@@ -1,0 +1,1988 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1588d-7ea9-7713-90a0-0e9df62adccd
+--------
+user
+# 敵対レビュー依頼：要因の組合せの結合テストケース（2巡目・26）
+
+あなたはレビュアーである。著者とは別人として、下の追加ケースを根拠と突き合わせ、誤りを指摘せよ。ファイルは変更しない。スクリプトやコマンドは読むだけで実行しない（grep・cat 等の閲覧は可。rg は使わない）。出力は日本語。
+レビューは事実確認に限る。設計書に無い仕様を足す提案はしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すと決めた。他の機能の設定値も要因に入れる。
+機能ごとに要因表（`combination/factors/`）を作り codex が反証した。そこから機械が試す値の組（`combination/combos/<機能ID>.tsv`）を並べ、著者が組1行にケース1件を書いた。
+組1行ごとの扱い（ケース化／既存ケースで確認済み／ケースにしない）は dispositions に書いてある。
+
+## 対象（/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/ 配下）
+
+| 機能ID | 組の範囲 | 追加ケース・シード・仕分け |
+| --- | --- | --- |
+| M03-04 | 全部 | `combination/cases/M03-04_cb_test_cases.tsv`・`M03-04_cb_seed_data.tsv`・`M03-04_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M03-05 | 全部 | `combination/cases/M03-05_cb_test_cases.tsv`・`M03-05_cb_seed_data.tsv`・`M03-05_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M03-06 | 全部 | `combination/cases/M03-06_cb_test_cases.tsv`・`M03-06_cb_seed_data.tsv`・`M03-06_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M03-08 | 全部 | `combination/cases/M03-08_cb_test_cases.tsv`・`M03-08_cb_seed_data.tsv`・`M03-08_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M03-09 | 全部 | `combination/cases/M03-09_cb_test_cases.tsv`・`M03-09_cb_seed_data.tsv`・`M03-09_cb_dispositions.tsv`（組の範囲の行だけ） |
+
+機能ごとに次を読む。
+- 追加ケース（13列。末尾の項目IDは埋めた組ID）、追加シード、仕分け（上の表のファイル）
+- 試す値の組 `combination/combos/<機能ID>.tsv`（組ID／処理ID／組（要因ID=値）／読める形／埋める組）
+- 要因表 `combination/factors/<機能ID>_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`・`_constraints.tsv`
+- 設計書 `combination/units/<機能ID>/design.txt`（行頭 L0001 が行番号。`#####` の行はシートの境目）。要因の根拠が他の機能のときは `combination/units/<その機能ID>/design.txt`、共通シートは `combination/units/_common/`
+- 既存のケースとシード `cases/<機能ID>_test_cases.tsv`・`<機能ID>_seed_data.tsv`（追加ケースが使う共有シードはここにある）
+
+規約は `combination/GEN_PROMPT.md`、裁定は `sheetmap/FIX_R1_BRIEF.md`（A〜L、C'）・`FIX_R2_BRIEF.md`（M〜O）、範囲は `integration_test/SCOPE.md`、前提条件は `precond/README.md`、判定単位は `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366。
+設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。Excel が触れていない条件を埋め込みが足しているだけのときは両方を当てる。
+期待結果の根拠は設計書に限る。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備と手順の実行可能性を確かめるためにだけ読む。実装と設計書が違うことは指摘しない。
+`combination/review/` の `*_out.txt`・`combination/prompts/` と、上の表に無いケースのファイルは読まない。
+
+## 前の巡
+
+1巡目の指摘が `combination/review/R1_*_findings.md`、直し担当の処置が `combination/review/<機能ID>_R1_dispositions.tsv`（部のある機能は `_R1_dispositions.p1.tsv` など）にある。指摘は見出しの機能IDで探す。却下の理由が設計書の原文に照らして妥当なら、同じ指摘を繰り返さない。採用したはずの指摘が実際に直っているか、直した結果に新しい誤りが入っていないかを見て、新しい事実の指摘だけを挙げる。
+
+## 意図的であり指摘対象外のもの
+
+- 1ケースの期待結果に、要因表 `processes.tsv` の「確かめる所」に挙がっている所どうし（ZIP と DB、画面と DB など）の結果が1文でまとめてあること（組1行にケース1件のため。2026-10-20 決定）。「確かめる所」に無い所の結果が混じっているときは指摘してよい。
+- 連鎖IDが空欄、要求IDが空欄であること。既存ケースを変えていないこと。判定IDが IT-0366 であること。
+- 組の値の選び方（どの組を並べたか）。要因表の「正解未定」「作れない」の組がケースに無いこと（要因表は反証済み。ただし、ケースを書いてみて組が作れない・結果が決まらないと分かったものは指摘してよい）。
+- 単体テスト・e2e へ送られるもの（画面上だけの入力制限、表示文言の逐語照合、見た目、計算式そのもの）のケースが無いこと。
+- シードの投入方法が「未確定: …」と書かれていること。
+- 商品がグッズ商品CSV登録で作られ、在庫が在庫変更CSV登録と承認で入ること（2026-10-19 の決まり）。
+
+## 重点観点
+
+1. **組の値がケースにあるか**: 事前準備・手順に、組のすべての要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）が値で書かれ、その値で処理を動かしているか。組と違う値で操作していないか。
+2. **期待結果が組の全要因の結果を重ねているか**: 確かめる所で、組の各要因の値について設計書が定める結果（金額・選択肢・更新先・更新内容）がまとめて確かめられているか。設計書の記述と事前準備の値だけから一意に出るか。設計書に無い値・ふるまいを期待していないか。金額・数量の計算が合っているか。
+3. 事前準備の状態から手順を実行して期待結果に到達できるか。単独で成立するか。「このN件だけ」を期待するのに、同じ条件に当たる他のデータを除く記述があるか。共有シードの設定と組の設定値が食い違っていないか。
+4. 1ケースに、確かめる所の違う期待結果が混じっていないか。既存ケースとの重複、物理名の混入。
+5. 「ケースにしない」とした組のうち、設計書の記述から期待結果が一意に決まるもの。「既存ケースで確認済み」としたもののうち、挙げたケースが実際にはその組の値で確かめていないもの。
+
+## 出力形式
+
+指摘が無ければ `NONE` の1語。あれば1件ごとに次の形で、テストIDの順に書く。確信の持てないものは挙げない。見出しの括弧の先頭は必ず機能ID。
+
+```
+### 指摘（<機能ID> / <テストID または 組ID>）
+- 主張: ケースまたは仕分けの記述（要点の引用）
+- 実際: 設計書の事実（design.txt の行番号。原文を引く）
+- 判定: 組の値が無い／期待結果の誤り／設計書に無い期待／成立しない前提・手順／要因の結果が欠けている／複数の期待結果／重複／ケースにできる／確認済みでない／組が作れない
+- 修正案: 結論を先に置いた1〜2文
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T09:03:51.632508Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象5機能について、組・追加ケース・シード・仕分けを設計書と照合します。まず規約と前巡の処置を確認し、既出で妥当な却下理由は再指摘しません。ファイル変更やスクリプト実行はしません。
+exec
+/bin/bash -lc "pwd && find integration_test/casegen/combination -maxdepth 3 -type f \\( -name 'GEN_PROMPT.md' -o -name 'M03-0[45689]*' -o -name 'R1_*_findings.md' \\) | sort && wc -l integration_test/casegen/combination/{cases,combos,factors}/*M03-0{4,5,6,8,9}* 2>/dev/null" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+/home/y-saito/Developments/hareruya-design-docs
+integration_test/casegen/combination/GEN_PROMPT.md
+integration_test/casegen/combination/cases/M03-04_cb_dispositions.tsv
+integration_test/casegen/combination/cases/M03-04_cb_seed_data.tsv
+integration_test/casegen/combination/cases/M03-04_cb_test_cases.tsv
+integration_test/casegen/combination/cases/M03-05_cb_dispositions.tsv
+integration_test/casegen/combination/cases/M03-05_cb_seed_data.tsv
+integration_test/casegen/combination/cases/M03-05_cb_test_cases.tsv
+integration_test/casegen/combination/cases/M03-06_cb_dispositions.tsv
+integration_test/casegen/combination/cases/M03-06_cb_seed_data.tsv
+integration_test/casegen/combination/cases/M03-06_cb_test_cases.tsv
+integration_test/casegen/combination/cases/M03-08_cb_dispositions.tsv
+integration_test/casegen/combination/cases/M03-08_cb_seed_data.tsv
+integration_test/casegen/combination/cases/M03-08_cb_test_cases.tsv
+integration_test/casegen/combination/cases/M03-09_cb_dispositions.p1.tsv
+integration_test/casegen/combination/cases/M03-09_cb_dispositions.p2.tsv
+integration_test/casegen/combination/cases/M03-09_cb_dispositions.tsv
+integration_test/casegen/combination/cases/M03-09_cb_seed_data.p1.tsv
+integration_test/casegen/combination/cases/M03-09_cb_seed_data.p2.tsv
+integration_test/casegen/combination/cases/M03-09_cb_seed_data.tsv
+integration_test/casegen/combination/cases/M03-09_cb_test_cases.p1.tsv
+integration_test/casegen/combination/cases/M03-09_cb_test_cases.p2.tsv
+integration_test/casegen/combination/cases/M03-09_cb_test_cases.tsv
+integration_test/casegen/combination/combos/M03-04.tsv
+integration_test/casegen/combination/combos/M03-04_undetermined.tsv
+integration_test/casegen/combination/combos/M03-05.tsv
+integration_test/casegen/combination/combos/M03-05_undetermined.tsv
+integration_test/casegen/combination/combos/M03-06.tsv
+integration_test/casegen/combination/combos/M03-06_undetermined.tsv
+integration_test/casegen/combination/combos/M03-08.tsv
+integration_test/casegen/combination/combos/M03-08_undetermined.tsv
+integration_test/casegen/combination/combos/M03-09.tsv
+integration_test/casegen/combination/combos/M03-09_undetermined.tsv
+integration_test/casegen/combination/factors/M03-04_constraints.tsv
+integration_test/casegen/combination/factors/M03-04_existing.tsv
+integration_test/casegen/combination/factors/M03-04_factors.tsv
+integration_test/casegen/combination/factors/M03-04_interactions.tsv
+integration_test/casegen/combination/factors/M03-04_processes.tsv
+integration_test/casegen/combination/factors/M03-05_constraints.tsv
+integration_test/casegen/combination/factors/M03-05_existing.tsv
+integration_test/casegen/combination/factors/M03-05_factors.tsv
+integration_test/casegen/combination/factors/M03-05_interactions.tsv
+integration_test/casegen/combination/factors/M03-05_processes.tsv
+integration_test/casegen/combination/factors/M03-06_constraints.tsv
+integration_test/casegen/combination/factors/M03-06_existing.tsv
+integration_test/casegen/combination/factors/M03-06_factors.tsv
+integration_test/casegen/combination/factors/M03-06_interactions.tsv
+integration_test/casegen/combination/factors/M03-06_processes.tsv
+integration_test/casegen/combination/factors/M03-08_constraints.tsv
+integration_test/casegen/combination/factors/M03-08_existing.tsv
+integration_test/casegen/combination/factors/M03-08_factors.tsv
+integration_test/casegen/combination/factors/M03-08_interactions.tsv
+integration_test/casegen/combination/factors/M03-08_processes.tsv
+integration_test/casegen/combination/factors/M03-09_constraints.tsv
+integration_test/casegen/combination/factors/M03-09_existing.tsv
+integration_test/casegen/combination/factors/M03-09_factors.tsv
+integration_test/casegen/combination/factors/M03-09_interactions.tsv
+integration_test/casegen/combination/factors/M03-09_processes.tsv
+integration_test/casegen/combination/prompts/M03-04_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-09_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M03-09_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-09_p2_GEN_PROMPT.md
+integration_test/casegen/combination/review/M03-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-04_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-04_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M03-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-05_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M03-05_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/M03-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-06_factors_md_dispositions.tsv
+integration_test/casegen/combination/review/M03-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-06_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M03-06_factors_x_dispositions.tsv
+integration_test/casegen/combination/review/M03-06_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/M03-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-08_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M03-08_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/M03-09_R1_dispositions.p1.tsv
+integration_test/casegen/combination/review/M03-09_R1_dispositions.p2.tsv
+integration_test/casegen/combination/review/M03-09_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M03-09_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M03-09_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/R1_01_findings.md
+integration_test/casegen/combination/review/R1_02_findings.md
+integration_test/casegen/combination/review/R1_03_findings.md
+integration_test/casegen/combination/review/R1_04_findings.md
+integration_test/casegen/combination/review/R1_05_findings.md
+integration_test/casegen/combination/review/R1_06_findings.md
+integration_test/casegen/combination/review/R1_07_findings.md
+integration_test/casegen/combination/review/R1_08_findings.md
+integration_test/casegen/combination/review/R1_09_findings.md
+integration_test/casegen/combination/review/R1_10_findings.md
+integration_test/casegen/combination/review/R1_11_findings.md
+integration_test/casegen/combination/review/R1_12_findings.md
+integration_test/casegen/combination/review/R1_13_findings.md
+integration_test/casegen/combination/review/R1_14_findings.md
+integration_test/casegen/combination/review/R1_15_findings.md
+integration_test/casegen/combination/review/R1_16_findings.md
+integration_test/casegen/combination/review/R1_17_findings.md
+integration_test/casegen/combination/review/R1_18_findings.md
+integration_test/casegen/combination/review/R1_19_findings.md
+integration_test/casegen/combination/review/R1_20_findings.md
+integration_test/casegen/combination/review/R1_21_findings.md
+integration_test/casegen/combination/review/R1_22_findings.md
+integration_test/casegen/combination/review/R1_23_findings.md
+integration_test/casegen/combination/review/R1_24_findings.md
+integration_test/casegen/combination/review/R1_25_findings.md
+integration_test/casegen/combination/review/R1_26_findings.md
+integration_test/casegen/combination/review/R1_27_findings.md
+integration_test/casegen/combination/review/R1_28_findings.md
+integration_test/casegen/combination/review/R1_29_findings.md
+integration_test/casegen/combination/review/R1_30_findings.md
+integration_test/casegen/combination/review/R1_31_findings.md
+integration_test/casegen/combination/review/R1_32_findings.md
+integration_test/casegen/combination/review/R1_33_findings.md
+integration_test/casegen/combination/review/R1_34_findings.md
+integration_test/casegen/combination/review/R1_35_findings.md
+integration_test/casegen/combination/review/R1_36_findings.md
+integration_test/casegen/combination/review/R1_37_findings.md
+integration_test/casegen/combination/review/R1_38_findings.md
+integration_test/casegen/combination/review/R1_39_findings.md
+integration_test/casegen/combination/review/R1_40_findings.md
+integration_test/casegen/combination/review/R1_41_findings.md
+integration_test/casegen/combination/review/R1_42_findings.md
+integration_test/casegen/combination/review/R1_43_findings.md
+integration_test/casegen/combination/review/R1_44_findings.md
+integration_test/casegen/combination/review/R1_45_findings.md
+integration_test/casegen/combination/review/R1_46_findings.md
+integration_test/casegen/combination/review/R1_47_findings.md
+integration_test/casegen/combination/review/R1_48_findings.md
+integration_test/casegen/combination/review/R1_49_findings.md
+integration_test/casegen/combination/review/R1_50_findings.md
+integration_test/casegen/combination/review/R1_51_findings.md
+integration_test/casegen/combination/review/R1_52_findings.md
+integration_test/casegen/combination/review/R1_53_findings.md
+integration_test/casegen/combination/review/R1_54_findings.md
+integration_test/casegen/combination/review/R1_55_findings.md
+integration_test/casegen/combination/review/R1_56_findings.md
+integration_test/casegen/combination/review/R1_A_findings.md
+integration_test/casegen/combination/review/R1_B_findings.md
+integration_test/casegen/combination/review/R1_C_findings.md
+integration_test/casegen/combination/review/R1_D_findings.md
+     4 integration_test/casegen/combination/cases/M03-04_cb_dispositions.tsv
+     4 integration_test/casegen/combination/cases/M03-04_cb_seed_data.tsv
+     4 integration_test/casegen/combination/cases/M03-04_cb_test_cases.tsv
+     3 integration_test/casegen/combination/cases/M03-05_cb_dispositions.tsv
+     3 integration_test/casegen/combination/cases/M03-05_cb_seed_data.tsv
+     3 integration_test/casegen/combination/cases/M03-05_cb_test_cases.tsv
+     3 integration_test/casegen/combination/cases/M03-06_cb_dispositions.tsv
+     5 integration_test/casegen/combination/cases/M03-06_cb_seed_data.tsv
+     3 integration_test/casegen/combination/cases/M03-06_cb_test_cases.tsv
+     6 integration_test/casegen/combination/cases/M03-08_cb_dispositions.tsv
+     3 integration_test/casegen/combination/cases/M03-08_cb_seed_data.tsv
+     3 integration_test/casegen/combination/cases/M03-08_cb_test_cases.tsv
+    20 integration_test/casegen/combination/cases/M03-09_cb_dispositions.p1.tsv
+    13 integration_test/casegen/combination/cases/M03-09_cb_dispositions.p2.tsv
+    32 integration_test/casegen/combination/cases/M03-09_cb_dispositions.tsv
+    19 integration_test/casegen/combination/cases/M03-09_cb_seed_data.p1.tsv
+    12 integration_test/casegen/combination/cases/M03-09_cb_seed_data.p2.tsv
+    30 integration_test/casegen/combination/cases/M03-09_cb_seed_data.tsv
+    18 integration_test/casegen/combination/cases/M03-09_cb_test_cases.p1.tsv
+    11 integration_test/casegen/combination/cases/M03-09_cb_test_cases.p2.tsv
+    28 integration_test/casegen/combination/cases/M03-09_cb_test_cases.tsv
+     4 integration_test/casegen/combination/combos/M03-04.tsv
+     1 integration_test/casegen/combination/combos/M03-04_undetermined.tsv
+     3 integration_test/casegen/combination/combos/M03-05.tsv
+     1 integration_test/casegen/combination/combos/M03-05_undetermined.tsv
+     3 integration_test/casegen/combination/combos/M03-06.tsv
+     1 integration_test/casegen/combination/combos/M03-06_undetermined.tsv
+     6 integration_test/casegen/combination/combos/M03-08.tsv
+     1 integration_test/casegen/combination/combos/M03-08_undetermined.tsv
+    32 integration_test/casegen/combination/combos/M03-09.tsv
+     4 integration_test/casegen/combination/combos/M03-09_undetermined.tsv
+     1 integration_test/casegen/combination/factors/M03-04_constraints.tsv
+    18 integration_test/casegen/combination/factors/M03-04_existing.tsv
+     4 integration_test/casegen/combination/factors/M03-04_factors.tsv
+     4 integration_test/casegen/combination/factors/M03-04_interactions.tsv
+     2 integration_test/casegen/combination/factors/M03-04_processes.tsv
+     1 integration_test/casegen/combination/factors/M03-05_constraints.tsv
+     7 integration_test/casegen/combination/factors/M03-05_existing.tsv
+     3 integration_test/casegen/combination/factors/M03-05_factors.tsv
+     2 integration_test/casegen/combination/factors/M03-05_interactions.tsv
+     2 integration_test/casegen/combination/factors/M03-05_processes.tsv
+     2 integration_test/casegen/combination/factors/M03-06_constraints.tsv
+     9 integration_test/casegen/combination/factors/M03-06_existing.tsv
+     4 integration_test/casegen/combination/factors/M03-06_factors.tsv
+     4 integration_test/casegen/combination/factors/M03-06_interactions.tsv
+     2 integration_test/casegen/combination/factors/M03-06_processes.tsv
+     5 integration_test/casegen/combination/factors/M03-08_constraints.tsv
+     4 integration_test/casegen/combination/factors/M03-08_existing.tsv
+     4 integration_test/casegen/combination/factors/M03-08_factors.tsv
+     5 integration_test/casegen/combination/factors/M03-08_interactions.tsv
+     3 integration_test/casegen/combination/factors/M03-08_processes.tsv
+    13 integration_test/casegen/combination/factors/M03-09_constraints.tsv
+    14 integration_test/casegen/combination/factors/M03-09_existing.tsv
+    16 integration_test/casegen/combination/factors/M03-09_factors.tsv
+    27 integration_test/casegen/combination/factors/M03-09_interactions.tsv
+     7 integration_test/casegen/combination/factors/M03-09_processes.tsv
+   446 total
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/GEN_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# {FID}（{FNAME}）の要因の組合せのケース作成（著者への依頼）
+
+リポジトリ: `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+あなたは機能ID **{FID}** の追加ケースを書く著者である。レビューは別の担当が行う。git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すと決めた。他の機能の設定値も要因に入れる。
+{FID} の要因表（別の担当が作り、codex が反証した）から、機械が試す値の組を並べた。そのうち **{RANGE} の {N}行** があなたの受け持ち（{PARTNOTE}）。1行ごとにケースを書く。**既存のケースは1文字も変えない。**
+
+## 読むもの
+
+1. 試す値の組: `integration_test/casegen/combination/combos/{FID}.tsv`（組ID／処理ID／組（要因ID=値）／組（読める形）／埋める組）。1行が1回の処理で同時に使う値の組。受け持ちは {RANGE}。
+2. 要因表: `integration_test/casegen/combination/factors/{FID}_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`（効き合う理由）・`_constraints.tsv`（作れない組・正解未定の組）
+3. 設計書: `integration_test/casegen/combination/units/{FID}/design.txt`（行頭の L0001 とタブは行番号で、設計書の内容ではない）。要因の根拠の行だけでなく、その節全体を読む。他の機能の設定値の要因は `units/<機能ID>/design.txt`
+4. 既存のケースとシード: `integration_test/casegen/cases/{FID}_test_cases.tsv`（11列）・`{FID}_seed_data.tsv`。**書き方・画面への入り方・シードの作り方はこれに合わせる**。同じ処理を別の値で通している既存ケースがあれば、それを下敷きにして値だけ変えるのが基本
+5. 確かめる所が別の機能の画面のときは、その機能のケース `integration_test/casegen/cases/<機能ID>_test_cases.tsv` で画面への入り方と表示の書き方を見る
+6. `integration_test/SCOPE.md`、`integration_test/casegen/sheetmap/FIX_R1_BRIEF.md` の裁定 A〜L・C'、`FIX_R2_BRIEF.md` の決まり M〜O（文中の `sheetmap/` は読み替える）、`integration_test/casegen/precond/README.md`（前提条件 P1〜P13・類型 T1〜T4）、`integration_test/casegen/STEP_PATTERNS.md`（手順の型）
+7. `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366（判定単位の文と除外を読む）
+
+## 1行（組ID）ごとに、次のどれかに決める
+
+| 扱い | いつ | 書くもの |
+| --- | --- | --- |
+| ケース化 | その値の組で処理を動かしたときの結果が、設計書の記述から一意に決まる | ケース1件（1ケース1期待結果）。組のすべての要因の値を事前準備・手順に値で書く |
+| 既存ケースで確認済み | 既存ケースの事前準備・手順に組のすべての値が書かれ、確かめる所で結果を見ている | そのテストIDと、どの手順・期待結果が当たるか |
+| ケースにしない | その値の組が実は作れない（制約の抜け）／結果が設計書から一意に決まらない／設計書の記述どうしが食い違う／結合テストの範囲でない | 理由（設計書の原文を引く）。作れない・決まらない組は、要因表の制約に足すべき組として理由に `要因ID=値&要因ID=値` を書く |
+
+安易に「ケースにしない」としない。要因表は codex が反証済み。それでも外すなら設計書の原文で理由を示す。
+
+## 期待結果の決め方
+
+- 組の**すべての要因**について、その値で設計書が定める結果を、確かめる所（processes.tsv）でまとめて確かめる。1つの確かめる所で見える結果を1文にまとめてよい（例: 「受注情報編集画面で、お支払方法が代金引換、配送方法がゆうパケット、送料が200円、手数料が330円、ポイント使用が0、合計が1,530円で表示されること」）。確かめる所が違う結果は入れない（1ケース1期待結果）。
+- 金額・数量は、事前準備に書いた値から設計書の計算で一意に出す。計算の途中を期待結果・出典に書かない（期待結果には結果の値だけ）。
+- 期待結果は設計書（design.txt。同じ冊子の別シート、要因の根拠にある他の機能の設計書も可）と事前準備の値だけから出す。実装コード・現行ソースから期待値を足さない。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備・シードの作り方と手順の実行可能性を確かめるためにだけ読んでよい（スクリプトやコマンドは実行しない）。
+- 設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採り、出典に両方を書く。
+- 要因表の constraints.tsv に「正解未定」とある値の組は機械が行に入れていない。それ以外の組で結果が決まらないと分かったら「ケースにしない」にする（推測で決めない）。
+- **打ち切りの行**: 組（読める形）に「（効かない）」とある要因は、その行では結果に効かない（constraints.tsv の種別「打ち切り」。処理が途中で打ち切られる。依頼者決定 2026-10-20）。その要因の値は事前準備に書かなくてよい（共有可シードのままでよい）。期待結果は打ち切りの結果（出ない・エラーで元の画面へ戻る・何も変わらない など）を、設計書の定めどおりに確かめる。打ち切りのあと値が残っていないか（更新されていないこと）を見るのはよい。
+
+## ケースの書き方
+
+- テストIDは `IT-{FID}-{START}` からの連番（既存と、外した番号の続き）。組IDの順に書く。
+- 判定IDは `IT-0366`、観点IDは `ITA-11`。項目ID列に組ID（1つ）。
+- 期待結果は合否が一意に決まる具体値で書き、「〜こと」で終える。
+- **組の値がケースから読めること**: 事前準備・手順に、組の全要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）を値で書く。要因名や組の値を並べただけの行（「このケースで試す値の組: …」など）を事前準備・手順に足さない。実際のデータで書いていれば、verify の「注意」（組の値が字句で無い）は残ってよい。
+- 結果は、データを作った所とは別のコンポーネントで確かめる（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。
+- 手順は「1. …／2. …」の形で、画面名・項目名・ボタン名・入力値を特定する。名前は設計書の表記を使う。画面への入り方は既存ケースに合わせる。
+- 物理名（テーブル名・カラム名・ルート名・クラス名・翻訳キー）を書かない。設計書に書かれている項目名はそのまま使ってよい。
+- 禁止語: 失敗させる／該当する操作／同上／いくつか／別の画面／要確認／TBD／設計どおり／設計書どおり／仕様どおり／正しいこと／正しく。
+- 実行区分は `ブラウザのみ` か `ブラウザ+DB確認`（外から見えない副作用だけDBを見る）。優先度は、業務データの保存・更新・出力値の一致を P1、表示・選択肢を P2。
+- 要求ID列: `integration_test/casegen/requirements_all.tsv` に当たる行（書番・シート名・要求文が合う行）が見つかればその要求IDを書く。見つからなければ空欄でよい。代用しない。
+- 連鎖IDは空欄。出典は既存ケースと同じ形（`<書番> <シート名> / <区分 と 見出し>`。別シート・別の冊子は「｜」でつなぐ）。
+
+## 前提条件（いまの決まり。既存のシードの書き方がこれに従っているので合わせる）
+
+- 各ケースは単独で成立する。**各ケースはケース専用シードを1件以上使う**（シードID `S-{FID}-CB<名前>-<ケース番号3桁>`）。参照だけのマスタ・アカウント・環境設定は、既存の `{FID}_seed_data.tsv` にある `共有可` のシードをそのまま使ってよい（シード表に書き足さない）。既存の `ケース専用` シードは使わない。
+- 組の値が共有可のシードの設定と違うとき（手数料・送料・利用条件・配送方法に紐づく支払方法など）は、ケース専用シードで設定を書き、事前準備に値で書く。
+- テストデータは画面から入力して作る（2026-10-09 決定）。画面で作れない状態だけ、理由を添えて DB へ直接入れる書き方にする。
+- **商品はカード商品も含めてグッズ商品CSV登録で作る**（商品登録画面の新規登録は使わない。M03-02 L0075〜L0077）。カード商品は商品登録編集画面の「カード指定 >」でカードを付ける。価格は税込みで登録する。在庫は在庫変更CSV登録で入庫し、別のメンバーが承認一覧で承認する（確認画面の OK まで書く）。既存の `{FID}_seed_data.tsv` の商品・在庫のシードの書き方をそのまま写す。
+- 確認モーダルが出る操作は、モーダルの確定まで手順に書く。規約同意など必須のチェックも書く（既存ケースに合わせる）。
+- 画面が振る番号（受注番号・会員IDなど）は、画面で作ったあとに控えた番号を使う（類型 T4。〔番号の名前-{FIDC}-ケース番号〕の呼び名で書く）。
+- ケース専用データの識別子（コード、名称、メール、ファイル名、パスワード）は全機能で一意にする。前提条件の検査 G5 の字句は `[A-Za-z0-9][A-Za-z0-9_.@\-]{3,}`。**英数字とハイフンの連なり1つ1つに、機能番号とケース番号を入れる**（例: 「{FIDC}-CB{START}-A」「cb{FIDL}-{START}@example.test」「Passw0rd-CB{FIDC}{START}」）。パスワードに「!」を使わない。番号だけの語（「A001」）を単独で置かない。`grep -rF` で `integration_test/casegen/cases/` と重ならないことを確かめよ。
+- 事前準備は必須。使用シードすべてについて状態を値付きで書き、シードIDを括弧で添える（「① …（S-…）／② …（S-…）」）。「このN件だけ」を期待するときは、同じ条件に当たる他のデータが無い状態を書く。
+- 事前準備で手順の結果を参照しない。期待結果の「AからB」「Aのまま」の A は事前準備に同じ表記で書いた値にする。
+- シードの投入方法は、何を使ってどう作るかを書く。作り方が分からないときは「未確定: <分からないこと>」と書く。推測で埋めない。
+- 中継・模擬応答、現在時刻の固定、障害を起こす手段は用意しない（2026-10-19 決定）。これが要る組は「ケースにしない」。バッチの実行、スマレジなど外部の試験環境、メールの受け取りは用意できる。
+
+## 出力（この3つだけを書く。ほかの既存ファイルは変更しない）
+
+1. `integration_test/casegen/combination/cases/{FID}_cb_test_cases{SFX}.tsv`
+   タブ区切り・13列: `テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID`
+   セル内に改行・タブ・ダブルクォートを入れない。ケース化が0件でもヘッダだけのファイルを書く。
+2. `integration_test/casegen/combination/cases/{FID}_cb_seed_data{SFX}.tsv`
+   タブ区切り・7列: `シードID	区分	論理名	状態・属性	用途	投入方法	共有`。**新しく足すシードだけ**を書く。
+3. `integration_test/casegen/combination/cases/{FID}_cb_dispositions{SFX}.tsv`
+   タブ区切り・4列: `項目ID	扱い	テストID	理由`。受け持ちの組 {N}行を1行ずつ（項目ID は組ID）。
+
+最後に `python3 integration_test/casegen/combination/verify_cb.py {VARG}` を実行し、合格するまで直せ。ほかの検査（gate_dry.sh・gate_factors.py など）は流さない（ほかの著者と同時に流すとぶつかる）。
+作業用の一時ファイルはスクラッチパッド（`/tmp/claude-1000/-home-y-saito-Developments-hareruya-design-docs/7ac77140-f212-4eb4-b04c-5cbd0cc6fcfa/scratchpad/`）に、名前へ {FID}{SFX} を入れて作る。他の機能・同じ機能の他の部の combination/cases のファイルは読まない・書かない。
+**ファイルは処理ごとに書き足していく**（全部を最後にまとめて書かない。途中で止まっても書いた分が残るように）。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+4行以内。ケース化／確認済み／ケースにしない の件数、ケースにしなかった主な理由（制約に足すべき組があれば件数）、verify の結果、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/sheetmap/FIX_R1_BRIEF.md integration_test/casegen/sheetmap/FIX_R2_BRIEF.md integration_test/SCOPE.md integration_test/casegen/precond/README.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# レビュー1巡目の反映（著者への依頼）
+
+codex のレビュー指摘が `integration_test/casegen/sheetmap/review/<機能ID>_r1_findings.md` にある。
+1件ずつ、**指摘が引いている設計書の記述を sheet.txt で自分で読み直して事実かどうか確かめてから**、下の裁定に従って反映せよ。指摘をそのまま適用しない。
+
+## 裁定（依頼元の決定。指摘と食い違うときはこちらが優先）
+
+| No. | 裁定 |
+| --- | --- |
+| A | **根拠はHTML設計書であり、対象シート1枚に限らない。** その機能のふるまい（何を出力するか、全件か選択か、出力対象の条件、未選択・0件のときの扱い、ファイル名、起動するボタン、権限）が同じ冊子の別シート（一覧画面のシートなど）に書かれていれば、それを期待結果の根拠にしてよい。出典にそのシートを「｜」でつないで書く。当初の依頼文の「隣接シートは操作の入口にだけ使う」は撤回する。したがって、「対象シートに記述が無い」ことだけを理由にした指摘は、同じ冊子の別シートに記述があれば却下する。逆に、別シートにその機能の記述があるのにケースにしていなかったもの（出力対象、選択と全件の違い、未選択時の扱いなど）は、ケースを足す。別シートは `python3 integration_test/casegen/sheetmap/build_materials.py --sheet <書番> <シート名>` で読む。他の冊子・実装・現行ソースは根拠にしない |
+| B | **観点表の「期待値の決め方」が「観点内で確定」の判定単位は、適用の条件が設計書から言えれば、期待結果は判定単位の文から決めてよい。** 例: IT-0080・IT-0225（参照・出力だけの機能は実行前後でデータを更新しない）は、設計書がその機能をCSV出力・一覧表示などの参照機能として書いていれば適用できる。「非更新とは対象シートに書いていない」という指摘は却下する。IT-0083（出力ファイルの数量・金額が画面表示およびDB値と一致）を使うときは、画面表示またはDB値と見比べる手順と期待結果にする |
+| C | **CSV・帳票の出力項目の構成と並びは IT-0156**（観点ID ITA-02。他の観点に割り当たらない機能仕様を受ける区分）に当てる。IT-0071 は「値が取得元と同値」にだけ使う。report.md に「出力項目の構成・並びを受ける判定単位が観点表に無いので IT-0156 を使った」と書く |
+| C' | （2026-10-06 追記）観点表に IT-0348（ITA-05。出力したファイルの各レコードが、定められた出力項目だけで構成され、定められた順に並ぶこと）を足した。出力項目の構成と並びは、以後 IT-0348 に当てる。裁定Cで IT-0156 に当てていた14件は付け替えた（`retag_0348.py`）。同日、IT-0349（ITA-05。出力したファイルのレコードが、定められた並び順で出力されること）も足した。出力したCSV・帳票の行の並び順は IT-0349 に当てる（24件を付け替えた。`retag_0349.py`）。同日、IT-0350（ITA-05。送信されたメールの件名、送信元、本文の構成が、定められたとおりであること）も足した。通知メールの内容は IT-0350 に当てる（10件を付け替えた。`retag_0350.py`）。初期値、未選択時の扱いなど、ほかに受ける判定単位が無いものは IT-0156 のまま（2026-10-07 追記）観点表にバッチ用の4行を足した。IT-0351（ITA-14。異常として定められた条件でバッチが異常終了として終わること）、IT-0352（ITA-13。異常終了した場合、異常の後に行わないと定められた処理が行われていないこと）、IT-0353（ITA-13。終了後、一時的な資源が定められたとおりに削除されている・残っていること）、IT-0354（ITA-21。バッチの出力メッセージが、定められた条件のときに定められた文言で出力されること）。バッチのケースで期待結果がこのどれかそのものであるものは、IT-0156 でなくこれらを使う。 |
+| D | 見出し行の有無、データが何行目から始まるかは、設計書に書いていなければ期待結果・手順に書かない。データ行は事前準備の識別子（番号・コード）で特定する。項目の並びは「各行の項目が左から設計書の識別ID順に対応する」ことを、事前準備の値がどの位置に出るかで確かめる |
+| E | 値の取得元が設計書から決まらない項目（備考が空で、項目名からも取得元が1つに決まらないもの。呼び名の違う属性を当てはめたもの）は、値の照合から外し、report.md の「ケースにしなかったもの」に取得元の不足として書く。項目名と同じ名前の属性は取得元が決まるとしてよい |
+| F | 計算・連結・書式変換の結果そのもの（姓＋空白＋名、差の計算、小計など）は単体テストの担当（SCOPE.md）。ケースから外し、report.md に「単体テストへ送った」と書く。ただし「どの時点の値か」「単価か小計か」のように、どの値を採るかの定めは結合テストで確かめてよい |
+| G | 1ケース1期待結果。判定単位が違う確認が1ケースに混じっていたら分ける |
+| H | シードは実際に作れる方法で書く。管理画面で指定できない内部IDを管理画面で登録する、と書かない（DB投入にする）。設計書が求める状態（必須項目が未設定の会員など）が ee 実装の制約で作れないときは、ケースは残し、投入方法を「未確定: <理由>」にして report.md の「試験環境に要るもの」に挙げる。実装が設計書と違うこと自体はケースを変える理由にしない |
+| I | 手順は、画面を開く・条件を入れる・ボタンを押す・ファイルを開く、の操作を番号付きで書く。「〜を確認する」だけの手順にしない |
+| J | 設計書の中で記述が食い違っている・誤記と思われる箇所を、推測でどちらかに決めて期待結果にしない。両方に共通する部分だけを期待結果にし、食い違いは report.md に書く |
+| K | 判定ID IT-0332〜0347 は使わない。使っているケースは、当てはまる別の判定単位に付け替えるか、無ければ外す |
+| L | 指摘が「取りこぼし」で、設計書の記述から期待結果が一意に決まるなら、ケースを足す。試験基盤が無いことはケースを作らない理由にならない（投入方法・前提を「未確定」と書いて残す） |
+
+## やること
+
+1. 指摘ごとに「採用／一部採用／却下」を決め、cases・seed・report.md を直す。ケースを足したり外したりしたら、テストIDを 001 からの連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. 指摘に無くても、裁定 A〜L に反する箇所が自分のケースにあれば同じように直す。
+3. `integration_test/casegen/sheetmap/review/<機能ID>_r1_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述（原文）・直した内容」を表で書く。保存できないときは返答に本文を含める。
+4. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること（他の著者と同じ置き場所を使っているため）。
+
+## 返答
+
+5行以内。直した後の件数、指摘ごとの判定の内訳（採用・一部採用・却下の件数）、足した・外したテストの数、verify の結果、dispositions.md を保存できたか。
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+# 結合テストケースの前提条件の書き直し
+
+## なぜ
+
+2026-09-28 時点の `cases/*_test_cases.tsv` は、上から順番に実行しても成立しないケースが多い。
+原因は3つある。
+
+1. **前提がケースに書かれていない。** 生成規則（`GEN_PROMPT_TEMPLATE.md` 縛り10）が
+   「シード投入は事前準備に書かない」としていたため、実行対象8,325件のうち7,866件の事前準備が `—`。
+   IT-A01-01-004 の前に「SMA-A01-002 を2個販売した取引」が要ることは、別ファイルのシード表を読まないと分からない
+2. **状態を書き換えるデータを複数ケースで共有している。** IT-A01-01-001 が SMA-A01-001 を2個販売すると、
+   002 の「10から8」は成立しない。012 が SMA-A01-I01 を7にすると、013 の「10から8」は成立しない
+3. **投入方法が実行できる粒度でない。** 「スマレジ試験環境に全キャンセル可能な取引を登録する」
+
+依頼者決定（2026-09-28）: **ケースごとに専用データを持たせる**。A01-01 で型を作ってから全機能へ広げる。
+
+## 規約
+
+対象は実行区分が「保留」以外のケース。保留ケースは1文字も変えない。
+
+| No. | 規約 |
+| --- | --- |
+| P1 | **各ケースは単独で成立する。** 他のケースを先に実行しても、後に実行しても、実行しなくても、事前準備どおりの状態から始められる |
+| P2 | シード表に `共有` 列を足す。`共有可` か `ケース専用` のどちらか。**どれか1ケースでも状態を変えるデータ**（在庫・受注・取引・ステータス・ログイン失敗回数など）は `ケース専用`。`共有可` にできるのは、どのケースも状態を変えないもの（参照だけのマスタ、ロックさせない管理者アカウント、環境設定）と、各ケースが開始時に必要な設定を自分で行う試験基盤（中継の保留／転送の切替など）だけ。`用途` にどちらなのかを書く |
+| P3 | `ケース専用` のシードを参照するケースはちょうど1件。シードIDは `<元のID>-<ケース番号3桁>` にする |
+| P4 | ケース専用データの識別子（DB投入するレコードのID・商品ID・CSVファイル名・会員メールなど）は、**全機能のケース専用シードの中で一意**にする。重なるときはケース番号を付けて改名する |
+| P5 | **事前準備は必須。** 使用シードすべてについて、どういう状態かを値付きで書き、シードIDを括弧で添える。シード投入の後で画面や外部システムを操作して作る状態（販売済みの取引など）は、その操作と、終わった後の値の確認まで書く |
+| P6 | 期待結果が「AからB」「Aのまま」と言うとき、**A は事前準備に書いた値**である |
+| P7 | **期待結果は変えない。** 変えてよいのは P4 の改名だけで、改名は `renames/<機能ID>.tsv` に宣言する。改名は、英数字の識別子どうし／シードで ID・名称・コード・番号・メール・ファイル名等の項目の値として定義した値／シードID／シードの自由文にある4文字以上のデータ名を「旧名-ケース番号」へ、の置換に限る（数量・状態語は改名しない）。改名で済まない変更は `oracle_changes/<機能ID>.tsv`（テストID/新期待結果/理由/承認）に載せ、承認が入るまでゲートを通さない。承認済みの類型は T1 だけ（下記）。手順で外部の値に呼び名を付け、その呼び名を期待結果で使う書き方もオラクル変更として扱う。要求ID・連鎖ID・観点ID・優先度・実行区分・出典は変えない |
+| P8 | 手順はテスト対象の操作だけにする。手順を変えてよいのは次の種別だけで、変えたら `step_changes/<機能ID>.tsv`（テストID/種別/新手順/理由）に宣言する。`準備移動`（準備操作を事前準備へ移す）／`改名`／`発番値控え`（実行中に発番される値を控える操作を足す）／`データ指示`（事前準備で作ったデータを指し示す）／`中継置換`（類型 T2）／`非同期完了待ち`（類型 T3）／`裁定訂正`（設計書の中の食い違いの裁定で直したもの。2026-10-16 依頼者決定） |
+| P9 | 投入方法は、何を使ってどう作るかを書く（管理画面のどの画面か／DB投入／スマレジ試験環境の管理画面で商品登録と在庫設定／CSVフィクスチャ）。「〜を登録する」だけで手段が無いものは不可 |
+| P10 | 事前準備に設計書に無い仕様を持ち込まない。書くのはテストデータの状態と作り方だけ。作り方は設計書に無ければ ee 実装（設定・テーブル・管理画面）から引いてよい。どちらにも無い作り方は `open_preconditions.tsv` に載せ、推測で埋めない |
+| P12 | 試験基盤が未整備、または作り方が設計書にも ee 実装にも無い前提は `open_preconditions.tsv` に載せる。**実行区分は変えない**（保留は「設計書に期待結果が無い」の意味で使っており、混ぜない）。ゲートは件数を参考として出す |
+| P13 | **手順で入力する値（登録する名称・コードなど）は改名しない。** 境界値や文字種の検査が壊れるため。同じ値のデータが既にあると成立しないときは、事前準備に「その値のデータが無い状態にする（あれば削除する）」と書く |
+| P11 | **事前準備は手順より前に完結する。** 手順の結果（発番されたID・返された値）を事前準備で参照しない。それらは手順の中で控える |
+
+## 承認済みの類型（依頼者 2026-09-28）
+
+| 類型 | 内容 | 記録先 |
+| --- | --- | --- |
+| T1 外部発番値 | 外部システムが発番する値（スマレジの在庫変動履歴ID・問い合わせIDなど）を基線が固定値で書いているときは、手順の中で発番値を控え、期待結果を「手順Nで控えた値」との照合に書き換える | `oracle_changes`（承認欄に「類型承認T1」） |
+| T3 非同期完了待ち | Webhook・バッチ・メッセージ処理など非同期で処理される操作の結果を確認する前に、非同期処理の対象のジョブ（待機中・実行中）が0件になるまで待つ手順を足す（画面名は書かない。下の「用語の置き換え」）。待つ上限時間を書く | `step_changes`（種別「非同期完了待ち」）。依頼者承認 2026-09-30 |
+| T2 中継置換 | 外部システムとの通信の観測・送信を、基線が実行できない書き方（「Webhookの応答をブラウザで確認」「スマレジAPIから送信」など）にしているときは、中継（通信を記録・保留・転送・模擬送信する試験基盤）で観測・送信する手順に変える。外部が実際に返す通知は保留して転送し、外部に起こさせられない結果（エラー等）だけを模擬送信する | `step_changes`（種別「中継置換」） |
+
+## 類型T4 画面発番値（依頼者決定 2026-10-09）
+
+テストデータは画面から入力して作る。画面が自動で振る番号（注文番号・受注ID・イベントIDなど）を基線が固定値で書いているときは、
+データを画面で登録したときに振られた番号を控え、事前準備・手順・期待結果ではその控えた番号（呼び名〔注文番号-M0526-012〕の形）を使う。
+書き直しは `../seed_screen/`（README）。期待結果・手順の変更は `oracle_changes/`（承認欄に「類型承認T4」）・`step_changes/`（種別に「発番値控え」）へ、`../seed_screen/apply.py` が機械で宣言する。
+控えた番号へ置き換えたケースの一覧は `screen_noted_cases.tsv`。検査は、これらのケースについて改名先（消えた固定の番号）の検査を外し、〔…〕の呼び名を識別子として数えない。
+
+## テストできない・作り方が未確定のケースの除外（依頼者決定 2026-10-14）
+
+テストできないケースと、作り方が未確定のケースを、ケースの正本（`../cases/`・`../all_test_cases.tsv`）から外した。
+外したのは、検査 G9 が「未整備・未確定の前提を使うケース」と数えていた 1,892件（使用シードの投入方法に「未確定」「未整備」がある、または `open_preconditions.tsv` の影響ケースに載っている）。
+内訳は、作り方が未確定 1,744、試験環境の決定待ち 113、実装上その状態を作れない 35。残りは 10,556件・345機能（20機能は全ケースが外れた）。
+
+- 行は消さず `../excluded_open_cases.tsv`（除外理由・未確定の内容つき。元の11列は「元_」付き）へ移した。外したケースだけが使っていたシード 2,458件は `../excluded_open_seeds.tsv`。
+- 道具は `../exclude_open.py`（何度流しても同じ）。**各 `merge_into_cases.py` と `seed_screen/apply.py` は外したケースを `cases/` へ戻すので、そのあとに必ず流す。** 順序は merge → `seed_screen/apply.py` → `datapattern/conflicts/apply_rulings.py`（最後に `product_csv/apply.py` と `runnable/apply.py` も当たる）→ `exclude_open.py` → `exclude_scope.py` → `build_all_test_cases.py`。
+- 作り方が決まったら、シードの投入方法（と `open_preconditions.tsv`）を直してから同じ順に流し直すと戻る。
+- 検査 G6 は、基線・追加分からこの除外分を差し引いて照合する。保留（設計書に正解が無い）の除外 `excluded_hold_cases.tsv` とは別の表で、意味を混ぜていない。
+
+### 影響ケースの漏れ（2026-10-16）
+
+`open_preconditions.tsv` の影響ケースは、行を足した時点のケースで書いた固定の一覧である。そのため、あとから足したケースが同じ未確定の前提を使っていても除外に掛からなかった。全数を洗い直し、63件を影響ケースに足して外した（11,777件 → 11,714件・341機能）。
+- 同じシードを使うのに一覧に無かったもの: IT-A05-04-047〜060（スマレジ受信。2026-10-09 の被覆監査で追加。取引情報取得APIの試験環境と Webhook の認証情報の2行）、IT-B02-02-010〜012（バッチの実行環境）、IT-M03-09-058・097（スマレジの試験用受信サーバー）。
+- 連携ケース（`../link/`）が、基線では未確定のシードを「-L-」付きの別名で作り直していたもの: S-B02-02-L-ENV・S-B05-02-L-CLOCK・S-B05-09-L-API/CLOCK/CONFIG・S-B06-01-L-ENV・S-B06-02-L-EXEC・S-B08-03-L-ENV・S-B08-06-L-API-CONTROL・S-B13-01-L-API/EXEC/MAIL。基線の行と同じ文面で、対象をL版にした行を足した（`未確定: …（… の未確定と同じ）`）。B06-01 の別名を使っていたデータパターンのケースも含む。
+- 時計を固定する前提: IT-M04-17-001（業務日を2026/09/29に固定。時計の固定は S-B05-09-CLOCK などと同じく作り方が無い）。
+- この結果、B02-02・B05-02・B05-09・B06-01・B08-03・B13-01 はケースが0件になった（基線のケースは前から外れており、残っていたのは別名のシードを使う連携ケースだけだった）。
+- 同じ日に `../chain_gap/` のレビューで、S-F06-02-L-ENV（IT-F06-02-024・025）も見つかり、同じ形の行を足して外した。基線の行の対象は S-F06-02-API-OK で、名前の役割の語（API と ENV）が違うため道具では拾えなかった。このシードは、開始時にスマレジAPI試験環境のユーザーDBで会員が0件であることを確かめる作り方で、024 は発番されたスマレジIDを控える。外部の試験環境を使うシードは、名前だけでなく中身でも基線の行と見比べる。
+- 候補を出す道具は `scan_open_leaks.py`。ケースを合流したあと、`exclude_open.py` の前に流す。候補を出すだけで判定はしない。残っている候補 159件は、読んだうえで漏れではないと判定したもの。
+  - 共有の定義だけを使い、未確定の項目に触れないもの: S-M05-03-DEFS、S-F06-05-BASIC、IT-A05-04-002（GETを送るだけで、認証も取引の取得も要らない）。
+  - 名前の役割の語が同じだけで、作り方が決まっているもの: ポイントの設定、ユニサーチの接続先、ee の開発用の正常応答、スマレジの試験環境への接続。
+  - S-M03-10-SMAREGI-ENV: ee の商品APIのクライアントは、模擬応答のときも呼び出しを記録する（SmaregiPlatformApiCallRecorder）。シードの書き方は実装と合っている。
+
+## 試験環境で用意できる前提の解消（依頼者決定 2026-10-19）
+
+依頼者決定「バッチの実行、スマレジなど外部の試験環境、メールの受け取りは環境準備できる」（中継・模擬応答、時刻の固定、障害を起こす手段は用意しない）。作り方が未確定で外したケースを止めていた項目（未確定のシード 944・未確定の前提の行 879）を1件ずつ判定し、この3つだけで決まるものは作り方を書いて解消した。止めていた項目がすべて解消したケース 183件が一覧へ戻った（11,713件 → 11,896件・346機能）。
+解消した前提の行 81 は `open_preconditions.tsv` から `resolved_preconditions.tsv`（解消の書き方・区分・根拠・決定つき）へ移した。シードは投入方法を書き直した（外した表 `../excluded_open_seeds.tsv` を直し、`exclude_open.py` が直った文で戻す）。
+同じ日の依頼者決定「おすすめで進めて」で、人が補って実行できるもの（決まった番号の読み替え、必須のチェック、確認モーダル、割引率、在庫の承認）も書き足した。道具・判定・レビューは `../runnable/README.md`。`../datapattern/conflicts/apply_rulings.py` が最後に `../runnable/apply.py` を呼ぶ。
+
+## E2E で作成を保留した入力ファイルを使うケースの除外（依頼者決定 2026-10-16）
+
+依頼者決定「テスト保留のケースがあれば除外」。ケース一覧に実行区分「保留」のケースは無かった（2026-10-01 にすべて外してある）。保留に当たっていたのは、E2E の入力ファイルの棚卸し（`../../../e2e/fixtures/named-file-references.tsv`。M03・M04 だけ棚卸し済み）で作成判断を「保留」「正本矛盾」とした33ファイルで、シードの記述だけでは中身（文字コード、見出し行の値、画像の中身など）が一つに決まらないか、シードの記述が食い違っていた（M03-30 の empty.tsv）。これを使うケース29件を、作り方が未確定の前提として `open_preconditions.tsv` に載せ（対象「入力ファイル <ファイル名>」の33行）、`exclude_open.py` で外した。ケースは 11,679件から 11,650件。ファイルの中身をシードに書いて棚卸しの判断が変わったら、その行を消して流し直すと戻る。M03・M04 以外の機能の入力ファイル（棚卸しで未判定の 1,729件）は見ていない。
+同じ日の依頼者決定「画像は任意の有効な画像でよいとして戻す」で、画像の中身が未指定だった9ファイル（M04-02-050・M04-03-005・M04-05-011・M04-31-150 の4ケース）の行を外し、4ケースを戻した（11,654件）。シード（`../seed_screen/out/` の該当行の投入方法）に「画像ファイルの中身は任意の有効な画像でよい。同じケースで使う複数の画像は、互いに見分けられる別の画像にする」と書いた。E2E の入力ファイル（`e2e/fixtures/`）はまだ作っていない。
+外したケースを戻すときは、流れを2回流す。1回目は `exclude_open.py` が除外表の古い文面のままケースとシードを戻すので、2回目の `seed_screen/apply.py`・`apply_rulings.py` で書き直しが当たる。
+
+## フェーズ2見送り・実装しない機能の除外（依頼者決定 2026-10-16）
+
+依頼者決定「フェーズ2見送り、機能実装しない機能についてはケースから除外」。対象は `../scope_out.tsv`（根拠つき）で、フェーズ2見送り13機能（A06-14・B01-02・B01-03・F02-05・M03-43・M03-44・M04-06・M04-07・M06-13・M08-11・M08-15・M08-16・M08-17）、実装しない4機能（M03-34・M03-36 は 2026-10-06 決定、M04-27・B13-02 は Excel の廃止の記述）と、M03-43 の機能を確かめていた IT-M03-30-038。
+ケース一覧の6件に加え、作り方が未確定で外していた65件、保留で外していた49件も、決まっても戻さないので `../excluded_scope_cases.tsv` へ移した（計120件。元の表と元の除外理由を残す）。外したケースだけが使っていたシード89件は `../excluded_scope_seeds.tsv`。道具は `../exclude_scope.py`（何度流しても同じ。`exclude_open.py` の後に流す）。ケースは 11,685件・349機能から 11,679件・346機能になった（F02-05・M03-44・M06-13 はケースが0件）。
+保留から移した49件は、設計者に聞く必要が無くなった（`../hold_review/questions.tsv` に論点があるものも含む）。機能の一部だけがフェーズ2のもの（ナビゲーションの通知、会員検索の顧客分析タグなど）は機能ごとは外していない。そのフェーズ2の部分を確かめるケースは IT-M03-30-038 のほかに無かった。
+検査 G6 は、基線・追加分からこの表の分も差し引いて照合する。
+
+## 既存ケースと設計書の食い違いの裁定（依頼者決定 2026-10-16）
+
+設計書の中で記述が食い違うときの優先順位（Excel由来＞埋め込みの表示メッセージ節＞埋め込みの現行仕様節、同じ出所では改訂後）を決め、既存ケース52件の報告を裁定した。直したケースの期待結果・手順・出典は `oracle_changes/`・`step_changes/`（種別「裁定訂正」）・`source_changes/` に、承認欄「2026-10-16 依頼者裁定」で宣言してある。規則で決まらず共通部分でも書けない10件は `../excluded_hold_cases.tsv` へ移した（論点ID が QD- の行。決める人＝設計者）。道具は `../datapattern/conflicts/apply_rulings.py`（何度流しても同じ。`seed_screen/apply.py` の後、`exclude_open.py` の前に流す）。説明は `../datapattern/conflicts/README.md`。
+
+## 保留ケースの除外（依頼者決定 2026-10-01）
+
+実行区分が「保留」のケース（1,014件）はテストケースから外した。設計書にも現行ソースにも期待結果（正解）が無く、テストできないため。
+行は削除せず `../excluded_hold_cases.tsv` へ移した（論点ID・決める人つき。元の11列は「元_」付きで保持）。保留ケースだけが使っていたシードは `../excluded_hold_seeds.tsv`。
+設計者の回答（`../hold_review/questions.tsv`）やテスト側の決定で正解が決まったら、そのケースを作り直して戻す。ゲート G6 は、基線のテストIDからこの除外分を差し引いて照合し、保留ケースが残っていれば落とす。
+
+## 実行の前提（依頼者決定 2026-09-30）
+
+- **専用DBで流す。** 結合テストは機能（またはモジュール）ごとに、まっさらな専用DBへシードを投入して流す。検索・一覧・集計で「このN件だけ」を期待するケースは、開始時に同じ条件に当たる他のデータを削除して隔離しており、共有の試験環境では他機能のデータを消しうる
+- **1件しかないデータは順番に実行する。** 基本設定のように1件しかない設定や、期待結果が固定IDを名指ししていて分けられないデータは `共有可` とし、使う各ケースが開始時に値を設定し直す。上から順に実行すれば成立するが、同じデータを使うケースを同時には実行しない。該当ケースは `sequential_only.tsv`
+
+## 機械検査 `gate_precond.py`
+
+| No. | 検査 | 対応する規約 |
+| --- | --- | --- |
+| G1 | 保留以外で事前準備が空・`—` | P5 |
+| G2 | 使用シードのIDが事前準備に現れない | P5 |
+| G3 | 期待結果の「AからB」「Aのまま」の A が事前準備に無い | P6 |
+| G4 | `共有` 列が無い・値が不正／ケース専用シードの参照が1件でない／ケース専用シードIDの末尾がケース番号でない／どのケースも使わないシード／保留以外のケースがケース専用シードを1件も使わない（状態を変えない読み取りだけのケースは `readonly_cases/<機能ID>.tsv` にテストID/理由で宣言） | P1 P2 P3 |
+| G5 | 同じ機能のケース専用シードどうしで自分のレコードID（「ID=20」「ID 20」）が重なる。ケース専用シードの識別子（「〜」の範囲は展開する）が、他のケースの事前準備・手順・期待結果、または他のケース専用シード（全機能）に現れる | P1 P4 |
+| G6 | 改名が識別子どうしでない。期待結果が「基線に改名を当てたもの」と一致せず、承認済みの oracle_changes にも無い。保留ケースが変わった。テストIDの集合・他の固定列が変わった（出典は `source_changes/`、実行区分の誤記は `kind_changes.tsv` に宣言したものを除く） | P7 |
+| G8 | 事前準備が「手順N」「返した値」「発番した」など後の結果を参照している | P11 |
+| G7 | 手順が「基線に改名を当てたもの」と違うのに `step_changes` に宣言が無い／種別が P8 の5種以外 | P8 |
+| G9 | 投入方法が「未確定」「未整備」のシードを使う非保留ケースが `open_preconditions.tsv` に無い。該当件数は参考として出す | P12 |
+
+`baseline/` は書き直し前（HEAD 98709b43）のスナップショット。G6 の基準なので書き換えない。
+
+実行区分の誤記を直すときは、基線を書き換えずに `kind_changes.tsv`（テストID／旧実行区分／新実行区分／理由）へ宣言する。G6 は、基線の値が旧実行区分と一致し、今の値が新実行区分と一致するものだけ認める（2026-10-19、IT-M03-45-024 の「ブラザ+DB確認」→「ブラウザ+DB確認」）。
+
+書き直しの後で足したケースは `added_cases.tsv`（テストID／追加日／由来）に載せる。G6 は「基線から保留除外分を引いた集合」に
+この追加分を足したものと、現在のテストIDの集合を照合する。基線が無い機能（後から新設したもの）は、全ケースが追加分になる。
+2026-10-06 に機能間データ連携のケース142件を足した（`../link/merge_into_cases.py`。旧テストIDとの対応は `../link/merged_map.tsv`）。
+同日、アクセス解析連携のケース（F10-01〜03）を足した（`../ga/merge_into_cases.py`。判定IDとの対応は `../ga/ga_map.tsv`）。
+同日、対応表が「候補」止まりだった14機能のケース398件を足した（`../sheetmap/merge_into_cases.py`。判定IDとの対応は `../sheetmap/sm_map.tsv`）。
+
+機械で見られないもの（P2 の共有可の妥当性、P6 の値と対象の対応、P8 の種別の妥当性、P9、P10）は codex レビューで見る。
+
+## 用語の置き換え（依頼者決定 2026-10-06）
+
+AWS Step Functions は使わない。テストケースでは「バッチ」と書き、非同期処理ダッシュボードの「Messenger ジョブ」という表現も書かない。
+置き換えの規則は `terms.py`（`python3 precond/terms.py` で cases/・step_changes/・open_preconditions.tsv・link/cases に当てる。何度流しても同じ）。
+基線は書き換えていない。ゲートは基線の手順と期待結果に同じ置き換えを当ててから照合する。
+シードID `S-B02-05-STEPFUNCTIONS` は `S-B02-05-BATCH-ENV` に変えた。
+
+「非同期処理ダッシュボード」という画面名も書かない（同日の依頼者決定）。設計書に無い画面で、実装にあるのは管理画面とは切り離した運用ツールである。
+ケースには「非同期処理の待機中・実行中のジョブが0件になるまで待つ」のように状態だけを書く。待機の手順そのものは残す
+（バッチはジョブを積むだけで終わり、実処理はワーカーが後から行うため）。確認の手段は試験環境の用意として扱う。
+
+exec
+/bin/bash -lc "grep -n -E '"'^### 指摘（M03-0(4|5|6|8|9)'"' integration_test/casegen/combination/review/R1_*_findings.md" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M03-0{4,5,6,8}_R1_dispositions.tsv integration_test/casegen/combination/review/M03-09_R1_dispositions.p{1,2}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+指摘	処置	理由	直した所
+IT-M03-04-032	却下	応答の文字コード指定はHTTP応答の属性で、確かめる所(CSVのデータ行)と別の場所の結果。設計書L0115の文字コードは出力設定に従う点は、設定どおりの文字コードでCSVが読めることで確かめている。1ケース1期待結果の決まりに反する	
+IT-M03-04-033	却下	032と同じ	
+IT-M03-04-034	却下	032と同じ	
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+指摘	処置	理由	直した所
+IT-M03-09-121	採用	設計書L0128はエラーとすることを定める。エラー表示とDBの保存値は確かめる所が別で1ケース1期待結果に反する	期待結果をエラー表示に絞り、手順5(DB確認)を外し実行区分をブラウザのみに変更(p1)
+IT-M03-09-122	採用	要求ID REQ-0204-sheet-63-R006・sheet-8-R036に「6桁の連番のコードを自動採番」とあり桁数が設計書で決まる	期待結果に6桁の数字を追加し出典に別添資料を併記(p1)
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+ succeeded in 21ms:
+integration_test/casegen/combination/review/R1_27_findings.md:1:### 指摘（M03-04 / IT-M03-04-032）
+integration_test/casegen/combination/review/R1_27_findings.md:7:### 指摘（M03-04 / IT-M03-04-033）
+integration_test/casegen/combination/review/R1_27_findings.md:13:### 指摘（M03-04 / IT-M03-04-034）
+integration_test/casegen/combination/review/R1_27_findings.md:19:### 指摘（M03-09 / IT-M03-09-121）
+integration_test/casegen/combination/review/R1_27_findings.md:25:### 指摘（M03-09 / IT-M03-09-122）
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/R1_27_findings.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+### 指摘（M03-04 / IT-M03-04-032）
+- 主張: UTF-8設定でCSVを読み、データ行だけを期待している。
+- 実際: 設計書L0115は「区切り文字と文字コードは出力設定に従い、応答にも同じ文字コードを指定する」と定める。応答の指定を確認する手順・期待結果がない。
+- 判定: 要因の結果が欠けている
+- 修正案: UTF-8で読めることに加え、応答の文字コード指定が設定と一致することを確かめる。
+
+### 指摘（M03-04 / IT-M03-04-033）
+- 主張: SJIS-win設定でCSVを読み、データ行だけを期待している。
+- 実際: 設計書L0115は「応答にも同じ文字コードを指定する」と定める。応答の指定を確認する手順・期待結果がない。
+- 判定: 要因の結果が欠けている
+- 修正案: 応答の文字コード指定もSJIS-win設定に対応していることを確かめる。
+
+### 指摘（M03-04 / IT-M03-04-034）
+- 主張: UTF-8設定でCSVを読み、データ行だけを期待している。
+- 実際: 設計書L0115は「応答にも同じ文字コードを指定する」と定める。応答の指定を確認する手順・期待結果がない。
+- 判定: 要因の結果が欠けている
+- 修正案: 応答の文字コード指定がUTF-8設定と一致することを確かめる。
+
+### 指摘（M03-09 / IT-M03-09-121）
+- 主張: 期待結果に「エラーが表示され」と、DB上の連携フラグ・商品コードが「のまま」を併記している。
+- 実際: 設計書L0128は「スマレジ連携フラグをONにした際にスマレジ商品コードがない場合はエラーとする」と定める。ケースは画面のエラー表示とDBの保存値という異なる場所の結果を一件に含めている。
+- 判定: 複数の期待結果
+- 修正案: このケースの期待結果をエラー表示に絞る。DBの非更新は別の確認として扱う。
+
+### 指摘（M03-09 / IT-M03-09-122）
+- 主張: スマレジ商品コードに「自動採番された数値」が保存されることを期待している。
+- 実際: 共通設計書「別添資料__スマレジ連携__商品連携項目」L0006～L0008は、シングルカードのコードを「6桁の連番のコードを自動採番する」と定める。数値であることだけでは桁数を確認できない。
+- 判定: 要因の結果が欠けている
+- 修正案: 自動採番されたコードが6桁であることも期待結果に含める。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-0{4,5,6,8}_processes.tsv integration_test/casegen/combination/factors/M03-0{4,5,6,8}_factors.tsv integration_test/casegen/combination/factors/M03-0{4,5,6,8}_interactions.tsv integration_test/casegen/combination/factors/M03-0{4,5,6,8}_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	選択した商品をグッズ商品CSVに出力する	商品一覧で商品を選びグッズ商品CSV出力ボタンを押す	ダウンロードしたグッズ商品CSV（行・文字コード・BOM）	L0094-L0106,L0115
+処理ID	処理	契機	確かめる所	根拠
+P1	選択した商品をセール用価格変更CSVに出力する	商品一覧で商品を選びセール用価格変更CSV出力ボタンを押す	ダウンロードしたセール用価格変更CSV（行・セールフラグ・文字コード・BOM）	L0044-L0053,L0064
+処理ID	処理	契機	確かめる所	根拠
+P1	商品情報カスタムCSVを出力する	商品マスター画面のカスタムデータCSVダウンロードで設定のボタンを押す	ダウンロードしたCSVのファイル	L0137-L0140,L0143
+処理ID	処理	契機	確かめる所	根拠
+P1	商品規格一覧を表示して稼働中と廃止に振り分ける	商品規格一覧画面を開く	商品規格一覧画面（稼働中の一覧・廃止規格一覧）	L0052-L0054,L0094-L0095
+P2	商品規格を初期化して削除済みにする	商品規格を初期化ボタンを押す	DB（商品規格の削除状態）	L0100-L0101
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	商品のカード詳細	なし｜あり	なし: 出力対象になる／あり: 出力対象から外れ行が出ない	L0098	この機能
+F02	P1	商品の規格	カード状態NMの規格あり｜カード状態NMの規格なし	カード状態NMの規格あり: NMの規格ごとに1行出す／カード状態NMの規格なし: 規格が0件で出力対象から外れるか、NM以外の規格のみで行にする規格が無く、その商品の行は出ない	L0098,L0100	この機能
+F03	P1	CSV出力の文字コード設定	UTF-8｜SJIS-win	UTF-8: UTF-8で書き出し応答にも同じ文字コードを指定する／SJIS-win: SJIS-winで書き出し応答にも同じ文字コードを指定する	L0115,M03-03:L0094	この機能
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	商品の規格	状態NMの規格あり｜状態NMの規格なし	状態NMの規格あり: NMの規格ごとに1行出す／状態NMの規格なし: 規格が0件またはNM以外の規格のみで、その商品の行を出さない（選択した商品すべてがそうならヘッダ行だけ）	L0044,L0047	この機能
+F03	P1	CSV出力の文字コード設定	UTF-8｜SJIS-win	UTF-8: UTF-8で書き出す／SJIS-win: SJIS-winで書き出す	L0064,M03-03:L0094	この機能
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	設定の出力列の有効な列名	有効な列名あり｜有効な列名なし	有効な列名あり: CSVを出力する／有効な列名なし: HTTP 404でCSVを出力しない	L0137,L0147	この機能
+F02	P1	商品一覧で保持している検索条件の該当	該当あり｜0件	該当あり: ヘッダ行に続けてデータ行を出力／0件: データ行を出さずヘッダ行のみ	L0140	この機能
+F03	P1	CSV出力設定の出力文字コード	UTF-8｜UTF-8以外	UTF-8: 先頭にBOMを付ける／UTF-8以外: 先頭にBOMを付けない	L0143	この機能
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	規格の公開状態	廃止でない｜廃止	廃止でない: 稼働中の一覧に出る／廃止: 廃止規格一覧に出る	L0052,L0054,L0094-L0095	この機能
+F02	P1,P2	規格の状態の設定	あり｜なし	あり: 一覧に出る・初期化で削除済みになる／なし: 一覧のどちらにも出ない・初期化で削除済みにならない	L0094-L0095,L0100	この機能
+F03	P1,P2	規格の言語の設定	あり｜なし	あり: 一覧に出る・初期化で削除済みになる／なし: 一覧のどちらにも出ない・初期化で削除済みにならない	L0094-L0095,L0100	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		商品が出力されるのはカード詳細が無く規格が1件以上あるときだけという条件の積で、組合せごとの結果は行が出る・出ないの2つだけ
+P1	F01+F03	関係しない		出力対象かどうかはカード詳細で決まり、文字コードは出力する内容の符号化だけを決める
+P1	F02+F03	関係しない		行になる規格はカード状態で決まり、文字コードは出力する内容の符号化だけを決める
+処理ID	要因	判定	根拠	理由
+P1	F01+F03	関係しない		行になる規格は規格の状態で決まり、文字コードは出力する内容の符号化だけを決める
+処理ID	要因	判定	根拠	理由
+P1	F02+F03	関係しない		先頭BOMは文字コードだけで決まり、データ行の有無で変わらない
+P1	F01+F02	関係しない		有効な列名があるときだけCSVを出力し、データ行の有無は検索条件の該当だけで決まる
+P1	F01+F03	関係しない		有効な列名があるときだけCSVを出力し、先頭BOMは文字コードだけで決まる
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		規格を一覧に出す条件はすべて満たすことで、出る・出ないの2通りだけ。条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F01+F03	関係しない		同上
+P1	F02+F03	関係しない		同上（状態と言語のどちらが欠けても一覧に出ない）
+P2	F02+F03	関係しない		状態と言語がともに設定された規格だけが削除済みになる。どちらかが欠ければ削除済みにならず、外れ方は1つずつ確かめれば足りる
+処理ID	組	種別	根拠	理由
+処理ID	組	種別	根拠	理由
+処理ID	組	種別	根拠	理由
+P1	F01=有効な列名なし	打ち切り	L0137,L0147	有効な列名が1つも無いときはHTTP 404とし、CSVを出力しない
+処理ID	組	種別	根拠	理由
+P1	F02=なし	打ち切り	L0094-L0095	規格の状態の設定が無いと稼働中・廃止のどちらの一覧にも出ず、ほかの要因の値は結果に効かない
+P1	F03=なし	打ち切り	L0094-L0095	規格の言語の設定が無いと稼働中・廃止のどちらの一覧にも出ず、ほかの要因の値は結果に効かない
+P2	F02=なし	打ち切り	L0100	規格の状態の設定が無いと初期化で削除済みにならず、ほかの要因の値は結果に効かない
+P2	F03=なし	打ち切り	L0100	規格の言語の設定が無いと初期化で削除済みにならず、ほかの要因の値は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-0{4,5,6,8}_cb_test_cases.tsv integration_test/casegen/combination/cases/M03-0{4,5,6,8}_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M03-0{4,5,6,8}.tsv integration_test/casegen/combination/cases/M03-0{4,5,6,8}_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M03-04-032	IT-0366			ITA-11	P1	ブラウザのみ	S-M03-04-ADM,S-M03-04-MASTER,S-M03-04-CONFIG,S-M03-04-CBCARD-032	① 管理画面に本店所属で商品管理を操作できるM03-04試験管理者でログインしている（S-M03-04-ADM）／② 本店・状態NM・SPが有効である（S-M03-04-MASTER）／③ ケース開始時にCSV出力設定を出力文字コード=UTF-8、出力用区切り文字=カンマに設定する（S-M03-04-CONFIG）／④ 商品ID 〔商品ID-M0304-032A〕は商品名M0304-CB032-A、公開、論理削除なし、カード詳細ID 〔カード詳細ID-M0304-032A〕を持つ、状態NMの規格ID 〔規格ID-M0304-032A〕を持つ。商品ID 〔商品ID-M0304-032B〕は商品名M0304-CB032-B、公開、論理削除なし、カード詳細なし、状態NMの規格ID 〔規格ID-M0304-032B〕を持つ。商品名に「M0304-CB032」を含む商品はこの2件だけである。呼び名で示す商品ID・カード詳細ID・規格IDは登録時に振られた番号を控えてある（S-M03-04-CBCARD-032）	1. 商品名=M0304-CB032の検索条件を保持した商品一覧画面の1ページ目を開き、検索結果が商品A・商品Bの2件だけであることを確認する／2. 商品ID 〔商品ID-M0304-032A〕と商品ID 〔商品ID-M0304-032B〕の両方を選択する／3. グッズ商品CSV出力ボタンを押す／4. ダウンロードしたCSVをUTF-8で読み取り、データ行を確認する	データ行が商品ID 〔商品ID-M0304-032B〕の1行だけで、商品ID 〔商品ID-M0304-032A〕の行を含まないこと	0204 グッズ商品CSV出力 / 現行仕様 出力しない商品・行の単位	CB-M03-04-001
+IT-M03-04-033	IT-0366			ITA-11	P1	ブラウザのみ	S-M03-04-ADM,S-M03-04-MASTER,S-M03-04-CONFIG,S-M03-04-CBCARDNONE-033	① 管理画面に本店所属で商品管理を操作できるM03-04試験管理者でログインしている（S-M03-04-ADM）／② 本店・状態NM・SPが有効である（S-M03-04-MASTER）／③ ケース開始時にCSV出力設定を出力文字コード=SJIS-win、出力用区切り文字=カンマに設定する（S-M03-04-CONFIG）／④ 商品ID 〔商品ID-M0304-033A〕は商品名M0304-CB033-A、公開、論理削除なし、カード詳細ID 〔カード詳細ID-M0304-033A〕を持つ、状態SPの規格ID 〔規格ID-M0304-033AS〕だけを持ち、状態NMの規格は0件。商品ID 〔商品ID-M0304-033B〕は商品名M0304-CB033-B、公開、論理削除なし、カード詳細なし、状態NMの規格ID 〔規格ID-M0304-033B〕を持つ。商品名に「M0304-CB033」を含む商品はこの2件だけである。呼び名で示す商品ID・カード詳細ID・規格IDは登録時に振られた番号を控えてある（S-M03-04-CBCARDNONE-033）	1. 商品名=M0304-CB033の検索条件を保持した商品一覧画面の1ページ目を開き、検索結果が商品A・商品Bの2件だけであることを確認する／2. 商品ID 〔商品ID-M0304-033A〕と商品ID 〔商品ID-M0304-033B〕の両方を選択する／3. グッズ商品CSV出力ボタンを押す／4. ダウンロードしたCSVをSJIS-winで読み取り、データ行を確認する	データ行が商品ID 〔商品ID-M0304-033B〕の1行だけで、商品ID 〔商品ID-M0304-033A〕の行を含まないこと	0204 グッズ商品CSV出力 / 現行仕様 出力しない商品・行の単位	CB-M03-04-002
+IT-M03-04-034	IT-0366			ITA-11	P1	ブラウザのみ	S-M03-04-ADM,S-M03-04-MASTER,S-M03-04-CONFIG,S-M03-04-CBNONNM-034	① 管理画面に本店所属で商品管理を操作できるM03-04試験管理者でログインしている（S-M03-04-ADM）／② 本店・状態NM・SPが有効である（S-M03-04-MASTER）／③ ケース開始時にCSV出力設定を出力文字コード=UTF-8、出力用区切り文字=カンマに設定する（S-M03-04-CONFIG）／④ 商品ID 〔商品ID-M0304-034A〕は商品名M0304-CB034-A、公開、論理削除なし、カード詳細なし、状態SPの規格ID 〔規格ID-M0304-034AS〕だけを持ち、状態NMの規格は0件。商品ID 〔商品ID-M0304-034B〕は商品名M0304-CB034-B、公開、論理削除なし、カード詳細なし、状態NMの規格ID 〔規格ID-M0304-034B〕を持つ。商品名に「M0304-CB034」を含む商品はこの2件だけである。呼び名で示す商品ID・カード詳細ID・規格IDは登録時に振られた番号を控えてある（S-M03-04-CBNONNM-034）	1. 商品名=M0304-CB034の検索条件を保持した商品一覧画面の1ページ目を開き、検索結果が商品A・商品Bの2件だけであることを確認する／2. 商品ID 〔商品ID-M0304-034A〕と商品ID 〔商品ID-M0304-034B〕の両方を選択する／3. グッズ商品CSV出力ボタンを押す／4. ダウンロードしたCSVをUTF-8で読み取り、データ行を確認する	データ行が商品ID 〔商品ID-M0304-034B〕の1行だけで、商品ID 〔商品ID-M0304-034A〕の行を含まないこと	0204 グッズ商品CSV出力 / 現行仕様 出力しない商品・行の単位	CB-M03-04-003
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M03-05-017	IT-0366			ITA-11	P2	ブラウザのみ	S-M03-05-ADM,S-M03-05-MASTER,S-M03-05-CONFIG,S-M03-05-CBNONNM-017	① 管理画面に商品管理を操作できるM03-05試験管理者でログインしている（S-M03-05-ADM）／② 本店・言語ID 1・状態NM・SP・商品公開ステータスが有効である（S-M03-05-MASTER）／③ ケース開始時にCSV出力設定を出力エンコーディング=UTF-8、出力用区切り文字=カンマに設定する（S-M03-05-CONFIG）／④ 商品ID 〔商品ID-M0305-017〕は商品名M0305-CB017-A、公開、論理削除なしで、規格ID 〔規格ID-M0305-017A〕と〔規格ID-M0305-017B〕の2件がいずれも状態SPであり、状態NMの規格を1件も持たない。商品名M0305-CB017の検索条件を保持し、検索結果がこの1商品であることを確認する（商品ID・規格IDは登録時に振られた番号を控えてある）（S-M03-05-CBNONNM-017）	1. 商品名=M0305-CB017の検索条件を保持した商品一覧画面の1ページ目を開く／2. 商品ID 〔商品ID-M0305-017〕を選択する／3. セール用価格変更CSV出力ボタンを押す／4. ダウンロードしたCSVをUTF-8で読み取り、内容を確認する	CSVが9列のヘッダ行だけを持ち、商品ID 〔商品ID-M0305-017〕のデータ行を含まないこと	0204 セール用価格変更CSV出力 / 業務ロジック 出力する行と値	CB-M03-05-001
+IT-M03-05-018	IT-0366			ITA-11	P2	ブラウザのみ	S-M03-05-ADM,S-M03-05-MASTER,S-M03-05-CONFIG,S-M03-05-CBNONNMSJIS-018	① 管理画面に商品管理を操作できるM03-05試験管理者でログインしている（S-M03-05-ADM）／② 本店・言語ID 1・状態NM・SP・商品公開ステータスが有効である（S-M03-05-MASTER）／③ ケース開始時にCSV出力設定を出力エンコーディング=SJIS-win、出力用区切り文字=カンマに設定する（S-M03-05-CONFIG）／④ 商品ID 〔商品ID-M0305-018〕は商品名M0305-CB018-A、公開、論理削除なしで、規格ID 〔規格ID-M0305-018A〕と〔規格ID-M0305-018B〕の2件がいずれも状態SPであり、状態NMの規格を1件も持たない。商品名M0305-CB018の検索条件を保持し、検索結果がこの1商品であることを確認する（商品ID・規格IDは登録時に振られた番号を控えてある）（S-M03-05-CBNONNMSJIS-018）	1. 商品名=M0305-CB018の検索条件を保持した商品一覧画面の1ページ目を開く／2. 商品ID 〔商品ID-M0305-018〕を選択する／3. セール用価格変更CSV出力ボタンを押す／4. ダウンロードしたCSVをSJIS-winで読み取り、内容を確認する	CSVが9列のヘッダ行だけを持ち、商品ID 〔商品ID-M0305-018〕のデータ行を含まないこと	0204 セール用価格変更CSV出力 / 業務ロジック 出力する行と値	CB-M03-05-002
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M03-06-022	IT-0366	REQ-0204-sheet-7-R101		ITA-11	P1	ブラウザのみ	S-M03-06-ADM,S-M03-06-MASTER,S-M03-06-SEARCH,S-M03-06-CUSTOM,S-M03-06-CBCFG-022,S-M03-06-CBBASE-022	① 管理画面に商品管理を操作できるM03-06試験管理者でログインしている（S-M03-06-ADM）／② CSV種別「商品」とM03-06追加項目設定が参照する5件のCSV項目、公開状態「公開」および状態「NM」が利用可能である（S-M03-06-MASTER）／③ ケース開始時に商品検索条件をクリアし、商品名(日/英)=未入力、ID=未入力、公開状態=公開、状態=NM、高額商品を除外する=ON、その他の検索条件=未入力にする（S-M03-06-SEARCH）／④ ケース開始時にCSV出力設定を文字コード=SJIS-win、区切り文字=カンマに設定する（S-M03-06-CBCFG-022）／⑤ 設定ID 〔設定ID-M0306-共有〕のM03-06追加項目設定が削除されておらず、商品規格ID、商品コード、基準価格、原価単価、当日販売数の5件の出力列（有効な列名あり）が設定されている（登録時に振られた設定IDを控えてある）（S-M03-06-CUSTOM）／⑥ 商品ID 〔商品ID-M0306-022〕は商品コード=M0306-CB022-A・基準価格=1001・原価単価の集計結果=333・当日販売数の集計結果=7で、公開・状態NM・高額商品ではなく、削除されていない規格ID 〔規格ID-M0306-022〕を持つ（登録時に振られた商品ID・規格IDを控えてある）。商品一覧で保持する検索条件に該当する規格はこの1件だけである（S-M03-06-CBBASE-022）	1. 商品マスター(検索入力)画面を開く／2. IDに〔商品ID-M0306-022〕を入力して「検索する >」を押す（検索結果に1件表示される）／3. カスタムデータCSVダウンロードの「M03-06追加項目設定」を押す／4. ダウンロードしたCSVをバイナリで開き、先頭3バイトを確認する／5. ダウンロードしたCSVのヘッダ行に続くデータ行を確認する	ファイル先頭にBOMが付かず、ヘッダ行に続くデータ行が「〔規格ID-M0306-022〕／M0306-CB022-A／1001／333／7」の1行だけであること	0204 商品情報カスタムCSV出力 / 業務ロジック 出力の形式、出力対象のデータ	CB-M03-06-001
+IT-M03-06-023	IT-0366	REQ-0204-sheet-7-R101		ITA-11	P2	ブラウザのみ	S-M03-06-ADM,S-M03-06-MASTER,S-M03-06-SEARCH,S-M03-06-CUSTOM,S-M03-06-CBCFG-023,S-M03-06-CBZERO-023	① 管理画面に商品管理を操作できるM03-06試験管理者でログインしている（S-M03-06-ADM）／② CSV種別「商品」とM03-06追加項目設定が参照する5件のCSV項目、公開状態「公開」および状態「NM」が利用可能である（S-M03-06-MASTER）／③ ケース開始時に商品検索条件をクリアし、商品名(日/英)=未入力、ID=未入力、公開状態=公開、状態=NM、高額商品を除外する=ON、その他の検索条件=未入力にする（S-M03-06-SEARCH）／④ ケース開始時にCSV出力設定を文字コード=SJIS-win、区切り文字=カンマに設定する（S-M03-06-CBCFG-023）／⑤ 設定ID 〔設定ID-M0306-共有〕のM03-06追加項目設定が削除されておらず、商品規格ID、商品コード、基準価格、原価単価、当日販売数の5件の出力列（有効な列名あり）が設定されている（登録時に振られた設定IDを控えてある）（S-M03-06-CUSTOM）／⑥ 商品名(日/英)に「M0306-CB023-NONE」を含む商品が存在せず、検索結果が0件になる（S-M03-06-CBZERO-023）	1. 商品マスター(検索入力)画面を開く／2. 商品名(日/英)に「M0306-CB023-NONE」を入力して「検索する >」を押す（検索結果が0件になる）／3. カスタムデータCSVダウンロードの「M03-06追加項目設定」を押す／4. ダウンロードしたCSVをバイナリで開き、先頭3バイトを確認する／5. ダウンロードしたCSVの行を確認する	ファイル先頭にBOMが付かず、CSVがヘッダ行だけを持ち、データ行を含まないこと	0204 商品情報カスタムCSV出力 / 業務ロジック 出力の形式、出力対象のデータ	CB-M03-06-002
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M03-08-035	IT-0366	REQ-0204-sheet-21-R041,REQ-0204-sheet-21-R053		ITA-11	P1	ブラウザのみ	S-M03-08-ADM,S-M03-08-MASTER,S-M03-08-CBLIST-035	① 管理画面に、稼働中・ロックなしで商品管理権限を持つm0308_adminとしてログインしている（S-M03-08-ADM）／② 日本語・英語、NM・SP・MP・HP、公開・非公開・廃止を使用できる（S-M03-08-MASTER）／③ 商品ID 〔商品ID-M0308-035〕に、規格ID 〔規格ID-M0308-035A〕（公開・日本語・NM・商品コードM0308-CB035-A）、規格ID 〔規格ID-M0308-035B〕（公開・日本語・状態未設定・商品コードM0308-CB035-B）、規格ID 〔規格ID-M0308-035C〕（廃止・日本語・状態未設定・商品コードM0308-CB035-C）の3件だけが登録され、全規格が削除済みではない。商品IDと規格IDは登録時に振られた番号を控えてある（S-M03-08-CBLIST-035）	1. 商品ID 〔商品ID-M0308-035〕の商品規格一覧画面を開く／2. 稼働中の規格一覧の商品コードを確認する／3. 「▼」を押す／4. 廃止規格一覧の商品コードを確認する	稼働中の規格一覧にはM0308-CB035-Aだけが表示され、M0308-CB035-Bは表示されず、廃止規格一覧には行が表示されないこと	0204 商品規格一覧 / 機能仕様 処理概要 一覧表示について、現行仕様 業務ロジック 一覧の対象	CB-M03-08-001
+IT-M03-08-036	IT-0366	REQ-0204-sheet-21-R041,REQ-0204-sheet-21-R053		ITA-11	P1	ブラウザのみ	S-M03-08-ADM,S-M03-08-MASTER,S-M03-08-CBLIST-036	① 管理画面に、稼働中・ロックなしで商品管理権限を持つm0308_adminとしてログインしている（S-M03-08-ADM）／② 日本語・英語、NM・SP・MP・HP、公開・非公開・廃止を使用できる（S-M03-08-MASTER）／③ 商品ID 〔商品ID-M0308-036〕に、規格ID 〔規格ID-M0308-036A〕（公開・日本語・NM・商品コードM0308-CB036-A）、規格ID 〔規格ID-M0308-036B〕（公開・言語未設定・NM・商品コードM0308-CB036-B）、規格ID 〔規格ID-M0308-036C〕（廃止・言語未設定・HP・商品コードM0308-CB036-C）の3件だけが登録され、全規格が削除済みではない。商品IDと規格IDは登録時に振られた番号を控えてある（S-M03-08-CBLIST-036）	1. 商品ID 〔商品ID-M0308-036〕の商品規格一覧画面を開く／2. 稼働中の規格一覧の商品コードを確認する／3. 「▼」を押す／4. 廃止規格一覧の商品コードを確認する	稼働中の規格一覧にはM0308-CB036-Aだけが表示され、M0308-CB036-Bは表示されず、廃止規格一覧には行が表示されないこと	0204 商品規格一覧 / 機能仕様 処理概要 一覧表示について、現行仕様 業務ロジック 一覧の対象	CB-M03-08-002
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M03-04-CBCARD-032	商品・カード詳細・規格	カード詳細ありでNM規格を持つ商品と対照商品(032)	商品A: 商品IDは登録時に画面が振る（控える。以下〔商品ID-M0304-032A〕）／商品名(日)=M0304-CB032-A／カード詳細あり（カード詳細IDは登録時に画面が振る。控える。以下〔カード詳細ID-M0304-032A〕）／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0304-032A〕）。状態NM・表示可能／商品B: 商品IDは登録時に画面が振る（控える。以下〔商品ID-M0304-032B〕）／商品名(日)=M0304-CB032-B／カード詳細なし／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0304-032B〕）。状態NM・表示可能	IT-M03-04-032専用。カード詳細ありの商品は状態NMの規格があっても行にならないことを、行が出る対照商品と同時に選んで確認する	【商品A】カード新規登録画面でカード名(英)に「M0304CB032CARDA」、点数で見たマナ・コストに0を入れ、カード詳細の行を1件足してレアリティ・レイアウト・プロモ種別・Foil・フレームをそれぞれ選択肢から選び、登録ボタンを押す。グッズ商品CSV登録で「雛形ファイルダウンロード」から得た見出し行に次の1行を足したCSVを作り、「CSVファイル選択」でそのCSVを選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。行の内容: 商品IDは空（新規登録）、商品コード=M0304-CB032-A-C、商品名(日)=M0304-CB032-A、商品公開ステータス=公開を表す値（グッズ商品CSV登録画面の雛形ファイル項目説明に従う）。残りの必須列（言語(ID)・支店の商品公開ステータス・商品名(英)・サイズ・重量・商品カテゴリ(ID)・購入グループ名称・基準価格・販売価格・買取価格）には取込が通る任意の値を入れ、スマレジ連携フラグは0にする。この取込で、論理削除なしの商品と、状態NM・表示可能の規格が1件作られる。商品一覧で商品名に「M0304-CB032-A」を入れて「検索する」を押し、商品名『M0304-CB032-A』の行に表示された商品IDを控える（〔商品ID-M0304-032A〕）。その行の商品名リンクから商品登録/編集画面を開き、「カード指定 >」ボタンを押し、カード検索ポップアップのカード名(日/英)に「M0304CB032CARDA」を入れて検索ボタンを押す。検索結果のID列に表示されたカード詳細IDを控え（〔カード詳細ID-M0304-032A〕）、その行の決定ボタンを押す。続けて商品名(日)と商品名(英)に「M0304-CB032-A」を入れ（カード指定で自動で入った値は書き換える）、必須の割引率には選択肢の先頭を選んで「商品を登録」ボタンを押す。その行の商品名リンクから商品登録/編集画面を開いて「規格設定」を押し、商品規格一覧で1件だけ表示される規格の行の「編集」を押して、商品規格登録/編集画面に表示された商品規格IDを控える（〔規格ID-M0304-032A〕）。【商品B】グッズ商品CSV登録で「雛形ファイルダウンロード」から得た見出し行に次の1行を足したCSVを作り、「CSVファイル選択」でそのCSVを選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。行の内容: 商品IDは空（新規登録）、商品コード=M0304-CB032-B-C、商品名(日)=M0304-CB032-B、商品公開ステータス=公開を表す値（グッズ商品CSV登録画面の雛形ファイル項目説明に従う）。残りの必須列（言語(ID)・支店の商品公開ステータス・商品名(英)・サイズ・重量・商品カテゴリ(ID)・購入グループ名称・基準価格・販売価格・買取価格）には取込が通る任意の値を入れ、スマレジ連携フラグは0にする。この取込で、論理削除なしの商品と、状態NM・表示可能の規格が1件作られる。商品一覧で商品名に「M0304-CB032-B」を入れて「検索する」を押し、商品名『M0304-CB032-B』の行に表示された商品IDを控える（〔商品ID-M0304-032B〕）。その行の商品名リンクから商品登録/編集画面を開いて「規格設定」を押し、商品規格一覧で1件だけ表示される規格の行の「編集」を押して、商品規格登録/編集画面に表示された商品規格IDを控える（〔規格ID-M0304-032B〕）。	ケース専用
+S-M03-04-CBCARDNONE-033	商品・カード詳細・規格	カード詳細ありでNM規格のない商品と対照商品(033)	商品A: 商品IDは登録時に画面が振る（控える。以下〔商品ID-M0304-033A〕）／商品名(日)=M0304-CB033-A／カード詳細あり（カード詳細IDは登録時に画面が振る。控える。以下〔カード詳細ID-M0304-033A〕）／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0304-033AS〕）。状態SP・表示可能で、状態NMの規格は0件／商品B: 商品IDは登録時に画面が振る（控える。以下〔商品ID-M0304-033B〕）／商品名(日)=M0304-CB033-B／カード詳細なし／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0304-033B〕）。状態NM・表示可能	IT-M03-04-033専用。カード詳細ありでNM規格のない商品は行にならないことを、行が出る対照商品と同時に選んで確認する	【商品A】カード新規登録画面でカード名(英)に「M0304CB033CARDA」、点数で見たマナ・コストに0を入れ、カード詳細の行を1件足してレアリティ・レイアウト・プロモ種別・Foil・フレームをそれぞれ選択肢から選び、登録ボタンを押す。グッズ商品CSV登録で「雛形ファイルダウンロード」から得た見出し行に次の1行を足したCSVを作り、「CSVファイル選択」でそのCSVを選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。行の内容: 商品IDは空（新規登録）、商品コード=M0304-CB033-A-C、商品名(日)=M0304-CB033-A、商品公開ステータス=公開を表す値（グッズ商品CSV登録画面の雛形ファイル項目説明に従う）。残りの必須列（言語(ID)・支店の商品公開ステータス・商品名(英)・サイズ・重量・商品カテゴリ(ID)・購入グループ名称・基準価格・販売価格・買取価格）には取込が通る任意の値を入れ、スマレジ連携フラグは0にする。この取込で、論理削除なしの商品と、状態NM・表示可能の規格が1件作られる。商品一覧で商品名に「M0304-CB033-A」を入れて「検索する」を押し、商品名『M0304-CB033-A』の行に表示された商品IDを控える（〔商品ID-M0304-033A〕）。その行の商品名リンクから商品登録/編集画面を開き、「カード指定 >」ボタンを押し、カード検索ポップアップのカード名(日/英)に「M0304CB033CARDA」を入れて検索ボタンを押す。検索結果のID列に表示されたカード詳細IDを控え（〔カード詳細ID-M0304-033A〕）、その行の決定ボタンを押す。続けて商品名(日)と商品名(英)に「M0304-CB033-A」を入れ（カード指定で自動で入った値は書き換える）、必須の割引率には選択肢の先頭を選んで「商品を登録」ボタンを押す。その行の商品名リンクから商品登録/編集画面を開いて「規格設定」を押し、商品規格一覧で1件だけ表示される規格の行の「編集」を押して、商品規格登録/編集画面に表示された商品規格IDを控える（〔規格ID-M0304-033A〕）。商品規格一覧で「新規作成」を押し、商品規格登録画面で状態にスライトリープレイドを選び、商品コードに「M0304-CB033-A-C-S」、残りの必須項目（言語・販売価格・基準価格・買取価格・部門）に任意の値を入れて「商品規格を登録」を押し、登録後の画面に表示された商品規格IDを控える（〔規格ID-M0304-033AS〕）。状態NMの規格0件は画面で指定できないためDBへ直接設定する（取込で作られた状態NMの規格と、その規格の在庫を消す）。【商品B】グッズ商品CSV登録で「雛形ファイルダウンロード」から得た見出し行に次の1行を足したCSVを作り、「CSVファイル選択」でそのCSVを選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。行の内容: 商品IDは空（新規登録）、商品コード=M0304-CB033-B-C、商品名(日)=M0304-CB033-B、商品公開ステータス=公開を表す値（グッズ商品CSV登録画面の雛形ファイル項目説明に従う）。残りの必須列（言語(ID)・支店の商品公開ステータス・商品名(英)・サイズ・重量・商品カテゴリ(ID)・購入グループ名称・基準価格・販売価格・買取価格）には取込が通る任意の値を入れ、スマレジ連携フラグは0にする。この取込で、論理削除なしの商品と、状態NM・表示可能の規格が1件作られる。商品一覧で商品名に「M0304-CB033-B」を入れて「検索する」を押し、商品名『M0304-CB033-B』の行に表示された商品IDを控える（〔商品ID-M0304-033B〕）。その行の商品名リンクから商品登録/編集画面を開いて「規格設定」を押し、商品規格一覧で1件だけ表示される規格の行の「編集」を押して、商品規格登録/編集画面に表示された商品規格IDを控える（〔規格ID-M0304-033B〕）。	ケース専用
+S-M03-04-CBNONNM-034	商品・カード詳細・規格	カード詳細なしでNM規格のない商品と対照商品(034)	商品A: 商品IDは登録時に画面が振る（控える。以下〔商品ID-M0304-034A〕）／商品名(日)=M0304-CB034-A／カード詳細なし／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0304-034AS〕）。状態SP・表示可能で、状態NMの規格は0件／商品B: 商品IDは登録時に画面が振る（控える。以下〔商品ID-M0304-034B〕）／商品名(日)=M0304-CB034-B／カード詳細なし／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0304-034B〕）。状態NM・表示可能	IT-M03-04-034専用。カード詳細なしでもNM規格が無い商品は行にならないことを、行が出る対照商品と同時に選んで確認する	【商品A】グッズ商品CSV登録で「雛形ファイルダウンロード」から得た見出し行に次の1行を足したCSVを作り、「CSVファイル選択」でそのCSVを選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。行の内容: 商品IDは空（新規登録）、商品コード=M0304-CB034-A-C、商品名(日)=M0304-CB034-A、商品公開ステータス=公開を表す値（グッズ商品CSV登録画面の雛形ファイル項目説明に従う）。残りの必須列（言語(ID)・支店の商品公開ステータス・商品名(英)・サイズ・重量・商品カテゴリ(ID)・購入グループ名称・基準価格・販売価格・買取価格）には取込が通る任意の値を入れ、スマレジ連携フラグは0にする。この取込で、論理削除なしの商品と、状態NM・表示可能の規格が1件作られる。商品一覧で商品名に「M0304-CB034-A」を入れて「検索する」を押し、商品名『M0304-CB034-A』の行に表示された商品IDを控える（〔商品ID-M0304-034A〕）。その行の商品名リンクから商品登録/編集画面を開いて「規格設定」を押し、商品規格一覧で1件だけ表示される規格の行の「編集」を押して、商品規格登録/編集画面に表示された商品規格IDを控える（〔規格ID-M0304-034A〕）。商品規格一覧で「新規作成」を押し、商品規格登録画面で状態にスライトリープレイドを選び、商品コードに「M0304-CB034-A-C-S」、残りの必須項目（言語・販売価格・基準価格・買取価格・部門）に任意の値を入れて「商品規格を登録」を押し、登録後の画面に表示された商品規格IDを控える（〔規格ID-M0304-034AS〕）。状態NMの規格0件は画面で指定できないためDBへ直接設定する（取込で作られた状態NMの規格と、その規格の在庫を消す）。【商品B】グッズ商品CSV登録で「雛形ファイルダウンロード」から得た見出し行に次の1行を足したCSVを作り、「CSVファイル選択」でそのCSVを選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。行の内容: 商品IDは空（新規登録）、商品コード=M0304-CB034-B-C、商品名(日)=M0304-CB034-B、商品公開ステータス=公開を表す値（グッズ商品CSV登録画面の雛形ファイル項目説明に従う）。残りの必須列（言語(ID)・支店の商品公開ステータス・商品名(英)・サイズ・重量・商品カテゴリ(ID)・購入グループ名称・基準価格・販売価格・買取価格）には取込が通る任意の値を入れ、スマレジ連携フラグは0にする。この取込で、論理削除なしの商品と、状態NM・表示可能の規格が1件作られる。商品一覧で商品名に「M0304-CB034-B」を入れて「検索する」を押し、商品名『M0304-CB034-B』の行に表示された商品IDを控える（〔商品ID-M0304-034B〕）。その行の商品名リンクから商品登録/編集画面を開いて「規格設定」を押し、商品規格一覧で1件だけ表示される規格の行の「編集」を押して、商品規格登録/編集画面に表示された商品規格IDを控える（〔規格ID-M0304-034B〕）。	ケース専用
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M03-05-CBNONNM-017	商品・規格	状態NM以外の規格だけを持つ商品(017)	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0305-017〕）／商品名=M0305-CB017-A／公開／論理削除なし／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0305-017A〕・〔規格ID-M0305-017B〕）で、いずれも状態SP／状態NMの規格は0件	IT-M03-05-017専用。状態NMの規格が1件も無い商品をUTF-8の設定で出力する	グッズ商品CSV登録画面で雛形ファイルをダウンロードし、1行を書く。商品名(日)=M0305-CB017-A・商品公開ステータス=2（公開）・言語(ID)・基準価格・販売価格・買取価格には取り込める値を入れる（販売価格は買取価格以上）。ほかの必須列（商品コード・商品名(英)・サイズ・重量・商品カテゴリ(ID)・購入グループ名称・支店の商品公開ステータス）には取り込める値を入れ、商品コードは「M0305-CB017-A」にし、商品IDの列は空にする。CSVファイル選択でそのファイルを選び、CSVファイルのアップロードボタンを押す（状態NMの規格が1件作られる）。商品一覧で商品名にM0305-CB017-Aを入れて検索し、その商品の商品登録編集画面に表示された商品IDを控える（〔商品ID-M0305-017〕）。規格設定ボタンから商品規格一覧を開き、その規格の商品規格登録編集画面に表示された商品規格IDを控える（〔規格ID-M0305-017A〕）。〔商品ID-M0305-017〕の商品規格一覧の新規作成ボタンから商品規格登録画面を開き、状態にスライトリープレイド、言語に選択肢のいずれか、商品コードに「M0305-CB017-A-S」、基準価格・販売価格・買取価格に取り込める値（販売価格は買取価格以上）、部門に選択肢のいずれかを入れて商品規格を登録ボタンを押す。登録後の商品規格登録編集画面に表示された商品規格IDを控える（〔規格ID-M0305-017B〕）。〔規格ID-M0305-017A〕の状態SPは画面で指定できないためDBへ直接設定する（状態NMの規格が0件になる）。	ケース専用
+S-M03-05-CBNONNMSJIS-018	商品・規格	状態NM以外の規格だけを持つ商品(018)	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0305-018〕）／商品名=M0305-CB018-A／公開／論理削除なし／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0305-018A〕・〔規格ID-M0305-018B〕）で、いずれも状態SP／状態NMの規格は0件	IT-M03-05-018専用。状態NMの規格が1件も無い商品をSJIS-winの設定で出力する	グッズ商品CSV登録画面で雛形ファイルをダウンロードし、1行を書く。商品名(日)=M0305-CB018-A・商品公開ステータス=2（公開）・言語(ID)・基準価格・販売価格・買取価格には取り込める値を入れる（販売価格は買取価格以上）。ほかの必須列（商品コード・商品名(英)・サイズ・重量・商品カテゴリ(ID)・購入グループ名称・支店の商品公開ステータス）には取り込める値を入れ、商品コードは「M0305-CB018-A」にし、商品IDの列は空にする。CSVファイル選択でそのファイルを選び、CSVファイルのアップロードボタンを押す（状態NMの規格が1件作られる）。商品一覧で商品名にM0305-CB018-Aを入れて検索し、その商品の商品登録編集画面に表示された商品IDを控える（〔商品ID-M0305-018〕）。規格設定ボタンから商品規格一覧を開き、その規格の商品規格登録編集画面に表示された商品規格IDを控える（〔規格ID-M0305-018A〕）。〔商品ID-M0305-018〕の商品規格一覧の新規作成ボタンから商品規格登録画面を開き、状態にスライトリープレイド、言語に選択肢のいずれか、商品コードに「M0305-CB018-A-S」、基準価格・販売価格・買取価格に取り込める値（販売価格は買取価格以上）、部門に選択肢のいずれかを入れて商品規格を登録ボタンを押す。登録後の商品規格登録編集画面に表示された商品規格IDを控える（〔規格ID-M0305-018B〕）。〔規格ID-M0305-018A〕の状態SPは画面で指定できないためDBへ直接設定する（状態NMの規格が0件になる）。	ケース専用
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M03-06-CBCFG-022	環境設定	CSV出力設定(SJIS-win)(022)	出力文字コード=SJIS-win（UTF-8以外）／出力用区切り文字=カンマ	IT-M03-06-022専用。文字コードがUTF-8以外のときの出力	試験環境のCSV出力設定変更手順で出力文字コードをSJIS-win、出力用区切り文字をカンマに設定し、設定反映後にアプリケーションを再読み込みする	ケース専用
+S-M03-06-CBBASE-022	商品・規格・集計元	出力確認商品(022)	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0306-022〕）／商品名(日)=M0306-CB022-商品／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0306-022〕）／商品コード=M0306-CB022-A／基準価格=1001／原価単価の集計結果=333／ケース実行日（Asia/Tokyo）の当日販売数集計結果=7／公開／状態NM／高額商品ではない／商品・規格とも削除されていない	IT-M03-06-022専用。ヘッダ行に続けてデータ行を出力する検索対象	グッズ商品CSV登録画面で「雛形ファイルダウンロード」を押して雛形を取り、データ行1行に 商品ID=空（新規登録）、商品コード=M0306-CB022-A、商品名(日)=M0306-CB022-商品、商品公開ステータス=公開に当たる値、基準価格=1001 を入れ、残りの必須項目（言語(ID)・支店の商品公開ステータス・商品名(英)・サイズ・重量・商品カテゴリ(ID)・購入グループ名称・販売価格・買取価格・原価単価）に取込が通る値を入れて保存する（商品名(英)は商品名(日)と同じ値にする）。「CSVファイル選択」でそのファイルを選び「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（規格は状態NMで1件作られる。高額商品コードは入れない）。商品マスター(検索入力)画面で商品名(日/英)に「M0306-CB022-商品」を入れて「検索する >」を押し、検索結果のその商品の行に表示された商品IDを控える（〔商品ID-M0306-022〕）。その商品の商品登録編集画面で「規格設定」を押し、商品規格一覧で規格の「編集」を押して、商品規格登録編集画面に表示された商品規格IDを控える（〔規格ID-M0306-022〕）。原価単価の集計結果 333 と当日販売数集計結果 7 は画面で指定できないためDBへ直接設定する（〔規格ID-M0306-022〕の規格について、原価集計元の在庫数と原価合計を原価単価の集計結果が333になる値に、ケース実行日（Asia/Tokyo）の当日販売数の保存値を7にする）。	ケース専用
+S-M03-06-CBCFG-023	環境設定	CSV出力設定(SJIS-win)(023)	出力文字コード=SJIS-win（UTF-8以外）／出力用区切り文字=カンマ	IT-M03-06-023専用。文字コードがUTF-8以外のときの出力	試験環境のCSV出力設定変更手順で出力文字コードをSJIS-win、出力用区切り文字をカンマに設定し、設定反映後にアプリケーションを再読み込みする	ケース専用
+S-M03-06-CBZERO-023	不存在状態	検索結果0件(023)	商品名(日/英)に「M0306-CB023-NONE」を含む商品が存在しない	IT-M03-06-023専用。検索条件に該当する商品が0件の状態を作る	商品マスター(検索入力)画面で商品名(日/英)に「M0306-CB023-NONE」を入れて「検索する >」を押し、検索結果が0件になることを確かめる（未登録）。商品が表示されたときは、その商品の商品登録編集画面で「削除」を押して削除し、もう一度検索して0件になることを確かめる。	ケース専用
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M03-08-CBLIST-035	商品・規格	状態未設定規格の一覧データ(035)	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0308-035〕）／商品名=M0308-CB035-商品／商品付加情報あり／削除なし／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0308-035A〕）=公開・日本語・NM・コードM0308-CB035-A／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0308-035B〕）=公開・日本語・状態未設定・コードM0308-CB035-B／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0308-035C〕）=廃止・日本語・状態未設定・コードM0308-CB035-C／全規格が削除済みではなくスマレジ連携無効・在庫0	IT-M03-08-035専用。状態が設定されていない規格が稼働中一覧・廃止一覧のどちらにも出ないことの確認	グッズ商品CSV登録画面で、商品IDを空、商品コードにM0308-CB035-A、言語(ID)に日本語、商品公開ステータスに公開、支店の商品公開ステータスに公開、商品名(日)と商品名(英)にM0308-CB035-商品、サイズ・重量・商品カテゴリ(ID)・購入グループ名称・原価単価に登録できる任意の値、基準価格・販売価格・買取価格に任意の値（買取価格は販売価格以下）、スマレジ連携フラグに無効、部門IDに10を書いた1行のCSVファイルを選び、CSVファイルのアップロードボタンを押す（商品と商品付加情報、状態NMの商品規格1件が作られる）。商品マスター(検索入力)画面で商品名(日/英)にM0308-CB035-商品を入れて検索し、商品マスター(検索結果)画面のその行に表示された商品IDを控える（〔商品ID-M0308-035〕）。その行の商品名リンクで商品編集画面を開き、規格設定ボタンで商品規格一覧画面を開く。商品コードM0308-CB035-Aの行の編集ボタンで商品規格編集画面を開き、表示された商品規格IDを控える（〔規格ID-M0308-035A〕）。公開ステータスに公開、部門に10、スマレジ連携フラグに連携しないを入れて商品規格を登録ボタンを押す。商品規格一覧画面の新規作成ボタンで商品規格登録画面を開き、言語に日本語、状態にNM（仮の値）、商品コードにM0308-CB035-B、基準価格・販売価格・買取価格に任意の値（買取価格は販売価格以下）、部門に10、スマレジ連携フラグに連携しない、公開ステータスに公開を入れて商品規格を登録ボタンを押す。商品規格一覧画面で商品コードM0308-CB035-Bの行の編集ボタンから商品規格編集画面を開き、表示された商品規格IDを控える（〔規格ID-M0308-035B〕）。商品規格一覧画面の新規作成ボタンで商品規格登録画面を開き、言語に日本語、状態にHP（仮の値）、商品コードにM0308-CB035-C、基準価格・販売価格・買取価格に任意の値（買取価格は販売価格以下）、部門に10、スマレジ連携フラグに連携しない、公開ステータスに廃止を入れて商品規格を登録ボタンを押す。商品規格一覧画面で「▼」を押して開いた廃止規格一覧の商品コードM0308-CB035-Cの行の編集ボタンから商品規格編集画面を開き、表示された商品規格IDを控える（〔規格ID-M0308-035C〕）。〔規格ID-M0308-035B〕の状態未設定は画面で指定できないためDBへ直接設定する。〔規格ID-M0308-035C〕の状態未設定は画面で指定できないためDBへ直接設定する。	ケース専用
+S-M03-08-CBLIST-036	商品・規格	言語未設定規格の一覧データ(036)	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0308-036〕）／商品名=M0308-CB036-商品／商品付加情報あり／削除なし／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0308-036A〕）=公開・日本語・NM・コードM0308-CB036-A／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0308-036B〕）=公開・言語未設定・NM・コードM0308-CB036-B／規格IDは登録時に画面が振る（控える。以下〔規格ID-M0308-036C〕）=廃止・言語未設定・HP・コードM0308-CB036-C／全規格が削除済みではなくスマレジ連携無効・在庫0	IT-M03-08-036専用。言語が設定されていない規格が稼働中一覧・廃止一覧のどちらにも出ないことの確認	グッズ商品CSV登録画面で、商品IDを空、商品コードにM0308-CB036-A、言語(ID)に日本語、商品公開ステータスに公開、支店の商品公開ステータスに公開、商品名(日)と商品名(英)にM0308-CB036-商品、サイズ・重量・商品カテゴリ(ID)・購入グループ名称・原価単価に登録できる任意の値、基準価格・販売価格・買取価格に任意の値（買取価格は販売価格以下）、スマレジ連携フラグに無効、部門IDに10を書いた1行のCSVファイルを選び、CSVファイルのアップロードボタンを押す（商品と商品付加情報、状態NMの商品規格1件が作られる）。商品マスター(検索入力)画面で商品名(日/英)にM0308-CB036-商品を入れて検索し、商品マスター(検索結果)画面のその行に表示された商品IDを控える（〔商品ID-M0308-036〕）。その行の商品名リンクで商品編集画面を開き、規格設定ボタンで商品規格一覧画面を開く。商品コードM0308-CB036-Aの行の編集ボタンで商品規格編集画面を開き、表示された商品規格IDを控える（〔規格ID-M0308-036A〕）。公開ステータスに公開、部門に10、スマレジ連携フラグに連携しないを入れて商品規格を登録ボタンを押す。商品規格一覧画面の新規作成ボタンで商品規格登録画面を開き、言語に日本語（仮の値）、状態にNM、商品コードにM0308-CB036-B、基準価格・販売価格・買取価格に任意の値（買取価格は販売価格以下）、部門に10、スマレジ連携フラグに連携しない、公開ステータスに公開を入れて商品規格を登録ボタンを押す。商品規格一覧画面で商品コードM0308-CB036-Bの行の編集ボタンから商品規格編集画面を開き、表示された商品規格IDを控える（〔規格ID-M0308-036B〕）。商品規格一覧画面の新規作成ボタンで商品規格登録画面を開き、言語に日本語（仮の値）、状態にHP、商品コードにM0308-CB036-C、基準価格・販売価格・買取価格に任意の値（買取価格は販売価格以下）、部門に10、スマレジ連携フラグに連携しない、公開ステータスに廃止を入れて商品規格を登録ボタンを押す。商品規格一覧画面で「▼」を押して開いた廃止規格一覧の商品コードM0308-CB036-Cの行の編集ボタンから商品規格編集画面を開き、表示された商品規格IDを控える（〔規格ID-M0308-036C〕）。〔規格ID-M0308-036B〕の言語未設定は画面で指定できないためDBへ直接設定する。〔規格ID-M0308-036C〕の言語未設定は画面で指定できないためDBへ直接設定する。	ケース専用
+
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M03-04-001	P1	F01=あり&F02=カード状態NMの規格あり&F03=UTF-8	商品のカード詳細=あり／商品の規格=カード状態NMの規格あり／CSV出力の文字コード設定=UTF-8	商品のカード詳細×商品の規格: あり×カード状態NMの規格あり；商品のカード詳細×CSV出力の文字コード設定: あり×UTF-8
+CB-M03-04-002	P1	F01=あり&F02=カード状態NMの規格なし&F03=SJIS-win	商品のカード詳細=あり／商品の規格=カード状態NMの規格なし／CSV出力の文字コード設定=SJIS-win	商品のカード詳細×商品の規格: あり×カード状態NMの規格なし；商品のカード詳細×CSV出力の文字コード設定: あり×SJIS-win；商品の規格×CSV出力の文字コード設定: カード状態NMの規格なし×SJIS-win
+CB-M03-04-003	P1	F01=なし&F02=カード状態NMの規格なし&F03=UTF-8	商品のカード詳細=なし／商品の規格=カード状態NMの規格なし／CSV出力の文字コード設定=UTF-8	商品の規格×CSV出力の文字コード設定: カード状態NMの規格なし×UTF-8
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M03-05-001	P1	F01=状態NMの規格なし&F03=UTF-8	商品の規格=状態NMの規格なし／CSV出力の文字コード設定=UTF-8	商品の規格×CSV出力の文字コード設定: 状態NMの規格なし×UTF-8
+CB-M03-05-002	P1	F01=状態NMの規格なし&F03=SJIS-win	商品の規格=状態NMの規格なし／CSV出力の文字コード設定=SJIS-win	商品の規格×CSV出力の文字コード設定: 状態NMの規格なし×SJIS-win
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M03-06-001	P1	F01=有効な列名あり&F02=該当あり&F03=UTF-8以外	設定の出力列の有効な列名=有効な列名あり／商品一覧で保持している検索条件の該当=該当あり／CSV出力設定の出力文字コード=UTF-8以外	設定の出力列の有効な列名×CSV出力設定の出力文字コード: 有効な列名あり×UTF-8以外；商品一覧で保持している検索条件の該当×CSV出力設定の出力文字コード: 該当あり×UTF-8以外
+CB-M03-06-002	P1	F01=有効な列名あり&F02=0件&F03=UTF-8以外	設定の出力列の有効な列名=有効な列名あり／商品一覧で保持している検索条件の該当=0件／CSV出力設定の出力文字コード=UTF-8以外	商品一覧で保持している検索条件の該当×CSV出力設定の出力文字コード: 0件×UTF-8以外
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M03-08-001	P1	F02=なし	規格の公開状態=（効かない）／規格の状態の設定=なし／規格の言語の設定=（効かない）	規格の状態の設定: なし
+CB-M03-08-002	P1	F03=なし	規格の公開状態=（効かない）／規格の状態の設定=（効かない。ありから選ぶ）／規格の言語の設定=なし	規格の言語の設定: なし
+CB-M03-08-003	P2	F02=あり&F03=あり	規格の状態の設定=あり／規格の言語の設定=あり	規格の状態の設定×規格の言語の設定: あり×あり
+CB-M03-08-004	P2	F02=なし	規格の状態の設定=なし／規格の言語の設定=（効かない）	規格の状態の設定: なし
+CB-M03-08-005	P2	F03=なし	規格の状態の設定=（効かない。ありから選ぶ）／規格の言語の設定=なし	規格の言語の設定: なし
+項目ID	扱い	テストID	理由
+CB-M03-04-001	ケース化	IT-M03-04-032	カード詳細が関連付けられている商品は出力しない（L0098）。状態NMの規格があっても行が出ないことを、行が出る対照商品と同時に選び、UTF-8のCSVに対照商品の行だけが出ることで確かめる。1商品だけの選択は、行が1行も無くなるときの扱いが現行仕様（ヘッダ行だけのCSV・L0098）と表示メッセージ節（CSVは出力されない・M03-04-MSG-001）で食い違うため避けた
+CB-M03-04-002	ケース化	IT-M03-04-033	カード詳細ありの商品は出力しない（L0098）うえ、行になるのは状態NMの規格だけ（L0100）。行が出る対照商品と同時に選び、SJIS-winのCSVに対照商品の行だけが出ることで確かめる
+CB-M03-04-003	ケース化	IT-M03-04-034	行になるのは状態NMの規格だけで、該当する規格が無い商品は行が作られない（L0100）。行が出る対照商品と同時に選び、UTF-8のCSVに対照商品の行だけが出ることで確かめる
+項目ID	扱い	テストID	理由
+CB-M03-05-001	ケース化	IT-M03-05-017	規格があっても状態NMの規格が1件も無い商品は行を出さず、選択した商品がすべてそうならヘッダ行だけのCSVになる（L0044,L0047）。出力エンコーディングUTF-8で、ヘッダ行だけのCSVになることを確かめる
+CB-M03-05-002	ケース化	IT-M03-05-018	規格があっても状態NMの規格が1件も無い商品は行を出さず、選択した商品がすべてそうならヘッダ行だけのCSVになる（L0044,L0047）。出力エンコーディングSJIS-winで、ヘッダ行だけのCSVになることを確かめる
+項目ID	扱い	テストID	理由
+CB-M03-06-001	ケース化	IT-M03-06-022	出力文字コードがSJIS-win（UTF-8以外）のとき先頭にBOMを付けない（L0143「文字コードがUTF-8のときは先頭にBOMを付す」）。有効な列名あり・検索条件に該当ありで、ヘッダ行に続けてデータ行を出力する（L0137・L0140）ことを1つのCSVで確かめる
+CB-M03-06-002	ケース化	IT-M03-06-023	出力文字コードがSJIS-win（UTF-8以外）のとき先頭にBOMを付けず（L0143）、検索結果が0件のときはデータ行を出力せずヘッダ行のみとなる（L0140）ことを1つのCSVで確かめる
+項目ID	扱い	テストID	理由
+CB-M03-08-001	ケース化	IT-M03-08-035	規格の状態の設定が無い規格は、稼働中の一覧にも廃止の一覧にも出ない（L0094-L0095「カード状態と言語がいずれも設定されている規格を対象とする」）。既存のIT-M03-08-002・005は事前準備に状態未設定の値を書いていないため、公開と廃止の両方の状態未設定の規格を値付きで並べたケースを足した
+CB-M03-08-002	ケース化	IT-M03-08-036	規格の言語の設定が無い規格は、稼働中の一覧にも廃止の一覧にも出ない（L0094-L0095）。公開と廃止の両方の言語未設定の規格を値付きで並べて確かめる
+CB-M03-08-003	既存ケースで確認済み	IT-M03-08-023	事前準備③に、状態と言語がともに設定された規格ID 023A・023B・023Eが書かれ、手順3のDB確認でこの3件だけが削除済みになることを見ている（L0100）
+CB-M03-08-004	既存ケースで確認済み	IT-M03-08-023	事前準備③に、状態未設定の規格ID 023D・023Gが書かれ、手順3のDB確認でこの2件が削除済みにならないことを見ている（L0100「言語または状態が設定されていない商品規格は削除済みにしない」）
+CB-M03-08-005	既存ケースで確認済み	IT-M03-08-023	事前準備③に、言語未設定の規格ID 023C・023Fが書かれ、手順3のDB確認でこの2件が削除済みにならないことを見ている（L0100）
+
+codex
+M03-04〜08では、追加ケースの大半が「出力から除外される商品・規格」と文字コード設定の組合せです。前巡のM03-04の指摘は、CSV本体とHTTP応答という確認先の違いを理由に却下されているため、その点は設計書と確認先を見て扱います。
+exec
+/bin/bash -lc "cut -f 1,9,10,11 integration_test/casegen/cases/M03-08_test_cases.tsv | grep -E 'IT-M03-08-023|テストID'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	手順	期待結果	出典
+IT-M03-08-023	1. 商品ID 〔商品ID-M0308-023〕の商品規格一覧画面を開く／2. 「商品規格を初期化」ボタンを押す／3. DBで規格ID 〔規格ID-M0308-023A〕〜〔規格ID-M0308-023G〕の削除状態を確認する	言語と状態がいずれも設定された規格ID 〔規格ID-M0308-023A〕、〔規格ID-M0308-023B〕、〔規格ID-M0308-023E〕だけが削除済みとなり、規格ID 〔規格ID-M0308-023C〕、〔規格ID-M0308-023D〕、〔規格ID-M0308-023F〕、〔規格ID-M0308-023G〕は削除済みにならないこと	0204 商品規格一覧 / 表示メッセージ M03-08-MSG-007、現行仕様 業務ロジック 商品規格の初期化
+
+exec
+/bin/bash -lc 'for x in 04 05 06 08; do echo M03-$x; cut -f 1,9,10,11 integration_test/casegen/combination/cases/M03-$x'"\\_cb_test_cases.tsv; done" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+M03-04
+テストID	事前準備	手順	期待結果
+IT-M03-04-032	① 管理画面に本店所属で商品管理を操作できるM03-04試験管理者でログインしている（S-M03-04-ADM）／② 本店・状態NM・SPが有効である（S-M03-04-MASTER）／③ ケース開始時にCSV出力設定を出力文字コード=UTF-8、出力用区切り文字=カンマに設定する（S-M03-04-CONFIG）／④ 商品ID 〔商品ID-M0304-032A〕は商品名M0304-CB032-A、公開、論理削除なし、カード詳細ID 〔カード詳細ID-M0304-032A〕を持つ、状態NMの規格ID 〔規格ID-M0304-032A〕を持つ。商品ID 〔商品ID-M0304-032B〕は商品名M0304-CB032-B、公開、論理削除なし、カード詳細なし、状態NMの規格ID 〔規格ID-M0304-032B〕を持つ。商品名に「M0304-CB032」を含む商品はこの2件だけである。呼び名で示す商品ID・カード詳細ID・規格IDは登録時に振られた番号を控えてある（S-M03-04-CBCARD-032）	1. 商品名=M0304-CB032の検索条件を保持した商品一覧画面の1ページ目を開き、検索結果が商品A・商品Bの2件だけであることを確認する／2. 商品ID 〔商品ID-M0304-032A〕と商品ID 〔商品ID-M0304-032B〕の両方を選択する／3. グッズ商品CSV出力ボタンを押す／4. ダウンロードしたCSVをUTF-8で読み取り、データ行を確認する	データ行が商品ID 〔商品ID-M0304-032B〕の1行だけで、商品ID 〔商品ID-M0304-032A〕の行を含まないこと
+IT-M03-04-033	① 管理画面に本店所属で商品管理を操作できるM03-04試験管理者でログインしている（S-M03-04-ADM）／② 本店・状態NM・SPが有効である（S-M03-04-MASTER）／③ ケース開始時にCSV出力設定を出力文字コード=SJIS-win、出力用区切り文字=カンマに設定する（S-M03-04-CONFIG）／④ 商品ID 〔商品ID-M0304-033A〕は商品名M0304-CB033-A、公開、論理削除なし、カード詳細ID 〔カード詳細ID-M0304-033A〕を持つ、状態SPの規格ID 〔規格ID-M0304-033AS〕だけを持ち、状態NMの規格は0件。商品ID 〔商品ID-M0304-033B〕は商品名M0304-CB033-B、公開、論理削除なし、カード詳細なし、状態NMの規格ID 〔規格ID-M0304-033B〕を持つ。商品名に「M0304-CB033」を含む商品はこの2件だけである。呼び名で示す商品ID・カード詳細ID・規格IDは登録時に振られた番号を控えてある（S-M03-04-CBCARDNONE-033）	1. 商品名=M0304-CB033の検索条件を保持した商品一覧画面の1ページ目を開き、検索結果が商品A・商品Bの2件だけであることを確認する／2. 商品ID 〔商品ID-M0304-033A〕と商品ID 〔商品ID-M0304-033B〕の両方を選択する／3. グッズ商品CSV出力ボタンを押す／4. ダウンロードしたCSVをSJIS-winで読み取り、データ行を確認する	データ行が商品ID 〔商品ID-M0304-033B〕の1行だけで、商品ID 〔商品ID-M0304-033A〕の行を含まないこと
+IT-M03-04-034	① 管理画面に本店所属で商品管理を操作できるM03-04試験管理者でログインしている（S-M03-04-ADM）／② 本店・状態NM・SPが有効である（S-M03-04-MASTER）／③ ケース開始時にCSV出力設定を出力文字コード=UTF-8、出力用区切り文字=カンマに設定する（S-M03-04-CONFIG）／④ 商品ID 〔商品ID-M0304-034A〕は商品名M0304-CB034-A、公開、論理削除なし、カード詳細なし、状態SPの規格ID 〔規格ID-M0304-034AS〕だけを持ち、状態NMの規格は0件。商品ID 〔商品ID-M0304-034B〕は商品名M0304-CB034-B、公開、論理削除なし、カード詳細なし、状態NMの規格ID 〔規格ID-M0304-034B〕を持つ。商品名に「M0304-CB034」を含む商品はこの2件だけである。呼び名で示す商品ID・カード詳細ID・規格IDは登録時に振られた番号を控えてある（S-M03-04-CBNONNM-034）	1. 商品名=M0304-CB034の検索条件を保持した商品一覧画面の1ページ目を開き、検索結果が商品A・商品Bの2件だけであることを確認する／2. 商品ID 〔商品ID-M0304-034A〕と商品ID 〔商品ID-M0304-034B〕の両方を選択する／3. グッズ商品CSV出力ボタンを押す／4. ダウンロードしたCSVをUTF-8で読み取り、データ行を確認する	データ行が商品ID 〔商品ID-M0304-034B〕の1行だけで、商品ID 〔商品ID-M0304-034A〕の行を含まないこと
+M03-05
+テストID	事前準備	手順	期待結果
+IT-M03-05-017	① 管理画面に商品管理を操作できるM03-05試験管理者でログインしている（S-M03-05-ADM）／② 本店・言語ID 1・状態NM・SP・商品公開ステータスが有効である（S-M03-05-MASTER）／③ ケース開始時にCSV出力設定を出力エンコーディング=UTF-8、出力用区切り文字=カンマに設定する（S-M03-05-CONFIG）／④ 商品ID 〔商品ID-M0305-017〕は商品名M0305-CB017-A、公開、論理削除なしで、規格ID 〔規格ID-M0305-017A〕と〔規格ID-M0305-017B〕の2件がいずれも状態SPであり、状態NMの規格を1件も持たない。商品名M0305-CB017の検索条件を保持し、検索結果がこの1商品であることを確認する（商品ID・規格IDは登録時に振られた番号を控えてある）（S-M03-05-CBNONNM-017）	1. 商品名=M0305-CB017の検索条件を保持した商品一覧画面の1ページ目を開く／2. 商品ID 〔商品ID-M0305-017〕を選択する／3. セール用価格変更CSV出力ボタンを押す／4. ダウンロードしたCSVをUTF-8で読み取り、内容を確認する	CSVが9列のヘッダ行だけを持ち、商品ID 〔商品ID-M0305-017〕のデータ行を含まないこと
+IT-M03-05-018	① 管理画面に商品管理を操作できるM03-05試験管理者でログインしている（S-M03-05-ADM）／② 本店・言語ID 1・状態NM・SP・商品公開ステータスが有効である（S-M03-05-MASTER）／③ ケース開始時にCSV出力設定を出力エンコーディング=SJIS-win、出力用区切り文字=カンマに設定する（S-M03-05-CONFIG）／④ 商品ID 〔商品ID-M0305-018〕は商品名M0305-CB018-A、公開、論理削除なしで、規格ID 〔規格ID-M0305-018A〕と〔規格ID-M0305-018B〕の2件がいずれも状態SPであり、状態NMの規格を1件も持たない。商品名M0305-CB018の検索条件を保持し、検索結果がこの1商品であることを確認する（商品ID・規格IDは登録時に振られた番号を控えてある）（S-M03-05-CBNONNMSJIS-018）	1. 商品名=M0305-CB018の検索条件を保持した商品一覧画面の1ページ目を開く／2. 商品ID 〔商品ID-M0305-018〕を選択する／3. セール用価格変更CSV出力ボタンを押す／4. ダウンロードしたCSVをSJIS-winで読み取り、内容を確認する	CSVが9列のヘッダ行だけを持ち、商品ID 〔商品ID-M0305-018〕のデータ行を含まないこと
+M03-06
+テストID	事前準備	手順	期待結果
+IT-M03-06-022	① 管理画面に商品管理を操作できるM03-06試験管理者でログインしている（S-M03-06-ADM）／② CSV種別「商品」とM03-06追加項目設定が参照する5件のCSV項目、公開状態「公開」および状態「NM」が利用可能である（S-M03-06-MASTER）／③ ケース開始時に商品検索条件をクリアし、商品名(日/英)=未入力、ID=未入力、公開状態=公開、状態=NM、高額商品を除外する=ON、その他の検索条件=未入力にする（S-M03-06-SEARCH）／④ ケース開始時にCSV出力設定を文字コード=SJIS-win、区切り文字=カンマに設定する（S-M03-06-CBCFG-022）／⑤ 設定ID 〔設定ID-M0306-共有〕のM03-06追加項目設定が削除されておらず、商品規格ID、商品コード、基準価格、原価単価、当日販売数の5件の出力列（有効な列名あり）が設定されている（登録時に振られた設定IDを控えてある）（S-M03-06-CUSTOM）／⑥ 商品ID 〔商品ID-M0306-022〕は商品コード=M0306-CB022-A・基準価格=1001・原価単価の集計結果=333・当日販売数の集計結果=7で、公開・状態NM・高額商品ではなく、削除されていない規格ID 〔規格ID-M0306-022〕を持つ（登録時に振られた商品ID・規格IDを控えてある）。商品一覧で保持する検索条件に該当する規格はこの1件だけである（S-M03-06-CBBASE-022）	1. 商品マスター(検索入力)画面を開く／2. IDに〔商品ID-M0306-022〕を入力して「検索する >」を押す（検索結果に1件表示される）／3. カスタムデータCSVダウンロードの「M03-06追加項目設定」を押す／4. ダウンロードしたCSVをバイナリで開き、先頭3バイトを確認する／5. ダウンロードしたCSVのヘッダ行に続くデータ行を確認する	ファイル先頭にBOMが付かず、ヘッダ行に続くデータ行が「〔規格ID-M0306-022〕／M0306-CB022-A／1001／333／7」の1行だけであること
+IT-M03-06-023	① 管理画面に商品管理を操作できるM03-06試験管理者でログインしている（S-M03-06-ADM）／② CSV種別「商品」とM03-06追加項目設定が参照する5件のCSV項目、公開状態「公開」および状態「NM」が利用可能である（S-M03-06-MASTER）／③ ケース開始時に商品検索条件をクリアし、商品名(日/英)=未入力、ID=未入力、公開状態=公開、状態=NM、高額商品を除外する=ON、その他の検索条件=未入力にする（S-M03-06-SEARCH）／④ ケース開始時にCSV出力設定を文字コード=SJIS-win、区切り文字=カンマに設定する（S-M03-06-CBCFG-023）／⑤ 設定ID 〔設定ID-M0306-共有〕のM03-06追加項目設定が削除されておらず、商品規格ID、商品コード、基準価格、原価単価、当日販売数の5件の出力列（有効な列名あり）が設定されている（登録時に振られた設定IDを控えてある）（S-M03-06-CUSTOM）／⑥ 商品名(日/英)に「M0306-CB023-NONE」を含む商品が存在せず、検索結果が0件になる（S-M03-06-CBZERO-023）	1. 商品マスター(検索入力)画面を開く／2. 商品名(日/英)に「M0306-CB023-NONE」を入力して「検索する >」を押す（検索結果が0件になる）／3. カスタムデータCSVダウンロードの「M03-06追加項目設定」を押す／4. ダウンロードしたCSVをバイナリで開き、先頭3バイトを確認する／5. ダウンロードしたCSVの行を確認する	ファイル先頭にBOMが付かず、CSVがヘッダ行だけを持ち、データ行を含まないこと
+M03-08
+テストID	事前準備	手順	期待結果
+IT-M03-08-035	① 管理画面に、稼働中・ロックなしで商品管理権限を持つm0308_adminとしてログインしている（S-M03-08-ADM）／② 日本語・英語、NM・SP・MP・HP、公開・非公開・廃止を使用できる（S-M03-08-MASTER）／③ 商品ID 〔商品ID-M0308-035〕に、規格ID 〔規格ID-M0308-035A〕（公開・日本語・NM・商品コードM0308-CB035-A）、規格ID 〔規格ID-M0308-035B〕（公開・日本語・状態未設定・商品コードM0308-CB035-B）、規格ID 〔規格ID-M0308-035C〕（廃止・日本語・状態未設定・商品コードM0308-CB035-C）の3件だけが登録され、全規格が削除済みではない。商品IDと規格IDは登録時に振られた番号を控えてある（S-M03-08-CBLIST-035）	1. 商品ID 〔商品ID-M0308-035〕の商品規格一覧画面を開く／2. 稼働中の規格一覧の商品コードを確認する／3. 「▼」を押す／4. 廃止規格一覧の商品コードを確認する	稼働中の規格一覧にはM0308-CB035-Aだけが表示され、M0308-CB035-Bは表示されず、廃止規格一覧には行が表示されないこと
+IT-M03-08-036	① 管理画面に、稼働中・ロックなしで商品管理権限を持つm0308_adminとしてログインしている（S-M03-08-ADM）／② 日本語・英語、NM・SP・MP・HP、公開・非公開・廃止を使用できる（S-M03-08-MASTER）／③ 商品ID 〔商品ID-M0308-036〕に、規格ID 〔規格ID-M0308-036A〕（公開・日本語・NM・商品コードM0308-CB036-A）、規格ID 〔規格ID-M0308-036B〕（公開・言語未設定・NM・商品コードM0308-CB036-B）、規格ID 〔規格ID-M0308-036C〕（廃止・言語未設定・HP・商品コードM0308-CB036-C）の3件だけが登録され、全規格が削除済みではない。商品IDと規格IDは登録時に振られた番号を控えてある（S-M03-08-CBLIST-036）	1. 商品ID 〔商品ID-M0308-036〕の商品規格一覧画面を開く／2. 稼働中の規格一覧の商品コードを確認する／3. 「▼」を押す／4. 廃止規格一覧の商品コードを確認する	稼働中の規格一覧にはM0308-CB036-Aだけが表示され、M0308-CB036-Bは表示されず、廃止規格一覧には行が表示されないこと
+
+exec
+/bin/bash -lc 'for x in 04 05 06 08; do echo M03-$x; grep -n -E '"'L00(4[0-9]|5[0-9]|6[0-9]|9[0-9])|L01(0[0-9]|1[0-9]|3[0-9]|4[0-9])' integration_test/casegen/combination/units/M03-"'$x/design.txt; done' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+M03-04
+41:L0040	25	基準価格	※カスタマイズ対応、新規項目を追加
+42:L0041	26	販売価格
+43:L0042	27	買取価格
+44:L0043	28	原価単価	※カスタマイズ対応、新規項目を追加
+45:L0044	29	地域別販売制限
+46:L0045	30	スマレジ連携フラグ	※カスタマイズ対応、新規項目を追加
+47:L0046	31	スマレジ商品コード	※カスタマイズ対応、新規項目を追加
+48:L0047	32	部門ID	※カスタマイズ対応、新規項目を追加
+49:L0048	スマレジ連携フラグをONにした場合は必須項目
+50:L0049	33	フリーエリア
+51:L0050	カスタマイズ説明
+52:L0051	概要
+53:L0052	商品情報のうちグッズ商品をCSV出力することが可能
+54:L0053	機能仕様機能について
+55:L0054	現行機能をベースに下記のカスタマイズを行う
+56:L0055	商品公開ステータス
+57:L0056	・商品公開ステータスの項目を追加する
+58:L0057	支店の商品公開ステータス
+59:L0058	・支店の商品公開ステータスを出力する
+60:L0059	カードセット(ID)
+61:L0060	・カードセット(ID)を出力する
+62:L0061	基準価格、原価単価
+63:L0062	・基準価格を出力する
+64:L0063	・原価単価を出力する
+65:L0064	言語(ID)
+66:L0065	・言語(ID)を出力する
+67:L0066	スマレジ連携フラグ
+68:L0067	・スマレジ連携のステータスを出力する
+69:L0068	スマレジ商品コードの追加
+70:L0069	・商品個別に発行されているJANコードもしくはカスタムコードを管理する
+91:L0090	functions/pf-eccube3/m03-04_admin_product_product_goods_csv_export.md
+92:L0091	現行仕様
+93:L0092	M03-04 グッズ商品CSV出力 / 商品管理 — グッズ商品CSV出力
+94:L0093	業務ロジック
+95:L0094	出力対象の決め方
+96:L0095	商品一覧で選択した商品IDを受け取る。1件も選択されていないときは出力せず、商品一覧へ戻す。戻り先のページ番号は保持している商品検索のページ番号、無ければ1とする。
+97:L0096	指定した商品IDのうち存在しないものは無視し、取得できた商品だけを出力する。指定が1件以上あるのに商品を1件も取得できないときは出力せずエラーとする。
+98:L0097	出力しない商品
+99:L0098	カード詳細が関連付けられている商品と、規格が0件の商品は出力しない。カード詳細ありと無しが混在するときは、カード詳細が無い商品だけが出力される。この除外の結果、出力する行が1行も無くなってもエラーにはならず、ヘッダ行だけのCSVを出力する。
+100:L0099	行の単位
+101:L0100	1商品につき規格の数だけ行を複製し、規格ごとに規格依存列を上書きする。行になるのは、商品に紐づく規格のうちカード状態がNMのものだけで、該当する規格が無い商品は行が作られない。規格の並びは一覧の表示順とは一致しない。
+102:L0101	規格ごとに値が変わるのは 商品コード・発送日目安(ID)・販売制限数・販売価格・買取価格 で、それ以外の列は同一商品の全行で同じ値を繰り返す。
+103:L0102	値の作り方
+104:L0103	タグIDは重複を除いたうえでカンマ連結する。売上分析タグIDと商品画像ファイル名もカンマ連結し、カテゴリIDは空の値を除いてカンマ連結する。「規格画像」列には商品側の画像のファイル名が入り、一覧の規格単位画像とは別の値である。「発送日目安(ID)」列に入るのは発送日目安のIDではなく名称である。「略称タグ(ID)」列は未設定のとき空文字とする。
+105:L0104	ヘッダ行にはグッズ商品CSV登録が受け取るヘッダ定義の項目名を同じ並びで出力し、データ行も同じ並びで値を並べる。
+106:L0105	ファイル名
+107:L0106	接頭辞 product_goods_ と実行日時（年月日時分秒）と拡張子 .csv を連結する。
+108:L0107	エラー時の扱い
+109:L0108	エラー内容	処理
+110:L0109	商品IDが1件も選択されていない	出力せず商品一覧へ戻す（ページ番号は保持値、無ければ1）
+111:L0110	指定IDに対応する商品が1件も無い	出力せずエラーとし、直前画面へ戻す
+112:L0111	入出力
+113:L0112	入力と出力
+114:L0113	種類	内容
+115:L0114	入力	商品IDの配列
+116:L0115	成功時出力	CSVのダウンロード。ファイル名は product_goods_（実行日時）.csv。先頭にBOMを付ける。区切り文字と文字コードは出力設定に従い、応答にも同じ文字コードを指定する
+117:L0116	失敗時出力	エラーメッセージを表示し、商品一覧または直前画面へ戻す。CSVは出力しない
+118:L0117	リニューアル後の仕様
+119:L0118	表示メッセージ
+120:L0119	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+M03-05
+41:L0040	判定	結果
+42:L0041	商品IDを1件も受け取らなかったとき	商品未選択のエラーを表示し、保持しているページ番号の商品一覧へ戻る
+43:L0042	指定IDに対応する商品が1件も無いとき	出力せず、選択した商品が見つからない旨のエラーとする
+44:L0043	一部のIDが存在しないとき	取得できた商品だけを出力対象とし、存在しないIDは無視する
+45:L0044	商品の規格が0件のとき	その商品は行を増やさない。選択した商品がすべて規格0件のときはヘッダ行だけのCSVとなり、エラーにはしない
+46:L0045	出力処理中は実行時間の上限を設けず、選択件数が多くても時間切れで打ち切らない。
+47:L0046	出力する行と値
+48:L0047	1行は状態NMの規格1件に対応する。同じ商品に状態NMの規格が複数あるときは、その件数だけ行が出る。規格があっても状態NMの規格が1件も無い商品は、行を出さない。規格の並び順は商品一覧の表示順との一致を保証しない。
+49:L0048	価格・セールフラグ・帯URLは規格ごとの値、商品IDとタグ(ID)は商品ごとの値であり、同じ商品の各行に同じ値が繰り返される。
+50:L0049	値	決め方
+51:L0050	言語(ID)	規格の言語ID。設定が無いときは空欄
+52:L0051	セールフラグ	セールでないとき、および値が無いときは0、セール中のときは1
+53:L0052	帯URL	規格の帯URL。設定が無いときは空欄
+54:L0053	タグ(ID)	商品に紐づくタグIDを並び順のままカンマで連結する。一意化しないため、同じIDが複数含まれることがある
+55:L0054	エラー時の扱い
+56:L0055	エラー内容	処理
+57:L0056	商品IDを1件も受け取らなかったとき	商品未選択のエラーを表示し、保持しているページ番号の商品一覧へ戻る
+58:L0057	指定IDに対応する商品が1件も無いとき	選択した商品が見つからない旨のエラーとする
+59:L0058	その他の実行時エラーのとき	エラーメッセージを表示し、直前の画面へ戻る
+60:L0059	指定IDに対応する商品が1件も無いときは、CSV出力を要求した画面（要求元として送られた画面）へ戻す。商品一覧から出力したときは、出力を要求したページの商品一覧へ戻る。
+61:L0060	入出力
+62:L0061	入出力の対応
+63:L0062	種類	内容
+64:L0063	入力	商品一覧で選択した商品IDの並び
+65:L0064	成功時出力	CSVファイル。ファイル名は接頭辞product_price_と出力日時と拡張子.csvを連結したもの。先頭にはBOMを付与する。値はUTF-8から設定の出力エンコーディングへ変換して出力し、区切り文字は出力用の設定値による
+66:L0065	失敗時出力	エラーメッセージ付きで商品一覧または直前の画面へ戻る
+67:L0066	本機能はデータを更新しない。
+68:L0067	リニューアル後の仕様
+69:L0068	表示メッセージ
+70:L0069	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+M03-06
+41:L0040	25	下代
+42:L0041	26	割引率ID
+43:L0042	27	購入グループ名
+44:L0043	28	掲載開始日時
+45:L0044	29	商品画像
+46:L0045	30	商品カテゴリ(ID)
+47:L0046	31	商品カテゴリ(名称)
+48:L0047	32	タグID
+49:L0048	33	タグ名
+50:L0049	34	カード名(日)
+51:L0050	35	カード名(英)
+52:L0051	36	色
+53:L0052	37	カードセット略称
+54:L0053	38	Foilフラグ
+55:L0054	39	プロモーション名
+56:L0055	40	イラストレーター名
+57:L0056	41	レアリティ
+58:L0057	42	セールフラグ
+59:L0058	43	帯URL
+60:L0059	44	状態コード
+61:L0060	45	高額商品用番号
+62:L0061	46	規格画像
+63:L0062	47	規格備考
+64:L0063	48	コレクターNo
+65:L0064	49	色順ID
+66:L0065	50	色順
+67:L0066	51	略称タグ(ID)
+68:L0067	52	略称タグ名称
+69:L0068	53	地域別販売制限
+70:L0069	54	販売制限名
+91:L0090	75	1週間販売数（支店）	一覧と同様に全支店のECスマレジ販売数	2026/8/4木村：ECCUBE_HARERUYA-1760カラム追加
+92:L0091	76	1ヵ月間販売数（支店）	一覧と同様に全支店のECスマレジ販売数	2026/8/4木村：ECCUBE_HARERUYA-1760カラム追加
+93:L0092	77	90日間販売数（支店）	一覧と同様に全支店のECスマレジ販売数	2026/8/4木村：ECCUBE_HARERUYA-1760カラム追加
+94:L0093	78	180日間販売数（支店）	一覧と同様に全支店のECスマレジ販売数	2026/8/4木村：ECCUBE_HARERUYA-1760カラム追加
+95:L0094	79	365日間販売数（支店）	一覧と同様に全支店のECスマレジ販売数	2026/8/4木村：ECCUBE_HARERUYA-1760カラム追加
+96:L0095	80	規格更新日
+97:L0096	81	カードID
+98:L0097	82	色(英)
+99:L0098	83	カード詳細(ID)
+100:L0099	84	カードセット名(日)
+101:L0100	85	カードセット名(英)
+102:L0101	86	レアリティ(日)
+103:L0102	87	ブロック名(日)
+104:L0103	88	ブロック名(英)
+105:L0104	89	レアリティ(英)
+106:L0105	90	プロモーションフラグ
+107:L0106	91	プロモーション名(日)
+108:L0107	92	価格更新日
+109:L0108	93	当日入庫数
+110:L0109	94	前日入庫数
+111:L0110	95	3日間入庫数
+112:L0111	96	1週間入庫数
+113:L0112	97	2週間入庫数
+114:L0113	98	3週間入庫数
+115:L0114	99	1ヶ月間入庫数
+116:L0115	100	90日間入庫数
+117:L0116	101	180日間入庫数
+118:L0117	102	365日間入庫数
+119:L0118	103	部門名
+120:L0119	104	部門コード
+131:L0130	★識別ID:24「原価単価」を追加。
+132:L0131	・ソート順は0202_基本設計仕様書(在庫管理機能).xlsxの納品書印刷（日本語）シートと同様になる
+134:L0132	# 商品管理 — カスタムデータ CSV ダウンロード（商品情報）
+135:L0133	## 業務ロジック
+136:L0134	### 出力対象のカスタムCSV設定
+137:L0135	指定されたIDのカスタムCSV設定を取得する。削除済みの設定、またはCSV種別が商品以外の設定は HTTP 404 とする。
+138:L0136	### 出力する列
+139:L0137	設定に紐づく出力列を、表示順（順位の昇順、並び順の昇順）で取得する。各列の列名は前後の空白を除き、空でないものだけを順に並べて出力列とする。有効な列名が1つも無いときは HTTP 404 とする。
+140:L0138	出力列のうち、商品CSVの利用可能な列に存在するものだけを残す。残った列が1つも無いときは既定の列一式で出力する。
+141:L0139	### 出力対象のデータ
+142:L0140	商品一覧で保持している検索条件を用いて出力対象を絞り込む。検索結果が0件のときはデータ行を出力せず、ヘッダ行のみのCSVとなる。
+143:L0141	金額の再計算や税率計算は行わない。保持している値と集計結果をそのまま出力する。
+144:L0142	### 出力の形式
+145:L0143	文字コードがUTF-8のときは先頭にBOMを付す。ヘッダ行に続いてデータ行を、設定の区切り文字と文字コードに従って出力する。データは規格ID単位で200行ごとに書き出す。ファイル名は `product_custom` に出力日時を続けた形式とする。
+146:L0144	### エラー時の扱い
+147:L0145	| エラー内容 | 処理 |
+148:L0146	|------------|------|
+149:L0147	| 不正または削除済みのカスタムCSV設定、または列名が皆無 | HTTP 404 とする |
+150:L0148	| 設定削除で外部キーエラー | エラーメッセージを表示し、編集画面へ遷移する |
+151:L0149	## 入出力
+M03-08
+41:L0040	商品規格一覧 / E8 / image 1
+42:L0041	カスタマイズ説明
+43:L0042	概要
+44:L0043	商品情報の商品規格一覧の参照が可能
+45:L0044	機能仕様機能について
+46:L0045	現行機能をベースに下記のカスタマイズを行う
+47:L0046	一覧表示について
+48:L0047	・基準価格を追加する
+49:L0048	・廃止規格がある場合、有効（公開・非公開）な規格の一覧とは別の場所に表示される
+50:L0049	・廃止規格はデフォルトでは折りたたまれた状態で表示される
+51:L0050	機能仕様処理概要（★はカスタマイズ項目）
+52:L0051	一覧表示について
+53:L0052	★商品に紐づく、公開ステータスが「廃止」に設定された規格を画面下部「廃止規格一覧」に出力する
+54:L0053	★「廃止規格一覧」は初期表示時は折りたたまれた状態で出力する
+55:L0054	★現行の一覧表示は公開ステータスが「廃止ではない」規格を出力する
+56:L0055	★「その他」の状態のソート順は通常規格の後で、さらに価格ソートで高額順に表示する
+57:L0056	★在庫数は本店のECCUBE在庫＋スマレジ在庫を表示する
+58:L0057	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+59:L0058	1	商品名	-	-	-	-	前画面で指定された商品名を表示
+60:L0059	2	新規作成	ボタン	-	-	-	商品規格登録画面へ遷移
+61:L0060	3	該当件数	-	-	-	-
+62:L0061	4	公開ステータス	-	-	-	-	※カスタマイズ対応、項目を追加、廃止ではない規格の情報を一覧で出力する
+63:L0062	5	言語	-	-	-	-	※カスタマイズ対応、廃止ではない規格の情報を一覧で出力する
+64:L0063	6	状態	-	-	-	-	※カスタマイズ対応、廃止ではない規格の情報を一覧で出力する
+65:L0064	7	スマレジ連携フラグ	-	-	-	-	※カスタマイズ対応、廃止ではない規格の情報を一覧で出力する
+66:L0065	8	商品コード	-	-	-	-	※カスタマイズ対応、廃止ではない規格の情報を一覧で出力する
+67:L0066	9	在庫数	-	-	-	-	※カスタマイズ対応、廃止ではない規格の情報を一覧で出力する
+68:L0067	10	販売制限数	-	-	-	-	※カスタマイズ対応、廃止ではない規格の情報を一覧で出力する
+69:L0068	11	基準価格(円)								-	-	-	-	※カスタマイズ対応、廃止ではない規格の情報を一覧で出力する
+70:L0069	12	販売価格(円)	-	-	-	-	※カスタマイズ対応、廃止ではない規格の情報を一覧で出力する
+91:L0090	一覧の構成
+92:L0091	画面は対象商品に紐づく商品規格を、稼働中の規格と廃止した規格の2つに分けて表示する。廃止した規格は折りたたんで表示する。
+93:L0092	件数の見出しには稼働中の規格の件数を表示する。
+94:L0093	一覧の対象
+95:L0094	稼働中の一覧は、公開状態が「廃止」でなく、カード状態と言語がいずれも設定されている規格を対象とする。
+96:L0095	廃止の一覧は、公開状態が「廃止」で、カード状態と言語がいずれも設定されている規格を対象とする。
+97:L0096	対象の商品が存在しない場合はページが見つからない扱いとする。
+98:L0097	戻り先
+99:L0098	商品一覧から遷移した場合は、戻るリンクの遷移先を商品一覧とし、検索条件を保持した状態で戻る。それ以外は商品編集を遷移先とする。
+100:L0099	商品規格の初期化
+101:L0100	商品規格を初期化すると、対象商品の商品規格のうち、言語と状態がいずれも設定されたものをすべて削除済みにする。言語または状態が設定されていない商品規格は削除済みにしない。
+102:L0101	削除済みにする商品規格が1件も無いときは、何も変更せずに商品規格一覧へ戻る。初期化を終えたときも商品規格一覧へ戻る。
+103:L0102	他機能との境界
+104:L0103	規格の登録・編集・削除は「商品規格登録/編集」を正とする。規格分類と規格の管理はそれぞれの一覧を正とする。
+105:L0104	税額・割引の計算は行わない。
+106:L0105	入出力
+107:L0106	種類	内容
+108:L0107	入力	対象の商品
+109:L0108	成功時出力	稼働中の規格の一覧と件数、廃止した規格の一覧
+110:L0109	失敗時出力	対象の商品が存在しない場合はページが見つからない扱い
+111:L0110	リニューアル後の仕様
+112:L0111	表示メッセージ
+113:L0112	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+114:L0113	M03-08-MSG-001	管理画面上部	保存に失敗しました	新しい商品規格の保存で、入力内容に不備があるとき	保存せず商品規格登録/編集画面に留まる
+115:L0114	M03-08-MSG-002	管理画面上部	保存しました	新しい商品規格を保存したとき	管理画面_商品管理_商品規格一覧画面に遷移する
+116:L0115	M03-08-MSG-003	管理画面上部	保存に失敗しました	商品規格の変更内容に不備があるとき	保存せず商品規格登録/編集画面に留まる
+117:L0116	M03-08-MSG-004	管理画面上部	保存しました	商品規格の変更を保存したとき	管理画面_商品管理_商品規格一覧画面に遷移する
+118:L0117	M03-08-MSG-005	管理画面上部	削除しました	商品規格を削除したとき	管理画面_商品管理_商品規格一覧画面に遷移する
+119:L0118	M03-08-MSG-006	管理画面上部	関連するデータがあるため「%name%」を削除できませんでした	商品規格を削除しようとしたが、関連するデータがあるとき	管理画面_商品管理_商品規格一覧画面に遷移する
+120:L0119	M03-08-MSG-007	管理画面上部	商品規格を初期化しました	商品規格を初期状態に戻す操作が完了したとき	管理画面_商品管理_商品規格一覧画面に遷移する
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-09_processes.tsv integration_test/casegen/combination/factors/M03-09_factors.tsv integration_test/casegen/combination/factors/M03-09_interactions.tsv integration_test/casegen/combination/factors/M03-09_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	商品規格を登録・更新して販売価格を確定する	商品規格登録/編集画面で商品規格を登録ボタンを押す	DB（商品規格の販売価格・基準価格）	L0085-L0087,L0116-L0119
+P2	商品規格を更新して価格履歴を記録する	商品規格登録/編集画面で商品規格を登録ボタンを押す	DB（価格履歴）／買取/販売価格履歴検索一覧画面	L0081,L0189
+P3	公開ステータスを保存して廃止の可否を決める	商品規格登録/編集画面で公開ステータスを選び商品規格を登録ボタンを押す	DB（公開ステータス）／商品規格登録/編集画面のエラー表示／スマレジ（廃止時の削除）	L0065-L0071,L0090-L0093,_common/0204_sheet-65.txt:L0058-L0059
+P4	スマレジ連携フラグをOFFにして保存する	商品規格登録/編集画面でスマレジ連携フラグを連携しないにして商品規格を登録ボタンを押す	DB（スマレジ連携フラグ）／商品規格登録/編集画面のエラー表示	L0109
+P5	スマレジ連携フラグONで保存してスマレジ商品コードを確定する	商品規格登録/編集画面でスマレジ連携フラグを連携するにして商品規格を登録ボタンを押す	DB（スマレジ商品コード）／商品規格登録/編集画面のエラー表示	L0102-L0104,L0127-L0129
+P6	スマレジ連携を実行して商品規格を登録・更新・削除する	商品規格登録/編集画面で商品規格を登録ボタンを押す	スマレジ（連携先の商品規格）	L0102-L0104,_common/0204_sheet-65.txt:L0027-L0035,_common/0204_sheet-65.txt:L0058-L0059
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	セールフラグ	チェックあり｜チェックなし	チェックあり: 販売価格は入力値のまま保存／チェックなし: 販売価格を基準価格の値で上書きして保存	L0086-L0087	この機能
+F02	P1	販売価格の入力値と基準価格	同じ｜異なる	同じ: 保存される販売価格は基準価格と同じ／異なる: セールフラグの値で保存される販売価格が決まる	L0086-L0087	この機能
+F03	P2	販売価格の変更	変更あり｜変更なし	変更あり: 価格履歴を記録／変更なし: 買取価格も変更なしなら記録しない	L0189	この機能
+F04	P2	買取価格の変更	変更あり｜変更なし	変更あり: 価格履歴を記録／変更なし: 販売価格も変更なしなら記録しない	L0189	この機能
+F05	P3	変更前の公開ステータス	廃止以外｜廃止	廃止以外: 公開ステータスを選べる／廃止: 以降は変更不可	L0067,L0091	この機能
+F06	P3,P6	保存する公開ステータス	公開または非公開｜廃止	公開または非公開: 在庫確認なしで保存／廃止: EC-CUBE・スマレジの在庫を確認し1以上ならエラー／（P6）公開または非公開: スマレジ連携の対象になる／廃止: 登録・更新は行わず、スマレジに登録済みなら削除する	L0071,L0092-L0093,_common/0204_sheet-65.txt:L0017-L0018,_common/0204_sheet-65.txt:L0059	この機能
+F07	P3	EC-CUBE在庫	0｜1以上	0: 廃止にできる／1以上: 廃止にするとエラー	L0071,L0092-L0093	この機能
+F08	P3,P4	スマレジ在庫	0｜1以上	0: 廃止にできる・連携をOFFにできる／1以上: 廃止にするとエラー・連携をOFFにできない	L0071,L0092-L0093,L0109	この機能
+F09	P4	スマレジ連携フラグの保存値	OFFにする｜OFFにしない	OFFにする: スマレジに在庫があればOFFにできない／OFFにしない: 在庫の有無によらず保存	L0109	この機能
+F10	P5	スマレジ連携フラグ	連携する｜連携しない	連携する: スマレジと連携する／連携しない: スマレジと連携しない	L0103-L0104	この機能
+F11	P5,P6	商品の種別	シングルカード｜シングルカード以外	シングルカード: スマレジ商品コードは自動採番／シングルカード以外: スマレジ商品コードは編集可能で必須／（P6）シングルカード: 部門コード・商品コード・基準価格の変更で連携／シングルカード以外: 部門コード・商品コード・スマレジ商品コード・基準価格の変更で連携	L0127-L0129,_common/0204_sheet-65.txt:L0029-L0034	この機能
+F12	P5	スマレジ商品コード	あり｜なし	あり: そのコードで連携／なし: 連携するかつシングルカードなら自動採番・連携するかつシングルカード以外ならエラー	L0128-L0129	この機能
+F13	P3,P6	スマレジ上の商品規格の登録状況	登録済み｜未登録	登録済み: （P3）廃止で保存するとスマレジの規格を削除／（P6）連携するときは更新／未登録: （P3）削除は行わない／（P6）連携するときは新規登録	_common/0204_sheet-65.txt:L0035,_common/0204_sheet-65.txt:L0059	この機能
+F14	P6	スマレジ連携フラグの操作	連携しないで保存｜連携するに変更して保存｜連携するのまま保存	連携しないで保存: 連携を行わない／連携するに変更して保存: 変更した項目によらず連携を行う／連携するのまま保存: 連携項目に変更があるときだけ連携を行う	_common/0204_sheet-65.txt:L0028,_common/0204_sheet-65.txt:L0030,_common/0204_sheet-65.txt:L0034,L0103-L0104	この機能
+F15	P6	スマレジ連携の対象項目の変更	部門コード・商品コード・基準価格のいずれかに変更あり｜スマレジ商品コードだけ変更｜変更なし	部門コード・商品コード・基準価格のいずれかに変更あり: 連携を行う／スマレジ商品コードだけ変更: シングルカード以外のときだけ連携を行う／変更なし: 連携を行わない（連携するに変更した場合を除く）	_common/0204_sheet-65.txt:L0030,_common/0204_sheet-65.txt:L0034	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0086-L0087	セールフラグがなしで入力値が異なるときだけ販売価格が基準価格で上書きされ、ありのときは入力値のまま保存される
+P2	F03+F04	関係しない		販売価格か買取価格のどちらかが変更されていれば記録し、どちらも変更なしなら記録しない。出る・出ないの2通りで、外れ方は1つずつ確かめれば足りる
+P3	F05+F06	効き合う	L0067,L0091	廃止済みの規格は公開ステータスを変更できないため、変更前が廃止だと保存できる値が廃止だけになる
+P3	F05+F07	設計書が決めていない	L0092	変更前がすでに廃止の規格を再保存するとき、EC-CUBE在庫の確認が行われるか書かれていない（廃止で更新を実施するタイミングとだけある）
+P3	F05+F08	設計書が決めていない	L0092	変更前がすでに廃止の規格を再保存するとき、スマレジ在庫の確認が行われるか書かれていない
+P3	F06+F07	関係しない		廃止で保存するとき、EC-CUBE在庫かスマレジ在庫のどれか1つでも1以上ならエラーになる。結果はエラーになる・ならないの2通りで、条件の外れ方は1つずつ確かめれば足りる
+P3	F06+F08	関係しない		同上
+P3	F07+F08	関係しない		2つの在庫はどちらか一方でも1以上ならエラーで、一方の値で他方の結果は変わらない
+P3	F05+F13	設計書が決めていない	_common/0204_sheet-65.txt:L0059	廃止済みの規格はすでにスマレジから削除されているはずで、廃止済みかつスマレジ登録済みの規格を再保存したときの結果が書かれていない
+P3	F06+F13	関係しない		廃止で保存するとき、登録済みならスマレジから削除する。削除する・しないの条件で、1つずつ確かめれば足りる
+P3	F07+F13	関係しない		削除は在庫が無い（エラーにならない）ときだけ行われる条件の一つで、1つずつ確かめれば足りる
+P3	F08+F13	関係しない		削除は在庫が無い（エラーにならない）ときだけ行われる条件の一つで、1つずつ確かめれば足りる
+P4	F08+F09	効き合う	L0109	OFFにするときだけ、スマレジに在庫が1つでもあるとOFFにできない
+P5	F10+F12	効き合う	L0103-L0104,L0128-L0129	連携するときだけ、スマレジ商品コードが無いと自動採番かエラーになり、連携しないときは何も起きない
+P5	F10+F11	関係しない		連携する・しないは種別で変わらない。種別の違いはコードが無いときの結果としてF11+F12で確かめる
+P5	F11+F12	効き合う	L0127-L0129	コードが無いとき、シングルカードなら自動採番しシングルカード以外ならエラーになる
+P6	F06+F11	関係しない		連携する・しないを決める条件の一つで、1つずつ確かめれば足りる
+P6	F06+F13	関係しない		連携する・しない（削除する・しない）を決める条件の一つで、1つずつ確かめれば足りる
+P6	F06+F14	関係しない		連携する・しないを決める条件の一つで、1つずつ確かめれば足りる
+P6	F06+F15	関係しない		連携する・しないを決める条件の一つで、1つずつ確かめれば足りる
+P6	F11+F13	関係しない		商品の種別でスマレジ上の登録状況による更新・新規登録は変わらない
+P6	F11+F14	関係しない		連携フラグの操作で連携が行われる条件は種別によらない
+P6	F11+F15	効き合う	_common/0204_sheet-65.txt:L0030,_common/0204_sheet-65.txt:L0034	スマレジ商品コードだけの変更は、シングルカード以外のときだけ連携対象になる
+P6	F13+F14	効き合う	_common/0204_sheet-65.txt:L0035	連携を行うときだけ、スマレジに登録済みなら更新、未登録なら新規登録になる
+P6	F13+F15	関係しない		登録状況は連携を行うときの更新・新規登録を決めるだけで、連携対象項目の変更の判定には影響しない
+P6	F14+F15	効き合う	_common/0204_sheet-65.txt:L0028,_common/0204_sheet-65.txt:L0030	連携するに変更したときは項目の変更によらず連携し、連携するのままのときは対象項目に変更があるときだけ連携する
+処理ID	組	種別	根拠	理由
+P3	F05=廃止	打ち切り	L0067,L0091	廃止済みの規格は公開ステータスを変更できず、以降の変更を受け付けない
+P3	F05=廃止&F07=1以上	正解未定	L0092	廃止済みの規格を再保存するときに在庫確認が行われるか決まらない
+P3	F05=廃止&F08=1以上	正解未定	L0092	廃止済みの規格を再保存するときに在庫確認が行われるか決まらない
+P3	F05=廃止&F13=登録済み	正解未定	_common/0204_sheet-65.txt:L0059	廃止済みの規格を再保存するときのスマレジ削除の扱いが決まらない
+P3	F06=廃止&F07=1以上	打ち切り	L0071,L0092-L0093	廃止にするときEC-CUBE在庫が1以上だと在庫が存在する旨のエラーを返し、スマレジ在庫・スマレジ登録状況は結果に効かない
+P3	F06=廃止&F08=1以上	打ち切り	L0071,L0092-L0093	廃止にするときスマレジ在庫が1以上だと在庫が存在する旨のエラーを返し、EC-CUBE在庫・スマレジ登録状況は結果に効かない
+P5	F10=連携しない	打ち切り	L0103-L0104	連携しないときはスマレジと連携せず、商品の種別・スマレジ商品コードの有無は結果に効かない
+P6	F06=廃止&F13=登録済み	打ち切り	_common/0204_sheet-65.txt:L0059	廃止で保存するときは登録・更新を行わず、スマレジに登録済みなら削除するだけで、連携フラグの操作・対象項目の変更・種別は効かない
+P6	F06=廃止&F13=未登録	打ち切り	_common/0204_sheet-65.txt:L0059	廃止で保存するときは登録・更新を行わず、未登録なら何もしない。連携フラグの操作・対象項目の変更・種別は効かない
+P6	F06=公開または非公開&F14=連携しないで保存	打ち切り	L0103-L0104	連携しないで保存するときはスマレジとの連携を行わず、保存値・種別・登録状況・対象項目の変更は効かない（廃止で保存するときは連携フラグによらずスマレジに登録済みなら削除するので、公開または非公開に限る）
+P6	F06=公開または非公開&F14=連携するのまま保存&F15=変更なし	打ち切り	_common/0204_sheet-65.txt:L0028,_common/0204_sheet-65.txt:L0034	連携するのままで対象項目に変更が無いときは連携を行わず、種別・登録状況は効かない（廃止で保存するときは連携フラグによらずスマレジに登録済みなら削除するので、公開または非公開に限る）
+P6	F06=公開または非公開&F11=シングルカード&F14=連携するのまま保存&F15=スマレジ商品コードだけ変更	打ち切り	_common/0204_sheet-65.txt:L0030	連携するのままでスマレジ商品コードだけの変更はシングルカードでは連携対象外のため連携を行わず、登録状況は効かない（廃止で保存するときは連携フラグによらずスマレジに登録済みなら削除するので、公開または非公開に限る）
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M03-09.tsv integration_test/casegen/combination/cases/M03-09_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M03-09-001	P1	F01=チェックあり&F02=同じ	セールフラグ=チェックあり／販売価格の入力値と基準価格=同じ	セールフラグ×販売価格の入力値と基準価格: チェックあり×同じ
+CB-M03-09-002	P3	F05=廃止以外&F06=公開または非公開&F07=0&F08=0&F13=登録済み	変更前の公開ステータス=廃止以外／保存する公開ステータス=公開または非公開／EC-CUBE在庫=0／スマレジ在庫=0／スマレジ上の商品規格の登録状況=登録済み	変更前の公開ステータス×保存する公開ステータス: 廃止以外×公開または非公開；変更前の公開ステータス×EC-CUBE在庫: 廃止以外×0；変更前の公開ステータス×スマレジ在庫: 廃止以外×0；変更前の公開ステータス×スマレジ上の商品規格の登録状況: 廃止以外×登録済み；保存する公開ステータス×EC-CUBE在庫: 公開または非公開×0；保存する公開ステータス×スマレジ在庫: 公開または非公開×0；保存する公開ステータス×スマレジ上の商品規格の登録状況: 公開または非公開×登録済み；EC-CUBE在庫×スマレジ在庫: 0×0；EC-CUBE在庫×スマレジ上の商品規格の登録状況: 0×登録済み；スマレジ在庫×スマレジ上の商品規格の登録状況: 0×登録済み
+CB-M03-09-003	P3	F05=廃止以外&F06=廃止&F07=0&F08=0&F13=未登録	変更前の公開ステータス=廃止以外／保存する公開ステータス=廃止／EC-CUBE在庫=0／スマレジ在庫=0／スマレジ上の商品規格の登録状況=未登録	変更前の公開ステータス×保存する公開ステータス: 廃止以外×廃止；変更前の公開ステータス×スマレジ上の商品規格の登録状況: 廃止以外×未登録；保存する公開ステータス×EC-CUBE在庫: 廃止×0；保存する公開ステータス×スマレジ在庫: 廃止×0；保存する公開ステータス×スマレジ上の商品規格の登録状況: 廃止×未登録；EC-CUBE在庫×スマレジ上の商品規格の登録状況: 0×未登録；スマレジ在庫×スマレジ上の商品規格の登録状況: 0×未登録
+CB-M03-09-004	P3	F05=廃止以外&F06=公開または非公開&F07=1以上&F08=1以上&F13=未登録	変更前の公開ステータス=廃止以外／保存する公開ステータス=公開または非公開／EC-CUBE在庫=1以上／スマレジ在庫=1以上／スマレジ上の商品規格の登録状況=未登録	変更前の公開ステータス×EC-CUBE在庫: 廃止以外×1以上；変更前の公開ステータス×スマレジ在庫: 廃止以外×1以上；保存する公開ステータス×EC-CUBE在庫: 公開または非公開×1以上；保存する公開ステータス×スマレジ在庫: 公開または非公開×1以上；保存する公開ステータス×スマレジ上の商品規格の登録状況: 公開または非公開×未登録；EC-CUBE在庫×スマレジ在庫: 1以上×1以上；EC-CUBE在庫×スマレジ上の商品規格の登録状況: 1以上×未登録；スマレジ在庫×スマレジ上の商品規格の登録状況: 1以上×未登録
+CB-M03-09-005	P3	F06=廃止&F07=1以上	変更前の公開ステータス=（効かない。廃止以外から選ぶ）／保存する公開ステータス=廃止／EC-CUBE在庫=1以上／スマレジ在庫=（効かない）／スマレジ上の商品規格の登録状況=（効かない）	保存する公開ステータス×EC-CUBE在庫: 廃止×1以上
+CB-M03-09-006	P3	F06=廃止&F08=1以上	変更前の公開ステータス=（効かない。廃止以外から選ぶ）／保存する公開ステータス=廃止／EC-CUBE在庫=（効かない。0から選ぶ）／スマレジ在庫=1以上／スマレジ上の商品規格の登録状況=（効かない）	保存する公開ステータス×スマレジ在庫: 廃止×1以上
+CB-M03-09-007	P3	F05=廃止以外&F06=廃止&F07=0&F08=0&F13=登録済み	変更前の公開ステータス=廃止以外／保存する公開ステータス=廃止／EC-CUBE在庫=0／スマレジ在庫=0／スマレジ上の商品規格の登録状況=登録済み	保存する公開ステータス×スマレジ上の商品規格の登録状況: 廃止×登録済み
+CB-M03-09-008	P3	F05=廃止以外&F06=公開または非公開&F07=0&F08=1以上&F13=登録済み	変更前の公開ステータス=廃止以外／保存する公開ステータス=公開または非公開／EC-CUBE在庫=0／スマレジ在庫=1以上／スマレジ上の商品規格の登録状況=登録済み	EC-CUBE在庫×スマレジ在庫: 0×1以上；スマレジ在庫×スマレジ上の商品規格の登録状況: 1以上×登録済み
+CB-M03-09-009	P3	F05=廃止以外&F06=公開または非公開&F07=1以上&F08=0&F13=登録済み	変更前の公開ステータス=廃止以外／保存する公開ステータス=公開または非公開／EC-CUBE在庫=1以上／スマレジ在庫=0／スマレジ上の商品規格の登録状況=登録済み	EC-CUBE在庫×スマレジ在庫: 1以上×0；EC-CUBE在庫×スマレジ上の商品規格の登録状況: 1以上×登録済み
+CB-M03-09-010	P3	F05=廃止	変更前の公開ステータス=廃止／保存する公開ステータス=（効かない）／EC-CUBE在庫=（効かない。0から選ぶ）／スマレジ在庫=（効かない。0から選ぶ）／スマレジ上の商品規格の登録状況=（効かない。未登録から選ぶ）	変更前の公開ステータス: 廃止
+CB-M03-09-011	P4	F08=0&F09=OFFにする	スマレジ在庫=0／スマレジ連携フラグの保存値=OFFにする	スマレジ在庫×スマレジ連携フラグの保存値: 0×OFFにする
+CB-M03-09-012	P4	F08=0&F09=OFFにしない	スマレジ在庫=0／スマレジ連携フラグの保存値=OFFにしない	スマレジ在庫×スマレジ連携フラグの保存値: 0×OFFにしない
+CB-M03-09-013	P4	F08=1以上&F09=OFFにする	スマレジ在庫=1以上／スマレジ連携フラグの保存値=OFFにする	スマレジ在庫×スマレジ連携フラグの保存値: 1以上×OFFにする
+CB-M03-09-014	P4	F08=1以上&F09=OFFにしない	スマレジ在庫=1以上／スマレジ連携フラグの保存値=OFFにしない	スマレジ在庫×スマレジ連携フラグの保存値: 1以上×OFFにしない
+CB-M03-09-015	P5	F10=連携する&F11=シングルカード&F12=あり	スマレジ連携フラグ=連携する／商品の種別=シングルカード／スマレジ商品コード=あり	スマレジ連携フラグ×商品の種別: 連携する×シングルカード；スマレジ連携フラグ×スマレジ商品コード: 連携する×あり；商品の種別×スマレジ商品コード: シングルカード×あり
+CB-M03-09-016	P5	F10=連携する&F11=シングルカード以外&F12=なし	スマレジ連携フラグ=連携する／商品の種別=シングルカード以外／スマレジ商品コード=なし	スマレジ連携フラグ×商品の種別: 連携する×シングルカード以外；スマレジ連携フラグ×スマレジ商品コード: 連携する×なし；商品の種別×スマレジ商品コード: シングルカード以外×なし
+CB-M03-09-017	P5	F10=連携する&F11=シングルカード&F12=なし	スマレジ連携フラグ=連携する／商品の種別=シングルカード／スマレジ商品コード=なし	商品の種別×スマレジ商品コード: シングルカード×なし
+CB-M03-09-018	P5	F10=連携する&F11=シングルカード以外&F12=あり	スマレジ連携フラグ=連携する／商品の種別=シングルカード以外／スマレジ商品コード=あり	商品の種別×スマレジ商品コード: シングルカード以外×あり
+CB-M03-09-019	P5	F10=連携しない	スマレジ連携フラグ=連携しない／商品の種別=（効かない）／スマレジ商品コード=（効かない）	スマレジ連携フラグ: 連携しない
+CB-M03-09-020	P6	F06=公開または非公開&F11=シングルカード&F14=連携するのまま保存&F15=スマレジ商品コードだけ変更	保存する公開ステータス=公開または非公開／商品の種別=シングルカード／スマレジ上の商品規格の登録状況=（効かない）／スマレジ連携フラグの操作=連携するのまま保存／スマレジ連携の対象項目の変更=スマレジ商品コードだけ変更	保存する公開ステータス×商品の種別×スマレジ連携フラグの操作×スマレジ連携の対象項目の変更: 公開または非公開×シングルカード×連携するのまま保存×スマレジ商品コードだけ変更
+CB-M03-09-021	P6	F06=公開または非公開&F14=連携するのまま保存&F15=変更なし	保存する公開ステータス=公開または非公開／商品の種別=（効かない）／スマレジ上の商品規格の登録状況=（効かない）／スマレジ連携フラグの操作=連携するのまま保存／スマレジ連携の対象項目の変更=変更なし	保存する公開ステータス×スマレジ連携フラグの操作×スマレジ連携の対象項目の変更: 公開または非公開×連携するのまま保存×変更なし
+CB-M03-09-022	P6	F06=公開または非公開&F11=シングルカード&F13=登録済み&F14=連携するに変更して保存&F15=部門コード・商品コード・基準価格のいずれかに変更あり	保存する公開ステータス=公開または非公開／商品の種別=シングルカード／スマレジ上の商品規格の登録状況=登録済み／スマレジ連携フラグの操作=連携するに変更して保存／スマレジ連携の対象項目の変更=部門コード・商品コード・基準価格のいずれかに変更あり	保存する公開ステータス×商品の種別: 公開または非公開×シングルカード；保存する公開ステータス×スマレジ上の商品規格の登録状況: 公開または非公開×登録済み；保存する公開ステータス×スマレジ連携フラグの操作: 公開または非公開×連携するに変更して保存；保存する公開ステータス×スマレジ連携の対象項目の変更: 公開または非公開×部門コード・商品コード・基準価格のいずれかに変更あり；商品の種別×スマレジ上の商品規格の登録状況: シングルカード×登録済み；商品の種別×スマレジ連携フラグの操作: シングルカード×連携するに変更して保存；商品の種別×スマレジ連携の対象項目の変更: シングルカード×部門コード・商品コード・基準価格のいずれかに変更あり；スマレジ上の商品規格の登録状況×スマレジ連携フラグの操作: 登録済み×連携するに変更して保存；スマレジ上の商品規格の登録状況×スマレジ連携の対象項目の変更: 登録済み×部門コード・商品コード・基準価格のいずれかに変更あり；スマレジ連携フラグの操作×スマレジ連携の対象項目の変更: 連携するに変更して保存×部門コード・商品コード・基準価格のいずれかに変更あり
+CB-M03-09-023	P6	F06=公開または非公開&F11=シングルカード以外&F13=未登録&F14=連携するのまま保存&F15=スマレジ商品コードだけ変更	保存する公開ステータス=公開または非公開／商品の種別=シングルカード以外／スマレジ上の商品規格の登録状況=未登録／スマレジ連携フラグの操作=連携するのまま保存／スマレジ連携の対象項目の変更=スマレジ商品コードだけ変更	保存する公開ステータス×商品の種別: 公開または非公開×シングルカード以外；保存する公開ステータス×スマレジ上の商品規格の登録状況: 公開または非公開×未登録；保存する公開ステータス×スマレジ連携フラグの操作: 公開または非公開×連携するのまま保存；保存する公開ステータス×スマレジ連携の対象項目の変更: 公開または非公開×スマレジ商品コードだけ変更；商品の種別×スマレジ上の商品規格の登録状況: シングルカード以外×未登録；商品の種別×スマレジ連携フラグの操作: シングルカード以外×連携するのまま保存；商品の種別×スマレジ連携の対象項目の変更: シングルカード以外×スマレジ商品コードだけ変更；スマレジ上の商品規格の登録状況×スマレジ連携フラグの操作: 未登録×連携するのまま保存；スマレジ上の商品規格の登録状況×スマレジ連携の対象項目の変更: 未登録×スマレジ商品コードだけ変更；スマレジ連携フラグの操作×スマレジ連携の対象項目の変更: 連携するのまま保存×スマレジ商品コードだけ変更
+CB-M03-09-024	P6	F06=公開または非公開&F14=連携しないで保存	保存する公開ステータス=公開または非公開／商品の種別=（効かない）／スマレジ上の商品規格の登録状況=（効かない）／スマレジ連携フラグの操作=連携しないで保存／スマレジ連携の対象項目の変更=（効かない）	保存する公開ステータス×スマレジ連携フラグの操作: 公開または非公開×連携しないで保存
+CB-M03-09-025	P6	F06=公開または非公開&F11=シングルカード&F13=未登録&F14=連携するに変更して保存&F15=変更なし	保存する公開ステータス=公開または非公開／商品の種別=シングルカード／スマレジ上の商品規格の登録状況=未登録／スマレジ連携フラグの操作=連携するに変更して保存／スマレジ連携の対象項目の変更=変更なし	保存する公開ステータス×スマレジ連携の対象項目の変更: 公開または非公開×変更なし；商品の種別×スマレジ上の商品規格の登録状況: シングルカード×未登録；商品の種別×スマレジ連携の対象項目の変更: シングルカード×変更なし；スマレジ上の商品規格の登録状況×スマレジ連携フラグの操作: 未登録×連携するに変更して保存；スマレジ上の商品規格の登録状況×スマレジ連携の対象項目の変更: 未登録×変更なし；スマレジ連携フラグの操作×スマレジ連携の対象項目の変更: 連携するに変更して保存×変更なし
+CB-M03-09-026	P6	F06=廃止&F13=登録済み	保存する公開ステータス=廃止／商品の種別=（効かない）／スマレジ上の商品規格の登録状況=登録済み／スマレジ連携フラグの操作=（効かない）／スマレジ連携の対象項目の変更=（効かない）	保存する公開ステータス×スマレジ上の商品規格の登録状況: 廃止×登録済み
+CB-M03-09-027	P6	F06=廃止&F13=未登録	保存する公開ステータス=廃止／商品の種別=（効かない）／スマレジ上の商品規格の登録状況=未登録／スマレジ連携フラグの操作=（効かない）／スマレジ連携の対象項目の変更=（効かない）	保存する公開ステータス×スマレジ上の商品規格の登録状況: 廃止×未登録
+CB-M03-09-028	P6	F06=公開または非公開&F11=シングルカード&F13=登録済み&F14=連携するのまま保存&F15=部門コード・商品コード・基準価格のいずれかに変更あり	保存する公開ステータス=公開または非公開／商品の種別=シングルカード／スマレジ上の商品規格の登録状況=登録済み／スマレジ連携フラグの操作=連携するのまま保存／スマレジ連携の対象項目の変更=部門コード・商品コード・基準価格のいずれかに変更あり	商品の種別×スマレジ連携フラグの操作: シングルカード×連携するのまま保存；スマレジ上の商品規格の登録状況×スマレジ連携フラグの操作: 登録済み×連携するのまま保存；スマレジ連携フラグの操作×スマレジ連携の対象項目の変更: 連携するのまま保存×部門コード・商品コード・基準価格のいずれかに変更あり
+CB-M03-09-029	P6	F06=公開または非公開&F11=シングルカード&F13=登録済み&F14=連携するに変更して保存&F15=スマレジ商品コードだけ変更	保存する公開ステータス=公開または非公開／商品の種別=シングルカード／スマレジ上の商品規格の登録状況=登録済み／スマレジ連携フラグの操作=連携するに変更して保存／スマレジ連携の対象項目の変更=スマレジ商品コードだけ変更	商品の種別×スマレジ連携の対象項目の変更: シングルカード×スマレジ商品コードだけ変更；スマレジ上の商品規格の登録状況×スマレジ連携の対象項目の変更: 登録済み×スマレジ商品コードだけ変更；スマレジ連携フラグの操作×スマレジ連携の対象項目の変更: 連携するに変更して保存×スマレジ商品コードだけ変更
+CB-M03-09-030	P6	F06=公開または非公開&F11=シングルカード以外&F13=登録済み&F14=連携するに変更して保存&F15=変更なし	保存する公開ステータス=公開または非公開／商品の種別=シングルカード以外／スマレジ上の商品規格の登録状況=登録済み／スマレジ連携フラグの操作=連携するに変更して保存／スマレジ連携の対象項目の変更=変更なし	商品の種別×スマレジ上の商品規格の登録状況: シングルカード以外×登録済み；商品の種別×スマレジ連携フラグの操作: シングルカード以外×連携するに変更して保存；商品の種別×スマレジ連携の対象項目の変更: シングルカード以外×変更なし；スマレジ上の商品規格の登録状況×スマレジ連携の対象項目の変更: 登録済み×変更なし
+CB-M03-09-031	P6	F06=公開または非公開&F11=シングルカード以外&F13=未登録&F14=連携するに変更して保存&F15=部門コード・商品コード・基準価格のいずれかに変更あり	保存する公開ステータス=公開または非公開／商品の種別=シングルカード以外／スマレジ上の商品規格の登録状況=未登録／スマレジ連携フラグの操作=連携するに変更して保存／スマレジ連携の対象項目の変更=部門コード・商品コード・基準価格のいずれかに変更あり	商品の種別×スマレジ連携の対象項目の変更: シングルカード以外×部門コード・商品コード・基準価格のいずれかに変更あり；スマレジ上の商品規格の登録状況×スマレジ連携の対象項目の変更: 未登録×部門コード・商品コード・基準価格のいずれかに変更あり
+項目ID	扱い	テストID	理由
+CB-M03-09-001	ケース化	IT-M03-09-106	セールフラグがチェックありのとき販売価格は入力値のまま保存される（L0086）。入力値が基準価格と同じ700なので保存される販売価格は700で基準価格と同じ。基準価格の上書きは行われない
+CB-M03-09-002	ケース化	IT-M03-09-107	公開ステータスを公開または非公開で保存するときは在庫確認を行わない（L0092は「廃止」で更新するタイミングに限る）。在庫0でスマレジ登録済みの規格を非公開へ保存できることを確かめる
+CB-M03-09-003	ケース化	IT-M03-09-108	在庫が両方0でスマレジ未登録の規格は廃止で保存できる（L0071・L0092-L0093）。廃止済みは以降変更不可になる（L0091）
+CB-M03-09-004	ケースにしない		作れない組。スマレジ在庫はスマレジ側の在庫（L0071・L0092「EC-CUBE・スマレジどちらの在庫も確認」）で、スマレジに登録されていない規格にはスマレジ在庫が存在しない。要因表の制約に足すべき組: F08=1以上&F13=未登録
+CB-M03-09-005	ケース化	IT-M03-09-110	廃止で保存するときEC-CUBE在庫が1以上ならスマレジ在庫・登録状況によらず在庫が存在する旨のエラーを返す（L0092-L0093）。スマレジ在庫は0、未登録で確かめる
+CB-M03-09-006	ケース化	IT-M03-09-111	廃止で保存するときスマレジ在庫が1以上ならEC-CUBE在庫によらず在庫が存在する旨のエラーを返す（L0092-L0093）。EC-CUBE在庫は0で確かめる
+CB-M03-09-007	ケース化	IT-M03-09-112	廃止にするときスマレジに登録済みならスマレジの商品を削除する（_common/0204_sheet-65 L0059「商品規格のステータスが廃止になった場合、スマレジに登録済みの場合は削除を行う」）。削除はスマレジ試験環境の管理画面で確かめる
+CB-M03-09-008	ケース化	IT-M03-09-113	公開または非公開で保存するときは在庫確認を行わず、スマレジ在庫が1以上でも保存できる（L0092の在庫確認は廃止で更新するタイミングに限る）
+CB-M03-09-009	ケース化	IT-M03-09-114	公開または非公開で保存するときは在庫確認を行わず、EC-CUBE在庫が1以上でも保存できる（L0092）
+CB-M03-09-010	既存ケースで確認済み	IT-M03-09-047	変更前が廃止の規格は公開ステータスを変更できない（L0067・L0091）。IT-M03-09-047は事前準備に公開ステータス廃止の規格を書き、手順2で編集画面の公開ステータスが廃止で読み取り表示され変更できないことを確認している。ほかの要因は結果に効かない（打ち切り）
+CB-M03-09-011	ケース化	IT-M03-09-116	スマレジ在庫が0なら連携フラグをOFFにして保存できる（L0109）
+CB-M03-09-012	ケース化	IT-M03-09-117	連携フラグをOFFにしない保存は、スマレジ在庫が0でもそのまま保存される（L0109はOFFにする場合の制御）
+CB-M03-09-013	ケース化	IT-M03-09-118	スマレジに在庫が1つでもあれば連携フラグをOFFにできない（L0109）。OFFにしようとして保存できないことを確かめる
+CB-M03-09-014	ケース化	IT-M03-09-119	連携フラグをOFFにしない保存は、スマレジ在庫が1以上でもそのまま保存される（L0109はOFFにする場合の制御）
+CB-M03-09-015	ケース化	IT-M03-09-120	連携するでシングルカードのスマレジ商品コードは自動採番で、コードがあるときはそのコードで連携する（L0127-L0129）。保存後もコードが変わらないことをDBで確かめる
+CB-M03-09-016	ケース化	IT-M03-09-121	連携するにしたときスマレジ商品コードが無いとエラーとする（L0128）。シングルカード以外なので自動採番は行われない（L0129）
+CB-M03-09-017	ケース化	IT-M03-09-122	シングルカードで連携するかつスマレジ商品コードが無いときは自動採番を行う（L0129）。採番された値そのものは設計書に定めが無いため、空でない数値で保存されることまでを期待結果にする
+CB-M03-09-018	ケース化	IT-M03-09-123	シングルカード以外でスマレジ商品コードがあるときは、そのコードで連携する（L0127-L0128）。保存後もコードが変わらないことをDBで確かめる
+CB-M03-09-019	ケース化	IT-M03-09-124	連携しないが選択されているときはスマレジと連携しない（L0104）。シングルカードでもスマレジ商品コードの自動採番は行われず空のまま保存される（L0129は連携フラグONの場合）
+CB-M03-09-020	ケースにしない		シングルカードのスマレジ商品コード欄は読み取り専用で、画面からスマレジ商品コードだけを変更する操作を作れない（設計書の画面項目定義 識別ID4「シングルカードの場合は読み取り専用、その他の場合は編集可能とする」L0127）。要因表の制約に足すべき組: F11=シングルカード&F15=スマレジ商品コードだけ変更
+CB-M03-09-021	ケース化	IT-M03-09-125	設計書の記述から結果が一意に決まる
+CB-M03-09-022	ケース化	IT-M03-09-126	設計書の記述から結果が一意に決まる
+CB-M03-09-023	ケース化	IT-M03-09-127	設計書の記述から結果が一意に決まる
+CB-M03-09-024	ケース化	IT-M03-09-128	設計書の記述から結果が一意に決まる
+CB-M03-09-025	ケース化	IT-M03-09-129	設計書の記述から結果が一意に決まる
+CB-M03-09-026	ケース化	IT-M03-09-130	設計書の記述から結果が一意に決まる
+CB-M03-09-027	ケース化	IT-M03-09-131	設計書の記述から結果が一意に決まる
+CB-M03-09-028	ケース化	IT-M03-09-132	設計書の記述から結果が一意に決まる
+CB-M03-09-029	ケースにしない		シングルカードのスマレジ商品コード欄は読み取り専用で、画面からスマレジ商品コードだけを変更する操作を作れない（設計書の画面項目定義 識別ID4「シングルカードの場合は読み取り専用、その他の場合は編集可能とする」L0127）。要因表の制約に足すべき組: F11=シングルカード&F15=スマレジ商品コードだけ変更
+CB-M03-09-030	ケース化	IT-M03-09-133	設計書の記述から結果が一意に決まる
+CB-M03-09-031	ケース化	IT-M03-09-134	設計書の記述から結果が一意に決まる
+
+exec
+/bin/bash -lc 'cut -f 1,9,10,11,13 integration_test/casegen/combination/cases/M03-09_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	事前準備	手順	期待結果	項目ID
+IT-M03-09-106	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ 商品ID 〔商品ID-M0309-106〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-106〕（登録時に振られた商品規格IDを控えてある）は販売価格500、基準価格500、買取価格200、セールフラグ無効である（S-M03-09-CBSALEON-106）	1. 商品ID 〔商品ID-M0309-106〕・商品規格ID 〔商品規格ID-M0309-106〕の編集画面を開く／2. セールフラグを有効にし、販売価格に700、基準価格に700を入力する／3. 商品規格を登録ボタンを押す／4. DBで商品規格ID 〔商品規格ID-M0309-106〕の販売価格と基準価格を確認する	商品規格ID 〔商品規格ID-M0309-106〕の販売価格が700、基準価格が700で保存されること	CB-M03-09-001
+IT-M03-09-107	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-107〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-107〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911071でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBPUBREG-107）	1. 商品ID 〔商品ID-M0309-107〕・商品規格ID 〔商品規格ID-M0309-107〕の編集画面を開く／2. 公開ステータスを非公開に変更する／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面の公開ステータスが非公開で表示されること	CB-M03-09-002
+IT-M03-09-108	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ 商品ID 〔商品ID-M0309-108〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-108〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携しない（スマレジ未登録）、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBRETNOREG-108）	1. 商品ID 〔商品ID-M0309-108〕・商品規格ID 〔商品規格ID-M0309-108〕の編集画面を開く／2. 公開ステータスを廃止に変更する／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面の公開ステータスが廃止で読み取り表示されること	CB-M03-09-003
+IT-M03-09-110	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ 商品ID 〔商品ID-M0309-110〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-110〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携しない（スマレジ未登録）、EC-CUBE在庫（通販）5、スマレジ在庫0である（S-M03-09-CBRETEC-110）	1. 商品ID 〔商品ID-M0309-110〕・商品規格ID 〔商品規格ID-M0309-110〕の編集画面を開く／2. 公開ステータスを廃止に変更する／3. 商品規格を登録ボタンを押す／4. 商品規格編集画面のエラー表示を確認する／5. 商品ID 〔商品ID-M0309-110〕・商品規格ID 〔商品規格ID-M0309-110〕の編集画面を開き直し、公開ステータスを確認する	在庫が存在する旨のエラーが表示され、開き直した商品規格編集画面の公開ステータスが公開のままであること	CB-M03-09-005
+IT-M03-09-111	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-111〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-111〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911111でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫3である（S-M03-09-CBRETSMA-111）	1. 商品ID 〔商品ID-M0309-111〕・商品規格ID 〔商品規格ID-M0309-111〕の編集画面を開く／2. 公開ステータスを廃止に変更する／3. 商品規格を登録ボタンを押す／4. 商品規格編集画面のエラー表示を確認する／5. 商品ID 〔商品ID-M0309-111〕・商品規格ID 〔商品規格ID-M0309-111〕の編集画面を開き直し、公開ステータスを確認する	在庫が存在する旨のエラーが表示され、開き直した商品規格編集画面の公開ステータスが公開のままであること	CB-M03-09-006
+IT-M03-09-112	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-112〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-112〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911121でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBRETDEL-112）	1. 商品ID 〔商品ID-M0309-112〕・商品規格ID 〔商品規格ID-M0309-112〕の編集画面を開く／2. 公開ステータスを廃止に変更する／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面で、スマレジ商品コード830911121の商品を検索する	スマレジ試験環境の管理画面に、スマレジ商品コード830911121の商品が表示されないこと	CB-M03-09-007
+IT-M03-09-113	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-113〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-113〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911131でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫3である（S-M03-09-CBPUBSMA-113）	1. 商品ID 〔商品ID-M0309-113〕・商品規格ID 〔商品規格ID-M0309-113〕の編集画面を開く／2. 公開ステータスを非公開に変更する／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面の公開ステータスが非公開で表示されること	CB-M03-09-008
+IT-M03-09-114	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-114〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-114〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911141でスマレジ試験環境に登録済み、EC-CUBE在庫（通販）5、スマレジ在庫0である（S-M03-09-CBPUBEC-114）	1. 商品ID 〔商品ID-M0309-114〕・商品規格ID 〔商品規格ID-M0309-114〕の編集画面を開く／2. 公開ステータスを非公開に変更する／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面の公開ステータスが非公開で表示されること	CB-M03-09-009
+IT-M03-09-116	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-116〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-116〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911161でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBOFFSTK0-116）	1. 商品ID 〔商品ID-M0309-116〕・商品規格ID 〔商品規格ID-M0309-116〕の編集画面を開く／2. スマレジ連携フラグを連携しないに変更する／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面のスマレジ連携フラグが連携しないで表示されること	CB-M03-09-011
+IT-M03-09-117	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-117〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-117〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911171でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBKEEPSTK0-117）	1. 商品ID 〔商品ID-M0309-117〕・商品規格ID 〔商品規格ID-M0309-117〕の編集画面を開く／2. 販売制限数に10を入力する（スマレジ連携フラグは連携するのままにする）／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面のスマレジ連携フラグが連携するのままで表示されること	CB-M03-09-012
+IT-M03-09-118	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-118〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-118〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911181でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫3である（S-M03-09-CBOFFSTK3-118）	1. 商品ID 〔商品ID-M0309-118〕・商品規格ID 〔商品規格ID-M0309-118〕の編集画面を開く／2. スマレジ連携フラグを連携しないに変更する／3. 商品規格を登録ボタンを押す／4. 商品規格編集画面のエラー表示を確認する／5. 商品ID 〔商品ID-M0309-118〕・商品規格ID 〔商品規格ID-M0309-118〕の編集画面を開き直し、スマレジ連携フラグを確認する	スマレジに在庫があるため連携をOFFにできない旨のエラーが表示され、開き直した商品規格編集画面のスマレジ連携フラグが連携するのままであること	CB-M03-09-013
+IT-M03-09-119	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-119〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-119〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911191でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫3である（S-M03-09-CBKEEPSTK3-119）	1. 商品ID 〔商品ID-M0309-119〕・商品規格ID 〔商品規格ID-M0309-119〕の編集画面を開く／2. 販売制限数に10を入力する（スマレジ連携フラグは連携するのままにする）／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面のスマレジ連携フラグが連携するのままで表示されること	CB-M03-09-014
+IT-M03-09-120	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-120〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-120〕（登録時に振られた商品規格IDを控えてある）はシングルカード（カード指定あり）で、公開ステータス公開、スマレジ連携しない、スマレジ商品コードは830911201で登録済み、部門10、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBSGCODE-120）	1. 商品ID 〔商品ID-M0309-120〕・商品規格ID 〔商品規格ID-M0309-120〕の編集画面を開く／2. スマレジ連携フラグを連携するに変更する／3. 商品規格を登録ボタンを押す／4. DBで商品規格ID 〔商品規格ID-M0309-120〕のスマレジ商品コードとスマレジ連携フラグを確認する	商品規格ID 〔商品規格ID-M0309-120〕のスマレジ商品コードが830911201、スマレジ連携フラグが連携するで保存されること	CB-M03-09-015
+IT-M03-09-121	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-121〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-121〕（登録時に振られた商品規格IDを控えてある）はシングルカードではない（カード指定なし）で、公開ステータス公開、スマレジ連携しない、スマレジ商品コードは空、部門10、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBGDNOCODE-121）	1. 商品ID 〔商品ID-M0309-121〕・商品規格ID 〔商品規格ID-M0309-121〕の編集画面を開く／2. スマレジ連携フラグを連携するに変更する／3. 商品規格を登録ボタンを押す／4. 商品規格編集画面のエラー表示を確認する	スマレジ商品コードの入力が必要である旨のエラーが商品規格編集画面に表示されること	CB-M03-09-016
+IT-M03-09-122	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-122〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-122〕（登録時に振られた商品規格IDを控えてある）はシングルカード（カード指定あり）で、公開ステータス公開、スマレジ連携しない、スマレジ商品コードは空、部門10、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBSGNOCODE-122）	1. 商品ID 〔商品ID-M0309-122〕・商品規格ID 〔商品規格ID-M0309-122〕の編集画面を開く／2. スマレジ連携フラグを連携するに変更する／3. 商品規格を登録ボタンを押す／4. DBで商品規格ID 〔商品規格ID-M0309-122〕のスマレジ商品コードとスマレジ連携フラグを確認する	商品規格ID 〔商品規格ID-M0309-122〕のスマレジ商品コードに6桁の数字の自動採番コードが保存され、スマレジ連携フラグが連携するで保存されること	CB-M03-09-017
+IT-M03-09-123	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-123〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-123〕（登録時に振られた商品規格IDを控えてある）はシングルカードではない（カード指定なし）で、公開ステータス公開、スマレジ連携しない、スマレジ商品コードは830911231で登録済み、部門10、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBGDCODE-123）	1. 商品ID 〔商品ID-M0309-123〕・商品規格ID 〔商品規格ID-M0309-123〕の編集画面を開く／2. スマレジ連携フラグを連携するに変更する／3. 商品規格を登録ボタンを押す／4. DBで商品規格ID 〔商品規格ID-M0309-123〕のスマレジ商品コードとスマレジ連携フラグを確認する	商品規格ID 〔商品規格ID-M0309-123〕のスマレジ商品コードが830911231、スマレジ連携フラグが連携するで保存されること	CB-M03-09-018
+IT-M03-09-124	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ 商品ID 〔商品ID-M0309-124〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-124〕（登録時に振られた商品規格IDを控えてある）はシングルカード（カード指定あり）で、公開ステータス公開、スマレジ連携しない、スマレジ商品コードは空、部門10、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBSGOFF-124）	1. 商品ID 〔商品ID-M0309-124〕・商品規格ID 〔商品規格ID-M0309-124〕の編集画面を開く／2. 販売制限数に10を入力する（スマレジ連携フラグは連携しないのままにする）／3. 商品規格を登録ボタンを押す／4. DBで商品規格ID 〔商品規格ID-M0309-124〕のスマレジ商品コードとスマレジ連携フラグを確認する	商品規格ID 〔商品規格ID-M0309-124〕のスマレジ商品コードが空のまま、スマレジ連携フラグが連携しないで保存されること	CB-M03-09-019
+IT-M03-09-125	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-125〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-125〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091251、スマレジ商品ID 〔スマレジ商品ID-M0309-125〕（登録時に画面に表示された番号を控えてある）、スマレジ連携する、部門10、基準価格500、販売制限数は空、公開ステータス非公開である。スマレジ試験環境の商品コード83091251の商品は商品単価777である（S-M03-09-CBKEEP-125）	1. 商品ID 〔商品ID-M0309-125〕・商品規格ID 〔商品規格ID-M0309-125〕の商品規格登録/編集画面を開く／2. 販売制限数に5を入力する（スマレジ連携フラグは連携する、公開ステータスは非公開、部門は10、スマレジ商品コード、基準価格は変更しない）／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091251」の商品を開き、商品単価を確認する	スマレジ試験環境の商品コード83091251の商品の商品単価が777円のままであること	CB-M03-09-021
+IT-M03-09-126	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-126〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-126〕（登録時に振られた商品規格IDを控えてある）はシングルカードで、スマレジ商品コード 〔スマレジ商品コード-M0309-126〕（スマレジに登録した時に自動採番された番号を控えてある）、スマレジ商品ID 〔スマレジ商品ID-M0309-126〕（登録時に画面に表示された番号を控えてある）、スマレジ連携しない、部門10、基準価格500、販売価格500、公開ステータス公開である。スマレジ試験環境の商品コード 〔スマレジ商品コード-M0309-126〕の商品は商品単価500である（S-M03-09-CBFLAGON-126）	1. シングルカードの商品ID 〔商品ID-M0309-126〕・商品規格ID 〔商品規格ID-M0309-126〕の商品規格登録/編集画面を開く／2. スマレジ連携フラグを連携しないから連携するに変更し、基準価格に600、販売価格に600を入力する／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード〔スマレジ商品コード-M0309-126〕の商品を開き、商品単価を確認する	スマレジ試験環境の商品コード〔スマレジ商品コード-M0309-126〕の商品の商品単価が600円になること	CB-M03-09-022
+IT-M03-09-127	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-127〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-127〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091271、スマレジ連携する、スマレジ商品IDなし（スマレジに未登録）、部門10、基準価格500、公開ステータス公開である。スマレジ試験環境に商品コード83091271・83091272の商品は無い（S-M03-09-CBCODE-127）	1. 商品ID 〔商品ID-M0309-127〕・商品規格ID 〔商品規格ID-M0309-127〕の商品規格登録/編集画面を開く／2. スマレジ商品コードを83091271から83091272に変更する（スマレジ連携フラグは連携するのまま、部門と基準価格は変更しない）／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091272」の商品を開き、商品単価を確認する	スマレジ試験環境に商品コード83091272の商品が1件登録され、商品単価が500円であること	CB-M03-09-023
+IT-M03-09-128	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-128〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-128〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091281、スマレジ連携しない、スマレジ商品IDなし（スマレジに未登録）、部門10、基準価格500、販売価格500、公開ステータス公開である。スマレジ試験環境に商品コード83091281の商品は無い（S-M03-09-CBOFF-128）	1. 商品ID 〔商品ID-M0309-128〕・商品規格ID 〔商品規格ID-M0309-128〕の商品規格登録/編集画面を開く／2. 基準価格に600、販売価格に600を入力する（スマレジ連携フラグは連携しないのまま）／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091281」の商品を検索する	スマレジ試験環境に商品コード83091281の商品が0件であること	CB-M03-09-024
+IT-M03-09-129	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-129〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-129〕（登録時に振られた商品規格IDを控えてある）はシングルカードで、スマレジ商品コードは空、スマレジ連携しない、スマレジ商品IDなし（スマレジに未登録）、部門10、基準価格500、販売価格500、公開ステータス公開である（S-M03-09-CBAUTO-129）	1. シングルカードの商品ID 〔商品ID-M0309-129〕・商品規格ID 〔商品規格ID-M0309-129〕の商品規格登録/編集画面を開く／2. スマレジ連携フラグを連携しないから連携するに変更する（部門、基準価格、販売価格は変更しない）／3. 商品規格を登録ボタンを押す／4. 保存後の商品規格登録/編集画面のスマレジ商品コード欄に表示された番号を控え、スマレジ試験環境の管理画面の商品一覧でその番号を商品コードとする商品を開き、商品単価を確認する	スマレジ試験環境に手順4で控えた番号を商品コードとする商品が1件登録され、商品単価が500円であること	CB-M03-09-025
+IT-M03-09-130	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-130〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-130〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091301、スマレジ商品ID 〔スマレジ商品ID-M0309-130〕（登録時に画面に表示された番号を控えてある）、スマレジ連携する、部門10、基準価格500、公開ステータス公開、EC-CUBE在庫0、スマレジ在庫0である。スマレジ試験環境に商品コード83091301の商品が1件ある（S-M03-09-CBABOL-130）	1. 商品ID 〔商品ID-M0309-130〕・商品規格ID 〔商品規格ID-M0309-130〕の商品規格登録/編集画面を開く／2. 公開ステータスを公開から廃止に変更する／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091301」の商品を検索する	スマレジ試験環境に商品コード83091301の商品が0件であること	CB-M03-09-026
+IT-M03-09-131	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-131〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-131〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091311、スマレジ連携する、スマレジ商品IDなし（スマレジに未登録）、部門10、基準価格500、公開ステータス公開、EC-CUBE在庫0、スマレジ在庫0である。スマレジ試験環境に商品コード83091311の商品は無い（S-M03-09-CBABUN-131）	1. 商品ID 〔商品ID-M0309-131〕・商品規格ID 〔商品規格ID-M0309-131〕の商品規格登録/編集画面を開く／2. 公開ステータスを公開から廃止に変更する／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091311」の商品を検索する	スマレジ試験環境に商品コード83091311の商品が0件であること	CB-M03-09-027
+IT-M03-09-132	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-132〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-132〕（登録時に振られた商品規格IDを控えてある）はシングルカードで、スマレジ商品コード 〔スマレジ商品コード-M0309-132〕（スマレジに登録した時に自動採番された番号を控えてある）、スマレジ商品ID 〔スマレジ商品ID-M0309-132〕（登録時に画面に表示された番号を控えてある）、スマレジ連携する、部門10、基準価格500、販売価格500、公開ステータス非公開である。スマレジ試験環境の商品コード 〔スマレジ商品コード-M0309-132〕の商品は商品単価500である（S-M03-09-CBTGT-132）	1. シングルカードの商品ID 〔商品ID-M0309-132〕・商品規格ID 〔商品規格ID-M0309-132〕の商品規格登録/編集画面を開く／2. 基準価格に600、販売価格に600を入力する（スマレジ連携フラグは連携するのまま、公開ステータスは非公開のまま）／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード〔スマレジ商品コード-M0309-132〕の商品を開き、商品単価を確認する	スマレジ試験環境の商品コード〔スマレジ商品コード-M0309-132〕の商品の商品単価が600円になること	CB-M03-09-028
+IT-M03-09-133	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-133〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-133〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091331、スマレジ商品ID 〔スマレジ商品ID-M0309-133〕（登録時に画面に表示された番号を控えてある）、スマレジ連携しない、部門10、基準価格500、公開ステータス公開である。スマレジ試験環境の商品コード83091331の商品は商品単価777である（S-M03-09-CBFORCE-133）	1. 商品ID 〔商品ID-M0309-133〕・商品規格ID 〔商品規格ID-M0309-133〕の商品規格登録/編集画面を開く／2. スマレジ連携フラグを連携しないから連携するに変更する（部門、スマレジ商品コード、基準価格は変更しない）／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091331」の商品を開き、商品単価を確認する	スマレジ試験環境の商品コード83091331の商品の商品単価が500円になること	CB-M03-09-030
+IT-M03-09-134	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-134〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-134〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091341、スマレジ連携しない、スマレジ商品IDなし（スマレジに未登録）、部門10、基準価格500、販売価格500、公開ステータス公開である。スマレジ試験環境に商品コード83091341の商品は無い（S-M03-09-CBNEWREG-134）	1. 商品ID 〔商品ID-M0309-134〕・商品規格ID 〔商品規格ID-M0309-134〕の商品規格登録/編集画面を開く／2. スマレジ連携フラグを連携しないから連携するに変更し、基準価格に600、販売価格に600を入力する／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091341」の商品を開き、商品単価を確認する	スマレジ試験環境に商品コード83091341の商品が1件登録され、商品単価が600円であること	CB-M03-09-031
+
+exec
+/bin/bash -lc "grep -n -E 'L00(5[0-9]|6[0-9]|7[0-9]|8[0-9]|9[0-9])|L01(0[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9]|6[0-9]|7[0-9]|8[0-9]|9[0-9])|L02[0-9][0-9]' integration_test/casegen/combination/units/M03-09/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+51:L0050	24
+52:L0051	3
+53:L0052	4
+54:L0053	商品規格登録編集 / E8 / image 1
+55:L0054	カスタマイズ説明
+56:L0055	概要
+57:L0056	商品規格登録および編集を行うことができる
+58:L0057	機能仕様機能について
+59:L0058	現行機能をベースに下記のカスタマイズを行う
+60:L0059	基準価格について
+61:L0060	・基準価格を追加する
+62:L0061	・非セール時の価格を保持する項目となり非セール時は販売価格が基準価格と同じとなる
+63:L0062	・セールフラグ無効時に、商品規格の価格を変更した場合は、基準価格から販売価格を上書きする
+64:L0063	※「別添資料_基準価格と販売価格について」にて補足説明しています
+65:L0064	規格表示制御
+66:L0065	・商品規格のステータスを「公開/非公開/廃止」の3種類とする。
+67:L0066	・フロント表示制御としては”公開”の場合は表示、”非公開（廃止）”の場合は非表示とする
+68:L0067	・公開ステータスを廃止とした場合、その後公開ステータス編集を行えないようにする
+69:L0068	(廃止は論理削除とし、廃止した商品規格は復活できない。復活する可能性のある場合は非公開として運用する)
+70:L0069	・廃止の場合は商品規格一覧に表示されなくなり、別枠の表示領域にまとめられる
+71:L0070	※程度の悪いダメージや水濡れなどはシステムとしては「その他」状態として扱う
+72:L0071	・公開ステータスを廃止とする場合は、EC-CUBE・スマレジどちらの在庫も確認し1件以上の場合はエラーとする。
+73:L0072	在庫変更について
+74:L0073	・在庫数変更をできないようにする
+75:L0074	・新規作成された場合は０で登録される
+76:L0075	・この画面での在庫数変更不可に伴い、識別ID:11「在庫変動理由」は除去する
+77:L0076	部門について
+78:L0077	・部門は登録を必須とする
+79:L0078	スマレジ連携対象に関して
+80:L0079	・スマレジ連携対象とするか区別ができるようにする
+81:L0080	買取・販売価格履歴について
+82:L0081	・買取・販売価格履歴を登録する際には、基準価格も登録する
+83:L0082	機能仕様処理概要（★はカスタマイズ項目）
+84:L0083	基準価格について
+85:L0084	★識別ID:14「基準価格」を追加。
+86:L0085	★識別ID:13「セールフラグ」がチェックされている/されていない によって、処理を切り替える
+87:L0086	・チェックされている状態で商品規格を登録すると、識別ID:12「販売価格」は入力されている値のまま登録/更新する。
+88:L0087	・チェックされていない状態で商品規格を登録すると、識別ID:12「販売価格」を識別ID:14「基準価格」の値で上書きして保存する。
+89:L0088	・「セールフラグ」と「基準価格」の関係性および処理イメージは、要件定義書「0204_管理画面_商品管理」のシート「別添資料_基準価格と販売価格について」を参照。
+90:L0089	規格表示制御
+91:L0090	★識別ID:37「公開ステータス」を追加。
+92:L0091	公開ステータスを「廃止」で登録/更新された場合、以降の公開ステータスが変更不可となる
+93:L0092	★公開ステータスを「廃止」で更新を実施するタイミングで、EC-CUBE・スマレジ両方の在庫数確認を実施
+94:L0093	いずれかの在庫数が1以上の場合は、在庫が存在する旨のエラーを返す
+95:L0094	在庫変更について
+96:L0095	★識別ID:9「在庫数」の出力をテキストボックスからテキストに変更、変更不可。
+97:L0096	★「通販+TC東京」の在庫数を表示する
+98:L0097	★新規登録時は項目名も非表示として、登録処理における当該規格の在庫数は0で登録する
+99:L0098	★この画面での在庫数変更不可に伴い、識別ID:11「在庫変動理由」は除去する
+100:L0099	部門について
+101:L0100	★部門は登録を必須とする
+102:L0101	スマレジ連携対象に関して
+103:L0102	★識別ID:25「スマレジ連携フラグ」を追加
+104:L0103	・「連携する」が選択されている場合のみ、スマレジとの連携を実施する
+105:L0104	・「連携しない」が選択されている場合は、スマレジとの連携を実施しない
+106:L0105	・販売価格を300円（閾値）を跨ぐ形で変更された場合、スマレジ連携フラグを見て、ポップアップメッセージを表示する
+107:L0106	販売価格が300円(閾値)未満から閾値以上に変更された かつ スマレジ連携フラグがOFFの場合
+108:L0107	販売価格が300円(閾値)以上から閾値未満に変更された かつ スマレジ連携フラグがONの場合
+109:L0108	メッセージ例: 「スマレジ連携の閾値（300円）を跨ぐ価格変更があったため、スマレジ連携フラグの設定をご確認ください」
+110:L0109	・スマレジ連携フラグを手動でOFFにする場合、スマレジに1つでも在庫があれば連携をOFFにできないよう制御する
+111:L0110	状態について
+112:L0111	★識別ID:6「状態」の選択肢に「その他」を追加する
+113:L0112	★状態で「その他」が選択された場合のみ、識別ID:7「状態名」を表示、入力可能とする
+114:L0113	★編集時に「状態名」が登録されている場合はテキストを出力、編集は不可とする
+115:L0114	★現行のデータベース精査が必要。備考に登録されているデータが状態名のみの場合は、データ移行実施時に「備考」の内容を「状態名」のカラムにコピーする
+116:L0115	セールフラグと販売価格、基準価格の連動について
+117:L0116	★セールフラグの位置を現行から変更、識別ID:12「販売価格」と識別ID:14「基準価格」の間
+118:L0117	★セールフラグのチェックをオフにした場合、識別ID:12「販売価格」の値を、識別ID:14「基準価格」に登録済みの値に上書きする
+119:L0118	※JavaScript での値コピーを実装する
+120:L0119	・セールフラグのチェックをオンにした場合は「販売価格」「基準価格」ともに現状のまま変化しない。
+121:L0120	画像表示について
+122:L0121	★識別ID:17「画像表示」の右上に配置されている「×」ボタンを除去、この画面で画像の削除をできないようにする。
+123:L0122	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+124:L0123	1	商品ID	数値	-	-	-	前画面で指定された商品IDを表示、編集不可
+125:L0124	2	商品規格ID	数値	-	-	-	前画面で指定された商品規格IDを表示、編集不可
+126:L0125	新規登録時は項目名も非表示
+127:L0126	3	スマレジ商品ID	数値	-	-	-	スマレジ商品IDを表示、編集不可
+128:L0127	4	スマレジ商品コード	数値	-	-	-	シングルカードの場合は読み取り専用、その他の場合は編集可能とする
+129:L0128	また、スマレジ連携フラグをONにした際にスマレジ商品コードがない場合はエラーとする
+130:L0129	シングルカードの場合は自動採番なので、スマレジ連携フラグONかつスマレジ商品コードがない場合は自動採番を行う
+131:L0130	5	言語	数値	-	-	-	新規登録時: 編集可
+132:L0131	編集時: すでに登録済みの言語を表示、編集不可
+133:L0132	6	状態	数値	-	-	-	※カスタマイズ対応、項目を追加
+134:L0133	新規登録時: 選択肢: ニアミント、スライトリープレイド、モデレトリープレイド、ヘビープレイド、その他
+135:L0134	編集時: すでに登録済みの状態を表示、編集不可
+136:L0135	7	状態名	半角・全角	-	-	-	※カスタマイズ対応、項目を追加
+137:L0136	識別ID:4「状態」で「その他」が選択された場合のみ表示、任意の状態名を入力できる
+138:L0137	編集時: すでに登録済みの状態名を表示、編集不可
+139:L0138	8	商品コード	半角英数	○	-	-
+140:L0139	9	在庫数	数値	-	-	-	※カスタマイズ対応、編集不可に変更。処理概要を参照。
+141:L0140	「通販+TC東京」の在庫数を表示する
+142:L0141	10	販売制限数	数値	-	-	-
+143:L0142	11	在庫変動理由	数値	-	-	-	※カスタマイズ対応、項目を除去する。処理概要を参照。
+144:L0143	選択肢: 入庫、在庫調整、キャンセル、受注、マスタ更新、棚卸結果の反映
+145:L0144	12	販売価格	数値	○	-	-
+146:L0145	13	セールフラグ	数値	-	-	-
+147:L0146	14	基準価格	数値	○	-	-	※カスタマイズ対応、新規項目を設置、処理概要を参照。
+148:L0147	15	買取価格	数値	○	-	-
+149:L0148	16	代表画像	数値	-	-	-
+150:L0149	17	画像表示	画像	-	-	-	※カスタマイズ対応、画像右上の「×」を除去、この画面で画像を削除できないようにする。
+151:L0150	画像の表示自体は現行踏襲。
+152:L0151	18	帯URL	半角英数	-	-	-
+153:L0152	19	高額商品コード	半角英数	-	-	-
+154:L0153	20	下代	数値	-	-	-
+155:L0154	21	状態別称	半角・全角	-	-	-	※カスタマイズ対応、名称を備考から変更
+156:L0155	22	部門	数値	○	-	-	※カスタマイズ対応 入力必須とする
+157:L0156	商品規格の部門はスマレジ用、店頭買取管理用の部門とする
+158:L0157	23	棚番号	数値	-	-	-
+159:L0158	24	スマレジ連携フラグ	数値	-	-	-	※カスタマイズ対応、新規項目を設置、処理概要を参照。
+160:L0159	25	商品規格を削除	ボタン	-	-	-
+161:L0160	26	登録日	-	-	-	-
+162:L0161	27	更新日	-	-	-	-
+163:L0162	28	本日販売数	-	-	-	-
+164:L0163	29	前日販売数	-	-	-	-
+165:L0164	30	3日間販売数	-	-	-	-
+166:L0165	31	1週間販売数	-	-	-	-
+167:L0166	32	1ヶ月販売数	-	-	-	-
+168:L0167	33	90日間販売数	-	-	-	-
+169:L0168	34	180日間販売数	-	-	-	-
+170:L0169	35	365日間販売数	-	-	-	-
+171:L0170	36	商品規格一覧に戻る	テキストリンク	-	-	-	当該の商品規格一覧画面へ遷移
+172:L0171	37	公開ステータス	数値	-	-	-	※カスタマイズ対応、新規項目を設置、処理概要を参照。
+173:L0172	38	商品規格を登録	ボタン	-	-	-
+174:L0173	Source:
+175:L0174	functions/pf-eccube3/m03-09_admin_product_product_class_edit.md
+176:L0175	現行仕様
+177:L0176	M03-09 商品規格登録/編集 / 商品管理 — 商品規格登録/編集
+178:L0177	業務ロジック
+179:L0178	規格の登録・編集画面を表示する
+180:L0179	利用者が新規登録画面または編集画面を開く。
+181:L0180	商品IDから商品付加情報を読み込み、見つからなければ見つからない（HTTP404）とする。
+182:L0181	編集（規格IDあり）では、指定商品に属する当該規格を読み込み、見つからなければ見つからない（HTTP404）とする。新規（規格IDなし）では未登録の規格を用意する。
+183:L0182	代表画像の選択肢には当該商品に登録済みの画像を並べ、当該規格に紐づく画像を現行の並び順で初期選択にする。
+184:L0183	編集時かつ規格が削除可能な場合だけ、削除ボタンを表示する。
+185:L0184	規格を更新する
+186:L0185	利用者が商品規格を登録ボタンを押下する。
+187:L0186	入力値の検証に失敗した場合は「登録できませんでした。」を表示し、同じ画面を再表示する。
+188:L0187	検証に合格した場合、規格の内容を保存する。
+189:L0188	画像の紐づけは、送信された代表画像と並び順で作り直す。送信されなかった画像の紐づけは残らない。
+190:L0189	販売価格または買取価格が変更されている場合だけ、価格履歴を記録する。
+191:L0190	規格の更新日時を現在時刻にする。
+192:L0191	支店システムへ当該商品の更新を通知する。
+193:L0192	「登録が完了しました。」の成功フラッシュを設定し、同じ規格の編集画面へリダイレクトする。
+194:L0193	販売価格と買取価格の関係
+195:L0194	販売価格が買取価格を下回る場合は検証エラーとし、販売価格欄の直下に、買取価格の値を差し込んだ「販売価格は買取価格「（買取価格）」以上を指定してください。」を表示する。
+196:L0195	このとき規格は更新されず、「登録できませんでした。」とともに同じ画面を再表示する。
+197:L0196	規格を削除する
+198:L0197	当該商品の規格が最後の1件のときは削除せず、不正要求（HTTP400）とする。
+199:L0198	規格を論理削除する。
+200:L0199	支店システムへ当該商品の更新を通知し、当該商品の規格一覧へリダイレクトする。
+201:L0200	登録日・更新日と期間別販売数の表示
+202:L0201	項目	表示
+203:L0202	登録日・更新日	新規登録時・編集時のいずれでも表示する。
+204:L0203	期間別の販売数（本日・前日・3日間・1週間・1ヶ月・90日間・180日間・365日間）	編集時だけ表示し、新規登録時は表示しない。集計済みの値の読み取り表示で、この画面からは変更できない。
+205:L0204	入出力
+206:L0205	入力と出力
+207:L0206	種類	内容
+208:L0207	入力	GETは商品ID（編集時は加えて規格ID）。POSTは規格の入力項目一式とCSRFトークン、およびmultipartで送る画像関連の隠しフィールド（代表画像の選択と並び順）。
+209:L0208	成功時出力	規格・価格履歴の更新、成功フラッシュ、同じ規格の編集画面への302リダイレクト。
+210:L0209	失敗時出力	検証失敗時は200で同じ画面を再描画し「登録できませんでした。」を表示する。
+211:L0210	リニューアル後の仕様
+212:L0211	表示メッセージ
+213:L0212	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+214:L0213	—	画面上部のフラッシュ領域	登録が完了しました。	規格更新が成功し編集画面へリダイレクトしたとき。キー。	—
+215:L0214	—	画面上部のフラッシュ領域	登録できませんでした。	フォーム検証に失敗したとき。キー。	—
+216:L0215	—	在庫無制限欄の直下	在庫数を入力、もしくは在庫無制限を設定してください。	在庫数も在庫無制限も未設定のとき。キー。	—
+217:L0216	M03-09-MSG-001	入力項目付近	数字で入力してください。	販売制限数に数字以外を入力して送信したとき	送信されず、該当項目付近にエラーを表示（画面に留まる）
+218:L0217	M03-09-MSG-002	入力項目付近	数字と小数点のみ入力できます。	税率に数字または小数点以外を入力して送信したとき	送信されず、該当項目付近にエラーを表示（画面に留まる）
+219:L0218	M03-09-MSG-003	入力項目直下	半角文字のみ使用可能です。	商品規格コードに半角文字以外を入力して登録または更新したとき	M03-09（商品規格登録/編集）画面に留まる
+220:L0219	M03-09-MSG-004	入力項目直下	数字で入力してください。	販売制限数に数字以外を入力して登録または更新したとき	M03-09（商品規格登録/編集）画面に留まる
+221:L0220	M03-09-MSG-005	入力項目直下	数字で入力してください。	販売価格に数字以外を入力して登録または更新したとき	M03-09（商品規格登録/編集）画面に留まる
+222:L0221	M03-09-MSG-006	入力項目直下	数字と小数点のみ入力できます。	税率に数字または小数点以外を入力して登録または更新したとき	M03-09（商品規格登録/編集）画面に留まる
+223:L0222	M03-09-MSG-007	入力項目直下	数字で入力してください。	標準価格に数字以外を入力して登録または更新したとき	M03-09（商品規格登録/編集）画面に留まる
+224:L0223	M03-09-MSG-008	入力項目直下	数字で入力してください。	仕入価格に数字以外を入力して登録または更新したとき	M03-09（商品規格登録/編集）画面に留まる
+225:L0224	M03-09-MSG-009	入力項目直下	数字で入力してください。	卸売価格に数字以外を入力して登録または更新したとき	M03-09（商品規格登録/編集）画面に留まる
+
+exec
+/bin/bash -lc 'cut -f 1,2,3,4 integration_test/casegen/combination/cases/M03-09_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cut -f 1,11,13 integration_test/casegen/combination/cases/M03-09_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cut -f 1,2,3 integration_test/casegen/combination/combos/M03-09.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '1,70p' integration_test/casegen/combination/units/_common/0204_sheet-65.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 46ms:
+項目ID	扱い	テストID	理由
+CB-M03-09-001	ケース化	IT-M03-09-106	セールフラグがチェックありのとき販売価格は入力値のまま保存される（L0086）。入力値が基準価格と同じ700なので保存される販売価格は700で基準価格と同じ。基準価格の上書きは行われない
+CB-M03-09-002	ケース化	IT-M03-09-107	公開ステータスを公開または非公開で保存するときは在庫確認を行わない（L0092は「廃止」で更新するタイミングに限る）。在庫0でスマレジ登録済みの規格を非公開へ保存できることを確かめる
+CB-M03-09-003	ケース化	IT-M03-09-108	在庫が両方0でスマレジ未登録の規格は廃止で保存できる（L0071・L0092-L0093）。廃止済みは以降変更不可になる（L0091）
+CB-M03-09-004	ケースにしない		作れない組。スマレジ在庫はスマレジ側の在庫（L0071・L0092「EC-CUBE・スマレジどちらの在庫も確認」）で、スマレジに登録されていない規格にはスマレジ在庫が存在しない。要因表の制約に足すべき組: F08=1以上&F13=未登録
+CB-M03-09-005	ケース化	IT-M03-09-110	廃止で保存するときEC-CUBE在庫が1以上ならスマレジ在庫・登録状況によらず在庫が存在する旨のエラーを返す（L0092-L0093）。スマレジ在庫は0、未登録で確かめる
+CB-M03-09-006	ケース化	IT-M03-09-111	廃止で保存するときスマレジ在庫が1以上ならEC-CUBE在庫によらず在庫が存在する旨のエラーを返す（L0092-L0093）。EC-CUBE在庫は0で確かめる
+CB-M03-09-007	ケース化	IT-M03-09-112	廃止にするときスマレジに登録済みならスマレジの商品を削除する（_common/0204_sheet-65 L0059「商品規格のステータスが廃止になった場合、スマレジに登録済みの場合は削除を行う」）。削除はスマレジ試験環境の管理画面で確かめる
+CB-M03-09-008	ケース化	IT-M03-09-113	公開または非公開で保存するときは在庫確認を行わず、スマレジ在庫が1以上でも保存できる（L0092の在庫確認は廃止で更新するタイミングに限る）
+CB-M03-09-009	ケース化	IT-M03-09-114	公開または非公開で保存するときは在庫確認を行わず、EC-CUBE在庫が1以上でも保存できる（L0092）
+CB-M03-09-010	既存ケースで確認済み	IT-M03-09-047	変更前が廃止の規格は公開ステータスを変更できない（L0067・L0091）。IT-M03-09-047は事前準備に公開ステータス廃止の規格を書き、手順2で編集画面の公開ステータスが廃止で読み取り表示され変更できないことを確認している。ほかの要因は結果に効かない（打ち切り）
+CB-M03-09-011	ケース化	IT-M03-09-116	スマレジ在庫が0なら連携フラグをOFFにして保存できる（L0109）
+CB-M03-09-012	ケース化	IT-M03-09-117	連携フラグをOFFにしない保存は、スマレジ在庫が0でもそのまま保存される（L0109はOFFにする場合の制御）
+CB-M03-09-013	ケース化	IT-M03-09-118	スマレジに在庫が1つでもあれば連携フラグをOFFにできない（L0109）。OFFにしようとして保存できないことを確かめる
+CB-M03-09-014	ケース化	IT-M03-09-119	連携フラグをOFFにしない保存は、スマレジ在庫が1以上でもそのまま保存される（L0109はOFFにする場合の制御）
+CB-M03-09-015	ケース化	IT-M03-09-120	連携するでシングルカードのスマレジ商品コードは自動採番で、コードがあるときはそのコードで連携する（L0127-L0129）。保存後もコードが変わらないことをDBで確かめる
+CB-M03-09-016	ケース化	IT-M03-09-121	連携するにしたときスマレジ商品コードが無いとエラーとする（L0128）。シングルカード以外なので自動採番は行われない（L0129）
+CB-M03-09-017	ケース化	IT-M03-09-122	シングルカードで連携するかつスマレジ商品コードが無いときは自動採番を行う（L0129）。採番された値そのものは設計書に定めが無いため、空でない数値で保存されることまでを期待結果にする
+CB-M03-09-018	ケース化	IT-M03-09-123	シングルカード以外でスマレジ商品コードがあるときは、そのコードで連携する（L0127-L0128）。保存後もコードが変わらないことをDBで確かめる
+CB-M03-09-019	ケース化	IT-M03-09-124	連携しないが選択されているときはスマレジと連携しない（L0104）。シングルカードでもスマレジ商品コードの自動採番は行われず空のまま保存される（L0129は連携フラグONの場合）
+CB-M03-09-020	ケースにしない		シングルカードのスマレジ商品コード欄は読み取り専用で、画面からスマレジ商品コードだけを変更する操作を作れない（設計書の画面項目定義 識別ID4「シングルカードの場合は読み取り専用、その他の場合は編集可能とする」L0127）。要因表の制約に足すべき組: F11=シングルカード&F15=スマレジ商品コードだけ変更
+CB-M03-09-021	ケース化	IT-M03-09-125	設計書の記述から結果が一意に決まる
+CB-M03-09-022	ケース化	IT-M03-09-126	設計書の記述から結果が一意に決まる
+CB-M03-09-023	ケース化	IT-M03-09-127	設計書の記述から結果が一意に決まる
+CB-M03-09-024	ケース化	IT-M03-09-128	設計書の記述から結果が一意に決まる
+CB-M03-09-025	ケース化	IT-M03-09-129	設計書の記述から結果が一意に決まる
+CB-M03-09-026	ケース化	IT-M03-09-130	設計書の記述から結果が一意に決まる
+CB-M03-09-027	ケース化	IT-M03-09-131	設計書の記述から結果が一意に決まる
+CB-M03-09-028	ケース化	IT-M03-09-132	設計書の記述から結果が一意に決まる
+CB-M03-09-029	ケースにしない		シングルカードのスマレジ商品コード欄は読み取り専用で、画面からスマレジ商品コードだけを変更する操作を作れない（設計書の画面項目定義 識別ID4「シングルカードの場合は読み取り専用、その他の場合は編集可能とする」L0127）。要因表の制約に足すべき組: F11=シングルカード&F15=スマレジ商品コードだけ変更
+CB-M03-09-030	ケース化	IT-M03-09-133	設計書の記述から結果が一意に決まる
+CB-M03-09-031	ケース化	IT-M03-09-134	設計書の記述から結果が一意に決まる
+
+ succeeded in 42ms:
+テストID	期待結果	項目ID
+IT-M03-09-106	商品規格ID 〔商品規格ID-M0309-106〕の販売価格が700、基準価格が700で保存されること	CB-M03-09-001
+IT-M03-09-107	「登録が完了しました。」が表示され、商品規格編集画面の公開ステータスが非公開で表示されること	CB-M03-09-002
+IT-M03-09-108	「登録が完了しました。」が表示され、商品規格編集画面の公開ステータスが廃止で読み取り表示されること	CB-M03-09-003
+IT-M03-09-110	在庫が存在する旨のエラーが表示され、開き直した商品規格編集画面の公開ステータスが公開のままであること	CB-M03-09-005
+IT-M03-09-111	在庫が存在する旨のエラーが表示され、開き直した商品規格編集画面の公開ステータスが公開のままであること	CB-M03-09-006
+IT-M03-09-112	スマレジ試験環境の管理画面に、スマレジ商品コード830911121の商品が表示されないこと	CB-M03-09-007
+IT-M03-09-113	「登録が完了しました。」が表示され、商品規格編集画面の公開ステータスが非公開で表示されること	CB-M03-09-008
+IT-M03-09-114	「登録が完了しました。」が表示され、商品規格編集画面の公開ステータスが非公開で表示されること	CB-M03-09-009
+IT-M03-09-116	「登録が完了しました。」が表示され、商品規格編集画面のスマレジ連携フラグが連携しないで表示されること	CB-M03-09-011
+IT-M03-09-117	「登録が完了しました。」が表示され、商品規格編集画面のスマレジ連携フラグが連携するのままで表示されること	CB-M03-09-012
+IT-M03-09-118	スマレジに在庫があるため連携をOFFにできない旨のエラーが表示され、開き直した商品規格編集画面のスマレジ連携フラグが連携するのままであること	CB-M03-09-013
+IT-M03-09-119	「登録が完了しました。」が表示され、商品規格編集画面のスマレジ連携フラグが連携するのままで表示されること	CB-M03-09-014
+IT-M03-09-120	商品規格ID 〔商品規格ID-M0309-120〕のスマレジ商品コードが830911201、スマレジ連携フラグが連携するで保存されること	CB-M03-09-015
+IT-M03-09-121	スマレジ商品コードの入力が必要である旨のエラーが商品規格編集画面に表示されること	CB-M03-09-016
+IT-M03-09-122	商品規格ID 〔商品規格ID-M0309-122〕のスマレジ商品コードに6桁の数字の自動採番コードが保存され、スマレジ連携フラグが連携するで保存されること	CB-M03-09-017
+IT-M03-09-123	商品規格ID 〔商品規格ID-M0309-123〕のスマレジ商品コードが830911231、スマレジ連携フラグが連携するで保存されること	CB-M03-09-018
+IT-M03-09-124	商品規格ID 〔商品規格ID-M0309-124〕のスマレジ商品コードが空のまま、スマレジ連携フラグが連携しないで保存されること	CB-M03-09-019
+IT-M03-09-125	スマレジ試験環境の商品コード83091251の商品の商品単価が777円のままであること	CB-M03-09-021
+IT-M03-09-126	スマレジ試験環境の商品コード〔スマレジ商品コード-M0309-126〕の商品の商品単価が600円になること	CB-M03-09-022
+IT-M03-09-127	スマレジ試験環境に商品コード83091272の商品が1件登録され、商品単価が500円であること	CB-M03-09-023
+IT-M03-09-128	スマレジ試験環境に商品コード83091281の商品が0件であること	CB-M03-09-024
+IT-M03-09-129	スマレジ試験環境に手順4で控えた番号を商品コードとする商品が1件登録され、商品単価が500円であること	CB-M03-09-025
+IT-M03-09-130	スマレジ試験環境に商品コード83091301の商品が0件であること	CB-M03-09-026
+IT-M03-09-131	スマレジ試験環境に商品コード83091311の商品が0件であること	CB-M03-09-027
+IT-M03-09-132	スマレジ試験環境の商品コード〔スマレジ商品コード-M0309-132〕の商品の商品単価が600円になること	CB-M03-09-028
+IT-M03-09-133	スマレジ試験環境の商品コード83091331の商品の商品単価が500円になること	CB-M03-09-030
+IT-M03-09-134	スマレジ試験環境に商品コード83091341の商品が1件登録され、商品単価が600円であること	CB-M03-09-031
+
+ succeeded in 38ms:
+組ID	処理ID	組
+CB-M03-09-001	P1	F01=チェックあり&F02=同じ
+CB-M03-09-002	P3	F05=廃止以外&F06=公開または非公開&F07=0&F08=0&F13=登録済み
+CB-M03-09-003	P3	F05=廃止以外&F06=廃止&F07=0&F08=0&F13=未登録
+CB-M03-09-004	P3	F05=廃止以外&F06=公開または非公開&F07=1以上&F08=1以上&F13=未登録
+CB-M03-09-005	P3	F06=廃止&F07=1以上
+CB-M03-09-006	P3	F06=廃止&F08=1以上
+CB-M03-09-007	P3	F05=廃止以外&F06=廃止&F07=0&F08=0&F13=登録済み
+CB-M03-09-008	P3	F05=廃止以外&F06=公開または非公開&F07=0&F08=1以上&F13=登録済み
+CB-M03-09-009	P3	F05=廃止以外&F06=公開または非公開&F07=1以上&F08=0&F13=登録済み
+CB-M03-09-010	P3	F05=廃止
+CB-M03-09-011	P4	F08=0&F09=OFFにする
+CB-M03-09-012	P4	F08=0&F09=OFFにしない
+CB-M03-09-013	P4	F08=1以上&F09=OFFにする
+CB-M03-09-014	P4	F08=1以上&F09=OFFにしない
+CB-M03-09-015	P5	F10=連携する&F11=シングルカード&F12=あり
+CB-M03-09-016	P5	F10=連携する&F11=シングルカード以外&F12=なし
+CB-M03-09-017	P5	F10=連携する&F11=シングルカード&F12=なし
+CB-M03-09-018	P5	F10=連携する&F11=シングルカード以外&F12=あり
+CB-M03-09-019	P5	F10=連携しない
+CB-M03-09-020	P6	F06=公開または非公開&F11=シングルカード&F14=連携するのまま保存&F15=スマレジ商品コードだけ変更
+CB-M03-09-021	P6	F06=公開または非公開&F14=連携するのまま保存&F15=変更なし
+CB-M03-09-022	P6	F06=公開または非公開&F11=シングルカード&F13=登録済み&F14=連携するに変更して保存&F15=部門コード・商品コード・基準価格のいずれかに変更あり
+CB-M03-09-023	P6	F06=公開または非公開&F11=シングルカード以外&F13=未登録&F14=連携するのまま保存&F15=スマレジ商品コードだけ変更
+CB-M03-09-024	P6	F06=公開または非公開&F14=連携しないで保存
+CB-M03-09-025	P6	F06=公開または非公開&F11=シングルカード&F13=未登録&F14=連携するに変更して保存&F15=変更なし
+CB-M03-09-026	P6	F06=廃止&F13=登録済み
+CB-M03-09-027	P6	F06=廃止&F13=未登録
+CB-M03-09-028	P6	F06=公開または非公開&F11=シングルカード&F13=登録済み&F14=連携するのまま保存&F15=部門コード・商品コード・基準価格のいずれかに変更あり
+CB-M03-09-029	P6	F06=公開または非公開&F11=シングルカード&F13=登録済み&F14=連携するに変更して保存&F15=スマレジ商品コードだけ変更
+CB-M03-09-030	P6	F06=公開または非公開&F11=シングルカード以外&F13=登録済み&F14=連携するに変更して保存&F15=変更なし
+CB-M03-09-031	P6	F06=公開または非公開&F11=シングルカード以外&F13=未登録&F14=連携するに変更して保存&F15=部門コード・商品コード・基準価格のいずれかに変更あり
+
+ succeeded in 37ms:
+##### 0204 sheet-65 別添資料__スマレジ連携対象商品
+L0001	別添資料__スマレジ連携対象商品
+L0002	1. スマレジ連携対象商品について
+L0003	[概要]
+L0004	①商品規格単位でスマレジに商品情報の連携を行う
+L0005	②商品規格単位でスマレジ連携フラグを持ち、スマレジ連携フラグがONの場合に連携を行う
+L0006	③シングルカードでは自動でスマレジ連携フラグがONになる条件がある
+L0007	④シングルカードの場合は規格編集画面でスマレジ連携フラグを手動でON/OFFできる
+L0008	⑤シングルカード以外の場合は規格編集画面とグッズ商品CSV登録画面でスマレジ連携フラグを手動でON/OFFできる
+L0009	商品の種別 連携対象
+L0010	シングルカード [自動判定条件]
+L0011	・基準価格が300円以上かつ状態がSP、MP、HP、その他規格である場合は自動でスマレジ連携フラグがONになる
+L0012	[スマレジ連携フラグについて]
+L0013	・商品規格編集画面でスマレジ連携フラグを手動でONにした場合は上記の条件によらず強制的に連携する（NMでも300円未満でも連携する）
+L0014	・新規登録時や更新時、一度でも連携条件（基準価格が300円以上かつ状態がSP、MP、HP、その他規格）を満たせば、フラグを手動でOFFにしない限りは条件を満たさなくなっても連携され続ける
+L0015	閾値は保守の範囲で設定変更できるようにしたい
+L0016	シングルカード以外 ・連携対象の商品について、商品規格編集画面またはグッズ商品CSV登録画面でスマレジ連携フラグを手動で立てた商品規格のみ連携を行う
+L0017	共通の条件 ・商品の状態が公開または非公開
+L0018	・商品規格の状態が公開または非公開
+L0019	2. スマレジ連携操作について
+L0020	・スマレジには商品規格の新規登録/更新/削除を行う
+L0021	スマレジ操作	機能	連携内容	スマレジ連携フラグ変更
+L0022	新規登録/更新	商品編集	・商品名が更新された場合に、スマレジに対して商品名の更新を行う
+L0023	・連携を行うのは紐付く商品規格のスマレジ連携フラグがONの場合に限る
+L0024	※商品編集画面での更新の場合、スマレジ連携フラグのON/OFFは行わない
+L0025	（スマレジ連携フラグは商品規格ごとに持つ、かつ商品編集画面ではシングルカードのスマレジ連携の条件である価格を変更しないため）
+L0026	※スマレジ連携フラグのON/OFFがないため、商品編集画面でスマレジへの商品規格新規登録は発生しない	なし
+L0027		規格登録	規格登録画面でスマレジ連携フラグの変更を可能とする
+L0028	スマレジ連携フラグをONに変更した場合は連携を行う
+L0029	シングルカードの場合
+L0030	部門コード、商品コードまたは基準価格に変更があった場合、スマレジ連携を行う
+L0031	価格の変更については、300円以上に更新された場合にスマレジ連携フラグをONにする
+L0032	「閾値(300円)をまたぐ価格変更がされたので、スマレジ連携フラグを確認してください」というポップアップを出す
+L0033	シングルカード以外の場合
+L0034	部門コード、商品コード、スマレジ商品コードまたは基準価格に変更があった場合、スマレジ連携を行う
+L0035	どちらの場合もスマレジに商品規格が存在してれば更新、なければ新規登録とする
+L0036	スマレジに在庫がある場合にはスマレジ連携フラグをOFFにできないよう制御を入れる
+L0037		手動
+L0038		カード商品CSV登録	基準価格が300円以上かつ状態がSP、MP、HP、その他規格である場合は自動でスマレジ連携フラグがONになる
+L0039	（カード商品CSV登録ではスマレジ連携フラグを指定することはできない）
+L0040	スマレジ連携フラグがONかつ商品名、基準価格に変更があった場合、スマレジ連携を行う
+L0041	（カード商品CSV登録では部門を指定することはできない）
+L0042	スマレジに商品規格が存在してれば更新、なければ新規登録とする	自動
+L0043		グッズ商品CSV登録	グッズ商品CSV登録画面でスマレジ連携フラグの変更を可能とする
+L0044	スマレジ連携フラグがONかつ商品名、部門コード、基準価格、商品コード、スマレジ商品コードに変更があった場合、スマレジ連携を行う
+L0045	スマレジに商品規格が存在してれば更新、なければ新規登録とする	手動
+L0046		部門更新CSV登録	スマレジ連携フラグが立っているかつ部門更新があった場合、連携を行う	なし
+L0047		買取・基準価格一括編集	シングルカードの場合
+L0048	スマレジ連携フラグが立っているかつ基準価格に変更があった場合、スマレジ連携を行う
+L0049	基準価格の変更については、300円以上に更新された場合にスマレジ連携フラグをONにする
+L0050	シングルカード以外の場合
+L0051	スマレジ連携フラグが立っているかつ価格に変更があった場合、スマレジ連携を行う	シングルカードの場合のみ自動
+L0052	その他はなし
+L0053		価格変更CSV登録	買取・基準価格一括編集と同様	シングルカードの場合のみ自動
+L0054		セール用価格変更CSV登録	買取・基準価格一括編集と同様	シングルカードの場合のみ自動 セール価格は連携しないため不要
+L0055		高額商品価格変更CSV登録	買取・基準価格一括編集と同様	シングルカードの場合のみ自動
+L0056		セール用高額商品価格変更CSV登録	買取・基準価格一括編集と同様	シングルカードの場合のみ自動 セール価格は連携しないため不要
+L0057		低価格帯カード価格変更CSV登録	買取・基準価格一括編集と同様	シングルカードの場合のみ自動
+L0058	削除	商品編集	商品公開ステータスが廃止になった場合、紐付く商品規格についてスマレジに登録済みの場合削除を行う	なし
+L0059		規格登録	商品規格のステータスが廃止になった場合、スマレジに登録済みの場合は削除を行う	なし
+L0060		カード商品CSV登録	商品編集と同様	なし
+L0061		グッズ商品CSV登録	商品編集と同様	なし
+L0062	※廃止ステータスになる場合は各機能（商品編集やCSV登録）で在庫のありなしのチェックを行うため、スマレジに在庫があるのにスマレジの商品が削除されることはない
+L0063	3. スマレジ商品IDについて
+L0064	スマレジに登録した商品についてはECCUBE側の商品規格にスマレジ商品IDを保持する
+L0065	4. 手動でスマレジ連携フラグをON/OFFした際の自動判定との関係
+L0066	更新時の自動判定（価格の変更がある場合かつ主にCSV登録自動判定を行う）
+L0067		自動判定条件満たさない→満たす	自動判定条件満たす→満たさない	自動判定条件満たさない→満たさない	自動判定条件満たす→満たす
+L0068	手動でフラグON	連携する	連携する(自動でフラグOFFにしない)	連携する（フラグはONのまま）	連携する
+L0069	手動でフラグOFF	連携する(自動でフラグONにする)	連携しない	連携しない	連携する(自動でフラグONにする)
+
+codex
+M03-09は31組あり、廃止時の在庫判定、連携フラグ、スマレジへの登録・更新が別の処理として並んでいます。ケースの前提値と操作を組ごとに追い、特に連携先の商品を事前に作れるか、操作後の期待値が設計書から決まるかを確認します。
+exec
+/bin/bash -lc "sed -n '12,21p' integration_test/casegen/combination/cases/M03-09_cb_test_cases.tsv | cut -f 1,8,9,10,11" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-M03-09-118	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBOFFSTK3-118	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-118〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-118〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911181でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫3である（S-M03-09-CBOFFSTK3-118）	1. 商品ID 〔商品ID-M0309-118〕・商品規格ID 〔商品規格ID-M0309-118〕の編集画面を開く／2. スマレジ連携フラグを連携しないに変更する／3. 商品規格を登録ボタンを押す／4. 商品規格編集画面のエラー表示を確認する／5. 商品ID 〔商品ID-M0309-118〕・商品規格ID 〔商品規格ID-M0309-118〕の編集画面を開き直し、スマレジ連携フラグを確認する	スマレジに在庫があるため連携をOFFにできない旨のエラーが表示され、開き直した商品規格編集画面のスマレジ連携フラグが連携するのままであること
+IT-M03-09-119	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBKEEPSTK3-119	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-119〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-119〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911191でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫3である（S-M03-09-CBKEEPSTK3-119）	1. 商品ID 〔商品ID-M0309-119〕・商品規格ID 〔商品規格ID-M0309-119〕の編集画面を開く／2. 販売制限数に10を入力する（スマレジ連携フラグは連携するのままにする）／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面のスマレジ連携フラグが連携するのままで表示されること
+IT-M03-09-120	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBSGCODE-120	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-120〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-120〕（登録時に振られた商品規格IDを控えてある）はシングルカード（カード指定あり）で、公開ステータス公開、スマレジ連携しない、スマレジ商品コードは830911201で登録済み、部門10、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBSGCODE-120）	1. 商品ID 〔商品ID-M0309-120〕・商品規格ID 〔商品規格ID-M0309-120〕の編集画面を開く／2. スマレジ連携フラグを連携するに変更する／3. 商品規格を登録ボタンを押す／4. DBで商品規格ID 〔商品規格ID-M0309-120〕のスマレジ商品コードとスマレジ連携フラグを確認する	商品規格ID 〔商品規格ID-M0309-120〕のスマレジ商品コードが830911201、スマレジ連携フラグが連携するで保存されること
+IT-M03-09-121	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBGDNOCODE-121	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-121〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-121〕（登録時に振られた商品規格IDを控えてある）はシングルカードではない（カード指定なし）で、公開ステータス公開、スマレジ連携しない、スマレジ商品コードは空、部門10、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBGDNOCODE-121）	1. 商品ID 〔商品ID-M0309-121〕・商品規格ID 〔商品規格ID-M0309-121〕の編集画面を開く／2. スマレジ連携フラグを連携するに変更する／3. 商品規格を登録ボタンを押す／4. 商品規格編集画面のエラー表示を確認する	スマレジ商品コードの入力が必要である旨のエラーが商品規格編集画面に表示されること
+IT-M03-09-122	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBSGNOCODE-122	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-122〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-122〕（登録時に振られた商品規格IDを控えてある）はシングルカード（カード指定あり）で、公開ステータス公開、スマレジ連携しない、スマレジ商品コードは空、部門10、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBSGNOCODE-122）	1. 商品ID 〔商品ID-M0309-122〕・商品規格ID 〔商品規格ID-M0309-122〕の編集画面を開く／2. スマレジ連携フラグを連携するに変更する／3. 商品規格を登録ボタンを押す／4. DBで商品規格ID 〔商品規格ID-M0309-122〕のスマレジ商品コードとスマレジ連携フラグを確認する	商品規格ID 〔商品規格ID-M0309-122〕のスマレジ商品コードに6桁の数字の自動採番コードが保存され、スマレジ連携フラグが連携するで保存されること
+IT-M03-09-123	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBGDCODE-123	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-123〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-123〕（登録時に振られた商品規格IDを控えてある）はシングルカードではない（カード指定なし）で、公開ステータス公開、スマレジ連携しない、スマレジ商品コードは830911231で登録済み、部門10、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBGDCODE-123）	1. 商品ID 〔商品ID-M0309-123〕・商品規格ID 〔商品規格ID-M0309-123〕の編集画面を開く／2. スマレジ連携フラグを連携するに変更する／3. 商品規格を登録ボタンを押す／4. DBで商品規格ID 〔商品規格ID-M0309-123〕のスマレジ商品コードとスマレジ連携フラグを確認する	商品規格ID 〔商品規格ID-M0309-123〕のスマレジ商品コードが830911231、スマレジ連携フラグが連携するで保存されること
+IT-M03-09-124	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBSGOFF-124	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ 商品ID 〔商品ID-M0309-124〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-124〕（登録時に振られた商品規格IDを控えてある）はシングルカード（カード指定あり）で、公開ステータス公開、スマレジ連携しない、スマレジ商品コードは空、部門10、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBSGOFF-124）	1. 商品ID 〔商品ID-M0309-124〕・商品規格ID 〔商品規格ID-M0309-124〕の編集画面を開く／2. 販売制限数に10を入力する（スマレジ連携フラグは連携しないのままにする）／3. 商品規格を登録ボタンを押す／4. DBで商品規格ID 〔商品規格ID-M0309-124〕のスマレジ商品コードとスマレジ連携フラグを確認する	商品規格ID 〔商品規格ID-M0309-124〕のスマレジ商品コードが空のまま、スマレジ連携フラグが連携しないで保存されること
+IT-M03-09-125	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBSMAENV,S-M03-09-CBKEEP-125	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-125〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-125〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091251、スマレジ商品ID 〔スマレジ商品ID-M0309-125〕（登録時に画面に表示された番号を控えてある）、スマレジ連携する、部門10、基準価格500、販売制限数は空、公開ステータス非公開である。スマレジ試験環境の商品コード83091251の商品は商品単価777である（S-M03-09-CBKEEP-125）	1. 商品ID 〔商品ID-M0309-125〕・商品規格ID 〔商品規格ID-M0309-125〕の商品規格登録/編集画面を開く／2. 販売制限数に5を入力する（スマレジ連携フラグは連携する、公開ステータスは非公開、部門は10、スマレジ商品コード、基準価格は変更しない）／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091251」の商品を開き、商品単価を確認する	スマレジ試験環境の商品コード83091251の商品の商品単価が777円のままであること
+IT-M03-09-126	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBSMAENV,S-M03-09-CBFLAGON-126	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-126〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-126〕（登録時に振られた商品規格IDを控えてある）はシングルカードで、スマレジ商品コード 〔スマレジ商品コード-M0309-126〕（スマレジに登録した時に自動採番された番号を控えてある）、スマレジ商品ID 〔スマレジ商品ID-M0309-126〕（登録時に画面に表示された番号を控えてある）、スマレジ連携しない、部門10、基準価格500、販売価格500、公開ステータス公開である。スマレジ試験環境の商品コード 〔スマレジ商品コード-M0309-126〕の商品は商品単価500である（S-M03-09-CBFLAGON-126）	1. シングルカードの商品ID 〔商品ID-M0309-126〕・商品規格ID 〔商品規格ID-M0309-126〕の商品規格登録/編集画面を開く／2. スマレジ連携フラグを連携しないから連携するに変更し、基準価格に600、販売価格に600を入力する／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード〔スマレジ商品コード-M0309-126〕の商品を開き、商品単価を確認する	スマレジ試験環境の商品コード〔スマレジ商品コード-M0309-126〕の商品の商品単価が600円になること
+IT-M03-09-127	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBSMAENV,S-M03-09-CBCODE-127	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-127〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-127〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091271、スマレジ連携する、スマレジ商品IDなし（スマレジに未登録）、部門10、基準価格500、公開ステータス公開である。スマレジ試験環境に商品コード83091271・83091272の商品は無い（S-M03-09-CBCODE-127）	1. 商品ID 〔商品ID-M0309-127〕・商品規格ID 〔商品規格ID-M0309-127〕の商品規格登録/編集画面を開く／2. スマレジ商品コードを83091271から83091272に変更する（スマレジ連携フラグは連携するのまま、部門と基準価格は変更しない）／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091272」の商品を開き、商品単価を確認する	スマレジ試験環境に商品コード83091272の商品が1件登録され、商品単価が500円であること
+
+exec
+/bin/bash -lc "sed -n '2,11p' integration_test/casegen/combination/cases/M03-09_cb_test_cases.tsv | cut -f 1,8,9,10,11" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '22,28p' integration_test/casegen/combination/cases/M03-09_cb_test_cases.tsv | cut -f 1,8,9,10,11" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-M03-09-106	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBSALEON-106	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ 商品ID 〔商品ID-M0309-106〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-106〕（登録時に振られた商品規格IDを控えてある）は販売価格500、基準価格500、買取価格200、セールフラグ無効である（S-M03-09-CBSALEON-106）	1. 商品ID 〔商品ID-M0309-106〕・商品規格ID 〔商品規格ID-M0309-106〕の編集画面を開く／2. セールフラグを有効にし、販売価格に700、基準価格に700を入力する／3. 商品規格を登録ボタンを押す／4. DBで商品規格ID 〔商品規格ID-M0309-106〕の販売価格と基準価格を確認する	商品規格ID 〔商品規格ID-M0309-106〕の販売価格が700、基準価格が700で保存されること
+IT-M03-09-107	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBPUBREG-107	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-107〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-107〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911071でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBPUBREG-107）	1. 商品ID 〔商品ID-M0309-107〕・商品規格ID 〔商品規格ID-M0309-107〕の編集画面を開く／2. 公開ステータスを非公開に変更する／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面の公開ステータスが非公開で表示されること
+IT-M03-09-108	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBRETNOREG-108	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ 商品ID 〔商品ID-M0309-108〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-108〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携しない（スマレジ未登録）、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBRETNOREG-108）	1. 商品ID 〔商品ID-M0309-108〕・商品規格ID 〔商品規格ID-M0309-108〕の編集画面を開く／2. 公開ステータスを廃止に変更する／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面の公開ステータスが廃止で読み取り表示されること
+IT-M03-09-110	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBRETEC-110	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ 商品ID 〔商品ID-M0309-110〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-110〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携しない（スマレジ未登録）、EC-CUBE在庫（通販）5、スマレジ在庫0である（S-M03-09-CBRETEC-110）	1. 商品ID 〔商品ID-M0309-110〕・商品規格ID 〔商品規格ID-M0309-110〕の編集画面を開く／2. 公開ステータスを廃止に変更する／3. 商品規格を登録ボタンを押す／4. 商品規格編集画面のエラー表示を確認する／5. 商品ID 〔商品ID-M0309-110〕・商品規格ID 〔商品規格ID-M0309-110〕の編集画面を開き直し、公開ステータスを確認する	在庫が存在する旨のエラーが表示され、開き直した商品規格編集画面の公開ステータスが公開のままであること
+IT-M03-09-111	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBRETSMA-111	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-111〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-111〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911111でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫3である（S-M03-09-CBRETSMA-111）	1. 商品ID 〔商品ID-M0309-111〕・商品規格ID 〔商品規格ID-M0309-111〕の編集画面を開く／2. 公開ステータスを廃止に変更する／3. 商品規格を登録ボタンを押す／4. 商品規格編集画面のエラー表示を確認する／5. 商品ID 〔商品ID-M0309-111〕・商品規格ID 〔商品規格ID-M0309-111〕の編集画面を開き直し、公開ステータスを確認する	在庫が存在する旨のエラーが表示され、開き直した商品規格編集画面の公開ステータスが公開のままであること
+IT-M03-09-112	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBRETDEL-112	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-112〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-112〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911121でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBRETDEL-112）	1. 商品ID 〔商品ID-M0309-112〕・商品規格ID 〔商品規格ID-M0309-112〕の編集画面を開く／2. 公開ステータスを廃止に変更する／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面で、スマレジ商品コード830911121の商品を検索する	スマレジ試験環境の管理画面に、スマレジ商品コード830911121の商品が表示されないこと
+IT-M03-09-113	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBPUBSMA-113	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-113〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-113〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911131でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫3である（S-M03-09-CBPUBSMA-113）	1. 商品ID 〔商品ID-M0309-113〕・商品規格ID 〔商品規格ID-M0309-113〕の編集画面を開く／2. 公開ステータスを非公開に変更する／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面の公開ステータスが非公開で表示されること
+IT-M03-09-114	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBPUBEC-114	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-114〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-114〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911141でスマレジ試験環境に登録済み、EC-CUBE在庫（通販）5、スマレジ在庫0である（S-M03-09-CBPUBEC-114）	1. 商品ID 〔商品ID-M0309-114〕・商品規格ID 〔商品規格ID-M0309-114〕の編集画面を開く／2. 公開ステータスを非公開に変更する／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面の公開ステータスが非公開で表示されること
+IT-M03-09-116	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBOFFSTK0-116	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-116〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-116〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911161でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBOFFSTK0-116）	1. 商品ID 〔商品ID-M0309-116〕・商品規格ID 〔商品規格ID-M0309-116〕の編集画面を開く／2. スマレジ連携フラグを連携しないに変更する／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面のスマレジ連携フラグが連携しないで表示されること
+IT-M03-09-117	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBP1ENV,S-M03-09-CBKEEPSTK0-117	① 試験管理者でログインする（S-M03-09-ADM）／② 部門10を含む共通参照データが登録済みである（S-M03-09-MASTER）／③ ECCUBEのスマレジ接続がスマレジ試験環境を向いている（S-M03-09-CBP1ENV）／④ 商品ID 〔商品ID-M0309-117〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-117〕（登録時に振られた商品規格IDを控えてある）は公開ステータス公開、スマレジ連携する、スマレジ商品コード830911171でスマレジ試験環境に登録済み、EC-CUBE在庫0、スマレジ在庫0である（S-M03-09-CBKEEPSTK0-117）	1. 商品ID 〔商品ID-M0309-117〕・商品規格ID 〔商品規格ID-M0309-117〕の編集画面を開く／2. 販売制限数に10を入力する（スマレジ連携フラグは連携するのままにする）／3. 商品規格を登録ボタンを押す／4. 表示された商品規格編集画面を確認する	「登録が完了しました。」が表示され、商品規格編集画面のスマレジ連携フラグが連携するのままで表示されること
+
+ succeeded in 0ms:
+IT-M03-09-128	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBSMAENV,S-M03-09-CBOFF-128	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-128〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-128〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091281、スマレジ連携しない、スマレジ商品IDなし（スマレジに未登録）、部門10、基準価格500、販売価格500、公開ステータス公開である。スマレジ試験環境に商品コード83091281の商品は無い（S-M03-09-CBOFF-128）	1. 商品ID 〔商品ID-M0309-128〕・商品規格ID 〔商品規格ID-M0309-128〕の商品規格登録/編集画面を開く／2. 基準価格に600、販売価格に600を入力する（スマレジ連携フラグは連携しないのまま）／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091281」の商品を検索する	スマレジ試験環境に商品コード83091281の商品が0件であること
+IT-M03-09-129	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBSMAENV,S-M03-09-CBAUTO-129	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-129〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-129〕（登録時に振られた商品規格IDを控えてある）はシングルカードで、スマレジ商品コードは空、スマレジ連携しない、スマレジ商品IDなし（スマレジに未登録）、部門10、基準価格500、販売価格500、公開ステータス公開である（S-M03-09-CBAUTO-129）	1. シングルカードの商品ID 〔商品ID-M0309-129〕・商品規格ID 〔商品規格ID-M0309-129〕の商品規格登録/編集画面を開く／2. スマレジ連携フラグを連携しないから連携するに変更する（部門、基準価格、販売価格は変更しない）／3. 商品規格を登録ボタンを押す／4. 保存後の商品規格登録/編集画面のスマレジ商品コード欄に表示された番号を控え、スマレジ試験環境の管理画面の商品一覧でその番号を商品コードとする商品を開き、商品単価を確認する	スマレジ試験環境に手順4で控えた番号を商品コードとする商品が1件登録され、商品単価が500円であること
+IT-M03-09-130	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBSMAENV,S-M03-09-CBABOL-130	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-130〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-130〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091301、スマレジ商品ID 〔スマレジ商品ID-M0309-130〕（登録時に画面に表示された番号を控えてある）、スマレジ連携する、部門10、基準価格500、公開ステータス公開、EC-CUBE在庫0、スマレジ在庫0である。スマレジ試験環境に商品コード83091301の商品が1件ある（S-M03-09-CBABOL-130）	1. 商品ID 〔商品ID-M0309-130〕・商品規格ID 〔商品規格ID-M0309-130〕の商品規格登録/編集画面を開く／2. 公開ステータスを公開から廃止に変更する／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091301」の商品を検索する	スマレジ試験環境に商品コード83091301の商品が0件であること
+IT-M03-09-131	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBSMAENV,S-M03-09-CBABUN-131	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-131〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-131〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091311、スマレジ連携する、スマレジ商品IDなし（スマレジに未登録）、部門10、基準価格500、公開ステータス公開、EC-CUBE在庫0、スマレジ在庫0である。スマレジ試験環境に商品コード83091311の商品は無い（S-M03-09-CBABUN-131）	1. 商品ID 〔商品ID-M0309-131〕・商品規格ID 〔商品規格ID-M0309-131〕の商品規格登録/編集画面を開く／2. 公開ステータスを公開から廃止に変更する／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091311」の商品を検索する	スマレジ試験環境に商品コード83091311の商品が0件であること
+IT-M03-09-132	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBSMAENV,S-M03-09-CBTGT-132	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-132〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-132〕（登録時に振られた商品規格IDを控えてある）はシングルカードで、スマレジ商品コード 〔スマレジ商品コード-M0309-132〕（スマレジに登録した時に自動採番された番号を控えてある）、スマレジ商品ID 〔スマレジ商品ID-M0309-132〕（登録時に画面に表示された番号を控えてある）、スマレジ連携する、部門10、基準価格500、販売価格500、公開ステータス非公開である。スマレジ試験環境の商品コード 〔スマレジ商品コード-M0309-132〕の商品は商品単価500である（S-M03-09-CBTGT-132）	1. シングルカードの商品ID 〔商品ID-M0309-132〕・商品規格ID 〔商品規格ID-M0309-132〕の商品規格登録/編集画面を開く／2. 基準価格に600、販売価格に600を入力する（スマレジ連携フラグは連携するのまま、公開ステータスは非公開のまま）／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード〔スマレジ商品コード-M0309-132〕の商品を開き、商品単価を確認する	スマレジ試験環境の商品コード〔スマレジ商品コード-M0309-132〕の商品の商品単価が600円になること
+IT-M03-09-133	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBSMAENV,S-M03-09-CBFORCE-133	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-133〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-133〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091331、スマレジ商品ID 〔スマレジ商品ID-M0309-133〕（登録時に画面に表示された番号を控えてある）、スマレジ連携しない、部門10、基準価格500、公開ステータス公開である。スマレジ試験環境の商品コード83091331の商品は商品単価777である（S-M03-09-CBFORCE-133）	1. 商品ID 〔商品ID-M0309-133〕・商品規格ID 〔商品規格ID-M0309-133〕の商品規格登録/編集画面を開く／2. スマレジ連携フラグを連携しないから連携するに変更する（部門、スマレジ商品コード、基準価格は変更しない）／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091331」の商品を開き、商品単価を確認する	スマレジ試験環境の商品コード83091331の商品の商品単価が500円になること
+IT-M03-09-134	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-CBSMAENV,S-M03-09-CBNEWREG-134	① 試験管理者でログインする（S-M03-09-ADM）／② 本店、在庫場所、言語、状態、部門10・20が登録済みである（S-M03-09-MASTER）／③ ECCUBEがスマレジ試験環境へ接続でき、試験担当者がスマレジ試験環境の管理画面で商品一覧の確認と商品単価の編集をできる（S-M03-09-CBSMAENV）／④ 商品ID 〔商品ID-M0309-134〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-134〕（登録時に振られた商品規格IDを控えてある）はシングルカードではなく、スマレジ商品コード83091341、スマレジ連携しない、スマレジ商品IDなし（スマレジに未登録）、部門10、基準価格500、販売価格500、公開ステータス公開である。スマレジ試験環境に商品コード83091341の商品は無い（S-M03-09-CBNEWREG-134）	1. 商品ID 〔商品ID-M0309-134〕・商品規格ID 〔商品規格ID-M0309-134〕の商品規格登録/編集画面を開く／2. スマレジ連携フラグを連携しないから連携するに変更し、基準価格に600、販売価格に600を入力する／3. 商品規格を登録ボタンを押す／4. スマレジ試験環境の管理画面の商品一覧で商品コード「83091341」の商品を開き、商品単価を確認する	スマレジ試験環境に商品コード83091341の商品が1件登録され、商品単価が600円であること
+
+exec
+/bin/bash -lc "grep -n -E '"'^(IT-M03-09-047|テストID)'"' integration_test/casegen/cases/M03-09_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cut -f 1,4,6 integration_test/casegen/combination/cases/M03-09_cb_seed_data.tsv | tail -n 18' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+1:テストID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典
+39:IT-M03-09-047	REQ-0204-sheet-22-R011,REQ-0204-sheet-22-R012,REQ-0204-sheet-22-R034		ITA-11,ITA-12	P1	ブラウザのみ	S-M03-09-ADM,S-M03-09-MASTER,S-M03-09-RETIRED-047	① 試験管理者でログインする（S-M03-09-ADM）／② 共通参照データが登録済みである（S-M03-09-MASTER）／③ 商品ID 〔商品ID-M0309-047〕（登録時に振られた商品IDを控えてある）・規格ID 〔商品規格ID-M0309-047〕（登録時に振られた商品規格IDを控えてある）は公開ステータス廃止、論理削除済み、在庫0である（S-M03-09-RETIRED-047）	1. 廃止済みの商品ID 〔商品ID-M0309-047〕・商品規格ID 〔商品規格ID-M0309-047〕の編集画面を開く／2. 公開ステータスを確認する	公開ステータスが廃止で読み取り表示され、変更できないこと	0204 商品規格登録編集 / 機能仕様 規格表示制御
+
+ succeeded in 0ms:
+S-M03-09-CBOFFSTK3-118	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-118〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-118〕）／商品コード=M0309-CB118-A／シングルカードではない（カード指定なし）／公開／スマレジ連携する／スマレジ商品コード=830911181（スマレジ試験環境に登録済み）／EC-CUBE在庫0／スマレジ在庫3／販売価格500/基準価格500/買取価格200/部門10	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB118-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB118-商品」・商品名(英)は「M0309-CB118-商品」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB118-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-118〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でスマレジ商品コードに「830911181」、部門に10、スマレジ連携フラグに連携する、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す（登録と同時にスマレジ試験環境へ商品が登録され、在庫は0で作られる）。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-118〕）。【スマレジ在庫3】在庫検索一覧で〔商品規格ID-M0309-118〕の本店・在庫場所スマレジの在庫を検索して商品名のリンクから在庫編集画面を開き、在庫変動区分に「入庫/その他」、在庫変動理由に「M0309-CB118-試験データ」、在庫増減数に3、仕入単価に0を入れ、承認通知先（メンバー選択）に承認権限を持つ別のメンバーを選んで登録する。その別のメンバーでログインし、在庫編集承認一覧で当該の行を開いて「承認する」ボタンを押す。スマレジ試験環境の管理画面で、スマレジ商品コード830911181の商品の本店に対応する店舗の在庫数を確かめ、3でなければ3に設定する。
+S-M03-09-CBKEEPSTK3-119	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-119〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-119〕）／商品コード=M0309-CB119-A／シングルカードではない（カード指定なし）／公開／スマレジ連携する／スマレジ商品コード=830911191（スマレジ試験環境に登録済み）／EC-CUBE在庫0／スマレジ在庫3／販売価格500/基準価格500/買取価格200/部門10	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB119-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB119-商品」・商品名(英)は「M0309-CB119-商品」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB119-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-119〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でスマレジ商品コードに「830911191」、部門に10、スマレジ連携フラグに連携する、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す（登録と同時にスマレジ試験環境へ商品が登録され、在庫は0で作られる）。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-119〕）。【スマレジ在庫3】在庫検索一覧で〔商品規格ID-M0309-119〕の本店・在庫場所スマレジの在庫を検索して商品名のリンクから在庫編集画面を開き、在庫変動区分に「入庫/その他」、在庫変動理由に「M0309-CB119-試験データ」、在庫増減数に3、仕入単価に0を入れ、承認通知先（メンバー選択）に承認権限を持つ別のメンバーを選んで登録する。その別のメンバーでログインし、在庫編集承認一覧で当該の行を開いて「承認する」ボタンを押す。スマレジ試験環境の管理画面で、スマレジ商品コード830911191の商品の本店に対応する店舗の在庫数を確かめ、3でなければ3に設定する。
+S-M03-09-CBSGCODE-120	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-120〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-120〕）／商品コード=M0309-CB120-A／シングルカード（カード指定あり）／公開／スマレジ連携しない／スマレジ商品コード=あり（830911201）／EC-CUBE在庫0／スマレジ在庫0／販売価格500/基準価格500/買取価格200/部門10	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB120-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB120-商品」・商品名(英)は「M0309-CB120-商品」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB120-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-120〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで登録済みのカードを1件選ぶ（シングルカードにする）。続けて商品名(日)に「M0309-CB120-商品」、商品名(英)に「M0309-CB120-商品」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、割引率に販売割引率に登録済みのものを選び、「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門に10、スマレジ連携フラグに連携しない、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-120〕）。シングルカードのためスマレジ商品コード欄は入力できず空のままになる。スマレジ商品コード830911201は、シングルカードではスマレジ商品コード欄が読み取り専用で画面から入力できないためDBへ直接設定する。
+S-M03-09-CBGDNOCODE-121	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-121〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-121〕）／商品コード=M0309-CB121-A／シングルカードではない（カード指定なし）／公開／スマレジ連携しない／スマレジ商品コード=なし（空）／EC-CUBE在庫0／スマレジ在庫0／販売価格500/基準価格500/買取価格200/部門10	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB121-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB121-商品」・商品名(英)は「M0309-CB121-商品」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB121-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-121〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門に10、スマレジ連携フラグに連携しない、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-121〕）。
+S-M03-09-CBSGNOCODE-122	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-122〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-122〕）／商品コード=M0309-CB122-A／シングルカード（カード指定あり）／公開／スマレジ連携しない／スマレジ商品コード=なし（空）／EC-CUBE在庫0／スマレジ在庫0／販売価格500/基準価格500/買取価格200/部門10	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB122-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB122-商品」・商品名(英)は「M0309-CB122-商品」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB122-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-122〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで登録済みのカードを1件選ぶ（シングルカードにする）。続けて商品名(日)に「M0309-CB122-商品」、商品名(英)に「M0309-CB122-商品」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、割引率に販売割引率に登録済みのものを選び、「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門に10、スマレジ連携フラグに連携しない、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-122〕）。シングルカードのためスマレジ商品コード欄は入力できず空のままになる。
+S-M03-09-CBGDCODE-123	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-123〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-123〕）／商品コード=M0309-CB123-A／シングルカードではない（カード指定なし）／公開／スマレジ連携しない／スマレジ商品コード=あり（830911231）／EC-CUBE在庫0／スマレジ在庫0／販売価格500/基準価格500/買取価格200/部門10	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB123-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB123-商品」・商品名(英)は「M0309-CB123-商品」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB123-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-123〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でスマレジ商品コードに「830911231」、部門に10、スマレジ連携フラグに連携しない、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-123〕）。
+S-M03-09-CBSGOFF-124	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-124〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-124〕）／商品コード=M0309-CB124-A／シングルカード（カード指定あり）／公開／スマレジ連携しない／スマレジ商品コード=なし（空）／EC-CUBE在庫0／スマレジ在庫0／販売価格500/基準価格500/買取価格200/部門10	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB124-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB124-商品」・商品名(英)は「M0309-CB124-商品」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB124-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-124〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで登録済みのカードを1件選ぶ（シングルカードにする）。続けて商品名(日)に「M0309-CB124-商品」、商品名(英)に「M0309-CB124-商品」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、割引率に販売割引率に登録済みのものを選び、「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門に10、スマレジ連携フラグに連携しない、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-124〕）。シングルカードのためスマレジ商品コード欄は入力できず空のままになる。
+S-M03-09-CBSMAENV	ECCUBEがスマレジ試験環境へ実際に接続できる（スマレジAPIの接続情報が設定済みで、模擬応答に切り替わっていない）／試験担当者がスマレジ試験環境の管理画面で商品一覧の検索・確認・商品単価の編集・商品の削除をできる	試験環境構築時にスマレジ試験環境の契約・接続情報をECCUBEへ設定し、試験担当者にスマレジ試験環境の管理画面の操作権限を付与する。各ケースが使う商品コードはケース専用の値で、開始時にスマレジ試験環境に同じ商品コードの商品が無いことを各ケースのシードで確かめる
+S-M03-09-CBKEEP-125	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-125〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-125〕）／シングルカードではない（カード指定なし）／スマレジ商品コード=83091251／スマレジ商品ID=〔スマレジ商品ID-M0309-125〕（登録時に画面に表示された番号を控える）／スマレジ連携する／部門10／基準価格500／販売制限数は空／公開ステータス非公開／スマレジ試験環境の商品コード83091251の商品は商品単価777（ECCUBEの基準価格500とは違う値）／EC-CUBE在庫0	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB125-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB125-A」・商品名(英)は「M0309-CB125-A」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB125-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-125〕）。カード詳細情報の「カード指定」は行わない（シングルカードにしない）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でスマレジ商品コードに83091251、部門に10、スマレジ連携フラグに連携する、公開ステータスに非公開を入れて「商品規格を登録」ボタンを押す（スマレジに新規登録される）。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-125〕）。スマレジ商品ID欄に表示された番号を控える（〔スマレジ商品ID-M0309-125〕）。スマレジ試験環境の商品コード83091251の商品が無いことを確かめ（あればスマレジ試験環境の管理画面で削除してから登録する）、登録後にスマレジ試験環境の管理画面の商品一覧で商品コード「83091251」の商品を開き、商品単価を500から777に変更して保存する（スマレジ側の値だけを変える）。
+S-M03-09-CBFLAGON-126	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-126〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-126〕）／シングルカード（カード指定あり）／スマレジ商品コード=〔スマレジ商品コード-M0309-126〕（スマレジに登録した時に自動採番された番号を控える）／スマレジ商品ID=〔スマレジ商品ID-M0309-126〕（登録時に画面に表示された番号を控える）／スマレジ連携しない／部門10／基準価格500／販売価格500／公開ステータス公開／スマレジ試験環境の商品コード〔スマレジ商品コード-M0309-126〕の商品は商品単価500／EC-CUBE在庫0	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB126-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB126-A」・商品名(英)は「M0309-CB126-A」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB126-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-126〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで登録済みのカードを1件選ぶ（シングルカードにする）。続けて商品名(日)に「M0309-CB126-A」、商品名(英)に「M0309-CB126-A」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、割引率に販売割引率に登録済みのものを選び、「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門に10、スマレジ連携フラグに連携する、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す（シングルカードのためスマレジ商品コード欄は入力できず、スマレジ商品コードが自動採番されてスマレジに新規登録される）。保存後の商品規格登録編集画面のスマレジ商品コード欄に表示された番号を控える（〔スマレジ商品コード-M0309-126〕）。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-126〕）。スマレジ商品ID欄に表示された番号を控える（〔スマレジ商品ID-M0309-126〕）。続けて同じ商品規格登録編集画面でスマレジ連携フラグを連携しないに変更し「商品規格を登録」ボタンを押す（スマレジ在庫は0）。スマレジ試験環境の管理画面の商品一覧で商品コード〔スマレジ商品コード-M0309-126〕の商品があり商品単価が500円であることを確かめる。
+S-M03-09-CBCODE-127	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-127〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-127〕）／シングルカードではない（カード指定なし）／スマレジ商品コード=83091271／スマレジ連携する／スマレジ商品IDなし（スマレジに未登録）／部門10／基準価格500／公開ステータス公開／スマレジ試験環境に商品コード83091271・83091272の商品が無い／EC-CUBE在庫0	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB127-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB127-A」・商品名(英)は「M0309-CB127-A」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB127-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-127〕）。カード詳細情報の「カード指定」は行わない（シングルカードにしない）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でスマレジ商品コードに83091271、部門に10、スマレジ連携フラグに連携しない、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-127〕）。スマレジ連携フラグ「連携する」は、画面で連携するにすると同時にスマレジへ新規登録されてスマレジ未登録の状態にならないため、DBへ直接設定する（スマレジ商品IDは空のままにする）。スマレジ試験環境の管理画面の商品一覧で商品コード83091271・83091272の商品が無いことを確かめる（あればスマレジ試験環境の管理画面で削除する）。
+S-M03-09-CBOFF-128	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-128〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-128〕）／シングルカードではない（カード指定なし）／スマレジ商品コード=83091281／スマレジ連携しない／スマレジ商品IDなし（スマレジに未登録）／部門10／基準価格500／販売価格500／公開ステータス公開／スマレジ試験環境に商品コード83091281の商品が無い／EC-CUBE在庫0	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB128-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB128-A」・商品名(英)は「M0309-CB128-A」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB128-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-128〕）。カード詳細情報の「カード指定」は行わない（シングルカードにしない）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でスマレジ商品コードに83091281、部門に10、スマレジ連携フラグに連携しない、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-128〕）。スマレジ試験環境の管理画面の商品一覧で商品コード83091281の商品が無いことを確かめる（あればスマレジ試験環境の管理画面で削除する）。
+S-M03-09-CBAUTO-129	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-129〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-129〕）／シングルカード（カード指定あり）／スマレジ商品コードは空／スマレジ連携しない／スマレジ商品IDなし（スマレジに未登録）／部門10／基準価格500／販売価格500／公開ステータス公開／EC-CUBE在庫0	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB129-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB129-A」・商品名(英)は「M0309-CB129-A」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB129-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-129〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで登録済みのカードを1件選ぶ（シングルカードにする）。続けて商品名(日)に「M0309-CB129-A」、商品名(英)に「M0309-CB129-A」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、割引率に販売割引率に登録済みのものを選び、「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門に10、スマレジ連携フラグに連携しない、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す（シングルカードのためスマレジ商品コード欄は入力できず空のままになる）。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-129〕）。
+S-M03-09-CBABOL-130	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-130〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-130〕）／シングルカードではない（カード指定なし）／スマレジ商品コード=83091301／スマレジ商品ID=〔スマレジ商品ID-M0309-130〕（登録時に画面に表示された番号を控える）／スマレジ連携する／スマレジに登録済み／部門10／基準価格500／公開ステータス公開／EC-CUBE在庫0／スマレジ在庫0	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB130-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB130-A」・商品名(英)は「M0309-CB130-A」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB130-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-130〕）。カード詳細情報の「カード指定」は行わない（シングルカードにしない）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でスマレジ商品コードに83091301、部門に10、スマレジ連携フラグに連携する、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す（スマレジに新規登録される）。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-130〕）。スマレジ商品ID欄に表示された番号を控える（〔スマレジ商品ID-M0309-130〕）。スマレジ試験環境の管理画面の商品一覧で商品コード83091301の商品が1件あることを確かめる（登録前にスマレジ試験環境に同じ商品コードの商品があれば管理画面で削除しておく）。EC-CUBEの在庫は登録時の0のままにし、スマレジ側にも在庫は入れない。
+S-M03-09-CBABUN-131	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-131〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-131〕）／シングルカードではない（カード指定なし）／スマレジ商品コード=83091311／スマレジ連携する／スマレジ商品IDなし（スマレジに未登録）／部門10／基準価格500／公開ステータス公開／スマレジ試験環境に商品コード83091311の商品が無い／EC-CUBE在庫0／スマレジ在庫0	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB131-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB131-A」・商品名(英)は「M0309-CB131-A」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB131-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-131〕）。カード詳細情報の「カード指定」は行わない（シングルカードにしない）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でスマレジ商品コードに83091311、部門に10、スマレジ連携フラグに連携しない、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-131〕）。スマレジ連携フラグ「連携する」は、画面で連携するにすると同時にスマレジへ新規登録されてスマレジ未登録の状態にならないため、DBへ直接設定する（スマレジ商品IDは空のままにする）。スマレジ試験環境の管理画面の商品一覧で商品コード83091311の商品が無いことを確かめる（あればスマレジ試験環境の管理画面で削除する）。
+S-M03-09-CBTGT-132	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-132〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-132〕）／シングルカード（カード指定あり）／スマレジ商品コード=〔スマレジ商品コード-M0309-132〕（スマレジに登録した時に自動採番された番号を控える）／スマレジ商品ID=〔スマレジ商品ID-M0309-132〕（登録時に画面に表示された番号を控える）／スマレジ連携する／部門10／基準価格500／販売価格500／公開ステータス非公開／スマレジ試験環境の商品コード〔スマレジ商品コード-M0309-132〕の商品は商品単価500／EC-CUBE在庫0	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB132-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB132-A」・商品名(英)は「M0309-CB132-A」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB132-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-132〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで登録済みのカードを1件選ぶ（シングルカードにする）。続けて商品名(日)に「M0309-CB132-A」、商品名(英)に「M0309-CB132-A」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、割引率に販売割引率に登録済みのものを選び、「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門に10、スマレジ連携フラグに連携する、公開ステータスに非公開を入れて「商品規格を登録」ボタンを押す（シングルカードのためスマレジ商品コード欄は入力できず、スマレジ商品コードが自動採番されてスマレジに新規登録される）。保存後の商品規格登録編集画面のスマレジ商品コード欄に表示された番号を控える（〔スマレジ商品コード-M0309-132〕）。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-132〕）。スマレジ商品ID欄に表示された番号を控える（〔スマレジ商品ID-M0309-132〕）。スマレジ試験環境の管理画面の商品一覧で商品コード〔スマレジ商品コード-M0309-132〕の商品があり商品単価が500円であることを確かめる。
+S-M03-09-CBFORCE-133	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-133〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-133〕）／シングルカードではない（カード指定なし）／スマレジ商品コード=83091331／スマレジ商品ID=〔スマレジ商品ID-M0309-133〕（登録時に画面に表示された番号を控える）／スマレジ連携しない／部門10／基準価格500／公開ステータス公開／スマレジ試験環境の商品コード83091331の商品は商品単価777（ECCUBEの基準価格500とは違う値）／EC-CUBE在庫0	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB133-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB133-A」・商品名(英)は「M0309-CB133-A」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB133-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-133〕）。カード詳細情報の「カード指定」は行わない（シングルカードにしない）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でスマレジ商品コードに83091331、部門に10、スマレジ連携フラグに連携する、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す（スマレジに新規登録される）。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-133〕）。スマレジ商品ID欄に表示された番号を控える（〔スマレジ商品ID-M0309-133〕）。続けて同じ商品規格登録編集画面でスマレジ連携フラグを連携しないに変更し「商品規格を登録」ボタンを押す（スマレジ在庫は0）。スマレジ試験環境の管理画面の商品一覧で商品コード「83091331」の商品を開き、商品単価を500から777に変更して保存する（スマレジ側の値だけを変える）。登録前にスマレジ試験環境に同じ商品コードの商品があれば管理画面で削除しておく。
+S-M03-09-CBNEWREG-134	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0309-134〕）／規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0309-134〕）／シングルカードではない（カード指定なし）／スマレジ商品コード=83091341／スマレジ連携しない／スマレジ商品IDなし（スマレジに未登録）／部門10／基準価格500／販売価格500／公開ステータス公開／スマレジ試験環境に商品コード83091341の商品が無い／EC-CUBE在庫0	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0309-CB134-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0309-CB134-A」・商品名(英)は「M0309-CB134-A」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M0309-CB134-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0309-134〕）。カード詳細情報の「カード指定」は行わない（シングルカードにしない）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でスマレジ商品コードに83091341、部門に10、スマレジ連携フラグに連携しない、公開ステータスに公開を入れて「商品規格を登録」ボタンを押す。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0309-134〕）。スマレジ試験環境の管理画面の商品一覧で商品コード83091341の商品が無いことを確かめる（あればスマレジ試験環境の管理画面で削除する）。
+
+exec
+/bin/bash -lc "grep -R -n -E '商品単価|基準価格.*スマレジ|スマレジ.*基準価格' integration_test/casegen/combination/units/_common integration_test/casegen/combination/units/M03-09/design.txt | head -90" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/units/_common/0204_sheet-67.txt:4:L0003	買取・基準価格一括編集画面では編集件数が多くない場合スマレジの一括更新は使わないが、編集件数が多い場合はスマレジ一括更新を行うため結果画面を別途作成する必要がある
+integration_test/casegen/combination/units/_common/0204_sheet-68.txt:15:L0014	買取・基準価格一括編集 スマレジ連携追加
+integration_test/casegen/combination/units/_common/0204_sheet-65.txt:12:L0011	・基準価格が300円以上かつ状態がSP、MP、HP、その他規格である場合は自動でスマレジ連携フラグがONになる
+integration_test/casegen/combination/units/_common/0204_sheet-65.txt:31:L0030	部門コード、商品コードまたは基準価格に変更があった場合、スマレジ連携を行う
+integration_test/casegen/combination/units/_common/0204_sheet-65.txt:35:L0034	部門コード、商品コード、スマレジ商品コードまたは基準価格に変更があった場合、スマレジ連携を行う
+integration_test/casegen/combination/units/_common/0204_sheet-65.txt:39:L0038		カード商品CSV登録	基準価格が300円以上かつ状態がSP、MP、HP、その他規格である場合は自動でスマレジ連携フラグがONになる
+integration_test/casegen/combination/units/_common/0204_sheet-65.txt:41:L0040	スマレジ連携フラグがONかつ商品名、基準価格に変更があった場合、スマレジ連携を行う
+integration_test/casegen/combination/units/_common/0204_sheet-65.txt:45:L0044	スマレジ連携フラグがONかつ商品名、部門コード、基準価格、商品コード、スマレジ商品コードに変更があった場合、スマレジ連携を行う
+integration_test/casegen/combination/units/_common/0204_sheet-65.txt:49:L0048	スマレジ連携フラグが立っているかつ基準価格に変更があった場合、スマレジ連携を行う
+integration_test/casegen/combination/units/_common/0204_sheet-65.txt:50:L0049	基準価格の変更については、300円以上に更新された場合にスマレジ連携フラグをONにする
+integration_test/casegen/combination/units/_common/0204_sheet-63.txt:4:L0003	No.	スマレジ項目名	ECCUBE項目名	概要	新規登録	更新	商品編集	規格登録	カード商品CSV登録	グッズ商品CSV登録	部門更新CSV登録	買取・基準価格一括編集	価格変更CSV登録	セール用価格変更CSV登録	高額商品価格変更CSV登録	セール用高額商品価格変更CSV登録
+integration_test/casegen/combination/units/_common/0204_sheet-63.txt:17:L0016	5	商品単価	基準価格	税込価格を連携する	〇	〇		〇	〇	〇		〇	〇	〇	〇	〇
+integration_test/casegen/combination/units/_common/0204_sheet-63.txt:20:L0019	商品単価の税区分 (0:税込、1:税抜、2:非課税)	〇
+integration_test/casegen/combination/units/_common/0204_sheet-63.txt:65:L0064	16	軽減税率商品単価		なし
+
+exec
+/bin/bash -lc "grep -n -E '"'^(S-M03-06-CUSTOM|S-M03-06-SEARCH|S-M03-04-CONFIG|S-M03-05-CONFIG)'"' integration_test/casegen/cases/M03-0{4,5,6}_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/cases/M03-04_seed_data.tsv:4:S-M03-04-CONFIG	出力設定	CSV出力設定	出力文字コード=UTF-8／出力用区切り文字=カンマ	IT-M03-04-017で使用する1件だけの設定。各ケースが開始時に必要な値を自分で設定する	試験環境のCSV出力設定で出力文字コードと区切り文字を設定する	共有可
+integration_test/casegen/cases/M03-05_seed_data.tsv:4:S-M03-05-CONFIG	出力設定	CSV出力設定	出力エンコーディング=UTF-8／出力用区切り文字=カンマ	IT-M03-05-007で使用する1件だけの設定。各ケースが開始時に必要な値を自分で設定する	試験環境のCSV出力設定で出力エンコーディングと区切り文字を設定する	共有可
+integration_test/casegen/cases/M03-06_seed_data.tsv:4:S-M03-06-SEARCH	画面状態	商品検索条件の初期状態	商品名(日/英)=未入力／ID=未入力／公開状態=公開／状態=NM／高額商品を除外する=ON／その他の検索条件=未入力	各ケースが開始時に必要な値を自分で設定する共有の検索セッション	商品マスター(検索入力)画面の「検索条件をクリア」を押し、各初期値を確認する	共有可
+integration_test/casegen/cases/M03-06_seed_data.tsv:6:S-M03-06-CUSTOM	カスタムCSV設定	追加項目設定	設定IDは登録時に画面が振る（控える。以下〔設定ID-M0306-共有〕）／設定名=M03-06追加項目設定／CSV種別=商品／削除されていない／設定更新日時=2026-09-01 10:02:00+09:00／出力列は商品規格ID、商品コード、基準価格、原価単価、当日販売数の5件をこの順に設定／5件のCSV項目定義の更新日時=2026-09-01 10:00:00+09:00	IT-M03-06-005〜008・010〜015が参照するだけで変更しない共通設定	カスタムCSV出力設定画面を開き、CSV種別に商品のCSVを選び、カスタムCSVは「新規作成」のままにする。出力名に「M03-06追加項目設定」を入れる。出力しない項目から 「商品規格ID」、「商品コード」、「基準価格」、「原価単価」、「当日販売数」 を選んで「出力」を押す。出力する項目の並びを「ひとつ上へ」「ひとつ下へ」で上から 「商品規格ID」、「商品コード」、「基準価格」、「原価単価」、「当日販売数」 の順にする。「登録」を押す。登録後に開く同じ画面のアドレス末尾の数字（設定ID）を控える（〔設定ID-M0306-共有〕）。設定更新日時 2026-09-01 10:02:00+09:00 と、5件のCSV項目定義の更新日時 2026-09-01 10:00:00+09:00 は画面で指定できないためDBへ直接設定する。	共有可
+
+exec
+/bin/bash -lc "sed -n '1,15p' integration_test/casegen/combination/units/M03-04/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0204 sheet-12 グッズ商品CSV出力
+L0001	グッズ商品CSV出力
+L0002	ドキュメント名商品管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-06-05
+L0007	更新者堀部
+L0008	更新日2025-09-12
+L0009	機能NoM03-04
+L0010	機能名グッズ商品CSV出力
+L0011	概要—
+L0012	機能について
+L0013	処理概要（★はカスタマイズ項目）
+L0014	M03-04 グッズ商品CSV出力
+
+exec
+/bin/bash -lc "grep -n 'IT-0366' integration_test/viewpoint_canonical/viewpoints_canonical.tsv" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '1,40p' integration_test/casegen/combination/units/M03-05/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '1,22p' integration_test/casegen/combination/units/_common/0204_sheet-63.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+367:IT-0366	ITA-11	内部結合テスト	制御	条件網羅	データパターン / 要因の組合せ	1つの処理の結果を左右する要因（区分、状態、設定、関連データの値など。他の機能で設定する値を含む）が2つ以上ある場合、設計書の定めが互いに効き合う要因については値の組合せのすべてで、互いに効き合わない要因についてはどの2つの要因の値の組もいずれかの組合せで、受け渡し先の結果が、それぞれの要因について定められた結果を重ねたとおり設計どおりとなること。設計書から結果が決まらない組合せ、設計上作れない組合せ、および検索条件と削除条件の組合せは除く。	設計書から引用	条件に応じて、呼び出される先、返却データ、出力結果、状態遷移および副作用が設計どおりに切り替わること。検索・削除条件の一致種別と組合せで期待したレコードが取得・対象化されること、表示／非表示条件、通知の発生条件を含む。	単一メソッド内の分岐網羅、および分岐編集の結果そのものは単体テストが担う
+
+ succeeded in 0ms:
+##### 0204 sheet-6 セール用価格変更CSV出力
+L0001	セール用価格変更CSV出力
+L0002	ドキュメント名商品管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-06-05
+L0007	更新者堀部
+L0008	更新日2025-09-12
+L0009	機能NoM03-05
+L0010	機能名セール用価格変更CSV出力
+L0011	概要—
+L0012	機能について
+L0013	処理概要（★はカスタマイズ項目）
+L0014	M03-05 セール用価格変更CSV出力
+L0015	識別ID	項目名	備考
+L0016	1	商品ID
+L0017	2	言語(ID)
+L0018	3	基準価格	※カスタマイズ対応、項目追加。
+L0019	4	販売価格
+L0020	5	買取価格
+L0021	6	原価単価	通販在庫の原価単価 ※カスタマイズ対応、項目追加。 
+L0022	7	セールフラグ
+L0023	8	帯URL
+L0024	9	タグ(ID)
+L0025	カスタマイズ説明
+L0026	概要
+L0027	セール用に商品変更を行うためのCSV出力することが可能
+L0028	機能仕様機能について
+L0029	現行機能をベースに下記のカスタマイズを行う
+L0030	機能仕様処理概要（★はカスタマイズ項目）
+L0031	★識別ID:3「基準価格」を追加。
+L0032	★識別ID:6「原価単価」を追加。
+L0033	Source:
+L0034	functions/pf-eccube3/m03-05_admin_product_product_sale_price_csv_export.md
+L0035	現行仕様
+L0036	M03-05 セール用価格変更CSV出力 / 商品管理 — セール用価格変更CSV出力
+L0037	業務ロジック
+L0038	出力対象の決定
+L0039	商品一覧で選択した商品IDを受け取り、その商品を出力対象とする。
+
+ succeeded in 0ms:
+##### 0204 sheet-63 別添資料__スマレジ連携__商品連携項目
+L0001	別添資料__スマレジ連携__商品連携項目
+L0002	1. 商品連携項目一覧機能別更新時更新項目
+L0003	No.	スマレジ項目名	ECCUBE項目名	概要	新規登録	更新	商品編集	規格登録	カード商品CSV登録	グッズ商品CSV登録	部門更新CSV登録	買取・基準価格一括編集	価格変更CSV登録	セール用価格変更CSV登録	高額商品価格変更CSV登録	セール用高額商品価格変更CSV登録
+L0004	1	商品ID	-	スマレジシステム上で一意のID
+L0005	スマレジ上で自動で採番される	自動採番
+L0006	2	商品コード	スマレジ商品コード	【シングルカード】
+L0007	スマレジ連携の対象となったカードに対して、6桁の連番のコードを自動採番する。
+L0008	現状130,000まで採番済みなので、本番の運用時に合わせて続きから連番にする
+L0009	【グッズ】
+L0010	CSVでスマレジ商品コードを指定して登録する	〇
+L0011	3	部門ID	部門コード		〇	〇		〇		〇	〇
+L0012	4	商品名	商品名	ECCUBEの商品名に言語、規格を付与して連携する
+L0013	【Foil】(002)■フルアート■《対抗呪文/Counterspell》(MagicConプロモ)[その他プロモ] 青
+L0014	↓
+L0015	【EN】【NM】【Foil】(002)■フルアート■《対抗呪文/Counterspell》(MagicConプロモ)[その他プロモ] 青	〇	〇	〇		〇	〇
+L0016	5	商品単価	基準価格	税込価格を連携する	〇	〇		〇	〇	〇		〇	〇	〇	〇	〇
+L0017	6	品番	商品コード		〇	〇		〇		〇
+L0018	7	税区分	-	0：税込 を連携する
+L0019	商品単価の税区分 (0:税込、1:税抜、2:非課税)	〇
+L0020	8	部門税設定参照フラグ	-	1：部門の税設定を使用 を連携する
+L0021	部門ごとに適用税率を設定できるため、商品に紐づく部門の適用税率を参照する設定とする
+
+codex
+設計書との照合で、M03-04・05の追加ケースには、CSV本体の先頭BOMを期待結果で確認していない共通の抜けが見つかりました。M03-09では、要因表がDB確認を指定する保存結果を、保存後の同じ編集画面だけで判定しているケースを確認中です。
+codex
+### 指摘（M03-04 / IT-M03-04-032）
+- 主張: UTF-8で読み、商品Bのデータ行だけを期待している。
+- 実際: 設計書L0115は成功時のCSVについて「先頭にBOMを付ける」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: データ行の期待結果に、CSV先頭のBOMを加える。
+
+### 指摘（M03-04 / IT-M03-04-033）
+- 主張: SJIS-winで読み、商品Bのデータ行だけを期待している。
+- 実際: 設計書L0115は成功時のCSVについて「先頭にBOMを付ける」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: CSV先頭のBOMも期待結果で確認する。
+
+### 指摘（M03-04 / IT-M03-04-034）
+- 主張: UTF-8で読み、商品Bのデータ行だけを期待している。
+- 実際: 設計書L0115は成功時のCSVについて「先頭にBOMを付ける」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: CSV先頭のBOMも期待結果で確認する。
+
+### 指摘（M03-05 / IT-M03-05-017）
+- 主張: UTF-8のCSVについて「9列のヘッダ行だけ」を期待している。
+- 実際: 設計書L0064は成功時のCSVについて「先頭にはBOMを付与する」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: ヘッダ行だけであることと併せ、先頭のBOMを確認する。
+
+### 指摘（M03-05 / IT-M03-05-018）
+- 主張: SJIS-winのCSVについて「9列のヘッダ行だけ」を期待している。
+- 実際: 設計書L0064は成功時のCSVについて「先頭にはBOMを付与する」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: ヘッダ行だけであることと併せ、先頭のBOMを確認する。
+
+### 指摘（M03-09 / IT-M03-09-107）
+- 主張: 非公開への保存結果を、成功表示と保存後の編集画面の表示だけで判定している。
+- 実際: 設計書L0187は「規格の内容を保存する」、L0192は「同じ規格の編集画面へリダイレクトする」と定める。要因表のP3が指定する保存結果の確認先はDB（公開ステータス）であり、ケースにはその確認がない。
+- 判定: 要因の結果が欠けている
+- 修正案: 保存された公開ステータスが非公開であることを、P3指定のDBで確認する。
+
+### 指摘（M03-09 / IT-M03-09-108）
+- 主張: 廃止への保存結果を、成功表示と保存後の編集画面の読み取り表示だけで判定している。
+- 実際: 設計書L0091は廃止後の変更不可、L0187は規格内容の保存を定める。要因表のP3が指定する保存結果の確認先はDB（公開ステータス）であり、ケースにはその確認がない。
+- 判定: 要因の結果が欠けている
+- 修正案: 廃止で保存されたことを、P3指定のDBで確認する。
+
+### 指摘（M03-09 / IT-M03-09-113）
+- 主張: スマレジ在庫3のまま非公開へ保存し、成功表示と編集画面の表示だけを確認している。
+- 実際: 設計書L0092〜L0093が在庫確認を定めるのは「廃止」で更新する場合であり、L0187は検証に合格した規格内容の保存を定める。要因表のP3が指定する保存結果の確認先はDB（公開ステータス）である。
+- 判定: 要因の結果が欠けている
+- 修正案: 非公開で保存されたことを、P3指定のDBで確認する。
+
+### 指摘（M03-09 / IT-M03-09-114）
+- 主張: EC-CUBE在庫5のまま非公開へ保存し、成功表示と編集画面の表示だけを確認している。
+- 実際: 設計書L0092〜L0093が在庫確認を定めるのは「廃止」で更新する場合であり、L0187は検証に合格した規格内容の保存を定める。要因表のP3が指定する保存結果の確認先はDB（公開ステータス）である。
+- 判定: 要因の結果が欠けている
+- 修正案: 非公開で保存されたことを、P3指定のDBで確認する。
+
+### 指摘（M03-09 / IT-M03-09-116）
+- 主張: 連携フラグをOFFにした結果を、成功表示と保存後の編集画面の表示だけで判定している。
+- 実際: 設計書L0109は「スマレジに1つでも在庫があれば連携をOFFにできない」と定め、L0187は検証に合格した規格内容の保存を定める。要因表のP4が指定する保存結果の確認先はDB（スマレジ連携フラグ）である。
+- 判定: 要因の結果が欠けている
+- 修正案: 連携フラグが「連携しない」で保存されたことを、P4指定のDBで確認する。
+
+### 指摘（M03-09 / IT-M03-09-117）
+- 主張: 連携フラグをOFFにしない結果を、成功表示と保存後の編集画面の表示だけで判定している。
+- 実際: 設計書L0109の制御対象は「手動でOFFにする場合」であり、L0187は検証に合格した規格内容の保存を定める。要因表のP4が指定する保存結果の確認先はDB（スマレジ連携フラグ）である。
+- 判定: 要因の結果が欠けている
+- 修正案: 連携フラグが「連携する」のまま保存されたことを、P4指定のDBで確認する。
+
+### 指摘（M03-09 / IT-M03-09-119）
+- 主張: スマレジ在庫3で連携フラグをOFFにしない結果を、成功表示と保存後の編集画面の表示だけで判定している。
+- 実際: 設計書L0109の制御対象は「手動でOFFにする場合」であり、L0187は検証に合格した規格内容の保存を定める。要因表のP4が指定する保存結果の確認先はDB（スマレジ連携フラグ）である。
+- 判定: 要因の結果が欠けている
+- 修正案: 連携フラグが「連携する」のまま保存されたことを、P4指定のDBで確認する。
+tokens used
+100,222
+### 指摘（M03-04 / IT-M03-04-032）
+- 主張: UTF-8で読み、商品Bのデータ行だけを期待している。
+- 実際: 設計書L0115は成功時のCSVについて「先頭にBOMを付ける」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: データ行の期待結果に、CSV先頭のBOMを加える。
+
+### 指摘（M03-04 / IT-M03-04-033）
+- 主張: SJIS-winで読み、商品Bのデータ行だけを期待している。
+- 実際: 設計書L0115は成功時のCSVについて「先頭にBOMを付ける」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: CSV先頭のBOMも期待結果で確認する。
+
+### 指摘（M03-04 / IT-M03-04-034）
+- 主張: UTF-8で読み、商品Bのデータ行だけを期待している。
+- 実際: 設計書L0115は成功時のCSVについて「先頭にBOMを付ける」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: CSV先頭のBOMも期待結果で確認する。
+
+### 指摘（M03-05 / IT-M03-05-017）
+- 主張: UTF-8のCSVについて「9列のヘッダ行だけ」を期待している。
+- 実際: 設計書L0064は成功時のCSVについて「先頭にはBOMを付与する」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: ヘッダ行だけであることと併せ、先頭のBOMを確認する。
+
+### 指摘（M03-05 / IT-M03-05-018）
+- 主張: SJIS-winのCSVについて「9列のヘッダ行だけ」を期待している。
+- 実際: 設計書L0064は成功時のCSVについて「先頭にはBOMを付与する」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: ヘッダ行だけであることと併せ、先頭のBOMを確認する。
+
+### 指摘（M03-09 / IT-M03-09-107）
+- 主張: 非公開への保存結果を、成功表示と保存後の編集画面の表示だけで判定している。
+- 実際: 設計書L0187は「規格の内容を保存する」、L0192は「同じ規格の編集画面へリダイレクトする」と定める。要因表のP3が指定する保存結果の確認先はDB（公開ステータス）であり、ケースにはその確認がない。
+- 判定: 要因の結果が欠けている
+- 修正案: 保存された公開ステータスが非公開であることを、P3指定のDBで確認する。
+
+### 指摘（M03-09 / IT-M03-09-108）
+- 主張: 廃止への保存結果を、成功表示と保存後の編集画面の読み取り表示だけで判定している。
+- 実際: 設計書L0091は廃止後の変更不可、L0187は規格内容の保存を定める。要因表のP3が指定する保存結果の確認先はDB（公開ステータス）であり、ケースにはその確認がない。
+- 判定: 要因の結果が欠けている
+- 修正案: 廃止で保存されたことを、P3指定のDBで確認する。
+
+### 指摘（M03-09 / IT-M03-09-113）
+- 主張: スマレジ在庫3のまま非公開へ保存し、成功表示と編集画面の表示だけを確認している。
+- 実際: 設計書L0092〜L0093が在庫確認を定めるのは「廃止」で更新する場合であり、L0187は検証に合格した規格内容の保存を定める。要因表のP3が指定する保存結果の確認先はDB（公開ステータス）である。
+- 判定: 要因の結果が欠けている
+- 修正案: 非公開で保存されたことを、P3指定のDBで確認する。
+
+### 指摘（M03-09 / IT-M03-09-114）
+- 主張: EC-CUBE在庫5のまま非公開へ保存し、成功表示と編集画面の表示だけを確認している。
+- 実際: 設計書L0092〜L0093が在庫確認を定めるのは「廃止」で更新する場合であり、L0187は検証に合格した規格内容の保存を定める。要因表のP3が指定する保存結果の確認先はDB（公開ステータス）である。
+- 判定: 要因の結果が欠けている
+- 修正案: 非公開で保存されたことを、P3指定のDBで確認する。
+
+### 指摘（M03-09 / IT-M03-09-116）
+- 主張: 連携フラグをOFFにした結果を、成功表示と保存後の編集画面の表示だけで判定している。
+- 実際: 設計書L0109は「スマレジに1つでも在庫があれば連携をOFFにできない」と定め、L0187は検証に合格した規格内容の保存を定める。要因表のP4が指定する保存結果の確認先はDB（スマレジ連携フラグ）である。
+- 判定: 要因の結果が欠けている
+- 修正案: 連携フラグが「連携しない」で保存されたことを、P4指定のDBで確認する。
+
+### 指摘（M03-09 / IT-M03-09-117）
+- 主張: 連携フラグをOFFにしない結果を、成功表示と保存後の編集画面の表示だけで判定している。
+- 実際: 設計書L0109の制御対象は「手動でOFFにする場合」であり、L0187は検証に合格した規格内容の保存を定める。要因表のP4が指定する保存結果の確認先はDB（スマレジ連携フラグ）である。
+- 判定: 要因の結果が欠けている
+- 修正案: 連携フラグが「連携する」のまま保存されたことを、P4指定のDBで確認する。
+
+### 指摘（M03-09 / IT-M03-09-119）
+- 主張: スマレジ在庫3で連携フラグをOFFにしない結果を、成功表示と保存後の編集画面の表示だけで判定している。
+- 実際: 設計書L0109の制御対象は「手動でOFFにする場合」であり、L0187は検証に合格した規格内容の保存を定める。要因表のP4が指定する保存結果の確認先はDB（スマレジ連携フラグ）である。
+- 判定: 要因の結果が欠けている
+- 修正案: 連携フラグが「連携する」のまま保存されたことを、P4指定のDBで確認する。

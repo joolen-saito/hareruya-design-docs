@@ -1,0 +1,1731 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1588a-555e-71c2-a26c-45124cf15319
+--------
+user
+# 敵対レビュー依頼：要因の組合せの結合テストケース（2巡目・10）
+
+あなたはレビュアーである。著者とは別人として、下の追加ケースを根拠と突き合わせ、誤りを指摘せよ。ファイルは変更しない。スクリプトやコマンドは読むだけで実行しない（grep・cat 等の閲覧は可。rg は使わない）。出力は日本語。
+レビューは事実確認に限る。設計書に無い仕様を足す提案はしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すと決めた。他の機能の設定値も要因に入れる。
+機能ごとに要因表（`combination/factors/`）を作り codex が反証した。そこから機械が試す値の組（`combination/combos/<機能ID>.tsv`）を並べ、著者が組1行にケース1件を書いた。
+組1行ごとの扱い（ケース化／既存ケースで確認済み／ケースにしない）は dispositions に書いてある。
+
+## 対象（/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/ 配下）
+
+| 機能ID | 組の範囲 | 追加ケース・シード・仕分け |
+| --- | --- | --- |
+| B08-01 | 全部 | `combination/cases/B08-01_cb_test_cases.tsv`・`B08-01_cb_seed_data.tsv`・`B08-01_cb_dispositions.tsv`（組の範囲の行だけ） |
+| B08-02 | 全部 | `combination/cases/B08-02_cb_test_cases.tsv`・`B08-02_cb_seed_data.tsv`・`B08-02_cb_dispositions.tsv`（組の範囲の行だけ） |
+| B08-03 | 全部 | `combination/cases/B08-03_cb_test_cases.tsv`・`B08-03_cb_seed_data.tsv`・`B08-03_cb_dispositions.tsv`（組の範囲の行だけ） |
+| B08-04 | 全部 | `combination/cases/B08-04_cb_test_cases.tsv`・`B08-04_cb_seed_data.tsv`・`B08-04_cb_dispositions.tsv`（組の範囲の行だけ） |
+| B08-06 | 全部 | `combination/cases/B08-06_cb_test_cases.tsv`・`B08-06_cb_seed_data.tsv`・`B08-06_cb_dispositions.tsv`（組の範囲の行だけ） |
+
+機能ごとに次を読む。
+- 追加ケース（13列。末尾の項目IDは埋めた組ID）、追加シード、仕分け（上の表のファイル）
+- 試す値の組 `combination/combos/<機能ID>.tsv`（組ID／処理ID／組（要因ID=値）／読める形／埋める組）
+- 要因表 `combination/factors/<機能ID>_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`・`_constraints.tsv`
+- 設計書 `combination/units/<機能ID>/design.txt`（行頭 L0001 が行番号。`#####` の行はシートの境目）。要因の根拠が他の機能のときは `combination/units/<その機能ID>/design.txt`、共通シートは `combination/units/_common/`
+- 既存のケースとシード `cases/<機能ID>_test_cases.tsv`・`<機能ID>_seed_data.tsv`（追加ケースが使う共有シードはここにある）
+
+規約は `combination/GEN_PROMPT.md`、裁定は `sheetmap/FIX_R1_BRIEF.md`（A〜L、C'）・`FIX_R2_BRIEF.md`（M〜O）、範囲は `integration_test/SCOPE.md`、前提条件は `precond/README.md`、判定単位は `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366。
+設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。Excel が触れていない条件を埋め込みが足しているだけのときは両方を当てる。
+期待結果の根拠は設計書に限る。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備と手順の実行可能性を確かめるためにだけ読む。実装と設計書が違うことは指摘しない。
+`combination/review/` の `*_out.txt`・`combination/prompts/` と、上の表に無いケースのファイルは読まない。
+
+## 前の巡
+
+1巡目の指摘が `combination/review/R1_*_findings.md`、直し担当の処置が `combination/review/<機能ID>_R1_dispositions.tsv`（部のある機能は `_R1_dispositions.p1.tsv` など）にある。指摘は見出しの機能IDで探す。却下の理由が設計書の原文に照らして妥当なら、同じ指摘を繰り返さない。採用したはずの指摘が実際に直っているか、直した結果に新しい誤りが入っていないかを見て、新しい事実の指摘だけを挙げる。
+
+## 意図的であり指摘対象外のもの
+
+- 1ケースの期待結果に、要因表 `processes.tsv` の「確かめる所」に挙がっている所どうし（ZIP と DB、画面と DB など）の結果が1文でまとめてあること（組1行にケース1件のため。2026-10-20 決定）。「確かめる所」に無い所の結果が混じっているときは指摘してよい。
+- 連鎖IDが空欄、要求IDが空欄であること。既存ケースを変えていないこと。判定IDが IT-0366 であること。
+- 組の値の選び方（どの組を並べたか）。要因表の「正解未定」「作れない」の組がケースに無いこと（要因表は反証済み。ただし、ケースを書いてみて組が作れない・結果が決まらないと分かったものは指摘してよい）。
+- 単体テスト・e2e へ送られるもの（画面上だけの入力制限、表示文言の逐語照合、見た目、計算式そのもの）のケースが無いこと。
+- シードの投入方法が「未確定: …」と書かれていること。
+- 商品がグッズ商品CSV登録で作られ、在庫が在庫変更CSV登録と承認で入ること（2026-10-19 の決まり）。
+
+## 重点観点
+
+1. **組の値がケースにあるか**: 事前準備・手順に、組のすべての要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）が値で書かれ、その値で処理を動かしているか。組と違う値で操作していないか。
+2. **期待結果が組の全要因の結果を重ねているか**: 確かめる所で、組の各要因の値について設計書が定める結果（金額・選択肢・更新先・更新内容）がまとめて確かめられているか。設計書の記述と事前準備の値だけから一意に出るか。設計書に無い値・ふるまいを期待していないか。金額・数量の計算が合っているか。
+3. 事前準備の状態から手順を実行して期待結果に到達できるか。単独で成立するか。「このN件だけ」を期待するのに、同じ条件に当たる他のデータを除く記述があるか。共有シードの設定と組の設定値が食い違っていないか。
+4. 1ケースに、確かめる所の違う期待結果が混じっていないか。既存ケースとの重複、物理名の混入。
+5. 「ケースにしない」とした組のうち、設計書の記述から期待結果が一意に決まるもの。「既存ケースで確認済み」としたもののうち、挙げたケースが実際にはその組の値で確かめていないもの。
+
+## 出力形式
+
+指摘が無ければ `NONE` の1語。あれば1件ごとに次の形で、テストIDの順に書く。確信の持てないものは挙げない。見出しの括弧の先頭は必ず機能ID。
+
+```
+### 指摘（<機能ID> / <テストID または 組ID>）
+- 主張: ケースまたは仕分けの記述（要点の引用）
+- 実際: 設計書の事実（design.txt の行番号。原文を引く）
+- 判定: 組の値が無い／期待結果の誤り／設計書に無い期待／成立しない前提・手順／要因の結果が欠けている／複数の期待結果／重複／ケースにできる／確認済みでない／組が作れない
+- 修正案: 結論を先に置いた1〜2文
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T09:00:31.089021Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象の5機能について、組・追加ケース・仕分けを設計書と照合します。まず規約と前巡の処置を確認し、その後、各ケースの値と期待結果を追います。ファイルは変更せず、閲覧コマンドだけを使います。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/GEN_PROMPT.md integration_test/casegen/sheetmap/FIX_R1_BRIEF.md integration_test/casegen/sheetmap/FIX_R2_BRIEF.md integration_test/SCOPE.md integration_test/casegen/precond/README.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# {FID}（{FNAME}）の要因の組合せのケース作成（著者への依頼）
+
+リポジトリ: `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+あなたは機能ID **{FID}** の追加ケースを書く著者である。レビューは別の担当が行う。git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すと決めた。他の機能の設定値も要因に入れる。
+{FID} の要因表（別の担当が作り、codex が反証した）から、機械が試す値の組を並べた。そのうち **{RANGE} の {N}行** があなたの受け持ち（{PARTNOTE}）。1行ごとにケースを書く。**既存のケースは1文字も変えない。**
+
+## 読むもの
+
+1. 試す値の組: `integration_test/casegen/combination/combos/{FID}.tsv`（組ID／処理ID／組（要因ID=値）／組（読める形）／埋める組）。1行が1回の処理で同時に使う値の組。受け持ちは {RANGE}。
+2. 要因表: `integration_test/casegen/combination/factors/{FID}_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`（効き合う理由）・`_constraints.tsv`（作れない組・正解未定の組）
+3. 設計書: `integration_test/casegen/combination/units/{FID}/design.txt`（行頭の L0001 とタブは行番号で、設計書の内容ではない）。要因の根拠の行だけでなく、その節全体を読む。他の機能の設定値の要因は `units/<機能ID>/design.txt`
+4. 既存のケースとシード: `integration_test/casegen/cases/{FID}_test_cases.tsv`（11列）・`{FID}_seed_data.tsv`。**書き方・画面への入り方・シードの作り方はこれに合わせる**。同じ処理を別の値で通している既存ケースがあれば、それを下敷きにして値だけ変えるのが基本
+5. 確かめる所が別の機能の画面のときは、その機能のケース `integration_test/casegen/cases/<機能ID>_test_cases.tsv` で画面への入り方と表示の書き方を見る
+6. `integration_test/SCOPE.md`、`integration_test/casegen/sheetmap/FIX_R1_BRIEF.md` の裁定 A〜L・C'、`FIX_R2_BRIEF.md` の決まり M〜O（文中の `sheetmap/` は読み替える）、`integration_test/casegen/precond/README.md`（前提条件 P1〜P13・類型 T1〜T4）、`integration_test/casegen/STEP_PATTERNS.md`（手順の型）
+7. `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366（判定単位の文と除外を読む）
+
+## 1行（組ID）ごとに、次のどれかに決める
+
+| 扱い | いつ | 書くもの |
+| --- | --- | --- |
+| ケース化 | その値の組で処理を動かしたときの結果が、設計書の記述から一意に決まる | ケース1件（1ケース1期待結果）。組のすべての要因の値を事前準備・手順に値で書く |
+| 既存ケースで確認済み | 既存ケースの事前準備・手順に組のすべての値が書かれ、確かめる所で結果を見ている | そのテストIDと、どの手順・期待結果が当たるか |
+| ケースにしない | その値の組が実は作れない（制約の抜け）／結果が設計書から一意に決まらない／設計書の記述どうしが食い違う／結合テストの範囲でない | 理由（設計書の原文を引く）。作れない・決まらない組は、要因表の制約に足すべき組として理由に `要因ID=値&要因ID=値` を書く |
+
+安易に「ケースにしない」としない。要因表は codex が反証済み。それでも外すなら設計書の原文で理由を示す。
+
+## 期待結果の決め方
+
+- 組の**すべての要因**について、その値で設計書が定める結果を、確かめる所（processes.tsv）でまとめて確かめる。1つの確かめる所で見える結果を1文にまとめてよい（例: 「受注情報編集画面で、お支払方法が代金引換、配送方法がゆうパケット、送料が200円、手数料が330円、ポイント使用が0、合計が1,530円で表示されること」）。確かめる所が違う結果は入れない（1ケース1期待結果）。
+- 金額・数量は、事前準備に書いた値から設計書の計算で一意に出す。計算の途中を期待結果・出典に書かない（期待結果には結果の値だけ）。
+- 期待結果は設計書（design.txt。同じ冊子の別シート、要因の根拠にある他の機能の設計書も可）と事前準備の値だけから出す。実装コード・現行ソースから期待値を足さない。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備・シードの作り方と手順の実行可能性を確かめるためにだけ読んでよい（スクリプトやコマンドは実行しない）。
+- 設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採り、出典に両方を書く。
+- 要因表の constraints.tsv に「正解未定」とある値の組は機械が行に入れていない。それ以外の組で結果が決まらないと分かったら「ケースにしない」にする（推測で決めない）。
+- **打ち切りの行**: 組（読める形）に「（効かない）」とある要因は、その行では結果に効かない（constraints.tsv の種別「打ち切り」。処理が途中で打ち切られる。依頼者決定 2026-10-20）。その要因の値は事前準備に書かなくてよい（共有可シードのままでよい）。期待結果は打ち切りの結果（出ない・エラーで元の画面へ戻る・何も変わらない など）を、設計書の定めどおりに確かめる。打ち切りのあと値が残っていないか（更新されていないこと）を見るのはよい。
+
+## ケースの書き方
+
+- テストIDは `IT-{FID}-{START}` からの連番（既存と、外した番号の続き）。組IDの順に書く。
+- 判定IDは `IT-0366`、観点IDは `ITA-11`。項目ID列に組ID（1つ）。
+- 期待結果は合否が一意に決まる具体値で書き、「〜こと」で終える。
+- **組の値がケースから読めること**: 事前準備・手順に、組の全要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）を値で書く。要因名や組の値を並べただけの行（「このケースで試す値の組: …」など）を事前準備・手順に足さない。実際のデータで書いていれば、verify の「注意」（組の値が字句で無い）は残ってよい。
+- 結果は、データを作った所とは別のコンポーネントで確かめる（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。
+- 手順は「1. …／2. …」の形で、画面名・項目名・ボタン名・入力値を特定する。名前は設計書の表記を使う。画面への入り方は既存ケースに合わせる。
+- 物理名（テーブル名・カラム名・ルート名・クラス名・翻訳キー）を書かない。設計書に書かれている項目名はそのまま使ってよい。
+- 禁止語: 失敗させる／該当する操作／同上／いくつか／別の画面／要確認／TBD／設計どおり／設計書どおり／仕様どおり／正しいこと／正しく。
+- 実行区分は `ブラウザのみ` か `ブラウザ+DB確認`（外から見えない副作用だけDBを見る）。優先度は、業務データの保存・更新・出力値の一致を P1、表示・選択肢を P2。
+- 要求ID列: `integration_test/casegen/requirements_all.tsv` に当たる行（書番・シート名・要求文が合う行）が見つかればその要求IDを書く。見つからなければ空欄でよい。代用しない。
+- 連鎖IDは空欄。出典は既存ケースと同じ形（`<書番> <シート名> / <区分 と 見出し>`。別シート・別の冊子は「｜」でつなぐ）。
+
+## 前提条件（いまの決まり。既存のシードの書き方がこれに従っているので合わせる）
+
+- 各ケースは単独で成立する。**各ケースはケース専用シードを1件以上使う**（シードID `S-{FID}-CB<名前>-<ケース番号3桁>`）。参照だけのマスタ・アカウント・環境設定は、既存の `{FID}_seed_data.tsv` にある `共有可` のシードをそのまま使ってよい（シード表に書き足さない）。既存の `ケース専用` シードは使わない。
+- 組の値が共有可のシードの設定と違うとき（手数料・送料・利用条件・配送方法に紐づく支払方法など）は、ケース専用シードで設定を書き、事前準備に値で書く。
+- テストデータは画面から入力して作る（2026-10-09 決定）。画面で作れない状態だけ、理由を添えて DB へ直接入れる書き方にする。
+- **商品はカード商品も含めてグッズ商品CSV登録で作る**（商品登録画面の新規登録は使わない。M03-02 L0075〜L0077）。カード商品は商品登録編集画面の「カード指定 >」でカードを付ける。価格は税込みで登録する。在庫は在庫変更CSV登録で入庫し、別のメンバーが承認一覧で承認する（確認画面の OK まで書く）。既存の `{FID}_seed_data.tsv` の商品・在庫のシードの書き方をそのまま写す。
+- 確認モーダルが出る操作は、モーダルの確定まで手順に書く。規約同意など必須のチェックも書く（既存ケースに合わせる）。
+- 画面が振る番号（受注番号・会員IDなど）は、画面で作ったあとに控えた番号を使う（類型 T4。〔番号の名前-{FIDC}-ケース番号〕の呼び名で書く）。
+- ケース専用データの識別子（コード、名称、メール、ファイル名、パスワード）は全機能で一意にする。前提条件の検査 G5 の字句は `[A-Za-z0-9][A-Za-z0-9_.@\-]{3,}`。**英数字とハイフンの連なり1つ1つに、機能番号とケース番号を入れる**（例: 「{FIDC}-CB{START}-A」「cb{FIDL}-{START}@example.test」「Passw0rd-CB{FIDC}{START}」）。パスワードに「!」を使わない。番号だけの語（「A001」）を単独で置かない。`grep -rF` で `integration_test/casegen/cases/` と重ならないことを確かめよ。
+- 事前準備は必須。使用シードすべてについて状態を値付きで書き、シードIDを括弧で添える（「① …（S-…）／② …（S-…）」）。「このN件だけ」を期待するときは、同じ条件に当たる他のデータが無い状態を書く。
+- 事前準備で手順の結果を参照しない。期待結果の「AからB」「Aのまま」の A は事前準備に同じ表記で書いた値にする。
+- シードの投入方法は、何を使ってどう作るかを書く。作り方が分からないときは「未確定: <分からないこと>」と書く。推測で埋めない。
+- 中継・模擬応答、現在時刻の固定、障害を起こす手段は用意しない（2026-10-19 決定）。これが要る組は「ケースにしない」。バッチの実行、スマレジなど外部の試験環境、メールの受け取りは用意できる。
+
+## 出力（この3つだけを書く。ほかの既存ファイルは変更しない）
+
+1. `integration_test/casegen/combination/cases/{FID}_cb_test_cases{SFX}.tsv`
+   タブ区切り・13列: `テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID`
+   セル内に改行・タブ・ダブルクォートを入れない。ケース化が0件でもヘッダだけのファイルを書く。
+2. `integration_test/casegen/combination/cases/{FID}_cb_seed_data{SFX}.tsv`
+   タブ区切り・7列: `シードID	区分	論理名	状態・属性	用途	投入方法	共有`。**新しく足すシードだけ**を書く。
+3. `integration_test/casegen/combination/cases/{FID}_cb_dispositions{SFX}.tsv`
+   タブ区切り・4列: `項目ID	扱い	テストID	理由`。受け持ちの組 {N}行を1行ずつ（項目ID は組ID）。
+
+最後に `python3 integration_test/casegen/combination/verify_cb.py {VARG}` を実行し、合格するまで直せ。ほかの検査（gate_dry.sh・gate_factors.py など）は流さない（ほかの著者と同時に流すとぶつかる）。
+作業用の一時ファイルはスクラッチパッド（`/tmp/claude-1000/-home-y-saito-Developments-hareruya-design-docs/7ac77140-f212-4eb4-b04c-5cbd0cc6fcfa/scratchpad/`）に、名前へ {FID}{SFX} を入れて作る。他の機能・同じ機能の他の部の combination/cases のファイルは読まない・書かない。
+**ファイルは処理ごとに書き足していく**（全部を最後にまとめて書かない。途中で止まっても書いた分が残るように）。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+4行以内。ケース化／確認済み／ケースにしない の件数、ケースにしなかった主な理由（制約に足すべき組があれば件数）、verify の結果、判断に迷った点（あれば1つ）。
+# レビュー1巡目の反映（著者への依頼）
+
+codex のレビュー指摘が `integration_test/casegen/sheetmap/review/<機能ID>_r1_findings.md` にある。
+1件ずつ、**指摘が引いている設計書の記述を sheet.txt で自分で読み直して事実かどうか確かめてから**、下の裁定に従って反映せよ。指摘をそのまま適用しない。
+
+## 裁定（依頼元の決定。指摘と食い違うときはこちらが優先）
+
+| No. | 裁定 |
+| --- | --- |
+| A | **根拠はHTML設計書であり、対象シート1枚に限らない。** その機能のふるまい（何を出力するか、全件か選択か、出力対象の条件、未選択・0件のときの扱い、ファイル名、起動するボタン、権限）が同じ冊子の別シート（一覧画面のシートなど）に書かれていれば、それを期待結果の根拠にしてよい。出典にそのシートを「｜」でつないで書く。当初の依頼文の「隣接シートは操作の入口にだけ使う」は撤回する。したがって、「対象シートに記述が無い」ことだけを理由にした指摘は、同じ冊子の別シートに記述があれば却下する。逆に、別シートにその機能の記述があるのにケースにしていなかったもの（出力対象、選択と全件の違い、未選択時の扱いなど）は、ケースを足す。別シートは `python3 integration_test/casegen/sheetmap/build_materials.py --sheet <書番> <シート名>` で読む。他の冊子・実装・現行ソースは根拠にしない |
+| B | **観点表の「期待値の決め方」が「観点内で確定」の判定単位は、適用の条件が設計書から言えれば、期待結果は判定単位の文から決めてよい。** 例: IT-0080・IT-0225（参照・出力だけの機能は実行前後でデータを更新しない）は、設計書がその機能をCSV出力・一覧表示などの参照機能として書いていれば適用できる。「非更新とは対象シートに書いていない」という指摘は却下する。IT-0083（出力ファイルの数量・金額が画面表示およびDB値と一致）を使うときは、画面表示またはDB値と見比べる手順と期待結果にする |
+| C | **CSV・帳票の出力項目の構成と並びは IT-0156**（観点ID ITA-02。他の観点に割り当たらない機能仕様を受ける区分）に当てる。IT-0071 は「値が取得元と同値」にだけ使う。report.md に「出力項目の構成・並びを受ける判定単位が観点表に無いので IT-0156 を使った」と書く |
+| C' | （2026-10-06 追記）観点表に IT-0348（ITA-05。出力したファイルの各レコードが、定められた出力項目だけで構成され、定められた順に並ぶこと）を足した。出力項目の構成と並びは、以後 IT-0348 に当てる。裁定Cで IT-0156 に当てていた14件は付け替えた（`retag_0348.py`）。同日、IT-0349（ITA-05。出力したファイルのレコードが、定められた並び順で出力されること）も足した。出力したCSV・帳票の行の並び順は IT-0349 に当てる（24件を付け替えた。`retag_0349.py`）。同日、IT-0350（ITA-05。送信されたメールの件名、送信元、本文の構成が、定められたとおりであること）も足した。通知メールの内容は IT-0350 に当てる（10件を付け替えた。`retag_0350.py`）。初期値、未選択時の扱いなど、ほかに受ける判定単位が無いものは IT-0156 のまま（2026-10-07 追記）観点表にバッチ用の4行を足した。IT-0351（ITA-14。異常として定められた条件でバッチが異常終了として終わること）、IT-0352（ITA-13。異常終了した場合、異常の後に行わないと定められた処理が行われていないこと）、IT-0353（ITA-13。終了後、一時的な資源が定められたとおりに削除されている・残っていること）、IT-0354（ITA-21。バッチの出力メッセージが、定められた条件のときに定められた文言で出力されること）。バッチのケースで期待結果がこのどれかそのものであるものは、IT-0156 でなくこれらを使う。 |
+| D | 見出し行の有無、データが何行目から始まるかは、設計書に書いていなければ期待結果・手順に書かない。データ行は事前準備の識別子（番号・コード）で特定する。項目の並びは「各行の項目が左から設計書の識別ID順に対応する」ことを、事前準備の値がどの位置に出るかで確かめる |
+| E | 値の取得元が設計書から決まらない項目（備考が空で、項目名からも取得元が1つに決まらないもの。呼び名の違う属性を当てはめたもの）は、値の照合から外し、report.md の「ケースにしなかったもの」に取得元の不足として書く。項目名と同じ名前の属性は取得元が決まるとしてよい |
+| F | 計算・連結・書式変換の結果そのもの（姓＋空白＋名、差の計算、小計など）は単体テストの担当（SCOPE.md）。ケースから外し、report.md に「単体テストへ送った」と書く。ただし「どの時点の値か」「単価か小計か」のように、どの値を採るかの定めは結合テストで確かめてよい |
+| G | 1ケース1期待結果。判定単位が違う確認が1ケースに混じっていたら分ける |
+| H | シードは実際に作れる方法で書く。管理画面で指定できない内部IDを管理画面で登録する、と書かない（DB投入にする）。設計書が求める状態（必須項目が未設定の会員など）が ee 実装の制約で作れないときは、ケースは残し、投入方法を「未確定: <理由>」にして report.md の「試験環境に要るもの」に挙げる。実装が設計書と違うこと自体はケースを変える理由にしない |
+| I | 手順は、画面を開く・条件を入れる・ボタンを押す・ファイルを開く、の操作を番号付きで書く。「〜を確認する」だけの手順にしない |
+| J | 設計書の中で記述が食い違っている・誤記と思われる箇所を、推測でどちらかに決めて期待結果にしない。両方に共通する部分だけを期待結果にし、食い違いは report.md に書く |
+| K | 判定ID IT-0332〜0347 は使わない。使っているケースは、当てはまる別の判定単位に付け替えるか、無ければ外す |
+| L | 指摘が「取りこぼし」で、設計書の記述から期待結果が一意に決まるなら、ケースを足す。試験基盤が無いことはケースを作らない理由にならない（投入方法・前提を「未確定」と書いて残す） |
+
+## やること
+
+1. 指摘ごとに「採用／一部採用／却下」を決め、cases・seed・report.md を直す。ケースを足したり外したりしたら、テストIDを 001 からの連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. 指摘に無くても、裁定 A〜L に反する箇所が自分のケースにあれば同じように直す。
+3. `integration_test/casegen/sheetmap/review/<機能ID>_r1_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述（原文）・直した内容」を表で書く。保存できないときは返答に本文を含める。
+4. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること（他の著者と同じ置き場所を使っているため）。
+
+## 返答
+
+5行以内。直した後の件数、指摘ごとの判定の内訳（採用・一部採用・却下の件数）、足した・外したテストの数、verify の結果、dispositions.md を保存できたか。
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+# 結合テストケースの前提条件の書き直し
+
+## なぜ
+
+2026-09-28 時点の `cases/*_test_cases.tsv` は、上から順番に実行しても成立しないケースが多い。
+原因は3つある。
+
+1. **前提がケースに書かれていない。** 生成規則（`GEN_PROMPT_TEMPLATE.md` 縛り10）が
+   「シード投入は事前準備に書かない」としていたため、実行対象8,325件のうち7,866件の事前準備が `—`。
+   IT-A01-01-004 の前に「SMA-A01-002 を2個販売した取引」が要ることは、別ファイルのシード表を読まないと分からない
+2. **状態を書き換えるデータを複数ケースで共有している。** IT-A01-01-001 が SMA-A01-001 を2個販売すると、
+   002 の「10から8」は成立しない。012 が SMA-A01-I01 を7にすると、013 の「10から8」は成立しない
+3. **投入方法が実行できる粒度でない。** 「スマレジ試験環境に全キャンセル可能な取引を登録する」
+
+依頼者決定（2026-09-28）: **ケースごとに専用データを持たせる**。A01-01 で型を作ってから全機能へ広げる。
+
+## 規約
+
+対象は実行区分が「保留」以外のケース。保留ケースは1文字も変えない。
+
+| No. | 規約 |
+| --- | --- |
+| P1 | **各ケースは単独で成立する。** 他のケースを先に実行しても、後に実行しても、実行しなくても、事前準備どおりの状態から始められる |
+| P2 | シード表に `共有` 列を足す。`共有可` か `ケース専用` のどちらか。**どれか1ケースでも状態を変えるデータ**（在庫・受注・取引・ステータス・ログイン失敗回数など）は `ケース専用`。`共有可` にできるのは、どのケースも状態を変えないもの（参照だけのマスタ、ロックさせない管理者アカウント、環境設定）と、各ケースが開始時に必要な設定を自分で行う試験基盤（中継の保留／転送の切替など）だけ。`用途` にどちらなのかを書く |
+| P3 | `ケース専用` のシードを参照するケースはちょうど1件。シードIDは `<元のID>-<ケース番号3桁>` にする |
+| P4 | ケース専用データの識別子（DB投入するレコードのID・商品ID・CSVファイル名・会員メールなど）は、**全機能のケース専用シードの中で一意**にする。重なるときはケース番号を付けて改名する |
+| P5 | **事前準備は必須。** 使用シードすべてについて、どういう状態かを値付きで書き、シードIDを括弧で添える。シード投入の後で画面や外部システムを操作して作る状態（販売済みの取引など）は、その操作と、終わった後の値の確認まで書く |
+| P6 | 期待結果が「AからB」「Aのまま」と言うとき、**A は事前準備に書いた値**である |
+| P7 | **期待結果は変えない。** 変えてよいのは P4 の改名だけで、改名は `renames/<機能ID>.tsv` に宣言する。改名は、英数字の識別子どうし／シードで ID・名称・コード・番号・メール・ファイル名等の項目の値として定義した値／シードID／シードの自由文にある4文字以上のデータ名を「旧名-ケース番号」へ、の置換に限る（数量・状態語は改名しない）。改名で済まない変更は `oracle_changes/<機能ID>.tsv`（テストID/新期待結果/理由/承認）に載せ、承認が入るまでゲートを通さない。承認済みの類型は T1 だけ（下記）。手順で外部の値に呼び名を付け、その呼び名を期待結果で使う書き方もオラクル変更として扱う。要求ID・連鎖ID・観点ID・優先度・実行区分・出典は変えない |
+| P8 | 手順はテスト対象の操作だけにする。手順を変えてよいのは次の種別だけで、変えたら `step_changes/<機能ID>.tsv`（テストID/種別/新手順/理由）に宣言する。`準備移動`（準備操作を事前準備へ移す）／`改名`／`発番値控え`（実行中に発番される値を控える操作を足す）／`データ指示`（事前準備で作ったデータを指し示す）／`中継置換`（類型 T2）／`非同期完了待ち`（類型 T3）／`裁定訂正`（設計書の中の食い違いの裁定で直したもの。2026-10-16 依頼者決定） |
+| P9 | 投入方法は、何を使ってどう作るかを書く（管理画面のどの画面か／DB投入／スマレジ試験環境の管理画面で商品登録と在庫設定／CSVフィクスチャ）。「〜を登録する」だけで手段が無いものは不可 |
+| P10 | 事前準備に設計書に無い仕様を持ち込まない。書くのはテストデータの状態と作り方だけ。作り方は設計書に無ければ ee 実装（設定・テーブル・管理画面）から引いてよい。どちらにも無い作り方は `open_preconditions.tsv` に載せ、推測で埋めない |
+| P12 | 試験基盤が未整備、または作り方が設計書にも ee 実装にも無い前提は `open_preconditions.tsv` に載せる。**実行区分は変えない**（保留は「設計書に期待結果が無い」の意味で使っており、混ぜない）。ゲートは件数を参考として出す |
+| P13 | **手順で入力する値（登録する名称・コードなど）は改名しない。** 境界値や文字種の検査が壊れるため。同じ値のデータが既にあると成立しないときは、事前準備に「その値のデータが無い状態にする（あれば削除する）」と書く |
+| P11 | **事前準備は手順より前に完結する。** 手順の結果（発番されたID・返された値）を事前準備で参照しない。それらは手順の中で控える |
+
+## 承認済みの類型（依頼者 2026-09-28）
+
+| 類型 | 内容 | 記録先 |
+| --- | --- | --- |
+| T1 外部発番値 | 外部システムが発番する値（スマレジの在庫変動履歴ID・問い合わせIDなど）を基線が固定値で書いているときは、手順の中で発番値を控え、期待結果を「手順Nで控えた値」との照合に書き換える | `oracle_changes`（承認欄に「類型承認T1」） |
+| T3 非同期完了待ち | Webhook・バッチ・メッセージ処理など非同期で処理される操作の結果を確認する前に、非同期処理の対象のジョブ（待機中・実行中）が0件になるまで待つ手順を足す（画面名は書かない。下の「用語の置き換え」）。待つ上限時間を書く | `step_changes`（種別「非同期完了待ち」）。依頼者承認 2026-09-30 |
+| T2 中継置換 | 外部システムとの通信の観測・送信を、基線が実行できない書き方（「Webhookの応答をブラウザで確認」「スマレジAPIから送信」など）にしているときは、中継（通信を記録・保留・転送・模擬送信する試験基盤）で観測・送信する手順に変える。外部が実際に返す通知は保留して転送し、外部に起こさせられない結果（エラー等）だけを模擬送信する | `step_changes`（種別「中継置換」） |
+
+## 類型T4 画面発番値（依頼者決定 2026-10-09）
+
+テストデータは画面から入力して作る。画面が自動で振る番号（注文番号・受注ID・イベントIDなど）を基線が固定値で書いているときは、
+データを画面で登録したときに振られた番号を控え、事前準備・手順・期待結果ではその控えた番号（呼び名〔注文番号-M0526-012〕の形）を使う。
+書き直しは `../seed_screen/`（README）。期待結果・手順の変更は `oracle_changes/`（承認欄に「類型承認T4」）・`step_changes/`（種別に「発番値控え」）へ、`../seed_screen/apply.py` が機械で宣言する。
+控えた番号へ置き換えたケースの一覧は `screen_noted_cases.tsv`。検査は、これらのケースについて改名先（消えた固定の番号）の検査を外し、〔…〕の呼び名を識別子として数えない。
+
+## テストできない・作り方が未確定のケースの除外（依頼者決定 2026-10-14）
+
+テストできないケースと、作り方が未確定のケースを、ケースの正本（`../cases/`・`../all_test_cases.tsv`）から外した。
+外したのは、検査 G9 が「未整備・未確定の前提を使うケース」と数えていた 1,892件（使用シードの投入方法に「未確定」「未整備」がある、または `open_preconditions.tsv` の影響ケースに載っている）。
+内訳は、作り方が未確定 1,744、試験環境の決定待ち 113、実装上その状態を作れない 35。残りは 10,556件・345機能（20機能は全ケースが外れた）。
+
+- 行は消さず `../excluded_open_cases.tsv`（除外理由・未確定の内容つき。元の11列は「元_」付き）へ移した。外したケースだけが使っていたシード 2,458件は `../excluded_open_seeds.tsv`。
+- 道具は `../exclude_open.py`（何度流しても同じ）。**各 `merge_into_cases.py` と `seed_screen/apply.py` は外したケースを `cases/` へ戻すので、そのあとに必ず流す。** 順序は merge → `seed_screen/apply.py` → `datapattern/conflicts/apply_rulings.py`（最後に `product_csv/apply.py` と `runnable/apply.py` も当たる）→ `exclude_open.py` → `exclude_scope.py` → `build_all_test_cases.py`。
+- 作り方が決まったら、シードの投入方法（と `open_preconditions.tsv`）を直してから同じ順に流し直すと戻る。
+- 検査 G6 は、基線・追加分からこの除外分を差し引いて照合する。保留（設計書に正解が無い）の除外 `excluded_hold_cases.tsv` とは別の表で、意味を混ぜていない。
+
+### 影響ケースの漏れ（2026-10-16）
+
+`open_preconditions.tsv` の影響ケースは、行を足した時点のケースで書いた固定の一覧である。そのため、あとから足したケースが同じ未確定の前提を使っていても除外に掛からなかった。全数を洗い直し、63件を影響ケースに足して外した（11,777件 → 11,714件・341機能）。
+- 同じシードを使うのに一覧に無かったもの: IT-A05-04-047〜060（スマレジ受信。2026-10-09 の被覆監査で追加。取引情報取得APIの試験環境と Webhook の認証情報の2行）、IT-B02-02-010〜012（バッチの実行環境）、IT-M03-09-058・097（スマレジの試験用受信サーバー）。
+- 連携ケース（`../link/`）が、基線では未確定のシードを「-L-」付きの別名で作り直していたもの: S-B02-02-L-ENV・S-B05-02-L-CLOCK・S-B05-09-L-API/CLOCK/CONFIG・S-B06-01-L-ENV・S-B06-02-L-EXEC・S-B08-03-L-ENV・S-B08-06-L-API-CONTROL・S-B13-01-L-API/EXEC/MAIL。基線の行と同じ文面で、対象をL版にした行を足した（`未確定: …（… の未確定と同じ）`）。B06-01 の別名を使っていたデータパターンのケースも含む。
+- 時計を固定する前提: IT-M04-17-001（業務日を2026/09/29に固定。時計の固定は S-B05-09-CLOCK などと同じく作り方が無い）。
+- この結果、B02-02・B05-02・B05-09・B06-01・B08-03・B13-01 はケースが0件になった（基線のケースは前から外れており、残っていたのは別名のシードを使う連携ケースだけだった）。
+- 同じ日に `../chain_gap/` のレビューで、S-F06-02-L-ENV（IT-F06-02-024・025）も見つかり、同じ形の行を足して外した。基線の行の対象は S-F06-02-API-OK で、名前の役割の語（API と ENV）が違うため道具では拾えなかった。このシードは、開始時にスマレジAPI試験環境のユーザーDBで会員が0件であることを確かめる作り方で、024 は発番されたスマレジIDを控える。外部の試験環境を使うシードは、名前だけでなく中身でも基線の行と見比べる。
+- 候補を出す道具は `scan_open_leaks.py`。ケースを合流したあと、`exclude_open.py` の前に流す。候補を出すだけで判定はしない。残っている候補 159件は、読んだうえで漏れではないと判定したもの。
+  - 共有の定義だけを使い、未確定の項目に触れないもの: S-M05-03-DEFS、S-F06-05-BASIC、IT-A05-04-002（GETを送るだけで、認証も取引の取得も要らない）。
+  - 名前の役割の語が同じだけで、作り方が決まっているもの: ポイントの設定、ユニサーチの接続先、ee の開発用の正常応答、スマレジの試験環境への接続。
+  - S-M03-10-SMAREGI-ENV: ee の商品APIのクライアントは、模擬応答のときも呼び出しを記録する（SmaregiPlatformApiCallRecorder）。シードの書き方は実装と合っている。
+
+## 試験環境で用意できる前提の解消（依頼者決定 2026-10-19）
+
+依頼者決定「バッチの実行、スマレジなど外部の試験環境、メールの受け取りは環境準備できる」（中継・模擬応答、時刻の固定、障害を起こす手段は用意しない）。作り方が未確定で外したケースを止めていた項目（未確定のシード 944・未確定の前提の行 879）を1件ずつ判定し、この3つだけで決まるものは作り方を書いて解消した。止めていた項目がすべて解消したケース 183件が一覧へ戻った（11,713件 → 11,896件・346機能）。
+解消した前提の行 81 は `open_preconditions.tsv` から `resolved_preconditions.tsv`（解消の書き方・区分・根拠・決定つき）へ移した。シードは投入方法を書き直した（外した表 `../excluded_open_seeds.tsv` を直し、`exclude_open.py` が直った文で戻す）。
+同じ日の依頼者決定「おすすめで進めて」で、人が補って実行できるもの（決まった番号の読み替え、必須のチェック、確認モーダル、割引率、在庫の承認）も書き足した。道具・判定・レビューは `../runnable/README.md`。`../datapattern/conflicts/apply_rulings.py` が最後に `../runnable/apply.py` を呼ぶ。
+
+## E2E で作成を保留した入力ファイルを使うケースの除外（依頼者決定 2026-10-16）
+
+依頼者決定「テスト保留のケースがあれば除外」。ケース一覧に実行区分「保留」のケースは無かった（2026-10-01 にすべて外してある）。保留に当たっていたのは、E2E の入力ファイルの棚卸し（`../../../e2e/fixtures/named-file-references.tsv`。M03・M04 だけ棚卸し済み）で作成判断を「保留」「正本矛盾」とした33ファイルで、シードの記述だけでは中身（文字コード、見出し行の値、画像の中身など）が一つに決まらないか、シードの記述が食い違っていた（M03-30 の empty.tsv）。これを使うケース29件を、作り方が未確定の前提として `open_preconditions.tsv` に載せ（対象「入力ファイル <ファイル名>」の33行）、`exclude_open.py` で外した。ケースは 11,679件から 11,650件。ファイルの中身をシードに書いて棚卸しの判断が変わったら、その行を消して流し直すと戻る。M03・M04 以外の機能の入力ファイル（棚卸しで未判定の 1,729件）は見ていない。
+同じ日の依頼者決定「画像は任意の有効な画像でよいとして戻す」で、画像の中身が未指定だった9ファイル（M04-02-050・M04-03-005・M04-05-011・M04-31-150 の4ケース）の行を外し、4ケースを戻した（11,654件）。シード（`../seed_screen/out/` の該当行の投入方法）に「画像ファイルの中身は任意の有効な画像でよい。同じケースで使う複数の画像は、互いに見分けられる別の画像にする」と書いた。E2E の入力ファイル（`e2e/fixtures/`）はまだ作っていない。
+外したケースを戻すときは、流れを2回流す。1回目は `exclude_open.py` が除外表の古い文面のままケースとシードを戻すので、2回目の `seed_screen/apply.py`・`apply_rulings.py` で書き直しが当たる。
+
+## フェーズ2見送り・実装しない機能の除外（依頼者決定 2026-10-16）
+
+依頼者決定「フェーズ2見送り、機能実装しない機能についてはケースから除外」。対象は `../scope_out.tsv`（根拠つき）で、フェーズ2見送り13機能（A06-14・B01-02・B01-03・F02-05・M03-43・M03-44・M04-06・M04-07・M06-13・M08-11・M08-15・M08-16・M08-17）、実装しない4機能（M03-34・M03-36 は 2026-10-06 決定、M04-27・B13-02 は Excel の廃止の記述）と、M03-43 の機能を確かめていた IT-M03-30-038。
+ケース一覧の6件に加え、作り方が未確定で外していた65件、保留で外していた49件も、決まっても戻さないので `../excluded_scope_cases.tsv` へ移した（計120件。元の表と元の除外理由を残す）。外したケースだけが使っていたシード89件は `../excluded_scope_seeds.tsv`。道具は `../exclude_scope.py`（何度流しても同じ。`exclude_open.py` の後に流す）。ケースは 11,685件・349機能から 11,679件・346機能になった（F02-05・M03-44・M06-13 はケースが0件）。
+保留から移した49件は、設計者に聞く必要が無くなった（`../hold_review/questions.tsv` に論点があるものも含む）。機能の一部だけがフェーズ2のもの（ナビゲーションの通知、会員検索の顧客分析タグなど）は機能ごとは外していない。そのフェーズ2の部分を確かめるケースは IT-M03-30-038 のほかに無かった。
+検査 G6 は、基線・追加分からこの表の分も差し引いて照合する。
+
+## 既存ケースと設計書の食い違いの裁定（依頼者決定 2026-10-16）
+
+設計書の中で記述が食い違うときの優先順位（Excel由来＞埋め込みの表示メッセージ節＞埋め込みの現行仕様節、同じ出所では改訂後）を決め、既存ケース52件の報告を裁定した。直したケースの期待結果・手順・出典は `oracle_changes/`・`step_changes/`（種別「裁定訂正」）・`source_changes/` に、承認欄「2026-10-16 依頼者裁定」で宣言してある。規則で決まらず共通部分でも書けない10件は `../excluded_hold_cases.tsv` へ移した（論点ID が QD- の行。決める人＝設計者）。道具は `../datapattern/conflicts/apply_rulings.py`（何度流しても同じ。`seed_screen/apply.py` の後、`exclude_open.py` の前に流す）。説明は `../datapattern/conflicts/README.md`。
+
+## 保留ケースの除外（依頼者決定 2026-10-01）
+
+実行区分が「保留」のケース（1,014件）はテストケースから外した。設計書にも現行ソースにも期待結果（正解）が無く、テストできないため。
+行は削除せず `../excluded_hold_cases.tsv` へ移した（論点ID・決める人つき。元の11列は「元_」付きで保持）。保留ケースだけが使っていたシードは `../excluded_hold_seeds.tsv`。
+設計者の回答（`../hold_review/questions.tsv`）やテスト側の決定で正解が決まったら、そのケースを作り直して戻す。ゲート G6 は、基線のテストIDからこの除外分を差し引いて照合し、保留ケースが残っていれば落とす。
+
+## 実行の前提（依頼者決定 2026-09-30）
+
+- **専用DBで流す。** 結合テストは機能（またはモジュール）ごとに、まっさらな専用DBへシードを投入して流す。検索・一覧・集計で「このN件だけ」を期待するケースは、開始時に同じ条件に当たる他のデータを削除して隔離しており、共有の試験環境では他機能のデータを消しうる
+- **1件しかないデータは順番に実行する。** 基本設定のように1件しかない設定や、期待結果が固定IDを名指ししていて分けられないデータは `共有可` とし、使う各ケースが開始時に値を設定し直す。上から順に実行すれば成立するが、同じデータを使うケースを同時には実行しない。該当ケースは `sequential_only.tsv`
+
+## 機械検査 `gate_precond.py`
+
+| No. | 検査 | 対応する規約 |
+| --- | --- | --- |
+| G1 | 保留以外で事前準備が空・`—` | P5 |
+| G2 | 使用シードのIDが事前準備に現れない | P5 |
+| G3 | 期待結果の「AからB」「Aのまま」の A が事前準備に無い | P6 |
+| G4 | `共有` 列が無い・値が不正／ケース専用シードの参照が1件でない／ケース専用シードIDの末尾がケース番号でない／どのケースも使わないシード／保留以外のケースがケース専用シードを1件も使わない（状態を変えない読み取りだけのケースは `readonly_cases/<機能ID>.tsv` にテストID/理由で宣言） | P1 P2 P3 |
+| G5 | 同じ機能のケース専用シードどうしで自分のレコードID（「ID=20」「ID 20」）が重なる。ケース専用シードの識別子（「〜」の範囲は展開する）が、他のケースの事前準備・手順・期待結果、または他のケース専用シード（全機能）に現れる | P1 P4 |
+| G6 | 改名が識別子どうしでない。期待結果が「基線に改名を当てたもの」と一致せず、承認済みの oracle_changes にも無い。保留ケースが変わった。テストIDの集合・他の固定列が変わった（出典は `source_changes/`、実行区分の誤記は `kind_changes.tsv` に宣言したものを除く） | P7 |
+| G8 | 事前準備が「手順N」「返した値」「発番した」など後の結果を参照している | P11 |
+| G7 | 手順が「基線に改名を当てたもの」と違うのに `step_changes` に宣言が無い／種別が P8 の5種以外 | P8 |
+| G9 | 投入方法が「未確定」「未整備」のシードを使う非保留ケースが `open_preconditions.tsv` に無い。該当件数は参考として出す | P12 |
+
+`baseline/` は書き直し前（HEAD 98709b43）のスナップショット。G6 の基準なので書き換えない。
+
+実行区分の誤記を直すときは、基線を書き換えずに `kind_changes.tsv`（テストID／旧実行区分／新実行区分／理由）へ宣言する。G6 は、基線の値が旧実行区分と一致し、今の値が新実行区分と一致するものだけ認める（2026-10-19、IT-M03-45-024 の「ブラザ+DB確認」→「ブラウザ+DB確認」）。
+
+書き直しの後で足したケースは `added_cases.tsv`（テストID／追加日／由来）に載せる。G6 は「基線から保留除外分を引いた集合」に
+この追加分を足したものと、現在のテストIDの集合を照合する。基線が無い機能（後から新設したもの）は、全ケースが追加分になる。
+2026-10-06 に機能間データ連携のケース142件を足した（`../link/merge_into_cases.py`。旧テストIDとの対応は `../link/merged_map.tsv`）。
+同日、アクセス解析連携のケース（F10-01〜03）を足した（`../ga/merge_into_cases.py`。判定IDとの対応は `../ga/ga_map.tsv`）。
+同日、対応表が「候補」止まりだった14機能のケース398件を足した（`../sheetmap/merge_into_cases.py`。判定IDとの対応は `../sheetmap/sm_map.tsv`）。
+
+機械で見られないもの（P2 の共有可の妥当性、P6 の値と対象の対応、P8 の種別の妥当性、P9、P10）は codex レビューで見る。
+
+## 用語の置き換え（依頼者決定 2026-10-06）
+
+AWS Step Functions は使わない。テストケースでは「バッチ」と書き、非同期処理ダッシュボードの「Messenger ジョブ」という表現も書かない。
+置き換えの規則は `terms.py`（`python3 precond/terms.py` で cases/・step_changes/・open_preconditions.tsv・link/cases に当てる。何度流しても同じ）。
+基線は書き換えていない。ゲートは基線の手順と期待結果に同じ置き換えを当ててから照合する。
+シードID `S-B02-05-STEPFUNCTIONS` は `S-B02-05-BATCH-ENV` に変えた。
+
+「非同期処理ダッシュボード」という画面名も書かない（同日の依頼者決定）。設計書に無い画面で、実装にあるのは管理画面とは切り離した運用ツールである。
+ケースには「非同期処理の待機中・実行中のジョブが0件になるまで待つ」のように状態だけを書く。待機の手順そのものは残す
+（バッチはジョブを積むだけで終わり、実処理はワーカーが後から行うため）。確認の手段は試験環境の用意として扱う。
+
+exec
+/bin/bash -lc 'ls -lh integration_test/casegen/combination/cases/B08-0{1,2,3,4,6}_cb_* integration_test/casegen/combination/combos/B08-0{1,2,3,4,6}.tsv integration_test/casegen/combination/factors/B08-0{1,2,3,4,6}_* integration_test/casegen/combination/review/*R1*' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+-rw-r--r-- 1 y-saito y-saito  315 Oct 20 16:51 integration_test/casegen/combination/cases/B08-01_cb_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.7K Oct 20 17:41 integration_test/casegen/combination/cases/B08-01_cb_seed_data.tsv
+-rw-r--r-- 1 y-saito y-saito 1.6K Oct 20 17:41 integration_test/casegen/combination/cases/B08-01_cb_test_cases.tsv
+-rw-r--r-- 1 y-saito y-saito  995 Oct 20 16:52 integration_test/casegen/combination/cases/B08-02_cb_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 4.0K Oct 20 16:52 integration_test/casegen/combination/cases/B08-02_cb_seed_data.tsv
+-rw-r--r-- 1 y-saito y-saito 2.5K Oct 20 16:52 integration_test/casegen/combination/cases/B08-02_cb_test_cases.tsv
+-rw-r--r-- 1 y-saito y-saito 2.3K Oct 20 16:54 integration_test/casegen/combination/cases/B08-03_cb_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  20K Oct 20 16:54 integration_test/casegen/combination/cases/B08-03_cb_seed_data.tsv
+-rw-r--r-- 1 y-saito y-saito  15K Oct 20 16:59 integration_test/casegen/combination/cases/B08-03_cb_test_cases.tsv
+-rw-r--r-- 1 y-saito y-saito  524 Oct 20 16:54 integration_test/casegen/combination/cases/B08-04_cb_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   72 Oct 20 16:54 integration_test/casegen/combination/cases/B08-04_cb_seed_data.tsv
+-rw-r--r-- 1 y-saito y-saito  136 Oct 20 16:54 integration_test/casegen/combination/cases/B08-04_cb_test_cases.tsv
+-rw-r--r-- 1 y-saito y-saito  822 Oct 20 16:51 integration_test/casegen/combination/cases/B08-06_cb_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   72 Oct 20 16:51 integration_test/casegen/combination/cases/B08-06_cb_seed_data.tsv
+-rw-r--r-- 1 y-saito y-saito  136 Oct 20 16:51 integration_test/casegen/combination/cases/B08-06_cb_test_cases.tsv
+-rw-r--r-- 1 y-saito y-saito  325 Oct 20 16:47 integration_test/casegen/combination/combos/B08-01.tsv
+-rw-r--r-- 1 y-saito y-saito  945 Oct 20 16:47 integration_test/casegen/combination/combos/B08-02.tsv
+-rw-r--r-- 1 y-saito y-saito 6.5K Oct 20 16:47 integration_test/casegen/combination/combos/B08-03.tsv
+-rw-r--r-- 1 y-saito y-saito  196 Oct 20 16:47 integration_test/casegen/combination/combos/B08-04.tsv
+-rw-r--r-- 1 y-saito y-saito  314 Oct 20 16:47 integration_test/casegen/combination/combos/B08-06.tsv
+-rw-r--r-- 1 y-saito y-saito  238 Oct 20 16:18 integration_test/casegen/combination/factors/B08-01_constraints.tsv
+-rw-r--r-- 1 y-saito y-saito 1023 Oct 20 12:42 integration_test/casegen/combination/factors/B08-01_existing.tsv
+-rw-r--r-- 1 y-saito y-saito  744 Oct 20 12:42 integration_test/casegen/combination/factors/B08-01_factors.tsv
+-rw-r--r-- 1 y-saito y-saito  197 Oct 20 12:42 integration_test/casegen/combination/factors/B08-01_interactions.tsv
+-rw-r--r-- 1 y-saito y-saito  423 Oct 20 12:42 integration_test/casegen/combination/factors/B08-01_processes.tsv
+-rw-r--r-- 1 y-saito y-saito  350 Oct 20 16:18 integration_test/casegen/combination/factors/B08-02_constraints.tsv
+-rw-r--r-- 1 y-saito y-saito  974 Oct 20 12:39 integration_test/casegen/combination/factors/B08-02_existing.tsv
+-rw-r--r-- 1 y-saito y-saito  929 Oct 20 16:18 integration_test/casegen/combination/factors/B08-02_factors.tsv
+-rw-r--r-- 1 y-saito y-saito  632 Oct 20 13:14 integration_test/casegen/combination/factors/B08-02_interactions.tsv
+-rw-r--r-- 1 y-saito y-saito  388 Oct 20 12:39 integration_test/casegen/combination/factors/B08-02_processes.tsv
+-rw-r--r-- 1 y-saito y-saito  627 Oct 20 16:18 integration_test/casegen/combination/factors/B08-03_constraints.tsv
+-rw-r--r-- 1 y-saito y-saito 2.0K Oct 20 13:13 integration_test/casegen/combination/factors/B08-03_existing.tsv
+-rw-r--r-- 1 y-saito y-saito 2.0K Oct 20 13:13 integration_test/casegen/combination/factors/B08-03_factors.tsv
+-rw-r--r-- 1 y-saito y-saito 6.3K Oct 20 13:13 integration_test/casegen/combination/factors/B08-03_interactions.tsv
+-rw-r--r-- 1 y-saito y-saito  420 Oct 20 12:40 integration_test/casegen/combination/factors/B08-03_processes.tsv
+-rw-r--r-- 1 y-saito y-saito  340 Oct 20 16:18 integration_test/casegen/combination/factors/B08-04_constraints.tsv
+-rw-r--r-- 1 y-saito y-saito 2.1K Oct 20 12:41 integration_test/casegen/combination/factors/B08-04_existing.tsv
+-rw-r--r-- 1 y-saito y-saito  588 Oct 20 12:41 integration_test/casegen/combination/factors/B08-04_factors.tsv
+-rw-r--r-- 1 y-saito y-saito  394 Oct 20 13:13 integration_test/casegen/combination/factors/B08-04_interactions.tsv
+-rw-r--r-- 1 y-saito y-saito  366 Oct 20 12:41 integration_test/casegen/combination/factors/B08-04_processes.tsv
+-rw-r--r-- 1 y-saito y-saito  191 Oct 20 16:18 integration_test/casegen/combination/factors/B08-06_constraints.tsv
+-rw-r--r-- 1 y-saito y-saito  774 Oct 20 13:14 integration_test/casegen/combination/factors/B08-06_existing.tsv
+-rw-r--r-- 1 y-saito y-saito  618 Oct 20 13:14 integration_test/casegen/combination/factors/B08-06_factors.tsv
+-rw-r--r-- 1 y-saito y-saito  257 Oct 20 13:14 integration_test/casegen/combination/factors/B08-06_interactions.tsv
+-rw-r--r-- 1 y-saito y-saito  419 Oct 20 13:14 integration_test/casegen/combination/factors/B08-06_processes.tsv
+-rw-r--r-- 1 y-saito y-saito  709 Oct 20 17:44 integration_test/casegen/combination/review/A01-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/A02-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/A02-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 17:45 integration_test/casegen/combination/review/A02-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  556 Oct 20 17:45 integration_test/casegen/combination/review/A02-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/A05-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  452 Oct 20 17:41 integration_test/casegen/combination/review/A05-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  376 Oct 20 17:41 integration_test/casegen/combination/review/A05-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.3K Oct 20 17:41 integration_test/casegen/combination/review/A05-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:42 integration_test/casegen/combination/review/A06-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  793 Oct 20 17:42 integration_test/casegen/combination/review/A06-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:42 integration_test/casegen/combination/review/A06-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/A06-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/A06-07_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/A06-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.3K Oct 20 17:45 integration_test/casegen/combination/review/A07-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.8K Oct 20 17:45 integration_test/casegen/combination/review/A07-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/A15-10_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/A15-12_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/A15-13_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  338 Oct 20 17:41 integration_test/casegen/combination/review/A15-14_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/A15-15_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/A15-16_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 2.1K Oct 20 17:41 integration_test/casegen/combination/review/A15-17_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/A15-18_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/A16-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/A17-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/A17-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  277 Oct 20 17:41 integration_test/casegen/combination/review/A17-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/A17-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.1K Oct 20 17:41 integration_test/casegen/combination/review/B02-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B02-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B02-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B02-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B02-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 2.3K Oct 20 17:41 integration_test/casegen/combination/review/B05-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B05-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B05-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B05-07_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B05-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  482 Oct 20 17:41 integration_test/casegen/combination/review/B06-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B06-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  442 Oct 20 17:41 integration_test/casegen/combination/review/B08-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B08-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B08-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B08-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/B08-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  709 Oct 20 17:44 integration_test/casegen/combination/review/B08-07_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.4K Oct 20 17:44 integration_test/casegen/combination/review/B16-11_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.8K Oct 20 17:45 integration_test/casegen/combination/review/F01-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 2.4K Oct 20 17:47 integration_test/casegen/combination/review/F01-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 17:44 integration_test/casegen/combination/review/F02-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:44 integration_test/casegen/combination/review/F02-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  274 Oct 20 17:44 integration_test/casegen/combination/review/F02-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/F03-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  592 Oct 20 17:41 integration_test/casegen/combination/review/F03-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:41 integration_test/casegen/combination/review/F03-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:42 integration_test/casegen/combination/review/F03-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:42 integration_test/casegen/combination/review/F03-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  893 Oct 20 17:42 integration_test/casegen/combination/review/F03-07_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:42 integration_test/casegen/combination/review/F03-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:42 integration_test/casegen/combination/review/F04-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  351 Oct 20 11:44 integration_test/casegen/combination/review/F04-02_R1_dispositions.owner.tsv
+-rw-r--r-- 1 y-saito y-saito  631 Oct 20 11:45 integration_test/casegen/combination/review/F04-02_R1_dispositions.p1.tsv
+-rw-r--r-- 1 y-saito y-saito 2.1K Oct 20 11:45 integration_test/casegen/combination/review/F04-02_R1_dispositions.p2.tsv
+-rw-r--r-- 1 y-saito y-saito 1.5K Oct 20 11:45 integration_test/casegen/combination/review/F04-02_R1_dispositions.p3.tsv
+-rw-r--r-- 1 y-saito y-saito  619 Oct 20 12:47 integration_test/casegen/combination/review/F04-02_R1_dispositions.p4.tsv
+-rw-r--r-- 1 y-saito y-saito 5.0K Oct 20 12:48 integration_test/casegen/combination/review/F04-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1010 Oct 20 17:41 integration_test/casegen/combination/review/F04-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  543 Oct 20 17:41 integration_test/casegen/combination/review/F04-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 17:42 integration_test/casegen/combination/review/F05-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:42 integration_test/casegen/combination/review/F05-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/F05-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  798 Oct 20 17:45 integration_test/casegen/combination/review/F05-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.9K Oct 20 17:45 integration_test/casegen/combination/review/F05-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.1K Oct 20 17:45 integration_test/casegen/combination/review/F06-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  981 Oct 20 17:45 integration_test/casegen/combination/review/F06-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.8K Oct 20 17:45 integration_test/casegen/combination/review/F06-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/F06-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/F06-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 6.4K Oct 20 17:45 integration_test/casegen/combination/review/F06-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/F06-07_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/F06-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/F06-09_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/F06-10_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 3.9K Oct 20 17:45 integration_test/casegen/combination/review/F06-11_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/F06-13_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  406 Oct 20 17:42 integration_test/casegen/combination/review/F06-14_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  396 Oct 20 17:42 integration_test/casegen/combination/review/F06-15_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  507 Oct 20 17:42 integration_test/casegen/combination/review/F06-16_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:42 integration_test/casegen/combination/review/F06-17_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.4K Oct 20 17:44 integration_test/casegen/combination/review/F06-18_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  855 Oct 20 17:44 integration_test/casegen/combination/review/F06-20_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  381 Oct 20 17:44 integration_test/casegen/combination/review/F06-21_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:44 integration_test/casegen/combination/review/F06-22_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:44 integration_test/casegen/combination/review/F06-26_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  778 Oct 20 17:48 integration_test/casegen/combination/review/F07-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.1K Oct 20 17:48 integration_test/casegen/combination/review/F07-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  334 Oct 20 17:48 integration_test/casegen/combination/review/F07-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 2.1K Oct 20 17:57 integration_test/casegen/combination/review/F08-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 5.4K Oct 20 17:34 integration_test/casegen/combination/review/F08-02_gate.fixed_R1.txt
+-rw-r--r-- 1 y-saito y-saito  485 Oct 20 17:57 integration_test/casegen/combination/review/F08-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  122 Oct 20 17:57 integration_test/casegen/combination/review/F08-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  897 Oct 20 17:57 integration_test/casegen/combination/review/F08-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  122 Oct 20 17:57 integration_test/casegen/combination/review/F09-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  627 Oct 20 17:47 integration_test/casegen/combination/review/F09-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/F09-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/F09-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  694 Oct 20 17:47 integration_test/casegen/combination/review/F09-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  363 Oct 20 17:44 integration_test/casegen/combination/review/F09-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.3K Oct 20 17:44 integration_test/casegen/combination/review/F09-07_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/F09-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/F10-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/F10-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 17:45 integration_test/casegen/combination/review/M03-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  576 Oct 20 17:45 integration_test/casegen/combination/review/M03-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  440 Oct 20 17:47 integration_test/casegen/combination/review/M03-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M03-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M03-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M03-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  552 Oct 20 17:47 integration_test/casegen/combination/review/M03-09_R1_dispositions.p1.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M03-09_R1_dispositions.p2.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M03-10_R1_dispositions.p1.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M03-10_R1_dispositions.p2.tsv
+-rw-r--r-- 1 y-saito y-saito  617 Oct 20 17:47 integration_test/casegen/combination/review/M03-11_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M03-13_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M03-16_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  580 Oct 20 17:47 integration_test/casegen/combination/review/M03-18_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/M03-19_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.7K Oct 20 17:45 integration_test/casegen/combination/review/M03-20_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/M03-22_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/M03-25_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.8K Oct 20 17:45 integration_test/casegen/combination/review/M03-26_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 2.8K Oct 20 17:54 integration_test/casegen/combination/review/M03-27_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.1K Oct 20 17:54 integration_test/casegen/combination/review/M03-28_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:54 integration_test/casegen/combination/review/M03-29_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 7.8K Oct 20 17:54 integration_test/casegen/combination/review/M03-30_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  948 Oct 20 17:54 integration_test/casegen/combination/review/M03-31_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 3.0K Oct 20 17:51 integration_test/casegen/combination/review/M03-32_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 3.4K Oct 20 17:51 integration_test/casegen/combination/review/M03-33_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:51 integration_test/casegen/combination/review/M03-35_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:51 integration_test/casegen/combination/review/M03-38_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:51 integration_test/casegen/combination/review/M03-40_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 17:45 integration_test/casegen/combination/review/M03-41_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/M03-45_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/M04-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:45 integration_test/casegen/combination/review/M04-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  446 Oct 20 17:45 integration_test/casegen/combination/review/M04-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  11K Oct 20 17:50 integration_test/casegen/combination/review/M04-09_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:50 integration_test/casegen/combination/review/M04-10_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 17:50 integration_test/casegen/combination/review/M04-13_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:50 integration_test/casegen/combination/review/M04-19_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M04-21_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M04-22_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M04-23_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M04-25_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  767 Oct 20 17:47 integration_test/casegen/combination/review/M04-30_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.9K Oct 20 17:48 integration_test/casegen/combination/review/M04-31_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 4.8K Oct 20 17:50 integration_test/casegen/combination/review/M04-32_R1_dispositions.p1.tsv
+-rw-r--r-- 1 y-saito y-saito  985 Oct 20 17:50 integration_test/casegen/combination/review/M04-32_R1_dispositions.p2.tsv
+-rw-r--r-- 1 y-saito y-saito 1.3K Oct 20 17:48 integration_test/casegen/combination/review/M04-33_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M04-34_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  950 Oct 20 17:47 integration_test/casegen/combination/review/M05-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M05-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M05-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M05-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M05-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 17:47 integration_test/casegen/combination/review/M05-09_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:47 integration_test/casegen/combination/review/M05-10_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 11:45 integration_test/casegen/combination/review/M05-11_R1_dispositions.p1.tsv
+-rw-r--r-- 1 y-saito y-saito  528 Oct 20 11:45 integration_test/casegen/combination/review/M05-11_R1_dispositions.p2.tsv
+-rw-r--r-- 1 y-saito y-saito 1.7K Oct 20 11:46 integration_test/casegen/combination/review/M05-11_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  292 Oct 20 17:47 integration_test/casegen/combination/review/M05-18_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 2.8K Oct 20 17:54 integration_test/casegen/combination/review/M05-21_R1_dispositions.p1.tsv
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 17:48 integration_test/casegen/combination/review/M05-21_R1_dispositions.p2.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:48 integration_test/casegen/combination/review/M05-22_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:48 integration_test/casegen/combination/review/M05-23_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:48 integration_test/casegen/combination/review/M05-24_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  418 Oct 20 17:48 integration_test/casegen/combination/review/M05-26_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  595 Oct 20 17:53 integration_test/casegen/combination/review/M06-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.6K Oct 20 17:53 integration_test/casegen/combination/review/M06-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 2.7K Oct 20 17:55 integration_test/casegen/combination/review/M06-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  420 Oct 20 17:55 integration_test/casegen/combination/review/M06-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:55 integration_test/casegen/combination/review/M06-09_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.5K Oct 20 17:54 integration_test/casegen/combination/review/M06-10_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 2.4K Oct 20 17:54 integration_test/casegen/combination/review/M06-11_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:54 integration_test/casegen/combination/review/M06-12_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:57 integration_test/casegen/combination/review/M07-01_R1_dispositions.p1.tsv
+-rw-r--r-- 1 y-saito y-saito 2.2K Oct 20 17:57 integration_test/casegen/combination/review/M07-01_R1_dispositions.p2.tsv
+-rw-r--r-- 1 y-saito y-saito 1.4K Oct 20 17:57 integration_test/casegen/combination/review/M07-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  137 Oct 20 17:57 integration_test/casegen/combination/review/M07-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.1K Oct 20 17:57 integration_test/casegen/combination/review/M07-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 17:53 integration_test/casegen/combination/review/M07-09_R1_dispositions.p1.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M07-09_R1_dispositions.p2.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M08-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M08-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M08-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M08-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  480 Oct 20 17:48 integration_test/casegen/combination/review/M08-07_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:48 integration_test/casegen/combination/review/M08-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  605 Oct 20 17:48 integration_test/casegen/combination/review/M08-10_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  673 Oct 20 17:48 integration_test/casegen/combination/review/M08-12_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  503 Oct 20 17:48 integration_test/casegen/combination/review/M08-13_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:54 integration_test/casegen/combination/review/M08-14_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  762 Oct 20 17:54 integration_test/casegen/combination/review/M09-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:54 integration_test/casegen/combination/review/M09-07_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.1K Oct 20 17:54 integration_test/casegen/combination/review/M09-10_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  512 Oct 20 17:54 integration_test/casegen/combination/review/M10-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  397 Oct 20 17:53 integration_test/casegen/combination/review/M10-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  679 Oct 20 17:53 integration_test/casegen/combination/review/M10-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M10-15_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  413 Oct 20 17:53 integration_test/casegen/combination/review/M11-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M11-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M12-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M12-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.8K Oct 20 17:53 integration_test/casegen/combination/review/M12-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 3.6K Oct 20 17:53 integration_test/casegen/combination/review/M12-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M12-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 2.5K Oct 20 17:54 integration_test/casegen/combination/review/M12-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.9K Oct 20 17:54 integration_test/casegen/combination/review/M12-07_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.3K Oct 20 17:54 integration_test/casegen/combination/review/M12-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:54 integration_test/casegen/combination/review/M12-09_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:54 integration_test/casegen/combination/review/M12-10_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M13-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M13-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  462 Oct 20 17:53 integration_test/casegen/combination/review/M13-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:53 integration_test/casegen/combination/review/M13-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  380 Oct 20 17:53 integration_test/casegen/combination/review/M13-10_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:55 integration_test/casegen/combination/review/M13-13_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  572 Oct 20 17:53 integration_test/casegen/combination/review/M13-15_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  742 Oct 20 17:55 integration_test/casegen/combination/review/M14-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.3K Oct 20 17:55 integration_test/casegen/combination/review/M14-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:54 integration_test/casegen/combination/review/M14-05_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  326 Oct 20 17:54 integration_test/casegen/combination/review/M14-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 4.4K Oct 20 17:53 integration_test/casegen/combination/review/M14-07_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  364 Oct 20 17:54 integration_test/casegen/combination/review/M14-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 17:54 integration_test/casegen/combination/review/M14-10_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  856 Oct 20 17:53 integration_test/casegen/combination/review/M15-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:54 integration_test/casegen/combination/review/M15-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  690 Oct 20 17:53 integration_test/casegen/combination/review/M15-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:54 integration_test/casegen/combination/review/M15-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 2.5K Oct 20 17:55 integration_test/casegen/combination/review/M15-05_R1_dispositions.p1.tsv
+-rw-r--r-- 1 y-saito y-saito 2.9K Oct 20 17:55 integration_test/casegen/combination/review/M15-05_R1_dispositions.p2.tsv
+-rw-r--r-- 1 y-saito y-saito  804 Oct 20 17:55 integration_test/casegen/combination/review/M15-06_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:55 integration_test/casegen/combination/review/M15-07_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  241 Oct 20 17:52 integration_test/casegen/combination/review/M15-08_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:52 integration_test/casegen/combination/review/M15-10_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:52 integration_test/casegen/combination/review/M16-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  253 Oct 20 17:52 integration_test/casegen/combination/review/M16-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  615 Oct 20 17:52 integration_test/casegen/combination/review/M16-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:52 integration_test/casegen/combination/review/M16-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 4.0K Oct 20 17:55 integration_test/casegen/combination/review/R1_01_findings.md
+-rw-r--r-- 1 y-saito y-saito 619K Oct 20 17:39 integration_test/casegen/combination/review/R1_01_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_01_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.7K Oct 20 17:55 integration_test/casegen/combination/review/R1_02_findings.md
+-rw-r--r-- 1 y-saito y-saito 757K Oct 20 17:38 integration_test/casegen/combination/review/R1_02_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.8K Oct 20 17:34 integration_test/casegen/combination/review/R1_02_prompt.md
+-rw-r--r-- 1 y-saito y-saito 4.0K Oct 20 17:55 integration_test/casegen/combination/review/R1_03_findings.md
+-rw-r--r-- 1 y-saito y-saito 410K Oct 20 17:38 integration_test/casegen/combination/review/R1_03_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.0K Oct 20 17:34 integration_test/casegen/combination/review/R1_03_prompt.md
+-rw-r--r-- 1 y-saito y-saito 3.2K Oct 20 17:55 integration_test/casegen/combination/review/R1_04_findings.md
+-rw-r--r-- 1 y-saito y-saito 512K Oct 20 17:40 integration_test/casegen/combination/review/R1_04_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_04_prompt.md
+-rw-r--r-- 1 y-saito y-saito    5 Oct 20 17:55 integration_test/casegen/combination/review/R1_05_findings.md
+-rw-r--r-- 1 y-saito y-saito 409K Oct 20 17:39 integration_test/casegen/combination/review/R1_05_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_05_prompt.md
+-rw-r--r-- 1 y-saito y-saito  669 Oct 20 17:55 integration_test/casegen/combination/review/R1_06_findings.md
+-rw-r--r-- 1 y-saito y-saito 312K Oct 20 17:38 integration_test/casegen/combination/review/R1_06_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_06_prompt.md
+-rw-r--r-- 1 y-saito y-saito 3.1K Oct 20 17:55 integration_test/casegen/combination/review/R1_07_findings.md
+-rw-r--r-- 1 y-saito y-saito 348K Oct 20 17:39 integration_test/casegen/combination/review/R1_07_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_07_prompt.md
+-rw-r--r-- 1 y-saito y-saito 2.1K Oct 20 17:55 integration_test/casegen/combination/review/R1_08_findings.md
+-rw-r--r-- 1 y-saito y-saito 306K Oct 20 17:38 integration_test/casegen/combination/review/R1_08_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_08_prompt.md
+-rw-r--r-- 1 y-saito y-saito 5.0K Oct 20 17:55 integration_test/casegen/combination/review/R1_09_findings.md
+-rw-r--r-- 1 y-saito y-saito 515K Oct 20 17:38 integration_test/casegen/combination/review/R1_09_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_09_prompt.md
+-rw-r--r-- 1 y-saito y-saito  778 Oct 20 17:55 integration_test/casegen/combination/review/R1_10_findings.md
+-rw-r--r-- 1 y-saito y-saito 312K Oct 20 17:38 integration_test/casegen/combination/review/R1_10_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_10_prompt.md
+-rw-r--r-- 1 y-saito y-saito  680 Oct 20 17:55 integration_test/casegen/combination/review/R1_11_findings.md
+-rw-r--r-- 1 y-saito y-saito 303K Oct 20 17:38 integration_test/casegen/combination/review/R1_11_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_11_prompt.md
+-rw-r--r-- 1 y-saito y-saito 5.2K Oct 20 17:55 integration_test/casegen/combination/review/R1_12_findings.md
+-rw-r--r-- 1 y-saito y-saito 437K Oct 20 17:40 integration_test/casegen/combination/review/R1_12_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.8K Oct 20 17:34 integration_test/casegen/combination/review/R1_12_prompt.md
+-rw-r--r-- 1 y-saito y-saito 6.8K Oct 20 17:55 integration_test/casegen/combination/review/R1_13_findings.md
+-rw-r--r-- 1 y-saito y-saito 509K Oct 20 17:40 integration_test/casegen/combination/review/R1_13_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.0K Oct 20 17:34 integration_test/casegen/combination/review/R1_13_prompt.md
+-rw-r--r-- 1 y-saito y-saito  621 Oct 20 17:55 integration_test/casegen/combination/review/R1_14_findings.md
+-rw-r--r-- 1 y-saito y-saito 325K Oct 20 17:39 integration_test/casegen/combination/review/R1_14_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.8K Oct 20 17:34 integration_test/casegen/combination/review/R1_14_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.7K Oct 20 17:55 integration_test/casegen/combination/review/R1_15_findings.md
+-rw-r--r-- 1 y-saito y-saito 401K Oct 20 17:39 integration_test/casegen/combination/review/R1_15_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_15_prompt.md
+-rw-r--r-- 1 y-saito y-saito 4.2K Oct 20 17:55 integration_test/casegen/combination/review/R1_16_findings.md
+-rw-r--r-- 1 y-saito y-saito 395K Oct 20 17:39 integration_test/casegen/combination/review/R1_16_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.0K Oct 20 17:34 integration_test/casegen/combination/review/R1_16_prompt.md
+-rw-r--r-- 1 y-saito y-saito 6.5K Oct 20 17:55 integration_test/casegen/combination/review/R1_17_findings.md
+-rw-r--r-- 1 y-saito y-saito 308K Oct 20 17:39 integration_test/casegen/combination/review/R1_17_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_17_prompt.md
+-rw-r--r-- 1 y-saito y-saito  11K Oct 20 17:55 integration_test/casegen/combination/review/R1_18_findings.md
+-rw-r--r-- 1 y-saito y-saito 436K Oct 20 17:40 integration_test/casegen/combination/review/R1_18_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_18_prompt.md
+-rw-r--r-- 1 y-saito y-saito 3.2K Oct 20 17:55 integration_test/casegen/combination/review/R1_19_findings.md
+-rw-r--r-- 1 y-saito y-saito 414K Oct 20 17:40 integration_test/casegen/combination/review/R1_19_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_19_prompt.md
+-rw-r--r-- 1 y-saito y-saito 3.1K Oct 20 17:55 integration_test/casegen/combination/review/R1_20_findings.md
+-rw-r--r-- 1 y-saito y-saito 632K Oct 20 17:39 integration_test/casegen/combination/review/R1_20_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.0K Oct 20 17:34 integration_test/casegen/combination/review/R1_20_prompt.md
+-rw-r--r-- 1 y-saito y-saito 5.3K Oct 20 17:55 integration_test/casegen/combination/review/R1_21_findings.md
+-rw-r--r-- 1 y-saito y-saito 425K Oct 20 17:42 integration_test/casegen/combination/review/R1_21_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_21_prompt.md
+-rw-r--r-- 1 y-saito y-saito 2.8K Oct 20 17:55 integration_test/casegen/combination/review/R1_22_findings.md
+-rw-r--r-- 1 y-saito y-saito 347K Oct 20 17:44 integration_test/casegen/combination/review/R1_22_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.8K Oct 20 17:34 integration_test/casegen/combination/review/R1_22_prompt.md
+-rw-r--r-- 1 y-saito y-saito 4.1K Oct 20 17:55 integration_test/casegen/combination/review/R1_23_findings.md
+-rw-r--r-- 1 y-saito y-saito 339K Oct 20 17:41 integration_test/casegen/combination/review/R1_23_out.capacity1.txt
+-rw-r--r-- 1 y-saito y-saito 367K Oct 20 17:50 integration_test/casegen/combination/review/R1_23_out.try1.txt
+-rw-r--r-- 1 y-saito y-saito 365K Oct 20 17:55 integration_test/casegen/combination/review/R1_23_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_23_prompt.md
+-rw-r--r-- 1 y-saito y-saito 2.7K Oct 20 17:55 integration_test/casegen/combination/review/R1_24_findings.md
+-rw-r--r-- 1 y-saito y-saito 489K Oct 20 17:43 integration_test/casegen/combination/review/R1_24_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.0K Oct 20 17:34 integration_test/casegen/combination/review/R1_24_prompt.md
+-rw-r--r-- 1 y-saito y-saito 3.3K Oct 20 17:55 integration_test/casegen/combination/review/R1_25_findings.md
+-rw-r--r-- 1 y-saito y-saito 466K Oct 20 17:41 integration_test/casegen/combination/review/R1_25_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.7K Oct 20 17:34 integration_test/casegen/combination/review/R1_25_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.9K Oct 20 17:55 integration_test/casegen/combination/review/R1_26_findings.md
+-rw-r--r-- 1 y-saito y-saito 460K Oct 20 17:42 integration_test/casegen/combination/review/R1_26_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_26_prompt.md
+-rw-r--r-- 1 y-saito y-saito 2.5K Oct 20 17:55 integration_test/casegen/combination/review/R1_27_findings.md
+-rw-r--r-- 1 y-saito y-saito 293K Oct 20 17:43 integration_test/casegen/combination/review/R1_27_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_27_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.8K Oct 20 17:55 integration_test/casegen/combination/review/R1_28_findings.md
+-rw-r--r-- 1 y-saito y-saito 566K Oct 20 17:44 integration_test/casegen/combination/review/R1_28_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_28_prompt.md
+-rw-r--r-- 1 y-saito y-saito 6.0K Oct 20 17:55 integration_test/casegen/combination/review/R1_29_findings.md
+-rw-r--r-- 1 y-saito y-saito 368K Oct 20 17:42 integration_test/casegen/combination/review/R1_29_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_29_prompt.md
+-rw-r--r-- 1 y-saito y-saito  12K Oct 20 17:55 integration_test/casegen/combination/review/R1_30_findings.md
+-rw-r--r-- 1 y-saito y-saito 454K Oct 20 17:44 integration_test/casegen/combination/review/R1_30_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_30_prompt.md
+-rw-r--r-- 1 y-saito y-saito  11K Oct 20 17:55 integration_test/casegen/combination/review/R1_31_findings.md
+-rw-r--r-- 1 y-saito y-saito 410K Oct 20 17:44 integration_test/casegen/combination/review/R1_31_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_31_prompt.md
+-rw-r--r-- 1 y-saito y-saito 4.5K Oct 20 17:55 integration_test/casegen/combination/review/R1_32_findings.md
+-rw-r--r-- 1 y-saito y-saito 534K Oct 20 17:42 integration_test/casegen/combination/review/R1_32_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_32_prompt.md
+-rw-r--r-- 1 y-saito y-saito 9.0K Oct 20 17:55 integration_test/casegen/combination/review/R1_33_findings.md
+-rw-r--r-- 1 y-saito y-saito 630K Oct 20 17:43 integration_test/casegen/combination/review/R1_33_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.0K Oct 20 17:34 integration_test/casegen/combination/review/R1_33_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.4K Oct 20 17:55 integration_test/casegen/combination/review/R1_34_findings.md
+-rw-r--r-- 1 y-saito y-saito 441K Oct 20 17:44 integration_test/casegen/combination/review/R1_34_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_34_prompt.md
+-rw-r--r-- 1 y-saito y-saito  10K Oct 20 17:55 integration_test/casegen/combination/review/R1_35_findings.md
+-rw-r--r-- 1 y-saito y-saito 348K Oct 20 17:44 integration_test/casegen/combination/review/R1_35_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.7K Oct 20 17:34 integration_test/casegen/combination/review/R1_35_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.5K Oct 20 17:55 integration_test/casegen/combination/review/R1_36_findings.md
+-rw-r--r-- 1 y-saito y-saito 471K Oct 20 17:43 integration_test/casegen/combination/review/R1_36_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.5K Oct 20 17:34 integration_test/casegen/combination/review/R1_36_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.8K Oct 20 17:55 integration_test/casegen/combination/review/R1_37_findings.md
+-rw-r--r-- 1 y-saito y-saito 582K Oct 20 17:44 integration_test/casegen/combination/review/R1_37_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.7K Oct 20 17:34 integration_test/casegen/combination/review/R1_37_prompt.md
+-rw-r--r-- 1 y-saito y-saito 2.6K Oct 20 17:55 integration_test/casegen/combination/review/R1_38_findings.md
+-rw-r--r-- 1 y-saito y-saito 457K Oct 20 17:43 integration_test/casegen/combination/review/R1_38_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_38_prompt.md
+-rw-r--r-- 1 y-saito y-saito  641 Oct 20 17:55 integration_test/casegen/combination/review/R1_39_findings.md
+-rw-r--r-- 1 y-saito y-saito 386K Oct 20 17:45 integration_test/casegen/combination/review/R1_39_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.7K Oct 20 17:34 integration_test/casegen/combination/review/R1_39_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.1K Oct 20 17:55 integration_test/casegen/combination/review/R1_40_findings.md
+-rw-r--r-- 1 y-saito y-saito 783K Oct 20 17:46 integration_test/casegen/combination/review/R1_40_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.5K Oct 20 17:34 integration_test/casegen/combination/review/R1_40_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.4K Oct 20 17:55 integration_test/casegen/combination/review/R1_41_findings.md
+-rw-r--r-- 1 y-saito y-saito 437K Oct 20 17:45 integration_test/casegen/combination/review/R1_41_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_41_prompt.md
+-rw-r--r-- 1 y-saito y-saito 7.6K Oct 20 17:55 integration_test/casegen/combination/review/R1_42_findings.md
+-rw-r--r-- 1 y-saito y-saito 319K Oct 20 17:49 integration_test/casegen/combination/review/R1_42_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_42_prompt.md
+-rw-r--r-- 1 y-saito y-saito 4.5K Oct 20 17:55 integration_test/casegen/combination/review/R1_43_findings.md
+-rw-r--r-- 1 y-saito y-saito 382K Oct 20 17:46 integration_test/casegen/combination/review/R1_43_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.8K Oct 20 17:34 integration_test/casegen/combination/review/R1_43_prompt.md
+-rw-r--r-- 1 y-saito y-saito 4.0K Oct 20 17:55 integration_test/casegen/combination/review/R1_44_findings.md
+-rw-r--r-- 1 y-saito y-saito 303K Oct 20 17:46 integration_test/casegen/combination/review/R1_44_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.0K Oct 20 17:34 integration_test/casegen/combination/review/R1_44_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 17:55 integration_test/casegen/combination/review/R1_45_findings.md
+-rw-r--r-- 1 y-saito y-saito 576K Oct 20 17:46 integration_test/casegen/combination/review/R1_45_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_45_prompt.md
+-rw-r--r-- 1 y-saito y-saito 3.2K Oct 20 17:55 integration_test/casegen/combination/review/R1_46_findings.md
+-rw-r--r-- 1 y-saito y-saito 288K Oct 20 17:45 integration_test/casegen/combination/review/R1_46_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_46_prompt.md
+-rw-r--r-- 1 y-saito y-saito 2.0K Oct 20 17:55 integration_test/casegen/combination/review/R1_47_findings.md
+-rw-r--r-- 1 y-saito y-saito 439K Oct 20 17:46 integration_test/casegen/combination/review/R1_47_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_47_prompt.md
+-rw-r--r-- 1 y-saito y-saito 2.3K Oct 20 17:55 integration_test/casegen/combination/review/R1_48_findings.md
+-rw-r--r-- 1 y-saito y-saito 309K Oct 20 17:46 integration_test/casegen/combination/review/R1_48_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_48_prompt.md
+-rw-r--r-- 1 y-saito y-saito 5.2K Oct 20 17:55 integration_test/casegen/combination/review/R1_49_findings.md
+-rw-r--r-- 1 y-saito y-saito 470K Oct 20 17:47 integration_test/casegen/combination/review/R1_49_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_49_prompt.md
+-rw-r--r-- 1 y-saito y-saito 5.5K Oct 20 17:55 integration_test/casegen/combination/review/R1_50_findings.md
+-rw-r--r-- 1 y-saito y-saito 431K Oct 20 17:51 integration_test/casegen/combination/review/R1_50_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_50_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.1K Oct 20 17:55 integration_test/casegen/combination/review/R1_51_findings.md
+-rw-r--r-- 1 y-saito y-saito 294K Oct 20 17:46 integration_test/casegen/combination/review/R1_51_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_51_prompt.md
+-rw-r--r-- 1 y-saito y-saito 4.3K Oct 20 17:55 integration_test/casegen/combination/review/R1_52_findings.md
+-rw-r--r-- 1 y-saito y-saito 753K Oct 20 17:49 integration_test/casegen/combination/review/R1_52_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.0K Oct 20 17:34 integration_test/casegen/combination/review/R1_52_prompt.md
+-rw-r--r-- 1 y-saito y-saito 5.3K Oct 20 17:55 integration_test/casegen/combination/review/R1_53_findings.md
+-rw-r--r-- 1 y-saito y-saito 606K Oct 20 17:47 integration_test/casegen/combination/review/R1_53_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.1K Oct 20 17:34 integration_test/casegen/combination/review/R1_53_prompt.md
+-rw-r--r-- 1 y-saito y-saito 4.4K Oct 20 17:55 integration_test/casegen/combination/review/R1_54_findings.md
+-rw-r--r-- 1 y-saito y-saito 301K Oct 20 17:47 integration_test/casegen/combination/review/R1_54_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.0K Oct 20 17:34 integration_test/casegen/combination/review/R1_54_prompt.md
+-rw-r--r-- 1 y-saito y-saito 5.9K Oct 20 17:55 integration_test/casegen/combination/review/R1_55_findings.md
+-rw-r--r-- 1 y-saito y-saito 335K Oct 20 17:50 integration_test/casegen/combination/review/R1_55_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.8K Oct 20 17:34 integration_test/casegen/combination/review/R1_55_prompt.md
+-rw-r--r-- 1 y-saito y-saito 2.3K Oct 20 17:55 integration_test/casegen/combination/review/R1_56_findings.md
+-rw-r--r-- 1 y-saito y-saito 287K Oct 20 17:47 integration_test/casegen/combination/review/R1_56_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.3K Oct 20 17:35 integration_test/casegen/combination/review/R1_56_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.5K Oct 20 11:43 integration_test/casegen/combination/review/R1_A_findings.md
+-rw-r--r-- 1 y-saito y-saito 916K Oct 20 11:43 integration_test/casegen/combination/review/R1_A_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.5K Oct 20 11:39 integration_test/casegen/combination/review/R1_A_prompt.md
+-rw-r--r-- 1 y-saito y-saito 7.5K Oct 20 11:43 integration_test/casegen/combination/review/R1_B_findings.md
+-rw-r--r-- 1 y-saito y-saito 469K Oct 20 11:42 integration_test/casegen/combination/review/R1_B_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.5K Oct 20 11:39 integration_test/casegen/combination/review/R1_B_prompt.md
+-rw-r--r-- 1 y-saito y-saito 2.2K Oct 20 11:43 integration_test/casegen/combination/review/R1_C_findings.md
+-rw-r--r-- 1 y-saito y-saito 409K Oct 20 11:43 integration_test/casegen/combination/review/R1_C_out.txt
+-rw-r--r-- 1 y-saito y-saito 6.5K Oct 20 11:39 integration_test/casegen/combination/review/R1_C_prompt.md
+-rw-r--r-- 1 y-saito y-saito 1.4K Oct 20 12:47 integration_test/casegen/combination/review/R1_D_findings.md
+-rw-r--r-- 1 y-saito y-saito 845K Oct 20 12:43 integration_test/casegen/combination/review/R1_D_out.txt
+-rw-r--r-- 1 y-saito y-saito 7.3K Oct 20 12:41 integration_test/casegen/combination/review/R1_D_prompt.md
+-rw-r--r-- 1 y-saito y-saito 2.4K Oct 20 17:55 integration_test/casegen/combination/review/R1_bundles.tsv
+-rw-r--r-- 1 y-saito y-saito  338 Oct 20 17:55 integration_test/casegen/combination/review/R1_fix_launched.txt
+-rw-r--r-- 1 y-saito y-saito    6 Oct 20 17:40 integration_test/casegen/combination/review/R1_fix_skipped.txt
+
+exec
+/bin/bash -lc "grep -lE '"'^### 指摘（B08-0(1|2|3|4|6) /'"' integration_test/casegen/combination/review/R1_*_findings.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 17ms:
+integration_test/casegen/combination/review/R1_11_findings.md
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/R1_11_findings.md integration_test/casegen/combination/review/B08-0{1,2,3,4,6}_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+### 指摘（B08-01 / IT-B08-01-019）
+- 主張: 期待結果で「会員IDと処理終了時刻」のコンソール表示と、メール試験サーバーの送信記録0件を一緒に確認している。
+- 実際: 設計書は、規格外の宛先では「その会員への送信を飛ばし、会員IDを添えてコンソールに出力」（B08-01 design.txt L0114）、またコンソールに「処理の開始時刻と終了時刻」を出力すると定める（L0120）。
+- 判定: 複数の期待結果
+- 修正案: コンソール出力とメール試験サーバーの送信記録は確かめる所が異なるため、期待結果を別ケースに分ける。
+指摘	処置	理由	直した所
+IT-B08-01-019	採用	設計書L0114(会員IDのコンソール出力)とメール試験サーバーの送信記録は確かめる所が別で、1ケース1期待結果に反していた。処理終了時刻(L0120)も別の確認事項のため外した	期待結果をコンソールの会員ID表示だけにし、手順3・事前準備④・使用シードと専用シードS-B08-01-CBMAILBOX-019を削除
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/B08-0{1,2,4,6}_{processes,factors,interactions,constraints}.tsv integration_test/casegen/combination/combos/B08-0{1,2,4,6}.tsv integration_test/casegen/combination/cases/B08-0{1,2,4,6}_cb_{dispositions,test_cases,seed_data}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	対象会員へサイトリニューアルとパスワード再設定を案内するメールを送り送信履歴を保存する	実行コンソールで「customer:batch sendAccountMigration」に基準日時を付けて起動する	会員宛ての受信メール・メール送信履歴・コンソール出力	L0028-L0030,L0045-L0048,L0071-L0072,L0094-L0100,L0110,L0114
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	会員に登録された国	日本または国未登録｜日本以外	日本または国未登録: 日本語の件名と本文でPC用・スマートフォン用の再設定URLを送る／日本以外: 英語の件名と本文を名・姓の順の宛名で送る	L0029,L0047-L0050,L0071-L0074,L0099,L0110	この機能
+F02	P1	宛先のメールアドレスの形式	電子メールの規格に沿う｜電子メールの規格に沿わない	電子メールの規格に沿う: 送信し送信履歴を保存する／電子メールの規格に沿わない: その会員への送信を飛ばし会員IDをコンソールに出力して次の会員へ進む	L0114	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0110,L0114	宛先の形式が規格に沿わないと国にかかわらず送信を飛ばし言語に応じた本文は送られない
+処理ID	組	種別	根拠	理由
+P1	F02=電子メールの規格に沿わない	打ち切り	L0114	宛先の形式が規格に沿わないとその会員への送信を飛ばし、国にかかわらず会員IDの出力だけで終える
+処理ID	処理	契機	確かめる所	根拠
+P1	期限切れポイントを会員ごとに失効する	バッチ lostPoint を起動する（毎日0:00のスケジュール起動、または手動起動）	ポイント履歴確認画面（M08-06）・プレイヤーデータ・ポイント履歴・スマレジのポイント残高	L0018-L0019,L0031-L0034,L0041-L0051,L0054-L0056,L0066
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	スマレジ会員IDの登録	登録済み｜未登録	登録済み: 失効の対象になりうる／未登録: 期限切れポイントがあっても対象に含めない	L0066	この機能
+F02	P1	期限内の加算ポイント累計に対するポイント残高	残高が累計より多い｜残高が累計以下	残高が累計より多い: 差分が失効ポイントとなり残高を累計へ更新し失効履歴を追加／残高が累計以下: 取得対象外で何も変えない	L0033-L0034,L0039,L0042-L0051	この機能
+F03	P1	スマレジのポイント増減APIの応答	成功｜失敗	成功: DBの残高更新と失効履歴追加を行う／失敗: タイムアウトか失敗扱いのステータスのとき、その会員の失効処理をスマレジ分もDB分も行わず翌日以降へ持ち越す	L0043,L0054-L0056	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		スマレジ会員IDが登録済みで、かつ残高が期限内累計より多い会員だけが対象になるというすべて満たす型の条件で、結果は対象になる・ならないの2つ。外れ方は1つずつ確かめれば足りる
+P1	F01+F03	効き合う	L0043,L0066	スマレジ会員IDが未登録の会員は対象外でAPIを呼ばないので、応答の成功・失敗が生じない
+P1	F02+F03	効き合う	L0034,L0043	残高が累計以下の会員は取得対象外でAPIを呼ばないので、応答の成功・失敗が生じない
+処理ID	組	種別	根拠	理由
+P1	F01=未登録	打ち切り	L0043,L0066	スマレジ会員IDが未登録の会員は対象に含めずAPIも呼ばず、残高や応答にかかわらず何も変えない
+P1	F02=残高が累計以下	打ち切り	L0034,L0043	残高が累計以下の会員は取得対象外でAPIを呼ばず、何も変えない
+処理ID	処理	契機	確かめる所	根拠
+P1	必須項目が空欄の会員を管理者へメールで通知する	バッチ checkBlankRequiredItemCustomer を起動する（毎日4:05のスケジュール起動、または手動起動）	管理者宛てに届いたメール（会員ID・抜粋行）	L0018-L0019,L0025-L0027,L0031,L0051-L0064,L0066-L0072,L0094
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	会員の退会状態	稼働中｜退会者	稼働中: 未設定の項目があれば通知の一覧に載る／退会者: 未設定の項目があっても一覧に載らない	L0025,L0031,L0064	この機能
+F02	P1	必須項目の未設定	未設定の項目あり｜全項目設定済み	未設定の項目あり: 一覧に載り該当者がいれば管理者へメールを送る／全項目設定済み: 一覧に載らず該当者が0人なら通知せず終える	L0025-L0027,L0031,L0051-L0063,L0094	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		退会者を除くことと必須項目に未設定があることは、会員を一覧に載せる条件の「すべて満たす」の一部で、どちらかを満たさない会員は載らない。載せる・載せないの2つだけで、条件ごとの外れ方は1つずつ確かめれば足りる（L0025,L0031,L0064）
+処理ID	組	種別	根拠	理由
+P1	F01=退会者	打ち切り	L0025,L0031,L0064	退会者は未設定の項目があっても一覧に載らず、通知の対象にならない
+P1	F02=全項目設定済み	打ち切り	L0025-L0027,L0094	全項目が設定済みの会員は一覧に載らず、該当者が0人なら通知せず終える
+処理ID	処理	契機	確かめる所	根拠
+P1	使用ポイントをスマレジへ送って減算する	スマレジ使用ポイント連携バッチを注文IDを渡して起動する（商品購入完了処理中に起動される）	スマレジ側のポイント残高（スマレジ試験環境の管理画面）・注文サブデータのスマレジエラー情報（DB）	L0021-L0026,L0030-L0031,L0036-L0042
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	注文IDに該当する注文データ	あり｜なし	あり: 使用ポイントをスマレジ連携ポイント増減APIへ送る／なし: 何もせず正常終了する	L0025,L0030,L0036,L0039-L0040	この機能
+F02	P1	スマレジ連携ポイント増減APIの通信結果	成功｜失敗	成功: 処理を終了する／失敗: 注文サブデータのスマレジエラーメッセージにエラー詳細JSONを、スマレジ使用ポイントエラーフラグにTrueを設定して更新する	L0036-L0037,L0041-L0042,L0051	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0036-L0042	該当する注文データがあるときだけAPIへ送るので、通信の成功・失敗は注文データがあるときにだけ結果（エラー情報の保存）を変える
+処理ID	組	種別	根拠	理由
+P1	F01=なし	打ち切り	L0036-L0040	該当する注文データが無いときはAPIへ送らず何もせず正常終了し、通信結果は生じない
+組ID	処理ID	組	組（読める形）	埋める組
+CB-B08-01-001	P1	F02=電子メールの規格に沿わない	会員に登録された国=（効かない）／宛先のメールアドレスの形式=電子メールの規格に沿わない	宛先のメールアドレスの形式: 電子メールの規格に沿わない
+組ID	処理ID	組	組（読める形）	埋める組
+CB-B08-02-001	P1	F01=登録済み&F02=残高が累計より多い&F03=失敗	スマレジ会員IDの登録=登録済み／期限内の加算ポイント累計に対するポイント残高=残高が累計より多い／スマレジのポイント増減APIの応答=失敗	スマレジ会員IDの登録×スマレジのポイント増減APIの応答: 登録済み×失敗；期限内の加算ポイント累計に対するポイント残高×スマレジのポイント増減APIの応答: 残高が累計より多い×失敗
+CB-B08-02-002	P1	F02=残高が累計以下	スマレジ会員IDの登録=（効かない。登録済みから選ぶ）／期限内の加算ポイント累計に対するポイント残高=残高が累計以下／スマレジのポイント増減APIの応答=（効かない）	期限内の加算ポイント累計に対するポイント残高: 残高が累計以下
+組ID	処理ID	組	組（読める形）	埋める組
+CB-B08-04-001	P1	F01=退会者	会員の退会状態=退会者／必須項目の未設定=（効かない）	会員の退会状態: 退会者
+組ID	処理ID	組	組（読める形）	埋める組
+CB-B08-06-001	P1	F01=あり&F02=失敗	注文IDに該当する注文データ=あり／スマレジ連携ポイント増減APIの通信結果=失敗	注文IDに該当する注文データ×スマレジ連携ポイント増減APIの通信結果: あり×失敗
+項目ID	扱い	テストID	理由
+CB-B08-01-001	ケース化	IT-B08-01-019	宛先の形式が規格に沿わない会員は、国にかかわらず送信を飛ばし会員IDをコンソールに出力して次へ進む（業務ロジック エラー時の扱い）。会員1名だけで結果が一意に決まる
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-B08-01-019	IT-0366	REQ-0408-sheet-3-R094		ITA-11	P1	ブラウザのみ	S-B08-01-DB,S-B08-01-MAIL-SETTINGS,S-B08-01-CBINVALID-019	① 試験DBへ基準データを再投入し、本ケース以外のB08-01ケース専用データが存在せず、本ケース専用会員以外の送信対象会員を0件にする（S-B08-01-DB）／② 開始時に送信元をinfo@hareruyamtg.com、返信先をreply-b0801@example.test、エラー返送先をreturn-b0801@example.test、日本語・英語の件名と本文を0408記載値に設定し、他のB08-01実行とメール送信処理を停止する（S-B08-01-MAIL-SETTINGS）／③ 会員ID 〔会員ID-B0801-019〕（登録時に振られた会員IDを控えてある）を、現行ECサイト取込会員、宛先のメールアドレスの形式=電子メールの規格に沿わない（メールアドレス=invalid-address-cbb0801-019）、国=日本、最終更新日=2025-09-10 10:00、パスワード再設定キーコード=KEY-CBB0801-019、メール送信履歴0件で登録する（S-B08-01-CBINVALID-019）	1. 実行コンソールで「customer:batch sendAccountMigration 202509101000」を起動する／2. コンソール出力を確認する	コンソールに、送信を飛ばした規格外メールアドレスの会員ID 〔会員ID-B0801-019〕が表示されること	0408 リニューアル時パスワードリセットメール送信 / 業務ロジック エラー時の扱い	CB-B08-01-001
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-B08-01-CBINVALID-019	会員	規格外メールアドレス会員(CB019)	会員IDは登録時に画面が振る（控える。以下〔会員ID-B0801-019〕）／現行ECサイト取込会員／メールアドレス=invalid-address-cbb0801-019（電子メールの規格に沿わない）／国=日本／最終更新日=2025-09-10 10:00／パスワード再設定キーコード=KEY-CBB0801-019／当該会員のメール送信履歴=0件	IT-B08-01-019専用。宛先の形式が規格に沿わない会員への送信が飛ばされることの確認	管理画面の会員登録編集画面を新規で開き、お名前姓に任意の値、メールアドレスに「tmp-cbb0801-019@example.test」、国に「日本」を選び、都道府県・住所1・住所2・電話番号・パスワード・パスワード（確認）に有効な値を入れて会員情報を登録ボタンを押す。登録後の会員登録編集画面の会員ID欄に表示された番号を控える（〔会員ID-B0801-019〕）。メールアドレス=invalid-address-cbb0801-019は画面で指定できないためDBへ直接設定する（登録時の仮のメールアドレス tmp-cbb0801-019@example.test を置き換える）。この会員が現行ECサイト取込会員であること、最終更新日=2025-09-10 10:00、パスワード再設定キーコード=KEY-CBB0801-019は画面で指定できないためDBへ直接設定する。当該会員のメール送信履歴が残っている場合は画面で消せないためDBへ直接設定して0件にする	ケース専用
+項目ID	扱い	テストID	理由
+CB-B08-02-001	ケースにしない		スマレジのポイント増減APIの応答=失敗の組。設計書は「スマレジへのポイント増減API登録失敗(タイムアウト・レスポンスステータスが失敗扱いの場合)」と書くだけで、失敗扱いとなるレスポンスステータスの値が定義されておらず結果の入力が決まらない（既存の保留 IT-B08-02-010 と同じ）。加えて、失敗応答・タイムアウトを起こす模擬応答・障害の手段は用意しない決定（2026-10-19）のため、この組は実行できない
+CB-B08-02-002	ケース化	IT-B08-02-021	残高が累計以下の会員は取得対象外でAPIを呼ばず何も変えない（入力データ詳細「ポイント残高の方が多いものを本取得する」）。残高300・期限内の加算ポイント累計300の境界で、ポイント履歴確認画面の残高と失効行の有無を確かめる
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-B08-02-021	IT-0366	REQ-0408-sheet-4-R019		ITA-11	P1	ブラウザのみ	S-B08-02-L-ENV,S-B08-02-L-ADM,S-B08-02-CBBALANCE-021	① ポイント有効期間を183日、業務タイムゾーンをAsia/Tokyo、ポイント属性ID 1を付与型に設定し、B08-02「ポイント失効」を手動起動でき、同時に実行中のポイント失効処理が無い状態にする（S-B08-02-L-ENV）／② 管理者ログインID b0802ladmin・パスワード Passw0rd!LB0802 の管理者が稼働中・ロックなしで、会員管理を操作できる（S-B08-02-L-ADM）／③ 会員ID 〔会員ID-B0802-021〕・プレイヤーデータID 〔プレイヤーデータID-B0802-021〕・メール cbb0802-021@example.test・通常会員・スマレジ会員ID SM-CBB0802-021（登録済み）、ポイント残高300、ポイント履歴は ID 〔ポイント履歴ID-B0802-021A〕（実行日の100日前12:00に+300）・ID 〔ポイント履歴ID-B0802-021B〕（実行日の184日前12:00に+200）・ID 〔ポイント履歴ID-B0802-021C〕（実行日の50日前12:00に-200）の3件だけ（期限内の加算ポイント累計300、ポイント残高が累計以下）で、備考「有効期限切れによる失効」の履歴は0件（登録時に振られた会員ID・プレイヤーデータID・ポイント履歴IDを控えてある。〔会員ID-B0802-021〕・〔プレイヤーデータID-B0802-021〕・〔ポイント履歴ID-B0802-021A〕・〔ポイント履歴ID-B0802-021B〕・〔ポイント履歴ID-B0802-021C〕）（S-B08-02-CBBALANCE-021）	1. バッチB08-02「ポイント失効」を手動起動する／2. バッチの実行履歴で当該実行の状態が成功になるまで待つ（最長10分。超えた場合は失敗として記録する）／3. 管理画面にログインID b0802ladmin・パスワード Passw0rd!LB0802 でログインする／4. 会員ID 〔会員ID-B0802-021〕のポイント履歴確認画面を開く／5. ポイント残高と、備考が「有効期限切れによる失効」の行の有無を確認する	ポイント残高が300のまま表示され、備考が「有効期限切れによる失効」の行が表示されないこと	0408 ポイント失効 / 機能仕様 入力データ詳細・実行結果詳細｜0207 ポイント履歴確認 / 画面項目定義 識別ID 1・5・6	CB-B08-02-002
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-B08-02-CBBALANCE-021	会員	残高が累計以下の会員(CB021)	会員IDは登録時に画面が振る（控える。以下〔会員ID-B0802-021〕）／プレイヤーデータIDは登録時に画面が振る（控える。以下〔プレイヤーデータID-B0802-021〕）／メール=cbb0802-021@example.test／通常会員／スマレジ会員ID=SM-CBB0802-021／ポイント残高=300／ポイント履歴ID 〔ポイント履歴ID-B0802-021A〕は実行日の100日前12:00に+300、ID 〔ポイント履歴ID-B0802-021B〕は実行日の184日前12:00に+200、ID 〔ポイント履歴ID-B0802-021C〕は実行日の50日前12:00に-200／備考「有効期限切れによる失効」の履歴=0件／ポイント履歴IDは登録時に画面が振る（控える。以下〔ポイント履歴ID-B0802-021A〕・〔ポイント履歴ID-B0802-021B〕・〔ポイント履歴ID-B0802-021C〕）	IT-B08-02-021専用。期限内の加算ポイント累計300に対しポイント残高300（累計以下）の会員が失効の対象にならず、残高も履歴も変わらないことの確認	ケース開始時に、同じメールアドレス・スマレジ会員IDの会員が無い状態にする。本店EC日本語版の新規会員登録画面（会員情報登録）で、メールアドレスとメールアドレス（確認）に「cbb0802-021@example.test」、パスワードとパスワード（確認）に任意の有効なパスワード、お名前・郵便番号・住所・電話番号・生年月日などほかの必須項目に任意の有効な値を入れて「同意して確認画面へ」ボタンを押し、会員情報登録確認画面で「登録する」ボタンを押す。仮会員登録完了画面が表示されたら、届いたメールの本会員登録用URLを開いて本会員にする。管理画面の会員一覧でメールアドレス「cbb0802-021@example.test」の会員を検索し、その行に表示された会員IDを控える（〔会員ID-B0802-021〕）。その行から会員登録編集画面を開き、顧客グループが「通常会員」であることを確かめる（違うときは「通常会員」を選んで登録ボタンを押す）。会員登録編集画面の「ポイント管理・履歴一覧」ボタンを押し、ポイント履歴画面で「キャンペーンによるポイント付与・特別対応」を選んで、ポイント履歴追加（キャンペーン、特別対応）の欄に次の順で登録する。ポイント増減量に「300」、ポイント発行日に実行日の100日前の日付、備考に「キャンペーン」を入れて保存ボタンを押し、下の一覧のID列に表示されたポイント履歴IDを控える（〔ポイント履歴ID-B0802-021A〕）。続けて、ポイント増減量に「200」、ポイント発行日に実行日の184日前の日付、備考に「キャンペーン」を入れて保存ボタンを押し、下の一覧のID列に表示されたポイント履歴IDを控える（〔ポイント履歴ID-B0802-021B〕）。続けて、ポイント増減量に「-200」、ポイント発行日に実行日の50日前の日付、備考に「キャンペーン」を入れて保存ボタンを押し、下の一覧のID列に表示されたポイント履歴IDを控える（〔ポイント履歴ID-B0802-021C〕）。プレイヤーデータIDは画面に表示されないため、DBで会員ID 〔会員ID-B0802-021〕のプレイヤーデータを参照して控える（〔プレイヤーデータID-B0802-021〕）。スマレジ会員ID「SM-CBB0802-021」は画面で指定できないためDBへ直接設定する（ポイント履歴を登録し終えたあとに設定する）。ポイント発行日の時刻12:00は画面で指定できない（日付だけの入力）ためDBへ直接設定する。ポイント履歴確認画面のポイント残高が300であることを確かめる	ケース専用
+項目ID	扱い	テストID	理由
+CB-B08-04-001	既存ケースで確認済み	IT-B08-04-005	退会者の打ち切り。IT-B08-04-005の事前準備に退会者フラグ=有効（退会者）で住所3が未設定(NULL)の会員2を書き、手順2で受信メール本文を開いて期待結果で退会者である会員ID 〔会員ID-B0804-005B〕が記載されないことを見ている（L0025・L0031・L0064）。必須項目の未設定は効かない行で、同じ値の組を既存ケースが通している
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+項目ID	扱い	テストID	理由
+CB-B08-06-001	ケースにしない		注文データがありスマレジ連携ポイント増減APIの通信が失敗する状態は、通信を遮断する、または指定の応答を返す中継を用意しないと作れない。設計書の「スマレジ連携ポイント増減API通信失敗した場合 注文サブデータのスマレジエラーメッセージ(point_error_message)にエラー詳細JSONを、スマレジ仕様ポイントエラーフラグ(smaregi_error_flg)をTrueを設定し更新する」(L0041-L0042)は失敗させる手段を定めておらず、障害を起こす手段・中継は用意しない決定(2026-10-19)のため、結合テストの範囲でない。同じ状態の既存ケース IT-B08-06-006・007・010 も同理由で除外済み
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+
+codex
+前巡のB08-01の指摘は、現在の期待結果ではコンソール出力の確認だけに直っています。B08-04とB08-06は追加ケースがなく、仕分けの根拠を既存ケースと設計書で確認します。B08-03は組数が多いため、処理ごとに追います。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/B08-03_{processes,factors,constraints}.tsv integration_test/casegen/combination/combos/B08-03.tsv integration_test/casegen/combination/cases/B08-03_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	期限が近いポイントを持つ会員へ通知メールを送る	バッチ pointExpireNotification を起動する（毎日0:05のスケジュール起動、または手動起動）	会員宛てに届いたメール・メール送信履歴・管理画面の会員のメール配信履歴	L0019,L0024-L0025,L0027-L0028,L0032-L0039,L0045-L0054,L0075-L0102,L0111-L0115
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	通知の区分	30日前｜7日前	30日前: 実行日から183日前に30日足した日に獲得したポイントを調べ有効期限日は実行日の30日後／7日前: 7日を足した日に獲得したポイントを調べ有効期限日は実行日の7日後	L0024,L0033-L0035,L0042,L0115	この機能
+F02	P1	会員ステータス	通常会員｜仮会員または退会済み会員	通常会員: 対象／仮会員または退会済み会員: 対象外（どちらも通知しない）	L0025,L0039,L0043	この機能
+F03	P1	スマレジ会員ID	設定済み｜未設定	設定済み: 対象／未設定: 失効間近のポイントがあっても通知しない	L0111	この機能
+F04	P1	ポイント残高	1以上｜0	1以上: 対象で有効期限間近ポイント数の候補になる／0: 通知しない	L0047,L0111	この機能
+F05	P1	指定日に獲得したポイント	あり｜なし	あり: 対象で有効期限間近ポイント数の候補になる／なし: 通知しない	L0033-L0035,L0049	この機能
+F06	P1	指定日までの残ポイント	プラス｜0以下	プラス: 対象で有効期限間近ポイント数の候補になる／0以下: 通知しない	L0036-L0038,L0048	この機能
+F07	P1	会員の都道府県	日本国外以外｜日本国外	日本国外以外: 日本語のメール（件名と本文と日本語テンプレート）／日本国外: 英語のメール（件名と本文と英語テンプレート）	L0054-L0055,L0075-L0076,L0101,L0113	この機能
+F08	P1	有効期限間近ポイント数が決まる項目	残高が最小｜指定日獲得が最小｜残ポイントが最小	残高が最小: 通知するポイント数はポイント残高／指定日獲得が最小: 通知するポイント数は指定日獲得ポイント／残ポイントが最小: 通知するポイント数は指定日までの残ポイント	L0045-L0050	この機能
+処理ID	組	種別	根拠	理由
+P1	F02=仮会員または退会済み会員	打ち切り	L0025,L0039,L0043	通常会員以外は対象外で、ほかの要因にかかわらず通知しない
+P1	F03=未設定	打ち切り	L0111	スマレジ会員IDが未設定なら失効間近のポイントがあっても通知しない
+P1	F04=0	打ち切り	L0047,L0111	ポイント残高が0なら通知しない
+P1	F05=なし	打ち切り	L0033-L0035,L0049	指定日に獲得したポイントが無ければ通知しない
+P1	F06=0以下	打ち切り	L0036-L0038,L0048	指定日までの残ポイントが0以下なら通知しない
+組ID	処理ID	組	組（読める形）	埋める組
+CB-B08-03-001	P1	F01=30日前&F02=通常会員&F03=設定済み&F04=1以上&F05=あり&F06=プラス&F07=日本国外&F08=指定日獲得が最小	通知の区分=30日前／会員ステータス=通常会員／スマレジ会員ID=設定済み／ポイント残高=1以上／指定日に獲得したポイント=あり／指定日までの残ポイント=プラス／会員の都道府県=日本国外／有効期限間近ポイント数が決まる項目=指定日獲得が最小	通知の区分×会員の都道府県: 30日前×日本国外；通知の区分×有効期限間近ポイント数が決まる項目: 30日前×指定日獲得が最小；会員ステータス×会員の都道府県: 通常会員×日本国外；会員ステータス×有効期限間近ポイント数が決まる項目: 通常会員×指定日獲得が最小；スマレジ会員ID×会員の都道府県: 設定済み×日本国外；スマレジ会員ID×有効期限間近ポイント数が決まる項目: 設定済み×指定日獲得が最小；ポイント残高×会員の都道府県: 1以上×日本国外；ポイント残高×有効期限間近ポイント数が決まる項目: 1以上×指定日獲得が最小；指定日に獲得したポイント×会員の都道府県: あり×日本国外；指定日に獲得したポイント×有効期限間近ポイント数が決まる項目: あり×指定日獲得が最小；指定日までの残ポイント×会員の都道府県: プラス×日本国外；指定日までの残ポイント×有効期限間近ポイント数が決まる項目: プラス×指定日獲得が最小；会員の都道府県×有効期限間近ポイント数が決まる項目: 日本国外×指定日獲得が最小
+CB-B08-03-002	P1	F01=30日前&F02=通常会員&F03=設定済み&F04=1以上&F05=あり&F06=プラス&F07=日本国外以外&F08=残ポイントが最小	通知の区分=30日前／会員ステータス=通常会員／スマレジ会員ID=設定済み／ポイント残高=1以上／指定日に獲得したポイント=あり／指定日までの残ポイント=プラス／会員の都道府県=日本国外以外／有効期限間近ポイント数が決まる項目=残ポイントが最小	通知の区分×有効期限間近ポイント数が決まる項目: 30日前×残ポイントが最小；会員ステータス×有効期限間近ポイント数が決まる項目: 通常会員×残ポイントが最小；スマレジ会員ID×有効期限間近ポイント数が決まる項目: 設定済み×残ポイントが最小；ポイント残高×有効期限間近ポイント数が決まる項目: 1以上×残ポイントが最小；指定日に獲得したポイント×有効期限間近ポイント数が決まる項目: あり×残ポイントが最小；指定日までの残ポイント×有効期限間近ポイント数が決まる項目: プラス×残ポイントが最小；会員の都道府県×有効期限間近ポイント数が決まる項目: 日本国外以外×残ポイントが最小
+CB-B08-03-003	P1	F01=7日前&F02=通常会員&F03=設定済み&F04=1以上&F05=あり&F06=プラス&F07=日本国外&F08=残ポイントが最小	通知の区分=7日前／会員ステータス=通常会員／スマレジ会員ID=設定済み／ポイント残高=1以上／指定日に獲得したポイント=あり／指定日までの残ポイント=プラス／会員の都道府県=日本国外／有効期限間近ポイント数が決まる項目=残ポイントが最小	通知の区分×会員の都道府県: 7日前×日本国外；通知の区分×有効期限間近ポイント数が決まる項目: 7日前×残ポイントが最小；会員の都道府県×有効期限間近ポイント数が決まる項目: 日本国外×残ポイントが最小
+CB-B08-03-004	P1	F01=7日前&F02=通常会員&F03=設定済み&F04=1以上&F05=あり&F06=プラス&F07=日本国外以外&F08=指定日獲得が最小	通知の区分=7日前／会員ステータス=通常会員／スマレジ会員ID=設定済み／ポイント残高=1以上／指定日に獲得したポイント=あり／指定日までの残ポイント=プラス／会員の都道府県=日本国外以外／有効期限間近ポイント数が決まる項目=指定日獲得が最小	通知の区分×有効期限間近ポイント数が決まる項目: 7日前×指定日獲得が最小；会員の都道府県×有効期限間近ポイント数が決まる項目: 日本国外以外×指定日獲得が最小
+CB-B08-03-005	P1	F01=30日前&F02=通常会員&F03=設定済み&F04=1以上&F05=あり&F06=プラス&F07=日本国外&F08=残高が最小	通知の区分=30日前／会員ステータス=通常会員／スマレジ会員ID=設定済み／ポイント残高=1以上／指定日に獲得したポイント=あり／指定日までの残ポイント=プラス／会員の都道府県=日本国外／有効期限間近ポイント数が決まる項目=残高が最小	会員の都道府県×有効期限間近ポイント数が決まる項目: 日本国外×残高が最小
+CB-B08-03-006	P1	F02=仮会員または退会済み会員	通知の区分=（効かない）／会員ステータス=仮会員または退会済み会員／スマレジ会員ID=（効かない）／ポイント残高=（効かない）／指定日に獲得したポイント=（効かない）／指定日までの残ポイント=（効かない）／会員の都道府県=（効かない）／有効期限間近ポイント数が決まる項目=（効かない）	会員ステータス: 仮会員または退会済み会員
+CB-B08-03-007	P1	F03=未設定	通知の区分=（効かない）／会員ステータス=（効かない。通常会員から選ぶ）／スマレジ会員ID=未設定／ポイント残高=（効かない）／指定日に獲得したポイント=（効かない）／指定日までの残ポイント=（効かない）／会員の都道府県=（効かない）／有効期限間近ポイント数が決まる項目=（効かない）	スマレジ会員ID: 未設定
+CB-B08-03-008	P1	F04=0	通知の区分=（効かない）／会員ステータス=（効かない。通常会員から選ぶ）／スマレジ会員ID=（効かない。設定済みから選ぶ）／ポイント残高=0／指定日に獲得したポイント=（効かない）／指定日までの残ポイント=（効かない）／会員の都道府県=（効かない）／有効期限間近ポイント数が決まる項目=（効かない）	ポイント残高: 0
+項目ID	扱い	テストID	理由
+CB-B08-03-001	ケース化	IT-B08-03-022	通知の区分・都道府県・有効期限間近ポイント数が決まる項目の組合せ。指定日獲得が最小（残高150・指定日獲得60・残ポイント120）で通知ポイント数が60に一意に決まる
+CB-B08-03-002	ケース化	IT-B08-03-023	通知の区分・都道府県・有効期限間近ポイント数が決まる項目の組合せ。残ポイントが最小（残高150・指定日獲得100・残ポイント70）で通知ポイント数が70に一意に決まる
+CB-B08-03-003	ケース化	IT-B08-03-024	通知の区分・都道府県・有効期限間近ポイント数が決まる項目の組合せ。残ポイントが最小（残高150・指定日獲得100・残ポイント70）で通知ポイント数が70に一意に決まる
+CB-B08-03-004	ケース化	IT-B08-03-025	通知の区分・都道府県・有効期限間近ポイント数が決まる項目の組合せ。指定日獲得が最小（残高150・指定日獲得60・残ポイント120）で通知ポイント数が60に一意に決まる
+CB-B08-03-005	ケース化	IT-B08-03-026	通知の区分・都道府県・有効期限間近ポイント数が決まる項目の組合せ。残高が最小（残高40・指定日獲得100・残ポイント200）で通知ポイント数が40に一意に決まる
+CB-B08-03-006	既存ケースで確認済み	IT-B08-03-005	会員ステータスが仮会員または退会済み会員の打ち切り。IT-B08-03-005の事前準備に仮会員と退会済み会員の両方を値で書き、手順2のメール受信確認画面で両者の受信件数0件を見ている（L0039・L0043）
+CB-B08-03-007	既存ケースで確認済み	IT-B08-03-006	スマレジ会員ID未設定の打ち切り。IT-B08-03-006の事前準備にスマレジ会員ID未設定の会員を書き、手順2のメール受信確認画面で受信件数0件を見ている（業務ロジック 通知の対象に加える条件）
+CB-B08-03-008	既存ケースで確認済み	IT-B08-03-006	ポイント残高0の打ち切り。IT-B08-03-006の事前準備にポイント残高0の会員を書き、手順2のメール受信確認画面で受信件数0件を見ている（業務ロジック 通知の対象に加える条件）
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/B08-03_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 21ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-B08-03-022	IT-0366	REQ-0408-sheet-5-R058,REQ-0408-sheet-5-R089,REQ-0408-sheet-5-R091		ITA-11	P1	ブラウザのみ	S-B08-03-DB,S-B08-03-ENV,S-B08-03-CBMEMBER-022,S-B08-03-CBMAILBOX-022	① 試験DBへ基準データを再投入し、本ケース以外のB08-03ケース専用データが存在せず、本ケース専用会員以外の30日前・7日前通知対象会員を0件にする（S-B08-03-DB）／② 開始時にポイント有効期間を183日、事前通知日数を30日と7日、送信元をinfo@hareruyamtg.com、日本語・英語の件名と本文を0408記載値に設定し、B08-03の実行中件数を0件にする（S-B08-03-ENV）／会員ステータス=通常会員／スマレジ会員ID=設定済み／ポイント残高=1以上／指定日に獲得したポイント=あり／指定日までの残ポイント=プラス／会員の都道府県=日本国外／有効期限間近ポイント数が決まる項目=指定日獲得が最小】会員ID 〔会員ID-B0803-022〕（登録時に振られた会員IDを控えてある）、メールアドレスen30a-cbb0803-022@example.test、日本国外、通常会員（稼働中、未削除）、プレイヤーID 〔プレイヤーID-B0803-022〕（登録時に振られたプレイヤーIDを控えてある）、スマレジ会員ID設定済み（SM-CBB0803-022-001）、ポイント残高150（1以上）、ポイント履歴ID 〔ポイント履歴ID-B0803-022A〕（登録時に振られたポイント履歴IDを控えてある）は実行日の154日前12:00に+60、ポイント履歴ID 〔ポイント履歴ID-B0803-022B〕（登録時に振られたポイント履歴IDを控えてある）は実行日の153日前12:00に+60、30日前通知の指定日（実行日の153日前）に獲得したポイントあり（指定日獲得ポイント60）、指定日までの残ポイント120（プラス）、メール送信履歴0件で登録する（S-B08-03-CBMEMBER-022）／③ 開始時にen30a-cbb0803-022@example.testの受信履歴を0件にする（S-B08-03-CBMAILBOX-022）	1. バッチB08-03「ポイント有効期限通知」を起動する／2. en30a-cbb0803-022@example.testで受信したメールとメールヘッダを開く	都道府県が「日本国外」の会員へ、宛先en30a-cbb0803-022@example.test、送信元info@hareruyamtg.com、件名「【Hareruya】 Your points are about to expire」で送信され、本文が0408「英語メール本文」の全文となり、有効期限間近ポイント60ポイントと実行日から30日後の有効期限日がD/M/Y形式で記載されること	0408 ポイント有効期限通知 / 機能仕様 実行結果詳細 英語メール本文・通知する有効期限間近ポイント数；業務ロジック 送信するメールの言語・通知する有効期限日	CB-B08-03-001
+IT-B08-03-023	IT-0366	REQ-0408-sheet-5-R089,REQ-0408-sheet-5-R091		ITA-11	P1	ブラウザのみ	S-B08-03-DB,S-B08-03-ENV,S-B08-03-CBMEMBER-023,S-B08-03-CBMAILBOX-023	① 試験DBへ基準データを再投入し、本ケース以外のB08-03ケース専用データが存在せず、本ケース専用会員以外の30日前・7日前通知対象会員を0件にする（S-B08-03-DB）／② 開始時にポイント有効期間を183日、事前通知日数を30日と7日、送信元をinfo@hareruyamtg.com、日本語・英語の件名と本文を0408記載値に設定し、B08-03の実行中件数を0件にする（S-B08-03-ENV）／会員ステータス=通常会員／スマレジ会員ID=設定済み／ポイント残高=1以上／指定日に獲得したポイント=あり／指定日までの残ポイント=プラス／会員の都道府県=日本国外以外（東京都）／有効期限間近ポイント数が決まる項目=残ポイントが最小】会員ID 〔会員ID-B0803-023〕（登録時に振られた会員IDを控えてある）、メールアドレスjp30r-cbb0803-023@example.test、東京都、通常会員（稼働中、未削除）、プレイヤーID 〔プレイヤーID-B0803-023〕（登録時に振られたプレイヤーIDを控えてある）、スマレジ会員ID設定済み（SM-CBB0803-023-001）、ポイント残高150（1以上）、ポイント履歴ID 〔ポイント履歴ID-B0803-023A〕（登録時に振られたポイント履歴IDを控えてある）は実行日の154日前12:00に+100、ポイント履歴ID 〔ポイント履歴ID-B0803-023B〕（登録時に振られたポイント履歴IDを控えてある）は実行日の153日前12:00に+100、ポイント履歴ID 〔ポイント履歴ID-B0803-023C〕（登録時に振られたポイント履歴IDを控えてある）は実行日の154日前12:00に-130、30日前通知の指定日（実行日の153日前）に獲得したポイントあり（指定日獲得ポイント100）、指定日までの残ポイント70（プラス）、メール送信履歴0件で登録する（S-B08-03-CBMEMBER-023）／③ 開始時にjp30r-cbb0803-023@example.testの受信履歴を0件にする（S-B08-03-CBMAILBOX-023）	1. バッチB08-03「ポイント有効期限通知」を起動する／2. jp30r-cbb0803-023@example.testで受信したメールとメールヘッダを開く	都道府県が東京都の会員へ、宛先jp30r-cbb0803-023@example.test、送信元info@hareruyamtg.com、件名「※重要【晴れる屋】ポイント有効期限のお知らせ」で送信され、本文が0408「日本語メール本文」の全文となり、有効期限間近ポイント70ポイントと実行日から30日後の有効期限日が記載されること	0408 ポイント有効期限通知 / 機能仕様 実行結果詳細 日本語メール本文・通知する有効期限間近ポイント数；業務ロジック 送信するメールの言語・通知する有効期限日	CB-B08-03-002
+IT-B08-03-024	IT-0366	REQ-0408-sheet-5-R058,REQ-0408-sheet-5-R089,REQ-0408-sheet-5-R091		ITA-11	P1	ブラウザのみ	S-B08-03-DB,S-B08-03-ENV,S-B08-03-CBMEMBER-024,S-B08-03-CBMAILBOX-024	① 試験DBへ基準データを再投入し、本ケース以外のB08-03ケース専用データが存在せず、本ケース専用会員以外の30日前・7日前通知対象会員を0件にする（S-B08-03-DB）／② 開始時にポイント有効期間を183日、事前通知日数を30日と7日、送信元をinfo@hareruyamtg.com、日本語・英語の件名と本文を0408記載値に設定し、B08-03の実行中件数を0件にする（S-B08-03-ENV）／会員ステータス=通常会員／スマレジ会員ID=設定済み／ポイント残高=1以上／指定日に獲得したポイント=あり／指定日までの残ポイント=プラス／会員の都道府県=日本国外／有効期限間近ポイント数が決まる項目=残ポイントが最小】会員ID 〔会員ID-B0803-024〕（登録時に振られた会員IDを控えてある）、メールアドレスen7r-cbb0803-024@example.test、日本国外、通常会員（稼働中、未削除）、プレイヤーID 〔プレイヤーID-B0803-024〕（登録時に振られたプレイヤーIDを控えてある）、スマレジ会員ID設定済み（SM-CBB0803-024-001）、ポイント残高150（1以上）、ポイント履歴ID 〔ポイント履歴ID-B0803-024A〕（登録時に振られたポイント履歴IDを控えてある）は実行日の177日前12:00に+100、ポイント履歴ID 〔ポイント履歴ID-B0803-024B〕（登録時に振られたポイント履歴IDを控えてある）は実行日の176日前12:00に+100、ポイント履歴ID 〔ポイント履歴ID-B0803-024C〕（登録時に振られたポイント履歴IDを控えてある）は実行日の177日前12:00に-130、7日前通知の指定日（実行日の176日前）に獲得したポイントあり（指定日獲得ポイント100）、指定日までの残ポイント70（プラス）、メール送信履歴0件で登録する（S-B08-03-CBMEMBER-024）／③ 開始時にen7r-cbb0803-024@example.testの受信履歴を0件にする（S-B08-03-CBMAILBOX-024）	1. バッチB08-03「ポイント有効期限通知」を起動する／2. en7r-cbb0803-024@example.testで受信したメールとメールヘッダを開く	都道府県が「日本国外」の会員へ、宛先en7r-cbb0803-024@example.test、送信元info@hareruyamtg.com、件名「【Hareruya】 Your points are about to expire」で送信され、本文が0408「英語メール本文」の全文となり、有効期限間近ポイント70ポイントと実行日から7日後の有効期限日がD/M/Y形式で記載されること	0408 ポイント有効期限通知 / 機能仕様 実行結果詳細 英語メール本文・通知する有効期限間近ポイント数；業務ロジック 送信するメールの言語・通知する有効期限日	CB-B08-03-003
+IT-B08-03-025	IT-0366	REQ-0408-sheet-5-R089,REQ-0408-sheet-5-R091		ITA-11	P1	ブラウザのみ	S-B08-03-DB,S-B08-03-ENV,S-B08-03-CBMEMBER-025,S-B08-03-CBMAILBOX-025	① 試験DBへ基準データを再投入し、本ケース以外のB08-03ケース専用データが存在せず、本ケース専用会員以外の30日前・7日前通知対象会員を0件にする（S-B08-03-DB）／② 開始時にポイント有効期間を183日、事前通知日数を30日と7日、送信元をinfo@hareruyamtg.com、日本語・英語の件名と本文を0408記載値に設定し、B08-03の実行中件数を0件にする（S-B08-03-ENV）／会員ステータス=通常会員／スマレジ会員ID=設定済み／ポイント残高=1以上／指定日に獲得したポイント=あり／指定日までの残ポイント=プラス／会員の都道府県=日本国外以外（東京都）／有効期限間近ポイント数が決まる項目=指定日獲得が最小】会員ID 〔会員ID-B0803-025〕（登録時に振られた会員IDを控えてある）、メールアドレスjp7a-cbb0803-025@example.test、東京都、通常会員（稼働中、未削除）、プレイヤーID 〔プレイヤーID-B0803-025〕（登録時に振られたプレイヤーIDを控えてある）、スマレジ会員ID設定済み（SM-CBB0803-025-001）、ポイント残高150（1以上）、ポイント履歴ID 〔ポイント履歴ID-B0803-025A〕（登録時に振られたポイント履歴IDを控えてある）は実行日の177日前12:00に+60、ポイント履歴ID 〔ポイント履歴ID-B0803-025B〕（登録時に振られたポイント履歴IDを控えてある）は実行日の176日前12:00に+60、7日前通知の指定日（実行日の176日前）に獲得したポイントあり（指定日獲得ポイント60）、指定日までの残ポイント120（プラス）、メール送信履歴0件で登録する（S-B08-03-CBMEMBER-025）／③ 開始時にjp7a-cbb0803-025@example.testの受信履歴を0件にする（S-B08-03-CBMAILBOX-025）	1. バッチB08-03「ポイント有効期限通知」を起動する／2. jp7a-cbb0803-025@example.testで受信したメールとメールヘッダを開く	都道府県が東京都の会員へ、宛先jp7a-cbb0803-025@example.test、送信元info@hareruyamtg.com、件名「※重要【晴れる屋】ポイント有効期限のお知らせ」で送信され、本文が0408「日本語メール本文」の全文となり、有効期限間近ポイント60ポイントと実行日から7日後の有効期限日が記載されること	0408 ポイント有効期限通知 / 機能仕様 実行結果詳細 日本語メール本文・通知する有効期限間近ポイント数；業務ロジック 送信するメールの言語・通知する有効期限日	CB-B08-03-004
+IT-B08-03-026	IT-0366	REQ-0408-sheet-5-R058,REQ-0408-sheet-5-R089,REQ-0408-sheet-5-R091		ITA-11	P1	ブラウザのみ	S-B08-03-DB,S-B08-03-ENV,S-B08-03-CBMEMBER-026,S-B08-03-CBMAILBOX-026	① 試験DBへ基準データを再投入し、本ケース以外のB08-03ケース専用データが存在せず、本ケース専用会員以外の30日前・7日前通知対象会員を0件にする（S-B08-03-DB）／② 開始時にポイント有効期間を183日、事前通知日数を30日と7日、送信元をinfo@hareruyamtg.com、日本語・英語の件名と本文を0408記載値に設定し、B08-03の実行中件数を0件にする（S-B08-03-ENV）／会員ステータス=通常会員／スマレジ会員ID=設定済み／ポイント残高=1以上／指定日に獲得したポイント=あり／指定日までの残ポイント=プラス／会員の都道府県=日本国外／有効期限間近ポイント数が決まる項目=残高が最小】会員ID 〔会員ID-B0803-026〕（登録時に振られた会員IDを控えてある）、メールアドレスen30b-cbb0803-026@example.test、日本国外、通常会員（稼働中、未削除）、プレイヤーID 〔プレイヤーID-B0803-026〕（登録時に振られたプレイヤーIDを控えてある）、スマレジ会員ID設定済み（SM-CBB0803-026-001）、ポイント残高40（1以上）、ポイント履歴ID 〔ポイント履歴ID-B0803-026A〕（登録時に振られたポイント履歴IDを控えてある）は実行日の154日前12:00に+100、ポイント履歴ID 〔ポイント履歴ID-B0803-026B〕（登録時に振られたポイント履歴IDを控えてある）は実行日の153日前12:00に+100、30日前通知の指定日（実行日の153日前）に獲得したポイントあり（指定日獲得ポイント100）、指定日までの残ポイント200（プラス）、メール送信履歴0件で登録する（S-B08-03-CBMEMBER-026）／③ 開始時にen30b-cbb0803-026@example.testの受信履歴を0件にする（S-B08-03-CBMAILBOX-026）	1. バッチB08-03「ポイント有効期限通知」を起動する／2. en30b-cbb0803-026@example.testで受信したメールとメールヘッダを開く	都道府県が「日本国外」の会員へ、宛先en30b-cbb0803-026@example.test、送信元info@hareruyamtg.com、件名「【Hareruya】 Your points are about to expire」で送信され、本文が0408「英語メール本文」の全文となり、有効期限間近ポイント40ポイントと実行日から30日後の有効期限日がD/M/Y形式で記載されること	0408 ポイント有効期限通知 / 機能仕様 実行結果詳細 英語メール本文・通知する有効期限間近ポイント数；業務ロジック 送信するメールの言語・通知する有効期限日	CB-B08-03-005
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B08-03/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 327ms:
+##### 0408 sheet-5 ポイント有効期限通知
+L0001	ポイント有効期限通知
+L0002	ドキュメント名会員 バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-09-10
+L0007	更新者盛田
+L0008	更新日2026-02-04
+L0009	機能NoB08-03
+L0010	機能名ポイント有効期限通知
+L0011	概要ポイント有効期限が近付いている会員に通知を行う
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理内容
+L0014	処理内容
+L0015	カスタマイズ説明
+L0016	概要
+L0017	ポイント有効期限が近付いている会員に通知を行う
+L0018	機能
+L0019	ポイント有効期限切れ前にユーザーにお知らせメールを送信する
+L0020	機能仕様処理概要（★はカスタマイズ項目）
+L0021	機能仕様処理内容
+L0022	・ポイントの有効期限は晴れる屋サイトで「ポイント発行日より6ヶ月(※)」と記載されており、それ以降のポイントは失効となる
+L0023	※システムでのポイント有効期限は183日間と定義されているため、若干のズレは発生する
+L0024	・ポイント有効期限メール通知は有効期限切れ「30日前」および「１週間前」の２回通知を行う
+L0025	★仮会員と退会済み会員は対象外とする
+L0026	機能仕様処理内容
+L0027	・ポイント有効期限メール通知対象者リストを取得する
+L0028	・指定された有効期限日に未使用のポイント残っている場合、ポイント有効期限メールを送信する
+L0029	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日0:05
+L0030	入力データ元 DB 出力先(フォーマット) メール
+L0031	入力データ詳細
+L0032	・ポイント履歴データ(dtb_point_history)から以下の条件にすべて該当するデータをユーザー毎に取得する
+L0033	1. 有効期限から指定日数(30日 or 7日)遡った日付に取得したポイントがある場合(以下 指定日獲得ポイント)
+L0034	例 バッチ実行日が2025/9/30の場合、ポイント有効期限切れになる日は2025/4/1になる。
+L0035	有効期限30日前は2025/5/1になり、その日に獲得したポイントの有無を確認し、ある場合には対象
+L0036	2. 有効期限から指定日数(30日 or 7日)遡った日付までで残ポイントがある場合(以下 残ポイント)
+L0037	例 上記の同様の条件の場合
+L0038	有効期限30日前は2025/5/1までの全獲得ポイント合計から使用ポイント合計を差し引いて、その結果がプラス(残ポイント)がある場合
+L0039	3. 会員の会員ステータスが、仮会員、退会済み会員のいずれでもない
+L0040	入力データ検索条件
+L0041	項目名	条件	備考
+L0042	ポイント履歴データ.ポイント発行日	>= 183日前の日時 + (30日 or 7日)	有効期限は半年間(183日)から30日前もしくは7日前
+L0043	会員情報.会員ステータス	仮会員ではない かつ 退会会員ではない
+L0044	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0045	・通知する有効期限間近ポイント数
+L0046	いずれかの値のうち、最小ポイントのものを有効期限間近ポイントとして案内する
+L0047	1. プレイヤーデータ(dtb_player)にある「ポイント残高」
+L0048	2. 入力データ詳細で取得したデータから「残ポイント」
+L0049	3. 入力データ詳細で取得したデータから「指定日獲得ポイント」
+L0050	(通常は3が該当するが、該当の処理がコードに含まれているため記載)
+L0051	・メール送信
+L0052	・メール送信先は会員データにあるメールアドレス宛に送信する
+L0053	・メール送信元は[info@hareruyamtg.com]に設定
+L0054	・日本語メール本文
+L0055	・件名: ※重要【晴れる屋】ポイント有効期限のお知らせ
+L0056	・本文
+L0057	いつも晴れる屋をご利用いただき誠にありがとうございます。
+L0058	下記のポイントに関しまして有効期限が迫っていることをお知らせさせていただきます。
+L0059	---------------------------
+L0060	[有効期限間近ポイント] ポイント 有効期限 [有効期限日時]
+L0061	---------------------------
+L0062	※有効期限内にご利用いただけないポイントは失効となってしまいます。
+L0063	失効となったポイントの再加算はいたしかねますのでご注意ください。
+L0064	※こちらのメールは自動送信となっております。
+L0065	ご返信いただきましても、お問い合わせにはお答えできかねますのでご了承ください。
+L0066	お問い合わせにつきましてはこちらからお願いいたします
+L0067	https://www.hareruyamtg.com/ja/contact
+L0068	*************************************
+L0069	《晴れる屋/Hareruya》
+L0070	〒169-0075
+L0071	東京都新宿区高田馬場3-12-2 OCビル2F
+L0072	E-MAIL : info@hareruyamtg.com
+L0073	URL :https://www.hareruyamtg.com
+L0074	*************************************
+L0075	・英語メール本文
+L0076	・件名: 【Hareruya】 Your points are about to expire
+L0077	・本文
+L0078	We strongly recommend you to spend these points before expired.
+L0079	---------------------------
+L0080	Points nearing expiration:
+L0081	[有効期限間近ポイント] points
+L0082	Expiration date:
+L0083	[有効期限日時(D/M/Y形式)]
+L0084	---------------------------
+L0085	*This e-mail message was sent to you by an automated e-mail system.
+L0086	Please click the following link if you'd like to contact us.
+L0087	https://www.hareruyamtg.com/en/contact
+L0088	*************************************
+L0089	[Hareruya]
+L0090	〒169-0075
+L0091	3-12-2 OC Building 2F Takadanobaba Shinjuku-ku Tokyo-to
+L0092	E-MAIL : info@hareruyamtg.com
+L0093	URL :https://www.hareruyamtg.com/en/
+L0094	*************************************
+L0095	※テンプレート内に有効期限間近ポイント数および有効期限日を記載する箇所がないため追記
+L0096	・メール送信後処理(1通ごとに処理実行)
+L0097	メール送信後、データベース内にあるメール送信履歴データ(dtb_mail_history)に下記情報が登録される
+L0098	・送信日時
+L0099	・送信時のメール件名
+L0100	・送信したメール本文の全文
+L0101	・メール送信時に使用したテンプレートのファイル名('Mail/point_expire_notification.twig' または 'Mail/point_expire_notification.en.twig')
+L0102	・送信した相手のユーザーID
+L0103	エラーハンドリング
+L0104	・該当処理なし
+L0105	Source:
+L0106	functions/pf-eccube3/b08-03_batch_customer_customer_point_expire_notification.md
+L0107	現行仕様
+L0108	B08-03 ポイント有効期限通知 / バッチ 会員管理 — ポイント有効期限通知
+L0109	業務ロジック
+L0110	通知の対象に加える条件
+L0111	スマレジ会員IDが設定されており、かつポイント残高が1以上の会員だけを通知の対象とする。どちらかを満たさない会員は、失効間近のポイントがあっても通知しない。
+L0112	送信するメールの言語
+L0113	会員の住所の都道府県が「日本国外」のときは英語のメールを、それ以外のときは日本語のメールを送る。
+L0114	通知する有効期限日
+L0115	通知する有効期限日は、実行日に事前通知日数を加えた日とする。
+L0116	実行するバッチの名前
+L0117	実行するバッチの名前を引数で受け取る。引数が無いとき、または実行できるバッチの名前と一致しないときは、実行日時を添えたメッセージを出力し、通知を行わずに異常終了する。
+L0118	入出力
+L0119	種類	内容
+L0120	入力	実行するバッチの名前。
+L0121	失敗時出力	実行するバッチの名前が一致しないときのメッセージ出力。
+L0122	本バッチでは、いずれの場合も他のAPIを呼び出さない。
+L0123	リニューアル後の仕様
+L0124	表示メッセージ
+L0125	この機能は、いずれの場合も画面のメッセージを扱わない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/B08-03_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-B08-03-CBMEMBER-022	会員・ポイント履歴・プレイヤー	30日前通知・指定日獲得が最小の会員(CB022)	会員IDは登録時に画面が振る（控える。以下〔会員ID-B0803-022〕）・メールアドレス=en30a-cbb0803-022@example.test・日本国外・通常会員・稼働中・未削除・プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-B0803-022〕）・スマレジ会員ID=SM-CBB0803-022-001・ポイント残高150・ポイント履歴は〔ポイント履歴ID-B0803-022A〕は実行日の154日前12:00に+60、〔ポイント履歴ID-B0803-022B〕は実行日の153日前12:00に+60・指定日（実行日の153日前）の獲得ポイント60・指定日までの残ポイント120／当該会員のメール送信履歴=0件	IT-B08-03-022専用。30日前通知で有効期限間近ポイント数が指定日獲得が最小のとき、60ポイントがメールに記載されることの確認	フロントの新規会員登録画面で、メールアドレスとメールアドレス(確認)en30a-cbb0803-022@example.testを入れ、国にJapan以外の国を1つ選び（住所(都道府県)は日本国外になる）、ほかの必須項目に入力チェックを通る値を入れて同意するボタンを押し、確認画面で登録するボタンを押す（仮会員として登録される）。en30a-cbb0803-022@example.testに届いた仮会員登録完了メールに記載の本会員登録用URLを開き、本会員（稼働中）にする。管理画面の会員検索一覧で「会員ID・メールアドレス・お名前」にen30a-cbb0803-022@example.testを入れて検索ボタンを押し、その行に表示された会員IDを控える（〔会員ID-B0803-022〕）。その会員の会員登録編集画面でポイント管理・履歴一覧ボタンを押し、ポイント付与画面で「キャンペーン、特別対応によるポイント付与」を押して、ポイント履歴追加（キャンペーン、特別対応）画面を開く。ポイント増減量に60、ポイント発行日に実行日の154日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-022A〕）。ポイント増減量に60、ポイント発行日に実行日の153日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-022B〕）。スマレジ会員ID（SM-CBB0803-022-001）は画面で指定できないためDBへ直接設定する。ポイント残高（150）は画面で指定できない（上の操作では120になる）ためDBへ直接設定する。ポイント発行日の時刻（12:00）は画面で指定できない（画面は日付だけを受け付ける）ためDBへ直接設定する。プレイヤーIDは画面に表示されないため、DBでこの会員のプレイヤーIDを見て控える（〔プレイヤーID-B0803-022〕）。管理画面の会員検索一覧からこの会員のメール配信履歴を開き、メール送信履歴が0件であることを確かめる	ケース専用
+S-B08-03-CBMAILBOX-022	メール受信環境	B08-03試験メールボックス(CB022)	en30a-cbb0803-022@example.testの受信メールを確認でき、受信履歴を0件へ戻せる	IT-B08-03-022専用。en30a-cbb0803-022@example.testの受信メールの確認	試験用メール受信環境の管理画面で記載したメールボックスを用意し、ケース開始時に受信履歴を消去する	ケース専用
+S-B08-03-CBMEMBER-023	会員・ポイント履歴・プレイヤー	30日前通知・残ポイントが最小の会員(CB023)	会員IDは登録時に画面が振る（控える。以下〔会員ID-B0803-023〕）・メールアドレス=jp30r-cbb0803-023@example.test・東京都・通常会員・稼働中・未削除・プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-B0803-023〕）・スマレジ会員ID=SM-CBB0803-023-001・ポイント残高150・ポイント履歴は〔ポイント履歴ID-B0803-023A〕は実行日の154日前12:00に+100、〔ポイント履歴ID-B0803-023B〕は実行日の153日前12:00に+100、〔ポイント履歴ID-B0803-023C〕は実行日の154日前12:00に-130・指定日（実行日の153日前）の獲得ポイント100・指定日までの残ポイント70／当該会員のメール送信履歴=0件	IT-B08-03-023専用。30日前通知で有効期限間近ポイント数が残ポイントが最小のとき、70ポイントがメールに記載されることの確認	フロントの新規会員登録画面で、メールアドレスとメールアドレス(確認)jp30r-cbb0803-023@example.testを入れ、国にJapan、住所(都道府県)に東京都、ほかの必須項目に入力チェックを通る値を入れて同意するボタンを押し、確認画面で登録するボタンを押す（仮会員として登録される）。jp30r-cbb0803-023@example.testに届いた仮会員登録完了メールに記載の本会員登録用URLを開き、本会員（稼働中）にする。管理画面の会員検索一覧で「会員ID・メールアドレス・お名前」にjp30r-cbb0803-023@example.testを入れて検索ボタンを押し、その行に表示された会員IDを控える（〔会員ID-B0803-023〕）。その会員の会員登録編集画面でポイント管理・履歴一覧ボタンを押し、ポイント付与画面で「キャンペーン、特別対応によるポイント付与」を押して、ポイント履歴追加（キャンペーン、特別対応）画面を開く。ポイント増減量に100、ポイント発行日に実行日の154日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-023A〕）。ポイント増減量に100、ポイント発行日に実行日の153日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-023B〕）。ポイント増減量に-130、ポイント発行日に実行日の154日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-023C〕）。スマレジ会員ID（SM-CBB0803-023-001）は画面で指定できないためDBへ直接設定する。ポイント残高（150）は画面で指定できない（上の操作では70になる）ためDBへ直接設定する。ポイント発行日の時刻（12:00）は画面で指定できない（画面は日付だけを受け付ける）ためDBへ直接設定する。プレイヤーIDは画面に表示されないため、DBでこの会員のプレイヤーIDを見て控える（〔プレイヤーID-B0803-023〕）。管理画面の会員検索一覧からこの会員のメール配信履歴を開き、メール送信履歴が0件であることを確かめる	ケース専用
+S-B08-03-CBMAILBOX-023	メール受信環境	B08-03試験メールボックス(CB023)	jp30r-cbb0803-023@example.testの受信メールを確認でき、受信履歴を0件へ戻せる	IT-B08-03-023専用。jp30r-cbb0803-023@example.testの受信メールの確認	試験用メール受信環境の管理画面で記載したメールボックスを用意し、ケース開始時に受信履歴を消去する	ケース専用
+S-B08-03-CBMEMBER-024	会員・ポイント履歴・プレイヤー	7日前通知・残ポイントが最小の会員(CB024)	会員IDは登録時に画面が振る（控える。以下〔会員ID-B0803-024〕）・メールアドレス=en7r-cbb0803-024@example.test・日本国外・通常会員・稼働中・未削除・プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-B0803-024〕）・スマレジ会員ID=SM-CBB0803-024-001・ポイント残高150・ポイント履歴は〔ポイント履歴ID-B0803-024A〕は実行日の177日前12:00に+100、〔ポイント履歴ID-B0803-024B〕は実行日の176日前12:00に+100、〔ポイント履歴ID-B0803-024C〕は実行日の177日前12:00に-130・指定日（実行日の176日前）の獲得ポイント100・指定日までの残ポイント70／当該会員のメール送信履歴=0件	IT-B08-03-024専用。7日前通知で有効期限間近ポイント数が残ポイントが最小のとき、70ポイントがメールに記載されることの確認	フロントの新規会員登録画面で、メールアドレスとメールアドレス(確認)en7r-cbb0803-024@example.testを入れ、国にJapan以外の国を1つ選び（住所(都道府県)は日本国外になる）、ほかの必須項目に入力チェックを通る値を入れて同意するボタンを押し、確認画面で登録するボタンを押す（仮会員として登録される）。en7r-cbb0803-024@example.testに届いた仮会員登録完了メールに記載の本会員登録用URLを開き、本会員（稼働中）にする。管理画面の会員検索一覧で「会員ID・メールアドレス・お名前」にen7r-cbb0803-024@example.testを入れて検索ボタンを押し、その行に表示された会員IDを控える（〔会員ID-B0803-024〕）。その会員の会員登録編集画面でポイント管理・履歴一覧ボタンを押し、ポイント付与画面で「キャンペーン、特別対応によるポイント付与」を押して、ポイント履歴追加（キャンペーン、特別対応）画面を開く。ポイント増減量に100、ポイント発行日に実行日の177日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-024A〕）。ポイント増減量に100、ポイント発行日に実行日の176日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-024B〕）。ポイント増減量に-130、ポイント発行日に実行日の177日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-024C〕）。スマレジ会員ID（SM-CBB0803-024-001）は画面で指定できないためDBへ直接設定する。ポイント残高（150）は画面で指定できない（上の操作では70になる）ためDBへ直接設定する。ポイント発行日の時刻（12:00）は画面で指定できない（画面は日付だけを受け付ける）ためDBへ直接設定する。プレイヤーIDは画面に表示されないため、DBでこの会員のプレイヤーIDを見て控える（〔プレイヤーID-B0803-024〕）。管理画面の会員検索一覧からこの会員のメール配信履歴を開き、メール送信履歴が0件であることを確かめる	ケース専用
+S-B08-03-CBMAILBOX-024	メール受信環境	B08-03試験メールボックス(CB024)	en7r-cbb0803-024@example.testの受信メールを確認でき、受信履歴を0件へ戻せる	IT-B08-03-024専用。en7r-cbb0803-024@example.testの受信メールの確認	試験用メール受信環境の管理画面で記載したメールボックスを用意し、ケース開始時に受信履歴を消去する	ケース専用
+S-B08-03-CBMEMBER-025	会員・ポイント履歴・プレイヤー	7日前通知・指定日獲得が最小の会員(CB025)	会員IDは登録時に画面が振る（控える。以下〔会員ID-B0803-025〕）・メールアドレス=jp7a-cbb0803-025@example.test・東京都・通常会員・稼働中・未削除・プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-B0803-025〕）・スマレジ会員ID=SM-CBB0803-025-001・ポイント残高150・ポイント履歴は〔ポイント履歴ID-B0803-025A〕は実行日の177日前12:00に+60、〔ポイント履歴ID-B0803-025B〕は実行日の176日前12:00に+60・指定日（実行日の176日前）の獲得ポイント60・指定日までの残ポイント120／当該会員のメール送信履歴=0件	IT-B08-03-025専用。7日前通知で有効期限間近ポイント数が指定日獲得が最小のとき、60ポイントがメールに記載されることの確認	フロントの新規会員登録画面で、メールアドレスとメールアドレス(確認)jp7a-cbb0803-025@example.testを入れ、国にJapan、住所(都道府県)に東京都、ほかの必須項目に入力チェックを通る値を入れて同意するボタンを押し、確認画面で登録するボタンを押す（仮会員として登録される）。jp7a-cbb0803-025@example.testに届いた仮会員登録完了メールに記載の本会員登録用URLを開き、本会員（稼働中）にする。管理画面の会員検索一覧で「会員ID・メールアドレス・お名前」にjp7a-cbb0803-025@example.testを入れて検索ボタンを押し、その行に表示された会員IDを控える（〔会員ID-B0803-025〕）。その会員の会員登録編集画面でポイント管理・履歴一覧ボタンを押し、ポイント付与画面で「キャンペーン、特別対応によるポイント付与」を押して、ポイント履歴追加（キャンペーン、特別対応）画面を開く。ポイント増減量に60、ポイント発行日に実行日の177日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-025A〕）。ポイント増減量に60、ポイント発行日に実行日の176日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-025B〕）。スマレジ会員ID（SM-CBB0803-025-001）は画面で指定できないためDBへ直接設定する。ポイント残高（150）は画面で指定できない（上の操作では120になる）ためDBへ直接設定する。ポイント発行日の時刻（12:00）は画面で指定できない（画面は日付だけを受け付ける）ためDBへ直接設定する。プレイヤーIDは画面に表示されないため、DBでこの会員のプレイヤーIDを見て控える（〔プレイヤーID-B0803-025〕）。管理画面の会員検索一覧からこの会員のメール配信履歴を開き、メール送信履歴が0件であることを確かめる	ケース専用
+S-B08-03-CBMAILBOX-025	メール受信環境	B08-03試験メールボックス(CB025)	jp7a-cbb0803-025@example.testの受信メールを確認でき、受信履歴を0件へ戻せる	IT-B08-03-025専用。jp7a-cbb0803-025@example.testの受信メールの確認	試験用メール受信環境の管理画面で記載したメールボックスを用意し、ケース開始時に受信履歴を消去する	ケース専用
+S-B08-03-CBMEMBER-026	会員・ポイント履歴・プレイヤー	30日前通知・残高が最小の会員(CB026)	会員IDは登録時に画面が振る（控える。以下〔会員ID-B0803-026〕）・メールアドレス=en30b-cbb0803-026@example.test・日本国外・通常会員・稼働中・未削除・プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-B0803-026〕）・スマレジ会員ID=SM-CBB0803-026-001・ポイント残高40・ポイント履歴は〔ポイント履歴ID-B0803-026A〕は実行日の154日前12:00に+100、〔ポイント履歴ID-B0803-026B〕は実行日の153日前12:00に+100・指定日（実行日の153日前）の獲得ポイント100・指定日までの残ポイント200／当該会員のメール送信履歴=0件	IT-B08-03-026専用。30日前通知で有効期限間近ポイント数が残高が最小のとき、40ポイントがメールに記載されることの確認	フロントの新規会員登録画面で、メールアドレスとメールアドレス(確認)en30b-cbb0803-026@example.testを入れ、国にJapan以外の国を1つ選び（住所(都道府県)は日本国外になる）、ほかの必須項目に入力チェックを通る値を入れて同意するボタンを押し、確認画面で登録するボタンを押す（仮会員として登録される）。en30b-cbb0803-026@example.testに届いた仮会員登録完了メールに記載の本会員登録用URLを開き、本会員（稼働中）にする。管理画面の会員検索一覧で「会員ID・メールアドレス・お名前」にen30b-cbb0803-026@example.testを入れて検索ボタンを押し、その行に表示された会員IDを控える（〔会員ID-B0803-026〕）。その会員の会員登録編集画面でポイント管理・履歴一覧ボタンを押し、ポイント付与画面で「キャンペーン、特別対応によるポイント付与」を押して、ポイント履歴追加（キャンペーン、特別対応）画面を開く。ポイント増減量に100、ポイント発行日に実行日の154日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-026A〕）。ポイント増減量に100、ポイント発行日に実行日の153日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-026B〕）。スマレジ会員ID（SM-CBB0803-026-001）は画面で指定できないためDBへ直接設定する。ポイント残高（40）は画面で指定できない（上の操作では200になる）ためDBへ直接設定する。ポイント発行日の時刻（12:00）は画面で指定できない（画面は日付だけを受け付ける）ためDBへ直接設定する。プレイヤーIDは画面に表示されないため、DBでこの会員のプレイヤーIDを見て控える（〔プレイヤーID-B0803-026〕）。管理画面の会員検索一覧からこの会員のメール配信履歴を開き、メール送信履歴が0件であることを確かめる	ケース専用
+S-B08-03-CBMAILBOX-026	メール受信環境	B08-03試験メールボックス(CB026)	en30b-cbb0803-026@example.testの受信メールを確認でき、受信履歴を0件へ戻せる	IT-B08-03-026専用。en30b-cbb0803-026@example.testの受信メールの確認	試験用メール受信環境の管理画面で記載したメールボックスを用意し、ケース開始時に受信履歴を消去する	ケース専用
+
+exec
+/bin/bash -lc "grep -E '"'^IT-B08-03-00(5|6)'"\\b|"'^IT-B08-04-005'"\\b' integration_test/casegen/cases/B08-03_test_cases.tsv integration_test/casegen/cases/B08-04_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/cases/B08-03_test_cases.tsv:IT-B08-03-005	REQ-0408-sheet-5-R010,REQ-0408-sheet-5-R024,REQ-0408-sheet-5-R027	—	ITA-11	P1	ブラウザのみ	S-B08-03-DB,S-B08-03-ENV,S-B08-03-STATUS-005,S-B08-03-MAILBOX	① 試験DBへ基準データを再投入し、本ケース以外のB08-03ケース専用データが存在せず、本ケース専用会員以外の30日前・7日前通知対象会員を0件にする（S-B08-03-DB）／② 開始時にポイント有効期間を183日、事前通知日数を30日と7日、送信元をinfo@hareruyamtg.com、日本語・英語の件名と本文を0408記載値に設定し、B08-03の実行中件数を0件にする（S-B08-03-ENV）／③ 会員ID 〔会員ID-B0803-005A〕（登録時に振られた会員IDを控えてある）をprovisional-b0803-005@example.test・東京都・仮会員・未削除・プレイヤーID 〔プレイヤーID-B0803-005A〕（登録時に振られたプレイヤーIDを控えてある）・スマレジ会員ID SM-B0803-005-001・ポイント残高100・153日前の獲得100、会員ID 〔会員ID-B0803-005B〕（登録時に振られた会員IDを控えてある）をwithdrawn-b0803-005@example.test・東京都・退会済み・未削除・プレイヤーID 〔プレイヤーID-B0803-005B〕（登録時に振られたプレイヤーIDを控えてある）・スマレジ会員ID SM-B0803-005-002・ポイント残高100・153日前の獲得100とし、両会員のメール送信履歴を0件にする（S-B08-03-STATUS-005）／④ 開始時にprovisional-b0803-005@example.testとwithdrawn-b0803-005@example.testの受信履歴を0件にする（S-B08-03-MAILBOX）	1. バッチB08-03「ポイント有効期限通知」を起動する／2. provisional-b0803-005@example.testとwithdrawn-b0803-005@example.testのメール受信確認画面を開く	仮会員のprovisional-b0803-005@example.testと退会済み会員のwithdrawn-b0803-005@example.testのポイント有効期限通知メール受信件数がいずれも0件であること	0408 ポイント有効期限通知 / 機能仕様 処理概要・入力データ詳細・入力データ検索条件
+integration_test/casegen/cases/B08-03_test_cases.tsv:IT-B08-03-006	REQ-0408-sheet-5-R087	—	ITA-11	P1	ブラウザのみ	S-B08-03-DB,S-B08-03-ENV,S-B08-03-CURRENT-FILTER-006,S-B08-03-MAILBOX	① 試験DBへ基準データを再投入し、本ケース以外のB08-03ケース専用データが存在せず、本ケース専用会員以外の30日前・7日前通知対象会員を0件にする（S-B08-03-DB）／② 開始時にポイント有効期間を183日、事前通知日数を30日と7日、送信元をinfo@hareruyamtg.com、日本語・英語の件名と本文を0408記載値に設定し、B08-03の実行中件数を0件にする（S-B08-03-ENV）／③ 会員ID 〔会員ID-B0803-006A〕（登録時に振られた会員IDを控えてある）をno-smaregi-b0803-006@example.test・東京都・稼働中・未削除・プレイヤーID 〔プレイヤーID-B0803-006A〕（登録時に振られたプレイヤーIDを控えてある）・スマレジ会員ID未設定・ポイント残高100・153日前の獲得100、会員ID 〔会員ID-B0803-006B〕（登録時に振られた会員IDを控えてある）をzero-balance-b0803-006@example.test・東京都・稼働中・未削除・プレイヤーID 〔プレイヤーID-B0803-006B〕（登録時に振られたプレイヤーIDを控えてある）・スマレジ会員ID SM-B0803-006-002・ポイント残高0・153日前の獲得100とし、両会員のメール送信履歴を0件にする（S-B08-03-CURRENT-FILTER-006）／④ 開始時にno-smaregi-b0803-006@example.testとzero-balance-b0803-006@example.testの受信履歴を0件にする（S-B08-03-MAILBOX）	1. バッチB08-03「ポイント有効期限通知」を起動する／2. no-smaregi-b0803-006@example.testとzero-balance-b0803-006@example.testのメール受信確認画面を開く	スマレジ会員IDが設定されていないno-smaregi-b0803-006@example.testと、プレイヤーデータのポイント残高が0のzero-balance-b0803-006@example.testのポイント有効期限通知メール受信件数がいずれも0件であること	0408 ポイント有効期限通知 / 業務ロジック 通知の対象に加える条件
+integration_test/casegen/cases/B08-04_test_cases.tsv:IT-B08-04-005	REQ-0408-sheet-6-R010,REQ-0408-sheet-6-R016,REQ-0408-sheet-6-R052		ITA-11	P1	ブラウザのみ	S-B08-04-DB,S-B08-04-MAIL,S-B08-04-WITHDRAW-005	① 試験DBへ基準データを再投入し、本ケース以外のB08-04ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-04-DB）／② 通知先メールアドレスの設定値をit_common@hareruyamtg.comにし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-04-MAIL）／③ 次の会員2名を登録する（S-B08-04-WITHDRAW-005）。会員1: 会員ID 〔会員ID-B0804-005A〕（登録時に振られた会員IDを控えてある）・国=日本・都道府県=東京都・名前(姓)=B0804-005-S1・名前(名)=B0804-005-N1・電話番号(1列目)=080・電話番号(2列目)=4005・電話番号(3列目)=0001・メールアドレス=b0804-005-01@example.test・住所1=B0804-005-A11・住所2=B0804-005-A12・住所3=未設定(NULL)・郵便番号1(上3桁)=160・郵便番号2(上4桁)=0022・郵便番号(ハイフン無し7桁)=1600022・退会者フラグ=無効（稼働中）／会員2: 会員ID 〔会員ID-B0804-005B〕（登録時に振られた会員IDを控えてある）・国=日本・都道府県=東京都・名前(姓)=B0804-005-S2・名前(名)=B0804-005-N2・電話番号(1列目)=080・電話番号(2列目)=4005・電話番号(3列目)=0002・メールアドレス=b0804-005-02@example.test・住所1=B0804-005-A21・住所2=B0804-005-A22・住所3=未設定(NULL)・郵便番号1(上3桁)=160・郵便番号2(上4桁)=0022・郵便番号(ハイフン無し7桁)=1600022・退会者フラグ=有効（退会者）	1. バッチB08-04「必須項目が空欄の会員発生通知」を起動し、終了するまで待つ／2. メール試験サーバーの it_common@hareruyamtg.com の受信メール一覧を開き、受信したメールの本文を開く	本文に会員ID 〔会員ID-B0804-005A〕が記載され、退会者である会員ID 〔会員ID-B0804-005B〕は記載されないこと	0408 必須項目が空欄の会員発生通知 / 機能仕様 入力データ詳細・入力データ検索条件
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B08-01/design.txt integration_test/casegen/combination/units/B08-02/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0408 sheet-3 リニューアル時パスワードリセットメール送信
+L0001	リニューアル時パスワードリセットメール送信
+L0002	ドキュメント名会員 バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-09-10
+L0007	更新者高久
+L0008	更新日2025-09-30
+L0009	機能NoB08-01
+L0010	機能名リニューアル時パスワードリセットメール送信
+L0011	概要リニューアル時にパスワード再設定を促すメールを送信する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理内容
+L0014	カスタマイズ説明
+L0015	概要
+L0016	リニューアル時にパスワード再設定を促すメールを送信する
+L0017	機能
+L0018	現行ECサイトインポートされたアカウントにパスワードリセットメールを送信
+L0019	(カスタマイズ後のシステムは厳格なパスワードを設定してもらう想定のため、全会員のパスワードを変更を促す可能性)
+L0020	機能仕様処理概要（★はカスタマイズ項目）
+L0021	事前準備
+L0022	・現行ECサイトから会員情報インポート後、各ユーザーの会員データに「パスワード再設定キーコード(※)」を登録する。
+L0023	「パスワード再設定キーコード」を登録すると会員データの最終更新日が自動的に更新される。
+L0024	※パスワード再設定キーコードはパスワード再設定用URLで使われるコードのこと。全ユーザー毎に個別生成され重複しないコード(ユニークコード)が割り振られる。
+L0025	機能仕様処理内容
+L0026	・リニューアル時パスワードリセットメール送信バッチを実行する際に日付入力しないとエラーとなる。
+L0027	引数には「パスワード再設定キーコード登録開始した日時」を入力し実行する。
+L0028	・リニューアル時パスワードリセットメール送信バッチを実行後、該当者に対してサイトリニューアルの案内およびパスワード再設定URLをメール送信される。
+L0029	設定言語(日本語・英語)によって、メール本文が切替わる
+L0030	・メール送信後、データベース内にあるメール送信履歴データ(dtb_user_mail_history)に送信内容が保存される。
+L0031	送信対象
+L0032	・会員情報データ最終更新日時がバッチ実行時に指定された日時以降のもの(最終更新日 >= 指定日時)
+L0033	今回の指定日時は「パスワード再設定キーコード登録開始した日時」を設定
+L0034	・会員情報データ内にパスワード再設定キーコードが事前に設定されていること
+L0035	実行トリガー - 実行タイミング 手動実行
+L0036	入力データ元 DB 出力先(フォーマット) メール・DB
+L0037	入力データ詳細
+L0038	バッチ実行時に、パスワード再設定コードを登録した日時を入力し実行する。
+L0039	入力データ検索条件
+L0040	項目名 条件 備考
+L0041	会員データ.最終更新日 >= パスワード再設定キーコード登録開始した日時(手入力)
+L0042	会員データ.パスワード再設定キーコード 未設定以外が該当(IS NOT NULL) 事前に「パスワード再設定キーコード」の登録が必要
+L0043	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0044	・メール送信
+L0045	・メール送信先は会員データにあるメールアドレス宛に送信する
+L0046	・メール送信元は[info@hareruyamtg.com]に設定
+L0047	・日本語メール本文
+L0048	・件名: 【晴れる屋】弊社Webサイトリニューアルに伴う、会員情報移行についてのお願い
+L0049	・本文
+L0050	[名前(姓)] [名前(名)] 様
+L0051	いつもご利用いただき、誠にありがとうございます。晴れる屋です。
+L0052	現在、弊社Webサイトリニューアルに伴うメンテナンスを行っており、サイトへのアクセスができなくなっております。
+L0053	メンテナンス終了後は、旧サイトに登録されていた会員様の情報が新サイトに移行されます。              
+L0054	そのため、メンテナンス終了後は移行された情報が正しいものであるかどうか、ご確認をお願いいたします。              
+L0055	その際にパスワードがリセットされるため、新しいパスワードの入力も併せてお願いいたします。  
+L0056	また、複数のお届け先を登録されていた場合、一番最初に登録されたお届け先以外は削除されます。          
+L0057	大変お手数ですが、複数のお届け先を引き続きご利用になる場合、削除されたお届け先の再登録をお願いいたします。
+L0058	今回のリニューアルにより、お客様にはご不便とご迷惑をおかけし、誠に申し訳ありません。              
+L0059	何卒ご理解とご協力のほど、よろしくお願い申し上げます。            
+L0060	■PC用サイト
+L0061	[パスワード再発行URL]
+L0062	■スマートフォン用サイト
+L0063	[パスワード再発行URL]?ismodesmartphone=on
+L0064	*************************************
+L0065	《晴れる屋/Hareruya》
+L0066	〒169-0075
+L0067	東京都新宿区高田馬場3-12-2 OCビル2F
+L0068	E-MAIL : info@hareruyamtg.com
+L0069	URL :http://www.hareruyamtg.com
+L0070	*************************************
+L0071	・英語メール本文
+L0072	・件名: 【Important】Notice regarding your account transfer to the renewed Hareruya web store.
+L0073	・本文
+L0074	Dear [名前(名)] [名前(姓)]
+L0075	Thank you for using Hareruya.
+L0076	We are currently undergoing maintenance work and the Hareruya web store is not able to access.
+L0077	When maintenance work is complete, your account that has been registered before the maintenance work will automatically be transferred to the new platform.
+L0078	When your account has been transferred the password you have registered will be reset.
+L0079	Please register your password once again.
+L0080	We deeply apologize for the trouble we ask regarding our web store renewal and we thank you in advance for your understanding.
+L0081	Kind regards,
+L0082	Hareruya Inc.
+L0083	* PC
+L0084	[パスワード再発行URL]
+L0085	* Smartphone
+L0086	[パスワード再発行URL]?ismodesmartphone=on
+L0087	*************************************
+L0088	《Hareruya》
+L0089	OC Bldg. 2F 3-12-2 Takadanobaba Shinjuku-ku Tokyo JAPAN 169-0075
+L0090	TEL: 03-5332-7544
+L0091	E-MAIL : info@hareruyamtg.com
+L0092	URL :http://www.hareruyamtg.com
+L0093	*************************************
+L0094	・メール送信後処理(1通ごとに処理実行)
+L0095	メール送信後、データベース内にあるメール送信履歴データ(dtb_user_mail_history)に下記情報が登録される
+L0096	・送信日時
+L0097	・送信時のメール件名
+L0098	・送信したメール本文の全文
+L0099	・メール送信時に使用したテンプレートのファイル名('Mail/customer_migration.twig' または 'Mail/customer_migration.en.twig')
+L0100	・送信した相手のユーザーID
+L0101	エラーハンドリング
+L0102	・パスワード再設定コードを登録した日時が未入力の場合、下記メッセージが出力され処理が終了する。
+L0103	「日付を指定してください。」
+L0104	Source:
+L0105	functions/pf-eccube3/b08-01_batch_customer_customer_send_account_migration.md
+L0106	現行仕様
+L0107	B08-01 リニューアル時パスワードリセットメール送信 / バッチ 会員管理 — リニューアル時パスワードリセットメール送信
+L0108	業務ロジック
+L0109	本文の言語の決め方
+L0110	会員に登録された国が日本以外のときは英語の本文とパスワード再設定URLを送る。国が日本のとき、および国が登録されていないときは日本語の本文とパスワード再設定URLを送る。
+L0111	エラー時の扱い
+L0112	エラー内容	処理
+L0113	コマンド名が未指定・不一致	実行日時を添えた案内をコンソールに出力し、対象の抽出も送信も行わずに終了する
+L0114	宛先のメールアドレスが電子メールの規格に沿わない	その会員への送信を飛ばし、会員IDを添えてコンソールに出力したうえで次の会員の処理へ進む。バッチは中断しない
+L0115	入出力
+L0116	本バッチは外部のAPIを呼び出さない。
+L0117	入力
+L0118	実行するバッチのコマンド名と、抽出の基準日時。基準日時は年4桁・月2桁・日2桁・時2桁・分2桁を続けた12桁の数字で与える。
+L0119	コンソールへの出力
+L0120	処理の開始時刻と終了時刻。送信が100件進むごとに、そこまでに処理した件数とメモリ使用量。
+L0121	送信するメールの返信先とエラー返送先
+L0122	返信先には基本情報に登録された返信先アドレスを、宛先不達の返送先には基本情報に登録されたエラー返送先アドレスを設定する。
+L0123	リニューアル後の仕様
+L0124	表示メッセージ
+L0125	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0126	画面を持たないため利用者向けのメッセージを表示しない。
+##### 0408 sheet-4 ポイント失効
+L0001	ポイント失効
+L0002	ドキュメント名会員 バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-09-10
+L0007	更新者高久
+L0008	更新日2025-09-30
+L0009	機能NoB08-02
+L0010	機能名ポイント失効
+L0011	概要ポイント失効処理を行う
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理内容
+L0014	カスタマイズ説明
+L0015	概要
+L0016	ポイント失効処理を行う
+L0017	機能
+L0018	有効期限が切れたポイントを失効処理を行う。
+L0019	併せて、スマレジ内のユーザー情報も同様にポイント失効をおこなう
+L0020	機能仕様処理概要（★はカスタマイズ項目）
+L0021	機能仕様処理内容
+L0022	・ポイントの有効期限は晴れる屋サイトで「ポイント発行日より6ヶ月(※)」と記載されており、それ以降のポイントは失効となる
+L0023	※システムでのポイント有効期限は183日間と定義されているため、若干のズレは発生する
+L0024	・スマレジに失効ポイントを差し引くAPI通信を粉う
+L0025	・プレイヤーデータにあるポイント残高を失効ポイントを差し引いたポイントへ更新する
+L0026	・ポイントの有効期限は「ポイント発行日より6ヶ月」とし、それ以降はポイント失効となる
+L0027	・ポイント履歴データに失効ポイントのレコードを追加する
+L0028	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日0:00
+L0029	入力データ元 DB 出力先(フォーマット) DB ・ スマレジAPI
+L0030	入力データ詳細
+L0031	・ポイント履歴データ(dtb_point_history)からユーザー毎に「バッチ実行日から有効期限日(183日前)までのポイント累計(以下、ポイント累計)」と
+L0032	プレイヤーデータ(dtb_player)にある「ポイント残高(point 以下、ポイント残高)」を一時的に取得
+L0033	※ ポイント累計は加算ポイント(プラス値)のみ対象とし、失効や使用したポイント(マイナス値)は累計に含めない
+L0034	・ポイント累計とポイント残高を比較し、ポイント残高の方が多いものを本取得する
+L0035	入力データ検索条件
+L0036	項目名	条件	備考
+L0037	ポイント履歴データ.ポイント発行日	>= 183日前の日時	有効期限は半年間(183日)
+L0038	ポイント履歴データ.ポイント増減量	> 0	加算ポイントのみ
+L0039	プレイヤーデータ.ポイント残高	＞ ポイント履歴データ.ポイント増減量の合計	上記2条件に該当するポイント増減量の合計
+L0040	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0041	・「入力データ詳細」で取得した一覧からユーザー毎に以下の処理を行う
+L0042	・「ポイント累計」からプレイヤーデータにある「ポイント残高」を差し引き、「失効ポイント」を算出する(計算結果はマイナス値になる)
+L0043	・ユーザーの「失効ポイント」の値をスマレジのポイント増減APIに送信し、失効ポイント分を差し引く
+L0044	・プレイヤーデータ(dtb_player)にあるポイント残高(point)を「ポイント累計」の値へ更新する
+L0045	・ポイント履歴データに下記の内容を登録する
+L0046	・会員ID:プレイヤーデータ(dtb_player)にある顧客ID(customer_id)
+L0047	・増減ポイント:失効ポイント
+L0048	・備考:「有効期限切れによる失効」に固定
+L0049	・有効期限:本日から183日間後の日時
+L0050	・登録日時:本日の日時
+L0051	・ポイント属性ID: 1(付与型)で登録
+L0052	※スマレジ取引IDという項目が存在するが、登録される処理が入っておらず未使用
+L0053	エラーハンドリング
+L0054	・スマレジへのポイント増減API登録失敗(タイムアウト・レスポンスステータスが失敗扱いの場合)
+L0055	エラーが発生したユーザーのポイント失効処理(スマレジ・ユーザーポイント増減含め)は今回は行わず、次のユーザーの処理を行う
+L0056	(該当ユーザーのポイント失効処理は翌日以降に持ち越しとなる)
+L0057	Source:
+L0058	functions/pf-eccube3/b08-02_batch_customer_customer_lost_points.md
+L0059	現行仕様
+L0060	B08-02 ポイント失効 / バッチ 会員管理 — ポイント失効
+L0061	業務ロジック
+L0062	起動時のバッチ名
+L0063	起動時に渡されたバッチ名が未指定のとき、または定義済みのバッチ名のいずれとも一致しないときは、失効処理を一切行わない。一致したときだけ失効処理を実行する。
+L0064	起動コマンドは customer:batch で、バッチ名を第1引数に渡す。ポイント失効のバッチ名は lostPoint である。定義済みのバッチ名は sendAccountMigration・lostPoint・complementPointHistory・pointExpireNotification・checkBlankRequiredItemCustomer・adjustPointVariance・idExpireNotification の7つである。
+L0065	対象会員の絞り込み
+L0066	スマレジ会員IDが登録されていない会員は、有効期限を過ぎたポイントを持っていても対象に含めない。
+L0067	有効期限の判定に用いる基準日時は、実行時刻の時分秒を切り捨てて0時0分0秒とする。
+L0068	会員ごとの処理間隔
+L0069	対象会員は1件ずつ順に処理し、1件を処理するごとに0.1秒の待ち時間を置いてから次の会員へ進む。
+L0070	更新の確定
+L0071	会員ごとの更新はその都度は確定せず、対象会員をすべて処理し終えた時点でまとめて確定する。処理の途中で異常終了した場合、その回の保有ポイントの更新もポイント履歴の記録も一件も残らない。
+L0072	入出力
+L0073	起動引数と終了状態
+L0074	種類	内容
+L0075	入力	起動時に渡すバッチ名
+L0076	出力	終了状態。失効処理を実行したときは正常終了、バッチ名が未指定・不一致のときは異常終了とする
+L0077	バッチ名が未指定・不一致のときの終了コードは1である。
+L0078	リニューアル後の仕様
+L0079	表示メッセージ
+L0080	このバッチは画面へ文言を表示しない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/B08-04/design.txt integration_test/casegen/combination/units/B08-06/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0408 sheet-6 必須項目が空欄の会員発生通知
+L0001	必須項目が空欄の会員発生通知
+L0002	ドキュメント名会員 バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-09-10
+L0007	更新者高久
+L0008	更新日2025-09-30
+L0009	機能NoB16-04（正しくは B08-04。Excel基本設計の機能No欄の誤記）
+L0010	機能名必須項目が空欄の会員発生通知
+L0011	概要必須項目が空欄の会員について管理者あてにメールを送信する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理内容
+L0014	カスタマイズ説明
+L0015	概要
+L0016	必須項目が空欄の会員について管理者あてにメールを送信する
+L0017	機能
+L0018	会員情報で必須項目に未記入があるユーザー一覧を取得し、
+L0019	該当ユーザーがいる場合、管理者あてに該当ユーザー一覧を送信する。
+L0020	備考
+L0021	現システム(EC-CUBE)では、会員登録・編集時に必須事項の入力チェックは必ず行われるため
+L0022	ECBeingからEC-CUBEへユーザーデータインポート後にユーザーデータの整合性を行うために作られた可能性があります。
+L0023	機能仕様処理概要（★はカスタマイズ項目）
+L0024	機能仕様処理内容
+L0025	・会員データのうち、下記項目で1つでも未入力の項目があるユーザーを取得する(退会者を除く)
+L0026	・該当者がいる場合、該当者一覧リストを作成し管理者のE-Mailにメールを送信する
+L0027	・該当者がいない場合にはバッチを終了
+L0028	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日 4:05
+L0029	入力データ元 DB 出力先(フォーマット) メール
+L0030	入力データ詳細
+L0031	・会員データのうち、下記項目で1つでも未設定の項目があるユーザーを取得する(退会者を除く)
+L0032	・国ID
+L0033	・都道府県ID
+L0034	・名前(姓)
+L0035	・名前(名)
+L0036	・電話番号(1列目)
+L0037	・電話番号(2列目)
+L0038	・電話番号(3列目)
+L0039	・メールアドレス
+L0040	・住所1
+L0041	・住所2
+L0042	・住所3
+L0043	・郵便番号
+L0044	・該当するユーザーがある場合、会員IDおよび上記項目全てをコロン(:)区切りを取得(以下 ユーザー情報抜粋データ)を取得する
+L0045	・取得例
+L0046	contory:[国名]:pref:[都道府県名]:name01:[名前(姓)]:name02:[名前(姓)]:tel01:[電話番号(1列目)]:tel02:[電話番号(2列目)]:tel03:[電話番号(3列目)]:email:[メールアドレス]:addr01:[住所1]:addr02:[住所2] :addr03:[住所3]:postal_code:[郵便番号]
+L0047	※未設定項目がある箇所には、'null'という文字列に置き換わる
+L0048	※「国名」および「都道府県名」は各マスターデータから名称を取得した上で表示される
+L0049	入力データ検索条件
+L0050	項目名 条件 備考
+L0051	会員データ.国ID 未設定(NULL)
+L0052	会員データ.都道府県ID 未設定(NULL)
+L0053	会員データ.名前(姓) 未設定(NULL)
+L0054	会員データ.名前(名) 未設定(NULL)
+L0055	会員データ.電話番号(1列目) 未設定(NULL)
+L0056	会員データ.電話番号(2列目) 未設定(NULL)
+L0057	会員データ.メールアドレス 未設定(NULL)
+L0058	会員データ.住所1 未設定(NULL)
+L0059	会員データ.住所2 未設定(NULL)
+L0060	会員データ.住所3 未設定(NULL)
+L0061	会員データ.郵便番号1(上3桁) 未設定(NULL)
+L0062	会員データ.郵便番号2(上4桁) 未設定(NULL)
+L0063	会員データ.郵便番号(ハイフン無し7桁) 未設定(NULL)
+L0064	会員データ.退会者フラグ 無効 退会者を除く
+L0065	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0066	・「入力データ詳細」で取得した一覧からユーザー毎に以下の処理を行う
+L0067	「会員ID」・「ユーザー情報抜粋データ」を改行で区切りながら、該当ユーザー分を繰り返しながらメール本文を作成する
+L0068	・全ユーザー分の処理が完了し、必須項目の未設定ユーザーが存在した場合は晴れる屋システム管理者のメールアドレスに送信する
+L0069	・メール送信先は[it_common@hareruyamtg.com]に送信する
+L0070	(メールの宛先はmtb_optionテーブルのcheck_bric_mail_addressカラムに設定されているメールアドレス)
+L0071	・メール送信元は本店IDを指定して取得
+L0072	・件名: 必須項目が空欄である会員の存在を通知するメール
+L0073	・本文(例)
+L0074	会員ID
+L0075	11111
+L0076	contory:日本:pref:東京都:name01:テスト:name02:ユーザー:tel01:000:tel02:0000:tel03:0000:email:test@test.com:addr01:新宿区:addr02:高田馬場3-12-2 :addr03:null:postal_code:null
+L0077	22222
+L0078	contory:日本:pref:東京都:name01:テスト:name02:ユーザー2:tel01:000:tel02:0000:tel03:0000:email:null:addr01:新宿区:addr02:高田馬場3-12-2 :addr03:OCビル2F:zip01:null :zip02:null :zipcode:null .
+L0079	.
+L0080	.
+L0081	(以下略)
+L0082	エラーハンドリング
+L0083	・該当処理なし
+L0084	Source:
+L0085	functions/pf-eccube3/b08-04_batch_customer_customer_check_blank_required.md
+L0086	現行仕様
+L0087	B08-04 必須項目が空欄の会員発生通知 / バッチ 会員管理 — 必須項目が空欄の会員発生通知
+L0088	業務ロジック
+L0089	対象の判定
+L0090	必須項目が空欄である会員の一覧を取り出す。空文字・値なし・未設定のいずれかのときを不備の候補として扱う。項目ごとの許容条件は、会員の必須項目の定義に従う。
+L0091	空欄の判定は会員のデータの現在値だけを見る。画面の入力補正と既定値の付与は行わない。
+L0092	コマンド名が未指定のとき、または一致しないときは処理を行わずに終える。
+L0093	通知
+L0094	該当する会員が 1 件でもあるときは、その一覧で管理者へアラートを通知する。該当が 1 件も無いときは通知せずに終える。
+L0095	このバッチは検出と通知だけを行い、会員情報を補ったり更新したりしない。
+L0096	エラー時の扱い
+L0097	エラー内容	処理
+L0098	コマンド名が未指定・不一致	処理を行わずに終える
+L0099	該当が 1 件も無い	何もせずに終える
+L0100	取得または送信でエラーが起きた	エラーメッセージを出力する
+L0101	入出力
+L0102	種類	内容
+L0103	入力	コマンド名
+L0104	成功時出力	該当する会員があるときの管理者へのアラート通知
+L0105	失敗時出力	エラーメッセージの出力
+L0106	このバッチは外部APIを呼び出さない。
+L0107	リニューアル後の仕様
+L0108	表示メッセージ
+L0109	このバッチは画面へ文言を表示しない。
+##### 0408 sheet-8 スマレジ使用ポイント連携
+L0001	スマレジ使用ポイント連携
+L0002	ドキュメント名会員 バッチ機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-09-10
+L0007	更新者高久
+L0008	更新日2025-09-30
+L0009	機能NoB08-06
+L0010	機能名スマレジ使用ポイント連携
+L0011	概要通販購入時の使用ポイント情報をスマレジに反映する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理内容
+L0014	カスタマイズ説明
+L0015	概要
+L0016	スマレジで使用したポイントを連携する
+L0017	機能
+L0018	通販購入時の使用ポイント情報をスマレジに反映する
+L0019	機能仕様処理概要（★はカスタマイズ項目）
+L0020	前提条件
+L0021	・このバッチは通販での購入完了時に、ポイント使用されて購入されたときに本処理とは別の処理で実行されるバッチになる
+L0022	別の処理にすることでサーバ負荷分散につながる
+L0023	・バッチの実行タイミングはデータベースに購入データが登録した際に発行される注文IDの値をバッチに引き渡したうえで実行する
+L0024	機能仕様処理内容
+L0025	・バッチ実行時に渡された注文IDを使って注文データから「使用ポイント」を取得する
+L0026	・スマレジ連携ポイント増減APIに「使用ポイント」を送信し、ポイント減算処理を行う。
+L0027	実行トリガー 商品購入完了処理中 実行タイミング -
+L0028	入力データ元 DB 出力先(フォーマット) スマレジAPI
+L0029	入力データ詳細
+L0030	・バッチを実行する際に送られる注文IDから注文サブデータ抽出し、購入したユーザーIDと注文で消費したポイントを取得する。
+L0031	・注文サブデータからユーザーIDからプレイヤーデータを抽出し、スマレジ用ユーザーIDを取得する。
+L0032	入力データ検索条件
+L0033	項目名	条件	備考
+L0034	注文サブデータ.注文ID	注文ID	注文データ登録時に発行された注文ID
+L0035	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0036	・スマレジ連携ポイント増減APIに今回の消費ポイント情報を送信
+L0037	正常に送信ができれば処理終了し、失敗した場合は注文サブデータに処理失敗情報を保存する(エラーハンドリング欄参照)
+L0038	エラーハンドリング
+L0039	・注文IDが未入力もしくは該当データなし
+L0040	処理を終了する(正常終了扱い[return終了])
+L0041	・スマレジ連携ポイント増減API通信失敗した場合
+L0042	注文サブデータのスマレジエラーメッセージ(point_error_message)にエラー詳細JSONを、スマレジ仕様ポイントエラーフラグ(smaregi_error_flg)をTrueを設定し更新する
+L0043	Source:
+L0044	functions/pf-eccube3/b08-06_batch_customer_smaregi_update_point.md
+L0045	現行仕様
+L0046	B08-06 スマレジ使用ポイント連携 / バッチ 会員管理 — スマレジ使用ポイント連携
+L0047	業務ロジック
+L0048	受注IDが数値でないとき
+L0049	引数として渡された受注IDが数値でないときは、連携を行わずに終了する。
+L0050	連携の失敗とみなす条件
+L0051	スマレジからの応答に処理結果が含まれないときを、この連携の失敗として扱う。
+L0052	失敗した受注の再連携
+L0053	連携エラーの区分が立ったままの受注は、スマレジ連携エラー受注の再連携処理が対象として拾う。
+L0054	入出力
+L0055	種類	内容
+L0056	入力	実行するバッチの名称
+L0057	起動する契機
+L0058	注文完了メールが送信されないまま残っている受注を再処理する処理からも、その受注IDを渡してこの連携が起動される。
+L0059	リニューアル後の仕様
+L0060	表示メッセージ
+L0061	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0062	—	—	本機能は利用者向けの文言を持たない	—	—
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/B08-03_existing.tsv integration_test/casegen/combination/factors/B08-03_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	処理ID	値	理由
+IT-B08-03-001	P1	F01=30日前&F02=通常会員&F03=設定済み&F04=1以上&F05=あり&F06=プラス&F07=日本国外以外&F08=残高が最小	事前準備で稼働中・東京都・スマレジ会員ID設定済み・残高120・30日前の指定日獲得150・残ポイント200を登録し、届いたメールで確かめる
+IT-B08-03-002	P1	F01=7日前&F02=通常会員&F03=設定済み&F04=1以上&F05=あり&F06=プラス&F07=日本国外以外&F08=残高が最小	事前準備で稼働中・東京都・スマレジ会員ID設定済み・残高70・7日前の指定日獲得100・残ポイント80を登録し、届いたメールで確かめる
+IT-B08-03-003	P1	F01=30日前&F02=通常会員&F03=設定済み&F04=1以上&F05=なし&F07=日本国外以外	事前準備で指定日の前日と翌日にだけ獲得した2会員（稼働中・東京都・スマレジ会員ID設定済み・残高100）を登録し、どちらにも届かないことを確かめる
+IT-B08-03-004	P1	F01=30日前&F02=通常会員&F03=設定済み&F04=1以上&F05=あり&F06=0以下&F07=日本国外以外	事前準備で稼働中・東京都・スマレジ会員ID設定済み・残高50・指定日獲得100と使用100・残ポイント0を登録し、届かないことを確かめる
+IT-B08-03-009	P1	F01=30日前&F02=通常会員&F03=設定済み&F04=1以上&F05=あり&F06=プラス&F07=日本国外以外	事前準備で全3会員を稼働中・東京都・スマレジ会員ID設定済み・30日前通知対象にし、それぞれ残高・指定日獲得・残ポイントを正の値で登録し、届いたメールで確かめる
+IT-B08-03-014	P1	F01=30日前&F02=通常会員&F03=設定済み&F04=1以上&F05=あり&F06=プラス&F07=日本国外以外&F08=残高が最小	事前準備で稼働中・東京都・スマレジ会員ID設定済み・残高120・153日前の獲得150・残ポイント200を登録し、届いたメールと管理画面のメール配信履歴で確かめる
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		通知の区分は調べる日と有効期限日を決め、会員ステータスは対象にするかどうかを決める条件のひとつ。会員ステータスの値は調べる日に対する状態として定まり、互いの結果を変えない
+P1	F01+F03	関係しない		通知の区分は調べる日と有効期限日を決め、スマレジ会員IDは対象にするかどうかを決める条件のひとつ。スマレジ会員IDの値は調べる日に対する状態として定まり、互いの結果を変えない
+P1	F01+F04	関係しない		通知の区分は調べる日と有効期限日を決め、ポイント残高は対象にするかどうかを決める条件のひとつ。ポイント残高の値は調べる日に対する状態として定まり、互いの結果を変えない
+P1	F01+F05	関係しない		通知の区分は調べる日と有効期限日を決め、指定日獲得ポイントは対象にするかどうかを決める条件のひとつ。指定日獲得ポイントの値は調べる日に対する状態として定まり、互いの結果を変えない
+P1	F01+F06	関係しない		通知の区分は調べる日と有効期限日を決め、残ポイントは対象にするかどうかを決める条件のひとつ。残ポイントの値は調べる日に対する状態として定まり、互いの結果を変えない
+P1	F01+F07	関係しない		メールの言語は都道府県だけで決まり、通知の区分で変わらない
+P1	F01+F08	関係しない		最小になる項目は通知するポイント数だけを決め、通知の区分の結果（対象かどうか・有効期限日・言語）を変えない
+P1	F02+F03	関係しない		会員ステータスとスマレジ会員IDは、通知の対象にする条件の「すべて満たす」の一部で、どれかを満たさない会員は通知しない。結果は通知する・しないの2つだけで、互いの値で変わらない
+P1	F02+F04	関係しない		会員ステータスとポイント残高は、通知の対象にする条件の「すべて満たす」の一部で、どれかを満たさない会員は通知しない。結果は通知する・しないの2つだけで、互いの値で変わらない
+P1	F02+F05	関係しない		会員ステータスと指定日獲得ポイントは、通知の対象にする条件の「すべて満たす」の一部で、どれかを満たさない会員は通知しない。結果は通知する・しないの2つだけで、互いの値で変わらない
+P1	F02+F06	関係しない		会員ステータスと残ポイントは、通知の対象にする条件の「すべて満たす」の一部で、どれかを満たさない会員は通知しない。結果は通知する・しないの2つだけで、互いの値で変わらない
+P1	F02+F07	関係しない		メールの言語は都道府県だけで決まり、会員ステータスで変わらない
+P1	F02+F08	関係しない		最小になる項目は通知するポイント数だけを決め、会員ステータスの結果（対象かどうか・有効期限日・言語）を変えない
+P1	F03+F04	関係しない		スマレジ会員IDとポイント残高は、通知の対象にする条件の「すべて満たす」の一部で、どれかを満たさない会員は通知しない。結果は通知する・しないの2つだけで、互いの値で変わらない
+P1	F03+F05	関係しない		スマレジ会員IDと指定日獲得ポイントは、通知の対象にする条件の「すべて満たす」の一部で、どれかを満たさない会員は通知しない。結果は通知する・しないの2つだけで、互いの値で変わらない
+P1	F03+F06	関係しない		スマレジ会員IDと残ポイントは、通知の対象にする条件の「すべて満たす」の一部で、どれかを満たさない会員は通知しない。結果は通知する・しないの2つだけで、互いの値で変わらない
+P1	F03+F07	関係しない		メールの言語は都道府県だけで決まり、スマレジ会員IDで変わらない
+P1	F03+F08	関係しない		最小になる項目は通知するポイント数だけを決め、スマレジ会員IDの結果（対象かどうか・有効期限日・言語）を変えない
+P1	F04+F05	関係しない		ポイント残高と指定日獲得ポイントは、通知の対象にする条件の「すべて満たす」の一部で、どれかを満たさない会員は通知しない。結果は通知する・しないの2つだけで、互いの値で変わらない
+P1	F04+F06	関係しない		ポイント残高と残ポイントは、通知の対象にする条件の「すべて満たす」の一部で、どれかを満たさない会員は通知しない。結果は通知する・しないの2つだけで、互いの値で変わらない
+P1	F04+F07	関係しない		メールの言語は都道府県だけで決まり、ポイント残高で変わらない
+P1	F04+F08	関係しない		最小になる項目は通知するポイント数だけを決め、ポイント残高は通知する・しないを決める条件のひとつ。互いの結果を変えない
+P1	F05+F06	関係しない		指定日獲得ポイントと残ポイントは、通知の対象にする条件の「すべて満たす」の一部で、どれかを満たさない会員は通知しない。結果は通知する・しないの2つだけで、互いの値で変わらない
+P1	F05+F07	関係しない		メールの言語は都道府県だけで決まり、指定日獲得ポイントで変わらない
+P1	F05+F08	関係しない		最小になる項目は通知するポイント数だけを決め、指定日獲得ポイントは通知する・しないを決める条件のひとつ。互いの結果を変えない
+P1	F06+F07	関係しない		メールの言語は都道府県だけで決まり、残ポイントで変わらない
+P1	F06+F08	関係しない		最小になる項目は通知するポイント数だけを決め、残ポイントは通知する・しないを決める条件のひとつ。互いの結果を変えない
+P1	F07+F08	関係しない		最小になる項目は通知するポイント数だけを決め、都道府県の結果（対象かどうか・有効期限日・言語）を変えない
+
+exec
+/bin/bash -lc "grep -E '"'^IT-B08-02-'"' integration_test/casegen/cases/B08-02_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-B08-02-006	REQ-0408-sheet-4-R045		ITA-08,ITA-11,ITA-24	P1	ブラウザ+DB確認	S-B08-02-CONFIG,S-B08-02-RUN,S-B08-02-NO-SMAREGI-006	① ポイント有効期間を183日、業務タイムゾーンをAsia/Tokyo、ポイント属性ID 1を付与型に設定する（S-B08-02-CONFIG）／② 日次スケジュールを停止し、実行中のポイント失効処理が無い状態にする（S-B08-02-RUN）／③ 他のB08-02試験会員が存在しない状態で、会員ID 〔会員ID-B0802-006〕、プレイヤーデータID 〔プレイヤーデータID-B0802-006〕を登録する。スマレジ会員IDは未登録、ポイント残高は100、ポイント履歴は184日前12:00の+100だけ、失効履歴は0件とする（登録時に振られた会員ID・プレイヤーデータIDを控えてある。〔会員ID-B0802-006〕・〔プレイヤーデータID-B0802-006〕）（S-B08-02-NO-SMAREGI-006）	1. バッチB08-02「ポイント失効」を手動起動する／2. 実行完了後、DBで会員ID 〔会員ID-B0802-006〕のポイント残高とポイント履歴を確認する	スマレジ会員IDが未登録の会員ID 〔会員ID-B0802-006〕は、有効期限を過ぎたポイントを持っていてもポイント残高が100のままで失効履歴が追加されないこと	0408 ポイント失効 / 現行仕様 業務ロジック 対象会員の絞り込み
+IT-B08-02-014	REQ-0408-sheet-4-R010,REQ-0408-sheet-4-R028		ITA-05	P1	ブラウザのみ	S-B08-02-L-ENV,S-B08-02-L-API,S-B08-02-L-ADM,S-B08-02-L-MEM-014	① ポイント有効期間を183日、業務タイムゾーンをAsia/Tokyo、ポイント属性ID 1を付与型に設定し、B08-02「ポイント失効」を手動起動でき、同時に実行中のポイント失効処理が無い状態にする（S-B08-02-L-ENV）／② スマレジAPI試験サーバーをポイント増減APIの正常応答に設定する（S-B08-02-L-API）／③ 会員ID 〔会員ID-B0802-014〕・プレイヤーデータID 〔プレイヤーデータID-B0802-014〕・メール b0802l-001@example.test・通常会員・スマレジ会員ID SM-B0802L-001、DBとスマレジのポイント残高はともに450、ポイント履歴は ID 〔ポイント履歴ID-B0802-014A〕（実行日の100日前12:00に+300）・ID 〔ポイント履歴ID-B0802-014B〕（実行日の184日前12:00に+200）・ID 〔ポイント履歴ID-B0802-014C〕（実行日の50日前12:00に-50）の3件だけで、備考「有効期限切れによる失効」の履歴は0件（登録時に振られた会員ID・プレイヤーデータID・ポイント履歴IDを控えてある。〔会員ID-B0802-014〕・〔プレイヤーデータID-B0802-014〕・〔ポイント履歴ID-B0802-014A〕・〔ポイント履歴ID-B0802-014B〕・〔ポイント履歴ID-B0802-014C〕）（S-B08-02-L-MEM-014）／④ 管理者ログインID b0802ladmin・パスワード Passw0rd!LB0802 の管理者が稼働中・ロックなしで、会員管理を操作できる（S-B08-02-L-ADM）	1. バッチB08-02「ポイント失効」を手動起動する／2. バッチの実行履歴で当該実行の状態が成功になるまで待つ（最長10分。超えた場合は失敗として記録する）／3. 管理画面にログインID b0802ladmin・パスワード Passw0rd!LB0802 でログインする／4. 会員ID 〔会員ID-B0802-014〕のポイント履歴確認画面を開く／5. ポイント残高を確認する	ポイント残高に、失効処理後のプレイヤーデータのポイント残高である300が表示されること	上流: 0408 ポイント失効 / 機能仕様 実行結果詳細｜下流: 0207 ポイント履歴確認 / 画面項目定義 識別ID 1、M08-06 機能設計書 / 業務ロジック 表示する値
+IT-B08-02-015	REQ-0408-sheet-4-R012,REQ-0408-sheet-4-R029,REQ-0408-sheet-4-R031,REQ-0408-sheet-4-R032		ITA-05	P1	ブラウザのみ	S-B08-02-L-ENV,S-B08-02-L-API,S-B08-02-L-ADM,S-B08-02-L-MEM-015	① ポイント有効期間を183日、業務タイムゾーンをAsia/Tokyo、ポイント属性ID 1を付与型に設定し、B08-02「ポイント失効」を手動起動でき、同時に実行中のポイント失効処理が無い状態にする（S-B08-02-L-ENV）／② スマレジAPI試験サーバーをポイント増減APIの正常応答に設定する（S-B08-02-L-API）／③ 会員ID 〔会員ID-B0802-015〕・プレイヤーデータID 〔プレイヤーデータID-B0802-015〕・メール b0802l-002@example.test・通常会員・スマレジ会員ID SM-B0802L-002、DBとスマレジのポイント残高はともに450、ポイント履歴は ID 〔ポイント履歴ID-B0802-015A〕（実行日の100日前12:00に+300）・ID 〔ポイント履歴ID-B0802-015B〕（実行日の184日前12:00に+200）・ID 〔ポイント履歴ID-B0802-015C〕（実行日の50日前12:00に-50）の3件だけで、備考「有効期限切れによる失効」の履歴は0件（登録時に振られた会員ID・プレイヤーデータID・ポイント履歴IDを控えてある。〔会員ID-B0802-015〕・〔プレイヤーデータID-B0802-015〕・〔ポイント履歴ID-B0802-015A〕・〔ポイント履歴ID-B0802-015B〕・〔ポイント履歴ID-B0802-015C〕）（S-B08-02-L-MEM-015）／④ 管理者ログインID b0802ladmin・パスワード Passw0rd!LB0802 の管理者が稼働中・ロックなしで、会員管理を操作できる（S-B08-02-L-ADM）	1. バッチB08-02「ポイント失効」を手動起動する／2. バッチの実行履歴で当該実行の状態が成功になるまで待つ（最長10分。超えた場合は失敗として記録する）／3. 管理画面にログインID b0802ladmin・パスワード Passw0rd!LB0802 でログインする／4. 会員ID 〔会員ID-B0802-015〕のポイント履歴確認画面を開く／5. 備考が「有効期限切れによる失効」の行を探し、その行の増減量と備考を確認する	備考が「有効期限切れによる失効」の行が表示され、その行の増減量が-150、備考が「有効期限切れによる失効」であること	上流: 0408 ポイント失効 / 機能仕様 実行結果詳細｜下流: 0207 ポイント履歴確認 / 画面項目定義 識別ID 5・6、M08-06 機能設計書 / 業務ロジック 一覧に出す履歴の範囲
+IT-B08-02-016	REQ-0408-sheet-4-R010,REQ-0408-sheet-4-R028		ITA-05	P1	ブラウザのみ	S-B08-02-L-ENV,S-B08-02-L-API,S-B08-02-L-MEM-016	① ポイント有効期間を183日、業務タイムゾーンをAsia/Tokyo、ポイント属性ID 1を付与型に設定し、B08-02「ポイント失効」を手動起動でき、同時に実行中のポイント失効処理が無い状態にする（S-B08-02-L-ENV）／② スマレジAPI試験サーバーをポイント増減APIの正常応答に設定する（S-B08-02-L-API）／③ 会員ID 〔会員ID-B0802-016〕・プレイヤーデータID 〔プレイヤーデータID-B0802-016〕・メール b0802l-003@example.test・通常会員・スマレジ会員ID SM-B0802L-003、DBとスマレジのポイント残高はともに450、ポイント履歴は ID 〔ポイント履歴ID-B0802-016A〕（実行日の100日前12:00に+300）・ID 〔ポイント履歴ID-B0802-016B〕（実行日の184日前12:00に+200）・ID 〔ポイント履歴ID-B0802-016C〕（実行日の50日前12:00に-50）の3件だけで、備考「有効期限切れによる失効」の履歴は0件／④ 会員ID 〔会員ID-B0802-016〕は本店EC日本語版にメール b0802l-003@example.test・パスワード PwB0802L003! でログインできる（登録時に振られた会員ID・プレイヤーデータID・ポイント履歴IDを控えてある。〔会員ID-B0802-016〕・〔プレイヤーデータID-B0802-016〕・〔ポイント履歴ID-B0802-016A〕・〔ポイント履歴ID-B0802-016B〕・〔ポイント履歴ID-B0802-016C〕）（S-B08-02-L-MEM-016）	1. バッチB08-02「ポイント失効」を手動起動する／2. バッチの実行履歴で当該実行の状態が成功になるまで待つ（最長10分。超えた場合は失敗として記録する）／3. ケース専用ブラウザで本店EC日本語版を開き、メール b0802l-003@example.test・パスワード PwB0802L003! でログインする／4. TOP画面を開く／5. 共通ヘッダー（グローバルナビ）のポイント表示を確認する	グローバルナビのポイント表示に、失効処理後のプレイヤーデータのポイント残高である300が表示されること	上流: 0408 ポイント失効 / 機能仕様 実行結果詳細｜下流: 0302 PC版ナビゲーション / 画面項目定義 識別ID 15、F02-05 機能設計書 / 業務ロジック・F06-05 機能設計書 / ヘッダー表示用のポイント
+
+exec
+/bin/bash -lc "grep -E '"'^IT-B08-03-009'"\\b' integration_test/casegen/cases/B08-03_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-B08-03-009	REQ-0408-sheet-5-R017,REQ-0408-sheet-5-R029,REQ-0408-sheet-5-R030,REQ-0408-sheet-5-R031,REQ-0408-sheet-5-R032,REQ-0408-sheet-5-R033,REQ-0408-sheet-5-R034	—	ITA-05	P1	ブラウザのみ	S-B08-03-DB,S-B08-03-ENV,S-B08-03-MINIMUM-009,S-B08-03-MAILBOX	① 試験DBへ基準データを再投入し、本ケース以外のB08-03ケース専用データが存在せず、本ケース専用会員以外の30日前・7日前通知対象会員を0件にする（S-B08-03-DB）／② 開始時にポイント有効期間を183日、事前通知日数を30日と7日、送信元をinfo@hareruyamtg.com、日本語・英語の件名と本文を0408記載値に設定し、B08-03の実行中件数を0件にする（S-B08-03-ENV）／③ 会員ID 〔会員ID-B0803-009A〕（登録時に振られた会員IDを控えてある）をmin-player-b0803-009@example.test・プレイヤーID 〔プレイヤーID-B0803-009A〕（登録時に振られたプレイヤーIDを控えてある）・ポイント残高40・指定日獲得100・残ポイント80、会員ID 〔会員ID-B0803-009B〕（登録時に振られた会員IDを控えてある）をmin-residual-b0803-009@example.test・プレイヤーID 〔プレイヤーID-B0803-009B〕（登録時に振られたプレイヤーIDを控えてある）・ポイント残高100・指定日獲得80・残ポイント50、会員ID 〔会員ID-B0803-009C〕（登録時に振られた会員IDを控えてある）をmin-acquired-b0803-009@example.test・プレイヤーID 〔プレイヤーID-B0803-009C〕（登録時に振られたプレイヤーIDを控えてある）・ポイント残高100・指定日獲得60・残ポイント80とし、全会員を東京都・稼働中・未削除・スマレジ会員ID設定済み・30日前通知対象・メール送信履歴0件にする（S-B08-03-MINIMUM-009）／④ 開始時にmin-player-b0803-009@example.test、min-residual-b0803-009@example.test、min-acquired-b0803-009@example.testの受信履歴を0件にする（S-B08-03-MAILBOX）	1. バッチB08-03「ポイント有効期限通知」を起動する／2. min-player-b0803-009@example.test、min-residual-b0803-009@example.test、min-acquired-b0803-009@example.testで受信したメールを開く	min-player-b0803-009@example.testにはプレイヤーデータのポイント残高40、min-residual-b0803-009@example.testには残ポイント50、min-acquired-b0803-009@example.testには指定日獲得ポイント60が、それぞれ有効期限間近ポイントとして記載されること	0408 ポイント有効期限通知 / 機能仕様 入力データ詳細・実行結果詳細 通知する有効期限間近ポイント数
+
+exec
+/bin/bash -lc "grep -nE 'ポイント残高|失効|有効期限切れ' integration_test/casegen/combination/units/M08-06/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+25:L0024	1	ポイント残高	ラベル	-	-	-
+45:L0044	ポイント残高は、会員に紐づく選手情報が保持する残高を表示する。履歴の増減量の合計ではない。
+52:L0051	出力	該当会員のポイント残高と、ポイント履歴の一覧
+
+exec
+/bin/bash -lc "grep -E '"'^S-B08-03-(MINIMUM-009|PLAYER-001|STATUS-005)'"' integration_test/casegen/cases/B08-03_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+S-B08-03-STATUS-005	会員・ポイント履歴・プレイヤー	仮会員・退会済み会員(005)	会員IDは登録時に画面が振る（控える。以下〔会員ID-B0803-005A〕）・メールアドレス=provisional-b0803-005@example.test・東京都・仮会員・未削除・プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-B0803-005A〕）・スマレジ会員ID=SM-B0803-005-001・ポイント残高100・ポイント履歴（ポイント履歴IDは登録時に画面が振る。控える。以下〔ポイント履歴ID-B0803-005A〕）は実行日の153日前12:00に+100／会員IDは登録時に画面が振る（控える。以下〔会員ID-B0803-005B〕）・メールアドレス=withdrawn-b0803-005@example.test・東京都・退会済み・未削除・プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-B0803-005B〕）・スマレジ会員ID=SM-B0803-005-002・ポイント残高100・ポイント履歴（ポイント履歴IDは登録時に画面が振る。控える。以下〔ポイント履歴ID-B0803-005B〕）は実行日の153日前12:00に+100／両会員の指定日獲得ポイントと残ポイント=100・メール送信履歴=0件	IT-B08-03-005専用。会員ステータスによる通知対象外確認	【1人目 provisional-b0803-005@example.test】フロントの新規会員登録画面で、メールアドレスとメールアドレス(確認)にprovisional-b0803-005@example.test、国にJapan、住所(都道府県)に東京都、ほかの必須項目に入力チェックを通る値を入れて同意するボタンを押し、確認画面で登録するボタンを押す（仮会員として登録される）。本会員登録用URLは開かず、仮会員のままにする。管理画面の会員検索一覧で「会員ID・メールアドレス・お名前」にprovisional-b0803-005@example.testを入れて検索ボタンを押し、その行に表示された会員IDを控える（〔会員ID-B0803-005A〕）。その会員の会員登録編集画面でポイント管理・履歴一覧ボタンを押し、ポイント付与画面で「キャンペーン、特別対応によるポイント付与」を押して、ポイント履歴追加（キャンペーン、特別対応）画面を開く。ポイント増減量に100、ポイント発行日に実行日の153日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-005A〕）。スマレジ会員ID（SM-B0803-005-001）は画面で指定できないためDBへ直接設定する。ポイント残高は上の操作で100になる（ポイント履歴追加画面のポイント残高の表示で確かめる）。ポイント発行日の時刻（12:00）は画面で指定できない（画面は日付だけを受け付ける）ためDBへ直接設定する。プレイヤーIDは画面に表示されないため、DBでこの会員のプレイヤーIDを見て控える（〔プレイヤーID-B0803-005A〕）。管理画面の会員検索一覧からこの会員のメール配信履歴を開き、メール送信履歴が0件であることを確かめる。【2人目 withdrawn-b0803-005@example.test】フロントの新規会員登録画面で、メールアドレスとメールアドレス(確認)にwithdrawn-b0803-005@example.test、国にJapan、住所(都道府県)に東京都、ほかの必須項目に入力チェックを通る値を入れて同意するボタンを押し、確認画面で登録するボタンを押す（仮会員として登録される）。withdrawn-b0803-005@example.testに届いた仮会員登録完了メールに記載の本会員登録用URLを開き、本会員（稼働中）にする。管理画面の会員検索一覧で「会員ID・メールアドレス・お名前」にwithdrawn-b0803-005@example.testを入れて検索ボタンを押し、その行に表示された会員IDを控える（〔会員ID-B0803-005B〕）。その会員の会員登録編集画面でポイント管理・履歴一覧ボタンを押し、ポイント付与画面で「キャンペーン、特別対応によるポイント付与」を押して、ポイント履歴追加（キャンペーン、特別対応）画面を開く。ポイント増減量に100、ポイント発行日に実行日の153日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-005B〕）。会員ステータス（退会済み）は、画面で退会に変えるとメールアドレスが別の値に書き換わり記載のメールアドレスを保てないため、DBへ直接設定する。スマレジ会員ID（SM-B0803-005-002）は画面で指定できないためDBへ直接設定する。ポイント残高は上の操作で100になる（ポイント履歴追加画面のポイント残高の表示で確かめる）。ポイント発行日の時刻（12:00）は画面で指定できない（画面は日付だけを受け付ける）ためDBへ直接設定する。プレイヤーIDは画面に表示されないため、DBでこの会員のプレイヤーIDを見て控える（〔プレイヤーID-B0803-005B〕）。管理画面の会員検索一覧からこの会員のメール配信履歴を開き、メール送信履歴が0件であることを確かめる。	ケース専用
+S-B08-03-MINIMUM-009	会員・ポイント履歴・プレイヤー	有効期限間近ポイント最小値会員(009)	会員IDは登録時に画面が振る（控える。以下〔会員ID-B0803-009A〕）・メールアドレス=min-player-b0803-009@example.test・東京都・稼働中・未削除・プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-B0803-009A〕）・スマレジ会員ID=SM-B0803-009-001・ポイント残高40・ポイント履歴（ポイント履歴IDは登録時に画面が振る。控える。以下〔ポイント履歴ID-B0803-009A〕）は実行日の153日前12:00に+100、ポイント履歴（ポイント履歴IDは登録時に画面が振る。控える。以下〔ポイント履歴ID-B0803-009B〕）は同日13:00に-20・残ポイント80／会員IDは登録時に画面が振る（控える。以下〔会員ID-B0803-009B〕）・メールアドレス=min-residual-b0803-009@example.test・東京都・稼働中・未削除・プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-B0803-009B〕）・スマレジ会員ID=SM-B0803-009-002・ポイント残高100・ポイント履歴（ポイント履歴IDは登録時に画面が振る。控える。以下〔ポイント履歴ID-B0803-009C〕）は153日前12:00に+80、ポイント履歴（ポイント履歴IDは登録時に画面が振る。控える。以下〔ポイント履歴ID-B0803-009D〕）は同日13:00に-30・残ポイント50／会員IDは登録時に画面が振る（控える。以下〔会員ID-B0803-009C〕）・メールアドレス=min-acquired-b0803-009@example.test・東京都・稼働中・未削除・プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-B0803-009C〕）・スマレジ会員ID=SM-B0803-009-003・ポイント残高100・ポイント履歴（ポイント履歴IDは登録時に画面が振る。控える。以下〔ポイント履歴ID-B0803-009E〕）は154日前12:00に+20、ポイント履歴（ポイント履歴IDは登録時に画面が振る。控える。以下〔ポイント履歴ID-B0803-009F〕）は153日前12:00に+60・残ポイント80／3会員のメール送信履歴=0件	IT-B08-03-009専用。ポイント残高、残ポイント、指定日獲得ポイントの最小値をそれぞれ案内する	【1人目 min-player-b0803-009@example.test】フロントの新規会員登録画面で、メールアドレスとメールアドレス(確認)にmin-player-b0803-009@example.test、国にJapan、住所(都道府県)に東京都、ほかの必須項目に入力チェックを通る値を入れて同意するボタンを押し、確認画面で登録するボタンを押す（仮会員として登録される）。min-player-b0803-009@example.testに届いた仮会員登録完了メールに記載の本会員登録用URLを開き、本会員（稼働中）にする。管理画面の会員検索一覧で「会員ID・メールアドレス・お名前」にmin-player-b0803-009@example.testを入れて検索ボタンを押し、その行に表示された会員IDを控える（〔会員ID-B0803-009A〕）。その会員の会員登録編集画面でポイント管理・履歴一覧ボタンを押し、ポイント付与画面で「キャンペーン、特別対応によるポイント付与」を押して、ポイント履歴追加（キャンペーン、特別対応）画面を開く。ポイント増減量に100、ポイント発行日に実行日の153日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-009A〕）。ポイント増減量に-20、ポイント発行日に実行日の153日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-009B〕）。スマレジ会員ID（SM-B0803-009-001）は画面で指定できないためDBへ直接設定する。ポイント残高（40）は画面で指定できない（上の操作では80になる）ためDBへ直接設定する。ポイント発行日の時刻（12:00・13:00）は画面で指定できない（画面は日付だけを受け付ける）ためDBへ直接設定する。プレイヤーIDは画面に表示されないため、DBでこの会員のプレイヤーIDを見て控える（〔プレイヤーID-B0803-009A〕）。管理画面の会員検索一覧からこの会員のメール配信履歴を開き、メール送信履歴が0件であることを確かめる。【2人目 min-residual-b0803-009@example.test】フロントの新規会員登録画面で、メールアドレスとメールアドレス(確認)にmin-residual-b0803-009@example.test、国にJapan、住所(都道府県)に東京都、ほかの必須項目に入力チェックを通る値を入れて同意するボタンを押し、確認画面で登録するボタンを押す（仮会員として登録される）。min-residual-b0803-009@example.testに届いた仮会員登録完了メールに記載の本会員登録用URLを開き、本会員（稼働中）にする。管理画面の会員検索一覧で「会員ID・メールアドレス・お名前」にmin-residual-b0803-009@example.testを入れて検索ボタンを押し、その行に表示された会員IDを控える（〔会員ID-B0803-009B〕）。その会員の会員登録編集画面でポイント管理・履歴一覧ボタンを押し、ポイント付与画面で「キャンペーン、特別対応によるポイント付与」を押して、ポイント履歴追加（キャンペーン、特別対応）画面を開く。ポイント増減量に80、ポイント発行日に実行日の153日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-009C〕）。ポイント増減量に-30、ポイント発行日に実行日の153日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-009D〕）。スマレジ会員ID（SM-B0803-009-002）は画面で指定できないためDBへ直接設定する。ポイント残高（100）は画面で指定できない（上の操作では50になる）ためDBへ直接設定する。ポイント発行日の時刻（12:00・13:00）は画面で指定できない（画面は日付だけを受け付ける）ためDBへ直接設定する。プレイヤーIDは画面に表示されないため、DBでこの会員のプレイヤーIDを見て控える（〔プレイヤーID-B0803-009B〕）。管理画面の会員検索一覧からこの会員のメール配信履歴を開き、メール送信履歴が0件であることを確かめる。【3人目 min-acquired-b0803-009@example.test】フロントの新規会員登録画面で、メールアドレスとメールアドレス(確認)にmin-acquired-b0803-009@example.test、国にJapan、住所(都道府県)に東京都、ほかの必須項目に入力チェックを通る値を入れて同意するボタンを押し、確認画面で登録するボタンを押す（仮会員として登録される）。min-acquired-b0803-009@example.testに届いた仮会員登録完了メールに記載の本会員登録用URLを開き、本会員（稼働中）にする。管理画面の会員検索一覧で「会員ID・メールアドレス・お名前」にmin-acquired-b0803-009@example.testを入れて検索ボタンを押し、その行に表示された会員IDを控える（〔会員ID-B0803-009C〕）。その会員の会員登録編集画面でポイント管理・履歴一覧ボタンを押し、ポイント付与画面で「キャンペーン、特別対応によるポイント付与」を押して、ポイント履歴追加（キャンペーン、特別対応）画面を開く。ポイント増減量に20、ポイント発行日に実行日の154日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-009E〕）。ポイント増減量に60、ポイント発行日に実行日の153日前の日付、備考に特別対応を入れて保存ボタンを押し、ポイント履歴一覧のID欄に表示された当該行のポイント履歴IDを控える（〔ポイント履歴ID-B0803-009F〕）。スマレジ会員ID（SM-B0803-009-003）は画面で指定できないためDBへ直接設定する。ポイント残高（100）は画面で指定できない（上の操作では80になる）ためDBへ直接設定する。ポイント発行日の時刻（12:00）は画面で指定できない（画面は日付だけを受け付ける）ためDBへ直接設定する。プレイヤーIDは画面に表示されないため、DBでこの会員のプレイヤーIDを見て控える（〔プレイヤーID-B0803-009C〕）。管理画面の会員検索一覧からこの会員のメール配信履歴を開き、メール送信履歴が0件であることを確かめる。	ケース専用
+
+codex
+B08-03の追加5件は、指定日・履歴の増減・残高から通知ポイント数を計算し直し、期待値の60・70・40ポイントと一致するところまで確認しました。続けて、シードの作成手順でその状態に到達できるか、既存ケースと同じ組を重ねていないかを確認します。
+exec
+/bin/bash -lc "grep -R -n --include='*.php' --include='*.twig' '日本国外' /home/y-saito/Developments/ec-cube-enterprise/src /home/y-saito/Developments/ec-cube-enterprise/app 2>/dev/null" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Front/EntryType.php:224:            // 後続の海外住所処理がPrefを「日本国外」に上書きする前に、送信値の整合性を検証する。
+
+exec
+/bin/bash -lc "grep -n 'IT-0366' integration_test/viewpoint_canonical/viewpoints_canonical.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+367:IT-0366	ITA-11	内部結合テスト	制御	条件網羅	データパターン / 要因の組合せ	1つの処理の結果を左右する要因（区分、状態、設定、関連データの値など。他の機能で設定する値を含む）が2つ以上ある場合、設計書の定めが互いに効き合う要因については値の組合せのすべてで、互いに効き合わない要因についてはどの2つの要因の値の組もいずれかの組合せで、受け渡し先の結果が、それぞれの要因について定められた結果を重ねたとおり設計どおりとなること。設計書から結果が決まらない組合せ、設計上作れない組合せ、および検索条件と削除条件の組合せは除く。	設計書から引用	条件に応じて、呼び出される先、返却データ、出力結果、状態遷移および副作用が設計どおりに切り替わること。検索・削除条件の一致種別と組合せで期待したレコードが取得・対象化されること、表示／非表示条件、通知の発生条件を含む。	単一メソッド内の分岐網羅、および分岐編集の結果そのものは単体テストが担う
+
+codex
+### 指摘（B08-01 / IT-B08-01-019）
+- 主張: 規格外メールアドレスの会員を1名だけ用意し、期待結果は「会員IDがコンソールに表示されること」のみ。
+- 実際: 設計書は、その会員への送信を飛ばし、会員IDを出力したうえで「次の会員の処理へ進む。バッチは中断しない」と定める（design.txt L0114）。メール送信履歴の保存は送信後に行う（L0094〜L0100）。現在のケースでは、非送信も後続会員への処理継続も確かめられない。
+- 判定: 要因の結果が欠けている
+- 修正案: 規格外会員への非送信を送信履歴または受信記録で確かめる。後続の対象会員も用意し、バッチがその会員の処理へ進むことを確かめる。
+tokens used
+84,134
+### 指摘（B08-01 / IT-B08-01-019）
+- 主張: 規格外メールアドレスの会員を1名だけ用意し、期待結果は「会員IDがコンソールに表示されること」のみ。
+- 実際: 設計書は、その会員への送信を飛ばし、会員IDを出力したうえで「次の会員の処理へ進む。バッチは中断しない」と定める（design.txt L0114）。メール送信履歴の保存は送信後に行う（L0094〜L0100）。現在のケースでは、非送信も後続会員への処理継続も確かめられない。
+- 判定: 要因の結果が欠けている
+- 修正案: 規格外会員への非送信を送信履歴または受信記録で確かめる。後続の対象会員も用意し、バッチがその会員の処理へ進むことを確かめる。

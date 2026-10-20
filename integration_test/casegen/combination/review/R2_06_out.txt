@@ -1,0 +1,1715 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1588a-56ad-7861-b1ca-1030acd64588
+--------
+user
+# 敵対レビュー依頼：要因の組合せの結合テストケース（2巡目・06）
+
+あなたはレビュアーである。著者とは別人として、下の追加ケースを根拠と突き合わせ、誤りを指摘せよ。ファイルは変更しない。スクリプトやコマンドは読むだけで実行しない（grep・cat 等の閲覧は可。rg は使わない）。出力は日本語。
+レビューは事実確認に限る。設計書に無い仕様を足す提案はしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すと決めた。他の機能の設定値も要因に入れる。
+機能ごとに要因表（`combination/factors/`）を作り codex が反証した。そこから機械が試す値の組（`combination/combos/<機能ID>.tsv`）を並べ、著者が組1行にケース1件を書いた。
+組1行ごとの扱い（ケース化／既存ケースで確認済み／ケースにしない）は dispositions に書いてある。
+
+## 対象（/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/ 配下）
+
+| 機能ID | 組の範囲 | 追加ケース・シード・仕分け |
+| --- | --- | --- |
+| A15-16 | 全部 | `combination/cases/A15-16_cb_test_cases.tsv`・`A15-16_cb_seed_data.tsv`・`A15-16_cb_dispositions.tsv`（組の範囲の行だけ） |
+| A15-17 | 全部 | `combination/cases/A15-17_cb_test_cases.tsv`・`A15-17_cb_seed_data.tsv`・`A15-17_cb_dispositions.tsv`（組の範囲の行だけ） |
+| A15-18 | 全部 | `combination/cases/A15-18_cb_test_cases.tsv`・`A15-18_cb_seed_data.tsv`・`A15-18_cb_dispositions.tsv`（組の範囲の行だけ） |
+| A16-02 | 全部 | `combination/cases/A16-02_cb_test_cases.tsv`・`A16-02_cb_seed_data.tsv`・`A16-02_cb_dispositions.tsv`（組の範囲の行だけ） |
+| A17-02 | 全部 | `combination/cases/A17-02_cb_test_cases.tsv`・`A17-02_cb_seed_data.tsv`・`A17-02_cb_dispositions.tsv`（組の範囲の行だけ） |
+
+機能ごとに次を読む。
+- 追加ケース（13列。末尾の項目IDは埋めた組ID）、追加シード、仕分け（上の表のファイル）
+- 試す値の組 `combination/combos/<機能ID>.tsv`（組ID／処理ID／組（要因ID=値）／読める形／埋める組）
+- 要因表 `combination/factors/<機能ID>_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`・`_constraints.tsv`
+- 設計書 `combination/units/<機能ID>/design.txt`（行頭 L0001 が行番号。`#####` の行はシートの境目）。要因の根拠が他の機能のときは `combination/units/<その機能ID>/design.txt`、共通シートは `combination/units/_common/`
+- 既存のケースとシード `cases/<機能ID>_test_cases.tsv`・`<機能ID>_seed_data.tsv`（追加ケースが使う共有シードはここにある）
+
+規約は `combination/GEN_PROMPT.md`、裁定は `sheetmap/FIX_R1_BRIEF.md`（A〜L、C'）・`FIX_R2_BRIEF.md`（M〜O）、範囲は `integration_test/SCOPE.md`、前提条件は `precond/README.md`、判定単位は `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366。
+設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。Excel が触れていない条件を埋め込みが足しているだけのときは両方を当てる。
+期待結果の根拠は設計書に限る。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備と手順の実行可能性を確かめるためにだけ読む。実装と設計書が違うことは指摘しない。
+`combination/review/` の `*_out.txt`・`combination/prompts/` と、上の表に無いケースのファイルは読まない。
+
+## 前の巡
+
+1巡目の指摘が `combination/review/R1_*_findings.md`、直し担当の処置が `combination/review/<機能ID>_R1_dispositions.tsv`（部のある機能は `_R1_dispositions.p1.tsv` など）にある。指摘は見出しの機能IDで探す。却下の理由が設計書の原文に照らして妥当なら、同じ指摘を繰り返さない。採用したはずの指摘が実際に直っているか、直した結果に新しい誤りが入っていないかを見て、新しい事実の指摘だけを挙げる。
+
+## 意図的であり指摘対象外のもの
+
+- 1ケースの期待結果に、要因表 `processes.tsv` の「確かめる所」に挙がっている所どうし（ZIP と DB、画面と DB など）の結果が1文でまとめてあること（組1行にケース1件のため。2026-10-20 決定）。「確かめる所」に無い所の結果が混じっているときは指摘してよい。
+- 連鎖IDが空欄、要求IDが空欄であること。既存ケースを変えていないこと。判定IDが IT-0366 であること。
+- 組の値の選び方（どの組を並べたか）。要因表の「正解未定」「作れない」の組がケースに無いこと（要因表は反証済み。ただし、ケースを書いてみて組が作れない・結果が決まらないと分かったものは指摘してよい）。
+- 単体テスト・e2e へ送られるもの（画面上だけの入力制限、表示文言の逐語照合、見た目、計算式そのもの）のケースが無いこと。
+- シードの投入方法が「未確定: …」と書かれていること。
+- 商品がグッズ商品CSV登録で作られ、在庫が在庫変更CSV登録と承認で入ること（2026-10-19 の決まり）。
+
+## 重点観点
+
+1. **組の値がケースにあるか**: 事前準備・手順に、組のすべての要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）が値で書かれ、その値で処理を動かしているか。組と違う値で操作していないか。
+2. **期待結果が組の全要因の結果を重ねているか**: 確かめる所で、組の各要因の値について設計書が定める結果（金額・選択肢・更新先・更新内容）がまとめて確かめられているか。設計書の記述と事前準備の値だけから一意に出るか。設計書に無い値・ふるまいを期待していないか。金額・数量の計算が合っているか。
+3. 事前準備の状態から手順を実行して期待結果に到達できるか。単独で成立するか。「このN件だけ」を期待するのに、同じ条件に当たる他のデータを除く記述があるか。共有シードの設定と組の設定値が食い違っていないか。
+4. 1ケースに、確かめる所の違う期待結果が混じっていないか。既存ケースとの重複、物理名の混入。
+5. 「ケースにしない」とした組のうち、設計書の記述から期待結果が一意に決まるもの。「既存ケースで確認済み」としたもののうち、挙げたケースが実際にはその組の値で確かめていないもの。
+
+## 出力形式
+
+指摘が無ければ `NONE` の1語。あれば1件ごとに次の形で、テストIDの順に書く。確信の持てないものは挙げない。見出しの括弧の先頭は必ず機能ID。
+
+```
+### 指摘（<機能ID> / <テストID または 組ID>）
+- 主張: ケースまたは仕分けの記述（要点の引用）
+- 実際: 設計書の事実（design.txt の行番号。原文を引く）
+- 判定: 組の値が無い／期待結果の誤り／設計書に無い期待／成立しない前提・手順／要因の結果が欠けている／複数の期待結果／重複／ケースにできる／確認済みでない／組が作れない
+- 修正案: 結論を先に置いた1〜2文
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T09:00:30.709669Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象のケース、組、要因表、設計書を突き合わせます。まずファイルの形式と件数を確認し、その後、各組の値と期待結果を順に検証します。ファイルは変更しません。
+exec
+/bin/bash -lc "find integration_test/casegen/combination -maxdepth 3 -type f -name '*A15-16*' -o -name '*A15-17*' -o -name '*A15-18*' -o -name '*A16-02*' -o -name '*A17-02*'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/prompts/A16-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-18_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-18_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-16_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A16-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-16_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-17_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A17-02_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/A15-17_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A17-02_GEN_PROMPT.md
+integration_test/casegen/combination/factors/A15-18_existing.tsv
+integration_test/casegen/combination/factors/A15-17_constraints.tsv
+integration_test/casegen/combination/factors/A15-16_existing.tsv
+integration_test/casegen/combination/factors/A15-18_processes.tsv
+integration_test/casegen/combination/factors/A15-17_factors.tsv
+integration_test/casegen/combination/factors/A15-18_constraints.tsv
+integration_test/casegen/combination/factors/A15-16_processes.tsv
+integration_test/casegen/combination/factors/A15-18_interactions.tsv
+integration_test/casegen/combination/factors/A15-18_factors.tsv
+integration_test/casegen/combination/factors/A16-02_factors.tsv
+integration_test/casegen/combination/factors/A15-16_factors.tsv
+integration_test/casegen/combination/factors/A15-16_constraints.tsv
+integration_test/casegen/combination/factors/A15-17_interactions.tsv
+integration_test/casegen/combination/factors/A17-02_interactions.tsv
+integration_test/casegen/combination/factors/A17-02_processes.tsv
+integration_test/casegen/combination/factors/A15-16_interactions.tsv
+integration_test/casegen/combination/factors/A16-02_interactions.tsv
+integration_test/casegen/combination/factors/A17-02_factors.tsv
+integration_test/casegen/combination/factors/A17-02_constraints.tsv
+integration_test/casegen/combination/factors/A17-02_existing.tsv
+integration_test/casegen/combination/factors/A15-17_existing.tsv
+integration_test/casegen/combination/factors/A15-17_processes.tsv
+integration_test/casegen/combination/factors/A16-02_constraints.tsv
+integration_test/casegen/combination/factors/A16-02_existing.tsv
+integration_test/casegen/combination/factors/A16-02_processes.tsv
+integration_test/casegen/combination/cases/A15-17_cb_test_cases.tsv
+integration_test/casegen/combination/cases/A15-18_cb_dispositions.tsv
+integration_test/casegen/combination/cases/A15-16_cb_seed_data.tsv
+integration_test/casegen/combination/cases/A15-16_cb_dispositions.tsv
+integration_test/casegen/combination/cases/A16-02_cb_dispositions.tsv
+integration_test/casegen/combination/cases/A17-02_cb_test_cases.tsv
+integration_test/casegen/combination/cases/A17-02_cb_dispositions.tsv
+integration_test/casegen/combination/cases/A15-18_cb_test_cases.tsv
+integration_test/casegen/combination/cases/A16-02_cb_test_cases.tsv
+integration_test/casegen/combination/cases/A15-17_cb_seed_data.tsv
+integration_test/casegen/combination/cases/A15-17_cb_dispositions.tsv
+integration_test/casegen/combination/cases/A17-02_cb_seed_data.tsv
+integration_test/casegen/combination/cases/A15-18_cb_seed_data.tsv
+integration_test/casegen/combination/cases/A15-16_cb_test_cases.tsv
+integration_test/casegen/combination/cases/A16-02_cb_seed_data.tsv
+integration_test/casegen/combination/combos/A15-18_undetermined.tsv
+integration_test/casegen/combination/combos/A17-02_undetermined.tsv
+integration_test/casegen/combination/combos/A15-18.tsv
+integration_test/casegen/combination/combos/A16-02.tsv
+integration_test/casegen/combination/combos/A15-16_undetermined.tsv
+integration_test/casegen/combination/combos/A15-17.tsv
+integration_test/casegen/combination/combos/A16-02_undetermined.tsv
+integration_test/casegen/combination/combos/A15-17_undetermined.tsv
+integration_test/casegen/combination/combos/A15-16.tsv
+integration_test/casegen/combination/combos/A17-02.tsv
+integration_test/casegen/combination/units/A15-17
+integration_test/casegen/combination/units/A17-02
+integration_test/casegen/combination/units/A15-18
+integration_test/casegen/combination/units/A16-02
+integration_test/casegen/combination/review/A15-16_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-18_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/A17-02_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/A16-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-17_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/A16-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-16_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-18_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-16_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/A17-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-18_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-16_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/A15-17_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/A17-02_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A15-17_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-18_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/A15-17_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/A16-02_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/A16-02_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/A17-02_factors_y_dispositions.tsv
+
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/combination/cases/{A15-16,A15-17,A15-18,A16-02,A17-02}_cb_{test_cases,seed_data,dispositions}.tsv integration_test/casegen/combination/combos/{A15-16,A15-17,A15-18,A16-02,A17-02}.tsv integration_test/casegen/combination/units/{A15-16,A15-17,A15-18,A16-02,A17-02}/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     1 integration_test/casegen/combination/cases/A15-16_cb_test_cases.tsv
+     1 integration_test/casegen/combination/cases/A15-16_cb_seed_data.tsv
+     5 integration_test/casegen/combination/cases/A15-16_cb_dispositions.tsv
+    10 integration_test/casegen/combination/cases/A15-17_cb_test_cases.tsv
+    11 integration_test/casegen/combination/cases/A15-17_cb_seed_data.tsv
+    10 integration_test/casegen/combination/cases/A15-17_cb_dispositions.tsv
+    12 integration_test/casegen/combination/cases/A15-18_cb_test_cases.tsv
+    12 integration_test/casegen/combination/cases/A15-18_cb_seed_data.tsv
+    12 integration_test/casegen/combination/cases/A15-18_cb_dispositions.tsv
+     1 integration_test/casegen/combination/cases/A16-02_cb_test_cases.tsv
+     1 integration_test/casegen/combination/cases/A16-02_cb_seed_data.tsv
+     4 integration_test/casegen/combination/cases/A16-02_cb_dispositions.tsv
+    15 integration_test/casegen/combination/cases/A17-02_cb_test_cases.tsv
+    15 integration_test/casegen/combination/cases/A17-02_cb_seed_data.tsv
+    15 integration_test/casegen/combination/cases/A17-02_cb_dispositions.tsv
+     5 integration_test/casegen/combination/combos/A15-16.tsv
+    10 integration_test/casegen/combination/combos/A15-17.tsv
+    12 integration_test/casegen/combination/combos/A15-18.tsv
+     4 integration_test/casegen/combination/combos/A16-02.tsv
+    15 integration_test/casegen/combination/combos/A17-02.tsv
+    35 integration_test/casegen/combination/units/A15-16/design.txt
+    40 integration_test/casegen/combination/units/A15-17/design.txt
+    80 integration_test/casegen/combination/units/A15-18/design.txt
+   146 integration_test/casegen/combination/units/A16-02/design.txt
+    89 integration_test/casegen/combination/units/A17-02/design.txt
+   561 total
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/GEN_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/SCOPE.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/sheetmap/FIX_R1_BRIEF.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/precond/README.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/sheetmap/FIX_R2_BRIEF.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 112ms:
+# 結合テストケースの前提条件の書き直し
+
+## なぜ
+
+2026-09-28 時点の `cases/*_test_cases.tsv` は、上から順番に実行しても成立しないケースが多い。
+原因は3つある。
+
+1. **前提がケースに書かれていない。** 生成規則（`GEN_PROMPT_TEMPLATE.md` 縛り10）が
+   「シード投入は事前準備に書かない」としていたため、実行対象8,325件のうち7,866件の事前準備が `—`。
+   IT-A01-01-004 の前に「SMA-A01-002 を2個販売した取引」が要ることは、別ファイルのシード表を読まないと分からない
+2. **状態を書き換えるデータを複数ケースで共有している。** IT-A01-01-001 が SMA-A01-001 を2個販売すると、
+   002 の「10から8」は成立しない。012 が SMA-A01-I01 を7にすると、013 の「10から8」は成立しない
+3. **投入方法が実行できる粒度でない。** 「スマレジ試験環境に全キャンセル可能な取引を登録する」
+
+依頼者決定（2026-09-28）: **ケースごとに専用データを持たせる**。A01-01 で型を作ってから全機能へ広げる。
+
+## 規約
+
+対象は実行区分が「保留」以外のケース。保留ケースは1文字も変えない。
+
+| No. | 規約 |
+| --- | --- |
+| P1 | **各ケースは単独で成立する。** 他のケースを先に実行しても、後に実行しても、実行しなくても、事前準備どおりの状態から始められる |
+| P2 | シード表に `共有` 列を足す。`共有可` か `ケース専用` のどちらか。**どれか1ケースでも状態を変えるデータ**（在庫・受注・取引・ステータス・ログイン失敗回数など）は `ケース専用`。`共有可` にできるのは、どのケースも状態を変えないもの（参照だけのマスタ、ロックさせない管理者アカウント、環境設定）と、各ケースが開始時に必要な設定を自分で行う試験基盤（中継の保留／転送の切替など）だけ。`用途` にどちらなのかを書く |
+| P3 | `ケース専用` のシードを参照するケースはちょうど1件。シードIDは `<元のID>-<ケース番号3桁>` にする |
+| P4 | ケース専用データの識別子（DB投入するレコードのID・商品ID・CSVファイル名・会員メールなど）は、**全機能のケース専用シードの中で一意**にする。重なるときはケース番号を付けて改名する |
+| P5 | **事前準備は必須。** 使用シードすべてについて、どういう状態かを値付きで書き、シードIDを括弧で添える。シード投入の後で画面や外部システムを操作して作る状態（販売済みの取引など）は、その操作と、終わった後の値の確認まで書く |
+| P6 | 期待結果が「AからB」「Aのまま」と言うとき、**A は事前準備に書いた値**である |
+| P7 | **期待結果は変えない。** 変えてよいのは P4 の改名だけで、改名は `renames/<機能ID>.tsv` に宣言する。改名は、英数字の識別子どうし／シードで ID・名称・コード・番号・メール・ファイル名等の項目の値として定義した値／シードID／シードの自由文にある4文字以上のデータ名を「旧名-ケース番号」へ、の置換に限る（数量・状態語は改名しない）。改名で済まない変更は `oracle_changes/<機能ID>.tsv`（テストID/新期待結果/理由/承認）に載せ、承認が入るまでゲートを通さない。承認済みの類型は T1 だけ（下記）。手順で外部の値に呼び名を付け、その呼び名を期待結果で使う書き方もオラクル変更として扱う。要求ID・連鎖ID・観点ID・優先度・実行区分・出典は変えない |
+| P8 | 手順はテスト対象の操作だけにする。手順を変えてよいのは次の種別だけで、変えたら `step_changes/<機能ID>.tsv`（テストID/種別/新手順/理由）に宣言する。`準備移動`（準備操作を事前準備へ移す）／`改名`／`発番値控え`（実行中に発番される値を控える操作を足す）／`データ指示`（事前準備で作ったデータを指し示す）／`中継置換`（類型 T2）／`非同期完了待ち`（類型 T3）／`裁定訂正`（設計書の中の食い違いの裁定で直したもの。2026-10-16 依頼者決定） |
+| P9 | 投入方法は、何を使ってどう作るかを書く（管理画面のどの画面か／DB投入／スマレジ試験環境の管理画面で商品登録と在庫設定／CSVフィクスチャ）。「〜を登録する」だけで手段が無いものは不可 |
+| P10 | 事前準備に設計書に無い仕様を持ち込まない。書くのはテストデータの状態と作り方だけ。作り方は設計書に無ければ ee 実装（設定・テーブル・管理画面）から引いてよい。どちらにも無い作り方は `open_preconditions.tsv` に載せ、推測で埋めない |
+| P12 | 試験基盤が未整備、または作り方が設計書にも ee 実装にも無い前提は `open_preconditions.tsv` に載せる。**実行区分は変えない**（保留は「設計書に期待結果が無い」の意味で使っており、混ぜない）。ゲートは件数を参考として出す |
+| P13 | **手順で入力する値（登録する名称・コードなど）は改名しない。** 境界値や文字種の検査が壊れるため。同じ値のデータが既にあると成立しないときは、事前準備に「その値のデータが無い状態にする（あれば削除する）」と書く |
+| P11 | **事前準備は手順より前に完結する。** 手順の結果（発番されたID・返された値）を事前準備で参照しない。それらは手順の中で控える |
+
+## 承認済みの類型（依頼者 2026-09-28）
+
+| 類型 | 内容 | 記録先 |
+| --- | --- | --- |
+| T1 外部発番値 | 外部システムが発番する値（スマレジの在庫変動履歴ID・問い合わせIDなど）を基線が固定値で書いているときは、手順の中で発番値を控え、期待結果を「手順Nで控えた値」との照合に書き換える | `oracle_changes`（承認欄に「類型承認T1」） |
+| T3 非同期完了待ち | Webhook・バッチ・メッセージ処理など非同期で処理される操作の結果を確認する前に、非同期処理の対象のジョブ（待機中・実行中）が0件になるまで待つ手順を足す（画面名は書かない。下の「用語の置き換え」）。待つ上限時間を書く | `step_changes`（種別「非同期完了待ち」）。依頼者承認 2026-09-30 |
+| T2 中継置換 | 外部システムとの通信の観測・送信を、基線が実行できない書き方（「Webhookの応答をブラウザで確認」「スマレジAPIから送信」など）にしているときは、中継（通信を記録・保留・転送・模擬送信する試験基盤）で観測・送信する手順に変える。外部が実際に返す通知は保留して転送し、外部に起こさせられない結果（エラー等）だけを模擬送信する | `step_changes`（種別「中継置換」） |
+
+## 類型T4 画面発番値（依頼者決定 2026-10-09）
+
+テストデータは画面から入力して作る。画面が自動で振る番号（注文番号・受注ID・イベントIDなど）を基線が固定値で書いているときは、
+データを画面で登録したときに振られた番号を控え、事前準備・手順・期待結果ではその控えた番号（呼び名〔注文番号-M0526-012〕の形）を使う。
+書き直しは `../seed_screen/`（README）。期待結果・手順の変更は `oracle_changes/`（承認欄に「類型承認T4」）・`step_changes/`（種別に「発番値控え」）へ、`../seed_screen/apply.py` が機械で宣言する。
+控えた番号へ置き換えたケースの一覧は `screen_noted_cases.tsv`。検査は、これらのケースについて改名先（消えた固定の番号）の検査を外し、〔…〕の呼び名を識別子として数えない。
+
+## テストできない・作り方が未確定のケースの除外（依頼者決定 2026-10-14）
+
+テストできないケースと、作り方が未確定のケースを、ケースの正本（`../cases/`・`../all_test_cases.tsv`）から外した。
+外したのは、検査 G9 が「未整備・未確定の前提を使うケース」と数えていた 1,892件（使用シードの投入方法に「未確定」「未整備」がある、または `open_preconditions.tsv` の影響ケースに載っている）。
+内訳は、作り方が未確定 1,744、試験環境の決定待ち 113、実装上その状態を作れない 35。残りは 10,556件・345機能（20機能は全ケースが外れた）。
+
+- 行は消さず `../excluded_open_cases.tsv`（除外理由・未確定の内容つき。元の11列は「元_」付き）へ移した。外したケースだけが使っていたシード 2,458件は `../excluded_open_seeds.tsv`。
+- 道具は `../exclude_open.py`（何度流しても同じ）。**各 `merge_into_cases.py` と `seed_screen/apply.py` は外したケースを `cases/` へ戻すので、そのあとに必ず流す。** 順序は merge → `seed_screen/apply.py` → `datapattern/conflicts/apply_rulings.py`（最後に `product_csv/apply.py` と `runnable/apply.py` も当たる）→ `exclude_open.py` → `exclude_scope.py` → `build_all_test_cases.py`。
+- 作り方が決まったら、シードの投入方法（と `open_preconditions.tsv`）を直してから同じ順に流し直すと戻る。
+- 検査 G6 は、基線・追加分からこの除外分を差し引いて照合する。保留（設計書に正解が無い）の除外 `excluded_hold_cases.tsv` とは別の表で、意味を混ぜていない。
+
+### 影響ケースの漏れ（2026-10-16）
+
+`open_preconditions.tsv` の影響ケースは、行を足した時点のケースで書いた固定の一覧である。そのため、あとから足したケースが同じ未確定の前提を使っていても除外に掛からなかった。全数を洗い直し、63件を影響ケースに足して外した（11,777件 → 11,714件・341機能）。
+- 同じシードを使うのに一覧に無かったもの: IT-A05-04-047〜060（スマレジ受信。2026-10-09 の被覆監査で追加。取引情報取得APIの試験環境と Webhook の認証情報の2行）、IT-B02-02-010〜012（バッチの実行環境）、IT-M03-09-058・097（スマレジの試験用受信サーバー）。
+- 連携ケース（`../link/`）が、基線では未確定のシードを「-L-」付きの別名で作り直していたもの: S-B02-02-L-ENV・S-B05-02-L-CLOCK・S-B05-09-L-API/CLOCK/CONFIG・S-B06-01-L-ENV・S-B06-02-L-EXEC・S-B08-03-L-ENV・S-B08-06-L-API-CONTROL・S-B13-01-L-API/EXEC/MAIL。基線の行と同じ文面で、対象をL版にした行を足した（`未確定: …（… の未確定と同じ）`）。B06-01 の別名を使っていたデータパターンのケースも含む。
+- 時計を固定する前提: IT-M04-17-001（業務日を2026/09/29に固定。時計の固定は S-B05-09-CLOCK などと同じく作り方が無い）。
+- この結果、B02-02・B05-02・B05-09・B06-01・B08-03・B13-01 はケースが0件になった（基線のケースは前から外れており、残っていたのは別名のシードを使う連携ケースだけだった）。
+- 同じ日に `../chain_gap/` のレビューで、S-F06-02-L-ENV（IT-F06-02-024・025）も見つかり、同じ形の行を足して外した。基線の行の対象は S-F06-02-API-OK で、名前の役割の語（API と ENV）が違うため道具では拾えなかった。このシードは、開始時にスマレジAPI試験環境のユーザーDBで会員が0件であることを確かめる作り方で、024 は発番されたスマレジIDを控える。外部の試験環境を使うシードは、名前だけでなく中身でも基線の行と見比べる。
+- 候補を出す道具は `scan_open_leaks.py`。ケースを合流したあと、`exclude_open.py` の前に流す。候補を出すだけで判定はしない。残っている候補 159件は、読んだうえで漏れではないと判定したもの。
+  - 共有の定義だけを使い、未確定の項目に触れないもの: S-M05-03-DEFS、S-F06-05-BASIC、IT-A05-04-002（GETを送るだけで、認証も取引の取得も要らない）。
+  - 名前の役割の語が同じだけで、作り方が決まっているもの: ポイントの設定、ユニサーチの接続先、ee の開発用の正常応答、スマレジの試験環境への接続。
+  - S-M03-10-SMAREGI-ENV: ee の商品APIのクライアントは、模擬応答のときも呼び出しを記録する（SmaregiPlatformApiCallRecorder）。シードの書き方は実装と合っている。
+
+## 試験環境で用意できる前提の解消（依頼者決定 2026-10-19）
+
+依頼者決定「バッチの実行、スマレジなど外部の試験環境、メールの受け取りは環境準備できる」（中継・模擬応答、時刻の固定、障害を起こす手段は用意しない）。作り方が未確定で外したケースを止めていた項目（未確定のシード 944・未確定の前提の行 879）を1件ずつ判定し、この3つだけで決まるものは作り方を書いて解消した。止めていた項目がすべて解消したケース 183件が一覧へ戻った（11,713件 → 11,896件・346機能）。
+解消した前提の行 81 は `open_preconditions.tsv` から `resolved_preconditions.tsv`（解消の書き方・区分・根拠・決定つき）へ移した。シードは投入方法を書き直した（外した表 `../excluded_open_seeds.tsv` を直し、`exclude_open.py` が直った文で戻す）。
+同じ日の依頼者決定「おすすめで進めて」で、人が補って実行できるもの（決まった番号の読み替え、必須のチェック、確認モーダル、割引率、在庫の承認）も書き足した。道具・判定・レビューは `../runnable/README.md`。`../datapattern/conflicts/apply_rulings.py` が最後に `../runnable/apply.py` を呼ぶ。
+
+## E2E で作成を保留した入力ファイルを使うケースの除外（依頼者決定 2026-10-16）
+
+依頼者決定「テスト保留のケースがあれば除外」。ケース一覧に実行区分「保留」のケースは無かった（2026-10-01 にすべて外してある）。保留に当たっていたのは、E2E の入力ファイルの棚卸し（`../../../e2e/fixtures/named-file-references.tsv`。M03・M04 だけ棚卸し済み）で作成判断を「保留」「正本矛盾」とした33ファイルで、シードの記述だけでは中身（文字コード、見出し行の値、画像の中身など）が一つに決まらないか、シードの記述が食い違っていた（M03-30 の empty.tsv）。これを使うケース29件を、作り方が未確定の前提として `open_preconditions.tsv` に載せ（対象「入力ファイル <ファイル名>」の33行）、`exclude_open.py` で外した。ケースは 11,679件から 11,650件。ファイルの中身をシードに書いて棚卸しの判断が変わったら、その行を消して流し直すと戻る。M03・M04 以外の機能の入力ファイル（棚卸しで未判定の 1,729件）は見ていない。
+同じ日の依頼者決定「画像は任意の有効な画像でよいとして戻す」で、画像の中身が未指定だった9ファイル（M04-02-050・M04-03-005・M04-05-011・M04-31-150 の4ケース）の行を外し、4ケースを戻した（11,654件）。シード（`../seed_screen/out/` の該当行の投入方法）に「画像ファイルの中身は任意の有効な画像でよい。同じケースで使う複数の画像は、互いに見分けられる別の画像にする」と書いた。E2E の入力ファイル（`e2e/fixtures/`）はまだ作っていない。
+外したケースを戻すときは、流れを2回流す。1回目は `exclude_open.py` が除外表の古い文面のままケースとシードを戻すので、2回目の `seed_screen/apply.py`・`apply_rulings.py` で書き直しが当たる。
+
+## フェーズ2見送り・実装しない機能の除外（依頼者決定 2026-10-16）
+
+依頼者決定「フェーズ2見送り、機能実装しない機能についてはケースから除外」。対象は `../scope_out.tsv`（根拠つき）で、フェーズ2見送り13機能（A06-14・B01-02・B01-03・F02-05・M03-43・M03-44・M04-06・M04-07・M06-13・M08-11・M08-15・M08-16・M08-17）、実装しない4機能（M03-34・M03-36 は 2026-10-06 決定、M04-27・B13-02 は Excel の廃止の記述）と、M03-43 の機能を確かめていた IT-M03-30-038。
+ケース一覧の6件に加え、作り方が未確定で外していた65件、保留で外していた49件も、決まっても戻さないので `../excluded_scope_cases.tsv` へ移した（計120件。元の表と元の除外理由を残す）。外したケースだけが使っていたシード89件は `../excluded_scope_seeds.tsv`。道具は `../exclude_scope.py`（何度流しても同じ。`exclude_open.py` の後に流す）。ケースは 11,685件・349機能から 11,679件・346機能になった（F02-05・M03-44・M06-13 はケースが0件）。
+保留から移した49件は、設計者に聞く必要が無くなった（`../hold_review/questions.tsv` に論点があるものも含む）。機能の一部だけがフェーズ2のもの（ナビゲーションの通知、会員検索の顧客分析タグなど）は機能ごとは外していない。そのフェーズ2の部分を確かめるケースは IT-M03-30-038 のほかに無かった。
+検査 G6 は、基線・追加分からこの表の分も差し引いて照合する。
+
+## 既存ケースと設計書の食い違いの裁定（依頼者決定 2026-10-16）
+
+設計書の中で記述が食い違うときの優先順位（Excel由来＞埋め込みの表示メッセージ節＞埋め込みの現行仕様節、同じ出所では改訂後）を決め、既存ケース52件の報告を裁定した。直したケースの期待結果・手順・出典は `oracle_changes/`・`step_changes/`（種別「裁定訂正」）・`source_changes/` に、承認欄「2026-10-16 依頼者裁定」で宣言してある。規則で決まらず共通部分でも書けない10件は `../excluded_hold_cases.tsv` へ移した（論点ID が QD- の行。決める人＝設計者）。道具は `../datapattern/conflicts/apply_rulings.py`（何度流しても同じ。`seed_screen/apply.py` の後、`exclude_open.py` の前に流す）。説明は `../datapattern/conflicts/README.md`。
+
+## 保留ケースの除外（依頼者決定 2026-10-01）
+
+実行区分が「保留」のケース（1,014件）はテストケースから外した。設計書にも現行ソースにも期待結果（正解）が無く、テストできないため。
+行は削除せず `../excluded_hold_cases.tsv` へ移した（論点ID・決める人つき。元の11列は「元_」付きで保持）。保留ケースだけが使っていたシードは `../excluded_hold_seeds.tsv`。
+設計者の回答（`../hold_review/questions.tsv`）やテスト側の決定で正解が決まったら、そのケースを作り直して戻す。ゲート G6 は、基線のテストIDからこの除外分を差し引いて照合し、保留ケースが残っていれば落とす。
+
+## 実行の前提（依頼者決定 2026-09-30）
+
+- **専用DBで流す。** 結合テストは機能（またはモジュール）ごとに、まっさらな専用DBへシードを投入して流す。検索・一覧・集計で「このN件だけ」を期待するケースは、開始時に同じ条件に当たる他のデータを削除して隔離しており、共有の試験環境では他機能のデータを消しうる
+- **1件しかないデータは順番に実行する。** 基本設定のように1件しかない設定や、期待結果が固定IDを名指ししていて分けられないデータは `共有可` とし、使う各ケースが開始時に値を設定し直す。上から順に実行すれば成立するが、同じデータを使うケースを同時には実行しない。該当ケースは `sequential_only.tsv`
+
+## 機械検査 `gate_precond.py`
+
+| No. | 検査 | 対応する規約 |
+| --- | --- | --- |
+| G1 | 保留以外で事前準備が空・`—` | P5 |
+| G2 | 使用シードのIDが事前準備に現れない | P5 |
+| G3 | 期待結果の「AからB」「Aのまま」の A が事前準備に無い | P6 |
+| G4 | `共有` 列が無い・値が不正／ケース専用シードの参照が1件でない／ケース専用シードIDの末尾がケース番号でない／どのケースも使わないシード／保留以外のケースがケース専用シードを1件も使わない（状態を変えない読み取りだけのケースは `readonly_cases/<機能ID>.tsv` にテストID/理由で宣言） | P1 P2 P3 |
+| G5 | 同じ機能のケース専用シードどうしで自分のレコードID（「ID=20」「ID 20」）が重なる。ケース専用シードの識別子（「〜」の範囲は展開する）が、他のケースの事前準備・手順・期待結果、または他のケース専用シード（全機能）に現れる | P1 P4 |
+| G6 | 改名が識別子どうしでない。期待結果が「基線に改名を当てたもの」と一致せず、承認済みの oracle_changes にも無い。保留ケースが変わった。テストIDの集合・他の固定列が変わった（出典は `source_changes/`、実行区分の誤記は `kind_changes.tsv` に宣言したものを除く） | P7 |
+| G8 | 事前準備が「手順N」「返した値」「発番した」など後の結果を参照している | P11 |
+| G7 | 手順が「基線に改名を当てたもの」と違うのに `step_changes` に宣言が無い／種別が P8 の5種以外 | P8 |
+| G9 | 投入方法が「未確定」「未整備」のシードを使う非保留ケースが `open_preconditions.tsv` に無い。該当件数は参考として出す | P12 |
+
+`baseline/` は書き直し前（HEAD 98709b43）のスナップショット。G6 の基準なので書き換えない。
+
+実行区分の誤記を直すときは、基線を書き換えずに `kind_changes.tsv`（テストID／旧実行区分／新実行区分／理由）へ宣言する。G6 は、基線の値が旧実行区分と一致し、今の値が新実行区分と一致するものだけ認める（2026-10-19、IT-M03-45-024 の「ブラザ+DB確認」→「ブラウザ+DB確認」）。
+
+書き直しの後で足したケースは `added_cases.tsv`（テストID／追加日／由来）に載せる。G6 は「基線から保留除外分を引いた集合」に
+この追加分を足したものと、現在のテストIDの集合を照合する。基線が無い機能（後から新設したもの）は、全ケースが追加分になる。
+2026-10-06 に機能間データ連携のケース142件を足した（`../link/merge_into_cases.py`。旧テストIDとの対応は `../link/merged_map.tsv`）。
+同日、アクセス解析連携のケース（F10-01〜03）を足した（`../ga/merge_into_cases.py`。判定IDとの対応は `../ga/ga_map.tsv`）。
+同日、対応表が「候補」止まりだった14機能のケース398件を足した（`../sheetmap/merge_into_cases.py`。判定IDとの対応は `../sheetmap/sm_map.tsv`）。
+
+機械で見られないもの（P2 の共有可の妥当性、P6 の値と対象の対応、P8 の種別の妥当性、P9、P10）は codex レビューで見る。
+
+## 用語の置き換え（依頼者決定 2026-10-06）
+
+AWS Step Functions は使わない。テストケースでは「バッチ」と書き、非同期処理ダッシュボードの「Messenger ジョブ」という表現も書かない。
+置き換えの規則は `terms.py`（`python3 precond/terms.py` で cases/・step_changes/・open_preconditions.tsv・link/cases に当てる。何度流しても同じ）。
+基線は書き換えていない。ゲートは基線の手順と期待結果に同じ置き換えを当ててから照合する。
+シードID `S-B02-05-STEPFUNCTIONS` は `S-B02-05-BATCH-ENV` に変えた。
+
+「非同期処理ダッシュボード」という画面名も書かない（同日の依頼者決定）。設計書に無い画面で、実装にあるのは管理画面とは切り離した運用ツールである。
+ケースには「非同期処理の待機中・実行中のジョブが0件になるまで待つ」のように状態だけを書く。待機の手順そのものは残す
+（バッチはジョブを積むだけで終わり、実処理はワーカーが後から行うため）。確認の手段は試験環境の用意として扱う。
+
+ succeeded in 100ms:
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+
+ succeeded in 134ms:
+# {FID}（{FNAME}）の要因の組合せのケース作成（著者への依頼）
+
+リポジトリ: `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+あなたは機能ID **{FID}** の追加ケースを書く著者である。レビューは別の担当が行う。git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すと決めた。他の機能の設定値も要因に入れる。
+{FID} の要因表（別の担当が作り、codex が反証した）から、機械が試す値の組を並べた。そのうち **{RANGE} の {N}行** があなたの受け持ち（{PARTNOTE}）。1行ごとにケースを書く。**既存のケースは1文字も変えない。**
+
+## 読むもの
+
+1. 試す値の組: `integration_test/casegen/combination/combos/{FID}.tsv`（組ID／処理ID／組（要因ID=値）／組（読める形）／埋める組）。1行が1回の処理で同時に使う値の組。受け持ちは {RANGE}。
+2. 要因表: `integration_test/casegen/combination/factors/{FID}_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`（効き合う理由）・`_constraints.tsv`（作れない組・正解未定の組）
+3. 設計書: `integration_test/casegen/combination/units/{FID}/design.txt`（行頭の L0001 とタブは行番号で、設計書の内容ではない）。要因の根拠の行だけでなく、その節全体を読む。他の機能の設定値の要因は `units/<機能ID>/design.txt`
+4. 既存のケースとシード: `integration_test/casegen/cases/{FID}_test_cases.tsv`（11列）・`{FID}_seed_data.tsv`。**書き方・画面への入り方・シードの作り方はこれに合わせる**。同じ処理を別の値で通している既存ケースがあれば、それを下敷きにして値だけ変えるのが基本
+5. 確かめる所が別の機能の画面のときは、その機能のケース `integration_test/casegen/cases/<機能ID>_test_cases.tsv` で画面への入り方と表示の書き方を見る
+6. `integration_test/SCOPE.md`、`integration_test/casegen/sheetmap/FIX_R1_BRIEF.md` の裁定 A〜L・C'、`FIX_R2_BRIEF.md` の決まり M〜O（文中の `sheetmap/` は読み替える）、`integration_test/casegen/precond/README.md`（前提条件 P1〜P13・類型 T1〜T4）、`integration_test/casegen/STEP_PATTERNS.md`（手順の型）
+7. `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366（判定単位の文と除外を読む）
+
+## 1行（組ID）ごとに、次のどれかに決める
+
+| 扱い | いつ | 書くもの |
+| --- | --- | --- |
+| ケース化 | その値の組で処理を動かしたときの結果が、設計書の記述から一意に決まる | ケース1件（1ケース1期待結果）。組のすべての要因の値を事前準備・手順に値で書く |
+| 既存ケースで確認済み | 既存ケースの事前準備・手順に組のすべての値が書かれ、確かめる所で結果を見ている | そのテストIDと、どの手順・期待結果が当たるか |
+| ケースにしない | その値の組が実は作れない（制約の抜け）／結果が設計書から一意に決まらない／設計書の記述どうしが食い違う／結合テストの範囲でない | 理由（設計書の原文を引く）。作れない・決まらない組は、要因表の制約に足すべき組として理由に `要因ID=値&要因ID=値` を書く |
+
+安易に「ケースにしない」としない。要因表は codex が反証済み。それでも外すなら設計書の原文で理由を示す。
+
+## 期待結果の決め方
+
+- 組の**すべての要因**について、その値で設計書が定める結果を、確かめる所（processes.tsv）でまとめて確かめる。1つの確かめる所で見える結果を1文にまとめてよい（例: 「受注情報編集画面で、お支払方法が代金引換、配送方法がゆうパケット、送料が200円、手数料が330円、ポイント使用が0、合計が1,530円で表示されること」）。確かめる所が違う結果は入れない（1ケース1期待結果）。
+- 金額・数量は、事前準備に書いた値から設計書の計算で一意に出す。計算の途中を期待結果・出典に書かない（期待結果には結果の値だけ）。
+- 期待結果は設計書（design.txt。同じ冊子の別シート、要因の根拠にある他の機能の設計書も可）と事前準備の値だけから出す。実装コード・現行ソースから期待値を足さない。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備・シードの作り方と手順の実行可能性を確かめるためにだけ読んでよい（スクリプトやコマンドは実行しない）。
+- 設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採り、出典に両方を書く。
+- 要因表の constraints.tsv に「正解未定」とある値の組は機械が行に入れていない。それ以外の組で結果が決まらないと分かったら「ケースにしない」にする（推測で決めない）。
+- **打ち切りの行**: 組（読める形）に「（効かない）」とある要因は、その行では結果に効かない（constraints.tsv の種別「打ち切り」。処理が途中で打ち切られる。依頼者決定 2026-10-20）。その要因の値は事前準備に書かなくてよい（共有可シードのままでよい）。期待結果は打ち切りの結果（出ない・エラーで元の画面へ戻る・何も変わらない など）を、設計書の定めどおりに確かめる。打ち切りのあと値が残っていないか（更新されていないこと）を見るのはよい。
+
+## ケースの書き方
+
+- テストIDは `IT-{FID}-{START}` からの連番（既存と、外した番号の続き）。組IDの順に書く。
+- 判定IDは `IT-0366`、観点IDは `ITA-11`。項目ID列に組ID（1つ）。
+- 期待結果は合否が一意に決まる具体値で書き、「〜こと」で終える。
+- **組の値がケースから読めること**: 事前準備・手順に、組の全要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）を値で書く。要因名や組の値を並べただけの行（「このケースで試す値の組: …」など）を事前準備・手順に足さない。実際のデータで書いていれば、verify の「注意」（組の値が字句で無い）は残ってよい。
+- 結果は、データを作った所とは別のコンポーネントで確かめる（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。
+- 手順は「1. …／2. …」の形で、画面名・項目名・ボタン名・入力値を特定する。名前は設計書の表記を使う。画面への入り方は既存ケースに合わせる。
+- 物理名（テーブル名・カラム名・ルート名・クラス名・翻訳キー）を書かない。設計書に書かれている項目名はそのまま使ってよい。
+- 禁止語: 失敗させる／該当する操作／同上／いくつか／別の画面／要確認／TBD／設計どおり／設計書どおり／仕様どおり／正しいこと／正しく。
+- 実行区分は `ブラウザのみ` か `ブラウザ+DB確認`（外から見えない副作用だけDBを見る）。優先度は、業務データの保存・更新・出力値の一致を P1、表示・選択肢を P2。
+- 要求ID列: `integration_test/casegen/requirements_all.tsv` に当たる行（書番・シート名・要求文が合う行）が見つかればその要求IDを書く。見つからなければ空欄でよい。代用しない。
+- 連鎖IDは空欄。出典は既存ケースと同じ形（`<書番> <シート名> / <区分 と 見出し>`。別シート・別の冊子は「｜」でつなぐ）。
+
+## 前提条件（いまの決まり。既存のシードの書き方がこれに従っているので合わせる）
+
+- 各ケースは単独で成立する。**各ケースはケース専用シードを1件以上使う**（シードID `S-{FID}-CB<名前>-<ケース番号3桁>`）。参照だけのマスタ・アカウント・環境設定は、既存の `{FID}_seed_data.tsv` にある `共有可` のシードをそのまま使ってよい（シード表に書き足さない）。既存の `ケース専用` シードは使わない。
+- 組の値が共有可のシードの設定と違うとき（手数料・送料・利用条件・配送方法に紐づく支払方法など）は、ケース専用シードで設定を書き、事前準備に値で書く。
+- テストデータは画面から入力して作る（2026-10-09 決定）。画面で作れない状態だけ、理由を添えて DB へ直接入れる書き方にする。
+- **商品はカード商品も含めてグッズ商品CSV登録で作る**（商品登録画面の新規登録は使わない。M03-02 L0075〜L0077）。カード商品は商品登録編集画面の「カード指定 >」でカードを付ける。価格は税込みで登録する。在庫は在庫変更CSV登録で入庫し、別のメンバーが承認一覧で承認する（確認画面の OK まで書く）。既存の `{FID}_seed_data.tsv` の商品・在庫のシードの書き方をそのまま写す。
+- 確認モーダルが出る操作は、モーダルの確定まで手順に書く。規約同意など必須のチェックも書く（既存ケースに合わせる）。
+- 画面が振る番号（受注番号・会員IDなど）は、画面で作ったあとに控えた番号を使う（類型 T4。〔番号の名前-{FIDC}-ケース番号〕の呼び名で書く）。
+- ケース専用データの識別子（コード、名称、メール、ファイル名、パスワード）は全機能で一意にする。前提条件の検査 G5 の字句は `[A-Za-z0-9][A-Za-z0-9_.@\-]{3,}`。**英数字とハイフンの連なり1つ1つに、機能番号とケース番号を入れる**（例: 「{FIDC}-CB{START}-A」「cb{FIDL}-{START}@example.test」「Passw0rd-CB{FIDC}{START}」）。パスワードに「!」を使わない。番号だけの語（「A001」）を単独で置かない。`grep -rF` で `integration_test/casegen/cases/` と重ならないことを確かめよ。
+- 事前準備は必須。使用シードすべてについて状態を値付きで書き、シードIDを括弧で添える（「① …（S-…）／② …（S-…）」）。「このN件だけ」を期待するときは、同じ条件に当たる他のデータが無い状態を書く。
+- 事前準備で手順の結果を参照しない。期待結果の「AからB」「Aのまま」の A は事前準備に同じ表記で書いた値にする。
+- シードの投入方法は、何を使ってどう作るかを書く。作り方が分からないときは「未確定: <分からないこと>」と書く。推測で埋めない。
+- 中継・模擬応答、現在時刻の固定、障害を起こす手段は用意しない（2026-10-19 決定）。これが要る組は「ケースにしない」。バッチの実行、スマレジなど外部の試験環境、メールの受け取りは用意できる。
+
+## 出力（この3つだけを書く。ほかの既存ファイルは変更しない）
+
+1. `integration_test/casegen/combination/cases/{FID}_cb_test_cases{SFX}.tsv`
+   タブ区切り・13列: `テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID`
+   セル内に改行・タブ・ダブルクォートを入れない。ケース化が0件でもヘッダだけのファイルを書く。
+2. `integration_test/casegen/combination/cases/{FID}_cb_seed_data{SFX}.tsv`
+   タブ区切り・7列: `シードID	区分	論理名	状態・属性	用途	投入方法	共有`。**新しく足すシードだけ**を書く。
+3. `integration_test/casegen/combination/cases/{FID}_cb_dispositions{SFX}.tsv`
+   タブ区切り・4列: `項目ID	扱い	テストID	理由`。受け持ちの組 {N}行を1行ずつ（項目ID は組ID）。
+
+最後に `python3 integration_test/casegen/combination/verify_cb.py {VARG}` を実行し、合格するまで直せ。ほかの検査（gate_dry.sh・gate_factors.py など）は流さない（ほかの著者と同時に流すとぶつかる）。
+作業用の一時ファイルはスクラッチパッド（`/tmp/claude-1000/-home-y-saito-Developments-hareruya-design-docs/7ac77140-f212-4eb4-b04c-5cbd0cc6fcfa/scratchpad/`）に、名前へ {FID}{SFX} を入れて作る。他の機能・同じ機能の他の部の combination/cases のファイルは読まない・書かない。
+**ファイルは処理ごとに書き足していく**（全部を最後にまとめて書かない。途中で止まっても書いた分が残るように）。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+4行以内。ケース化／確認済み／ケースにしない の件数、ケースにしなかった主な理由（制約に足すべき組があれば件数）、verify の結果、判断に迷った点（あれば1つ）。
+
+ succeeded in 120ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+
+ succeeded in 119ms:
+# レビュー1巡目の反映（著者への依頼）
+
+codex のレビュー指摘が `integration_test/casegen/sheetmap/review/<機能ID>_r1_findings.md` にある。
+1件ずつ、**指摘が引いている設計書の記述を sheet.txt で自分で読み直して事実かどうか確かめてから**、下の裁定に従って反映せよ。指摘をそのまま適用しない。
+
+## 裁定（依頼元の決定。指摘と食い違うときはこちらが優先）
+
+| No. | 裁定 |
+| --- | --- |
+| A | **根拠はHTML設計書であり、対象シート1枚に限らない。** その機能のふるまい（何を出力するか、全件か選択か、出力対象の条件、未選択・0件のときの扱い、ファイル名、起動するボタン、権限）が同じ冊子の別シート（一覧画面のシートなど）に書かれていれば、それを期待結果の根拠にしてよい。出典にそのシートを「｜」でつないで書く。当初の依頼文の「隣接シートは操作の入口にだけ使う」は撤回する。したがって、「対象シートに記述が無い」ことだけを理由にした指摘は、同じ冊子の別シートに記述があれば却下する。逆に、別シートにその機能の記述があるのにケースにしていなかったもの（出力対象、選択と全件の違い、未選択時の扱いなど）は、ケースを足す。別シートは `python3 integration_test/casegen/sheetmap/build_materials.py --sheet <書番> <シート名>` で読む。他の冊子・実装・現行ソースは根拠にしない |
+| B | **観点表の「期待値の決め方」が「観点内で確定」の判定単位は、適用の条件が設計書から言えれば、期待結果は判定単位の文から決めてよい。** 例: IT-0080・IT-0225（参照・出力だけの機能は実行前後でデータを更新しない）は、設計書がその機能をCSV出力・一覧表示などの参照機能として書いていれば適用できる。「非更新とは対象シートに書いていない」という指摘は却下する。IT-0083（出力ファイルの数量・金額が画面表示およびDB値と一致）を使うときは、画面表示またはDB値と見比べる手順と期待結果にする |
+| C | **CSV・帳票の出力項目の構成と並びは IT-0156**（観点ID ITA-02。他の観点に割り当たらない機能仕様を受ける区分）に当てる。IT-0071 は「値が取得元と同値」にだけ使う。report.md に「出力項目の構成・並びを受ける判定単位が観点表に無いので IT-0156 を使った」と書く |
+| C' | （2026-10-06 追記）観点表に IT-0348（ITA-05。出力したファイルの各レコードが、定められた出力項目だけで構成され、定められた順に並ぶこと）を足した。出力項目の構成と並びは、以後 IT-0348 に当てる。裁定Cで IT-0156 に当てていた14件は付け替えた（`retag_0348.py`）。同日、IT-0349（ITA-05。出力したファイルのレコードが、定められた並び順で出力されること）も足した。出力したCSV・帳票の行の並び順は IT-0349 に当てる（24件を付け替えた。`retag_0349.py`）。同日、IT-0350（ITA-05。送信されたメールの件名、送信元、本文の構成が、定められたとおりであること）も足した。通知メールの内容は IT-0350 に当てる（10件を付け替えた。`retag_0350.py`）。初期値、未選択時の扱いなど、ほかに受ける判定単位が無いものは IT-0156 のまま（2026-10-07 追記）観点表にバッチ用の4行を足した。IT-0351（ITA-14。異常として定められた条件でバッチが異常終了として終わること）、IT-0352（ITA-13。異常終了した場合、異常の後に行わないと定められた処理が行われていないこと）、IT-0353（ITA-13。終了後、一時的な資源が定められたとおりに削除されている・残っていること）、IT-0354（ITA-21。バッチの出力メッセージが、定められた条件のときに定められた文言で出力されること）。バッチのケースで期待結果がこのどれかそのものであるものは、IT-0156 でなくこれらを使う。 |
+| D | 見出し行の有無、データが何行目から始まるかは、設計書に書いていなければ期待結果・手順に書かない。データ行は事前準備の識別子（番号・コード）で特定する。項目の並びは「各行の項目が左から設計書の識別ID順に対応する」ことを、事前準備の値がどの位置に出るかで確かめる |
+| E | 値の取得元が設計書から決まらない項目（備考が空で、項目名からも取得元が1つに決まらないもの。呼び名の違う属性を当てはめたもの）は、値の照合から外し、report.md の「ケースにしなかったもの」に取得元の不足として書く。項目名と同じ名前の属性は取得元が決まるとしてよい |
+| F | 計算・連結・書式変換の結果そのもの（姓＋空白＋名、差の計算、小計など）は単体テストの担当（SCOPE.md）。ケースから外し、report.md に「単体テストへ送った」と書く。ただし「どの時点の値か」「単価か小計か」のように、どの値を採るかの定めは結合テストで確かめてよい |
+| G | 1ケース1期待結果。判定単位が違う確認が1ケースに混じっていたら分ける |
+| H | シードは実際に作れる方法で書く。管理画面で指定できない内部IDを管理画面で登録する、と書かない（DB投入にする）。設計書が求める状態（必須項目が未設定の会員など）が ee 実装の制約で作れないときは、ケースは残し、投入方法を「未確定: <理由>」にして report.md の「試験環境に要るもの」に挙げる。実装が設計書と違うこと自体はケースを変える理由にしない |
+| I | 手順は、画面を開く・条件を入れる・ボタンを押す・ファイルを開く、の操作を番号付きで書く。「〜を確認する」だけの手順にしない |
+| J | 設計書の中で記述が食い違っている・誤記と思われる箇所を、推測でどちらかに決めて期待結果にしない。両方に共通する部分だけを期待結果にし、食い違いは report.md に書く |
+| K | 判定ID IT-0332〜0347 は使わない。使っているケースは、当てはまる別の判定単位に付け替えるか、無ければ外す |
+| L | 指摘が「取りこぼし」で、設計書の記述から期待結果が一意に決まるなら、ケースを足す。試験基盤が無いことはケースを作らない理由にならない（投入方法・前提を「未確定」と書いて残す） |
+
+## やること
+
+1. 指摘ごとに「採用／一部採用／却下」を決め、cases・seed・report.md を直す。ケースを足したり外したりしたら、テストIDを 001 からの連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. 指摘に無くても、裁定 A〜L に反する箇所が自分のケースにあれば同じように直す。
+3. `integration_test/casegen/sheetmap/review/<機能ID>_r1_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述（原文）・直した内容」を表で書く。保存できないときは返答に本文を含める。
+4. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること（他の著者と同じ置き場所を使っているため）。
+
+## 返答
+
+5行以内。直した後の件数、指摘ごとの判定の内訳（採用・一部採用・却下の件数）、足した・外したテストの数、verify の結果、dispositions.md を保存できたか。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/A15-16.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 64ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-A15-16-001	P1	F01=設定済み&F02=値あり&F03=値あり	大会日=設定済み／大会名（日本語）=値あり／大会名（英語）=値あり	大会日×大会名（日本語）: 設定済み×値あり；大会日×大会名（英語）: 設定済み×値あり；大会名（日本語）×大会名（英語）: 値あり×値あり
+CB-A15-16-002	P1	F01=未設定	大会日=未設定／大会名（日本語）=（効かない）／大会名（英語）=（効かない）	大会日: 未設定
+CB-A15-16-003	P1	F02=空	大会日=（効かない。設定済みから選ぶ）／大会名（日本語）=空／大会名（英語）=（効かない）	大会名（日本語）: 空
+CB-A15-16-004	P1	F03=空	大会日=（効かない。設定済みから選ぶ）／大会名（日本語）=（効かない。値ありから選ぶ）／大会名（英語）=空	大会名（英語）: 空
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/A15-16_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 55ms:
+項目ID	扱い	テストID	理由
+CB-A15-16-001	既存ケースで確認済み	IT-A15-16-001	事前準備③のID=1601と1603は大会日・日本語大会名・英語大会名がすべて設定済みで、手順3で2件が一覧に含まれ、ほかの行は含まれないことを見ている
+CB-A15-16-002	既存ケースで確認済み	IT-A15-16-001	事前準備③のID=1602は大会日未設定で、手順3で一覧に含まれないことを見ている（打ち切りの行で、ほかの要因は効かない）
+CB-A15-16-003	既存ケースで確認済み	IT-A15-16-001	事前準備③のID=1604は日本語大会名が空文字（大会日は設定済み）で、手順3で一覧に含まれないことを見ている
+CB-A15-16-004	既存ケースで確認済み	IT-A15-16-001	事前準備③のID=1605は英語大会名が空文字（大会日は設定済み）で、手順3で一覧に含まれないことを見ている
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A15-16_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	最新大会デッキのマスタから直近大会の一覧を抽出して返す	パラメータ無しで直近大会情報取得APIを呼ぶ	API応答（直近大会の一覧）	L0006,L0008,L0015
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A15-16_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	大会日	設定済み｜未設定	設定済み: 抽出の条件を満たす／未設定: 抽出されない	L0006	この機能
+F02	P1	大会名（日本語）	値あり｜空	値あり: 抽出の条件を満たす／空: 抽出されない	L0006	この機能
+F03	P1	大会名（英語）	値あり｜空	値あり: 抽出の条件を満たす／空: 抽出されない	L0006	この機能
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A15-16_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない	L0006	大会日・大会名（日本語）・大会名（英語）は、どれも1行を一覧に出すかの条件で、すべて満たすときだけ出る。外れ方は1つずつ確かめれば足りる
+P1	F01+F03	関係しない	L0006	同上
+P1	F02+F03	関係しない	L0006	同上
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A15-16_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	組	種別	根拠	理由
+P1	F01=未設定	打ち切り	L0006	大会日が未設定の行は抽出されず、ほかの要因の値は結果に効かない
+P1	F02=空	打ち切り	L0006	大会名（日本語）が空の行は抽出されず、ほかの要因の値は結果に効かない
+P1	F03=空	打ち切り	L0006	大会名（英語）が空の行は抽出されず、ほかの要因の値は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-16/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0515 a15-16 A15-16 直近大会情報取得 ／ API デッキビルダー — 直近大会情報取得
+L0001	Source:
+L0002	functions/pf-api/a15-16_api_deck_builder_deck_recent_event.md
+L0003	A15-16 直近大会情報取得 ／ API デッキビルダー — 直近大会情報取得
+L0004	業務ロジック
+L0005	取得対象
+L0006	最新大会デッキのマスタから、大会日が設定済みで、かつ大会名（日本語・英語）が空でない行を抽出する。条件に合致する大会が無いときも失敗とせず、空の一覧を返す。
+L0007	並び順
+L0008	識別子の昇順に並べる。
+L0009	値の取り方
+L0010	数量・日時は永続化済みの値を返し、応答生成時の丸め・補正を行わない。
+L0011	呼び出しの条件
+L0012	リクエストのパラメータを受け取らない。認証も行わないため、認証を理由とするHTTP 401は返さない。公開向けの一覧であり、呼び出し元の状態によらず同一の結果を返す。呼び出し元はデッキビルダーアプリである。
+L0013	エラー時の扱い
+L0014	エラー内容	処理
+L0015	該当大会なし	エラーとせず、空の一覧で処理結果コード200を返す
+L0016	取得処理中の例外	共通の例外処理に委ねる（HTTP 500相当）
+L0017	入出力
+L0018	種類	内容
+L0019	入力	なし
+L0020	成功時出力	HTTP 200。処理結果コードと直近大会の一覧
+L0021	失敗時出力	取得処理中の例外は共通の例外処理に委ねる（HTTP 500相当）
+L0022	出力: 直近大会の項目
+L0023	フィールド	型	説明
+L0024	大会日	string	日時の文字列。
+L0025	フォーマット識別子	integer	フォーマット識別子。
+L0026	フォーマット名（日本語）	string	フォーマットの日本語名。
+L0027	フォーマット名（英語）	string	フォーマットの英語名。
+L0028	大会名（日本語）	string	大会の日本語名。
+L0029	大会名（英語）	string	大会の英語名。
+L0030	参加者数	integer	参加者数。
+L0031	リニューアル後の仕様
+L0032	表示メッセージ
+L0033	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0034	—	—	本機能は利用者向けの文言を持たない	—	—
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/A16-02.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-A16-02-001	P1	F01=空文字	バナーの画像URL=空文字／バナーの表示タイプ=（効かない）／バナーの指定言語への紐づけ=（効かない）	バナーの画像URL: 空文字
+CB-A16-02-002	P1	F02=非表示	バナーの画像URL=（効かない。ありから選ぶ）／バナーの表示タイプ=非表示／バナーの指定言語への紐づけ=（効かない）	バナーの表示タイプ: 非表示
+CB-A16-02-003	P1	F03=紐づかない	バナーの画像URL=（効かない。ありから選ぶ）／バナーの表示タイプ=（効かない。表示から選ぶ）／バナーの指定言語への紐づけ=紐づかない	バナーの指定言語への紐づけ: 紐づかない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/A16-02_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+項目ID	扱い	テストID	理由
+CB-A16-02-001	既存ケースで確認済み	IT-A16-02-004	事前準備③のバナーID 5は画像URLが空文字（表示タイプ1・JPに紐づく）で、手順2でバナーID 5が一覧に含まれないことを見ている（打ち切りの行で、ほかの要因は効かない）
+CB-A16-02-002	既存ケースで確認済み	IT-A16-02-004	事前準備③のバナーID 6は表示タイプが0（画像URLあり・JPに紐づく）で、手順2でバナーID 6が一覧に含まれないことを見ている
+CB-A16-02-003	既存ケースで確認済み	IT-A16-02-003	事前準備③のバナーID 3は画像URLあり・リンク先あり・表示タイプ1でJPに紐づかず、手順2でバナーID 3が一覧に含まれないことを見ている
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A16-02_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	指定言語のトップバナー一覧を取得する	言語コードをパスに指定して一覧取得APIへGETを送る	応答本文（JSON配列）	L0021,L0031,L0135-L0137
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A16-02_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	バナーの画像URL	空文字｜あり	空文字: 一覧に含めない／あり: 他の条件を満たせば一覧に含める	L0135	この機能
+F02	P1	バナーの表示タイプ	非表示｜表示	非表示: 一覧に含めない／表示: 他の条件を満たせば一覧に含める	L0135	この機能
+F03	P1	バナーの指定言語への紐づけ	紐づく｜紐づかない	紐づく: 他の条件を満たせば一覧に含める／紐づかない: 一覧に含めない	L0021,L0031	この機能
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A16-02_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		一覧に入れるかを決める条件の1つで、一つでも外れると入らず、結果は入る・入らないの2つだけ
+P1	F01+F03	関係しない		一覧に入れるかを決める条件の1つで、一つでも外れると入らず、結果は入る・入らないの2つだけ
+P1	F02+F03	関係しない		一覧に入れるかを決める条件の1つで、一つでも外れると入らず、結果は入る・入らないの2つだけ
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A16-02_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	組	種別	根拠	理由
+P1	F01=空文字	打ち切り	L0135	画像URLが空文字のバナーは一覧に含まれず、ほかの要因の値は結果に効かない
+P1	F02=非表示	打ち切り	L0135	表示タイプが非表示のバナーは一覧に含まれず、ほかの要因の値は結果に効かない
+P1	F03=紐づかない	打ち切り	L0021,L0031	指定言語に紐づかないバナーは一覧に含まれず、ほかの要因の値は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A16-02/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0516 sheet-4 言語コードに紐づいたトップバナーの情報一覧を取得
+L0001	言語コードに紐づいたトップバナーの情報一覧を取得
+L0002	ドキュメント名データ管理API機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-08-12
+L0007	更新者高久
+L0008	更新日2025-09-17
+L0009	機能NoA16-02
+L0010	機能名言語コードに紐づいたトップバナーの情報一覧を取得
+L0011	概要指定された言語コードに紐づいたトップバナー情報一覧をJSON形式で出力
+L0012	処理概要（★はカスタマイズ項目）
+L0013	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0014	エンドポイントURL
+L0015	/topBanners/{言語コード}.json
+L0016	プロトコル HTTP メソッド GET 認証の有無 無 認証方式 無 リクエスト書式 クエリ レスポンス書式 JSON
+L0017	カスタマイズ説明
+L0018	指定言語の設定済みトップバナー一覧を取得
+L0019	記事サイト各ページ下部のバナー部分を載せる際に呼び出される
+L0020	機能仕様処理概要（★はカスタマイズ項目）
+L0021	・指定された言語コードに紐づいたトップバナー情報の一覧をJSON形式で出力する
+L0022	リクエストパラメータ
+L0023	項目名	型	必須	最大文字数
+L0024	または最大値	入力例	備考
+L0025	言語コード	文字型	〇	2	JP
+L0026	リクエストパラメータサンプル
+L0027	/api/topBanners/JP.json
+L0028	ステータスコード
+L0029	コード 説明
+L0030	200 正常
+L0031	404 該当データがない場合(言語コード未設定・言語コードに紐づいたトップバナーIDがない場合)
+L0032	レスポンスデータ
+L0033	名前	型	説明
+L0034	id	数字(整数)	バナーID
+L0035	image_url	文字型	バナーURL
+L0036	link	文字型	バナーリンク先
+L0037	disp_type	数字(整数)	表示タイプ(0:非表示 1:表示)
+L0038	languages.id	数字(整数)	言語ID
+L0039	languages.name_jp	文字型	言語名(日本語)
+L0040	languages.name_en	文字型	言語名(英語)
+L0041	languages.code	文字型	言語コード
+L0042	レスポンスデータサンプル
+L0043	[
+L0044	{
+L0045	"id": 2,
+L0046	"image_url": "https://files.hareruyamtg.com/banner/tc/68a57910318c4190.jpeg?d=800x450",
+L0047	"link": "https://www.hareruyamtg.com/ja/products/search?tags=657&saleFlg=1",
+L0048	"disp_type": 1,
+L0049	"languages": [
+L0050	{
+L0051	"id": 1,
+L0052	"name_jp": "日本語",
+L0053	"name_en": "Japanease",
+L0054	"code": "JP"
+L0055	}
+L0056	]
+L0057	},
+L0058	{
+L0059	"id": 3,
+L0060	"image_url": "https://files.hareruyamtg.com/banner/tc/6881cd0619b07940.jpeg?d=800x450",
+L0061	"link": "https://www.hareruyamtg.com/ja/products/search?tags=743",
+L0062	"disp_type": 1,
+L0063	"languages": [
+L0064	{
+L0065	"id": 1,
+L0066	"name_jp": "日本語",
+L0067	"name_en": "Japanease",
+L0068	"code": "JP"
+L0069	}
+L0070	]
+L0071	},
+L0072	{
+L0073	"id": 5,
+L0074	"image_url": "https://files.hareruyamtg.com/banner/tc/6878848a8714b725.jpeg?d=800x450",
+L0075	"link": "https://www.hareruyamtg.com/ja/products/search?tags=774",
+L0076	"disp_type": 1,
+L0077	"languages": [
+L0078	{
+L0079	"id": 1,
+L0080	"name_jp": "日本語",
+L0081	"name_en": "Japanease",
+L0082	"code": "JP"
+L0083	}
+L0084	]
+L0085	},
+L0086	{
+L0087	"id": 6,
+L0088	"image_url": "https://files.hareruyamtg.com/img/usr/new_product_portal/eoe/banner_2507_eoe.webp",
+L0089	"link": "https://www.hareruyamtg.com/ja/user_data/lp_edge_of_eternities",
+L0090	"disp_type": 1,
+L0091	"languages": [
+L0092	{
+L0093	"id": 1,
+L0094	"name_jp": "日本語",
+L0095	"name_en": "Japanease",
+L0096	"code": "JP"
+L0097	}
+L0098	]
+L0099	},
+L0100	{
+L0101	"id": 7,
+L0102	"image_url": "https://files.hareruyamtg.com/img/usr/new_product_portal/fin/banner_2507_mtg_x_FF_Nowonsale_JP.webp",
+L0103	"link": "https://www.hareruyamtg.com/ja/products/search?tags=741",
+L0104	"disp_type": 1,
+L0105	"languages": [
+L0106	{
+L0107	"id": 1,
+L0108	"name_jp": "日本語",
+L0109	"name_en": "Japanease",
+L0110	"code": "JP"
+L0111	}
+L0112	]
+L0113	},
+L0114	{
+L0115	"id": 20,
+L0116	"image_url": "https://files.hareruyamtg.com/img/usr/Campaign/startcampaign1000/banner.webp",
+L0117	"link": "https://www.hareruyamtg.com/ja/user_data/mtg-startcampaign1000",
+L0118	"disp_type": 1,
+L0119	"languages": [
+L0120	{
+L0121	"id": 1,
+L0122	"name_jp": "日本語",
+L0123	"name_en": "Japanease",
+L0124	"code": "JP"
+L0125	}
+L0126	]
+L0127	}
+L0128	]
+L0129	Source:
+L0130	functions/pf-api/a16-02_api_top_banner_list.md
+L0131	現行仕様
+L0132	A16-02 指定言語の設定済みトップバナー一覧を取得 / API データ管理 — 指定言語の設定済みトップバナー一覧を取得
+L0133	業務ロジック
+L0134	一覧に含めるバナー
+L0135	画像URLが空文字のバナーは一覧に含めない。表示タイプが0（非表示）のバナーも一覧に含めない。
+L0136	一覧はバナーIDの昇順で並べる。
+L0137	指定した言語コードが登録されていれば、一覧に含めるバナーが1件も残らないときもコード200を返し、応答本文は空の配列（[]）になる。
+L0138	入出力
+L0139	受け付けるパス
+L0140	拡張子を付けないパス（/topBanners/{言語コード}）でも、同じ一覧を返す。
+L0141	失敗時の応答本文
+L0142	コード404を返すときの応答本文は、コードとメッセージの2項目を持つ。メッセージは「Language code is not found」である。
+L0143	リニューアル後の仕様
+L0144	表示メッセージ
+L0145	本APIは画面メッセージを扱わない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/cases/A15-16_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典
+IT-A15-16-001	REQ-0515-sheet-16-R003,REQ-0515-sheet-16-R013,REQ-0515-sheet-16-R014	—	ITA-07,ITA-11	P1	ブラウザのみ	S-A15-16-ENV,S-A15-16-FORMATS,S-A15-16-EVENTS,S-A15-16-CACHE	① 直近大会情報取得APIとデッキビルダーアプリを起動し、ブラウザから両方へ到達でき、デッキビルダーアプリのAPI接続先が試験対象APIで、ブラウザからの通信が許可されていることを確認する（S-A15-16-ENV）／② DBシードでID=〔フォーマットID-A1516-共有A〕（登録時に振られたフォーマットIDを控えてある）・日本語名「結合試験フォーマットA」・英語名「Integration Format A」と、ID=〔フォーマットID-A1516-共有B〕（登録時に振られたフォーマットIDを控えてある）・日本語名「結合試験フォーマットC」・英語名「Integration Format C」の2件を登録し、記載値であることを確認する（S-A15-16-FORMATS）／③ 既存の直近大会デッキを退避し、DBシードで、ID=1601・大会日2026-08-31 09:07:05・フォーマット識別子〔フォーマットID-A1516-共有A〕・日本語大会名「結合試験大会A」・英語大会名「Integration Event A」・参加者数17、ID=1602・大会日未設定・フォーマット識別子〔フォーマットID-A1516-共有A〕・日本語大会名「抽出対象外大会B」・英語大会名「Excluded Event B」・参加者数21、ID=1603・大会日2026-09-02 18:30:45・フォーマット識別子〔フォーマットID-A1516-共有B〕・日本語大会名「結合試験大会C」・英語大会名「Integration Event C」・参加者数32、ID=1604・大会日2026-09-03 10:00:00・フォーマット識別子〔フォーマットID-A1516-共有B〕・日本語大会名が空文字・英語大会名「Excluded Event D」・参加者数25、ID=1605・大会日2026-09-04 11:00:00・フォーマット識別子〔フォーマットID-A1516-共有B〕・日本語大会名「抽出対象外大会E」・英語大会名が空文字・参加者数28の5件へ置き換え、直近大会デッキがこの5件だけであることを確認する（S-A15-16-EVENTS）／④ eeアプリケーションのキャッシュ消去機能を使用し、直近大会一覧の永続化結果キャッシュを空にする（S-A15-16-CACHE）	1. ブラウザの開発者ツールを開く／2. パラメータを付けずに直近大会情報取得APIへ要求を送信する／3. Networkで応答を確認する	HTTPステータスと処理結果コードが200となり、大会日および日本語・英語の大会名が設定された「結合試験大会A」・「結合試験大会C」だけが直近大会の一覧に含まれること	A15-16 直近大会情報取得 / 業務ロジック 取得対象、入出力
+IT-A15-16-002	REQ-0515-sheet-16-R005	—	ITA-11	P1	ブラウザのみ	S-A15-16-ENV,S-A15-16-FORMATS,S-A15-16-EVENTS,S-A15-16-CACHE	① 直近大会情報取得APIとデッキビルダーアプリを起動し、ブラウザから両方へ到達でき、デッキビルダーアプリのAPI接続先が試験対象APIで、ブラウザからの通信が許可されていることを確認する（S-A15-16-ENV）／② DBシードでID=〔フォーマットID-A1516-共有A〕（登録時に振られたフォーマットIDを控えてある）・日本語名「結合試験フォーマットA」・英語名「Integration Format A」と、ID=〔フォーマットID-A1516-共有B〕（登録時に振られたフォーマットIDを控えてある）・日本語名「結合試験フォーマットC」・英語名「Integration Format C」の2件を登録し、記載値であることを確認する（S-A15-16-FORMATS）／③ 既存の直近大会デッキを退避し、DBシードで、ID=1601・大会日2026-08-31 09:07:05・フォーマット識別子〔フォーマットID-A1516-共有A〕・日本語大会名「結合試験大会A」・英語大会名「Integration Event A」・参加者数17、ID=1602・大会日未設定・フォーマット識別子〔フォーマットID-A1516-共有A〕・日本語大会名「抽出対象外大会B」・英語大会名「Excluded Event B」・参加者数21、ID=1603・大会日2026-09-02 18:30:45・フォーマット識別子〔フォーマットID-A1516-共有B〕・日本語大会名「結合試験大会C」・英語大会名「Integration Event C」・参加者数32、ID=1604・大会日2026-09-03 10:00:00・フォーマット識別子〔フォーマットID-A1516-共有B〕・日本語大会名が空文字・英語大会名「Excluded Event D」・参加者数25、ID=1605・大会日2026-09-04 11:00:00・フォーマット識別子〔フォーマットID-A1516-共有B〕・日本語大会名「抽出対象外大会E」・英語大会名が空文字・参加者数28の5件へ置き換え、直近大会デッキがこの5件だけであることを確認する（S-A15-16-EVENTS）／④ eeアプリケーションのキャッシュ消去機能を使用し、直近大会一覧の永続化結果キャッシュを空にする（S-A15-16-CACHE）	1. ブラウザの開発者ツールを開く／2. パラメータを付けずに直近大会情報取得APIへ要求を送信する／3. Networkで直近大会の一覧の順序を確認する	最新大会デッキの識別子1601の「結合試験大会A」、識別子1603の「結合試験大会C」の順で返ること	A15-16 直近大会情報取得 / 業務ロジック 並び順
+IT-A15-16-004	REQ-0515-sheet-16-R003,REQ-0515-sheet-16-R011,REQ-0515-sheet-16-R014	—	ITA-08,ITA-11	P1	ブラウザのみ	S-A15-16-ENV,S-A15-16-NO-EVENTS-004,S-A15-16-CACHE	① 直近大会情報取得APIとデッキビルダーアプリを起動し、ブラウザから両方へ到達でき、デッキビルダーアプリのAPI接続先が試験対象APIで、ブラウザからの通信が許可されていることを確認する（S-A15-16-ENV）／② 専用テスト環境の既存の直近大会デッキを退避し、DBシードで0件へ置き換え、直近大会デッキが0件であることを確認する（S-A15-16-NO-EVENTS-004）／③ eeアプリケーションのキャッシュ消去機能を使用し、直近大会一覧の永続化結果キャッシュを空にする（S-A15-16-CACHE）	1. ブラウザの開発者ツールを開く／2. パラメータを付けずに直近大会情報取得APIへ要求を送信する／3. Networkで応答を確認する	HTTPステータスと処理結果コードが200となり、直近大会の一覧が空の配列で返ること	A15-16 直近大会情報取得 / 業務ロジック 取得対象・エラー時の扱い「該当大会なし」、入出力 成功時出力
+IT-A15-16-005	REQ-0515-sheet-16-R009	—	ITB-04,ITA-05	P1	ブラウザのみ	S-A15-16-ENV,S-A15-16-FORMATS,S-A15-16-EVENTS,S-A15-16-CACHE,S-A15-16-CALLERS-005	① 直近大会情報取得APIとデッキビルダーアプリを起動し、ブラウザから両方へ到達でき、デッキビルダーアプリのAPI接続先が試験対象APIで、ブラウザからの通信が許可されていることを確認する（S-A15-16-ENV）／② DBシードでID=〔フォーマットID-A1516-共有A〕（登録時に振られたフォーマットIDを控えてある）・日本語名「結合試験フォーマットA」・英語名「Integration Format A」と、ID=〔フォーマットID-A1516-共有B〕（登録時に振られたフォーマットIDを控えてある）・日本語名「結合試験フォーマットC」・英語名「Integration Format C」の2件を登録し、記載値であることを確認する（S-A15-16-FORMATS）／③ 既存の直近大会デッキを退避し、DBシードで、ID=1601・大会日2026-08-31 09:07:05・フォーマット識別子〔フォーマットID-A1516-共有A〕・日本語大会名「結合試験大会A」・英語大会名「Integration Event A」・参加者数17、ID=1602・大会日未設定・フォーマット識別子〔フォーマットID-A1516-共有A〕・日本語大会名「抽出対象外大会B」・英語大会名「Excluded Event B」・参加者数21、ID=1603・大会日2026-09-02 18:30:45・フォーマット識別子〔フォーマットID-A1516-共有B〕・日本語大会名「結合試験大会C」・英語大会名「Integration Event C」・参加者数32、ID=1604・大会日2026-09-03 10:00:00・フォーマット識別子〔フォーマットID-A1516-共有B〕・日本語大会名が空文字・英語大会名「Excluded Event D」・参加者数25、ID=1605・大会日2026-09-04 11:00:00・フォーマット識別子〔フォーマットID-A1516-共有B〕・日本語大会名「抽出対象外大会E」・英語大会名が空文字・参加者数28の5件へ置き換え、直近大会デッキがこの5件だけであることを確認する（S-A15-16-EVENTS）／④ eeアプリケーションのキャッシュ消去機能を使用し、直近大会一覧の永続化結果キャッシュを空にする（S-A15-16-CACHE）／⑤ ブラウザの開発者ツールで、認証情報を付けない要求と認証ヘッダに「Bearer invalid-token」を設定した要求を送信できるように用意する（S-A15-16-CALLERS-005）	1. ブラウザの開発者ツールを開く／2. 認証情報を付けずに直近大会情報取得APIへ要求を送信する／3. 認証ヘッダに「Bearer invalid-token」を設定して同じ要求を送信する／4. Networkで2回の応答を確認する	2回とも認証を理由とするHTTPステータス401とならず、HTTPステータス200で同一の直近大会一覧が返ること	A15-16 直近大会情報取得 / 業務ロジック 呼び出しの条件
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/cases/A15-16_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-A15-16-ENV	試験環境	直近大会API・デッキビルダー接続環境	直近大会情報取得APIとデッキビルダーアプリが起動済み／ブラウザから両方へ到達可能／デッキビルダーアプリのAPI接続先が試験対象API／ブラウザからの通信が許可済み	各ケースが開始時に接続状態を確認する共有試験環境	試験環境の配備時設定でAPIとデッキビルダーアプリを起動し、両者を接続する	共有可
+S-A15-16-FORMATS	フォーマット	直近大会用フォーマット	フォーマットIDは登録時に画面が振る（控える。以下〔フォーマットID-A1516-共有A〕）／日本語名「結合試験フォーマットA」／英語名「Integration Format A」、フォーマットIDは登録時に画面が振る（控える。以下〔フォーマットID-A1516-共有B〕）／日本語名「結合試験フォーマットC」／英語名「Integration Format C」	各ケースが参照するだけで状態を変更しない共有マスタ	管理画面のフォーマット管理（フォーマット一覧）からフォーマット登録画面を開き、フォーマット名(日)に「結合試験フォーマットA」、フォーマット名(英)に「Integration Format A」、並び順に1〜10000の範囲で既存のフォーマットと重ならない値を入れ、メタゲーム分析日数は初期表示の値のままにして、登録ボタンを押す。登録後に開く同じフォーマットの編集画面のアドレス欄で「format/」と「/edit」の間に表示された番号を控える（〔フォーマットID-A1516-共有A〕）。続けてフォーマット登録画面を新しく開き、フォーマット名(日)に「結合試験フォーマットC」、フォーマット名(英)に「Integration Format C」、並び順に1〜10000の範囲で既存のフォーマットと重ならない値を入れ、メタゲーム分析日数は初期表示の値のままにして、登録ボタンを押す。登録後に開く同じフォーマットの編集画面のアドレス欄で「format/」と「/edit」の間に表示された番号を控える（〔フォーマットID-A1516-共有B〕）。フォーマット一覧に「結合試験フォーマットA」「結合試験フォーマットC」の2件が表示されることを確認する	共有可
+S-A15-16-EVENTS	最新大会デッキ	抽出・並び順確認大会	ID=1601／大会日2026-08-31 09:07:05／フォーマット識別子〔フォーマットID-A1516-共有A〕／大会名（日本語）「結合試験大会A」／大会名（英語）「Integration Event A」／参加者数17、ID=1602／大会日未設定／フォーマット識別子〔フォーマットID-A1516-共有A〕／大会名（日本語）「抽出対象外大会B」／大会名（英語）「Excluded Event B」／参加者数21、ID=1603／大会日2026-09-02 18:30:45／フォーマット識別子〔フォーマットID-A1516-共有B〕／大会名（日本語）「結合試験大会C」／大会名（英語）「Integration Event C」／参加者数32、ID=1604／大会日2026-09-03 10:00:00／フォーマット識別子〔フォーマットID-A1516-共有B〕／大会名（日本語）空文字／大会名（英語）「Excluded Event D」／参加者数25、ID=1605／大会日2026-09-04 11:00:00／フォーマット識別子〔フォーマットID-A1516-共有B〕／大会名（日本語）「抽出対象外大会E」／大会名（英語）空文字／参加者数28／直近大会デッキはこの5件だけ（〔フォーマットID-A1516-共有A〕は「結合試験フォーマットA」、〔フォーマットID-A1516-共有B〕は「結合試験フォーマットC」を登録したときに控えたフォーマットID）	直近大会一覧は要求条件でケースを分離できないため共有する5件。使用する各ケースが開始時に必要な5件を自分で設定する	① 直近大会デッキの枠の追加・削除とIDは画面で指定できないためDBへ直接設定する: 専用テスト環境で既存の直近大会デッキを退避し、ID=1601・1602・1603・1604・1605の5件（全項目が未設定）へ置き換える。② 管理画面のデッキ管理メニューから直近の大会管理画面を開き、上から1番目の枠（ID=1601）のイベント開催日に2026-08-31 09:07、フォーマットに「結合試験フォーマットA」、イベント名(日)に「結合試験大会A」、イベント名(英)に「Integration Event A」、イベント参加人数に17を入れ、上から3番目の枠（ID=1603）のイベント開催日に2026-09-02 18:30、フォーマットに「結合試験フォーマットC」、イベント名(日)に「結合試験大会C」、イベント名(英)に「Integration Event C」、イベント参加人数に32を入れ、ほかの3つの枠は空のままにして、直近の大会設定ボタンを押す。③ 大会日の秒は画面で指定できないためDBへ直接設定する: ID=1601の大会日を2026-08-31 09:07:05、ID=1603の大会日を2026-09-02 18:30:45にする。④ 一部の項目だけが空の枠は画面で保存できないためDBへ直接設定する: ID=1602を大会日未設定・フォーマット識別子〔フォーマットID-A1516-共有A〕・大会名（日本語）「抽出対象外大会B」・大会名（英語）「Excluded Event B」・参加者数21、ID=1604を大会日2026-09-03 10:00:00・フォーマット識別子〔フォーマットID-A1516-共有B〕・大会名（日本語）空文字・大会名（英語）「Excluded Event D」・参加者数25、ID=1605を大会日2026-09-04 11:00:00・フォーマット識別子〔フォーマットID-A1516-共有B〕・大会名（日本語）「抽出対象外大会E」・大会名（英語）空文字・参加者数28にする。⑤ 直近大会デッキが記載した5件だけであることを確認する	共有可
+S-A15-16-CACHE	試験基盤	直近大会一覧結果キャッシュ	直近大会一覧の永続化結果キャッシュが空	各ケースが開始時に必要な空の状態を自分で設定する共有試験基盤	eeアプリケーションのキャッシュ消去機能で直近大会一覧の永続化結果キャッシュを消去する	共有可
+S-A15-16-NO-EVENTS-004	最新大会デッキ状態	抽出対象0件状態(004)	直近大会デッキが0件	IT-A15-16-004専用。直近大会一覧を空にする	専用テスト環境でDBシードの前処理により既存の直近大会デッキを退避し、0件へ置き換える	ケース専用
+S-A15-16-CALLERS-005	API入力	認証状態の異なる要求(005)	認証情報を付けない要求／認証ヘッダに「Bearer invalid-token」を設定した要求	IT-A15-16-005専用。2種類の呼び出し状態を固定する	ブラウザの開発者ツールから送信する2種類の固定要求データとして用意する	ケース専用
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/cases/A16-02_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 19ms:
+テストID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典
+IT-A16-02-001	REQ-0516-sheet-4-R003,REQ-0516-sheet-4-R004,REQ-0516-sheet-4-R016		ITA-04	P1	ブラウザのみ	S-A16-02-ENV,S-A16-02-JP,S-A16-02-BANNERS	① 開始時に接続先を対象公開APIへ設定し、HTTP GETを認証情報なしで利用できるようにする（S-A16-02-ENV）／② ID 1・言語名（日本語）「日本語」・言語名（英語）「Japanease」・言語コードJPの言語を再投入する（S-A16-02-JP）／③ バナーID 2・7・20を画像URLあり・リンク先あり・表示タイプ1でJPに紐づけ、ID 3をJPに紐づけず、ID 5を画像URL空文字・表示タイプ1、ID 6を画像URLあり・表示タイプ0でJPに紐づけ、JPに対する他のトップバナー紐付けを解除する（S-A16-02-BANNERS）	1. ブラウザの開発者ツールでネットワークパネルを開く／2. 未ログイン状態で「/api/topBanners/JP.json」を開く／3. HTTPステータスを確認する	認証情報を付けないGETリクエストに対してHTTPステータス200が表示されること	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 処理概要 エンドポイントURL・プロトコル、機能仕様 ステータスコード
+IT-A16-02-002	REQ-0516-sheet-4-R004,REQ-0516-sheet-4-R005,REQ-0516-sheet-4-R007,REQ-0516-sheet-4-R020,REQ-0516-sheet-4-R021,REQ-0516-sheet-4-R022,REQ-0516-sheet-4-R023,REQ-0516-sheet-4-R024,REQ-0516-sheet-4-R025,REQ-0516-sheet-4-R026,REQ-0516-sheet-4-R027		ITB-06,ITA-05	P1	ブラウザのみ	S-A16-02-ENV,S-A16-02-JP,S-A16-02-BANNERS	① 開始時に接続先を対象公開APIへ設定し、HTTP GETを利用できるようにする（S-A16-02-ENV）／② ID 1・言語名（日本語）「日本語」・言語名（英語）「Japanease」・言語コードJPの言語を再投入する（S-A16-02-JP）／③ ID 2のバナーを画像URL「https://files.hareruyamtg.com/banner/tc/68a57910318c4190.jpeg?d=800x450」・リンク先「https://www.hareruyamtg.com/ja/products/search?tags=657&saleFlg=1」・表示タイプ1でJPだけに紐づく状態へ再投入する（S-A16-02-BANNERS）	1. ブラウザで「/api/topBanners/JP.json」を開く／2. 表示されたJSONのルート型とID 2の要素を確認する	レスポンスがJSON配列であり、ID 2の要素にid=2（整数）、image_url（文字列）、link（文字列）、disp_type=1（整数）およびlanguages配列内のid=1（整数）・name_jp=「日本語」（文字列）・name_en=「Japanease」（文字列）・code=「JP」（文字列）が含まれること	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 機能仕様 処理概要・レスポンスデータ・レスポンスデータサンプル
+IT-A16-02-003	REQ-0516-sheet-4-R005,REQ-0516-sheet-4-R007		ITA-11	P1	ブラウザのみ	S-A16-02-ENV,S-A16-02-JP,S-A16-02-BANNERS	① 開始時に接続先を対象公開APIへ設定し、HTTP GETを利用できるようにする（S-A16-02-ENV）／② ID 1・言語コードJPの言語を再投入する（S-A16-02-JP）／③ バナーID 2・7・20を画像URLあり・リンク先あり・表示タイプ1でJPに紐づけ、バナーID 3を画像URLあり・リンク先あり・表示タイプ1でJPに紐づけず、JPに対する他の表示対象バナー紐付けを解除する（S-A16-02-BANNERS）	1. ブラウザで「/api/topBanners/JP.json」を開く／2. 表示されたJSON内のバナーIDを確認する	JPに紐づくバナーID 2・7・20が一覧に含まれ、JPに紐づかないバナーID 3が一覧に含まれないこと	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 機能仕様 処理概要
+IT-A16-02-004	REQ-0516-sheet-4-R117		ITA-11	P2	ブラウザのみ	S-A16-02-ENV,S-A16-02-JP,S-A16-02-BANNERS	① 開始時に接続先を対象公開APIへ設定し、HTTP GETを利用できるようにする（S-A16-02-ENV）／② ID 1・言語コードJPの言語を再投入する（S-A16-02-JP）／③ バナーID 5を画像URL空文字・リンク先「https://www.hareruyamtg.com/ja/products/search?tags=774」・表示タイプ1でJPに紐づけ、バナーID 6を画像URL「https://files.hareruyamtg.com/img/usr/new_product_portal/eoe/banner_2507_eoe.webp」・リンク先「https://www.hareruyamtg.com/ja/user_data/lp_edge_of_eternities」・表示タイプ0でJPに紐づける（S-A16-02-BANNERS）	1. ブラウザで「/api/topBanners/JP.json」を開く／2. 表示されたJSON内のバナーIDを確認する	画像URLが空文字のバナーID 5および表示タイプが0のバナーID 6が一覧に含まれないこと	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 現行仕様 業務ロジック 一覧に含めるバナー
+IT-A16-02-005	REQ-0516-sheet-4-R118		ITA-11	P2	ブラウザのみ	S-A16-02-ENV,S-A16-02-JP,S-A16-02-BANNERS	① 開始時に接続先を対象公開APIへ設定し、HTTP GETを利用できるようにする（S-A16-02-ENV）／② ID 1・言語コードJPの言語を再投入する（S-A16-02-JP）／③ バナーID 2・7・20を画像URLあり・リンク先あり・表示タイプ1でJPに紐づけ、ID 3をJPに紐づけず、ID 5を画像URL空文字、ID 6を表示タイプ0に設定し、JPに紐づく表示対象バナーをID 2・7・20だけにする（S-A16-02-BANNERS）	1. ブラウザで「/api/topBanners/JP.json」を開く／2. 表示されたJSON配列のバナーIDを先頭から確認する	一覧のバナーIDが2、7、20の昇順で表示されること	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 現行仕様 業務ロジック 一覧に含めるバナー
+IT-A16-02-006	REQ-0516-sheet-4-R003,REQ-0516-sheet-4-R120		ITB-06	P2	ブラウザのみ	S-A16-02-ENV,S-A16-02-JP,S-A16-02-BANNERS	① 開始時に接続先を対象公開APIへ設定し、「/api/topBanners/JP.json」と「/api/topBanners/JP」の両方をHTTP GETで利用できるようにする（S-A16-02-ENV）／② ID 1・言語コードJPの言語を再投入する（S-A16-02-JP）／③ バナーID 2・7・20を画像URLあり・リンク先あり・表示タイプ1でJPに紐づけ、ID 3をJPに紐づけず、ID 5を画像URL空文字、ID 6を表示タイプ0に設定し、JPに紐づく表示対象バナーをID 2・7・20だけにする（S-A16-02-BANNERS）	1. ブラウザで「/api/topBanners/JP.json」を開いてJSONを記録する／2. ブラウザで「/api/topBanners/JP」を開く／3. 2つのJSONを比較する	拡張子なしのパスで表示される一覧が「/api/topBanners/JP.json」で表示される一覧と同じであること	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 処理概要 エンドポイントURL、現行仕様 入出力 受け付けるパス
+IT-A16-02-007	REQ-0516-sheet-4-R017		ITA-04	P1	ブラウザのみ	S-A16-02-ENV,S-A16-02-NO-LANGUAGE	① 開始時に接続先を対象公開APIへ設定し、HTTP GETを利用できるようにする（S-A16-02-ENV）／② 言語コードXXの言語があれば削除し、XXの言語が存在しない状態にする（S-A16-02-NO-LANGUAGE）	1. ブラウザの開発者ツールでネットワークパネルを開く／2. 「/api/topBanners/XX.json」を開く／3. HTTPステータスを確認する	言語コードXXが未設定の場合にHTTPステータス404が表示されること	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 機能仕様 ステータスコード
+IT-A16-02-008	REQ-0516-sheet-4-R122		ITB-06	P1	ブラウザのみ	S-A16-02-ENV,S-A16-02-NO-LANGUAGE	① 開始時に接続先を対象公開APIへ設定し、HTTP GETを利用できるようにする（S-A16-02-ENV）／② 言語コードXXの言語があれば削除し、XXの言語が存在しない状態にする（S-A16-02-NO-LANGUAGE）	1. ブラウザで「/api/topBanners/XX.json」を開く／2. 表示されたJSONを確認する	応答本文がcode=404とmessage=「Language code is not found」の2項目を持つこと	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 現行仕様 入出力 失敗時の応答本文
+IT-A16-02-009	REQ-0516-sheet-4-R017		ITA-04	P1	ブラウザのみ	S-A16-02-ENV,S-A16-02-NO-BANNER-LANG	① 開始時に接続先を対象公開APIへ設定し、HTTP GETを利用できるようにする（S-A16-02-ENV）／② 言語ID 〔言語ID-A1602-共有A〕（登録時に振られた言語IDを控えてある）・言語名（日本語）「ZZ試験言語」・言語名（英語）「ZZ Test Language」・言語コードZZの言語を再投入し、ZZに対するトップバナー紐付けをすべて解除して0件にする（S-A16-02-NO-BANNER-LANG）	1. ブラウザの開発者ツールでネットワークパネルを開く／2. 「/api/topBanners/ZZ.json」を開く／3. HTTPステータスを確認する	言語コードZZにトップバナーIDが紐づいていない場合にHTTPステータス404が表示されること	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 機能仕様 ステータスコード
+IT-A16-02-010	REQ-0516-sheet-4-R122		ITB-06	P1	ブラウザのみ	S-A16-02-ENV,S-A16-02-NO-BANNER-LANG	① 開始時に接続先を対象公開APIへ設定し、HTTP GETを利用できるようにする（S-A16-02-ENV）／② 言語ID 〔言語ID-A1602-共有A〕（登録時に振られた言語IDを控えてある）・言語名（日本語）「ZZ試験言語」・言語名（英語）「ZZ Test Language」・言語コードZZの言語を再投入し、ZZに対するトップバナー紐付けをすべて解除して0件にする（S-A16-02-NO-BANNER-LANG）	1. ブラウザで「/api/topBanners/ZZ.json」を開く／2. 表示されたJSONを確認する	応答本文がcode=404とmessage=「Language code is not found」の2項目を持つこと	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 現行仕様 入出力 失敗時の応答本文
+IT-A16-02-011	REQ-0516-sheet-4-R006		ITA-05	P2	ブラウザのみ	S-A16-02-ENV,S-A16-02-JP,S-A16-02-BANNERS	① 開始時に記事サイト日本語版の接続先を対象公開APIへ設定し、ページ下部から対象公開APIを参照できるようにする（S-A16-02-ENV）／② ID 1・言語コードJPの言語を再投入する（S-A16-02-JP）／③ バナーID 2を画像URL「https://files.hareruyamtg.com/banner/tc/68a57910318c4190.jpeg?d=800x450」・リンク先「https://www.hareruyamtg.com/ja/products/search?tags=657&saleFlg=1」、ID 7を画像URL「https://files.hareruyamtg.com/img/usr/new_product_portal/fin/banner_2507_mtg_x_FF_Nowonsale_JP.webp」・リンク先「https://www.hareruyamtg.com/ja/products/search?tags=741」、ID 20を画像URL「https://files.hareruyamtg.com/img/usr/Campaign/startcampaign1000/banner.webp」・リンク先「https://www.hareruyamtg.com/ja/user_data/mtg-startcampaign1000」とし、3件とも表示タイプ1でJPに紐づける／④ ID 3をJPに紐づけず、ID 5を画像URL空文字・表示タイプ1、ID 6を画像URLあり・表示タイプ0でJPに紐づけ、JPに対する他のトップバナー紐付けを解除する（S-A16-02-BANNERS）	1. 記事サイトのトップページを開く／2. ページ下部のバナー表示部分に表示されたバナー画像とリンク先を確認する	ページ下部のバナー表示部分に、JPに紐づき一覧に含まれるバナーID 2・7・20の画像とリンク先が表示され、JPに紐づかないバナーID 3、画像URLが空文字のバナーID 5および表示タイプが0のバナーID 6が表示されないこと	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 機能仕様 カスタマイズ説明、現行仕様 業務ロジック 一覧に含めるバナー
+IT-A16-02-012	REQ-0516-sheet-4-R017,REQ-0516-sheet-4-R117		ITB-10	P1	ブラウザのみ	S-A16-02-ENV,S-A16-02-ALL-EXCLUDED	① 開始時に接続先を対象公開APIへ設定し、HTTP GETを利用できるようにする（S-A16-02-ENV）／② 言語ID 〔言語ID-A1602-共有B〕（登録時に振られた言語IDを控えてある）・言語名（日本語）「YY試験言語」・言語名（英語）「YY Test Language」・言語コードYYの言語を再投入する／③ バナーID 8を画像URL空文字・リンク先「https://www.hareruyamtg.com/ja/products/search?tags=774」・表示タイプ1、バナーID 9を画像URL「https://files.hareruyamtg.com/img/usr/new_product_portal/eoe/banner_2507_eoe.webp」・リンク先「https://www.hareruyamtg.com/ja/user_data/lp_edge_of_eternities」・表示タイプ0としてYYに紐づけ、YYに対する他のトップバナー紐付けを解除する（S-A16-02-ALL-EXCLUDED）	1. ブラウザの開発者ツールでネットワークパネルを開く／2. 「/api/topBanners/YY.json」を開く／3. HTTPステータスと応答本文を確認する	HTTPステータス200となり、応答本文が空の配列「[]」であること	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 機能仕様 ステータスコード、現行仕様 業務ロジック 一覧に含めるバナー
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/cases/A16-02_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-A16-02-ENV	環境設定	公開API・記事サイト接続	公開APIへHTTP GETでアクセスできる／認証情報は不要／「/api/topBanners/{言語コード}.json」と拡張子なしのパスを利用できる／記事サイト日本語版のページ下部が対象公開APIを参照する	各ケースが開始時に接続先を対象公開APIへ設定し、認証情報を付けずに利用する。全ケースとも設定値を変更しない	試験環境設定で公開APIと記事サイトを起動し、記事サイトの接続先を対象公開APIへ設定する	共有可
+S-A16-02-JP	言語	JP言語	ID=1／言語名（日本語）=日本語／言語名（英語）=Japanease／言語コード=JP	正常取得、応答項目、言語による選択、除外条件、ID昇順、拡張子なしパスおよび記事サイト表示で参照する。全ケースとも言語を変更しない	管理画面のデータ管理＞MTGマスターデータ（MTGマスターデータ管理）で種別の選択欄から「言語」を選んで選択ボタンを押す。一覧で言語コード（列見出し code）がJPの行（標準で登録済みの日本語の行。ID 1）について、言語名（日本語）（列見出し name_jp）に「日本語」、言語名（英語）（列見出し name_en）に「Japanease」、言語コード（列見出し code）に「JP」を入れて登録ボタンを押す。	共有可
+S-A16-02-BANNERS	トップバナー	JP一覧選択・並び順確認バナー	ID=2は画像URL=https://files.hareruyamtg.com/banner/tc/68a57910318c4190.jpeg?d=800x450・リンク先=https://www.hareruyamtg.com/ja/products/search?tags=657&saleFlg=1・表示タイプ=1・JPに紐づく／ID=3は画像URL=https://files.hareruyamtg.com/banner/tc/6881cd0619b07940.jpeg?d=800x450・リンク先=https://www.hareruyamtg.com/ja/products/search?tags=743・表示タイプ=1・JPに紐づかない／ID=5は画像URL=空文字・リンク先=https://www.hareruyamtg.com/ja/products/search?tags=774・表示タイプ=1・JPに紐づく／ID=6は画像URL=https://files.hareruyamtg.com/img/usr/new_product_portal/eoe/banner_2507_eoe.webp・リンク先=https://www.hareruyamtg.com/ja/user_data/lp_edge_of_eternities・表示タイプ=0・JPに紐づく／ID=7は画像URL=https://files.hareruyamtg.com/img/usr/new_product_portal/fin/banner_2507_mtg_x_FF_Nowonsale_JP.webp・リンク先=https://www.hareruyamtg.com/ja/products/search?tags=741・表示タイプ=1・JPに紐づく／ID=20は画像URL=https://files.hareruyamtg.com/img/usr/Campaign/startcampaign1000/banner.webp・リンク先=https://www.hareruyamtg.com/ja/user_data/mtg-startcampaign1000・表示タイプ=1・JPに紐づく／JPに紐づくトップバナーはID 2・5・6・7・20だけ	正常取得、応答項目、言語による選択、除外条件、ID昇順、拡張子なしパスおよび記事サイト表示で参照する。全ケースともバナーを変更しない	管理画面のデータ管理＞トップバナー管理を開く。バナーは並び順の欄の初期値がバナーIDと同じ数字なので、その数字で各IDのバナーを見分ける。ID 2は画像URLに「https://files.hareruyamtg.com/banner/tc/68a57910318c4190.jpeg?d=800x450」、リンク先URLに「https://www.hareruyamtg.com/ja/products/search?tags=657&saleFlg=1」を入れ、表示タイプで「表示」を選び、言語の「日本語」にチェックを入れる。ID 3は画像URLに「https://files.hareruyamtg.com/banner/tc/6881cd0619b07940.jpeg?d=800x450」、リンク先URLに「https://www.hareruyamtg.com/ja/products/search?tags=743」を入れ、表示タイプで「表示」を選び、言語の「日本語」のチェックを外す。ID 5は画像URLを空にし、リンク先URLに「https://www.hareruyamtg.com/ja/products/search?tags=774」を入れ、言語の「日本語」にチェックを入れる。ID 6は画像URLに「https://files.hareruyamtg.com/img/usr/new_product_portal/eoe/banner_2507_eoe.webp」、リンク先URLに「https://www.hareruyamtg.com/ja/user_data/lp_edge_of_eternities」を入れ、表示タイプで「非表示」を選び、言語の「日本語」にチェックを入れる。ID 7は画像URLに「https://files.hareruyamtg.com/img/usr/new_product_portal/fin/banner_2507_mtg_x_FF_Nowonsale_JP.webp」、リンク先URLに「https://www.hareruyamtg.com/ja/products/search?tags=741」を入れ、表示タイプで「表示」を選び、言語の「日本語」にチェックを入れる。ID 20は画像URLに「https://files.hareruyamtg.com/img/usr/Campaign/startcampaign1000/banner.webp」、リンク先URLに「https://www.hareruyamtg.com/ja/user_data/mtg-startcampaign1000」を入れ、表示タイプで「表示」を選び、言語の「日本語」にチェックを入れる。ID 2・5・6・7・20以外のすべてのバナーは言語の「日本語」のチェックを外す。並び順はどのバナーも変えずにバナー設定ボタンを押す。ID 5の表示タイプ=1は画面で指定できないためDBへ直接設定する（画像URLが空のバナーは保存時に表示タイプが0になる）。一覧にID 20のバナーが無い環境では、ID 20のバナーは画面で指定できないためDBへ直接設定する（バナーの枠を増やす画面が無い）。トップバナー管理のバナー設定ボタンは全バナーをまとめて保存し、画像URLが空のバナーの表示タイプを0へ戻し、紐付けを日本語・英語のチェックどおりに置き換えるので、DBへの直接設定はこの画面での保存をすべて終えたあとに行う。	共有可
+S-A16-02-NO-LANGUAGE	言語状態	未登録言語	言語コードXXの言語が存在しない	未登録言語のHTTPステータスと応答本文で参照する。両ケースとも言語を登録しない	管理画面のデータ管理＞MTGマスターデータ（MTGマスターデータ管理）で種別の選択欄から「言語」を選んで選択ボタンを押す。一覧に言語コード（列見出し code）がXXの行が無いことを確かめる。XXの行があるときは、その行のすべての欄（列見出し sort_no・name_jp・name_en・code）を空にして登録ボタンを押し、行が一覧から消えたことを確かめる。	共有可
+S-A16-02-NO-BANNER-LANG	言語・紐付け	トップバナー未設定言語	言語IDは登録時に画面が振る（控える。以下〔言語ID-A1602-共有A〕）／言語名（日本語）=ZZ試験言語／言語名（英語）=ZZ Test Language／言語コード=ZZ／ZZに紐づくトップバナーは0件	登録済み言語にトップバナーがない場合のHTTPステータスと応答本文で参照する。両ケースとも言語および紐付けを変更しない	管理画面のデータ管理＞MTGマスターデータ（MTGマスターデータ管理）で種別の選択欄から「言語」を選んで選択ボタンを押す。一覧のいちばん下の空の行（新規の行）で、言語名（日本語）（列見出し name_jp）に「ZZ試験言語」、言語名（英語）（列見出し name_en）に「ZZ Test Language」、言語コード（列見出し code）に「ZZ」を入れて登録ボタンを押す。言語IDは画面に文字としては表示されないので、登録後の一覧で言語コードがZZの行の入力欄をブラウザの開発者ツールで調べ、入力欄の名前に含まれる行の番号を言語IDとして控える（〔言語ID-A1602-共有A〕）。トップバナー管理の言語の選択肢は日本語と英語だけで、ZZにトップバナーを紐づける操作は無いので、登録した時点でZZに紐づくトップバナーは0件である。	共有可
+S-A16-02-ALL-EXCLUDED	言語・トップバナー	全件除外言語	言語IDは登録時に画面が振る（控える。以下〔言語ID-A1602-共有B〕）／言語名（日本語）=YY試験言語／言語名（英語）=YY Test Language／言語コード=YY／バナーID=8は画像URL=空文字・リンク先=https://www.hareruyamtg.com/ja/products/search?tags=774・表示タイプ=1・YYに紐づく／バナーID=9は画像URL=https://files.hareruyamtg.com/img/usr/new_product_portal/eoe/banner_2507_eoe.webp・リンク先=https://www.hareruyamtg.com/ja/user_data/lp_edge_of_eternities・表示タイプ=0・YYに紐づく／YYに紐づくトップバナーはID 8・9だけ	登録済み言語に除外対象のバナーだけが紐づく状態を参照する。ケース中に言語、バナーおよび紐付けを変更しない	管理画面のデータ管理＞MTGマスターデータ（MTGマスターデータ管理）で種別の選択欄から「言語」を選んで選択ボタンを押す。一覧のいちばん下の空の行（新規の行）で、言語名（日本語）（列見出し name_jp）に「YY試験言語」、言語名（英語）（列見出し name_en）に「YY Test Language」、言語コード（列見出し code）に「YY」を入れて登録ボタンを押す。言語IDは画面に文字としては表示されないので、登録後の一覧で言語コードがYYの行の入力欄をブラウザの開発者ツールで調べ、入力欄の名前に含まれる行の番号を言語IDとして控える（〔言語ID-A1602-共有B〕）。次に管理画面のデータ管理＞トップバナー管理を開く。バナーは並び順の欄の初期値がバナーIDと同じ数字なので、その数字で各IDのバナーを見分ける。ID 8は画像URLを空にし、リンク先URLに「https://www.hareruyamtg.com/ja/products/search?tags=774」を入れる。ID 9は画像URLに「https://files.hareruyamtg.com/img/usr/new_product_portal/eoe/banner_2507_eoe.webp」、リンク先URLに「https://www.hareruyamtg.com/ja/user_data/lp_edge_of_eternities」を入れ、表示タイプで「非表示」を選ぶ。並び順はどのバナーも変えずにバナー設定ボタンを押す。バナーID 8・9のYYへの紐付けは画面で指定できないためDBへ直接設定する（言語の選択肢が日本語と英語だけ）。バナーID 8の表示タイプ=1は画面で指定できないためDBへ直接設定する（画像URLが空のバナーは保存時に表示タイプが0になる）。YYに紐づくトップバナーがID 8・9だけであることを確かめる。トップバナー管理のバナー設定ボタンは全バナーをまとめて保存し、画像URLが空のバナーの表示タイプを0へ戻し、紐付けを日本語・英語のチェックどおりに置き換えるので、DBへの直接設定はこの画面での保存をすべて終えたあとに行う。	共有可
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/A15-16_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/A16-02_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 94ms:
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+exec
+/bin/bash -lc "grep '"'^IT-A16-02-003'"\\|"'^IT-A16-02-004'"' integration_test/casegen/cases/A16-02_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-A16-02-003	REQ-0516-sheet-4-R005,REQ-0516-sheet-4-R007		ITA-11	P1	ブラウザのみ	S-A16-02-ENV,S-A16-02-JP,S-A16-02-BANNERS	① 開始時に接続先を対象公開APIへ設定し、HTTP GETを利用できるようにする（S-A16-02-ENV）／② ID 1・言語コードJPの言語を再投入する（S-A16-02-JP）／③ バナーID 2・7・20を画像URLあり・リンク先あり・表示タイプ1でJPに紐づけ、バナーID 3を画像URLあり・リンク先あり・表示タイプ1でJPに紐づけず、JPに対する他の表示対象バナー紐付けを解除する（S-A16-02-BANNERS）	1. ブラウザで「/api/topBanners/JP.json」を開く／2. 表示されたJSON内のバナーIDを確認する	JPに紐づくバナーID 2・7・20が一覧に含まれ、JPに紐づかないバナーID 3が一覧に含まれないこと	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 機能仕様 処理概要
+IT-A16-02-004	REQ-0516-sheet-4-R117		ITA-11	P2	ブラウザのみ	S-A16-02-ENV,S-A16-02-JP,S-A16-02-BANNERS	① 開始時に接続先を対象公開APIへ設定し、HTTP GETを利用できるようにする（S-A16-02-ENV）／② ID 1・言語コードJPの言語を再投入する（S-A16-02-JP）／③ バナーID 5を画像URL空文字・リンク先「https://www.hareruyamtg.com/ja/products/search?tags=774」・表示タイプ1でJPに紐づけ、バナーID 6を画像URL「https://files.hareruyamtg.com/img/usr/new_product_portal/eoe/banner_2507_eoe.webp」・リンク先「https://www.hareruyamtg.com/ja/user_data/lp_edge_of_eternities」・表示タイプ0でJPに紐づける（S-A16-02-BANNERS）	1. ブラウザで「/api/topBanners/JP.json」を開く／2. 表示されたJSON内のバナーIDを確認する	画像URLが空文字のバナーID 5および表示タイプが0のバナーID 6が一覧に含まれないこと	0516 言語コードに紐づいたトップバナーの情報一覧を取得 / 現行仕様 業務ロジック 一覧に含めるバナー
+
+codex
+A15-16 と A16-02 は、仕分けが挙げる既存ケースで、対象の値と除外結果を確認できました。残り3機能の追加ケースとシードを設計書に照らします。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/A15-17.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 65ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-A15-17-001	P1	F01=統率者使用設定が有効&F02=見出しなし&F03=空行なし&F04=解読できない行あり	フォーマットの統率者使用設定=統率者使用設定が有効／カードリストの見出しの行=見出しなし／カードリスト中の空行=空行なし／カード名が一致せず解読できない行=解読できない行あり	フォーマットの統率者使用設定×カードリストの見出しの行×カードリスト中の空行: 統率者使用設定が有効×見出しなし×空行なし；フォーマットの統率者使用設定×カード名が一致せず解読できない行: 統率者使用設定が有効×解読できない行あり
+CB-A15-17-002	P1	F01=統率者使用設定が有効&F02=Deck見出し&F03=空行あり&F04=解読できない行なし	フォーマットの統率者使用設定=統率者使用設定が有効／カードリストの見出しの行=Deck見出し／カードリスト中の空行=空行あり／カード名が一致せず解読できない行=解読できない行なし	フォーマットの統率者使用設定×カードリストの見出しの行×カードリスト中の空行: 統率者使用設定が有効×Deck見出し×空行あり
+CB-A15-17-003	P1	F01=統率者使用設定が有効&F02=Sideboard見出し&F03=空行あり&F04=解読できない行なし	フォーマットの統率者使用設定=統率者使用設定が有効／カードリストの見出しの行=Sideboard見出し／カードリスト中の空行=空行あり／カード名が一致せず解読できない行=解読できない行なし	フォーマットの統率者使用設定×カードリストの見出しの行×カードリスト中の空行: 統率者使用設定が有効×Sideboard見出し×空行あり
+CB-A15-17-004	P1	F01=統率者使用設定が有効&F02=Sideboard見出し&F03=空行なし&F04=解読できない行なし	フォーマットの統率者使用設定=統率者使用設定が有効／カードリストの見出しの行=Sideboard見出し／カードリスト中の空行=空行なし／カード名が一致せず解読できない行=解読できない行なし	フォーマットの統率者使用設定×カードリストの見出しの行×カードリスト中の空行: 統率者使用設定が有効×Sideboard見出し×空行なし
+CB-A15-17-005	P1	F01=統率者使用設定が有効&F02=Commander見出しと続くカード行&F03=空行あり&F04=解読できない行なし	フォーマットの統率者使用設定=統率者使用設定が有効／カードリストの見出しの行=Commander見出しと続くカード行／カードリスト中の空行=空行あり／カード名が一致せず解読できない行=解読できない行なし	フォーマットの統率者使用設定×カードリストの見出しの行×カードリスト中の空行: 統率者使用設定が有効×Commander見出しと続くカード行×空行あり
+CB-A15-17-006	P1	F01=統率者使用設定が有効&F02=Commander見出しと続くカード行&F03=空行なし&F04=解読できない行なし	フォーマットの統率者使用設定=統率者使用設定が有効／カードリストの見出しの行=Commander見出しと続くカード行／カードリスト中の空行=空行なし／カード名が一致せず解読できない行=解読できない行なし	フォーマットの統率者使用設定×カードリストの見出しの行×カードリスト中の空行: 統率者使用設定が有効×Commander見出しと続くカード行×空行なし
+CB-A15-17-007	P1	F01=統率者使用設定が無効&F02=Deck見出し&F03=空行あり&F04=解読できない行なし	フォーマットの統率者使用設定=統率者使用設定が無効／カードリストの見出しの行=Deck見出し／カードリスト中の空行=空行あり／カード名が一致せず解読できない行=解読できない行なし	フォーマットの統率者使用設定×カードリストの見出しの行×カードリスト中の空行: 統率者使用設定が無効×Deck見出し×空行あり
+CB-A15-17-008	P1	F01=統率者使用設定が無効&F02=Deck見出し&F03=空行なし&F04=解読できない行なし	フォーマットの統率者使用設定=統率者使用設定が無効／カードリストの見出しの行=Deck見出し／カードリスト中の空行=空行なし／カード名が一致せず解読できない行=解読できない行なし	フォーマットの統率者使用設定×カードリストの見出しの行×カードリスト中の空行: 統率者使用設定が無効×Deck見出し×空行なし
+CB-A15-17-009	P1	F01=統率者使用設定が無効&F02=Sideboard見出し&F03=空行あり&F04=解読できない行なし	フォーマットの統率者使用設定=統率者使用設定が無効／カードリストの見出しの行=Sideboard見出し／カードリスト中の空行=空行あり／カード名が一致せず解読できない行=解読できない行なし	フォーマットの統率者使用設定×カードリストの見出しの行×カードリスト中の空行: 統率者使用設定が無効×Sideboard見出し×空行あり
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A15-17_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 27ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	カードリストを解読してデッキを新規登録する	認証用トークンとフォーマットの識別子つきでデッキ登録インポートAPIへ要求を送る	応答本文とDB（デッキと採用カード）	L0006-L0011,L0013,L0017,L0030
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A15-17_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 5ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	フォーマットの統率者使用設定	統率者使用設定が有効｜統率者使用設定が無効	統率者使用設定が有効: 行の保存先は統率領域から始まる／統率者使用設定が無効: 保存先はメインボードから始まり統率領域に保存する行があると入力不正（HTTP 400）	L0008,L0010	この機能
+F02	P1	カードリストの見出しの行	見出しなし｜Deck見出し｜Sideboard見出し｜Commander見出しと続くカード行	見出しなし: 開始の保存先のまま空行で切り替わる／Deck見出し: 以降はメインボード／Sideboard見出し: 以降はサイドボード／Commander見出しと続くカード行: 見出しの後のカード行は統率領域	L0010	この機能
+F03	P1	カードリスト中の空行	空行あり｜空行なし	空行あり: Deck見出しが無いとき統率領域から以降はメインボード・サイドボード見出しが無いときメインボードから以降はサイドボード／空行なし: 切り替わらない	L0010	この機能
+F04	P1	カード名が一致せず解読できない行	解読できない行あり｜解読できない行なし	解読できない行あり: 登録は完了しHTTP 206で該当行の行番号を返す／解読できない行なし: HTTP 200	L0011,L0030	この機能
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A15-17_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 95ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02+F03	効き合う	L0010	保存先の開始（統率領域かメインボード）は統率者使用設定で決まり、見出しと空行がそこから以降の保存先を切り替える。無効で統率領域に保存する行があると400
+P1	F01+F04	効き合う	L0010,L0011	無効で統率領域に保存する行があると400で登録されず、解読できない行があっても206にならない
+P1	F02+F04	設計書が決めていない	L0011	行番号を数えるとき見出しの行を含むか書かれていない
+P1	F03+F04	設計書が決めていない	L0011	行番号を数えるとき空行を含むか書かれていない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A15-17_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 340ms:
+処理ID	組	種別	根拠	理由
+P1	F02=Deck見出し&F04=解読できない行あり	正解未定	L0011	行番号に見出しの行を数えるか決まらない
+P1	F02=Sideboard見出し&F04=解読できない行あり	正解未定	L0011	行番号に見出しの行を数えるか決まらない
+P1	F02=Commander見出しと続くカード行&F04=解読できない行あり	正解未定	L0011	行番号に見出しの行を数えるか決まらない
+P1	F03=空行あり&F04=解読できない行あり	正解未定	L0011	行番号に空行を数えるか決まらない
+P1	F01=統率者使用設定が無効&F02=Commander見出しと続くカード行	打ち切り	L0010	統率者使用設定が無効でCommander見出しの後に統率領域へ保存するカード行があると入力不正（HTTP 400）で登録されず、F03・F04の値は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-17/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 97ms:
+##### 0515 a15-17 A15-17 デッキ登録インポート ／ API デッキビルダー — デッキ登録インポート
+L0001	Source:
+L0002	functions/pf-api/a15-17_api_deck_builder_deck_import_register.md
+L0003	A15-17 デッキ登録インポート ／ API デッキビルダー — デッキ登録インポート
+L0004	業務ロジック
+L0005	登録対象
+L0006	パスにデッキ識別子を持たないときは新規デッキを対象とする。既存デッキの取得と所有者の照合は行わない。認証したプレイヤーを新規デッキの所有者として登録する。
+L0007	カードリストの解読
+L0008	フォーマットの識別子からフォーマットを取得し、そのフォーマットの統率者使用設定に応じてカードリストを解読する。カードリストは枚数とカード名の行を並べた形式とする。未指定または空のときは空のカード配列として扱う。
+L0009	カードリストの行数が500行を超えるときは入力不正（HTTP 400）とする。
+L0010	カードリストの行の保存先は、統率者使用設定が有効なフォーマットでは統率領域から、無効なフォーマットではメインボードから始める。 「Deck」「デッキ」だけの行より後の行は、メインボードに保存する。 「Sideboard」「サイドボード」「相棒」「Companion」だけの行より後の行は、サイドボードに保存する。 「Commander」「統率者」だけの行より後の行は、統率領域に保存する。 カードリストに「Deck」「デッキ」だけの行が無いときは、統率領域への保存中に空行があると、以降の行をメインボードに保存する。 カードリストにサイドボードの見出しの行が無いときは、メインボードへの保存中に空行があると、以降の行をサイドボードに保存する。 統率者使用設定が無効なフォーマットで統率領域に保存する行があるときは、入力不正（HTTP 400）とする。
+L0011	カード名が一致せず解読できない行があるときは、登録は完了させたうえで処理結果コードを206に切り替え、該当行の行番号を返す。行番号は1から数える。
+L0012	登録の可否
+L0013	解読したカードとデッキ名・公開区分・アーキタイプ等で新規デッキを組み立て、検証を通過したときだけ保存する。検証エラーは入力不正（HTTP 400）、その他の例外は処理失敗（HTTP 500）とする。
+L0014	保存したときは、当該デッキの下書きとして保持している一時保存も削除する。
+L0015	一時保存の保存先は Redis とする。 一時保存のキーは、「deck_」に登録したデッキのデッキIDを付けた値とする。
+L0016	応答の内容
+L0017	新規デッキの識別子を返す。公開区分が限定公開のときだけ、表示用トークンをあわせて返す。限定公開以外のときは表示用トークンを返さない。
+L0018	他機能との境界
+L0019	認証用トークンを検証し、トークンに含まれる顧客IDからプレイヤーを引く。署名方式はHS256とする。トークンが無い、署名が不正、該当するプレイヤーが無いときは、いずれも認証拒否（HTTP 401）とする。トークンの原値と署名シークレットは本書に記載しない。
+L0020	デッキビルダーアプリを識別する要求項目は無い。 有効な認証用トークンがあれば、呼び出し元のクライアントによらず登録を受け付ける。
+L0021	エラー時の扱い
+L0022	エラー内容	処理
+L0023	トークンが無い、署名が不正、該当するプレイヤーが無い	認証拒否（HTTP 401）とし、処理結果コードとメッセージ（「Access Token is incorrect」または「Authentication failed」）を返す
+L0024	必須項目不足・不正値、またはカードリストが500行を超える	入力不正（HTTP 400）とし、処理結果コードと検証エラーメッセージを返す
+L0025	解読できない行がある	登録は完了させ、処理結果コード206として該当行の行番号を返す
+L0026	保存処理中のその他の例外	処理失敗（HTTP 500）とし、処理結果コードと例外メッセージを返す
+L0027	入出力
+L0028	種類	内容
+L0029	入力	認証用トークン（ヘッダ・必須）とフォーマットの識別子（必須）。カードリスト・デッキ名・公開区分・アーキタイプの識別子・デッキ画像に用いるカードの識別子・キャンペーンタグの識別子は、いずれも指定が無いときは扱わない
+L0030	成功時出力	全行を解読できたときはHTTP 200、解読できない行があるときはHTTP 206。処理結果コード・処理結果メッセージ（「Deck registration success by import」）・登録したデッキの識別子。限定公開のときだけ表示用トークン、解読できない行があるときだけ該当行の行番号
+L0031	失敗時出力	認証できないときはHTTP 401、入力が不正なときはHTTP 400、その他の例外のときはHTTP 500。処理結果コードとメッセージ
+L0032	キャンペーンタグの識別子は、単一値と配列のどちらのときも受け取る。
+L0033	入出力: 永続化
+L0034	操作	契機
+L0035	追加	検証を通過したとき。新規デッキと採用カードを登録する
+L0036	削除	登録したとき。当該デッキの下書きの一時保存を削除する
+L0037	リニューアル後の仕様
+L0038	表示メッセージ
+L0039	本APIは画面を持たない。応答本文の処理結果メッセージは入出力の節を正とする。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/A15-17_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 95ms:
+項目ID	扱い	テストID	理由
+CB-A15-17-001	ケース化	IT-A15-17-031	
+CB-A15-17-002	ケース化	IT-A15-17-032	
+CB-A15-17-003	ケース化	IT-A15-17-033	
+CB-A15-17-004	ケース化	IT-A15-17-034	
+CB-A15-17-005	ケース化	IT-A15-17-035	
+CB-A15-17-006	ケース化	IT-A15-17-036	
+CB-A15-17-007	ケース化	IT-A15-17-037	
+CB-A15-17-008	ケース化	IT-A15-17-038	
+CB-A15-17-009	ケース化	IT-A15-17-039	
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/A15-17_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 607ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-A15-17-031	IT-0366	REQ-0515-sheet-17-R007		ITA-11	P1	ブラウザ+DB確認	S-A15-17-CBAUTH-031,S-A15-17-AUTH-CONFIG,S-A15-17-COMMANDER,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS,S-A15-17-CBLIST-031	① 顧客ID 〔顧客ID-A1517-031〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-031〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB031-Deck」は0件である（S-A15-17-CBAUTH-031）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定が有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）／⑦ 開始時に存在しないカード「存在しないカードA1517-CB031Z」を未登録にし、1行目が「1 結合試験カードC」、2行目が「1 存在しないカードA1517-CB031Z」のカードリストを用意する（S-A15-17-CBLIST-031）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-031の有効な認証トークンをヘッダへ設定する／3. フォーマットに「統率者試験フォーマット」、デッキ名に「A1517-CB031-Deck」、公開区分に「公開」およびS-A15-17-CBLIST-031のカードリスト（「1 結合試験カードC」・「1 存在しないカードA1517-CB031Z」の2行。見出しなし・空行なし・解読できない行あり）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB031-Deck」のデッキと採用カードを確認する	HTTPステータス206となり、応答本文に処理結果コード206、登録したデッキの識別子および解読できない行の行番号2だけが含まれ、DBでデッキ名「A1517-CB031-Deck」の採用カードが結合試験カードC 1枚だけ統率領域として保存されること	0515 A15-17 デッキ登録インポート / 業務ロジック カードリストの解読	CB-A15-17-001
+IT-A15-17-032	IT-0366	REQ-0515-sheet-17-R007		ITA-11	P1	ブラウザ+DB確認	S-A15-17-CBAUTH-032,S-A15-17-AUTH-CONFIG,S-A15-17-COMMANDER,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-032〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-032〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB032-Deck」は0件である（S-A15-17-CBAUTH-032）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定が有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-032の有効な認証トークンをヘッダへ設定する／3. フォーマットに「統率者試験フォーマット」、デッキ名に「A1517-CB032-Deck」、公開区分に「公開」、カードリストに「1 結合試験カードC」・「Deck」・「2 結合試験カードA」・空行・「1 結合試験カードB」の5行（Deck見出し・空行あり・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB032-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB032-Deck」の採用カードが、結合試験カードCは統率領域、結合試験カードAはメインボード（枚数2）、結合試験カードBはサイドボードとして保存されること	0515 A15-17 デッキ登録インポート / 業務ロジック カードリストの解読	CB-A15-17-002
+IT-A15-17-033	IT-0366	REQ-0515-sheet-17-R007		ITA-11	P1	ブラウザ+DB確認	S-A15-17-CBAUTH-033,S-A15-17-AUTH-CONFIG,S-A15-17-COMMANDER,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-033〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-033〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB033-Deck」は0件である（S-A15-17-CBAUTH-033）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定が有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-033の有効な認証トークンをヘッダへ設定する／3. フォーマットに「統率者試験フォーマット」、デッキ名に「A1517-CB033-Deck」、公開区分に「公開」、カードリストに「1 結合試験カードC」・空行・「2 結合試験カードA」・「Sideboard」・「1 結合試験カードB」の5行（Sideboard見出し・空行あり・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB033-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB033-Deck」の採用カードが、結合試験カードCは統率領域、結合試験カードAはメインボード（枚数2）、結合試験カードBはサイドボードとして保存されること	0515 A15-17 デッキ登録インポート / 業務ロジック カードリストの解読	CB-A15-17-003
+IT-A15-17-034	IT-0366	REQ-0515-sheet-17-R007		ITA-11	P1	ブラウザ+DB確認	S-A15-17-CBAUTH-034,S-A15-17-AUTH-CONFIG,S-A15-17-COMMANDER,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-034〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-034〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB034-Deck」は0件である（S-A15-17-CBAUTH-034）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定が有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-034の有効な認証トークンをヘッダへ設定する／3. フォーマットに「統率者試験フォーマット」、デッキ名に「A1517-CB034-Deck」、公開区分に「公開」、カードリストに「1 結合試験カードC」・「Sideboard」・「1 結合試験カードB」・「2 結合試験カードA」の4行（Sideboard見出し・空行なし・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB034-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB034-Deck」の採用カードが、結合試験カードCは統率領域、結合試験カードBは枚数1・結合試験カードAは枚数2のサイドボードとして保存されること	0515 A15-17 デッキ登録インポート / 業務ロジック カードリストの解読	CB-A15-17-004
+IT-A15-17-035	IT-0366	REQ-0515-sheet-17-R007		ITA-11	P1	ブラウザ+DB確認	S-A15-17-CBAUTH-035,S-A15-17-AUTH-CONFIG,S-A15-17-COMMANDER,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-035〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-035〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB035-Deck」は0件である（S-A15-17-CBAUTH-035）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定が有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-035の有効な認証トークンをヘッダへ設定する／3. フォーマットに「統率者試験フォーマット」、デッキ名に「A1517-CB035-Deck」、公開区分に「公開」、カードリストに「Commander」・「1 結合試験カードC」・空行・「2 結合試験カードA」の4行（Commander見出しと続くカード行・空行あり・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB035-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB035-Deck」の採用カードが、結合試験カードCは統率領域、結合試験カードAはメインボード（枚数2）として保存されること	0515 A15-17 デッキ登録インポート / 業務ロジック カードリストの解読	CB-A15-17-005
+IT-A15-17-036	IT-0366	REQ-0515-sheet-17-R007		ITA-11	P1	ブラウザ+DB確認	S-A15-17-CBAUTH-036,S-A15-17-AUTH-CONFIG,S-A15-17-COMMANDER,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-036〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-036〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB036-Deck」は0件である（S-A15-17-CBAUTH-036）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定が有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-036の有効な認証トークンをヘッダへ設定する／3. フォーマットに「統率者試験フォーマット」、デッキ名に「A1517-CB036-Deck」、公開区分に「公開」、カードリストに「Commander」・「1 結合試験カードC」の2行（Commander見出しと続くカード行・空行なし・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB036-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB036-Deck」の採用カードが、結合試験カードC 1枚だけ統率領域として保存されること	0515 A15-17 デッキ登録インポート / 業務ロジック カードリストの解読	CB-A15-17-006
+IT-A15-17-037	IT-0366	REQ-0515-sheet-17-R007		ITA-11	P1	ブラウザ+DB確認	S-A15-17-CBAUTH-037,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-037〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-037〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB037-Deck」は0件である（S-A15-17-CBAUTH-037）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定が無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-037の有効な認証トークンをヘッダへ設定する／3. フォーマットに「結合試験フォーマット」、デッキ名に「A1517-CB037-Deck」、公開区分に「公開」、カードリストに「Deck」・「2 結合試験カードA」・空行・「1 結合試験カードB」の4行（Deck見出し・空行あり・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB037-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB037-Deck」の採用カードが、結合試験カードAはメインボード（枚数2）、結合試験カードBはサイドボードとして保存されること	0515 A15-17 デッキ登録インポート / 業務ロジック カードリストの解読	CB-A15-17-007
+IT-A15-17-038	IT-0366	REQ-0515-sheet-17-R007		ITA-11	P1	ブラウザ+DB確認	S-A15-17-CBAUTH-038,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-038〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-038〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB038-Deck」は0件である（S-A15-17-CBAUTH-038）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定が無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-038の有効な認証トークンをヘッダへ設定する／3. フォーマットに「結合試験フォーマット」、デッキ名に「A1517-CB038-Deck」、公開区分に「公開」、カードリストに「Deck」・「2 結合試験カードA」・「1 結合試験カードB」の3行（Deck見出し・空行なし・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB038-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB038-Deck」の採用カードが、結合試験カードAはメインボード（枚数2）、結合試験カードBはメインボード（枚数1）として保存されること	0515 A15-17 デッキ登録インポート / 業務ロジック カードリストの解読	CB-A15-17-008
+IT-A15-17-039	IT-0366	REQ-0515-sheet-17-R007		ITA-11	P1	ブラウザ+DB確認	S-A15-17-CBAUTH-039,S-A15-17-AUTH-CONFIG,S-A15-17-FORMAT,S-A15-17-CARDS,S-A15-17-COMMANDER,S-A15-17-SCOPES,S-A15-17-DECK-MASTERS	① 顧客ID 〔顧客ID-A1517-039〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-039〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB039-Deck」は0件である（S-A15-17-CBAUTH-039）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定が無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／⑥ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑦ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-039の有効な認証トークンをヘッダへ設定する／3. フォーマットに「結合試験フォーマット」、デッキ名に「A1517-CB039-Deck」、公開区分に「公開」、カードリストに「1 結合試験カードA」・空行・「1 結合試験カードB」・「Sideboard」・「1 結合試験カードC」の5行（Sideboard見出し・空行あり・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB039-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB039-Deck」の採用カードが、結合試験カードAと結合試験カードBはメインボード、結合試験カードCはサイドボードとして保存されること	0515 A15-17 デッキ登録インポート / 業務ロジック カードリストの解読	CB-A15-17-009
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/A15-17_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 315ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-A15-17-CBLIST-031	API入力	解読不能行ありカードリスト(CB031)	1行目「1 結合試験カードC」／2行目「1 存在しないカードA1517-CB031Z」	IT-A15-17-031専用。統率者使用設定有効のフォーマットで、見出しも空行も無く2行目だけ解読できないカードリスト	記載した2行の固定要求データを作成する。ケース開始時にカードマスタを確認し、名称「存在しないカードA1517-CB031Z」のカードがあれば削除する	ケース専用
+S-A15-17-CBAUTH-031	顧客・プレイヤー・デッキ状態	組合せ確認用プレイヤー(CB031)	顧客IDは登録時に画面が振る（控える。以下〔顧客ID-A1517-031〕）／プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-A1517-031〕）／稼働中／顧客とプレイヤーの対応あり／有効な認証トークンを取得可能／デッキ名「A1517-CB031-Deck」は0件	IT-A15-17-031専用。統率者有効の見出し空行なし解読不能ありの組を確かめるデッキを所有する	フロントの新規会員登録画面で、お名前(姓)に「結合」、お名前(名)に「A1517-CB031」、メールアドレスとメールアドレス(確認)に「cba1517-031@example.test」、パスワードとパスワード(確認)に「ItA1517-CB031-Pass」、フリガナ(姓)・フリガナ(名)・生年月日・国・郵便番号・住所(都道府県)・住所1・住所2・電話番号に任意の有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。届いた仮会員登録完了メールのURLを開いて本会員登録を完了する（顧客に対応するプレイヤーは会員登録のときに画面が作る）。管理画面の会員一覧をメールアドレス「cba1517-031@example.test」で検索し、その行に表示された会員IDを控える（〔顧客ID-A1517-031〕）。管理画面のデッキ登録画面でプレイヤーの「検索する」を押し、プレイヤー検索に「A1517-CB031」を入れて「検索」を押し、表示された行のIDを控える（〔プレイヤーID-A1517-031〕。デッキは登録せずに画面を離れる）。デッキ名「A1517-CB031-Deck」の既存デッキは画面から探して削除できないため、あればDBへ直接接続して採用カードなどの関連データとともに削除する。ケース開始直前に、デッキビルダーのログインフォームでメールアドレス「cba1517-031@example.test」とパスワード「ItA1517-CB031-Pass」を入れてログインし、開発者ツールのNetworkに表示されたログインの応答からアクセストークンを取得する	ケース専用
+S-A15-17-CBAUTH-032	顧客・プレイヤー・デッキ状態	組合せ確認用プレイヤー(CB032)	顧客IDは登録時に画面が振る（控える。以下〔顧客ID-A1517-032〕）／プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-A1517-032〕）／稼働中／顧客とプレイヤーの対応あり／有効な認証トークンを取得可能／デッキ名「A1517-CB032-Deck」は0件	IT-A15-17-032専用。統率者有効のDeck見出し空行ありの組を確かめるデッキを所有する	フロントの新規会員登録画面で、お名前(姓)に「結合」、お名前(名)に「A1517-CB032」、メールアドレスとメールアドレス(確認)に「cba1517-032@example.test」、パスワードとパスワード(確認)に「ItA1517-CB032-Pass」、フリガナ(姓)・フリガナ(名)・生年月日・国・郵便番号・住所(都道府県)・住所1・住所2・電話番号に任意の有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。届いた仮会員登録完了メールのURLを開いて本会員登録を完了する（顧客に対応するプレイヤーは会員登録のときに画面が作る）。管理画面の会員一覧をメールアドレス「cba1517-032@example.test」で検索し、その行に表示された会員IDを控える（〔顧客ID-A1517-032〕）。管理画面のデッキ登録画面でプレイヤーの「検索する」を押し、プレイヤー検索に「A1517-CB032」を入れて「検索」を押し、表示された行のIDを控える（〔プレイヤーID-A1517-032〕。デッキは登録せずに画面を離れる）。デッキ名「A1517-CB032-Deck」の既存デッキは画面から探して削除できないため、あればDBへ直接接続して採用カードなどの関連データとともに削除する。ケース開始直前に、デッキビルダーのログインフォームでメールアドレス「cba1517-032@example.test」とパスワード「ItA1517-CB032-Pass」を入れてログインし、開発者ツールのNetworkに表示されたログインの応答からアクセストークンを取得する	ケース専用
+S-A15-17-CBAUTH-033	顧客・プレイヤー・デッキ状態	組合せ確認用プレイヤー(CB033)	顧客IDは登録時に画面が振る（控える。以下〔顧客ID-A1517-033〕）／プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-A1517-033〕）／稼働中／顧客とプレイヤーの対応あり／有効な認証トークンを取得可能／デッキ名「A1517-CB033-Deck」は0件	IT-A15-17-033専用。統率者有効のSideboard見出し空行ありの組を確かめるデッキを所有する	フロントの新規会員登録画面で、お名前(姓)に「結合」、お名前(名)に「A1517-CB033」、メールアドレスとメールアドレス(確認)に「cba1517-033@example.test」、パスワードとパスワード(確認)に「ItA1517-CB033-Pass」、フリガナ(姓)・フリガナ(名)・生年月日・国・郵便番号・住所(都道府県)・住所1・住所2・電話番号に任意の有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。届いた仮会員登録完了メールのURLを開いて本会員登録を完了する（顧客に対応するプレイヤーは会員登録のときに画面が作る）。管理画面の会員一覧をメールアドレス「cba1517-033@example.test」で検索し、その行に表示された会員IDを控える（〔顧客ID-A1517-033〕）。管理画面のデッキ登録画面でプレイヤーの「検索する」を押し、プレイヤー検索に「A1517-CB033」を入れて「検索」を押し、表示された行のIDを控える（〔プレイヤーID-A1517-033〕。デッキは登録せずに画面を離れる）。デッキ名「A1517-CB033-Deck」の既存デッキは画面から探して削除できないため、あればDBへ直接接続して採用カードなどの関連データとともに削除する。ケース開始直前に、デッキビルダーのログインフォームでメールアドレス「cba1517-033@example.test」とパスワード「ItA1517-CB033-Pass」を入れてログインし、開発者ツールのNetworkに表示されたログインの応答からアクセストークンを取得する	ケース専用
+S-A15-17-CBAUTH-034	顧客・プレイヤー・デッキ状態	組合せ確認用プレイヤー(CB034)	顧客IDは登録時に画面が振る（控える。以下〔顧客ID-A1517-034〕）／プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-A1517-034〕）／稼働中／顧客とプレイヤーの対応あり／有効な認証トークンを取得可能／デッキ名「A1517-CB034-Deck」は0件	IT-A15-17-034専用。統率者有効のSideboard見出し空行なしの組を確かめるデッキを所有する	フロントの新規会員登録画面で、お名前(姓)に「結合」、お名前(名)に「A1517-CB034」、メールアドレスとメールアドレス(確認)に「cba1517-034@example.test」、パスワードとパスワード(確認)に「ItA1517-CB034-Pass」、フリガナ(姓)・フリガナ(名)・生年月日・国・郵便番号・住所(都道府県)・住所1・住所2・電話番号に任意の有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。届いた仮会員登録完了メールのURLを開いて本会員登録を完了する（顧客に対応するプレイヤーは会員登録のときに画面が作る）。管理画面の会員一覧をメールアドレス「cba1517-034@example.test」で検索し、その行に表示された会員IDを控える（〔顧客ID-A1517-034〕）。管理画面のデッキ登録画面でプレイヤーの「検索する」を押し、プレイヤー検索に「A1517-CB034」を入れて「検索」を押し、表示された行のIDを控える（〔プレイヤーID-A1517-034〕。デッキは登録せずに画面を離れる）。デッキ名「A1517-CB034-Deck」の既存デッキは画面から探して削除できないため、あればDBへ直接接続して採用カードなどの関連データとともに削除する。ケース開始直前に、デッキビルダーのログインフォームでメールアドレス「cba1517-034@example.test」とパスワード「ItA1517-CB034-Pass」を入れてログインし、開発者ツールのNetworkに表示されたログインの応答からアクセストークンを取得する	ケース専用
+S-A15-17-CBAUTH-035	顧客・プレイヤー・デッキ状態	組合せ確認用プレイヤー(CB035)	顧客IDは登録時に画面が振る（控える。以下〔顧客ID-A1517-035〕）／プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-A1517-035〕）／稼働中／顧客とプレイヤーの対応あり／有効な認証トークンを取得可能／デッキ名「A1517-CB035-Deck」は0件	IT-A15-17-035専用。統率者有効のCommander見出し空行ありの組を確かめるデッキを所有する	フロントの新規会員登録画面で、お名前(姓)に「結合」、お名前(名)に「A1517-CB035」、メールアドレスとメールアドレス(確認)に「cba1517-035@example.test」、パスワードとパスワード(確認)に「ItA1517-CB035-Pass」、フリガナ(姓)・フリガナ(名)・生年月日・国・郵便番号・住所(都道府県)・住所1・住所2・電話番号に任意の有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。届いた仮会員登録完了メールのURLを開いて本会員登録を完了する（顧客に対応するプレイヤーは会員登録のときに画面が作る）。管理画面の会員一覧をメールアドレス「cba1517-035@example.test」で検索し、その行に表示された会員IDを控える（〔顧客ID-A1517-035〕）。管理画面のデッキ登録画面でプレイヤーの「検索する」を押し、プレイヤー検索に「A1517-CB035」を入れて「検索」を押し、表示された行のIDを控える（〔プレイヤーID-A1517-035〕。デッキは登録せずに画面を離れる）。デッキ名「A1517-CB035-Deck」の既存デッキは画面から探して削除できないため、あればDBへ直接接続して採用カードなどの関連データとともに削除する。ケース開始直前に、デッキビルダーのログインフォームでメールアドレス「cba1517-035@example.test」とパスワード「ItA1517-CB035-Pass」を入れてログインし、開発者ツールのNetworkに表示されたログインの応答からアクセストークンを取得する	ケース専用
+S-A15-17-CBAUTH-036	顧客・プレイヤー・デッキ状態	組合せ確認用プレイヤー(CB036)	顧客IDは登録時に画面が振る（控える。以下〔顧客ID-A1517-036〕）／プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-A1517-036〕）／稼働中／顧客とプレイヤーの対応あり／有効な認証トークンを取得可能／デッキ名「A1517-CB036-Deck」は0件	IT-A15-17-036専用。統率者有効のCommander見出し空行なしの組を確かめるデッキを所有する	フロントの新規会員登録画面で、お名前(姓)に「結合」、お名前(名)に「A1517-CB036」、メールアドレスとメールアドレス(確認)に「cba1517-036@example.test」、パスワードとパスワード(確認)に「ItA1517-CB036-Pass」、フリガナ(姓)・フリガナ(名)・生年月日・国・郵便番号・住所(都道府県)・住所1・住所2・電話番号に任意の有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。届いた仮会員登録完了メールのURLを開いて本会員登録を完了する（顧客に対応するプレイヤーは会員登録のときに画面が作る）。管理画面の会員一覧をメールアドレス「cba1517-036@example.test」で検索し、その行に表示された会員IDを控える（〔顧客ID-A1517-036〕）。管理画面のデッキ登録画面でプレイヤーの「検索する」を押し、プレイヤー検索に「A1517-CB036」を入れて「検索」を押し、表示された行のIDを控える（〔プレイヤーID-A1517-036〕。デッキは登録せずに画面を離れる）。デッキ名「A1517-CB036-Deck」の既存デッキは画面から探して削除できないため、あればDBへ直接接続して採用カードなどの関連データとともに削除する。ケース開始直前に、デッキビルダーのログインフォームでメールアドレス「cba1517-036@example.test」とパスワード「ItA1517-CB036-Pass」を入れてログインし、開発者ツールのNetworkに表示されたログインの応答からアクセストークンを取得する	ケース専用
+S-A15-17-CBAUTH-037	顧客・プレイヤー・デッキ状態	組合せ確認用プレイヤー(CB037)	顧客IDは登録時に画面が振る（控える。以下〔顧客ID-A1517-037〕）／プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-A1517-037〕）／稼働中／顧客とプレイヤーの対応あり／有効な認証トークンを取得可能／デッキ名「A1517-CB037-Deck」は0件	IT-A15-17-037専用。統率者無効のDeck見出し空行ありの組を確かめるデッキを所有する	フロントの新規会員登録画面で、お名前(姓)に「結合」、お名前(名)に「A1517-CB037」、メールアドレスとメールアドレス(確認)に「cba1517-037@example.test」、パスワードとパスワード(確認)に「ItA1517-CB037-Pass」、フリガナ(姓)・フリガナ(名)・生年月日・国・郵便番号・住所(都道府県)・住所1・住所2・電話番号に任意の有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。届いた仮会員登録完了メールのURLを開いて本会員登録を完了する（顧客に対応するプレイヤーは会員登録のときに画面が作る）。管理画面の会員一覧をメールアドレス「cba1517-037@example.test」で検索し、その行に表示された会員IDを控える（〔顧客ID-A1517-037〕）。管理画面のデッキ登録画面でプレイヤーの「検索する」を押し、プレイヤー検索に「A1517-CB037」を入れて「検索」を押し、表示された行のIDを控える（〔プレイヤーID-A1517-037〕。デッキは登録せずに画面を離れる）。デッキ名「A1517-CB037-Deck」の既存デッキは画面から探して削除できないため、あればDBへ直接接続して採用カードなどの関連データとともに削除する。ケース開始直前に、デッキビルダーのログインフォームでメールアドレス「cba1517-037@example.test」とパスワード「ItA1517-CB037-Pass」を入れてログインし、開発者ツールのNetworkに表示されたログインの応答からアクセストークンを取得する	ケース専用
+S-A15-17-CBAUTH-038	顧客・プレイヤー・デッキ状態	組合せ確認用プレイヤー(CB038)	顧客IDは登録時に画面が振る（控える。以下〔顧客ID-A1517-038〕）／プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-A1517-038〕）／稼働中／顧客とプレイヤーの対応あり／有効な認証トークンを取得可能／デッキ名「A1517-CB038-Deck」は0件	IT-A15-17-038専用。統率者無効のDeck見出し空行なしの組を確かめるデッキを所有する	フロントの新規会員登録画面で、お名前(姓)に「結合」、お名前(名)に「A1517-CB038」、メールアドレスとメールアドレス(確認)に「cba1517-038@example.test」、パスワードとパスワード(確認)に「ItA1517-CB038-Pass」、フリガナ(姓)・フリガナ(名)・生年月日・国・郵便番号・住所(都道府県)・住所1・住所2・電話番号に任意の有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。届いた仮会員登録完了メールのURLを開いて本会員登録を完了する（顧客に対応するプレイヤーは会員登録のときに画面が作る）。管理画面の会員一覧をメールアドレス「cba1517-038@example.test」で検索し、その行に表示された会員IDを控える（〔顧客ID-A1517-038〕）。管理画面のデッキ登録画面でプレイヤーの「検索する」を押し、プレイヤー検索に「A1517-CB038」を入れて「検索」を押し、表示された行のIDを控える（〔プレイヤーID-A1517-038〕。デッキは登録せずに画面を離れる）。デッキ名「A1517-CB038-Deck」の既存デッキは画面から探して削除できないため、あればDBへ直接接続して採用カードなどの関連データとともに削除する。ケース開始直前に、デッキビルダーのログインフォームでメールアドレス「cba1517-038@example.test」とパスワード「ItA1517-CB038-Pass」を入れてログインし、開発者ツールのNetworkに表示されたログインの応答からアクセストークンを取得する	ケース専用
+S-A15-17-CBAUTH-039	顧客・プレイヤー・デッキ状態	組合せ確認用プレイヤー(CB039)	顧客IDは登録時に画面が振る（控える。以下〔顧客ID-A1517-039〕）／プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-A1517-039〕）／稼働中／顧客とプレイヤーの対応あり／有効な認証トークンを取得可能／デッキ名「A1517-CB039-Deck」は0件	IT-A15-17-039専用。統率者無効のSideboard見出し空行ありの組を確かめるデッキを所有する	フロントの新規会員登録画面で、お名前(姓)に「結合」、お名前(名)に「A1517-CB039」、メールアドレスとメールアドレス(確認)に「cba1517-039@example.test」、パスワードとパスワード(確認)に「ItA1517-CB039-Pass」、フリガナ(姓)・フリガナ(名)・生年月日・国・郵便番号・住所(都道府県)・住所1・住所2・電話番号に任意の有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。届いた仮会員登録完了メールのURLを開いて本会員登録を完了する（顧客に対応するプレイヤーは会員登録のときに画面が作る）。管理画面の会員一覧をメールアドレス「cba1517-039@example.test」で検索し、その行に表示された会員IDを控える（〔顧客ID-A1517-039〕）。管理画面のデッキ登録画面でプレイヤーの「検索する」を押し、プレイヤー検索に「A1517-CB039」を入れて「検索」を押し、表示された行のIDを控える（〔プレイヤーID-A1517-039〕。デッキは登録せずに画面を離れる）。デッキ名「A1517-CB039-Deck」の既存デッキは画面から探して削除できないため、あればDBへ直接接続して採用カードなどの関連データとともに削除する。ケース開始直前に、デッキビルダーのログインフォームでメールアドレス「cba1517-039@example.test」とパスワード「ItA1517-CB039-Pass」を入れてログインし、開発者ツールのNetworkに表示されたログインの応答からアクセストークンを取得する	ケース専用
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/A15-17_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 167ms:
+指摘	処置	理由	直した所
+IT-A15-17-032	採用	設計書 L0030「全行を解読できたときはHTTP 200」。解読できない行なしの組なので応答の確認が必要	手順4にNetworkでの応答確認を追加(DB確認は5へ)、期待結果にHTTPステータス200を追加
+IT-A15-17-033	採用	設計書 L0030「全行を解読できたときはHTTP 200」。解読できない行なしの組なので応答の確認が必要	手順4にNetworkでの応答確認を追加(DB確認は5へ)、期待結果にHTTPステータス200を追加
+IT-A15-17-034	採用	設計書 L0030「全行を解読できたときはHTTP 200」。解読できない行なしの組なので応答の確認が必要	手順4にNetworkでの応答確認を追加(DB確認は5へ)、期待結果にHTTPステータス200を追加
+IT-A15-17-035	採用	設計書 L0030「全行を解読できたときはHTTP 200」。解読できない行なしの組なので応答の確認が必要	手順4にNetworkでの応答確認を追加(DB確認は5へ)、期待結果にHTTPステータス200を追加
+IT-A15-17-036	採用	設計書 L0030「全行を解読できたときはHTTP 200」。解読できない行なしの組なので応答の確認が必要	手順4にNetworkでの応答確認を追加(DB確認は5へ)、期待結果にHTTPステータス200を追加
+IT-A15-17-037	採用	設計書 L0030「全行を解読できたときはHTTP 200」。解読できない行なしの組なので応答の確認が必要	手順4にNetworkでの応答確認を追加(DB確認は5へ)、期待結果にHTTPステータス200を追加
+IT-A15-17-038	採用	設計書 L0030「全行を解読できたときはHTTP 200」。解読できない行なしの組なので応答の確認が必要	手順4にNetworkでの応答確認を追加(DB確認は5へ)、期待結果にHTTPステータス200を追加
+IT-A15-17-039	採用	設計書 L0030「全行を解読できたときはHTTP 200」。解読できない行なしの組なので応答の確認が必要	手順4にNetworkでの応答確認を追加(DB確認は5へ)、期待結果にHTTPステータス200を追加
+
+exec
+/bin/bash -lc 'cut -f1,9,10,11 integration_test/casegen/combination/cases/A15-17_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	事前準備	手順	期待結果
+IT-A15-17-031	① 顧客ID 〔顧客ID-A1517-031〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-031〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB031-Deck」は0件である（S-A15-17-CBAUTH-031）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定が有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）／⑦ 開始時に存在しないカード「存在しないカードA1517-CB031Z」を未登録にし、1行目が「1 結合試験カードC」、2行目が「1 存在しないカードA1517-CB031Z」のカードリストを用意する（S-A15-17-CBLIST-031）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-031の有効な認証トークンをヘッダへ設定する／3. フォーマットに「統率者試験フォーマット」、デッキ名に「A1517-CB031-Deck」、公開区分に「公開」およびS-A15-17-CBLIST-031のカードリスト（「1 結合試験カードC」・「1 存在しないカードA1517-CB031Z」の2行。見出しなし・空行なし・解読できない行あり）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB031-Deck」のデッキと採用カードを確認する	HTTPステータス206となり、応答本文に処理結果コード206、登録したデッキの識別子および解読できない行の行番号2だけが含まれ、DBでデッキ名「A1517-CB031-Deck」の採用カードが結合試験カードC 1枚だけ統率領域として保存されること
+IT-A15-17-032	① 顧客ID 〔顧客ID-A1517-032〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-032〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB032-Deck」は0件である（S-A15-17-CBAUTH-032）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定が有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-032の有効な認証トークンをヘッダへ設定する／3. フォーマットに「統率者試験フォーマット」、デッキ名に「A1517-CB032-Deck」、公開区分に「公開」、カードリストに「1 結合試験カードC」・「Deck」・「2 結合試験カードA」・空行・「1 結合試験カードB」の5行（Deck見出し・空行あり・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB032-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB032-Deck」の採用カードが、結合試験カードCは統率領域、結合試験カードAはメインボード（枚数2）、結合試験カードBはサイドボードとして保存されること
+IT-A15-17-033	① 顧客ID 〔顧客ID-A1517-033〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-033〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB033-Deck」は0件である（S-A15-17-CBAUTH-033）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定が有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-033の有効な認証トークンをヘッダへ設定する／3. フォーマットに「統率者試験フォーマット」、デッキ名に「A1517-CB033-Deck」、公開区分に「公開」、カードリストに「1 結合試験カードC」・空行・「2 結合試験カードA」・「Sideboard」・「1 結合試験カードB」の5行（Sideboard見出し・空行あり・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB033-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB033-Deck」の採用カードが、結合試験カードCは統率領域、結合試験カードAはメインボード（枚数2）、結合試験カードBはサイドボードとして保存されること
+IT-A15-17-034	① 顧客ID 〔顧客ID-A1517-034〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-034〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB034-Deck」は0件である（S-A15-17-CBAUTH-034）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定が有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-034の有効な認証トークンをヘッダへ設定する／3. フォーマットに「統率者試験フォーマット」、デッキ名に「A1517-CB034-Deck」、公開区分に「公開」、カードリストに「1 結合試験カードC」・「Sideboard」・「1 結合試験カードB」・「2 結合試験カードA」の4行（Sideboard見出し・空行なし・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB034-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB034-Deck」の採用カードが、結合試験カードCは統率領域、結合試験カードBは枚数1・結合試験カードAは枚数2のサイドボードとして保存されること
+IT-A15-17-035	① 顧客ID 〔顧客ID-A1517-035〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-035〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB035-Deck」は0件である（S-A15-17-CBAUTH-035）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定が有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-035の有効な認証トークンをヘッダへ設定する／3. フォーマットに「統率者試験フォーマット」、デッキ名に「A1517-CB035-Deck」、公開区分に「公開」、カードリストに「Commander」・「1 結合試験カードC」・空行・「2 結合試験カードA」の4行（Commander見出しと続くカード行・空行あり・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB035-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB035-Deck」の採用カードが、結合試験カードCは統率領域、結合試験カードAはメインボード（枚数2）として保存されること
+IT-A15-17-036	① 顧客ID 〔顧客ID-A1517-036〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-036〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB036-Deck」は0件である（S-A15-17-CBAUTH-036）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有B〕（登録時に振られた番号を控えてある）の「統率者試験フォーマット」が統率者使用設定が有効で、カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-036の有効な認証トークンをヘッダへ設定する／3. フォーマットに「統率者試験フォーマット」、デッキ名に「A1517-CB036-Deck」、公開区分に「公開」、カードリストに「Commander」・「1 結合試験カードC」の2行（Commander見出しと続くカード行・空行なし・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB036-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB036-Deck」の採用カードが、結合試験カードC 1枚だけ統率領域として保存されること
+IT-A15-17-037	① 顧客ID 〔顧客ID-A1517-037〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-037〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB037-Deck」は0件である（S-A15-17-CBAUTH-037）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定が無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-037の有効な認証トークンをヘッダへ設定する／3. フォーマットに「結合試験フォーマット」、デッキ名に「A1517-CB037-Deck」、公開区分に「公開」、カードリストに「Deck」・「2 結合試験カードA」・空行・「1 結合試験カードB」の4行（Deck見出し・空行あり・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB037-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB037-Deck」の採用カードが、結合試験カードAはメインボード（枚数2）、結合試験カードBはサイドボードとして保存されること
+IT-A15-17-038	① 顧客ID 〔顧客ID-A1517-038〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-038〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB038-Deck」は0件である（S-A15-17-CBAUTH-038）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定が無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑥ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-038の有効な認証トークンをヘッダへ設定する／3. フォーマットに「結合試験フォーマット」、デッキ名に「A1517-CB038-Deck」、公開区分に「公開」、カードリストに「Deck」・「2 結合試験カードA」・「1 結合試験カードB」の3行（Deck見出し・空行なし・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB038-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB038-Deck」の採用カードが、結合試験カードAはメインボード（枚数2）、結合試験カードBはメインボード（枚数1）として保存されること
+IT-A15-17-039	① 顧客ID 〔顧客ID-A1517-039〕（登録時に振られた番号を控えてある）とプレイヤーID 〔プレイヤーID-A1517-039〕（登録時に振られた番号を控えてある）が対応付けられ、稼働中で有効な認証トークンを取得済みであり、デッキ名「A1517-CB039-Deck」は0件である（S-A15-17-CBAUTH-039）／② 開始時に署名方式をHS256、署名シークレットをテスト環境で保管するA15-17試験値に設定し、発行側と検証側で一致させる（S-A15-17-AUTH-CONFIG）／③ フォーマットID 〔フォーマットID-A1517-共有A〕（登録時に振られた番号を控えてある）の「結合試験フォーマット」が統率者使用設定が無効である（S-A15-17-FORMAT）／④ カードID 〔カードID-A1517-共有A〕（登録時に振られた番号を控えてある）の結合試験カードAとカードID 〔カードID-A1517-共有B〕（登録時に振られた番号を控えてある）の結合試験カードBが利用可能である（S-A15-17-CARDS）／⑤ カードID 〔カードID-A1517-共有C〕（登録時に振られた番号を控えてある）の結合試験カードCが利用可能である（S-A15-17-COMMANDER）／⑥ 公開・非公開・限定公開の各公開区分を識別子で指定できる（S-A15-17-SCOPES）／⑦ ユーザーデッキ種別とメインボード・サイドボード・統率領域が登録済みである（S-A15-17-DECK-MASTERS）	1. ブラウザの開発者ツールを開く／2. S-A15-17-CBAUTH-039の有効な認証トークンをヘッダへ設定する／3. フォーマットに「結合試験フォーマット」、デッキ名に「A1517-CB039-Deck」、公開区分に「公開」、カードリストに「1 結合試験カードA」・空行・「1 結合試験カードB」・「Sideboard」・「1 結合試験カードC」の5行（Sideboard見出し・空行あり・解読できない行なし）を指定してデッキ登録インポートAPIへ要求を送信する／4. Networkで応答を確認する／5. DBでデッキ名「A1517-CB039-Deck」のデッキと採用カードを確認する	HTTPステータス200となり、デッキ名「A1517-CB039-Deck」の採用カードが、結合試験カードAと結合試験カードBはメインボード、結合試験カードCはサイドボードとして保存されること
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/A15-18.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-A15-18-001	P1	F01=統率者使用設定が無効&F02=統率領域のカードを含む&F05=下書きあり	フォーマットの統率者使用設定=統率者使用設定が無効／カードリスト=統率領域のカードを含む／デッキ画像に用いるカード識別子の決まり方=（効かない。画像カードの指定で決まる・アーキタイプの画像で決まる・統率領域のカードで決まるから選ぶ）／カード名が一致せず解読できない行=（効かない）／当該デッキの下書きの一時保存=下書きあり	フォーマットの統率者使用設定×カードリスト×当該デッキの下書きの一時保存: 統率者使用設定が無効×統率領域のカードを含む×下書きあり
+CB-A15-18-002	P1	F01=統率者使用設定が無効&F02=統率領域のカードを含む&F05=下書きなし	フォーマットの統率者使用設定=統率者使用設定が無効／カードリスト=統率領域のカードを含む／デッキ画像に用いるカード識別子の決まり方=（効かない。画像カードの指定で決まる・アーキタイプの画像で決まる・統率領域のカードで決まるから選ぶ）／カード名が一致せず解読できない行=（効かない）／当該デッキの下書きの一時保存=下書きなし	フォーマットの統率者使用設定×カードリスト×当該デッキの下書きの一時保存: 統率者使用設定が無効×統率領域のカードを含む×下書きなし
+CB-A15-18-003	P1	F01=統率者使用設定が有効&F02=省略&F03=画像カードの指定で決まる&F04=解読できない行なし&F05=下書きあり	フォーマットの統率者使用設定=統率者使用設定が有効／カードリスト=省略／デッキ画像に用いるカード識別子の決まり方=画像カードの指定で決まる／カード名が一致せず解読できない行=解読できない行なし／当該デッキの下書きの一時保存=下書きあり	フォーマットの統率者使用設定×カードリスト: 統率者使用設定が有効×省略；フォーマットの統率者使用設定×デッキ画像に用いるカード識別子の決まり方: 統率者使用設定が有効×画像カードの指定で決まる；フォーマットの統率者使用設定×当該デッキの下書きの一時保存: 統率者使用設定が有効×下書きあり；カードリスト×デッキ画像に用いるカード識別子の決まり方: 省略×画像カードの指定で決まる；カードリスト×当該デッキの下書きの一時保存: 省略×下書きあり；デッキ画像に用いるカード識別子の決まり方×当該デッキの下書きの一時保存: 画像カードの指定で決まる×下書きあり；カード名が一致せず解読できない行×当該デッキの下書きの一時保存: 解読できない行なし×下書きあり
+CB-A15-18-004	P1	F01=統率者使用設定が有効&F02=統率領域のカードを含む&F03=画像カードの指定で決まる&F04=解読できない行あり&F05=下書きなし	フォーマットの統率者使用設定=統率者使用設定が有効／カードリスト=統率領域のカードを含む／デッキ画像に用いるカード識別子の決まり方=画像カードの指定で決まる／カード名が一致せず解読できない行=解読できない行あり／当該デッキの下書きの一時保存=下書きなし	フォーマットの統率者使用設定×カード名が一致せず解読できない行: 統率者使用設定が有効×解読できない行あり；フォーマットの統率者使用設定×当該デッキの下書きの一時保存: 統率者使用設定が有効×下書きなし；カードリスト×デッキ画像に用いるカード識別子の決まり方: 統率領域のカードを含む×画像カードの指定で決まる；カードリスト×カード名が一致せず解読できない行: 統率領域のカードを含む×解読できない行あり；カードリスト×当該デッキの下書きの一時保存: 統率領域のカードを含む×下書きなし；デッキ画像に用いるカード識別子の決まり方×カード名が一致せず解読できない行: 画像カードの指定で決まる×解読できない行あり；デッキ画像に用いるカード識別子の決まり方×当該デッキの下書きの一時保存: 画像カードの指定で決まる×下書きなし；カード名が一致せず解読できない行×当該デッキの下書きの一時保存: 解読できない行あり×下書きなし
+CB-A15-18-005	P1	F01=統率者使用設定が無効&F02=統率領域のカードを含まない&F03=アーキタイプの画像で決まる&F04=解読できない行あり&F05=下書きあり	フォーマットの統率者使用設定=統率者使用設定が無効／カードリスト=統率領域のカードを含まない／デッキ画像に用いるカード識別子の決まり方=アーキタイプの画像で決まる／カード名が一致せず解読できない行=解読できない行あり／当該デッキの下書きの一時保存=下書きあり	フォーマットの統率者使用設定×デッキ画像に用いるカード識別子の決まり方: 統率者使用設定が無効×アーキタイプの画像で決まる；フォーマットの統率者使用設定×当該デッキの下書きの一時保存: 統率者使用設定が無効×下書きあり；カードリスト×デッキ画像に用いるカード識別子の決まり方: 統率領域のカードを含まない×アーキタイプの画像で決まる；カードリスト×カード名が一致せず解読できない行: 統率領域のカードを含まない×解読できない行あり；カードリスト×当該デッキの下書きの一時保存: 統率領域のカードを含まない×下書きあり；デッキ画像に用いるカード識別子の決まり方×カード名が一致せず解読できない行: アーキタイプの画像で決まる×解読できない行あり；デッキ画像に用いるカード識別子の決まり方×当該デッキの下書きの一時保存: アーキタイプの画像で決まる×下書きあり；カード名が一致せず解読できない行×当該デッキの下書きの一時保存: 解読できない行あり×下書きあり
+CB-A15-18-006	P1	F01=統率者使用設定が無効&F02=省略&F03=値なしになる&F04=解読できない行なし&F05=下書きなし	フォーマットの統率者使用設定=統率者使用設定が無効／カードリスト=省略／デッキ画像に用いるカード識別子の決まり方=値なしになる／カード名が一致せず解読できない行=解読できない行なし／当該デッキの下書きの一時保存=下書きなし	フォーマットの統率者使用設定×デッキ画像に用いるカード識別子の決まり方: 統率者使用設定が無効×値なしになる；フォーマットの統率者使用設定×当該デッキの下書きの一時保存: 統率者使用設定が無効×下書きなし；カードリスト×デッキ画像に用いるカード識別子の決まり方: 省略×値なしになる；カードリスト×当該デッキの下書きの一時保存: 省略×下書きなし；デッキ画像に用いるカード識別子の決まり方×当該デッキの下書きの一時保存: 値なしになる×下書きなし；カード名が一致せず解読できない行×当該デッキの下書きの一時保存: 解読できない行なし×下書きなし
+CB-A15-18-007	P1	F01=統率者使用設定が有効&F02=統率領域のカードを含む&F03=統率領域のカードで決まる&F04=解読できない行あり&F05=下書きあり	フォーマットの統率者使用設定=統率者使用設定が有効／カードリスト=統率領域のカードを含む／デッキ画像に用いるカード識別子の決まり方=統率領域のカードで決まる／カード名が一致せず解読できない行=解読できない行あり／当該デッキの下書きの一時保存=下書きあり	カードリスト×当該デッキの下書きの一時保存: 統率領域のカードを含む×下書きあり；デッキ画像に用いるカード識別子の決まり方×カード名が一致せず解読できない行: 統率領域のカードで決まる×解読できない行あり；デッキ画像に用いるカード識別子の決まり方×当該デッキの下書きの一時保存: 統率領域のカードで決まる×下書きあり
+CB-A15-18-008	P1	F01=統率者使用設定が有効&F02=統率領域のカードを含まない&F03=アーキタイプの画像で決まる&F04=解読できない行あり&F05=下書きなし	フォーマットの統率者使用設定=統率者使用設定が有効／カードリスト=統率領域のカードを含まない／デッキ画像に用いるカード識別子の決まり方=アーキタイプの画像で決まる／カード名が一致せず解読できない行=解読できない行あり／当該デッキの下書きの一時保存=下書きなし	カードリスト×当該デッキの下書きの一時保存: 統率領域のカードを含まない×下書きなし；デッキ画像に用いるカード識別子の決まり方×当該デッキの下書きの一時保存: アーキタイプの画像で決まる×下書きなし
+CB-A15-18-009	P1	F01=統率者使用設定が有効&F02=省略&F03=アーキタイプの画像で決まる&F04=解読できない行なし&F05=下書きあり	フォーマットの統率者使用設定=統率者使用設定が有効／カードリスト=省略／デッキ画像に用いるカード識別子の決まり方=アーキタイプの画像で決まる／カード名が一致せず解読できない行=解読できない行なし／当該デッキの下書きの一時保存=下書きあり	カードリスト×デッキ画像に用いるカード識別子の決まり方: 省略×アーキタイプの画像で決まる
+CB-A15-18-010	P1	F01=統率者使用設定が有効&F02=統率領域のカードを含む&F03=統率領域のカードで決まる&F04=解読できない行あり&F05=下書きなし	フォーマットの統率者使用設定=統率者使用設定が有効／カードリスト=統率領域のカードを含む／デッキ画像に用いるカード識別子の決まり方=統率領域のカードで決まる／カード名が一致せず解読できない行=解読できない行あり／当該デッキの下書きの一時保存=下書きなし	デッキ画像に用いるカード識別子の決まり方×当該デッキの下書きの一時保存: 統率領域のカードで決まる×下書きなし
+CB-A15-18-011	P1	F01=統率者使用設定が有効&F02=統率領域のカードを含まない&F03=値なしになる&F04=解読できない行あり&F05=下書きあり	フォーマットの統率者使用設定=統率者使用設定が有効／カードリスト=統率領域のカードを含まない／デッキ画像に用いるカード識別子の決まり方=値なしになる／カード名が一致せず解読できない行=解読できない行あり／当該デッキの下書きの一時保存=下書きあり	デッキ画像に用いるカード識別子の決まり方×カード名が一致せず解読できない行: 値なしになる×解読できない行あり；デッキ画像に用いるカード識別子の決まり方×当該デッキの下書きの一時保存: 値なしになる×下書きあり
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A15-18_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	既存デッキをカードリストで上書き更新する	パスに既存デッキの識別子を付け、認証トークンとフォーマットと公開区分つきでデッキ更新インポートAPIへ要求を送る	応答本文とDB（デッキ・採用カード・デッキ画像・キャンペーンタグ・下書き）	L0014-L0028,L0032
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A15-18_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	フォーマットの統率者使用設定	統率者使用設定が有効｜統率者使用設定が無効	統率者使用設定が有効: カードリストの行は統率領域から保存が始まる／統率者使用設定が無効: メインボードから始まる	L0014	この機能
+F02	P1	カードリスト	統率領域のカードを含む｜統率領域のカードを含まない｜省略	統率領域のカードを含む: 統率領域に保存され画像の既定に使われる／統率領域のカードを含まない: 統率領域のカードが無い／省略: 採用カードを0件にする	L0014,L0022,L0025	この機能
+F03	P1	デッキ画像に用いるカード識別子の決まり方	画像カードの指定で決まる｜アーキタイプの画像で決まる｜統率領域のカードで決まる｜値なしになる	画像カードの指定で決まる: 指定したカードの画像で保存／アーキタイプの画像で決まる: 画像カードを省略しアーキタイプを指定したのでアーキタイプの画像で保存／統率領域のカードで決まる: 画像カードもアーキタイプも省略し統率領域のカードの最新の画像で保存／値なしになる: 画像カードもアーキタイプも省略し統率領域のカードも無いので値なしで保存	L0025	この機能
+F04	P1	カード名が一致せず解読できない行	解読できない行あり｜解読できない行なし	解読できない行あり: 更新は完了しHTTP 206で行番号を返す／解読できない行なし: HTTP 200	L0016,L0045	この機能
+F05	P1	当該デッキの下書きの一時保存	下書きあり｜下書きなし	下書きあり: 保存後に削除される／下書きなし: 削除するものが無い	L0018,L0070	この機能
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A15-18_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0010,L0014,L0030	統率者使用設定が無効で統率領域に保存する行があると入力不正（HTTP 400）になり、更新は取り消される。有効なら統率領域に保存される（更新と登録は同一の処理で、デッキ登録インポートL0010が定める）
+P1	F02+F03	効き合う	L0022,L0025	デッキ画像は、画像カードもアーキタイプも省略したとき統率領域のカードの有無で決まり、カードリストを省略または統率領域のカードが無いと値なしになる
+P1	F02+F04	効き合う	L0014,L0016,L0022	カードリストを省略すると行が無く解読できない行も生じない
+P1	F01+F03	関係しない		それぞれ別の項目の保存・応答の判定で、互いの値で結果が変わる定めが設計書に無い
+P1	F01+F04	関係しない		それぞれ別の項目の保存・応答の判定で、互いの値で結果が変わる定めが設計書に無い
+P1	F01+F05	関係しない		下書きの削除は更新が保存されるかで決まる。更新が取り消される組（F01=統率者使用設定が無効&F02=統率領域のカードを含む）は打ち切りに書いて下書きありの値で1回通す
+P1	F02+F05	関係しない		下書きの削除は更新が保存されるかで決まる。更新が取り消される組（F01=統率者使用設定が無効&F02=統率領域のカードを含む）は打ち切りに書いて下書きありの値で1回通す
+P1	F03+F04	関係しない		それぞれ別の項目の保存・応答の判定で、互いの値で結果が変わる定めが設計書に無い
+P1	F03+F05	関係しない		それぞれ別の項目の保存・応答の判定で、互いの値で結果が変わる定めが設計書に無い
+P1	F04+F05	関係しない		それぞれ別の項目の保存・応答の判定で、互いの値で結果が変わる定めが設計書に無い
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A15-18_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	組	種別	根拠	理由
+P1	F02=統率領域のカードを含まない&F03=統率領域のカードで決まる	作れない	L0025	統率領域のカードが無ければ統率領域のカードの画像にはならない
+P1	F02=省略&F03=統率領域のカードで決まる	作れない	L0022,L0025	カードリストを省略すると採用カードは0件で統率領域のカードも無い
+P1	F02=統率領域のカードを含む&F03=値なしになる	作れない	L0025	統率領域のカードがあれば値なしにはならない
+P1	F02=省略&F04=解読できない行あり	作れない	L0014,L0022	カードリストを省略すると行が無く解読できない行は生じない
+P1	F01=統率者使用設定が無効&F02=統率領域のカードを含む&F05=下書きあり	打ち切り	L0010,L0019,L0030,L0032	統率者使用設定が無効で統率領域に保存する行があると入力不正（HTTP 400）で更新は取り消され、当該デッキの下書きは削除されない。画像・解読・ほかの要因の値は結果に効かない
+P1	F01=統率者使用設定が無効&F02=統率領域のカードを含む&F05=下書きなし	打ち切り	L0010,L0019,L0030,L0032	統率者使用設定が無効で統率領域に保存する行があると入力不正（HTTP 400）で更新は取り消される。下書きが無いので削除の有無は確かめられず、ほかの要因の値は結果に効かない（下書きありの行とあわせて、この組の全値を打ち切りにするため）
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A15-18/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0515 a15-18 A15-18 デッキ更新インポート ／ API デッキビルダー — デッキ更新インポート
+L0001	Source:
+L0002	functions/pf-api/a15-18_api_deck_builder_deck_import_update.md
+L0003	A15-18 デッキ更新インポート ／ API デッキビルダー — デッキ更新インポート
+L0004	業務ロジック
+L0005	更新できる条件
+L0006	順序	判定	結果
+L0007	1	認証トークンが無い、署名が不正、またはトークンの顧客IDに対応するプレイヤーがない	認証拒否（HTTP 401）
+L0008	2	パスで指定したデッキ識別子に一致するデッキがない	該当なし（HTTP 404）
+L0009	3	デッキの所有プレイヤーが認証したプレイヤーと一致しない	認証拒否（HTTP 401）
+L0010	4	上記以外	更新を実行する
+L0011	認証は要求ヘッダのトークンを検証し、その利用者IDに対応するプレイヤーを特定する。署名方式はHS256とする。トークンの原値と署名の秘密値は本書に記載しない。
+L0012	デッキビルダーアプリを識別する要求項目は無い。 有効な認証トークンを持つデッキの所有者であれば、呼び出し元のクライアントによらず更新を受け付ける。
+L0013	カードリストの解読
+L0014	カードリストは、枚数とカード名の行を並べたテキストである。指定されたフォーマットの統率者使用設定に応じて解読し、カードの配列に変換する。カードリストの行数の上限は500行で、超過時は入力不正（HTTP 400）とする。カードリストが未指定または空のときは、空のカード配列として扱う。
+L0015	カードリストの行は、メインボード・サイドボード・統率領域のいずれかとして保存する。 カードリストの行を、メイビー・アトラクション・ステッカーとして保存することは無い。
+L0016	カード名が一致せず解読できない行があるときも更新は完了させ、処理結果コードを206に切り替えて該当行の行番号を応答に含める。行番号は1始まりとする。
+L0017	更新の内容
+L0018	既存デッキ配下のデッキカード・メイビー・アトラクション・ステッカーを初期化したうえで、解読したカードとデッキ名・公開区分・アーキタイプ識別子などで内容を組み立て直す。入力検証を通過したときに保存し、あわせて当該デッキの下書きを削除する。
+L0019	初期化の後に入力検証エラーまたは保存中の例外が起きたときは、初期化を含めて更新をすべて取り消し、更新前の状態に戻す。 このとき当該デッキの下書きは削除しない。
+L0020	任意項目を省略したときは、既存の値を引き継がず、次の値で保存する。
+L0021	省略した項目	更新後の値
+L0022	カードリスト	採用カードを0件にする
+L0023	デッキ名	値なし
+L0024	アーキタイプ識別子	値なし
+L0025	デッキ画像に用いるカード識別子	アーキタイプを指定したときはアーキタイプの画像。それ以外は、カードリストの統率領域のカードの最新のカード画像。統率領域のカードが無いときは値なし
+L0026	キャンペーンタグ識別子	紐づけなし
+L0027	公開区分を省略したときは入力不正（HTTP 400）とし、更新をすべて取り消す。
+L0028	公開区分が限定公開のときは、応答に表示用トークンを含める。
+L0029	新規登録との分岐
+L0030	デッキ登録インポートと同一の処理を用い、パスのデッキ識別子の有無で動作を分ける。
+L0031	条件	動作
+L0032	更新要求（パスのデッキ識別子あり）	該当デッキを取得し、該当なしは404、所有者不一致は401とする。取得できたときは既存デッキを上書き更新する
+L0033	登録要求（パスにデッキ識別子なし）	既存デッキの取得と所有者の照合を行わず、新規デッキとして登録する（デッキ登録インポートで扱う）
+L0034	処理結果メッセージは、更新時は「Deck update success by import」、新規登録時は「Deck registration success by import」となる。
+L0035	エラー時の扱い
+L0036	事象	扱い
+L0037	認証できないとき、または所有者が一致しないとき	認証拒否（HTTP 401）とし、処理結果コードとメッセージを返す
+L0038	デッキが存在しないとき	該当なし（HTTP 404）とし、処理結果コードとメッセージを返す
+L0039	入力検証に失敗したとき、またはカードリストが上限行数を超過したとき	入力不正（HTTP 400）とし、処理結果コードと検証エラーメッセージを返す
+L0040	解読できない行があるとき	更新は完了させ、処理結果コード206として該当行の行番号を返す
+L0041	保存処理中にその他の例外が発生したとき	処理失敗（HTTP 500）とし、処理結果コードと例外メッセージを返す
+L0042	入出力
+L0043	種類	内容
+L0044	入力	更新対象のデッキ識別子（パス）、認証トークン（ヘッダ）、フォーマット識別子、カードリスト、デッキ名、公開区分、アーキタイプ識別子、デッキ画像に用いるカード識別子、キャンペーンタグ識別子
+L0045	成功時出力	HTTP 200。処理結果コード、処理結果メッセージ、更新したデッキの識別子。限定公開のときは表示用トークン。解読できない行があるときはHTTP 206で該当行の行番号も返す
+L0046	失敗時出力	HTTP 401・404・400・500のいずれかと、処理結果コードおよびメッセージ
+L0047	入出力: リクエスト
+L0048	項目	位置	型	必須／任意	内容
+L0049	デッキ識別子	パス	integer	必須	更新対象のデッキ。該当が無いときは404、所有者が一致しないときは401
+L0050	認証トークン	ヘッダ	string	必須	検証して利用者IDからプレイヤーを特定する
+L0051	フォーマット識別子	ボディ	integer	必須	カードリスト解読時の統率者使用設定の判定に用いる
+L0052	カードリスト	ボディ	string	任意	枚数とカード名の行を並べたテキスト。未指定・空のときは空のカード配列
+L0053	デッキ名	ボディ	string	任意	—
+L0054	公開区分	ボディ	integer	必須	公開・非公開・限定公開。限定公開のとき応答に表示用トークンを含める
+L0055	アーキタイプ識別子	ボディ	integer	任意	—
+L0056	デッキ画像に用いるカード識別子	ボディ	integer	任意	—
+L0057	キャンペーンタグ識別子	ボディ	integer または配列	任意	デッキに紐づけるキャンペーンタグ
+L0058	入出力: レスポンス
+L0059	応答本体はラッパオブジェクトで、キーはスネークケースで組み立てる。
+L0060	項目	型	内容
+L0061	処理結果コード	integer	全行を解読できたときは200、解読できない行があるときは206
+L0062	処理結果メッセージ	string	更新時は「Deck update success by import」
+L0063	デッキ識別子	integer	更新したデッキの識別子
+L0064	表示用トークン	string	限定公開のときのみ含む
+L0065	解読できない行の行番号	array	解読できない行がある場合のみ含む、1始まりの行番号の配列
+L0066	入出力: 永続化
+L0067	操作	契機
+L0068	削除	更新開始時の、既存デッキ配下のデッキカード・メイビー・アトラクション・ステッカーの初期化
+L0069	更新	入力検証を通過したときの、デッキ内容の保存
+L0070	削除	保存後の、当該デッキの下書き
+L0071	リニューアル後の仕様
+L0072	表示メッセージ
+L0073	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0074	—	API応答の処理結果メッセージ	Deck update success by import	更新に成功したとき	処理結果コード200（解読できない行があるときは206）で応答を返す
+L0075	—	API応答の処理結果メッセージ	Deck registration success by import	新規登録として処理し、登録に成功したとき	応答を返す
+L0076	—	API応答の処理結果メッセージ	Access Token is incorrect	認証トークンが無い、署名が不正、または該当するプレイヤーがないとき	認証拒否（HTTP 401）で終了する
+L0077	—	API応答の処理結果メッセージ	Authentication failed	デッキの所有プレイヤーが認証したプレイヤーと一致しないとき	認証拒否（HTTP 401）で終了する
+L0078	—	API応答の処理結果メッセージ	The deck does not exist	パスで指定したデッキ識別子に一致するデッキがないとき	該当なし（HTTP 404）で終了する
+L0079	このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/A15-18_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+項目ID	扱い	テストID	理由
+CB-A15-18-001	ケース化	IT-A15-18-041	
+CB-A15-18-002	ケース化	IT-A15-18-042	
+CB-A15-18-003	ケース化	IT-A15-18-043	
+CB-A15-18-004	ケース化	IT-A15-18-044	
+CB-A15-18-005	ケース化	IT-A15-18-045	
+CB-A15-18-006	ケース化	IT-A15-18-046	
+CB-A15-18-007	ケース化	IT-A15-18-047	
+CB-A15-18-008	ケース化	IT-A15-18-048	
+CB-A15-18-009	ケース化	IT-A15-18-049	
+CB-A15-18-010	ケース化	IT-A15-18-050	
+CB-A15-18-011	ケース化	IT-A15-18-051	
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/A15-18_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+exec
+/bin/bash -lc 'cut -f1,10,11 integration_test/casegen/combination/cases/A15-18_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	手順	期待結果
+IT-A15-18-041	1. DBでデッキID 15851041のデッキ名・デッキ画像と4区分のカードを記録し、Redisでデッキの一時保存（デッキID 15851041分）が存在することを確認する／2. S-A15-18-AUTH-Aの有効な認証トークンをヘッダへ設定し、フォーマット「結合試験フォーマット」、デッキ名「A1518-CB041-更新後」、公開区分「公開」、カードリスト「Commander」・「1 結合試験カードA」の2行を指定してデッキ更新インポートAPIへデッキID 15851041の要求を送信する（確かめる組: 統率者使用設定が無効・統率領域のカードを含む・下書きあり）／3. Networkで応答を確認する／4. DBでデッキID 15851041を確認する／5. Redisでデッキの一時保存（デッキID 15851041分）を確認する	HTTPステータス400となり、デッキID 15851041のデッキ名・デッキ画像と4区分のカード各1件が手順1の記録から変わらず、RedisのデッキID 15851041の一時保存が残ること
+IT-A15-18-042	1. DBでデッキID 15851042のデッキ名・デッキ画像と4区分のカードを記録し、RedisにデッキID 15851042の一時保存が存在しないことを確認する／2. S-A15-18-AUTH-Aの有効な認証トークンをヘッダへ設定し、フォーマット「結合試験フォーマット」、デッキ名「A1518-CB042-更新後」、公開区分「公開」、カードリスト「Commander」・「1 結合試験カードA」の2行を指定してデッキ更新インポートAPIへデッキID 15851042の要求を送信する（確かめる組: 統率者使用設定が無効・統率領域のカードを含む・下書きなし）／3. Networkで応答を確認する／4. DBでデッキID 15851042を確認する／5. Redisでデッキの一時保存（デッキID 15851042分）を確認する	HTTPステータス400となり、デッキID 15851042のデッキ名・デッキ画像と4区分のカード各1件が手順1の記録から変わらず、RedisにデッキID 15851042の一時保存が存在しないままであること
+IT-A15-18-043	1. DBでデッキID 15851043のデッキ名・デッキ画像と4区分のカードを記録し、Redisでデッキの一時保存（デッキID 15851043分）が存在することを確認する／2. S-A15-18-AUTH-Aの有効な認証トークンをヘッダへ設定し、フォーマット「統率者試験フォーマット」、デッキ名「A1518-CB043-更新後」、公開区分「公開」、カードリストを指定せず、デッキ画像用カード「結合試験カードA」を指定してデッキ更新インポートAPIへデッキID 15851043の要求を送信する（確かめる組: 統率者使用設定が有効・カードリストは省略・画像カードの指定で決まる・解読できない行なし・下書きあり）／3. Networkで応答を確認する／4. DBでデッキID 15851043を確認する／5. Redisでデッキの一時保存（デッキID 15851043分）を確認する	HTTPステータス200となり、応答本文に処理結果コード200とデッキ識別子15851043が含まれ、DBでデッキID 15851043のデッキカード・メイビー・アトラクション・ステッカーが0件となり、デッキ画像が手順1の記録から変わって結合試験カードAのカード画像（〔カード画像ID-A1518-共有〕）になり、RedisのデッキID 15851043の一時保存が削除されること
+IT-A15-18-044	1. DBでデッキID 15851044のデッキ名・デッキ画像と4区分のカードを記録し、RedisにデッキID 15851044の一時保存が存在しないことを確認する／2. S-A15-18-AUTH-Aの有効な認証トークンをヘッダへ設定し、フォーマット「統率者試験フォーマット」、デッキ名「A1518-CB044-更新後」、公開区分「公開」、カードリスト「1 結合試験カードB」・「1 A1518-CB044-未登録カード」の2行、デッキ画像用カード「結合試験カードA」を指定してデッキ更新インポートAPIへデッキID 15851044の要求を送信する（確かめる組: 統率者使用設定が有効・統率領域のカードを含む・画像カードの指定で決まる・解読できない行あり・下書きなし）／3. Networkで応答を確認する／4. DBでデッキID 15851044を確認する／5. Redisでデッキの一時保存（デッキID 15851044分）を確認する	HTTPステータス206となり、応答本文に処理結果コード206、デッキ識別子15851044および解読できない行の行番号2だけが含まれ、DBでデッキID 15851044の更新前の4区分のカードがなくなり、統率領域に結合試験カードB 1枚だけのカードが保存され、デッキ画像が手順1の記録から変わって結合試験カードAのカード画像（〔カード画像ID-A1518-共有〕）になり、RedisにデッキID 15851044の一時保存が存在しないままであること
+IT-A15-18-045	1. DBでデッキID 15851045のデッキ名・デッキ画像と4区分のカードを記録し、Redisでデッキの一時保存（デッキID 15851045分）が存在することを確認する／2. S-A15-18-AUTH-Aの有効な認証トークンをヘッダへ設定し、フォーマット「結合試験フォーマット」、デッキ名「A1518-CB045-更新後」、公開区分「公開」、カードリスト「2 結合試験カードA」・「1 A1518-CB045-未登録カード」の2行、アーキタイプ「A1518-CB045-アーキタイプ」を指定してデッキ更新インポートAPIへデッキID 15851045の要求を送信する（確かめる組: 統率者使用設定が無効・統率領域のカードを含まない・アーキタイプの画像で決まる・解読できない行あり・下書きあり）／3. Networkで応答を確認する／4. DBでデッキID 15851045を確認する／5. Redisでデッキの一時保存（デッキID 15851045分）を確認する	HTTPステータス206となり、応答本文に処理結果コード206、デッキ識別子15851045および解読できない行の行番号2だけが含まれ、DBでデッキID 15851045の更新前の4区分のカードがなくなり、メインボードに結合試験カードA 2枚だけのカードが保存され、デッキ画像が手順1の記録から変わってアーキタイプの画像であるカード画像ID 15832045になり、RedisのデッキID 15851045の一時保存が削除されること
+IT-A15-18-046	1. DBでデッキID 15851046のデッキ名・デッキ画像と4区分のカードを記録し、RedisにデッキID 15851046の一時保存が存在しないことを確認する／2. S-A15-18-AUTH-Aの有効な認証トークンをヘッダへ設定し、フォーマット「結合試験フォーマット」、デッキ名「A1518-CB046-更新後」、公開区分「公開」、カードリストを指定せずを指定してデッキ更新インポートAPIへデッキID 15851046の要求を送信する（確かめる組: 統率者使用設定が無効・カードリストは省略・値なしになる・解読できない行なし・下書きなし）／3. Networkで応答を確認する／4. DBでデッキID 15851046を確認する／5. Redisでデッキの一時保存（デッキID 15851046分）を確認する	HTTPステータス200となり、応答本文に処理結果コード200とデッキ識別子15851046が含まれ、DBでデッキID 15851046のデッキカード・メイビー・アトラクション・ステッカーが0件となり、デッキ画像が手順1の記録から変わって値なしになり、RedisにデッキID 15851046の一時保存が存在しないままであること
+IT-A15-18-047	1. DBでデッキID 15851047のデッキ名・デッキ画像と4区分のカードを記録し、Redisでデッキの一時保存（デッキID 15851047分）が存在することを確認する／2. S-A15-18-AUTH-Aの有効な認証トークンをヘッダへ設定し、フォーマット「統率者試験フォーマット」、デッキ名「A1518-CB047-更新後」、公開区分「公開」、カードリスト「1 A1518-CB047-統率者」・「1 A1518-CB047-未登録カード」の2行を指定してデッキ更新インポートAPIへデッキID 15851047の要求を送信する（確かめる組: 統率者使用設定が有効・統率領域のカードを含む・統率領域のカードで決まる・解読できない行あり・下書きあり）／3. Networkで応答を確認する／4. DBでデッキID 15851047を確認する／5. Redisでデッキの一時保存（デッキID 15851047分）を確認する	HTTPステータス206となり、応答本文に処理結果コード206、デッキ識別子15851047および解読できない行の行番号2だけが含まれ、DBでデッキID 15851047の更新前の4区分のカードがなくなり、統率領域にA1518-CB047-統率者 1枚だけのカードが保存され、デッキ画像が手順1の記録から変わって統率領域カードの画像であるカード画像ID 15833047になり、RedisのデッキID 15851047の一時保存が削除されること
+IT-A15-18-048	1. DBでデッキID 15851048のデッキ名・デッキ画像と4区分のカードを記録し、RedisにデッキID 15851048の一時保存が存在しないことを確認する／2. S-A15-18-AUTH-Aの有効な認証トークンをヘッダへ設定し、フォーマット「統率者試験フォーマット」、デッキ名「A1518-CB048-更新後」、公開区分「公開」、カードリスト「1 A1518-CB048-未登録カード」・「Deck」・「2 結合試験カードA」の3行、アーキタイプ「A1518-CB048-アーキタイプ」を指定してデッキ更新インポートAPIへデッキID 15851048の要求を送信する（確かめる組: 統率者使用設定が有効・統率領域のカードを含まない・アーキタイプの画像で決まる・解読できない行あり・下書きなし）／3. Networkで応答を確認する／4. DBでデッキID 15851048を確認する／5. Redisでデッキの一時保存（デッキID 15851048分）を確認する	HTTPステータス206となり、応答本文に処理結果コード206、デッキ識別子15851048および解読できない行の行番号1だけが含まれ、DBでデッキID 15851048の更新前の4区分のカードがなくなり、メインボードに結合試験カードA 2枚だけのカードが保存され、デッキ画像が手順1の記録から変わってアーキタイプの画像であるカード画像ID 15832048になり、RedisにデッキID 15851048の一時保存が存在しないままであること
+IT-A15-18-049	1. DBでデッキID 15851049のデッキ名・デッキ画像と4区分のカードを記録し、Redisでデッキの一時保存（デッキID 15851049分）が存在することを確認する／2. S-A15-18-AUTH-Aの有効な認証トークンをヘッダへ設定し、フォーマット「統率者試験フォーマット」、デッキ名「A1518-CB049-更新後」、公開区分「公開」、カードリストを指定せず、アーキタイプ「A1518-CB049-アーキタイプ」を指定してデッキ更新インポートAPIへデッキID 15851049の要求を送信する（確かめる組: 統率者使用設定が有効・カードリストは省略・アーキタイプの画像で決まる・解読できない行なし・下書きあり）／3. Networkで応答を確認する／4. DBでデッキID 15851049を確認する／5. Redisでデッキの一時保存（デッキID 15851049分）を確認する	HTTPステータス200となり、応答本文に処理結果コード200とデッキ識別子15851049が含まれ、DBでデッキID 15851049のデッキカード・メイビー・アトラクション・ステッカーが0件となり、デッキ画像が手順1の記録から変わってアーキタイプの画像であるカード画像ID 15832049になり、RedisのデッキID 15851049の一時保存が削除されること
+IT-A15-18-050	1. DBでデッキID 15851050のデッキ名・デッキ画像と4区分のカードを記録し、RedisにデッキID 15851050の一時保存が存在しないことを確認する／2. S-A15-18-AUTH-Aの有効な認証トークンをヘッダへ設定し、フォーマット「統率者試験フォーマット」、デッキ名「A1518-CB050-更新後」、公開区分「公開」、カードリスト「1 A1518-CB050-統率者」・「1 A1518-CB050-未登録カード」の2行を指定してデッキ更新インポートAPIへデッキID 15851050の要求を送信する（確かめる組: 統率者使用設定が有効・統率領域のカードを含む・統率領域のカードで決まる・解読できない行あり・下書きなし）／3. Networkで応答を確認する／4. DBでデッキID 15851050を確認する／5. Redisでデッキの一時保存（デッキID 15851050分）を確認する	HTTPステータス206となり、応答本文に処理結果コード206、デッキ識別子15851050および解読できない行の行番号2だけが含まれ、DBでデッキID 15851050の更新前の4区分のカードがなくなり、統率領域にA1518-CB050-統率者 1枚だけのカードが保存され、デッキ画像が手順1の記録から変わって統率領域カードの画像であるカード画像ID 15833050になり、RedisにデッキID 15851050の一時保存が存在しないままであること
+IT-A15-18-051	1. DBでデッキID 15851051のデッキ名・デッキ画像と4区分のカードを記録し、Redisでデッキの一時保存（デッキID 15851051分）が存在することを確認する／2. S-A15-18-AUTH-Aの有効な認証トークンをヘッダへ設定し、フォーマット「統率者試験フォーマット」、デッキ名「A1518-CB051-更新後」、公開区分「公開」、カードリスト「1 A1518-CB051-未登録カード」・「Deck」・「2 結合試験カードA」の3行を指定してデッキ更新インポートAPIへデッキID 15851051の要求を送信する（確かめる組: 統率者使用設定が有効・統率領域のカードを含まない・値なしになる・解読できない行あり・下書きあり）／3. Networkで応答を確認する／4. DBでデッキID 15851051を確認する／5. Redisでデッキの一時保存（デッキID 15851051分）を確認する	HTTPステータス206となり、応答本文に処理結果コード206、デッキ識別子15851051および解読できない行の行番号1だけが含まれ、DBでデッキID 15851051の更新前の4区分のカードがなくなり、メインボードに結合試験カードA 2枚だけのカードが保存され、デッキ画像が手順1の記録から変わって値なしになり、RedisのデッキID 15851051の一時保存が削除されること
+
+exec
+/bin/bash -lc 'cut -f1,9 integration_test/casegen/combination/cases/A15-18_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	事前準備
+IT-A15-18-041	① 顧客ID 〔顧客ID-A1518-共有A〕に対応するプレイヤーID 〔プレイヤーID-A1518-共有A〕が稼働中で、有効期限内の認証トークンを取得する。〔顧客ID-A1518-共有A〕・〔プレイヤーID-A1518-共有A〕は登録時に振られた番号を控えてある（S-A15-18-AUTH-A）／② デッキID 15851041がプレイヤーID 〔プレイヤーID-A1518-共有A〕所有、デッキ名「A1518-CB041-更新前」、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ画像がカード画像ID 15831041で、4区分の明細ID 15861041・15862041・15863041・15864041を各1件保持する（S-A15-18-CBTARGET-041）／③ デッキ情報更新APIへ即時保存を指定せず、デッキID 15851041、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ名「下書き」を送り、デッキID 15851041の一時保存がその値で存在することを確認する（S-A15-18-CBTARGET-041）／④ フォーマットID 〔フォーマットID-A1518-共有A〕と、統率者使用設定が無効のフォーマットID 〔フォーマットID-A1518-共有B〕「結合試験フォーマット」が利用可能である。〔フォーマットID-A1518-共有A〕・〔フォーマットID-A1518-共有B〕は登録時に振られた番号を控えてある（S-A15-18-FORMATS）／⑤ カードID 〔カードID-A1518-共有A〕「結合試験カードA」、〔カードID-A1518-共有B〕「結合試験カードB」、更新前カードID 〔カードID-A1518-共有C〕〜〔カードID-A1518-共有F〕が利用可能である。〔カードID-A1518-共有A〕〜〔カードID-A1518-共有F〕は登録時に振られた番号を控えてある（S-A15-18-CARDS）／⑥ 公開区分ID 1=公開、2=非公開、3=限定公開が利用可能である（S-A15-18-SCOPES）
+IT-A15-18-042	① 顧客ID 〔顧客ID-A1518-共有A〕に対応するプレイヤーID 〔プレイヤーID-A1518-共有A〕が稼働中で、有効期限内の認証トークンを取得する。〔顧客ID-A1518-共有A〕・〔プレイヤーID-A1518-共有A〕は登録時に振られた番号を控えてある（S-A15-18-AUTH-A）／② デッキID 15851042がプレイヤーID 〔プレイヤーID-A1518-共有A〕所有、デッキ名「A1518-CB042-更新前」、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ画像がカード画像ID 15831042で、4区分の明細ID 15861042・15862042・15863042・15864042を各1件保持する（S-A15-18-CBTARGET-042）／③ フォーマットID 〔フォーマットID-A1518-共有A〕と、統率者使用設定が無効のフォーマットID 〔フォーマットID-A1518-共有B〕「結合試験フォーマット」が利用可能である。〔フォーマットID-A1518-共有A〕・〔フォーマットID-A1518-共有B〕は登録時に振られた番号を控えてある（S-A15-18-FORMATS）／④ カードID 〔カードID-A1518-共有A〕「結合試験カードA」、〔カードID-A1518-共有B〕「結合試験カードB」、更新前カードID 〔カードID-A1518-共有C〕〜〔カードID-A1518-共有F〕が利用可能である。〔カードID-A1518-共有A〕〜〔カードID-A1518-共有F〕は登録時に振られた番号を控えてある（S-A15-18-CARDS）／⑤ 公開区分ID 1=公開、2=非公開、3=限定公開が利用可能である（S-A15-18-SCOPES）
+IT-A15-18-043	① 顧客ID 〔顧客ID-A1518-共有A〕に対応するプレイヤーID 〔プレイヤーID-A1518-共有A〕が稼働中で、有効期限内の認証トークンを取得する。〔顧客ID-A1518-共有A〕・〔プレイヤーID-A1518-共有A〕は登録時に振られた番号を控えてある（S-A15-18-AUTH-A）／② デッキID 15851043がプレイヤーID 〔プレイヤーID-A1518-共有A〕所有、デッキ名「A1518-CB043-更新前」、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ画像がカード画像ID 15831043で、4区分の明細ID 15861043・15862043・15863043・15864043を各1件保持する（S-A15-18-CBTARGET-043）／③ デッキ情報更新APIへ即時保存を指定せず、デッキID 15851043、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ名「下書き」を送り、デッキID 15851043の一時保存がその値で存在することを確認する（S-A15-18-CBTARGET-043）／④ フォーマットID 〔フォーマットID-A1518-共有A〕と、統率者使用設定が無効のフォーマットID 〔フォーマットID-A1518-共有B〕「結合試験フォーマット」が利用可能である。〔フォーマットID-A1518-共有A〕・〔フォーマットID-A1518-共有B〕は登録時に振られた番号を控えてある（S-A15-18-FORMATS）／⑤ フォーマットID 〔フォーマットID-A1518-共有C〕「統率者試験フォーマット」の統率者使用設定が有効である。〔フォーマットID-A1518-共有C〕は登録時に振られた番号を控えてある（S-A15-18-COMMANDER）／⑥ カードID 〔カードID-A1518-共有A〕「結合試験カードA」、〔カードID-A1518-共有B〕「結合試験カードB」、更新前カードID 〔カードID-A1518-共有C〕〜〔カードID-A1518-共有F〕が利用可能である。〔カードID-A1518-共有A〕〜〔カードID-A1518-共有F〕は登録時に振られた番号を控えてある（S-A15-18-CARDS）／⑦ カード画像ID 〔カード画像ID-A1518-共有〕がカードID 〔カードID-A1518-共有A〕「結合試験カードA」の画像として登録されている。〔カード画像ID-A1518-共有〕は控えてある（S-A15-18-RELATED）／⑧ 公開区分ID 1=公開、2=非公開、3=限定公開が利用可能である（S-A15-18-SCOPES）
+IT-A15-18-044	① 顧客ID 〔顧客ID-A1518-共有A〕に対応するプレイヤーID 〔プレイヤーID-A1518-共有A〕が稼働中で、有効期限内の認証トークンを取得する。〔顧客ID-A1518-共有A〕・〔プレイヤーID-A1518-共有A〕は登録時に振られた番号を控えてある（S-A15-18-AUTH-A）／② デッキID 15851044がプレイヤーID 〔プレイヤーID-A1518-共有A〕所有、デッキ名「A1518-CB044-更新前」、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ画像がカード画像ID 15831044で、4区分の明細ID 15861044・15862044・15863044・15864044を各1件保持する（S-A15-18-CBTARGET-044）／③ フォーマットID 〔フォーマットID-A1518-共有A〕と、統率者使用設定が無効のフォーマットID 〔フォーマットID-A1518-共有B〕「結合試験フォーマット」が利用可能である。〔フォーマットID-A1518-共有A〕・〔フォーマットID-A1518-共有B〕は登録時に振られた番号を控えてある（S-A15-18-FORMATS）／④ フォーマットID 〔フォーマットID-A1518-共有C〕「統率者試験フォーマット」の統率者使用設定が有効である。〔フォーマットID-A1518-共有C〕は登録時に振られた番号を控えてある（S-A15-18-COMMANDER）／⑤ カードID 〔カードID-A1518-共有A〕「結合試験カードA」、〔カードID-A1518-共有B〕「結合試験カードB」、更新前カードID 〔カードID-A1518-共有C〕〜〔カードID-A1518-共有F〕が利用可能である。〔カードID-A1518-共有A〕〜〔カードID-A1518-共有F〕は登録時に振られた番号を控えてある（S-A15-18-CARDS）／⑥ カード画像ID 〔カード画像ID-A1518-共有〕がカードID 〔カードID-A1518-共有A〕「結合試験カードA」の画像として登録されている。〔カード画像ID-A1518-共有〕は控えてある（S-A15-18-RELATED）／⑦ 公開区分ID 1=公開、2=非公開、3=限定公開が利用可能である（S-A15-18-SCOPES）／⑧ カードマスタに名称「A1518-CB044-未登録カード」のカードが存在しない（S-A15-18-CBTARGET-044）
+IT-A15-18-045	① 顧客ID 〔顧客ID-A1518-共有A〕に対応するプレイヤーID 〔プレイヤーID-A1518-共有A〕が稼働中で、有効期限内の認証トークンを取得する。〔顧客ID-A1518-共有A〕・〔プレイヤーID-A1518-共有A〕は登録時に振られた番号を控えてある（S-A15-18-AUTH-A）／② デッキID 15851045がプレイヤーID 〔プレイヤーID-A1518-共有A〕所有、デッキ名「A1518-CB045-更新前」、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ画像がカード画像ID 15831045で、4区分の明細ID 15861045・15862045・15863045・15864045を各1件保持する、アーキタイプID 15822045「A1518-CB045-アーキタイプ」（フォーマットは使用するフォーマットと同じ）の画像はカード画像ID 15832045（S-A15-18-CBTARGET-045）／③ デッキ情報更新APIへ即時保存を指定せず、デッキID 15851045、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ名「下書き」を送り、デッキID 15851045の一時保存がその値で存在することを確認する（S-A15-18-CBTARGET-045）／④ フォーマットID 〔フォーマットID-A1518-共有A〕と、統率者使用設定が無効のフォーマットID 〔フォーマットID-A1518-共有B〕「結合試験フォーマット」が利用可能である。〔フォーマットID-A1518-共有A〕・〔フォーマットID-A1518-共有B〕は登録時に振られた番号を控えてある（S-A15-18-FORMATS）／⑤ カードID 〔カードID-A1518-共有A〕「結合試験カードA」、〔カードID-A1518-共有B〕「結合試験カードB」、更新前カードID 〔カードID-A1518-共有C〕〜〔カードID-A1518-共有F〕が利用可能である。〔カードID-A1518-共有A〕〜〔カードID-A1518-共有F〕は登録時に振られた番号を控えてある（S-A15-18-CARDS）／⑥ 公開区分ID 1=公開、2=非公開、3=限定公開が利用可能である（S-A15-18-SCOPES）／⑦ カードマスタに名称「A1518-CB045-未登録カード」のカードが存在しない（S-A15-18-CBTARGET-045）
+IT-A15-18-046	① 顧客ID 〔顧客ID-A1518-共有A〕に対応するプレイヤーID 〔プレイヤーID-A1518-共有A〕が稼働中で、有効期限内の認証トークンを取得する。〔顧客ID-A1518-共有A〕・〔プレイヤーID-A1518-共有A〕は登録時に振られた番号を控えてある（S-A15-18-AUTH-A）／② デッキID 15851046がプレイヤーID 〔プレイヤーID-A1518-共有A〕所有、デッキ名「A1518-CB046-更新前」、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ画像がカード画像ID 15831046で、4区分の明細ID 15861046・15862046・15863046・15864046を各1件保持する（S-A15-18-CBTARGET-046）／③ フォーマットID 〔フォーマットID-A1518-共有A〕と、統率者使用設定が無効のフォーマットID 〔フォーマットID-A1518-共有B〕「結合試験フォーマット」が利用可能である。〔フォーマットID-A1518-共有A〕・〔フォーマットID-A1518-共有B〕は登録時に振られた番号を控えてある（S-A15-18-FORMATS）／④ カードID 〔カードID-A1518-共有A〕「結合試験カードA」、〔カードID-A1518-共有B〕「結合試験カードB」、更新前カードID 〔カードID-A1518-共有C〕〜〔カードID-A1518-共有F〕が利用可能である。〔カードID-A1518-共有A〕〜〔カードID-A1518-共有F〕は登録時に振られた番号を控えてある（S-A15-18-CARDS）／⑤ 公開区分ID 1=公開、2=非公開、3=限定公開が利用可能である（S-A15-18-SCOPES）
+IT-A15-18-047	① 顧客ID 〔顧客ID-A1518-共有A〕に対応するプレイヤーID 〔プレイヤーID-A1518-共有A〕が稼働中で、有効期限内の認証トークンを取得する。〔顧客ID-A1518-共有A〕・〔プレイヤーID-A1518-共有A〕は登録時に振られた番号を控えてある（S-A15-18-AUTH-A）／② デッキID 15851047がプレイヤーID 〔プレイヤーID-A1518-共有A〕所有、デッキ名「A1518-CB047-更新前」、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ画像がカード画像ID 15831047で、4区分の明細ID 15861047・15862047・15863047・15864047を各1件保持する、カードID 15872047「A1518-CB047-統率者」の画像はカード画像ID 15833047（唯一の画像）（S-A15-18-CBTARGET-047）／③ デッキ情報更新APIへ即時保存を指定せず、デッキID 15851047、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ名「下書き」を送り、デッキID 15851047の一時保存がその値で存在することを確認する（S-A15-18-CBTARGET-047）／④ フォーマットID 〔フォーマットID-A1518-共有A〕と、統率者使用設定が無効のフォーマットID 〔フォーマットID-A1518-共有B〕「結合試験フォーマット」が利用可能である。〔フォーマットID-A1518-共有A〕・〔フォーマットID-A1518-共有B〕は登録時に振られた番号を控えてある（S-A15-18-FORMATS）／⑤ フォーマットID 〔フォーマットID-A1518-共有C〕「統率者試験フォーマット」の統率者使用設定が有効である。〔フォーマットID-A1518-共有C〕は登録時に振られた番号を控えてある（S-A15-18-COMMANDER）／⑥ カードID 〔カードID-A1518-共有A〕「結合試験カードA」、〔カードID-A1518-共有B〕「結合試験カードB」、更新前カードID 〔カードID-A1518-共有C〕〜〔カードID-A1518-共有F〕が利用可能である。〔カードID-A1518-共有A〕〜〔カードID-A1518-共有F〕は登録時に振られた番号を控えてある（S-A15-18-CARDS）／⑦ 公開区分ID 1=公開、2=非公開、3=限定公開が利用可能である（S-A15-18-SCOPES）／⑧ カードマスタに名称「A1518-CB047-未登録カード」のカードが存在しない（S-A15-18-CBTARGET-047）
+IT-A15-18-048	① 顧客ID 〔顧客ID-A1518-共有A〕に対応するプレイヤーID 〔プレイヤーID-A1518-共有A〕が稼働中で、有効期限内の認証トークンを取得する。〔顧客ID-A1518-共有A〕・〔プレイヤーID-A1518-共有A〕は登録時に振られた番号を控えてある（S-A15-18-AUTH-A）／② デッキID 15851048がプレイヤーID 〔プレイヤーID-A1518-共有A〕所有、デッキ名「A1518-CB048-更新前」、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ画像がカード画像ID 15831048で、4区分の明細ID 15861048・15862048・15863048・15864048を各1件保持する、アーキタイプID 15822048「A1518-CB048-アーキタイプ」（フォーマットは使用するフォーマットと同じ）の画像はカード画像ID 15832048（S-A15-18-CBTARGET-048）／③ フォーマットID 〔フォーマットID-A1518-共有A〕と、統率者使用設定が無効のフォーマットID 〔フォーマットID-A1518-共有B〕「結合試験フォーマット」が利用可能である。〔フォーマットID-A1518-共有A〕・〔フォーマットID-A1518-共有B〕は登録時に振られた番号を控えてある（S-A15-18-FORMATS）／④ フォーマットID 〔フォーマットID-A1518-共有C〕「統率者試験フォーマット」の統率者使用設定が有効である。〔フォーマットID-A1518-共有C〕は登録時に振られた番号を控えてある（S-A15-18-COMMANDER）／⑤ カードID 〔カードID-A1518-共有A〕「結合試験カードA」、〔カードID-A1518-共有B〕「結合試験カードB」、更新前カードID 〔カードID-A1518-共有C〕〜〔カードID-A1518-共有F〕が利用可能である。〔カードID-A1518-共有A〕〜〔カードID-A1518-共有F〕は登録時に振られた番号を控えてある（S-A15-18-CARDS）／⑥ 公開区分ID 1=公開、2=非公開、3=限定公開が利用可能である（S-A15-18-SCOPES）／⑦ カードマスタに名称「A1518-CB048-未登録カード」のカードが存在しない（S-A15-18-CBTARGET-048）
+IT-A15-18-049	① 顧客ID 〔顧客ID-A1518-共有A〕に対応するプレイヤーID 〔プレイヤーID-A1518-共有A〕が稼働中で、有効期限内の認証トークンを取得する。〔顧客ID-A1518-共有A〕・〔プレイヤーID-A1518-共有A〕は登録時に振られた番号を控えてある（S-A15-18-AUTH-A）／② デッキID 15851049がプレイヤーID 〔プレイヤーID-A1518-共有A〕所有、デッキ名「A1518-CB049-更新前」、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ画像がカード画像ID 15831049で、4区分の明細ID 15861049・15862049・15863049・15864049を各1件保持する、アーキタイプID 15822049「A1518-CB049-アーキタイプ」（フォーマットは使用するフォーマットと同じ）の画像はカード画像ID 15832049（S-A15-18-CBTARGET-049）／③ デッキ情報更新APIへ即時保存を指定せず、デッキID 15851049、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ名「下書き」を送り、デッキID 15851049の一時保存がその値で存在することを確認する（S-A15-18-CBTARGET-049）／④ フォーマットID 〔フォーマットID-A1518-共有A〕と、統率者使用設定が無効のフォーマットID 〔フォーマットID-A1518-共有B〕「結合試験フォーマット」が利用可能である。〔フォーマットID-A1518-共有A〕・〔フォーマットID-A1518-共有B〕は登録時に振られた番号を控えてある（S-A15-18-FORMATS）／⑤ フォーマットID 〔フォーマットID-A1518-共有C〕「統率者試験フォーマット」の統率者使用設定が有効である。〔フォーマットID-A1518-共有C〕は登録時に振られた番号を控えてある（S-A15-18-COMMANDER）／⑥ カードID 〔カードID-A1518-共有A〕「結合試験カードA」、〔カードID-A1518-共有B〕「結合試験カードB」、更新前カードID 〔カードID-A1518-共有C〕〜〔カードID-A1518-共有F〕が利用可能である。〔カードID-A1518-共有A〕〜〔カードID-A1518-共有F〕は登録時に振られた番号を控えてある（S-A15-18-CARDS）／⑦ 公開区分ID 1=公開、2=非公開、3=限定公開が利用可能である（S-A15-18-SCOPES）
+IT-A15-18-050	① 顧客ID 〔顧客ID-A1518-共有A〕に対応するプレイヤーID 〔プレイヤーID-A1518-共有A〕が稼働中で、有効期限内の認証トークンを取得する。〔顧客ID-A1518-共有A〕・〔プレイヤーID-A1518-共有A〕は登録時に振られた番号を控えてある（S-A15-18-AUTH-A）／② デッキID 15851050がプレイヤーID 〔プレイヤーID-A1518-共有A〕所有、デッキ名「A1518-CB050-更新前」、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ画像がカード画像ID 15831050で、4区分の明細ID 15861050・15862050・15863050・15864050を各1件保持する、カードID 15872050「A1518-CB050-統率者」の画像はカード画像ID 15833050（唯一の画像）（S-A15-18-CBTARGET-050）／③ フォーマットID 〔フォーマットID-A1518-共有A〕と、統率者使用設定が無効のフォーマットID 〔フォーマットID-A1518-共有B〕「結合試験フォーマット」が利用可能である。〔フォーマットID-A1518-共有A〕・〔フォーマットID-A1518-共有B〕は登録時に振られた番号を控えてある（S-A15-18-FORMATS）／④ フォーマットID 〔フォーマットID-A1518-共有C〕「統率者試験フォーマット」の統率者使用設定が有効である。〔フォーマットID-A1518-共有C〕は登録時に振られた番号を控えてある（S-A15-18-COMMANDER）／⑤ カードID 〔カードID-A1518-共有A〕「結合試験カードA」、〔カードID-A1518-共有B〕「結合試験カードB」、更新前カードID 〔カードID-A1518-共有C〕〜〔カードID-A1518-共有F〕が利用可能である。〔カードID-A1518-共有A〕〜〔カードID-A1518-共有F〕は登録時に振られた番号を控えてある（S-A15-18-CARDS）／⑥ 公開区分ID 1=公開、2=非公開、3=限定公開が利用可能である（S-A15-18-SCOPES）／⑦ カードマスタに名称「A1518-CB050-未登録カード」のカードが存在しない（S-A15-18-CBTARGET-050）
+IT-A15-18-051	① 顧客ID 〔顧客ID-A1518-共有A〕に対応するプレイヤーID 〔プレイヤーID-A1518-共有A〕が稼働中で、有効期限内の認証トークンを取得する。〔顧客ID-A1518-共有A〕・〔プレイヤーID-A1518-共有A〕は登録時に振られた番号を控えてある（S-A15-18-AUTH-A）／② デッキID 15851051がプレイヤーID 〔プレイヤーID-A1518-共有A〕所有、デッキ名「A1518-CB051-更新前」、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ画像がカード画像ID 15831051で、4区分の明細ID 15861051・15862051・15863051・15864051を各1件保持する（S-A15-18-CBTARGET-051）／③ デッキ情報更新APIへ即時保存を指定せず、デッキID 15851051、フォーマットID 〔フォーマットID-A1518-共有A〕、公開区分ID 2、デッキ名「下書き」を送り、デッキID 15851051の一時保存がその値で存在することを確認する（S-A15-18-CBTARGET-051）／④ フォーマットID 〔フォーマットID-A1518-共有A〕と、統率者使用設定が無効のフォーマットID 〔フォーマットID-A1518-共有B〕「結合試験フォーマット」が利用可能である。〔フォーマットID-A1518-共有A〕・〔フォーマットID-A1518-共有B〕は登録時に振られた番号を控えてある（S-A15-18-FORMATS）／⑤ フォーマットID 〔フォーマットID-A1518-共有C〕「統率者試験フォーマット」の統率者使用設定が有効である。〔フォーマットID-A1518-共有C〕は登録時に振られた番号を控えてある（S-A15-18-COMMANDER）／⑥ カードID 〔カードID-A1518-共有A〕「結合試験カードA」、〔カードID-A1518-共有B〕「結合試験カードB」、更新前カードID 〔カードID-A1518-共有C〕〜〔カードID-A1518-共有F〕が利用可能である。〔カードID-A1518-共有A〕〜〔カードID-A1518-共有F〕は登録時に振られた番号を控えてある（S-A15-18-CARDS）／⑦ 公開区分ID 1=公開、2=非公開、3=限定公開が利用可能である（S-A15-18-SCOPES）／⑧ カードマスタに名称「A1518-CB051-未登録カード」のカードが存在しない（S-A15-18-CBTARGET-051）
+
+exec
+/bin/bash -lc "grep '"'^S-A15-18-CBTARGET-041'"\\|"'^S-A15-18-CBTARGET-045'"\\|"'^S-A15-18-CBTARGET-047'"' integration_test/casegen/combination/cases/A15-18_cb_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+S-A15-18-CBTARGET-041	デッキ・一時保存	組合せ確認用の更新対象(CB041)	デッキID 15851041／所有プレイヤーID 〔プレイヤーID-A1518-共有A〕／デッキ名=A1518-CB041-更新前／フォーマットID 〔フォーマットID-A1518-共有A〕／公開区分ID 2／デッキ画像=カード画像ID 15831041（カードID 〔カードID-A1518-共有C〕の画像）／アーキタイプなし／4区分の明細ID 15861041・15862041・15863041・15864041を各1件／デッキID 15851041の一時保存はデッキ名=下書き・フォーマットID 〔フォーマットID-A1518-共有A〕・公開区分ID 2	IT-A15-18-041専用の更新対象	DBシードで同じデッキIDの試験データを入れ直し、所有者、デッキ属性、4区分の明細と、デッキ画像のカード画像を登録する。そのあと、デッキ情報更新APIへ即時保存を指定せず要求し、デッキID 15851041の一時保存が存在することを確認する	ケース専用
+S-A15-18-CBTARGET-045	デッキ・一時保存	組合せ確認用の更新対象(CB045)	デッキID 15851045／所有プレイヤーID 〔プレイヤーID-A1518-共有A〕／デッキ名=A1518-CB045-更新前／フォーマットID 〔フォーマットID-A1518-共有A〕／公開区分ID 2／デッキ画像=カード画像ID 15831045（カードID 〔カードID-A1518-共有C〕の画像）／アーキタイプなし／4区分の明細ID 15861045・15862045・15863045・15864045を各1件／アーキタイプID 15822045=名称「A1518-CB045-アーキタイプ」・画像=カード画像ID 15832045／デッキID 15851045の一時保存はデッキ名=下書き・フォーマットID 〔フォーマットID-A1518-共有A〕・公開区分ID 2／カードマスタに名称「A1518-CB045-未登録カード」のカードなし	IT-A15-18-045専用の更新対象	DBシードで同じデッキIDの試験データを入れ直し、所有者、デッキ属性、4区分の明細と、デッキ画像のカード画像を登録する。アーキタイプとその画像も登録する。そのあと、デッキ情報更新APIへ即時保存を指定せず要求し、デッキID 15851045の一時保存が存在することを確認する。ケース開始時にカードマスタを確認し、名称「A1518-CB045-未登録カード」のカードがあれば削除する	ケース専用
+S-A15-18-CBTARGET-047	デッキ・一時保存	組合せ確認用の更新対象(CB047)	デッキID 15851047／所有プレイヤーID 〔プレイヤーID-A1518-共有A〕／デッキ名=A1518-CB047-更新前／フォーマットID 〔フォーマットID-A1518-共有A〕／公開区分ID 2／デッキ画像=カード画像ID 15831047（カードID 〔カードID-A1518-共有C〕の画像）／アーキタイプなし／4区分の明細ID 15861047・15862047・15863047・15864047を各1件／カードID 15872047=名称「A1518-CB047-統率者」・カード画像ID 15833047の1枚だけを保持／デッキID 15851047の一時保存はデッキ名=下書き・フォーマットID 〔フォーマットID-A1518-共有A〕・公開区分ID 2／カードマスタに名称「A1518-CB047-未登録カード」のカードなし	IT-A15-18-047専用の更新対象	DBシードで同じデッキIDの試験データを入れ直し、所有者、デッキ属性、4区分の明細と、デッキ画像のカード画像を登録する。統率領域に使うカードとその画像も登録する。そのあと、デッキ情報更新APIへ即時保存を指定せず要求し、デッキID 15851047の一時保存が存在することを確認する。ケース開始時にカードマスタを確認し、名称「A1518-CB047-未登録カード」のカードがあれば削除する	ケース専用
+
+codex
+A15-17 と A15-18 では、成功応答に含める項目の記述が設計書と合うか、追加で確認しています。続いて A17-02 の全14ケースを照合します。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/A17-02.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-A17-02-001	P1	F01=デッキだけ&F02=基準記事と同じ&F03=基準記事と別の0以外&F05=複数件&F06=指定あり&F07=取得件数以内	候補記事が基準記事と共有する対象=デッキだけ／候補記事のWP種別ID=基準記事と同じ／候補記事のWP投稿ID=基準記事と別の0以外／同じWP投稿IDを持つ候補記事の数=複数件／limitの指定=指定あり／関連記事の数と取得件数の関係=取得件数以内	候補記事が基準記事と共有する対象×候補記事のWP種別ID: デッキだけ×基準記事と同じ；候補記事が基準記事と共有する対象×候補記事のWP投稿ID: デッキだけ×基準記事と別の0以外；候補記事が基準記事と共有する対象×同じWP投稿IDを持つ候補記事の数: デッキだけ×複数件；候補記事が基準記事と共有する対象×limitの指定: デッキだけ×指定あり；候補記事が基準記事と共有する対象×関連記事の数と取得件数の関係: デッキだけ×取得件数以内；候補記事のWP種別ID×同じWP投稿IDを持つ候補記事の数: 基準記事と同じ×複数件；候補記事のWP種別ID×limitの指定: 基準記事と同じ×指定あり；候補記事のWP種別ID×関連記事の数と取得件数の関係: 基準記事と同じ×取得件数以内；候補記事のWP投稿ID×同じWP投稿IDを持つ候補記事の数: 基準記事と別の0以外×複数件；候補記事のWP投稿ID×limitの指定: 基準記事と別の0以外×指定あり；候補記事のWP投稿ID×関連記事の数と取得件数の関係: 基準記事と別の0以外×取得件数以内；同じWP投稿IDを持つ候補記事の数×limitの指定: 複数件×指定あり；同じWP投稿IDを持つ候補記事の数×関連記事の数と取得件数の関係: 複数件×取得件数以内；limitの指定×関連記事の数と取得件数の関係: 指定あり×取得件数以内
+CB-A17-02-002	P1	F01=デッキだけ&F02=基準記事と同じ&F03=基準記事と別の0以外&F05=1件&F06=未指定&F07=取得件数以内	候補記事が基準記事と共有する対象=デッキだけ／候補記事のWP種別ID=基準記事と同じ／候補記事のWP投稿ID=基準記事と別の0以外／同じWP投稿IDを持つ候補記事の数=1件／limitの指定=未指定／関連記事の数と取得件数の関係=取得件数以内	候補記事が基準記事と共有する対象×同じWP投稿IDを持つ候補記事の数: デッキだけ×1件；候補記事が基準記事と共有する対象×limitの指定: デッキだけ×未指定；同じWP投稿IDを持つ候補記事の数×limitの指定: 1件×未指定；同じWP投稿IDを持つ候補記事の数×関連記事の数と取得件数の関係: 1件×取得件数以内；limitの指定×関連記事の数と取得件数の関係: 未指定×取得件数以内
+CB-A17-02-003	P1	F01=アーキタイプだけ&F02=基準記事と同じ&F03=基準記事と別の0以外&F05=1件&F06=指定あり&F07=取得件数以内	候補記事が基準記事と共有する対象=アーキタイプだけ／候補記事のWP種別ID=基準記事と同じ／候補記事のWP投稿ID=基準記事と別の0以外／同じWP投稿IDを持つ候補記事の数=1件／limitの指定=指定あり／関連記事の数と取得件数の関係=取得件数以内	候補記事が基準記事と共有する対象×候補記事のWP種別ID: アーキタイプだけ×基準記事と同じ；候補記事が基準記事と共有する対象×候補記事のWP投稿ID: アーキタイプだけ×基準記事と別の0以外；候補記事が基準記事と共有する対象×同じWP投稿IDを持つ候補記事の数: アーキタイプだけ×1件；候補記事が基準記事と共有する対象×limitの指定: アーキタイプだけ×指定あり；候補記事が基準記事と共有する対象×関連記事の数と取得件数の関係: アーキタイプだけ×取得件数以内；同じWP投稿IDを持つ候補記事の数×limitの指定: 1件×指定あり
+CB-A17-02-004	P1	F01=アーキタイプだけ&F02=基準記事と同じ&F03=基準記事と別の0以外&F05=複数件&F06=未指定&F07=取得件数以内	候補記事が基準記事と共有する対象=アーキタイプだけ／候補記事のWP種別ID=基準記事と同じ／候補記事のWP投稿ID=基準記事と別の0以外／同じWP投稿IDを持つ候補記事の数=複数件／limitの指定=未指定／関連記事の数と取得件数の関係=取得件数以内	候補記事が基準記事と共有する対象×同じWP投稿IDを持つ候補記事の数: アーキタイプだけ×複数件；候補記事が基準記事と共有する対象×limitの指定: アーキタイプだけ×未指定；同じWP投稿IDを持つ候補記事の数×limitの指定: 複数件×未指定
+CB-A17-02-005	P1	F01=カードだけ&F02=基準記事と同じ&F03=基準記事と別の0以外&F05=1件&F06=指定あり&F07=取得件数以内	候補記事が基準記事と共有する対象=カードだけ／候補記事のWP種別ID=基準記事と同じ／候補記事のWP投稿ID=基準記事と別の0以外／同じWP投稿IDを持つ候補記事の数=1件／limitの指定=指定あり／関連記事の数と取得件数の関係=取得件数以内	候補記事が基準記事と共有する対象×同じWP投稿IDを持つ候補記事の数: カードだけ×1件；候補記事が基準記事と共有する対象×limitの指定: カードだけ×指定あり；候補記事が基準記事と共有する対象×関連記事の数と取得件数の関係: カードだけ×取得件数以内
+CB-A17-02-006	P1	F01=カードだけ&F02=基準記事と同じ&F03=基準記事と別の0以外&F05=複数件&F06=未指定&F07=取得件数以内	候補記事が基準記事と共有する対象=カードだけ／候補記事のWP種別ID=基準記事と同じ／候補記事のWP投稿ID=基準記事と別の0以外／同じWP投稿IDを持つ候補記事の数=複数件／limitの指定=未指定／関連記事の数と取得件数の関係=取得件数以内	候補記事が基準記事と共有する対象×同じWP投稿IDを持つ候補記事の数: カードだけ×複数件
+CB-A17-02-007	P1	F01=イベント詳細だけ&F02=基準記事と同じ&F03=基準記事と別の0以外&F05=1件&F06=未指定&F07=取得件数以内	候補記事が基準記事と共有する対象=イベント詳細だけ／候補記事のWP種別ID=基準記事と同じ／候補記事のWP投稿ID=基準記事と別の0以外／同じWP投稿IDを持つ候補記事の数=1件／limitの指定=未指定／関連記事の数と取得件数の関係=取得件数以内	候補記事が基準記事と共有する対象×候補記事のWP種別ID: イベント詳細だけ×基準記事と同じ；候補記事が基準記事と共有する対象×候補記事のWP投稿ID: イベント詳細だけ×基準記事と別の0以外；候補記事が基準記事と共有する対象×同じWP投稿IDを持つ候補記事の数: イベント詳細だけ×1件；候補記事が基準記事と共有する対象×limitの指定: イベント詳細だけ×未指定；候補記事が基準記事と共有する対象×関連記事の数と取得件数の関係: イベント詳細だけ×取得件数以内
+CB-A17-02-008	P1	F01=イベント詳細だけ&F02=基準記事と同じ&F03=基準記事と別の0以外&F05=複数件&F06=指定あり&F07=取得件数以内	候補記事が基準記事と共有する対象=イベント詳細だけ／候補記事のWP種別ID=基準記事と同じ／候補記事のWP投稿ID=基準記事と別の0以外／同じWP投稿IDを持つ候補記事の数=複数件／limitの指定=指定あり／関連記事の数と取得件数の関係=取得件数以内	候補記事が基準記事と共有する対象×同じWP投稿IDを持つ候補記事の数: イベント詳細だけ×複数件；候補記事が基準記事と共有する対象×limitの指定: イベント詳細だけ×指定あり
+CB-A17-02-009	P1	F01=デッキとカード&F02=基準記事と同じ&F03=基準記事と別の0以外&F05=複数件&F06=未指定&F07=取得件数以内	候補記事が基準記事と共有する対象=デッキとカード／候補記事のWP種別ID=基準記事と同じ／候補記事のWP投稿ID=基準記事と別の0以外／同じWP投稿IDを持つ候補記事の数=複数件／limitの指定=未指定／関連記事の数と取得件数の関係=取得件数以内	候補記事が基準記事と共有する対象×同じWP投稿IDを持つ候補記事の数: デッキとカード×複数件；候補記事が基準記事と共有する対象×limitの指定: デッキとカード×未指定；候補記事が基準記事と共有する対象×関連記事の数と取得件数の関係: デッキとカード×取得件数以内
+CB-A17-02-010	P1	F01=デッキとカード&F02=基準記事と同じ&F03=基準記事と別の0以外&F05=1件&F06=指定あり&F07=取得件数以内	候補記事が基準記事と共有する対象=デッキとカード／候補記事のWP種別ID=基準記事と同じ／候補記事のWP投稿ID=基準記事と別の0以外／同じWP投稿IDを持つ候補記事の数=1件／limitの指定=指定あり／関連記事の数と取得件数の関係=取得件数以内	候補記事が基準記事と共有する対象×limitの指定: デッキとカード×指定あり
+CB-A17-02-011	P1	F01=アーキタイプとイベント詳細&F02=基準記事と同じ&F03=基準記事と別の0以外&F05=1件&F06=未指定&F07=取得件数以内	候補記事が基準記事と共有する対象=アーキタイプとイベント詳細／候補記事のWP種別ID=基準記事と同じ／候補記事のWP投稿ID=基準記事と別の0以外／同じWP投稿IDを持つ候補記事の数=1件／limitの指定=未指定／関連記事の数と取得件数の関係=取得件数以内	候補記事が基準記事と共有する対象×候補記事のWP種別ID: アーキタイプとイベント詳細×基準記事と同じ；候補記事が基準記事と共有する対象×候補記事のWP投稿ID: アーキタイプとイベント詳細×基準記事と別の0以外；候補記事が基準記事と共有する対象×同じWP投稿IDを持つ候補記事の数: アーキタイプとイベント詳細×1件；候補記事が基準記事と共有する対象×limitの指定: アーキタイプとイベント詳細×未指定；候補記事が基準記事と共有する対象×関連記事の数と取得件数の関係: アーキタイプとイベント詳細×取得件数以内
+CB-A17-02-012	P1	F01=アーキタイプとイベント詳細&F02=基準記事と同じ&F03=基準記事と別の0以外&F05=複数件&F06=指定あり&F07=取得件数以内	候補記事が基準記事と共有する対象=アーキタイプとイベント詳細／候補記事のWP種別ID=基準記事と同じ／候補記事のWP投稿ID=基準記事と別の0以外／同じWP投稿IDを持つ候補記事の数=複数件／limitの指定=指定あり／関連記事の数と取得件数の関係=取得件数以内	候補記事が基準記事と共有する対象×同じWP投稿IDを持つ候補記事の数: アーキタイプとイベント詳細×複数件；候補記事が基準記事と共有する対象×limitの指定: アーキタイプとイベント詳細×指定あり
+CB-A17-02-013	P1	F02=基準記事と異なる	候補記事が基準記事と共有する対象=（効かない。デッキだけ・アーキタイプだけ・カードだけ・イベント詳細だけ・デッキとカード・アーキタイプとイベント詳細から選ぶ）／候補記事のWP種別ID=基準記事と異なる／候補記事のWP投稿ID=（効かない）／同じWP投稿IDを持つ候補記事の数=（効かない）／limitの指定=（効かない）／関連記事の数と取得件数の関係=（効かない）	候補記事のWP種別ID: 基準記事と異なる
+CB-A17-02-014	P1	F03=基準記事と同じまたは0	候補記事が基準記事と共有する対象=（効かない。デッキだけ・アーキタイプだけ・カードだけ・イベント詳細だけ・デッキとカード・アーキタイプとイベント詳細から選ぶ）／候補記事のWP種別ID=（効かない。基準記事と同じから選ぶ）／候補記事のWP投稿ID=基準記事と同じまたは0／同じWP投稿IDを持つ候補記事の数=（効かない）／limitの指定=（効かない）／関連記事の数と取得件数の関係=（効かない）	候補記事のWP投稿ID: 基準記事と同じまたは0
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A17-02_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	記事IDに関連する記事を探して返す	GET /article/related/{WPの投稿ID} を開く（limit は任意）	応答のHTTPステータスと応答JSON（要素・フラグ・順・件数）	L0015,L0020,L0024,L0030,L0067-L0084,L0088
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A17-02_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	候補記事が基準記事と共有する対象	デッキだけ｜アーキタイプだけ｜カードだけ｜イベント詳細だけ｜デッキとカード｜アーキタイプとイベント詳細｜共有なし	デッキだけ: 関連とし先頭に置きhasSameDeckだけ1／アーキタイプだけ: 関連としhasSameArchetypeだけ1／カードだけ: 関連としhasSameCardだけ1／イベント詳細だけ: 関連とし最後に置きhasSameEventDetailだけ1／デッキとカード: 関連とし先頭に置きhasSameDeckとhasSameCardが1・ほかは0で配列には1回だけ現れる／アーキタイプとイベント詳細: 関連としhasSameArchetypeとhasSameEventDetailが1・ほかは0で配列には1回だけ現れる／共有なし: 関連とせず返さない	L0068-L0070,L0075,L0082,L0084	この機能
+F02	P1	候補記事のWP種別ID	基準記事と同じ｜基準記事と異なる	基準記事と同じ: 対象になる／基準記事と異なる: 対象外で返さない	L0072	この機能
+F03	P1	候補記事のWP投稿ID	基準記事と別の0以外｜基準記事と同じまたは0	基準記事と別の0以外: 対象になる／基準記事と同じまたは0: 自身として含めない・または対象外で、どちらも返さない	L0071,L0073	この機能
+F05	P1	同じWP投稿IDを持つ候補記事の数	1件｜複数件	1件: そのまま返す／複数件: 1件にまとめて配列に1回だけ現れる	L0084	この機能
+F06	P1	limitの指定	未指定｜指定あり	未指定: 取得件数20件／指定あり: 指定した件数まで返す	L0024,L0080	この機能
+F07	P1	関連記事の数と取得件数の関係	取得件数以内｜取得件数を超える	取得件数以内: 関連記事を全部返す／取得件数を超える: 取得件数までに絞って返す	L0024,L0080	この機能
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A17-02_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		関連記事にする条件の1つで、一つでも外れると対象に入らず、結果は入る・入らないの2つだけ
+P1	F01+F03	関係しない		関連記事にする条件の1つで、一つでも外れると対象に入らず、結果は入る・入らないの2つだけ
+P1	F02+F03	関係しない		関連記事にする条件の1つで、一つでも外れると対象に入らず、結果は入る・入らないの2つだけ
+P1	F01+F05	効き合う	L0082,L0084	同じWP投稿IDの記事が複数あると共有する対象が複数記事にまたがっても1件にまとまり、フラグはその投稿IDの共有状況で決まる
+P1	F06+F07	効き合う	L0024,L0080	取得件数は指定の有無で20件か指定件数かが決まり、関連記事の数がそれを超えると絞られる
+P1	F01+F07	設計書が決めていない	L0075,L0080	取得件数を超えるとき、並び順で先頭から残るのか絞ってから並べるのかが書かれておらず、どの候補が返るか決まらない
+P1	F01+F06	関係しない		共有する対象でフラグと順が決まり、limitは件数だけを決める
+P1	F02+F05	関係しない		種別の判定と同一投稿IDのまとめは別の定めで、互いの結果を変えない
+P1	F02+F06	関係しない		種別の判定は件数の指定に左右されない
+P1	F02+F07	関係しない		種別違いは件数の数える前に対象外になり、取得件数との関係は変わらない
+P1	F03+F05	関係しない		投稿IDの判定と同一投稿IDのまとめは別の定めで、互いの結果を変えない
+P1	F03+F06	関係しない		投稿IDの判定は件数の指定に左右されない
+P1	F03+F07	関係しない		自身や0の記事は件数を数える前に対象外になり、取得件数との関係は変わらない
+P1	F05+F06	関係しない		まとめる処理はlimitの指定に左右されない
+P1	F05+F07	関係しない		まとめた後の件数が取得件数と比べられるだけで、定めは互いの結果を変えない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/A17-02_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	組	種別	根拠	理由
+P1	F01=デッキだけ&F07=取得件数を超える	正解未定	L0075,L0080	取得件数を超えるとき並べる前に絞るか後かが書かれておらず、この候補が返るか決まらない
+P1	F01=アーキタイプだけ&F07=取得件数を超える	正解未定	L0075,L0080	取得件数を超えるとき並べる前に絞るか後かが書かれておらず、この候補が返るか決まらない
+P1	F01=カードだけ&F07=取得件数を超える	正解未定	L0075,L0080	取得件数を超えるとき並べる前に絞るか後かが書かれておらず、この候補が返るか決まらない
+P1	F01=イベント詳細だけ&F07=取得件数を超える	正解未定	L0075,L0080	取得件数を超えるとき並べる前に絞るか後かが書かれておらず、この候補が返るか決まらない
+P1	F01=デッキとカード&F07=取得件数を超える	正解未定	L0075,L0080	取得件数を超えるとき並べる前に絞るか後かが書かれておらず、この候補が返るか決まらない
+P1	F01=アーキタイプとイベント詳細&F07=取得件数を超える	正解未定	L0075,L0080	取得件数を超えるとき並べる前に絞るか後かが書かれておらず、この候補が返るか決まらない
+P1	F01=共有なし	打ち切り	L0068-L0070	基準記事と何も共有しない記事は関連とされず返さない。ほかの要因の値は結果に効かない
+P1	F02=基準記事と異なる	打ち切り	L0072	WP種別IDが基準記事と異なる記事は対象外で、ほかの要因の値は結果に効かない
+P1	F03=基準記事と同じまたは0	打ち切り	L0071,L0073	基準記事と同じWP投稿IDの記事とWP投稿IDが0の記事は返さず、ほかの要因の値は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/A17-02/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0517 sheet-4 記事IDに関連する記事情報を取得
+L0001	記事IDに関連する記事情報を取得
+L0002	ドキュメント名その他API機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者緑川
+L0006	作成日2025-08-28
+L0007	更新者緑川
+L0008	更新日2025-09-06
+L0009	機能NoA17-02
+L0010	機能名記事IDに関連する記事情報を取得
+L0011	概要関連する記事情報を取得
+L0012	処理概要（★はカスタマイズ項目）
+L0013	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0014	エンドポイントURL
+L0015	/article/related/{記事ID}
+L0016	プロトコル HTTP メソッド GET 認証の有無 無 認証方式 無 リクエスト書式 クエリ レスポンス書式 JSON
+L0017	カスタマイズ説明
+L0018	機能仕様処理概要（★はカスタマイズ項目）
+L0019	・WordPressから参照されるEC-CUBEのAPI
+L0020	・記事IDから関連する記事情報検索しJSON出力する。
+L0021	リクエストパラメータ
+L0022	項目名	型	必須	最大文字数
+L0023	または最大値	入力例	備考
+L0024	取得件数	数値（整数）		-	2	設定しない場合は取得件数20件とする
+L0025	リクエストパラメータサンプル
+L0026	/article/related/1043
+L0027	ステータスコード
+L0028	コード 説明
+L0029	200 正常
+L0030	404 該当データがない場合
+L0031	レスポンスデータ
+L0032	名前	型	説明
+L0033	wp_post_id	数字	WPの投稿ID
+L0034	hasSameDeck	文字型	デッキフラグ
+L0035	hasSameArchetype	文字型	アーキタイプフラグ
+L0036	hasSameCard	文字型	カードフラグ
+L0037	hasSameEventDetail	文字型	イベント詳細フラグ
+L0038	レスポンスデータサンプル
+L0039	[
+L0040	{
+L0041	"wpPostId": 35811,
+L0042	"hasSameDeck": "0",
+L0043	"hasSameArchetype": "0",
+L0044	"hasSameCard": "1",
+L0045	"hasSameEventDetail": "0"
+L0046	},
+L0047	{
+L0048	"wpPostId": 41267,
+L0049	"hasSameDeck": "0",
+L0050	"hasSameArchetype": "0",
+L0051	"hasSameCard": "1",
+L0052	"hasSameEventDetail": "0"
+L0053	},
+L0054	{
+L0055	"wpPostId": 41283,
+L0056	"hasSameDeck": "0",
+L0057	"hasSameArchetype": "0",
+L0058	"hasSameCard": "1",
+L0059	"hasSameEventDetail": "0"
+L0060	}
+L0061	]
+L0062	Source:
+L0063	functions/pf-api/a17-02_api_other_article_related.md
+L0064	現行仕様
+L0065	A17-02 記事IDに関連する記事情報を取得 / API その他 — 記事IDに関連する記事情報を取得
+L0066	業務ロジック
+L0067	関連記事の判定
+L0068	基準記事とデッキ・アーキタイプ・カード・イベント詳細のいずれかを共有する記事を関連とみなす。関連とするのは、次の条件をすべて満たす記事に限る。
+L0069	条件	内容
+L0070	共有	デッキ・アーキタイプ・カード・イベント詳細のうち少なくとも1つが基準記事と一致する
+L0071	自身の除外	基準記事と同じWP投稿IDを持つ記事は関連記事に含めない
+L0072	WP種別	基準記事とWP種別IDが同じ記事だけを対象とする
+L0073	投稿IDの有無	WP投稿IDが0の記事は対象外とする
+L0074	並び順
+L0075	一致した種類の優先度が高いものから並べる。デッキが一致する記事を先頭に置き、以下アーキタイプ・カード・イベント詳細の順で、一致する記事を一致しない記事より先に返す。
+L0076	入出力
+L0077	入力: 記事IDの照合先
+L0078	パスで受け取る記事IDは、記事のWP投稿IDとして照合する。記事そのものに振られた連番のIDではない。
+L0079	入力: 取得件数の指定方法
+L0080	取得件数はクエリ文字列の limit で受け取る。
+L0081	出力: 一致フラグの値
+L0082	デッキ・アーキタイプ・カード・イベント詳細の各フラグは、その対象を基準記事と1つでも共有していれば1、共有していなければ0を返す。
+L0083	出力: 関連記事の重複
+L0084	同一のWP投稿IDを持つ記事は1件にまとめて返す。デッキとカードのように共有する対象が複数あっても、同じWP投稿IDが配列に複数回現れることはない。
+L0085	リニューアル後の仕様
+L0086	表示メッセージ
+L0087	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0088	—	API応答JSON	Not Found	関連記事が無いとき	HTTP 404を返して終了する
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/A17-02_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+項目ID	扱い	テストID	理由
+CB-A17-02-001	ケース化	IT-A17-02-012	共有する対象がデッキだけ・同じWP投稿IDの候補記事が複数件・limitが指定あり・取得件数以内の組を応答の要素とフラグでまとめて確かめる
+CB-A17-02-002	ケース化	IT-A17-02-013	共有する対象がデッキだけ・同じWP投稿IDの候補記事が1件・limitが未指定・取得件数以内の組を応答の要素とフラグでまとめて確かめる
+CB-A17-02-003	ケース化	IT-A17-02-014	共有する対象がアーキタイプだけ・同じWP投稿IDの候補記事が1件・limitが指定あり・取得件数以内の組を応答の要素とフラグでまとめて確かめる
+CB-A17-02-004	ケース化	IT-A17-02-015	共有する対象がアーキタイプだけ・同じWP投稿IDの候補記事が複数件・limitが未指定・取得件数以内の組を応答の要素とフラグでまとめて確かめる
+CB-A17-02-005	ケース化	IT-A17-02-016	共有する対象がカードだけ・同じWP投稿IDの候補記事が1件・limitが指定あり・取得件数以内の組を応答の要素とフラグでまとめて確かめる
+CB-A17-02-006	ケース化	IT-A17-02-017	共有する対象がカードだけ・同じWP投稿IDの候補記事が複数件・limitが未指定・取得件数以内の組を応答の要素とフラグでまとめて確かめる
+CB-A17-02-007	ケース化	IT-A17-02-018	共有する対象がイベント詳細だけ・同じWP投稿IDの候補記事が1件・limitが未指定・取得件数以内の組を応答の要素とフラグでまとめて確かめる
+CB-A17-02-008	ケース化	IT-A17-02-019	共有する対象がイベント詳細だけ・同じWP投稿IDの候補記事が複数件・limitが指定あり・取得件数以内の組を応答の要素とフラグでまとめて確かめる
+CB-A17-02-009	ケース化	IT-A17-02-020	共有する対象がデッキとカード・同じWP投稿IDの候補記事が複数件・limitが未指定・取得件数以内の組を応答の要素とフラグでまとめて確かめる
+CB-A17-02-010	ケース化	IT-A17-02-021	共有する対象がデッキとカード・同じWP投稿IDの候補記事が1件・limitが指定あり・取得件数以内の組を応答の要素とフラグでまとめて確かめる
+CB-A17-02-011	ケース化	IT-A17-02-022	共有する対象がアーキタイプとイベント詳細・同じWP投稿IDの候補記事が1件・limitが未指定・取得件数以内の組を応答の要素とフラグでまとめて確かめる
+CB-A17-02-012	ケース化	IT-A17-02-023	共有する対象がアーキタイプとイベント詳細・同じWP投稿IDの候補記事が複数件・limitが指定あり・取得件数以内の組を応答の要素とフラグでまとめて確かめる
+CB-A17-02-013	ケース化	IT-A17-02-024	WP種別IDが基準記事と異なる組は打ち切りで、他の要因が効かず関連記事なしの404になることを確かめる
+CB-A17-02-014	ケース化	IT-A17-02-025	WP投稿IDが基準記事と同じまたは0の組は打ち切りで、他の要因が効かず関連記事なしの404になることを確かめる
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/A17-02_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+exec
+/bin/bash -lc 'cut -f1,10,11 integration_test/casegen/combination/cases/A17-02_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	手順	期待結果
+IT-A17-02-012	1. ブラウザでGET「/article/related/50120?limit=3」を開く／2. HTTPステータスと応答JSONの要素数、各要素のWP投稿IDとhasSameDeck、hasSameArchetype、hasSameCard、hasSameEventDetailを確認する	HTTPステータス200で、応答がWP投稿ID 50121の1件だけの配列JSONとなり（同じWP投稿IDが複数回現れない）、hasSameDeckが文字型の「1」、hasSameArchetypeとhasSameCardとhasSameEventDetailが文字型の「0」となること
+IT-A17-02-013	1. ブラウザでGET「/article/related/50130」を開く／2. HTTPステータスと応答JSONの要素数、各要素のWP投稿IDとhasSameDeck、hasSameArchetype、hasSameCard、hasSameEventDetailを確認する	HTTPステータス200で、応答がWP投稿ID 50131の1件だけの配列JSONとなり（同じWP投稿IDが複数回現れない）、hasSameDeckが文字型の「1」、hasSameArchetypeとhasSameCardとhasSameEventDetailが文字型の「0」となること
+IT-A17-02-014	1. ブラウザでGET「/article/related/50140?limit=3」を開く／2. HTTPステータスと応答JSONの要素数、各要素のWP投稿IDとhasSameDeck、hasSameArchetype、hasSameCard、hasSameEventDetailを確認する	HTTPステータス200で、応答がWP投稿ID 50141の1件だけの配列JSONとなり（同じWP投稿IDが複数回現れない）、hasSameArchetypeが文字型の「1」、hasSameDeckとhasSameCardとhasSameEventDetailが文字型の「0」となること
+IT-A17-02-015	1. ブラウザでGET「/article/related/50150」を開く／2. HTTPステータスと応答JSONの要素数、各要素のWP投稿IDとhasSameDeck、hasSameArchetype、hasSameCard、hasSameEventDetailを確認する	HTTPステータス200で、応答がWP投稿ID 50151の1件だけの配列JSONとなり（同じWP投稿IDが複数回現れない）、hasSameArchetypeが文字型の「1」、hasSameDeckとhasSameCardとhasSameEventDetailが文字型の「0」となること
+IT-A17-02-016	1. ブラウザでGET「/article/related/50160?limit=3」を開く／2. HTTPステータスと応答JSONの要素数、各要素のWP投稿IDとhasSameDeck、hasSameArchetype、hasSameCard、hasSameEventDetailを確認する	HTTPステータス200で、応答がWP投稿ID 50161の1件だけの配列JSONとなり（同じWP投稿IDが複数回現れない）、hasSameCardが文字型の「1」、hasSameDeckとhasSameArchetypeとhasSameEventDetailが文字型の「0」となること
+IT-A17-02-017	1. ブラウザでGET「/article/related/50170」を開く／2. HTTPステータスと応答JSONの要素数、各要素のWP投稿IDとhasSameDeck、hasSameArchetype、hasSameCard、hasSameEventDetailを確認する	HTTPステータス200で、応答がWP投稿ID 50171の1件だけの配列JSONとなり（同じWP投稿IDが複数回現れない）、hasSameCardが文字型の「1」、hasSameDeckとhasSameArchetypeとhasSameEventDetailが文字型の「0」となること
+IT-A17-02-018	1. ブラウザでGET「/article/related/50180」を開く／2. HTTPステータスと応答JSONの要素数、各要素のWP投稿IDとhasSameDeck、hasSameArchetype、hasSameCard、hasSameEventDetailを確認する	HTTPステータス200で、応答がWP投稿ID 50181の1件だけの配列JSONとなり（同じWP投稿IDが複数回現れない）、hasSameEventDetailが文字型の「1」、hasSameDeckとhasSameArchetypeとhasSameCardが文字型の「0」となること
+IT-A17-02-019	1. ブラウザでGET「/article/related/50190?limit=3」を開く／2. HTTPステータスと応答JSONの要素数、各要素のWP投稿IDとhasSameDeck、hasSameArchetype、hasSameCard、hasSameEventDetailを確認する	HTTPステータス200で、応答がWP投稿ID 50191の1件だけの配列JSONとなり（同じWP投稿IDが複数回現れない）、hasSameEventDetailが文字型の「1」、hasSameDeckとhasSameArchetypeとhasSameCardが文字型の「0」となること
+IT-A17-02-020	1. ブラウザでGET「/article/related/50200」を開く／2. HTTPステータスと応答JSONの要素数、各要素のWP投稿IDとhasSameDeck、hasSameArchetype、hasSameCard、hasSameEventDetailを確認する	HTTPステータス200で、応答がWP投稿ID 50201の1件だけの配列JSONとなり（同じWP投稿IDが複数回現れない）、hasSameDeckとhasSameCardが文字型の「1」、hasSameArchetypeとhasSameEventDetailが文字型の「0」となること
+IT-A17-02-021	1. ブラウザでGET「/article/related/50210?limit=3」を開く／2. HTTPステータスと応答JSONの要素数、各要素のWP投稿IDとhasSameDeck、hasSameArchetype、hasSameCard、hasSameEventDetailを確認する	HTTPステータス200で、応答がWP投稿ID 50211の1件だけの配列JSONとなり（同じWP投稿IDが複数回現れない）、hasSameDeckとhasSameCardが文字型の「1」、hasSameArchetypeとhasSameEventDetailが文字型の「0」となること
+IT-A17-02-022	1. ブラウザでGET「/article/related/50220」を開く／2. HTTPステータスと応答JSONの要素数、各要素のWP投稿IDとhasSameDeck、hasSameArchetype、hasSameCard、hasSameEventDetailを確認する	HTTPステータス200で、応答がWP投稿ID 50221の1件だけの配列JSONとなり（同じWP投稿IDが複数回現れない）、hasSameArchetypeとhasSameEventDetailが文字型の「1」、hasSameDeckとhasSameCardが文字型の「0」となること
+IT-A17-02-023	1. ブラウザでGET「/article/related/50230?limit=3」を開く／2. HTTPステータスと応答JSONの要素数、各要素のWP投稿IDとhasSameDeck、hasSameArchetype、hasSameCard、hasSameEventDetailを確認する	HTTPステータス200で、応答がWP投稿ID 50231の1件だけの配列JSONとなり（同じWP投稿IDが複数回現れない）、hasSameArchetypeとhasSameEventDetailが文字型の「1」、hasSameDeckとhasSameCardが文字型の「0」となること
+IT-A17-02-024	1. ブラウザでGET「/article/related/50240」を開く／2. HTTPステータスと応答JSONを確認する	WP種別IDが基準記事と異なる候補記事はWP投稿ID 50241の要素として返らず、HTTPステータス404および「Not Found」を含むAPI応答JSONが返ること
+IT-A17-02-025	1. ブラウザでGET「/article/related/50250」を開く／2. HTTPステータスと応答JSONを確認する	基準記事と同じWP投稿ID 50250の記事およびWP投稿IDが0の記事が応答に含まれず、HTTPステータス404および「Not Found」を含むAPI応答JSONが返ること
+
+exec
+/bin/bash -lc 'cut -f1,9 integration_test/casegen/combination/cases/A17-02_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	事前準備
+IT-A17-02-012	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40120・WP投稿ID 50120・WP種別ID 1で、デッキID 701201に紐づく（ほかの対象には紐づかない）／候補記事は連番ID 40121と40122の2記事で、同じWP投稿ID 50121（基準記事と別の0以外）・WP種別ID 1（基準記事と同じ）を持ち、それぞれデッキID 701201を基準記事と共有し（候補記事が基準記事と共有する対象はデッキだけ）、ほかの対象は共有しない（同じWP投稿IDを持つ候補記事の数は複数件）／記載外の記事には基準記事との共通関連がない。関連記事は50121の1件だけで、リクエストのlimitの指定は指定あり（limit=3）で関連記事の数は取得件数以内（S-A17-02-CBDECK-012）
+IT-A17-02-013	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40130・WP投稿ID 50130・WP種別ID 1で、デッキID 701301に紐づく（ほかの対象には紐づかない）／候補記事は連番ID 40131の1記事で、同じWP投稿ID 50131（基準記事と別の0以外）・WP種別ID 1（基準記事と同じ）を持ち、デッキID 701301を基準記事と共有し（候補記事が基準記事と共有する対象はデッキだけ）、ほかの対象は共有しない（同じWP投稿IDを持つ候補記事の数は1件）／記載外の記事には基準記事との共通関連がない。関連記事は50131の1件だけで、リクエストのlimitの指定は未指定で既定の取得件数20件に対し関連記事の数は取得件数以内（S-A17-02-CBDECK-013）
+IT-A17-02-014	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40140・WP投稿ID 50140・WP種別ID 1で、アーキタイプID 701402に紐づく（ほかの対象には紐づかない）／候補記事は連番ID 40141の1記事で、同じWP投稿ID 50141（基準記事と別の0以外）・WP種別ID 1（基準記事と同じ）を持ち、アーキタイプID 701402を基準記事と共有し（候補記事が基準記事と共有する対象はアーキタイプだけ）、ほかの対象は共有しない（同じWP投稿IDを持つ候補記事の数は1件）／記載外の記事には基準記事との共通関連がない。関連記事は50141の1件だけで、リクエストのlimitの指定は指定あり（limit=3）で関連記事の数は取得件数以内（S-A17-02-CBARCH-014）
+IT-A17-02-015	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40150・WP投稿ID 50150・WP種別ID 1で、アーキタイプID 701502に紐づく（ほかの対象には紐づかない）／候補記事は連番ID 40151と40152の2記事で、同じWP投稿ID 50151（基準記事と別の0以外）・WP種別ID 1（基準記事と同じ）を持ち、それぞれアーキタイプID 701502を基準記事と共有し（候補記事が基準記事と共有する対象はアーキタイプだけ）、ほかの対象は共有しない（同じWP投稿IDを持つ候補記事の数は複数件）／記載外の記事には基準記事との共通関連がない。関連記事は50151の1件だけで、リクエストのlimitの指定は未指定で既定の取得件数20件に対し関連記事の数は取得件数以内（S-A17-02-CBARCH-015）
+IT-A17-02-016	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40160・WP投稿ID 50160・WP種別ID 1で、カードID 701603に紐づく（ほかの対象には紐づかない）／候補記事は連番ID 40161の1記事で、同じWP投稿ID 50161（基準記事と別の0以外）・WP種別ID 1（基準記事と同じ）を持ち、カードID 701603を基準記事と共有し（候補記事が基準記事と共有する対象はカードだけ）、ほかの対象は共有しない（同じWP投稿IDを持つ候補記事の数は1件）／記載外の記事には基準記事との共通関連がない。関連記事は50161の1件だけで、リクエストのlimitの指定は指定あり（limit=3）で関連記事の数は取得件数以内（S-A17-02-CBCARD-016）
+IT-A17-02-017	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40170・WP投稿ID 50170・WP種別ID 1で、カードID 701703に紐づく（ほかの対象には紐づかない）／候補記事は連番ID 40171と40172の2記事で、同じWP投稿ID 50171（基準記事と別の0以外）・WP種別ID 1（基準記事と同じ）を持ち、それぞれカードID 701703を基準記事と共有し（候補記事が基準記事と共有する対象はカードだけ）、ほかの対象は共有しない（同じWP投稿IDを持つ候補記事の数は複数件）／記載外の記事には基準記事との共通関連がない。関連記事は50171の1件だけで、リクエストのlimitの指定は未指定で既定の取得件数20件に対し関連記事の数は取得件数以内（S-A17-02-CBCARD-017）
+IT-A17-02-018	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40180・WP投稿ID 50180・WP種別ID 1で、イベント詳細ID 701804に紐づく（ほかの対象には紐づかない）／候補記事は連番ID 40181の1記事で、同じWP投稿ID 50181（基準記事と別の0以外）・WP種別ID 1（基準記事と同じ）を持ち、イベント詳細ID 701804を基準記事と共有し（候補記事が基準記事と共有する対象はイベント詳細だけ）、ほかの対象は共有しない（同じWP投稿IDを持つ候補記事の数は1件）／記載外の記事には基準記事との共通関連がない。関連記事は50181の1件だけで、リクエストのlimitの指定は未指定で既定の取得件数20件に対し関連記事の数は取得件数以内（S-A17-02-CBEVT-018）
+IT-A17-02-019	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40190・WP投稿ID 50190・WP種別ID 1で、イベント詳細ID 701904に紐づく（ほかの対象には紐づかない）／候補記事は連番ID 40191と40192の2記事で、同じWP投稿ID 50191（基準記事と別の0以外）・WP種別ID 1（基準記事と同じ）を持ち、それぞれイベント詳細ID 701904を基準記事と共有し（候補記事が基準記事と共有する対象はイベント詳細だけ）、ほかの対象は共有しない（同じWP投稿IDを持つ候補記事の数は複数件）／記載外の記事には基準記事との共通関連がない。関連記事は50191の1件だけで、リクエストのlimitの指定は指定あり（limit=3）で関連記事の数は取得件数以内（S-A17-02-CBEVT-019）
+IT-A17-02-020	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40200・WP投稿ID 50200・WP種別ID 1で、デッキID 702001、カードID 702003に紐づく（ほかの対象には紐づかない）／候補記事は連番ID 40201と40202の2記事で、同じWP投稿ID 50201（基準記事と別の0以外）・WP種別ID 1（基準記事と同じ）を持ち、それぞれデッキID 702001、カードID 702003を基準記事と共有し（候補記事が基準記事と共有する対象はデッキとカード）、ほかの対象は共有しない（同じWP投稿IDを持つ候補記事の数は複数件）／記載外の記事には基準記事との共通関連がない。関連記事は50201の1件だけで、リクエストのlimitの指定は未指定で既定の取得件数20件に対し関連記事の数は取得件数以内（S-A17-02-CBDECKCARD-020）
+IT-A17-02-021	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40210・WP投稿ID 50210・WP種別ID 1で、デッキID 702101、カードID 702103に紐づく（ほかの対象には紐づかない）／候補記事は連番ID 40211の1記事で、同じWP投稿ID 50211（基準記事と別の0以外）・WP種別ID 1（基準記事と同じ）を持ち、デッキID 702101、カードID 702103を基準記事と共有し（候補記事が基準記事と共有する対象はデッキとカード）、ほかの対象は共有しない（同じWP投稿IDを持つ候補記事の数は1件）／記載外の記事には基準記事との共通関連がない。関連記事は50211の1件だけで、リクエストのlimitの指定は指定あり（limit=3）で関連記事の数は取得件数以内（S-A17-02-CBDECKCARD-021）
+IT-A17-02-022	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40220・WP投稿ID 50220・WP種別ID 1で、アーキタイプID 702202、イベント詳細ID 702204に紐づく（ほかの対象には紐づかない）／候補記事は連番ID 40221の1記事で、同じWP投稿ID 50221（基準記事と別の0以外）・WP種別ID 1（基準記事と同じ）を持ち、アーキタイプID 702202、イベント詳細ID 702204を基準記事と共有し（候補記事が基準記事と共有する対象はアーキタイプとイベント詳細）、ほかの対象は共有しない（同じWP投稿IDを持つ候補記事の数は1件）／記載外の記事には基準記事との共通関連がない。関連記事は50221の1件だけで、リクエストのlimitの指定は未指定で既定の取得件数20件に対し関連記事の数は取得件数以内（S-A17-02-CBARCHEVT-022）
+IT-A17-02-023	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40230・WP投稿ID 50230・WP種別ID 1で、アーキタイプID 702302、イベント詳細ID 702304に紐づく（ほかの対象には紐づかない）／候補記事は連番ID 40231と40232の2記事で、同じWP投稿ID 50231（基準記事と別の0以外）・WP種別ID 1（基準記事と同じ）を持ち、それぞれアーキタイプID 702302、イベント詳細ID 702304を基準記事と共有し（候補記事が基準記事と共有する対象はアーキタイプとイベント詳細）、ほかの対象は共有しない（同じWP投稿IDを持つ候補記事の数は複数件）／記載外の記事には基準記事との共通関連がない。関連記事は50231の1件だけで、リクエストのlimitの指定は指定あり（limit=3）で関連記事の数は取得件数以内（S-A17-02-CBARCHEVT-023）
+IT-A17-02-024	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40240・WP投稿ID 50240・WP種別ID 1で、デッキID 702401・アーキタイプID 702402・カードID 702403・イベント詳細ID 702404に紐づく／候補記事は連番ID 40241・WP投稿ID 50241（基準記事と別の0以外）・WP種別ID 2（基準記事と異なる）で、4種類すべてを基準記事と共有する／記載外の記事には基準記事との共通関連がない。関連記事になり得る記事はこの1件だけ（S-A17-02-CBTYPE-024）
+IT-A17-02-025	① 開始時に関連記事の取得件数初期値を20件に設定し、A17-02を含むアプリケーションを稼働させ、ブラウザの接続先（APIベースURL）をその試験環境の公開URLに設定する（S-A17-02-ENV）／② 基準記事は連番ID 40250・WP投稿ID 50250・WP種別ID 1で、デッキID 702501・アーキタイプID 702502・カードID 702503・イベント詳細ID 702504に紐づく／候補記事は2件あり、連番ID 40251はWP投稿ID 50250（基準記事と同じ）・WP種別ID 1、連番ID 40252はWP投稿ID 0・WP種別ID 1で、どちらも4種類すべてを基準記事と共有する（WP投稿IDは基準記事と同じまたは0）／記載外の記事には基準記事との共通関連がない。関連記事になり得る記事はこの2件だけ（S-A17-02-CBSELF-025）
+
+exec
+/bin/bash -lc 'cut -f1,4,6 integration_test/casegen/combination/cases/A17-02_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+シードID	状態・属性	投入方法
+S-A17-02-CBDECK-012	基準記事=連番ID 40120・WP投稿ID 50120・WP種別ID 1・デッキID 701201に紐づく／候補記事=連番ID 40121と40122の2記事・WP投稿ID 50121・WP種別ID 1・デッキID 701201を基準記事と共有し、ほかの対象は共有しない／記載外の記事との共通関連なし	DBシードで基準記事と候補記事2件を登録し、記載したデッキID 701201へ関連付ける。記事・デッキ・アーキタイプ・カード・イベント詳細の関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBDECK-013	基準記事=連番ID 40130・WP投稿ID 50130・WP種別ID 1・デッキID 701301に紐づく／候補記事=連番ID 40131の1記事・WP投稿ID 50131・WP種別ID 1・デッキID 701301を基準記事と共有し、ほかの対象は共有しない／記載外の記事との共通関連なし	DBシードで基準記事と候補記事1件を登録し、記載したデッキID 701301へ関連付ける。記事・デッキ・アーキタイプ・カード・イベント詳細の関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBARCH-014	基準記事=連番ID 40140・WP投稿ID 50140・WP種別ID 1・アーキタイプID 701402に紐づく／候補記事=連番ID 40141の1記事・WP投稿ID 50141・WP種別ID 1・アーキタイプID 701402を基準記事と共有し、ほかの対象は共有しない／記載外の記事との共通関連なし	DBシードで基準記事と候補記事1件を登録し、記載したアーキタイプID 701402へ関連付ける。記事・デッキ・アーキタイプ・カード・イベント詳細の関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBARCH-015	基準記事=連番ID 40150・WP投稿ID 50150・WP種別ID 1・アーキタイプID 701502に紐づく／候補記事=連番ID 40151と40152の2記事・WP投稿ID 50151・WP種別ID 1・アーキタイプID 701502を基準記事と共有し、ほかの対象は共有しない／記載外の記事との共通関連なし	DBシードで基準記事と候補記事2件を登録し、記載したアーキタイプID 701502へ関連付ける。記事・デッキ・アーキタイプ・カード・イベント詳細の関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBCARD-016	基準記事=連番ID 40160・WP投稿ID 50160・WP種別ID 1・カードID 701603に紐づく／候補記事=連番ID 40161の1記事・WP投稿ID 50161・WP種別ID 1・カードID 701603を基準記事と共有し、ほかの対象は共有しない／記載外の記事との共通関連なし	DBシードで基準記事と候補記事1件を登録し、記載したカードID 701603へ関連付ける。記事・デッキ・アーキタイプ・カード・イベント詳細の関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBCARD-017	基準記事=連番ID 40170・WP投稿ID 50170・WP種別ID 1・カードID 701703に紐づく／候補記事=連番ID 40171と40172の2記事・WP投稿ID 50171・WP種別ID 1・カードID 701703を基準記事と共有し、ほかの対象は共有しない／記載外の記事との共通関連なし	DBシードで基準記事と候補記事2件を登録し、記載したカードID 701703へ関連付ける。記事・デッキ・アーキタイプ・カード・イベント詳細の関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBEVT-018	基準記事=連番ID 40180・WP投稿ID 50180・WP種別ID 1・イベント詳細ID 701804に紐づく／候補記事=連番ID 40181の1記事・WP投稿ID 50181・WP種別ID 1・イベント詳細ID 701804を基準記事と共有し、ほかの対象は共有しない／記載外の記事との共通関連なし	DBシードで基準記事と候補記事1件を登録し、記載したイベント詳細ID 701804へ関連付ける。記事・デッキ・アーキタイプ・カード・イベント詳細の関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBEVT-019	基準記事=連番ID 40190・WP投稿ID 50190・WP種別ID 1・イベント詳細ID 701904に紐づく／候補記事=連番ID 40191と40192の2記事・WP投稿ID 50191・WP種別ID 1・イベント詳細ID 701904を基準記事と共有し、ほかの対象は共有しない／記載外の記事との共通関連なし	DBシードで基準記事と候補記事2件を登録し、記載したイベント詳細ID 701904へ関連付ける。記事・デッキ・アーキタイプ・カード・イベント詳細の関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBDECKCARD-020	基準記事=連番ID 40200・WP投稿ID 50200・WP種別ID 1・デッキID 702001、カードID 702003に紐づく／候補記事=連番ID 40201と40202の2記事・WP投稿ID 50201・WP種別ID 1・デッキID 702001、カードID 702003を基準記事と共有し、ほかの対象は共有しない／記載外の記事との共通関連なし	DBシードで基準記事と候補記事2件を登録し、記載したデッキID 702001、カードID 702003へ関連付ける。記事・デッキ・アーキタイプ・カード・イベント詳細の関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBDECKCARD-021	基準記事=連番ID 40210・WP投稿ID 50210・WP種別ID 1・デッキID 702101、カードID 702103に紐づく／候補記事=連番ID 40211の1記事・WP投稿ID 50211・WP種別ID 1・デッキID 702101、カードID 702103を基準記事と共有し、ほかの対象は共有しない／記載外の記事との共通関連なし	DBシードで基準記事と候補記事1件を登録し、記載したデッキID 702101、カードID 702103へ関連付ける。記事・デッキ・アーキタイプ・カード・イベント詳細の関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBARCHEVT-022	基準記事=連番ID 40220・WP投稿ID 50220・WP種別ID 1・アーキタイプID 702202、イベント詳細ID 702204に紐づく／候補記事=連番ID 40221の1記事・WP投稿ID 50221・WP種別ID 1・アーキタイプID 702202、イベント詳細ID 702204を基準記事と共有し、ほかの対象は共有しない／記載外の記事との共通関連なし	DBシードで基準記事と候補記事1件を登録し、記載したアーキタイプID 702202、イベント詳細ID 702204へ関連付ける。記事・デッキ・アーキタイプ・カード・イベント詳細の関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBARCHEVT-023	基準記事=連番ID 40230・WP投稿ID 50230・WP種別ID 1・アーキタイプID 702302、イベント詳細ID 702304に紐づく／候補記事=連番ID 40231と40232の2記事・WP投稿ID 50231・WP種別ID 1・アーキタイプID 702302、イベント詳細ID 702304を基準記事と共有し、ほかの対象は共有しない／記載外の記事との共通関連なし	DBシードで基準記事と候補記事2件を登録し、記載したアーキタイプID 702302、イベント詳細ID 702304へ関連付ける。記事・デッキ・アーキタイプ・カード・イベント詳細の関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBTYPE-024	基準記事=連番ID 40240・WP投稿ID 50240・WP種別ID 1・デッキID 702401・アーキタイプID 702402・カードID 702403・イベント詳細ID 702404に紐づく／候補記事=連番ID 40241・WP投稿ID 50241・WP種別ID 2・4種類すべてを基準記事と共有／記載外の記事との共通関連なし	DBシードで基準記事と候補記事1件を登録し、記載したデッキ・アーキタイプ・カード・イベント詳細へ関連付ける。関連付けはこの機能の画面から登録できないためDBへ直接投入する
+S-A17-02-CBSELF-025	基準記事=連番ID 40250・WP投稿ID 50250・WP種別ID 1・デッキID 702501・アーキタイプID 702502・カードID 702503・イベント詳細ID 702504に紐づく／候補記事=連番ID 40251・WP投稿ID 50250・WP種別ID 1・4種類すべてを共有／連番ID 40252・WP投稿ID 0・WP種別ID 1・4種類すべてを共有／記載外の記事との共通関連なし	DBシードで基準記事と候補記事2件を登録し、記載したデッキ・アーキタイプ・カード・イベント詳細へ関連付ける。関連付けはこの機能の画面から登録できないためDBへ直接投入する
+
+exec
+/bin/bash -lc "grep -n 'A15-17\\|A15-18\\|A17-02\\|A15-16\\|A16-02' integration_test/casegen/combination/review/R1_*_findings.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/review/R1_07_findings.md:1:### 指摘（A15-17 / IT-A15-17-032）
+integration_test/casegen/combination/review/R1_07_findings.md:2:- 主張: CB-A15-17-002は「解読できない行なし」の組だが、手順と期待結果は採用カードのDB確認だけである。
+integration_test/casegen/combination/review/R1_07_findings.md:7:### 指摘（A15-17 / IT-A15-17-033）
+integration_test/casegen/combination/review/R1_07_findings.md:8:- 主張: CB-A15-17-003は「解読できない行なし」の組だが、手順と期待結果は採用カードのDB確認だけである。
+integration_test/casegen/combination/review/R1_07_findings.md:13:### 指摘（A15-17 / IT-A15-17-034）
+integration_test/casegen/combination/review/R1_07_findings.md:14:- 主張: CB-A15-17-004は「解読できない行なし」の組だが、手順と期待結果は採用カードのDB確認だけである。
+integration_test/casegen/combination/review/R1_07_findings.md:19:### 指摘（A15-17 / IT-A15-17-035）
+integration_test/casegen/combination/review/R1_07_findings.md:20:- 主張: CB-A15-17-005は「解読できない行なし」の組だが、手順と期待結果は採用カードのDB確認だけである。
+integration_test/casegen/combination/review/R1_07_findings.md:25:### 指摘（A15-17 / IT-A15-17-036）
+integration_test/casegen/combination/review/R1_07_findings.md:26:- 主張: CB-A15-17-006は「解読できない行なし」の組だが、手順と期待結果は採用カードのDB確認だけである。
+integration_test/casegen/combination/review/R1_07_findings.md:31:### 指摘（A15-17 / IT-A15-17-037）
+integration_test/casegen/combination/review/R1_07_findings.md:32:- 主張: CB-A15-17-007は「解読できない行なし」の組だが、手順と期待結果は採用カードのDB確認だけである。
+integration_test/casegen/combination/review/R1_07_findings.md:37:### 指摘（A15-17 / IT-A15-17-038）
+integration_test/casegen/combination/review/R1_07_findings.md:38:- 主張: CB-A15-17-008は「解読できない行なし」の組だが、手順と期待結果は採用カードのDB確認だけである。
+integration_test/casegen/combination/review/R1_07_findings.md:43:### 指摘（A15-17 / IT-A15-17-039）
+integration_test/casegen/combination/review/R1_07_findings.md:44:- 主張: CB-A15-17-009は「解読できない行なし」の組だが、手順と期待結果は採用カードのDB確認だけである。
+
+exec
+/bin/bash -lc "grep '"'^S-A15-17-COMMANDER'"\\|"'^S-A15-17-FORMAT'"\\|"'^S-A15-17-CARDS'"' integration_test/casegen/cases/A15-17_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+S-A15-17-FORMAT	フォーマット	結合試験フォーマット	フォーマットIDは登録時に画面が振る（控える。以下〔フォーマットID-A1517-共有A〕）／名称=結合試験フォーマット／統率者使用設定=無効	各ケースが参照するだけのフォーマット	管理画面のフォーマット一覧で「新規登録」を押し、フォーマット登録画面でフォーマット名(日)に「結合試験フォーマット」、フォーマット名(英)に「IT Format A1517」、並び順に「9001」を入れ、「デッキビルダーで利用」にチェックを付け、「統率でカードを使用する（統率者や策略等）」にはチェックを付けずに「登録」を押す。登録後に開くフォーマット編集画面のURLに含まれる番号を控える（〔フォーマットID-A1517-共有A〕）。試験中は値を変更しない	共有可
+S-A15-17-CARDS	カード	基本採用カード	カードIDは登録時に画面が振る（控える。以下〔カードID-A1517-共有A〕）・名称=結合試験カードA／カードIDは登録時に画面が振る（控える。以下〔カードID-A1517-共有B〕）・名称=結合試験カードB／両カードとも利用可能	各ケースが参照するだけのカード	カード登録CSVを2行で作る（カード名(日本語)「結合試験カードA」・カード名(英語)「IT A1517 Card A」の行と、カード名(日本語)「結合試験カードB」・カード名(英語)「IT A1517 Card B」の行。各行のレアリティとレイアウトにはMTGマスターデータへ登録済みの名称(英)（設計書の入力例は「Uncommon」「Normal」）、画像URL(英語)には設計書の入力例の形式に沿った値（例「img/goods/L/TDM/en_7de21787f2._jpg」）を入れ、カード詳細IDは空にする）。管理画面のカードCSVアップロード画面で「ファイルを選択」にそのCSVを指定して「CSVファイルのアップロード」を押す。管理画面のカード一覧をカード名「結合試験カードA」「結合試験カードB」でそれぞれ検索し、その行に表示されたカードIDを控える（結合試験カードAが〔カードID-A1517-共有A〕、結合試験カードBが〔カードID-A1517-共有B〕）。試験中は値を変更しない	共有可
+S-A15-17-COMMANDER	フォーマット・カード	統率者試験データ	フォーマットIDは登録時に画面が振る（控える。以下〔フォーマットID-A1517-共有B〕）／名称=統率者試験フォーマット／統率者使用設定=有効／カードIDは登録時に画面が振る（控える。以下〔カードID-A1517-共有C〕）・名称=結合試験カードC／カードは利用可能	IT-A15-17-017が参照するだけの統率者用データ	管理画面のフォーマット一覧で「新規登録」を押し、フォーマット登録画面でフォーマット名(日)に「統率者試験フォーマット」、フォーマット名(英)に「IT Commander Format A1517」、並び順に「9002」を入れ、「デッキビルダーで利用」と「統率でカードを使用する（統率者や策略等）」にチェックを付けて「登録」を押す。登録後に開くフォーマット編集画面のURLに含まれる番号を控える（〔フォーマットID-A1517-共有B〕）。カード登録CSVを1行で作る（カード名(日本語)「結合試験カードC」・カード名(英語)「IT A1517 Card C」の行。レアリティとレイアウトにはMTGマスターデータへ登録済みの名称(英)（設計書の入力例は「Uncommon」「Normal」）、画像URL(英語)には設計書の入力例の形式に沿った値（例「img/goods/L/TDM/en_7de21787f2._jpg」）を入れ、カード詳細IDは空にする）。管理画面のカードCSVアップロード画面で「ファイルを選択」にそのCSVを指定して「CSVファイルのアップロード」を押す。管理画面のカード一覧をカード名「結合試験カードC」で検索し、その行に表示されたカードIDを控える（〔カードID-A1517-共有C〕）。試験中は値を変更しない	共有可
+
+exec
+/bin/bash -lc "grep 'IT-0366' integration_test/viewpoint_canonical/viewpoints_canonical.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-0366	ITA-11	内部結合テスト	制御	条件網羅	データパターン / 要因の組合せ	1つの処理の結果を左右する要因（区分、状態、設定、関連データの値など。他の機能で設定する値を含む）が2つ以上ある場合、設計書の定めが互いに効き合う要因については値の組合せのすべてで、互いに効き合わない要因についてはどの2つの要因の値の組もいずれかの組合せで、受け渡し先の結果が、それぞれの要因について定められた結果を重ねたとおり設計どおりとなること。設計書から結果が決まらない組合せ、設計上作れない組合せ、および検索条件と削除条件の組合せは除く。	設計書から引用	条件に応じて、呼び出される先、返却データ、出力結果、状態遷移および副作用が設計どおりに切り替わること。検索・削除条件の一致種別と組合せで期待したレコードが取得・対象化されること、表示／非表示条件、通知の発生条件を含む。	単一メソッド内の分岐網羅、および分岐編集の結果そのものは単体テストが担う
+
+exec
+/bin/bash -lc "grep '"'^S-A15-18-FORMATS'"\\|"'^S-A15-18-COMMANDER'"\\|"'^S-A15-18-RELATED'"' integration_test/casegen/cases/A15-18_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+S-A15-18-FORMATS	フォーマット	更新前・更新後フォーマット	更新前フォーマットIDは登録時に画面が振る（控える。以下〔フォーマットID-A1518-共有A〕）／結合試験フォーマットIDは登録時に画面が振る（控える。以下〔フォーマットID-A1518-共有B〕）・名称=結合試験フォーマット・統率者使用設定=無効	フォーマット指定とカードリスト解読の参照専用。どのケースもフォーマットを変更しない	管理画面のフォーマット一覧で「新規登録」を押し、フォーマット詳細(登録)画面でフォーマット名(日)に「更新前フォーマット」を入れ、入力必須のフォーマット名(英)・並び順・メタゲーム分析日数に他のフォーマットと重ならない任意の値を入れ、「登録」を押す。登録後に開くフォーマット詳細(編集)画面のURLに含まれるフォーマットの番号を控える（〔フォーマットID-A1518-共有A〕）。続けて、管理画面のフォーマット一覧で「新規登録」を押し、フォーマット詳細(登録)画面でフォーマット名(日)に「結合試験フォーマット」を入れ、入力必須のフォーマット名(英)・並び順・メタゲーム分析日数に他のフォーマットと重ならない任意の値を入れ、「統率でカードを使用する（統率者や策略等）」を選択しないまま「登録」を押す。登録後に開くフォーマット詳細(編集)画面のURLに含まれるフォーマットの番号を控える（〔フォーマットID-A1518-共有B〕）	共有可
+S-A15-18-RELATED	アーキタイプ・カード画像・キャンペーンタグ	更新用関連データ	アーキタイプIDは登録時に画面が振る（控える。以下〔アーキタイプID-A1518-共有〕）・名称=結合試験アーキタイプ・フォーマットID=〔フォーマットID-A1518-共有B〕／カード画像IDは登録時に画面が振る（控える。以下〔カード画像ID-A1518-共有〕）・カードID=〔カードID-A1518-共有A〕の画像／キャンペーンタグIDは登録時に画面が振る（控える。以下〔キャンペーンタグID-A1518-共有A〕）・名称=結合試験キャンペーンA／キャンペーンタグIDは登録時に画面が振る（控える。以下〔キャンペーンタグID-A1518-共有B〕）・名称=結合試験キャンペーンB	任意入力項目の参照専用。どのケースも関連マスタを変更しない	①カード画像: 管理画面のカード一覧で「結合試験カードA」を検索してカード情報のCSVを出力し、その行の画像URL(英語)に試験用の画像のパスを入れて保存する。カード登録CSVアップロード画面で「ファイルを選択」からそのCSVファイルを選び「CSVファイルのアップロード」を押す。カード画像IDは管理画面に表示されないため、デッキビルダーのカード取得APIへ〔カードID-A1518-共有A〕を指定して要求し、応答に含まれるカード画像の識別子を控える（〔カード画像ID-A1518-共有〕）。②アーキタイプ: 管理画面のアーキタイプ管理で新規登録を開き、アーキタイプ編集画面でアーキタイプ名(日)に「結合試験アーキタイプ」、入力必須のアーキタイプ名(英)に任意の値を入れ、公開状態に「公開」、フォーマットに「結合試験フォーマット」を選んで「新規登録」を押す。アーキタイプ管理の一覧で該当行に表示されたIDを控える（〔アーキタイプID-A1518-共有〕）。③キャンペーンタグ: 管理画面のMTGマスターデータでMTGマスターデータ選択に「キャンペーンタグ」を選んで「選択」を押し、一覧の空行のname_jpに「結合試験キャンペーンA」、name_enとsort_noに任意の値を入れて「登録」を押す。続けて空行のname_jpに「結合試験キャンペーンB」を入れて同じく登録する。キャンペーンタグIDは管理画面に表示されないため、デッキビルダーのマスタ検索APIでキャンペーンタグを取得し、名称が一致する行の識別子を控える（「結合試験キャンペーンA」は〔キャンペーンタグID-A1518-共有A〕、「結合試験キャンペーンB」は〔キャンペーンタグID-A1518-共有B〕）	共有可
+S-A15-18-COMMANDER	フォーマット	統率者試験フォーマット	フォーマットIDは登録時に画面が振る（控える。以下〔フォーマットID-A1518-共有C〕）／名称=統率者試験フォーマット／統率者使用設定=有効	統率領域解読の参照専用。どのケースもフォーマットを変更しない	管理画面のフォーマット一覧で「新規登録」を押し、フォーマット詳細(登録)画面でフォーマット名(日)に「統率者試験フォーマット」を入れ、入力必須のフォーマット名(英)・並び順・メタゲーム分析日数に他のフォーマットと重ならない任意の値を入れ、「統率でカードを使用する（統率者や策略等）」を選択して「登録」を押す。登録後に開くフォーマット詳細(編集)画面のURLに含まれるフォーマットの番号を控える（〔フォーマットID-A1518-共有C〕）	共有可
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/sheetmap/FIX_R2_BRIEF.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+
+codex
+### 指摘（A15-17 / IT-A15-17-031）
+- 主張: 応答本文には「処理結果コード206、登録したデッキの識別子および解読できない行の行番号2**だけ**が含まれ」る。
+- 実際: design.txt L0030 は、成功時に「処理結果メッセージ（『Deck registration success by import』）」も返すと定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+
+### 指摘（A15-18 / IT-A15-18-044）
+- 主張: 応答本文には「処理結果コード206、デッキ識別子15851044および解読できない行の行番号2**だけ**が含まれ」る。
+- 実際: design.txt L0045 は成功時出力に処理結果メッセージを含め、L0062 は更新時の値を「Deck update success by import」と定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+
+### 指摘（A15-18 / IT-A15-18-045）
+- 主張: 応答本文には「処理結果コード206、デッキ識別子15851045および解読できない行の行番号2**だけ**が含まれ」る。
+- 実際: design.txt L0045 は成功時出力に処理結果メッセージを含め、L0062 は更新時の値を「Deck update success by import」と定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+
+### 指摘（A15-18 / IT-A15-18-047）
+- 主張: 応答本文には「処理結果コード206、デッキ識別子15851047および解読できない行の行番号2**だけ**が含まれ」る。
+- 実際: design.txt L0045 は成功時出力に処理結果メッセージを含め、L0062 は更新時の値を「Deck update success by import」と定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+
+### 指摘（A15-18 / IT-A15-18-048）
+- 主張: 応答本文には「処理結果コード206、デッキ識別子15851048および解読できない行の行番号1**だけ**が含まれ」る。
+- 実際: design.txt L0045 は成功時出力に処理結果メッセージを含め、L0062 は更新時の値を「Deck update success by import」と定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+
+### 指摘（A15-18 / IT-A15-18-050）
+- 主張: 応答本文には「処理結果コード206、デッキ識別子15851050および解読できない行の行番号2**だけ**が含まれ」る。
+- 実際: design.txt L0045 は成功時出力に処理結果メッセージを含め、L0062 は更新時の値を「Deck update success by import」と定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+
+### 指摘（A15-18 / IT-A15-18-051）
+- 主張: 応答本文には「処理結果コード206、デッキ識別子15851051および解読できない行の行番号1**だけ**が含まれ」る。
+- 実際: design.txt L0045 は成功時出力に処理結果メッセージを含め、L0062 は更新時の値を「Deck update success by import」と定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+tokens used
+119,819
+### 指摘（A15-17 / IT-A15-17-031）
+- 主張: 応答本文には「処理結果コード206、登録したデッキの識別子および解読できない行の行番号2**だけ**が含まれ」る。
+- 実際: design.txt L0030 は、成功時に「処理結果メッセージ（『Deck registration success by import』）」も返すと定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+
+### 指摘（A15-18 / IT-A15-18-044）
+- 主張: 応答本文には「処理結果コード206、デッキ識別子15851044および解読できない行の行番号2**だけ**が含まれ」る。
+- 実際: design.txt L0045 は成功時出力に処理結果メッセージを含め、L0062 は更新時の値を「Deck update success by import」と定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+
+### 指摘（A15-18 / IT-A15-18-045）
+- 主張: 応答本文には「処理結果コード206、デッキ識別子15851045および解読できない行の行番号2**だけ**が含まれ」る。
+- 実際: design.txt L0045 は成功時出力に処理結果メッセージを含め、L0062 は更新時の値を「Deck update success by import」と定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+
+### 指摘（A15-18 / IT-A15-18-047）
+- 主張: 応答本文には「処理結果コード206、デッキ識別子15851047および解読できない行の行番号2**だけ**が含まれ」る。
+- 実際: design.txt L0045 は成功時出力に処理結果メッセージを含め、L0062 は更新時の値を「Deck update success by import」と定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+
+### 指摘（A15-18 / IT-A15-18-048）
+- 主張: 応答本文には「処理結果コード206、デッキ識別子15851048および解読できない行の行番号1**だけ**が含まれ」る。
+- 実際: design.txt L0045 は成功時出力に処理結果メッセージを含め、L0062 は更新時の値を「Deck update success by import」と定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+
+### 指摘（A15-18 / IT-A15-18-050）
+- 主張: 応答本文には「処理結果コード206、デッキ識別子15851050および解読できない行の行番号2**だけ**が含まれ」る。
+- 実際: design.txt L0045 は成功時出力に処理結果メッセージを含め、L0062 は更新時の値を「Deck update success by import」と定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。
+
+### 指摘（A15-18 / IT-A15-18-051）
+- 主張: 応答本文には「処理結果コード206、デッキ識別子15851051および解読できない行の行番号1**だけ**が含まれ」る。
+- 実際: design.txt L0045 は成功時出力に処理結果メッセージを含め、L0062 は更新時の値を「Deck update success by import」と定める。
+- 判定: 期待結果の誤り
+- 修正案: 「だけ」を外し、処理結果メッセージも含む期待結果に直す。

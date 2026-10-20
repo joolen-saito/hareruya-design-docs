@@ -1,0 +1,2559 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15892-82fb-7902-902f-81404c6e6b34
+--------
+user
+# 敵対レビュー依頼：要因の組合せの結合テストケース（2巡目・53）
+
+あなたはレビュアーである。著者とは別人として、下の追加ケースを根拠と突き合わせ、誤りを指摘せよ。ファイルは変更しない。スクリプトやコマンドは読むだけで実行しない（grep・cat 等の閲覧は可。rg は使わない）。出力は日本語。
+レビューは事実確認に限る。設計書に無い仕様を足す提案はしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すと決めた。他の機能の設定値も要因に入れる。
+機能ごとに要因表（`combination/factors/`）を作り codex が反証した。そこから機械が試す値の組（`combination/combos/<機能ID>.tsv`）を並べ、著者が組1行にケース1件を書いた。
+組1行ごとの扱い（ケース化／既存ケースで確認済み／ケースにしない）は dispositions に書いてある。
+
+## 対象（/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/ 配下）
+
+| 機能ID | 組の範囲 | 追加ケース・シード・仕分け |
+| --- | --- | --- |
+| M15-01 | 全部 | `combination/cases/M15-01_cb_test_cases.tsv`・`M15-01_cb_seed_data.tsv`・`M15-01_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M15-02 | 全部 | `combination/cases/M15-02_cb_test_cases.tsv`・`M15-02_cb_seed_data.tsv`・`M15-02_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M15-03 | 全部 | `combination/cases/M15-03_cb_test_cases.tsv`・`M15-03_cb_seed_data.tsv`・`M15-03_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M15-04 | 全部 | `combination/cases/M15-04_cb_test_cases.tsv`・`M15-04_cb_seed_data.tsv`・`M15-04_cb_dispositions.tsv`（組の範囲の行だけ） |
+
+機能ごとに次を読む。
+- 追加ケース（13列。末尾の項目IDは埋めた組ID）、追加シード、仕分け（上の表のファイル）
+- 試す値の組 `combination/combos/<機能ID>.tsv`（組ID／処理ID／組（要因ID=値）／読める形／埋める組）
+- 要因表 `combination/factors/<機能ID>_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`・`_constraints.tsv`
+- 設計書 `combination/units/<機能ID>/design.txt`（行頭 L0001 が行番号。`#####` の行はシートの境目）。要因の根拠が他の機能のときは `combination/units/<その機能ID>/design.txt`、共通シートは `combination/units/_common/`
+- 既存のケースとシード `cases/<機能ID>_test_cases.tsv`・`<機能ID>_seed_data.tsv`（追加ケースが使う共有シードはここにある）
+
+規約は `combination/GEN_PROMPT.md`、裁定は `sheetmap/FIX_R1_BRIEF.md`（A〜L、C'）・`FIX_R2_BRIEF.md`（M〜O）、範囲は `integration_test/SCOPE.md`、前提条件は `precond/README.md`、判定単位は `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366。
+設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。Excel が触れていない条件を埋め込みが足しているだけのときは両方を当てる。
+期待結果の根拠は設計書に限る。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備と手順の実行可能性を確かめるためにだけ読む。実装と設計書が違うことは指摘しない。
+`combination/review/` の `*_out.txt`・`combination/prompts/` と、上の表に無いケースのファイルは読まない。
+
+## 前の巡
+
+1巡目の指摘が `combination/review/R1_*_findings.md`、直し担当の処置が `combination/review/<機能ID>_R1_dispositions.tsv`（部のある機能は `_R1_dispositions.p1.tsv` など）にある。指摘は見出しの機能IDで探す。却下の理由が設計書の原文に照らして妥当なら、同じ指摘を繰り返さない。採用したはずの指摘が実際に直っているか、直した結果に新しい誤りが入っていないかを見て、新しい事実の指摘だけを挙げる。
+
+## 意図的であり指摘対象外のもの
+
+- 1ケースの期待結果に、要因表 `processes.tsv` の「確かめる所」に挙がっている所どうし（ZIP と DB、画面と DB など）の結果が1文でまとめてあること（組1行にケース1件のため。2026-10-20 決定）。「確かめる所」に無い所の結果が混じっているときは指摘してよい。
+- 連鎖IDが空欄、要求IDが空欄であること。既存ケースを変えていないこと。判定IDが IT-0366 であること。
+- 組の値の選び方（どの組を並べたか）。要因表の「正解未定」「作れない」の組がケースに無いこと（要因表は反証済み。ただし、ケースを書いてみて組が作れない・結果が決まらないと分かったものは指摘してよい）。
+- 単体テスト・e2e へ送られるもの（画面上だけの入力制限、表示文言の逐語照合、見た目、計算式そのもの）のケースが無いこと。
+- シードの投入方法が「未確定: …」と書かれていること。
+- 商品がグッズ商品CSV登録で作られ、在庫が在庫変更CSV登録と承認で入ること（2026-10-19 の決まり）。
+
+## 重点観点
+
+1. **組の値がケースにあるか**: 事前準備・手順に、組のすべての要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）が値で書かれ、その値で処理を動かしているか。組と違う値で操作していないか。
+2. **期待結果が組の全要因の結果を重ねているか**: 確かめる所で、組の各要因の値について設計書が定める結果（金額・選択肢・更新先・更新内容）がまとめて確かめられているか。設計書の記述と事前準備の値だけから一意に出るか。設計書に無い値・ふるまいを期待していないか。金額・数量の計算が合っているか。
+3. 事前準備の状態から手順を実行して期待結果に到達できるか。単独で成立するか。「このN件だけ」を期待するのに、同じ条件に当たる他のデータを除く記述があるか。共有シードの設定と組の設定値が食い違っていないか。
+4. 1ケースに、確かめる所の違う期待結果が混じっていないか。既存ケースとの重複、物理名の混入。
+5. 「ケースにしない」とした組のうち、設計書の記述から期待結果が一意に決まるもの。「既存ケースで確認済み」としたもののうち、挙げたケースが実際にはその組の値で確かめていないもの。
+
+## 出力形式
+
+指摘が無ければ `NONE` の1語。あれば1件ごとに次の形で、テストIDの順に書く。確信の持てないものは挙げない。見出しの括弧の先頭は必ず機能ID。
+
+```
+### 指摘（<機能ID> / <テストID または 組ID>）
+- 主張: ケースまたは仕分けの記述（要点の引用）
+- 実際: 設計書の事実（design.txt の行番号。原文を引く）
+- 判定: 組の値が無い／期待結果の誤り／設計書に無い期待／成立しない前提・手順／要因の結果が欠けている／複数の期待結果／重複／ケースにできる／確認済みでない／組が作れない
+- 修正案: 結論を先に置いた1〜2文
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T09:09:20.862846Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象4機能の組・追加ケース・仕分けと設計書を照合します。前巡の採否も確認し、根拠を示せる新しい誤りだけを挙げます。ファイルは変更せず、閲覧用のコマンドだけを使います。
+exec
+/bin/bash -lc 'ls -lh combination/cases/M15-0{1,2,3,4}_cb_{test_cases,seed_data,dispositions}.tsv combination/combos/M15-0{1,2,3,4}.tsv combination/factors/M15-0{1,2,3,4}_{processes,factors,interactions,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+-rw-r--r-- 1 y-saito y-saito  797 Oct 20 17:29 combination/cases/M15-01_cb_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 6.6K Oct 20 17:53 combination/cases/M15-01_cb_seed_data.tsv
+-rw-r--r-- 1 y-saito y-saito 9.0K Oct 20 17:53 combination/cases/M15-01_cb_test_cases.tsv
+-rw-r--r-- 1 y-saito y-saito 1.4K Oct 20 17:21 combination/cases/M15-02_cb_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 6.1K Oct 20 17:21 combination/cases/M15-02_cb_seed_data.tsv
+-rw-r--r-- 1 y-saito y-saito 5.2K Oct 20 17:21 combination/cases/M15-02_cb_test_cases.tsv
+-rw-r--r-- 1 y-saito y-saito 2.0K Oct 20 17:53 combination/cases/M15-03_cb_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  11K Oct 20 17:53 combination/cases/M15-03_cb_seed_data.tsv
+-rw-r--r-- 1 y-saito y-saito 6.9K Oct 20 17:53 combination/cases/M15-03_cb_test_cases.tsv
+-rw-r--r-- 1 y-saito y-saito 1.9K Oct 20 17:26 combination/cases/M15-04_cb_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  20K Oct 20 17:26 combination/cases/M15-04_cb_seed_data.tsv
+-rw-r--r-- 1 y-saito y-saito 8.5K Oct 20 17:26 combination/cases/M15-04_cb_test_cases.tsv
+-rw-r--r-- 1 y-saito y-saito  940 Oct 20 16:48 combination/combos/M15-01.tsv
+-rw-r--r-- 1 y-saito y-saito  741 Oct 20 16:48 combination/combos/M15-02.tsv
+-rw-r--r-- 1 y-saito y-saito 2.0K Oct 20 16:48 combination/combos/M15-03.tsv
+-rw-r--r-- 1 y-saito y-saito 1.1K Oct 20 16:48 combination/combos/M15-04.tsv
+-rw-r--r-- 1 y-saito y-saito  491 Oct 20 16:44 combination/factors/M15-01_constraints.tsv
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 16:44 combination/factors/M15-01_factors.tsv
+-rw-r--r-- 1 y-saito y-saito  657 Oct 20 16:44 combination/factors/M15-01_interactions.tsv
+-rw-r--r-- 1 y-saito y-saito  711 Oct 20 16:44 combination/factors/M15-01_processes.tsv
+-rw-r--r-- 1 y-saito y-saito  273 Oct 20 16:24 combination/factors/M15-02_constraints.tsv
+-rw-r--r-- 1 y-saito y-saito  745 Oct 20 16:24 combination/factors/M15-02_factors.tsv
+-rw-r--r-- 1 y-saito y-saito  252 Oct 20 16:24 combination/factors/M15-02_interactions.tsv
+-rw-r--r-- 1 y-saito y-saito  226 Oct 20 13:02 combination/factors/M15-02_processes.tsv
+-rw-r--r-- 1 y-saito y-saito   34 Oct 20 16:24 combination/factors/M15-03_constraints.tsv
+-rw-r--r-- 1 y-saito y-saito  839 Oct 20 13:37 combination/factors/M15-03_factors.tsv
+-rw-r--r-- 1 y-saito y-saito  304 Oct 20 13:37 combination/factors/M15-03_interactions.tsv
+-rw-r--r-- 1 y-saito y-saito  255 Oct 20 13:30 combination/factors/M15-03_processes.tsv
+-rw-r--r-- 1 y-saito y-saito   34 Oct 20 13:02 combination/factors/M15-04_constraints.tsv
+-rw-r--r-- 1 y-saito y-saito  527 Oct 20 16:23 combination/factors/M15-04_factors.tsv
+-rw-r--r-- 1 y-saito y-saito  218 Oct 20 16:23 combination/factors/M15-04_interactions.tsv
+-rw-r--r-- 1 y-saito y-saito  443 Oct 20 13:30 combination/factors/M15-04_processes.tsv
+
+exec
+/bin/bash -lc 'ls -lh combination/units/M15-0{1,2,3,4}/design.txt combination/GEN_PROMPT.md sheetmap/FIX_R1_BRIEF.md sheetmap/FIX_R2_BRIEF.md precond/README.md ../SCOPE.md ../viewpoint_canonical/viewpoints_canonical.tsv combination/review/R1_*_findings.md combination/review/M15-0{1,2,3,4}_R1_dispositions*.tsv' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+-rw-r--r-- 1 y-saito y-saito 6.1K Sep  1 12:48 ../SCOPE.md
+-rw-r--r-- 1 y-saito y-saito 220K Oct 20 11:10 ../viewpoint_canonical/viewpoints_canonical.tsv
+-rw-r--r-- 1 y-saito y-saito  14K Oct 20 16:58 combination/GEN_PROMPT.md
+-rw-r--r-- 1 y-saito y-saito  856 Oct 20 17:53 combination/review/M15-01_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:54 combination/review/M15-02_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito  690 Oct 20 17:53 combination/review/M15-03_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito   63 Oct 20 17:54 combination/review/M15-04_R1_dispositions.tsv
+-rw-r--r-- 1 y-saito y-saito 4.0K Oct 20 17:55 combination/review/R1_01_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.7K Oct 20 17:55 combination/review/R1_02_findings.md
+-rw-r--r-- 1 y-saito y-saito 4.0K Oct 20 17:55 combination/review/R1_03_findings.md
+-rw-r--r-- 1 y-saito y-saito 3.2K Oct 20 17:55 combination/review/R1_04_findings.md
+-rw-r--r-- 1 y-saito y-saito    5 Oct 20 17:55 combination/review/R1_05_findings.md
+-rw-r--r-- 1 y-saito y-saito  669 Oct 20 17:55 combination/review/R1_06_findings.md
+-rw-r--r-- 1 y-saito y-saito 3.1K Oct 20 17:55 combination/review/R1_07_findings.md
+-rw-r--r-- 1 y-saito y-saito 2.1K Oct 20 17:55 combination/review/R1_08_findings.md
+-rw-r--r-- 1 y-saito y-saito 5.0K Oct 20 17:55 combination/review/R1_09_findings.md
+-rw-r--r-- 1 y-saito y-saito  778 Oct 20 17:55 combination/review/R1_10_findings.md
+-rw-r--r-- 1 y-saito y-saito  680 Oct 20 17:55 combination/review/R1_11_findings.md
+-rw-r--r-- 1 y-saito y-saito 5.2K Oct 20 17:55 combination/review/R1_12_findings.md
+-rw-r--r-- 1 y-saito y-saito 6.8K Oct 20 17:55 combination/review/R1_13_findings.md
+-rw-r--r-- 1 y-saito y-saito  621 Oct 20 17:55 combination/review/R1_14_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.7K Oct 20 17:55 combination/review/R1_15_findings.md
+-rw-r--r-- 1 y-saito y-saito 4.2K Oct 20 17:55 combination/review/R1_16_findings.md
+-rw-r--r-- 1 y-saito y-saito 6.5K Oct 20 17:55 combination/review/R1_17_findings.md
+-rw-r--r-- 1 y-saito y-saito  11K Oct 20 17:55 combination/review/R1_18_findings.md
+-rw-r--r-- 1 y-saito y-saito 3.2K Oct 20 17:55 combination/review/R1_19_findings.md
+-rw-r--r-- 1 y-saito y-saito 3.1K Oct 20 17:55 combination/review/R1_20_findings.md
+-rw-r--r-- 1 y-saito y-saito 5.3K Oct 20 17:55 combination/review/R1_21_findings.md
+-rw-r--r-- 1 y-saito y-saito 2.8K Oct 20 17:55 combination/review/R1_22_findings.md
+-rw-r--r-- 1 y-saito y-saito 4.1K Oct 20 17:55 combination/review/R1_23_findings.md
+-rw-r--r-- 1 y-saito y-saito 2.7K Oct 20 17:55 combination/review/R1_24_findings.md
+-rw-r--r-- 1 y-saito y-saito 3.3K Oct 20 17:55 combination/review/R1_25_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.9K Oct 20 17:55 combination/review/R1_26_findings.md
+-rw-r--r-- 1 y-saito y-saito 2.5K Oct 20 17:55 combination/review/R1_27_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.8K Oct 20 17:55 combination/review/R1_28_findings.md
+-rw-r--r-- 1 y-saito y-saito 6.0K Oct 20 17:55 combination/review/R1_29_findings.md
+-rw-r--r-- 1 y-saito y-saito  12K Oct 20 17:55 combination/review/R1_30_findings.md
+-rw-r--r-- 1 y-saito y-saito  11K Oct 20 17:55 combination/review/R1_31_findings.md
+-rw-r--r-- 1 y-saito y-saito 4.5K Oct 20 17:55 combination/review/R1_32_findings.md
+-rw-r--r-- 1 y-saito y-saito 9.0K Oct 20 17:55 combination/review/R1_33_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.4K Oct 20 17:55 combination/review/R1_34_findings.md
+-rw-r--r-- 1 y-saito y-saito  10K Oct 20 17:55 combination/review/R1_35_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.5K Oct 20 17:55 combination/review/R1_36_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.8K Oct 20 17:55 combination/review/R1_37_findings.md
+-rw-r--r-- 1 y-saito y-saito 2.6K Oct 20 17:55 combination/review/R1_38_findings.md
+-rw-r--r-- 1 y-saito y-saito  641 Oct 20 17:55 combination/review/R1_39_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.1K Oct 20 17:55 combination/review/R1_40_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.4K Oct 20 17:55 combination/review/R1_41_findings.md
+-rw-r--r-- 1 y-saito y-saito 7.6K Oct 20 17:55 combination/review/R1_42_findings.md
+-rw-r--r-- 1 y-saito y-saito 4.5K Oct 20 17:55 combination/review/R1_43_findings.md
+-rw-r--r-- 1 y-saito y-saito 4.0K Oct 20 17:55 combination/review/R1_44_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.2K Oct 20 17:55 combination/review/R1_45_findings.md
+-rw-r--r-- 1 y-saito y-saito 3.2K Oct 20 17:55 combination/review/R1_46_findings.md
+-rw-r--r-- 1 y-saito y-saito 2.0K Oct 20 17:55 combination/review/R1_47_findings.md
+-rw-r--r-- 1 y-saito y-saito 2.3K Oct 20 17:55 combination/review/R1_48_findings.md
+-rw-r--r-- 1 y-saito y-saito 5.2K Oct 20 17:55 combination/review/R1_49_findings.md
+-rw-r--r-- 1 y-saito y-saito 5.5K Oct 20 17:55 combination/review/R1_50_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.1K Oct 20 17:55 combination/review/R1_51_findings.md
+-rw-r--r-- 1 y-saito y-saito 4.3K Oct 20 17:55 combination/review/R1_52_findings.md
+-rw-r--r-- 1 y-saito y-saito 5.3K Oct 20 17:55 combination/review/R1_53_findings.md
+-rw-r--r-- 1 y-saito y-saito 4.4K Oct 20 17:55 combination/review/R1_54_findings.md
+-rw-r--r-- 1 y-saito y-saito 5.9K Oct 20 17:55 combination/review/R1_55_findings.md
+-rw-r--r-- 1 y-saito y-saito 2.3K Oct 20 17:55 combination/review/R1_56_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.5K Oct 20 11:43 combination/review/R1_A_findings.md
+-rw-r--r-- 1 y-saito y-saito 7.5K Oct 20 11:43 combination/review/R1_B_findings.md
+-rw-r--r-- 1 y-saito y-saito 2.2K Oct 20 11:43 combination/review/R1_C_findings.md
+-rw-r--r-- 1 y-saito y-saito 1.4K Oct 20 12:47 combination/review/R1_D_findings.md
+-rw-r--r-- 1 y-saito y-saito  26K Oct 20 13:27 combination/units/M15-01/design.txt
+-rw-r--r-- 1 y-saito y-saito  11K Oct 20 13:27 combination/units/M15-02/design.txt
+-rw-r--r-- 1 y-saito y-saito  15K Oct 20 13:27 combination/units/M15-03/design.txt
+-rw-r--r-- 1 y-saito y-saito  14K Oct 20 13:27 combination/units/M15-04/design.txt
+-rw-r--r-- 1 y-saito y-saito  25K Oct 20 00:08 precond/README.md
+-rw-r--r-- 1 y-saito y-saito 8.0K Oct  7 18:07 sheetmap/FIX_R1_BRIEF.md
+-rw-r--r-- 1 y-saito y-saito 3.2K Oct  6 18:13 sheetmap/FIX_R2_BRIEF.md
+
+exec
+/bin/bash -lc 'cat combination/combos/M15-0{1,2,3,4}.tsv combination/factors/M15-0{1,2,3,4}_{processes,factors,interactions,constraints}.tsv combination/cases/M15-0{1,2,3,4}_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M15-01-001	P2	F03=変更しない&F04=変更しない	公開状態の変更=変更しない／アーキタイプの変更=変更しない	公開状態の変更×アーキタイプの変更: 変更しない×変更しない
+CB-M15-01-002	P2	F03=変更しない&F04=設定する	公開状態の変更=変更しない／アーキタイプの変更=設定する	公開状態の変更×アーキタイプの変更: 変更しない×設定する
+CB-M15-01-003	P2	F03=公開にする&F04=変更しない	公開状態の変更=公開にする／アーキタイプの変更=変更しない	公開状態の変更×アーキタイプの変更: 公開にする×変更しない
+CB-M15-01-004	P2	F03=公開にする&F04=設定する	公開状態の変更=公開にする／アーキタイプの変更=設定する	公開状態の変更×アーキタイプの変更: 公開にする×設定する
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M15-02-001	P1	F01=一部が存在しない&F02=UTF-8	選択したIDの存在=一部が存在しない／CSV出力の文字コード設定=UTF-8	選択したIDの存在×CSV出力の文字コード設定: 一部が存在しない×UTF-8
+CB-M15-02-002	P1	F01=一部が存在しない&F02=SJIS-win	選択したIDの存在=一部が存在しない／CSV出力の文字コード設定=SJIS-win	選択したIDの存在×CSV出力の文字コード設定: 一部が存在しない×SJIS-win
+CB-M15-02-003	P1	F01=すべて存在しない	選択したIDの存在=すべて存在しない／CSV出力の文字コード設定=（効かない）	選択したIDの存在: すべて存在しない
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M15-03-001	P1	F01=すべて未使用&F02=あり	選んだデッキの記事での使用状況と並び順=すべて未使用／保持していた一覧のページ番号=あり	選んだデッキの記事での使用状況と並び順×保持していた一覧のページ番号: すべて未使用×あり
+CB-M15-03-002	P1	F01=すべて未使用&F02=なし	選んだデッキの記事での使用状況と並び順=すべて未使用／保持していた一覧のページ番号=なし	選んだデッキの記事での使用状況と並び順×保持していた一覧のページ番号: すべて未使用×なし
+CB-M15-03-003	P1	F01=先頭が使用中&F02=あり	選んだデッキの記事での使用状況と並び順=先頭が使用中／保持していた一覧のページ番号=あり	選んだデッキの記事での使用状況と並び順×保持していた一覧のページ番号: 先頭が使用中×あり
+CB-M15-03-004	P1	F01=先頭が使用中&F02=なし	選んだデッキの記事での使用状況と並び順=先頭が使用中／保持していた一覧のページ番号=なし	選んだデッキの記事での使用状況と並び順×保持していた一覧のページ番号: 先頭が使用中×なし
+CB-M15-03-005	P1	F01=未使用の後に使用中&F02=あり	選んだデッキの記事での使用状況と並び順=未使用の後に使用中／保持していた一覧のページ番号=あり	選んだデッキの記事での使用状況と並び順×保持していた一覧のページ番号: 未使用の後に使用中×あり
+CB-M15-03-006	P1	F01=未使用の後に使用中&F02=なし	選んだデッキの記事での使用状況と並び順=未使用の後に使用中／保持していた一覧のページ番号=なし	選んだデッキの記事での使用状況と並び順×保持していた一覧のページ番号: 未使用の後に使用中×なし
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M15-04-001	P1	F01=オン&F02=あり	アーキタイプの変更チェック=オン／選んだアーキタイプの代表カード画像=あり	アーキタイプの変更チェック×選んだアーキタイプの代表カード画像: オン×あり
+CB-M15-04-002	P1	F01=オン&F02=なし	アーキタイプの変更チェック=オン／選んだアーキタイプの代表カード画像=なし	アーキタイプの変更チェック×選んだアーキタイプの代表カード画像: オン×なし
+CB-M15-04-003	P1	F01=オフ&F02=あり	アーキタイプの変更チェック=オフ／選んだアーキタイプの代表カード画像=あり	アーキタイプの変更チェック×選んだアーキタイプの代表カード画像: オフ×あり
+CB-M15-04-004	P1	F01=オフ&F02=なし	アーキタイプの変更チェック=オフ／選んだアーキタイプの代表カード画像=なし	アーキタイプの変更チェック×選んだアーキタイプの代表カード画像: オフ×なし
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキを検索結果一覧に出すか決める	デッキ検索・一覧画面で検索するボタンを押す	デッキ検索・一覧画面の検索結果	L0054,L0055,L0131
+P2	選んだデッキに公開状態・アーキタイプの変更チェックを付けて一括編集し、フロントの検索結果への載り方を変える	デッキ検索・一覧画面で一括編集(アコーディオン)を開き、公開状態・アーキタイプの項目を入力して変更チェックを付け、一括編集実行を押す	デッキの保存値（DB）とフロントのデッキ検索結果（F09-02）	L0205,L0253,L0254,L0268,F09-02:L0006-L0010
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキの作成元	管理者作成｜ユーザ作成	管理者作成: ほかの条件を満たせば検索結果に出る／ユーザ作成: 検索結果に出ない	L0055	この機能
+F02	P1	大会開始時刻との関係	開始前｜開始後または紐づかない	開始前: 検索結果に出ない／開始後または紐づかない: 開始時刻による除外の対象にならず検索結果に出る	L0054,L0131	この機能
+F03	P2	公開状態の変更	変更しない｜公開にする｜非公開にする	変更しない: 公開状態は更新前のまま／公開にする: 公開になり、ほかの条件を満たせばフロントの検索結果に載る／非公開にする: フロントの検索結果から外れる	L0254,L0268,F09-02:L0008	この機能
+F04	P2	アーキタイプの変更	変更しない｜設定する	変更しない: アーキタイプは更新前のまま／設定する: アーキタイプが設定され、ほかの条件を満たせばフロントの検索結果に載る	L0253,L0268,F09-02:L0010	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		出る条件をすべて満たすものだけが出る型で、大会開始時刻による除外は作成元に関わらず独立（L0131は開始時刻による除外だけを外す）。条件ごとの外れ方を1つずつ確かめれば足りる
+P2	F03+F04	関係しない	F09-02:L0008,F09-02:L0010	フロントの検索結果には公開かつアーキタイプ設定済みのものだけが載る（すべて満たすものだけが載る型）。公開状態の更新とアーキタイプの更新は互いの保存値を変えない。非公開にする側は打ち切りに書いた
+処理ID	組	種別	根拠	理由
+P1	F01=ユーザ作成	打ち切り	L0055	ユーザ作成のデッキは検索結果に出さない。ほかの要因の値は結果に効かない
+P1	F02=開始前	打ち切り	L0054	大会開始時刻前のデッキは検索結果に出さない。ほかの要因の値は結果に効かない
+P2	F03=非公開にする	打ち切り	F09-02:L0008	非公開にすると、アーキタイプの変更に関わらずフロントの検索結果から外れる
+処理ID	処理	契機	確かめる所	根拠
+P1	選択したデッキをCSVに出力する	一覧でデッキを選び、CSV出力ボタンを押す	ダウンロードしたCSVファイルと応答ヘッダ	L0059,L0114-L0132
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	選択したIDの存在	すべて存在する｜一部が存在しない｜すべて存在しない	すべて存在する: 選択した件数分の行／すべて存在しない: CSVを出力せず、未登録のエラーを表示して直前の画面へ戻る（ダウンロードは始まらない）／一部が存在しない: 存在しないIDの行は出力に現れず、存在するものは出力される	L0110,L0111	この機能
+F02	P1	CSV出力の文字コード設定	UTF-8｜SJIS-win	UTF-8: 応答の文字集合はUTF-8／SJIS-win: 応答の文字集合の表記だけがwindows-31jになる（本文とBOMはどちらもUTF-8）	L0120,L0132,L0134	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		文字コード設定は応答ヘッダの文字集合の表記だけを決め、出力する行には関わらない。すべて存在しないときの打ち切りは制約に書いた
+処理ID	組	種別	根拠	理由
+P1	F01=すべて存在しない	打ち切り	L0110	該当デッキが1件も無いときは出力せず未登録のエラーで直前の画面へ戻り、ダウンロードは始まらない。文字コード設定は結果に効かない
+処理ID	処理	契機	確かめる所	根拠
+P1	選んだデッキを一括で削除する	一覧で選んだデッキに対して一括削除を押し、確認画面でOKを押す	デッキ検索・一覧画面、デッキ検索TOP、記事	L0147-L0160
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	選んだデッキの記事での使用状況と並び順	すべて未使用｜先頭が使用中｜未使用の後に使用中	すべて未使用: 全デッキを削除し削除完了のメッセージを出す／先頭が使用中: 1件も削除せず、記事に紐付いている旨のエラーを出して元の画面へ戻す／未使用の後に使用中: 使用中のデッキの手前までは削除済みになり、使用中のデッキ以降は削除せず、エラーを出して元の画面へ戻す	L0152-L0154,L0157-L0158,L0167,L0183-L0184	この機能
+F02	P1	保持していた一覧のページ番号	あり｜なし	あり: デッキ検索・一覧の当該ページへ戻す／なし: デッキ一覧の先頭へ戻す	L0160,L0172,L0173	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		戻り先は一覧のページ番号の有無で決まり（L0160）、削除するかどうかと削除済みの範囲は記事での使用状況で決まる（L0152,L0157-L0158）。戻り先の定めは成功時に限られていない
+処理ID	組	種別	根拠	理由
+処理ID	処理	契機	確かめる所	根拠
+P1	選んだデッキに変更チェックを付けた項目だけを一括で上書きする	一括編集(アコーディオン)で項目を入力して変更チェックを付け、一括編集実行を押す	デッキ検索・一覧、デッキリスト詳細画面、アーキタイプ管理(検索結果)の登録デッキ数、メタゲーム集計	L0072-L0101,L0059-L0066,L0152-L0159,L0163
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	アーキタイプの変更チェック	オン｜オフ	オン: アーキタイプを入力値で更新する／オフ: アーキタイプは更新前の値のまま	L0086,L0101	この機能
+F02	P1	選んだアーキタイプの代表カード画像	あり｜なし	あり: アーキタイプと代表カード画像を同時に更新する／なし: アーキタイプだけ更新し、代表カード画像の参照は更新前のまま	L0163	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0163	アーキタイプを更新するときだけ、アーキタイプに代表カード画像があるかで画像の参照を更新するかが変わる
+処理ID	組	種別	根拠	理由
+項目ID	扱い	テストID	理由
+CB-M15-01-001	ケース化	IT-M15-01-100	公開状態もアーキタイプも変更せず（変更チェックなし）一括編集し、非公開・アーキタイプ未設定のまま変わらずフロントの検索結果に載らない
+CB-M15-01-002	ケース化	IT-M15-01-101	アーキタイプだけを設定して一括編集しても、非公開のままならフロントの検索結果に載らない
+CB-M15-01-003	ケース化	IT-M15-01-102	公開状態だけを公開にして一括編集しても、アーキタイプが未設定のままならフロントの検索結果に載らない
+CB-M15-01-004	ケース化	IT-M15-01-103	公開状態を公開にしアーキタイプも設定して一括編集すると、フロントの検索結果に載る
+項目ID	扱い	テストID	理由
+CB-M15-02-001	ケース化	IT-M15-02-023	一部のIDが存在しない（指定したIDの一部だけが存在しないとき、該当が1件以上あれば処理を続け、該当しないIDは出力に現れない。L0111）と、文字コード設定がUTF-8（応答の文字集合はUTF-8、先頭にBOM。L0117,L0134）の組を、同じCSVとその応答ヘッダで確かめる
+CB-M15-02-002	ケース化	IT-M15-02-024	一部のIDが存在しない（L0111）と、文字コード設定がSJIS-win（応答の文字集合の表記だけがwindows-31jになり、本文とBOMはUTF-8のまま。L0120,L0132）の組を、同じCSVとその応答ヘッダで確かめる
+CB-M15-02-003	既存ケースで確認済み	IT-M15-02-007,IT-M15-02-008	打ち切りの行（該当デッキが1件も無いときは出力せず未登録のエラーで直前の画面へ戻り、ダウンロードは始まらない。L0110。文字コード設定は結果に効かない）。IT-M15-02-007は選択値を存在しないID 159999007へ変えてCSV出力し、手順6でダウンロード履歴に新しいCSVが追加されないことを、IT-M15-02-008は同様に存在しないID 159999008へ変えて、管理画面上部にエラーが表示されデッキ検索・一覧画面へ戻ることを見ており、あわせて打ち切りの結果を確かめている
+項目ID	扱い	テストID	理由
+CB-M15-03-001	ケース化	IT-M15-03-004	一括削除に選んだデッキの記事での使用状況がすべて未使用（L0152-L0154,L0157-L0158）で、保持していた一覧のページ番号があり（デッキ検索・一覧の当該ページへ戻す。L0160）の組を、削除後に戻った一覧画面とメッセージで確かめる
+CB-M15-03-002	ケースにしない	-	一括削除は検索結果の一覧でデッキを選んで行うが、M15-01 L0115は「一覧の初期表示では、保持していた検索条件・ページ番号・表示件数を破棄し、空の検索条件・空の一覧」とする。選べる一覧が出ている状態では検索によりページ番号が保持されており、M15-03 L0160の「保持していた一覧のページ番号があるとき」にしかならず、「なし」で削除は実行できない（実装でも検索で1が保存される）。要因の制約に足すべき組: F02=なし&F01=すべて未使用
+CB-M15-03-003	ケース化	IT-M15-03-006	一括削除に選んだデッキの記事での使用状況が先頭が使用中（L0152-L0154,L0157-L0158）で、保持していた一覧のページ番号があり（デッキ検索・一覧の当該ページへ戻す。L0160）の組を、削除後に戻った一覧画面とメッセージで確かめる
+CB-M15-03-004	ケースにしない	-	同上。要因の制約に足すべき組: F02=なし&F01=先頭が使用中
+CB-M15-03-005	ケース化	IT-M15-03-008	一括削除に選んだデッキの記事での使用状況が未使用の後に使用中（L0152-L0154,L0157-L0158）で、保持していた一覧のページ番号があり（デッキ検索・一覧の当該ページへ戻す。L0160）の組を、削除後に戻った一覧画面とメッセージで確かめる
+CB-M15-03-006	ケースにしない	-	同上。要因の制約に足すべき組: F02=なし&F01=未使用の後に使用中
+項目ID	扱い	テストID	理由
+CB-M15-04-001	ケース化	IT-M15-04-007	アーキタイプの変更チェックがオン（アーキタイプを入力値で更新する。L0086,L0101）で、選んだアーキタイプの代表カード画像があり（アーキタイプと代表カード画像を同時に更新する。L0156,L0163）の組を、デッキCSV出力（M15-02 L0123-L0126）のアーキタイプと代表カード名の列で確かめる
+CB-M15-04-002	ケース化	IT-M15-04-008	アーキタイプの変更チェックがオン（アーキタイプを入力値で更新する。L0086,L0101）で、選んだアーキタイプの代表カード画像がなし（アーキタイプだけ更新し、代表カード画像の参照は更新前のまま。L0156,L0163）の組を、デッキCSV出力（M15-02 L0123-L0126）のアーキタイプと代表カード名の列で確かめる
+CB-M15-04-003	ケース化	IT-M15-04-009	アーキタイプの変更チェックがオフ（アーキタイプは更新前の値のまま。L0086,L0101）で、選んだアーキタイプの代表カード画像があり（変更チェックの無い項目は既存の値を保持するため、アーキタイプも代表カード画像も更新前のまま。L0156,L0163）の組を、デッキCSV出力（M15-02 L0123-L0126）のアーキタイプと代表カード名の列で確かめる
+CB-M15-04-004	ケース化	IT-M15-04-010	アーキタイプの変更チェックがオフ（アーキタイプは更新前の値のまま。L0086,L0101）で、選んだアーキタイプの代表カード画像がなし（変更チェックの無い項目は既存の値を保持するため、アーキタイプも代表カード画像も更新前のまま。L0156,L0163）の組を、デッキCSV出力（M15-02 L0123-L0126）のアーキタイプと代表カード名の列で確かめる
+
+exec
+/bin/bash -lc "grep -n -e 'IT-0366' ../viewpoint_canonical/viewpoints_canonical.tsv; grep -n -e '組' -e '期待結果' -e '物理名' combination/GEN_PROMPT.md" in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+367:IT-0366	ITA-11	内部結合テスト	制御	条件網羅	データパターン / 要因の組合せ	1つの処理の結果を左右する要因（区分、状態、設定、関連データの値など。他の機能で設定する値を含む）が2つ以上ある場合、設計書の定めが互いに効き合う要因については値の組合せのすべてで、互いに効き合わない要因についてはどの2つの要因の値の組もいずれかの組合せで、受け渡し先の結果が、それぞれの要因について定められた結果を重ねたとおり設計どおりとなること。設計書から結果が決まらない組合せ、設計上作れない組合せ、および検索条件と削除条件の組合せは除く。	設計書から引用	条件に応じて、呼び出される先、返却データ、出力結果、状態遷移および副作用が設計どおりに切り替わること。検索・削除条件の一致種別と組合せで期待したレコードが取得・対象化されること、表示／非表示条件、通知の発生条件を含む。	単一メソッド内の分岐網羅、および分岐編集の結果そのものは単体テストが担う
+1:# {FID}（{FNAME}）の要因の組合せのケース作成（著者への依頼）
+9:依頼者は、**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すと決めた。他の機能の設定値も要因に入れる。
+10:{FID} の要因表（別の担当が作り、codex が反証した）から、機械が試す値の組を並べた。そのうち **{RANGE} の {N}行** があなたの受け持ち（{PARTNOTE}）。1行ごとにケースを書く。**既存のケースは1文字も変えない。**
+14:1. 試す値の組: `integration_test/casegen/combination/combos/{FID}.tsv`（組ID／処理ID／組（要因ID=値）／組（読める形）／埋める組）。1行が1回の処理で同時に使う値の組。受け持ちは {RANGE}。
+15:2. 要因表: `integration_test/casegen/combination/factors/{FID}_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`（効き合う理由）・`_constraints.tsv`（作れない組・正解未定の組）
+22:## 1行（組ID）ごとに、次のどれかに決める
+26:| ケース化 | その値の組で処理を動かしたときの結果が、設計書の記述から一意に決まる | ケース1件（1ケース1期待結果）。組のすべての要因の値を事前準備・手順に値で書く |
+27:| 既存ケースで確認済み | 既存ケースの事前準備・手順に組のすべての値が書かれ、確かめる所で結果を見ている | そのテストIDと、どの手順・期待結果が当たるか |
+28:| ケースにしない | その値の組が実は作れない（制約の抜け）／結果が設計書から一意に決まらない／設計書の記述どうしが食い違う／結合テストの範囲でない | 理由（設計書の原文を引く）。作れない・決まらない組は、要因表の制約に足すべき組として理由に `要因ID=値&要因ID=値` を書く |
+32:## 期待結果の決め方
+34:- 組の**すべての要因**について、その値で設計書が定める結果を、確かめる所（processes.tsv）でまとめて確かめる。1つの確かめる所で見える結果を1文にまとめてよい（例: 「受注情報編集画面で、お支払方法が代金引換、配送方法がゆうパケット、送料が200円、手数料が330円、ポイント使用が0、合計が1,530円で表示されること」）。確かめる所が違う結果は入れない（1ケース1期待結果）。
+35:- 金額・数量は、事前準備に書いた値から設計書の計算で一意に出す。計算の途中を期待結果・出典に書かない（期待結果には結果の値だけ）。
+36:- 期待結果は設計書（design.txt。同じ冊子の別シート、要因の根拠にある他の機能の設計書も可）と事前準備の値だけから出す。実装コード・現行ソースから期待値を足さない。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備・シードの作り方と手順の実行可能性を確かめるためにだけ読んでよい（スクリプトやコマンドは実行しない）。
+38:- 要因表の constraints.tsv に「正解未定」とある値の組は機械が行に入れていない。それ以外の組で結果が決まらないと分かったら「ケースにしない」にする（推測で決めない）。
+39:- **打ち切りの行**: 組（読める形）に「（効かない）」とある要因は、その行では結果に効かない（constraints.tsv の種別「打ち切り」。処理が途中で打ち切られる。依頼者決定 2026-10-20）。その要因の値は事前準備に書かなくてよい（共有可シードのままでよい）。期待結果は打ち切りの結果（出ない・エラーで元の画面へ戻る・何も変わらない など）を、設計書の定めどおりに確かめる。打ち切りのあと値が残っていないか（更新されていないこと）を見るのはよい。
+43:- テストIDは `IT-{FID}-{START}` からの連番（既存と、外した番号の続き）。組IDの順に書く。
+44:- 判定IDは `IT-0366`、観点IDは `ITA-11`。項目ID列に組ID（1つ）。
+45:- 期待結果は合否が一意に決まる具体値で書き、「〜こと」で終える。
+46:- **組の値がケースから読めること**: 事前準備・手順に、組の全要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）を値で書く。要因名や組の値を並べただけの行（「このケースで試す値の組: …」など）を事前準備・手順に足さない。実際のデータで書いていれば、verify の「注意」（組の値が字句で無い）は残ってよい。
+49:- 物理名（テーブル名・カラム名・ルート名・クラス名・翻訳キー）を書かない。設計書に書かれている項目名はそのまま使ってよい。
+58:- 組の値が共有可のシードの設定と違うとき（手数料・送料・利用条件・配送方法に紐づく支払方法など）は、ケース専用シードで設定を書き、事前準備に値で書く。
+65:- 事前準備で手順の結果を参照しない。期待結果の「AからB」「Aのまま」の A は事前準備に同じ表記で書いた値にする。
+67:- 中継・模擬応答、現在時刻の固定、障害を起こす手段は用意しない（2026-10-19 決定）。これが要る組は「ケースにしない」。バッチの実行、スマレジなど外部の試験環境、メールの受け取りは用意できる。
+72:   タブ区切り・13列: `テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID`
+77:   タブ区切り・4列: `項目ID	扱い	テストID	理由`。受け持ちの組 {N}行を1行ずつ（項目ID は組ID）。
+86:4行以内。ケース化／確認済み／ケースにしない の件数、ケースにしなかった主な理由（制約に足すべき組があれば件数）、verify の結果、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc 'cat combination/review/R1_53_findings.md combination/review/M15-0{1,2,3,4}_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+### 指摘（M14-07 / IT-M14-07-031）
+- 主張: ZIP内の「1件だけ」と、DBのデッドリンクが偽になることを一つの期待結果にしている。
+- 実際: 設計書L0043は「カードセットごとにフォルダを分けたzipファイル」を定め、L0093はカード画像の「デッドリンク」の更新を定める。確認先はZIPとDBで異なる。
+- 判定: 複数の期待結果
+- 修正案: ZIPの内容とDBの更新を、確かめる所ごとに分ける。
+
+### 指摘（M14-07 / IT-M14-07-032）
+- 主張: `download/JP`の内容と、3件のデッドリンクの値を一つの期待結果にしている。
+- 実際: 設計書L0151は言語ごとのZIPフォルダ、L0093はデッドリンクの更新を定める。確認先はZIPとDBで異なる。
+- 判定: 複数の期待結果
+- 修正案: ZIPの内容とDBの更新を、確かめる所ごとに分ける。
+
+### 指摘（M14-07 / IT-M14-07-033）
+- 主張: ZIPに入る画像と、保存できた画像・できなかった画像のデッドリンクを一つの期待結果にしている。
+- 実際: 設計書L0087は「保存に成功した画像はすべて圧縮ファイルへ追加」、L0093は保存の成否に応じたデッドリンク更新を定める。確認先はZIPとDBで異なる。
+- 判定: 複数の期待結果
+- 修正案: ZIPの内容とDBの更新を、確かめる所ごとに分ける。
+
+### 指摘（M14-07 / IT-M14-07-034）
+- 主張: 事前準備では画像のデッドリンクを偽としているが、期待結果はZIPの内容だけである。
+- 実際: 設計書L0093は「画像の保存に成功しなかったときは真へ、成功して真だったときは偽へ更新する」と定める。この組の保存前の値と保存結果を重ねたデッドリンクの結果を確認していない。
+- 判定: 要因の結果が欠けている
+- 修正案: デッドリンクが偽のままであることも、DBを確かめるケースで確認する。
+
+### 指摘（M14-07 / IT-M14-07-035）
+- 主張: 日本語画像だけがZIPに入ることと、日本語・英語画像それぞれのデッドリンクの値を一つの期待結果にしている。
+- 実際: 設計書L0080・L0083はZIPに載る画像、L0093はデッドリンクの更新を定める。確認先はZIPとDBで異なる。
+- 判定: 複数の期待結果
+- 修正案: ZIPの内容とDBの更新を、確かめる所ごとに分ける。
+
+### 指摘（M14-07 / IT-M14-07-036）
+- 主張: `download/JP`の内容と、2件のデッドリンクの値を一つの期待結果にしている。
+- 実際: 設計書L0151は言語ごとのZIPフォルダ、L0093はデッドリンクの更新を定める。確認先はZIPとDBで異なる。
+- 判定: 複数の期待結果
+- 修正案: ZIPの内容とDBの更新を、確かめる所ごとに分ける。
+
+### 指摘（M14-07 / IT-M14-07-037）
+- 主張: 保存前のデッドリンクは偽で、日英画像とも保存成功とする一方、期待結果はZIPの内容だけである。
+- 実際: 設計書L0093は保存の成否と保存前の値に応じたデッドリンク更新を定める。この組のデッドリンクの結果を確認していない。
+- 判定: 要因の結果が欠けている
+- 修正案: 両画像のデッドリンクが偽のままであることを、DBを確かめるケースで確認する。
+
+### 指摘（M14-07 / IT-M14-07-038）
+- 主張: 保存前のデッドリンクは偽で画像を保存成功とする一方、期待結果はZIPの内容だけである。
+- 実際: 設計書L0093は保存の成否と保存前の値に応じたデッドリンク更新を定める。この組のデッドリンクの結果を確認していない。
+- 判定: 要因の結果が欠けている
+- 修正案: 対象画像のデッドリンクが偽のままであることを、DBを確かめるケースで確認する。
+
+### 指摘（M14-07 / IT-M14-07-039）
+- 主張: ZIPの「1件だけ」と、DBのデッドリンクが偽になることを一つの期待結果にしている。
+- 実際: 設計書L0043はZIPのフォルダ構成、L0093はデッドリンクの更新を定める。確認先はZIPとDBで異なる。
+- 判定: 複数の期待結果
+- 修正案: ZIPの内容とDBの更新を、確かめる所ごとに分ける。
+
+### 指摘（M14-10 / IT-M14-10-073）
+- 主張: 「登録後に当該フォーマットの編集画面が表示され」ることと、DBで「1件になる」ことを一つの期待結果にしている。
+- 実際: 設計書L0173は「保存した後は当該フォーマットの編集画面を表示する」、L0155は入力チェック後の登録を定める。確認先は画面とDBで異なる。
+- 判定: 複数の期待結果
+- 修正案: 保存後の画面表示とDBへの登録を、確かめる所ごとに分ける。
+
+### 指摘（M14-10 / IT-M14-10-074）
+- 主張: 更新後の編集画面表示と、DBのフォーマット名の更新を一つの期待結果にしている。
+- 実際: 設計書L0173は「保存した後は当該フォーマットの編集画面を表示する」、L0155は入力チェック後の更新を定める。確認先は画面とDBで異なる。
+- 判定: 複数の期待結果
+- 修正案: 保存後の画面表示とDBの更新を、確かめる所ごとに分ける。
+指摘	処置	理由	直した所
+IT-M15-01-100	採用	設計書F09-02 L0020-L0021は既定件数20件で、条件なし検索の一覧では対象が後続ページにある可能性を除けない。F09-01 L0039のプレイヤー名部分一致で絞る	手順9と期待結果をプレイヤー名指定の検索へ変更
+IT-M15-01-101	採用	同上	手順9と期待結果をプレイヤー名指定の検索へ変更
+IT-M15-01-102	採用	同上	手順9と期待結果をプレイヤー名指定の検索へ変更
+IT-M15-01-103	採用	同上	手順9と期待結果をプレイヤー名指定の検索へ変更
+gate:S-M15-01-CBBULK-100	採用	識別子M1501が他シードと重なる	プレイヤー名・イベント名(日)(英)の英数字の連なりにCB番号を含む形(M1501-CB100組合せ選手など)へ変更。ケースとシードの両方
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+指摘	処置	理由	直した所
+IT-M15-03-005	採用	削除に使う一覧は検索後の表示で、保持ページ番号が必ずある（M15-01 L0115は初期表示を空の一覧とする）。「なし」の組は作れない	ケースとシードS-M15-03-CBTOPFREE-005を削除し、dispositionsをケースにしないへ変更。制約に足すべき組 F02=なし&F01=すべて未使用
+IT-M15-03-007	採用	同上	ケースとシードS-M15-03-CBTOPHEAD-007を削除。制約に足すべき組 F02=なし&F01=先頭が使用中
+IT-M15-03-009	採用	同上	ケースとシードS-M15-03-CBTOPMID-009を削除。制約に足すべき組 F02=なし&F01=未使用の後に使用中
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+exec
+/bin/bash -lc "grep -l -E '"'^### 指摘（M15-0[1-4] /'"' combination/review/R1_*_findings.md" in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+combination/review/R1_54_findings.md
+
+exec
+/bin/bash -lc 'cat combination/cases/M15-0{1,2,3,4}_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M15-01-100	IT-0366	REQ-0212-sheet-4-R045,REQ-0212-sheet-4-R046,REQ-0212-sheet-4-R059		ITA-11	P1	ブラウザ+DB確認	S-M15-01-ADM-A,S-M15-01-SESSION,S-M15-01-MASTER,S-M15-01-CBBULK-100	① デッキ検索の保持値がない新しいブラウザセッションで、M15-01試験管理者Aでログインしている（S-M15-01-SESSION、S-M15-01-ADM-A）／② Standard、Red Aggro、Blue Controlを選択できる（S-M15-01-MASTER）／③ ID 〔デッキID-M1501-100〕（登録時に振られたデッキIDを控えてある）は管理者作成の大会デッキで、表示区分は非公開、アーキタイプは未設定、プレイヤー名は「M1501-CB100組合せ選手」、開催日は試験基準日（ケース実行日）の3日前である（S-M15-01-CBBULK-100）	1. 日付クリアを押し、デッキIDに「〔デッキID-M1501-100〕」を入力して検索する／2. ID 〔デッキID-M1501-100〕を選択する／3. 一括編集を開く／4. プレイヤー名に「M1501-CB100一括後選手」を入力し、プレイヤー名の変更チェックだけをオンにする（公開状態とアーキタイプは入力せず、変更チェックをオフのままにする）／5. 一括編集実行を押す／6. DBでID 〔デッキID-M1501-100〕の表示区分とアーキタイプを確認する／7. ブラウザで未ログインの新しいセッションを開き、フロントのデッキ検索TOPを開く／8. 「クリア」を押して入力済みの検索条件を空に戻す／9. プレイヤー名の入力欄に「M1501-CB100一括後選手」を入力し、「検索」を押して一覧を確認する	DBでID 〔デッキID-M1501-100〕の表示区分が非公開のまま、アーキタイプが未設定のまま、プレイヤー名が「M1501-CB100一括後選手」となり、フロントのデッキ検索でプレイヤー名「M1501-CB100一括後選手」を指定した検索結果の一覧にプレイヤー名「M1501-CB100一括後選手」のデッキが載らないこと	0212 デッキ一覧(検索結果) / 機能仕様 処理概要、画面項目定義 一括編集 識別ID 2・3・17｜0309 F09-02 デッキ検索結果 ／ フロント デッキ検索 — デッキ検索結果 / 業務ロジック 一覧に載せるデッキ	CB-M15-01-001
+IT-M15-01-101	IT-0366	REQ-0212-sheet-4-R045,REQ-0212-sheet-4-R046,REQ-0212-sheet-4-R059		ITA-11	P1	ブラウザ+DB確認	S-M15-01-ADM-A,S-M15-01-SESSION,S-M15-01-MASTER,S-M15-01-CBBULK-101	① デッキ検索の保持値がない新しいブラウザセッションで、M15-01試験管理者Aでログインしている（S-M15-01-SESSION、S-M15-01-ADM-A）／② Standard、Red Aggro、Blue Controlを選択できる（S-M15-01-MASTER）／③ ID 〔デッキID-M1501-101〕（登録時に振られたデッキIDを控えてある）は管理者作成の大会デッキで、表示区分は非公開、アーキタイプは未設定、プレイヤー名は「M1501-CB101組合せ選手」、開催日は試験基準日（ケース実行日）の3日前である（S-M15-01-CBBULK-101）	1. 日付クリアを押し、デッキIDに「〔デッキID-M1501-101〕」を入力して検索する／2. ID 〔デッキID-M1501-101〕を選択する／3. 一括編集を開く／4. アーキタイプをRed Aggroにし、アーキタイプの変更チェックをオンにする／そのほかの項目は入力せず、変更チェックをオフのままにする／5. 一括編集実行を押す／6. DBでID 〔デッキID-M1501-101〕の表示区分とアーキタイプを確認する／7. ブラウザで未ログインの新しいセッションを開き、フロントのデッキ検索TOPを開く／8. 「クリア」を押して入力済みの検索条件を空に戻す／9. プレイヤー名の入力欄に「M1501-CB101組合せ選手」を入力し、「検索」を押して一覧を確認する	DBでID 〔デッキID-M1501-101〕の表示区分が非公開のまま、アーキタイプがRed Aggroに設定となり、フロントのデッキ検索でプレイヤー名「M1501-CB101組合せ選手」を指定した検索結果の一覧にプレイヤー名「M1501-CB101組合せ選手」のデッキが載らないこと	0212 デッキ一覧(検索結果) / 機能仕様 処理概要、画面項目定義 一括編集 識別ID 2・3・17｜0309 F09-02 デッキ検索結果 ／ フロント デッキ検索 — デッキ検索結果 / 業務ロジック 一覧に載せるデッキ	CB-M15-01-002
+IT-M15-01-102	IT-0366	REQ-0212-sheet-4-R045,REQ-0212-sheet-4-R046,REQ-0212-sheet-4-R059		ITA-11	P1	ブラウザ+DB確認	S-M15-01-ADM-A,S-M15-01-SESSION,S-M15-01-MASTER,S-M15-01-CBBULK-102	① デッキ検索の保持値がない新しいブラウザセッションで、M15-01試験管理者Aでログインしている（S-M15-01-SESSION、S-M15-01-ADM-A）／② Standard、Red Aggro、Blue Controlを選択できる（S-M15-01-MASTER）／③ ID 〔デッキID-M1501-102〕（登録時に振られたデッキIDを控えてある）は管理者作成の大会デッキで、表示区分は非公開、アーキタイプは未設定、プレイヤー名は「M1501-CB102組合せ選手」、開催日は試験基準日（ケース実行日）の3日前である（S-M15-01-CBBULK-102）	1. 日付クリアを押し、デッキIDに「〔デッキID-M1501-102〕」を入力して検索する／2. ID 〔デッキID-M1501-102〕を選択する／3. 一括編集を開く／4. 公開状態を公開にし、公開状態の変更チェックをオンにする／そのほかの項目は入力せず、変更チェックをオフのままにする／5. 一括編集実行を押す／6. DBでID 〔デッキID-M1501-102〕の表示区分とアーキタイプを確認する／7. ブラウザで未ログインの新しいセッションを開き、フロントのデッキ検索TOPを開く／8. 「クリア」を押して入力済みの検索条件を空に戻す／9. プレイヤー名の入力欄に「M1501-CB102組合せ選手」を入力し、「検索」を押して一覧を確認する	DBでID 〔デッキID-M1501-102〕の表示区分が公開、アーキタイプが未設定のままとなり、フロントのデッキ検索でプレイヤー名「M1501-CB102組合せ選手」を指定した検索結果の一覧にプレイヤー名「M1501-CB102組合せ選手」のデッキが載らないこと	0212 デッキ一覧(検索結果) / 機能仕様 処理概要、画面項目定義 一括編集 識別ID 2・3・17｜0309 F09-02 デッキ検索結果 ／ フロント デッキ検索 — デッキ検索結果 / 業務ロジック 一覧に載せるデッキ	CB-M15-01-003
+IT-M15-01-103	IT-0366	REQ-0212-sheet-4-R045,REQ-0212-sheet-4-R046,REQ-0212-sheet-4-R059		ITA-11	P1	ブラウザ+DB確認	S-M15-01-ADM-A,S-M15-01-SESSION,S-M15-01-MASTER,S-M15-01-CBBULK-103	① デッキ検索の保持値がない新しいブラウザセッションで、M15-01試験管理者Aでログインしている（S-M15-01-SESSION、S-M15-01-ADM-A）／② Standard、Red Aggro、Blue Controlを選択できる（S-M15-01-MASTER）／③ ID 〔デッキID-M1501-103〕（登録時に振られたデッキIDを控えてある）は管理者作成の大会デッキで、表示区分は非公開、アーキタイプは未設定、プレイヤー名は「M1501-CB103組合せ選手」、開催日は試験基準日（ケース実行日）の3日前である（S-M15-01-CBBULK-103）	1. 日付クリアを押し、デッキIDに「〔デッキID-M1501-103〕」を入力して検索する／2. ID 〔デッキID-M1501-103〕を選択する／3. 一括編集を開く／4. 公開状態を公開にし、公開状態の変更チェックをオンにする／アーキタイプをRed Aggroにし、アーキタイプの変更チェックをオンにする／そのほかの項目は入力せず、変更チェックをオフのままにする／5. 一括編集実行を押す／6. DBでID 〔デッキID-M1501-103〕の表示区分とアーキタイプを確認する／7. ブラウザで未ログインの新しいセッションを開き、フロントのデッキ検索TOPを開く／8. 「クリア」を押して入力済みの検索条件を空に戻す／9. プレイヤー名の入力欄に「M1501-CB103組合せ選手」を入力し、「検索」を押して一覧を確認する	DBでID 〔デッキID-M1501-103〕の表示区分が公開、アーキタイプがRed Aggroに設定となり、フロントのデッキ検索でプレイヤー名「M1501-CB103組合せ選手」を指定した検索結果の一覧にプレイヤー名「M1501-CB103組合せ選手」のデッキが載ること	0212 デッキ一覧(検索結果) / 機能仕様 処理概要、画面項目定義 一括編集 識別ID 2・3・17｜0309 F09-02 デッキ検索結果 ／ フロント デッキ検索 — デッキ検索結果 / 業務ロジック 一覧に載せるデッキ	CB-M15-01-004
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M15-02-023	IT-0366	REQ-0212-sheet-5-R143,REQ-0212-sheet-5-R149,REQ-0212-sheet-5-R152,REQ-0212-sheet-5-R166		ITA-11	P1	ブラウザのみ	S-M15-02-ADM,S-M15-02-REF,S-M15-02-CONFIG,S-M15-02-CBPARTUTF8-023	① 新しいブラウザセッションで試験管理者としてログインし、保持された検索条件と選択状態がないデッキ検索・一覧画面を初期表示する（S-M15-02-ADM）／② Standard、青白コントロール、Sol RingおよびLightning Boltの参照データが記載したIDと名称で登録されている（S-M15-02-REF）／③ ケース開始時にCSV出力文字コード設定をUTF-8へ設定し、アプリケーションへ反映する（S-M15-02-CONFIG）／④ デッキID 〔デッキID-M1502-023A〕（デッキ名 M1502-CB023-存在デッキ甲、公開、Standard、青白コントロール、メインリスト 4 Lightning Bolt）と 〔デッキID-M1502-023B〕（デッキ名 M1502-CB023-存在デッキ乙、非公開、Standard、青白コントロール、メインリスト 3 Sol Ring）が削除されていない通常デッキとして登録され、デッキID 159999023は存在しない（登録時に振られたデッキIDを控えてある）（S-M15-02-CBPARTUTF8-023）	1. デッキ検索・一覧画面でデッキIDに「〔デッキID-M1502-023A〕,〔デッキID-M1502-023B〕」を入力して「検索する」を押す／2. 開発者ツールのNetworkでログを保持する／3. デッキID 〔デッキID-M1502-023A〕と〔デッキID-M1502-023B〕のチェックボックスを選択する／4. 開発者ツールで〔デッキID-M1502-023B〕の選択済みチェックボックスの値を「159999023」に変更する／5. CSV出力ボタンを押す／6. CSV出力応答のContent-Typeとダウンロードしたファイルの先頭バイトを確認し、ダウンロードしたCSVを表形式で開く	Content-Typeが「text/csv;charset=UTF-8」であり、ファイル先頭がUTF-8のBOMで、BOMに続く本文をUTF-8で読み取れ、見出し行に続くデータ行が存在するデッキ 〔デッキID-M1502-023A〕 の1行（フォーマットがStandard、アーキタイプが青白コントロール、メインリストが4 Lightning Bolt）だけで、〔デッキID-M1502-023B〕 のメインリスト3 Sol Ringの行とID 159999023の行を含まないこと	0212 デッキ一覧(検索結果) / 現行仕様 M15-02 業務ロジック 出力対象の決め方、出力の構成、応答とファイル名	CB-M15-02-001
+IT-M15-02-024	IT-0366	REQ-0212-sheet-5-R143,REQ-0212-sheet-5-R149,REQ-0212-sheet-5-R152,REQ-0212-sheet-5-R164,REQ-0212-sheet-5-R166		ITA-11	P1	ブラウザのみ	S-M15-02-ADM,S-M15-02-REF,S-M15-02-CONFIG,S-M15-02-CBPARTSJIS-024	① 新しいブラウザセッションで試験管理者としてログインし、保持された検索条件と選択状態がないデッキ検索・一覧画面を初期表示する（S-M15-02-ADM）／② Standard、青白コントロール、Sol RingおよびLightning Boltの参照データが記載したIDと名称で登録されている（S-M15-02-REF）／③ ケース開始時にCSV出力文字コード設定をSJIS-winへ設定し、アプリケーションへ反映する（S-M15-02-CONFIG）／④ デッキID 〔デッキID-M1502-024A〕（デッキ名 M1502-CB024-存在デッキ甲、公開、Standard、青白コントロール、メインリスト 4 Lightning Bolt）と 〔デッキID-M1502-024B〕（デッキ名 M1502-CB024-存在デッキ乙、非公開、Standard、青白コントロール、メインリスト 3 Sol Ring）が削除されていない通常デッキとして登録され、デッキID 159999024は存在しない（登録時に振られたデッキIDを控えてある）（S-M15-02-CBPARTSJIS-024）	1. デッキ検索・一覧画面でデッキIDに「〔デッキID-M1502-024A〕,〔デッキID-M1502-024B〕」を入力して「検索する」を押す／2. 開発者ツールのNetworkでログを保持する／3. デッキID 〔デッキID-M1502-024A〕と〔デッキID-M1502-024B〕のチェックボックスを選択する／4. 開発者ツールで〔デッキID-M1502-024B〕の選択済みチェックボックスの値を「159999024」に変更する／5. CSV出力ボタンを押す／6. CSV出力応答のContent-Typeとダウンロードしたファイルの先頭バイトを確認し、ダウンロードしたCSVを表形式で開く	Content-Typeが「text/csv;charset=windows-31j」であり、ファイル先頭がUTF-8のBOMで、BOMに続く本文をUTF-8で読み取れ、見出し行に続くデータ行が存在するデッキ 〔デッキID-M1502-024A〕 の1行（フォーマットがStandard、アーキタイプが青白コントロール、メインリストが4 Lightning Bolt）だけで、〔デッキID-M1502-024B〕 のメインリスト3 Sol Ringの行とID 159999024の行を含まないこと	0212 デッキ一覧(検索結果) / 現行仕様 M15-02 業務ロジック 出力対象の決め方、出力の構成、応答とファイル名	CB-M15-02-002
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M15-03-004	IT-0366	REQ-0212-sheet-4-R008		ITA-11	P1	ブラウザのみ	S-M15-03-QM-ADM,S-M15-03-CBPAGEFREE-004	① 管理画面にログインできる管理者 m1503qm-adm（S-M15-03-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件と一覧のページ番号が無い状態から始める。フォーマット「M1503-CB004-フォーマット」のデッキ14件（プレイヤー名 M1503-CB004-選手01 から M1503-CB004-選手14 までの連番。すべて公開・大会デッキ）が登録済みで、削除対象に選ぶM1503-CB004-選手11・M1503-CB004-選手12・M1503-CB004-選手13の3件はいずれも記事に使われていない（すべて未使用）。このフォーマットのデッキはこれだけ（S-M15-03-CBPAGEFREE-004）	1. 管理画面のログイン画面でログインIDに m1503qm-adm、パスワードに Passw0rd-M1503QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、プレイヤー名に「M1503-CB004-選手」を入力し、件数で10件、並べかえ項目でプレイヤー名、ソート順で昇順を選択して「検索する」を押す／3. 2ページ目へ移動する（保持される一覧のページ番号が2になる）／4. プレイヤー「M1503-CB004-選手11」「M1503-CB004-選手12」「M1503-CB004-選手13」の3件のチェックボックスを上から順に選択する／5. 「一括削除」を押し、確認画面で「OK」を押す	管理画面上部に「削除しました」が表示され、デッキ検索・一覧画面の2ページ目が表示されて該当件数が11件になり、そのページにはプレイヤー M1503-CB004-選手14 の1件が表示され、M1503-CB004-選手11、M1503-CB004-選手12、M1503-CB004-選手13の行は含まれないこと	0212 デッキ一覧(検索結果) / 機能仕様 処理概要、M15-03 機能設計書 / 業務ロジック 削除の判定順序、記事に使われているかの判定、戻り先、表示メッセージ	CB-M15-03-001
+IT-M15-03-006	IT-0366	REQ-0212-sheet-4-R008,REQ-0212-sheet-3-R087		ITA-11	P1	ブラウザのみ	S-M15-03-QM-ADM,S-M15-03-CBPAGEHEAD-006	① 管理画面にログインできる管理者 m1503qm-adm（S-M15-03-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件と一覧のページ番号が無い状態から始める。フォーマット「M1503-CB006-フォーマット」のデッキ14件（プレイヤー名 M1503-CB006-選手01 から M1503-CB006-選手14 までの連番。すべて公開・大会デッキ）が登録済みで、削除対象に選ぶM1503-CB006-選手11・M1503-CB006-選手12・M1503-CB006-選手13の3件のうち先頭のM1503-CB006-選手11が記事「M1503-CB006-記事」に使われ、あとの2件は記事に使われていない（先頭が使用中）。このフォーマットのデッキはこれだけ（S-M15-03-CBPAGEHEAD-006）	1. 管理画面のログイン画面でログインIDに m1503qm-adm、パスワードに Passw0rd-M1503QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、プレイヤー名に「M1503-CB006-選手」を入力し、件数で10件、並べかえ項目でプレイヤー名、ソート順で昇順を選択して「検索する」を押す／3. 2ページ目へ移動する（保持される一覧のページ番号が2になる）／4. プレイヤー「M1503-CB006-選手11」「M1503-CB006-選手12」「M1503-CB006-選手13」の3件のチェックボックスを上から順に選択する／5. 「一括削除」を押し、確認画面で「OK」を押す	管理画面上部に「記事に紐付いているデッキがあるため削除できません。」が表示され、「削除しました」は表示されず、デッキ検索・一覧画面の2ページ目が表示されて該当件数が14件になり、そのページにはプレイヤー M1503-CB006-選手11・M1503-CB006-選手12・M1503-CB006-選手13・M1503-CB006-選手14 の4件が表示され、削除対象に選んだ3件がすべて残っていること	0212 デッキ一覧(検索結果) / 機能仕様 処理概要、M15-03 機能設計書 / 業務ロジック 削除の判定順序、記事に使われているかの判定、戻り先、表示メッセージ	CB-M15-03-003
+IT-M15-03-008	IT-0366	REQ-0212-sheet-4-R008,REQ-0212-sheet-3-R087		ITA-11	P1	ブラウザのみ	S-M15-03-QM-ADM,S-M15-03-CBPAGEMID-008	① 管理画面にログインできる管理者 m1503qm-adm（S-M15-03-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件と一覧のページ番号が無い状態から始める。フォーマット「M1503-CB008-フォーマット」のデッキ14件（プレイヤー名 M1503-CB008-選手01 から M1503-CB008-選手14 までの連番。すべて公開・大会デッキ）が登録済みで、削除対象に選ぶM1503-CB008-選手11・M1503-CB008-選手12・M1503-CB008-選手13の3件のうち先頭のM1503-CB008-選手11は記事に使われておらず、2番目のM1503-CB008-選手12が記事「M1503-CB008-記事」に使われ、3番目のM1503-CB008-選手13は記事に使われていない（未使用の後に使用中）。このフォーマットのデッキはこれだけ（S-M15-03-CBPAGEMID-008）	1. 管理画面のログイン画面でログインIDに m1503qm-adm、パスワードに Passw0rd-M1503QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、プレイヤー名に「M1503-CB008-選手」を入力し、件数で10件、並べかえ項目でプレイヤー名、ソート順で昇順を選択して「検索する」を押す／3. 2ページ目へ移動する（保持される一覧のページ番号が2になる）／4. プレイヤー「M1503-CB008-選手11」「M1503-CB008-選手12」「M1503-CB008-選手13」の3件のチェックボックスを上から順に選択する／5. 「一括削除」を押し、確認画面で「OK」を押す	管理画面上部に「記事に紐付いているデッキがあるため削除できません。」が表示され、「削除しました」は表示されず、デッキ検索・一覧画面の2ページ目が表示されて該当件数が13件になり、そのページにはプレイヤー M1503-CB008-選手12・M1503-CB008-選手13・M1503-CB008-選手14 の3件が表示され、M1503-CB008-選手11の行は含まれないこと	0212 デッキ一覧(検索結果) / 機能仕様 処理概要、M15-03 機能設計書 / 業務ロジック 削除の判定順序、記事に使われているかの判定、戻り先、表示メッセージ	CB-M15-03-005
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M15-04-007	IT-0366	REQ-0212-sheet-4-R009		ITA-11	P1	ブラウザのみ	S-M15-04-QM-ADM,S-M15-04-CBONIMG-007	① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件がない状態から始める。フォーマット「M1504-CB007-フォーマット」に、アーキタイプ「M1504-CB007-型甲」（代表カード画像なし）と、アーキタイプ「M1504-CB007-型乙」（代表カード画像は英語名M1504-CB007-NewCardのカードの画像（代表カード画像あり））が登録され、デッキID 〔デッキID-M1504-007〕（プレイヤー名 M1504-CB007-選手・公開・アーキタイプ M1504-CB007-型甲・代表カード画像は英語名M1504-CB007-OldCardのカードの画像）が登録済み（登録時に振られたデッキIDを控えてある）（S-M15-04-CBONIMG-007）	1. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-007〕 を入力して「検索する」を押す／3. デッキID 〔デッキID-M1504-007〕 を選択し、一括編集を開く／4. アーキタイプに「M1504-CB007-型乙」、公開状態に「非公開」を選び、アーキタイプの変更チェックと公開状態の変更チェックをオンにする／5. 「一括編集実行」を押す／6. デッキ検索・一覧画面でデッキID 〔デッキID-M1504-007〕 を選択してCSV出力ボタンを押す／7. ダウンロードしたCSVを表形式で開く	ダウンロードしたCSVのデータ行が1行で、アーキタイプが「M1504-CB007-型乙」、代表カード名が「M1504-CB007-NewCard」、表示フラグが0であること	0212 デッキ一覧(検索結果) / 一括編集(アコーディオン)、M15-04 機能設計書 / 更新する項目｜0212 デッキ一覧(検索結果) / 現行仕様 M15-02 業務ロジック 列の値の作り方	CB-M15-04-001
+IT-M15-04-008	IT-0366	REQ-0212-sheet-4-R009		ITA-11	P1	ブラウザのみ	S-M15-04-QM-ADM,S-M15-04-CBONNOIMG-008	① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件がない状態から始める。フォーマット「M1504-CB008-フォーマット」に、アーキタイプ「M1504-CB008-型甲」（代表カード画像なし）と、アーキタイプ「M1504-CB008-型乙」（代表カード画像なし）が登録され、デッキID 〔デッキID-M1504-008〕（プレイヤー名 M1504-CB008-選手・公開・アーキタイプ M1504-CB008-型甲・代表カード画像は英語名M1504-CB008-OldCardのカードの画像）が登録済み（登録時に振られたデッキIDを控えてある）（S-M15-04-CBONNOIMG-008）	1. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-008〕 を入力して「検索する」を押す／3. デッキID 〔デッキID-M1504-008〕 を選択し、一括編集を開く／4. アーキタイプに「M1504-CB008-型乙」、公開状態に「非公開」を選び、アーキタイプの変更チェックと公開状態の変更チェックをオンにする／5. 「一括編集実行」を押す／6. デッキ検索・一覧画面でデッキID 〔デッキID-M1504-008〕 を選択してCSV出力ボタンを押す／7. ダウンロードしたCSVを表形式で開く	ダウンロードしたCSVのデータ行が1行で、アーキタイプが「M1504-CB008-型乙」、代表カード名が「M1504-CB008-OldCard」、表示フラグが0であること	0212 デッキ一覧(検索結果) / 一括編集(アコーディオン)、M15-04 機能設計書 / 更新する項目｜0212 デッキ一覧(検索結果) / 現行仕様 M15-02 業務ロジック 列の値の作り方	CB-M15-04-002
+IT-M15-04-009	IT-0366	REQ-0212-sheet-4-R009		ITA-11	P1	ブラウザのみ	S-M15-04-QM-ADM,S-M15-04-CBOFFIMG-009	① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件がない状態から始める。フォーマット「M1504-CB009-フォーマット」に、アーキタイプ「M1504-CB009-型甲」（代表カード画像なし）と、アーキタイプ「M1504-CB009-型乙」（代表カード画像は英語名M1504-CB009-NewCardのカードの画像（代表カード画像あり））が登録され、デッキID 〔デッキID-M1504-009〕（プレイヤー名 M1504-CB009-選手・公開・アーキタイプ M1504-CB009-型甲・代表カード画像は英語名M1504-CB009-OldCardのカードの画像）が登録済み（登録時に振られたデッキIDを控えてある）（S-M15-04-CBOFFIMG-009）	1. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-009〕 を入力して「検索する」を押す／3. デッキID 〔デッキID-M1504-009〕 を選択し、一括編集を開く／4. アーキタイプに「M1504-CB009-型乙」、公開状態に「非公開」を選び、公開状態の変更チェックだけをオンにし、アーキタイプの変更チェックはオフのままにする／5. 「一括編集実行」を押す／6. デッキ検索・一覧画面でデッキID 〔デッキID-M1504-009〕 を選択してCSV出力ボタンを押す／7. ダウンロードしたCSVを表形式で開く	ダウンロードしたCSVのデータ行が1行で、アーキタイプが「M1504-CB009-型甲」、代表カード名が「M1504-CB009-OldCard」、表示フラグが0であること	0212 デッキ一覧(検索結果) / 一括編集(アコーディオン)、M15-04 機能設計書 / 更新する項目｜0212 デッキ一覧(検索結果) / 現行仕様 M15-02 業務ロジック 列の値の作り方	CB-M15-04-003
+IT-M15-04-010	IT-0366	REQ-0212-sheet-4-R009		ITA-11	P1	ブラウザのみ	S-M15-04-QM-ADM,S-M15-04-CBOFFNOIMG-010	① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件がない状態から始める。フォーマット「M1504-CB010-フォーマット」に、アーキタイプ「M1504-CB010-型甲」（代表カード画像なし）と、アーキタイプ「M1504-CB010-型乙」（代表カード画像なし）が登録され、デッキID 〔デッキID-M1504-010〕（プレイヤー名 M1504-CB010-選手・公開・アーキタイプ M1504-CB010-型甲・代表カード画像は英語名M1504-CB010-OldCardのカードの画像）が登録済み（登録時に振られたデッキIDを控えてある）（S-M15-04-CBOFFNOIMG-010）	1. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-010〕 を入力して「検索する」を押す／3. デッキID 〔デッキID-M1504-010〕 を選択し、一括編集を開く／4. アーキタイプに「M1504-CB010-型乙」、公開状態に「非公開」を選び、公開状態の変更チェックだけをオンにし、アーキタイプの変更チェックはオフのままにする／5. 「一括編集実行」を押す／6. デッキ検索・一覧画面でデッキID 〔デッキID-M1504-010〕 を選択してCSV出力ボタンを押す／7. ダウンロードしたCSVを表形式で開く	ダウンロードしたCSVのデータ行が1行で、アーキタイプが「M1504-CB010-型甲」、代表カード名が「M1504-CB010-OldCard」、表示フラグが0であること	0212 デッキ一覧(検索結果) / 一括編集(アコーディオン)、M15-04 機能設計書 / 更新する項目｜0212 デッキ一覧(検索結果) / 現行仕様 M15-02 業務ロジック 列の値の作り方	CB-M15-04-004
+
+exec
+/bin/bash -lc 'cat combination/cases/M15-0{1,2,3,4}_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M15-01-CBBULK-100	デッキ	一括編集・公開状態とアーキタイプの組合せデータ(100)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1501-100〕）／管理者作成の大会デッキ・Standard・表示区分=非公開・アーキタイプ=未設定・イベント名(日)=M1501-CB100組合せ大会・イベント名(英)=M1501-CB100-Event・開催日=試験基準日（ケース実行日）の3日前・順位=1・プレイヤー名=M1501-CB100組合せ選手	IT-M15-01-100専用。公開状態もアーキタイプも変更せず（変更チェックなし）一括編集し、非公開・アーキタイプ未設定のまま変わらずフロントの検索結果に載らない	M15-01試験管理者Aでログインし、デッキ新規登録画面でデッキタイプでevent（管理者作成）を選び、フォーマットにStandard、アーキタイプは必須のため一旦Blue Controlを選び、公開状態(デッキ全体の公開設定)に非公開を選び、デッキリスト公開状態の「非公開(採用カード情報を公開しない)」のチェックを外したままにし、イベント名(日)に「M1501-CB100組合せ大会」、イベント名(英)に「M1501-CB100-Event」、開催日に試験基準日（ケース実行日）の3日前の日付、順位に1、プレイヤー名に「M1501-CB100組合せ選手」を入れ、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-100〕）。アーキタイプ未設定は画面で指定できないためDBへ直接設定する。	ケース専用
+S-M15-01-CBBULK-101	デッキ	一括編集・公開状態とアーキタイプの組合せデータ(101)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1501-101〕）／管理者作成の大会デッキ・Standard・表示区分=非公開・アーキタイプ=未設定・イベント名(日)=M1501-CB101組合せ大会・イベント名(英)=M1501-CB101-Event・開催日=試験基準日（ケース実行日）の3日前・順位=1・プレイヤー名=M1501-CB101組合せ選手	IT-M15-01-101専用。アーキタイプだけを設定して一括編集しても、非公開のままならフロントの検索結果に載らない	M15-01試験管理者Aでログインし、デッキ新規登録画面でデッキタイプでevent（管理者作成）を選び、フォーマットにStandard、アーキタイプは必須のため一旦Blue Controlを選び、公開状態(デッキ全体の公開設定)に非公開を選び、デッキリスト公開状態の「非公開(採用カード情報を公開しない)」のチェックを外したままにし、イベント名(日)に「M1501-CB101組合せ大会」、イベント名(英)に「M1501-CB101-Event」、開催日に試験基準日（ケース実行日）の3日前の日付、順位に1、プレイヤー名に「M1501-CB101組合せ選手」を入れ、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-101〕）。アーキタイプ未設定は画面で指定できないためDBへ直接設定する。	ケース専用
+S-M15-01-CBBULK-102	デッキ	一括編集・公開状態とアーキタイプの組合せデータ(102)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1501-102〕）／管理者作成の大会デッキ・Standard・表示区分=非公開・アーキタイプ=未設定・イベント名(日)=M1501-CB102組合せ大会・イベント名(英)=M1501-CB102-Event・開催日=試験基準日（ケース実行日）の3日前・順位=1・プレイヤー名=M1501-CB102組合せ選手	IT-M15-01-102専用。公開状態だけを公開にして一括編集しても、アーキタイプが未設定のままならフロントの検索結果に載らない	M15-01試験管理者Aでログインし、デッキ新規登録画面でデッキタイプでevent（管理者作成）を選び、フォーマットにStandard、アーキタイプは必須のため一旦Blue Controlを選び、公開状態(デッキ全体の公開設定)に非公開を選び、デッキリスト公開状態の「非公開(採用カード情報を公開しない)」のチェックを外したままにし、イベント名(日)に「M1501-CB102組合せ大会」、イベント名(英)に「M1501-CB102-Event」、開催日に試験基準日（ケース実行日）の3日前の日付、順位に1、プレイヤー名に「M1501-CB102組合せ選手」を入れ、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-102〕）。アーキタイプ未設定は画面で指定できないためDBへ直接設定する。	ケース専用
+S-M15-01-CBBULK-103	デッキ	一括編集・公開状態とアーキタイプの組合せデータ(103)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1501-103〕）／管理者作成の大会デッキ・Standard・表示区分=非公開・アーキタイプ=未設定・イベント名(日)=M1501-CB103組合せ大会・イベント名(英)=M1501-CB103-Event・開催日=試験基準日（ケース実行日）の3日前・順位=1・プレイヤー名=M1501-CB103組合せ選手	IT-M15-01-103専用。公開状態を公開にしアーキタイプも設定して一括編集すると、フロントの検索結果に載る	M15-01試験管理者Aでログインし、デッキ新規登録画面でデッキタイプでevent（管理者作成）を選び、フォーマットにStandard、アーキタイプは必須のため一旦Blue Controlを選び、公開状態(デッキ全体の公開設定)に非公開を選び、デッキリスト公開状態の「非公開(採用カード情報を公開しない)」のチェックを外したままにし、イベント名(日)に「M1501-CB103組合せ大会」、イベント名(英)に「M1501-CB103-Event」、開催日に試験基準日（ケース実行日）の3日前の日付、順位に1、プレイヤー名に「M1501-CB103組合せ選手」を入れ、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-103〕）。アーキタイプ未設定は画面で指定できないためDBへ直接設定する。	ケース専用
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M15-02-CBPARTUTF8-023	デッキ・未登録状態	一部不存在確認データ(023)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1502-023A〕）・デッキ名=M1502-CB023-存在デッキ甲・フォーマット英語名=Standard・アーキタイプ日本語名=青白コントロール・メインリスト=「4 Lightning Bolt」・公開／デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1502-023B〕）・デッキ名=M1502-CB023-存在デッキ乙・フォーマット英語名=Standard・アーキタイプ日本語名=青白コントロール・メインリスト=「3 Sol Ring」・非公開／両方とも通常デッキで削除されていない／デッキID=159999023は存在しない	IT-M15-02-023専用。存在するIDと存在しないIDの混在で、文字コード設定UTF-8のCSV出力を確かめる	存在するデッキを2件、1件ずつ登録する。1件目: デッキ検索・一覧画面で「新規登録」を押してデッキ編集画面（新規登録）を開く。デッキ名に「M1502-CB023-存在デッキ甲」を入れ、デッキタイプに「event」を選び、フォーマットに英語名がStandardのフォーマットを選び、アーキタイプに「青白コントロール」（共有の参照データで登録したもの）を選び、公開状態(デッキ全体の公開設定)に「公開」を選ぶ。公開のときはイベント名(日)・イベント名(英)・開催日が必須のため、イベント名(日)に「M1502-CB023-イベント」、イベント名(英)に「M1502-CB023-Event」、開催日に「2026/09/01 10:00」を入れる（この3つは必須を満たすためだけの値で、ケースの確認内容には使わない）。メインボードの1行目に「4 Lightning Bolt」を入れる。「新規登録」を押す。登録後に開くデッキ編集画面のアドレス欄のURLに含まれるデッキIDを控える。（〔デッキID-M1502-023A〕）2件目: デッキ検索・一覧画面で「新規登録」を押してデッキ編集画面（新規登録）を開く。デッキ名に「M1502-CB023-存在デッキ乙」を入れ、デッキタイプに「event」を選び、フォーマットに英語名がStandardのフォーマットを選び、アーキタイプに「青白コントロール」（共有の参照データで登録したもの）を選び、公開状態(デッキ全体の公開設定)に「非公開」を選ぶ。メインボードの1行目に「3 Sol Ring」を入れる。「新規登録」を押す。登録後に開くデッキ編集画面のアドレス欄のURLに含まれるデッキIDを控える。（〔デッキID-M1502-023B〕）登録した2件は削除しない。デッキID 159999023 のデッキと、同じIDに結び付くデッキ情報が1件も無い状態は画面で指定できないためDBへ直接設定する（該当するデータがあれば削除し、無いことを確かめる）	ケース専用
+S-M15-02-CBPARTSJIS-024	デッキ・未登録状態	一部不存在確認データ(024)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1502-024A〕）・デッキ名=M1502-CB024-存在デッキ甲・フォーマット英語名=Standard・アーキタイプ日本語名=青白コントロール・メインリスト=「4 Lightning Bolt」・公開／デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1502-024B〕）・デッキ名=M1502-CB024-存在デッキ乙・フォーマット英語名=Standard・アーキタイプ日本語名=青白コントロール・メインリスト=「3 Sol Ring」・非公開／両方とも通常デッキで削除されていない／デッキID=159999024は存在しない	IT-M15-02-024専用。存在するIDと存在しないIDの混在で、文字コード設定SJIS-winのCSV出力を確かめる	存在するデッキを2件、1件ずつ登録する。1件目: デッキ検索・一覧画面で「新規登録」を押してデッキ編集画面（新規登録）を開く。デッキ名に「M1502-CB024-存在デッキ甲」を入れ、デッキタイプに「event」を選び、フォーマットに英語名がStandardのフォーマットを選び、アーキタイプに「青白コントロール」（共有の参照データで登録したもの）を選び、公開状態(デッキ全体の公開設定)に「公開」を選ぶ。公開のときはイベント名(日)・イベント名(英)・開催日が必須のため、イベント名(日)に「M1502-CB024-イベント」、イベント名(英)に「M1502-CB024-Event」、開催日に「2026/09/01 10:00」を入れる（この3つは必須を満たすためだけの値で、ケースの確認内容には使わない）。メインボードの1行目に「4 Lightning Bolt」を入れる。「新規登録」を押す。登録後に開くデッキ編集画面のアドレス欄のURLに含まれるデッキIDを控える。（〔デッキID-M1502-024A〕）2件目: デッキ検索・一覧画面で「新規登録」を押してデッキ編集画面（新規登録）を開く。デッキ名に「M1502-CB024-存在デッキ乙」を入れ、デッキタイプに「event」を選び、フォーマットに英語名がStandardのフォーマットを選び、アーキタイプに「青白コントロール」（共有の参照データで登録したもの）を選び、公開状態(デッキ全体の公開設定)に「非公開」を選ぶ。メインボードの1行目に「3 Sol Ring」を入れる。「新規登録」を押す。登録後に開くデッキ編集画面のアドレス欄のURLに含まれるデッキIDを控える。（〔デッキID-M1502-024B〕）登録した2件は削除しない。デッキID 159999024 のデッキと、同じIDに結び付くデッキ情報が1件も無い状態は画面で指定できないためDBへ直接設定する（該当するデータがあれば削除し、無いことを確かめる）	ケース専用
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M15-03-CBPAGEFREE-004	フォーマット・アーキタイプ・デッキ	一括削除の使用状況と戻り先の確認データ(004)	フォーマット（名(日)=M1503-CB004-フォーマット／名(英)=M1503-CB004-Format／並び順=9304／メタゲーム分析日数=14／ランキング表示=ON）。アーキタイプ（名(日)=M1503-CB004-型／名(英)=M1503-CB004-Type／公開）。デッキ14件（どれもデッキタイプ=event／公開状態=公開／デッキリスト公開／開催日=2025/03/10 10:00／参加人数=18）。プレイヤー名は M1503-CB004-選手01 から M1503-CB004-選手14 までの連番で、順位は連番と同じ数。どのデッキも記事に紐づかない。このフォーマットのデッキはこれだけ	IT-M15-03-004専用。プレイヤー名の連番順に並べた一覧で、2ページ目のM1503-CB004-選手11からM1503-CB004-選手13までの3件を選んで一括削除する	前回の残りを消す: デッキ一覧でプレイヤー名に「M1503-CB004-」を入れて「日付クリア」と「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押す。アーキタイプ一覧・フォーマット一覧に名称が「M1503-CB004-」で始まるものがあれば削除する。管理画面のカード管理＞フォーマット管理で「新規登録」を押し、フォーマット名(日)に「M1503-CB004-フォーマット」、フォーマット名(英)に「M1503-CB004-Format」、並び順に「9304」、メタゲーム分析日数に「14」を入れ、「ランキング表示」にチェックを付け、「メタ分布簡易化」にチェックを付けず、「登録」を押す。管理画面のデッキ管理＞アーキタイプ一覧で「新規登録」を押し、アーキタイプ名(日)に「M1503-CB004-型」、アーキタイプ名(英)に「M1503-CB004-Type」、公開状態に「公開」、フォーマットに「M1503-CB004-フォーマット」を選び、代表カードは選ばずに「新規登録」を押す。デッキを14件、1件ずつ登録する。プレイヤー名の末尾の連番を01から14まで1つずつ増やし、順位と成績の連番も同じ数にして、次の手順を14回繰り返す: 管理画面のデッキ管理＞デッキ一覧で「新規登録」を押してデッキ編集画面（新規登録）を開き、デッキタイプに「event」、フォーマットに「M1503-CB004-フォーマット」、アーキタイプに「M1503-CB004-型」、公開状態(デッキ全体の公開設定)に「公開」を選び、「デッキリスト公開状態(非公開)」のチェックは外したまま、プレイヤー名に「M1503-CB004-選手NN」、イベント名(日)に「M1503-CB004-大会」、イベント名(英)に「M1503-CB004-Event」、イベント開催日に「2025/03/10 10:00」、順位に「NN」、成績に「M1503-CB004-成績NN」、イベント参加人数に「18」を入れて「新規登録」を押す。登録したデッキは削除せず、記事には紐づけない。	ケース専用
+S-M15-03-CBPAGEHEAD-006	フォーマット・アーキタイプ・デッキ・記事	一括削除の使用状況と戻り先の確認データ(006)	フォーマット（名(日)=M1503-CB006-フォーマット／名(英)=M1503-CB006-Format／並び順=9306／メタゲーム分析日数=14／ランキング表示=ON）。アーキタイプ（名(日)=M1503-CB006-型／名(英)=M1503-CB006-Type／公開）。デッキ14件（どれもデッキタイプ=event／公開状態=公開／デッキリスト公開／開催日=2025/03/10 10:00／参加人数=18）。プレイヤー名は M1503-CB006-選手01 から M1503-CB006-選手14 までの連番で、順位は連番と同じ数。記事に紐づくのはM1503-CB006-選手11の1件だけ。このフォーマットのデッキはこれだけ	IT-M15-03-006専用。プレイヤー名の連番順に並べた一覧で、2ページ目のM1503-CB006-選手11からM1503-CB006-選手13までの3件を選んで一括削除する	前回の残りを消す: デッキ一覧でプレイヤー名に「M1503-CB006-」を入れて「日付クリア」と「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押す。アーキタイプ一覧・フォーマット一覧に名称が「M1503-CB006-」で始まるものがあれば削除する。管理画面のカード管理＞フォーマット管理で「新規登録」を押し、フォーマット名(日)に「M1503-CB006-フォーマット」、フォーマット名(英)に「M1503-CB006-Format」、並び順に「9306」、メタゲーム分析日数に「14」を入れ、「ランキング表示」にチェックを付け、「メタ分布簡易化」にチェックを付けず、「登録」を押す。管理画面のデッキ管理＞アーキタイプ一覧で「新規登録」を押し、アーキタイプ名(日)に「M1503-CB006-型」、アーキタイプ名(英)に「M1503-CB006-Type」、公開状態に「公開」、フォーマットに「M1503-CB006-フォーマット」を選び、代表カードは選ばずに「新規登録」を押す。デッキを14件、1件ずつ登録する。プレイヤー名の末尾の連番を01から14まで1つずつ増やし、順位と成績の連番も同じ数にして、次の手順を14回繰り返す: 管理画面のデッキ管理＞デッキ一覧で「新規登録」を押してデッキ編集画面（新規登録）を開き、デッキタイプに「event」、フォーマットに「M1503-CB006-フォーマット」、アーキタイプに「M1503-CB006-型」、公開状態(デッキ全体の公開設定)に「公開」を選び、「デッキリスト公開状態(非公開)」のチェックは外したまま、プレイヤー名に「M1503-CB006-選手NN」、イベント名(日)に「M1503-CB006-大会」、イベント名(英)に「M1503-CB006-Event」、イベント開催日に「2025/03/10 10:00」、順位に「NN」、成績に「M1503-CB006-成績NN」、イベント参加人数に「18」を入れて「新規登録」を押す。登録したデッキは削除せず、記事には紐づけない。続けて、プレイヤー名「M1503-CB006-選手11」のデッキに関連する試験記事「M1503-CB006-記事」を1件用意する。試験記事の登録と、デッキと試験記事の関連付けは、記事を登録する画面とデッキを記事に関連付ける画面が管理画面に無く画面で指定できないためDBへ直接設定する。他のデッキは記事に紐づけない。	ケース専用
+S-M15-03-CBPAGEMID-008	フォーマット・アーキタイプ・デッキ・記事	一括削除の使用状況と戻り先の確認データ(008)	フォーマット（名(日)=M1503-CB008-フォーマット／名(英)=M1503-CB008-Format／並び順=9308／メタゲーム分析日数=14／ランキング表示=ON）。アーキタイプ（名(日)=M1503-CB008-型／名(英)=M1503-CB008-Type／公開）。デッキ14件（どれもデッキタイプ=event／公開状態=公開／デッキリスト公開／開催日=2025/03/10 10:00／参加人数=18）。プレイヤー名は M1503-CB008-選手01 から M1503-CB008-選手14 までの連番で、順位は連番と同じ数。記事に紐づくのはM1503-CB008-選手12の1件だけ。このフォーマットのデッキはこれだけ	IT-M15-03-008専用。プレイヤー名の連番順に並べた一覧で、2ページ目のM1503-CB008-選手11からM1503-CB008-選手13までの3件を選んで一括削除する	前回の残りを消す: デッキ一覧でプレイヤー名に「M1503-CB008-」を入れて「日付クリア」と「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押す。アーキタイプ一覧・フォーマット一覧に名称が「M1503-CB008-」で始まるものがあれば削除する。管理画面のカード管理＞フォーマット管理で「新規登録」を押し、フォーマット名(日)に「M1503-CB008-フォーマット」、フォーマット名(英)に「M1503-CB008-Format」、並び順に「9308」、メタゲーム分析日数に「14」を入れ、「ランキング表示」にチェックを付け、「メタ分布簡易化」にチェックを付けず、「登録」を押す。管理画面のデッキ管理＞アーキタイプ一覧で「新規登録」を押し、アーキタイプ名(日)に「M1503-CB008-型」、アーキタイプ名(英)に「M1503-CB008-Type」、公開状態に「公開」、フォーマットに「M1503-CB008-フォーマット」を選び、代表カードは選ばずに「新規登録」を押す。デッキを14件、1件ずつ登録する。プレイヤー名の末尾の連番を01から14まで1つずつ増やし、順位と成績の連番も同じ数にして、次の手順を14回繰り返す: 管理画面のデッキ管理＞デッキ一覧で「新規登録」を押してデッキ編集画面（新規登録）を開き、デッキタイプに「event」、フォーマットに「M1503-CB008-フォーマット」、アーキタイプに「M1503-CB008-型」、公開状態(デッキ全体の公開設定)に「公開」を選び、「デッキリスト公開状態(非公開)」のチェックは外したまま、プレイヤー名に「M1503-CB008-選手NN」、イベント名(日)に「M1503-CB008-大会」、イベント名(英)に「M1503-CB008-Event」、イベント開催日に「2025/03/10 10:00」、順位に「NN」、成績に「M1503-CB008-成績NN」、イベント参加人数に「18」を入れて「新規登録」を押す。登録したデッキは削除せず、記事には紐づけない。続けて、プレイヤー名「M1503-CB008-選手12」のデッキに関連する試験記事「M1503-CB008-記事」を1件用意する。試験記事の登録と、デッキと試験記事の関連付けは、記事を登録する画面とデッキを記事に関連付ける画面が管理画面に無く画面で指定できないためDBへ直接設定する。他のデッキは記事に紐づけない。	ケース専用
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M15-04-CBONIMG-007	フォーマット・アーキタイプ・カード・デッキ	一括編集前のデッキと代表カード画像のある変更先アーキタイプ(007)	フォーマット「M1504-CB007-フォーマット」（名(英)=M1504-CB007-Format／並び順=9507／メタゲーム分析日数=14／ランキング表示=ON）。アーキタイプ2件（M1504-CB007-型甲／M1504-CB007-TypeA は代表カード画像なし、M1504-CB007-型乙／M1504-CB007-TypeB は代表カード画像がM1504-CB007-NewCardの画像1枚。どちらも公開）。カード（英語名 M1504-CB007-OldCard、M1504-CB007-NewCard。それぞれ画像1枚）。デッキ1件（デッキIDは登録時に画面が振る。控える。以下〔デッキID-M1504-007〕）・プレイヤー名=M1504-CB007-選手・デッキタイプ=event・公開状態=公開・アーキタイプ=M1504-CB007-型甲・代表カード画像=M1504-CB007-OldCardの画像・開催日=2025/03/10 10:00。このフォーマットのデッキはこれだけ	IT-M15-04-007専用。一括編集でアーキタイプを変更するときのアーキタイプと代表カード画像の更新を、CSV出力で確かめる	前回の残りを消す: デッキ一覧でプレイヤー名に「M1504-CB007-」を入れて「日付クリア」と「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押す。アーキタイプ一覧・フォーマット一覧に名称が「M1504-CB007-」で始まるものがあれば削除する。カード一覧(検索入力)画面でカード名・テキストに「M1504-CB007-」を入れて検索し、出たカードはカード詳細(編集)画面を開いて「削除」を押して消す。カード登録CSVのファイルを1行で作る（カード名(日本語)=M1504-CB007-旧札、カード名(英語)=M1504-CB007-OldCard、レアリティとレイアウトは登録済みの英語名（例: Uncommon、Normal）、画像URL(英語)=img/m1504/cb007-old.jpg、画像URL(日本語)とカード詳細IDは空）。カード登録CSVアップロード画面でファイルを選択でこのファイルを選び、CSVファイルのアップロードボタンを押す。カード登録CSVのファイルを1行で作る（カード名(日本語)=M1504-CB007-新札、カード名(英語)=M1504-CB007-NewCard、レアリティとレイアウトは登録済みの英語名（例: Uncommon、Normal）、画像URL(英語)=img/m1504/cb007-new.jpg、画像URL(日本語)とカード詳細IDは空）。カード登録CSVアップロード画面でファイルを選択でこのファイルを選び、CSVファイルのアップロードボタンを押す。管理画面のカード管理＞フォーマット管理で「新規登録」を押し、フォーマット名(日)に「M1504-CB007-フォーマット」、フォーマット名(英)に「M1504-CB007-Format」、並び順に「9507」、メタゲーム分析日数に「14」を入れ、「ランキング表示」にチェックを付け、「メタ分布簡易化」にチェックを付けず、「登録」を押す。管理画面のデッキ管理＞アーキタイプ一覧で「新規登録」を押し、アーキタイプ名(日)に「M1504-CB007-型甲」、アーキタイプ名(英)に「M1504-CB007-TypeA」、公開状態に「公開」、フォーマットに「M1504-CB007-フォーマット」を選び、代表カードは選ばずに「新規登録」を押す。同じ画面で「新規登録」を押し、アーキタイプ名(日)に「M1504-CB007-型乙」、アーキタイプ名(英)に「M1504-CB007-TypeB」、公開状態に「公開」、フォーマットに「M1504-CB007-フォーマット」を選び、「代表カード選択」を押し、代表カード検索ポップアップでカード名に「M1504-CB007-NewCard」を入れ、完全一致検索を選んで検索するボタンを押し、表示された行を選んで「新規登録」を押す。管理画面のデッキ管理＞デッキ一覧で「新規登録」を押してデッキ編集画面（新規登録）を開き、デッキタイプに「event」、フォーマットに「M1504-CB007-フォーマット」、アーキタイプに「M1504-CB007-型甲」、公開状態(デッキ全体の公開設定)に「公開」を選び、「デッキリスト公開状態(非公開)」のチェックは外したまま、「代表カード選択」を押し、代表カード検索ポップアップでカード名に「M1504-CB007-OldCard」を入れ、完全一致検索を選んで検索するボタンを押し、表示された行を選ぶ。プレイヤー名に「M1504-CB007-選手」、イベント名(日)に「M1504-CB007-大会」、イベント名(英)に「M1504-CB007-Event」、イベント開催日に「2025/03/10 10:00」、順位に「1」、成績に「M1504-CB007-成績」、イベント参加人数に「18」を入れて「新規登録」を押す。登録後に開くデッキ編集画面のアドレス欄のURLに含まれるデッキIDを控える（〔デッキID-M1504-007〕）。記事には紐づけず、登録したデッキは削除しない。	ケース専用
+S-M15-04-CBONNOIMG-008	フォーマット・アーキタイプ・カード・デッキ	一括編集前のデッキと代表カード画像のない変更先アーキタイプ(008)	フォーマット「M1504-CB008-フォーマット」（名(英)=M1504-CB008-Format／並び順=9508／メタゲーム分析日数=14／ランキング表示=ON）。アーキタイプ2件（M1504-CB008-型甲／M1504-CB008-TypeA は代表カード画像なし、M1504-CB008-型乙／M1504-CB008-TypeB は代表カード画像なし。どちらも公開）。カード（英語名 M1504-CB008-OldCard。それぞれ画像1枚）。デッキ1件（デッキIDは登録時に画面が振る。控える。以下〔デッキID-M1504-008〕）・プレイヤー名=M1504-CB008-選手・デッキタイプ=event・公開状態=公開・アーキタイプ=M1504-CB008-型甲・代表カード画像=M1504-CB008-OldCardの画像・開催日=2025/03/10 10:00。このフォーマットのデッキはこれだけ	IT-M15-04-008専用。一括編集でアーキタイプを変更するときのアーキタイプと代表カード画像の更新を、CSV出力で確かめる	前回の残りを消す: デッキ一覧でプレイヤー名に「M1504-CB008-」を入れて「日付クリア」と「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押す。アーキタイプ一覧・フォーマット一覧に名称が「M1504-CB008-」で始まるものがあれば削除する。カード一覧(検索入力)画面でカード名・テキストに「M1504-CB008-」を入れて検索し、出たカードはカード詳細(編集)画面を開いて「削除」を押して消す。カード登録CSVのファイルを1行で作る（カード名(日本語)=M1504-CB008-旧札、カード名(英語)=M1504-CB008-OldCard、レアリティとレイアウトは登録済みの英語名（例: Uncommon、Normal）、画像URL(英語)=img/m1504/cb008-old.jpg、画像URL(日本語)とカード詳細IDは空）。カード登録CSVアップロード画面でファイルを選択でこのファイルを選び、CSVファイルのアップロードボタンを押す。管理画面のカード管理＞フォーマット管理で「新規登録」を押し、フォーマット名(日)に「M1504-CB008-フォーマット」、フォーマット名(英)に「M1504-CB008-Format」、並び順に「9508」、メタゲーム分析日数に「14」を入れ、「ランキング表示」にチェックを付け、「メタ分布簡易化」にチェックを付けず、「登録」を押す。管理画面のデッキ管理＞アーキタイプ一覧で「新規登録」を押し、アーキタイプ名(日)に「M1504-CB008-型甲」、アーキタイプ名(英)に「M1504-CB008-TypeA」、公開状態に「公開」、フォーマットに「M1504-CB008-フォーマット」を選び、代表カードは選ばずに「新規登録」を押す。同じ画面で「新規登録」を押し、アーキタイプ名(日)に「M1504-CB008-型乙」、アーキタイプ名(英)に「M1504-CB008-TypeB」、公開状態に「公開」、フォーマットに「M1504-CB008-フォーマット」を選び、代表カードは選ばずに「新規登録」を押す。管理画面のデッキ管理＞デッキ一覧で「新規登録」を押してデッキ編集画面（新規登録）を開き、デッキタイプに「event」、フォーマットに「M1504-CB008-フォーマット」、アーキタイプに「M1504-CB008-型甲」、公開状態(デッキ全体の公開設定)に「公開」を選び、「デッキリスト公開状態(非公開)」のチェックは外したまま、「代表カード選択」を押し、代表カード検索ポップアップでカード名に「M1504-CB008-OldCard」を入れ、完全一致検索を選んで検索するボタンを押し、表示された行を選ぶ。プレイヤー名に「M1504-CB008-選手」、イベント名(日)に「M1504-CB008-大会」、イベント名(英)に「M1504-CB008-Event」、イベント開催日に「2025/03/10 10:00」、順位に「1」、成績に「M1504-CB008-成績」、イベント参加人数に「18」を入れて「新規登録」を押す。登録後に開くデッキ編集画面のアドレス欄のURLに含まれるデッキIDを控える（〔デッキID-M1504-008〕）。記事には紐づけず、登録したデッキは削除しない。	ケース専用
+S-M15-04-CBOFFIMG-009	フォーマット・アーキタイプ・カード・デッキ	一括編集前のデッキと代表カード画像のある変更先アーキタイプ(009)	フォーマット「M1504-CB009-フォーマット」（名(英)=M1504-CB009-Format／並び順=9509／メタゲーム分析日数=14／ランキング表示=ON）。アーキタイプ2件（M1504-CB009-型甲／M1504-CB009-TypeA は代表カード画像なし、M1504-CB009-型乙／M1504-CB009-TypeB は代表カード画像がM1504-CB009-NewCardの画像1枚。どちらも公開）。カード（英語名 M1504-CB009-OldCard、M1504-CB009-NewCard。それぞれ画像1枚）。デッキ1件（デッキIDは登録時に画面が振る。控える。以下〔デッキID-M1504-009〕）・プレイヤー名=M1504-CB009-選手・デッキタイプ=event・公開状態=公開・アーキタイプ=M1504-CB009-型甲・代表カード画像=M1504-CB009-OldCardの画像・開催日=2025/03/10 10:00。このフォーマットのデッキはこれだけ	IT-M15-04-009専用。一括編集でアーキタイプを変更せず入力だけするときのアーキタイプと代表カード画像の更新を、CSV出力で確かめる	前回の残りを消す: デッキ一覧でプレイヤー名に「M1504-CB009-」を入れて「日付クリア」と「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押す。アーキタイプ一覧・フォーマット一覧に名称が「M1504-CB009-」で始まるものがあれば削除する。カード一覧(検索入力)画面でカード名・テキストに「M1504-CB009-」を入れて検索し、出たカードはカード詳細(編集)画面を開いて「削除」を押して消す。カード登録CSVのファイルを1行で作る（カード名(日本語)=M1504-CB009-旧札、カード名(英語)=M1504-CB009-OldCard、レアリティとレイアウトは登録済みの英語名（例: Uncommon、Normal）、画像URL(英語)=img/m1504/cb009-old.jpg、画像URL(日本語)とカード詳細IDは空）。カード登録CSVアップロード画面でファイルを選択でこのファイルを選び、CSVファイルのアップロードボタンを押す。カード登録CSVのファイルを1行で作る（カード名(日本語)=M1504-CB009-新札、カード名(英語)=M1504-CB009-NewCard、レアリティとレイアウトは登録済みの英語名（例: Uncommon、Normal）、画像URL(英語)=img/m1504/cb009-new.jpg、画像URL(日本語)とカード詳細IDは空）。カード登録CSVアップロード画面でファイルを選択でこのファイルを選び、CSVファイルのアップロードボタンを押す。管理画面のカード管理＞フォーマット管理で「新規登録」を押し、フォーマット名(日)に「M1504-CB009-フォーマット」、フォーマット名(英)に「M1504-CB009-Format」、並び順に「9509」、メタゲーム分析日数に「14」を入れ、「ランキング表示」にチェックを付け、「メタ分布簡易化」にチェックを付けず、「登録」を押す。管理画面のデッキ管理＞アーキタイプ一覧で「新規登録」を押し、アーキタイプ名(日)に「M1504-CB009-型甲」、アーキタイプ名(英)に「M1504-CB009-TypeA」、公開状態に「公開」、フォーマットに「M1504-CB009-フォーマット」を選び、代表カードは選ばずに「新規登録」を押す。同じ画面で「新規登録」を押し、アーキタイプ名(日)に「M1504-CB009-型乙」、アーキタイプ名(英)に「M1504-CB009-TypeB」、公開状態に「公開」、フォーマットに「M1504-CB009-フォーマット」を選び、「代表カード選択」を押し、代表カード検索ポップアップでカード名に「M1504-CB009-NewCard」を入れ、完全一致検索を選んで検索するボタンを押し、表示された行を選んで「新規登録」を押す。管理画面のデッキ管理＞デッキ一覧で「新規登録」を押してデッキ編集画面（新規登録）を開き、デッキタイプに「event」、フォーマットに「M1504-CB009-フォーマット」、アーキタイプに「M1504-CB009-型甲」、公開状態(デッキ全体の公開設定)に「公開」を選び、「デッキリスト公開状態(非公開)」のチェックは外したまま、「代表カード選択」を押し、代表カード検索ポップアップでカード名に「M1504-CB009-OldCard」を入れ、完全一致検索を選んで検索するボタンを押し、表示された行を選ぶ。プレイヤー名に「M1504-CB009-選手」、イベント名(日)に「M1504-CB009-大会」、イベント名(英)に「M1504-CB009-Event」、イベント開催日に「2025/03/10 10:00」、順位に「1」、成績に「M1504-CB009-成績」、イベント参加人数に「18」を入れて「新規登録」を押す。登録後に開くデッキ編集画面のアドレス欄のURLに含まれるデッキIDを控える（〔デッキID-M1504-009〕）。記事には紐づけず、登録したデッキは削除しない。	ケース専用
+S-M15-04-CBOFFNOIMG-010	フォーマット・アーキタイプ・カード・デッキ	一括編集前のデッキと代表カード画像のない変更先アーキタイプ(010)	フォーマット「M1504-CB010-フォーマット」（名(英)=M1504-CB010-Format／並び順=9510／メタゲーム分析日数=14／ランキング表示=ON）。アーキタイプ2件（M1504-CB010-型甲／M1504-CB010-TypeA は代表カード画像なし、M1504-CB010-型乙／M1504-CB010-TypeB は代表カード画像なし。どちらも公開）。カード（英語名 M1504-CB010-OldCard。それぞれ画像1枚）。デッキ1件（デッキIDは登録時に画面が振る。控える。以下〔デッキID-M1504-010〕）・プレイヤー名=M1504-CB010-選手・デッキタイプ=event・公開状態=公開・アーキタイプ=M1504-CB010-型甲・代表カード画像=M1504-CB010-OldCardの画像・開催日=2025/03/10 10:00。このフォーマットのデッキはこれだけ	IT-M15-04-010専用。一括編集でアーキタイプを変更せず入力だけするときのアーキタイプと代表カード画像の更新を、CSV出力で確かめる	前回の残りを消す: デッキ一覧でプレイヤー名に「M1504-CB010-」を入れて「日付クリア」と「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押す。アーキタイプ一覧・フォーマット一覧に名称が「M1504-CB010-」で始まるものがあれば削除する。カード一覧(検索入力)画面でカード名・テキストに「M1504-CB010-」を入れて検索し、出たカードはカード詳細(編集)画面を開いて「削除」を押して消す。カード登録CSVのファイルを1行で作る（カード名(日本語)=M1504-CB010-旧札、カード名(英語)=M1504-CB010-OldCard、レアリティとレイアウトは登録済みの英語名（例: Uncommon、Normal）、画像URL(英語)=img/m1504/cb010-old.jpg、画像URL(日本語)とカード詳細IDは空）。カード登録CSVアップロード画面でファイルを選択でこのファイルを選び、CSVファイルのアップロードボタンを押す。管理画面のカード管理＞フォーマット管理で「新規登録」を押し、フォーマット名(日)に「M1504-CB010-フォーマット」、フォーマット名(英)に「M1504-CB010-Format」、並び順に「9510」、メタゲーム分析日数に「14」を入れ、「ランキング表示」にチェックを付け、「メタ分布簡易化」にチェックを付けず、「登録」を押す。管理画面のデッキ管理＞アーキタイプ一覧で「新規登録」を押し、アーキタイプ名(日)に「M1504-CB010-型甲」、アーキタイプ名(英)に「M1504-CB010-TypeA」、公開状態に「公開」、フォーマットに「M1504-CB010-フォーマット」を選び、代表カードは選ばずに「新規登録」を押す。同じ画面で「新規登録」を押し、アーキタイプ名(日)に「M1504-CB010-型乙」、アーキタイプ名(英)に「M1504-CB010-TypeB」、公開状態に「公開」、フォーマットに「M1504-CB010-フォーマット」を選び、代表カードは選ばずに「新規登録」を押す。管理画面のデッキ管理＞デッキ一覧で「新規登録」を押してデッキ編集画面（新規登録）を開き、デッキタイプに「event」、フォーマットに「M1504-CB010-フォーマット」、アーキタイプに「M1504-CB010-型甲」、公開状態(デッキ全体の公開設定)に「公開」を選び、「デッキリスト公開状態(非公開)」のチェックは外したまま、「代表カード選択」を押し、代表カード検索ポップアップでカード名に「M1504-CB010-OldCard」を入れ、完全一致検索を選んで検索するボタンを押し、表示された行を選ぶ。プレイヤー名に「M1504-CB010-選手」、イベント名(日)に「M1504-CB010-大会」、イベント名(英)に「M1504-CB010-Event」、イベント開催日に「2025/03/10 10:00」、順位に「1」、成績に「M1504-CB010-成績」、イベント参加人数に「18」を入れて「新規登録」を押す。登録後に開くデッキ編集画面のアドレス欄のURLに含まれるデッキIDを控える（〔デッキID-M1504-010〕）。記事には紐づけず、登録したデッキは削除しない。	ケース専用
+
+exec
+/bin/bash -lc 'cat combination/units/M15-01/design.txt' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+exec
+/bin/bash -lc 'cat combination/review/R1_54_findings.md' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+exec
+/bin/bash -lc 'cat combination/units/M15-02/design.txt' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 195ms:
+##### 0212 sheet-3 デッキ一覧(検索入力)
+L0001	デッキ一覧(検索入力)
+L0002	ドキュメント名デッキ管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-04-30
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM15-01
+L0010	機能名デッキ一覧(検索入力)
+L0011	概要キーワード、カテゴリ、大会名などでデッキを検索。結果を一覧表示。
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	3
+L0015	4
+L0016	5
+L0017	6
+L0018	7
+L0019	10
+L0020	11
+L0021	12
+L0022	9
+L0023	8
+L0024	13
+L0025	14
+L0026	15
+L0027	16
+L0028	17
+L0029	18
+L0030	19
+L0031	20
+L0032	21
+L0033	22
+L0034	1
+L0035	2
+L0036	32
+L0037	31
+L0038	23
+L0039	24
+L0040	25
+L0041	26
+L0042	27
+L0043	28
+L0044	29
+L0045	30
+L0046	画像レイヤー（2枚）: デッキ一覧(検索入力) / C7 / image 1 + デッキ一覧(検索入力) / AC24 / image 2
+L0047	カスタマイズ説明
+L0048	・カスタマイズ要件
+L0049	・イベントID検索削除しイベント詳細ID検索を追加する
+L0050	・旧デッキID、DCIナンバーは不要のため削除
+L0051	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0052	機能仕様処理概要（★はカスタマイズ項目）
+L0053	各項目を入力し、デッキ検索を実行する。
+L0054	大会開始時刻前のデッキは検索結果に表示しない。
+L0055	ユーザ作成のデッキは検索結果に表示しない。
+L0056	以下の項目はスペースorカンマ区切りで複数検索可能
+L0057	デッキID
+L0058	デッキ名（部分一致）
+L0059	成績（部分一致）
+L0060	イベント名（部分一致）
+L0061	プレイヤー名（部分一致）
+L0062	イベント詳細ID
+L0063	複数タグが指定された場合はAND検索
+L0064	カード名が指定された場合は、カード名（日）・カード名（英）から完全一致検索
+L0065	★画面上の検索項目を差し替え、除去する
+L0066	・識別ID:2「旧デッキID」、識別ID:21「DCIナンバー」を除去する
+L0067	・識別ID:25「イベントID」を「イベント詳細ID」に差し替える
+L0068	・識別ID:17～22「勝利数」「敗北数」「引き分け数」を除去する
+L0069	★画面の変更にあわせて、検索実行ロジック内に記載されている
+L0070	・検索項目「イベントID」を「イベント詳細ID」に差し替える
+L0071	・検索項目「旧デッキID」、「DCIナンバー」を除去する
+L0072	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0073	1	新規登録	ボタン	-			デッキ新規登録画面に遷移する
+L0074	2	CSV,TSV取り込み	ボタン	-			デッキ登録CSV, TSVアップロード画面に遷移する
+L0075	3	デッキID	数値、スペース、カンマ	-	50文字
+L0076	4	旧デッキID	文字列	-			※カスタマイズ対応、項目を除去する
+L0077	5	フォーマット	複数選択	-			MtbFormatから選択
+L0078	サジェスト機能
+L0079	6	カラー	チェックボックス	-			MtbColorから選択
+L0080	サジェスト機能
+L0081	7	アーキタイプ	複数選択	-			DtbArchetypeから選択
+L0082	サジェスト機能
+L0083	8	公開状態	複数選択	-			-
+L0084	9	デッキリスト公開状態	チェックボックス	-			-
+L0085	10	イベント開催日(From)	文字列(yyyy/mm/dd)	-		3か月前の日付	カレンダー選択 初期値として3か月前の日付が入力されている
+L0086	11	イベント開催日(To)	文字列(yyyy/mm/dd)	-			カレンダー選択
+L0087	12	イベント名	文字列	-	50文字
+L0088	13	日付クリア	ボタン	-			項目「イベント開催日(From)」「イベント開催日(To)」の値をクリアする
+L0089	14	順位(From)	数値（1以上）	-			-
+L0090	15	順位(To)	数値（1以上）	-			-
+L0091	16	成績	文字列	-	50文字		-
+L0092	17	勝利数(From)	数値（0以上）	-			※カスタマイズ対応、項目を除去する
+L0093	18	勝利数(To)	数値（0以上）	-			※カスタマイズ対応、項目を除去する
+L0094	19	敗北数(From)	数値（0以上）	-			※カスタマイズ対応、項目を除去する
+L0095	20	敗北数(To)	数値（0以上）	-			※カスタマイズ対応、項目を除去する
+L0096	21	引き分け数(From)	数値（0以上）	-			※カスタマイズ対応、項目を除去する
+L0097	22	引き分け数(To)	数値（0以上）	-			※カスタマイズ対応、項目を除去する
+L0098	23	デッキ名	文字列	-	50文字
+L0099	24	DCIナンバー	文字列	-			※カスタマイズ対応、項目を除去する
+L0100	25	プレイヤー名	文字列	-	50文字
+L0101	26	タグ	複数選択	-			MtbDeckTag から選択
+L0102	サジェスト機能
+L0103	27	カード名	文字列	-	100文字
+L0104	28	→ イベント詳細ID	数値、スペース、カンマ	-	50文字		※カスタマイズ対応、現行画面にある「イベントID」を除去、「イベント詳細ID」に差し替える
+L0105	29	開催店舗	単一選択	-			MtbShopから選択
+L0106	30	最終更新者	単一選択	-			Eccube\Entity\Member から選択
+L0107	31	検索条件をクリア	リンク	-			入力された各項目の値を空白にする
+L0108	32	検索する	ボタン	-			入力項目一覧で設定された値をもとに検索を実行する
+L0109	Source:
+L0110	functions/pf-eccube3/m15-01_admin_deck_deck_search.md
+L0111	現行仕様
+L0112	M15-01 デッキ検索/一覧 / デッキ管理 — デッキ検索・一覧
+L0113	業務ロジック
+L0114	初期表示
+L0115	一覧の初期表示では、保持していた検索条件・ページ番号・表示件数を破棄し、空の検索条件・空の一覧・ページ番号 1・既定の表示件数で表示する。ソートキーと並び順は破棄しない。
+L0116	検索条件
+L0117	入力した検索条件は保持し、次に同じ画面へ戻ったときの検索に使う。
+L0118	項目	検索条件
+L0119	デッキ名・イベント名・成績・プレイヤー名	半角空白・全角空白・カンマで語に分割し、語ごとに対象項目のいずれかへ部分一致。語どうしは AND、同じ語の中の複数項目は OR（イベント名は日本語名と英語名のどちらかに一致すればよい）
+L0120	デッキID	同様に分割し、数値だけを取り出して一致するものに限る。数値でない語は条件にしない
+L0121	フォーマット・アーキタイプ・公開状態	選択したいずれかに一致
+L0122	カラー	選択したいずれかの色を持つアーキタイプのデッキに限る
+L0123	デッキリスト公開状態	選択がちょうど 1 件のときだけ、その真偽で一致させる。未選択または両方選択のときは条件にしない
+L0124	イベント開催日	開始のみのときはその日の 0 時以上、終了のみのときはその日の 23 時 59 分 59 秒以下、両方あるときはその範囲
+L0125	順位	開始側に整数があるときは下限、終了側に整数があるときは上限を付ける
+L0126	開催店舗	イベント詳細を経由したイベントの店舗が選択値と一致するデッキに限る。この条件を指定すると、イベント詳細を持たないデッキは対象から外れる
+L0127	最終更新者	デッキを最後に更新した管理者が選択値と一致するデッキに限る。この記録は、新規登録・編集・複製・一括編集で保存するたびに、その操作を行った管理者へ置き換わる
+L0128	選択肢の並び
+L0129	フォーマットは表示順、表示順が同じときは登録の古い順に並べる。開催店舗と最終更新者は表示順に並べる。アーキタイプは、アーキタイプ名にそのフォーマット名を添えて示す。
+L0130	大会開始前のデッキの扱い
+L0131	イベント詳細に紐づかないデッキは、大会開始時刻による除外の対象にならず、検索結果に残る。
+L0132	表示件数と並び順
+L0133	表示件数は、保持していた値があるときはそれを使い、無いときは既定値とする。要求で指定された表示件数は、件数の選択肢と一致するときだけ採用して保持する。
+L0134	並び順は要求の指定、無いときは保持していた値、それも無いときは既定値（デッキIDの降順）とする。昇順・降順のいずれでもない指定のときは、検索を行わずエラーを表示し、初期表示と同じ状態へ戻す。このとき検索条件とページ関連の保持値だけを破棄し、ソートキーと並び順の保持値は破棄しない。
+L0135	検索条件を受け取れないときは、保持していた検索条件で検索する。保持していた検索条件も無いときは初期表示へ戻す。
+L0136	最終ページで件数とページ番号の関係がずれるときは、ページ番号を 1 減らして調整する。
+L0137	カードリストの行の書式
+L0138	デッキの新規登録・編集では、カードリストを統率・メインボード・サイドボードの3つに分けて受け取り、それぞれを改行ごとの行に分けて読む。空行は読み飛ばす。
+L0139	各行は、半角数字の枚数、半角スペース1つ、空白以外の文字で始まるカード名の順で始まらなければならない。
+L0140	行の形の判定で形の合わない行を検出すると、デッキもカードリストも保存せず、入力内容を残したままデッキ編集画面を表示する。このときメインボード・サイドボード・統率のそれぞれについて、最初に形の合わない行の行番号を示してM15-01-MSG-008を表示する。
+L0141	入出力
+L0142	種類	内容
+L0143	入力	検索条件、ソートキー、並び順、ページ番号、表示件数
+L0144	成功時出力	検索条件の入力欄と、該当があるときは一覧とページ送りを含む画面
+L0145	失敗時出力	並び順が不正のときはエラー表示と初期画面
+L0146	リニューアル後の仕様
+L0147	表示メッセージ
+L0148	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0149	M15-01-MSG-001	管理画面上部	セッションがタイムアウトしました。もう一度やり直してください。	一括削除の実行時に、操作の有効期限が切れていたとき	デッキ検索・一覧画面に遷移する
+L0150	M15-01-MSG-002	管理画面上部	記事に紐付いているデッキがあるため削除できません。	記事に使用されているデッキを一括削除しようとしたとき	デッキ検索・一覧画面に遷移する
+L0151	M15-01-MSG-003	管理画面上部	削除に失敗しました	一括削除中にエラーが起きたとき	デッキ検索・一覧画面に遷移する
+L0152	M15-01-MSG-004	管理画面上部	削除しました	選択したデッキを一括削除できたとき	デッキ検索・一覧画面に遷移する
+L0153	M15-01-MSG-005	管理画面上部	セッションがタイムアウトしました。もう一度やり直してください。	一括編集の実行時に、操作の有効期限が切れていたとき	デッキ検索・一覧画面に遷移する
+L0154	M15-01-MSG-006	管理画面上部	保存に失敗しました	一括編集の保存中にエラーが起きたとき	デッキ検索・一覧画面に遷移する
+L0155	M15-01-MSG-007	管理画面上部	保存しました	選択したデッキを一括編集で保存できたとき	デッキ検索・一覧画面に遷移する
+L0156	M15-01-MSG-008	管理画面上部	%board% の %row% 行目に、異常な値が入力されています	デッキを新規登録または編集するとき、カードリストに不正な行があるとき	デッキ編集画面に留まる
+L0157	M15-01-MSG-009	管理画面上部	メインボードのカードが、現行フォーマットに則さない形で登録されています。 ／ サイドボードのカードが、現行フォーマットに則さない形で登録されています。 ／ 統率のカードが、現行フォーマットに則さない形で登録されています。 ／ %row% 行目の %name% は存在しません ／ %row% 行目の %name% はフォーマットの範囲から外れています ／ %row% 行目の %name% は禁止カードです ／ %row% 行目の %name% は制限カードです ／ %row% 行目の %name% が2枚以上登録されています ／ %row% 行目の %name% が%count%枚を超えて登録されています ／ ボード内のカード枚数が %count% 枚を上回っています ／ ボード内のカード枚数が %count% 枚を下回っています ／ このフォーマットでは統率用カードを使用しません	デッキを保存したとき、メインボード、サイドボードまたは統率（command）にフォーマット条件を満たさないカードまたは枚数がある場合	デッキを保存し、編集画面に遷移する
+L0158	M15-01-MSG-010	管理画面上部	保存しました	カードリストに問題がない状態で、デッキを新規登録または編集して保存できたとき	デッキ編集画面に遷移する
+L0159	M15-01-MSG-011	管理画面上部	保存に失敗しました	デッキの新規登録または編集の保存中にエラーが起きたとき	デッキ編集画面に留まる
+L0160	M15-01-MSG-012	管理画面上部	セッションがタイムアウトしました。もう一度やり直してください。	CSV出力の実行時に、操作の有効期限が切れていたとき	デッキ検索・一覧画面に遷移する
+L0161	M15-01-MSG-013	管理画面上部	CSV出力対象のデッキが選択されていません。	CSV出力で、出力するデッキを選択していないとき	デッキ検索・一覧画面に遷移する
+L0162	M15-01-MSG-014	管理画面上部	CSV出力対象のデッキが選択されていません。	CSV出力で、選択したデッキが見つからないとき	デッキ検索・一覧画面に遷移する
+L0163	M15-01-MSG-015	画面中央（確認ダイアログ）	選択されたデッキを削除しますか？	デッキを選択して一括削除を押したとき（送信前の確認）	選択したデッキの削除処理後、一覧画面に遷移する
+L0164	M15-01-MSG-016	画面中央（確認ダイアログ）	このデッキを削除しますか？	一覧でデッキの削除を押したとき（送信前の確認）	デッキの削除に成功すると一覧画面に遷移し、失敗すると編集画面に遷移する
+L0165	M15-05-MSG-001	画面中央(ダイアログ)	アーキタイプを選択してください。	アーキタイプを選択せずにデッキタグを設定しようとしたとき	デッキ編集画面に留まる
+L0166	M15-05-MSG-002	画面中央(ダイアログ)	選択されたアーキタイプにデッキタグが設定されていません。	アーキタイプに設定できるデッキタグがないとき	デッキ編集画面に留まる
+L0167	M15-05-MSG-003	画面中央(ダイアログ)	このデッキを削除しますか？	デッキの削除を実行しようとしたとき（送信前確認）	OKで削除処理を実行し、キャンセルでデッキ編集画面に留まる
+##### 0212 sheet-4 デッキ一覧(検索結果)
+L0168	デッキ一覧(検索結果)
+L0169	ドキュメント名デッキ管理機能
+L0170	セクション—
+L0171	プロジェクト名サイトリニューアル
+L0172	作成者城下
+L0173	作成日2025-05-01
+L0174	更新者—
+L0175	更新日—
+L0176	機能NoM15-01
+L0177	機能名デッキを一覧(検索結果)
+L0178	概要デッキ一覧(入力)で検索した結果を一覧表示。
+L0179	処理概要（★はカスタマイズ項目）
+L0180	レイアウト図
+L0181	2
+L0182	4
+L0183	3
+L0184	1
+L0185	9
+L0186	10
+L0187	5
+L0188	6
+L0189	7
+L0190	8
+L0191	11
+L0192	11
+L0193	画像レイヤー（2枚）: デッキ一覧(検索結果) / C7 / image 2 + デッキ一覧(検索結果) / AC24 / image 3
+L0194	カスタマイズ説明
+L0195	・カスタマイズ要件
+L0196	・旧デッキID、DCIナンバーは不要のため削除
+L0197	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0198	機能仕様処理概要（★はカスタマイズ項目）
+L0199	デッキ検索結果を一覧表示する。表示後、以下の操作ができる。
+L0200	検索結果一覧表示から個別にデッキの編集画面へ遷移できる。
+L0201	検索結果一覧表示から個別にデッキの削除ができる。
+L0202	検索結果一覧表示のうちチェックを入れたものに対し、以下の操作ができる。
+L0203	CSV出力する。
+L0204	一括削除する。
+L0205	一括編集する。
+L0206	★1ページあたりの表示件数のデフォルト値を「100件」とする
+L0207	★画面上の項目を除去する
+L0208	・識別ID:2「並べ替え項目」の選択肢「勝利数」「敗北数」「引き分け数」「DCIナンバー」を除去する
+L0209	・識別ID:6「CSV出力(旧サイト仕様)」を除去する
+L0210	・識別ID:10 デッキ詳細情報の成績部分から、「勝利数-敗北数-引き分け数」 の表示を除去する
+L0211	★画面上の一括編集(アコーディオン)項目を除去する
+L0212	・識別ID:13「DCIナンバー」を除去する
+L0213	★画面の変更にあわせて、検索実行ロジック内に記載されている
+L0214	・「DCIナンバー」の並べ替えを除去する
+L0215	★画面の変更にあわせて、一括編集実行ロジック内に記載されている
+L0216	・「DCIナンバー」の更新を除去する
+L0217	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0218	1	該当件数	文字列	-			デッキ一覧(入力)で設定された条件に合致するデッキの件数
+L0219	2	件数	単一選択	-			選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0220	※カスタマイズ対応 デフォルト値を100件とする
+L0221	3	並べかえ: 項目	単一選択	-			選択肢:
+L0222	デッキID 順位 イベント開催日
+L0223	イベント名(日) イベント名(英) デッキ名 プレイヤー名
+L0224	※カスタマイズ対応、選択肢「DCIナンバー」「勝利数」「敗北数」「引き分け数」を除去する
+L0225	4	並べ替え: ソート順	単一選択	-			選択肢: 昇順 降順
+L0226	5	CSV出力	ボタン	-			一覧左側のチェックボックスを選択したデッキ情報のCSVがダウンロードされる
+L0227	6	CSV出力(旧サイト仕様)	ボタン	-			※カスタマイズ対応、項目を除去する
+L0228	7	一括削除	ボタン	-			一覧左側のチェックボックスを選択したデッキを一括で削除する
+L0229	8	一括編集	ボタン	-			一括編集(アコーディオン)を開く
+L0230	9	デッキ詳細	チェックボックス	-			チェックすると、デッキ情報(後述)に配置されているチェックボックスをすべてオン/オフにする
+L0231	10	デッキ情報	リンク	-			・デッキの情報を設定されている件数ぶん出力する
+L0232	・クリックすると当該デッキの編集画面へ遷移する
+L0233	・情報の左上にチェックボックスを配置、チェックされたデッキを「一括削除」「一括編集」の対象にする
+L0234	11	ポップアップメニュー
+L0235	（…）	ボタン	-			当該デッキに対するポップアップメニューを表示する
+L0236	・編集 編集画面へ遷移する
+L0237	・削除 確認ダイアログを表示し、OKを選択したらデッキを削除する
+L0238	12	ページングUI	リンク	-
+L0239	一括編集(アコーディオン)
+L0240	8
+L0241	9
+L0242	10
+L0243	11
+L0244	12
+L0245	13
+L0246	14
+L0247	15
+L0248	16
+L0249	17
+L0250	デッキ一覧(検索結果) / C109 / image 1
+L0251	識別ID	ラベル	書式・制限	入力チェック	画面部品の説明
+L0252	1	フォーマット	単一選択	チェックを入れた場合のみ必須	サジェスト機能
+L0253	2	アーキタイプ	単一選択	チェックを入れた場合のみ必須	サジェスト機能
+L0254	3	公開状態	ラジオボタン	チェックを入れた場合のみ必須
+L0255	4	デッキリスト公開状態	ラジオボタン	チェックを入れた場合のみ必須
+L0256	5	イベント名(日)	文字列	チェックを入れた場合のみ必須、255文字まで
+L0257	6	イベント名(英)	文字列	チェックを入れた場合のみ必須、255文字まで
+L0258	7	イベント開催日	文字列	チェックを入れた場合のみ必須、日付形式チェック	YYYY-M-DD HH:ii
+L0259	8	順位	数値	チェックを入れた場合のみ必須、数値チェック
+L0260	9	成績	文字列	チェックを入れた場合のみ必須、32文字まで
+L0261	10	勝利数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+L0262	11	敗北数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+L0263	12	引き分け数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+L0264	13	DCIナンバー	文字列	チェックを入れた場合のみ必須	※カスタマイズ対応、項目を除去する
+L0265	14	プレイヤー名	文字列	チェックを入れた場合のみ必須、64文字まで
+L0266	15	タグ	複数選択	チェックを入れた場合のみ必須	サジェスト機能
+L0267	16	引用元URL	文字列	チェックを入れた場合のみ必須、255文字まで
+L0268	17	一括編集実行	ボタン	-	入力された項目に該当するデータを更新する
+L0269	Source:
+L0270	functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md
+L0271	現行仕様
+L0272	M15-02 デッキCSV出力 / デッキ管理 — デッキ CSV 出力
+L0273	業務ロジック
+L0274	出力対象の決め方
+L0275	選択の状態	扱い
+L0276	デッキIDを1件も選択せずに実行したとき	出力せず、必須のエラーを表示して直前の画面へ戻す。ダウンロードは始めない。画面側でも未選択の送信を既定で止める
+L0277	該当するデッキが1件も無いとき	出力せず、未登録のエラーを表示して直前の画面へ戻す。ダウンロードは始めない
+L0278	指定したIDの一部だけが存在しないとき	該当が1件以上あれば処理を続ける。該当しないIDは出力に現れない
+L0279	並び順は、利用者が一覧で選択したときの表示順と一致するとは限らない。
+L0280	一覧の一括編集フォームの他の項目もあわせて送信されるが、この出力では読まない。
+L0281	出力の構成
+L0282	見出し行に論理キーを出力し、続けてデータ行を出力する。デッキ1件につき1行とする。
+L0283	順序	出力
+L0284	1	UTF-8のBOM。文字コードの設定がどの値のときも先頭に出力する
+L0285	2	論理キーの見出し行。1行だけ出力する
+L0286	3	データ行。該当するデッキが複数あるときは、件数分を出力する
+L0287	区切り文字は設定に従う。本文の文字コードは設定によらずUTF-8とし、先頭のBOMと合わせる。 応答が示す文字集合は設定から決まるため（「応答とファイル名」）、設定がUTF-8以外のときは 応答の表記と本文の文字コードが一致しない。
+L0288	列の値の作り方
+L0289	列	値の作り方
+L0290	フォーマット	紐づくフォーマットがあるときはその英語名、無いときは空文字とする
+L0291	アーキタイプ	紐づくアーキタイプがあるときはその日本語名、無いときは空文字とする
+L0292	統率者名	統率者ボードに紐づくカードがあるときはその英語名、無いときは空文字とする
+L0293	代表カード名	代表カード画像に紐づくカードがあるときはその英語名、無いときは空文字とする
+L0294	メインリスト・サイドリスト	登録されているデッキリストのテキストをそのまま出力する
+L0295	イベント開催日	日時が無いときは空文字、あるときは Y-m-d H:i:s の書式とする
+L0296	表示フラグ	公開のときは 1、非公開のときは 0 を出力する。限定公開には対応する値が無く、空欄になる
+L0297	応答とファイル名
+L0298	接頭辞 deck_、出力時点の日時（YmdHis）、拡張子 .csv を連結した名前とし、添付ファイルとして返す。
+L0299	文字コードの設定が SJIS-win のときは、応答の文字集合の表記だけを windows-31j に読み替える。
+L0300	応答ヘッダ	値
+L0301	内容の種別	設定の文字コードに基づく text/csv;charset=… とする
+L0302	内容の配置	添付ファイルとし、ファイル名を付ける
+L0303	入出力
+L0304	種類	内容
+L0305	入力	一覧で選択したデッキIDの配列。
+L0306	成功時出力	CSVファイル。ファイル名は接頭辞と日時から作る。
+L0307	失敗時出力	エラーメッセージと直前の画面への戻り。ダウンロードは始まらない。
+L0308	リニューアル後の仕様
+L0309	表示メッセージ
+L0310	出力に成功したときは画面にメッセージを出さず、ファイルの応答だけを返す。未選択のときと、選択したデッキが 1件も見つからないときのエラー文言は、デッキ検索・一覧（M15-01）の表示メッセージ一覧に含める。
+
+ succeeded in 224ms:
+### 指摘（M15-01 / IT-M15-01-100）
+- 主張: 条件を指定せずフロントで「検索」を押し、対象デッキが「一覧に載らない」ことを確認する。
+- 実際: F09-02 設計書 L0020–L0021 は「1ページあたりの件数の既定」を20件と定める。手順には他のページの確認がなく、表示中の一覧に無いだけでは検索結果全体からの除外を確認できない。
+- 判定: 成立しない前提・手順
+- 修正案: 変更後のプレイヤー名を検索条件に指定し、対象デッキの行の有無を確認する。
+
+### 指摘（M15-01 / IT-M15-01-101）
+- 主張: 条件を指定せずフロントで「検索」を押し、アーキタイプを設定した対象デッキが「一覧に載らない」ことを確認する。
+- 実際: F09-02 設計書 L0020–L0021 は既定の表示件数を20件と定める。手順の一覧確認だけでは、対象が後続ページにある可能性を除けない。
+- 判定: 成立しない前提・手順
+- 修正案: 対象のプレイヤー名を指定して検索し、その行の有無を確認する。
+
+### 指摘（M15-01 / IT-M15-01-102）
+- 主張: 条件を指定せずフロントで「検索」を押し、公開に変更した対象デッキが「一覧に載らない」ことを確認する。
+- 実際: F09-02 設計書 L0020–L0021 は既定の表示件数を20件と定める。手順の一覧確認だけでは、後続ページに対象がある場合も期待結果を満たしたように見える。
+- 判定: 成立しない前提・手順
+- 修正案: 対象のプレイヤー名を指定して検索し、その行の有無を確認する。
+
+### 指摘（M15-01 / IT-M15-01-103）
+- 主張: 条件を指定せずフロントで「検索」を押し、対象デッキが「一覧に載る」ことを期待する。
+- 実際: F09-02 設計書 L0020–L0021 は既定の表示件数を20件と定める。公開かつアーキタイプ設定済みでも、他の該当デッキがあれば対象が表示中のページに載るとは限らない。
+- 判定: 成立しない前提・手順
+- 修正案: 対象のプレイヤー名を指定して検索し、その行が表示されることを確認する。
+
+### 指摘（M15-03 / IT-M15-03-005）
+- 主張: 「ページ移動はしない」手順を、保持していた一覧のページ番号が「なし」の組として扱う。
+- 実際: M15-03 設計書 L0160 は「保持していた一覧のページ番号があるときはデッキ検索・一覧の当該ページへ、無いときはデッキ一覧の先頭へ戻す」と区別する。手順2の検索ではページ番号1が保存されるため、「なし」にならない（[DeckController.php](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:101)）。
+- 判定: 組の値が無い
+- 修正案: ページ番号が保持されない実行手順に直す。通常の画面操作で作れない場合は、その組の仕分けを見直す。
+
+### 指摘（M15-03 / IT-M15-03-007）
+- 主張: 「ページ移動はしない」手順を、保持していた一覧のページ番号が「なし」の組として扱う。
+- 実際: M15-03 設計書 L0160 はページ番号の有無で戻り先を分ける。手順2で検索するとページ番号1が保存され、「なし」の値では処理されない（[DeckController.php](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:101)）。
+- 判定: 組の値が無い
+- 修正案: ページ番号が保持されない実行手順に直す。通常の画面操作で作れない場合は、その組の仕分けを見直す。
+
+### 指摘（M15-03 / IT-M15-03-009）
+- 主張: 「ページ移動はしない」手順を、保持していた一覧のページ番号が「なし」の組として扱う。
+- 実際: M15-03 設計書 L0160 は「ページ番号があるとき」と「無いとき」を区別する。手順2の検索はページ番号1を保存するため、期待する「なし」の分岐を通らない（[DeckController.php](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:101)）。
+- 判定: 組の値が無い
+- 修正案: ページ番号が保持されない実行手順に直す。通常の画面操作で作れない場合は、その組の仕分けを見直す。
+
+ succeeded in 192ms:
+##### 0212 sheet-4 デッキ一覧(検索結果)
+L0001	デッキ一覧(検索結果)
+L0002	ドキュメント名デッキ管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-05-01
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM15-01
+L0010	機能名デッキを一覧(検索結果)
+L0011	概要デッキ一覧(入力)で検索した結果を一覧表示。
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	2
+L0015	4
+L0016	3
+L0017	1
+L0018	9
+L0019	10
+L0020	5
+L0021	6
+L0022	7
+L0023	8
+L0024	11
+L0025	11
+L0026	画像レイヤー（2枚）: デッキ一覧(検索結果) / C7 / image 2 + デッキ一覧(検索結果) / AC24 / image 3
+L0027	カスタマイズ説明
+L0028	・カスタマイズ要件
+L0029	・旧デッキID、DCIナンバーは不要のため削除
+L0030	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0031	機能仕様処理概要（★はカスタマイズ項目）
+L0032	デッキ検索結果を一覧表示する。表示後、以下の操作ができる。
+L0033	検索結果一覧表示から個別にデッキの編集画面へ遷移できる。
+L0034	検索結果一覧表示から個別にデッキの削除ができる。
+L0035	検索結果一覧表示のうちチェックを入れたものに対し、以下の操作ができる。
+L0036	CSV出力する。
+L0037	一括削除する。
+L0038	一括編集する。
+L0039	★1ページあたりの表示件数のデフォルト値を「100件」とする
+L0040	★画面上の項目を除去する
+L0041	・識別ID:2「並べ替え項目」の選択肢「勝利数」「敗北数」「引き分け数」「DCIナンバー」を除去する
+L0042	・識別ID:6「CSV出力(旧サイト仕様)」を除去する
+L0043	・識別ID:10 デッキ詳細情報の成績部分から、「勝利数-敗北数-引き分け数」 の表示を除去する
+L0044	★画面上の一括編集(アコーディオン)項目を除去する
+L0045	・識別ID:13「DCIナンバー」を除去する
+L0046	★画面の変更にあわせて、検索実行ロジック内に記載されている
+L0047	・「DCIナンバー」の並べ替えを除去する
+L0048	★画面の変更にあわせて、一括編集実行ロジック内に記載されている
+L0049	・「DCIナンバー」の更新を除去する
+L0050	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0051	1	該当件数	文字列	-			デッキ一覧(入力)で設定された条件に合致するデッキの件数
+L0052	2	件数	単一選択	-			選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0053	※カスタマイズ対応 デフォルト値を100件とする
+L0054	3	並べかえ: 項目	単一選択	-			選択肢:
+L0055	デッキID 順位 イベント開催日
+L0056	イベント名(日) イベント名(英) デッキ名 プレイヤー名
+L0057	※カスタマイズ対応、選択肢「DCIナンバー」「勝利数」「敗北数」「引き分け数」を除去する
+L0058	4	並べ替え: ソート順	単一選択	-			選択肢: 昇順 降順
+L0059	5	CSV出力	ボタン	-			一覧左側のチェックボックスを選択したデッキ情報のCSVがダウンロードされる
+L0060	6	CSV出力(旧サイト仕様)	ボタン	-			※カスタマイズ対応、項目を除去する
+L0061	7	一括削除	ボタン	-			一覧左側のチェックボックスを選択したデッキを一括で削除する
+L0062	8	一括編集	ボタン	-			一括編集(アコーディオン)を開く
+L0063	9	デッキ詳細	チェックボックス	-			チェックすると、デッキ情報(後述)に配置されているチェックボックスをすべてオン/オフにする
+L0064	10	デッキ情報	リンク	-			・デッキの情報を設定されている件数ぶん出力する
+L0065	・クリックすると当該デッキの編集画面へ遷移する
+L0066	・情報の左上にチェックボックスを配置、チェックされたデッキを「一括削除」「一括編集」の対象にする
+L0067	11	ポップアップメニュー
+L0068	（…）	ボタン	-			当該デッキに対するポップアップメニューを表示する
+L0069	・編集 編集画面へ遷移する
+L0070	・削除 確認ダイアログを表示し、OKを選択したらデッキを削除する
+L0071	12	ページングUI	リンク	-
+L0072	一括編集(アコーディオン)
+L0073	8
+L0074	9
+L0075	10
+L0076	11
+L0077	12
+L0078	13
+L0079	14
+L0080	15
+L0081	16
+L0082	17
+L0083	デッキ一覧(検索結果) / C109 / image 1
+L0084	識別ID	ラベル	書式・制限	入力チェック	画面部品の説明
+L0085	1	フォーマット	単一選択	チェックを入れた場合のみ必須	サジェスト機能
+L0086	2	アーキタイプ	単一選択	チェックを入れた場合のみ必須	サジェスト機能
+L0087	3	公開状態	ラジオボタン	チェックを入れた場合のみ必須
+L0088	4	デッキリスト公開状態	ラジオボタン	チェックを入れた場合のみ必須
+L0089	5	イベント名(日)	文字列	チェックを入れた場合のみ必須、255文字まで
+L0090	6	イベント名(英)	文字列	チェックを入れた場合のみ必須、255文字まで
+L0091	7	イベント開催日	文字列	チェックを入れた場合のみ必須、日付形式チェック	YYYY-M-DD HH:ii
+L0092	8	順位	数値	チェックを入れた場合のみ必須、数値チェック
+L0093	9	成績	文字列	チェックを入れた場合のみ必須、32文字まで
+L0094	10	勝利数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+L0095	11	敗北数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+L0096	12	引き分け数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+L0097	13	DCIナンバー	文字列	チェックを入れた場合のみ必須	※カスタマイズ対応、項目を除去する
+L0098	14	プレイヤー名	文字列	チェックを入れた場合のみ必須、64文字まで
+L0099	15	タグ	複数選択	チェックを入れた場合のみ必須	サジェスト機能
+L0100	16	引用元URL	文字列	チェックを入れた場合のみ必須、255文字まで
+L0101	17	一括編集実行	ボタン	-	入力された項目に該当するデータを更新する
+L0102	Source:
+L0103	functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md
+L0104	現行仕様
+L0105	M15-02 デッキCSV出力 / デッキ管理 — デッキ CSV 出力
+L0106	業務ロジック
+L0107	出力対象の決め方
+L0108	選択の状態	扱い
+L0109	デッキIDを1件も選択せずに実行したとき	出力せず、必須のエラーを表示して直前の画面へ戻す。ダウンロードは始めない。画面側でも未選択の送信を既定で止める
+L0110	該当するデッキが1件も無いとき	出力せず、未登録のエラーを表示して直前の画面へ戻す。ダウンロードは始めない
+L0111	指定したIDの一部だけが存在しないとき	該当が1件以上あれば処理を続ける。該当しないIDは出力に現れない
+L0112	並び順は、利用者が一覧で選択したときの表示順と一致するとは限らない。
+L0113	一覧の一括編集フォームの他の項目もあわせて送信されるが、この出力では読まない。
+L0114	出力の構成
+L0115	見出し行に論理キーを出力し、続けてデータ行を出力する。デッキ1件につき1行とする。
+L0116	順序	出力
+L0117	1	UTF-8のBOM。文字コードの設定がどの値のときも先頭に出力する
+L0118	2	論理キーの見出し行。1行だけ出力する
+L0119	3	データ行。該当するデッキが複数あるときは、件数分を出力する
+L0120	区切り文字は設定に従う。本文の文字コードは設定によらずUTF-8とし、先頭のBOMと合わせる。 応答が示す文字集合は設定から決まるため（「応答とファイル名」）、設定がUTF-8以外のときは 応答の表記と本文の文字コードが一致しない。
+L0121	列の値の作り方
+L0122	列	値の作り方
+L0123	フォーマット	紐づくフォーマットがあるときはその英語名、無いときは空文字とする
+L0124	アーキタイプ	紐づくアーキタイプがあるときはその日本語名、無いときは空文字とする
+L0125	統率者名	統率者ボードに紐づくカードがあるときはその英語名、無いときは空文字とする
+L0126	代表カード名	代表カード画像に紐づくカードがあるときはその英語名、無いときは空文字とする
+L0127	メインリスト・サイドリスト	登録されているデッキリストのテキストをそのまま出力する
+L0128	イベント開催日	日時が無いときは空文字、あるときは Y-m-d H:i:s の書式とする
+L0129	表示フラグ	公開のときは 1、非公開のときは 0 を出力する。限定公開には対応する値が無く、空欄になる
+L0130	応答とファイル名
+L0131	接頭辞 deck_、出力時点の日時（YmdHis）、拡張子 .csv を連結した名前とし、添付ファイルとして返す。
+L0132	文字コードの設定が SJIS-win のときは、応答の文字集合の表記だけを windows-31j に読み替える。
+L0133	応答ヘッダ	値
+L0134	内容の種別	設定の文字コードに基づく text/csv;charset=… とする
+L0135	内容の配置	添付ファイルとし、ファイル名を付ける
+L0136	入出力
+L0137	種類	内容
+L0138	入力	一覧で選択したデッキIDの配列。
+L0139	成功時出力	CSVファイル。ファイル名は接頭辞と日時から作る。
+L0140	失敗時出力	エラーメッセージと直前の画面への戻り。ダウンロードは始まらない。
+L0141	リニューアル後の仕様
+L0142	表示メッセージ
+L0143	出力に成功したときは画面にメッセージを出さず、ファイルの応答だけを返す。未選択のときと、選択したデッキが 1件も見つからないときのエラー文言は、デッキ検索・一覧（M15-01）の表示メッセージ一覧に含める。
+
+codex
+前巡の対象指摘は M15-01 の検索条件と M15-03 のページ番号でした。修正後のケースと仕分けを確認しました。続いて、各ケースの期待値が設計書から導けるかを追います。
+exec
+/bin/bash -lc 'cat combination/cases/M15-04_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M15-04-007	IT-0366	REQ-0212-sheet-4-R009		ITA-11	P1	ブラウザのみ	S-M15-04-QM-ADM,S-M15-04-CBONIMG-007	① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件がない状態から始める。フォーマット「M1504-CB007-フォーマット」に、アーキタイプ「M1504-CB007-型甲」（代表カード画像なし）と、アーキタイプ「M1504-CB007-型乙」（代表カード画像は英語名M1504-CB007-NewCardのカードの画像（代表カード画像あり））が登録され、デッキID 〔デッキID-M1504-007〕（プレイヤー名 M1504-CB007-選手・公開・アーキタイプ M1504-CB007-型甲・代表カード画像は英語名M1504-CB007-OldCardのカードの画像）が登録済み（登録時に振られたデッキIDを控えてある）（S-M15-04-CBONIMG-007）	1. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-007〕 を入力して「検索する」を押す／3. デッキID 〔デッキID-M1504-007〕 を選択し、一括編集を開く／4. アーキタイプに「M1504-CB007-型乙」、公開状態に「非公開」を選び、アーキタイプの変更チェックと公開状態の変更チェックをオンにする／5. 「一括編集実行」を押す／6. デッキ検索・一覧画面でデッキID 〔デッキID-M1504-007〕 を選択してCSV出力ボタンを押す／7. ダウンロードしたCSVを表形式で開く	ダウンロードしたCSVのデータ行が1行で、アーキタイプが「M1504-CB007-型乙」、代表カード名が「M1504-CB007-NewCard」、表示フラグが0であること	0212 デッキ一覧(検索結果) / 一括編集(アコーディオン)、M15-04 機能設計書 / 更新する項目｜0212 デッキ一覧(検索結果) / 現行仕様 M15-02 業務ロジック 列の値の作り方	CB-M15-04-001
+IT-M15-04-008	IT-0366	REQ-0212-sheet-4-R009		ITA-11	P1	ブラウザのみ	S-M15-04-QM-ADM,S-M15-04-CBONNOIMG-008	① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件がない状態から始める。フォーマット「M1504-CB008-フォーマット」に、アーキタイプ「M1504-CB008-型甲」（代表カード画像なし）と、アーキタイプ「M1504-CB008-型乙」（代表カード画像なし）が登録され、デッキID 〔デッキID-M1504-008〕（プレイヤー名 M1504-CB008-選手・公開・アーキタイプ M1504-CB008-型甲・代表カード画像は英語名M1504-CB008-OldCardのカードの画像）が登録済み（登録時に振られたデッキIDを控えてある）（S-M15-04-CBONNOIMG-008）	1. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-008〕 を入力して「検索する」を押す／3. デッキID 〔デッキID-M1504-008〕 を選択し、一括編集を開く／4. アーキタイプに「M1504-CB008-型乙」、公開状態に「非公開」を選び、アーキタイプの変更チェックと公開状態の変更チェックをオンにする／5. 「一括編集実行」を押す／6. デッキ検索・一覧画面でデッキID 〔デッキID-M1504-008〕 を選択してCSV出力ボタンを押す／7. ダウンロードしたCSVを表形式で開く	ダウンロードしたCSVのデータ行が1行で、アーキタイプが「M1504-CB008-型乙」、代表カード名が「M1504-CB008-OldCard」、表示フラグが0であること	0212 デッキ一覧(検索結果) / 一括編集(アコーディオン)、M15-04 機能設計書 / 更新する項目｜0212 デッキ一覧(検索結果) / 現行仕様 M15-02 業務ロジック 列の値の作り方	CB-M15-04-002
+IT-M15-04-009	IT-0366	REQ-0212-sheet-4-R009		ITA-11	P1	ブラウザのみ	S-M15-04-QM-ADM,S-M15-04-CBOFFIMG-009	① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件がない状態から始める。フォーマット「M1504-CB009-フォーマット」に、アーキタイプ「M1504-CB009-型甲」（代表カード画像なし）と、アーキタイプ「M1504-CB009-型乙」（代表カード画像は英語名M1504-CB009-NewCardのカードの画像（代表カード画像あり））が登録され、デッキID 〔デッキID-M1504-009〕（プレイヤー名 M1504-CB009-選手・公開・アーキタイプ M1504-CB009-型甲・代表カード画像は英語名M1504-CB009-OldCardのカードの画像）が登録済み（登録時に振られたデッキIDを控えてある）（S-M15-04-CBOFFIMG-009）	1. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-009〕 を入力して「検索する」を押す／3. デッキID 〔デッキID-M1504-009〕 を選択し、一括編集を開く／4. アーキタイプに「M1504-CB009-型乙」、公開状態に「非公開」を選び、公開状態の変更チェックだけをオンにし、アーキタイプの変更チェックはオフのままにする／5. 「一括編集実行」を押す／6. デッキ検索・一覧画面でデッキID 〔デッキID-M1504-009〕 を選択してCSV出力ボタンを押す／7. ダウンロードしたCSVを表形式で開く	ダウンロードしたCSVのデータ行が1行で、アーキタイプが「M1504-CB009-型甲」、代表カード名が「M1504-CB009-OldCard」、表示フラグが0であること	0212 デッキ一覧(検索結果) / 一括編集(アコーディオン)、M15-04 機能設計書 / 更新する項目｜0212 デッキ一覧(検索結果) / 現行仕様 M15-02 業務ロジック 列の値の作り方	CB-M15-04-003
+IT-M15-04-010	IT-0366	REQ-0212-sheet-4-R009		ITA-11	P1	ブラウザのみ	S-M15-04-QM-ADM,S-M15-04-CBOFFNOIMG-010	① 管理画面にログインできる管理者 m1504qm-adm（S-M15-04-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件がない状態から始める。フォーマット「M1504-CB010-フォーマット」に、アーキタイプ「M1504-CB010-型甲」（代表カード画像なし）と、アーキタイプ「M1504-CB010-型乙」（代表カード画像なし）が登録され、デッキID 〔デッキID-M1504-010〕（プレイヤー名 M1504-CB010-選手・公開・アーキタイプ M1504-CB010-型甲・代表カード画像は英語名M1504-CB010-OldCardのカードの画像）が登録済み（登録時に振られたデッキIDを控えてある）（S-M15-04-CBOFFNOIMG-010）	1. 管理画面のログイン画面でログインIDに m1504qm-adm、パスワードに Passw0rd-M1504QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、デッキIDに 〔デッキID-M1504-010〕 を入力して「検索する」を押す／3. デッキID 〔デッキID-M1504-010〕 を選択し、一括編集を開く／4. アーキタイプに「M1504-CB010-型乙」、公開状態に「非公開」を選び、公開状態の変更チェックだけをオンにし、アーキタイプの変更チェックはオフのままにする／5. 「一括編集実行」を押す／6. デッキ検索・一覧画面でデッキID 〔デッキID-M1504-010〕 を選択してCSV出力ボタンを押す／7. ダウンロードしたCSVを表形式で開く	ダウンロードしたCSVのデータ行が1行で、アーキタイプが「M1504-CB010-型甲」、代表カード名が「M1504-CB010-OldCard」、表示フラグが0であること	0212 デッキ一覧(検索結果) / 一括編集(アコーディオン)、M15-04 機能設計書 / 更新する項目｜0212 デッキ一覧(検索結果) / 現行仕様 M15-02 業務ロジック 列の値の作り方	CB-M15-04-004
+
+exec
+/bin/bash -lc 'cat combination/units/M15-03/design.txt' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+##### 0212 sheet-4 デッキ一覧(検索結果)
+L0001	デッキ一覧(検索結果)
+L0002	ドキュメント名デッキ管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-05-01
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM15-01
+L0010	機能名デッキを一覧(検索結果)
+L0011	概要デッキ一覧(入力)で検索した結果を一覧表示。
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	2
+L0015	4
+L0016	3
+L0017	1
+L0018	9
+L0019	10
+L0020	5
+L0021	6
+L0022	7
+L0023	8
+L0024	11
+L0025	11
+L0026	画像レイヤー（2枚）: デッキ一覧(検索結果) / C7 / image 2 + デッキ一覧(検索結果) / AC24 / image 3
+L0027	カスタマイズ説明
+L0028	・カスタマイズ要件
+L0029	・旧デッキID、DCIナンバーは不要のため削除
+L0030	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0031	機能仕様処理概要（★はカスタマイズ項目）
+L0032	デッキ検索結果を一覧表示する。表示後、以下の操作ができる。
+L0033	検索結果一覧表示から個別にデッキの編集画面へ遷移できる。
+L0034	検索結果一覧表示から個別にデッキの削除ができる。
+L0035	検索結果一覧表示のうちチェックを入れたものに対し、以下の操作ができる。
+L0036	CSV出力する。
+L0037	一括削除する。
+L0038	一括編集する。
+L0039	★1ページあたりの表示件数のデフォルト値を「100件」とする
+L0040	★画面上の項目を除去する
+L0041	・識別ID:2「並べ替え項目」の選択肢「勝利数」「敗北数」「引き分け数」「DCIナンバー」を除去する
+L0042	・識別ID:6「CSV出力(旧サイト仕様)」を除去する
+L0043	・識別ID:10 デッキ詳細情報の成績部分から、「勝利数-敗北数-引き分け数」 の表示を除去する
+L0044	★画面上の一括編集(アコーディオン)項目を除去する
+L0045	・識別ID:13「DCIナンバー」を除去する
+L0046	★画面の変更にあわせて、検索実行ロジック内に記載されている
+L0047	・「DCIナンバー」の並べ替えを除去する
+L0048	★画面の変更にあわせて、一括編集実行ロジック内に記載されている
+L0049	・「DCIナンバー」の更新を除去する
+L0050	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0051	1	該当件数	文字列	-			デッキ一覧(入力)で設定された条件に合致するデッキの件数
+L0052	2	件数	単一選択	-			選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0053	※カスタマイズ対応 デフォルト値を100件とする
+L0054	3	並べかえ: 項目	単一選択	-			選択肢:
+L0055	デッキID 順位 イベント開催日
+L0056	イベント名(日) イベント名(英) デッキ名 プレイヤー名
+L0057	※カスタマイズ対応、選択肢「DCIナンバー」「勝利数」「敗北数」「引き分け数」を除去する
+L0058	4	並べ替え: ソート順	単一選択	-			選択肢: 昇順 降順
+L0059	5	CSV出力	ボタン	-			一覧左側のチェックボックスを選択したデッキ情報のCSVがダウンロードされる
+L0060	6	CSV出力(旧サイト仕様)	ボタン	-			※カスタマイズ対応、項目を除去する
+L0061	7	一括削除	ボタン	-			一覧左側のチェックボックスを選択したデッキを一括で削除する
+L0062	8	一括編集	ボタン	-			一括編集(アコーディオン)を開く
+L0063	9	デッキ詳細	チェックボックス	-			チェックすると、デッキ情報(後述)に配置されているチェックボックスをすべてオン/オフにする
+L0064	10	デッキ情報	リンク	-			・デッキの情報を設定されている件数ぶん出力する
+L0065	・クリックすると当該デッキの編集画面へ遷移する
+L0066	・情報の左上にチェックボックスを配置、チェックされたデッキを「一括削除」「一括編集」の対象にする
+L0067	11	ポップアップメニュー
+L0068	（…）	ボタン	-			当該デッキに対するポップアップメニューを表示する
+L0069	・編集 編集画面へ遷移する
+L0070	・削除 確認ダイアログを表示し、OKを選択したらデッキを削除する
+L0071	12	ページングUI	リンク	-
+L0072	一括編集(アコーディオン)
+L0073	8
+L0074	9
+L0075	10
+L0076	11
+L0077	12
+L0078	13
+L0079	14
+L0080	15
+L0081	16
+L0082	17
+L0083	デッキ一覧(検索結果) / C109 / image 1
+L0084	識別ID	ラベル	書式・制限	入力チェック	画面部品の説明
+L0085	1	フォーマット	単一選択	チェックを入れた場合のみ必須	サジェスト機能
+L0086	2	アーキタイプ	単一選択	チェックを入れた場合のみ必須	サジェスト機能
+L0087	3	公開状態	ラジオボタン	チェックを入れた場合のみ必須
+L0088	4	デッキリスト公開状態	ラジオボタン	チェックを入れた場合のみ必須
+L0089	5	イベント名(日)	文字列	チェックを入れた場合のみ必須、255文字まで
+L0090	6	イベント名(英)	文字列	チェックを入れた場合のみ必須、255文字まで
+L0091	7	イベント開催日	文字列	チェックを入れた場合のみ必須、日付形式チェック	YYYY-M-DD HH:ii
+L0092	8	順位	数値	チェックを入れた場合のみ必須、数値チェック
+L0093	9	成績	文字列	チェックを入れた場合のみ必須、32文字まで
+L0094	10	勝利数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+L0095	11	敗北数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+L0096	12	引き分け数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+L0097	13	DCIナンバー	文字列	チェックを入れた場合のみ必須	※カスタマイズ対応、項目を除去する
+L0098	14	プレイヤー名	文字列	チェックを入れた場合のみ必須、64文字まで
+L0099	15	タグ	複数選択	チェックを入れた場合のみ必須	サジェスト機能
+L0100	16	引用元URL	文字列	チェックを入れた場合のみ必須、255文字まで
+L0101	17	一括編集実行	ボタン	-	入力された項目に該当するデータを更新する
+L0102	Source:
+L0103	functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md
+L0104	現行仕様
+L0105	M15-02 デッキCSV出力 / デッキ管理 — デッキ CSV 出力
+L0106	業務ロジック
+L0107	出力対象の決め方
+L0108	選択の状態	扱い
+L0109	デッキIDを1件も選択せずに実行したとき	出力せず、必須のエラーを表示して直前の画面へ戻す。ダウンロードは始めない。画面側でも未選択の送信を既定で止める
+L0110	該当するデッキが1件も無いとき	出力せず、未登録のエラーを表示して直前の画面へ戻す。ダウンロードは始めない
+L0111	指定したIDの一部だけが存在しないとき	該当が1件以上あれば処理を続ける。該当しないIDは出力に現れない
+L0112	並び順は、利用者が一覧で選択したときの表示順と一致するとは限らない。
+L0113	一覧の一括編集フォームの他の項目もあわせて送信されるが、この出力では読まない。
+L0114	出力の構成
+L0115	見出し行に論理キーを出力し、続けてデータ行を出力する。デッキ1件につき1行とする。
+L0116	順序	出力
+L0117	1	UTF-8のBOM。文字コードの設定がどの値のときも先頭に出力する
+L0118	2	論理キーの見出し行。1行だけ出力する
+L0119	3	データ行。該当するデッキが複数あるときは、件数分を出力する
+L0120	区切り文字は設定に従う。本文の文字コードは設定によらずUTF-8とし、先頭のBOMと合わせる。 応答が示す文字集合は設定から決まるため（「応答とファイル名」）、設定がUTF-8以外のときは 応答の表記と本文の文字コードが一致しない。
+L0121	列の値の作り方
+L0122	列	値の作り方
+L0123	フォーマット	紐づくフォーマットがあるときはその英語名、無いときは空文字とする
+L0124	アーキタイプ	紐づくアーキタイプがあるときはその日本語名、無いときは空文字とする
+L0125	統率者名	統率者ボードに紐づくカードがあるときはその英語名、無いときは空文字とする
+L0126	代表カード名	代表カード画像に紐づくカードがあるときはその英語名、無いときは空文字とする
+L0127	メインリスト・サイドリスト	登録されているデッキリストのテキストをそのまま出力する
+L0128	イベント開催日	日時が無いときは空文字、あるときは Y-m-d H:i:s の書式とする
+L0129	表示フラグ	公開のときは 1、非公開のときは 0 を出力する。限定公開には対応する値が無く、空欄になる
+L0130	応答とファイル名
+L0131	接頭辞 deck_、出力時点の日時（YmdHis）、拡張子 .csv を連結した名前とし、添付ファイルとして返す。
+L0132	文字コードの設定が SJIS-win のときは、応答の文字集合の表記だけを windows-31j に読み替える。
+L0133	応答ヘッダ	値
+L0134	内容の種別	設定の文字コードに基づく text/csv;charset=… とする
+L0135	内容の配置	添付ファイルとし、ファイル名を付ける
+L0136	入出力
+L0137	種類	内容
+L0138	入力	一覧で選択したデッキIDの配列。
+L0139	成功時出力	CSVファイル。ファイル名は接頭辞と日時から作る。
+L0140	失敗時出力	エラーメッセージと直前の画面への戻り。ダウンロードは始まらない。
+L0141	リニューアル後の仕様
+L0142	表示メッセージ
+L0143	出力に成功したときは画面にメッセージを出さず、ファイルの応答だけを返す。未選択のときと、選択したデッキが 1件も見つからないときのエラー文言は、デッキ検索・一覧（M15-01）の表示メッセージ一覧に含める。
+##### 機能設計書 functions/pf-eccube3/m15-03_admin_deck_deck_bulk_delete.md
+L0144	# デッキ管理 — 一括削除
+L0145	## 業務ロジック
+L0146	### 削除の判定順序
+L0147	| 順序 | 判定 | 結果 |
+L0148	| --- | --- | --- |
+L0149	| 1 | なりすまし対策トークンが有効か | 無効のときはアクセス拒否（HTTP 403）とする |
+L0150	| 2 | 削除対象のデッキが送られているか | 送られていないときはメッセージを出さず、デッキ検索・一覧へ戻して終える |
+L0151	| 3 | 各デッキを取り出せるか | 取り出せないときは 404 として打ち切る。後続のデッキは処理しない |
+L0152	| 4 | 当該デッキを使う記事が 1 件でもあるか | あるときは削除せず、エラーを表示して元の画面へ戻して終える |
+L0153	| 5 | いずれの記事にも使われていないとき | デッキに含まれるカードを削除し、更新者をログイン中の管理者にしてから、デッキを削除する |
+L0154	送られたデッキは配列の先頭から順に処理する。すべてのデッキを打ち切りなく処理できたときだけ、削除完了のメッセージを出す。
+L0155	同じ識別子が重複して送られたときは、先に削除したデッキを後の要素で再びたどるため、手順 3 で 404 となることがある。
+L0156	### 記事に使われているかの判定
+L0157	デッキに紐づく記事の件数を見る。件数が 0 より大きいときは削除しない。
+L0158	打ち切りより前に削除できたデッキは、その時点で削除済みとなる。
+L0159	### 戻り先
+L0160	保持していた一覧のページ番号があるときはデッキ検索・一覧の当該ページへ、無いときはデッキ一覧の先頭へ戻す。
+L0161	数量の計算と料金の計算はこの機能では行わない。
+L0162	### エラー時の扱い
+L0163	| エラー内容 | 処理 |
+L0164	| --- | --- |
+L0165	| なりすまし対策トークンが不一致 | アクセス拒否（HTTP 403）とする |
+L0166	| 対象のデッキが無い | 404 として打ち切る |
+L0167	| 記事で使われているデッキが含まれる | 当該デッキを削除せず、エラーを表示して元の画面へ戻す |
+L0168	## 入出力
+L0169	| 種類 | 内容 |
+L0170	| --- | --- |
+L0171	| 入力 | 削除対象のデッキの配列となりすまし対策トークン。同じ送信に含まれる検索条件と一括編集の入力は参照しない |
+L0172	| 成功時出力 | デッキ検索・一覧またはデッキ一覧の先頭へ戻し、削除完了のメッセージを出す |
+L0173	| 失敗時出力 | トークンが不一致のときは HTTP 403、対象のデッキが無いときは 404。記事で使われているときはエラーメッセージを伴って元の画面へ戻す |
+L0174	### 入出力: 永続化
+L0175	| 操作 | 契機 |
+L0176	| --- | --- |
+L0177	| 削除 | デッキに含まれるカードを、当該デッキを削除できる条件を満たしたとき |
+L0178	| 更新 | デッキの更新者を、削除の直前にログイン中の管理者へ書き換えたとき |
+L0179	| 削除 | デッキ本体を、更新者の書き換えの後 |
+L0180	## 表示メッセージ
+L0181	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+L0182	| --- | --- | --- | --- | --- |
+L0183	| — | 管理画面上部 | 記事に紐付いているデッキがあるため削除できません。 | 記事で使われているデッキを一括削除しようとしたとき | 削除せず、元の画面へ戻す |
+L0184	| — | 管理画面上部 | 削除しました | 選択したデッキをすべて削除できたとき | デッキ検索・一覧またはデッキ一覧の先頭へ戻す |
+
+exec
+/bin/bash -lc 'cat combination/units/M15-04/design.txt' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+##### 0212 sheet-4 デッキ一覧(検索結果)
+L0001	デッキ一覧(検索結果)
+L0002	ドキュメント名デッキ管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-05-01
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM15-01
+L0010	機能名デッキを一覧(検索結果)
+L0011	概要デッキ一覧(入力)で検索した結果を一覧表示。
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	2
+L0015	4
+L0016	3
+L0017	1
+L0018	9
+L0019	10
+L0020	5
+L0021	6
+L0022	7
+L0023	8
+L0024	11
+L0025	11
+L0026	画像レイヤー（2枚）: デッキ一覧(検索結果) / C7 / image 2 + デッキ一覧(検索結果) / AC24 / image 3
+L0027	カスタマイズ説明
+L0028	・カスタマイズ要件
+L0029	・旧デッキID、DCIナンバーは不要のため削除
+L0030	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0031	機能仕様処理概要（★はカスタマイズ項目）
+L0032	デッキ検索結果を一覧表示する。表示後、以下の操作ができる。
+L0033	検索結果一覧表示から個別にデッキの編集画面へ遷移できる。
+L0034	検索結果一覧表示から個別にデッキの削除ができる。
+L0035	検索結果一覧表示のうちチェックを入れたものに対し、以下の操作ができる。
+L0036	CSV出力する。
+L0037	一括削除する。
+L0038	一括編集する。
+L0039	★1ページあたりの表示件数のデフォルト値を「100件」とする
+L0040	★画面上の項目を除去する
+L0041	・識別ID:2「並べ替え項目」の選択肢「勝利数」「敗北数」「引き分け数」「DCIナンバー」を除去する
+L0042	・識別ID:6「CSV出力(旧サイト仕様)」を除去する
+L0043	・識別ID:10 デッキ詳細情報の成績部分から、「勝利数-敗北数-引き分け数」 の表示を除去する
+L0044	★画面上の一括編集(アコーディオン)項目を除去する
+L0045	・識別ID:13「DCIナンバー」を除去する
+L0046	★画面の変更にあわせて、検索実行ロジック内に記載されている
+L0047	・「DCIナンバー」の並べ替えを除去する
+L0048	★画面の変更にあわせて、一括編集実行ロジック内に記載されている
+L0049	・「DCIナンバー」の更新を除去する
+L0050	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0051	1	該当件数	文字列	-			デッキ一覧(入力)で設定された条件に合致するデッキの件数
+L0052	2	件数	単一選択	-			選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0053	※カスタマイズ対応 デフォルト値を100件とする
+L0054	3	並べかえ: 項目	単一選択	-			選択肢:
+L0055	デッキID 順位 イベント開催日
+L0056	イベント名(日) イベント名(英) デッキ名 プレイヤー名
+L0057	※カスタマイズ対応、選択肢「DCIナンバー」「勝利数」「敗北数」「引き分け数」を除去する
+L0058	4	並べ替え: ソート順	単一選択	-			選択肢: 昇順 降順
+L0059	5	CSV出力	ボタン	-			一覧左側のチェックボックスを選択したデッキ情報のCSVがダウンロードされる
+L0060	6	CSV出力(旧サイト仕様)	ボタン	-			※カスタマイズ対応、項目を除去する
+L0061	7	一括削除	ボタン	-			一覧左側のチェックボックスを選択したデッキを一括で削除する
+L0062	8	一括編集	ボタン	-			一括編集(アコーディオン)を開く
+L0063	9	デッキ詳細	チェックボックス	-			チェックすると、デッキ情報(後述)に配置されているチェックボックスをすべてオン/オフにする
+L0064	10	デッキ情報	リンク	-			・デッキの情報を設定されている件数ぶん出力する
+L0065	・クリックすると当該デッキの編集画面へ遷移する
+L0066	・情報の左上にチェックボックスを配置、チェックされたデッキを「一括削除」「一括編集」の対象にする
+L0067	11	ポップアップメニュー
+L0068	（…）	ボタン	-			当該デッキに対するポップアップメニューを表示する
+L0069	・編集 編集画面へ遷移する
+L0070	・削除 確認ダイアログを表示し、OKを選択したらデッキを削除する
+L0071	12	ページングUI	リンク	-
+L0072	一括編集(アコーディオン)
+L0073	8
+L0074	9
+L0075	10
+L0076	11
+L0077	12
+L0078	13
+L0079	14
+L0080	15
+L0081	16
+L0082	17
+L0083	デッキ一覧(検索結果) / C109 / image 1
+L0084	識別ID	ラベル	書式・制限	入力チェック	画面部品の説明
+L0085	1	フォーマット	単一選択	チェックを入れた場合のみ必須	サジェスト機能
+L0086	2	アーキタイプ	単一選択	チェックを入れた場合のみ必須	サジェスト機能
+L0087	3	公開状態	ラジオボタン	チェックを入れた場合のみ必須
+L0088	4	デッキリスト公開状態	ラジオボタン	チェックを入れた場合のみ必須
+L0089	5	イベント名(日)	文字列	チェックを入れた場合のみ必須、255文字まで
+L0090	6	イベント名(英)	文字列	チェックを入れた場合のみ必須、255文字まで
+L0091	7	イベント開催日	文字列	チェックを入れた場合のみ必須、日付形式チェック	YYYY-M-DD HH:ii
+L0092	8	順位	数値	チェックを入れた場合のみ必須、数値チェック
+L0093	9	成績	文字列	チェックを入れた場合のみ必須、32文字まで
+L0094	10	勝利数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+L0095	11	敗北数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+L0096	12	引き分け数	数値	チェックを入れた場合のみ必須、数値チェック	※カスタマイズ対応、項目を除去する
+L0097	13	DCIナンバー	文字列	チェックを入れた場合のみ必須	※カスタマイズ対応、項目を除去する
+L0098	14	プレイヤー名	文字列	チェックを入れた場合のみ必須、64文字まで
+L0099	15	タグ	複数選択	チェックを入れた場合のみ必須	サジェスト機能
+L0100	16	引用元URL	文字列	チェックを入れた場合のみ必須、255文字まで
+L0101	17	一括編集実行	ボタン	-	入力された項目に該当するデータを更新する
+L0102	Source:
+L0103	functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md
+L0104	現行仕様
+L0105	M15-02 デッキCSV出力 / デッキ管理 — デッキ CSV 出力
+L0106	業務ロジック
+L0107	出力対象の決め方
+L0108	選択の状態	扱い
+L0109	デッキIDを1件も選択せずに実行したとき	出力せず、必須のエラーを表示して直前の画面へ戻す。ダウンロードは始めない。画面側でも未選択の送信を既定で止める
+L0110	該当するデッキが1件も無いとき	出力せず、未登録のエラーを表示して直前の画面へ戻す。ダウンロードは始めない
+L0111	指定したIDの一部だけが存在しないとき	該当が1件以上あれば処理を続ける。該当しないIDは出力に現れない
+L0112	並び順は、利用者が一覧で選択したときの表示順と一致するとは限らない。
+L0113	一覧の一括編集フォームの他の項目もあわせて送信されるが、この出力では読まない。
+L0114	出力の構成
+L0115	見出し行に論理キーを出力し、続けてデータ行を出力する。デッキ1件につき1行とする。
+L0116	順序	出力
+L0117	1	UTF-8のBOM。文字コードの設定がどの値のときも先頭に出力する
+L0118	2	論理キーの見出し行。1行だけ出力する
+L0119	3	データ行。該当するデッキが複数あるときは、件数分を出力する
+L0120	区切り文字は設定に従う。本文の文字コードは設定によらずUTF-8とし、先頭のBOMと合わせる。 応答が示す文字集合は設定から決まるため（「応答とファイル名」）、設定がUTF-8以外のときは 応答の表記と本文の文字コードが一致しない。
+L0121	列の値の作り方
+L0122	列	値の作り方
+L0123	フォーマット	紐づくフォーマットがあるときはその英語名、無いときは空文字とする
+L0124	アーキタイプ	紐づくアーキタイプがあるときはその日本語名、無いときは空文字とする
+L0125	統率者名	統率者ボードに紐づくカードがあるときはその英語名、無いときは空文字とする
+L0126	代表カード名	代表カード画像に紐づくカードがあるときはその英語名、無いときは空文字とする
+L0127	メインリスト・サイドリスト	登録されているデッキリストのテキストをそのまま出力する
+L0128	イベント開催日	日時が無いときは空文字、あるときは Y-m-d H:i:s の書式とする
+L0129	表示フラグ	公開のときは 1、非公開のときは 0 を出力する。限定公開には対応する値が無く、空欄になる
+L0130	応答とファイル名
+L0131	接頭辞 deck_、出力時点の日時（YmdHis）、拡張子 .csv を連結した名前とし、添付ファイルとして返す。
+L0132	文字コードの設定が SJIS-win のときは、応答の文字集合の表記だけを windows-31j に読み替える。
+L0133	応答ヘッダ	値
+L0134	内容の種別	設定の文字コードに基づく text/csv;charset=… とする
+L0135	内容の配置	添付ファイルとし、ファイル名を付ける
+L0136	入出力
+L0137	種類	内容
+L0138	入力	一覧で選択したデッキIDの配列。
+L0139	成功時出力	CSVファイル。ファイル名は接頭辞と日時から作る。
+L0140	失敗時出力	エラーメッセージと直前の画面への戻り。ダウンロードは始まらない。
+L0141	リニューアル後の仕様
+L0142	表示メッセージ
+L0143	出力に成功したときは画面にメッセージを出さず、ファイルの応答だけを返す。未選択のときと、選択したデッキが 1件も見つからないときのエラー文言は、デッキ検索・一覧（M15-01）の表示メッセージ一覧に含める。
+##### 機能設計書 functions/pf-eccube3/m15-04_admin_deck_deck_bulk_update.md
+L0144	# デッキ管理 — 検索一覧からの一括編集
+L0145	## 業務ロジック
+L0146	### 一括更新の判定順序
+L0147	| 順序 | 判定 | 結果 |
+L0148	|------|------|------|
+L0149	| 1 | なりすまし対策トークンが有効か | 無効なときはアクセス拒否（HTTP 403）とする |
+L0150	| 2 | 送信フォームの検証に通るか（全項目。変更フラグは検証対象の絞り込みに使わない） | 失敗したときはエラーメッセージを表示し、直前の画面へ戻す |
+L0151	| 3 | 各デッキIDが空でなく半角数字のみか | 1件でも不正なときはHTTP 404で打ち切る |
+L0152	| 4 | 上記を通過したとき | 変更フラグが付いた項目だけをフォームの値で上書きし、まとめて保存する |
+L0153	保存に成功したときは登録完了のメッセージを表示し、直前の画面へ戻す。
+L0154	デッキ検索一覧の表示時には、入力が未送信の状態の一括編集フォームを一覧へ載せる。
+L0155	### 更新する項目
+L0156	変更フラグが送信された項目だけを、対象のすべてのデッキへ同じ値で適用する。変更フラグが無い項目は既存の値を保持する。
+L0157	| 対象項目 |
+L0158	|------|
+L0159	| フォーマット、アーキタイプ、表示区分、非公開フラグ、大会名（日本語）、大会名（英語）、大会日、順位、成績、勝ち数、負け数、引き分け数、DCI番号、プレイヤー名、デッキタグ、参照元URL |
+L0160	| 項目 | 扱い |
+L0161	|------|------|
+L0162	| フォーマット | 未選択の状態で上書きしたときは、保存側では参照なしとして解釈されうる |
+L0163	| アーキタイプ | アーキタイプと代表カード画像を同時に設定する経路で更新する。アーキタイプに代表カード画像が無いときは画像の参照を更新しない |
+L0164	| デッキタグ | 多値選択とし、変更フラグが付いたときはその値で既存のタグ紐付けを置き換える。空選択のときは空として解釈されうる |
+L0165	| 最終更新者 | 対象の各デッキに、操作した管理者アカウントのIDを記録する |
+L0166	本機能では売上・順位計算などの業務計算は行わない。
+L0167	### エラー時の扱い
+L0168	| エラー内容 | 処理 |
+L0169	|------------|------|
+L0170	| なりすまし対策トークンが無効なとき | アクセス拒否（HTTP 403）とする |
+L0171	| フォーム検証に失敗したとき | 各エラーを表示し、直前の画面へ戻す |
+L0172	| デッキIDが半角数字でないとき | HTTP 404とする |
+L0173	## 入出力
+L0174	| 種類 | 内容 |
+L0175	|------|------|
+L0176	| 入力 | 一括編集の各項目、なりすまし対策トークン、変更フラグ、対象のデッキID群 |
+L0177	| 成功時出力 | 直前の画面への遷移と登録完了のメッセージ |
+L0178	| 失敗時出力 | 検証失敗のときはエラーメッセージと直前の画面への遷移。ID形式不正のときはHTTP 404。なりすまし対策トークン失敗のときは共通の拒否応答 |
+L0179	### 入出力: 永続化
+L0180	| 操作 | 契機 |
+L0181	| --- | --- |
+L0182	| 更新 | 一括編集の実行（変更フラグが付いた項目と最終更新者） |
+L0183	## 表示メッセージ
+L0184	本機能は一括編集の登録完了メッセージと、フォーム検証のエラーメッセージだけを表示する。
+
+exec
+/bin/bash -lc 'cat combination/cases/M15-03_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M15-03-004	IT-0366	REQ-0212-sheet-4-R008		ITA-11	P1	ブラウザのみ	S-M15-03-QM-ADM,S-M15-03-CBPAGEFREE-004	① 管理画面にログインできる管理者 m1503qm-adm（S-M15-03-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件と一覧のページ番号が無い状態から始める。フォーマット「M1503-CB004-フォーマット」のデッキ14件（プレイヤー名 M1503-CB004-選手01 から M1503-CB004-選手14 までの連番。すべて公開・大会デッキ）が登録済みで、削除対象に選ぶM1503-CB004-選手11・M1503-CB004-選手12・M1503-CB004-選手13の3件はいずれも記事に使われていない（すべて未使用）。このフォーマットのデッキはこれだけ（S-M15-03-CBPAGEFREE-004）	1. 管理画面のログイン画面でログインIDに m1503qm-adm、パスワードに Passw0rd-M1503QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、プレイヤー名に「M1503-CB004-選手」を入力し、件数で10件、並べかえ項目でプレイヤー名、ソート順で昇順を選択して「検索する」を押す／3. 2ページ目へ移動する（保持される一覧のページ番号が2になる）／4. プレイヤー「M1503-CB004-選手11」「M1503-CB004-選手12」「M1503-CB004-選手13」の3件のチェックボックスを上から順に選択する／5. 「一括削除」を押し、確認画面で「OK」を押す	管理画面上部に「削除しました」が表示され、デッキ検索・一覧画面の2ページ目が表示されて該当件数が11件になり、そのページにはプレイヤー M1503-CB004-選手14 の1件が表示され、M1503-CB004-選手11、M1503-CB004-選手12、M1503-CB004-選手13の行は含まれないこと	0212 デッキ一覧(検索結果) / 機能仕様 処理概要、M15-03 機能設計書 / 業務ロジック 削除の判定順序、記事に使われているかの判定、戻り先、表示メッセージ	CB-M15-03-001
+IT-M15-03-006	IT-0366	REQ-0212-sheet-4-R008,REQ-0212-sheet-3-R087		ITA-11	P1	ブラウザのみ	S-M15-03-QM-ADM,S-M15-03-CBPAGEHEAD-006	① 管理画面にログインできる管理者 m1503qm-adm（S-M15-03-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件と一覧のページ番号が無い状態から始める。フォーマット「M1503-CB006-フォーマット」のデッキ14件（プレイヤー名 M1503-CB006-選手01 から M1503-CB006-選手14 までの連番。すべて公開・大会デッキ）が登録済みで、削除対象に選ぶM1503-CB006-選手11・M1503-CB006-選手12・M1503-CB006-選手13の3件のうち先頭のM1503-CB006-選手11が記事「M1503-CB006-記事」に使われ、あとの2件は記事に使われていない（先頭が使用中）。このフォーマットのデッキはこれだけ（S-M15-03-CBPAGEHEAD-006）	1. 管理画面のログイン画面でログインIDに m1503qm-adm、パスワードに Passw0rd-M1503QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、プレイヤー名に「M1503-CB006-選手」を入力し、件数で10件、並べかえ項目でプレイヤー名、ソート順で昇順を選択して「検索する」を押す／3. 2ページ目へ移動する（保持される一覧のページ番号が2になる）／4. プレイヤー「M1503-CB006-選手11」「M1503-CB006-選手12」「M1503-CB006-選手13」の3件のチェックボックスを上から順に選択する／5. 「一括削除」を押し、確認画面で「OK」を押す	管理画面上部に「記事に紐付いているデッキがあるため削除できません。」が表示され、「削除しました」は表示されず、デッキ検索・一覧画面の2ページ目が表示されて該当件数が14件になり、そのページにはプレイヤー M1503-CB006-選手11・M1503-CB006-選手12・M1503-CB006-選手13・M1503-CB006-選手14 の4件が表示され、削除対象に選んだ3件がすべて残っていること	0212 デッキ一覧(検索結果) / 機能仕様 処理概要、M15-03 機能設計書 / 業務ロジック 削除の判定順序、記事に使われているかの判定、戻り先、表示メッセージ	CB-M15-03-003
+IT-M15-03-008	IT-0366	REQ-0212-sheet-4-R008,REQ-0212-sheet-3-R087		ITA-11	P1	ブラウザのみ	S-M15-03-QM-ADM,S-M15-03-CBPAGEMID-008	① 管理画面にログインできる管理者 m1503qm-adm（S-M15-03-QM-ADM）／② 新しいブラウザセッションで、保持された検索条件と一覧のページ番号が無い状態から始める。フォーマット「M1503-CB008-フォーマット」のデッキ14件（プレイヤー名 M1503-CB008-選手01 から M1503-CB008-選手14 までの連番。すべて公開・大会デッキ）が登録済みで、削除対象に選ぶM1503-CB008-選手11・M1503-CB008-選手12・M1503-CB008-選手13の3件のうち先頭のM1503-CB008-選手11は記事に使われておらず、2番目のM1503-CB008-選手12が記事「M1503-CB008-記事」に使われ、3番目のM1503-CB008-選手13は記事に使われていない（未使用の後に使用中）。このフォーマットのデッキはこれだけ（S-M15-03-CBPAGEMID-008）	1. 管理画面のログイン画面でログインIDに m1503qm-adm、パスワードに Passw0rd-M1503QM を入力してログインする／2. デッキ管理＞デッキ一覧のデッキ検索・一覧画面で「日付クリア」を押し、プレイヤー名に「M1503-CB008-選手」を入力し、件数で10件、並べかえ項目でプレイヤー名、ソート順で昇順を選択して「検索する」を押す／3. 2ページ目へ移動する（保持される一覧のページ番号が2になる）／4. プレイヤー「M1503-CB008-選手11」「M1503-CB008-選手12」「M1503-CB008-選手13」の3件のチェックボックスを上から順に選択する／5. 「一括削除」を押し、確認画面で「OK」を押す	管理画面上部に「記事に紐付いているデッキがあるため削除できません。」が表示され、「削除しました」は表示されず、デッキ検索・一覧画面の2ページ目が表示されて該当件数が13件になり、そのページにはプレイヤー M1503-CB008-選手12・M1503-CB008-選手13・M1503-CB008-選手14 の3件が表示され、M1503-CB008-選手11の行は含まれないこと	0212 デッキ一覧(検索結果) / 機能仕様 処理概要、M15-03 機能設計書 / 業務ロジック 削除の判定順序、記事に使われているかの判定、戻り先、表示メッセージ	CB-M15-03-005
+
+exec
+/bin/bash -lc "grep -n -e 'S-M15-02-CONFIG' -e 'S-M15-02-REF' -e 'S-M15-02-ADM' cases/M15-02_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+2:S-M15-02-ADM	管理者	M15-02試験管理者	ログインID=m1502_admin／パスワード=Passw0rd!M1502／稼働中／デッキ管理を操作できる	全ケースの管理画面操作。ログイン失敗、ロック、管理者情報変更は行わない。各ケースは開始時に新しいブラウザセッションでログインする	管理画面のメンバー管理で登録し、デッキ管理を操作できる権限を設定する	共有可
+3:S-M15-02-REF	フォーマット・アーキタイプ・カード	CSV出力参照データ	フォーマットID=1・英語名=Standard・選択可能／フォーマットID=2・英語名=Modern・選択可能／アーキタイプIDは登録時に画面が振る（控える。以下〔アーキタイプID-M1502-共有A〕）・日本語名=青白コントロール・選択可能／アーキタイプIDは登録時に画面が振る（控える。以下〔アーキタイプID-M1502-共有B〕）・日本語名=バーン・選択可能／カードID=8708・英語名=Sol Ring／カードID=6140・英語名=Lightning Bolt／カード画像ID=173271・カード英語名=Lightning Bolt	全項目出力および一括編集フォームで参照するマスタ。テスト操作では変更しない	アーキタイプ一覧画面で「新規登録」を押し、アーキタイプ名(日)に「青白コントロール」、アーキタイプ名(英)に「M15-02 UW Control」（必須を満たすための値）を入れ、フォーマットに英語名がStandardのフォーマット（必須のため選ぶ）、公開状態に「公開」を選んで「新規登録」を押す。アーキタイプ一覧画面でアーキタイプ名「青白コントロール / M15-02 UW Control」の行のIDを控える（〔アーキタイプID-M1502-共有A〕）。続けてアーキタイプ一覧画面で「新規登録」を押し、アーキタイプ名(日)に「バーン」、アーキタイプ名(英)に「M15-02 Burn」（必須を満たすための値）を入れ、フォーマットに英語名がModernのフォーマット（必須のため選ぶ）、公開状態に「公開」を選んで「新規登録」を押す。アーキタイプ一覧画面でアーキタイプ名「バーン / M15-02 Burn」の行のIDを控える（〔アーキタイプID-M1502-共有B〕）。既存のフォーマット（フォーマットID=1・2）、カード（カードID=8708・6140）、カード画像（カード画像ID=173271）を記載したIDのまま記載値へ戻すことは画面で指定できないためDBへ直接設定する	共有可
+4:S-M15-02-CONFIG	CSV設定	CSV出力文字コード設定	CSV出力文字コード設定はIT-M15-02-014ではUTF-8、IT-M15-02-015ではSJIS-win	1件だけの設定。各ケースが開始時に必要な値を自分で設定する	試験環境のCSV出力文字コード設定を指定値へ変更し、設定をアプリケーションへ反映する	共有可
+
+exec
+/bin/bash -lc 'cat sheetmap/FIX_R1_BRIEF.md sheetmap/FIX_R2_BRIEF.md' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+# レビュー1巡目の反映（著者への依頼）
+
+codex のレビュー指摘が `integration_test/casegen/sheetmap/review/<機能ID>_r1_findings.md` にある。
+1件ずつ、**指摘が引いている設計書の記述を sheet.txt で自分で読み直して事実かどうか確かめてから**、下の裁定に従って反映せよ。指摘をそのまま適用しない。
+
+## 裁定（依頼元の決定。指摘と食い違うときはこちらが優先）
+
+| No. | 裁定 |
+| --- | --- |
+| A | **根拠はHTML設計書であり、対象シート1枚に限らない。** その機能のふるまい（何を出力するか、全件か選択か、出力対象の条件、未選択・0件のときの扱い、ファイル名、起動するボタン、権限）が同じ冊子の別シート（一覧画面のシートなど）に書かれていれば、それを期待結果の根拠にしてよい。出典にそのシートを「｜」でつないで書く。当初の依頼文の「隣接シートは操作の入口にだけ使う」は撤回する。したがって、「対象シートに記述が無い」ことだけを理由にした指摘は、同じ冊子の別シートに記述があれば却下する。逆に、別シートにその機能の記述があるのにケースにしていなかったもの（出力対象、選択と全件の違い、未選択時の扱いなど）は、ケースを足す。別シートは `python3 integration_test/casegen/sheetmap/build_materials.py --sheet <書番> <シート名>` で読む。他の冊子・実装・現行ソースは根拠にしない |
+| B | **観点表の「期待値の決め方」が「観点内で確定」の判定単位は、適用の条件が設計書から言えれば、期待結果は判定単位の文から決めてよい。** 例: IT-0080・IT-0225（参照・出力だけの機能は実行前後でデータを更新しない）は、設計書がその機能をCSV出力・一覧表示などの参照機能として書いていれば適用できる。「非更新とは対象シートに書いていない」という指摘は却下する。IT-0083（出力ファイルの数量・金額が画面表示およびDB値と一致）を使うときは、画面表示またはDB値と見比べる手順と期待結果にする |
+| C | **CSV・帳票の出力項目の構成と並びは IT-0156**（観点ID ITA-02。他の観点に割り当たらない機能仕様を受ける区分）に当てる。IT-0071 は「値が取得元と同値」にだけ使う。report.md に「出力項目の構成・並びを受ける判定単位が観点表に無いので IT-0156 を使った」と書く |
+| C' | （2026-10-06 追記）観点表に IT-0348（ITA-05。出力したファイルの各レコードが、定められた出力項目だけで構成され、定められた順に並ぶこと）を足した。出力項目の構成と並びは、以後 IT-0348 に当てる。裁定Cで IT-0156 に当てていた14件は付け替えた（`retag_0348.py`）。同日、IT-0349（ITA-05。出力したファイルのレコードが、定められた並び順で出力されること）も足した。出力したCSV・帳票の行の並び順は IT-0349 に当てる（24件を付け替えた。`retag_0349.py`）。同日、IT-0350（ITA-05。送信されたメールの件名、送信元、本文の構成が、定められたとおりであること）も足した。通知メールの内容は IT-0350 に当てる（10件を付け替えた。`retag_0350.py`）。初期値、未選択時の扱いなど、ほかに受ける判定単位が無いものは IT-0156 のまま（2026-10-07 追記）観点表にバッチ用の4行を足した。IT-0351（ITA-14。異常として定められた条件でバッチが異常終了として終わること）、IT-0352（ITA-13。異常終了した場合、異常の後に行わないと定められた処理が行われていないこと）、IT-0353（ITA-13。終了後、一時的な資源が定められたとおりに削除されている・残っていること）、IT-0354（ITA-21。バッチの出力メッセージが、定められた条件のときに定められた文言で出力されること）。バッチのケースで期待結果がこのどれかそのものであるものは、IT-0156 でなくこれらを使う。 |
+| D | 見出し行の有無、データが何行目から始まるかは、設計書に書いていなければ期待結果・手順に書かない。データ行は事前準備の識別子（番号・コード）で特定する。項目の並びは「各行の項目が左から設計書の識別ID順に対応する」ことを、事前準備の値がどの位置に出るかで確かめる |
+| E | 値の取得元が設計書から決まらない項目（備考が空で、項目名からも取得元が1つに決まらないもの。呼び名の違う属性を当てはめたもの）は、値の照合から外し、report.md の「ケースにしなかったもの」に取得元の不足として書く。項目名と同じ名前の属性は取得元が決まるとしてよい |
+| F | 計算・連結・書式変換の結果そのもの（姓＋空白＋名、差の計算、小計など）は単体テストの担当（SCOPE.md）。ケースから外し、report.md に「単体テストへ送った」と書く。ただし「どの時点の値か」「単価か小計か」のように、どの値を採るかの定めは結合テストで確かめてよい |
+| G | 1ケース1期待結果。判定単位が違う確認が1ケースに混じっていたら分ける |
+| H | シードは実際に作れる方法で書く。管理画面で指定できない内部IDを管理画面で登録する、と書かない（DB投入にする）。設計書が求める状態（必須項目が未設定の会員など）が ee 実装の制約で作れないときは、ケースは残し、投入方法を「未確定: <理由>」にして report.md の「試験環境に要るもの」に挙げる。実装が設計書と違うこと自体はケースを変える理由にしない |
+| I | 手順は、画面を開く・条件を入れる・ボタンを押す・ファイルを開く、の操作を番号付きで書く。「〜を確認する」だけの手順にしない |
+| J | 設計書の中で記述が食い違っている・誤記と思われる箇所を、推測でどちらかに決めて期待結果にしない。両方に共通する部分だけを期待結果にし、食い違いは report.md に書く |
+| K | 判定ID IT-0332〜0347 は使わない。使っているケースは、当てはまる別の判定単位に付け替えるか、無ければ外す |
+| L | 指摘が「取りこぼし」で、設計書の記述から期待結果が一意に決まるなら、ケースを足す。試験基盤が無いことはケースを作らない理由にならない（投入方法・前提を「未確定」と書いて残す） |
+
+## やること
+
+1. 指摘ごとに「採用／一部採用／却下」を決め、cases・seed・report.md を直す。ケースを足したり外したりしたら、テストIDを 001 からの連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. 指摘に無くても、裁定 A〜L に反する箇所が自分のケースにあれば同じように直す。
+3. `integration_test/casegen/sheetmap/review/<機能ID>_r1_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述（原文）・直した内容」を表で書く。保存できないときは返答に本文を含める。
+4. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること（他の著者と同じ置き場所を使っているため）。
+
+## 返答
+
+5行以内。直した後の件数、指摘ごとの判定の内訳（採用・一部採用・却下の件数）、足した・外したテストの数、verify の結果、dispositions.md を保存できたか。
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+
+exec
+/bin/bash -lc "grep -n -e 'IT-M15-02-007' -e 'IT-M15-02-008' cases/M15-02_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+exec
+/bin/bash -lc "grep -n -e 'F09-02' combination/factors/M15-01_factors.tsv; ls combination/units/F09-02; grep -n -e '一覧に載せる' -e 'プレイヤー名' combination/units/F09-02/design.txt" in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+8:IT-M15-02-007	REQ-0212-sheet-5-R142,REQ-0212-sheet-5-R170	—	ITA-11,ITA-14	P1	ブラウザのみ	S-M15-02-ADM,S-M15-02-NOTFOUND-007	① 新しいブラウザセッションで試験管理者としてログインし、保持された検索条件と選択状態がないデッキ検索・一覧画面を初期表示する（S-M15-02-ADM）／② デッキID 〔デッキID-M1502-007〕が公開かつ削除されていない通常デッキとして登録され、デッキID 159999007は存在しない（登録時に振られたデッキIDを控えてある）（S-M15-02-NOTFOUND-007）	1. デッキ検索・一覧画面でデッキIDに「〔デッキID-M1502-007〕」を入力して「検索する」を押す／2. デッキID 〔デッキID-M1502-007〕のチェックボックスを選択する／3. 開発者ツールで選択済みチェックボックスの値を「159999007」に変更する／4. ブラウザのダウンロード履歴を記録する／5. CSV出力ボタンを押す／6. ダウンロード履歴を確認する	ブラウザのダウンロード履歴に新しいCSVファイルが追加されないこと	0212 デッキ一覧(検索結果) / 現行仕様 M15-02 業務ロジック 出力対象の決め方、入出力 失敗時出力
+9:IT-M15-02-008	REQ-0212-sheet-5-R142,REQ-0212-sheet-5-R170,REQ-0212-sheet-3-R099	CH-0488	ITA-11,ITA-14,ITA-20	P1	ブラウザのみ	S-M15-02-ADM,S-M15-02-NOTFOUND-008	① 新しいブラウザセッションで試験管理者としてログインし、保持された検索条件、選択状態および管理画面上部のメッセージがないデッキ検索・一覧画面を初期表示する（S-M15-02-ADM）／② デッキID 〔デッキID-M1502-008〕が公開かつ削除されていない通常デッキとして登録され、デッキID 159999008は存在しない（登録時に振られたデッキIDを控えてある）（S-M15-02-NOTFOUND-008）	1. デッキ検索・一覧画面でデッキIDに「〔デッキID-M1502-008〕」を入力して「検索する」を押す／2. デッキID 〔デッキID-M1502-008〕のチェックボックスを選択する／3. 開発者ツールで選択済みチェックボックスの値を「159999008」に変更する／4. CSV出力ボタンを押す	管理画面上部にエラーが表示され、デッキ検索・一覧画面へ戻ること	0212 デッキ一覧(検索結果) / 現行仕様 M15-02 業務ロジック 出力対象の決め方、入出力 失敗時出力；0212 デッキ一覧(検索入力) / 表示メッセージ M15-01-MSG-014
+
+ succeeded in 0ms:
+4:F03	P2	公開状態の変更	変更しない｜公開にする｜非公開にする	変更しない: 公開状態は更新前のまま／公開にする: 公開になり、ほかの条件を満たせばフロントの検索結果に載る／非公開にする: フロントの検索結果から外れる	L0254,L0268,F09-02:L0008	この機能
+5:F04	P2	アーキタイプの変更	変更しない｜設定する	変更しない: アーキタイプは更新前のまま／設定する: アーキタイプが設定され、ほかの条件を満たせばフロントの検索結果に載る	L0253,L0268,F09-02:L0010	この機能
+design.txt
+excluded.tsv
+6:L0005	一覧に載せるデッキ
+7:L0006	検索条件の指定によらず、次の条件を常に満たすデッキだけを一覧に載せる。
+38:L0037	プレイヤー	プレイヤー名
+44:L0043	指定された検索条件から見出しの語を組み立て、/で連結した文字列に「のデッキ検索一覧」を付けて画面の題名とする。語に採るのはフォーマット名・アーキタイプ名・カード名・プレイヤー名・大会名・タグ名・開催日時の期間・参加人数の範囲・成績の選択・公開状態の選択で、指定の無い条件は語に加えない。条件を1件も指定していないときは題名も説明文も組み立てない。
+
+exec
+/bin/bash -lc 'cat combination/cases/M15-02_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+exec
+/bin/bash -lc 'cat combination/units/F09-02/design.txt' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M15-02-CBPARTUTF8-023	デッキ・未登録状態	一部不存在確認データ(023)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1502-023A〕）・デッキ名=M1502-CB023-存在デッキ甲・フォーマット英語名=Standard・アーキタイプ日本語名=青白コントロール・メインリスト=「4 Lightning Bolt」・公開／デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1502-023B〕）・デッキ名=M1502-CB023-存在デッキ乙・フォーマット英語名=Standard・アーキタイプ日本語名=青白コントロール・メインリスト=「3 Sol Ring」・非公開／両方とも通常デッキで削除されていない／デッキID=159999023は存在しない	IT-M15-02-023専用。存在するIDと存在しないIDの混在で、文字コード設定UTF-8のCSV出力を確かめる	存在するデッキを2件、1件ずつ登録する。1件目: デッキ検索・一覧画面で「新規登録」を押してデッキ編集画面（新規登録）を開く。デッキ名に「M1502-CB023-存在デッキ甲」を入れ、デッキタイプに「event」を選び、フォーマットに英語名がStandardのフォーマットを選び、アーキタイプに「青白コントロール」（共有の参照データで登録したもの）を選び、公開状態(デッキ全体の公開設定)に「公開」を選ぶ。公開のときはイベント名(日)・イベント名(英)・開催日が必須のため、イベント名(日)に「M1502-CB023-イベント」、イベント名(英)に「M1502-CB023-Event」、開催日に「2026/09/01 10:00」を入れる（この3つは必須を満たすためだけの値で、ケースの確認内容には使わない）。メインボードの1行目に「4 Lightning Bolt」を入れる。「新規登録」を押す。登録後に開くデッキ編集画面のアドレス欄のURLに含まれるデッキIDを控える。（〔デッキID-M1502-023A〕）2件目: デッキ検索・一覧画面で「新規登録」を押してデッキ編集画面（新規登録）を開く。デッキ名に「M1502-CB023-存在デッキ乙」を入れ、デッキタイプに「event」を選び、フォーマットに英語名がStandardのフォーマットを選び、アーキタイプに「青白コントロール」（共有の参照データで登録したもの）を選び、公開状態(デッキ全体の公開設定)に「非公開」を選ぶ。メインボードの1行目に「3 Sol Ring」を入れる。「新規登録」を押す。登録後に開くデッキ編集画面のアドレス欄のURLに含まれるデッキIDを控える。（〔デッキID-M1502-023B〕）登録した2件は削除しない。デッキID 159999023 のデッキと、同じIDに結び付くデッキ情報が1件も無い状態は画面で指定できないためDBへ直接設定する（該当するデータがあれば削除し、無いことを確かめる）	ケース専用
+S-M15-02-CBPARTSJIS-024	デッキ・未登録状態	一部不存在確認データ(024)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1502-024A〕）・デッキ名=M1502-CB024-存在デッキ甲・フォーマット英語名=Standard・アーキタイプ日本語名=青白コントロール・メインリスト=「4 Lightning Bolt」・公開／デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1502-024B〕）・デッキ名=M1502-CB024-存在デッキ乙・フォーマット英語名=Standard・アーキタイプ日本語名=青白コントロール・メインリスト=「3 Sol Ring」・非公開／両方とも通常デッキで削除されていない／デッキID=159999024は存在しない	IT-M15-02-024専用。存在するIDと存在しないIDの混在で、文字コード設定SJIS-winのCSV出力を確かめる	存在するデッキを2件、1件ずつ登録する。1件目: デッキ検索・一覧画面で「新規登録」を押してデッキ編集画面（新規登録）を開く。デッキ名に「M1502-CB024-存在デッキ甲」を入れ、デッキタイプに「event」を選び、フォーマットに英語名がStandardのフォーマットを選び、アーキタイプに「青白コントロール」（共有の参照データで登録したもの）を選び、公開状態(デッキ全体の公開設定)に「公開」を選ぶ。公開のときはイベント名(日)・イベント名(英)・開催日が必須のため、イベント名(日)に「M1502-CB024-イベント」、イベント名(英)に「M1502-CB024-Event」、開催日に「2026/09/01 10:00」を入れる（この3つは必須を満たすためだけの値で、ケースの確認内容には使わない）。メインボードの1行目に「4 Lightning Bolt」を入れる。「新規登録」を押す。登録後に開くデッキ編集画面のアドレス欄のURLに含まれるデッキIDを控える。（〔デッキID-M1502-024A〕）2件目: デッキ検索・一覧画面で「新規登録」を押してデッキ編集画面（新規登録）を開く。デッキ名に「M1502-CB024-存在デッキ乙」を入れ、デッキタイプに「event」を選び、フォーマットに英語名がStandardのフォーマットを選び、アーキタイプに「青白コントロール」（共有の参照データで登録したもの）を選び、公開状態(デッキ全体の公開設定)に「非公開」を選ぶ。メインボードの1行目に「3 Sol Ring」を入れる。「新規登録」を押す。登録後に開くデッキ編集画面のアドレス欄のURLに含まれるデッキIDを控える。（〔デッキID-M1502-024B〕）登録した2件は削除しない。デッキID 159999024 のデッキと、同じIDに結び付くデッキ情報が1件も無い状態は画面で指定できないためDBへ直接設定する（該当するデータがあれば削除し、無いことを確かめる）	ケース専用
+
+ succeeded in 0ms:
+##### 0309 f09-02 F09-02 デッキ検索結果 ／ フロント デッキ検索 — デッキ検索結果
+L0001	Source:
+L0002	functions/pf-eccube3/f09-02_front_deck_deck_result.md
+L0003	F09-02 デッキ検索結果 ／ フロント デッキ検索 — デッキ検索結果
+L0004	業務ロジック
+L0005	一覧に載せるデッキ
+L0006	検索条件の指定によらず、次の条件を常に満たすデッキだけを一覧に載せる。
+L0007	条件	扱い
+L0008	表示区分	公開のものだけを対象とする
+L0009	デッキ種別	大会デッキだけを対象とする。ユーザーデッキは載せない
+L0010	アーキタイプ	設定されているデッキだけを対象とする。未設定のデッキは載せない
+L0011	大会の開催日	当日の23:59:59以下だけを対象とする。開催日が先の大会のデッキは載せない
+L0012	デッキタグの指定があるとき	指定したデッキタグのいずれかを持つデッキだけを対象とする
+L0013	カード名の指定があるとき	指定した名称のカードを採用しているデッキだけを対象とする
+L0014	利用者が指定する検索条件の突き合わせ方はデッキ検索TOP（F09-01）を正とする。
+L0015	並び順
+L0016	大会の開催日の降順、大会名（日本語）の昇順、順位の昇順の順に並べる。同じ大会のデッキは順位の高いものが先になる。
+L0017	件数とページの決定
+L0018	観点	扱い
+L0019	ページ番号の既定	1
+L0020	1ページあたりの件数の既定	20件
+L0021	1ページあたりの件数の指定	検索条件として受け取った値を検証せずに抽出へ使う。未指定・空文字・0のときは20件とする。画面が用意する選択肢は20件・40件・60件・80件・100件
+L0022	総件数	条件に一致するデッキを重複排除して数えた件数
+L0023	総ページ数	総件数を1ページあたりの件数で割って切り上げた数。件数の指定が無いときは20件で割る
+L0024	ページ送りの範囲	現在ページの前後4ページ分までを並べ、それを超える範囲は省略の印にまとめる
+L0025	範囲外のページ番号	ページ番号を丸めない。総件数が1件以上でもHTTP 200のまま一覧が空になり、該当なしの案内を出す
+L0026	表示件数を変えたときのふるまい
+L0027	表示件数を変えると、入力欄に載っている検索条件すべてに指定した件数を添えて検索し直す。開催日時の開始が未指定のときは、入力欄の既定値である6か月前が条件に加わる。ページ番号は引き継がず、1ページ目から表示する。
+L0028	該当0件のときの応答
+L0029	該当が0件のときは、検索条件の入力欄を載せた同じ画面をHTTP 404で返す。一覧の領域には該当なしの案内だけを出す。
+L0030	一覧の各件に載せる内容
+L0031	表示項目	値
+L0032	画像	デッキに代表カード画像があるときはその画像、無いときは画像なし用の既定画像
+L0033	デッキリストの状態	デッキリストが非公開のときだけ非公開の印を付ける
+L0034	デッキタグ	そのデッキに紐づくタグの名称をすべて並べる
+L0035	フォーマット	フォーマットに対応する記号
+L0036	アーキタイプ	日本語名と英語名を/で連結した文字列
+L0037	プレイヤー	プレイヤー名
+L0038	大会名	大会の日本語名
+L0039	成績	デッキの成績
+L0040	参加人数	大会の参加人数
+L0041	開催日	大会の開催日をY/m/dの形式で表す
+L0042	見出しと説明文の組み立て
+L0043	指定された検索条件から見出しの語を組み立て、/で連結した文字列に「のデッキ検索一覧」を付けて画面の題名とする。語に採るのはフォーマット名・アーキタイプ名・カード名・プレイヤー名・大会名・タグ名・開催日時の期間・参加人数の範囲・成績の選択・公開状態の選択で、指定の無い条件は語に加えない。条件を1件も指定していないときは題名も説明文も組み立てない。
+L0044	条件の指定	見出しの語
+L0045	開催日時の開始と終了の両方	開始と終了を～でつないだ日付
+L0046	開催日時の開始だけ	開始の日付に～を付けた文字列
+L0047	開催日時の終了だけ	～に終了の日付を付けた文字列
+L0048	参加人数の下限と上限の両方	下限と上限を人数で示した範囲
+L0049	参加人数の下限だけ	下限以上を示す文字列
+L0050	参加人数の上限だけ	上限以下を示す文字列
+L0051	入出力
+L0052	種類	内容
+L0053	入力	検索条件・ページ番号・1ページあたりの件数。いずれも未指定を許す
+L0054	成功時出力	該当が1件以上のとき、HTTP 200でデッキの一覧とページ送りを載せた画面
+L0055	失敗時出力	該当が0件のとき、HTTP 404で該当なしの案内を載せた同じ画面
+L0056	入出力: 永続化
+L0057	デッキ情報を登録・更新・削除しない。キャッシュへの保存も行わない。
+L0058	リニューアル後の仕様
+L0059	表示メッセージ
+L0060	メッセージID	表示位置	画面上の文言	画面上の文言(英語)	表示条件	後続処理
+L0061	—	画面上部の見出し	デッキ検索結果	Deck search results	常時	—
+L0062	—	件数の表示領域	検索結果	Search results	該当が1件以上のとき	—
+L0063	—	一覧の領域	ご指定の条件に一致するデッキが見つかりませんでした。	We could not find a deck that matched your criteria.	該当が0件のとき	一覧を表示せず、HTTP 404を返す
+L0064	—	表示件数の指定欄	表示件数	Results per page	常時	—
+L0065	—	一覧の各件	プレイヤー	Player	該当が1件以上のとき	—
+L0066	—	一覧の各件	大会名	Tournament	該当が1件以上のとき	—
+L0067	—	一覧の各件	成績	Standing	該当が1件以上のとき	—
+L0068	—	一覧の各件	参加人数	Players	該当が1件以上のとき	—
+L0069	—	一覧の各件	開催日	Date	該当が1件以上のとき	—
+L0070	—	画面の題名	（条件の語）のデッキ検索一覧	（条件の語） Deck Search Results	検索条件を1件以上指定したとき	—
+
+exec
+/bin/bash -lc 'cat combination/cases/M15-03_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M15-03-CBPAGEFREE-004	フォーマット・アーキタイプ・デッキ	一括削除の使用状況と戻り先の確認データ(004)	フォーマット（名(日)=M1503-CB004-フォーマット／名(英)=M1503-CB004-Format／並び順=9304／メタゲーム分析日数=14／ランキング表示=ON）。アーキタイプ（名(日)=M1503-CB004-型／名(英)=M1503-CB004-Type／公開）。デッキ14件（どれもデッキタイプ=event／公開状態=公開／デッキリスト公開／開催日=2025/03/10 10:00／参加人数=18）。プレイヤー名は M1503-CB004-選手01 から M1503-CB004-選手14 までの連番で、順位は連番と同じ数。どのデッキも記事に紐づかない。このフォーマットのデッキはこれだけ	IT-M15-03-004専用。プレイヤー名の連番順に並べた一覧で、2ページ目のM1503-CB004-選手11からM1503-CB004-選手13までの3件を選んで一括削除する	前回の残りを消す: デッキ一覧でプレイヤー名に「M1503-CB004-」を入れて「日付クリア」と「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押す。アーキタイプ一覧・フォーマット一覧に名称が「M1503-CB004-」で始まるものがあれば削除する。管理画面のカード管理＞フォーマット管理で「新規登録」を押し、フォーマット名(日)に「M1503-CB004-フォーマット」、フォーマット名(英)に「M1503-CB004-Format」、並び順に「9304」、メタゲーム分析日数に「14」を入れ、「ランキング表示」にチェックを付け、「メタ分布簡易化」にチェックを付けず、「登録」を押す。管理画面のデッキ管理＞アーキタイプ一覧で「新規登録」を押し、アーキタイプ名(日)に「M1503-CB004-型」、アーキタイプ名(英)に「M1503-CB004-Type」、公開状態に「公開」、フォーマットに「M1503-CB004-フォーマット」を選び、代表カードは選ばずに「新規登録」を押す。デッキを14件、1件ずつ登録する。プレイヤー名の末尾の連番を01から14まで1つずつ増やし、順位と成績の連番も同じ数にして、次の手順を14回繰り返す: 管理画面のデッキ管理＞デッキ一覧で「新規登録」を押してデッキ編集画面（新規登録）を開き、デッキタイプに「event」、フォーマットに「M1503-CB004-フォーマット」、アーキタイプに「M1503-CB004-型」、公開状態(デッキ全体の公開設定)に「公開」を選び、「デッキリスト公開状態(非公開)」のチェックは外したまま、プレイヤー名に「M1503-CB004-選手NN」、イベント名(日)に「M1503-CB004-大会」、イベント名(英)に「M1503-CB004-Event」、イベント開催日に「2025/03/10 10:00」、順位に「NN」、成績に「M1503-CB004-成績NN」、イベント参加人数に「18」を入れて「新規登録」を押す。登録したデッキは削除せず、記事には紐づけない。	ケース専用
+S-M15-03-CBPAGEHEAD-006	フォーマット・アーキタイプ・デッキ・記事	一括削除の使用状況と戻り先の確認データ(006)	フォーマット（名(日)=M1503-CB006-フォーマット／名(英)=M1503-CB006-Format／並び順=9306／メタゲーム分析日数=14／ランキング表示=ON）。アーキタイプ（名(日)=M1503-CB006-型／名(英)=M1503-CB006-Type／公開）。デッキ14件（どれもデッキタイプ=event／公開状態=公開／デッキリスト公開／開催日=2025/03/10 10:00／参加人数=18）。プレイヤー名は M1503-CB006-選手01 から M1503-CB006-選手14 までの連番で、順位は連番と同じ数。記事に紐づくのはM1503-CB006-選手11の1件だけ。このフォーマットのデッキはこれだけ	IT-M15-03-006専用。プレイヤー名の連番順に並べた一覧で、2ページ目のM1503-CB006-選手11からM1503-CB006-選手13までの3件を選んで一括削除する	前回の残りを消す: デッキ一覧でプレイヤー名に「M1503-CB006-」を入れて「日付クリア」と「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押す。アーキタイプ一覧・フォーマット一覧に名称が「M1503-CB006-」で始まるものがあれば削除する。管理画面のカード管理＞フォーマット管理で「新規登録」を押し、フォーマット名(日)に「M1503-CB006-フォーマット」、フォーマット名(英)に「M1503-CB006-Format」、並び順に「9306」、メタゲーム分析日数に「14」を入れ、「ランキング表示」にチェックを付け、「メタ分布簡易化」にチェックを付けず、「登録」を押す。管理画面のデッキ管理＞アーキタイプ一覧で「新規登録」を押し、アーキタイプ名(日)に「M1503-CB006-型」、アーキタイプ名(英)に「M1503-CB006-Type」、公開状態に「公開」、フォーマットに「M1503-CB006-フォーマット」を選び、代表カードは選ばずに「新規登録」を押す。デッキを14件、1件ずつ登録する。プレイヤー名の末尾の連番を01から14まで1つずつ増やし、順位と成績の連番も同じ数にして、次の手順を14回繰り返す: 管理画面のデッキ管理＞デッキ一覧で「新規登録」を押してデッキ編集画面（新規登録）を開き、デッキタイプに「event」、フォーマットに「M1503-CB006-フォーマット」、アーキタイプに「M1503-CB006-型」、公開状態(デッキ全体の公開設定)に「公開」を選び、「デッキリスト公開状態(非公開)」のチェックは外したまま、プレイヤー名に「M1503-CB006-選手NN」、イベント名(日)に「M1503-CB006-大会」、イベント名(英)に「M1503-CB006-Event」、イベント開催日に「2025/03/10 10:00」、順位に「NN」、成績に「M1503-CB006-成績NN」、イベント参加人数に「18」を入れて「新規登録」を押す。登録したデッキは削除せず、記事には紐づけない。続けて、プレイヤー名「M1503-CB006-選手11」のデッキに関連する試験記事「M1503-CB006-記事」を1件用意する。試験記事の登録と、デッキと試験記事の関連付けは、記事を登録する画面とデッキを記事に関連付ける画面が管理画面に無く画面で指定できないためDBへ直接設定する。他のデッキは記事に紐づけない。	ケース専用
+S-M15-03-CBPAGEMID-008	フォーマット・アーキタイプ・デッキ・記事	一括削除の使用状況と戻り先の確認データ(008)	フォーマット（名(日)=M1503-CB008-フォーマット／名(英)=M1503-CB008-Format／並び順=9308／メタゲーム分析日数=14／ランキング表示=ON）。アーキタイプ（名(日)=M1503-CB008-型／名(英)=M1503-CB008-Type／公開）。デッキ14件（どれもデッキタイプ=event／公開状態=公開／デッキリスト公開／開催日=2025/03/10 10:00／参加人数=18）。プレイヤー名は M1503-CB008-選手01 から M1503-CB008-選手14 までの連番で、順位は連番と同じ数。記事に紐づくのはM1503-CB008-選手12の1件だけ。このフォーマットのデッキはこれだけ	IT-M15-03-008専用。プレイヤー名の連番順に並べた一覧で、2ページ目のM1503-CB008-選手11からM1503-CB008-選手13までの3件を選んで一括削除する	前回の残りを消す: デッキ一覧でプレイヤー名に「M1503-CB008-」を入れて「日付クリア」と「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押す。アーキタイプ一覧・フォーマット一覧に名称が「M1503-CB008-」で始まるものがあれば削除する。管理画面のカード管理＞フォーマット管理で「新規登録」を押し、フォーマット名(日)に「M1503-CB008-フォーマット」、フォーマット名(英)に「M1503-CB008-Format」、並び順に「9308」、メタゲーム分析日数に「14」を入れ、「ランキング表示」にチェックを付け、「メタ分布簡易化」にチェックを付けず、「登録」を押す。管理画面のデッキ管理＞アーキタイプ一覧で「新規登録」を押し、アーキタイプ名(日)に「M1503-CB008-型」、アーキタイプ名(英)に「M1503-CB008-Type」、公開状態に「公開」、フォーマットに「M1503-CB008-フォーマット」を選び、代表カードは選ばずに「新規登録」を押す。デッキを14件、1件ずつ登録する。プレイヤー名の末尾の連番を01から14まで1つずつ増やし、順位と成績の連番も同じ数にして、次の手順を14回繰り返す: 管理画面のデッキ管理＞デッキ一覧で「新規登録」を押してデッキ編集画面（新規登録）を開き、デッキタイプに「event」、フォーマットに「M1503-CB008-フォーマット」、アーキタイプに「M1503-CB008-型」、公開状態(デッキ全体の公開設定)に「公開」を選び、「デッキリスト公開状態(非公開)」のチェックは外したまま、プレイヤー名に「M1503-CB008-選手NN」、イベント名(日)に「M1503-CB008-大会」、イベント名(英)に「M1503-CB008-Event」、イベント開催日に「2025/03/10 10:00」、順位に「NN」、成績に「M1503-CB008-成績NN」、イベント参加人数に「18」を入れて「新規登録」を押す。登録したデッキは削除せず、記事には紐づけない。続けて、プレイヤー名「M1503-CB008-選手12」のデッキに関連する試験記事「M1503-CB008-記事」を1件用意する。試験記事の登録と、デッキと試験記事の関連付けは、記事を登録する画面とデッキを記事に関連付ける画面が管理画面に無く画面で指定できないためDBへ直接設定する。他のデッキは記事に紐づけない。	ケース専用
+
+exec
+/bin/bash -lc 'cat combination/cases/M15-01_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+exec
+/bin/bash -lc 'cat ../SCOPE.md precond/README.md' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 11ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M15-01-CBBULK-100	デッキ	一括編集・公開状態とアーキタイプの組合せデータ(100)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1501-100〕）／管理者作成の大会デッキ・Standard・表示区分=非公開・アーキタイプ=未設定・イベント名(日)=M1501-CB100組合せ大会・イベント名(英)=M1501-CB100-Event・開催日=試験基準日（ケース実行日）の3日前・順位=1・プレイヤー名=M1501-CB100組合せ選手	IT-M15-01-100専用。公開状態もアーキタイプも変更せず（変更チェックなし）一括編集し、非公開・アーキタイプ未設定のまま変わらずフロントの検索結果に載らない	M15-01試験管理者Aでログインし、デッキ新規登録画面でデッキタイプでevent（管理者作成）を選び、フォーマットにStandard、アーキタイプは必須のため一旦Blue Controlを選び、公開状態(デッキ全体の公開設定)に非公開を選び、デッキリスト公開状態の「非公開(採用カード情報を公開しない)」のチェックを外したままにし、イベント名(日)に「M1501-CB100組合せ大会」、イベント名(英)に「M1501-CB100-Event」、開催日に試験基準日（ケース実行日）の3日前の日付、順位に1、プレイヤー名に「M1501-CB100組合せ選手」を入れ、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-100〕）。アーキタイプ未設定は画面で指定できないためDBへ直接設定する。	ケース専用
+S-M15-01-CBBULK-101	デッキ	一括編集・公開状態とアーキタイプの組合せデータ(101)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1501-101〕）／管理者作成の大会デッキ・Standard・表示区分=非公開・アーキタイプ=未設定・イベント名(日)=M1501-CB101組合せ大会・イベント名(英)=M1501-CB101-Event・開催日=試験基準日（ケース実行日）の3日前・順位=1・プレイヤー名=M1501-CB101組合せ選手	IT-M15-01-101専用。アーキタイプだけを設定して一括編集しても、非公開のままならフロントの検索結果に載らない	M15-01試験管理者Aでログインし、デッキ新規登録画面でデッキタイプでevent（管理者作成）を選び、フォーマットにStandard、アーキタイプは必須のため一旦Blue Controlを選び、公開状態(デッキ全体の公開設定)に非公開を選び、デッキリスト公開状態の「非公開(採用カード情報を公開しない)」のチェックを外したままにし、イベント名(日)に「M1501-CB101組合せ大会」、イベント名(英)に「M1501-CB101-Event」、開催日に試験基準日（ケース実行日）の3日前の日付、順位に1、プレイヤー名に「M1501-CB101組合せ選手」を入れ、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-101〕）。アーキタイプ未設定は画面で指定できないためDBへ直接設定する。	ケース専用
+S-M15-01-CBBULK-102	デッキ	一括編集・公開状態とアーキタイプの組合せデータ(102)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1501-102〕）／管理者作成の大会デッキ・Standard・表示区分=非公開・アーキタイプ=未設定・イベント名(日)=M1501-CB102組合せ大会・イベント名(英)=M1501-CB102-Event・開催日=試験基準日（ケース実行日）の3日前・順位=1・プレイヤー名=M1501-CB102組合せ選手	IT-M15-01-102専用。公開状態だけを公開にして一括編集しても、アーキタイプが未設定のままならフロントの検索結果に載らない	M15-01試験管理者Aでログインし、デッキ新規登録画面でデッキタイプでevent（管理者作成）を選び、フォーマットにStandard、アーキタイプは必須のため一旦Blue Controlを選び、公開状態(デッキ全体の公開設定)に非公開を選び、デッキリスト公開状態の「非公開(採用カード情報を公開しない)」のチェックを外したままにし、イベント名(日)に「M1501-CB102組合せ大会」、イベント名(英)に「M1501-CB102-Event」、開催日に試験基準日（ケース実行日）の3日前の日付、順位に1、プレイヤー名に「M1501-CB102組合せ選手」を入れ、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-102〕）。アーキタイプ未設定は画面で指定できないためDBへ直接設定する。	ケース専用
+S-M15-01-CBBULK-103	デッキ	一括編集・公開状態とアーキタイプの組合せデータ(103)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1501-103〕）／管理者作成の大会デッキ・Standard・表示区分=非公開・アーキタイプ=未設定・イベント名(日)=M1501-CB103組合せ大会・イベント名(英)=M1501-CB103-Event・開催日=試験基準日（ケース実行日）の3日前・順位=1・プレイヤー名=M1501-CB103組合せ選手	IT-M15-01-103専用。公開状態を公開にしアーキタイプも設定して一括編集すると、フロントの検索結果に載る	M15-01試験管理者Aでログインし、デッキ新規登録画面でデッキタイプでevent（管理者作成）を選び、フォーマットにStandard、アーキタイプは必須のため一旦Blue Controlを選び、公開状態(デッキ全体の公開設定)に非公開を選び、デッキリスト公開状態の「非公開(採用カード情報を公開しない)」のチェックを外したままにし、イベント名(日)に「M1501-CB103組合せ大会」、イベント名(英)に「M1501-CB103-Event」、開催日に試験基準日（ケース実行日）の3日前の日付、順位に1、プレイヤー名に「M1501-CB103組合せ選手」を入れ、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-103〕）。アーキタイプ未設定は画面で指定できないためDBへ直接設定する。	ケース専用
+
+exec
+/bin/bash -lc 'cat combination/units/F09-01/design.txt' in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 27ms:
+##### 0309 f09-01 F09-01 デッキ検索TOP ／ フロント デッキ検索 — デッキ検索TOP
+L0001	Source:
+L0002	functions/pf-eccube3/f09-01_front_deck_deck_index.md
+L0003	F09-01 デッキ検索TOP ／ フロント デッキ検索 — デッキ検索TOP
+L0004	業務ロジック
+L0005	メタゲーム上位の集計
+L0006	集計対象はランキング表示の対象に設定されたフォーマットだけで、表示順の昇順に並べる。フォーマットごとに、大会デッキかつ公開のデッキを集計期間で絞り、アーキタイプ単位のデッキ数を多い順に上位3件まで示す。
+L0007	観点	扱い
+L0008	対象フォーマット	ランキング表示の対象が有効なフォーマットだけを対象とする
+L0009	対象デッキ	デッキ種別が大会デッキ、かつ表示区分が公開のものだけを対象とする
+L0010	集計期間の開始	当日からフォーマットごとのメタ集計日数を引いた日の00:00:00
+L0011	集計期間の終了	当日の23:59:59
+L0012	期間判定に使う日付	大会の開催日
+L0013	集計単位	アーキタイプ
+L0014	並び順	デッキ数の降順
+L0015	表示件数	上位3件。4位以下はメタゲーム一覧が受け持つ
+L0016	ユーザーデッキ	集計に含めない
+L0017	その他フォーマットの案内
+L0018	その他メタゲームの対象に設定されたフォーマットを表示順の昇順に並べ、各フォーマットのメタゲーム一覧への入口とする。対象が1件も無いときは何も並べない。
+L0019	直近の大会
+L0020	直近大会マスタのうち、開催日が設定され、日本語名と英語名がどちらも空でない大会を識別子の昇順に並べ、開催日・フォーマット名・大会名・参加人数を示す。条件を満たす大会が1件も無いときは直近の大会の区画そのものを表示しない。
+L0021	画面から引き継ぐ検索条件
+L0022	起点	遷移先	引き継ぐ条件
+L0023	メタゲーム上位のアーキタイプ	デッキ検索結果	アーキタイプIDと、開催日時の開始＝当該フォーマットの集計期間の開始日
+L0024	4位以下を見る	メタゲーム一覧	フォーマットID
+L0025	フォーマット名の見出し	メタゲーム一覧	フォーマットID
+L0026	その他	その他デッキ一覧	引き継がない
+L0027	直近の大会の1件	デッキ検索結果	開催日時の開始と終了＝その大会の開催日、大会名＝その大会の日本語名
+L0028	検索条件
+L0029	検索条件はデッキ検索結果へGETで渡す。デッキ検索TOP・デッキ検索結果・メタゲーム一覧・デッキリスト詳細は同一の検索条件の様式を共有する。
+L0030	画面上の項目	画面上の項目（英語）	検索条件
+L0031	フォーマット	Format	受け取ったフォーマットIDのいずれかに一致。選択肢を検索対象の設定で絞るのは画面側で、受け取ったID自体は再判定しない
+L0032	アーキタイプ	Archetype	選択したアーキタイプIDのいずれかに一致。カンマ区切りの文字列で渡す
+L0033	開催日時（開始）	Date	大会の開催日が、指定日の00:00:00以上
+L0034	開催日時（終了）	Date	大会の開催日が、指定日の23:59:59以下
+L0035	参加人数（下限）	Participants	参加人数が指定値以上
+L0036	参加人数（上限）	Participants	参加人数が指定値以下
+L0037	タグ	Tag	選択したデッキタグIDのいずれかを持つデッキだけを対象とする
+L0038	カード名	Card	採用カードの日本語名または英語名に完全一致するカードを含むデッキだけを対象とする
+L0039	プレイヤー名	Player	プレイヤー名への部分一致
+L0040	大会名	Tournament	大会の日本語名または英語名への部分一致
+L0041	成績	Result	優勝デッキのみ（Winning deck only）は順位が1位、TOP8以上のみ（Top 8 decks only）は順位が1位以上8位以下。掲載デッキすべて（List All Decks）は絞り込まない
+L0042	公開/非公開	Viewable/Private	公開リストのみ（Viewable Only）はデッキリストが公開のものだけを対象とする。非公開リストを含む（Private List Included）は絞り込まない
+L0043	検索条件の初期値と入力の扱い
+L0044	開催日時の開始の初期値は当日の6か月前、成績の初期値は「掲載デッキすべて」、公開/非公開の初期値は「非公開リストを含む」とする。他の項目の初期値は空とする。日付はY/m/dの形式で解釈し、この形式に合わない値は条件にしない。カード名の入力に含まれる+は/へ置き換えてから突き合わせる。プレイヤー名と大会名は入力値のワイルドカード文字%と_をエスケープして文字そのものとして扱う。
+L0045	アーキタイプの選択は、フォーマットと色による絞り込みとアーキタイプ名の入力補助を備えた選択画面で行い、選択結果をカンマ区切りの識別子として検索条件に載せる。カード名の入力補助にはカード名の一覧ファイルを用いる。
+L0046	集計に用いるデータ
+L0047	データ	用途
+L0048	デッキ	大会デッキで表示区分が公開のものだけを数える
+L0049	アーキタイプ	集計の単位とし、区画に出す名称と画像にも用いる
+L0050	フォーマット	ランキング表示の対象かどうかと、メタ集計日数と表示順を持つ
+L0051	直近大会マスタ	直近の大会の区画に出す大会だけを持つ
+L0052	デッキリストの公開状態	集計の条件にしない。デッキリストが非公開でも数える
+L0053	検索条件の送信様式
+L0054	画面上の項目	送信の形
+L0055	フォーマット	選択したフォーマットごとに、その識別子を鍵にした配列の要素として送る
+L0056	アーキタイプ	選択した識別子をカンマで連ねた1つの値として送る
+L0057	タグ	選択したタグの識別子を配列として送る
+L0058	大会名	入力欄の値のほかに、同じ名前の隠し項目も送る
+L0059	表示件数	デッキ検索TOPからは値を入れずに送る。値が入るのはデッキ検索結果で件数を変えたときだけ
+L0060	検索の実行	入力値の妥当性を判定せずに送る。形式を判定するのは日付だけで、参加人数などは形式を判定せず、空でなければそのまま条件にする
+L0061	エッジケース
+L0062	ケース	扱い
+L0063	ランキング表示の対象フォーマットが0件のとき	メタゲームの区画を1つも出さない
+L0064	あるフォーマットの集計結果が0件のとき	そのフォーマットの首位のアーキタイプの区画を出さず、4位以下への入口だけを残す
+L0065	その他メタゲームの対象が0件のとき	その他フォーマットの区画にはその他デッキ一覧への入口だけが残る
+L0066	その他フォーマットが多いとき	フォーマットの識別子が8のものの直後で区画を分けて折り返す
+L0067	直近大会の登録が0件のとき	直近の大会の区画そのものを出さない
+L0068	集計期間の開始日	Y/m/dの形式の文字列として検索条件へ引き継ぐ
+L0069	入出力
+L0070	種類	内容
+L0071	入力	なし。検索条件を伴わずに開く
+L0072	成功時出力	メタゲーム上位・その他フォーマット・直近の大会・検索条件の入力欄を載せた画面
+L0073	失敗時出力	なし。集計結果が0件でも同じ画面を返す
+L0074	入出力: 永続化
+L0075	デッキ情報を登録・更新・削除しない。
+L0076	操作	契機
+L0077	キャッシュへの保存	メタゲーム上位の集計結果をフォーマットごとに保存する。保持時間は3600秒
+L0078	キャッシュへの保存	同じ集計結果を、フォーマットと上限件数を鍵とする結果キャッシュにも保存する。保持時間は60秒
+L0079	リニューアル後の仕様
+L0080	表示メッセージ
+L0081	メッセージID	表示位置	画面上の文言	画面上の文言(英語)	表示条件	後続処理
+L0082	—	画面上部の見出し	デッキ検索	Deck Search	常時	—
+L0083	—	メタゲームの区画	（フォーマット名）メタゲーム	（フォーマット名） Metagame	常時	—
+L0084	—	アーキタイプの区画	デッキ数：	Decks:	集計結果が1件以上のとき	—
+L0085	—	メタゲームの区画	もっと見る	See more	常時	メタゲーム一覧へ遷移する
+L0086	—	フォーマットの区画	その他	Other	常時	その他デッキ一覧へ遷移する
+L0087	—	直近の大会の見出し	直近の大会でデッキ検索	Deck Search by Tournament	直近大会の登録が1件以上のとき	—
+L0088	—	直近の大会の各行	（人数）名	（人数） players	直近大会の登録が1件以上のとき	—
+L0089	—	検索条件の見出し	デッキ詳細検索	Deck Detailed Search	常時	—
+L0090	—	開催日時の入力欄	20xx/xx/xx	20xx/xx/xx	未入力のとき	—
+L0091	—	参加人数の入力欄	半角数字で入力	Enter half-width numbers	未入力のとき	—
+L0092	—	カード名の入力欄	カード名を入力してください	Keyword	未入力のとき	—
+L0093	—	プレイヤー名の入力欄	プレイヤー名を入力してください	Keyword	未入力のとき	—
+L0094	—	大会名の入力欄	大会名を入力してください	Keyword	未入力のとき	—
+L0095	—	検索条件の操作	検索	Search	常時	検索条件をデッキ検索結果へ渡す
+L0096	—	検索条件の操作	クリア	Reset	常時	入力済みの検索条件を空に戻す
+L0097	—	アーキタイプ選択の操作	リセット	Reset	アーキタイプ選択を開いたとき	選択済みのアーキタイプを空に戻す
+L0098	—	アーキタイプ選択の見出し	フォーマット	Choose format	アーキタイプ選択を開いたとき	—
+L0099	—	アーキタイプ選択の見出し	色	Archetype sorted by color	アーキタイプ選択を開いたとき	—
+L0100	—	アーキタイプ選択の入力欄	アーキタイプ名を入力してください。	Enter an archetype name.	アーキタイプ選択を開いたとき	—
+L0101	—	アーキタイプ選択の操作	選択	Select	アーキタイプ選択を開いたとき	選択したアーキタイプを検索条件へ載せる
+
+ succeeded in 63ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+# 結合テストケースの前提条件の書き直し
+
+## なぜ
+
+2026-09-28 時点の `cases/*_test_cases.tsv` は、上から順番に実行しても成立しないケースが多い。
+原因は3つある。
+
+1. **前提がケースに書かれていない。** 生成規則（`GEN_PROMPT_TEMPLATE.md` 縛り10）が
+   「シード投入は事前準備に書かない」としていたため、実行対象8,325件のうち7,866件の事前準備が `—`。
+   IT-A01-01-004 の前に「SMA-A01-002 を2個販売した取引」が要ることは、別ファイルのシード表を読まないと分からない
+2. **状態を書き換えるデータを複数ケースで共有している。** IT-A01-01-001 が SMA-A01-001 を2個販売すると、
+   002 の「10から8」は成立しない。012 が SMA-A01-I01 を7にすると、013 の「10から8」は成立しない
+3. **投入方法が実行できる粒度でない。** 「スマレジ試験環境に全キャンセル可能な取引を登録する」
+
+依頼者決定（2026-09-28）: **ケースごとに専用データを持たせる**。A01-01 で型を作ってから全機能へ広げる。
+
+## 規約
+
+対象は実行区分が「保留」以外のケース。保留ケースは1文字も変えない。
+
+| No. | 規約 |
+| --- | --- |
+| P1 | **各ケースは単独で成立する。** 他のケースを先に実行しても、後に実行しても、実行しなくても、事前準備どおりの状態から始められる |
+| P2 | シード表に `共有` 列を足す。`共有可` か `ケース専用` のどちらか。**どれか1ケースでも状態を変えるデータ**（在庫・受注・取引・ステータス・ログイン失敗回数など）は `ケース専用`。`共有可` にできるのは、どのケースも状態を変えないもの（参照だけのマスタ、ロックさせない管理者アカウント、環境設定）と、各ケースが開始時に必要な設定を自分で行う試験基盤（中継の保留／転送の切替など）だけ。`用途` にどちらなのかを書く |
+| P3 | `ケース専用` のシードを参照するケースはちょうど1件。シードIDは `<元のID>-<ケース番号3桁>` にする |
+| P4 | ケース専用データの識別子（DB投入するレコードのID・商品ID・CSVファイル名・会員メールなど）は、**全機能のケース専用シードの中で一意**にする。重なるときはケース番号を付けて改名する |
+| P5 | **事前準備は必須。** 使用シードすべてについて、どういう状態かを値付きで書き、シードIDを括弧で添える。シード投入の後で画面や外部システムを操作して作る状態（販売済みの取引など）は、その操作と、終わった後の値の確認まで書く |
+| P6 | 期待結果が「AからB」「Aのまま」と言うとき、**A は事前準備に書いた値**である |
+| P7 | **期待結果は変えない。** 変えてよいのは P4 の改名だけで、改名は `renames/<機能ID>.tsv` に宣言する。改名は、英数字の識別子どうし／シードで ID・名称・コード・番号・メール・ファイル名等の項目の値として定義した値／シードID／シードの自由文にある4文字以上のデータ名を「旧名-ケース番号」へ、の置換に限る（数量・状態語は改名しない）。改名で済まない変更は `oracle_changes/<機能ID>.tsv`（テストID/新期待結果/理由/承認）に載せ、承認が入るまでゲートを通さない。承認済みの類型は T1 だけ（下記）。手順で外部の値に呼び名を付け、その呼び名を期待結果で使う書き方もオラクル変更として扱う。要求ID・連鎖ID・観点ID・優先度・実行区分・出典は変えない |
+| P8 | 手順はテスト対象の操作だけにする。手順を変えてよいのは次の種別だけで、変えたら `step_changes/<機能ID>.tsv`（テストID/種別/新手順/理由）に宣言する。`準備移動`（準備操作を事前準備へ移す）／`改名`／`発番値控え`（実行中に発番される値を控える操作を足す）／`データ指示`（事前準備で作ったデータを指し示す）／`中継置換`（類型 T2）／`非同期完了待ち`（類型 T3）／`裁定訂正`（設計書の中の食い違いの裁定で直したもの。2026-10-16 依頼者決定） |
+| P9 | 投入方法は、何を使ってどう作るかを書く（管理画面のどの画面か／DB投入／スマレジ試験環境の管理画面で商品登録と在庫設定／CSVフィクスチャ）。「〜を登録する」だけで手段が無いものは不可 |
+| P10 | 事前準備に設計書に無い仕様を持ち込まない。書くのはテストデータの状態と作り方だけ。作り方は設計書に無ければ ee 実装（設定・テーブル・管理画面）から引いてよい。どちらにも無い作り方は `open_preconditions.tsv` に載せ、推測で埋めない |
+| P12 | 試験基盤が未整備、または作り方が設計書にも ee 実装にも無い前提は `open_preconditions.tsv` に載せる。**実行区分は変えない**（保留は「設計書に期待結果が無い」の意味で使っており、混ぜない）。ゲートは件数を参考として出す |
+| P13 | **手順で入力する値（登録する名称・コードなど）は改名しない。** 境界値や文字種の検査が壊れるため。同じ値のデータが既にあると成立しないときは、事前準備に「その値のデータが無い状態にする（あれば削除する）」と書く |
+| P11 | **事前準備は手順より前に完結する。** 手順の結果（発番されたID・返された値）を事前準備で参照しない。それらは手順の中で控える |
+
+## 承認済みの類型（依頼者 2026-09-28）
+
+| 類型 | 内容 | 記録先 |
+| --- | --- | --- |
+| T1 外部発番値 | 外部システムが発番する値（スマレジの在庫変動履歴ID・問い合わせIDなど）を基線が固定値で書いているときは、手順の中で発番値を控え、期待結果を「手順Nで控えた値」との照合に書き換える | `oracle_changes`（承認欄に「類型承認T1」） |
+| T3 非同期完了待ち | Webhook・バッチ・メッセージ処理など非同期で処理される操作の結果を確認する前に、非同期処理の対象のジョブ（待機中・実行中）が0件になるまで待つ手順を足す（画面名は書かない。下の「用語の置き換え」）。待つ上限時間を書く | `step_changes`（種別「非同期完了待ち」）。依頼者承認 2026-09-30 |
+| T2 中継置換 | 外部システムとの通信の観測・送信を、基線が実行できない書き方（「Webhookの応答をブラウザで確認」「スマレジAPIから送信」など）にしているときは、中継（通信を記録・保留・転送・模擬送信する試験基盤）で観測・送信する手順に変える。外部が実際に返す通知は保留して転送し、外部に起こさせられない結果（エラー等）だけを模擬送信する | `step_changes`（種別「中継置換」） |
+
+## 類型T4 画面発番値（依頼者決定 2026-10-09）
+
+テストデータは画面から入力して作る。画面が自動で振る番号（注文番号・受注ID・イベントIDなど）を基線が固定値で書いているときは、
+データを画面で登録したときに振られた番号を控え、事前準備・手順・期待結果ではその控えた番号（呼び名〔注文番号-M0526-012〕の形）を使う。
+書き直しは `../seed_screen/`（README）。期待結果・手順の変更は `oracle_changes/`（承認欄に「類型承認T4」）・`step_changes/`（種別に「発番値控え」）へ、`../seed_screen/apply.py` が機械で宣言する。
+控えた番号へ置き換えたケースの一覧は `screen_noted_cases.tsv`。検査は、これらのケースについて改名先（消えた固定の番号）の検査を外し、〔…〕の呼び名を識別子として数えない。
+
+## テストできない・作り方が未確定のケースの除外（依頼者決定 2026-10-14）
+
+テストできないケースと、作り方が未確定のケースを、ケースの正本（`../cases/`・`../all_test_cases.tsv`）から外した。
+外したのは、検査 G9 が「未整備・未確定の前提を使うケース」と数えていた 1,892件（使用シードの投入方法に「未確定」「未整備」がある、または `open_preconditions.tsv` の影響ケースに載っている）。
+内訳は、作り方が未確定 1,744、試験環境の決定待ち 113、実装上その状態を作れない 35。残りは 10,556件・345機能（20機能は全ケースが外れた）。
+
+- 行は消さず `../excluded_open_cases.tsv`（除外理由・未確定の内容つき。元の11列は「元_」付き）へ移した。外したケースだけが使っていたシード 2,458件は `../excluded_open_seeds.tsv`。
+- 道具は `../exclude_open.py`（何度流しても同じ）。**各 `merge_into_cases.py` と `seed_screen/apply.py` は外したケースを `cases/` へ戻すので、そのあとに必ず流す。** 順序は merge → `seed_screen/apply.py` → `datapattern/conflicts/apply_rulings.py`（最後に `product_csv/apply.py` と `runnable/apply.py` も当たる）→ `exclude_open.py` → `exclude_scope.py` → `build_all_test_cases.py`。
+- 作り方が決まったら、シードの投入方法（と `open_preconditions.tsv`）を直してから同じ順に流し直すと戻る。
+- 検査 G6 は、基線・追加分からこの除外分を差し引いて照合する。保留（設計書に正解が無い）の除外 `excluded_hold_cases.tsv` とは別の表で、意味を混ぜていない。
+
+### 影響ケースの漏れ（2026-10-16）
+
+`open_preconditions.tsv` の影響ケースは、行を足した時点のケースで書いた固定の一覧である。そのため、あとから足したケースが同じ未確定の前提を使っていても除外に掛からなかった。全数を洗い直し、63件を影響ケースに足して外した（11,777件 → 11,714件・341機能）。
+- 同じシードを使うのに一覧に無かったもの: IT-A05-04-047〜060（スマレジ受信。2026-10-09 の被覆監査で追加。取引情報取得APIの試験環境と Webhook の認証情報の2行）、IT-B02-02-010〜012（バッチの実行環境）、IT-M03-09-058・097（スマレジの試験用受信サーバー）。
+- 連携ケース（`../link/`）が、基線では未確定のシードを「-L-」付きの別名で作り直していたもの: S-B02-02-L-ENV・S-B05-02-L-CLOCK・S-B05-09-L-API/CLOCK/CONFIG・S-B06-01-L-ENV・S-B06-02-L-EXEC・S-B08-03-L-ENV・S-B08-06-L-API-CONTROL・S-B13-01-L-API/EXEC/MAIL。基線の行と同じ文面で、対象をL版にした行を足した（`未確定: …（… の未確定と同じ）`）。B06-01 の別名を使っていたデータパターンのケースも含む。
+- 時計を固定する前提: IT-M04-17-001（業務日を2026/09/29に固定。時計の固定は S-B05-09-CLOCK などと同じく作り方が無い）。
+- この結果、B02-02・B05-02・B05-09・B06-01・B08-03・B13-01 はケースが0件になった（基線のケースは前から外れており、残っていたのは別名のシードを使う連携ケースだけだった）。
+- 同じ日に `../chain_gap/` のレビューで、S-F06-02-L-ENV（IT-F06-02-024・025）も見つかり、同じ形の行を足して外した。基線の行の対象は S-F06-02-API-OK で、名前の役割の語（API と ENV）が違うため道具では拾えなかった。このシードは、開始時にスマレジAPI試験環境のユーザーDBで会員が0件であることを確かめる作り方で、024 は発番されたスマレジIDを控える。外部の試験環境を使うシードは、名前だけでなく中身でも基線の行と見比べる。
+- 候補を出す道具は `scan_open_leaks.py`。ケースを合流したあと、`exclude_open.py` の前に流す。候補を出すだけで判定はしない。残っている候補 159件は、読んだうえで漏れではないと判定したもの。
+  - 共有の定義だけを使い、未確定の項目に触れないもの: S-M05-03-DEFS、S-F06-05-BASIC、IT-A05-04-002（GETを送るだけで、認証も取引の取得も要らない）。
+  - 名前の役割の語が同じだけで、作り方が決まっているもの: ポイントの設定、ユニサーチの接続先、ee の開発用の正常応答、スマレジの試験環境への接続。
+  - S-M03-10-SMAREGI-ENV: ee の商品APIのクライアントは、模擬応答のときも呼び出しを記録する（SmaregiPlatformApiCallRecorder）。シードの書き方は実装と合っている。
+
+## 試験環境で用意できる前提の解消（依頼者決定 2026-10-19）
+
+依頼者決定「バッチの実行、スマレジなど外部の試験環境、メールの受け取りは環境準備できる」（中継・模擬応答、時刻の固定、障害を起こす手段は用意しない）。作り方が未確定で外したケースを止めていた項目（未確定のシード 944・未確定の前提の行 879）を1件ずつ判定し、この3つだけで決まるものは作り方を書いて解消した。止めていた項目がすべて解消したケース 183件が一覧へ戻った（11,713件 → 11,896件・346機能）。
+解消した前提の行 81 は `open_preconditions.tsv` から `resolved_preconditions.tsv`（解消の書き方・区分・根拠・決定つき）へ移した。シードは投入方法を書き直した（外した表 `../excluded_open_seeds.tsv` を直し、`exclude_open.py` が直った文で戻す）。
+同じ日の依頼者決定「おすすめで進めて」で、人が補って実行できるもの（決まった番号の読み替え、必須のチェック、確認モーダル、割引率、在庫の承認）も書き足した。道具・判定・レビューは `../runnable/README.md`。`../datapattern/conflicts/apply_rulings.py` が最後に `../runnable/apply.py` を呼ぶ。
+
+## E2E で作成を保留した入力ファイルを使うケースの除外（依頼者決定 2026-10-16）
+
+依頼者決定「テスト保留のケースがあれば除外」。ケース一覧に実行区分「保留」のケースは無かった（2026-10-01 にすべて外してある）。保留に当たっていたのは、E2E の入力ファイルの棚卸し（`../../../e2e/fixtures/named-file-references.tsv`。M03・M04 だけ棚卸し済み）で作成判断を「保留」「正本矛盾」とした33ファイルで、シードの記述だけでは中身（文字コード、見出し行の値、画像の中身など）が一つに決まらないか、シードの記述が食い違っていた（M03-30 の empty.tsv）。これを使うケース29件を、作り方が未確定の前提として `open_preconditions.tsv` に載せ（対象「入力ファイル <ファイル名>」の33行）、`exclude_open.py` で外した。ケースは 11,679件から 11,650件。ファイルの中身をシードに書いて棚卸しの判断が変わったら、その行を消して流し直すと戻る。M03・M04 以外の機能の入力ファイル（棚卸しで未判定の 1,729件）は見ていない。
+同じ日の依頼者決定「画像は任意の有効な画像でよいとして戻す」で、画像の中身が未指定だった9ファイル（M04-02-050・M04-03-005・M04-05-011・M04-31-150 の4ケース）の行を外し、4ケースを戻した（11,654件）。シード（`../seed_screen/out/` の該当行の投入方法）に「画像ファイルの中身は任意の有効な画像でよい。同じケースで使う複数の画像は、互いに見分けられる別の画像にする」と書いた。E2E の入力ファイル（`e2e/fixtures/`）はまだ作っていない。
+外したケースを戻すときは、流れを2回流す。1回目は `exclude_open.py` が除外表の古い文面のままケースとシードを戻すので、2回目の `seed_screen/apply.py`・`apply_rulings.py` で書き直しが当たる。
+
+## フェーズ2見送り・実装しない機能の除外（依頼者決定 2026-10-16）
+
+依頼者決定「フェーズ2見送り、機能実装しない機能についてはケースから除外」。対象は `../scope_out.tsv`（根拠つき）で、フェーズ2見送り13機能（A06-14・B01-02・B01-03・F02-05・M03-43・M03-44・M04-06・M04-07・M06-13・M08-11・M08-15・M08-16・M08-17）、実装しない4機能（M03-34・M03-36 は 2026-10-06 決定、M04-27・B13-02 は Excel の廃止の記述）と、M03-43 の機能を確かめていた IT-M03-30-038。
+ケース一覧の6件に加え、作り方が未確定で外していた65件、保留で外していた49件も、決まっても戻さないので `../excluded_scope_cases.tsv` へ移した（計120件。元の表と元の除外理由を残す）。外したケースだけが使っていたシード89件は `../excluded_scope_seeds.tsv`。道具は `../exclude_scope.py`（何度流しても同じ。`exclude_open.py` の後に流す）。ケースは 11,685件・349機能から 11,679件・346機能になった（F02-05・M03-44・M06-13 はケースが0件）。
+保留から移した49件は、設計者に聞く必要が無くなった（`../hold_review/questions.tsv` に論点があるものも含む）。機能の一部だけがフェーズ2のもの（ナビゲーションの通知、会員検索の顧客分析タグなど）は機能ごとは外していない。そのフェーズ2の部分を確かめるケースは IT-M03-30-038 のほかに無かった。
+検査 G6 は、基線・追加分からこの表の分も差し引いて照合する。
+
+## 既存ケースと設計書の食い違いの裁定（依頼者決定 2026-10-16）
+
+設計書の中で記述が食い違うときの優先順位（Excel由来＞埋め込みの表示メッセージ節＞埋め込みの現行仕様節、同じ出所では改訂後）を決め、既存ケース52件の報告を裁定した。直したケースの期待結果・手順・出典は `oracle_changes/`・`step_changes/`（種別「裁定訂正」）・`source_changes/` に、承認欄「2026-10-16 依頼者裁定」で宣言してある。規則で決まらず共通部分でも書けない10件は `../excluded_hold_cases.tsv` へ移した（論点ID が QD- の行。決める人＝設計者）。道具は `../datapattern/conflicts/apply_rulings.py`（何度流しても同じ。`seed_screen/apply.py` の後、`exclude_open.py` の前に流す）。説明は `../datapattern/conflicts/README.md`。
+
+## 保留ケースの除外（依頼者決定 2026-10-01）
+
+実行区分が「保留」のケース（1,014件）はテストケースから外した。設計書にも現行ソースにも期待結果（正解）が無く、テストできないため。
+行は削除せず `../excluded_hold_cases.tsv` へ移した（論点ID・決める人つき。元の11列は「元_」付きで保持）。保留ケースだけが使っていたシードは `../excluded_hold_seeds.tsv`。
+設計者の回答（`../hold_review/questions.tsv`）やテスト側の決定で正解が決まったら、そのケースを作り直して戻す。ゲート G6 は、基線のテストIDからこの除外分を差し引いて照合し、保留ケースが残っていれば落とす。
+
+## 実行の前提（依頼者決定 2026-09-30）
+
+- **専用DBで流す。** 結合テストは機能（またはモジュール）ごとに、まっさらな専用DBへシードを投入して流す。検索・一覧・集計で「このN件だけ」を期待するケースは、開始時に同じ条件に当たる他のデータを削除して隔離しており、共有の試験環境では他機能のデータを消しうる
+- **1件しかないデータは順番に実行する。** 基本設定のように1件しかない設定や、期待結果が固定IDを名指ししていて分けられないデータは `共有可` とし、使う各ケースが開始時に値を設定し直す。上から順に実行すれば成立するが、同じデータを使うケースを同時には実行しない。該当ケースは `sequential_only.tsv`
+
+## 機械検査 `gate_precond.py`
+
+| No. | 検査 | 対応する規約 |
+| --- | --- | --- |
+| G1 | 保留以外で事前準備が空・`—` | P5 |
+| G2 | 使用シードのIDが事前準備に現れない | P5 |
+| G3 | 期待結果の「AからB」「Aのまま」の A が事前準備に無い | P6 |
+| G4 | `共有` 列が無い・値が不正／ケース専用シードの参照が1件でない／ケース専用シードIDの末尾がケース番号でない／どのケースも使わないシード／保留以外のケースがケース専用シードを1件も使わない（状態を変えない読み取りだけのケースは `readonly_cases/<機能ID>.tsv` にテストID/理由で宣言） | P1 P2 P3 |
+| G5 | 同じ機能のケース専用シードどうしで自分のレコードID（「ID=20」「ID 20」）が重なる。ケース専用シードの識別子（「〜」の範囲は展開する）が、他のケースの事前準備・手順・期待結果、または他のケース専用シード（全機能）に現れる | P1 P4 |
+| G6 | 改名が識別子どうしでない。期待結果が「基線に改名を当てたもの」と一致せず、承認済みの oracle_changes にも無い。保留ケースが変わった。テストIDの集合・他の固定列が変わった（出典は `source_changes/`、実行区分の誤記は `kind_changes.tsv` に宣言したものを除く） | P7 |
+| G8 | 事前準備が「手順N」「返した値」「発番した」など後の結果を参照している | P11 |
+| G7 | 手順が「基線に改名を当てたもの」と違うのに `step_changes` に宣言が無い／種別が P8 の5種以外 | P8 |
+| G9 | 投入方法が「未確定」「未整備」のシードを使う非保留ケースが `open_preconditions.tsv` に無い。該当件数は参考として出す | P12 |
+
+`baseline/` は書き直し前（HEAD 98709b43）のスナップショット。G6 の基準なので書き換えない。
+
+実行区分の誤記を直すときは、基線を書き換えずに `kind_changes.tsv`（テストID／旧実行区分／新実行区分／理由）へ宣言する。G6 は、基線の値が旧実行区分と一致し、今の値が新実行区分と一致するものだけ認める（2026-10-19、IT-M03-45-024 の「ブラザ+DB確認」→「ブラウザ+DB確認」）。
+
+書き直しの後で足したケースは `added_cases.tsv`（テストID／追加日／由来）に載せる。G6 は「基線から保留除外分を引いた集合」に
+この追加分を足したものと、現在のテストIDの集合を照合する。基線が無い機能（後から新設したもの）は、全ケースが追加分になる。
+2026-10-06 に機能間データ連携のケース142件を足した（`../link/merge_into_cases.py`。旧テストIDとの対応は `../link/merged_map.tsv`）。
+同日、アクセス解析連携のケース（F10-01〜03）を足した（`../ga/merge_into_cases.py`。判定IDとの対応は `../ga/ga_map.tsv`）。
+同日、対応表が「候補」止まりだった14機能のケース398件を足した（`../sheetmap/merge_into_cases.py`。判定IDとの対応は `../sheetmap/sm_map.tsv`）。
+
+機械で見られないもの（P2 の共有可の妥当性、P6 の値と対象の対応、P8 の種別の妥当性、P9、P10）は codex レビューで見る。
+
+## 用語の置き換え（依頼者決定 2026-10-06）
+
+AWS Step Functions は使わない。テストケースでは「バッチ」と書き、非同期処理ダッシュボードの「Messenger ジョブ」という表現も書かない。
+置き換えの規則は `terms.py`（`python3 precond/terms.py` で cases/・step_changes/・open_preconditions.tsv・link/cases に当てる。何度流しても同じ）。
+基線は書き換えていない。ゲートは基線の手順と期待結果に同じ置き換えを当ててから照合する。
+シードID `S-B02-05-STEPFUNCTIONS` は `S-B02-05-BATCH-ENV` に変えた。
+
+「非同期処理ダッシュボード」という画面名も書かない（同日の依頼者決定）。設計書に無い画面で、実装にあるのは管理画面とは切り離した運用ツールである。
+ケースには「非同期処理の待機中・実行中のジョブが0件になるまで待つ」のように状態だけを書く。待機の手順そのものは残す
+（バッチはジョブを積むだけで終わり、実処理はワーカーが後から行うため）。確認の手段は試験環境の用意として扱う。
+
+codex
+M15-02 の打ち切り組と M15-03 の削除順・ページ遷移は、現時点では設計書と整合しています。残る実行可能性を、ケースが使う共有シードと画面操作の経路に絞って確かめます。
+exec
+/bin/bash -lc "grep -n -e 'F02=なし' combination/cases/M15-03_cb_dispositions.tsv" in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+3:CB-M15-03-002	ケースにしない	-	一括削除は検索結果の一覧でデッキを選んで行うが、M15-01 L0115は「一覧の初期表示では、保持していた検索条件・ページ番号・表示件数を破棄し、空の検索条件・空の一覧」とする。選べる一覧が出ている状態では検索によりページ番号が保持されており、M15-03 L0160の「保持していた一覧のページ番号があるとき」にしかならず、「なし」で削除は実行できない（実装でも検索で1が保存される）。要因の制約に足すべき組: F02=なし&F01=すべて未使用
+5:CB-M15-03-004	ケースにしない	-	同上。要因の制約に足すべき組: F02=なし&F01=先頭が使用中
+7:CB-M15-03-006	ケースにしない	-	同上。要因の制約に足すべき組: F02=なし&F01=未使用の後に使用中
+
+exec
+/bin/bash -lc "grep -R -n -e 'image_url' -e 'imageUrl' -e 'ImageUrl' src/Eccube/Controller/Admin/Card" in /home/y-saito/Developments/ec-cube-enterprise
+exec
+/bin/bash -lc 'ls src/Eccube/Controller/Admin/Deck src/Eccube/Controller/Admin/Card' in /home/y-saito/Developments/ec-cube-enterprise
+ exited 1 in 0ms:
+ succeeded in 0ms:
+src/Eccube/Controller/Admin/Card:
+CardController.php
+CardCsvController.php
+CardsetController.php
+FormatController.php
+
+src/Eccube/Controller/Admin/Deck:
+DeckController.php
+DeckCsvController.php
+LatestEventDeckController.php
+
+exec
+/bin/bash -lc "grep -R -n -e 'function bulkUpdate' -e 'function export' -e 'function bulkDelete' src/Eccube/Controller/Admin/Deck" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+src/Eccube/Controller/Admin/Deck/DeckController.php:151:    public function bulkDelete(Request $request): RedirectResponse
+src/Eccube/Controller/Admin/Deck/DeckController.php:200:    public function bulkUpdate(Request $request): RedirectResponse
+
+exec
+/bin/bash -lc "sed -n '60,285p' src/Eccube/Controller/Admin/Deck/DeckController.php" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+        private readonly DeckBulkDeleteAction $bulkDeleteAction,
+        private readonly DeckBulkUpdateAction $bulkUpdateAction,
+        private readonly DeckStoreAction $storeAction,
+        private readonly DeckCopyAction $copyAction,
+        private readonly DeckCsvExporterService $deckCsvExporterService,
+    ) {
+        $this->repository = $this->deckRepository;
+        $this->sessionKey = 'deck';
+        $this->formType = SearchDeckType::class;
+        $this->formName = 'admin_search_deck';
+        $this->defaultOrder = 'DESC';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[Route('/%eccube_admin_route%/deck', name: 'admin_deck_list', methods: ['GET', 'POST'])]
+    #[Route('/%eccube_admin_route%/deck/search/{page_no}', name: 'admin_deck_search', requirements: ['page_no' => '\d+'], methods: ['GET', 'POST'])]
+    #[Template('@admin/Deck/index.twig')]
+    public function index(Request $request, PaginatorInterface $paginator, int $page_no = 1): array
+    {
+        $searchForm = $this->getForm();
+        $bulkUpdateForm = $this->createForm(DeckBulkUpdateType::class);
+
+        $event = new EventArgs(
+            [
+                'form' => $searchForm,
+            ],
+            $request
+        );
+        $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_DECK_INDEX_INITIALIZE);
+
+        if ($request->isMethod('POST')) {
+            $searchForm->handleRequest($request);
+
+            if (!$searchForm->isValid()) {
+                return [
+                    'searchForm' => $searchForm->createView(),
+                    'bulkUpdateForm' => $bulkUpdateForm->createView(),
+                    'pagination' => null,
+                    'is_search_filter_active' => true,
+                ];
+            }
+
+            $page_no = 1;
+            $viewData = FormUtil::getViewData($searchForm);
+
+            $this->session->set($this->sessionKey, $viewData);
+            $this->session->set($this->sessionKey.'.page_no', $page_no);
+        } else {
+            $pageNoAttr = $request->attributes->get('page_no');
+            if ($request->query->getInt('resume') === Constant::ENABLED || $pageNoAttr !== null) {
+                if ($pageNoAttr !== null) {
+                    $page_no = (int) $pageNoAttr;
+                    $this->session->set($this->sessionKey.'.page_no', $page_no);
+                } else {
+                    $page_no = $this->session->get($this->sessionKey.'.page_no', 1);
+                }
+                $viewData = $this->session->get($this->sessionKey, []);
+                FormUtil::submitAndGetData($searchForm, $viewData);
+            } else {
+                $viewData = FormUtil::getViewData($searchForm);
+                $this->session->set($this->sessionKey, $viewData);
+                $this->session->set($this->sessionKey.'.page_no', 1);
+                $this->session->set('eccube.admin.'.$this->sessionKey.'.search.page_count', 100);
+
+                return [
+                    'searchForm' => $searchForm->createView(),
+                    'bulkUpdateForm' => $bulkUpdateForm->createView(),
+                    'pagination' => null,
+                    'is_search_filter_active' => false,
+                ];
+            }
+        }
+
+        $responseData = $this->search($request, null, $page_no);
+        $this->session->set($this->sessionKey.'.page_no', $responseData['page_no']);
+
+        $searchData = $searchForm->getData();
+        $responseData['sortKeys'] = $this->deckRepository->getSortKeys();
+        $responseData['sortKey'] = $searchData['sortKey'] ?? $this->deckRepository::DEFAULT_SORT_KEY;
+        $responseData['sortOrder'] = $searchData['sortOrder'] ?? $this->deckRepository::DEFAULT_SORT_ORDER;
+        $responseData['bulkUpdateForm'] = $bulkUpdateForm->createView();
+
+        return $responseData;
+    }
+
+    /**
+     * デッキ一括削除（個別削除兼用）.
+     */
+    #[Route('/%eccube_admin_route%/deck/bulk_delete', name: 'admin_deck_bulk_delete', methods: ['POST'])]
+    public function bulkDelete(Request $request): RedirectResponse
+    {
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('admin_deck_bulk_delete', $token)) {
+            $this->addError('admin.common.csrf_invalid', 'admin');
+
+            return $this->redirectToRoute('admin_deck_list');
+        }
+
+        $pageNo = $this->session->get($this->sessionKey.'.page_no', 1);
+
+        /** @var array<int, string> $deckIds */
+        $deckIds = $request->request->all('deckId');
+
+        if (empty($deckIds)) {
+            return $this->redirectToRoute('admin_deck_search', ['page_no' => $pageNo]);
+        }
+
+        $User = $this->getUser();
+        $Member = $User instanceof \Eccube\Entity\Member ? $User : null;
+        $input = new DeckBulkDeleteInput($deckIds, $Member);
+
+        try {
+            $this->bulkDeleteAction->handle($input);
+        } catch (NotFoundHttpException $e) {
+            throw $e;
+        } catch (\RuntimeException $e) {
+            $this->addError($e->getMessage(), 'admin');
+
+            return $this->redirectToRoute('admin_deck_search', ['page_no' => $pageNo]);
+        } catch (\Exception $e) {
+            log_error('デッキ一括削除エラー', ['message' => $e->getMessage()]);
+            $this->addError('admin.common.delete_error', 'admin');
+
+            return $this->redirectToRoute('admin_deck_search', ['page_no' => $pageNo]);
+        }
+
+        $event = new EventArgs([], $request);
+        $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_DECK_BULK_DELETE_COMPLETE);
+
+        $this->addSuccess('admin.common.delete_complete', 'admin');
+
+        return $this->redirectToRoute('admin_deck_search', ['page_no' => $pageNo]);
+    }
+
+    /**
+     * デッキ一括編集.
+     */
+    #[Route('/%eccube_admin_route%/deck/bulk_update', name: 'admin_deck_bulk_update', methods: ['POST'])]
+    public function bulkUpdate(Request $request): RedirectResponse
+    {
+        $token = $request->request->get('_token');
+        $pageNo = $this->session->get($this->sessionKey.'.page_no', 1);
+
+        if (!$this->isCsrfTokenValid('admin_deck_bulk_update', $token)) {
+            $this->addError('admin.common.csrf_invalid', 'admin');
+
+            return $this->redirectToRoute('admin_deck_list');
+        }
+
+        $form = $this->createForm(DeckBulkUpdateType::class);
+        $form->handleRequest($request);
+
+        if (!$form->isValid()) {
+            foreach ($form->getErrors(true) as $error) {
+                $this->addError($error->getMessage(), 'admin');
+            }
+
+            return $this->redirectToRoute('admin_deck_search', ['page_no' => $pageNo]);
+        }
+
+        /** @var array<int, string> $deckIds */
+        $deckIds = $request->request->all('deckId');
+
+        if (empty($deckIds)) {
+            return $this->redirectToRoute('admin_deck_search', ['page_no' => $pageNo]);
+        }
+
+        /** @var array<string, string> $changeFlgs */
+        $changeFlgs = $request->request->all('change_flgs');
+
+        if (empty($changeFlgs)) {
+            return $this->redirectToRoute('admin_deck_search', ['page_no' => $pageNo]);
+        }
+
+        $User = $this->getUser();
+        $Member = $User instanceof \Eccube\Entity\Member ? $User : null;
+        $input = new DeckBulkUpdateInput($deckIds, $changeFlgs, $form, $Member);
+
+        try {
+            $this->bulkUpdateAction->handle($input);
+        } catch (NotFoundHttpException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            log_error('デッキ一括編集エラー', ['message' => $e->getMessage()]);
+            $this->addError('admin.common.save_error', 'admin');
+
+            return $this->redirectToRoute('admin_deck_search', ['page_no' => $pageNo]);
+        }
+
+        $event = new EventArgs(
+            [
+                'form' => $form,
+            ],
+            $request
+        );
+        $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_DECK_BULK_UPDATE_COMPLETE);
+
+        $this->addSuccess('admin.common.save_complete', 'admin');
+
+        return $this->redirectToRoute('admin_deck_search', ['page_no' => $pageNo]);
+    }
+
+    /**
+     * デッキ新規登録画面.
+     *
+     * @return array<string, mixed>|RedirectResponse
+     */
+    #[Route('/%eccube_admin_route%/deck/new', name: 'admin_deck_new', methods: ['GET', 'POST'])]
+    #[Template('@admin/Deck/edit.twig')]
+    public function new(Request $request): RedirectResponse|array
+    {
+        $Deck = new DtbDeck();
+
+        return $this->save($request, $Deck, isNew: true);
+    }
+
+    /**
+     * デッキ編集画面.
+     *
+     * @return array<string, mixed>|RedirectResponse
+     */
+    #[Route('/%eccube_admin_route%/deck/{id}/edit', name: 'admin_deck_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Template('@admin/Deck/edit.twig')]
+    public function edit(Request $request, DtbDeck $Deck): RedirectResponse|array
+
+exec
+/bin/bash -lc "grep -n -e 'image' -e 'Image' -e 'CSV' src/Eccube/Controller/Admin/Card/CardCsvController.php" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+34: * 管理画面のカードマスタ CSV（雛形ダウンロード・アップロード・一覧からの出力）を扱う。
+45:     * カードマスタ取込用 CSV テンプレートをダウンロードする。
+57:        $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_CARD_CSV_EXPORT);
+63:     * カード CSV アップロード画面を表示する。
+78:     * アップロードされたカード CSV を検証し取り込む。
+109:        if ($this->countCsvRows($formFile) >= static::ADMIN_CSV_IMPORT_MAX_ROWS) {
+115:        log_info('カードCSV登録開始');
+141:        log_info('カードCSV登録完了');
+149:        $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_CARD_CSV_IMPORT_COMPLETE);
+157:     * 一覧で選択したカードを CSV で出力する。
+176:            $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_CARD_CSV_EXPORT);
+199:     * CSV アップロード画面の Twig 変数を組み立てる。
+
+exec
+/bin/bash -lc "grep -R -n -e 'カード登録CSV' -e '画像URL(英語)' /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/combination/units/M15-04/design.txt /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/combination/units/_common" in /home/y-saito/Developments/ec-cube-enterprise
+ exited 1 in 0ms:
+exec
+/bin/bash -lc "grep -n -e 'M15-03-QM-ADM' cases/M15-03_seed_data.tsv; grep -n -e 'M15-04-QM-ADM' cases/M15-04_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+2:S-M15-03-QM-ADM	管理者	M15-03連携試験の管理者	管理画面のログインID=m1503qm-adm／パスワード=Passw0rd-M1503QM／稼働中／ロックなし／システム管理者の権限（デッキ・アーキタイプ・フォーマット・カード・直近の大会の管理ができる）	管理画面で上流機能を操作する全ケースが使う。どのケースもアカウントの状態を変更しない	管理画面のメンバー管理で登録し、システム管理者の権限を付ける	共有可
+2:S-M15-04-QM-ADM	管理者	M15-04連携試験の管理者	管理画面のログインID=m1504qm-adm／パスワード=Passw0rd-M1504QM／稼働中／ロックなし／システム管理者の権限（デッキ・アーキタイプ・フォーマット・カード・直近の大会の管理ができる）	管理画面で上流機能を操作する全ケースが使う。どのケースもアカウントの状態を変更しない	管理画面のメンバー管理で登録し、システム管理者の権限を付ける	共有可
+
+exec
+/bin/bash -lc "sed -n '75,145p' src/Eccube/Controller/Admin/Card/CardCsvController.php; grep -R -n -e 'class CardCsvImport' -e 'class CardCsv' src/Eccube/Service src/Eccube/UseCase src/Eccube/Domain 2>/dev/null" in /home/y-saito/Developments/ec-cube-enterprise
+ exited 2 in 0ms:
+    }
+
+    /**
+     * アップロードされたカード CSV を検証し取り込む。
+     */
+    #[Route(path: '/%eccube_admin_route%/card/import', name: 'admin_card_csv_import', methods: ['POST'])]
+    public function import(Request $request): RedirectResponse
+    {
+        $headers = CardCsv::getCsvHeader();
+        $notRequired = CardCsv::getNotRequiredCsvHeaderKeys();
+
+        $form = $this->formFactory->createBuilder(CsvImportType::class)->getForm();
+        $form->handleRequest($request);
+        if (!$this->cardCsv->checkFormValid($form)) {
+            foreach ($this->cardCsv->getErrors() as $error) {
+                $this->addError($error->getMessage(), 'admin');
+            }
+
+            return $this->redirectToRoute('admin_card_csv_upload');
+        }
+
+        $formFile = $this->cardCsv->getFormFile($form);
+        if ($formFile === null) {
+            $this->addError('admin.common.csv_invalid_format', 'admin');
+
+            return $this->redirectToRoute('admin_card_csv_upload');
+        }
+
+        if (strtolower($formFile->getClientOriginalExtension()) !== 'csv') {
+            $this->addError('admin.card.csv_tsv_not_allowed', 'admin');
+
+            return $this->redirectToRoute('admin_card_csv_upload');
+        }
+
+        if ($this->countCsvRows($formFile) >= static::ADMIN_CSV_IMPORT_MAX_ROWS) {
+            $this->addError($this->getCsvImportMaxRowsExceededMessage(), 'admin');
+
+            return $this->redirectToRoute('admin_card_csv_upload');
+        }
+
+        log_info('カードCSV登録開始');
+        try {
+            $data = $this->cardCsv->getImportData($formFile);
+            if ($data === false) {
+                $this->addError('admin.common.csv_invalid_format', 'admin');
+
+                return $this->redirectToRoute('admin_card_csv_upload');
+            }
+
+            $columnHeaders = $data->getColumnHeaders();
+            $this->cardCsv->checkHeaderValues(array_keys($headers), $columnHeaders, $notRequired);
+            $this->cardCsv->checkDataSize($data);
+            $this->cardCsv->register(array_keys($headers), count($columnHeaders), $data);
+        } catch (\LogicException|\RuntimeException $e) {
+            $this->addError($e->getMessage(), 'admin');
+
+            return $this->redirectToRoute('admin_card_csv_upload');
+        } catch (\Throwable $e) {
+            $this->cardCsv->registerFail($e->getMessage());
+            $this->addError('admin.common.csv_upload_error', 'admin');
+
+            return $this->redirectToRoute('admin_card_csv_upload');
+        } finally {
+            $this->cardCsv->deleteTempData();
+        }
+
+        log_info('カードCSV登録完了');
+
+        $event = new EventArgs(
+            [
+                'form' => $form,
+src/Eccube/Service/Csv/CardCsv.php:54:class CardCsv extends AbstractCsvService
+
+exec
+/bin/bash -lc "grep -R -n -e 'imageUrlEn' -e 'image_url_en' -e 'ImageUrlEn' -e '画像URL(英語)' src/Eccube | head -60" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+src/Eccube/Service/Csv/CardCsv.php:99:            'image_en' => '画像URL(英語)',
+
+exec
+/bin/bash -lc "grep -n -e '代表カード' -e '画像' combination/units/M15-04/design.txt | tail -20" in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+27:L0026	画像レイヤー（2枚）: デッキ一覧(検索結果) / C7 / image 2 + デッキ一覧(検索結果) / AC24 / image 3
+127:L0126	代表カード名	代表カード画像に紐づくカードがあるときはその英語名、無いときは空文字とする
+165:L0163	| アーキタイプ | アーキタイプと代表カード画像を同時に設定する経路で更新する。アーキタイプに代表カード画像が無いときは画像の参照を更新しない |
+
+exec
+/bin/bash -lc "grep -n -e 'image_en' -e 'image' -e 'register' src/Eccube/Service/Csv/CardCsv.php | head -100" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+98:            'image_jp' => '画像URL(日本語)',
+99:            'image_en' => '画像URL(英語)',
+113:        return ['name_en', 'rarity', 'layout', 'image_en'];
+217:            throw new \RuntimeException($this->translator->trans('admin.csv.error.export.not_registered', [], 'messages'));
+362:                'image_jp' => '',
+363:                'image_en' => '',
+381:            'image_jp' => $this->findCardImageUrl($Detail, MtbLanguage::JP_ID),
+382:            'image_en' => $this->findCardImageUrl($Detail, MtbLanguage::EN_ID),
+455:     * カード CSV の取り込み。$headers は列キー名の並び（AbstractCsvService::register 準拠）。表示文言は $this->csvHeader を参照する。
+460:    public function register(array $headers, int $headerSize, \Iterator $data): void
+463:            throw new \LogicException('カードCSV: register に渡した列キー並びがコンストラクタの csvHeader と一致しません。');
+515:                        throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('color_sequence'), $row['color_sequence'], $rowIndex));
+531:            $this->registerFail($e->getMessage());
+608:                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('cardtype'), $nameEn, $rowIndex));
+625:                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn($columnKey), $nameEn, $rowIndex));
+644:                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('subtype'), $nameEn, $rowIndex));
+663:                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('specialtype'), $nameEn, $rowIndex));
+694:        foreach ($Card->getCardFormats()->toArray() as $registeredFormat) {
+695:            $registeredName = $registeredFormat->getFormat()?->getNameEn();
+696:            if ($registeredName === null || !array_key_exists($registeredName, $restrictionByFormat)) {
+697:                $Card->removeCardFormat($registeredFormat);
+710:                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn($headerKey), $formatName, $rowIndex));
+751:                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('card_detail_id'), $rawCardDetailId, $rowIndex));
+784:                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('set'), $row['set'], $rowIndex));
+794:                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('layout'), $layoutName, $rowIndex));
+803:                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('rarity'), $row['rarity'], $rowIndex));
+812:                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('promotion_type'), $row['promotion_type'], $rowIndex));
+820:        if ($this->hasAnyValue((string) ($row['image_jp'] ?? ''))) {
+821:            $this->upsertCardImage($CardDetail, MtbLanguage::JP_ID, (string) $row['image_jp']);
+824:        if ($this->hasAnyValue((string) ($row['image_en'] ?? ''))) {
+825:            $this->upsertCardImage($CardDetail, MtbLanguage::EN_ID, (string) $row['image_en']);
+847:                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('back_card_detail_id'), $row['back_card_detail_id'], $rowIndex));
+861:        foreach ($CardDetail->getCardImages() as $registeredCardImage) {
+862:            if ($registeredCardImage->getLanguage()?->getId() === $languageId && !$registeredCardImage->isBackFlg()) {
+863:                $CardImage = $registeredCardImage;
+884:        foreach ($Card->getCardTypes()->toArray() as $registeredType) {
+885:            $Card->removeCardType($registeredType);
+897:        foreach ($Card->getColors()->toArray() as $registeredColor) {
+898:            $Card->removeColor($registeredColor);
+910:        foreach ($Card->getColorIdentities()->toArray() as $registeredColorIdentity) {
+911:            $Card->removeColorIdentity($registeredColorIdentity);
+923:        foreach ($Card->getSubtypes()->toArray() as $registeredSubtype) {
+924:            $Card->removeSubtype($registeredSubtype);
+936:        foreach ($Card->getSpecialtypes()->toArray() as $registeredSpecialtype) {
+937:            $Card->removeSpecialtype($registeredSpecialtype);
+986:        throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('frame'), $value, $rowIndex));
+1003:            throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('foil'), $value, $rowIndex));
+
+exec
+/bin/bash -lc "grep -n -e 'S-M15-01-MASTER' -e 'S-M15-01-SESSION' cases/M15-01_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+4:S-M15-01-SESSION	ブラウザ状態	デッキ検索セッション	デッキ検索条件・ページ番号・表示件数・ソートキー・ソート順の保持値なし	ケースごとに分けられないブラウザ状態。各ケースが開始時に保持値のない新しいセッションを用意する	新しいブラウザプロファイルを使用するか、デッキ検索の保持値を削除して開始する	共有可
+5:S-M15-01-MASTER	検索マスタ	M15-01検索選択肢	フォーマット名=Standard・Modern・Pioneer／カラー名=青・白・赤・緑／アーキタイプ名=Blue Control・Red Aggro・Green Midrange／タグ名=タグA・タグB／店舗名=東京店・大阪店／各表示順・登録日時・関連は基線の値	選択肢表示と検索で参照するマスタ。どのケースも状態を変更しない	フォーマット一覧からフォーマット登録画面を開き、フォーマット名(日)とフォーマット名(英)にStandardを入れ、並び順に基線の表示順を入れて登録を押す。Modern・Pioneerも同じ画面で1件ずつ登録する。MTGマスターデータ管理でカラーを選んで選択を押し、最下行の空行に日本語名「青」・英語名・表示順（基線の値）を入れて登録を押す。白・赤・緑も1件ずつ登録する。MTGマスターデータ管理でデッキタグを選んで選択を押し、最下行の空行に日本語名「タグA」・英語名・表示順（基線の値）を入れて登録を押す。タグBも登録する。アーキタイプ一覧の新規登録からアーキタイプ新規登録画面を開き、アーキタイプ名(日)とアーキタイプ名(英)にBlue Controlを入れ、公開状態を選び、カラー・フォーマット・タグに基線の関連の値を選んで新規登録を押す。Red Aggro・Green Midrangeも1件ずつ登録する。店舗登録画面で店名に「東京店」、表示順に基線の値を入れ、ほかの必須項目を入れて登録を押す。大阪店も登録する。各マスタの登録日時は画面で指定できない（登録した時刻になる）ためDBへ直接設定する。	共有可
+21:S-M15-01-TAG-027	デッキ	タグAND検索データ(027)	デッキID=〔デッキID-M1501-027〕は共有マスタのタグAとタグBの両方を持つ／両タグを持つ他のデッキなし／デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1501-027〕）	IT-M15-01-027専用。2タグのAND検索を確認する	デッキ新規登録画面でデッキタイプでevent（管理者作成）を選び、タグに共有マスタ（S-M15-01-MASTER）のタグAとタグBを選び、必須のフォーマット・アーキタイプ・公開状態(デッキ全体の公開設定)に任意の値を選び（公開を選ぶときはイベント名(日)・イベント名(英)・開催日も入れる）、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-027〕）。本機能のほかのシードのデッキにはタグAとタグBの両方を付けない。	ケース専用
+59:S-M15-01-BLANK-080	デッキ	一括編集空入力データ(076)	デッキID=〔デッキID-M1501-080〕／アーキタイプは共有マスタのBlue Control（フォーマットは共有マスタのStandard）／管理者作成／削除されていない／デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1501-080〕）	IT-M15-01-080専用。アーキタイプの変更チェックオンで入力なしの実行を確認する	デッキ新規登録画面でデッキタイプでevent（管理者作成）を選び、フォーマットに共有マスタ（S-M15-01-MASTER）のStandard、アーキタイプに共有マスタのBlue Controlを選び、必須の公開状態(デッキ全体の公開設定)に任意の値を選び（公開を選ぶときはイベント名(日)・イベント名(英)・開催日も入れる）、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-080〕）。	ケース専用
+68:S-M15-01-BLANK-089	デッキ	一括編集空入力データ(085)	デッキID=〔デッキID-M1501-089〕／タグは共有マスタのタグA／管理者作成／削除されていない／デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1501-089〕）	IT-M15-01-089専用。タグの変更チェックオンで入力なしの実行を確認する	デッキ新規登録画面でデッキタイプでevent（管理者作成）を選び、タグに共有マスタ（S-M15-01-MASTER）のタグAを選び、必須のフォーマット・アーキタイプ・公開状態(デッキ全体の公開設定)に任意の値を選び（公開を選ぶときはイベント名(日)・イベント名(英)・開催日も入れる）、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-089〕）。	ケース専用
+73:S-M15-01-TAGMIX-094	デッキ	タグAND混在データ(094)	デッキID=〔デッキID-M1501-094A〕／デッキ名=M1501-094-A／共有マスタのタグAのみ、デッキID=〔デッキID-M1501-094B〕／デッキ名=M1501-094-B／共有マスタのタグBのみ、デッキID=〔デッキID-M1501-094C〕／デッキ名=M1501-094-C／タグAとタグBの両方／全件が管理者作成でイベント詳細なし／デッキ名に「M1501-094」を含む他のデッキなし／デッキIDは登録時に画面が振る（控える）	タグが片方だけのデッキと両方持つデッキが混在する状態でのAND検索の確認	デッキ新規登録画面でデッキ名に「M1501-094-A」を入れ、デッキタイプでevent（管理者作成）を選び、タグに共有マスタ（S-M15-01-MASTER）のタグAだけを選び、必須のフォーマット・アーキタイプに任意の値を選び、公開状態(デッキ全体の公開設定)に任意の値を選び（公開を選ぶときはイベント名(日)・イベント名(英)・開催日も入れる）、イベントは選ばず、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-094A〕）。デッキ新規登録画面でデッキ名に「M1501-094-B」を入れ、デッキタイプでevent（管理者作成）を選び、タグに共有マスタ（S-M15-01-MASTER）のタグBだけを選び、必須のフォーマット・アーキタイプに任意の値を選び、公開状態(デッキ全体の公開設定)に任意の値を選び（公開を選ぶときはイベント名(日)・イベント名(英)・開催日も入れる）、イベントは選ばず、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-094B〕）。デッキ新規登録画面でデッキ名に「M1501-094-C」を入れ、デッキタイプでevent（管理者作成）を選び、タグに共有マスタ（S-M15-01-MASTER）のタグAとタグBを選び、必須のフォーマット・アーキタイプに任意の値を選び、公開状態(デッキ全体の公開設定)に任意の値を選び（公開を選ぶときはイベント名(日)・イベント名(英)・開催日も入れる）、イベントは選ばず、新規登録を押す。登録後に開くデッキ編集画面のURL（…/deck/<番号>/edit）の<番号>をデッキIDとして控える（〔デッキID-M1501-094C〕）。	ケース専用
+
+exec
+/bin/bash -lc "sed -n '450,540p' src/Eccube/Service/Csv/CardCsv.php; sed -n '740,835p' src/Eccube/Service/Csv/CardCsv.php" in /home/y-saito/Developments/ec-cube-enterprise
+ succeeded in 0ms:
+
+        return rtrim(rtrim(sprintf('%.10F', $cmc), '0'), '.');
+    }
+
+    /**
+     * カード CSV の取り込み。$headers は列キー名の並び（AbstractCsvService::register 準拠）。表示文言は $this->csvHeader を参照する。
+     *
+     * @param array<int, string>                    $headers
+     * @param \Iterator<int, array<string, string>> $data
+     */
+    public function register(array $headers, int $headerSize, \Iterator $data): void
+    {
+        if ($headers !== array_keys($this->csvHeader)) {
+            throw new \LogicException('カードCSV: register に渡した列キー並びがコンストラクタの csvHeader と一致しません。');
+        }
+
+        $requiredHeaders = $this->requiredCsvHeader;
+        // 同一CSV内で先に処理した英語名。同名の後続行では分類紐付けを置換しない。
+        $processedCardNames = [];
+
+        $this->entityManager->beginTransaction();
+        try {
+            foreach ($data as $row) {
+                $rowIndex = $data->key() + 1;
+                $this->checkHeaderSize($headerSize, $row, $rowIndex);
+                $this->checkRequiredHeaders($requiredHeaders, $row, $rowIndex);
+
+                $nameEn = trim(str_replace('//', '/', (string) ($row['name_en'] ?? '')));
+                $isDuplicateNameInCsv = isset($processedCardNames[$nameEn]);
+                $Card = $this->cardRepository->findOneBy(['name_en' => $nameEn]);
+                if ($Card === null) {
+                    $Card = new MtbCard();
+                }
+
+                $this->updateCard($Card, $row, $nameEn);
+
+                if (!$isDuplicateNameInCsv) {
+                    if ($this->hasAnyValue((string) ($row['cardtype'] ?? ''))) {
+                        $this->replaceCardTypes($Card, $this->resolveCardTypes($row, $rowIndex));
+                    }
+                    if ($this->hasAnyValue((string) ($row['color'] ?? ''))) {
+                        $this->replaceColors($Card, $this->resolveColors('color', (string) ($row['color'] ?? ''), $rowIndex));
+                    }
+                    if ($this->hasAnyValue((string) ($row['color_identity'] ?? ''))) {
+                        $this->replaceColorIdentities($Card, $this->resolveColors('color_identity', (string) ($row['color_identity'] ?? ''), $rowIndex));
+                    }
+                    if ($this->hasAnyValue((string) ($row['subtype'] ?? ''))) {
+                        $this->replaceSubtypes($Card, $this->resolveSubtypes($row, $rowIndex));
+                    }
+                    if ($this->hasAnyValue((string) ($row['specialtype'] ?? ''))) {
+                        $this->replaceSpecialtypes($Card, $this->resolveSpecialtypes($row, $rowIndex));
+                    }
+                }
+                if (
+                    $this->hasAnyValue((string) ($row['format'] ?? ''))
+                    || $this->hasAnyValue((string) ($row['restriction_format'] ?? ''))
+                    || $this->hasAnyValue((string) ($row['ban_format'] ?? ''))
+                ) {
+                    $this->replaceFormats($Card, $row, $rowIndex);
+                }
+
+                if ($this->hasAnyValue((string) ($row['color_sequence'] ?? ''))) {
+                    $colorSequenceName = trim((string) $row['color_sequence']);
+                    $ColorSequence = $this->colorSequenceRepository->findOneBy(['name' => $colorSequenceName]);
+                    if ($ColorSequence === null) {
+                        throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('color_sequence'), $row['color_sequence'], $rowIndex));
+                    }
+                    $Card->setColorSequence($ColorSequence);
+                } else {
+                    $Card->setColorSequence(null);
+                }
+
+                $this->updateCardDetail($Card, $row, $rowIndex);
+
+                $this->entityManager->persist($Card);
+                $this->entityManager->flush();
+                $processedCardNames[$nameEn] = true;
+            }
+
+            $this->entityManager->commit();
+        } catch (\Throwable $e) {
+            $this->registerFail($e->getMessage());
+            throw $e;
+        } finally {
+            $this->deleteTempData();
+        }
+    }
+
+    /**
+     * 必須列の値が空でないか検証する（ラベルは改行より前の1行目のみをメッセージに用いる）。
+     *
+        $rawCardDetailId = trim((string) ($row['card_detail_id'] ?? ''));
+        if ($rawCardDetailId !== '' && !ctype_digit($rawCardDetailId)) {
+            throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.product.invalid', [], 'messages'), $rowIndex, $this->columnLabelForCsvColumn('card_detail_id')));
+        }
+
+        $cardDetailId = $rawCardDetailId === '' ? null : (int) $rawCardDetailId;
+        $CardDetail = null;
+        if ($cardDetailId !== null) {
+            $CardDetail = $this->entityManager->find(MtbCardDetail::class, $cardDetailId);
+            if ($CardDetail instanceof MtbCardDetail && $CardDetail->getCard()?->getId() !== $Card->getId()) {
+                // 他カードに属する詳細IDは更新対象にできない
+                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('card_detail_id'), $rawCardDetailId, $rowIndex));
+            }
+            if (!$CardDetail instanceof MtbCardDetail) {
+                // 未登録のカード詳細IDは、そのIDでカード詳細を新規登録する（登録済みなら更新、未登録なら新規登録）
+                $CardDetail = $this->cardDetailRepository->createWithSpecifiedId($cardDetailId);
+                $Card->addCardDetail($CardDetail);
+            }
+        }
+        if (!$CardDetail instanceof MtbCardDetail) {
+            $CardDetail = new MtbCardDetail();
+            $Card->addCardDetail($CardDetail);
+            $this->entityManager->persist($CardDetail);
+        }
+
+        $foil = $this->parseFoilFlag((string) ($row['foil'] ?? ''), $rowIndex);
+        $frame = $this->parseFrameFlag((string) ($row['frame'] ?? ''), $rowIndex);
+
+        $CardDetail
+            ->setCard($Card)
+            ->setFlavorJp((string) ($row['flavor_jp'] ?? ''))
+            ->setFlavorEn((string) ($row['flavor_en'] ?? ''))
+            ->setTextJp((string) ($row['text_jp'] ?? ''))
+            ->setTextEn((string) ($row['text_en'] ?? ''))
+            ->setPower((string) ($row['power'] ?? ''))
+            ->setToughness((string) ($row['toughness'] ?? ''))
+            ->setCardNo((string) ($row['card_no'] ?? ''))
+            ->setFoilFlg($foil)
+            ->setFrameFlg($frame);
+
+        if ($this->hasAnyValue((string) ($row['set'] ?? ''))) {
+            $setName = trim((string) $row['set']);
+            $Cardset = $this->cardsetRepository->findOneBy(['name_en' => $setName]);
+            if ($Cardset === null) {
+                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('set'), $row['set'], $rowIndex));
+            }
+            $CardDetail->setCardset($Cardset);
+        }
+
+        if ($this->hasAnyValue((string) ($row['layout'] ?? ''))) {
+            $layoutName = trim((string) $row['layout']);
+            $searchLayoutName = $layoutName === 'Double Faced,Meld' ? 'Meld' : $layoutName;
+            $Layout = $this->cardLayoutRepository->findOneBy(['name_en' => $searchLayoutName]);
+            if ($Layout === null) {
+                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('layout'), $layoutName, $rowIndex));
+            }
+            $CardDetail->setCardLayout($Layout);
+        }
+
+        if ($this->hasAnyValue((string) ($row['rarity'] ?? ''))) {
+            $rarityName = trim((string) $row['rarity']);
+            $Rarity = $this->rarityRepository->findOneBy(['name_en' => $rarityName]);
+            if ($Rarity === null) {
+                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('rarity'), $row['rarity'], $rowIndex));
+            }
+            $CardDetail->setRarity($Rarity);
+        }
+
+        if ($this->hasAnyValue((string) ($row['promotion_type'] ?? ''))) {
+            $promotionType = trim((string) $row['promotion_type']);
+            $Promotion = $this->promotionRepository->findOneBy(['name_en' => $promotionType]);
+            if ($Promotion === null) {
+                throw new \RuntimeException(sprintf($this->translator->trans('admin.csv.error.data.not_registered', [], 'messages'), $this->columnLabelForCsvColumn('promotion_type'), $row['promotion_type'], $rowIndex));
+            }
+            $CardDetail->setPromotion($Promotion);
+        } else {
+            $CardDetail->setPromotion($this->entityManager->find(MtbPromotion::class, MtbPromotion::NON_PROMOTION_ID));
+        }
+        $CardDetail->setPromotionFlg($CardDetail->getPromotion()?->getId() !== MtbPromotion::NON_PROMOTION_ID);
+
+        if ($this->hasAnyValue((string) ($row['image_jp'] ?? ''))) {
+            $this->upsertCardImage($CardDetail, MtbLanguage::JP_ID, (string) $row['image_jp']);
+        }
+
+        if ($this->hasAnyValue((string) ($row['image_en'] ?? ''))) {
+            $this->upsertCardImage($CardDetail, MtbLanguage::EN_ID, (string) $row['image_en']);
+        }
+
+        if ($this->hasAnyValue((string) ($row['illustrator'] ?? ''))) {
+            $illustratorName = trim((string) $row['illustrator']);
+            $Illustrator = $this->illustratorRepository->findOneBy(['name_en' => $illustratorName]);
+            if (!$Illustrator instanceof MtbIllustrator) {
+                $Illustrator = new MtbIllustrator();
+                $Illustrator->setNameEn($illustratorName);
+                $this->entityManager->persist($Illustrator);
+            }
+
+exec
+/bin/bash -lc "grep -n -e 'CB' -e '組合せ' cases/M15-01_test_cases.tsv | head -10" in /home/y-saito/Developments/hareruya-design-docs/integration_test/casegen
+ succeeded in 0ms:
+codex
+### 指摘（M15-04 / IT-M15-04-007）
+- 主張: 一括編集後のアーキタイプと代表カード画像を、CSVのデータ行だけで確認する。
+- 実際: 設計書 L0163 は「アーキタイプと代表カード画像を同時に設定する経路で更新する」と定める。CSVの列の値は L0124・L0126 に定められているが、この組の要因表 P1 の「確かめる所」にCSVは含まれない。
+- 判定: 要因の結果が欠けている
+- 修正案: 要因表 P1 に挙がる確認先で、アーキタイプと代表カード画像の更新結果を確かめる。
+
+### 指摘（M15-04 / IT-M15-04-008）
+- 主張: 代表カード画像のないアーキタイプへの変更結果を、CSVのデータ行だけで確認する。
+- 実際: 設計書 L0163 は「アーキタイプに代表カード画像が無いときは画像の参照を更新しない」と定める。CSVの列の値は L0124・L0126 に定められているが、この組の要因表 P1 の「確かめる所」にCSVは含まれない。
+- 判定: 要因の結果が欠けている
+- 修正案: 要因表 P1 に挙がる確認先で、アーキタイプの変更と画像参照の維持を確かめる。
+
+### 指摘（M15-04 / IT-M15-04-009）
+- 主張: アーキタイプの変更チェックをオフにした結果を、CSVのデータ行だけで確認する。
+- 実際: 設計書 L0156 は「変更フラグが無い項目は既存の値を保持する」と定める。CSVの列の値は L0124・L0126 に定められているが、この組の要因表 P1 の「確かめる所」にCSVは含まれない。
+- 判定: 要因の結果が欠けている
+- 修正案: 要因表 P1 に挙がる確認先で、アーキタイプと代表カード画像が保持されたことを確かめる。
+
+### 指摘（M15-04 / IT-M15-04-010）
+- 主張: アーキタイプの変更チェックをオフにした結果を、CSVのデータ行だけで確認する。
+- 実際: 設計書 L0156 は「変更フラグが無い項目は既存の値を保持する」と定める。CSVの列の値は L0124・L0126 に定められているが、この組の要因表 P1 の「確かめる所」にCSVは含まれない。
+- 判定: 要因の結果が欠けている
+- 修正案: 要因表 P1 に挙がる確認先で、アーキタイプと代表カード画像が保持されたことを確かめる。
+tokens used
+106,684
+### 指摘（M15-04 / IT-M15-04-007）
+- 主張: 一括編集後のアーキタイプと代表カード画像を、CSVのデータ行だけで確認する。
+- 実際: 設計書 L0163 は「アーキタイプと代表カード画像を同時に設定する経路で更新する」と定める。CSVの列の値は L0124・L0126 に定められているが、この組の要因表 P1 の「確かめる所」にCSVは含まれない。
+- 判定: 要因の結果が欠けている
+- 修正案: 要因表 P1 に挙がる確認先で、アーキタイプと代表カード画像の更新結果を確かめる。
+
+### 指摘（M15-04 / IT-M15-04-008）
+- 主張: 代表カード画像のないアーキタイプへの変更結果を、CSVのデータ行だけで確認する。
+- 実際: 設計書 L0163 は「アーキタイプに代表カード画像が無いときは画像の参照を更新しない」と定める。CSVの列の値は L0124・L0126 に定められているが、この組の要因表 P1 の「確かめる所」にCSVは含まれない。
+- 判定: 要因の結果が欠けている
+- 修正案: 要因表 P1 に挙がる確認先で、アーキタイプの変更と画像参照の維持を確かめる。
+
+### 指摘（M15-04 / IT-M15-04-009）
+- 主張: アーキタイプの変更チェックをオフにした結果を、CSVのデータ行だけで確認する。
+- 実際: 設計書 L0156 は「変更フラグが無い項目は既存の値を保持する」と定める。CSVの列の値は L0124・L0126 に定められているが、この組の要因表 P1 の「確かめる所」にCSVは含まれない。
+- 判定: 要因の結果が欠けている
+- 修正案: 要因表 P1 に挙がる確認先で、アーキタイプと代表カード画像が保持されたことを確かめる。
+
+### 指摘（M15-04 / IT-M15-04-010）
+- 主張: アーキタイプの変更チェックをオフにした結果を、CSVのデータ行だけで確認する。
+- 実際: 設計書 L0156 は「変更フラグが無い項目は既存の値を保持する」と定める。CSVの列の値は L0124・L0126 に定められているが、この組の要因表 P1 の「確かめる所」にCSVは含まれない。
+- 判定: 要因の結果が欠けている
+- 修正案: 要因表 P1 に挙がる確認先で、アーキタイプと代表カード画像が保持されたことを確かめる。

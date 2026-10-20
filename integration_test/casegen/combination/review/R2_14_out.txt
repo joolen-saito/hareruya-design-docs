@@ -1,0 +1,2079 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1588a-5460-7983-a571-a5236fea99d0
+--------
+user
+# 敵対レビュー依頼：要因の組合せの結合テストケース（2巡目・14）
+
+あなたはレビュアーである。著者とは別人として、下の追加ケースを根拠と突き合わせ、誤りを指摘せよ。ファイルは変更しない。スクリプトやコマンドは読むだけで実行しない（grep・cat 等の閲覧は可。rg は使わない）。出力は日本語。
+レビューは事実確認に限る。設計書に無い仕様を足す提案はしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すと決めた。他の機能の設定値も要因に入れる。
+機能ごとに要因表（`combination/factors/`）を作り codex が反証した。そこから機械が試す値の組（`combination/combos/<機能ID>.tsv`）を並べ、著者が組1行にケース1件を書いた。
+組1行ごとの扱い（ケース化／既存ケースで確認済み／ケースにしない）は dispositions に書いてある。
+
+## 対象（/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/ 配下）
+
+| 機能ID | 組の範囲 | 追加ケース・シード・仕分け |
+| --- | --- | --- |
+| F03-05 | 全部 | `combination/cases/F03-05_cb_test_cases.tsv`・`F03-05_cb_seed_data.tsv`・`F03-05_cb_dispositions.tsv`（組の範囲の行だけ） |
+| F03-06 | 全部 | `combination/cases/F03-06_cb_test_cases.tsv`・`F03-06_cb_seed_data.tsv`・`F03-06_cb_dispositions.tsv`（組の範囲の行だけ） |
+| F03-07 | 全部 | `combination/cases/F03-07_cb_test_cases.tsv`・`F03-07_cb_seed_data.tsv`・`F03-07_cb_dispositions.tsv`（組の範囲の行だけ） |
+| F03-08 | 全部 | `combination/cases/F03-08_cb_test_cases.tsv`・`F03-08_cb_seed_data.tsv`・`F03-08_cb_dispositions.tsv`（組の範囲の行だけ） |
+| F04-01 | 全部 | `combination/cases/F04-01_cb_test_cases.tsv`・`F04-01_cb_seed_data.tsv`・`F04-01_cb_dispositions.tsv`（組の範囲の行だけ） |
+
+機能ごとに次を読む。
+- 追加ケース（13列。末尾の項目IDは埋めた組ID）、追加シード、仕分け（上の表のファイル）
+- 試す値の組 `combination/combos/<機能ID>.tsv`（組ID／処理ID／組（要因ID=値）／読める形／埋める組）
+- 要因表 `combination/factors/<機能ID>_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`・`_constraints.tsv`
+- 設計書 `combination/units/<機能ID>/design.txt`（行頭 L0001 が行番号。`#####` の行はシートの境目）。要因の根拠が他の機能のときは `combination/units/<その機能ID>/design.txt`、共通シートは `combination/units/_common/`
+- 既存のケースとシード `cases/<機能ID>_test_cases.tsv`・`<機能ID>_seed_data.tsv`（追加ケースが使う共有シードはここにある）
+
+規約は `combination/GEN_PROMPT.md`、裁定は `sheetmap/FIX_R1_BRIEF.md`（A〜L、C'）・`FIX_R2_BRIEF.md`（M〜O）、範囲は `integration_test/SCOPE.md`、前提条件は `precond/README.md`、判定単位は `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366。
+設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。Excel が触れていない条件を埋め込みが足しているだけのときは両方を当てる。
+期待結果の根拠は設計書に限る。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備と手順の実行可能性を確かめるためにだけ読む。実装と設計書が違うことは指摘しない。
+`combination/review/` の `*_out.txt`・`combination/prompts/` と、上の表に無いケースのファイルは読まない。
+
+## 前の巡
+
+1巡目の指摘が `combination/review/R1_*_findings.md`、直し担当の処置が `combination/review/<機能ID>_R1_dispositions.tsv`（部のある機能は `_R1_dispositions.p1.tsv` など）にある。指摘は見出しの機能IDで探す。却下の理由が設計書の原文に照らして妥当なら、同じ指摘を繰り返さない。採用したはずの指摘が実際に直っているか、直した結果に新しい誤りが入っていないかを見て、新しい事実の指摘だけを挙げる。
+
+## 意図的であり指摘対象外のもの
+
+- 1ケースの期待結果に、要因表 `processes.tsv` の「確かめる所」に挙がっている所どうし（ZIP と DB、画面と DB など）の結果が1文でまとめてあること（組1行にケース1件のため。2026-10-20 決定）。「確かめる所」に無い所の結果が混じっているときは指摘してよい。
+- 連鎖IDが空欄、要求IDが空欄であること。既存ケースを変えていないこと。判定IDが IT-0366 であること。
+- 組の値の選び方（どの組を並べたか）。要因表の「正解未定」「作れない」の組がケースに無いこと（要因表は反証済み。ただし、ケースを書いてみて組が作れない・結果が決まらないと分かったものは指摘してよい）。
+- 単体テスト・e2e へ送られるもの（画面上だけの入力制限、表示文言の逐語照合、見た目、計算式そのもの）のケースが無いこと。
+- シードの投入方法が「未確定: …」と書かれていること。
+- 商品がグッズ商品CSV登録で作られ、在庫が在庫変更CSV登録と承認で入ること（2026-10-19 の決まり）。
+
+## 重点観点
+
+1. **組の値がケースにあるか**: 事前準備・手順に、組のすべての要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）が値で書かれ、その値で処理を動かしているか。組と違う値で操作していないか。
+2. **期待結果が組の全要因の結果を重ねているか**: 確かめる所で、組の各要因の値について設計書が定める結果（金額・選択肢・更新先・更新内容）がまとめて確かめられているか。設計書の記述と事前準備の値だけから一意に出るか。設計書に無い値・ふるまいを期待していないか。金額・数量の計算が合っているか。
+3. 事前準備の状態から手順を実行して期待結果に到達できるか。単独で成立するか。「このN件だけ」を期待するのに、同じ条件に当たる他のデータを除く記述があるか。共有シードの設定と組の設定値が食い違っていないか。
+4. 1ケースに、確かめる所の違う期待結果が混じっていないか。既存ケースとの重複、物理名の混入。
+5. 「ケースにしない」とした組のうち、設計書の記述から期待結果が一意に決まるもの。「既存ケースで確認済み」としたもののうち、挙げたケースが実際にはその組の値で確かめていないもの。
+
+## 出力形式
+
+指摘が無ければ `NONE` の1語。あれば1件ごとに次の形で、テストIDの順に書く。確信の持てないものは挙げない。見出しの括弧の先頭は必ず機能ID。
+
+```
+### 指摘（<機能ID> / <テストID または 組ID>）
+- 主張: ケースまたは仕分けの記述（要点の引用）
+- 実際: 設計書の事実（design.txt の行番号。原文を引く）
+- 判定: 組の値が無い／期待結果の誤り／設計書に無い期待／成立しない前提・手順／要因の結果が欠けている／複数の期待結果／重複／ケースにできる／確認済みでない／組が作れない
+- 修正案: 結論を先に置いた1〜2文
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T09:00:26.884497Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象の追加ケース、組、要因表、設計書、前巡の処置を照合します。ファイルは変更せず、閲覧コマンドだけを使います。
+exec
+/bin/bash -lc "find integration_test/casegen/combination -maxdepth 3 -type f | grep -E '(F03-0[5-8]|F04-01|GEN_PROMPT|FIX_R|R1_.*findings)' | sort" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/CASEFIX_ROLLOUT_PROMPT.md
+integration_test/casegen/combination/FIX_ROLLOUT_PROMPT.md
+integration_test/casegen/combination/GEN_PROMPT.md
+integration_test/casegen/combination/cases/F03-05_cb_dispositions.tsv
+integration_test/casegen/combination/cases/F03-05_cb_seed_data.tsv
+integration_test/casegen/combination/cases/F03-05_cb_test_cases.tsv
+integration_test/casegen/combination/cases/F03-06_cb_dispositions.tsv
+integration_test/casegen/combination/cases/F03-06_cb_seed_data.tsv
+integration_test/casegen/combination/cases/F03-06_cb_test_cases.tsv
+integration_test/casegen/combination/cases/F03-07_cb_dispositions.tsv
+integration_test/casegen/combination/cases/F03-07_cb_seed_data.tsv
+integration_test/casegen/combination/cases/F03-07_cb_test_cases.tsv
+integration_test/casegen/combination/cases/F03-08_cb_dispositions.tsv
+integration_test/casegen/combination/cases/F03-08_cb_seed_data.tsv
+integration_test/casegen/combination/cases/F03-08_cb_test_cases.tsv
+integration_test/casegen/combination/cases/F04-01_cb_dispositions.tsv
+integration_test/casegen/combination/cases/F04-01_cb_seed_data.tsv
+integration_test/casegen/combination/cases/F04-01_cb_test_cases.tsv
+integration_test/casegen/combination/combos/F03-05.tsv
+integration_test/casegen/combination/combos/F03-05_undetermined.tsv
+integration_test/casegen/combination/combos/F03-06.tsv
+integration_test/casegen/combination/combos/F03-06_undetermined.tsv
+integration_test/casegen/combination/combos/F03-07.tsv
+integration_test/casegen/combination/combos/F03-07_undetermined.tsv
+integration_test/casegen/combination/combos/F03-08.tsv
+integration_test/casegen/combination/combos/F03-08_undetermined.tsv
+integration_test/casegen/combination/combos/F04-01.tsv
+integration_test/casegen/combination/combos/F04-01_undetermined.tsv
+integration_test/casegen/combination/factors/F03-05_constraints.tsv
+integration_test/casegen/combination/factors/F03-05_existing.tsv
+integration_test/casegen/combination/factors/F03-05_factors.tsv
+integration_test/casegen/combination/factors/F03-05_interactions.tsv
+integration_test/casegen/combination/factors/F03-05_processes.tsv
+integration_test/casegen/combination/factors/F03-06_constraints.tsv
+integration_test/casegen/combination/factors/F03-06_existing.tsv
+integration_test/casegen/combination/factors/F03-06_factors.tsv
+integration_test/casegen/combination/factors/F03-06_interactions.tsv
+integration_test/casegen/combination/factors/F03-06_processes.tsv
+integration_test/casegen/combination/factors/F03-07_constraints.tsv
+integration_test/casegen/combination/factors/F03-07_existing.tsv
+integration_test/casegen/combination/factors/F03-07_factors.tsv
+integration_test/casegen/combination/factors/F03-07_interactions.tsv
+integration_test/casegen/combination/factors/F03-07_processes.tsv
+integration_test/casegen/combination/factors/F03-08_constraints.tsv
+integration_test/casegen/combination/factors/F03-08_existing.tsv
+integration_test/casegen/combination/factors/F03-08_factors.tsv
+integration_test/casegen/combination/factors/F03-08_interactions.tsv
+integration_test/casegen/combination/factors/F03-08_processes.tsv
+integration_test/casegen/combination/factors/F04-01_constraints.tsv
+integration_test/casegen/combination/factors/F04-01_existing.tsv
+integration_test/casegen/combination/factors/F04-01_factors.tsv
+integration_test/casegen/combination/factors/F04-01_interactions.tsv
+integration_test/casegen/combination/factors/F04-01_processes.tsv
+integration_test/casegen/combination/prompts/A01-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A02-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A02-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A02-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A02-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A05-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A05-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A05-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A05-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A06-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A06-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A06-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A06-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A06-07_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A06-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A07-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A07-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A08-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A14-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-09_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-10_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-12_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-13_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-14_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-15_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-16_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-17_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A15-18_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A16-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A17-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A17-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A17-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/A17-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B02-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B02-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B02-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B02-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B02-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B05-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B05-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B05-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B05-07_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B05-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B06-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B06-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B08-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B08-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B08-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B08-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B08-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B08-07_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/B16-11_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F01-01_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F01-01_p2_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F01-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F02-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F02-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F02-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F03-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F03-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F03-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F03-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F03-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F03-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-07_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F03-08_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F03-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F04-01_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/F04-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F04-02_p1_CASEFIX_R1.md
+integration_test/casegen/combination/prompts/F04-02_p1_CASEFIX_R2.md
+integration_test/casegen/combination/prompts/F04-02_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F04-02_p2_CASEFIX_R1.md
+integration_test/casegen/combination/prompts/F04-02_p2_CASEFIX_R2.md
+integration_test/casegen/combination/prompts/F04-02_p2_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F04-02_p3_CASEFIX_R1.md
+integration_test/casegen/combination/prompts/F04-02_p3_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F04-02_p4_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F04-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F04-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F05-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F05-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F05-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F05-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F05-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-07_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-09_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-10_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-11_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-13_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-14_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-15_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-16_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-17_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-18_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-20_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-21_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-22_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F06-26_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F07-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F07-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F07-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F08-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F08-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F08-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F08-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F09-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F09-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F09-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F09-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F09-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F09-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F09-07_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F09-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F10-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/F10-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-09_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-09_p2_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-10_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-10_p2_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-11_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-13_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-16_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-18_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-19_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-20_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-22_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-25_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-26_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-27_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-28_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-29_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-30_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-31_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-32_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-33_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-35_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-38_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-40_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-41_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M03-45_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-09_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-10_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-13_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-19_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-21_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-22_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-23_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-25_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-30_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-31_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-32_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-32_p2_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-33_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-34_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M04-34_p2_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-09_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-10_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-11_p1_CASEFIX_R1.md
+integration_test/casegen/combination/prompts/M05-11_p1_CASEFIX_R2.md
+integration_test/casegen/combination/prompts/M05-11_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-11_p2_CASEFIX_R1.md
+integration_test/casegen/combination/prompts/M05-11_p2_CASEFIX_R2.md
+integration_test/casegen/combination/prompts/M05-11_p2_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-18_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-21_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-21_p2_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-22_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-23_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-24_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M05-26_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M06-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M06-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M06-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M06-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M06-09_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M06-10_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M06-11_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M06-12_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M07-01_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M07-01_p2_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M07-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M07-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M07-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M07-09_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M07-09_p2_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M08-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M08-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M08-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M08-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M08-07_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M08-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M08-10_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M08-12_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M08-13_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M08-14_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M09-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M09-07_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M09-10_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M10-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M10-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M10-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M10-15_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M11-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M11-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M12-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M12-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M12-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M12-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M12-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M12-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M12-07_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M12-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M12-09_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M12-10_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M13-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M13-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M13-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M13-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M13-10_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M13-13_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M13-15_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M14-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M14-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M14-05_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M14-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M14-07_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M14-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M14-10_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-04_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-05_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-05_p2_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-07_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-08_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-10_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M16-01_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M16-02_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M16-03_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M16-04_GEN_PROMPT.md
+integration_test/casegen/combination/review/F03-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/F03-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-05_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/F03-05_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/F03-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/F03-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-06_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/F03-06_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/F03-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/F03-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-07_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/F03-07_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/F03-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/F03-08_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F03-08_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/F03-08_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/F04-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/F04-01_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/F04-01_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/F04-01_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/R1_01_findings.md
+integration_test/casegen/combination/review/R1_02_findings.md
+integration_test/casegen/combination/review/R1_03_findings.md
+integration_test/casegen/combination/review/R1_04_findings.md
+integration_test/casegen/combination/review/R1_05_findings.md
+integration_test/casegen/combination/review/R1_06_findings.md
+integration_test/casegen/combination/review/R1_07_findings.md
+integration_test/casegen/combination/review/R1_08_findings.md
+integration_test/casegen/combination/review/R1_09_findings.md
+integration_test/casegen/combination/review/R1_10_findings.md
+integration_test/casegen/combination/review/R1_11_findings.md
+integration_test/casegen/combination/review/R1_12_findings.md
+integration_test/casegen/combination/review/R1_13_findings.md
+integration_test/casegen/combination/review/R1_14_findings.md
+integration_test/casegen/combination/review/R1_15_findings.md
+integration_test/casegen/combination/review/R1_16_findings.md
+integration_test/casegen/combination/review/R1_17_findings.md
+integration_test/casegen/combination/review/R1_18_findings.md
+integration_test/casegen/combination/review/R1_19_findings.md
+integration_test/casegen/combination/review/R1_20_findings.md
+integration_test/casegen/combination/review/R1_21_findings.md
+integration_test/casegen/combination/review/R1_22_findings.md
+integration_test/casegen/combination/review/R1_23_findings.md
+integration_test/casegen/combination/review/R1_24_findings.md
+integration_test/casegen/combination/review/R1_25_findings.md
+integration_test/casegen/combination/review/R1_26_findings.md
+integration_test/casegen/combination/review/R1_27_findings.md
+integration_test/casegen/combination/review/R1_28_findings.md
+integration_test/casegen/combination/review/R1_29_findings.md
+integration_test/casegen/combination/review/R1_30_findings.md
+integration_test/casegen/combination/review/R1_31_findings.md
+integration_test/casegen/combination/review/R1_32_findings.md
+integration_test/casegen/combination/review/R1_33_findings.md
+integration_test/casegen/combination/review/R1_34_findings.md
+integration_test/casegen/combination/review/R1_35_findings.md
+integration_test/casegen/combination/review/R1_36_findings.md
+integration_test/casegen/combination/review/R1_37_findings.md
+integration_test/casegen/combination/review/R1_38_findings.md
+integration_test/casegen/combination/review/R1_39_findings.md
+integration_test/casegen/combination/review/R1_40_findings.md
+integration_test/casegen/combination/review/R1_41_findings.md
+integration_test/casegen/combination/review/R1_42_findings.md
+integration_test/casegen/combination/review/R1_43_findings.md
+integration_test/casegen/combination/review/R1_44_findings.md
+integration_test/casegen/combination/review/R1_45_findings.md
+integration_test/casegen/combination/review/R1_46_findings.md
+integration_test/casegen/combination/review/R1_47_findings.md
+integration_test/casegen/combination/review/R1_48_findings.md
+integration_test/casegen/combination/review/R1_49_findings.md
+integration_test/casegen/combination/review/R1_50_findings.md
+integration_test/casegen/combination/review/R1_51_findings.md
+integration_test/casegen/combination/review/R1_52_findings.md
+integration_test/casegen/combination/review/R1_53_findings.md
+integration_test/casegen/combination/review/R1_54_findings.md
+integration_test/casegen/combination/review/R1_55_findings.md
+integration_test/casegen/combination/review/R1_56_findings.md
+integration_test/casegen/combination/review/R1_A_findings.md
+integration_test/casegen/combination/review/R1_B_findings.md
+integration_test/casegen/combination/review/R1_C_findings.md
+integration_test/casegen/combination/review/R1_D_findings.md
+integration_test/casegen/combination/units/F03-05/design.txt
+integration_test/casegen/combination/units/F03-05/excluded.tsv
+integration_test/casegen/combination/units/F03-06/design.txt
+integration_test/casegen/combination/units/F03-06/excluded.tsv
+integration_test/casegen/combination/units/F03-07/design.txt
+integration_test/casegen/combination/units/F03-07/excluded.tsv
+integration_test/casegen/combination/units/F03-08/design.txt
+integration_test/casegen/combination/units/F03-08/excluded.tsv
+integration_test/casegen/combination/units/F04-01/design.txt
+integration_test/casegen/combination/units/F04-01/excluded.tsv
+
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/combination/{GEN_PROMPT.md,cases/F03-0[5-8]_cb_*.tsv,cases/F04-01_cb_*.tsv,combos/F03-0[5-8].tsv,combos/F04-01.tsv,factors/F03-0[5-8]_*.tsv,factors/F04-01_*.tsv,units/F03-0[5-8]/design.txt,units/F04-01/design.txt,review/F03-0[5-8]_R1_dispositions.tsv,review/F04-01_R1_dispositions.tsv}' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+    86 integration_test/casegen/combination/GEN_PROMPT.md
+    17 integration_test/casegen/combination/cases/F03-05_cb_dispositions.tsv
+     6 integration_test/casegen/combination/cases/F03-05_cb_seed_data.tsv
+     6 integration_test/casegen/combination/cases/F03-05_cb_test_cases.tsv
+     8 integration_test/casegen/combination/cases/F03-06_cb_dispositions.tsv
+     1 integration_test/casegen/combination/cases/F03-06_cb_seed_data.tsv
+     1 integration_test/casegen/combination/cases/F03-06_cb_test_cases.tsv
+     6 integration_test/casegen/combination/cases/F03-07_cb_dispositions.tsv
+     6 integration_test/casegen/combination/cases/F03-07_cb_seed_data.tsv
+     5 integration_test/casegen/combination/cases/F03-07_cb_test_cases.tsv
+     4 integration_test/casegen/combination/cases/F03-08_cb_dispositions.tsv
+     4 integration_test/casegen/combination/cases/F03-08_cb_seed_data.tsv
+     4 integration_test/casegen/combination/cases/F03-08_cb_test_cases.tsv
+    11 integration_test/casegen/combination/cases/F04-01_cb_dispositions.tsv
+    11 integration_test/casegen/combination/cases/F04-01_cb_seed_data.tsv
+    11 integration_test/casegen/combination/cases/F04-01_cb_test_cases.tsv
+    17 integration_test/casegen/combination/combos/F03-05.tsv
+     8 integration_test/casegen/combination/combos/F03-06.tsv
+     6 integration_test/casegen/combination/combos/F03-07.tsv
+     4 integration_test/casegen/combination/combos/F03-08.tsv
+    11 integration_test/casegen/combination/combos/F04-01.tsv
+    10 integration_test/casegen/combination/factors/F03-05_constraints.tsv
+     8 integration_test/casegen/combination/factors/F03-05_existing.tsv
+    12 integration_test/casegen/combination/factors/F03-05_factors.tsv
+    56 integration_test/casegen/combination/factors/F03-05_interactions.tsv
+     2 integration_test/casegen/combination/factors/F03-05_processes.tsv
+     5 integration_test/casegen/combination/factors/F03-06_constraints.tsv
+     8 integration_test/casegen/combination/factors/F03-06_existing.tsv
+     6 integration_test/casegen/combination/factors/F03-06_factors.tsv
+    11 integration_test/casegen/combination/factors/F03-06_interactions.tsv
+     2 integration_test/casegen/combination/factors/F03-06_processes.tsv
+     8 integration_test/casegen/combination/factors/F03-07_constraints.tsv
+    34 integration_test/casegen/combination/factors/F03-07_existing.tsv
+     9 integration_test/casegen/combination/factors/F03-07_factors.tsv
+    11 integration_test/casegen/combination/factors/F03-07_interactions.tsv
+     4 integration_test/casegen/combination/factors/F03-07_processes.tsv
+     5 integration_test/casegen/combination/factors/F03-08_constraints.tsv
+    22 integration_test/casegen/combination/factors/F03-08_existing.tsv
+     8 integration_test/casegen/combination/factors/F03-08_factors.tsv
+     6 integration_test/casegen/combination/factors/F03-08_interactions.tsv
+     4 integration_test/casegen/combination/factors/F03-08_processes.tsv
+    10 integration_test/casegen/combination/factors/F04-01_constraints.tsv
+    28 integration_test/casegen/combination/factors/F04-01_existing.tsv
+    11 integration_test/casegen/combination/factors/F04-01_factors.tsv
+    11 integration_test/casegen/combination/factors/F04-01_interactions.tsv
+     5 integration_test/casegen/combination/factors/F04-01_processes.tsv
+    66 integration_test/casegen/combination/units/F03-05/design.txt
+    85 integration_test/casegen/combination/units/F03-06/design.txt
+   147 integration_test/casegen/combination/units/F03-07/design.txt
+   135 integration_test/casegen/combination/units/F03-08/design.txt
+   264 integration_test/casegen/combination/units/F04-01/design.txt
+     2 integration_test/casegen/combination/review/F03-05_R1_dispositions.tsv
+     2 integration_test/casegen/combination/review/F03-06_R1_dispositions.tsv
+     4 integration_test/casegen/combination/review/F03-07_R1_dispositions.tsv
+     2 integration_test/casegen/combination/review/F03-08_R1_dispositions.tsv
+     2 integration_test/casegen/combination/review/F04-01_R1_dispositions.tsv
+  1238 total
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/GEN_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# {FID}（{FNAME}）の要因の組合せのケース作成（著者への依頼）
+
+リポジトリ: `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+あなたは機能ID **{FID}** の追加ケースを書く著者である。レビューは別の担当が行う。git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すと決めた。他の機能の設定値も要因に入れる。
+{FID} の要因表（別の担当が作り、codex が反証した）から、機械が試す値の組を並べた。そのうち **{RANGE} の {N}行** があなたの受け持ち（{PARTNOTE}）。1行ごとにケースを書く。**既存のケースは1文字も変えない。**
+
+## 読むもの
+
+1. 試す値の組: `integration_test/casegen/combination/combos/{FID}.tsv`（組ID／処理ID／組（要因ID=値）／組（読める形）／埋める組）。1行が1回の処理で同時に使う値の組。受け持ちは {RANGE}。
+2. 要因表: `integration_test/casegen/combination/factors/{FID}_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`（効き合う理由）・`_constraints.tsv`（作れない組・正解未定の組）
+3. 設計書: `integration_test/casegen/combination/units/{FID}/design.txt`（行頭の L0001 とタブは行番号で、設計書の内容ではない）。要因の根拠の行だけでなく、その節全体を読む。他の機能の設定値の要因は `units/<機能ID>/design.txt`
+4. 既存のケースとシード: `integration_test/casegen/cases/{FID}_test_cases.tsv`（11列）・`{FID}_seed_data.tsv`。**書き方・画面への入り方・シードの作り方はこれに合わせる**。同じ処理を別の値で通している既存ケースがあれば、それを下敷きにして値だけ変えるのが基本
+5. 確かめる所が別の機能の画面のときは、その機能のケース `integration_test/casegen/cases/<機能ID>_test_cases.tsv` で画面への入り方と表示の書き方を見る
+6. `integration_test/SCOPE.md`、`integration_test/casegen/sheetmap/FIX_R1_BRIEF.md` の裁定 A〜L・C'、`FIX_R2_BRIEF.md` の決まり M〜O（文中の `sheetmap/` は読み替える）、`integration_test/casegen/precond/README.md`（前提条件 P1〜P13・類型 T1〜T4）、`integration_test/casegen/STEP_PATTERNS.md`（手順の型）
+7. `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366（判定単位の文と除外を読む）
+
+## 1行（組ID）ごとに、次のどれかに決める
+
+| 扱い | いつ | 書くもの |
+| --- | --- | --- |
+| ケース化 | その値の組で処理を動かしたときの結果が、設計書の記述から一意に決まる | ケース1件（1ケース1期待結果）。組のすべての要因の値を事前準備・手順に値で書く |
+| 既存ケースで確認済み | 既存ケースの事前準備・手順に組のすべての値が書かれ、確かめる所で結果を見ている | そのテストIDと、どの手順・期待結果が当たるか |
+| ケースにしない | その値の組が実は作れない（制約の抜け）／結果が設計書から一意に決まらない／設計書の記述どうしが食い違う／結合テストの範囲でない | 理由（設計書の原文を引く）。作れない・決まらない組は、要因表の制約に足すべき組として理由に `要因ID=値&要因ID=値` を書く |
+
+安易に「ケースにしない」としない。要因表は codex が反証済み。それでも外すなら設計書の原文で理由を示す。
+
+## 期待結果の決め方
+
+- 組の**すべての要因**について、その値で設計書が定める結果を、確かめる所（processes.tsv）でまとめて確かめる。1つの確かめる所で見える結果を1文にまとめてよい（例: 「受注情報編集画面で、お支払方法が代金引換、配送方法がゆうパケット、送料が200円、手数料が330円、ポイント使用が0、合計が1,530円で表示されること」）。確かめる所が違う結果は入れない（1ケース1期待結果）。
+- 金額・数量は、事前準備に書いた値から設計書の計算で一意に出す。計算の途中を期待結果・出典に書かない（期待結果には結果の値だけ）。
+- 期待結果は設計書（design.txt。同じ冊子の別シート、要因の根拠にある他の機能の設計書も可）と事前準備の値だけから出す。実装コード・現行ソースから期待値を足さない。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備・シードの作り方と手順の実行可能性を確かめるためにだけ読んでよい（スクリプトやコマンドは実行しない）。
+- 設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採り、出典に両方を書く。
+- 要因表の constraints.tsv に「正解未定」とある値の組は機械が行に入れていない。それ以外の組で結果が決まらないと分かったら「ケースにしない」にする（推測で決めない）。
+- **打ち切りの行**: 組（読める形）に「（効かない）」とある要因は、その行では結果に効かない（constraints.tsv の種別「打ち切り」。処理が途中で打ち切られる。依頼者決定 2026-10-20）。その要因の値は事前準備に書かなくてよい（共有可シードのままでよい）。期待結果は打ち切りの結果（出ない・エラーで元の画面へ戻る・何も変わらない など）を、設計書の定めどおりに確かめる。打ち切りのあと値が残っていないか（更新されていないこと）を見るのはよい。
+
+## ケースの書き方
+
+- テストIDは `IT-{FID}-{START}` からの連番（既存と、外した番号の続き）。組IDの順に書く。
+- 判定IDは `IT-0366`、観点IDは `ITA-11`。項目ID列に組ID（1つ）。
+- 期待結果は合否が一意に決まる具体値で書き、「〜こと」で終える。
+- **組の値がケースから読めること**: 事前準備・手順に、組の全要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）を値で書く。要因名や組の値を並べただけの行（「このケースで試す値の組: …」など）を事前準備・手順に足さない。実際のデータで書いていれば、verify の「注意」（組の値が字句で無い）は残ってよい。
+- 結果は、データを作った所とは別のコンポーネントで確かめる（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。
+- 手順は「1. …／2. …」の形で、画面名・項目名・ボタン名・入力値を特定する。名前は設計書の表記を使う。画面への入り方は既存ケースに合わせる。
+- 物理名（テーブル名・カラム名・ルート名・クラス名・翻訳キー）を書かない。設計書に書かれている項目名はそのまま使ってよい。
+- 禁止語: 失敗させる／該当する操作／同上／いくつか／別の画面／要確認／TBD／設計どおり／設計書どおり／仕様どおり／正しいこと／正しく。
+- 実行区分は `ブラウザのみ` か `ブラウザ+DB確認`（外から見えない副作用だけDBを見る）。優先度は、業務データの保存・更新・出力値の一致を P1、表示・選択肢を P2。
+- 要求ID列: `integration_test/casegen/requirements_all.tsv` に当たる行（書番・シート名・要求文が合う行）が見つかればその要求IDを書く。見つからなければ空欄でよい。代用しない。
+- 連鎖IDは空欄。出典は既存ケースと同じ形（`<書番> <シート名> / <区分 と 見出し>`。別シート・別の冊子は「｜」でつなぐ）。
+
+## 前提条件（いまの決まり。既存のシードの書き方がこれに従っているので合わせる）
+
+- 各ケースは単独で成立する。**各ケースはケース専用シードを1件以上使う**（シードID `S-{FID}-CB<名前>-<ケース番号3桁>`）。参照だけのマスタ・アカウント・環境設定は、既存の `{FID}_seed_data.tsv` にある `共有可` のシードをそのまま使ってよい（シード表に書き足さない）。既存の `ケース専用` シードは使わない。
+- 組の値が共有可のシードの設定と違うとき（手数料・送料・利用条件・配送方法に紐づく支払方法など）は、ケース専用シードで設定を書き、事前準備に値で書く。
+- テストデータは画面から入力して作る（2026-10-09 決定）。画面で作れない状態だけ、理由を添えて DB へ直接入れる書き方にする。
+- **商品はカード商品も含めてグッズ商品CSV登録で作る**（商品登録画面の新規登録は使わない。M03-02 L0075〜L0077）。カード商品は商品登録編集画面の「カード指定 >」でカードを付ける。価格は税込みで登録する。在庫は在庫変更CSV登録で入庫し、別のメンバーが承認一覧で承認する（確認画面の OK まで書く）。既存の `{FID}_seed_data.tsv` の商品・在庫のシードの書き方をそのまま写す。
+- 確認モーダルが出る操作は、モーダルの確定まで手順に書く。規約同意など必須のチェックも書く（既存ケースに合わせる）。
+- 画面が振る番号（受注番号・会員IDなど）は、画面で作ったあとに控えた番号を使う（類型 T4。〔番号の名前-{FIDC}-ケース番号〕の呼び名で書く）。
+- ケース専用データの識別子（コード、名称、メール、ファイル名、パスワード）は全機能で一意にする。前提条件の検査 G5 の字句は `[A-Za-z0-9][A-Za-z0-9_.@\-]{3,}`。**英数字とハイフンの連なり1つ1つに、機能番号とケース番号を入れる**（例: 「{FIDC}-CB{START}-A」「cb{FIDL}-{START}@example.test」「Passw0rd-CB{FIDC}{START}」）。パスワードに「!」を使わない。番号だけの語（「A001」）を単独で置かない。`grep -rF` で `integration_test/casegen/cases/` と重ならないことを確かめよ。
+- 事前準備は必須。使用シードすべてについて状態を値付きで書き、シードIDを括弧で添える（「① …（S-…）／② …（S-…）」）。「このN件だけ」を期待するときは、同じ条件に当たる他のデータが無い状態を書く。
+- 事前準備で手順の結果を参照しない。期待結果の「AからB」「Aのまま」の A は事前準備に同じ表記で書いた値にする。
+- シードの投入方法は、何を使ってどう作るかを書く。作り方が分からないときは「未確定: <分からないこと>」と書く。推測で埋めない。
+- 中継・模擬応答、現在時刻の固定、障害を起こす手段は用意しない（2026-10-19 決定）。これが要る組は「ケースにしない」。バッチの実行、スマレジなど外部の試験環境、メールの受け取りは用意できる。
+
+## 出力（この3つだけを書く。ほかの既存ファイルは変更しない）
+
+1. `integration_test/casegen/combination/cases/{FID}_cb_test_cases{SFX}.tsv`
+   タブ区切り・13列: `テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID`
+   セル内に改行・タブ・ダブルクォートを入れない。ケース化が0件でもヘッダだけのファイルを書く。
+2. `integration_test/casegen/combination/cases/{FID}_cb_seed_data{SFX}.tsv`
+   タブ区切り・7列: `シードID	区分	論理名	状態・属性	用途	投入方法	共有`。**新しく足すシードだけ**を書く。
+3. `integration_test/casegen/combination/cases/{FID}_cb_dispositions{SFX}.tsv`
+   タブ区切り・4列: `項目ID	扱い	テストID	理由`。受け持ちの組 {N}行を1行ずつ（項目ID は組ID）。
+
+最後に `python3 integration_test/casegen/combination/verify_cb.py {VARG}` を実行し、合格するまで直せ。ほかの検査（gate_dry.sh・gate_factors.py など）は流さない（ほかの著者と同時に流すとぶつかる）。
+作業用の一時ファイルはスクラッチパッド（`/tmp/claude-1000/-home-y-saito-Developments-hareruya-design-docs/7ac77140-f212-4eb4-b04c-5cbd0cc6fcfa/scratchpad/`）に、名前へ {FID}{SFX} を入れて作る。他の機能・同じ機能の他の部の combination/cases のファイルは読まない・書かない。
+**ファイルは処理ごとに書き足していく**（全部を最後にまとめて書かない。途中で止まっても書いた分が残るように）。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+4行以内。ケース化／確認済み／ケースにしない の件数、ケースにしなかった主な理由（制約に足すべき組があれば件数）、verify の結果、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/F03-0[5-8]_cb_dispositions.tsv integration_test/casegen/combination/cases/F04-01_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "grep -n -E 'F03-05|F03-06|F03-07|F03-08|F04-01' integration_test/casegen/combination/review/R1_*_findings.md" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F03-0[5-8]_processes.tsv integration_test/casegen/combination/factors/F04-01_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/review/R1_15_findings.md:1:### 指摘（F03-07 / IT-F03-07-056）
+integration_test/casegen/combination/review/R1_15_findings.md:7:### 指摘（F03-07 / IT-F03-07-057）
+integration_test/casegen/combination/review/R1_15_findings.md:13:### 指摘（F03-07 / IT-F03-07-058）
+
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	おすすめ商品を取得して表示する	マイページ・購入完了ページ・商品詳細ページ・買い物かごページを開き、おすすめ枠が画面内に入る	各ページのおすすめ商品枠（表示された商品と、無いときの案内文言）	L0018-L0041,L0050-L0053
+処理ID	処理	契機	確かめる所	根拠
+P1	最近チェックした商品の一覧を表示する	本店ECTOP・商品一覧・商品詳細（支店は各支店の同画面）を開く	画面の最近チェックした商品欄（閲覧履歴Cookie、商品データは商品登録/編集M03-02で設定）	L0028-L0034,L0053-L0076
+処理ID	処理	契機	確かめる所	根拠
+P1	入荷通知を依頼・取消する	商品詳細・商品一覧・入荷待ち商品で「入荷時に通知」または「通知待ち」を押す	入荷通知依頼のDB、マイページ＞入荷待ち商品、ログイン後の戻り先画面	L0058-L0063,L0074-L0077,L0102-L0103,L0116-L0123
+P2	入荷通知ボタンを表示する	商品一覧・商品詳細・入荷待ち商品一覧を開く	商品一覧画面・商品詳細画面・入荷待ち商品一覧画面（商品・依頼のデータで表示が変わる）	L0046-L0051,L0054-L0057,L0065,L0098,L0102
+P3	入荷時に通知メールを送る	在庫の反映・入荷CSVの取込・商品規格の登録更新で在庫が入荷する	テストメール受信箱	L0127-L0131,M10-16:L0070
+処理ID	処理	契機	確かめる所	根拠
+P1	お気に入りを登録・解除する	「お気に入りに追加する」「♡」または登録済みのボタンを押す	お気に入りのDB、マイページ＞お気に入り登録商品一覧	L0049-L0054,L0057,L0102-L0107,L0118-L0120
+P2	お気に入りボタンを表示する	本店ECTOP・商品一覧・商品詳細・お気に入り登録商品一覧を開く	各画面（店舗とお気に入りのデータで表示が変わる）	L0044-L0052,L0085,L0089,L0109
+P3	お気に入り登録商品一覧に商品を出す	マイページのお気に入り登録商品一覧を開く	お気に入り登録商品一覧画面	L0051,L0113-L0114
+処理ID	処理	契機	確かめる所	根拠
+P1	買い物かごの集計欄に送料と送料無料の案内を出す	買い物かご画面を開く	買い物かご画面のカート集計欄	L0045,L0157,L0214-L0216,L0253,L0257
+P2	閲覧店舗のカートの商品を表示・削除する	買い物かご画面を開く、商品の削除ボタン、カート一括削除を押す	買い物かご画面と他店舗のカート（DB）	L0043,L0053,L0174-L0175,L0182-L0183
+P3	購入手続きへのボタンを出して押す	買い物かご画面を開き、購入手続きへボタンを押す	買い物かご画面とご注文方法の指定画面	L0179-L0180,L0218-L0219
+P4	商品規格と数量を受け取ってカートへ追加する	POST /cart/add・/cart/add_bulk・/cart/add_show へ要求を送る	買い物かご画面のカート内容	L0221-L0229
+
+ succeeded in 0ms:
+項目ID	扱い	テストID	理由
+CB-F03-05-001	ケースにしない		設計書L0025-L0026は「直近の注文に含まれる明細のうち販売価格が最も高い商品」を基準とし、L0051は処理中の注文を直近の注文から除くとするが、未ログインの閲覧者にとっての「直近の注文」（誰の注文の集合か）は設計書に定められておらず、マイページは会員の画面で未ログインでは開けない。処理中の注文を除いたうえで基準商品が取得できる状態（F11=取得できる）を一意に作れない。制約に足すべき組: F01=マイページ・注文完了ページ&F03=未ログイン
+CB-F03-05-002	ケース化	IT-F03-05-030	設計書の記述から結果が一意に決まる
+CB-F03-05-003	ケース化	IT-F03-05-031	設計書の記述から結果が一意に決まる
+CB-F03-05-004	ケース化	IT-F03-05-032	設計書の記述から結果が一意に決まる
+CB-F03-05-005	ケース化	IT-F03-05-033	設計書の記述から結果が一意に決まる
+CB-F03-05-006	既存ケースで確認済み	IT-F03-05-008	本店・日本語表示のBASE-FILTER-008の商品詳細ページで、本店非公開のFILTER-PRIVATE-008が表示されないことを期待結果で確認している（手順1〜3・事前準備。打ち切りのためほかの要因は効かない）
+CB-F03-05-007	既存ケースで確認済み	IT-F03-05-008	本店でのFILTER-NOSTOCK-008（本店公開・在庫0）が表示されないことを手順1〜3・期待結果で確認している（打ち切りのためほかの要因は効かない）
+CB-F03-05-008	ケース化	IT-F03-05-034	設計書の記述から結果が一意に決まる
+CB-F03-05-009	既存ケースで確認済み	IT-F03-05-009	TC大阪支店でのOSAKA-HIDDEN-009（支店非公開）が表示されないことを手順1〜3・期待結果で確認している（打ち切りのためほかの要因は効かない）
+CB-F03-05-010	既存ケースで確認済み	IT-F03-05-009	TC大阪支店でのOSAKA-NOSTOCK-009（支店公開・大阪在庫0・本店在庫5）が表示されないことを手順1〜3・期待結果で確認している（打ち切りのためほかの要因は効かない）
+CB-F03-05-011	既存ケースで確認済み	IT-F03-05-010	ログイン中に購入済みのPURCHASED-REC-010が表示されないことを手順1〜3・期待結果で確認している（打ち切りのためほかの要因は効かない）
+CB-F03-05-012	ケースにしない		設計書L0025-L0026は「直近の注文に含まれる明細のうち販売価格が最も高い商品」を基準とし、L0051は処理中の注文を直近の注文から除くとするが、未ログインの閲覧者にとっての「直近の注文」（誰の注文の集合か）は設計書に定められておらず、マイページは会員の画面で未ログインでは開けない。処理中の注文を除いたうえで基準商品が取得できる状態（F11=取得できる）を一意に作れない。制約に足すべき組: F01=マイページ・注文完了ページ&F03=未ログイン
+CB-F03-05-013	既存ケースで確認済み	IT-F03-05-008	日本語表示でのFILTER-EN-008（英語だけを表示対象）が表示されないことを手順1〜3・期待結果で確認している（打ち切りのためほかの要因は効かない）
+CB-F03-05-014	既存ケースで確認済み	IT-F03-05-006	検索期間30日に対し31日前の注文でBASE-CORR-006と同時購入されたREC-OLD-006が表示されないことを事前準備・期待結果で確認している（打ち切りのためほかの要因は効かない）
+CB-F03-05-015	既存ケースで確認済み	IT-F03-05-007	基準商品と同一カードのSAME-CARD-ALT-007と基準商品自身が表示されないことを事前準備・期待結果で確認している（打ち切りのためほかの要因は効かない）
+CB-F03-05-016	既存ケースで確認済み	IT-F03-05-005	注文0件の会員のマイページで基準の商品IDを取得できずおすすめ商品が表示されないことを事前準備・期待結果で確認している（打ち切りのためほかの要因は効かない）
+項目ID	扱い	テストID	理由
+CB-F03-06-001	ケースにしない		取得商品が0件になるのは、保存値の商品IDが実在せず商品情報を取得できないときに限る。この組は、履歴の商品が表示地域に表示中の言語を含み（L0063）、NMの規格の販売価格が0より大きく（L0064）、本店では支店表示フラグを参照しない（L0032）ので、L0061の「取得の対象は、次をすべて満たす商品」を満たす商品が履歴にあれば取得商品は必ず1件以上になり、L0071の「取得できた商品が1件も無い」と両立しない。制約に足すべき組: F03=表示中の言語を含む&F04=NMの規格があり価格が0より大きい&F05=保存値あり・取得商品0件
+CB-F03-06-002	既存ケースで確認済み	IT-F03-06-005	TC大阪支店の商品一覧画面で、支店表示フラグあり・公開・表示ロケールja・NM販売価格100円のREC-FLAG-ON-005が閲覧履歴から取得されて表示されることを事前準備・手順・期待結果で確認している（組の全要因の値が事前準備に書かれている）
+CB-F03-06-003	既存ケースで確認済み	IT-F03-06-005	TC大阪支店の商品一覧画面で、支店表示フラグなしのREC-FLAG-OFF-005が表示されないことを事前準備・手順・期待結果で確認している（打ち切りのためほかの要因は効かない）
+CB-F03-06-004	ケースにしない		取得商品が0件になるのは、保存値の商品IDが実在せず商品情報を取得できないときに限る。この組は、履歴の商品が表示地域に表示中の言語を含み（L0063）、NMの規格の販売価格が0より大きく（L0064）、支店で見たときも支店表示フラグが立っている（L0032）ので、L0061の「取得の対象は、次をすべて満たす商品」を満たす商品が履歴にあれば取得商品は必ず1件以上になり、L0071の「取得できた商品が1件も無い」と両立しない。制約に足すべき組: F03=表示中の言語を含む&F04=NMの規格があり価格が0より大きい&F02=立っている&F05=保存値あり・取得商品0件
+CB-F03-06-005	ケースにしない		取得商品が0件になるのは、保存値の商品IDが実在せず商品情報を取得できないときに限る。この組は、履歴の商品が表示地域に表示中の言語を含み（L0063）、NMの規格の販売価格が0より大きく（L0064）、本店で見ているので支店表示フラグが立っていなくても対象から外れず（L0032）、L0061の「取得の対象は、次をすべて満たす商品」を満たす商品が履歴にあれば取得商品は必ず1件以上になり、L0071の「取得できた商品が1件も無い」と両立しない。既存のIT-F03-06-021が、本店では支店表示フラグが立っていない商品も表示されることを確認している。制約に足すべき組: F01=本店&F03=表示中の言語を含む&F04=NMの規格があり価格が0より大きい&F05=保存値あり・取得商品0件
+CB-F03-06-006	既存ケースで確認済み	IT-F03-06-009	日本語版と英語版の商品一覧画面で、表示ロケールに表示中の言語を含まない商品が最近チェックした商品欄に表示されないことを事前準備・手順・期待結果で確認している（打ち切りのためほかの要因は効かない）
+CB-F03-06-007	既存ケースで確認済み	IT-F03-06-010	本店の商品一覧画面で、NMの販売価格が0円のNM-PRICE-ZERO-010とNMの規格を持たないEX-ONLY-010が表示されないことを事前準備・手順・期待結果で確認している（打ち切りのためほかの要因は効かない）
+項目ID	扱い	テストID	理由
+CB-F03-07-001	ケースにしない		同一依頼がある状態で商品単位（まとめて入荷通知・商品一覧の入荷時に通知）の依頼を押したときの取消の扱いが設計書から一意に決まらない。L0120は取消の判定を「同一商品規格の依頼が既にあるか」としており、商品と言語を単位とする商品単位の依頼（L0060）が同じ判定で削除されるのか、別の一括解除（L0141のトースト「入荷通知を解除しました」は「一括解除を実行したとき」とだけ書かれ、実行の契機・対象が未定義）になるのかが書かれていない。制約に足すべき組: F01=同一依頼がある&F02=商品単位
+CB-F03-07-002	ケース化	IT-F03-07-055	設計書の記述から結果が一意に決まる
+CB-F03-07-003	ケース化	IT-F03-07-056	設計書の記述から結果が一意に決まる
+CB-F03-07-004	ケース化	IT-F03-07-057	設計書の記述から結果が一意に決まる
+CB-F03-07-005	ケース化	IT-F03-07-058	設計書の記述から結果が一意に決まる
+項目ID	扱い	テストID	理由
+CB-F03-08-001	ケース化	IT-F03-08-040	未ログインの登録で、登録せずログインを促す（L0133）ことを、ログイン後の一覧に出ないことで確かめる。既存IT-F03-08-002はモーダル表示のみで一覧・保存を見ていない
+CB-F03-08-002	ケース化	IT-F03-08-041	公開中・高額商品コードなし・在庫ありで一覧に出る（L0114。既存IT-F03-08-010は公開状態のみ、011は高額商品コードありの在庫差）
+CB-F03-08-003	ケース化	IT-F03-08-042	公開中・高額商品コードなし・在庫なしでも一覧に出る（L0114「高額商品コードを持つ商品は、在庫があるものだけ」）
+項目ID	扱い	テストID	理由
+CB-F04-01-001	ケース化	IT-F04-01-060	支店は送料を表示しない（L0045）。送料無料の金額・個数がどちらも設定なしなので案内も不足額も出ない（L0214）。既存IT-F04-01-002は金額5,000円設定の支店、027は本店のみ
+CB-F04-01-002	ケース化	IT-F04-01-061	金額設定がないので案内も不足額も出さない（L0214）。個数が未達でも金額設定がなければ案内は出ない。既存IT-F04-01-027は個数も設定なし、056は金額設定あり
+CB-F04-01-003	ケース化	IT-F04-01-062	合計が送料無料金額以上、または合計個数が送料無料個数以上で送料無料（L0215）。両方に達した組。既存は金額到達・個数設定なし(028)、金額未達・個数到達(029,054)のみ
+CB-F04-01-004	ケース化	IT-F04-01-063	個数が未達でも合計が送料無料金額以上なら送料無料（L0215）。既存IT-F04-01-028は個数設定なし
+CB-F04-01-005	ケース化	IT-F04-01-064	個別削除は選んだ商品だけを削除（L0174-L0175）。他店舗のカートが無い本店での削除。既存IT-F04-01-013は支店Aでの個別削除
+CB-F04-01-006	ケース化	IT-F04-01-065	一括削除は閲覧店舗の商品をすべて削除（L0182-L0183）。他店舗のカートが無い本店での一括削除。既存IT-F04-01-024は支店Aでの一括削除
+CB-F04-01-007	ケース化	IT-F04-01-066	閲覧店舗のカートの商品だけを表示する（L0043,L0053）。他店舗のカートが無い支店Aの表示。既存IT-F04-01-001は3店舗にカートがある場合
+CB-F04-01-008	ケース化	IT-F04-01-067	数量の指定が無いときは1（L0221）。複数件の追加は cart_list のフォーム値で受ける（L0226）。既存IT-F04-01-035は数量を指定した場合
+CB-F04-01-009	ケース化	IT-F04-01-068	数量の指定が無いときは1（L0221）。add_show は成否にかかわらず買い物かご画面へ遷移（L0227）。既存IT-F04-01-038は数量1を指定した場合
+CB-F04-01-010	ケース化	IT-F04-01-069	数量の指定が無いときは1（L0221）。フォーム値に product_class_id も quantity も無いときJSON本文を読む（L0229）。既存IT-F04-01-033は数量2を指定した場合
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/F03-0[5-8].tsv integration_test/casegen/combination/combos/F04-01.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F03-0[5-8]_factors.tsv integration_test/casegen/combination/factors/F04-01_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/R1_15_findings.md integration_test/casegen/combination/review/F03-0[5-8]_R1_dispositions.tsv integration_test/casegen/combination/review/F04-01_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 31ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-F03-05-001	P1	F01=マイページ・注文完了ページ&F02=支店&F03=未ログイン&F04=処理中&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがある&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる	表示するページ=マイページ・注文完了ページ／閲覧店舗=支店／会員ログイン=未ログイン／基準商品の決定と同時購入に使う注文のステータス=処理中／おすすめ候補商品の公開状態=公開中／おすすめ候補商品の在庫=在庫あり／おすすめ候補商品の言語=参照中の言語の商品／おすすめ候補商品の会員の購入履歴=購入したことがある／同時購入の注文日=検索期間内／おすすめ候補商品と基準商品の関係=別の商品かつ別のカード／基準の商品IDの取得可否=取得できる	表示するページ×閲覧店舗: マイページ・注文完了ページ×支店；表示するページ×会員ログイン: マイページ・注文完了ページ×未ログイン；表示するページ×基準商品の決定と同時購入に使う注文のステータス: マイページ・注文完了ページ×処理中；表示するページ×おすすめ候補商品の言語: マイページ・注文完了ページ×参照中の言語の商品；表示するページ×おすすめ候補商品の会員の購入履歴: マイページ・注文完了ページ×購入したことがある；表示するページ×おすすめ候補商品と基準商品の関係: マイページ・注文完了ページ×別の商品かつ別のカード；表示するページ×基準の商品IDの取得可否: マイページ・注文完了ページ×取得できる；閲覧店舗×会員ログイン: 支店×未ログイン；閲覧店舗×基準商品の決定と同時購入に使う注文のステータス: 支店×処理中；閲覧店舗×おすすめ候補商品の公開状態: 支店×公開中；閲覧店舗×おすすめ候補商品の在庫: 支店×在庫あり；閲覧店舗×おすすめ候補商品の言語: 支店×参照中の言語の商品；閲覧店舗×おすすめ候補商品の会員の購入履歴: 支店×購入したことがある；閲覧店舗×同時購入の注文日: 支店×検索期間内；閲覧店舗×おすすめ候補商品と基準商品の関係: 支店×別の商品かつ別のカード；閲覧店舗×基準の商品IDの取得可否: 支店×取得できる；会員ログイン×基準商品の決定と同時購入に使う注文のステータス: 未ログイン×処理中；会員ログイン×おすすめ候補商品の公開状態: 未ログイン×公開中；会員ログイン×おすすめ候補商品の在庫: 未ログイン×在庫あり；会員ログイン×おすすめ候補商品の言語: 未ログイン×参照中の言語の商品；会員ログイン×おすすめ候補商品の会員の購入履歴: 未ログイン×購入したことがある；会員ログイン×同時購入の注文日: 未ログイン×検索期間内；会員ログイン×おすすめ候補商品と基準商品の関係: 未ログイン×別の商品かつ別のカード；会員ログイン×基準の商品IDの取得可否: 未ログイン×取得できる；基準商品の決定と同時購入に使う注文のステータス×おすすめ候補商品の公開状態: 処理中×公開中；基準商品の決定と同時購入に使う注文のステータス×おすすめ候補商品の在庫: 処理中×在庫あり；基準商品の決定と同時購入に使う注文のステータス×おすすめ候補商品の言語: 処理中×参照中の言語の商品；基準商品の決定と同時購入に使う注文のステータス×おすすめ候補商品の会員の購入履歴: 処理中×購入したことがある；基準商品の決定と同時購入に使う注文のステータス×同時購入の注文日: 処理中×検索期間内；基準商品の決定と同時購入に使う注文のステータス×おすすめ候補商品と基準商品の関係: 処理中×別の商品かつ別のカード；基準商品の決定と同時購入に使う注文のステータス×基準の商品IDの取得可否: 処理中×取得できる；おすすめ候補商品の公開状態×おすすめ候補商品の言語: 公開中×参照中の言語の商品；おすすめ候補商品の公開状態×おすすめ候補商品の会員の購入履歴: 公開中×購入したことがある；おすすめ候補商品の公開状態×おすすめ候補商品と基準商品の関係: 公開中×別の商品かつ別のカード；おすすめ候補商品の公開状態×基準の商品IDの取得可否: 公開中×取得できる；おすすめ候補商品の在庫×おすすめ候補商品の言語: 在庫あり×参照中の言語の商品；おすすめ候補商品の在庫×おすすめ候補商品の会員の購入履歴: 在庫あり×購入したことがある；おすすめ候補商品の在庫×おすすめ候補商品と基準商品の関係: 在庫あり×別の商品かつ別のカード；おすすめ候補商品の在庫×基準の商品IDの取得可否: 在庫あり×取得できる；おすすめ候補商品の言語×おすすめ候補商品の会員の購入履歴: 参照中の言語の商品×購入したことがある；おすすめ候補商品の言語×同時購入の注文日: 参照中の言語の商品×検索期間内；おすすめ候補商品の言語×おすすめ候補商品と基準商品の関係: 参照中の言語の商品×別の商品かつ別のカード；おすすめ候補商品の言語×基準の商品IDの取得可否: 参照中の言語の商品×取得できる；おすすめ候補商品の会員の購入履歴×同時購入の注文日: 購入したことがある×検索期間内；おすすめ候補商品の会員の購入履歴×おすすめ候補商品と基準商品の関係: 購入したことがある×別の商品かつ別のカード；おすすめ候補商品の会員の購入履歴×基準の商品IDの取得可否: 購入したことがある×取得できる；同時購入の注文日×おすすめ候補商品と基準商品の関係: 検索期間内×別の商品かつ別のカード；同時購入の注文日×基準の商品IDの取得可否: 検索期間内×取得できる；おすすめ候補商品と基準商品の関係×基準の商品IDの取得可否: 別の商品かつ別のカード×取得できる
+CB-F03-05-002	P1	F01=商品詳細ページ&F02=支店&F03=ログイン中&F04=処理中&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがない&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる	表示するページ=商品詳細ページ／閲覧店舗=支店／会員ログイン=ログイン中／基準商品の決定と同時購入に使う注文のステータス=処理中／おすすめ候補商品の公開状態=公開中／おすすめ候補商品の在庫=在庫あり／おすすめ候補商品の言語=参照中の言語の商品／おすすめ候補商品の会員の購入履歴=購入したことがない／同時購入の注文日=検索期間内／おすすめ候補商品と基準商品の関係=別の商品かつ別のカード／基準の商品IDの取得可否=取得できる	表示するページ×閲覧店舗: 商品詳細ページ×支店；表示するページ×会員ログイン: 商品詳細ページ×ログイン中；表示するページ×基準商品の決定と同時購入に使う注文のステータス: 商品詳細ページ×処理中；表示するページ×おすすめ候補商品の言語: 商品詳細ページ×参照中の言語の商品；表示するページ×おすすめ候補商品の会員の購入履歴: 商品詳細ページ×購入したことがない；表示するページ×おすすめ候補商品と基準商品の関係: 商品詳細ページ×別の商品かつ別のカード；表示するページ×基準の商品IDの取得可否: 商品詳細ページ×取得できる；閲覧店舗×会員ログイン: 支店×ログイン中；閲覧店舗×おすすめ候補商品の会員の購入履歴: 支店×購入したことがない；会員ログイン×基準商品の決定と同時購入に使う注文のステータス: ログイン中×処理中；会員ログイン×おすすめ候補商品の言語: ログイン中×参照中の言語の商品；会員ログイン×おすすめ候補商品と基準商品の関係: ログイン中×別の商品かつ別のカード；会員ログイン×基準の商品IDの取得可否: ログイン中×取得できる；基準商品の決定と同時購入に使う注文のステータス×おすすめ候補商品の会員の購入履歴: 処理中×購入したことがない；おすすめ候補商品の言語×おすすめ候補商品の会員の購入履歴: 参照中の言語の商品×購入したことがない；おすすめ候補商品の会員の購入履歴×おすすめ候補商品と基準商品の関係: 購入したことがない×別の商品かつ別のカード；おすすめ候補商品の会員の購入履歴×基準の商品IDの取得可否: 購入したことがない×取得できる
+CB-F03-05-003	P1	F01=商品詳細ページ&F02=本店&F03=未ログイン&F04=処理中&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがある&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる	表示するページ=商品詳細ページ／閲覧店舗=本店／会員ログイン=未ログイン／基準商品の決定と同時購入に使う注文のステータス=処理中／おすすめ候補商品の公開状態=公開中／おすすめ候補商品の在庫=在庫あり／おすすめ候補商品の言語=参照中の言語の商品／おすすめ候補商品の会員の購入履歴=購入したことがある／同時購入の注文日=検索期間内／おすすめ候補商品と基準商品の関係=別の商品かつ別のカード／基準の商品IDの取得可否=取得できる	表示するページ×会員ログイン: 商品詳細ページ×未ログイン；表示するページ×おすすめ候補商品の会員の購入履歴: 商品詳細ページ×購入したことがある；閲覧店舗×会員ログイン: 本店×未ログイン；閲覧店舗×基準商品の決定と同時購入に使う注文のステータス: 本店×処理中；閲覧店舗×おすすめ候補商品の言語: 本店×参照中の言語の商品；閲覧店舗×おすすめ候補商品の会員の購入履歴: 本店×購入したことがある；閲覧店舗×おすすめ候補商品と基準商品の関係: 本店×別の商品かつ別のカード；閲覧店舗×基準の商品IDの取得可否: 本店×取得できる
+CB-F03-05-004	P1	F01=買い物かごページ&F02=支店&F03=ログイン中&F04=処理中&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがない&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる	表示するページ=買い物かごページ／閲覧店舗=支店／会員ログイン=ログイン中／基準商品の決定と同時購入に使う注文のステータス=処理中／おすすめ候補商品の公開状態=公開中／おすすめ候補商品の在庫=在庫あり／おすすめ候補商品の言語=参照中の言語の商品／おすすめ候補商品の会員の購入履歴=購入したことがない／同時購入の注文日=検索期間内／おすすめ候補商品と基準商品の関係=別の商品かつ別のカード／基準の商品IDの取得可否=取得できる	表示するページ×閲覧店舗: 買い物かごページ×支店；表示するページ×会員ログイン: 買い物かごページ×ログイン中；表示するページ×基準商品の決定と同時購入に使う注文のステータス: 買い物かごページ×処理中；表示するページ×おすすめ候補商品の言語: 買い物かごページ×参照中の言語の商品；表示するページ×おすすめ候補商品の会員の購入履歴: 買い物かごページ×購入したことがない；表示するページ×おすすめ候補商品と基準商品の関係: 買い物かごページ×別の商品かつ別のカード；表示するページ×基準の商品IDの取得可否: 買い物かごページ×取得できる
+CB-F03-05-005	P1	F01=買い物かごページ&F02=本店&F03=未ログイン&F04=処理中以外&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがある&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる	表示するページ=買い物かごページ／閲覧店舗=本店／会員ログイン=未ログイン／基準商品の決定と同時購入に使う注文のステータス=処理中以外／おすすめ候補商品の公開状態=公開中／おすすめ候補商品の在庫=在庫あり／おすすめ候補商品の言語=参照中の言語の商品／おすすめ候補商品の会員の購入履歴=購入したことがある／同時購入の注文日=検索期間内／おすすめ候補商品と基準商品の関係=別の商品かつ別のカード／基準の商品IDの取得可否=取得できる	表示するページ×会員ログイン: 買い物かごページ×未ログイン；表示するページ×おすすめ候補商品の会員の購入履歴: 買い物かごページ×購入したことがある；会員ログイン×基準商品の決定と同時購入に使う注文のステータス: 未ログイン×処理中以外；基準商品の決定と同時購入に使う注文のステータス×おすすめ候補商品の言語: 処理中以外×参照中の言語の商品；基準商品の決定と同時購入に使う注文のステータス×おすすめ候補商品の会員の購入履歴: 処理中以外×購入したことがある；基準商品の決定と同時購入に使う注文のステータス×おすすめ候補商品と基準商品の関係: 処理中以外×別の商品かつ別のカード；基準商品の決定と同時購入に使う注文のステータス×基準の商品IDの取得可否: 処理中以外×取得できる
+CB-F03-05-006	P1	F02=本店&F05=非公開	表示するページ=（効かない）／閲覧店舗=本店／会員ログイン=（効かない）／基準商品の決定と同時購入に使う注文のステータス=（効かない）／おすすめ候補商品の公開状態=非公開／おすすめ候補商品の在庫=（効かない）／おすすめ候補商品の言語=（効かない）／おすすめ候補商品の会員の購入履歴=（効かない）／同時購入の注文日=（効かない）／おすすめ候補商品と基準商品の関係=（効かない）／基準の商品IDの取得可否=（効かない）	閲覧店舗×おすすめ候補商品の公開状態: 本店×非公開
+CB-F03-05-007	P1	F02=本店&F06=在庫なし	表示するページ=（効かない）／閲覧店舗=本店／会員ログイン=（効かない）／基準商品の決定と同時購入に使う注文のステータス=（効かない）／おすすめ候補商品の公開状態=（効かない。公開中から選ぶ）／おすすめ候補商品の在庫=在庫なし／おすすめ候補商品の言語=（効かない）／おすすめ候補商品の会員の購入履歴=（効かない）／同時購入の注文日=（効かない）／おすすめ候補商品と基準商品の関係=（効かない）／基準の商品IDの取得可否=（効かない）	閲覧店舗×おすすめ候補商品の在庫: 本店×在庫なし
+CB-F03-05-008	P1	F01=マイページ・注文完了ページ&F02=支店&F03=ログイン中&F04=処理中以外&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがない&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる	表示するページ=マイページ・注文完了ページ／閲覧店舗=支店／会員ログイン=ログイン中／基準商品の決定と同時購入に使う注文のステータス=処理中以外／おすすめ候補商品の公開状態=公開中／おすすめ候補商品の在庫=在庫あり／おすすめ候補商品の言語=参照中の言語の商品／おすすめ候補商品の会員の購入履歴=購入したことがない／同時購入の注文日=検索期間内／おすすめ候補商品と基準商品の関係=別の商品かつ別のカード／基準の商品IDの取得可否=取得できる	閲覧店舗×基準商品の決定と同時購入に使う注文のステータス: 支店×処理中以外
+CB-F03-05-009	P1	F02=支店&F05=非公開	表示するページ=（効かない）／閲覧店舗=支店／会員ログイン=（効かない）／基準商品の決定と同時購入に使う注文のステータス=（効かない）／おすすめ候補商品の公開状態=非公開／おすすめ候補商品の在庫=（効かない）／おすすめ候補商品の言語=（効かない）／おすすめ候補商品の会員の購入履歴=（効かない）／同時購入の注文日=（効かない）／おすすめ候補商品と基準商品の関係=（効かない）／基準の商品IDの取得可否=（効かない）	閲覧店舗×おすすめ候補商品の公開状態: 支店×非公開
+CB-F03-05-010	P1	F02=支店&F06=在庫なし	表示するページ=（効かない）／閲覧店舗=支店／会員ログイン=（効かない）／基準商品の決定と同時購入に使う注文のステータス=（効かない）／おすすめ候補商品の公開状態=（効かない。公開中から選ぶ）／おすすめ候補商品の在庫=在庫なし／おすすめ候補商品の言語=（効かない）／おすすめ候補商品の会員の購入履歴=（効かない）／同時購入の注文日=（効かない）／おすすめ候補商品と基準商品の関係=（効かない）／基準の商品IDの取得可否=（効かない）	閲覧店舗×おすすめ候補商品の在庫: 支店×在庫なし
+CB-F03-05-011	P1	F03=ログイン中&F08=購入したことがある	表示するページ=（効かない）／閲覧店舗=（効かない）／会員ログイン=ログイン中／基準商品の決定と同時購入に使う注文のステータス=（効かない）／おすすめ候補商品の公開状態=（効かない）／おすすめ候補商品の在庫=（効かない）／おすすめ候補商品の言語=（効かない）／おすすめ候補商品の会員の購入履歴=購入したことがある／同時購入の注文日=（効かない）／おすすめ候補商品と基準商品の関係=（効かない）／基準の商品IDの取得可否=（効かない）	会員ログイン×おすすめ候補商品の会員の購入履歴: ログイン中×購入したことがある
+CB-F03-05-012	P1	F01=マイページ・注文完了ページ&F02=本店&F03=未ログイン&F04=処理中&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがない&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる	表示するページ=マイページ・注文完了ページ／閲覧店舗=本店／会員ログイン=未ログイン／基準商品の決定と同時購入に使う注文のステータス=処理中／おすすめ候補商品の公開状態=公開中／おすすめ候補商品の在庫=在庫あり／おすすめ候補商品の言語=参照中の言語の商品／おすすめ候補商品の会員の購入履歴=購入したことがない／同時購入の注文日=検索期間内／おすすめ候補商品と基準商品の関係=別の商品かつ別のカード／基準の商品IDの取得可否=取得できる	会員ログイン×おすすめ候補商品の会員の購入履歴: 未ログイン×購入したことがない
+CB-F03-05-013	P1	F07=参照中の言語でない商品	表示するページ=（効かない）／閲覧店舗=（効かない）／会員ログイン=（効かない）／基準商品の決定と同時購入に使う注文のステータス=（効かない）／おすすめ候補商品の公開状態=（効かない）／おすすめ候補商品の在庫=（効かない）／おすすめ候補商品の言語=参照中の言語でない商品／おすすめ候補商品の会員の購入履歴=（効かない）／同時購入の注文日=（効かない）／おすすめ候補商品と基準商品の関係=（効かない）／基準の商品IDの取得可否=（効かない。取得できるから選ぶ）	おすすめ候補商品の言語: 参照中の言語でない商品
+CB-F03-05-014	P1	F09=検索期間外	表示するページ=（効かない）／閲覧店舗=（効かない）／会員ログイン=（効かない）／基準商品の決定と同時購入に使う注文のステータス=（効かない）／おすすめ候補商品の公開状態=（効かない）／おすすめ候補商品の在庫=（効かない）／おすすめ候補商品の言語=（効かない。参照中の言語の商品から選ぶ）／おすすめ候補商品の会員の購入履歴=（効かない）／同時購入の注文日=検索期間外／おすすめ候補商品と基準商品の関係=（効かない。別の商品かつ別のカードから選ぶ）／基準の商品IDの取得可否=（効かない。取得できるから選ぶ）	同時購入の注文日: 検索期間外
+CB-F03-05-015	P1	F10=同一商品または同一カード	表示するページ=（効かない）／閲覧店舗=（効かない）／会員ログイン=（効かない）／基準商品の決定と同時購入に使う注文のステータス=（効かない）／おすすめ候補商品の公開状態=（効かない）／おすすめ候補商品の在庫=（効かない）／おすすめ候補商品の言語=（効かない。参照中の言語の商品から選ぶ）／おすすめ候補商品の会員の購入履歴=（効かない）／同時購入の注文日=（効かない）／おすすめ候補商品と基準商品の関係=同一商品または同一カード／基準の商品IDの取得可否=（効かない。取得できるから選ぶ）	おすすめ候補商品と基準商品の関係: 同一商品または同一カード
+CB-F03-05-016	P1	F11=取得できない	表示するページ=（効かない）／閲覧店舗=（効かない）／会員ログイン=（効かない）／基準商品の決定と同時購入に使う注文のステータス=（効かない）／おすすめ候補商品の公開状態=（効かない）／おすすめ候補商品の在庫=（効かない）／おすすめ候補商品の言語=（効かない）／おすすめ候補商品の会員の購入履歴=（効かない）／同時購入の注文日=（効かない）／おすすめ候補商品と基準商品の関係=（効かない）／基準の商品IDの取得可否=取得できない	基準の商品IDの取得可否: 取得できない
+組ID	処理ID	組	組（読める形）	埋める組
+CB-F03-06-001	P1	F01=本店&F02=立っている&F03=表示中の言語を含む&F04=NMの規格があり価格が0より大きい&F05=保存値あり・取得商品0件	閲覧店舗=本店／商品の支店表示フラグ=立っている／商品の地域制限の表示ロケール=表示中の言語を含む／カード状態NMの規格の販売価格=NMの規格があり価格が0より大きい／閲覧履歴の保存値と取得できた商品=保存値あり・取得商品0件	閲覧店舗×閲覧履歴の保存値と取得できた商品: 本店×保存値あり・取得商品0件；商品の支店表示フラグ×閲覧履歴の保存値と取得できた商品: 立っている×保存値あり・取得商品0件；商品の地域制限の表示ロケール×閲覧履歴の保存値と取得できた商品: 表示中の言語を含む×保存値あり・取得商品0件；カード状態NMの規格の販売価格×閲覧履歴の保存値と取得できた商品: NMの規格があり価格が0より大きい×保存値あり・取得商品0件
+CB-F03-06-002	P1	F01=支店&F02=立っている&F03=表示中の言語を含む&F04=NMの規格があり価格が0より大きい&F05=保存値あり・取得商品あり	閲覧店舗=支店／商品の支店表示フラグ=立っている／商品の地域制限の表示ロケール=表示中の言語を含む／カード状態NMの規格の販売価格=NMの規格があり価格が0より大きい／閲覧履歴の保存値と取得できた商品=保存値あり・取得商品あり	閲覧店舗×商品の支店表示フラグ: 支店×立っている；閲覧店舗×商品の地域制限の表示ロケール: 支店×表示中の言語を含む；閲覧店舗×カード状態NMの規格の販売価格: 支店×NMの規格があり価格が0より大きい；閲覧店舗×閲覧履歴の保存値と取得できた商品: 支店×保存値あり・取得商品あり
+CB-F03-06-003	P1	F01=支店&F02=立っていない	閲覧店舗=支店／商品の支店表示フラグ=立っていない／商品の地域制限の表示ロケール=（効かない）／カード状態NMの規格の販売価格=（効かない）／閲覧履歴の保存値と取得できた商品=（効かない）	閲覧店舗×商品の支店表示フラグ: 支店×立っていない
+CB-F03-06-004	P1	F01=支店&F02=立っている&F03=表示中の言語を含む&F04=NMの規格があり価格が0より大きい&F05=保存値あり・取得商品0件	閲覧店舗=支店／商品の支店表示フラグ=立っている／商品の地域制限の表示ロケール=表示中の言語を含む／カード状態NMの規格の販売価格=NMの規格があり価格が0より大きい／閲覧履歴の保存値と取得できた商品=保存値あり・取得商品0件	閲覧店舗×閲覧履歴の保存値と取得できた商品: 支店×保存値あり・取得商品0件
+CB-F03-06-005	P1	F01=本店&F02=立っていない&F03=表示中の言語を含む&F04=NMの規格があり価格が0より大きい&F05=保存値あり・取得商品0件	閲覧店舗=本店／商品の支店表示フラグ=立っていない／商品の地域制限の表示ロケール=表示中の言語を含む／カード状態NMの規格の販売価格=NMの規格があり価格が0より大きい／閲覧履歴の保存値と取得できた商品=保存値あり・取得商品0件	商品の支店表示フラグ×閲覧履歴の保存値と取得できた商品: 立っていない×保存値あり・取得商品0件
+CB-F03-06-006	P1	F03=表示中の言語を含まない	閲覧店舗=（効かない）／商品の支店表示フラグ=（効かない）／商品の地域制限の表示ロケール=表示中の言語を含まない／カード状態NMの規格の販売価格=（効かない）／閲覧履歴の保存値と取得できた商品=（効かない。保存値あり・取得商品あり・保存値あり・取得商品0件から選ぶ）	商品の地域制限の表示ロケール: 表示中の言語を含まない
+CB-F03-06-007	P1	F04=NMの規格がない、または価格が0	閲覧店舗=（効かない）／商品の支店表示フラグ=（効かない）／商品の地域制限の表示ロケール=（効かない。表示中の言語を含むから選ぶ）／カード状態NMの規格の販売価格=NMの規格がない、または価格が0／閲覧履歴の保存値と取得できた商品=（効かない。保存値あり・取得商品あり・保存値あり・取得商品0件から選ぶ）	カード状態NMの規格の販売価格: NMの規格がない、または価格が0
+組ID	処理ID	組	組（読める形）	埋める組
+CB-F03-07-001	P1	F01=同一依頼がある&F02=商品単位	どの段で決まるか=同一依頼がある／依頼の単位=商品単位	どの段で決まるか×依頼の単位: 同一依頼がある×商品単位
+CB-F03-07-002	P2	F03=本店&F04=高額商品でない&F05=入荷待ち商品一覧&F06=依頼済み	閲覧店舗=本店／商品の高額区分=高額商品でない／表示画面=入荷待ち商品一覧／会員自身の依頼=依頼済み	閲覧店舗×表示画面: 本店×入荷待ち商品一覧；商品の高額区分×表示画面: 高額商品でない×入荷待ち商品一覧；表示画面×会員自身の依頼: 入荷待ち商品一覧×依頼済み
+CB-F03-07-003	P2	F03=本店&F04=高額商品でない&F05=商品一覧&F06=依頼済み	閲覧店舗=本店／商品の高額区分=高額商品でない／表示画面=商品一覧／会員自身の依頼=依頼済み	表示画面×会員自身の依頼: 商品一覧×依頼済み
+CB-F03-07-004	P3	F02=商品規格単位&F07=送る&F08=NM	依頼の単位=商品規格単位／入荷通知メールの許可=送る／入荷した商品規格の状態=NM	依頼の単位×入荷した商品規格の状態: 商品規格単位×NM
+CB-F03-07-005	P3	F02=商品規格単位&F07=送る&F08=NM以外	依頼の単位=商品規格単位／入荷通知メールの許可=送る／入荷した商品規格の状態=NM以外	依頼の単位×入荷した商品規格の状態: 商品規格単位×NM以外
+組ID	処理ID	組	組（読める形）	埋める組
+CB-F03-08-001	P1	F01=登録&F02=未ログイン	操作=登録／どの段で決まるか=未ログイン	操作×どの段で決まるか: 登録×未ログイン
+CB-F03-08-002	P3	F05=公開中&F06=なし&F07=あり	商品の公開状態=公開中／高額商品コード=なし／商品の在庫=あり	商品の公開状態×高額商品コード: 公開中×なし；高額商品コード×商品の在庫: なし×あり
+CB-F03-08-003	P3	F05=公開中&F06=なし&F07=なし	商品の公開状態=公開中／高額商品コード=なし／商品の在庫=なし	高額商品コード×商品の在庫: なし×なし
+組ID	処理ID	組	組（読める形）	埋める組
+CB-F04-01-001	P1	F01=支店&F02=設定なし&F03=設定なし	閲覧店舗=支店／送料無料金額の条件=設定なし／送料無料個数の条件=設定なし	閲覧店舗×送料無料金額の条件: 支店×設定なし；閲覧店舗×送料無料個数の条件: 支店×設定なし
+CB-F04-01-002	P1	F01=本店&F02=設定なし&F03=設定あり・個数が未達	閲覧店舗=本店／送料無料金額の条件=設定なし／送料無料個数の条件=設定あり・個数が未達	送料無料金額の条件×送料無料個数の条件: 設定なし×設定あり・個数が未達
+CB-F04-01-003	P1	F01=本店&F02=設定あり・合計が到達&F03=設定あり・個数が到達	閲覧店舗=本店／送料無料金額の条件=設定あり・合計が到達／送料無料個数の条件=設定あり・個数が到達	送料無料金額の条件×送料無料個数の条件: 設定あり・合計が到達×設定あり・個数が到達
+CB-F04-01-004	P1	F01=本店&F02=設定あり・合計が到達&F03=設定あり・個数が未達	閲覧店舗=本店／送料無料金額の条件=設定あり・合計が到達／送料無料個数の条件=設定あり・個数が未達	送料無料金額の条件×送料無料個数の条件: 設定あり・合計が到達×設定あり・個数が未達
+CB-F04-01-005	P2	F01=本店&F04=なし&F05=個別削除	閲覧店舗=本店／他店舗のカートの商品=なし／カートへの操作=個別削除	閲覧店舗×他店舗のカートの商品: 本店×なし；閲覧店舗×カートへの操作: 本店×個別削除；他店舗のカートの商品×カートへの操作: なし×個別削除
+CB-F04-01-006	P2	F01=本店&F04=なし&F05=一括削除	閲覧店舗=本店／他店舗のカートの商品=なし／カートへの操作=一括削除	閲覧店舗×カートへの操作: 本店×一括削除；他店舗のカートの商品×カートへの操作: なし×一括削除
+CB-F04-01-007	P2	F01=支店&F04=なし&F05=表示のみ	閲覧店舗=支店／他店舗のカートの商品=なし／カートへの操作=表示のみ	閲覧店舗×他店舗のカートの商品: 支店×なし；他店舗のカートの商品×カートへの操作: なし×表示のみ
+CB-F04-01-008	P4	F08=POST /cart/add_bulk&F09=フォーム値&F10=指定なし	送信先=POST /cart/add_bulk／要求の渡し方=フォーム値／数量の指定=指定なし	送信先×数量の指定: POST /cart/add_bulk×指定なし
+CB-F04-01-009	P4	F08=POST /cart/add_show&F09=フォーム値&F10=指定なし	送信先=POST /cart/add_show／要求の渡し方=フォーム値／数量の指定=指定なし	送信先×数量の指定: POST /cart/add_show×指定なし
+CB-F04-01-010	P4	F08=POST /cart/add&F09=JSON本文&F10=指定なし	送信先=POST /cart/add／要求の渡し方=JSON本文／数量の指定=指定なし	要求の渡し方×数量の指定: JSON本文×指定なし
+
+ succeeded in 34ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	表示するページ	マイページ・注文完了ページ｜商品詳細ページ｜買い物かごページ	マイページ・注文完了ページ: 直近の注文の明細で販売価格が最も高い商品が基準／商品詳細ページ: 表示している商品が基準／買い物かごページ: カート内で販売価格が最も高い商品が基準（基準商品の同時購入商品がおすすめになる）	L0024-L0031,L0050-L0051	この機能
+F02	P1	閲覧店舗	本店｜支店	本店: 本店の公開フラグと在庫を参照／支店: 支店公開フラグと支店の在庫を参照	L0034,L0036	この機能
+F03	P1	会員ログイン	ログイン中｜未ログイン	ログイン中: 購入済み商品の除外を行う／未ログイン: 購入済み商品の除外を行わない	L0037	この機能
+F04	P1	基準商品の決定と同時購入に使う注文のステータス	処理中｜処理中以外	処理中: その注文を同時購入の集計に含めず、マイページ・注文完了ページでは基準商品を決める直近の注文からも除く／処理中以外: 含める	L0032,L0051	この機能
+F05	P1	おすすめ候補商品の公開状態	公開中｜非公開	公開中: おすすめに出る／非公開: 出ない（支店は支店公開フラグで判定）	L0034	この機能
+F06	P1	おすすめ候補商品の在庫	在庫あり｜在庫なし	在庫あり: おすすめに出る／在庫なし: 出ない（支店は支店の在庫で判定）	L0036	この機能
+F07	P1	おすすめ候補商品の言語	参照中の言語の商品｜参照中の言語でない商品	参照中の言語の商品: おすすめに出る／参照中の言語でない商品: 出ない	L0035	この機能
+F08	P1	おすすめ候補商品の会員の購入履歴	購入したことがある｜購入したことがない	購入したことがある: ログイン中なら出ない（未ログインなら除外されない）／購入したことがない: おすすめに出る	L0037	この機能
+F09	P1	同時購入の注文日	検索期間内｜検索期間外	検索期間内: 同時購入の集計に含める／検索期間外: 含めない	L0032,M10-16:L0064	M10-16（設定）
+F10	P1	おすすめ候補商品と基準商品の関係	別の商品かつ別のカード｜同一商品または同一カード	別の商品かつ別のカード: おすすめに出る／同一商品または同一カード: 出ない	L0033	この機能
+F11	P1	基準の商品IDの取得可否	取得できる｜取得できない	取得できる: おすすめ商品を取得して表示する／取得できない: おすすめ商品を表示しない（おすすめ商品がないときの案内文言を表示する）	L0024,L0040-L0041	この機能
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	閲覧店舗	本店｜支店	本店: 履歴の商品を支店表示フラグにかかわらず対象にする／支店: 支店表示フラグが立っている商品だけ対象にする	L0032	この機能
+F02	P1	商品の支店表示フラグ	立っている｜立っていない	立っている: 支店でも表示対象／立っていない: 支店の履歴には出さない（本店には影響しない）	L0032,M03-02:L0081-L0083	M03-02（データ）
+F03	P1	商品の地域制限の表示ロケール	表示中の言語を含む｜表示中の言語を含まない	表示中の言語を含む: 一覧に出る／表示中の言語を含まない: 一覧から除外される	L0063	この機能
+F04	P1	カード状態NMの規格の販売価格	NMの規格があり価格が0より大きい｜NMの規格がない、または価格が0	NMの規格があり価格が0より大きい: 一覧に出る／NMの規格がない、または価格が0: 一覧から除外される	L0064	この機能
+F05	P1	閲覧履歴の保存値と取得できた商品	保存値あり・取得商品あり｜保存値あり・取得商品0件｜保存値なし	保存値あり・取得商品あり: 取得できた商品のサムネイルを新しい順に並べる／保存値あり・取得商品0件: 見出しだけを表示し履歴無しの表示は行わない／保存値なし: 履歴無しの表示を出す	L0034,L0069-L0071	この機能
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	どの段で決まるか	規格を特定できない｜未ログイン｜同一依頼がある｜件数が上限以上｜全段を通過	規格を特定できない: 対象商品が削除済みの応答で登録しない（状態fail）／未ログイン: 戻り先を保持しログインモーダルを表示する（状態nologin）／同一依頼がある: その依頼を削除して取り消す（状態cancel）／件数が上限以上: 登録せず上限超過のエラーを出す（状態fail）／全段を通過: 依頼を作成して保存する（状態success）	L0116-L0123,L0061-L0063,M10-16:L0062	この機能
+F02	P1,P3	依頼の単位	商品規格単位｜商品単位	商品規格単位: P1は規格の依頼1件、P3は依頼した規格の入荷で通知／商品単位: P1は商品と言語の依頼1件、P3はNMの入荷だけ通知	L0060,L0062,L0067,L0130	この機能
+F03	P2	閲覧店舗	本店｜支店	本店: 通知ボタンを表示する／支店: 通知ボタンを表示しない	L0051,L0065,L0098	この機能
+F04	P2	商品の高額区分	高額商品｜高額商品でない	高額商品: 通知ボタンを表示しない／高額商品でない: 通知ボタンを表示する	L0050	この機能
+F05	P2	表示画面	商品詳細｜商品一覧｜入荷待ち商品一覧	商品詳細: 商品言語単位と規格単位の通知ボタンを表示する／商品一覧: SOLDOUTの商品に商品単位の通知ボタンを表示する／入荷待ち商品一覧: 通知ボタンを表示する画面に挙がるが、出すボタンの種類は設計書に定めがない	L0046-L0049,L0054-L0057,L0068	この機能
+F06	P2	会員自身の依頼	依頼済み｜未依頼	依頼済み: 「通知待ち」を表示する／未依頼: 「入荷時に通知」を表示する	L0102	この機能
+F07	P3	入荷通知メールの許可	送る｜送らない	送る: 入荷した規格を依頼する会員へ依頼の登録日時の昇順に1件ずつ送信する／送らない: 1件も送信しない	L0129-L0130,M10-16:L0070	M10-16（設定）
+F08	P3	入荷した商品規格の状態	NM｜NM以外	NM: 商品単位の依頼にも通知する／NM以外: 商品単位の依頼には通知しない（規格単位の依頼にはその規格の入荷で通知）	L0067,L0130	この機能
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	操作	登録｜解除	登録: お気に入りに追加する／解除: お気に入りから外す	L0049-L0050,L0089-L0090	この機能
+F02	P1	どの段で決まるか	未ログイン｜上限以上｜既にある｜無い	未ログイン: 登録はログインを促し、解除は不正要求（HTTP400）で本文なし／上限以上: 登録だけが既登録の判定より先に上限超過で登録しない／既にある: 登録は新たに作らず成功、解除は削除／無い: 登録は作成、解除は何も削除せず成功	L0049,L0053-L0054,L0102-L0107,L0132-L0133	この機能
+F03	P2	閲覧店舗	本店｜支店	本店: お気に入りのボタンを表示する／支店: 表示しない	L0052,L0085	この機能
+F04	P2	会員自身のお気に入り	登録済み｜未登録	登録済み: 「お気に入りに登録中」または「♥」を表示する／未登録: 「お気に入りに追加する」または「♡」を表示する	L0089,L0109	この機能
+F05	P3	商品の公開状態	公開中｜非公開	公開中: 一覧に出す候補になる／非公開: 一覧に出さない	L0114	この機能
+F06	P3	高額商品コード	あり｜なし	あり: 在庫があるときだけ一覧に出す／なし: 在庫によらず公開中なら出す	L0114	この機能
+F07	P3	商品の在庫	あり｜なし	あり: 一覧に出す／なし: 高額商品コードがあるときは一覧に出さない	L0114	この機能
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1,P2	閲覧店舗	本店｜支店	本店: 送料を表示する／支店: 送料を表示しない。カートは閲覧店舗の商品だけ	L0043,L0045,L0157	この機能
+F02	P1	送料無料金額の条件	設定なし｜設定あり・合計が到達｜設定あり・合計が未達	設定なし: 送料無料の案内も不足額の案内も出ない／設定あり・合計が到達: 送料無料の状態を表示／設定あり・合計が未達: 不足額を案内	M10-01:L0072,L0214-L0216	M10-01（設定）
+F03	P1	送料無料個数の条件	設定なし｜設定あり・個数が到達｜設定あり・個数が未達	設定なし: 個数では判定しない／設定あり・個数が到達: 金額に関わらず送料無料／設定あり・個数が未達: 金額の判定に従う	M10-01:L0073,L0215	M10-01（設定）
+F04	P2	他店舗のカートの商品	あり｜なし	あり: 閲覧店舗の操作後も他店舗のカートに残る／なし: 閲覧店舗のカートだけが対象	L0053,L0175,L0183	この機能
+F05	P2	カートへの操作	表示のみ｜個別削除｜一括削除	表示のみ: 閲覧店舗の商品だけ表示／個別削除: 選んだ商品だけ削除／一括削除: 閲覧店舗の商品をすべて削除	L0174-L0175,L0182-L0183	この機能
+F06	P3	カートの購入グループ構成	商品なし｜単一｜複数	商品なし: 空の案内だけでボタンは出ない／単一: ボタンを出す／複数: ボタンを出さずエラーを表示	L0218,L0239,L0260	この機能
+F07	P3	販売個数制限	制限内｜制限超過	制限内: ご注文方法の指定画面へ進む／制限超過: 進まずメッセージ付きで買い物かごへ戻る	L0219	この機能
+F08	P4	送信先	POST /cart/add｜POST /cart/add_bulk｜POST /cart/add_show	POST /cart/add: 追加後のカート内容を返す／POST /cart/add_bulk: 複数件を追加し追加後のカート内容を返す／POST /cart/add_show: 成否にかかわらず買い物かご画面へ遷移	L0222,L0225-L0227	この機能
+F09	P4	要求の渡し方	フォーム値｜JSON本文	フォーム値: フォームの値を読む／JSON本文: フォームに商品規格も数量も無いときJSON本文を読む	L0221,L0225,L0229	この機能
+F10	P4	数量の指定	指定あり｜指定なし	指定あり: 指定した数量で追加／指定なし: 数量1で追加	L0221	この機能
+
+ succeeded in 67ms:
+### 指摘（F03-07 / IT-F03-07-056）
+- 主張: シードは「商品一覧画面で『入荷時に通知』を押し」、商品単位の依頼を登録するとしている。
+- 実際: 設計書 L0067 は「商品一覧画面でSOLDOUTとなっている場合、NMのみの入荷通知とする、が正しい」と明記する。
+- 判定: 成立しない前提・手順
+- 修正案: 商品一覧から登録する依頼をNM規格の依頼として記述する。依頼済み表示の期待結果も、その状態を前提に確認する。
+
+### 指摘（F03-07 / IT-F03-07-057）
+- 主張: 手順は「商品規格の登録更新で在庫を0から1へ変更する」としている。
+- 実際: 設計書 L0127 は通知の契機を「入荷（在庫の反映・入荷CSVの取込・商品規格の登録更新）」とする。商品規格登録フォームには在庫数を0から1へ変更する入力欄がない。
+- 判定: 成立しない前提・手順
+- 修正案: 在庫変更CSV登録と承認によって、対象NM規格の在庫を0から1へ反映する手順に直す。
+
+### 指摘（F03-07 / IT-F03-07-058）
+- 主張: 手順は「状態SPの商品規格の登録更新で在庫を0から1へ変更する」としている。
+- 実際: 設計書 L0127 は通知の契機を「入荷（在庫の反映・入荷CSVの取込・商品規格の登録更新）」とする。商品規格登録フォームには在庫数を0から1へ変更する入力欄がない。
+- 判定: 成立しない前提・手順
+- 修正案: 在庫変更CSV登録と承認によって、対象SP規格の在庫を0から1へ反映する手順に直す。
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+指摘	処置	理由	直した所
+IT-F03-07-056	採用	設計書L0067に「商品一覧画面でSOLDOUTとなっている場合、NMのみの入荷通知とする」とあり、商品単位の依頼は成り立たない	IT-F03-07-056の事前準備③とS-F03-07-CBLIST-056をNM規格の規格単位の依頼に変更
+IT-F03-07-057	採用	商品規格登録編集画面の項目に在庫数が無いことを実装で確認。L0127の契機「在庫の反映」を在庫変更CSV登録と承認で実行する	IT-F03-07-057の手順を在庫変更CSV登録と承認に変更。承認用の共有可シードS-F03-07-CBAPRを追加（既存に承認者無し）
+IT-F03-07-058	採用	057と同じ。SP規格の商品コードを画面で決める必要があるため商品コードF0307-CB058-SPを規格登録時に設定	IT-F03-07-058の手順・事前準備とS-F03-07-CBMAILSP-058を変更
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+codex
+前巡の指摘は F03-07 の3件で、いずれも「採用」と記録されています。修正後のケースとシードを確認し、各組で試す値と設計上の結果を照合します。
+exec
+/bin/bash -lc 'cut -f1-3 integration_test/casegen/combination/combos/F03-05.tsv integration_test/casegen/combination/combos/F03-06.tsv integration_test/casegen/combination/combos/F03-07.tsv integration_test/casegen/combination/combos/F03-08.tsv integration_test/casegen/combination/combos/F04-01.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/F03-07_cb_test_cases.tsv integration_test/casegen/combination/cases/F03-07_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/F03-05_cb_test_cases.tsv integration_test/casegen/combination/cases/F03-05_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/F03-08_cb_test_cases.tsv integration_test/casegen/combination/cases/F03-08_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 71ms:
+組ID	処理ID	組
+CB-F03-05-001	P1	F01=マイページ・注文完了ページ&F02=支店&F03=未ログイン&F04=処理中&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがある&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる
+CB-F03-05-002	P1	F01=商品詳細ページ&F02=支店&F03=ログイン中&F04=処理中&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがない&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる
+CB-F03-05-003	P1	F01=商品詳細ページ&F02=本店&F03=未ログイン&F04=処理中&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがある&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる
+CB-F03-05-004	P1	F01=買い物かごページ&F02=支店&F03=ログイン中&F04=処理中&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがない&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる
+CB-F03-05-005	P1	F01=買い物かごページ&F02=本店&F03=未ログイン&F04=処理中以外&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがある&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる
+CB-F03-05-006	P1	F02=本店&F05=非公開
+CB-F03-05-007	P1	F02=本店&F06=在庫なし
+CB-F03-05-008	P1	F01=マイページ・注文完了ページ&F02=支店&F03=ログイン中&F04=処理中以外&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがない&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる
+CB-F03-05-009	P1	F02=支店&F05=非公開
+CB-F03-05-010	P1	F02=支店&F06=在庫なし
+CB-F03-05-011	P1	F03=ログイン中&F08=購入したことがある
+CB-F03-05-012	P1	F01=マイページ・注文完了ページ&F02=本店&F03=未ログイン&F04=処理中&F05=公開中&F06=在庫あり&F07=参照中の言語の商品&F08=購入したことがない&F09=検索期間内&F10=別の商品かつ別のカード&F11=取得できる
+CB-F03-05-013	P1	F07=参照中の言語でない商品
+CB-F03-05-014	P1	F09=検索期間外
+CB-F03-05-015	P1	F10=同一商品または同一カード
+CB-F03-05-016	P1	F11=取得できない
+組ID	処理ID	組
+CB-F03-06-001	P1	F01=本店&F02=立っている&F03=表示中の言語を含む&F04=NMの規格があり価格が0より大きい&F05=保存値あり・取得商品0件
+CB-F03-06-002	P1	F01=支店&F02=立っている&F03=表示中の言語を含む&F04=NMの規格があり価格が0より大きい&F05=保存値あり・取得商品あり
+CB-F03-06-003	P1	F01=支店&F02=立っていない
+CB-F03-06-004	P1	F01=支店&F02=立っている&F03=表示中の言語を含む&F04=NMの規格があり価格が0より大きい&F05=保存値あり・取得商品0件
+CB-F03-06-005	P1	F01=本店&F02=立っていない&F03=表示中の言語を含む&F04=NMの規格があり価格が0より大きい&F05=保存値あり・取得商品0件
+CB-F03-06-006	P1	F03=表示中の言語を含まない
+CB-F03-06-007	P1	F04=NMの規格がない、または価格が0
+組ID	処理ID	組
+CB-F03-07-001	P1	F01=同一依頼がある&F02=商品単位
+CB-F03-07-002	P2	F03=本店&F04=高額商品でない&F05=入荷待ち商品一覧&F06=依頼済み
+CB-F03-07-003	P2	F03=本店&F04=高額商品でない&F05=商品一覧&F06=依頼済み
+CB-F03-07-004	P3	F02=商品規格単位&F07=送る&F08=NM
+CB-F03-07-005	P3	F02=商品規格単位&F07=送る&F08=NM以外
+組ID	処理ID	組
+CB-F03-08-001	P1	F01=登録&F02=未ログイン
+CB-F03-08-002	P3	F05=公開中&F06=なし&F07=あり
+CB-F03-08-003	P3	F05=公開中&F06=なし&F07=なし
+組ID	処理ID	組
+CB-F04-01-001	P1	F01=支店&F02=設定なし&F03=設定なし
+CB-F04-01-002	P1	F01=本店&F02=設定なし&F03=設定あり・個数が未達
+CB-F04-01-003	P1	F01=本店&F02=設定あり・合計が到達&F03=設定あり・個数が到達
+CB-F04-01-004	P1	F01=本店&F02=設定あり・合計が到達&F03=設定あり・個数が未達
+CB-F04-01-005	P2	F01=本店&F04=なし&F05=個別削除
+CB-F04-01-006	P2	F01=本店&F04=なし&F05=一括削除
+CB-F04-01-007	P2	F01=支店&F04=なし&F05=表示のみ
+CB-F04-01-008	P4	F08=POST /cart/add_bulk&F09=フォーム値&F10=指定なし
+CB-F04-01-009	P4	F08=POST /cart/add_show&F09=フォーム値&F10=指定なし
+CB-F04-01-010	P4	F08=POST /cart/add&F09=JSON本文&F10=指定なし
+
+ succeeded in 110ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-F03-05-030	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-F03-05-CONFIG,S-F03-05-CBPROC-030	① 開始時にレコメンドの検索期間（日数）を30に設定する（S-F03-05-CONFIG）／② 新しいブラウザをTC大阪支店・日本語表示・未ログインで開始する。店舗ID 5は参照だけに使用し、会員M cbf0305-030@example.test（パスワード=Passw0rd-CBF0305030）が利用可能で購入履歴がなく、F0305-CB030-BASE、F0305-CB030-RECA、F0305-CB030-RECPは日本語・支店公開・大阪在庫あり（F0305-CB030-BASE=5、F0305-CB030-RECA=2、F0305-CB030-RECP=2）の互いに別の商品かつ別のカード、会員Pの試験開始時刻の1日前の入金済み注文にF0305-CB030-BASEとF0305-CB030-RECA、会員Pの試験開始時刻の1日前の処理中の注文にF0305-CB030-BASEとF0305-CB030-RECPが含まれる（S-F03-05-CBPROC-030）	1. TC大阪支店のログイン画面でcbf0305-030@example.test / Passw0rd-CBF0305030を入力してログインする／2. TC大阪支店のF0305-CB030-BASEの商品詳細ページを開く／3. おすすめ商品枠までスクロールする／4. 前送りボタンを使用して表示された商品を確認する	商品詳細ページのおすすめ商品枠に、処理中以外の注文でF0305-CB030-BASEと同時購入されたF0305-CB030-RECAが表示され、処理中の注文だけに含まれるF0305-CB030-RECPが表示されないこと	0303 商品リコメンド / 機能仕様 処理概要、現行仕様 業務ロジック 基準商品を決める注文の絞り込み	CB-F03-05-002
+IT-F03-05-031	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-F03-05-CONFIG,S-F03-05-CBPROC-031	① 開始時にレコメンドの検索期間（日数）を30に設定する（S-F03-05-CONFIG）／② 新しいブラウザを本店・日本語表示・未ログインで開始する。F0305-CB031-BASE、F0305-CB031-RECA、F0305-CB031-RECPは日本語・本店公開・本店在庫ありの互いに別の商品かつ別のカードで、会員P（購入履歴にF0305-CB031-RECAがある）の試験開始時刻の1日前の入金済み注文にF0305-CB031-BASEとF0305-CB031-RECA、会員Pの試験開始時刻の1日前の処理中の注文にF0305-CB031-BASEとF0305-CB031-RECPが含まれる（S-F03-05-CBPROC-031）	1. 本店のF0305-CB031-BASEの商品詳細ページを開く／2. おすすめ商品枠までスクロールする／3. 前送りボタンを使用して表示された商品を確認する	未ログインでは購入済みの除外が行われず、商品詳細ページのおすすめ商品枠に、会員Pが購入したことのあるF0305-CB031-RECAが表示され、処理中の注文だけに含まれるF0305-CB031-RECPが表示されないこと	0303 商品リコメンド / 機能仕様 処理概要、現行仕様 業務ロジック 基準商品を決める注文の絞り込み	CB-F03-05-003
+IT-F03-05-032	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-F03-05-CONFIG,S-F03-05-CBPROC-032	① 開始時にレコメンドの検索期間（日数）を30に設定する（S-F03-05-CONFIG）／② 新しいブラウザをTC大阪支店・日本語表示・未ログインで開始する。店舗ID 5は参照だけに使用し、会員M cbf0305-032@example.test（パスワード=Passw0rd-CBF0305032）が利用可能で購入履歴がなくカートは空、F0305-CB032-BASE、F0305-CB032-RECA、F0305-CB032-RECPは日本語・支店公開・大阪在庫あり（F0305-CB032-BASE=5、F0305-CB032-RECA=2、F0305-CB032-RECP=2）の互いに別の商品かつ別のカード、会員Pの試験開始時刻の1日前の入金済み注文にF0305-CB032-BASEとF0305-CB032-RECA、会員Pの試験開始時刻の1日前の処理中の注文にF0305-CB032-BASEとF0305-CB032-RECPが含まれる（S-F03-05-CBPROC-032）	1. TC大阪支店のログイン画面でcbf0305-032@example.test / Passw0rd-CBF0305032を入力してログインする／2. TC大阪支店のF0305-CB032-BASEの商品詳細ページを開いて1個をカートに入れる／3. 買い物かごページを開く／4. おすすめ商品枠までスクロールする／5. 前送りボタンを使用して表示された商品を確認する	買い物かごページのおすすめ商品枠に、処理中以外の注文でカート内のF0305-CB032-BASEと同時購入されたF0305-CB032-RECAが表示され、処理中の注文だけに含まれるF0305-CB032-RECPが表示されないこと	0303 商品リコメンド / 機能仕様 処理概要、現行仕様 業務ロジック 基準商品を決める注文の絞り込み	CB-F03-05-004
+IT-F03-05-033	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-F03-05-CONFIG,S-F03-05-CBPAID-033	① 開始時にレコメンドの検索期間（日数）を30に設定する（S-F03-05-CONFIG）／② 新しいブラウザを本店・日本語表示・未ログインで開始する。カートは空で、F0305-CB033-BASEとF0305-CB033-RECAは日本語・本店公開・本店在庫ありの互いに別の商品かつ別のカード、会員P（購入履歴にF0305-CB033-RECAがある）の試験開始時刻の1日前の入金済み注文にF0305-CB033-BASEとF0305-CB033-RECAが含まれ、処理中の注文はない（S-F03-05-CBPAID-033）	1. 本店のF0305-CB033-BASEの商品詳細ページを開いて1個をカートに入れる／2. 買い物かごページを開く／3. おすすめ商品枠までスクロールする／4. 前送りボタンを使用して表示された商品を確認する	未ログインでは購入済みの除外が行われず、買い物かごページのおすすめ商品枠に、会員Pが購入したことのあるF0305-CB033-RECAが表示されること	0303 商品リコメンド / 機能仕様 処理概要、現行仕様 業務ロジック 基準商品を決める注文の絞り込み	CB-F03-05-005
+IT-F03-05-034	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-F03-05-CONFIG,S-F03-05-CBMYP-034	① 開始時にレコメンドの検索期間（日数）を30に設定する（S-F03-05-CONFIG）／② 新しいブラウザをTC大阪支店・日本語表示・未ログインで開始する。店舗ID 5は参照だけに使用し、会員M cbf0305-034@example.test（パスワード=Passw0rd-CBF0305034）が利用可能で試験開始時刻の1日前の入金済み注文にF0305-CB034-BASE（販売価格3000円）だけを含みF0305-CB034-RECAの購入履歴はなく、F0305-CB034-BASEとF0305-CB034-RECAは日本語・支店公開・大阪在庫あり（F0305-CB034-BASE=5、F0305-CB034-RECA=2）の互いに別の商品かつ別のカード、会員Pの試験開始時刻の1日前の入金済み注文にF0305-CB034-BASEとF0305-CB034-RECAが含まれ、処理中の注文はない（S-F03-05-CBMYP-034）	1. TC大阪支店のログイン画面でcbf0305-034@example.test / Passw0rd-CBF0305034を入力してログインする／2. TC大阪支店のマイページを開く／3. おすすめ商品枠までスクロールする／4. 前送りボタンを使用して表示された商品を確認する	マイページのおすすめ商品枠に、直近の処理中以外の注文の唯一の明細であるF0305-CB034-BASEを基準として同時購入されたF0305-CB034-RECAが表示されること	0303 商品リコメンド / 機能仕様 処理概要、現行仕様 業務ロジック 基準商品を決める注文の絞り込み	CB-F03-05-008
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-F03-05-CBPROC-030	会員・店舗参照・商品・在庫・注文	支店・処理中注文の除外データ(030)	TC大阪支店は店舗ID 5の既存店舗を参照し更新しない／閲覧会員M（メールアドレス=cbf0305-030@example.test・パスワード=Passw0rd-CBF0305030・本会員）は購入履歴0件／購入用の別会員P（メールアドレス=cbf0305-030p@example.test・パスワード=Passw0rd-CBF0305030P・本会員）／商品ID=F0305-CB030-BASE、F0305-CB030-RECA、F0305-CB030-RECP（商品レコードIDと商品規格IDは登録時に画面が振る。手順・期待結果で使わないため控えない）／3商品は日本語・商品公開ステータス公開・支店の商品公開ステータス公開・本店在庫あり・大阪在庫あり（F0305-CB030-BASE=5、F0305-CB030-RECA=2、F0305-CB030-RECP=2）／3商品はグッズ商品で互いに別の商品かつ別のカード／受注ID 〔受注ID-F0305-030A〕は会員Pの試験開始時刻の1日前・入金済みの注文でF0305-CB030-BASEとF0305-CB030-RECAを含む／会員Pの処理中の注文（注文手続きの画面を開いたときに画面が振る。控えない）は試験開始時刻の1日前でF0305-CB030-BASEとF0305-CB030-RECPを含む	IT-F03-05-030専用。CB-F03-05-002の値の組を通す	①管理画面のグッズ商品CSV登録で、次の商品を1行ずつ書いたCSVファイルを「CSVファイル選択」で選び「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。各行とも商品IDは空にし、商品コード・商品名(日)・商品名(英)に状態・属性の商品IDの値（括弧内に別の指定があるものはその値）、言語(ID)に日本語、商品公開ステータスに公開、支店の商品公開ステータスに公開、地域別販売制限に日本語サイト、販売制限数は空、そのほかの必須項目に任意の値を入れる（括弧内は行ごとの指定）: F0305-CB030-BASE、F0305-CB030-RECA、F0305-CB030-RECP。TC大阪支店（店舗ID 5の既存店舗）は参照するだけで、店舗の設定は変更しない。②在庫検索一覧で各商品の店舗=本店・在庫区分=EC-CUBEの行の商品名を押して在庫編集を開き、在庫変動区分に入庫の区分、在庫増減数に次の数（購入で減る分を足した数）、仕入単価に任意の値、承認通知先に承認するメンバーを入れて登録を押す: F0305-CB030-BASE=7、F0305-CB030-RECA=7、F0305-CB030-RECP=6。登録者とは別のメンバーが在庫編集承認一覧でその行を選び一括承認を押す。③在庫検索一覧で各商品の店舗=TC大阪支店・在庫区分=EC-CUBEの行の商品名を押して在庫編集を開き、在庫変動区分に入庫の区分、在庫増減数に次の数（大阪在庫の数）、仕入単価に任意の値、承認通知先に承認するメンバーを入れて登録を押す: F0305-CB030-BASE=5、F0305-CB030-RECA=2、F0305-CB030-RECP=2。登録者とは別のメンバーが在庫編集承認一覧でその行を選び一括承認を押す。④フロントの新規会員登録で、メールアドレスにcbf0305-030@example.test、パスワードにPassw0rd-CBF0305030、そのほかの必須項目に任意の値を入れて登録し、管理画面の会員検索一覧からその会員の会員登録編集を開き、会員ステータスを本会員にして登録する（閲覧会員M）。⑤フロントの新規会員登録で、メールアドレスにcbf0305-030p@example.test、パスワードにPassw0rd-CBF0305030P、そのほかの必須項目に任意の値を入れて登録し、管理画面の会員検索一覧からその会員の会員登録編集を開き、会員ステータスを本会員にして登録する（購入用の会員P）。⑥フロントで購入用の会員Pがログインし、商品詳細ページでF0305-CB030-BASEを1個、F0305-CB030-RECAを1個をカートに入れ、買い物かごからご注文方法指定・決済へ進めて注文を確定する。管理画面の受注情報検索一覧でその注文を開き、受注情報編集の「変更後のステータス」で入金済みを選び「受注ステータスを変更」を押す。開いた受注情報編集のアドレス欄に表示される受注ID（「order/」と「/edit」の間の数字）を控える（〔受注ID-F0305-030A〕）。ログアウトする。⑦フロントで購入用の会員Pがログインし、商品詳細ページでF0305-CB030-BASEを1個、F0305-CB030-RECPを1個をカートに入れ、買い物かごから注文手続きの画面（ご注文方法指定）を開いたところで止め、注文を確定せずにログアウトする（処理中の注文ができる）。⑧〔受注ID-F0305-030A〕の受注日時=試験開始時刻の1日前、会員Pの処理中の注文の受注日時=試験開始時刻の1日前は画面で指定できないためDBへ直接設定する。	ケース専用
+S-F03-05-CBPROC-031	会員・商品・注文	未ログイン・購入履歴あり・処理中注文データ(031)	購入用の会員P（メールアドレス=cbf0305-031p@example.test・パスワード=Passw0rd-CBF0305031P・本会員）はF0305-CB031-RECAを購入したことがある／閲覧者は未ログイン／商品ID=F0305-CB031-BASE、F0305-CB031-RECA、F0305-CB031-RECP（商品レコードIDと商品規格IDは登録時に画面が振る。手順・期待結果で使わないため控えない）／3商品は日本語・本店公開・本店在庫あり／3商品はグッズ商品で互いに別の商品かつ別のカード／受注ID 〔受注ID-F0305-031A〕は会員Pの試験開始時刻の1日前・入金済みの注文でF0305-CB031-BASEとF0305-CB031-RECAを含む／会員Pの処理中の注文（注文手続きの画面を開いたときに画面が振る。控えない）は試験開始時刻の1日前でF0305-CB031-BASEとF0305-CB031-RECPを含む	IT-F03-05-031専用。CB-F03-05-003の値の組を通す	①管理画面のグッズ商品CSV登録で、次の商品を1行ずつ書いたCSVファイルを「CSVファイル選択」で選び「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。各行とも商品IDは空にし、商品コード・商品名(日)・商品名(英)に状態・属性の商品IDの値（括弧内に別の指定があるものはその値）、言語(ID)に日本語、商品公開ステータスに公開、支店の商品公開ステータスに公開、地域別販売制限に日本語サイト、販売制限数は空、そのほかの必須項目に任意の値を入れる（括弧内は行ごとの指定）: F0305-CB031-BASE、F0305-CB031-RECA、F0305-CB031-RECP。②在庫検索一覧で各商品の店舗=本店・在庫区分=EC-CUBEの行の商品名を押して在庫編集を開き、在庫変動区分に入庫の区分、在庫増減数に次の数（購入で減る分を足した数）、仕入単価に任意の値、承認通知先に承認するメンバーを入れて登録を押す: F0305-CB031-BASE=7、F0305-CB031-RECA=7、F0305-CB031-RECP=6。登録者とは別のメンバーが在庫編集承認一覧でその行を選び一括承認を押す。③フロントの新規会員登録で、メールアドレスにcbf0305-031p@example.test、パスワードにPassw0rd-CBF0305031P、そのほかの必須項目に任意の値を入れて登録し、管理画面の会員検索一覧からその会員の会員登録編集を開き、会員ステータスを本会員にして登録する（購入用の会員P）。④フロントで購入用の会員Pがログインし、商品詳細ページでF0305-CB031-BASEを1個、F0305-CB031-RECAを1個をカートに入れ、買い物かごからご注文方法指定・決済へ進めて注文を確定する。管理画面の受注情報検索一覧でその注文を開き、受注情報編集の「変更後のステータス」で入金済みを選び「受注ステータスを変更」を押す。開いた受注情報編集のアドレス欄に表示される受注ID（「order/」と「/edit」の間の数字）を控える（〔受注ID-F0305-031A〕）。ログアウトする。⑤フロントで購入用の会員Pがログインし、商品詳細ページでF0305-CB031-BASEを1個、F0305-CB031-RECPを1個をカートに入れ、買い物かごから注文手続きの画面（ご注文方法指定）を開いたところで止め、注文を確定せずにログアウトする（処理中の注文ができる）。⑥〔受注ID-F0305-031A〕の受注日時=試験開始時刻の1日前、会員Pの処理中の注文の受注日時=試験開始時刻の1日前は画面で指定できないためDBへ直接設定する。	ケース専用
+S-F03-05-CBPROC-032	会員・店舗参照・商品・在庫・注文・カート状態	支店・買い物かご・処理中注文の除外データ(032)	TC大阪支店は店舗ID 5の既存店舗を参照し更新しない／閲覧会員M（メールアドレス=cbf0305-032@example.test・パスワード=Passw0rd-CBF0305032・本会員）は購入履歴0件／購入用の別会員P（メールアドレス=cbf0305-032p@example.test・パスワード=Passw0rd-CBF0305032P・本会員）／商品ID=F0305-CB032-BASE、F0305-CB032-RECA、F0305-CB032-RECP（商品レコードIDと商品規格IDは登録時に画面が振る。手順・期待結果で使わないため控えない）／3商品は日本語・商品公開ステータス公開・支店の商品公開ステータス公開・本店在庫あり・大阪在庫あり（F0305-CB032-BASE=5、F0305-CB032-RECA=2、F0305-CB032-RECP=2）／3商品はグッズ商品で互いに別の商品かつ別のカード／受注ID 〔受注ID-F0305-032A〕は会員Pの試験開始時刻の1日前・入金済みの注文でF0305-CB032-BASEとF0305-CB032-RECAを含む／会員Pの処理中の注文（注文手続きの画面を開いたときに画面が振る。控えない）は試験開始時刻の1日前でF0305-CB032-BASEとF0305-CB032-RECPを含む／会員Mのカートは空	IT-F03-05-032専用。CB-F03-05-004の値の組を通す	①管理画面のグッズ商品CSV登録で、次の商品を1行ずつ書いたCSVファイルを「CSVファイル選択」で選び「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。各行とも商品IDは空にし、商品コード・商品名(日)・商品名(英)に状態・属性の商品IDの値（括弧内に別の指定があるものはその値）、言語(ID)に日本語、商品公開ステータスに公開、支店の商品公開ステータスに公開、地域別販売制限に日本語サイト、販売制限数は空、そのほかの必須項目に任意の値を入れる（括弧内は行ごとの指定）: F0305-CB032-BASE、F0305-CB032-RECA、F0305-CB032-RECP。TC大阪支店（店舗ID 5の既存店舗）は参照するだけで、店舗の設定は変更しない。②在庫検索一覧で各商品の店舗=本店・在庫区分=EC-CUBEの行の商品名を押して在庫編集を開き、在庫変動区分に入庫の区分、在庫増減数に次の数（購入で減る分を足した数）、仕入単価に任意の値、承認通知先に承認するメンバーを入れて登録を押す: F0305-CB032-BASE=7、F0305-CB032-RECA=7、F0305-CB032-RECP=6。登録者とは別のメンバーが在庫編集承認一覧でその行を選び一括承認を押す。③在庫検索一覧で各商品の店舗=TC大阪支店・在庫区分=EC-CUBEの行の商品名を押して在庫編集を開き、在庫変動区分に入庫の区分、在庫増減数に次の数（大阪在庫の数）、仕入単価に任意の値、承認通知先に承認するメンバーを入れて登録を押す: F0305-CB032-BASE=5、F0305-CB032-RECA=2、F0305-CB032-RECP=2。登録者とは別のメンバーが在庫編集承認一覧でその行を選び一括承認を押す。④フロントの新規会員登録で、メールアドレスにcbf0305-032@example.test、パスワードにPassw0rd-CBF0305032、そのほかの必須項目に任意の値を入れて登録し、管理画面の会員検索一覧からその会員の会員登録編集を開き、会員ステータスを本会員にして登録する（閲覧会員M）。⑤フロントの新規会員登録で、メールアドレスにcbf0305-032p@example.test、パスワードにPassw0rd-CBF0305032P、そのほかの必須項目に任意の値を入れて登録し、管理画面の会員検索一覧からその会員の会員登録編集を開き、会員ステータスを本会員にして登録する（購入用の会員P）。⑥フロントで購入用の会員Pがログインし、商品詳細ページでF0305-CB032-BASEを1個、F0305-CB032-RECAを1個をカートに入れ、買い物かごからご注文方法指定・決済へ進めて注文を確定する。管理画面の受注情報検索一覧でその注文を開き、受注情報編集の「変更後のステータス」で入金済みを選び「受注ステータスを変更」を押す。開いた受注情報編集のアドレス欄に表示される受注ID（「order/」と「/edit」の間の数字）を控える（〔受注ID-F0305-032A〕）。ログアウトする。⑦フロントで購入用の会員Pがログインし、商品詳細ページでF0305-CB032-BASEを1個、F0305-CB032-RECPを1個をカートに入れ、買い物かごから注文手続きの画面（ご注文方法指定）を開いたところで止め、注文を確定せずにログアウトする（処理中の注文ができる）。⑧〔受注ID-F0305-032A〕の受注日時=試験開始時刻の1日前、会員Pの処理中の注文の受注日時=試験開始時刻の1日前は画面で指定できないためDBへ直接設定する。	ケース専用
+S-F03-05-CBPAID-033	会員・商品・注文・カート状態	未ログイン・購入履歴あり・買い物かごデータ(033)	購入用の会員P（メールアドレス=cbf0305-033p@example.test・パスワード=Passw0rd-CBF0305033P・本会員）はF0305-CB033-RECAを購入したことがある／閲覧者は未ログイン／商品ID=F0305-CB033-BASE、F0305-CB033-RECA（商品レコードIDと商品規格IDは登録時に画面が振る。手順・期待結果で使わないため控えない）／2商品は日本語・本店公開・本店在庫あり／2商品はグッズ商品で互いに別の商品かつ別のカード／受注ID 〔受注ID-F0305-033A〕は会員Pの試験開始時刻の1日前・入金済みの注文でF0305-CB033-BASEとF0305-CB033-RECAを含み、処理中の注文はない／閲覧者のカートは空	IT-F03-05-033専用。CB-F03-05-005の値の組を通す	①管理画面のグッズ商品CSV登録で、次の商品を1行ずつ書いたCSVファイルを「CSVファイル選択」で選び「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。各行とも商品IDは空にし、商品コード・商品名(日)・商品名(英)に状態・属性の商品IDの値（括弧内に別の指定があるものはその値）、言語(ID)に日本語、商品公開ステータスに公開、支店の商品公開ステータスに公開、地域別販売制限に日本語サイト、販売制限数は空、そのほかの必須項目に任意の値を入れる（括弧内は行ごとの指定）: F0305-CB033-BASE、F0305-CB033-RECA。②在庫検索一覧で各商品の店舗=本店・在庫区分=EC-CUBEの行の商品名を押して在庫編集を開き、在庫変動区分に入庫の区分、在庫増減数に次の数（購入で減る分を足した数）、仕入単価に任意の値、承認通知先に承認するメンバーを入れて登録を押す: F0305-CB033-BASE=6、F0305-CB033-RECA=6。登録者とは別のメンバーが在庫編集承認一覧でその行を選び一括承認を押す。③フロントの新規会員登録で、メールアドレスにcbf0305-033p@example.test、パスワードにPassw0rd-CBF0305033P、そのほかの必須項目に任意の値を入れて登録し、管理画面の会員検索一覧からその会員の会員登録編集を開き、会員ステータスを本会員にして登録する（購入用の会員P）。④フロントで購入用の会員Pがログインし、商品詳細ページでF0305-CB033-BASEを1個、F0305-CB033-RECAを1個をカートに入れ、買い物かごからご注文方法指定・決済へ進めて注文を確定する。管理画面の受注情報検索一覧でその注文を開き、受注情報編集の「変更後のステータス」で入金済みを選び「受注ステータスを変更」を押す。開いた受注情報編集のアドレス欄に表示される受注ID（「order/」と「/edit」の間の数字）を控える（〔受注ID-F0305-033A〕）。ログアウトする。⑤〔受注ID-F0305-033A〕の受注日時=試験開始時刻の1日前は画面で指定できないためDBへ直接設定する。	ケース専用
+S-F03-05-CBMYP-034	会員・店舗参照・商品・在庫・注文	支店・マイページ・購入履歴なしデータ(034)	TC大阪支店は店舗ID 5の既存店舗を参照し更新しない／閲覧会員M（メールアドレス=cbf0305-034@example.test・パスワード=Passw0rd-CBF0305034・本会員）はF0305-CB034-BASEだけを含む注文1件がありF0305-CB034-RECAの購入履歴はない／購入用の別会員P（メールアドレス=cbf0305-034p@example.test・パスワード=Passw0rd-CBF0305034P・本会員）／商品ID=F0305-CB034-BASE、F0305-CB034-RECA（商品レコードIDと商品規格IDは登録時に画面が振る。手順・期待結果で使わないため控えない）／2商品は日本語・商品公開ステータス公開・支店の商品公開ステータス公開・本店在庫あり・大阪在庫あり（F0305-CB034-BASE=5、F0305-CB034-RECA=2）／F0305-CB034-BASEの販売価格3000円／2商品はグッズ商品で互いに別の商品かつ別のカード／受注ID 〔受注ID-F0305-034A〕は会員Mの試験開始時刻の1日前・入金済みの注文でF0305-CB034-BASEだけを含む／受注ID 〔受注ID-F0305-034B〕は会員Pの試験開始時刻の1日前・入金済みの注文でF0305-CB034-BASEとF0305-CB034-RECAを含む／処理中の注文はない	IT-F03-05-034専用。CB-F03-05-008の値の組を通す	①管理画面のグッズ商品CSV登録で、次の商品を1行ずつ書いたCSVファイルを「CSVファイル選択」で選び「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。各行とも商品IDは空にし、商品コード・商品名(日)・商品名(英)に状態・属性の商品IDの値（括弧内に別の指定があるものはその値）、言語(ID)に日本語、商品公開ステータスに公開、支店の商品公開ステータスに公開、地域別販売制限に日本語サイト、販売制限数は空、そのほかの必須項目に任意の値を入れる（括弧内は行ごとの指定）: F0305-CB034-BASE（販売価格・基準価格=3000）、F0305-CB034-RECA。TC大阪支店（店舗ID 5の既存店舗）は参照するだけで、店舗の設定は変更しない。②在庫検索一覧で各商品の店舗=本店・在庫区分=EC-CUBEの行の商品名を押して在庫編集を開き、在庫変動区分に入庫の区分、在庫増減数に次の数（購入で減る分を足した数）、仕入単価に任意の値、承認通知先に承認するメンバーを入れて登録を押す: F0305-CB034-BASE=7、F0305-CB034-RECA=6。登録者とは別のメンバーが在庫編集承認一覧でその行を選び一括承認を押す。③在庫検索一覧で各商品の店舗=TC大阪支店・在庫区分=EC-CUBEの行の商品名を押して在庫編集を開き、在庫変動区分に入庫の区分、在庫増減数に次の数（大阪在庫の数）、仕入単価に任意の値、承認通知先に承認するメンバーを入れて登録を押す: F0305-CB034-BASE=5、F0305-CB034-RECA=2。登録者とは別のメンバーが在庫編集承認一覧でその行を選び一括承認を押す。④フロントの新規会員登録で、メールアドレスにcbf0305-034@example.test、パスワードにPassw0rd-CBF0305034、そのほかの必須項目に任意の値を入れて登録し、管理画面の会員検索一覧からその会員の会員登録編集を開き、会員ステータスを本会員にして登録する（閲覧会員M）。⑤フロントの新規会員登録で、メールアドレスにcbf0305-034p@example.test、パスワードにPassw0rd-CBF0305034P、そのほかの必須項目に任意の値を入れて登録し、管理画面の会員検索一覧からその会員の会員登録編集を開き、会員ステータスを本会員にして登録する（購入用の会員P）。⑥フロントで閲覧会員Mがログインし、商品詳細ページでF0305-CB034-BASEを1個をカートに入れ、買い物かごからご注文方法指定・決済へ進めて注文を確定する。管理画面の受注情報検索一覧でその注文を開き、受注情報編集の「変更後のステータス」で入金済みを選び「受注ステータスを変更」を押す。開いた受注情報編集のアドレス欄に表示される受注ID（「order/」と「/edit」の間の数字）を控える（〔受注ID-F0305-034A〕）。ログアウトする。⑦フロントで購入用の会員Pがログインし、商品詳細ページでF0305-CB034-BASEを1個、F0305-CB034-RECAを1個をカートに入れ、買い物かごからご注文方法指定・決済へ進めて注文を確定する。管理画面の受注情報検索一覧でその注文を開き、受注情報編集の「変更後のステータス」で入金済みを選び「受注ステータスを変更」を押す。開いた受注情報編集のアドレス欄に表示される受注ID（「order/」と「/edit」の間の数字）を控える（〔受注ID-F0305-034B〕）。ログアウトする。⑧〔受注ID-F0305-034A〕と〔受注ID-F0305-034B〕の受注日時=試験開始時刻の1日前は画面で指定できないためDBへ直接設定する。	ケース専用
+
+ succeeded in 114ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-F03-07-055	IT-0366			ITA-11	P2	ブラウザのみ	S-F03-07-CBWAIT-055	① 会員Aが本会員・利用可能で、Eメールアドレスcbf0307-055@example.test・パスワードPassw0rd-CBF0307055である（S-F03-07-CBWAIT-055）／② F0307-CB055-GOODSが本店公開、高額商品ではなく、商品規格F0307-CB055-NM（状態ニアミント）の本店EC-CUBE在庫が0でSOLDOUTである（S-F03-07-CBWAIT-055）／③ 会員Aと商品規格F0307-CB055-NMを対応付けた有効な入荷通知依頼が1件ある（S-F03-07-CBWAIT-055）	1. 会員Aで本店にログインする／2. マイページ＞入荷待ち商品（入荷待ち商品一覧）を開く／3. F0307-CB055-GOODSの行の入荷通知のボタンを確認する	入荷待ち商品一覧のF0307-CB055-GOODSの行に、依頼済みを示す「通知待ち」のボタンが表示されること	0303 入荷時通知 / 機能仕様 処理概要、画面項目定義 識別ID 2-1	CB-F03-07-002
+IT-F03-07-056	IT-0366			ITA-11	P2	ブラウザのみ	S-F03-07-CBLIST-056	① 会員Aが本会員・利用可能で、Eメールアドレスcbf0307-056@example.test・パスワードPassw0rd-CBF0307056である（S-F03-07-CBLIST-056）／② F0307-CB056-LISTが本店公開、本店の商品一覧に表示、日本語、高額商品ではなく、全規格の本店EC-CUBE在庫が0でSOLDOUTである（S-F03-07-CBLIST-056）／③ 会員AとF0307-CB056-LISTの商品規格F0307-CB056-NM（状態NM）を対応付けた規格単位の入荷通知依頼が1件ある（S-F03-07-CBLIST-056）	1. 会員Aで本店にログインする／2. 商品一覧画面でF0307-CB056-LISTを表示する／3. F0307-CB056-LISTの入荷通知のボタンを確認する	商品一覧のF0307-CB056-LISTに、依頼済みを示す「通知待ち」のボタンが表示され、「入荷時に通知」のボタンが表示されないこと	0303 入荷時通知 / カスタマイズ説明 カスタマイズ要件、機能仕様 処理概要、画面項目定義 識別ID 2-1	CB-F03-07-003
+IT-F03-07-057	IT-0366			ITA-11	P3	ブラウザのみ	S-F03-07-ADM,S-F03-07-MAIL-SETTING,S-F03-07-MAILBOX,S-F03-07-CBAPR,S-F03-07-CBMAILNM-057	① 商品・商品規格を更新できる試験管理者で管理画面にログインしている（S-F03-07-ADM）／② 開始時に入荷通知メールの許可を「送る」に設定する（S-F03-07-MAIL-SETTING）／③ 開始時にcbf0307-057@example.test宛の受信メールを削除して0件にする（S-F03-07-MAILBOX）／④ 会員Aが本会員・利用可能で、Eメールアドレスcbf0307-057@example.testである。承認用管理者が在庫編集承認の権限を持つ稼働中の管理者である（S-F03-07-CBAPR）。会員Aと商品規格F0307-CB057-NM（状態NM）を対応付けた規格単位の有効な入荷通知依頼が1件ある（S-F03-07-CBMAILNM-057）／⑤ F0307-CB057-GOODSの商品と商品規格F0307-CB057-NMが本店公開、日本語で、本店EC-CUBE在庫が0である（S-F03-07-CBMAILNM-057）	1. 管理者（S-F03-07-ADM）で管理画面の在庫変更CSV登録画面を開き、店舗に本店、在庫場所にEC-CUBE、在庫変動区分に入庫の区分、在庫変動理由に「F0307-CB057試験」を入れ、承認通知先に承認用管理者（S-F03-07-CBAPR）を選び、商品コード「F0307-CB057-NM」・在庫増減数「1」・仕入単価「1」を書いたCSVを登録する／2. 承認用管理者（S-F03-07-CBAPR）でログインし、在庫編集承認一覧画面でその行を開き「承認する」を押して、商品規格F0307-CB057-NMの在庫を0から1にする／3. テストメール受信箱を確認する	商品規格F0307-CB057-NM（状態NM）を依頼している会員Aへ入荷通知メールが1件送信されること	0303 入荷時通知 / 業務ロジック 入荷時の通知メール	CB-F03-07-004
+IT-F03-07-058	IT-0366			ITA-11	P3	ブラウザのみ	S-F03-07-ADM,S-F03-07-MAIL-SETTING,S-F03-07-MAILBOX,S-F03-07-CBAPR,S-F03-07-CBMAILSP-058	① 商品・商品規格を更新できる試験管理者で管理画面にログインしている（S-F03-07-ADM）／② 開始時に入荷通知メールの許可を「送る」に設定する（S-F03-07-MAIL-SETTING）／③ 開始時にcbf0307-058@example.test宛の受信メールを削除して0件にする（S-F03-07-MAILBOX）／④ 会員Aが本会員・利用可能で、Eメールアドレスcbf0307-058@example.testである。承認用管理者が在庫編集承認の権限を持つ稼働中の管理者である（S-F03-07-CBAPR）。F0307-CB058-CARDはカード商品で、状態SPの商品規格（商品コードF0307-CB058-SP、SP販売価格は100円以上でSPの行が日本語の価格表に表示される）と状態NMの商品規格がともに本店EC-CUBE在庫0であり、会員Aと状態SPの商品規格を対応付けた規格単位の有効な入荷通知依頼が1件、状態NMの商品規格の依頼が0件ある（S-F03-07-CBMAILSP-058）／⑤ F0307-CB058-CARDの商品と2つの商品規格が本店公開、日本語である（S-F03-07-CBMAILSP-058）	1. 管理者（S-F03-07-ADM）で管理画面の在庫変更CSV登録画面を開き、店舗に本店、在庫場所にEC-CUBE、在庫変動区分に入庫の区分、在庫変動理由に「F0307-CB058試験」を入れ、承認通知先に承認用管理者（S-F03-07-CBAPR）を選び、商品コード「F0307-CB058-SP」・在庫増減数「1」・仕入単価「1」を書いたCSVを登録する／2. 承認用管理者（S-F03-07-CBAPR）でログインし、在庫編集承認一覧画面でその行を開き「承認する」を押して、F0307-CB058-CARDの状態SPの商品規格の在庫を0から1にする／3. テストメール受信箱を確認する	状態SPの商品規格を依頼している会員Aへ入荷通知メールが1件送信されること	0303 入荷時通知 / 業務ロジック 入荷時の通知メール	CB-F03-07-005
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-F03-07-CBWAIT-055	会員・商品・商品規格・入荷通知依頼	入荷待ち商品一覧の依頼済み表示データ(055)	会員IDは登録時に画面が振る（控える。以下〔会員ID-F0307-055〕）／Eメールアドレス=cbf0307-055@example.test／パスワード=Passw0rd-CBF0307055／本会員・利用可能／商品名=F0307-CB055-GOODS／本店公開／高額商品ではない／商品規格コード=F0307-CB055-NM（状態ニアミント）／本店EC-CUBE在庫0でSOLDOUT／会員と当該規格の有効な入荷通知依頼1件	IT-F03-07-055専用。入荷待ち商品一覧で依頼済みの規格のボタンを確認する	フロント本店の新規会員登録画面でメールアドレスとメールアドレス(確認)に「cbf0307-055@example.test」、パスワードとパスワード(確認)に「Passw0rd-CBF0307055」、ほかの必須項目に有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。cbf0307-055@example.test宛の仮会員登録完了メールに記載されたURLを開いて本会員にする。管理画面の会員検索一覧でメールアドレス「cbf0307-055@example.test」を検索して会員登録編集画面を開き、表示された会員IDを控える（〔会員ID-F0307-055〕）。管理画面のグッズ商品CSV登録で、商品IDを空、商品コードに「F0307-CB055-NM」、言語(ID)に日本語のID、商品公開ステータスに2（公開）、商品名(日)に「F0307-CB055-GOODS」、ほかの必須項目に有効な値を入れた1行のCSVファイルを「CSVファイル選択」で選び、「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品と、状態がニアミントの商品規格1件が在庫0で登録される）。商品マスターで登録した商品を検索して商品規格一覧から商品規格登録編集画面を開き、公開ステータスが公開でなければ公開を選んで「商品規格を登録」を押す。フロント本店にcbf0307-055@example.testの会員でログインし、F0307-CB055-GOODSの商品詳細画面で商品規格F0307-CB055-NMの「入荷時に通知」を押し、入荷通知完了モーダルの「OK」を押して閉じる（入荷通知依頼を登録する）。	ケース専用
+S-F03-07-CBLIST-056	会員・商品・商品規格・入荷通知依頼	商品一覧の依頼済み表示データ(056)	会員IDは登録時に画面が振る（控える。以下〔会員ID-F0307-056〕）／Eメールアドレス=cbf0307-056@example.test／パスワード=Passw0rd-CBF0307056／本会員・利用可能／商品名=F0307-CB056-LIST／本店公開／本店の商品一覧に表示／日本語／高額商品ではない／商品規格コード=F0307-CB056-NM（状態ニアミント）／全規格の本店EC-CUBE在庫0でSOLDOUT／会員と商品規格F0307-CB056-NM（NM）の規格単位の入荷通知依頼1件	IT-F03-07-056専用。商品一覧でSOLDOUT商品のNMのみの入荷通知の依頼済みのボタンを確認する	フロント本店の新規会員登録画面でメールアドレスとメールアドレス(確認)に「cbf0307-056@example.test」、パスワードとパスワード(確認)に「Passw0rd-CBF0307056」、ほかの必須項目に有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。cbf0307-056@example.test宛の仮会員登録完了メールに記載されたURLを開いて本会員にする。管理画面の会員検索一覧でメールアドレス「cbf0307-056@example.test」を検索して会員登録編集画面を開き、表示された会員IDを控える（〔会員ID-F0307-056〕）。管理画面のグッズ商品CSV登録で、商品IDを空、商品コードに「F0307-CB056-NM」、言語(ID)に日本語のID、商品公開ステータスに2（公開）、商品名(日)に「F0307-CB056-LIST」、ほかの必須項目に有効な値を入れた1行のCSVファイルを「CSVファイル選択」で選び、「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品と、状態がニアミントの商品規格1件が在庫0で登録される）。商品マスターで登録した商品を検索して商品規格一覧から商品規格登録編集画面を開き、公開ステータスが公開でなければ公開を選んで「商品規格を登録」を押す。フロント本店にcbf0307-056@example.testの会員でログインし、商品一覧画面でF0307-CB056-LISTを表示して「入荷時に通知」を押し、入荷通知完了モーダルの「OK」を押して閉じる（SOLDOUTの商品一覧からの依頼はNMのみの入荷通知となり、NM規格の規格単位の入荷通知依頼を登録する）。	ケース専用
+S-F03-07-CBMAILNM-057	会員・商品・商品規格・入荷通知依頼	規格単位NM入荷メールデータ(057)	会員IDは登録時に画面が振る（控える。以下〔会員ID-F0307-057〕）／Eメールアドレス=cbf0307-057@example.test／パスワード=Passw0rd-CBF0307057／本会員・利用可能／商品名=F0307-CB057-GOODS／本店公開／日本語／高額商品ではない／商品規格コード=F0307-CB057-NM（状態ニアミント=NM）／本店EC-CUBE在庫0／会員と当該規格の有効な入荷通知依頼1件（規格単位）	IT-F03-07-057専用。規格単位の依頼で状態NMの規格が入荷したときのメールを確認する	フロント本店の新規会員登録画面でメールアドレスとメールアドレス(確認)に「cbf0307-057@example.test」、パスワードとパスワード(確認)に「Passw0rd-CBF0307057」、ほかの必須項目に有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。cbf0307-057@example.test宛の仮会員登録完了メールに記載されたURLを開いて本会員にする。管理画面の会員検索一覧でメールアドレス「cbf0307-057@example.test」を検索して会員登録編集画面を開き、表示された会員IDを控える（〔会員ID-F0307-057〕）。管理画面のグッズ商品CSV登録で、商品IDを空、商品コードに「F0307-CB057-NM」、言語(ID)に日本語のID、商品公開ステータスに2（公開）、商品名(日)に「F0307-CB057-GOODS」、ほかの必須項目に有効な値を入れた1行のCSVファイルを「CSVファイル選択」で選び、「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品と、状態がニアミントの商品規格1件が在庫0で登録される）。商品マスターで登録した商品を検索して商品規格一覧から商品規格登録編集画面を開き、公開ステータスが公開でなければ公開を選んで「商品規格を登録」を押す。フロント本店にcbf0307-057@example.testの会員でログインし、F0307-CB057-GOODSの商品詳細画面で商品規格F0307-CB057-NMの「入荷時に通知」を押し、入荷通知完了モーダルの「OK」を押して閉じる（規格単位の入荷通知依頼を登録する）。	ケース専用
+S-F03-07-CBMAILSP-058	会員・カード・商品・商品規格・入荷通知依頼	規格単位SP入荷メールデータ(058)	会員IDは登録時に画面が振る（控える。以下〔会員ID-F0307-058〕）／Eメールアドレス=cbf0307-058@example.test／パスワード=Passw0rd-CBF0307058／本会員・利用可能／カード商品／商品名=F0307-CB058-CARD／SP販売価格は100円以上でSP行が公開側に表示される／本店公開／日本語(JP)／高額商品ではない／商品ID・商品規格ID（NM・SP）は登録時に画面が振る（手順・期待結果で使わないため控えない）／JPの規格はNMとSPの2件だけ／SP規格の商品コード=F0307-CB058-SP／両規格とも本店EC-CUBE在庫0／会員とSP規格の有効な入荷通知依頼1件（規格単位）、NM規格の依頼0件	IT-F03-07-058専用。規格単位の依頼で状態NM以外の規格が入荷したときのメールを確認する	フロント本店の新規会員登録画面でメールアドレスとメールアドレス(確認)に「cbf0307-058@example.test」、パスワードとパスワード(確認)に「Passw0rd-CBF0307058」、ほかの必須項目に有効な値を入れて「同意する」を押し、確認画面で「登録する」を押す。cbf0307-058@example.test宛の仮会員登録完了メールに記載されたURLを開いて本会員にする。管理画面の会員検索一覧でメールアドレス「cbf0307-058@example.test」を検索して会員登録編集画面を開き、表示された会員IDを控える（〔会員ID-F0307-058〕）。管理画面のカード詳細の新規登録画面で、カード名(日)とカード名(英)に「F0307-CB058-CARD」、ルールテキスト(日)に「表面テスト能力」、マナ・コストに「1U」、パワーに2、タフネスに2、カードタイプに「クリーチャー」、カラーに「青」、サブタイプに「ウィザード」、フォーマット選択に「スタンダード」でリーガリティ「使用可」、詳細情報にカードセット「テストセット」、レアリティ「レア」、イラストレーター「試験太郎」、そのほかの必須項目に試験環境にある値を入れて「登録」を押す。カード一覧でカード名「F0307-CB058-CARD」の行に表示されたカードIDを控え、カード詳細の編集画面に表示されたカード詳細IDを控える。カード商品CSV登録画面で、商品IDを空、言語(ID)にJPのID、商品公開ステータスに2（公開）、支店の商品公開ステータスに0（非公開）、商品名(日)と商品名(英)に「F0307-CB058-CARD」、サイズに1、重量に3、商品カテゴリ(ID)に商品カテゴリ管理で単体カードの配下に登録されているカテゴリのID1件、購入グループ名称に購入グループ管理に登録されている「通常商品」、割引率(ID)に販売割引率一覧でSPの割引率が登録されている（「未定義」でない）行のうち、基準価格1,500から計算されるSP販売価格が100円以上になる割引のID、基準価格と販売価格に1,500、買取価格に100、カード詳細(ID)に控えたカード詳細ID、地域別販売制限に0（日本語英語両サイト）を入れた1行のCSVファイルを選び、「CSVファイルのアップロード」を押す。表示された確認モーダルで取込を確定し、取込が成功したことを確かめる（商品と、JPの状態ごとの商品規格が在庫0で作られる）。商品マスターの検索結果で商品名「F0307-CB058-CARD」の行に表示された商品IDを控える。商品規格一覧から、JPのNMの規格とSPの規格それぞれの商品規格登録編集画面を開き、SPの規格は商品コードを「F0307-CB058-SP」に書き換え、部門に登録済みの部門を選び、公開ステータスが公開でなければ公開を選んで「商品規格を登録」を押す。JPのNM・SP以外の状態の規格は「商品規格を削除」を押して消す。フロント本店にcbf0307-058@example.testの会員でログインし、F0307-CB058-CARDの商品詳細画面の日本語の価格表で状態SPの行の「入荷時に通知」を押し、入荷通知完了モーダルの「OK」を押して閉じる（SP規格の規格単位の入荷通知依頼を登録する）。	ケース専用
+S-F03-07-CBAPR	管理者	F03-07在庫承認者	ログインID=f0307cb-apr／パスワード=Passw0rd-CBF0307A／稼働中／ログイン失敗回数=0／ロックなし／在庫編集承認一覧を操作して入庫を承認できる／S-F03-07-ADMとは別のメンバー	在庫変更CSVの入庫申請を承認するためだけに使う。権限を変更しない	管理画面のメンバー管理で上のログインID・パスワードで登録し、本店の在庫編集承認の権限を設定する	共有可
+
+ succeeded in 143ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-F03-08-040	IT-0366	REQ-0303-sheet-10-R023,REQ-0303-sheet-10-R035		ITA-11	P1	ブラウザのみ	S-F03-08-ENV,S-F03-08-CBUNLOGIN-040	① 開始時に管理画面の店舗設定でお気に入り商品機能を有効に設定する（S-F03-08-ENV）／② 会員Aが本会員・利用可能で、Eメールアドレスcbf0308-040@example.test・パスワードPassw0rd-CBF0308040でログインできる（S-F03-08-CBUNLOGIN-040）／③ 商品CBF0308-040-P1が本店公開・日本語・表示可能で、会員Aのお気に入り総数が0件である（S-F03-08-CBUNLOGIN-040）／④ 新しいプライベートウィンドウに本店のログイン状態が残っていない（未ログイン）	1. ブラウザの新しいプライベートウィンドウで商品CBF0308-040-P1の本店の商品詳細画面を開く／2. 操作は登録、会員は未ログインのまま「お気に入りに追加する」を押す／3. 表示されたログインモーダルの「ログインモーダルを閉じる」を押す／4. 本店の会員ログイン画面で会員Aのメールアドレスcbf0308-040@example.testとパスワードPassw0rd-CBF0308040を入れてログインする／5. マイページ＞お気に入り登録商品一覧を開く	お気に入り登録商品一覧に商品CBF0308-040-P1が表示されないこと	0303 お気に入り / 機能仕様 処理概要、画面項目定義 識別ID 1-1・1-4、現行仕様 表示メッセージ（未ログインで登録しようとしたとき「登録せず、ログインを促す」）	CB-F03-08-001
+IT-F03-08-041	IT-0366	REQ-0303-sheet-10-R074		ITA-11	P1	ブラウザのみ	S-F03-08-ENV,S-F03-08-CBLIST-041	① 開始時に管理画面の店舗設定でお気に入り商品機能を有効に設定する（S-F03-08-ENV）／② 会員Aが本会員・利用可能で、Eメールアドレスcbf0308-041@example.test・パスワードPassw0rd-CBF0308041でログインできる（S-F03-08-CBLIST-041）／③ 会員Aのお気に入りは商品CBF0308-041-P1の日本語の1件だけで、商品の公開状態は公開中（本店公開・日本語）、高額商品コードはなし、商品の在庫はあり（本店EC-CUBE在庫1）である（S-F03-08-CBLIST-041）	1. 会員Aで本店にログインする／2. マイページ＞お気に入り登録商品一覧を開く	お気に入り登録商品一覧に、商品CBF0308-041-P1が1件表示されること	0303 お気に入り / 現行仕様 業務ロジック 一覧に表示する対象	CB-F03-08-002
+IT-F03-08-042	IT-0366	REQ-0303-sheet-10-R074		ITA-11	P1	ブラウザのみ	S-F03-08-ENV,S-F03-08-CBLIST-042	① 開始時に管理画面の店舗設定でお気に入り商品機能を有効に設定する（S-F03-08-ENV）／② 会員Aが本会員・利用可能で、Eメールアドレスcbf0308-042@example.test・パスワードPassw0rd-CBF0308042でログインできる（S-F03-08-CBLIST-042）／③ 会員Aのお気に入りは商品CBF0308-042-P1の日本語の1件だけで、商品の公開状態は公開中（本店公開・日本語）、高額商品コードはなし、商品の在庫はなし（本店EC-CUBE在庫0）である（S-F03-08-CBLIST-042）	1. 会員Aで本店にログインする／2. マイページ＞お気に入り登録商品一覧を開く	お気に入り登録商品一覧に、商品CBF0308-042-P1が1件表示されること	0303 お気に入り / 現行仕様 業務ロジック 一覧に表示する対象	CB-F03-08-003
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-F03-08-CBUNLOGIN-040	会員・商品・商品規格	未ログイン登録データ(040)	Eメールアドレス=cbf0308-040@example.test／パスワード=Passw0rd-CBF0308040／本会員・利用可能／商品コード=CBF0308-040-P1／本店公開・日本語・表示可・販売価格100円／会員Aのお気に入り総数0件	IT-F03-08-040専用。未ログインで登録を押したときお気に入りが作られないことを確認する	フロントの本店の新規会員登録画面で、メールアドレスとメールアドレス(確認)に「cbf0308-040@example.test」、パスワードとパスワード(確認)に「Passw0rd-CBF0308040」、お名前(姓)に「試験」、お名前(名)に「CBF0308A040」を入れ、フリガナ・生年月日・国・郵便番号・住所・電話番号の必須項目を埋めて「同意する」を押し、会員登録確認画面で登録を確定する。届いた仮会員登録のメールにある本会員登録用のURLを開いて本会員にする（仮会員を経ない設定のときは確定と同時に本会員になる）。管理画面のグッズ商品CSV登録画面で、新規登録の行を1行持つCSVファイル（各行とも商品IDは空、商品コードは「CBF0308-040-P1」、商品名(日)と商品名(英)は商品コードと同じ文字列、言語(ID)は日本語、商品公開ステータスは公開、支店の商品公開ステータスは非公開、基準価格と販売価格は「100」、買取価格・原価単価・サイズ・重量・商品カテゴリ(ID)・購入グループ名称の必須項目は登録済みの値）を「CSVファイル選択」で選び、「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。お気に入りは登録しない。再実行で同じEメールアドレスの会員や同じ商品コードの商品が残っているときは、作り直さずにそれを使い、マイページ＞お気に入り登録商品一覧での解除と上の操作で、この状態に合わせ直す。	ケース専用
+S-F03-08-CBLIST-041	会員・商品・商品規格・在庫・お気に入り	コードなし在庫あり一覧データ(041)	Eメールアドレス=cbf0308-041@example.test／パスワード=Passw0rd-CBF0308041／本会員・利用可能／商品コード=CBF0308-041-P1／本店公開・日本語・表示可・販売価格100円・高額商品コードなし／本店EC-CUBE在庫は1／会員Aの日本語のお気に入り1件	IT-F03-08-041専用。公開中で高額商品コードがない商品が在庫ありでも一覧に出ることを確認する	フロントの本店の新規会員登録画面で、メールアドレスとメールアドレス(確認)に「cbf0308-041@example.test」、パスワードとパスワード(確認)に「Passw0rd-CBF0308041」、お名前(姓)に「試験」、お名前(名)に「CBF0308A041」を入れ、フリガナ・生年月日・国・郵便番号・住所・電話番号の必須項目を埋めて「同意する」を押し、会員登録確認画面で登録を確定する。届いた仮会員登録のメールにある本会員登録用のURLを開いて本会員にする（仮会員を経ない設定のときは確定と同時に本会員になる）。管理画面のグッズ商品CSV登録画面で、新規登録の行を1行持つCSVファイル（各行とも商品IDは空、商品コードは「CBF0308-041-P1」、商品名(日)と商品名(英)は商品コードと同じ文字列、言語(ID)は日本語、商品公開ステータスは公開、支店の商品公開ステータスは非公開、基準価格と販売価格は「100」、買取価格・原価単価・サイズ・重量・商品カテゴリ(ID)・購入グループ名称の必須項目は登録済みの値）を「CSVファイル選択」で選び、「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。フロントの本店に会員A（Eメールアドレス「cbf0308-041@example.test」）でログインし、商品「CBF0308-041-P1」の日本語の商品詳細画面で「お気に入りに追加する」を押して、お気に入り登録完了モーダルを閉じる。高額商品コードは設定しない（空のまま）。管理画面の在庫検索一覧で商品コード「CBF0308-041-P1」を検索し、店舗が本店・在庫区分がEC-CUBEの行の商品名を押して在庫編集画面を開き、在庫変動区分に「入庫/その他」、在庫変動理由に「CBF0308-041試験データ」、在庫増減数に「1」、仕入単価に「0」を入れ、承認通知先のメンバーを選んで登録する。在庫編集承認一覧でその申請を開いて「承認する」を押し、在庫検索一覧で在庫数が1になったことを確かめる。再実行で同じEメールアドレスの会員や同じ商品コードの商品が残っているときは、作り直さずにそれを使い、マイページ＞お気に入り登録商品一覧での解除と上の操作で、この状態に合わせ直す。	ケース専用
+S-F03-08-CBLIST-042	会員・商品・商品規格・在庫・お気に入り	コードなし在庫なし一覧データ(042)	Eメールアドレス=cbf0308-042@example.test／パスワード=Passw0rd-CBF0308042／本会員・利用可能／商品コード=CBF0308-042-P1／本店公開・日本語・表示可・販売価格100円・高額商品コードなし／本店EC-CUBE在庫は0／会員Aの日本語のお気に入り1件	IT-F03-08-042専用。公開中で高額商品コードがない商品が在庫なしでも一覧に出ることを確認する	フロントの本店の新規会員登録画面で、メールアドレスとメールアドレス(確認)に「cbf0308-042@example.test」、パスワードとパスワード(確認)に「Passw0rd-CBF0308042」、お名前(姓)に「試験」、お名前(名)に「CBF0308A042」を入れ、フリガナ・生年月日・国・郵便番号・住所・電話番号の必須項目を埋めて「同意する」を押し、会員登録確認画面で登録を確定する。届いた仮会員登録のメールにある本会員登録用のURLを開いて本会員にする（仮会員を経ない設定のときは確定と同時に本会員になる）。管理画面のグッズ商品CSV登録画面で、新規登録の行を1行持つCSVファイル（各行とも商品IDは空、商品コードは「CBF0308-042-P1」、商品名(日)と商品名(英)は商品コードと同じ文字列、言語(ID)は日本語、商品公開ステータスは公開、支店の商品公開ステータスは非公開、基準価格と販売価格は「100」、買取価格・原価単価・サイズ・重量・商品カテゴリ(ID)・購入グループ名称の必須項目は登録済みの値）を「CSVファイル選択」で選び、「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。フロントの本店に会員A（Eメールアドレス「cbf0308-042@example.test」）でログインし、商品「CBF0308-042-P1」の日本語の商品詳細画面で「お気に入りに追加する」を押して、お気に入り登録完了モーダルを閉じる。高額商品コードは設定しない（空のまま）。商品「CBF0308-042-P1」の在庫は登録時の0のまま変えない。再実行で同じEメールアドレスの会員や同じ商品コードの商品が残っているときは、作り直さずにそれを使い、マイページ＞お気に入り登録商品一覧での解除と上の操作で、この状態に合わせ直す。	ケース専用
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/F04-01_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-F04-01-060	IT-0366	REQ-0304-sheet-3-R013,REQ-0304-sheet-3-R123,REQ-0304-sheet-3-R174		ITA-11	P2	ブラウザのみ	S-F04-01-SHOPS,S-F04-01-SETTINGS,S-F04-01-CBBRNOSET-060	① 店舗ID 〔店舗ID-F0401-共有A〕（登録時に振られた番号を控えてある）の支店Aを公開し、配送方法を店舗受取のみにする（S-F04-01-SHOPS）／② 閲覧店舗は支店A、送料無料金額の条件は設定なし、送料無料個数の条件は設定なし。開始時に本店の送料無料金額を設定なし、送料無料個数を設定なし、入荷通知上限件数を100に設定する（S-F04-01-SETTINGS）／③ 会員ID 〔会員ID-F0401-060〕（登録時に振られた番号を控えてある）の会員Aでケース専用ブラウザにログインし、税込単価1,000円の商品Cを支店Aカートに数量1で保持する（S-F04-01-CBBRNOSET-060）	1. 支店Aの買い物かご画面を開く／2. カート集計欄を確認する	カート集計欄に送料が表示されず、送料無料の案内および送料無料までの不足額の案内も表示されないこと	0304 買い物かご / カスタマイズ説明 送料の表示、現行仕様 業務ロジック 金額の算出と送料無料の案内	CB-F04-01-001
+IT-F04-01-061	IT-0366	REQ-0304-sheet-3-R174,REQ-0304-sheet-3-R175,REQ-0304-sheet-3-R176		ITA-11	P2	ブラウザのみ	S-F04-01-SHOPS,S-F04-01-SETTINGS,S-F04-01-CBMAINCNTLOW-061	① 店舗ID 1の本店を公開する（S-F04-01-SHOPS）／② 閲覧店舗は本店、送料無料金額の条件は設定なし、送料無料個数の条件は設定あり・個数が未達（送料無料個数3に対し合計個数1）。開始時に本店の送料無料金額を設定なし、送料無料個数を3、入荷通知上限件数を100に設定する（S-F04-01-SETTINGS）／③ 会員ID 〔会員ID-F0401-061〕（登録時に振られた番号を控えてある）の会員Aでケース専用ブラウザにログインし、税込単価1,000円の商品Aを本店カートに数量1で保持して、合計個数を1、合計金額を1,000円にする（S-F04-01-CBMAINCNTLOW-061）	1. 送料無料金額の設定がなく、送料無料個数3に対して合計1個の商品Aを保持する本店の買い物かご画面を開く／2. カート集計欄を確認する	カート集計欄に送料無料の案内および送料無料までの不足額の案内が表示されないこと	0304 買い物かご / 業務ロジック 金額の算出と送料無料の案内	CB-F04-01-002
+IT-F04-01-062	IT-0366	REQ-0304-sheet-3-R175,REQ-0304-sheet-3-R176,REQ-0304-sheet-3-R202		ITA-11	P2	ブラウザのみ	S-F04-01-SHOPS,S-F04-01-SETTINGS,S-F04-01-CBBOTHREACH-062	① 店舗ID 1の本店を公開する（S-F04-01-SHOPS）／② 閲覧店舗は本店、送料無料金額の条件は設定あり・合計が到達（送料無料金額5,000円に対し合計5,000円）、送料無料個数の条件は設定あり・個数が到達（送料無料個数3に対し合計個数5）。開始時に本店の送料無料金額を5,000円、送料無料個数を3、入荷通知上限件数を100に設定する（S-F04-01-SETTINGS）／③ 会員ID 〔会員ID-F0401-062〕（登録時に振られた番号を控えてある）の会員Aでケース専用ブラウザにログインし、税込単価1,000円の商品Aを本店カートに数量5で保持して、合計個数を5、合計金額を5,000円にする（S-F04-01-CBBOTHREACH-062）	1. 送料無料金額5,000円・送料無料個数3に対して合計5,000円・合計5個の商品Aを保持する本店の買い物かご画面を開く／2. カート集計欄を確認する	カート集計欄に「現在送料無料です。」が表示され、送料無料までの不足額は表示されないこと	0304 買い物かご / 現行仕様 業務ロジック 金額の算出と送料無料の案内、リニューアル後の仕様 表示メッセージ F04-01-MSG-002	CB-F04-01-003
+IT-F04-01-063	IT-0366	REQ-0304-sheet-3-R175,REQ-0304-sheet-3-R176,REQ-0304-sheet-3-R202		ITA-11	P2	ブラウザのみ	S-F04-01-SHOPS,S-F04-01-SETTINGS,S-F04-01-CBAMTONLY-063	① 店舗ID 1の本店を公開する（S-F04-01-SHOPS）／② 閲覧店舗は本店、送料無料金額の条件は設定あり・合計が到達（送料無料金額5,000円に対し合計5,000円）、送料無料個数の条件は設定あり・個数が未達（送料無料個数10に対し合計個数5）。開始時に本店の送料無料金額を5,000円、送料無料個数を10、入荷通知上限件数を100に設定する（S-F04-01-SETTINGS）／③ 会員ID 〔会員ID-F0401-063〕（登録時に振られた番号を控えてある）の会員Aでケース専用ブラウザにログインし、税込単価1,000円の商品Aを本店カートに数量5で保持して、合計個数を5、合計金額を5,000円にする（S-F04-01-CBAMTONLY-063）	1. 送料無料金額5,000円・送料無料個数10に対して合計5,000円・合計5個の商品Aを保持する本店の買い物かご画面を開く／2. カート集計欄を確認する	カート集計欄に「現在送料無料です。」が表示され、送料無料までの不足額は表示されないこと	0304 買い物かご / 現行仕様 業務ロジック 金額の算出と送料無料の案内、リニューアル後の仕様 表示メッセージ F04-01-MSG-002	CB-F04-01-004
+IT-F04-01-064	IT-0366	REQ-0304-sheet-3-R009,REQ-0304-sheet-3-R140,REQ-0304-sheet-3-R141,REQ-0304-sheet-3-R157		ITA-11	P1	ブラウザのみ	S-F04-01-SHOPS,S-F04-01-SETTINGS,S-F04-01-CBDELONE-064	① 店舗ID 1の本店を公開する（S-F04-01-SHOPS）／② 閲覧店舗は本店、他店舗のカートの商品はなし（支店Aのカートと支店Bのカートに商品を入れない）、カートへの操作は個別削除。開始時に本店の送料無料金額を5,000円、送料無料個数を設定なし、入荷通知上限件数を100に設定する（S-F04-01-SETTINGS）／③ 会員ID 〔会員ID-F0401-064〕（登録時に振られた番号を控えてある）の会員Aでケース専用ブラウザにログインし、本店カートに商品Aと商品Bを各数量1で保持する（S-F04-01-CBDELONE-064）	1. 商品A・商品Bを保持する本店の買い物かご画面を開く／2. 商品Aの削除ボタンを押す	買い物かご画面が再読み込みされ、本店のカートから商品Aだけが削除されて商品Bが表示されること	0304 買い物かご / カスタマイズ説明 カート内の削除ボタン、機能仕様 処理概要 カート内の削除ボタン	CB-F04-01-005
+IT-F04-01-065	IT-0366	REQ-0304-sheet-3-R147,REQ-0304-sheet-3-R148,REQ-0304-sheet-3-R149,REQ-0304-sheet-3-R166,REQ-0304-sheet-3-R197		ITA-11	P1	ブラウザのみ	S-F04-01-SHOPS,S-F04-01-SETTINGS,S-F04-01-CBDELALL-065	① 店舗ID 1の本店を公開する（S-F04-01-SHOPS）／② 閲覧店舗は本店、他店舗のカートの商品はなし（支店Aのカートと支店Bのカートに商品を入れない）。開始時に本店の送料無料金額を5,000円、送料無料個数を設定なし、入荷通知上限件数を100に設定する（S-F04-01-SETTINGS）／③ 会員ID 〔会員ID-F0401-065〕（登録時に振られた番号を控えてある）の会員Aでケース専用ブラウザにログインし、本店カートに商品Aと商品Bを各数量1で保持する（S-F04-01-CBDELALL-065）	1. 商品A・商品Bを保持する本店の買い物かご画面を開く／2. カート一括削除を押す／3. 確認ダイアログで実行を選ぶ	買い物かご画面が再読み込みされ、本店のカートが空になること	0304 買い物かご / カスタマイズ説明 カート一括削除ボタンの処理、表示メッセージ F04-01-MSG-001	CB-F04-01-006
+IT-F04-01-066	IT-0366	REQ-0304-sheet-3-R009		ITA-11	P2	ブラウザのみ	S-F04-01-SHOPS,S-F04-01-SETTINGS,S-F04-01-CBVIEWBR-066	① 店舗ID 〔店舗ID-F0401-共有A〕（登録時に振られた番号を控えてある）の支店Aを公開し、配送方法を店舗受取のみにする（S-F04-01-SHOPS）／② 閲覧店舗は支店A、他店舗のカートの商品はなし（本店のカートと支店Bのカートに商品を入れない）。開始時に本店の送料無料金額を5,000円、送料無料個数を設定なし、入荷通知上限件数を100に設定する（S-F04-01-SETTINGS）／③ 会員ID 〔会員ID-F0401-066〕（登録時に振られた番号を控えてある）の会員Aでケース専用ブラウザにログインし、支店Aカートに商品Cと商品Dを各数量1で保持する（S-F04-01-CBVIEWBR-066）	1. 支店Aの買い物かご画面を開く（カートの操作は表示のみ）	支店Aの買い物かご画面に商品Cと商品Dが表示されること	0304 買い物かご / カスタマイズ説明 カートの表示、機能仕様 処理概要	CB-F04-01-007
+IT-F04-01-067	IT-0366	REQ-0304-sheet-3-R181		ITA-11	P1	ブラウザのみ	S-F04-01-SHOPS,S-F04-01-SETTINGS,S-F04-01-CBBULKNOQTY-067	① 店舗ID 1の本店を公開する（S-F04-01-SHOPS）／② 送信先はPOST /cart/add_bulk、要求の渡し方はフォーム値、数量の指定は指定なし。開始時に本店の送料無料金額を5,000円、送料無料個数を設定なし、入荷通知上限件数を100に設定する（S-F04-01-SETTINGS）／③ 会員ID 〔会員ID-F0401-067〕（登録時に振られた番号を控えてある）の会員Aでケース専用ブラウザにログインし、商品規格ID 〔商品規格ID-F0401-067A〕（登録時に振られた番号を控えてある）の商品Aを在庫10で利用可能にし、本店カートID 〔カートID-F0401-067〕（登録時に画面が振った番号。画面に表示されないため呼び名で指す）の商品明細を0件にする（S-F04-01-CBBULKNOQTY-067）	1. 本店の買い物かご画面を開く／2. 同じブラウザの開発者ツールから POST /cart/add_bulk へフォーム値 cart_list[0][product_class_id]=商品Aの商品規格ID のみを送信する（quantityは送らない）／3. 本店の買い物かご画面を開き直す	買い物かご画面に商品Aが数量1で表示されること	0304 買い物かご / 業務ロジック カートへの追加 / 現行仕様 業務ロジック カートへの追加	CB-F04-01-008
+IT-F04-01-068	IT-0366	REQ-0304-sheet-3-R182,REQ-0304-sheet-3-R192		ITA-11	P1	ブラウザのみ	S-F04-01-SHOPS,S-F04-01-SETTINGS,S-F04-01-CBSHOWNOQTY-068	① 店舗ID 1の本店を公開する（S-F04-01-SHOPS）／② 送信先はPOST /cart/add_show、要求の渡し方はフォーム値、数量の指定は指定なし。開始時に本店の送料無料金額を5,000円、送料無料個数を設定なし、入荷通知上限件数を100に設定する（S-F04-01-SETTINGS）／③ 会員ID 〔会員ID-F0401-068〕（登録時に振られた番号を控えてある）の会員Aでケース専用ブラウザにログインし、商品規格ID 〔商品規格ID-F0401-068A〕（登録時に振られた番号を控えてある）の商品Aを在庫10で利用可能にし、本店カートID 〔カートID-F0401-068〕（登録時に画面が振った番号。画面に表示されないため呼び名で指す）の商品明細を0件にする（S-F04-01-CBSHOWNOQTY-068）	1. 本店の買い物かご画面を開く／2. 同じブラウザの開発者ツールのコンソールで、送信先 /cart/add_show・送信方法 POST・入力値 product_class_id=商品Aの商品規格ID のみ（quantityは持たない）を持つフォーム要素を作成し、そのフォームを送信する	買い物かご画面へ遷移し、商品Aが数量1で表示されること	0304 買い物かご / 業務ロジック カートへの追加、入出力 / 現行仕様 業務ロジック カートへの追加	CB-F04-01-009
+IT-F04-01-069	IT-0366	REQ-0304-sheet-3-R181,REQ-0304-sheet-3-R191,REQ-0304-sheet-3-R193		ITA-11	P1	ブラウザのみ	S-F04-01-SHOPS,S-F04-01-SETTINGS,S-F04-01-CBJSONNOQTY-069	① 店舗ID 1の本店を公開する（S-F04-01-SHOPS）／② 送信先はPOST /cart/add、要求の渡し方はJSON本文、数量の指定は指定なし。開始時に本店の送料無料金額を5,000円、送料無料個数を設定なし、入荷通知上限件数を100に設定する（S-F04-01-SETTINGS）／③ 会員ID 〔会員ID-F0401-069〕（登録時に振られた番号を控えてある）の会員Aでケース専用ブラウザにログインし、商品規格ID 〔商品規格ID-F0401-069A〕（登録時に振られた番号を控えてある）の商品Aを在庫10で利用可能にし、本店カートID 〔カートID-F0401-069〕（登録時に画面が振った番号。画面に表示されないため呼び名で指す）の商品明細を0件にする（S-F04-01-CBJSONNOQTY-069）	1. 本店の買い物かご画面を開く／2. 同じブラウザの開発者ツールから POST /cart/add へJSON本文 {product_class_id: 商品Aの商品規格ID} のみを送信する（quantityは含めない）／3. 本店の買い物かご画面を開き直す	買い物かご画面に商品Aが数量1で表示されること	0304 買い物かご / 業務ロジック カートへの追加、入出力 / 現行仕様 業務ロジック カートへの追加	CB-F04-01-010
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F03-07/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F03-05/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F03-06/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/F03-08/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '1,65p;145,185p;205,265p' integration_test/casegen/combination/units/F04-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 45ms:
+##### 0303 sheet-9 入荷時通知
+L0001	入荷時通知
+L0002	ドキュメント名フロント 商品
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-08-19
+L0007	更新者石川
+L0008	更新日2025-09-22
+L0009	機能NoF03-07
+L0010	機能名入荷時通知
+L0011	概要会員がログイン済みの場合、会員に対し商品の入荷があった際に通知ができる
+L0012	処理概要（★はカスタマイズ項目）
+L0013	入荷通知依頼 レイアウト図
+L0014	1-2
+L0015	1-3
+L0016	1-4
+L0017	1-9
+L0018	1-10
+L0019	1-5
+L0020	1-6
+L0021	1-7
+L0022	1-8
+L0023	1-1
+L0024	画像レイヤー（9枚）: 入荷時通知 / AE58 / image 1 + 入荷時通知 / O40 / image 2 + 入荷時通知 / C8 / image 3 + 入荷時通知 / AO66 / image 5 + 入荷時通知 / X42 / image 6 + 入荷時通知 / E58 / image 7 + 入荷時通知 / E58 / image 8 + 入荷時通知 / C27 / image 9 + 入荷時通知 / N151 / image 16
+L0025	入荷時通知 / Y10 / image 4
+L0026	商品詳細
+L0027	商品一覧
+L0028	ボタン押下後、入荷通知依頼確認モーダルを表示
+L0029	OK押下
+L0030	現行にあるモーダルは非表示とし、直接ログインモーダルまたは入荷通知完了モーダルを表示する
+L0031	現行にあるモーダルは非表示とし、入荷通知キャンセル完了モーダルを表示する
+L0032	商品詳細
+L0033	商品一覧
+L0034	ボタン押下後、入荷通知キャンセル確認モーダルを表示
+L0035	画面遷移図をExcel図形座標で再構成（画面 6件 / 遷移 6件 / 元コネクタ 9件）
+L0036	遷移一覧（6件）（うち推定 6件：明示接続でなく最近傍幾何で補完）
+L0037	遷移元	遷移先	connector
+L0038	商品詳細	推定現行にあるモーダルは非表示とし、直接ログインモーダルまたは入荷通知完了モーダルを表示する	16（0303:入荷時通知!Y17）
+L0039	ボタン押下後、入荷通知依頼確認モーダルを表示	推定現行にあるモーダルは非表示とし、直接ログインモーダルまたは入荷通知完了モーダルを表示する	20（0303:入荷時通知!Z48）
+L0040	商品一覧	推定現行にあるモーダルは非表示とし、直接ログインモーダルまたは入荷通知完了モーダルを表示する	4（0303:入荷時通知!O48）
+L0041	商品一覧	推定ボタン押下後、入荷通知キャンセル確認モーダルを表示	81（0303:入荷時通知!B133）
+L0042	商品詳細	推定ボタン押下後、入荷通知キャンセル確認モーダルを表示	78（0303:入荷時通知!B133）
+L0043	商品一覧	推定入荷通知を解除しました	46（0303:入荷時通知!Z165）
+L0044	カスタマイズ説明
+L0045	・カスタマイズ要件
+L0046	・商品言語単位の通知ボタンを詳細ページに追加する（商品規格単位のボタンは残す）
+L0047	※一覧には表示しない
+L0048	・一覧の場合はSOLDOUTとなっている場合、商品単位の通知とする
+L0049	・商品詳細画面にて、NMとSP以下と全状態の通知ボタンを表示する
+L0050	・高額商品の場合、通知ボタンを表示しない
+L0051	・本店のみであること
+L0052	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0053	機能仕様処理概要（★はカスタマイズ項目）
+L0054	・下記の画面で表示する
+L0055	1 商品一覧
+L0056	2 商品詳細
+L0057	3 入荷待ち商品一覧
+L0058	・会員未ログインの場合に「入荷時に通知」ボタンを押下すると、ログインモーダルを表示する
+L0059	・会員ログイン済みの場合に「入荷時に通知」ボタンをを押下すると、入荷通知完了のモーダルを表示する
+L0060	★商品詳細画面の「まとめて入荷通知」より、商品単位の入荷通知を設定できる
+L0061	・登録上限は管理画面で設定されている入荷通知登録上限数(現在は20件)とする
+L0062	※上限件数は「まとめて入荷通知」で登録している場合でも1件、商品規格単位でも1件としてカウントする
+L0063	※登録上限数以上の登録をしようとした場合は、エラーを表示する
+L0064	・会員ログイン時に入荷待ちに登録した商品は、マイページ＞入荷待ち商品に表示する
+L0065	★本店のみ表示し、支店で表示しない
+L0066	★
+L0067	2026/7/13 TAMさんに確認したところ、商品一覧画面でSOLDOUTとなっている場合、NMのみの入荷通知とする、が正しい
+L0068	★商品詳細画面にて、各状態と全状態の通知ボタンを表示する
+L0069	・ログイン押下後にログインが失敗すると、下記のエラーメッセージを表示したログイン画面に遷移する
+L0070	「ログインできませんでした。入力内容に誤りがないかご確認ください。」
+L0071	識別ID	ラベル	書式・制限	必須	最大文字数
+L0072	または最大値	初期値	画面部品の説明
+L0073	入荷通知依頼
+L0074	1-1	入荷時に通知	ボタン	-	-	-	・押下時ログイン済みの場合は入荷通知を登録する
+L0075	・押下時未ログインの場合はログインモーダルを表示する
+L0076	1-2	OK(入荷通知依頼確認)	ボタン	-	-	-	・会員未ログインの場合に押下すると、会員ログインのモーダルを表示
+L0077	・会員ログイン済みの場合に押下すると、入荷通知を登録する
+L0078	・リニューアルでは非表示とする
+L0079	1-3	キャンセル	ラベル	-	-	-	・表示している入荷通知のモーダルを閉じる
+L0080	・リニューアルでは非表示とする
+L0081	1-4	ログインモーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示しているログインモーダルを閉じる
+L0082	1-5	Eメールアドレス	半角	○	320	-	・プレースホルダ: Eメールアドレス
+L0083	・入力せずに(7)ログインを押下すると入力必須のバリデーションメッセージを表示する
+L0084	1-6	パスワード	半角	○	320	-	・プレースホルダ: パスワード
+L0085	・入力せずに(7)ログインを押下すると入力必須のバリデーションメッセージを表示する
+L0086	1-7	ログイン	ボタン	-	-	-	・モーダル内の入力値をもとにログインを実行し、ログインが失敗すれば会員ログイン画面に遷移する
+L0087	1-8	新規会員登録	リンク	-	-	-	・押下すると、会員登録画面に遷移する
+L0088	1-9	入荷通知依頼完了モーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示している入荷通知依頼完了のモーダルを閉じる
+L0089	1-10	OK(入荷通知依頼完了)	モーダルを閉じるボタン	-	-	-	・表示している入荷通知依頼のモーダルを閉じる
+L0090	入荷通知キャンセル レイアウト図
+L0091	画像レイヤー（3枚）: 入荷時通知 / B133 / image 10 + 入荷時通知 / B133 / image 12 + 入荷時通知 / B133 / image 13
+L0092	2-1
+L0093	2-4
+L0094	2-5
+L0095	2-3
+L0096	画像レイヤー（5枚）: 入荷時通知 / B133 / image 11 + 入荷時通知 / B133 / image 14 + 入荷時通知 / N170 / image 15 + 入荷時通知 / Z177 / image 17 + 入荷時通知 / W158 / image 18
+L0097	処理概要（★はカスタマイズ項目）
+L0098	★本店のみ表示し、支店で表示しない
+L0099	識別ID	ラベル	書式・制限	必須	最大文字数
+L0100	または最大値	初期値	画面部品の説明
+L0101	入荷通知キャンセル
+L0102	2-1	通知待ち	ボタン	-	-	-	・入荷通知が登録済みの場合に表示
+L0103	・押下時入荷通知をキャンセルし、キャンセルモーダルを表示する
+L0104	2-2	OK(入荷通知キャンセル確認)	ボタン	-	-	-	・押下すると、入荷通知をキャンセルする
+L0105	・リニューアルでは非表示とする
+L0106	2-3	キャンセル	モーダルを閉じるボタン	-	-	-	・表示している入荷通知キャンセル確認のモーダルを閉じる
+L0107	・リニューアルでは非表示とする
+L0108	2-4	入荷通知キャンセル完了のモーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示している入荷通知キャンセル完了のモーダルを閉じる
+L0109	2-5	OK(入荷通知キャンセル完了)	モーダルを閉じるボタン	-	-	-	・表示している入荷通知キャンセル完了のモーダルを閉じる
+L0110	Source:
+L0111	functions/pf-eccube3/f03-07_front_product_product_arrival_notification.md
+L0112	現行仕様
+L0113	F03-07 入荷時通知 / F03-07（入荷時通知）
+L0114	業務ロジック
+L0115	依頼と取り消しの判定順序
+L0116	同じ「入荷時に通知」の指示に対し、次の順で判定して最初に該当したものだけを返す。
+L0117	順序	判定	結果
+L0118	1	商品規格が特定できるか	できないなら対象商品が削除済みの応答（状態fail）を返す
+L0119	2	ログイン会員か	会員でないなら戻り先を保持し、未ログインの応答（状態nologin）を返す
+L0120	3	同一商品規格の依頼が既にあるか	あるならその依頼を削除し、取り消しの応答（状態cancel）を返す
+L0121	4	依頼件数が上限未満か	上限以上なら上限超過の応答（状態fail）を返す
+L0122	5	上記を通過	依頼を作成して保存し、依頼成功の応答（状態success）を返す
+L0123	上限と比べる件数は、有効な依頼だけを数える。取り消した依頼と、削除日時が設定された依頼は数えない。
+L0124	未ログインで依頼したあとの戻り先
+L0125	未ログインで入荷通知を依頼したときは、依頼を指示した画面を戻り先として保持する。 戻り先を保持した状態でログイン後にマイページを開くと、マイページを表示せずその戻り先へ遷移する。 新規会員登録から本会員登録を完了したときも同じ戻り先へ遷移する。いずれも一度遷移すると戻り先は消え、次回以降は通常どおりマイページ・会員登録完了の画面を表示する。
+L0126	入荷時の通知メール
+L0127	入荷通知の依頼に対するメールは、入荷（在庫の反映・入荷CSVの取込・商品規格の登録更新）を契機に送る。
+L0128	条件	ふるまい
+L0129	入荷通知メールを送らない設定になっている	1件も送信しない
+L0130	送る設定になっている	入荷した商品規格を依頼している会員へ、依頼の登録日時の昇順に1件ずつ送信する
+L0131	メールを送っても入荷通知の依頼は残る。同じ商品規格が再度入荷すれば、依頼している会員へ再び送信する。
+L0132	入出力
+L0133	種類	内容
+L0134	入力	登録・取り消しは商品規格ID。一覧は会員ログイン情報
+L0135	成功時出力	登録・取り消しは状態と文言を含む応答。一覧は対象商品の一覧表示
+L0136	失敗時出力	未ログイン・上限超過・対象商品削除済みの応答
+L0137	リニューアル後の仕様
+L0138	表示メッセージ
+L0139	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0140	F03-07-MSG-001	画面右下	入荷通知処理が失敗しました。	入荷通知の依頼または取消の通信に失敗したとき	処理結果を反映せず、元の画面に留まる。
+L0141	F03-07-MSG-002	画面右下トースト	入荷通知を解除しました	入荷通知の一括解除を実行したとき（各処理の完了を待たず表示）	入荷通知の一括解除を開始し、画面にとどまる
+L0142	F03-07-MSG-003	画面右下トースト	入荷通知を設定しました	入荷通知の一括設定を実行したとき（各処理の完了を待たず表示）	入荷通知の一括設定を開始し、画面にとどまる
+L0143	—	入荷通知ボタン付近の通知	入荷通知依頼しました。	依頼の登録に成功したとき	状態successを返し、依頼済みの表示へ切り替える
+L0144	—	入荷通知ボタン付近の通知	入荷通知依頼をキャンセルしました。	既に依頼済みの商品規格を再度依頼したとき	状態cancelを返し、未依頼の表示へ切り替える
+L0145	—	入荷通知ボタン付近の通知	入荷通知依頼は（上限件数）件までです。	依頼件数が上限以上のとき	状態failを返し、登録しない。上限件数は依頼上限値を埋め込む
+L0146	—	入荷通知ボタン付近の通知	対象の商品は削除済です。	対象の商品規格が特定できないとき	状態failを返し、登録しない
+
+ succeeded in 38ms:
+##### 0303 sheet-8 最近チェックした商品
+L0001	最近チェックした商品
+L0002	ドキュメント名フロント 商品
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-08-19
+L0007	更新者石川
+L0008	更新日2025-09-22
+L0009	機能NoF03-06
+L0010	機能名最近チェックした商品
+L0011	概要Cookieに登録されている商品IDから、商品の画像を表示する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	画像レイヤー（3枚）: 最近チェックした商品 / AH10 / image 1 + 最近チェックした商品 / D32 / image 2 + 最近チェックした商品 / I8 / image 3
+L0020	カスタマイズ説明
+L0021	・カスタマイズ要件
+L0022	・本店フロント＞商品一覧と同じ商品一覧を表示する
+L0023	・現行の支店にはない機能のため、本店と統合する支店の画面では機能を新規追加
+L0024	支店商品の公開と非公開の制御
+L0025	・「M03-02商品登録/編集」機能の商品公開ステータスに応じて、商品を表示、または非表示にする
+L0026	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0027	機能仕様処理概要（★はカスタマイズ項目）
+L0028	・下記の画面で表示する
+L0029	1 本店ECTOP
+L0030	2 商品一覧
+L0031	3 商品詳細
+L0032	★本店、各支店でチェックした商品を1つのCookieで管理し、支店側で表示した場合は支店表示フラグが立っているもののみ表示する
+L0033	・最近チェックした商品情報のcookieは2年間有効のものとする
+L0034	・最大15件をスライダーなしで表示する、表示順は最近見た順（新しい順）とする
+L0035	識別ID	ラベル	書式・制限	必須	最大文字数
+L0036	または最大値	初期値	画面部品の説明
+L0037	1	商品画像	画像	-	-	-	・押下すると、拡大画像を表示する
+L0038	・PC版でマウスホバーすると、下記のようにする
+L0039	・商品画像をグレーアウト
+L0040	・「画像を拡大」を表示
+L0041	2	セールアイコン	ラベル	-	-	-	・セールフラグが立っている商品に表示する
+L0042	3	商品画像拡大	ラベル	-	-	-	・押下すると、商品画像の拡大画像を表示する
+L0043	・SP版のみ表示する
+L0044	4	カード言語	ラベル	-	-	-	・カード商品のみ表示する
+L0045	・商品に登録している言語コードを表示する
+L0046	5	商品名	リンク	-	-	-	・押下すると、押下した商品の商品詳細画面に遷移する
+L0047	・表示範囲に収まらない場合は…を表示する
+L0048	Source:
+L0049	functions/pf-eccube3/f03-06_front_product_product_recently_viewed.md
+L0050	現行仕様
+L0051	F03-06 最近見た商品 / F03-06（最近見た商品）
+L0052	業務ロジック
+L0053	表示するもの
+L0054	要素	内容
+L0055	見出し	常に表示する
+L0056	履歴無しの表示	履歴が無いときに、最近見た商品が無い旨を表示する
+L0057	商品画像の装飾	フォイル商品のときはフォイル用の装飾を付す
+L0058	商品画像は遅延読み込みで取得する。取得が終わるまでは読み込み中を示す画像を表示する。
+L0059	本機能は利用者の入力欄を持たない。
+L0060	一覧に並べる商品
+L0061	閲覧履歴の保存値を商品IDの並びとして解釈し、商品IDごとに商品情報とサムネイル画像を取得する。取得できた商品だけをサムネイルとして並べ、取得できなかった商品は一覧から除外する。取得の対象は、次をすべて満たす商品とする。
+L0062	条件	内容
+L0063	表示地域	商品に設定された地域制限の表示ロケールに、表示中の言語が含まれること
+L0064	販売可能な規格	カード状態がNMの規格を持ち、その規格の販売価格が0より大きいこと
+L0065	サムネイルに使う画像は、その商品に登録された商品画像のうち表示順が最も先の1枚とする。
+L0066	閲覧履歴の保存期限は、商品詳細を開くたびに、その時点から730日後へ更新する。
+L0067	エラー時の扱い
+L0068	事象	扱い
+L0069	閲覧履歴の保存値が無いとき	履歴無しの表示を描画する
+L0070	商品情報を取得できない商品があるとき	当該商品だけを一覧から除外する
+L0071	閲覧履歴の保存値はあるが、取得できた商品が1件も無いとき	見出しだけを表示し、履歴無しの表示は行わない
+L0072	入出力
+L0073	種類	内容
+L0074	入力	閲覧履歴の保存値（商品IDの並び）
+L0075	成功時出力	履歴の商品サムネイル一覧、または履歴が無いときの履歴無しの表示
+L0076	失敗時出力	保存値が無いときは履歴無しの表示
+L0077	リニューアル後の仕様
+L0078	表示メッセージ
+L0079	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0080	—	見出し	最近チェックした商品	常に表示する	—
+L0081	—	見出し（英語表示時）	Recently Viewed	常に表示する	—
+L0082	—	一覧領域	最近見た商品はありません。	閲覧履歴の保存値が無いとき	一覧を表示しない
+L0083	—	一覧領域（英語表示時）	No Recently Seen Items	閲覧履歴の保存値が無いとき	一覧を表示しない
+L0084	本ブロックは項目ごとのエラーと一時的な通知メッセージを生成しない。
+
+ succeeded in 75ms:
+##### 0303 sheet-7 商品リコメンド
+L0001	商品リコメンド
+L0002	ドキュメント名フロント 商品
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-08-19
+L0007	更新者石川
+L0008	更新日2025-09-22
+L0009	機能NoF03-05
+L0010	機能名商品リコメンド
+L0011	概要マイページ、購入完了ページ、商品詳細ページ、買い物かごページにおすすめ商品を表示する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	画像レイヤー（2枚）: 商品リコメンド / C29 / image 1 + 商品リコメンド / C10 / image 2
+L0015	カスタマイズ説明
+L0016	・現行踏襲
+L0017	機能仕様処理概要（★はカスタマイズ項目）
+L0018	・下記の機能で表示する
+L0019	1 マイページ
+L0020	2 購入完了ページ
+L0021	3 商品詳細ページ
+L0022	4 買い物かごページ
+L0023	・下記の条件を満たす商品を表示する
+L0024	・ページによって異なる商品IDを取得し、商品IDをもとにおすすめ商品を取得する（商品IDが取得できない場合はおすすめ商品を表示しない）
+L0025	・マイページまたは注文完了ページの場合
+L0026	・直近の注文に含まれる明細のうち販売価格が最も高い商品
+L0027	・商品詳細ページの場合
+L0028	・表示している商品ID
+L0029	・カートページの場合
+L0030	・カートに入っている商品のうち販売価格が最も高い商品
+L0031	・上記で取得した商品IDと同時に購入された商品
+L0032	（過去N日間（追加システム設定のレコメンドの検索期間（日数））の注文を対象とする、注文ステータスが「処理中」の注文は含まない）
+L0033	・商品IDで指定された商品と同一商品、同一カードではない
+L0034	・公開中（支店であれば支店公開フラグを参照する）
+L0035	・参照中の言語の商品
+L0036	・在庫あり（支店であれば支店の在庫を参照する）
+L0037	・会員ログインしている場合、会員が購入したことのある商品以外
+L0038	・表示件数は10件とする
+L0039	・商品を表示している画面部品については、商品一覧シートを参照
+L0040	・おすすめ商品がない場合、商品は表示せず下記の文言を表示する。
+L0041	「表示するおすすめ商品はまだありません。」
+L0042	識別ID ラベル 書式・制限 必須 最大文字数
+L0043	または最大値 初期値 画面部品の説明
+L0044	画面項目は商品一覧の商品表示部分と同一とする
+L0045	Source:
+L0046	functions/pf-eccube3/f03-05_front_product_block_recommend.md
+L0047	現行仕様
+L0048	F03-05 商品リコメンド / 商品 — 商品リコメンド（おすすめ商品ブロック）
+L0049	業務ロジック
+L0050	基準商品を決める注文の絞り込み
+L0051	マイページ・注文完了ページで基準商品を決めるとき、対象とする直近の注文から、注文ステータスが「処理中」の注文を除く。
+L0052	おすすめの並び順
+L0053	おすすめ商品は、基準商品と同時に購入された数量の合計が多い順に並べる。
+L0054	入出力
+L0055	取得と描画
+L0056	おすすめ枠が画面内に入った時点で、おすすめ内容を非同期に取得して枠内へ描画する。取得は1回の画面表示につき1度だけで、描画後は再取得しない。本機能は利用者入力のフォームを持たない。
+L0057	表示内容
+L0058	おすすめ商品は横スライダーで表示し、前送り・後送りのボタンを備える。商品画像は遅延読み込みで表示し、フォイル商品は画像にフォイル用の装飾を付す。枠の見出しには「あなたへのおすすめアイテム」（英語表示時は「Recommended items for you」）を表示する。英語表示時は商品名を英語名で表示する。本ブロック専用のモーダルは無い。
+L0059	リニューアル後の仕様
+L0060	表示メッセージ
+L0061	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0062	F03-05-MSG-001	おすすめ商品枠内	表示するおすすめ商品はまだありません。	表示対象のおすすめ商品がないとき	おすすめ商品なしの案内を表示したまま、同じ画面に留まる
+L0063	F03-05-MSG-001	おすすめ商品枠内（英語表示時）	No recommended products to display.	表示対象のおすすめ商品がないとき。英語ロケールへは言語切替で到達する	おすすめ商品なしの案内を表示したまま、同じ画面に留まる
+L0064	—	おすすめ商品枠内（英語表示時）	No recommended items to display yet.	表示対象のおすすめ商品がないとき（英語文言の別の確認値）	おすすめ商品なしの案内を表示したまま、同じ画面に留まる
+L0065	本ブロックはエラーのインライン表示やフラッシュ・トーストを生成しない。
+
+ succeeded in 58ms:
+##### 0304 sheet-3 買い物かご
+L0001	買い物かご
+L0002	ドキュメント名フロント_注文 基本設計仕様書
+L0003	セクション—
+L0004	プロジェクト名フロント_注文機能
+L0005	作成者緑川
+L0006	作成日2025-06-12
+L0007	更新者盛田
+L0008	更新日2025-11-06
+L0009	機能NoF04-01
+L0010	機能名買い物かご
+L0011	概要カートに追加している商品情報を表示します。
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	5
+L0017	6
+L0018	7
+L0019	8
+L0020	9
+L0021	3
+L0022	4
+L0023	10
+L0024	11
+L0025	12
+L0026	13
+L0027	14
+L0028	15
+L0029	16
+L0030	買い物かご / D8 / image 1
+L0031	カスタマイズ説明
+L0032	・カスタマイズ要件
+L0033	現行機能をベースに下記カスタマイズを入れる
+L0034	カート内商品の数量変更に伴う処理について
+L0035	カート内の商品数を変更する際、以下の処理を画面再読み込みせずに行われるようにする
+L0036	・カート内商品の合計金額を自動で再計算する
+L0037	・在庫数を超える商品数を入力できないようにする
+L0038	・購入上限数を超える商品数を入力できないようにする
+L0039	・商品点数は0以下を入力できないようにする
+L0040	カート内の削除ボタン
+L0041	・削除ボタンを押下時は画面をリロードし、商品を削除する
+L0042	カートの表示
+L0043	・ユーザーの閲覧店舗に応じて店舗別に異なるカート情報が表示されるようにする
+L0044	送料の表示
+L0045	・支店は商品の配送方法が店舗受取のみで送料が存在しないため、支店では送料は表示しない
+L0046	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0047	機能仕様処理概要（★はカスタマイズ項目）
+L0048	・表示について
+L0049	・本店の表示内容を踏襲する
+L0050	・購入グループが複数カートにある場合エラーを表示する
+L0051	買い物かご / E62 / image 2
+L0052	★ユーザの閲覧店舗に応じて店舗別に異なるカート情報が表示されるようにする
+L0053	・店舗ごとに商品を保持するため、URLを変更してもカートの中身は引き継がない
+L0054	現行 カスタマイズ
+L0055	会員A
+L0056	①本店カート内
+L0057	・商品A
+L0058	・商品B
+L0059	②支店カート内
+L0060	・商品C
+L0061	・商品D
+L0062	本店サイトカート
+L0063	・商品A
+L0064	・商品B
+L0144	会員A
+L0145	①本店カート内
+L0146	・商品A
+L0147	・商品B
+L0148	②支店Aカート内
+L0149	・商品C
+L0150	・商品D
+L0151	③支店Bカート内
+L0152	・商品E
+L0153	・商品F	支店Aサイトカート
+L0154	・商品C
+L0155	・商品D	77（0304:買い物かご!AL84）
+L0156	★送料の表示
+L0157	・支店は商品の配送方法が店舗受取のみで送料が存在しないため、支店では送料は表示しない
+L0158	・カートの商品数量変更処理
+L0159	★カート内の商品数を変更する際、以下の処理を画面再読み込みせずに行われるようにする
+L0160	・カート内商品の合計金額を自動で再計算する
+L0161	・在庫数を超える商品数を入力できないようにする
+L0162	※カートに遷移した時点での在庫数で、+ボタン、数量入力を制御する
+L0163	カート画面中に在庫数が変更してもリアルタイムでカート画面に反映はされない
+L0164	・購入上限数を超える商品数を入力できないようにする
+L0165	※カートに遷移した時点での購入上限数で+ボタン、数量入力を制御
+L0166	カート画面中に購入上限数が変更してもリアルタイムでカート画面に反映はされない
+L0167	・商品点数は0以下を入力できないようにする
+L0168	・計算した内容を下記に反映する
+L0169	・小計
+L0170	・送料無料までの残り金額表示
+L0171	・合計金額
+L0172	・ボタンの挙動
+L0173	★カート内の削除ボタン
+L0174	・削除ボタンを押下時は画面をリロードし、商品を削除する
+L0175	・削除する商品は閲覧店舗に紐づいている商品のみとする
+L0176	・他の商品も見るボタンの処理
+L0177	・TOP画面へ遷移する
+L0178	・遷移するTOP画面は閲覧店舗とする
+L0179	・購入手続きへボタンの処理
+L0180	・ご注文方法の指定画面へ遷移する
+L0181	・カート一括削除ボタンの処理
+L0182	・削除ボタン押下時は画面をリロードし、カート内商品をすべて削除する
+L0183	・削除する商品は閲覧店舗に紐づいている商品のみとする
+L0184	識別ID	ラベル	書式・制限	必須	最大文字数
+L0204	現行仕様
+L0205	F04-01 買い物かご / F04-01（買い物かご）
+L0206	業務ロジック
+L0207	商品行の表示
+L0208	商品画像は登録が無いときノーイメージ画像を出す。商品画像と商品名はどちらも当該商品の商品詳細ページへのリンクで、別のタブで開く。数量の入力欄は3桁までとする。
+L0209	操作の改ざん防止
+L0210	数量の増減、数量の直接指定、商品の個別削除は、なりすまし対策のトークンを検証してから実行する。トークンが一致しない要求は実行せず、アクセス拒否として扱う。
+L0211	金額の算出と送料無料の案内
+L0212	項目	内容
+L0213	商品ごとの金額	単価×数量
+L0214	送料無料の案内を出す条件	送料無料金額の設定があるとき。設定が無いときは送料無料の案内も不足額の案内も出さない
+L0215	送料無料と判定する条件	合計が送料無料金額以上、または合計個数が送料無料個数以上
+L0216	送料無料に達していないとき	送料無料金額と合計の差額を不足額として案内する
+L0217	購入手続きへ進めるかどうか
+L0218	購入手続きへのボタンは、カートに商品が1件以上あり、かつ購入グループが単一のときだけ出す。購入グループが複数のときはボタンを出さず、購入手続きへ進めない。ボタンはスマートフォン用とPC用の2か所に同じものを置く。
+L0219	購入手続きへ進むとき、販売個数制限の超過などでメッセージが出た場合は購入手続きへ進まず、買い物かごへ戻ってそのメッセージを表示する。
+L0220	カートへの追加
+L0221	商品規格と数量を受け取ってカートへ追加する。数量の指定が無いときは1とする。要求はJSON本文でもフォームの値でも受け付ける。複数商品をまとめて追加する要求も受け付け、追加する商品の並びが渡されないときは追加せず失敗として扱う。追加に失敗したときはエラーメッセージを出す。
+L0222	非同期の追加は追加後のカート内容（商品明細と合計）を返し、画面遷移を伴う追加は買い物かご画面を表示する。カート内容の取得だけを求める要求にも同じカート内容を返す。
+L0223	要求の送信先と受け取る値は、方式ごとに次のとおりとする。
+L0224	方式	送信先	受け取る値	応答
+L0225	1件の追加（非同期）	POST /cart/add	JSON本文の product_class_id・quantity、またはフォーム値 product_class_id・quantity	追加後のカート内容
+L0226	複数件の追加（非同期）	POST /cart/add_bulk	フォーム値 cart_list（要素ごとに product_class_id・quantity）	追加後のカート内容
+L0227	1件の追加（画面遷移あり）	POST /cart/add_show	フォーム値 product_class_id・quantity	成否にかかわらず買い物かご画面へ遷移する
+L0228	カート内容の取得	GET /cart/get	なし	カート内容
+L0229	JSON本文を読むのは、フォーム値に product_class_id も quantity も無いときである。複数件の追加で cart_list が無い、または並びでないときは、1件も追加しない。カート内容の応答は、カートの内容（cart）と、カートを識別する値（cookie）を持つJSONとする。
+L0230	入荷通知依頼
+L0231	条件	結果
+L0232	対象の商品規格が存在しない	依頼を受け付けず失敗を返す
+L0233	未ログイン	依頼を受け付けずログインを促す。ログイン後に戻れるよう直前の画面を覚えておく
+L0234	すでに同じ商品規格の依頼がある	その依頼を取り消す
+L0235	依頼件数が上限に達している	依頼を登録せず、上限値を添えて失敗を返す
+L0236	上記以外	依頼を登録する
+L0237	依頼の送信先は POST /cart/pushReceive で、商品規格をフォーム値 product_class_id で渡す。取消では依頼に削除日時を記録し、依頼の行は残す。依頼件数の上限値は、オプションマスタの入荷通知上限件数で決まる。上限と比べる依頼件数は、その会員の依頼のうち削除日時が記録されていないものの件数である。
+L0238	カートが空のとき
+L0239	商品が1件も無いときは、商品行・集計欄・購入手続きへのボタン・カート一括削除を出さず、買い物かごが空である案内だけを出す。他の商品を見るボタンは空のときも出す。
+L0240	入出力
+L0241	種類	内容
+L0242	入力	カートへ追加する商品規格と数量、入荷通知を依頼する商品規格
+L0243	成功時出力	買い物かご画面の表示、カート内容（商品明細と合計）の返却、入荷通知依頼の結果
+L0244	失敗時出力	カート追加のエラーメッセージ、入荷通知依頼のエラーメッセージ
+L0245	入出力: 永続化
+L0246	操作	契機
+L0247	登録	入荷通知依頼の受付
+L0248	削除	入荷通知依頼の取消
+L0249	リニューアル後の仕様
+L0250	表示メッセージ
+L0251	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0252	F04-01-MSG-001	画面中央(ダイアログ)	カート内の商品がすべて削除されます。本当に実行してよろしいですか？	「カート一括削除」を押したとき	確認で実行するとカートを全削除して買い物かご画面へ戻る。キャンセル時は同じ画面に留まる。
+L0253	F04-01-MSG-002	カート集計欄	現在送料無料です。	送料無料の条件（金額または個数）に達したとき	送料無料の状態を買い物かご画面に表示し、画面に留まる。
+L0254	F04-01-MSG-003	画面本文	現在カート内に商品はございません。	カート内の商品が0件のとき	空の買い物かご画面を表示し、画面に留まる。
+L0255	F04-01-MSG-004	画面右下トースト	カートに追加しました：	商品をカートに追加したとき	商品をカートに追加し、現在の画面に留まる。カート画面へのリンクを表示する。
+L0256	—	画面見出し	買い物かご	買い物かご画面の表示時	画面に留まる
+L0257	—	カート集計欄	あと（残り金額）で送料無料になります。	送料無料金額設定があり、未到達のとき	画面に留まる
+L0258	—	カート集計欄	合計(税込)	買い物かご画面の表示時	画面に留まる
+L0259	—	画面本文	現在、買い物かごには商品が入っておりません。	カートアイテムが0件のとき	画面に留まる
+L0260	—	画面上部のエラー領域	「（購入グループ1）」と「（購入グループ2）」の商品は同時に注文することが出来ません。お手数ですがいずれかの商品を買い物かごから削除し、（以下続く）	購入グループが複数あるとき	同時注文できないため、買い物かご画面に留まる
+L0261	—	入荷通知依頼の応答メッセージ	入荷通知を依頼する場合ログインしてください	入荷通知依頼で未ログインのとき	参照元URLを保持し、ログインを促す
+L0262	—	入荷通知依頼の応答メッセージ	入荷通知依頼は（上限）件までです。	入荷通知依頼が上限を超えるとき	依頼を登録せず、画面に留まる
+L0263	—	入荷通知依頼の応答メッセージ	入荷通知依頼しました。／入荷通知依頼をキャンセルしました。	入荷通知依頼の登録・取消成功時	依頼を登録または取消し、画面に留まる
+
+ succeeded in 74ms:
+##### 0303 sheet-10 お気に入り
+L0001	お気に入り
+L0002	ドキュメント名フロント 商品
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-08-19
+L0007	更新者石川
+L0008	更新日2025-09-22
+L0009	機能NoF03-08
+L0010	機能名お気に入り
+L0011	概要会員がログイン済みの場合、商品に対しお気に入り登録ができる
+L0012	処理概要（★はカスタマイズ項目）
+L0013	お気に入り登録 レイアウト図
+L0014	1-1
+L0015	お気に入り / C8 / image 4
+L0016	1-3
+L0017	1-4
+L0018	1-5
+L0019	1-6
+L0020	1-7
+L0021	1-8
+L0022	1-9
+L0023	1-10
+L0024	画像レイヤー（5枚）: お気に入り / U29 / image 1 + お気に入り / C47 / image 2 + お気に入り / AE47 / image 3 + お気に入り / Y10 / image 5 + お気に入り / AN53 / image 6
+L0025	商品詳細
+L0026	商品一覧
+L0027	会員未ログインの場合
+L0028	会員ログイン済みの場合
+L0029	OK押下
+L0030	商品詳細
+L0031	商品一覧
+L0032	画面遷移図をExcel図形座標で再構成（画面 5件 / 遷移 4件 / 元コネクタ 7件）
+L0033	遷移一覧（4件）（うち推定 4件：明示接続でなく最近傍幾何で補完）
+L0034	遷移元	遷移先	connector
+L0035	会員ログイン済みの場合	推定会員未ログインの場合	12（0303:お気に入り!Z37）
+L0036	会員未ログインの場合	推定会員ログイン済みの場合	15（0303:お気に入り!P37）
+L0037	商品詳細	推定現行にあるモーダルは非表示とし、直接ログインモーダルまたはお気に入り登録完了モーダルを表示する	17（0303:お気に入り!Z20）
+L0038	商品詳細	推定商品一覧	42（0303:お気に入り!B112）
+L0039	カスタマイズ説明
+L0040	・カスタマイズ要件
+L0041	・本店のみであること
+L0042	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0043	機能仕様処理概要（★はカスタマイズ項目）
+L0044	★下記の画面で表示する
+L0045	1 本店ECTOP（追加）
+L0046	2 商品一覧（追加）
+L0047	3 商品詳細
+L0048	4 お気に入り登録商品一覧
+L0049	・会員未ログインの場合に「お気に入りに追加する」または「♡」ボタンを押下すると、ログインモーダルを表示する
+L0050	・会員ログイン済みの場合に「お気に入りに追加する」または「♡」ボタンをを押下すると、お気に入り登録完了のモーダルを表示する
+L0051	・会員ログイン時にお気に入りに登録した商品は、マイページ＞お気に入り登録商品一覧に表示する
+L0052	★本店のみ表示し、支店で表示しない
+L0053	・最大100件(登録上限数)まで表示
+L0054	登録上限数を超えて登録仕様とした場合、エラーを表示する
+L0055	・ログイン押下後にログインが失敗すると、下記のエラーメッセージを表示したログイン画面に遷移する
+L0056	「ログインできませんでした。入力内容に誤りがないかご確認ください。」
+L0057	・お気に入りは商品ごと、言語ごとに登録可能
+L0058	識別ID	ラベル	書式・制限	必須	最大文字数
+L0059	または最大値	初期値	画面部品の説明
+L0060	お気に入り登録
+L0061	1-1	「お気に入りに追加する」または「♡」	ボタン	-	-	-	・押下時ログイン済みの場合はお気に入りを登録する
+L0062	・押下時未ログインの場合はログインモーダルを表示する
+L0063	1-2	OK(お気に入り登録確認)	ボタン	-	-	-	・会員未ログインの場合に押下すると、会員ログインのモーダルを表示
+L0064	・会員ログイン済みの場合に押下すると、お気に入りに登録する
+L0065	・リニューアルでは非表示とする
+L0066	1-3	キャンセル	ラベル	-	-	-	・表示しているお気に入り登録のモーダルを閉じる
+L0067	・リニューアルでは非表示とする
+L0068	1-4	ログインモーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示しているログインモーダルを閉じる
+L0069	1-5	Eメールアドレス	半角	○	320	-	・プレースホルダ: Eメールアドレス
+L0070	・入力せずにログインを押下すると入力必須のバリデーションメッセージを表示する
+L0071	1-6	パスワード	半角	○	320	-	・プレースホルダ: パスワード
+L0072	・入力せずにログインを押下すると入力必須のバリデーションメッセージを表示する
+L0073	1-7	ログイン	ボタン	-	-	-	・モーダル内の入力値をもとにログインを実行し、ログインが失敗すれば会員ログイン画面に遷移する
+L0074	1-8	新規会員登録	リンク	-	-	-	・押下すると、会員登録画面に遷移する
+L0075	1-9	お気に入り登録完了モーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示している入お気に入り登録完了のモーダルを閉じる
+L0076	1-10	OK(お気に入り登録完了)	モーダルを閉じるボタン	-	-	-	・表示しているお気に入り登録完了のモーダルを閉じる
+L0077	お気に入り登録キャンセル レイアウト図
+L0078	2-1
+L0079	2-5
+L0080	2-4
+L0081	2-3
+L0082	2-2
+L0083	画像レイヤー（10枚）: お気に入り / B112 / image 7 + お気に入り / B112 / image 8 + お気に入り / B112 / image 9 + お気に入り / B112 / image 10 + お気に入り / B112 / image 11 + お気に入り / B112 / image 12 + お気に入り / W137 / image 13 + お気に入り / Y155 / image 14 + お気に入り / P149 / image 15 + お気に入り / N130 / image 16
+L0084	処理概要（★はカスタマイズ項目）
+L0085	★本店のみ表示し、支店で表示しない
+L0086	識別ID	ラベル	書式・制限	必須	最大文字数
+L0087	または最大値	初期値	画面部品の説明
+L0088	お気に入り登録キャンセル
+L0089	2-1	「お気に入りに登録中」または「♥」	ボタン	-	-	-	・お気に入りが登録済みの場合に表示
+L0090	・押下時お気に入り登録をキャンセルし、キャンセルモーダルを表示する
+L0091	2-2	OK(お気に入り登録キャンセル確認)	ボタン	-	-	-	・押下すると、お気に入り登録をキャンセルする
+L0092	・リニューアルでは非表示とする
+L0093	2-3	キャンセル	モーダルを閉じるボタン	-	-	-	・表示しているお気に入り登録キャンセル確認のモーダルを閉じる
+L0094	・リニューアルでは非表示とする
+L0095	2-4	お気に入り登録キャンセル完了のモーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示しているお気に入り登録キャンセル完了のモーダルを閉じる
+L0096	2-5	OK(お気に入り登録キャンセル完了)	モーダルを閉じるボタン	-	-	-	・表示しているお気に入り登録キャンセル完了のモーダルを閉じる
+L0097	Source:
+L0098	functions/pf-eccube3/f03-08_front_product_product_favorite.md
+L0099	現行仕様
+L0100	F03-08 お気に入り / 商品 — お気に入り（登録・解除・一覧）
+L0101	業務ロジック
+L0102	既登録の商品・言語をもう一度登録したとき
+L0103	当該商品・言語がすでにお気に入りにあるときは、新たに作らず成功として応答する。同じ商品・言語がお気に入りに二重に並ぶことはない。ただし登録件数が上限に達している会員では、既登録かどうかを調べる前に上限超過として応答する。
+L0104	登録されていない商品・言語を解除したとき
+L0105	当該商品・言語のお気に入りが無いときは、何も削除せず解除成功として応答する。
+L0106	未ログインでお気に入りを解除しようとしたとき
+L0107	会員（選手情報）を特定できないときは、不正要求（HTTP400）として応答し、画面文言を返さない。
+L0108	商品詳細でのお気に入りの状態表示
+L0109	商品詳細では、お気に入りに登録済みかどうかを言語ごとに判定して表示する。
+L0110	セール通知
+L0111	お気に入りに登録した商品がセール対象になると、その会員の登録メールアドレスへ通知を送る。通知は会員ごとに1通へまとめ、対象となったお気に入り商品を並べて知らせる。
+L0112	1通へまとめる範囲は、1回の実行で見つかったセール対象のお気に入り商品すべてである。まとめるための期間の区切りは設けない。
+L0113	一覧に表示する対象
+L0114	会員ログインを要求し、ログインしていなければ会員ログイン画面へ誘導する。表示するのは、その会員がお気に入りに登録した商品のうち公開中のものに限る。高額商品コードを持つ商品は、在庫があるものだけを表示する。同一商品でも言語が異なれば別の行として並べる。
+L0115	入出力
+L0116	受け取る値と返す応答
+L0117	種類	内容
+L0118	入力	登録・解除は商品IDと言語コード
+L0119	出力	登録・解除は状態（成功／失敗／未ログイン）と文言を持つ応答
+L0120	解除で会員を特定できないとき	応答の本文を返さず不正要求（HTTP400）
+L0121	リニューアル後の仕様
+L0122	表示メッセージ
+L0123	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0124	F03-08-MSG-001	画面右下トースト	お気に入り追加に失敗しました。	お気に入りの登録または解除の通信に失敗したとき	お気に入りボタンの状態を元に戻し、同じ画面に留まる。
+L0125	F03-08-MSG-002	画面中央(ダイアログ)	お気に入り登録解除に失敗しました。	お気に入り商品の解除に失敗したとき	お気に入り一覧を変更せず、同じ画面に留まる
+L0126	F03-08-MSG-003	画面右下トースト	お気に入り登録を解除しました。	お気に入り商品を解除したとき	対象商品を一覧から除去し、同じ画面に留まる
+L0127	F03-08-MSG-004	画面右下トースト	お気に入りに追加しました：	商品をお気に入りに追加したとき	お気に入りを登録し、現在の画面に留まる。お気に入り一覧へのリンクを表示する。
+L0128	F03-08-MSG-005	画面右下トースト	お気に入りから削除しました：	商品をお気に入りから削除したとき	お気に入りを削除し、現在の画面に留まる。お気に入り一覧へのリンクを表示する。
+L0129	F03-08-MSG-006	入力項目付近	1以上で入力してください。	カートへ追加する数量が1未満のとき	カート追加を中止し、入力中の画面に留まる
+L0130	—	お気に入りボタン付近の通知	お気に入りに追加しました。	登録に成功したとき	お気に入りを登録し、画面に留まる
+L0131	—	お気に入りボタン付近の通知	お気に入り登録を解除しました。	解除に成功したとき	お気に入りを削除し、画面に留まる
+L0132	—	お気に入りボタン付近の通知	お気に入り登録は100件までです。	登録件数が上限以上のとき	登録せず、画面に留まる
+L0133	—	お気に入りボタン付近の通知	お気に入りを追加する場合ログインしてください。	未ログインで登録しようとしたとき	登録せず、ログインを促す
+L0134	—	一覧の案内	お気に入り登録した商品がセール対象になった際、ご登録されているメールアドレスにお知らせをお送りいたします。	お気に入り一覧を表示したとき	画面に留まる
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/F03-07_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-F03-07-055	IT-0366			ITA-11	P2	ブラウザのみ	S-F03-07-CBWAIT-055	① 会員Aが本会員・利用可能で、Eメールアドレスcbf0307-055@example.test・パスワードPassw0rd-CBF0307055である（S-F03-07-CBWAIT-055）／② F0307-CB055-GOODSが本店公開、高額商品ではなく、商品規格F0307-CB055-NM（状態ニアミント）の本店EC-CUBE在庫が0でSOLDOUTである（S-F03-07-CBWAIT-055）／③ 会員Aと商品規格F0307-CB055-NMを対応付けた有効な入荷通知依頼が1件ある（S-F03-07-CBWAIT-055）	1. 会員Aで本店にログインする／2. マイページ＞入荷待ち商品（入荷待ち商品一覧）を開く／3. F0307-CB055-GOODSの行の入荷通知のボタンを確認する	入荷待ち商品一覧のF0307-CB055-GOODSの行に、依頼済みを示す「通知待ち」のボタンが表示されること	0303 入荷時通知 / 機能仕様 処理概要、画面項目定義 識別ID 2-1	CB-F03-07-002
+IT-F03-07-056	IT-0366			ITA-11	P2	ブラウザのみ	S-F03-07-CBLIST-056	① 会員Aが本会員・利用可能で、Eメールアドレスcbf0307-056@example.test・パスワードPassw0rd-CBF0307056である（S-F03-07-CBLIST-056）／② F0307-CB056-LISTが本店公開、本店の商品一覧に表示、日本語、高額商品ではなく、全規格の本店EC-CUBE在庫が0でSOLDOUTである（S-F03-07-CBLIST-056）／③ 会員AとF0307-CB056-LISTの商品規格F0307-CB056-NM（状態NM）を対応付けた規格単位の入荷通知依頼が1件ある（S-F03-07-CBLIST-056）	1. 会員Aで本店にログインする／2. 商品一覧画面でF0307-CB056-LISTを表示する／3. F0307-CB056-LISTの入荷通知のボタンを確認する	商品一覧のF0307-CB056-LISTに、依頼済みを示す「通知待ち」のボタンが表示され、「入荷時に通知」のボタンが表示されないこと	0303 入荷時通知 / カスタマイズ説明 カスタマイズ要件、機能仕様 処理概要、画面項目定義 識別ID 2-1	CB-F03-07-003
+IT-F03-07-057	IT-0366			ITA-11	P3	ブラウザのみ	S-F03-07-ADM,S-F03-07-MAIL-SETTING,S-F03-07-MAILBOX,S-F03-07-CBAPR,S-F03-07-CBMAILNM-057	① 商品・商品規格を更新できる試験管理者で管理画面にログインしている（S-F03-07-ADM）／② 開始時に入荷通知メールの許可を「送る」に設定する（S-F03-07-MAIL-SETTING）／③ 開始時にcbf0307-057@example.test宛の受信メールを削除して0件にする（S-F03-07-MAILBOX）／④ 会員Aが本会員・利用可能で、Eメールアドレスcbf0307-057@example.testである。承認用管理者が在庫編集承認の権限を持つ稼働中の管理者である（S-F03-07-CBAPR）。会員Aと商品規格F0307-CB057-NM（状態NM）を対応付けた規格単位の有効な入荷通知依頼が1件ある（S-F03-07-CBMAILNM-057）／⑤ F0307-CB057-GOODSの商品と商品規格F0307-CB057-NMが本店公開、日本語で、本店EC-CUBE在庫が0である（S-F03-07-CBMAILNM-057）	1. 管理者（S-F03-07-ADM）で管理画面の在庫変更CSV登録画面を開き、店舗に本店、在庫場所にEC-CUBE、在庫変動区分に入庫の区分、在庫変動理由に「F0307-CB057試験」を入れ、承認通知先に承認用管理者（S-F03-07-CBAPR）を選び、商品コード「F0307-CB057-NM」・在庫増減数「1」・仕入単価「1」を書いたCSVを登録する／2. 承認用管理者（S-F03-07-CBAPR）でログインし、在庫編集承認一覧画面でその行を開き「承認する」を押して、商品規格F0307-CB057-NMの在庫を0から1にする／3. テストメール受信箱を確認する	商品規格F0307-CB057-NM（状態NM）を依頼している会員Aへ入荷通知メールが1件送信されること	0303 入荷時通知 / 業務ロジック 入荷時の通知メール	CB-F03-07-004
+IT-F03-07-058	IT-0366			ITA-11	P3	ブラウザのみ	S-F03-07-ADM,S-F03-07-MAIL-SETTING,S-F03-07-MAILBOX,S-F03-07-CBAPR,S-F03-07-CBMAILSP-058	① 商品・商品規格を更新できる試験管理者で管理画面にログインしている（S-F03-07-ADM）／② 開始時に入荷通知メールの許可を「送る」に設定する（S-F03-07-MAIL-SETTING）／③ 開始時にcbf0307-058@example.test宛の受信メールを削除して0件にする（S-F03-07-MAILBOX）／④ 会員Aが本会員・利用可能で、Eメールアドレスcbf0307-058@example.testである。承認用管理者が在庫編集承認の権限を持つ稼働中の管理者である（S-F03-07-CBAPR）。F0307-CB058-CARDはカード商品で、状態SPの商品規格（商品コードF0307-CB058-SP、SP販売価格は100円以上でSPの行が日本語の価格表に表示される）と状態NMの商品規格がともに本店EC-CUBE在庫0であり、会員Aと状態SPの商品規格を対応付けた規格単位の有効な入荷通知依頼が1件、状態NMの商品規格の依頼が0件ある（S-F03-07-CBMAILSP-058）／⑤ F0307-CB058-CARDの商品と2つの商品規格が本店公開、日本語である（S-F03-07-CBMAILSP-058）	1. 管理者（S-F03-07-ADM）で管理画面の在庫変更CSV登録画面を開き、店舗に本店、在庫場所にEC-CUBE、在庫変動区分に入庫の区分、在庫変動理由に「F0307-CB058試験」を入れ、承認通知先に承認用管理者（S-F03-07-CBAPR）を選び、商品コード「F0307-CB058-SP」・在庫増減数「1」・仕入単価「1」を書いたCSVを登録する／2. 承認用管理者（S-F03-07-CBAPR）でログインし、在庫編集承認一覧画面でその行を開き「承認する」を押して、F0307-CB058-CARDの状態SPの商品規格の在庫を0から1にする／3. テストメール受信箱を確認する	状態SPの商品規格を依頼している会員Aへ入荷通知メールが1件送信されること	0303 入荷時通知 / 業務ロジック 入荷時の通知メール	CB-F03-07-005
+
+exec
+/bin/bash -lc "sed -n '112,147p' integration_test/casegen/combination/units/F03-07/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0111	functions/pf-eccube3/f03-07_front_product_product_arrival_notification.md
+L0112	現行仕様
+L0113	F03-07 入荷時通知 / F03-07（入荷時通知）
+L0114	業務ロジック
+L0115	依頼と取り消しの判定順序
+L0116	同じ「入荷時に通知」の指示に対し、次の順で判定して最初に該当したものだけを返す。
+L0117	順序	判定	結果
+L0118	1	商品規格が特定できるか	できないなら対象商品が削除済みの応答（状態fail）を返す
+L0119	2	ログイン会員か	会員でないなら戻り先を保持し、未ログインの応答（状態nologin）を返す
+L0120	3	同一商品規格の依頼が既にあるか	あるならその依頼を削除し、取り消しの応答（状態cancel）を返す
+L0121	4	依頼件数が上限未満か	上限以上なら上限超過の応答（状態fail）を返す
+L0122	5	上記を通過	依頼を作成して保存し、依頼成功の応答（状態success）を返す
+L0123	上限と比べる件数は、有効な依頼だけを数える。取り消した依頼と、削除日時が設定された依頼は数えない。
+L0124	未ログインで依頼したあとの戻り先
+L0125	未ログインで入荷通知を依頼したときは、依頼を指示した画面を戻り先として保持する。 戻り先を保持した状態でログイン後にマイページを開くと、マイページを表示せずその戻り先へ遷移する。 新規会員登録から本会員登録を完了したときも同じ戻り先へ遷移する。いずれも一度遷移すると戻り先は消え、次回以降は通常どおりマイページ・会員登録完了の画面を表示する。
+L0126	入荷時の通知メール
+L0127	入荷通知の依頼に対するメールは、入荷（在庫の反映・入荷CSVの取込・商品規格の登録更新）を契機に送る。
+L0128	条件	ふるまい
+L0129	入荷通知メールを送らない設定になっている	1件も送信しない
+L0130	送る設定になっている	入荷した商品規格を依頼している会員へ、依頼の登録日時の昇順に1件ずつ送信する
+L0131	メールを送っても入荷通知の依頼は残る。同じ商品規格が再度入荷すれば、依頼している会員へ再び送信する。
+L0132	入出力
+L0133	種類	内容
+L0134	入力	登録・取り消しは商品規格ID。一覧は会員ログイン情報
+L0135	成功時出力	登録・取り消しは状態と文言を含む応答。一覧は対象商品の一覧表示
+L0136	失敗時出力	未ログイン・上限超過・対象商品削除済みの応答
+L0137	リニューアル後の仕様
+L0138	表示メッセージ
+L0139	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0140	F03-07-MSG-001	画面右下	入荷通知処理が失敗しました。	入荷通知の依頼または取消の通信に失敗したとき	処理結果を反映せず、元の画面に留まる。
+L0141	F03-07-MSG-002	画面右下トースト	入荷通知を解除しました	入荷通知の一括解除を実行したとき（各処理の完了を待たず表示）	入荷通知の一括解除を開始し、画面にとどまる
+L0142	F03-07-MSG-003	画面右下トースト	入荷通知を設定しました	入荷通知の一括設定を実行したとき（各処理の完了を待たず表示）	入荷通知の一括設定を開始し、画面にとどまる
+L0143	—	入荷通知ボタン付近の通知	入荷通知依頼しました。	依頼の登録に成功したとき	状態successを返し、依頼済みの表示へ切り替える
+L0144	—	入荷通知ボタン付近の通知	入荷通知依頼をキャンセルしました。	既に依頼済みの商品規格を再度依頼したとき	状態cancelを返し、未依頼の表示へ切り替える
+L0145	—	入荷通知ボタン付近の通知	入荷通知依頼は（上限件数）件までです。	依頼件数が上限以上のとき	状態failを返し、登録しない。上限件数は依頼上限値を埋め込む
+L0146	—	入荷通知ボタン付近の通知	対象の商品は削除済です。	対象の商品規格が特定できないとき	状態failを返し、登録しない
+
+exec
+/bin/bash -lc 'cut -f1,4,6 integration_test/casegen/combination/cases/F04-01_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+シードID	状態・属性	投入方法
+S-F04-01-CBBRNOSET-060	会員A=メール cbf0401-060@example.test／商品C=商品コードCBF0401-C-060・税込単価1,000円・支店A在庫10／支店Aカートに商品Cを数量1	フロントの新規会員登録画面でメールアドレスに「cbf0401-060@example.test」、氏名・パスワードなどの必須項目を入れて登録し、届いた本会員登録の案内メールのリンクを開いて本会員にする。管理画面の会員一覧でメールアドレス「cbf0401-060@example.test」の行に表示されたIDを控える（〔会員ID-F0401-060〕）。プレイヤーIDは会員登録と同時に画面が振り、画面に表示されないため控えない（〔プレイヤーID-F0401-060〕と呼ぶ）。管理画面の購入グループ管理画面で名称(日)に「CBF0401-G1-060」、名称(英)・支払方法・配送方法などの必須項目を入れて登録する。購入グループIDは画面に表示されないため控えない（〔購入グループID-F0401-060〕と呼ぶ）。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-C-060」、商品名(日)に「商品C」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-060」、販売制限数は空、販売価格に税込単価が1000円になる金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-C-060」の行に表示されたIDを控える（〔商品ID-F0401-060C〕）。在庫一覧で店舗に支店A、商品コードに「CBF0401-C-060」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-060C〕、〔在庫ID-F0401-060C〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して支店Aの在庫数を10にする。フロントで会員A（cbf0401-060@example.test）としてケース専用ブラウザにログインし、支店Aの商品Cの商品詳細画面で数量を「1」にして「カートに入れる」を押す。カートID・明細ID・カート識別値は画面が自動で振り、画面に表示されないため控えない（カートを〔カートID-F0401-060〕と呼ぶ）
+S-F04-01-CBMAINCNTLOW-061	会員A=メール cbf0401-061@example.test／商品A=商品コードCBF0401-A-061・税込単価1,000円・本店在庫10／本店カートに商品Aを数量1	フロントの新規会員登録画面でメールアドレスに「cbf0401-061@example.test」、氏名・パスワードなどの必須項目を入れて登録し、届いた本会員登録の案内メールのリンクを開いて本会員にする。管理画面の会員一覧でメールアドレス「cbf0401-061@example.test」の行に表示されたIDを控える（〔会員ID-F0401-061〕）。プレイヤーIDは会員登録と同時に画面が振り、画面に表示されないため控えない（〔プレイヤーID-F0401-061〕と呼ぶ）。管理画面の購入グループ管理画面で名称(日)に「CBF0401-G1-061」、名称(英)・支払方法・配送方法などの必須項目を入れて登録する。購入グループIDは画面に表示されないため控えない（〔購入グループID-F0401-061〕と呼ぶ）。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-A-061」、商品名(日)に「商品A」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-061」、販売制限数は空、販売価格に税込単価が1000円になる金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-A-061」の行に表示されたIDを控える（〔商品ID-F0401-061A〕）。在庫一覧で店舗に本店、商品コードに「CBF0401-A-061」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-061A〕、〔在庫ID-F0401-061A〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して本店の在庫数を10にする。フロントで会員A（cbf0401-061@example.test）としてケース専用ブラウザにログインし、本店の商品Aの商品詳細画面で数量を「1」にして「カートに入れる」を押す。カートID・明細ID・カート識別値は画面が自動で振り、画面に表示されないため控えない（カートを〔カートID-F0401-061〕と呼ぶ）
+S-F04-01-CBBOTHREACH-062	会員A=メール cbf0401-062@example.test／商品A=商品コードCBF0401-A-062・税込単価1,000円・本店在庫10／本店カートに商品Aを数量5	フロントの新規会員登録画面でメールアドレスに「cbf0401-062@example.test」、氏名・パスワードなどの必須項目を入れて登録し、届いた本会員登録の案内メールのリンクを開いて本会員にする。管理画面の会員一覧でメールアドレス「cbf0401-062@example.test」の行に表示されたIDを控える（〔会員ID-F0401-062〕）。プレイヤーIDは会員登録と同時に画面が振り、画面に表示されないため控えない（〔プレイヤーID-F0401-062〕と呼ぶ）。管理画面の購入グループ管理画面で名称(日)に「CBF0401-G1-062」、名称(英)・支払方法・配送方法などの必須項目を入れて登録する。購入グループIDは画面に表示されないため控えない（〔購入グループID-F0401-062〕と呼ぶ）。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-A-062」、商品名(日)に「商品A」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-062」、販売制限数は空、販売価格に税込単価が1000円になる金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-A-062」の行に表示されたIDを控える（〔商品ID-F0401-062A〕）。在庫一覧で店舗に本店、商品コードに「CBF0401-A-062」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-062A〕、〔在庫ID-F0401-062A〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して本店の在庫数を10にする。フロントで会員A（cbf0401-062@example.test）としてケース専用ブラウザにログインし、本店の商品Aの商品詳細画面で数量を「5」にして「カートに入れる」を押す。カートID・明細ID・カート識別値は画面が自動で振り、画面に表示されないため控えない（カートを〔カートID-F0401-062〕と呼ぶ）
+S-F04-01-CBAMTONLY-063	会員A=メール cbf0401-063@example.test／商品A=商品コードCBF0401-A-063・税込単価1,000円・本店在庫10／本店カートに商品Aを数量5	フロントの新規会員登録画面でメールアドレスに「cbf0401-063@example.test」、氏名・パスワードなどの必須項目を入れて登録し、届いた本会員登録の案内メールのリンクを開いて本会員にする。管理画面の会員一覧でメールアドレス「cbf0401-063@example.test」の行に表示されたIDを控える（〔会員ID-F0401-063〕）。プレイヤーIDは会員登録と同時に画面が振り、画面に表示されないため控えない（〔プレイヤーID-F0401-063〕と呼ぶ）。管理画面の購入グループ管理画面で名称(日)に「CBF0401-G1-063」、名称(英)・支払方法・配送方法などの必須項目を入れて登録する。購入グループIDは画面に表示されないため控えない（〔購入グループID-F0401-063〕と呼ぶ）。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-A-063」、商品名(日)に「商品A」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-063」、販売制限数は空、販売価格に税込単価が1000円になる金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-A-063」の行に表示されたIDを控える（〔商品ID-F0401-063A〕）。在庫一覧で店舗に本店、商品コードに「CBF0401-A-063」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-063A〕、〔在庫ID-F0401-063A〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して本店の在庫数を10にする。フロントで会員A（cbf0401-063@example.test）としてケース専用ブラウザにログインし、本店の商品Aの商品詳細画面で数量を「5」にして「カートに入れる」を押す。カートID・明細ID・カート識別値は画面が自動で振り、画面に表示されないため控えない（カートを〔カートID-F0401-063〕と呼ぶ）
+S-F04-01-CBDELONE-064	会員A=メール cbf0401-064@example.test／商品A=商品コードCBF0401-A-064・商品B=商品コードCBF0401-B-064・本店在庫各10／本店カートに商品A・商品Bを各数量1／支店A・支店Bのカートは商品なし	フロントの新規会員登録画面でメールアドレスに「cbf0401-064@example.test」、氏名・パスワードなどの必須項目を入れて登録し、届いた本会員登録の案内メールのリンクを開いて本会員にする。管理画面の会員一覧でメールアドレス「cbf0401-064@example.test」の行に表示されたIDを控える（〔会員ID-F0401-064〕）。プレイヤーIDは会員登録と同時に画面が振り、画面に表示されないため控えない（〔プレイヤーID-F0401-064〕と呼ぶ）。管理画面の購入グループ管理画面で名称(日)に「CBF0401-G1-064」、名称(英)・支払方法・配送方法などの必須項目を入れて登録する。購入グループIDは画面に表示されないため控えない（〔購入グループID-F0401-064〕と呼ぶ）。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-A-064」、商品名(日)に「商品A」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-064」、販売制限数は空、販売価格に任意の金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-A-064」の行に表示されたIDを控える（〔商品ID-F0401-064A〕）。在庫一覧で店舗に本店、商品コードに「CBF0401-A-064」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-064A〕、〔在庫ID-F0401-064A〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して本店の在庫数を10にする。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-B-064」、商品名(日)に「商品B」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-064」、販売制限数は空、販売価格に任意の金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-B-064」の行に表示されたIDを控える（〔商品ID-F0401-064B〕）。在庫一覧で店舗に本店、商品コードに「CBF0401-B-064」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-064B〕、〔在庫ID-F0401-064B〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して本店の在庫数を10にする。フロントで会員A（cbf0401-064@example.test）としてケース専用ブラウザにログインし、本店の商品Aの商品詳細画面で数量を「1」にして「カートに入れる」を押す。本店の商品Bの商品詳細画面で数量を「1」にして「カートに入れる」を押す。カートID・明細ID・カート識別値は画面が自動で振り、画面に表示されないため控えない（カートを〔カートID-F0401-064〕と呼ぶ）
+S-F04-01-CBDELALL-065	会員A=メール cbf0401-065@example.test／商品A=商品コードCBF0401-A-065・商品B=商品コードCBF0401-B-065・本店在庫各10／本店カートに商品A・商品Bを各数量1／支店A・支店Bのカートは商品なし	フロントの新規会員登録画面でメールアドレスに「cbf0401-065@example.test」、氏名・パスワードなどの必須項目を入れて登録し、届いた本会員登録の案内メールのリンクを開いて本会員にする。管理画面の会員一覧でメールアドレス「cbf0401-065@example.test」の行に表示されたIDを控える（〔会員ID-F0401-065〕）。プレイヤーIDは会員登録と同時に画面が振り、画面に表示されないため控えない（〔プレイヤーID-F0401-065〕と呼ぶ）。管理画面の購入グループ管理画面で名称(日)に「CBF0401-G1-065」、名称(英)・支払方法・配送方法などの必須項目を入れて登録する。購入グループIDは画面に表示されないため控えない（〔購入グループID-F0401-065〕と呼ぶ）。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-A-065」、商品名(日)に「商品A」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-065」、販売制限数は空、販売価格に任意の金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-A-065」の行に表示されたIDを控える（〔商品ID-F0401-065A〕）。在庫一覧で店舗に本店、商品コードに「CBF0401-A-065」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-065A〕、〔在庫ID-F0401-065A〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して本店の在庫数を10にする。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-B-065」、商品名(日)に「商品B」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-065」、販売制限数は空、販売価格に任意の金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-B-065」の行に表示されたIDを控える（〔商品ID-F0401-065B〕）。在庫一覧で店舗に本店、商品コードに「CBF0401-B-065」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-065B〕、〔在庫ID-F0401-065B〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して本店の在庫数を10にする。フロントで会員A（cbf0401-065@example.test）としてケース専用ブラウザにログインし、本店の商品Aの商品詳細画面で数量を「1」にして「カートに入れる」を押す。本店の商品Bの商品詳細画面で数量を「1」にして「カートに入れる」を押す。カートID・明細ID・カート識別値は画面が自動で振り、画面に表示されないため控えない（カートを〔カートID-F0401-065〕と呼ぶ）
+S-F04-01-CBVIEWBR-066	会員A=メール cbf0401-066@example.test／商品C=商品コードCBF0401-C-066・商品D=商品コードCBF0401-D-066・支店A在庫各10／支店Aカートに商品C・商品Dを各数量1／本店・支店Bのカートは商品なし	フロントの新規会員登録画面でメールアドレスに「cbf0401-066@example.test」、氏名・パスワードなどの必須項目を入れて登録し、届いた本会員登録の案内メールのリンクを開いて本会員にする。管理画面の会員一覧でメールアドレス「cbf0401-066@example.test」の行に表示されたIDを控える（〔会員ID-F0401-066〕）。プレイヤーIDは会員登録と同時に画面が振り、画面に表示されないため控えない（〔プレイヤーID-F0401-066〕と呼ぶ）。管理画面の購入グループ管理画面で名称(日)に「CBF0401-G1-066」、名称(英)・支払方法・配送方法などの必須項目を入れて登録する。購入グループIDは画面に表示されないため控えない（〔購入グループID-F0401-066〕と呼ぶ）。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-C-066」、商品名(日)に「商品C」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-066」、販売制限数は空、販売価格に任意の金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-C-066」の行に表示されたIDを控える（〔商品ID-F0401-066C〕）。在庫一覧で店舗に支店A、商品コードに「CBF0401-C-066」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-066C〕、〔在庫ID-F0401-066C〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して支店Aの在庫数を10にする。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-D-066」、商品名(日)に「商品D」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-066」、販売制限数は空、販売価格に任意の金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-D-066」の行に表示されたIDを控える（〔商品ID-F0401-066D〕）。在庫一覧で店舗に支店A、商品コードに「CBF0401-D-066」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-066D〕、〔在庫ID-F0401-066D〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して支店Aの在庫数を10にする。フロントで会員A（cbf0401-066@example.test）としてケース専用ブラウザにログインし、支店Aの商品Cの商品詳細画面で数量を「1」にして「カートに入れる」を押す。支店Aの商品Dの商品詳細画面で数量を「1」にして「カートに入れる」を押す。カートID・明細ID・カート識別値は画面が自動で振り、画面に表示されないため控えない（カートを〔カートID-F0401-066〕と呼ぶ）
+S-F04-01-CBBULKNOQTY-067	会員A=メール cbf0401-067@example.test／商品A=商品コードCBF0401-A-067・本店在庫10／本店カートの商品明細は0件	フロントの新規会員登録画面でメールアドレスに「cbf0401-067@example.test」、氏名・パスワードなどの必須項目を入れて登録し、届いた本会員登録の案内メールのリンクを開いて本会員にする。管理画面の会員一覧でメールアドレス「cbf0401-067@example.test」の行に表示されたIDを控える（〔会員ID-F0401-067〕）。プレイヤーIDは会員登録と同時に画面が振り、画面に表示されないため控えない（〔プレイヤーID-F0401-067〕と呼ぶ）。管理画面の購入グループ管理画面で名称(日)に「CBF0401-G1-067」、名称(英)・支払方法・配送方法などの必須項目を入れて登録する。購入グループIDは画面に表示されないため控えない（〔購入グループID-F0401-067〕と呼ぶ）。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-A-067」、商品名(日)に「商品A」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-067」、販売制限数は空、販売価格に任意の金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-A-067」の行に表示されたIDを控える（〔商品ID-F0401-067A〕）。在庫一覧で店舗に本店、商品コードに「CBF0401-A-067」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-067A〕、〔在庫ID-F0401-067A〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して本店の在庫数を10にする。フロントで会員A（cbf0401-067@example.test）としてケース専用ブラウザにログインし、本店の買い物かごに商品を1件も入れず、買い物かご画面で商品が0件であることを確かめる。カートIDとカート識別値は画面が自動で振り、画面に表示されないため控えない（会員Aの本店カートを〔カートID-F0401-067〕と呼ぶ）
+S-F04-01-CBSHOWNOQTY-068	会員A=メール cbf0401-068@example.test／商品A=商品コードCBF0401-A-068・本店在庫10／本店カートの商品明細は0件	フロントの新規会員登録画面でメールアドレスに「cbf0401-068@example.test」、氏名・パスワードなどの必須項目を入れて登録し、届いた本会員登録の案内メールのリンクを開いて本会員にする。管理画面の会員一覧でメールアドレス「cbf0401-068@example.test」の行に表示されたIDを控える（〔会員ID-F0401-068〕）。プレイヤーIDは会員登録と同時に画面が振り、画面に表示されないため控えない（〔プレイヤーID-F0401-068〕と呼ぶ）。管理画面の購入グループ管理画面で名称(日)に「CBF0401-G1-068」、名称(英)・支払方法・配送方法などの必須項目を入れて登録する。購入グループIDは画面に表示されないため控えない（〔購入グループID-F0401-068〕と呼ぶ）。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-A-068」、商品名(日)に「商品A」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-068」、販売制限数は空、販売価格に任意の金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-A-068」の行に表示されたIDを控える（〔商品ID-F0401-068A〕）。在庫一覧で店舗に本店、商品コードに「CBF0401-A-068」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-068A〕、〔在庫ID-F0401-068A〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して本店の在庫数を10にする。フロントで会員A（cbf0401-068@example.test）としてケース専用ブラウザにログインし、本店の買い物かごに商品を1件も入れず、買い物かご画面で商品が0件であることを確かめる。カートIDとカート識別値は画面が自動で振り、画面に表示されないため控えない（会員Aの本店カートを〔カートID-F0401-068〕と呼ぶ）
+S-F04-01-CBJSONNOQTY-069	会員A=メール cbf0401-069@example.test／商品A=商品コードCBF0401-A-069・本店在庫10／本店カートの商品明細は0件	フロントの新規会員登録画面でメールアドレスに「cbf0401-069@example.test」、氏名・パスワードなどの必須項目を入れて登録し、届いた本会員登録の案内メールのリンクを開いて本会員にする。管理画面の会員一覧でメールアドレス「cbf0401-069@example.test」の行に表示されたIDを控える（〔会員ID-F0401-069〕）。プレイヤーIDは会員登録と同時に画面が振り、画面に表示されないため控えない（〔プレイヤーID-F0401-069〕と呼ぶ）。管理画面の購入グループ管理画面で名称(日)に「CBF0401-G1-069」、名称(英)・支払方法・配送方法などの必須項目を入れて登録する。購入グループIDは画面に表示されないため控えない（〔購入グループID-F0401-069〕と呼ぶ）。管理画面のグッズ商品CSV登録画面で、商品コードに「CBF0401-A-069」、商品名(日)に「商品A」、商品公開ステータスに公開、支店の商品公開ステータスに公開、購入グループ名称に「CBF0401-G1-069」、販売制限数は空、販売価格に任意の金額、ほかの必須列を入れた1行のCSVファイルを選んで登録する（商品規格は1件、高額商品コードは付かない）。商品一覧で商品コード「CBF0401-A-069」の行に表示されたIDを控える（〔商品ID-F0401-069A〕）。在庫一覧で店舗に本店、商品コードに「CBF0401-A-069」を指定して検索し、その行の在庫編集画面を開いて、表示された商品規格IDと在庫IDを控える（〔商品規格ID-F0401-069A〕、〔在庫ID-F0401-069A〕）。在庫編集画面の在庫変動内容で在庫変動区分に入庫の区分、在庫変動理由、在庫増減数に「10」、仕入単価を入れて登録ボタンを押し、在庫編集承認一覧でその申請を承認して本店の在庫数を10にする。フロントで会員A（cbf0401-069@example.test）としてケース専用ブラウザにログインし、本店の買い物かごに商品を1件も入れず、買い物かご画面で商品が0件であることを確かめる。カートIDとカート識別値は画面が自動で振り、画面に表示されないため控えない（会員Aの本店カートを〔カートID-F0401-069〕と呼ぶ）
+
+exec
+/bin/bash -lc "grep -n -E 'S-F04-01-(SETTINGS|SHOPS)' integration_test/casegen/cases/F04-01_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+2:S-F04-01-SHOPS	店舗・配送方法	カート試験共通店舗	本店=店舗ID 1・公開中／支店A=店舗IDは登録時に画面が振る（控える。以下〔店舗ID-F0401-共有A〕）・公開中・店舗URL識別子shop-a-f0401／支店B=店舗IDは登録時に画面が振る（控える。以下〔店舗ID-F0401-共有B〕）・公開中・店舗URL識別子shop-b-f0401／本店の配送方法ID=940100101／支店Aの店舗受取配送方法ID=940100102／支店Bの店舗受取配送方法ID=940100103	全ケースが参照する店舗。各ケースは店舗レコードを変更しない	本店（店舗ID 1）は登録済みの店舗を使い、管理画面の店舗一覧から開いた店舗登録画面で公開が「公開」であることを確かめる。支店Aは店舗登録画面で店名に「支店A」、店舗種別に「支店」、公開に「公開」、開店に「開店」、支店URLに仮の半角英数字「shopaf0401」を入れ、会社名・住所・電話番号・メールアドレスなどの必須項目を入れて登録ボタンを押す。店舗一覧で店名「支店A」の行に表示されたIDを控える（〔店舗ID-F0401-共有A〕）。支店Bは店舗登録画面で店名に「支店B」、店舗種別に「支店」、公開に「公開」、開店に「開店」、支店URLに仮の半角英数字「shopbf0401」を入れ、会社名・住所・電話番号・メールアドレスなどの必須項目を入れて登録ボタンを押す。店舗一覧で店名「支店B」の行に表示されたIDを控える（〔店舗ID-F0401-共有B〕）。店舗URL識別子shop-a-f0401とshop-b-f0401はハイフンを含み、店舗登録画面の支店URLの入力チェックを通らないため画面で指定できず、DBへ直接設定する。本店の配送方法ID 940100101、支店Aの店舗受取配送方法ID 940100102、支店Bの店舗受取配送方法ID 940100103は、配送方法をどの店舗のものにするか・店舗受取にするかを画面で指定できないためDBへ直接設定する	共有可
+3:S-F04-01-SETTINGS	店舗設定・オプションマスタ	カート試験共通設定	本店の送料無料金額・送料無料個数、入荷通知上限件数を保持する	1件ずつの設定を共有する。各ケースが開始時に必要な値を自分で設定する	管理画面の基本設定画面で本店の送料無料条件（金額）と送料無料条件（数量）に各ケースの開始時の値を入れて（設定なしのときは空にして）登録ボタンを押す。管理画面の追加システム設定画面で入荷通知最大数に各ケースの開始時の入荷通知上限件数を入れて登録ボタンを押す	共有可
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/sheetmap/FIX_R1_BRIEF.md integration_test/casegen/sheetmap/FIX_R2_BRIEF.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# レビュー1巡目の反映（著者への依頼）
+
+codex のレビュー指摘が `integration_test/casegen/sheetmap/review/<機能ID>_r1_findings.md` にある。
+1件ずつ、**指摘が引いている設計書の記述を sheet.txt で自分で読み直して事実かどうか確かめてから**、下の裁定に従って反映せよ。指摘をそのまま適用しない。
+
+## 裁定（依頼元の決定。指摘と食い違うときはこちらが優先）
+
+| No. | 裁定 |
+| --- | --- |
+| A | **根拠はHTML設計書であり、対象シート1枚に限らない。** その機能のふるまい（何を出力するか、全件か選択か、出力対象の条件、未選択・0件のときの扱い、ファイル名、起動するボタン、権限）が同じ冊子の別シート（一覧画面のシートなど）に書かれていれば、それを期待結果の根拠にしてよい。出典にそのシートを「｜」でつないで書く。当初の依頼文の「隣接シートは操作の入口にだけ使う」は撤回する。したがって、「対象シートに記述が無い」ことだけを理由にした指摘は、同じ冊子の別シートに記述があれば却下する。逆に、別シートにその機能の記述があるのにケースにしていなかったもの（出力対象、選択と全件の違い、未選択時の扱いなど）は、ケースを足す。別シートは `python3 integration_test/casegen/sheetmap/build_materials.py --sheet <書番> <シート名>` で読む。他の冊子・実装・現行ソースは根拠にしない |
+| B | **観点表の「期待値の決め方」が「観点内で確定」の判定単位は、適用の条件が設計書から言えれば、期待結果は判定単位の文から決めてよい。** 例: IT-0080・IT-0225（参照・出力だけの機能は実行前後でデータを更新しない）は、設計書がその機能をCSV出力・一覧表示などの参照機能として書いていれば適用できる。「非更新とは対象シートに書いていない」という指摘は却下する。IT-0083（出力ファイルの数量・金額が画面表示およびDB値と一致）を使うときは、画面表示またはDB値と見比べる手順と期待結果にする |
+| C | **CSV・帳票の出力項目の構成と並びは IT-0156**（観点ID ITA-02。他の観点に割り当たらない機能仕様を受ける区分）に当てる。IT-0071 は「値が取得元と同値」にだけ使う。report.md に「出力項目の構成・並びを受ける判定単位が観点表に無いので IT-0156 を使った」と書く |
+| C' | （2026-10-06 追記）観点表に IT-0348（ITA-05。出力したファイルの各レコードが、定められた出力項目だけで構成され、定められた順に並ぶこと）を足した。出力項目の構成と並びは、以後 IT-0348 に当てる。裁定Cで IT-0156 に当てていた14件は付け替えた（`retag_0348.py`）。同日、IT-0349（ITA-05。出力したファイルのレコードが、定められた並び順で出力されること）も足した。出力したCSV・帳票の行の並び順は IT-0349 に当てる（24件を付け替えた。`retag_0349.py`）。同日、IT-0350（ITA-05。送信されたメールの件名、送信元、本文の構成が、定められたとおりであること）も足した。通知メールの内容は IT-0350 に当てる（10件を付け替えた。`retag_0350.py`）。初期値、未選択時の扱いなど、ほかに受ける判定単位が無いものは IT-0156 のまま（2026-10-07 追記）観点表にバッチ用の4行を足した。IT-0351（ITA-14。異常として定められた条件でバッチが異常終了として終わること）、IT-0352（ITA-13。異常終了した場合、異常の後に行わないと定められた処理が行われていないこと）、IT-0353（ITA-13。終了後、一時的な資源が定められたとおりに削除されている・残っていること）、IT-0354（ITA-21。バッチの出力メッセージが、定められた条件のときに定められた文言で出力されること）。バッチのケースで期待結果がこのどれかそのものであるものは、IT-0156 でなくこれらを使う。 |
+| D | 見出し行の有無、データが何行目から始まるかは、設計書に書いていなければ期待結果・手順に書かない。データ行は事前準備の識別子（番号・コード）で特定する。項目の並びは「各行の項目が左から設計書の識別ID順に対応する」ことを、事前準備の値がどの位置に出るかで確かめる |
+| E | 値の取得元が設計書から決まらない項目（備考が空で、項目名からも取得元が1つに決まらないもの。呼び名の違う属性を当てはめたもの）は、値の照合から外し、report.md の「ケースにしなかったもの」に取得元の不足として書く。項目名と同じ名前の属性は取得元が決まるとしてよい |
+| F | 計算・連結・書式変換の結果そのもの（姓＋空白＋名、差の計算、小計など）は単体テストの担当（SCOPE.md）。ケースから外し、report.md に「単体テストへ送った」と書く。ただし「どの時点の値か」「単価か小計か」のように、どの値を採るかの定めは結合テストで確かめてよい |
+| G | 1ケース1期待結果。判定単位が違う確認が1ケースに混じっていたら分ける |
+| H | シードは実際に作れる方法で書く。管理画面で指定できない内部IDを管理画面で登録する、と書かない（DB投入にする）。設計書が求める状態（必須項目が未設定の会員など）が ee 実装の制約で作れないときは、ケースは残し、投入方法を「未確定: <理由>」にして report.md の「試験環境に要るもの」に挙げる。実装が設計書と違うこと自体はケースを変える理由にしない |
+| I | 手順は、画面を開く・条件を入れる・ボタンを押す・ファイルを開く、の操作を番号付きで書く。「〜を確認する」だけの手順にしない |
+| J | 設計書の中で記述が食い違っている・誤記と思われる箇所を、推測でどちらかに決めて期待結果にしない。両方に共通する部分だけを期待結果にし、食い違いは report.md に書く |
+| K | 判定ID IT-0332〜0347 は使わない。使っているケースは、当てはまる別の判定単位に付け替えるか、無ければ外す |
+| L | 指摘が「取りこぼし」で、設計書の記述から期待結果が一意に決まるなら、ケースを足す。試験基盤が無いことはケースを作らない理由にならない（投入方法・前提を「未確定」と書いて残す） |
+
+## やること
+
+1. 指摘ごとに「採用／一部採用／却下」を決め、cases・seed・report.md を直す。ケースを足したり外したりしたら、テストIDを 001 からの連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. 指摘に無くても、裁定 A〜L に反する箇所が自分のケースにあれば同じように直す。
+3. `integration_test/casegen/sheetmap/review/<機能ID>_r1_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述（原文）・直した内容」を表で書く。保存できないときは返答に本文を含める。
+4. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること（他の著者と同じ置き場所を使っているため）。
+
+## 返答
+
+5行以内。直した後の件数、指摘ごとの判定の内訳（採用・一部採用・却下の件数）、足した・外したテストの数、verify の結果、dispositions.md を保存できたか。
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+
+exec
+/bin/bash -lc "grep -n -E 'S-F03-05-CONFIG|S-F03-07-MAIL-SETTING|S-F03-08-ENV' integration_test/casegen/cases/F03-05_seed_data.tsv integration_test/casegen/cases/F03-07_seed_data.tsv integration_test/casegen/cases/F03-08_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/cases/F03-05_seed_data.tsv:2:S-F03-05-CONFIG	追加システム設定	レコメンド検索期間設定	レコメンドの検索期間（日数）=30	1件だけの設定。各ケースが開始時に必要な値を自分で設定する	管理画面の追加システム設定で30を設定する	共有可
+integration_test/casegen/cases/F03-07_seed_data.tsv:4:S-F03-07-MAIL-SETTING	設定	入荷通知メール送信設定	追加システム設定の入荷通知メールの許可を「送る」「送らない」へ変更可能	メール確認に使用する1件だけの設定。各ケースが開始時に必要な値を自分で設定する	管理画面の追加システム設定で設定する	共有可
+integration_test/casegen/cases/F03-08_seed_data.tsv:2:S-F03-08-ENV	店舗・設定	F03-08共通店舗設定	本店がメイン店舗、支店が支店店舗として利用可能／お気に入り商品機能を有効・無効へ変更可能	店舗は全ケースが参照だけに使用する。お気に入り商品機能は1件だけの設定であり、各ケースが開始時に必要な値を自分で設定する	試験環境の本店・支店を使用し、管理画面の店舗設定でお気に入り商品機能を設定する	共有可
+
+exec
+/bin/bash -lc "grep -n -E '処理中の注文|注文手続きの画面|RECP' integration_test/casegen/cases/F03-05_test_cases.tsv integration_test/casegen/cases/F03-05_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/cases/F03-05_seed_data.tsv:3:S-F03-05-CASE-001	会員・商品・注文	マイページ基準商品データ(001)	会員IDは登録時に画面が振る（控える。以下〔会員ID-F0305-001〕）・ログインID=f0305_member-001・パスワード=Passw0rd-001!F0305-001・利用可能／商品レコードIDは登録時に画面が振る（手順・期待結果で使わないため控えない）・商品ID=BASE-PROCESS-HIGH-001、REC-PROCESS-001、BASE-MYP-HIGH-001、BASE-MYP-LOW-001／商品規格IDは登録時に画面が振る（手順・期待結果で使わないため控えない）／全商品が日本語・本店公開・本店在庫5／受注IDは注文手続きの画面を開いたときに画面が振る（控えない）・受注日時=試験開始時刻の1時間前・ステータス=処理中・BASE-PROCESS-HIGH-001とREC-PROCESS-001を含む／受注IDは登録時に画面が振る（控える。以下〔受注ID-F0305-001〕）・受注日時=試験開始時刻の2時間前・ステータス=入金済み・BASE-MYP-HIGH-001の販売価格3000円とBASE-MYP-LOW-001の販売価格1000円を含む／受注明細IDは登録時に画面が振る（手順・期待結果で使わないため控えない）	IT-F03-05-001専用。処理中注文の除外と直近注文内の最高販売価格を判定する	①管理画面のグッズ商品CSV登録で、次の商品を1行ずつ書いたCSVファイルを「CSVファイル選択」で選び「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。各行とも商品IDは空にし、商品コード・商品名(日)・商品名(英)に状態・属性の商品IDの値（括弧内に別の指定があるものはその値）、言語(ID)に日本語、商品公開ステータスに公開、支店の商品公開ステータスに公開、地域別販売制限に日本語サイト、そのほかの必須項目に任意の値を入れる（括弧内は行ごとの指定）: BASE-PROCESS-HIGH-001、REC-PROCESS-001、BASE-MYP-HIGH-001（販売価格・基準価格=3000）、BASE-MYP-LOW-001（販売価格・基準価格=1000）。②在庫検索一覧で各商品の店舗=本店・在庫区分=EC-CUBEの行の商品名を押して在庫編集を開き、在庫変動区分に入庫の区分、在庫増減数に次の数（購入で減る分を足した数）、仕入単価に任意の値、承認通知先に承認するメンバーを入れて登録を押す: BASE-PROCESS-HIGH-001=5、REC-PROCESS-001=5、BASE-MYP-HIGH-001=6、BASE-MYP-LOW-001=6。登録者とは別のメンバーが在庫編集承認一覧でその行を選び一括承認を押す。③フロントの新規会員登録で、メールアドレスに仮のメールアドレス（試験者が決める）、パスワードにPassw0rd-001!F0305-001、そのほかの必須項目に任意の値を入れて登録し、管理画面の会員検索一覧からその会員の会員登録編集を開き、会員ステータスを本会員にして登録する。会員検索一覧でその会員の行に表示された会員IDを控える（〔会員ID-F0305-001〕）。④フロントでその会員がログインし、商品詳細ページでBASE-MYP-HIGH-001とBASE-MYP-LOW-001を各1個をカートに入れ、買い物かごからご注文方法指定・決済へ進めて注文を確定する。⑤管理画面の受注情報検索一覧でその注文を開き、受注情報編集の「変更後のステータス」で入金済みを選び「受注ステータスを変更」を押す。開いた受注情報編集のアドレス欄に表示される受注ID（「order/」と「/edit」の間の数字）を控える（〔受注ID-F0305-001〕）。⑥フロントで同じ会員が、商品詳細ページでBASE-PROCESS-HIGH-001とREC-PROCESS-001を各1個カートに入れ、買い物かごから注文手続きの画面（ご注文方法指定）を開いたところで止め、注文を確定せずにログアウトする（処理中の注文ができる）。⑦〔受注ID-F0305-001〕の受注日時=試験開始時刻の2時間前は画面で指定できないためDBへ直接設定する。⑧〔会員ID-F0305-001〕の処理中の注文の受注日時=試験開始時刻の1時間前は画面で指定できないためDBへ直接設定する。⑨ログインID=f0305_member-001は画面で指定できないためDBへ直接設定する（仮のメールアドレスと置き換える）。	ケース専用
+integration_test/casegen/cases/F03-05_seed_data.tsv:8:S-F03-05-CASE-006	商品・注文	同時購入期間・数量データ(006)	商品レコードIDは登録時に画面が振る（手順・期待結果で使わないため控えない）・商品ID=BASE-CORR-006、REC-QTY-5-006、REC-QTY-3-006、REC-OLD-006、REC-PROCESS-006／商品規格IDは登録時に画面が振る（手順・期待結果で使わないため控えない）／全商品が日本語・本店公開・本店在庫5／受注ID（登録時に画面が振る。控える。以下〔受注ID-F0305-006A〕）は試験開始時刻の1日前・入金済みでBASE-CORR-006、REC-QTY-5-006数量5、REC-QTY-3-006数量3を含む／受注ID（登録時に画面が振る。控える。以下〔受注ID-F0305-006B〕）は31日前・入金済みでBASE-CORR-006とREC-OLD-006数量20を含む／受注ID（注文手続きの画面を開いたときに画面が振る。控えない）は1日前・処理中でBASE-CORR-006とREC-PROCESS-006数量20を含む／受注明細IDは登録時に画面が振る（手順・期待結果で使わないため控えない）	IT-F03-05-006専用。期間、注文ステータスおよび数量順を判定する	①管理画面のグッズ商品CSV登録で、次の商品を1行ずつ書いたCSVファイルを「CSVファイル選択」で選び「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する。各行とも商品IDは空にし、商品コード・商品名(日)・商品名(英)に状態・属性の商品IDの値（括弧内に別の指定があるものはその値）、言語(ID)に日本語、商品公開ステータスに公開、支店の商品公開ステータスに公開、地域別販売制限に日本語サイト、そのほかの必須項目に任意の値を入れる（括弧内は行ごとの指定）: BASE-CORR-006、REC-QTY-5-006、REC-QTY-3-006、REC-OLD-006、REC-PROCESS-006。販売制限数は空にする。②在庫検索一覧で各商品の店舗=本店・在庫区分=EC-CUBEの行の商品名を押して在庫編集を開き、在庫変動区分に入庫の区分、在庫増減数に次の数（購入で減る分を足した数。REC-PROCESS-006はカートに20個入れるための数）、仕入単価に任意の値、承認通知先に承認するメンバーを入れて登録を押す: BASE-CORR-006=7、REC-QTY-5-006=10、REC-QTY-3-006=8、REC-OLD-006=25、REC-PROCESS-006=20。登録者とは別のメンバーが在庫編集承認一覧でその行を選び一括承認を押す。③フロントの新規会員登録で購入用の会員（メールアドレス・パスワードは試験者が決める）を登録し、管理画面の会員検索一覧からその会員の会員登録編集を開き、会員ステータスを本会員にして登録する。④フロントで購入用の会員がログインし、商品詳細ページでBASE-CORR-006を1個、REC-QTY-5-006を5個、REC-QTY-3-006を3個をカートに入れ、買い物かごからご注文方法指定・決済へ進めて注文を確定する。⑤管理画面の受注情報検索一覧でその注文を開き、受注情報編集の「変更後のステータス」で入金済みを選び「受注ステータスを変更」を押す。開いた受注情報編集のアドレス欄に表示される受注ID（「order/」と「/edit」の間の数字）を控える（〔受注ID-F0305-006A〕）。⑥フロントで購入用の会員がログインし、商品詳細ページでBASE-CORR-006を1個、REC-OLD-006を20個をカートに入れ、買い物かごからご注文方法指定・決済へ進めて注文を確定する。⑦管理画面の受注情報検索一覧でその注文を開き、受注情報編集の「変更後のステータス」で入金済みを選び「受注ステータスを変更」を押す。開いた受注情報編集のアドレス欄に表示される受注ID（「order/」と「/edit」の間の数字）を控える（〔受注ID-F0305-006B〕）。⑧フロントで購入用の会員が、商品詳細ページでBASE-CORR-006を1個、REC-PROCESS-006を20個カートに入れ、買い物かごから注文手続きの画面（ご注文方法指定）を開いたところで止め、注文を確定せずにログアウトする（処理中の注文ができる）。⑨在庫検索一覧でREC-PROCESS-006の店舗=本店・在庫区分=EC-CUBEの行から在庫編集を開き、在庫変動区分に廃棄の区分、在庫増減数に-15を入れて登録を押し、登録者とは別のメンバーが在庫編集承認一覧で承認する（本店在庫が5になる）。⑩〔受注ID-F0305-006A〕の受注日時=試験開始時刻の1日前、〔受注ID-F0305-006B〕の受注日時=試験開始時刻の31日前、購入用の会員の処理中の注文の受注日時=試験開始時刻の1日前は画面で指定できないためDBへ直接設定する。	ケース専用
+
+exec
+/bin/bash -lc "grep -n 'IT-0366' integration_test/viewpoint_canonical/viewpoints_canonical.tsv" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/F03-05_constraints.tsv integration_test/casegen/combination/factors/F03-06_constraints.tsv integration_test/casegen/combination/factors/F03-07_constraints.tsv integration_test/casegen/combination/factors/F03-08_constraints.tsv integration_test/casegen/combination/factors/F04-01_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	組	種別	根拠	理由
+P1	F11=取得できない	打ち切り	L0024	基準の商品IDが取得できないとおすすめ商品を表示せず、案内文言を出す。ほかの要因の値は結果に効かない
+P1	F02=本店&F05=非公開	打ち切り	L0034	本店の公開フラグが非公開の商品は出ない。ほかの要因の値は効かない
+P1	F02=支店&F05=非公開	打ち切り	L0034	支店公開フラグが非公開の商品は出ない。ほかの要因の値は効かない
+P1	F02=本店&F06=在庫なし	打ち切り	L0036	本店の在庫が無い商品は出ない。ほかの要因の値は効かない
+P1	F02=支店&F06=在庫なし	打ち切り	L0036	支店の在庫が無い商品は出ない。ほかの要因の値は効かない
+P1	F07=参照中の言語でない商品	打ち切り	L0035	参照中の言語でない商品は出ない。ほかの要因の値は効かない
+P1	F10=同一商品または同一カード	打ち切り	L0033	基準商品と同一商品・同一カードの商品は出ない。ほかの要因の値は効かない
+P1	F09=検索期間外	打ち切り	L0032	検索期間外の注文は同時購入の集計に含まれず、おすすめの候補にならない。ほかの要因の値は効かない
+P1	F03=ログイン中&F08=購入したことがある	打ち切り	L0037	ログイン中は購入済みの商品を除外するので出ない。ほかの要因の値は効かない
+処理ID	組	種別	根拠	理由
+P1	F05=保存値なし	打ち切り	L0069,L0076	閲覧履歴の保存値が無いと商品の絞り込みを行わず、履歴無しの表示だけを出す。ほかの要因の値は効かない
+P1	F01=支店&F02=立っていない	打ち切り	L0032	支店で見たとき、支店表示フラグが立っていない商品は出ない。ほかの要因の値は効かない
+P1	F03=表示中の言語を含まない	打ち切り	L0063	表示地域に表示中の言語を含まない商品は一覧から除外される。ほかの要因の値は効かない
+P1	F04=NMの規格がない、または価格が0	打ち切り	L0064	販売可能な規格が無い商品は一覧から除外される。ほかの要因の値は効かない
+処理ID	組	種別	根拠	理由
+P1	F01=規格を特定できない&F02=商品単位	正解未定	L0118,L0060	商品単位の依頼で対象を特定できないときの応答が設計書から決まらない
+P2	F05=入荷待ち商品一覧&F06=未依頼	正解未定	L0057,L0102	入荷待ち商品一覧で未依頼の商品が出るか、出るときのボタンが何かが設計書から決まらない
+P1	F01=未ログイン	打ち切り	L0119,L0058	未ログインだと戻り先を保持してログインモーダルを出し、依頼の登録・取消は行わない。依頼の単位は結果に効かない
+P1	F01=件数が上限以上	打ち切り	L0121,L0062	上限以上だと登録せず上限超過のエラーを出す。件数は単位によらず1件で数えるので依頼の単位は結果に効かない
+P2	F03=支店	打ち切り	L0051,L0065	支店ではボタン自体を表示しない。ほかの要因の値は効かない
+P2	F04=高額商品	打ち切り	L0050	高額商品ではボタン自体を表示しない。ほかの要因の値は効かない
+P3	F07=送らない	打ち切り	L0129	送らない設定だと状態・単位によらず1件も送信しない
+処理ID	組	種別	根拠	理由
+P1	F01=解除&F02=上限以上	作れない	L0103-L0105	上限の判定は登録だけで行い、解除は上限を見ずに削除か何もしないで決まる
+P2	F03=支店	打ち切り	L0052,L0085	支店ではお気に入りのボタン自体を表示しない。ほかの要因の値は効かない
+P3	F05=非公開	打ち切り	L0114	非公開の商品は一覧に出さない。ほかの要因の値は効かない
+P3	F06=あり&F07=なし	打ち切り	L0114	高額商品コードがあって在庫が無い商品は一覧に出さない。公開状態は効かない
+処理ID	組	種別	根拠	理由
+P1	F02=設定なし&F03=設定あり・個数が到達	正解未定	L0214,L0215,L0253	案内は金額設定があるときだけ出すと定める一方、送料無料は金額または個数で判定し「現在送料無料です。」は個数到達でも出すと定め、金額設定なしで個数だけ到達したときの案内の有無が決まらない
+P1	F01=支店&F02=設定あり・合計が到達	正解未定	L0045,L0157	支店の集計欄に送料無料の状態を出すかが書かれていない
+P1	F01=支店&F02=設定あり・合計が未達	正解未定	L0045,L0157	支店の集計欄に不足額の案内を出すかが書かれていない
+P1	F01=支店&F03=設定あり・個数が到達	正解未定	L0045,L0157	支店の集計欄に個数による送料無料の状態を出すかが書かれていない
+P1	F01=支店&F03=設定あり・個数が未達	正解未定	L0045,L0157	支店の集計欄に個数条件の案内を出すかが書かれていない
+P4	F08=POST /cart/add_bulk&F09=JSON本文	正解未定	L0225-L0229	表は add_bulk がフォーム値 cart_list を受けるとするだけで、JSON本文を送ったときの結果が書かれていない
+P4	F08=POST /cart/add_show&F09=JSON本文	正解未定	L0225-L0229	表は add_show がフォーム値だけを受けるとするだけで、JSON本文を送ったときの結果が書かれていない
+P3	F06=商品なし	打ち切り	L0239	カートが空だと空の案内だけを出し、購入手続きへのボタンも販売個数制限の判定も無い
+P3	F06=複数	打ち切り	L0218,L0260	購入グループが複数だとボタンを出さずエラーを表示し、購入手続きへ進めないので販売個数制限は判定されない
+
+ succeeded in 0ms:
+367:IT-0366	ITA-11	内部結合テスト	制御	条件網羅	データパターン / 要因の組合せ	1つの処理の結果を左右する要因（区分、状態、設定、関連データの値など。他の機能で設定する値を含む）が2つ以上ある場合、設計書の定めが互いに効き合う要因については値の組合せのすべてで、互いに効き合わない要因についてはどの2つの要因の値の組もいずれかの組合せで、受け渡し先の結果が、それぞれの要因について定められた結果を重ねたとおり設計どおりとなること。設計書から結果が決まらない組合せ、設計上作れない組合せ、および検索条件と削除条件の組合せは除く。	設計書から引用	条件に応じて、呼び出される先、返却データ、出力結果、状態遷移および副作用が設計どおりに切り替わること。検索・削除条件の一致種別と組合せで期待したレコードが取得・対象化されること、表示／非表示条件、通知の発生条件を含む。	単一メソッド内の分岐網羅、および分岐編集の結果そのものは単体テストが担う
+
+exec
+/bin/bash -lc 'cat integration_test/SCOPE.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+
+exec
+/bin/bash -lc "sed -n '34,75p' integration_test/casegen/combination/units/F03-08/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0033	遷移一覧（4件）（うち推定 4件：明示接続でなく最近傍幾何で補完）
+L0034	遷移元	遷移先	connector
+L0035	会員ログイン済みの場合	推定会員未ログインの場合	12（0303:お気に入り!Z37）
+L0036	会員未ログインの場合	推定会員ログイン済みの場合	15（0303:お気に入り!P37）
+L0037	商品詳細	推定現行にあるモーダルは非表示とし、直接ログインモーダルまたはお気に入り登録完了モーダルを表示する	17（0303:お気に入り!Z20）
+L0038	商品詳細	推定商品一覧	42（0303:お気に入り!B112）
+L0039	カスタマイズ説明
+L0040	・カスタマイズ要件
+L0041	・本店のみであること
+L0042	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0043	機能仕様処理概要（★はカスタマイズ項目）
+L0044	★下記の画面で表示する
+L0045	1 本店ECTOP（追加）
+L0046	2 商品一覧（追加）
+L0047	3 商品詳細
+L0048	4 お気に入り登録商品一覧
+L0049	・会員未ログインの場合に「お気に入りに追加する」または「♡」ボタンを押下すると、ログインモーダルを表示する
+L0050	・会員ログイン済みの場合に「お気に入りに追加する」または「♡」ボタンをを押下すると、お気に入り登録完了のモーダルを表示する
+L0051	・会員ログイン時にお気に入りに登録した商品は、マイページ＞お気に入り登録商品一覧に表示する
+L0052	★本店のみ表示し、支店で表示しない
+L0053	・最大100件(登録上限数)まで表示
+L0054	登録上限数を超えて登録仕様とした場合、エラーを表示する
+L0055	・ログイン押下後にログインが失敗すると、下記のエラーメッセージを表示したログイン画面に遷移する
+L0056	「ログインできませんでした。入力内容に誤りがないかご確認ください。」
+L0057	・お気に入りは商品ごと、言語ごとに登録可能
+L0058	識別ID	ラベル	書式・制限	必須	最大文字数
+L0059	または最大値	初期値	画面部品の説明
+L0060	お気に入り登録
+L0061	1-1	「お気に入りに追加する」または「♡」	ボタン	-	-	-	・押下時ログイン済みの場合はお気に入りを登録する
+L0062	・押下時未ログインの場合はログインモーダルを表示する
+L0063	1-2	OK(お気に入り登録確認)	ボタン	-	-	-	・会員未ログインの場合に押下すると、会員ログインのモーダルを表示
+L0064	・会員ログイン済みの場合に押下すると、お気に入りに登録する
+L0065	・リニューアルでは非表示とする
+L0066	1-3	キャンセル	ラベル	-	-	-	・表示しているお気に入り登録のモーダルを閉じる
+L0067	・リニューアルでは非表示とする
+L0068	1-4	ログインモーダルを閉じる	モーダルを閉じるボタン	-	-	-	・表示しているログインモーダルを閉じる
+L0069	1-5	Eメールアドレス	半角	○	320	-	・プレースホルダ: Eメールアドレス
+L0070	・入力せずにログインを押下すると入力必須のバリデーションメッセージを表示する
+L0071	1-6	パスワード	半角	○	320	-	・プレースホルダ: パスワード
+L0072	・入力せずにログインを押下すると入力必須のバリデーションメッセージを表示する
+L0073	1-7	ログイン	ボタン	-	-	-	・モーダル内の入力値をもとにログインを実行し、ログインが失敗すれば会員ログイン画面に遷移する
+L0074	1-8	新規会員登録	リンク	-	-	-	・押下すると、会員登録画面に遷移する
+
+codex
+設計書との照合では、追加ケースの期待結果に明確な不一致は見つかっていません。最後に、要求本文の指定で実際に送信できるかと、前巡で採用された修正が手順に反映されているかを確認します。
+exec
+/bin/bash -lc "sed -n '1,130p' integration_test/casegen/precond/README.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 結合テストケースの前提条件の書き直し
+
+## なぜ
+
+2026-09-28 時点の `cases/*_test_cases.tsv` は、上から順番に実行しても成立しないケースが多い。
+原因は3つある。
+
+1. **前提がケースに書かれていない。** 生成規則（`GEN_PROMPT_TEMPLATE.md` 縛り10）が
+   「シード投入は事前準備に書かない」としていたため、実行対象8,325件のうち7,866件の事前準備が `—`。
+   IT-A01-01-004 の前に「SMA-A01-002 を2個販売した取引」が要ることは、別ファイルのシード表を読まないと分からない
+2. **状態を書き換えるデータを複数ケースで共有している。** IT-A01-01-001 が SMA-A01-001 を2個販売すると、
+   002 の「10から8」は成立しない。012 が SMA-A01-I01 を7にすると、013 の「10から8」は成立しない
+3. **投入方法が実行できる粒度でない。** 「スマレジ試験環境に全キャンセル可能な取引を登録する」
+
+依頼者決定（2026-09-28）: **ケースごとに専用データを持たせる**。A01-01 で型を作ってから全機能へ広げる。
+
+## 規約
+
+対象は実行区分が「保留」以外のケース。保留ケースは1文字も変えない。
+
+| No. | 規約 |
+| --- | --- |
+| P1 | **各ケースは単独で成立する。** 他のケースを先に実行しても、後に実行しても、実行しなくても、事前準備どおりの状態から始められる |
+| P2 | シード表に `共有` 列を足す。`共有可` か `ケース専用` のどちらか。**どれか1ケースでも状態を変えるデータ**（在庫・受注・取引・ステータス・ログイン失敗回数など）は `ケース専用`。`共有可` にできるのは、どのケースも状態を変えないもの（参照だけのマスタ、ロックさせない管理者アカウント、環境設定）と、各ケースが開始時に必要な設定を自分で行う試験基盤（中継の保留／転送の切替など）だけ。`用途` にどちらなのかを書く |
+| P3 | `ケース専用` のシードを参照するケースはちょうど1件。シードIDは `<元のID>-<ケース番号3桁>` にする |
+| P4 | ケース専用データの識別子（DB投入するレコードのID・商品ID・CSVファイル名・会員メールなど）は、**全機能のケース専用シードの中で一意**にする。重なるときはケース番号を付けて改名する |
+| P5 | **事前準備は必須。** 使用シードすべてについて、どういう状態かを値付きで書き、シードIDを括弧で添える。シード投入の後で画面や外部システムを操作して作る状態（販売済みの取引など）は、その操作と、終わった後の値の確認まで書く |
+| P6 | 期待結果が「AからB」「Aのまま」と言うとき、**A は事前準備に書いた値**である |
+| P7 | **期待結果は変えない。** 変えてよいのは P4 の改名だけで、改名は `renames/<機能ID>.tsv` に宣言する。改名は、英数字の識別子どうし／シードで ID・名称・コード・番号・メール・ファイル名等の項目の値として定義した値／シードID／シードの自由文にある4文字以上のデータ名を「旧名-ケース番号」へ、の置換に限る（数量・状態語は改名しない）。改名で済まない変更は `oracle_changes/<機能ID>.tsv`（テストID/新期待結果/理由/承認）に載せ、承認が入るまでゲートを通さない。承認済みの類型は T1 だけ（下記）。手順で外部の値に呼び名を付け、その呼び名を期待結果で使う書き方もオラクル変更として扱う。要求ID・連鎖ID・観点ID・優先度・実行区分・出典は変えない |
+| P8 | 手順はテスト対象の操作だけにする。手順を変えてよいのは次の種別だけで、変えたら `step_changes/<機能ID>.tsv`（テストID/種別/新手順/理由）に宣言する。`準備移動`（準備操作を事前準備へ移す）／`改名`／`発番値控え`（実行中に発番される値を控える操作を足す）／`データ指示`（事前準備で作ったデータを指し示す）／`中継置換`（類型 T2）／`非同期完了待ち`（類型 T3）／`裁定訂正`（設計書の中の食い違いの裁定で直したもの。2026-10-16 依頼者決定） |
+| P9 | 投入方法は、何を使ってどう作るかを書く（管理画面のどの画面か／DB投入／スマレジ試験環境の管理画面で商品登録と在庫設定／CSVフィクスチャ）。「〜を登録する」だけで手段が無いものは不可 |
+| P10 | 事前準備に設計書に無い仕様を持ち込まない。書くのはテストデータの状態と作り方だけ。作り方は設計書に無ければ ee 実装（設定・テーブル・管理画面）から引いてよい。どちらにも無い作り方は `open_preconditions.tsv` に載せ、推測で埋めない |
+| P12 | 試験基盤が未整備、または作り方が設計書にも ee 実装にも無い前提は `open_preconditions.tsv` に載せる。**実行区分は変えない**（保留は「設計書に期待結果が無い」の意味で使っており、混ぜない）。ゲートは件数を参考として出す |
+| P13 | **手順で入力する値（登録する名称・コードなど）は改名しない。** 境界値や文字種の検査が壊れるため。同じ値のデータが既にあると成立しないときは、事前準備に「その値のデータが無い状態にする（あれば削除する）」と書く |
+| P11 | **事前準備は手順より前に完結する。** 手順の結果（発番されたID・返された値）を事前準備で参照しない。それらは手順の中で控える |
+
+## 承認済みの類型（依頼者 2026-09-28）
+
+| 類型 | 内容 | 記録先 |
+| --- | --- | --- |
+| T1 外部発番値 | 外部システムが発番する値（スマレジの在庫変動履歴ID・問い合わせIDなど）を基線が固定値で書いているときは、手順の中で発番値を控え、期待結果を「手順Nで控えた値」との照合に書き換える | `oracle_changes`（承認欄に「類型承認T1」） |
+| T3 非同期完了待ち | Webhook・バッチ・メッセージ処理など非同期で処理される操作の結果を確認する前に、非同期処理の対象のジョブ（待機中・実行中）が0件になるまで待つ手順を足す（画面名は書かない。下の「用語の置き換え」）。待つ上限時間を書く | `step_changes`（種別「非同期完了待ち」）。依頼者承認 2026-09-30 |
+| T2 中継置換 | 外部システムとの通信の観測・送信を、基線が実行できない書き方（「Webhookの応答をブラウザで確認」「スマレジAPIから送信」など）にしているときは、中継（通信を記録・保留・転送・模擬送信する試験基盤）で観測・送信する手順に変える。外部が実際に返す通知は保留して転送し、外部に起こさせられない結果（エラー等）だけを模擬送信する | `step_changes`（種別「中継置換」） |
+
+## 類型T4 画面発番値（依頼者決定 2026-10-09）
+
+テストデータは画面から入力して作る。画面が自動で振る番号（注文番号・受注ID・イベントIDなど）を基線が固定値で書いているときは、
+データを画面で登録したときに振られた番号を控え、事前準備・手順・期待結果ではその控えた番号（呼び名〔注文番号-M0526-012〕の形）を使う。
+書き直しは `../seed_screen/`（README）。期待結果・手順の変更は `oracle_changes/`（承認欄に「類型承認T4」）・`step_changes/`（種別に「発番値控え」）へ、`../seed_screen/apply.py` が機械で宣言する。
+控えた番号へ置き換えたケースの一覧は `screen_noted_cases.tsv`。検査は、これらのケースについて改名先（消えた固定の番号）の検査を外し、〔…〕の呼び名を識別子として数えない。
+
+## テストできない・作り方が未確定のケースの除外（依頼者決定 2026-10-14）
+
+テストできないケースと、作り方が未確定のケースを、ケースの正本（`../cases/`・`../all_test_cases.tsv`）から外した。
+外したのは、検査 G9 が「未整備・未確定の前提を使うケース」と数えていた 1,892件（使用シードの投入方法に「未確定」「未整備」がある、または `open_preconditions.tsv` の影響ケースに載っている）。
+内訳は、作り方が未確定 1,744、試験環境の決定待ち 113、実装上その状態を作れない 35。残りは 10,556件・345機能（20機能は全ケースが外れた）。
+
+- 行は消さず `../excluded_open_cases.tsv`（除外理由・未確定の内容つき。元の11列は「元_」付き）へ移した。外したケースだけが使っていたシード 2,458件は `../excluded_open_seeds.tsv`。
+- 道具は `../exclude_open.py`（何度流しても同じ）。**各 `merge_into_cases.py` と `seed_screen/apply.py` は外したケースを `cases/` へ戻すので、そのあとに必ず流す。** 順序は merge → `seed_screen/apply.py` → `datapattern/conflicts/apply_rulings.py`（最後に `product_csv/apply.py` と `runnable/apply.py` も当たる）→ `exclude_open.py` → `exclude_scope.py` → `build_all_test_cases.py`。
+- 作り方が決まったら、シードの投入方法（と `open_preconditions.tsv`）を直してから同じ順に流し直すと戻る。
+- 検査 G6 は、基線・追加分からこの除外分を差し引いて照合する。保留（設計書に正解が無い）の除外 `excluded_hold_cases.tsv` とは別の表で、意味を混ぜていない。
+
+### 影響ケースの漏れ（2026-10-16）
+
+`open_preconditions.tsv` の影響ケースは、行を足した時点のケースで書いた固定の一覧である。そのため、あとから足したケースが同じ未確定の前提を使っていても除外に掛からなかった。全数を洗い直し、63件を影響ケースに足して外した（11,777件 → 11,714件・341機能）。
+- 同じシードを使うのに一覧に無かったもの: IT-A05-04-047〜060（スマレジ受信。2026-10-09 の被覆監査で追加。取引情報取得APIの試験環境と Webhook の認証情報の2行）、IT-B02-02-010〜012（バッチの実行環境）、IT-M03-09-058・097（スマレジの試験用受信サーバー）。
+- 連携ケース（`../link/`）が、基線では未確定のシードを「-L-」付きの別名で作り直していたもの: S-B02-02-L-ENV・S-B05-02-L-CLOCK・S-B05-09-L-API/CLOCK/CONFIG・S-B06-01-L-ENV・S-B06-02-L-EXEC・S-B08-03-L-ENV・S-B08-06-L-API-CONTROL・S-B13-01-L-API/EXEC/MAIL。基線の行と同じ文面で、対象をL版にした行を足した（`未確定: …（… の未確定と同じ）`）。B06-01 の別名を使っていたデータパターンのケースも含む。
+- 時計を固定する前提: IT-M04-17-001（業務日を2026/09/29に固定。時計の固定は S-B05-09-CLOCK などと同じく作り方が無い）。
+- この結果、B02-02・B05-02・B05-09・B06-01・B08-03・B13-01 はケースが0件になった（基線のケースは前から外れており、残っていたのは別名のシードを使う連携ケースだけだった）。
+- 同じ日に `../chain_gap/` のレビューで、S-F06-02-L-ENV（IT-F06-02-024・025）も見つかり、同じ形の行を足して外した。基線の行の対象は S-F06-02-API-OK で、名前の役割の語（API と ENV）が違うため道具では拾えなかった。このシードは、開始時にスマレジAPI試験環境のユーザーDBで会員が0件であることを確かめる作り方で、024 は発番されたスマレジIDを控える。外部の試験環境を使うシードは、名前だけでなく中身でも基線の行と見比べる。
+- 候補を出す道具は `scan_open_leaks.py`。ケースを合流したあと、`exclude_open.py` の前に流す。候補を出すだけで判定はしない。残っている候補 159件は、読んだうえで漏れではないと判定したもの。
+  - 共有の定義だけを使い、未確定の項目に触れないもの: S-M05-03-DEFS、S-F06-05-BASIC、IT-A05-04-002（GETを送るだけで、認証も取引の取得も要らない）。
+  - 名前の役割の語が同じだけで、作り方が決まっているもの: ポイントの設定、ユニサーチの接続先、ee の開発用の正常応答、スマレジの試験環境への接続。
+  - S-M03-10-SMAREGI-ENV: ee の商品APIのクライアントは、模擬応答のときも呼び出しを記録する（SmaregiPlatformApiCallRecorder）。シードの書き方は実装と合っている。
+
+## 試験環境で用意できる前提の解消（依頼者決定 2026-10-19）
+
+依頼者決定「バッチの実行、スマレジなど外部の試験環境、メールの受け取りは環境準備できる」（中継・模擬応答、時刻の固定、障害を起こす手段は用意しない）。作り方が未確定で外したケースを止めていた項目（未確定のシード 944・未確定の前提の行 879）を1件ずつ判定し、この3つだけで決まるものは作り方を書いて解消した。止めていた項目がすべて解消したケース 183件が一覧へ戻った（11,713件 → 11,896件・346機能）。
+解消した前提の行 81 は `open_preconditions.tsv` から `resolved_preconditions.tsv`（解消の書き方・区分・根拠・決定つき）へ移した。シードは投入方法を書き直した（外した表 `../excluded_open_seeds.tsv` を直し、`exclude_open.py` が直った文で戻す）。
+同じ日の依頼者決定「おすすめで進めて」で、人が補って実行できるもの（決まった番号の読み替え、必須のチェック、確認モーダル、割引率、在庫の承認）も書き足した。道具・判定・レビューは `../runnable/README.md`。`../datapattern/conflicts/apply_rulings.py` が最後に `../runnable/apply.py` を呼ぶ。
+
+## E2E で作成を保留した入力ファイルを使うケースの除外（依頼者決定 2026-10-16）
+
+依頼者決定「テスト保留のケースがあれば除外」。ケース一覧に実行区分「保留」のケースは無かった（2026-10-01 にすべて外してある）。保留に当たっていたのは、E2E の入力ファイルの棚卸し（`../../../e2e/fixtures/named-file-references.tsv`。M03・M04 だけ棚卸し済み）で作成判断を「保留」「正本矛盾」とした33ファイルで、シードの記述だけでは中身（文字コード、見出し行の値、画像の中身など）が一つに決まらないか、シードの記述が食い違っていた（M03-30 の empty.tsv）。これを使うケース29件を、作り方が未確定の前提として `open_preconditions.tsv` に載せ（対象「入力ファイル <ファイル名>」の33行）、`exclude_open.py` で外した。ケースは 11,679件から 11,650件。ファイルの中身をシードに書いて棚卸しの判断が変わったら、その行を消して流し直すと戻る。M03・M04 以外の機能の入力ファイル（棚卸しで未判定の 1,729件）は見ていない。
+同じ日の依頼者決定「画像は任意の有効な画像でよいとして戻す」で、画像の中身が未指定だった9ファイル（M04-02-050・M04-03-005・M04-05-011・M04-31-150 の4ケース）の行を外し、4ケースを戻した（11,654件）。シード（`../seed_screen/out/` の該当行の投入方法）に「画像ファイルの中身は任意の有効な画像でよい。同じケースで使う複数の画像は、互いに見分けられる別の画像にする」と書いた。E2E の入力ファイル（`e2e/fixtures/`）はまだ作っていない。
+外したケースを戻すときは、流れを2回流す。1回目は `exclude_open.py` が除外表の古い文面のままケースとシードを戻すので、2回目の `seed_screen/apply.py`・`apply_rulings.py` で書き直しが当たる。
+
+## フェーズ2見送り・実装しない機能の除外（依頼者決定 2026-10-16）
+
+依頼者決定「フェーズ2見送り、機能実装しない機能についてはケースから除外」。対象は `../scope_out.tsv`（根拠つき）で、フェーズ2見送り13機能（A06-14・B01-02・B01-03・F02-05・M03-43・M03-44・M04-06・M04-07・M06-13・M08-11・M08-15・M08-16・M08-17）、実装しない4機能（M03-34・M03-36 は 2026-10-06 決定、M04-27・B13-02 は Excel の廃止の記述）と、M03-43 の機能を確かめていた IT-M03-30-038。
+ケース一覧の6件に加え、作り方が未確定で外していた65件、保留で外していた49件も、決まっても戻さないので `../excluded_scope_cases.tsv` へ移した（計120件。元の表と元の除外理由を残す）。外したケースだけが使っていたシード89件は `../excluded_scope_seeds.tsv`。道具は `../exclude_scope.py`（何度流しても同じ。`exclude_open.py` の後に流す）。ケースは 11,685件・349機能から 11,679件・346機能になった（F02-05・M03-44・M06-13 はケースが0件）。
+保留から移した49件は、設計者に聞く必要が無くなった（`../hold_review/questions.tsv` に論点があるものも含む）。機能の一部だけがフェーズ2のもの（ナビゲーションの通知、会員検索の顧客分析タグなど）は機能ごとは外していない。そのフェーズ2の部分を確かめるケースは IT-M03-30-038 のほかに無かった。
+検査 G6 は、基線・追加分からこの表の分も差し引いて照合する。
+
+## 既存ケースと設計書の食い違いの裁定（依頼者決定 2026-10-16）
+
+設計書の中で記述が食い違うときの優先順位（Excel由来＞埋め込みの表示メッセージ節＞埋め込みの現行仕様節、同じ出所では改訂後）を決め、既存ケース52件の報告を裁定した。直したケースの期待結果・手順・出典は `oracle_changes/`・`step_changes/`（種別「裁定訂正」）・`source_changes/` に、承認欄「2026-10-16 依頼者裁定」で宣言してある。規則で決まらず共通部分でも書けない10件は `../excluded_hold_cases.tsv` へ移した（論点ID が QD- の行。決める人＝設計者）。道具は `../datapattern/conflicts/apply_rulings.py`（何度流しても同じ。`seed_screen/apply.py` の後、`exclude_open.py` の前に流す）。説明は `../datapattern/conflicts/README.md`。
+
+## 保留ケースの除外（依頼者決定 2026-10-01）
+
+実行区分が「保留」のケース（1,014件）はテストケースから外した。設計書にも現行ソースにも期待結果（正解）が無く、テストできないため。
+行は削除せず `../excluded_hold_cases.tsv` へ移した（論点ID・決める人つき。元の11列は「元_」付きで保持）。保留ケースだけが使っていたシードは `../excluded_hold_seeds.tsv`。
+設計者の回答（`../hold_review/questions.tsv`）やテスト側の決定で正解が決まったら、そのケースを作り直して戻す。ゲート G6 は、基線のテストIDからこの除外分を差し引いて照合し、保留ケースが残っていれば落とす。
+
+## 実行の前提（依頼者決定 2026-09-30）
+
+- **専用DBで流す。** 結合テストは機能（またはモジュール）ごとに、まっさらな専用DBへシードを投入して流す。検索・一覧・集計で「このN件だけ」を期待するケースは、開始時に同じ条件に当たる他のデータを削除して隔離しており、共有の試験環境では他機能のデータを消しうる
+- **1件しかないデータは順番に実行する。** 基本設定のように1件しかない設定や、期待結果が固定IDを名指ししていて分けられないデータは `共有可` とし、使う各ケースが開始時に値を設定し直す。上から順に実行すれば成立するが、同じデータを使うケースを同時には実行しない。該当ケースは `sequential_only.tsv`
+
+## 機械検査 `gate_precond.py`
+
+| No. | 検査 | 対応する規約 |
+| --- | --- | --- |
+| G1 | 保留以外で事前準備が空・`—` | P5 |
+| G2 | 使用シードのIDが事前準備に現れない | P5 |
+| G3 | 期待結果の「AからB」「Aのまま」の A が事前準備に無い | P6 |
+| G4 | `共有` 列が無い・値が不正／ケース専用シードの参照が1件でない／ケース専用シードIDの末尾がケース番号でない／どのケースも使わないシード／保留以外のケースがケース専用シードを1件も使わない（状態を変えない読み取りだけのケースは `readonly_cases/<機能ID>.tsv` にテストID/理由で宣言） | P1 P2 P3 |
+| G5 | 同じ機能のケース専用シードどうしで自分のレコードID（「ID=20」「ID 20」）が重なる。ケース専用シードの識別子（「〜」の範囲は展開する）が、他のケースの事前準備・手順・期待結果、または他のケース専用シード（全機能）に現れる | P1 P4 |
+| G6 | 改名が識別子どうしでない。期待結果が「基線に改名を当てたもの」と一致せず、承認済みの oracle_changes にも無い。保留ケースが変わった。テストIDの集合・他の固定列が変わった（出典は `source_changes/`、実行区分の誤記は `kind_changes.tsv` に宣言したものを除く） | P7 |
+| G8 | 事前準備が「手順N」「返した値」「発番した」など後の結果を参照している | P11 |
+| G7 | 手順が「基線に改名を当てたもの」と違うのに `step_changes` に宣言が無い／種別が P8 の5種以外 | P8 |
+| G9 | 投入方法が「未確定」「未整備」のシードを使う非保留ケースが `open_preconditions.tsv` に無い。該当件数は参考として出す | P12 |
+
+`baseline/` は書き直し前（HEAD 98709b43）のスナップショット。G6 の基準なので書き換えない。
+
+実行区分の誤記を直すときは、基線を書き換えずに `kind_changes.tsv`（テストID／旧実行区分／新実行区分／理由）へ宣言する。G6 は、基線の値が旧実行区分と一致し、今の値が新実行区分と一致するものだけ認める（2026-10-19、IT-M03-45-024 の「ブラザ+DB確認」→「ブラウザ+DB確認」）。
+
+書き直しの後で足したケースは `added_cases.tsv`（テストID／追加日／由来）に載せる。G6 は「基線から保留除外分を引いた集合」に
+この追加分を足したものと、現在のテストIDの集合を照合する。基線が無い機能（後から新設したもの）は、全ケースが追加分になる。
+2026-10-06 に機能間データ連携のケース142件を足した（`../link/merge_into_cases.py`。旧テストIDとの対応は `../link/merged_map.tsv`）。
+
+exec
+/bin/bash -lc "grep -n -E '"'^IT-F03-06-(005|009|010|021)'"\\t' integration_test/casegen/cases/F03-06_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ exited 1 in 0ms:
+exec
+/bin/bash -lc "grep -n -E '"'^IT-F03-06-(005|009|010|021)'"' integration_test/casegen/cases/F03-06_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+5:IT-F03-06-005	REQ-0303-sheet-8-R010		ITA-05,ITA-11	P1	ブラウザのみ	S-F03-06-ENV,S-F03-06-STORE-FLAG-005	① 開始時にTC大阪支店をフロント公開中・営業中に設定し、日本語版を表示可能にする（S-F03-06-ENV）／② REC-FLAG-ON-005を商品ID=〔商品ID-F0306-005A〕（登録時に振られた商品IDを控えてある）・支店表示フラグあり、REC-FLAG-OFF-005を商品ID=〔商品ID-F0306-005B〕（登録時に振られた商品IDを控えてある）・支店表示フラグなしとして登録する。両商品は公開・表示ロケールja・NM販売価格100円とし、専用ブラウザープロファイルの閲覧履歴を〔商品ID-F0306-005A〕,〔商品ID-F0306-005B〕に設定する（S-F03-06-STORE-FLAG-005）	1. TC大阪支店の商品一覧画面を開く／2. 最近チェックした商品欄を確認する	支店表示フラグが立っているREC-FLAG-ON-005が表示され、支店表示フラグが立っていないREC-FLAG-OFF-005が表示されないこと	0303 最近チェックした商品 / 機能仕様 処理概要
+9:IT-F03-06-009	REQ-0303-sheet-8-R035		ITA-05,ITA-11	P1	ブラウザのみ	S-F03-06-ENV,S-F03-06-REGION-009	① 開始時に本店をフロント公開中・営業中に設定し、日本語版と英語版を表示可能にする。両言語版で閲覧履歴Cookieを共有できる状態にする（S-F03-06-ENV）／② REGION-JA-009を商品ID=〔商品ID-F0306-009A〕（登録時に振られた商品IDを控えてある）・表示ロケールjaのみ、REGION-EN-009を商品ID=〔商品ID-F0306-009B〕（登録時に振られた商品IDを控えてある）・表示ロケールenのみとして登録する。両商品は公開・支店表示フラグあり・NM販売価格100円とし、専用ブラウザープロファイルの閲覧履歴を〔商品ID-F0306-009A〕,〔商品ID-F0306-009B〕に設定する（S-F03-06-REGION-009）	1. 日本語版の商品一覧画面を開いて最近チェックした商品欄を確認する／2. 英語版の商品一覧画面を開いて最近チェックした商品欄を確認する	日本語版ではREGION-JA-009だけが表示され、英語版ではREGION-EN-009だけが表示されること	0303 最近チェックした商品 / 現行仕様 業務ロジック 一覧に並べる商品
+10:IT-F03-06-010	REQ-0303-sheet-8-R036		ITA-05,ITA-11	P1	ブラウザのみ	S-F03-06-ENV,S-F03-06-ELIGIBILITY-010	① 開始時に本店をフロント公開中・営業中に設定し、日本語版を表示可能にする（S-F03-06-ENV）／② ELIGIBLE-NM-010を商品ID=〔商品ID-F0306-010A〕（登録時に振られた商品IDを控えてある）・NM販売価格100円、NM-PRICE-ZERO-010を商品ID=〔商品ID-F0306-010B〕（登録時に振られた商品IDを控えてある）・NM販売価格0円、EX-ONLY-010を商品ID=〔商品ID-F0306-010C〕（登録時に振られた商品IDを控えてある）・EX販売価格100円・NM規格なしとして登録する。全商品は公開・支店表示フラグあり・表示ロケールjaとし、専用ブラウザープロファイルの閲覧履歴を〔商品ID-F0306-010A〕,〔商品ID-F0306-010B〕,〔商品ID-F0306-010C〕に設定する（S-F03-06-ELIGIBILITY-010）	1. 本店の商品一覧画面を開く／2. 最近チェックした商品欄を確認する	NMの規格を持ち、その販売価格が100円のELIGIBLE-NM-010だけが表示され、NMの販売価格が0円のNM-PRICE-ZERO-010およびNMの規格を持たないEX-ONLY-010が表示されないこと	0303 最近チェックした商品 / 現行仕様 業務ロジック 一覧に並べる商品
+20:IT-F03-06-021	REQ-0303-sheet-8-R010		ITA-11	P1	ブラウザのみ	S-F03-06-ENV,S-F03-06-HQ-NOFLAG-021	① 開始時に本店をフロント公開中・営業中に設定し、日本語版を表示可能にする（S-F03-06-ENV）／② F0306-021-NOFLAGを商品ID=〔商品ID-F0306-021〕（登録時に振られた商品IDを控えてある）・公開・支店表示フラグなし・表示ロケールja・NM販売価格100円として登録し、専用ブラウザープロファイルの閲覧履歴を〔商品ID-F0306-021〕に設定する（S-F03-06-HQ-NOFLAG-021）	1. 本店の商品一覧画面を開く／2. 最近チェックした商品欄を確認する	本店の最近チェックした商品欄に、支店表示フラグが立っていないF0306-021-NOFLAGが表示されること	0303 最近チェックした商品 / 機能仕様 処理概要
+
+codex
+### 指摘（F04-01 / IT-F04-01-069）
+- 主張: 手順2は「JSON本文 `{product_class_id: 商品Aの商品規格ID}` のみを送信する」としている。
+- 実際: 設計書 L0225 は、`POST /cart/add` が「JSON本文の product_class_id・quantity」を受け取ると定める。記載された本文はキーが引用符で囲まれておらず、値も数値ではないため、JSONとして送信できない。
+- 判定: 成立しない前提・手順
+- 修正案: 手順2を、有効なJSON形式で、登録時に控えた商品Aの商品規格IDを数値として送る記述に直す。
+tokens used
+197,126
+### 指摘（F04-01 / IT-F04-01-069）
+- 主張: 手順2は「JSON本文 `{product_class_id: 商品Aの商品規格ID}` のみを送信する」としている。
+- 実際: 設計書 L0225 は、`POST /cart/add` が「JSON本文の product_class_id・quantity」を受け取ると定める。記載された本文はキーが引用符で囲まれておらず、値も数値ではないため、JSONとして送信できない。
+- 判定: 成立しない前提・手順
+- 修正案: 手順2を、有効なJSON形式で、登録時に控えた商品Aの商品規格IDを数値として送る記述に直す。

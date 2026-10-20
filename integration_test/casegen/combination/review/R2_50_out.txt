@@ -1,0 +1,1967 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15891-7cb7-7ff1-8e66-8c41a5f6cb25
+--------
+user
+# 敵対レビュー依頼：要因の組合せの結合テストケース（2巡目・50）
+
+あなたはレビュアーである。著者とは別人として、下の追加ケースを根拠と突き合わせ、誤りを指摘せよ。ファイルは変更しない。スクリプトやコマンドは読むだけで実行しない（grep・cat 等の閲覧は可。rg は使わない）。出力は日本語。
+レビューは事実確認に限る。設計書に無い仕様を足す提案はしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すと決めた。他の機能の設定値も要因に入れる。
+機能ごとに要因表（`combination/factors/`）を作り codex が反証した。そこから機械が試す値の組（`combination/combos/<機能ID>.tsv`）を並べ、著者が組1行にケース1件を書いた。
+組1行ごとの扱い（ケース化／既存ケースで確認済み／ケースにしない）は dispositions に書いてある。
+
+## 対象（/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/ 配下）
+
+| 機能ID | 組の範囲 | 追加ケース・シード・仕分け |
+| --- | --- | --- |
+| M13-02 | 全部 | `combination/cases/M13-02_cb_test_cases.tsv`・`M13-02_cb_seed_data.tsv`・`M13-02_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M13-03 | 全部 | `combination/cases/M13-03_cb_test_cases.tsv`・`M13-03_cb_seed_data.tsv`・`M13-03_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M13-04 | 全部 | `combination/cases/M13-04_cb_test_cases.tsv`・`M13-04_cb_seed_data.tsv`・`M13-04_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M13-08 | 全部 | `combination/cases/M13-08_cb_test_cases.tsv`・`M13-08_cb_seed_data.tsv`・`M13-08_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M13-10 | 全部 | `combination/cases/M13-10_cb_test_cases.tsv`・`M13-10_cb_seed_data.tsv`・`M13-10_cb_dispositions.tsv`（組の範囲の行だけ） |
+
+機能ごとに次を読む。
+- 追加ケース（13列。末尾の項目IDは埋めた組ID）、追加シード、仕分け（上の表のファイル）
+- 試す値の組 `combination/combos/<機能ID>.tsv`（組ID／処理ID／組（要因ID=値）／読める形／埋める組）
+- 要因表 `combination/factors/<機能ID>_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`・`_constraints.tsv`
+- 設計書 `combination/units/<機能ID>/design.txt`（行頭 L0001 が行番号。`#####` の行はシートの境目）。要因の根拠が他の機能のときは `combination/units/<その機能ID>/design.txt`、共通シートは `combination/units/_common/`
+- 既存のケースとシード `cases/<機能ID>_test_cases.tsv`・`<機能ID>_seed_data.tsv`（追加ケースが使う共有シードはここにある）
+
+規約は `combination/GEN_PROMPT.md`、裁定は `sheetmap/FIX_R1_BRIEF.md`（A〜L、C'）・`FIX_R2_BRIEF.md`（M〜O）、範囲は `integration_test/SCOPE.md`、前提条件は `precond/README.md`、判定単位は `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366。
+設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。Excel が触れていない条件を埋め込みが足しているだけのときは両方を当てる。
+期待結果の根拠は設計書に限る。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備と手順の実行可能性を確かめるためにだけ読む。実装と設計書が違うことは指摘しない。
+`combination/review/` の `*_out.txt`・`combination/prompts/` と、上の表に無いケースのファイルは読まない。
+
+## 前の巡
+
+1巡目の指摘が `combination/review/R1_*_findings.md`、直し担当の処置が `combination/review/<機能ID>_R1_dispositions.tsv`（部のある機能は `_R1_dispositions.p1.tsv` など）にある。指摘は見出しの機能IDで探す。却下の理由が設計書の原文に照らして妥当なら、同じ指摘を繰り返さない。採用したはずの指摘が実際に直っているか、直した結果に新しい誤りが入っていないかを見て、新しい事実の指摘だけを挙げる。
+
+## 意図的であり指摘対象外のもの
+
+- 1ケースの期待結果に、要因表 `processes.tsv` の「確かめる所」に挙がっている所どうし（ZIP と DB、画面と DB など）の結果が1文でまとめてあること（組1行にケース1件のため。2026-10-20 決定）。「確かめる所」に無い所の結果が混じっているときは指摘してよい。
+- 連鎖IDが空欄、要求IDが空欄であること。既存ケースを変えていないこと。判定IDが IT-0366 であること。
+- 組の値の選び方（どの組を並べたか）。要因表の「正解未定」「作れない」の組がケースに無いこと（要因表は反証済み。ただし、ケースを書いてみて組が作れない・結果が決まらないと分かったものは指摘してよい）。
+- 単体テスト・e2e へ送られるもの（画面上だけの入力制限、表示文言の逐語照合、見た目、計算式そのもの）のケースが無いこと。
+- シードの投入方法が「未確定: …」と書かれていること。
+- 商品がグッズ商品CSV登録で作られ、在庫が在庫変更CSV登録と承認で入ること（2026-10-19 の決まり）。
+
+## 重点観点
+
+1. **組の値がケースにあるか**: 事前準備・手順に、組のすべての要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）が値で書かれ、その値で処理を動かしているか。組と違う値で操作していないか。
+2. **期待結果が組の全要因の結果を重ねているか**: 確かめる所で、組の各要因の値について設計書が定める結果（金額・選択肢・更新先・更新内容）がまとめて確かめられているか。設計書の記述と事前準備の値だけから一意に出るか。設計書に無い値・ふるまいを期待していないか。金額・数量の計算が合っているか。
+3. 事前準備の状態から手順を実行して期待結果に到達できるか。単独で成立するか。「このN件だけ」を期待するのに、同じ条件に当たる他のデータを除く記述があるか。共有シードの設定と組の設定値が食い違っていないか。
+4. 1ケースに、確かめる所の違う期待結果が混じっていないか。既存ケースとの重複、物理名の混入。
+5. 「ケースにしない」とした組のうち、設計書の記述から期待結果が一意に決まるもの。「既存ケースで確認済み」としたもののうち、挙げたケースが実際にはその組の値で確かめていないもの。
+
+## 出力形式
+
+指摘が無ければ `NONE` の1語。あれば1件ごとに次の形で、テストIDの順に書く。確信の持てないものは挙げない。見出しの括弧の先頭は必ず機能ID。
+
+```
+### 指摘（<機能ID> / <テストID または 組ID>）
+- 主張: ケースまたは仕分けの記述（要点の引用）
+- 実際: 設計書の事実（design.txt の行番号。原文を引く）
+- 判定: 組の値が無い／期待結果の誤り／設計書に無い期待／成立しない前提・手順／要因の結果が欠けている／複数の期待結果／重複／ケースにできる／確認済みでない／組が作れない
+- 修正案: 結論を先に置いた1〜2文
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T09:08:13.595005Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象の追加ケース、要因表、設計書、前巡の指摘と処置を照合します。閲覧用コマンドだけを使い、ファイルは変更しません。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/GEN_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# {FID}（{FNAME}）の要因の組合せのケース作成（著者への依頼）
+
+リポジトリ: `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+あなたは機能ID **{FID}** の追加ケースを書く著者である。レビューは別の担当が行う。git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すと決めた。他の機能の設定値も要因に入れる。
+{FID} の要因表（別の担当が作り、codex が反証した）から、機械が試す値の組を並べた。そのうち **{RANGE} の {N}行** があなたの受け持ち（{PARTNOTE}）。1行ごとにケースを書く。**既存のケースは1文字も変えない。**
+
+## 読むもの
+
+1. 試す値の組: `integration_test/casegen/combination/combos/{FID}.tsv`（組ID／処理ID／組（要因ID=値）／組（読める形）／埋める組）。1行が1回の処理で同時に使う値の組。受け持ちは {RANGE}。
+2. 要因表: `integration_test/casegen/combination/factors/{FID}_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`（効き合う理由）・`_constraints.tsv`（作れない組・正解未定の組）
+3. 設計書: `integration_test/casegen/combination/units/{FID}/design.txt`（行頭の L0001 とタブは行番号で、設計書の内容ではない）。要因の根拠の行だけでなく、その節全体を読む。他の機能の設定値の要因は `units/<機能ID>/design.txt`
+4. 既存のケースとシード: `integration_test/casegen/cases/{FID}_test_cases.tsv`（11列）・`{FID}_seed_data.tsv`。**書き方・画面への入り方・シードの作り方はこれに合わせる**。同じ処理を別の値で通している既存ケースがあれば、それを下敷きにして値だけ変えるのが基本
+5. 確かめる所が別の機能の画面のときは、その機能のケース `integration_test/casegen/cases/<機能ID>_test_cases.tsv` で画面への入り方と表示の書き方を見る
+6. `integration_test/SCOPE.md`、`integration_test/casegen/sheetmap/FIX_R1_BRIEF.md` の裁定 A〜L・C'、`FIX_R2_BRIEF.md` の決まり M〜O（文中の `sheetmap/` は読み替える）、`integration_test/casegen/precond/README.md`（前提条件 P1〜P13・類型 T1〜T4）、`integration_test/casegen/STEP_PATTERNS.md`（手順の型）
+7. `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366（判定単位の文と除外を読む）
+
+## 1行（組ID）ごとに、次のどれかに決める
+
+| 扱い | いつ | 書くもの |
+| --- | --- | --- |
+| ケース化 | その値の組で処理を動かしたときの結果が、設計書の記述から一意に決まる | ケース1件（1ケース1期待結果）。組のすべての要因の値を事前準備・手順に値で書く |
+| 既存ケースで確認済み | 既存ケースの事前準備・手順に組のすべての値が書かれ、確かめる所で結果を見ている | そのテストIDと、どの手順・期待結果が当たるか |
+| ケースにしない | その値の組が実は作れない（制約の抜け）／結果が設計書から一意に決まらない／設計書の記述どうしが食い違う／結合テストの範囲でない | 理由（設計書の原文を引く）。作れない・決まらない組は、要因表の制約に足すべき組として理由に `要因ID=値&要因ID=値` を書く |
+
+安易に「ケースにしない」としない。要因表は codex が反証済み。それでも外すなら設計書の原文で理由を示す。
+
+## 期待結果の決め方
+
+- 組の**すべての要因**について、その値で設計書が定める結果を、確かめる所（processes.tsv）でまとめて確かめる。1つの確かめる所で見える結果を1文にまとめてよい（例: 「受注情報編集画面で、お支払方法が代金引換、配送方法がゆうパケット、送料が200円、手数料が330円、ポイント使用が0、合計が1,530円で表示されること」）。確かめる所が違う結果は入れない（1ケース1期待結果）。
+- 金額・数量は、事前準備に書いた値から設計書の計算で一意に出す。計算の途中を期待結果・出典に書かない（期待結果には結果の値だけ）。
+- 期待結果は設計書（design.txt。同じ冊子の別シート、要因の根拠にある他の機能の設計書も可）と事前準備の値だけから出す。実装コード・現行ソースから期待値を足さない。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備・シードの作り方と手順の実行可能性を確かめるためにだけ読んでよい（スクリプトやコマンドは実行しない）。
+- 設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採り、出典に両方を書く。
+- 要因表の constraints.tsv に「正解未定」とある値の組は機械が行に入れていない。それ以外の組で結果が決まらないと分かったら「ケースにしない」にする（推測で決めない）。
+- **打ち切りの行**: 組（読める形）に「（効かない）」とある要因は、その行では結果に効かない（constraints.tsv の種別「打ち切り」。処理が途中で打ち切られる。依頼者決定 2026-10-20）。その要因の値は事前準備に書かなくてよい（共有可シードのままでよい）。期待結果は打ち切りの結果（出ない・エラーで元の画面へ戻る・何も変わらない など）を、設計書の定めどおりに確かめる。打ち切りのあと値が残っていないか（更新されていないこと）を見るのはよい。
+
+## ケースの書き方
+
+- テストIDは `IT-{FID}-{START}` からの連番（既存と、外した番号の続き）。組IDの順に書く。
+- 判定IDは `IT-0366`、観点IDは `ITA-11`。項目ID列に組ID（1つ）。
+- 期待結果は合否が一意に決まる具体値で書き、「〜こと」で終える。
+- **組の値がケースから読めること**: 事前準備・手順に、組の全要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）を値で書く。要因名や組の値を並べただけの行（「このケースで試す値の組: …」など）を事前準備・手順に足さない。実際のデータで書いていれば、verify の「注意」（組の値が字句で無い）は残ってよい。
+- 結果は、データを作った所とは別のコンポーネントで確かめる（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。
+- 手順は「1. …／2. …」の形で、画面名・項目名・ボタン名・入力値を特定する。名前は設計書の表記を使う。画面への入り方は既存ケースに合わせる。
+- 物理名（テーブル名・カラム名・ルート名・クラス名・翻訳キー）を書かない。設計書に書かれている項目名はそのまま使ってよい。
+- 禁止語: 失敗させる／該当する操作／同上／いくつか／別の画面／要確認／TBD／設計どおり／設計書どおり／仕様どおり／正しいこと／正しく。
+- 実行区分は `ブラウザのみ` か `ブラウザ+DB確認`（外から見えない副作用だけDBを見る）。優先度は、業務データの保存・更新・出力値の一致を P1、表示・選択肢を P2。
+- 要求ID列: `integration_test/casegen/requirements_all.tsv` に当たる行（書番・シート名・要求文が合う行）が見つかればその要求IDを書く。見つからなければ空欄でよい。代用しない。
+- 連鎖IDは空欄。出典は既存ケースと同じ形（`<書番> <シート名> / <区分 と 見出し>`。別シート・別の冊子は「｜」でつなぐ）。
+
+## 前提条件（いまの決まり。既存のシードの書き方がこれに従っているので合わせる）
+
+- 各ケースは単独で成立する。**各ケースはケース専用シードを1件以上使う**（シードID `S-{FID}-CB<名前>-<ケース番号3桁>`）。参照だけのマスタ・アカウント・環境設定は、既存の `{FID}_seed_data.tsv` にある `共有可` のシードをそのまま使ってよい（シード表に書き足さない）。既存の `ケース専用` シードは使わない。
+- 組の値が共有可のシードの設定と違うとき（手数料・送料・利用条件・配送方法に紐づく支払方法など）は、ケース専用シードで設定を書き、事前準備に値で書く。
+- テストデータは画面から入力して作る（2026-10-09 決定）。画面で作れない状態だけ、理由を添えて DB へ直接入れる書き方にする。
+- **商品はカード商品も含めてグッズ商品CSV登録で作る**（商品登録画面の新規登録は使わない。M03-02 L0075〜L0077）。カード商品は商品登録編集画面の「カード指定 >」でカードを付ける。価格は税込みで登録する。在庫は在庫変更CSV登録で入庫し、別のメンバーが承認一覧で承認する（確認画面の OK まで書く）。既存の `{FID}_seed_data.tsv` の商品・在庫のシードの書き方をそのまま写す。
+- 確認モーダルが出る操作は、モーダルの確定まで手順に書く。規約同意など必須のチェックも書く（既存ケースに合わせる）。
+- 画面が振る番号（受注番号・会員IDなど）は、画面で作ったあとに控えた番号を使う（類型 T4。〔番号の名前-{FIDC}-ケース番号〕の呼び名で書く）。
+- ケース専用データの識別子（コード、名称、メール、ファイル名、パスワード）は全機能で一意にする。前提条件の検査 G5 の字句は `[A-Za-z0-9][A-Za-z0-9_.@\-]{3,}`。**英数字とハイフンの連なり1つ1つに、機能番号とケース番号を入れる**（例: 「{FIDC}-CB{START}-A」「cb{FIDL}-{START}@example.test」「Passw0rd-CB{FIDC}{START}」）。パスワードに「!」を使わない。番号だけの語（「A001」）を単独で置かない。`grep -rF` で `integration_test/casegen/cases/` と重ならないことを確かめよ。
+- 事前準備は必須。使用シードすべてについて状態を値付きで書き、シードIDを括弧で添える（「① …（S-…）／② …（S-…）」）。「このN件だけ」を期待するときは、同じ条件に当たる他のデータが無い状態を書く。
+- 事前準備で手順の結果を参照しない。期待結果の「AからB」「Aのまま」の A は事前準備に同じ表記で書いた値にする。
+- シードの投入方法は、何を使ってどう作るかを書く。作り方が分からないときは「未確定: <分からないこと>」と書く。推測で埋めない。
+- 中継・模擬応答、現在時刻の固定、障害を起こす手段は用意しない（2026-10-19 決定）。これが要る組は「ケースにしない」。バッチの実行、スマレジなど外部の試験環境、メールの受け取りは用意できる。
+
+## 出力（この3つだけを書く。ほかの既存ファイルは変更しない）
+
+1. `integration_test/casegen/combination/cases/{FID}_cb_test_cases{SFX}.tsv`
+   タブ区切り・13列: `テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID`
+   セル内に改行・タブ・ダブルクォートを入れない。ケース化が0件でもヘッダだけのファイルを書く。
+2. `integration_test/casegen/combination/cases/{FID}_cb_seed_data{SFX}.tsv`
+   タブ区切り・7列: `シードID	区分	論理名	状態・属性	用途	投入方法	共有`。**新しく足すシードだけ**を書く。
+3. `integration_test/casegen/combination/cases/{FID}_cb_dispositions{SFX}.tsv`
+   タブ区切り・4列: `項目ID	扱い	テストID	理由`。受け持ちの組 {N}行を1行ずつ（項目ID は組ID）。
+
+最後に `python3 integration_test/casegen/combination/verify_cb.py {VARG}` を実行し、合格するまで直せ。ほかの検査（gate_dry.sh・gate_factors.py など）は流さない（ほかの著者と同時に流すとぶつかる）。
+作業用の一時ファイルはスクラッチパッド（`/tmp/claude-1000/-home-y-saito-Developments-hareruya-design-docs/7ac77140-f212-4eb4-b04c-5cbd0cc6fcfa/scratchpad/`）に、名前へ {FID}{SFX} を入れて作る。他の機能・同じ機能の他の部の combination/cases のファイルは読まない・書かない。
+**ファイルは処理ごとに書き足していく**（全部を最後にまとめて書かない。途中で止まっても書いた分が残るように）。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+4行以内。ケース化／確認済み／ケースにしない の件数、ケースにしなかった主な理由（制約に足すべき組があれば件数）、verify の結果、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc 'cat integration_test/SCOPE.md integration_test/casegen/precond/README.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'ls integration_test/casegen/combination/review/R1_*_findings.md integration_test/casegen/combination/review/*_R1_dispositions*.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+# 結合テストケースの前提条件の書き直し
+
+## なぜ
+
+2026-09-28 時点の `cases/*_test_cases.tsv` は、上から順番に実行しても成立しないケースが多い。
+原因は3つある。
+
+1. **前提がケースに書かれていない。** 生成規則（`GEN_PROMPT_TEMPLATE.md` 縛り10）が
+   「シード投入は事前準備に書かない」としていたため、実行対象8,325件のうち7,866件の事前準備が `—`。
+   IT-A01-01-004 の前に「SMA-A01-002 を2個販売した取引」が要ることは、別ファイルのシード表を読まないと分からない
+2. **状態を書き換えるデータを複数ケースで共有している。** IT-A01-01-001 が SMA-A01-001 を2個販売すると、
+   002 の「10から8」は成立しない。012 が SMA-A01-I01 を7にすると、013 の「10から8」は成立しない
+3. **投入方法が実行できる粒度でない。** 「スマレジ試験環境に全キャンセル可能な取引を登録する」
+
+依頼者決定（2026-09-28）: **ケースごとに専用データを持たせる**。A01-01 で型を作ってから全機能へ広げる。
+
+## 規約
+
+対象は実行区分が「保留」以外のケース。保留ケースは1文字も変えない。
+
+| No. | 規約 |
+| --- | --- |
+| P1 | **各ケースは単独で成立する。** 他のケースを先に実行しても、後に実行しても、実行しなくても、事前準備どおりの状態から始められる |
+| P2 | シード表に `共有` 列を足す。`共有可` か `ケース専用` のどちらか。**どれか1ケースでも状態を変えるデータ**（在庫・受注・取引・ステータス・ログイン失敗回数など）は `ケース専用`。`共有可` にできるのは、どのケースも状態を変えないもの（参照だけのマスタ、ロックさせない管理者アカウント、環境設定）と、各ケースが開始時に必要な設定を自分で行う試験基盤（中継の保留／転送の切替など）だけ。`用途` にどちらなのかを書く |
+| P3 | `ケース専用` のシードを参照するケースはちょうど1件。シードIDは `<元のID>-<ケース番号3桁>` にする |
+| P4 | ケース専用データの識別子（DB投入するレコードのID・商品ID・CSVファイル名・会員メールなど）は、**全機能のケース専用シードの中で一意**にする。重なるときはケース番号を付けて改名する |
+| P5 | **事前準備は必須。** 使用シードすべてについて、どういう状態かを値付きで書き、シードIDを括弧で添える。シード投入の後で画面や外部システムを操作して作る状態（販売済みの取引など）は、その操作と、終わった後の値の確認まで書く |
+| P6 | 期待結果が「AからB」「Aのまま」と言うとき、**A は事前準備に書いた値**である |
+| P7 | **期待結果は変えない。** 変えてよいのは P4 の改名だけで、改名は `renames/<機能ID>.tsv` に宣言する。改名は、英数字の識別子どうし／シードで ID・名称・コード・番号・メール・ファイル名等の項目の値として定義した値／シードID／シードの自由文にある4文字以上のデータ名を「旧名-ケース番号」へ、の置換に限る（数量・状態語は改名しない）。改名で済まない変更は `oracle_changes/<機能ID>.tsv`（テストID/新期待結果/理由/承認）に載せ、承認が入るまでゲートを通さない。承認済みの類型は T1 だけ（下記）。手順で外部の値に呼び名を付け、その呼び名を期待結果で使う書き方もオラクル変更として扱う。要求ID・連鎖ID・観点ID・優先度・実行区分・出典は変えない |
+| P8 | 手順はテスト対象の操作だけにする。手順を変えてよいのは次の種別だけで、変えたら `step_changes/<機能ID>.tsv`（テストID/種別/新手順/理由）に宣言する。`準備移動`（準備操作を事前準備へ移す）／`改名`／`発番値控え`（実行中に発番される値を控える操作を足す）／`データ指示`（事前準備で作ったデータを指し示す）／`中継置換`（類型 T2）／`非同期完了待ち`（類型 T3）／`裁定訂正`（設計書の中の食い違いの裁定で直したもの。2026-10-16 依頼者決定） |
+| P9 | 投入方法は、何を使ってどう作るかを書く（管理画面のどの画面か／DB投入／スマレジ試験環境の管理画面で商品登録と在庫設定／CSVフィクスチャ）。「〜を登録する」だけで手段が無いものは不可 |
+| P10 | 事前準備に設計書に無い仕様を持ち込まない。書くのはテストデータの状態と作り方だけ。作り方は設計書に無ければ ee 実装（設定・テーブル・管理画面）から引いてよい。どちらにも無い作り方は `open_preconditions.tsv` に載せ、推測で埋めない |
+| P12 | 試験基盤が未整備、または作り方が設計書にも ee 実装にも無い前提は `open_preconditions.tsv` に載せる。**実行区分は変えない**（保留は「設計書に期待結果が無い」の意味で使っており、混ぜない）。ゲートは件数を参考として出す |
+| P13 | **手順で入力する値（登録する名称・コードなど）は改名しない。** 境界値や文字種の検査が壊れるため。同じ値のデータが既にあると成立しないときは、事前準備に「その値のデータが無い状態にする（あれば削除する）」と書く |
+| P11 | **事前準備は手順より前に完結する。** 手順の結果（発番されたID・返された値）を事前準備で参照しない。それらは手順の中で控える |
+
+## 承認済みの類型（依頼者 2026-09-28）
+
+| 類型 | 内容 | 記録先 |
+| --- | --- | --- |
+| T1 外部発番値 | 外部システムが発番する値（スマレジの在庫変動履歴ID・問い合わせIDなど）を基線が固定値で書いているときは、手順の中で発番値を控え、期待結果を「手順Nで控えた値」との照合に書き換える | `oracle_changes`（承認欄に「類型承認T1」） |
+| T3 非同期完了待ち | Webhook・バッチ・メッセージ処理など非同期で処理される操作の結果を確認する前に、非同期処理の対象のジョブ（待機中・実行中）が0件になるまで待つ手順を足す（画面名は書かない。下の「用語の置き換え」）。待つ上限時間を書く | `step_changes`（種別「非同期完了待ち」）。依頼者承認 2026-09-30 |
+| T2 中継置換 | 外部システムとの通信の観測・送信を、基線が実行できない書き方（「Webhookの応答をブラウザで確認」「スマレジAPIから送信」など）にしているときは、中継（通信を記録・保留・転送・模擬送信する試験基盤）で観測・送信する手順に変える。外部が実際に返す通知は保留して転送し、外部に起こさせられない結果（エラー等）だけを模擬送信する | `step_changes`（種別「中継置換」） |
+
+## 類型T4 画面発番値（依頼者決定 2026-10-09）
+
+テストデータは画面から入力して作る。画面が自動で振る番号（注文番号・受注ID・イベントIDなど）を基線が固定値で書いているときは、
+データを画面で登録したときに振られた番号を控え、事前準備・手順・期待結果ではその控えた番号（呼び名〔注文番号-M0526-012〕の形）を使う。
+書き直しは `../seed_screen/`（README）。期待結果・手順の変更は `oracle_changes/`（承認欄に「類型承認T4」）・`step_changes/`（種別に「発番値控え」）へ、`../seed_screen/apply.py` が機械で宣言する。
+控えた番号へ置き換えたケースの一覧は `screen_noted_cases.tsv`。検査は、これらのケースについて改名先（消えた固定の番号）の検査を外し、〔…〕の呼び名を識別子として数えない。
+
+## テストできない・作り方が未確定のケースの除外（依頼者決定 2026-10-14）
+
+テストできないケースと、作り方が未確定のケースを、ケースの正本（`../cases/`・`../all_test_cases.tsv`）から外した。
+外したのは、検査 G9 が「未整備・未確定の前提を使うケース」と数えていた 1,892件（使用シードの投入方法に「未確定」「未整備」がある、または `open_preconditions.tsv` の影響ケースに載っている）。
+内訳は、作り方が未確定 1,744、試験環境の決定待ち 113、実装上その状態を作れない 35。残りは 10,556件・345機能（20機能は全ケースが外れた）。
+
+- 行は消さず `../excluded_open_cases.tsv`（除外理由・未確定の内容つき。元の11列は「元_」付き）へ移した。外したケースだけが使っていたシード 2,458件は `../excluded_open_seeds.tsv`。
+- 道具は `../exclude_open.py`（何度流しても同じ）。**各 `merge_into_cases.py` と `seed_screen/apply.py` は外したケースを `cases/` へ戻すので、そのあとに必ず流す。** 順序は merge → `seed_screen/apply.py` → `datapattern/conflicts/apply_rulings.py`（最後に `product_csv/apply.py` と `runnable/apply.py` も当たる）→ `exclude_open.py` → `exclude_scope.py` → `build_all_test_cases.py`。
+- 作り方が決まったら、シードの投入方法（と `open_preconditions.tsv`）を直してから同じ順に流し直すと戻る。
+- 検査 G6 は、基線・追加分からこの除外分を差し引いて照合する。保留（設計書に正解が無い）の除外 `excluded_hold_cases.tsv` とは別の表で、意味を混ぜていない。
+
+### 影響ケースの漏れ（2026-10-16）
+
+`open_preconditions.tsv` の影響ケースは、行を足した時点のケースで書いた固定の一覧である。そのため、あとから足したケースが同じ未確定の前提を使っていても除外に掛からなかった。全数を洗い直し、63件を影響ケースに足して外した（11,777件 → 11,714件・341機能）。
+- 同じシードを使うのに一覧に無かったもの: IT-A05-04-047〜060（スマレジ受信。2026-10-09 の被覆監査で追加。取引情報取得APIの試験環境と Webhook の認証情報の2行）、IT-B02-02-010〜012（バッチの実行環境）、IT-M03-09-058・097（スマレジの試験用受信サーバー）。
+- 連携ケース（`../link/`）が、基線では未確定のシードを「-L-」付きの別名で作り直していたもの: S-B02-02-L-ENV・S-B05-02-L-CLOCK・S-B05-09-L-API/CLOCK/CONFIG・S-B06-01-L-ENV・S-B06-02-L-EXEC・S-B08-03-L-ENV・S-B08-06-L-API-CONTROL・S-B13-01-L-API/EXEC/MAIL。基線の行と同じ文面で、対象をL版にした行を足した（`未確定: …（… の未確定と同じ）`）。B06-01 の別名を使っていたデータパターンのケースも含む。
+- 時計を固定する前提: IT-M04-17-001（業務日を2026/09/29に固定。時計の固定は S-B05-09-CLOCK などと同じく作り方が無い）。
+- この結果、B02-02・B05-02・B05-09・B06-01・B08-03・B13-01 はケースが0件になった（基線のケースは前から外れており、残っていたのは別名のシードを使う連携ケースだけだった）。
+- 同じ日に `../chain_gap/` のレビューで、S-F06-02-L-ENV（IT-F06-02-024・025）も見つかり、同じ形の行を足して外した。基線の行の対象は S-F06-02-API-OK で、名前の役割の語（API と ENV）が違うため道具では拾えなかった。このシードは、開始時にスマレジAPI試験環境のユーザーDBで会員が0件であることを確かめる作り方で、024 は発番されたスマレジIDを控える。外部の試験環境を使うシードは、名前だけでなく中身でも基線の行と見比べる。
+- 候補を出す道具は `scan_open_leaks.py`。ケースを合流したあと、`exclude_open.py` の前に流す。候補を出すだけで判定はしない。残っている候補 159件は、読んだうえで漏れではないと判定したもの。
+  - 共有の定義だけを使い、未確定の項目に触れないもの: S-M05-03-DEFS、S-F06-05-BASIC、IT-A05-04-002（GETを送るだけで、認証も取引の取得も要らない）。
+  - 名前の役割の語が同じだけで、作り方が決まっているもの: ポイントの設定、ユニサーチの接続先、ee の開発用の正常応答、スマレジの試験環境への接続。
+  - S-M03-10-SMAREGI-ENV: ee の商品APIのクライアントは、模擬応答のときも呼び出しを記録する（SmaregiPlatformApiCallRecorder）。シードの書き方は実装と合っている。
+
+## 試験環境で用意できる前提の解消（依頼者決定 2026-10-19）
+
+依頼者決定「バッチの実行、スマレジなど外部の試験環境、メールの受け取りは環境準備できる」（中継・模擬応答、時刻の固定、障害を起こす手段は用意しない）。作り方が未確定で外したケースを止めていた項目（未確定のシード 944・未確定の前提の行 879）を1件ずつ判定し、この3つだけで決まるものは作り方を書いて解消した。止めていた項目がすべて解消したケース 183件が一覧へ戻った（11,713件 → 11,896件・346機能）。
+解消した前提の行 81 は `open_preconditions.tsv` から `resolved_preconditions.tsv`（解消の書き方・区分・根拠・決定つき）へ移した。シードは投入方法を書き直した（外した表 `../excluded_open_seeds.tsv` を直し、`exclude_open.py` が直った文で戻す）。
+同じ日の依頼者決定「おすすめで進めて」で、人が補って実行できるもの（決まった番号の読み替え、必須のチェック、確認モーダル、割引率、在庫の承認）も書き足した。道具・判定・レビューは `../runnable/README.md`。`../datapattern/conflicts/apply_rulings.py` が最後に `../runnable/apply.py` を呼ぶ。
+
+## E2E で作成を保留した入力ファイルを使うケースの除外（依頼者決定 2026-10-16）
+
+依頼者決定「テスト保留のケースがあれば除外」。ケース一覧に実行区分「保留」のケースは無かった（2026-10-01 にすべて外してある）。保留に当たっていたのは、E2E の入力ファイルの棚卸し（`../../../e2e/fixtures/named-file-references.tsv`。M03・M04 だけ棚卸し済み）で作成判断を「保留」「正本矛盾」とした33ファイルで、シードの記述だけでは中身（文字コード、見出し行の値、画像の中身など）が一つに決まらないか、シードの記述が食い違っていた（M03-30 の empty.tsv）。これを使うケース29件を、作り方が未確定の前提として `open_preconditions.tsv` に載せ（対象「入力ファイル <ファイル名>」の33行）、`exclude_open.py` で外した。ケースは 11,679件から 11,650件。ファイルの中身をシードに書いて棚卸しの判断が変わったら、その行を消して流し直すと戻る。M03・M04 以外の機能の入力ファイル（棚卸しで未判定の 1,729件）は見ていない。
+同じ日の依頼者決定「画像は任意の有効な画像でよいとして戻す」で、画像の中身が未指定だった9ファイル（M04-02-050・M04-03-005・M04-05-011・M04-31-150 の4ケース）の行を外し、4ケースを戻した（11,654件）。シード（`../seed_screen/out/` の該当行の投入方法）に「画像ファイルの中身は任意の有効な画像でよい。同じケースで使う複数の画像は、互いに見分けられる別の画像にする」と書いた。E2E の入力ファイル（`e2e/fixtures/`）はまだ作っていない。
+外したケースを戻すときは、流れを2回流す。1回目は `exclude_open.py` が除外表の古い文面のままケースとシードを戻すので、2回目の `seed_screen/apply.py`・`apply_rulings.py` で書き直しが当たる。
+
+## フェーズ2見送り・実装しない機能の除外（依頼者決定 2026-10-16）
+
+依頼者決定「フェーズ2見送り、機能実装しない機能についてはケースから除外」。対象は `../scope_out.tsv`（根拠つき）で、フェーズ2見送り13機能（A06-14・B01-02・B01-03・F02-05・M03-43・M03-44・M04-06・M04-07・M06-13・M08-11・M08-15・M08-16・M08-17）、実装しない4機能（M03-34・M03-36 は 2026-10-06 決定、M04-27・B13-02 は Excel の廃止の記述）と、M03-43 の機能を確かめていた IT-M03-30-038。
+ケース一覧の6件に加え、作り方が未確定で外していた65件、保留で外していた49件も、決まっても戻さないので `../excluded_scope_cases.tsv` へ移した（計120件。元の表と元の除外理由を残す）。外したケースだけが使っていたシード89件は `../excluded_scope_seeds.tsv`。道具は `../exclude_scope.py`（何度流しても同じ。`exclude_open.py` の後に流す）。ケースは 11,685件・349機能から 11,679件・346機能になった（F02-05・M03-44・M06-13 はケースが0件）。
+保留から移した49件は、設計者に聞く必要が無くなった（`../hold_review/questions.tsv` に論点があるものも含む）。機能の一部だけがフェーズ2のもの（ナビゲーションの通知、会員検索の顧客分析タグなど）は機能ごとは外していない。そのフェーズ2の部分を確かめるケースは IT-M03-30-038 のほかに無かった。
+検査 G6 は、基線・追加分からこの表の分も差し引いて照合する。
+
+## 既存ケースと設計書の食い違いの裁定（依頼者決定 2026-10-16）
+
+設計書の中で記述が食い違うときの優先順位（Excel由来＞埋め込みの表示メッセージ節＞埋め込みの現行仕様節、同じ出所では改訂後）を決め、既存ケース52件の報告を裁定した。直したケースの期待結果・手順・出典は `oracle_changes/`・`step_changes/`（種別「裁定訂正」）・`source_changes/` に、承認欄「2026-10-16 依頼者裁定」で宣言してある。規則で決まらず共通部分でも書けない10件は `../excluded_hold_cases.tsv` へ移した（論点ID が QD- の行。決める人＝設計者）。道具は `../datapattern/conflicts/apply_rulings.py`（何度流しても同じ。`seed_screen/apply.py` の後、`exclude_open.py` の前に流す）。説明は `../datapattern/conflicts/README.md`。
+
+## 保留ケースの除外（依頼者決定 2026-10-01）
+
+実行区分が「保留」のケース（1,014件）はテストケースから外した。設計書にも現行ソースにも期待結果（正解）が無く、テストできないため。
+行は削除せず `../excluded_hold_cases.tsv` へ移した（論点ID・決める人つき。元の11列は「元_」付きで保持）。保留ケースだけが使っていたシードは `../excluded_hold_seeds.tsv`。
+設計者の回答（`../hold_review/questions.tsv`）やテスト側の決定で正解が決まったら、そのケースを作り直して戻す。ゲート G6 は、基線のテストIDからこの除外分を差し引いて照合し、保留ケースが残っていれば落とす。
+
+## 実行の前提（依頼者決定 2026-09-30）
+
+- **専用DBで流す。** 結合テストは機能（またはモジュール）ごとに、まっさらな専用DBへシードを投入して流す。検索・一覧・集計で「このN件だけ」を期待するケースは、開始時に同じ条件に当たる他のデータを削除して隔離しており、共有の試験環境では他機能のデータを消しうる
+- **1件しかないデータは順番に実行する。** 基本設定のように1件しかない設定や、期待結果が固定IDを名指ししていて分けられないデータは `共有可` とし、使う各ケースが開始時に値を設定し直す。上から順に実行すれば成立するが、同じデータを使うケースを同時には実行しない。該当ケースは `sequential_only.tsv`
+
+## 機械検査 `gate_precond.py`
+
+| No. | 検査 | 対応する規約 |
+| --- | --- | --- |
+| G1 | 保留以外で事前準備が空・`—` | P5 |
+| G2 | 使用シードのIDが事前準備に現れない | P5 |
+| G3 | 期待結果の「AからB」「Aのまま」の A が事前準備に無い | P6 |
+| G4 | `共有` 列が無い・値が不正／ケース専用シードの参照が1件でない／ケース専用シードIDの末尾がケース番号でない／どのケースも使わないシード／保留以外のケースがケース専用シードを1件も使わない（状態を変えない読み取りだけのケースは `readonly_cases/<機能ID>.tsv` にテストID/理由で宣言） | P1 P2 P3 |
+| G5 | 同じ機能のケース専用シードどうしで自分のレコードID（「ID=20」「ID 20」）が重なる。ケース専用シードの識別子（「〜」の範囲は展開する）が、他のケースの事前準備・手順・期待結果、または他のケース専用シード（全機能）に現れる | P1 P4 |
+| G6 | 改名が識別子どうしでない。期待結果が「基線に改名を当てたもの」と一致せず、承認済みの oracle_changes にも無い。保留ケースが変わった。テストIDの集合・他の固定列が変わった（出典は `source_changes/`、実行区分の誤記は `kind_changes.tsv` に宣言したものを除く） | P7 |
+| G8 | 事前準備が「手順N」「返した値」「発番した」など後の結果を参照している | P11 |
+| G7 | 手順が「基線に改名を当てたもの」と違うのに `step_changes` に宣言が無い／種別が P8 の5種以外 | P8 |
+| G9 | 投入方法が「未確定」「未整備」のシードを使う非保留ケースが `open_preconditions.tsv` に無い。該当件数は参考として出す | P12 |
+
+`baseline/` は書き直し前（HEAD 98709b43）のスナップショット。G6 の基準なので書き換えない。
+
+実行区分の誤記を直すときは、基線を書き換えずに `kind_changes.tsv`（テストID／旧実行区分／新実行区分／理由）へ宣言する。G6 は、基線の値が旧実行区分と一致し、今の値が新実行区分と一致するものだけ認める（2026-10-19、IT-M03-45-024 の「ブラザ+DB確認」→「ブラウザ+DB確認」）。
+
+書き直しの後で足したケースは `added_cases.tsv`（テストID／追加日／由来）に載せる。G6 は「基線から保留除外分を引いた集合」に
+この追加分を足したものと、現在のテストIDの集合を照合する。基線が無い機能（後から新設したもの）は、全ケースが追加分になる。
+2026-10-06 に機能間データ連携のケース142件を足した（`../link/merge_into_cases.py`。旧テストIDとの対応は `../link/merged_map.tsv`）。
+同日、アクセス解析連携のケース（F10-01〜03）を足した（`../ga/merge_into_cases.py`。判定IDとの対応は `../ga/ga_map.tsv`）。
+同日、対応表が「候補」止まりだった14機能のケース398件を足した（`../sheetmap/merge_into_cases.py`。判定IDとの対応は `../sheetmap/sm_map.tsv`）。
+
+機械で見られないもの（P2 の共有可の妥当性、P6 の値と対象の対応、P8 の種別の妥当性、P9、P10）は codex レビューで見る。
+
+## 用語の置き換え（依頼者決定 2026-10-06）
+
+AWS Step Functions は使わない。テストケースでは「バッチ」と書き、非同期処理ダッシュボードの「Messenger ジョブ」という表現も書かない。
+置き換えの規則は `terms.py`（`python3 precond/terms.py` で cases/・step_changes/・open_preconditions.tsv・link/cases に当てる。何度流しても同じ）。
+基線は書き換えていない。ゲートは基線の手順と期待結果に同じ置き換えを当ててから照合する。
+シードID `S-B02-05-STEPFUNCTIONS` は `S-B02-05-BATCH-ENV` に変えた。
+
+「非同期処理ダッシュボード」という画面名も書かない（同日の依頼者決定）。設計書に無い画面で、実装にあるのは管理画面とは切り離した運用ツールである。
+ケースには「非同期処理の待機中・実行中のジョブが0件になるまで待つ」のように状態だけを書く。待機の手順そのものは残す
+（バッチはジョブを積むだけで終わり、実処理はワーカーが後から行うため）。確認の手段は試験環境の用意として扱う。
+
+ succeeded in 0ms:
+integration_test/casegen/combination/review/A01-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/A02-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/A02-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/A02-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/A02-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/A05-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/A05-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/A05-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/A05-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/A06-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/A06-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/A06-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/A06-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/A06-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/A06-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/A07-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/A07-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-10_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-12_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-13_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-14_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-15_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-16_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-17_R1_dispositions.tsv
+integration_test/casegen/combination/review/A15-18_R1_dispositions.tsv
+integration_test/casegen/combination/review/A16-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/A17-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/A17-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/A17-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/A17-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/B02-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/B02-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/B02-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/B02-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/B02-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/B05-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/B05-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/B05-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/B05-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/B05-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/B06-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/B06-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/B08-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/B08-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/B08-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/B08-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/B08-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/B08-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/B16-11_R1_dispositions.tsv
+integration_test/casegen/combination/review/F01-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/F01-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/F02-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/F02-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/F02-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/F03-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/F03-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/F03-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/F03-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/F03-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/F03-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/F03-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/F04-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/F04-02_R1_dispositions.owner.tsv
+integration_test/casegen/combination/review/F04-02_R1_dispositions.p1.tsv
+integration_test/casegen/combination/review/F04-02_R1_dispositions.p2.tsv
+integration_test/casegen/combination/review/F04-02_R1_dispositions.p3.tsv
+integration_test/casegen/combination/review/F04-02_R1_dispositions.p4.tsv
+integration_test/casegen/combination/review/F04-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/F04-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/F04-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/F05-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/F05-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/F05-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/F05-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/F05-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-09_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-10_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-11_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-13_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-14_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-15_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-16_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-17_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-18_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-20_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-21_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-22_R1_dispositions.tsv
+integration_test/casegen/combination/review/F06-26_R1_dispositions.tsv
+integration_test/casegen/combination/review/F07-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/F07-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/F07-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/F08-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/F08-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/F08-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/F08-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/F09-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/F09-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/F09-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/F09-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/F09-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/F09-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/F09-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/F09-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/F10-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/F10-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-09_R1_dispositions.p1.tsv
+integration_test/casegen/combination/review/M03-09_R1_dispositions.p2.tsv
+integration_test/casegen/combination/review/M03-10_R1_dispositions.p1.tsv
+integration_test/casegen/combination/review/M03-10_R1_dispositions.p2.tsv
+integration_test/casegen/combination/review/M03-11_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-13_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-16_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-18_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-19_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-20_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-22_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-25_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-26_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-27_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-28_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-29_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-30_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-31_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-32_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-33_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-35_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-38_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-40_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-41_R1_dispositions.tsv
+integration_test/casegen/combination/review/M03-45_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-09_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-10_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-13_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-19_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-21_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-22_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-23_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-25_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-30_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-31_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-32_R1_dispositions.p1.tsv
+integration_test/casegen/combination/review/M04-32_R1_dispositions.p2.tsv
+integration_test/casegen/combination/review/M04-33_R1_dispositions.tsv
+integration_test/casegen/combination/review/M04-34_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-09_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-10_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-11_R1_dispositions.p1.tsv
+integration_test/casegen/combination/review/M05-11_R1_dispositions.p2.tsv
+integration_test/casegen/combination/review/M05-11_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-18_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-21_R1_dispositions.p1.tsv
+integration_test/casegen/combination/review/M05-21_R1_dispositions.p2.tsv
+integration_test/casegen/combination/review/M05-22_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-23_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-24_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-26_R1_dispositions.tsv
+integration_test/casegen/combination/review/M06-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/M06-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/M06-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/M06-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/M06-09_R1_dispositions.tsv
+integration_test/casegen/combination/review/M06-10_R1_dispositions.tsv
+integration_test/casegen/combination/review/M06-11_R1_dispositions.tsv
+integration_test/casegen/combination/review/M06-12_R1_dispositions.tsv
+integration_test/casegen/combination/review/M07-01_R1_dispositions.p1.tsv
+integration_test/casegen/combination/review/M07-01_R1_dispositions.p2.tsv
+integration_test/casegen/combination/review/M07-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/M07-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/M07-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/M07-09_R1_dispositions.p1.tsv
+integration_test/casegen/combination/review/M07-09_R1_dispositions.p2.tsv
+integration_test/casegen/combination/review/M08-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/M08-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/M08-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/M08-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/M08-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/M08-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/M08-10_R1_dispositions.tsv
+integration_test/casegen/combination/review/M08-12_R1_dispositions.tsv
+integration_test/casegen/combination/review/M08-13_R1_dispositions.tsv
+integration_test/casegen/combination/review/M08-14_R1_dispositions.tsv
+integration_test/casegen/combination/review/M09-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/M09-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/M09-10_R1_dispositions.tsv
+integration_test/casegen/combination/review/M10-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/M10-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/M10-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/M10-15_R1_dispositions.tsv
+integration_test/casegen/combination/review/M11-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/M11-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/M12-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/M12-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/M12-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/M12-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/M12-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/M12-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/M12-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/M12-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/M12-09_R1_dispositions.tsv
+integration_test/casegen/combination/review/M12-10_R1_dispositions.tsv
+integration_test/casegen/combination/review/M13-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/M13-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/M13-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/M13-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/M13-10_R1_dispositions.tsv
+integration_test/casegen/combination/review/M13-13_R1_dispositions.tsv
+integration_test/casegen/combination/review/M13-15_R1_dispositions.tsv
+integration_test/casegen/combination/review/M14-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/M14-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/M14-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/M14-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/M14-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/M14-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/M14-10_R1_dispositions.tsv
+integration_test/casegen/combination/review/M15-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/M15-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/M15-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/M15-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/M15-05_R1_dispositions.p1.tsv
+integration_test/casegen/combination/review/M15-05_R1_dispositions.p2.tsv
+integration_test/casegen/combination/review/M15-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/M15-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/M15-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/M15-10_R1_dispositions.tsv
+integration_test/casegen/combination/review/M16-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/M16-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/M16-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/M16-04_R1_dispositions.tsv
+integration_test/casegen/combination/review/R1_01_findings.md
+integration_test/casegen/combination/review/R1_02_findings.md
+integration_test/casegen/combination/review/R1_03_findings.md
+integration_test/casegen/combination/review/R1_04_findings.md
+integration_test/casegen/combination/review/R1_05_findings.md
+integration_test/casegen/combination/review/R1_06_findings.md
+integration_test/casegen/combination/review/R1_07_findings.md
+integration_test/casegen/combination/review/R1_08_findings.md
+integration_test/casegen/combination/review/R1_09_findings.md
+integration_test/casegen/combination/review/R1_10_findings.md
+integration_test/casegen/combination/review/R1_11_findings.md
+integration_test/casegen/combination/review/R1_12_findings.md
+integration_test/casegen/combination/review/R1_13_findings.md
+integration_test/casegen/combination/review/R1_14_findings.md
+integration_test/casegen/combination/review/R1_15_findings.md
+integration_test/casegen/combination/review/R1_16_findings.md
+integration_test/casegen/combination/review/R1_17_findings.md
+integration_test/casegen/combination/review/R1_18_findings.md
+integration_test/casegen/combination/review/R1_19_findings.md
+integration_test/casegen/combination/review/R1_20_findings.md
+integration_test/casegen/combination/review/R1_21_findings.md
+integration_test/casegen/combination/review/R1_22_findings.md
+integration_test/casegen/combination/review/R1_23_findings.md
+integration_test/casegen/combination/review/R1_24_findings.md
+integration_test/casegen/combination/review/R1_25_findings.md
+integration_test/casegen/combination/review/R1_26_findings.md
+integration_test/casegen/combination/review/R1_27_findings.md
+integration_test/casegen/combination/review/R1_28_findings.md
+integration_test/casegen/combination/review/R1_29_findings.md
+integration_test/casegen/combination/review/R1_30_findings.md
+integration_test/casegen/combination/review/R1_31_findings.md
+integration_test/casegen/combination/review/R1_32_findings.md
+integration_test/casegen/combination/review/R1_33_findings.md
+integration_test/casegen/combination/review/R1_34_findings.md
+integration_test/casegen/combination/review/R1_35_findings.md
+integration_test/casegen/combination/review/R1_36_findings.md
+integration_test/casegen/combination/review/R1_37_findings.md
+integration_test/casegen/combination/review/R1_38_findings.md
+integration_test/casegen/combination/review/R1_39_findings.md
+integration_test/casegen/combination/review/R1_40_findings.md
+integration_test/casegen/combination/review/R1_41_findings.md
+integration_test/casegen/combination/review/R1_42_findings.md
+integration_test/casegen/combination/review/R1_43_findings.md
+integration_test/casegen/combination/review/R1_44_findings.md
+integration_test/casegen/combination/review/R1_45_findings.md
+integration_test/casegen/combination/review/R1_46_findings.md
+integration_test/casegen/combination/review/R1_47_findings.md
+integration_test/casegen/combination/review/R1_48_findings.md
+integration_test/casegen/combination/review/R1_49_findings.md
+integration_test/casegen/combination/review/R1_50_findings.md
+integration_test/casegen/combination/review/R1_51_findings.md
+integration_test/casegen/combination/review/R1_52_findings.md
+integration_test/casegen/combination/review/R1_53_findings.md
+integration_test/casegen/combination/review/R1_54_findings.md
+integration_test/casegen/combination/review/R1_55_findings.md
+integration_test/casegen/combination/review/R1_56_findings.md
+integration_test/casegen/combination/review/R1_A_findings.md
+integration_test/casegen/combination/review/R1_B_findings.md
+integration_test/casegen/combination/review/R1_C_findings.md
+integration_test/casegen/combination/review/R1_D_findings.md
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/sheetmap/FIX_R1_BRIEF.md integration_test/casegen/sheetmap/FIX_R2_BRIEF.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# レビュー1巡目の反映（著者への依頼）
+
+codex のレビュー指摘が `integration_test/casegen/sheetmap/review/<機能ID>_r1_findings.md` にある。
+1件ずつ、**指摘が引いている設計書の記述を sheet.txt で自分で読み直して事実かどうか確かめてから**、下の裁定に従って反映せよ。指摘をそのまま適用しない。
+
+## 裁定（依頼元の決定。指摘と食い違うときはこちらが優先）
+
+| No. | 裁定 |
+| --- | --- |
+| A | **根拠はHTML設計書であり、対象シート1枚に限らない。** その機能のふるまい（何を出力するか、全件か選択か、出力対象の条件、未選択・0件のときの扱い、ファイル名、起動するボタン、権限）が同じ冊子の別シート（一覧画面のシートなど）に書かれていれば、それを期待結果の根拠にしてよい。出典にそのシートを「｜」でつないで書く。当初の依頼文の「隣接シートは操作の入口にだけ使う」は撤回する。したがって、「対象シートに記述が無い」ことだけを理由にした指摘は、同じ冊子の別シートに記述があれば却下する。逆に、別シートにその機能の記述があるのにケースにしていなかったもの（出力対象、選択と全件の違い、未選択時の扱いなど）は、ケースを足す。別シートは `python3 integration_test/casegen/sheetmap/build_materials.py --sheet <書番> <シート名>` で読む。他の冊子・実装・現行ソースは根拠にしない |
+| B | **観点表の「期待値の決め方」が「観点内で確定」の判定単位は、適用の条件が設計書から言えれば、期待結果は判定単位の文から決めてよい。** 例: IT-0080・IT-0225（参照・出力だけの機能は実行前後でデータを更新しない）は、設計書がその機能をCSV出力・一覧表示などの参照機能として書いていれば適用できる。「非更新とは対象シートに書いていない」という指摘は却下する。IT-0083（出力ファイルの数量・金額が画面表示およびDB値と一致）を使うときは、画面表示またはDB値と見比べる手順と期待結果にする |
+| C | **CSV・帳票の出力項目の構成と並びは IT-0156**（観点ID ITA-02。他の観点に割り当たらない機能仕様を受ける区分）に当てる。IT-0071 は「値が取得元と同値」にだけ使う。report.md に「出力項目の構成・並びを受ける判定単位が観点表に無いので IT-0156 を使った」と書く |
+| C' | （2026-10-06 追記）観点表に IT-0348（ITA-05。出力したファイルの各レコードが、定められた出力項目だけで構成され、定められた順に並ぶこと）を足した。出力項目の構成と並びは、以後 IT-0348 に当てる。裁定Cで IT-0156 に当てていた14件は付け替えた（`retag_0348.py`）。同日、IT-0349（ITA-05。出力したファイルのレコードが、定められた並び順で出力されること）も足した。出力したCSV・帳票の行の並び順は IT-0349 に当てる（24件を付け替えた。`retag_0349.py`）。同日、IT-0350（ITA-05。送信されたメールの件名、送信元、本文の構成が、定められたとおりであること）も足した。通知メールの内容は IT-0350 に当てる（10件を付け替えた。`retag_0350.py`）。初期値、未選択時の扱いなど、ほかに受ける判定単位が無いものは IT-0156 のまま（2026-10-07 追記）観点表にバッチ用の4行を足した。IT-0351（ITA-14。異常として定められた条件でバッチが異常終了として終わること）、IT-0352（ITA-13。異常終了した場合、異常の後に行わないと定められた処理が行われていないこと）、IT-0353（ITA-13。終了後、一時的な資源が定められたとおりに削除されている・残っていること）、IT-0354（ITA-21。バッチの出力メッセージが、定められた条件のときに定められた文言で出力されること）。バッチのケースで期待結果がこのどれかそのものであるものは、IT-0156 でなくこれらを使う。 |
+| D | 見出し行の有無、データが何行目から始まるかは、設計書に書いていなければ期待結果・手順に書かない。データ行は事前準備の識別子（番号・コード）で特定する。項目の並びは「各行の項目が左から設計書の識別ID順に対応する」ことを、事前準備の値がどの位置に出るかで確かめる |
+| E | 値の取得元が設計書から決まらない項目（備考が空で、項目名からも取得元が1つに決まらないもの。呼び名の違う属性を当てはめたもの）は、値の照合から外し、report.md の「ケースにしなかったもの」に取得元の不足として書く。項目名と同じ名前の属性は取得元が決まるとしてよい |
+| F | 計算・連結・書式変換の結果そのもの（姓＋空白＋名、差の計算、小計など）は単体テストの担当（SCOPE.md）。ケースから外し、report.md に「単体テストへ送った」と書く。ただし「どの時点の値か」「単価か小計か」のように、どの値を採るかの定めは結合テストで確かめてよい |
+| G | 1ケース1期待結果。判定単位が違う確認が1ケースに混じっていたら分ける |
+| H | シードは実際に作れる方法で書く。管理画面で指定できない内部IDを管理画面で登録する、と書かない（DB投入にする）。設計書が求める状態（必須項目が未設定の会員など）が ee 実装の制約で作れないときは、ケースは残し、投入方法を「未確定: <理由>」にして report.md の「試験環境に要るもの」に挙げる。実装が設計書と違うこと自体はケースを変える理由にしない |
+| I | 手順は、画面を開く・条件を入れる・ボタンを押す・ファイルを開く、の操作を番号付きで書く。「〜を確認する」だけの手順にしない |
+| J | 設計書の中で記述が食い違っている・誤記と思われる箇所を、推測でどちらかに決めて期待結果にしない。両方に共通する部分だけを期待結果にし、食い違いは report.md に書く |
+| K | 判定ID IT-0332〜0347 は使わない。使っているケースは、当てはまる別の判定単位に付け替えるか、無ければ外す |
+| L | 指摘が「取りこぼし」で、設計書の記述から期待結果が一意に決まるなら、ケースを足す。試験基盤が無いことはケースを作らない理由にならない（投入方法・前提を「未確定」と書いて残す） |
+
+## やること
+
+1. 指摘ごとに「採用／一部採用／却下」を決め、cases・seed・report.md を直す。ケースを足したり外したりしたら、テストIDを 001 からの連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. 指摘に無くても、裁定 A〜L に反する箇所が自分のケースにあれば同じように直す。
+3. `integration_test/casegen/sheetmap/review/<機能ID>_r1_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述（原文）・直した内容」を表で書く。保存できないときは返答に本文を含める。
+4. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること（他の著者と同じ置き場所を使っているため）。
+
+## 返答
+
+5行以内。直した後の件数、指摘ごとの判定の内訳（採用・一部採用・却下の件数）、足した・外したテストの数、verify の結果、dispositions.md を保存できたか。
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/combination/cases/M13-{02,03,04,08,10}_cb_*.tsv integration_test/casegen/combination/combos/M13-{02,03,04,08,10}.tsv integration_test/casegen/combination/factors/M13-{02,03,04,08,10}_*.tsv integration_test/casegen/combination/units/M13-{02,03,04,08,10}/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     5 integration_test/casegen/combination/cases/M13-02_cb_dispositions.tsv
+     3 integration_test/casegen/combination/cases/M13-02_cb_seed_data.tsv
+     3 integration_test/casegen/combination/cases/M13-02_cb_test_cases.tsv
+     4 integration_test/casegen/combination/cases/M13-03_cb_dispositions.tsv
+     4 integration_test/casegen/combination/cases/M13-03_cb_seed_data.tsv
+     4 integration_test/casegen/combination/cases/M13-03_cb_test_cases.tsv
+     6 integration_test/casegen/combination/cases/M13-04_cb_dispositions.tsv
+     5 integration_test/casegen/combination/cases/M13-04_cb_seed_data.tsv
+     5 integration_test/casegen/combination/cases/M13-04_cb_test_cases.tsv
+     3 integration_test/casegen/combination/cases/M13-08_cb_dispositions.tsv
+     3 integration_test/casegen/combination/cases/M13-08_cb_seed_data.tsv
+     3 integration_test/casegen/combination/cases/M13-08_cb_test_cases.tsv
+     3 integration_test/casegen/combination/cases/M13-10_cb_dispositions.tsv
+     3 integration_test/casegen/combination/cases/M13-10_cb_seed_data.tsv
+     3 integration_test/casegen/combination/cases/M13-10_cb_test_cases.tsv
+     5 integration_test/casegen/combination/combos/M13-02.tsv
+     4 integration_test/casegen/combination/combos/M13-03.tsv
+     6 integration_test/casegen/combination/combos/M13-04.tsv
+     3 integration_test/casegen/combination/combos/M13-08.tsv
+     3 integration_test/casegen/combination/combos/M13-10.tsv
+     4 integration_test/casegen/combination/factors/M13-02_constraints.tsv
+    12 integration_test/casegen/combination/factors/M13-02_existing.tsv
+     6 integration_test/casegen/combination/factors/M13-02_factors.tsv
+     6 integration_test/casegen/combination/factors/M13-02_interactions.tsv
+     4 integration_test/casegen/combination/factors/M13-02_processes.tsv
+     9 integration_test/casegen/combination/factors/M13-03_constraints.tsv
+     8 integration_test/casegen/combination/factors/M13-03_existing.tsv
+     7 integration_test/casegen/combination/factors/M13-03_factors.tsv
+     8 integration_test/casegen/combination/factors/M13-03_interactions.tsv
+     3 integration_test/casegen/combination/factors/M13-03_processes.tsv
+    11 integration_test/casegen/combination/factors/M13-04_constraints.tsv
+     9 integration_test/casegen/combination/factors/M13-04_existing.tsv
+     5 integration_test/casegen/combination/factors/M13-04_factors.tsv
+     7 integration_test/casegen/combination/factors/M13-04_interactions.tsv
+     2 integration_test/casegen/combination/factors/M13-04_processes.tsv
+     1 integration_test/casegen/combination/factors/M13-08_constraints.tsv
+     4 integration_test/casegen/combination/factors/M13-08_existing.tsv
+     3 integration_test/casegen/combination/factors/M13-08_factors.tsv
+     2 integration_test/casegen/combination/factors/M13-08_interactions.tsv
+     2 integration_test/casegen/combination/factors/M13-08_processes.tsv
+     2 integration_test/casegen/combination/factors/M13-10_constraints.tsv
+    12 integration_test/casegen/combination/factors/M13-10_existing.tsv
+     3 integration_test/casegen/combination/factors/M13-10_factors.tsv
+     2 integration_test/casegen/combination/factors/M13-10_interactions.tsv
+     2 integration_test/casegen/combination/factors/M13-10_processes.tsv
+   311 integration_test/casegen/combination/units/M13-02/design.txt
+   121 integration_test/casegen/combination/units/M13-03/design.txt
+   123 integration_test/casegen/combination/units/M13-04/design.txt
+    86 integration_test/casegen/combination/units/M13-08/design.txt
+   178 integration_test/casegen/combination/units/M13-10/design.txt
+  1031 total
+
+exec
+/bin/bash -lc "grep -n 'IT-0366' integration_test/viewpoint_canonical/viewpoints_canonical.tsv" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/sheetmap/FIX_R2_BRIEF.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+367:IT-0366	ITA-11	内部結合テスト	制御	条件網羅	データパターン / 要因の組合せ	1つの処理の結果を左右する要因（区分、状態、設定、関連データの値など。他の機能で設定する値を含む）が2つ以上ある場合、設計書の定めが互いに効き合う要因については値の組合せのすべてで、互いに効き合わない要因についてはどの2つの要因の値の組もいずれかの組合せで、受け渡し先の結果が、それぞれの要因について定められた結果を重ねたとおり設計どおりとなること。設計書から結果が決まらない組合せ、設計上作れない組合せ、および検索条件と削除条件の組合せは除く。	設計書から引用	条件に応じて、呼び出される先、返却データ、出力結果、状態遷移および副作用が設計どおりに切り替わること。検索・削除条件の一致種別と組合せで期待したレコードが取得・対象化されること、表示／非表示条件、通知の発生条件を含む。	単一メソッド内の分岐網羅、および分岐編集の結果そのものは単体テストが担う
+
+ succeeded in 0ms:
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+
+exec
+/bin/bash -lc "grep -n -E '"'^### 指摘（M13-(02|03|04|08|10) /'"' integration_test/casegen/combination/review/R1_*_findings.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/review/R1_51_findings.md:1:### 指摘（M13-04 / IT-M13-04-046）
+integration_test/casegen/combination/review/R1_51_findings.md:7:### 指摘（M13-10 / IT-M13-10-044）
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M13-02.tsv integration_test/casegen/combination/factors/M13-02_processes.tsv integration_test/casegen/combination/factors/M13-02_factors.tsv integration_test/casegen/combination/factors/M13-02_interactions.tsv integration_test/casegen/combination/factors/M13-02_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M13-02-001	P1	F01=なし&F02=現状のまま&F03=なし	更新するイベントへの申込=なし／支払方法の更新内容=現状のまま／有料かつオンライン受付ありの日程=なし	更新するイベントへの申込×支払方法の更新内容: なし×現状のまま；支払方法の更新内容×有料かつオンライン受付ありの日程: 現状のまま×なし
+CB-M13-02-002	P1	F01=あり&F02=現状のまま&F03=あり	更新するイベントへの申込=あり／支払方法の更新内容=現状のまま／有料かつオンライン受付ありの日程=あり	更新するイベントへの申込×支払方法の更新内容: あり×現状のまま；更新するイベントへの申込×有料かつオンライン受付ありの日程: あり×あり；支払方法の更新内容×有料かつオンライン受付ありの日程: 現状のまま×あり
+CB-M13-02-003	P3	F04=あり	削除対象の日程のデッキ登録=あり／削除対象の日程への申込=（効かない）	削除対象の日程のデッキ登録: あり
+CB-M13-02-004	P3	F05=あり	削除対象の日程のデッキ登録=（効かない。なしから選ぶ）／削除対象の日程への申込=あり	削除対象の日程への申込: あり
+処理ID	処理	契機	確かめる所	根拠
+P1	イベントを更新して保存する	イベント編集画面で支払方法などを変えて更新ボタンを押す	DB、イベント編集画面のメッセージ	L0089,L0093-L0094,L0263,L0269-L0270,L0285
+P2	日程を個別に削除する	日程の編集ボタンのポップアップメニューで削除を選び、確定する	DB、イベント編集画面のメッセージ	L0091-L0092,L0203,L0276-L0278
+P3	チェックした日程を一括削除する	チェックした日程削除ボタンを押して確定する	DB、イベント編集画面のメッセージ	L0091-L0092,L0238,L0281-L0282,L0287-L0288
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	更新するイベントへの申込	なし｜あり	なし: 支払方法を変えられる／あり: 支払方法に差分があると保存されず申込済みのエラー	L0089,L0263	この機能
+F02	P1	支払方法の更新内容	現状のまま｜カード決済をオフにする	現状のまま: 支払方法の判定に掛からない／カード決済をオフにする: 申込済みまたは有料のオンライン受付日程があると保存されない	L0089,L0093-L0094,L0285	この機能
+F03	P1	有料かつオンライン受付ありの日程	なし｜あり	なし: カード決済オフでも保存できる／あり: カード決済オフでは保存されずエラー	L0093-L0094,L0285	この機能
+F04	P2,P3	削除対象の日程のデッキ登録	なし｜あり	なし: デッキの理由では止まらない／あり: 削除されない（個別削除はデッキ登録済みのエラー、一括削除は一括削除できませんでしたのエラー）	L0091,L0276,L0281,L0287	この機能
+F05	P2,P3	削除対象の日程への申込	なし｜あり	なし: 申込の理由では止まらない／あり: 削除されない（個別削除は申込済みのエラー、一括削除は一括削除できませんでしたのエラー）	L0092,L0277,L0281,L0288	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0089,L0263	申込があるときだけ支払方法の変更が保存されない
+P1	F01+F03	関係しない		申込の有無と有料オンライン日程の有無は別の理由で保存を止めるだけで、保存される・されないの結果は互いに変わらない
+P1	F02+F03	効き合う	L0093-L0094,L0285	カード決済をオフにするときだけ、有料オンライン日程の有無で保存の可否が変わる
+P2	F04+F05	設計書が決めていない	L0276-L0277,L0287-L0288	チェックボックスのツールチップはデッキ登録を優先すると読めるが、個別削除でデッキ登録と申込が両方あるときにどのメッセージを出すか書かれていない
+P3	F04+F05	関係しない	L0281	デッキ登録または申込のある日程を含めると一括削除できない（1つのメッセージ）だけで、どちらか1つで外れるため外れ方は1つずつ確かめれば足りる
+処理ID	組	種別	根拠	理由
+P2	F04=あり&F05=あり	正解未定	L0276-L0277,L0287-L0288	デッキ登録と申込が両方ある日程の個別削除でどちらのエラーメッセージが出るか決まらない
+P3	F04=あり	打ち切り	L0281	デッキ登録のある日程を含めると一括削除せず中止し、同じ1つのメッセージを出す。申込の有無は結果に効かない
+P3	F05=あり	打ち切り	L0281	申込のある日程を含めると一括削除せず中止し、同じ1つのメッセージを出す。デッキ登録の有無は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M13-04.tsv integration_test/casegen/combination/factors/M13-04_processes.tsv integration_test/casegen/combination/factors/M13-04_factors.tsv integration_test/casegen/combination/factors/M13-04_interactions.tsv integration_test/casegen/combination/factors/M13-04_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M13-04-001	P1	F01=なし&F04=土曜日曜か休日マスタの日を含む	オンライン受付あり=なし／親イベントの参加費=（効かない）／親イベントの支払方法=（効かない）／作成される日の内訳=土曜日曜か休日マスタの日を含む	オンライン受付あり×作成される日の内訳: なし×土曜日曜か休日マスタの日を含む
+CB-M13-04-002	P1	F02=無料&F04=該当日なし	オンライン受付あり=（効かない。ありから選ぶ）／親イベントの参加費=無料／親イベントの支払方法=（効かない）／作成される日の内訳=該当日なし	親イベントの参加費×作成される日の内訳: 無料×該当日なし
+CB-M13-04-003	P1	F02=無料&F04=平日のみ	オンライン受付あり=（効かない。ありから選ぶ）／親イベントの参加費=無料／親イベントの支払方法=（効かない）／作成される日の内訳=平日のみ	親イベントの参加費×作成される日の内訳: 無料×平日のみ
+CB-M13-04-004	P1	F02=無料&F04=土曜日曜か休日マスタの日を含む	オンライン受付あり=（効かない。ありから選ぶ）／親イベントの参加費=無料／親イベントの支払方法=（効かない）／作成される日の内訳=土曜日曜か休日マスタの日を含む	親イベントの参加費×作成される日の内訳: 無料×土曜日曜か休日マスタの日を含む
+CB-M13-04-005	P1	F03=クレジットカード決済あり&F04=土曜日曜か休日マスタの日を含む	オンライン受付あり=（効かない。ありから選ぶ）／親イベントの参加費=（効かない。有料から選ぶ）／親イベントの支払方法=クレジットカード決済あり／作成される日の内訳=土曜日曜か休日マスタの日を含む	親イベントの支払方法×作成される日の内訳: クレジットカード決済あり×土曜日曜か休日マスタの日を含む
+処理ID	処理	契機	確かめる所	根拠
+P1	繰り返し日程を一括登録する	繰返日程追加画面で期間・曜日・時刻を入れ、登録ボタンを押す	DBの日程、イベント編集画面、繰返日程追加画面	L0052-L0053,L0102-L0111,L0122
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	オンライン受付あり	あり｜なし	あり: 参加費が有料のとき親イベントの支払方法を調べる／なし: 支払方法は調べない	L0122	この機能
+F02	P1	親イベントの参加費	有料｜無料	有料: オンライン受付ありのとき親イベントの支払方法を調べる／無料: 支払方法は調べない	L0054,L0108,L0122,M13-02:L0132	M13-02（データ）
+F03	P1	親イベントの支払方法	クレジットカード決済あり｜未設定	クレジットカード決済あり: 登録できる／未設定: オンライン受付ありかつ有料のときエラー	L0122,M13-02:L0131	M13-02（データ）
+F04	P1	作成される日の内訳	該当日なし｜平日のみ｜土曜日曜か休日マスタの日を含む	該当日なし: 日程を作らず登録完了／平日のみ: 休日でない日程ができる／土曜日曜か休日マスタの日を含む: 休日の日程ができる	L0053,L0106,L0111	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		オンライン受付あり・有料・支払方法未設定のすべてを満たすときだけエラーになる型で、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F01+F03	関係しない		オンライン受付あり・有料・支払方法未設定のすべてを満たすときだけエラーになる型で、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F02+F03	関係しない		オンライン受付あり・有料・支払方法未設定のすべてを満たすときだけエラーになる型で、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F01+F04	関係しない		作成される日の内訳(休日の扱い)は日付で決まり、受付の有無で変わらない。エラーのときは日程を作らないが、エラーになる条件の1つずつで確かめれば足りる
+P1	F02+F04	関係しない		作成される日の内訳(休日の扱い)は日付で決まり、参加費で変わらない。エラーのときは日程を作らないが、エラーになる条件の1つずつで確かめれば足りる
+P1	F03+F04	関係しない		作成される日の内訳(休日の扱い)は日付で決まり、支払方法で変わらない。エラーのときは日程を作らないが、エラーになる条件の1つずつで確かめれば足りる
+処理ID	組	種別	根拠	理由
+P1	F01=あり&F02=有料&F03=未設定	打ち切り	L0122	オンライン受付あり・有料・支払方法未設定のすべてを満たすとエラーで日程を作らず、作成される日の内訳は結果に効かない
+P1	F01=なし&F04=該当日なし	打ち切り	L0122	オンライン受付ありでなければ親イベントの支払方法を調べず、参加費・支払方法は結果に効かない（日の内訳は結果が違うので組に残す）
+P1	F02=無料&F04=該当日なし	打ち切り	L0122	参加費が無料なら親イベントの支払方法を調べず、オンライン受付・支払方法は結果に効かない
+P1	F03=クレジットカード決済あり&F04=該当日なし	打ち切り	L0122	支払方法の確認が通るので、オンライン受付・参加費によらず登録できる
+P1	F01=なし&F04=平日のみ	打ち切り	L0122	オンライン受付ありでなければ親イベントの支払方法を調べず、参加費・支払方法は結果に効かない（日の内訳は結果が違うので組に残す）
+P1	F02=無料&F04=平日のみ	打ち切り	L0122	参加費が無料なら親イベントの支払方法を調べず、オンライン受付・支払方法は結果に効かない
+P1	F03=クレジットカード決済あり&F04=平日のみ	打ち切り	L0122	支払方法の確認が通るので、オンライン受付・参加費によらず登録できる
+P1	F01=なし&F04=土曜日曜か休日マスタの日を含む	打ち切り	L0122	オンライン受付ありでなければ親イベントの支払方法を調べず、参加費・支払方法は結果に効かない（日の内訳は結果が違うので組に残す）
+P1	F02=無料&F04=土曜日曜か休日マスタの日を含む	打ち切り	L0122	参加費が無料なら親イベントの支払方法を調べず、オンライン受付・支払方法は結果に効かない
+P1	F03=クレジットカード決済あり&F04=土曜日曜か休日マスタの日を含む	打ち切り	L0122	支払方法の確認が通るので、オンライン受付・参加費によらず登録できる
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M13-08.tsv integration_test/casegen/combination/factors/M13-08_processes.tsv integration_test/casegen/combination/factors/M13-08_factors.tsv integration_test/casegen/combination/factors/M13-08_interactions.tsv integration_test/casegen/combination/factors/M13-08_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M13-10.tsv integration_test/casegen/combination/factors/M13-10_processes.tsv integration_test/casegen/combination/factors/M13-10_factors.tsv integration_test/casegen/combination/factors/M13-10_interactions.tsv integration_test/casegen/combination/factors/M13-10_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M13-08-001	P1	F01=1ページ&F02=なし	メインカードのページ数=1ページ／サイドボードのカード=なし	メインカードのページ数×サイドボードのカード: 1ページ×なし
+CB-M13-08-002	P1	F01=2ページ以上&F02=なし	メインカードのページ数=2ページ以上／サイドボードのカード=なし	メインカードのページ数×サイドボードのカード: 2ページ以上×なし
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキリストを印刷向けに組み立てて表示する	申込一覧でデッキ表示ボタンを押す	デッキ表示画面	L0067-L0073
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	メインカードのページ数	1ページ｜2ページ以上	1ページ: 1ページでプレイヤー名の後ろに1と総ページ数1を表示／2ページ以上: 40枚ごとに分割し各ページに現在ページと総ページ数を表示	L0073	この機能
+F02	P1	サイドボードのカード	あり｜なし	あり: 先頭ページにだけサイドを載せ2ページ目以降は空／なし: サイドは空でサイド枚数0	L0071,L0073	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0073	サイドは先頭ページにだけ載り、メインが複数ページのときは2ページ目以降のサイドが空になる
+処理ID	組	種別	根拠	理由
+
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M13-10-001	P1	F01=通過&F02=変更なし	参加者情報リストの検証結果=通過／参加者情報リストの変更内容=変更なし	参加者情報リストの検証結果×参加者情報リストの変更内容: 通過×変更なし
+CB-M13-10-002	P1	F01=通過&F02=外れのみ	参加者情報リストの検証結果=通過／参加者情報リストの変更内容=外れのみ	参加者情報リストの検証結果×参加者情報リストの変更内容: 通過×外れのみ
+処理ID	処理	契機	確かめる所	根拠
+P1	イベント申込を更新する	イベント申込詳細・編集画面で内容を変えて登録ボタンを押す	DB（申込・参加者・申込履歴）、編集画面	L0057,L0140-L0148,L0165-L0167
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	参加者情報リストの検証結果	通過｜実在しないか同日程の他申込と重複	通過: 申込を更新し成功を表示する／実在しないか同日程の他申込と重複: 申込重複のメッセージを表示し更新しない	L0144,L0146,L0156,L0172	この機能
+F02	P1	参加者情報リストの変更内容	変更なし｜追加のみ｜外れのみ｜追加と外れの両方	変更なし: 参加者の追加も削除もしない／追加のみ: 追加分を新規に登録する／外れのみ: 外れた参加者を削除する／追加と外れの両方: 外れた参加者の削除と追加分の登録を同じ更新で行う	L0148,L0165,L0167	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0144,L0146,L0148	検証を通過しないと更新されず、参加者の追加・削除も行われない
+処理ID	組	種別	根拠	理由
+P1	F01=実在しないか同日程の他申込と重複	打ち切り	L0144,L0146	検証を通過しないと申込重複のメッセージを出して更新せず、参加者の変更内容は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M13-03.tsv integration_test/casegen/combination/factors/M13-03_processes.tsv integration_test/casegen/combination/factors/M13-03_factors.tsv integration_test/casegen/combination/factors/M13-03_interactions.tsv integration_test/casegen/combination/factors/M13-03_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M13-03-001	P1	F01=新規登録&F02=あり&F03=有料&F04=未設定	操作=新規登録／オンライン受付あり=あり／参加費=有料／親イベントの支払方法=未設定	操作×親イベントの支払方法: 新規登録×未設定；オンライン受付あり×親イベントの支払方法: あり×未設定；参加費×親イベントの支払方法: 有料×未設定
+CB-M13-03-002	P1	F01=既存日程の更新&F02=あり&F03=有料&F04=未設定	操作=既存日程の更新／オンライン受付あり=あり／参加費=有料／親イベントの支払方法=未設定	操作×オンライン受付あり: 既存日程の更新×あり；操作×親イベントの支払方法: 既存日程の更新×未設定
+CB-M13-03-003	P1	F01=既存日程の更新&F03=無料	操作=既存日程の更新／オンライン受付あり=（効かない。ありから選ぶ）／参加費=無料／親イベントの支払方法=（効かない）	操作×参加費: 既存日程の更新×無料
+処理ID	処理	契機	確かめる所	根拠
+P1	日程を登録または更新する	日程登録画面で登録ボタン、または日程編集画面で更新ボタンを押す	DBの日程、日程編集画面とイベント編集画面	L0053,L0056-L0057,L0089-L0090
+P2	日程を削除する	日程編集画面で削除ボタンを押し、確認画面で削除する	DBの日程、イベント編集画面	L0054-L0055,L0091
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	操作	新規登録｜既存日程の更新	新規登録: 日程が1件増える／既存日程の更新: 既存の日程が書き換わる	L0053,L0089-L0090	この機能
+F02	P1	オンライン受付あり	あり｜なし	あり: 参加費が有料のとき親イベントの支払方法を調べる／なし: 支払方法は調べない	L0056-L0057,L0076	この機能
+F03	P1	参加費	有料｜無料	有料: オンライン受付ありのとき親イベントの支払方法を調べる／無料: 支払方法は調べない	L0056-L0057,L0085	この機能
+F04	P1	親イベントの支払方法	クレジットカード決済あり｜未設定	クレジットカード決済あり: 登録・更新できる／未設定: オンライン受付ありかつ有料のときエラー	L0057,M13-02:L0131	M13-02（データ）
+F05	P2	日程のデッキ登録	なし｜あり	なし: 削除できる／あり: 削除できない	L0055	この機能
+F06	P2	日程の申込	なし｜あり	なし: 削除できる／あり: 削除できない	L0055	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		支払方法の確認は登録・更新のどちらでも同じ条件で行われる
+P1	F01+F03	関係しない		支払方法の確認は登録・更新のどちらでも同じ条件で行われる
+P1	F01+F04	関係しない		支払方法の確認は登録・更新のどちらでも同じ条件で行われる
+P1	F02+F03	関係しない		オンライン受付あり・有料・支払方法未設定のすべてを満たすときだけエラーになる型で、結果は登録できる・エラーの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F02+F04	関係しない		オンライン受付あり・有料・支払方法未設定のすべてを満たすときだけエラーになる型で、結果は登録できる・エラーの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F03+F04	関係しない		オンライン受付あり・有料・支払方法未設定のすべてを満たすときだけエラーになる型で、結果は登録できる・エラーの2つだけ。条件ごとの外れ方は1つずつ確かめれば足りる
+P2	F05+F06	関係しない		デッキ登録か申込のどちらか1つがあれば削除できず、結果は削除できる・できないの2つだけ
+処理ID	組	種別	根拠	理由
+P1	F02=なし&F01=新規登録	打ち切り	L0056-L0057	オンライン受付ありでなければ親イベントの支払方法を調べず、参加費・支払方法は結果に効かない（新規登録か更新かは結果が違うので組に残す）
+P1	F02=なし&F01=既存日程の更新	打ち切り	L0056-L0057	オンライン受付ありでなければ親イベントの支払方法を調べず、参加費・支払方法は結果に効かない
+P1	F03=無料&F01=新規登録	打ち切り	L0056-L0057	参加費が無料なら親イベントの支払方法を調べず、オンライン受付・支払方法は結果に効かない
+P1	F03=無料&F01=既存日程の更新	打ち切り	L0056-L0057	参加費が無料なら親イベントの支払方法を調べず、オンライン受付・支払方法は結果に効かない
+P1	F04=クレジットカード決済あり&F01=新規登録	打ち切り	L0057	支払方法の確認が通るので、オンライン受付・参加費によらず登録できる
+P1	F04=クレジットカード決済あり&F01=既存日程の更新	打ち切り	L0057	支払方法の確認が通るので、オンライン受付・参加費によらず更新できる
+P2	F05=あり	打ち切り	L0055	デッキ登録があれば削除できず、申込の有無は結果に効かない
+P2	F06=あり	打ち切り	L0055	申込があれば削除できず、デッキ登録の有無は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M13-02_cb_test_cases.tsv integration_test/casegen/combination/cases/M13-02_cb_seed_data.tsv integration_test/casegen/combination/cases/M13-02_cb_dispositions.tsv integration_test/casegen/combination/review/M13-02_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M13-02-090	IT-0366	REQ-0214-sheet-5-R011,REQ-0214-sheet-5-R015		ITA-11	P1	ブラウザ+DB確認	S-M13-02-ADM,S-M13-02-MASTERS,S-M13-02-CBEVENT-090	① 新しいブラウザセッションで管理者ID 〔管理者ID-M1302-共有〕としてログインしている（S-M13-02-ADM）／② 店舗Aとクレジットカード決済が登録済みである（S-M13-02-MASTERS）／③ イベントID 〔イベントID-M1302-CB090〕（登録時に振られたイベントIDを控えてある）はイベント名(日)「更新前イベントM1302-CB090」、クレジットカード決済オン、参加費0で、日程ID 〔日程ID-M1302-CB090〕（登録時に振られた日程IDを控えてある）は開始時間2026-11-01 10:00・参加費0・オンライン受付なし・申込0件の1件だけである（登録時に振られたIDを控えてある）（S-M13-02-CBEVENT-090）	1. ID 〔イベントID-M1302-CB090〕のイベント編集画面を開く／2. イベント名(日)を「更新後イベントM1302-CB090」に変更し、支払方法のクレジットカード決済はオンのままにする／3. 更新ボタンを押す／4. DBでID 〔イベントID-M1302-CB090〕のイベント名(日)と支払方法を確認する	ID 〔イベントID-M1302-CB090〕のイベント名(日)が「更新前イベントM1302-CB090」から「更新後イベントM1302-CB090」に更新され、支払方法がクレジットカード決済オンのままであること	0214 イベント編集 / 機能仕様 処理概要、表示メッセージ 申込済みの場合支払方法を変更できない・M13-02-MSG-019	CB-M13-02-001
+IT-M13-02-091	IT-0366	REQ-0214-sheet-5-R011,REQ-0214-sheet-5-R016		ITA-11	P1	ブラウザ+DB確認	S-M13-02-ADM,S-M13-02-MASTERS,S-M13-02-CBEVENT-091	① 新しいブラウザセッションで管理者ID 〔管理者ID-M1302-共有〕としてログインしている（S-M13-02-ADM）／② 店舗Aとクレジットカード決済が登録済みである（S-M13-02-MASTERS）／③ イベントID 〔イベントID-M1302-CB091〕（登録時に振られたイベントIDを控えてある）はイベント名(日)「更新前イベントM1302-CB091」、クレジットカード決済オン、参加費500で、日程ID 〔日程ID-M1302-CB091〕（登録時に振られた日程IDを控えてある）は開始時間2026-11-01 10:00・参加費500・オンライン受付あり、申込ID 〔申込ID-M1302-CB091〕（登録時に振られた申込IDを控えてある）の1件がある日程の1件だけである（登録時に振られたIDを控えてある）（S-M13-02-CBEVENT-091）	1. ID 〔イベントID-M1302-CB091〕のイベント編集画面を開く／2. イベント名(日)を「更新後イベントM1302-CB091」に変更し、支払方法のクレジットカード決済はオンのままにする／3. 更新ボタンを押す／4. DBでID 〔イベントID-M1302-CB091〕のイベント名(日)と支払方法を確認する	ID 〔イベントID-M1302-CB091〕のイベント名(日)が「更新前イベントM1302-CB091」から「更新後イベントM1302-CB091」に更新され、支払方法がクレジットカード決済オンのままであること	0214 イベント編集 / 機能仕様 処理概要、表示メッセージ 申込済みの場合支払方法を変更できない・M13-02-MSG-019	CB-M13-02-002
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M13-02-CBEVENT-090	イベント・日程・申込	申込なし・有料オンライン日程なしのイベント(090)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1302-CB090〕）／日程IDは登録時に画面が振る（控える。以下〔日程ID-M1302-CB090〕）／イベント名(日)=更新前イベントM1302-CB090／店舗A／公開／クレジットカード決済オン／参加費0／日程ID 〔日程ID-M1302-CB090〕の1件だけ（開始時間2026-11-01 10:00・参加費0・オンライン受付なし）／申込0件／デッキ登録なし	IT-M13-02-090専用。支払方法を変えずに更新したときの保存	店舗Aに編集権限を持つM13-02の試験管理者で管理画面にログインし、メニューの「イベント管理」→「イベント一覧」で「新規作成」を押してイベント登録画面を開く。イベント名(日)に「更新前イベントM1302-CB090」、イベント名(英)に「M1302-CB090-EVENTE」を入れ、店舗で「店舗A」、フォーマットで「スタンダード」、ルール適用度で「初心者歓迎」、公開状態で「公開」を選び、定員に「16」、参加費に「0」を入れ、支払方法の「クレジットカード決済」にチェックを入れ、ここに書いていない項目は初期表示のままにして「登録」を押す。フォーマット「スタンダード」、ルール適用度「初心者歓迎」、定員「16」は、シードが値を定めていない項目なので、ここに書いた値を入れる。イベント一覧でイベント名「更新前イベントM1302-CB090」の行に表示されたイベントIDを控える（〔イベントID-M1302-CB090〕）。イベント一覧でイベント名「更新前イベントM1302-CB090」を押してイベント編集画面を開き、「日程追加」を押して日程登録画面を開く。開始時間に「2026-11-01 10:00」を入れ、「受付あり」のチェックを外し、「デッキ登録あり」のチェックを外し、「オンライン受付あり」のチェックは外したままにし、参加費が「0」であることを確かめ、定員・公開状態は初期表示（イベントと同じ値）のままにして「登録」を押す。遷移した日程編集画面の「イベント詳細ID」に表示された番号を日程IDとして控える（〔日程ID-M1302-CB090〕）。申込とデッキは登録しない。	ケース専用
+S-M13-02-CBEVENT-091	イベント・日程・申込	申込あり・有料オンライン日程ありのイベント(091)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1302-CB091〕）／日程IDは登録時に画面が振る（控える。以下〔日程ID-M1302-CB091〕）／申込IDは登録時に画面が振る（控える。以下〔申込ID-M1302-CB091〕）／イベント名(日)=更新前イベントM1302-CB091／店舗A／公開／クレジットカード決済オン／参加費500／日程ID 〔日程ID-M1302-CB091〕の1件だけ（開始時間2026-11-01 10:00・参加費500・オンライン受付あり）／申込ID 〔申込ID-M1302-CB091〕の1件／デッキ登録なし	IT-M13-02-091専用。支払方法を変えずに更新したときの保存	店舗Aに編集権限を持つM13-02の試験管理者で管理画面にログインし、メニューの「イベント管理」→「イベント一覧」で「新規作成」を押してイベント登録画面を開く。イベント名(日)に「更新前イベントM1302-CB091」、イベント名(英)に「M1302-CB091-EVENTE」を入れ、店舗で「店舗A」、フォーマットで「スタンダード」、ルール適用度で「初心者歓迎」、公開状態で「公開」を選び、定員に「16」、参加費に「500」を入れ、支払方法の「クレジットカード決済」にチェックを入れ、ここに書いていない項目は初期表示のままにして「登録」を押す。フォーマット「スタンダード」、ルール適用度「初心者歓迎」、定員「16」は、シードが値を定めていない項目なので、ここに書いた値を入れる。イベント一覧でイベント名「更新前イベントM1302-CB091」の行に表示されたイベントIDを控える（〔イベントID-M1302-CB091〕）。イベント一覧でイベント名「更新前イベントM1302-CB091」を押してイベント編集画面を開き、「日程追加」を押して日程登録画面を開く。開始時間に「2026-11-01 10:00」を入れ、「受付あり」のチェックを外し、「デッキ登録あり」のチェックを外し、「オンライン受付あり」にチェックを入れてオンライン受付開始時間に「2026-10-25 12:00」、オンライン受付終了時間に「2026-10-31 23:00」を入れ、参加費が「500」であることを確かめ、定員・公開状態は初期表示（イベントと同じ値）のままにして「登録」を押す。遷移した日程編集画面の「イベント詳細ID」に表示された番号を日程IDとして控える（〔日程ID-M1302-CB091〕）。メニューの「イベント管理」→「イベント申込登録」を開き、イベント名・略称に「更新前イベントM1302-CB091」を入れ、開催日の開始日が2026-11-01以前であることを確かめて「検索」を押す。検索結果の日程「2026-11-01 10:00」の行で「新規登録」を押す。開いた画面でプレイヤーの「検索」を押し、プレイヤー検索に会員登録済みの会員（この日程にまだ申込していない会員。該当する会員が無ければ、フロントの新規会員登録画面で会員を登録しておく）の名前を入れて「検索する」を押し、その会員の行の「決定」を押す。申込状況・支払方法は初期表示のままにして「登録」を押す。遷移したイベント申込詳細・編集画面の「申込ID」に表示された番号を控える（〔申込ID-M1302-CB091〕）。デッキは登録しない。	ケース専用
+項目ID	扱い	テストID	理由
+CB-M13-02-001	ケース化	IT-M13-02-090	要因F01〜F03の組。申込がなく、支払方法を現状のまま、有料かつオンライン受付ありの日程も無いイベントは、イベント名の更新が保存され支払方法は変わらない（L0089,L0093-L0094,L0269）
+CB-M13-02-002	ケース化	IT-M13-02-091	要因F01〜F03の組。申込があり有料かつオンライン受付ありの日程があっても、支払方法を現状のままにした更新は保存され、支払方法は変わらない（L0089,L0093-L0094,L0269）
+CB-M13-02-003	既存ケースで確認済み	IT-M13-02-050	F04=あり（デッキ登録のある日程）を含む一括削除の行。申込の有無は結果に効かない打ち切り。IT-M13-02-050はデッキ登録なしの日程050Aとデッキ登録ありの日程050Bを選んでチェックした日程削除を確定し、手順5のDBで両日程が削除されていないことを見ている（L0281）
+CB-M13-02-004	既存ケースで確認済み	IT-M13-02-051	F05=あり（申込のある日程）を含む一括削除の行。デッキ登録の有無は結果に効かない打ち切り。IT-M13-02-051は申込のない日程051Aと申込のある日程051Bを選んでチェックした日程削除を確定し、手順のDBで両日程が削除されていないことを見ている（L0281）
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M13-03_cb_test_cases.tsv integration_test/casegen/combination/cases/M13-03_cb_seed_data.tsv integration_test/casegen/combination/cases/M13-03_cb_dispositions.tsv integration_test/casegen/combination/review/M13-03_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M13-03-063	IT-0366	REQ-0214-sheet-7-R008,REQ-0214-sheet-7-R009		ITA-11	P1	ブラウザ+DB確認	S-M13-03-ADM,S-M13-03-CBDATE-063	① ログインID=m1303_adminの稼働中管理者でログインし、店舗ID 〔店舗ID-M1303-共有A〕の店舗Aは編集でき、店舗ID 〔店舗ID-M1303-共有B〕の店舗Bは編集できない（登録時に振られた店舗ID・管理者IDを控えてある。〔店舗ID-M1303-共有A〕・〔店舗ID-M1303-共有B〕・〔管理者ID-M1303-共有〕）（S-M13-03-ADM）／② イベントID 〔イベントID-M1303-CB063〕が、イベント名(日)=M1303-CB063-EVENT、店舗A、ルール適用度=初心者歓迎、チーム戦オフ、定員10、参加費0、公開状態=公開、支払方法=未設定（クレジットカード決済なし）、未削除、日程0件で登録されている（登録時に振られたイベントIDを控えてある。〔イベントID-M1303-CB063〕）（S-M13-03-CBDATE-063）	1. イベントID 〔イベントID-M1303-CB063〕の日程追加画面を開く／2. 開始時間に「2026/09/10 18:00」、定員に10、参加費に1000、公開状態に公開を設定する／3. 受付あり、デッキ登録あり、デッキ登録を終了するをオフにし、オンライン受付ありをオンにして、オンライン受付開始時間に「2026/09/01 09:00」、オンライン受付終了時間に「2026/09/09 23:00」を設定する／4. 登録ボタンを押す／5. DBでイベントID 〔イベントID-M1303-CB063〕の日程を確認する	イベントID 〔イベントID-M1303-CB063〕の日程が0件のままで、日程が追加されないこと	0214 日程登録 / 機能仕様 処理概要（オンライン受付ありかつ有料のとき親イベントの支払方法をチェックする）	CB-M13-03-001
+IT-M13-03-064	IT-0366	REQ-0214-sheet-7-R008,REQ-0214-sheet-7-R009		ITA-11	P1	ブラウザ+DB確認	S-M13-03-ADM,S-M13-03-CBDATE-064	① ログインID=m1303_adminの稼働中管理者でログインし、店舗ID 〔店舗ID-M1303-共有A〕の店舗Aは編集でき、店舗ID 〔店舗ID-M1303-共有B〕の店舗Bは編集できない（登録時に振られた店舗ID・管理者IDを控えてある。〔店舗ID-M1303-共有A〕・〔店舗ID-M1303-共有B〕・〔管理者ID-M1303-共有〕）（S-M13-03-ADM）／② イベントID 〔イベントID-M1303-CB064〕が、イベント名(日)=M1303-CB064-EVENT、店舗A、チーム戦オフ、定員10、参加費0、公開状態=公開、支払方法=未設定（クレジットカード決済なし）、未削除で登録され、日程ID 〔日程ID-M1303-CB064〕が開始時間2026/10/01 18:00、受付あり・デッキ登録あり・デッキ登録を終了する・オンライン受付ありはすべてオフ、各条件付き日時は空、定員16、参加費0、公開状態=公開の1件だけある（登録時に振られたイベントID・日程IDを控えてある。〔イベントID-M1303-CB064〕・〔日程ID-M1303-CB064〕）（S-M13-03-CBDATE-064）	1. イベントID 〔イベントID-M1303-CB064〕の日程ID 〔日程ID-M1303-CB064〕の日程編集画面を開く／2. 参加費を1000に変更する／3. オンライン受付ありをオンにして、オンライン受付開始時間に「2026/09/01 09:00」、オンライン受付終了時間に「2026/09/30 23:00」を設定する／4. 更新ボタンを押す／5. DBで日程ID 〔日程ID-M1303-CB064〕の参加費とオンライン受付ありを確認する	日程ID 〔日程ID-M1303-CB064〕の参加費が0、オンライン受付ありがオフのまま更新されないこと	0214 日程登録 / 機能仕様 処理概要（オンライン受付ありかつ有料のとき親イベントの支払方法をチェックする）	CB-M13-03-002
+IT-M13-03-065	IT-0366	REQ-0214-sheet-7-R008		ITA-11	P1	ブラウザ+DB確認	S-M13-03-ADM,S-M13-03-CBDATE-065	① ログインID=m1303_adminの稼働中管理者でログインし、店舗ID 〔店舗ID-M1303-共有A〕の店舗Aは編集でき、店舗ID 〔店舗ID-M1303-共有B〕の店舗Bは編集できない（登録時に振られた店舗ID・管理者IDを控えてある。〔店舗ID-M1303-共有A〕・〔店舗ID-M1303-共有B〕・〔管理者ID-M1303-共有〕）（S-M13-03-ADM）／② イベントID 〔イベントID-M1303-CB065〕が、イベント名(日)=M1303-CB065-EVENT、店舗A、チーム戦オフ、定員10、参加費0、公開状態=公開、支払方法=未設定（クレジットカード決済なし）、未削除で登録され、日程ID 〔日程ID-M1303-CB065〕が開始時間2026/10/01 18:00、受付あり・デッキ登録あり・デッキ登録を終了する・オンライン受付ありはすべてオフ、各条件付き日時は空、定員16、参加費0、公開状態=公開の1件だけある（登録時に振られたイベントID・日程IDを控えてある。〔イベントID-M1303-CB065〕・〔日程ID-M1303-CB065〕）（S-M13-03-CBDATE-065）	1. イベントID 〔イベントID-M1303-CB065〕の日程ID 〔日程ID-M1303-CB065〕の日程編集画面を開く／2. 参加費は0のまま、定員を20に変更する／3. オンライン受付ありをオンにして、オンライン受付開始時間に「2026/09/01 09:00」、オンライン受付終了時間に「2026/09/30 23:00」を設定する／4. 更新ボタンを押す／5. DBで日程ID 〔日程ID-M1303-CB065〕の定員とオンライン受付ありを確認する	日程ID 〔日程ID-M1303-CB065〕の定員が16から20に、オンライン受付ありがオフからオンに更新されること	0214 日程登録 / 機能仕様 処理概要（オンライン受付ありかつ有料のとき親イベントの支払方法をチェックする）	CB-M13-03-003
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M13-03-CBDATE-063	イベント・日程	親イベントの支払方法が未設定のイベント(063)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1303-CB063〕）／イベント名(日)=M1303-CB063-EVENT／店舗A（店舗ID 〔店舗ID-M1303-共有A〕）／ルール適用度=初心者歓迎／チーム戦オフ／定員10／参加費0／公開状態=公開／支払方法=未設定（クレジットカード決済なし）／未削除／日程0件	IT-M13-03-063専用。オンライン受付ありかつ有料の日程の新規登録エラー	試験管理者（ログインID=m1303_admin）で管理画面にログインし、イベント一覧画面で新規作成ボタンを押す。イベント登録画面でイベント名(日)に「M1303-CB063-EVENT」を入れ、店舗に店舗A、ルール適用度に初心者歓迎、公開状態に公開を選び、チーム戦フラグをオフにし、定員に10、参加費に0を入れ、支払方法はクレジットカード決済のチェックを外して何も選ばず、賞品(日)と賞品(英)は空のままにし、入力が必須のイベント名(英)とフォーマットには任意の値を入れて登録ボタンを押す。イベント一覧画面でイベント名「M1303-CB063-EVENT」の行に表示されたイベントIDを控える（〔イベントID-M1303-CB063〕）。イベント編集画面の日程一覧に「登録されている日程はありません」と表示されていること（日程0件）を確かめる。	ケース専用
+S-M13-03-CBDATE-064	イベント・日程	親イベントの支払方法が未設定で日程が1件あるイベント(064)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1303-CB064〕）／イベント名(日)=M1303-CB064-EVENT／店舗A（店舗ID 〔店舗ID-M1303-共有A〕）／ルール適用度=初心者歓迎／チーム戦オフ／定員10／参加費0／公開状態=公開／支払方法=未設定（クレジットカード決済なし）／未削除／日程IDは登録時に画面が振る（控える。以下〔日程ID-M1303-CB064〕）／日程ID 〔日程ID-M1303-CB064〕の1件だけ（開始時間=2026/10/01 18:00／受付あり・デッキ登録あり・デッキ登録を終了する・オンライン受付ありはすべてオフ／各条件付き日時は空／定員16／参加費0／公開状態=公開）	IT-M13-03-064専用。オンライン受付ありかつ有料の日程の更新エラー	試験管理者（ログインID=m1303_admin）で管理画面にログインし、イベント一覧画面で新規作成ボタンを押す。イベント登録画面でイベント名(日)に「M1303-CB064-EVENT」を入れ、店舗に店舗A、ルール適用度に初心者歓迎、公開状態に公開を選び、チーム戦フラグをオフにし、定員に10、参加費に0を入れ、支払方法はクレジットカード決済のチェックを外して何も選ばず、賞品(日)と賞品(英)は空のままにし、入力が必須のイベント名(英)とフォーマットには任意の値を入れて登録ボタンを押す。イベント一覧画面でイベント名「M1303-CB064-EVENT」の行に表示されたイベントIDを控える（〔イベントID-M1303-CB064〕）。イベント編集画面で日程追加ボタンを押し、日程登録画面で開始時間に「2026/10/01 18:00」を入れ、受付あり・デッキ登録あり・デッキ登録を終了する・オンライン受付ありをすべてオフにし、受付開始時間・受付終了時間・デッキ登録締切・オンライン受付開始時間・オンライン受付終了時間は空にし、定員に16、参加費に0を入れ、公開状態に公開を選び、賞品(日)と賞品(英)は空のまま登録ボタンを押す。イベント編集画面の日程一覧でその日程の編集を押し、日程編集画面に表示されたイベント詳細ID（日程ID）を控える（〔日程ID-M1303-CB064〕）。	ケース専用
+S-M13-03-CBDATE-065	イベント・日程	親イベントの支払方法が未設定で日程が1件あるイベント(065)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1303-CB065〕）／イベント名(日)=M1303-CB065-EVENT／店舗A（店舗ID 〔店舗ID-M1303-共有A〕）／ルール適用度=初心者歓迎／チーム戦オフ／定員10／参加費0／公開状態=公開／支払方法=未設定（クレジットカード決済なし）／未削除／日程IDは登録時に画面が振る（控える。以下〔日程ID-M1303-CB065〕）／日程ID 〔日程ID-M1303-CB065〕の1件だけ（開始時間=2026/10/01 18:00／受付あり・デッキ登録あり・デッキ登録を終了する・オンライン受付ありはすべてオフ／各条件付き日時は空／定員16／参加費0／公開状態=公開）	IT-M13-03-065専用。参加費が無料の日程の更新	試験管理者（ログインID=m1303_admin）で管理画面にログインし、イベント一覧画面で新規作成ボタンを押す。イベント登録画面でイベント名(日)に「M1303-CB065-EVENT」を入れ、店舗に店舗A、ルール適用度に初心者歓迎、公開状態に公開を選び、チーム戦フラグをオフにし、定員に10、参加費に0を入れ、支払方法はクレジットカード決済のチェックを外して何も選ばず、賞品(日)と賞品(英)は空のままにし、入力が必須のイベント名(英)とフォーマットには任意の値を入れて登録ボタンを押す。イベント一覧画面でイベント名「M1303-CB065-EVENT」の行に表示されたイベントIDを控える（〔イベントID-M1303-CB065〕）。イベント編集画面で日程追加ボタンを押し、日程登録画面で開始時間に「2026/10/01 18:00」を入れ、受付あり・デッキ登録あり・デッキ登録を終了する・オンライン受付ありをすべてオフにし、受付開始時間・受付終了時間・デッキ登録締切・オンライン受付開始時間・オンライン受付終了時間は空にし、定員に16、参加費に0を入れ、公開状態に公開を選び、賞品(日)と賞品(英)は空のまま登録ボタンを押す。イベント編集画面の日程一覧でその日程の編集を押し、日程編集画面に表示されたイベント詳細ID（日程ID）を控える（〔日程ID-M1303-CB065〕）。	ケース専用
+項目ID	扱い	テストID	理由
+CB-M13-03-001	ケース化	IT-M13-03-063	要因F01〜F04の組。新規登録で、オンライン受付ありかつ参加費が有料のとき、親イベントにクレジットカード決済の設定が無ければエラーになり日程は追加されない（L0056-L0057）
+CB-M13-03-002	ケース化	IT-M13-03-064	要因F01〜F04の組。既存日程の更新でも、オンライン受付ありかつ参加費が有料のとき、親イベントにクレジットカード決済の設定が無ければエラーになり日程は更新されない（L0056-L0057）
+CB-M13-03-003	ケース化	IT-M13-03-065	要因F01・F03=無料の行。参加費が無料なら親イベントの支払方法を調べないので、オンライン受付ありで支払方法が未設定でも既存日程の更新は保存される（L0056-L0057）
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M13-10_cb_test_cases.tsv integration_test/casegen/combination/cases/M13-10_cb_seed_data.tsv integration_test/casegen/combination/cases/M13-10_cb_dispositions.tsv integration_test/casegen/combination/review/M13-10_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M13-10-044	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M13-10-MASTER,S-M13-10-ADM-DPA,S-M13-10-CBKEEPALL-044	① 店舗ID〔店舗ID-M1310-共有A〕（登録時に振られた店舗IDを控えてある）、申込状況「申込済み」「キャンセル済み」が参照できる（S-M13-10-MASTER）／② 店舗ID〔店舗ID-M1310-共有A〕を編集できる管理者でログインしている（S-M13-10-ADM-DPA）／③ イベント申込ID〔イベント申込ID-M1310-CB044〕（登録時に振られたイベント申込IDを控えてある）は店舗ID〔店舗ID-M1310-共有A〕・有効なイベント日程ID〔イベント日程ID-M1310-CB044〕（登録時に振られたイベント日程IDを控えてある）に紐づくチーム人数3人の申込済みの申込で、有効な参加者はプレイヤーID〔継続プレイヤーID-M1310-CB044A〕（登録時に振られた継続プレイヤーIDを控えてある）・〔継続プレイヤーID-M1310-CB044B〕（登録時に振られた継続プレイヤーIDを控えてある）・〔継続プレイヤーID-M1310-CB044C〕（登録時に振られた継続プレイヤーIDを控えてある）の3人である（S-M13-10-CBKEEPALL-044）	1. イベント申込ID〔イベント申込ID-M1310-CB044〕のイベント申込詳細・編集画面を開く／2. 申込状況で「キャンセル済み」を選択し、参加プレイヤーの3行は変更しない／3. 登録ボタンを押す／4. DBでイベント申込ID〔イベント申込ID-M1310-CB044〕の申込状況と参加者を確認する	イベント申込ID〔イベント申込ID-M1310-CB044〕の申込状況が「キャンセル済み」に更新され、参加者がプレイヤーID〔継続プレイヤーID-M1310-CB044A〕・〔継続プレイヤーID-M1310-CB044B〕・〔継続プレイヤーID-M1310-CB044C〕の3人のままであること	0214 イベント申込詳細・編集 / 業務ロジック 参加者の反映、入出力: 永続化	CB-M13-10-001
+IT-M13-10-045	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M13-10-MASTER,S-M13-10-ADM-DPA,S-M13-10-CBREMOVEONLY-045	① 店舗ID〔店舗ID-M1310-共有A〕（登録時に振られた店舗IDを控えてある）、申込状況「申込済み」「キャンセル済み」が参照できる（S-M13-10-MASTER）／② 店舗ID〔店舗ID-M1310-共有A〕を編集できる管理者でログインしている（S-M13-10-ADM-DPA）／③ イベント申込ID〔イベント申込ID-M1310-CB045〕（登録時に振られたイベント申込IDを控えてある）は店舗ID〔店舗ID-M1310-共有A〕・有効なイベント日程ID〔イベント日程ID-M1310-CB045〕（登録時に振られたイベント日程IDを控えてある）に紐づくチーム人数3人の申込済みの申込で、有効な参加者はプレイヤーID〔継続プレイヤーID-M1310-CB045A〕（登録時に振られた継続プレイヤーIDを控えてある）・〔外すプレイヤーID-M1310-CB045〕（登録時に振られた外すプレイヤーIDを控えてある）・〔継続プレイヤーID-M1310-CB045C〕（登録時に振られた継続プレイヤーIDを控えてある）の3人である（S-M13-10-CBREMOVEONLY-045）	1. イベント申込ID〔イベント申込ID-M1310-CB045〕のイベント申込詳細・編集画面を開く／2. プレイヤーID〔外すプレイヤーID-M1310-CB045〕の削除ボタンを押し、検索ボタンに切り替わった行は空のままにする／3. 登録ボタンを押す／4. DBでイベント申込ID〔イベント申込ID-M1310-CB045〕の参加者を確認する	イベント申込ID〔イベント申込ID-M1310-CB045〕の参加者がプレイヤーID〔継続プレイヤーID-M1310-CB045A〕・〔継続プレイヤーID-M1310-CB045C〕の2人となり、プレイヤーID〔外すプレイヤーID-M1310-CB045〕が含まれないこと	0214 イベント申込詳細・編集 / 業務ロジック 参加者の反映、入出力: 永続化	CB-M13-10-002
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M13-10-CBKEEPALL-044	イベント・日程・申込・検索	参加者を変えない申込(044)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1310-CB044〕）／イベント日程IDは登録時に画面が振る（控える。以下〔イベント日程ID-M1310-CB044〕）／イベント・日程は有効／開催日時=2026-09-10 10:00／店舗ID=〔店舗ID-M1310-共有A〕（S-M13-10-MASTERで控えた番号）／チーム人数=3／イベント申込IDは登録時に画面が振る（控える。以下〔イベント申込ID-M1310-CB044〕）／申込状況名=申込済み／プレイヤーIDは登録時に画面が振る（控える。以下〔継続プレイヤーID-M1310-CB044A〕〔継続プレイヤーID-M1310-CB044B〕〔継続プレイヤーID-M1310-CB044C〕）／会員IDは登録時に画面が振る（控える。以下〔継続会員ID-M1310-CB044A〕〔継続会員ID-M1310-CB044B〕〔継続会員ID-M1310-CB044C〕）／参加者関連IDは登録時に画面が振る（画面に表示されず、ケースでも使わないため控えない）・有効／有効な既存参加者数=3	IT-M13-10-044専用。参加者情報リストを変えずに申込状況だけ更新する	店舗Aを編集できる管理者（S-M13-10-ADM-DPA）で管理画面にログインして行う。イベント登録画面でイベント名(日)に「M1310-CB044イベント」、イベント名(英)に「M1310-CB044 Event」を入れ、店舗で「店舗A」、フォーマットで「スタンダード」を選び、公開状態で公開の値を選び、ほかの必須項目を入力して登録ボタンを押す。続けてイベント編集画面の日程追加ボタンを押し、日程登録画面で開始時間に「2026-09-10 10:00」を入れ、公開状態で公開の値を選び、ほかの必須項目を入力して登録ボタンを押す。登録後に表示される日程編集画面のイベントID欄とイベント詳細ID欄の番号を控える（〔イベントID-M1310-CB044〕・〔イベント日程ID-M1310-CB044〕）。1人目の参加プレイヤーにする会員を作る。フロントの会員情報登録画面でお名前の姓に「継続姓M1310-CB044A」、名に「継続名M1310-CB044A」、メールアドレスに未使用のアドレスを入れ、ほかの必須項目を入力して「同意して確認画面へ」を押し、確認画面で「登録する」を押す（会員と同時にプレイヤーが作られる）。管理画面の会員一覧で氏名「継続姓M1310-CB044A 継続名M1310-CB044A」の行に表示された会員IDを控える（〔継続会員ID-M1310-CB044A〕）。2人目の参加プレイヤーにする会員を作る。フロントの会員情報登録画面でお名前の姓に「継続姓M1310-CB044B」、名に「継続名M1310-CB044B」、メールアドレスに未使用のアドレスを入れ、ほかの必須項目を入力して「同意して確認画面へ」を押し、確認画面で「登録する」を押す（会員と同時にプレイヤーが作られる）。管理画面の会員一覧で氏名「継続姓M1310-CB044B 継続名M1310-CB044B」の行に表示された会員IDを控える（〔継続会員ID-M1310-CB044B〕）。3人目の参加プレイヤーにする会員を作る。フロントの会員情報登録画面でお名前の姓に「継続姓M1310-CB044C」、名に「継続名M1310-CB044C」、メールアドレスに未使用のアドレスを入れ、ほかの必須項目を入力して「同意して確認画面へ」を押し、確認画面で「登録する」を押す（会員と同時にプレイヤーが作られる）。管理画面の会員一覧で氏名「継続姓M1310-CB044C 継続名M1310-CB044C」の行に表示された会員IDを控える（〔継続会員ID-M1310-CB044C〕）。イベント申込登録画面で検索イベント名に「M1310-CB044イベント」を入れ、開催日を空にして検索するボタンを押し、開始時間「2026-09-10 10:00」の日程の新規登録ボタンを押す。イベント申込新規登録画面でプレイヤー情報の検索ボタンを押し、プレイヤー検索に「継続姓M1310-CB044A」を入れて検索するボタンを押し、一覧のID欄に表示されたプレイヤーIDを控えて（〔継続プレイヤーID-M1310-CB044A〕）、その行の決定ボタンを押す。登録ボタンを押し、表示されたイベント申込詳細・編集画面の申込ID欄の番号を控える（〔イベント申込ID-M1310-CB044〕）。続けて、イベント申込登録画面から同じ日程の新規登録ボタンでイベント申込新規登録画面をもう一度開き、プレイヤー情報の検索ボタンを押す。同じプレイヤー検索モーダルで「継続姓M1310-CB044B」を検索し、一覧のID欄に表示されたプレイヤーIDを控える（〔継続プレイヤーID-M1310-CB044B〕。決定ボタンは押さない）。同じプレイヤー検索モーダルで「継続姓M1310-CB044C」を検索し、一覧のID欄に表示されたプレイヤーIDを控える（〔継続プレイヤーID-M1310-CB044C〕。決定ボタンは押さない）。控えたらモーダルを閉じ、登録ボタンを押さずに画面を離れる。チーム人数「3」は画面で指定できないためDBへ直接設定する。2人目と3人目の参加者（〔継続プレイヤーID-M1310-CB044B〕・〔継続プレイヤーID-M1310-CB044C〕）をこのイベント申込へ有効な参加者として加えることは画面で指定できないためDBへ直接設定する	ケース専用
+S-M13-10-CBREMOVEONLY-045	イベント・日程・申込・検索	参加者を1人外すだけの申込(045)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1310-CB045〕）／イベント日程IDは登録時に画面が振る（控える。以下〔イベント日程ID-M1310-CB045〕）／イベント・日程は有効／開催日時=2026-09-10 10:00／店舗ID=〔店舗ID-M1310-共有A〕（S-M13-10-MASTERで控えた番号）／チーム人数=3／イベント申込IDは登録時に画面が振る（控える。以下〔イベント申込ID-M1310-CB045〕）／申込状況名=申込済み／プレイヤーIDは登録時に画面が振る（控える。以下〔継続プレイヤーID-M1310-CB045A〕〔外すプレイヤーID-M1310-CB045〕〔継続プレイヤーID-M1310-CB045C〕）／会員IDは登録時に画面が振る（控える。以下〔継続会員ID-M1310-CB045A〕〔外す会員ID-M1310-CB045〕〔継続会員ID-M1310-CB045C〕）／参加者関連IDは登録時に画面が振る（画面に表示されず、ケースでも使わないため控えない）・有効／有効な既存参加者数=3	IT-M13-10-045専用。参加者情報リストから1人を外し、追加はしない	店舗Aを編集できる管理者（S-M13-10-ADM-DPA）で管理画面にログインして行う。イベント登録画面でイベント名(日)に「M1310-CB045イベント」、イベント名(英)に「M1310-CB045 Event」を入れ、店舗で「店舗A」、フォーマットで「スタンダード」を選び、公開状態で公開の値を選び、ほかの必須項目を入力して登録ボタンを押す。続けてイベント編集画面の日程追加ボタンを押し、日程登録画面で開始時間に「2026-09-10 10:00」を入れ、公開状態で公開の値を選び、ほかの必須項目を入力して登録ボタンを押す。登録後に表示される日程編集画面のイベントID欄とイベント詳細ID欄の番号を控える（〔イベントID-M1310-CB045〕・〔イベント日程ID-M1310-CB045〕）。1人目の参加プレイヤーにする会員を作る。フロントの会員情報登録画面でお名前の姓に「継続姓M1310-CB045A」、名に「継続名M1310-CB045A」、メールアドレスに未使用のアドレスを入れ、ほかの必須項目を入力して「同意して確認画面へ」を押し、確認画面で「登録する」を押す（会員と同時にプレイヤーが作られる）。管理画面の会員一覧で氏名「継続姓M1310-CB045A 継続名M1310-CB045A」の行に表示された会員IDを控える（〔継続会員ID-M1310-CB045A〕）。2人目の参加プレイヤーにする会員を作る。フロントの会員情報登録画面でお名前の姓に「外す姓M1310-CB045」、名に「外す名M1310-CB045」、メールアドレスに未使用のアドレスを入れ、ほかの必須項目を入力して「同意して確認画面へ」を押し、確認画面で「登録する」を押す（会員と同時にプレイヤーが作られる）。管理画面の会員一覧で氏名「外す姓M1310-CB045 外す名M1310-CB045」の行に表示された会員IDを控える（〔外す会員ID-M1310-CB045〕）。3人目の参加プレイヤーにする会員を作る。フロントの会員情報登録画面でお名前の姓に「継続姓M1310-CB045C」、名に「継続名M1310-CB045C」、メールアドレスに未使用のアドレスを入れ、ほかの必須項目を入力して「同意して確認画面へ」を押し、確認画面で「登録する」を押す（会員と同時にプレイヤーが作られる）。管理画面の会員一覧で氏名「継続姓M1310-CB045C 継続名M1310-CB045C」の行に表示された会員IDを控える（〔継続会員ID-M1310-CB045C〕）。イベント申込登録画面で検索イベント名に「M1310-CB045イベント」を入れ、開催日を空にして検索するボタンを押し、開始時間「2026-09-10 10:00」の日程の新規登録ボタンを押す。イベント申込新規登録画面でプレイヤー情報の検索ボタンを押し、プレイヤー検索に「継続姓M1310-CB045A」を入れて検索するボタンを押し、一覧のID欄に表示されたプレイヤーIDを控えて（〔継続プレイヤーID-M1310-CB045A〕）、その行の決定ボタンを押す。登録ボタンを押し、表示されたイベント申込詳細・編集画面の申込ID欄の番号を控える（〔イベント申込ID-M1310-CB045〕）。続けて、イベント申込登録画面から同じ日程の新規登録ボタンでイベント申込新規登録画面をもう一度開き、プレイヤー情報の検索ボタンを押す。同じプレイヤー検索モーダルで「外す姓M1310-CB045」を検索し、一覧のID欄に表示されたプレイヤーIDを控える（〔外すプレイヤーID-M1310-CB045〕。決定ボタンは押さない）。同じプレイヤー検索モーダルで「継続姓M1310-CB045C」を検索し、一覧のID欄に表示されたプレイヤーIDを控える（〔継続プレイヤーID-M1310-CB045C〕。決定ボタンは押さない）。控えたらモーダルを閉じ、登録ボタンを押さずに画面を離れる。チーム人数「3」は画面で指定できないためDBへ直接設定する。2人目と3人目の参加者（〔外すプレイヤーID-M1310-CB045〕・〔継続プレイヤーID-M1310-CB045C〕）をこのイベント申込へ有効な参加者として加えることは画面で指定できないためDBへ直接設定する	ケース専用
+項目ID	扱い	テストID	理由
+CB-M13-10-001	ケース化	IT-M13-10-044	検証を通過して参加者情報リストに変更が無い組。既存025は申込履歴件数しか見ておらず参加者が増減しないことは未確認のため、L0148・L0165〜L0167をDBの参加者で確かめる
+CB-M13-10-002	ケース化	IT-M13-10-045	検証を通過して外れのみの組。既存024・042は追加を伴うため、追加の無い削除だけをL0148・L0167で確かめる
+指摘	処置	理由	直した所
+IT-M13-10-044	採用	設計書 L0146・L0166 は検証通過時に申込を更新すると定め、申込状況の更新が期待結果に無かった。確かめる所（DB）が同じ	IT-M13-10-044 の手順4を申込状況と参加者の確認にし、期待結果に申込状況が「キャンセル済み」に更新されることを追加
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M13-04_cb_test_cases.tsv integration_test/casegen/combination/cases/M13-04_cb_seed_data.tsv integration_test/casegen/combination/cases/M13-04_cb_dispositions.tsv integration_test/casegen/combination/review/M13-04_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M13-08_cb_test_cases.tsv integration_test/casegen/combination/cases/M13-08_cb_seed_data.tsv integration_test/casegen/combination/cases/M13-08_cb_dispositions.tsv integration_test/casegen/combination/review/M13-08_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M13-08-018	IT-0366			ITA-11	P2	ブラウザのみ	S-M13-08-REF,S-M13-08-ADM,S-M13-08-CBNOSIDE1P-018	① 新宿店（店舗ID=〔店舗ID-M1308-共有A〕）と、カードID 〔カードID-M1308-共有A〕「稲妻」・英語名「Lightning Bolt」、〔カードID-M1308-共有B〕「島」・英語名「Island」が登録されている（呼び名で示した番号は登録時に振られたものを控えてある）（S-M13-08-REF）／② 新しいブラウザセッションを開始し、新宿店の編集権限を持つ管理者ID 130800021で管理画面にログインしている（S-M13-08-ADM）／③ 新宿店にイベントID 〔イベントID-M1308-CB018〕「M1308-CB018無サイド一頁大会」・日程ID 〔日程ID-M1308-CB018〕・開催日2026-12-01・申込ID 〔申込ID-M1308-CB018〕・申込選手ID 〔申込選手ID-M1308-CB018〕・会員ID 〔会員ID-M1308-CB018〕・プレイヤーID 〔プレイヤーID-M1308-CB018〕・デッキID 〔デッキID-M1308-CB018〕が申込済み、イベント用、削除なしで登録され、デッキのプレイヤー名は「一頁無サイド 太郎 M1308-CB018」、メインは稲妻4枚と島20枚、サイドは0枚（カード無し）である（呼び名で示した番号は登録時に振られたものを控えてある。申込選手IDだけは画面に表示されないため控えていない）（S-M13-08-CBNOSIDE1P-018）	1. イベント名に「M1308-CB018無サイド一頁大会」を指定してデッキ登録を検索する／2. デッキ表示ボタンを押す／3. 「一頁無サイド 太郎 M1308-CB018」のデッキのページ構成とサイドボードを確認する	メイン24枚のデッキが1ページで表示され、現在ページ番号が1、総ページ数が1、サイド枚数が0となり、サイドボードにカードが表示されないこと	0214 デッキ表示 / 業務ロジック ページの分割、カードリストの組み立て	CB-M13-08-001
+IT-M13-08-019	IT-0366			ITA-11	P2	ブラウザのみ	S-M13-08-REF,S-M13-08-ADM,S-M13-08-CBNOSIDE2P-019	① 新宿店（店舗ID=〔店舗ID-M1308-共有A〕）が登録されている（呼び名で示した番号は登録時に振られたものを控えてある）（S-M13-08-REF）／② 新しいブラウザセッションを開始し、新宿店の編集権限を持つ管理者ID 130800021で管理画面にログインしている（S-M13-08-ADM）／③ 新宿店にイベントID 〔イベントID-M1308-CB019〕「M1308-CB019無サイド四十一枚大会」・日程ID 〔日程ID-M1308-CB019〕・開催日2026-12-02・申込ID 〔申込ID-M1308-CB019〕・申込選手ID 〔申込選手ID-M1308-CB019〕・会員ID 〔会員ID-M1308-CB019〕・プレイヤーID 〔プレイヤーID-M1308-CB019〕「無サイド四十一枚 花子 M1308-CB019」・デッキID 〔デッキID-M1308-CB019〕が申込済み、イベント用、削除なしで登録され、メインには異なるカードID 〔カードID-M1308-CB019A01〕〜〔カードID-M1308-CB019A41〕が各1枚、サイドは0枚（カード無し）である（呼び名で示した番号は登録時に振られたものを控えてある。申込選手IDだけは画面に表示されないため控えていない）（S-M13-08-CBNOSIDE2P-019）	1. イベント名に「M1308-CB019無サイド四十一枚大会」を指定してデッキ登録を検索する／2. デッキ表示ボタンを押す／3. 「無サイド四十一枚 花子 M1308-CB019」のデッキの各ページを確認する	メイン41枚のデッキがメイン40枚と1枚の2ページに分割され、各ページに現在ページ番号・総ページ数2とサイド枚数0が表示され、どのページにもサイドボードのカードが表示されないこと	0214 デッキ表示 / 業務ロジック ページの分割、カードリストの組み立て	CB-M13-08-002
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M13-08-CBNOSIDE1P-018	イベント・日程・申込・会員・プレイヤー・デッキ	サイド無し・メイン1ページのデッキ(018)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1308-CB018〕）、日程IDは登録時に画面が振る（控える。以下〔日程ID-M1308-CB018〕）、申込IDは登録時に画面が振る（控える。以下〔申込ID-M1308-CB018〕）、申込選手IDは登録時に画面が振る（画面に表示されないため控えない。以下〔申込選手ID-M1308-CB018〕）、会員IDは登録時に画面が振る（控える。以下〔会員ID-M1308-CB018〕）・メール=m1308-cb018@example.test、プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-M1308-CB018〕）、デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1308-CB018〕）／新宿店／イベント名「M1308-CB018無サイド一頁大会」／イベント名(英)「M1308-CB018-EN」／開催日2026-12-01／デッキのプレイヤー名「一頁無サイド 太郎 M1308-CB018」／申込済み／イベント用デッキ／メインはカードID 〔カードID-M1308-共有A〕を4枚と〔カードID-M1308-共有B〕を20枚／サイドは0枚（カード無し）／削除なし	IT-M13-08-018専用。メインが1ページでサイドが無いデッキのページ構成確認	フロントの会員情報登録画面で、お名前に申込登録のプレイヤー検索で探せる任意の姓名、お名前(フリガナ)に任意のカタカナ、メールアドレスに「m1308-cb018@example.test」、そのほかの必須項目に入力チェックを通る任意の値を入れ、同意して確認画面へを押し、会員情報登録確認画面で登録するを押す（仮会員になった場合は届いたメールに書かれたURLを開いて本会員にする。会員の登録と同時にプレイヤーも作られる）。管理画面の会員一覧でメールアドレス「m1308-cb018@example.test」の会員を開き、会員登録画面の会員ID欄に表示された番号を控える（〔会員ID-M1308-CB018〕）。新宿店の編集権限を持つ管理者で管理画面にログインし、イベント一覧で新規作成を押し、イベント登録画面で店舗に「新宿店」、イベント名(日)に「M1308-CB018無サイド一頁大会」、イベント名(英)に「M1308-CB018-EN」、フォーマット・ルール適用度・公開状態・定員に入力チェックを通る任意の値、参加費に「0」を入れて登録を押す。イベント一覧でイベント名「M1308-CB018無サイド一頁大会」の行のID欄に表示された番号を控える（〔イベントID-M1308-CB018〕）。イベント編集画面で日程追加を押し、日程登録画面で開始時間に「2026-12-01」の任意の時刻を入れ、オンライン受付ありにチェックを付けてオンライン受付開始時間とオンライン受付終了時間に開始時間より前の日時を入れ、参加費に「0」、そのほかの必須項目に入力チェックを通る任意の値を入れて登録を押す。イベント編集画面の日程一覧から日程編集画面を開き、イベント詳細ID欄に表示された番号を日程IDとして控える（〔日程ID-M1308-CB018〕）。イベント申込登録画面でイベント名・略称に「M1308-CB018無サイド一頁大会」を入れて検索を押し、検索結果の該当日程の新規登録を押す。イベント申込詳細・編集画面でプレイヤーの検索を押し、会員のお名前で検索して該当行のID欄に表示されたプレイヤーIDを控え（〔プレイヤーID-M1308-CB018〕）、決定を押してからイベント申込を登録を押す（申込状況は申込済みで登録される）。登録後に開く画面の申込ID欄に表示された番号を控える（〔申込ID-M1308-CB018〕）。申込選手IDは登録時に画面が振るが画面に表示されないため控えない（〔申込選手ID-M1308-CB018〕）。管理画面のデッキ一覧で新規登録を押し、デッキ新規登録画面でデッキタイプに「event」（イベント用）、フォーマットとアーキタイプに登録済みの任意のもの、公開状態に任意の値を選び、プレイヤーの検索するを押してプレイヤー検索で検索語を空のまま検索を押し、ID欄が〔プレイヤーID-M1308-CB018〕の行の選択を押し、プレイヤー名に「一頁無サイド 太郎 M1308-CB018」を入れ（選択時に自動で入った値は消して入れ直す）、イベントの検索するを押してイベント検索でイベント名に「M1308-CB018無サイド一頁大会」を入れて検索を押し、開催日2026-12-01の行の選択を押し、メインボードに「4 稲妻」「20 島」を1行ずつ、サイドボードは空のままで新規登録を押す。保存後に開くデッキ編集画面のURLに含まれる番号をデッキIDとして控える（〔デッキID-M1308-CB018〕）。	ケース専用
+S-M13-08-CBNOSIDE2P-019	イベント・日程・申込・会員・プレイヤー・デッキ・カード	サイド無し・メイン2ページのデッキ(019)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1308-CB019〕）、日程IDは登録時に画面が振る（控える。以下〔日程ID-M1308-CB019〕）、申込IDは登録時に画面が振る（控える。以下〔申込ID-M1308-CB019〕）、申込選手IDは登録時に画面が振る（画面に表示されないため控えない。以下〔申込選手ID-M1308-CB019〕）、会員IDは登録時に画面が振る（控える。以下〔会員ID-M1308-CB019〕）・メール=m1308-cb019@example.test、プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-M1308-CB019〕）、デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1308-CB019〕）／新宿店／イベント名「M1308-CB019無サイド四十一枚大会」／開催日2026-12-02／プレイヤー名「無サイド四十一枚 花子 M1308-CB019」／申込済み／イベント用デッキ／メインカードIDは登録時に画面が振る（控える。以下〔カードID-M1308-CB019A01〕〜〔カードID-M1308-CB019A41〕）・名称=M1308-CB019-M001〜M1308-CB019-M041の異なる41件を各1枚／サイドは0枚（カード無し）／削除なし	IT-M13-08-019専用。メインが2ページでサイドが無いデッキのページ構成確認	管理画面のカード一覧で新規登録を押し、カード新規登録画面でカード名(日)とカード名(英)に「M1308-CB019-M001」、点数で見たマナ・コストに任意の数値を入れ、カードタイプは未選択のまま登録を押す。これを「M1308-CB019-M041」まで名称を1ずつ変えて41件繰り返し、カード一覧でそれぞれの行のカードID欄に表示された番号を控える（〔カードID-M1308-CB019A01〕〜〔カードID-M1308-CB019A41〕）。フロントの会員情報登録画面で、お名前に申込登録のプレイヤー検索で探せる任意の姓名、お名前(フリガナ)に任意のカタカナ、メールアドレスに「m1308-cb019@example.test」、そのほかの必須項目に入力チェックを通る任意の値を入れ、同意して確認画面へを押し、会員情報登録確認画面で登録するを押す（仮会員になった場合は届いたメールに書かれたURLを開いて本会員にする。会員の登録と同時にプレイヤーも作られる）。管理画面の会員一覧でメールアドレス「m1308-cb019@example.test」の会員を開き、会員登録画面の会員ID欄に表示された番号を控える（〔会員ID-M1308-CB019〕）。新宿店の編集権限を持つ管理者で管理画面にログインし、イベント一覧で新規作成を押し、イベント登録画面で店舗に「新宿店」、イベント名(日)に「M1308-CB019無サイド四十一枚大会」、イベント名(英)は必須のためイベント名(日)と同じ「M1308-CB019無サイド四十一枚大会」、フォーマット・ルール適用度・公開状態・定員に入力チェックを通る任意の値、参加費に「0」を入れて登録を押す。イベント一覧でイベント名「M1308-CB019無サイド四十一枚大会」の行のID欄に表示された番号を控える（〔イベントID-M1308-CB019〕）。イベント編集画面で日程追加を押し、日程登録画面で開始時間に「2026-12-02」の任意の時刻を入れ、オンライン受付ありにチェックを付けてオンライン受付開始時間とオンライン受付終了時間に開始時間より前の日時を入れ、参加費に「0」、そのほかの必須項目に入力チェックを通る任意の値を入れて登録を押す。イベント編集画面の日程一覧から日程編集画面を開き、イベント詳細ID欄に表示された番号を日程IDとして控える（〔日程ID-M1308-CB019〕）。イベント申込登録画面でイベント名・略称に「M1308-CB019無サイド四十一枚大会」を入れて検索を押し、検索結果の該当日程の新規登録を押す。イベント申込詳細・編集画面でプレイヤーの検索を押し、会員のお名前で検索して該当行のID欄に表示されたプレイヤーIDを控え（〔プレイヤーID-M1308-CB019〕）、決定を押してからイベント申込を登録を押す（申込状況は申込済みで登録される）。登録後に開く画面の申込ID欄に表示された番号を控える（〔申込ID-M1308-CB019〕）。申込選手IDは登録時に画面が振るが画面に表示されないため控えない（〔申込選手ID-M1308-CB019〕）。管理画面のデッキ一覧で新規登録を押し、デッキ新規登録画面でデッキタイプに「event」（イベント用）、フォーマットとアーキタイプに登録済みの任意のもの、公開状態に任意の値を選び、プレイヤーの検索するを押してプレイヤー検索で検索語を空のまま検索を押し、ID欄が〔プレイヤーID-M1308-CB019〕の行の選択を押し、プレイヤー名に「無サイド四十一枚 花子 M1308-CB019」を入れ（選択時に自動で入った値は消して入れ直す）、イベントの検索するを押してイベント検索でイベント名に「M1308-CB019無サイド四十一枚大会」を入れて検索を押し、開催日2026-12-02の行の選択を押し、メインボードに「1 M1308-CB019-M001」〜「1 M1308-CB019-M041」の41行を1行ずつ入れ、サイドボードは空のままで新規登録を押す。保存後に開くデッキ編集画面のURLに含まれる番号をデッキIDとして控える（〔デッキID-M1308-CB019〕）。	ケース専用
+項目ID	扱い	テストID	理由
+CB-M13-08-001	ケース化	IT-M13-08-018	メイン1ページ×サイド無しの組。既存012・013はサイドありのため、サイドが無いときの枚数0と空のサイド欄をL0071・L0073で確かめる
+CB-M13-08-002	ケース化	IT-M13-08-019	メイン2ページ以上×サイド無しの組。既存013はサイドありのため、サイドが無いとき各ページのサイド枚数0と空のサイド欄をL0073で確かめる
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M13-04-046	IT-0366			ITA-11	P2	ブラウザ+DB確認	S-M13-04-ADM,S-M13-04-CBFREENODAY-046	① ログインID=m1304_admin、担当者名=M13-04試験管理者の稼働中管理者でログインし、店舗Aのイベントを編集でき、店舗Bのイベントは編集できない。店舗A・店舗Bは登録済みである（S-M13-04-ADM）／② イベントID（登録時に振られたイベントIDを控えてある。〔イベントID-M1304-CB046〕）が、イベント名(日)=M1304-CB046-無料該当日なしイベント、店舗A、定員64、参加費0、公開状態=公開、支払方法=0件、日程0件で登録されている（S-M13-04-CBFREENODAY-046）	1. イベントID 〔イベントID-M1304-CB046〕の繰返日程追加画面を開く／2. 期間Fromに「2026/09/01」、期間Toに「2026/09/02」、曜日選択に金曜日、開始時間に「18:00」を設定する／3. 受付ありとデッキ登録ありをオフ、オンライン受付ありをオンにし、オンライン受付開始の開始日前日数に7、時刻に「09:00」、終了の開始日前日数に1、時刻に「23:00」を設定する／4. 登録ボタンを押す／5. 表示された画面を確認する／6. DBでイベントID 〔イベントID-M1304-CB046〕の日程を確認する	イベントID 〔イベントID-M1304-CB046〕のイベント編集画面へ遷移し、日程が事前準備の0件のまま増えていないこと	0214 繰返日程追加 / 現行仕様 業務ロジック 該当する日が無いとき、表示メッセージ M13-04-MSG-004（現行仕様 業務ロジック 登録の判定順序3より刷新条件を採用）	CB-M13-04-002
+IT-M13-04-047	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M13-04-ADM,S-M13-04-CBFREEWEEKDAY-047	① ログインID=m1304_admin、担当者名=M13-04試験管理者の稼働中管理者でログインし、店舗Aのイベントを編集でき、店舗Bのイベントは編集できない。店舗A・店舗Bは登録済みである（S-M13-04-ADM）／② イベントID（登録時に振られたイベントIDを控えてある。〔イベントID-M1304-CB047〕）が、イベント名(日)=M1304-CB047-無料平日イベント、店舗A、定員64、参加費0、公開状態=公開、支払方法=0件、日程0件で登録されている、休日マスタに2026/09/09は登録されていない（S-M13-04-CBFREEWEEKDAY-047）	1. イベントID 〔イベントID-M1304-CB047〕の繰返日程追加画面を開く／2. 期間Fromに「2026/09/09」、期間Toに「2026/09/11」、曜日選択に水曜日、開始時間に「18:00」を設定する／3. 受付ありとデッキ登録ありをオフ、オンライン受付ありをオンにし、オンライン受付開始の開始日前日数に7、時刻に「09:00」、終了の開始日前日数に1、時刻に「23:00」を設定する／4. 登録ボタンを押す／5. DBで「2026/09/09」の日程の休日状態を確認する	水曜日で休日マスタに登録されていない「2026/09/09」が、休日でない日程として登録されること	0214 繰返日程追加 / 現行仕様 業務ロジック 作成した日程に設定される値	CB-M13-04-003
+IT-M13-04-048	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M13-04-ADM,S-M13-04-CBFREEHOLIDAY-048	① ログインID=m1304_admin、担当者名=M13-04試験管理者の稼働中管理者でログインし、店舗Aのイベントを編集でき、店舗Bのイベントは編集できない。店舗A・店舗Bは登録済みである（S-M13-04-ADM）／② イベントID（登録時に振られたイベントIDを控えてある。〔イベントID-M1304-CB048〕）が、イベント名(日)=M1304-CB048-無料土日イベント、店舗A、定員64、参加費0、公開状態=公開、支払方法=0件、日程0件で登録されている（S-M13-04-CBFREEHOLIDAY-048）	1. イベントID 〔イベントID-M1304-CB048〕の繰返日程追加画面を開く／2. 期間Fromに「2026/09/04」、期間Toに「2026/09/08」、曜日選択に土曜日・日曜日、開始時間に「10:00」を設定する／3. 受付ありとデッキ登録ありをオフ、オンライン受付ありをオンにし、オンライン受付開始の開始日前日数に7、時刻に「09:00」、終了の開始日前日数に1、時刻に「23:00」を設定する／4. 登録ボタンを押す／5. DBで作成された日程の休日状態を確認する	土曜日の「2026/09/05」と日曜日の「2026/09/06」が休日として登録されること	0214 繰返日程追加 / 現行仕様 業務ロジック 作成した日程に設定される値	CB-M13-04-004
+IT-M13-04-049	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M13-04-ADM,S-M13-04-CBCARDHOLIDAY-049	① ログインID=m1304_admin、担当者名=M13-04試験管理者の稼働中管理者でログインし、店舗Aのイベントを編集でき、店舗Bのイベントは編集できない。店舗A・店舗Bは登録済みである（S-M13-04-ADM）／② イベントID（登録時に振られたイベントIDを控えてある。〔イベントID-M1304-CB049〕）が、イベント名(日)=M1304-CB049-カード決済土日イベント、店舗A、定員64、参加費3000、公開状態=公開、支払方法=クレジットカード決済、日程0件で登録されている（S-M13-04-CBCARDHOLIDAY-049）	1. イベントID 〔イベントID-M1304-CB049〕の繰返日程追加画面を開く／2. 期間Fromに「2026/09/04」、期間Toに「2026/09/08」、曜日選択に土曜日・日曜日、開始時間に「10:00」を設定する／3. 受付ありとデッキ登録ありをオフ、オンライン受付ありをオンにし、オンライン受付開始の開始日前日数に7、時刻に「09:00」、終了の開始日前日数に1、時刻に「23:00」を設定する／4. 登録ボタンを押す／5. DBで作成された日程の休日状態を確認する	土曜日の「2026/09/05」と日曜日の「2026/09/06」が休日として登録されること	0214 繰返日程追加 / 現行仕様 業務ロジック 作成した日程に設定される値	CB-M13-04-005
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M13-04-CBFREENODAY-046	イベント	無料該当日なしイベントの親イベント(046)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1304-CB046〕）／イベント名(日)=M1304-CB046-無料該当日なしイベント／店舗A／定員=64／参加費=0／公開状態=公開／支払方法=0件／日程=0件	IT-M13-04-046専用。参加費が無料でオンライン受付ありのとき、期間内に選択曜日の日が無い場合の登録完了を確認する	S-M13-04-ADMの管理者で管理画面にログインし、イベント管理のイベント一覧で新規作成ボタンを押してイベント登録画面を開く。イベント名(日)に「M1304-CB046-無料該当日なしイベント」、イベント名(英)に「M1304-CB046-無料該当日なしイベント EN」を入れ、店舗で店舗Aを選び、フォーマットとルール適用度は選択肢の先頭を選び、公開状態で「公開」を選び、定員に「64」、参加費に「0」を入れ、支払方法の「クレジットカード決済」にはチェックを付けないままにして登録ボタンを押す（日程は追加しない）。イベント一覧でイベント名に「M1304-CB046-無料該当日なしイベント」を入れて検索し、その行のイベントID列に表示された番号を控える（〔イベントID-M1304-CB046〕）。	ケース専用
+S-M13-04-CBFREEWEEKDAY-047	イベント	無料平日イベントの親イベント(047)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1304-CB047〕）／イベント名(日)=M1304-CB047-無料平日イベント／店舗A／定員=64／参加費=0／公開状態=公開／支払方法=0件／日程=0件／休日マスタに2026/09/09は登録されていない	IT-M13-04-047専用。参加費が無料でオンライン受付ありのとき、平日で休日マスタに無い日の日程が休日扱いにならないことを確認する	S-M13-04-ADMの管理者で管理画面にログインし、イベント管理のイベント一覧で新規作成ボタンを押してイベント登録画面を開く。イベント名(日)に「M1304-CB047-無料平日イベント」、イベント名(英)に「M1304-CB047-無料平日イベント EN」を入れ、店舗で店舗Aを選び、フォーマットとルール適用度は選択肢の先頭を選び、公開状態で「公開」を選び、定員に「64」、参加費に「0」を入れ、支払方法の「クレジットカード決済」にはチェックを付けないままにして登録ボタンを押す（日程は追加しない）。イベント一覧でイベント名に「M1304-CB047-無料平日イベント」を入れて検索し、その行のイベントID列に表示された番号を控える（〔イベントID-M1304-CB047〕）。続けてデータ管理の祝日管理画面で、日付が「2026/09/09」の登録が無いことを確認する（あれば削除する）。	ケース専用
+S-M13-04-CBFREEHOLIDAY-048	イベント	無料土日イベントの親イベント(048)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1304-CB048〕）／イベント名(日)=M1304-CB048-無料土日イベント／店舗A／定員=64／参加費=0／公開状態=公開／支払方法=0件／日程=0件	IT-M13-04-048専用。参加費が無料でオンライン受付ありのとき、土曜・日曜の日程が休日になることを確認する	S-M13-04-ADMの管理者で管理画面にログインし、イベント管理のイベント一覧で新規作成ボタンを押してイベント登録画面を開く。イベント名(日)に「M1304-CB048-無料土日イベント」、イベント名(英)に「M1304-CB048-無料土日イベント EN」を入れ、店舗で店舗Aを選び、フォーマットとルール適用度は選択肢の先頭を選び、公開状態で「公開」を選び、定員に「64」、参加費に「0」を入れ、支払方法の「クレジットカード決済」にはチェックを付けないままにして登録ボタンを押す（日程は追加しない）。イベント一覧でイベント名に「M1304-CB048-無料土日イベント」を入れて検索し、その行のイベントID列に表示された番号を控える（〔イベントID-M1304-CB048〕）。	ケース専用
+S-M13-04-CBCARDHOLIDAY-049	イベント	カード決済土日イベントの親イベント(049)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1304-CB049〕）／イベント名(日)=M1304-CB049-カード決済土日イベント／店舗A／定員=64／参加費=3000／公開状態=公開／支払方法=クレジットカード決済／日程=0件	IT-M13-04-049専用。参加費が有料で支払方法がクレジットカード決済のイベントに、オンライン受付ありで土曜・日曜の日程を登録して休日になることを確認する	S-M13-04-ADMの管理者で管理画面にログインし、イベント管理のイベント一覧で新規作成ボタンを押してイベント登録画面を開く。イベント名(日)に「M1304-CB049-カード決済土日イベント」、イベント名(英)に「M1304-CB049-カード決済土日イベント EN」を入れ、店舗で店舗Aを選び、フォーマットとルール適用度は選択肢の先頭を選び、公開状態で「公開」を選び、定員に「64」、参加費に「3000」を入れ、支払方法の「クレジットカード決済」にチェックを付けて登録ボタンを押す（日程は追加しない）。イベント一覧でイベント名に「M1304-CB049-カード決済土日イベント」を入れて検索し、その行のイベントID列に表示された番号を控える（〔イベントID-M1304-CB049〕）。	ケース専用
+項目ID	扱い	テストID	理由
+CB-M13-04-001	既存ケースで確認済み	IT-M13-04-005	IT-M13-04-005は、事前準備でイベントを参加費3000・支払方法クレジットカード決済とし、手順3でオンライン受付ありをオフにして土曜・日曜・休日マスタ登録日を含む期間で登録し、手順5でDBの休日状態を見ている（オンライン受付なしの行で、参加費・支払方法は効かない）
+CB-M13-04-002	ケース化	IT-M13-04-046	参加費0・オンライン受付ありで期間内に選択曜日の日が無い組。L0111の登録完了を、編集画面への遷移で確かめる
+CB-M13-04-003	ケース化	IT-M13-04-047	参加費0・オンライン受付ありで平日のみの組。L0106の休日扱いにならないことをDBで確かめる
+CB-M13-04-004	ケース化	IT-M13-04-048	参加費0・オンライン受付ありで土曜日曜を含む組。L0106の休日扱いをDBで確かめる
+CB-M13-04-005	ケース化	IT-M13-04-049	支払方法クレジットカード決済・オンライン受付ありで土曜日曜を含む組。L0106の休日扱いをDBで確かめる
+指摘	処置	理由	直した所
+IT-M13-04-046	採用	設計書 L0111「日程を1件も作成しないまま登録完了として扱う」のうち日程が増えないことが期待結果に無かった。確かめる所（DBの日程・イベント編集画面）の範囲内	IT-M13-04-046 の手順に6（DBで日程を確認）を足し、期待結果を編集画面への遷移と日程が0件のままに、実行区分をブラウザ+DB確認に変更
+
+codex
+対象は組16行、追加ケース13件です。前巡の指摘は M13-04 と M13-10 に各1件あり、処置後のケースと設計書を確認しています。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M13-08_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M13-08-018	IT-0366			ITA-11	P2	ブラウザのみ	S-M13-08-REF,S-M13-08-ADM,S-M13-08-CBNOSIDE1P-018	① 新宿店（店舗ID=〔店舗ID-M1308-共有A〕）と、カードID 〔カードID-M1308-共有A〕「稲妻」・英語名「Lightning Bolt」、〔カードID-M1308-共有B〕「島」・英語名「Island」が登録されている（呼び名で示した番号は登録時に振られたものを控えてある）（S-M13-08-REF）／② 新しいブラウザセッションを開始し、新宿店の編集権限を持つ管理者ID 130800021で管理画面にログインしている（S-M13-08-ADM）／③ 新宿店にイベントID 〔イベントID-M1308-CB018〕「M1308-CB018無サイド一頁大会」・日程ID 〔日程ID-M1308-CB018〕・開催日2026-12-01・申込ID 〔申込ID-M1308-CB018〕・申込選手ID 〔申込選手ID-M1308-CB018〕・会員ID 〔会員ID-M1308-CB018〕・プレイヤーID 〔プレイヤーID-M1308-CB018〕・デッキID 〔デッキID-M1308-CB018〕が申込済み、イベント用、削除なしで登録され、デッキのプレイヤー名は「一頁無サイド 太郎 M1308-CB018」、メインは稲妻4枚と島20枚、サイドは0枚（カード無し）である（呼び名で示した番号は登録時に振られたものを控えてある。申込選手IDだけは画面に表示されないため控えていない）（S-M13-08-CBNOSIDE1P-018）	1. イベント名に「M1308-CB018無サイド一頁大会」を指定してデッキ登録を検索する／2. デッキ表示ボタンを押す／3. 「一頁無サイド 太郎 M1308-CB018」のデッキのページ構成とサイドボードを確認する	メイン24枚のデッキが1ページで表示され、現在ページ番号が1、総ページ数が1、サイド枚数が0となり、サイドボードにカードが表示されないこと	0214 デッキ表示 / 業務ロジック ページの分割、カードリストの組み立て	CB-M13-08-001
+IT-M13-08-019	IT-0366			ITA-11	P2	ブラウザのみ	S-M13-08-REF,S-M13-08-ADM,S-M13-08-CBNOSIDE2P-019	① 新宿店（店舗ID=〔店舗ID-M1308-共有A〕）が登録されている（呼び名で示した番号は登録時に振られたものを控えてある）（S-M13-08-REF）／② 新しいブラウザセッションを開始し、新宿店の編集権限を持つ管理者ID 130800021で管理画面にログインしている（S-M13-08-ADM）／③ 新宿店にイベントID 〔イベントID-M1308-CB019〕「M1308-CB019無サイド四十一枚大会」・日程ID 〔日程ID-M1308-CB019〕・開催日2026-12-02・申込ID 〔申込ID-M1308-CB019〕・申込選手ID 〔申込選手ID-M1308-CB019〕・会員ID 〔会員ID-M1308-CB019〕・プレイヤーID 〔プレイヤーID-M1308-CB019〕「無サイド四十一枚 花子 M1308-CB019」・デッキID 〔デッキID-M1308-CB019〕が申込済み、イベント用、削除なしで登録され、メインには異なるカードID 〔カードID-M1308-CB019A01〕〜〔カードID-M1308-CB019A41〕が各1枚、サイドは0枚（カード無し）である（呼び名で示した番号は登録時に振られたものを控えてある。申込選手IDだけは画面に表示されないため控えていない）（S-M13-08-CBNOSIDE2P-019）	1. イベント名に「M1308-CB019無サイド四十一枚大会」を指定してデッキ登録を検索する／2. デッキ表示ボタンを押す／3. 「無サイド四十一枚 花子 M1308-CB019」のデッキの各ページを確認する	メイン41枚のデッキがメイン40枚と1枚の2ページに分割され、各ページに現在ページ番号・総ページ数2とサイド枚数0が表示され、どのページにもサイドボードのカードが表示されないこと	0214 デッキ表示 / 業務ロジック ページの分割、カードリストの組み立て	CB-M13-08-002
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/R1_51_findings.md integration_test/casegen/combination/review/M13-04_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+### 指摘（M13-04 / IT-M13-04-046）
+- 主張: 期待結果は「イベント編集画面へ遷移すること」だけを確認している。
+- 実際: 設計書 L0111 は「日程を1件も作成しないまま登録完了として扱う」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 登録完了に加え、対象イベントの日程が事前準備の0件から増えていないことを確認する。
+
+### 指摘（M13-10 / IT-M13-10-044）
+- 主張: 手順で申込状況を「キャンセル済み」に変更するが、期待結果は「参加者が…3人のまま」であることだけを確認している。
+- 実際: 設計書 L0146 は、検証を通過した場合「申込を更新し」と定め、L0166 も更新成功時の申込の更新を定める。参加者が変わらないだけでは、組の「検証結果=通過」を確認できない。
+- 判定: 要因の結果が欠けている
+- 修正案: 参加者3人の維持とともに、申込状況が「キャンセル済み」に更新されたことを確認する。
+指摘	処置	理由	直した所
+IT-M13-04-046	採用	設計書 L0111「日程を1件も作成しないまま登録完了として扱う」のうち日程が増えないことが期待結果に無かった。確かめる所（DBの日程・イベント編集画面）の範囲内	IT-M13-04-046 の手順に6（DBで日程を確認）を足し、期待結果を編集画面への遷移と日程が0件のままに、実行区分をブラウザ+DB確認に変更
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M13-03_cb_dispositions.tsv integration_test/casegen/combination/cases/M13-04_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M13-04_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+項目ID	扱い	テストID	理由
+CB-M13-03-001	ケース化	IT-M13-03-063	要因F01〜F04の組。新規登録で、オンライン受付ありかつ参加費が有料のとき、親イベントにクレジットカード決済の設定が無ければエラーになり日程は追加されない（L0056-L0057）
+CB-M13-03-002	ケース化	IT-M13-03-064	要因F01〜F04の組。既存日程の更新でも、オンライン受付ありかつ参加費が有料のとき、親イベントにクレジットカード決済の設定が無ければエラーになり日程は更新されない（L0056-L0057）
+CB-M13-03-003	ケース化	IT-M13-03-065	要因F01・F03=無料の行。参加費が無料なら親イベントの支払方法を調べないので、オンライン受付ありで支払方法が未設定でも既存日程の更新は保存される（L0056-L0057）
+項目ID	扱い	テストID	理由
+CB-M13-04-001	既存ケースで確認済み	IT-M13-04-005	IT-M13-04-005は、事前準備でイベントを参加費3000・支払方法クレジットカード決済とし、手順3でオンライン受付ありをオフにして土曜・日曜・休日マスタ登録日を含む期間で登録し、手順5でDBの休日状態を見ている（オンライン受付なしの行で、参加費・支払方法は効かない）
+CB-M13-04-002	ケース化	IT-M13-04-046	参加費0・オンライン受付ありで期間内に選択曜日の日が無い組。L0111の登録完了を、編集画面への遷移で確かめる
+CB-M13-04-003	ケース化	IT-M13-04-047	参加費0・オンライン受付ありで平日のみの組。L0106の休日扱いにならないことをDBで確かめる
+CB-M13-04-004	ケース化	IT-M13-04-048	参加費0・オンライン受付ありで土曜日曜を含む組。L0106の休日扱いをDBで確かめる
+CB-M13-04-005	ケース化	IT-M13-04-049	支払方法クレジットカード決済・オンライン受付ありで土曜日曜を含む組。L0106の休日扱いをDBで確かめる
+
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M13-04-046	IT-0366			ITA-11	P2	ブラウザ+DB確認	S-M13-04-ADM,S-M13-04-CBFREENODAY-046	① ログインID=m1304_admin、担当者名=M13-04試験管理者の稼働中管理者でログインし、店舗Aのイベントを編集でき、店舗Bのイベントは編集できない。店舗A・店舗Bは登録済みである（S-M13-04-ADM）／② イベントID（登録時に振られたイベントIDを控えてある。〔イベントID-M1304-CB046〕）が、イベント名(日)=M1304-CB046-無料該当日なしイベント、店舗A、定員64、参加費0、公開状態=公開、支払方法=0件、日程0件で登録されている（S-M13-04-CBFREENODAY-046）	1. イベントID 〔イベントID-M1304-CB046〕の繰返日程追加画面を開く／2. 期間Fromに「2026/09/01」、期間Toに「2026/09/02」、曜日選択に金曜日、開始時間に「18:00」を設定する／3. 受付ありとデッキ登録ありをオフ、オンライン受付ありをオンにし、オンライン受付開始の開始日前日数に7、時刻に「09:00」、終了の開始日前日数に1、時刻に「23:00」を設定する／4. 登録ボタンを押す／5. 表示された画面を確認する／6. DBでイベントID 〔イベントID-M1304-CB046〕の日程を確認する	イベントID 〔イベントID-M1304-CB046〕のイベント編集画面へ遷移し、日程が事前準備の0件のまま増えていないこと	0214 繰返日程追加 / 現行仕様 業務ロジック 該当する日が無いとき、表示メッセージ M13-04-MSG-004（現行仕様 業務ロジック 登録の判定順序3より刷新条件を採用）	CB-M13-04-002
+IT-M13-04-047	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M13-04-ADM,S-M13-04-CBFREEWEEKDAY-047	① ログインID=m1304_admin、担当者名=M13-04試験管理者の稼働中管理者でログインし、店舗Aのイベントを編集でき、店舗Bのイベントは編集できない。店舗A・店舗Bは登録済みである（S-M13-04-ADM）／② イベントID（登録時に振られたイベントIDを控えてある。〔イベントID-M1304-CB047〕）が、イベント名(日)=M1304-CB047-無料平日イベント、店舗A、定員64、参加費0、公開状態=公開、支払方法=0件、日程0件で登録されている、休日マスタに2026/09/09は登録されていない（S-M13-04-CBFREEWEEKDAY-047）	1. イベントID 〔イベントID-M1304-CB047〕の繰返日程追加画面を開く／2. 期間Fromに「2026/09/09」、期間Toに「2026/09/11」、曜日選択に水曜日、開始時間に「18:00」を設定する／3. 受付ありとデッキ登録ありをオフ、オンライン受付ありをオンにし、オンライン受付開始の開始日前日数に7、時刻に「09:00」、終了の開始日前日数に1、時刻に「23:00」を設定する／4. 登録ボタンを押す／5. DBで「2026/09/09」の日程の休日状態を確認する	水曜日で休日マスタに登録されていない「2026/09/09」が、休日でない日程として登録されること	0214 繰返日程追加 / 現行仕様 業務ロジック 作成した日程に設定される値	CB-M13-04-003
+IT-M13-04-048	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M13-04-ADM,S-M13-04-CBFREEHOLIDAY-048	① ログインID=m1304_admin、担当者名=M13-04試験管理者の稼働中管理者でログインし、店舗Aのイベントを編集でき、店舗Bのイベントは編集できない。店舗A・店舗Bは登録済みである（S-M13-04-ADM）／② イベントID（登録時に振られたイベントIDを控えてある。〔イベントID-M1304-CB048〕）が、イベント名(日)=M1304-CB048-無料土日イベント、店舗A、定員64、参加費0、公開状態=公開、支払方法=0件、日程0件で登録されている（S-M13-04-CBFREEHOLIDAY-048）	1. イベントID 〔イベントID-M1304-CB048〕の繰返日程追加画面を開く／2. 期間Fromに「2026/09/04」、期間Toに「2026/09/08」、曜日選択に土曜日・日曜日、開始時間に「10:00」を設定する／3. 受付ありとデッキ登録ありをオフ、オンライン受付ありをオンにし、オンライン受付開始の開始日前日数に7、時刻に「09:00」、終了の開始日前日数に1、時刻に「23:00」を設定する／4. 登録ボタンを押す／5. DBで作成された日程の休日状態を確認する	土曜日の「2026/09/05」と日曜日の「2026/09/06」が休日として登録されること	0214 繰返日程追加 / 現行仕様 業務ロジック 作成した日程に設定される値	CB-M13-04-004
+IT-M13-04-049	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M13-04-ADM,S-M13-04-CBCARDHOLIDAY-049	① ログインID=m1304_admin、担当者名=M13-04試験管理者の稼働中管理者でログインし、店舗Aのイベントを編集でき、店舗Bのイベントは編集できない。店舗A・店舗Bは登録済みである（S-M13-04-ADM）／② イベントID（登録時に振られたイベントIDを控えてある。〔イベントID-M1304-CB049〕）が、イベント名(日)=M1304-CB049-カード決済土日イベント、店舗A、定員64、参加費3000、公開状態=公開、支払方法=クレジットカード決済、日程0件で登録されている（S-M13-04-CBCARDHOLIDAY-049）	1. イベントID 〔イベントID-M1304-CB049〕の繰返日程追加画面を開く／2. 期間Fromに「2026/09/04」、期間Toに「2026/09/08」、曜日選択に土曜日・日曜日、開始時間に「10:00」を設定する／3. 受付ありとデッキ登録ありをオフ、オンライン受付ありをオンにし、オンライン受付開始の開始日前日数に7、時刻に「09:00」、終了の開始日前日数に1、時刻に「23:00」を設定する／4. 登録ボタンを押す／5. DBで作成された日程の休日状態を確認する	土曜日の「2026/09/05」と日曜日の「2026/09/06」が休日として登録されること	0214 繰返日程追加 / 現行仕様 業務ロジック 作成した日程に設定される値	CB-M13-04-005
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M13-08/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0214 sheet-13 デッキ表示
+L0001	デッキ表示
+L0002	ドキュメント名イベント管理 基本設計仕様書
+L0003	セクション—
+L0004	プロジェクト名イベント管理機能
+L0005	作成者佐藤
+L0006	作成日2025/5/29
+L0007	更新者畠山
+L0008	更新日2025-09-19
+L0009	機能NoM13-08
+L0010	機能名デッキ表示
+L0011	概要—
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	6
+L0019	7
+L0020	9
+L0021	10
+L0022	11
+L0023	8
+L0024	5
+L0025	20250101
+L0026	デッキ表示 / B7 / image 1
+L0027	カスタマイズ説明
+L0028	・カスタマイズ要件
+L0029	・権限を保持している店舗のイベントのデッキのみ表示を可能とする
+L0030	・デッキリストをタイプ別にソートして表示する
+L0031	・日本語名の表記の後に英語名を表示する
+L0032	・DCIナンバーの項目を廃止とする
+L0033	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0034	機能仕様処理概要（★はカスタマイズ項目）
+L0035	★表示順の変更について
+L0036	・識別ID:8「カード一覧」を現行のフロントのデッキ詳細のようにデッキリストをタイプ別にソートして表示する
+L0037	★表示項目の追加、削除について
+L0038	・識別ID:8「カード一覧」の日本語名の表記の後に英語名を追加する。英語名が1行に入りきらない場合は「…」で省略する
+L0039	・識別ID:5「DCIナンバー」の項目を削除する
+L0040	・識別ID:9 - 11 「Deck Check Rd」「Status」「Judge」の項目を削除する
+L0041	・イベント申込一覧の検索結果に紐づくデッキリストを表示する。
+L0042	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0043	1	印刷	ボタン	-	-	-	印刷処理を行う
+L0044	2	Name	ラベル	-	-	-	プレイヤー名を表示
+L0045	3	First Letter of Last Name	ラベル	-	-	-	プレイヤー名（姓）の頭文字を表示
+L0046	4	Table Number	ラベル	-	-	-	-
+L0047	5	DCI Number	ラベル	-	-	-	削除
+L0048	6	Event	ラベル	-	-	-	イベント名（英）を表示
+L0049	7	Date	ラベル	-	-	-	開催日を表示
+L0050	8	カード一覧	ラベル	-	-	-	デッキリストをタイプ別にソートして表示する
+L0051	日本語名の表記の後に英語名を表紙する
+L0052	9	Deck Check Rd	ラベル	-	-	-	削除
+L0053	10	Status	ラベル	-	-	-	削除
+L0054	11	Judge	ラベル	-	-	-	削除
+L0055	Source:
+L0056	functions/pf-eccube3/m13-08_admin_event_event_deck_view.md
+L0057	現行仕様
+L0058	M13-08 デッキ表示 / M13-08（デッキ表示）
+L0059	刷新後は実装不要本節は現行実装（pf-eccube3）からのリバースです。次の記述は Excel基本設計により廃止されており、刷新後に実装する必要はありません。
+L0060	DCIナンバー（デッキ表示） は削除（0214 デッキ表示 識別ID:5）
+L0061	デッキチェック記入欄（Deck Check Rd・Status・Judge） は削除（0214 デッキ表示 識別ID:9-11）
+L0062	業務ロジック
+L0063	刷新後は実装しない（廃止）
+L0064	Excel基本設計 0214 識別ID:5 により廃止。刷新後は実装しない。
+L0065	Excel基本設計 0214 識別ID:9-11 により廃止。刷新後は実装しない。
+L0066	表示の対象
+L0067	本画面では検索条件を入力させない。申込一覧側の検索条件が保持されていないときは、空の条件として扱い、登録デッキの取得結果に従う。並び順は既定の並びとする。表示は印刷向けのデッキリストとして、申込一覧とは別の画面に開く。
+L0068	プレイヤー名の決め方
+L0069	デッキに登録されたプレイヤー名から前後の空白を除いて用いる。プレイヤー名が空のときは、会員のカナ姓とカナ名を半角空白で連結して表示する。
+L0070	カードリストの組み立て
+L0071	カード一覧はカードごとに枚数とカード名を並べる。メインとサイドそれぞれの枚数を合計し、各見出しに枚数を表示する。
+L0072	ページの分割
+L0073	メインのカード一覧を1ページ40枚で分割し、デッキ単位でページを構成する。サイドボードは先頭ページにだけ載せ、2ページ目以降のサイドは空とする。ページごとにプレイヤー名・日程・メインカード・メイン枚数・サイド枚数を並べる。プレイヤー名の後ろに、そのデッキの中での現在ページ番号と総ページ数を表示する。表番号の欄は値を出さず空欄とする。日程は開催日を年/月/日の書式で表示する。
+L0074	エラー時の扱い
+L0075	事象	扱い
+L0076	申込の検索条件が保持されていない	空の条件として扱い、登録デッキの取得結果に従う
+L0077	データの読み取り障害	共通の例外処理に委ねる。本画面固有の利用者向けメッセージは設けない
+L0078	入出力
+L0079	種類	内容
+L0080	入力	利用者が入力する項目は無い
+L0081	成功時出力	印刷向けのデッキリストの表示
+L0082	失敗時出力	本画面固有のエラー画面は持たない
+L0083	リニューアル後の仕様
+L0084	表示メッセージ
+L0085	この機能はメッセージを表示しない。画面はデッキ情報と印刷の導線だけで、操作結果を知らせる文言を出さない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M13-03/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M13-04/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0214 sheet-8 繰返日程追加
+L0001	繰返日程追加
+L0002	ドキュメント名イベント管理 基本設計仕様書
+L0003	セクション—
+L0004	プロジェクト名イベント管理機能
+L0005	作成者佐藤
+L0006	作成日2025/5/29
+L0007	更新者畠山
+L0008	更新日2025-09-19
+L0009	機能NoM13-04
+L0010	機能名繰返日程追加
+L0011	概要—
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	6
+L0020	7
+L0021	8
+L0022	9
+L0023	10
+L0024	11
+L0025	12
+L0026	13
+L0027	14
+L0028	15
+L0029	16
+L0030	17
+L0031	18
+L0032	19
+L0033	20
+L0034	21
+L0035	繰返日程追加 / C7 / image 1
+L0036	イベント編集
+L0037	登録
+L0038	ボタンの位置を画面下部に移動する
+L0039	「戻る」は、前の画面名を表示する
+L0040	登録
+L0041	画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 1件）
+L0042	遷移一覧（1件）
+L0043	遷移元	遷移先	connector
+L0044	登録	イベント編集	39（0214:繰返日程追加!BF13）
+L0045	カスタマイズ説明
+L0046	・カスタマイズ要件
+L0047	・編集権限を保持している店舗のイベントのみ編集を可能とする
+L0048	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0049	機能仕様処理概要（★はカスタマイズ項目）
+L0050	★権限による制御
+L0051	・メンバーが権限を保持している店舗のイベントのみ日程追加が可能にする
+L0052	・イベントに対して期間を指定して複数の日程の一括登録を行う。
+L0053	・指定した期間のうち、選択した曜日に該当する日に日程登録する。
+L0054	・定員、参加費、公開状態、商品（日・英）は、親イベントのものがセットされる。
+L0055	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0056	1	イベントID	ラベル	-	-	-
+L0057	2	イベント詳細ID	ラベル	-	-	-
+L0058	3	イベント名（日）	ラベル	-	-	-
+L0059	4	イベントページURL	リンク	-	-	-	フロントの当該イベントページへのリンク
+L0060	5	期間From	日付	〇	-	-	期間From < 期間To であること
+L0061	6	期間To	日付	〇	-	-	期間From < 期間To であること
+L0062	7	曜日選択	複数選択	〇	-	-	2026/9/3木村：現行バグのため必須に変更ECCUBE_HARERUYA-2221
+L0063	8	開始時間	時刻	〇	-	-
+L0064	9	受付あり	チェックボックス	-	-	オン
+L0065	10	受付開始時間	時刻	△	-	00:00	受付ありの値に応じて表示/非表示を切り替える
+L0066	受付ありの場合必須
+L0067	受付開始時間 < 受付終了時間であること
+L0068	11	受付終了時間	時刻	△	-	00:00	受付ありの値に応じて表示/非表示を切り替える
+L0069	受付ありの場合必須
+L0070	受付終了時間 <= 開始時間であること
+L0071	12	デッキ登録あり	チェックボックス	-	-	オン
+L0072	13	デッキ登録締切
+L0073	開始日前日数	数値(整数)	△	-	0	デッキ登録ありの値に応じて表示/非表示を切り替える
+L0074	デッキ登録ありの場合必須
+L0075	14	デッキ登録締切
+L0076	時刻	時刻	△	-	23:59	デッキ登録ありの値に応じて表示/非表示を切り替える
+L0077	デッキ登録ありの場合必須
+L0078	15	オンライン受付あり	チェックボックス	-	-	-
+L0079	16	オンライン受付開始時間
+L0080	開始日前日数	数値(整数)	△	-	0	オンライン受付ありの値に応じて表示/非表示を切り替える
+L0081	オンライン受付ありの場合必須
+L0082	17	オンライン受付開始時間
+L0083	時刻	時刻	△	-	00:00	オンライン受付ありの値に応じて表示/非表示を切り替える
+L0084	オンライン受付ありの場合必須
+L0085	18	オンライン受付終了時間
+L0086	開始日前日数	数値(整数)	△	-	0	オンライン受付ありの値に応じて表示/非表示を切り替える
+L0087	オンライン受付ありの場合必須
+L0088	オンライン受付開始時間 < オンライン受付終了時間であること
+L0089	19	オンライン受付終了時間
+L0090	時刻	時刻	△	-	00:00	オンライン受付ありの値に応じて表示/非表示を切り替える
+L0091	オンライン受付ありの場合必須
+L0092	オンライン受付開始時間 < オンライン受付終了時間であること
+L0093	20	登録	ボタン	-	-	-	新規日程登録時のみ表示
+L0094	21	イベント編集	ボタン	-	-	-	イベント編集画面へ遷移する
+L0095	Source:
+L0096	functions/pf-eccube3/m13-04_admin_event_event_repeat_schedule.md
+L0097	現行仕様
+L0098	M13-04 繰り返し日程登録 / イベント管理 — 繰り返し日程登録
+L0099	業務ロジック
+L0100	登録の判定順序
+L0101	順序	判定	結果
+L0102	1	パスのイベントIDに一致するイベントが存在しないとき（入力画面の表示時・登録時とも）	ページが見つからない扱い（404）とする
+L0103	2	入力の検証に失敗したとき	保存に失敗した旨を表示し、入力画面を再表示する
+L0104	3	「受付あり」を有効にした指定で、対象イベントに支払方法が設定されていないとき	申込受付ができない旨を表示し、入力画面を再表示する
+L0105	作成した日程に設定される値
+L0106	作成した日程が土曜・日曜に当たるとき、または休日マスタに登録された日に当たるときは、その日程を休日として扱う。
+L0107	作成した日程の登録者には、操作した担当者を記録する。
+L0108	作成した日程の定員・参加費・公開状態・賞品（日）・賞品（英）には、親イベントの値をそのまま設定する。繰り返し日程登録の入力項目には、これらの項目は無い。
+L0109	オンライン受付の開始・終了とデッキ登録締切の日時は、その日程の日付から指定の前日数を引いた日に、指定の時刻を組み合わせたものとする。
+L0110	該当する日が無いとき
+L0111	指定期間内に、選択した曜日に該当する日が1日も無いときは、日程を1件も作成しないまま登録完了として扱う。
+L0112	入出力
+L0113	入力
+L0114	種類	内容
+L0115	入力	なりすまし対策トークン。値が一致しないときは日程を作成せず、アクセス拒否として扱う
+L0116	リニューアル後の仕様
+L0117	表示メッセージ
+L0118	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0119	M13-04-MSG-001	管理画面上部	不正なリクエストです。	対象イベントの店舗情報がない、またはその店舗を編集できないとき	繰り返し日程登録画面に遷移する
+L0120	M13-04-MSG-002	管理画面上部	保存しました	繰り返し日程を登録したとき	イベント編集画面に遷移する
+L0121	M13-04-MSG-003	管理画面上部	保存に失敗しました	繰り返し日程の登録中にエラーが起きたとき	繰り返し日程登録画面に留まる
+L0122	M13-04-MSG-004	入力項目直下	オンライン受付ありかつ参加費が有料の場合は、イベント編集画面で支払方法を設定してください。	オンライン受付を有効にして繰り返し日程を登録する際、参加費が有料で支払方法が未設定のとき	エラーを表示して、繰り返し日程登録画面に留まる
+
+ succeeded in 0ms:
+##### 0214 sheet-7 日程登録
+L0001	日程登録
+L0002	ドキュメント名イベント管理 基本設計仕様書
+L0003	セクション—
+L0004	プロジェクト名イベント管理機能
+L0005	作成者佐藤
+L0006	作成日2025/5/29
+L0007	更新者畠山
+L0008	更新日2025-09-19
+L0009	機能NoM13-03
+L0010	機能名日程登録
+L0011	概要—
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	6
+L0020	7
+L0021	8
+L0022	9
+L0023	10
+L0024	11
+L0025	12
+L0026	13
+L0027	14
+L0028	17
+L0029	18
+L0030	19
+L0031	20
+L0032	21
+L0033	22
+L0034	23
+L0035	15
+L0036	16
+L0037	画像レイヤー（3枚）: 日程登録 / B7 / image 1 + 日程登録 / B7 / image 2 + 日程登録 / B7 / image 3
+L0038	ボタンの位置を画面下部に移動する
+L0039	「戻る」は、前の画面名を表示する
+L0040	更新
+L0041	更新
+L0042	画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 1件）
+L0043	遷移一覧（1件）
+L0044	遷移元	遷移先	connector
+L0045	更新	イベント編集	36（0214:日程登録!BF14）
+L0046	カスタマイズ説明
+L0047	・カスタマイズ要件
+L0048	・編集権限を保持している店舗のイベントのみ編集を可能とする
+L0049	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0050	機能仕様処理概要（★はカスタマイズ項目）
+L0051	★権限による制御
+L0052	・メンバーが権限を保持している店舗のイベントのみ日程追加が可能にする
+L0053	・イベントに対して日程の新規登録、または既存の日程の更新を行う。
+L0054	・削除した場合はイベント編集画面に遷移する。
+L0055	・対象の日程にデッキ登録、申込がある場合、削除はできない。
+L0056	・オンライン受付あり（識別ID:9）をオン、かつ参加費（識別ID:16）を有料で登録・更新をしようとした時は、
+L0057	親イベントで支払方法（クレジットカード決済）の設定をチェックし、設定されていない場合はエラーとする。
+L0058	★識別ID:15「定員」の接尾辞は、 親イベントの「チーム戦」設定がオフの時は「人」、オンの時は「組」に切り替える
+L0059	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0060	1	イベントID	ラベル	-	-	-
+L0061	2	イベント詳細ID	ラベル	-	-	-
+L0062	3	イベント名（日）	ラベル	-	-	-
+L0063	4	イベントページURL	リンク	-	-	-	フロントの当該イベントページへのリンク
+L0064	5	開始時間	日付時刻	〇	-	-
+L0065	6	受付あり	チェックボックス	-	-	オン
+L0066	7	受付開始時間	時刻	△	-	00:00	受付ありの値に応じて表示/非表示を切り替える
+L0067	受付ありの場合必須
+L0068	受付開始時間 < 受付終了時間であること
+L0069	8	受付終了時間	時刻	△	-	00:00	受付ありの値に応じて表示/非表示を切り替える
+L0070	受付ありの場合必須
+L0071	受付終了時間 <= 開始時間であること
+L0072	9	デッキ登録あり	チェックボックス	-	-	オン
+L0073	10	デッキ登録締め切り	日付時刻	△	-	-	デッキ登録ありの値に応じて表示/非表示を切り替える
+L0074	デッキ登録ありの場合必須
+L0075	11	デッキ登録を終了する	チェックボックス	-	-	-
+L0076	12	オンライン受付あり	チェックボックス	-	-	-
+L0077	13	オンライン受付開始時間	日付時刻	△	-	-	オンライン受付ありの値に応じて表示/非表示を切り替える
+L0078	オンライン受付ありの場合必須
+L0079	オンライン受付開始時間 < オンライン受付終了時間であること
+L0080	14	オンライン受付終了時間	日付時刻	△	-	-	オンライン受付ありの値に応じて表示/非表示を切り替える
+L0081	オンライン受付ありの場合必須
+L0082	オンライン受付終了時間 < 開始時間であること
+L0083	15	定員	数値(整数)	〇	8	親イベントを引き継ぐ	1以上であること
+L0084	接尾辞は、親イベントの設定でチーム戦オフの時「人」、オンの時「組」 2026/7/7木村：ECCUBE_HARERUYA-1626：カスタマイズ要件がないため初期値は現行に合わせる。2026/8/31木村：int範囲超過のため50文字からイベント編集側と同様の8桁に修正ECCUBE_HARERUYA-2218
+L0085	16	参加費	数値(整数)	〇	8	親イベントを引き継ぐ	2026/7/7木村：ECCUBE_HARERUYA-1626：カスタマイズ要件がないため初期値は現行に合わせる。2026/8/31木村：int範囲超過のため50文字からイベント編集側と同様の8桁に修正ECCUBE_HARERUYA-2218
+L0086	17	公開状態	単一選択	〇	-	親イベントを引き継ぐ	2026/7/7木村：ECCUBE_HARERUYA-1626：カスタマイズ要件がないため初期値は現行に合わせる
+L0087	18	賞品（日）	全角・半角	-	4096文字	親イベントを引き継ぐ	2026/7/7木村：ECCUBE_HARERUYA-1626：カスタマイズ要件がないため初期値は現行に合わせる
+L0088	19	賞品（英）	全角・半角	-	4096文字	親イベントを引き継ぐ	2026/7/7木村：ECCUBE_HARERUYA-1626：カスタマイズ要件がないため初期値は現行に合わせる
+L0089	20	登録	ボタン	-	-	-	新規日程登録時のみ表示
+L0090	21	更新	ボタン	-	-	-	既存の日程更新時のみ表示
+L0091	22	削除	ボタン	-	-	-	既存の日程更新時のみ表示
+L0092	23	イベント編集	ボタン	-	-	-	イベント編集画面へ遷移する
+L0093	Source:
+L0094	functions/pf-eccube3/m13-03_admin_event_event_schedule_add.md
+L0095	現行仕様
+L0096	M13-03 日程追加 / イベント管理 — 日程追加
+L0097	業務ロジック
+L0098	追加の判定順序
+L0099	順序	判定	結果
+L0100	1	パスのイベントIDに一致するイベントが存在しないとき	ページが見つからない扱い（404）とする
+L0101	2	なりすまし対策トークンが一致しないとき	アクセス拒否として処理を打ち切り、登録しない
+L0102	3	日程の入力検証に失敗したとき	日程入力画面を、入力した値を保った状態で再表示する
+L0103	4	上記以外のとき	追加した日程の日程編集画面を開く
+L0104	登録時に記録する値
+L0105	入力欄では指定しないが、登録時に日程へ記録される。
+L0106	記録する値	決め方
+L0107	受付開始時間・受付終了時間の日付	開始時間の日付と、入力された時刻を組み合わせて記録する
+L0108	祝日かどうか	開始時間の日付が祝日にあたるときは、祝日として記録する
+L0109	登録者	操作した管理ユーザを登録者として記録する
+L0110	入出力
+L0111	受け取るものと返すもの
+L0112	種類	内容
+L0113	入力	追加先のイベントIDはパスで受け取る。日程の各項目となりすまし対策トークンは送信内容で受け取る
+L0114	成功時出力	追加した日程の日程編集画面
+L0115	失敗時出力	イベントが無いときは404。トークンが一致しないときはアクセス拒否。検証に失敗したときは日程入力画面の再表示
+L0116	リニューアル後の仕様
+L0117	表示メッセージ
+L0118	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0119	M13-03-MSG-001	管理画面上部	保存しました	日程追加の内容を保存したとき	日程編集画面に遷移する
+L0120	M13-03-MSG-002	管理画面上部	保存に失敗しました	日程追加の保存中にエラーが起きたとき	日程入力画面に留まる
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M13-10/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0214 sheet-15 イベント申込詳細・編集
+L0001	イベント申込詳細・編集
+L0002	ドキュメント名イベント管理 基本設計仕様書
+L0003	セクション—
+L0004	プロジェクト名イベント管理機能
+L0005	作成者佐藤
+L0006	作成日2025/5/29
+L0007	更新者畠山
+L0008	更新日2025-09-19
+L0009	機能NoM13-10
+L0010	機能名イベント申込詳細・編集
+L0011	概要—
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理概要（★はカスタマイズ項目）
+L0014	レイアウト図
+L0015	1-1
+L0016	1-2
+L0017	1-3
+L0018	1-4
+L0019	1-5
+L0020	1-6
+L0021	2-1
+L0022	1-10
+L0023	1-9
+L0024	1-8
+L0025	2-2
+L0026	4-3
+L0027	2-3
+L0028	3-3
+L0029	3-2
+L0030	3-1
+L0031	4-2
+L0032	1
+L0033	2-4
+L0034	4-1
+L0035	1-7
+L0036	イベント申込詳細・編集 / C7 / image 1
+L0037	晴屋 太郎Taro HARE
+L0038	ボタンの位置を画面下部に移動する
+L0039	「戻る」は、前の画面名を表示する
+L0040	画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 5件）
+L0041	遷移一覧（3件）（うち推定 2件：明示接続でなく最近傍幾何で補完）
+L0042	遷移元	遷移先	connector
+L0043	イベント申込一覧	推定申込状況	11（0214:イベント申込詳細・編集!D16）
+L0044	登録	イベント申込一覧	30（0214:イベント申込詳細・編集!BB11）
+L0045	イベント申込一覧	推定ボタンの位置を画面下部に移動する
+L0046	「戻る」は、前の画面名を表示する	6（0214:イベント申込詳細・編集!Z17）
+L0047	カスタマイズ説明
+L0048	・カスタマイズ要件
+L0049	・権限を保持している店舗のイベントのみ登録、編集が可能とする
+L0050	・席順の編集は廃止とする
+L0051	・支払金額の項目は参照のみとする
+L0052	・DCIナンバーの項目を廃止とする
+L0053	・チームメンバー確認済の項目を廃止とする
+L0054	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0055	機能仕様処理概要（★はカスタマイズ項目）
+L0056	★権限による制御
+L0057	・権限を保持している店舗のイベントの申込のみ編集が可能
+L0058	・識別ID:2-3「削除」は権限を保持している店舗のイベントの申込のみ表示する
+L0059	・識別ID:2-4「検索」は権限を保持している店舗のイベントの申込のみ表示する
+L0060	・識別ID:3-1「イベント申込を登録」は権限を保持している店舗のイベントの申込のみ表示する
+L0061	・識別ID:3-2「同日程の新規申込へ」は権限を保持している店舗のイベントの申込のみ表示する
+L0062	★入力項目の変更について
+L0063	・識別ID:1-9「支払金額」は参照のみのため操作不可
+L0064	★表示項目の削除について
+L0065	・識別ID:4-1「席順」は削除する
+L0066	・識別ID:4-2「DCIナンバー」は削除する
+L0067	・識別ID:4-3「チームメンバー確認済み」は削除する
+L0068	・イベント申込情報の詳細表示と、申込状況の変更、プレイヤーの登録・削除ができる。
+L0069	・プレイヤーが登録されている場合はプレイヤー削除ボタン（識別ID:2-3）を表示し、
+L0070	未登録の場合はプレイヤー検索ボタン（識別ID:2-4）を表示する。
+L0071	・プレイヤー検索ボタンを押下するとプレイヤー検索ポップアップ画面を表示する。
+L0072	プレイヤー検索ポップアップ画面
+L0073	・「同日程の新規申込へ」ボタン(識別ID:3-2)を押下すると、表示中の日程に対するイベント申込新規登録画面に遷移する。
+L0074	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0075	入力項目
+L0076	1-1	イベント申込ID	ラベル	-	-	-	-
+L0077	1-2	イベント名	ラベル	-	-	-	-
+L0078	1-3	店舗	ラベル	-	-	-	-
+L0079	1-4	会場	ラベル	-	-	-	- 2026/7/17木村：会場の概念はなくなっているので項目削除
+L0080	1-5	フォーマット	ラベル	-	-	-	-
+L0081	1-6	支払会員	ラベル	-	-	-	-
+L0082	1-7	申込状況	単一選択	-	-	-	選択肢:決済中 入金待ち 申込済み 入金期限切れ キャンセル済み 支払番号が存在しない
+L0083	1-8	支払方法	単一選択	-	-	-	操作不可
+L0084	1-9	支払金額	ラベル	-	-	-
+L0085	1-10	支払番号	ラベル	--	-	-	-
+L0086	プレイヤー情報
+L0087	2-1	プレイヤー名	ラベル	-	-	-	-
+L0088	2-2	MTG Companion登録本名	ラベル	-	-	-	-
+L0089	2-3	削除	ボタン	-	-	-	権限を保持している店舗のイベントの申込のみ表示
+L0090	プレイヤー情報を削除し検索ボタンを表示
+L0091	2-4	検索	ボタン	-	-	-	権限を保持している店舗のイベントの申込のみ表示
+L0092	プレイヤー検索モーダルを開く
+L0093	ボタン、リンク
+L0094	3-1	登録	ボタン	-	-	-	権限を保持している店舗のイベントの申込のみ表示
+L0095	入力されたフォームの値で登録
+L0096	3-2	同日程の新規申込へ	ボタン	-	-	-	権限を保持している店舗のイベントの申込のみ表示
+L0097	3-3	イベント申込一覧	リンク	-	-	-	イベント申込一覧画面へ遷移する
+L0098	削除項目
+L0099	4-1	席順	-	-	-	-	削除
+L0100	4-2	DCIナンバー	-	-	-	-	削除
+L0101	4-3	チームメンバー確認済み	チェックボックス	-	-	-	削除
+L0102	プレイヤー検索
+L0103	カスタマイズ説明
+L0104	・カスタマイズ要件
+L0105	・DCIナンバーの項目を廃止する
+L0106	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0107	機能仕様処理概要（★はカスタマイズ項目）
+L0108	★表示項目の削除について
+L0109	・識別ID:8「DCIナンバー」を削除する
+L0110	・プレイヤー名で検索して一致したプレイヤーを一覧表示する。
+L0111	会員の姓・名、プレイヤーの姓・名いずれかに部分一致したら表示する。
+L0112	・決定ボタンで選択したプレイヤー情報をイベント申込情報に反映する。
+L0113	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0114	1	プレイヤー検索	全角・半角	-	-	-
+L0115	2	検索する	ボタン	-	-	-	入力されたフォームの値で検索
+L0116	3	閉じる	ボタン	-	-	-	モーダルを閉じる
+L0117	4	ID	ラベル	-	-	-	-
+L0118	5	プレイヤー名	ラベル	-	-	-	会員姓（日） 会員名（日）＜改行＞
+L0119	プレイヤー名（英） プレイヤー姓（英）
+L0120	の書式で表示
+L0121	6	DCIナンバー	文字列	-	-	-	削除
+L0122	7	決定	ボタン	-	-	-	イベント申込詳細・編集に戻りプレイヤー情報を挿入
+L0123	検索ボタンを削除ボタンに変更
+L0124	8	ページング	リンク	-	-	-	選択したページへ遷移する
+L0125	Source:
+L0126	functions/pf-eccube3/m13-10_admin_event_event_entry_edit.md
+L0127	現行仕様
+L0128	M13-10 イベント申込詳細・編集 / イベント管理 — イベント申込詳細・編集
+L0129	刷新後は実装不要本節は現行実装（pf-eccube3）からのリバースです。次の記述は Excel基本設計により廃止されており、刷新後に実装する必要はありません。
+L0130	席順（席次） は削除（0214 イベント申込詳細・編集 識別ID:4-1）これに伴い実装不要: 参加プレイヤー表の席順セレクトと、席順アルファベット一覧による検証／申込選手への席次（seat_order）設定
+L0131	DCIナンバー（参加プレイヤー表） は削除（0214 イベント申込詳細・編集 識別ID:4-2）
+L0132	チームメンバー確認済み（承認フラグ） は削除（0214 イベント申込詳細・編集 識別ID:4-3）これに伴い実装不要: 参加プレイヤー表のチームメンバー確認済チェックと、その更新／承認フラグ（dtb_entry_player.confirm_flg）の運用／招待リンクからのチームプレイヤー認証（events_team_player_activate）
+L0133	業務ロジック
+L0134	Excel基本設計により廃止された仕様（刷新後は実装不要）
+L0135	Excel基本設計 0214 識別ID:4-1 により廃止。刷新後は実装しない。現行実装のふるまいは本書に残すが、刷新後の実装・テストの対象外とする
+L0136	Excel基本設計 0214 識別ID:4-2 により廃止。刷新後は実装しない。現行実装のふるまいは本書に残すが、刷新後の実装・テストの対象外とする
+L0137	Excel基本設計 0214 識別ID:4-3 により廃止。刷新後は実装しない。現行実装のふるまいは本書に残すが、刷新後の実装・テストの対象外とする
+L0138	申込詳細の初期表示
+L0139	削除済みの会員も、削除済みのプレイヤーも表示の対象から外さない。指定された申込が存在しないときは404とする。参加プレイヤーの行は、チーム人数と既存の参加者数の大きい方の行数で用意する。
+L0140	更新の判定順序
+L0141	順序	判定	結果
+L0142	1	指定された申込が存在するか	存在しなければ404とする
+L0143	2	更新の送信であるか	送信によらない到達は更新失敗を表示し、編集画面へ戻す
+L0144	3	参加者が実在し、同じ日程の他の申込に登録されていないか	実在しないか重複するときは申込重複のメッセージを表示し、編集画面を再描画する
+L0145	4	その他の入力内容が妥当か	妥当でなければ更新失敗を表示し、編集画面を再描画する
+L0146	5	上記を通過	申込を更新し、成功を表示して同じ申込の編集画面へ戻る
+L0147	参加者の反映
+L0148	参加者情報リストから外れた参加者は削除し、追加された参加者は新規に登録する。更新が成功するたびに申込履歴を1件記録する。
+L0149	プレイヤー検索の絞り込みと選択可否
+L0150	検索語は空白・カンマで区切り、区切ったすべての語に一致するものだけを表示する。語ごとの一致対象には会員の姓カナ・名カナも含む。
+L0151	表示中の申込と同じ日程に、別の申込で既に登録されているプレイヤーは「登録済」と表示し、決定できない。編集中の申込ですでに選んだプレイヤーは「選択済」と表示し、決定できない。
+L0152	エラー時の扱い
+L0153	エラー内容	処理
+L0154	申込が存在しない	404とする。画面のメッセージは表示しない
+L0155	更新の送信でない	更新失敗を表示し編集画面へ戻す
+L0156	参加者が実在しない・参加者重複	申込重複のメッセージを表示し編集画面を再描画する
+L0157	その他の検証不備	更新失敗を表示し編集画面を再描画する
+L0158	入出力
+L0159	種類	内容
+L0160	入力	パスの申込ID、なりすまし対策トークン、参加者情報リスト
+L0161	成功時出力	申込の更新と成功表示、編集画面への遷移
+L0162	失敗時出力	更新の送信でないとき・検証不備はエラー表示のうえ編集画面の再描画または遷移。申込不在は404
+L0163	入出力: 永続化
+L0164	操作	契機
+L0165	追加	更新成功時の申込履歴、参加者情報リストに追加された参加者
+L0166	更新	更新成功時の申込
+L0167	削除	参加者情報リストから外れた参加者
+L0168	リニューアル後の仕様
+L0169	表示メッセージ
+L0170	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0171	M13-10-MSG-001	管理画面上部	保存しました	イベント申込内容を編集して保存したとき	イベント申込詳細・編集画面に遷移する
+L0172	M13-10-MSG-002	管理画面上部	プレイヤーID %player_id% が見つかりません。 ／ admin.event.entry.paying_member_customer_not_registered	イベント申込の編集で、存在しないプレイヤーIDを指定して更新したとき	編集画面に留まる
+L0173	M13-10-MSG-003	管理画面上部	保存に失敗しました	イベント申込内容の保存中にエラーが起きたとき	イベント申込詳細・編集画面に留まる
+L0174	—	画面上部	登録が完了しました。	申込の更新が成功したとき	編集画面へ戻る
+L0175	—	画面上部	登録できませんでした。	更新の送信でないとき、またはその他の検証失敗で更新できなかったとき	編集画面に留まる
+L0176	—	画面上部	半角数字で金額を入力してください。	支払金額が不正なとき	編集画面に留まる
+L0177	「登録が完了しました。」は登録・更新で共通の成功メッセージである。参加者重複時は申込重複用の文言を表示する。申込が存在しないときはメッセージを表示しない。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M13-08_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M13-08-CBNOSIDE1P-018	イベント・日程・申込・会員・プレイヤー・デッキ	サイド無し・メイン1ページのデッキ(018)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1308-CB018〕）、日程IDは登録時に画面が振る（控える。以下〔日程ID-M1308-CB018〕）、申込IDは登録時に画面が振る（控える。以下〔申込ID-M1308-CB018〕）、申込選手IDは登録時に画面が振る（画面に表示されないため控えない。以下〔申込選手ID-M1308-CB018〕）、会員IDは登録時に画面が振る（控える。以下〔会員ID-M1308-CB018〕）・メール=m1308-cb018@example.test、プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-M1308-CB018〕）、デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1308-CB018〕）／新宿店／イベント名「M1308-CB018無サイド一頁大会」／イベント名(英)「M1308-CB018-EN」／開催日2026-12-01／デッキのプレイヤー名「一頁無サイド 太郎 M1308-CB018」／申込済み／イベント用デッキ／メインはカードID 〔カードID-M1308-共有A〕を4枚と〔カードID-M1308-共有B〕を20枚／サイドは0枚（カード無し）／削除なし	IT-M13-08-018専用。メインが1ページでサイドが無いデッキのページ構成確認	フロントの会員情報登録画面で、お名前に申込登録のプレイヤー検索で探せる任意の姓名、お名前(フリガナ)に任意のカタカナ、メールアドレスに「m1308-cb018@example.test」、そのほかの必須項目に入力チェックを通る任意の値を入れ、同意して確認画面へを押し、会員情報登録確認画面で登録するを押す（仮会員になった場合は届いたメールに書かれたURLを開いて本会員にする。会員の登録と同時にプレイヤーも作られる）。管理画面の会員一覧でメールアドレス「m1308-cb018@example.test」の会員を開き、会員登録画面の会員ID欄に表示された番号を控える（〔会員ID-M1308-CB018〕）。新宿店の編集権限を持つ管理者で管理画面にログインし、イベント一覧で新規作成を押し、イベント登録画面で店舗に「新宿店」、イベント名(日)に「M1308-CB018無サイド一頁大会」、イベント名(英)に「M1308-CB018-EN」、フォーマット・ルール適用度・公開状態・定員に入力チェックを通る任意の値、参加費に「0」を入れて登録を押す。イベント一覧でイベント名「M1308-CB018無サイド一頁大会」の行のID欄に表示された番号を控える（〔イベントID-M1308-CB018〕）。イベント編集画面で日程追加を押し、日程登録画面で開始時間に「2026-12-01」の任意の時刻を入れ、オンライン受付ありにチェックを付けてオンライン受付開始時間とオンライン受付終了時間に開始時間より前の日時を入れ、参加費に「0」、そのほかの必須項目に入力チェックを通る任意の値を入れて登録を押す。イベント編集画面の日程一覧から日程編集画面を開き、イベント詳細ID欄に表示された番号を日程IDとして控える（〔日程ID-M1308-CB018〕）。イベント申込登録画面でイベント名・略称に「M1308-CB018無サイド一頁大会」を入れて検索を押し、検索結果の該当日程の新規登録を押す。イベント申込詳細・編集画面でプレイヤーの検索を押し、会員のお名前で検索して該当行のID欄に表示されたプレイヤーIDを控え（〔プレイヤーID-M1308-CB018〕）、決定を押してからイベント申込を登録を押す（申込状況は申込済みで登録される）。登録後に開く画面の申込ID欄に表示された番号を控える（〔申込ID-M1308-CB018〕）。申込選手IDは登録時に画面が振るが画面に表示されないため控えない（〔申込選手ID-M1308-CB018〕）。管理画面のデッキ一覧で新規登録を押し、デッキ新規登録画面でデッキタイプに「event」（イベント用）、フォーマットとアーキタイプに登録済みの任意のもの、公開状態に任意の値を選び、プレイヤーの検索するを押してプレイヤー検索で検索語を空のまま検索を押し、ID欄が〔プレイヤーID-M1308-CB018〕の行の選択を押し、プレイヤー名に「一頁無サイド 太郎 M1308-CB018」を入れ（選択時に自動で入った値は消して入れ直す）、イベントの検索するを押してイベント検索でイベント名に「M1308-CB018無サイド一頁大会」を入れて検索を押し、開催日2026-12-01の行の選択を押し、メインボードに「4 稲妻」「20 島」を1行ずつ、サイドボードは空のままで新規登録を押す。保存後に開くデッキ編集画面のURLに含まれる番号をデッキIDとして控える（〔デッキID-M1308-CB018〕）。	ケース専用
+S-M13-08-CBNOSIDE2P-019	イベント・日程・申込・会員・プレイヤー・デッキ・カード	サイド無し・メイン2ページのデッキ(019)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1308-CB019〕）、日程IDは登録時に画面が振る（控える。以下〔日程ID-M1308-CB019〕）、申込IDは登録時に画面が振る（控える。以下〔申込ID-M1308-CB019〕）、申込選手IDは登録時に画面が振る（画面に表示されないため控えない。以下〔申込選手ID-M1308-CB019〕）、会員IDは登録時に画面が振る（控える。以下〔会員ID-M1308-CB019〕）・メール=m1308-cb019@example.test、プレイヤーIDは登録時に画面が振る（控える。以下〔プレイヤーID-M1308-CB019〕）、デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1308-CB019〕）／新宿店／イベント名「M1308-CB019無サイド四十一枚大会」／開催日2026-12-02／プレイヤー名「無サイド四十一枚 花子 M1308-CB019」／申込済み／イベント用デッキ／メインカードIDは登録時に画面が振る（控える。以下〔カードID-M1308-CB019A01〕〜〔カードID-M1308-CB019A41〕）・名称=M1308-CB019-M001〜M1308-CB019-M041の異なる41件を各1枚／サイドは0枚（カード無し）／削除なし	IT-M13-08-019専用。メインが2ページでサイドが無いデッキのページ構成確認	管理画面のカード一覧で新規登録を押し、カード新規登録画面でカード名(日)とカード名(英)に「M1308-CB019-M001」、点数で見たマナ・コストに任意の数値を入れ、カードタイプは未選択のまま登録を押す。これを「M1308-CB019-M041」まで名称を1ずつ変えて41件繰り返し、カード一覧でそれぞれの行のカードID欄に表示された番号を控える（〔カードID-M1308-CB019A01〕〜〔カードID-M1308-CB019A41〕）。フロントの会員情報登録画面で、お名前に申込登録のプレイヤー検索で探せる任意の姓名、お名前(フリガナ)に任意のカタカナ、メールアドレスに「m1308-cb019@example.test」、そのほかの必須項目に入力チェックを通る任意の値を入れ、同意して確認画面へを押し、会員情報登録確認画面で登録するを押す（仮会員になった場合は届いたメールに書かれたURLを開いて本会員にする。会員の登録と同時にプレイヤーも作られる）。管理画面の会員一覧でメールアドレス「m1308-cb019@example.test」の会員を開き、会員登録画面の会員ID欄に表示された番号を控える（〔会員ID-M1308-CB019〕）。新宿店の編集権限を持つ管理者で管理画面にログインし、イベント一覧で新規作成を押し、イベント登録画面で店舗に「新宿店」、イベント名(日)に「M1308-CB019無サイド四十一枚大会」、イベント名(英)は必須のためイベント名(日)と同じ「M1308-CB019無サイド四十一枚大会」、フォーマット・ルール適用度・公開状態・定員に入力チェックを通る任意の値、参加費に「0」を入れて登録を押す。イベント一覧でイベント名「M1308-CB019無サイド四十一枚大会」の行のID欄に表示された番号を控える（〔イベントID-M1308-CB019〕）。イベント編集画面で日程追加を押し、日程登録画面で開始時間に「2026-12-02」の任意の時刻を入れ、オンライン受付ありにチェックを付けてオンライン受付開始時間とオンライン受付終了時間に開始時間より前の日時を入れ、参加費に「0」、そのほかの必須項目に入力チェックを通る任意の値を入れて登録を押す。イベント編集画面の日程一覧から日程編集画面を開き、イベント詳細ID欄に表示された番号を日程IDとして控える（〔日程ID-M1308-CB019〕）。イベント申込登録画面でイベント名・略称に「M1308-CB019無サイド四十一枚大会」を入れて検索を押し、検索結果の該当日程の新規登録を押す。イベント申込詳細・編集画面でプレイヤーの検索を押し、会員のお名前で検索して該当行のID欄に表示されたプレイヤーIDを控え（〔プレイヤーID-M1308-CB019〕）、決定を押してからイベント申込を登録を押す（申込状況は申込済みで登録される）。登録後に開く画面の申込ID欄に表示された番号を控える（〔申込ID-M1308-CB019〕）。申込選手IDは登録時に画面が振るが画面に表示されないため控えない（〔申込選手ID-M1308-CB019〕）。管理画面のデッキ一覧で新規登録を押し、デッキ新規登録画面でデッキタイプに「event」（イベント用）、フォーマットとアーキタイプに登録済みの任意のもの、公開状態に任意の値を選び、プレイヤーの検索するを押してプレイヤー検索で検索語を空のまま検索を押し、ID欄が〔プレイヤーID-M1308-CB019〕の行の選択を押し、プレイヤー名に「無サイド四十一枚 花子 M1308-CB019」を入れ（選択時に自動で入った値は消して入れ直す）、イベントの検索するを押してイベント検索でイベント名に「M1308-CB019無サイド四十一枚大会」を入れて検索を押し、開催日2026-12-02の行の選択を押し、メインボードに「1 M1308-CB019-M001」〜「1 M1308-CB019-M041」の41行を1行ずつ入れ、サイドボードは空のままで新規登録を押す。保存後に開くデッキ編集画面のURLに含まれる番号をデッキIDとして控える（〔デッキID-M1308-CB019〕）。	ケース専用
+
+exec
+/bin/bash -lc "grep -n -E 'IT-M13-04-005|IT-M13-02-050|IT-M13-02-051' integration_test/casegen/cases/M13-04_test_cases.tsv integration_test/casegen/cases/M13-02_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '70,110p;125,140p;198,210p;230,242p;258,293p' integration_test/casegen/combination/units/M13-02/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/cases/M13-04_test_cases.tsv:6:IT-M13-04-005	REQ-0214-sheet-8-R053		ITA-05,ITA-11	P1	ブラウザ+DB確認	S-M13-04-ADM,S-M13-04-EVENT-005	① ログインID=m1304_admin、担当者名=M13-04試験管理者の稼働中管理者でログインし、店舗Aのイベントを編集でき、店舗Bのイベントは編集できない。店舗A・店舗Bは登録済みである（S-M13-04-ADM）／② イベントID（登録時に振られたイベントIDを控えてある。〔イベントID-M1304-005〕）が、イベント名(日)=M1304-005基本イベント、店舗A、定員64、参加費3000、公開状態=公開、支払方法=クレジットカード決済、日程0件で登録され、休日マスタに2026/09/10が登録されている（S-M13-04-EVENT-005）	1. イベントID 〔イベントID-M1304-005〕の繰返日程追加画面を開く／2. 期間Fromに「2026/09/04」、期間Toに「2026/09/11」、曜日選択に木曜日・土曜日・日曜日、開始時間に「10:00」を設定する／3. 受付あり、デッキ登録あり、オンライン受付ありをオフにする／4. 登録ボタンを押す／5. DBで作成された日程の休日状態を確認する	土曜日の「2026/09/05」、日曜日の「2026/09/06」および休日マスタ登録日の「2026/09/10」が休日として登録されること	0214 繰返日程追加 / 業務ロジック 作成した日程に設定される値
+integration_test/casegen/cases/M13-02_test_cases.tsv:51:IT-M13-02-050	REQ-0214-sheet-5-R013,REQ-0214-sheet-5-R152,REQ-0214-sheet-5-R173,REQ-0214-sheet-5-R189	CH-0555	ITA-11,ITA-13	P1	ブラウザ+DB確認	S-M13-02-ADM,S-M13-02-MASTERS,S-M13-02-DATES-050	① 新しいブラウザセッションで管理者ID 〔管理者ID-M1302-共有〕としてログインしている（S-M13-02-ADM）／② 店舗Aが登録済みである（S-M13-02-MASTERS）／③ イベントID 〔イベントID-M1302-050〕（登録時に振られたイベントIDを控えてある）の日程ID 〔日程ID-M1302-050A〕（登録時に振られた日程IDを控えてある。以下の日程IDも同じ）はデッキ登録なし・申込0件、日程ID 〔日程ID-M1302-050B〕はデッキID 〔デッキID-M1302-050〕（登録時に振られたデッキIDを控えてある）の登録あり・申込0件である（S-M13-02-DATES-050）	1. ID 〔イベントID-M1302-050〕のイベント編集画面を開く／2. 開発者ツールで日程ID 〔日程ID-M1302-050B〕のチェックボックスを選択可能にする／3. 日程ID 〔日程ID-M1302-050A〕と〔日程ID-M1302-050B〕を選択する／4. チェックした日程削除ボタンを押し、削除を確定する／5. DBで日程ID 〔日程ID-M1302-050A〕と〔日程ID-M1302-050B〕を確認する	デッキ登録がある日程ID 〔日程ID-M1302-050B〕を含むため、選択した日程ID 〔日程ID-M1302-050A〕と〔日程ID-M1302-050B〕がどちらも削除されないこと	0214 イベント編集 / 業務ロジック 日程一括削除の判定順序、表示メッセージ M13-02-MSG-015
+integration_test/casegen/cases/M13-02_test_cases.tsv:52:IT-M13-02-051	REQ-0214-sheet-5-R014,REQ-0214-sheet-5-R152,REQ-0214-sheet-5-R174,REQ-0214-sheet-5-R189	CH-0555	ITA-11,ITA-13	P1	ブラウザ+DB確認	S-M13-02-ADM,S-M13-02-MASTERS,S-M13-02-DATES-051	① 新しいブラウザセッションで管理者ID 〔管理者ID-M1302-共有〕としてログインしている（S-M13-02-ADM）／② 店舗Aが登録済みである（S-M13-02-MASTERS）／③ イベントID 〔イベントID-M1302-051〕（登録時に振られたイベントIDを控えてある）の日程ID 〔日程ID-M1302-051A〕（登録時に振られた日程IDを控えてある。以下の日程IDも同じ）はデッキ登録なし・申込0件、日程ID 〔日程ID-M1302-051B〕はデッキ登録なし・申込ID 〔申込ID-M1302-051〕（登録時に振られた申込IDを控えてある）の1件ありである（S-M13-02-DATES-051）	1. ID 〔イベントID-M1302-051〕のイベント編集画面を開く／2. 開発者ツールで日程ID 〔日程ID-M1302-051B〕のチェックボックスを選択可能にする／3. 日程ID 〔日程ID-M1302-051A〕と〔日程ID-M1302-051B〕を選択する／4. チェックした日程削除ボタンを押し、削除を確定する／5. DBで日程ID 〔日程ID-M1302-051A〕と〔日程ID-M1302-051B〕を確認する	申込がある日程ID 〔日程ID-M1302-051B〕を含むため、選択した日程ID 〔日程ID-M1302-051A〕と〔日程ID-M1302-051B〕がどちらも削除されないこと	0214 イベント編集 / 業務ロジック 日程一括削除の判定順序、表示メッセージ M13-02-MSG-015
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M13-04_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M13-04-CBFREENODAY-046	イベント	無料該当日なしイベントの親イベント(046)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1304-CB046〕）／イベント名(日)=M1304-CB046-無料該当日なしイベント／店舗A／定員=64／参加費=0／公開状態=公開／支払方法=0件／日程=0件	IT-M13-04-046専用。参加費が無料でオンライン受付ありのとき、期間内に選択曜日の日が無い場合の登録完了を確認する	S-M13-04-ADMの管理者で管理画面にログインし、イベント管理のイベント一覧で新規作成ボタンを押してイベント登録画面を開く。イベント名(日)に「M1304-CB046-無料該当日なしイベント」、イベント名(英)に「M1304-CB046-無料該当日なしイベント EN」を入れ、店舗で店舗Aを選び、フォーマットとルール適用度は選択肢の先頭を選び、公開状態で「公開」を選び、定員に「64」、参加費に「0」を入れ、支払方法の「クレジットカード決済」にはチェックを付けないままにして登録ボタンを押す（日程は追加しない）。イベント一覧でイベント名に「M1304-CB046-無料該当日なしイベント」を入れて検索し、その行のイベントID列に表示された番号を控える（〔イベントID-M1304-CB046〕）。	ケース専用
+S-M13-04-CBFREEWEEKDAY-047	イベント	無料平日イベントの親イベント(047)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1304-CB047〕）／イベント名(日)=M1304-CB047-無料平日イベント／店舗A／定員=64／参加費=0／公開状態=公開／支払方法=0件／日程=0件／休日マスタに2026/09/09は登録されていない	IT-M13-04-047専用。参加費が無料でオンライン受付ありのとき、平日で休日マスタに無い日の日程が休日扱いにならないことを確認する	S-M13-04-ADMの管理者で管理画面にログインし、イベント管理のイベント一覧で新規作成ボタンを押してイベント登録画面を開く。イベント名(日)に「M1304-CB047-無料平日イベント」、イベント名(英)に「M1304-CB047-無料平日イベント EN」を入れ、店舗で店舗Aを選び、フォーマットとルール適用度は選択肢の先頭を選び、公開状態で「公開」を選び、定員に「64」、参加費に「0」を入れ、支払方法の「クレジットカード決済」にはチェックを付けないままにして登録ボタンを押す（日程は追加しない）。イベント一覧でイベント名に「M1304-CB047-無料平日イベント」を入れて検索し、その行のイベントID列に表示された番号を控える（〔イベントID-M1304-CB047〕）。続けてデータ管理の祝日管理画面で、日付が「2026/09/09」の登録が無いことを確認する（あれば削除する）。	ケース専用
+S-M13-04-CBFREEHOLIDAY-048	イベント	無料土日イベントの親イベント(048)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1304-CB048〕）／イベント名(日)=M1304-CB048-無料土日イベント／店舗A／定員=64／参加費=0／公開状態=公開／支払方法=0件／日程=0件	IT-M13-04-048専用。参加費が無料でオンライン受付ありのとき、土曜・日曜の日程が休日になることを確認する	S-M13-04-ADMの管理者で管理画面にログインし、イベント管理のイベント一覧で新規作成ボタンを押してイベント登録画面を開く。イベント名(日)に「M1304-CB048-無料土日イベント」、イベント名(英)に「M1304-CB048-無料土日イベント EN」を入れ、店舗で店舗Aを選び、フォーマットとルール適用度は選択肢の先頭を選び、公開状態で「公開」を選び、定員に「64」、参加費に「0」を入れ、支払方法の「クレジットカード決済」にはチェックを付けないままにして登録ボタンを押す（日程は追加しない）。イベント一覧でイベント名に「M1304-CB048-無料土日イベント」を入れて検索し、その行のイベントID列に表示された番号を控える（〔イベントID-M1304-CB048〕）。	ケース専用
+S-M13-04-CBCARDHOLIDAY-049	イベント	カード決済土日イベントの親イベント(049)	イベントIDは登録時に画面が振る（控える。以下〔イベントID-M1304-CB049〕）／イベント名(日)=M1304-CB049-カード決済土日イベント／店舗A／定員=64／参加費=3000／公開状態=公開／支払方法=クレジットカード決済／日程=0件	IT-M13-04-049専用。参加費が有料で支払方法がクレジットカード決済のイベントに、オンライン受付ありで土曜・日曜の日程を登録して休日になることを確認する	S-M13-04-ADMの管理者で管理画面にログインし、イベント管理のイベント一覧で新規作成ボタンを押してイベント登録画面を開く。イベント名(日)に「M1304-CB049-カード決済土日イベント」、イベント名(英)に「M1304-CB049-カード決済土日イベント EN」を入れ、店舗で店舗Aを選び、フォーマットとルール適用度は選択肢の先頭を選び、公開状態で「公開」を選び、定員に「64」、参加費に「3000」を入れ、支払方法の「クレジットカード決済」にチェックを付けて登録ボタンを押す（日程は追加しない）。イベント一覧でイベント名に「M1304-CB049-カード決済土日イベント」を入れて検索し、その行のイベントID列に表示された番号を控える（〔イベントID-M1304-CB049〕）。	ケース専用
+
+ succeeded in 0ms:
+L0069	「戻る」は、前の画面名を表示する
+L0070	更新
+L0071	複製新規
+L0072	画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）
+L0073	遷移一覧（1件）
+L0074	遷移元	遷移先	connector
+L0075	更新	イベント一覧	8（0214:イベント編集!AT19）
+L0076	カスタマイズ説明
+L0077	・カスタマイズ要件
+L0078	・
+L0079	→権限を保持している店舗のイベントのみ編集可能とする
+L0080	・大型イベント、特別イベント、イベントレベル(初心者など)を個別に設定できる
+L0081	・コンビニ決済を削除する
+L0082	・以下の入力項目を追加する
+L0083	・イベント規模
+L0084	・フリー入力エリア
+L0085	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0086	機能仕様処理概要（★はカスタマイズ項目）
+L0087	・新規イベントの登録、既存イベントの編集ができる。
+L0088	・イベントに紐づく日程の追加、一覧表示、削除ができる。
+L0089	・すでに申込がある場合、支払方法は変更できない。
+L0090	・日程情報がある場合、イベントの削除はできない。
+L0091	・デッキ登録されている日程の削除はできない。
+L0092	・申込されている日程の削除はできない。
+L0093	・支払方法（識別ID:1-13）でクレジットカード決済をオフで更新しようとした時は、紐づく日程データをチェックし、
+L0094	参加費が有料かつオンライン受付がありの日程が存在する場合はエラーとする。
+L0095	★権限による制御
+L0096	・メンバーが権限を保持している店舗のイベントのみ、登録、編集、削除が可能
+L0097	・識別ID:1-3 「店舗」は編集権限のない店舗が選択された場合エラーとする
+L0098	・識別ID:1-3 「店舗」の初期値にメンバーのデフォルト表示の店舗を設定する（新規登録の場合）
+L0099	・識別ID:3-2 「日程追加」は編集権限のある店舗のイベントのみ表示する
+L0100	・識別ID:3-3 「繰返日程追加」は編集権限のある店舗のイベントのみ表示する
+L0101	・識別ID:3-4 「削除」は編集権限のある店舗のイベントのみ表示する
+L0102	・識別ID:3-5 「チェックした日程削除」は編集権限のある店舗のイベントのみ表示する
+L0103	・識別ID:3-6 「複製新規」は編集権限のある店舗のイベントのみ表示する
+L0104	・識別ID:3-8 「イベント更新」は編集権限のある店舗のイベントのみ表示する
+L0105	・識別ID:4-8 「編集リンク」内の「削除」はメンバーが権限を保持している店舗のイベントのみ表示する
+L0106	★入力項目の追加、削除について
+L0107	・識別ID:1-13 「支払方法」からコンビニ決済を削除する
+L0108	・識別ID:1-8 「イベント規模」を追加する、おすすめイベント、デイリーイベント、特別イベント、大型イベントから選択
+L0109	・識別ID:2-3、2-4 「備考」を削除する
+L0124	初心者歓迎、カジュアル対戦、上級者向けを追加
+L0125	1-7	公開状態	単一選択	〇	-	-	選択肢: 公開 非公開 限定公開
+L0126	1-8	イベント規模	単一選択	-	-	-	選択肢:大型イベント 特別イベント デイリーイベント おすすめイベント
+L0127	1-9	バナーURL(日)	全角・半角	-	255字	-	-
+L0128	1-10	バナーURL(英)	全角・半角	-	255字	-	-
+L0129	1-11	定員	数値(整数)	〇	8字	-	接尾辞はチーム戦オフの時「人」、オンの時「組」
+L0130	1-12	チーム戦	チェックボックス	-	-	-	-
+L0131	1-13	支払方法	単一選択	-	-	クレジットカード決済	コンビニ決済は削除
+L0132	1-14	参加費	数値(整数)	〇	8字	-	-
+L0133	イベント説明
+L0134	2-1	賞品(日)	全角・半角	-	4096字	-	-
+L0135	2-2	賞品(英)	全角・半角	-	4096字	-	-
+L0136	2-3	備考(日)	全角・半角	-	4096字	-	削除
+L0137	2-4	備考(英)	全角・半角	-	4096字	-	削除
+L0138	2-5	フリー入力エリア1
+L0139	項目名(日)	全角・半角	-	255字	-	-
+L0197	4-5	デッキ登録締切	ラベル	-	-	-	-
+L0198	4-6	申込人数	ラベル	-	-	-	-
+L0199	4-7	申込一覧	リンク	-	-	-	選択したイベントの情報を用いてイベント申込一覧画面へ遷移
+L0200	4-8	編集ボタン	ボタン	-	-	-	ポップアップメニューを表示する。
+L0201	選択肢:編集 削除
+L0202	編集選択時は日程編集へ遷移
+L0203	削除選択時は選択された日程削除
+L0204	削除はメンバーが権限を保持している店舗のイベントのみ表示
+L0205	Source:
+L0206	functions/pf-eccube3/m13-02_admin_event_event_edit_delete.md
+L0207	現行仕様
+L0208	M13-02 イベント編集/削除 / イベント管理 — イベント編集/削除
+L0209	刷新後は実装不要本節は現行実装（pf-eccube3）からのリバースです。次の記述は Excel基本設計により廃止されており、刷新後に実装する必要はありません。
+L0229	1	パスの識別子のイベントが存在するか	存在しなければアクセス拒否とする
+L0230	2	なりすまし対策トークン	不正なら共通のアクセス拒否として扱う
+L0231	3	削除	完了メッセージを表示し、検索結果ページへ戻す。ページ番号は保持した検索ページ番号、無ければ1ページ目とする
+L0232	日程一括削除の判定順序
+L0233	順序	判定	結果
+L0234	1	削除対象の日程識別子が空でないか	空なら該当なしとして扱う
+L0235	2	当該イベントに該当する日程が存在するか	無ければ該当なしとして扱う
+L0236	3	なりすまし対策トークン	不正なら共通のアクセス拒否として扱う
+L0237	4	削除	日程削除の完了メッセージを表示し、編集画面へ戻す
+L0238	判定は選択された日程を1件ずつ順に見て、削除できない日程に当たった時点で中止する。中止したときは、同じ要求で選択した他の日程も削除しない。
+L0239	登録者と入力値の扱い
+L0240	新規登録・更新の保存前に、ログイン中の管理者を登録者として設定する。参加費・定員は入力値をそのまま整数として保存し、金額計算・税計算・丸めは行わない。定員の入力欄は1を、参加費の入力欄は0を下限とする。
+L0241	エラー時の扱い
+L0257	—	イベント一覧の削除確認ダイアログ	このイベント情報を削除してもよろしいですか？	イベント一覧の削除リンクを押したとき	—
+L0258	—	削除確認ダイアログ	（開始日時を埋め込んだ削除確認文言）	日程の削除リンクを押したとき	—
+L0259	—	フラッシュ	イベント情報を登録しました。	新規登録・更新の保存に成功したとき	—
+L0260	—	フラッシュ	イベント情報を削除しました。	イベントの削除に成功したとき（pf設計文言）	—
+L0261	—	フラッシュ	日程情報を削除しました。	日程の一括削除に成功したとき	—
+L0262	—	フラッシュ	イベント情報を登録できませんでした。	入力の検証に失敗したとき	—
+L0263	—	フラッシュ	申込済みの場合、支払方法を変更できません。	申込済みで支払方法に差分があるとき	—
+L0264	—	フラッシュ	日程情報が存在する場合、イベント情報を削除することができません。	日程が残るイベントを削除しようとしたとき	—
+L0265	—	フラッシュ	デッキ登録済みの場合、イベント情報を削除することができません。	デッキ登録済みの日程を一括削除しようとしたとき	—
+L0266	—	フラッシュ	申込済みの場合、イベント情報を削除することができません。	申込済みの日程を一括削除しようとしたとき	—
+L0267	M13-02-MSG-001	管理画面上部	保存しました	イベントを新規登録して保存したとき	イベント編集画面に遷移する
+L0268	M13-02-MSG-002	管理画面上部	保存に失敗しました	イベントの新規登録の保存に失敗したとき	イベント登録画面に留まる
+L0269	M13-02-MSG-003	管理画面上部	保存しました	イベントを編集して保存したとき	イベント編集画面に留まる
+L0270	M13-02-MSG-004	管理画面上部	保存に失敗しました	イベント編集の保存に失敗したとき	イベント編集画面に留まる
+L0271	M13-02-MSG-005	管理画面上部	不正なリクエストです。	イベントを削除しようとしたが、対象店舗を編集する権限がないとき	イベント編集画面に遷移する
+L0272	M13-02-MSG-006	管理画面上部	admin.event.delete.schedule_exists	日程情報が登録されているイベントを削除しようとしたとき	イベント編集画面に遷移する
+L0273	M13-02-MSG-007	管理画面上部	削除しました	日程が登録されていないイベントを削除したとき	イベント一覧検索画面に遷移する
+L0274	M13-02-MSG-008	管理画面上部	不正なリクエストです。	対象イベントの店舗を編集する権限がないとき	イベント編集画面に遷移する
+L0275	M13-02-MSG-009	管理画面上部	不正なリクエストです。	別のイベントに属する日程を操作しようとしたとき	イベント編集画面に遷移する
+L0276	M13-02-MSG-010	管理画面上部	admin.event.delete.deckerror	デッキ登録がある日程を削除しようとしたとき	イベント編集画面に遷移する
+L0277	M13-02-MSG-011	管理画面上部	admin.event.delete.entryerror	申込がある日程を削除しようとしたとき	イベント編集画面に遷移する
+L0278	M13-02-MSG-012	管理画面上部	削除しました	イベントの日程を削除したとき	イベント編集画面に遷移する
+L0279	M13-02-MSG-013	管理画面上部	不正なリクエストです。	対象イベントの店舗を編集する権限がないとき	イベント編集画面に遷移する
+L0280	M13-02-MSG-014	管理画面上部	削除する日程を選択してください	日程を選択せずに一括削除を実行したとき	イベント編集画面に遷移する
+L0281	M13-02-MSG-015	管理画面上部	デッキ登録または申込がある日程が含まれていたため、一括削除できませんでした。	デッキ登録または申込がある日程を含めて一括削除しようとしたとき	イベント編集画面に遷移する
+L0282	M13-02-MSG-016	管理画面上部	%count%件の日程を削除しました	選択した日程を一括削除したとき	イベント編集画面に遷移する
+L0283	M13-02-MSG-017	入力項目直下	admin.banner.regex_error	バナーURLに「admin.hareruyamtg.com」を含む値を入力して保存したとき	入力画面に留まる
+L0284	M13-02-MSG-018	入力項目直下	admin.banner.regex_error	英語用バナーURLに「admin.hareruyamtg.com」を含む値を入力して保存したとき	入力画面に留まる
+L0285	M13-02-MSG-019	入力項目直下/フォーム上部	参加費が有料かつオンライン受付ありの日程が存在するため、支払方法をオフにできません。	有料のオンライン受付日程があるイベントで、支払方法をすべてオフにして保存しようとしたとき	イベント編集画面に留まる
+L0286	M13-02-MSG-020	入力項目直下/フォーム上部	ユーザーの編集可能店舗を選択してください。	編集できない店舗を選択したとき	イベント登録・編集画面に留まる
+L0287	M13-02-MSG-021	イベント編集画面の日程一覧にある一括削除用チェックボックスのツールチップ	デッキ登録があるため削除できません	編集可能なイベントで、デッキ登録がある日程の一括削除用チェックボックスにカーソルを合わせたとき	対象日程のチェックボックスは選択できず、一括削除の対象にできない
+L0288	M13-02-MSG-022	イベント編集画面の日程一覧にある一括削除用チェックボックスのツールチップ	申込があるため削除できません	編集可能なイベントで、デッキ登録がなく申込がある日程の一括削除用チェックボックスにカーソルを合わせたとき	対象日程のチェックボックスは選択できず、一括削除の対象にできない
+##### 0214 sheet-6 イベント削除
+L0289	イベント削除
+L0290	ドキュメント名イベント管理 基本設計仕様書
+L0291	セクション—
+
+exec
+/bin/bash -lc "grep -n -E '表示文言|メッセージ|結合テスト|画面' integration_test/SCOPE.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+1:# 結合テスト観点表の適用範囲
+12:**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+24:| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+25:| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+33:画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+36:- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+37:- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+64:| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+65:| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+72:| 事象 | 結合テストが見るもの | 他が見るもの |
+79:| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+80:| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+exec
+/bin/bash -lc "grep -n -E 'IT-M13-03-06[3-5]|IT-M13-04-04[6-9]|IT-M13-08-01[8-9]|IT-M13-10-04[4-5]' integration_test/casegen/combination/review/R1_*_findings.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/review/R1_51_findings.md:1:### 指摘（M13-04 / IT-M13-04-046）
+integration_test/casegen/combination/review/R1_51_findings.md:7:### 指摘（M13-10 / IT-M13-10-044）
+
+exec
+/bin/bash -lc "grep -n -E 'IT-M13-10-0(24|25|42)' integration_test/casegen/cases/M13-10_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+24:IT-M13-10-024	REQ-0214-sheet-15-R019,REQ-0214-sheet-15-R089,REQ-0214-sheet-15-R102,REQ-0214-sheet-15-R104		ITA-03,ITA-07	P1	ブラウザ+DB確認	S-M13-10-MASTER,S-M13-10-ADM-A,S-M13-10-DATA-024	① 店舗ID〔店舗ID-M1310-共有A〕（登録時に振られた店舗IDを控えてある）が参照できる（S-M13-10-MASTER）／② 店舗ID〔店舗ID-M1310-共有A〕を編集できる管理者でログインしている（S-M13-10-ADM-A）／③ イベント申込ID〔イベント申込ID-M1310-024〕（登録時に振られたイベント申込IDを控えてある）の更新前参加者はプレイヤーID〔更新前プレイヤーID-M1310-024〕（登録時に振られた更新前プレイヤーIDを控えてある）だけであり、会員姓に「会員姓一」を含むプレイヤーID〔検索プレイヤーID-M1310-024〕（登録時に振られた検索プレイヤーIDを控えてある）はイベント日程ID〔イベント日程ID-M1310-024〕（登録時に振られたイベント日程IDを控えてある）へ未登録である（S-M13-10-DATA-024）	1. イベント申込ID〔イベント申込ID-M1310-024〕のイベント申込詳細・編集画面を開く／2. プレイヤーID〔更新前プレイヤーID-M1310-024〕の削除ボタンを押す／3. 表示された検索ボタンを押す／4. 「会員姓一」で検索しプレイヤーID〔検索プレイヤーID-M1310-024〕の決定ボタンを押す／5. 登録ボタンを押す／6. DBでイベント申込ID〔イベント申込ID-M1310-024〕の参加者を確認する	イベント申込ID〔イベント申込ID-M1310-024〕の参加者がプレイヤーID〔検索プレイヤーID-M1310-024〕だけとなること	0214 イベント申込詳細・編集 / 機能仕様 処理概要、業務ロジック 参加者の反映、入出力: 永続化
+25:IT-M13-10-025	REQ-0214-sheet-15-R089,REQ-0214-sheet-15-R102		ITA-21	P1	ブラウザ+DB確認	S-M13-10-MASTER,S-M13-10-ADM-A,S-M13-10-DATA-025	① 申込状況「申込済み」「キャンセル済み」が参照できる（S-M13-10-MASTER）／② 店舗ID〔店舗ID-M1310-共有A〕（登録時に振られた店舗IDを控えてある）を編集できる管理者でログインしている（S-M13-10-ADM-A）／③ イベント申込ID〔イベント申込ID-M1310-025〕（登録時に振られたイベント申込IDを控えてある）の開始時の申込状況は「申込済み」、参加者はプレイヤーID〔プレイヤーID-M1310-025〕（登録時に振られたプレイヤーIDを控えてある）の1人、申込履歴は履歴ID〔申込履歴ID-M1310-025A〕（登録時に振られた申込履歴IDを控えてある）と〔申込履歴ID-M1310-025B〕（登録時に振られた申込履歴IDを控えてある）の2件である（S-M13-10-DATA-025）	1. イベント申込ID〔イベント申込ID-M1310-025〕のイベント申込詳細・編集画面を開く／2. 申込状況で「キャンセル済み」を選択する／3. 登録ボタンを押す／4. DBでイベント申込ID〔イベント申込ID-M1310-025〕の申込履歴件数を確認する	イベント申込ID〔イベント申込ID-M1310-025〕の申込履歴が更新前から1件増えること	0214 イベント申込詳細・編集 / 業務ロジック 参加者の反映、入出力: 永続化
+39:IT-M13-10-042	REQ-0214-sheet-15-R089,REQ-0214-sheet-15-R102,REQ-0214-sheet-15-R104		ITA-11	P1	ブラウザ+DB確認	S-M13-10-MASTER,S-M13-10-ADM-DPA,S-M13-10-KEEPSWAP-042	① 店舗ID〔店舗ID-M1310-共有A〕（登録時に振られた店舗IDを控えてある）が参照できる（S-M13-10-MASTER）／② 店舗ID〔店舗ID-M1310-共有A〕を編集できる管理者でログインしている（S-M13-10-ADM-DPA）／③ イベント申込ID〔イベント申込ID-M1310-042〕（登録時に振られたイベント申込IDを控えてある）は店舗ID〔店舗ID-M1310-共有A〕・有効なイベント日程ID〔イベント日程ID-M1310-042〕（登録時に振られたイベント日程IDを控えてある）に紐づくチーム人数3人の申込済みの申込で、有効な参加者はプレイヤーID〔継続プレイヤーID-M1310-042A〕（登録時に振られた継続プレイヤーIDを控えてある）・〔外すプレイヤーID-M1310-042〕（登録時に振られた外すプレイヤーIDを控えてある）・〔継続プレイヤーID-M1310-042C〕（登録時に振られた継続プレイヤーIDを控えてある）の3人である。会員姓に「追加姓042」を含むプレイヤーID〔追加プレイヤーID-M1310-042〕（登録時に振られた追加プレイヤーIDを控えてある）はイベント日程ID〔イベント日程ID-M1310-042〕へ未登録である（S-M13-10-KEEPSWAP-042）	1. イベント申込ID〔イベント申込ID-M1310-042〕のイベント申込詳細・編集画面を開く／2. プレイヤーID〔外すプレイヤーID-M1310-042〕の削除ボタンを押す／3. 表示された検索ボタンを押す／4. 「追加姓042」で検索しプレイヤーID〔追加プレイヤーID-M1310-042〕の決定ボタンを押す／5. 登録ボタンを押す／6. DBでイベント申込ID〔イベント申込ID-M1310-042〕の参加者を確認する	イベント申込ID〔イベント申込ID-M1310-042〕の参加者がプレイヤーID〔継続プレイヤーID-M1310-042A〕・〔継続プレイヤーID-M1310-042C〕・〔追加プレイヤーID-M1310-042〕の3人となり、プレイヤーID〔外すプレイヤーID-M1310-042〕が含まれないこと	0214 イベント申込詳細・編集 / 業務ロジック 参加者の反映、入出力: 永続化
+
+exec
+/bin/bash -lc "sed -n '55,83p' integration_test/SCOPE.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+
+codex
+DBでの保存・未更新は確認できても、設計書が定めるエラーや履歴追加を見ていないケースがありました。作成日程の参加費についても、親イベントから引き継ぐ値が期待結果に含まれているかを最終確認します。
+codex
+### 指摘（M13-03 / IT-M13-03-063）
+- 主張: 期待結果は「日程が0件のまま」で、エラーの発生を確認していない。
+- 実際: design.txt L0056–L0057 は、オンライン受付あり・有料で親イベントにクレジットカード決済の設定がない場合、「エラーとする」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 日程が追加されないことに加え、支払方法の条件によるエラーが発生することを確認する。
+
+### 指摘（M13-03 / IT-M13-03-064）
+- 主張: 期待結果は「参加費が0、オンライン受付ありがオフのまま更新されない」ことだけである。
+- 実際: design.txt L0056–L0057 は、同じ条件で既存日程を更新しようとした場合も「エラーとする」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: DB上の未更新に加え、支払方法の条件によるエラーが発生することを確認する。
+
+### 指摘（M13-04 / IT-M13-04-047）
+- 主張: 期待結果は「2026/09/09」が休日でない日程として登録されることだけで、組の「参加費=無料」を確認していない。
+- 実際: design.txt L0054 は「参加費…は、親イベントのものがセットされる」、L0108 は作成日程の参加費に親イベントの値をそのまま設定すると定める。事前準備の親イベントは参加費0である。
+- 判定: 要因の結果が欠けている
+- 修正案: 作成日程の休日状態とともに、参加費が0で登録されたことを確認する。
+
+### 指摘（M13-04 / IT-M13-04-048）
+- 主張: 期待結果は土曜・日曜の日程が休日として登録されることだけで、組の「参加費=無料」を確認していない。
+- 実際: design.txt L0054、L0108 は、作成日程の参加費に親イベントの値を設定すると定める。事前準備の親イベントは参加費0である。
+- 判定: 要因の結果が欠けている
+- 修正案: 作成された日程について、休日状態に加えて参加費0を確認する。
+
+### 指摘（M13-04 / IT-M13-04-049）
+- 主張: 期待結果は土曜・日曜の日程の休日状態だけで、有料の参加費とオンライン受付の設定結果を確認していない。
+- 実際: design.txt L0108 は作成日程に親イベントの参加費を設定し、L0109 はオンライン受付の開始・終了日時を指定の前日数と時刻から設定すると定める。事前準備の参加費は3000、手順の指定は開始7日前09:00・終了1日前23:00である。
+- 判定: 要因の結果が欠けている
+- 修正案: 各日程の休日状態に加え、参加費3000とオンライン受付の開始・終了日時を確認する。
+
+### 指摘（M13-10 / IT-M13-10-044）
+- 主張: 期待結果は申込状況の更新と参加者3人の維持だけで、申込履歴を確認していない。
+- 実際: design.txt L0148 は「更新が成功するたびに申込履歴を1件記録する」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 更新前の履歴件数を控え、更新後に1件増えたことを確認する。
+
+### 指摘（M13-10 / IT-M13-10-045）
+- 主張: 期待結果は参加者が2人になることだけで、申込履歴を確認していない。
+- 実際: design.txt L0148 は「更新が成功するたびに申込履歴を1件記録する」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 更新前の履歴件数を控え、参加者の削除と同じ更新で履歴が1件増えたことを確認する。
+tokens used
+85,942
+### 指摘（M13-03 / IT-M13-03-063）
+- 主張: 期待結果は「日程が0件のまま」で、エラーの発生を確認していない。
+- 実際: design.txt L0056–L0057 は、オンライン受付あり・有料で親イベントにクレジットカード決済の設定がない場合、「エラーとする」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 日程が追加されないことに加え、支払方法の条件によるエラーが発生することを確認する。
+
+### 指摘（M13-03 / IT-M13-03-064）
+- 主張: 期待結果は「参加費が0、オンライン受付ありがオフのまま更新されない」ことだけである。
+- 実際: design.txt L0056–L0057 は、同じ条件で既存日程を更新しようとした場合も「エラーとする」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: DB上の未更新に加え、支払方法の条件によるエラーが発生することを確認する。
+
+### 指摘（M13-04 / IT-M13-04-047）
+- 主張: 期待結果は「2026/09/09」が休日でない日程として登録されることだけで、組の「参加費=無料」を確認していない。
+- 実際: design.txt L0054 は「参加費…は、親イベントのものがセットされる」、L0108 は作成日程の参加費に親イベントの値をそのまま設定すると定める。事前準備の親イベントは参加費0である。
+- 判定: 要因の結果が欠けている
+- 修正案: 作成日程の休日状態とともに、参加費が0で登録されたことを確認する。
+
+### 指摘（M13-04 / IT-M13-04-048）
+- 主張: 期待結果は土曜・日曜の日程が休日として登録されることだけで、組の「参加費=無料」を確認していない。
+- 実際: design.txt L0054、L0108 は、作成日程の参加費に親イベントの値を設定すると定める。事前準備の親イベントは参加費0である。
+- 判定: 要因の結果が欠けている
+- 修正案: 作成された日程について、休日状態に加えて参加費0を確認する。
+
+### 指摘（M13-04 / IT-M13-04-049）
+- 主張: 期待結果は土曜・日曜の日程の休日状態だけで、有料の参加費とオンライン受付の設定結果を確認していない。
+- 実際: design.txt L0108 は作成日程に親イベントの参加費を設定し、L0109 はオンライン受付の開始・終了日時を指定の前日数と時刻から設定すると定める。事前準備の参加費は3000、手順の指定は開始7日前09:00・終了1日前23:00である。
+- 判定: 要因の結果が欠けている
+- 修正案: 各日程の休日状態に加え、参加費3000とオンライン受付の開始・終了日時を確認する。
+
+### 指摘（M13-10 / IT-M13-10-044）
+- 主張: 期待結果は申込状況の更新と参加者3人の維持だけで、申込履歴を確認していない。
+- 実際: design.txt L0148 は「更新が成功するたびに申込履歴を1件記録する」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 更新前の履歴件数を控え、更新後に1件増えたことを確認する。
+
+### 指摘（M13-10 / IT-M13-10-045）
+- 主張: 期待結果は参加者が2人になることだけで、申込履歴を確認していない。
+- 実際: design.txt L0148 は「更新が成功するたびに申込履歴を1件記録する」と定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 更新前の履歴件数を控え、参加者の削除と同じ更新で履歴が1件増えたことを確認する。

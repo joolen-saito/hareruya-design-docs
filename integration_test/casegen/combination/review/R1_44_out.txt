@@ -1,0 +1,1447 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15879-db01-7203-bac8-484d4825842e
+--------
+user
+# 敵対レビュー依頼：要因の組合せの結合テストケース（1巡目・44）
+
+あなたはレビュアーである。著者とは別人として、下の追加ケースを根拠と突き合わせ、誤りを指摘せよ。ファイルは変更しない。スクリプトやコマンドは読むだけで実行しない（grep・cat 等の閲覧は可。rg は使わない）。出力は日本語。
+レビューは事実確認に限る。設計書に無い仕様を足す提案はしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すと決めた。他の機能の設定値も要因に入れる。
+機能ごとに要因表（`combination/factors/`）を作り codex が反証した。そこから機械が試す値の組（`combination/combos/<機能ID>.tsv`）を並べ、著者が組1行にケース1件を書いた。
+組1行ごとの扱い（ケース化／既存ケースで確認済み／ケースにしない）は dispositions に書いてある。
+
+## 対象（/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/ 配下）
+
+| 機能ID | 組の範囲 | 追加ケース・シード・仕分け |
+| --- | --- | --- |
+| M07-01 | 全部 | `combination/cases/M07-01_cb_test_cases.tsv`・`M07-01_cb_seed_data.tsv`・`M07-01_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M07-03 | 全部 | `combination/cases/M07-03_cb_test_cases.tsv`・`M07-03_cb_seed_data.tsv`・`M07-03_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M07-06 | 全部 | `combination/cases/M07-06_cb_test_cases.tsv`・`M07-06_cb_seed_data.tsv`・`M07-06_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M07-08 | 全部 | `combination/cases/M07-08_cb_test_cases.tsv`・`M07-08_cb_seed_data.tsv`・`M07-08_cb_dispositions.tsv`（組の範囲の行だけ） |
+
+機能ごとに次を読む。
+- 追加ケース（13列。末尾の項目IDは埋めた組ID）、追加シード、仕分け（上の表のファイル）
+- 試す値の組 `combination/combos/<機能ID>.tsv`（組ID／処理ID／組（要因ID=値）／読める形／埋める組）
+- 要因表 `combination/factors/<機能ID>_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`・`_constraints.tsv`
+- 設計書 `combination/units/<機能ID>/design.txt`（行頭 L0001 が行番号。`#####` の行はシートの境目）。要因の根拠が他の機能のときは `combination/units/<その機能ID>/design.txt`、共通シートは `combination/units/_common/`
+- 既存のケースとシード `cases/<機能ID>_test_cases.tsv`・`<機能ID>_seed_data.tsv`（追加ケースが使う共有シードはここにある）
+
+規約は `combination/GEN_PROMPT.md`、裁定は `sheetmap/FIX_R1_BRIEF.md`（A〜L、C'）・`FIX_R2_BRIEF.md`（M〜O）、範囲は `integration_test/SCOPE.md`、前提条件は `precond/README.md`、判定単位は `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366。
+設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。Excel が触れていない条件を埋め込みが足しているだけのときは両方を当てる。
+期待結果の根拠は設計書に限る。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備と手順の実行可能性を確かめるためにだけ読む。実装と設計書が違うことは指摘しない。
+`combination/review/` の `*_out.txt`・`combination/prompts/` と、上の表に無いケースのファイルは読まない。
+
+## 意図的であり指摘対象外のもの
+
+- 連鎖IDが空欄、要求IDが空欄であること。既存ケースを変えていないこと。判定IDが IT-0366 であること。
+- 組の値の選び方（どの組を並べたか）。要因表の「正解未定」「作れない」の組がケースに無いこと（要因表は反証済み。ただし、ケースを書いてみて組が作れない・結果が決まらないと分かったものは指摘してよい）。
+- 単体テスト・e2e へ送られるもの（画面上だけの入力制限、表示文言の逐語照合、見た目、計算式そのもの）のケースが無いこと。
+- シードの投入方法が「未確定: …」と書かれていること。
+- 商品がグッズ商品CSV登録で作られ、在庫が在庫変更CSV登録と承認で入ること（2026-10-19 の決まり）。
+
+## 重点観点
+
+1. **組の値がケースにあるか**: 事前準備・手順に、組のすべての要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）が値で書かれ、その値で処理を動かしているか。組と違う値で操作していないか。
+2. **期待結果が組の全要因の結果を重ねているか**: 確かめる所で、組の各要因の値について設計書が定める結果（金額・選択肢・更新先・更新内容）がまとめて確かめられているか。設計書の記述と事前準備の値だけから一意に出るか。設計書に無い値・ふるまいを期待していないか。金額・数量の計算が合っているか。
+3. 事前準備の状態から手順を実行して期待結果に到達できるか。単独で成立するか。「このN件だけ」を期待するのに、同じ条件に当たる他のデータを除く記述があるか。共有シードの設定と組の設定値が食い違っていないか。
+4. 1ケースに、確かめる所の違う期待結果が混じっていないか。既存ケースとの重複、物理名の混入。
+5. 「ケースにしない」とした組のうち、設計書の記述から期待結果が一意に決まるもの。「既存ケースで確認済み」としたもののうち、挙げたケースが実際にはその組の値で確かめていないもの。
+
+## 出力形式
+
+指摘が無ければ `NONE` の1語。あれば1件ごとに次の形で、テストIDの順に書く。確信の持てないものは挙げない。見出しの括弧の先頭は必ず機能ID。
+
+```
+### 指摘（<機能ID> / <テストID または 組ID>）
+- 主張: ケースまたは仕分けの記述（要点の引用）
+- 実際: 設計書の事実（design.txt の行番号。原文を引く）
+- 判定: 組の値が無い／期待結果の誤り／設計書に無い期待／成立しない前提・手順／要因の結果が欠けている／複数の期待結果／重複／ケースにできる／確認済みでない／組が作れない
+- 修正案: 結論を先に置いた1〜2文
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T08:42:24.895366Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象4機能の組、ケース、仕分け、設計書を順に照合します。ファイルは変更せず、閲覧コマンドだけを使います。
+exec
+/bin/bash -lc 'pwd && ls integration_test/casegen/combination && wc -l integration_test/casegen/combination/{cases,combos,factors}/*M07-0{1,3,6,8}* 2>/dev/null' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 22ms:
+/home/y-saito/Developments/hareruya-design-docs
+CASEFIX_PROMPT.md
+CASEFIX_ROLLOUT_PROMPT.md
+FACTOR_PROMPT.md
+FIX_PROMPT.md
+FIX_ROLLOUT_PROMPT.md
+GEN_PROMPT.md
+MD_ADD_PROMPT.md
+README.md
+REVIEW_PROMPT.md
+SWEEP_PROMPT.md
+VERIFY_MD_PROMPT.md
+VERIFY_PROMPT.md
+VERIFY_SWEEP_PROMPT.md
+__pycache__
+batches.tsv
+build_batches.py
+build_parts.py
+build_targets.py
+build_units.py
+cases
+cb_map.tsv
+cb_seeds.tsv
+collect_notmade.py
+combine_parts.py
+combos
+count_rows.py
+extract_findings.py
+factors
+gate_dry.sh
+gate_factors.py
+gen_batches.tsv
+gen_combos.py
+gen_launched.txt
+merge_cb.py
+mk_casefix.py
+mk_fix.py
+mk_prompt.py
+mk_rbatches.py
+mk_review.py
+mk_verify.py
+parts.tsv
+prompts
+review
+rollout_launched.txt
+rollout_notes.md
+run_codex.sh
+run_review.sh
+strip_combo_meta.py
+sweep_launched.txt
+targets.tsv
+units
+units.tsv
+verify_cb.py
+wait_done.sh
+    10 integration_test/casegen/combination/cases/M07-01_cb_dispositions.p1.tsv
+    23 integration_test/casegen/combination/cases/M07-01_cb_dispositions.p2.tsv
+    32 integration_test/casegen/combination/cases/M07-01_cb_dispositions.tsv
+     5 integration_test/casegen/combination/cases/M07-01_cb_seed_data.p1.tsv
+    12 integration_test/casegen/combination/cases/M07-01_cb_seed_data.p2.tsv
+    16 integration_test/casegen/combination/cases/M07-01_cb_seed_data.tsv
+     5 integration_test/casegen/combination/cases/M07-01_cb_test_cases.p1.tsv
+    12 integration_test/casegen/combination/cases/M07-01_cb_test_cases.p2.tsv
+    16 integration_test/casegen/combination/cases/M07-01_cb_test_cases.tsv
+     7 integration_test/casegen/combination/cases/M07-03_cb_dispositions.tsv
+     7 integration_test/casegen/combination/cases/M07-03_cb_seed_data.tsv
+     7 integration_test/casegen/combination/cases/M07-03_cb_test_cases.tsv
+     6 integration_test/casegen/combination/cases/M07-06_cb_dispositions.tsv
+     6 integration_test/casegen/combination/cases/M07-06_cb_seed_data.tsv
+     6 integration_test/casegen/combination/cases/M07-06_cb_test_cases.tsv
+     6 integration_test/casegen/combination/cases/M07-08_cb_dispositions.tsv
+     4 integration_test/casegen/combination/cases/M07-08_cb_seed_data.tsv
+     4 integration_test/casegen/combination/cases/M07-08_cb_test_cases.tsv
+    32 integration_test/casegen/combination/combos/M07-01.tsv
+     1 integration_test/casegen/combination/combos/M07-01_undetermined.tsv
+     7 integration_test/casegen/combination/combos/M07-03.tsv
+     1 integration_test/casegen/combination/combos/M07-03_undetermined.tsv
+     6 integration_test/casegen/combination/combos/M07-06.tsv
+     1 integration_test/casegen/combination/combos/M07-06_undetermined.tsv
+     6 integration_test/casegen/combination/combos/M07-08.tsv
+     1 integration_test/casegen/combination/combos/M07-08_undetermined.tsv
+     6 integration_test/casegen/combination/factors/M07-01_constraints.tsv
+     7 integration_test/casegen/combination/factors/M07-01_existing.tsv
+     9 integration_test/casegen/combination/factors/M07-01_factors.tsv
+     7 integration_test/casegen/combination/factors/M07-01_interactions.tsv
+     5 integration_test/casegen/combination/factors/M07-01_processes.tsv
+     7 integration_test/casegen/combination/factors/M07-03_constraints.tsv
+    45 integration_test/casegen/combination/factors/M07-03_existing.tsv
+    12 integration_test/casegen/combination/factors/M07-03_factors.tsv
+    10 integration_test/casegen/combination/factors/M07-03_interactions.tsv
+     6 integration_test/casegen/combination/factors/M07-03_processes.tsv
+     4 integration_test/casegen/combination/factors/M07-06_constraints.tsv
+    13 integration_test/casegen/combination/factors/M07-06_existing.tsv
+     4 integration_test/casegen/combination/factors/M07-06_factors.tsv
+     4 integration_test/casegen/combination/factors/M07-06_interactions.tsv
+     2 integration_test/casegen/combination/factors/M07-06_processes.tsv
+     2 integration_test/casegen/combination/factors/M07-08_constraints.tsv
+     5 integration_test/casegen/combination/factors/M07-08_existing.tsv
+     5 integration_test/casegen/combination/factors/M07-08_factors.tsv
+     7 integration_test/casegen/combination/factors/M07-08_interactions.tsv
+     2 integration_test/casegen/combination/factors/M07-08_processes.tsv
+   401 total
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/sheetmap/FIX_R2_BRIEF.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/GEN_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# {FID}（{FNAME}）の要因の組合せのケース作成（著者への依頼）
+
+リポジトリ: `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+あなたは機能ID **{FID}** の追加ケースを書く著者である。レビューは別の担当が行う。git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すと決めた。他の機能の設定値も要因に入れる。
+{FID} の要因表（別の担当が作り、codex が反証した）から、機械が試す値の組を並べた。そのうち **{RANGE} の {N}行** があなたの受け持ち（{PARTNOTE}）。1行ごとにケースを書く。**既存のケースは1文字も変えない。**
+
+## 読むもの
+
+1. 試す値の組: `integration_test/casegen/combination/combos/{FID}.tsv`（組ID／処理ID／組（要因ID=値）／組（読める形）／埋める組）。1行が1回の処理で同時に使う値の組。受け持ちは {RANGE}。
+2. 要因表: `integration_test/casegen/combination/factors/{FID}_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`（効き合う理由）・`_constraints.tsv`（作れない組・正解未定の組）
+3. 設計書: `integration_test/casegen/combination/units/{FID}/design.txt`（行頭の L0001 とタブは行番号で、設計書の内容ではない）。要因の根拠の行だけでなく、その節全体を読む。他の機能の設定値の要因は `units/<機能ID>/design.txt`
+4. 既存のケースとシード: `integration_test/casegen/cases/{FID}_test_cases.tsv`（11列）・`{FID}_seed_data.tsv`。**書き方・画面への入り方・シードの作り方はこれに合わせる**。同じ処理を別の値で通している既存ケースがあれば、それを下敷きにして値だけ変えるのが基本
+5. 確かめる所が別の機能の画面のときは、その機能のケース `integration_test/casegen/cases/<機能ID>_test_cases.tsv` で画面への入り方と表示の書き方を見る
+6. `integration_test/SCOPE.md`、`integration_test/casegen/sheetmap/FIX_R1_BRIEF.md` の裁定 A〜L・C'、`FIX_R2_BRIEF.md` の決まり M〜O（文中の `sheetmap/` は読み替える）、`integration_test/casegen/precond/README.md`（前提条件 P1〜P13・類型 T1〜T4）、`integration_test/casegen/STEP_PATTERNS.md`（手順の型）
+7. `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366（判定単位の文と除外を読む）
+
+## 1行（組ID）ごとに、次のどれかに決める
+
+| 扱い | いつ | 書くもの |
+| --- | --- | --- |
+| ケース化 | その値の組で処理を動かしたときの結果が、設計書の記述から一意に決まる | ケース1件（1ケース1期待結果）。組のすべての要因の値を事前準備・手順に値で書く |
+| 既存ケースで確認済み | 既存ケースの事前準備・手順に組のすべての値が書かれ、確かめる所で結果を見ている | そのテストIDと、どの手順・期待結果が当たるか |
+| ケースにしない | その値の組が実は作れない（制約の抜け）／結果が設計書から一意に決まらない／設計書の記述どうしが食い違う／結合テストの範囲でない | 理由（設計書の原文を引く）。作れない・決まらない組は、要因表の制約に足すべき組として理由に `要因ID=値&要因ID=値` を書く |
+
+安易に「ケースにしない」としない。要因表は codex が反証済み。それでも外すなら設計書の原文で理由を示す。
+
+## 期待結果の決め方
+
+- 組の**すべての要因**について、その値で設計書が定める結果を、確かめる所（processes.tsv）でまとめて確かめる。1つの確かめる所で見える結果を1文にまとめてよい（例: 「受注情報編集画面で、お支払方法が代金引換、配送方法がゆうパケット、送料が200円、手数料が330円、ポイント使用が0、合計が1,530円で表示されること」）。確かめる所が違う結果は入れない（1ケース1期待結果）。
+- 金額・数量は、事前準備に書いた値から設計書の計算で一意に出す。計算の途中を期待結果・出典に書かない（期待結果には結果の値だけ）。
+- 期待結果は設計書（design.txt。同じ冊子の別シート、要因の根拠にある他の機能の設計書も可）と事前準備の値だけから出す。実装コード・現行ソースから期待値を足さない。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備・シードの作り方と手順の実行可能性を確かめるためにだけ読んでよい（スクリプトやコマンドは実行しない）。
+- 設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採り、出典に両方を書く。
+- 要因表の constraints.tsv に「正解未定」とある値の組は機械が行に入れていない。それ以外の組で結果が決まらないと分かったら「ケースにしない」にする（推測で決めない）。
+- **打ち切りの行**: 組（読める形）に「（効かない）」とある要因は、その行では結果に効かない（constraints.tsv の種別「打ち切り」。処理が途中で打ち切られる。依頼者決定 2026-10-20）。その要因の値は事前準備に書かなくてよい（共有可シードのままでよい）。期待結果は打ち切りの結果（出ない・エラーで元の画面へ戻る・何も変わらない など）を、設計書の定めどおりに確かめる。打ち切りのあと値が残っていないか（更新されていないこと）を見るのはよい。
+
+## ケースの書き方
+
+- テストIDは `IT-{FID}-{START}` からの連番（既存と、外した番号の続き）。組IDの順に書く。
+- 判定IDは `IT-0366`、観点IDは `ITA-11`。項目ID列に組ID（1つ）。
+- 期待結果は合否が一意に決まる具体値で書き、「〜こと」で終える。
+- **組の値がケースから読めること**: 事前準備・手順に、組の全要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）を値で書く。要因名や組の値を並べただけの行（「このケースで試す値の組: …」など）を事前準備・手順に足さない。実際のデータで書いていれば、verify の「注意」（組の値が字句で無い）は残ってよい。
+- 結果は、データを作った所とは別のコンポーネントで確かめる（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。
+- 手順は「1. …／2. …」の形で、画面名・項目名・ボタン名・入力値を特定する。名前は設計書の表記を使う。画面への入り方は既存ケースに合わせる。
+- 物理名（テーブル名・カラム名・ルート名・クラス名・翻訳キー）を書かない。設計書に書かれている項目名はそのまま使ってよい。
+- 禁止語: 失敗させる／該当する操作／同上／いくつか／別の画面／要確認／TBD／設計どおり／設計書どおり／仕様どおり／正しいこと／正しく。
+- 実行区分は `ブラウザのみ` か `ブラウザ+DB確認`（外から見えない副作用だけDBを見る）。優先度は、業務データの保存・更新・出力値の一致を P1、表示・選択肢を P2。
+- 要求ID列: `integration_test/casegen/requirements_all.tsv` に当たる行（書番・シート名・要求文が合う行）が見つかればその要求IDを書く。見つからなければ空欄でよい。代用しない。
+- 連鎖IDは空欄。出典は既存ケースと同じ形（`<書番> <シート名> / <区分 と 見出し>`。別シート・別の冊子は「｜」でつなぐ）。
+
+## 前提条件（いまの決まり。既存のシードの書き方がこれに従っているので合わせる）
+
+- 各ケースは単独で成立する。**各ケースはケース専用シードを1件以上使う**（シードID `S-{FID}-CB<名前>-<ケース番号3桁>`）。参照だけのマスタ・アカウント・環境設定は、既存の `{FID}_seed_data.tsv` にある `共有可` のシードをそのまま使ってよい（シード表に書き足さない）。既存の `ケース専用` シードは使わない。
+- 組の値が共有可のシードの設定と違うとき（手数料・送料・利用条件・配送方法に紐づく支払方法など）は、ケース専用シードで設定を書き、事前準備に値で書く。
+- テストデータは画面から入力して作る（2026-10-09 決定）。画面で作れない状態だけ、理由を添えて DB へ直接入れる書き方にする。
+- **商品はカード商品も含めてグッズ商品CSV登録で作る**（商品登録画面の新規登録は使わない。M03-02 L0075〜L0077）。カード商品は商品登録編集画面の「カード指定 >」でカードを付ける。価格は税込みで登録する。在庫は在庫変更CSV登録で入庫し、別のメンバーが承認一覧で承認する（確認画面の OK まで書く）。既存の `{FID}_seed_data.tsv` の商品・在庫のシードの書き方をそのまま写す。
+- 確認モーダルが出る操作は、モーダルの確定まで手順に書く。規約同意など必須のチェックも書く（既存ケースに合わせる）。
+- 画面が振る番号（受注番号・会員IDなど）は、画面で作ったあとに控えた番号を使う（類型 T4。〔番号の名前-{FIDC}-ケース番号〕の呼び名で書く）。
+- ケース専用データの識別子（コード、名称、メール、ファイル名、パスワード）は全機能で一意にする。前提条件の検査 G5 の字句は `[A-Za-z0-9][A-Za-z0-9_.@\-]{3,}`。**英数字とハイフンの連なり1つ1つに、機能番号とケース番号を入れる**（例: 「{FIDC}-CB{START}-A」「cb{FIDL}-{START}@example.test」「Passw0rd-CB{FIDC}{START}」）。パスワードに「!」を使わない。番号だけの語（「A001」）を単独で置かない。`grep -rF` で `integration_test/casegen/cases/` と重ならないことを確かめよ。
+- 事前準備は必須。使用シードすべてについて状態を値付きで書き、シードIDを括弧で添える（「① …（S-…）／② …（S-…）」）。「このN件だけ」を期待するときは、同じ条件に当たる他のデータが無い状態を書く。
+- 事前準備で手順の結果を参照しない。期待結果の「AからB」「Aのまま」の A は事前準備に同じ表記で書いた値にする。
+- シードの投入方法は、何を使ってどう作るかを書く。作り方が分からないときは「未確定: <分からないこと>」と書く。推測で埋めない。
+- 中継・模擬応答、現在時刻の固定、障害を起こす手段は用意しない（2026-10-19 決定）。これが要る組は「ケースにしない」。バッチの実行、スマレジなど外部の試験環境、メールの受け取りは用意できる。
+
+## 出力（この3つだけを書く。ほかの既存ファイルは変更しない）
+
+1. `integration_test/casegen/combination/cases/{FID}_cb_test_cases{SFX}.tsv`
+   タブ区切り・13列: `テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID`
+   セル内に改行・タブ・ダブルクォートを入れない。ケース化が0件でもヘッダだけのファイルを書く。
+2. `integration_test/casegen/combination/cases/{FID}_cb_seed_data{SFX}.tsv`
+   タブ区切り・7列: `シードID	区分	論理名	状態・属性	用途	投入方法	共有`。**新しく足すシードだけ**を書く。
+3. `integration_test/casegen/combination/cases/{FID}_cb_dispositions{SFX}.tsv`
+   タブ区切り・4列: `項目ID	扱い	テストID	理由`。受け持ちの組 {N}行を1行ずつ（項目ID は組ID）。
+
+最後に `python3 integration_test/casegen/combination/verify_cb.py {VARG}` を実行し、合格するまで直せ。ほかの検査（gate_dry.sh・gate_factors.py など）は流さない（ほかの著者と同時に流すとぶつかる）。
+作業用の一時ファイルはスクラッチパッド（`/tmp/claude-1000/-home-y-saito-Developments-hareruya-design-docs/7ac77140-f212-4eb4-b04c-5cbd0cc6fcfa/scratchpad/`）に、名前へ {FID}{SFX} を入れて作る。他の機能・同じ機能の他の部の combination/cases のファイルは読まない・書かない。
+**ファイルは処理ごとに書き足していく**（全部を最後にまとめて書かない。途中で止まっても書いた分が残るように）。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+4行以内。ケース化／確認済み／ケースにしない の件数、ケースにしなかった主な理由（制約に足すべき組があれば件数）、verify の結果、判断に迷った点（あれば1つ）。
+
+exec
+/bin/bash -lc 'cat integration_test/SCOPE.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/sheetmap/FIX_R1_BRIEF.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# レビュー1巡目の反映（著者への依頼）
+
+codex のレビュー指摘が `integration_test/casegen/sheetmap/review/<機能ID>_r1_findings.md` にある。
+1件ずつ、**指摘が引いている設計書の記述を sheet.txt で自分で読み直して事実かどうか確かめてから**、下の裁定に従って反映せよ。指摘をそのまま適用しない。
+
+## 裁定（依頼元の決定。指摘と食い違うときはこちらが優先）
+
+| No. | 裁定 |
+| --- | --- |
+| A | **根拠はHTML設計書であり、対象シート1枚に限らない。** その機能のふるまい（何を出力するか、全件か選択か、出力対象の条件、未選択・0件のときの扱い、ファイル名、起動するボタン、権限）が同じ冊子の別シート（一覧画面のシートなど）に書かれていれば、それを期待結果の根拠にしてよい。出典にそのシートを「｜」でつないで書く。当初の依頼文の「隣接シートは操作の入口にだけ使う」は撤回する。したがって、「対象シートに記述が無い」ことだけを理由にした指摘は、同じ冊子の別シートに記述があれば却下する。逆に、別シートにその機能の記述があるのにケースにしていなかったもの（出力対象、選択と全件の違い、未選択時の扱いなど）は、ケースを足す。別シートは `python3 integration_test/casegen/sheetmap/build_materials.py --sheet <書番> <シート名>` で読む。他の冊子・実装・現行ソースは根拠にしない |
+| B | **観点表の「期待値の決め方」が「観点内で確定」の判定単位は、適用の条件が設計書から言えれば、期待結果は判定単位の文から決めてよい。** 例: IT-0080・IT-0225（参照・出力だけの機能は実行前後でデータを更新しない）は、設計書がその機能をCSV出力・一覧表示などの参照機能として書いていれば適用できる。「非更新とは対象シートに書いていない」という指摘は却下する。IT-0083（出力ファイルの数量・金額が画面表示およびDB値と一致）を使うときは、画面表示またはDB値と見比べる手順と期待結果にする |
+| C | **CSV・帳票の出力項目の構成と並びは IT-0156**（観点ID ITA-02。他の観点に割り当たらない機能仕様を受ける区分）に当てる。IT-0071 は「値が取得元と同値」にだけ使う。report.md に「出力項目の構成・並びを受ける判定単位が観点表に無いので IT-0156 を使った」と書く |
+| C' | （2026-10-06 追記）観点表に IT-0348（ITA-05。出力したファイルの各レコードが、定められた出力項目だけで構成され、定められた順に並ぶこと）を足した。出力項目の構成と並びは、以後 IT-0348 に当てる。裁定Cで IT-0156 に当てていた14件は付け替えた（`retag_0348.py`）。同日、IT-0349（ITA-05。出力したファイルのレコードが、定められた並び順で出力されること）も足した。出力したCSV・帳票の行の並び順は IT-0349 に当てる（24件を付け替えた。`retag_0349.py`）。同日、IT-0350（ITA-05。送信されたメールの件名、送信元、本文の構成が、定められたとおりであること）も足した。通知メールの内容は IT-0350 に当てる（10件を付け替えた。`retag_0350.py`）。初期値、未選択時の扱いなど、ほかに受ける判定単位が無いものは IT-0156 のまま（2026-10-07 追記）観点表にバッチ用の4行を足した。IT-0351（ITA-14。異常として定められた条件でバッチが異常終了として終わること）、IT-0352（ITA-13。異常終了した場合、異常の後に行わないと定められた処理が行われていないこと）、IT-0353（ITA-13。終了後、一時的な資源が定められたとおりに削除されている・残っていること）、IT-0354（ITA-21。バッチの出力メッセージが、定められた条件のときに定められた文言で出力されること）。バッチのケースで期待結果がこのどれかそのものであるものは、IT-0156 でなくこれらを使う。 |
+| D | 見出し行の有無、データが何行目から始まるかは、設計書に書いていなければ期待結果・手順に書かない。データ行は事前準備の識別子（番号・コード）で特定する。項目の並びは「各行の項目が左から設計書の識別ID順に対応する」ことを、事前準備の値がどの位置に出るかで確かめる |
+| E | 値の取得元が設計書から決まらない項目（備考が空で、項目名からも取得元が1つに決まらないもの。呼び名の違う属性を当てはめたもの）は、値の照合から外し、report.md の「ケースにしなかったもの」に取得元の不足として書く。項目名と同じ名前の属性は取得元が決まるとしてよい |
+| F | 計算・連結・書式変換の結果そのもの（姓＋空白＋名、差の計算、小計など）は単体テストの担当（SCOPE.md）。ケースから外し、report.md に「単体テストへ送った」と書く。ただし「どの時点の値か」「単価か小計か」のように、どの値を採るかの定めは結合テストで確かめてよい |
+| G | 1ケース1期待結果。判定単位が違う確認が1ケースに混じっていたら分ける |
+| H | シードは実際に作れる方法で書く。管理画面で指定できない内部IDを管理画面で登録する、と書かない（DB投入にする）。設計書が求める状態（必須項目が未設定の会員など）が ee 実装の制約で作れないときは、ケースは残し、投入方法を「未確定: <理由>」にして report.md の「試験環境に要るもの」に挙げる。実装が設計書と違うこと自体はケースを変える理由にしない |
+| I | 手順は、画面を開く・条件を入れる・ボタンを押す・ファイルを開く、の操作を番号付きで書く。「〜を確認する」だけの手順にしない |
+| J | 設計書の中で記述が食い違っている・誤記と思われる箇所を、推測でどちらかに決めて期待結果にしない。両方に共通する部分だけを期待結果にし、食い違いは report.md に書く |
+| K | 判定ID IT-0332〜0347 は使わない。使っているケースは、当てはまる別の判定単位に付け替えるか、無ければ外す |
+| L | 指摘が「取りこぼし」で、設計書の記述から期待結果が一意に決まるなら、ケースを足す。試験基盤が無いことはケースを作らない理由にならない（投入方法・前提を「未確定」と書いて残す） |
+
+## やること
+
+1. 指摘ごとに「採用／一部採用／却下」を決め、cases・seed・report.md を直す。ケースを足したり外したりしたら、テストIDを 001 からの連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. 指摘に無くても、裁定 A〜L に反する箇所が自分のケースにあれば同じように直す。
+3. `integration_test/casegen/sheetmap/review/<機能ID>_r1_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述（原文）・直した内容」を表で書く。保存できないときは返答に本文を含める。
+4. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること（他の著者と同じ置き場所を使っているため）。
+
+## 返答
+
+5行以内。直した後の件数、指摘ごとの判定の内訳（採用・一部採用・却下の件数）、足した・外したテストの数、verify の結果、dispositions.md を保存できたか。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/precond/README.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 結合テストケースの前提条件の書き直し
+
+## なぜ
+
+2026-09-28 時点の `cases/*_test_cases.tsv` は、上から順番に実行しても成立しないケースが多い。
+原因は3つある。
+
+1. **前提がケースに書かれていない。** 生成規則（`GEN_PROMPT_TEMPLATE.md` 縛り10）が
+   「シード投入は事前準備に書かない」としていたため、実行対象8,325件のうち7,866件の事前準備が `—`。
+   IT-A01-01-004 の前に「SMA-A01-002 を2個販売した取引」が要ることは、別ファイルのシード表を読まないと分からない
+2. **状態を書き換えるデータを複数ケースで共有している。** IT-A01-01-001 が SMA-A01-001 を2個販売すると、
+   002 の「10から8」は成立しない。012 が SMA-A01-I01 を7にすると、013 の「10から8」は成立しない
+3. **投入方法が実行できる粒度でない。** 「スマレジ試験環境に全キャンセル可能な取引を登録する」
+
+依頼者決定（2026-09-28）: **ケースごとに専用データを持たせる**。A01-01 で型を作ってから全機能へ広げる。
+
+## 規約
+
+対象は実行区分が「保留」以外のケース。保留ケースは1文字も変えない。
+
+| No. | 規約 |
+| --- | --- |
+| P1 | **各ケースは単独で成立する。** 他のケースを先に実行しても、後に実行しても、実行しなくても、事前準備どおりの状態から始められる |
+| P2 | シード表に `共有` 列を足す。`共有可` か `ケース専用` のどちらか。**どれか1ケースでも状態を変えるデータ**（在庫・受注・取引・ステータス・ログイン失敗回数など）は `ケース専用`。`共有可` にできるのは、どのケースも状態を変えないもの（参照だけのマスタ、ロックさせない管理者アカウント、環境設定）と、各ケースが開始時に必要な設定を自分で行う試験基盤（中継の保留／転送の切替など）だけ。`用途` にどちらなのかを書く |
+| P3 | `ケース専用` のシードを参照するケースはちょうど1件。シードIDは `<元のID>-<ケース番号3桁>` にする |
+| P4 | ケース専用データの識別子（DB投入するレコードのID・商品ID・CSVファイル名・会員メールなど）は、**全機能のケース専用シードの中で一意**にする。重なるときはケース番号を付けて改名する |
+| P5 | **事前準備は必須。** 使用シードすべてについて、どういう状態かを値付きで書き、シードIDを括弧で添える。シード投入の後で画面や外部システムを操作して作る状態（販売済みの取引など）は、その操作と、終わった後の値の確認まで書く |
+| P6 | 期待結果が「AからB」「Aのまま」と言うとき、**A は事前準備に書いた値**である |
+| P7 | **期待結果は変えない。** 変えてよいのは P4 の改名だけで、改名は `renames/<機能ID>.tsv` に宣言する。改名は、英数字の識別子どうし／シードで ID・名称・コード・番号・メール・ファイル名等の項目の値として定義した値／シードID／シードの自由文にある4文字以上のデータ名を「旧名-ケース番号」へ、の置換に限る（数量・状態語は改名しない）。改名で済まない変更は `oracle_changes/<機能ID>.tsv`（テストID/新期待結果/理由/承認）に載せ、承認が入るまでゲートを通さない。承認済みの類型は T1 だけ（下記）。手順で外部の値に呼び名を付け、その呼び名を期待結果で使う書き方もオラクル変更として扱う。要求ID・連鎖ID・観点ID・優先度・実行区分・出典は変えない |
+| P8 | 手順はテスト対象の操作だけにする。手順を変えてよいのは次の種別だけで、変えたら `step_changes/<機能ID>.tsv`（テストID/種別/新手順/理由）に宣言する。`準備移動`（準備操作を事前準備へ移す）／`改名`／`発番値控え`（実行中に発番される値を控える操作を足す）／`データ指示`（事前準備で作ったデータを指し示す）／`中継置換`（類型 T2）／`非同期完了待ち`（類型 T3）／`裁定訂正`（設計書の中の食い違いの裁定で直したもの。2026-10-16 依頼者決定） |
+| P9 | 投入方法は、何を使ってどう作るかを書く（管理画面のどの画面か／DB投入／スマレジ試験環境の管理画面で商品登録と在庫設定／CSVフィクスチャ）。「〜を登録する」だけで手段が無いものは不可 |
+| P10 | 事前準備に設計書に無い仕様を持ち込まない。書くのはテストデータの状態と作り方だけ。作り方は設計書に無ければ ee 実装（設定・テーブル・管理画面）から引いてよい。どちらにも無い作り方は `open_preconditions.tsv` に載せ、推測で埋めない |
+| P12 | 試験基盤が未整備、または作り方が設計書にも ee 実装にも無い前提は `open_preconditions.tsv` に載せる。**実行区分は変えない**（保留は「設計書に期待結果が無い」の意味で使っており、混ぜない）。ゲートは件数を参考として出す |
+| P13 | **手順で入力する値（登録する名称・コードなど）は改名しない。** 境界値や文字種の検査が壊れるため。同じ値のデータが既にあると成立しないときは、事前準備に「その値のデータが無い状態にする（あれば削除する）」と書く |
+| P11 | **事前準備は手順より前に完結する。** 手順の結果（発番されたID・返された値）を事前準備で参照しない。それらは手順の中で控える |
+
+## 承認済みの類型（依頼者 2026-09-28）
+
+| 類型 | 内容 | 記録先 |
+| --- | --- | --- |
+| T1 外部発番値 | 外部システムが発番する値（スマレジの在庫変動履歴ID・問い合わせIDなど）を基線が固定値で書いているときは、手順の中で発番値を控え、期待結果を「手順Nで控えた値」との照合に書き換える | `oracle_changes`（承認欄に「類型承認T1」） |
+| T3 非同期完了待ち | Webhook・バッチ・メッセージ処理など非同期で処理される操作の結果を確認する前に、非同期処理の対象のジョブ（待機中・実行中）が0件になるまで待つ手順を足す（画面名は書かない。下の「用語の置き換え」）。待つ上限時間を書く | `step_changes`（種別「非同期完了待ち」）。依頼者承認 2026-09-30 |
+| T2 中継置換 | 外部システムとの通信の観測・送信を、基線が実行できない書き方（「Webhookの応答をブラウザで確認」「スマレジAPIから送信」など）にしているときは、中継（通信を記録・保留・転送・模擬送信する試験基盤）で観測・送信する手順に変える。外部が実際に返す通知は保留して転送し、外部に起こさせられない結果（エラー等）だけを模擬送信する | `step_changes`（種別「中継置換」） |
+
+## 類型T4 画面発番値（依頼者決定 2026-10-09）
+
+テストデータは画面から入力して作る。画面が自動で振る番号（注文番号・受注ID・イベントIDなど）を基線が固定値で書いているときは、
+データを画面で登録したときに振られた番号を控え、事前準備・手順・期待結果ではその控えた番号（呼び名〔注文番号-M0526-012〕の形）を使う。
+書き直しは `../seed_screen/`（README）。期待結果・手順の変更は `oracle_changes/`（承認欄に「類型承認T4」）・`step_changes/`（種別に「発番値控え」）へ、`../seed_screen/apply.py` が機械で宣言する。
+控えた番号へ置き換えたケースの一覧は `screen_noted_cases.tsv`。検査は、これらのケースについて改名先（消えた固定の番号）の検査を外し、〔…〕の呼び名を識別子として数えない。
+
+## テストできない・作り方が未確定のケースの除外（依頼者決定 2026-10-14）
+
+テストできないケースと、作り方が未確定のケースを、ケースの正本（`../cases/`・`../all_test_cases.tsv`）から外した。
+外したのは、検査 G9 が「未整備・未確定の前提を使うケース」と数えていた 1,892件（使用シードの投入方法に「未確定」「未整備」がある、または `open_preconditions.tsv` の影響ケースに載っている）。
+内訳は、作り方が未確定 1,744、試験環境の決定待ち 113、実装上その状態を作れない 35。残りは 10,556件・345機能（20機能は全ケースが外れた）。
+
+- 行は消さず `../excluded_open_cases.tsv`（除外理由・未確定の内容つき。元の11列は「元_」付き）へ移した。外したケースだけが使っていたシード 2,458件は `../excluded_open_seeds.tsv`。
+- 道具は `../exclude_open.py`（何度流しても同じ）。**各 `merge_into_cases.py` と `seed_screen/apply.py` は外したケースを `cases/` へ戻すので、そのあとに必ず流す。** 順序は merge → `seed_screen/apply.py` → `datapattern/conflicts/apply_rulings.py`（最後に `product_csv/apply.py` と `runnable/apply.py` も当たる）→ `exclude_open.py` → `exclude_scope.py` → `build_all_test_cases.py`。
+- 作り方が決まったら、シードの投入方法（と `open_preconditions.tsv`）を直してから同じ順に流し直すと戻る。
+- 検査 G6 は、基線・追加分からこの除外分を差し引いて照合する。保留（設計書に正解が無い）の除外 `excluded_hold_cases.tsv` とは別の表で、意味を混ぜていない。
+
+### 影響ケースの漏れ（2026-10-16）
+
+`open_preconditions.tsv` の影響ケースは、行を足した時点のケースで書いた固定の一覧である。そのため、あとから足したケースが同じ未確定の前提を使っていても除外に掛からなかった。全数を洗い直し、63件を影響ケースに足して外した（11,777件 → 11,714件・341機能）。
+- 同じシードを使うのに一覧に無かったもの: IT-A05-04-047〜060（スマレジ受信。2026-10-09 の被覆監査で追加。取引情報取得APIの試験環境と Webhook の認証情報の2行）、IT-B02-02-010〜012（バッチの実行環境）、IT-M03-09-058・097（スマレジの試験用受信サーバー）。
+- 連携ケース（`../link/`）が、基線では未確定のシードを「-L-」付きの別名で作り直していたもの: S-B02-02-L-ENV・S-B05-02-L-CLOCK・S-B05-09-L-API/CLOCK/CONFIG・S-B06-01-L-ENV・S-B06-02-L-EXEC・S-B08-03-L-ENV・S-B08-06-L-API-CONTROL・S-B13-01-L-API/EXEC/MAIL。基線の行と同じ文面で、対象をL版にした行を足した（`未確定: …（… の未確定と同じ）`）。B06-01 の別名を使っていたデータパターンのケースも含む。
+- 時計を固定する前提: IT-M04-17-001（業務日を2026/09/29に固定。時計の固定は S-B05-09-CLOCK などと同じく作り方が無い）。
+- この結果、B02-02・B05-02・B05-09・B06-01・B08-03・B13-01 はケースが0件になった（基線のケースは前から外れており、残っていたのは別名のシードを使う連携ケースだけだった）。
+- 同じ日に `../chain_gap/` のレビューで、S-F06-02-L-ENV（IT-F06-02-024・025）も見つかり、同じ形の行を足して外した。基線の行の対象は S-F06-02-API-OK で、名前の役割の語（API と ENV）が違うため道具では拾えなかった。このシードは、開始時にスマレジAPI試験環境のユーザーDBで会員が0件であることを確かめる作り方で、024 は発番されたスマレジIDを控える。外部の試験環境を使うシードは、名前だけでなく中身でも基線の行と見比べる。
+- 候補を出す道具は `scan_open_leaks.py`。ケースを合流したあと、`exclude_open.py` の前に流す。候補を出すだけで判定はしない。残っている候補 159件は、読んだうえで漏れではないと判定したもの。
+  - 共有の定義だけを使い、未確定の項目に触れないもの: S-M05-03-DEFS、S-F06-05-BASIC、IT-A05-04-002（GETを送るだけで、認証も取引の取得も要らない）。
+  - 名前の役割の語が同じだけで、作り方が決まっているもの: ポイントの設定、ユニサーチの接続先、ee の開発用の正常応答、スマレジの試験環境への接続。
+  - S-M03-10-SMAREGI-ENV: ee の商品APIのクライアントは、模擬応答のときも呼び出しを記録する（SmaregiPlatformApiCallRecorder）。シードの書き方は実装と合っている。
+
+## 試験環境で用意できる前提の解消（依頼者決定 2026-10-19）
+
+依頼者決定「バッチの実行、スマレジなど外部の試験環境、メールの受け取りは環境準備できる」（中継・模擬応答、時刻の固定、障害を起こす手段は用意しない）。作り方が未確定で外したケースを止めていた項目（未確定のシード 944・未確定の前提の行 879）を1件ずつ判定し、この3つだけで決まるものは作り方を書いて解消した。止めていた項目がすべて解消したケース 183件が一覧へ戻った（11,713件 → 11,896件・346機能）。
+解消した前提の行 81 は `open_preconditions.tsv` から `resolved_preconditions.tsv`（解消の書き方・区分・根拠・決定つき）へ移した。シードは投入方法を書き直した（外した表 `../excluded_open_seeds.tsv` を直し、`exclude_open.py` が直った文で戻す）。
+同じ日の依頼者決定「おすすめで進めて」で、人が補って実行できるもの（決まった番号の読み替え、必須のチェック、確認モーダル、割引率、在庫の承認）も書き足した。道具・判定・レビューは `../runnable/README.md`。`../datapattern/conflicts/apply_rulings.py` が最後に `../runnable/apply.py` を呼ぶ。
+
+## E2E で作成を保留した入力ファイルを使うケースの除外（依頼者決定 2026-10-16）
+
+依頼者決定「テスト保留のケースがあれば除外」。ケース一覧に実行区分「保留」のケースは無かった（2026-10-01 にすべて外してある）。保留に当たっていたのは、E2E の入力ファイルの棚卸し（`../../../e2e/fixtures/named-file-references.tsv`。M03・M04 だけ棚卸し済み）で作成判断を「保留」「正本矛盾」とした33ファイルで、シードの記述だけでは中身（文字コード、見出し行の値、画像の中身など）が一つに決まらないか、シードの記述が食い違っていた（M03-30 の empty.tsv）。これを使うケース29件を、作り方が未確定の前提として `open_preconditions.tsv` に載せ（対象「入力ファイル <ファイル名>」の33行）、`exclude_open.py` で外した。ケースは 11,679件から 11,650件。ファイルの中身をシードに書いて棚卸しの判断が変わったら、その行を消して流し直すと戻る。M03・M04 以外の機能の入力ファイル（棚卸しで未判定の 1,729件）は見ていない。
+同じ日の依頼者決定「画像は任意の有効な画像でよいとして戻す」で、画像の中身が未指定だった9ファイル（M04-02-050・M04-03-005・M04-05-011・M04-31-150 の4ケース）の行を外し、4ケースを戻した（11,654件）。シード（`../seed_screen/out/` の該当行の投入方法）に「画像ファイルの中身は任意の有効な画像でよい。同じケースで使う複数の画像は、互いに見分けられる別の画像にする」と書いた。E2E の入力ファイル（`e2e/fixtures/`）はまだ作っていない。
+外したケースを戻すときは、流れを2回流す。1回目は `exclude_open.py` が除外表の古い文面のままケースとシードを戻すので、2回目の `seed_screen/apply.py`・`apply_rulings.py` で書き直しが当たる。
+
+## フェーズ2見送り・実装しない機能の除外（依頼者決定 2026-10-16）
+
+依頼者決定「フェーズ2見送り、機能実装しない機能についてはケースから除外」。対象は `../scope_out.tsv`（根拠つき）で、フェーズ2見送り13機能（A06-14・B01-02・B01-03・F02-05・M03-43・M03-44・M04-06・M04-07・M06-13・M08-11・M08-15・M08-16・M08-17）、実装しない4機能（M03-34・M03-36 は 2026-10-06 決定、M04-27・B13-02 は Excel の廃止の記述）と、M03-43 の機能を確かめていた IT-M03-30-038。
+ケース一覧の6件に加え、作り方が未確定で外していた65件、保留で外していた49件も、決まっても戻さないので `../excluded_scope_cases.tsv` へ移した（計120件。元の表と元の除外理由を残す）。外したケースだけが使っていたシード89件は `../excluded_scope_seeds.tsv`。道具は `../exclude_scope.py`（何度流しても同じ。`exclude_open.py` の後に流す）。ケースは 11,685件・349機能から 11,679件・346機能になった（F02-05・M03-44・M06-13 はケースが0件）。
+保留から移した49件は、設計者に聞く必要が無くなった（`../hold_review/questions.tsv` に論点があるものも含む）。機能の一部だけがフェーズ2のもの（ナビゲーションの通知、会員検索の顧客分析タグなど）は機能ごとは外していない。そのフェーズ2の部分を確かめるケースは IT-M03-30-038 のほかに無かった。
+検査 G6 は、基線・追加分からこの表の分も差し引いて照合する。
+
+## 既存ケースと設計書の食い違いの裁定（依頼者決定 2026-10-16）
+
+設計書の中で記述が食い違うときの優先順位（Excel由来＞埋め込みの表示メッセージ節＞埋め込みの現行仕様節、同じ出所では改訂後）を決め、既存ケース52件の報告を裁定した。直したケースの期待結果・手順・出典は `oracle_changes/`・`step_changes/`（種別「裁定訂正」）・`source_changes/` に、承認欄「2026-10-16 依頼者裁定」で宣言してある。規則で決まらず共通部分でも書けない10件は `../excluded_hold_cases.tsv` へ移した（論点ID が QD- の行。決める人＝設計者）。道具は `../datapattern/conflicts/apply_rulings.py`（何度流しても同じ。`seed_screen/apply.py` の後、`exclude_open.py` の前に流す）。説明は `../datapattern/conflicts/README.md`。
+
+## 保留ケースの除外（依頼者決定 2026-10-01）
+
+実行区分が「保留」のケース（1,014件）はテストケースから外した。設計書にも現行ソースにも期待結果（正解）が無く、テストできないため。
+行は削除せず `../excluded_hold_cases.tsv` へ移した（論点ID・決める人つき。元の11列は「元_」付きで保持）。保留ケースだけが使っていたシードは `../excluded_hold_seeds.tsv`。
+設計者の回答（`../hold_review/questions.tsv`）やテスト側の決定で正解が決まったら、そのケースを作り直して戻す。ゲート G6 は、基線のテストIDからこの除外分を差し引いて照合し、保留ケースが残っていれば落とす。
+
+## 実行の前提（依頼者決定 2026-09-30）
+
+- **専用DBで流す。** 結合テストは機能（またはモジュール）ごとに、まっさらな専用DBへシードを投入して流す。検索・一覧・集計で「このN件だけ」を期待するケースは、開始時に同じ条件に当たる他のデータを削除して隔離しており、共有の試験環境では他機能のデータを消しうる
+- **1件しかないデータは順番に実行する。** 基本設定のように1件しかない設定や、期待結果が固定IDを名指ししていて分けられないデータは `共有可` とし、使う各ケースが開始時に値を設定し直す。上から順に実行すれば成立するが、同じデータを使うケースを同時には実行しない。該当ケースは `sequential_only.tsv`
+
+## 機械検査 `gate_precond.py`
+
+| No. | 検査 | 対応する規約 |
+| --- | --- | --- |
+| G1 | 保留以外で事前準備が空・`—` | P5 |
+| G2 | 使用シードのIDが事前準備に現れない | P5 |
+| G3 | 期待結果の「AからB」「Aのまま」の A が事前準備に無い | P6 |
+| G4 | `共有` 列が無い・値が不正／ケース専用シードの参照が1件でない／ケース専用シードIDの末尾がケース番号でない／どのケースも使わないシード／保留以外のケースがケース専用シードを1件も使わない（状態を変えない読み取りだけのケースは `readonly_cases/<機能ID>.tsv` にテストID/理由で宣言） | P1 P2 P3 |
+| G5 | 同じ機能のケース専用シードどうしで自分のレコードID（「ID=20」「ID 20」）が重なる。ケース専用シードの識別子（「〜」の範囲は展開する）が、他のケースの事前準備・手順・期待結果、または他のケース専用シード（全機能）に現れる | P1 P4 |
+| G6 | 改名が識別子どうしでない。期待結果が「基線に改名を当てたもの」と一致せず、承認済みの oracle_changes にも無い。保留ケースが変わった。テストIDの集合・他の固定列が変わった（出典は `source_changes/`、実行区分の誤記は `kind_changes.tsv` に宣言したものを除く） | P7 |
+| G8 | 事前準備が「手順N」「返した値」「発番した」など後の結果を参照している | P11 |
+| G7 | 手順が「基線に改名を当てたもの」と違うのに `step_changes` に宣言が無い／種別が P8 の5種以外 | P8 |
+| G9 | 投入方法が「未確定」「未整備」のシードを使う非保留ケースが `open_preconditions.tsv` に無い。該当件数は参考として出す | P12 |
+
+`baseline/` は書き直し前（HEAD 98709b43）のスナップショット。G6 の基準なので書き換えない。
+
+実行区分の誤記を直すときは、基線を書き換えずに `kind_changes.tsv`（テストID／旧実行区分／新実行区分／理由）へ宣言する。G6 は、基線の値が旧実行区分と一致し、今の値が新実行区分と一致するものだけ認める（2026-10-19、IT-M03-45-024 の「ブラザ+DB確認」→「ブラウザ+DB確認」）。
+
+書き直しの後で足したケースは `added_cases.tsv`（テストID／追加日／由来）に載せる。G6 は「基線から保留除外分を引いた集合」に
+この追加分を足したものと、現在のテストIDの集合を照合する。基線が無い機能（後から新設したもの）は、全ケースが追加分になる。
+2026-10-06 に機能間データ連携のケース142件を足した（`../link/merge_into_cases.py`。旧テストIDとの対応は `../link/merged_map.tsv`）。
+同日、アクセス解析連携のケース（F10-01〜03）を足した（`../ga/merge_into_cases.py`。判定IDとの対応は `../ga/ga_map.tsv`）。
+同日、対応表が「候補」止まりだった14機能のケース398件を足した（`../sheetmap/merge_into_cases.py`。判定IDとの対応は `../sheetmap/sm_map.tsv`）。
+
+機械で見られないもの（P2 の共有可の妥当性、P6 の値と対象の対応、P8 の種別の妥当性、P9、P10）は codex レビューで見る。
+
+## 用語の置き換え（依頼者決定 2026-10-06）
+
+AWS Step Functions は使わない。テストケースでは「バッチ」と書き、非同期処理ダッシュボードの「Messenger ジョブ」という表現も書かない。
+置き換えの規則は `terms.py`（`python3 precond/terms.py` で cases/・step_changes/・open_preconditions.tsv・link/cases に当てる。何度流しても同じ）。
+基線は書き換えていない。ゲートは基線の手順と期待結果に同じ置き換えを当ててから照合する。
+シードID `S-B02-05-STEPFUNCTIONS` は `S-B02-05-BATCH-ENV` に変えた。
+
+「非同期処理ダッシュボード」という画面名も書かない（同日の依頼者決定）。設計書に無い画面で、実装にあるのは管理画面とは切り離した運用ツールである。
+ケースには「非同期処理の待機中・実行中のジョブが0件になるまで待つ」のように状態だけを書く。待機の手順そのものは残す
+（バッチはジョブを積むだけで終わり、実処理はワーカーが後から行うため）。確認の手段は試験環境の用意として扱う。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M07-06_{processes,factors,interactions,constraints}.tsv integration_test/casegen/combination/combos/M07-06.tsv integration_test/casegen/combination/cases/M07-06_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	買取商品一覧CSV（売却・キャンセル）を出す	買取一覧（検索結果）で買取情報を選び、ダウンロードから買取商品一覧CSV（キャンセルは買取商品（キャンセル）CSV）を押す	ダウンロードしたCSV	L0023-L0053
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	CSV種別	売却｜非売却	売却: 数量列の見出しは「在庫増減数」・ファイル名は purchase_product_list_ から／非売却: 数量列の見出しだけ「キャンセル数」に変わり・ファイル名は purchase_product_cancel_list_ から	L0028-L0029,L0034,L0036,L0040,L0049	この機能
+F02	P1	明細の売却区分	売却する｜売却しない	売却する: CSV種別が売却のときだけ出力の対象／売却しない: CSV種別が非売却のときだけ出力の対象	L0034	この機能
+F03	P1	買取注文のステータス	キャンセル｜キャンセル以外	キャンセル: 非売却のときは通常の明細も個別入力の明細も出力から除く（売却のときは除かない）／キャンセル以外: 売却区分が一致する明細を出力する	L0034	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0034	売却区分がCSV種別と一致する明細だけ出力されるので、売却区分ごとに出る・出ないがCSV種別によって入れ替わる
+P1	F01+F03	効き合う	L0034	非売却のときだけキャンセルのステータスの買取注文の明細が除かれ、売却のときは除かれない（一方の値で、もう一方の処理が行われない）
+P1	F02+F03	関係しない		明細を出す条件は売却区分がCSV種別と一致することと、非売却ならステータスがキャンセルでないことの両方を満たすことで、すべて満たす型。売却区分とステータスは互いの判定結果を変えず、外れ方は1つずつ確かめれば足りる
+処理ID	組	種別	根拠	理由
+P1	F01=売却&F02=売却しない	打ち切り	L0034	売却区分がCSV種別と一致しない明細は出力されず、買取注文のステータスは効かない
+P1	F01=非売却&F02=売却する	打ち切り	L0034	売却区分がCSV種別と一致しない明細は出力されず、買取注文のステータスは効かない
+P1	F01=非売却&F03=キャンセル	打ち切り	L0034	非売却ではキャンセルの買取注文の明細は通常も個別入力も出力から除かれ、明細の売却区分は効かない
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M07-06-001	P1	F01=売却&F02=売却しない	CSV種別=売却／明細の売却区分=売却しない／買取注文のステータス=（効かない）	CSV種別×明細の売却区分: 売却×売却しない
+CB-M07-06-002	P1	F01=売却&F02=売却する&F03=キャンセル	CSV種別=売却／明細の売却区分=売却する／買取注文のステータス=キャンセル	CSV種別×買取注文のステータス: 売却×キャンセル；明細の売却区分×買取注文のステータス: 売却する×キャンセル
+CB-M07-06-003	P1	F01=売却&F02=売却する&F03=キャンセル以外	CSV種別=売却／明細の売却区分=売却する／買取注文のステータス=キャンセル以外	CSV種別×買取注文のステータス: 売却×キャンセル以外；明細の売却区分×買取注文のステータス: 売却する×キャンセル以外
+CB-M07-06-004	P1	F01=非売却&F02=売却する	CSV種別=非売却／明細の売却区分=売却する／買取注文のステータス=（効かない）	CSV種別×明細の売却区分: 非売却×売却する
+CB-M07-06-005	P1	F01=非売却&F03=キャンセル	CSV種別=非売却／明細の売却区分=（効かない。売却しないから選ぶ）／買取注文のステータス=キャンセル	CSV種別×買取注文のステータス: 非売却×キャンセル
+項目ID	扱い	テストID	理由
+CB-M07-06-001	ケース化	IT-M07-06-015	組の値を事前準備・手順に書き、ダウンロードしたCSVで確かめる
+CB-M07-06-002	ケース化	IT-M07-06-016	組の値を事前準備・手順に書き、ダウンロードしたCSVで確かめる
+CB-M07-06-003	ケース化	IT-M07-06-017	組の値を事前準備・手順に書き、ダウンロードしたCSVで確かめる
+CB-M07-06-004	ケース化	IT-M07-06-018	組の値を事前準備・手順に書き、ダウンロードしたCSVで確かめる
+CB-M07-06-005	ケース化	IT-M07-06-019	組の値を事前準備・手順に書き、ダウンロードしたCSVで確かめる
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M07-03_{processes,factors,interactions,constraints}.tsv integration_test/casegen/combination/combos/M07-03.tsv integration_test/casegen/combination/cases/M07-03_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M07-01_{processes,factors,interactions,constraints}.tsv integration_test/casegen/combination/combos/M07-01.tsv integration_test/casegen/combination/cases/M07-01_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M07-08_{processes,factors,interactions,constraints}.tsv integration_test/casegen/combination/combos/M07-08.tsv integration_test/casegen/combination/cases/M07-08_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	買取状況を振込依頼済みへ変えて保存する	買取情報編集画面で買取状況を振込依頼済みにして保存を押す	買取情報（DBの買取状況）	L0078-L0080,L0445
+P2	買取状況を振込完了へ変えて保存する	買取情報編集画面で買取状況を振込完了にして保存を押す	振込完了メール・買取情報（DBの買取状況）	L0081-L0086,L0236,L0250-L0251
+P3	買取状況を査定内容承諾へ変えて保存する	買取情報編集画面で買取状況を査定内容承諾にして保存を押す	実在庫情報・実在庫履歴（DB）	L0087-L0089,L0084
+P4	買取状況を変えて保存する（入庫済みへの変更と入庫済みからの変更）	買取情報編集画面で買取状況を変更して保存を押す	買取情報（DBの買取状況）・本店のECCUBE在庫	L0090-L0100,L0092,L0108
+P5	個別入力商品の実在庫を登録する	個別入力商品の実在庫登録ボタンを押し、商品を選択する	実在庫情報・買取情報（DBの買取状況）	L0235-L0242,L0250-L0251,L0317-L0318,L0445
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	買取依頼者の身分証明書	未登録｜登録済み	未登録: 振込依頼済みへ変更できない／登録済み: この条件では止まらない	L0079,L0384,L0445	この機能
+F02	P1	会員の本人確認状態	未確認または確認中｜確認済み	未確認または確認中: 本人確認が必要な金額以上のとき変更できない／確認済み: 金額によらず止まらない（オンライン本人確認済み・簡易書留確認済み）	L0080,L0126	この機能
+F03	P1	買取金額の合計と本人確認が必要な金額（設定値）	必要額未満｜必要額以上	必要額未満: 本人確認状態によらず止まらない／必要額以上: 本人確認が未確認または確認中だと変更できない	L0080,L0406	この機能
+F04	P2	過去に振込完了にしたステータス変更履歴	なし｜あり	なし: 振込完了メールを自動送信する／あり: メールを送信しない	L0082-L0083	この機能
+F05	P2,P5	個別入力商品の実在庫登録状況	すべて登録済み｜未登録が残る	すべて登録済み: 買取状況を入庫待ちにする／未登録が残る: 買取状況を未登録在庫ありにする	L0086,L0250-L0251	この機能
+F06	P3	過去に査定内容承諾にしたステータス変更履歴	なし｜あり	なし: 売却する明細から実在庫と実在庫履歴を洗い替えで作る／あり: 実在庫を作らない	L0087-L0089	この機能
+F07	P3	明細の売却状況	売却する｜売却しない	売却する: 実在庫の作成対象／売却しない: 実在庫を作らない	L0084,L0088	この機能
+F08	P3	明細の種別	選んで買取またはまとめて買取｜個別入力商品	選んで買取またはまとめて買取: 実在庫を作る／個別入力商品: この処理では作らない（実在庫登録ボタンで登録）	L0088,L0235-L0237	この機能
+F09	P4	変更前の買取状況	入庫済み｜入庫済み以外	入庫済み: 他のステータスへ変更できない／入庫済み以外: 変更できる	L0092,L0057,L0445	この機能
+F10	P4	変更後の買取状況	入庫済み｜入庫済み以外	入庫済み: 実在庫を本店のECCUBE在庫へ入庫し在庫履歴を登録、最終更新者を操作者にする／入庫済み以外: 入庫処理は行わない	L0093-L0100	この機能
+F11	P5	実在庫登録時の買取状況	登録可能な範囲内｜登録可能な範囲外	登録可能な範囲内: 査定内容承諾から入庫待ちまでで、実在庫を登録できる／登録可能な範囲外: 登録できずエラー	L0236,L0445	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		身分証明書が未登録なら止まり、本人確認の条件とは別に判定される（どれか1つで外れる）
+P1	F01+F03	関係しない		身分証明書の判定は金額に依らない
+P1	F02+F03	効き合う	L0080	本人確認が必要な金額以上かつ未確認または確認中のときだけ更新不可
+P2	F04+F05	関係しない		メール送信は履歴だけで、次の買取状況は実在庫登録状況だけで決まる
+P3	F06+F07	関係しない		すべて満たす明細だけ実在庫を作る型で、条件ごとの外れ方を1つずつ確かめれば足りる
+P3	F06+F08	関係しない		すべて満たす明細だけ実在庫を作る型で、条件ごとの外れ方を1つずつ確かめれば足りる
+P3	F07+F08	関係しない		すべて満たす明細だけ実在庫を作る型で、条件ごとの外れ方を1つずつ確かめれば足りる
+P4	F09+F10	効き合う	L0092,L0093	入庫済みからは他へ変更できず、入庫済みへの変更時だけ入庫処理を行う
+P5	F05+F11	効き合う	L0236,L0250-L0251	範囲外では実在庫を登録できず買取状況の判定も走らない。範囲内でだけ登録後の状況で入庫待ちか未登録在庫ありが決まる
+処理ID	組	種別	根拠	理由
+P1	F01=未登録	打ち切り	L0079,L0445	身分証明書が未登録なら振込依頼済みへ変更できず、本人確認の条件は効かない
+P3	F06=あり	打ち切り	L0087-L0089	過去に査定内容承諾にしたことがあれば実在庫を作らず、明細の条件は効かない
+P3	F07=売却しない	打ち切り	L0084,L0088	売却しない明細は実在庫を作らず、ほかの条件は効かない
+P3	F08=個別入力商品	打ち切り	L0088,L0235-L0237	個別入力商品はこの処理では実在庫を作らず、ほかの条件は効かない
+P4	F09=入庫済み	打ち切り	L0092	入庫済みからは他のステータスへ変更できず、変更後の状況は効かない
+P5	F11=登録可能な範囲外	打ち切り	L0236,L0445	登録できる範囲外では実在庫を登録できずエラーになり、実在庫の登録状況は効かない
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M07-03-001	P1	F01=登録済み&F02=確認済み&F03=必要額未満	買取依頼者の身分証明書=登録済み／会員の本人確認状態=確認済み／買取金額の合計と本人確認が必要な金額（設定値）=必要額未満	会員の本人確認状態×買取金額の合計と本人確認が必要な金額（設定値）: 確認済み×必要額未満
+CB-M07-03-002	P2	F04=なし&F05=未登録が残る	過去に振込完了にしたステータス変更履歴=なし／個別入力商品の実在庫登録状況=未登録が残る	過去に振込完了にしたステータス変更履歴×個別入力商品の実在庫登録状況: なし×未登録が残る
+CB-M07-03-003	P2	F04=あり&F05=すべて登録済み	過去に振込完了にしたステータス変更履歴=あり／個別入力商品の実在庫登録状況=すべて登録済み	過去に振込完了にしたステータス変更履歴×個別入力商品の実在庫登録状況: あり×すべて登録済み
+CB-M07-03-004	P2	F04=あり&F05=未登録が残る	過去に振込完了にしたステータス変更履歴=あり／個別入力商品の実在庫登録状況=未登録が残る	過去に振込完了にしたステータス変更履歴×個別入力商品の実在庫登録状況: あり×未登録が残る
+CB-M07-03-005	P3	F07=売却しない	過去に査定内容承諾にしたステータス変更履歴=（効かない。なしから選ぶ）／明細の売却状況=売却しない／明細の種別=（効かない）	明細の売却状況: 売却しない
+CB-M07-03-006	P3	F08=個別入力商品	過去に査定内容承諾にしたステータス変更履歴=（効かない。なしから選ぶ）／明細の売却状況=（効かない。売却するから選ぶ）／明細の種別=個別入力商品	明細の種別: 個別入力商品
+項目ID	扱い	テストID	理由
+CB-M07-03-001	ケース化	IT-M07-03-154	身分証明書登録済み・簡易書留確認済み・合計9999で振込依頼済みへ変更し、更新されることを確かめる
+CB-M07-03-002	ケース化	IT-M07-03-155	履歴なし・未登録が残る状態で振込完了へ変更し、メール送信と未登録在庫ありを確かめる
+CB-M07-03-003	ケース化	IT-M07-03-156	履歴あり・すべて登録済みで振込完了へ変更し、メール追加送信なしと入庫待ちを確かめる
+CB-M07-03-004	ケース化	IT-M07-03-157	履歴あり・未登録が残る状態で振込完了へ変更し、メール追加送信なしと未登録在庫ありを確かめる
+CB-M07-03-005	ケース化	IT-M07-03-158	売却しない明細だけの買取を査定内容承諾へ変更し、実在庫・実在庫履歴が作られないことを確かめる
+CB-M07-03-006	ケース化	IT-M07-03-159	売却する個別入力商品を持つ買取を査定内容承諾へ変更し、実在庫・実在庫履歴が作られないことを確かめる
+
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	選んだ買取情報の買取商品（キャンセル）CSVを出力する	検索結果でチェックを付け、ダウンロードから買取商品（キャンセル）CSVを押す	ダウンロードしたCSV	L0272-L0277
+P2	選んだ買取情報の買取商品一覧CSVを出力する	検索結果でチェックを付け、ダウンロードから買取商品一覧CSVを押す	ダウンロードしたCSV	L0268-L0271
+P3	選んだ買取情報の戻しリストをCSVまたはPDFで出力する	検索結果でチェックを付け、ダウンロードから戻しリストCSVまたは戻しリストPDFを押す	ダウンロードしたCSV・戻しリスト画面・エラー表示	L0278-L0282,L0335
+P4	戻しリストの出力で商品の並び順を決める	検索結果で入庫待ちまたは入庫済みの買取情報にチェックを付け、ダウンロードから戻しリストCSVまたは戻しリストPDFを押す	ダウンロードしたCSV・戻しリスト画面	L0284-L0294
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	買取状況がキャンセル済みか	キャンセル済み｜キャンセル済み以外	キャンセル済み: 出力しない／キャンセル済み以外: 明細の条件を満たせば出力する	L0276	この機能
+F02	P1	明細の売却状態（キャンセルCSV）	売却しない｜売却しない以外	売却しない: 出力する／売却しない以外: 出力しない（売却する・未定を含む）	L0277	この機能
+F03	P2	明細の売却状態（買取商品一覧CSV）	売却する｜売却する以外	売却する: 出力する／売却する以外: 出力しない（売却しない・未定を含む）	L0270	この機能
+F04	P2	並び順がどの段で決まるか（買取商品一覧CSV）	明細区分で決まる｜商品IDで決まる｜商品コードの有無で決まる｜状態で決まる｜全段が同じ	明細区分で決まる: 通常買取明細を個別入力明細より先に並べる／商品IDで決まる: 商品IDの昇順／商品コードの有無で決まる: 商品コードが存在するものを先に並べる／状態で決まる: 状態の昇順／全段が同じ: 差が付かない	L0271	この機能
+F05	P3	買取状況（戻しリスト）	入庫待ちか入庫済み｜入庫待ちと入庫済み以外	入庫待ちか入庫済み: 出力して棚戻し済みにする／入庫待ちと入庫済み以外: エラーにして出力しない	L0279-L0281,L0335	この機能
+F06	P3,P4	出力形式	CSV｜PDF	CSV: 戻しリストCSVをダウンロード／PDF: 戻しリストPDFを画面に表示	L0259-L0260,L0278-L0279	この機能
+F07	P4	並び順がどの段で決まるか（戻しリスト）	金額閾値で決まる｜棚番で決まる｜言語で決まる｜状態で決まる｜Foilで決まる｜略称タグで決まる｜レアリティで決まる｜色で決まる｜コレクター番号で決まる｜英語のカード名で決まる｜全段が同じ	金額閾値で決まる: 金額閾値の昇順（サプライは最後）／棚番で決まる: 棚番の昇順／言語で決まる: 日→英→他言語／状態で決まる: NM→HP／Foilで決まる: 非Foil→Foil／略称タグで決まる: 略称タグの昇順／レアリティで決まる: M→C／色で決まる: マスターデータの色順／コレクター番号で決まる: 設定された略称タグがコレクター番号ソートのときコレクター番号の昇順／英語のカード名で決まる: 設定された略称タグがアルファベットソートのとき英語のカード名の昇順／全段が同じ: 差が付かない	L0284-L0294	この機能
+F08	P4	閲覧店舗	本店｜支店	本店: 棚番の昇順で並べる段がある／支店: 棚番のソートは行わない	L0286	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		出力するかは買取状況と売却状態をすべて満たすかで決まり、条件ごとの外れ方は1つずつ確かめれば足りる
+P2	F03+F04	関係しない		売却する明細だけが対象で、並び順は対象になった明細の間でだけ決まる
+P3	F05+F06	関係しない		状態の判定は出力形式に関わらず同じで、形式は出力物だけを変える
+P4	F06+F07	関係しない		CSVとPDFで並び順の比較は同じ
+P4	F06+F08	関係しない		出力形式は店舗による棚番の扱いを変えない
+P4	F07+F08	効き合う	L0286	支店では棚番のソートを行わないので、棚番の段で決まる並びは本店だけ
+処理ID	組	種別	根拠	理由
+P4	F07=棚番で決まる&F08=支店	作れない	L0286	支店では棚番のソートを行わない
+P1	F01=キャンセル済み	打ち切り	L0276	買取状況がキャンセル済みなら出力せず、売却状態は効かない
+P1	F02=売却しない以外	打ち切り	L0277	売却状態が売却しない以外（売却する・未定）なら出力せず、買取状況は効かない
+P2	F03=売却する以外	打ち切り	L0270	売却フラグが売却する以外なら出力せず、並び順は効かない
+P3	F05=入庫待ちと入庫済み以外	打ち切り	L0280-L0281,L0335	入庫待ち・入庫済み以外はCSVでもPDFでもエラーにして出力しない（識別ID28）
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M07-01-001	P1	F01=キャンセル済み以外&F02=売却しない	買取状況がキャンセル済みか=キャンセル済み以外／明細の売却状態（キャンセルCSV）=売却しない	買取状況がキャンセル済みか×明細の売却状態（キャンセルCSV）: キャンセル済み以外×売却しない
+CB-M07-01-002	P1	F01=キャンセル済み	買取状況がキャンセル済みか=キャンセル済み／明細の売却状態（キャンセルCSV）=（効かない）	買取状況がキャンセル済みか: キャンセル済み
+CB-M07-01-003	P1	F02=売却しない以外	買取状況がキャンセル済みか=（効かない。キャンセル済み以外から選ぶ）／明細の売却状態（キャンセルCSV）=売却しない以外	明細の売却状態（キャンセルCSV）: 売却しない以外
+CB-M07-01-004	P2	F03=売却する&F04=明細区分で決まる	明細の売却状態（買取商品一覧CSV）=売却する／並び順がどの段で決まるか（買取商品一覧CSV）=明細区分で決まる	明細の売却状態（買取商品一覧CSV）×並び順がどの段で決まるか（買取商品一覧CSV）: 売却する×明細区分で決まる
+CB-M07-01-005	P2	F03=売却する&F04=商品IDで決まる	明細の売却状態（買取商品一覧CSV）=売却する／並び順がどの段で決まるか（買取商品一覧CSV）=商品IDで決まる	明細の売却状態（買取商品一覧CSV）×並び順がどの段で決まるか（買取商品一覧CSV）: 売却する×商品IDで決まる
+CB-M07-01-006	P2	F03=売却する&F04=商品コードの有無で決まる	明細の売却状態（買取商品一覧CSV）=売却する／並び順がどの段で決まるか（買取商品一覧CSV）=商品コードの有無で決まる	明細の売却状態（買取商品一覧CSV）×並び順がどの段で決まるか（買取商品一覧CSV）: 売却する×商品コードの有無で決まる
+CB-M07-01-007	P2	F03=売却する&F04=状態で決まる	明細の売却状態（買取商品一覧CSV）=売却する／並び順がどの段で決まるか（買取商品一覧CSV）=状態で決まる	明細の売却状態（買取商品一覧CSV）×並び順がどの段で決まるか（買取商品一覧CSV）: 売却する×状態で決まる
+CB-M07-01-008	P2	F03=売却する&F04=全段が同じ	明細の売却状態（買取商品一覧CSV）=売却する／並び順がどの段で決まるか（買取商品一覧CSV）=全段が同じ	明細の売却状態（買取商品一覧CSV）×並び順がどの段で決まるか（買取商品一覧CSV）: 売却する×全段が同じ
+CB-M07-01-009	P2	F03=売却する以外	明細の売却状態（買取商品一覧CSV）=売却する以外／並び順がどの段で決まるか（買取商品一覧CSV）=（効かない）	明細の売却状態（買取商品一覧CSV）: 売却する以外
+CB-M07-01-010	P4	F06=CSV&F07=金額閾値で決まる&F08=本店	出力形式=CSV／並び順がどの段で決まるか（戻しリスト）=金額閾値で決まる／閲覧店舗=本店	出力形式×並び順がどの段で決まるか（戻しリスト）: CSV×金額閾値で決まる；出力形式×閲覧店舗: CSV×本店；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 金額閾値で決まる×本店
+CB-M07-01-011	P4	F06=CSV&F07=棚番で決まる&F08=本店	出力形式=CSV／並び順がどの段で決まるか（戻しリスト）=棚番で決まる／閲覧店舗=本店	出力形式×並び順がどの段で決まるか（戻しリスト）: CSV×棚番で決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 棚番で決まる×本店
+CB-M07-01-012	P4	F06=CSV&F07=言語で決まる&F08=支店	出力形式=CSV／並び順がどの段で決まるか（戻しリスト）=言語で決まる／閲覧店舗=支店	出力形式×並び順がどの段で決まるか（戻しリスト）: CSV×言語で決まる；出力形式×閲覧店舗: CSV×支店；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 言語で決まる×支店
+CB-M07-01-013	P4	F06=CSV&F07=状態で決まる&F08=本店	出力形式=CSV／並び順がどの段で決まるか（戻しリスト）=状態で決まる／閲覧店舗=本店	出力形式×並び順がどの段で決まるか（戻しリスト）: CSV×状態で決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 状態で決まる×本店
+CB-M07-01-014	P4	F06=CSV&F07=Foilで決まる&F08=本店	出力形式=CSV／並び順がどの段で決まるか（戻しリスト）=Foilで決まる／閲覧店舗=本店	出力形式×並び順がどの段で決まるか（戻しリスト）: CSV×Foilで決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: Foilで決まる×本店
+CB-M07-01-015	P4	F06=CSV&F07=略称タグで決まる&F08=本店	出力形式=CSV／並び順がどの段で決まるか（戻しリスト）=略称タグで決まる／閲覧店舗=本店	出力形式×並び順がどの段で決まるか（戻しリスト）: CSV×略称タグで決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 略称タグで決まる×本店
+CB-M07-01-016	P4	F06=CSV&F07=レアリティで決まる&F08=本店	出力形式=CSV／並び順がどの段で決まるか（戻しリスト）=レアリティで決まる／閲覧店舗=本店	出力形式×並び順がどの段で決まるか（戻しリスト）: CSV×レアリティで決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: レアリティで決まる×本店
+CB-M07-01-017	P4	F06=CSV&F07=色で決まる&F08=本店	出力形式=CSV／並び順がどの段で決まるか（戻しリスト）=色で決まる／閲覧店舗=本店	出力形式×並び順がどの段で決まるか（戻しリスト）: CSV×色で決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 色で決まる×本店
+CB-M07-01-018	P4	F06=CSV&F07=コレクター番号で決まる&F08=本店	出力形式=CSV／並び順がどの段で決まるか（戻しリスト）=コレクター番号で決まる／閲覧店舗=本店	出力形式×並び順がどの段で決まるか（戻しリスト）: CSV×コレクター番号で決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: コレクター番号で決まる×本店
+CB-M07-01-019	P4	F06=CSV&F07=英語のカード名で決まる&F08=本店	出力形式=CSV／並び順がどの段で決まるか（戻しリスト）=英語のカード名で決まる／閲覧店舗=本店	出力形式×並び順がどの段で決まるか（戻しリスト）: CSV×英語のカード名で決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 英語のカード名で決まる×本店
+CB-M07-01-020	P4	F06=CSV&F07=全段が同じ&F08=本店	出力形式=CSV／並び順がどの段で決まるか（戻しリスト）=全段が同じ／閲覧店舗=本店	出力形式×並び順がどの段で決まるか（戻しリスト）: CSV×全段が同じ；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 全段が同じ×本店
+CB-M07-01-021	P4	F06=PDF&F07=金額閾値で決まる&F08=支店	出力形式=PDF／並び順がどの段で決まるか（戻しリスト）=金額閾値で決まる／閲覧店舗=支店	出力形式×並び順がどの段で決まるか（戻しリスト）: PDF×金額閾値で決まる；出力形式×閲覧店舗: PDF×支店；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 金額閾値で決まる×支店
+CB-M07-01-022	P4	F06=PDF&F07=棚番で決まる&F08=本店	出力形式=PDF／並び順がどの段で決まるか（戻しリスト）=棚番で決まる／閲覧店舗=本店	出力形式×並び順がどの段で決まるか（戻しリスト）: PDF×棚番で決まる；出力形式×閲覧店舗: PDF×本店
+CB-M07-01-023	P4	F06=PDF&F07=言語で決まる&F08=本店	出力形式=PDF／並び順がどの段で決まるか（戻しリスト）=言語で決まる／閲覧店舗=本店	出力形式×並び順がどの段で決まるか（戻しリスト）: PDF×言語で決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 言語で決まる×本店
+CB-M07-01-024	P4	F06=PDF&F07=状態で決まる&F08=支店	出力形式=PDF／並び順がどの段で決まるか（戻しリスト）=状態で決まる／閲覧店舗=支店	出力形式×並び順がどの段で決まるか（戻しリスト）: PDF×状態で決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 状態で決まる×支店
+CB-M07-01-025	P4	F06=PDF&F07=Foilで決まる&F08=支店	出力形式=PDF／並び順がどの段で決まるか（戻しリスト）=Foilで決まる／閲覧店舗=支店	出力形式×並び順がどの段で決まるか（戻しリスト）: PDF×Foilで決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: Foilで決まる×支店
+CB-M07-01-026	P4	F06=PDF&F07=略称タグで決まる&F08=支店	出力形式=PDF／並び順がどの段で決まるか（戻しリスト）=略称タグで決まる／閲覧店舗=支店	出力形式×並び順がどの段で決まるか（戻しリスト）: PDF×略称タグで決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 略称タグで決まる×支店
+CB-M07-01-027	P4	F06=PDF&F07=レアリティで決まる&F08=支店	出力形式=PDF／並び順がどの段で決まるか（戻しリスト）=レアリティで決まる／閲覧店舗=支店	出力形式×並び順がどの段で決まるか（戻しリスト）: PDF×レアリティで決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: レアリティで決まる×支店
+CB-M07-01-028	P4	F06=PDF&F07=色で決まる&F08=支店	出力形式=PDF／並び順がどの段で決まるか（戻しリスト）=色で決まる／閲覧店舗=支店	出力形式×並び順がどの段で決まるか（戻しリスト）: PDF×色で決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 色で決まる×支店
+CB-M07-01-029	P4	F06=PDF&F07=コレクター番号で決まる&F08=支店	出力形式=PDF／並び順がどの段で決まるか（戻しリスト）=コレクター番号で決まる／閲覧店舗=支店	出力形式×並び順がどの段で決まるか（戻しリスト）: PDF×コレクター番号で決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: コレクター番号で決まる×支店
+CB-M07-01-030	P4	F06=PDF&F07=英語のカード名で決まる&F08=支店	出力形式=PDF／並び順がどの段で決まるか（戻しリスト）=英語のカード名で決まる／閲覧店舗=支店	出力形式×並び順がどの段で決まるか（戻しリスト）: PDF×英語のカード名で決まる；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 英語のカード名で決まる×支店
+CB-M07-01-031	P4	F06=PDF&F07=全段が同じ&F08=支店	出力形式=PDF／並び順がどの段で決まるか（戻しリスト）=全段が同じ／閲覧店舗=支店	出力形式×並び順がどの段で決まるか（戻しリスト）: PDF×全段が同じ；並び順がどの段で決まるか（戻しリスト）×閲覧店舗: 全段が同じ×支店
+項目ID	扱い	テストID	理由
+CB-M07-01-001	既存ケースで確認済み	IT-M07-01-058	事前準備にキャンセル済みでない買取〔買取番号-M0701-058A〕の売却しない明細（3種）が書かれ、手順で買取商品（キャンセル）CSVの出力対象になることを確かめている
+CB-M07-01-002	既存ケースで確認済み	IT-M07-01-058	事前準備にキャンセル済みで売却しない明細を持つ買取〔買取番号-M0701-058B〕が書かれ、そのキャンセル済み買取の明細が出力されないことを期待結果で確かめている
+CB-M07-01-003	既存ケースで確認済み	IT-M07-01-058	事前準備にキャンセル済みでない買取〔買取番号-M0701-058A〕の売却未定明細と売却する明細が書かれ、それらが出力されないことを期待結果で確かめている
+CB-M07-01-004	ケース化	IT-M07-01-092	通常買取明細と個別入力明細だけが違う2明細でCSVの行順を確かめる
+CB-M07-01-005	ケース化	IT-M07-01-093	商品IDだけが違う2明細でCSVの行順を確かめる
+CB-M07-01-006	ケース化	IT-M07-01-094	同じ商品IDで商品コードの有無だけが違う2明細でCSVの行順を確かめる
+CB-M07-01-007	ケースにしない		設計書は「状態の昇順」(L0271)とだけ書き、昇順の基準（状態マスターの並び・状態ID・名称）も、NMとHPなど具体的な状態のどちらが先かも定めていない。同じ設計書の戻しリストの「状態（NM→HP）」(L0288)は別の出力の定めで、買取商品一覧CSVに当てられない。要因表の制約に足すべき組: F04=状態で決まる
+CB-M07-01-008	ケース化	IT-M07-01-095	全段が同じ2明細が2行とも出力されることを確かめる（差が付かないため行順は定められず確かめない）
+CB-M07-01-009	既存ケースで確認済み	IT-M07-01-089,IT-M07-01-091	089は事前準備に売却しない明細M0701-089-A-NG等が書かれ、091は売却未定の明細M0701-091-UNDECIDEDが書かれ、売却する以外の明細が買取商品一覧CSVに出力されないことをCSVで確かめている
+CB-M07-01-010	ケース化	IT-M07-01-101	並び順が金額閾値で決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-011	ケース化	IT-M07-01-102	並び順が棚番で決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-012	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=言語で決まる&F08=支店（作れない）
+CB-M07-01-013	ケース化	IT-M07-01-103	並び順が状態で決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-014	ケース化	IT-M07-01-104	並び順がFoilで決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-015	ケース化	IT-M07-01-105	並び順が略称タグで決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-016	ケース化	IT-M07-01-106	並び順がレアリティで決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-017	ケース化	IT-M07-01-107	並び順が色で決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-018	ケース化	IT-M07-01-108	並び順がコレクター番号で決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-019	ケース化	IT-M07-01-109	並び順が英語のカード名で決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-020	ケースにしない		全段が同じなら並び順に差が付かず、結果が一意に決まらない。設計書は L0284〜L0294 で段ごとの昇順だけを定め、全段が同じ行どうしの並びを定めていない（要因表の値の結果も「差が付かない」）。要因表の制約に足すべき組: F07=全段が同じ&F08=本店（正解未定）
+CB-M07-01-021	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=金額閾値で決まる&F08=支店（作れない）
+CB-M07-01-022	ケース化	IT-M07-01-110	並び順が棚番で決まるように2件の実在庫を作り、PDFの行順を確かめる
+CB-M07-01-023	ケース化	IT-M07-01-111	並び順が言語で決まるように2件の実在庫を作り、PDFの行順を確かめる
+CB-M07-01-024	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=状態で決まる&F08=支店（作れない）
+CB-M07-01-025	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=Foilで決まる&F08=支店（作れない）
+CB-M07-01-026	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=略称タグで決まる&F08=支店（作れない）
+CB-M07-01-027	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=レアリティで決まる&F08=支店（作れない）
+CB-M07-01-028	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=色で決まる&F08=支店（作れない）
+CB-M07-01-029	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=コレクター番号で決まる&F08=支店（作れない）
+CB-M07-01-030	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=英語のカード名で決まる&F08=支店（作れない）
+CB-M07-01-031	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=全段が同じ&F08=支店（作れない）
+
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	戻しリストCSVを出す	買取検索一覧画面で買取を選び、ダウンロードから戻しリストCSVを押す	ダウンロードしたCSV	L0011-L0023
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	商品区分	シングルカード｜サプライ品	シングルカード: 金額閾値の区分・FoilやJPなどの言語/状態・略称を出し商品名から略称などを取り除く／サプライ品: 区分はサプライ・言語/状態は「サプライ品」・略称は出さない	L0014,L0015,L0018,L0019,L0022	この機能
+F02	P1	基準価格の閾値帯	閾値1未満｜閾値1以上閾値2未満｜閾値2以上	閾値1未満: ●●円未満の区分／閾値1以上閾値2未満: ●●円以上▲▲円未満の区分／閾値2以上: ■■円以上の区分	L0014-L0016	この機能
+F03	P1	Foilか	非Foil｜Foil	非Foil: 言語/状態を「JP/NM」形式で出す／Foil: 「FoilJP/NM」と出す（サプライ品は「サプライ品」のみ）	L0018	この機能
+F04	P1	選んだ買取のステータス	入庫待ちか入庫済みだけ｜それ以外を含む	入庫待ちか入庫済みだけ: 戻しリストCSVを出す／それ以外を含む: 出力対象外のステータスの買取番号を示すエラーを出し、買取一覧の検索結果へ戻りCSVを出さない	L0029	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0014,L0015	サプライ品は閾値帯でなく「サプライ」の区分になる
+P1	F01+F03	効き合う	L0018	サプライ品は Foil でも「サプライ品」と出し、シングルカードだけ Foil を付ける
+P1	F02+F03	関係しない		閾値帯は価格で決まり、Foil は言語/状態の表記にだけ効く
+P1	F01+F04	関係しない		出力するかどうかを決める条件で、出す場合の区分・言語/状態・略称は商品の属性で決まる。外れる（出さない）のは1通りだけ
+P1	F02+F04	関係しない		出力するかどうかを決める条件で、閾値帯は出す場合の区分の計算にだけ効く
+P1	F03+F04	関係しない		出力するかどうかを決める条件で、Foilは出す場合の言語/状態の表記にだけ効く
+処理ID	組	種別	根拠	理由
+P1	F04=それ以外を含む	打ち切り	L0029	入庫待ち・入庫済み以外を含むとエラーで買取一覧の検索結果へ戻りCSVを出さず、商品区分・閾値帯・Foilは効かない
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M07-08-001	P1	F01=シングルカード&F02=閾値2以上&F03=非Foil&F04=入庫待ちか入庫済みだけ	商品区分=シングルカード／基準価格の閾値帯=閾値2以上／Foilか=非Foil／選んだ買取のステータス=入庫待ちか入庫済みだけ	商品区分×基準価格の閾値帯: シングルカード×閾値2以上；商品区分×選んだ買取のステータス: シングルカード×入庫待ちか入庫済みだけ；基準価格の閾値帯×Foilか: 閾値2以上×非Foil；基準価格の閾値帯×選んだ買取のステータス: 閾値2以上×入庫待ちか入庫済みだけ；Foilか×選んだ買取のステータス: 非Foil×入庫待ちか入庫済みだけ
+CB-M07-08-002	P1	F01=サプライ品&F02=閾値1未満&F03=非Foil&F04=入庫待ちか入庫済みだけ	商品区分=サプライ品／基準価格の閾値帯=閾値1未満／Foilか=非Foil／選んだ買取のステータス=入庫待ちか入庫済みだけ	商品区分×基準価格の閾値帯: サプライ品×閾値1未満；商品区分×Foilか: サプライ品×非Foil；商品区分×選んだ買取のステータス: サプライ品×入庫待ちか入庫済みだけ；基準価格の閾値帯×Foilか: 閾値1未満×非Foil；基準価格の閾値帯×選んだ買取のステータス: 閾値1未満×入庫待ちか入庫済みだけ
+CB-M07-08-003	P1	F01=サプライ品&F02=閾値1以上閾値2未満&F03=Foil&F04=入庫待ちか入庫済みだけ	商品区分=サプライ品／基準価格の閾値帯=閾値1以上閾値2未満／Foilか=Foil／選んだ買取のステータス=入庫待ちか入庫済みだけ	商品区分×基準価格の閾値帯: サプライ品×閾値1以上閾値2未満；商品区分×Foilか: サプライ品×Foil；基準価格の閾値帯×Foilか: 閾値1以上閾値2未満×Foil；基準価格の閾値帯×選んだ買取のステータス: 閾値1以上閾値2未満×入庫待ちか入庫済みだけ；Foilか×選んだ買取のステータス: Foil×入庫待ちか入庫済みだけ
+CB-M07-08-004	P1	F01=サプライ品&F02=閾値2以上&F03=Foil&F04=入庫待ちか入庫済みだけ	商品区分=サプライ品／基準価格の閾値帯=閾値2以上／Foilか=Foil／選んだ買取のステータス=入庫待ちか入庫済みだけ	商品区分×基準価格の閾値帯: サプライ品×閾値2以上；基準価格の閾値帯×Foilか: 閾値2以上×Foil
+CB-M07-08-005	P1	F04=それ以外を含む	商品区分=（効かない）／基準価格の閾値帯=（効かない）／Foilか=（効かない）／選んだ買取のステータス=それ以外を含む	選んだ買取のステータス: それ以外を含む
+項目ID	扱い	テストID	理由
+CB-M07-08-001	ケース化	IT-M07-08-015	組の値（シングルカード・基準価格800円・非Foil・入庫待ち）を事前準備に書き、ダウンロードしたCSVの行で確かめる
+CB-M07-08-002	ケース化	IT-M07-08-016	組の値（サプライ品・基準価格50円で閾値1未満・非Foil・入庫済み）を事前準備に書き、ダウンロードしたCSVの行で確かめる
+CB-M07-08-003	ケースにしない		作れない組。設計書 L0018「Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示」。Foilは画面ではカード詳細(登録・編集・削除)でカードごとに選ぶ属性（既存シード S-M07-08-BASIC-003「カード詳細のレアリティに「R」、FoilにFoilを選んで「登録」を押す」）で、サプライ品は S-M07-08-BASIC-004 のとおりカード指定を付けずにグッズ商品CSV登録で作る商品のため、Foilを持たせる画面操作が無く、サプライ品かつFoilの買取在庫を作れない。要因表の制約に足すべき組: F01=サプライ品&F03=Foil（種別: 作れない）
+CB-M07-08-004	ケースにしない		作れない組。設計書 L0018「Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示」。Foilは画面ではカード詳細(登録・編集・削除)でカードごとに選ぶ属性（既存シード S-M07-08-BASIC-003「カード詳細のレアリティに「R」、FoilにFoilを選んで「登録」を押す」）で、サプライ品は S-M07-08-BASIC-004 のとおりカード指定を付けずにグッズ商品CSV登録で作る商品のため、Foilを持たせる画面操作が無く、サプライ品かつFoilの買取在庫を作れない。要因表の制約に足すべき組: F01=サプライ品&F03=Foil（種別: 作れない）
+CB-M07-08-005	ケース化	IT-M07-08-019	打ち切りの行。商品区分・閾値帯・Foilは効かないので書かず、入庫待ちとキャンセル済みを含む選択でエラーとCSVが出ないことを確かめる
+
+codex
+組と仕分けを確認しました。次は各ケースの事前準備・操作・期待結果を設計書の該当節と照らし、判断が確実な箇所に絞ります。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M07-06_cb_test_cases.tsv integration_test/casegen/combination/cases/M07-06_cb_seed_data.tsv integration_test/casegen/combination/cases/M07-08_cb_test_cases.tsv integration_test/casegen/combination/cases/M07-08_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M07-06-015	IT-0366	REQ-0206-sheet-7-R001,REQ-0206-sheet-7-R003		ITA-11	P1	ブラウザのみ	S-M07-06-ADM,S-M07-06-MASTER,S-M07-06-CBSELLNO-015	① 管理者（ログインID m0706_admin）を稼働中、ログイン失敗回数0、ロックなし、ネット買取管理の参照とCSV出力が可能に設定し、新しいブラウザセッションでログインする（S-M07-06-ADM）／② 買取状況「注文」、状態「NM」（状態ID 1）「SP」（状態ID 2）、レアリティ「M」「C」、略称タグ「TAGA」「TAGB」、言語「日本語」（言語ID 1）「英語」（言語ID 2）が利用可能な状態にする（S-M07-06-MASTER）／③ 買取番号〔買取番号-M0706-CB015〕（登録時に振られた買取番号を控えてある。注文者名M0706-CB015-顧客）に通常買取明細を1件、商品コードM0706-CB015-A・商品名M0706-CB015-カードA・日本語・状態NM・基準価格1000・個数1・売却状態は「しない」で登録する。注文者名M0706-CB015-顧客の買取情報はこの1件だけにする（S-M07-06-CBSELLNO-015）	1. 買取一覧(検索入力)画面を開く／2. 注文者名に「M0706-CB015-顧客」を入力して「検索する >」ボタンを押す／3. 買取番号〔買取番号-M0706-CB015〕の「買取情報の選択」をチェックする／4. 「ダウンロード▼」を押して「買取商品一覧CSV」を押す／5. ダウンロードしたCSVを開く	CSVのファイル名がpurchase_product_list_で始まり、見出し行の第2項目が「在庫増減数」で、データ行が0件（見出し行だけ）であり、商品コードM0706-CB015-Aの行を含まないこと	0206 買取商品一覧CSV出力項目 / 項目定義 識別ID 2｜0206 買取商品一覧CSV出力項目 / 現行仕様 業務ロジック 出力の対象｜0206 買取一覧(検索結果) / 機能仕様 買取商品一覧CSV出力	CB-M07-06-001
+IT-M07-06-016	IT-0366	REQ-0206-sheet-7-R001,REQ-0206-sheet-7-R003		ITA-11	P1	ブラウザのみ	S-M07-06-ADM,S-M07-06-MASTER,S-M07-06-CBSELLCANCEL-016	① 管理者（ログインID m0706_admin）を稼働中、ログイン失敗回数0、ロックなし、ネット買取管理の参照とCSV出力が可能に設定し、新しいブラウザセッションでログインする（S-M07-06-ADM）／② 買取状況「注文」、状態「NM」（状態ID 1）「SP」（状態ID 2）、レアリティ「M」「C」、略称タグ「TAGA」「TAGB」、言語「日本語」（言語ID 1）「英語」（言語ID 2）が利用可能な状態にする（S-M07-06-MASTER）／③ 買取番号〔買取番号-M0706-CB016〕（登録時に振られた買取番号を控えてある。注文者名M0706-CB016-顧客）に通常買取明細を1件、商品コードM0706-CB016-A・商品名M0706-CB016-カードA・日本語・状態NM・基準価格1000・個数2・売却状態は「する」で登録する。買取状況は「キャンセル済み」にする。注文者名M0706-CB016-顧客の買取情報はこの1件だけにする（S-M07-06-CBSELLCANCEL-016）	1. 買取一覧(検索入力)画面を開く／2. 注文者名に「M0706-CB016-顧客」を入力して「検索する >」ボタンを押す／3. 買取番号〔買取番号-M0706-CB016〕の「買取情報の選択」をチェックする／4. 「ダウンロード▼」を押して「買取商品一覧CSV」を押す／5. ダウンロードしたCSVを開く	CSVのファイル名がpurchase_product_list_で始まり、見出し行の第2項目が「在庫増減数」で、データ行が商品コードM0706-CB016-Aの1行だけであり、その第2項目が「2」、第3項目が「M0706-CB016-カードA」であること	0206 買取商品一覧CSV出力項目 / 項目定義 識別ID 2｜0206 買取商品一覧CSV出力項目 / 現行仕様 業務ロジック 出力の対象｜0206 買取一覧(検索結果) / 機能仕様 買取商品一覧CSV出力	CB-M07-06-002
+IT-M07-06-017	IT-0366	REQ-0206-sheet-7-R001,REQ-0206-sheet-7-R003		ITA-11	P1	ブラウザのみ	S-M07-06-ADM,S-M07-06-MASTER,S-M07-06-CBSELLACTIVE-017	① 管理者（ログインID m0706_admin）を稼働中、ログイン失敗回数0、ロックなし、ネット買取管理の参照とCSV出力が可能に設定し、新しいブラウザセッションでログインする（S-M07-06-ADM）／② 買取状況「注文」、状態「NM」（状態ID 1）「SP」（状態ID 2）、レアリティ「M」「C」、略称タグ「TAGA」「TAGB」、言語「日本語」（言語ID 1）「英語」（言語ID 2）が利用可能な状態にする（S-M07-06-MASTER）／③ 買取番号〔買取番号-M0706-CB017〕（登録時に振られた買取番号を控えてある。注文者名M0706-CB017-顧客）に通常買取明細を1件、商品コードM0706-CB017-A・商品名M0706-CB017-カードA・日本語・状態NM・基準価格1000・個数3・売却状態は「する」で登録する。買取状況は「入庫待ち」にする。注文者名M0706-CB017-顧客の買取情報はこの1件だけにする（S-M07-06-CBSELLACTIVE-017）	1. 買取一覧(検索入力)画面を開く／2. 注文者名に「M0706-CB017-顧客」を入力して「検索する >」ボタンを押す／3. 買取番号〔買取番号-M0706-CB017〕の「買取情報の選択」をチェックする／4. 「ダウンロード▼」を押して「買取商品一覧CSV」を押す／5. ダウンロードしたCSVを開く	CSVのファイル名がpurchase_product_list_で始まり、見出し行の第2項目が「在庫増減数」で、データ行が商品コードM0706-CB017-Aの1行だけであり、その第2項目が「3」、第3項目が「M0706-CB017-カードA」であること	0206 買取商品一覧CSV出力項目 / 項目定義 識別ID 2｜0206 買取商品一覧CSV出力項目 / 現行仕様 業務ロジック 出力の対象｜0206 買取一覧(検索結果) / 機能仕様 買取商品一覧CSV出力	CB-M07-06-003
+IT-M07-06-018	IT-0366	REQ-0206-sheet-4-R046		ITA-11	P1	ブラウザのみ	S-M07-06-ADM,S-M07-06-MASTER,S-M07-06-CBCANCELSELL-018	① 管理者（ログインID m0706_admin）を稼働中、ログイン失敗回数0、ロックなし、ネット買取管理の参照とCSV出力が可能に設定し、新しいブラウザセッションでログインする（S-M07-06-ADM）／② 買取状況「注文」、状態「NM」（状態ID 1）「SP」（状態ID 2）、レアリティ「M」「C」、略称タグ「TAGA」「TAGB」、言語「日本語」（言語ID 1）「英語」（言語ID 2）が利用可能な状態にする（S-M07-06-MASTER）／③ 買取番号〔買取番号-M0706-CB018〕（登録時に振られた買取番号を控えてある。注文者名M0706-CB018-顧客）に通常買取明細を1件、商品コードM0706-CB018-A・商品名M0706-CB018-カードA・日本語・状態NM・基準価格1000・個数1・売却状態は「する」で登録する。注文者名M0706-CB018-顧客の買取情報はこの1件だけにする（S-M07-06-CBCANCELSELL-018）	1. 買取一覧(検索入力)画面を開く／2. 注文者名に「M0706-CB018-顧客」を入力して「検索する >」ボタンを押す／3. 買取番号〔買取番号-M0706-CB018〕の「買取情報の選択」をチェックする／4. 「ダウンロード▼」を押して「買取商品（キャンセル）CSV」を押す／5. ダウンロードしたCSVを開く	CSVのファイル名がpurchase_product_cancel_list_で始まり、見出し行の第2項目が「キャンセル数」で、データ行が0件（見出し行だけ）であり、商品コードM0706-CB018-Aの行を含まないこと	0206 買取商品一覧CSV出力項目 / 現行仕様 業務ロジック 出力の対象｜0206 買取商品一覧CSV出力項目 / 現行仕様 業務ロジック 出力する列｜0206 買取一覧(検索結果) / 機能仕様処理概要 買取商品（キャンセル）CSV	CB-M07-06-004
+IT-M07-06-019	IT-0366	REQ-0206-sheet-4-R046,REQ-0206-sheet-4-R049		ITA-11	P1	ブラウザのみ	S-M07-06-ADM,S-M07-06-MASTER,S-M07-06-CBCANCELCSV-019	① 管理者（ログインID m0706_admin）を稼働中、ログイン失敗回数0、ロックなし、ネット買取管理の参照とCSV出力が可能に設定し、新しいブラウザセッションでログインする（S-M07-06-ADM）／② 買取状況「注文」、状態「NM」（状態ID 1）「SP」（状態ID 2）、レアリティ「M」「C」、略称タグ「TAGA」「TAGB」、言語「日本語」（言語ID 1）「英語」（言語ID 2）が利用可能な状態にする（S-M07-06-MASTER）／③ 買取番号〔買取番号-M0706-CB019〕（登録時に振られた買取番号を控えてある。注文者名M0706-CB019-顧客）に通常買取明細を1件、商品コードM0706-CB019-A・商品名M0706-CB019-カードA・日本語・状態NM・基準価格1000・個数1・売却状態は「しない」で登録する。買取状況は「キャンセル済み」にする。注文者名M0706-CB019-顧客の買取情報はこの1件だけにする（S-M07-06-CBCANCELCSV-019）	1. 買取一覧(検索入力)画面を開く／2. 注文者名に「M0706-CB019-顧客」を入力して「検索する >」ボタンを押す／3. 買取番号〔買取番号-M0706-CB019〕の「買取情報の選択」をチェックする／4. 「ダウンロード▼」を押して「買取商品（キャンセル）CSV」を押す／5. ダウンロードしたCSVを開く	CSVのファイル名がpurchase_product_cancel_list_で始まり、見出し行の第2項目が「キャンセル数」で、データ行が0件（見出し行だけ）であり、商品コードM0706-CB019-Aの行を含まないこと	0206 買取商品一覧CSV出力項目 / 現行仕様 業務ロジック 出力の対象｜0206 買取商品一覧CSV出力項目 / 現行仕様 業務ロジック 出力する列｜0206 買取一覧(検索結果) / 機能仕様処理概要 買取商品（キャンセル）CSV	CB-M07-06-005
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M07-06-CBSELLNO-015	買取・商品・明細	売却CSV組合せ用の買取データ	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0706-CB015〕）／注文者名=M0706-CB015-顧客／通常買取明細1件（商品コードM0706-CB015-A・商品名M0706-CB015-カードA・日本語・NM・基準価格1000・個数1・売却状態は「しない」）／この注文者名の買取情報はこの1件だけ	IT-M07-06-015専用。CSV種別売却・売却状態「しない」の組	① グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0706-CB015-A」・商品名(日)は「M0706-CB015-カードA」・商品名(英)は「M0706-CB015-カードA」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格600・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。買取価格は、ネット買取商品詳細に「カートに入れる」を表示させるため500以上の値にする／② 商品「M0706-CB015-カードA」の商品規格を直す。商品マスター(検索入力)で商品コードに「M0706-CB015-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに「公開」を選び、「商品規格を登録」ボタンを押す／③ フロントの新規会員登録でお名前(姓)に「M0706-CB015-顧客」、お名前(名)・メールアドレス・メールアドレス(確認)・パスワード・パスワード(確認)と残りの必須項目に任意の値を入れて「同意する」を押し、届いた確認メールから本会員登録を完了する／④ その会員でフロントにログインし、ネット買取商品詳細で商品「M0706-CB015-カードA」の言語「日本語」を表示し、商品数を1にして「カートに入れる」を押す／⑤ ネット買取カートで「買取手続きへ」を押し、買取手続きの画面で銀行名・支店名・口座種別・口座番号・口座名義・箱数（職業・生年月日が表示されたときはそれも）に任意の値を入れ、買取の承諾方法に「査定結果を確認してから承諾する」、適格請求発行事業者の確認に「いいえ」を選び、ネット買取規約同意にチェックして「申込み」を押す／⑥ 管理画面の買取一覧(検索入力)で注文者名に「M0706-CB015-顧客」を入れて「検索する >」ボタンを押し、買取一覧(検索結果)の行に表示された買取番号を控える（〔買取番号-M0706-CB015〕）／⑦ 買取一覧(検索結果)で〔買取番号-M0706-CB015〕のリンクを押して買取情報編集を開き、「査定編集」を押して商品「M0706-CB015-カードA」の明細の売却を「しない」にして「査定確定」を押す	ケース専用
+S-M07-06-CBSELLCANCEL-016	買取・商品・明細	売却CSV組合せ用の買取データ	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0706-CB016〕）／注文者名=M0706-CB016-顧客／通常買取明細1件（商品コードM0706-CB016-A・商品名M0706-CB016-カードA・日本語・NM・基準価格1000・個数2・売却状態は「する」）／買取状況=キャンセル済み／この注文者名の買取情報はこの1件だけ	IT-M07-06-016専用。CSV種別売却・売却状態「する」・買取状況「キャンセル済み」の組	① グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0706-CB016-A」・商品名(日)は「M0706-CB016-カードA」・商品名(英)は「M0706-CB016-カードA」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格600・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。買取価格は、ネット買取商品詳細に「カートに入れる」を表示させるため500以上の値にする／② 商品「M0706-CB016-カードA」の商品規格を直す。商品マスター(検索入力)で商品コードに「M0706-CB016-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに「公開」を選び、「商品規格を登録」ボタンを押す／③ フロントの新規会員登録でお名前(姓)に「M0706-CB016-顧客」、お名前(名)・メールアドレス・メールアドレス(確認)・パスワード・パスワード(確認)と残りの必須項目に任意の値を入れて「同意する」を押し、届いた確認メールから本会員登録を完了する／④ その会員でフロントにログインし、ネット買取商品詳細で商品「M0706-CB016-カードA」の言語「日本語」を表示し、商品数を2にして「カートに入れる」を押す／⑤ ネット買取カートで「買取手続きへ」を押し、買取手続きの画面で銀行名・支店名・口座種別・口座番号・口座名義・箱数（職業・生年月日が表示されたときはそれも）に任意の値を入れ、買取の承諾方法に「査定結果を確認してから承諾する」、適格請求発行事業者の確認に「いいえ」を選び、ネット買取規約同意にチェックして「申込み」を押す／⑥ 管理画面の買取一覧(検索入力)で注文者名に「M0706-CB016-顧客」を入れて「検索する >」ボタンを押し、買取一覧(検索結果)の行に表示された買取番号を控える（〔買取番号-M0706-CB016〕）／⑦ 買取一覧(検索結果)で〔買取番号-M0706-CB016〕のリンクを押して買取情報編集を開き、「査定編集」を押して商品「M0706-CB016-カードA」の明細の売却を「する」にして「査定確定」を押す。続けて買取状況に「キャンセル済み」を選んで「保存」を押す	ケース専用
+S-M07-06-CBSELLACTIVE-017	買取・商品・明細	売却CSV組合せ用の買取データ	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0706-CB017〕）／注文者名=M0706-CB017-顧客／通常買取明細1件（商品コードM0706-CB017-A・商品名M0706-CB017-カードA・日本語・NM・基準価格1000・個数3・売却状態は「する」）／買取状況=入庫待ち／この注文者名の買取情報はこの1件だけ	IT-M07-06-017専用。CSV種別売却・売却状態「する」・買取状況「入庫待ち」の組	① グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0706-CB017-A」・商品名(日)は「M0706-CB017-カードA」・商品名(英)は「M0706-CB017-カードA」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格600・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。買取価格は、ネット買取商品詳細に「カートに入れる」を表示させるため500以上の値にする／② 商品「M0706-CB017-カードA」の商品規格を直す。商品マスター(検索入力)で商品コードに「M0706-CB017-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに「公開」を選び、「商品規格を登録」ボタンを押す／③ フロントの新規会員登録でお名前(姓)に「M0706-CB017-顧客」、お名前(名)・メールアドレス・メールアドレス(確認)・パスワード・パスワード(確認)と残りの必須項目に任意の値を入れて「同意する」を押し、届いた確認メールから本会員登録を完了する／④ その会員でフロントにログインし、ネット買取商品詳細で商品「M0706-CB017-カードA」の言語「日本語」を表示し、商品数を3にして「カートに入れる」を押す／⑤ ネット買取カートで「買取手続きへ」を押し、買取手続きの画面で銀行名・支店名・口座種別・口座番号・口座名義・箱数（職業・生年月日が表示されたときはそれも）に任意の値を入れ、買取の承諾方法に「査定結果を確認してから承諾する」、適格請求発行事業者の確認に「いいえ」を選び、ネット買取規約同意にチェックして「申込み」を押す／⑥ 管理画面の買取一覧(検索入力)で注文者名に「M0706-CB017-顧客」を入れて「検索する >」ボタンを押し、買取一覧(検索結果)の行に表示された買取番号を控える（〔買取番号-M0706-CB017〕）／⑦ 買取一覧(検索結果)で〔買取番号-M0706-CB017〕のリンクを押して買取情報編集を開き、「査定編集」を押して商品「M0706-CB017-カードA」の明細の売却を「する」にして「査定確定」を押す。続けて買取状況に「入庫待ち」を選んで「保存」を押す	ケース専用
+S-M07-06-CBCANCELSELL-018	買取・商品・明細	非売却CSV組合せ用の買取データ	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0706-CB018〕）／注文者名=M0706-CB018-顧客／通常買取明細1件（商品コードM0706-CB018-A・商品名M0706-CB018-カードA・日本語・NM・基準価格1000・個数1・売却状態は「する」）／この注文者名の買取情報はこの1件だけ	IT-M07-06-018専用。CSV種別非売却・売却状態「する」の組	① グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0706-CB018-A」・商品名(日)は「M0706-CB018-カードA」・商品名(英)は「M0706-CB018-カードA」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格600・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。買取価格は、ネット買取商品詳細に「カートに入れる」を表示させるため500以上の値にする／② 商品「M0706-CB018-カードA」の商品規格を直す。商品マスター(検索入力)で商品コードに「M0706-CB018-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに「公開」を選び、「商品規格を登録」ボタンを押す／③ フロントの新規会員登録でお名前(姓)に「M0706-CB018-顧客」、お名前(名)・メールアドレス・メールアドレス(確認)・パスワード・パスワード(確認)と残りの必須項目に任意の値を入れて「同意する」を押し、届いた確認メールから本会員登録を完了する／④ その会員でフロントにログインし、ネット買取商品詳細で商品「M0706-CB018-カードA」の言語「日本語」を表示し、商品数を1にして「カートに入れる」を押す／⑤ ネット買取カートで「買取手続きへ」を押し、買取手続きの画面で銀行名・支店名・口座種別・口座番号・口座名義・箱数（職業・生年月日が表示されたときはそれも）に任意の値を入れ、買取の承諾方法に「査定結果を確認してから承諾する」、適格請求発行事業者の確認に「いいえ」を選び、ネット買取規約同意にチェックして「申込み」を押す／⑥ 管理画面の買取一覧(検索入力)で注文者名に「M0706-CB018-顧客」を入れて「検索する >」ボタンを押し、買取一覧(検索結果)の行に表示された買取番号を控える（〔買取番号-M0706-CB018〕）／⑦ 買取一覧(検索結果)で〔買取番号-M0706-CB018〕のリンクを押して買取情報編集を開き、「査定編集」を押して商品「M0706-CB018-カードA」の明細の売却を「する」にして「査定確定」を押す	ケース専用
+S-M07-06-CBCANCELCSV-019	買取・商品・明細	非売却CSV組合せ用の買取データ	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0706-CB019〕）／注文者名=M0706-CB019-顧客／通常買取明細1件（商品コードM0706-CB019-A・商品名M0706-CB019-カードA・日本語・NM・基準価格1000・個数1・売却状態は「しない」）／買取状況=キャンセル済み／この注文者名の買取情報はこの1件だけ	IT-M07-06-019専用。CSV種別非売却・売却状態「しない」・買取状況「キャンセル済み」の組	① グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0706-CB019-A」・商品名(日)は「M0706-CB019-カードA」・商品名(英)は「M0706-CB019-カードA」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格600・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。買取価格は、ネット買取商品詳細に「カートに入れる」を表示させるため500以上の値にする／② 商品「M0706-CB019-カードA」の商品規格を直す。商品マスター(検索入力)で商品コードに「M0706-CB019-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに「公開」を選び、「商品規格を登録」ボタンを押す／③ フロントの新規会員登録でお名前(姓)に「M0706-CB019-顧客」、お名前(名)・メールアドレス・メールアドレス(確認)・パスワード・パスワード(確認)と残りの必須項目に任意の値を入れて「同意する」を押し、届いた確認メールから本会員登録を完了する／④ その会員でフロントにログインし、ネット買取商品詳細で商品「M0706-CB019-カードA」の言語「日本語」を表示し、商品数を1にして「カートに入れる」を押す／⑤ ネット買取カートで「買取手続きへ」を押し、買取手続きの画面で銀行名・支店名・口座種別・口座番号・口座名義・箱数（職業・生年月日が表示されたときはそれも）に任意の値を入れ、買取の承諾方法に「査定結果を確認してから承諾する」、適格請求発行事業者の確認に「いいえ」を選び、ネット買取規約同意にチェックして「申込み」を押す／⑥ 管理画面の買取一覧(検索入力)で注文者名に「M0706-CB019-顧客」を入れて「検索する >」ボタンを押し、買取一覧(検索結果)の行に表示された買取番号を控える（〔買取番号-M0706-CB019〕）／⑦ 買取一覧(検索結果)で〔買取番号-M0706-CB019〕のリンクを押して買取情報編集を開き、「査定編集」を押して商品「M0706-CB019-カードA」の明細の売却を「しない」にして「査定確定」を押す。続けて買取状況に「キャンセル済み」を選んで「保存」を押す	ケース専用
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M07-08-015	IT-0366	REQ-0206-sheet-9-R002,REQ-0206-sheet-9-R003,REQ-0206-sheet-9-R004,REQ-0206-sheet-9-R011		ITA-11	P1	ブラウザのみ	S-M07-08-ADM,S-M07-08-CONFIG,S-M07-08-MASTER,S-M07-08-CBSINGLE-015	① ログインID m0708_admin、パスワードPassw0rd!M0708の管理者が稼働中で、ネット買取管理を操作できる（S-M07-08-ADM）／② 開始時に本店の金額閾値1を100円、金額閾値2を500円、金額閾値3を未設定にする（S-M07-08-CONFIG）／③ 色順に赤、レアリティにM、略称タグDOMが登録されている（S-M07-08-MASTER）／④ 注文者名「戻しリスト組合せ試験-M0708-CB015」の買取番号〔買取番号-M0708-CB015〕（登録時に振られた買取番号を控えてある）は入庫待ち・棚戻し未で、実在庫にシングルカード「戻しカードM0708-CB015[DOM]【JP/NM】赤M」が棚A01・非Foil・数量2・基準価格800円・言語JP・状態NM・略称DOM・色赤・レアリティMであり、この注文者名を持つ他の買取情報はない（S-M07-08-CBSINGLE-015）	1. 買取検索一覧画面を開く／2. 注文者名に「戻しリスト組合せ試験-M0708-CB015」を入力して「検索する >」ボタンを押す／3. 事前準備④の買取にチェックを付ける／4. 「ダウンロード▼」から「戻しリストCSV」を押す／5. ダウンロードしたCSVの「戻しカードM0708-CB015」の行を確認する	商品名「戻しカードM0708-CB015」の行が「500円以上／A01／JP/NM／DOM／赤M／2／戻しカードM0708-CB015／800」の8列値で表示されること	0206 【新規】戻しリストCSV出力 / 戻しリストCSV 識別ID 1・3〜5・7・8	CB-M07-08-001
+IT-M07-08-016	IT-0366	REQ-0206-sheet-9-R002,REQ-0206-sheet-9-R003,REQ-0206-sheet-9-R006,REQ-0206-sheet-9-R007		ITA-11	P1	ブラウザのみ	S-M07-08-ADM,S-M07-08-CONFIG,S-M07-08-CBSUPPLY-016	① ログインID m0708_admin、パスワードPassw0rd!M0708の管理者が稼働中で、ネット買取管理を操作できる（S-M07-08-ADM）／② 開始時に本店の金額閾値1を100円、金額閾値2を500円、金額閾値3を未設定にする（S-M07-08-CONFIG）／③ 注文者名「戻しリスト組合せ試験-M0708-CB016」の買取番号〔買取番号-M0708-CB016〕（登録時に振られた買取番号を控えてある）は入庫済み・棚戻し未で、実在庫にサプライ品「戻しスリーブM0708-CB016」（カード指定なし）が棚S01・数量3・基準価格50円（本店の金額閾値1の100円を下回る）であり、この注文者名を持つ他の買取情報はない（S-M07-08-CBSUPPLY-016）	1. 買取検索一覧画面を開く／2. 注文者名に「戻しリスト組合せ試験-M0708-CB016」を入力して「検索する >」ボタンを押す／3. 事前準備③の買取にチェックを付ける／4. 「ダウンロード▼」から「戻しリストCSV」を押す／5. ダウンロードしたCSVの「戻しスリーブM0708-CB016」の行を確認する	「戻しスリーブM0708-CB016」の行は、ピッキング区分が「サプライ」、言語/状態が「サプライ品」、略称が空欄、数が「3」、基準価格が「50」で表示されること	0206 【新規】戻しリストCSV出力 / 戻しリストCSV 識別ID 1・3・4・6・8	CB-M07-08-002
+IT-M07-08-019	IT-0366	REQ-0206-sheet-4-R053,REQ-0206-sheet-4-R054,REQ-0206-sheet-4-R107		ITA-11	P1	ブラウザのみ	S-M07-08-ADM,S-M07-08-CBMIXED-019	① ログインID m0708_admin、パスワードPassw0rd!M0708の管理者が稼働中で、ネット買取管理を操作できる（S-M07-08-ADM）／② 注文者名「戻しリスト組合せ試験-M0708-CB019」の買取番号〔買取番号-M0708-CB019A〕（登録時に振られた買取番号を控えてある）は入庫待ち・棚戻し未、買取番号〔買取番号-M0708-CB019B〕（登録時に振られた買取番号を控えてある）はキャンセル済み・棚戻し未で、それぞれ数量1の本店実在庫があり、この注文者名を持つ他の買取情報はない（S-M07-08-CBMIXED-019）	1. 買取検索一覧画面を開く／2. 注文者名に「戻しリスト組合せ試験-M0708-CB019」を入力して「検索する >」ボタンを押す／3. 事前準備②の入庫待ちとキャンセル済みの2件にチェックを付ける／4. 「ダウンロード▼」から「戻しリストCSV」を押す／5. ブラウザのダウンロード履歴を見る	「買取番号: 」に続けて〔買取番号-M0708-CB019B〕を7桁（足りない上位桁は0）で表した番号と「出力対象に入庫待ち、入庫済み以外のステータスが設定されています。」を示すエラーが管理画面上部に表示された買取一覧(検索結果)画面へ遷移し、ブラウザのダウンロード履歴にCSVファイルが追加されないこと	0206 【新規】戻しリストCSV出力 / 表示メッセージ M07-08-MSG-002｜0206 買取一覧(検索結果) / 機能仕様 戻しリストCSV、戻しリストPDFをダウンロード可能とする・画面項目定義 識別ID 28	CB-M07-08-005
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M07-08-CBSINGLE-015	買取・実在庫・商品	戻しリスト組合せ用シングルカードデータ(015)	注文者名=戻しリスト組合せ試験-M0708-CB015／買取番号は登録時に画面が振る（控える。以下〔買取番号-M0708-CB015〕）・入庫待ち・棚戻し未／本店実在庫は商品コードM0708-CB015-A・商品名「戻しカードM0708-CB015[DOM]【JP/NM】赤M」・棚A01・非Foil・数量2・基準価格800円・言語JP・状態NM・略称DOM・色赤・レアリティM	IT-M07-08-015専用。CSV出力により棚戻し済み状態が変わるため共有しない	買取検索一覧で注文者名に「戻しリスト組合せ試験-M0708-CB015」を入れて「検索する >」を押し、以前の試験で作った買取が表示された場合は各行の「削除」を押して0件にする。管理画面の会員登録で姓に「戻しリスト組合せ試験-M0708-CB015」を入れ、名・フリガナ・住所・電話番号・メールアドレス・パスワード・職業・生年月日を入れ、会員種別を本会員にして「登録」を押す（この姓の会員が登録済みならその会員を使う）。棚番号管理で名称「A01」が未登録なら、名称と並び順（名称の昇順になる値）を入れて「登録」を押す。カード登録でカード名に「戻しカードM0708-CB015」、色と色順に「赤」に当たる選択肢を入れ、カード詳細のレアリティに「M」、Foilに非Foilを選んで「登録」を押す。グッ商品マスター(検索入力)で商品コードに「M0708-CB015-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップでカード名(日/英)に「戻しカードM0708-CB015」を入れて検索ボタンを押して表示された、上で登録したカードの行の決定ボタンを押す。続けて商品名(日)に「戻しカードM0708-CB015[DOM]【JP/NM】赤M」、商品名(英)に「戻しカードM0708-CB015[DOM]【JP/NM】赤M」を入れ（カード指定で自動で入った値は書き換える）、略称タグに「DOM」を選び、割引率に販売割引率に登録済みのものを選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で棚番号に「A01」を入れ、部門は選択肢の先頭を選び、「商品規格を登録」ボタンを押す。フロント画面に姓「戻しリスト組合せ試験-M0708-CB015」の会員でログインし、ネット買取商品詳細で商品「M0708-CB015-A」の数量を2にして「カートに入れる」を押し、ネット買取カートから買取手続きへ進み、振込先口座などの必須項目を入れて申込ボタンを押す。買取検索一覧で注文者名に「戻しリスト組合せ試験-M0708-CB015」を入れて検索し、新しく増えた行に表示された買取番号を控える（〔買取番号-M0708-CB015〕）。〔買取番号-M0708-CB015〕の買取情報編集を開き、買取状況で「入庫待ち」を選んで「保存」を押す。実在庫情報の「編集」を押し、「商品追加」の商品検索で商品コード「M0708-CB015-A」を検索して選び増減数に2を入れ、「追加品確定」を押す。申込に使った商品は買取明細に売却「未定」のまま残り、買取明細からは実在庫が作られない。棚戻し済みは登録直後の「未」のままにする。	ケース専用
+S-M07-08-CBSUPPLY-016	買取・実在庫・商品	戻しリスト組合せ用サプライ品データ(016)	注文者名=戻しリスト組合せ試験-M0708-CB016／買取番号は登録時に画面が振る（控える。以下〔買取番号-M0708-CB016〕）・入庫済み・棚戻し未／本店実在庫は商品コードM0708-CB016-A・商品名「戻しスリーブM0708-CB016」・サプライ品（カード指定なし）・棚S01・数量3・基準価格50円	IT-M07-08-016専用。CSV出力により棚戻し済み状態が変わるため共有しない	買取検索一覧で注文者名に「戻しリスト組合せ試験-M0708-CB016」を入れて「検索する >」を押し、以前の試験で作った買取が表示された場合は各行の「削除」を押して0件にする。管理画面の会員登録で姓に「戻しリスト組合せ試験-M0708-CB016」を入れ、名・フリガナ・住所・電話番号・メールアドレス・パスワード・職業・生年月日を入れ、会員種別を本会員にして「登録」を押す（この姓の会員が登録済みならその会員を使う）。棚番号管理で名称「S01」が未登録なら、名称と並び順（名称の昇順になる値）を入れて「登録」を押す。グッ商品マスター(検索入力)で商品コードに「M0708-CB016-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で棚番号に「S01」を入れ、部門は選択肢の先頭を選び、「商品規格を登録」ボタンを押す。フロント画面に姓「戻しリスト組合せ試験-M0708-CB016」の会員でログインし、ネット買取商品詳細で商品「M0708-CB016-A」の数量を3にして「カートに入れる」を押し、ネット買取カートから買取手続きへ進み、振込先口座などの必須項目を入れて申込ボタンを押す。買取検索一覧で注文者名に「戻しリスト組合せ試験-M0708-CB016」を入れて検索し、新しく増えた行に表示された買取番号を控える（〔買取番号-M0708-CB016〕）。〔買取番号-M0708-CB016〕の買取情報編集を開き、買取状況で「入庫待ち」を選んで「保存」を押す。実在庫情報の「編集」を押し、「商品追加」の商品検索で商品コード「M0708-CB016-A」を検索して選び増減数に3を入れ、「追加品確定」を押す。続けて買取状況で「入庫済み」を選んで「保存」を押す。申込に使った商品は買取明細に売却「未定」のまま残り、買取明細からは実在庫が作られない。棚戻し済みは登録直後の「未」のままにする。	ケース専用
+S-M07-08-CBMIXED-019	買取・実在庫・商品	戻しリスト組合せ用対象外ステータス混在データ(019)	注文者名=戻しリスト組合せ試験-M0708-CB019／買取番号は登録時に画面が振る（控える。以下〔買取番号-M0708-CB019A〕）・入庫待ち・棚戻し未・本店実在庫は商品コードM0708-CB019-A・商品名「戻しスリーブM0708-CB019-A」のサプライ品1個・棚S01・基準価格50円／買取番号は登録時に画面が振る（控える。以下〔買取番号-M0708-CB019B〕）・キャンセル済み・棚戻し未・本店実在庫は商品コードM0708-CB019-B・商品名「戻しスリーブM0708-CB019-B」のサプライ品1個・棚S01・基準価格60円	IT-M07-08-019専用。出力対象外のステータスを含む選択を他ケースから分離する	買取検索一覧で注文者名に「戻しリスト組合せ試験-M0708-CB019」を入れて「検索する >」を押し、以前の試験で作った買取が表示された場合は各行の「削除」を押して0件にする。管理画面の会員登録で姓に「戻しリスト組合せ試験-M0708-CB019」を入れ、名・フリガナ・住所・電話番号・メールアドレス・パスワード・職業・生年月日を入れ、会員種別を本会員にして「登録」を押す（この姓の会員が登録済みならその会員を使う）。棚番号管理で名称「S01」が未登録なら、名称と並び順（名称の昇順になる値）を入れて「登録」を押す。グッ商品マスター(検索入力)で商品コードに「M0708-CB019-A」を入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で棚番号に「S01」を入れ、部門は選択肢の先頭を選び、「商品規格を登録」ボタンを押す。グッ商品マスター(検索入力)で商品コードに「M0708-CB019-B」を入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で棚番号に「S01」を入れ、部門は選択肢の先頭を選び、「商品規格を登録」ボタンを押す。1件目の買取: フロント画面に姓「戻しリスト組合せ試験-M0708-CB019」の会員でログインし、ネット買取商品詳細で商品「M0708-CB019-A」の数量を1にして「カートに入れる」を押し、ネット買取カートから買取手続きへ進み、振込先口座などの必須項目を入れて申込ボタンを押す。買取検索一覧で注文者名に「戻しリスト組合せ試験-M0708-CB019」を入れて検索し、新しく増えた行に表示された買取番号を控える（〔買取番号-M0708-CB019A〕）。〔買取番号-M0708-CB019A〕の買取情報編集を開き、買取状況で「入庫待ち」を選んで「保存」を押す。実在庫情報の「編集」を押し、「商品追加」の商品検索で商品コード「M0708-CB019-A」を検索して選び増減数に1を入れ、「追加品確定」を押す。2件目の買取: フロント画面に姓「戻しリスト組合せ試験-M0708-CB019」の会員でログインし、ネット買取商品詳細で商品「M0708-CB019-B」の数量を1にして「カートに入れる」を押し、ネット買取カートから買取手続きへ進み、振込先口座などの必須項目を入れて申込ボタンを押す。買取検索一覧で注文者名に「戻しリスト組合せ試験-M0708-CB019」を入れて検索し、新しく増えた行に表示された買取番号を控える（〔買取番号-M0708-CB019B〕）。〔買取番号-M0708-CB019B〕の買取情報編集を開き、買取状況で「入庫待ち」を選んで「保存」を押す。実在庫情報の「編集」を押し、「商品追加」の商品検索で商品コード「M0708-CB019-B」を検索して選び増減数に1を入れ、「追加品確定」を押す。続けて買取状況で「キャンセル済み」を選んで「保存」を押す。申込に使った商品は買取明細に売却「未定」のまま残り、買取明細からは実在庫が作られない。棚戻し済みは登録直後の「未」のままにする。	ケース専用
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M07-08/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0206 sheet-9 【新規】戻しリストCSV出力
+L0001	【新規】戻しリストCSV出力
+L0002	ドキュメント名ネット買取管理 基本設計書
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者石川
+L0006	作成日2025-09-20
+L0007	更新者石川
+L0008	更新日2025-09-20
+L0009	機能NoM07-08
+L0010	機能名【新規】戻しリストCSV出力
+L0011	概要ネット買取情報の戻しリストCSV出力
+L0012	戻しリストCSV
+L0013	識別ID	項目名	備考
+L0014	1	ピッキング区分	店舗ごとの閾値（ネット買取管理の場合は本店しかないため本店の閾値）とサプライを出力
+L0015	●●円未満、●●円以上▲▲円未満、■■円以上、サプライ
+L0016	閾値の表示も基準価格を参照して行う（セール中で金額が変わっても棚を移動することはないため）
+L0017	2	棚番号	本店のみ
+L0018	3	言語/状態	Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示
+L0019	4	略称	サプライ品の場合は表示しない
+L0020	5	色/R	商品名から取り出した色とレアリティを出力（例: 金R）
+L0021	6	数
+L0022	7	商品名	サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く
+L0023	8	基準価格
+##### 機能設計書 functions/ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.md
+L0024	# ネット買取管理 — 戻しリストCSV
+L0025	## 表示メッセージ
+L0026	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+L0027	| --- | --- | --- | --- | --- |
+L0028	| M07-08-MSG-001 | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | 戻しリストCSVを出力するときに、買取注文を選択していないとき | 買取検索/一覧画面に遷移する |
+L0029	| M07-08-MSG-002 | 管理画面上部 | 対象のデータが見つかりません。 ／ 買取番号: %07d は存在しません。 ／ 買取番号: %07d 出力対象に入庫待ち、入庫済み以外のステータスが設定されています。 | 買取一覧で選択した買取の棚戻しリストを出力するとき、選択した全件が存在しない、選択中に存在しない買取がある、または入庫待ち・入庫済み以外のステータスの買取がある場合 | エラーを表示し、買取一覧の検索結果画面に遷移する |
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M07-06/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0206 sheet-7 買取商品一覧CSV出力項目
+L0001	買取商品一覧CSV出力項目
+L0002	ドキュメント名ネット買取管理 基本設計書
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-05-21
+L0007	更新者石川
+L0008	更新日2025-09-20
+L0009	機能NoM07-05（正しくは M07-06。Excel基本設計の機能No欄の誤記）
+L0010	機能名買取商品一覧CSV出力項目
+L0011	概要買取商品一覧CSVの出力
+L0012	買取商品一覧CSV出力項目
+L0013	識別ID	項目名	備考
+L0014	1	商品コード	個別入力商品または状態がない場合は何も出力しない
+L0015	2	在庫増減数	買取の個数を表示する
+L0016	3	商品名
+L0017	4	販売価格	商品規格に紐づく現在の基準価格、個別入力商品または状態がない場合は何も出力しない
+L0018	5	買取価格
+L0019	6	言語ID	個別入力商品または状態がない場合は[1: 日本語]固定
+L0020	7	略称タグ	個別入力商品または状態がない場合は何も出力しない
+L0021	8	レアリティ	個別入力商品または状態がない場合は何も出力しない
+L0022	9	状態	NM、SPなどと出力される、個別入力商品または状態がない場合は何も出力しない
+##### 機能設計書 functions/pf-eccube3/m07-06_admin_online_purchase_purchase_online_product_list_csv_export.md
+L0023	# m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）
+L0024	## 業務ロジック
+L0025	### 出力の判定順序
+L0026	| 順序 | 判定 | 結果 |
+L0027	| --- | --- | --- |
+L0028	| 1 | 選択された買取注文IDがあるか | 各IDを数値として扱い0を除いた結果が空なら、選択が無い旨を表示して買取注文一覧へ戻す |
+L0029	| 2 | CSV種別が売却・非売却のいずれかか | どちらでもなければ不正なCSV種別として表示し、買取注文一覧へ戻す |
+L0030	| 3 | 指定されたIDに該当する買取注文が1件でもあるか | 1件も無ければ、該当する買取注文IDが無い旨を表示して買取注文一覧へ戻す |
+L0031	| 4 | 上記を通過 | 出力行を組み立ててファイルを送出する |
+L0032	指定したIDに存在しないものが混ざっていても、該当が1件でもあればエラーとしない。戻り先の一覧は、保持している検索結果のページ（無ければ1ページ目）とする。
+L0033	### 出力の対象
+L0034	該当する買取注文をID昇順で取り出す。出力する明細は、買取メインカードと個別入力の売却区分がCSV種別と一致する行に限る。非売却を指定したときは、買取注文のステータスがキャンセルの行を、通常の明細と個別入力の明細のどちらからも除く。買取注文は存在しても条件に合う明細が組み立てられないときは、見出し行だけのファイルとなる。
+L0035	### 出力する列
+L0036	見出しは定めた列の順に出力する。非売却を指定したときは、数量の列の見出しだけが「キャンセル数」に変わり、列の数は変わらない。データ行は見出しの順に値を並べ、値が無いキーは空文字とする。並びや集約のための内部の列は出力しない。
+L0037	| CSV列名（ヘッダ） | データの由来・規則 |
+L0038	| --- | --- |
+L0039	| 商品コード | 状態がある通常の明細では商品規格の商品コード。状態が無い明細や個別入力では空文字になり得る |
+L0040	| 在庫増減数／キャンセル数 | 売却では見出しを「在庫増減数」、非売却では同じ意味の数量を「キャンセル数」の見出しで出力する。値は集約した数量または個別入力の数量 |
+L0041	| 商品名 | 商品名、または個別入力の商品名 |
+L0042	| 基準価格 | 状態がある通常の明細では商品規格の基準価格。状態が無い明細や個別入力では未設定または空として出力され得る |
+L0043	| 買取価格 | 通常の明細では買取メインカードの価格、個別入力では個別入力の単価 |
+L0044	| 言語ID | 通常の明細では明細の言語ID。個別入力では常に1を返す経路がある |
+L0045	| 略称タグ | 商品の保管コードの名称。結び付く行が無いときは空文字になり得る |
+L0046	| レアリティ | カード詳細をたどったレアリティコード。無ければ空文字 |
+L0047	| 状態 | カード状態のコード。状態が無い通常の明細や個別入力では空文字になり得る |
+L0048	### ファイル名
+L0049	売却のときは `purchase_product_list_`、非売却のときは `purchase_product_cancel_list_` を先頭に置く。続けて、指定された買取注文IDの最小値を7桁のゼロ詰めにした番号、アンダースコア、出力日時（年月日時分秒）、拡張子 `.csv` を連結する。
+L0050	### 出力の記録
+L0051	送出が終わった時点で、完了した旨と出力したファイル名を情報ログに残す。
+L0052	### 値の扱い
+L0053	金額・数量・日時・ステータスは参照した時点の保存済みの値をそのまま出力し、出力時に再計算や補正を行わない。文字コード・列順・見出し・空値の表し方は既存の出力仕様に従う。出力の途中で対象データが更新されても、読み直して整合させることはしない。
+L0054	### エラー時の扱い
+L0055	| 事象 | 扱い |
+L0056	| --- | --- |
+L0057	| 選択された買取注文IDが無い | 選択が無い旨を表示し、買取注文一覧へ戻す |
+L0058	| CSV種別が売却・非売却のいずれでもない | 不正なCSV種別である旨を表示し、買取注文一覧へ戻す |
+L0059	| 該当する買取注文が1件も無い | 該当する買取注文IDが無い旨を表示し、買取注文一覧へ戻す |
+L0060	| 上記以外の例外 | 共通の例外処理に委ねる |
+L0061	## 入出力
+L0062	| 種類 | 内容 |
+L0063	| --- | --- |
+L0064	| 入力 | 選択した買取注文ID群、CSV種別（売却・非売却） |
+L0065	| 成功時出力 | 見出し行と明細行からなるファイルの送出。実行時間の上限は設けずに送出する |
+L0066	| 失敗時出力 | 買取注文一覧へ戻し、理由を表示する |
+L0067	## 表示メッセージ
+L0068	| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+L0069	| --- | --- | --- | --- | --- |
+L0070	| — | 管理画面上部 | 不正なCSV種別です。 | CSV種別が売却・非売却のいずれでもないとき | 出力せず買取注文一覧へ戻る |
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M07-03_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M07-03-154	IT-0366	REQ-0206-sheet-11-R045,REQ-0206-sheet-11-R047		ITA-11	P1	ブラウザのみ	S-M07-03-ADM,S-M07-03-REF,S-M07-03-CONFIG,S-M07-03-CBIDOK-154	① 管理者m0703_adminでログインする（S-M07-03-ADM）／② 振込依頼済みと本人確認状態の参照値が登録済みである（S-M07-03-REF）／③ 開始時に本人確認必要額を10000に設定する（S-M07-03-CONFIG）／④ 買取ID〔買取番号-M0703-154〕（登録時に振られた買取番号を控えてある）は査定内容承諾、身分証明書登録済み、会員の本人確認状態が簡易書留確認済み、買取合計9999で必要額未満（必要額は10000）である（S-M07-03-CBIDOK-154）	1. 買取番号〔買取番号-M0703-154〕の買取情報編集画面を開く／2. 買取状況を「振込依頼済み」に変更する／3. 保存を押す／4. 買取検索一覧画面を開き、買取番号に〔買取番号-M0703-154〕を入力して「検索する >」ボタンを押し、一覧の買取状況を確認する	買取金額の合計が9999で必要額10000未満、本人確認状態が簡易書留確認済みの買取〔買取番号-M0703-154〕の買取状況が、買取検索一覧で「振込依頼済み」と表示されること	0206 買取情報編集 / 機能仕様 ステータス変更処理について、業務ロジック 買取状況変更の条件	CB-M07-03-001
+IT-M07-03-155	IT-0366	REQ-0206-sheet-11-R048,REQ-0206-sheet-11-R050,REQ-0206-sheet-11-R055,REQ-0206-sheet-11-R056,REQ-0206-sheet-11-R159		ITA-11	P1	ブラウザのみ	S-M07-03-MAIL,S-M07-03-ADM,S-M07-03-REF,S-M07-03-CONFIG,S-M07-03-CBMAIL-155	① 開始時に振込完了メールの配送先をMailCatcherに設定し、cbm0703-155@example.test宛てのメールを0件にする（S-M07-03-MAIL）／② 管理者m0703_adminでログインする（S-M07-03-ADM）／③ 振込依頼済み・振込完了・入庫待ち・未登録在庫ありが登録済みである（S-M07-03-REF）／④ 開始時に本人確認必要額を10000に設定する（S-M07-03-CONFIG）／⑤ 買取ID〔買取番号-M0703-155〕（登録時に振られた買取番号を控えてある）は振込依頼済み、身分証明書登録済み、買取合計は10000円未満で、過去に振込完了にしたステータス変更履歴が0件、個別入力商品はIND-M0703-CB155-Aは売却する・実在庫登録済み（実在庫情報は商品コードM0703-CB155-FB・数量1・買取単価500・買取小計500）、IND-M0703-CB155-Bは売却する・実在庫未登録である（S-M07-03-CBMAIL-155）	1. 買取番号〔買取番号-M0703-155〕の買取情報編集画面を開く／2. 買取状況を「振込完了」に変更する／3. 保存を押す／4. メール受信確認画面でcbm0703-155@example.test宛ての振込完了メールを確認する／5. 買取検索一覧画面を開き、買取番号に〔買取番号-M0703-155〕を入力して「検索する >」ボタンを押し、一覧の買取状況を確認する	cbm0703-155@example.test宛ての振込完了メールが1件届き、買取検索一覧で買取〔買取番号-M0703-155〕の買取状況が「未登録在庫あり」と表示されること	0206 買取情報編集 / 機能仕様 振込完了ステータスに変更時の処理、個別入力商品の実在庫登録	CB-M07-03-002
+IT-M07-03-156	IT-0366	REQ-0206-sheet-11-R048,REQ-0206-sheet-11-R050,REQ-0206-sheet-11-R055,REQ-0206-sheet-11-R056,REQ-0206-sheet-11-R160		ITA-11	P1	ブラウザのみ	S-M07-03-MAIL,S-M07-03-ADM,S-M07-03-REF,S-M07-03-CONFIG,S-M07-03-RG-BATCHWINDOW,S-M07-03-CBMAIL-156	① 開始時に振込完了メールの配送先をMailCatcherに設定し、cbm0703-156@example.test宛てのメールを0件にする（S-M07-03-MAIL）／② 管理者m0703_adminでログインする（S-M07-03-ADM）／③ 振込依頼済み・振込完了・入庫待ち・未登録在庫ありが登録済みである（S-M07-03-REF）／④ 開始時に本人確認必要額を10000に設定する（S-M07-03-CONFIG）／⑤ 入庫待ちへの変更とケースの実行を同じ日の15:00より前に済ませ、15:00までに終える（毎日15:00に起動する買取自動入庫バッチが先に入庫しない）（S-M07-03-RG-BATCHWINDOW）／⑥ 買取ID〔買取番号-M0703-156〕（登録時に振られた買取番号を控えてある）は振込依頼済み、身分証明書登録済み、買取合計は10000円未満で、振込完了にしたステータス変更履歴が1件あり、cbm0703-156@example.test宛ての振込完了メールを1件受信済み、個別入力商品はIND-M0703-CB156-Aは売却する・実在庫登録済み（実在庫情報は商品コードM0703-CB156-FB・数量1・買取単価500・買取小計500）である（S-M07-03-CBMAIL-156）	1. 買取番号〔買取番号-M0703-156〕の買取情報編集画面を開く／2. 買取状況を「振込完了」に変更する／3. 保存を押す／4. メール受信確認画面でcbm0703-156@example.test宛ての振込完了メールを確認する／5. 買取検索一覧画面を開き、買取番号に〔買取番号-M0703-156〕を入力して「検索する >」ボタンを押し、一覧の買取状況を確認する	cbm0703-156@example.test宛ての振込完了メールが事前準備の1件のまま増えず、買取検索一覧で買取〔買取番号-M0703-156〕の買取状況が「入庫待ち」と表示されること	0206 買取情報編集 / 機能仕様 振込完了ステータスに変更時の処理、個別入力商品の実在庫登録	CB-M07-03-003
+IT-M07-03-157	IT-0366	REQ-0206-sheet-11-R048,REQ-0206-sheet-11-R050,REQ-0206-sheet-11-R055,REQ-0206-sheet-11-R056,REQ-0206-sheet-11-R159		ITA-11	P1	ブラウザのみ	S-M07-03-MAIL,S-M07-03-ADM,S-M07-03-REF,S-M07-03-CONFIG,S-M07-03-CBMAIL-157	① 開始時に振込完了メールの配送先をMailCatcherに設定し、cbm0703-157@example.test宛てのメールを0件にする（S-M07-03-MAIL）／② 管理者m0703_adminでログインする（S-M07-03-ADM）／③ 振込依頼済み・振込完了・入庫待ち・未登録在庫ありが登録済みである（S-M07-03-REF）／④ 開始時に本人確認必要額を10000に設定する（S-M07-03-CONFIG）／⑤ 買取ID〔買取番号-M0703-157〕（登録時に振られた買取番号を控えてある）は振込依頼済み、身分証明書登録済み、買取合計は10000円未満で、振込完了にしたステータス変更履歴が1件あり、cbm0703-157@example.test宛ての振込完了メールを1件受信済み、個別入力商品はIND-M0703-CB157-Aは売却する・実在庫登録済み（実在庫情報は商品コードM0703-CB157-FB・数量1・買取単価500・買取小計500）、IND-M0703-CB157-Bは売却する・実在庫未登録である（S-M07-03-CBMAIL-157）	1. 買取番号〔買取番号-M0703-157〕の買取情報編集画面を開く／2. 買取状況を「振込完了」に変更する／3. 保存を押す／4. メール受信確認画面でcbm0703-157@example.test宛ての振込完了メールを確認する／5. 買取検索一覧画面を開き、買取番号に〔買取番号-M0703-157〕を入力して「検索する >」ボタンを押し、一覧の買取状況を確認する	cbm0703-157@example.test宛ての振込完了メールが事前準備の1件のまま増えず、買取検索一覧で買取〔買取番号-M0703-157〕の買取状況が「未登録在庫あり」と表示されること	0206 買取情報編集 / 機能仕様 振込完了ステータスに変更時の処理、個別入力商品の実在庫登録	CB-M07-03-004
+IT-M07-03-158	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M07-03-ADM,S-M07-03-REF,S-M07-03-GF-STATUS,S-M07-03-CBNOSALE-158	① 管理者m0703_adminでログインする（S-M07-03-ADM）／② 査定内容承諾が登録済みである（S-M07-03-REF）／③ 買取状況の選択肢にMTGBuyer査定完了が登録済みである（S-M07-03-GF-STATUS）／④ 買取ID〔買取番号-M0703-158〕（登録時に振られた買取番号を控えてある）は自動承諾でMTGBuyer査定完了、査定内容承諾への変更履歴0件・実在庫情報と実在庫履歴0件、選んで買取のサプライ品M0703-CB158-SUP（査定価格1000・数量2・売却しない）がある（S-M07-03-CBNOSALE-158）	1. 買取番号〔買取番号-M0703-158〕の買取情報編集画面を開く／2. 買取状況を「査定内容承諾」に変更する／3. 保存を押す／4. DBで買取の実在庫情報と実在庫履歴を確認する	売却しないサプライ品M0703-CB158-SUPに対応する実在庫情報と実在庫履歴が作られず、この買取の実在庫情報と実在庫履歴が0件のままであること	0206 買取情報編集 / 機能仕様 査定内容承諾ステータスに変更時の処理	CB-M07-03-005
+IT-M07-03-159	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M07-03-ADM,S-M07-03-REF,S-M07-03-GF-STATUS,S-M07-03-CBINDIV-159	① 管理者m0703_adminでログインする（S-M07-03-ADM）／② 査定内容承諾が登録済みである（S-M07-03-REF）／③ 買取状況の選択肢にMTGBuyer査定完了が登録済みである（S-M07-03-GF-STATUS）／④ 買取ID〔買取番号-M0703-159〕（登録時に振られた買取番号を控えてある）は自動承諾でMTGBuyer査定完了、査定内容承諾への変更履歴0件・実在庫情報と実在庫履歴0件、選んで買取のサプライ品M0703-CB159-SUP（査定価格1000・数量2・売却しない）と個別入力商品IND-M0703-CB159-A（査定価格1000・数量1・売却する・実在庫未登録）がある（S-M07-03-CBINDIV-159）	1. 買取番号〔買取番号-M0703-159〕の買取情報編集画面を開く／2. 買取状況を「査定内容承諾」に変更する／3. 保存を押す／4. DBで買取の実在庫情報と実在庫履歴を確認する	個別入力商品IND-M0703-CB159-Aに対応する実在庫情報と実在庫履歴が作られず、この買取の実在庫情報と実在庫履歴が0件のままであること	0206 買取情報編集 / 機能仕様 査定内容承諾ステータスに変更時の処理	CB-M07-03-006
+
+exec
+/bin/bash -lc "sed -n '1,115p;225,260p;375,415p;435,450p' integration_test/casegen/combination/units/M07-03/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0206 sheet-11 買取情報編集
+L0001	買取情報編集
+L0002	ドキュメント名ネット買取管理 基本設計書
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-05-21
+L0007	更新者石川
+L0008	更新日2025-09-20
+L0009	機能NoM07-03
+L0010	機能名買取情報編集
+L0011	概要ネット買取情報の編集を行う
+L0012	カスタマイズ処理概要
+L0013	処理概要（★はカスタマイズ項目）
+L0014	カスタマイズ処理概要
+L0015	処理概要（★はカスタマイズ項目）
+L0016	処理概要（★はカスタマイズ項目）
+L0017	レイアウト図
+L0018	1
+L0019	2
+L0020	4
+L0021	5
+L0022	3
+L0023	6
+L0024	7
+L0025	9
+L0026	10
+L0027	11
+L0028	12
+L0029	16
+L0030	14
+L0031	15
+L0032	8
+L0033	13
+L0034	買取情報編集 / B7 / image 1
+L0035	カスタマイズ説明
+L0036	現行の買取情報編集機能をベースに下記カスタマイズを行う
+L0037	商品登録について
+L0038	・カードについては登録不可とし、サプライ品のみ登録可能とする。
+L0039	※えらんで買取の時にサプライ品がMTGBuyerから登録できないため
+L0040	→商品マスタ側でその他規格を運用しないことに決まったため要件削除
+L0041	入庫済みステータスへの変更について
+L0042	・
+L0043	→手動入庫も可能
+L0044	在庫自動反映について
+L0045	・バッチにて、・入庫待ちステータスの場合、入庫済みにステータス変更し、EC-CUBEに在庫が入庫される
+L0046	・運用想定として、店頭に並べる際はEC-CUBEに入庫された商品を、在庫移動・振替機能により、スマレジに在庫移動する
+L0047	・未在庫商品がある買取データの場合は在庫反映対象とせず入庫待ちとする→ステータスを未登録在庫ありとする
+L0048	・買取された商品のうち、既に登録されている商品の場合はそのまま在庫化する
+L0049	ステータス変更権限について
+L0050	・
+L0051	→経理が払い出しのステータスにしているわけではないので権限はわけない
+L0052	・
+L0053	→入庫の特別な権限は不要
+L0054	ステータスについて
+L0055	査定系のステータス＞払い出しのステータス＞入庫のステータス
+L0056	・
+L0057	→入庫済みになったもののみ、その他のステータスに変更できないようにする
+L0058	・ステータスの種類は下記を想定 ※ステータスのフローや項目について設計にて行う
+L0059	査定系のステータス
+L0060	[注文、商品到着、査定中、査定中断、査定再開、MTGBuyer査定完了、査定内容連絡済み、査定内容承諾]
+L0061	↓
+L0062	払い出しのステータス
+L0063	[振込依頼済み、振込完了]
+L0064	↓
+L0065	入庫のステータス
+L0066	例外運用
+L0067	・払い出し完了後にカードの規格誤り等が判明し、差額が生じた場合には、追加払い出し対応を行うことがある
+L0068	カード商品の変更は、在庫移動で振替をする(ステータスの差し戻しは行わない)
+L0069	差額の払い出しは、EC-CUBE外で管理し、買取情報には追加払い出し対応のメモを記入できるようにする
+L0070	更新日について
+L0071	・
+L0072	→ネット買取はデータ出力日は持っておらず、仕入れ完了日を入庫日とする
+L0073	・
+L0074	→振込完了日がすでに存在するためそちらを利用する
+L0075	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0076	機能仕様カスタマイズ処理概要
+L0077	・ステータス変更処理について
+L0078	・振込依頼済みステータスに変更時に以下の状態の場合に更新不可
+L0079	★買取依頼者情報＞身分証明書が未登録以外になっていなければ更新不可（エンハンス対応）
+L0080	・古物営業法における本人確認が必要な買取金額以上、かつ本人確認状態が未確認または確認中の場合は更新不可
+L0081	★振込完了ステータスに変更時、以下の処理を行う
+L0082	・振込完了メールを自動送信する
+L0083	・二度メールが飛ばないように、過去に振込完了にしたステータス変更履歴がある場合はメール送信を行わない
+L0084	2026/4/30木村：買取承諾時に売却する商品のみ実在庫をつくるようになったため、削除処理をなくす
+L0085	・振込完了ステータスに変更時、入庫待ちの判定を行う
+L0086	・個別入力商品情報について、すべて実在庫情報が登録済みの場合はステータスを「入庫待ち」そうでない場合は「未登録在庫あり」とする
+L0087	★査定内容承諾ステータスに変更時、以下の処理を行う 2026/4/30木村：自動承諾で管理画面から査定内容承諾にしたときに、明細から実在庫を作成する。
+L0088	・選んで買取とまとめて買取の売却する商品の明細から実在庫と実在庫履歴を洗い替えする。商品ID、言語ID、状態IDから商品規格を特定して実在庫と紐づける。
+L0089	・二度実在庫を作成しないように、過去に査定内容承諾済みにしたステータス変更履歴がある場合は上記の実在庫作成を行わない
+L0090	★入庫済みステータスについて
+L0091	・仕入完了ステータスから入庫済みステータスに名称変更する（仕入完了日も入庫日に名称変更する）
+L0092	・入庫済みステータスの場合は、他のステータスに変更できないようにする
+L0093	・入庫済みステータスにした際、B06-01 買取自動入庫バッチと同様の入庫処理を行う
+L0094	・実在庫情報を、本店のECCUBE在庫に登録する
+L0095	総在庫、総原価、原価単価の更新を行う
+L0096	・在庫履歴を登録する
+L0097	仕入単価＝買取単価で登録
+L0098	登録元機能は「ネット買取」、登録元IDは査定IDを登録
+L0099	履歴の登録については、0202_基本設計仕様書(在庫管理機能).xlsxの「別添資料_在庫変動時の履歴作成について」シート参照
+L0100	・ネット買取情報の最終更新者を入庫済みボタンを押したユーザとする
+L0101	★棚戻し済み
+L0102	・棚戻し状態を出力する
+L0103	・ラジオボタンは非活性とし、現在選択されている状態を表示する
+L0104	・棚戻し済みフラグの編集は、戻しリストCSVまたはPDFをダウンロードした際に棚戻し済みフラグを立てる
+L0105	・一括売却登録について
+L0106	・ボタンをクリックすると、明細の売却状況をすべて「売却する」に変更する（特にチェック等はない）
+L0107	・保存ボタン押下時の処理
+L0108	・入力されたステータスへの更新
+L0109	・ステータス変更があった場合、ステータス変更履歴を登録する
+L0110	・振込依頼可能フラグ、振込失敗フラグの更新
+L0111	・送料、メモ、送料や商品の金額変更による査定金額合計の更新
+L0112	★サプライ品の追加、査定価格変更
+L0113	・サプライ品以外は編集できないようにする、またサプライ品も状態と数量は編集できないようにする
+L0114	・サプライ品の追加は選んで買取の方に追加される
+L0224	・査定編集ボタンを押下すると、買取情報の中で編集可能なもののみ編集可能フォームとして表示される
+L0225	★現行では選んで買取、まとめて買取の「状態」「査定価格」「数量」「売却」と個別入力商品情報の「商品名」「査定価格」「数量」「売却」を変更できるが
+L0226	リニューアル後は選んで買取のサプライ品の査定価格、数量、売却のみ変更可能とする 2026/5/19木村：数量も編集可能に変更
+L0227	（基本的にはすべてMTGBuyerで査定を終える想定だが、サプライのみMTGBuyerでは査定できず、選んで買取に商品を追加したり、登録済みの選んで買取の査定価格を
+L0228	入力したりする必要があるため）
+L0229	・送料、メモ、売却についてはこれまで通り変更可能とする
+L0230	・査定編集ボタンを押下すると、ボタンの名称が査定確定ボタンに変更される
+L0231	・編集が終わったら査定確定ボタンを押下すると、編集不可状態となるが、保存ボタンを押下するまでは変更内容は反映されない
+L0232	・削除、複製リンク
+L0233	・選んで買取にある複製、削除リンク、まとめて買取にある削除リンクは現行では押下すると複製や削除が即時で反映される
+L0234	★MTGBuyerで査定を終える前提のため、複製リンクは不要とする。サプライ品のみ削除可能とする。 2026/5/19木村：サプライ品のみ削除可能に変更
+L0235	★個別入力商品の実在庫登録状況を管理できるようにする（未登録在庫についての要件）
+L0236	・実在庫登録が可能なのは「査定内容承諾、簡易書留送付済み、振込依頼済み、振込完了、振込失敗、未登録在庫あり、入庫待ち」ステータスの場合のみ。 2026/4/30木村：登録可能なステータスを査定承諾〜入庫待ちまで拡張
+L0237	・個別入力商品について、商品・商品規格がない状態であるため、商品・商品規格を登録したのち、実在庫登録ボタンを押下し実在庫登録を行う
+L0238	・実在庫登録ボタンを押下すると、商品検索モーダルを開き、実在庫として登録する商品を選択する
+L0239	・商品追加モーダルの仕様については店頭買取管理の商品追加モーダルと同仕様とする
+L0240	・商品選択を行ったら、実在庫情報に商品コード/実際に買取を行った買取単価/実際に買取を行った買取小計/実際に買取を行った数量を登録する
+L0241	・個別入力商品情報には選択した商品コードを登録する
+L0242	・実在庫登録状況を「実在庫登録済み」にする
+L0243	個別入力商品に持っている情報 個別入力商品をもとに実在庫情報に登録する内容
+L0244	項目名	説明	項目名	説明
+L0245	商品名	MTGBuyerで入力した商品名	商品コード	実在庫情報登録で選択した商品の商品コード
+L0246	買取金額	MTGBuyerで入力した金額、単価	買取金額	個別入力商品情報を引き継ぎ
+L0247	個数	MTGBuyerで入力した個数	買取小計	個別入力商品情報の買取金額×個数
+L0248			個数	個別入力商品情報を引き継ぎ
+L0249	※実在庫情報の修正等で適切に原価の移動を行うため小計を保持するようにする
+L0250	・個別入力商品内に1つでも実在庫登録済みでない商品が存在する場合、買取のステータスを「未登録在庫あり」にする
+L0251	・個別入力商品内の商品がすべて実在庫登録済みの場合、買取のステータスを「入庫待ち」にする
+L0252	★古物台帳入力用CSV出力
+L0253	・CSV出力から名称変更を行う
+L0254	・出力内容は現行と同様、古物台帳入力用CSVの内容とする
+L0255	・買取商品一覧CSV出力
+L0256	・出力内容は現行と同様、買取商品一覧CSVの内容とする
+L0257	識別ID	ラベル	書式・制限	必須	最大文字数
+L0258	または最大値	初期値	画面部品の説明
+L0259	買取情報/選んで買取
+L0374	1-9	郵便番号	半角数字	〇	-	-
+L0375	1-10	住所1	半角・全角	〇	-	-
+L0376	1-11	住所2	半角・全角	〇	-	-
+L0377	1-12	住所3	半角・全角	-	-	-
+L0378	1-13	電話番号	半角数字	-	11	-
+L0379	1-14	E-mail	半角英数記号	〇	-	-	メールアドレスのチェック
+L0380	1-15	職業	数値	〇	-	-	選択肢: 「マスターデータ管理 / 職業」で設定された値
+L0381	1-16	生年月日(年)	数値	〇	4	-	選択肢: 1905から今年
+L0382	1-17	生年月日(月)	数値	〇	2	-	選択肢: 1から12
+L0383	1-18	生年月日(日)	数値	〇	2	-	選択肢: 1から31
+L0384	1-19	身分証明書	数値	-	-	-	選択肢: 未登録 自動車運転免許証 パスポート 健康保険被保険者証 外国人登録証明書 住民基本台帳カード 学生証、会社員証 身体障害者手帳 マイナンバーカード
+L0385	口座情報
+L0386	2-1	銀行名	半角・全角	〇	-	-
+L0387	2-2	支店名	半角・全角	〇	-	-
+L0388	2-3	口座種別	数値	〇	-	-	選択肢: 普通 当座 貯蓄
+L0389	2-4	口座番号	数値	〇	7	-
+L0390	2-5	口座名義	半角・全角	〇	-	-
+L0391	口座情報
+L0392	3-1	事業者情報	数値	-	-	-	0: 非事業者 1:事業者
+L0393	3-2	事業者番号	半角英数	※	14文字	-	※識別ID:3-1「事業者情報」で「事業者」を選択している場合は必須
+L0394	"T"+13ケタの数字
+L0395	Source:
+L0396	functions/pf-eccube3/m07-03_admin_online_purchase_purchase_online_buy_order_edit.md
+L0397	現行仕様
+L0398	M07-03 買取情報編集 / ネット買取管理 — 買取情報編集（買取詳細）
+L0399	業務ロジック
+L0400	買取詳細の表示
+L0401	買取IDに対応する買取注文が無いときは404とする。
+L0402	選んで買取とまとめて買取の明細は、売却しない（キャンセル）の行が先頭に来る並びで表示する。個別入力商品もキャンセル行が先頭に来る並びで表示する。
+L0403	買取金額の合計
+L0404	明細を1件削除したときは、買取金額の合計を残っている明細（選んで買取・まとめて買取・個別入力商品）の査定価格×数量の合計から計算し直し、10円単位に切り上げる。
+L0405	買取状況変更の条件
+L0406	本人確認の要否は、買取金額の合計を設定値（10000）と比べて判定する。
+L0407	適格請求書の登録番号
+L0408	事業者区分を非事業者として保存したときは、適格請求書発行事業者の登録番号を空にして保存する。
+L0409	入出力
+L0410	種類	内容
+L0411	入力	買取ID。保存時は買取詳細・口座・適格請求書の各入力と、なりすまし対策トークン
+L0412	成功時出力	買取詳細画面へ遷移し、完了メッセージを1件表示する
+L0413	失敗時出力	買取詳細画面を再表示し、入力項目のエラーを表示する。入力内容は保存しない
+L0414	リニューアル後の仕様
+L0434	M07-03-MSG-019	管理画面上部	admin.common.csrf_token_error	実在庫の登録でセキュリティ確認に失敗したとき	エラーを表示して、買取情報編集（買取詳細）画面に遷移する
+L0435	M07-03-MSG-020	管理画面上部	商品規格が見つかりません。	選択した商品規格が見つからないとき	エラーを表示して、買取情報編集（買取詳細）画面に遷移する
+L0436	M07-03-MSG-021	管理画面上部	実在庫登録が完了しました。	実在庫を登録したとき	完了メッセージを表示して、買取情報編集（買取詳細）画面に遷移する
+L0437	M07-03-MSG-022	ブラウザダイアログ	search product failed.	商品検索でエラーが起きたとき	エラーを表示して、買取情報編集（買取詳細）画面に留まる
+L0438	M07-03-MSG-023	ブラウザダイアログ	編集した内容は元に戻ります。解除しますか？	編集中の内容を元に戻すとき	キャンセル時は買取情報編集（買取詳細）画面に留まり、OK時は編集内容を破棄して画面に留まる
+L0439	M07-03-MSG-024	ブラウザダイアログ	商品の検索に失敗しました。	商品検索でエラーが起きたとき	エラーを表示して、買取情報編集（買取詳細）画面に留まる
+L0440	M07-03-MSG-025	ブラウザダイアログ	CSRFトークンが取得できません。	実在庫を登録するときに必要な情報を取得できないとき	エラーを表示して、買取情報編集（買取詳細）画面に留まる
+L0441	M07-03-MSG-026	ブラウザダイアログ	すべての買取商品の売却ステータスを「売却する」に変更します。よろしいですか？	一括売却の登録ボタンを押したとき（送信前確認）	キャンセル時は送信せず買取情報編集（買取詳細）画面に留まり、OK時は処理後に買取情報編集（買取詳細）画面に遷移する
+L0442	M07-03-MSG-027	入力項目直下	数字で入力してください。	通常UIでは発生しない（査定価格入力は無効化されている）	該当なし（通常UIでは保存操作に至らない）
+L0443	M07-03-MSG-028	入力項目直下	数字で入力してください。	サプライ品の査定価格に数字以外を入力して保存したとき	エラーを表示して、買取情報編集（買取詳細）画面に留まる
+L0444	M07-03-MSG-029	入力項目直下	数字で入力してください。	サプライ品の数量に数字以外を入力して保存したとき	エラーを表示して、買取情報編集（買取詳細）画面に留まる
+L0445	M07-03-MSG-015	管理画面上部	入力されていません。 ／ 長すぎます。この値は{{ limit }}文字以下で入力してください。 ／ 数字で入力してください。 ／ 有効なメールアドレスではありません。 ／ 生年月日が不正な日付です。 ／ 実在庫情報の登録は「査定内容承諾」〜「入庫待ち」のステータスの場合のみ可能です。 ／ 買取依頼者の身分証明書が未登録です。 ／ 会員の本人確認情報を取得できません。 ／ 会員の本人確認ステータスが未確認です。 ／ 入庫済みステータスは他のステータスに変更できません。 ／ CSRFトークンが無効です、再送信してください。 ／ フィールドグループに追加のフィールドを含んではなりません。 ／ 有効な生年月日を入力してください。 ／ 選択した値は無効です。 ／ コレクションは無効です。 ／ 有効な金額を入力してください。 ／ 整数で入力してください。 ／ 隠しフィールドが無効です。 ／ チェックボックスの値が無効です。 ／ 有効な値ではありません。	買取詳細の更新時に入力内容の検証エラーがあるとき	買取詳細画面を再表示する
+
+exec
+/bin/bash -lc 'cut -f1,9,10,11,13 integration_test/casegen/combination/cases/M07-01_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	事前準備	手順	期待結果	項目ID
+IT-M07-01-092	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 会員の姓=M0701-CB092-X、買取番号〔買取番号-M0701-092〕の明細は売却状態がいずれも売却するで、通常買取明細（商品コードM0701-CB092-N・数量2）と個別入力明細（商品名M0701-CB092-INDIV・数量3）の2件だけであり、個別入力明細を先に登録してある。この会員の買取情報はこの1件だけである（登録時に振られた買取番号を控えてある。〔買取番号-M0701-092〕）（S-M07-01-CBSORT-092）	1. 買取検索一覧画面を開く／2. 注文者名に「M0701-CB092-X」を入力して「検索する >」ボタンを押す／3. 買取番号〔買取番号-M0701-092〕だけにチェックを付ける／4. 「ダウンロード▼」から「買取商品一覧CSV」を押す／5. ダウンロードしたCSVを開く	CSVのデータ行が2行で、1行目が商品コードM0701-CB092-N（在庫増減数2）、2行目が商品名M0701-CB092-INDIV（在庫増減数3）の順に並ぶこと	CB-M07-01-004
+IT-M07-01-093	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 会員の姓=M0701-CB093-X、買取番号〔買取番号-M0701-093〕の明細は売却状態がいずれも売却するで、状態NMの通常買取明細2件だけである（商品コードM0701-CB093-Y・数量2の商品は、商品コードM0701-CB093-X2・数量3の商品より商品IDが小さい）。商品IDの大きい方の明細を先に登録してあり、この会員の買取情報はこの1件だけである（登録時に振られた買取番号を控えてある。〔買取番号-M0701-093〕）（S-M07-01-CBSORT-093）	1. 買取検索一覧画面を開く／2. 注文者名に「M0701-CB093-X」を入力して「検索する >」ボタンを押す／3. 買取番号〔買取番号-M0701-093〕だけにチェックを付ける／4. 「ダウンロード▼」から「買取商品一覧CSV」を押す／5. ダウンロードしたCSVを開く	CSVのデータ行が2行で、1行目が商品コードM0701-CB093-Y（在庫増減数2）、2行目が商品コードM0701-CB093-X2（在庫増減数3）の順に並ぶこと	CB-M07-01-005
+IT-M07-01-094	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 会員の姓=M0701-CB094-X、買取番号〔買取番号-M0701-094〕の明細は売却状態がいずれも売却するで、同じ商品IDの状態NMの通常買取明細2件だけである（商品コードM0701-CB094-P・数量2の明細と、商品コードなし・数量3の明細）。商品コードなしの明細を先に登録してあり、この会員の買取情報はこの1件だけである（登録時に振られた買取番号を控えてある。〔買取番号-M0701-094〕）（S-M07-01-CBSORT-094）	1. 買取検索一覧画面を開く／2. 注文者名に「M0701-CB094-X」を入力して「検索する >」ボタンを押す／3. 買取番号〔買取番号-M0701-094〕だけにチェックを付ける／4. 「ダウンロード▼」から「買取商品一覧CSV」を押す／5. ダウンロードしたCSVを開く	CSVのデータ行が2行で、1行目が商品コードM0701-CB094-P（在庫増減数2）、2行目が商品コード欄が空（在庫増減数3）の順に並ぶこと	CB-M07-01-006
+IT-M07-01-095	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 会員の姓=M0701-CB095-X、買取番号〔買取番号-M0701-095〕の明細は売却状態がいずれも売却するで、同じ商品ID・同じ規格（商品コードM0701-CB095-P）・状態NMの通常買取明細2件だけである（数量2の明細と数量3の明細）。この会員の買取情報はこの1件だけである（登録時に振られた買取番号を控えてある。〔買取番号-M0701-095〕）（S-M07-01-CBSORT-095）	1. 買取検索一覧画面を開く／2. 注文者名に「M0701-CB095-X」を入力して「検索する >」ボタンを押す／3. 買取番号〔買取番号-M0701-095〕だけにチェックを付ける／4. 「ダウンロード▼」から「買取商品一覧CSV」を押す／5. ダウンロードしたCSVを開く	CSVのデータ行が2行で、商品コードM0701-CB095-Pの行のうち在庫増減数が2の行と3の行が1行ずつ出力され、行の順は問わないこと	CB-M07-01-008
+IT-M07-01-101	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 開始時に本店の金額閾値を第1=1000円、第2=5000円、第3=未設定、色順を赤・青、TAG-Cをコレクター番号順、TAG-Aを英語カード名順に設定する（S-M07-01-RETURN-CONFIG）／③ 買取番号〔買取番号-M0701-101〕が入庫待ち・棚戻し未で、本店の棚番号を持つ実在庫2件を持つ（登録時に振られた買取番号を控えてある。〔買取番号-M0701-101〕）。注文者名は「戻組合せ甲」で、実在庫は並び順が金額閾値で決まるように、金額閾値の前の段は値を同じにし、金額閾値の値だけを違え、金額閾値の後ろの段は値を逆にしてある。Xは商品名「戻し組合せ品-M0701-CB101-X」（商品コードM0701-CB101-X）・基準価格500円・棚番号V-101・言語英語・状態ヘビープレイド・Foil・略称タグTAG-M0701-CB101-2・レアリティC（コモン）・色青・カード番号2・カードの英語名M0701-CB101-CardX・数量1、Yは商品名「戻し組合せ品-M0701-CB101-Y」（商品コードM0701-CB101-Y）・基準価格3000円・棚番号W-101・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB101-1・レアリティM（神話レア）・色赤・カード番号1・カードの英語名M0701-CB101-CardY・数量1（S-M07-01-CBSORT-101）	1. 買取検索一覧画面を開く／2. 注文者名に「戻組合せ甲」を入力して「検索する >」ボタンを押す／3. 入庫待ちの買取番号〔買取番号-M0701-101〕にチェックを付ける／4. 「ダウンロード▼」から「戻しリストCSV」を押す／5. ダウンロードしたCSVの行順を確認する	ダウンロードしたCSVの行が、商品名「戻し組合せ品-M0701-CB101-X」の行、商品名「戻し組合せ品-M0701-CB101-Y」の行の順に並ぶこと	CB-M07-01-010
+IT-M07-01-102	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 開始時に本店の金額閾値を第1=1000円、第2=5000円、第3=未設定、色順を赤・青、TAG-Cをコレクター番号順、TAG-Aを英語カード名順に設定する（S-M07-01-RETURN-CONFIG）／③ 買取番号〔買取番号-M0701-102〕が入庫待ち・棚戻し未で、本店の棚番号を持つ実在庫2件を持つ（登録時に振られた買取番号を控えてある。〔買取番号-M0701-102〕）。注文者名は「戻組合せ乙」で、実在庫は並び順が棚番で決まるように、棚番の前の段は値を同じにし、棚番の値だけを違え、棚番の後ろの段は値を逆にしてある。Xは商品名「戻し組合せ品-M0701-CB102-X」（商品コードM0701-CB102-X）・基準価格500円・棚番号W-102・言語英語・状態ヘビープレイド・Foil・略称タグTAG-M0701-CB102-2・レアリティC（コモン）・色青・カード番号2・カードの英語名M0701-CB102-CardX・数量1、Yは商品名「戻し組合せ品-M0701-CB102-Y」（商品コードM0701-CB102-Y）・基準価格500円・棚番号V-102・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB102-1・レアリティM（神話レア）・色赤・カード番号1・カードの英語名M0701-CB102-CardY・数量1（S-M07-01-CBSORT-102）	1. 買取検索一覧画面を開く／2. 注文者名に「戻組合せ乙」を入力して「検索する >」ボタンを押す／3. 入庫待ちの買取番号〔買取番号-M0701-102〕にチェックを付ける／4. 「ダウンロード▼」から「戻しリストCSV」を押す／5. ダウンロードしたCSVの行順を確認する	ダウンロードしたCSVの行が、商品名「戻し組合せ品-M0701-CB102-X」の行、商品名「戻し組合せ品-M0701-CB102-Y」の行の順に並ぶこと	CB-M07-01-011
+IT-M07-01-103	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 開始時に本店の金額閾値を第1=1000円、第2=5000円、第3=未設定、色順を赤・青、TAG-Cをコレクター番号順、TAG-Aを英語カード名順に設定する（S-M07-01-RETURN-CONFIG）／③ 買取番号〔買取番号-M0701-103〕が入庫待ち・棚戻し未で、本店の棚番号を持つ実在庫2件を持つ（登録時に振られた買取番号を控えてある。〔買取番号-M0701-103〕）。注文者名は「戻組合せ丙」で、実在庫は並び順が状態で決まるように、状態の前の段は値を同じにし、状態の値だけを違え、状態の後ろの段は値を逆にしてある。Xは商品名「戻し組合せ品-M0701-CB103-X」（商品コードM0701-CB103-X）・基準価格500円・棚番号W-103・言語日本語・状態ニアミント・Foil・略称タグTAG-M0701-CB103-2・レアリティC（コモン）・色青・カード番号2・カードの英語名M0701-CB103-CardX・数量1、Yは商品名「戻し組合せ品-M0701-CB103-Y」（商品コードM0701-CB103-Y）・基準価格500円・棚番号W-103・言語日本語・状態ヘビープレイド・非Foil・略称タグTAG-M0701-CB103-1・レアリティM（神話レア）・色赤・カード番号1・カードの英語名M0701-CB103-CardY・数量1（S-M07-01-CBSORT-103）	1. 買取検索一覧画面を開く／2. 注文者名に「戻組合せ丙」を入力して「検索する >」ボタンを押す／3. 入庫待ちの買取番号〔買取番号-M0701-103〕にチェックを付ける／4. 「ダウンロード▼」から「戻しリストCSV」を押す／5. ダウンロードしたCSVの行順を確認する	ダウンロードしたCSVの行が、商品名「戻し組合せ品-M0701-CB103-X」の行、商品名「戻し組合せ品-M0701-CB103-Y」の行の順に並ぶこと	CB-M07-01-013
+IT-M07-01-104	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 開始時に本店の金額閾値を第1=1000円、第2=5000円、第3=未設定、色順を赤・青、TAG-Cをコレクター番号順、TAG-Aを英語カード名順に設定する（S-M07-01-RETURN-CONFIG）／③ 買取番号〔買取番号-M0701-104〕が入庫待ち・棚戻し未で、本店の棚番号を持つ実在庫2件を持つ（登録時に振られた買取番号を控えてある。〔買取番号-M0701-104〕）。注文者名は「戻組合せ丁」で、実在庫は並び順がFoilで決まるように、Foilの前の段は値を同じにし、Foilの値だけを違え、Foilの後ろの段は値を逆にしてある。Xは商品名「戻し組合せ品-M0701-CB104-X」（商品コードM0701-CB104-X）・基準価格500円・棚番号W-104・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB104-2・レアリティC（コモン）・色青・カード番号2・カードの英語名M0701-CB104-CardX・数量1、Yは商品名「戻し組合せ品-M0701-CB104-Y」（商品コードM0701-CB104-Y）・基準価格500円・棚番号W-104・言語日本語・状態ニアミント・Foil・略称タグTAG-M0701-CB104-1・レアリティM（神話レア）・色赤・カード番号1・カードの英語名M0701-CB104-CardY・数量1（S-M07-01-CBSORT-104）	1. 買取検索一覧画面を開く／2. 注文者名に「戻組合せ丁」を入力して「検索する >」ボタンを押す／3. 入庫待ちの買取番号〔買取番号-M0701-104〕にチェックを付ける／4. 「ダウンロード▼」から「戻しリストCSV」を押す／5. ダウンロードしたCSVの行順を確認する	ダウンロードしたCSVの行が、商品名「戻し組合せ品-M0701-CB104-X」の行、商品名「戻し組合せ品-M0701-CB104-Y」の行の順に並ぶこと	CB-M07-01-014
+IT-M07-01-105	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 開始時に本店の金額閾値を第1=1000円、第2=5000円、第3=未設定、色順を赤・青、TAG-Cをコレクター番号順、TAG-Aを英語カード名順に設定する（S-M07-01-RETURN-CONFIG）／③ 買取番号〔買取番号-M0701-105〕が入庫待ち・棚戻し未で、本店の棚番号を持つ実在庫2件を持つ（登録時に振られた買取番号を控えてある。〔買取番号-M0701-105〕）。注文者名は「戻組合せ戊」で、実在庫は並び順が略称タグで決まるように、略称タグの前の段は値を同じにし、略称タグの値だけを違え、略称タグの後ろの段は値を逆にしてある。Xは商品名「戻し組合せ品-M0701-CB105-X」（商品コードM0701-CB105-X）・基準価格500円・棚番号W-105・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB105-1・レアリティC（コモン）・色青・カード番号2・カードの英語名M0701-CB105-CardX・数量1、Yは商品名「戻し組合せ品-M0701-CB105-Y」（商品コードM0701-CB105-Y）・基準価格500円・棚番号W-105・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB105-2・レアリティM（神話レア）・色赤・カード番号1・カードの英語名M0701-CB105-CardY・数量1（S-M07-01-CBSORT-105）	1. 買取検索一覧画面を開く／2. 注文者名に「戻組合せ戊」を入力して「検索する >」ボタンを押す／3. 入庫待ちの買取番号〔買取番号-M0701-105〕にチェックを付ける／4. 「ダウンロード▼」から「戻しリストCSV」を押す／5. ダウンロードしたCSVの行順を確認する	ダウンロードしたCSVの行が、商品名「戻し組合せ品-M0701-CB105-X」の行、商品名「戻し組合せ品-M0701-CB105-Y」の行の順に並ぶこと	CB-M07-01-015
+IT-M07-01-106	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 開始時に本店の金額閾値を第1=1000円、第2=5000円、第3=未設定、色順を赤・青、TAG-Cをコレクター番号順、TAG-Aを英語カード名順に設定する（S-M07-01-RETURN-CONFIG）／③ 買取番号〔買取番号-M0701-106〕が入庫待ち・棚戻し未で、本店の棚番号を持つ実在庫2件を持つ（登録時に振られた買取番号を控えてある。〔買取番号-M0701-106〕）。注文者名は「戻組合せ己」で、実在庫は並び順がレアリティで決まるように、レアリティの前の段は値を同じにし、レアリティの値だけを違え、レアリティの後ろの段は値を逆にしてある。Xは商品名「戻し組合せ品-M0701-CB106-X」（商品コードM0701-CB106-X）・基準価格500円・棚番号W-106・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB106-1・レアリティM（神話レア）・色青・カード番号2・カードの英語名M0701-CB106-CardX・数量1、Yは商品名「戻し組合せ品-M0701-CB106-Y」（商品コードM0701-CB106-Y）・基準価格500円・棚番号W-106・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB106-1・レアリティC（コモン）・色赤・カード番号1・カードの英語名M0701-CB106-CardY・数量1（S-M07-01-CBSORT-106）	1. 買取検索一覧画面を開く／2. 注文者名に「戻組合せ己」を入力して「検索する >」ボタンを押す／3. 入庫待ちの買取番号〔買取番号-M0701-106〕にチェックを付ける／4. 「ダウンロード▼」から「戻しリストCSV」を押す／5. ダウンロードしたCSVの行順を確認する	ダウンロードしたCSVの行が、商品名「戻し組合せ品-M0701-CB106-X」の行、商品名「戻し組合せ品-M0701-CB106-Y」の行の順に並ぶこと	CB-M07-01-016
+IT-M07-01-107	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 開始時に本店の金額閾値を第1=1000円、第2=5000円、第3=未設定、色順を赤・青、TAG-Cをコレクター番号順、TAG-Aを英語カード名順に設定する（S-M07-01-RETURN-CONFIG）／③ 買取番号〔買取番号-M0701-107〕が入庫待ち・棚戻し未で、本店の棚番号を持つ実在庫2件を持つ（登録時に振られた買取番号を控えてある。〔買取番号-M0701-107〕）。注文者名は「戻組合せ庚」で、実在庫は並び順が色で決まるように、色の前の段は値を同じにし、色の値だけを違え、色の後ろの段は値を逆にしてある。Xは商品名「戻し組合せ品-M0701-CB107-X」（商品コードM0701-CB107-X）・基準価格500円・棚番号W-107・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB107-1・レアリティM（神話レア）・色赤・カード番号2・カードの英語名M0701-CB107-CardX・数量1、Yは商品名「戻し組合せ品-M0701-CB107-Y」（商品コードM0701-CB107-Y）・基準価格500円・棚番号W-107・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB107-1・レアリティM（神話レア）・色青・カード番号1・カードの英語名M0701-CB107-CardY・数量1（S-M07-01-CBSORT-107）	1. 買取検索一覧画面を開く／2. 注文者名に「戻組合せ庚」を入力して「検索する >」ボタンを押す／3. 入庫待ちの買取番号〔買取番号-M0701-107〕にチェックを付ける／4. 「ダウンロード▼」から「戻しリストCSV」を押す／5. ダウンロードしたCSVの行順を確認する	ダウンロードしたCSVの行が、商品名「戻し組合せ品-M0701-CB107-X」の行、商品名「戻し組合せ品-M0701-CB107-Y」の行の順に並ぶこと	CB-M07-01-017
+IT-M07-01-108	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 開始時に本店の金額閾値を第1=1000円、第2=5000円、第3=未設定、色順を赤・青、TAG-Cをコレクター番号順、TAG-Aを英語カード名順に設定する（S-M07-01-RETURN-CONFIG）／③ 買取番号〔買取番号-M0701-108〕が入庫待ち・棚戻し未で、本店の棚番号を持つ実在庫2件を持つ（登録時に振られた買取番号を控えてある。〔買取番号-M0701-108〕）。注文者名は「戻組合せ辛」で、実在庫は並び順がコレクター番号で決まるように、カード番号または英語のカード名の前の段は値を同じにし、カード番号または英語のカード名の値だけを違え、カード番号または英語のカード名の後ろの段は値を逆にしてある。Xは商品名「戻し組合せ品-M0701-CB108-X」（商品コードM0701-CB108-X）・基準価格500円・棚番号W-108・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB108-1・レアリティM（神話レア）・色赤・カード番号1・カードの英語名M0701-CB108-Beta・数量1、Yは商品名「戻し組合せ品-M0701-CB108-Y」（商品コードM0701-CB108-Y）・基準価格500円・棚番号W-108・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB108-1・レアリティM（神話レア）・色赤・カード番号2・カードの英語名M0701-CB108-Alpha・数量1（S-M07-01-CBSORT-108）	1. 買取検索一覧画面を開く／2. 注文者名に「戻組合せ辛」を入力して「検索する >」ボタンを押す／3. 入庫待ちの買取番号〔買取番号-M0701-108〕にチェックを付ける／4. 「ダウンロード▼」から「戻しリストCSV」を押す／5. ダウンロードしたCSVの行順を確認する	ダウンロードしたCSVの行が、商品名「戻し組合せ品-M0701-CB108-X」の行、商品名「戻し組合せ品-M0701-CB108-Y」の行の順に並ぶこと	CB-M07-01-018
+IT-M07-01-109	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 開始時に本店の金額閾値を第1=1000円、第2=5000円、第3=未設定、色順を赤・青、TAG-Cをコレクター番号順、TAG-Aを英語カード名順に設定する（S-M07-01-RETURN-CONFIG）／③ 買取番号〔買取番号-M0701-109〕が入庫待ち・棚戻し未で、本店の棚番号を持つ実在庫2件を持つ（登録時に振られた買取番号を控えてある。〔買取番号-M0701-109〕）。注文者名は「戻組合せ壬」で、実在庫は並び順が英語のカード名で決まるように、カード番号または英語のカード名の前の段は値を同じにし、カード番号または英語のカード名の値だけを違え、カード番号または英語のカード名の後ろの段は値を逆にしてある。Xは商品名「戻し組合せ品-M0701-CB109-X」（商品コードM0701-CB109-X）・基準価格500円・棚番号W-109・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB109-1・レアリティM（神話レア）・色赤・カード番号2・カードの英語名M0701-CB109-Alpha・数量1、Yは商品名「戻し組合せ品-M0701-CB109-Y」（商品コードM0701-CB109-Y）・基準価格500円・棚番号W-109・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB109-1・レアリティM（神話レア）・色赤・カード番号1・カードの英語名M0701-CB109-Beta・数量1（S-M07-01-CBSORT-109）	1. 買取検索一覧画面を開く／2. 注文者名に「戻組合せ壬」を入力して「検索する >」ボタンを押す／3. 入庫待ちの買取番号〔買取番号-M0701-109〕にチェックを付ける／4. 「ダウンロード▼」から「戻しリストCSV」を押す／5. ダウンロードしたCSVの行順を確認する	ダウンロードしたCSVの行が、商品名「戻し組合せ品-M0701-CB109-X」の行、商品名「戻し組合せ品-M0701-CB109-Y」の行の順に並ぶこと	CB-M07-01-019
+IT-M07-01-110	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 開始時に本店の金額閾値を第1=1000円、第2=5000円、第3=未設定、色順を赤・青、TAG-Cをコレクター番号順、TAG-Aを英語カード名順に設定する（S-M07-01-RETURN-CONFIG）／③ 買取番号〔買取番号-M0701-110〕が入庫待ち・棚戻し未で、本店の棚番号を持つ実在庫2件を持つ（登録時に振られた買取番号を控えてある。〔買取番号-M0701-110〕）。注文者名は「戻組合せ癸」で、実在庫は並び順が棚番で決まるように、棚番の前の段は値を同じにし、棚番の値だけを違え、棚番の後ろの段は値を逆にしてある。Xは商品名「戻し組合せ品-M0701-CB110-X」（商品コードM0701-CB110-X）・基準価格500円・棚番号W-110・言語英語・状態ヘビープレイド・Foil・略称タグTAG-M0701-CB110-2・レアリティC（コモン）・色青・カード番号2・カードの英語名M0701-CB110-CardX・数量1、Yは商品名「戻し組合せ品-M0701-CB110-Y」（商品コードM0701-CB110-Y）・基準価格500円・棚番号V-110・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB110-1・レアリティM（神話レア）・色赤・カード番号1・カードの英語名M0701-CB110-CardY・数量1（S-M07-01-CBSORT-110）	1. 買取検索一覧画面を開く／2. 注文者名に「戻組合せ癸」を入力して「検索する >」ボタンを押す／3. 入庫待ちの買取番号〔買取番号-M0701-110〕にチェックを付ける／4. 「ダウンロード▼」から「戻しリストPDF」を押す／5. 表示された戻しリストの商品名の表示順を確認する	表示された戻しリストで、商品名「戻し組合せ品-M0701-CB110-X」の行が商品名「戻し組合せ品-M0701-CB110-Y」の行より前に表示されること	CB-M07-01-022
+IT-M07-01-111	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 開始時に本店の金額閾値を第1=1000円、第2=5000円、第3=未設定、色順を赤・青、TAG-Cをコレクター番号順、TAG-Aを英語カード名順に設定する（S-M07-01-RETURN-CONFIG）／③ 買取番号〔買取番号-M0701-111〕が入庫待ち・棚戻し未で、本店の棚番号を持つ実在庫2件を持つ（登録時に振られた買取番号を控えてある。〔買取番号-M0701-111〕）。注文者名は「戻組合せ子」で、実在庫は並び順が言語で決まるように、言語の前の段は値を同じにし、言語の値だけを違え、言語の後ろの段は値を逆にしてある。Xは商品名「戻し組合せ品-M0701-CB111-X」（商品コードM0701-CB111-X）・基準価格500円・棚番号W-111・言語日本語・状態ヘビープレイド・Foil・略称タグTAG-M0701-CB111-2・レアリティC（コモン）・色青・カード番号2・カードの英語名M0701-CB111-CardX・数量1、Yは商品名「戻し組合せ品-M0701-CB111-Y」（商品コードM0701-CB111-Y）・基準価格500円・棚番号W-111・言語英語・状態ニアミント・非Foil・略称タグTAG-M0701-CB111-1・レアリティM（神話レア）・色赤・カード番号1・カードの英語名M0701-CB111-CardY・数量1（S-M07-01-CBSORT-111）	1. 買取検索一覧画面を開く／2. 注文者名に「戻組合せ子」を入力して「検索する >」ボタンを押す／3. 入庫待ちの買取番号〔買取番号-M0701-111〕にチェックを付ける／4. 「ダウンロード▼」から「戻しリストPDF」を押す／5. 表示された戻しリストの商品名の表示順を確認する	表示された戻しリストで、商品名「戻し組合せ品-M0701-CB111-X」の行が商品名「戻し組合せ品-M0701-CB111-Y」の行より前に表示されること	CB-M07-01-023
+
+exec
+/bin/bash -lc "sed -n '255,300p;325,340p' integration_test/casegen/combination/units/M07-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0253	★CSVダウンロードをダウンロードという名称に変更し、以下の内容をダウンロード可能とする
+L0254	現行リニューアル後（全体的に出力の文字省略、一部名称変更）
+L0255	CSV出力 古物台帳入力用CSV ←名称変更（CSV出力という名称だったが、用途の名称に変更）
+L0256	入金CSV出力 入金CSV
+L0257	買取商品一覧CSV出力 買取商品一覧CSV
+L0258	買取商品（キャンセル）CSV ←追加
+L0259	戻しリストCSV ←追加
+L0260	戻しリストPDF ←追加
+L0261	・古物台帳入力用CSV出力
+L0262	・選択された買取データについて出力する
+L0263	★住所に住所3を追加する
+L0264	★現行は順不同だが、買取番号順の出力とする
+L0265	・入金CSV出力
+L0266	・選択された買取データについて出力する
+L0267	★住所に住所3を追加する
+L0268	・買取商品一覧CSV出力
+L0269	・選択された買取データについて出力する
+L0270	・買取明細のうち売却フラグが「売却する」であるもの
+L0271	・並び順は[通常買取明細、個別入力明細]の順で、商品IDの昇順、[商品コードが存在する、商品コードが存在しない]の順、状態の昇順
+L0272	★買取商品（キャンセル）CSVをダウンロード可能とする
+L0273	・買取商品一覧CSVと同様のフォーマットで、以下の条件に一致する商品を出力する
+L0274	（項目名の「在庫増減数」のみ「キャンセル数」に変更する）
+L0275	① 一覧のチェックボックスでチェック済みの買取情報に紐づく商品
+L0276	② 買取状況が「キャンセル済み」でないかつ
+L0277	買取明細（えらんで買取、まとめて買取、個別入力商品）の売却状態が「売却しない」になっているもの（売却状態が「未定」のものは含まない）
+L0278	★戻しリストCSV、戻しリストPDFをダウンロード可能とする
+L0279	・新たに棚戻し済みフラグを設け、戻しリストCSVまたはPDF出力を行った買取情報は、フラグを「棚戻し済み」とする
+L0280	・「入庫待ち」「入庫済み」ステータス以外の買取情報を戻しリストCSVまたはPDF出力の対象にした場合はエラーとする
+L0281	・識別ID:28のようにエラーを出力する
+L0282	・戻しリストCSVまたはPDFの出力は、チェックした買取情報の実在庫情報を参照し出力する（買取明細ではない）
+L0283	・出力項目は「【新規】戻しリストCSV」シート参照
+L0284	・並び順は金額閾値の昇順(最後にサプライ)が最優先となる
+L0285	・金額閾値内の並び順は以下の通りとなる
+L0286	・棚番（昇順、支店の場合は棚番のソートは行わない）
+L0287	・言語（日→英→他言語）
+L0288	・状態（NM→HP）
+L0289	・Foilフラグ（非Foil→Foil）
+L0290	・略称タグ（昇順）
+L0291	・レアリティ（M→C）
+L0292	・色（マスターデータ色順参照）
+L0293	・設定されている略称タグについてコレクター番号でのソートだった場合、コレクター番号（昇順）
+L0294	・設定されている略称タグについてアルファベットでのソートだった場合、英語のカード名（昇順）
+L0295	識別ID	ラベル	書式・制限	必須	最大文字数
+L0296	または最大値	初期値	画面部品の説明
+L0297	1	該当件数	文字列	-	-	-	買取一覧(検索入力)で設定された条件に合致する買取の件数
+L0298	2	ダウンロード▼	リンク	-	-	-	CSVダウンロードからダウンロードへ名称変更
+L0323	21	ページング	ボタン	-	-	-	表記されている番号の買取一覧ページに遷移する
+L0324	※現在表示中のページ番号はハイライト、クリックできないようにする
+L0325	22	古物台帳入力用CSV	リンク	-	-	-	CSV出力から名称変更
+L0326	出力内容は古物台帳入力用CSV出力項目シート参照
+L0327	23	入金CSV	リンク	-	-	-	出力内容は入金CSV出力項目シート参照
+L0328	24	買取商品一覧CSV	リンク	-	-	-	出力内容は買取商品一覧CSV出力項目シート参照
+L0329	25	買取商品（キャンセル）CSV	リンク	-	-	-	新規追加
+L0330	出力内容は【新規】買取商品一覧（キャンセル）CSV出力項目シート参照
+L0331	26	戻しリストCSV	リンク	-	-	-	新規追加
+L0332	出力内容は【新規】戻しリストCSVシート参照
+L0333	27	戻しリストPDF	リンク	-	-	-	新規追加
+L0334	出力内容は【新規】戻しリストPDFシート参照
+L0335	28	戻しリストCSV出力エラー	ラベル	-	-	-	・戻しリストCSVまたはPDF出力時、「入庫待ち」「入庫済み」ステータス以外が対象に選ばれていた場合はエラーとする
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M07-01_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+項目ID	扱い	テストID	理由
+CB-M07-01-001	既存ケースで確認済み	IT-M07-01-058	事前準備にキャンセル済みでない買取〔買取番号-M0701-058A〕の売却しない明細（3種）が書かれ、手順で買取商品（キャンセル）CSVの出力対象になることを確かめている
+CB-M07-01-002	既存ケースで確認済み	IT-M07-01-058	事前準備にキャンセル済みで売却しない明細を持つ買取〔買取番号-M0701-058B〕が書かれ、そのキャンセル済み買取の明細が出力されないことを期待結果で確かめている
+CB-M07-01-003	既存ケースで確認済み	IT-M07-01-058	事前準備にキャンセル済みでない買取〔買取番号-M0701-058A〕の売却未定明細と売却する明細が書かれ、それらが出力されないことを期待結果で確かめている
+CB-M07-01-004	ケース化	IT-M07-01-092	通常買取明細と個別入力明細だけが違う2明細でCSVの行順を確かめる
+CB-M07-01-005	ケース化	IT-M07-01-093	商品IDだけが違う2明細でCSVの行順を確かめる
+CB-M07-01-006	ケース化	IT-M07-01-094	同じ商品IDで商品コードの有無だけが違う2明細でCSVの行順を確かめる
+CB-M07-01-007	ケースにしない		設計書は「状態の昇順」(L0271)とだけ書き、昇順の基準（状態マスターの並び・状態ID・名称）も、NMとHPなど具体的な状態のどちらが先かも定めていない。同じ設計書の戻しリストの「状態（NM→HP）」(L0288)は別の出力の定めで、買取商品一覧CSVに当てられない。要因表の制約に足すべき組: F04=状態で決まる
+CB-M07-01-008	ケース化	IT-M07-01-095	全段が同じ2明細が2行とも出力されることを確かめる（差が付かないため行順は定められず確かめない）
+CB-M07-01-009	既存ケースで確認済み	IT-M07-01-089,IT-M07-01-091	089は事前準備に売却しない明細M0701-089-A-NG等が書かれ、091は売却未定の明細M0701-091-UNDECIDEDが書かれ、売却する以外の明細が買取商品一覧CSVに出力されないことをCSVで確かめている
+CB-M07-01-010	ケース化	IT-M07-01-101	並び順が金額閾値で決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-011	ケース化	IT-M07-01-102	並び順が棚番で決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-012	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=言語で決まる&F08=支店（作れない）
+CB-M07-01-013	ケース化	IT-M07-01-103	並び順が状態で決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-014	ケース化	IT-M07-01-104	並び順がFoilで決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-015	ケース化	IT-M07-01-105	並び順が略称タグで決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-016	ケース化	IT-M07-01-106	並び順がレアリティで決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-017	ケース化	IT-M07-01-107	並び順が色で決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-018	ケース化	IT-M07-01-108	並び順がコレクター番号で決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-019	ケース化	IT-M07-01-109	並び順が英語のカード名で決まるように2件の実在庫を作り、CSVの行順を確かめる
+CB-M07-01-020	ケースにしない		全段が同じなら並び順に差が付かず、結果が一意に決まらない。設計書は L0284〜L0294 で段ごとの昇順だけを定め、全段が同じ行どうしの並びを定めていない（要因表の値の結果も「差が付かない」）。要因表の制約に足すべき組: F07=全段が同じ&F08=本店（正解未定）
+CB-M07-01-021	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=金額閾値で決まる&F08=支店（作れない）
+CB-M07-01-022	ケース化	IT-M07-01-110	並び順が棚番で決まるように2件の実在庫を作り、PDFの行順を確かめる
+CB-M07-01-023	ケース化	IT-M07-01-111	並び順が言語で決まるように2件の実在庫を作り、PDFの行順を確かめる
+CB-M07-01-024	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=状態で決まる&F08=支店（作れない）
+CB-M07-01-025	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=Foilで決まる&F08=支店（作れない）
+CB-M07-01-026	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=略称タグで決まる&F08=支店（作れない）
+CB-M07-01-027	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=レアリティで決まる&F08=支店（作れない）
+CB-M07-01-028	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=色で決まる&F08=支店（作れない）
+CB-M07-01-029	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=コレクター番号で決まる&F08=支店（作れない）
+CB-M07-01-030	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=英語のカード名で決まる&F08=支店（作れない）
+CB-M07-01-031	ケースにしない		閲覧店舗を支店にして戻しリストを出す事前準備・手順を書けない。設計書の店舗の記述は L0286「棚番（昇順、支店の場合は棚番のソートは行わない）」だけで、買取検索一覧に閲覧店舗を支店へ切り替える設定・操作や支店の金額閾値の設定の記述が無い。要因表の制約に足すべき組: F07=全段が同じ&F08=支店（作れない）
+
+exec
+/bin/bash -lc "grep -E '"'^IT-M07-01-(058|089|091)'"\\t' integration_test/casegen/cases/M07-01_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ exited 1 in 0ms:
+exec
+/bin/bash -lc "grep '"'^IT-M07-01-058'"\\|"'^IT-M07-01-089'"\\|"'^IT-M07-01-091'"' integration_test/casegen/cases/M07-01_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-M07-01-058	REQ-0206-sheet-4-R003,REQ-0206-sheet-4-R031,REQ-0206-sheet-4-R045,REQ-0206-sheet-4-R046,REQ-0206-sheet-4-R047,REQ-0206-sheet-4-R048,REQ-0206-sheet-4-R049,REQ-0206-sheet-4-R050,REQ-0206-sheet-4-R101,REQ-0206-sheet-4-R102		ITA-05,ITA-07,ITA-11	P1	ブラウザのみ	S-M07-01-ADM,S-M07-01-CANCEL-CSV-058	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 買取番号〔買取番号-M0701-058A〕はキャンセル済みではなく、3種の売却しない明細、売却未定明細、売却する明細を持ち、買取番号〔買取番号-M0701-058B〕はキャンセル済みで売却しない明細を持つ。注文者名に「キャンセル出力試験」を含む他の買取情報は無い状態にする（あれば削除する）（登録時に振られた買取番号を控えてある。〔買取番号-M0701-058A〕〔買取番号-M0701-058B〕）（S-M07-01-CANCEL-CSV-058）	1. 買取検索一覧画面を開く／2. 注文者名に「キャンセル出力試験」を入力して「検索する >」ボタンを押す／3. 表示された買取情報すべてにチェックを付ける／4. 「ダウンロード▼」から「買取商品（キャンセル）CSV」を押す／5. ダウンロードしたCSVを開く	キャンセル済みでない買取に属する、えらんで買取・まとめて買取・個別入力商品の売却しない明細だけが出力され、未定明細とキャンセル済み買取の明細が出力されず、在庫増減数列に代えてキャンセル数列を持つこと	0206 買取一覧(検索結果) / 機能仕様 買取商品（キャンセル）CSVをダウンロード可能とする、0206 【新規】買取商品一覧（キャンセル）CSV出力項目 / 買取商品一覧CSV出力項目
+IT-M07-01-089	REQ-0206-sheet-4-R043,REQ-0206-sheet-4-R044		ITA-07	P1	ブラウザのみ	S-M07-01-CSVMULTI-089	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 買取番号〔買取番号-M0701-089A〕の売却する明細が商品コードM0701-089-A-OK（数量2）、売却しない明細が商品コードM0701-089-A-NG（数量1）、買取番号〔買取番号-M0701-089B〕の売却する明細が商品コードM0701-089-B-OK（数量3）、売却しない明細が商品コードM0701-089-B-NG（数量1）で、注文者名「M0701-089-X」の買取情報はこの2件だけである（登録時に振られた買取番号を控えてある。〔買取番号-M0701-089A〕〔買取番号-M0701-089B〕）（S-M07-01-CSVMULTI-089）	1. 買取検索一覧画面を開く／2. 注文者名に「M0701-089-X」を入力して「検索する >」ボタンを押す／3. 買取番号〔買取番号-M0701-089A〕だけにチェックを付ける／4. 「ダウンロード▼」から「買取商品一覧CSV」を押す／5. ダウンロードしたCSVを開く	商品コードM0701-089-A-OK（在庫増減数2）の1行だけが出力され、M0701-089-A-NG・M0701-089-B-OK・M0701-089-B-NG の行が出力されないこと	0206 買取一覧(検索結果) / 機能仕様 買取商品一覧CSV出力、0206 買取商品一覧CSV出力項目 / 買取商品一覧CSV出力項目
+IT-M07-01-091	REQ-0206-sheet-4-R043,REQ-0206-sheet-4-R044		ITA-11	P1	ブラウザのみ	S-M07-01-CSVUNDECIDED-091	① M07-01試験管理者が稼働中でネット買取管理を操作できる（S-M07-01-ADM）／② 買取番号〔買取番号-M0701-091〕の売却する明細が商品コードM0701-091-OK（数量2）、売却状態が未定の明細が商品コードM0701-091-UNDECIDED（数量1）である（登録時に振られた買取番号を控えてある。〔買取番号-M0701-091〕）（S-M07-01-CSVUNDECIDED-091）	1. 買取検索一覧画面を開く／2. 注文者名に「M0701-091-X」を入力して「検索する >」ボタンを押す／3. 買取番号〔買取番号-M0701-091〕だけにチェックを付ける／4. 「ダウンロード▼」から「買取商品一覧CSV」を押す／5. ダウンロードしたCSVを開く	商品コードM0701-091-OK（在庫増減数2）の1行だけが出力され、商品コードM0701-091-UNDECIDED の行が出力されないこと	0206 買取一覧(検索結果) / 機能仕様 買取商品一覧CSV出力、0206 買取商品一覧CSV出力項目 / 買取商品一覧CSV出力項目
+
+exec
+/bin/bash -lc "grep '"'^S-M07-01-RETURN-CONFIG'"\\|"'^S-M07-01-CBSORT-108'"\\|"'^S-M07-01-CBSORT-109'"' integration_test/casegen/combination/cases/M07-01_cb_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+S-M07-01-CBSORT-108	買取・実在庫	戻しリスト並び順の組合せデータ（カード番号または英語のカード名）	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0701-108〕）／注文者名=戻組合せ辛／買取番号〔買取番号-M0701-108〕／状態=入庫待ち／棚戻し状態=棚戻し未／実在庫2件（Xは商品名「戻し組合せ品-M0701-CB108-X」（商品コードM0701-CB108-X）・基準価格500円・棚番号W-108・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB108-1・レアリティM（神話レア）・色赤・カード番号1・カードの英語名M0701-CB108-Beta・数量1／Yは商品名「戻し組合せ品-M0701-CB108-Y」（商品コードM0701-CB108-Y）・基準価格500円・棚番号W-108・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB108-1・レアリティM（神話レア）・色赤・カード番号2・カードの英語名M0701-CB108-Alpha・数量1）／並び順はコレクター番号で決まる	IT-M07-01-108専用。戻しリストCSVの並び順（コレクター番号で決まる）	(1) 実在庫にする商品を用意する。管理画面のカード登録画面でカード2件を登録する（英語名「M0701-CB108-Beta」・色赤・色順赤／英語名「M0701-CB108-Alpha」・色赤・色順赤）。各カードのカード詳細に、M0701-CB108-Betaはカード番号1・レアリティM（神話レア）・非Foil／M0701-CB108-Alphaはカード番号2・レアリティM（神話レア）・非Foilを登録する。棚番号登録画面で本店の棚番号を登録する（名称「W-108」・並び順1）。略称タグ登録画面で略称タグを登録する（名称「TAG-M0701-CB108-1」・並び順1・アルファベット順ソートフラグを付けない）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0701-CB108-X」・商品名(日)は「戻し組合せ品-M0701-CB108-X」・商品名(英)は「Return Order M0701-CB108-X」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格0・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0701-CB108-Y」・商品名(日)は「戻し組合せ品-M0701-CB108-Y」・商品名(英)は「Return Order M0701-CB108-Y」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格0・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が商品ごとに1件ずつ作られる。各商品について、商品マスター(検索入力)で商品コードを入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで先に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)・商品名(英)にCSVの値を入れ直し（カード指定で自動で入った値は書き換える）、略称タグを選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品ごとの略称タグはXは「TAG-M0701-CB108-1」、Yは「TAG-M0701-CB108-1」。規格は、X（商品コードM0701-CB108-X）は、商品登録編集画面の「規格設定」ボタンから商品規格一覧を開き、取り込みで作られた状態ニアミント・日本語の規格の行を開き、商品規格登録編集画面で棚番号に「W-108」を入れ、部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す／Y（商品コードM0701-CB108-Y）は、商品登録編集画面の「規格設定」ボタンから商品規格一覧を開き、取り込みで作られた状態ニアミント・日本語の規格の行を開き、商品規格登録編集画面で棚番号に「W-108」を入れ、部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。(2) フロントの新規会員登録画面でお名前(姓)に「戻組合せ辛」、お名前(名)とフリガナに他のケースの検索条件に一致しない値、メールアドレスに「cbm0701-108@example.test」、パスワードに「Passw0rd-CBM0701108」、生年月日・住所・電話番号などの必須項目に有効な値を入れて「同意する」を押し、届いたメールの本会員登録用URLを開いて本会員にする。(3) その会員でフロントにログインし、ネット買取商品詳細画面で買取価格500円以上の公開中の商品の「カートに入れる」を押し、買取カート画面で「買取手続きへ」を押し、買取手続き画面で銀行名・支店名・口座種別・口座番号・口座名義・箱数・買取の承諾方法・適格請求発行事業者の確認（職業が表示されたときは職業も）に有効な値を入れ、「ネット買取規約同意」にチェックを入れて「申込み」ボタンを押し、表示されたモーダルの「申込み」ボタンを押す。(4) 管理画面の買取検索一覧画面で注文者名にその会員の姓を入れて「検索する >」を押し、先頭行（いちばん新しい買取）の買取番号を控える（〔買取番号-M0701-108〕）。(5) 買取検索一覧画面で〔買取番号-M0701-108〕の買取番号リンクを押して買取情報編集画面を開き、買取状況に「査定内容承諾」を選んで「保存」を押す。続けて実在庫情報の「編集」を押し、「商品追加」で、先にYの規格（商品コードM0701-CB108-Y）、次にXの規格（商品コードM0701-CB108-X）を1件ずつ検索して選び、増減数にそれぞれ1を入れて「追加品確定」を押す。(6) 買取検索一覧画面で〔買取番号-M0701-108〕の買取番号リンクを押して買取情報編集画面を開き、買取状況に「入庫待ち」を選んで「保存」を押す（戻しリストはダウンロードしない。棚戻し状態は棚戻し未のまま）。	ケース専用
+S-M07-01-CBSORT-109	買取・実在庫	戻しリスト並び順の組合せデータ（カード番号または英語のカード名）	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0701-109〕）／注文者名=戻組合せ壬／買取番号〔買取番号-M0701-109〕／状態=入庫待ち／棚戻し状態=棚戻し未／実在庫2件（Xは商品名「戻し組合せ品-M0701-CB109-X」（商品コードM0701-CB109-X）・基準価格500円・棚番号W-109・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB109-1・レアリティM（神話レア）・色赤・カード番号2・カードの英語名M0701-CB109-Alpha・数量1／Yは商品名「戻し組合せ品-M0701-CB109-Y」（商品コードM0701-CB109-Y）・基準価格500円・棚番号W-109・言語日本語・状態ニアミント・非Foil・略称タグTAG-M0701-CB109-1・レアリティM（神話レア）・色赤・カード番号1・カードの英語名M0701-CB109-Beta・数量1）／並び順は英語のカード名で決まる	IT-M07-01-109専用。戻しリストCSVの並び順（英語のカード名で決まる）	(1) 実在庫にする商品を用意する。管理画面のカード登録画面でカード2件を登録する（英語名「M0701-CB109-Alpha」・色赤・色順赤／英語名「M0701-CB109-Beta」・色赤・色順赤）。各カードのカード詳細に、M0701-CB109-Alphaはカード番号2・レアリティM（神話レア）・非Foil／M0701-CB109-Betaはカード番号1・レアリティM（神話レア）・非Foilを登録する。棚番号登録画面で本店の棚番号を登録する（名称「W-109」・並び順1）。略称タグ登録画面で略称タグを登録する（名称「TAG-M0701-CB109-1」・並び順1・アルファベット順ソートフラグを付ける）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0701-CB109-X」・商品名(日)は「戻し組合せ品-M0701-CB109-X」・商品名(英)は「Return Order M0701-CB109-X」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格0・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0701-CB109-Y」・商品名(日)は「戻し組合せ品-M0701-CB109-Y」・商品名(英)は「Return Order M0701-CB109-Y」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格500・販売価格500・買取価格0・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が商品ごとに1件ずつ作られる。各商品について、商品マスター(検索入力)で商品コードを入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで先に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)・商品名(英)にCSVの値を入れ直し（カード指定で自動で入った値は書き換える）、略称タグを選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品ごとの略称タグはXは「TAG-M0701-CB109-1」、Yは「TAG-M0701-CB109-1」。規格は、X（商品コードM0701-CB109-X）は、商品登録編集画面の「規格設定」ボタンから商品規格一覧を開き、取り込みで作られた状態ニアミント・日本語の規格の行を開き、商品規格登録編集画面で棚番号に「W-109」を入れ、部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す／Y（商品コードM0701-CB109-Y）は、商品登録編集画面の「規格設定」ボタンから商品規格一覧を開き、取り込みで作られた状態ニアミント・日本語の規格の行を開き、商品規格登録編集画面で棚番号に「W-109」を入れ、部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。(2) フロントの新規会員登録画面でお名前(姓)に「戻組合せ壬」、お名前(名)とフリガナに他のケースの検索条件に一致しない値、メールアドレスに「cbm0701-109@example.test」、パスワードに「Passw0rd-CBM0701109」、生年月日・住所・電話番号などの必須項目に有効な値を入れて「同意する」を押し、届いたメールの本会員登録用URLを開いて本会員にする。(3) その会員でフロントにログインし、ネット買取商品詳細画面で買取価格500円以上の公開中の商品の「カートに入れる」を押し、買取カート画面で「買取手続きへ」を押し、買取手続き画面で銀行名・支店名・口座種別・口座番号・口座名義・箱数・買取の承諾方法・適格請求発行事業者の確認（職業が表示されたときは職業も）に有効な値を入れ、「ネット買取規約同意」にチェックを入れて「申込み」ボタンを押し、表示されたモーダルの「申込み」ボタンを押す。(4) 管理画面の買取検索一覧画面で注文者名にその会員の姓を入れて「検索する >」を押し、先頭行（いちばん新しい買取）の買取番号を控える（〔買取番号-M0701-109〕）。(5) 買取検索一覧画面で〔買取番号-M0701-109〕の買取番号リンクを押して買取情報編集画面を開き、買取状況に「査定内容承諾」を選んで「保存」を押す。続けて実在庫情報の「編集」を押し、「商品追加」で、先にYの規格（商品コードM0701-CB109-Y）、次にXの規格（商品コードM0701-CB109-X）を1件ずつ検索して選び、増減数にそれぞれ1を入れて「追加品確定」を押す。(6) 買取検索一覧画面で〔買取番号-M0701-109〕の買取番号リンクを押して買取情報編集画面を開き、買取状況に「入庫待ち」を選んで「保存」を押す（戻しリストはダウンロードしない。棚戻し状態は棚戻し未のまま）。	ケース専用
+
+exec
+/bin/bash -lc "grep '"'^S-M07-01-CBSORT-094'"\\|"'^S-M07-01-CBSORT-095'"' integration_test/casegen/combination/cases/M07-01_cb_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+S-M07-01-CBSORT-094	買取・商品・明細	買取商品一覧CSVの並び順（商品コードの有無）データ		IT-M07-01-094専用。買取商品一覧CSVの並び順	グッズ商品CSV登録で雛形ファイルをダウンロードし、次の行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（各行の共通の値は、商品IDは空・言語(ID)は日本語のID・商品公開ステータスと支店の商品公開ステータスは公開を表す値・サイズ1・重量1・商品カテゴリ(ID)はグッズ配下の既存カテゴリのID・購入グループ名称は既存の購入グループの名称・基準価格100・販売価格100・買取価格10・原価単価10・部門IDは空）: 商品コード「M0701-CB094-P」・商品名(日)「M0701-CB094-NAME」・商品名(英)「M0701-CB094-NAME-EN」。商品マスター(検索入力)でコードに「M0701-CB094-P」を入れて「検索する >」を押し、商品マスター(検索結果)の行に表示された商品IDを控える（商品コード「M0701-CB094-P」の商品ID〔商品ID-M0701-094-P〕）。(1) フロントの新規会員登録画面でお名前(姓)に「M0701-CB094-X」、お名前(名)とフリガナに他のケースの検索条件に一致しない値、メールアドレスに「cbm0701-094@example.test」、パスワードに「Passw0rd-CBM0701094」、生年月日・住所・電話番号などの必須項目に有効な値を入れて「同意する」を押し、届いたメールの本会員登録用URLを開いて本会員にする。(2) 買取の申込みを1回行う（その会員でフロントにログインし、ネット買取商品詳細画面で買取価格500円以上の公開中の商品の「カートに入れる」を押し、買取カート画面で「買取手続きへ」を押し、買取手続き画面で銀行名・支店名・口座種別・口座番号・口座名義・箱数・買取の承諾方法・適格請求発行事業者の確認（職業が表示されたときは職業も）に有効な値を入れ、「ネット買取規約同意」にチェックを入れて「申込み」ボタンを押し、表示されたモーダルの「申込み」ボタンを押す）。申込みのあと、管理画面の買取検索一覧画面で注文者名にその会員の姓を入れて「検索する >」を押し、先頭行の買取番号を控える（〔買取番号-M0701-094〕）。(3) 〔商品ID-M0701-094-P〕の商品に、商品コードを持たない規格を1件DBへ直接追加する（画面で商品コードなしの規格を作れないため）。(4) 買取番号〔買取番号-M0701-094〕の明細は画面で指定できないためDBへ直接設定する（既存の明細は削除し、商品コードなしの規格の通常買取明細（数量3・状態NM・売却状態は売却する）を先に、続けて商品コードM0701-CB094-Pの規格の通常買取明細（数量2・状態NM・売却状態は売却する）を登録する）。	ケース専用
+S-M07-01-CBSORT-095	買取・商品・明細	買取商品一覧CSVの並び順（全段が同じ）データ		IT-M07-01-095専用。買取商品一覧CSVの並び順	グッズ商品CSV登録で雛形ファイルをダウンロードし、次の行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（各行の共通の値は、商品IDは空・言語(ID)は日本語のID・商品公開ステータスと支店の商品公開ステータスは公開を表す値・サイズ1・重量1・商品カテゴリ(ID)はグッズ配下の既存カテゴリのID・購入グループ名称は既存の購入グループの名称・基準価格100・販売価格100・買取価格10・原価単価10・部門IDは空）: 商品コード「M0701-CB095-P」・商品名(日)「M0701-CB095-NAME」・商品名(英)「M0701-CB095-NAME-EN」。商品マスター(検索入力)でコードに「M0701-CB095-P」を入れて「検索する >」を押し、商品マスター(検索結果)の行に表示された商品IDを控える（商品コード「M0701-CB095-P」の商品ID〔商品ID-M0701-095-P〕）。(1) フロントの新規会員登録画面でお名前(姓)に「M0701-CB095-X」、お名前(名)とフリガナに他のケースの検索条件に一致しない値、メールアドレスに「cbm0701-095@example.test」、パスワードに「Passw0rd-CBM0701095」、生年月日・住所・電話番号などの必須項目に有効な値を入れて「同意する」を押し、届いたメールの本会員登録用URLを開いて本会員にする。(2) 買取の申込みを1回行う（その会員でフロントにログインし、ネット買取商品詳細画面で買取価格500円以上の公開中の商品の「カートに入れる」を押し、買取カート画面で「買取手続きへ」を押し、買取手続き画面で銀行名・支店名・口座種別・口座番号・口座名義・箱数・買取の承諾方法・適格請求発行事業者の確認（職業が表示されたときは職業も）に有効な値を入れ、「ネット買取規約同意」にチェックを入れて「申込み」ボタンを押し、表示されたモーダルの「申込み」ボタンを押す）。申込みのあと、管理画面の買取検索一覧画面で注文者名にその会員の姓を入れて「検索する >」を押し、先頭行の買取番号を控える（〔買取番号-M0701-095〕）。(3) 買取番号〔買取番号-M0701-095〕の明細は画面で指定できないためDBへ直接設定する（既存の明細は削除し、〔商品ID-M0701-095-P〕の商品の同じ規格（商品コードM0701-CB095-P）の通常買取明細を、数量2と数量3の2件を、いずれも状態NM・売却状態は売却するで登録する）。	ケース専用
+
+exec
+/bin/bash -lc "sed -n '70,82p' integration_test/casegen/combination/units/M03-02/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0069	機能仕様処理概要（★はカスタマイズ項目）
+L0070	カードセットID編集について
+L0071	★識別ID:12「カードセット」を追加
+L0072	カードセットマスタより一覧取得、選択肢にセットする
+L0073	編集中の商品がシングルカードの場合、カードセットは編集できないようにする
+L0074	商品新規登録について
+L0075	★商品新規登録のアクセスを禁止する
+L0076	商品新規登録のURL(下記)にアクセスすると、404(Page Not Found)エラーを返すように改修
+L0077	/admin/product/product/new
+L0078	★識別ID:26「複製」ボタンを削除する。
+L0079	商品公開ステータスについて
+L0080	★識別ID:34「商品公開ステータス」の設置場所を画面右上から右下へ移動、選択肢「廃止」を追加する
+L0081	★識別ID:22「支店の商品公開ステータス」を新設する、選択肢は「公開」「非公開」の二択。
+
+codex
+M07-01では棚番の昇順と期待する行順が逆になっているケースを確認しました。M07-03では、メールと一覧表示を一つの期待結果にまとめたケースがあり、設計書の処理ごとに確認先を照合しています。
+exec
+/bin/bash -lc 'cut -f1,4,6 integration_test/casegen/combination/cases/M07-03_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+シードID	状態・属性	投入方法
+S-M07-03-CBIDOK-154	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0703-154〕）／買取状況=査定内容承諾／身分証明書=自動車運転免許証／その会員の本人確認=簡易書留確認済み／買取合計=9999（サプライ品M0703-CB154-SUP 査定価格9999・数量1）	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0703-CB154-SUP」・商品名(日)は「M0703-CB154-SUP」・商品名(英)は「M0703-CB154-SUP」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・部門IDは空）。グッズ商品は状態ニアミント・日本語の規格が1件ずつ作られる。管理画面の会員登録編集（新規）で、お名前姓に「晴屋」、お名前名に「買取154」、お名前姓（カナ）に「ハレヤ」、お名前名（カナ）に「カイトリ」、郵便番号に101と0001、都道府県に「東京都」、住所1に「千代田区」、住所2に「神田」、メールアドレスにcbm0703-154@example.test、電話番号に090・1234・5678、パスワードとパスワード（確認）に同じ任意の値、職業に「会社員」、生年月日に1990年1月1日、本人確認ステータスに「簡易書留確認済み」、会員ステータスに「本会員」を入れて「会員情報を登録」を押す。フロント画面にその会員でログインし、ネット買取商品詳細で商品コードM0703-CB154-SUPの商品の商品数を1にして「カートに入れる」を押す。ネット買取カートで「買取手続きへ」を押し、買取手続きで銀行名に「晴屋銀行」、支店名に「本店」、口座種別に「普通」、口座番号に1234567、口座名義に「ハレヤカイトリ」、箱数に1、買取の承諾方法に「査定結果を確認してから承諾する」、適格請求発行事業者の確認に「いいえ」を入れ、ネット買取規約同意にチェックして「申込み」を押し、確認のモーダルで「申込み」を押す。管理画面の買取一覧で買取依頼者氏名「晴屋 買取154」の行に表示された買取番号を控える（〔買取番号-M0703-154〕）。管理画面の買取情報編集（〔買取番号-M0703-154〕）で、買取状況に「査定内容承諾」を選び、「査定編集」を押してM0703-CB154-SUPの査定価格に9999・数量に1を入れて「査定確定」を押し、買取依頼者情報の「編集」を押して身分証明書に「自動車運転免許証」を入れて「確定」を押し、「保存」を押す。
+S-M07-03-CBMAIL-155	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0703-155〕）／買取状況=振込依頼済み／身分証明書=自動車運転免許証／過去の振込完了履歴=0件／個別入力商品=IND-M0703-CB155-Aは売却する・実在庫登録済み・IND-M0703-CB155-Bは売却する・実在庫未登録	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0703-CB155-FB」・商品名(日)は「M0703-CB155-FB」・商品名(英)は「M0703-CB155-FB」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・部門IDは空）。グッズ商品は状態ニアミント・日本語の規格が1件ずつ作られる。管理画面の会員登録編集（新規）で、お名前姓に「晴屋」、お名前名に「買取155」、お名前姓（カナ）に「ハレヤ」、お名前名（カナ）に「カイトリ」、郵便番号に101と0001、都道府県に「東京都」、住所1に「千代田区」、住所2に「神田」、メールアドレスにcbm0703-155@example.test、電話番号に090・1234・5678、パスワードとパスワード（確認）に同じ任意の値、職業に「会社員」、生年月日に1990年1月1日、会員ステータスに「本会員」を入れて「会員情報を登録」を押す。フロント画面にその会員でログインし、ネット買取商品詳細で商品コードM0703-CB155-FBの商品の商品数を1にして「カートに入れる」を押す。ネット買取カートで「買取手続きへ」を押し、買取手続きで銀行名に「晴屋銀行」、支店名に「本店」、口座種別に「普通」、口座番号に1234567、口座名義に「ハレヤカイトリ」、箱数に1、買取の承諾方法に「査定結果を確認してから承諾する」、適格請求発行事業者の確認に「いいえ」を入れ、ネット買取規約同意にチェックして「申込み」を押し、確認のモーダルで「申込み」を押す。管理画面の買取一覧で買取依頼者氏名「晴屋 買取155」の行に表示された買取番号を控える（〔買取番号-M0703-155〕）。管理画面の買取情報編集（〔買取番号-M0703-155〕）で、買取依頼者情報の「編集」を押して身分証明書に「自動車運転免許証」を入れて「確定」を押し、買取状況に「振込依頼済み」を選び、「保存」を押す。個別入力商品2件（IND-M0703-CB155-A（査定価格500・数量1・売却する・実在庫登録済み。対応する実在庫情報は商品コードM0703-CB155-FB・数量1・買取単価500・買取小計500）、IND-M0703-CB155-B（査定価格500・数量1・売却する・実在庫未登録））は画面で指定できないためDBへ直接設定する（〔買取番号-M0703-155〕の買取に紐づける）。
+S-M07-03-CBMAIL-156	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0703-156〕）／買取状況=振込依頼済み／身分証明書=自動車運転免許証／過去の振込完了履歴=1件／宛先=cbm0703-156@example.test／当該履歴に対応する受信済み振込完了メール=1件／個別入力商品=IND-M0703-CB156-Aは売却する・実在庫登録済み	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0703-CB156-FB」・商品名(日)は「M0703-CB156-FB」・商品名(英)は「M0703-CB156-FB」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・部門IDは空）。グッズ商品は状態ニアミント・日本語の規格が1件ずつ作られる。管理画面の会員登録編集（新規）で、お名前姓に「晴屋」、お名前名に「買取156」、お名前姓（カナ）に「ハレヤ」、お名前名（カナ）に「カイトリ」、郵便番号に101と0001、都道府県に「東京都」、住所1に「千代田区」、住所2に「神田」、メールアドレスにcbm0703-156@example.test、電話番号に090・1234・5678、パスワードとパスワード（確認）に同じ任意の値、職業に「会社員」、生年月日に1990年1月1日、会員ステータスに「本会員」を入れて「会員情報を登録」を押す。フロント画面にその会員でログインし、ネット買取商品詳細で商品コードM0703-CB156-FBの商品の商品数を1にして「カートに入れる」を押す。ネット買取カートで「買取手続きへ」を押し、買取手続きで銀行名に「晴屋銀行」、支店名に「本店」、口座種別に「普通」、口座番号に1234567、口座名義に「ハレヤカイトリ」、箱数に1、買取の承諾方法に「査定結果を確認してから承諾する」、適格請求発行事業者の確認に「いいえ」を入れ、ネット買取規約同意にチェックして「申込み」を押し、確認のモーダルで「申込み」を押す。管理画面の買取一覧で買取依頼者氏名「晴屋 買取156」の行に表示された買取番号を控える（〔買取番号-M0703-156〕）。管理画面の買取情報編集（〔買取番号-M0703-156〕）で、買取依頼者情報の「編集」を押して身分証明書に「自動車運転免許証」を入れて「確定」を押し、買取状況に「振込依頼済み」を選び、「保存」を押す。続けて同じ買取情報編集で、買取状況に「振込完了」を選び、「保存」を押す。メール受信確認画面でcbm0703-156@example.test宛ての振込完了メール1件を確かめ、買取情報編集で振込完了の履歴1件を確かめる。続けて買取状況に「振込依頼済み」を選び、「保存」を押す。個別入力商品1件（IND-M0703-CB156-A（査定価格500・数量1・売却する・実在庫登録済み。対応する実在庫情報は商品コードM0703-CB156-FB・数量1・買取単価500・買取小計500））は画面で指定できないためDBへ直接設定する（〔買取番号-M0703-156〕の買取に紐づける）。
+S-M07-03-CBMAIL-157	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0703-157〕）／買取状況=振込依頼済み／身分証明書=自動車運転免許証／過去の振込完了履歴=1件／宛先=cbm0703-157@example.test／当該履歴に対応する受信済み振込完了メール=1件／個別入力商品=IND-M0703-CB157-Aは売却する・実在庫登録済み・IND-M0703-CB157-Bは売却する・実在庫未登録	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0703-CB157-FB」・商品名(日)は「M0703-CB157-FB」・商品名(英)は「M0703-CB157-FB」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・部門IDは空）。グッズ商品は状態ニアミント・日本語の規格が1件ずつ作られる。管理画面の会員登録編集（新規）で、お名前姓に「晴屋」、お名前名に「買取157」、お名前姓（カナ）に「ハレヤ」、お名前名（カナ）に「カイトリ」、郵便番号に101と0001、都道府県に「東京都」、住所1に「千代田区」、住所2に「神田」、メールアドレスにcbm0703-157@example.test、電話番号に090・1234・5678、パスワードとパスワード（確認）に同じ任意の値、職業に「会社員」、生年月日に1990年1月1日、会員ステータスに「本会員」を入れて「会員情報を登録」を押す。フロント画面にその会員でログインし、ネット買取商品詳細で商品コードM0703-CB157-FBの商品の商品数を1にして「カートに入れる」を押す。ネット買取カートで「買取手続きへ」を押し、買取手続きで銀行名に「晴屋銀行」、支店名に「本店」、口座種別に「普通」、口座番号に1234567、口座名義に「ハレヤカイトリ」、箱数に1、買取の承諾方法に「査定結果を確認してから承諾する」、適格請求発行事業者の確認に「いいえ」を入れ、ネット買取規約同意にチェックして「申込み」を押し、確認のモーダルで「申込み」を押す。管理画面の買取一覧で買取依頼者氏名「晴屋 買取157」の行に表示された買取番号を控える（〔買取番号-M0703-157〕）。管理画面の買取情報編集（〔買取番号-M0703-157〕）で、買取依頼者情報の「編集」を押して身分証明書に「自動車運転免許証」を入れて「確定」を押し、買取状況に「振込依頼済み」を選び、「保存」を押す。続けて同じ買取情報編集で、買取状況に「振込完了」を選び、「保存」を押す。メール受信確認画面でcbm0703-157@example.test宛ての振込完了メール1件を確かめ、買取情報編集で振込完了の履歴1件を確かめる。続けて買取状況に「振込依頼済み」を選び、「保存」を押す。個別入力商品2件（IND-M0703-CB157-A（査定価格500・数量1・売却する・実在庫登録済み。対応する実在庫情報は商品コードM0703-CB157-FB・数量1・買取単価500・買取小計500）、IND-M0703-CB157-B（査定価格500・数量1・売却する・実在庫未登録））は画面で指定できないためDBへ直接設定する（〔買取番号-M0703-157〕の買取に紐づける）。
+S-M07-03-CBNOSALE-158	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0703-158〕）／承諾方法=自動承諾／買取状況=MTGBuyer査定完了／査定内容承諾への変更履歴=0件／実在庫情報と実在庫履歴=0件／選んで買取のサプライ品M0703-CB158-SUP（査定価格1000・数量2・売却しない）	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0703-CB158-SUP」・商品名(日)は「M0703-CB158-SUP」・商品名(英)は「M0703-CB158-SUP」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・部門IDは空）。グッズ商品は状態ニアミント・日本語の規格が1件ずつ作られる。管理画面の会員登録編集（新規）で、お名前姓に「晴屋」、お名前名に「買取158」、お名前姓（カナ）に「ハレヤ」、お名前名（カナ）に「カイトリ」、郵便番号に101と0001、都道府県に「東京都」、住所1に「千代田区」、住所2に「神田」、メールアドレスにcbm0703-158@example.test、電話番号に090・1234・5678、パスワードとパスワード（確認）に同じ任意の値、職業に「会社員」、生年月日に1990年1月1日、会員ステータスに「本会員」を入れて「会員情報を登録」を押す。フロント画面にその会員でログインし、ネット買取商品詳細で商品コードM0703-CB158-SUPの商品の商品数を2にして「カートに入れる」を押す。ネット買取カートで「買取手続きへ」を押し、買取手続きで銀行名に「晴屋銀行」、支店名に「本店」、口座種別に「普通」、口座番号に1234567、口座名義に「ハレヤカイトリ」、箱数に1、買取の承諾方法に「自動承諾を利用する」、適格請求発行事業者の確認に「いいえ」を入れ、ネット買取規約同意にチェックして「申込み」を押し、確認のモーダルで「申込み」を押す。管理画面の買取一覧で買取依頼者氏名「晴屋 買取158」の行に表示された買取番号を控える（〔買取番号-M0703-158〕）。管理画面の買取情報編集（〔買取番号-M0703-158〕）で、「査定編集」を押してM0703-CB158-SUPの査定価格に1000・数量に2・売却に「しない」を入れて「査定確定」を押し、買取状況に「MTGBuyer査定完了」を選び、「保存」を押す。
+S-M07-03-CBINDIV-159	買取番号は登録時に画面が振る（控える。以下〔買取番号-M0703-159〕）／承諾方法=自動承諾／買取状況=MTGBuyer査定完了／査定内容承諾への変更履歴=0件／実在庫情報と実在庫履歴=0件／選んで買取のサプライ品M0703-CB159-SUP（査定価格1000・数量2・売却しない）／個別入力商品IND-M0703-CB159-A（査定価格1000・数量1・売却する・実在庫未登録）	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0703-CB159-SUP」・商品名(日)は「M0703-CB159-SUP」・商品名(英)は「M0703-CB159-SUP」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・部門IDは空）。グッズ商品は状態ニアミント・日本語の規格が1件ずつ作られる。管理画面の会員登録編集（新規）で、お名前姓に「晴屋」、お名前名に「買取159」、お名前姓（カナ）に「ハレヤ」、お名前名（カナ）に「カイトリ」、郵便番号に101と0001、都道府県に「東京都」、住所1に「千代田区」、住所2に「神田」、メールアドレスにcbm0703-159@example.test、電話番号に090・1234・5678、パスワードとパスワード（確認）に同じ任意の値、職業に「会社員」、生年月日に1990年1月1日、会員ステータスに「本会員」を入れて「会員情報を登録」を押す。フロント画面にその会員でログインし、ネット買取商品詳細で商品コードM0703-CB159-SUPの商品の商品数を2にして「カートに入れる」を押す。ネット買取カートで「買取手続きへ」を押し、買取手続きで銀行名に「晴屋銀行」、支店名に「本店」、口座種別に「普通」、口座番号に1234567、口座名義に「ハレヤカイトリ」、箱数に1、買取の承諾方法に「自動承諾を利用する」、適格請求発行事業者の確認に「いいえ」を入れ、ネット買取規約同意にチェックして「申込み」を押し、確認のモーダルで「申込み」を押す。管理画面の買取一覧で買取依頼者氏名「晴屋 買取159」の行に表示された買取番号を控える（〔買取番号-M0703-159〕）。管理画面の買取情報編集（〔買取番号-M0703-159〕）で、「査定編集」を押してM0703-CB159-SUPの査定価格に1000・数量に2・売却に「しない」を入れて「査定確定」を押し、買取状況に「MTGBuyer査定完了」を選び、「保存」を押す。個別入力商品IND-M0703-CB159-A（査定価格1000・数量1・売却する・実在庫未登録）は画面で指定できないためDBへ直接設定する（〔買取番号-M0703-159〕の買取に紐づける）。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M07-03_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	買取状況を振込依頼済みへ変えて保存する	買取情報編集画面で買取状況を振込依頼済みにして保存を押す	買取情報（DBの買取状況）	L0078-L0080,L0445
+P2	買取状況を振込完了へ変えて保存する	買取情報編集画面で買取状況を振込完了にして保存を押す	振込完了メール・買取情報（DBの買取状況）	L0081-L0086,L0236,L0250-L0251
+P3	買取状況を査定内容承諾へ変えて保存する	買取情報編集画面で買取状況を査定内容承諾にして保存を押す	実在庫情報・実在庫履歴（DB）	L0087-L0089,L0084
+P4	買取状況を変えて保存する（入庫済みへの変更と入庫済みからの変更）	買取情報編集画面で買取状況を変更して保存を押す	買取情報（DBの買取状況）・本店のECCUBE在庫	L0090-L0100,L0092,L0108
+P5	個別入力商品の実在庫を登録する	個別入力商品の実在庫登録ボタンを押し、商品を選択する	実在庫情報・買取情報（DBの買取状況）	L0235-L0242,L0250-L0251,L0317-L0318,L0445
+
+exec
+/bin/bash -lc "grep '"'^S-M07-01-ADM'"\\|"'^S-M07-01-RETURN-CONFIG'"' integration_test/casegen/cases/M07-01_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+S-M07-01-ADM	管理者	M07-01試験管理者	ログインID=m0701_admin／パスワード=Passw0rd!M0701／稼働中／ネット買取管理を操作できる	全ケースの管理画面操作。ログイン試行回数やロック状態を変更しない	管理画面のメンバー管理で登録し、ネット買取管理の操作権限を付与する	共有可
+S-M07-01-RETURN-CONFIG	基本設定	戻しリスト並び順設定	本店の金額閾値第1=1000円、第2=5000円、第3=未設定／色順=赤、青／略称タグTAG-C=コレクター番号順、TAG-A=英語カード名順	戻しリストの区分と並び順。各ケースが開始時に必要な値を自分で設定する	(1) 管理画面の基本設定画面（本店）で高額商品閾値1に「1000」、高額商品閾値2に「5000」を入れ、高額商品閾値3を空にして「登録」を押す。(2) MTGマスターデータ画面で「色順」を選んで「選択」を押し、赤の並び順の値を青より小さくして「登録」を押す。(3) 略称タグ登録画面で名称「TAG-C」はアルファベット順ソートフラグを外し、名称「TAG-A」はアルファベット順ソートフラグを付けて、それぞれ「登録」を押す（無いときは名称と並び順を入れて新しく登録する）。	共有可
+
+exec
+/bin/bash -lc "grep -n '500円\\|買取価格' integration_test/casegen/combination/units/M07-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+241:L0239	項目：商品コード,在庫増減数,商品名,販売価格,買取価格,言語ID,略称タグ,レアリティ,状態
+
+exec
+/bin/bash -lc "grep -c '買取価格0' integration_test/casegen/combination/cases/M07-01_cb_seed_data.tsv && grep -c '買取価格500円以上の公開中の商品' integration_test/casegen/combination/cases/M07-01_cb_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+11
+15
+
+exec
+/bin/bash -lc "grep -n '専用DB\\|各ケースは\\|単独' integration_test/casegen/precond/README.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+23:| P1 | **各ケースは単独で成立する。** 他のケースを先に実行しても、後に実行しても、実行しなくても、事前準備どおりの状態から始められる |
+107:- **専用DBで流す。** 結合テストは機能（またはモジュール）ごとに、まっさらな専用DBへシードを投入して流す。検索・一覧・集計で「このN件だけ」を期待するケースは、開始時に同じ条件に当たる他のデータを削除して隔離しており、共有の試験環境では他機能のデータを消しうる
+
+codex
+### 指摘（M07-01 / IT-M07-01-101）
+- 主張: IT-M07-01-101〜111のシードは、作成する商品の買取価格を0円としながら、申込みには「買取価格500円以上の公開中の商品」を使う。
+- 実際: 設計書L0282は「チェックした買取情報の実在庫情報を参照し出力する」と定める。これらのケースの使用シードには、申込みに使う500円以上の商品がない。
+- 判定: 成立しない前提・手順
+- 修正案: IT-M07-01-101〜111の各シードで、申込みに使う商品を具体的に用意する。
+
+### 指摘（M07-01 / IT-M07-01-102）
+- 主張: 棚番号W-102のXを、V-102のYより先に出力すると期待している。
+- 実際: 設計書L0284〜L0286は、金額閾値内では「棚番（昇順）」と定める。同じ価格帯ならV-102がW-102より先になる。
+- 判定: 期待結果の誤り
+- 修正案: 期待する行順をY、Xに直す。
+
+### 指摘（M07-01 / IT-M07-01-110）
+- 主張: 棚番号W-110のXを、V-110のYより先にPDFへ表示すると期待している。
+- 実際: 設計書L0284〜L0286は、金額閾値内では「棚番（昇順）」と定める。同じ価格帯ならV-110がW-110より先になる。
+- 判定: 期待結果の誤り
+- 修正案: 期待する表示順をY、Xに直す。
+
+### 指摘（M07-01 / CB-M07-01-020）
+- 主張: 「全段が同じなら並び順に差が付かず、結果が一意に決まらない」としてケースにしない。
+- 実際: 設計書L0282は「チェックした買取情報の実在庫情報を参照し出力する」と定める。L0284〜L0294に同値の行どうしの順序指定はないが、選んだ実在庫の行が出力されるかは確認できる。
+- 判定: ケースにできる
+- 修正案: 行順を問わず、用意した実在庫の行が出力されるケースにする。
+
+### 指摘（M07-03 / IT-M07-03-155）
+- 主張: 一つの期待結果で「振込完了メールが1件届き」、買取検索一覧の状況が「未登録在庫あり」と表示されることを確認する。
+- 実際: 設計書L0082〜L0083はメール送信を、L0085〜L0086は個別入力商品の登録状況による買取状況を、それぞれ別の結果として定める。
+- 判定: 複数の期待結果
+- 修正案: メール受信先での確認と買取状況の確認を別ケースに分ける。
+
+### 指摘（M07-03 / IT-M07-03-156）
+- 主張: 一つの期待結果で「メールが事前準備の1件のまま増えず」、一覧の状況が「入庫待ち」と表示されることを確認する。
+- 実際: 設計書L0083は履歴がある場合のメール不送信を、L0085〜L0086は実在庫登録状況による買取状況を、それぞれ定める。
+- 判定: 複数の期待結果
+- 修正案: メール件数と買取状況を別ケースで確認する。
+
+### 指摘（M07-03 / IT-M07-03-157）
+- 主張: 一つの期待結果で「メールが事前準備の1件のまま増えず」、一覧の状況が「未登録在庫あり」と表示されることを確認する。
+- 実際: 設計書L0083は履歴がある場合のメール不送信を、L0085〜L0086は実在庫登録状況による買取状況を、それぞれ定める。
+- 判定: 複数の期待結果
+- 修正案: メール件数と買取状況を別ケースで確認する。
+
+### 指摘（M07-08 / IT-M07-08-015）
+- 主張: IT-M07-08-015・016・019の各シードは、商品コードを検索して既存商品の編集を始め、その商品を使った実在庫からCSVを確認する。
+- 実際: 設計書M07-01のL0282は、戻しリストが「チェックした買取情報の実在庫情報を参照し出力する」と定める。各シードの投入方法には、検索対象の商品を作成する手順がない。
+- 判定: 成立しない前提・手順
+- 修正案: IT-M07-08-015・016・019の各シードに、検索に先立つ対象商品の作成手順を加える。
+tokens used
+103,400
+### 指摘（M07-01 / IT-M07-01-101）
+- 主張: IT-M07-01-101〜111のシードは、作成する商品の買取価格を0円としながら、申込みには「買取価格500円以上の公開中の商品」を使う。
+- 実際: 設計書L0282は「チェックした買取情報の実在庫情報を参照し出力する」と定める。これらのケースの使用シードには、申込みに使う500円以上の商品がない。
+- 判定: 成立しない前提・手順
+- 修正案: IT-M07-01-101〜111の各シードで、申込みに使う商品を具体的に用意する。
+
+### 指摘（M07-01 / IT-M07-01-102）
+- 主張: 棚番号W-102のXを、V-102のYより先に出力すると期待している。
+- 実際: 設計書L0284〜L0286は、金額閾値内では「棚番（昇順）」と定める。同じ価格帯ならV-102がW-102より先になる。
+- 判定: 期待結果の誤り
+- 修正案: 期待する行順をY、Xに直す。
+
+### 指摘（M07-01 / IT-M07-01-110）
+- 主張: 棚番号W-110のXを、V-110のYより先にPDFへ表示すると期待している。
+- 実際: 設計書L0284〜L0286は、金額閾値内では「棚番（昇順）」と定める。同じ価格帯ならV-110がW-110より先になる。
+- 判定: 期待結果の誤り
+- 修正案: 期待する表示順をY、Xに直す。
+
+### 指摘（M07-01 / CB-M07-01-020）
+- 主張: 「全段が同じなら並び順に差が付かず、結果が一意に決まらない」としてケースにしない。
+- 実際: 設計書L0282は「チェックした買取情報の実在庫情報を参照し出力する」と定める。L0284〜L0294に同値の行どうしの順序指定はないが、選んだ実在庫の行が出力されるかは確認できる。
+- 判定: ケースにできる
+- 修正案: 行順を問わず、用意した実在庫の行が出力されるケースにする。
+
+### 指摘（M07-03 / IT-M07-03-155）
+- 主張: 一つの期待結果で「振込完了メールが1件届き」、買取検索一覧の状況が「未登録在庫あり」と表示されることを確認する。
+- 実際: 設計書L0082〜L0083はメール送信を、L0085〜L0086は個別入力商品の登録状況による買取状況を、それぞれ別の結果として定める。
+- 判定: 複数の期待結果
+- 修正案: メール受信先での確認と買取状況の確認を別ケースに分ける。
+
+### 指摘（M07-03 / IT-M07-03-156）
+- 主張: 一つの期待結果で「メールが事前準備の1件のまま増えず」、一覧の状況が「入庫待ち」と表示されることを確認する。
+- 実際: 設計書L0083は履歴がある場合のメール不送信を、L0085〜L0086は実在庫登録状況による買取状況を、それぞれ定める。
+- 判定: 複数の期待結果
+- 修正案: メール件数と買取状況を別ケースで確認する。
+
+### 指摘（M07-03 / IT-M07-03-157）
+- 主張: 一つの期待結果で「メールが事前準備の1件のまま増えず」、一覧の状況が「未登録在庫あり」と表示されることを確認する。
+- 実際: 設計書L0083は履歴がある場合のメール不送信を、L0085〜L0086は実在庫登録状況による買取状況を、それぞれ定める。
+- 判定: 複数の期待結果
+- 修正案: メール件数と買取状況を別ケースで確認する。
+
+### 指摘（M07-08 / IT-M07-08-015）
+- 主張: IT-M07-08-015・016・019の各シードは、商品コードを検索して既存商品の編集を始め、その商品を使った実在庫からCSVを確認する。
+- 実際: 設計書M07-01のL0282は、戻しリストが「チェックした買取情報の実在庫情報を参照し出力する」と定める。各シードの投入方法には、検索対象の商品を作成する手順がない。
+- 判定: 成立しない前提・手順
+- 修正案: IT-M07-08-015・016・019の各シードに、検索に先立つ対象商品の作成手順を加える。

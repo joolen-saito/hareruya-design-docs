@@ -1,0 +1,2550 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1588e-09d2-7d33-bda0-ab59839bc5bd
+--------
+user
+# 敵対レビュー依頼：要因の組合せの結合テストケース（2巡目・30）
+
+あなたはレビュアーである。著者とは別人として、下の追加ケースを根拠と突き合わせ、誤りを指摘せよ。ファイルは変更しない。スクリプトやコマンドは読むだけで実行しない（grep・cat 等の閲覧は可。rg は使わない）。出力は日本語。
+レビューは事実確認に限る。設計書に無い仕様を足す提案はしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すと決めた。他の機能の設定値も要因に入れる。
+機能ごとに要因表（`combination/factors/`）を作り codex が反証した。そこから機械が試す値の組（`combination/combos/<機能ID>.tsv`）を並べ、著者が組1行にケース1件を書いた。
+組1行ごとの扱い（ケース化／既存ケースで確認済み／ケースにしない）は dispositions に書いてある。
+
+## 対象（/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/ 配下）
+
+| 機能ID | 組の範囲 | 追加ケース・シード・仕分け |
+| --- | --- | --- |
+| M03-32 | 全部 | `combination/cases/M03-32_cb_test_cases.tsv`・`M03-32_cb_seed_data.tsv`・`M03-32_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M03-33 | 全部 | `combination/cases/M03-33_cb_test_cases.tsv`・`M03-33_cb_seed_data.tsv`・`M03-33_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M03-35 | 全部 | `combination/cases/M03-35_cb_test_cases.tsv`・`M03-35_cb_seed_data.tsv`・`M03-35_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M03-38 | 全部 | `combination/cases/M03-38_cb_test_cases.tsv`・`M03-38_cb_seed_data.tsv`・`M03-38_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M03-40 | 全部 | `combination/cases/M03-40_cb_test_cases.tsv`・`M03-40_cb_seed_data.tsv`・`M03-40_cb_dispositions.tsv`（組の範囲の行だけ） |
+
+機能ごとに次を読む。
+- 追加ケース（13列。末尾の項目IDは埋めた組ID）、追加シード、仕分け（上の表のファイル）
+- 試す値の組 `combination/combos/<機能ID>.tsv`（組ID／処理ID／組（要因ID=値）／読める形／埋める組）
+- 要因表 `combination/factors/<機能ID>_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`・`_constraints.tsv`
+- 設計書 `combination/units/<機能ID>/design.txt`（行頭 L0001 が行番号。`#####` の行はシートの境目）。要因の根拠が他の機能のときは `combination/units/<その機能ID>/design.txt`、共通シートは `combination/units/_common/`
+- 既存のケースとシード `cases/<機能ID>_test_cases.tsv`・`<機能ID>_seed_data.tsv`（追加ケースが使う共有シードはここにある）
+
+規約は `combination/GEN_PROMPT.md`、裁定は `sheetmap/FIX_R1_BRIEF.md`（A〜L、C'）・`FIX_R2_BRIEF.md`（M〜O）、範囲は `integration_test/SCOPE.md`、前提条件は `precond/README.md`、判定単位は `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366。
+設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。Excel が触れていない条件を埋め込みが足しているだけのときは両方を当てる。
+期待結果の根拠は設計書に限る。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備と手順の実行可能性を確かめるためにだけ読む。実装と設計書が違うことは指摘しない。
+`combination/review/` の `*_out.txt`・`combination/prompts/` と、上の表に無いケースのファイルは読まない。
+
+## 前の巡
+
+1巡目の指摘が `combination/review/R1_*_findings.md`、直し担当の処置が `combination/review/<機能ID>_R1_dispositions.tsv`（部のある機能は `_R1_dispositions.p1.tsv` など）にある。指摘は見出しの機能IDで探す。却下の理由が設計書の原文に照らして妥当なら、同じ指摘を繰り返さない。採用したはずの指摘が実際に直っているか、直した結果に新しい誤りが入っていないかを見て、新しい事実の指摘だけを挙げる。
+
+## 意図的であり指摘対象外のもの
+
+- 1ケースの期待結果に、要因表 `processes.tsv` の「確かめる所」に挙がっている所どうし（ZIP と DB、画面と DB など）の結果が1文でまとめてあること（組1行にケース1件のため。2026-10-20 決定）。「確かめる所」に無い所の結果が混じっているときは指摘してよい。
+- 連鎖IDが空欄、要求IDが空欄であること。既存ケースを変えていないこと。判定IDが IT-0366 であること。
+- 組の値の選び方（どの組を並べたか）。要因表の「正解未定」「作れない」の組がケースに無いこと（要因表は反証済み。ただし、ケースを書いてみて組が作れない・結果が決まらないと分かったものは指摘してよい）。
+- 単体テスト・e2e へ送られるもの（画面上だけの入力制限、表示文言の逐語照合、見た目、計算式そのもの）のケースが無いこと。
+- シードの投入方法が「未確定: …」と書かれていること。
+- 商品がグッズ商品CSV登録で作られ、在庫が在庫変更CSV登録と承認で入ること（2026-10-19 の決まり）。
+
+## 重点観点
+
+1. **組の値がケースにあるか**: 事前準備・手順に、組のすべての要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）が値で書かれ、その値で処理を動かしているか。組と違う値で操作していないか。
+2. **期待結果が組の全要因の結果を重ねているか**: 確かめる所で、組の各要因の値について設計書が定める結果（金額・選択肢・更新先・更新内容）がまとめて確かめられているか。設計書の記述と事前準備の値だけから一意に出るか。設計書に無い値・ふるまいを期待していないか。金額・数量の計算が合っているか。
+3. 事前準備の状態から手順を実行して期待結果に到達できるか。単独で成立するか。「このN件だけ」を期待するのに、同じ条件に当たる他のデータを除く記述があるか。共有シードの設定と組の設定値が食い違っていないか。
+4. 1ケースに、確かめる所の違う期待結果が混じっていないか。既存ケースとの重複、物理名の混入。
+5. 「ケースにしない」とした組のうち、設計書の記述から期待結果が一意に決まるもの。「既存ケースで確認済み」としたもののうち、挙げたケースが実際にはその組の値で確かめていないもの。
+
+## 出力形式
+
+指摘が無ければ `NONE` の1語。あれば1件ごとに次の形で、テストIDの順に書く。確信の持てないものは挙げない。見出しの括弧の先頭は必ず機能ID。
+
+```
+### 指摘（<機能ID> / <テストID または 組ID>）
+- 主張: ケースまたは仕分けの記述（要点の引用）
+- 実際: 設計書の事実（design.txt の行番号。原文を引く）
+- 判定: 組の値が無い／期待結果の誤り／設計書に無い期待／成立しない前提・手順／要因の結果が欠けている／複数の期待結果／重複／ケースにできる／確認済みでない／組が作れない
+- 修正案: 結論を先に置いた1〜2文
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T09:04:27.781602Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象5機能の組・追加ケース・仕分けを設計書と照合します。1巡目の指摘と処置も確認し、再指摘は新しい事実がある場合に限ります。ファイルは変更せず、閲覧用コマンドだけを使います。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/GEN_PROMPT.md integration_test/casegen/sheetmap/FIX_R1_BRIEF.md integration_test/casegen/sheetmap/FIX_R2_BRIEF.md integration_test/SCOPE.md integration_test/casegen/precond/README.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# {FID}（{FNAME}）の要因の組合せのケース作成（著者への依頼）
+
+リポジトリ: `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+あなたは機能ID **{FID}** の追加ケースを書く著者である。レビューは別の担当が行う。git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すと決めた。他の機能の設定値も要因に入れる。
+{FID} の要因表（別の担当が作り、codex が反証した）から、機械が試す値の組を並べた。そのうち **{RANGE} の {N}行** があなたの受け持ち（{PARTNOTE}）。1行ごとにケースを書く。**既存のケースは1文字も変えない。**
+
+## 読むもの
+
+1. 試す値の組: `integration_test/casegen/combination/combos/{FID}.tsv`（組ID／処理ID／組（要因ID=値）／組（読める形）／埋める組）。1行が1回の処理で同時に使う値の組。受け持ちは {RANGE}。
+2. 要因表: `integration_test/casegen/combination/factors/{FID}_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`（効き合う理由）・`_constraints.tsv`（作れない組・正解未定の組）
+3. 設計書: `integration_test/casegen/combination/units/{FID}/design.txt`（行頭の L0001 とタブは行番号で、設計書の内容ではない）。要因の根拠の行だけでなく、その節全体を読む。他の機能の設定値の要因は `units/<機能ID>/design.txt`
+4. 既存のケースとシード: `integration_test/casegen/cases/{FID}_test_cases.tsv`（11列）・`{FID}_seed_data.tsv`。**書き方・画面への入り方・シードの作り方はこれに合わせる**。同じ処理を別の値で通している既存ケースがあれば、それを下敷きにして値だけ変えるのが基本
+5. 確かめる所が別の機能の画面のときは、その機能のケース `integration_test/casegen/cases/<機能ID>_test_cases.tsv` で画面への入り方と表示の書き方を見る
+6. `integration_test/SCOPE.md`、`integration_test/casegen/sheetmap/FIX_R1_BRIEF.md` の裁定 A〜L・C'、`FIX_R2_BRIEF.md` の決まり M〜O（文中の `sheetmap/` は読み替える）、`integration_test/casegen/precond/README.md`（前提条件 P1〜P13・類型 T1〜T4）、`integration_test/casegen/STEP_PATTERNS.md`（手順の型）
+7. `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366（判定単位の文と除外を読む）
+
+## 1行（組ID）ごとに、次のどれかに決める
+
+| 扱い | いつ | 書くもの |
+| --- | --- | --- |
+| ケース化 | その値の組で処理を動かしたときの結果が、設計書の記述から一意に決まる | ケース1件（1ケース1期待結果）。組のすべての要因の値を事前準備・手順に値で書く |
+| 既存ケースで確認済み | 既存ケースの事前準備・手順に組のすべての値が書かれ、確かめる所で結果を見ている | そのテストIDと、どの手順・期待結果が当たるか |
+| ケースにしない | その値の組が実は作れない（制約の抜け）／結果が設計書から一意に決まらない／設計書の記述どうしが食い違う／結合テストの範囲でない | 理由（設計書の原文を引く）。作れない・決まらない組は、要因表の制約に足すべき組として理由に `要因ID=値&要因ID=値` を書く |
+
+安易に「ケースにしない」としない。要因表は codex が反証済み。それでも外すなら設計書の原文で理由を示す。
+
+## 期待結果の決め方
+
+- 組の**すべての要因**について、その値で設計書が定める結果を、確かめる所（processes.tsv）でまとめて確かめる。1つの確かめる所で見える結果を1文にまとめてよい（例: 「受注情報編集画面で、お支払方法が代金引換、配送方法がゆうパケット、送料が200円、手数料が330円、ポイント使用が0、合計が1,530円で表示されること」）。確かめる所が違う結果は入れない（1ケース1期待結果）。
+- 金額・数量は、事前準備に書いた値から設計書の計算で一意に出す。計算の途中を期待結果・出典に書かない（期待結果には結果の値だけ）。
+- 期待結果は設計書（design.txt。同じ冊子の別シート、要因の根拠にある他の機能の設計書も可）と事前準備の値だけから出す。実装コード・現行ソースから期待値を足さない。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備・シードの作り方と手順の実行可能性を確かめるためにだけ読んでよい（スクリプトやコマンドは実行しない）。
+- 設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採り、出典に両方を書く。
+- 要因表の constraints.tsv に「正解未定」とある値の組は機械が行に入れていない。それ以外の組で結果が決まらないと分かったら「ケースにしない」にする（推測で決めない）。
+- **打ち切りの行**: 組（読める形）に「（効かない）」とある要因は、その行では結果に効かない（constraints.tsv の種別「打ち切り」。処理が途中で打ち切られる。依頼者決定 2026-10-20）。その要因の値は事前準備に書かなくてよい（共有可シードのままでよい）。期待結果は打ち切りの結果（出ない・エラーで元の画面へ戻る・何も変わらない など）を、設計書の定めどおりに確かめる。打ち切りのあと値が残っていないか（更新されていないこと）を見るのはよい。
+
+## ケースの書き方
+
+- テストIDは `IT-{FID}-{START}` からの連番（既存と、外した番号の続き）。組IDの順に書く。
+- 判定IDは `IT-0366`、観点IDは `ITA-11`。項目ID列に組ID（1つ）。
+- 期待結果は合否が一意に決まる具体値で書き、「〜こと」で終える。
+- **組の値がケースから読めること**: 事前準備・手順に、組の全要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）を値で書く。要因名や組の値を並べただけの行（「このケースで試す値の組: …」など）を事前準備・手順に足さない。実際のデータで書いていれば、verify の「注意」（組の値が字句で無い）は残ってよい。
+- 結果は、データを作った所とは別のコンポーネントで確かめる（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。
+- 手順は「1. …／2. …」の形で、画面名・項目名・ボタン名・入力値を特定する。名前は設計書の表記を使う。画面への入り方は既存ケースに合わせる。
+- 物理名（テーブル名・カラム名・ルート名・クラス名・翻訳キー）を書かない。設計書に書かれている項目名はそのまま使ってよい。
+- 禁止語: 失敗させる／該当する操作／同上／いくつか／別の画面／要確認／TBD／設計どおり／設計書どおり／仕様どおり／正しいこと／正しく。
+- 実行区分は `ブラウザのみ` か `ブラウザ+DB確認`（外から見えない副作用だけDBを見る）。優先度は、業務データの保存・更新・出力値の一致を P1、表示・選択肢を P2。
+- 要求ID列: `integration_test/casegen/requirements_all.tsv` に当たる行（書番・シート名・要求文が合う行）が見つかればその要求IDを書く。見つからなければ空欄でよい。代用しない。
+- 連鎖IDは空欄。出典は既存ケースと同じ形（`<書番> <シート名> / <区分 と 見出し>`。別シート・別の冊子は「｜」でつなぐ）。
+
+## 前提条件（いまの決まり。既存のシードの書き方がこれに従っているので合わせる）
+
+- 各ケースは単独で成立する。**各ケースはケース専用シードを1件以上使う**（シードID `S-{FID}-CB<名前>-<ケース番号3桁>`）。参照だけのマスタ・アカウント・環境設定は、既存の `{FID}_seed_data.tsv` にある `共有可` のシードをそのまま使ってよい（シード表に書き足さない）。既存の `ケース専用` シードは使わない。
+- 組の値が共有可のシードの設定と違うとき（手数料・送料・利用条件・配送方法に紐づく支払方法など）は、ケース専用シードで設定を書き、事前準備に値で書く。
+- テストデータは画面から入力して作る（2026-10-09 決定）。画面で作れない状態だけ、理由を添えて DB へ直接入れる書き方にする。
+- **商品はカード商品も含めてグッズ商品CSV登録で作る**（商品登録画面の新規登録は使わない。M03-02 L0075〜L0077）。カード商品は商品登録編集画面の「カード指定 >」でカードを付ける。価格は税込みで登録する。在庫は在庫変更CSV登録で入庫し、別のメンバーが承認一覧で承認する（確認画面の OK まで書く）。既存の `{FID}_seed_data.tsv` の商品・在庫のシードの書き方をそのまま写す。
+- 確認モーダルが出る操作は、モーダルの確定まで手順に書く。規約同意など必須のチェックも書く（既存ケースに合わせる）。
+- 画面が振る番号（受注番号・会員IDなど）は、画面で作ったあとに控えた番号を使う（類型 T4。〔番号の名前-{FIDC}-ケース番号〕の呼び名で書く）。
+- ケース専用データの識別子（コード、名称、メール、ファイル名、パスワード）は全機能で一意にする。前提条件の検査 G5 の字句は `[A-Za-z0-9][A-Za-z0-9_.@\-]{3,}`。**英数字とハイフンの連なり1つ1つに、機能番号とケース番号を入れる**（例: 「{FIDC}-CB{START}-A」「cb{FIDL}-{START}@example.test」「Passw0rd-CB{FIDC}{START}」）。パスワードに「!」を使わない。番号だけの語（「A001」）を単独で置かない。`grep -rF` で `integration_test/casegen/cases/` と重ならないことを確かめよ。
+- 事前準備は必須。使用シードすべてについて状態を値付きで書き、シードIDを括弧で添える（「① …（S-…）／② …（S-…）」）。「このN件だけ」を期待するときは、同じ条件に当たる他のデータが無い状態を書く。
+- 事前準備で手順の結果を参照しない。期待結果の「AからB」「Aのまま」の A は事前準備に同じ表記で書いた値にする。
+- シードの投入方法は、何を使ってどう作るかを書く。作り方が分からないときは「未確定: <分からないこと>」と書く。推測で埋めない。
+- 中継・模擬応答、現在時刻の固定、障害を起こす手段は用意しない（2026-10-19 決定）。これが要る組は「ケースにしない」。バッチの実行、スマレジなど外部の試験環境、メールの受け取りは用意できる。
+
+## 出力（この3つだけを書く。ほかの既存ファイルは変更しない）
+
+1. `integration_test/casegen/combination/cases/{FID}_cb_test_cases{SFX}.tsv`
+   タブ区切り・13列: `テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID`
+   セル内に改行・タブ・ダブルクォートを入れない。ケース化が0件でもヘッダだけのファイルを書く。
+2. `integration_test/casegen/combination/cases/{FID}_cb_seed_data{SFX}.tsv`
+   タブ区切り・7列: `シードID	区分	論理名	状態・属性	用途	投入方法	共有`。**新しく足すシードだけ**を書く。
+3. `integration_test/casegen/combination/cases/{FID}_cb_dispositions{SFX}.tsv`
+   タブ区切り・4列: `項目ID	扱い	テストID	理由`。受け持ちの組 {N}行を1行ずつ（項目ID は組ID）。
+
+最後に `python3 integration_test/casegen/combination/verify_cb.py {VARG}` を実行し、合格するまで直せ。ほかの検査（gate_dry.sh・gate_factors.py など）は流さない（ほかの著者と同時に流すとぶつかる）。
+作業用の一時ファイルはスクラッチパッド（`/tmp/claude-1000/-home-y-saito-Developments-hareruya-design-docs/7ac77140-f212-4eb4-b04c-5cbd0cc6fcfa/scratchpad/`）に、名前へ {FID}{SFX} を入れて作る。他の機能・同じ機能の他の部の combination/cases のファイルは読まない・書かない。
+**ファイルは処理ごとに書き足していく**（全部を最後にまとめて書かない。途中で止まっても書いた分が残るように）。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+4行以内。ケース化／確認済み／ケースにしない の件数、ケースにしなかった主な理由（制約に足すべき組があれば件数）、verify の結果、判断に迷った点（あれば1つ）。
+# レビュー1巡目の反映（著者への依頼）
+
+codex のレビュー指摘が `integration_test/casegen/sheetmap/review/<機能ID>_r1_findings.md` にある。
+1件ずつ、**指摘が引いている設計書の記述を sheet.txt で自分で読み直して事実かどうか確かめてから**、下の裁定に従って反映せよ。指摘をそのまま適用しない。
+
+## 裁定（依頼元の決定。指摘と食い違うときはこちらが優先）
+
+| No. | 裁定 |
+| --- | --- |
+| A | **根拠はHTML設計書であり、対象シート1枚に限らない。** その機能のふるまい（何を出力するか、全件か選択か、出力対象の条件、未選択・0件のときの扱い、ファイル名、起動するボタン、権限）が同じ冊子の別シート（一覧画面のシートなど）に書かれていれば、それを期待結果の根拠にしてよい。出典にそのシートを「｜」でつないで書く。当初の依頼文の「隣接シートは操作の入口にだけ使う」は撤回する。したがって、「対象シートに記述が無い」ことだけを理由にした指摘は、同じ冊子の別シートに記述があれば却下する。逆に、別シートにその機能の記述があるのにケースにしていなかったもの（出力対象、選択と全件の違い、未選択時の扱いなど）は、ケースを足す。別シートは `python3 integration_test/casegen/sheetmap/build_materials.py --sheet <書番> <シート名>` で読む。他の冊子・実装・現行ソースは根拠にしない |
+| B | **観点表の「期待値の決め方」が「観点内で確定」の判定単位は、適用の条件が設計書から言えれば、期待結果は判定単位の文から決めてよい。** 例: IT-0080・IT-0225（参照・出力だけの機能は実行前後でデータを更新しない）は、設計書がその機能をCSV出力・一覧表示などの参照機能として書いていれば適用できる。「非更新とは対象シートに書いていない」という指摘は却下する。IT-0083（出力ファイルの数量・金額が画面表示およびDB値と一致）を使うときは、画面表示またはDB値と見比べる手順と期待結果にする |
+| C | **CSV・帳票の出力項目の構成と並びは IT-0156**（観点ID ITA-02。他の観点に割り当たらない機能仕様を受ける区分）に当てる。IT-0071 は「値が取得元と同値」にだけ使う。report.md に「出力項目の構成・並びを受ける判定単位が観点表に無いので IT-0156 を使った」と書く |
+| C' | （2026-10-06 追記）観点表に IT-0348（ITA-05。出力したファイルの各レコードが、定められた出力項目だけで構成され、定められた順に並ぶこと）を足した。出力項目の構成と並びは、以後 IT-0348 に当てる。裁定Cで IT-0156 に当てていた14件は付け替えた（`retag_0348.py`）。同日、IT-0349（ITA-05。出力したファイルのレコードが、定められた並び順で出力されること）も足した。出力したCSV・帳票の行の並び順は IT-0349 に当てる（24件を付け替えた。`retag_0349.py`）。同日、IT-0350（ITA-05。送信されたメールの件名、送信元、本文の構成が、定められたとおりであること）も足した。通知メールの内容は IT-0350 に当てる（10件を付け替えた。`retag_0350.py`）。初期値、未選択時の扱いなど、ほかに受ける判定単位が無いものは IT-0156 のまま（2026-10-07 追記）観点表にバッチ用の4行を足した。IT-0351（ITA-14。異常として定められた条件でバッチが異常終了として終わること）、IT-0352（ITA-13。異常終了した場合、異常の後に行わないと定められた処理が行われていないこと）、IT-0353（ITA-13。終了後、一時的な資源が定められたとおりに削除されている・残っていること）、IT-0354（ITA-21。バッチの出力メッセージが、定められた条件のときに定められた文言で出力されること）。バッチのケースで期待結果がこのどれかそのものであるものは、IT-0156 でなくこれらを使う。 |
+| D | 見出し行の有無、データが何行目から始まるかは、設計書に書いていなければ期待結果・手順に書かない。データ行は事前準備の識別子（番号・コード）で特定する。項目の並びは「各行の項目が左から設計書の識別ID順に対応する」ことを、事前準備の値がどの位置に出るかで確かめる |
+| E | 値の取得元が設計書から決まらない項目（備考が空で、項目名からも取得元が1つに決まらないもの。呼び名の違う属性を当てはめたもの）は、値の照合から外し、report.md の「ケースにしなかったもの」に取得元の不足として書く。項目名と同じ名前の属性は取得元が決まるとしてよい |
+| F | 計算・連結・書式変換の結果そのもの（姓＋空白＋名、差の計算、小計など）は単体テストの担当（SCOPE.md）。ケースから外し、report.md に「単体テストへ送った」と書く。ただし「どの時点の値か」「単価か小計か」のように、どの値を採るかの定めは結合テストで確かめてよい |
+| G | 1ケース1期待結果。判定単位が違う確認が1ケースに混じっていたら分ける |
+| H | シードは実際に作れる方法で書く。管理画面で指定できない内部IDを管理画面で登録する、と書かない（DB投入にする）。設計書が求める状態（必須項目が未設定の会員など）が ee 実装の制約で作れないときは、ケースは残し、投入方法を「未確定: <理由>」にして report.md の「試験環境に要るもの」に挙げる。実装が設計書と違うこと自体はケースを変える理由にしない |
+| I | 手順は、画面を開く・条件を入れる・ボタンを押す・ファイルを開く、の操作を番号付きで書く。「〜を確認する」だけの手順にしない |
+| J | 設計書の中で記述が食い違っている・誤記と思われる箇所を、推測でどちらかに決めて期待結果にしない。両方に共通する部分だけを期待結果にし、食い違いは report.md に書く |
+| K | 判定ID IT-0332〜0347 は使わない。使っているケースは、当てはまる別の判定単位に付け替えるか、無ければ外す |
+| L | 指摘が「取りこぼし」で、設計書の記述から期待結果が一意に決まるなら、ケースを足す。試験基盤が無いことはケースを作らない理由にならない（投入方法・前提を「未確定」と書いて残す） |
+
+## やること
+
+1. 指摘ごとに「採用／一部採用／却下」を決め、cases・seed・report.md を直す。ケースを足したり外したりしたら、テストIDを 001 からの連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. 指摘に無くても、裁定 A〜L に反する箇所が自分のケースにあれば同じように直す。
+3. `integration_test/casegen/sheetmap/review/<機能ID>_r1_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述（原文）・直した内容」を表で書く。保存できないときは返答に本文を含める。
+4. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること（他の著者と同じ置き場所を使っているため）。
+
+## 返答
+
+5行以内。直した後の件数、指摘ごとの判定の内訳（採用・一部採用・却下の件数）、足した・外したテストの数、verify の結果、dispositions.md を保存できたか。
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+# 結合テストケースの前提条件の書き直し
+
+## なぜ
+
+2026-09-28 時点の `cases/*_test_cases.tsv` は、上から順番に実行しても成立しないケースが多い。
+原因は3つある。
+
+1. **前提がケースに書かれていない。** 生成規則（`GEN_PROMPT_TEMPLATE.md` 縛り10）が
+   「シード投入は事前準備に書かない」としていたため、実行対象8,325件のうち7,866件の事前準備が `—`。
+   IT-A01-01-004 の前に「SMA-A01-002 を2個販売した取引」が要ることは、別ファイルのシード表を読まないと分からない
+2. **状態を書き換えるデータを複数ケースで共有している。** IT-A01-01-001 が SMA-A01-001 を2個販売すると、
+   002 の「10から8」は成立しない。012 が SMA-A01-I01 を7にすると、013 の「10から8」は成立しない
+3. **投入方法が実行できる粒度でない。** 「スマレジ試験環境に全キャンセル可能な取引を登録する」
+
+依頼者決定（2026-09-28）: **ケースごとに専用データを持たせる**。A01-01 で型を作ってから全機能へ広げる。
+
+## 規約
+
+対象は実行区分が「保留」以外のケース。保留ケースは1文字も変えない。
+
+| No. | 規約 |
+| --- | --- |
+| P1 | **各ケースは単独で成立する。** 他のケースを先に実行しても、後に実行しても、実行しなくても、事前準備どおりの状態から始められる |
+| P2 | シード表に `共有` 列を足す。`共有可` か `ケース専用` のどちらか。**どれか1ケースでも状態を変えるデータ**（在庫・受注・取引・ステータス・ログイン失敗回数など）は `ケース専用`。`共有可` にできるのは、どのケースも状態を変えないもの（参照だけのマスタ、ロックさせない管理者アカウント、環境設定）と、各ケースが開始時に必要な設定を自分で行う試験基盤（中継の保留／転送の切替など）だけ。`用途` にどちらなのかを書く |
+| P3 | `ケース専用` のシードを参照するケースはちょうど1件。シードIDは `<元のID>-<ケース番号3桁>` にする |
+| P4 | ケース専用データの識別子（DB投入するレコードのID・商品ID・CSVファイル名・会員メールなど）は、**全機能のケース専用シードの中で一意**にする。重なるときはケース番号を付けて改名する |
+| P5 | **事前準備は必須。** 使用シードすべてについて、どういう状態かを値付きで書き、シードIDを括弧で添える。シード投入の後で画面や外部システムを操作して作る状態（販売済みの取引など）は、その操作と、終わった後の値の確認まで書く |
+| P6 | 期待結果が「AからB」「Aのまま」と言うとき、**A は事前準備に書いた値**である |
+| P7 | **期待結果は変えない。** 変えてよいのは P4 の改名だけで、改名は `renames/<機能ID>.tsv` に宣言する。改名は、英数字の識別子どうし／シードで ID・名称・コード・番号・メール・ファイル名等の項目の値として定義した値／シードID／シードの自由文にある4文字以上のデータ名を「旧名-ケース番号」へ、の置換に限る（数量・状態語は改名しない）。改名で済まない変更は `oracle_changes/<機能ID>.tsv`（テストID/新期待結果/理由/承認）に載せ、承認が入るまでゲートを通さない。承認済みの類型は T1 だけ（下記）。手順で外部の値に呼び名を付け、その呼び名を期待結果で使う書き方もオラクル変更として扱う。要求ID・連鎖ID・観点ID・優先度・実行区分・出典は変えない |
+| P8 | 手順はテスト対象の操作だけにする。手順を変えてよいのは次の種別だけで、変えたら `step_changes/<機能ID>.tsv`（テストID/種別/新手順/理由）に宣言する。`準備移動`（準備操作を事前準備へ移す）／`改名`／`発番値控え`（実行中に発番される値を控える操作を足す）／`データ指示`（事前準備で作ったデータを指し示す）／`中継置換`（類型 T2）／`非同期完了待ち`（類型 T3）／`裁定訂正`（設計書の中の食い違いの裁定で直したもの。2026-10-16 依頼者決定） |
+| P9 | 投入方法は、何を使ってどう作るかを書く（管理画面のどの画面か／DB投入／スマレジ試験環境の管理画面で商品登録と在庫設定／CSVフィクスチャ）。「〜を登録する」だけで手段が無いものは不可 |
+| P10 | 事前準備に設計書に無い仕様を持ち込まない。書くのはテストデータの状態と作り方だけ。作り方は設計書に無ければ ee 実装（設定・テーブル・管理画面）から引いてよい。どちらにも無い作り方は `open_preconditions.tsv` に載せ、推測で埋めない |
+| P12 | 試験基盤が未整備、または作り方が設計書にも ee 実装にも無い前提は `open_preconditions.tsv` に載せる。**実行区分は変えない**（保留は「設計書に期待結果が無い」の意味で使っており、混ぜない）。ゲートは件数を参考として出す |
+| P13 | **手順で入力する値（登録する名称・コードなど）は改名しない。** 境界値や文字種の検査が壊れるため。同じ値のデータが既にあると成立しないときは、事前準備に「その値のデータが無い状態にする（あれば削除する）」と書く |
+| P11 | **事前準備は手順より前に完結する。** 手順の結果（発番されたID・返された値）を事前準備で参照しない。それらは手順の中で控える |
+
+## 承認済みの類型（依頼者 2026-09-28）
+
+| 類型 | 内容 | 記録先 |
+| --- | --- | --- |
+| T1 外部発番値 | 外部システムが発番する値（スマレジの在庫変動履歴ID・問い合わせIDなど）を基線が固定値で書いているときは、手順の中で発番値を控え、期待結果を「手順Nで控えた値」との照合に書き換える | `oracle_changes`（承認欄に「類型承認T1」） |
+| T3 非同期完了待ち | Webhook・バッチ・メッセージ処理など非同期で処理される操作の結果を確認する前に、非同期処理の対象のジョブ（待機中・実行中）が0件になるまで待つ手順を足す（画面名は書かない。下の「用語の置き換え」）。待つ上限時間を書く | `step_changes`（種別「非同期完了待ち」）。依頼者承認 2026-09-30 |
+| T2 中継置換 | 外部システムとの通信の観測・送信を、基線が実行できない書き方（「Webhookの応答をブラウザで確認」「スマレジAPIから送信」など）にしているときは、中継（通信を記録・保留・転送・模擬送信する試験基盤）で観測・送信する手順に変える。外部が実際に返す通知は保留して転送し、外部に起こさせられない結果（エラー等）だけを模擬送信する | `step_changes`（種別「中継置換」） |
+
+## 類型T4 画面発番値（依頼者決定 2026-10-09）
+
+テストデータは画面から入力して作る。画面が自動で振る番号（注文番号・受注ID・イベントIDなど）を基線が固定値で書いているときは、
+データを画面で登録したときに振られた番号を控え、事前準備・手順・期待結果ではその控えた番号（呼び名〔注文番号-M0526-012〕の形）を使う。
+書き直しは `../seed_screen/`（README）。期待結果・手順の変更は `oracle_changes/`（承認欄に「類型承認T4」）・`step_changes/`（種別に「発番値控え」）へ、`../seed_screen/apply.py` が機械で宣言する。
+控えた番号へ置き換えたケースの一覧は `screen_noted_cases.tsv`。検査は、これらのケースについて改名先（消えた固定の番号）の検査を外し、〔…〕の呼び名を識別子として数えない。
+
+## テストできない・作り方が未確定のケースの除外（依頼者決定 2026-10-14）
+
+テストできないケースと、作り方が未確定のケースを、ケースの正本（`../cases/`・`../all_test_cases.tsv`）から外した。
+外したのは、検査 G9 が「未整備・未確定の前提を使うケース」と数えていた 1,892件（使用シードの投入方法に「未確定」「未整備」がある、または `open_preconditions.tsv` の影響ケースに載っている）。
+内訳は、作り方が未確定 1,744、試験環境の決定待ち 113、実装上その状態を作れない 35。残りは 10,556件・345機能（20機能は全ケースが外れた）。
+
+- 行は消さず `../excluded_open_cases.tsv`（除外理由・未確定の内容つき。元の11列は「元_」付き）へ移した。外したケースだけが使っていたシード 2,458件は `../excluded_open_seeds.tsv`。
+- 道具は `../exclude_open.py`（何度流しても同じ）。**各 `merge_into_cases.py` と `seed_screen/apply.py` は外したケースを `cases/` へ戻すので、そのあとに必ず流す。** 順序は merge → `seed_screen/apply.py` → `datapattern/conflicts/apply_rulings.py`（最後に `product_csv/apply.py` と `runnable/apply.py` も当たる）→ `exclude_open.py` → `exclude_scope.py` → `build_all_test_cases.py`。
+- 作り方が決まったら、シードの投入方法（と `open_preconditions.tsv`）を直してから同じ順に流し直すと戻る。
+- 検査 G6 は、基線・追加分からこの除外分を差し引いて照合する。保留（設計書に正解が無い）の除外 `excluded_hold_cases.tsv` とは別の表で、意味を混ぜていない。
+
+### 影響ケースの漏れ（2026-10-16）
+
+`open_preconditions.tsv` の影響ケースは、行を足した時点のケースで書いた固定の一覧である。そのため、あとから足したケースが同じ未確定の前提を使っていても除外に掛からなかった。全数を洗い直し、63件を影響ケースに足して外した（11,777件 → 11,714件・341機能）。
+- 同じシードを使うのに一覧に無かったもの: IT-A05-04-047〜060（スマレジ受信。2026-10-09 の被覆監査で追加。取引情報取得APIの試験環境と Webhook の認証情報の2行）、IT-B02-02-010〜012（バッチの実行環境）、IT-M03-09-058・097（スマレジの試験用受信サーバー）。
+- 連携ケース（`../link/`）が、基線では未確定のシードを「-L-」付きの別名で作り直していたもの: S-B02-02-L-ENV・S-B05-02-L-CLOCK・S-B05-09-L-API/CLOCK/CONFIG・S-B06-01-L-ENV・S-B06-02-L-EXEC・S-B08-03-L-ENV・S-B08-06-L-API-CONTROL・S-B13-01-L-API/EXEC/MAIL。基線の行と同じ文面で、対象をL版にした行を足した（`未確定: …（… の未確定と同じ）`）。B06-01 の別名を使っていたデータパターンのケースも含む。
+- 時計を固定する前提: IT-M04-17-001（業務日を2026/09/29に固定。時計の固定は S-B05-09-CLOCK などと同じく作り方が無い）。
+- この結果、B02-02・B05-02・B05-09・B06-01・B08-03・B13-01 はケースが0件になった（基線のケースは前から外れており、残っていたのは別名のシードを使う連携ケースだけだった）。
+- 同じ日に `../chain_gap/` のレビューで、S-F06-02-L-ENV（IT-F06-02-024・025）も見つかり、同じ形の行を足して外した。基線の行の対象は S-F06-02-API-OK で、名前の役割の語（API と ENV）が違うため道具では拾えなかった。このシードは、開始時にスマレジAPI試験環境のユーザーDBで会員が0件であることを確かめる作り方で、024 は発番されたスマレジIDを控える。外部の試験環境を使うシードは、名前だけでなく中身でも基線の行と見比べる。
+- 候補を出す道具は `scan_open_leaks.py`。ケースを合流したあと、`exclude_open.py` の前に流す。候補を出すだけで判定はしない。残っている候補 159件は、読んだうえで漏れではないと判定したもの。
+  - 共有の定義だけを使い、未確定の項目に触れないもの: S-M05-03-DEFS、S-F06-05-BASIC、IT-A05-04-002（GETを送るだけで、認証も取引の取得も要らない）。
+  - 名前の役割の語が同じだけで、作り方が決まっているもの: ポイントの設定、ユニサーチの接続先、ee の開発用の正常応答、スマレジの試験環境への接続。
+  - S-M03-10-SMAREGI-ENV: ee の商品APIのクライアントは、模擬応答のときも呼び出しを記録する（SmaregiPlatformApiCallRecorder）。シードの書き方は実装と合っている。
+
+## 試験環境で用意できる前提の解消（依頼者決定 2026-10-19）
+
+依頼者決定「バッチの実行、スマレジなど外部の試験環境、メールの受け取りは環境準備できる」（中継・模擬応答、時刻の固定、障害を起こす手段は用意しない）。作り方が未確定で外したケースを止めていた項目（未確定のシード 944・未確定の前提の行 879）を1件ずつ判定し、この3つだけで決まるものは作り方を書いて解消した。止めていた項目がすべて解消したケース 183件が一覧へ戻った（11,713件 → 11,896件・346機能）。
+解消した前提の行 81 は `open_preconditions.tsv` から `resolved_preconditions.tsv`（解消の書き方・区分・根拠・決定つき）へ移した。シードは投入方法を書き直した（外した表 `../excluded_open_seeds.tsv` を直し、`exclude_open.py` が直った文で戻す）。
+同じ日の依頼者決定「おすすめで進めて」で、人が補って実行できるもの（決まった番号の読み替え、必須のチェック、確認モーダル、割引率、在庫の承認）も書き足した。道具・判定・レビューは `../runnable/README.md`。`../datapattern/conflicts/apply_rulings.py` が最後に `../runnable/apply.py` を呼ぶ。
+
+## E2E で作成を保留した入力ファイルを使うケースの除外（依頼者決定 2026-10-16）
+
+依頼者決定「テスト保留のケースがあれば除外」。ケース一覧に実行区分「保留」のケースは無かった（2026-10-01 にすべて外してある）。保留に当たっていたのは、E2E の入力ファイルの棚卸し（`../../../e2e/fixtures/named-file-references.tsv`。M03・M04 だけ棚卸し済み）で作成判断を「保留」「正本矛盾」とした33ファイルで、シードの記述だけでは中身（文字コード、見出し行の値、画像の中身など）が一つに決まらないか、シードの記述が食い違っていた（M03-30 の empty.tsv）。これを使うケース29件を、作り方が未確定の前提として `open_preconditions.tsv` に載せ（対象「入力ファイル <ファイル名>」の33行）、`exclude_open.py` で外した。ケースは 11,679件から 11,650件。ファイルの中身をシードに書いて棚卸しの判断が変わったら、その行を消して流し直すと戻る。M03・M04 以外の機能の入力ファイル（棚卸しで未判定の 1,729件）は見ていない。
+同じ日の依頼者決定「画像は任意の有効な画像でよいとして戻す」で、画像の中身が未指定だった9ファイル（M04-02-050・M04-03-005・M04-05-011・M04-31-150 の4ケース）の行を外し、4ケースを戻した（11,654件）。シード（`../seed_screen/out/` の該当行の投入方法）に「画像ファイルの中身は任意の有効な画像でよい。同じケースで使う複数の画像は、互いに見分けられる別の画像にする」と書いた。E2E の入力ファイル（`e2e/fixtures/`）はまだ作っていない。
+外したケースを戻すときは、流れを2回流す。1回目は `exclude_open.py` が除外表の古い文面のままケースとシードを戻すので、2回目の `seed_screen/apply.py`・`apply_rulings.py` で書き直しが当たる。
+
+## フェーズ2見送り・実装しない機能の除外（依頼者決定 2026-10-16）
+
+依頼者決定「フェーズ2見送り、機能実装しない機能についてはケースから除外」。対象は `../scope_out.tsv`（根拠つき）で、フェーズ2見送り13機能（A06-14・B01-02・B01-03・F02-05・M03-43・M03-44・M04-06・M04-07・M06-13・M08-11・M08-15・M08-16・M08-17）、実装しない4機能（M03-34・M03-36 は 2026-10-06 決定、M04-27・B13-02 は Excel の廃止の記述）と、M03-43 の機能を確かめていた IT-M03-30-038。
+ケース一覧の6件に加え、作り方が未確定で外していた65件、保留で外していた49件も、決まっても戻さないので `../excluded_scope_cases.tsv` へ移した（計120件。元の表と元の除外理由を残す）。外したケースだけが使っていたシード89件は `../excluded_scope_seeds.tsv`。道具は `../exclude_scope.py`（何度流しても同じ。`exclude_open.py` の後に流す）。ケースは 11,685件・349機能から 11,679件・346機能になった（F02-05・M03-44・M06-13 はケースが0件）。
+保留から移した49件は、設計者に聞く必要が無くなった（`../hold_review/questions.tsv` に論点があるものも含む）。機能の一部だけがフェーズ2のもの（ナビゲーションの通知、会員検索の顧客分析タグなど）は機能ごとは外していない。そのフェーズ2の部分を確かめるケースは IT-M03-30-038 のほかに無かった。
+検査 G6 は、基線・追加分からこの表の分も差し引いて照合する。
+
+## 既存ケースと設計書の食い違いの裁定（依頼者決定 2026-10-16）
+
+設計書の中で記述が食い違うときの優先順位（Excel由来＞埋め込みの表示メッセージ節＞埋め込みの現行仕様節、同じ出所では改訂後）を決め、既存ケース52件の報告を裁定した。直したケースの期待結果・手順・出典は `oracle_changes/`・`step_changes/`（種別「裁定訂正」）・`source_changes/` に、承認欄「2026-10-16 依頼者裁定」で宣言してある。規則で決まらず共通部分でも書けない10件は `../excluded_hold_cases.tsv` へ移した（論点ID が QD- の行。決める人＝設計者）。道具は `../datapattern/conflicts/apply_rulings.py`（何度流しても同じ。`seed_screen/apply.py` の後、`exclude_open.py` の前に流す）。説明は `../datapattern/conflicts/README.md`。
+
+## 保留ケースの除外（依頼者決定 2026-10-01）
+
+実行区分が「保留」のケース（1,014件）はテストケースから外した。設計書にも現行ソースにも期待結果（正解）が無く、テストできないため。
+行は削除せず `../excluded_hold_cases.tsv` へ移した（論点ID・決める人つき。元の11列は「元_」付きで保持）。保留ケースだけが使っていたシードは `../excluded_hold_seeds.tsv`。
+設計者の回答（`../hold_review/questions.tsv`）やテスト側の決定で正解が決まったら、そのケースを作り直して戻す。ゲート G6 は、基線のテストIDからこの除外分を差し引いて照合し、保留ケースが残っていれば落とす。
+
+## 実行の前提（依頼者決定 2026-09-30）
+
+- **専用DBで流す。** 結合テストは機能（またはモジュール）ごとに、まっさらな専用DBへシードを投入して流す。検索・一覧・集計で「このN件だけ」を期待するケースは、開始時に同じ条件に当たる他のデータを削除して隔離しており、共有の試験環境では他機能のデータを消しうる
+- **1件しかないデータは順番に実行する。** 基本設定のように1件しかない設定や、期待結果が固定IDを名指ししていて分けられないデータは `共有可` とし、使う各ケースが開始時に値を設定し直す。上から順に実行すれば成立するが、同じデータを使うケースを同時には実行しない。該当ケースは `sequential_only.tsv`
+
+## 機械検査 `gate_precond.py`
+
+| No. | 検査 | 対応する規約 |
+| --- | --- | --- |
+| G1 | 保留以外で事前準備が空・`—` | P5 |
+| G2 | 使用シードのIDが事前準備に現れない | P5 |
+| G3 | 期待結果の「AからB」「Aのまま」の A が事前準備に無い | P6 |
+| G4 | `共有` 列が無い・値が不正／ケース専用シードの参照が1件でない／ケース専用シードIDの末尾がケース番号でない／どのケースも使わないシード／保留以外のケースがケース専用シードを1件も使わない（状態を変えない読み取りだけのケースは `readonly_cases/<機能ID>.tsv` にテストID/理由で宣言） | P1 P2 P3 |
+| G5 | 同じ機能のケース専用シードどうしで自分のレコードID（「ID=20」「ID 20」）が重なる。ケース専用シードの識別子（「〜」の範囲は展開する）が、他のケースの事前準備・手順・期待結果、または他のケース専用シード（全機能）に現れる | P1 P4 |
+| G6 | 改名が識別子どうしでない。期待結果が「基線に改名を当てたもの」と一致せず、承認済みの oracle_changes にも無い。保留ケースが変わった。テストIDの集合・他の固定列が変わった（出典は `source_changes/`、実行区分の誤記は `kind_changes.tsv` に宣言したものを除く） | P7 |
+| G8 | 事前準備が「手順N」「返した値」「発番した」など後の結果を参照している | P11 |
+| G7 | 手順が「基線に改名を当てたもの」と違うのに `step_changes` に宣言が無い／種別が P8 の5種以外 | P8 |
+| G9 | 投入方法が「未確定」「未整備」のシードを使う非保留ケースが `open_preconditions.tsv` に無い。該当件数は参考として出す | P12 |
+
+`baseline/` は書き直し前（HEAD 98709b43）のスナップショット。G6 の基準なので書き換えない。
+
+実行区分の誤記を直すときは、基線を書き換えずに `kind_changes.tsv`（テストID／旧実行区分／新実行区分／理由）へ宣言する。G6 は、基線の値が旧実行区分と一致し、今の値が新実行区分と一致するものだけ認める（2026-10-19、IT-M03-45-024 の「ブラザ+DB確認」→「ブラウザ+DB確認」）。
+
+書き直しの後で足したケースは `added_cases.tsv`（テストID／追加日／由来）に載せる。G6 は「基線から保留除外分を引いた集合」に
+この追加分を足したものと、現在のテストIDの集合を照合する。基線が無い機能（後から新設したもの）は、全ケースが追加分になる。
+2026-10-06 に機能間データ連携のケース142件を足した（`../link/merge_into_cases.py`。旧テストIDとの対応は `../link/merged_map.tsv`）。
+同日、アクセス解析連携のケース（F10-01〜03）を足した（`../ga/merge_into_cases.py`。判定IDとの対応は `../ga/ga_map.tsv`）。
+同日、対応表が「候補」止まりだった14機能のケース398件を足した（`../sheetmap/merge_into_cases.py`。判定IDとの対応は `../sheetmap/sm_map.tsv`）。
+
+機械で見られないもの（P2 の共有可の妥当性、P6 の値と対象の対応、P8 の種別の妥当性、P9、P10）は codex レビューで見る。
+
+## 用語の置き換え（依頼者決定 2026-10-06）
+
+AWS Step Functions は使わない。テストケースでは「バッチ」と書き、非同期処理ダッシュボードの「Messenger ジョブ」という表現も書かない。
+置き換えの規則は `terms.py`（`python3 precond/terms.py` で cases/・step_changes/・open_preconditions.tsv・link/cases に当てる。何度流しても同じ）。
+基線は書き換えていない。ゲートは基線の手順と期待結果に同じ置き換えを当ててから照合する。
+シードID `S-B02-05-STEPFUNCTIONS` は `S-B02-05-BATCH-ENV` に変えた。
+
+「非同期処理ダッシュボード」という画面名も書かない（同日の依頼者決定）。設計書に無い画面で、実装にあるのは管理画面とは切り離した運用ツールである。
+ケースには「非同期処理の待機中・実行中のジョブが0件になるまで待つ」のように状態だけを書く。待機の手順そのものは残す
+（バッチはジョブを積むだけで終わり、実処理はワーカーが後から行うため）。確認の手段は試験環境の用意として扱う。
+
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/combination/{combos,factors,cases}/*M03-{32,33,35,38,40}* integration_test/casegen/combination/units/M03-{32,33,35,38,40}/design.txt integration_test/casegen/combination/review/R1_*_findings.md integration_test/casegen/combination/review/M03-{32,33,35,38,40}_R1_dispositions*.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+    10 integration_test/casegen/combination/combos/M03-32.tsv
+     1 integration_test/casegen/combination/combos/M03-32_undetermined.tsv
+     8 integration_test/casegen/combination/combos/M03-33.tsv
+     1 integration_test/casegen/combination/combos/M03-33_undetermined.tsv
+     2 integration_test/casegen/combination/combos/M03-35.tsv
+     1 integration_test/casegen/combination/combos/M03-35_undetermined.tsv
+     3 integration_test/casegen/combination/combos/M03-38.tsv
+     1 integration_test/casegen/combination/combos/M03-38_undetermined.tsv
+     2 integration_test/casegen/combination/combos/M03-40.tsv
+     2 integration_test/casegen/combination/combos/M03-40_undetermined.tsv
+     1 integration_test/casegen/combination/factors/M03-32_constraints.tsv
+    15 integration_test/casegen/combination/factors/M03-32_existing.tsv
+    11 integration_test/casegen/combination/factors/M03-32_factors.tsv
+    15 integration_test/casegen/combination/factors/M03-32_interactions.tsv
+     4 integration_test/casegen/combination/factors/M03-32_processes.tsv
+     2 integration_test/casegen/combination/factors/M03-33_constraints.tsv
+     7 integration_test/casegen/combination/factors/M03-33_existing.tsv
+     5 integration_test/casegen/combination/factors/M03-33_factors.tsv
+     5 integration_test/casegen/combination/factors/M03-33_interactions.tsv
+     2 integration_test/casegen/combination/factors/M03-33_processes.tsv
+     2 integration_test/casegen/combination/factors/M03-35_constraints.tsv
+     4 integration_test/casegen/combination/factors/M03-35_existing.tsv
+     3 integration_test/casegen/combination/factors/M03-35_factors.tsv
+     2 integration_test/casegen/combination/factors/M03-35_interactions.tsv
+     2 integration_test/casegen/combination/factors/M03-35_processes.tsv
+     2 integration_test/casegen/combination/factors/M03-38_constraints.tsv
+    10 integration_test/casegen/combination/factors/M03-38_existing.tsv
+     4 integration_test/casegen/combination/factors/M03-38_factors.tsv
+     4 integration_test/casegen/combination/factors/M03-38_interactions.tsv
+     2 integration_test/casegen/combination/factors/M03-38_processes.tsv
+     5 integration_test/casegen/combination/factors/M03-40_constraints.tsv
+     9 integration_test/casegen/combination/factors/M03-40_existing.tsv
+     4 integration_test/casegen/combination/factors/M03-40_factors.tsv
+     4 integration_test/casegen/combination/factors/M03-40_interactions.tsv
+     2 integration_test/casegen/combination/factors/M03-40_processes.tsv
+    10 integration_test/casegen/combination/cases/M03-32_cb_dispositions.tsv
+     6 integration_test/casegen/combination/cases/M03-32_cb_seed_data.tsv
+     6 integration_test/casegen/combination/cases/M03-32_cb_test_cases.tsv
+     8 integration_test/casegen/combination/cases/M03-33_cb_dispositions.tsv
+     5 integration_test/casegen/combination/cases/M03-33_cb_seed_data.tsv
+     5 integration_test/casegen/combination/cases/M03-33_cb_test_cases.tsv
+     2 integration_test/casegen/combination/cases/M03-35_cb_dispositions.tsv
+     1 integration_test/casegen/combination/cases/M03-35_cb_seed_data.tsv
+     1 integration_test/casegen/combination/cases/M03-35_cb_test_cases.tsv
+     3 integration_test/casegen/combination/cases/M03-38_cb_dispositions.tsv
+     3 integration_test/casegen/combination/cases/M03-38_cb_seed_data.tsv
+     2 integration_test/casegen/combination/cases/M03-38_cb_test_cases.tsv
+     2 integration_test/casegen/combination/cases/M03-40_cb_dispositions.tsv
+     2 integration_test/casegen/combination/cases/M03-40_cb_seed_data.tsv
+     2 integration_test/casegen/combination/cases/M03-40_cb_test_cases.tsv
+   148 integration_test/casegen/combination/units/M03-32/design.txt
+   212 integration_test/casegen/combination/units/M03-33/design.txt
+    96 integration_test/casegen/combination/units/M03-35/design.txt
+   141 integration_test/casegen/combination/units/M03-38/design.txt
+   113 integration_test/casegen/combination/units/M03-40/design.txt
+    47 integration_test/casegen/combination/review/R1_01_findings.md
+    17 integration_test/casegen/combination/review/R1_02_findings.md
+    41 integration_test/casegen/combination/review/R1_03_findings.md
+    23 integration_test/casegen/combination/review/R1_04_findings.md
+     1 integration_test/casegen/combination/review/R1_05_findings.md
+     5 integration_test/casegen/combination/review/R1_06_findings.md
+    47 integration_test/casegen/combination/review/R1_07_findings.md
+    23 integration_test/casegen/combination/review/R1_08_findings.md
+    41 integration_test/casegen/combination/review/R1_09_findings.md
+     5 integration_test/casegen/combination/review/R1_10_findings.md
+     5 integration_test/casegen/combination/review/R1_11_findings.md
+    53 integration_test/casegen/combination/review/R1_12_findings.md
+    77 integration_test/casegen/combination/review/R1_13_findings.md
+     5 integration_test/casegen/combination/review/R1_14_findings.md
+    17 integration_test/casegen/combination/review/R1_15_findings.md
+    47 integration_test/casegen/combination/review/R1_16_findings.md
+    71 integration_test/casegen/combination/review/R1_17_findings.md
+   131 integration_test/casegen/combination/review/R1_18_findings.md
+    35 integration_test/casegen/combination/review/R1_19_findings.md
+    29 integration_test/casegen/combination/review/R1_20_findings.md
+    65 integration_test/casegen/combination/review/R1_21_findings.md
+    29 integration_test/casegen/combination/review/R1_22_findings.md
+    47 integration_test/casegen/combination/review/R1_23_findings.md
+    29 integration_test/casegen/combination/review/R1_24_findings.md
+    41 integration_test/casegen/combination/review/R1_25_findings.md
+    17 integration_test/casegen/combination/review/R1_26_findings.md
+    29 integration_test/casegen/combination/review/R1_27_findings.md
+    11 integration_test/casegen/combination/review/R1_28_findings.md
+    53 integration_test/casegen/combination/review/R1_29_findings.md
+   149 integration_test/casegen/combination/review/R1_30_findings.md
+   143 integration_test/casegen/combination/review/R1_31_findings.md
+    47 integration_test/casegen/combination/review/R1_32_findings.md
+   101 integration_test/casegen/combination/review/R1_33_findings.md
+    11 integration_test/casegen/combination/review/R1_34_findings.md
+   101 integration_test/casegen/combination/review/R1_35_findings.md
+    11 integration_test/casegen/combination/review/R1_36_findings.md
+    17 integration_test/casegen/combination/review/R1_37_findings.md
+    29 integration_test/casegen/combination/review/R1_38_findings.md
+     5 integration_test/casegen/combination/review/R1_39_findings.md
+     5 integration_test/casegen/combination/review/R1_40_findings.md
+    11 integration_test/casegen/combination/review/R1_41_findings.md
+    89 integration_test/casegen/combination/review/R1_42_findings.md
+    41 integration_test/casegen/combination/review/R1_43_findings.md
+    47 integration_test/casegen/combination/review/R1_44_findings.md
+    11 integration_test/casegen/combination/review/R1_45_findings.md
+    23 integration_test/casegen/combination/review/R1_46_findings.md
+    17 integration_test/casegen/combination/review/R1_47_findings.md
+    23 integration_test/casegen/combination/review/R1_48_findings.md
+    71 integration_test/casegen/combination/review/R1_49_findings.md
+    65 integration_test/casegen/combination/review/R1_50_findings.md
+    11 integration_test/casegen/combination/review/R1_51_findings.md
+    47 integration_test/casegen/combination/review/R1_52_findings.md
+    65 integration_test/casegen/combination/review/R1_53_findings.md
+    41 integration_test/casegen/combination/review/R1_54_findings.md
+    59 integration_test/casegen/combination/review/R1_55_findings.md
+    23 integration_test/casegen/combination/review/R1_56_findings.md
+    11 integration_test/casegen/combination/review/R1_A_findings.md
+    83 integration_test/casegen/combination/review/R1_B_findings.md
+    17 integration_test/casegen/combination/review/R1_C_findings.md
+    11 integration_test/casegen/combination/review/R1_D_findings.md
+    11 integration_test/casegen/combination/review/M03-32_R1_dispositions.tsv
+    15 integration_test/casegen/combination/review/M03-33_R1_dispositions.tsv
+     2 integration_test/casegen/combination/review/M03-35_R1_dispositions.tsv
+     2 integration_test/casegen/combination/review/M03-38_R1_dispositions.tsv
+     2 integration_test/casegen/combination/review/M03-40_R1_dispositions.tsv
+  3383 total
+
+exec
+/bin/bash -lc "grep -l -E '"'^### 指摘（M03-(32|33|35|38|40) /'"' integration_test/casegen/combination/review/R1_*_findings.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/review/R1_31_findings.md
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M03-32_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/R1_31_findings.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-32_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M03-32.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-32_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-32_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-32_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M03-33_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M03-33.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-33_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-33_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-33_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-33_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M03-35_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M03-35.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+### 指摘（M03-32 / IT-M03-32-078）
+- 主張: 商品コード「M0332-CB078-A」のCSVを取り込む。
+- 実際: 設計書 L0120 はCSVの商品コードの最大文字数を「11」とする。このコードは13文字。
+- 判定: 成立しない前提・手順
+- 修正案: 11文字以内の商品コードでシードとCSVを作り直す。
+
+### 指摘（M03-32 / IT-M03-32-079）
+- 主張: 商品コード「M0332-CB079-A」のCSVを取り込む。
+- 実際: 設計書 L0120 はCSVの商品コードの最大文字数を「11」とする。このコードは13文字。
+- 判定: 成立しない前提・手順
+- 修正案: 11文字以内の商品コードでシードとCSVを作り直す。
+
+### 指摘（M03-32 / IT-M03-32-084）
+- 主張: シードで商品コード「HIGHM0332-CB084-A-CSV」の規格を作り、CSVでは「HIGHM0332-CB084-A」を指定する。投入方法に規格の商品コードを変更する操作がない。
+- 実際: 設計書 L0079 は「商品コードに該当する高額対象の規格が無い行」は取込全体を中止すると定める。
+- 判定: 成立しない前提・手順
+- 修正案: 作成する規格と取込CSVの商品コードを一致させる。
+
+### 指摘（M03-32 / IT-M03-32-084）
+- 主張: CSVの商品コードは「HIGHM0332-CB084-A」。
+- 実際: 設計書 L0120 はCSVの商品コードの最大文字数を「11」とする。このコードは17文字。
+- 判定: 成立しない前提・手順
+- 修正案: 商品コードを11文字以内に直す。
+
+### 指摘（M03-32 / IT-M03-32-084）
+- 主張: 期待結果はスマレジ連携フラグが「連携する」のままであることだけ。
+- 実際: 共通設計書 `0204_sheet-65.txt` L0047-L0048 は、フラグが立ち、かつ基準価格に変更があった場合にスマレジ連携を行うと定める。事前準備の基準価格とCSV値はともに250円。
+- 判定: 要因の結果が欠けている
+- 修正案: フラグの維持に加え、価格変更なしの組に対応するAPI呼出結果も確かめる。
+
+### 指摘（M03-32 / IT-M03-32-085）
+- 主張: シードで商品コード「HIGHM0332-CB085-A-CSV」の規格を作り、CSVでは「HIGHM0332-CB085-A」を指定する。投入方法に規格の商品コードを変更する操作がない。
+- 実際: 設計書 L0079 は「商品コードに該当する高額対象の規格が無い行」は取込全体を中止すると定める。
+- 判定: 成立しない前提・手順
+- 修正案: 作成する規格と取込CSVの商品コードを一致させる。
+
+### 指摘（M03-32 / IT-M03-32-085）
+- 主張: CSVの商品コードは「HIGHM0332-CB085-A」。
+- 実際: 設計書 L0120 はCSVの商品コードの最大文字数を「11」とする。このコードは17文字。
+- 判定: 成立しない前提・手順
+- 修正案: 商品コードを11文字以内に直す。
+
+### 指摘（M03-32 / IT-M03-32-085）
+- 主張: 期待結果はスマレジ連携フラグが「連携する」のままであることだけ。
+- 実際: 共通設計書 `0204_sheet-65.txt` L0050-L0051、L0055 は、シングルカード以外ではフラグが立ち、かつ価格に変更があった場合に連携すると定める。事前準備とCSVの価格は同じ250円。
+- 判定: 要因の結果が欠けている
+- 修正案: 価格変更なしの組に対応するAPI呼出結果も確かめる。
+
+### 指摘（M03-32 / IT-M03-32-086）
+- 主張: CSVの商品コードは「HIGHM0332-CB086-A」。
+- 実際: 設計書 L0120 はCSVの商品コードの最大文字数を「11」とする。このコードは17文字。
+- 判定: 成立しない前提・手順
+- 修正案: 商品コードを11文字以内に直す。
+
+### 指摘（M03-32 / IT-M03-32-086）
+- 主張: 期待結果はスマレジ連携フラグが「連携しない」のままであることだけ。
+- 実際: 共通設計書 `0204_sheet-65.txt` L0050-L0051、L0055 は、シングルカード以外の連携をフラグと価格変更に結び付けている。この組はフラグOFFで価格も変更しない。
+- 判定: 要因の結果が欠けている
+- 修正案: フラグの維持に加え、連携対象の価格変更なしに対応するAPI呼出結果も確かめる。
+
+### 指摘（M03-33 / IT-M03-33-072）
+- 主張: CSV行は「HP-M0333-CB072,1400,600,0,空,空,0」で、セールフラグを0とする。
+- 実際: 設計書 L0150-L0155 は第3項目を「セールフラグ」、値を0または1と定める。提示行の第3項目は600。
+- 判定: 組の値が無い
+- 修正案: 設計書の列順に合わせ、セールフラグ0を所定の項目に置く。
+
+### 指摘（M03-33 / IT-M03-33-072）
+- 主張: 期待結果は「価格履歴が1件も追加されず0件のまま」だけ。
+- 実際: 設計書 L0066-L0072 は、無効から無効の取込で基準価格・販売価格を据え置き、買取価格をCSV値へ更新し、セールフラグを無効のままと定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 履歴に加え、規格の価格とセールフラグがこの組で定められた値になることを確かめる。
+
+### 指摘（M03-33 / IT-M03-33-073）
+- 主張: CSV行は「HP-M0333-CB073,1500,650,1,空,空,0」で、セールフラグを1とする。
+- 実際: 設計書 L0150-L0155 は第3項目を「セールフラグ」、値を0または1と定める。提示行の第3項目は650。
+- 判定: 組の値が無い
+- 修正案: 設計書の列順に合わせ、セールフラグ1を所定の項目に置く。
+
+### 指摘（M03-33 / IT-M03-33-073）
+- 主張: 期待結果は買取価格の履歴だけ。
+- 実際: 設計書 L0044-L0050 は、無効から有効への切替でセールフラグを有効にし、販売価格をCSV値へ更新し、基準価格は据え置き、買取価格をCSV値へ更新すると定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 履歴とともに、セールフラグ・販売価格・基準価格・買取価格の更新後の値を確かめる。
+
+### 指摘（M03-33 / IT-M03-33-074）
+- 主張: CSV行は「HP-M0333-CB074,1200,600,1,空,空,0」で、セールフラグを1とする。
+- 実際: 設計書 L0150-L0155 は第3項目を「セールフラグ」、値を0または1と定める。提示行の第3項目は600。
+- 判定: 組の値が無い
+- 修正案: 設計書の列順に合わせ、セールフラグ1を所定の項目に置く。
+
+### 指摘（M03-33 / IT-M03-33-074）
+- 主張: 期待結果は販売価格の履歴だけ。
+- 実際: 設計書 L0044-L0050 は、無効から有効への切替でセールフラグを有効にし、販売価格をCSV値へ更新し、基準価格は据え置き、買取価格をCSV値へ更新すると定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 履歴とともに、セールフラグ有効・販売価格1200・基準価格1500・買取価格600を確かめる。
+
+### 指摘（M03-33 / IT-M03-33-075）
+- 主張: CSV行は「HP-M0333-CB075,1300,650,0,空,空,0」で、セールフラグを0とする。
+- 実際: 設計書 L0150-L0155 は第3項目を「セールフラグ」、値を0または1と定める。提示行の第3項目は650。
+- 判定: 組の値が無い
+- 修正案: 設計書の列順に合わせ、セールフラグ0を所定の項目に置く。
+
+### 指摘（M03-33 / IT-M03-33-075）
+- 主張: 期待結果は買取価格の履歴だけ。
+- 実際: 設計書 L0058-L0064 は、有効から無効への切替でセールフラグを無効にし、販売価格を登録済みの基準価格からコピーし、買取価格をCSV値へ更新すると定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 履歴とともに、セールフラグ無効・販売価格1500・買取価格650を確かめる。
+
+### 指摘（M03-33 / IT-M03-33-076）
+- 主張: CSV行は「HP-M0333-CB076,900,600,0,空,空,0」で、セールフラグを0とする。
+- 実際: 設計書 L0150-L0155 は第3項目を「セールフラグ」、値を0または1と定める。提示行の第3項目は600。
+- 判定: 組の値が無い
+- 修正案: 設計書の列順に合わせ、セールフラグ0を所定の項目に置く。
+
+### 指摘（M03-33 / IT-M03-33-076）
+- 主張: 期待結果は販売価格の履歴だけ。
+- 実際: 設計書 L0058-L0064 は、有効から無効への切替でセールフラグを無効にし、販売価格を登録済みの基準価格からコピーし、買取価格をCSV値へ更新すると定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 履歴とともに、セールフラグ無効・販売価格1500・買取価格600を確かめる。
+
+### 指摘（M03-33 / IT-M03-33-077）
+- 主張: CSV行は「HP-M0333-CB077,1200,700,1,空,空,0」で、セールフラグを1とする。
+- 実際: 設計書 L0150-L0155 は第3項目を「セールフラグ」、値を0または1と定める。提示行の第3項目は700。
+- 判定: 組の値が無い
+- 修正案: 設計書の列順に合わせ、セールフラグ1を所定の項目に置く。
+
+### 指摘（M03-33 / IT-M03-33-077）
+- 主張: 期待結果は「価格履歴が1件も追加されず0件のまま」だけ。
+- 実際: 設計書 L0051-L0057 は、有効から有効の取込で基準価格は据え置き、販売価格・買取価格をCSV値へ更新し、セールフラグを有効のままと定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 履歴に加え、基準価格1600・販売価格1200・買取価格700・セールフラグ有効を確かめる。
+
+### 指摘（M03-33 / IT-M03-33-078）
+- 主張: CSV行は「HP-M0333-CB078,1100,650,1,空,空,0」で、セールフラグを1とする。
+- 実際: 設計書 L0150-L0155 は第3項目を「セールフラグ」、値を0または1と定める。提示行の第3項目は650。
+- 判定: 組の値が無い
+- 修正案: 設計書の列順に合わせ、セールフラグ1を所定の項目に置く。
+
+### 指摘（M03-33 / IT-M03-33-078）
+- 主張: 期待結果は販売価格・買取価格の履歴だけ。
+- 実際: 設計書 L0051-L0057 は、有効から有効の取込で基準価格は据え置き、販売価格・買取価格をCSV値へ更新し、セールフラグを有効のままと定める。
+- 判定: 要因の結果が欠けている
+- 修正案: 履歴とともに、基準価格1600・販売価格1100・買取価格650・セールフラグ有効を確かめる。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-35_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+指摘	処置	理由	直した所
+IT-M03-32-078	採用	L0120「1 商品コード ... 最大文字数 11」。M0332-CB078-Aは13文字で正しい指摘	商品コードを11文字以内のM32CB078Aに変え、商品名・CSV名・シード投入方法・事前準備・手順を同じ値にそろえた(高額商品コードは対象外のため据え置き)
+IT-M03-32-079	採用	L0120「1 商品コード ... 最大文字数 11」。M0332-CB079-Aは13文字で正しい指摘	商品コードをM32CB079Aに変え、関連する記述をそろえた
+IT-M03-32-084	採用	L0079「商品コードに該当する高額対象の規格が無い行」は取込全体を中止。シードは商品コード「…-CSV」の規格を作りCSVは別コードを指しており、規格の商品コードを変える手順が無かった。商品規格登録編集画面に商品コード欄があることを実装で確認した	CSV登録時の商品コードをM32CB084C、規格の商品コードをM32CB084Sとし、シード投入方法の規格編集で商品コードをM32CB084Sに変える操作を追記
+IT-M03-32-084	採用	L0120 商品コード最大文字数11。旧コードは17文字	CSVの商品コードを9文字のM32CB084Sにした
+IT-M03-32-084	採用	共通設計書0204_sheet-65 L0044-L0048・L0040は、フラグONかつ基準価格に変更があったときだけ連携を行うと定める。価格変更なしの組(F10=変更なし)でAPI呼出が無いことが欠けていた	手順5(DBでスマレジ試験受信記録を確認)を足し、期待結果にフラグが連携するのままと受信記録が0件のままを併記。事前準備にAPI呼出記録0件を追記し、実行区分をブラウザ+DB確認へ変更、出典を追記
+IT-M03-32-085	採用	L0079。084と同じく規格の商品コードを変える手順が無かった	CSV登録時の商品コードをM32CB085C、規格の商品コードをM32CB085Sとし、規格編集で商品コードを変える操作を追記
+IT-M03-32-085	採用	L0120 商品コード最大文字数11。旧コードは17文字	CSVの商品コードをM32CB085Sにした
+IT-M03-32-085	採用	共通設計書0204_sheet-65 L0051・L0055は、フラグONかつ価格に変更があったときに連携すると定める。価格変更なしのAPI呼出結果が欠けていた	084と同様に手順5・期待結果・事前準備・実行区分・出典を直した
+IT-M03-32-086	採用	L0120 商品コード最大文字数11。旧コードは17文字	CSVの商品コードをM32CB086Sにし、新規作成する規格の商品コードも同じ値にした
+IT-M03-32-086	採用	共通設計書0204_sheet-65 L0050-L0051・L0055。フラグOFFで価格変更なしの組のAPI呼出結果が欠けていた。L0051は「スマレジ連携フラグが立っているかつ価格に変更があった場合」に連携とするため、OFFは連携しない	084と同様に手順5・期待結果(連携しないのまま・受信記録0件)・事前準備・実行区分・出典を直した
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-35_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-35_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-35_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M03-38.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M03-38_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 71ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	価格履歴を残す	高額商品価格変更CSVアップロード画面でCSVを選び、CSVファイルのアップロードを押す	買取/販売価格履歴検索/一覧画面	L0039-L0048,L0092
+P2	取込成功後に支店システムへ商品を通知する	同上	支店システム・連携エラー	L0082
+P3	価格更新に伴いスマレジ連携フラグを自動で決め連携を呼び出す	高額商品価格変更CSVの取込で基準価格が更新される	規格のスマレジ連携フラグ（DB）、スマレジ連携のAPI呼出履歴	_common/0204_sheet-65.txt:L0010-L0016,_common/0204_sheet-65.txt:L0047-L0049,_common/0204_sheet-65.txt:L0055
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-38_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-38_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-38_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-38_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M03-40_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 134ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M03-33-001	P1	F01=無効&F02=無効&F03=登録済と同じ&F04=登録済と同じ	登録済のセールフラグ=無効／CSVのセールフラグ=無効／更新後の販売価格と登録済の販売価格=登録済と同じ／CSVの買取価格と登録済の買取価格=登録済と同じ	登録済のセールフラグ×CSVのセールフラグ×更新後の販売価格と登録済の販売価格: 無効×無効×登録済と同じ；登録済のセールフラグ×CSVの買取価格と登録済の買取価格: 無効×登録済と同じ；CSVのセールフラグ×CSVの買取価格と登録済の買取価格: 無効×登録済と同じ；更新後の販売価格と登録済の販売価格×CSVの買取価格と登録済の買取価格: 登録済と同じ×登録済と同じ
+CB-M03-33-002	P1	F01=無効&F02=有効&F03=登録済と同じ&F04=登録済と異なる	登録済のセールフラグ=無効／CSVのセールフラグ=有効／更新後の販売価格と登録済の販売価格=登録済と同じ／CSVの買取価格と登録済の買取価格=登録済と異なる	登録済のセールフラグ×CSVのセールフラグ×更新後の販売価格と登録済の販売価格: 無効×有効×登録済と同じ；登録済のセールフラグ×CSVの買取価格と登録済の買取価格: 無効×登録済と異なる；CSVのセールフラグ×CSVの買取価格と登録済の買取価格: 有効×登録済と異なる；更新後の販売価格と登録済の販売価格×CSVの買取価格と登録済の買取価格: 登録済と同じ×登録済と異なる
+CB-M03-33-003	P1	F01=無効&F02=有効&F03=登録済と異なる&F04=登録済と同じ	登録済のセールフラグ=無効／CSVのセールフラグ=有効／更新後の販売価格と登録済の販売価格=登録済と異なる／CSVの買取価格と登録済の買取価格=登録済と同じ	登録済のセールフラグ×CSVのセールフラグ×更新後の販売価格と登録済の販売価格: 無効×有効×登録済と異なる；CSVのセールフラグ×CSVの買取価格と登録済の買取価格: 有効×登録済と同じ；更新後の販売価格と登録済の販売価格×CSVの買取価格と登録済の買取価格: 登録済と異なる×登録済と同じ
+CB-M03-33-004	P1	F01=有効&F02=無効&F03=登録済と同じ&F04=登録済と異なる	登録済のセールフラグ=有効／CSVのセールフラグ=無効／更新後の販売価格と登録済の販売価格=登録済と同じ／CSVの買取価格と登録済の買取価格=登録済と異なる	登録済のセールフラグ×CSVのセールフラグ×更新後の販売価格と登録済の販売価格: 有効×無効×登録済と同じ；登録済のセールフラグ×CSVの買取価格と登録済の買取価格: 有効×登録済と異なる；CSVのセールフラグ×CSVの買取価格と登録済の買取価格: 無効×登録済と異なる
+CB-M03-33-005	P1	F01=有効&F02=無効&F03=登録済と異なる&F04=登録済と同じ	登録済のセールフラグ=有効／CSVのセールフラグ=無効／更新後の販売価格と登録済の販売価格=登録済と異なる／CSVの買取価格と登録済の買取価格=登録済と同じ	登録済のセールフラグ×CSVのセールフラグ×更新後の販売価格と登録済の販売価格: 有効×無効×登録済と異なる；登録済のセールフラグ×CSVの買取価格と登録済の買取価格: 有効×登録済と同じ
+CB-M03-33-006	P1	F01=有効&F02=有効&F03=登録済と同じ&F04=登録済と同じ	登録済のセールフラグ=有効／CSVのセールフラグ=有効／更新後の販売価格と登録済の販売価格=登録済と同じ／CSVの買取価格と登録済の買取価格=登録済と同じ	登録済のセールフラグ×CSVのセールフラグ×更新後の販売価格と登録済の販売価格: 有効×有効×登録済と同じ
+CB-M03-33-007	P1	F01=有効&F02=有効&F03=登録済と異なる&F04=登録済と異なる	登録済のセールフラグ=有効／CSVのセールフラグ=有効／更新後の販売価格と登録済の販売価格=登録済と異なる／CSVの買取価格と登録済の買取価格=登録済と異なる	登録済のセールフラグ×CSVのセールフラグ×更新後の販売価格と登録済の販売価格: 有効×有効×登録済と異なる；更新後の販売価格と登録済の販売価格×CSVの買取価格と登録済の買取価格: 登録済と異なる×登録済と異なる
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M03-40.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-40_factors.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-40_processes.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-40_interactions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M03-40_constraints.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 188ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		基準価格はセールフラグによらずCSVの値へ更新され、基準価格の変更で履歴を残すかはセールフラグで変わらない
+P1	F01+F03	効き合う	L0040-L0047	販売価格はセールフラグが無効のときだけCSVの基準価格へ更新され、有効のときは変えない。販売価格の差が履歴に載るかがセールフラグで変わる
+P1	F02+F03	関係しない		履歴は基準価格か販売価格のどちらかが変わったときに残す「どれか」の条件で、結果は履歴あり・なしの2つだけ。外れ方は1つずつ確かめれば足りる
+P2	F04+F05	関係しない		通知結果は連携エラーを残すかを決め、行数は通知の件数を決めるだけで互いの結果を変えない
+P3	F06+F07	関係しない		種別・状態は自動ONを決める「すべて満たす」条件で、外れ方は1つずつ確かめれば足りる
+P3	F06+F08	関係しない		自動ONの「すべて満たす」条件の1つずつ
+P3	F07+F08	関係しない		自動ONの「すべて満たす」条件の1つずつ
+P3	F06+F09	関係しない		フラグは更新前がONか自動条件を満たすかの「どちらか」でONになり、結果はONかOFFの2つだけ
+P3	F07+F09	関係しない		フラグは更新前がONか自動条件を満たすかの「どちらか」でONになり、結果はONかOFFの2つだけ
+P3	F08+F09	関係しない		フラグは更新前がONか自動条件を満たすかの「どちらか」でONになり、結果はONかOFFの2つだけ
+P3	F06+F10	関係しない		連携の呼出しは、フラグがONかつ連携対象の価格に変更がある「すべて満たす」条件で、外れ方は1つずつ確かめれば足りる
+P3	F07+F10	関係しない		連携の呼出しは、フラグがONかつ価格に変更がある「すべて満たす」条件
+P3	F08+F10	関係しない		連携の呼出しは、フラグがONかつ価格に変更がある「すべて満たす」条件
+P3	F09+F10	関係しない		連携の呼出しは、フラグがONかつ価格に変更がある「すべて満たす」条件
+
+ succeeded in 221ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	CSVの1行で商品コードに一致する規格の部門を更新する	部門更新CSV登録画面でCSVを選び、CSVファイルのアップロードボタンを押す	商品規格の部門ID（DB）・取込履歴	L0029,L0051-L0061
+
+ succeeded in 246ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	登録済みのセールフラグ	無効｜有効	無効: 基準価格も販売価格もCSVの基準価格へ更新する／有効: 基準価格だけ更新し販売価格は変えない	L0040-L0047	この機能
+F02	P1	CSVの基準価格と登録済みの基準価格	同じ｜異なる	同じ: 基準価格は変わらず、基準価格の変更としては履歴を残さない（販売価格が変わって履歴を作るときは基準価格も履歴に登録する）／異なる: 基準価格が更新され、価格が変わった行として履歴を残し更新前後を記録する	L0034,L0092	この機能
+F03	P1	CSVの基準価格と登録済みの販売価格	同じ｜異なる	同じ: 販売価格は変わらず履歴に載らない／異なる: 無効なら販売価格の更新前後を履歴に記録し有効なら販売価格は変わらない	L0043,L0047,L0092	この機能
+F04	P2	支店システムへの通知結果	受け付けられる｜失敗する	受け付けられる: 取込成功のまま連携エラーは残らない／失敗する: 取込は成功のまま失敗した商品を再連携の対象に記録する	L0082	この機能
+F05	P2	CSV内の同じ商品の行数	1行｜複数行	1行: 商品は通知に1件／複数行: 同じ商品は通知を1件にまとめる	L0082	この機能
+F06	P3	商品の種別	シングルカード｜シングルカード以外	シングルカード: 条件を満たすと自動でフラグがON／シングルカード以外: 自動ONはなく手動でONにした規格だけ連携	_common/0204_sheet-65.txt:L0010-L0016,_common/0204_sheet-65.txt:L0055	この機能
+F07	P3	規格のカード状態（スマレジ判定）	NM｜SP・MP・HP・その他	NM: 自動ONにならない／SP・MP・HP・その他: 基準価格が閾値以上なら自動でON	_common/0204_sheet-65.txt:L0011	この機能
+F08	P3	更新後の基準価格	閾値以上｜閾値未満	閾値以上: 他の条件を満たせば自動でON／閾値未満: 自動ONにならない	_common/0204_sheet-65.txt:L0011	この機能
+F09	P3	更新前のスマレジ連携フラグ	無効｜有効	無効: 条件を満たしたときだけONになる／有効: 条件を満たさなくなってもONのまま保たれ、基準価格の変更で連携を呼び出す	_common/0204_sheet-65.txt:L0014,_common/0204_sheet-65.txt:L0047-L0048	この機能
+F10	P3	連携対象の価格の変更	変更あり｜変更なし	変更あり: 連携フラグがONならスマレジ連携を呼び出す／変更なし: 連携を呼び出さない（シングルカードは基準価格、それ以外は価格）	_common/0204_sheet-65.txt:L0047-L0051,_common/0204_sheet-65.txt:L0055	この機能
+
+ succeeded in 263ms:
+指摘	処置	理由	直した所
+IT-M03-33-072	一部採用	指摘のとおり設計書のCSV項目はL0150-L0157の5つ(商品コード・販売価格・セールフラグ・帯URL・タグ(ID))で、第3項目がセールフラグ。ただし買取価格の列は設計書(Excel)のCSV書式に無く、修正案の「買取価格の列を足す」形は採らず5列で書いた。実装の取込も5列である	CSV行を「HP-M0333-CB072,1400,0,空,空」に変え、買取価格は登録済みの600のままと事前準備に明記。シードの7列を5列に直した
+IT-M03-33-072	採用	L0066-L0072: 無効から無効の取込で基準価格・販売価格は据え置き、セールフラグは無効のまま。欠けていた	期待結果に規格の基準価格1500・販売価格1500・買取価格600・セールフラグ無効のままを追加し、手順2で規格の値を確認
+IT-M03-33-073	却下	CSVの項目を5列(L0150-L0157)に直すと買取価格を渡せない。L0050の「買取価格をCSVの買取価格に更新」とCSV書式は同じExcel内で食い違う(Excel同士)ため、買取価格が登録済みと異なる組は作れない。この組をケースにしないへ変更	ケースとシードを削除。dispositionsを「ケースにしない」へ(制約に足す組: F01=無効&F02=有効&F04=登録済と異なる)
+IT-M03-33-073	却下	同上。期待結果を直す対象のケース自体を削除したため	同上
+IT-M03-33-074	一部採用	CSVの項目はL0150-L0157の5つで第3項目がセールフラグ。5列で書き直した(買取価格の列は無い)	CSV行を「HP-M0333-CB074,1200,1,空,空」に変更
+IT-M03-33-074	採用	L0044-L0050: 無効から有効への切替でセールフラグ有効、販売価格をCSV値へ、基準価格は据え置き。欠けていた	期待結果に規格のセールフラグ有効・基準価格1500・販売価格1200・買取価格600を追加し、手順2で規格の値を確認
+IT-M03-33-075	却下	073と同じ理由(買取価格が登録済みと異なる組は、CSV書式に列が無く作れない)。ケースにしないへ変更	ケースとシードを削除。制約に足す組: F01=有効&F02=無効&F04=登録済と異なる
+IT-M03-33-075	却下	同上	同上
+IT-M03-33-076	一部採用	5列で書き直した	CSV行を「HP-M0333-CB076,900,0,空,空」に変更
+IT-M03-33-076	採用	L0058-L0064: 有効から無効への切替でセールフラグ無効、販売価格を登録済みの基準価格からコピー。欠けていた	期待結果に規格のセールフラグ無効・基準価格1500・販売価格1500・買取価格600を追加し、履歴の販売価格1200から1500を維持
+IT-M03-33-077	一部採用	5列で書き直した	CSV行を「HP-M0333-CB077,1200,1,空,空」に変更
+IT-M03-33-077	採用	L0051-L0057: 有効から有効の取込で基準価格据え置き、販売価格をCSV値へ、セールフラグは有効のまま。欠けていた	期待結果に基準価格1600・販売価格1200・買取価格700・セールフラグ有効のままを追加
+IT-M03-33-078	却下	073と同じ理由(買取価格が登録済みと異なる組は作れない)。ケースにしないへ変更	ケースとシードを削除。制約に足す組: F01=有効&F02=有効&F04=登録済と異なる
+IT-M03-33-078	却下	同上	同上
+
+ succeeded in 273ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M03-32-001	P1	F01=有効&F02=同じ&F03=同じ	登録済みのセールフラグ=有効／CSVの基準価格と登録済みの基準価格=同じ／CSVの基準価格と登録済みの販売価格=同じ	登録済みのセールフラグ×CSVの基準価格と登録済みの基準価格: 有効×同じ；登録済みのセールフラグ×CSVの基準価格と登録済みの販売価格: 有効×同じ
+CB-M03-32-002	P1	F01=無効&F02=異なる&F03=同じ	登録済みのセールフラグ=無効／CSVの基準価格と登録済みの基準価格=異なる／CSVの基準価格と登録済みの販売価格=同じ	CSVの基準価格と登録済みの基準価格×CSVの基準価格と登録済みの販売価格: 異なる×同じ
+CB-M03-32-003	P2	F04=受け付けられる&F05=1行	支店システムへの通知結果=受け付けられる／CSV内の同じ商品の行数=1行	支店システムへの通知結果×CSV内の同じ商品の行数: 受け付けられる×1行
+CB-M03-32-004	P2	F04=受け付けられる&F05=複数行	支店システムへの通知結果=受け付けられる／CSV内の同じ商品の行数=複数行	支店システムへの通知結果×CSV内の同じ商品の行数: 受け付けられる×複数行
+CB-M03-32-005	P2	F04=失敗する&F05=1行	支店システムへの通知結果=失敗する／CSV内の同じ商品の行数=1行	支店システムへの通知結果×CSV内の同じ商品の行数: 失敗する×1行
+CB-M03-32-006	P2	F04=失敗する&F05=複数行	支店システムへの通知結果=失敗する／CSV内の同じ商品の行数=複数行	支店システムへの通知結果×CSV内の同じ商品の行数: 失敗する×複数行
+CB-M03-32-007	P3	F06=シングルカード&F07=NM&F08=閾値未満&F09=有効&F10=変更なし	商品の種別=シングルカード／規格のカード状態（スマレジ判定）=NM／更新後の基準価格=閾値未満／更新前のスマレジ連携フラグ=有効／連携対象の価格の変更=変更なし	商品の種別×連携対象の価格の変更: シングルカード×変更なし；規格のカード状態（スマレジ判定）×更新後の基準価格: NM×閾値未満；規格のカード状態（スマレジ判定）×更新前のスマレジ連携フラグ: NM×有効；規格のカード状態（スマレジ判定）×連携対象の価格の変更: NM×変更なし；更新後の基準価格×更新前のスマレジ連携フラグ: 閾値未満×有効；更新後の基準価格×連携対象の価格の変更: 閾値未満×変更なし；更新前のスマレジ連携フラグ×連携対象の価格の変更: 有効×変更なし
+CB-M03-32-008	P3	F06=シングルカード以外&F07=NM&F08=閾値未満&F09=有効&F10=変更なし	商品の種別=シングルカード以外／規格のカード状態（スマレジ判定）=NM／更新後の基準価格=閾値未満／更新前のスマレジ連携フラグ=有効／連携対象の価格の変更=変更なし	商品の種別×規格のカード状態（スマレジ判定）: シングルカード以外×NM；商品の種別×更新後の基準価格: シングルカード以外×閾値未満；商品の種別×更新前のスマレジ連携フラグ: シングルカード以外×有効；商品の種別×連携対象の価格の変更: シングルカード以外×変更なし
+CB-M03-32-009	P3	F06=シングルカード以外&F07=SP・MP・HP・その他&F08=閾値以上&F09=無効&F10=変更なし	商品の種別=シングルカード以外／規格のカード状態（スマレジ判定）=SP・MP・HP・その他／更新後の基準価格=閾値以上／更新前のスマレジ連携フラグ=無効／連携対象の価格の変更=変更なし	商品の種別×規格のカード状態（スマレジ判定）: シングルカード以外×SP・MP・HP・その他；規格のカード状態（スマレジ判定）×連携対象の価格の変更: SP・MP・HP・その他×変更なし；更新後の基準価格×連携対象の価格の変更: 閾値以上×変更なし；更新前のスマレジ連携フラグ×連携対象の価格の変更: 無効×変更なし
+
+ succeeded in 298ms:
+処理ID	組	種別	根拠	理由
+
+ succeeded in 307ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	CSVの1行で商品規格の価格・セールフラグ・タグ・帯URLを更新する	セール用高額商品価格変更CSVアップロード画面でCSVを選び、CSVファイルのアップロードボタンを押す	商品規格の登録内容（DB）・価格履歴・商品タグ	L0042-L0074,L0108-L0116
+
+ succeeded in 318ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02+F03	効き合う	L0042-L0072,L0115-L0116	登録済とCSVのセールフラグの組で販売価格の更新元(CSV値・基準価格・据え置き)が決まり、その結果が登録済の販売価格と同じか異なるかで販売価格の価格履歴の有無が決まる
+P1	F01+F04	関係しない		買取価格はセールフラグの組によらずCSV値に更新される
+P1	F02+F04	関係しない		買取価格はセールフラグの組によらずCSV値に更新される
+P1	F03+F04	関係しない		価格履歴は販売価格・買取価格のどちらかが変わると1件残り、変わった側だけを記録する。それぞれの変化は互いの値で変わらない
+
+ succeeded in 345ms:
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+ succeeded in 359ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M03-35-001	P1	F01=ある&F02=ある	商品コードに一致する規格（削除されていない商品）=ある／部門コードに一致する部門=ある	商品コードに一致する規格（削除されていない商品）×部門コードに一致する部門: ある×ある
+
+ succeeded in 373ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	登録済のセールフラグ	無効｜有効	無効: 通常商品として扱い販売価格は据え置きか有効化の対象／有効: セール商品として扱い販売価格はCSV値か基準価格のコピー	L0044,L0051,L0058,L0066	この機能
+F02	P1	CSVのセールフラグ	無効｜有効	無効: 販売価格はCSVを無視し有効からの切替では基準価格をコピー／有効: 販売価格をCSV値に更新しフラグは有効	L0045,L0052,L0059,L0067	この機能
+F03	P1	更新後の販売価格と登録済の販売価格	登録済と同じ｜登録済と異なる	登録済と同じ: 販売価格の価格履歴は残らない／登録済と異なる: 販売価格の更新前後が価格履歴に残る	L0115-L0116	この機能
+F04	P1	CSVの買取価格と登録済の買取価格	登録済と同じ｜登録済と異なる	登録済と同じ: 買取価格の価格履歴は残らない／登録済と異なる: 買取価格の更新前後が価格履歴に残る	L0050,L0056,L0063,L0071,L0115-L0116	この機能
+
+ succeeded in 283ms:
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+ succeeded in 374ms:
+処理ID	組	種別	根拠	理由
+P1	F01=無い	打ち切り	L0057,L0061	商品コードに一致する規格が無いと商品コードのエラーで全体を中止し、部門コードの有無は結果に効かない（両方無いときも規格のエラーで中止: L0052-L0059）
+
+ succeeded in 279ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M03-40-001	P1	F01=稼働中2件以上	CSVの商品コードに一致する商品規格=稼働中2件以上／CSVの棚番号名称=（効かない）／同じ商品コードを持つCSVの行=（効かない）	CSVの商品コードに一致する商品規格: 稼働中2件以上
+
+ succeeded in 431ms:
+処理ID	組	種別	根拠	理由
+P1	F01=無効&F02=無効&F03=登録済と異なる	作れない	L0066-L0070	無効のまま取り込むと販売価格は据え置きで、更新後の販売価格が登録済と異なることはない
+
+ succeeded in 399ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		どちらか一方が無ければ全体を中止し、更新するのは両方あるときだけ。条件どうしの外れ方は1つずつ確かめれば足りる
+
+ succeeded in 310ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	CSVの商品コードに一致する商品規格	稼働中1件のみ｜稼働中と削除済みの両方｜稼働中2件以上｜削除済みのみまたは一致なし	稼働中1件のみ: その規格の棚番号を置き換える／稼働中と削除済みの両方: 反映対象は一致する規格すべてで削除済みも含むとあるが同じ記述が2件以上は実行時例外とも読める（正解未定）／稼働中2件以上: 実行時例外で取込を中止し1行も確定しない／削除済みのみまたは一致なし: 存在しない商品として扱い取込を打ち切り変更を確定しない	L0062,L0065-L0066,L0068	この機能
+F02	P1	CSVの棚番号名称	登録済み｜未登録	登録済み: 棚番号を置き換える／未登録: 以降の行を処理せず変更を確定しない	L0063,L0065,L0076,L0093	この機能
+F03	P1	同じ商品コードを持つCSVの行	1行のみ｜複数行	1行のみ: その行の棚番号になる／複数行: 行ごとに反映し最後の行の値が残る	L0066	この機能
+
+ succeeded in 371ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0079,L0081	商品が削除済みまたは未登録のときは、公開ステータスを更新せず全体を取り消す
+P1	F01+F03	効き合う	L0079,L0081	商品が削除済みまたは未登録のときは、支店の公開ステータスも更新せず全体を取り消す
+P1	F02+F03	関係しない		商品公開ステータスと支店の商品公開ステータスは別々の列を更新し、一方の値で他方の結果は変わらない（L0084は更新するのは公開ステータスだけとあるのみ）
+
+ succeeded in 348ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	棚番号更新CSVを取り込んで商品規格の棚番号を置き換える	棚番号更新CSV登録画面でCSVを選び、アップロードボタンを押す	商品規格の棚番号（DB）と取込履歴	L0028-L0029,L0054-L0068,L0070,L0085-L0086,L0108-L0109
+
+ succeeded in 462ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	商品コードに一致する規格（削除されていない商品）	ある｜無い	ある: 判定を進める／無い: 商品コードでデータを取得できない旨のエラーを積み全体を中止し部門は更新されず取込履歴も残らない	L0057,L0061	この機能
+F02	P1	部門コードに一致する部門	ある｜無い	ある: 判定を進める／無い: 部門コードでデータを取得できない旨のエラーを積み全体を中止し部門は更新されず取込履歴も残らない	L0058,L0061	この機能
+
+ succeeded in 329ms:
+処理ID	組	種別	根拠	理由
+P1	F01=稼働中と削除済みの両方	正解未定	L0066,L0068	反映対象は削除済みを含む一致規格すべてとある一方、一致する規格が2件以上は実行時例外とも書かれ、削除済みが件数に数えられるか決まらない（IT-M03-40-008は保留）
+P1	F01=稼働中2件以上	打ち切り	L0066	一致する商品規格が2件以上だと照合が実行時例外となり取込を中止し1行も確定しない
+P1	F01=削除済みのみまたは一致なし	打ち切り	L0062,L0065	存在しない商品として扱い以降の行を処理せず変更を確定しない
+P1	F01=稼働中1件のみ&F02=未登録	打ち切り	L0062-L0063,L0065-L0066	商品の照合（7）を通った行で棚番号名称が未登録だと以降の行を処理せず変更を確定しない。照合が先なので、規格2件以上（実行時例外）・削除済みのみまたは一致なしは棚番号名称の判定に進まず、それぞれ別の打ち切りになる
+
+ succeeded in 429ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	CSVの商品IDが指す商品の状態	実在｜削除済みまたは未登録	実在: 公開ステータスを更新し取込履歴を1件記録する／削除済みまたは未登録: 存在しない商品として扱い取込を打ち切り変更を確定せず取込履歴も記録しない	L0079,L0081,L0086	この機能
+F02	P1	CSVの商品公開ステータス	非公開｜公開	非公開: 商品の公開ステータスが非公開(0)になる／公開: 公開(1)になる（廃止の2は選べない）	L0036-L0037,L0046,L0126,L0137-L0138	この機能
+F03	P1	CSVの支店の商品公開ステータス	公開｜非公開	公開: 支店の商品公開ステータスが公開(1)になる／非公開: 非公開(0)になる	L0038,L0127,L0139	この機能
+
+ succeeded in 408ms:
+処理ID	組	種別	根拠	理由
+P1	F01=削除済みまたは未登録	打ち切り	L0079,L0081	存在しない商品として扱い、取込を打ち切って変更を確定せず取込履歴も記録しない（F02・F03の値は結果に効かない）
+
+ succeeded in 437ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	商品公開CSVを取り込んで商品の公開ステータスを更新する	商品公開CSV登録画面でCSVを選び、アップロードして確認モーダルのOKを押す	商品情報の公開ステータス（DB）と取込履歴、本店・支店の公開側表示	L0033,L0036-L0038,L0046,L0079-L0081,L0084-L0086,L0125-L0127
+
+ succeeded in 456ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M03-38-001	P1	F01=実在&F02=非公開&F03=非公開	CSVの商品IDが指す商品の状態=実在／CSVの商品公開ステータス=非公開／CSVの支店の商品公開ステータス=非公開	CSVの商品IDが指す商品の状態×CSVの商品公開ステータス: 実在×非公開；CSVの商品IDが指す商品の状態×CSVの支店の商品公開ステータス: 実在×非公開；CSVの商品公開ステータス×CSVの支店の商品公開ステータス: 非公開×非公開
+CB-M03-38-002	P1	F01=実在&F02=公開&F03=公開	CSVの商品IDが指す商品の状態=実在／CSVの商品公開ステータス=公開／CSVの支店の商品公開ステータス=公開	CSVの商品IDが指す商品の状態×CSVの商品公開ステータス: 実在×公開；CSVの商品IDが指す商品の状態×CSVの支店の商品公開ステータス: 実在×公開
+
+ succeeded in 462ms:
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+ succeeded in 374ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		商品の判定と棚番号名称の判定は別々の判定で、更新は両方を満たす行だけ。すべて満たすときだけ更新し、外れ方は1つずつ確かめれば足りる
+P1	F01+F03	関係しない		複数行の反映規則（行ごとに反映し最後の値が残る）は商品コードに一致する規格の数で変わらない。中断になる値は行数に関係なく中断
+P1	F02+F03	関係しない		棚番号名称が未登録の行が1つでもあれば中断、全行が登録済みなら最後の行の値が残る。名称の判定は行ごとで行数に左右されない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-32_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-32_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M03-32-078	IT-0366	REQ-0204-sheet-48-R011,REQ-0204-sheet-48-R020,REQ-0204-sheet-48-R021,REQ-0204-sheet-48-R022		ITA-11	P1	ブラウザのみ	S-M03-32-RB-ADM,S-M03-32-RB-MASTER,S-M03-32-CBHIST-078	① 管理画面にm0332rbでログインしている（S-M03-32-RB-ADM）／② 東京本店が開店で、言語ID=1（日本語）、商品カテゴリID=2、購入グループ名称「通常商品」、CSV取込設定が登録済みである（S-M03-32-RB-MASTER）／③ 商品コードM32CB078Aの規格は、高額商品コードHM0332-CB078-A・言語日本語・状態NM・セールフラグ有効・基準価格1000・販売価格1000・買取価格400・公開・未削除で、cb-m0332-078.csvは商品コード=M32CB078A・基準価格1000（登録済みの基準価格1000と同じ、登録済みの販売価格1000と同じ）である（S-M03-32-CBHIST-078）	1. 買取/販売価格履歴検索/一覧画面を開き、商品名(日/英)・カード名・商品コード、備考に「M32CB078A」を入力して「検索する >」を押す。表示された行の数を控える／2. 高額商品価格変更CSVアップロード画面を開く／3. 「ファイルを選択」でcb-m0332-078.csvを選び、「CSVファイルのアップロード」を押す／4. 完了のメッセージが表示されることを確認する／5. 買取/販売価格履歴検索/一覧画面を開き直し、商品名(日/英)・カード名・商品コード、備考に「M32CB078A」を入力して「検索する >」を押す	行の数が手順1で控えた数のまま変わらず、商品コード「M32CB078A」の履歴の行が増えていないこと	0204 高額商品価格変更CSVアップロード / 機能仕様 買取・販売価格履歴について、現行仕様 入出力: 永続化｜0204 買取・販売価格履歴検索 / 画面項目定義 識別ID 2-3〜2-14、現行仕様 業務ロジック 検索の対象	CB-M03-32-001
+IT-M03-32-079	IT-0366	REQ-0204-sheet-48-R011,REQ-0204-sheet-48-R016,REQ-0204-sheet-48-R017,REQ-0204-sheet-48-R018,REQ-0204-sheet-48-R019		ITA-11	P1	ブラウザのみ	S-M03-32-RB-ADM,S-M03-32-RB-MASTER,S-M03-32-CBHIST-079	① 管理画面にm0332rbでログインしている（S-M03-32-RB-ADM）／② 東京本店が開店で、言語ID=1（日本語）、商品カテゴリID=2、購入グループ名称「通常商品」、CSV取込設定が登録済みである（S-M03-32-RB-MASTER）／③ 商品コードM32CB079Aの規格は、高額商品コードHM0332-CB079-A・言語日本語・状態NM・セールフラグ無効・基準価格1000・販売価格1500・買取価格400・公開・未削除で、cb-m0332-079.csvは商品コード=M32CB079A・基準価格1500（登録済みの基準価格1000と異なり、登録済みの販売価格1500と同じ）である（S-M03-32-CBHIST-079）	1. 買取/販売価格履歴検索/一覧画面を開き、商品名(日/英)・カード名・商品コード、備考に「M32CB079A」を入力して「検索する >」を押す。表示された行の数を控える／2. 高額商品価格変更CSVアップロード画面を開く／3. 「ファイルを選択」でcb-m0332-079.csvを選び、「CSVファイルのアップロード」を押す／4. 完了のメッセージが表示されることを確認する／5. 買取/販売価格履歴検索/一覧画面を開き直し、商品名(日/英)・カード名・商品コード、備考に「M32CB079A」を入力して「検索する >」を押す	行の数が手順1で控えた数より1件多くなり、商品コード「M32CB079A」で変更前基準価格1000・変更後基準価格1500・登録者「M03-32連携試験管理者」の行が表示され、その行の変更前販売価格と変更後販売価格が空であること	0204 高額商品価格変更CSVアップロード / 機能仕様 買取・販売価格履歴について、現行仕様 入出力: 永続化｜0204 買取・販売価格履歴検索 / 画面項目定義 識別ID 2-3〜2-14、現行仕様 業務ロジック 検索の対象	CB-M03-32-002
+IT-M03-32-084	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M03-32-ADM,S-M03-32-CONFIG,S-M03-32-THRESH,S-M03-32-SMAREGI,S-M03-32-DASH,S-M03-32-CBSMA-084	① 管理者ID 33200001の管理者でログインしている（S-M03-32-ADM）／② 開始時にCSV区切り文字をカンマに設定する（S-M03-32-CONFIG）／③ 開始時にスマレジ連携フラグの自動ON閾値を設定画面で300円に設定する（S-M03-32-THRESH）／④ スマレジAPIクライアントIDが空の試験環境でスマレジAPIへの通信が試験応答に切り替わり、非同期処理のメッセージ消費プロセスが稼働している。ケース開始時に非同期処理の待機中・実行中のジョブが0件であることを確認し、スマレジAPI呼出記録を全件削除して0件にする（S-M03-32-SMAREGI）／⑤ 商品ID 〔商品ID-M0332-084〕・商品規格ID 〔商品規格ID-M0332-084〕（登録時に振られた商品IDと商品規格IDを控えてある）の商品コードM32CB084Sはシングルカード、状態=NM、商品・規格とも公開・削除なし、高額商品コード=HPM0332-CB084-A、セールフラグ無効、基準価格250（閾値300円未満）、販売価格250、スマレジ連携フラグ=ON（有効）で、cb-m0332-084.csvのデータは「M32CB084S,250」（見出し「商品コード,基準価格」。基準価格は登録済みの250から変わらない）で、当該規格のスマレジAPI呼出記録は0件である（S-M03-32-CBSMA-084）／⑥ 非同期処理のジョブの状態を確認するため、システム管理者の権限を持つ管理者で別のブラウザからログインしている（S-M03-32-DASH）	1. 高額商品価格変更CSVアップロード画面を開く／2. cb-m0332-084.csvを選択してCSVファイルのアップロードボタンを押す／3. 非同期処理の待機中・実行中のジョブが0件になるまで待つ（最長5分。超えた場合は失敗として記録する）／4. 商品マスター(検索結果)で商品コード「M32CB084S」を検索し、商品登録編集画面の「規格設定」ボタンから商品規格一覧を開き、状態NMの規格の行を開いて商品規格登録編集画面を表示する／5. DBでスマレジ試験受信記録のうち、要求先が「https://api.smaregi.jp/{契約ID}/pos/products/bulk」のものを確認する	商品規格登録編集画面で、商品コードM32CB084Sの規格のスマレジ連携フラグが「連携する」のままであり、要求先が「https://api.smaregi.jp/{契約ID}/pos/products/bulk」で商品コードM32CB084Sの規格に係るスマレジ試験受信記録が0件のままであること	0204 別添資料__スマレジ連携対象商品 / 本文 1. スマレジ連携対象商品について シングルカードの自動判定条件｜0204 別添資料__スマレジ連携対象商品 / 本文 2. スマレジ連携操作について 高額商品価格変更CSV登録｜0204 別添資料__スマレジ連携対象商品 / 本文 2. スマレジ連携操作について 高額商品価格変更CSV登録	CB-M03-32-007
+IT-M03-32-085	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M03-32-ADM,S-M03-32-CONFIG,S-M03-32-THRESH,S-M03-32-SMAREGI,S-M03-32-DASH,S-M03-32-CBSMA-085	① 管理者ID 33200001の管理者でログインしている（S-M03-32-ADM）／② 開始時にCSV区切り文字をカンマに設定する（S-M03-32-CONFIG）／③ 開始時にスマレジ連携フラグの自動ON閾値を設定画面で300円に設定する（S-M03-32-THRESH）／④ スマレジAPIクライアントIDが空の試験環境でスマレジAPIへの通信が試験応答に切り替わり、非同期処理のメッセージ消費プロセスが稼働している。ケース開始時に非同期処理の待機中・実行中のジョブが0件であることを確認し、スマレジAPI呼出記録を全件削除して0件にする（S-M03-32-SMAREGI）／⑤ 商品ID 〔商品ID-M0332-085〕・商品規格ID 〔商品規格ID-M0332-085〕（登録時に振られた商品IDと商品規格IDを控えてある）の商品コードM32CB085Sはシングルカード以外のグッズ商品、状態=NM、商品・規格とも公開・削除なし、高額商品コード=HPM0332-CB085-A、セールフラグ無効、基準価格250（閾値300円未満）、販売価格250、スマレジ連携フラグ=ON（有効）で、cb-m0332-085.csvのデータは「M32CB085S,250」（見出し「商品コード,基準価格」。基準価格は登録済みの250から変わらない）で、当該規格のスマレジAPI呼出記録は0件である（S-M03-32-CBSMA-085）／⑥ 非同期処理のジョブの状態を確認するため、システム管理者の権限を持つ管理者で別のブラウザからログインしている（S-M03-32-DASH）	1. 高額商品価格変更CSVアップロード画面を開く／2. cb-m0332-085.csvを選択してCSVファイルのアップロードボタンを押す／3. 非同期処理の待機中・実行中のジョブが0件になるまで待つ（最長5分。超えた場合は失敗として記録する）／4. 商品マスター(検索結果)で商品コード「M32CB085S」を検索し、商品登録編集画面の「規格設定」ボタンから商品規格一覧を開き、状態NMの規格の行を開いて商品規格登録編集画面を表示する／5. DBでスマレジ試験受信記録のうち、要求先が「https://api.smaregi.jp/{契約ID}/pos/products/bulk」のものを確認する	商品規格登録編集画面で、商品コードM32CB085Sの規格のスマレジ連携フラグが「連携する」のままであり、要求先が「https://api.smaregi.jp/{契約ID}/pos/products/bulk」で商品コードM32CB085Sの規格に係るスマレジ試験受信記録が0件のままであること	0204 別添資料__スマレジ連携対象商品 / 本文 1. スマレジ連携対象商品について シングルカードの自動判定条件｜0204 別添資料__スマレジ連携対象商品 / 本文 2. スマレジ連携操作について 高額商品価格変更CSV登録｜0204 別添資料__スマレジ連携対象商品 / 本文 2. スマレジ連携操作について 高額商品価格変更CSV登録	CB-M03-32-008
+IT-M03-32-086	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M03-32-ADM,S-M03-32-CONFIG,S-M03-32-THRESH,S-M03-32-SMAREGI,S-M03-32-DASH,S-M03-32-CBSMA-086	① 管理者ID 33200001の管理者でログインしている（S-M03-32-ADM）／② 開始時にCSV区切り文字をカンマに設定する（S-M03-32-CONFIG）／③ 開始時にスマレジ連携フラグの自動ON閾値を設定画面で300円に設定する（S-M03-32-THRESH）／④ スマレジAPIクライアントIDが空の試験環境でスマレジAPIへの通信が試験応答に切り替わり、非同期処理のメッセージ消費プロセスが稼働している。ケース開始時に非同期処理の待機中・実行中のジョブが0件であることを確認し、スマレジAPI呼出記録を全件削除して0件にする（S-M03-32-SMAREGI）／⑤ 商品ID 〔商品ID-M0332-086〕・商品規格ID 〔商品規格ID-M0332-086〕（登録時に振られた商品IDと商品規格IDを控えてある）の商品コードM32CB086Sはシングルカード以外のグッズ商品、状態=SP、商品・規格とも公開・削除なし、高額商品コード=HPM0332-CB086-A、セールフラグ無効、基準価格1500（閾値300円以上）、販売価格1500、スマレジ連携フラグ=OFF（無効）で、cb-m0332-086.csvのデータは「M32CB086S,1500」（見出し「商品コード,基準価格」。基準価格は登録済みの1500から変わらない）で、当該規格のスマレジAPI呼出記録は0件である（S-M03-32-CBSMA-086）／⑥ 非同期処理のジョブの状態を確認するため、システム管理者の権限を持つ管理者で別のブラウザからログインしている（S-M03-32-DASH）	1. 高額商品価格変更CSVアップロード画面を開く／2. cb-m0332-086.csvを選択してCSVファイルのアップロードボタンを押す／3. 非同期処理の待機中・実行中のジョブが0件になるまで待つ（最長5分。超えた場合は失敗として記録する）／4. 商品マスター(検索結果)で商品コード「M32CB086S」を検索し、商品登録編集画面の「規格設定」ボタンから商品規格一覧を開き、状態SPの規格の行を開いて商品規格登録編集画面を表示する／5. DBでスマレジ試験受信記録のうち、要求先が「https://api.smaregi.jp/{契約ID}/pos/products/bulk」のものを確認する	商品規格登録編集画面で、商品コードM32CB086Sの規格のスマレジ連携フラグが「連携しない」のままであり、要求先が「https://api.smaregi.jp/{契約ID}/pos/products/bulk」で商品コードM32CB086Sの規格に係るスマレジ試験受信記録が0件のままであること	0204 別添資料__スマレジ連携対象商品 / 本文 1. スマレジ連携対象商品について シングルカードの自動判定条件｜0204 別添資料__スマレジ連携対象商品 / 本文 2. スマレジ連携操作について 高額商品価格変更CSV登録｜0204 別添資料__スマレジ連携対象商品 / 本文 2. スマレジ連携操作について 高額商品価格変更CSV登録	CB-M03-32-009
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-33_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-33_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-32_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+項目ID	扱い	テストID	理由
+CB-M03-32-001	ケース化	IT-M03-32-078	
+CB-M03-32-002	ケース化	IT-M03-32-079	
+CB-M03-32-003	ケースにしない		設計書は「取込を中止せずに終えたとき、更新した商品を支店システムへ通知する。同じ商品が複数の行にあっても通知は1件にまとめる。通知に失敗しても取込は成功として扱い、失敗した商品を再連携の対象として記録する。」(L0082)としか書かず、支店システムが受けた通知（商品の一覧・件数）や再連携の記録を画面・DBのどこで確かめるかを定めていない。同じ内容の既存ケース IT-M03-32-046〜048・074 も、支店システムの試験受信先の作り方が決まらず除外済み。制約に足すべき組（正解未定）: F04=受け付けられる&F05=1行
+CB-M03-32-004	ケースにしない		設計書は「取込を中止せずに終えたとき、更新した商品を支店システムへ通知する。同じ商品が複数の行にあっても通知は1件にまとめる。通知に失敗しても取込は成功として扱い、失敗した商品を再連携の対象として記録する。」(L0082)としか書かず、支店システムが受けた通知（商品の一覧・件数）や再連携の記録を画面・DBのどこで確かめるかを定めていない。同じ内容の既存ケース IT-M03-32-046〜048・074 も、支店システムの試験受信先の作り方が決まらず除外済み。制約に足すべき組（正解未定）: F04=受け付けられる&F05=複数行
+CB-M03-32-005	ケースにしない		設計書は「取込を中止せずに終えたとき、更新した商品を支店システムへ通知する。同じ商品が複数の行にあっても通知は1件にまとめる。通知に失敗しても取込は成功として扱い、失敗した商品を再連携の対象として記録する。」(L0082)としか書かず、支店システムが受けた通知（商品の一覧・件数）や再連携の記録を画面・DBのどこで確かめるかを定めていない。同じ内容の既存ケース IT-M03-32-046〜048・074 も、支店システムの試験受信先の作り方が決まらず除外済み。制約に足すべき組（正解未定）: F04=失敗する&F05=1行。さらに、支店システムへの通知を失敗させるには通信の遮断などの障害を起こす手段が要るが、障害を起こす手段は用意しない（2026-10-19 決定）
+CB-M03-32-006	ケースにしない		設計書は「取込を中止せずに終えたとき、更新した商品を支店システムへ通知する。同じ商品が複数の行にあっても通知は1件にまとめる。通知に失敗しても取込は成功として扱い、失敗した商品を再連携の対象として記録する。」(L0082)としか書かず、支店システムが受けた通知（商品の一覧・件数）や再連携の記録を画面・DBのどこで確かめるかを定めていない。同じ内容の既存ケース IT-M03-32-046〜048・074 も、支店システムの試験受信先の作り方が決まらず除外済み。制約に足すべき組（正解未定）: F04=失敗する&F05=複数行。さらに、支店システムへの通知を失敗させるには通信の遮断などの障害を起こす手段が要るが、障害を起こす手段は用意しない（2026-10-19 決定）
+CB-M03-32-007	ケース化	IT-M03-32-084	
+CB-M03-32-008	ケース化	IT-M03-32-085	
+CB-M03-32-009	ケース化	IT-M03-32-086	
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-33_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-35_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-35_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-35_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-38_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-38_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-38_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-40_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-40_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-40_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 107ms:
+項目ID	扱い	テストID	理由
+CB-M03-33-001	ケース化	IT-M03-33-072	登録済のセールフラグ・CSVのセールフラグ・販売価格の変化・買取価格の変化の値の組をCSVで取り込み、DBで価格履歴の有無と記録内容を確認する
+CB-M03-33-002	ケースにしない		CSVで更新後と異なる買取価格を渡せない。Excelの機能仕様は「買取価格を、CSVに設定されている買取価格に更新する」(L0050,L0056,L0063)とするが、同じExcelのCSVフォーマット(sheet-51)の項目は「1 商品コード／2 販売価格／3 セールフラグ／4 帯URL／5 タグ(ID)」(L0150-L0157)の5つで買取価格の列が無い。どちらもExcel由来で食い違うため決められない。制約に足すべき組: F01=無効&F02=有効&F04=登録済と異なる
+CB-M03-33-003	ケース化	IT-M03-33-074	登録済のセールフラグ・CSVのセールフラグ・販売価格の変化・買取価格の変化の値の組をCSVで取り込み、DBで価格履歴の有無と記録内容を確認する
+CB-M03-33-004	ケースにしない		CSVで更新後と異なる買取価格を渡せない。Excelの機能仕様は「買取価格を、CSVに設定されている買取価格に更新する」(L0050,L0056,L0063)とするが、同じExcelのCSVフォーマット(sheet-51)の項目は「1 商品コード／2 販売価格／3 セールフラグ／4 帯URL／5 タグ(ID)」(L0150-L0157)の5つで買取価格の列が無い。どちらもExcel由来で食い違うため決められない。制約に足すべき組: F01=有効&F02=無効&F04=登録済と異なる
+CB-M03-33-005	ケース化	IT-M03-33-076	登録済のセールフラグ・CSVのセールフラグ・販売価格の変化・買取価格の変化の値の組をCSVで取り込み、DBで価格履歴の有無と記録内容を確認する
+CB-M03-33-006	ケース化	IT-M03-33-077	登録済のセールフラグ・CSVのセールフラグ・販売価格の変化・買取価格の変化の値の組をCSVで取り込み、DBで価格履歴の有無と記録内容を確認する
+CB-M03-33-007	ケースにしない		CSVで更新後と異なる買取価格を渡せない。Excelの機能仕様は「買取価格を、CSVに設定されている買取価格に更新する」(L0050,L0056,L0063)とするが、同じExcelのCSVフォーマット(sheet-51)の項目は「1 商品コード／2 販売価格／3 セールフラグ／4 帯URL／5 タグ(ID)」(L0150-L0157)の5つで買取価格の列が無い。どちらもExcel由来で食い違うため決められない。制約に足すべき組: F01=有効&F02=有効&F04=登録済と異なる
+
+ succeeded in 118ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M03-32-CBHIST-078	商品・規格・入力ファイル	価格履歴の組合せ確認データ(078)	商品名(日)=M32CB078A商品／商品コード=M32CB078A／高額商品コード=HM0332-CB078-A／言語=日本語（言語ID=1）／状態=NM／公開・未削除／セールフラグ有効／タグなし／基準価格=1000／販売価格=1000／買取価格=400／当該規格の価格履歴は規格登録後の分を含めて手順1で件数を控える／cb-m0332-078.csvは「商品コード=M32CB078A、基準価格=1000」	IT-M03-32-078専用。登録済みのセールフラグとCSVの基準価格の同異で価格履歴に載る内容	【確認】商品マスター（検索結果）で詳細検索のコードに「M32CB078A」を入れて検索し、該当があれば行のチェックを付けて「削除」を押し、確認モーダル「商品を削除します」で「削除」を押して0件にする。【ファイル】グッズ商品CSV登録画面の「雛形ファイルダウンロード」で取得した見出し行の下に「商品ID=空、商品コード=M32CB078A、言語(ID)=1、商品公開ステータス=2（公開）、支店の商品公開ステータス=1、商品名(日)=M32CB078A商品、商品名(英)=M32CB078AItem、サイズ=200、重量=148、商品カテゴリ(ID)=2、購入グループ名称=通常商品、基準価格=1000、販売価格=1000、買取価格=400、原価単価=300、スマレジ連携フラグ=0、ほかの列=空」の1行を書いた、UTF-8・カンマ区切りの M32CB078A-base.csv を作る。【画面】グッズ商品CSV登録画面で M32CB078A-base.csv を選び、「CSVファイルのアップロード」を押して確認モーダルで確定し、完了のメッセージが出ることを確かめる（言語日本語・状態NM・セールフラグ無効・公開の規格ができ、基準価格と販売価格は同じ値になる）。【画面】商品マスター（検索結果）で詳細検索のコードに「M32CB078A」を入れて検索し、該当行に表示された商品IDを控える。【画面】商品マスター（検索結果）の該当商品の商品登録編集画面を開き、規格設定ボタンで商品規格一覧画面を開き、編集ボタンで商品規格登録編集画面を開き、高額商品コードに「HM0332-CB078-A」を入れ、セールフラグにチェックを入れ、基準価格(円)に1000、販売価格(円)に1000、買取価格(円)に400を入れ、部門は選択肢の先頭を選び、公開状態に公開を選んで「商品規格を登録」を押す。【ファイル】試験者の端末で、高額商品価格変更CSVアップロード画面の「雛形ファイルダウンロード」で取得した見出し行の下に「商品コード=M32CB078A、基準価格=1000」の1行を書いた、UTF-8・カンマ区切りの cb-m0332-078.csv を作り、ブラウザから選択できる場所に置く。	ケース専用
+S-M03-32-CBHIST-079	商品・規格・入力ファイル	価格履歴の組合せ確認データ(079)	商品名(日)=M32CB079A商品／商品コード=M32CB079A／高額商品コード=HM0332-CB079-A／言語=日本語（言語ID=1）／状態=NM／公開・未削除／セールフラグ無効／タグなし／基準価格=1000／販売価格=1500／買取価格=400／当該規格の価格履歴は規格登録後の分を含めて手順1で件数を控える／cb-m0332-079.csvは「商品コード=M32CB079A、基準価格=1500」	IT-M03-32-079専用。登録済みのセールフラグとCSVの基準価格の同異で価格履歴に載る内容	【確認】商品マスター（検索結果）で詳細検索のコードに「M32CB079A」を入れて検索し、該当があれば行のチェックを付けて「削除」を押し、確認モーダル「商品を削除します」で「削除」を押して0件にする。【ファイル】グッズ商品CSV登録画面の「雛形ファイルダウンロード」で取得した見出し行の下に「商品ID=空、商品コード=M32CB079A、言語(ID)=1、商品公開ステータス=2（公開）、支店の商品公開ステータス=1、商品名(日)=M32CB079A商品、商品名(英)=M32CB079AItem、サイズ=200、重量=148、商品カテゴリ(ID)=2、購入グループ名称=通常商品、基準価格=1000、販売価格=1000、買取価格=400、原価単価=300、スマレジ連携フラグ=0、ほかの列=空」の1行を書いた、UTF-8・カンマ区切りの M32CB079A-base.csv を作る。【画面】グッズ商品CSV登録画面で M32CB079A-base.csv を選び、「CSVファイルのアップロード」を押して確認モーダルで確定し、完了のメッセージが出ることを確かめる（言語日本語・状態NM・セールフラグ無効・公開の規格ができ、基準価格と販売価格は同じ値になる）。【画面】商品マスター（検索結果）で詳細検索のコードに「M32CB079A」を入れて検索し、該当行に表示された商品IDを控える。【画面】商品マスター（検索結果）の該当商品の商品登録編集画面を開き、規格設定ボタンで商品規格一覧画面を開き、編集ボタンで商品規格登録編集画面を開き、高額商品コードに「HM0332-CB079-A」を入れ、セールフラグはチェックなしのまま、基準価格(円)に1000、販売価格(円)に1000、買取価格(円)に400を入れ、部門は選択肢の先頭を選び、公開状態に公開を選んで「商品規格を登録」を押す（セールフラグなしで登録すると、販売価格は入力にかかわらず基準価格と同じ値で保存される）。【DB直接】M32CB079Aの規格の販売価格1500は、セールフラグなしでは画面が基準価格と同じ値で保存するため画面で指定できず、DBへ直接設定する。【ファイル】試験者の端末で、高額商品価格変更CSVアップロード画面の「雛形ファイルダウンロード」で取得した見出し行の下に「商品コード=M32CB079A、基準価格=1500」の1行を書いた、UTF-8・カンマ区切りの cb-m0332-079.csv を作り、ブラウザから選択できる場所に置く。	ケース専用
+S-M03-32-CBSMA-084	商品・商品規格・取込ファイル・スマレジ連携	スマレジ連携フラグの組合せ確認データ(084)	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0332-084〕）／商品規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0332-084〕）／商品コード=M32CB084S／シングルカード／状態=NM／商品・規格とも公開・削除なし／高額商品コード=HPM0332-CB084-A／セールフラグ無効／基準価格250／販売価格250／スマレジ連携フラグ=ON／スマレジ商品IDは連携登録で試験応答が返した値／cb-m0332-084.csv=見出し「商品コード,基準価格」・データ「M32CB084S,250」	IT-M03-32-084専用。商品の種別・規格の状態・基準価格・更新前のスマレジ連携フラグ・連携対象の価格の変更の組での連携フラグ	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M32CB084C」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M32CB084S」・商品名(英)は「M32CB084S」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格250・販売価格250・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M32CB084C」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0332-084〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。「カード指定 >」ボタンを押し、カード検索ポップアップの一覧から任意のカードを1件選んで決定ボタンを押す。続けて商品名(日)に「M32CB084S」、商品名(英)に「M32CB084S」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、割引率に販売割引率に登録済みのものを選び、公開状態は「公開」のまま「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で商品コードに「M32CB084S」、高額商品コードに「HPM0332-CB084-A」、セールフラグはチェックなし、基準価格(円)に「250」、販売価格(円)に250、買取価格(円)に200、スマレジ連携フラグに「連携する」、部門に「ショーケース品」（選択肢に無いときは、先に部門の登録画面で部門「ショーケース品」を登録する）、スマレジ商品コードは空のまま（シングルカードは自動で振られる）、公開状態に「公開」を選んで「商品規格を登録」を押す（セールフラグなしで登録すると、販売価格は入力にかかわらず基準価格と同じ250で保存される）。「連携する」で登録するとスマレジへの登録が非同期で行われるので、非同期処理の待機中・実行中のジョブが0件になるまで待ち、そのあとスマレジAPI呼出記録を全件削除して0件にする。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0332-084〕）。【ファイル】試験者の端末で次の取込ファイルを作り、ブラウザから選択できる場所に置く（文字コード・区切りの指定が無いものはUTF-8・カンマ区切り）: cb-m0332-084.csv=見出し「商品コード,基準価格」・データ「M32CB084S,250」。	ケース専用
+S-M03-32-CBSMA-085	商品・商品規格・取込ファイル・スマレジ連携	スマレジ連携フラグの組合せ確認データ(085)	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0332-085〕）／商品規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0332-085〕）／商品コード=M32CB085S／シングルカード以外のグッズ商品／状態=NM／商品・規格とも公開・削除なし／高額商品コード=HPM0332-CB085-A／セールフラグ無効／基準価格250／販売価格250／スマレジ連携フラグ=ON／スマレジ商品ID=SMR-M0332-CB085-A／cb-m0332-085.csv=見出し「商品コード,基準価格」・データ「M32CB085S,250」	IT-M03-32-085専用。商品の種別・規格の状態・基準価格・更新前のスマレジ連携フラグ・連携対象の価格の変更の組での連携フラグ	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M32CB085C」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M32CB085S」・商品名(英)は「M32CB085S」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格250・販売価格250・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M32CB085C」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0332-085〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で商品コードに「M32CB085S」、高額商品コードに「HPM0332-CB085-A」、セールフラグはチェックなし、基準価格(円)に「250」、販売価格(円)に250、買取価格(円)に200、スマレジ連携フラグに「連携する」、部門にスマレジ側の部門と連携済みの部門を選び、スマレジ商品コードに他の規格と重ならない任意の値（シングルカード以外は自動で振られないため入力が要る）、公開状態に「公開」を選んで「商品規格を登録」を押す（セールフラグなしで登録すると、販売価格は入力にかかわらず基準価格と同じ250で保存される）。「連携する」で登録するとスマレジへの登録が非同期で行われるので、非同期処理の待機中・実行中のジョブが0件になるまで待ち、そのあとスマレジAPI呼出記録を全件削除して0件にする。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0332-085〕）。【DB直接】M32CB085Sのスマレジ商品ID=SMR-M0332-CB085-Aは、画面に入力欄が無く（表示のみ。連携するで登録すると試験応答が返した値が入る）指定できないため、DBへ直接設定する。【ファイル】試験者の端末で次の取込ファイルを作り、ブラウザから選択できる場所に置く（文字コード・区切りの指定が無いものはUTF-8・カンマ区切り）: cb-m0332-085.csv=見出し「商品コード,基準価格」・データ「M32CB085S,250」。	ケース専用
+S-M03-32-CBSMA-086	商品・商品規格・取込ファイル・スマレジ連携	スマレジ連携フラグの組合せ確認データ(086)	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0332-086〕）／商品規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0332-086〕）／商品コード=M32CB086S／シングルカード以外のグッズ商品／状態=SP／商品・規格とも公開・削除なし／高額商品コード=HPM0332-CB086-A／セールフラグ無効／基準価格1500／販売価格1500／スマレジ連携フラグ=OFF／スマレジ商品ID未設定／cb-m0332-086.csv=見出し「商品コード,基準価格」・データ「M32CB086S,1500」	IT-M03-32-086専用。商品の種別・規格の状態・基準価格・更新前のスマレジ連携フラグ・連携対象の価格の変更の組での連携フラグ	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M32CB086C」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M32CB086S」・商品名(英)は「M32CB086S」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1500・販売価格1500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M32CB086C」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0332-086〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧の「新規作成」を押し、商品規格登録編集画面で言語に日本語、状態にSP、商品コードに「M32CB086S」、商品規格登録編集画面で高額商品コードに「HPM0332-CB086-A」、セールフラグはチェックなし、基準価格(円)に「1500」、販売価格(円)に1500、買取価格(円)に200、スマレジ連携フラグに「連携しない」、部門は選択肢の先頭を選び、スマレジ商品コードは空のまま、公開状態に「公開」を選んで「商品規格を登録」を押す（セールフラグなしで登録すると、販売価格は入力にかかわらず基準価格と同じ1500で保存される）。「連携しない」で登録するとスマレジへの登録は行われず、スマレジ商品IDは未設定のままになる。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0332-086〕）。【ファイル】試験者の端末で次の取込ファイルを作り、ブラウザから選択できる場所に置く（文字コード・区切りの指定が無いものはUTF-8・カンマ区切り）: cb-m0332-086.csv=見出し「商品コード,基準価格」・データ「M32CB086S,1500」。	ケース専用
+
+ succeeded in 105ms:
+項目ID	扱い	テストID	理由
+CB-M03-35-001	既存ケースで確認済み	IT-M03-35-001	IT-M03-35-001の事前準備④で商品コードSEC-A-001-001・SEC-B-001-001の削除されていない商品の規格が存在し、事前準備②で部門コード31・32・33の部門が存在する状態にして、手順2でm0335_normal-001.csv（部門コード32・31を指定）をアップロードし、手順3のDBで部門IDの更新を確認している。商品コードに一致する規格がある×部門コードに一致する部門があるの値がそろい、確かめる所（商品規格の部門ID）で結果を見ているため、新しいケースは足さない
+
+ succeeded in 106ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M03-38-046	IT-0366	REQ-0204-sheet-19-R012,REQ-0204-sheet-20-R004,REQ-0204-sheet-20-R005		ITA-11	P2	ブラウザのみ	S-M03-38-L-ADM,S-M03-38-L-ENV,S-M03-38-CBPUB-046,S-M03-38-CBCSV-046	① 新しいブラウザセッションで、ログインID=m0338l_admin、パスワード=Passw0rd!M0338L の稼働中かつ商品管理を操作できる管理者で管理画面にログインしている（S-M03-38-L-ADM）／② 本店を/ja/、TC大阪支店を/ja/osaka/で利用可能にし、ブラウザのCookieとJavaScriptを有効にしている（S-M03-38-L-ENV）／③ 商品ID 〔商品ID-M0338-046〕「CB公開確認商品-M0338n046」（未廃止・日本語・NM価格1,500円・在庫2・削除されていない）を本店公開（商品公開ステータス=公開）・TC大阪支店公開（支店の商品公開ステータス=公開）にしている（登録時に振られた商品IDを控えてある。〔商品ID-M0338-046〕）（S-M03-38-CBPUB-046）／④ 商品公開CSVフォーマットの見出し行（商品ID・商品公開ステータス・支店の商品公開ステータス）と、〔商品ID-M0338-046〕 の1行（〔商品ID-M0338-046〕、商品公開ステータス=0（非公開）、支店の商品公開ステータス=0（非公開））だけのCSVファイル「cbm0338-046.csv」を用意している（S-M03-38-CBCSV-046）	1. 商品管理の商品公開CSV登録画面で「CSVファイル選択」から「cbm0338-046.csv」を選び、「CSVファイルのアップロード」を押して確認モーダルを確定する／2. 画面上部に「登録が完了しました。」と表示されることを確かめる／3. 本店 /ja/ の商品詳細画面で商品ID 〔商品ID-M0338-046〕 を指定して開く／4. TC大阪支店 /ja/osaka/ の商品詳細画面で商品ID 〔商品ID-M0338-046〕 を指定して開く	「CB公開確認商品-M0338n046」の商品詳細が本店画面にも支店画面にも表示されないこと	0204 商品公開CSV登録 / 機能仕様 商品公開ステータス更新について、商品公開CSVフォーマット 項目定義 識別ID 2・3｜0303 商品詳細 / 機能仕様 本店と各支店の表示制御について	CB-M03-38-001
+
+ succeeded in 133ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+
+ succeeded in 139ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M03-33-CBPRICE-072	商品・商品規格・CSV	価格履歴の組合せデータ	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0333-072〕）／商品規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0333-072〕）／商品コード=HP-M0333-CB072／削除なし／高額商品コードあり／基準価格1500／販売価格1500／買取価格600／セール無効／価格履歴0件／cbm0333-072.csv=HP-M0333-CB072,1400,0,空,空／同名取込履歴0件	IT-M03-33-072専用。登録済みのセールフラグ・CSVのセールフラグ・販売価格と買取価格の変化の組で価格履歴を確認する	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「HP-M0333-CB072」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0333-CB072」・商品名(英)は「M0333-CB072」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1500・販売価格1500・買取価格600・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「HP-M0333-CB072」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0333-072〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でセールフラグにチェックを入れず、基準価格(円)に1500、販売価格(円)に1500、買取価格(円)に600を入れ、高額商品コードに商品コードと同じ値を入れ、スマレジ連携フラグは「連携しない」のまま、部門は選択肢の先頭を選び、公開ステータスは「公開」のままにして「商品規格を登録」ボタンを押し、登録後の商品規格登録画面に表示された商品規格IDを控える（〔商品規格ID-M0333-072〕）。画面の「雛形ファイルダウンロード」で得た雛形のヘッダ行の下に、状態・属性に書いたcbm0333-072.csvのデータ行を1行入れた、UTF-8・カンマ区切り・5列（商品コード・販売価格・セールフラグ・帯URL・タグ(ID)）のファイルを作り、cbm0333-072.csvの名前で試験端末に保存する。セール用高額商品価格変更CSVアップロード画面のCSVインポート履歴に、用意したファイルと同じファイル名の行が無いことを確かめる。価格履歴0件は、商品規格を登録すると価格履歴が1件作られ、消す画面も無く、画面で指定できないためDBへ直接設定する（登録した商品規格の価格履歴を削除する）。	ケース専用
+S-M03-33-CBPRICE-074	商品・商品規格・CSV	価格履歴の組合せデータ	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0333-074〕）／商品規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0333-074〕）／商品コード=HP-M0333-CB074／削除なし／高額商品コードあり／基準価格1500／販売価格1500／買取価格600／セール無効／価格履歴0件／cbm0333-074.csv=HP-M0333-CB074,1200,1,空,空／同名取込履歴0件	IT-M03-33-074専用。登録済みのセールフラグ・CSVのセールフラグ・販売価格と買取価格の変化の組で価格履歴を確認する	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「HP-M0333-CB074」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0333-CB074」・商品名(英)は「M0333-CB074」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1500・販売価格1500・買取価格600・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「HP-M0333-CB074」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0333-074〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でセールフラグにチェックを入れず、基準価格(円)に1500、販売価格(円)に1500、買取価格(円)に600を入れ、高額商品コードに商品コードと同じ値を入れ、スマレジ連携フラグは「連携しない」のまま、部門は選択肢の先頭を選び、公開ステータスは「公開」のままにして「商品規格を登録」ボタンを押し、登録後の商品規格登録画面に表示された商品規格IDを控える（〔商品規格ID-M0333-074〕）。画面の「雛形ファイルダウンロード」で得た雛形のヘッダ行の下に、状態・属性に書いたcbm0333-074.csvのデータ行を1行入れた、UTF-8・カンマ区切り・5列（商品コード・販売価格・セールフラグ・帯URL・タグ(ID)）のファイルを作り、cbm0333-074.csvの名前で試験端末に保存する。セール用高額商品価格変更CSVアップロード画面のCSVインポート履歴に、用意したファイルと同じファイル名の行が無いことを確かめる。価格履歴0件は、商品規格を登録すると価格履歴が1件作られ、消す画面も無く、画面で指定できないためDBへ直接設定する（登録した商品規格の価格履歴を削除する）。	ケース専用
+S-M03-33-CBPRICE-076	商品・商品規格・CSV	価格履歴の組合せデータ	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0333-076〕）／商品規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0333-076〕）／商品コード=HP-M0333-CB076／削除なし／高額商品コードあり／基準価格1500／販売価格1200／買取価格600／セール有効／価格履歴0件／cbm0333-076.csv=HP-M0333-CB076,900,0,空,空／同名取込履歴0件	IT-M03-33-076専用。登録済みのセールフラグ・CSVのセールフラグ・販売価格と買取価格の変化の組で価格履歴を確認する	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「HP-M0333-CB076」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0333-CB076」・商品名(英)は「M0333-CB076」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1500・販売価格1500・買取価格600・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「HP-M0333-CB076」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0333-076〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でセールフラグにチェックを入れ、基準価格(円)に1500、販売価格(円)に1200、買取価格(円)に600を入れ、高額商品コードに商品コードと同じ値を入れ、スマレジ連携フラグは「連携しない」のまま、部門は選択肢の先頭を選び、公開ステータスは「公開」のままにして「商品規格を登録」ボタンを押し、登録後の商品規格登録画面に表示された商品規格IDを控える（〔商品規格ID-M0333-076〕）。画面の「雛形ファイルダウンロード」で得た雛形のヘッダ行の下に、状態・属性に書いたcbm0333-076.csvのデータ行を1行入れた、UTF-8・カンマ区切り・5列（商品コード・販売価格・セールフラグ・帯URL・タグ(ID)）のファイルを作り、cbm0333-076.csvの名前で試験端末に保存する。セール用高額商品価格変更CSVアップロード画面のCSVインポート履歴に、用意したファイルと同じファイル名の行が無いことを確かめる。価格履歴0件は、商品規格を登録すると価格履歴が1件作られ、消す画面も無く、画面で指定できないためDBへ直接設定する（登録した商品規格の価格履歴を削除する）。	ケース専用
+S-M03-33-CBPRICE-077	商品・商品規格・CSV	価格履歴の組合せデータ	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0333-077〕）／商品規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0333-077〕）／商品コード=HP-M0333-CB077／削除なし／高額商品コードあり／基準価格1600／販売価格1200／買取価格700／セール有効／価格履歴0件／cbm0333-077.csv=HP-M0333-CB077,1200,1,空,空／同名取込履歴0件	IT-M03-33-077専用。登録済みのセールフラグ・CSVのセールフラグ・販売価格と買取価格の変化の組で価格履歴を確認する	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「HP-M0333-CB077」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0333-CB077」・商品名(英)は「M0333-CB077」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1600・販売価格1600・買取価格700・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「HP-M0333-CB077」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0333-077〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面でセールフラグにチェックを入れ、基準価格(円)に1600、販売価格(円)に1200、買取価格(円)に700を入れ、高額商品コードに商品コードと同じ値を入れ、スマレジ連携フラグは「連携しない」のまま、部門は選択肢の先頭を選び、公開ステータスは「公開」のままにして「商品規格を登録」ボタンを押し、登録後の商品規格登録画面に表示された商品規格IDを控える（〔商品規格ID-M0333-077〕）。画面の「雛形ファイルダウンロード」で得た雛形のヘッダ行の下に、状態・属性に書いたcbm0333-077.csvのデータ行を1行入れた、UTF-8・カンマ区切り・5列（商品コード・販売価格・セールフラグ・帯URL・タグ(ID)）のファイルを作り、cbm0333-077.csvの名前で試験端末に保存する。セール用高額商品価格変更CSVアップロード画面のCSVインポート履歴に、用意したファイルと同じファイル名の行が無いことを確かめる。価格履歴0件は、商品規格を登録すると価格履歴が1件作られ、消す画面も無く、画面で指定できないためDBへ直接設定する（登録した商品規格の価格履歴を削除する）。	ケース専用
+
+ succeeded in 160ms:
+項目ID	扱い	テストID	理由
+CB-M03-38-001	ケース化	IT-M03-38-046	商品が実在し、商品公開ステータスも支店の商品公開ステータスも非公開にするCSVを取り込み、本店と支店の商品詳細の表示を確認する（既存ケースに非公開×非公開が無い）
+CB-M03-38-002	既存ケースで確認済み	IT-M03-38-035	IT-M03-38-035の事前準備③で商品ID（削除されていない実在の商品）を本店・支店とも非公開にしておき、事前準備④のCSVで商品公開ステータス=1（公開）・支店の商品公開ステータス=1（公開）を指定して取り込み、手順3で支店画面の商品詳細が表示されることを確かめている。実在×公開×公開の値がそろい、確かめる所（公開側の表示）で結果を見ているため、新しいケースは足さない
+
+ succeeded in 173ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+
+ succeeded in 105ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M03-40-CBSHELF-040	棚番号・商品・商品規格・取込ファイル・取込履歴	稼働中の規格が2件ある商品データ	棚番号名称=S-M0340-CB040-OLDとS-M0340-CB040-NEW／商品IDは登録時に画面が振る（控える。以下〔商品ID-M0340-040〕）・商品コード=M0340-CB040-P・削除なし／稼働中の商品規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0340-040A〕）・棚番号=S-M0340-CB040-OLD／もう1件の稼働中の商品規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0340-040B〕）・棚番号=S-M0340-CB040-OLD／削除済みの商品規格なし／cbm0340-040.csv=見出し「商品コード,棚番号名称」、データ「M0340-CB040-P,S-M0340-CB040-NEW」／棚番号更新CSV履歴=0件	IT-M03-40-040専用。商品コードに一致する稼働中の商品規格が2件以上のときの中止を確認する	棚番号（名称S-M0340-CB040-OLD、S-M0340-CB040-NEW）は、名称が棚番号登録/編集画面の名称の形式チェック（大文字英字1字・ハイフン・数字3桁の形だけを通す）を通らず画面で指定できないためDBへ直接設定する。商品一覧で商品コードにM0340-CB040-Pを入れて検索し、該当が無ければ、グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0340-CB040-P」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0340商品-CB040」・商品名(英)は「M0340-Product-CB040」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は「通常商品」・基準価格1000・販売価格1000・買取価格1000・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。その商品の商品規格一覧画面を開き、言語日本語・状態NMの規格（取り込みで作られた規格）の行を開いて、商品規格登録編集画面で棚番号でS-M0340-CB040-OLDを選び、部門は選択肢の先頭を選び、公開ステータスに「公開」を選んで「商品規格を登録」ボタンを押し、表示された商品IDと商品規格IDを控える（〔商品ID-M0340-040〕・〔商品規格ID-M0340-040A〕）。同じ商品の商品規格一覧画面の新規登録ボタンから商品規格登録画面を開き、商品コードにM0340-CB040-Pを入れ、棚番号でS-M0340-CB040-OLDを選び、言語・状態の組が1件目の規格と重ならない値を選び、部門は選択肢の先頭を選び、公開ステータスに「公開」を選び、基準価格などほかの必須項目に登録できる値を入れて「商品規格を登録」ボタンを押し、表示された商品規格IDを控える（〔商品規格ID-M0340-040B〕）。取込ファイル（cbm0340-040.csv）は、状態・属性に書いた内容・文字コード・改行形式・区切り・大きさ・件数のとおりに試験者が手元で作る。棚番号更新CSVの取込履歴の0件は、取込履歴を削除する画面が無く画面で指定できないためDBへ直接設定する（棚番号更新CSVの取込履歴を削除する）。	ケース専用
+
+ succeeded in 151ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M03-38-CBPUB-046	商品・規格	CB公開確認商品-M0338n046	商品ID=〔商品ID-M0338-046〕／商品名=CB公開確認商品-M0338n046／未廃止／言語=日本語／NM価格1,500円・在庫2／商品公開ステータス=公開・支店の商品公開ステータス=公開／他に同商品IDの商品なし／削除済みでない／商品IDは登録時に画面が振る（控える。以下〔商品ID-M0338-046〕）	IT-M03-38-046専用。公開ステータス更新の対象。両方を非公開へ更新したときの公開側表示を確認する	グッズ商品CSV登録画面で、商品IDを空にし、商品コード「M0338-CB046」、言語(ID)に日本語、商品名(日)と商品名(英)に「CB公開確認商品-M0338n046」、サイズに1、重量に1、商品カテゴリ(ID)に登録済みのグッズのカテゴリ、購入グループ名称に登録済みの購入グループ、基準価格1500、販売価格1500、買取価格1500、原価単価1500、商品公開ステータスと支店の商品公開ステータスに非公開を表す値を入れた1行のCSVファイルを「CSVファイル選択」で選び、「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（グッズ商品は状態NM・日本語の規格で登録され、販売価格がNM価格になる）。商品マスターで商品名(日/英)に「CB公開確認商品-M0338n046」を入れて検索し、検索結果の行に表示された商品IDを控える（〔商品ID-M0338-046〕）。在庫検索一覧でこの商品を検索し、商品名を押して在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「M03-38試験」、在庫増減数に2、仕入単価に1500を入れて「登録」を押す。登録した管理者とは別の、承認権限を持つ管理者でログインし直し、在庫編集承認一覧でこの在庫編集の行を選んで「一括承認」を押し、確認でOKを押す。商品マスターの検索結果でこの商品の商品名を押して商品登録編集画面を開き、商品公開ステータスで「公開」、支店の商品公開ステータスで「公開」を選び、割引率を販売割引率に登録済みのものから選んで「商品を登録」を押す。	ケース専用
+S-M03-38-CBCSV-046	CSVフィクスチャ	cbm0338-046.csv	見出し行=商品ID,商品公開ステータス,支店の商品公開ステータス／データ行は1行=〔商品ID-M0338-046〕,0,0／UTF-8・カンマ区切り	IT-M03-38-046専用。商品公開CSV登録の取込ファイル	ファイル「cbm0338-046.csv」をテキストエディタで作成し、データ行の商品IDには画面で控えた〔商品ID-M0338-046〕の番号を入れ、ブラウザから選べる場所に置く	ケース専用
+
+ succeeded in 207ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M03-33-072	IT-0366	REQ-0204-sheet-50-R085,REQ-0204-sheet-50-R086		ITA-11	P1	ブラウザ+DB確認	S-M03-33-ADM,S-M03-33-CBPRICE-072	① M03-33試験管理者でログインし、管理者ID 33033が履歴担当者として記録される状態である（S-M03-33-ADM）／② 商品ID 〔商品ID-M0333-072〕・商品規格ID 〔商品規格ID-M0333-072〕（登録時に振られた商品IDと商品規格IDを控えてある）の商品コードHP-M0333-CB072が基準価格1500、販売価格1500、買取価格600、セール無効、価格履歴0件であり、cbm0333-072.csvのデータ行は「HP-M0333-CB072,1400,0,空,空」（CSVのセールフラグ無効(0)、販売価格1400。買取価格の列は無く、登録済みの買取価格600のまま）で、cbm0333-072.csvと同名の取込履歴は0件である（S-M03-33-CBPRICE-072）	1. セール用高額商品価格変更CSVアップロード画面でcbm0333-072.csvを選択して「CSVファイルのアップロード」ボタンを押す／2. DBで商品コードHP-M0333-CB072の規格の基準価格・販売価格・買取価格・セールフラグと、価格履歴を確認する	商品コードHP-M0333-CB072の規格が基準価格1500・販売価格1500・買取価格600・セールフラグ無効のままで、価格履歴が1件も追加されず0件のままであること	0204 セール用高額商品価格変更CSVアップロード / 機能仕様 セール前の価格保持（基準価格）について｜0204 セール用高額商品価格変更CSVアップロード / 現行仕様 業務ロジック 価格履歴の記録	CB-M03-33-001
+IT-M03-33-074	IT-0366	REQ-0204-sheet-50-R085,REQ-0204-sheet-50-R086		ITA-11	P1	ブラウザ+DB確認	S-M03-33-ADM,S-M03-33-CBPRICE-074	① M03-33試験管理者でログインし、管理者ID 33033が履歴担当者として記録される状態である（S-M03-33-ADM）／② 商品ID 〔商品ID-M0333-074〕・商品規格ID 〔商品規格ID-M0333-074〕（登録時に振られた商品IDと商品規格IDを控えてある）の商品コードHP-M0333-CB074が基準価格1500、販売価格1500、買取価格600、セール無効、価格履歴0件であり、cbm0333-074.csvのデータ行は「HP-M0333-CB074,1200,1,空,空」（CSVのセールフラグ有効(1)、販売価格1200。買取価格の列は無く、登録済みの買取価格600のまま）で、cbm0333-074.csvと同名の取込履歴は0件である（S-M03-33-CBPRICE-074）	1. セール用高額商品価格変更CSVアップロード画面でcbm0333-074.csvを選択して「CSVファイルのアップロード」ボタンを押す／2. DBで商品コードHP-M0333-CB074の規格の基準価格・販売価格・買取価格・セールフラグと、価格履歴を確認する	商品コードHP-M0333-CB074の規格がセールフラグ有効・基準価格1500・販売価格1200・買取価格600になり、価格履歴が1件追加されて販売価格の更新前1500・更新後1200と操作した担当者が記録され、買取価格の変更値が記録されないこと	0204 セール用高額商品価格変更CSVアップロード / 機能仕様 セール前の価格保持（基準価格）について｜0204 セール用高額商品価格変更CSVアップロード / 現行仕様 業務ロジック 価格履歴の記録	CB-M03-33-003
+IT-M03-33-076	IT-0366	REQ-0204-sheet-50-R085,REQ-0204-sheet-50-R086		ITA-11	P1	ブラウザ+DB確認	S-M03-33-ADM,S-M03-33-CBPRICE-076	① M03-33試験管理者でログインし、管理者ID 33033が履歴担当者として記録される状態である（S-M03-33-ADM）／② 商品ID 〔商品ID-M0333-076〕・商品規格ID 〔商品規格ID-M0333-076〕（登録時に振られた商品IDと商品規格IDを控えてある）の商品コードHP-M0333-CB076が基準価格1500、販売価格1200、買取価格600、セール有効、価格履歴0件であり、cbm0333-076.csvのデータ行は「HP-M0333-CB076,900,0,空,空」（CSVのセールフラグ無効(0)、販売価格900。買取価格の列は無く、登録済みの買取価格600のまま）で、cbm0333-076.csvと同名の取込履歴は0件である（S-M03-33-CBPRICE-076）	1. セール用高額商品価格変更CSVアップロード画面でcbm0333-076.csvを選択して「CSVファイルのアップロード」ボタンを押す／2. DBで商品コードHP-M0333-CB076の規格の基準価格・販売価格・買取価格・セールフラグと、価格履歴を確認する	商品コードHP-M0333-CB076の規格がセールフラグ無効・基準価格1500・販売価格1500・買取価格600になり、価格履歴が1件追加されて販売価格の更新前1200・更新後1500と操作した担当者が記録され、買取価格の変更値が記録されないこと	0204 セール用高額商品価格変更CSVアップロード / 機能仕様 セール前の価格保持（基準価格）について｜0204 セール用高額商品価格変更CSVアップロード / 現行仕様 業務ロジック 価格履歴の記録	CB-M03-33-005
+IT-M03-33-077	IT-0366	REQ-0204-sheet-50-R085,REQ-0204-sheet-50-R086		ITA-11	P1	ブラウザ+DB確認	S-M03-33-ADM,S-M03-33-CBPRICE-077	① M03-33試験管理者でログインし、管理者ID 33033が履歴担当者として記録される状態である（S-M03-33-ADM）／② 商品ID 〔商品ID-M0333-077〕・商品規格ID 〔商品規格ID-M0333-077〕（登録時に振られた商品IDと商品規格IDを控えてある）の商品コードHP-M0333-CB077が基準価格1600、販売価格1200、買取価格700、セール有効、価格履歴0件であり、cbm0333-077.csvのデータ行は「HP-M0333-CB077,1200,1,空,空」（CSVのセールフラグ有効(1)、販売価格1200。買取価格の列は無く、登録済みの買取価格700のまま）で、cbm0333-077.csvと同名の取込履歴は0件である（S-M03-33-CBPRICE-077）	1. セール用高額商品価格変更CSVアップロード画面でcbm0333-077.csvを選択して「CSVファイルのアップロード」ボタンを押す／2. DBで商品コードHP-M0333-CB077の規格の基準価格・販売価格・買取価格・セールフラグと、価格履歴を確認する	商品コードHP-M0333-CB077の規格が基準価格1600・販売価格1200・買取価格700・セールフラグ有効のままで、価格履歴が1件も追加されず0件のままであること	0204 セール用高額商品価格変更CSVアップロード / 機能仕様 セール前の価格保持（基準価格）について｜0204 セール用高額商品価格変更CSVアップロード / 現行仕様 業務ロジック 価格履歴の記録	CB-M03-33-006
+
+ succeeded in 152ms:
+項目ID	扱い	テストID	理由
+CB-M03-40-001	ケース化	IT-M03-40-040	商品コードに一致する稼働中の商品規格が2件ある商品を指すCSV1行を取り込み、DBで2件の棚番号が変わらず取込履歴が増えないことを確認する。棚番号名称と同一商品コードの行数は結果に効かない打ち切りの組のため、CSVは棚番号名称が登録済みの1行にした
+
+ succeeded in 140ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M03-40-040	IT-0366			ITA-11	P1	ブラウザ+DB確認	S-M03-40-ADM,S-M03-40-CONFIG,S-M03-40-CBSHELF-040	① 管理者ID 34000001の管理者でログインしている（S-M03-40-ADM）／② 開始時にCSV区切り文字をカンマ、アップロードサイズ上限を5MBに設定する（S-M03-40-CONFIG）／③ 棚番号名称S-M0340-CB040-OLDとS-M0340-CB040-NEWが登録済みである。商品ID 〔商品ID-M0340-040〕・商品コードM0340-CB040-Pには、棚番号S-M0340-CB040-OLDの稼働中の商品規格ID 〔商品規格ID-M0340-040A〕と、棚番号S-M0340-CB040-OLDの稼働中の商品規格ID 〔商品規格ID-M0340-040B〕の2件があり（削除済みの商品規格は無い）、商品コードM0340-CB040-Pに一致する稼働中の商品規格は2件以上である。cbm0340-040.csvは見出し「商品コード,棚番号名称」、データ「M0340-CB040-P,S-M0340-CB040-NEW」の1行で、棚番号更新CSVの取込履歴は0件である。登録時に振られた商品IDと商品規格IDを控えてある（S-M03-40-CBSHELF-040）	1. 棚番号更新CSV登録画面を開く／2. cbm0340-040.csvを選択してCSVファイルのアップロードボタンを押す／3. DBで商品ID 〔商品ID-M0340-040〕・商品コード「M0340-CB040-P」の商品規格 〔商品規格ID-M0340-040A〕・〔商品規格ID-M0340-040B〕 の棚番号と、棚番号更新CSVの取込履歴を確認する	商品コード「M0340-CB040-P」の商品規格 〔商品規格ID-M0340-040A〕・〔商品規格ID-M0340-040B〕 の棚番号がともにS-M0340-CB040-OLDのまま変わらず、取込履歴も追加されないこと	0204 棚番号更新CSV登録 / 業務ロジック 取込の判定順序 順序7、取込結果、エラー時の扱い、入出力: 永続化	CB-M03-40-001
+
+codex
+組とケースの対応を確認しました。続いて、CSVの列定義と取込後の更新規則を設計書の原文で確かめ、1巡目で修正済みの指摘を除いて見ます。
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M03-32/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0204 sheet-48 高額商品価格変更CSVアップロード
+L0001	高額商品価格変更CSVアップロード
+L0002	ドキュメント名商品管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-06-16
+L0007	更新者堀部
+L0008	更新日2025-09-16
+L0009	機能NoM03-32
+L0010	機能名高額商品価格変更CSVアップロード
+L0011	概要高額商品用に価格変更をCSVにて一括で更新する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	2
+L0015	1
+L0016	3
+L0017	4
+L0018	5
+L0019	6
+L0020	7
+L0021	高額商品価格変更CSVアップロード / C7 / image 1
+L0022	カスタマイズ説明
+L0023	概要
+L0024	高額商品用に価格変更をCSVにて一括で更新する
+L0025	機能
+L0026	現行機能をベースに下記カスタマイズ
+L0027	価格登録に関して
+L0028	・価格の登録に関してセール前の価格保持（基準価格）を考慮した登録処理とする
+L0029	備考
+L0030	セール前の価格保持（基準価格）について、要件整理中は下記の制御にて検討していたが基本設計にて仕様確定とする
+L0031	・CSV取り込み項目である”販売価格”を基準価格に変更する
+L0032	・セールフラグ無しの商品規格の価格を変更した場合は、基準価格から販売価格を上書きする
+L0033	買取・販売価格履歴について
+L0034	・買取・販売価格履歴を登録する際には、基準価格も登録する
+L0035	機能仕様処理概要（★はカスタマイズ項目）
+L0036	セール前の価格保持（基準価格）について
+L0037	★識別ID:3 「高額商品価格変更CSVファイルフォーマット」
+L0038	・項目「販売価格」を「基準価格」に変更
+L0039	★対象の商品コードから当該の商品データを検索。現在登録済の商品に設定されている「セールフラグ」を参照して処理を切り替える
+L0040	・セールフラグが「無効(0)」の場合
+L0041	・通常商品の販売価格変更として処理する
+L0042	・基準価格を、CSVに設定されている基準価格に更新する
+L0043	・販売価格を、CSVに設定されている基準価格に更新する
+L0044	・セールフラグが「有効(1)」の場合
+L0045	・セール中商品の販売価格は変更できない
+L0046	・基準価格を、CSVに設定されている基準価格に更新する
+L0047	・販売価格は変更しない、現在登録済の販売価格のまま
+L0048	・セール中商品の販売価格は変更できない旨(アラート)を画面上に表示する
+L0049	・当該の商品データが見つからない場合は、エラーを返す(現行の処理を踏襲する)
+L0050	識別ID	ラベル	画面部品の種類	入力チェック	画面部品の説明
+L0051	1	ファイルを選択	ボタン	-	ボタン押下で、OS標準のファイル選択ウィンドウを表示
+L0052	2	CSVファイルの
+L0053	アップロード	ボタン	-	CSVファイルのアップロードと入力チェックを実施。
+L0054	3	高額商品価格変更CSV
+L0055	ファイルフォーマット	テーブル	-	登録/更新に使用するCSVのファイルをーマットをテーブルで表現
+L0056	※CSVの項目はシート「高額商品価格変更CSV」を参照
+L0057	4	雛形ファイルダウンロード	ボタン	-	ボタン押下で、登録CSVの雛形がダウンロードされる
+L0058	5	件数	単一選択	-	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0059	6	該当レコード表示	-	-	インポート履歴データを出力、インポート日時の降順
+L0060	7	ページング	リンク	-	選択したページへ遷移する
+L0061	Source:
+L0062	functions/pf-eccube3/m03-32_admin_product_product_simple_high_price_csv_import.md
+L0063	現行仕様
+L0064	M03-32 高額商品価格変更CSV登録 / 商品管理 — 高額商品価格変更CSV登録
+L0065	業務ロジック
+L0066	雛形の出力
+L0067	見出し行だけを持つCSVを出力する。ファイル名は simple_high_price.csv とする。列の説明文言は持たない。
+L0068	取込の受付条件
+L0069	順序	判定	結果
+L0070	1	送信内容が妥当でないとき	エラーを表示し、取込を開始しない
+L0071	2	ファイルが選択されていないとき	CSVデータが無い旨のエラーを表示し、取込を開始しない
+L0072	3	二重引用符に囲まれた改行を除いた改行数が5010以上のとき	上限超過のエラーを表示し、取込を開始しない
+L0073	4	1行目を見出し行とみなせないとき、または見出し行の直後にデータ行が無いとき	取込を開始せず、エラーメッセージだけを返す
+L0074	ファイルは必須とし、大きさの上限は設定値（確認値5メガバイト）とする。ファイルの種別はCSV・タブ区切り・書式なしテキスト・表計算ソフトの既定種別に限り、それ以外の種別は受け付けない。画面の入力はファイルとなりすまし対策トークンだけであり、他の入力項目は操作できない。
+L0075	行の検証
+L0076	見出し名と列定義が一致しないとき、必須列が空のときは、当該行で取込全体を中止する。中止したときは、読み込み済みの行も反映しない。
+L0077	区切り文字は、拡張子がタブ区切りのときはタブ、それ以外のときは設定値とする。取り込むファイルの文字コードはUTF-8でなくてよく、判別したうえでUTF-8へ変換して読み取る。ゼロ幅スペースとバイト順マークは、位置を問わず取り除く。
+L0078	更新の対象と対象外の行
+L0079	高額対象の規格は、高額商品コードが設定された規格に限り、削除済みの商品・規格は対象としない。商品コードに該当する高額対象の規格が無い行は、行番号を付けたエラーを表示して取込全体を中止し、それまでに読み込んだ行も反映しない。
+L0080	エラーが1件でもあるときは、完了メッセージを表示せず、取込履歴も残さない。
+L0081	支店システムへの連携
+L0082	取込を中止せずに終えたとき、更新した商品を支店システムへ通知する。同じ商品が複数の行にあっても通知は1件にまとめる。通知に失敗しても取込は成功として扱い、失敗した商品を再連携の対象として記録する。
+L0083	入出力
+L0084	種類	内容
+L0085	入力	取込のCSVファイルとなりすまし対策トークン
+L0086	成功時出力	登録完了のメッセージを表示し、アップロード画面へ戻る
+L0087	失敗時出力	エラーを表示し、アップロード画面へ戻る
+L0088	入出力: 永続化
+L0089	操作	契機
+L0090	更新	行が対象規格に該当したとき。規格の更新日を記録する
+L0091	追加	エラーなく取込を終えたとき。取込履歴を1件（種別は高額商品価格変更、ファイル名はアップロードしたファイルの名称）
+L0092	追加	価格が変わった行。買取・販売価格履歴を1件（変わった値の更新前と更新後を記録）。値が変わらない行は履歴を残さない
+L0093	リニューアル後の仕様
+L0094	表示メッセージ
+L0095	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0096	M03-32-MSG-001	管理画面上部	The uploaded file was too large. Please try to upload a smaller file. ／ CSRFトークンが無効です、再送信してください。 ／ フィールドグループに追加のフィールドを含んではなりません。	CSV取込を送信したときに、アップロードしたファイルのサイズが上限を超えた、CSRFトークンが無効になった、または送信内容に未対応の項目が含まれるとき	高額商品価格変更CSVアップロード画面に戻る
+L0097	M03-32-MSG-002	管理画面上部	CSVデータが存在しません	送信内容は妥当だが、ファイルを選択せずにCSV取込を実行したとき	エラーを表示し、高額商品価格変更CSVアップロード画面に遷移する
+L0098	M03-32-MSG-003	管理画面上部	%maxRecord% 行を超えるCSVファイルは登録できません。	上限を超える行数のCSVファイルを登録したとき	エラーを表示し、高額商品価格変更CSVアップロード画面に遷移する
+L0099	M03-32-MSG-004	管理画面上部	%d行目: セール中商品のため、基準価格のみ更新しました。（販売価格は変更されません）	CSVの商品コードがセール中の商品規格に該当するとき	警告を表示し、高額商品価格変更CSVアップロード画面に遷移する
+L0100	M03-32-MSG-005	管理画面上部	CSVのフォーマットが一致しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ CSVデータが存在しません。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の %s ではデータを取得できません。 ／ %d 行目の %s は0以上の数値を設定してください。 ／ %d 行目の %s は %d桁以内の数値 を設定してください。 ／ %d 行目の商品コードの値 %s は重複して登録されてるため更新できません。 ／ %d行目: 対象の商品規格がありません。（商品公開ステータスが0かつ高額商品コードが設定された規格のみ対象です）	CSVのヘッダー形式が不正、またはデータ行の列数が不正なCSVを取り込んだとき	高額商品価格変更CSVアップロード画面に戻る
+L0101	M03-32-MSG-006	管理画面上部	登録が完了しました。	CSVファイルをエラーなく登録したとき	成功メッセージを表示し、高額商品価格変更CSVアップロード画面に遷移する
+L0102	M03-32-MSG-007	管理画面上部	%d行目: 対象の商品規格がありません。（商品公開ステータスが0かつ高額商品コードが設定された規格のみ対象です）	CSVの商品コードに価格変更の対象となる商品規格がないとき	エラーを表示し、高額商品価格変更CSVアップロード画面に遷移する
+L0103	M03-32-MSG-008	管理画面上部	%d 行目の %s ではデータを取得できません。	CSVの商品コードに該当する商品規格が見つからないとき	エラーを表示し、高額商品価格変更CSVアップロード画面に遷移する
+L0104	M03-32-MSG-009	管理画面上部	%d 行目の商品コードの値 %s は重複して登録されてるため更新できません。	CSVの商品コードに該当する商品規格が複数あるとき	エラーを表示し、高額商品価格変更CSVアップロード画面に遷移する
+##### 0204 sheet-49 高額商品価格変更CSVフォーマット
+L0105	高額商品価格変更CSVフォーマット
+L0106	ドキュメント名商品管理機能
+L0107	セクション—
+L0108	プロジェクト名サイトリニューアル
+L0109	作成者城下
+L0110	作成日2025-06-16
+L0111	更新者堀部
+L0112	更新日2025-09-12
+L0113	機能NoM03-32
+L0114	機能名高額商品価格変更CSV登録フォーマット
+L0115	概要—
+L0116	処理概要（★はカスタマイズ項目）
+L0117	M03-32 高額商品価格変更CSV登録
+L0118	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0119	または最大値	入力例	備考
+L0120	1	商品コード	◯	文字型	◯	11	PRODUCT-001	更新対象の商品コードを指定
+L0121	2	基準価格	◯	数値(整数)	◯	11	1000	※カスタマイズ対応、販売価格 → 基準価格 に変更
+L0122	カスタマイズ説明
+L0123	概要
+L0124	高額商品用に価格変更をCSVにて一括で更新する
+L0125	機能
+L0126	現行機能をベースに下記カスタマイズ
+L0127	価格登録に関して
+L0128	・価格の登録に関してセール前の価格保持（基準価格）を考慮した登録処理とする
+L0129	備考
+L0130	セール前の価格保持（基準価格）について、要件整理中は下記の制御にて検討していたが基本設計にて仕様確定とする
+L0131	・CSV取り込み項目である”販売価格”を基準価格に変更する
+L0132	・セールフラグ無しの商品規格の価格を変更した場合は、基準価格から販売価格を上書きする
+L0133	機能仕様処理概要（★はカスタマイズ項目）
+L0134	セール前の価格保持（基準価格）について
+L0135	★識別ID:2 「販売価格」を「基準価格」に変更
+L0136	★対象の商品コードから当該の商品データを検索。現在登録済の商品に設定されている「セールフラグ」を参照して処理を切り替える
+L0137	・セールフラグが「無効(0)」の場合
+L0138	・通常商品の販売価格変更として処理する
+L0139	・基準価格を、CSVに設定されている基準価格に更新する
+L0140	・販売価格を、CSVに設定されている基準価格に更新する
+L0141	・セールフラグが「有効(1)」の場合
+L0142	・セール中商品の販売価格は変更できない
+L0143	・基準価格を、CSVに設定されている基準価格に更新する
+L0144	・販売価格は変更しない、現在登録済の販売価格のまま
+L0145	・セール中商品の販売価格は変更できない旨(アラート)を画面上に表示する
+L0146	・当該の商品データが見つからない場合は、エラーを返す(現行の処理を踏襲する)
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M03-38/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0204 sheet-19 商品公開CSV登録
+L0001	商品公開CSV登録
+L0002	ドキュメント名商品管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-06-04
+L0007	更新者堀部
+L0008	更新日2025-09-16
+L0009	機能NoM03-38
+L0010	機能名商品公開CSV登録
+L0011	概要商品の公開ステータスをCSVで一括更新できる
+L0012	処理概要（★はカスタマイズ項目）
+L0013	・既存踏襲処理概要
+L0014	レイアウト図
+L0015	1
+L0016	2
+L0017	3
+L0018	4
+L0019	5
+L0020	6
+L0021	7
+L0022	8
+L0023	商品公開CSV登録 / H7 / image 1
+L0024	カスタマイズ説明
+L0025	カスタマイズ要件
+L0026	・商品公開ステータス更新について。新規登録時の処理はしない(画面設計では「新規登録時は入力しないと書いてあるが)
+L0027	設計で追加した仕様
+L0028	・CSVインポート履歴のページング化
+L0029	ページ表示高速化のため
+L0030	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0031	機能仕様処理概要（★はカスタマイズ項目）
+L0032	・概要
+L0033	商品公開ステータスをCSVで一括更新できる
+L0034	※商品公開CSVのファイルイメージは別シート「商品公開CSVフォーマット」(以下 CSVフォーマット)として記載します。
+L0035	★商品公開ステータス更新について
+L0036	・CSVフォーマット識別ID 2:「公開ステータス(ID)」から「商品公開ステータス」へ名称変更、選択項目は「非公開」「公開」の2種類、支店の商品公開ステータスと商品公開ステータスは値が違うので注意
+L0037	※当機能は「商品公開ステータス」区分の一つである「2 - 廃止」の変更はできません。
+L0038	・CSVフォーマット識別ID 3:「支店の商品公開ステータス」を追加。選択項目は「公開」「非公開」の2種類
+L0039	★CSVインポート履歴のページング化
+L0040	・CSVインポート履歴の膨大化に踏まえ、一定データ数ごとに区切ってページ表示する「ページング」の実装
+L0041	・識別ID 5 ページ表示レコード数 で1ページに表示する該当データ(レコード)数を指定
+L0042	選択後、指定レコード数へ自動的に切り替え
+L0043	・識別ID 8 ページ遷移リンクにより他ページに移動可能
+L0044	機能仕様・既存踏襲処理概要
+L0045	・レコード数上限チェックを実施。5010件以上はエラーとする。
+L0046	・商品IDで商品情報の商品公開ステータスIDを更新する。
+L0047	画面構成
+L0048	識別ID	ラベル	書式・制限	必須	最大文字数
+L0049	または最大値	初期値	画面部品の説明
+L0050	1	CSVファイル選択	ボタン	-	-	-	新規作成した商品公開CSVファイルを選択
+L0051	2	CSVファイルのアップロード	ボタン	-	-	-	押下後、確認モーダルを表示
+L0052	3	雛形ファイルダウンロード	ボタン	-	-	-
+L0053	4	雛形ファイル項目説明	-	-	-	-	各項目の名称および内容を記載
+L0054	5	該当件数	-	-	-	-
+L0055	6	件数	単一選択	-	-	-	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0056	7	該当レコード表示	-	-	-	-
+L0057	8	ページング	リンク	-	-	-	選択したページへ遷移する
+L0058	Source:
+L0059	functions/pf-eccube3/m03-38_admin_product_product_status_csv.md
+L0060	現行仕様
+L0061	M03-38 商品公開CSV登録 / 商品管理 — 商品公開CSV登録
+L0062	業務ロジック
+L0063	アップロード画面の表示
+L0064	取込履歴の一覧は、CSV種別が商品公開CSVのものだけに絞って表示する。他のCSV取込の履歴は混ざらない。
+L0065	一覧に出すのはファイル名・アップロード日時（分まで）・作業者の3つで、アップロード日時の新しい順に並べる。作業者は、削除済みの管理者であっても氏名を表示する。
+L0066	雛形のダウンロード
+L0067	見出し行だけを1行出力する。画面に並べている項目説明の文言は出力しない。先頭に BOM を書き、区切り文字は設定の値（配布既定はカンマ）とする。ファイル名は product_status.csv とし、ファイルとしてダウンロードさせる。
+L0068	取込ファイルの受け付け
+L0069	取込ファイルの文字コードは自動判定し、UTF-8 でなければ UTF-8 へ変換して読む。拡張子が tsv のときは区切り文字をタブとし、それ以外は設定の区切り文字とする。ゼロ幅スペースと BOM は読む前に取り除く。
+L0070	行数の上限判定に使う行数は、引用符で囲まれた範囲を取り除いたうえでの改行の数とする。値の中に改行を含む行はこの数に加わらない。上限の判定は取込を始める前の1回だけで、取込中に行数で打ち切ることはない。
+L0071	取込の判定順序
+L0072	順序	判定	結果
+L0073	1	なりすまし対策トークンが正しいこと	不正なときはアクセス拒否として取込を始めない
+L0074	2	ファイルが選択されていること、アップロードサイズが上限（設定のメガバイト値）以内であること、CSVとして扱える種類のファイルであること	失敗時はメッセージを表示するだけで取込を始めない
+L0075	3	行数が上限に達していないこと	上限に達しているときはメッセージを表示して中止する
+L0076	4	1行目が見出し行として読めること、2行目以降にデータ行があること	見出し形式のエラー、またはデータが無いエラーとして取込を終える
+L0077	5	各データ行の列数が、この機能が定める列の数と一致すること	一致しないときは列数のエラーとして全体を中断する
+L0078	6	各行に見出し名どおりの列が揃っていること、列ごとの必須と選択肢を満たすこと	満たさない行を見つけた時点で以降の行を処理しない
+L0079	7	商品IDの商品が実在すること。削除済みの商品を指す行は、存在しない商品として扱う	存在しないときは以降の行を処理しない
+L0080	8	上記を満たす行の反映	商品の公開ステータスを更新する
+L0081	検証エラーまたは商品未存在が1件でもあると、その時点で取込を打ち切り、それまでに反映した行を含めて変更を確定しない。全行が通ったときだけ確定する。
+L0082	商品IDと公開ステータスに桁数・文字数の上限は設けない。
+L0083	反映の範囲
+L0084	更新するのは商品の公開ステータスだけで、同じ商品の他の項目は変えない。商品の更新日時も変わらない。
+L0085	取込結果
+L0086	エラーが1件でもあるときは、各エラーを画面に並べて表示する。エラーが無いときは登録完了を表示し、取込履歴へ CSV種別・アップロードしたファイルの元の名称・取込日時・作業者を1件記録する。いずれの場合もアップロード画面へ戻る。
+L0087	エラー時の扱い
+L0088	エラー内容	処理
+L0089	ファイル未選択・サイズ超過・種類不正・行数超過	メッセージを表示するだけで、取込は始めない
+L0090	見出し不備／データ無し／行の検証エラー／商品が存在しない	取込がエラーを返し、画面にメッセージを展開する。変更は確定しない
+L0091	取込中の一般的な例外	取り消しを試みたうえで例外を伝播させる。本機能では握りつぶさない
+L0092	入出力
+L0093	種類	内容
+L0094	入力	取込するCSVファイル、なりすまし対策トークン
+L0095	成功時出力	商品の公開ステータスの更新、取込履歴の記録、完了メッセージ、アップロード画面への戻り。雛形は見出し行のみのCSVファイル
+L0096	失敗時出力	エラーメッセージを伴うアップロード画面への戻り
+L0097	入出力: 永続化
+L0098	操作	契機
+L0099	更新	取込の各行で、商品の公開ステータスを更新する
+L0100	追加	取込がエラーなく完了したときに、取込履歴を1件記録する
+L0101	リニューアル後の仕様
+L0102	表示メッセージ
+L0103	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0104	M03-38-MSG-001	管理画面上部	フィールドグループに追加のフィールドを含んではなりません。 ／ アップロードされたファイルが大きすぎます。小さなファイルで再度アップロードしてください。 ／ CSRFトークンが無効です、再送信してください。	CSV取込を送信したときに、アップロードしたファイルのサイズが上限を超えた、CSRFトークンが無効になった、または送信内容に未対応の項目が含まれるとき	エラーを表示し、商品公開CSV取込画面に遷移する
+L0105	M03-38-MSG-002	管理画面上部	CSVのフォーマットが一致しません	送信内容は有効だが、取込ファイルが選択されていないとき	商品公開CSV登録画面に遷移する
+L0106	M03-38-MSG-003	管理画面上部	%maxRecord% 行を超えるCSVファイルは登録できません。	登録するCSVファイルの行数が上限以上のとき	商品公開CSV登録画面に遷移する
+L0107	M03-38-MSG-004	管理画面上部	CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %d 行目の %s ではデータを取得できません。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の %s の値が異常です。	CSV取込時に、ヘッダーを読み取れない、データ行がない、またはデータ行の列数が不正なとき	エラーを表示し、商品公開CSV取込画面に遷移する
+L0108	M03-38-MSG-005	管理画面上部	登録が完了しました。	商品公開CSVの登録が完了したとき	商品公開CSV登録画面に遷移する
+##### 0204 sheet-20 商品公開CSVフォーマット
+L0109	商品公開CSVフォーマット
+L0110	ドキュメント名商品管理機能
+L0111	セクション—
+L0112	プロジェクト名サイトリニューアル
+L0113	作成者高久
+L0114	作成日2025-06-23
+L0115	更新者—
+L0116	更新日—
+L0117	機能NoM03-38
+L0118	機能名商品公開CSVフォーマット
+L0119	概要—
+L0120	機能について
+L0121	処理概要（★はカスタマイズ項目）
+L0122	M03-38 商品公開CSVフォーマット
+L0123	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0124	または最大値	入力例	備考
+L0125	1	商品ID	〇	数値(整数)	〇		176808
+L0126	2	商品公開ステータス		数値(整数)	〇		1	0: 非公開 1:公開 項目名変更
+L0127	3	支店の商品公開ステータス		数値(整数)	〇		1	0: 非公開 1:公開 新規項目追加
+L0128	カスタマイズ説明
+L0129	概要
+L0130	商品情報の公開フラグの変更をおこなう
+L0131	機能仕様機能について
+L0132	現行機能をベースに下記のカスタマイズを行う
+L0133	商品公開ステータスを2種類に変更
+L0134	・商品公開ステータスを「全体」と「支店のみ」の2種類へ分離
+L0135	機能仕様処理概要（★はカスタマイズ項目）
+L0136	★商品公開ステータスの項目追加・変更
+L0137	・識別ID 2:「公開ステータス(ID)」から「商品公開ステータス」へ名称変更、選択項目は「非公開」「公開」の2種類
+L0138	※当機能は「商品公開ステータス」区分の一つである「2 - 廃止」の変更できないため、選択項目に含めていません。
+L0139	・識別ID 3:「支店の商品公開ステータス」を追加。選択項目は「公開」「非公開」の2種類
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M03-33/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M03-35/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M03-40/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0204 sheet-50 セール用高額商品価格変更CSVアップロード
+L0001	セール用高額商品価格変更CSVアップロード
+L0002	ドキュメント名商品管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-06-16
+L0007	更新者堀部
+L0008	更新日2025-09-16
+L0009	機能NoM03-33
+L0010	機能名セール用高額商品価格変更CSV登録
+L0011	概要高額商品のセール用の価格変更をCSVにて一括で更新する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	2
+L0015	1
+L0016	3
+L0017	4
+L0018	6
+L0019	5
+L0020	7
+L0021	セール用高額商品価格変更CSVアップロード / C8 / image 1
+L0022	カスタマイズ説明
+L0023	概要
+L0024	高額商品のセール用の価格変更をCSVにて一括で更新する
+L0025	機能
+L0026	現行機能をベースに下記カスタマイズ
+L0027	価格登録に関して
+L0028	・価格の登録に関してセール前の価格保持（基準価格）を考慮した登録処理とする
+L0029	スマレジ連携について
+L0030	・スマレジ連携フラグの項目を追加
+L0031	・商品スマレジ連携.xlsxを参照のこと
+L0032	備考
+L0033	セール前の価格保持（基準価格）について、要件整理中は下記の制御にて検討していたが基本設計にて仕様確定とする
+L0034	・セールフラグ有効の商品規格の価格を変更した場合は、販売価格を変更できる
+L0035	・セールフラグ無効の商品規格の価格を変更した場合は、販売価格は変更できない
+L0036	機能仕様処理概要（★はカスタマイズ項目）
+L0037	スマレジ連携について
+L0038	★識別ID:3 「高額商品価格変更CSVファイルフォーマット」
+L0039	・項目「スマレジ連携フラグ」を追加
+L0040	・商品スマレジ連携.xlsxを参照のこと
+L0041	セール前の価格保持（基準価格）について
+L0042	★対象の商品コードから当該の商品データを検索。CSVに設定されている「セールフラグ」と、
+L0043	現在登録済の商品に設定されている「セールフラグ」を突き合わせて処理を切り替える
+L0044	・現在登録済の商品に設定されているセールフラグが「無効(0)」
+L0045	・CSVに設定されているセールフラグが「有効(1)」の場合、
+L0046	・通常商品 → セール商品 へ切替として処理する
+L0047	・セールフラグを「無効(0)」→「有効(1)」に切り替える
+L0048	・販売価格を、CSVに設定されている販売価格に更新する
+L0049	・基準価格は更新しない、現在登録済の基準価格のまま
+L0050	・買取価格を、CSVに設定されている買取価格に更新する
+L0051	・現在登録済の商品に設定されているセールフラグが「有効(1)」
+L0052	・CSVに設定されているセールフラグが「有効(1)」の場合、
+L0053	・セール中商品の販売価格、買取価格変更として処理する
+L0054	・基準価格は更新しない、現在登録済の基準価格のまま
+L0055	・販売価格を、CSVに設定されている販売価格に更新する
+L0056	・買取価格を、CSVに設定されている買取価格に更新する
+L0057	・セールフラグは「有効(1)」のまま
+L0058	・現在登録済の商品に設定されているセールフラグが「有効(1)」
+L0059	・CSVに設定されているセールフラグが「無効(0)」の場合、
+L0060	・セール商品 → 通常商品 へ切替として処理する
+L0061	・セールフラグを「有効(1)」→「無効(0)」に切り替える
+L0062	・販売価格を、現在登録済の基準価格からコピーする
+L0063	・買取価格を、CSVに設定されている買取価格に更新する
+L0064	・CSVに設定されている販売価格は無視する
+L0065	・CSVに販売価格、買取価格が設定されている場合は、CSVの価格は反映されていない旨(アラート)を画面上に表示する
+L0066	・現在登録済の商品に設定されているセールフラグが「無効(0)」
+L0067	・CSVに設定されているセールフラグが「無効(0)」の場合、
+L0068	・通常商品の販売価格、買取価格は変更できない
+L0069	・基準価格は更新しない、現在登録済の基準価格のまま
+L0070	・販売価格は更新しない、現在登録済の販売価格のまま
+L0071	・買取価格を、CSVに設定されている買取価格に更新する
+L0072	・セールフラグは「無効(0)」のまま
+L0073	・通常商品の販売価格、買取価格は変更できない旨(アラート)を画面上に表示する
+L0074	・当該の商品データが見つからない場合は、エラーを返す(現行の処理を踏襲する)
+L0075	識別ID	ラベル	画面部品の種類	入力チェック	画面部品の説明
+L0076	1	ファイルを選択	ボタン	-	ボタン押下で、OS標準のファイル選択ウィンドウを表示
+L0077	2	CSVファイルの
+L0078	アップロード	ボタン	-	CSVファイルのアップロードと入力チェックを実施。
+L0079	3	セール用高額商品価格変更CSVファイルフォーマット	テーブル	-	登録/更新に使用するCSVのファイルをーマットをテーブルで表現
+L0080	※CSVの項目はシート「セール用高額商品価格変更CSV」を参照
+L0081	4	雛形ファイルダウンロード	ボタン	-	ボタン押下で、登録CSVの雛形がダウンロードされる
+L0082	5	件数	単一選択	-	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0083	6	該当レコード表示	-	-	インポート履歴データを出力、インポート日時の降順
+L0084	7	ページ遷移リンク	リンク	-	選択したページへ遷移する
+L0085	Source:
+L0086	functions/pf-eccube3/m03-33_admin_product_product_sale_high_price_csv_import.md
+L0087	現行仕様
+L0088	M03-33 セール用高額商品価格変更CSV登録 / 商品管理 — セール用高額商品価格変更CSV登録
+L0089	業務ロジック
+L0090	受け付けるファイル
+L0091	ファイルが選ばれていない、ファイルの大きさが上限を超える、ファイルの種類がCSV・TSV・テキスト・表計算のいずれでもない、のいずれかに当たるときは取込を行わず、同じ画面を再表示する。
+L0092	ファイルの行数が5010行以上のときは、1行も取り込まずに同じ画面を再表示する。行数は、取込ファイル全文の改行のうち、二重引用符の内側にある改行を除いて数える。
+L0093	拡張子が tsv のファイルはタブ区切り、それ以外はカンマ区切りとして読む。文字コードがUTF-8以外のファイルはUTF-8として読み直す。行頭・行中のゼロ幅空白は読み捨てる。
+L0094	1行目をヘッダ行として扱い、ヘッダ行が無いとき、2行目以降にデータ行が無いときは1行も取り込まない。
+L0095	取込の中止と取り消し
+L0096	行の不備を1件でも見つけた時点で取込を打ち切り、それより前の行で更新した内容もすべて取り消す。打ち切った行より後の行は読まない。部分的に取り込まれた状態は残らない。
+L0097	行の不備として扱うのは次のとき。
+L0098	行の列数がフォーマットの列数と一致しない。
+L0099	フォーマットにある列が行に見つからない。
+L0100	必須の列が空、または形式が合わない。
+L0101	指定したタグが存在しない。
+L0102	買取価格が販売価格を上回る。
+L0103	対象の商品規格が見つからない。
+L0104	行の不備を見つけたときは、完了のメッセージを出さず、取込履歴にも残さない。取込の途中で処理が続けられなくなったときも、それまでの更新をすべて取り消す。
+L0105	取込中は、同じ行を他の処理が押さえているときの待ち時間を5秒とする。
+L0106	5秒待っても押さえが外れないときは、取込を継続せずに中止し、それまでの更新をすべて取り消す。この中止では完了のメッセージを出さず、取込履歴にも残さない。
+L0107	更新の対象となる商品規格
+L0108	対象は、行の商品コードに一致し、高額商品コードを持つ商品規格1件とする。削除済みの商品・商品規格は対象にしない。
+L0109	更新する項目
+L0110	対象の商品規格では、価格とセールフラグのほかに、帯URLと更新日時が書き換わる。これ以外の項目はこの取込では変わらない。
+L0111	帯URLの列が空の行では、対象規格の帯URLを未設定にする。
+L0112	商品タグの更新
+L0113	行ごとに、その商品に登録されているタグをすべて削除したうえで、行のタグ(ID)列に並んだIDで登録し直す。タグは商品単位で持つため、この入れ替えは規格の別によらず、その商品全体に及ぶ。
+L0114	価格履歴の記録
+L0115	規格の販売価格・買取価格のいずれかが更新前と変わったときだけ、その規格の価格履歴を1件残す。どちらも変わらない行では残さない。
+L0116	履歴には、変わった側の価格だけを更新前と更新後の組で記録する。あわせて操作した担当者を記録する。
+L0117	支店システムへの通知と取込履歴
+L0118	取込が成功したときだけ、取り込んだ商品を支店システムへ通知する。通知は取り込んだ商品から重複を除いた一覧で1回行う。
+L0119	支店システムへの通知に失敗しても取込は成功のままとし、通知できなかった内容を連携エラーとして残す。残した内容は再連携の対象になる。
+L0120	取込が成功したときだけ、セール用高額商品価格変更として、アップロードしたファイルの名前と操作した担当者を取込履歴に残す。
+L0121	入出力
+L0122	種類	内容
+L0123	入力	CSVまたはTSVのファイル1つと、画面が発行した照合値。
+L0124	成功時出力	対象規格の販売価格・買取価格・セールフラグ・帯URLの更新、商品タグの入れ替え、価格履歴の追加、支店システムへの通知、取込履歴への記録、完了メッセージを付けた同じ画面。
+L0125	失敗時出力	更新はすべて取り消され、エラーの一覧を付けた同じ画面。取込履歴は増えない。
+L0126	リニューアル後の仕様
+L0127	表示メッセージ
+L0128	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0129	M03-33-MSG-001	管理画面上部	アップロードされたファイルが大きすぎます。小さなファイルで再度アップロードしてください。 ／ CSRFトークンが無効です、再送信してください。 ／ フィールドグループに追加のフィールドを含んではなりません。	CSV取込を送信したときに、アップロードしたファイルのサイズが上限を超えた、CSRFトークンが無効になった、または送信内容に未対応の項目が含まれるとき	取込を中止し、セール用高額商品価格変更CSVアップロード画面に遷移する
+L0130	M03-33-MSG-002	管理画面上部	CSVのフォーマットが一致しません	フォームが有効であるにもかかわらず、取込ファイルが指定されていないとき	管理画面_商品管理_セール用高額商品価格変更CSV登録画面に遷移する
+L0131	M03-33-MSG-003	管理画面上部	%maxRecord% 行を超えるCSVファイルは登録できません。	CSVの行数が登録可能な上限以上のとき	管理画面_商品管理_セール用高額商品価格変更CSV登録画面に遷移する
+L0132	M03-33-MSG-006	管理画面上部	登録が完了しました。	CSVの登録処理がエラーなく完了したとき	管理画面_商品管理_セール用高額商品価格変更CSV登録画面に遷移する
+L0133	M03-33-MSG-004	管理画面上部	%d行目: セール外のため、買取価格および販売価格はデータベースにある基準価格で更新してます。 ／ %d行目: 通常商品のため、買取価格はCSVの値で更新しました。	セール中の商品をセール外（セールフラグ0）として、販売価格を入力したCSVをアップロードしたとき	対象商品の販売価格を登録済みの基準価格にしてセール外へ更新し、CSVアップロード画面へ戻る
+L0134	M03-33-MSG-005	管理画面上部	CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の %s の値が異常です。 ／ %d 行目の %s ではデータを取得できません。 ／ %d 行目の %s は0以上の数値を設定してください。 ／ %d 行目の %s は %d桁以内の数値 を設定してください。 ／ %s : %s がマスターから取得できません。 %d 行目のデータを確認してください。 ／ %d 行目の商品コードの値 %s は重複して登録されてるため更新できません。	CSV取込でフォーマット不一致・データ不足・値不正があるとき	CSV登録画面に留まる
+##### 0204 sheet-51 セール用高額商品価格変更CSVフォーマット
+L0135	セール用高額商品価格変更CSVフォーマット
+L0136	ドキュメント名商品管理機能
+L0137	セクション—
+L0138	プロジェクト名サイトリニューアル
+L0139	作成者城下
+L0140	作成日2025-06-16
+L0141	更新者堀部
+L0142	更新日2025-09-12
+L0143	機能NoM03-33
+L0144	機能名セール用高額商品価格変更CSVフォーマット
+L0145	概要—
+L0146	処理概要（★はカスタマイズ項目）
+L0147	M03-33 セール用高額商品価格変更CSV
+L0148	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0149	または最大値	入力例	備考
+L0150	1	商品コード	◯	文字型	◯	999999999	PRODUCT-001	更新対象の商品コードを指定
+L0151	2	販売価格		数値(整数)	◯	999999999	1000
+L0152	3	セールフラグ		数値(整数)	◯	1	0	※カスタマイズ対応、必須項目に変更
+L0153	0: セールではない
+L0154	1: セールである
+L0155	指定が無い場合は エラー
+L0156	4	帯URL		文字型		128	https://www.hareruyamtg.com/
+L0157	5	タグ(ID)		文字型		-	1,2,3	タグ登録ID【数値(整数)】を指定/カンマ区切りで複数指定可能
+L0158	カスタマイズ説明
+L0159	概要
+L0160	高額商品のセール用の価格変更をCSVにて一括で更新する
+L0161	機能
+L0162	現行機能をベースに下記カスタマイズ
+L0163	価格登録に関して
+L0164	・価格の登録に関してセール前の価格保持（基準価格）を考慮した登録処理とする
+L0165	スマレジ連携について
+L0166	・スマレジ連携フラグの項目を追加
+L0167	・商品スマレジ連携.xlsxを参照のこと
+L0168	備考
+L0169	セール前の価格保持（基準価格）について、要件整理中は下記の制御にて検討していたが基本設計にて仕様確定とする
+L0170	・CSV取り込み項目である”販売価格”を基準価格に変更する
+L0171	・セールフラグ有効の商品規格の価格を変更した場合は、販売価格を変更できる
+L0172	・セールフラグ無効の商品規格の価格を変更した場合は、販売価格は変更できない
+L0173	機能仕様処理概要（★はカスタマイズ項目）
+L0174	スマレジ連携について
+L0175	★識別ID:7 「スマレジ連携フラグ」を追加
+L0176	・商品スマレジ連携.xlsxを参照のこと
+L0177	セール前の価格保持（基準価格）について
+L0178	★対象の商品コードから当該の商品データを検索。CSVに設定されている「セールフラグ」と、
+L0179	現在登録済の商品に設定されている「セールフラグ」を突き合わせて処理を切り替える
+L0180	・現在登録済の商品に設定されているセールフラグが「無効(0)」
+L0181	・CSVに設定されているセールフラグが「有効(1)」の場合、
+L0182	・通常商品 → セール商品 へ切替として処理する
+L0183	・セールフラグを「無効(0)」→「有効(1)」に切り替える
+L0184	・販売価格を、CSVに設定されている販売価格に更新する
+L0185	・基準価格は更新しない、現在登録済の基準価格のまま
+L0186	・買取価格を、CSVに設定されている買取価格に更新する
+L0187	・現在登録済の商品に設定されているセールフラグが「有効(1)」
+L0188	・CSVに設定されているセールフラグが「有効(1)」の場合、
+L0189	・セール中商品の販売価格、買取価格変更として処理する
+L0190	・基準価格は更新しない、現在登録済の基準価格のまま
+L0191	・販売価格を、CSVに設定されている販売価格に更新する
+L0192	・買取価格を、CSVに設定されている買取価格に更新する
+L0193	・セールフラグは「有効(1)」のまま
+L0194	・現在登録済の商品に設定されているセールフラグが「有効(1)」
+L0195	・CSVに設定されているセールフラグが「無効(0)」の場合、
+L0196	・セール商品 → 通常商品 へ切替として処理する
+L0197	・セールフラグを「有効(1)」→「無効(0)」に切り替える
+L0198	・販売価格を、現在登録済の基準価格からコピーする
+L0199	・CSVに設定されている販売価格は無視する
+L0200	・買取価格を、CSVに設定されている買取価格に更新する
+L0201	・CSVに販売価格が設定されている場合は、CSVの価格は反映されていない旨(アラート)を画面上に表示する
+L0202	・現在登録済の商品に設定されているセールフラグが「無効(0)」
+L0203	・CSVに設定されているセールフラグが「無効(0)」の場合、
+L0204	・通常商品の販売価格、買取価格は変更できない
+L0205	・基準価格は更新しない、現在登録済の基準価格のまま
+L0206	・販売価格は更新しない、現在登録済の販売価格のまま
+L0207	・買取価格を、CSVに設定されている買取価格に更新する
+L0208	・セールフラグは「無効(0)」のまま
+L0209	・通常商品の販売価格、買取価格は変更できない旨(アラート)を画面上に表示する
+L0210	・当該の商品データが見つからない場合は、エラーを返す(現行の処理を踏襲する)
+
+ succeeded in 0ms:
+##### 0204 sheet-52 部門更新CSV登録
+L0001	部門更新CSV登録
+L0002	ドキュメント名商品管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者大澤
+L0006	作成日2025-08-03
+L0007	更新者堀部
+L0008	更新日2025-09-16
+L0009	機能NoM03-35
+L0010	機能名部門更新CSV登録
+L0011	概要商品の部門更新をCSVで行える
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理概要
+L0014	レイアウト図
+L0015	2
+L0016	1
+L0017	3
+L0018	4
+L0019	6
+L0020	7
+L0021	8
+L0022	5
+L0023	9
+L0024	画像レイヤー（3枚）: 部門更新CSV登録 / B7 / image 1 + 部門更新CSV登録 / B28 / image 2 + 部門更新CSV登録 / AL18 / image 3
+L0025	カスタマイズ説明
+L0026	機能仕様処理概要（★はカスタマイズ項目）
+L0027	機能仕様処理概要
+L0028	・レコード数上限チェックを実施。5010件以上はエラーとする。
+L0029	・商品コードで商品規格の部門IDを更新する。
+L0030	識別ID	ラベル	画面部品の種類	必須	入力チェック	画面部品の説明
+L0031	1	ファイルを選択	ボタン	-	-	ボタン押下で、OS標準のファイル選択ウィンドウを表示
+L0032	2	CSVファイルの
+L0033	アップロード	ボタン	-	-	CSVファイルのアップロードと入力チェックを実施
+L0034	3	部門更新CSVファイルフォーマット	テーブル	-	-	"登録/更新に使用するCSVのファイルをーマットをテーブルで表現
+L0035	※CSVの項目はシート「部門更新CSVフォーマット」を参照"
+L0036	4	雛形ファイルダウンロード	ボタン	-	-	雛形ファイルをダウンロードする
+L0037	5	件数	単一選択	-	-	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0038	6	ファイル名			-
+L0039	7	アップロード日時	-	-	-
+L0040	8	作業者	-	-	-
+L0041	9	ページング	リンク	-	-	選択したページへ遷移する
+L0042	Source:
+L0043	functions/pf-eccube3/m03-35_admin_product_product_section_csv_import.md
+L0044	現行仕様
+L0045	M03-35 部門更新CSV登録 / 商品管理 — 部門更新CSV登録
+L0046	業務ロジック
+L0047	アップロード画面の表示
+L0048	部門更新の取込履歴だけを、新しいものから順に並べて表示する。作業者には取込を実行した管理者の氏名を表示し、その管理者が削除済みであっても氏名を表示する。
+L0049	雛形の出力
+L0050	見出し行だけを持つCSVを出力する。ファイル名は product_section_update.csv とする。
+L0051	取込の判定順序
+L0052	順序	判定	結果
+L0053	1	ファイルを選択していないとき、ファイルの種別がテキスト・CSV・タブ区切り・表計算のいずれでもないとき、またはファイルの大きさが上限（設定値。配布時の既定は5メガバイト）を超えるとき	エラーを表示してアップロード画面へ戻り、取込を開始しない
+L0054	2	見出し行が読めないとき、または2行目以降のデータ行が無いとき	エラーを表示し、取込を行わない
+L0055	3	データ行の列数が2でないとき	全体を中止する
+L0056	4	見出しに商品コード・部門コードの列が無いとき、または商品コードが空のとき	全体を中止する
+L0057	5	削除されていない商品の規格に、商品コードが一致するものが無いとき	商品コードでデータを取得できない旨のエラーを積み、全体を中止する
+L0058	6	部門コードに一致する部門が存在しないとき	部門コードでデータを取得できない旨のエラーを積み、全体を中止する
+L0059	7	上記のいずれにも該当しないとき	商品コードが一致するすべての規格の部門を更新する
+L0060	ファイルの種別は、アップロード時に送られた種別が text/plain・text/csv・text/tab-separated-values・application/vnd.ms-excel のいずれかであるかで判定する。拡張子では判定しない。
+L0061	全体を中止したときは、それまでに読んだ行の更新も含めて何も反映しない。同一のCSV内に同じ商品コードが複数行あるときは、最後の行の部門で確定する。
+L0062	入出力
+L0063	入出力: 取り込むファイルの読み取り
+L0064	拡張子が tsv のファイルはタブ区切りとして読み、それ以外は設定した区切り文字（配布時の既定はカンマ）で読む。文字コードがUTF-8以外のファイルは変換して読み取り、ファイル全体から幅の無い空白を取り除く。
+L0065	application/vnd.ms-excel の種別で受け付けたファイルも、同じ規則でテキストとして区切って読む。
+L0066	入出力: 永続化
+L0067	操作	契機
+L0068	追加	エラーなく取込を終えたとき。取込履歴を1件（種別は部門更新、ファイル名はアップロードしたファイルの名称、実行した利用者）
+L0069	リニューアル後の仕様
+L0070	表示メッセージ
+L0071	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0072	M03-35-MSG-001	管理画面上部	CSRFトークンが無効です、再送信してください。	CSV取込時にCSRFトークンが無効なとき	部門更新CSV取込画面に遷移する
+L0073	M03-35-MSG-002	管理画面上部	CSVのフォーマットが一致しません	送信内容は妥当だが、ファイルを選択せずにCSV取込を実行したとき	エラーを表示し、部門更新CSV登録画面に遷移する
+L0074	M03-35-MSG-003	管理画面上部	%maxRecord% 行を超えるCSVファイルは登録できません。	上限を超える行数のCSVファイルを登録したとき	エラーを表示し、部門更新CSV登録画面に遷移する
+L0075	M03-35-MSG-004	管理画面上部	CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %d 行目の %s ではデータを取得できません。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %s : %s がマスターから取得できません。 %d 行目のデータを確認してください。	CSV取込時にヘッダーがない、データ行がない、またはデータ行の列数が不正なとき	部門更新CSV取込画面に遷移する
+L0076	M03-35-MSG-005	管理画面上部	登録が完了しました。	CSVの登録がエラーなく完了したとき	登録完了を表示し、部門更新CSV登録画面に遷移する
+##### 0204 sheet-53 部門更新CSVフォーマット
+L0077	部門更新CSVフォーマット
+L0078	ドキュメント名商品管理機能
+L0079	セクション—
+L0080	プロジェクト名サイトリニューアル
+L0081	作成者大澤
+L0082	作成日2025-08-08
+L0083	更新者—
+L0084	更新日—
+L0085	機能NoM03-35
+L0086	機能名部門更新CSVフォーマット
+L0087	概要—
+L0088	M03-35 部門更新CSV登録
+L0089	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0090	または最大値	入力例	備考
+L0091	1	商品コード	◯	文字型	◯	-	1
+L0092	2	部門コード(ID)		数値(整数)	◯	-	1
+L0093	カスタマイズ説明
+L0094	処理概要（★はカスタマイズ項目）
+
+ succeeded in 0ms:
+##### 0204 sheet-56 棚番号更新CSV登録
+L0001	棚番号更新CSV登録
+L0002	ドキュメント名商品管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者大澤
+L0006	作成日2025-08-05
+L0007	更新者堀部
+L0008	更新日2025-09-16
+L0009	機能NoM03-40
+L0010	機能名棚番号更新CSV登録
+L0011	概要商品の棚番号更新をCSVで行える
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理概要
+L0014	レイアウト図
+L0015	9
+L0016	2
+L0017	1
+L0018	3
+L0019	4
+L0020	6
+L0021	7
+L0022	8
+L0023	5
+L0024	画像レイヤー（3枚）: 棚番号更新CSV登録 / E24 / image 1 + 棚番号更新CSV登録 / B7 / image 2 + 棚番号更新CSV登録 / AU19 / image 3
+L0025	カスタマイズ説明
+L0026	機能仕様処理概要（★はカスタマイズ項目）
+L0027	機能仕様処理概要
+L0028	・レコード数上限チェックを実施。110000件以上はエラーとする。
+L0029	・商品IDで商品情報の棚番号を更新する。
+L0030	識別ID	ラベル	画面部品の種類	必須	入力チェック	画面部品の説明
+L0031	1	ファイルを選択	ボタン	-	-	ボタン押下で、OS標準のファイル選択ウィンドウを表示
+L0032	2	CSVファイルの
+L0033	アップロード	ボタン	-	-	CSVファイルのアップロードと入力チェックを実施
+L0034	3	棚番号更新CSVファイルフォーマット	テーブル	-	-	登録/更新に使用するCSVのファイルをーマットをテーブルで表現
+L0035	※CSVの項目はシート「棚番号更新CSVフォーマット」を参照
+L0036	4	雛形ファイルダウンロード	ボタン	-	-	雛形ファイルをダウンロードする
+L0037	5	件数	単一選択	-	-	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0038	6	ファイル名	-	-	-	CSVインポート履歴
+L0039	7	アップロード日時	-	-	-	CSVインポート履歴
+L0040	8	作業者	-	-	-	CSVインポート履歴
+L0041	9	ページング	リンク	-	-	選択したページへ遷移する
+L0042	Source:
+L0043	functions/pf-eccube3/m03-40_admin_product_product_shelf_number_csv_import.md
+L0044	現行仕様
+L0045	M03-40 棚番号更新CSV登録 / 商品管理 — 棚番号更新CSV登録
+L0046	業務ロジック
+L0047	取込履歴の一覧
+L0048	一覧に出すのは棚番号更新CSVの取込履歴だけで、他のCSV取込の履歴は混ざらない。アップロード日時の新しい順に並べる。作業者は、削除済みの管理者であっても氏名を表示する。
+L0049	雛形のダウンロード
+L0050	見出し行だけを1行出力する。先頭に BOM を書き、区切り文字は設定の値（配布既定はカンマ）とする。ファイル名は product_shelf_number.csv とし、ファイルとしてダウンロードさせる。
+L0051	取込ファイルの受け付け
+L0052	取込ファイルの文字コードは自動判定し、UTF-8 でなければ UTF-8 へ変換して読む。改行コードは揃える。拡張子が tsv のときは区切り文字をタブとし、それ以外は設定の区切り文字とする。ゼロ幅スペースと BOM は読む前に取り除く。
+L0053	行数の上限判定に使う行数は、引用符で囲まれた範囲を取り除いたうえでの改行の数とする。値の中に改行を含む行はこの数に加わらない。上限の判定は取込を始める前の1回だけで、取込中に行数で打ち切ることはない。
+L0054	取込の判定順序
+L0055	順序	判定	結果
+L0056	1	なりすまし対策トークンが正しいこと	不正なときはアクセス拒否として取込を始めない
+L0057	2	ファイルが選択されていること、アップロードサイズが上限（設定のメガバイト値。配布既定は5）以内であること、CSVとして扱える種類のファイルであること	失敗時はメッセージを表示するだけで取込を始めない
+L0058	3	行数が上限に達していないこと	達しているときはメッセージを表示し、取込を始めない
+L0059	4	1行目が見出し行として読めること、2行目以降にデータ行があること	見出し形式のエラー、またはデータが無いエラーとして取込を終える
+L0060	5	各データ行の列数が、この機能が定める列の数と一致すること	一致しないときは列数のエラーとして全体を中断する
+L0061	6	各行に見出し名どおりの列が揃っていること、列ごとの必須を満たすこと	満たさない行を見つけた時点で以降の行を処理しない
+L0062	7	商品コードに対応する商品が実在すること。削除された商品・商品規格しか無い行は、存在しない商品として扱う	存在しないときは以降の行を処理しない
+L0063	8	棚番号の値と同じ名称の棚番号が登録済みであること	登録が無いときは以降の行を処理しない
+L0064	9	上記を満たす行の反映	対象の商品規格の棚番号を置き換える
+L0065	検証エラーが1件でもあると、その時点で取込を打ち切り、それまでに反映した行を含めて変更を確定しない。全行が通ったときだけ確定する。
+L0066	同じ商品コードが同一ファイル内に複数行あるときは行ごとに反映するので、最後の行の値が残る。ただし商品コードに一致する商品規格が2件以上あるときは、7の照合が実行時例外となり取込を中止し、1行も確定しない。
+L0067	反映の範囲
+L0068	更新するのは商品規格の棚番号だけで、同じ商品の他の項目は変えない。商品・商品規格の更新日時も変わらない。反映の対象は商品コードが一致する商品規格すべてで、削除済みの商品規格も含む。
+L0069	取込結果
+L0070	エラーが1件でもあるときは、各エラーをアップロード画面に並べて表示する。エラーが無いときは登録完了を表示し、取込履歴へ CSV種別・アップロードしたファイルの元の名称・取込日時・作業者を1件記録する。いずれの場合もアップロード画面へ戻る。
+L0071	エラー時の扱い
+L0072	エラー内容	処理
+L0073	なりすまし対策トークンの不正	アクセス拒否として応答し、取込を始めない
+L0074	ファイル未選択・サイズ超過・種類不正・行数超過	メッセージを表示するだけで、取込は始めない
+L0075	見出し不備／データ行無し	取込がエラーを返す。データは1行も更新しない
+L0076	行の検証エラー／商品が存在しない／棚番号が登録されていない	取込がエラーを返し、画面にメッセージを展開する。変更は確定しない
+L0077	取込中の実行時例外	取り消しを試みたうえで例外を伝播させる。本機能では握りつぶさない
+L0078	入出力
+L0079	種類	内容
+L0080	入力	取り込むファイル（CSVまたはTSV）、なりすまし対策トークン
+L0081	成功時出力	アップロード画面へ戻し、登録完了を表示する。取込履歴を1件登録する。雛形は見出し行のみのファイル
+L0082	失敗時出力	同じ画面へ戻し、エラーの内容を表示する
+L0083	入出力: 永続化
+L0084	操作	契機
+L0085	更新	検証を通った行ごとに、対象の商品規格の棚番号を置き換える
+L0086	追加	エラーが1件も無く取込を終えたとき、取込履歴を1件登録する
+L0087	リニューアル後の仕様
+L0088	表示メッセージ
+L0089	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0090	M03-40-MSG-001	管理画面上部	CSVのフォーマットが一致しません	フォームが有効であるにもかかわらず、import_file が null のとき	管理画面_商品管理_棚番号更新CSV登録画面に遷移する
+L0091	M03-40-MSG-002	管理画面上部	%maxRecord% 行を超えるCSVファイルは登録できません。	上限を超える行数のCSVファイルを登録したとき	管理画面_商品管理_棚番号更新CSV登録画面に遷移する
+L0092	M03-40-MSG-004	管理画面上部	登録が完了しました。	CSVファイルを正常に登録したとき	管理画面_商品管理_棚番号更新CSV登録画面に遷移する
+L0093	M03-40-MSG-003	管理画面上部	CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %d 行目の %s ではデータを取得できません。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の %s の値が異常です。 ／ %d 行目の商品コードの値 %s は重複して登録されてるため更新できません。 ／ %s : %s がマスターから取得できません。 %d 行目のデータを確認してください。	CSVアップロードボタンを押下し、CSVのヘッダー形式またはデータ行の列数が不正、もしくはヘッダー以外のデータ行が存在しないとき	エラーフラッシュを設定し、棚番号更新CSVアップロード画面へ遷移する
+##### 0204 sheet-57 棚番号更新CSVフォーマット
+L0094	棚番号更新CSVフォーマット
+L0095	ドキュメント名商品管理機能
+L0096	セクション—
+L0097	プロジェクト名サイトリニューアル
+L0098	作成者大澤
+L0099	作成日2025-08-08
+L0100	更新者—
+L0101	更新日—
+L0102	機能NoM03-40
+L0103	機能名棚番号更新CSVフォーマット
+L0104	概要—
+L0105	M03-40 棚番号更新CSV登録
+L0106	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0107	または最大値	入力例	備考
+L0108	1	商品コード	◯	文字型	◯	-	EOE00001JPNM
+L0109	2	棚番号名称	◯	文字型	◯	-	S-002
+L0110	カスタマイズ説明
+L0111	処理概要（★はカスタマイズ項目）
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-33_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M03-33_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+項目ID	扱い	テストID	理由
+CB-M03-33-001	ケース化	IT-M03-33-072	登録済のセールフラグ・CSVのセールフラグ・販売価格の変化・買取価格の変化の値の組をCSVで取り込み、DBで価格履歴の有無と記録内容を確認する
+CB-M03-33-002	ケースにしない		CSVで更新後と異なる買取価格を渡せない。Excelの機能仕様は「買取価格を、CSVに設定されている買取価格に更新する」(L0050,L0056,L0063)とするが、同じExcelのCSVフォーマット(sheet-51)の項目は「1 商品コード／2 販売価格／3 セールフラグ／4 帯URL／5 タグ(ID)」(L0150-L0157)の5つで買取価格の列が無い。どちらもExcel由来で食い違うため決められない。制約に足すべき組: F01=無効&F02=有効&F04=登録済と異なる
+CB-M03-33-003	ケース化	IT-M03-33-074	登録済のセールフラグ・CSVのセールフラグ・販売価格の変化・買取価格の変化の値の組をCSVで取り込み、DBで価格履歴の有無と記録内容を確認する
+CB-M03-33-004	ケースにしない		CSVで更新後と異なる買取価格を渡せない。Excelの機能仕様は「買取価格を、CSVに設定されている買取価格に更新する」(L0050,L0056,L0063)とするが、同じExcelのCSVフォーマット(sheet-51)の項目は「1 商品コード／2 販売価格／3 セールフラグ／4 帯URL／5 タグ(ID)」(L0150-L0157)の5つで買取価格の列が無い。どちらもExcel由来で食い違うため決められない。制約に足すべき組: F01=有効&F02=無効&F04=登録済と異なる
+CB-M03-33-005	ケース化	IT-M03-33-076	登録済のセールフラグ・CSVのセールフラグ・販売価格の変化・買取価格の変化の値の組をCSVで取り込み、DBで価格履歴の有無と記録内容を確認する
+CB-M03-33-006	ケース化	IT-M03-33-077	登録済のセールフラグ・CSVのセールフラグ・販売価格の変化・買取価格の変化の値の組をCSVで取り込み、DBで価格履歴の有無と記録内容を確認する
+CB-M03-33-007	ケースにしない		CSVで更新後と異なる買取価格を渡せない。Excelの機能仕様は「買取価格を、CSVに設定されている買取価格に更新する」(L0050,L0056,L0063)とするが、同じExcelのCSVフォーマット(sheet-51)の項目は「1 商品コード／2 販売価格／3 セールフラグ／4 帯URL／5 タグ(ID)」(L0150-L0157)の5つで買取価格の列が無い。どちらもExcel由来で食い違うため決められない。制約に足すべき組: F01=有効&F02=有効&F04=登録済と異なる
+
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M03-33-072	IT-0366	REQ-0204-sheet-50-R085,REQ-0204-sheet-50-R086		ITA-11	P1	ブラウザ+DB確認	S-M03-33-ADM,S-M03-33-CBPRICE-072	① M03-33試験管理者でログインし、管理者ID 33033が履歴担当者として記録される状態である（S-M03-33-ADM）／② 商品ID 〔商品ID-M0333-072〕・商品規格ID 〔商品規格ID-M0333-072〕（登録時に振られた商品IDと商品規格IDを控えてある）の商品コードHP-M0333-CB072が基準価格1500、販売価格1500、買取価格600、セール無効、価格履歴0件であり、cbm0333-072.csvのデータ行は「HP-M0333-CB072,1400,0,空,空」（CSVのセールフラグ無効(0)、販売価格1400。買取価格の列は無く、登録済みの買取価格600のまま）で、cbm0333-072.csvと同名の取込履歴は0件である（S-M03-33-CBPRICE-072）	1. セール用高額商品価格変更CSVアップロード画面でcbm0333-072.csvを選択して「CSVファイルのアップロード」ボタンを押す／2. DBで商品コードHP-M0333-CB072の規格の基準価格・販売価格・買取価格・セールフラグと、価格履歴を確認する	商品コードHP-M0333-CB072の規格が基準価格1500・販売価格1500・買取価格600・セールフラグ無効のままで、価格履歴が1件も追加されず0件のままであること	0204 セール用高額商品価格変更CSVアップロード / 機能仕様 セール前の価格保持（基準価格）について｜0204 セール用高額商品価格変更CSVアップロード / 現行仕様 業務ロジック 価格履歴の記録	CB-M03-33-001
+IT-M03-33-074	IT-0366	REQ-0204-sheet-50-R085,REQ-0204-sheet-50-R086		ITA-11	P1	ブラウザ+DB確認	S-M03-33-ADM,S-M03-33-CBPRICE-074	① M03-33試験管理者でログインし、管理者ID 33033が履歴担当者として記録される状態である（S-M03-33-ADM）／② 商品ID 〔商品ID-M0333-074〕・商品規格ID 〔商品規格ID-M0333-074〕（登録時に振られた商品IDと商品規格IDを控えてある）の商品コードHP-M0333-CB074が基準価格1500、販売価格1500、買取価格600、セール無効、価格履歴0件であり、cbm0333-074.csvのデータ行は「HP-M0333-CB074,1200,1,空,空」（CSVのセールフラグ有効(1)、販売価格1200。買取価格の列は無く、登録済みの買取価格600のまま）で、cbm0333-074.csvと同名の取込履歴は0件である（S-M03-33-CBPRICE-074）	1. セール用高額商品価格変更CSVアップロード画面でcbm0333-074.csvを選択して「CSVファイルのアップロード」ボタンを押す／2. DBで商品コードHP-M0333-CB074の規格の基準価格・販売価格・買取価格・セールフラグと、価格履歴を確認する	商品コードHP-M0333-CB074の規格がセールフラグ有効・基準価格1500・販売価格1200・買取価格600になり、価格履歴が1件追加されて販売価格の更新前1500・更新後1200と操作した担当者が記録され、買取価格の変更値が記録されないこと	0204 セール用高額商品価格変更CSVアップロード / 機能仕様 セール前の価格保持（基準価格）について｜0204 セール用高額商品価格変更CSVアップロード / 現行仕様 業務ロジック 価格履歴の記録	CB-M03-33-003
+IT-M03-33-076	IT-0366	REQ-0204-sheet-50-R085,REQ-0204-sheet-50-R086		ITA-11	P1	ブラウザ+DB確認	S-M03-33-ADM,S-M03-33-CBPRICE-076	① M03-33試験管理者でログインし、管理者ID 33033が履歴担当者として記録される状態である（S-M03-33-ADM）／② 商品ID 〔商品ID-M0333-076〕・商品規格ID 〔商品規格ID-M0333-076〕（登録時に振られた商品IDと商品規格IDを控えてある）の商品コードHP-M0333-CB076が基準価格1500、販売価格1200、買取価格600、セール有効、価格履歴0件であり、cbm0333-076.csvのデータ行は「HP-M0333-CB076,900,0,空,空」（CSVのセールフラグ無効(0)、販売価格900。買取価格の列は無く、登録済みの買取価格600のまま）で、cbm0333-076.csvと同名の取込履歴は0件である（S-M03-33-CBPRICE-076）	1. セール用高額商品価格変更CSVアップロード画面でcbm0333-076.csvを選択して「CSVファイルのアップロード」ボタンを押す／2. DBで商品コードHP-M0333-CB076の規格の基準価格・販売価格・買取価格・セールフラグと、価格履歴を確認する	商品コードHP-M0333-CB076の規格がセールフラグ無効・基準価格1500・販売価格1500・買取価格600になり、価格履歴が1件追加されて販売価格の更新前1200・更新後1500と操作した担当者が記録され、買取価格の変更値が記録されないこと	0204 セール用高額商品価格変更CSVアップロード / 機能仕様 セール前の価格保持（基準価格）について｜0204 セール用高額商品価格変更CSVアップロード / 現行仕様 業務ロジック 価格履歴の記録	CB-M03-33-005
+IT-M03-33-077	IT-0366	REQ-0204-sheet-50-R085,REQ-0204-sheet-50-R086		ITA-11	P1	ブラウザ+DB確認	S-M03-33-ADM,S-M03-33-CBPRICE-077	① M03-33試験管理者でログインし、管理者ID 33033が履歴担当者として記録される状態である（S-M03-33-ADM）／② 商品ID 〔商品ID-M0333-077〕・商品規格ID 〔商品規格ID-M0333-077〕（登録時に振られた商品IDと商品規格IDを控えてある）の商品コードHP-M0333-CB077が基準価格1600、販売価格1200、買取価格700、セール有効、価格履歴0件であり、cbm0333-077.csvのデータ行は「HP-M0333-CB077,1200,1,空,空」（CSVのセールフラグ有効(1)、販売価格1200。買取価格の列は無く、登録済みの買取価格700のまま）で、cbm0333-077.csvと同名の取込履歴は0件である（S-M03-33-CBPRICE-077）	1. セール用高額商品価格変更CSVアップロード画面でcbm0333-077.csvを選択して「CSVファイルのアップロード」ボタンを押す／2. DBで商品コードHP-M0333-CB077の規格の基準価格・販売価格・買取価格・セールフラグと、価格履歴を確認する	商品コードHP-M0333-CB077の規格が基準価格1600・販売価格1200・買取価格700・セールフラグ有効のままで、価格履歴が1件も追加されず0件のままであること	0204 セール用高額商品価格変更CSVアップロード / 機能仕様 セール前の価格保持（基準価格）について｜0204 セール用高額商品価格変更CSVアップロード / 現行仕様 業務ロジック 価格履歴の記録	CB-M03-33-006
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M03-35/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M03-38/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0204 sheet-52 部門更新CSV登録
+L0001	部門更新CSV登録
+L0002	ドキュメント名商品管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者大澤
+L0006	作成日2025-08-03
+L0007	更新者堀部
+L0008	更新日2025-09-16
+L0009	機能NoM03-35
+L0010	機能名部門更新CSV登録
+L0011	概要商品の部門更新をCSVで行える
+L0012	処理概要（★はカスタマイズ項目）
+L0013	処理概要
+L0014	レイアウト図
+L0015	2
+L0016	1
+L0017	3
+L0018	4
+L0019	6
+L0020	7
+L0021	8
+L0022	5
+L0023	9
+L0024	画像レイヤー（3枚）: 部門更新CSV登録 / B7 / image 1 + 部門更新CSV登録 / B28 / image 2 + 部門更新CSV登録 / AL18 / image 3
+L0025	カスタマイズ説明
+L0026	機能仕様処理概要（★はカスタマイズ項目）
+L0027	機能仕様処理概要
+L0028	・レコード数上限チェックを実施。5010件以上はエラーとする。
+L0029	・商品コードで商品規格の部門IDを更新する。
+L0030	識別ID	ラベル	画面部品の種類	必須	入力チェック	画面部品の説明
+L0031	1	ファイルを選択	ボタン	-	-	ボタン押下で、OS標準のファイル選択ウィンドウを表示
+L0032	2	CSVファイルの
+L0033	アップロード	ボタン	-	-	CSVファイルのアップロードと入力チェックを実施
+L0034	3	部門更新CSVファイルフォーマット	テーブル	-	-	"登録/更新に使用するCSVのファイルをーマットをテーブルで表現
+L0035	※CSVの項目はシート「部門更新CSVフォーマット」を参照"
+L0036	4	雛形ファイルダウンロード	ボタン	-	-	雛形ファイルをダウンロードする
+L0037	5	件数	単一選択	-	-	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0038	6	ファイル名			-
+L0039	7	アップロード日時	-	-	-
+L0040	8	作業者	-	-	-
+L0041	9	ページング	リンク	-	-	選択したページへ遷移する
+L0042	Source:
+L0043	functions/pf-eccube3/m03-35_admin_product_product_section_csv_import.md
+L0044	現行仕様
+L0045	M03-35 部門更新CSV登録 / 商品管理 — 部門更新CSV登録
+L0046	業務ロジック
+L0047	アップロード画面の表示
+L0048	部門更新の取込履歴だけを、新しいものから順に並べて表示する。作業者には取込を実行した管理者の氏名を表示し、その管理者が削除済みであっても氏名を表示する。
+L0049	雛形の出力
+L0050	見出し行だけを持つCSVを出力する。ファイル名は product_section_update.csv とする。
+L0051	取込の判定順序
+L0052	順序	判定	結果
+L0053	1	ファイルを選択していないとき、ファイルの種別がテキスト・CSV・タブ区切り・表計算のいずれでもないとき、またはファイルの大きさが上限（設定値。配布時の既定は5メガバイト）を超えるとき	エラーを表示してアップロード画面へ戻り、取込を開始しない
+L0054	2	見出し行が読めないとき、または2行目以降のデータ行が無いとき	エラーを表示し、取込を行わない
+L0055	3	データ行の列数が2でないとき	全体を中止する
+L0056	4	見出しに商品コード・部門コードの列が無いとき、または商品コードが空のとき	全体を中止する
+L0057	5	削除されていない商品の規格に、商品コードが一致するものが無いとき	商品コードでデータを取得できない旨のエラーを積み、全体を中止する
+L0058	6	部門コードに一致する部門が存在しないとき	部門コードでデータを取得できない旨のエラーを積み、全体を中止する
+L0059	7	上記のいずれにも該当しないとき	商品コードが一致するすべての規格の部門を更新する
+L0060	ファイルの種別は、アップロード時に送られた種別が text/plain・text/csv・text/tab-separated-values・application/vnd.ms-excel のいずれかであるかで判定する。拡張子では判定しない。
+L0061	全体を中止したときは、それまでに読んだ行の更新も含めて何も反映しない。同一のCSV内に同じ商品コードが複数行あるときは、最後の行の部門で確定する。
+L0062	入出力
+L0063	入出力: 取り込むファイルの読み取り
+L0064	拡張子が tsv のファイルはタブ区切りとして読み、それ以外は設定した区切り文字（配布時の既定はカンマ）で読む。文字コードがUTF-8以外のファイルは変換して読み取り、ファイル全体から幅の無い空白を取り除く。
+L0065	application/vnd.ms-excel の種別で受け付けたファイルも、同じ規則でテキストとして区切って読む。
+L0066	入出力: 永続化
+L0067	操作	契機
+L0068	追加	エラーなく取込を終えたとき。取込履歴を1件（種別は部門更新、ファイル名はアップロードしたファイルの名称、実行した利用者）
+L0069	リニューアル後の仕様
+L0070	表示メッセージ
+L0071	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0072	M03-35-MSG-001	管理画面上部	CSRFトークンが無効です、再送信してください。	CSV取込時にCSRFトークンが無効なとき	部門更新CSV取込画面に遷移する
+L0073	M03-35-MSG-002	管理画面上部	CSVのフォーマットが一致しません	送信内容は妥当だが、ファイルを選択せずにCSV取込を実行したとき	エラーを表示し、部門更新CSV登録画面に遷移する
+L0074	M03-35-MSG-003	管理画面上部	%maxRecord% 行を超えるCSVファイルは登録できません。	上限を超える行数のCSVファイルを登録したとき	エラーを表示し、部門更新CSV登録画面に遷移する
+L0075	M03-35-MSG-004	管理画面上部	CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %d 行目の %s ではデータを取得できません。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %s : %s がマスターから取得できません。 %d 行目のデータを確認してください。	CSV取込時にヘッダーがない、データ行がない、またはデータ行の列数が不正なとき	部門更新CSV取込画面に遷移する
+L0076	M03-35-MSG-005	管理画面上部	登録が完了しました。	CSVの登録がエラーなく完了したとき	登録完了を表示し、部門更新CSV登録画面に遷移する
+##### 0204 sheet-53 部門更新CSVフォーマット
+L0077	部門更新CSVフォーマット
+L0078	ドキュメント名商品管理機能
+L0079	セクション—
+L0080	プロジェクト名サイトリニューアル
+L0081	作成者大澤
+L0082	作成日2025-08-08
+L0083	更新者—
+L0084	更新日—
+L0085	機能NoM03-35
+L0086	機能名部門更新CSVフォーマット
+L0087	概要—
+L0088	M03-35 部門更新CSV登録
+L0089	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0090	または最大値	入力例	備考
+L0091	1	商品コード	◯	文字型	◯	-	1
+L0092	2	部門コード(ID)		数値(整数)	◯	-	1
+L0093	カスタマイズ説明
+L0094	処理概要（★はカスタマイズ項目）
+
+ succeeded in 0ms:
+##### 0204 sheet-19 商品公開CSV登録
+L0001	商品公開CSV登録
+L0002	ドキュメント名商品管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者高久
+L0006	作成日2025-06-04
+L0007	更新者堀部
+L0008	更新日2025-09-16
+L0009	機能NoM03-38
+L0010	機能名商品公開CSV登録
+L0011	概要商品の公開ステータスをCSVで一括更新できる
+L0012	処理概要（★はカスタマイズ項目）
+L0013	・既存踏襲処理概要
+L0014	レイアウト図
+L0015	1
+L0016	2
+L0017	3
+L0018	4
+L0019	5
+L0020	6
+L0021	7
+L0022	8
+L0023	商品公開CSV登録 / H7 / image 1
+L0024	カスタマイズ説明
+L0025	カスタマイズ要件
+L0026	・商品公開ステータス更新について。新規登録時の処理はしない(画面設計では「新規登録時は入力しないと書いてあるが)
+L0027	設計で追加した仕様
+L0028	・CSVインポート履歴のページング化
+L0029	ページ表示高速化のため
+L0030	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0031	機能仕様処理概要（★はカスタマイズ項目）
+L0032	・概要
+L0033	商品公開ステータスをCSVで一括更新できる
+L0034	※商品公開CSVのファイルイメージは別シート「商品公開CSVフォーマット」(以下 CSVフォーマット)として記載します。
+L0035	★商品公開ステータス更新について
+L0036	・CSVフォーマット識別ID 2:「公開ステータス(ID)」から「商品公開ステータス」へ名称変更、選択項目は「非公開」「公開」の2種類、支店の商品公開ステータスと商品公開ステータスは値が違うので注意
+L0037	※当機能は「商品公開ステータス」区分の一つである「2 - 廃止」の変更はできません。
+L0038	・CSVフォーマット識別ID 3:「支店の商品公開ステータス」を追加。選択項目は「公開」「非公開」の2種類
+L0039	★CSVインポート履歴のページング化
+L0040	・CSVインポート履歴の膨大化に踏まえ、一定データ数ごとに区切ってページ表示する「ページング」の実装
+L0041	・識別ID 5 ページ表示レコード数 で1ページに表示する該当データ(レコード)数を指定
+L0042	選択後、指定レコード数へ自動的に切り替え
+L0043	・識別ID 8 ページ遷移リンクにより他ページに移動可能
+L0044	機能仕様・既存踏襲処理概要
+L0045	・レコード数上限チェックを実施。5010件以上はエラーとする。
+L0046	・商品IDで商品情報の商品公開ステータスIDを更新する。
+L0047	画面構成
+L0048	識別ID	ラベル	書式・制限	必須	最大文字数
+L0049	または最大値	初期値	画面部品の説明
+L0050	1	CSVファイル選択	ボタン	-	-	-	新規作成した商品公開CSVファイルを選択
+L0051	2	CSVファイルのアップロード	ボタン	-	-	-	押下後、確認モーダルを表示
+L0052	3	雛形ファイルダウンロード	ボタン	-	-	-
+L0053	4	雛形ファイル項目説明	-	-	-	-	各項目の名称および内容を記載
+L0054	5	該当件数	-	-	-	-
+L0055	6	件数	単一選択	-	-	-	選択肢: 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件
+L0056	7	該当レコード表示	-	-	-	-
+L0057	8	ページング	リンク	-	-	-	選択したページへ遷移する
+L0058	Source:
+L0059	functions/pf-eccube3/m03-38_admin_product_product_status_csv.md
+L0060	現行仕様
+L0061	M03-38 商品公開CSV登録 / 商品管理 — 商品公開CSV登録
+L0062	業務ロジック
+L0063	アップロード画面の表示
+L0064	取込履歴の一覧は、CSV種別が商品公開CSVのものだけに絞って表示する。他のCSV取込の履歴は混ざらない。
+L0065	一覧に出すのはファイル名・アップロード日時（分まで）・作業者の3つで、アップロード日時の新しい順に並べる。作業者は、削除済みの管理者であっても氏名を表示する。
+L0066	雛形のダウンロード
+L0067	見出し行だけを1行出力する。画面に並べている項目説明の文言は出力しない。先頭に BOM を書き、区切り文字は設定の値（配布既定はカンマ）とする。ファイル名は product_status.csv とし、ファイルとしてダウンロードさせる。
+L0068	取込ファイルの受け付け
+L0069	取込ファイルの文字コードは自動判定し、UTF-8 でなければ UTF-8 へ変換して読む。拡張子が tsv のときは区切り文字をタブとし、それ以外は設定の区切り文字とする。ゼロ幅スペースと BOM は読む前に取り除く。
+L0070	行数の上限判定に使う行数は、引用符で囲まれた範囲を取り除いたうえでの改行の数とする。値の中に改行を含む行はこの数に加わらない。上限の判定は取込を始める前の1回だけで、取込中に行数で打ち切ることはない。
+L0071	取込の判定順序
+L0072	順序	判定	結果
+L0073	1	なりすまし対策トークンが正しいこと	不正なときはアクセス拒否として取込を始めない
+L0074	2	ファイルが選択されていること、アップロードサイズが上限（設定のメガバイト値）以内であること、CSVとして扱える種類のファイルであること	失敗時はメッセージを表示するだけで取込を始めない
+L0075	3	行数が上限に達していないこと	上限に達しているときはメッセージを表示して中止する
+L0076	4	1行目が見出し行として読めること、2行目以降にデータ行があること	見出し形式のエラー、またはデータが無いエラーとして取込を終える
+L0077	5	各データ行の列数が、この機能が定める列の数と一致すること	一致しないときは列数のエラーとして全体を中断する
+L0078	6	各行に見出し名どおりの列が揃っていること、列ごとの必須と選択肢を満たすこと	満たさない行を見つけた時点で以降の行を処理しない
+L0079	7	商品IDの商品が実在すること。削除済みの商品を指す行は、存在しない商品として扱う	存在しないときは以降の行を処理しない
+L0080	8	上記を満たす行の反映	商品の公開ステータスを更新する
+L0081	検証エラーまたは商品未存在が1件でもあると、その時点で取込を打ち切り、それまでに反映した行を含めて変更を確定しない。全行が通ったときだけ確定する。
+L0082	商品IDと公開ステータスに桁数・文字数の上限は設けない。
+L0083	反映の範囲
+L0084	更新するのは商品の公開ステータスだけで、同じ商品の他の項目は変えない。商品の更新日時も変わらない。
+L0085	取込結果
+L0086	エラーが1件でもあるときは、各エラーを画面に並べて表示する。エラーが無いときは登録完了を表示し、取込履歴へ CSV種別・アップロードしたファイルの元の名称・取込日時・作業者を1件記録する。いずれの場合もアップロード画面へ戻る。
+L0087	エラー時の扱い
+L0088	エラー内容	処理
+L0089	ファイル未選択・サイズ超過・種類不正・行数超過	メッセージを表示するだけで、取込は始めない
+L0090	見出し不備／データ無し／行の検証エラー／商品が存在しない	取込がエラーを返し、画面にメッセージを展開する。変更は確定しない
+L0091	取込中の一般的な例外	取り消しを試みたうえで例外を伝播させる。本機能では握りつぶさない
+L0092	入出力
+L0093	種類	内容
+L0094	入力	取込するCSVファイル、なりすまし対策トークン
+L0095	成功時出力	商品の公開ステータスの更新、取込履歴の記録、完了メッセージ、アップロード画面への戻り。雛形は見出し行のみのCSVファイル
+L0096	失敗時出力	エラーメッセージを伴うアップロード画面への戻り
+L0097	入出力: 永続化
+L0098	操作	契機
+L0099	更新	取込の各行で、商品の公開ステータスを更新する
+L0100	追加	取込がエラーなく完了したときに、取込履歴を1件記録する
+L0101	リニューアル後の仕様
+L0102	表示メッセージ
+L0103	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0104	M03-38-MSG-001	管理画面上部	フィールドグループに追加のフィールドを含んではなりません。 ／ アップロードされたファイルが大きすぎます。小さなファイルで再度アップロードしてください。 ／ CSRFトークンが無効です、再送信してください。	CSV取込を送信したときに、アップロードしたファイルのサイズが上限を超えた、CSRFトークンが無効になった、または送信内容に未対応の項目が含まれるとき	エラーを表示し、商品公開CSV取込画面に遷移する
+L0105	M03-38-MSG-002	管理画面上部	CSVのフォーマットが一致しません	送信内容は有効だが、取込ファイルが選択されていないとき	商品公開CSV登録画面に遷移する
+L0106	M03-38-MSG-003	管理画面上部	%maxRecord% 行を超えるCSVファイルは登録できません。	登録するCSVファイルの行数が上限以上のとき	商品公開CSV登録画面に遷移する
+L0107	M03-38-MSG-004	管理画面上部	CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %d 行目の %s ではデータを取得できません。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の %s の値が異常です。	CSV取込時に、ヘッダーを読み取れない、データ行がない、またはデータ行の列数が不正なとき	エラーを表示し、商品公開CSV取込画面に遷移する
+L0108	M03-38-MSG-005	管理画面上部	登録が完了しました。	商品公開CSVの登録が完了したとき	商品公開CSV登録画面に遷移する
+##### 0204 sheet-20 商品公開CSVフォーマット
+L0109	商品公開CSVフォーマット
+L0110	ドキュメント名商品管理機能
+L0111	セクション—
+L0112	プロジェクト名サイトリニューアル
+L0113	作成者高久
+L0114	作成日2025-06-23
+L0115	更新者—
+L0116	更新日—
+L0117	機能NoM03-38
+L0118	機能名商品公開CSVフォーマット
+L0119	概要—
+L0120	機能について
+L0121	処理概要（★はカスタマイズ項目）
+L0122	M03-38 商品公開CSVフォーマット
+L0123	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0124	または最大値	入力例	備考
+L0125	1	商品ID	〇	数値(整数)	〇		176808
+L0126	2	商品公開ステータス		数値(整数)	〇		1	0: 非公開 1:公開 項目名変更
+L0127	3	支店の商品公開ステータス		数値(整数)	〇		1	0: 非公開 1:公開 新規項目追加
+L0128	カスタマイズ説明
+L0129	概要
+L0130	商品情報の公開フラグの変更をおこなう
+L0131	機能仕様機能について
+L0132	現行機能をベースに下記のカスタマイズを行う
+L0133	商品公開ステータスを2種類に変更
+L0134	・商品公開ステータスを「全体」と「支店のみ」の2種類へ分離
+L0135	機能仕様処理概要（★はカスタマイズ項目）
+L0136	★商品公開ステータスの項目追加・変更
+L0137	・識別ID 2:「公開ステータス(ID)」から「商品公開ステータス」へ名称変更、選択項目は「非公開」「公開」の2種類
+L0138	※当機能は「商品公開ステータス」区分の一つである「2 - 廃止」の変更できないため、選択項目に含めていません。
+L0139	・識別ID 3:「支店の商品公開ステータス」を追加。選択項目は「公開」「非公開」の2種類
+
+exec
+/bin/bash -lc "sed -n '87,212p' integration_test/casegen/combination/units/M03-33/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0086	functions/pf-eccube3/m03-33_admin_product_product_sale_high_price_csv_import.md
+L0087	現行仕様
+L0088	M03-33 セール用高額商品価格変更CSV登録 / 商品管理 — セール用高額商品価格変更CSV登録
+L0089	業務ロジック
+L0090	受け付けるファイル
+L0091	ファイルが選ばれていない、ファイルの大きさが上限を超える、ファイルの種類がCSV・TSV・テキスト・表計算のいずれでもない、のいずれかに当たるときは取込を行わず、同じ画面を再表示する。
+L0092	ファイルの行数が5010行以上のときは、1行も取り込まずに同じ画面を再表示する。行数は、取込ファイル全文の改行のうち、二重引用符の内側にある改行を除いて数える。
+L0093	拡張子が tsv のファイルはタブ区切り、それ以外はカンマ区切りとして読む。文字コードがUTF-8以外のファイルはUTF-8として読み直す。行頭・行中のゼロ幅空白は読み捨てる。
+L0094	1行目をヘッダ行として扱い、ヘッダ行が無いとき、2行目以降にデータ行が無いときは1行も取り込まない。
+L0095	取込の中止と取り消し
+L0096	行の不備を1件でも見つけた時点で取込を打ち切り、それより前の行で更新した内容もすべて取り消す。打ち切った行より後の行は読まない。部分的に取り込まれた状態は残らない。
+L0097	行の不備として扱うのは次のとき。
+L0098	行の列数がフォーマットの列数と一致しない。
+L0099	フォーマットにある列が行に見つからない。
+L0100	必須の列が空、または形式が合わない。
+L0101	指定したタグが存在しない。
+L0102	買取価格が販売価格を上回る。
+L0103	対象の商品規格が見つからない。
+L0104	行の不備を見つけたときは、完了のメッセージを出さず、取込履歴にも残さない。取込の途中で処理が続けられなくなったときも、それまでの更新をすべて取り消す。
+L0105	取込中は、同じ行を他の処理が押さえているときの待ち時間を5秒とする。
+L0106	5秒待っても押さえが外れないときは、取込を継続せずに中止し、それまでの更新をすべて取り消す。この中止では完了のメッセージを出さず、取込履歴にも残さない。
+L0107	更新の対象となる商品規格
+L0108	対象は、行の商品コードに一致し、高額商品コードを持つ商品規格1件とする。削除済みの商品・商品規格は対象にしない。
+L0109	更新する項目
+L0110	対象の商品規格では、価格とセールフラグのほかに、帯URLと更新日時が書き換わる。これ以外の項目はこの取込では変わらない。
+L0111	帯URLの列が空の行では、対象規格の帯URLを未設定にする。
+L0112	商品タグの更新
+L0113	行ごとに、その商品に登録されているタグをすべて削除したうえで、行のタグ(ID)列に並んだIDで登録し直す。タグは商品単位で持つため、この入れ替えは規格の別によらず、その商品全体に及ぶ。
+L0114	価格履歴の記録
+L0115	規格の販売価格・買取価格のいずれかが更新前と変わったときだけ、その規格の価格履歴を1件残す。どちらも変わらない行では残さない。
+L0116	履歴には、変わった側の価格だけを更新前と更新後の組で記録する。あわせて操作した担当者を記録する。
+L0117	支店システムへの通知と取込履歴
+L0118	取込が成功したときだけ、取り込んだ商品を支店システムへ通知する。通知は取り込んだ商品から重複を除いた一覧で1回行う。
+L0119	支店システムへの通知に失敗しても取込は成功のままとし、通知できなかった内容を連携エラーとして残す。残した内容は再連携の対象になる。
+L0120	取込が成功したときだけ、セール用高額商品価格変更として、アップロードしたファイルの名前と操作した担当者を取込履歴に残す。
+L0121	入出力
+L0122	種類	内容
+L0123	入力	CSVまたはTSVのファイル1つと、画面が発行した照合値。
+L0124	成功時出力	対象規格の販売価格・買取価格・セールフラグ・帯URLの更新、商品タグの入れ替え、価格履歴の追加、支店システムへの通知、取込履歴への記録、完了メッセージを付けた同じ画面。
+L0125	失敗時出力	更新はすべて取り消され、エラーの一覧を付けた同じ画面。取込履歴は増えない。
+L0126	リニューアル後の仕様
+L0127	表示メッセージ
+L0128	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0129	M03-33-MSG-001	管理画面上部	アップロードされたファイルが大きすぎます。小さなファイルで再度アップロードしてください。 ／ CSRFトークンが無効です、再送信してください。 ／ フィールドグループに追加のフィールドを含んではなりません。	CSV取込を送信したときに、アップロードしたファイルのサイズが上限を超えた、CSRFトークンが無効になった、または送信内容に未対応の項目が含まれるとき	取込を中止し、セール用高額商品価格変更CSVアップロード画面に遷移する
+L0130	M03-33-MSG-002	管理画面上部	CSVのフォーマットが一致しません	フォームが有効であるにもかかわらず、取込ファイルが指定されていないとき	管理画面_商品管理_セール用高額商品価格変更CSV登録画面に遷移する
+L0131	M03-33-MSG-003	管理画面上部	%maxRecord% 行を超えるCSVファイルは登録できません。	CSVの行数が登録可能な上限以上のとき	管理画面_商品管理_セール用高額商品価格変更CSV登録画面に遷移する
+L0132	M03-33-MSG-006	管理画面上部	登録が完了しました。	CSVの登録処理がエラーなく完了したとき	管理画面_商品管理_セール用高額商品価格変更CSV登録画面に遷移する
+L0133	M03-33-MSG-004	管理画面上部	%d行目: セール外のため、買取価格および販売価格はデータベースにある基準価格で更新してます。 ／ %d行目: 通常商品のため、買取価格はCSVの値で更新しました。	セール中の商品をセール外（セールフラグ0）として、販売価格を入力したCSVをアップロードしたとき	対象商品の販売価格を登録済みの基準価格にしてセール外へ更新し、CSVアップロード画面へ戻る
+L0134	M03-33-MSG-005	管理画面上部	CSVのフォーマットが一致しません。 ／ CSVデータが存在しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の %s の値が異常です。 ／ %d 行目の %s ではデータを取得できません。 ／ %d 行目の %s は0以上の数値を設定してください。 ／ %d 行目の %s は %d桁以内の数値 を設定してください。 ／ %s : %s がマスターから取得できません。 %d 行目のデータを確認してください。 ／ %d 行目の商品コードの値 %s は重複して登録されてるため更新できません。	CSV取込でフォーマット不一致・データ不足・値不正があるとき	CSV登録画面に留まる
+##### 0204 sheet-51 セール用高額商品価格変更CSVフォーマット
+L0135	セール用高額商品価格変更CSVフォーマット
+L0136	ドキュメント名商品管理機能
+L0137	セクション—
+L0138	プロジェクト名サイトリニューアル
+L0139	作成者城下
+L0140	作成日2025-06-16
+L0141	更新者堀部
+L0142	更新日2025-09-12
+L0143	機能NoM03-33
+L0144	機能名セール用高額商品価格変更CSVフォーマット
+L0145	概要—
+L0146	処理概要（★はカスタマイズ項目）
+L0147	M03-33 セール用高額商品価格変更CSV
+L0148	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0149	または最大値	入力例	備考
+L0150	1	商品コード	◯	文字型	◯	999999999	PRODUCT-001	更新対象の商品コードを指定
+L0151	2	販売価格		数値(整数)	◯	999999999	1000
+L0152	3	セールフラグ		数値(整数)	◯	1	0	※カスタマイズ対応、必須項目に変更
+L0153	0: セールではない
+L0154	1: セールである
+L0155	指定が無い場合は エラー
+L0156	4	帯URL		文字型		128	https://www.hareruyamtg.com/
+L0157	5	タグ(ID)		文字型		-	1,2,3	タグ登録ID【数値(整数)】を指定/カンマ区切りで複数指定可能
+L0158	カスタマイズ説明
+L0159	概要
+L0160	高額商品のセール用の価格変更をCSVにて一括で更新する
+L0161	機能
+L0162	現行機能をベースに下記カスタマイズ
+L0163	価格登録に関して
+L0164	・価格の登録に関してセール前の価格保持（基準価格）を考慮した登録処理とする
+L0165	スマレジ連携について
+L0166	・スマレジ連携フラグの項目を追加
+L0167	・商品スマレジ連携.xlsxを参照のこと
+L0168	備考
+L0169	セール前の価格保持（基準価格）について、要件整理中は下記の制御にて検討していたが基本設計にて仕様確定とする
+L0170	・CSV取り込み項目である”販売価格”を基準価格に変更する
+L0171	・セールフラグ有効の商品規格の価格を変更した場合は、販売価格を変更できる
+L0172	・セールフラグ無効の商品規格の価格を変更した場合は、販売価格は変更できない
+L0173	機能仕様処理概要（★はカスタマイズ項目）
+L0174	スマレジ連携について
+L0175	★識別ID:7 「スマレジ連携フラグ」を追加
+L0176	・商品スマレジ連携.xlsxを参照のこと
+L0177	セール前の価格保持（基準価格）について
+L0178	★対象の商品コードから当該の商品データを検索。CSVに設定されている「セールフラグ」と、
+L0179	現在登録済の商品に設定されている「セールフラグ」を突き合わせて処理を切り替える
+L0180	・現在登録済の商品に設定されているセールフラグが「無効(0)」
+L0181	・CSVに設定されているセールフラグが「有効(1)」の場合、
+L0182	・通常商品 → セール商品 へ切替として処理する
+L0183	・セールフラグを「無効(0)」→「有効(1)」に切り替える
+L0184	・販売価格を、CSVに設定されている販売価格に更新する
+L0185	・基準価格は更新しない、現在登録済の基準価格のまま
+L0186	・買取価格を、CSVに設定されている買取価格に更新する
+L0187	・現在登録済の商品に設定されているセールフラグが「有効(1)」
+L0188	・CSVに設定されているセールフラグが「有効(1)」の場合、
+L0189	・セール中商品の販売価格、買取価格変更として処理する
+L0190	・基準価格は更新しない、現在登録済の基準価格のまま
+L0191	・販売価格を、CSVに設定されている販売価格に更新する
+L0192	・買取価格を、CSVに設定されている買取価格に更新する
+L0193	・セールフラグは「有効(1)」のまま
+L0194	・現在登録済の商品に設定されているセールフラグが「有効(1)」
+L0195	・CSVに設定されているセールフラグが「無効(0)」の場合、
+L0196	・セール商品 → 通常商品 へ切替として処理する
+L0197	・セールフラグを「有効(1)」→「無効(0)」に切り替える
+L0198	・販売価格を、現在登録済の基準価格からコピーする
+L0199	・CSVに設定されている販売価格は無視する
+L0200	・買取価格を、CSVに設定されている買取価格に更新する
+L0201	・CSVに販売価格が設定されている場合は、CSVの価格は反映されていない旨(アラート)を画面上に表示する
+L0202	・現在登録済の商品に設定されているセールフラグが「無効(0)」
+L0203	・CSVに設定されているセールフラグが「無効(0)」の場合、
+L0204	・通常商品の販売価格、買取価格は変更できない
+L0205	・基準価格は更新しない、現在登録済の基準価格のまま
+L0206	・販売価格は更新しない、現在登録済の販売価格のまま
+L0207	・買取価格を、CSVに設定されている買取価格に更新する
+L0208	・セールフラグは「無効(0)」のまま
+L0209	・通常商品の販売価格、買取価格は変更できない旨(アラート)を画面上に表示する
+L0210	・当該の商品データが見つからない場合は、エラーを返す(現行の処理を踏襲する)
+
+exec
+/bin/bash -lc "grep -F 'IT-M03-35-001' integration_test/casegen/cases/M03-35_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "grep -F 'IT-M03-38-035' integration_test/casegen/cases/M03-38_test_cases.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-M03-38-035	REQ-0204-sheet-19-R012,REQ-0204-sheet-20-R004,REQ-0204-sheet-20-R005		ITA-05	P2	ブラウザのみ	S-M03-38-L-ADM,S-M03-38-L-ENV,S-M03-38-L-PROD-035,S-M03-38-L-CSV-035	① 新しいブラウザセッションで、ログインID=m0338l_admin、パスワード=Passw0rd!M0338L の稼働中かつ商品管理を操作できる管理者で管理画面にログインしている（S-M03-38-L-ADM）／② 本店を/ja/、TC大阪支店を/ja/osaka/で利用可能にし、ブラウザのCookieとJavaScriptを有効にしている（S-M03-38-L-ENV）／③ 商品ID 〔商品ID-M0338-035〕「CSV連携公開確認商品-L002M0338n035」（未廃止・日本語・NM価格1,500円・在庫2）を本店非公開（商品公開ステータス=非公開）・TC大阪支店非公開（支店の商品公開ステータス=非公開）にしている（登録時に振られた商品IDを控えてある。〔商品ID-M0338-035〕）（S-M03-38-L-PROD-035）／④ 商品公開CSVフォーマットの見出し行（商品ID・商品公開ステータス・支店の商品公開ステータス）と、商品ID 〔商品ID-M0338-035〕 の1行（〔商品ID-M0338-035〕、商品公開ステータス=1、支店の商品公開ステータス=1）だけのCSVファイル「公開確認-L002.csv」を用意している（S-M03-38-L-CSV-035）	1. 商品管理の商品公開CSV登録画面で「CSVファイル選択」からCSVを選び、「CSVファイルのアップロード」を押して確認モーダルを確定する／2. 画面上部に「登録が完了しました。」と表示されることを確かめる／3. TC大阪支店 /ja/osaka/ の商品詳細画面で商品ID 〔商品ID-M0338-035〕 を指定して開く	「CSV連携公開確認商品-L002M0338n035」の商品詳細が支店画面に表示されること	上流: 0204 商品公開CSV登録 / 機能仕様 商品公開ステータス更新について、商品公開CSVフォーマット 項目定義 識別ID 2・3｜下流: 0303 商品詳細 / 機能仕様 本店と各支店の表示制御について
+
+ succeeded in 0ms:
+IT-M03-35-001	REQ-0204-sheet-52-R004,REQ-0204-sheet-52-R028,REQ-0204-sheet-53-R003,REQ-0204-sheet-53-R004		ITA-05,ITA-07	P1	ブラウザ+DB確認	S-M03-35-ADM,S-M03-35-SECTIONS,S-M03-35-CSV-CONFIG,S-M03-35-CASE-001	① 商品管理権限を持つM03-35試験管理者でログインしている（S-M03-35-ADM）／② 部門コード31、32、33が存在する（登録時に振られた部門IDを控えてある。部門コード31の部門=〔部門ID-M0335-共有A〕、部門コード32の部門=〔部門ID-M0335-共有B〕、部門コード33の部門=〔部門ID-M0335-共有C〕）（S-M03-35-SECTIONS）／③ ケース開始時にCSV区切り文字をカンマ、ファイルサイズ上限を5MB、受理できるデータ行数の上限を5009件に設定する（S-M03-35-CSV-CONFIG）／④ SEC-A-001-001の2商品規格は部門ID〔部門ID-M0335-共有A〕、SEC-B-001-001の1商品規格は部門ID〔部門ID-M0335-共有B〕で、m0335_normal-001.csvに対応する取込履歴は0件であり、記載内容のCSVを選択できる（S-M03-35-CASE-001）	1. 部門更新CSV登録画面を開く／2. 「m0335_normal-001.csv」を選択してCSVファイルのアップロードボタンを押す／3. DBで商品コードSEC-A-001-001とSEC-B-001-001の商品規格を確認する	商品コードSEC-A-001-001に一致する2件すべての部門IDが〔部門ID-M0335-共有B〕、SEC-B-001-001の部門IDが〔部門ID-M0335-共有A〕に更新されること	0204 部門更新CSV登録 / 機能仕様 処理概要、現行仕様 業務ロジック 取込の判定順序、0204 部門更新CSVフォーマット / 画面項目定義 識別ID 1・2（刷新の「部門コード(ID)」を採用。現行仕様は「部門コード」）
+
+exec
+/bin/bash -lc "grep -R -n -F '本店と各支店の表示制御' integration_test/casegen/combination/units --include=design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/units/F03-02/design.txt:60:L0059	★本店と各支店の表示制御について
+integration_test/casegen/combination/units/F03-02/design.txt:121:L0120	★本店と各支店の表示制御について
+
+exec
+/bin/bash -lc "sed -n '50,72p;115,136p' integration_test/casegen/combination/units/F03-02/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0049	・他のバージョンも見る
+L0050	・他のバージョンも見る欄に記載
+L0051	・このカードはこんなデッキに使われています
+L0052	・このカードはこんなデッキに使われています欄に記載
+L0053	・あなたへのおすすめ
+L0054	・シート「商品リコメンド」を参照
+L0055	・最近チェックした商品
+L0056	・シート「最近チェックした商品」を参照
+L0057	・カテゴリ一覧
+L0058	・シート「カテゴリ一覧」を参照
+L0059	★本店と各支店の表示制御について
+L0060	★本店、各支店に応じた商品公開ステータスを取得し、公開/非公開を制御する
+L0061	★パンくずリストについて
+L0062	★下記のような表示形式とする
+L0063	{ホームアイコン} > {カテゴリ}
+L0064	(例) カード商品の場合: 🏠 > スタンダード > タルキール：龍嵐録 > タルキール：龍嵐録
+L0065	サプライ商品の場合: 🏠 > サプライ・グッズ > スリーブ > KMC
+L0066	🏠マークを押下した際、それぞれ現在見ている店舗のTOP画面に遷移する
+L0067	★パンくずリスト内のカテゴリを押下すると、押下したカテゴリで検索した商品一覧を表示する
+L0068	・(8)カテゴリ一覧は、PC版サイトのみ表示する
+L0069	★支店の商品詳細はnoindexとする
+L0070	★販売制限が日本国内や海外のみになっている商品でも表示は行う
+L0071	※エンハンス対応 HARESEKA-1300 【ユニサーチリリース後残課題】販売制限あり商品が商品一覧上に表示されている
+L0114	・本店や各支店サイト上で本画面に遷移した際、ドメイン及びコンテキストルートを維持し、遷移元の店舗商品が表示または検索対象となるようにする
+L0115	・ドメイン及びコンテキストルートについては商品一覧を参照
+L0116	支店商品の公開と非公開の制御
+L0117	・「M03-02商品登録/編集」機能の商品公開ステータスに応じて、商品を表示、または非表示にする
+L0118	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0119	機能仕様処理概要（★はカスタマイズ項目）
+L0120	★本店と各支店の表示制御について
+L0121	★下記の項目は本店のみ表示し、支店で表示しない
+L0122	・(2-14)入荷通知/通知待ち
+L0123	・(2-16)お気に入りへ追加/解除
+L0124	・(2-17)まとめて入荷通知
+L0125	・(2-22)SNSでシェアする
+L0126	・下記の項目は商品詳細がカードの場合のみ表示し、サプライ・グッズでは表示しない
+L0127	・(2-1)言語切替
+L0128	・(2-7)状態(カードの状態表示のリンク)
+L0129	・(2-8)状態
+L0130	・(2-17)まとめて入荷通知
+L0131	・(2-18)使われているデッキ
+L0132	・(2-19)他のバージョン
+L0133	★カード商品の場合の状態別の表のソート順は、価格降順で表示する ※状態によるソートは不要
+L0134	・(2-2)商品画像の読込中は、ローディングを表示する
+L0135	★(2-22)SNSでシェアするを押下すると、押下したSNSアイコンに応じて商品名やページURL等を共有できる
+
+exec
+/bin/bash -lc "grep -F -e 'S-M03-32-CBSMA-084' -e 'S-M03-32-CBSMA-085' -e 'S-M03-32-CBSMA-086' integration_test/casegen/combination/cases/M03-32_cb_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 111ms:
+S-M03-32-CBSMA-084	商品・商品規格・取込ファイル・スマレジ連携	スマレジ連携フラグの組合せ確認データ(084)	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0332-084〕）／商品規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0332-084〕）／商品コード=M32CB084S／シングルカード／状態=NM／商品・規格とも公開・削除なし／高額商品コード=HPM0332-CB084-A／セールフラグ無効／基準価格250／販売価格250／スマレジ連携フラグ=ON／スマレジ商品IDは連携登録で試験応答が返した値／cb-m0332-084.csv=見出し「商品コード,基準価格」・データ「M32CB084S,250」	IT-M03-32-084専用。商品の種別・規格の状態・基準価格・更新前のスマレジ連携フラグ・連携対象の価格の変更の組での連携フラグ	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M32CB084C」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M32CB084S」・商品名(英)は「M32CB084S」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格250・販売価格250・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M32CB084C」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0332-084〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。「カード指定 >」ボタンを押し、カード検索ポップアップの一覧から任意のカードを1件選んで決定ボタンを押す。続けて商品名(日)に「M32CB084S」、商品名(英)に「M32CB084S」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、割引率に販売割引率に登録済みのものを選び、公開状態は「公開」のまま「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で商品コードに「M32CB084S」、高額商品コードに「HPM0332-CB084-A」、セールフラグはチェックなし、基準価格(円)に「250」、販売価格(円)に250、買取価格(円)に200、スマレジ連携フラグに「連携する」、部門に「ショーケース品」（選択肢に無いときは、先に部門の登録画面で部門「ショーケース品」を登録する）、スマレジ商品コードは空のまま（シングルカードは自動で振られる）、公開状態に「公開」を選んで「商品規格を登録」を押す（セールフラグなしで登録すると、販売価格は入力にかかわらず基準価格と同じ250で保存される）。「連携する」で登録するとスマレジへの登録が非同期で行われるので、非同期処理の待機中・実行中のジョブが0件になるまで待ち、そのあとスマレジAPI呼出記録を全件削除して0件にする。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0332-084〕）。【ファイル】試験者の端末で次の取込ファイルを作り、ブラウザから選択できる場所に置く（文字コード・区切りの指定が無いものはUTF-8・カンマ区切り）: cb-m0332-084.csv=見出し「商品コード,基準価格」・データ「M32CB084S,250」。	ケース専用
+S-M03-32-CBSMA-085	商品・商品規格・取込ファイル・スマレジ連携	スマレジ連携フラグの組合せ確認データ(085)	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0332-085〕）／商品規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0332-085〕）／商品コード=M32CB085S／シングルカード以外のグッズ商品／状態=NM／商品・規格とも公開・削除なし／高額商品コード=HPM0332-CB085-A／セールフラグ無効／基準価格250／販売価格250／スマレジ連携フラグ=ON／スマレジ商品ID=SMR-M0332-CB085-A／cb-m0332-085.csv=見出し「商品コード,基準価格」・データ「M32CB085S,250」	IT-M03-32-085専用。商品の種別・規格の状態・基準価格・更新前のスマレジ連携フラグ・連携対象の価格の変更の組での連携フラグ	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M32CB085C」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M32CB085S」・商品名(英)は「M32CB085S」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格250・販売価格250・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M32CB085C」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0332-085〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で商品コードに「M32CB085S」、高額商品コードに「HPM0332-CB085-A」、セールフラグはチェックなし、基準価格(円)に「250」、販売価格(円)に250、買取価格(円)に200、スマレジ連携フラグに「連携する」、部門にスマレジ側の部門と連携済みの部門を選び、スマレジ商品コードに他の規格と重ならない任意の値（シングルカード以外は自動で振られないため入力が要る）、公開状態に「公開」を選んで「商品規格を登録」を押す（セールフラグなしで登録すると、販売価格は入力にかかわらず基準価格と同じ250で保存される）。「連携する」で登録するとスマレジへの登録が非同期で行われるので、非同期処理の待機中・実行中のジョブが0件になるまで待ち、そのあとスマレジAPI呼出記録を全件削除して0件にする。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0332-085〕）。【DB直接】M32CB085Sのスマレジ商品ID=SMR-M0332-CB085-Aは、画面に入力欄が無く（表示のみ。連携するで登録すると試験応答が返した値が入る）指定できないため、DBへ直接設定する。【ファイル】試験者の端末で次の取込ファイルを作り、ブラウザから選択できる場所に置く（文字コード・区切りの指定が無いものはUTF-8・カンマ区切り）: cb-m0332-085.csv=見出し「商品コード,基準価格」・データ「M32CB085S,250」。	ケース専用
+S-M03-32-CBSMA-086	商品・商品規格・取込ファイル・スマレジ連携	スマレジ連携フラグの組合せ確認データ(086)	商品IDは登録時に画面が振る（控える。以下〔商品ID-M0332-086〕）／商品規格IDは登録時に画面が振る（控える。以下〔商品規格ID-M0332-086〕）／商品コード=M32CB086S／シングルカード以外のグッズ商品／状態=SP／商品・規格とも公開・削除なし／高額商品コード=HPM0332-CB086-A／セールフラグ無効／基準価格1500／販売価格1500／スマレジ連携フラグ=OFF／スマレジ商品ID未設定／cb-m0332-086.csv=見出し「商品コード,基準価格」・データ「M32CB086S,1500」	IT-M03-32-086専用。商品の種別・規格の状態・基準価格・更新前のスマレジ連携フラグ・連携対象の価格の変更の組での連携フラグ	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M32CB086C」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M32CB086S」・商品名(英)は「M32CB086S」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1500・販売価格1500・買取価格200・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに「M32CB086C」を入れて「検索する >」を押し、商品マスター(検索結果)の行の商品IDに表示された番号を控える（〔商品ID-M0332-086〕）。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開く。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧の「新規作成」を押し、商品規格登録編集画面で言語に日本語、状態にSP、商品コードに「M32CB086S」、商品規格登録編集画面で高額商品コードに「HPM0332-CB086-A」、セールフラグはチェックなし、基準価格(円)に「1500」、販売価格(円)に1500、買取価格(円)に200、スマレジ連携フラグに「連携しない」、部門は選択肢の先頭を選び、スマレジ商品コードは空のまま、公開状態に「公開」を選んで「商品規格を登録」を押す（セールフラグなしで登録すると、販売価格は入力にかかわらず基準価格と同じ1500で保存される）。「連携しない」で登録するとスマレジへの登録は行われず、スマレジ商品IDは未設定のままになる。商品規格登録編集画面の商品規格ID欄に表示された番号を控える（〔商品規格ID-M0332-086〕）。【ファイル】試験者の端末で次の取込ファイルを作り、ブラウザから選択できる場所に置く（文字コード・区切りの指定が無いものはUTF-8・カンマ区切り）: cb-m0332-086.csv=見出し「商品コード,基準価格」・データ「M32CB086S,1500」。	ケース専用
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/_common/0204_sheet-65.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0204 sheet-65 別添資料__スマレジ連携対象商品
+L0001	別添資料__スマレジ連携対象商品
+L0002	1. スマレジ連携対象商品について
+L0003	[概要]
+L0004	①商品規格単位でスマレジに商品情報の連携を行う
+L0005	②商品規格単位でスマレジ連携フラグを持ち、スマレジ連携フラグがONの場合に連携を行う
+L0006	③シングルカードでは自動でスマレジ連携フラグがONになる条件がある
+L0007	④シングルカードの場合は規格編集画面でスマレジ連携フラグを手動でON/OFFできる
+L0008	⑤シングルカード以外の場合は規格編集画面とグッズ商品CSV登録画面でスマレジ連携フラグを手動でON/OFFできる
+L0009	商品の種別 連携対象
+L0010	シングルカード [自動判定条件]
+L0011	・基準価格が300円以上かつ状態がSP、MP、HP、その他規格である場合は自動でスマレジ連携フラグがONになる
+L0012	[スマレジ連携フラグについて]
+L0013	・商品規格編集画面でスマレジ連携フラグを手動でONにした場合は上記の条件によらず強制的に連携する（NMでも300円未満でも連携する）
+L0014	・新規登録時や更新時、一度でも連携条件（基準価格が300円以上かつ状態がSP、MP、HP、その他規格）を満たせば、フラグを手動でOFFにしない限りは条件を満たさなくなっても連携され続ける
+L0015	閾値は保守の範囲で設定変更できるようにしたい
+L0016	シングルカード以外 ・連携対象の商品について、商品規格編集画面またはグッズ商品CSV登録画面でスマレジ連携フラグを手動で立てた商品規格のみ連携を行う
+L0017	共通の条件 ・商品の状態が公開または非公開
+L0018	・商品規格の状態が公開または非公開
+L0019	2. スマレジ連携操作について
+L0020	・スマレジには商品規格の新規登録/更新/削除を行う
+L0021	スマレジ操作	機能	連携内容	スマレジ連携フラグ変更
+L0022	新規登録/更新	商品編集	・商品名が更新された場合に、スマレジに対して商品名の更新を行う
+L0023	・連携を行うのは紐付く商品規格のスマレジ連携フラグがONの場合に限る
+L0024	※商品編集画面での更新の場合、スマレジ連携フラグのON/OFFは行わない
+L0025	（スマレジ連携フラグは商品規格ごとに持つ、かつ商品編集画面ではシングルカードのスマレジ連携の条件である価格を変更しないため）
+L0026	※スマレジ連携フラグのON/OFFがないため、商品編集画面でスマレジへの商品規格新規登録は発生しない	なし
+L0027		規格登録	規格登録画面でスマレジ連携フラグの変更を可能とする
+L0028	スマレジ連携フラグをONに変更した場合は連携を行う
+L0029	シングルカードの場合
+L0030	部門コード、商品コードまたは基準価格に変更があった場合、スマレジ連携を行う
+L0031	価格の変更については、300円以上に更新された場合にスマレジ連携フラグをONにする
+L0032	「閾値(300円)をまたぐ価格変更がされたので、スマレジ連携フラグを確認してください」というポップアップを出す
+L0033	シングルカード以外の場合
+L0034	部門コード、商品コード、スマレジ商品コードまたは基準価格に変更があった場合、スマレジ連携を行う
+L0035	どちらの場合もスマレジに商品規格が存在してれば更新、なければ新規登録とする
+L0036	スマレジに在庫がある場合にはスマレジ連携フラグをOFFにできないよう制御を入れる
+L0037		手動
+L0038		カード商品CSV登録	基準価格が300円以上かつ状態がSP、MP、HP、その他規格である場合は自動でスマレジ連携フラグがONになる
+L0039	（カード商品CSV登録ではスマレジ連携フラグを指定することはできない）
+L0040	スマレジ連携フラグがONかつ商品名、基準価格に変更があった場合、スマレジ連携を行う
+L0041	（カード商品CSV登録では部門を指定することはできない）
+L0042	スマレジに商品規格が存在してれば更新、なければ新規登録とする	自動
+L0043		グッズ商品CSV登録	グッズ商品CSV登録画面でスマレジ連携フラグの変更を可能とする
+L0044	スマレジ連携フラグがONかつ商品名、部門コード、基準価格、商品コード、スマレジ商品コードに変更があった場合、スマレジ連携を行う
+L0045	スマレジに商品規格が存在してれば更新、なければ新規登録とする	手動
+L0046		部門更新CSV登録	スマレジ連携フラグが立っているかつ部門更新があった場合、連携を行う	なし
+L0047		買取・基準価格一括編集	シングルカードの場合
+L0048	スマレジ連携フラグが立っているかつ基準価格に変更があった場合、スマレジ連携を行う
+L0049	基準価格の変更については、300円以上に更新された場合にスマレジ連携フラグをONにする
+L0050	シングルカード以外の場合
+L0051	スマレジ連携フラグが立っているかつ価格に変更があった場合、スマレジ連携を行う	シングルカードの場合のみ自動
+L0052	その他はなし
+L0053		価格変更CSV登録	買取・基準価格一括編集と同様	シングルカードの場合のみ自動
+L0054		セール用価格変更CSV登録	買取・基準価格一括編集と同様	シングルカードの場合のみ自動 セール価格は連携しないため不要
+L0055		高額商品価格変更CSV登録	買取・基準価格一括編集と同様	シングルカードの場合のみ自動
+L0056		セール用高額商品価格変更CSV登録	買取・基準価格一括編集と同様	シングルカードの場合のみ自動 セール価格は連携しないため不要
+L0057		低価格帯カード価格変更CSV登録	買取・基準価格一括編集と同様	シングルカードの場合のみ自動
+L0058	削除	商品編集	商品公開ステータスが廃止になった場合、紐付く商品規格についてスマレジに登録済みの場合削除を行う	なし
+L0059		規格登録	商品規格のステータスが廃止になった場合、スマレジに登録済みの場合は削除を行う	なし
+L0060		カード商品CSV登録	商品編集と同様	なし
+L0061		グッズ商品CSV登録	商品編集と同様	なし
+L0062	※廃止ステータスになる場合は各機能（商品編集やCSV登録）で在庫のありなしのチェックを行うため、スマレジに在庫があるのにスマレジの商品が削除されることはない
+L0063	3. スマレジ商品IDについて
+L0064	スマレジに登録した商品についてはECCUBE側の商品規格にスマレジ商品IDを保持する
+L0065	4. 手動でスマレジ連携フラグをON/OFFした際の自動判定との関係
+L0066	更新時の自動判定（価格の変更がある場合かつ主にCSV登録自動判定を行う）
+L0067		自動判定条件満たさない→満たす	自動判定条件満たす→満たさない	自動判定条件満たさない→満たさない	自動判定条件満たす→満たす
+L0068	手動でフラグON	連携する	連携する(自動でフラグOFFにしない)	連携する（フラグはONのまま）	連携する
+L0069	手動でフラグOFF	連携する(自動でフラグONにする)	連携しない	連携しない	連携する(自動でフラグONにする)
+L0070	[質問]スマレジに在庫がある場合に手動でスマレジフラグをOFFにした場合、そのまま何も連携しないようにして問題ないのか、それともOFFにできないよう制御すべきか
+L0071	→スマレジに在庫があるうちはOFFにできない！
+L0072	5. 商品の部門について
+L0073	部門はECCUBEからは主に以下の4部門を商品に紐付けて連携を行う
+L0074	部門	登録機能
+L0075	店頭受取（PCシングル）	店頭受取注文を行った際のスマレジ商品連携時
+L0076	※スムーズ店頭受取も同様		シングル
+L0077	ショーケース品	カード商品CSV登録で新規登録時NM以外は必ずショーケース品になる
+L0078	（NMはPCシングルにする）	手動でNMのスマレジ連携フラグをONにする場合は部門もショーケース品に変更する必要がある	シングル
+L0079	ストレージ品	グッズ商品CSV登録で部門指定時	グッズ商品CSV登録でスマレジ連携フラグをONにした場合は部門の指定は必須
+L0080	ドキドキ	グッズ商品CSV登録で部門指定時	グッズ商品CSV登録でスマレジ連携フラグをONにした場合は部門の指定は必須
+L0081	また、規格編集画面・部門更新CSV登録機能で任意の部門に変更した場合もスマレジに連携する
+L0082	6. スマレジ連携フラグを自動でオンする際の金額の閾値について
+L0083	設定画で設定可能とする
+
+exec
+/bin/bash -lc "grep -F -e 'S-M03-35-SECTIONS' -e 'S-M03-35-CASE-001' integration_test/casegen/cases/M03-35_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+S-M03-35-SECTIONS	部門	部門更新試験用部門	部門コード=31、32、33の3件が存在する／部門IDは登録時に画面が振る（控える。以下、部門コード31の部門の部門ID=〔部門ID-M0335-共有A〕、部門コード32の部門の部門ID=〔部門ID-M0335-共有B〕、部門コード33の部門の部門ID=〔部門ID-M0335-共有C〕）／各部門は有効／スマレジ試験用部門ID=SMR-SECTION-31、SMR-SECTION-32、SMR-SECTION-33と対応付け済み	商品規格の更新元・更新先として参照する。各ケースは部門自体を変更しない	部門登録/編集画面で、部門名に「M0335部門31」、部門コードに31、免税区分に一般品を入れ、MTGBuyer表示フラグを表示するにして登録ボタンを押す。同じ画面で部門名「M0335部門32」・部門コード32、部門名「M0335部門33」・部門コード33の部門も登録する。部門一覧で部門コード31、32、33の行のID列に表示された部門IDを控える（〔部門ID-M0335-共有A〕、〔部門ID-M0335-共有B〕、〔部門ID-M0335-共有C〕）。スマレジ試験用部門ID（SMR-SECTION-31、SMR-SECTION-32、SMR-SECTION-33）は画面で指定できないためDBへ直接設定する（部門コード31、32、33の部門のスマレジ部門IDとして設定する）	共有可
+S-M03-35-CASE-001	商品・商品規格・CSVファイル	正常取込データ(001)	商品コードSEC-A-001-001の商品に商品規格2件があり部門ID=〔部門ID-M0335-共有A〕（部門コード31の部門）／商品コードSEC-B-001-001の商品に商品規格1件があり部門ID=〔部門ID-M0335-共有B〕（部門コード32の部門）／商品ID・商品規格IDは登録時に画面が振る（控える。以下、SEC-A-001-001の商品ID=〔商品ID-M0335-001A〕、商品規格ID=〔商品規格ID-M0335-001A〕・〔商品規格ID-M0335-001B〕、SEC-B-001-001の商品ID=〔商品ID-M0335-001B〕、商品規格ID=〔商品規格ID-M0335-001C〕）／m0335_normal-001.csvは見出し=商品コード,部門コード(ID)、データ=SEC-A-001-001,32およびSEC-B-001-001,31／同名ファイルの部門更新取込履歴=0件	IT-M03-35-001専用	グッズ商品CSV登録画面で、商品ID列を空にし、1行目は商品コード=SEC-A-001-001・部門ID=〔部門ID-M0335-共有A〕・商品公開ステータス=1（公開）・スマレジ連携フラグ=0、2行目は商品コード=SEC-B-001-001・部門ID=〔部門ID-M0335-共有B〕・商品公開ステータス=1（公開）・スマレジ連携フラグ=0とし、各行のそのほかの必須列（言語(ID)・支店の商品公開ステータス・商品名(日)・商品名(英)・サイズ・重量・商品カテゴリ(ID)・購入グループ名称・基準価格・販売価格・買取価格）に有効な値を書いたCSVを選び、「CSVファイルをアップロード」ボタンを押す。商品コードSEC-A-001-001の商品の商品規格一覧で「新規登録」を押し、商品規格登録画面で商品コードにSEC-A-001-001、部門に部門コード31の部門、スマレジ連携フラグに「連携しない」、そのほかの必須項目に有効な値を入れて登録ボタンを押す（2件目の商品規格）。商品一覧で商品コードSEC-A-001-001を検索し、行に表示された商品IDを控える（〔商品ID-M0335-001A〕）。商品コードSEC-A-001-001の商品の商品規格一覧から商品規格の編集画面を開き、表示された商品規格IDを控える（〔商品規格ID-M0335-001A〕・〔商品規格ID-M0335-001B〕）。商品一覧で商品コードSEC-B-001-001を検索し、行に表示された商品IDを控える（〔商品ID-M0335-001B〕）。商品コードSEC-B-001-001の商品の商品規格一覧から商品規格の編集画面を開き、表示された商品規格IDを控える（〔商品規格ID-M0335-001C〕）。「m0335_normal-001.csv」を状態・属性に記載した内容で試験端末に作る。「m0335_normal-001.csv」と同名の部門更新取込履歴が残っているときは、取込履歴を消す画面が無く0件を画面で指定できないためDBへ直接設定する（該当の履歴を削除する）	ケース専用
+
+codex
+設計書では、M03-33の機能仕様が買取価格をCSV値から更新すると定める一方、同じExcel由来のCSVフォーマットには買取価格列がありません。修正後のケースがこの食い違いをどう扱っているか、またM03-38の「既存ケースで確認済み」が本店と支店の両方を確認しているかを最終確認します。
+exec
+/bin/bash -lc "grep -n -E '"'^'"\\| (M|N|O) \\|' integration_test/casegen/sheetmap/FIX_R2_BRIEF.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+12:| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+13:| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+14:| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+exec
+/bin/bash -lc "grep -F 'IT-0366' integration_test/viewpoint_canonical/viewpoints_canonical.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-0366	ITA-11	内部結合テスト	制御	条件網羅	データパターン / 要因の組合せ	1つの処理の結果を左右する要因（区分、状態、設定、関連データの値など。他の機能で設定する値を含む）が2つ以上ある場合、設計書の定めが互いに効き合う要因については値の組合せのすべてで、互いに効き合わない要因についてはどの2つの要因の値の組もいずれかの組合せで、受け渡し先の結果が、それぞれの要因について定められた結果を重ねたとおり設計どおりとなること。設計書から結果が決まらない組合せ、設計上作れない組合せ、および検索条件と削除条件の組合せは除く。	設計書から引用	条件に応じて、呼び出される先、返却データ、出力結果、状態遷移および副作用が設計どおりに切り替わること。検索・削除条件の一致種別と組合せで期待したレコードが取得・対象化されること、表示／非表示条件、通知の発生条件を含む。	単一メソッド内の分岐網羅、および分岐編集の結果そのものは単体テストが担う
+
+exec
+/bin/bash -lc "grep -n -E 'P1|P2|P3|P4|P5|P6|P9|P10' integration_test/casegen/precond/README.md" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "grep -n -E '"'^'"\\| (A|B|C|D|E|F|G|H|I|J|K|L) \\|' integration_test/casegen/sheetmap/FIX_R1_BRIEF.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+23:| P1 | **各ケースは単独で成立する。** 他のケースを先に実行しても、後に実行しても、実行しなくても、事前準備どおりの状態から始められる |
+24:| P2 | シード表に `共有` 列を足す。`共有可` か `ケース専用` のどちらか。**どれか1ケースでも状態を変えるデータ**（在庫・受注・取引・ステータス・ログイン失敗回数など）は `ケース専用`。`共有可` にできるのは、どのケースも状態を変えないもの（参照だけのマスタ、ロックさせない管理者アカウント、環境設定）と、各ケースが開始時に必要な設定を自分で行う試験基盤（中継の保留／転送の切替など）だけ。`用途` にどちらなのかを書く |
+25:| P3 | `ケース専用` のシードを参照するケースはちょうど1件。シードIDは `<元のID>-<ケース番号3桁>` にする |
+26:| P4 | ケース専用データの識別子（DB投入するレコードのID・商品ID・CSVファイル名・会員メールなど）は、**全機能のケース専用シードの中で一意**にする。重なるときはケース番号を付けて改名する |
+27:| P5 | **事前準備は必須。** 使用シードすべてについて、どういう状態かを値付きで書き、シードIDを括弧で添える。シード投入の後で画面や外部システムを操作して作る状態（販売済みの取引など）は、その操作と、終わった後の値の確認まで書く |
+28:| P6 | 期待結果が「AからB」「Aのまま」と言うとき、**A は事前準備に書いた値**である |
+29:| P7 | **期待結果は変えない。** 変えてよいのは P4 の改名だけで、改名は `renames/<機能ID>.tsv` に宣言する。改名は、英数字の識別子どうし／シードで ID・名称・コード・番号・メール・ファイル名等の項目の値として定義した値／シードID／シードの自由文にある4文字以上のデータ名を「旧名-ケース番号」へ、の置換に限る（数量・状態語は改名しない）。改名で済まない変更は `oracle_changes/<機能ID>.tsv`（テストID/新期待結果/理由/承認）に載せ、承認が入るまでゲートを通さない。承認済みの類型は T1 だけ（下記）。手順で外部の値に呼び名を付け、その呼び名を期待結果で使う書き方もオラクル変更として扱う。要求ID・連鎖ID・観点ID・優先度・実行区分・出典は変えない |
+31:| P9 | 投入方法は、何を使ってどう作るかを書く（管理画面のどの画面か／DB投入／スマレジ試験環境の管理画面で商品登録と在庫設定／CSVフィクスチャ）。「〜を登録する」だけで手段が無いものは不可 |
+32:| P10 | 事前準備に設計書に無い仕様を持ち込まない。書くのはテストデータの状態と作り方だけ。作り方は設計書に無ければ ee 実装（設定・テーブル・管理画面）から引いてよい。どちらにも無い作り方は `open_preconditions.tsv` に載せ、推測で埋めない |
+33:| P12 | 試験基盤が未整備、または作り方が設計書にも ee 実装にも無い前提は `open_preconditions.tsv` に載せる。**実行区分は変えない**（保留は「設計書に期待結果が無い」の意味で使っており、混ぜない）。ゲートは件数を参考として出す |
+34:| P13 | **手順で入力する値（登録する名称・コードなど）は改名しない。** 境界値や文字種の検査が壊れるため。同じ値のデータが既にあると成立しないときは、事前準備に「その値のデータが無い状態にする（あれば削除する）」と書く |
+35:| P11 | **事前準備は手順より前に完結する。** 手順の結果（発番されたID・返された値）を事前準備で参照しない。それらは手順の中で控える |
+114:| G1 | 保留以外で事前準備が空・`—` | P5 |
+115:| G2 | 使用シードのIDが事前準備に現れない | P5 |
+116:| G3 | 期待結果の「AからB」「Aのまま」の A が事前準備に無い | P6 |
+117:| G4 | `共有` 列が無い・値が不正／ケース専用シードの参照が1件でない／ケース専用シードIDの末尾がケース番号でない／どのケースも使わないシード／保留以外のケースがケース専用シードを1件も使わない（状態を変えない読み取りだけのケースは `readonly_cases/<機能ID>.tsv` にテストID/理由で宣言） | P1 P2 P3 |
+118:| G5 | 同じ機能のケース専用シードどうしで自分のレコードID（「ID=20」「ID 20」）が重なる。ケース専用シードの識別子（「〜」の範囲は展開する）が、他のケースの事前準備・手順・期待結果、または他のケース専用シード（全機能）に現れる | P1 P4 |
+120:| G8 | 事前準備が「手順N」「返した値」「発番した」など後の結果を参照している | P11 |
+122:| G9 | 投入方法が「未確定」「未整備」のシードを使う非保留ケースが `open_preconditions.tsv` に無い。該当件数は参考として出す | P12 |
+134:機械で見られないもの（P2 の共有可の妥当性、P6 の値と対象の対応、P8 の種別の妥当性、P9、P10）は codex レビューで見る。
+
+ succeeded in 0ms:
+10:| A | **根拠はHTML設計書であり、対象シート1枚に限らない。** その機能のふるまい（何を出力するか、全件か選択か、出力対象の条件、未選択・0件のときの扱い、ファイル名、起動するボタン、権限）が同じ冊子の別シート（一覧画面のシートなど）に書かれていれば、それを期待結果の根拠にしてよい。出典にそのシートを「｜」でつないで書く。当初の依頼文の「隣接シートは操作の入口にだけ使う」は撤回する。したがって、「対象シートに記述が無い」ことだけを理由にした指摘は、同じ冊子の別シートに記述があれば却下する。逆に、別シートにその機能の記述があるのにケースにしていなかったもの（出力対象、選択と全件の違い、未選択時の扱いなど）は、ケースを足す。別シートは `python3 integration_test/casegen/sheetmap/build_materials.py --sheet <書番> <シート名>` で読む。他の冊子・実装・現行ソースは根拠にしない |
+11:| B | **観点表の「期待値の決め方」が「観点内で確定」の判定単位は、適用の条件が設計書から言えれば、期待結果は判定単位の文から決めてよい。** 例: IT-0080・IT-0225（参照・出力だけの機能は実行前後でデータを更新しない）は、設計書がその機能をCSV出力・一覧表示などの参照機能として書いていれば適用できる。「非更新とは対象シートに書いていない」という指摘は却下する。IT-0083（出力ファイルの数量・金額が画面表示およびDB値と一致）を使うときは、画面表示またはDB値と見比べる手順と期待結果にする |
+12:| C | **CSV・帳票の出力項目の構成と並びは IT-0156**（観点ID ITA-02。他の観点に割り当たらない機能仕様を受ける区分）に当てる。IT-0071 は「値が取得元と同値」にだけ使う。report.md に「出力項目の構成・並びを受ける判定単位が観点表に無いので IT-0156 を使った」と書く |
+14:| D | 見出し行の有無、データが何行目から始まるかは、設計書に書いていなければ期待結果・手順に書かない。データ行は事前準備の識別子（番号・コード）で特定する。項目の並びは「各行の項目が左から設計書の識別ID順に対応する」ことを、事前準備の値がどの位置に出るかで確かめる |
+15:| E | 値の取得元が設計書から決まらない項目（備考が空で、項目名からも取得元が1つに決まらないもの。呼び名の違う属性を当てはめたもの）は、値の照合から外し、report.md の「ケースにしなかったもの」に取得元の不足として書く。項目名と同じ名前の属性は取得元が決まるとしてよい |
+16:| F | 計算・連結・書式変換の結果そのもの（姓＋空白＋名、差の計算、小計など）は単体テストの担当（SCOPE.md）。ケースから外し、report.md に「単体テストへ送った」と書く。ただし「どの時点の値か」「単価か小計か」のように、どの値を採るかの定めは結合テストで確かめてよい |
+17:| G | 1ケース1期待結果。判定単位が違う確認が1ケースに混じっていたら分ける |
+18:| H | シードは実際に作れる方法で書く。管理画面で指定できない内部IDを管理画面で登録する、と書かない（DB投入にする）。設計書が求める状態（必須項目が未設定の会員など）が ee 実装の制約で作れないときは、ケースは残し、投入方法を「未確定: <理由>」にして report.md の「試験環境に要るもの」に挙げる。実装が設計書と違うこと自体はケースを変える理由にしない |
+19:| I | 手順は、画面を開く・条件を入れる・ボタンを押す・ファイルを開く、の操作を番号付きで書く。「〜を確認する」だけの手順にしない |
+20:| J | 設計書の中で記述が食い違っている・誤記と思われる箇所を、推測でどちらかに決めて期待結果にしない。両方に共通する部分だけを期待結果にし、食い違いは report.md に書く |
+21:| K | 判定ID IT-0332〜0347 は使わない。使っているケースは、当てはまる別の判定単位に付け替えるか、無ければ外す |
+22:| L | 指摘が「取りこぼし」で、設計書の記述から期待結果が一意に決まるなら、ケースを足す。試験基盤が無いことはケースを作らない理由にならない（投入方法・前提を「未確定」と書いて残す） |
+
+codex
+### 指摘（M03-32 / CB-M03-32-003）
+- 主張: 通知を受け付ける1行の組を「ケースにしない」とし、通知先での確認場所が設計書に無いことを理由にしている。
+- 実際: design.txt L0082は「更新した商品を支店システムへ通知する。同じ商品が複数の行にあっても通知は1件にまとめる」と定める。1行の通知結果は一意に決まる。
+- 判定: ケースにできる
+- 修正案: 支店システムが受け付ける1行の組をケース化する。
+
+### 指摘（M03-32 / CB-M03-32-004）
+- 主張: 通知を受け付ける複数行の組を「ケースにしない」とし、通知先での確認場所が設計書に無いことを理由にしている。
+- 実際: design.txt L0082は「同じ商品が複数の行にあっても通知は1件にまとめる」と定める。複数行の通知結果も一意に決まる。
+- 判定: ケースにできる
+- 修正案: 同じ商品を複数行に記載し、通知が1件にまとまる組をケース化する。
+
+### 指摘（M03-33 / IT-M03-33-072）
+- 主張: 買取価格の列がないCSVを取り込み、買取価格600のまま、価格履歴0件と期待する。
+- 実際: design.txt L0071は「買取価格を、CSVに設定されている買取価格に更新する」とするが、L0150〜L0157のCSV項目には買取価格がない。「CSVの買取価格＝登録済と同じ」という組の値をファイルに指定できない。
+- 判定: 組の値が無い
+- 修正案: このCSVで買取価格の同値を指定できるものとして扱わない。買取価格と履歴の期待値も、設計書から一意に決まる値として置かない。
+
+### 指摘（M03-33 / IT-M03-33-074）
+- 主張: 買取価格の列がないCSVを取り込み、買取価格600と「買取価格の変更値が記録されないこと」を期待する。
+- 実際: design.txt L0050は買取価格をCSV値へ更新すると定める一方、L0150〜L0157のCSV項目に買取価格はない。組の「CSVの買取価格＝登録済と同じ」を指定できない。
+- 判定: 組の値が無い
+- 修正案: 買取価格の同値を指定した組としてケース化しない。買取価格とその履歴の期待値を確定値として扱わない。
+
+### 指摘（M03-33 / IT-M03-33-076）
+- 主張: 買取価格の列がないCSVを取り込み、買取価格600と「買取価格の変更値が記録されないこと」を期待する。
+- 実際: design.txt L0063は買取価格をCSV値へ更新すると定める一方、L0150〜L0157のCSV項目に買取価格はない。組の「CSVの買取価格＝登録済と同じ」を指定できない。
+- 判定: 組の値が無い
+- 修正案: 買取価格の同値を指定した組としてケース化しない。買取価格とその履歴の期待値を確定値として扱わない。
+
+### 指摘（M03-33 / IT-M03-33-077）
+- 主張: 買取価格の列がないCSVを取り込み、買取価格700のまま、価格履歴0件と期待する。
+- 実際: design.txt L0056は買取価格をCSV値へ更新すると定める一方、L0150〜L0157のCSV項目に買取価格はない。組の「CSVの買取価格＝登録済と同じ」を指定できない。
+- 判定: 組の値が無い
+- 修正案: 買取価格の同値を指定した組としてケース化しない。価格履歴0件を一意の期待値として扱わない。
+
+### 指摘（M03-38 / CB-M03-38-002）
+- 主張: IT-M03-38-035で「実在×公開×公開」を確認済みとする。
+- 実際: M03-38のdesign.txt L0036〜L0038は商品公開ステータスと支店の商品公開ステータスを別項目とする。F03-02のdesign.txt L0059〜L0060も「本店、各支店に応じた商品公開ステータス」を取得して表示を制御すると定める。IT-M03-38-035の手順と期待結果が確認するのは支店の商品詳細だけで、本店での公開結果は確認していない。
+- 判定: 確認済みでない
+- 修正案: この既存ケースだけで両方の公開結果を確認済みとしない。本店側の結果も確かめるケースとして扱う。
+tokens used
+96,469
+### 指摘（M03-32 / CB-M03-32-003）
+- 主張: 通知を受け付ける1行の組を「ケースにしない」とし、通知先での確認場所が設計書に無いことを理由にしている。
+- 実際: design.txt L0082は「更新した商品を支店システムへ通知する。同じ商品が複数の行にあっても通知は1件にまとめる」と定める。1行の通知結果は一意に決まる。
+- 判定: ケースにできる
+- 修正案: 支店システムが受け付ける1行の組をケース化する。
+
+### 指摘（M03-32 / CB-M03-32-004）
+- 主張: 通知を受け付ける複数行の組を「ケースにしない」とし、通知先での確認場所が設計書に無いことを理由にしている。
+- 実際: design.txt L0082は「同じ商品が複数の行にあっても通知は1件にまとめる」と定める。複数行の通知結果も一意に決まる。
+- 判定: ケースにできる
+- 修正案: 同じ商品を複数行に記載し、通知が1件にまとまる組をケース化する。
+
+### 指摘（M03-33 / IT-M03-33-072）
+- 主張: 買取価格の列がないCSVを取り込み、買取価格600のまま、価格履歴0件と期待する。
+- 実際: design.txt L0071は「買取価格を、CSVに設定されている買取価格に更新する」とするが、L0150〜L0157のCSV項目には買取価格がない。「CSVの買取価格＝登録済と同じ」という組の値をファイルに指定できない。
+- 判定: 組の値が無い
+- 修正案: このCSVで買取価格の同値を指定できるものとして扱わない。買取価格と履歴の期待値も、設計書から一意に決まる値として置かない。
+
+### 指摘（M03-33 / IT-M03-33-074）
+- 主張: 買取価格の列がないCSVを取り込み、買取価格600と「買取価格の変更値が記録されないこと」を期待する。
+- 実際: design.txt L0050は買取価格をCSV値へ更新すると定める一方、L0150〜L0157のCSV項目に買取価格はない。組の「CSVの買取価格＝登録済と同じ」を指定できない。
+- 判定: 組の値が無い
+- 修正案: 買取価格の同値を指定した組としてケース化しない。買取価格とその履歴の期待値を確定値として扱わない。
+
+### 指摘（M03-33 / IT-M03-33-076）
+- 主張: 買取価格の列がないCSVを取り込み、買取価格600と「買取価格の変更値が記録されないこと」を期待する。
+- 実際: design.txt L0063は買取価格をCSV値へ更新すると定める一方、L0150〜L0157のCSV項目に買取価格はない。組の「CSVの買取価格＝登録済と同じ」を指定できない。
+- 判定: 組の値が無い
+- 修正案: 買取価格の同値を指定した組としてケース化しない。買取価格とその履歴の期待値を確定値として扱わない。
+
+### 指摘（M03-33 / IT-M03-33-077）
+- 主張: 買取価格の列がないCSVを取り込み、買取価格700のまま、価格履歴0件と期待する。
+- 実際: design.txt L0056は買取価格をCSV値へ更新すると定める一方、L0150〜L0157のCSV項目に買取価格はない。組の「CSVの買取価格＝登録済と同じ」を指定できない。
+- 判定: 組の値が無い
+- 修正案: 買取価格の同値を指定した組としてケース化しない。価格履歴0件を一意の期待値として扱わない。
+
+### 指摘（M03-38 / CB-M03-38-002）
+- 主張: IT-M03-38-035で「実在×公開×公開」を確認済みとする。
+- 実際: M03-38のdesign.txt L0036〜L0038は商品公開ステータスと支店の商品公開ステータスを別項目とする。F03-02のdesign.txt L0059〜L0060も「本店、各支店に応じた商品公開ステータス」を取得して表示を制御すると定める。IT-M03-38-035の手順と期待結果が確認するのは支店の商品詳細だけで、本店での公開結果は確認していない。
+- 判定: 確認済みでない
+- 修正案: この既存ケースだけで両方の公開結果を確認済みとしない。本店側の結果も確かめるケースとして扱う。

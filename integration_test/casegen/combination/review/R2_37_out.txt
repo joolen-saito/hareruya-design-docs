@@ -1,0 +1,2292 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1588f-291b-78b2-b980-9b35c682cb3f
+--------
+user
+# 敵対レビュー依頼：要因の組合せの結合テストケース（2巡目・37）
+
+あなたはレビュアーである。著者とは別人として、下の追加ケースを根拠と突き合わせ、誤りを指摘せよ。ファイルは変更しない。スクリプトやコマンドは読むだけで実行しない（grep・cat 等の閲覧は可。rg は使わない）。出力は日本語。
+レビューは事実確認に限る。設計書に無い仕様を足す提案はしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すと決めた。他の機能の設定値も要因に入れる。
+機能ごとに要因表（`combination/factors/`）を作り codex が反証した。そこから機械が試す値の組（`combination/combos/<機能ID>.tsv`）を並べ、著者が組1行にケース1件を書いた。
+組1行ごとの扱い（ケース化／既存ケースで確認済み／ケースにしない）は dispositions に書いてある。
+
+## 対象（/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/ 配下）
+
+| 機能ID | 組の範囲 | 追加ケース・シード・仕分け |
+| --- | --- | --- |
+| M05-02 | 全部 | `combination/cases/M05-02_cb_test_cases.tsv`・`M05-02_cb_seed_data.tsv`・`M05-02_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M05-03 | 全部 | `combination/cases/M05-03_cb_test_cases.tsv`・`M05-03_cb_seed_data.tsv`・`M05-03_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M05-05 | 全部 | `combination/cases/M05-05_cb_test_cases.tsv`・`M05-05_cb_seed_data.tsv`・`M05-05_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M05-08 | 全部 | `combination/cases/M05-08_cb_test_cases.tsv`・`M05-08_cb_seed_data.tsv`・`M05-08_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M05-09 | 全部 | `combination/cases/M05-09_cb_test_cases.tsv`・`M05-09_cb_seed_data.tsv`・`M05-09_cb_dispositions.tsv`（組の範囲の行だけ） |
+
+機能ごとに次を読む。
+- 追加ケース（13列。末尾の項目IDは埋めた組ID）、追加シード、仕分け（上の表のファイル）
+- 試す値の組 `combination/combos/<機能ID>.tsv`（組ID／処理ID／組（要因ID=値）／読める形／埋める組）
+- 要因表 `combination/factors/<機能ID>_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`・`_constraints.tsv`
+- 設計書 `combination/units/<機能ID>/design.txt`（行頭 L0001 が行番号。`#####` の行はシートの境目）。要因の根拠が他の機能のときは `combination/units/<その機能ID>/design.txt`、共通シートは `combination/units/_common/`
+- 既存のケースとシード `cases/<機能ID>_test_cases.tsv`・`<機能ID>_seed_data.tsv`（追加ケースが使う共有シードはここにある）
+
+規約は `combination/GEN_PROMPT.md`、裁定は `sheetmap/FIX_R1_BRIEF.md`（A〜L、C'）・`FIX_R2_BRIEF.md`（M〜O）、範囲は `integration_test/SCOPE.md`、前提条件は `precond/README.md`、判定単位は `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366。
+設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。Excel が触れていない条件を埋め込みが足しているだけのときは両方を当てる。
+期待結果の根拠は設計書に限る。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備と手順の実行可能性を確かめるためにだけ読む。実装と設計書が違うことは指摘しない。
+`combination/review/` の `*_out.txt`・`combination/prompts/` と、上の表に無いケースのファイルは読まない。
+
+## 前の巡
+
+1巡目の指摘が `combination/review/R1_*_findings.md`、直し担当の処置が `combination/review/<機能ID>_R1_dispositions.tsv`（部のある機能は `_R1_dispositions.p1.tsv` など）にある。指摘は見出しの機能IDで探す。却下の理由が設計書の原文に照らして妥当なら、同じ指摘を繰り返さない。採用したはずの指摘が実際に直っているか、直した結果に新しい誤りが入っていないかを見て、新しい事実の指摘だけを挙げる。
+
+## 意図的であり指摘対象外のもの
+
+- 1ケースの期待結果に、要因表 `processes.tsv` の「確かめる所」に挙がっている所どうし（ZIP と DB、画面と DB など）の結果が1文でまとめてあること（組1行にケース1件のため。2026-10-20 決定）。「確かめる所」に無い所の結果が混じっているときは指摘してよい。
+- 連鎖IDが空欄、要求IDが空欄であること。既存ケースを変えていないこと。判定IDが IT-0366 であること。
+- 組の値の選び方（どの組を並べたか）。要因表の「正解未定」「作れない」の組がケースに無いこと（要因表は反証済み。ただし、ケースを書いてみて組が作れない・結果が決まらないと分かったものは指摘してよい）。
+- 単体テスト・e2e へ送られるもの（画面上だけの入力制限、表示文言の逐語照合、見た目、計算式そのもの）のケースが無いこと。
+- シードの投入方法が「未確定: …」と書かれていること。
+- 商品がグッズ商品CSV登録で作られ、在庫が在庫変更CSV登録と承認で入ること（2026-10-19 の決まり）。
+
+## 重点観点
+
+1. **組の値がケースにあるか**: 事前準備・手順に、組のすべての要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）が値で書かれ、その値で処理を動かしているか。組と違う値で操作していないか。
+2. **期待結果が組の全要因の結果を重ねているか**: 確かめる所で、組の各要因の値について設計書が定める結果（金額・選択肢・更新先・更新内容）がまとめて確かめられているか。設計書の記述と事前準備の値だけから一意に出るか。設計書に無い値・ふるまいを期待していないか。金額・数量の計算が合っているか。
+3. 事前準備の状態から手順を実行して期待結果に到達できるか。単独で成立するか。「このN件だけ」を期待するのに、同じ条件に当たる他のデータを除く記述があるか。共有シードの設定と組の設定値が食い違っていないか。
+4. 1ケースに、確かめる所の違う期待結果が混じっていないか。既存ケースとの重複、物理名の混入。
+5. 「ケースにしない」とした組のうち、設計書の記述から期待結果が一意に決まるもの。「既存ケースで確認済み」としたもののうち、挙げたケースが実際にはその組の値で確かめていないもの。
+
+## 出力形式
+
+指摘が無ければ `NONE` の1語。あれば1件ごとに次の形で、テストIDの順に書く。確信の持てないものは挙げない。見出しの括弧の先頭は必ず機能ID。
+
+```
+### 指摘（<機能ID> / <テストID または 組ID>）
+- 主張: ケースまたは仕分けの記述（要点の引用）
+- 実際: 設計書の事実（design.txt の行番号。原文を引く）
+- 判定: 組の値が無い／期待結果の誤り／設計書に無い期待／成立しない前提・手順／要因の結果が欠けている／複数の期待結果／重複／ケースにできる／確認済みでない／組が作れない
+- 修正案: 結論を先に置いた1〜2文
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T09:05:41.571060Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象の組・ケース・仕分けを照合し、疑義がある箇所だけ設計書の原文と前巡の処置まで確認します。ファイルは変更せず、閲覧コマンドだけを使います。
+exec
+/bin/bash -lc "cat 'integration_test/casegen/sheetmap/FIX_R2_BRIEF.md'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/GEN_PROMPT.md'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/sheetmap/FIX_R1_BRIEF.md'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/precond/README.md'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 11ms:
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+
+exec
+/bin/bash -lc "cat 'integration_test/SCOPE.md'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 48ms:
+# {FID}（{FNAME}）の要因の組合せのケース作成（著者への依頼）
+
+リポジトリ: `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+あなたは機能ID **{FID}** の追加ケースを書く著者である。レビューは別の担当が行う。git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すと決めた。他の機能の設定値も要因に入れる。
+{FID} の要因表（別の担当が作り、codex が反証した）から、機械が試す値の組を並べた。そのうち **{RANGE} の {N}行** があなたの受け持ち（{PARTNOTE}）。1行ごとにケースを書く。**既存のケースは1文字も変えない。**
+
+## 読むもの
+
+1. 試す値の組: `integration_test/casegen/combination/combos/{FID}.tsv`（組ID／処理ID／組（要因ID=値）／組（読める形）／埋める組）。1行が1回の処理で同時に使う値の組。受け持ちは {RANGE}。
+2. 要因表: `integration_test/casegen/combination/factors/{FID}_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`（効き合う理由）・`_constraints.tsv`（作れない組・正解未定の組）
+3. 設計書: `integration_test/casegen/combination/units/{FID}/design.txt`（行頭の L0001 とタブは行番号で、設計書の内容ではない）。要因の根拠の行だけでなく、その節全体を読む。他の機能の設定値の要因は `units/<機能ID>/design.txt`
+4. 既存のケースとシード: `integration_test/casegen/cases/{FID}_test_cases.tsv`（11列）・`{FID}_seed_data.tsv`。**書き方・画面への入り方・シードの作り方はこれに合わせる**。同じ処理を別の値で通している既存ケースがあれば、それを下敷きにして値だけ変えるのが基本
+5. 確かめる所が別の機能の画面のときは、その機能のケース `integration_test/casegen/cases/<機能ID>_test_cases.tsv` で画面への入り方と表示の書き方を見る
+6. `integration_test/SCOPE.md`、`integration_test/casegen/sheetmap/FIX_R1_BRIEF.md` の裁定 A〜L・C'、`FIX_R2_BRIEF.md` の決まり M〜O（文中の `sheetmap/` は読み替える）、`integration_test/casegen/precond/README.md`（前提条件 P1〜P13・類型 T1〜T4）、`integration_test/casegen/STEP_PATTERNS.md`（手順の型）
+7. `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366（判定単位の文と除外を読む）
+
+## 1行（組ID）ごとに、次のどれかに決める
+
+| 扱い | いつ | 書くもの |
+| --- | --- | --- |
+| ケース化 | その値の組で処理を動かしたときの結果が、設計書の記述から一意に決まる | ケース1件（1ケース1期待結果）。組のすべての要因の値を事前準備・手順に値で書く |
+| 既存ケースで確認済み | 既存ケースの事前準備・手順に組のすべての値が書かれ、確かめる所で結果を見ている | そのテストIDと、どの手順・期待結果が当たるか |
+| ケースにしない | その値の組が実は作れない（制約の抜け）／結果が設計書から一意に決まらない／設計書の記述どうしが食い違う／結合テストの範囲でない | 理由（設計書の原文を引く）。作れない・決まらない組は、要因表の制約に足すべき組として理由に `要因ID=値&要因ID=値` を書く |
+
+安易に「ケースにしない」としない。要因表は codex が反証済み。それでも外すなら設計書の原文で理由を示す。
+
+## 期待結果の決め方
+
+- 組の**すべての要因**について、その値で設計書が定める結果を、確かめる所（processes.tsv）でまとめて確かめる。1つの確かめる所で見える結果を1文にまとめてよい（例: 「受注情報編集画面で、お支払方法が代金引換、配送方法がゆうパケット、送料が200円、手数料が330円、ポイント使用が0、合計が1,530円で表示されること」）。確かめる所が違う結果は入れない（1ケース1期待結果）。
+- 金額・数量は、事前準備に書いた値から設計書の計算で一意に出す。計算の途中を期待結果・出典に書かない（期待結果には結果の値だけ）。
+- 期待結果は設計書（design.txt。同じ冊子の別シート、要因の根拠にある他の機能の設計書も可）と事前準備の値だけから出す。実装コード・現行ソースから期待値を足さない。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備・シードの作り方と手順の実行可能性を確かめるためにだけ読んでよい（スクリプトやコマンドは実行しない）。
+- 設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採り、出典に両方を書く。
+- 要因表の constraints.tsv に「正解未定」とある値の組は機械が行に入れていない。それ以外の組で結果が決まらないと分かったら「ケースにしない」にする（推測で決めない）。
+- **打ち切りの行**: 組（読める形）に「（効かない）」とある要因は、その行では結果に効かない（constraints.tsv の種別「打ち切り」。処理が途中で打ち切られる。依頼者決定 2026-10-20）。その要因の値は事前準備に書かなくてよい（共有可シードのままでよい）。期待結果は打ち切りの結果（出ない・エラーで元の画面へ戻る・何も変わらない など）を、設計書の定めどおりに確かめる。打ち切りのあと値が残っていないか（更新されていないこと）を見るのはよい。
+
+## ケースの書き方
+
+- テストIDは `IT-{FID}-{START}` からの連番（既存と、外した番号の続き）。組IDの順に書く。
+- 判定IDは `IT-0366`、観点IDは `ITA-11`。項目ID列に組ID（1つ）。
+- 期待結果は合否が一意に決まる具体値で書き、「〜こと」で終える。
+- **組の値がケースから読めること**: 事前準備・手順に、組の全要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）を値で書く。要因名や組の値を並べただけの行（「このケースで試す値の組: …」など）を事前準備・手順に足さない。実際のデータで書いていれば、verify の「注意」（組の値が字句で無い）は残ってよい。
+- 結果は、データを作った所とは別のコンポーネントで確かめる（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。
+- 手順は「1. …／2. …」の形で、画面名・項目名・ボタン名・入力値を特定する。名前は設計書の表記を使う。画面への入り方は既存ケースに合わせる。
+- 物理名（テーブル名・カラム名・ルート名・クラス名・翻訳キー）を書かない。設計書に書かれている項目名はそのまま使ってよい。
+- 禁止語: 失敗させる／該当する操作／同上／いくつか／別の画面／要確認／TBD／設計どおり／設計書どおり／仕様どおり／正しいこと／正しく。
+- 実行区分は `ブラウザのみ` か `ブラウザ+DB確認`（外から見えない副作用だけDBを見る）。優先度は、業務データの保存・更新・出力値の一致を P1、表示・選択肢を P2。
+- 要求ID列: `integration_test/casegen/requirements_all.tsv` に当たる行（書番・シート名・要求文が合う行）が見つかればその要求IDを書く。見つからなければ空欄でよい。代用しない。
+- 連鎖IDは空欄。出典は既存ケースと同じ形（`<書番> <シート名> / <区分 と 見出し>`。別シート・別の冊子は「｜」でつなぐ）。
+
+## 前提条件（いまの決まり。既存のシードの書き方がこれに従っているので合わせる）
+
+- 各ケースは単独で成立する。**各ケースはケース専用シードを1件以上使う**（シードID `S-{FID}-CB<名前>-<ケース番号3桁>`）。参照だけのマスタ・アカウント・環境設定は、既存の `{FID}_seed_data.tsv` にある `共有可` のシードをそのまま使ってよい（シード表に書き足さない）。既存の `ケース専用` シードは使わない。
+- 組の値が共有可のシードの設定と違うとき（手数料・送料・利用条件・配送方法に紐づく支払方法など）は、ケース専用シードで設定を書き、事前準備に値で書く。
+- テストデータは画面から入力して作る（2026-10-09 決定）。画面で作れない状態だけ、理由を添えて DB へ直接入れる書き方にする。
+- **商品はカード商品も含めてグッズ商品CSV登録で作る**（商品登録画面の新規登録は使わない。M03-02 L0075〜L0077）。カード商品は商品登録編集画面の「カード指定 >」でカードを付ける。価格は税込みで登録する。在庫は在庫変更CSV登録で入庫し、別のメンバーが承認一覧で承認する（確認画面の OK まで書く）。既存の `{FID}_seed_data.tsv` の商品・在庫のシードの書き方をそのまま写す。
+- 確認モーダルが出る操作は、モーダルの確定まで手順に書く。規約同意など必須のチェックも書く（既存ケースに合わせる）。
+- 画面が振る番号（受注番号・会員IDなど）は、画面で作ったあとに控えた番号を使う（類型 T4。〔番号の名前-{FIDC}-ケース番号〕の呼び名で書く）。
+- ケース専用データの識別子（コード、名称、メール、ファイル名、パスワード）は全機能で一意にする。前提条件の検査 G5 の字句は `[A-Za-z0-9][A-Za-z0-9_.@\-]{3,}`。**英数字とハイフンの連なり1つ1つに、機能番号とケース番号を入れる**（例: 「{FIDC}-CB{START}-A」「cb{FIDL}-{START}@example.test」「Passw0rd-CB{FIDC}{START}」）。パスワードに「!」を使わない。番号だけの語（「A001」）を単独で置かない。`grep -rF` で `integration_test/casegen/cases/` と重ならないことを確かめよ。
+- 事前準備は必須。使用シードすべてについて状態を値付きで書き、シードIDを括弧で添える（「① …（S-…）／② …（S-…）」）。「このN件だけ」を期待するときは、同じ条件に当たる他のデータが無い状態を書く。
+- 事前準備で手順の結果を参照しない。期待結果の「AからB」「Aのまま」の A は事前準備に同じ表記で書いた値にする。
+- シードの投入方法は、何を使ってどう作るかを書く。作り方が分からないときは「未確定: <分からないこと>」と書く。推測で埋めない。
+- 中継・模擬応答、現在時刻の固定、障害を起こす手段は用意しない（2026-10-19 決定）。これが要る組は「ケースにしない」。バッチの実行、スマレジなど外部の試験環境、メールの受け取りは用意できる。
+
+## 出力（この3つだけを書く。ほかの既存ファイルは変更しない）
+
+1. `integration_test/casegen/combination/cases/{FID}_cb_test_cases{SFX}.tsv`
+   タブ区切り・13列: `テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID`
+   セル内に改行・タブ・ダブルクォートを入れない。ケース化が0件でもヘッダだけのファイルを書く。
+2. `integration_test/casegen/combination/cases/{FID}_cb_seed_data{SFX}.tsv`
+   タブ区切り・7列: `シードID	区分	論理名	状態・属性	用途	投入方法	共有`。**新しく足すシードだけ**を書く。
+3. `integration_test/casegen/combination/cases/{FID}_cb_dispositions{SFX}.tsv`
+   タブ区切り・4列: `項目ID	扱い	テストID	理由`。受け持ちの組 {N}行を1行ずつ（項目ID は組ID）。
+
+最後に `python3 integration_test/casegen/combination/verify_cb.py {VARG}` を実行し、合格するまで直せ。ほかの検査（gate_dry.sh・gate_factors.py など）は流さない（ほかの著者と同時に流すとぶつかる）。
+作業用の一時ファイルはスクラッチパッド（`/tmp/claude-1000/-home-y-saito-Developments-hareruya-design-docs/7ac77140-f212-4eb4-b04c-5cbd0cc6fcfa/scratchpad/`）に、名前へ {FID}{SFX} を入れて作る。他の機能・同じ機能の他の部の combination/cases のファイルは読まない・書かない。
+**ファイルは処理ごとに書き足していく**（全部を最後にまとめて書かない。途中で止まっても書いた分が残るように）。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+4行以内。ケース化／確認済み／ケースにしない の件数、ケースにしなかった主な理由（制約に足すべき組があれば件数）、verify の結果、判断に迷った点（あれば1つ）。
+
+ succeeded in 63ms:
+# 結合テストケースの前提条件の書き直し
+
+## なぜ
+
+2026-09-28 時点の `cases/*_test_cases.tsv` は、上から順番に実行しても成立しないケースが多い。
+原因は3つある。
+
+1. **前提がケースに書かれていない。** 生成規則（`GEN_PROMPT_TEMPLATE.md` 縛り10）が
+   「シード投入は事前準備に書かない」としていたため、実行対象8,325件のうち7,866件の事前準備が `—`。
+   IT-A01-01-004 の前に「SMA-A01-002 を2個販売した取引」が要ることは、別ファイルのシード表を読まないと分からない
+2. **状態を書き換えるデータを複数ケースで共有している。** IT-A01-01-001 が SMA-A01-001 を2個販売すると、
+   002 の「10から8」は成立しない。012 が SMA-A01-I01 を7にすると、013 の「10から8」は成立しない
+3. **投入方法が実行できる粒度でない。** 「スマレジ試験環境に全キャンセル可能な取引を登録する」
+
+依頼者決定（2026-09-28）: **ケースごとに専用データを持たせる**。A01-01 で型を作ってから全機能へ広げる。
+
+## 規約
+
+対象は実行区分が「保留」以外のケース。保留ケースは1文字も変えない。
+
+| No. | 規約 |
+| --- | --- |
+| P1 | **各ケースは単独で成立する。** 他のケースを先に実行しても、後に実行しても、実行しなくても、事前準備どおりの状態から始められる |
+| P2 | シード表に `共有` 列を足す。`共有可` か `ケース専用` のどちらか。**どれか1ケースでも状態を変えるデータ**（在庫・受注・取引・ステータス・ログイン失敗回数など）は `ケース専用`。`共有可` にできるのは、どのケースも状態を変えないもの（参照だけのマスタ、ロックさせない管理者アカウント、環境設定）と、各ケースが開始時に必要な設定を自分で行う試験基盤（中継の保留／転送の切替など）だけ。`用途` にどちらなのかを書く |
+| P3 | `ケース専用` のシードを参照するケースはちょうど1件。シードIDは `<元のID>-<ケース番号3桁>` にする |
+| P4 | ケース専用データの識別子（DB投入するレコードのID・商品ID・CSVファイル名・会員メールなど）は、**全機能のケース専用シードの中で一意**にする。重なるときはケース番号を付けて改名する |
+| P5 | **事前準備は必須。** 使用シードすべてについて、どういう状態かを値付きで書き、シードIDを括弧で添える。シード投入の後で画面や外部システムを操作して作る状態（販売済みの取引など）は、その操作と、終わった後の値の確認まで書く |
+| P6 | 期待結果が「AからB」「Aのまま」と言うとき、**A は事前準備に書いた値**である |
+| P7 | **期待結果は変えない。** 変えてよいのは P4 の改名だけで、改名は `renames/<機能ID>.tsv` に宣言する。改名は、英数字の識別子どうし／シードで ID・名称・コード・番号・メール・ファイル名等の項目の値として定義した値／シードID／シードの自由文にある4文字以上のデータ名を「旧名-ケース番号」へ、の置換に限る（数量・状態語は改名しない）。改名で済まない変更は `oracle_changes/<機能ID>.tsv`（テストID/新期待結果/理由/承認）に載せ、承認が入るまでゲートを通さない。承認済みの類型は T1 だけ（下記）。手順で外部の値に呼び名を付け、その呼び名を期待結果で使う書き方もオラクル変更として扱う。要求ID・連鎖ID・観点ID・優先度・実行区分・出典は変えない |
+| P8 | 手順はテスト対象の操作だけにする。手順を変えてよいのは次の種別だけで、変えたら `step_changes/<機能ID>.tsv`（テストID/種別/新手順/理由）に宣言する。`準備移動`（準備操作を事前準備へ移す）／`改名`／`発番値控え`（実行中に発番される値を控える操作を足す）／`データ指示`（事前準備で作ったデータを指し示す）／`中継置換`（類型 T2）／`非同期完了待ち`（類型 T3）／`裁定訂正`（設計書の中の食い違いの裁定で直したもの。2026-10-16 依頼者決定） |
+| P9 | 投入方法は、何を使ってどう作るかを書く（管理画面のどの画面か／DB投入／スマレジ試験環境の管理画面で商品登録と在庫設定／CSVフィクスチャ）。「〜を登録する」だけで手段が無いものは不可 |
+| P10 | 事前準備に設計書に無い仕様を持ち込まない。書くのはテストデータの状態と作り方だけ。作り方は設計書に無ければ ee 実装（設定・テーブル・管理画面）から引いてよい。どちらにも無い作り方は `open_preconditions.tsv` に載せ、推測で埋めない |
+| P12 | 試験基盤が未整備、または作り方が設計書にも ee 実装にも無い前提は `open_preconditions.tsv` に載せる。**実行区分は変えない**（保留は「設計書に期待結果が無い」の意味で使っており、混ぜない）。ゲートは件数を参考として出す |
+| P13 | **手順で入力する値（登録する名称・コードなど）は改名しない。** 境界値や文字種の検査が壊れるため。同じ値のデータが既にあると成立しないときは、事前準備に「その値のデータが無い状態にする（あれば削除する）」と書く |
+| P11 | **事前準備は手順より前に完結する。** 手順の結果（発番されたID・返された値）を事前準備で参照しない。それらは手順の中で控える |
+
+## 承認済みの類型（依頼者 2026-09-28）
+
+| 類型 | 内容 | 記録先 |
+| --- | --- | --- |
+| T1 外部発番値 | 外部システムが発番する値（スマレジの在庫変動履歴ID・問い合わせIDなど）を基線が固定値で書いているときは、手順の中で発番値を控え、期待結果を「手順Nで控えた値」との照合に書き換える | `oracle_changes`（承認欄に「類型承認T1」） |
+| T3 非同期完了待ち | Webhook・バッチ・メッセージ処理など非同期で処理される操作の結果を確認する前に、非同期処理の対象のジョブ（待機中・実行中）が0件になるまで待つ手順を足す（画面名は書かない。下の「用語の置き換え」）。待つ上限時間を書く | `step_changes`（種別「非同期完了待ち」）。依頼者承認 2026-09-30 |
+| T2 中継置換 | 外部システムとの通信の観測・送信を、基線が実行できない書き方（「Webhookの応答をブラウザで確認」「スマレジAPIから送信」など）にしているときは、中継（通信を記録・保留・転送・模擬送信する試験基盤）で観測・送信する手順に変える。外部が実際に返す通知は保留して転送し、外部に起こさせられない結果（エラー等）だけを模擬送信する | `step_changes`（種別「中継置換」） |
+
+## 類型T4 画面発番値（依頼者決定 2026-10-09）
+
+テストデータは画面から入力して作る。画面が自動で振る番号（注文番号・受注ID・イベントIDなど）を基線が固定値で書いているときは、
+データを画面で登録したときに振られた番号を控え、事前準備・手順・期待結果ではその控えた番号（呼び名〔注文番号-M0526-012〕の形）を使う。
+書き直しは `../seed_screen/`（README）。期待結果・手順の変更は `oracle_changes/`（承認欄に「類型承認T4」）・`step_changes/`（種別に「発番値控え」）へ、`../seed_screen/apply.py` が機械で宣言する。
+控えた番号へ置き換えたケースの一覧は `screen_noted_cases.tsv`。検査は、これらのケースについて改名先（消えた固定の番号）の検査を外し、〔…〕の呼び名を識別子として数えない。
+
+## テストできない・作り方が未確定のケースの除外（依頼者決定 2026-10-14）
+
+テストできないケースと、作り方が未確定のケースを、ケースの正本（`../cases/`・`../all_test_cases.tsv`）から外した。
+外したのは、検査 G9 が「未整備・未確定の前提を使うケース」と数えていた 1,892件（使用シードの投入方法に「未確定」「未整備」がある、または `open_preconditions.tsv` の影響ケースに載っている）。
+内訳は、作り方が未確定 1,744、試験環境の決定待ち 113、実装上その状態を作れない 35。残りは 10,556件・345機能（20機能は全ケースが外れた）。
+
+- 行は消さず `../excluded_open_cases.tsv`（除外理由・未確定の内容つき。元の11列は「元_」付き）へ移した。外したケースだけが使っていたシード 2,458件は `../excluded_open_seeds.tsv`。
+- 道具は `../exclude_open.py`（何度流しても同じ）。**各 `merge_into_cases.py` と `seed_screen/apply.py` は外したケースを `cases/` へ戻すので、そのあとに必ず流す。** 順序は merge → `seed_screen/apply.py` → `datapattern/conflicts/apply_rulings.py`（最後に `product_csv/apply.py` と `runnable/apply.py` も当たる）→ `exclude_open.py` → `exclude_scope.py` → `build_all_test_cases.py`。
+- 作り方が決まったら、シードの投入方法（と `open_preconditions.tsv`）を直してから同じ順に流し直すと戻る。
+- 検査 G6 は、基線・追加分からこの除外分を差し引いて照合する。保留（設計書に正解が無い）の除外 `excluded_hold_cases.tsv` とは別の表で、意味を混ぜていない。
+
+### 影響ケースの漏れ（2026-10-16）
+
+`open_preconditions.tsv` の影響ケースは、行を足した時点のケースで書いた固定の一覧である。そのため、あとから足したケースが同じ未確定の前提を使っていても除外に掛からなかった。全数を洗い直し、63件を影響ケースに足して外した（11,777件 → 11,714件・341機能）。
+- 同じシードを使うのに一覧に無かったもの: IT-A05-04-047〜060（スマレジ受信。2026-10-09 の被覆監査で追加。取引情報取得APIの試験環境と Webhook の認証情報の2行）、IT-B02-02-010〜012（バッチの実行環境）、IT-M03-09-058・097（スマレジの試験用受信サーバー）。
+- 連携ケース（`../link/`）が、基線では未確定のシードを「-L-」付きの別名で作り直していたもの: S-B02-02-L-ENV・S-B05-02-L-CLOCK・S-B05-09-L-API/CLOCK/CONFIG・S-B06-01-L-ENV・S-B06-02-L-EXEC・S-B08-03-L-ENV・S-B08-06-L-API-CONTROL・S-B13-01-L-API/EXEC/MAIL。基線の行と同じ文面で、対象をL版にした行を足した（`未確定: …（… の未確定と同じ）`）。B06-01 の別名を使っていたデータパターンのケースも含む。
+- 時計を固定する前提: IT-M04-17-001（業務日を2026/09/29に固定。時計の固定は S-B05-09-CLOCK などと同じく作り方が無い）。
+- この結果、B02-02・B05-02・B05-09・B06-01・B08-03・B13-01 はケースが0件になった（基線のケースは前から外れており、残っていたのは別名のシードを使う連携ケースだけだった）。
+- 同じ日に `../chain_gap/` のレビューで、S-F06-02-L-ENV（IT-F06-02-024・025）も見つかり、同じ形の行を足して外した。基線の行の対象は S-F06-02-API-OK で、名前の役割の語（API と ENV）が違うため道具では拾えなかった。このシードは、開始時にスマレジAPI試験環境のユーザーDBで会員が0件であることを確かめる作り方で、024 は発番されたスマレジIDを控える。外部の試験環境を使うシードは、名前だけでなく中身でも基線の行と見比べる。
+- 候補を出す道具は `scan_open_leaks.py`。ケースを合流したあと、`exclude_open.py` の前に流す。候補を出すだけで判定はしない。残っている候補 159件は、読んだうえで漏れではないと判定したもの。
+  - 共有の定義だけを使い、未確定の項目に触れないもの: S-M05-03-DEFS、S-F06-05-BASIC、IT-A05-04-002（GETを送るだけで、認証も取引の取得も要らない）。
+  - 名前の役割の語が同じだけで、作り方が決まっているもの: ポイントの設定、ユニサーチの接続先、ee の開発用の正常応答、スマレジの試験環境への接続。
+  - S-M03-10-SMAREGI-ENV: ee の商品APIのクライアントは、模擬応答のときも呼び出しを記録する（SmaregiPlatformApiCallRecorder）。シードの書き方は実装と合っている。
+
+## 試験環境で用意できる前提の解消（依頼者決定 2026-10-19）
+
+依頼者決定「バッチの実行、スマレジなど外部の試験環境、メールの受け取りは環境準備できる」（中継・模擬応答、時刻の固定、障害を起こす手段は用意しない）。作り方が未確定で外したケースを止めていた項目（未確定のシード 944・未確定の前提の行 879）を1件ずつ判定し、この3つだけで決まるものは作り方を書いて解消した。止めていた項目がすべて解消したケース 183件が一覧へ戻った（11,713件 → 11,896件・346機能）。
+解消した前提の行 81 は `open_preconditions.tsv` から `resolved_preconditions.tsv`（解消の書き方・区分・根拠・決定つき）へ移した。シードは投入方法を書き直した（外した表 `../excluded_open_seeds.tsv` を直し、`exclude_open.py` が直った文で戻す）。
+同じ日の依頼者決定「おすすめで進めて」で、人が補って実行できるもの（決まった番号の読み替え、必須のチェック、確認モーダル、割引率、在庫の承認）も書き足した。道具・判定・レビューは `../runnable/README.md`。`../datapattern/conflicts/apply_rulings.py` が最後に `../runnable/apply.py` を呼ぶ。
+
+## E2E で作成を保留した入力ファイルを使うケースの除外（依頼者決定 2026-10-16）
+
+依頼者決定「テスト保留のケースがあれば除外」。ケース一覧に実行区分「保留」のケースは無かった（2026-10-01 にすべて外してある）。保留に当たっていたのは、E2E の入力ファイルの棚卸し（`../../../e2e/fixtures/named-file-references.tsv`。M03・M04 だけ棚卸し済み）で作成判断を「保留」「正本矛盾」とした33ファイルで、シードの記述だけでは中身（文字コード、見出し行の値、画像の中身など）が一つに決まらないか、シードの記述が食い違っていた（M03-30 の empty.tsv）。これを使うケース29件を、作り方が未確定の前提として `open_preconditions.tsv` に載せ（対象「入力ファイル <ファイル名>」の33行）、`exclude_open.py` で外した。ケースは 11,679件から 11,650件。ファイルの中身をシードに書いて棚卸しの判断が変わったら、その行を消して流し直すと戻る。M03・M04 以外の機能の入力ファイル（棚卸しで未判定の 1,729件）は見ていない。
+同じ日の依頼者決定「画像は任意の有効な画像でよいとして戻す」で、画像の中身が未指定だった9ファイル（M04-02-050・M04-03-005・M04-05-011・M04-31-150 の4ケース）の行を外し、4ケースを戻した（11,654件）。シード（`../seed_screen/out/` の該当行の投入方法）に「画像ファイルの中身は任意の有効な画像でよい。同じケースで使う複数の画像は、互いに見分けられる別の画像にする」と書いた。E2E の入力ファイル（`e2e/fixtures/`）はまだ作っていない。
+外したケースを戻すときは、流れを2回流す。1回目は `exclude_open.py` が除外表の古い文面のままケースとシードを戻すので、2回目の `seed_screen/apply.py`・`apply_rulings.py` で書き直しが当たる。
+
+## フェーズ2見送り・実装しない機能の除外（依頼者決定 2026-10-16）
+
+依頼者決定「フェーズ2見送り、機能実装しない機能についてはケースから除外」。対象は `../scope_out.tsv`（根拠つき）で、フェーズ2見送り13機能（A06-14・B01-02・B01-03・F02-05・M03-43・M03-44・M04-06・M04-07・M06-13・M08-11・M08-15・M08-16・M08-17）、実装しない4機能（M03-34・M03-36 は 2026-10-06 決定、M04-27・B13-02 は Excel の廃止の記述）と、M03-43 の機能を確かめていた IT-M03-30-038。
+ケース一覧の6件に加え、作り方が未確定で外していた65件、保留で外していた49件も、決まっても戻さないので `../excluded_scope_cases.tsv` へ移した（計120件。元の表と元の除外理由を残す）。外したケースだけが使っていたシード89件は `../excluded_scope_seeds.tsv`。道具は `../exclude_scope.py`（何度流しても同じ。`exclude_open.py` の後に流す）。ケースは 11,685件・349機能から 11,679件・346機能になった（F02-05・M03-44・M06-13 はケースが0件）。
+保留から移した49件は、設計者に聞く必要が無くなった（`../hold_review/questions.tsv` に論点があるものも含む）。機能の一部だけがフェーズ2のもの（ナビゲーションの通知、会員検索の顧客分析タグなど）は機能ごとは外していない。そのフェーズ2の部分を確かめるケースは IT-M03-30-038 のほかに無かった。
+検査 G6 は、基線・追加分からこの表の分も差し引いて照合する。
+
+## 既存ケースと設計書の食い違いの裁定（依頼者決定 2026-10-16）
+
+設計書の中で記述が食い違うときの優先順位（Excel由来＞埋め込みの表示メッセージ節＞埋め込みの現行仕様節、同じ出所では改訂後）を決め、既存ケース52件の報告を裁定した。直したケースの期待結果・手順・出典は `oracle_changes/`・`step_changes/`（種別「裁定訂正」）・`source_changes/` に、承認欄「2026-10-16 依頼者裁定」で宣言してある。規則で決まらず共通部分でも書けない10件は `../excluded_hold_cases.tsv` へ移した（論点ID が QD- の行。決める人＝設計者）。道具は `../datapattern/conflicts/apply_rulings.py`（何度流しても同じ。`seed_screen/apply.py` の後、`exclude_open.py` の前に流す）。説明は `../datapattern/conflicts/README.md`。
+
+## 保留ケースの除外（依頼者決定 2026-10-01）
+
+実行区分が「保留」のケース（1,014件）はテストケースから外した。設計書にも現行ソースにも期待結果（正解）が無く、テストできないため。
+行は削除せず `../excluded_hold_cases.tsv` へ移した（論点ID・決める人つき。元の11列は「元_」付きで保持）。保留ケースだけが使っていたシードは `../excluded_hold_seeds.tsv`。
+設計者の回答（`../hold_review/questions.tsv`）やテスト側の決定で正解が決まったら、そのケースを作り直して戻す。ゲート G6 は、基線のテストIDからこの除外分を差し引いて照合し、保留ケースが残っていれば落とす。
+
+## 実行の前提（依頼者決定 2026-09-30）
+
+- **専用DBで流す。** 結合テストは機能（またはモジュール）ごとに、まっさらな専用DBへシードを投入して流す。検索・一覧・集計で「このN件だけ」を期待するケースは、開始時に同じ条件に当たる他のデータを削除して隔離しており、共有の試験環境では他機能のデータを消しうる
+- **1件しかないデータは順番に実行する。** 基本設定のように1件しかない設定や、期待結果が固定IDを名指ししていて分けられないデータは `共有可` とし、使う各ケースが開始時に値を設定し直す。上から順に実行すれば成立するが、同じデータを使うケースを同時には実行しない。該当ケースは `sequential_only.tsv`
+
+## 機械検査 `gate_precond.py`
+
+| No. | 検査 | 対応する規約 |
+| --- | --- | --- |
+| G1 | 保留以外で事前準備が空・`—` | P5 |
+| G2 | 使用シードのIDが事前準備に現れない | P5 |
+| G3 | 期待結果の「AからB」「Aのまま」の A が事前準備に無い | P6 |
+| G4 | `共有` 列が無い・値が不正／ケース専用シードの参照が1件でない／ケース専用シードIDの末尾がケース番号でない／どのケースも使わないシード／保留以外のケースがケース専用シードを1件も使わない（状態を変えない読み取りだけのケースは `readonly_cases/<機能ID>.tsv` にテストID/理由で宣言） | P1 P2 P3 |
+| G5 | 同じ機能のケース専用シードどうしで自分のレコードID（「ID=20」「ID 20」）が重なる。ケース専用シードの識別子（「〜」の範囲は展開する）が、他のケースの事前準備・手順・期待結果、または他のケース専用シード（全機能）に現れる | P1 P4 |
+| G6 | 改名が識別子どうしでない。期待結果が「基線に改名を当てたもの」と一致せず、承認済みの oracle_changes にも無い。保留ケースが変わった。テストIDの集合・他の固定列が変わった（出典は `source_changes/`、実行区分の誤記は `kind_changes.tsv` に宣言したものを除く） | P7 |
+| G8 | 事前準備が「手順N」「返した値」「発番した」など後の結果を参照している | P11 |
+| G7 | 手順が「基線に改名を当てたもの」と違うのに `step_changes` に宣言が無い／種別が P8 の5種以外 | P8 |
+| G9 | 投入方法が「未確定」「未整備」のシードを使う非保留ケースが `open_preconditions.tsv` に無い。該当件数は参考として出す | P12 |
+
+`baseline/` は書き直し前（HEAD 98709b43）のスナップショット。G6 の基準なので書き換えない。
+
+実行区分の誤記を直すときは、基線を書き換えずに `kind_changes.tsv`（テストID／旧実行区分／新実行区分／理由）へ宣言する。G6 は、基線の値が旧実行区分と一致し、今の値が新実行区分と一致するものだけ認める（2026-10-19、IT-M03-45-024 の「ブラザ+DB確認」→「ブラウザ+DB確認」）。
+
+書き直しの後で足したケースは `added_cases.tsv`（テストID／追加日／由来）に載せる。G6 は「基線から保留除外分を引いた集合」に
+この追加分を足したものと、現在のテストIDの集合を照合する。基線が無い機能（後から新設したもの）は、全ケースが追加分になる。
+2026-10-06 に機能間データ連携のケース142件を足した（`../link/merge_into_cases.py`。旧テストIDとの対応は `../link/merged_map.tsv`）。
+同日、アクセス解析連携のケース（F10-01〜03）を足した（`../ga/merge_into_cases.py`。判定IDとの対応は `../ga/ga_map.tsv`）。
+同日、対応表が「候補」止まりだった14機能のケース398件を足した（`../sheetmap/merge_into_cases.py`。判定IDとの対応は `../sheetmap/sm_map.tsv`）。
+
+機械で見られないもの（P2 の共有可の妥当性、P6 の値と対象の対応、P8 の種別の妥当性、P9、P10）は codex レビューで見る。
+
+## 用語の置き換え（依頼者決定 2026-10-06）
+
+AWS Step Functions は使わない。テストケースでは「バッチ」と書き、非同期処理ダッシュボードの「Messenger ジョブ」という表現も書かない。
+置き換えの規則は `terms.py`（`python3 precond/terms.py` で cases/・step_changes/・open_preconditions.tsv・link/cases に当てる。何度流しても同じ）。
+基線は書き換えていない。ゲートは基線の手順と期待結果に同じ置き換えを当ててから照合する。
+シードID `S-B02-05-STEPFUNCTIONS` は `S-B02-05-BATCH-ENV` に変えた。
+
+「非同期処理ダッシュボード」という画面名も書かない（同日の依頼者決定）。設計書に無い画面で、実装にあるのは管理画面とは切り離した運用ツールである。
+ケースには「非同期処理の待機中・実行中のジョブが0件になるまで待つ」のように状態だけを書く。待機の手順そのものは残す
+（バッチはジョブを積むだけで終わり、実処理はワーカーが後から行うため）。確認の手段は試験環境の用意として扱う。
+
+ succeeded in 74ms:
+# レビュー1巡目の反映（著者への依頼）
+
+codex のレビュー指摘が `integration_test/casegen/sheetmap/review/<機能ID>_r1_findings.md` にある。
+1件ずつ、**指摘が引いている設計書の記述を sheet.txt で自分で読み直して事実かどうか確かめてから**、下の裁定に従って反映せよ。指摘をそのまま適用しない。
+
+## 裁定（依頼元の決定。指摘と食い違うときはこちらが優先）
+
+| No. | 裁定 |
+| --- | --- |
+| A | **根拠はHTML設計書であり、対象シート1枚に限らない。** その機能のふるまい（何を出力するか、全件か選択か、出力対象の条件、未選択・0件のときの扱い、ファイル名、起動するボタン、権限）が同じ冊子の別シート（一覧画面のシートなど）に書かれていれば、それを期待結果の根拠にしてよい。出典にそのシートを「｜」でつないで書く。当初の依頼文の「隣接シートは操作の入口にだけ使う」は撤回する。したがって、「対象シートに記述が無い」ことだけを理由にした指摘は、同じ冊子の別シートに記述があれば却下する。逆に、別シートにその機能の記述があるのにケースにしていなかったもの（出力対象、選択と全件の違い、未選択時の扱いなど）は、ケースを足す。別シートは `python3 integration_test/casegen/sheetmap/build_materials.py --sheet <書番> <シート名>` で読む。他の冊子・実装・現行ソースは根拠にしない |
+| B | **観点表の「期待値の決め方」が「観点内で確定」の判定単位は、適用の条件が設計書から言えれば、期待結果は判定単位の文から決めてよい。** 例: IT-0080・IT-0225（参照・出力だけの機能は実行前後でデータを更新しない）は、設計書がその機能をCSV出力・一覧表示などの参照機能として書いていれば適用できる。「非更新とは対象シートに書いていない」という指摘は却下する。IT-0083（出力ファイルの数量・金額が画面表示およびDB値と一致）を使うときは、画面表示またはDB値と見比べる手順と期待結果にする |
+| C | **CSV・帳票の出力項目の構成と並びは IT-0156**（観点ID ITA-02。他の観点に割り当たらない機能仕様を受ける区分）に当てる。IT-0071 は「値が取得元と同値」にだけ使う。report.md に「出力項目の構成・並びを受ける判定単位が観点表に無いので IT-0156 を使った」と書く |
+| C' | （2026-10-06 追記）観点表に IT-0348（ITA-05。出力したファイルの各レコードが、定められた出力項目だけで構成され、定められた順に並ぶこと）を足した。出力項目の構成と並びは、以後 IT-0348 に当てる。裁定Cで IT-0156 に当てていた14件は付け替えた（`retag_0348.py`）。同日、IT-0349（ITA-05。出力したファイルのレコードが、定められた並び順で出力されること）も足した。出力したCSV・帳票の行の並び順は IT-0349 に当てる（24件を付け替えた。`retag_0349.py`）。同日、IT-0350（ITA-05。送信されたメールの件名、送信元、本文の構成が、定められたとおりであること）も足した。通知メールの内容は IT-0350 に当てる（10件を付け替えた。`retag_0350.py`）。初期値、未選択時の扱いなど、ほかに受ける判定単位が無いものは IT-0156 のまま（2026-10-07 追記）観点表にバッチ用の4行を足した。IT-0351（ITA-14。異常として定められた条件でバッチが異常終了として終わること）、IT-0352（ITA-13。異常終了した場合、異常の後に行わないと定められた処理が行われていないこと）、IT-0353（ITA-13。終了後、一時的な資源が定められたとおりに削除されている・残っていること）、IT-0354（ITA-21。バッチの出力メッセージが、定められた条件のときに定められた文言で出力されること）。バッチのケースで期待結果がこのどれかそのものであるものは、IT-0156 でなくこれらを使う。 |
+| D | 見出し行の有無、データが何行目から始まるかは、設計書に書いていなければ期待結果・手順に書かない。データ行は事前準備の識別子（番号・コード）で特定する。項目の並びは「各行の項目が左から設計書の識別ID順に対応する」ことを、事前準備の値がどの位置に出るかで確かめる |
+| E | 値の取得元が設計書から決まらない項目（備考が空で、項目名からも取得元が1つに決まらないもの。呼び名の違う属性を当てはめたもの）は、値の照合から外し、report.md の「ケースにしなかったもの」に取得元の不足として書く。項目名と同じ名前の属性は取得元が決まるとしてよい |
+| F | 計算・連結・書式変換の結果そのもの（姓＋空白＋名、差の計算、小計など）は単体テストの担当（SCOPE.md）。ケースから外し、report.md に「単体テストへ送った」と書く。ただし「どの時点の値か」「単価か小計か」のように、どの値を採るかの定めは結合テストで確かめてよい |
+| G | 1ケース1期待結果。判定単位が違う確認が1ケースに混じっていたら分ける |
+| H | シードは実際に作れる方法で書く。管理画面で指定できない内部IDを管理画面で登録する、と書かない（DB投入にする）。設計書が求める状態（必須項目が未設定の会員など）が ee 実装の制約で作れないときは、ケースは残し、投入方法を「未確定: <理由>」にして report.md の「試験環境に要るもの」に挙げる。実装が設計書と違うこと自体はケースを変える理由にしない |
+| I | 手順は、画面を開く・条件を入れる・ボタンを押す・ファイルを開く、の操作を番号付きで書く。「〜を確認する」だけの手順にしない |
+| J | 設計書の中で記述が食い違っている・誤記と思われる箇所を、推測でどちらかに決めて期待結果にしない。両方に共通する部分だけを期待結果にし、食い違いは report.md に書く |
+| K | 判定ID IT-0332〜0347 は使わない。使っているケースは、当てはまる別の判定単位に付け替えるか、無ければ外す |
+| L | 指摘が「取りこぼし」で、設計書の記述から期待結果が一意に決まるなら、ケースを足す。試験基盤が無いことはケースを作らない理由にならない（投入方法・前提を「未確定」と書いて残す） |
+
+## やること
+
+1. 指摘ごとに「採用／一部採用／却下」を決め、cases・seed・report.md を直す。ケースを足したり外したりしたら、テストIDを 001 からの連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. 指摘に無くても、裁定 A〜L に反する箇所が自分のケースにあれば同じように直す。
+3. `integration_test/casegen/sheetmap/review/<機能ID>_r1_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述（原文）・直した内容」を表で書く。保存できないときは返答に本文を含める。
+4. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること（他の著者と同じ置き場所を使っているため）。
+
+## 返答
+
+5行以内。直した後の件数、指摘ごとの判定の内訳（採用・一部採用・却下の件数）、足した・外したテストの数、verify の結果、dispositions.md を保存できたか。
+
+ succeeded in 66ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/combination/cases/M05-02_cb_test_cases.tsv integration_test/casegen/combination/cases/M05-02_cb_seed_data.tsv integration_test/casegen/combination/cases/M05-02_cb_dispositions.tsv integration_test/casegen/combination/combos/M05-02.tsv integration_test/casegen/combination/factors/M05-02_processes.tsv integration_test/casegen/combination/factors/M05-02_factors.tsv integration_test/casegen/combination/factors/M05-02_interactions.tsv integration_test/casegen/combination/factors/M05-02_constraints.tsv integration_test/casegen/combination/units/M05-02/design.txt integration_test/casegen/cases/M05-02_test_cases.tsv integration_test/casegen/cases/M05-02_seed_data.tsv integration_test/casegen/combination/cases/M05-03_cb_test_cases.tsv integration_test/casegen/combination/cases/M05-03_cb_seed_data.tsv integration_test/casegen/combination/cases/M05-03_cb_dispositions.tsv integration_test/casegen/combination/combos/M05-03.tsv integration_test/casegen/combination/factors/M05-03_processes.tsv integration_test/casegen/combination/factors/M05-03_factors.tsv integration_test/casegen/combination/factors/M05-03_interactions.tsv integration_test/casegen/combination/factors/M05-03_constraints.tsv integration_test/casegen/combination/units/M05-03/design.txt integration_test/casegen/cases/M05-03_test_cases.tsv integration_test/casegen/cases/M05-03_seed_data.tsv integration_test/casegen/combination/cases/M05-05_cb_test_cases.tsv integration_test/casegen/combination/cases/M05-05_cb_seed_data.tsv integration_test/casegen/combination/cases/M05-05_cb_dispositions.tsv integration_test/casegen/combination/combos/M05-05.tsv integration_test/casegen/combination/factors/M05-05_processes.tsv integration_test/casegen/combination/factors/M05-05_factors.tsv integration_test/casegen/combination/factors/M05-05_interactions.tsv integration_test/casegen/combination/factors/M05-05_constraints.tsv integration_test/casegen/combination/units/M05-05/design.txt integration_test/casegen/cases/M05-05_test_cases.tsv integration_test/casegen/cases/M05-05_seed_data.tsv integration_test/casegen/combination/cases/M05-08_cb_test_cases.tsv integration_test/casegen/combination/cases/M05-08_cb_seed_data.tsv integration_test/casegen/combination/cases/M05-08_cb_dispositions.tsv integration_test/casegen/combination/combos/M05-08.tsv integration_test/casegen/combination/factors/M05-08_processes.tsv integration_test/casegen/combination/factors/M05-08_factors.tsv integration_test/casegen/combination/factors/M05-08_interactions.tsv integration_test/casegen/combination/factors/M05-08_constraints.tsv integration_test/casegen/combination/units/M05-08/design.txt integration_test/casegen/cases/M05-08_test_cases.tsv integration_test/casegen/cases/M05-08_seed_data.tsv integration_test/casegen/combination/cases/M05-09_cb_test_cases.tsv integration_test/casegen/combination/cases/M05-09_cb_seed_data.tsv integration_test/casegen/combination/cases/M05-09_cb_dispositions.tsv integration_test/casegen/combination/combos/M05-09.tsv integration_test/casegen/combination/factors/M05-09_processes.tsv integration_test/casegen/combination/factors/M05-09_factors.tsv integration_test/casegen/combination/factors/M05-09_interactions.tsv integration_test/casegen/combination/factors/M05-09_constraints.tsv integration_test/casegen/combination/units/M05-09/design.txt integration_test/casegen/cases/M05-09_test_cases.tsv integration_test/casegen/cases/M05-09_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 18ms:
+      5 integration_test/casegen/combination/cases/M05-02_cb_test_cases.tsv
+      5 integration_test/casegen/combination/cases/M05-02_cb_seed_data.tsv
+     10 integration_test/casegen/combination/cases/M05-02_cb_dispositions.tsv
+     10 integration_test/casegen/combination/combos/M05-02.tsv
+      2 integration_test/casegen/combination/factors/M05-02_processes.tsv
+      4 integration_test/casegen/combination/factors/M05-02_factors.tsv
+      4 integration_test/casegen/combination/factors/M05-02_interactions.tsv
+      3 integration_test/casegen/combination/factors/M05-02_constraints.tsv
+    139 integration_test/casegen/combination/units/M05-02/design.txt
+     29 integration_test/casegen/cases/M05-02_test_cases.tsv
+     35 integration_test/casegen/cases/M05-02_seed_data.tsv
+      1 integration_test/casegen/combination/cases/M05-03_cb_test_cases.tsv
+      1 integration_test/casegen/combination/cases/M05-03_cb_seed_data.tsv
+      4 integration_test/casegen/combination/cases/M05-03_cb_dispositions.tsv
+      4 integration_test/casegen/combination/combos/M05-03.tsv
+      2 integration_test/casegen/combination/factors/M05-03_processes.tsv
+      3 integration_test/casegen/combination/factors/M05-03_factors.tsv
+      2 integration_test/casegen/combination/factors/M05-03_interactions.tsv
+      2 integration_test/casegen/combination/factors/M05-03_constraints.tsv
+    141 integration_test/casegen/combination/units/M05-03/design.txt
+     32 integration_test/casegen/cases/M05-03_test_cases.tsv
+     35 integration_test/casegen/cases/M05-03_seed_data.tsv
+      1 integration_test/casegen/combination/cases/M05-05_cb_test_cases.tsv
+      1 integration_test/casegen/combination/cases/M05-05_cb_seed_data.tsv
+      3 integration_test/casegen/combination/cases/M05-05_cb_dispositions.tsv
+      3 integration_test/casegen/combination/combos/M05-05.tsv
+      2 integration_test/casegen/combination/factors/M05-05_processes.tsv
+      3 integration_test/casegen/combination/factors/M05-05_factors.tsv
+      2 integration_test/casegen/combination/factors/M05-05_interactions.tsv
+      2 integration_test/casegen/combination/factors/M05-05_constraints.tsv
+    167 integration_test/casegen/combination/units/M05-05/design.txt
+     32 integration_test/casegen/cases/M05-05_test_cases.tsv
+     34 integration_test/casegen/cases/M05-05_seed_data.tsv
+      2 integration_test/casegen/combination/cases/M05-08_cb_test_cases.tsv
+      2 integration_test/casegen/combination/cases/M05-08_cb_seed_data.tsv
+      2 integration_test/casegen/combination/cases/M05-08_cb_dispositions.tsv
+      2 integration_test/casegen/combination/combos/M05-08.tsv
+      2 integration_test/casegen/combination/factors/M05-08_processes.tsv
+      4 integration_test/casegen/combination/factors/M05-08_factors.tsv
+      4 integration_test/casegen/combination/factors/M05-08_interactions.tsv
+      2 integration_test/casegen/combination/factors/M05-08_constraints.tsv
+     57 integration_test/casegen/combination/units/M05-08/design.txt
+     21 integration_test/casegen/cases/M05-08_test_cases.tsv
+     24 integration_test/casegen/cases/M05-08_seed_data.tsv
+     14 integration_test/casegen/combination/cases/M05-09_cb_test_cases.tsv
+     14 integration_test/casegen/combination/cases/M05-09_cb_seed_data.tsv
+     20 integration_test/casegen/combination/cases/M05-09_cb_dispositions.tsv
+     20 integration_test/casegen/combination/combos/M05-09.tsv
+      4 integration_test/casegen/combination/factors/M05-09_processes.tsv
+      9 integration_test/casegen/combination/factors/M05-09_factors.tsv
+      9 integration_test/casegen/combination/factors/M05-09_interactions.tsv
+      5 integration_test/casegen/combination/factors/M05-09_constraints.tsv
+    148 integration_test/casegen/combination/units/M05-09/design.txt
+     43 integration_test/casegen/cases/M05-09_test_cases.tsv
+     46 integration_test/casegen/cases/M05-09_seed_data.tsv
+   1177 total
+
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/combos/M05-02.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-02_factors.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-02_interactions.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-02_processes.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-02_constraints.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-02_cb_dispositions.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/combos/M05-03.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-03_factors.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-03_processes.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-03_interactions.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-03_constraints.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-03_cb_dispositions.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/combos/M05-05.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-05_processes.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-05_factors.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-05_interactions.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-05_constraints.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/combos/M05-08.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-05_cb_dispositions.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-08_processes.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 27ms:
+処理ID	組	種別	根拠	理由
+P1	F01=受注&F02=空	打ち切り	L0112,L0114	種別が受注の項目で受注の値が空のときは空欄を出力し、取り出した値の種類による変換は行われない
+P1	F01=受注明細&F02=値がある	作れない	L0114	種別が受注明細の出力項目は受注から値を取れず常に明細から取るため、受注から取った値がある状態は成り立たない
+
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-08_factors.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-08_interactions.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 52ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	出力項目に指定したデータの種別	受注｜受注明細	受注: 受注から値を取り、空のときは明細から取り直しても空のまま／受注明細: 受注では取れないため常に明細から取る	L0112,L0114	この機能
+F02	P1	受注から取った値	値がある｜空	値がある: その値を出力する（受注明細種別の項目は明細の値）／空: 種別が受注なら空欄、受注明細種別なら明細の値を出力する	L0112,L0114	この機能
+F03	P1	取り出した値の種類	他のデータを1件参照する値｜他のデータを複数参照する値｜日時｜上記以外の値	他のデータを1件参照する値: 参照先の項目の値／他のデータを複数参照する値: 参照先の項目の値を,で連結し同じ値は1つにまとめる／日時: Y-m-d H:i:s形式の文字列／上記以外の値: 取り出した値のまま	L0115-L0121	この機能
+
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-08_cb_dispositions.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 78ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	効き合う	L0112,L0114	種別が受注のときは受注の値が空だと空欄、受注明細のときは受注の値に依らず明細から取る
+P1	F01+F03	関係しない		値の種類による変換は取り出した値に対して行い、取り出し元が受注か明細かで変わらない
+P1	F02+F03	効き合う	L0112,L0114,L0115-L0121	受注から取った値が空で種別が受注のときは変換の対象が無く空欄になり、値があるときだけ種類ごとの変換を行う
+
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-08_constraints.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/combos/M05-09.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-09_processes.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-09_factors.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-09_interactions.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/factors/M05-09_constraints.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-09_cb_dispositions.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 206ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	CSVの各列の値を取り出して出力する形に変える	受注情報検索一覧画面で受注一覧CSVダウンロードを押す（出力項目はCSV出力項目設定で設定済み）	ダウンロードしたCSVの各列の値	L0112-L0121
+
+ succeeded in 212ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M05-02-001	P1	F01=受注&F02=値がある&F03=他のデータを1件参照する値	出力項目に指定したデータの種別=受注／受注から取った値=値がある／取り出した値の種類=他のデータを1件参照する値	出力項目に指定したデータの種別×受注から取った値: 受注×値がある；出力項目に指定したデータの種別×取り出した値の種類: 受注×他のデータを1件参照する値；受注から取った値×取り出した値の種類: 値がある×他のデータを1件参照する値
+CB-M05-02-002	P1	F01=受注&F02=空	出力項目に指定したデータの種別=受注／受注から取った値=空／取り出した値の種類=（効かない）	出力項目に指定したデータの種別×受注から取った値: 受注×空
+CB-M05-02-003	P1	F01=受注&F02=値がある&F03=他のデータを複数参照する値	出力項目に指定したデータの種別=受注／受注から取った値=値がある／取り出した値の種類=他のデータを複数参照する値	出力項目に指定したデータの種別×取り出した値の種類: 受注×他のデータを複数参照する値；受注から取った値×取り出した値の種類: 値がある×他のデータを複数参照する値
+CB-M05-02-004	P1	F01=受注&F02=値がある&F03=日時	出力項目に指定したデータの種別=受注／受注から取った値=値がある／取り出した値の種類=日時	出力項目に指定したデータの種別×取り出した値の種類: 受注×日時；受注から取った値×取り出した値の種類: 値がある×日時
+CB-M05-02-005	P1	F01=受注&F02=値がある&F03=上記以外の値	出力項目に指定したデータの種別=受注／受注から取った値=値がある／取り出した値の種類=上記以外の値	出力項目に指定したデータの種別×取り出した値の種類: 受注×上記以外の値；受注から取った値×取り出した値の種類: 値がある×上記以外の値
+CB-M05-02-006	P1	F01=受注明細&F02=空&F03=他のデータを1件参照する値	出力項目に指定したデータの種別=受注明細／受注から取った値=空／取り出した値の種類=他のデータを1件参照する値	出力項目に指定したデータの種別×受注から取った値: 受注明細×空；出力項目に指定したデータの種別×取り出した値の種類: 受注明細×他のデータを1件参照する値；受注から取った値×取り出した値の種類: 空×他のデータを1件参照する値
+CB-M05-02-007	P1	F01=受注明細&F02=空&F03=他のデータを複数参照する値	出力項目に指定したデータの種別=受注明細／受注から取った値=空／取り出した値の種類=他のデータを複数参照する値	出力項目に指定したデータの種別×取り出した値の種類: 受注明細×他のデータを複数参照する値；受注から取った値×取り出した値の種類: 空×他のデータを複数参照する値
+CB-M05-02-008	P1	F01=受注明細&F02=空&F03=日時	出力項目に指定したデータの種別=受注明細／受注から取った値=空／取り出した値の種類=日時	出力項目に指定したデータの種別×取り出した値の種類: 受注明細×日時；受注から取った値×取り出した値の種類: 空×日時
+CB-M05-02-009	P1	F01=受注明細&F02=空&F03=上記以外の値	出力項目に指定したデータの種別=受注明細／受注から取った値=空／取り出した値の種類=上記以外の値	出力項目に指定したデータの種別×取り出した値の種類: 受注明細×上記以外の値；受注から取った値×取り出した値の種類: 空×上記以外の値
+
+ succeeded in 274ms:
+項目ID	扱い	テストID	理由
+CB-M05-02-001	ケース化	IT-M05-02-034	種別受注・値あり・他のデータ1件参照の都道府県(名称)の出力を確認
+CB-M05-02-002	既存ケースで確認済み	IT-M05-02-021	事前準備④⑤で表示順1を受注種別の商品名とし受注の商品名は空と書いてあり、手順3・期待結果で表示順1の商品名列が空欄になることを見ている（種別が受注で受注の値が空のとき取り出した値の種類に依らず空欄。L0114）
+CB-M05-02-003	ケースにしない		結果が設計書から一意に決まらない。受注の出力項目（L0016-L0079）に複数のデータを参照する値の項目は無く、受注が複数のデータを参照する項目（受注明細の一覧など）を出力項目にDBで設定する形になる。参照先の件数と値は設計書に定めが無く（送料などの明細行がどう含まれるかを設計書は書かない）、L0119の連結結果を設計書から一意に出せない。要因表の制約に足すべき組: F01=受注&F02=値がある&F03=他のデータを複数参照する値
+CB-M05-02-004	ケース化	IT-M05-02-035	種別受注・値あり・日時の受注日の出力を確認
+CB-M05-02-005	ケース化	IT-M05-02-036	種別受注・値あり・上記以外の値のショップ用メモ欄の出力を確認
+CB-M05-02-006	ケース化	IT-M05-02-037	種別受注明細・受注側が空・他のデータ1件参照の商品IDの出力を確認
+CB-M05-02-007	ケースにしない		作れない。受注明細種別の出力項目（L0058-L0069の注文詳細ID・商品ID・商品規格ID・商品名・商品コード・規格名・価格・個数）に、複数のデータを参照する値の項目が無い。要因表の制約に足すべき組: F01=受注明細&F03=他のデータを複数参照する値
+CB-M05-02-008	ケースにしない		作れない。受注明細種別の出力項目（L0058-L0069）に日時の値の項目が無く、日時の項目（受注日L0055・入金日L0056・出荷指示日L0057）はいずれも受注の項目である。要因表の制約に足すべき組: F01=受注明細&F03=日時
+CB-M05-02-009	既存ケースで確認済み	IT-M05-02-021	事前準備④⑤で表示順2を受注明細種別の商品名とし受注の商品名は空・明細の商品名=明細商品-021（文字列）と書いてあり、手順3・期待結果で表示順2の商品名列に「明細商品-021」が出ることを見ている（受注明細種別は受注に依らず明細から取る。L0114）
+
+ succeeded in 363ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	受注の出所	本店｜支店｜スマレジ	本店: 本店の受注の行を出力／支店: 支店の受注の行を出力／スマレジ: EC-CUBEで保持するスマレジ取引の行を出力	L0016,L0018,L0075,L0087	この機能
+F02	P1	受注の明細の有無	1件以上｜0件	1件以上: 明細の件数だけ行を出力／0件: その受注の行を出力しない	L0110	この機能
+
+ succeeded in 385ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M05-05-001	P1	F01=本店&F02=1件以上	受注の出所=本店／受注の配送先の件数=1件以上	受注の出所×受注の配送先の件数: 本店×1件以上
+CB-M05-05-002	P1	F01=支店&F02=1件以上	受注の出所=支店／受注の配送先の件数=1件以上	受注の出所×受注の配送先の件数: 支店×1件以上
+
+ succeeded in 494ms:
+項目ID	扱い	テストID	理由
+CB-M05-03-001	既存ケースで確認済み	IT-M05-03-008	事前準備④に本店受注05030011が受注明細1件（明細ID 510008001）を持つと書かれ、手順3・4で定義「M0503販路確認定義」を出力して期待結果で本店受注05030011が1行出力されることを見ている（L0016・L0090・L0110）
+CB-M05-03-002	既存ケースで確認済み	IT-M05-03-008	事前準備④に支店受注05030012が受注明細1件（明細ID 510008002）を持つと書かれ、手順3・4で定義「M0503販路確認定義」を出力して期待結果で支店受注05030012が1行出力されることを見ている（L0016・L0090・L0110）
+CB-M05-03-003	既存ケースで確認済み	IT-M05-03-008	事前準備④にEC-CUBEで保持するスマレジ取引05030013が受注明細1件（明細ID 510008003）を持つと書かれ、手順3・4で定義「M0503販路確認定義」を出力して期待結果でスマレジ取引05030013が1行出力されることを見ている（L0016・L0090・L0110）
+
+ succeeded in 556ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	受注詳細カスタムCSVを出力する	受注情報検索一覧画面で検索し、受注詳細カスタムCSVダウンロードで定義を選ぶ	ダウンロードしたCSVの行と列	L0016,L0018,L0085,L0113
+
+ succeeded in 559ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M05-03-001	P1	F01=本店&F02=1件以上	受注の出所=本店／受注の明細の有無=1件以上	受注の出所×受注の明細の有無: 本店×1件以上
+CB-M05-03-002	P1	F01=支店&F02=1件以上	受注の出所=支店／受注の明細の有無=1件以上	受注の出所×受注の明細の有無: 支店×1件以上
+CB-M05-03-003	P1	F01=スマレジ&F02=1件以上	受注の出所=スマレジ／受注の明細の有無=1件以上	受注の出所×受注の明細の有無: スマレジ×1件以上
+
+ succeeded in 560ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	受注一覧カスタムCSVを出力する	受注情報検索一覧画面で検索し、受注一覧カスタムCSVダウンロードで定義を選ぶ	ダウンロードしたCSVの行と列	L0016,L0018,L0075,L0087
+
+ succeeded in 569ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		出所は出力対象にする受注の行を決め、明細の件数は受注ごとの行数を決めるだけで互いの結果を変えない
+
+ succeeded in 648ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M05-08-001	P1	F01=全て採番済み&F02=注文受領以外&F03=存在しない担当者	対象受注の注文番号採番=全て採番済み／対象受注の対応状況=注文受領以外／受け取った担当者ID=存在しない担当者	対象受注の対応状況×受け取った担当者ID: 注文受領以外×存在しない担当者
+
+ succeeded in 656ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	受注の出所	本店｜支店｜スマレジ	本店: 本店の受注の行を出力／支店: 支店の受注の行を出力／スマレジ: EC-CUBEで保持するスマレジ取引の行を出力	L0016,L0018,L0085,L0113	この機能
+F02	P1	受注の配送先の件数	1件以上｜0件	1件以上: 配送先の件数だけ行を出力／0件: その受注の行を出力しない	L0136	この機能
+
+ succeeded in 642ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	スタック用紙印刷を予約して受注を更新する	受注一覧で受注を選択しスタック用紙印刷ボタンを押す	受注のブラウザ印刷フラグ・対応状況・注文確定日・担当者（DB）	L0017-L0020,L0034-L0038
+
+ succeeded in 711ms:
+処理ID	組	種別	根拠	理由
+P1	F02=0件	打ち切り	L0136	配送先を1件も持たない受注は行を出力せず、ほかの要因の値は結果に効かない
+
+ succeeded in 583ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	受注の配送方法の区分	国内配送｜国内配送以外	国内配送: 日本語の納品書に出る／国内配送以外: 日本語の納品書に出ない（海外配送・区分未設定・配送方法未設定・配送先なしを含む）	L0058,L0117-L0121	この機能
+F02	P1	受注の会員情報とプレイヤー情報	会員とプレイヤー情報あり｜ゲスト｜会員だがプレイヤー情報なし	会員とプレイヤー情報あり: 出る／ゲスト: 出て会員番号に非会員と表示（Excel優先）／会員だがプレイヤー情報なし: 出ない	L0091,L0118	この機能
+F03	P1	注文者の都道府県	設定あり｜未設定	設定あり: 出る／未設定: 出ない	L0120	この機能
+F04	P2	受注の店舗	本店またはスマレジ｜支店	本店またはスマレジ: 棚番で並べる／支店: 棚番の並べ替えを行わない	L0054,L0059,L0063	この機能
+F05	P2	明細の並びを決める段	カードかどうかで決まる｜棚番で決まる｜言語で決まる｜状態で決まる｜Foilで決まる｜略称タグで決まる｜レアリティで決まる｜色で決まる｜コレクター番号で決まる｜英語カード名で決まる	カードかどうかで決まる: カードが先／棚番で決まる: 棚番昇順／言語で決まる: 日→英→他言語／状態で決まる: NM→HP／Foilで決まる: 非Foil→Foil／略称タグで決まる: タグ昇順／レアリティで決まる: M→C／色で決まる: 色マスター順／コレクター番号で決まる: 番号昇順／英語カード名で決まる: 英語名昇順	L0062-L0071	この機能
+F06	P3	同じ受注を選んだ回数	1回｜複数回	1回: 納品書1回／複数回: 納品書は1回だけ	L0124	この機能
+F07	P3	受注の配送先の数	1つ｜複数	1つ: 数量合計は受注の数量／複数: 配送先をまたいで受注単位で1つにまとめる	L0124	この機能
+F08	P1	受注明細の商品・商品規格・サブ情報	全て持つ｜いずれかを持たない	全て持つ: 明細行が納品書に出る／いずれかを持たない: その明細行が納品書に出ない（商品・商品規格・商品サブ情報・商品規格サブ情報のどれを欠いても結果は同じ）	L0122	この機能
+
+ succeeded in 720ms:
+項目ID	扱い	テストID	理由
+CB-M05-05-001	既存ケースで確認済み	IT-M05-05-008	事前準備②に本店受注05050011が配送先1件を持つと書かれ、手順3・4で定義「M0505販路確認定義-008」を出力して期待結果で本店受注05050011が1行出力されることを見ている（L0016・L0116・L0136）
+CB-M05-05-002	既存ケースで確認済み	IT-M05-05-008	事前準備②に支店受注05050012が配送先1件を持つと書かれ、手順3・4で定義「M0505販路確認定義-008」を出力して期待結果で支店受注05050012が1行出力されることを見ている（L0016・L0116・L0136）
+
+ succeeded in 789ms:
+処理ID	組	種別	根拠	理由
+P1	F02=0件	打ち切り	L0110	明細を1件も持たない受注は行を出力せず、ほかの要因の値は結果に効かない
+
+ succeeded in 747ms:
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	対象受注の注文番号採番	全て採番済み｜未採番あり	全て採番済み: 更新する／未採番あり: 他の対象受注も含め1件も更新せず終了（400）	L0019,L0034	この機能
+F02	P1	対象受注の対応状況	注文受領｜注文受領以外	注文受領: ピック中に変え注文確定日を設定／注文受領以外: 対応状況と注文確定日は変えない（印刷済みにはする）	L0020,L0036	この機能
+F03	P1	受け取った担当者ID	存在する担当者｜存在しない担当者	存在する担当者: 受注の担当者に設定／存在しない担当者: 担当者を変更しない	L0038	この機能
+
+ succeeded in 641ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		出す条件を全て満たすかで決まり、条件ごとの外れ方は1つずつ確かめれば足りる
+P1	F01+F03	関係しない		出す条件を全て満たすかで決まる
+P1	F02+F03	関係しない		出す条件を全て満たすかで決まる
+P2	F04+F05	効き合う	L0063	支店では棚番の並べ替えを行わないため、棚番で決まる段が本店と支店で変わる
+P3	F06+F07	関係しない		選んだ回数の重複排除と配送先をまたぐ数量合計は別の定めで、互いに影響しない
+P1	F01+F08	関係しない	L0122	受注を出すかは受注の条件で決まり、明細行を出すかは明細の持つ情報で決まる。互いの結果を変えない
+P1	F02+F08	関係しない	L0122	受注を出すかは受注の条件で決まり、明細行を出すかは明細の持つ情報で決まる。互いの結果を変えない
+P1	F03+F08	関係しない	L0122	受注を出すかは受注の条件で決まり、明細行を出すかは明細の持つ情報で決まる。互いの結果を変えない
+
+ succeeded in 803ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		出所は出力対象にする受注の行を決め、配送先の件数は受注ごとの行数を決めるだけで互いの結果を変えない
+
+ succeeded in 763ms:
+処理ID	組	種別	根拠	理由
+P1	F01=未採番あり	打ち切り	L0034	未採番の注文が1件でもあると1件も更新せず終了するので、ほかの要因の値は結果に効かない
+
+ succeeded in 702ms:
+項目ID	扱い	テストID	理由
+CB-M05-09-001	ケース化	IT-M05-09-046	組の値の組み合わせで処理を動かした結果が設計書から一意に決まる
+CB-M05-09-002	ケース化	IT-M05-09-047	組の値の組み合わせで処理を動かした結果が設計書から一意に決まる
+CB-M05-09-003	既存ケースで確認済み	IT-M05-09-006	IT-M05-09-006 の事前準備に、ゲスト受注（会員とプレイヤーを持たない）・注文者都道府県・国内配送先と配送方法・有効な明細1件（商品関連情報が揃った明細）が書かれ、手順2〜3でその受注を選んで納品書印刷（日本語）を押し、期待結果で納品書が出て送り主の会員番号に「非会員」と表示されることを見ている。組の値（国内配送・ゲスト・都道府県が設定あり・明細が全て持つ）がすべてそろう
+CB-M05-09-004	ケース化	IT-M05-09-049	組の値の組み合わせで処理を動かした結果が設計書から一意に決まる
+CB-M05-09-005	既存ケースで確認済み	IT-M05-09-004	IT-M05-09-004 の事前準備に、受注者と配送先の国が日本で配送方法だけが海外配送の受注が書かれ、手順で国内配送の受注とともに選んで納品書印刷（日本語）を押し、期待結果で海外配送の受注の納品書が出力されないことを見ている。「出す条件を1つでも満たさない受注は納品書に出ないので、ほかの要因の値は結果に効かない」（打ち切り・L0117,L0121）ため国内配送以外の1値で足りる
+CB-M05-09-006	既存ケースで確認済み	IT-M05-09-008	IT-M05-09-008 の事前準備に、会員を持つがプレイヤーを持たない受注（008B）が書かれ、手順で会員とプレイヤーを持つ受注とともに選んで納品書印刷（日本語）を押し、期待結果で008Bの納品書が出力されないことを見ている。打ち切り（L0117-L0118）のためほかの要因の値は結果に効かない
+CB-M05-09-007	既存ケースで確認済み	IT-M05-09-010	IT-M05-09-010 の事前準備に、注文者都道府県が未設定の受注（010B）が書かれ、手順で都道府県が東京都の受注とともに選んで納品書印刷（日本語）を押し、期待結果で010Bの納品書が出力されないことを見ている。打ち切り（L0117,L0120）のためほかの要因の値は結果に効かない
+CB-M05-09-008	ケース化	IT-M05-09-053	支店×並べる段の組で結果が設計書から一意に決まる
+CB-M05-09-009	ケース化	IT-M05-09-054	支店×並べる段の組で結果が設計書から一意に決まる
+CB-M05-09-010	ケース化	IT-M05-09-055	支店×並べる段の組で結果が設計書から一意に決まる
+CB-M05-09-011	ケース化	IT-M05-09-056	支店×並べる段の組で結果が設計書から一意に決まる
+CB-M05-09-012	ケース化	IT-M05-09-057	支店×並べる段の組で結果が設計書から一意に決まる
+CB-M05-09-013	ケース化	IT-M05-09-058	支店×並べる段の組で結果が設計書から一意に決まる
+CB-M05-09-014	ケース化	IT-M05-09-059	支店×並べる段の組で結果が設計書から一意に決まる
+CB-M05-09-015	ケース化	IT-M05-09-060	支店×並べる段の組で結果が設計書から一意に決まる
+CB-M05-09-016	ケース化	IT-M05-09-061	組の値の組み合わせで処理を動かした結果が設計書から一意に決まる
+CB-M05-09-017	ケース化	IT-M05-09-062	組の値の組み合わせで処理を動かした結果が設計書から一意に決まる
+CB-M05-09-018	ケースにしない		配送先が1つの受注は、受注情報検索の一覧にも出荷指示リストにも選べる行が1行しか無く、同じ受注を複数回選べない（L0124「同じ受注を複数回選んだときも、納品書は 1 回だけ出す。配送先を複数持つ受注でも…」は、複数回選べるのは配送先の行が複数ある受注に限られる）。制約に足すべき組: F06=複数回&F07=1つ
+CB-M05-09-019	既存ケースで確認済み	IT-M05-09-014	IT-M05-09-014 の事前準備に配送先2件（複数）・受注総数量5が書かれ、手順2で同じ受注に属する配送先2件を選ぶ（同じ受注を複数回選ぶ）、手順3で納品書印刷（日本語）を押し、期待結果で納品書が1回だけ出力され商品数が受注単位の数量合計5であることを見ている
+
+ succeeded in 714ms:
+処理ID	組	種別	根拠	理由
+P2	F04=支店&F05=棚番で決まる	作れない	L0063	支店は棚番の並べ替えを行わないので棚番で決まる段が成り立たない
+P1	F01=国内配送以外	打ち切り	L0117-L0121	出す条件を1つでも満たさない受注は納品書に出ないので、ほかの要因の値は結果に効かない
+P1	F02=会員だがプレイヤー情報なし	打ち切り	L0117-L0118	出す条件を1つでも満たさない受注は納品書に出ないので、ほかの要因の値は結果に効かない
+P1	F03=未設定	打ち切り	L0117,L0120	出す条件を1つでも満たさない受注は納品書に出ないので、ほかの要因の値は結果に効かない
+
+ succeeded in 811ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M05-09-001	P1	F01=国内配送&F02=会員とプレイヤー情報あり&F03=設定あり&F08=全て持つ	受注の配送方法の区分=国内配送／受注の会員情報とプレイヤー情報=会員とプレイヤー情報あり／注文者の都道府県=設定あり／受注明細の商品・商品規格・サブ情報=全て持つ	受注の配送方法の区分×受注の会員情報とプレイヤー情報: 国内配送×会員とプレイヤー情報あり；受注の配送方法の区分×受注明細の商品・商品規格・サブ情報: 国内配送×全て持つ；受注の会員情報とプレイヤー情報×注文者の都道府県: 会員とプレイヤー情報あり×設定あり；受注の会員情報とプレイヤー情報×受注明細の商品・商品規格・サブ情報: 会員とプレイヤー情報あり×全て持つ；注文者の都道府県×受注明細の商品・商品規格・サブ情報: 設定あり×全て持つ
+CB-M05-09-002	P1	F01=国内配送&F02=会員とプレイヤー情報あり&F03=設定あり&F08=いずれかを持たない	受注の配送方法の区分=国内配送／受注の会員情報とプレイヤー情報=会員とプレイヤー情報あり／注文者の都道府県=設定あり／受注明細の商品・商品規格・サブ情報=いずれかを持たない	受注の配送方法の区分×受注明細の商品・商品規格・サブ情報: 国内配送×いずれかを持たない；受注の会員情報とプレイヤー情報×受注明細の商品・商品規格・サブ情報: 会員とプレイヤー情報あり×いずれかを持たない；注文者の都道府県×受注明細の商品・商品規格・サブ情報: 設定あり×いずれかを持たない
+CB-M05-09-003	P1	F01=国内配送&F02=ゲスト&F03=設定あり&F08=全て持つ	受注の配送方法の区分=国内配送／受注の会員情報とプレイヤー情報=ゲスト／注文者の都道府県=設定あり／受注明細の商品・商品規格・サブ情報=全て持つ	受注の会員情報とプレイヤー情報×受注明細の商品・商品規格・サブ情報: ゲスト×全て持つ
+CB-M05-09-004	P1	F01=国内配送&F02=ゲスト&F03=設定あり&F08=いずれかを持たない	受注の配送方法の区分=国内配送／受注の会員情報とプレイヤー情報=ゲスト／注文者の都道府県=設定あり／受注明細の商品・商品規格・サブ情報=いずれかを持たない	受注の会員情報とプレイヤー情報×受注明細の商品・商品規格・サブ情報: ゲスト×いずれかを持たない
+CB-M05-09-005	P1	F01=国内配送以外	受注の配送方法の区分=国内配送以外／受注の会員情報とプレイヤー情報=（効かない）／注文者の都道府県=（効かない）／受注明細の商品・商品規格・サブ情報=（効かない）	受注の配送方法の区分: 国内配送以外
+CB-M05-09-006	P1	F02=会員だがプレイヤー情報なし	受注の配送方法の区分=（効かない。国内配送から選ぶ）／受注の会員情報とプレイヤー情報=会員だがプレイヤー情報なし／注文者の都道府県=（効かない）／受注明細の商品・商品規格・サブ情報=（効かない）	受注の会員情報とプレイヤー情報: 会員だがプレイヤー情報なし
+CB-M05-09-007	P1	F03=未設定	受注の配送方法の区分=（効かない。国内配送から選ぶ）／受注の会員情報とプレイヤー情報=（効かない。会員とプレイヤー情報あり・ゲストから選ぶ）／注文者の都道府県=未設定／受注明細の商品・商品規格・サブ情報=（効かない）	注文者の都道府県: 未設定
+CB-M05-09-008	P2	F04=支店&F05=カードかどうかで決まる	受注の店舗=支店／明細の並びを決める段=カードかどうかで決まる	受注の店舗×明細の並びを決める段: 支店×カードかどうかで決まる
+CB-M05-09-009	P2	F04=支店&F05=状態で決まる	受注の店舗=支店／明細の並びを決める段=状態で決まる	受注の店舗×明細の並びを決める段: 支店×状態で決まる
+CB-M05-09-010	P2	F04=支店&F05=Foilで決まる	受注の店舗=支店／明細の並びを決める段=Foilで決まる	受注の店舗×明細の並びを決める段: 支店×Foilで決まる
+CB-M05-09-011	P2	F04=支店&F05=略称タグで決まる	受注の店舗=支店／明細の並びを決める段=略称タグで決まる	受注の店舗×明細の並びを決める段: 支店×略称タグで決まる
+CB-M05-09-012	P2	F04=支店&F05=レアリティで決まる	受注の店舗=支店／明細の並びを決める段=レアリティで決まる	受注の店舗×明細の並びを決める段: 支店×レアリティで決まる
+CB-M05-09-013	P2	F04=支店&F05=色で決まる	受注の店舗=支店／明細の並びを決める段=色で決まる	受注の店舗×明細の並びを決める段: 支店×色で決まる
+CB-M05-09-014	P2	F04=支店&F05=コレクター番号で決まる	受注の店舗=支店／明細の並びを決める段=コレクター番号で決まる	受注の店舗×明細の並びを決める段: 支店×コレクター番号で決まる
+CB-M05-09-015	P2	F04=支店&F05=英語カード名で決まる	受注の店舗=支店／明細の並びを決める段=英語カード名で決まる	受注の店舗×明細の並びを決める段: 支店×英語カード名で決まる
+CB-M05-09-016	P3	F06=1回&F07=1つ	同じ受注を選んだ回数=1回／受注の配送先の数=1つ	同じ受注を選んだ回数×受注の配送先の数: 1回×1つ
+CB-M05-09-017	P3	F06=1回&F07=複数	同じ受注を選んだ回数=1回／受注の配送先の数=複数	同じ受注を選んだ回数×受注の配送先の数: 1回×複数
+CB-M05-09-018	P3	F06=複数回&F07=1つ	同じ受注を選んだ回数=複数回／受注の配送先の数=1つ	同じ受注を選んだ回数×受注の配送先の数: 複数回×1つ
+CB-M05-09-019	P3	F06=複数回&F07=複数	同じ受注を選んだ回数=複数回／受注の配送先の数=複数	同じ受注を選んだ回数×受注の配送先の数: 複数回×複数
+
+ succeeded in 795ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	印刷対象の受注と明細を納品書に出すか決める	受注一覧または出荷指示リストで受注を選び納品書印刷（日本語）ボタンを押す	別ウィンドウに出力された納品書	L0058,L0117-L0121
+P2	納品書の明細の並び順を決める	同上	別ウィンドウに出力された納品書の明細行の順	L0061-L0071
+P3	納品書の部数と数量合計を決める	同上	別ウィンドウに出力された納品書	L0124
+
+ succeeded in 880ms:
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		未採番があると何も更新しない打ち切り側で扱い、未採番なしの受注の対応状況の更新は採番の値で変わらない
+P1	F01+F03	関係しない		未採番があると何も更新しない打ち切り側で扱い、未採番なしの受注の担当者の更新は採番の値で変わらない
+P1	F02+F03	関係しない		対応状況の更新と担当者の更新は別の定めで、一方の値で他方の結果は変わらない
+
+ succeeded in 865ms:
+項目ID	扱い	テストID	理由
+CB-M05-08-001	ケース化	IT-M05-08-023	注文受領以外かつ存在しない担当者IDの組は既存ケース（008は注文受領、019は存在する担当者）のどちらにも当たらないため新規にケース化
+
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-02_cb_test_cases.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-02_cb_seed_data.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 11ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M05-02-034	IT-0366	REQ-0203-sheet-5-R014,REQ-0203-sheet-5-R067		ITA-11	P2	ブラウザのみ	S-M05-02-ADM,S-M05-02-REF,S-M05-02-CSV-COLS,S-M05-02-ENCODING,S-M05-02-CBPREF-034	① 試験管理者で管理画面へログインしている（S-M05-02-ADM）／② 参照マスタが登録されている（S-M05-02-REF）／③ 開始時にCSV出力文字コードをSJIS-winに設定する（S-M05-02-ENCODING）／④ 開始時に受注CSV出力項目は都道府県(名称)（出力項目に指定したデータの種別が受注の項目）だけを有効、その他を無効に設定する（S-M05-02-CSV-COLS）／⑤ 受注ID 〔受注ID-M0502-034〕（登録時に振られた番号を控えてある）・注文番号〔注文番号-M0502-034〕（登録時に振られた番号を控えてある）が、受注の都道府県として大阪府（都道府県の名称を持つ別のデータ1件）を参照していて値がある状態で、受注明細ID 〔受注明細ID-M0502-034〕（登録時に振られた番号を控えてある）の明細1件を持つ。受注の都道府県(名称)の値は大阪府である（S-M05-02-CBPREF-034）	1. 受注情報検索 一覧(検索入力)画面で注文番号「〔注文番号-M0502-034〕」を検索する／2. 受注一覧CSVダウンロードを押す／3. CSVの都道府県(名称)列を確認する	種別が受注で値がある都道府県(名称)列に、参照先の値「大阪府」が出力されること	0203 受注一覧CSV出力 / 業務ロジック 値の取り方	CB-M05-02-001
+IT-M05-02-035	IT-0366	REQ-0203-sheet-5-R041,REQ-0203-sheet-5-R067		ITA-11	P2	ブラウザのみ	S-M05-02-ADM,S-M05-02-REF,S-M05-02-CSV-COLS,S-M05-02-ENCODING,S-M05-02-CBDATE-035	① 試験管理者で管理画面へログインしている（S-M05-02-ADM）／② 参照マスタが登録されている（S-M05-02-REF）／③ 開始時にCSV出力文字コードをSJIS-winに設定する（S-M05-02-ENCODING）／④ 開始時に受注CSV出力項目は受注日（出力項目に指定したデータの種別が受注の項目）だけを有効、その他を無効に設定する（S-M05-02-CSV-COLS）／⑤ 受注ID 〔受注ID-M0502-035〕（登録時に振られた番号を控えてある）・注文番号〔注文番号-M0502-035〕（登録時に振られた番号を控えてある）の受注日が2026-09-04 08:09:10で値があり、受注明細ID 〔受注明細ID-M0502-035〕（登録時に振られた番号を控えてある）の明細1件を持つ（S-M05-02-CBDATE-035）	1. 受注情報検索 一覧(検索入力)画面で注文番号「〔注文番号-M0502-035〕」を検索する／2. 受注一覧CSVダウンロードを押す／3. CSVの受注日列を確認する	種別が受注で値がある受注日列に、日時値が「2026-09-04 08:09:10」のY-m-d H:i:s形式で出力されること	0203 受注一覧CSV出力 / 業務ロジック 値の取り方	CB-M05-02-004
+IT-M05-02-036	IT-0366	REQ-0203-sheet-5-R030,REQ-0203-sheet-5-R067		ITA-11	P2	ブラウザのみ	S-M05-02-ADM,S-M05-02-REF,S-M05-02-CSV-COLS,S-M05-02-ENCODING,S-M05-02-CBMEMO-036	① 試験管理者で管理画面へログインしている（S-M05-02-ADM）／② 参照マスタが登録されている（S-M05-02-REF）／③ 開始時にCSV出力文字コードをSJIS-winに設定する（S-M05-02-ENCODING）／④ 開始時に受注CSV出力項目はショップ用メモ欄（出力項目に指定したデータの種別が受注の項目）だけを有効、その他を無効に設定する（S-M05-02-CSV-COLS）／⑤ 受注ID 〔受注ID-M0502-036〕（登録時に振られた番号を控えてある）・注文番号〔注文番号-M0502-036〕（登録時に振られた番号を控えてある）のショップ用メモ欄が原文値M0502-CB036で値があり、受注明細ID 〔受注明細ID-M0502-036〕（登録時に振られた番号を控えてある）の明細1件を持つ（S-M05-02-CBMEMO-036）	1. 受注情報検索 一覧(検索入力)画面で注文番号「〔注文番号-M0502-036〕」を検索する／2. 受注一覧CSVダウンロードを押す／3. CSVのショップ用メモ欄列を確認する	種別が受注で値があるショップ用メモ欄列に、取得元と同じ「原文値M0502-CB036」が出力されること	0203 受注一覧CSV出力 / 業務ロジック 値の取り方	CB-M05-02-005
+IT-M05-02-037	IT-0366	REQ-0203-sheet-5-R045,REQ-0203-sheet-5-R067		ITA-11	P2	ブラウザのみ	S-M05-02-ADM,S-M05-02-REF,S-M05-02-CSV-COLS,S-M05-02-ENCODING,S-M05-02-CBPRODID-037	① 試験管理者で管理画面へログインしている（S-M05-02-ADM）／② 参照マスタが登録されている（S-M05-02-REF）／③ 開始時にCSV出力文字コードをSJIS-winに設定する（S-M05-02-ENCODING）／④ 開始時に受注CSV出力項目は商品ID（出力項目に指定したデータの種別が受注明細の項目）だけを有効、その他を無効に設定する（S-M05-02-CSV-COLS）／⑤ 受注ID 〔受注ID-M0502-037〕（登録時に振られた番号を控えてある）・注文番号〔注文番号-M0502-037〕（登録時に振られた番号を控えてある）が、商品コードM0502-CB037-A・商品名明細商品M0502-CB037の商品〔商品ID-M0502-037〕（登録時に振られた番号を控えてある）の1点を注文した受注明細ID 〔受注明細ID-M0502-037〕（登録時に振られた番号を控えてある）の明細1件を持つ。受注には商品IDの値が無く（空）、明細の商品は他のデータ（商品）1件を参照している（S-M05-02-CBPRODID-037）	1. 受注情報検索 一覧(検索入力)画面で注文番号「〔注文番号-M0502-037〕」を検索する／2. 受注一覧CSVダウンロードを押す／3. CSVの商品ID列を確認する	種別が受注明細で受注側の値が空の商品ID列に、明細が参照する商品の値〔商品ID-M0502-037〕が出力されること	0203 受注一覧CSV出力 / 業務ロジック 値の取り方	CB-M05-02-006
+
+ succeeded in 6ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M05-02-CBPREF-034	受注・受注明細	種別受注・単一参照値あり受注(034)	受注IDは登録時に画面が振る（控える。以下〔受注ID-M0502-034〕）／受注明細IDは登録時に画面が振る（控える。以下〔受注明細ID-M0502-034〕）／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0502-034〕）／会員のお名前(姓)=検証CBM0502034／メールアドレス=cbm0502-034@example.test／パスワード=Passw0rd-CBM0502034／受注の都道府県は大阪府を参照／対応状況=注文受領／受注明細1件／削除されていない	IT-M05-02-034専用。種別が受注で値があり、他のデータを1件参照する値の出力	新規会員登録画面でお名前(姓)に「検証CBM0502034」、メールアドレスに「cbm0502-034@example.test」、パスワードに「Passw0rd-CBM0502034」を入れ、住所などの必須項目を入力（住所(都道府県)には大阪府を選ぶ）して「同意する」を押し、届いたメールのリンクから本会員登録を済ませる。その会員で本店サイトへログインし、販売中で在庫のある商品1点を買い物かごに入れ、買い物かごの「購入手続きへ」を押し、ご注文方法指定画面でお支払い方法に銀行振込以外で外部決済を伴わないものを選んで注文を確定し、購入完了画面まで進める（対応状況は注文受領になる）。管理画面の受注情報検索で注文者名にその会員のお名前を入れて検索し、該当した受注の受注情報編集画面を開く。注文番号欄に表示された注文番号を控える（〔注文番号-M0502-034〕）。アドレス欄のURLに含まれる受注IDを控える（〔受注ID-M0502-034〕）。CSV出力項目設定画面でCSV種別に受注CSVを選び、注文番号と注文詳細IDを「出力する項目」にして設定を押し、受注情報検索で同じ条件を検索して受注一覧CSVをダウンロードし、注文詳細ID列の値を控える（〔受注明細ID-M0502-034〕）。	ケース専用
+S-M05-02-CBDATE-035	受注・受注明細	種別受注・日時値あり受注(035)	受注IDは登録時に画面が振る（控える。以下〔受注ID-M0502-035〕）／受注明細IDは登録時に画面が振る（控える。以下〔受注明細ID-M0502-035〕）／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0502-035〕）／会員のお名前(姓)=検証CBM0502035／メールアドレス=cbm0502-035@example.test／パスワード=Passw0rd-CBM0502035／受注日=2026-09-04 08:09:10／対応状況=注文受領／受注明細1件／削除されていない	IT-M05-02-035専用。種別が受注で値があり、日時の値の出力	新規会員登録画面でお名前(姓)に「検証CBM0502035」、メールアドレスに「cbm0502-035@example.test」、パスワードに「Passw0rd-CBM0502035」を入れ、住所などの必須項目を入力して「同意する」を押し、届いたメールのリンクから本会員登録を済ませる。その会員で本店サイトへログインし、販売中で在庫のある商品1点を買い物かごに入れ、買い物かごの「購入手続きへ」を押し、ご注文方法指定画面でお支払い方法に銀行振込以外で外部決済を伴わないものを選んで注文を確定し、購入完了画面まで進める（対応状況は注文受領になる）。管理画面の受注情報検索で注文者名にその会員のお名前を入れて検索し、該当した受注の受注情報編集画面を開く。注文番号欄に表示された注文番号を控える（〔注文番号-M0502-035〕）。アドレス欄のURLに含まれる受注IDを控える（〔受注ID-M0502-035〕）。CSV出力項目設定画面でCSV種別に受注CSVを選び、注文番号と注文詳細IDを「出力する項目」にして設定を押し、受注情報検索で同じ条件を検索して受注一覧CSVをダウンロードし、注文詳細ID列の値を控える（〔受注明細ID-M0502-035〕）。受注日 2026-09-04 08:09:10 は画面で指定できないためDBへ直接設定する。	ケース専用
+S-M05-02-CBMEMO-036	受注・受注明細	種別受注・その他の値あり受注(036)	受注IDは登録時に画面が振る（控える。以下〔受注ID-M0502-036〕）／受注明細IDは登録時に画面が振る（控える。以下〔受注明細ID-M0502-036〕）／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0502-036〕）／会員のお名前(姓)=検証CBM0502036／メールアドレス=cbm0502-036@example.test／パスワード=Passw0rd-CBM0502036／ショップ用メモ欄=原文値M0502-CB036／対応状況=注文受領／受注明細1件／削除されていない	IT-M05-02-036専用。種別が受注で値があり、日時でも参照でもない値の出力	新規会員登録画面でお名前(姓)に「検証CBM0502036」、メールアドレスに「cbm0502-036@example.test」、パスワードに「Passw0rd-CBM0502036」を入れ、住所などの必須項目を入力して「同意する」を押し、届いたメールのリンクから本会員登録を済ませる。その会員で本店サイトへログインし、販売中で在庫のある商品1点を買い物かごに入れ、買い物かごの「購入手続きへ」を押し、ご注文方法指定画面でお支払い方法に銀行振込以外で外部決済を伴わないものを選んで注文を確定し、購入完了画面まで進める（対応状況は注文受領になる）。管理画面の受注情報検索で注文者名にその会員のお名前を入れて検索し、該当した受注の受注情報編集画面を開く。注文番号欄に表示された注文番号を控える（〔注文番号-M0502-036〕）。アドレス欄のURLに含まれる受注IDを控える（〔受注ID-M0502-036〕）。CSV出力項目設定画面でCSV種別に受注CSVを選び、注文番号と注文詳細IDを「出力する項目」にして設定を押し、受注情報検索で同じ条件を検索して受注一覧CSVをダウンロードし、注文詳細ID列の値を控える（〔受注明細ID-M0502-036〕）。受注情報編集画面でショップ用メモ欄に「原文値M0502-CB036」を入れ、「受注情報を登録」を押す。	ケース専用
+S-M05-02-CBPRODID-037	受注・受注明細	種別受注明細・受注側が空・単一参照値の受注(037)	受注IDは登録時に画面が振る（控える。以下〔受注ID-M0502-037〕）／受注明細IDは登録時に画面が振る（控える。以下〔受注明細ID-M0502-037〕）／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0502-037〕）／商品コードM0502-CB037-A・商品名明細商品M0502-CB037の商品IDは登録時に画面が振る（控える。以下〔商品ID-M0502-037〕）／会員のお名前(姓)=検証CBM0502037／メールアドレス=cbm0502-037@example.test／パスワード=Passw0rd-CBM0502037／対応状況=注文受領／受注明細1件／削除されていない	IT-M05-02-037専用。種別が受注明細で受注側の値が空のとき、明細が参照する他のデータ1件の値の出力	グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0502-CB037-A」・商品名(日)は「明細商品M0502-CB037」・商品名(英)は「明細商品M0502-CB037」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。商品マスター(検索入力)で商品コードに各行の商品コードを1つずつ入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で言語日本語・状態NMの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに「公開」を選び、「商品規格を登録」ボタンを押す。在庫変更CSV登録画面で店舗に本店を選び、在庫区分にEC-CUBE、在庫変動区分に入庫の区分、在庫変動理由に「シード作成」、承認通知先（所属選択）で承認するメンバーの所属を選び、承認通知先（メンバー選択）で承認するメンバーを選び、商品コード「M0502-CB037-A」・在庫増減数10・仕入単価100 の1行を書いたCSVファイルを選んで「一括登録を実行」を押す。在庫を登録したメンバーとは別の、その店舗の承認権限を持つメンバーで承認一覧を開き、この申請の行にチェックを入れて「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押す（M04-32 L0108・L0110・L0141・L0218・L0297・L0301）。商品マスターで商品コードM0502-CB037-Aを検索して商品登録編集画面を開き、表示された商品IDを控える（〔商品ID-M0502-037〕）。新規会員登録画面でお名前(姓)に「検証CBM0502037」、メールアドレスに「cbm0502-037@example.test」、パスワードに「Passw0rd-CBM0502037」を入れ、住所などの必須項目を入力して「同意する」を押し、届いたメールのリンクから本会員登録を済ませる。その会員で本店サイトへログインし、商品名明細商品M0502-CB037の商品1点を買い物かごに入れ、買い物かごの「購入手続きへ」を押し、ご注文方法指定画面でお支払い方法に銀行振込以外で外部決済を伴わないものを選んで注文を確定し、購入完了画面まで進める（対応状況は注文受領になる）。管理画面の受注情報検索で注文者名にその会員のお名前を入れて検索し、該当した受注の受注情報編集画面を開く。注文番号欄に表示された注文番号を控える（〔注文番号-M0502-037〕）。アドレス欄のURLに含まれる受注IDを控える（〔受注ID-M0502-037〕）。CSV出力項目設定画面でCSV種別に受注CSVを選び、注文番号と注文詳細IDを「出力する項目」にして設定を押し、受注情報検索で同じ条件を検索して受注一覧CSVをダウンロードし、注文詳細ID列の値を控える（〔受注明細ID-M0502-037〕）。	ケース専用
+
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-08_cb_seed_data.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-08_cb_test_cases.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-09_cb_test_cases.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M05-08-023	IT-0366	REQ-0203-sheet-12-R004,REQ-0203-sheet-12-R015		ITA-11	P1	ブラウザ+DB確認	S-M05-08-ADM,S-M05-08-OLD-MEMBER,S-M05-08-MASTER,S-M05-08-PRINT-SETTING,S-M05-08-CBNONNEWNOMEM-023	① 本店、注文受領、ピック中、入金待ち、日本、東京都および商品明細種別を参照できる（S-M05-08-MASTER）／② 開始時にスタック用紙の高額判定基準を販売価格、高額判定額を5000円に設定する（S-M05-08-PRINT-SETTING）／③ メンバーID 5080のM05-08試験管理者で本店を操作対象としてログインする（S-M05-08-ADM）／④ メンバーID 〔メンバーID-M0508-共有〕の更新前担当者が稼働中であり、担当者ID 999999は未登録とする。登録済みならDBシードで削除する（登録時に振られたメンバーIDを控えてある。〔メンバーID-M0508-共有〕）（S-M05-08-OLD-MEMBER）／⑤ 受注ID 〔受注ID-M0508-023〕・注文番号〔注文番号-M0508-023〕（注文番号は採番済み）は、入金待ち（注文受領以外）、ブラウザ印刷フラグOFF、注文確定日2026-09-01 10:00:00、担当者ID 〔メンバーID-M0508-共有〕、店舗本店、未削除であり、配送ID 〔配送ID-M0508-023〕と販売価格1000円・数量1の受注明細ID 〔受注明細ID-M0508-023〕を持つ（登録時に振られた受注ID・注文番号・配送ID・受注明細IDを控えてある）（S-M05-08-CBNONNEWNOMEM-023）／⑥ 開始時に、ブラウザの開発者ツールによるスタック用紙印刷受付への通信の遮断が無く、同受付の応答遅延が0秒である状態にする（応答遅延プロキシを経由する環境では遅延を0秒に戻す）	1. 受注一覧画面を開く／2. 注文番号〔注文番号-M0508-023〕の受注を選択する／3. 開発者ツールでスタック用紙印刷要求の担当者IDを999999に変更する／4. スタック用紙印刷ボタンを押す／5. DBで受注ID 〔受注ID-M0508-023〕を確認する	受注ID 〔受注ID-M0508-023〕のブラウザ印刷フラグがONになり、対応状況は入金待ち、注文確定日は2026-09-01 10:00:00、担当者はID 〔メンバーID-M0508-共有〕のまま変わらないこと	0203 スタック用紙印刷 / 現行仕様 業務ロジック 対応状況と印刷済みの更新・担当者の更新	CB-M05-08-001
+
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-09_cb_seed_data.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 15ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M05-08-CBNONNEWNOMEM-023	受注・配送・明細	注文受領以外・存在しない担当者ID指定用受注(023)	受注IDは登録時に画面が振る（控える。以下〔受注ID-M0508-023〕）／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0508-023〕）／対応状況=入金待ち／ブラウザ印刷フラグ=OFF／注文確定日=2026-09-01 10:00:00／担当者=更新前担当者（メンバーIDは〔メンバーID-M0508-共有〕）／受注日=2026-09-01 09:00:00／店舗=本店／未削除／注文番号は採番済み／配送IDは登録時に画面が振る（控える。以下〔配送ID-M0508-023〕）・店舗=本店・国=日本・都道府県=東京都／受注明細IDは登録時に画面が振る（控える。以下〔受注明細ID-M0508-023〕）・商品名=印刷商品M0508-CB023・販売価格=1000円・数量=1	IT-M05-08-023専用。注文受領以外かつ存在しない担当者ID指定時の、印刷済み更新と対応状況・注文確定日・担当者の維持確認	1) グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0508-CB023-P」・商品名(日)は「印刷商品M0508-CB023」・商品名(英)は「印刷商品M0508-CB023」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は予約商品フラグの付いていない既存の購入グループの名称・基準価格1000・販売価格1000・買取価格1000・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。2) 商品マスター(検索入力)で商品コードに「M0508-CB023-P」を入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品コード「M0508-CB023-P」の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに「公開」を選んで「商品規格を登録」ボタンを押す。3) 在庫検索一覧でこの商品規格の本店の在庫を開き、在庫編集画面で在庫変動区分に入庫の区分、在庫変動理由に「M05-08試験」、在庫増減数に1を入れて登録ボタンを押す（承認待ちになるときは在庫編集の承認一覧で承認する）。4) フロントの新規会員登録画面でお名前(姓)に「印刷」、お名前(名)に「購入者」、フリガナ(姓)に「インサツ」、フリガナ(名)に「コウニュウシャ」、生年月日に1990年1月1日、メールアドレスとメールアドレス(確認)に「cbm0508-023@example.test」、パスワードとパスワード(確認)に「Passw0rd-CBM0508023」、国にJapan、郵便番号に「1000001」、住所(都道府県)に東京都、住所1に「千代田区千代田」、住所2に「1-1」、電話番号に「0312345678」を入れて同意するボタンを押し、確認画面で登録を確定し、届いた仮登録メールのリンクを開いて本会員登録を完了する。5) フロントの本店サイトにこの会員でログインし、商品詳細画面で「印刷商品M0508-CB023」の商品数に1を入れてカートに追加ボタンを押す。買い物かご画面で購入手続きへボタンを押し、ご注文方法指定画面でお届け先に会員情報住所（日本・東京都）、配送方法指定に「ゆうパック」、支払方法に「銀行振込」を選び、確定チェックボックスにチェックを入れて注文するボタンを押す。6) 購入完了画面に表示された注文番号を控える（〔注文番号-M0508-023〕）。管理画面の受注一覧でその注文番号の行（対応状況が入金待ち、店舗が本店）の注文番号リンクを押して受注情報編集画面を開き、アドレス欄に含まれる番号を受注IDとして控える（〔受注ID-M0508-023〕）。7) 受注日（2026-09-01 09:00:00）と担当者（更新前担当者。メンバーIDは〔メンバーID-M0508-共有〕）は画面で指定できないためDBへ直接設定する。注文確定日（2026-09-01 10:00:00）は画面で指定できないためDBへ直接設定する。配送IDと受注明細IDは画面に表示されないため、DBで配送と商品の受注明細を参照して控える（〔配送ID-M0508-023〕・〔受注明細ID-M0508-023〕）。	ケース専用
+
+ succeeded in 0ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M05-09-CBBASE-046	受注・配送先・明細	出る条件を満たす国内受注(046)	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーID・商品ID・商品規格IDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB046〕）／本店受注／国内配送／会員とプレイヤー情報あり／注文者の都道府県=東京都／注文受付／受注日時=2026-09-29 10:00:00 JST／明細は1行で、商品M0509-CB046-P1（数量1）。商品・商品規格・商品サブ情報・商品規格サブ情報をすべて持つ	IT-M05-09-046専用。出す条件をすべて満たす受注の納品書出力	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-046@example.test」・パスワード「Passw0rd-CBM0509046」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB046-P1」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB046-P1」・商品名(英)は「M0509-CB046-P1」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。在庫検索一覧で商品コード「M0509-CB046-P1」を検索し、本店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の1件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。その会員でフロント（本店）にログインし、1件目の商品を数量1でカートに入れ、ご注文手続き画面で配送方法にゆうパック、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB046〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する	ケース専用
+S-M05-09-CBLINE-047	受注・配送先・明細	商品規格を持たない明細のある国内受注(047)	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーID・商品ID・商品規格IDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB047〕）／本店受注／国内配送／会員とプレイヤー情報あり／注文者の都道府県=東京都／注文受付／受注日時=2026-09-29 10:00:00 JST／明細は2行で、商品M0509-CB047-OK（数量1。商品・商品規格・商品サブ情報・商品規格サブ情報をすべて持つ）と商品M0509-CB047-NG（数量1。商品規格を持たない）	IT-M05-09-047専用。明細が商品関連情報を欠く受注の納品書出力	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-047@example.test」・パスワード「Passw0rd-CBM0509047」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB047-OK」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB047-OK」・商品名(英)は「M0509-CB047-OK」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB047-NG」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB047-NG」・商品名(英)は「M0509-CB047-NG」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。在庫検索一覧で商品コード「M0509-CB047-OK」を検索し、本店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB047-NG」を検索し、本店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。その会員でフロント（本店）にログインし、1件目の商品を数量1、2件目の商品を数量1でカートに入れ、ご注文手続き画面で配送方法にゆうパック、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB047〕）。商品M0509-CB047-NGの明細は、DBで商品規格との紐付けを外して商品規格を持たない明細にする（画面では商品規格を持たない明細を作れないためDBへ直接設定する）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する	ケース専用
+S-M05-09-CBGUEST-049	受注・配送先・明細	ゲスト国内受注と商品規格を持たない明細(049)	受注ID=59049001／配送先ID=59049101／明細ID=59049201・59049202／商品ID=59049501・59049502／商品規格ID=59049601（明細59049201の商品に紐付く。明細59049202の商品には商品規格を作らない）／注文番号GUEST-M0509-CB049／会員・プレイヤー未紐付け／受注者都道府県=東京都／国内配送先1件（配送方法=ゆうパック）／受注状態=注文受付／受注日時=2026-09-29 10:00:00 JST／明細は2行で、商品M0509-CB049-OK（明細59049201。商品関連情報が揃っている）と商品M0509-CB049-NG（明細59049202。商品規格を持たない）	IT-M05-09-049専用。ゲスト受注で明細が商品関連情報を欠く場合の納品書出力	DBシードで記載IDの受注、配送先、商品関連情報、明細を登録し、会員とプレイヤーを紐付けない。商品M0509-CB049-NGの明細には商品規格を紐付けない（画面では会員を持たない受注も商品規格を持たない明細も作れないためDBへ直接設定する）	ケース専用
+S-M05-09-CBSORTCARD-053	受注・配送先・明細	カード先行並び順データ(支店)(053)	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーIDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB053〕）／支店受注／国内配送／注文受付／注文者の都道府県=東京都／受注日時=2026-09-29 10:00:00 JST／明細は2行（ID末尾の順に並べる前）で、商品M0509-CB053-GOODS（カードカテゴリでない商品・棚番M0509-CB053-A01）と商品M0509-CB053-CARD（カードカテゴリの商品・棚番M0509-CB053-B02）を持ち、言語・状態・Foilフラグ・略称タグ・レアリティ・色は2行とも同じ／明細は期待する並びと逆の順（明細ID・商品IDが小さい方が後に並ぶ側）で登録する／削除されていない	IT-M05-09-053専用。支店受注の明細の並び順	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-053@example.test」・パスワード「Passw0rd-CBM0509053」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。管理画面の棚番登録 編集画面で棚番M0509-CB053-A01（ソート順1）と棚番M0509-CB053-B02（ソート順2）を登録する。管理画面のカード登録画面で日本語カード名・英語カード名を入れ、カード詳細にカード番号・レアリティ・Foilを入れて登録ボタンを押す（商品ごとに1枚、1枚を登録する。商品M0509-CB053-GOODSのカードは登録しない（商品M0509-CB053-GOODSはカードのカテゴリとカード詳細を付けない）。ほかの値は2件とも同じにする。登録はM0509-CB053-GOODS、M0509-CB053-CARDの順）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB053-GOODS」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB053-GOODS」・商品名(英)は「M0509-CB053-GOODS」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB053-CARD」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB053-CARD」・商品名(英)は「M0509-CB053-CARD」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる（行は登録の順に並べる）。商品マスター(検索入力)で商品コードに「M0509-CB053-GOODS」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、略称タグは選択肢の先頭を選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で棚番号に「M0509-CB053-A01」を入れ、部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。商品マスター(検索入力)で商品コードに「M0509-CB053-CARD」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで1枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB053-CARD」、商品名(英)に「M0509-CB053-CARD」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグは選択肢の先頭を選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で棚番号に「M0509-CB053-B02」を入れ、部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。在庫検索一覧で商品コード「M0509-CB053-GOODS」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB053-CARD」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。明細と商品は、期待する並びで後になる商品から先に登録し、先にカートへ入れる（登録の順が小さい方が後に並ぶ側になる）。その会員でフロント（支店）にログインし、登録した商品を先に登録した順に数量1ずつカートに入れ、ご注文手続き画面で配送方法に支店で選べる国内配送の配送方法、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB053〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する	ケース専用
+S-M05-09-CBSORTCOND-054	受注・配送先・明細	状態並び順データ(支店)(054)	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーIDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB054〕）／支店受注／国内配送／注文受付／注文者の都道府県=東京都／受注日時=2026-09-29 10:00:00 JST／明細は2行で、商品M0509-CB054-HP（状態HP）と商品M0509-CB054-NM（状態NM）を持ち、ともにカードカテゴリで棚番・言語・Foilフラグ・略称タグ・レアリティ・色は同じ／明細は期待する並びと逆の順（明細ID・商品IDが小さい方が後に並ぶ側）で登録する／削除されていない	IT-M05-09-054専用。支店受注の明細の並び順	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-054@example.test」・パスワード「Passw0rd-CBM0509054」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。管理画面のカード登録画面で日本語カード名・英語カード名を入れ、カード詳細にカード番号・レアリティ・Foilを入れて登録ボタンを押す（商品ごとに1枚、2枚を登録する。ほかの値は2枚とも同じにする。登録はM0509-CB054-HP、M0509-CB054-NMの順）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB054-HP-NM」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB054-HP」・商品名(英)は「M0509-CB054-HP」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB054-NM」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB054-NM」・商品名(英)は「M0509-CB054-NM」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる（行は登録の順に並べる）。商品マスター(検索入力)で商品コードに「M0509-CB054-HP-NM」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで1枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB054-HP」、商品名(英)に「M0509-CB054-HP」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグは選択肢の先頭を選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧の「新規作成」を押し、商品規格登録編集画面で言語に日本語、状態にHP（ヘビープレイド）、商品コードに「M0509-CB054-HP」、基準価格(円)・販売価格(円)に1000円、買取価格(円)に100円を入れ、部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。商品規格一覧で状態ニアミントの規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で「商品規格を削除」ボタンを押す。商品マスター(検索入力)で商品コードに「M0509-CB054-NM」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで2枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB054-NM」、商品名(英)に「M0509-CB054-NM」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグは選択肢の先頭を選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。在庫検索一覧で商品コード「M0509-CB054-HP」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB054-NM」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。明細と商品は、期待する並びで後になる商品から先に登録し、先にカートへ入れる（登録の順が小さい方が後に並ぶ側になる）。その会員でフロント（支店）にログインし、登録した商品を先に登録した順に数量1ずつカートに入れ、ご注文手続き画面で配送方法に支店で選べる国内配送の配送方法、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB054〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する	ケース専用
+S-M05-09-CBSORTFOIL-055	受注・配送先・明細	Foil並び順データ(支店)(055)	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーIDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB055〕）／支店受注／国内配送／注文受付／注文者の都道府県=東京都／受注日時=2026-09-29 10:00:00 JST／明細は2行で、商品M0509-CB055-FOIL（Foilフラグあり）と商品M0509-CB055-PLAIN（Foilフラグなし）を持ち、ともにカードカテゴリで棚番・言語・状態・略称タグ・レアリティ・色は同じ／明細は期待する並びと逆の順（明細ID・商品IDが小さい方が後に並ぶ側）で登録する／削除されていない	IT-M05-09-055専用。支店受注の明細の並び順	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-055@example.test」・パスワード「Passw0rd-CBM0509055」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。管理画面のカード登録画面で日本語カード名・英語カード名を入れ、カード詳細にカード番号・レアリティ・Foilを入れて登録ボタンを押す（商品ごとに1枚、2枚を登録する。商品M0509-CB055-FOILのカードはFoilあり、商品M0509-CB055-PLAINのカードはFoilなし、ほかの値は2枚とも同じにする。登録はM0509-CB055-FOIL、M0509-CB055-PLAINの順）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB055-FOIL」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB055-FOIL」・商品名(英)は「M0509-CB055-FOIL」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB055-PLAIN」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB055-PLAIN」・商品名(英)は「M0509-CB055-PLAIN」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる（行は登録の順に並べる）。商品マスター(検索入力)で商品コードに「M0509-CB055-FOIL」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで1枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB055-FOIL」、商品名(英)に「M0509-CB055-FOIL」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグは選択肢の先頭を選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。商品マスター(検索入力)で商品コードに「M0509-CB055-PLAIN」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで2枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB055-PLAIN」、商品名(英)に「M0509-CB055-PLAIN」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグは選択肢の先頭を選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。在庫検索一覧で商品コード「M0509-CB055-FOIL」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB055-PLAIN」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。明細と商品は、期待する並びで後になる商品から先に登録し、先にカートへ入れる（登録の順が小さい方が後に並ぶ側になる）。その会員でフロント（支店）にログインし、登録した商品を先に登録した順に数量1ずつカートに入れ、ご注文手続き画面で配送方法に支店で選べる国内配送の配送方法、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB055〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する	ケース専用
+S-M05-09-CBSORTABBR-056	受注・配送先・明細	略称タグ並び順データ(支店)(056)	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーIDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB056〕）／支店受注／国内配送／注文受付／注文者の都道府県=東京都／受注日時=2026-09-29 10:00:00 JST／明細は2行で、略称タグM0509-CB056-BBB（並び順2）の商品M0509-CB056-B と略称タグM0509-CB056-AAA（並び順1）の商品M0509-CB056-A を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・レアリティ・色は同じ／明細は期待する並びと逆の順（明細ID・商品IDが小さい方が後に並ぶ側）で登録する／削除されていない	IT-M05-09-056専用。支店受注の明細の並び順	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-056@example.test」・パスワード「Passw0rd-CBM0509056」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。管理画面の略称タグ登録画面で略称タグM0509-CB056-AAA（並び順1）、略称タグM0509-CB056-BBB（並び順2）を登録する。管理画面のカード登録画面で日本語カード名・英語カード名を入れ、カード詳細にカード番号・レアリティ・Foilを入れて登録ボタンを押す（商品ごとに1枚、2枚を登録する。ほかの値は2枚とも同じにする。登録はM0509-CB056-B、M0509-CB056-Aの順）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB056-B」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB056-B」・商品名(英)は「M0509-CB056-B」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB056-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB056-A」・商品名(英)は「M0509-CB056-A」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる（行は登録の順に並べる）。商品マスター(検索入力)で商品コードに「M0509-CB056-B」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで1枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB056-B」、商品名(英)に「M0509-CB056-B」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグに略称タグM0509-CB056-BBBを選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。商品マスター(検索入力)で商品コードに「M0509-CB056-A」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで2枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB056-A」、商品名(英)に「M0509-CB056-A」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグに略称タグM0509-CB056-AAAを選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。在庫検索一覧で商品コード「M0509-CB056-B」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB056-A」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。明細と商品は、期待する並びで後になる商品から先に登録し、先にカートへ入れる（登録の順が小さい方が後に並ぶ側になる）。その会員でフロント（支店）にログインし、登録した商品を先に登録した順に数量1ずつカートに入れ、ご注文手続き画面で配送方法に支店で選べる国内配送の配送方法、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB056〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する	ケース専用
+S-M05-09-CBSORTRARITY-057	受注・配送先・明細	レアリティ並び順データ(支店)(057)	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーIDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB057〕）／支店受注／国内配送／注文受付／注文者の都道府県=東京都／受注日時=2026-09-29 10:00:00 JST／明細は2行で、商品M0509-CB057-C（レアリティC）と商品M0509-CB057-M（レアリティM）を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・略称タグ・色は同じ／明細は期待する並びと逆の順（明細ID・商品IDが小さい方が後に並ぶ側）で登録する／削除されていない	IT-M05-09-057専用。支店受注の明細の並び順	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-057@example.test」・パスワード「Passw0rd-CBM0509057」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。管理画面のカード登録画面で日本語カード名・英語カード名を入れ、カード詳細にカード番号・レアリティ・Foilを入れて登録ボタンを押す（商品ごとに1枚、2枚を登録する。商品M0509-CB057-CのカードはレアリティC、商品M0509-CB057-MのカードはレアリティM、ほかの値は2枚とも同じにする。登録はM0509-CB057-C、M0509-CB057-Mの順）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB057-C」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB057-C」・商品名(英)は「M0509-CB057-C」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB057-M」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB057-M」・商品名(英)は「M0509-CB057-M」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる（行は登録の順に並べる）。商品マスター(検索入力)で商品コードに「M0509-CB057-C」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで1枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB057-C」、商品名(英)に「M0509-CB057-C」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグは選択肢の先頭を選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。商品マスター(検索入力)で商品コードに「M0509-CB057-M」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで2枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB057-M」、商品名(英)に「M0509-CB057-M」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグは選択肢の先頭を選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。在庫検索一覧で商品コード「M0509-CB057-C」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB057-M」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。明細と商品は、期待する並びで後になる商品から先に登録し、先にカートへ入れる（登録の順が小さい方が後に並ぶ側になる）。その会員でフロント（支店）にログインし、登録した商品を先に登録した順に数量1ずつカートに入れ、ご注文手続き画面で配送方法に支店で選べる国内配送の配送方法、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB057〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する	ケース専用
+S-M05-09-CBSORTCOLOR-058	受注・配送先・明細	色並び順データ(支店)(058)	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーIDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB058〕）／支店受注／国内配送／注文受付／注文者の都道府県=東京都／受注日時=2026-09-29 10:00:00 JST／明細は2行で、色M0509-CB058-BLUE（色マスターの順序2）の商品M0509-CB058-B と色M0509-CB058-WHITE（色マスターの順序1）の商品M0509-CB058-W を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・略称タグ・レアリティは同じ／明細は期待する並びと逆の順（明細ID・商品IDが小さい方が後に並ぶ側）で登録する／削除されていない	IT-M05-09-058専用。支店受注の明細の並び順	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-058@example.test」・パスワード「Passw0rd-CBM0509058」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。色マスターの値（色M0509-CB058-WHITE＝順序1、色M0509-CB058-BLUE＝順序2）は画面で指定できないためDBへ直接設定する。管理画面のカード登録画面で日本語カード名・英語カード名を入れ、カード詳細にカード番号・レアリティ・Foilを入れて登録ボタンを押す（商品ごとに1枚、2枚を登録する。カード登録画面の色の並びで、商品M0509-CB058-Bのカードに色M0509-CB058-BLUE、商品M0509-CB058-Wのカードに色M0509-CB058-WHITEを選び、ほかの値は2枚とも同じにする。登録はM0509-CB058-B、M0509-CB058-Wの順）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB058-B」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB058-B」・商品名(英)は「M0509-CB058-B」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB058-W」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB058-W」・商品名(英)は「M0509-CB058-W」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる（行は登録の順に並べる）。商品マスター(検索入力)で商品コードに「M0509-CB058-B」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで1枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB058-B」、商品名(英)に「M0509-CB058-B」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグは選択肢の先頭を選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。商品マスター(検索入力)で商品コードに「M0509-CB058-W」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで2枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB058-W」、商品名(英)に「M0509-CB058-W」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグは選択肢の先頭を選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。在庫検索一覧で商品コード「M0509-CB058-B」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB058-W」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。明細と商品は、期待する並びで後になる商品から先に登録し、先にカートへ入れる（登録の順が小さい方が後に並ぶ側になる）。その会員でフロント（支店）にログインし、登録した商品を先に登録した順に数量1ずつカートに入れ、ご注文手続き画面で配送方法に支店で選べる国内配送の配送方法、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB058〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する	ケース専用
+S-M05-09-CBSORTCOLLNO-059	受注・配送先・明細	コレクター番号並び順データ(支店)(059)	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーIDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB059〕）／支店受注／国内配送／注文受付／注文者の都道府県=東京都／受注日時=2026-09-29 10:00:00 JST／明細は2行で、同じ略称タグM0509-CB059-TAG（コレクター番号でソートする設定）の商品M0509-CB059-N10（コレクター番号010・英語カード名M0509-CB059 Alpha Card）と商品M0509-CB059-N02（コレクター番号002・英語カード名M0509-CB059 Zulu Card）を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・レアリティ・色は同じ／明細は期待する並びと逆の順（明細ID・商品IDが小さい方が後に並ぶ側）で登録する／削除されていない	IT-M05-09-059専用。支店受注の明細の並び順	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-059@example.test」・パスワード「Passw0rd-CBM0509059」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。管理画面の略称タグ登録画面で略称タグM0509-CB059-TAG（アルファベットソートのチェックを外す＝コレクター番号でソートする設定）を登録する。管理画面のカード登録画面で日本語カード名・英語カード名を入れ、カード詳細にカード番号・レアリティ・Foilを入れて登録ボタンを押す（商品ごとに1枚、2枚を登録する。商品M0509-CB059-N10のカードはカード番号010・英語カード名M0509-CB059 Alpha Card、商品M0509-CB059-N02のカードはカード番号002・英語カード名M0509-CB059 Zulu Card、ほかの値は2枚とも同じにする。登録はM0509-CB059-N10、M0509-CB059-N02の順）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB059-N10」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB059-N10」・商品名(英)は「M0509-CB059-N10」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB059-N02」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB059-N02」・商品名(英)は「M0509-CB059-N02」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる（行は登録の順に並べる）。商品マスター(検索入力)で商品コードに「M0509-CB059-N10」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで1枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB059-N10」、商品名(英)に「M0509-CB059-N10」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグに略称タグM0509-CB059-TAGを選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。商品マスター(検索入力)で商品コードに「M0509-CB059-N02」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで2枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB059-N02」、商品名(英)に「M0509-CB059-N02」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグに略称タグM0509-CB059-TAGを選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。在庫検索一覧で商品コード「M0509-CB059-N10」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB059-N02」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。明細と商品は、期待する並びで後になる商品から先に登録し、先にカートへ入れる（登録の順が小さい方が後に並ぶ側になる）。その会員でフロント（支店）にログインし、登録した商品を先に登録した順に数量1ずつカートに入れ、ご注文手続き画面で配送方法に支店で選べる国内配送の配送方法、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB059〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する	ケース専用
+S-M05-09-CBSORTALPHA-060	受注・配送先・明細	英語カード名並び順データ(支店)(060)	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーIDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB060〕）／支店受注／国内配送／注文受付／注文者の都道府県=東京都／受注日時=2026-09-29 10:00:00 JST／明細は2行で、同じ略称タグM0509-CB060-TAG（アルファベットでソートする設定）の商品M0509-CB060-ZULU（英語カード名M0509-CB060 Zulu Card・コレクター番号002）と商品M0509-CB060-ALPHA（英語カード名M0509-CB060 Alpha Card・コレクター番号010）を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・レアリティ・色は同じ／明細は期待する並びと逆の順（明細ID・商品IDが小さい方が後に並ぶ側）で登録する／削除されていない	IT-M05-09-060専用。支店受注の明細の並び順	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-060@example.test」・パスワード「Passw0rd-CBM0509060」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。管理画面の略称タグ登録画面で略称タグM0509-CB060-TAG（アルファベットソートにチェックを入れる＝アルファベットでソートする設定）を登録する。管理画面のカード登録画面で日本語カード名・英語カード名を入れ、カード詳細にカード番号・レアリティ・Foilを入れて登録ボタンを押す（商品ごとに1枚、2枚を登録する。商品M0509-CB060-ZULUのカードは英語カード名M0509-CB060 Zulu Card・カード番号002、商品M0509-CB060-ALPHAのカードは英語カード名M0509-CB060 Alpha Card・カード番号010、ほかの値は2枚とも同じにする。登録はM0509-CB060-ZULU、M0509-CB060-ALPHAの順）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB060-ZULU」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB060-ZULU」・商品名(英)は「M0509-CB060-ZULU」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB060-ALPHA」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB060-ALPHA」・商品名(英)は「M0509-CB060-ALPHA」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる（行は登録の順に並べる）。商品マスター(検索入力)で商品コードに「M0509-CB060-ZULU」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで1枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB060-ZULU」、商品名(英)に「M0509-CB060-ZULU」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグに略称タグM0509-CB060-TAGを選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。商品マスター(検索入力)で商品コードに「M0509-CB060-ALPHA」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで2枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB060-ALPHA」、商品名(英)に「M0509-CB060-ALPHA」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグに略称タグM0509-CB060-TAGを選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。在庫検索一覧で商品コード「M0509-CB060-ZULU」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB060-ALPHA」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。明細と商品は、期待する並びで後になる商品から先に登録し、先にカートへ入れる（登録の順が小さい方が後に並ぶ側になる）。その会員でフロント（支店）にログインし、登録した商品を先に登録した順に数量1ずつカートに入れ、ご注文手続き画面で配送方法に支店で選べる国内配送の配送方法、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB060〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する	ケース専用
+S-M05-09-CBSHIP1-061	受注・配送先・明細	配送先1つの国内受注(061)	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーID・商品ID・商品規格IDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB061〕）／国内配送先1件／明細は1行で、商品M0509-CB061-P1（数量2）・受注総数量=2／本店受注／注文受付／受注日時=2026-09-29 10:00:00 JST	IT-M05-09-061専用。1回選んだ配送先1つの受注の納品書と数量合計	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-061@example.test」・パスワード「Passw0rd-CBM0509061」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB061-P1」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB061-P1」・商品名(英)は「M0509-CB061-P1」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。在庫検索一覧で商品コード「M0509-CB061-P1」を検索し、本店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の1件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。その会員でフロント（本店）にログインし、1件目の商品を数量2でカートに入れ、ご注文手続き画面で配送方法にゆうパック、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB061〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する	ケース専用
+S-M05-09-CBSHIPN-062	受注・配送先・明細	配送先複数の国内受注(062)	画面で作るデータの受注ID・明細ID・会員ID・プレイヤーID・商品ID・商品規格IDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB062〕）／配送先IDは登録時に画面が振る（控える。以下〔配送先ID-M0509-CB062A〕・〔配送先ID-M0509-CB062B〕）／国内配送先2件／明細数量=2と3・受注総数量=5／注文受付／受注日時=2026-09-29 10:00:00 JST	IT-M05-09-062専用。配送先複数の受注を配送先1件だけ選んだときの納品書と数量合計	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-062@example.test」・パスワード「Passw0rd-CBM0509062」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB062-P1」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB062-P1」・商品名(英)は「M0509-CB062-P1」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB062-P2」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB062-P2」・商品名(英)は「M0509-CB062-P2」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。在庫検索一覧で商品コード「M0509-CB062-P1」を検索し、本店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB062-P2」を検索し、本店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。その会員でフロント（本店）にログインし、1件目の商品を数量2、2件目の商品を数量3でカートに入れ、ご注文手続き画面で配送方法にゆうパック、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB062〕）。管理画面の受注情報編集画面でその受注を開いて出荷先を追加を押し、出荷登録画面で2件目の配送先に国内の氏名・住所・電話番号、配送方法にゆうパックを入れ、数量3の商品を2件目の配送先へ移して登録ボタンを押す。配送先IDは画面に文字で表示されないため、受注情報検索 一覧(検索結果)で〔注文番号-M0509-CB062〕の2行の選択チェックボックスに付く値をブラウザの開発者ツールで読み取って控える（〔配送先ID-M0509-CB062A〕・〔配送先ID-M0509-CB062B〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する	ケース専用
+
+ succeeded in 28ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M05-09-046	IT-0366	REQ-0203-sheet-13-R049,REQ-0203-sheet-13-R050,REQ-0203-sheet-13-R052		ITA-11	P1	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBBASE-046	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB046〕（登録時に振られた注文番号を控えてある）は本店の受注・国内配送・注文受付で、配送先1件を持ち、会員とプレイヤー情報を持ち、注文者の都道府県は東京都（設定あり）で、明細は商品M0509-CB046-P1の1行（数量1。商品・商品規格・商品サブ情報・商品規格サブ情報をすべて持つ）。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBBASE-046）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB046〕を選択する／3. 納品書印刷（日本語）ボタンを押す	〔注文番号-M0509-CB046〕の日本語納品書が出力され、商品情報に商品M0509-CB046-P1の行が表示されること	0203 納品書印刷（日本語） / 機能仕様 処理概要（★はカスタマイズ項目）、現行仕様 業務ロジック 納品書に出る受注と明細	CB-M05-09-001
+IT-M05-09-047	IT-0366	REQ-0203-sheet-13-R049,REQ-0203-sheet-13-R054		ITA-11	P1	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBLINE-047	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB047〕（登録時に振られた注文番号を控えてある）は本店の受注・国内配送・注文受付で、配送先1件を持ち、会員とプレイヤー情報を持ち、注文者の都道府県は東京都（設定あり）で、明細は2行。商品M0509-CB047-OKは商品・商品規格・商品サブ情報・商品規格サブ情報をすべて持ち、商品M0509-CB047-NGは商品規格を持たない（いずれかを持たない）。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBLINE-047）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB047〕を選択する／3. 納品書印刷（日本語）ボタンを押す	〔注文番号-M0509-CB047〕の日本語納品書が出力され、商品情報に商品M0509-CB047-OKの行が表示され、商品M0509-CB047-NGの行が表示されないこと	0203 納品書印刷（日本語） / 機能仕様 処理概要（★はカスタマイズ項目）、現行仕様 業務ロジック 納品書に出る受注と明細	CB-M05-09-002
+IT-M05-09-049	IT-0366	REQ-0203-sheet-13-R027,REQ-0203-sheet-13-R049,REQ-0203-sheet-13-R054		ITA-11	P1	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBGUEST-049	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ GUEST-M0509-CB049は会員とプレイヤーを持たないゲスト受注で、注文者都道府県は東京都（設定あり）、国内配送先と配送方法ゆうパック、注文受付を持ち、明細は2行。商品M0509-CB049-OKは商品・商品規格・商品サブ情報・商品規格サブ情報をすべて持ち、商品M0509-CB049-NGは商品規格を持たない（いずれかを持たない）。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBGUEST-049）	1. 受注情報検索 一覧(検索結果)画面を開く／2. ゲスト受注である注文番号GUEST-M0509-CB049を選択する／3. 納品書印刷（日本語）ボタンを押す	GUEST-M0509-CB049の日本語納品書が出力され、送り主の会員番号に「非会員」と表示され、商品情報に商品M0509-CB049-OKの行が表示され、商品M0509-CB049-NGの行が表示されないこと	0203 納品書印刷（日本語） / 画面項目定義 識別ID 16（刷新指示を採用）、現行仕様 業務ロジック 納品書に出る受注と明細（会員情報とプレイヤー情報を要求する現行仕様とは不一致）	CB-M05-09-004
+IT-M05-09-053	IT-0366			ITA-11	P2	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBSORTCARD-053	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB053〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行（ID末尾の順に並べる前）で、商品M0509-CB053-GOODS（カードカテゴリでない商品・棚番M0509-CB053-A01）と商品M0509-CB053-CARD（カードカテゴリの商品・棚番M0509-CB053-B02）を持ち、言語・状態・Foilフラグ・略称タグ・レアリティ・色は2行とも同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTCARD-053）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB053〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、カードカテゴリの商品M0509-CB053-CARD、カードカテゴリでない商品M0509-CB053-GOODSの順に表示されること	0203 納品書印刷（日本語） / 機能仕様 処理概要（★はカスタマイズ項目）の並び順「カードが先、カード以外は後」	CB-M05-09-008
+IT-M05-09-054	IT-0366			ITA-11	P2	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBSORTCOND-054	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB054〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、商品M0509-CB054-HP（状態HP）と商品M0509-CB054-NM（状態NM）を持ち、ともにカードカテゴリで棚番・言語・Foilフラグ・略称タグ・レアリティ・色は同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTCOND-054）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB054〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、状態NMの商品M0509-CB054-NM、状態HPの商品M0509-CB054-HPの順に表示されること	0203 納品書印刷（日本語） / 機能仕様 処理概要（★はカスタマイズ項目）の並び順「状態（NM→HP）」	CB-M05-09-009
+IT-M05-09-055	IT-0366			ITA-11	P2	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBSORTFOIL-055	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB055〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、商品M0509-CB055-FOIL（Foilフラグあり）と商品M0509-CB055-PLAIN（Foilフラグなし）を持ち、ともにカードカテゴリで棚番・言語・状態・略称タグ・レアリティ・色は同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTFOIL-055）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB055〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、非Foilの商品M0509-CB055-PLAIN、Foilの商品M0509-CB055-FOILの順に表示されること	0203 納品書印刷（日本語） / 機能仕様 処理概要（★はカスタマイズ項目）の並び順「Foilフラグ（非Foil→Foil）」	CB-M05-09-010
+IT-M05-09-056	IT-0366			ITA-11	P2	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBSORTABBR-056	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB056〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、略称タグM0509-CB056-BBB（並び順2）の商品M0509-CB056-B と略称タグM0509-CB056-AAA（並び順1）の商品M0509-CB056-A を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・レアリティ・色は同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTABBR-056）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB056〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、略称タグM0509-CB056-AAAの商品M0509-CB056-A、略称タグM0509-CB056-BBBの商品M0509-CB056-Bの順に表示されること	0203 納品書印刷（日本語） / 機能仕様 処理概要（★はカスタマイズ項目）の並び順「略称タグ（昇順）」	CB-M05-09-011
+IT-M05-09-057	IT-0366			ITA-11	P2	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBSORTRARITY-057	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB057〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、商品M0509-CB057-C（レアリティC）と商品M0509-CB057-M（レアリティM）を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・略称タグ・色は同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTRARITY-057）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB057〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、レアリティMの商品M0509-CB057-M、レアリティCの商品M0509-CB057-Cの順に表示されること	0203 納品書印刷（日本語） / 機能仕様 処理概要（★はカスタマイズ項目）の並び順「レアリティ（M→C）」	CB-M05-09-012
+IT-M05-09-058	IT-0366			ITA-11	P2	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBSORTCOLOR-058	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB058〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、色M0509-CB058-BLUE（色マスターの順序2）の商品M0509-CB058-B と色M0509-CB058-WHITE（色マスターの順序1）の商品M0509-CB058-W を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・略称タグ・レアリティは同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTCOLOR-058）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB058〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、色マスターの順序1の色M0509-CB058-WHITEの商品M0509-CB058-W、順序2の色M0509-CB058-BLUEの商品M0509-CB058-Bの順に表示されること	0203 納品書印刷（日本語） / 機能仕様 処理概要（★はカスタマイズ項目）の並び順「色（マスターデータ色順参照）」	CB-M05-09-013
+IT-M05-09-059	IT-0366			ITA-11	P2	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBSORTCOLLNO-059	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB059〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、同じ略称タグM0509-CB059-TAG（コレクター番号でソートする設定）の商品M0509-CB059-N10（コレクター番号010・英語カード名M0509-CB059 Alpha Card）と商品M0509-CB059-N02（コレクター番号002・英語カード名M0509-CB059 Zulu Card）を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・レアリティ・色は同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTCOLLNO-059）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB059〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、コレクター番号002の商品M0509-CB059-N02、コレクター番号010の商品M0509-CB059-N10の順に表示されること	0203 納品書印刷（日本語） / 機能仕様 処理概要（★はカスタマイズ項目）の並び順「設定されている略称タグについてコレクター番号でのソートだった場合、コレクター番号（昇順）」	CB-M05-09-014
+IT-M05-09-060	IT-0366			ITA-11	P2	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBSORTALPHA-060	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB060〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、同じ略称タグM0509-CB060-TAG（アルファベットでソートする設定）の商品M0509-CB060-ZULU（英語カード名M0509-CB060 Zulu Card・コレクター番号002）と商品M0509-CB060-ALPHA（英語カード名M0509-CB060 Alpha Card・コレクター番号010）を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・レアリティ・色は同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTALPHA-060）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB060〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、英語カード名M0509-CB060 Alpha Cardの商品M0509-CB060-ALPHA、英語カード名M0509-CB060 Zulu Cardの商品M0509-CB060-ZULUの順に表示されること	0203 納品書印刷（日本語） / 機能仕様 処理概要（★はカスタマイズ項目）の並び順「設定されている略称タグについてアルファベットでのソートだった場合、英語のカード名（昇順）」	CB-M05-09-015
+IT-M05-09-061	IT-0366	REQ-0203-sheet-13-R056		ITA-11	P1	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBSHIP1-061	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB061〕（登録時に振られた注文番号を控えてある）は国内配送先を1件だけ持ち、数量2の有効な明細1行による受注総数量が2で、注文受付中であり、受注情報検索ではこの受注の配送先1件だけを表示できる（S-M05-09-CBSHIP1-061）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB061〕の配送先1件を1回だけ選択する／3. 納品書印刷（日本語）ボタンを押す	〔注文番号-M0509-CB061〕の納品書が1回だけ出力され、商品数が「2 / 2」と表示されること	0203 納品書印刷（日本語） / 画面項目定義 識別ID 35、現行仕様 業務ロジック 納品書に出る受注と明細	CB-M05-09-016
+IT-M05-09-062	IT-0366	REQ-0203-sheet-13-R056		ITA-11	P1	ブラウザのみ	S-M05-09-ADM,S-M05-09-DELIVERY,S-M05-09-CBSHIPN-062	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 〔注文番号-M0509-CB062〕（登録時に振られた注文番号を控えてある）は国内配送先ID 〔配送先ID-M0509-CB062A〕（登録時に振られた配送先IDを控えてある）と〔配送先ID-M0509-CB062B〕（登録時に振られた配送先IDを控えてある）の2件（複数）を持ち、数量2と3の有効な明細による受注総数量が5で、注文受付中であり、受注情報検索ではこの受注の配送先2件だけを表示できる（S-M05-09-CBSHIPN-062）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB062〕に属する配送先のうち〔配送先ID-M0509-CB062A〕の1件だけを1回選択する／3. 納品書印刷（日本語）ボタンを押す	〔注文番号-M0509-CB062〕の納品書が1回だけ出力され、商品数が「5 / 5」と表示されること	0203 納品書印刷（日本語） / 画面項目定義 識別ID 35、現行仕様 業務ロジック 納品書に出る受注と明細	CB-M05-09-017
+
+codex
+仕分けは M05-03・M05-05 が全件「既存ケースで確認済み」、M05-09 はケース化と既存確認が混在しています。まず既存ケースの値の一致と、M05-09 の新規ケースの並び順・出力条件を重点的に確かめています。
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/units/M05-02/design.txt'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/units/M05-03/design.txt'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/units/M05-05/design.txt'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/units/M05-09/design.txt'" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/units/M05-08/design.txt'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 86ms:
+##### 0203 sheet-13 納品書印刷（日本語）
+L0001	納品書印刷（日本語）
+L0002	ドキュメント名受注管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名受注管理機能
+L0005	作成者緑川
+L0006	作成日2025-05-13
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM05-09
+L0010	機能名納品書印刷（日本語）
+L0011	概要日本語の納品書印刷が行えるよう納品書が表示されます。
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	6
+L0020	7
+L0021	8
+L0022	9
+L0023	10
+L0024	11
+L0025	12
+L0026	13
+L0027	14
+L0028	15
+L0029	16
+L0030	17
+L0031	18
+L0032	19
+L0033	20
+L0034	21
+L0035	22
+L0036	23
+L0037	24
+L0038	25
+L0039	26
+L0040	27
+L0041	28
+L0042	29
+L0043	30
+L0044	31
+L0045	32
+L0046	33
+L0047	34
+L0048	35
+L0049	納品書印刷（日本語） / F7 / image 1
+L0050	カスタマイズ説明
+L0051	・カスタマイズ要件
+L0052	現行機能をベースに下記カスタマイズを行う
+L0053	・出力データについて
+L0054	・本店のほかに、支店もスマレジも出力対象となる
+L0055	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0056	機能仕様処理概要（★はカスタマイズ項目）
+L0057	・出力データについて
+L0058	・出力するデータは国内配送のみ
+L0059	★本店のほかに、支店もスマレジも出力対象とする
+L0060	★支店の場合も本店と同じレイアウト、内容とする
+L0061	・並び順は以下の通りとなる
+L0062	  ・カードが先、カード以外は後
+L0063	  ・棚番（昇順、支店の場合は棚番のソートは行わない）
+L0064	  ・言語（日→英→他言語）
+L0065	  ・状態（NM→HP）
+L0066	  ・Foilフラグ（非Foil→Foil）
+L0067	  ・略称タグ（昇順）
+L0068	  ・レアリティ（M→C）
+L0069	  ・色（マスターデータ色順参照）
+L0070	  ・設定されている略称タグについてコレクター番号でのソートだった場合、コレクター番号（昇順）
+L0071	  ・設定されている略称タグについてアルファベットでのソートだった場合、英語のカード名（昇順）
+L0072	・商品情報の行は1ページに30行まで
+L0073	・「印刷する」ボタンを押下するとブラウザの印刷ダイアログを開く。
+L0074	識別ID	ラベル	書式・制限	必須	最大文字数
+L0075	または最大値	初期値	画面部品の説明
+L0076	1	印刷する	ボタン	-	-	-
+L0077	2	ページ数	ラベル	-	-	-	ページ数/ページ総数で表示する
+L0078	3	注文番号	ラベル	-	-	-
+L0079	4	お届け先-郵便番号	ラベル	-	-	-
+L0080	5	お届け先-都道府県	ラベル	-	-	-
+L0081	6	お届け先-住所1	ラベル	-	-	-
+L0082	7	お届け先-住所2	ラベル	-	-	-
+L0083	8	お届け先-電話番号	ラベル	-	-	-
+L0084	9	お届け先-名前	ラベル	-	-	-
+L0085	10	送り主-郵便番号	ラベル	-	-	-
+L0086	11	送り主-都道府県	ラベル	-	-	-
+L0087	12	送り主-住所1	ラベル	-	-	-
+L0088	13	送り主-住所2	ラベル	-	-	-
+L0089	14	送り主-電話番号	ラベル	-	-	-
+L0090	15	送り主-名前	ラベル	-	-	-
+L0091	16	送り主-会員番号	ラベル	-	-	-	ゲストの場合は「非会員」と表示する
+L0092	17	会社-会社名	ラベル	-	-	-
+L0093	18	会社-郵便番号	ラベル	-	-	-
+L0094	19	会社-住所	ラベル	-	-	-
+L0095	20	会社-建物名	ラベル	-	-	-
+L0096	21	会社-電話番号	ラベル	-	-	-
+L0097	22	会社-URL	ラベル	-	-	-
+L0098	23	会社-メールアドレス	ラベル	-	-	-
+L0099	24	会社-適格請求書発行事業者登録番号	ラベル	-	-	-	店舗情報(dtb_base_info) 本店の適格事業者番号設定値を記載
+L0100	25	お買い上げ額	ラベル	-	-	-
+L0101	26	送料	ラベル	-	-	-
+L0102	27	手数料	ラベル	-	-	-
+L0103	28	ポイント使用	ラベル	-	-	-
+L0104	29	発送方法	ラベル	-	-	-
+L0105	30	請求金額	ラベル	-	-	-	税込金額（内税）で表示される
+L0106	31	商品情報	ラベル	-	-	-
+L0107	32	価格	ラベル	-	-	-
+L0108	33	数量	ラベル	-	-	-
+L0109	34	合計	ラベル	-	-	-	各ページの最終行に表示
+L0110	35	商品数	ラベル	-	-	-	このページまでの数量合計 / 注文の総数量
+L0111	Source:
+L0112	functions/pf-eccube3/m05-09_admin_order_order_print_delivery_slips_ja.md
+L0113	現行仕様
+L0114	M05-09 納品書印刷（日本語） / 受注管理 — 納品書印刷（日本語）
+L0115	業務ロジック
+L0116	納品書に出る受注と明細
+L0117	選んだ受注のうち、次をすべて満たす受注だけが納品書に出る。満たさない受注は、選んでいても納品書に出ない。
+L0118	会員情報とプレイヤー情報を持つ
+L0119	配送先を持ち、その配送先に配送方法が設定されている
+L0120	注文者の都道府県が設定されている
+L0121	国内配送か海外配送かは、受注に紐づく配送方法へ設定された区分だけで決まる。受注や配送先の国では変わらない。配送方法にその区分が設定されていない受注は、日本語の納品書にも英語の納品書にも出ない。
+L0122	明細のうち、商品・商品規格・商品サブ情報・商品規格サブ情報のいずれかを持たないものは納品書に出ない。
+L0123	配送先の都道府県または国が設定されていないときは納品書に出て、その欄だけが空になる。
+L0124	同じ受注を複数回選んだときも、納品書は 1 回だけ出す。配送先を複数持つ受注でも、数量の合計は受注単位で 1 つにまとめる。
+L0125	受注一覧から実行したときは、選んだ受注が 1 件も存在しなければ納品書を作らず未検出として応答する。出荷指示リストから実行したときは、指定した出荷指示リストが存在しなければ未検出として応答する。
+L0126	差出人・届け先の表示
+L0127	条件	表示
+L0128	都道府県が海外のとき	国・地域名を郵便番号の上の行に出し、郵便番号の後ろに都道府県を出さない
+L0129	都道府県が海外以外のとき	国・地域名を出さず、郵便番号の後ろに都道府県を出す
+L0130	会員番号の欄	スマレジ会員IDを出す
+L0131	配送方法がスムーズ店頭受取のとき	受取人署名の欄を見出しの右に出す
+L0132	配送方法がスムーズ店頭受取以外のとき	受取人署名の欄を出さない
+L0133	会社の欄に出す会社名・郵便番号・住所・建物名・電話番号・URL・メールアドレスは、受注の内容によって変わらない。
+L0134	郵便番号は、上 3 桁と下 4 桁がどちらも登録されているときだけ - でつなぐ。どちらかが欠けているときは、登録されている郵便番号をそのまま使う。電話番号は 3 つの電話番号値を区切り文字なしで連結する。氏名は姓と名の間に空白を 1 個入れ、後ろに敬称「様」を付ける。
+L0135	金額と明細の表示
+L0136	消費税額は、受注の小計に送料と手数料を足し、値引きを引いた金額から算出する。
+L0137	ポイント使用の欄には受注の値引き額を出し、単位として「ポイント」を付ける。ポイント数として計算した値ではない。値引きが 0 のときも 0 と出す。
+L0138	明細行の合計は、価格に数量を掛けた金額とする。商品情報には受注したときの商品名を出す。受注のあとに商品名を変えたときも、納品書に出る商品名は変わらない。
+L0139	金額は通貨記号「¥」を前に付け、3 桁ごとに区切って出す。ポイント使用の欄だけは、どちらも付けない。
+L0140	改ページ
+L0141	改ページしたあとのページの先頭では、見出し・注文番号・受取人署名・お届け先・送り主・会社情報・金額の欄を出し直す。
+L0142	入出力
+L0143	出力: 納品書
+L0144	受注一覧・出荷指示リストのどちらから実行したときも、対象に選ばれた受注の納品書を、実行元の画面とは別のウィンドウに出力する。対象の受注が複数のときは、受注ごとに納品書を続けて出す。
+L0145	リニューアル後の仕様
+L0146	表示メッセージ
+L0147	本機能は画面メッセージを持たない。
+
+ succeeded in 131ms:
+##### 0203 sheet-6 受注一覧カスタムCSV出力
+L0001	受注一覧カスタムCSV出力
+L0002	ドキュメント名受注管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名受注管理機能
+L0005	作成者緑川
+L0006	作成日2025-05-13
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM05-03
+L0010	機能名受注一覧カスタムCSV出力
+L0011	概要カスタムCSV機能より受注情報CSV出力の項目を変更した状態で出力することができます。
+L0012	機能について
+L0013	処理概要（★はカスタマイズ項目）
+L0014	受注一覧カスタムCSV出力項目設定
+L0015	識別ID	項目名	備考
+L0016	1	注文番号	本店、支店、スマレジの注文データを出力対象とする
+L0017	2	注文ID
+L0018	3	店舗ID	本店、支店のデータを統合するため追加
+L0019	4	店舗名	本店、支店のデータを統合するため追加
+L0020	5	会員ID
+L0021	6	お名前(姓)	非会員である場合は非会員と表示する
+L0022	7	お名前(名)
+L0023	8	お名前(セイ)
+L0024	9	お名前(メイ)
+L0025	10	郵便番号1
+L0026	11	郵便番号2
+L0027	12	都道府県(ID)
+L0028	13	都道府県(名称)
+L0029	14	住所1
+L0030	15	住所2
+L0031	16	住所3	海外住所用で住所３を追加
+L0032	17	メールアドレス
+L0033	18	TEL1
+L0034	19	TEL2
+L0035	20	TEL3
+L0036	21	FAX1
+L0037	22	FAX2
+L0038	23	FAX3
+L0039	24	性別(ID)
+L0040	25	性別(名称)
+L0041	26	職業(ID)
+L0042	27	職業(名称)
+L0043	28	誕生日
+L0044	29	ショップ用メモ欄
+L0045	30	小計
+L0046	31	値引き
+L0047	32	送料
+L0048	33	税金
+L0049	34	合計
+L0050	35	支払合計
+L0051	36	対応状況(ID)
+L0052	37	対応状況(名称)
+L0053	38	支払方法(ID)
+L0054	39	支払方法(名称)
+L0055	40	受注日
+L0056	41	入金日
+L0057	42	出荷指示日
+L0058	43	注文詳細ID
+L0059	44	商品ID
+L0060	45	商品規格ID
+L0061	46	商品名
+L0062	47	商品コード
+L0063	48	規格名1
+L0064	49	規格名2
+L0065	50	規格分類名1
+L0066	51	規格分類名2
+L0067	52	価格
+L0068	53	個数
+L0069	54	注文備考
+L0070	55	配送方法
+L0071	56	配送先国
+L0072	57	会社名
+L0073	58	税率ルール(ID)
+L0074	59	税率
+L0075	60	スマレジ取引ID	スマレジ連携
+L0076	61	小計値引き/割引区分	スマレジ連携
+L0077	62	クーポン値引き	スマレジ連携
+L0078	63	スマレジメモ	スマレジ連携
+L0079	64	免税額	スマレジ連携
+L0080	カスタマイズ説明
+L0081	概要
+L0082	本店・支店・スマレジ（実店頭）の受注情報をCSVとして出力することが可能
+L0083	機能仕様機能について
+L0084	現行機能の"受注一覧カスタムCSV出力”をベースに下記カスタマイズを行う
+L0085	・出力データについて
+L0086	・本店のほか、支店の受注およびEC-CUBEで保持されているスマレジの取引データをCSV出力することが可能
+L0087	・非会員である場合、非会員と表現する
+L0088	※スマレジでの非会員による取引データを考慮
+L0089	機能仕様処理概要（★はカスタマイズ項目）
+L0090	★本店のほか、支店の受注およびEC-CUBEで保持されているスマレジの取引データをCSV出力する
+L0091	★非会員である場合、識別ID:4「お名前(姓)」に非会員と表現する
+L0092	★識別ID:14「住所3」を追加。
+L0093	★識別ID:58「店舗ID」を追加。
+L0094	★識別ID:59「取引ID」を追加。
+L0095	★識別ID:60「小計値引き/割引区分」を追加。
+L0096	★識別ID:61「クーポン値引き」を追加。
+L0097	★識別ID:62「メモ」を追加。
+L0098	★識別ID:63「免税額」を追加。
+##### 機能設計書 functions/pf-eccube3/m05-03_admin_order_order_custom_csv_export.md
+L0099	# 受注管理 — カスタム受注CSVダウンロード
+L0100	## 業務ロジック
+L0101	### 出力形式の選択
+L0102	一覧で選んだカスタムCSV定義を出力形式とする。指定したIDのカスタムCSV定義が存在しないときは、出力せず未検出として応答する。
+L0103	出力する項目は、その定義に登録した項目とする。並びは定義に登録した表示順の昇順とし、表示順が同じ項目は出力項目そのものの表示順の昇順で並ぶ。見出し行には各項目の表示名を出力する。出力項目の有効・無効は問わず、受注CSVダウンロードと違い、出力項目設定で無効にした項目も定義に登録されている限り出力する。
+L0104	### 出力対象の受注
+L0105	セッションに保持した受注検索条件で検索し直し、一致した受注をすべて出力する。一覧で最後に実行した検索と同じ条件になる。検索条件を保持していないときは、条件を空にして検索する。対応状況を条件に含めないときは購入処理中を除いた全対応状況が対象になるため、条件が空でも購入処理中の受注は出力しない。
+L0106	保持した検索条件は検索フォームへ入れ直してから使う。フォームの検証結果は出力の可否に影響せず、検証エラーがあっても、フォームが受け取れた条件だけで出力する。
+L0107	一覧のページ番号と表示件数は出力対象に影響しない。表示していたページの受注だけに絞られることはなく、条件に一致する限りすべての受注を出力する。
+L0108	出力順は注文日の降順に固定である。明細を複数持つ受注は検索の結果に複数回現れる。同じ受注が続けて返ったときは 2 件目以降を出力しないが、続かない位置に同じ受注が現れたときは、その受注を重ねて出力する。
+L0109	### 行の作り方
+L0110	受注 1 件につき、その受注の明細の件数だけ行を出力する。明細が 3 件ある受注は 3 行になり、明細を 1 件も持たない受注は行を出力しない。
+L0111	### 値の取り方
+L0112	| 出力項目が紐づく情報 | 出力する値 |
+L0113	| --- | --- |
+L0114	| 受注サブ情報 | 注文番号。受注サブ情報の項目を複数登録したときも、いずれの列にも注文番号を出力する |
+L0115	| 配送先 | 先頭の配送先の値。2 件目以降の配送先は使わない |
+L0116	| 上記以外 | 受注の値。受注から取った値が空のときだけ、同じ項目名で受注明細から取り直す |
+L0117	受注サブ情報を持たない受注では受注サブ情報に紐づく列が空欄になり、配送先を持たない受注では配送先に紐づく列が空欄になる。受注・受注明細のどちらからも取れないときも空欄とする。出力項目に指定した種別が受注・受注明細のいずれとも一致しないとき、項目名がどちらにも無いときも空欄とする。
+L0118	| 値の種類 | 出力する形 |
+L0119	| --- | --- |
+L0120	| 他のデータを 1 件だけ参照する値 | 参照先の、出力項目に指定した項目の値 |
+L0121	| 他のデータを複数参照する値 | 参照先の、出力項目に指定した項目の値を `,` で連結する。同じ値が複数あるときは 1 つにまとめ、参照先が見つからない要素は連結しない |
+L0122	| 日時 | `Y-m-d H:i:s` の形式の文字列 |
+L0123	| 上記以外 | 取り出した値のまま |
+L0124	## 入出力
+L0125	### 出力: CSVファイル
+L0126	| 項目 | 内容 |
+L0127	| --- | --- |
+L0128	| 文字コード | `SJIS-win`。`UTF-8` から変換し、変換できない文字は環境に設定した代替文字に置き換わる |
+L0129	| 区切り文字 | `,` |
+L0130	| 引用符 | 値が `,`・`"`・改行のいずれかを含むときだけ、値全体を `"` で囲む。値の中の `"` は 2 個続けて出力する |
+L0131	| ファイル名 | `order_` に出力日時を `YmdHis` の形式でつなぎ、`.csv` を付けた名前 |
+L0132	| 応答 | ダウンロードとして返す |
+L0133	ファイルの先頭にバイトオーダーマークを 1 個出力する。受注CSVダウンロードと違い、2 個続けて出力することはない。見出し行の次の行からデータ行を出力する。印は UTF-8 のバイトオーダーマーク（`EF BB BF`）で、見出し行を出力するときだけ付ける。ファイルは `EF BB BF` の 3 バイトで始まり、その直後に見出し行が続く。
+L0134	## 表示メッセージ
+L0135	本機能は画面メッセージを持たない。
+L0136	## 出典
+L0137	| 小見出し | 重要度 | 出典 |
+L0138	| --- | --- | --- |
+L0139	| 出力: CSVファイル | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CustomExportCsvController.php:66 |
+
+ succeeded in 149ms:
+##### 0203 sheet-5 受注一覧CSV出力
+L0001	受注一覧CSV出力
+L0002	ドキュメント名受注管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名受注管理機能
+L0005	作成者緑川
+L0006	作成日2025-05-13
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM05-02
+L0010	機能名受注一覧CSV出力
+L0011	概要受注内容のCSV出力が行えます。
+L0012	機能について
+L0013	処理概要（★はカスタマイズ項目）
+L0014	受注一覧CSV出力
+L0015	識別ID	項目名	備考
+L0016	1	注文番号	本店、支店、スマレジの注文データを出力対象とする
+L0017	2	注文ID
+L0018	3	店舗ID	本店、支店のデータを統合するため追加
+L0019	4	店舗名	本店、支店のデータを統合するため追加
+L0020	5	会員ID
+L0021	6	お名前(姓)	非会員である場合は非会員と表示する
+L0022	7	お名前(名)
+L0023	8	お名前(セイ)
+L0024	9	お名前(メイ)
+L0025	10	郵便番号1
+L0026	11	郵便番号2
+L0027	12	都道府県(ID)
+L0028	13	都道府県(名称)
+L0029	14	住所1
+L0030	15	住所2
+L0031	16	住所3	海外住所用で住所３を追加
+L0032	17	メールアドレス
+L0033	18	TEL1
+L0034	19	TEL2
+L0035	20	TEL3
+L0036	21	FAX1
+L0037	22	FAX2
+L0038	23	FAX3
+L0039	24	性別(ID)
+L0040	25	性別(名称)
+L0041	26	職業(ID)
+L0042	27	職業(名称)
+L0043	28	誕生日
+L0044	29	ショップ用メモ欄
+L0045	30	小計
+L0046	31	値引き
+L0047	32	送料
+L0048	33	税金
+L0049	34	合計
+L0050	35	支払合計
+L0051	36	対応状況(ID)
+L0052	37	対応状況(名称)
+L0053	38	支払方法(ID)
+L0054	39	支払方法(名称)
+L0055	40	受注日
+L0056	41	入金日
+L0057	42	出荷指示日
+L0058	43	注文詳細ID
+L0059	44	商品ID
+L0060	45	商品規格ID
+L0061	46	商品名
+L0062	47	商品コード
+L0063	48	規格名1
+L0064	49	規格名2
+L0065	50	規格分類名1
+L0066	51	規格分類名2
+L0067	52	価格
+L0068	53	個数
+L0069	54	注文備考
+L0070	55	配送方法
+L0071	56	配送先国
+L0072	57	会社名
+L0073	58	税率ルール(ID)
+L0074	59	税率
+L0075	60	スマレジ取引ID	スマレジ連携
+L0076	61	小計値引き/割引区分	スマレジ連携
+L0077	62	クーポン値引き	スマレジ連携
+L0078	63	スマレジメモ	スマレジ連携
+L0079	64	免税額	スマレジ連携
+L0080	カスタマイズ説明
+L0081	概要
+L0082	本店・支店・スマレジ（実店頭）の受注情報をCSVとして出力することが可能
+L0083	機能仕様機能について
+L0084	現行機能の"受注一覧CSV出力”をベースに下記カスタマイズを行う
+L0085	・出力データについて
+L0086	・本店のほか、支店の受注およびEC-CUBEで保持されているスマレジの取引データをCSV出力することが可能
+L0087	・非会員である場合、非会員と表現する
+L0088	※スマレジでの非会員による取引データを考慮
+L0089	機能仕様処理概要（★はカスタマイズ項目）
+L0090	★本店のほか、支店の受注およびEC-CUBEで保持されているスマレジの取引データをCSV出力する
+L0091	★非会員である場合、識別ID:4「お名前(姓)」に非会員と表現する
+L0092	★識別ID:14「住所3」を追加。
+L0093	★識別ID:58「店舗ID」を追加。
+L0094	★識別ID:59「取引ID」を追加。
+L0095	★識別ID:60「小計値引き/割引区分」を追加。
+L0096	★識別ID:61「クーポン値引き」を追加。
+L0097	★識別ID:62「メモ」を追加。
+L0098	★識別ID:63「免税額」を追加。
+##### 機能設計書 functions/pf-eccube3/m05-02_admin_order_order_csv_export.md
+L0099	# 受注管理 — 受注CSVダウンロード
+L0100	## 業務ロジック
+L0101	### 出力対象の受注
+L0102	セッションに保持した受注検索条件で検索し直し、一致した受注をすべて出力する。一覧で最後に実行した検索と同じ条件になる。検索条件を保持していないときは、条件を空にして検索する。対応状況を条件に含めないときは購入処理中を除いた全対応状況が対象になるため、条件が空でも購入処理中の受注は出力しない。
+L0103	一覧のページ番号と表示件数は出力対象に影響しない。表示していたページの受注だけに絞られることはなく、条件に一致する限りすべての受注を出力する。
+L0104	保持した検索条件は検索フォームへ入れ直してから使う。フォームの検証結果は出力の可否に影響せず、検証エラーがあっても、フォームが受け取れた条件だけで出力する。
+L0105	出力順は注文日の降順に固定である。出力項目に並び順の指定は無い。
+L0106	明細を複数持つ受注は、検索の結果に複数回現れる。同じ受注が続けて返ったときは 2 件目以降を出力しないが、続かない位置に同じ受注が現れたときは、その受注を重ねて出力する。
+L0107	### 出力する列
+L0108	受注CSVの出力項目のうち、有効なものだけを出力する。並びは出力項目に設定した表示順の昇順とする。見出し行には各出力項目の表示名を出力し、有効な出力項目が 1 件も無いときは、見出し行もデータ行も列を持たない空の行になる。
+L0109	### 行の作り方
+L0110	受注 1 件につき、その受注の明細の件数だけ行を出力する。明細が 3 件ある受注は 3 行になり、明細を 1 件も持たない受注は行を出力しない。
+L0111	### 値の取り方
+L0112	出力項目ごとに、まず受注から値を取る。受注から取った値が空のときだけ、同じ項目名で受注明細から取り直し、どちらからも取れないときは空欄とする。
+L0113	出力項目に指定したデータの種別が受注・受注明細のいずれとも一致しないときは空欄とする。項目名が受注・受注明細のどちらにも無いときも空欄とする。
+L0114	種別を受注とした出力項目は、受注の値が空のときに明細から取り直しても空のままになる。種別を受注明細とした出力項目は、受注では取れないため常に明細から取る。
+L0115	取り出した値は、種類ごとに次の形へ変換して出力する。
+L0116	| 値の種類 | 出力する形 |
+L0117	| --- | --- |
+L0118	| 他のデータを 1 件だけ参照する値 | 参照先の、出力項目に指定した項目の値 |
+L0119	| 他のデータを複数参照する値 | 参照先の、出力項目に指定した項目の値を `,` で連結する。同じ値が複数あるときは 1 つにまとめ、参照先が見つからない要素は連結しない |
+L0120	| 日時 | `Y-m-d H:i:s` の形式の文字列 |
+L0121	| 上記以外 | 取り出した値のまま |
+L0122	## 入出力
+L0123	### 出力: CSVファイル
+L0124	| 項目 | 内容 |
+L0125	| --- | --- |
+L0126	| 文字コード | `SJIS-win`。`UTF-8` から変換し、変換できない文字は環境に設定した代替文字に置き換わる |
+L0127	| 区切り文字 | `,` |
+L0128	| 引用符 | 値が `,`・`"`・改行のいずれかを含むときだけ、値全体を `"` で囲む。値の中の `"` は 2 個続けて出力する |
+L0129	| ファイル名 | `order_` に出力日時を `YmdHis` の形式でつなぎ、`.csv` を付けた名前 |
+L0130	| 応答 | ダウンロードとして返す |
+L0131	ファイルの先頭にバイトオーダーマークを 2 個出力する。見出し行を出力するときにも同じ印を付ける。見出し行の次の行からデータ行を出力する。印は UTF-8 のバイトオーダーマーク（`EF BB BF`）である。見出し行を出力するときに付ける印は、先頭の 2 個のうちの 2 個目にあたる。ファイル中の印は先頭の 2 個だけである。ファイルは `EF BB BF` を 2 回続けた 6 バイトで始まり、その直後に見出し行が続く。
+L0132	## 表示メッセージ
+L0133	本機能は画面メッセージを持たない。
+L0134	## 出典
+L0135	| 小見出し | 重要度 | 出典 |
+L0136	| --- | --- | --- |
+L0137	| 出力: CSVファイル | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php:134-137 |
+
+ succeeded in 139ms:
+##### 0203 sheet-8 受注詳細カスタムCSV出力
+L0001	受注詳細カスタムCSV出力
+L0002	ドキュメント名受注管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名受注管理機能
+L0005	作成者緑川
+L0006	作成日2025-05-13
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM05-05
+L0010	機能名出荷実績入力用CSV出力
+L0011	概要カスタムCSV機能より配送情報CSV出力の項目を変更した状態で出力することができます。
+L0012	機能について
+L0013	処理概要（★はカスタマイズ項目）
+L0014	受注詳細カスタムCSV出力項目設定
+L0015	識別ID	項目名	備考
+L0016	1	注文番号	本店、支店、スマレジの注文データを出力対象とする
+L0017	2	注文ID
+L0018	3	店舗ID	本店、支店のデータを統合するため追加
+L0019	4	店舗名	本店、支店のデータを統合するため追加
+L0020	5	会員ID
+L0021	6	お名前(姓)	非会員である場合は非会員と表示する
+L0022	7	お名前(名)
+L0023	8	お名前(セイ)
+L0024	9	お名前(メイ)
+L0025	10	会社名
+L0026	11	郵便番号1
+L0027	12	郵便番号2
+L0028	13	都道府県(ID)
+L0029	14	都道府県(名称)
+L0030	15	住所1
+L0031	16	住所2
+L0032	17	住所3	海外住所用で住所３を追加
+L0033	18	メールアドレス
+L0034	19	TEL1
+L0035	20	TEL2
+L0036	21	TEL3
+L0037	22	FAX1
+L0038	23	FAX2
+L0039	24	FAX3
+L0040	25	性別(ID)
+L0041	26	性別(名称)
+L0042	27	職業(ID)
+L0043	28	職業(名称)
+L0044	29	誕生日
+L0045	30	ショップ用メモ欄
+L0046	31	小計
+L0047	32	値引き
+L0048	33	送料
+L0049	34	税金
+L0050	35	合計
+L0051	36	支払合計
+L0052	37	対応状況(ID)
+L0053	38	対応状況(名称)
+L0054	39	支払方法(ID)
+L0055	40	支払方法(名称)
+L0056	41	受注日
+L0057	42	入金日
+L0058	43	出荷指示日
+L0059	44	配送ID
+L0060	45	配送先_お名前(姓)
+L0061	46	配送先_お名前(名)
+L0062	47	配送先_お名前(セイ)
+L0063	48	配送先_お名前(メイ)
+L0064	49	配送先_会社名
+L0065	50	配送先_郵便番号1
+L0066	51	配送先_郵便番号2
+L0067	52	配送先_都道府県(ID)
+L0068	53	配送先_都道府県(名称)
+L0069	54	配送先_住所1
+L0070	55	配送先_住所2
+L0071	56	配送先_TEL1
+L0072	57	配送先_TEL2
+L0073	58	配送先_TEL3
+L0074	59	配送先_FAX1
+L0075	60	配送先_FAX2
+L0076	61	配送先_FAX3
+L0077	62	配送業者(ID)
+L0078	63	配送業者(名称)
+L0079	64	お届け時間ID
+L0080	65	お届け時間(名称)
+L0081	66	お届け希望日
+L0082	67	送料ID
+L0083	68	送料
+L0084	69	出荷日
+L0085	70	スマレジ取引ID	スマレジ連携
+L0086	71	小計値引き/割引区分	スマレジ連携
+L0087	72	クーポン値引き	スマレジ連携
+L0088	73	スマレジメモ	スマレジ連携
+L0089	74	免税額	スマレジ連携
+L0090	75	配送商品ID
+L0091	76	商品ID
+L0092	77	商品規格ID
+L0093	78	商品名
+L0094	79	商品コード
+L0095	80	規格名1
+L0096	81	規格名2
+L0097	82	規格分類名1
+L0098	83	規格分類名2
+L0099	84	価格
+L0100	85	個数
+L0101	86	注文備考
+L0102	87	注文国
+L0103	88	注文番号
+L0104	89	配送先国
+L0105	90	送り状No.
+L0106	カスタマイズ説明
+L0107	概要
+L0108	本店・支店・スマレジ（実店頭）の受注情報をCSVとして出力することが可能
+L0109	機能仕様機能について
+L0110	現行機能の"受注詳細CSV出力”をベースに下記カスタマイズを行う
+L0111	・出力データについて
+L0112	・本店のほか、支店の受注およびEC-CUBEで保持されているスマレジの取引データをCSV出力することが可能
+L0113	・非会員である場合、非会員と表現する
+L0114	※スマレジでの非会員による取引データを考慮
+L0115	機能仕様処理概要（★はカスタマイズ項目）
+L0116	★本店のほか、支店の受注およびEC-CUBEで保持されているスマレジの取引データをCSV出力する
+L0117	★非会員である場合、識別ID:3「お名前(姓)」に非会員と表現する
+L0118	★識別ID:14「住所3」を追加。
+L0119	★識別ID:83「店舗ID」を追加。
+L0120	★識別ID:84「取引ID」を追加。
+L0121	★識別ID:85「小計値引き/割引区分」を追加。
+L0122	★識別ID:86「クーポン値引き」を追加。
+L0123	★識別ID:87「メモ」を追加。
+L0124	★識別ID:88「免税額」を追加。
+##### 機能設計書 functions/pf-eccube3/m05-05_admin_order_order_shipping_custom_csv_export.md
+L0125	# 受注管理 — カスタム配送CSVダウンロード
+L0126	## 業務ロジック
+L0127	### 出力形式の選択
+L0128	一覧で選んだカスタムCSV定義を出力形式とする。指定したIDのカスタムCSV定義が存在しないときは、出力せず未検出として応答する。
+L0129	出力する項目は、その定義に登録した項目とする。並びは定義に登録した表示順の昇順とし、表示順が同じ項目は出力項目そのものの表示順の昇順で並ぶ。見出し行には各項目の表示名を出力する。出力項目の有効・無効は問わず、配送CSVダウンロードと違い、出力項目設定で無効にした項目も定義に登録されている限り出力する。
+L0130	### 出力対象の受注
+L0131	セッションに保持した受注検索条件で検索し直し、一致した受注をすべて出力する。一覧で最後に実行した検索と同じ条件になる。検索条件を保持していないときは、条件を空にして検索する。対応状況を条件に含めないときは購入処理中を除いた全対応状況が対象になるため、条件が空でも購入処理中の受注は出力しない。
+L0132	保持した検索条件は検索フォームへ入れ直してから使う。フォームの検証結果は出力の可否に影響せず、検証エラーがあっても、フォームが受け取れた条件だけで出力する。
+L0133	一覧のページ番号と表示件数は出力対象に影響しない。表示していたページの受注だけに絞られることはなく、条件に一致する限りすべての受注を出力する。
+L0134	出力順は注文日の降順に固定である。明細を複数持つ受注は検索の結果に複数回現れる。同じ受注が続けて返ったときは 2 件目以降を出力しないが、続かない位置に同じ受注が現れたときは、その受注を重ねて出力する。
+L0135	### 行の作り方
+L0136	受注 1 件につき、その受注の配送先の件数だけ行を出力する。配送CSVダウンロードが先頭の配送先だけを出力するのに対し、こちらは配送先を複数持つ受注をその件数だけ行にする。配送先を 1 件も持たない受注は行を出力しない。
+L0137	### 値の取り方
+L0138	| 出力項目が紐づく情報 | 出力する値 |
+L0139	| --- | --- |
+L0140	| 受注サブ情報 | 項目名に対応する値。注文番号と送り状No.だけを出力でき、どちらにも対応しない項目名を登録したときは空欄になる |
+L0141	| 上記以外 | 受注の値。受注から取った値が空のときだけ、同じ項目名でその行の配送先から取り直す |
+L0142	受注・配送先のどちらからも取れないときは空欄とする。出力項目に指定した種別が受注・配送先のいずれとも一致しないとき、項目名がどちらにも無いときも空欄とする。受注サブ情報を持たない受注では、受注サブ情報に紐づく列が空欄になる。
+L0143	| 値の種類 | 出力する形 |
+L0144	| --- | --- |
+L0145	| 他のデータを 1 件だけ参照する値 | 参照先の、出力項目に指定した項目の値 |
+L0146	| 他のデータを複数参照する値 | 参照先の、出力項目に指定した項目の値を `,` で連結する。同じ値が複数あるときは 1 つにまとめ、参照先が見つからない要素は連結しない |
+L0147	| 日時 | `Y-m-d H:i:s` の形式の文字列 |
+L0148	| 上記以外 | 取り出した値のまま |
+L0149	## 入出力
+L0150	### 出力: CSVファイル
+L0151	| 項目 | 内容 |
+L0152	| --- | --- |
+L0153	| 文字コード | `SJIS-win`。`UTF-8` から変換し、変換できない文字は環境に設定した代替文字に置き換わる |
+L0154	| 区切り文字 | `,` |
+L0155	| 引用符 | 値が `,`・`"`・改行のいずれかを含むときだけ、値全体を `"` で囲む。値の中の `"` は 2 個続けて出力する |
+L0156	| ファイル名 | `shipping_` に出力日時を `YmdHis` の形式でつなぎ、`.csv` を付けた名前 |
+L0157	| 応答 | ダウンロードとして返す |
+L0158	ファイルの先頭にバイトオーダーマークを 1 個出力する。配送CSVダウンロードと違い、2 個続けて出力することはない。見出し行の次の行からデータ行を出力する。印は UTF-8 のバイトオーダーマーク（`EF BB BF`）で、見出し行を出力するときだけ付ける。ファイルは `EF BB BF` の 3 バイトで始まり、その直後に見出し行が続く。
+L0159	## 表示メッセージ
+L0160	本機能は画面メッセージを持たない。
+L0161	## 出典
+L0162	| 小見出し | 重要度 | 出典 |
+L0163	| --- | --- | --- |
+L0164	| 出力: CSVファイル | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/Admin/CustomExportCsvController.php:66 |
+L0165	| 出力: CSVファイル | P2 | pf-eccube3:app/Plugin/HareruyaEc/Service/CsvExportService.php:110-112 |
+
+ succeeded in 174ms:
+##### 0203 sheet-12 スタック用紙印刷
+L0001	スタック用紙印刷
+L0002	ドキュメント名受注管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名受注管理機能
+L0005	作成者緑川
+L0006	作成日2025-05-13
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM05-08
+L0010	機能名スタック用紙印刷
+L0011	概要スタック用紙をプリンターへ印刷することができます。
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	スタック用紙印刷 / C8 / image 1
+L0015	カスタマイズ説明
+L0016	機能仕様処理概要（★はカスタマイズ項目）
+L0017	・受注一覧で「スタック用紙印刷」ボタンを押下するとポップアップウインドウで「スタック用紙印刷中」を表示する。
+L0018	・受注一覧で選択された受注のブラウザ印刷フラグをONにする。ONになるとスタック印刷APIで印刷の対象となる。
+L0019	・未採番の注文がある場合は400エラーを返すようにする。
+L0020	・受注のステータスが注文受領である場合はピック中に変更し、注文確定日を登録する。
+L0021	・処理後、印刷予約を受け付けた旨のメッセージを表示して、ポップアップウインドウ表示する（レイアウト図参照）
+L0022	・印刷内容については0505_基本設計仕様書(API_受注管理)を参照
+L0023	識別ID ラベル 書式・制限 必須 最大文字数
+L0024	または最大値 初期値 画面部品の説明
+L0025	Source:
+L0026	functions/pf-eccube3/m05-08_admin_order_order_stack_paper_print.md
+L0027	現行仕様
+L0028	M05-08 スタック用紙印刷 / 受注管理 — スタック用紙印刷
+L0029	業務ロジック
+L0030	印刷対象の指定
+L0031	要求に受注IDが 1 件も含まれないときは、印刷内容を組み立てず、対象が見つからない応答を返す。この応答にメッセージは含めない。
+L0032	受注IDを 1 件以上受け取り、そのいずれにも一致する受注が無いときは、受注を 1 件も更新せず、印刷予約を受け付けた応答を返す。この応答は正常に予約できたときと同じである。
+L0033	注文番号が未採番のときの扱い
+L0034	対象受注に注文番号が未採番のものが 1 件でもあるときは、他の対象受注も含めて 1 件も更新せずに終了する。
+L0035	対応状況と印刷済みの更新
+L0036	対象受注は、対応状況に関わらずブラウザ印刷済みにする。対応状況が注文受領の受注だけ、対応状況をピック中にし、注文確定日に処理した日時を設定する。注文受領以外の受注は、対応状況と注文確定日を変更しない。
+L0037	担当者の更新
+L0038	受け取った担当者IDに一致する担当者が存在するときだけ、受注の担当者に設定する。存在しないときは担当者を変更しない。
+L0039	応答待ちの打ち切り
+L0040	印刷用の別画面からの呼び出しは、5 秒で応答が無いときは打ち切る。
+L0041	入出力
+L0042	種類	内容
+L0043	入力	一覧で選択した受注のID、操作した担当者のID
+L0044	成功時出力	メッセージだけを返す。印刷内容は応答に含めない
+L0045	失敗時出力	受注を更新しない。メッセージを返すか、メッセージを含まない「対象が見つからない」応答を返す
+L0046	入出力: 永続化
+L0047	操作	契機
+L0048	担当者の更新	受け取った担当者IDに一致する担当者が存在するときだけ
+L0049	リニューアル後の仕様
+L0050	表示メッセージ
+L0051	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0052	M05-08-MSG-001	画面中央(ダイアログ、スタック印刷ウィンドウ)	admin.common.csrf_token_error	スタック用紙印刷で、送信内容の確認に失敗したとき	エラーを表示後、スタック用紙印刷ウィンドウを閉じる
+L0053	M05-08-MSG-002	画面中央(ダイアログ、スタック印刷ウィンドウ)	対象の注文が指定されていません。	スタック用紙印刷で、印刷する注文を選択せずに実行したとき	エラーを表示後、スタック用紙印刷ウィンドウを閉じる
+L0054	M05-08-MSG-003	画面中央(ダイアログ、スタック印刷ウィンドウ)	注文番号が未採番の注文があります。	印刷対象に注文番号が付いていない注文が含まれるとき	エラーを表示後、スタック用紙印刷ウィンドウを閉じる
+L0055	M05-08-MSG-004	画面中央(ダイアログ、スタック印刷ウィンドウ)	印刷予約を受け付けました。	スタック用紙印刷の予約が完了したとき	完了メッセージを表示後、スタック用紙印刷ウィンドウを閉じる
+L0056	M05-08-MSG-005	画面中央(ダイアログ、スタック印刷ウィンドウ)	システムエラーが発生いたしました。<br>サイト管理者へお問い合わせください。	スタック用紙印刷の通信で、エラー内容を取得できなかったとき	エラーを表示後、スタック用紙印刷ウィンドウを閉じる
+
+exec
+/bin/bash -lc 'ls integration_test/casegen/combination/review/R1_*_findings.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/review/R1_01_findings.md
+integration_test/casegen/combination/review/R1_02_findings.md
+integration_test/casegen/combination/review/R1_03_findings.md
+integration_test/casegen/combination/review/R1_04_findings.md
+integration_test/casegen/combination/review/R1_05_findings.md
+integration_test/casegen/combination/review/R1_06_findings.md
+integration_test/casegen/combination/review/R1_07_findings.md
+integration_test/casegen/combination/review/R1_08_findings.md
+integration_test/casegen/combination/review/R1_09_findings.md
+integration_test/casegen/combination/review/R1_10_findings.md
+integration_test/casegen/combination/review/R1_11_findings.md
+integration_test/casegen/combination/review/R1_12_findings.md
+integration_test/casegen/combination/review/R1_13_findings.md
+integration_test/casegen/combination/review/R1_14_findings.md
+integration_test/casegen/combination/review/R1_15_findings.md
+integration_test/casegen/combination/review/R1_16_findings.md
+integration_test/casegen/combination/review/R1_17_findings.md
+integration_test/casegen/combination/review/R1_18_findings.md
+integration_test/casegen/combination/review/R1_19_findings.md
+integration_test/casegen/combination/review/R1_20_findings.md
+integration_test/casegen/combination/review/R1_21_findings.md
+integration_test/casegen/combination/review/R1_22_findings.md
+integration_test/casegen/combination/review/R1_23_findings.md
+integration_test/casegen/combination/review/R1_24_findings.md
+integration_test/casegen/combination/review/R1_25_findings.md
+integration_test/casegen/combination/review/R1_26_findings.md
+integration_test/casegen/combination/review/R1_27_findings.md
+integration_test/casegen/combination/review/R1_28_findings.md
+integration_test/casegen/combination/review/R1_29_findings.md
+integration_test/casegen/combination/review/R1_30_findings.md
+integration_test/casegen/combination/review/R1_31_findings.md
+integration_test/casegen/combination/review/R1_32_findings.md
+integration_test/casegen/combination/review/R1_33_findings.md
+integration_test/casegen/combination/review/R1_34_findings.md
+integration_test/casegen/combination/review/R1_35_findings.md
+integration_test/casegen/combination/review/R1_36_findings.md
+integration_test/casegen/combination/review/R1_37_findings.md
+integration_test/casegen/combination/review/R1_38_findings.md
+integration_test/casegen/combination/review/R1_39_findings.md
+integration_test/casegen/combination/review/R1_40_findings.md
+integration_test/casegen/combination/review/R1_41_findings.md
+integration_test/casegen/combination/review/R1_42_findings.md
+integration_test/casegen/combination/review/R1_43_findings.md
+integration_test/casegen/combination/review/R1_44_findings.md
+integration_test/casegen/combination/review/R1_45_findings.md
+integration_test/casegen/combination/review/R1_46_findings.md
+integration_test/casegen/combination/review/R1_47_findings.md
+integration_test/casegen/combination/review/R1_48_findings.md
+integration_test/casegen/combination/review/R1_49_findings.md
+integration_test/casegen/combination/review/R1_50_findings.md
+integration_test/casegen/combination/review/R1_51_findings.md
+integration_test/casegen/combination/review/R1_52_findings.md
+integration_test/casegen/combination/review/R1_53_findings.md
+integration_test/casegen/combination/review/R1_54_findings.md
+integration_test/casegen/combination/review/R1_55_findings.md
+integration_test/casegen/combination/review/R1_56_findings.md
+integration_test/casegen/combination/review/R1_A_findings.md
+integration_test/casegen/combination/review/R1_B_findings.md
+integration_test/casegen/combination/review/R1_C_findings.md
+integration_test/casegen/combination/review/R1_D_findings.md
+
+exec
+/bin/bash -lc 'ls integration_test/casegen/combination/review/M05-0*_R1_dispositions*.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/review/M05-01_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-02_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-03_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-05_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-08_R1_dispositions.tsv
+integration_test/casegen/combination/review/M05-09_R1_dispositions.tsv
+
+exec
+/bin/bash -lc "grep -l -E '### 指摘（M05-(02|03|05|08|09)' integration_test/casegen/combination/review/R1_*_findings.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/review/R1_38_findings.md
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M05-02_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M05-05_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M05-08_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M05-03_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+ succeeded in 22ms:
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+ succeeded in 33ms:
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+ succeeded in 13ms:
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/M05-09_R1_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+指摘	処置	理由	直した所
+IT-M05-09-046	採用	シードの控え方の呼び名が〔注文番号-M0509-CBCB046〕でケースの〔注文番号-M0509-CB046〕と食い違っていた	シード S-M05-09-*-046 の投入方法の呼び名をCB046に統一
+IT-M05-09-047	採用	シードの控え方の呼び名が〔注文番号-M0509-CBCB047〕でケースの〔注文番号-M0509-CB047〕と食い違っていた	シード S-M05-09-*-047 の投入方法の呼び名をCB047に統一
+IT-M05-09-061	採用	シードの控え方の呼び名が〔注文番号-M0509-CBCB061〕でケースの〔注文番号-M0509-CB061〕と食い違っていた	シード S-M05-09-*-061 の投入方法の呼び名をCB061に統一
+IT-M05-09-061	採用	設計書は商品数を「このページまでの数量合計 / 注文の総数量」と定め、受注単位で合計する（配送先複数でも受注単位で1つにまとめる）。明細1行・数量2・1ページに収まるため「2 / 2」	期待結果を「2 / 2」と明記
+IT-M05-09-062	採用	同上。総数量5・明細2行で1ページに収まるため「5 / 5」	期待結果を「5 / 5」と明記
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/R1_38_findings.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+### 指摘（M05-09 / IT-M05-09-046）
+- 主張: ケースは〔注文番号-M0509-CB046〕を選ぶが、シードの投入方法は取得した番号を〔注文番号-M0509-CBCB046〕として控える。
+- 実際: 設計書 L0117 は「選んだ受注のうち、次をすべて満たす受注だけが納品書に出る」と定める。ケースで選ぶ番号がシードの手順では確定しない。
+- 判定: 成立しない前提・手順
+- 修正案: シードで控える注文番号の呼び名をケースと一致させる。
+
+### 指摘（M05-09 / IT-M05-09-047）
+- 主張: ケースは〔注文番号-M0509-CB047〕を選ぶが、シードの投入方法は〔注文番号-M0509-CBCB047〕として控える。
+- 実際: 設計書 L0117 は「選んだ受注のうち、次をすべて満たす受注だけが納品書に出る」と定める。ケースで選ぶ番号がシードの手順では確定しない。
+- 判定: 成立しない前提・手順
+- 修正案: シードで控える注文番号の呼び名をケースと一致させる。
+
+### 指摘（M05-09 / IT-M05-09-061）
+- 主張: ケースは〔注文番号-M0509-CB061〕を選ぶが、シードの投入方法は〔注文番号-M0509-CBCB061〕として控える。
+- 実際: 設計書 L0117 は「選んだ受注のうち、次をすべて満たす受注だけが納品書に出る」と定める。ケースで選ぶ番号がシードの手順では確定しない。
+- 判定: 成立しない前提・手順
+- 修正案: シードで控える注文番号の呼び名をケースと一致させる。
+
+### 指摘（M05-09 / IT-M05-09-061）
+- 主張: 期待結果は「商品数が受注単位の数量合計2として表示されること」。
+- 実際: 設計書 L0110 は商品数を「このページまでの数量合計 / 注文の総数量」と定める。明細1行・数量2という準備値から、このケースの表示値は「2 / 2」となる。
+- 判定: 期待結果の誤り
+- 修正案: 商品数の期待値を「2 / 2」と明記する。
+
+### 指摘（M05-09 / IT-M05-09-062）
+- 主張: 期待結果は「商品数の注文の総数量が受注単位の数量合計5として表示されること」。
+- 実際: 設計書 L0110 は商品数を「このページまでの数量合計 / 注文の総数量」と定め、L0072 は商品情報を1ページ30行までとする。明細2行・総数量5という準備値から、このケースの表示値は「5 / 5」となる。
+- 判定: 期待結果の誤り
+- 修正案: 商品数の期待値を「5 / 5」と明記する。
+
+exec
+/bin/bash -lc "cut -f1,9-11,13 'integration_test/casegen/combination/cases/M05-09_cb_test_cases.tsv' | sed -n '1,8p'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	事前準備	手順	期待結果	項目ID
+IT-M05-09-046	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB046〕（登録時に振られた注文番号を控えてある）は本店の受注・国内配送・注文受付で、配送先1件を持ち、会員とプレイヤー情報を持ち、注文者の都道府県は東京都（設定あり）で、明細は商品M0509-CB046-P1の1行（数量1。商品・商品規格・商品サブ情報・商品規格サブ情報をすべて持つ）。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBBASE-046）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB046〕を選択する／3. 納品書印刷（日本語）ボタンを押す	〔注文番号-M0509-CB046〕の日本語納品書が出力され、商品情報に商品M0509-CB046-P1の行が表示されること	CB-M05-09-001
+IT-M05-09-047	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB047〕（登録時に振られた注文番号を控えてある）は本店の受注・国内配送・注文受付で、配送先1件を持ち、会員とプレイヤー情報を持ち、注文者の都道府県は東京都（設定あり）で、明細は2行。商品M0509-CB047-OKは商品・商品規格・商品サブ情報・商品規格サブ情報をすべて持ち、商品M0509-CB047-NGは商品規格を持たない（いずれかを持たない）。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBLINE-047）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB047〕を選択する／3. 納品書印刷（日本語）ボタンを押す	〔注文番号-M0509-CB047〕の日本語納品書が出力され、商品情報に商品M0509-CB047-OKの行が表示され、商品M0509-CB047-NGの行が表示されないこと	CB-M05-09-002
+IT-M05-09-049	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ GUEST-M0509-CB049は会員とプレイヤーを持たないゲスト受注で、注文者都道府県は東京都（設定あり）、国内配送先と配送方法ゆうパック、注文受付を持ち、明細は2行。商品M0509-CB049-OKは商品・商品規格・商品サブ情報・商品規格サブ情報をすべて持ち、商品M0509-CB049-NGは商品規格を持たない（いずれかを持たない）。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBGUEST-049）	1. 受注情報検索 一覧(検索結果)画面を開く／2. ゲスト受注である注文番号GUEST-M0509-CB049を選択する／3. 納品書印刷（日本語）ボタンを押す	GUEST-M0509-CB049の日本語納品書が出力され、送り主の会員番号に「非会員」と表示され、商品情報に商品M0509-CB049-OKの行が表示され、商品M0509-CB049-NGの行が表示されないこと	CB-M05-09-004
+IT-M05-09-053	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB053〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行（ID末尾の順に並べる前）で、商品M0509-CB053-GOODS（カードカテゴリでない商品・棚番M0509-CB053-A01）と商品M0509-CB053-CARD（カードカテゴリの商品・棚番M0509-CB053-B02）を持ち、言語・状態・Foilフラグ・略称タグ・レアリティ・色は2行とも同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTCARD-053）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB053〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、カードカテゴリの商品M0509-CB053-CARD、カードカテゴリでない商品M0509-CB053-GOODSの順に表示されること	CB-M05-09-008
+IT-M05-09-054	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB054〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、商品M0509-CB054-HP（状態HP）と商品M0509-CB054-NM（状態NM）を持ち、ともにカードカテゴリで棚番・言語・Foilフラグ・略称タグ・レアリティ・色は同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTCOND-054）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB054〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、状態NMの商品M0509-CB054-NM、状態HPの商品M0509-CB054-HPの順に表示されること	CB-M05-09-009
+IT-M05-09-055	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB055〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、商品M0509-CB055-FOIL（Foilフラグあり）と商品M0509-CB055-PLAIN（Foilフラグなし）を持ち、ともにカードカテゴリで棚番・言語・状態・略称タグ・レアリティ・色は同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTFOIL-055）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB055〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、非Foilの商品M0509-CB055-PLAIN、Foilの商品M0509-CB055-FOILの順に表示されること	CB-M05-09-010
+IT-M05-09-056	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB056〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、略称タグM0509-CB056-BBB（並び順2）の商品M0509-CB056-B と略称タグM0509-CB056-AAA（並び順1）の商品M0509-CB056-A を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・レアリティ・色は同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTABBR-056）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB056〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、略称タグM0509-CB056-AAAの商品M0509-CB056-A、略称タグM0509-CB056-BBBの商品M0509-CB056-Bの順に表示されること	CB-M05-09-011
+
+exec
+/bin/bash -lc "cut -f1,9-11,13 'integration_test/casegen/combination/cases/M05-09_cb_test_cases.tsv' | sed -n '9,14p'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-M05-09-057	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB057〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、商品M0509-CB057-C（レアリティC）と商品M0509-CB057-M（レアリティM）を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・略称タグ・色は同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTRARITY-057）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB057〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、レアリティMの商品M0509-CB057-M、レアリティCの商品M0509-CB057-Cの順に表示されること	CB-M05-09-012
+IT-M05-09-058	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB058〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、色M0509-CB058-BLUE（色マスターの順序2）の商品M0509-CB058-B と色M0509-CB058-WHITE（色マスターの順序1）の商品M0509-CB058-W を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・略称タグ・レアリティは同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTCOLOR-058）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB058〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、色マスターの順序1の色M0509-CB058-WHITEの商品M0509-CB058-W、順序2の色M0509-CB058-BLUEの商品M0509-CB058-Bの順に表示されること	CB-M05-09-013
+IT-M05-09-059	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB059〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、同じ略称タグM0509-CB059-TAG（コレクター番号でソートする設定）の商品M0509-CB059-N10（コレクター番号010・英語カード名M0509-CB059 Alpha Card）と商品M0509-CB059-N02（コレクター番号002・英語カード名M0509-CB059 Zulu Card）を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・レアリティ・色は同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTCOLLNO-059）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB059〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、コレクター番号002の商品M0509-CB059-N02、コレクター番号010の商品M0509-CB059-N10の順に表示されること	CB-M05-09-014
+IT-M05-09-060	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB060〕（登録時に振られた注文番号を控えてある）は支店の受注・国内配送・注文受付・注文者の都道府県は東京都で、会員とプレイヤーと配送先1件を持ち、明細は2行で、同じ略称タグM0509-CB060-TAG（アルファベットでソートする設定）の商品M0509-CB060-ZULU（英語カード名M0509-CB060 Zulu Card・コレクター番号002）と商品M0509-CB060-ALPHA（英語カード名M0509-CB060 Alpha Card・コレクター番号010）を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・レアリティ・色は同じ。受注情報検索ではこの受注だけを表示できる（S-M05-09-CBSORTALPHA-060）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB060〕を選択する／3. 納品書印刷（日本語）ボタンを押す	商品情報の行が、英語カード名M0509-CB060 Alpha Cardの商品M0509-CB060-ALPHA、英語カード名M0509-CB060 Zulu Cardの商品M0509-CB060-ZULUの順に表示されること	CB-M05-09-015
+IT-M05-09-061	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 注文番号〔注文番号-M0509-CB061〕（登録時に振られた注文番号を控えてある）は国内配送先を1件だけ持ち、数量2の有効な明細1行による受注総数量が2で、注文受付中であり、受注情報検索ではこの受注の配送先1件だけを表示できる（S-M05-09-CBSHIP1-061）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB061〕の配送先1件を1回だけ選択する／3. 納品書印刷（日本語）ボタンを押す	〔注文番号-M0509-CB061〕の納品書が1回だけ出力され、商品数が「2 / 2」と表示されること	CB-M05-09-016
+IT-M05-09-062	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 〔注文番号-M0509-CB062〕（登録時に振られた注文番号を控えてある）は国内配送先ID 〔配送先ID-M0509-CB062A〕（登録時に振られた配送先IDを控えてある）と〔配送先ID-M0509-CB062B〕（登録時に振られた配送先IDを控えてある）の2件（複数）を持ち、数量2と3の有効な明細による受注総数量が5で、注文受付中であり、受注情報検索ではこの受注の配送先2件だけを表示できる（S-M05-09-CBSHIPN-062）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-CB062〕に属する配送先のうち〔配送先ID-M0509-CB062A〕の1件だけを1回選択する／3. 納品書印刷（日本語）ボタンを押す	〔注文番号-M0509-CB062〕の納品書が1回だけ出力され、商品数が「5 / 5」と表示されること	CB-M05-09-017
+
+exec
+/bin/bash -lc "grep -F 'IT-M05-02-021' integration_test/casegen/cases/M05-02_test_cases.tsv | cut -f1,8-11" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-M05-02-021	① 試験管理者で管理画面へログインしている（S-M05-02-ADM）／② 参照マスタが登録されている（S-M05-02-REF）／③ 開始時にCSV出力文字コードをSJIS-winに設定する（S-M05-02-ENCODING）／④ 開始時に表示順1を受注種別の商品名、表示順2を受注明細種別の商品名として有効にし、その他を無効に設定する（S-M05-02-CSV-COLS）／⑤ 受注ID 〔受注ID-M0502-021〕（登録時に振られた番号を控えてある）・注文番号〔注文番号-M0502-021〕（登録時に振られた番号を控えてある）の受注の商品名は空、受注明細ID 〔受注明細ID-M0502-021〕（登録時に振られた番号を控えてある）の商品名は明細商品-021である（S-M05-02-VALUES-021）	1. 受注情報検索 一覧(検索入力)画面で注文番号「〔注文番号-M0502-021〕」を検索する／2. 受注一覧CSVダウンロードを押す／3. 表示順1と表示順2の各商品名列を確認する	種別を受注とした表示順1の商品名列は空欄となり、種別を受注明細とした表示順2の商品名列には「明細商品-021」が出力されること	0203 受注一覧CSV出力 / 業務ロジック 値の取り方
+
+exec
+/bin/bash -lc "grep -F 'IT-M05-03-008' integration_test/casegen/cases/M05-03_test_cases.tsv | cut -f1,8-11" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "grep -F 'IT-M05-05-008' integration_test/casegen/cases/M05-05_test_cases.tsv | cut -f1,8-11" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "grep -F 'IT-M05-09-004' integration_test/casegen/cases/M05-09_test_cases.tsv | cut -f1,8-11" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "grep -F 'IT-M05-09-008' integration_test/casegen/cases/M05-09_test_cases.tsv | cut -f1,8-11" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 6ms:
+IT-M05-09-008	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 〔注文番号-M0509-008A〕（登録時に振られた注文番号を控えてある）は会員とプレイヤーを持ち、〔注文番号-M0509-008B〕（登録時に振られた注文番号を控えてある）は会員を持つがプレイヤーを持たず、両受注は国内配送・注文受付で他の抽出条件を満たし、受注情報検索ではこの2受注だけを表示できる（S-M05-09-CUSTOMERS-008）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-008A〕と、会員情報を持つがプレイヤー情報を持たない注文番号〔注文番号-M0509-008B〕を選択する／3. 納品書印刷（日本語）ボタンを押す	〔注文番号-M0509-008A〕の日本語納品書だけが出力され、〔注文番号-M0509-008B〕の納品書が出力されないこと	0203 納品書印刷（日本語） / 現行仕様 業務ロジック 納品書に出る受注と明細
+
+ succeeded in 23ms:
+IT-M05-05-008	① M05-05試験管理者でログインし、受注管理を操作できることを確認する（S-M05-05-ADM）／② 注文ID 51000801〜51000803の本店・支店・スマレジ受注が注文番号05050011・05050012・05050013、注文日2026-08-08、配送先各1件であり、検索条件ID 55000801「M0505三販路-008」がこの3受注に一致し、定義ID 54000801「M0505販路確認定義-008」が登録されていることを確認する。CSVではこの3受注の出力有無と各注文番号の行数を判定対象にする（S-M05-05-DATA-008）	1. 受注情報検索 一覧(検索入力)画面を開く／2. 保存済み検索条件「M0505三販路-008」を選択する／3. 受注詳細カスタムCSVダウンロードで「M0505販路確認定義-008」を選択する／4. CSVのデータ行を確認する	本店受注05050011、支店受注05050012、EC-CUBEで保持するスマレジ取引05050013が各1行出力されること	0203 受注詳細カスタムCSV出力 / 概要、機能仕様 機能について・処理概要
+
+ succeeded in 24ms:
+IT-M05-09-004	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3と海外配送方法ID 8が登録済みである（S-M05-09-DELIVERY）／③ 〔注文番号-M0509-004A〕（登録時に振られた注文番号を控えてある）は国内配送、〔注文番号-M0509-004B〕（登録時に振られた注文番号を控えてある）は受注者と配送先の国が日本で配送方法だけが海外配送であり、両受注が注文受付中で有効な明細1件を持ち、受注情報検索ではこの2受注だけを表示できる（S-M05-09-CLASSIFICATION-004）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-004A〕と、受注と配送先の国が日本で配送方法の区分が海外配送である注文番号〔注文番号-M0509-004B〕を選択する／3. 納品書印刷（日本語）ボタンを押す	〔注文番号-M0509-004A〕の日本語納品書だけが出力され、〔注文番号-M0509-004B〕の納品書が出力されないこと	0203 納品書印刷（日本語） / 機能仕様 処理概要（★はカスタマイズ項目）、現行仕様 業務ロジック 納品書に出る受注と明細
+
+exec
+/bin/bash -lc "grep -F 'IT-M05-09-010' integration_test/casegen/cases/M05-09_test_cases.tsv | cut -f1,8-11" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "grep -F 'IT-M05-09-006' integration_test/casegen/cases/M05-09_test_cases.tsv | cut -f1,8-11" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "grep -F 'IT-M05-09-014' integration_test/casegen/cases/M05-09_test_cases.tsv | cut -f1,8-11" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 57ms:
+IT-M05-03-008	① 開始時にCSV出力文字コードをSJIS-win、区切り文字をカンマ、日時形式をY-m-d H:i:s、代替文字を?に設定する（S-M05-03-ENV）／② 管理者ID 570000001・ログインID m0503_adminが稼働中・ロックなし・受注管理操作可能である（S-M05-03-ADM）／③ 検索条件ID 540000801・名称「M0503三販路」・対象店舗560008001〜560008003と、定義ID 〔定義ID-M0503-共有-販路確認定義〕・名称「M0503販路確認定義」・紐付けID 〔紐付けID-M0503-共有-販路確認定義〕が登録済みである（登録時に振られた定義IDを控えてある）（S-M05-03-DEFS）／④ 店舗ID 560008001〜560008003はいずれも開店中で、本店受注05030011・受注ID 500008001、支店受注05030012・受注ID 500008002、スマレジ取引05030013・受注ID 500008003が明細ID 510008001〜510008003と配送先ID 520008001〜520008003を各1件持ち、3店舗にはこの3受注以外がない（S-M05-03-CASE-008）	1. 受注情報検索 一覧(検索入力)画面を開く／2. 保存済み検索条件「M0503三販路」を選択する／3. 受注一覧カスタムCSVダウンロードで「M0503販路確認定義」を選択する／4. CSVのデータ行を確認する	本店受注05030011、支店受注05030012、EC-CUBEで保持するスマレジ取引05030013が各1行出力されること	0203 受注一覧カスタムCSV出力 / 概要、機能仕様 機能について・処理概要
+
+ succeeded in 0ms:
+IT-M05-09-014	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 〔注文番号-M0509-014〕（登録時に振られた注文番号を控えてある）は国内配送先ID 〔配送先ID-M0509-014A〕（登録時に振られた配送先IDを控えてある）と〔配送先ID-M0509-014B〕（登録時に振られた配送先IDを控えてある）を持ち、数量2と3の有効な明細による受注総数量が5で、注文受付中であり、受注情報検索ではこの受注の配送先2件だけを表示できる（S-M05-09-MULTISHIP-014）	1. 受注情報検索 一覧(検索結果)画面を開く／2. 注文番号〔注文番号-M0509-014〕に属する配送先2件を選択する／3. 納品書印刷（日本語）ボタンを押す	〔注文番号-M0509-014〕の納品書が1回だけ出力され、商品数が受注単位の数量合計5として表示されること	0203 納品書印刷（日本語） / 画面項目定義 識別ID 35、現行仕様 業務ロジック 納品書に出る受注と明細
+
+ succeeded in 0ms:
+IT-M05-09-006	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ GUEST-JP-001-006は会員とプレイヤーを持たないゲスト受注で、注文者都道府県、国内配送先、配送方法、有効な明細1件を持ち、注文受付中で、受注情報検索ではこの受注だけを表示できる（S-M05-09-CUSTOMERS-006）	1. 受注情報検索 一覧(検索結果)画面を開く／2. ゲスト受注である注文番号GUEST-JP-001-006を選択する／3. 納品書印刷（日本語）ボタンを押す	GUEST-JP-001-006の日本語納品書が出力され、送り主の会員番号に「非会員」と表示されること	0203 納品書印刷（日本語） / 画面項目定義 識別ID 16（刷新指示を採用）、現行仕様 業務ロジック 納品書に出る受注と明細（会員情報とプレイヤー情報を要求する現行仕様とは不一致）
+
+ succeeded in 0ms:
+IT-M05-09-010	① 受注管理権限を持つ稼働中の試験管理者でログインしている（S-M05-09-ADM）／② 国内配送方法ID 3が登録済みである（S-M05-09-DELIVERY）／③ 出荷指示リストID 〔出荷指示リストID-M0509-010〕（生成時に振られた出荷指示リストIDを控えてある）に、注文者都道府県が東京都の〔注文番号-M0509-010A〕（登録時に振られた注文番号を控えてある）と注文者都道府県未設定の〔注文番号-M0509-010B〕（登録時に振られた注文番号を控えてある）が紐付き、両受注は国内配送先と有効な明細を持ち、選択可能である（S-M05-09-RELATIONS-010）	1. 出荷指示リストID 〔出荷指示リストID-M0509-010〕の出荷指示リスト編集画面を開く／2. 注文番号〔注文番号-M0509-010A〕と、注文者の都道府県が設定されていない注文番号〔注文番号-M0509-010B〕を選択する／3. 納品書印刷（日本語）ボタンを押す	〔注文番号-M0509-010A〕の日本語納品書だけが出力され、〔注文番号-M0509-010B〕の納品書が出力されないこと	0203 納品書印刷（日本語） / 現行仕様 業務ロジック 納品書に出る受注と明細
+
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-08_cb_test_cases.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M05-08-023	IT-0366	REQ-0203-sheet-12-R004,REQ-0203-sheet-12-R015		ITA-11	P1	ブラウザ+DB確認	S-M05-08-ADM,S-M05-08-OLD-MEMBER,S-M05-08-MASTER,S-M05-08-PRINT-SETTING,S-M05-08-CBNONNEWNOMEM-023	① 本店、注文受領、ピック中、入金待ち、日本、東京都および商品明細種別を参照できる（S-M05-08-MASTER）／② 開始時にスタック用紙の高額判定基準を販売価格、高額判定額を5000円に設定する（S-M05-08-PRINT-SETTING）／③ メンバーID 5080のM05-08試験管理者で本店を操作対象としてログインする（S-M05-08-ADM）／④ メンバーID 〔メンバーID-M0508-共有〕の更新前担当者が稼働中であり、担当者ID 999999は未登録とする。登録済みならDBシードで削除する（登録時に振られたメンバーIDを控えてある。〔メンバーID-M0508-共有〕）（S-M05-08-OLD-MEMBER）／⑤ 受注ID 〔受注ID-M0508-023〕・注文番号〔注文番号-M0508-023〕（注文番号は採番済み）は、入金待ち（注文受領以外）、ブラウザ印刷フラグOFF、注文確定日2026-09-01 10:00:00、担当者ID 〔メンバーID-M0508-共有〕、店舗本店、未削除であり、配送ID 〔配送ID-M0508-023〕と販売価格1000円・数量1の受注明細ID 〔受注明細ID-M0508-023〕を持つ（登録時に振られた受注ID・注文番号・配送ID・受注明細IDを控えてある）（S-M05-08-CBNONNEWNOMEM-023）／⑥ 開始時に、ブラウザの開発者ツールによるスタック用紙印刷受付への通信の遮断が無く、同受付の応答遅延が0秒である状態にする（応答遅延プロキシを経由する環境では遅延を0秒に戻す）	1. 受注一覧画面を開く／2. 注文番号〔注文番号-M0508-023〕の受注を選択する／3. 開発者ツールでスタック用紙印刷要求の担当者IDを999999に変更する／4. スタック用紙印刷ボタンを押す／5. DBで受注ID 〔受注ID-M0508-023〕を確認する	受注ID 〔受注ID-M0508-023〕のブラウザ印刷フラグがONになり、対応状況は入金待ち、注文確定日は2026-09-01 10:00:00、担当者はID 〔メンバーID-M0508-共有〕のまま変わらないこと	0203 スタック用紙印刷 / 現行仕様 業務ロジック 対応状況と印刷済みの更新・担当者の更新	CB-M05-08-001
+
+exec
+/bin/bash -lc "cat 'integration_test/casegen/combination/cases/M05-08_cb_seed_data.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M05-08-CBNONNEWNOMEM-023	受注・配送・明細	注文受領以外・存在しない担当者ID指定用受注(023)	受注IDは登録時に画面が振る（控える。以下〔受注ID-M0508-023〕）／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0508-023〕）／対応状況=入金待ち／ブラウザ印刷フラグ=OFF／注文確定日=2026-09-01 10:00:00／担当者=更新前担当者（メンバーIDは〔メンバーID-M0508-共有〕）／受注日=2026-09-01 09:00:00／店舗=本店／未削除／注文番号は採番済み／配送IDは登録時に画面が振る（控える。以下〔配送ID-M0508-023〕）・店舗=本店・国=日本・都道府県=東京都／受注明細IDは登録時に画面が振る（控える。以下〔受注明細ID-M0508-023〕）・商品名=印刷商品M0508-CB023・販売価格=1000円・数量=1	IT-M05-08-023専用。注文受領以外かつ存在しない担当者ID指定時の、印刷済み更新と対応状況・注文確定日・担当者の維持確認	1) グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（商品IDは空・商品コードは「M0508-CB023-P」・商品名(日)は「印刷商品M0508-CB023」・商品名(英)は「印刷商品M0508-CB023」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は予約商品フラグの付いていない既存の購入グループの名称・基準価格1000・販売価格1000・買取価格1000・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。2) 商品マスター(検索入力)で商品コードに「M0508-CB023-P」を入れて「検索する >」を押し、商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「規格設定」ボタンから商品規格一覧を開く。商品コード「M0508-CB023-P」の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに「公開」を選んで「商品規格を登録」ボタンを押す。3) 在庫検索一覧でこの商品規格の本店の在庫を開き、在庫編集画面で在庫変動区分に入庫の区分、在庫変動理由に「M05-08試験」、在庫増減数に1を入れて登録ボタンを押す（承認待ちになるときは在庫編集の承認一覧で承認する）。4) フロントの新規会員登録画面でお名前(姓)に「印刷」、お名前(名)に「購入者」、フリガナ(姓)に「インサツ」、フリガナ(名)に「コウニュウシャ」、生年月日に1990年1月1日、メールアドレスとメールアドレス(確認)に「cbm0508-023@example.test」、パスワードとパスワード(確認)に「Passw0rd-CBM0508023」、国にJapan、郵便番号に「1000001」、住所(都道府県)に東京都、住所1に「千代田区千代田」、住所2に「1-1」、電話番号に「0312345678」を入れて同意するボタンを押し、確認画面で登録を確定し、届いた仮登録メールのリンクを開いて本会員登録を完了する。5) フロントの本店サイトにこの会員でログインし、商品詳細画面で「印刷商品M0508-CB023」の商品数に1を入れてカートに追加ボタンを押す。買い物かご画面で購入手続きへボタンを押し、ご注文方法指定画面でお届け先に会員情報住所（日本・東京都）、配送方法指定に「ゆうパック」、支払方法に「銀行振込」を選び、確定チェックボックスにチェックを入れて注文するボタンを押す。6) 購入完了画面に表示された注文番号を控える（〔注文番号-M0508-023〕）。管理画面の受注一覧でその注文番号の行（対応状況が入金待ち、店舗が本店）の注文番号リンクを押して受注情報編集画面を開き、アドレス欄に含まれる番号を受注IDとして控える（〔受注ID-M0508-023〕）。7) 受注日（2026-09-01 09:00:00）と担当者（更新前担当者。メンバーIDは〔メンバーID-M0508-共有〕）は画面で指定できないためDBへ直接設定する。注文確定日（2026-09-01 10:00:00）は画面で指定できないためDBへ直接設定する。配送IDと受注明細IDは画面に表示されないため、DBで配送と商品の受注明細を参照して控える（〔配送ID-M0508-023〕・〔受注明細ID-M0508-023〕）。	ケース専用
+
+exec
+/bin/bash -lc "grep -E '"'^S-M05-09-(CBBASE-046|CBLINE-047|CBGUEST-049)'"' 'integration_test/casegen/combination/cases/M05-09_cb_seed_data.tsv' | cut -f1,4,6" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+S-M05-09-CBBASE-046	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーID・商品ID・商品規格IDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB046〕）／本店受注／国内配送／会員とプレイヤー情報あり／注文者の都道府県=東京都／注文受付／受注日時=2026-09-29 10:00:00 JST／明細は1行で、商品M0509-CB046-P1（数量1）。商品・商品規格・商品サブ情報・商品規格サブ情報をすべて持つ	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-046@example.test」・パスワード「Passw0rd-CBM0509046」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。グッズ商品CSV登録で雛形ファイルをダウンロードし、1行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB046-P1」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB046-P1」・商品名(英)は「M0509-CB046-P1」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。在庫検索一覧で商品コード「M0509-CB046-P1」を検索し、本店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の1件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。その会員でフロント（本店）にログインし、1件目の商品を数量1でカートに入れ、ご注文手続き画面で配送方法にゆうパック、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB046〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する
+S-M05-09-CBLINE-047	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーID・商品ID・商品規格IDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB047〕）／本店受注／国内配送／会員とプレイヤー情報あり／注文者の都道府県=東京都／注文受付／受注日時=2026-09-29 10:00:00 JST／明細は2行で、商品M0509-CB047-OK（数量1。商品・商品規格・商品サブ情報・商品規格サブ情報をすべて持つ）と商品M0509-CB047-NG（数量1。商品規格を持たない）	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-047@example.test」・パスワード「Passw0rd-CBM0509047」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB047-OK」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB047-OK」・商品名(英)は「M0509-CB047-OK」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB047-NG」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB047-NG」・商品名(英)は「M0509-CB047-NG」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる。在庫検索一覧で商品コード「M0509-CB047-OK」を検索し、本店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB047-NG」を検索し、本店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。その会員でフロント（本店）にログインし、1件目の商品を数量1、2件目の商品を数量1でカートに入れ、ご注文手続き画面で配送方法にゆうパック、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB047〕）。商品M0509-CB047-NGの明細は、DBで商品規格との紐付けを外して商品規格を持たない明細にする（画面では商品規格を持たない明細を作れないためDBへ直接設定する）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する
+S-M05-09-CBGUEST-049	受注ID=59049001／配送先ID=59049101／明細ID=59049201・59049202／商品ID=59049501・59049502／商品規格ID=59049601（明細59049201の商品に紐付く。明細59049202の商品には商品規格を作らない）／注文番号GUEST-M0509-CB049／会員・プレイヤー未紐付け／受注者都道府県=東京都／国内配送先1件（配送方法=ゆうパック）／受注状態=注文受付／受注日時=2026-09-29 10:00:00 JST／明細は2行で、商品M0509-CB049-OK（明細59049201。商品関連情報が揃っている）と商品M0509-CB049-NG（明細59049202。商品規格を持たない）	DBシードで記載IDの受注、配送先、商品関連情報、明細を登録し、会員とプレイヤーを紐付けない。商品M0509-CB049-NGの明細には商品規格を紐付けない（画面では会員を持たない受注も商品規格を持たない明細も作れないためDBへ直接設定する）
+
+codex
+前巡の M05-09 指摘は、シードの番号表記と商品数の期待値が修正済みでした。続いて、追加シードで実際にその状態を作れるか、特に印刷要求の担当者指定と明細の欠損状態を確認します。
+exec
+/bin/bash -lc "grep -R -n -F 'スタック用紙印刷' /home/y-saito/Developments/ec-cube-enterprise/app/Plugin/HareruyaEc/Resource/template/admin /home/y-saito/Developments/ec-cube-enterprise/app/template/admin" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "grep -R -n -F 'stack_paper' /home/y-saito/Developments/ec-cube-enterprise/app/Plugin/HareruyaEc/Controller/Admin/Order /home/y-saito/Developments/ec-cube-enterprise/app/Plugin/HareruyaEc/Resource/template/admin/order" in /home/y-saito/Developments/hareruya-design-docs
+ exited 2 in 76ms:
+grep: /home/y-saito/Developments/ec-cube-enterprise/app/Plugin/HareruyaEc/Controller/Admin/Order: No such file or directory
+grep: /home/y-saito/Developments/ec-cube-enterprise/app/Plugin/HareruyaEc/Resource/template/admin/order: No such file or directory
+
+ exited 2 in 81ms:
+grep: /home/y-saito/Developments/ec-cube-enterprise/app/Plugin/HareruyaEc/Resource/template/admin: No such file or directory
+
+exec
+/bin/bash -lc 'ls /home/y-saito/Developments/ec-cube-enterprise' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+AGENTS.md
+CLAUDE.md
+COPYING
+Dockerfile
+Dockerfile.Playwright
+LICENSE.txt
+README.md
+UPGRADE_GUIDE_4.3_TO_SYMFONY7.md
+api_deploy.sh
+app
+babel.config.json
+batch_deploy.sh
+bin
+build.dev.sh
+build.stg.sh
+codeception
+codeception.yml
+composer.json
+composer.lock
+deck_api_deploy.sh
+dev
+docker-compose.codeception.ci.yml
+docker-compose.codeception.yml
+docker-compose.dev-db-snapshot.yml
+docker-compose.dev.yml
+docker-compose.e2e.ci.yml
+docker-compose.e2e.yml
+docker-compose.faker_pgsql.yml
+docker-compose.lb.yml
+docker-compose.nodejs.yml
+docker-compose.owaspzap.ci.yml
+docker-compose.owaspzap.daemon.yml
+docker-compose.owaspzap.yml
+docker-compose.pgsql.yml
+docker-compose.yml
+dockerbuild
+docs
+e2e-tests
+eccube_db_20260907.sql.gz
+eslint.config.mjs
+faker-pgsql
+frontend
+gulp
+gulpfile.js
+html
+infra
+nginx.conf.sample
+output
+package-lock.json
+package.json
+package.sh
+phpdoc_result_script.sh
+phpstan
+phpstan.neon.dist
+phpunit.xml.dist
+playwright.config.ts
+plugin_repos
+rector.php
+repos
+robots.txt
+script
+scripts
+src
+symfony.lock
+tests
+tsconfig.json
+var
+vendor
+volume
+webpack.config.js
+zap
+
+exec
+/bin/bash -lc "find /home/y-saito/Developments/ec-cube-enterprise -iname '*stack*' -type f" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 244ms:
+/home/y-saito/Developments/ec-cube-enterprise/docs/docs/application/localstack.md
+/home/y-saito/Developments/ec-cube-enterprise/infra/lib/eccube-stack.ts
+/home/y-saito/Developments/ec-cube-enterprise/.cursor/design/functions/pf-eccube3/admin_order_stack_paper_print.md
+/home/y-saito/Developments/ec-cube-enterprise/.cursor/design/html/functions/admin_order_stack_paper_print.html
+/home/y-saito/Developments/ec-cube-enterprise/vendor/symfony/http-foundation/RequestStack.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/symfony/http-kernel/Debug/VirtualRequestStack.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/symfony/asset/Context/RequestStackContext.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/symfony/console/Formatter/OutputFormatterStyleStack.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/symfony/framework-bundle/DependencyInjection/VirtualRequestStackPass.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/symfony/dependency-injection/Compiler/ResolveDecoratorStackPass.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/symfony/messenger/Middleware/StackInterface.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/symfony/messenger/Middleware/StackMiddleware.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/guzzlehttp/guzzle/src/HandlerStack.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/doctrine/dbal/src/Logging/DebugStack.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/rector/rector/vendor/symfony/console/Formatter/OutputFormatterStyleStack.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/rector/rector/vendor/rector/rector-symfony/rules/Symfony72/Rector/StmtsAwareInterface/PushRequestToRequestStackConstructorRector.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/phpunit/phpunit/src/Event/Exception/NoTestCaseObjectOnCallStackException.php
+/home/y-saito/Developments/ec-cube-enterprise/vendor/codeception/codeception/src/Codeception/Util/StackTraceFilter.php
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdateStackListAction.php
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/ActionInput/UpdateStackListInput.php
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/print_stack_window.twig
+/home/y-saito/Developments/ec-cube-enterprise/dockerbuild/localstack/docker-localstack-entrypoint.sh
+/home/y-saito/Developments/ec-cube-enterprise/tests/Eccube/Tests/Service/Admin/Order/UpdateStackListActionTest.php
+
+exec
+/bin/bash -lc "grep -R -n -F 'print_stack_window' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "grep -R -n -F 'UpdateStackListInput' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 4ms:
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderController.php:948:    #[Route(path: '/%eccube_admin_route%/order/print/stack/window', name: 'admin_order_print_stack_window', methods: ['POST'])]
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderController.php:949:    #[Template(template: '@admin/Order/print_stack_window.twig')]
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderController.php:962:        return $this->render('@admin/Order/print_stack_window.twig', [
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/index.twig:232:                    action: "{{ url('admin_order_print_stack_window') }}",
+
+ succeeded in 65ms:
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdateStackListAction.php:23:use Eccube\Service\Admin\Order\ActionInput\UpdateStackListInput;
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdateStackListAction.php:36:    public function handle(UpdateStackListInput $input): void
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/ActionInput/UpdateStackListInput.php:18:final readonly class UpdateStackListInput
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderController.php:53:use Eccube\Service\Admin\Order\ActionInput\UpdateStackListInput;
+/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderController.php:1030:                $this->updateStackListAction->handle(new UpdateStackListInput(
+
+exec
+/bin/bash -lc "sed -n '1,180p' '/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/print_stack_window.twig'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+{#
+This file is part of EC-CUBE
+
+Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved.
+
+http://www.ec-cube.co.jp/
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+
+{% block title %}{% endblock %}
+{% block sub_title %}{% endblock %}
+
+{% block stylesheet %}
+{% endblock stylesheet %}
+
+{% block javascript %}
+    <script src="{{ asset('admin.bundle.js', 'bundle') }}"></script>
+    <script nonce="{{ csp_nonce }}">
+        $(function () {
+        var options = {
+            dataType: 'JSON',
+            timeout: 5000,
+            type: 'POST',
+            data: { 
+                ids: {{ ids|json_encode|raw }} ,
+                {{ constant('Eccube\\Common\\Constant::TOKEN_NAME') }}: '{{ csrf_token(constant('Eccube\\Common\\Constant::TOKEN_NAME')) }}'
+            },
+            url: '{{ url("admin_order_print_stack") }}'
+        };
+
+        $.ajax(options)
+        .done(function (data, status, jqXHR) {
+            if (data.message !== undefined) {
+                alert(data.message);
+            }
+            window.close();
+        })
+        .fail(function (jqXHR, status, error) {
+            if (jqXHR.responseJSON !== undefined) {
+                alert(jqXHR.responseJSON.message);
+            } else {
+                alert('システムエラーが発生いたしました。\nサイト管理者へお問い合わせください。');
+            }
+            window.close();
+        });
+    });
+
+    function getParam(name) {
+        var url = window.location.href;
+        name = name.replace(/[\[\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+            results = regex.exec(url);
+        if (!results) {
+            return null;
+        }
+        if (!results[2]){
+            return '';
+        }
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+    }
+    </script>
+{% endblock javascript %}
+
+{% block main %}
+    <body>
+        <h2>スタック用紙印刷中</h2>
+    </body>
+{% endblock %}
+
+exec
+/bin/bash -lc "sed -n '210,245p' '/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/index.twig'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+                        alert('Update failed.');
+                    }
+                    return true;
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    var response = JSON.parse(jqXHR.responseText);
+                    var messages = '';
+                    for (var i = 0; i < response.messages.length; i++) {
+                        messages += response.messages[i] + "\n";
+                    }
+                    alert(messages);
+                    return false;
+                });
+            };
+
+            // スタック用紙印刷
+            $('#printStack').click(function (event) {
+                if (preventIfNoCheckedBulkTarget()) {
+                    event.preventDefault();
+                    return false;
+                }
+                window.open('', 'newwin', 'toolbar=no, width=450, height=400');
+                submitBulkForm({
+                    action: "{{ url('admin_order_print_stack_window') }}",
+                    target: 'newwin'
+                });
+                return false;
+            });
+
+            $('button.update_tracking_number').prop('disabled', true);
+            // フォームに変更があったら更新ボタンを有効にする
+            $('input.update_tracking_number').on('keyup', function(event) {
+                var $tracking_number = $(this);
+                var $button = $("button[data-target='#" + $tracking_number.attr('id') + "']");
+                $button.prop('disabled', false);
+                $button.children('i')
+                    .removeClass('text-secondary')
+
+exec
+/bin/bash -lc "sed -n '945,1045p' '/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderController.php'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+     *
+     * @return Response
+     */
+    #[Route(path: '/%eccube_admin_route%/order/print/stack/window', name: 'admin_order_print_stack_window', methods: ['POST'])]
+    #[Template(template: '@admin/Order/print_stack_window.twig')]
+    public function printStackWindow(Request $request): Response
+    {
+        $ids = $request->get('ids');
+
+        $event = new EventArgs(
+            [
+                'ids' => $ids,
+            ],
+            $request
+        );
+        $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_ORDER_PRINT_STACK_WINDOW_EXPORT);
+
+        return $this->render('@admin/Order/print_stack_window.twig', [
+            'ids' => $ids,
+        ]);
+    }
+
+    /**
+     * スタック用紙印刷
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    #[Route(path: '/%eccube_admin_route%/order/print/stack', name: 'admin_order_print_stack', methods: ['POST'])]
+    public function printStackPaper(Request $request): JsonResponse
+    {
+        // CSRFトークンの検証
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid(Constant::TOKEN_NAME, $token)) {
+            $this->addError('admin.common.csrf_token_error', 'admin');
+
+            return $this->json(['message' => '不正なリクエストです。'], 400, [
+                'Content-Type' => 'application/json',
+            ]);
+        }
+
+        $shippingIds = $request->get('ids');
+
+        if (empty($shippingIds)) {
+            return $this->json(['message' => '対象の注文が指定されていません。'], 404, [
+                'Content-Type' => 'application/json',
+            ]);
+        }
+        if (!\is_array($shippingIds)) {
+            $shippingIds = [$shippingIds];
+        }
+
+        $memberId = $this->getMember()->getId();
+
+        $options = $this->optionRepository->findListArray([
+            MtbOption::STACK_PAPER_JUDGMENT_PRICE,
+            MtbOption::STACK_PAPER_THRESHOLD_PRICE,
+        ]);
+
+        $optionValues = array_column($options, 'option_value', 'option_key');
+        $OrderList = $this->orderRepository->getPrintOrderList($shippingIds, $optionValues);
+
+        $UpdateOrderList = [];
+        foreach ($OrderList as $Order) {
+            // 未採番の注文がある場合はエラーを返すようにする
+            if (empty($Order['order_number'])) {
+                return $this->json(['message' => '注文番号が未採番の注文があります。'], 400, [
+                    'Content-Type' => 'application/json',
+                ]);
+            }
+            $params = [
+                'order' => $Order,
+                'browser_print_flg' => true,
+                'update_status_picking' => false,
+            ];
+            // 「注文受領」状態の受注のみ、ステータスを「ピック中」に更新するフラグを立てる
+            if ($Order['status'] === OrderStatus::NEW) {
+                $params['update_status_picking'] = true;
+            }
+            $UpdateOrderList[] = $params;
+        }
+
+        if (count($UpdateOrderList)) {
+            try {
+                $this->updateStackListAction->handle(new UpdateStackListInput(
+                    UpdateOrderList: $UpdateOrderList,
+                    MemberId: $memberId,
+                ));
+            } catch (\InvalidArgumentException $e) {
+                $this->addError($e->getMessage(), 'admin');
+
+                return $this->json(['message' => $e->getMessage()], 400, [
+                    'Content-Type' => 'application/json',
+                ]);
+            }
+        }
+
+        $event = new EventArgs(
+            [
+                'shippingIds' => $shippingIds,
+
+exec
+/bin/bash -lc "grep -E '"'^S-M05-09-(CBSORTABBR-056|CBSORTCOLOR-058)'"' 'integration_test/casegen/combination/cases/M05-09_cb_seed_data.tsv' | cut -f1,4,6" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+S-M05-09-CBSORTABBR-056	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーIDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB056〕）／支店受注／国内配送／注文受付／注文者の都道府県=東京都／受注日時=2026-09-29 10:00:00 JST／明細は2行で、略称タグM0509-CB056-BBB（並び順2）の商品M0509-CB056-B と略称タグM0509-CB056-AAA（並び順1）の商品M0509-CB056-A を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・レアリティ・色は同じ／明細は期待する並びと逆の順（明細ID・商品IDが小さい方が後に並ぶ側）で登録する／削除されていない	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-056@example.test」・パスワード「Passw0rd-CBM0509056」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。管理画面の略称タグ登録画面で略称タグM0509-CB056-AAA（並び順1）、略称タグM0509-CB056-BBB（並び順2）を登録する。管理画面のカード登録画面で日本語カード名・英語カード名を入れ、カード詳細にカード番号・レアリティ・Foilを入れて登録ボタンを押す（商品ごとに1枚、2枚を登録する。ほかの値は2枚とも同じにする。登録はM0509-CB056-B、M0509-CB056-Aの順）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB056-B」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB056-B」・商品名(英)は「M0509-CB056-B」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB056-A」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB056-A」・商品名(英)は「M0509-CB056-A」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる（行は登録の順に並べる）。商品マスター(検索入力)で商品コードに「M0509-CB056-B」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで1枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB056-B」、商品名(英)に「M0509-CB056-B」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグに略称タグM0509-CB056-BBBを選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。商品マスター(検索入力)で商品コードに「M0509-CB056-A」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで2枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB056-A」、商品名(英)に「M0509-CB056-A」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグに略称タグM0509-CB056-AAAを選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。在庫検索一覧で商品コード「M0509-CB056-B」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB056-A」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。明細と商品は、期待する並びで後になる商品から先に登録し、先にカートへ入れる（登録の順が小さい方が後に並ぶ側になる）。その会員でフロント（支店）にログインし、登録した商品を先に登録した順に数量1ずつカートに入れ、ご注文手続き画面で配送方法に支店で選べる国内配送の配送方法、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB056〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する
+S-M05-09-CBSORTCOLOR-058	画面で作るデータの受注ID・配送先ID・会員ID・プレイヤーIDは登録時に画面が振る／注文番号は登録時に画面が振る（控える。以下〔注文番号-M0509-CB058〕）／支店受注／国内配送／注文受付／注文者の都道府県=東京都／受注日時=2026-09-29 10:00:00 JST／明細は2行で、色M0509-CB058-BLUE（色マスターの順序2）の商品M0509-CB058-B と色M0509-CB058-WHITE（色マスターの順序1）の商品M0509-CB058-W を持ち、ともにカードカテゴリで棚番・言語・状態・Foilフラグ・略称タグ・レアリティは同じ／明細は期待する並びと逆の順（明細ID・商品IDが小さい方が後に並ぶ側）で登録する／削除されていない	フロントの新規会員登録画面で氏名・フリガナ・住所（都道府県に東京都、国・地域に日本）・電話番号・メールアドレス「cbm0509-058@example.test」・パスワード「Passw0rd-CBM0509058」を入れて登録し、届いた仮登録メールのURLを開いて本会員登録を済ませる（会員とプレイヤーが同時に作られる）。色マスターの値（色M0509-CB058-WHITE＝順序1、色M0509-CB058-BLUE＝順序2）は画面で指定できないためDBへ直接設定する。管理画面のカード登録画面で日本語カード名・英語カード名を入れ、カード詳細にカード番号・レアリティ・Foilを入れて登録ボタンを押す（商品ごとに1枚、2枚を登録する。カード登録画面の色の並びで、商品M0509-CB058-Bのカードに色M0509-CB058-BLUE、商品M0509-CB058-Wのカードに色M0509-CB058-WHITEを選び、ほかの値は2枚とも同じにする。登録はM0509-CB058-B、M0509-CB058-Wの順）。グッズ商品CSV登録で雛形ファイルをダウンロードし、2行を書いたCSVをCSVファイル選択で選んで「CSVファイルのアップロード」を押し、表示された確認モーダルでアップロードを確定する（1行目は商品IDは空・商品コードは「M0509-CB058-B」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB058-B」・商品名(英)は「M0509-CB058-B」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空／2行目は商品IDは空・商品コードは「M0509-CB058-W」・言語(ID)は日本語のID・商品公開ステータスは2（公開）・支店の商品公開ステータスは1（公開）・商品名(日)は「M0509-CB058-W」・商品名(英)は「M0509-CB058-W」・サイズ1・重量1・商品カテゴリ(ID)はサプライ・グッズのカテゴリID（カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行のID欄に表示された値）・購入グループ名称は既存の購入グループの名称・基準価格1000・販売価格1000・買取価格100・原価単価10・地域別販売制限は0・スマレジ連携フラグは0・スマレジ商品コードと部門IDは空）。グッズ商品は状態ニアミントの規格が1件作られる（行は登録の順に並べる）。商品マスター(検索入力)で商品コードに「M0509-CB058-B」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで1枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB058-B」、商品名(英)に「M0509-CB058-B」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグは選択肢の先頭を選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。商品マスター(検索入力)で商品コードに「M0509-CB058-W」を入れて「検索する >」を押す。商品マスター(検索結果)の行から商品登録編集画面（既存の商品の編集）を開き、「カード指定 >」ボタンを押し、カード検索ポップアップで2枚目に登録したカード詳細の行の決定ボタンを押す。続けて商品名(日)に「M0509-CB058-W」、商品名(英)に「M0509-CB058-W」を入れ（カード指定で自動で入った値は書き換える）、商品カテゴリはサプライ・グッズの選択を外して単体カードのカテゴリを選び、略称タグは選択肢の先頭を選び、割引率に販売割引率に登録済みの割引率を選んで「商品を登録」ボタンを押す。商品登録編集画面の「規格設定」ボタンから商品規格一覧を開く。商品規格一覧で状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き、商品規格登録編集画面で部門は選択肢の先頭を選び、公開ステータスに公開を選んで「商品規格を登録」ボタンを押す。在庫検索一覧で商品コード「M0509-CB058-B」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。在庫検索一覧で商品コード「M0509-CB058-W」を検索し、TC大阪支店の在庫の在庫編集画面を開き、在庫変動区分で「入庫/その他」を選び、在庫変動理由に「試験データ」、在庫増減数に10、仕入単価に0を入れ、承認通知先（メンバー選択）で承認権限を持つ別の管理者を選んで登録ボタンを押す。その別の管理者で管理画面に入り、在庫編集承認一覧で上の2件の在庫編集を選択して「一括承認」を押し、表示された確認モーダルで「承認する」を押し、表示された確認画面で「OK」を押し、在庫検索一覧で各商品の在庫数が10であることを確かめる。明細と商品は、期待する並びで後になる商品から先に登録し、先にカートへ入れる（登録の順が小さい方が後に並ぶ側になる）。その会員でフロント（支店）にログインし、登録した商品を先に登録した順に数量1ずつカートに入れ、ご注文手続き画面で配送方法に支店で選べる国内配送の配送方法、お支払方法に代金引換（銀行振込は受注状態が入金待ちになるため選ばない）を選び、ご注文内容確認画面で注文するボタンを押す。管理画面の受注情報検索 一覧(検索結果)で、注文者名がその会員の行に表示された注文番号を控える（〔注文番号-M0509-CB058〕）。受注日時（2026-09-29 10:00:00 JST）は画面で指定できないためDBへ直接設定する
+
+exec
+/bin/bash -lc "grep -F 'S-M05-09-CUSTOMERS-006' 'integration_test/casegen/cases/M05-09_seed_data.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+S-M05-09-CUSTOMERS-006	受注・配送先・明細	ゲスト国内受注(006)	受注ID=59006001／配送先ID=59006101／明細ID=59006201／商品ID=59006501／商品規格ID=59006601／注文番号GUEST-JP-001-006／会員・プレイヤー未紐付け／受注者都道府県=東京都／国内配送先1件／受注状態=注文受付／受注日時=2026-09-29 10:00:00 JST／商品関連情報が揃った明細1件	IT-M05-09-006専用。ゲスト受注の会員番号表示	DBシードで記載IDの受注、配送先、商品関連情報、明細を登録し、会員とプレイヤーを紐付けない	ケース専用
+
+exec
+/bin/bash -lc "grep -E '"'^S-M05-08-(ADM|OLD-MEMBER)'"' 'integration_test/casegen/cases/M05-08_seed_data.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+S-M05-08-ADM	管理者	M05-08試験管理者	メンバーID=5080／ログインID=m0508_admin／パスワード=Passw0rd!M0508／稼働中／所属店舗・操作対象店舗=本店／受注管理を操作できる	全ケースの画面操作と、正常受付時に受注へ設定される担当者。管理者自身の状態は変更しない	管理画面のメンバー管理で登録し、本店と受注管理権限を設定する	共有可
+S-M05-08-OLD-MEMBER	管理者	更新前担当者	メンバーIDは登録時に画面が振る（控える。以下〔メンバーID-M0508-共有〕）／ログインID=m0508_old／稼働中／所属店舗=本店	各専用受注が開始時に保持する担当者。管理者自身の状態は変更しない	管理画面のメンバー管理一覧から新規登録でメンバー管理画面を開き、名前に「更新前担当者」、所属店舗に本店、所属に任意の所属、ログインIDに「m0508_old」、パスワードとパスワード(確認)に同じ任意の4文字以上の値、権限グループに任意の権限、稼働に稼働を入れて登録ボタンを押す。登録後に開くメンバー管理（編集）画面のアドレス欄に含まれる番号をメンバーIDとして控える（〔メンバーID-M0508-共有〕）	共有可
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/sheetmap/FIX_R2_BRIEF.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/SCOPE.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 15ms:
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+
+exec
+/bin/bash -lc "grep -F 'IT-0366' integration_test/viewpoint_canonical/viewpoints_canonical.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 23ms:
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+
+ succeeded in 0ms:
+IT-0366	ITA-11	内部結合テスト	制御	条件網羅	データパターン / 要因の組合せ	1つの処理の結果を左右する要因（区分、状態、設定、関連データの値など。他の機能で設定する値を含む）が2つ以上ある場合、設計書の定めが互いに効き合う要因については値の組合せのすべてで、互いに効き合わない要因についてはどの2つの要因の値の組もいずれかの組合せで、受け渡し先の結果が、それぞれの要因について定められた結果を重ねたとおり設計どおりとなること。設計書から結果が決まらない組合せ、設計上作れない組合せ、および検索条件と削除条件の組合せは除く。	設計書から引用	条件に応じて、呼び出される先、返却データ、出力結果、状態遷移および副作用が設計どおりに切り替わること。検索・削除条件の一致種別と組合せで期待したレコードが取得・対象化されること、表示／非表示条件、通知の発生条件を含む。	単一メソッド内の分岐網羅、および分岐編集の結果そのものは単体テストが担う
+
+codex
+### 指摘（M05-08 / IT-M05-08-023）
+- 主張: 手順3は「スタック用紙印刷要求の担当者IDを999999に変更する」とし、担当者が更新前のまま残ることを期待する。
+- 実際: 設計書 L0038 は「受け取った担当者IDに一致する担当者が存在するときだけ、受注の担当者に設定する」と定め、L0043 は入力を「一覧で選択した受注のID、操作した担当者のID」とする。実行可能性を確認した実装では、印刷要求に担当者IDは含まれず、ログイン中の担当者ID 5080が使われる。手順3では未登録のIDを受け取らせられない。
+- 判定: 成立しない前提・手順
+- 修正案: この手順による「存在しない担当者ID」の確認を取り下げる。実際にそのIDを受け取らせられる手順がある場合に限り、ケースを書き直す。
+
+### 指摘（M05-09 / CB-M05-09-003）
+- 主張: 仕分けは IT-M05-09-006 で「明細が全て持つ」組も確認済みとする。
+- 実際: 設計書 L0122 は「商品・商品規格・商品サブ情報・商品規格サブ情報のいずれかを持たないものは納品書に出ない」と定める。IT-M05-09-006 の期待結果は納品書の出力と会員番号「非会員」だけで、明細行が出ることを確かめていない。
+- 判定: 確認済みでない
+- 修正案: 確認済みの仕分けを取り消し、商品関連情報を全て持つ明細行の出力を確かめるケースにする。
+tokens used
+114,667
+### 指摘（M05-08 / IT-M05-08-023）
+- 主張: 手順3は「スタック用紙印刷要求の担当者IDを999999に変更する」とし、担当者が更新前のまま残ることを期待する。
+- 実際: 設計書 L0038 は「受け取った担当者IDに一致する担当者が存在するときだけ、受注の担当者に設定する」と定め、L0043 は入力を「一覧で選択した受注のID、操作した担当者のID」とする。実行可能性を確認した実装では、印刷要求に担当者IDは含まれず、ログイン中の担当者ID 5080が使われる。手順3では未登録のIDを受け取らせられない。
+- 判定: 成立しない前提・手順
+- 修正案: この手順による「存在しない担当者ID」の確認を取り下げる。実際にそのIDを受け取らせられる手順がある場合に限り、ケースを書き直す。
+
+### 指摘（M05-09 / CB-M05-09-003）
+- 主張: 仕分けは IT-M05-09-006 で「明細が全て持つ」組も確認済みとする。
+- 実際: 設計書 L0122 は「商品・商品規格・商品サブ情報・商品規格サブ情報のいずれかを持たないものは納品書に出ない」と定める。IT-M05-09-006 の期待結果は納品書の出力と会員番号「非会員」だけで、明細行が出ることを確かめていない。
+- 判定: 確認済みでない
+- 修正案: 確認済みの仕分けを取り消し、商品関連情報を全て持つ明細行の出力を確かめるケースにする。

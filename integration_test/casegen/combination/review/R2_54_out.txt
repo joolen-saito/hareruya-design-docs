@@ -1,0 +1,1943 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15892-d858-7d30-85a3-d6170a76e673
+--------
+user
+# 敵対レビュー依頼：要因の組合せの結合テストケース（2巡目・54）
+
+あなたはレビュアーである。著者とは別人として、下の追加ケースを根拠と突き合わせ、誤りを指摘せよ。ファイルは変更しない。スクリプトやコマンドは読むだけで実行しない（grep・cat 等の閲覧は可。rg は使わない）。出力は日本語。
+レビューは事実確認に限る。設計書に無い仕様を足す提案はしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回試すと決めた。他の機能の設定値も要因に入れる。
+機能ごとに要因表（`combination/factors/`）を作り codex が反証した。そこから機械が試す値の組（`combination/combos/<機能ID>.tsv`）を並べ、著者が組1行にケース1件を書いた。
+組1行ごとの扱い（ケース化／既存ケースで確認済み／ケースにしない）は dispositions に書いてある。
+
+## 対象（/home/y-saito/Developments/hareruya-design-docs/integration_test/casegen/ 配下）
+
+| 機能ID | 組の範囲 | 追加ケース・シード・仕分け |
+| --- | --- | --- |
+| M15-05 | 全部 | `combination/cases/M15-05_cb_test_cases.tsv`・`M15-05_cb_seed_data.tsv`・`M15-05_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M15-06 | 全部 | `combination/cases/M15-06_cb_test_cases.tsv`・`M15-06_cb_seed_data.tsv`・`M15-06_cb_dispositions.tsv`（組の範囲の行だけ） |
+| M15-07 | 全部 | `combination/cases/M15-07_cb_test_cases.tsv`・`M15-07_cb_seed_data.tsv`・`M15-07_cb_dispositions.tsv`（組の範囲の行だけ） |
+
+機能ごとに次を読む。
+- 追加ケース（13列。末尾の項目IDは埋めた組ID）、追加シード、仕分け（上の表のファイル）
+- 試す値の組 `combination/combos/<機能ID>.tsv`（組ID／処理ID／組（要因ID=値）／読める形／埋める組）
+- 要因表 `combination/factors/<機能ID>_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`・`_constraints.tsv`
+- 設計書 `combination/units/<機能ID>/design.txt`（行頭 L0001 が行番号。`#####` の行はシートの境目）。要因の根拠が他の機能のときは `combination/units/<その機能ID>/design.txt`、共通シートは `combination/units/_common/`
+- 既存のケースとシード `cases/<機能ID>_test_cases.tsv`・`<機能ID>_seed_data.tsv`（追加ケースが使う共有シードはここにある）
+
+規約は `combination/GEN_PROMPT.md`、裁定は `sheetmap/FIX_R1_BRIEF.md`（A〜L、C'）・`FIX_R2_BRIEF.md`（M〜O）、範囲は `integration_test/SCOPE.md`、前提条件は `precond/README.md`、判定単位は `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366。
+設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採る。Excel が触れていない条件を埋め込みが足しているだけのときは両方を当てる。
+期待結果の根拠は設計書に限る。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備と手順の実行可能性を確かめるためにだけ読む。実装と設計書が違うことは指摘しない。
+`combination/review/` の `*_out.txt`・`combination/prompts/` と、上の表に無いケースのファイルは読まない。
+
+## 前の巡
+
+1巡目の指摘が `combination/review/R1_*_findings.md`、直し担当の処置が `combination/review/<機能ID>_R1_dispositions.tsv`（部のある機能は `_R1_dispositions.p1.tsv` など）にある。指摘は見出しの機能IDで探す。却下の理由が設計書の原文に照らして妥当なら、同じ指摘を繰り返さない。採用したはずの指摘が実際に直っているか、直した結果に新しい誤りが入っていないかを見て、新しい事実の指摘だけを挙げる。
+
+## 意図的であり指摘対象外のもの
+
+- 1ケースの期待結果に、要因表 `processes.tsv` の「確かめる所」に挙がっている所どうし（ZIP と DB、画面と DB など）の結果が1文でまとめてあること（組1行にケース1件のため。2026-10-20 決定）。「確かめる所」に無い所の結果が混じっているときは指摘してよい。
+- 連鎖IDが空欄、要求IDが空欄であること。既存ケースを変えていないこと。判定IDが IT-0366 であること。
+- 組の値の選び方（どの組を並べたか）。要因表の「正解未定」「作れない」の組がケースに無いこと（要因表は反証済み。ただし、ケースを書いてみて組が作れない・結果が決まらないと分かったものは指摘してよい）。
+- 単体テスト・e2e へ送られるもの（画面上だけの入力制限、表示文言の逐語照合、見た目、計算式そのもの）のケースが無いこと。
+- シードの投入方法が「未確定: …」と書かれていること。
+- 商品がグッズ商品CSV登録で作られ、在庫が在庫変更CSV登録と承認で入ること（2026-10-19 の決まり）。
+
+## 重点観点
+
+1. **組の値がケースにあるか**: 事前準備・手順に、組のすべての要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）が値で書かれ、その値で処理を動かしているか。組と違う値で操作していないか。
+2. **期待結果が組の全要因の結果を重ねているか**: 確かめる所で、組の各要因の値について設計書が定める結果（金額・選択肢・更新先・更新内容）がまとめて確かめられているか。設計書の記述と事前準備の値だけから一意に出るか。設計書に無い値・ふるまいを期待していないか。金額・数量の計算が合っているか。
+3. 事前準備の状態から手順を実行して期待結果に到達できるか。単独で成立するか。「このN件だけ」を期待するのに、同じ条件に当たる他のデータを除く記述があるか。共有シードの設定と組の設定値が食い違っていないか。
+4. 1ケースに、確かめる所の違う期待結果が混じっていないか。既存ケースとの重複、物理名の混入。
+5. 「ケースにしない」とした組のうち、設計書の記述から期待結果が一意に決まるもの。「既存ケースで確認済み」としたもののうち、挙げたケースが実際にはその組の値で確かめていないもの。
+
+## 出力形式
+
+指摘が無ければ `NONE` の1語。あれば1件ごとに次の形で、テストIDの順に書く。確信の持てないものは挙げない。見出しの括弧の先頭は必ず機能ID。
+
+```
+### 指摘（<機能ID> / <テストID または 組ID>）
+- 主張: ケースまたは仕分けの記述（要点の引用）
+- 実際: 設計書の事実（design.txt の行番号。原文を引く）
+- 判定: 組の値が無い／期待結果の誤り／設計書に無い期待／成立しない前提・手順／要因の結果が欠けている／複数の期待結果／重複／ケースにできる／確認済みでない／組が作れない
+- 修正案: 結論を先に置いた1〜2文
+```
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T09:09:42.693193Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象の3機能について、組・要因表・追加ケースと仕分けを先に照合し、疑義のある行だけ設計書と前巡の裁定まで確認します。閲覧コマンドだけを使い、ファイルは変更しません。
+exec
+/bin/bash -lc "pwd; find integration_test/casegen/combination -maxdepth 3 -type f -name 'M15-0[567]*' -print; find integration_test/casegen/combination/review -maxdepth 1 -type f -name 'R1_*_findings.md' -print; find integration_test/casegen/combination/review -maxdepth 1 -type f -name 'M15-0[567]_R1_dispositions*' -print" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 21ms:
+/home/y-saito/Developments/hareruya-design-docs
+integration_test/casegen/combination/prompts/M15-05_p2_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-06_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-05_p1_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-06_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-07_GEN_PROMPT.md
+integration_test/casegen/combination/prompts/M15-07_FACTOR_PROMPT.md
+integration_test/casegen/combination/prompts/M15-05_FACTOR_PROMPT.md
+integration_test/casegen/combination/factors/M15-05_factors.tsv
+integration_test/casegen/combination/factors/M15-05_interactions.tsv
+integration_test/casegen/combination/factors/M15-06_constraints.tsv
+integration_test/casegen/combination/factors/M15-05_processes.tsv
+integration_test/casegen/combination/factors/M15-06_interactions.tsv
+integration_test/casegen/combination/factors/M15-06_existing.tsv
+integration_test/casegen/combination/factors/M15-07_factors.tsv
+integration_test/casegen/combination/factors/M15-05_existing.tsv
+integration_test/casegen/combination/factors/M15-07_existing.tsv
+integration_test/casegen/combination/factors/M15-06_processes.tsv
+integration_test/casegen/combination/factors/M15-07_constraints.tsv
+integration_test/casegen/combination/factors/M15-07_processes.tsv
+integration_test/casegen/combination/factors/M15-07_interactions.tsv
+integration_test/casegen/combination/factors/M15-05_constraints.tsv
+integration_test/casegen/combination/factors/M15-06_factors.tsv
+integration_test/casegen/combination/cases/M15-05_cb_test_cases.tsv
+integration_test/casegen/combination/cases/M15-05_cb_test_cases.p2.tsv
+integration_test/casegen/combination/cases/M15-06_cb_test_cases.tsv
+integration_test/casegen/combination/cases/M15-06_cb_seed_data.tsv
+integration_test/casegen/combination/cases/M15-06_cb_dispositions.tsv
+integration_test/casegen/combination/cases/M15-05_cb_dispositions.p2.tsv
+integration_test/casegen/combination/cases/M15-07_cb_test_cases.tsv
+integration_test/casegen/combination/cases/M15-05_cb_dispositions.tsv
+integration_test/casegen/combination/cases/M15-05_cb_dispositions.p1.tsv
+integration_test/casegen/combination/cases/M15-05_cb_seed_data.tsv
+integration_test/casegen/combination/cases/M15-05_cb_test_cases.p1.tsv
+integration_test/casegen/combination/cases/M15-05_cb_seed_data.p1.tsv
+integration_test/casegen/combination/cases/M15-07_cb_dispositions.tsv
+integration_test/casegen/combination/cases/M15-05_cb_seed_data.p2.tsv
+integration_test/casegen/combination/cases/M15-07_cb_seed_data.tsv
+integration_test/casegen/combination/combos/M15-05.tsv
+integration_test/casegen/combination/combos/M15-07.tsv
+integration_test/casegen/combination/combos/M15-06_undetermined.tsv
+integration_test/casegen/combination/combos/M15-05_undetermined.tsv
+integration_test/casegen/combination/combos/M15-06.tsv
+integration_test/casegen/combination/combos/M15-07_undetermined.tsv
+integration_test/casegen/combination/review/M15-06_factors_x_dispositions.tsv
+integration_test/casegen/combination/review/M15-05_R1_dispositions.p1.tsv
+integration_test/casegen/combination/review/M15-07_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M15-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/M15-06_factors_md_dispositions.tsv
+integration_test/casegen/combination/review/M15-07_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/M15-06_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-06_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M15-05_R1_dispositions.p2.tsv
+integration_test/casegen/combination/review/M15-05_factors_v_dispositions.tsv
+integration_test/casegen/combination/review/M15-05_factors_s_dispositions.tsv
+integration_test/casegen/combination/review/M15-05_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/M15-07_factors_y_dispositions.tsv
+integration_test/casegen/combination/review/R1_45_findings.md
+integration_test/casegen/combination/review/R1_20_findings.md
+integration_test/casegen/combination/review/R1_18_findings.md
+integration_test/casegen/combination/review/R1_51_findings.md
+integration_test/casegen/combination/review/R1_08_findings.md
+integration_test/casegen/combination/review/R1_30_findings.md
+integration_test/casegen/combination/review/R1_21_findings.md
+integration_test/casegen/combination/review/R1_19_findings.md
+integration_test/casegen/combination/review/R1_31_findings.md
+integration_test/casegen/combination/review/R1_53_findings.md
+integration_test/casegen/combination/review/R1_A_findings.md
+integration_test/casegen/combination/review/R1_43_findings.md
+integration_test/casegen/combination/review/R1_40_findings.md
+integration_test/casegen/combination/review/R1_15_findings.md
+integration_test/casegen/combination/review/R1_B_findings.md
+integration_test/casegen/combination/review/R1_29_findings.md
+integration_test/casegen/combination/review/R1_10_findings.md
+integration_test/casegen/combination/review/R1_50_findings.md
+integration_test/casegen/combination/review/R1_42_findings.md
+integration_test/casegen/combination/review/R1_01_findings.md
+integration_test/casegen/combination/review/R1_12_findings.md
+integration_test/casegen/combination/review/R1_C_findings.md
+integration_test/casegen/combination/review/R1_04_findings.md
+integration_test/casegen/combination/review/R1_39_findings.md
+integration_test/casegen/combination/review/R1_25_findings.md
+integration_test/casegen/combination/review/R1_03_findings.md
+integration_test/casegen/combination/review/R1_24_findings.md
+integration_test/casegen/combination/review/R1_48_findings.md
+integration_test/casegen/combination/review/R1_33_findings.md
+integration_test/casegen/combination/review/R1_07_findings.md
+integration_test/casegen/combination/review/R1_41_findings.md
+integration_test/casegen/combination/review/R1_02_findings.md
+integration_test/casegen/combination/review/R1_46_findings.md
+integration_test/casegen/combination/review/R1_09_findings.md
+integration_test/casegen/combination/review/R1_17_findings.md
+integration_test/casegen/combination/review/R1_11_findings.md
+integration_test/casegen/combination/review/R1_36_findings.md
+integration_test/casegen/combination/review/R1_05_findings.md
+integration_test/casegen/combination/review/R1_56_findings.md
+integration_test/casegen/combination/review/R1_35_findings.md
+integration_test/casegen/combination/review/R1_55_findings.md
+integration_test/casegen/combination/review/R1_23_findings.md
+integration_test/casegen/combination/review/R1_32_findings.md
+integration_test/casegen/combination/review/R1_54_findings.md
+integration_test/casegen/combination/review/R1_22_findings.md
+integration_test/casegen/combination/review/R1_28_findings.md
+integration_test/casegen/combination/review/R1_D_findings.md
+integration_test/casegen/combination/review/R1_14_findings.md
+integration_test/casegen/combination/review/R1_44_findings.md
+integration_test/casegen/combination/review/R1_38_findings.md
+integration_test/casegen/combination/review/R1_06_findings.md
+integration_test/casegen/combination/review/R1_26_findings.md
+integration_test/casegen/combination/review/R1_47_findings.md
+integration_test/casegen/combination/review/R1_34_findings.md
+integration_test/casegen/combination/review/R1_49_findings.md
+integration_test/casegen/combination/review/R1_37_findings.md
+integration_test/casegen/combination/review/R1_13_findings.md
+integration_test/casegen/combination/review/R1_27_findings.md
+integration_test/casegen/combination/review/R1_52_findings.md
+integration_test/casegen/combination/review/R1_16_findings.md
+integration_test/casegen/combination/review/M15-05_R1_dispositions.p1.tsv
+integration_test/casegen/combination/review/M15-07_R1_dispositions.tsv
+integration_test/casegen/combination/review/M15-06_R1_dispositions.tsv
+integration_test/casegen/combination/review/M15-05_R1_dispositions.p2.tsv
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/sheetmap/FIX_R1_BRIEF.md integration_test/casegen/sheetmap/FIX_R2_BRIEF.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/GEN_PROMPT.md integration_test/SCOPE.md integration_test/casegen/precond/README.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/combination/cases/M15-0{5,6,7}_cb_{test_cases,seed_data,dispositions}.tsv integration_test/casegen/combination/combos/M15-0{5,6,7}.tsv integration_test/casegen/combination/factors/M15-0{5,6,7}_{processes,factors,interactions,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/review/R1_54_findings.md integration_test/casegen/combination/review/M15-06_R1_dispositions.tsv integration_test/casegen/combination/review/M15-07_R1_dispositions.tsv integration_test/casegen/combination/review/M15-05_R1_dispositions.p1.tsv integration_test/casegen/combination/review/M15-05_R1_dispositions.p2.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 60ms:
+# レビュー1巡目の反映（著者への依頼）
+
+codex のレビュー指摘が `integration_test/casegen/sheetmap/review/<機能ID>_r1_findings.md` にある。
+1件ずつ、**指摘が引いている設計書の記述を sheet.txt で自分で読み直して事実かどうか確かめてから**、下の裁定に従って反映せよ。指摘をそのまま適用しない。
+
+## 裁定（依頼元の決定。指摘と食い違うときはこちらが優先）
+
+| No. | 裁定 |
+| --- | --- |
+| A | **根拠はHTML設計書であり、対象シート1枚に限らない。** その機能のふるまい（何を出力するか、全件か選択か、出力対象の条件、未選択・0件のときの扱い、ファイル名、起動するボタン、権限）が同じ冊子の別シート（一覧画面のシートなど）に書かれていれば、それを期待結果の根拠にしてよい。出典にそのシートを「｜」でつないで書く。当初の依頼文の「隣接シートは操作の入口にだけ使う」は撤回する。したがって、「対象シートに記述が無い」ことだけを理由にした指摘は、同じ冊子の別シートに記述があれば却下する。逆に、別シートにその機能の記述があるのにケースにしていなかったもの（出力対象、選択と全件の違い、未選択時の扱いなど）は、ケースを足す。別シートは `python3 integration_test/casegen/sheetmap/build_materials.py --sheet <書番> <シート名>` で読む。他の冊子・実装・現行ソースは根拠にしない |
+| B | **観点表の「期待値の決め方」が「観点内で確定」の判定単位は、適用の条件が設計書から言えれば、期待結果は判定単位の文から決めてよい。** 例: IT-0080・IT-0225（参照・出力だけの機能は実行前後でデータを更新しない）は、設計書がその機能をCSV出力・一覧表示などの参照機能として書いていれば適用できる。「非更新とは対象シートに書いていない」という指摘は却下する。IT-0083（出力ファイルの数量・金額が画面表示およびDB値と一致）を使うときは、画面表示またはDB値と見比べる手順と期待結果にする |
+| C | **CSV・帳票の出力項目の構成と並びは IT-0156**（観点ID ITA-02。他の観点に割り当たらない機能仕様を受ける区分）に当てる。IT-0071 は「値が取得元と同値」にだけ使う。report.md に「出力項目の構成・並びを受ける判定単位が観点表に無いので IT-0156 を使った」と書く |
+| C' | （2026-10-06 追記）観点表に IT-0348（ITA-05。出力したファイルの各レコードが、定められた出力項目だけで構成され、定められた順に並ぶこと）を足した。出力項目の構成と並びは、以後 IT-0348 に当てる。裁定Cで IT-0156 に当てていた14件は付け替えた（`retag_0348.py`）。同日、IT-0349（ITA-05。出力したファイルのレコードが、定められた並び順で出力されること）も足した。出力したCSV・帳票の行の並び順は IT-0349 に当てる（24件を付け替えた。`retag_0349.py`）。同日、IT-0350（ITA-05。送信されたメールの件名、送信元、本文の構成が、定められたとおりであること）も足した。通知メールの内容は IT-0350 に当てる（10件を付け替えた。`retag_0350.py`）。初期値、未選択時の扱いなど、ほかに受ける判定単位が無いものは IT-0156 のまま（2026-10-07 追記）観点表にバッチ用の4行を足した。IT-0351（ITA-14。異常として定められた条件でバッチが異常終了として終わること）、IT-0352（ITA-13。異常終了した場合、異常の後に行わないと定められた処理が行われていないこと）、IT-0353（ITA-13。終了後、一時的な資源が定められたとおりに削除されている・残っていること）、IT-0354（ITA-21。バッチの出力メッセージが、定められた条件のときに定められた文言で出力されること）。バッチのケースで期待結果がこのどれかそのものであるものは、IT-0156 でなくこれらを使う。 |
+| D | 見出し行の有無、データが何行目から始まるかは、設計書に書いていなければ期待結果・手順に書かない。データ行は事前準備の識別子（番号・コード）で特定する。項目の並びは「各行の項目が左から設計書の識別ID順に対応する」ことを、事前準備の値がどの位置に出るかで確かめる |
+| E | 値の取得元が設計書から決まらない項目（備考が空で、項目名からも取得元が1つに決まらないもの。呼び名の違う属性を当てはめたもの）は、値の照合から外し、report.md の「ケースにしなかったもの」に取得元の不足として書く。項目名と同じ名前の属性は取得元が決まるとしてよい |
+| F | 計算・連結・書式変換の結果そのもの（姓＋空白＋名、差の計算、小計など）は単体テストの担当（SCOPE.md）。ケースから外し、report.md に「単体テストへ送った」と書く。ただし「どの時点の値か」「単価か小計か」のように、どの値を採るかの定めは結合テストで確かめてよい |
+| G | 1ケース1期待結果。判定単位が違う確認が1ケースに混じっていたら分ける |
+| H | シードは実際に作れる方法で書く。管理画面で指定できない内部IDを管理画面で登録する、と書かない（DB投入にする）。設計書が求める状態（必須項目が未設定の会員など）が ee 実装の制約で作れないときは、ケースは残し、投入方法を「未確定: <理由>」にして report.md の「試験環境に要るもの」に挙げる。実装が設計書と違うこと自体はケースを変える理由にしない |
+| I | 手順は、画面を開く・条件を入れる・ボタンを押す・ファイルを開く、の操作を番号付きで書く。「〜を確認する」だけの手順にしない |
+| J | 設計書の中で記述が食い違っている・誤記と思われる箇所を、推測でどちらかに決めて期待結果にしない。両方に共通する部分だけを期待結果にし、食い違いは report.md に書く |
+| K | 判定ID IT-0332〜0347 は使わない。使っているケースは、当てはまる別の判定単位に付け替えるか、無ければ外す |
+| L | 指摘が「取りこぼし」で、設計書の記述から期待結果が一意に決まるなら、ケースを足す。試験基盤が無いことはケースを作らない理由にならない（投入方法・前提を「未確定」と書いて残す） |
+
+## やること
+
+1. 指摘ごとに「採用／一部採用／却下」を決め、cases・seed・report.md を直す。ケースを足したり外したりしたら、テストIDを 001 からの連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. 指摘に無くても、裁定 A〜L に反する箇所が自分のケースにあれば同じように直す。
+3. `integration_test/casegen/sheetmap/review/<機能ID>_r1_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述（原文）・直した内容」を表で書く。保存できないときは返答に本文を含める。
+4. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること（他の著者と同じ置き場所を使っているため）。
+
+## 返答
+
+5行以内。直した後の件数、指摘ごとの判定の内訳（採用・一部採用・却下の件数）、足した・外したテストの数、verify の結果、dispositions.md を保存できたか。
+# レビュー2巡目とゲートの反映（著者への依頼）
+
+次の2つを反映せよ。裁定は `FIX_R1_BRIEF.md` の A〜L のまま。指摘は sheet.txt（別シートは `build_materials.py --sheet`）で事実を確かめてから反映する。
+
+1. codex 2巡目の指摘: `integration_test/casegen/sheetmap/review/<機能ID>_r2_findings.md`（`NONE` なら指摘なし。ファイルが無い機能はレビュー対象外）
+2. 前提条件ゲートの不合格: `integration_test/casegen/sheetmap/review/<機能ID>_gate.txt`（空なら不合格なし）
+
+## 追加の決まり
+
+| No. | 決まり |
+| --- | --- |
+| M | **要求IDを代用しない。** 同じ冊子の別シートを根拠にしたケースの要求ID欄には、そのシートの要求ID（`integration_test/casegen/requirements_all.tsv` の、書番とシート名が合う行の `要求ID`）を書く。自機能の sheet.txt にあるのに `<機能ID>_requirements.tsv` に行が無い記述（抽出が古いため）は、いちばん近い見出し行の要求IDを書き、report.md に「要求表に行が無い」と書く |
+| N | **ゲートG5（識別子の重なり）**: ケース専用シードの `状態・属性` に書いた識別子（英数字とハイフンの連なり、数値のID）が、他のケース専用シードや他のケースの事前準備・手順・期待結果に現れてはならない。複数ケースが同じマスタ（レアリティ、レイアウト、フォーマットなど）や同じ行を使うなら、そのデータは共有シード（共有可）へ出す。ケースごとに違うデータなら、識別子にケース番号を入れる。同じ行を書き換えるケースどうしは、ケースごとに別の行・別のデータを使うよう作り直すか、それができない（設計書上1件しかないデータ）なら共有シードにして各ケースの事前準備の最初に「開始時にこの値へ設定し直す」と書き、report.md に「順に実行する」と書く |
+| O | **ゲートG3**: 期待結果に「AからB」「Aのまま」と書くとき、A は事前準備に同じ表記で書いてある値にする |
+
+## やること
+
+1. 指摘・不合格ごとに直す。テストIDを足したり外したりしたら連番に振り直し、ケース専用シードIDの末尾も合わせる。
+2. `integration_test/casegen/sheetmap/review/<機能ID>_r2_dispositions.md` に、指摘番号ごとの「判定（採用／一部採用／却下）・確かめた設計書の記述・直した内容」と、ゲート不合格の直し方を書く。保存できないときは返答に本文を含める。
+3. `python3 integration_test/casegen/sheetmap/verify_sheetmap.py <機能ID>` が合格するまで直す。ゲートは依頼元が合流後に流すので、自分では `cases/` へ合流させない。
+
+作業用の一時ファイルは、ファイル名に自分の機能IDを入れること。
+
+## 返答
+
+5行以内。直した後の件数、指摘の判定の内訳、ゲート不合格をどう直したか、verify の結果、dispositions.md を保存できたか。
+
+ succeeded in 104ms:
+# {FID}（{FNAME}）の要因の組合せのケース作成（著者への依頼）
+
+リポジトリ: `/home/y-saito/Developments/hareruya-design-docs/`。パスはここからの相対。出力はすべて日本語で書く。
+あなたは機能ID **{FID}** の追加ケースを書く著者である。レビューは別の担当が行う。git の変更操作（add・commit など）をしない。
+
+## 背景（依頼者決定 2026-10-20）
+
+1回の処理の結果を左右する要因（区分・状態・設定・関連データの値）が2つ以上あるのに、その値を同時に変えて通すケースが無かった。
+依頼者は、**効き合う要因は値の組合せを全部、関係しない要因はどの2つの要因の値の組もどこかで1回**試すと決めた。他の機能の設定値も要因に入れる。
+{FID} の要因表（別の担当が作り、codex が反証した）から、機械が試す値の組を並べた。そのうち **{RANGE} の {N}行** があなたの受け持ち（{PARTNOTE}）。1行ごとにケースを書く。**既存のケースは1文字も変えない。**
+
+## 読むもの
+
+1. 試す値の組: `integration_test/casegen/combination/combos/{FID}.tsv`（組ID／処理ID／組（要因ID=値）／組（読める形）／埋める組）。1行が1回の処理で同時に使う値の組。受け持ちは {RANGE}。
+2. 要因表: `integration_test/casegen/combination/factors/{FID}_processes.tsv`（処理・契機・確かめる所）・`_factors.tsv`（要因・値・値ごとの結果・根拠）・`_interactions.tsv`（効き合う理由）・`_constraints.tsv`（作れない組・正解未定の組）
+3. 設計書: `integration_test/casegen/combination/units/{FID}/design.txt`（行頭の L0001 とタブは行番号で、設計書の内容ではない）。要因の根拠の行だけでなく、その節全体を読む。他の機能の設定値の要因は `units/<機能ID>/design.txt`
+4. 既存のケースとシード: `integration_test/casegen/cases/{FID}_test_cases.tsv`（11列）・`{FID}_seed_data.tsv`。**書き方・画面への入り方・シードの作り方はこれに合わせる**。同じ処理を別の値で通している既存ケースがあれば、それを下敷きにして値だけ変えるのが基本
+5. 確かめる所が別の機能の画面のときは、その機能のケース `integration_test/casegen/cases/<機能ID>_test_cases.tsv` で画面への入り方と表示の書き方を見る
+6. `integration_test/SCOPE.md`、`integration_test/casegen/sheetmap/FIX_R1_BRIEF.md` の裁定 A〜L・C'、`FIX_R2_BRIEF.md` の決まり M〜O（文中の `sheetmap/` は読み替える）、`integration_test/casegen/precond/README.md`（前提条件 P1〜P13・類型 T1〜T4）、`integration_test/casegen/STEP_PATTERNS.md`（手順の型）
+7. `integration_test/viewpoint_canonical/viewpoints_canonical.tsv` の IT-0366（判定単位の文と除外を読む）
+
+## 1行（組ID）ごとに、次のどれかに決める
+
+| 扱い | いつ | 書くもの |
+| --- | --- | --- |
+| ケース化 | その値の組で処理を動かしたときの結果が、設計書の記述から一意に決まる | ケース1件（1ケース1期待結果）。組のすべての要因の値を事前準備・手順に値で書く |
+| 既存ケースで確認済み | 既存ケースの事前準備・手順に組のすべての値が書かれ、確かめる所で結果を見ている | そのテストIDと、どの手順・期待結果が当たるか |
+| ケースにしない | その値の組が実は作れない（制約の抜け）／結果が設計書から一意に決まらない／設計書の記述どうしが食い違う／結合テストの範囲でない | 理由（設計書の原文を引く）。作れない・決まらない組は、要因表の制約に足すべき組として理由に `要因ID=値&要因ID=値` を書く |
+
+安易に「ケースにしない」としない。要因表は codex が反証済み。それでも外すなら設計書の原文で理由を示す。
+
+## 期待結果の決め方
+
+- 組の**すべての要因**について、その値で設計書が定める結果を、確かめる所（processes.tsv）でまとめて確かめる。1つの確かめる所で見える結果を1文にまとめてよい（例: 「受注情報編集画面で、お支払方法が代金引換、配送方法がゆうパケット、送料が200円、手数料が330円、ポイント使用が0、合計が1,530円で表示されること」）。確かめる所が違う結果は入れない（1ケース1期待結果）。
+- 金額・数量は、事前準備に書いた値から設計書の計算で一意に出す。計算の途中を期待結果・出典に書かない（期待結果には結果の値だけ）。
+- 期待結果は設計書（design.txt。同じ冊子の別シート、要因の根拠にある他の機能の設計書も可）と事前準備の値だけから出す。実装コード・現行ソースから期待値を足さない。実装（`/home/y-saito/Developments/ec-cube-enterprise`）は、事前準備・シードの作り方と手順の実行可能性を確かめるためにだけ読んでよい（スクリプトやコマンドは実行しない）。
+- 設計書の中の食い違いは、Excel 由来の本文 ＞ 埋め込みの「表示メッセージ」節 ＞ 埋め込みの「現行仕様」節の順に採り、出典に両方を書く。
+- 要因表の constraints.tsv に「正解未定」とある値の組は機械が行に入れていない。それ以外の組で結果が決まらないと分かったら「ケースにしない」にする（推測で決めない）。
+- **打ち切りの行**: 組（読める形）に「（効かない）」とある要因は、その行では結果に効かない（constraints.tsv の種別「打ち切り」。処理が途中で打ち切られる。依頼者決定 2026-10-20）。その要因の値は事前準備に書かなくてよい（共有可シードのままでよい）。期待結果は打ち切りの結果（出ない・エラーで元の画面へ戻る・何も変わらない など）を、設計書の定めどおりに確かめる。打ち切りのあと値が残っていないか（更新されていないこと）を見るのはよい。
+
+## ケースの書き方
+
+- テストIDは `IT-{FID}-{START}` からの連番（既存と、外した番号の続き）。組IDの順に書く。
+- 判定IDは `IT-0366`、観点IDは `ITA-11`。項目ID列に組ID（1つ）。
+- 期待結果は合否が一意に決まる具体値で書き、「〜こと」で終える。
+- **組の値がケースから読めること**: 事前準備・手順に、組の全要因の値（店舗、配送方法、支払方法、ポイントの使い方、受注の種類、状態、設定値など）を値で書く。要因名や組の値を並べただけの行（「このケースで試す値の組: …」など）を事前準備・手順に足さない。実際のデータで書いていれば、verify の「注意」（組の値が字句で無い）は残ってよい。
+- 結果は、データを作った所とは別のコンポーネントで確かめる（DB、別の画面、別の機能の画面、CSV・帳票、メール、連携先）。
+- 手順は「1. …／2. …」の形で、画面名・項目名・ボタン名・入力値を特定する。名前は設計書の表記を使う。画面への入り方は既存ケースに合わせる。
+- 物理名（テーブル名・カラム名・ルート名・クラス名・翻訳キー）を書かない。設計書に書かれている項目名はそのまま使ってよい。
+- 禁止語: 失敗させる／該当する操作／同上／いくつか／別の画面／要確認／TBD／設計どおり／設計書どおり／仕様どおり／正しいこと／正しく。
+- 実行区分は `ブラウザのみ` か `ブラウザ+DB確認`（外から見えない副作用だけDBを見る）。優先度は、業務データの保存・更新・出力値の一致を P1、表示・選択肢を P2。
+- 要求ID列: `integration_test/casegen/requirements_all.tsv` に当たる行（書番・シート名・要求文が合う行）が見つかればその要求IDを書く。見つからなければ空欄でよい。代用しない。
+- 連鎖IDは空欄。出典は既存ケースと同じ形（`<書番> <シート名> / <区分 と 見出し>`。別シート・別の冊子は「｜」でつなぐ）。
+
+## 前提条件（いまの決まり。既存のシードの書き方がこれに従っているので合わせる）
+
+- 各ケースは単独で成立する。**各ケースはケース専用シードを1件以上使う**（シードID `S-{FID}-CB<名前>-<ケース番号3桁>`）。参照だけのマスタ・アカウント・環境設定は、既存の `{FID}_seed_data.tsv` にある `共有可` のシードをそのまま使ってよい（シード表に書き足さない）。既存の `ケース専用` シードは使わない。
+- 組の値が共有可のシードの設定と違うとき（手数料・送料・利用条件・配送方法に紐づく支払方法など）は、ケース専用シードで設定を書き、事前準備に値で書く。
+- テストデータは画面から入力して作る（2026-10-09 決定）。画面で作れない状態だけ、理由を添えて DB へ直接入れる書き方にする。
+- **商品はカード商品も含めてグッズ商品CSV登録で作る**（商品登録画面の新規登録は使わない。M03-02 L0075〜L0077）。カード商品は商品登録編集画面の「カード指定 >」でカードを付ける。価格は税込みで登録する。在庫は在庫変更CSV登録で入庫し、別のメンバーが承認一覧で承認する（確認画面の OK まで書く）。既存の `{FID}_seed_data.tsv` の商品・在庫のシードの書き方をそのまま写す。
+- 確認モーダルが出る操作は、モーダルの確定まで手順に書く。規約同意など必須のチェックも書く（既存ケースに合わせる）。
+- 画面が振る番号（受注番号・会員IDなど）は、画面で作ったあとに控えた番号を使う（類型 T4。〔番号の名前-{FIDC}-ケース番号〕の呼び名で書く）。
+- ケース専用データの識別子（コード、名称、メール、ファイル名、パスワード）は全機能で一意にする。前提条件の検査 G5 の字句は `[A-Za-z0-9][A-Za-z0-9_.@\-]{3,}`。**英数字とハイフンの連なり1つ1つに、機能番号とケース番号を入れる**（例: 「{FIDC}-CB{START}-A」「cb{FIDL}-{START}@example.test」「Passw0rd-CB{FIDC}{START}」）。パスワードに「!」を使わない。番号だけの語（「A001」）を単独で置かない。`grep -rF` で `integration_test/casegen/cases/` と重ならないことを確かめよ。
+- 事前準備は必須。使用シードすべてについて状態を値付きで書き、シードIDを括弧で添える（「① …（S-…）／② …（S-…）」）。「このN件だけ」を期待するときは、同じ条件に当たる他のデータが無い状態を書く。
+- 事前準備で手順の結果を参照しない。期待結果の「AからB」「Aのまま」の A は事前準備に同じ表記で書いた値にする。
+- シードの投入方法は、何を使ってどう作るかを書く。作り方が分からないときは「未確定: <分からないこと>」と書く。推測で埋めない。
+- 中継・模擬応答、現在時刻の固定、障害を起こす手段は用意しない（2026-10-19 決定）。これが要る組は「ケースにしない」。バッチの実行、スマレジなど外部の試験環境、メールの受け取りは用意できる。
+
+## 出力（この3つだけを書く。ほかの既存ファイルは変更しない）
+
+1. `integration_test/casegen/combination/cases/{FID}_cb_test_cases{SFX}.tsv`
+   タブ区切り・13列: `テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID`
+   セル内に改行・タブ・ダブルクォートを入れない。ケース化が0件でもヘッダだけのファイルを書く。
+2. `integration_test/casegen/combination/cases/{FID}_cb_seed_data{SFX}.tsv`
+   タブ区切り・7列: `シードID	区分	論理名	状態・属性	用途	投入方法	共有`。**新しく足すシードだけ**を書く。
+3. `integration_test/casegen/combination/cases/{FID}_cb_dispositions{SFX}.tsv`
+   タブ区切り・4列: `項目ID	扱い	テストID	理由`。受け持ちの組 {N}行を1行ずつ（項目ID は組ID）。
+
+最後に `python3 integration_test/casegen/combination/verify_cb.py {VARG}` を実行し、合格するまで直せ。ほかの検査（gate_dry.sh・gate_factors.py など）は流さない（ほかの著者と同時に流すとぶつかる）。
+作業用の一時ファイルはスクラッチパッド（`/tmp/claude-1000/-home-y-saito-Developments-hareruya-design-docs/7ac77140-f212-4eb4-b04c-5cbd0cc6fcfa/scratchpad/`）に、名前へ {FID}{SFX} を入れて作る。他の機能・同じ機能の他の部の combination/cases のファイルは読まない・書かない。
+**ファイルは処理ごとに書き足していく**（全部を最後にまとめて書かない。途中で止まっても書いた分が残るように）。
+ファイルの書き込みを拒否されたときは、回避せず、書くはずだった本文を返答に載せる（依頼元が保存する）。
+
+## 返答
+
+4行以内。ケース化／確認済み／ケースにしない の件数、ケースにしなかった主な理由（制約に足すべき組があれば件数）、verify の結果、判断に迷った点（あれば1つ）。
+# 結合テスト観点表の適用範囲
+
+`ipa-integration-test-viewpoints.tsv` が対象とする範囲を定める。
+判定基準は旧観点資産（`archive/integration-test-viewpoints.md`）の層判定をそのまま踏襲する。
+
+## 対象とするもの
+
+**独立したコンポーネント間の契約と相互作用。**
+呼出側と受取側の間で、受け渡される値、状態、副作用、異常時の振る舞いが
+双方の設計どおりに噛み合っていることを確認する。
+
+**媒体をいくつ跨いだかでは判定しない。** 単一のロジックの結果をDBや画面で観測するだけの確認は、
+観測先が別コンポーネントであっても単体テストの範囲とする。
+旧正本もこの基準を採り、DBへ登録される変換・計算結果をUT判定している
+（`archive/integration-test-viewpoints.md` No.60-66）。
+
+## 単項目の検証は、DBへ保存するかで分ける（2026-09-01 依頼者決裁）
+
+単項目の桁数・文字種・必須・コード値・日付・メールアドレス書式の検証は、
+**その項目をDBへ保存するかどうか**で担当を分ける。
+
+| 項目の性質 | 担当 | 理由 |
+| --- | --- | --- |
+| DBへ保存する項目（登録・編集の入力欄） | **結合テスト** | Form層で受理された値がDB層に収まるかは跨コンポーネントでしか観測できない。pf(MySQL)はバイト、ee(PostgreSQL)は文字で数えるため、Form層の単体テストでは意味論差が出ない |
+| 画面上だけの入力制限（検索条件、絞り込み、表示件数） | 単体テスト | DBへ保存しないので意味論差が起きない。判定ロジックの正しさだけを見ればよい |
+
+同じ種類の判定であれば、複数項目をまとめて1件のテストケースにしてよい。
+例: 「商品名と商品名(英)の最大文字数が設計書どおりであること」は1件でよい。
+判定の種類が違えば分ける（最大文字数と必須は別のケース）。
+
+単体テストが担うのは、検証を行う処理そのもの（計算式、文字数の数え方、分岐網羅）である。
+
+画面項目定義のうち次は、桁数・必須の指定が無くても結合テストの対象とする。
+跨コンポーネントでしか確認できないからである。
+
+- 初期値の指定（画面を開いてDBから値を取り、初期表示する）
+- 画面部品のふるまい（「押下すると検索を行う」「表示/非表示を切り替える」）
+- 表示内容（「チェックを付けると一覧すべてを対象に設定」）
+
+## 現行仕様と刷新の指示が食い違うときは刷新を採る（2026-09-01）
+
+HTML設計書には次の2つが載る。両方が同じ項目に触れて食い違うことがある。
+
+| 出所 | 中身 |
+| --- | --- |
+| Excel基本設計の本文 | 刷新後にどうするかの指示。「※カスタマイズ対応」「〜とする」 |
+| 埋め込まれた機能設計書の「現行仕様」 | 現行の実装がどう動いているか |
+
+**期待結果は刷新の指示を採る。** 現行仕様は、刷新の指示が無い箇所にだけ使う。
+両方に記述があって内容が違うときは、刷新の指示を期待結果にし、
+現行仕様との差を `出典` に併記する。
+
+実例: M03-01の並び順は、機能設計書の現行仕様が「商品IDの降順」、
+Excel基本設計が「表示順は、棚番号昇順とする」で食い違う。棚番号昇順を採る。
+現行仕様だけを見てケースを書き、誤った期待結果を作った（codex R1）。
+
+## 対象としないもの
+
+| 除外区分 | 内容 | 担当 |
+| --- | --- | --- |
+| 単体テスト粒度 | 単一コンポーネント内で完結する変換・計算ロジック | 単体テスト |
+| 単体テスト粒度 | 単一メソッド内の分岐網羅 | 単体テスト |
+| 単体テスト粒度 | 変換、編集分岐、ループ編集、計算、連結、暗号化、マスキング、パディング、小数桁の結果そのもの | 単体テスト |
+| e2e粒度 | 見た目、画面レイアウト、ブラウザ固有挙動、確認ダイアログの表示 | e2e・手動 |
+| e2e粒度 | 画面表示文言の照合 | e2e・手動 |
+| 性能 | 応答時間、スループット、同時接続数の上限、リトライ間隔の適切さ | 性能テスト（別工程） |
+
+## 境界が紛らわしいもの
+
+同じ語で呼ばれるが、担当が分かれるもの。
+
+| 事象 | 結合テストが見るもの | 他が見るもの |
+| --- | --- | --- |
+| 境界値 | 設計書が定めた桁数・範囲どおりに受理／拒否されること。DB層のカラム制約、件数上限、ファイルサイズ、表示上限を含む | 計算式そのものの正しさは単体テスト |
+| 文字列長 | 設計書が定めた最大文字数どおりに受理／拒否されること。pf(MySQL)とee(PostgreSQL)の意味論差を含み、Form層とDB層の双方を見る | 文字数を数える処理そのものは単体テスト |
+| 最大件数・最大ファイルサイズ | 規定量を機能として正しく扱えるか（ITB-11） | 規定時間内に終わるかは性能テスト |
+| タイムアウト | タイムアウト時の跨コンポーネントの挙動（ITB-14） | 応答時間そのものは性能テスト |
+| リトライ | 再送回数、間隔、打切り条件が仕様どおりか（ITB-15） | 間隔の適切さは性能テスト |
+| バリデーション | 設計書が定めた検証（必須、桁数、文字種、コード値、日付、メールアドレス書式）の結果が画面・DB・ファイル・連携先へ反映されること | 検証関数そのものの分岐網羅は単体テスト |
+| メッセージ | DB、ファイル、ログ、連携先の期待結果（COM-04） | 画面表示文言の照合はe2e |
+
+## 除外の記録
+
+除外した観点は捨てない。旧資産の層判定は `archive/integration-test-viewpoints.md` の
+`テスト層` 列に、新観点への対応は `MIGRATION_MAP.tsv` に残る。
+# 結合テストケースの前提条件の書き直し
+
+## なぜ
+
+2026-09-28 時点の `cases/*_test_cases.tsv` は、上から順番に実行しても成立しないケースが多い。
+原因は3つある。
+
+1. **前提がケースに書かれていない。** 生成規則（`GEN_PROMPT_TEMPLATE.md` 縛り10）が
+   「シード投入は事前準備に書かない」としていたため、実行対象8,325件のうち7,866件の事前準備が `—`。
+   IT-A01-01-004 の前に「SMA-A01-002 を2個販売した取引」が要ることは、別ファイルのシード表を読まないと分からない
+2. **状態を書き換えるデータを複数ケースで共有している。** IT-A01-01-001 が SMA-A01-001 を2個販売すると、
+   002 の「10から8」は成立しない。012 が SMA-A01-I01 を7にすると、013 の「10から8」は成立しない
+3. **投入方法が実行できる粒度でない。** 「スマレジ試験環境に全キャンセル可能な取引を登録する」
+
+依頼者決定（2026-09-28）: **ケースごとに専用データを持たせる**。A01-01 で型を作ってから全機能へ広げる。
+
+## 規約
+
+対象は実行区分が「保留」以外のケース。保留ケースは1文字も変えない。
+
+| No. | 規約 |
+| --- | --- |
+| P1 | **各ケースは単独で成立する。** 他のケースを先に実行しても、後に実行しても、実行しなくても、事前準備どおりの状態から始められる |
+| P2 | シード表に `共有` 列を足す。`共有可` か `ケース専用` のどちらか。**どれか1ケースでも状態を変えるデータ**（在庫・受注・取引・ステータス・ログイン失敗回数など）は `ケース専用`。`共有可` にできるのは、どのケースも状態を変えないもの（参照だけのマスタ、ロックさせない管理者アカウント、環境設定）と、各ケースが開始時に必要な設定を自分で行う試験基盤（中継の保留／転送の切替など）だけ。`用途` にどちらなのかを書く |
+| P3 | `ケース専用` のシードを参照するケースはちょうど1件。シードIDは `<元のID>-<ケース番号3桁>` にする |
+| P4 | ケース専用データの識別子（DB投入するレコードのID・商品ID・CSVファイル名・会員メールなど）は、**全機能のケース専用シードの中で一意**にする。重なるときはケース番号を付けて改名する |
+| P5 | **事前準備は必須。** 使用シードすべてについて、どういう状態かを値付きで書き、シードIDを括弧で添える。シード投入の後で画面や外部システムを操作して作る状態（販売済みの取引など）は、その操作と、終わった後の値の確認まで書く |
+| P6 | 期待結果が「AからB」「Aのまま」と言うとき、**A は事前準備に書いた値**である |
+| P7 | **期待結果は変えない。** 変えてよいのは P4 の改名だけで、改名は `renames/<機能ID>.tsv` に宣言する。改名は、英数字の識別子どうし／シードで ID・名称・コード・番号・メール・ファイル名等の項目の値として定義した値／シードID／シードの自由文にある4文字以上のデータ名を「旧名-ケース番号」へ、の置換に限る（数量・状態語は改名しない）。改名で済まない変更は `oracle_changes/<機能ID>.tsv`（テストID/新期待結果/理由/承認）に載せ、承認が入るまでゲートを通さない。承認済みの類型は T1 だけ（下記）。手順で外部の値に呼び名を付け、その呼び名を期待結果で使う書き方もオラクル変更として扱う。要求ID・連鎖ID・観点ID・優先度・実行区分・出典は変えない |
+| P8 | 手順はテスト対象の操作だけにする。手順を変えてよいのは次の種別だけで、変えたら `step_changes/<機能ID>.tsv`（テストID/種別/新手順/理由）に宣言する。`準備移動`（準備操作を事前準備へ移す）／`改名`／`発番値控え`（実行中に発番される値を控える操作を足す）／`データ指示`（事前準備で作ったデータを指し示す）／`中継置換`（類型 T2）／`非同期完了待ち`（類型 T3）／`裁定訂正`（設計書の中の食い違いの裁定で直したもの。2026-10-16 依頼者決定） |
+| P9 | 投入方法は、何を使ってどう作るかを書く（管理画面のどの画面か／DB投入／スマレジ試験環境の管理画面で商品登録と在庫設定／CSVフィクスチャ）。「〜を登録する」だけで手段が無いものは不可 |
+| P10 | 事前準備に設計書に無い仕様を持ち込まない。書くのはテストデータの状態と作り方だけ。作り方は設計書に無ければ ee 実装（設定・テーブル・管理画面）から引いてよい。どちらにも無い作り方は `open_preconditions.tsv` に載せ、推測で埋めない |
+| P12 | 試験基盤が未整備、または作り方が設計書にも ee 実装にも無い前提は `open_preconditions.tsv` に載せる。**実行区分は変えない**（保留は「設計書に期待結果が無い」の意味で使っており、混ぜない）。ゲートは件数を参考として出す |
+| P13 | **手順で入力する値（登録する名称・コードなど）は改名しない。** 境界値や文字種の検査が壊れるため。同じ値のデータが既にあると成立しないときは、事前準備に「その値のデータが無い状態にする（あれば削除する）」と書く |
+| P11 | **事前準備は手順より前に完結する。** 手順の結果（発番されたID・返された値）を事前準備で参照しない。それらは手順の中で控える |
+
+## 承認済みの類型（依頼者 2026-09-28）
+
+| 類型 | 内容 | 記録先 |
+| --- | --- | --- |
+| T1 外部発番値 | 外部システムが発番する値（スマレジの在庫変動履歴ID・問い合わせIDなど）を基線が固定値で書いているときは、手順の中で発番値を控え、期待結果を「手順Nで控えた値」との照合に書き換える | `oracle_changes`（承認欄に「類型承認T1」） |
+| T3 非同期完了待ち | Webhook・バッチ・メッセージ処理など非同期で処理される操作の結果を確認する前に、非同期処理の対象のジョブ（待機中・実行中）が0件になるまで待つ手順を足す（画面名は書かない。下の「用語の置き換え」）。待つ上限時間を書く | `step_changes`（種別「非同期完了待ち」）。依頼者承認 2026-09-30 |
+| T2 中継置換 | 外部システムとの通信の観測・送信を、基線が実行できない書き方（「Webhookの応答をブラウザで確認」「スマレジAPIから送信」など）にしているときは、中継（通信を記録・保留・転送・模擬送信する試験基盤）で観測・送信する手順に変える。外部が実際に返す通知は保留して転送し、外部に起こさせられない結果（エラー等）だけを模擬送信する | `step_changes`（種別「中継置換」） |
+
+## 類型T4 画面発番値（依頼者決定 2026-10-09）
+
+テストデータは画面から入力して作る。画面が自動で振る番号（注文番号・受注ID・イベントIDなど）を基線が固定値で書いているときは、
+データを画面で登録したときに振られた番号を控え、事前準備・手順・期待結果ではその控えた番号（呼び名〔注文番号-M0526-012〕の形）を使う。
+書き直しは `../seed_screen/`（README）。期待結果・手順の変更は `oracle_changes/`（承認欄に「類型承認T4」）・`step_changes/`（種別に「発番値控え」）へ、`../seed_screen/apply.py` が機械で宣言する。
+控えた番号へ置き換えたケースの一覧は `screen_noted_cases.tsv`。検査は、これらのケースについて改名先（消えた固定の番号）の検査を外し、〔…〕の呼び名を識別子として数えない。
+
+## テストできない・作り方が未確定のケースの除外（依頼者決定 2026-10-14）
+
+テストできないケースと、作り方が未確定のケースを、ケースの正本（`../cases/`・`../all_test_cases.tsv`）から外した。
+外したのは、検査 G9 が「未整備・未確定の前提を使うケース」と数えていた 1,892件（使用シードの投入方法に「未確定」「未整備」がある、または `open_preconditions.tsv` の影響ケースに載っている）。
+内訳は、作り方が未確定 1,744、試験環境の決定待ち 113、実装上その状態を作れない 35。残りは 10,556件・345機能（20機能は全ケースが外れた）。
+
+- 行は消さず `../excluded_open_cases.tsv`（除外理由・未確定の内容つき。元の11列は「元_」付き）へ移した。外したケースだけが使っていたシード 2,458件は `../excluded_open_seeds.tsv`。
+- 道具は `../exclude_open.py`（何度流しても同じ）。**各 `merge_into_cases.py` と `seed_screen/apply.py` は外したケースを `cases/` へ戻すので、そのあとに必ず流す。** 順序は merge → `seed_screen/apply.py` → `datapattern/conflicts/apply_rulings.py`（最後に `product_csv/apply.py` と `runnable/apply.py` も当たる）→ `exclude_open.py` → `exclude_scope.py` → `build_all_test_cases.py`。
+- 作り方が決まったら、シードの投入方法（と `open_preconditions.tsv`）を直してから同じ順に流し直すと戻る。
+- 検査 G6 は、基線・追加分からこの除外分を差し引いて照合する。保留（設計書に正解が無い）の除外 `excluded_hold_cases.tsv` とは別の表で、意味を混ぜていない。
+
+### 影響ケースの漏れ（2026-10-16）
+
+`open_preconditions.tsv` の影響ケースは、行を足した時点のケースで書いた固定の一覧である。そのため、あとから足したケースが同じ未確定の前提を使っていても除外に掛からなかった。全数を洗い直し、63件を影響ケースに足して外した（11,777件 → 11,714件・341機能）。
+- 同じシードを使うのに一覧に無かったもの: IT-A05-04-047〜060（スマレジ受信。2026-10-09 の被覆監査で追加。取引情報取得APIの試験環境と Webhook の認証情報の2行）、IT-B02-02-010〜012（バッチの実行環境）、IT-M03-09-058・097（スマレジの試験用受信サーバー）。
+- 連携ケース（`../link/`）が、基線では未確定のシードを「-L-」付きの別名で作り直していたもの: S-B02-02-L-ENV・S-B05-02-L-CLOCK・S-B05-09-L-API/CLOCK/CONFIG・S-B06-01-L-ENV・S-B06-02-L-EXEC・S-B08-03-L-ENV・S-B08-06-L-API-CONTROL・S-B13-01-L-API/EXEC/MAIL。基線の行と同じ文面で、対象をL版にした行を足した（`未確定: …（… の未確定と同じ）`）。B06-01 の別名を使っていたデータパターンのケースも含む。
+- 時計を固定する前提: IT-M04-17-001（業務日を2026/09/29に固定。時計の固定は S-B05-09-CLOCK などと同じく作り方が無い）。
+- この結果、B02-02・B05-02・B05-09・B06-01・B08-03・B13-01 はケースが0件になった（基線のケースは前から外れており、残っていたのは別名のシードを使う連携ケースだけだった）。
+- 同じ日に `../chain_gap/` のレビューで、S-F06-02-L-ENV（IT-F06-02-024・025）も見つかり、同じ形の行を足して外した。基線の行の対象は S-F06-02-API-OK で、名前の役割の語（API と ENV）が違うため道具では拾えなかった。このシードは、開始時にスマレジAPI試験環境のユーザーDBで会員が0件であることを確かめる作り方で、024 は発番されたスマレジIDを控える。外部の試験環境を使うシードは、名前だけでなく中身でも基線の行と見比べる。
+- 候補を出す道具は `scan_open_leaks.py`。ケースを合流したあと、`exclude_open.py` の前に流す。候補を出すだけで判定はしない。残っている候補 159件は、読んだうえで漏れではないと判定したもの。
+  - 共有の定義だけを使い、未確定の項目に触れないもの: S-M05-03-DEFS、S-F06-05-BASIC、IT-A05-04-002（GETを送るだけで、認証も取引の取得も要らない）。
+  - 名前の役割の語が同じだけで、作り方が決まっているもの: ポイントの設定、ユニサーチの接続先、ee の開発用の正常応答、スマレジの試験環境への接続。
+  - S-M03-10-SMAREGI-ENV: ee の商品APIのクライアントは、模擬応答のときも呼び出しを記録する（SmaregiPlatformApiCallRecorder）。シードの書き方は実装と合っている。
+
+## 試験環境で用意できる前提の解消（依頼者決定 2026-10-19）
+
+依頼者決定「バッチの実行、スマレジなど外部の試験環境、メールの受け取りは環境準備できる」（中継・模擬応答、時刻の固定、障害を起こす手段は用意しない）。作り方が未確定で外したケースを止めていた項目（未確定のシード 944・未確定の前提の行 879）を1件ずつ判定し、この3つだけで決まるものは作り方を書いて解消した。止めていた項目がすべて解消したケース 183件が一覧へ戻った（11,713件 → 11,896件・346機能）。
+解消した前提の行 81 は `open_preconditions.tsv` から `resolved_preconditions.tsv`（解消の書き方・区分・根拠・決定つき）へ移した。シードは投入方法を書き直した（外した表 `../excluded_open_seeds.tsv` を直し、`exclude_open.py` が直った文で戻す）。
+同じ日の依頼者決定「おすすめで進めて」で、人が補って実行できるもの（決まった番号の読み替え、必須のチェック、確認モーダル、割引率、在庫の承認）も書き足した。道具・判定・レビューは `../runnable/README.md`。`../datapattern/conflicts/apply_rulings.py` が最後に `../runnable/apply.py` を呼ぶ。
+
+## E2E で作成を保留した入力ファイルを使うケースの除外（依頼者決定 2026-10-16）
+
+依頼者決定「テスト保留のケースがあれば除外」。ケース一覧に実行区分「保留」のケースは無かった（2026-10-01 にすべて外してある）。保留に当たっていたのは、E2E の入力ファイルの棚卸し（`../../../e2e/fixtures/named-file-references.tsv`。M03・M04 だけ棚卸し済み）で作成判断を「保留」「正本矛盾」とした33ファイルで、シードの記述だけでは中身（文字コード、見出し行の値、画像の中身など）が一つに決まらないか、シードの記述が食い違っていた（M03-30 の empty.tsv）。これを使うケース29件を、作り方が未確定の前提として `open_preconditions.tsv` に載せ（対象「入力ファイル <ファイル名>」の33行）、`exclude_open.py` で外した。ケースは 11,679件から 11,650件。ファイルの中身をシードに書いて棚卸しの判断が変わったら、その行を消して流し直すと戻る。M03・M04 以外の機能の入力ファイル（棚卸しで未判定の 1,729件）は見ていない。
+同じ日の依頼者決定「画像は任意の有効な画像でよいとして戻す」で、画像の中身が未指定だった9ファイル（M04-02-050・M04-03-005・M04-05-011・M04-31-150 の4ケース）の行を外し、4ケースを戻した（11,654件）。シード（`../seed_screen/out/` の該当行の投入方法）に「画像ファイルの中身は任意の有効な画像でよい。同じケースで使う複数の画像は、互いに見分けられる別の画像にする」と書いた。E2E の入力ファイル（`e2e/fixtures/`）はまだ作っていない。
+外したケースを戻すときは、流れを2回流す。1回目は `exclude_open.py` が除外表の古い文面のままケースとシードを戻すので、2回目の `seed_screen/apply.py`・`apply_rulings.py` で書き直しが当たる。
+
+## フェーズ2見送り・実装しない機能の除外（依頼者決定 2026-10-16）
+
+依頼者決定「フェーズ2見送り、機能実装しない機能についてはケースから除外」。対象は `../scope_out.tsv`（根拠つき）で、フェーズ2見送り13機能（A06-14・B01-02・B01-03・F02-05・M03-43・M03-44・M04-06・M04-07・M06-13・M08-11・M08-15・M08-16・M08-17）、実装しない4機能（M03-34・M03-36 は 2026-10-06 決定、M04-27・B13-02 は Excel の廃止の記述）と、M03-43 の機能を確かめていた IT-M03-30-038。
+ケース一覧の6件に加え、作り方が未確定で外していた65件、保留で外していた49件も、決まっても戻さないので `../excluded_scope_cases.tsv` へ移した（計120件。元の表と元の除外理由を残す）。外したケースだけが使っていたシード89件は `../excluded_scope_seeds.tsv`。道具は `../exclude_scope.py`（何度流しても同じ。`exclude_open.py` の後に流す）。ケースは 11,685件・349機能から 11,679件・346機能になった（F02-05・M03-44・M06-13 はケースが0件）。
+保留から移した49件は、設計者に聞く必要が無くなった（`../hold_review/questions.tsv` に論点があるものも含む）。機能の一部だけがフェーズ2のもの（ナビゲーションの通知、会員検索の顧客分析タグなど）は機能ごとは外していない。そのフェーズ2の部分を確かめるケースは IT-M03-30-038 のほかに無かった。
+検査 G6 は、基線・追加分からこの表の分も差し引いて照合する。
+
+## 既存ケースと設計書の食い違いの裁定（依頼者決定 2026-10-16）
+
+設計書の中で記述が食い違うときの優先順位（Excel由来＞埋め込みの表示メッセージ節＞埋め込みの現行仕様節、同じ出所では改訂後）を決め、既存ケース52件の報告を裁定した。直したケースの期待結果・手順・出典は `oracle_changes/`・`step_changes/`（種別「裁定訂正」）・`source_changes/` に、承認欄「2026-10-16 依頼者裁定」で宣言してある。規則で決まらず共通部分でも書けない10件は `../excluded_hold_cases.tsv` へ移した（論点ID が QD- の行。決める人＝設計者）。道具は `../datapattern/conflicts/apply_rulings.py`（何度流しても同じ。`seed_screen/apply.py` の後、`exclude_open.py` の前に流す）。説明は `../datapattern/conflicts/README.md`。
+
+## 保留ケースの除外（依頼者決定 2026-10-01）
+
+実行区分が「保留」のケース（1,014件）はテストケースから外した。設計書にも現行ソースにも期待結果（正解）が無く、テストできないため。
+行は削除せず `../excluded_hold_cases.tsv` へ移した（論点ID・決める人つき。元の11列は「元_」付きで保持）。保留ケースだけが使っていたシードは `../excluded_hold_seeds.tsv`。
+設計者の回答（`../hold_review/questions.tsv`）やテスト側の決定で正解が決まったら、そのケースを作り直して戻す。ゲート G6 は、基線のテストIDからこの除外分を差し引いて照合し、保留ケースが残っていれば落とす。
+
+## 実行の前提（依頼者決定 2026-09-30）
+
+- **専用DBで流す。** 結合テストは機能（またはモジュール）ごとに、まっさらな専用DBへシードを投入して流す。検索・一覧・集計で「このN件だけ」を期待するケースは、開始時に同じ条件に当たる他のデータを削除して隔離しており、共有の試験環境では他機能のデータを消しうる
+- **1件しかないデータは順番に実行する。** 基本設定のように1件しかない設定や、期待結果が固定IDを名指ししていて分けられないデータは `共有可` とし、使う各ケースが開始時に値を設定し直す。上から順に実行すれば成立するが、同じデータを使うケースを同時には実行しない。該当ケースは `sequential_only.tsv`
+
+## 機械検査 `gate_precond.py`
+
+| No. | 検査 | 対応する規約 |
+| --- | --- | --- |
+| G1 | 保留以外で事前準備が空・`—` | P5 |
+| G2 | 使用シードのIDが事前準備に現れない | P5 |
+| G3 | 期待結果の「AからB」「Aのまま」の A が事前準備に無い | P6 |
+| G4 | `共有` 列が無い・値が不正／ケース専用シードの参照が1件でない／ケース専用シードIDの末尾がケース番号でない／どのケースも使わないシード／保留以外のケースがケース専用シードを1件も使わない（状態を変えない読み取りだけのケースは `readonly_cases/<機能ID>.tsv` にテストID/理由で宣言） | P1 P2 P3 |
+| G5 | 同じ機能のケース専用シードどうしで自分のレコードID（「ID=20」「ID 20」）が重なる。ケース専用シードの識別子（「〜」の範囲は展開する）が、他のケースの事前準備・手順・期待結果、または他のケース専用シード（全機能）に現れる | P1 P4 |
+| G6 | 改名が識別子どうしでない。期待結果が「基線に改名を当てたもの」と一致せず、承認済みの oracle_changes にも無い。保留ケースが変わった。テストIDの集合・他の固定列が変わった（出典は `source_changes/`、実行区分の誤記は `kind_changes.tsv` に宣言したものを除く） | P7 |
+| G8 | 事前準備が「手順N」「返した値」「発番した」など後の結果を参照している | P11 |
+| G7 | 手順が「基線に改名を当てたもの」と違うのに `step_changes` に宣言が無い／種別が P8 の5種以外 | P8 |
+| G9 | 投入方法が「未確定」「未整備」のシードを使う非保留ケースが `open_preconditions.tsv` に無い。該当件数は参考として出す | P12 |
+
+`baseline/` は書き直し前（HEAD 98709b43）のスナップショット。G6 の基準なので書き換えない。
+
+実行区分の誤記を直すときは、基線を書き換えずに `kind_changes.tsv`（テストID／旧実行区分／新実行区分／理由）へ宣言する。G6 は、基線の値が旧実行区分と一致し、今の値が新実行区分と一致するものだけ認める（2026-10-19、IT-M03-45-024 の「ブラザ+DB確認」→「ブラウザ+DB確認」）。
+
+書き直しの後で足したケースは `added_cases.tsv`（テストID／追加日／由来）に載せる。G6 は「基線から保留除外分を引いた集合」に
+この追加分を足したものと、現在のテストIDの集合を照合する。基線が無い機能（後から新設したもの）は、全ケースが追加分になる。
+2026-10-06 に機能間データ連携のケース142件を足した（`../link/merge_into_cases.py`。旧テストIDとの対応は `../link/merged_map.tsv`）。
+同日、アクセス解析連携のケース（F10-01〜03）を足した（`../ga/merge_into_cases.py`。判定IDとの対応は `../ga/ga_map.tsv`）。
+同日、対応表が「候補」止まりだった14機能のケース398件を足した（`../sheetmap/merge_into_cases.py`。判定IDとの対応は `../sheetmap/sm_map.tsv`）。
+
+機械で見られないもの（P2 の共有可の妥当性、P6 の値と対象の対応、P8 の種別の妥当性、P9、P10）は codex レビューで見る。
+
+## 用語の置き換え（依頼者決定 2026-10-06）
+
+AWS Step Functions は使わない。テストケースでは「バッチ」と書き、非同期処理ダッシュボードの「Messenger ジョブ」という表現も書かない。
+置き換えの規則は `terms.py`（`python3 precond/terms.py` で cases/・step_changes/・open_preconditions.tsv・link/cases に当てる。何度流しても同じ）。
+基線は書き換えていない。ゲートは基線の手順と期待結果に同じ置き換えを当ててから照合する。
+シードID `S-B02-05-STEPFUNCTIONS` は `S-B02-05-BATCH-ENV` に変えた。
+
+「非同期処理ダッシュボード」という画面名も書かない（同日の依頼者決定）。設計書に無い画面で、実装にあるのは管理画面とは切り離した運用ツールである。
+ケースには「非同期処理の待機中・実行中のジョブが0件になるまで待つ」のように状態だけを書く。待機の手順そのものは残す
+（バッチはジョブを積むだけで終わり、実処理はワーカーが後から行うため）。確認の手段は試験環境の用意として扱う。
+
+ succeeded in 97ms:
+    25 integration_test/casegen/combination/cases/M15-05_cb_test_cases.tsv
+    35 integration_test/casegen/combination/cases/M15-05_cb_seed_data.tsv
+    46 integration_test/casegen/combination/cases/M15-05_cb_dispositions.tsv
+     7 integration_test/casegen/combination/cases/M15-06_cb_test_cases.tsv
+     7 integration_test/casegen/combination/cases/M15-06_cb_seed_data.tsv
+     7 integration_test/casegen/combination/cases/M15-06_cb_dispositions.tsv
+     4 integration_test/casegen/combination/cases/M15-07_cb_test_cases.tsv
+     4 integration_test/casegen/combination/cases/M15-07_cb_seed_data.tsv
+     4 integration_test/casegen/combination/cases/M15-07_cb_dispositions.tsv
+    46 integration_test/casegen/combination/combos/M15-05.tsv
+     7 integration_test/casegen/combination/combos/M15-06.tsv
+     4 integration_test/casegen/combination/combos/M15-07.tsv
+     3 integration_test/casegen/combination/factors/M15-05_processes.tsv
+     9 integration_test/casegen/combination/factors/M15-05_factors.tsv
+    17 integration_test/casegen/combination/factors/M15-05_interactions.tsv
+     5 integration_test/casegen/combination/factors/M15-05_constraints.tsv
+     2 integration_test/casegen/combination/factors/M15-06_processes.tsv
+     7 integration_test/casegen/combination/factors/M15-06_factors.tsv
+    16 integration_test/casegen/combination/factors/M15-06_interactions.tsv
+     4 integration_test/casegen/combination/factors/M15-06_constraints.tsv
+     2 integration_test/casegen/combination/factors/M15-07_processes.tsv
+     3 integration_test/casegen/combination/factors/M15-07_factors.tsv
+     2 integration_test/casegen/combination/factors/M15-07_interactions.tsv
+     3 integration_test/casegen/combination/factors/M15-07_constraints.tsv
+   269 total
+
+ succeeded in 118ms:
+### 指摘（M15-01 / IT-M15-01-100）
+- 主張: 条件を指定せずフロントで「検索」を押し、対象デッキが「一覧に載らない」ことを確認する。
+- 実際: F09-02 設計書 L0020–L0021 は「1ページあたりの件数の既定」を20件と定める。手順には他のページの確認がなく、表示中の一覧に無いだけでは検索結果全体からの除外を確認できない。
+- 判定: 成立しない前提・手順
+- 修正案: 変更後のプレイヤー名を検索条件に指定し、対象デッキの行の有無を確認する。
+
+### 指摘（M15-01 / IT-M15-01-101）
+- 主張: 条件を指定せずフロントで「検索」を押し、アーキタイプを設定した対象デッキが「一覧に載らない」ことを確認する。
+- 実際: F09-02 設計書 L0020–L0021 は既定の表示件数を20件と定める。手順の一覧確認だけでは、対象が後続ページにある可能性を除けない。
+- 判定: 成立しない前提・手順
+- 修正案: 対象のプレイヤー名を指定して検索し、その行の有無を確認する。
+
+### 指摘（M15-01 / IT-M15-01-102）
+- 主張: 条件を指定せずフロントで「検索」を押し、公開に変更した対象デッキが「一覧に載らない」ことを確認する。
+- 実際: F09-02 設計書 L0020–L0021 は既定の表示件数を20件と定める。手順の一覧確認だけでは、後続ページに対象がある場合も期待結果を満たしたように見える。
+- 判定: 成立しない前提・手順
+- 修正案: 対象のプレイヤー名を指定して検索し、その行の有無を確認する。
+
+### 指摘（M15-01 / IT-M15-01-103）
+- 主張: 条件を指定せずフロントで「検索」を押し、対象デッキが「一覧に載る」ことを期待する。
+- 実際: F09-02 設計書 L0020–L0021 は既定の表示件数を20件と定める。公開かつアーキタイプ設定済みでも、他の該当デッキがあれば対象が表示中のページに載るとは限らない。
+- 判定: 成立しない前提・手順
+- 修正案: 対象のプレイヤー名を指定して検索し、その行が表示されることを確認する。
+
+### 指摘（M15-03 / IT-M15-03-005）
+- 主張: 「ページ移動はしない」手順を、保持していた一覧のページ番号が「なし」の組として扱う。
+- 実際: M15-03 設計書 L0160 は「保持していた一覧のページ番号があるときはデッキ検索・一覧の当該ページへ、無いときはデッキ一覧の先頭へ戻す」と区別する。手順2の検索ではページ番号1が保存されるため、「なし」にならない（[DeckController.php](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:101)）。
+- 判定: 組の値が無い
+- 修正案: ページ番号が保持されない実行手順に直す。通常の画面操作で作れない場合は、その組の仕分けを見直す。
+
+### 指摘（M15-03 / IT-M15-03-007）
+- 主張: 「ページ移動はしない」手順を、保持していた一覧のページ番号が「なし」の組として扱う。
+- 実際: M15-03 設計書 L0160 はページ番号の有無で戻り先を分ける。手順2で検索するとページ番号1が保存され、「なし」の値では処理されない（[DeckController.php](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:101)）。
+- 判定: 組の値が無い
+- 修正案: ページ番号が保持されない実行手順に直す。通常の画面操作で作れない場合は、その組の仕分けを見直す。
+
+### 指摘（M15-03 / IT-M15-03-009）
+- 主張: 「ページ移動はしない」手順を、保持していた一覧のページ番号が「なし」の組として扱う。
+- 実際: M15-03 設計書 L0160 は「ページ番号があるとき」と「無いとき」を区別する。手順2の検索はページ番号1を保存するため、期待する「なし」の分岐を通らない（[DeckController.php](/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Deck/DeckController.php:101)）。
+- 判定: 組の値が無い
+- 修正案: ページ番号が保持されない実行手順に直す。通常の画面操作で作れない場合は、その組の仕分けを見直す。
+指摘	処置	理由	直した所
+IT-M15-06-062	一部採用	Excel由来のL0039は「デッキリスト公開の場合はDtbDeckCardに登録する」と定めるが、埋め込みの現行仕様L0168は表示フラグが非表示のときは明細の出力を省略すると定め、表示=非表示かつリスト公開の組は両者で結果が分かれ、設計書から一意に決まらない。レビュアーの『L0039が優先し登録される』と断定する案は、L0039が表示フラグに触れていないため採らず、明細の期待を外した（明細を登録するとも書かない）	期待結果と手順4から「デッキ明細は統率者ボードを含め1件も作られない」「デッキ明細を確認する」を外した。dispositionsの理由文も更新
+指摘	処置	理由	直した所
+-	直しなし	指摘なし	
+指摘	処置	理由	直した所
+IT-M15-05-159	採用	アーキタイプのフォーマットは必須（M15-09 L0057）で、デッキ編集のアーキタイプ選択はデッキのフォーマットに属するものだけに絞られる（実装の画面を確認）。共有のデッキ試験型甲は全件デッキ試験標準所属のため、この組は選べない。	フォーマット「デッキ試験単一」に属するケース専用アーキタイプ「M1505-CB159-型」（シードS-M15-05-CBARC-159を新設）に差し替え。共有S-M15-05-ARCは使用シードから外し、事前準備・手順・シードの該当箇所を更新
+IT-M15-05-160	採用	アーキタイプのフォーマットは必須（M15-09 L0057）で、デッキ編集のアーキタイプ選択はデッキのフォーマットに属するものだけに絞られる（実装の画面を確認）。共有のデッキ試験型甲は全件デッキ試験標準所属のため、この組は選べない。	フォーマット「デッキ試験統率なし」に属するケース専用アーキタイプ「M1505-CB160-型」（シードS-M15-05-CBARC-160を新設）に差し替え。共有S-M15-05-ARCは使用シードから外し、事前準備・手順・シードの該当箇所を更新
+IT-M15-05-161	採用	アーキタイプのフォーマットは必須（M15-09 L0057）で、デッキ編集のアーキタイプ選択はデッキのフォーマットに属するものだけに絞られる（実装の画面を確認）。共有のデッキ試験型甲は全件デッキ試験標準所属のため、この組は選べない。	フォーマット「デッキ試験上限」に属するケース専用アーキタイプ「M1505-CB161-型」（シードS-M15-05-CBARC-161を新設）に差し替え。共有S-M15-05-ARCは使用シードから外し、事前準備・手順・シードの該当箇所を更新
+IT-M15-05-162	採用	アーキタイプのフォーマットは必須（M15-09 L0057）で、デッキ編集のアーキタイプ選択はデッキのフォーマットに属するものだけに絞られる（実装の画面を確認）。共有のデッキ試験型甲は全件デッキ試験標準所属のため、この組は選べない。	フォーマット「デッキ試験下限」に属するケース専用アーキタイプ「M1505-CB162-型」（シードS-M15-05-CBARC-162を新設）に差し替え。共有S-M15-05-ARCは使用シードから外し、事前準備・手順・シードの該当箇所を更新
+指摘	処置	理由	直した所
+IT-M15-05-191	採用	アーキタイプのフォーマットは必須（M15-09 L0057）で、デッキ編集のアーキタイプ選択はデッキのフォーマットに属するものだけに絞られる（実装の画面を確認）。共有のデッキ試験型甲は全件デッキ試験標準所属のため、この組は選べない。	フォーマット「デッキ試験単一」に属するケース専用アーキタイプ「M1505-CB191-型」（シードS-M15-05-CBARC-191を新設）に差し替え。共有S-M15-05-ARCは使用シードから外し、事前準備・手順・シードの該当箇所を更新
+IT-M15-05-192	採用	アーキタイプのフォーマットは必須（M15-09 L0057）で、デッキ編集のアーキタイプ選択はデッキのフォーマットに属するものだけに絞られる（実装の画面を確認）。共有のデッキ試験型甲は全件デッキ試験標準所属のため、この組は選べない。	フォーマット「デッキ試験統率なし」に属するケース専用アーキタイプ「M1505-CB192-型」（シードS-M15-05-CBARC-192を新設）に差し替え。共有S-M15-05-ARCは使用シードから外し、事前準備・手順・シードの該当箇所を更新
+IT-M15-05-193	採用	アーキタイプのフォーマットは必須（M15-09 L0057）で、デッキ編集のアーキタイプ選択はデッキのフォーマットに属するものだけに絞られる（実装の画面を確認）。共有のデッキ試験型甲は全件デッキ試験標準所属のため、この組は選べない。	フォーマット「デッキ試験上限」に属するケース専用アーキタイプ「M1505-CB193-型」（シードS-M15-05-CBARC-193を新設）に差し替え。共有S-M15-05-ARCは使用シードから外し、事前準備・手順・シードの該当箇所を更新
+IT-M15-05-194	採用	アーキタイプのフォーマットは必須（M15-09 L0057）で、デッキ編集のアーキタイプ選択はデッキのフォーマットに属するものだけに絞られる（実装の画面を確認）。共有のデッキ試験型甲は全件デッキ試験標準所属のため、この組は選べない。	フォーマット「デッキ試験下限」に属するケース専用アーキタイプ「M1505-CB194-型」（シードS-M15-05-CBARC-194を新設）に差し替え。共有S-M15-05-ARCは使用シードから外し、事前準備・手順・シードの該当箇所を更新
+IT-M15-05-195	採用	M15-01 L0115は一覧の並び順を破棄しないと定め、L0134は並び順の既定をデッキIDの降順とする。保持値で2ページ目の対象が変わりうるため、並び順を手順で明示する。	手順2で「並べかえ」の「項目」にデッキID、「ソート順」に降順を選ぶ操作を追加（期待結果は変更なし）
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M15-05_{processes,factors,interactions,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキを新規登録または更新して保存する	デッキ編集画面で新規登録または更新を押す	デッキ編集画面（再表示）、デッキ検索・一覧、デッキリスト詳細画面	L0240-L0245,L0148-L0153,L0085-L0086
+P2	デッキを削除する	デッキ編集画面で削除を押して確認ダイアログでOKを選ぶ	デッキ検索・一覧、デッキ編集画面、デッキ詳細画面	L0249-L0251,L0154-L0156
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	保存の種別	新規登録｜更新	新規登録: 保存前のデッキカードは無い／更新: 既存のデッキカードを全件削除して作り直す。代表カードの設定は新規登録と同じ（Excel本文は登録・更新時の処理）	L0085-L0086,L0242-L0243,L0148-L0153	この機能
+F02	P1	代表カードの指定	あり｜なし	あり: 指定した代表カードを名前から解決して設定する／なし: 指定が無く、アーキタイプの既定の画像があればそれを設定する	L0086,L0242,L0120-L0121	この機能
+F03	P1	選んだアーキタイプの既定の代表カード画像	あり｜なし	あり: 代表カードの指定が無いとき、この画像を設定する／なし: 設定できる画像が無い	L0086,L0242	この機能
+F04	P1	デッキの現行フォーマットの設定	真｜偽	真: フォーマットが設定されていれば保存後にリストの整合とフォーマットの制限を検査し、問題があれば警告を出す／偽: 保存後の検査をしない	L0244	この機能
+F05	P1	デッキリストの状態	空｜同一カードが複数行｜許可された不明参照を含む｜存在しないカードを含む｜適合｜禁止カードを含む｜範囲外カードを含む｜4枚制限を超える｜1枚制限を超える｜統率が使えないのに統率あり｜最大枚数を超える｜最小枚数に満たない	空: 空のリストとして扱いエラーにしない／同一カードが複数行: 枚数を合算して1件にまとめる／許可された不明参照を含む: 不明参照として許可された文字列はそのまま残す／存在しないカードを含む: いずれにも当たらない名前は登録しない。現行フォーマットが真のときは詳細警告（n行目の カード名 は存在しません）も出る／適合: 警告は出ない／禁止カードを含む: 禁止カードの警告（n行目の カード名 は禁止カードです）／範囲外カードを含む: 範囲外の警告（フォーマットの範囲から外れています）／4枚制限を超える: 4枚制限の警告（5枚以上登録されています）／1枚制限を超える: 1枚制限の警告（2枚以上登録されています）／統率が使えないのに統率あり: 統率の警告（このフォーマットでは統率用カードを使用しません）／最大枚数を超える: 最大枚数の警告（ボード内のカード枚数が n 枚を上回っています）／最小枚数に満たない: 最小枚数の警告（ボード内のカード枚数が n 枚を下回っています）	L0236-L0239,L0073-L0084,L0244	この機能
+F06	P1	保存前のデッキカード	あり｜なし	あり: 保存時に全件削除して解釈済みのリストから作り直す／なし: 作り直したカードだけになる	L0243,L0266	この機能
+F07	P2	削除対象の記事の紐付け	あり｜なし	あり: 削除せず使用中のエラーを表示して直前の画面へ戻る／なし: デッキカードを全件削除しデッキ自体を削除する	L0250-L0251,L0273	この機能
+F08	P2	保持しているページ番号	あり｜なし	あり: 削除後はデッキ検索のそのページへ戻る／なし: 削除後はデッキ一覧へ戻る	L0251	この機能
+処理ID	要因	判定	根拠	理由
+P1	F02+F03	効き合う	L0086,L0242	代表カードの指定が無いときだけアーキタイプの既定の画像が設定され、指定があればその画像が使われる
+P1	F01+F02	関係しない		Excel本文は代表カードのセットを登録・更新時の処理として定めており、保存の種別で設定の仕方は変わらない
+P1	F01+F03	関係しない		同上。既定の画像の使い方は保存の種別で変わらない
+P1	F01+F04	関係しない		警告の検査は現行フォーマットの設定で決まり、保存の種別では変わらない
+P1	F01+F05	関係しない		リストの解釈と警告は保存の種別によらず同じ
+P1	F02+F04	関係しない		代表カードの設定は警告の検査に関わらない
+P1	F02+F05	関係しない		代表カードの設定はデッキリストの解釈に関わらない
+P1	F02+F06	関係しない		代表カードの設定はデッキカードの作り直しに関わらない
+P1	F03+F04	関係しない		既定画像の使用は警告の検査に関わらない
+P1	F03+F05	関係しない		既定画像の使用はデッキリストの解釈に関わらない
+P1	F03+F06	関係しない		既定画像の使用はデッキカードの作り直しに関わらない
+P1	F04+F06	関係しない		検査は保存後の登録内容に対して行い、作り直しの有無で結果は変わらない
+P1	F05+F06	関係しない		保存前のカードの有無によらず解釈済みのリストで作り直す
+P1	F01+F06	効き合う	L0243,L0229	新規登録のデッキにはデッキカードが無く、更新のときだけ既存カードの全件削除が起きる
+P1	F04+F05	効き合う	L0244	現行フォーマットが真のときだけリストの状態に応じた警告が出て、偽のときは出ない
+P2	F07+F08	効き合う	L0250-L0251	記事に紐づくと削除せず戻るので、保持ページ番号による戻り先は削除したときだけ効く
+処理ID	組	種別	根拠	理由
+P1	F01=新規登録&F06=あり	作れない	L0229	新規登録は空のデッキが対象で、保存前のデッキカードは無い
+P1	F02=なし&F03=なし	正解未定	L0086,L0242	代表カードの指定も既定の画像も無いときの結果が書かれていない
+P1	F04=真&F05=許可された不明参照を含む	正解未定	L0238,L0244	不明参照として許可された文字列を含むとき、フォーマット検査で警告が出るか書かれていない
+P2	F07=あり	打ち切り	L0250	記事に紐づくデッキは削除せず使用中のエラーで直前の画面へ戻る。保持ページ番号は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M15-0{5,6,7}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M15-05-001	P1	F01=新規登録&F02=あり&F03=あり&F04=真&F05=空&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=空／保存前のデッキカード=なし	保存の種別×選んだアーキタイプの既定の代表カード画像: 新規登録×あり；保存の種別×デッキの現行フォーマットの設定: 新規登録×真；保存の種別×保存前のデッキカード: 新規登録×なし；代表カードの指定×選んだアーキタイプの既定の代表カード画像: あり×あり；代表カードの指定×デッキの現行フォーマットの設定: あり×真；代表カードの指定×デッキリストの状態: あり×空；代表カードの指定×保存前のデッキカード: あり×なし；選んだアーキタイプの既定の代表カード画像×デッキの現行フォーマットの設定: あり×真；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: あり×空；選んだアーキタイプの既定の代表カード画像×保存前のデッキカード: あり×なし；デッキの現行フォーマットの設定×デッキリストの状態: 真×空；デッキの現行フォーマットの設定×保存前のデッキカード: 真×なし；デッキリストの状態×保存前のデッキカード: 空×なし
+CB-M15-05-002	P1	F01=新規登録&F02=あり&F03=なし&F04=偽&F05=許可された不明参照を含む&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=なし／デッキの現行フォーマットの設定=偽／デッキリストの状態=許可された不明参照を含む／保存前のデッキカード=なし	保存の種別×選んだアーキタイプの既定の代表カード画像: 新規登録×なし；保存の種別×デッキの現行フォーマットの設定: 新規登録×偽；保存の種別×デッキリストの状態: 新規登録×許可された不明参照を含む；代表カードの指定×選んだアーキタイプの既定の代表カード画像: あり×なし；代表カードの指定×デッキの現行フォーマットの設定: あり×偽；代表カードの指定×デッキリストの状態: あり×許可された不明参照を含む；選んだアーキタイプの既定の代表カード画像×デッキの現行フォーマットの設定: なし×偽；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: なし×許可された不明参照を含む；選んだアーキタイプの既定の代表カード画像×保存前のデッキカード: なし×なし；デッキの現行フォーマットの設定×デッキリストの状態: 偽×許可された不明参照を含む；デッキの現行フォーマットの設定×保存前のデッキカード: 偽×なし；デッキリストの状態×保存前のデッキカード: 許可された不明参照を含む×なし
+CB-M15-05-003	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=適合&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=偽／デッキリストの状態=適合／保存前のデッキカード=なし	保存の種別×デッキリストの状態: 新規登録×適合；代表カードの指定×デッキリストの状態: あり×適合；選んだアーキタイプの既定の代表カード画像×デッキの現行フォーマットの設定: あり×偽；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: あり×適合；デッキの現行フォーマットの設定×デッキリストの状態: 偽×適合；デッキリストの状態×保存前のデッキカード: 適合×なし
+CB-M15-05-004	P1	F01=新規登録&F02=あり&F03=あり&F04=真&F05=禁止カードを含む&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=禁止カードを含む／保存前のデッキカード=なし	保存の種別×デッキリストの状態: 新規登録×禁止カードを含む；代表カードの指定×デッキリストの状態: あり×禁止カードを含む；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: あり×禁止カードを含む；デッキリストの状態×保存前のデッキカード: 禁止カードを含む×なし
+CB-M15-05-005	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=範囲外カードを含む&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=偽／デッキリストの状態=範囲外カードを含む／保存前のデッキカード=なし	保存の種別×デッキリストの状態: 新規登録×範囲外カードを含む；代表カードの指定×デッキリストの状態: あり×範囲外カードを含む；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: あり×範囲外カードを含む；デッキの現行フォーマットの設定×デッキリストの状態: 偽×範囲外カードを含む；デッキリストの状態×保存前のデッキカード: 範囲外カードを含む×なし
+CB-M15-05-006	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=4枚制限を超える&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=偽／デッキリストの状態=4枚制限を超える／保存前のデッキカード=なし	保存の種別×デッキリストの状態: 新規登録×4枚制限を超える；代表カードの指定×デッキリストの状態: あり×4枚制限を超える；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: あり×4枚制限を超える；デッキの現行フォーマットの設定×デッキリストの状態: 偽×4枚制限を超える；デッキリストの状態×保存前のデッキカード: 4枚制限を超える×なし
+CB-M15-05-007	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=1枚制限を超える&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=偽／デッキリストの状態=1枚制限を超える／保存前のデッキカード=なし	保存の種別×デッキリストの状態: 新規登録×1枚制限を超える；代表カードの指定×デッキリストの状態: あり×1枚制限を超える；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: あり×1枚制限を超える；デッキの現行フォーマットの設定×デッキリストの状態: 偽×1枚制限を超える；デッキリストの状態×保存前のデッキカード: 1枚制限を超える×なし
+CB-M15-05-008	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=統率が使えないのに統率あり&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=偽／デッキリストの状態=統率が使えないのに統率あり／保存前のデッキカード=なし	保存の種別×デッキリストの状態: 新規登録×統率が使えないのに統率あり；代表カードの指定×デッキリストの状態: あり×統率が使えないのに統率あり；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: あり×統率が使えないのに統率あり；デッキの現行フォーマットの設定×デッキリストの状態: 偽×統率が使えないのに統率あり；デッキリストの状態×保存前のデッキカード: 統率が使えないのに統率あり×なし
+CB-M15-05-009	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=最大枚数を超える&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=偽／デッキリストの状態=最大枚数を超える／保存前のデッキカード=なし	保存の種別×デッキリストの状態: 新規登録×最大枚数を超える；代表カードの指定×デッキリストの状態: あり×最大枚数を超える；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: あり×最大枚数を超える；デッキの現行フォーマットの設定×デッキリストの状態: 偽×最大枚数を超える；デッキリストの状態×保存前のデッキカード: 最大枚数を超える×なし
+CB-M15-05-010	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=最小枚数に満たない&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=偽／デッキリストの状態=最小枚数に満たない／保存前のデッキカード=なし	保存の種別×デッキリストの状態: 新規登録×最小枚数に満たない；代表カードの指定×デッキリストの状態: あり×最小枚数に満たない；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: あり×最小枚数に満たない；デッキの現行フォーマットの設定×デッキリストの状態: 偽×最小枚数に満たない；デッキリストの状態×保存前のデッキカード: 最小枚数に満たない×なし
+CB-M15-05-011	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=同一カードが複数行&F06=あり	保存の種別=更新／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=同一カードが複数行／保存前のデッキカード=あり	保存の種別×代表カードの指定: 更新×あり；保存の種別×選んだアーキタイプの既定の代表カード画像: 更新×あり；保存の種別×デッキリストの状態: 更新×同一カードが複数行；代表カードの指定×デッキリストの状態: あり×同一カードが複数行；代表カードの指定×保存前のデッキカード: あり×あり；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: あり×同一カードが複数行；選んだアーキタイプの既定の代表カード画像×保存前のデッキカード: あり×あり；デッキの現行フォーマットの設定×デッキリストの状態: 真×同一カードが複数行；デッキの現行フォーマットの設定×保存前のデッキカード: 真×あり；デッキリストの状態×保存前のデッキカード: 同一カードが複数行×あり
+CB-M15-05-012	P1	F01=更新&F02=なし&F03=あり&F04=真&F05=存在しないカードを含む&F06=なし	保存の種別=更新／代表カードの指定=なし／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=存在しないカードを含む／保存前のデッキカード=なし	保存の種別×代表カードの指定: 更新×なし；保存の種別×デッキリストの状態: 更新×存在しないカードを含む；保存の種別×保存前のデッキカード: 更新×なし；代表カードの指定×選んだアーキタイプの既定の代表カード画像: なし×あり；代表カードの指定×デッキの現行フォーマットの設定: なし×真；代表カードの指定×デッキリストの状態: なし×存在しないカードを含む；代表カードの指定×保存前のデッキカード: なし×なし；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: あり×存在しないカードを含む；デッキの現行フォーマットの設定×デッキリストの状態: 真×存在しないカードを含む；デッキリストの状態×保存前のデッキカード: 存在しないカードを含む×なし
+CB-M15-05-013	P1	F01=更新&F02=あり&F03=なし&F04=真&F05=空&F06=あり	保存の種別=更新／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=なし／デッキの現行フォーマットの設定=真／デッキリストの状態=空／保存前のデッキカード=あり	保存の種別×選んだアーキタイプの既定の代表カード画像: 更新×なし；保存の種別×デッキリストの状態: 更新×空；選んだアーキタイプの既定の代表カード画像×デッキの現行フォーマットの設定: なし×真；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: なし×空；選んだアーキタイプの既定の代表カード画像×保存前のデッキカード: なし×あり；デッキリストの状態×保存前のデッキカード: 空×あり
+CB-M15-05-014	P1	F01=更新&F02=なし&F03=あり&F04=偽&F05=許可された不明参照を含む&F06=あり	保存の種別=更新／代表カードの指定=なし／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=偽／デッキリストの状態=許可された不明参照を含む／保存前のデッキカード=あり	保存の種別×デッキリストの状態: 更新×許可された不明参照を含む；代表カードの指定×デッキの現行フォーマットの設定: なし×偽；代表カードの指定×デッキリストの状態: なし×許可された不明参照を含む；代表カードの指定×保存前のデッキカード: なし×あり；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: あり×許可された不明参照を含む；デッキの現行フォーマットの設定×保存前のデッキカード: 偽×あり；デッキリストの状態×保存前のデッキカード: 許可された不明参照を含む×あり
+CB-M15-05-015	P1	F01=新規登録&F02=あり&F03=なし&F04=偽&F05=存在しないカードを含む&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=なし／デッキの現行フォーマットの設定=偽／デッキリストの状態=存在しないカードを含む／保存前のデッキカード=なし	代表カードの指定×デッキリストの状態: あり×存在しないカードを含む；選んだアーキタイプの既定の代表カード画像×デッキリストの状態: なし×存在しないカードを含む；デッキの現行フォーマットの設定×デッキリストの状態: 偽×存在しないカードを含む
+CB-M15-05-016	P1	F01=新規登録&F02=なし&F03=あり&F04=偽&F05=空&F06=なし	保存の種別=新規登録／代表カードの指定=なし／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=偽／デッキリストの状態=空／保存前のデッキカード=なし	代表カードの指定×デッキリストの状態: なし×空；デッキの現行フォーマットの設定×デッキリストの状態: 偽×空
+CB-M15-05-017	P1	F01=新規登録&F02=なし&F03=あり&F04=偽&F05=同一カードが複数行&F06=なし	保存の種別=新規登録／代表カードの指定=なし／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=偽／デッキリストの状態=同一カードが複数行／保存前のデッキカード=なし	代表カードの指定×デッキリストの状態: なし×同一カードが複数行；デッキの現行フォーマットの設定×デッキリストの状態: 偽×同一カードが複数行；デッキリストの状態×保存前のデッキカード: 同一カードが複数行×なし
+CB-M15-05-018	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=適合&F06=なし	保存の種別=新規登録／代表カードの指定=なし／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=適合／保存前のデッキカード=なし	代表カードの指定×デッキリストの状態: なし×適合
+CB-M15-05-019	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=禁止カードを含む&F06=なし	保存の種別=新規登録／代表カードの指定=なし／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=禁止カードを含む／保存前のデッキカード=なし	代表カードの指定×デッキリストの状態: なし×禁止カードを含む
+CB-M15-05-020	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=範囲外カードを含む&F06=なし	保存の種別=新規登録／代表カードの指定=なし／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=範囲外カードを含む／保存前のデッキカード=なし	代表カードの指定×デッキリストの状態: なし×範囲外カードを含む
+CB-M15-05-021	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=4枚制限を超える&F06=なし	保存の種別=新規登録／代表カードの指定=なし／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=4枚制限を超える／保存前のデッキカード=なし	代表カードの指定×デッキリストの状態: なし×4枚制限を超える
+CB-M15-05-022	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=1枚制限を超える&F06=なし	保存の種別=新規登録／代表カードの指定=なし／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=1枚制限を超える／保存前のデッキカード=なし	代表カードの指定×デッキリストの状態: なし×1枚制限を超える
+CB-M15-05-023	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=統率が使えないのに統率あり&F06=なし	保存の種別=新規登録／代表カードの指定=なし／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=統率が使えないのに統率あり／保存前のデッキカード=なし	代表カードの指定×デッキリストの状態: なし×統率が使えないのに統率あり
+CB-M15-05-024	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=最大枚数を超える&F06=なし	保存の種別=新規登録／代表カードの指定=なし／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=最大枚数を超える／保存前のデッキカード=なし	代表カードの指定×デッキリストの状態: なし×最大枚数を超える
+CB-M15-05-025	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=最小枚数に満たない&F06=なし	保存の種別=新規登録／代表カードの指定=なし／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=最小枚数に満たない／保存前のデッキカード=なし	代表カードの指定×デッキリストの状態: なし×最小枚数に満たない
+CB-M15-05-026	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=同一カードが複数行&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=なし／デッキの現行フォーマットの設定=真／デッキリストの状態=同一カードが複数行／保存前のデッキカード=なし	選んだアーキタイプの既定の代表カード画像×デッキリストの状態: なし×同一カードが複数行
+CB-M15-05-027	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=適合&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=なし／デッキの現行フォーマットの設定=真／デッキリストの状態=適合／保存前のデッキカード=なし	選んだアーキタイプの既定の代表カード画像×デッキリストの状態: なし×適合
+CB-M15-05-028	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=禁止カードを含む&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=なし／デッキの現行フォーマットの設定=真／デッキリストの状態=禁止カードを含む／保存前のデッキカード=なし	選んだアーキタイプの既定の代表カード画像×デッキリストの状態: なし×禁止カードを含む
+CB-M15-05-029	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=範囲外カードを含む&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=なし／デッキの現行フォーマットの設定=真／デッキリストの状態=範囲外カードを含む／保存前のデッキカード=なし	選んだアーキタイプの既定の代表カード画像×デッキリストの状態: なし×範囲外カードを含む
+CB-M15-05-030	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=4枚制限を超える&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=なし／デッキの現行フォーマットの設定=真／デッキリストの状態=4枚制限を超える／保存前のデッキカード=なし	選んだアーキタイプの既定の代表カード画像×デッキリストの状態: なし×4枚制限を超える
+CB-M15-05-031	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=1枚制限を超える&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=なし／デッキの現行フォーマットの設定=真／デッキリストの状態=1枚制限を超える／保存前のデッキカード=なし	選んだアーキタイプの既定の代表カード画像×デッキリストの状態: なし×1枚制限を超える
+CB-M15-05-032	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=統率が使えないのに統率あり&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=なし／デッキの現行フォーマットの設定=真／デッキリストの状態=統率が使えないのに統率あり／保存前のデッキカード=なし	選んだアーキタイプの既定の代表カード画像×デッキリストの状態: なし×統率が使えないのに統率あり
+CB-M15-05-033	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=最大枚数を超える&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=なし／デッキの現行フォーマットの設定=真／デッキリストの状態=最大枚数を超える／保存前のデッキカード=なし	選んだアーキタイプの既定の代表カード画像×デッキリストの状態: なし×最大枚数を超える
+CB-M15-05-034	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=最小枚数に満たない&F06=なし	保存の種別=新規登録／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=なし／デッキの現行フォーマットの設定=真／デッキリストの状態=最小枚数に満たない／保存前のデッキカード=なし	選んだアーキタイプの既定の代表カード画像×デッキリストの状態: なし×最小枚数に満たない
+CB-M15-05-035	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=存在しないカードを含む&F06=あり	保存の種別=更新／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=存在しないカードを含む／保存前のデッキカード=あり	デッキリストの状態×保存前のデッキカード: 存在しないカードを含む×あり
+CB-M15-05-036	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=適合&F06=あり	保存の種別=更新／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=適合／保存前のデッキカード=あり	デッキリストの状態×保存前のデッキカード: 適合×あり
+CB-M15-05-037	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=禁止カードを含む&F06=あり	保存の種別=更新／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=禁止カードを含む／保存前のデッキカード=あり	デッキリストの状態×保存前のデッキカード: 禁止カードを含む×あり
+CB-M15-05-038	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=範囲外カードを含む&F06=あり	保存の種別=更新／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=範囲外カードを含む／保存前のデッキカード=あり	デッキリストの状態×保存前のデッキカード: 範囲外カードを含む×あり
+CB-M15-05-039	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=4枚制限を超える&F06=あり	保存の種別=更新／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=4枚制限を超える／保存前のデッキカード=あり	デッキリストの状態×保存前のデッキカード: 4枚制限を超える×あり
+CB-M15-05-040	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=1枚制限を超える&F06=あり	保存の種別=更新／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=1枚制限を超える／保存前のデッキカード=あり	デッキリストの状態×保存前のデッキカード: 1枚制限を超える×あり
+CB-M15-05-041	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=統率が使えないのに統率あり&F06=あり	保存の種別=更新／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=統率が使えないのに統率あり／保存前のデッキカード=あり	デッキリストの状態×保存前のデッキカード: 統率が使えないのに統率あり×あり
+CB-M15-05-042	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=最大枚数を超える&F06=あり	保存の種別=更新／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=最大枚数を超える／保存前のデッキカード=あり	デッキリストの状態×保存前のデッキカード: 最大枚数を超える×あり
+CB-M15-05-043	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=最小枚数に満たない&F06=あり	保存の種別=更新／代表カードの指定=あり／選んだアーキタイプの既定の代表カード画像=あり／デッキの現行フォーマットの設定=真／デッキリストの状態=最小枚数に満たない／保存前のデッキカード=あり	デッキリストの状態×保存前のデッキカード: 最小枚数に満たない×あり
+CB-M15-05-044	P2	F07=なし&F08=あり	削除対象の記事の紐付け=なし／保持しているページ番号=あり	削除対象の記事の紐付け×保持しているページ番号: なし×あり
+CB-M15-05-045	P2	F07=なし&F08=なし	削除対象の記事の紐付け=なし／保持しているページ番号=なし	削除対象の記事の紐付け×保持しているページ番号: なし×なし
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M15-06-001	P1	F01=一致するデッキあり&F02=公開&F03=統率者戦&F04=設定あり&F05=登録あり&F06=表示	デッキIDに一致するデッキ=一致するデッキあり／デッキリスト非公開フラグ=公開／フォーマット種別=統率者戦／代表カード名=設定あり／アーキタイプの代表カード=登録あり／表示フラグ=表示	デッキIDに一致するデッキ×デッキリスト非公開フラグ: 一致するデッキあり×公開；デッキIDに一致するデッキ×フォーマット種別: 一致するデッキあり×統率者戦；デッキIDに一致するデッキ×代表カード名: 一致するデッキあり×設定あり；デッキIDに一致するデッキ×アーキタイプの代表カード: 一致するデッキあり×登録あり；デッキリスト非公開フラグ×フォーマット種別: 公開×統率者戦；デッキリスト非公開フラグ×代表カード名: 公開×設定あり；デッキリスト非公開フラグ×アーキタイプの代表カード: 公開×登録あり；フォーマット種別×代表カード名: 統率者戦×設定あり；フォーマット種別×アーキタイプの代表カード: 統率者戦×登録あり；フォーマット種別×表示フラグ: 統率者戦×表示；代表カード名×アーキタイプの代表カード: 設定あり×登録あり；代表カード名×表示フラグ: 設定あり×表示；アーキタイプの代表カード×表示フラグ: 登録あり×表示
+CB-M15-06-002	P1	F01=一致するデッキあり&F02=公開&F03=統率者戦以外&F04=設定なし&F05=登録あり&F06=表示	デッキIDに一致するデッキ=一致するデッキあり／デッキリスト非公開フラグ=公開／フォーマット種別=統率者戦以外／代表カード名=設定なし／アーキタイプの代表カード=登録あり／表示フラグ=表示	デッキIDに一致するデッキ×フォーマット種別: 一致するデッキあり×統率者戦以外；デッキIDに一致するデッキ×代表カード名: 一致するデッキあり×設定なし；デッキリスト非公開フラグ×フォーマット種別: 公開×統率者戦以外；デッキリスト非公開フラグ×代表カード名: 公開×設定なし；フォーマット種別×代表カード名: 統率者戦以外×設定なし；フォーマット種別×アーキタイプの代表カード: 統率者戦以外×登録あり；フォーマット種別×表示フラグ: 統率者戦以外×表示；代表カード名×表示フラグ: 設定なし×表示
+CB-M15-06-003	P1	F01=一致するデッキあり&F02=公開&F03=統率者戦&F04=設定あり&F05=登録なし&F06=表示	デッキIDに一致するデッキ=一致するデッキあり／デッキリスト非公開フラグ=公開／フォーマット種別=統率者戦／代表カード名=設定あり／アーキタイプの代表カード=登録なし／表示フラグ=表示	デッキIDに一致するデッキ×アーキタイプの代表カード: 一致するデッキあり×登録なし；デッキリスト非公開フラグ×アーキタイプの代表カード: 公開×登録なし；フォーマット種別×アーキタイプの代表カード: 統率者戦×登録なし；代表カード名×アーキタイプの代表カード: 設定あり×登録なし；アーキタイプの代表カード×表示フラグ: 登録なし×表示
+CB-M15-06-004	P1	F01=一致するデッキなし&F02=公開&F03=統率者戦&F04=設定なし&F05=登録あり&F06=非表示	デッキIDに一致するデッキ=一致するデッキなし／デッキリスト非公開フラグ=公開／フォーマット種別=統率者戦／代表カード名=設定なし／アーキタイプの代表カード=登録あり／表示フラグ=非表示	デッキIDに一致するデッキ×デッキリスト非公開フラグ: 一致するデッキなし×公開；デッキIDに一致するデッキ×フォーマット種別: 一致するデッキなし×統率者戦；デッキIDに一致するデッキ×代表カード名: 一致するデッキなし×設定なし；デッキIDに一致するデッキ×アーキタイプの代表カード: 一致するデッキなし×登録あり；デッキIDに一致するデッキ×表示フラグ: 一致するデッキなし×非表示；デッキリスト非公開フラグ×表示フラグ: 公開×非表示；フォーマット種別×代表カード名: 統率者戦×設定なし；フォーマット種別×表示フラグ: 統率者戦×非表示；代表カード名×表示フラグ: 設定なし×非表示；アーキタイプの代表カード×表示フラグ: 登録あり×非表示
+CB-M15-06-005	P1	F01=一致するデッキなし&F02=非公開&F03=統率者戦以外&F04=設定あり&F05=登録なし&F06=非表示	デッキIDに一致するデッキ=一致するデッキなし／デッキリスト非公開フラグ=非公開／フォーマット種別=統率者戦以外／代表カード名=設定あり／アーキタイプの代表カード=登録なし／表示フラグ=非表示	デッキIDに一致するデッキ×フォーマット種別: 一致するデッキなし×統率者戦以外；デッキIDに一致するデッキ×代表カード名: 一致するデッキなし×設定あり；デッキIDに一致するデッキ×アーキタイプの代表カード: 一致するデッキなし×登録なし；デッキリスト非公開フラグ×フォーマット種別: 非公開×統率者戦以外；デッキリスト非公開フラグ×代表カード名: 非公開×設定あり；デッキリスト非公開フラグ×アーキタイプの代表カード: 非公開×登録なし；デッキリスト非公開フラグ×表示フラグ: 非公開×非表示；フォーマット種別×代表カード名: 統率者戦以外×設定あり；フォーマット種別×アーキタイプの代表カード: 統率者戦以外×登録なし；フォーマット種別×表示フラグ: 統率者戦以外×非表示；代表カード名×表示フラグ: 設定あり×非表示；アーキタイプの代表カード×表示フラグ: 登録なし×非表示
+CB-M15-06-006	P1	F01=一致するデッキなし&F02=非公開&F03=統率者戦&F04=設定なし&F05=登録あり&F06=表示	デッキIDに一致するデッキ=一致するデッキなし／デッキリスト非公開フラグ=非公開／フォーマット種別=統率者戦／代表カード名=設定なし／アーキタイプの代表カード=登録あり／表示フラグ=表示	デッキリスト非公開フラグ×フォーマット種別: 非公開×統率者戦；デッキリスト非公開フラグ×代表カード名: 非公開×設定なし；デッキリスト非公開フラグ×アーキタイプの代表カード: 非公開×登録あり
+組ID	処理ID	組	組（読める形）	埋める組
+CB-M15-07-001	P1	F01=なし&F02=なし	デッキタグに紐づくデッキ=なし／アーキタイプ初期値側の関連=なし	デッキタグに紐づくデッキ×アーキタイプ初期値側の関連: なし×なし
+CB-M15-07-002	P1	F01=1件以上あり	デッキタグに紐づくデッキ=1件以上あり／アーキタイプ初期値側の関連=（効かない）	デッキタグに紐づくデッキ: 1件以上あり
+CB-M15-07-003	P1	F02=1件以上あり	デッキタグに紐づくデッキ=（効かない。なしから選ぶ）／アーキタイプ初期値側の関連=1件以上あり	アーキタイプ初期値側の関連: 1件以上あり
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/factors/M15-06_{processes,factors,interactions,constraints}.tsv integration_test/casegen/combination/factors/M15-07_{processes,factors,interactions,constraints}.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+処理ID	処理	契機	確かめる所	根拠
+P1	CSVをアップロードしてデッキを新規登録または更新する	デッキ登録CSVアップロード画面でCSVを選び、CSVファイルのアップロードボタンを押す	DB（デッキ・デッキ明細）、デッキ検索・詳細画面（M15-01）	L0028-L0039
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキIDに一致するデッキ	一致するデッキあり｜一致するデッキなし	一致するデッキあり: 更新／一致するデッキなし: 新規登録	L0029,L0098,L0160-L0163	この機能
+F02	P1	デッキリスト非公開フラグ	公開｜非公開	公開: メインリストは必須でデッキ明細へ登録／非公開: メインリストは任意でデッキ明細へ登録しない	L0034,L0039,L0093	この機能
+F03	P1	フォーマット種別	統率者戦｜統率者戦以外	統率者戦: 統率者は必須でメインリスト内の統率者は除外／統率者戦以外: 統率者の定めなし	L0035,L0037	この機能
+F04	P1	代表カード名	設定あり｜設定なし	設定あり: 代表カード名のカードイメージ／設定なし: アーキタイプの代表カードのイメージ	L0038,L0099,L0172-L0173	この機能
+F05	P1	アーキタイプの代表カード	登録あり｜登録なし	登録あり: そのイメージを代表画像に使える／登録なし: 代表カード名も無いときの画像が書かれていない	L0038,M15-09:L0053	M15-09（データ）
+F06	P1	表示フラグ	表示｜非表示	表示: 公開へ読み替えて登録し、リスト公開のときだけ本文とデッキ明細の検証・書き換えを行う／非表示: 非表示として登録し、リスト本文の検証と明細の出力を省略して原文だけ反映	L0092,L0164,L0168	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	設計書が決めていない	L0029,L0039	更新で非公開にしたとき、既存のデッキ明細を消すか残すかが書かれていない
+P1	F01+F03	関係しない		統率者の必須判定と除外は新規と更新で区別なく同じ（L0035,L0037）
+P1	F01+F04	関係しない		代表画像の決め方は新規と更新で区別なく同じ（L0038）
+P1	F01+F05	関係しない		アーキタイプの代表カードは更新か新規かで使い方が変わらない（L0038）
+P1	F02+F03	効き合う	L0034,L0037,L0039	公開のときだけデッキ明細へ登録され、統率者戦では登録内容からメインの統率者が除かれる
+P1	F02+F04	関係しない		代表画像の決め方は公開か非公開かで変わらない（L0038）
+P1	F02+F05	関係しない		アーキタイプの代表カードの使い方は公開か非公開かで変わらない（L0038）
+P1	F03+F04	関係しない		代表画像の決め方はフォーマットで変わらない（L0038）
+P1	F03+F05	関係しない		アーキタイプの代表カードの使い方はフォーマットで変わらない（L0038）
+P1	F04+F05	効き合う	L0038,L0172-L0173	代表カード名が無いときだけアーキタイプの代表カードが使われる
+P1	F01+F06	設計書が決めていない	L0029,L0168	更新で表示フラグを非表示にしたとき、既存のデッキ明細を消すか残すかが書かれていない
+P1	F02+F06	関係しない		明細の検証・書き換えは表示フラグが表示かつリスト公開のすべてを満たすときだけで、結果は行う・行わないの2つ（L0168）
+P1	F03+F06	効き合う	L0166,L0168	統率者ボードへの明細の書き込みは、リスト検証の経路に入る行だけ（表示かつリスト公開）
+P1	F04+F06	関係しない		代表画像の決め方は表示フラグで変わらない（L0038,L0173）
+P1	F05+F06	関係しない		アーキタイプの代表カードの使い方は表示フラグで変わらない（L0173）
+処理ID	組	種別	根拠	理由
+P1	F01=一致するデッキあり&F02=非公開	正解未定	L0029,L0039	更新で非公開にしたとき既存のデッキ明細を消すか残すか書かれていない
+P1	F04=設定なし&F05=登録なし	正解未定	L0038	代表カード名もアーキタイプの代表カードも無いときの画像が書かれていない
+P1	F01=一致するデッキあり&F06=非表示	正解未定	L0029,L0168	更新で非表示にしたとき既存のデッキ明細を消すか残すか書かれていない
+処理ID	処理	契機	確かめる所	根拠
+P1	デッキタグを削除する	デッキタグ管理の一覧で削除を選び確認を承諾する	DB（デッキタグ）、MTGマスターデータ管理画面（デッキタグ）	L0024,L0034
+要因ID	処理ID	要因	値	値ごとの結果	根拠	出所
+F01	P1	デッキタグに紐づくデッキ	なし｜1件以上あり	なし: 削除できる／1件以上あり: 削除せずエラーメッセージで一覧へ戻る	L0024,L0039	この機能
+F02	P1	アーキタイプ初期値側の関連	なし｜1件以上あり	なし: 削除できる／1件以上あり: 削除せずエラーメッセージで一覧へ戻る	L0024,L0040	この機能
+処理ID	要因	判定	根拠	理由
+P1	F01+F02	関係しない		削除は「どれか1つでも関連があれば削除しない」「両方0件のときだけ削除する」の組合せで、結果は削除する・しないの2つ。両方にあるときも削除しない（L0024）。表示メッセージ欄にも文言は指定されておらず、両条件で変わる結果は無い
+処理ID	組	種別	根拠	理由
+P1	F01=1件以上あり	打ち切り	L0024,L0039	紐づくデッキが1件以上あると削除せずエラーメッセージで一覧へ戻る。アーキタイプ初期値側の関連の有無は結果に効かない
+P1	F02=1件以上あり	打ち切り	L0024,L0040	アーキタイプ初期値側の関連が1件以上あると削除せずエラーメッセージで一覧へ戻る。紐づくデッキの有無は結果に効かない
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M15-0{5,6,7}_cb_dispositions.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+項目ID	扱い	テストID	理由
+CB-M15-05-001	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-002	ケースにしない		デッキリストの「不明参照として許可された文字列」が設計書に具体的に書かれておらず（L0238「カードに一致するか、不明参照として許可された文字列か」）、事前準備に入力する値を設計書から決められない。また保存後の編集画面での表示も「管理画面では不明参照として許可された文字列だけを残せる」（L0238）とあるだけで一意に決まらない。制約に足す組: F04=偽&F05=許可された不明参照を含む
+CB-M15-05-003	ケース化	IT-M15-05-156	
+CB-M15-05-004	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-005	ケース化	IT-M15-05-157	
+CB-M15-05-006	ケース化	IT-M15-05-158	
+CB-M15-05-007	ケース化	IT-M15-05-159	
+CB-M15-05-008	ケース化	IT-M15-05-160	
+CB-M15-05-009	ケース化	IT-M15-05-161	
+CB-M15-05-010	ケース化	IT-M15-05-162	
+CB-M15-05-011	ケース化	IT-M15-05-163	
+CB-M15-05-012	ケース化	IT-M15-05-164	
+CB-M15-05-013	ケース化	IT-M15-05-165	
+CB-M15-05-014	ケースにしない		同じ理由。許可された不明参照の文字列が設計書に無く（L0238）、事前準備に入力する値と保存後の表示が決まらない。制約に足す組: F04=偽&F05=許可された不明参照を含む
+CB-M15-05-015	ケース化	IT-M15-05-166	
+CB-M15-05-016	ケース化	IT-M15-05-167	
+CB-M15-05-017	ケース化	IT-M15-05-168	
+CB-M15-05-018	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-019	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-020	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-021	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-022	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-023	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-024	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-025	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-026	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-027	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-028	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-029	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-030	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-031	ケースにしない		保存の種別が新規登録で現行フォーマットが真の組は画面から作れない。現行フォーマットは保存後の検査の条件（設計書L0244「保存後、「現行フォーマット」が真でフォーマットが設定されているときは、リストの整合とフォーマットの制限を検査する」）だが、新規登録は「空のデッキを対象に入力欄を表示する」（L0229）もので、デッキ編集画面の項目定義（識別ID 1〜39）に現行フォーマットを入れる項目は無く、登録前のデッキは存在しないためDBへ先に真を設定することもできない（登録後は更新になる）。デッキリストの状態=1枚制限を超えるの警告もこの組では出る前提が成り立たない。要因表の制約に足すべき組: F01=新規登録&F04=真
+CB-M15-05-032	ケースにしない		保存の種別が新規登録で現行フォーマットが真の組は画面から作れない。現行フォーマットは保存後の検査の条件（設計書L0244「保存後、「現行フォーマット」が真でフォーマットが設定されているときは、リストの整合とフォーマットの制限を検査する」）だが、新規登録は「空のデッキを対象に入力欄を表示する」（L0229）もので、デッキ編集画面の項目定義（識別ID 1〜39）に現行フォーマットを入れる項目は無く、登録前のデッキは存在しないためDBへ先に真を設定することもできない（登録後は更新になる）。デッキリストの状態=統率が使えないのに統率ありの警告もこの組では出る前提が成り立たない。要因表の制約に足すべき組: F01=新規登録&F04=真
+CB-M15-05-033	ケースにしない		保存の種別が新規登録で現行フォーマットが真の組は画面から作れない。現行フォーマットは保存後の検査の条件（設計書L0244「保存後、「現行フォーマット」が真でフォーマットが設定されているときは、リストの整合とフォーマットの制限を検査する」）だが、新規登録は「空のデッキを対象に入力欄を表示する」（L0229）もので、デッキ編集画面の項目定義（識別ID 1〜39）に現行フォーマットを入れる項目は無く、登録前のデッキは存在しないためDBへ先に真を設定することもできない（登録後は更新になる）。デッキリストの状態=最大枚数を超えるの警告もこの組では出る前提が成り立たない。要因表の制約に足すべき組: F01=新規登録&F04=真
+CB-M15-05-034	ケースにしない		保存の種別が新規登録で現行フォーマットが真の組は画面から作れない。現行フォーマットは保存後の検査の条件（設計書L0244「保存後、「現行フォーマット」が真でフォーマットが設定されているときは、リストの整合とフォーマットの制限を検査する」）だが、新規登録は「空のデッキを対象に入力欄を表示する」（L0229）もので、デッキ編集画面の項目定義（識別ID 1〜39）に現行フォーマットを入れる項目は無く、登録前のデッキは存在しないためDBへ先に真を設定することもできない（登録後は更新になる）。デッキリストの状態=最小枚数に満たないの警告もこの組では出る前提が成り立たない。要因表の制約に足すべき組: F01=新規登録&F04=真
+CB-M15-05-035	ケース化	IT-M15-05-186	更新で代表カードを指定（アーキタイプの既定の画像あり）、保存前のデッキカードあり、現行フォーマット真のとき、デッキリストの状態=存在しないカードを含むの結果（警告の有無と内容、保存後のデッキカード）を更新後のデッキ編集画面で確かめる
+CB-M15-05-036	ケース化	IT-M15-05-187	更新で代表カードを指定（アーキタイプの既定の画像あり）、保存前のデッキカードあり、現行フォーマット真のとき、デッキリストの状態=適合の結果（警告の有無と内容、保存後のデッキカード）を更新後のデッキ編集画面で確かめる
+CB-M15-05-037	ケース化	IT-M15-05-188	更新で代表カードを指定（アーキタイプの既定の画像あり）、保存前のデッキカードあり、現行フォーマット真のとき、デッキリストの状態=禁止カードを含むの結果（警告の有無と内容、保存後のデッキカード）を更新後のデッキ編集画面で確かめる
+CB-M15-05-038	ケース化	IT-M15-05-189	更新で代表カードを指定（アーキタイプの既定の画像あり）、保存前のデッキカードあり、現行フォーマット真のとき、デッキリストの状態=範囲外カードを含むの結果（警告の有無と内容、保存後のデッキカード）を更新後のデッキ編集画面で確かめる
+CB-M15-05-039	ケース化	IT-M15-05-190	更新で代表カードを指定（アーキタイプの既定の画像あり）、保存前のデッキカードあり、現行フォーマット真のとき、デッキリストの状態=4枚制限を超えるの結果（警告の有無と内容、保存後のデッキカード）を更新後のデッキ編集画面で確かめる
+CB-M15-05-040	ケース化	IT-M15-05-191	更新で代表カードを指定（アーキタイプの既定の画像あり）、保存前のデッキカードあり、現行フォーマット真のとき、デッキリストの状態=1枚制限を超えるの結果（警告の有無と内容、保存後のデッキカード）を更新後のデッキ編集画面で確かめる
+CB-M15-05-041	ケース化	IT-M15-05-192	更新で代表カードを指定（アーキタイプの既定の画像あり）、保存前のデッキカードあり、現行フォーマット真のとき、デッキリストの状態=統率が使えないのに統率ありの結果（警告の有無と内容、保存後のデッキカード）を更新後のデッキ編集画面で確かめる
+CB-M15-05-042	ケース化	IT-M15-05-193	更新で代表カードを指定（アーキタイプの既定の画像あり）、保存前のデッキカードあり、現行フォーマット真のとき、デッキリストの状態=最大枚数を超えるの結果（警告の有無と内容、保存後のデッキカード）を更新後のデッキ編集画面で確かめる
+CB-M15-05-043	ケース化	IT-M15-05-194	更新で代表カードを指定（アーキタイプの既定の画像あり）、保存前のデッキカードあり、現行フォーマット真のとき、デッキリストの状態=最小枚数に満たないの結果（警告の有無と内容、保存後のデッキカード）を更新後のデッキ編集画面で確かめる
+CB-M15-05-044	ケース化	IT-M15-05-195	削除対象が記事に紐づいていないとき（デッキカード・デッキを削除する）、デッキ検索の2ページ目を保持していれば、削除後にそのページへ戻ることを確かめる（L0251）
+CB-M15-05-045	ケース化	IT-M15-05-196	削除対象が記事に紐づいていないとき、保持しているページ番号が無ければ、削除後はデッキ一覧へ戻ることを確かめる（L0251）
+項目ID	扱い	テストID	理由
+CB-M15-06-001	ケース化	IT-M15-06-059	6要因すべての値をCSVに書いて取り込み、DB（デッキ・デッキ明細）で更新/新規・表示の区分・代表画像・デッキ明細・本文を確かめる（L0029,L0034-L0039,L0164-L0173）
+CB-M15-06-002	ケース化	IT-M15-06-060	6要因すべての値をCSVに書いて取り込み、DB（デッキ・デッキ明細）で更新/新規・表示の区分・代表画像・デッキ明細・本文を確かめる（L0029,L0034-L0039,L0164-L0173）
+CB-M15-06-003	ケース化	IT-M15-06-061	6要因すべての値をCSVに書いて取り込み、DB（デッキ・デッキ明細）で更新/新規・表示の区分・代表画像・デッキ明細・本文を確かめる（L0029,L0034-L0039,L0164-L0173）
+CB-M15-06-004	ケース化	IT-M15-06-062	6要因すべての値をCSVに書いて取り込み、DB（デッキ）で更新/新規・表示の区分・代表画像・本文を確かめる（表示=非表示かつリスト公開のときのデッキ明細は、L0039と L0168 で結果が分かれるため確かめない）（L0029,L0034-L0039,L0164-L0173）
+CB-M15-06-005	ケース化	IT-M15-06-063	6要因すべての値をCSVに書いて取り込み、DB（デッキ・デッキ明細）で更新/新規・表示の区分・代表画像・デッキ明細・本文を確かめる（L0029,L0034-L0039,L0164-L0173）
+CB-M15-06-006	ケース化	IT-M15-06-064	6要因すべての値をCSVに書いて取り込み、DB（デッキ・デッキ明細）で更新/新規・表示の区分・代表画像・デッキ明細・本文を確かめる（L0029,L0034-L0039,L0164-L0173）
+項目ID	扱い	テストID	理由
+CB-M15-07-001	ケース化	IT-M15-07-002	紐づくデッキもアーキタイプ初期値側の関連も無いときだけ削除できる（L0024「いずれも0件のときだけ削除する」、L0034）。削除の操作はデッキタグ一覧が開くMTGマスターデータ管理画面で、行の値をすべて空にして登録する形で行う（0213 保存の判定順序「主キー以外の入力がすべて未設定」で削除）
+CB-M15-07-002	ケース化	IT-M15-07-003	紐づくデッキが1件以上あるときは削除せず、デッキタグ一覧が開くMTGマスターデータ管理画面へ戻る（L0024、表示メッセージ L0039）。アーキタイプ初期値側の関連は効かない（打ち切り）のでなしにする。エラーメッセージの文言は設計書が定めていない（L0039の画面上の文言は「—」）ため、エラーメッセージが表示されることだけを確かめる
+CB-M15-07-003	ケース化	IT-M15-07-004	アーキタイプ初期値側の関連が1件以上あるときは削除せず、デッキタグ一覧が開くMTGマスターデータ管理画面へ戻る（L0024、表示メッセージ L0040）。紐づくデッキの有無は効かない（打ち切り）のでなしにする。エラーメッセージの文言は設計書が定めていない（L0040の画面上の文言は「—」）ため、エラーメッセージが表示されることだけを確かめる
+
+exec
+/bin/bash -lc "sed -n '1,18p' integration_test/casegen/combination/cases/M15-05_cb_dispositions.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+項目ID	扱い	テストID	理由
+CB-M15-05-001	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-002	ケースにしない		デッキリストの「不明参照として許可された文字列」が設計書に具体的に書かれておらず（L0238「カードに一致するか、不明参照として許可された文字列か」）、事前準備に入力する値を設計書から決められない。また保存後の編集画面での表示も「管理画面では不明参照として許可された文字列だけを残せる」（L0238）とあるだけで一意に決まらない。制約に足す組: F04=偽&F05=許可された不明参照を含む
+CB-M15-05-003	ケース化	IT-M15-05-156	
+CB-M15-05-004	ケースにしない		新規登録で現行フォーマットが真の組は作れない。項目定義（L0111〜L0159・識別ID 1〜39）に「現行フォーマット」の入力項目は無く、新規登録するデッキは保存の時点で初めて作られるため、保存前に現行フォーマットを真にできない（既存のS-M15-05-DECKW-066・069も、登録のあとにDBへ直接真を設定している）。L0244「「現行フォーマット」が真でフォーマットが設定されているとき…検査する」は更新または登録済みデッキの保存でだけ起きる。制約に足す組: F01=新規登録&F04=真
+CB-M15-05-005	ケース化	IT-M15-05-157	
+CB-M15-05-006	ケース化	IT-M15-05-158	
+CB-M15-05-007	ケース化	IT-M15-05-159	
+CB-M15-05-008	ケース化	IT-M15-05-160	
+CB-M15-05-009	ケース化	IT-M15-05-161	
+CB-M15-05-010	ケース化	IT-M15-05-162	
+CB-M15-05-011	ケース化	IT-M15-05-163	
+CB-M15-05-012	ケース化	IT-M15-05-164	
+CB-M15-05-013	ケース化	IT-M15-05-165	
+CB-M15-05-014	ケースにしない		同じ理由。許可された不明参照の文字列が設計書に無く（L0238）、事前準備に入力する値と保存後の表示が決まらない。制約に足す組: F04=偽&F05=許可された不明参照を含む
+CB-M15-05-015	ケース化	IT-M15-05-166	
+CB-M15-05-016	ケース化	IT-M15-05-167	
+CB-M15-05-017	ケース化	IT-M15-05-168	
+
+exec
+/bin/bash -lc 'cut -f1-3 integration_test/casegen/combination/combos/M15-05.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+組ID	処理ID	組
+CB-M15-05-001	P1	F01=新規登録&F02=あり&F03=あり&F04=真&F05=空&F06=なし
+CB-M15-05-002	P1	F01=新規登録&F02=あり&F03=なし&F04=偽&F05=許可された不明参照を含む&F06=なし
+CB-M15-05-003	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=適合&F06=なし
+CB-M15-05-004	P1	F01=新規登録&F02=あり&F03=あり&F04=真&F05=禁止カードを含む&F06=なし
+CB-M15-05-005	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=範囲外カードを含む&F06=なし
+CB-M15-05-006	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=4枚制限を超える&F06=なし
+CB-M15-05-007	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=1枚制限を超える&F06=なし
+CB-M15-05-008	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=統率が使えないのに統率あり&F06=なし
+CB-M15-05-009	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=最大枚数を超える&F06=なし
+CB-M15-05-010	P1	F01=新規登録&F02=あり&F03=あり&F04=偽&F05=最小枚数に満たない&F06=なし
+CB-M15-05-011	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=同一カードが複数行&F06=あり
+CB-M15-05-012	P1	F01=更新&F02=なし&F03=あり&F04=真&F05=存在しないカードを含む&F06=なし
+CB-M15-05-013	P1	F01=更新&F02=あり&F03=なし&F04=真&F05=空&F06=あり
+CB-M15-05-014	P1	F01=更新&F02=なし&F03=あり&F04=偽&F05=許可された不明参照を含む&F06=あり
+CB-M15-05-015	P1	F01=新規登録&F02=あり&F03=なし&F04=偽&F05=存在しないカードを含む&F06=なし
+CB-M15-05-016	P1	F01=新規登録&F02=なし&F03=あり&F04=偽&F05=空&F06=なし
+CB-M15-05-017	P1	F01=新規登録&F02=なし&F03=あり&F04=偽&F05=同一カードが複数行&F06=なし
+CB-M15-05-018	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=適合&F06=なし
+CB-M15-05-019	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=禁止カードを含む&F06=なし
+CB-M15-05-020	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=範囲外カードを含む&F06=なし
+CB-M15-05-021	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=4枚制限を超える&F06=なし
+CB-M15-05-022	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=1枚制限を超える&F06=なし
+CB-M15-05-023	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=統率が使えないのに統率あり&F06=なし
+CB-M15-05-024	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=最大枚数を超える&F06=なし
+CB-M15-05-025	P1	F01=新規登録&F02=なし&F03=あり&F04=真&F05=最小枚数に満たない&F06=なし
+CB-M15-05-026	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=同一カードが複数行&F06=なし
+CB-M15-05-027	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=適合&F06=なし
+CB-M15-05-028	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=禁止カードを含む&F06=なし
+CB-M15-05-029	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=範囲外カードを含む&F06=なし
+CB-M15-05-030	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=4枚制限を超える&F06=なし
+CB-M15-05-031	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=1枚制限を超える&F06=なし
+CB-M15-05-032	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=統率が使えないのに統率あり&F06=なし
+CB-M15-05-033	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=最大枚数を超える&F06=なし
+CB-M15-05-034	P1	F01=新規登録&F02=あり&F03=なし&F04=真&F05=最小枚数に満たない&F06=なし
+CB-M15-05-035	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=存在しないカードを含む&F06=あり
+CB-M15-05-036	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=適合&F06=あり
+CB-M15-05-037	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=禁止カードを含む&F06=あり
+CB-M15-05-038	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=範囲外カードを含む&F06=あり
+CB-M15-05-039	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=4枚制限を超える&F06=あり
+CB-M15-05-040	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=1枚制限を超える&F06=あり
+CB-M15-05-041	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=統率が使えないのに統率あり&F06=あり
+CB-M15-05-042	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=最大枚数を超える&F06=あり
+CB-M15-05-043	P1	F01=更新&F02=あり&F03=あり&F04=真&F05=最小枚数に満たない&F06=あり
+CB-M15-05-044	P2	F07=なし&F08=あり
+CB-M15-05-045	P2	F07=なし&F08=なし
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M15-07_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M15-07-002	IT-0366	REQ-0212-sheet-8-R001		ITA-11	P1	ブラウザ+DB確認	S-M15-07-ADM,S-M15-07-CBTAG-002	① 管理画面にm1507_adminでログインしている（S-M15-07-ADM）／② デッキタグ「M1507-CB002-タグ」（日本語名「M1507-CB002-タグ」、英語名「M1507-CB002-Tag」）が1件だけあり、これに紐づくデッキは0件（デッキタグに紐づくデッキ=なし）、アーキタイプ初期値側の関連も0件（アーキタイプ初期値側の関連=なし）（S-M15-07-CBTAG-002）	1. 管理画面のデッキ管理メニューで「デッキタグ一覧」を押す／2. 開いたMTGマスターデータ管理画面（デッキタグが選択された状態）の一覧で、日本語名が「M1507-CB002-タグ」の行の日本語名・英語名・並び順をすべて空にして「登録」を押す／3. 登録後に表示された画面で、一覧に日本語名「M1507-CB002-タグ」の行があるかを見る／4. DBでデッキタグに日本語名「M1507-CB002-タグ」があるかを確認する	MTGマスターデータ管理画面にデッキタグが選択された状態で戻り、一覧に日本語名「M1507-CB002-タグ」の行が無く、DBにもこのデッキタグが存在しないこと	0212 デッキタグ一覧 / 現行仕様 削除、入出力: 永続化、表示メッセージ｜0213 MTGマスターデータ / 業務ロジック 保存の判定順序	CB-M15-07-001
+IT-M15-07-003	IT-0366	REQ-0212-sheet-8-R001		ITA-11	P1	ブラウザ+DB確認	S-M15-07-ADM,S-M15-07-CBTAG-003	① 管理画面にm1507_adminでログインしている（S-M15-07-ADM）／② デッキタグ「M1507-CB003-タグ」（日本語名「M1507-CB003-タグ」、英語名「M1507-CB003-Tag」）が1件あり、デッキ「M1507-CB003-デッキ」が1件このデッキタグだけを付けて登録されている（デッキタグに紐づくデッキ=1件以上あり）。アーキタイプ初期値側の関連は0件（S-M15-07-CBTAG-003）	1. 管理画面のデッキ管理メニューで「デッキタグ一覧」を押す／2. 開いたMTGマスターデータ管理画面（デッキタグが選択された状態）の一覧で、日本語名が「M1507-CB003-タグ」の行の日本語名・英語名・並び順をすべて空にして「登録」を押す／3. 登録後に表示された画面で、一覧に日本語名「M1507-CB003-タグ」の行があるかを見る／4. DBでデッキタグに日本語名「M1507-CB003-タグ」があるかを確認する	管理画面上部にエラーメッセージが表示され、MTGマスターデータ管理画面にデッキタグが選択された状態で戻り、一覧に日本語名「M1507-CB003-タグ」の行が残り、DBにもこのデッキタグが存在すること	0212 デッキタグ一覧 / 現行仕様 削除、入出力: 永続化、表示メッセージ｜0213 MTGマスターデータ / 業務ロジック 保存の判定順序	CB-M15-07-002
+IT-M15-07-004	IT-0366	REQ-0212-sheet-8-R001		ITA-11	P1	ブラウザ+DB確認	S-M15-07-ADM,S-M15-07-CBTAG-004	① 管理画面にm1507_adminでログインしている（S-M15-07-ADM）／② デッキタグ「M1507-CB004-タグ」（日本語名「M1507-CB004-タグ」、英語名「M1507-CB004-Tag」）が1件あり、アーキタイプ「M1507-CB004-ARC」の初期値としてこのデッキタグが設定されている（アーキタイプ初期値側の関連=1件以上あり）。このデッキタグに紐づくデッキは0件（S-M15-07-CBTAG-004）	1. 管理画面のデッキ管理メニューで「デッキタグ一覧」を押す／2. 開いたMTGマスターデータ管理画面（デッキタグが選択された状態）の一覧で、日本語名が「M1507-CB004-タグ」の行の日本語名・英語名・並び順をすべて空にして「登録」を押す／3. 登録後に表示された画面で、一覧に日本語名「M1507-CB004-タグ」の行があるかを見る／4. DBでデッキタグに日本語名「M1507-CB004-タグ」があるかを確認する	管理画面上部にエラーメッセージが表示され、MTGマスターデータ管理画面にデッキタグが選択された状態で戻り、一覧に日本語名「M1507-CB004-タグ」の行が残り、DBにもこのデッキタグが存在すること	0212 デッキタグ一覧 / 現行仕様 削除、入出力: 永続化、表示メッセージ｜0213 MTGマスターデータ / 業務ロジック 保存の判定順序	CB-M15-07-003
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M15-06_cb_test_cases.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	判定ID	要求ID	連鎖ID	観点ID	優先度	実行区分	使用シード	事前準備	手順	期待結果	出典	項目ID
+IT-M15-06-059	IT-0366	REQ-0212-sheet-6-R006,REQ-0212-sheet-6-R007,REQ-0212-sheet-6-R013,REQ-0212-sheet-6-R016,REQ-0212-sheet-6-R017,REQ-0212-sheet-7-R026,REQ-0212-sheet-7-R027,REQ-0212-sheet-7-R028		ITA-11	P1	ブラウザ+DB確認	S-M15-06-ADM,S-M15-06-MASTER,S-M15-06-CSV-BASE,S-M15-06-CBCSV-059	① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② 共有のマスタがある。フォーマットTestStandard（統率者なし・メイン2〜3枚・サイド1〜2枚）・TestCommander（統率者あり・メイン2〜3枚・サイド1〜2枚）、カードMain Card A・Side Card・Feature Card（代表画像あり）・Commander Card（日本語名「統率者札」）、アーキタイプ「Test Archetype」（TestStandardに属し、代表カードにFeature Cardの画像が登録されている）（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ アーキタイプ「M1506-CB059-Type」（日本語名「M1506-CB059-型」）がフォーマットTestCommanderに属し、代表カードにFeature Cardが登録されている（アーキタイプの代表カード=登録あり）。カード「M1506-CB059-Pic」（画像URL https://example.test/cards/m1506-cb059-pic.jpg）が登録されている。デッキID〔デッキID-M1506-CB059〕のデッキ（プレイヤー名M1506-CB059-旧P、デッキ名M1506-CB059-旧デッキ、フォーマットTestCommander、アーキタイプM1506-CB059-Type、表示フラグ0（非表示）、デッキリスト非公開フラグ1、デッキ明細は1件も無い）が1件だけある（デッキIDに一致するデッキあり）。プレイヤー名M1506-CB059-Pのデッキは存在しない。手元のm1506-cb059-main.csv（1行・20項目）は、プレイヤー名M1506-CB059-P、フォーマットTestCommander（統率者戦）、アーキタイプM1506-CB059-Type、デッキ名M1506-CB059-デッキ、表示フラグ1（表示）、デッキリスト非公開フラグ0（公開）、メインリスト「1 Commander Card」、「2 Main Card A」の2行、サイドリスト「1 Side Card」、統率者Commander Card、デッキID〔デッキID-M1506-CB059〕、代表カード名M1506-CB059-Pic（設定あり）、その他は有効基準値（S-M15-06-CBCSV-059）	1. デッキ登録CSVアップロード画面を開く／2. 「ファイルを選択」を押してm1506-cb059-main.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBでデッキID〔デッキID-M1506-CB059〕のデッキと、プレイヤー名「M1506-CB059-P」のデッキの件数を確認し、続けてそのデッキの表示の区分・代表画像・メインリスト本文とデッキ明細（ボードごとのカードと枚数）を確認する	デッキID〔デッキID-M1506-CB059〕のデッキのプレイヤー名が「M1506-CB059-P」、表示の区分が表示に更新されて新しいデッキは追加されず、代表画像が「M1506-CB059-Pic」の画像（アーキタイプの代表カードFeature Cardの画像ではない）になり、メインリスト本文が「2 Main Card A」（メインリストに含めた統率者「1 Commander Card」は除かれる）になり、デッキ明細がメインボード「Main Card A」2枚、サイドボード「Side Card」1枚、統率者ボード「Commander Card」1枚の3行になること	0212 デッキ登録CSVアップロード / 機能仕様 処理概要、業務ロジック 行ごとの判定順序、登録の判定、デッキ明細の作成、表示状態とリスト本文、代表カード	CB-M15-06-001
+IT-M15-06-060	IT-0366	REQ-0212-sheet-6-R006,REQ-0212-sheet-6-R007,REQ-0212-sheet-6-R013,REQ-0212-sheet-6-R016,REQ-0212-sheet-6-R017,REQ-0212-sheet-7-R026,REQ-0212-sheet-7-R027,REQ-0212-sheet-7-R028		ITA-11	P1	ブラウザ+DB確認	S-M15-06-ADM,S-M15-06-MASTER,S-M15-06-CSV-BASE,S-M15-06-CBCSV-060	① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② 共有のマスタがある。フォーマットTestStandard（統率者なし・メイン2〜3枚・サイド1〜2枚）・TestCommander（統率者あり・メイン2〜3枚・サイド1〜2枚）、カードMain Card A・Side Card・Feature Card（代表画像あり）・Commander Card（日本語名「統率者札」）、アーキタイプ「Test Archetype」（TestStandardに属し、代表カードにFeature Cardの画像が登録されている）（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ 使うアーキタイプは共有の「Test Archetype」（アーキタイプの代表カード=登録あり）。デッキID〔デッキID-M1506-CB060〕のデッキ（プレイヤー名M1506-CB060-旧P、デッキ名M1506-CB060-旧デッキ、フォーマットTestStandard、アーキタイプTest Archetype、表示フラグ0（非表示）、デッキリスト非公開フラグ1、デッキ明細は1件も無い）が1件だけある（デッキIDに一致するデッキあり）。プレイヤー名M1506-CB060-Pのデッキは存在しない。手元のm1506-cb060-main.csv（1行・20項目）は、プレイヤー名M1506-CB060-P、フォーマットTestStandard（統率者戦以外）、アーキタイプTest Archetype、デッキ名M1506-CB060-デッキ、表示フラグ1（表示）、デッキリスト非公開フラグ0（公開）、メインリスト「2 Main Card A」、サイドリスト「1 Side Card」、統率者空欄、デッキID〔デッキID-M1506-CB060〕、代表カード名空欄（設定なし）、その他は有効基準値（S-M15-06-CBCSV-060）	1. デッキ登録CSVアップロード画面を開く／2. 「ファイルを選択」を押してm1506-cb060-main.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBでデッキID〔デッキID-M1506-CB060〕のデッキと、プレイヤー名「M1506-CB060-P」のデッキの件数を確認し、続けてそのデッキの表示の区分・代表画像・メインリスト本文とデッキ明細（ボードごとのカードと枚数）を確認する	デッキID〔デッキID-M1506-CB060〕のデッキのプレイヤー名が「M1506-CB060-P」、表示の区分が表示に更新されて新しいデッキは追加されず、代表画像がFeature Cardの画像になり、メインリスト本文が「2 Main Card A」になり、デッキ明細がメインボード「Main Card A」2枚、サイドボード「Side Card」1枚の2行（統率者ボードの行は作られない）になること	0212 デッキ登録CSVアップロード / 機能仕様 処理概要、業務ロジック 行ごとの判定順序、登録の判定、デッキ明細の作成、表示状態とリスト本文、代表カード	CB-M15-06-002
+IT-M15-06-061	IT-0366	REQ-0212-sheet-6-R006,REQ-0212-sheet-6-R007,REQ-0212-sheet-6-R013,REQ-0212-sheet-6-R016,REQ-0212-sheet-6-R017,REQ-0212-sheet-7-R026,REQ-0212-sheet-7-R027,REQ-0212-sheet-7-R028		ITA-11	P1	ブラウザ+DB確認	S-M15-06-ADM,S-M15-06-MASTER,S-M15-06-CSV-BASE,S-M15-06-CBCSV-061	① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② 共有のマスタがある。フォーマットTestStandard（統率者なし・メイン2〜3枚・サイド1〜2枚）・TestCommander（統率者あり・メイン2〜3枚・サイド1〜2枚）、カードMain Card A・Side Card・Feature Card（代表画像あり）・Commander Card（日本語名「統率者札」）、アーキタイプ「Test Archetype」（TestStandardに属し、代表カードにFeature Cardの画像が登録されている）（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ アーキタイプ「M1506-CB061-Type」（日本語名「M1506-CB061-型」）がフォーマットTestCommanderに属し、代表カードは登録されていない（アーキタイプの代表カード=登録なし）。デッキID〔デッキID-M1506-CB061〕のデッキ（プレイヤー名M1506-CB061-旧P、デッキ名M1506-CB061-旧デッキ、フォーマットTestCommander、アーキタイプM1506-CB061-Type、表示フラグ0（非表示）、デッキリスト非公開フラグ1、デッキ明細は1件も無い）が1件だけある（デッキIDに一致するデッキあり）。プレイヤー名M1506-CB061-Pのデッキは存在しない。手元のm1506-cb061-main.csv（1行・20項目）は、プレイヤー名M1506-CB061-P、フォーマットTestCommander（統率者戦）、アーキタイプM1506-CB061-Type、デッキ名M1506-CB061-デッキ、表示フラグ1（表示）、デッキリスト非公開フラグ0（公開）、メインリスト「2 Main Card A」、サイドリスト「1 Side Card」、統率者Commander Card、デッキID〔デッキID-M1506-CB061〕、代表カード名Feature Card（設定あり）、その他は有効基準値（S-M15-06-CBCSV-061）	1. デッキ登録CSVアップロード画面を開く／2. 「ファイルを選択」を押してm1506-cb061-main.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBでデッキID〔デッキID-M1506-CB061〕のデッキと、プレイヤー名「M1506-CB061-P」のデッキの件数を確認し、続けてそのデッキの表示の区分・代表画像・メインリスト本文とデッキ明細（ボードごとのカードと枚数）を確認する	デッキID〔デッキID-M1506-CB061〕のデッキのプレイヤー名が「M1506-CB061-P」、表示の区分が表示に更新されて新しいデッキは追加されず、代表画像がFeature Cardの画像になり、メインリスト本文が「2 Main Card A」になり、デッキ明細がメインボード「Main Card A」2枚、サイドボード「Side Card」1枚、統率者ボード「Commander Card」1枚の3行になること	0212 デッキ登録CSVアップロード / 機能仕様 処理概要、業務ロジック 行ごとの判定順序、登録の判定、デッキ明細の作成、表示状態とリスト本文、代表カード	CB-M15-06-003
+IT-M15-06-062	IT-0366	REQ-0212-sheet-6-R006,REQ-0212-sheet-6-R007,REQ-0212-sheet-6-R013,REQ-0212-sheet-6-R016,REQ-0212-sheet-6-R017,REQ-0212-sheet-7-R026,REQ-0212-sheet-7-R027,REQ-0212-sheet-7-R028		ITA-11	P1	ブラウザ+DB確認	S-M15-06-ADM,S-M15-06-MASTER,S-M15-06-CSV-BASE,S-M15-06-CBCSV-062	① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② 共有のマスタがある。フォーマットTestStandard（統率者なし・メイン2〜3枚・サイド1〜2枚）・TestCommander（統率者あり・メイン2〜3枚・サイド1〜2枚）、カードMain Card A・Side Card・Feature Card（代表画像あり）・Commander Card（日本語名「統率者札」）、アーキタイプ「Test Archetype」（TestStandardに属し、代表カードにFeature Cardの画像が登録されている）（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ アーキタイプ「M1506-CB062-Type」（日本語名「M1506-CB062-型」）がフォーマットTestCommanderに属し、代表カードにFeature Cardが登録されている（アーキタイプの代表カード=登録あり）。プレイヤー名M1506-CB062-Pのデッキは存在しない（デッキID欄は空欄にするので、一致するデッキなし）。手元のm1506-cb062-main.csv（1行・20項目）は、プレイヤー名M1506-CB062-P、フォーマットTestCommander（統率者戦）、アーキタイプM1506-CB062-Type、デッキ名M1506-CB062-デッキ、表示フラグ0（非表示）、デッキリスト非公開フラグ0（公開）、メインリスト「2 Main Card A」、サイドリスト「1 Side Card」、統率者Commander Card、デッキID空欄、代表カード名空欄（設定なし）、その他は有効基準値（S-M15-06-CBCSV-062）	1. デッキ登録CSVアップロード画面を開く／2. 「ファイルを選択」を押してm1506-cb062-main.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBでプレイヤー名「M1506-CB062-P」のデッキの件数を確認し、続けてそのデッキの表示の区分・デッキリスト非公開フラグ・代表画像・メインリスト本文・サイドリスト本文を確認する	プレイヤー名「M1506-CB062-P」のデッキが新しいデッキとして1件追加され、表示の区分が非表示、デッキリスト非公開フラグが0（公開）、代表画像がFeature Cardの画像で、メインリスト本文が「2 Main Card A」、サイドリスト本文が「1 Side Card」と入力した原文のままになること	0212 デッキ登録CSVアップロード / 機能仕様 処理概要、業務ロジック 行ごとの判定順序、登録の判定、デッキ明細の作成、表示状態とリスト本文、代表カード	CB-M15-06-004
+IT-M15-06-063	IT-0366	REQ-0212-sheet-6-R006,REQ-0212-sheet-6-R007,REQ-0212-sheet-6-R013,REQ-0212-sheet-6-R016,REQ-0212-sheet-6-R017,REQ-0212-sheet-7-R026,REQ-0212-sheet-7-R027,REQ-0212-sheet-7-R028		ITA-11	P1	ブラウザ+DB確認	S-M15-06-ADM,S-M15-06-MASTER,S-M15-06-CSV-BASE,S-M15-06-CBCSV-063	① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② 共有のマスタがある。フォーマットTestStandard（統率者なし・メイン2〜3枚・サイド1〜2枚）・TestCommander（統率者あり・メイン2〜3枚・サイド1〜2枚）、カードMain Card A・Side Card・Feature Card（代表画像あり）・Commander Card（日本語名「統率者札」）、アーキタイプ「Test Archetype」（TestStandardに属し、代表カードにFeature Cardの画像が登録されている）（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ アーキタイプ「M1506-CB063-Type」（日本語名「M1506-CB063-型」）がフォーマットTestStandardに属し、代表カードは登録されていない（アーキタイプの代表カード=登録なし）。プレイヤー名M1506-CB063-Pのデッキは存在しない（デッキID欄は空欄にするので、一致するデッキなし）。手元のm1506-cb063-main.csv（1行・20項目）は、プレイヤー名M1506-CB063-P、フォーマットTestStandard（統率者戦以外）、アーキタイプM1506-CB063-Type、デッキ名M1506-CB063-デッキ、表示フラグ0（非表示）、デッキリスト非公開フラグ1（非公開）、メインリスト「2 Main Card A」、サイドリスト「1 Side Card」、統率者空欄、デッキID空欄、代表カード名Feature Card（設定あり）、その他は有効基準値（S-M15-06-CBCSV-063）	1. デッキ登録CSVアップロード画面を開く／2. 「ファイルを選択」を押してm1506-cb063-main.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBでプレイヤー名「M1506-CB063-P」のデッキの件数を確認し、続けてそのデッキの表示の区分・デッキリスト非公開フラグ・代表画像・メインリスト本文・サイドリスト本文とデッキ明細（統率者ボードを含む全ボード）を確認する	プレイヤー名「M1506-CB063-P」のデッキが新しいデッキとして1件追加され、表示の区分が非表示、デッキリスト非公開フラグが1（非公開）、代表画像がFeature Cardの画像で、メインリスト本文が「2 Main Card A」、サイドリスト本文が「1 Side Card」と入力した原文のままになり、デッキ明細は統率者ボードを含め1件も作られないこと	0212 デッキ登録CSVアップロード / 機能仕様 処理概要、業務ロジック 行ごとの判定順序、登録の判定、デッキ明細の作成、表示状態とリスト本文、代表カード	CB-M15-06-005
+IT-M15-06-064	IT-0366	REQ-0212-sheet-6-R006,REQ-0212-sheet-6-R007,REQ-0212-sheet-6-R013,REQ-0212-sheet-6-R016,REQ-0212-sheet-6-R017,REQ-0212-sheet-7-R026,REQ-0212-sheet-7-R027,REQ-0212-sheet-7-R028		ITA-11	P1	ブラウザ+DB確認	S-M15-06-ADM,S-M15-06-MASTER,S-M15-06-CSV-BASE,S-M15-06-CBCSV-064	① 試験管理者で管理画面にログインしている（S-M15-06-ADM）／② 共有のマスタがある。フォーマットTestStandard（統率者なし・メイン2〜3枚・サイド1〜2枚）・TestCommander（統率者あり・メイン2〜3枚・サイド1〜2枚）、カードMain Card A・Side Card・Feature Card（代表画像あり）・Commander Card（日本語名「統率者札」）、アーキタイプ「Test Archetype」（TestStandardに属し、代表カードにFeature Cardの画像が登録されている）（S-M15-06-MASTER）／③ 刷新後20項目のCSVヘッダと有効基準値が確定している（S-M15-06-CSV-BASE）／④ アーキタイプ「M1506-CB064-Type」（日本語名「M1506-CB064-型」）がフォーマットTestCommanderに属し、代表カードにFeature Cardが登録されている（アーキタイプの代表カード=登録あり）。プレイヤー名M1506-CB064-Pのデッキは存在しない（デッキID欄は空欄にするので、一致するデッキなし）。手元のm1506-cb064-main.csv（1行・20項目）は、プレイヤー名M1506-CB064-P、フォーマットTestCommander（統率者戦）、アーキタイプM1506-CB064-Type、デッキ名M1506-CB064-デッキ、表示フラグ1（表示）、デッキリスト非公開フラグ1（非公開）、メインリスト「2 Main Card A」、サイドリスト「1 Side Card」、統率者Commander Card、デッキID空欄、代表カード名空欄（設定なし）、その他は有効基準値（S-M15-06-CBCSV-064）	1. デッキ登録CSVアップロード画面を開く／2. 「ファイルを選択」を押してm1506-cb064-main.csvを選択する／3. 「CSVファイルのアップロード」を押す／4. DBでプレイヤー名「M1506-CB064-P」のデッキの件数を確認し、続けてそのデッキの表示の区分・デッキリスト非公開フラグ・代表画像・メインリスト本文・サイドリスト本文とデッキ明細（統率者ボードを含む全ボード）を確認する	プレイヤー名「M1506-CB064-P」のデッキが新しいデッキとして1件追加され、表示の区分が表示、デッキリスト非公開フラグが1（非公開）、代表画像がFeature Cardの画像で、メインリスト本文が「2 Main Card A」、サイドリスト本文が「1 Side Card」と入力した原文のままになり、デッキ明細は統率者ボードを含め1件も作られないこと	0212 デッキ登録CSVアップロード / 機能仕様 処理概要、業務ロジック 行ごとの判定順序、登録の判定、デッキ明細の作成、表示状態とリスト本文、代表カード	CB-M15-06-006
+
+codex
+仕分けでは M15-05 の「新規登録かつ現行フォーマット真」を多数ケース外にし、M15-06 は6組すべて、M15-07 は3組すべてをケース化しています。ここから、除外理由と、ケースの入力値・期待値が設計書の分岐に一致するかを確認します。
+exec
+/bin/bash -lc "sed -n '210,280p' integration_test/casegen/combination/units/M15-05/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0209	5	検索する	ボタン	-			入力されたイベント名、店舗、開催日をもとに検索を実行する
+L0210	6	イベントの情報	各種	-			検索条件に合致する ID, イベント名, 開催日を表示
+L0211	同じイベントで開催日が複数登録されているデータはまとめて表示する
+L0212	7	決定	ボタン	-			入力フォームの「イベント名(日)」「イベント名(英)」「開催日」に
+L0213	値を反映してポップアップを閉じる
+L0214	8	ページングUI	リンク	-
+L0215	デッキ情報複製ポップアップ
+L0216	デッキ編集 / B298 / image 1
+L0217	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0218	1	指定回数	数値	△			複製する回数を指定
+L0219	識別ID:2「複製保存」押下時は必須
+L0220	2	複製保存	ボタン	-			指定回数の値に沿って、デッキ情報を複製する
+L0221	3	複製新規	ボタン	-			現在表示中のデッキ情報を引き継ぎ、デッキ新規登録画面へ遷移する
+L0222	Source:
+L0223	functions/pf-eccube3/m15-05_admin_deck_deck_edit.md
+L0224	現行仕様
+L0225	M15-05 デッキ新規登録/編集/削除/複製 / デッキ管理 — 新規登録・編集・削除・複製
+L0226	業務ロジック
+L0227	画面の表示
+L0228	開き方	表示内容
+L0229	新規登録	空のデッキを対象に入力欄を表示する。イベント検索・カード検索の補助入力を添える
+L0230	複製入力	指定された既存デッキの内容を読み込んで表示する。画面上は新規登録と同じ扱いで、保存すると新規のデッキとして登録する
+L0231	編集	指定されたデッキを読み込んで表示する。該当するデッキが無いときはページが見つからない扱い（404）とする
+L0232	プレイヤーとイベント詳細は、識別子が設定されていれば対応する表示名・日時を項目へ補う。代表カードの画像は、代表カードが設定されていれば解決した画像を表示する。削除・複製の確認モーダルは、既存デッキを開いたときだけ表示する。一覧へ戻る際のページ番号は、保持している値（既定 1）を用いる。
+L0233	デッキリストの解釈順序
+L0234	メイン・サイド・コマンドの各テキストを、次の順序で解釈する。
+L0235	順序	判定	結果
+L0236	1	テキストが空または空白のみ	空のリストとして扱う。エラーにはしない
+L0237	2	空でない各行が「数量 カード名」の形式に合うか	合わない行があれば、1 から数えたその行番号を返し、行番号を含むエラーを表示して登録を中止する
+L0238	3	カード名を正規化したうえで、カードに一致するか、不明参照として許可された文字列か	いずれにも当たらない名前は登録しない。管理画面では不明参照として許可された文字列だけを残せる
+L0239	4	同じリスト内に同じカードが複数ある	枚数を合算して1件にまとめる
+L0240	登録・更新
+L0241	デッキリストの解釈に失敗したとき、または入力値の検証に通らないときは、同じ画面を再表示して終える（画面遷移しない）。
+L0242	検証に通ったときは次を行う。プレイヤーが入力されていれば当該プレイヤーへ紐付け直す。編集者としてログイン中の管理者を記録する。代表カードは、新規登録のときに限り、指定があれば名前を解決して設定し、指定が無ければ選択中のアーキタイプの既定の代表カード画像を設定する。
+L0243	デッキを保存したうえで、当該デッキのカードをすべて削除し、解釈済みのリストからメイン・サイド・コマンドごとに作り直す。
+L0244	保存後、「現行フォーマット」が真でフォーマットが設定されているときは、リストの整合とフォーマットの制限を検査する。問題があればボード単位で警告を表示する。この検査はエラーとせず、保存は完了したままとする。完了後は当該デッキの編集画面へ移る。
+L0245	本機能では金額・ポイントの算出を行わない。フォーマットの警告は、ボードごとの最小・最大枚数、サイドとの合算、カードの使用可否の情報にもとづく。検出の順序は内部の実装順に依存するが、画面上は警告のみで保存は済んでいる。
+L0246	複製
+L0247	複製する回数が整数で、かつ 1 以上、設定の上限（既定値 310）以下でなければ、エラーを表示して元の編集画面へ戻る。複製元のデッキを取得できないときも保存失敗を表示して戻る。この経路では入力の共通検証を経由しない。
+L0248	条件を満たすときは指定回数だけデッキを複製する。複製したデッキは記事の紐付けを空にし、編集者を操作者に更新する。複製元の各デッキカードも複製して、複製したデッキへ付け替える。完了時は複製した回数を含む完了メッセージを表示し、元の編集画面へ戻る。
+L0249	削除
+L0250	なりすまし対策トークンを検証する。対象のデッキを取得できないときはページが見つからない扱い（404）とする。当該デッキに紐づく記事が1件以上あるときは削除せず、使用中である旨を表示して直前の画面へ戻る。
+L0251	削除するときは、デッキカードをすべて削除し、編集者を操作者に更新したうえでデッキ自体を削除する。削除後は、保持しているページ番号があればデッキ検索のそのページへ、無ければデッキ一覧へ戻る。削除対象の指定がまったく無いときは、メッセージを出さず一覧相当へ戻る。
+L0252	エラー時の扱い
+L0253	エラー内容	処理
+L0254	デッキリストの行形式が不正	入力を保持したまま同じ画面を再表示し、行番号とボード名を含む文言を表示する
+L0255	削除時のなりすまし対策トークンが無効	アクセスを拒否する（共通の処理に委ねる）
+L0256	記事に使用中で削除できない	エラーを表示し、直前の画面へ戻る
+L0257	複製回数が不正	エラーを表示し、編集画面へ戻る
+L0258	入出力
+L0259	種類	内容
+L0260	入力	デッキの入力項目（メイン・サイド・コマンドの各テキスト、プレイヤー、イベント詳細、代表カード、フォーマットなど）、複製する回数、削除対象のデッキ、なりすまし対策トークン
+L0261	成功時出力	デッキの登録・更新・複製・削除、完了メッセージ、編集画面または一覧への移動
+L0262	失敗時出力	同じ画面の再表示、またはエラー・警告メッセージを伴う戻り
+L0263	入出力: 永続化
+L0264	操作	契機
+L0265	追加・更新	デッキの登録・更新が検証に通ったとき
+L0266	削除・追加	デッキの保存時に、当該デッキのカードを全件削除して解釈済みリストから作り直す
+L0267	追加	複製時に、指定回数分のデッキとそのデッキカードを作成する
+L0268	削除	デッキの削除時に、デッキカードとデッキ自体を削除する
+L0269	リニューアル後の仕様
+L0270	表示メッセージ
+L0271	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0272	M15-05-MSG-004	管理画面上部	セッションがタイムアウトしました。もう一度やり直してください。	デッキを削除するとき、セッションの有効期限が切れているとき	デッキ検索・一覧画面に遷移する
+L0273	M15-05-MSG-005	管理画面上部	記事に紐付いているデッキがあるため削除できません。	記事に使用されているデッキを削除しようとしたとき	デッキ編集画面に遷移する
+L0274	M15-05-MSG-006	管理画面上部	削除に失敗しました	デッキの削除中にエラーが起きたとき	デッキ編集画面に遷移する
+L0275	M15-05-MSG-007	管理画面上部	削除しました	デッキを削除したとき	デッキ検索・一覧画面に遷移する
+L0276	M15-05-MSG-008	管理画面上部	セッションがタイムアウトしました。もう一度やり直してください。	デッキを複製するとき、セッションの有効期限が切れているとき	デッキ編集画面に遷移する
+L0277	M15-05-MSG-009	管理画面上部	保存に失敗しました	デッキの複製を保存するとき、入力内容に不備があるとき	デッキ編集画面に遷移する
+L0278	M15-05-MSG-010	管理画面上部	保存に失敗しました	デッキの複製を保存中にエラーが起きたとき	デッキ編集画面に遷移する
+L0279	M15-05-MSG-011	管理画面上部	保存しました	デッキを複製して保存したとき	デッキ編集画面に遷移する
+
+exec
+/bin/bash -lc "sed -n '1,110p' integration_test/casegen/combination/units/M15-05/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0212 sheet-5 デッキ編集
+L0001	デッキ編集
+L0002	ドキュメント名デッキ管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-05-02
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM15-02（正しくは M15-05。Excel基本設計の機能No欄の誤記）
+L0010	機能名デッキ編集
+L0011	概要デッキの各種情報を編集する。
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	6
+L0020	7
+L0021	9
+L0022	10
+L0023	13
+L0024	16
+L0025	12
+L0026	14
+L0027	17
+L0028	18
+L0029	19
+L0030	20
+L0031	21
+L0032	22
+L0033	23
+L0034	24
+L0035	32
+L0036	33
+L0037	34
+L0038	8
+L0039	11
+L0040	15
+L0041	25
+L0042	26
+L0043	28
+L0044	29
+L0045	30
+L0046	31
+L0047	35
+L0048	36
+L0049	37
+L0050	38
+L0051	39
+L0052	27
+L0053	デッキ編集 / C8 / image 4
+L0054	カスタマイズ説明
+L0055	・カスタマイズ要件
+L0056	・カード情報の領域については3種類のテキストボックスとし入力補助の機能を削減する
+L0057	・旧デッキID、DCIナンバーは不要のため削除
+L0058	・カード情報欄にあるカード名、枚数、全角スペース変換ボタンは不要のため削除
+L0059	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0060	機能仕様処理概要（★はカスタマイズ項目）
+L0061	画面上の各項目を入力して、デッキの新規登録および登録済みデッキの内容変更ができる。
+L0062	登録済みデッキを対象とする場合、当該デッキの削除ができる。
+L0063	登録済みデッキを対象とする場合、当該デッキの複製ができる。
+L0064	画面上の各項目の制御について
+L0065	(5) アーキタイプを選択変更すると、JSで(8)代表カードが更新される。
+L0066	(7) タグ自動設定は、アーキタイプ選択後に利用できる。
+L0067	アーキタイプ未選択時はアラート表示
+L0068	アーキタイプにデッキタグが設定されていないときはアラート表示
+L0069	(13) プレイヤー名は手入力またはプレイヤー検索からの入力が可能
+L0070	(17～19) イベント名、開催日は手入力またはイベント検索からの入力が可能
+L0071	(32～34) 統率、メインボード、サイドボードのテキストエリアに入力すると、JSで（）内の枚数が更新される。
+L0072	登録・更新時
+L0073	統率、メインボード、サイドボードの入力書式が不正の場合、メッセージを表示して登録エラー
+L0074	「{ボード名} の x 行目に、異常な値が入力されています」
+L0075	統率、メインボード、サイドボードの入力内容が現行フォーマットに則さない場合、登録はできるが、
+L0076	「{ボード名} のカードが、現行フォーマットに則さない形で登録されています。」の警告メッセージとともに、詳細メッセージを表示する。
+L0077	存在しないカードが入力されている場合 「n 行目の {カード名} は存在しません」
+L0078	禁止カードが入力されている場合「n 行目の {カード名} は禁止カードです」
+L0079	フォーマットの範囲外カードが入力されている場合「n 行目の {カード名} はフォーマットの範囲から外れています」
+L0080	4枚制限ルールのあるカードが5枚以上入力されている場合「 n 行目の {カード名} が5枚以上登録されています」
+L0081	1枚制限ルールのあるカードが2枚以上入力されている場合「 n 行目の {カード名} 2枚以上登録されています」
+L0082	フォーマットで統率者カードが使用できないのに入力されている場合「このフォーマットでは統率用カードを使用しません」
+L0083	フォーマットの最大枚数を超えている場合「ボード内のカード枚数が n 枚を上回っています」
+L0084	フォーマットの最小枚数に満たない場合「ボード内のカード枚数が n 枚を下回っています」
+L0085	編集者を記録する。
+L0086	カードイメージをセットする。カードイメージ未設定時は、アーキタイプの代表カードイメージをセットする。
+L0087	★画面上の項目を除去する
+L0088	・識別ID:11「DCIナンバー」を除去する
+L0089	・識別ID:24「カード名」を除去する
+L0090	・識別ID:25「枚数」を除去する
+L0091	・識別ID:26「枚(カード情報)」を除去する
+L0092	・識別ID:27「全角スペースを変換」を除去する
+L0093	・識別ID:28「統率」を除去する
+L0094	・識別ID:29「メインボード」を除去する
+L0095	・識別ID:30「サイドボード」を除去する
+L0096	・識別ID:31「1, 2, 3, 4」を除去する
+L0097	★画面上の項目を除去にともなうJavScriptを除去する
+L0098	・識別ID:26「枚(カード情報)」押下時の「統率」「メインボード」「サイドボード」へ反映させる機能
+L0099	・識別ID:27「全角スペースを変換」押下時の全角スペース変換機能
+L0100	・識別ID:28「統率」押下時の、識別ID:21「カード名」の入力値を識別ID:23「統率」欄へ切り替える機能
+L0101	・識別ID:29「メインボード」押下時の、識別ID:21「カード名」の入力値を識別ID:24「メインボード」欄へ切り替える機能
+L0102	・識別ID:30「サイドボード」押下時の、識別ID:21「カード名」の入力値を識別ID:25「サイドボード」欄へ切り替える機能
+L0103	・識別ID:31「1, 2, 3, 4」押下時の、識別ID:21「カード名」と識別ID:23「統率」、識別ID:24「メインボード」、識別ID:25「サイドボード」の
+L0104	いずれかへ反映させる機能
+L0105	★画面上のプレイヤー検索ポップアップの項目を除去する
+L0106	・識別ID:7「プレイヤーの情報」から「DCIナンバー」を除去する
+L0107	★画面の変更にあわせて、登録/更新ロジック内に記載されている
+L0108	・項目「DCIナンバー」を除去する
+L0109	★画面の変更にあわせて、プレイヤー検索のロジック内に記載されている
+
+exec
+/bin/bash -lc "sed -n '1,110p' integration_test/casegen/combination/units/M15-06/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '110,180p' integration_test/casegen/combination/units/M15-05/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0109	★画面の変更にあわせて、プレイヤー検索のロジック内に記載されている
+L0110	・項目「DCIナンバー」を除去する
+L0111	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0112	1	デッキ名	文字列		255文字
+L0113	2	デッキリスト公開状態
+L0114	(非公開)	チェックボックス	-
+L0115	3	デッキ種別	単一選択	-			選択肢: event, user
+L0116	4	フォーマット	セレクトボックス	○			サジェスト機能
+L0117	5	アーキタイプ	セレクトボックス	○			サジェスト機能
+L0118	6	タグ	セレクトボックス	-			サジェスト機能
+L0119	7	自動設定(タグ)	ボタン	-			選択したアーキタイプに紐づけられているタグを自動入力する
+L0120	8	代表カード	画像	-
+L0121	9	代表カード検索	ボタン	-			代表カード検索のポップアップを表示
+L0122	10	公開状態	セレクトボックス	-			選択肢: 公開, 非公開, 限定公開
+L0123	11	検索	ボタン	-			プレイヤー検索のポップアップを表示
+L0124	12	クリア	ボタン	-			プレイヤー情報をクリアする
+L0125	13	プレイヤー名	文字列		64文字
+L0126	14	DCIナンバー	数値	-			※カスタマイズ対応、項目を除去する
+L0127	15	検索	ボタン	-			イベント検索のポップアップを表示
+L0128	16	クリア	ボタン	-			イベント情報（イベント名日英、開催日）をクリアする
+L0129	17	イベント名(日)	文字列	△	255文字		公開状態が「公開」の場合、必須
+L0130	18	イベント名(英)	文字列	△	255文字		公開状態が「公開」の場合、必須
+L0131	19	イベント開催日	文字列(日付)	△			公開状態が「公開」の場合、必須
+L0132	YYYY/MM/DD HH:Mi
+L0133	20	順位	数値	-
+L0134	21	成績	文字列	-	32文字
+L0135	22	引用元URL	文字列	-	2048文字
+L0136	23	イベント参加人数	数値	-
+L0137	24	カード名	文字列	-			※カスタマイズ対応、項目を除去する
+L0138	25	枚数	数値	-			※カスタマイズ対応、項目を除去する
+L0139	26	枚(カード情報)	ボタン	-			※カスタマイズ対応、項目を除去する
+L0140	27	全角スペースを変換	ボタン	-			※カスタマイズ対応、項目を除去する
+L0141	28	統率	ボタン	-			※カスタマイズ対応、項目を除去する
+L0142	29	メインボード	ボタン	-			※カスタマイズ対応、項目を除去する
+L0143	30	サイドボード	ボタン	-			※カスタマイズ対応、項目を除去する
+L0144	31	1, 2, 3, 4	ボタン	-			※カスタマイズ対応、項目を除去する
+L0145	32	統率	デッキリスト書式	-			登録しているカード情報を表示
+L0146	33	メインボード	デッキリスト書式	-			登録しているカード情報を表示
+L0147	34	サイドボード	デッキリスト書式	-			登録しているカード情報を表示
+L0148	35	新規登録	ボタン	-			登録時のみ表示。
+L0149	フォーム入力チェックを実施。
+L0150	OKであれば登録を実施、NGがあればエラー内容を表示する。
+L0151	36	更新	ボタン	-			編集時のみ表示。
+L0152	フォーム入力チェックを実施。
+L0153	OKであれば登録を実施、NGがあればエラー内容を表示する。
+L0154	37	削除	ボタン	-			編集時のみ表示、登録時は非表示。
+L0155	現在表示中のデッキ情報削除を確認するJSダイアログを表示
+L0156	「OK」押下で削除を実行する
+L0157	38	複製 >	ボタン	-			編集時のみ表示。
+L0158	デッキ情報複製のポップアップを表示する
+L0159	39	戻る	ボタン	-			ひとつ前のページに戻る
+L0160	代表カード検索ポップアップ
+L0161	1
+L0162	2
+L0163	3
+L0164	4
+L0165	6
+L0166	7
+L0167	4
+L0168	デッキ編集 / C174 / image 5
+L0169	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0170	1	カード名	文字列	-			検索対象は カード名（日）、カード名（英）
+L0171	2	完全一致検索	チェックボックス	-			選択した場合：カード名が完全に一致する代表カードのみ対象とする
+L0172	未選択の場合：半角スペース、全角スペース、カンマで分割した単語で AND LIKE 検索
+L0173	3	テキスト	文字列	-			検索対象は テキスト（日）、テキスト（英）
+L0174	半角スペース、全角スペース、カンマで分割した単語で AND LIKE 検索
+L0175	4	検索する	ボタン	-			入力されたカード名、テキストをもとに検索を実行する
+L0176	5	代表カードの情報	各種	-			検索条件に合致する ID, カード名, カード画像を表示
+L0177	6	決定	ボタン	-			入力フォームの「代表カード」に値を反映してポップアップを閉じる
+L0178	7	ページングUI	リンク	-
+L0179	プレイヤー検索ポップアップ
+
+ succeeded in 0ms:
+##### 0212 sheet-6 デッキ登録CSVアップロード
+L0001	デッキ登録CSVアップロード
+L0002	ドキュメント名デッキ管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者城下
+L0006	作成日2025-05-07
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM15-06
+L0010	機能名デッキ登録CSVアップロード
+L0011	概要デッキ情報をCSVにて登録する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	レイアウト図
+L0014	1
+L0015	2
+L0016	3
+L0017	4
+L0018	5
+L0019	デッキ登録CSVアップロード / B8 / image 1
+L0020	カスタマイズ説明
+L0021	・カスタマイズ要件
+L0022	現行システムをベースに下記カスタマイズを行う
+L0023	・TSVアップロードを廃止
+L0024	・厳密にチェックするチェックボックスは不要のため削除
+L0025	・旧デッキID、DCIナンバーは不要のため削除
+L0026	・カスタマイズ要件に記載の内容以外は現行踏襲とする。
+L0027	機能仕様処理概要（★はカスタマイズ項目）
+L0028	CSVファイルをアップロードして一括でデッキの新規登録・更新ができる。
+L0029	デッキIDが一致するデッキがあれば更新。なければ新規登録。
+L0030	各項目の入力チェックを行い、エラーがあれば登録を中止してメッセージを表示する。
+L0031	フォーマット名（英）が一致するフォーマットが存在すること。
+L0032	アーキタイプ名（日/英）とフォーマットが一致するアーキタイプが存在すること。
+L0033	イベント詳細IDを指定した場合は、IDが一致するイベント詳細が存在すること。
+L0034	デッキ非公開フラグ=0 の場合、メインリストは必須。
+L0035	統率者戦フォーマットの場合、統率者は必須。カード名（日英）が一致するカードが存在すること。
+L0036	メインリスト、サイドリストのカード枚数がフォーマットで規定されている最大数を超えるか最小数に満たない場合はエラー。
+L0037	統率者が登録される場合で、メインリストに統率者が含まれている場合はメインリストから除外する。
+L0038	代表カード名が設定されていたらカードイメージをセットする。設定がなければアーキタイプから代表カードのイメージをセットする。
+L0039	デッキリスト公開の場合はデッキリストをDtbDeckCardに登録する。
+L0040	★画面の項目を一部除去する
+L0041	・表記されている「TSV」の文言を除去する
+L0042	・識別ID:3「厳密にチェックする」を除去する
+L0043	・ファイルフォーマットから「win_count（勝利数）」「loss_count（敗北数）」「draw_count（引分数）」を除去する
+L0044	★画面の変更にあわせて、CSVアップロード実行ロジック内に記載されている
+L0045	・ファイル拡張子「TSV」をエラー扱いにする処理を追加
+L0046	・「厳密にチェックする」が有効な場合に実行されている処理を除去する
+L0047	・項目「旧デッキID」「DCIナンバー」に関するエラーチェック、登録/更新処理を除去する
+L0048	※CSVの項目はシート「デッキ登録CSV」を参照
+L0049	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+L0050	1	CSVファイル選択	ファイル	-			※カスタマイズ対応、現行の表記から「TSV」を除去
+L0051	2	ファイルを選択	ボタン	-			ボタン押下で、OS標準のファイル選択ウィンドウを表示
+L0052	3	厳密にチェックする	チェックボックス	-			※カスタマイズ対応、項目を除去する
+L0053	4	CSVファイルの
+L0054	アップロード	ボタン	-			CSVファイルのアップロードと入力チェックを実施。
+L0055	「処理概要」を参照。
+L0056	5	デッキ登録CSV
+L0057	フォーマット	テーブル	-			登録/更新に使用するCSVのファイルをーマットをテーブルで表現
+L0058	画面に入りきれない場合はスクロールできるようにする
+L0059	※CSVの項目はシート「デッキ登録CSV」を参照
+##### 0212 sheet-7 デッキ登録CSV
+L0060	デッキ登録CSV
+L0061	ドキュメント名デッキ管理機能
+L0062	セクション—
+L0063	プロジェクト名サイトリニューアル
+L0064	作成者城下
+L0065	作成日2025-05-07
+L0066	更新者堀部
+L0067	更新日2025-10-24
+L0068	機能NoM15-06
+L0069	機能名デッキ登録CSV
+L0070	概要デッキ情報をCSVにて登録する
+L0071	デッキ登録CSV
+L0072	識別ID	項目名	主キー	書式・制限	必須	最大文字数
+L0073	または最大値	入力例	備考
+L0074	1	プレイヤー名			〇		ハレルヤクン
+L0075	2	フォーマット			〇		Pioneer	フォーマット名
+L0076	3	アーキタイプ			〇		白青ビートダウン	アーキタイプ名
+L0077	4	イベント詳細ID					127282	イベント詳細ID
+L0078	5	デッキ名					新白青	デッキ名
+L0079	6	勝利数					3	勝利数 ※カスタマイズ対応、項目除去する
+L0080	7	敗北数					0	敗北数 ※カスタマイズ対応、項目除去する
+L0081	8	引分数					1	引分数 ※カスタマイズ対応、項目除去する
+L0082	9	順位					1	順位
+L0083	10	成績					優勝	成績
+L0084	11	DCI番号						DCI番号 ※カスタマイズ対応、項目除去する
+L0085	12	タグ					グランプリ,プロツアー	タグ カンマ区切りで複数指定可能
+L0086	※カスタマイズ対応、項目追加
+L0087	12	イベント名(英)			〇		PanPacaPioneer	イベント名(英)
+L0088	13	イベント名(日)			〇		パンパカパイオニア	イベント名(日)
+L0089	14	イベント開催日		日付	〇		2020-07-11 13:00:00	イベント開催日
+L0090	15	参照元					http://example.com/	参照元
+L0091	16	イベント参加人数					10	イベント参加人数
+L0092	17	表示フラグ		0(非表示) または 1(表示)	〇		1	表示フラグ
+L0093	18	デッキリスト非公開フラグ		0(公開) または 1(非公開)	〇		0	デッキリスト非公開フラグ
+L0094	19	メインリスト		デッキリスト形式	△		2 Castle Ardenvale
+L0095	（略）	メインリスト
+L0096	20	サイドリスト		デッキリスト形式			同上	サイドリスト
+L0097	21	統率者		デッキリスト形式	△		同上	統率者
+L0098	22	デッキID	〇				290036	デッキID
+L0099	23	代表カード名					Hallowed Fountain	代表カード名
+L0100	24	旧デッキID						旧デッキID ※カスタマイズ対応、項目除去する
+##### 機能設計書 functions/pf-eccube3/m15-06_admin_deck_deck_csv_import.md
+L0101	# デッキ管理 — デッキ登録CSV（取込）
+L0102	## 業務ロジック
+L0103	### 取込ファイルの形式
+L0104	1行目をヘッダ行として扱う。拡張子が `tsv` のときはタブ区切り、それ以外のときは既定の区切り文字と囲み文字を用いる。読み込み時に文字コードを環境ごとの方針で変換し、改行を統一し、ゼロ幅文字とBOMを除去する。取り込んだファイルは一時領域へ乱数由来の名前で移して読み込み、処理の成否によらず、残っていれば削除する。
+L0105	### ヘッダ行の項目
+L0106	画面には、ヘッダ行の並びと各項目の説明を表示する。並びは次のとおりで、本文1行目と一致させる。
+L0107	| 並び順 | 項目 | 内容 |
+
+exec
+/bin/bash -lc "sed -n '145,185p' integration_test/casegen/combination/units/M15-06/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0142	| 6 | `event_date` が日時として解釈できること |
+L0143	| 7 | `disp_flg` がデッキの公開・非公開いずれかの値と完全に一致すること |
+L0144	| 8 | `private_flg` が二値のいずれかと完全に一致すること |
+L0145	| 9 | 統率者を使うフォーマットのときだけ `commander` を必須とし、空でないときはカード名として解けること、解けた名前が有効なカードであること |
+L0146	| 10 | `old_deck_id` が空でないときは、半角英数とアンダースコアで最大16文字であり、既存のデッキと重複しないこと |
+L0147	| 11 | リスト検証の経路に入るときは、リスト形式の異常と不明なカード名が無いこと |
+L0148	いずれかが成立しないときは、その行で取込を中止し、それまでの登録を取り消す。
+L0149	統率者の判定では、行頭に枚数として 1 と空白を前置した形でカード名を解く。リスト検証では、` // ` をスラッシュ1つへ正規化してからリストを解釈する。統率者があるときは、メインボードから統率者カードの重複を除いてテキストを再生成する。
+L0150	### 厳密チェック
+L0151	「厳密」を指定したときだけ、次の検査結果をエラーへ昇格する。指定しないときは、リスト内に複数種のエラー状態があっても取込を続ける。
+L0152	| 検査 |
+L0153	| --- |
+L0154	| アーキタイプ横断チェック |
+L0155	| 禁止制限チェック |
+L0156	| リスト形式の異常・不明なカード名 |
+L0157	| メイン・サイドそれぞれの枚数総和が、フォーマットの許容下限・上限に収まること |
+L0158	枚数総和は、メインボードとサイドボードそれぞれで、リスト解釈後の各カードの所持枚数を合計した数である。統率者の枚数規定は総和の評価に含めない。
+L0159	### 登録の判定
+L0160	| `deck_id` の値 | 登録 |
+L0161	| --- | --- |
+L0162	| 空欄のとき | 新規に採番して登録する |
+L0163	| 既存のデッキと一致するとき | そのデッキを上書きする |
+L0164	デッキ名・イベント情報・勝敗数・順位・成績・各フラグ・リスト原文・調整済みの統率者テキスト・旧サイト向け連番・代表画像を、行の値で設定する。表示フラグは、取込値の公開・非公開から表示区分の値へ読み替える。登録者には操作した管理者アカウントを必ず設定する。デッキ種別が未設定のときは、イベント種別を既定として補う。
+L0165	### デッキ明細の作成
+L0166	リスト検証の経路に入る行だけ、ボード単位でデッキ明細を作成する。統率者は、統率者を使う形式で入力が済んでいるときは、常に統率者ボードへ別に書き込む。
+L0167	### 表示状態とリスト本文
+L0168	表示フラグが公開へ読み替えられ、かつデッキリスト非公開フラグが公開状態のときだけ、本文テキストとデッキ明細が一致する状態を検証して書き換える。それ以外の組み合わせのときは、リスト本文の検証と明細の出力を広く省略し、入力した原文をメインリスト・サイドリストのテキストにだけ反映する。
+L0169	### 代表カード
+L0170	| `image_card_name` の値 | 代表画像 |
+L0171	| --- | --- |
+L0172	| 空でなく、有効なカードへ解けるとき | その名前から最適と判定される画像を設定する |
+L0173	| 空のとき | 当該フォーマットに紐づくアーキタイプの既定の代表画像で上書きする |
+L0174	### エラー時の扱い
+L0175	| 事象 | 扱い |
+L0176	|------|------|
+L0177	| 入力内容の検証に外れたとき | エラーを順に表示する |
+L0178	| 取込ファイルを受け取れないとき | 登録せず、取込画面へ戻る |
+L0179	| ファイルの読み込みに失敗したとき | 登録せず、取込画面へ戻る |
+L0180	| ヘッダの並びが期待の並びと一致しないとき | 登録せず、取込画面へ戻る |
+L0181	| データ行が0件のとき | 登録せず、取込画面へ戻る |
+L0182	| 行の判定に外れたとき | それまでの登録を取り消し、エラーを表示して取込画面へ戻る |
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/units/M15-07/design.txt' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0212 sheet-8 デッキタグ一覧
+L0001	デッキタグ一覧
+L0002	ドキュメント名デッキ管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者石川
+L0006	作成日2025-08-08
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM15-07
+L0010	機能名デッキタグ一覧
+L0011	概要MTGマスターデータ管理へのリンク
+L0012	MTGマスターデータ管理画面へ「デッキタグ」が選択された状態で遷移する
+L0013	Source:
+L0014	functions/pf-eccube3/m15-07_admin_deck_deck_tag_list.md
+L0015	現行仕様
+L0016	M15-07 デッキタグ一覧 / デッキ管理 — デッキタグ一覧（カスタム管理画面）
+L0017	業務ロジック
+L0018	一覧の表示
+L0019	デッキタグをすべて取得して一覧に表示する。一覧に出す項目は日本語名・英語名・表示順で、行ごとに編集と削除の操作を置く。ページ内の表示件数・ページ番号・並び替えキーは、リクエストの指定または画面の既定値で決める。既定は表示件数100件・1ページ目・表示順の昇順で、表示件数は10件から100件まで10件刻みで選べる。並び替えキーは日本語名・英語名・表示順の3種で、いずれも昇順のみ。対応表に無い並び替えキーを受け取ったときは並び順を指定しない。登録・更新用のモーダルは一覧と同じ画面に置き、一覧表示のときは入力値の検証を行わない。新規登録でモーダルを開いたときは、表示順に一覧中の最大の表示順＋1を初期表示する。取得した全件のうち一覧に出すのは現在のページに当たる行だけで、デッキタグが1件以上あるときは一覧の下にページ送り（前へ・ページ番号・次へ）を出し、ページ送りの各リンクは表示件数と並び替えを保つ。画面のタイトルは「デッキタグ管理」で、モーダルの見出しは新規登録が「デッキタグ新規作成」・編集が「デッキタグ編集」、送信ボタンの文言は新規登録が「登録」・編集が「更新」になる。
+L0020	登録・更新
+L0021	識別子を伴わない送信は新規登録、識別子を伴う送信は当該デッキタグの更新とする。識別子はあるが該当するデッキタグが無いときはページが見つからない扱い（404）とする。入力値の検証に通ったときだけ、送信された日本語名・英語名・表示順をデッキタグへ反映する。デッキとアーキタイプの関連は登録・更新の対象から外すため変更しない。更新後は送信時と同じ表示件数・ページ番号・並び替えの一覧へ戻る。検証に通らないときは一覧と同じ画面を再表示し、モーダルを開いた状態で入力エラーを見せる。
+L0022	日本語名と英語名はいずれも必須で32文字以内、表示順は必須で1以上999999以下とし、他のデッキタグと同じ表示順は登録・更新できない。
+L0023	削除
+L0024	削除の操作では確認を求め、承諾したときだけ削除を実行する。削除対象のデッキタグが無いときはページが見つからない扱い（404）とする。当該デッキタグに紐づくデッキが1件以上あるときは削除しない。アーキタイプ初期値側の関連が1件以上あるときも削除しない。いずれも0件のときだけ削除する。削除の可否にかかわらず、この一覧画面ではなく、メニューの「デッキタグ一覧」が開くMTGマスターデータ管理画面へ戻る。
+L0025	入出力
+L0026	種類	内容
+L0027	入力	一覧の表示件数・ページ指定と並び替え指定、登録・更新の日本語名・英語名・表示順、削除対象のデッキタグID
+L0028	成功時出力	一覧画面のHTML、または完了メッセージを伴う一覧への戻り
+L0029	失敗時出力	入力不備は同一画面の再表示でエラーを見せる。使用中の削除はエラーメッセージを伴う一覧への戻り
+L0030	入出力: 永続化
+L0031	操作	契機
+L0032	追加	識別子を伴わない登録・更新の送信が検証に通ったとき
+L0033	更新	識別子を伴う登録・更新の送信が検証に通ったとき
+L0034	削除	関連するデッキとアーキタイプ初期値がいずれも0件のデッキタグを削除したとき
+L0035	リニューアル後の仕様
+L0036	表示メッセージ
+L0037	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0038	—	管理画面上部	—	デッキタグの登録・更新が完了したとき	送信元と同じページ変数でデッキタグ一覧へ戻る
+L0039	—	管理画面上部	—	削除対象のデッキタグに紐づくデッキが1件以上あるとき	削除せずデッキタグ一覧へ戻る
+L0040	—	管理画面上部	—	削除対象のデッキタグにアーキタイプ初期値側の関連が1件以上あるとき	削除せずデッキタグ一覧へ戻る
+L0041	—	管理画面上部	—	デッキタグの削除が完了したとき	デッキタグ一覧へ戻る
+L0042	—	モーダル内の入力項目直下	—	入力値の検証に通らなかったとき（表示順の重複を含む）	一覧と同じ画面を再表示し、モーダルを開いた状態で留まる
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M15-07_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M15-06.tsv | cut -f1-3' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 4ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M15-07-CBTAG-002	デッキタグ	M15-07 削除できるデッキタグ(CB002)	デッキタグ1件（日本語名=M1507-CB002-タグ／英語名=M1507-CB002-Tag／並び順=9702）／このデッキタグに紐づくデッキなし／アーキタイプ初期値側の関連なし／日本語名にM1507-CB002を含む他のデッキタグなし	紐づくデッキもアーキタイプ初期値側の関連も無いデッキタグを削除したときの結果の確認	システム管理者の権限を持つ管理者（m1507_adminではなく、デッキ管理・カード管理・データ管理の全メニューを使える管理者）で管理画面にログインする。前回の残りを消す: MTGマスターデータ管理画面（メニューの「デッキタグ一覧」）で日本語名が「M1507-CB002-タグ」の行があれば、その行の日本語名・英語名・並び順をすべて空にして「登録」を押す。デッキ管理メニューの「デッキタグ一覧」を押してMTGマスターデータ管理画面（デッキタグ選択）を開き、一覧末尾の空行の日本語名に「M1507-CB002-タグ」、英語名に「M1507-CB002-Tag」、並び順に他の行と重ならない整数「9702」を入れて「登録」を押す。デッキもアーキタイプにも、このデッキタグを紐づけない。	ケース専用
+S-M15-07-CBTAG-003	デッキタグ・デッキ	M15-07 デッキに紐づくデッキタグ(CB003)	デッキタグ1件（日本語名=M1507-CB003-タグ／英語名=M1507-CB003-Tag／並び順=9703）／フォーマット M1507-CB003-FMT・アーキタイプ M1507-CB003-ARC／デッキ1件（デッキ名=M1507-CB003-デッキ／デッキタイプ=event／管理者作成／公開状態=非公開／タグはM1507-CB003-タグだけ）／アーキタイプ初期値側の関連なし	デッキタグに紐づくデッキが1件ある状態での削除の結果の確認	システム管理者の権限を持つ管理者（m1507_adminではなく、デッキ管理・カード管理・データ管理の全メニューを使える管理者）で管理画面にログインする。前回の残りを消す: デッキ一覧(検索入力)画面でデッキ名に「M1507-CB003-デッキ」を入れて「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押し、確認ダイアログで「OK」を押す。アーキタイプ一覧とフォーマット一覧に名称が「M1507-CB003-」で始まるものがあれば削除する。前回の残りを消す: MTGマスターデータ管理画面（メニューの「デッキタグ一覧」）で日本語名が「M1507-CB003-タグ」の行があれば、その行の日本語名・英語名・並び順をすべて空にして「登録」を押す。デッキ管理メニューの「デッキタグ一覧」を押してMTGマスターデータ管理画面（デッキタグ選択）を開き、一覧末尾の空行の日本語名に「M1507-CB003-タグ」、英語名に「M1507-CB003-Tag」、並び順に他の行と重ならない整数「9703」を入れて「登録」を押す。カード管理＞フォーマット管理で「新規登録」を押し、フォーマット名(日)とフォーマット名(英)に「M1507-CB003-FMT」、並び順などの必須の項目に有効な値を入れて「登録」を押す。デッキ管理＞アーキタイプ一覧で「新規登録」を押し、アーキタイプ名(日)とアーキタイプ名(英)に「M1507-CB003-ARC」、公開状態に「公開」、フォーマットに「M1507-CB003-FMT」を選び、代表カードは選ばずに「新規登録」を押す。デッキ一覧(検索入力)画面で「新規登録」を押し、デッキ名に「M1507-CB003-デッキ」、デッキタイプに「event」、フォーマットに「M1507-CB003-FMT」、アーキタイプに「M1507-CB003-ARC」、タグに「M1507-CB003-タグ」だけ、公開状態(デッキ全体の公開設定)に「非公開」を選び、プレイヤーとイベントは検索して選ばずに「新規登録」を押す。アーキタイプにはデッキタグを付けない。	ケース専用
+S-M15-07-CBTAG-004	デッキタグ・アーキタイプ	M15-07 アーキタイプ初期値側に関連するデッキタグ(CB004)	デッキタグ1件（日本語名=M1507-CB004-タグ／英語名=M1507-CB004-Tag／並び順=9704）／フォーマット M1507-CB004-FMT／アーキタイプ M1507-CB004-ARC（公開・タグにM1507-CB004-タグを設定）／このデッキタグに紐づくデッキなし	アーキタイプ初期値側の関連が1件ある状態での削除の結果の確認	システム管理者の権限を持つ管理者（m1507_adminではなく、デッキ管理・カード管理・データ管理の全メニューを使える管理者）で管理画面にログインする。前回の残りを消す: アーキタイプ一覧とフォーマット一覧に名称が「M1507-CB004-」で始まるものがあれば削除する。前回の残りを消す: MTGマスターデータ管理画面（メニューの「デッキタグ一覧」）で日本語名が「M1507-CB004-タグ」の行があれば、その行の日本語名・英語名・並び順をすべて空にして「登録」を押す。デッキ管理メニューの「デッキタグ一覧」を押してMTGマスターデータ管理画面（デッキタグ選択）を開き、一覧末尾の空行の日本語名に「M1507-CB004-タグ」、英語名に「M1507-CB004-Tag」、並び順に他の行と重ならない整数「9704」を入れて「登録」を押す。カード管理＞フォーマット管理で「新規登録」を押し、フォーマット名(日)とフォーマット名(英)に「M1507-CB004-FMT」、並び順などの必須の項目に有効な値を入れて「登録」を押す。デッキ管理＞アーキタイプ一覧で「新規登録」を押し、アーキタイプ名(日)とアーキタイプ名(英)に「M1507-CB004-ARC」、公開状態に「公開」、フォーマットに「M1507-CB004-FMT」を選び、タグに「M1507-CB004-タグ」を選び、代表カードは選ばずに「新規登録」を押す。このデッキタグを付けたデッキは登録しない。	ケース専用
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/cases/M15-06_cb_seed_data.tsv' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 12ms:
+組ID	処理ID	組
+CB-M15-06-001	P1	F01=一致するデッキあり&F02=公開&F03=統率者戦&F04=設定あり&F05=登録あり&F06=表示
+CB-M15-06-002	P1	F01=一致するデッキあり&F02=公開&F03=統率者戦以外&F04=設定なし&F05=登録あり&F06=表示
+CB-M15-06-003	P1	F01=一致するデッキあり&F02=公開&F03=統率者戦&F04=設定あり&F05=登録なし&F06=表示
+CB-M15-06-004	P1	F01=一致するデッキなし&F02=公開&F03=統率者戦&F04=設定なし&F05=登録あり&F06=非表示
+CB-M15-06-005	P1	F01=一致するデッキなし&F02=非公開&F03=統率者戦以外&F04=設定あり&F05=登録なし&F06=非表示
+CB-M15-06-006	P1	F01=一致するデッキなし&F02=非公開&F03=統率者戦&F04=設定なし&F05=登録あり&F06=表示
+
+ succeeded in 0ms:
+シードID	区分	論理名	状態・属性	用途	投入方法	共有
+S-M15-06-CBCSV-059	入力ファイル・デッキ	M15-06 組合せ試験用CSV(CB059)	m1506-cb059-main.csv=プレイヤー名M1506-CB059-P、フォーマットTestCommander、アーキタイプM1506-CB059-Type、デッキ名M1506-CB059-デッキ、表示フラグ1（表示）、デッキリスト非公開フラグ0（公開）、メインリスト「1 Commander Card、2 Main Card A」、サイドリスト「1 Side Card」、統率者Commander Card、デッキID〔デッキID-M1506-CB059〕、代表カード名M1506-CB059-Pic、その他は有効基準値／アーキタイプM1506-CB059-Type（フォーマットTestCommander、代表カードFeature Card）／カードM1506-CB059-Pic（画像URL https://example.test/cards/m1506-cb059-pic.jpg）／デッキID〔デッキID-M1506-CB059〕のデッキ（プレイヤー名M1506-CB059-旧P、フォーマットTestCommander、アーキタイプM1506-CB059-Type、表示フラグ0、デッキリスト非公開フラグ1、デッキ明細なし）／プレイヤー名M1506-CB059-Pのデッキは存在しない	デッキID・表示フラグ・デッキリスト非公開フラグ・代表カード名・アーキタイプの代表カード・フォーマット種別の組合せでの取込結果の確認	前回の残りを消す: デッキ一覧(検索入力)画面でプレイヤー名に「M1506-CB059-」を入れて「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押し、確認ダイアログで「OK」を押し、もう一度検索して0件であることを確かめる。 アーキタイプ一覧に名称が「M1506-CB059-」で始まるものがあれば削除する。アーキタイプ編集画面を「新規登録」から開き、アーキタイプ名(日)に「M1506-CB059-型」、アーキタイプ名(英)に「M1506-CB059-Type」、公開状態に「公開」、フォーマットに「TestCommander」を入れ、「代表カード選択」を押して代表カード検索でカード名「Feature Card」を検索し画像を選択して「新規登録」を押す。 カード一覧(検索入力)画面でカード名・テキストの欄に「M1506-CB059-Pic」を入れて「検索する」を押し、カード名が「M1506-CB059-Pic」の行があれば削除して0件であることを確かめる。カード登録CSVアップロード画面で、カード名(英語)「M1506-CB059-Pic」、レアリティ・レイアウト・カードセットはFeature Cardの登録に使ったものと同じ登録済みの英名、Foilなし、プロモ種別空欄、画像URL(英語)に「https://example.test/cards/m1506-cb059-pic.jpg」を書いた1行のカード登録用CSV（m1506-cb059-card.csv）を選んで「CSVファイルのアップロード」を押す。 試験者が手元で、プレイヤー名M1506-CB059-旧P、フォーマットTestCommander、アーキタイプM1506-CB059-Type、イベント詳細ID 150601、デッキ名M1506-CB059-旧デッキ、表示フラグ0、デッキリスト非公開フラグ1、メインリストとサイドリストは空欄、統率者Commander Card、デッキIDと代表カード名は空欄、その他は有効基準値とした刷新後20項目のUTF-8のCSVファイル（m1506-cb059-setup.csv）を作る。デッキ登録CSVアップロード画面で「ファイルを選択」を押してそのファイルを選び、「CSVファイルのアップロード」を押す。デッキ一覧(検索入力)画面でプレイヤー名に「M1506-CB059-旧P」を入れて「検索する」を押し、検索結果の行をクリックして開いたデッキ編集画面のアドレス末尾に表示されたデッキIDを控える（〔デッキID-M1506-CB059〕）。 試験者が手元で、状態・属性に書いた内容の刷新後20項目のUTF-8のCSVファイル（m1506-cb059-main.csv）を作る（メインリストが複数行のときは、1つのセルの中で改行して二重引用符で囲む）。	ケース専用
+S-M15-06-CBCSV-060	入力ファイル・デッキ	M15-06 組合せ試験用CSV(CB060)	m1506-cb060-main.csv=プレイヤー名M1506-CB060-P、フォーマットTestStandard、アーキタイプTest Archetype、デッキ名M1506-CB060-デッキ、表示フラグ1（表示）、デッキリスト非公開フラグ0（公開）、メインリスト「2 Main Card A」、サイドリスト「1 Side Card」、統率者空欄、デッキID〔デッキID-M1506-CB060〕、代表カード名空欄、その他は有効基準値／デッキID〔デッキID-M1506-CB060〕のデッキ（プレイヤー名M1506-CB060-旧P、フォーマットTestStandard、アーキタイプTest Archetype、表示フラグ0、デッキリスト非公開フラグ1、デッキ明細なし）／プレイヤー名M1506-CB060-Pのデッキは存在しない	デッキID・表示フラグ・デッキリスト非公開フラグ・代表カード名・アーキタイプの代表カード・フォーマット種別の組合せでの取込結果の確認	前回の残りを消す: デッキ一覧(検索入力)画面でプレイヤー名に「M1506-CB060-」を入れて「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押し、確認ダイアログで「OK」を押し、もう一度検索して0件であることを確かめる。 試験者が手元で、プレイヤー名M1506-CB060-旧P、フォーマットTestStandard、アーキタイプTest Archetype、イベント詳細ID 150601、デッキ名M1506-CB060-旧デッキ、表示フラグ0、デッキリスト非公開フラグ1、メインリストとサイドリストは空欄、統率者空欄、デッキIDと代表カード名は空欄、その他は有効基準値とした刷新後20項目のUTF-8のCSVファイル（m1506-cb060-setup.csv）を作る。デッキ登録CSVアップロード画面で「ファイルを選択」を押してそのファイルを選び、「CSVファイルのアップロード」を押す。デッキ一覧(検索入力)画面でプレイヤー名に「M1506-CB060-旧P」を入れて「検索する」を押し、検索結果の行をクリックして開いたデッキ編集画面のアドレス末尾に表示されたデッキIDを控える（〔デッキID-M1506-CB060〕）。 試験者が手元で、状態・属性に書いた内容の刷新後20項目のUTF-8のCSVファイル（m1506-cb060-main.csv）を作る（メインリストが複数行のときは、1つのセルの中で改行して二重引用符で囲む）。	ケース専用
+S-M15-06-CBCSV-061	入力ファイル・デッキ	M15-06 組合せ試験用CSV(CB061)	m1506-cb061-main.csv=プレイヤー名M1506-CB061-P、フォーマットTestCommander、アーキタイプM1506-CB061-Type、デッキ名M1506-CB061-デッキ、表示フラグ1（表示）、デッキリスト非公開フラグ0（公開）、メインリスト「2 Main Card A」、サイドリスト「1 Side Card」、統率者Commander Card、デッキID〔デッキID-M1506-CB061〕、代表カード名Feature Card、その他は有効基準値／アーキタイプM1506-CB061-Type（フォーマットTestCommander、代表カードなし）／デッキID〔デッキID-M1506-CB061〕のデッキ（プレイヤー名M1506-CB061-旧P、フォーマットTestCommander、アーキタイプM1506-CB061-Type、表示フラグ0、デッキリスト非公開フラグ1、デッキ明細なし）／プレイヤー名M1506-CB061-Pのデッキは存在しない	デッキID・表示フラグ・デッキリスト非公開フラグ・代表カード名・アーキタイプの代表カード・フォーマット種別の組合せでの取込結果の確認	前回の残りを消す: デッキ一覧(検索入力)画面でプレイヤー名に「M1506-CB061-」を入れて「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押し、確認ダイアログで「OK」を押し、もう一度検索して0件であることを確かめる。 アーキタイプ一覧に名称が「M1506-CB061-」で始まるものがあれば削除する。アーキタイプ編集画面を「新規登録」から開き、アーキタイプ名(日)に「M1506-CB061-型」、アーキタイプ名(英)に「M1506-CB061-Type」、公開状態に「公開」、フォーマットに「TestCommander」を入れ、代表カードは選ばずに「新規登録」を押す。 試験者が手元で、プレイヤー名M1506-CB061-旧P、フォーマットTestCommander、アーキタイプM1506-CB061-Type、イベント詳細ID 150601、デッキ名M1506-CB061-旧デッキ、表示フラグ0、デッキリスト非公開フラグ1、メインリストとサイドリストは空欄、統率者Commander Card、デッキIDと代表カード名は空欄、その他は有効基準値とした刷新後20項目のUTF-8のCSVファイル（m1506-cb061-setup.csv）を作る。デッキ登録CSVアップロード画面で「ファイルを選択」を押してそのファイルを選び、「CSVファイルのアップロード」を押す。デッキ一覧(検索入力)画面でプレイヤー名に「M1506-CB061-旧P」を入れて「検索する」を押し、検索結果の行をクリックして開いたデッキ編集画面のアドレス末尾に表示されたデッキIDを控える（〔デッキID-M1506-CB061〕）。 試験者が手元で、状態・属性に書いた内容の刷新後20項目のUTF-8のCSVファイル（m1506-cb061-main.csv）を作る（メインリストが複数行のときは、1つのセルの中で改行して二重引用符で囲む）。	ケース専用
+S-M15-06-CBCSV-062	入力ファイル	M15-06 組合せ試験用CSV(CB062)	m1506-cb062-main.csv=プレイヤー名M1506-CB062-P、フォーマットTestCommander、アーキタイプM1506-CB062-Type、デッキ名M1506-CB062-デッキ、表示フラグ0（非表示）、デッキリスト非公開フラグ0（公開）、メインリスト「2 Main Card A」、サイドリスト「1 Side Card」、統率者Commander Card、デッキID空欄、代表カード名空欄、その他は有効基準値／アーキタイプM1506-CB062-Type（フォーマットTestCommander、代表カードFeature Card）／プレイヤー名M1506-CB062-Pのデッキは存在しない	デッキID・表示フラグ・デッキリスト非公開フラグ・代表カード名・アーキタイプの代表カード・フォーマット種別の組合せでの取込結果の確認	前回の残りを消す: デッキ一覧(検索入力)画面でプレイヤー名に「M1506-CB062-」を入れて「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押し、確認ダイアログで「OK」を押し、もう一度検索して0件であることを確かめる。 アーキタイプ一覧に名称が「M1506-CB062-」で始まるものがあれば削除する。アーキタイプ編集画面を「新規登録」から開き、アーキタイプ名(日)に「M1506-CB062-型」、アーキタイプ名(英)に「M1506-CB062-Type」、公開状態に「公開」、フォーマットに「TestCommander」を入れ、「代表カード選択」を押して代表カード検索でカード名「Feature Card」を検索し画像を選択して「新規登録」を押す。 試験者が手元で、状態・属性に書いた内容の刷新後20項目のUTF-8のCSVファイル（m1506-cb062-main.csv）を作る（メインリストが複数行のときは、1つのセルの中で改行して二重引用符で囲む）。	ケース専用
+S-M15-06-CBCSV-063	入力ファイル	M15-06 組合せ試験用CSV(CB063)	m1506-cb063-main.csv=プレイヤー名M1506-CB063-P、フォーマットTestStandard、アーキタイプM1506-CB063-Type、デッキ名M1506-CB063-デッキ、表示フラグ0（非表示）、デッキリスト非公開フラグ1（非公開）、メインリスト「2 Main Card A」、サイドリスト「1 Side Card」、統率者空欄、デッキID空欄、代表カード名Feature Card、その他は有効基準値／アーキタイプM1506-CB063-Type（フォーマットTestStandard、代表カードなし）／プレイヤー名M1506-CB063-Pのデッキは存在しない	デッキID・表示フラグ・デッキリスト非公開フラグ・代表カード名・アーキタイプの代表カード・フォーマット種別の組合せでの取込結果の確認	前回の残りを消す: デッキ一覧(検索入力)画面でプレイヤー名に「M1506-CB063-」を入れて「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押し、確認ダイアログで「OK」を押し、もう一度検索して0件であることを確かめる。 アーキタイプ一覧に名称が「M1506-CB063-」で始まるものがあれば削除する。アーキタイプ編集画面を「新規登録」から開き、アーキタイプ名(日)に「M1506-CB063-型」、アーキタイプ名(英)に「M1506-CB063-Type」、公開状態に「公開」、フォーマットに「TestStandard」を入れ、代表カードは選ばずに「新規登録」を押す。 試験者が手元で、状態・属性に書いた内容の刷新後20項目のUTF-8のCSVファイル（m1506-cb063-main.csv）を作る（メインリストが複数行のときは、1つのセルの中で改行して二重引用符で囲む）。	ケース専用
+S-M15-06-CBCSV-064	入力ファイル	M15-06 組合せ試験用CSV(CB064)	m1506-cb064-main.csv=プレイヤー名M1506-CB064-P、フォーマットTestCommander、アーキタイプM1506-CB064-Type、デッキ名M1506-CB064-デッキ、表示フラグ1（表示）、デッキリスト非公開フラグ1（非公開）、メインリスト「2 Main Card A」、サイドリスト「1 Side Card」、統率者Commander Card、デッキID空欄、代表カード名空欄、その他は有効基準値／アーキタイプM1506-CB064-Type（フォーマットTestCommander、代表カードFeature Card）／プレイヤー名M1506-CB064-Pのデッキは存在しない	デッキID・表示フラグ・デッキリスト非公開フラグ・代表カード名・アーキタイプの代表カード・フォーマット種別の組合せでの取込結果の確認	前回の残りを消す: デッキ一覧(検索入力)画面でプレイヤー名に「M1506-CB064-」を入れて「検索する」を押し、出たデッキは1件ずつ編集画面を開いて「削除」を押し、確認ダイアログで「OK」を押し、もう一度検索して0件であることを確かめる。 アーキタイプ一覧に名称が「M1506-CB064-」で始まるものがあれば削除する。アーキタイプ編集画面を「新規登録」から開き、アーキタイプ名(日)に「M1506-CB064-型」、アーキタイプ名(英)に「M1506-CB064-Type」、公開状態に「公開」、フォーマットに「TestCommander」を入れ、「代表カード選択」を押して代表カード検索でカード名「Feature Card」を検索し画像を選択して「新規登録」を押す。 試験者が手元で、状態・属性に書いた内容の刷新後20項目のUTF-8のCSVファイル（m1506-cb064-main.csv）を作る（メインリストが複数行のときは、1つのセルの中で改行して二重引用符で囲む）。	ケース専用
+
+exec
+/bin/bash -lc "find integration_test/casegen/combination/units -maxdepth 2 -type f -name design.txt | grep 'M15-' | tail -20" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/combination/combos/M15-07.tsv | cut -f1-3' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+組ID	処理ID	組
+CB-M15-07-001	P1	F01=なし&F02=なし
+CB-M15-07-002	P1	F01=1件以上あり
+CB-M15-07-003	P1	F02=1件以上あり
+
+exec
+/bin/bash -lc "grep -n -E '削除|主キー|未設定|登録' integration_test/casegen/combination/units/M15-10/design.txt | head -80" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+1:##### 0212 sheet-12 アーキタイプ登録CSVアップロード
+2:L0001	アーキタイプ登録CSVアップロード
+11:L0010	機能名アーキタイプ登録CSVアップロード
+12:L0011	概要アーキタイプ情報をCSVにて登録が可能
+19:L0018	アーキタイプ登録CSVアップロード / C7 / image 1
+24:L0023	・旧アーキタイプIDは不要のため削除
+27:L0026	CSVファイルをアップロードして一括でアーキタイプの新規登録・更新ができる。
+28:L0027	フォーマット名（英）が一致するフォーマットが存在しない場合は登録を中止してメッセージを表示する。
+29:L0028	アーキタイプ名（日本語）、アーキタイプ名（英語）、フォーマットが全て一致するアーキタイプがあれば更新。なければ新規登録。
+34:L0033	・識別ID:4「アーキタイプ登録CSVフォーマット」から「旧アーキタイプID」を除去する
+37:L0036	・項目「旧アーキタイプID」に関するエラーチェック、登録/更新処理を除去する
+38:L0037	※CSVの項目はシート「アーキタイプ登録CSV」を参照
+44:L0043	OKなら登録/更新を実施、エラーがあればエラーの内容を画面上に表示する
+45:L0044	4	アーキタイプ登録CSV
+46:L0045	フォーマット	テーブル	-			登録/更新に使用するCSVのファイルをーマットをテーブルで表現
+48:L0047	※CSVの項目はシート「アーキタイプ登録CSV」を参照
+52:L0051	M15-10 アーキタイプ登録CSV / m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV 取込）
+57:L0056	2	ファイル選択・ファイルサイズ・ファイル種別が制約を満たすか	違反してもエラーメッセージを表示するだけで取込は打ち切らず、後続の判定を通過すれば登録まで行う
+67:L0066	途中でエラーになったときは取込内容をすべて取り消し、エラーメッセージを表示して取込画面へ戻す。全行に成功したときは登録完了メッセージを表示して取込画面へ戻す。
+68:L0067	登録の単位と更新する項目
+69:L0068	更新する相手を探すとき、削除済みのアーキタイプとは突き合わせない。名前とフォーマットが同じ削除済みのものがあっても、別に新規登録される。
+78:L0077	成功時出力	取込画面への遷移と登録完了メッセージ
+82:L0081	本機能はCSV取込に共通のメッセージだけを表示する。内容は取込結果に応じたエラーメッセージと、登録完了のメッセージである。
+83:##### 0212 sheet-13 アーキタイプ登録CSV
+84:L0082	アーキタイプ登録CSV
+93:L0091	機能名アーキタイプ登録CSV
+95:L0093	アーキタイプ登録CSV
+96:L0094	識別ID	項目名 ※	主キー	書式・制限	必須	最大文字数
+98:L0096	1	アーキタイプ名（日本語）			〇		テストアーキタイプ	登録/更新のキー項目
+99:L0097	2	アーキタイプ名（英語）			〇		Test Archetype	登録/更新のキー項目
+102:L0100	5	フォーマット			〇		Pioneer	登録/更新のキー項目
+
+ succeeded in 7ms:
+integration_test/casegen/combination/units/M15-07/design.txt
+integration_test/casegen/combination/units/M15-10/design.txt
+integration_test/casegen/combination/units/M15-08/design.txt
+integration_test/casegen/combination/units/M15-06/design.txt
+integration_test/casegen/combination/units/M15-09/design.txt
+integration_test/casegen/combination/units/M15-02/design.txt
+integration_test/casegen/combination/units/M15-05/design.txt
+integration_test/casegen/combination/units/M15-04/design.txt
+integration_test/casegen/combination/units/M15-01/design.txt
+integration_test/casegen/combination/units/M15-11/design.txt
+integration_test/casegen/combination/units/M15-03/design.txt
+
+exec
+/bin/bash -lc "sed -n '14,25p' integration_test/casegen/combination/cases/M15-05_cb_test_cases.tsv | cut -f1,8-11,13" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-M15-05-168	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBNEWREQ-168	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。デッキ試験型乙の代表カードはDeckTestBetaの画像。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ名「M1505-CB168-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-168）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB168-デッキ」、「フォーマット」に「デッキ試験標準」、「アーキタイプ」に「デッキ試験型乙」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」は押さず、代表カードを選ばない／5. 「メインボード」に1行目「2 DeckTestAlpha」、2行目「3 DeckTestBeta」、3行目「2 DeckTestAlpha」を入力する／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにアーキタイプ「デッキ試験型乙」の代表カードであるDeckTestBetaの画像が表示され、メインボードにDeckTestAlphaが「4 DeckTestAlpha」の1行にまとめて、DeckTestBetaが「3 DeckTestBeta」の1行で表示され、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと	CB-M15-05-017
+IT-M15-05-186	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBDECK-186	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。アーキタイプ「デッキ試験型甲」は代表カードの既定の画像（DeckTestAlphaの画像）がある（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ「M1505-CB186-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験標準」、アーキタイプは「デッキ試験型甲」、メインボードに「1 DeckTestBeta」が登録済み（保存前のデッキカードあり）、サイドボードと統率は登録済みカードなし、代表カードは指定していない（S-M15-05-CBDECK-186）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB186-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB186-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード選択」を押し、表示された検索のポップアップで「カード名」に「DeckTestBeta」を入力して「完全一致検索」にチェックを付け、「検索する」を押し、検索結果のDeckTestBetaの行の「選択」を押す／4. 「メインボード」の「1 DeckTestBeta」を消し、1行目「1 M1505-CB186-NoCard」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の警告表示、「代表カード」、「メインボード」、「統率」を見る	更新後のデッキ編集画面に、警告「メインボードのカードが、現行フォーマットに則さない形で登録されています。」と詳細メッセージ「1 行目の M1505-CB186-NoCard は存在しません」が表示され、代表カードにDeckTestBetaの画像が表示され、「メインボード」が空で、入力した「1 M1505-CB186-NoCard」は登録されず、保存前の「1 DeckTestBeta」も表示されないこと	CB-M15-05-035
+IT-M15-05-187	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBDECK-187	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。アーキタイプ「デッキ試験型甲」は代表カードの既定の画像（DeckTestAlphaの画像）がある（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ「M1505-CB187-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験標準」、アーキタイプは「デッキ試験型甲」、メインボードに「1 DeckTestBeta」が登録済み（保存前のデッキカードあり）、サイドボードと統率は登録済みカードなし、代表カードは指定していない（S-M15-05-CBDECK-187）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB187-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB187-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード選択」を押し、表示された検索のポップアップで「カード名」に「DeckTestBeta」を入力して「完全一致検索」にチェックを付け、「検索する」を押し、検索結果のDeckTestBetaの行の「選択」を押す／4. 「メインボード」の「1 DeckTestBeta」を消し、1行目「2 DeckTestAlpha」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の警告表示、「代表カード」、「メインボード」、「統率」を見る	更新後のデッキ編集画面に、「現行フォーマットに則さない形で登録されています。」の警告が表示されず、代表カードにDeckTestBetaの画像が表示され、「メインボード」は「2 DeckTestAlpha」の行だけで、保存前に登録されていた内容は残っていないこと	CB-M15-05-036
+IT-M15-05-188	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBDECK-188	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。アーキタイプ「デッキ試験型甲」は代表カードの既定の画像（DeckTestAlphaの画像）がある（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ「M1505-CB188-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験標準」、アーキタイプは「デッキ試験型甲」、メインボードに「1 DeckTestBeta」が登録済み（保存前のデッキカードあり）、サイドボードと統率は登録済みカードなし、代表カードは指定していない（S-M15-05-CBDECK-188）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB188-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB188-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード選択」を押し、表示された検索のポップアップで「カード名」に「DeckTestBeta」を入力して「完全一致検索」にチェックを付け、「検索する」を押し、検索結果のDeckTestBetaの行の「選択」を押す／4. 「メインボード」の「1 DeckTestBeta」を消し、1行目「1 DeckTestBanned」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の警告表示、「代表カード」、「メインボード」、「統率」を見る	更新後のデッキ編集画面に、警告「メインボードのカードが、現行フォーマットに則さない形で登録されています。」と詳細メッセージ「1 行目の DeckTestBanned は禁止カードです」が表示され、代表カードにDeckTestBetaの画像が表示され、「メインボード」は「1 DeckTestBanned」の行だけで、保存前に登録されていた内容は残っていないこと	CB-M15-05-037
+IT-M15-05-189	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBDECK-189	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。アーキタイプ「デッキ試験型甲」は代表カードの既定の画像（DeckTestAlphaの画像）がある（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ「M1505-CB189-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験標準」、アーキタイプは「デッキ試験型甲」、メインボードに「1 DeckTestBeta」が登録済み（保存前のデッキカードあり）、サイドボードと統率は登録済みカードなし、代表カードは指定していない（S-M15-05-CBDECK-189）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB189-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB189-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード選択」を押し、表示された検索のポップアップで「カード名」に「DeckTestBeta」を入力して「完全一致検索」にチェックを付け、「検索する」を押し、検索結果のDeckTestBetaの行の「選択」を押す／4. 「メインボード」の「1 DeckTestBeta」を消し、1行目「1 DeckTestOut」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の警告表示、「代表カード」、「メインボード」、「統率」を見る	更新後のデッキ編集画面に、警告「メインボードのカードが、現行フォーマットに則さない形で登録されています。」と詳細メッセージ「1 行目の DeckTestOut はフォーマットの範囲から外れています」が表示され、代表カードにDeckTestBetaの画像が表示され、「メインボード」は「1 DeckTestOut」の行だけで、保存前に登録されていた内容は残っていないこと	CB-M15-05-038
+IT-M15-05-190	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBDECK-190	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。アーキタイプ「デッキ試験型甲」は代表カードの既定の画像（DeckTestAlphaの画像）がある（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ「M1505-CB190-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験標準」、アーキタイプは「デッキ試験型甲」、メインボードに「1 DeckTestBeta」が登録済み（保存前のデッキカードあり）、サイドボードと統率は登録済みカードなし、代表カードは指定していない（S-M15-05-CBDECK-190）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB190-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB190-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード選択」を押し、表示された検索のポップアップで「カード名」に「DeckTestBeta」を入力して「完全一致検索」にチェックを付け、「検索する」を押し、検索結果のDeckTestBetaの行の「選択」を押す／4. 「メインボード」の「1 DeckTestBeta」を消し、1行目「5 DeckTestAlpha」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の警告表示、「代表カード」、「メインボード」、「統率」を見る	更新後のデッキ編集画面に、警告「メインボードのカードが、現行フォーマットに則さない形で登録されています。」と、「1 行目の DeckTestAlpha が」で始まり「5枚以上登録されています」で終わる詳細メッセージが表示され、代表カードにDeckTestBetaの画像が表示され、「メインボード」は「5 DeckTestAlpha」の行だけで、保存前に登録されていた内容は残っていないこと	CB-M15-05-039
+IT-M15-05-191	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-CBARC-191,S-M15-05-CBDECK-191	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カードがある。デッキ試験単一は同じカードを1枚までとし、枚数制限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。（S-M15-05-FMT、S-M15-05-CARD）／③ アーキタイプ「M1505-CB191-型」が1件あり、フォーマットは「デッキ試験単一」、公開状態は公開、代表カードはDeckTestAlphaの画像（S-M15-05-CBARC-191）／④ デッキ「M1505-CB191-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験単一」、アーキタイプは「M1505-CB191-型」、メインボードに「1 DeckTestBeta」が登録済み（保存前のデッキカードあり）、サイドボードと統率は登録済みカードなし、代表カードは指定していない（S-M15-05-CBDECK-191）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB191-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB191-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード選択」を押し、表示された検索のポップアップで「カード名」に「DeckTestBeta」を入力して「完全一致検索」にチェックを付け、「検索する」を押し、検索結果のDeckTestBetaの行の「選択」を押す／4. 「メインボード」の「1 DeckTestBeta」を消し、1行目「2 DeckTestAlpha」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の警告表示、「代表カード」、「メインボード」、「統率」を見る	更新後のデッキ編集画面に、警告「メインボードのカードが、現行フォーマットに則さない形で登録されています。」と、「1 行目の DeckTestAlpha 」で始まり「2枚以上登録されています」で終わる詳細メッセージが表示され、代表カードにDeckTestBetaの画像が表示され、「メインボード」は「2 DeckTestAlpha」の行だけで、保存前に登録されていた内容は残っていないこと	CB-M15-05-040
+IT-M15-05-192	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-CBARC-192,S-M15-05-CBDECK-192	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カードがある。デッキ試験統率なしは統率ボードの設定がなく、他の制限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。（S-M15-05-FMT、S-M15-05-CARD）／③ アーキタイプ「M1505-CB192-型」が1件あり、フォーマットは「デッキ試験統率なし」、公開状態は公開、代表カードはDeckTestAlphaの画像（S-M15-05-CBARC-192）／④ デッキ「M1505-CB192-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験統率なし」、アーキタイプは「M1505-CB192-型」、メインボードに「1 DeckTestBeta」が登録済み（保存前のデッキカードあり）、サイドボードと統率は登録済みカードなし、代表カードは指定していない（S-M15-05-CBDECK-192）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB192-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB192-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード選択」を押し、表示された検索のポップアップで「カード名」に「DeckTestBeta」を入力して「完全一致検索」にチェックを付け、「検索する」を押し、検索結果のDeckTestBetaの行の「選択」を押す／4. 「メインボード」の「1 DeckTestBeta」を消して空にし、「統率」に1行目「1 DeckTestAlpha」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の警告表示、「代表カード」、「メインボード」、「統率」を見る	更新後のデッキ編集画面に、警告「統率のカードが、現行フォーマットに則さない形で登録されています。」と詳細メッセージ「このフォーマットでは統率用カードを使用しません」が表示され、代表カードにDeckTestBetaの画像が表示され、「統率」に「1 DeckTestAlpha」だけが表示され、保存前の「1 DeckTestBeta」は「メインボード」に表示されないこと	CB-M15-05-041
+IT-M15-05-193	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-CBARC-193,S-M15-05-CBDECK-193	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カードがある。デッキ試験上限はメインボードの上限枚数が5、他の制限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。（S-M15-05-FMT、S-M15-05-CARD）／③ アーキタイプ「M1505-CB193-型」が1件あり、フォーマットは「デッキ試験上限」、公開状態は公開、代表カードはDeckTestAlphaの画像（S-M15-05-CBARC-193）／④ デッキ「M1505-CB193-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験上限」、アーキタイプは「M1505-CB193-型」、メインボードに「1 DeckTestBeta」が登録済み（保存前のデッキカードあり）、サイドボードと統率は登録済みカードなし、代表カードは指定していない（S-M15-05-CBDECK-193）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB193-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB193-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード選択」を押し、表示された検索のポップアップで「カード名」に「DeckTestBeta」を入力して「完全一致検索」にチェックを付け、「検索する」を押し、検索結果のDeckTestBetaの行の「選択」を押す／4. 「メインボード」の「1 DeckTestBeta」を消し、1行目「3 DeckTestAlpha」、2行目「3 DeckTestBeta」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の警告表示、「代表カード」、「メインボード」、「統率」を見る	更新後のデッキ編集画面に、警告「メインボードのカードが、現行フォーマットに則さない形で登録されています。」と詳細メッセージ「ボード内のカード枚数が 5 枚を上回っています」が表示され、代表カードにDeckTestBetaの画像が表示され、「メインボード」は「3 DeckTestAlpha」、「3 DeckTestBeta」の行だけで、保存前に登録されていた内容は残っていないこと	CB-M15-05-042
+IT-M15-05-194	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-CBARC-194,S-M15-05-CBDECK-194	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カードがある。デッキ試験下限はメインボードの下限枚数が5、他の制限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。（S-M15-05-FMT、S-M15-05-CARD）／③ アーキタイプ「M1505-CB194-型」が1件あり、フォーマットは「デッキ試験下限」、公開状態は公開、代表カードはDeckTestAlphaの画像（S-M15-05-CBARC-194）／④ デッキ「M1505-CB194-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験下限」、アーキタイプは「M1505-CB194-型」、メインボードに「1 DeckTestBeta」が登録済み（保存前のデッキカードあり）、サイドボードと統率は登録済みカードなし、代表カードは指定していない（S-M15-05-CBDECK-194）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB194-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB194-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード選択」を押し、表示された検索のポップアップで「カード名」に「DeckTestBeta」を入力して「完全一致検索」にチェックを付け、「検索する」を押し、検索結果のDeckTestBetaの行の「選択」を押す／4. 「メインボード」の「1 DeckTestBeta」を消し、1行目「2 DeckTestAlpha」、2行目「2 DeckTestBeta」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の警告表示、「代表カード」、「メインボード」、「統率」を見る	更新後のデッキ編集画面に、警告「メインボードのカードが、現行フォーマットに則さない形で登録されています。」と詳細メッセージ「ボード内のカード枚数が 5 枚を下回っています」が表示され、代表カードにDeckTestBetaの画像が表示され、「メインボード」は「2 DeckTestAlpha」、「2 DeckTestBeta」の行だけで、保存前に登録されていた内容は残っていないこと	CB-M15-05-043
+IT-M15-05-195	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-ARC,S-M15-05-CBDECK12-195	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・アーキタイプがある（S-M15-05-FMT、S-M15-05-ARC）／③ デッキ12件がある。デッキ名は「M1505-CB195-01」〜「M1505-CB195-12」で、どのデッキも記事に紐づいていない。デッキ名に「M1505-CB195」を含む他のデッキはない（S-M15-05-CBDECK12-195）	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB195」を入力して「日付クリア」と「検索する」を押す／2. 「並べかえ」の「項目」で「デッキID」、「ソート順」で「降順」を選び、検索結果の「件数」で「10件」を選ぶ／3. ページングUIで2ページ目を開く（デッキ情報が「M1505-CB195-01」「M1505-CB195-02」の2件）／4. 「M1505-CB195-01」のデッキ情報をクリックして編集画面を開き、「削除」を押して確認ダイアログで「OK」を押す／5. 削除後に表示された画面を見る	「削除しました」が表示され、デッキ検索の2ページ目が表示されて、「M1505-CB195-02」が表示され「M1505-CB195-01」は表示されないこと	CB-M15-05-044
+IT-M15-05-196	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-ARC,S-M15-05-CBNEW-196	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・アーキタイプがある（S-M15-05-FMT、S-M15-05-ARC）／③ 新しいブラウザセッションで、デッキの検索を一度も実行していない（保持しているページ番号なし）。デッキ名「M1505-CB196-デッキ」のデッキがない（S-M15-05-CBNEW-196）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB196-デッキ」、「フォーマット」に「デッキ試験標準」、「アーキタイプ」に「デッキ試験型丙」、「公開状態」に「非公開」を設定して「新規登録」を押し、移った編集画面を開いたままにする（このデッキはどの記事にも紐づけない）／4. 「削除」を押し、確認ダイアログで「OK」を押す／5. 削除後に表示された画面を見る	「削除しました」が表示され、デッキ検索の特定のページではなく、デッキ一覧(検索入力)画面が表示されること	CB-M15-05-045
+
+exec
+/bin/bash -lc "sed -n '1,13p' integration_test/casegen/combination/cases/M15-05_cb_test_cases.tsv | cut -f1,8-11,13" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+テストID	使用シード	事前準備	手順	期待結果	項目ID
+IT-M15-05-156	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBNEWREQ-156	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。デッキ試験型甲の代表カードはDeckTestAlphaの画像。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ名「M1505-CB156-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-156）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB156-デッキ」、「フォーマット」に「デッキ試験標準」、「アーキタイプ」に「デッキ試験型甲」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」を押し、「カード名」に「DeckTestBeta」を入力して「検索する」を押し、検索結果のDeckTestBetaを選んで「決定」を押す／5. 「メインボード」に1行目「2 DeckTestAlpha」、2行目「2 DeckTestBeta」を入力する／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestBetaの画像が表示されてアーキタイプ「デッキ試験型甲」の代表カードであるDeckTestAlphaの画像は表示されず、メインボードに「2 DeckTestAlpha」「2 DeckTestBeta」の2行が表示され、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと	CB-M15-05-003
+IT-M15-05-157	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBNEWREQ-157	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。デッキ試験型甲の代表カードはDeckTestAlphaの画像。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ名「M1505-CB157-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-157）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB157-デッキ」、「フォーマット」に「デッキ試験標準」、「アーキタイプ」に「デッキ試験型甲」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」を押し、「カード名」に「DeckTestBeta」を入力して「検索する」を押し、検索結果のDeckTestBetaを選んで「決定」を押す／5. 「メインボード」に1行目「1 DeckTestOut」を入力する／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestBetaの画像が表示されてDeckTestAlphaの画像は表示されず、メインボードに「1 DeckTestOut」の1行が表示され、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと	CB-M15-05-005
+IT-M15-05-158	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBNEWREQ-158	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。デッキ試験型甲の代表カードはDeckTestAlphaの画像。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ名「M1505-CB158-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-158）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB158-デッキ」、「フォーマット」に「デッキ試験標準」、「アーキタイプ」に「デッキ試験型甲」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」を押し、「カード名」に「DeckTestBeta」を入力して「検索する」を押し、検索結果のDeckTestBetaを選んで「決定」を押す／5. 「メインボード」に1行目「5 DeckTestAlpha」を入力する／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestBetaの画像が表示されてDeckTestAlphaの画像は表示されず、メインボードに「5 DeckTestAlpha」の1行が表示され、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと	CB-M15-05-006
+IT-M15-05-159	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-CBARC-159,S-M15-05-CBNEWREQ-159	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カードがある。デッキ試験単一は同じカードを1枚までとし、枚数制限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。（S-M15-05-FMT、S-M15-05-CARD）／③ アーキタイプ「M1505-CB159-型」が1件あり、フォーマットは「デッキ試験単一」、公開状態は公開、代表カードはDeckTestAlphaの画像（S-M15-05-CBARC-159）／④ デッキ名「M1505-CB159-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-159）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB159-デッキ」、「フォーマット」に「デッキ試験単一」、「アーキタイプ」に「M1505-CB159-型」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」を押し、「カード名」に「DeckTestBeta」を入力して「検索する」を押し、検索結果のDeckTestBetaを選んで「決定」を押す／5. 「メインボード」に1行目「2 DeckTestAlpha」を入力する／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestBetaの画像が表示されてDeckTestAlphaの画像は表示されず、メインボードに「2 DeckTestAlpha」の1行が表示され、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと	CB-M15-05-007
+IT-M15-05-160	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-CBARC-160,S-M15-05-CBNEWREQ-160	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カードがある。デッキ試験統率なしは統率ボードの設定がなく、他の制限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。（S-M15-05-FMT、S-M15-05-CARD）／③ アーキタイプ「M1505-CB160-型」が1件あり、フォーマットは「デッキ試験統率なし」、公開状態は公開、代表カードはDeckTestAlphaの画像（S-M15-05-CBARC-160）／④ デッキ名「M1505-CB160-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-160）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB160-デッキ」、「フォーマット」に「デッキ試験統率なし」、「アーキタイプ」に「M1505-CB160-型」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」を押し、「カード名」に「DeckTestBeta」を入力して「検索する」を押し、検索結果のDeckTestBetaを選んで「決定」を押す／5. 「統率」に1行目「1 DeckTestAlpha」を入力する／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestBetaの画像が表示されてDeckTestAlphaの画像は表示されず、統率に「1 DeckTestAlpha」の1行が表示され、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと	CB-M15-05-008
+IT-M15-05-161	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-CBARC-161,S-M15-05-CBNEWREQ-161	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カードがある。デッキ試験上限はメインボードの上限枚数が5、他の制限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。（S-M15-05-FMT、S-M15-05-CARD）／③ アーキタイプ「M1505-CB161-型」が1件あり、フォーマットは「デッキ試験上限」、公開状態は公開、代表カードはDeckTestAlphaの画像（S-M15-05-CBARC-161）／④ デッキ名「M1505-CB161-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-161）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB161-デッキ」、「フォーマット」に「デッキ試験上限」、「アーキタイプ」に「M1505-CB161-型」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」を押し、「カード名」に「DeckTestBeta」を入力して「検索する」を押し、検索結果のDeckTestBetaを選んで「決定」を押す／5. 「メインボード」に1行目「3 DeckTestAlpha」、2行目「3 DeckTestBeta」を入力する／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestBetaの画像が表示されてDeckTestAlphaの画像は表示されず、メインボードに「3 DeckTestAlpha」「3 DeckTestBeta」の2行が表示され、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと	CB-M15-05-009
+IT-M15-05-162	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-CBARC-162,S-M15-05-CBNEWREQ-162	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カードがある。デッキ試験下限はメインボードの下限枚数が5、他の制限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。（S-M15-05-FMT、S-M15-05-CARD）／③ アーキタイプ「M1505-CB162-型」が1件あり、フォーマットは「デッキ試験下限」、公開状態は公開、代表カードはDeckTestAlphaの画像（S-M15-05-CBARC-162）／④ デッキ名「M1505-CB162-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-162）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB162-デッキ」、「フォーマット」に「デッキ試験下限」、「アーキタイプ」に「M1505-CB162-型」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」を押し、「カード名」に「DeckTestBeta」を入力して「検索する」を押し、検索結果のDeckTestBetaを選んで「決定」を押す／5. 「メインボード」に1行目「2 DeckTestAlpha」、2行目「2 DeckTestBeta」を入力する／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestBetaの画像が表示されてDeckTestAlphaの画像は表示されず、メインボードに「2 DeckTestAlpha」「2 DeckTestBeta」の2行が表示され、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと	CB-M15-05-010
+IT-M15-05-163	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBDECKW-163	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。デッキ試験型甲の代表カードはDeckTestAlphaの画像。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ「M1505-CB163-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験標準」、アーキタイプは「デッキ試験型甲」、代表カードはDeckTestAlphaの画像、メインボードに「3 DeckTestBeta」の1行（S-M15-05-CBDECKW-163）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB163-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB163-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード検索」を押し、「カード名」に「DeckTestBeta」を入力して「検索する」を押し、検索結果のDeckTestBetaを選んで「決定」を押す／4. 「メインボード」の入力済みの内容をすべて消し、1行目「2 DeckTestAlpha」、2行目「1 DeckTestBeta」、3行目「2 DeckTestAlpha」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestBetaの画像が表示され、メインボードに「4 DeckTestAlpha」「1 DeckTestBeta」の2行だけが表示されて更新前の「3 DeckTestBeta」の行は表示されず、警告は表示されないこと	CB-M15-05-011
+IT-M15-05-164	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBDECKW-164	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。デッキ試験型甲の代表カードはDeckTestAlphaの画像。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ「M1505-CB164-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験標準」、アーキタイプは「デッキ試験型甲」、代表カードはDeckTestAlphaの画像、メイン・サイド・統率とも登録済みカードなし（S-M15-05-CBDECKW-164）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB164-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB164-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード検索」は押さず、代表カードを選ばない／4. 「メインボード」の入力済みの内容をすべて消し、1行目「1 M1505-CB164-Nothing」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestAlphaの画像が表示され、メインボードに「M1505-CB164-Nothing」の行は表示されず、警告「メインボードのカードが、現行フォーマットに則さない形で登録されています。」と詳細メッセージ「1 行目の M1505-CB164-Nothing は存在しません」が表示されること	CB-M15-05-012
+IT-M15-05-165	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBARC-165,S-M15-05-CBDECKW-165	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ アーキタイプ「M1505-CB165-型」が1件あり、フォーマットはデッキ試験標準、公開状態は公開、代表カードは未設定（S-M15-05-CBARC-165）／④ デッキ「M1505-CB165-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験標準」、アーキタイプは「M1505-CB165-型」、代表カードの画像は未設定、メインボードに「2 DeckTestAlpha」の1行（S-M15-05-CBDECKW-165）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB165-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB165-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード検索」を押し、「カード名」に「DeckTestBeta」を入力して「検索する」を押し、検索結果のDeckTestBetaを選んで「決定」を押す／4. 「メインボード」の入力済みの内容をすべて消して空にする／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestBetaの画像が表示され、メインボードが空で更新前の「2 DeckTestAlpha」の行は表示されず、警告は表示されないこと	CB-M15-05-013
+IT-M15-05-166	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBARC-166,S-M15-05-CBNEWREQ-166	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ アーキタイプ「M1505-CB166-型」が1件あり、フォーマットはデッキ試験標準、公開状態は公開、代表カードは未設定（S-M15-05-CBARC-166）／④ デッキ名「M1505-CB166-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-166）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB166-デッキ」、「フォーマット」に「デッキ試験標準」、「アーキタイプ」に「M1505-CB166-型」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」を押し、「カード名」に「DeckTestBeta」を入力して「検索する」を押し、検索結果のDeckTestBetaを選んで「決定」を押す／5. 「メインボード」に1行目「2 DeckTestAlpha」、2行目「1 M1505-CB166-Nothing」を入力する／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestBetaの画像が表示され、メインボードに「2 DeckTestAlpha」の1行だけが表示されて「M1505-CB166-Nothing」の行は表示されず、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと	CB-M15-05-015
+IT-M15-05-167	S-M15-05-ADM,S-M15-05-FMT,S-M15-05-CARD,S-M15-05-ARC,S-M15-05-CBNEWREQ-167	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。デッキ試験型乙の代表カードはDeckTestBetaの画像。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ名「M1505-CB167-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-167）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB167-デッキ」、「フォーマット」に「デッキ試験標準」、「アーキタイプ」に「デッキ試験型乙」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」は押さず、代表カードを選ばない／5. 「統率」「メインボード」「サイドボード」は空のままにする／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにアーキタイプ「デッキ試験型乙」の代表カードであるDeckTestBetaの画像が表示され、統率・メインボード・サイドボードがすべて空で、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと	CB-M15-05-016
+
+exec
+/bin/bash -lc 'find integration_test/casegen/combination/units/_common -maxdepth 2 -type f -print' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/units/_common/0305_sheet-13.txt
+integration_test/casegen/combination/units/_common/0202_sheet-34.txt
+integration_test/casegen/combination/units/_common/0205_sheet-18.txt
+integration_test/casegen/combination/units/_common/0416_sheet-9.txt
+integration_test/casegen/combination/units/_common/0203_sheet-10.txt
+integration_test/casegen/combination/units/_common/0207_sheet-25.txt
+integration_test/casegen/combination/units/_common/0203_sheet-16.txt
+integration_test/casegen/combination/units/_common/0204_sheet-64.txt
+integration_test/casegen/combination/units/_common/0416_sheet-4.txt
+integration_test/casegen/combination/units/_common/0416_sheet-14.txt
+integration_test/casegen/combination/units/_common/0204_sheet-67.txt
+integration_test/casegen/combination/units/_common/0207_sheet-16.txt
+integration_test/casegen/combination/units/_common/0207_sheet-26.txt
+integration_test/casegen/combination/units/_common/0416_sheet-7.txt
+integration_test/casegen/combination/units/_common/0416_sheet-5.txt
+integration_test/casegen/combination/units/_common/0204_sheet-61.txt
+integration_test/casegen/combination/units/_common/0404_sheet-11.txt
+integration_test/casegen/combination/units/_common/0202_sheet-50.txt
+integration_test/casegen/combination/units/_common/0204_sheet-66.txt
+integration_test/casegen/combination/units/_common/0204_sheet-62.txt
+integration_test/casegen/combination/units/_common/0204_sheet-68.txt
+integration_test/casegen/combination/units/_common/0204_sheet-65.txt
+integration_test/casegen/combination/units/_common/0204_sheet-60.txt
+integration_test/casegen/combination/units/_common/0304_sheet-10.txt
+integration_test/casegen/combination/units/_common/0202_sheet-53.txt
+integration_test/casegen/combination/units/_common/0302_sheet-8.txt
+integration_test/casegen/combination/units/_common/0202_sheet-3.txt
+integration_test/casegen/combination/units/_common/0416_sheet-10.txt
+integration_test/casegen/combination/units/_common/0416_sheet-3.txt
+integration_test/casegen/combination/units/_common/0206_sheet-17.txt
+integration_test/casegen/combination/units/_common/0404_sheet-9.txt
+integration_test/casegen/combination/units/_common/0203_sheet-27.txt
+integration_test/casegen/combination/units/_common/0206_sheet-13.txt
+integration_test/casegen/combination/units/_common/0204_sheet-63.txt
+integration_test/casegen/combination/units/_common/0416_sheet-6.txt
+integration_test/casegen/combination/units/_common/0202_sheet-51.txt
+
+exec
+/bin/bash -lc "grep -n -E '"'^L0(18[0-9]|19[0-9]|20[0-9]|21[0-9]|22[0-9])'"' integration_test/casegen/combination/units/M15-05/design.txt | tail -45" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+186:L0185	5
+187:L0186	6
+188:L0187	7
+189:L0188	8
+190:L0189	デッキ編集 / B222 / image 3
+191:L0190	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+192:L0191	1	プレイヤー名	文字列	-
+193:L0192	2	検索する	ボタン	-			入力されたプレイヤー名をもとに検索を実行する
+194:L0193	3	プレイヤーの情報	各種	-			検索条件に合致する ID, プレイヤー名を表示
+195:L0194	※カスタマイズ対応、DCIナンバーを除去する
+196:L0195	4	決定	ボタン	-			入力フォームの「プレイヤー名」に値を反映して
+197:L0196	ポップアップを閉じる
+198:L0197	※カスタマイズ対応、DCIナンバーへの反映を除去する
+199:L0198	5	ページングUI	リンク	-
+200:L0199	イベント検索ポップアップ
+201:L0200	1
+202:L0201	2
+203:L0202	3
+204:L0203	デッキ編集 / B254 / image 2
+205:L0204	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+206:L0205	1	イベント名	文字列	-
+207:L0206	2	店舗	セレクトボックス	-			サジェスト機能
+208:L0207	3	開催日(From)	文字列	-			カレンダー選択
+209:L0208	4	開催日(To)	文字列	-			カレンダー選択
+210:L0209	5	検索する	ボタン	-			入力されたイベント名、店舗、開催日をもとに検索を実行する
+211:L0210	6	イベントの情報	各種	-			検索条件に合致する ID, イベント名, 開催日を表示
+212:L0211	同じイベントで開催日が複数登録されているデータはまとめて表示する
+213:L0212	7	決定	ボタン	-			入力フォームの「イベント名(日)」「イベント名(英)」「開催日」に
+214:L0213	値を反映してポップアップを閉じる
+215:L0214	8	ページングUI	リンク	-
+216:L0215	デッキ情報複製ポップアップ
+217:L0216	デッキ編集 / B298 / image 1
+218:L0217	識別ID	ラベル	書式・制限	必須	最大値	初期値	画面部品の説明
+219:L0218	1	指定回数	数値	△			複製する回数を指定
+220:L0219	識別ID:2「複製保存」押下時は必須
+221:L0220	2	複製保存	ボタン	-			指定回数の値に沿って、デッキ情報を複製する
+222:L0221	3	複製新規	ボタン	-			現在表示中のデッキ情報を引き継ぎ、デッキ新規登録画面へ遷移する
+223:L0222	Source:
+224:L0223	functions/pf-eccube3/m15-05_admin_deck_deck_edit.md
+225:L0224	現行仕様
+226:L0225	M15-05 デッキ新規登録/編集/削除/複製 / デッキ管理 — 新規登録・編集・削除・複製
+227:L0226	業務ロジック
+228:L0227	画面の表示
+229:L0228	開き方	表示内容
+230:L0229	新規登録	空のデッキを対象に入力欄を表示する。イベント検索・カード検索の補助入力を添える
+
+exec
+/bin/bash -lc "sed -n '1,60p' integration_test/casegen/combination/cases/M15-05_cb_seed_data.tsv | cut -f1-4" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "grep -R -n -F '主キー以外の入力がすべて未設定' integration_test/casegen/combination/units --exclude-dir=review" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/units/M16-04/design.txt:105:L0104	1	主キーの値があり、主キー以外の入力がすべて未設定	当該行を削除する
+integration_test/casegen/combination/units/M16-04/design.txt:123:L0122	削除	主キーがあり、主キー以外の入力がすべて未設定の行の保存
+
+ succeeded in 0ms:
+シードID	区分	論理名	状態・属性
+S-M15-05-CBNEWREQ-156	不存在状態	M15-05 登録用の不存在状態(CB156)	デッキ名「M1505-CB156-デッキ」のデッキは存在しない。新規登録するデッキの現行フォーマットは偽（デッキ新規登録画面に入力欄が無く、初期値が偽）
+S-M15-05-CBNEWREQ-157	不存在状態	M15-05 登録用の不存在状態(CB157)	デッキ名「M1505-CB157-デッキ」のデッキは存在しない。新規登録するデッキの現行フォーマットは偽（デッキ新規登録画面に入力欄が無く、初期値が偽）
+S-M15-05-CBNEWREQ-158	不存在状態	M15-05 登録用の不存在状態(CB158)	デッキ名「M1505-CB158-デッキ」のデッキは存在しない。新規登録するデッキの現行フォーマットは偽（デッキ新規登録画面に入力欄が無く、初期値が偽）
+S-M15-05-CBARC-159	アーキタイプ	代表カードがAlphaのアーキタイプ(CB159)	アーキタイプ名(日)=M1505-CB159-型／アーキタイプ名(英)=M1505-CB159-Type／フォーマット=デッキ試験単一／公開状態=公開／代表カード=DeckTestAlphaの画像／デッキタグなし
+S-M15-05-CBNEWREQ-159	不存在状態	M15-05 登録用の不存在状態(CB159)	デッキ名「M1505-CB159-デッキ」のデッキは存在しない。新規登録するデッキの現行フォーマットは偽（デッキ新規登録画面に入力欄が無く、初期値が偽）
+S-M15-05-CBARC-160	アーキタイプ	代表カードがAlphaのアーキタイプ(CB160)	アーキタイプ名(日)=M1505-CB160-型／アーキタイプ名(英)=M1505-CB160-Type／フォーマット=デッキ試験統率なし／公開状態=公開／代表カード=DeckTestAlphaの画像／デッキタグなし
+S-M15-05-CBNEWREQ-160	不存在状態	M15-05 登録用の不存在状態(CB160)	デッキ名「M1505-CB160-デッキ」のデッキは存在しない。新規登録するデッキの現行フォーマットは偽（デッキ新規登録画面に入力欄が無く、初期値が偽）
+S-M15-05-CBARC-161	アーキタイプ	代表カードがAlphaのアーキタイプ(CB161)	アーキタイプ名(日)=M1505-CB161-型／アーキタイプ名(英)=M1505-CB161-Type／フォーマット=デッキ試験上限／公開状態=公開／代表カード=DeckTestAlphaの画像／デッキタグなし
+S-M15-05-CBNEWREQ-161	不存在状態	M15-05 登録用の不存在状態(CB161)	デッキ名「M1505-CB161-デッキ」のデッキは存在しない。新規登録するデッキの現行フォーマットは偽（デッキ新規登録画面に入力欄が無く、初期値が偽）
+S-M15-05-CBARC-162	アーキタイプ	代表カードがAlphaのアーキタイプ(CB162)	アーキタイプ名(日)=M1505-CB162-型／アーキタイプ名(英)=M1505-CB162-Type／フォーマット=デッキ試験下限／公開状態=公開／代表カード=DeckTestAlphaの画像／デッキタグなし
+S-M15-05-CBNEWREQ-162	不存在状態	M15-05 登録用の不存在状態(CB162)	デッキ名「M1505-CB162-デッキ」のデッキは存在しない。新規登録するデッキの現行フォーマットは偽（デッキ新規登録画面に入力欄が無く、初期値が偽）
+S-M15-05-CBDECKW-163	デッキ	M15-05 更新用デッキ(CB163)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1505-163〕）／デッキ名=M1505-CB163-デッキ／デッキ種別=event／管理者作成／現行フォーマット=真／フォーマット=デッキ試験標準／アーキタイプ=デッキ試験型甲／公開状態=非公開／イベント詳細なし／代表カード=はDeckTestAlphaの画像／メインボードに「3 DeckTestBeta」の1行
+S-M15-05-CBDECKW-164	デッキ	M15-05 更新用デッキ(CB164)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1505-164〕）／デッキ名=M1505-CB164-デッキ／デッキ種別=event／管理者作成／現行フォーマット=真／フォーマット=デッキ試験標準／アーキタイプ=デッキ試験型甲／公開状態=非公開／イベント詳細なし／代表カード=はDeckTestAlphaの画像／メイン・サイド・統率とも登録済みカードなし
+S-M15-05-CBARC-165	アーキタイプ	代表カードが無いアーキタイプ(CB165)	アーキタイプ名(日)=M1505-CB165-型／アーキタイプ名(英)=M1505-CB165-Type／フォーマット=デッキ試験標準／公開状態=公開／代表カード=未設定（代表カードの画像が無い）／デッキタグなし
+S-M15-05-CBDECKW-165	デッキ	M15-05 更新用デッキ(CB165)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1505-165〕）／デッキ名=M1505-CB165-デッキ／デッキ種別=event／管理者作成／現行フォーマット=真／フォーマット=デッキ試験標準／アーキタイプ=M1505-CB165-型／公開状態=非公開／イベント詳細なし／代表カード=の画像は未設定／メインボードに「2 DeckTestAlpha」の1行
+S-M15-05-CBNEWREQ-166	不存在状態	M15-05 登録用の不存在状態(CB166)	デッキ名「M1505-CB166-デッキ」のデッキは存在しない。新規登録するデッキの現行フォーマットは偽（デッキ新規登録画面に入力欄が無く、初期値が偽）。「M1505-CB166-Nothing」という名前のカードも、不明参照として許可された文字列もない
+S-M15-05-CBARC-166	アーキタイプ	代表カードが無いアーキタイプ(CB166)	アーキタイプ名(日)=M1505-CB166-型／アーキタイプ名(英)=M1505-CB166-Type／フォーマット=デッキ試験標準／公開状態=公開／代表カード=未設定（代表カードの画像が無い）／デッキタグなし
+S-M15-05-CBNEWREQ-167	不存在状態	M15-05 登録用の不存在状態(CB167)	デッキ名「M1505-CB167-デッキ」のデッキは存在しない。新規登録するデッキの現行フォーマットは偽（デッキ新規登録画面に入力欄が無く、初期値が偽）
+S-M15-05-CBNEWREQ-168	不存在状態	M15-05 登録用の不存在状態(CB168)	デッキ名「M1505-CB168-デッキ」のデッキは存在しない。新規登録するデッキの現行フォーマットは偽（デッキ新規登録画面に入力欄が無く、初期値が偽）
+S-M15-05-CBDECK-186	デッキ	M15-05 更新時の現行フォーマット検査用デッキ(CB186)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1505-186〕）／デッキ名=M1505-CB186-デッキ／デッキ種別=event／管理者作成／現行フォーマット=真／フォーマット=デッキ試験標準／アーキタイプ=デッキ試験型甲／公開状態=非公開／イベント詳細なし／メインボード=DeckTestBetaを1枚（保存前のデッキカード）／サイドボード・統率とも登録済みカードなし／代表カードは指定しない
+S-M15-05-CBDECK-187	デッキ	M15-05 更新時の現行フォーマット検査用デッキ(CB187)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1505-187〕）／デッキ名=M1505-CB187-デッキ／デッキ種別=event／管理者作成／現行フォーマット=真／フォーマット=デッキ試験標準／アーキタイプ=デッキ試験型甲／公開状態=非公開／イベント詳細なし／メインボード=DeckTestBetaを1枚（保存前のデッキカード）／サイドボード・統率とも登録済みカードなし／代表カードは指定しない
+S-M15-05-CBDECK-188	デッキ	M15-05 更新時の現行フォーマット検査用デッキ(CB188)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1505-188〕）／デッキ名=M1505-CB188-デッキ／デッキ種別=event／管理者作成／現行フォーマット=真／フォーマット=デッキ試験標準／アーキタイプ=デッキ試験型甲／公開状態=非公開／イベント詳細なし／メインボード=DeckTestBetaを1枚（保存前のデッキカード）／サイドボード・統率とも登録済みカードなし／代表カードは指定しない
+S-M15-05-CBDECK-189	デッキ	M15-05 更新時の現行フォーマット検査用デッキ(CB189)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1505-189〕）／デッキ名=M1505-CB189-デッキ／デッキ種別=event／管理者作成／現行フォーマット=真／フォーマット=デッキ試験標準／アーキタイプ=デッキ試験型甲／公開状態=非公開／イベント詳細なし／メインボード=DeckTestBetaを1枚（保存前のデッキカード）／サイドボード・統率とも登録済みカードなし／代表カードは指定しない
+S-M15-05-CBDECK-190	デッキ	M15-05 更新時の現行フォーマット検査用デッキ(CB190)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1505-190〕）／デッキ名=M1505-CB190-デッキ／デッキ種別=event／管理者作成／現行フォーマット=真／フォーマット=デッキ試験標準／アーキタイプ=デッキ試験型甲／公開状態=非公開／イベント詳細なし／メインボード=DeckTestBetaを1枚（保存前のデッキカード）／サイドボード・統率とも登録済みカードなし／代表カードは指定しない
+S-M15-05-CBARC-191	アーキタイプ	代表カードがAlphaのアーキタイプ(CB191)	アーキタイプ名(日)=M1505-CB191-型／アーキタイプ名(英)=M1505-CB191-Type／フォーマット=デッキ試験単一／公開状態=公開／代表カード=DeckTestAlphaの画像／デッキタグなし
+S-M15-05-CBDECK-191	デッキ	M15-05 更新時の現行フォーマット検査用デッキ(CB191)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1505-191〕）／デッキ名=M1505-CB191-デッキ／デッキ種別=event／管理者作成／現行フォーマット=真／フォーマット=デッキ試験単一／アーキタイプ=M1505-CB191-型／公開状態=非公開／イベント詳細なし／メインボード=DeckTestBetaを1枚（保存前のデッキカード）／サイドボード・統率とも登録済みカードなし／代表カードは指定しない
+S-M15-05-CBARC-192	アーキタイプ	代表カードがAlphaのアーキタイプ(CB192)	アーキタイプ名(日)=M1505-CB192-型／アーキタイプ名(英)=M1505-CB192-Type／フォーマット=デッキ試験統率なし／公開状態=公開／代表カード=DeckTestAlphaの画像／デッキタグなし
+S-M15-05-CBDECK-192	デッキ	M15-05 更新時の現行フォーマット検査用デッキ(CB192)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1505-192〕）／デッキ名=M1505-CB192-デッキ／デッキ種別=event／管理者作成／現行フォーマット=真／フォーマット=デッキ試験統率なし／アーキタイプ=M1505-CB192-型／公開状態=非公開／イベント詳細なし／メインボード=DeckTestBetaを1枚（保存前のデッキカード）／サイドボード・統率とも登録済みカードなし／代表カードは指定しない
+S-M15-05-CBARC-193	アーキタイプ	代表カードがAlphaのアーキタイプ(CB193)	アーキタイプ名(日)=M1505-CB193-型／アーキタイプ名(英)=M1505-CB193-Type／フォーマット=デッキ試験上限／公開状態=公開／代表カード=DeckTestAlphaの画像／デッキタグなし
+S-M15-05-CBDECK-193	デッキ	M15-05 更新時の現行フォーマット検査用デッキ(CB193)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1505-193〕）／デッキ名=M1505-CB193-デッキ／デッキ種別=event／管理者作成／現行フォーマット=真／フォーマット=デッキ試験上限／アーキタイプ=M1505-CB193-型／公開状態=非公開／イベント詳細なし／メインボード=DeckTestBetaを1枚（保存前のデッキカード）／サイドボード・統率とも登録済みカードなし／代表カードは指定しない
+S-M15-05-CBARC-194	アーキタイプ	代表カードがAlphaのアーキタイプ(CB194)	アーキタイプ名(日)=M1505-CB194-型／アーキタイプ名(英)=M1505-CB194-Type／フォーマット=デッキ試験下限／公開状態=公開／代表カード=DeckTestAlphaの画像／デッキタグなし
+S-M15-05-CBDECK-194	デッキ	M15-05 更新時の現行フォーマット検査用デッキ(CB194)	デッキIDは登録時に画面が振る（控える。以下〔デッキID-M1505-194〕）／デッキ名=M1505-CB194-デッキ／デッキ種別=event／管理者作成／現行フォーマット=真／フォーマット=デッキ試験下限／アーキタイプ=M1505-CB194-型／公開状態=非公開／イベント詳細なし／メインボード=DeckTestBetaを1枚（保存前のデッキカード）／サイドボード・統率とも登録済みカードなし／代表カードは指定しない
+S-M15-05-CBDECK12-195	デッキ	M15-05 削除後のページ復帰用デッキ12件(CB195)	デッキ名=M1505-CB195-01〜M1505-CB195-12の12件／デッキIDは登録時に画面が振る（デッキ名の番号順に登録するので番号順に昇順になる。控える。以下、デッキ名の番号順に〔デッキID-M1505-CB195A〕〜〔デッキID-M1505-CB195L〕）／デッキ種別=event／管理者作成／イベント詳細なし／記事の紐づけなし／デッキ名に「M1505-CB195」を含む他のデッキなし
+S-M15-05-CBNEW-196	不存在状態	M15-05 削除後の遷移用の不存在状態(CB196)	デッキ名「M1505-CB196-デッキ」のデッキは存在しない／ブラウザセッションは新しく、デッキの検索を一度も実行していない
+
+exec
+/bin/bash -lc "grep -n -E 'M15-05|M15-06|M15-07' integration_test/casegen/combination/review/R1_54_findings.md" in /home/y-saito/Developments/hareruya-design-docs
+ exited 1 in 0ms:
+exec
+/bin/bash -lc "grep -n -F 'IT-0366' integration_test/viewpoint_canonical/viewpoints_canonical.tsv" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "grep -R -n -E '### 指摘（M15-0[567] /' integration_test/casegen/combination/review/R1_*_findings.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+367:IT-0366	ITA-11	内部結合テスト	制御	条件網羅	データパターン / 要因の組合せ	1つの処理の結果を左右する要因（区分、状態、設定、関連データの値など。他の機能で設定する値を含む）が2つ以上ある場合、設計書の定めが互いに効き合う要因については値の組合せのすべてで、互いに効き合わない要因についてはどの2つの要因の値の組もいずれかの組合せで、受け渡し先の結果が、それぞれの要因について定められた結果を重ねたとおり設計どおりとなること。設計書から結果が決まらない組合せ、設計上作れない組合せ、および検索条件と削除条件の組合せは除く。	設計書から引用	条件に応じて、呼び出される先、返却データ、出力結果、状態遷移および副作用が設計どおりに切り替わること。検索・削除条件の一致種別と組合せで期待したレコードが取得・対象化されること、表示／非表示条件、通知の発生条件を含む。	単一メソッド内の分岐網羅、および分岐編集の結果そのものは単体テストが担う
+
+ succeeded in 0ms:
+integration_test/casegen/combination/review/R1_55_findings.md:1:### 指摘（M15-05 / IT-M15-05-159）
+integration_test/casegen/combination/review/R1_55_findings.md:7:### 指摘（M15-05 / IT-M15-05-160）
+integration_test/casegen/combination/review/R1_55_findings.md:13:### 指摘（M15-05 / IT-M15-05-161）
+integration_test/casegen/combination/review/R1_55_findings.md:19:### 指摘（M15-05 / IT-M15-05-162）
+integration_test/casegen/combination/review/R1_55_findings.md:25:### 指摘（M15-05 / IT-M15-05-191）
+integration_test/casegen/combination/review/R1_55_findings.md:31:### 指摘（M15-05 / IT-M15-05-192）
+integration_test/casegen/combination/review/R1_55_findings.md:37:### 指摘（M15-05 / IT-M15-05-193）
+integration_test/casegen/combination/review/R1_55_findings.md:43:### 指摘（M15-05 / IT-M15-05-194）
+integration_test/casegen/combination/review/R1_55_findings.md:49:### 指摘（M15-05 / IT-M15-05-195）
+integration_test/casegen/combination/review/R1_55_findings.md:55:### 指摘（M15-06 / IT-M15-06-062）
+
+exec
+/bin/bash -lc "sed -n '1,145p' integration_test/casegen/combination/units/M16-04/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+##### 0213 sheet-6 MTGマスターデータ
+L0001	MTGマスターデータ
+L0002	ドキュメント名データ管理機能
+L0003	セクション—
+L0004	プロジェクト名サイトリニューアル
+L0005	作成者加島
+L0006	作成日2025-06-11
+L0007	更新者—
+L0008	更新日—
+L0009	機能NoM16-04
+L0010	機能名MTGマスターデータ編集
+L0011	概要MTGマスターデータの編集ができる
+L0012	処理概要（★はカスタマイズ項目）
+L0013	・ 他に現行踏襲として記載する処理概要はなし
+L0014	レイアウト図
+L0015	1
+L0016	2
+L0017	3
+L0018	4
+L0019	5
+L0020	6
+L0021	MTGマスターデータ / C8 / image 1
+L0022	カスタマイズ説明
+L0023	・カスタマイズ要件
+L0024	・データの並び順を制御する項目が無いため設定できるよう管理項目を追加する
+L0025	・店舗やお問合せ件名等カードに関するマスタ以外は設定メニューへ移動する
+L0026	・カスタマイズ要件に記載の内容以外は現行踏襲とする
+L0027	機能仕様処理概要（★はカスタマイズ項目）
+L0028	・画面の項目を一部除去する
+L0029	★(6)登録はECCUBE4系に合わせて(5)登録で同じ機能を追加するため除去
+L0030	2026/7/15 お問合せ件名はidとnameだけの構成のマスタではないので、標準機能のマスターデータ管理では扱えないため、そのままMTGマスターデータに残す
+L0031	★「店舗」のMTGマスターデータは、エンタープライズ版の店舗管理に統合のため削除
+L0032	1 店舗
+L0033	2 場所
+L0034	※1の項目「VenueId」「ManagerName」は統合しない
+L0035	※2の項目「PrefId」「MaxCapacity」のみ統合する
+L0036	※2のデータにある「外部会場」は統合しない
+L0037	★下記1~3のMTGマスターデータにある「Rank」の項目を、「sort_no」に変更
+L0038	1 レアリティ
+L0039	2 デッキタグ
+L0040	3 色順
+L0041	★下記1~18のMTGマスターデータに並び順「sort_no」の項目を追加
+L0042	1	カードタイプ	11	認定
+L0043	2	サブタイプ	12	言語
+L0044	3	特殊タイプ	13	マナシンボル
+L0045	4	カラー	14	ルール適用度
+L0046	5	カードレイアウト	15	キャンペーンタグ
+L0047	6	プロモーション	16	状態
+L0048	7	イラストレーター	17	特殊サジェスト
+L0049	8	リーガリティ	18	特殊制限
+L0050	9	ボード
+L0051	10	カードセットブロック
+L0052	★(4)マスターデータは各項目の「sort_no」昇順でデフォルト表示とする
+L0053	・カードセット管理画面の「ブロックを追加」を押下して遷移した場合、画面を下記のように表示する
+L0054	・(1)MTGマスターデータ選択に「ブロックタグ」を選択状態にする
+L0055	・(4)MTGマスターデータにブロックタグのマスターデータを一覧表示する
+L0056	・グローバルメニューのデッキ管理＞デッキタグ一覧を押下して遷移した場合、画面を下記のように表示する
+L0057	・(1)MTGマスターデータ選択に「デッキタグ」を選択状態にする
+L0058	・(4)MTGマスターデータにデッキタグのマスターデータを一覧表示する
+L0059	・他に現行踏襲として記載する処理概要はなし
+L0060	識別ID	ラベル	書式・制限	必須	最大文字数
+L0061	または最大値	初期値	画面部品の説明
+L0062	1	MTGマスターデータ選択	セレクトボックス	-	-	カードタイプ	-
+L0063	2	選択	ボタン	-	-	-	・押下すると、(1)MTGマスターデータ選択に設定しているデータを画面下部に表示する
+L0064	3	カード一覧の「カード名リスト作成」	リンク	-	-	-	・押下すると、カード一覧画面に遷移する
+L0065	4	MTGマスターデータ	テーブル	-	-	-	※カスタマイズ対応
+L0066	・「Rank」の項目を「sort_no」に変更
+L0067	・データの並び順を制御する項目が無いデータに「sort_no」の項目を追加する
+L0068	・MTGマスターデータをテーブルで表示する
+L0069	・項目「sort_no」の昇順をデフォルト表示とする
+L0070	5	登録	ボタン	-	-	-	※カスタマイズ対応、現行の登録ボタンを4系に寄せるように変更
+L0071	・フォームに入力した情報で入力チェックを実施、OKであれば登録/更新を実施、NGがあればエラー内容を表示する
+L0072	6	登録	ボタン	-	-	-	※カスタマイズ対応、項目を除去する
+L0073	Source:
+L0074	functions/pf-eccube3/m16-04_admin_data_hareruya_mtg_masterdata.md
+L0075	現行仕様
+L0076	M16-04 MTGマスターデータ編集 / データ管理 — MTGマスターデータ編集
+L0077	業務ロジック
+L0078	種別の確定
+L0079	編集できるマスタ種別は、カードタイプ、サブタイプ、特殊タイプ、カラー、レアリティ、カードレイアウト、プロモーション、イラストレーター、リーガリティ、ボード、カードセットブロック、認定、言語、マナシンボル、ルール適用度、店舗、場所、お問い合わせ件名、デッキタグ、キャンペーンタグ、状態、色順、特殊サジェスト、特殊制限の24種別である。種別選択の送信内容が妥当なときにその種別を確定する。種別が未確定のときは一覧を組み立てない。一覧と登録ボタンの領域は、一覧が組み上がったときだけ画面に出す。
+L0080	一覧の作り方
+L0081	対象種別のデータを全件取得して一覧に写す。一覧に列として並べるのは先頭項目を除く2列目以降で、最大10列までとする。先頭項目は列として表示せず、行を識別するキーとして保持し、保存時にそのまま送り返す。日時型の項目のうち表示用の見出しが表示開始日時・表示終了日時にあたる列は Y-m-d H:i:s 形式の文字列にする。真偽値が偽のセルは画面上は数値の 0 とする。一覧の末尾には空行を 1 行追加する。
+L0082	一覧上部の案内
+L0083	一覧の上部に、行の値をすべて消すとその値が削除されること、設定値によってはサイトが機能しなくなる場合があることを案内する。あわせて「特殊サジェスト」を設定したときは、設定後に「カード一覧の「カード名リスト作成」」を実行するよう案内する。
+L0084	編集ロック
+L0085	種別ごとに編集ロックの境界値を持つ。行を識別するキーの値が境界値以下の行では、並び順の列以外を読み取り専用にする。ロック行では表示開始日時・表示終了日時も日時ピッカーを使わず読み取り専用のままとする。
+L0086	表示開始日時・表示終了日時を持つ種別はキャンペーンタグだけである。キャンペーンタグは編集ロックなしのため、ロック行に表示開始日時・表示終了日時が現れることはない。
+L0087	画面ラベル	編集ロックの境界値
+L0088	カードレイアウト	5
+L0089	カードタイプ	14
+L0090	カードセットブロック	27
+L0091	ボード	3
+L0092	認定	3
+L0093	言語	2
+L0094	プロモーション	32
+L0095	レアリティ	7
+L0096	リーガリティ	3
+L0097	ルール適用度	5
+L0098	特殊タイプ	7
+L0099	サブタイプ	378
+L0100	カラー、イラストレーター、マナシンボル、店舗、場所、お問い合わせ件名、デッキタグ、キャンペーンタグ、状態、色順、特殊サジェスト、特殊制限は境界値を持たず、編集ロックなしとなる。
+L0101	保存の判定順序
+L0102	一覧の行ごとに次の順で判定する。
+L0103	順序	判定	結果
+L0104	1	主キーの値があり、主キー以外の入力がすべて未設定	当該行を削除する
+L0105	2	主キーの値があり、主キー以外に入力がある	既存データを読み、主キー以外の項目を入力値で上書きする
+L0106	3	主キーの値が空で、いずれかの項目に入力がある	新規に作成する
+L0107	削除は、主キー以外の項目に未設定でない値がひとつも無いときだけ成立する。
+L0108	日時列は空でないことを確認する。不合格のときはエラーメッセージを表示し、直前の画面へ戻す。保存が完了したときは成功メッセージを表示し、送信した種別の一覧画面へ戻る。
+L0109	エラー時の扱い
+L0110	エラー内容	処理
+L0111	編集フォームの検証失敗（なりすまし対策トークンを含む）	HTTP 404 とする。共通の成功・失敗メッセージは表示しない
+L0112	日時必須違反	エラーメッセージを表示し、直前の画面へ戻す
+L0113	入出力
+L0114	種類	内容
+L0115	入力	対象マスタ種別の指定、一覧各行の入力値、なりすまし対策トークン
+L0116	成功時出力	対象種別の一覧画面。保存後は同じ種別の一覧画面へ戻り、成功メッセージを表示する
+L0117	失敗時出力	編集フォームの検証失敗は HTTP 404。日時必須違反は直前の画面へ戻し、エラーメッセージを表示する
+L0118	入出力: 永続化
+L0119	操作	契機
+L0120	追加	主キーが空で、いずれかの項目に入力がある行の保存
+L0121	更新	主キーがあり、主キー以外に入力がある行の保存
+L0122	削除	主キーがあり、主キー以外の入力がすべて未設定の行の保存
+L0123	リニューアル後の仕様
+L0124	表示メッセージ
+L0125	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0126	M16-04-MSG-001	管理画面上部	保存しました	MTGマスターデータの編集内容を保存したとき	保存後、MTGマスターデータ編集画面に遷移する
+
+exec
+/bin/bash -lc "grep -n -E '"'^S-M15-07-ADM'"' integration_test/casegen/cases/M15-07_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+2:S-M15-07-ADM	管理者	M15-07試験管理者	ログインID=m1507_admin／パスワード=Passw0rd!M1507／稼働中／ログイン失敗回数=0／アカウントロックなし／デッキ管理メニューの「デッキタグ一覧」とMTGマスターデータ管理を閲覧できる	IT-M15-07-001の管理画面操作。ログイン失敗やアカウントロックを起こさず、業務データを変更しないため共有可	管理画面のメンバー管理で登録し、デッキ管理メニューの「デッキタグ一覧」とMTGマスターデータ管理を閲覧できる権限を付ける	共有可
+
+exec
+/bin/bash -lc "grep -n -E '"'^S-M15-06-(MASTER|CSV-BASE|ADM)'"' integration_test/casegen/cases/M15-06_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+2:S-M15-06-ADM	管理者	M15-06試験管理者	ログインID=m1506_admin／パスワード=Passw0rd!M1506／稼働中／アカウントロックなし／デッキ一覧とデッキ登録CSVアップロードを操作できる	全ケースの管理画面操作。どのケースもログイン失敗回数やアカウント状態を変更しない	管理画面のメンバー管理で登録し、デッキ管理権限を付ける	共有可
+3:S-M15-06-MASTER	フォーマット・アーキタイプ・イベント・カード・タグ	CSV取込参照マスタ	TestStandard=統率者なし・メイン2〜3枚・サイド1〜2枚／TestCommander=統率者あり・メイン2〜3枚・サイド1〜2枚／OtherFormatを登録／試験アーキタイプ=Test ArchetypeをTestStandardへ、統率者試験=Commander ArchetypeをTestCommanderへ、別アーキタイプ=Other ArchetypeをOtherFormatへ関連付ける／イベント詳細ID=150601／カード=Main Card A、Main Card B、Side Card、Feature Card、日本語名「統率者札」・英名「Commander Card」のカード、Restricted Card、Cross Archetype Card／Feature Cardに代表画像あり／試験アーキタイプに既定代表画像あり／Restricted Cardは禁止制限対象／Cross Archetype Cardは試験アーキタイプの対象外／タグ=試験タグA、試験タグB／英名NoSuchFormatのフォーマット、イベント詳細ID 999999、カード名Unknown Commanderは存在しない	全CSVケースが参照するマスタ。各ケースは参照だけを行い、マスタの状態を変更しない	①フォーマット詳細(登録・編集・削除)画面を「新規登録」から開き、フォーマット名(英)に「TestStandard」、フォーマット名(日)に他と重ならない任意の名称、並び順とメタゲーム分析日数に入力範囲内の任意の値、メイン下限枚数に2、メイン上限枚数に3、サイド下限枚数に1、サイド上限枚数に2を入れ、「統率でカードを使用する（統率者や策略等）」のチェックを外したまま「登録」を押す。同じ画面で、フォーマット名(英)「TestCommander」を同じ枚数（メイン下限2・上限3、サイド下限1・上限2）で「統率でカードを使用する（統率者や策略等）」にチェックを入れて「登録」を押し、フォーマット名(英)「OtherFormat」を必須項目だけ入れて「登録」を押す。②デッキタグ一覧画面で「新規」の行にタグの日本語名「試験タグA」と英語名・表示順を入れ、同様に「試験タグB」の行を足して「登録」を押す。③カード詳細(登録・編集・削除)画面を「新規登録」から開き、カード名(英)と点数で見たマナ・コスト（任意の数値）を入れて「登録」を押す操作を、カード名(英)「Main Card A」「Main Card B」「Side Card」「Cross Archetype Card」の4枚について行う。同じ画面で、カード名(日)「統率者札」・カード名(英)「Commander Card」のカードを登録する。同じ画面で、カード名(英)「Restricted Card」を入れ、「リーガリティ追加」を押してフォーマットに「TestStandard」、リーガリティに制限を選び「登録」を押す。アーキタイプへカードを関連付ける項目は無いので、Cross Archetype Cardは登録するだけで試験アーキタイプの対象外になる。④カード登録CSVアップロード画面で、カード名(英語)「Feature Card」、レアリティ・レイアウト・カードセットに登録済みの英名、Foilなし、プロモ種別空欄、画像URL(英語)に画像のURLを書いた1行のCSVを選んでアップロードし、Feature Cardに代表画像を持たせる。⑤アーキタイプ編集画面を「新規登録」から開き、アーキタイプ名(日)「試験アーキタイプ」、アーキタイプ名(英)「Test Archetype」、公開状態、フォーマット「TestStandard」を入れ、「代表カード選択」を押して代表カード検索でカード名「Feature Card」を検索し画像を選択して「新規登録」を押す。同じ画面で、アーキタイプ名(日)「統率者試験」・アーキタイプ名(英)「Commander Archetype」・フォーマット「TestCommander」、アーキタイプ名(日)「別アーキタイプ」・アーキタイプ名(英)「Other Archetype」・フォーマット「OtherFormat」をそれぞれ登録する。⑥フォーマット一覧画面でフォーマット名(英)が「NoSuchFormat」の行があれば、その行の操作メニューの「削除」を押して確認で承認し、行が無いことを確かめる。カード一覧(検索入力)画面でカード名・テキストの欄に「Unknown Commander」を入れて「検索する」を押し、カード名が「Unknown Commander」の行があれば削除して0件であることを確かめる。⑦イベント詳細ID 150601 は画面で指定できないためDBへ直接設定する（イベントと、イベント詳細ID 150601の日程をDBへ直接登録する）。イベント詳細ID 999999 は画面でIDを指定して探せないため、DBで存在しないことを確認し、あれば削除する。	共有可
+4:S-M15-06-CSV-BASE	入力ファイル仕様	刷新後CSV共通仕様	UTF-8・カンマ区切り／ヘッダは表示順に、プレイヤー名、フォーマット、アーキタイプ、イベント詳細ID、デッキ名、順位、成績、タグ、イベント名(英)、イベント名(日)、イベント開催日、参照元、イベント参加人数、表示フラグ、デッキリスト非公開フラグ、メインリスト、サイドリスト、統率者、デッキID、代表カード名の20項目／有効基準値=TestStandard、Test Archetype、イベント詳細ID 150601、順位1、成績優勝、タグ空欄、イベント名英IT Event、イベント名日ITイベント、開催日2025-09-01 10:00:00、参照元http://example.com/deck、参加人数10、表示1、非公開0、メイン2 Main Card A、サイド1 Side Card、統率者空欄、デッキID空欄、代表カードFeature Card	各ケース専用CSVを作るための共通仕様。どのケースもこの仕様自体を変更しない	入力値の取り決めとして用意し、各ケース専用シードの投入方法でCSV試験資産を生成する	共有可
+
+exec
+/bin/bash -lc "grep -n -F 'M1505-CB195' integration_test/casegen/combination/cases/M15-05_cb_seed_data.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+34:S-M15-05-CBDECK12-195	デッキ	M15-05 削除後のページ復帰用デッキ12件(CB195)	デッキ名=M1505-CB195-01〜M1505-CB195-12の12件／デッキIDは登録時に画面が振る（デッキ名の番号順に登録するので番号順に昇順になる。控える。以下、デッキ名の番号順に〔デッキID-M1505-CB195A〕〜〔デッキID-M1505-CB195L〕）／デッキ種別=event／管理者作成／イベント詳細なし／記事の紐づけなし／デッキ名に「M1505-CB195」を含む他のデッキなし	削除対象に記事の紐づけが無いとき、保持しているページ番号のページへ戻ることの確認	m1505_adminで管理画面にログインする。デッキ一覧(検索入力)画面で「デッキ名」に「M1505-CB195」を入れて「日付クリア」と「検索する」を押し、デッキ名に「M1505-CB195」を含むデッキが残っていないことを確かめる（残っているときは、検索結果からデッキ編集画面を開いて「削除」を押し、確認ダイアログで「OK」を押して、すべて削除する）。デッキ名「M1505-CB195-01」から「M1505-CB195-12」まで、番号の小さい順に12回くり返す: デッキ一覧(検索入力)画面で「新規登録」を押し、デッキ新規登録画面で「デッキ名」にその回のデッキ名を入れ、「デッキタイプ」で「event」、「フォーマット」で「デッキ試験標準」、「アーキタイプ」で「デッキ試験型甲」、「公開状態(デッキ全体の公開設定)」で「非公開」を選び、プレイヤーとイベントは検索して選ばずに「新規登録」を押す（管理者作成・イベント詳細なしになる。記事には紐づけない）。遷移したデッキ編集画面のアドレス末尾に表示されたデッキIDを、その回ごとに控える（登録順に〔デッキID-M1505-CB195A〕〜〔デッキID-M1505-CB195L〕。後に登録したデッキほど番号が大きい）。	ケース専用
+
+exec
+/bin/bash -lc "grep -n -F 'IT-M15-05-167' integration_test/casegen/combination/cases/M15-05_cb_test_cases.tsv | cut -f1,9-11" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+13:IT-M15-05-167	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。デッキ試験型乙の代表カードはDeckTestBetaの画像。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ名「M1505-CB167-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-167）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB167-デッキ」、「フォーマット」に「デッキ試験標準」、「アーキタイプ」に「デッキ試験型乙」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」は押さず、代表カードを選ばない／5. 「統率」「メインボード」「サイドボード」は空のままにする／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにアーキタイプ「デッキ試験型乙」の代表カードであるDeckTestBetaの画像が表示され、統率・メインボード・サイドボードがすべて空で、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと
+
+codex
+M15-07 では、追加ケースの手順が MTGマスターデータ管理画面で空欄を保存する操作になっています。一方、削除を止める条件は別のデッキタグ一覧の記述にあり、画面遷移先との整合を確認中です。あわせて M15-05 の更新ケースで、既存値が要因の結果確認を妨げていないかを見ます。
+exec
+<command included NUL byte> in /home/y-saito/Developments/hareruya-design-docs
+2026-10-20T09:12:09.389870Z ERROR codex_core::tools::router: error=exec_command failed: CreateProcess { message: "Rejected(\"Failed to create unified exec process: nul byte found in provided data\")" }
+ exited -1 in 0ms:
+Failed to create unified exec process: nul byte found in provided data
+exec
+/bin/bash -lc "grep -E '"'^IT-M15-05-(165|166|167|168|186|187)[[:space:]]'"' integration_test/casegen/combination/cases/M15-05_cb_test_cases.tsv | cut -f1,9-11" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+IT-M15-05-165	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ アーキタイプ「M1505-CB165-型」が1件あり、フォーマットはデッキ試験標準、公開状態は公開、代表カードは未設定（S-M15-05-CBARC-165）／④ デッキ「M1505-CB165-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験標準」、アーキタイプは「M1505-CB165-型」、代表カードの画像は未設定、メインボードに「2 DeckTestAlpha」の1行（S-M15-05-CBDECKW-165）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB165-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB165-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード検索」を押し、「カード名」に「DeckTestBeta」を入力して「検索する」を押し、検索結果のDeckTestBetaを選んで「決定」を押す／4. 「メインボード」の入力済みの内容をすべて消して空にする／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestBetaの画像が表示され、メインボードが空で更新前の「2 DeckTestAlpha」の行は表示されず、警告は表示されないこと
+IT-M15-05-166	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ アーキタイプ「M1505-CB166-型」が1件あり、フォーマットはデッキ試験標準、公開状態は公開、代表カードは未設定（S-M15-05-CBARC-166）／④ デッキ名「M1505-CB166-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-166）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB166-デッキ」、「フォーマット」に「デッキ試験標準」、「アーキタイプ」に「M1505-CB166-型」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」を押し、「カード名」に「DeckTestBeta」を入力して「検索する」を押し、検索結果のDeckTestBetaを選んで「決定」を押す／5. 「メインボード」に1行目「2 DeckTestAlpha」、2行目「1 M1505-CB166-Nothing」を入力する／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにDeckTestBetaの画像が表示され、メインボードに「2 DeckTestAlpha」の1行だけが表示されて「M1505-CB166-Nothing」の行は表示されず、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと
+IT-M15-05-167	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。デッキ試験型乙の代表カードはDeckTestBetaの画像。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ名「M1505-CB167-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-167）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB167-デッキ」、「フォーマット」に「デッキ試験標準」、「アーキタイプ」に「デッキ試験型乙」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」は押さず、代表カードを選ばない／5. 「統率」「メインボード」「サイドボード」は空のままにする／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにアーキタイプ「デッキ試験型乙」の代表カードであるDeckTestBetaの画像が表示され、統率・メインボード・サイドボードがすべて空で、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと
+IT-M15-05-168	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。デッキ試験型乙の代表カードはDeckTestBetaの画像。（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ名「M1505-CB168-デッキ」のデッキがない。新規登録するデッキの現行フォーマットは偽（新規登録画面に入力欄が無く初期値が偽）で、保存前のデッキカードはない（S-M15-05-CBNEWREQ-168）	1. デッキ一覧(検索入力)画面を開く／2. 「新規登録」を押してデッキ新規登録画面を開く／3. 「デッキ名」に「M1505-CB168-デッキ」、「フォーマット」に「デッキ試験標準」、「アーキタイプ」に「デッキ試験型乙」、「公開状態」に「非公開」を設定する／4. 「代表カード検索」は押さず、代表カードを選ばない／5. 「メインボード」に1行目「2 DeckTestAlpha」、2行目「3 DeckTestBeta」、3行目「2 DeckTestAlpha」を入力する／6. 「新規登録」を押す／7. 登録後に表示されたデッキ編集画面の「代表カード」、各ボード、警告表示を見る	代表カードにアーキタイプ「デッキ試験型乙」の代表カードであるDeckTestBetaの画像が表示され、メインボードにDeckTestAlphaが「4 DeckTestAlpha」の1行にまとめて、DeckTestBetaが「3 DeckTestBeta」の1行で表示され、「現行フォーマットに則さない形で登録されています。」の警告は表示されないこと
+IT-M15-05-186	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。アーキタイプ「デッキ試験型甲」は代表カードの既定の画像（DeckTestAlphaの画像）がある（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ「M1505-CB186-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験標準」、アーキタイプは「デッキ試験型甲」、メインボードに「1 DeckTestBeta」が登録済み（保存前のデッキカードあり）、サイドボードと統率は登録済みカードなし、代表カードは指定していない（S-M15-05-CBDECK-186）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB186-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB186-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード選択」を押し、表示された検索のポップアップで「カード名」に「DeckTestBeta」を入力して「完全一致検索」にチェックを付け、「検索する」を押し、検索結果のDeckTestBetaの行の「選択」を押す／4. 「メインボード」の「1 DeckTestBeta」を消し、1行目「1 M1505-CB186-NoCard」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の警告表示、「代表カード」、「メインボード」、「統率」を見る	更新後のデッキ編集画面に、警告「メインボードのカードが、現行フォーマットに則さない形で登録されています。」と詳細メッセージ「1 行目の M1505-CB186-NoCard は存在しません」が表示され、代表カードにDeckTestBetaの画像が表示され、「メインボード」が空で、入力した「1 M1505-CB186-NoCard」は登録されず、保存前の「1 DeckTestBeta」も表示されないこと
+IT-M15-05-187	① 管理画面にm1505_adminでログインしている（S-M15-05-ADM）／② 共有のフォーマット・カード・アーキタイプがある。デッキ試験標準は同じカードを4枚まで、統率ボードあり、各ボードの上限下限なし。DeckTestAlphaとDeckTestBetaは全フォーマットで使用可、DeckTestBannedはデッキ試験標準で禁止、DeckTestOutはどのフォーマットにも合法性の登録なし。アーキタイプ「デッキ試験型甲」は代表カードの既定の画像（DeckTestAlphaの画像）がある（S-M15-05-FMT、S-M15-05-CARD、S-M15-05-ARC）／③ デッキ「M1505-CB187-デッキ」が1件あり、現行フォーマットは真、フォーマットは「デッキ試験標準」、アーキタイプは「デッキ試験型甲」、メインボードに「1 DeckTestBeta」が登録済み（保存前のデッキカードあり）、サイドボードと統率は登録済みカードなし、代表カードは指定していない（S-M15-05-CBDECK-187）。同名のデッキは他にない	1. デッキ一覧(検索入力)画面を開き、「デッキ名」に「M1505-CB187-デッキ」を入力して「日付クリア」と「検索する」を押す／2. 検索結果の「M1505-CB187-デッキ」のデッキ情報をクリックしてデッキ編集画面を開く／3. 「代表カード選択」を押し、表示された検索のポップアップで「カード名」に「DeckTestBeta」を入力して「完全一致検索」にチェックを付け、「検索する」を押し、検索結果のDeckTestBetaの行の「選択」を押す／4. 「メインボード」の「1 DeckTestBeta」を消し、1行目「2 DeckTestAlpha」を入力する／5. 「更新」を押す／6. 更新後に表示されたデッキ編集画面の警告表示、「代表カード」、「メインボード」、「統率」を見る	更新後のデッキ編集画面に、「現行フォーマットに則さない形で登録されています。」の警告が表示されず、代表カードにDeckTestBetaの画像が表示され、「メインボード」は「2 DeckTestAlpha」の行だけで、保存前に登録されていた内容は残っていないこと
+
+codex
+### 指摘（M15-05 / IT-M15-05-164）
+- 主張: 代表カードを選ばずに更新し、アーキタイプの既定画像である DeckTestAlpha の画像が表示されることを、既定画像「あり」の結果として確かめる。
+- 実際: 事前準備の既存デッキには、すでに DeckTestAlpha の画像が設定されている。設計書 L0086 は「カードイメージ未設定時は、アーキタイプの代表カードイメージをセットする」と定め、L0232 は設定済みの代表カードの画像を表示すると定める。このケースでは既定画像への切替結果を判別できない。
+- 判定: 要因の結果が欠けている
+- 修正案: 保存前の代表カード画像を未設定にし、更新後に既定画像が設定されたことを確かめる。
+
+### 指摘（M15-07 / IT-M15-07-002）
+- 主張: MTGマスターデータ管理画面でデッキタグ行の入力を空にして「登録」を押す手順を、デッキタグ削除の組としてケース化している。
+- 実際: M15-07 設計書 L0024 の削除は「確認を求め、承諾したときだけ削除を実行する」操作である。一方、手順の空欄保存は M16-04 設計書 L0104 の「主キーの値があり、主キー以外の入力がすべて未設定」なら行を削除する処理に当たる。
+- 判定: 組の値が無い
+- 修正案: この手順を M15-07 の削除操作を通すケースとして扱わない。確認を伴う削除操作に到達する手順が定まるかを確認し、仕分けを見直す。
+
+### 指摘（M15-07 / IT-M15-07-003）
+- 主張: デッキに紐づくタグの入力を空にして「登録」を押すと、削除されずエラーが表示されることを期待する。
+- 実際: M15-07 設計書 L0024 は、紐づくデッキがある場合に削除しないと定める削除操作で確認を求める。ケースが実行する空欄保存については、M16-04 設計書 L0104 が当該行を削除すると定めている。
+- 判定: 成立しない前提・手順
+- 修正案: 空欄保存を M15-07 の関連有無による削除判定として扱わない。対象の削除操作を実行できる手順に直せない場合は、仕分けを見直す。
+
+### 指摘（M15-07 / IT-M15-07-004）
+- 主張: アーキタイプ初期値側に関連するタグの入力を空にして「登録」を押すと、削除されずエラーが表示されることを期待する。
+- 実際: M15-07 設計書 L0024 は、アーキタイプ初期値側の関連がある場合に削除しないと定める削除操作で確認を求める。ケースが実行する空欄保存は、M16-04 設計書 L0104 の行削除の条件に当たる。
+- 判定: 成立しない前提・手順
+- 修正案: 空欄保存を M15-07 の関連有無による削除判定として扱わない。対象の削除操作を実行できる手順に直せない場合は、仕分けを見直す。
+tokens used
+101,192
+### 指摘（M15-05 / IT-M15-05-164）
+- 主張: 代表カードを選ばずに更新し、アーキタイプの既定画像である DeckTestAlpha の画像が表示されることを、既定画像「あり」の結果として確かめる。
+- 実際: 事前準備の既存デッキには、すでに DeckTestAlpha の画像が設定されている。設計書 L0086 は「カードイメージ未設定時は、アーキタイプの代表カードイメージをセットする」と定め、L0232 は設定済みの代表カードの画像を表示すると定める。このケースでは既定画像への切替結果を判別できない。
+- 判定: 要因の結果が欠けている
+- 修正案: 保存前の代表カード画像を未設定にし、更新後に既定画像が設定されたことを確かめる。
+
+### 指摘（M15-07 / IT-M15-07-002）
+- 主張: MTGマスターデータ管理画面でデッキタグ行の入力を空にして「登録」を押す手順を、デッキタグ削除の組としてケース化している。
+- 実際: M15-07 設計書 L0024 の削除は「確認を求め、承諾したときだけ削除を実行する」操作である。一方、手順の空欄保存は M16-04 設計書 L0104 の「主キーの値があり、主キー以外の入力がすべて未設定」なら行を削除する処理に当たる。
+- 判定: 組の値が無い
+- 修正案: この手順を M15-07 の削除操作を通すケースとして扱わない。確認を伴う削除操作に到達する手順が定まるかを確認し、仕分けを見直す。
+
+### 指摘（M15-07 / IT-M15-07-003）
+- 主張: デッキに紐づくタグの入力を空にして「登録」を押すと、削除されずエラーが表示されることを期待する。
+- 実際: M15-07 設計書 L0024 は、紐づくデッキがある場合に削除しないと定める削除操作で確認を求める。ケースが実行する空欄保存については、M16-04 設計書 L0104 が当該行を削除すると定めている。
+- 判定: 成立しない前提・手順
+- 修正案: 空欄保存を M15-07 の関連有無による削除判定として扱わない。対象の削除操作を実行できる手順に直せない場合は、仕分けを見直す。
+
+### 指摘（M15-07 / IT-M15-07-004）
+- 主張: アーキタイプ初期値側に関連するタグの入力を空にして「登録」を押すと、削除されずエラーが表示されることを期待する。
+- 実際: M15-07 設計書 L0024 は、アーキタイプ初期値側の関連がある場合に削除しないと定める削除操作で確認を求める。ケースが実行する空欄保存は、M16-04 設計書 L0104 の行削除の条件に当たる。
+- 判定: 成立しない前提・手順
+- 修正案: 空欄保存を M15-07 の関連有無による削除判定として扱わない。対象の削除操作を実行できる手順に直せない場合は、仕分けを見直す。
