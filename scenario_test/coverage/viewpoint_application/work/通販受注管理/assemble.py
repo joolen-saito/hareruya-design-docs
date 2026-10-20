@@ -86,7 +86,6 @@ for r in records:
         excluded.append({"contract_id": cid, "kind": r["kind"], "merged_into": target, "reason": reason})
         continue
     if r["kind"] == "item":
-        assert r["scenario_id"] in existing, f"既存に無いシナリオ: {cid} {r['scenario_id']}"
         items.append({"disposition": "adopted", "business": BUSINESS, **{k: v for k, v in r.items() if k != "kind"}})
     else:
         sid = ROUTE_SID[cid]
@@ -220,6 +219,7 @@ def to_002(obj):
     return obj
 
 
+MOVE_BANK_ITEMS_TO_002 = False
 moved_to_002 = []
 for i, item in enumerate(items):
     limits = [x for x in item.get("known_limits", [])
@@ -227,13 +227,13 @@ for i, item in enumerate(items):
     item = {**item, "known_limits": limits}
     # 消す注記を除いてから判定する（注記にだけ「銀行振込」がある代金引換の項目を移さない）
     text = json.dumps({k: v for k, v in item.items() if k != "evidence"}, ensure_ascii=False)
-    if item["scenario_id"] == SCN001 and item["contract_id"] not in KEEP_ON_001 and "代金引換" not in text and (
+    # 裁定 R0（支払はクレジットカード決済だけ）で 002 を適用外にしたので、002 へは移さない。
+    if MOVE_BANK_ITEMS_TO_002 and item["scenario_id"] == SCN001 and item["contract_id"] not in KEEP_ON_001 and "代金引換" not in text and (
             "銀行振込" in text or item["viewpoint"].startswith("SV-16")):
         item = to_002({**item, "scenario_id": SCN002,
                        "known_limits": item["known_limits"] + ["銀行振込を前提にした確認のため、銀行振込の実線の経路（シナリオ002）で行う。"]})
         moved_to_002.append(item["contract_id"])
     items[i] = replace_all(item)
-print("002へ移した項目:", " ".join(moved_to_002))
 routes = [replace_all(r) for r in routes]
 unused = set(REWRITE) - used
 assert not unused, f"使われなかった書き直し: {unused}"
@@ -405,13 +405,455 @@ LEDGER_FIX = {
         "購入完了手続き再処理の多重起動の防止（MySQLの名前付きロック→PostgreSQLのアドバイザリロック）は機構的な確認として他層（結合テスト IT-B05-02 系、ITA-15）に委ねる。")},
 }
 
+# --- 依頼者の裁定（2026-10-20、review/通販受注管理/rulings.md）---
+# R0 支払は SPLINKS のクレジットカード決済だけ。R11 クレジットカードだけの注文では配送方法「同梱」が選択肢に出ない。
+PAY = "クレジットカード決済"
+CARD_PAY = "「クレジットカード決済へ」を押し、カード情報の入力画面でカード情報を入力して決済を完了する"
+FRONT = "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html"
+ORDERS = "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html"
+BATCH = "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html"
+STOCK = "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html"
+RULINGS = "scenario_test/coverage/viewpoint_application/review/通販受注管理/rulings.md"
+
+
+def ev(file, line):
+    return {"file": file, "line": line, "quote": quote_at(repo, file, line)}
+
+
+EV_CARD_BUTTON = ev(FRONT, 1304)
+
+
+def add_evidence(c, *extra):
+    seen = {(e["file"], e["line"]) for e in c["evidence"]}
+    c["evidence"] = c["evidence"] + [e for e in extra if (e["file"], e["line"]) not in seen]
+
+
+def rewrite_fields(c, pairs, keys=("item_name", "precondition", "input", "operation", "expected_result", "observation")):
+    """pairs の (old, new) を、引用以外の文に順に当てる。1か所も当たらない組があれば止める。"""
+    for old, new in pairs:
+        hit = False
+        for k in keys:
+            if isinstance(c.get(k), str) and old in c[k]:
+                c[k] = c[k].replace(old, new)
+                hit = True
+        if not hit:
+            raise AssertionError(f"直す元の文が無い: {c.get('contract_id')} {old[:40]}")
+
+
+def drop_limits(c, *needles):
+    before = len(c.get("known_limits", []))
+    c["known_limits"] = [x for x in c.get("known_limits", []) if not any(n in x for n in needles)]
+    assert len(c["known_limits"]) < before, f"消す注記が無い: {c['contract_id']} {needles}"
+
+
+# 1) 成り立たなくなったシナリオ（生成しない）
+RETIRED = {
+    "SCN-TSUHAN-お客様EC購入フロー-002": "決済処理（コンビニ決済・郵便振替・銀行振込）を行う経路。支払はクレジットカード決済だけ（裁定 R0）",
+    "SCN-TSUHAN-入金確認業務-005": "銀行振込・郵便振替の入金確認（裁定 R0）",
+    "SCN-TSUHAN-入金確認業務-006": "コンビニ決済と SPLINKS の照合を含む入金確認（裁定 R0）",
+    "SCN-TSUHAN-クレジットカード以外-012": "クレジットカード以外の返金対応（裁定 R0）",
+    "SCN-TSUHAN-クレジットカード以外-018": "クレジットカード以外の返金対応（裁定 R0）",
+    "SCN-TSUHAN-クレジットカード以外-019": "クレジットカード以外の返金対応（裁定 R0）",
+    "SCN-TSUHAN-購入入金国内出荷連鎖-901": "銀行振込の入金照合を挟む連鎖（裁定 R0）。入金の工程を除いた連鎖は SCN-TSUHAN-購入国内出荷連鎖-921 で行う",
+}
+retired_scenarios = [{"scenario_id": k, "reason": v, "ruling": RULINGS} for k, v in RETIRED.items()]
+# 残すシナリオの中で、裁定で無くなった作り直し前の項目（route_evidence.py のデータパターン）
+retired_items = [{"test_id": "STI-TSUHAN-EC-001-010", "scenario_id": SCN001,
+                  "reason": "データパターン DP-N003（代金引換で購入）。支払はクレジットカード決済だけ（裁定 R0）", "ruling": RULINGS}]
+RETIRED_ROUTES = {
+    "VPR-TSUHAN-02-03-01": "同梱の注文の経路。クレジットカードだけの注文では配送方法「同梱」が選択肢に出ない（裁定 R0・R11、0304 1556〜1559行）",
+    "VPR-TSUHAN-04-01-01": "銀行振込の未入金受注の準キャンセル・キャンセルの経路（裁定 R0）。クレジットカードの受注を EC-CUBE でキャンセルする業務の流れは業務フローに無い",
+}
+for r in [r for r in routes if r["contract_id"] in RETIRED_ROUTES]:
+    routes.remove(r)
+    excluded.append({"contract_id": r["contract_id"], "kind": "route", "merged_into": "-", "reason": RETIRED_ROUTES[r["contract_id"]]})
+for e in excluded:
+    if e["merged_into"] in RETIRED_ROUTES:
+        e["reason"] += f"（統合先の {e['merged_into']} は裁定で外した）"
+        e["merged_into"] = "-"
+
+# 2) 項目を成り立たせる直し
+def item(cid):
+    return by_item[cid]
+
+
+def exclude_item(cid, reason):
+    items.remove(by_item[cid])
+    excluded.append({"contract_id": cid, "kind": "item", "merged_into": "-", "reason": reason})
+
+
+exclude_item("VP-TSUHAN-03-10-01", "同梱で出荷完了にした受注の取込の確認。同梱は選択肢に出ない（裁定 R0・R11）")
+exclude_item("VP-TSUHAN-03-10-02", "VP-TSUHAN-03-10-01 と同じ理由")
+exclude_item("VP-TSUHAN-1707-01", "「郵便番号から自動入力」ボタンを除去した変更の確認。ボタンはある（裁定 R8、0304 1882行）")
+c1603 = item("VP-TSUHAN-1603-02")
+exclude_item("VP-TSUHAN-1603-02", "支払方法の切り替えで確定ボタンの文言が変わる確認。支払方法はクレジットカード決済だけ（裁定 R0）。クレジットカード決済の文言は VP-TSUHAN-1603-01 で確かめる")
+# 1603-02 の準備を使っていた 1607-01 には準備をそのまま書く
+c = item("VP-TSUHAN-1607-01")
+prep = c1603["precondition"].split(" / 対象状態:")[0].replace("ST-CARD-TSUHAN-001-R02", "ST-CARD-TSUHAN-001-R01")
+c["precondition"] = edit(c["precondition"], "準備手順: VP-TSUHAN-1603-02 と同じ会員C（会員番号 ST-MEMBER-TSUHAN-001-VP1607、注文0件）で、ご注文方法指定画面を表示したままにする。お支払い方法=銀行振込に戻しておく",
+                         prep + "、お支払い方法=クレジットカード決済を選んで、ご注文方法指定画面を表示したままにする")
+
+# 3) 支払方法をクレジットカード決済にそろえる（項目）
+PAY_ITEMS = {
+    "VP-TSUHAN-01-05-03": [("支払方法=銀行振込", f"支払方法={PAY}"), ("お支払い方法に銀行振込を選んで注文する", f"お支払い方法に{PAY}を選んで{CARD_PAY}")],
+    "VP-TSUHAN-06-06-01": [("支払方法=銀行振込を選び、確定チェックボックスにチェックを入れて注文ボタンを押す。", f"支払方法={PAY}を選び、確定チェックボックスにチェックを入れて{CARD_PAY}。"),
+                           ("支払方法=銀行振込", f"支払方法={PAY}")],
+    "VP-TSUHAN-06-03-02": [("支払方法=銀行振込", f"支払方法={PAY}")],
+    "VP-TSUHAN-07-06-01": [("支払方法=銀行振込", f"支払方法={PAY}")],
+    "VP-TSUHAN-08-01-04": [("ゆうパック・銀行振込", f"ゆうパック・{PAY}")],
+    "VP-TSUHAN-08-06-01": [("代金引換（SCN-001 DP-N003）", f"{PAY}（SCN-001 DP-N002）"), ("お支払い方法=代金引換", f"お支払い方法={PAY}"),
+                           ("確定チェックボックスをチェックし、注文するボタンを押す。", f"確定チェックボックスをチェックし、{CARD_PAY}。")],
+    "VP-TSUHAN-1201-01": [("代金引換で購入し", f"{PAY}で購入し"), ("お支払方法=代金引換", f"お支払方法={PAY}"),
+                          ("お支払方法「代金引換」、ポイント使用「ポイントを使う」、使用ポイント「100」を入力して、注文するボタンを押す。",
+                           f"お支払方法「{PAY}」、ポイント使用「ポイントを使う」、使用ポイント「100」を入力して、{CARD_PAY}。")],
+    "VP-TSUHAN-1601-01": [("お支払い方法=銀行振込", f"お支払い方法={PAY}"), ("支払方法=銀行振込", f"支払方法={PAY}"),
+                          ("確定ボタン「注文する」を1回押す", "確定ボタン「クレジットカード決済へ」を1回押し、カード情報の入力画面でカード情報を入力して決済を完了する"),
+                          ("お客様がご注文方法指定画面で「注文する」を押すと、別の確認画面を経ずに購入完了画面へ進むこと（最終確認画面がご注文方法指定画面であること）を確かめる",
+                           "お客様がご注文方法指定画面で申込内容と確定ボタンが同じ画面にあることを確かめ、「クレジットカード決済へ」から決済を完了すると購入完了画面が表示されることを確かめる"),
+                          ("「注文する」を押すと別の確認画面を経ずに購入完了画面が表示され、", "「クレジットカード決済へ」から決済を完了すると購入完了画面が表示され、")],
+    "VP-TSUHAN-1602-01": [("お支払い方法=銀行振込", f"お支払い方法={PAY}")],
+    "VP-TSUHAN-1602-02": [("お支払い方法=銀行振込", f"お支払い方法={PAY}")],
+    "VP-TSUHAN-1602-03": [("お支払い方法=銀行振込", f"お支払い方法={PAY}"), ("支払方法=銀行振込", f"支払方法={PAY}"),
+                          ("お支払い方法で銀行振込を選んだ", f"お支払い方法で{PAY}を選んだ"), ("お支払い方法の「銀行振込」", f"お支払い方法の「{PAY}」")],
+    "VP-TSUHAN-1603-01": [("お支払い方法=銀行振込", f"お支払い方法={PAY}"), ("支払方法=銀行振込", f"支払方法={PAY}"),
+                          ("お客様が銀行振込を選んだ最終確認画面で、確定ボタンの文言が「注文する」であることを確かめる",
+                           f"お客様が{PAY}を選んだ最終確認画面で、確定ボタンの文言が「クレジットカード決済へ」であることを確かめる"),
+                          ("お支払い方法で銀行振込が選ばれている", f"お支払い方法で{PAY}が選ばれている"),
+                          ("お支払い方法で銀行振込を選んだ状態の確定ボタンの文言が「注文する」であること。", f"お支払い方法で{PAY}を選んだ状態の確定ボタンの文言が「クレジットカード決済へ」であること。")],
+    "VP-TSUHAN-1605-01": [("お支払い方法=郵便振替", f"お支払い方法={PAY}")],
+    "VP-TSUHAN-1605-02": [("お支払い方法=郵便振替", f"お支払い方法={PAY}"), ("遷移前の支払方法=郵便振替", f"遷移前の支払方法={PAY}"),
+                          ("お支払い方法「郵便振替」", f"お支払い方法「{PAY}」")],
+    "VP-TSUHAN-1605-03": [("お支払い方法=郵便振替", f"お支払い方法={PAY}"),
+                          ("確定ボタン「注文する」を押す。", "確定ボタン「クレジットカード決済へ」を押し、カード情報の入力画面でカード情報を入力して決済を完了する。")],
+    "VP-TSUHAN-1701-01": [("会員Bは銀行振込で支払う", f"会員Bも{PAY}で支払う"), ("会員B: 支払方法=銀行振込", f"会員B: 支払方法={PAY}"),
+                          ("支払方法に銀行振込を選んで「注文する」を押し、購入完了画面を表示する。", f"支払方法に{PAY}を選んで「クレジットカード決済へ」を押し、カード情報を入力して決済を完了し、購入完了画面を表示する。")],
+}
+for cid in ("VP-TSUHAN-08-04-01", "VP-TSUHAN-08-04-02", "VP-TSUHAN-08-04-03", "VP-TSUHAN-08-04-04"):
+    PAY_ITEMS[cid] = [("ゆうパック・銀行振込", f"ゆうパック・{PAY}")]
+for cid in ("VP-TSUHAN-10-02-01", "VP-TSUHAN-10-02-02", "VP-TSUHAN-10-02-03"):
+    PAY_ITEMS[cid] = [("支払方法=銀行振込", f"支払方法={PAY}"), ("（注文ボタンはまだ押さない）", "（「クレジットカード決済へ」はまだ押さない）"),
+                      ("(1) 会員Aが注文ボタンを押し、購入完了画面が表示されたことを確認する。(2) 続けて会員Bが注文ボタンを押す。",
+                       "(1) 会員Aが「クレジットカード決済へ」を押し、カード情報の入力画面でカード情報を入力して決済を完了し、購入完了画面が表示されたことを確認する。"
+                       "(2) 続けて会員Bが「クレジットカード決済へ」を押す。カード情報の入力画面が表示されたときはカード情報を入力して決済に進む。")]
+for cid, pairs in PAY_ITEMS.items():
+    c = item(cid)
+    rewrite_fields(c, pairs)
+    c["known_limits"] = [x.replace("銀行振込の受注で確かめる", f"{PAY}の受注で確かめる") for x in c.get("known_limits", [])]
+    if "クレジットカード決済へ" in json.dumps({k: c[k] for k in ("operation", "expected_result", "item_name", "precondition")}, ensure_ascii=False):
+        add_evidence(c, EV_CARD_BUTTON)
+c = item("VP-TSUHAN-1601-01")
+drop_limits(c, "クレジットカード決済・コンビニ決済では確定ボタンが")
+c["known_limits"].append("確定ボタン「クレジットカード決済へ」のあとはカード情報の入力へ進み、その遷移先の仕様は設計書に無い（0306 2132行）。"
+                         "決済情報の入力の前に申込内容を確かめる最終確認画面はご注文方法指定画面と判断する。カード情報の入力のほかに確認画面を経ないことは判定しない")
+# 901 の項目を移す（901 は適用外）
+for cid in ("VP-TSUHAN-08-01-01", "VP-TSUHAN-08-01-02"):
+    c = item(cid)
+    c["scenario_id"] = SCN001
+    rewrite_fields(c, [("ST-MEMBER-TSUHAN-901", "ST-MEMBER-TSUHAN-001-VP0801"), ("ST-CARD-CROSS-001", "ST-CARD-TSUHAN-001-VP0801")],
+                   keys=("precondition", "input", "operation", "expected_result"))
+    pairs = [("銀行振込の手数料", f"{PAY}の手数料")] + ([("お支払い方法: 銀行振込", f"お支払い方法: {PAY}"), ("お支払い方法=銀行振込", f"お支払い方法={PAY}")]
+                                                    if cid.endswith("-01") else [("・銀行振込・", f"・{PAY}・")])
+    rewrite_fields(c, pairs)
+    c["known_limits"] = [x for x in c.get("known_limits", []) if "SCN-901の工程1" not in x]
+c = item("VP-TSUHAN-04-04-01")
+c["scenario_id"] = "SCN-TSUHAN-既存業務発送業務-007"
+c["precondition"] = ("準備手順: 発送業務（SCN-007）の工程9で取り込む国内の受注（ST-ORDER-TSUHAN-004-R01）を、購入時のポイント使用を「ポイントをためる」として作り、"
+                     "ご注文方法指定の「ポイント発生」の表示値と、受注情報編集に表示される付与ポイントを記録しておく。 / 対象状態: 同じ実受注番号の出荷日が未登録で、付与ポイントが0より大きい。")
+c["input"] = "工程9と同じ出荷実績CSV（ヘッダ「注文番号,出荷日,送り状No.」・同じ実受注番号の1行）"
+rewrite_fields(c, [("会員 ST-MEMBER-TSUHAN-901", "会員 ST-MEMBER-TSUHAN-004-R01"), ("STI-TSUHAN-901-010 の取込", "工程9の取込"),
+                   ("出荷実績を取り込んで発送済みにしたとき", "出荷実績を取り込んで出荷完了にしたとき")])
+assert "901" not in json.dumps({k: c[k] for k in ("precondition", "input", "operation", "expected_result")}, ensure_ascii=False)
+# R11: クレジットカード決済の受注がある会員の注文でも同梱は出ない（SV-05-01）
+items.append({
+    "disposition": "adopted", "business": BUSINESS, "contract_id": "VP-TSUHAN-05-01-02", "viewpoint": "SV-05-01",
+    "scenario_id": SCN001, "function_id": "F04-02", "flow_type": "代替系",
+    "item_name": "発送前のクレジットカード決済の受注がある会員がもう一度注文するとき、ご注文方法指定画面の配送方法指定の選択肢に「同梱」が表示されないことを確かめる",
+    "precondition": ("準備手順: 会員 ST-MEMBER-TSUHAN-001-R01 で ST-CARD-TSUHAN-001-R01 を1点、配送方法=ゆうパック・支払方法=クレジットカード決済で購入し（受注X）、受注番号を控える。"
+                     "続けて同じ会員で ST-CARD-TSUHAN-001-R01 を1点カートに入れ、買い物かご画面の「購入手続きへ」でご注文方法指定画面を開く。"
+                     " / 対象状態: 受注Xは出荷日が空で、対応状況がキャンセル以外。"),
+    "input": "既存の受注X: 支払方法=クレジットカード決済・出荷日=空 / 今回の注文: ST-CARD-TSUHAN-001-R01 を1点",
+    "operation": ("【準備確認】受注情報検索・一覧で受注Xの支払方法がクレジットカード決済で、出荷日が空であることを記録する。\n"
+                  "【操作】ご注文方法指定画面で配送方法指定の選択肢を表示する。\n"
+                  "【操作後確認】配送方法指定の選択肢の一覧を画面証跡に残す。"),
+    "expected_result": "ご注文方法指定画面の配送方法指定の選択肢に「同梱」が表示されないこと。",
+    "observation": "確認場所: フロントのご注文方法指定画面の配送方法指定",
+    "evidence": [ev(FRONT, 1547), ev(FRONT, 1548), ev(FRONT, 1556), ev(FRONT, 1557), ev(FRONT, 1558), ev(FRONT, 1559)],
+    "known_limits": ["支払方法はクレジットカード決済だけ（裁定 R0）。同梱は既存の受注の支払方法が銀行振込・郵便振替のときだけ表示され、同梱で選べる支払方法も郵便振替・銀行振込だけなので、"
+                     "クレジットカードだけの注文では選択肢に出ない（裁定 R11）。", "受注X・商品・数量は実行用の具体値。"],
+})
+# R6: 送り状No.に英字・記号を含めても、取り込んだ文字列のまま保存する（SV-07-06）
+items.append({
+    "disposition": "adopted", "business": BUSINESS, "contract_id": "VP-TSUHAN-07-06-03", "viewpoint": "SV-07-06",
+    "scenario_id": "SCN-TSUHAN-既存業務発送業務-007", "function_id": "M05-26", "flow_type": "正常系",
+    "item_name": "通販チームが英字・記号を含む送り状No.の出荷実績CSVを取り込み、送り状No.が取り込んだ文字列のまま受注に登録されることを確かめる",
+    "precondition": ("準備手順: 会員 ST-MEMBER-TSUHAN-004-R01 で ST-CARD-TSUHAN-004-R01 を1点、配送方法=ゆうパック・支払方法=クレジットカード決済で購入した受注を1件作り"
+                     "（ST-ORDER-TSUHAN-VP0706C）、実注文番号を控える。工程9の受注とは別の受注にする（出荷日が登録済みの受注は取込で更新されない。0203 4714行）。"
+                     " / 対象状態: 受注 ST-ORDER-TSUHAN-VP0706C の出荷日と送り状No.が空。"),
+    "input": "ヘッダ「注文番号,出荷日,送り状No.」・受注 ST-ORDER-TSUHAN-VP0706C の実注文番号・出荷日=取込日の17:00・送り状No.=AB-1234-X#9 の1行",
+    "operation": ("【準備確認】受注情報編集で受注 ST-ORDER-TSUHAN-VP0706C の出荷日と送り状No.が空であることを記録する。\n"
+                  "【操作】出荷実績インポート登録で入力のCSVファイルを選択し「CSVファイルのアップロード」を押す。\n"
+                  "【操作後確認】画面上部の表示を記録し、受注情報編集で同じ受注の出荷日と送り状No.を記録する。"),
+    "expected_result": "取込エラーが表示されず、受注情報編集の送り状No.に取り込んだ文字列「AB-1234-X#9」がそのまま表示され、出荷日がCSVの値で登録されること。",
+    "observation": "確認場所: 出荷実績インポート登録の画面上部と、受注情報編集の送り状No.・出荷日",
+    "evidence": [ev(ORDERS, 4758), ev(ORDERS, 4714), ev(ORDERS, 4716)],
+    "known_limits": ["送り状No.の値（AB-1234-X#9）は実行用の具体値。", "0203 4863行の項目定義は送り状No.を数値(整数)とするが、裁定 R6 に従い文字列のまま保存されることを判定する。",
+                     "正常に完了したときの文言は表示メッセージ節に「CSVファイルをアップロードしました」（M05-26-MSG-001）と「登録が完了しました。」（M05-26-MSG-003）が並ぶため、文言は判定しない。"],
+})
+
+# 4) 経路の支払方法
+PAY_ROUTES = {
+    "VPR-TSUHAN-02-07-01": [("お支払い方法に銀行振込を選ぶ。注文するはまだ押さない。", f"お支払い方法に{PAY}を選ぶ。「クレジットカード決済へ」はまだ押さない。"),
+                            ("銀行振込で注文を完了する。", f"{PAY}で注文を完了する（{CARD_PAY}）。"),
+                            ("確定チェックボックスを選び、注文するを押す。", "確定チェックボックスを選び、「クレジットカード決済へ」を押す。"),
+                            ("購入手続きへを押し、銀行振込を選んで注文するを押す。", f"購入手続きへを押し、{PAY}を選んで{CARD_PAY}。")],
+    "VPR-TSUHAN-02-04-01": [("お支払い方法に銀行振込を選び、", f"お支払い方法に{PAY}を選び、"),
+                            ("確定チェックボックスを選んで注文するを押す。", "確定チェックボックスを選んで「クレジットカード決済へ」を押す。"),
+                            ("銀行振込を選んで30分以内に注文するを押す。", f"{PAY}を選んで30分以内に{CARD_PAY}。")],
+    "VPR-TSUHAN-02-02-01": [("（ST-CARD-TSUHAN-205 を数量3、銀行振込、発送管理台帳に入金日の記録あり）", f"（ST-CARD-TSUHAN-205 を数量3、{PAY}）")],
+    "VPR-TSUHAN-07-05-01": [("支払方法=銀行振込", f"支払方法={PAY}")],
+    "VPR-TSUHAN-1401-01": [("お支払い方法=銀行振込を選び、確定チェックボックスにチェックを入れて「注文する」を押す。",
+                            f"お支払い方法={PAY}を選び、確定チェックボックスにチェックを入れて{CARD_PAY}。")],
+}
+
+
+def rewrite_route(r, pairs):
+    for old, new in pairs:
+        hit = False
+        if old in r["precondition"]:
+            r["precondition"] = r["precondition"].replace(old, new); hit = True
+        for s in r["steps"]:
+            for k in ("operation", "expected_result"):
+                if old in s.get(k, ""):
+                    s[k] = s[k].replace(old, new); hit = True
+        if not hit:
+            raise AssertionError(f"直す元の文が無い: {r['contract_id']} {old[:40]}")
+
+
+route_by_id = {r["contract_id"]: r for r in routes}
+for cid, pairs in PAY_ROUTES.items():
+    r = route_by_id[cid]
+    rewrite_route(r, pairs)
+    if r["seed"].get("支払方法") == "銀行振込":
+        r["seed"]["支払方法"] = PAY
+    if "クレジットカード決済へ" in json.dumps(r["steps"], ensure_ascii=False):
+        r["evidence"] = r["evidence"] + [EV_CARD_BUTTON]
+for r in routes:
+    body = json.dumps({k: r[k] for k in ("precondition", "seed", "steps")}, ensure_ascii=False)
+    for word in ("銀行振込", "郵便振替", "代金引換", "コンビニ決済"):
+        assert word not in re.sub(r'"evidence": \[.*?\]', "", body), f"経路にクレジットカード以外の支払方法が残る: {r['contract_id']} {word}"
+
+# 5) 裁定 R1〜R3・R7・R10 を期待結果に入れる
+M0520 = "functions/pf-eccube3/m05-20_admin_order_order_shipping_standby_detail_edit_delete.md"
+c = item("VP-TSUHAN-04-03-01")
+rewrite_fields(c, [("（ステータスは記録だけ行い判定しない）", "（対応状況の表示値も記録する）"),
+                   ("作り直した出荷指示リストに削除前と同じ3件の受注が紐づき、", "リスト削除のあと3受注の対応状況が「出荷指示」のまま出荷指示日が空になり、作り直した出荷指示リストに削除前と同じ3件の受注が紐づき、")])
+drop_limits(c, "削除後の受注ステータスは")
+c["known_limits"].append("削除後の受注は対応状況が出荷指示のまま出荷指示日だけが空になる（裁定 R1。業務フロー 16:191 の「注文受領」に推移するには従わない）。")
+add_evidence(c, ev(M0520, 25), ev(ORDERS, 4307))
+c = item("VP-TSUHAN-1105-01")
+c["known_limits"] = [("業務フロー11-1は作成済みの出荷指示を削除してから再作成する手順で、削除した受注は対応状況が出荷指示のまま出荷指示日だけが空になり、次の出荷指示リスト作成の対象に戻る（裁定 R1）。"
+                      "本項目は件数の確認のため、どの出荷指示リストにも紐づいていない受注から生成する。") if "削除後の対応状況が業務フロー" in x else x for x in c["known_limits"]]
+f37 = next(f for f in step_resolutions if f["contract_id"] == "G1-SF-37")
+f37["expected_result"] = edit(f37["expected_result"], "削除した出荷指示に含まれていた受注の出荷指示日が空になり、",
+                              "削除した出荷指示に含まれていた受注の対応状況が「出荷指示」のまま出荷指示日が空になり、")
+f37["disposition"], f37["reason"] = "adopted", ""
+f37["fix_note"] = (f37.get("fix_note", "") + " 削除後の状態は裁定 R1（出荷指示のまま）。").strip()
+f37["evidence"] = f37["evidence"] + [ev(M0520, 25)]
+# R2: 欠品登録で在庫数・総原価は変わらず、在庫の履歴を2行残す（0202 別添資料 ③）
+r = route_by_id["VPR-TSUHAN-02-02-01"]
+s2, s3 = r["steps"][1], r["steps"][2]
+s2["operation"] = "欠品登録の前に在庫検索一覧で対象商品の在庫数を記録する。" + s2["operation"]
+s3["operation"] = s3["operation"] + "在庫検索一覧で対象商品の在庫数を記録し、在庫履歴検索一覧で同じ商品の在庫履歴を開く。"
+s3["expected_result"] = s3["expected_result"].rstrip("。") + ("。在庫履歴に在庫変動区分「欠品でもどし」の増減+1と「欠品」の増減−1の2行が記録され、"
+                                                              "在庫数が工程2で記録した欠品登録の前の値と同じであること。")
+s3["evidence"] = s3["evidence"] + [ev(STOCK, 8753), ev(STOCK, 8756), ev(STOCK, 8757), ev(ORDERS, 2840)]
+r["known_limits"] = [x for x in r["known_limits"] if "欠品登録時の在庫数・総原価の扱いは" not in x] + [
+    "欠品登録では在庫数・総原価は変わらず、減った理由を欠品に付け替える履歴を2行残す（裁定 R2。0203 2794行の「在庫数を減らす」には従わない）。"]
+# R3: 購入完了手続き再処理は在庫数を減らさず、在庫履歴だけを登録する
+r = route_by_id["VPR-TSUHAN-10-03-01"]
+r["steps"][1]["operation"] += "在庫検索一覧で商品 ST-CARD-TSUHAN-VP1003 の在庫数を記録する。"
+r["steps"][5]["expected_result"] = r["steps"][5]["expected_result"].rstrip("。") + "。在庫検索一覧の在庫数が工程2で記録した値から変わっていないこと。"
+r["steps"][5]["evidence"] = r["steps"][5]["evidence"] + [ev(BATCH, 1239)]
+r["known_limits"] = [x for x in r["known_limits"] if "バッチで在庫数を減らすかは" not in x] + [
+    "購入完了手続き再処理は在庫数を減らさない。在庫数は注文確定のときに減っている（裁定 R3。0405 1261行の「在庫を減らす」には従わない）。"]
+# R7: ポイント二重登録チェックの対象は減った履歴
+r = route_by_id["VPR-TSUHAN-1204-02"]
+r["known_limits"] = [("ポイント二重登録チェックの対象はポイントが減った履歴（増減量がマイナス）（裁定 R7）。0405 1575行の「ポイントが付与された履歴」には従わない。")
+                     if "付与と減算の言葉が食い違う" in x else x for x in r["known_limits"]]
+# R10: しきい値は店舗登録。初期値980は追加システム設定（現行仕様節）の値
+c = item("VP-TSUHAN-08-04-01")
+c["known_limits"] = [x.replace("0209の店舗登録はピッキングリスト分割しきい値価格（初期値980）の1項目", "0209の店舗登録はピッキングリスト分割しきい値価格の1項目（裁定 R10。初期値980は追加システム設定の現行仕様節の値）")
+                     for x in c["known_limits"]]
+# R4: 取り込み後の状態は「出荷完了」
+c = item("VP-TSUHAN-09-03-01")
+c["known_limits"] = [("取り込み後の状態は「出荷完了」（裁定 R4）。件数は出荷日で数える。") if "表記が違うため" in x else x for x in c["known_limits"]]
+orders_contracts = json.loads((repo / "scenario_test/coverage/execution_repairs/orders_contracts.json").read_text(encoding="utf-8"))
+for cid in ("ORDER-EXEC-011", "ORDER-EXEC-012", "ORDER-EXEC-013", "ORDER-EXEC-014"):
+    base = json.loads(json.dumps(next(c for c in orders_contracts["step_resolutions"] if c["contract_id"] == cid), ensure_ascii=False))
+    base["expected_result"] = edit(base["expected_result"], "発送済みの状態と出荷完了メールの受注番号が対応すること",
+                                   "対応状況が「出荷完了」になり、出荷完了メールの受注番号が対応すること")
+    base["evidence"] = base.get("evidence", []) + [ev(ORDERS, 2831)]
+    base["fix_note"] = "取り込み後の状態は「出荷完了」（裁定 R4。0203 4715行の「発送済み」には従わない）。"
+    step_resolutions.append(base)
+# SCN-007 工程10: 同梱は出ないので、EMS の出荷実績の取込だけを行う
+base = json.loads(json.dumps(next(c for c in orders_contracts["step_resolutions"] if c["contract_id"] == "ORDER-EXEC-016"), ensure_ascii=False))
+base["operation"] = ("EMSの当日集荷分の受注について、集荷完了後にヘッダ「注文番号,出荷日,送り状No.」の出荷実績CSVへ1受注1行で記録し、M05-26でファイルを選択して"
+                     "CSVファイルのアップロードを押す。M05-11と顧客の試験受信箱で同じ受注の出荷日・送り状No.・状態・出荷完了メールを照合する")
+base["expected_result"] = "EMSの受注の出荷日・送り状No.がCSVと一致し、対応状況が「出荷完了」になり、出荷完了メールの受注番号が対応すること。"
+base["function_ids"], base["screen"] = ["M05-26", "M05-11"], "出荷実績インポート登録→受注情報編集（EMS）"
+base["evidence"] = base.get("evidence", []) + [ev(FRONT, 1556), ev(FRONT, 1559), ev(ORDERS, 2831)]
+base["fix_note"] = "同梱はクレジットカードだけの注文では配送方法の選択肢に出ないため、同梱出荷処理は行わない（裁定 R0・R11）。EMSの出荷実績の取込だけを残す。"
+step_resolutions.append(base)
+for t in step_targets:
+    if t["scenario_id"] == SCN007 and t["step"] == 10:
+        t["target"], t["chain_key"], t["reason"] = "受注番号={EMS受注番号}（EMS）", "EMS受注番号", "EMSの受注は出荷実績インポートで取り込む（同梱は選択肢に出ない。裁定 R11）"
+seed_additions[SCN007].pop("同梱受注番号")
+# 001 の工程5・6: コンビニ決済と支払方法の分岐を外す
+f = next(f for f in step_resolutions if f["contract_id"] == "G1-SF-03")
+f["operation"] = edit(f["operation"], "。コンビニ決済のデータパターンでは支払方法に関するメールも開く", "")
+f["expected_result"] = edit(f["expected_result"], "、コンビニ決済の場合は支払方法に関するメールを別に受信していること。", "していること。").replace("受信しし", "受信し")
+f = next(f for f in step_resolutions if f["contract_id"] == "G1-SF-04")
+f["operation"] = "受注情報編集で同じ受注のお支払い方法がクレジットカード決済であることを確かめ、購入完了へ進む（支払はクレジットカード決済だけ。裁定 R0）"
+f["expected_result"] = "受注情報編集の同じ受注のお支払い方法にクレジットカード決済が表示され、購入完了へ進めること。"
+# 発送準備（003 工程5・004 工程6）の発送台帳更新: 同梱は選択肢に出ないので、受注欄の備考の反映だけを行う
+f = next(f for f in step_resolutions if f["contract_id"] == "G1-SF-07")
+f["operation"] = edit(f["operation"], "発送管理台帳の同じ受注番号の行に同梱対応と受注欄の備考を反映する", "発送管理台帳の同じ受注番号の行に受注欄の備考を反映する（同梱対応は、同梱が選択肢に出ないため行わない。裁定 R11）")
+f["expected_result"] = edit(f["expected_result"], "受注欄の備考と同梱対応の内容が反映されていること。", "受注欄の備考の内容が反映されていること。")
+# 001 の工程4: クレジットカード決済の確定は「クレジットカード決済へ」からカード情報の入力で行う（0304 1304行）
+base = json.loads(json.dumps(next(c for c in json.loads((repo / "scenario_test/coverage/source_contracts.json").read_text(encoding="utf-8"))["step_resolutions"]
+                                  if c["contract_id"] == "SC-061"), ensure_ascii=False))
+base["operation"] = edit(base["operation"], "購入内容を確定して注文完了画面を表示する",
+                         "購入内容を確定して注文完了画面を表示する（ご注文方法指定で確定チェックボックスにチェックを入れ、" + CARD_PAY + "）")
+base["evidence"] = base["evidence"] + [EV_CARD_BUTTON]
+base["fix_note"] = "支払はクレジットカード決済だけ（裁定 R0）なので、確定の操作を「クレジットカード決済へ」とカード情報の入力で書いた。"
+step_resolutions.append(base)
+# 適用外にしたシナリオだけに当てていた補正は外し、ほかの補正からも適用外のシナリオを外す
+for f in list(step_resolutions):
+    occ = [o for o in f.get("occurrences", []) if o["scenario_id"] not in RETIRED]
+    if not occ:
+        step_resolutions.remove(f)
+        excluded.append({"contract_id": f["contract_id"], "kind": "step_fix", "merged_into": "-", "reason": "当てていたシナリオを裁定 R0 で適用外にした"})
+    else:
+        f["occurrences"] = occ
+for t in step_targets:
+    assert t["scenario_id"] not in RETIRED
+
+# 6) 入金の工程を除いた購入→国内出荷の連鎖（901 の代わり）
+cross = next(r for r in json.loads((repo / "scenario_test/coverage/source_contracts.json").read_text(encoding="utf-8"))["cross_business_routes"]
+             if r["contract_id"] == "CROSS-TSUHAN-ORDER-001")
+cross_fix = orders_contracts["supplemental_steps"]["SCN-TSUHAN-購入入金国内出荷連鎖-901"]
+SID921 = "SCN-TSUHAN-購入国内出荷連鎖-921"
+chain_steps = []
+for s in cross["steps"]:
+    if s["no"] in (6, 7):  # 銀行振込の入金と入金照合
+        continue
+    s = {**json.loads(json.dumps(s, ensure_ascii=False)), **json.loads(json.dumps(cross_fix.get(str(s["no"]), {}), ensure_ascii=False))}
+    s = {k: v for k, v in s.items() if k in ("actor", "kind", "screen", "function_ids", "operation", "expected_result", "matching_keys", "evidence")}
+    for k in ("operation", "expected_result"):
+        s[k] = s[k].replace("{{数量}}", "2").replace("{{商品代金}}", "2,000円")
+    chain_steps.append(s)
+c1, c8, c9 = chain_steps[0], chain_steps[5], chain_steps[6]
+c1["operation"] = edit(c1["operation"], "国内配送先・ゆうパック・銀行振込を選び、", f"国内配送先・ゆうパック・{PAY}を選び、")
+c1["operation"] = edit(c1["operation"], "購入を一度確定する。", f"{CARD_PAY}（購入は一度だけ確定する）。")
+c1["expected_result"] = edit(c1["expected_result"], "銀行振込・未入金の受注", f"{PAY}の受注")
+c1["actor"] = "お客様"
+c1["evidence"] = c1["evidence"] + [EV_CARD_BUTTON]
+c8["operation"] = edit(c8["operation"], "入金確認済み台帳と追跡情報から", "追跡情報から")
+c9["expected_result"] = edit(c9["expected_result"], "発送済みの状態と出荷完了メールの受注番号が対応すること", "対応状況が「出荷完了」になり、出荷完了メールの受注番号が対応すること")
+c9["evidence"] = c9["evidence"] + [ev(ORDERS, 2831)]
+for no, s in enumerate(chain_steps, 1):
+    s["no"] = no
+    s.setdefault("actor", "通販チーム")
+    s["actor"] = s["actor"] or "通販チーム"
+    s["observation"] = "確認場所: " + s["screen"]
+    assert s["evidence"], f"根拠の無い工程: 921 #{no}"
+    for word in ("銀行振込", "入金"):
+        assert word not in s["operation"] + s["expected_result"], f"921 #{no} に {word} が残る"
+chain_evidence = []
+for s in chain_steps:
+    for e in s["evidence"]:
+        if (e["file"], e["line"]) not in {(x["file"], x["line"]) for x in chain_evidence}:
+            chain_evidence.append(e)
+CHAIN_ID = "VPR-TSUHAN-01-01-01"
+design = next(e for e in chain_evidence if not e["file"].startswith("scenario_test/markdown/"))
+routes.append({
+    "contract_id": CHAIN_ID, "disposition": "adopted_viewpoint_route", "business": BUSINESS, "scenario_id": SID921,
+    "viewpoint": ["SV-01-01", "SV-09-02"], "pattern_number": "921", "pattern_name": "クレジットカードの購入から国内出荷まで（同一受注）",
+    "route_name": "クレジットカード決済で購入した受注を、発送準備から国内出荷・出荷実績の取込まで同じ受注で通す",
+    "route_kind": "主要代替", "source_file": "scenario_test/coverage/viewpoint_contracts.json",
+    "basis": ("観点 SV-01-01・SV-09-02 の当てはめで追加した経路。補足経路 CROSS-TSUHAN-ORDER-001（SCN-TSUHAN-購入入金国内出荷連鎖-901）から、"
+              "銀行振込の入金と入金照合の工程（6・7）を除いた。支払はクレジットカード決済だけ（裁定 R0）。工程は CROSS-TSUHAN-ORDER-001 と orders_contracts.json の補正のまま。"
+              " 観点上の種別: 主要代替。"),
+    "precondition": "国内配送・クレジットカード決済・通常商品・欠品なし・イレギュラーなしの注文を1件作る。1件の実受注を全工程で使い、別受注の差し替えや各工程での再シードは禁止する。",
+    "final_state": ("購入時に採番した同じ受注番号について、商品・数量・金額がCSV/帳票/台帳/現物に一致し、出荷実績登録で受注の出荷日・送り状No.が登録され、"
+                    "対応状況が「出荷完了」になり、同じ顧客へ出荷完了メールが届く。"),
+    "seed": {"試験管理ID": "ST-ORDER-TSUHAN-921", "会員番号": "ST-MEMBER-TSUHAN-921", "受注番号": "購入完了で採番された実受注番号をST-ORDER-TSUHAN-921の実行記録へ対応付ける",
+             "商品コード": "ST-CARD-TSUHAN-921", "数量": "2", "販売単価": "1,000円", "商品代金": "2,000円", "配送方法": "ゆうパック", "支払方法": PAY,
+             "注文開始状態": "未注文・未採番", "決済状態": "未決済（購入前）", "受注ステータス": "未作成（購入完了後に記録）",
+             "業務時刻": "発送準備13:00、国内発送チェック16:00、ゆうパック集荷17:00を同一営業日に記録する"},
+    "known_limits": ["外部マクロ・ラベル印字・集荷はテスト用ファイル/記録と現場代替を準備する。実行済みとは扱わない。",
+                     "取り込み後の状態は「出荷完了」（裁定 R4）。", "会員・商品・数量・時刻は実行用の具体値。"],
+    "primary_key": "実受注番号", "chain_artifact": "同一受注の対象記録", "evidence": chain_evidence, "steps": chain_steps,
+    "condition": f"観点の当てはめ契約 {CHAIN_ID} の経路（観点 SV-01-01・SV-09-02。設計書本文: {design['file']}:{design['line']}）",
+})
+ROUTE_SID[CHAIN_ID] = SID921
+by_id[CHAIN_ID] = {"viewpoint": ["SV-01-01", "SV-09-02"]}
+for word in ("銀行振込", "郵便振替", "代金引換", "コンビニ決済"):
+    for c in items:
+        body = json.dumps({k: c[k] for k in ("item_name", "precondition", "input", "operation", "expected_result")}, ensure_ascii=False)
+        assert word not in body, f"項目にクレジットカード以外の支払方法が残る: {c['contract_id']} {word}"
+
+live = {c["contract_id"] for c in items} | {r["contract_id"] for r in routes}
+for c in items:
+    body = json.dumps({k: v for k, v in c.items() if k != "evidence"}, ensure_ascii=False)
+    dangling = set(re.findall(r"VPR?-TSUHAN-[\d-]*\d", body)) - live - {c["contract_id"]}
+    assert not dangling, f"無くなった契約を引いている（裁定の反映後）: {c['contract_id']} → {dangling}"
+    assert c["scenario_id"] not in RETIRED, f"適用外のシナリオに項目がある: {c['contract_id']}"
+    assert c["scenario_id"] in existing | set(ROUTE_SID.values()), f"置き先のシナリオが無い: {c['contract_id']} {c['scenario_id']}"
+
+
+# 裁定で項目・経路を外した観点の判定（2026-10-20）
+CANCEL_NOTE = ("クレジットカードの受注を EC-CUBE でキャンセルする業務の流れが業務フローに無い。未入金の受注の準キャンセル・キャンセルの経路（VPR-TSUHAN-04-01-01）は、"
+               "支払がクレジットカード決済だけになったので外した（裁定 R0）。キャンセルで在庫・使用ポイント・付与ポイントが戻りポイント履歴を削除する規則（0203 2834行）は機能の確認として結合テストの範囲。")
+LEDGER_FIX.update({
+    "SV-02-03": {"判定": "既存項目で確認済み", "対象シナリオ": "SCN-TSUHAN-既存業務発送業務-007 / SCN-TSUHAN-予約受注対応シングル-014",
+                 "既存テストID": "STI-TSUHAN-007-002（止まる）/ STI-TSUHAN-007-008（無くす）/ STI-TSUHAN-014-002（分ける）",
+                 "理由・確認すること": ("止まる・無くす・分けるは既存項目で判定済み。纏める（同梱）は、クレジットカードだけの注文では配送方法の選択肢に出ないため経路を作らない（裁定 R0・R11）。"
+                                     "繰り返す（注文の二重送信・同じ出荷実績の再取込み）と戻る（ブラウザの戻る）は機構的な確認で、既存シナリオの他層委譲（ITA-15・ITA-17・ITB-16）に従う。")},
+    "SV-03-10": {"判定": "追加（既存シナリオ）", "対象シナリオ": "SCN-TSUHAN-既存業務発送業務-007", "既存テストID": "-",
+                 "理由・確認すること": ("出荷日が登録済みの受注は出荷実績の取込で更新しない（出荷完了メール・ポイント付加も行わない）という更新してはいけない時機の規則（0203 4714行）を、"
+                                     "取込済みCSVの再取込（VP-TSUHAN-09-04-03）で確かめる。同梱で手動で出荷完了にした受注を取込に含める確認（VP-TSUHAN-03-10-01・02）は、"
+                                     "同梱が選択肢に出ないため外した（裁定 R0・R11）。単一機能の判定は IT-M05-26-022〜024・046〜048 が担当。")},
+    "SV-04-01": {"判定": "根拠待ち", "対象シナリオ": "-", "既存テストID": "STI-TSUHAN-ECCUB-008-005, STI-TSUHAN-ECCUB-008-006",
+                 "理由・確認すること": "受注の作成から出荷までは SCN-TSUHAN-購入国内出荷連鎖-921 で同じ受注を通す。取消側のライフサイクル: " + CANCEL_NOTE + " 返品は通販受注管理の原典に無い。"},
+    "SV-04-02": {"判定": "根拠待ち", "対象シナリオ": "-", "既存テストID": "STI-TSUHAN-014-004, STI-TSUHAN-020-004",
+                 "理由・確認すること": ("設計書に明記された起きてはならない遷移のうち、出荷日登録済みの受注を出荷実績取込で再更新しないことは SV-03-10（VP-TSUHAN-09-04-03）で確かめる。"
+                                     "出荷指示の後にキャンセルされた受注をピック表から外す手作業は 014-004・020-004 が確かめている。キャンセルした受注を出荷指示にしないことは: " + CANCEL_NOTE +
+                                     " 状態とイベントの網羅は、受注ステータスの遷移の許可規則の一覧が設計書に無いため根拠待ち。")},
+    "SV-08-02": {"判定": "根拠待ち", "対象シナリオ": "-", "既存テストID": "STI-TSUHAN-ECCUB-008-006",
+                 "理由・確認すること": ("購入で減った在庫数と使用ポイントがキャンセルで戻ること: " + CANCEL_NOTE +
+                                     " 欠品登録では在庫数・総原価は変わらない（裁定 R2）ことを SCN-TSUHAN-欠品登録と出荷-914 の工程3で確かめる。分割出荷は業務フローに無い。")},
+    "SV-17-07": {"判定": "既存項目で確認済み", "対象シナリオ": "SCN-TSUHAN-既存業務発送業務-007 / SCN-TSUHAN-在庫移動準備業務-900",
+                 "既存テストID": "STI-TSUHAN-007-021, STI-TSUHAN-007-022, STI-TSUHAN-900-001",
+                 "理由・確認すること": ("パッケージ標準・tobe に合わせて変えた手順のうち、tobe の在庫移動実績インポートと新規追加の在庫移動準備業務は既存項目で通している。"
+                                     "標準機能での同梱出荷は、同梱が選択肢に出ないため対象外（裁定 R0・R11）。「郵便番号から自動入力」ボタンは残る（裁定 R8）ため、住所入力の手順の変更は無い。")},
+})
+
+
+# 裁定を当てたあとの判定の見直し（担当の差し替え。直す行だけ・5列すべて）
+fix_path = vp / "ledger_fix.json"
+if fix_path.is_file():
+    for vid, fields in json.loads(fix_path.read_text(encoding="utf-8")).items():
+        LEDGER_FIX[vid] = {**LEDGER_FIX.get(vid, {}), **fields}
+
 out = {
     "schema_version": 1, "review_date": "2026-10-20", "business": [BUSINESS],
     "description": "シナリオテスト観点（scenario_test/シナリオテスト観点.md 第1部）を業務のシナリオへ当てはめた契約。"
                    "items は既存シナリオへ足す項目、routes は新しい経路、step_resolutions は既存工程の画面・担当の補正。"
                    "引用は audit_scenario_delivery.py が原典と照合する。",
     "items": items, "routes": routes, "step_resolutions": step_resolutions, "step_targets": step_targets,
-    "seed_additions": seed_additions, "excluded": excluded,
+    "seed_additions": seed_additions, "retired_scenarios": retired_scenarios,
+    "retired_items": retired_items, "excluded": excluded,
 }
 (repo / "scenario_test/coverage/viewpoint_contracts.json").write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
@@ -458,15 +900,25 @@ with (ledger_dir / f"{BUSINESS}.tsv").open("w", encoding="utf-8", newline="") as
             for v in (src["viewpoint"] if isinstance(src["viewpoint"], list) else [src["viewpoint"]]):
                 targets.setdefault(v, set()).add(owner[e["merged_into"]])
     new_routes = set(ROUTE_SID.values())
+    no_target = []
+    # 通販のシナリオの総数は、裁定で9本外し921を足して24本（作り直し前の22本と書いた行を直す）
+    TOTAL_FIX = (("22本すべて", "24本すべて"), ("全22シナリオ", "全24シナリオ"), ("全22本", "全24本"),
+                 ("通販受注管理の22行", "通販受注管理の24行"), ("通販22行", "通販24行"))
     for r in rows:
         r.update(LEDGER_FIX.get(r["観点ID"], {}))
-        if r["判定"].startswith("追加"):
+        for col in ("対象シナリオ", "理由・確認すること", "根拠"):
+            for old_text, new_text in TOTAL_FIX:
+                r[col] = r[col].replace(old_text, new_text)
+        if r["判定"].startswith("追加") and "対象シナリオ" not in LEDGER_FIX.get(r["観点ID"], {}):
             found = targets.get(r["観点ID"])
-            assert found, f"追加と判定したのに項目も経路も無い: {r['観点ID']}"
+            if not found:
+                no_target.append(r["観点ID"])
+                continue
             r["対象シナリオ"] = " / ".join(sorted(found))
             r["判定"] = "追加（既存シナリオ）" if found - new_routes else "追加（新規経路）"
         note = r["理由・確認すること"]
         if r["観点ID"] in moved:
             note += " / 統合: " + "、".join(sorted(moved[r["観点ID"]])) + " で確認する"
         w.writerow([r["観点ID"], r["判定"], r["対象シナリオ"], r["既存テストID"], note, r["根拠"]])
+    assert not no_target, f"追加と判定したのに項目も経路も無い: {no_target}"
 print(f"items={len(items)} routes={len(routes)} step_resolutions={len(step_resolutions)} excluded={len(excluded)} ledger={len(rows)}")

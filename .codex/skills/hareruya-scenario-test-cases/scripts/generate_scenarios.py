@@ -3402,6 +3402,9 @@ def discover_flows(repo: Path, only: str | None) -> list[tuple[Path, str, str, s
     return flows
 
 
+RETIRED_SCENARIOS: dict[str, tuple] = {}
+
+
 def generate(repo: Path, only: str | None, max_docs: int) -> list[Scenario]:
     reset_generation_state()
     import source_contract_adapter
@@ -3490,6 +3493,14 @@ def generate(repo: Path, only: str | None, max_docs: int) -> list[Scenario]:
             scenarios.append(Scenario(sid, title, business_title, flow_path, pattern, route, rel_docs, html_docs, coverage, non_eccube, dup_number))
     import supplemental_scenarios
     supplemental_scenarios.append(repo, scenarios, docs, sys.modules[__name__])
+    # 業務の裁定で成り立たなくなった経路は作らない（理由は viewpoint_contracts.json の retired_scenarios）。
+    retired = execution_repairs.retired_scenarios(repo)
+    unknown = set(retired) - {s.sid for s in scenarios}
+    if unknown and only is None:  # 業務を絞って生成するときは、ほかの業務の候補が無いので照合しない
+        raise ValueError(f"適用外にしたシナリオが生成の候補に無い: {sorted(unknown)}")
+    RETIRED_SCENARIOS.clear()
+    RETIRED_SCENARIOS.update({s.sid: (s, retired[s.sid]) for s in scenarios if s.sid in retired})
+    scenarios = [s for s in scenarios if s.sid not in retired]
     return [execution_repairs.prepare_scenario(s, sys.modules[__name__]) for s in scenarios]
 
 
@@ -3698,6 +3709,22 @@ def write_index(repo: Path, scenarios: list[Scenario], dry_run: bool) -> None:
     for path, number, name, status in sorted(MISSING_PATTERNS, key=lambda item: (str(item[0]), item[1], item[2])):
         business = business_title_for_flow(title_from_markdown(FLOW_TEXT_BY_PATH.get(path, ""), path.stem))
         source_coverage.append(f"| {business} | `{path}` | {number} | {table_cell(name)} | {table_cell(status)} | 0 |")
+    # 業務の裁定で外した経路は、黙って表から消さずに「適用外」として残す。
+    retired_keys = {}
+    for sid, (retired_s, reason) in sorted(RETIRED_SCENARIOS.items()):
+        key = (retired_s.business_title, retired_s.flow_path, retired_s.pattern.source_number or retired_s.pattern.number, retired_s.pattern.name)
+        retired_keys.setdefault(key, []).append(sid)
+    for (business, path, number, name), sids in sorted(retired_keys.items(), key=lambda item: (item[0][0], str(item[0][1]), item[0][2])):
+        if (business, path, number, name) not in parent_counts:
+            source_coverage.append(f"| {business} | `{path}` | {number} | {table_cell(name)} | 適用外（業務の裁定。下の表） | 0 |")
+    if RETIRED_SCENARIOS:
+        source_coverage.extend(["", "## 業務の裁定で外した経路", "",
+                                "生成しない経路。理由と裁定の記録は `scenario_test/coverage/viewpoint_contracts.json` の retired_scenarios。", "",
+                                "| 業務 | 出典 | 原典パターン番号 | シナリオID | 経路 | 理由 |", "|---|---|---|---|---|---|"])
+        for sid, (retired_s, reason) in sorted(RETIRED_SCENARIOS.items()):
+            number = retired_s.pattern.source_number or retired_s.pattern.number
+            # 出典を ` で囲まない（上の集計表の行として数えられないように）
+            source_coverage.append(f"| {retired_s.business_title} | {retired_s.flow_path} | {number} | {sid} | {table_cell(retired_s.title)} | {table_cell(reason)} |")
     if dry_run:
         print(f"would write {out / '01_シナリオ一覧.md'}")
         print(f"would write {out / '02_トレーサビリティ.md'}")

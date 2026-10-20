@@ -2,7 +2,7 @@
 
 <!-- generated-by: audit_scenario_delivery.py -->
 
-正本 `../test_items/all_scenario_test_items.tsv` の1747項目を、業務別の14列TSVへ変換した。
+正本 `../test_items/all_scenario_test_items.tsv` の1652項目を、業務別の14列TSVへ変換した。
 
 [目的と完了基準](../システムテストの目的と完了基準.md)に従い、各経路の全必須判定と最終業務状態から業務成立を判定する。[必須判定一覧](../coverage/business_goal_review/route_acceptance.tsv)で経路と個別判定を対応付ける。
 
@@ -16,7 +16,7 @@
 | [ sti-price_concretized.tsv ](tsv/sti-price_concretized.tsv) | 価格管理 | 46 |
 | [ sti-product_concretized.tsv ](tsv/sti-product_concretized.tsv) | 商品登録・編集 | 108 |
 | [ sti-shiire_concretized.tsv ](tsv/sti-shiire_concretized.tsv) | 仕入れ業務 | 54 |
-| [ sti-tsuhan_concretized.tsv ](tsv/sti-tsuhan_concretized.tsv) | 通販受注管理 | 458 |
+| [ sti-tsuhan_concretized.tsv ](tsv/sti-tsuhan_concretized.tsv) | 通販受注管理 | 363 |
 | [ sti-zaiko_concretized.tsv ](tsv/sti-zaiko_concretized.tsv) | 在庫管理 | 491 |
 
 元の11列に使用シード・自動検証・実行方法を加える。前提条件から移した情報は逆変換で照合し、操作の改行は ` ⏎ ` として保持する。

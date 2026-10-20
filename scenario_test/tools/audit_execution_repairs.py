@@ -97,11 +97,21 @@ def main():
         grouped[sid(row)].append(row)
     # 観点の当てはめで足した経路のSCNは修正前に存在しないので、比較から外す。
     viewpoint_path = ROOT / "scenario_test/coverage/viewpoint_contracts.json"
-    viewpoint_sids = {r["scenario_id"] for r in json.loads(viewpoint_path.read_text()).get("routes", [])} if viewpoint_path.exists() else set()
-    assert set(grouped) - viewpoint_sids == {sid(r) for r in old}, "修正前後のSCN集合が異なる"
+    viewpoint = json.loads(viewpoint_path.read_text()) if viewpoint_path.exists() else {}
+    viewpoint_sids = {r["scenario_id"] for r in viewpoint.get("routes", [])}
+    # 業務の裁定で成り立たなくなったシナリオは作らない。旧項目は理由付きで「適用外」と記録する。
+    retired = {r["scenario_id"]: r["reason"] + "（" + r["ruling"] + "）" for r in viewpoint.get("retired_scenarios", [])}
+    assert not set(retired) & set(grouped), "適用外にしたシナリオの項目が残っている"
+    retired_items = {r["test_id"]: r["reason"] + "（" + r["ruling"] + "）" for r in viewpoint.get("retired_items", [])}
+    assert set(grouped) - viewpoint_sids == {sid(r) for r in old} - set(retired), "修正前後のSCN集合が異なる"
     mapping, unmatched = [], []
     for row in old:
         s, d = sid(row), descriptor(row)
+        if s in retired or row["テストID"] in retired_items:
+            mapping.append({"旧テストID": row["テストID"], "シナリオID": s, "対応状態": "適用外（業務の裁定）", "新テストID": "",
+                            "対応根拠": retired.get(s) or retired_items[row["テストID"]], "旧観点": row["テスト観点"], "旧項目名": row["テスト項目名"],
+                            "旧期待結果": row["期待結果／レスポンス"], "新期待結果": ""})
+            continue
         keys = [d]
         if d[0] in {"step", "assertion"}:
             keys = [(d[0], number, *d[2:]) for number in step_map.get(s, {}).get(d[1], [d[1]])]

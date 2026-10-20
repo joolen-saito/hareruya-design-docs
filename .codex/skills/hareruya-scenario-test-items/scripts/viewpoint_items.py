@@ -60,9 +60,24 @@ def citations(contract: dict) -> str:
     return " / ".join(f"{e['file']}:{e['line']}" for e in contract["evidence"])
 
 
+def reserved_numbers(sid: str) -> set[int]:
+    """業務の裁定で外した作り直し前のテストID（retired_items）の番号。欠番として残し、振り直さない。"""
+    path = _repo() / CONTRACT_PATH
+    if not path.is_file():
+        return set()
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return {int(r["test_id"].rsplit("-", 1)[1]) for r in data.get("retired_items", []) if r["scenario_id"] == sid}
+
+
 def items_for(s, start: int, g) -> list:
     """g は generate_test_items モジュール（補助関数と TestItem を使う）。"""
     contracts = load().get(s.sid, [])
+    reserved = reserved_numbers(s.sid)
+    if reserved:
+        # 外したIDは既存の項目の後ろにだけある前提（途中にあると既存の項目のIDがずれる）
+        if min(reserved) < start:
+            raise ValueError(f"外したテストIDが既存の項目の途中にある: {s.sid} {sorted(reserved)} start={start}")
+        start = max(reserved) + 1
     result = []
     pattern = g.normal_representative_pattern(s)
     for contract in contracts:

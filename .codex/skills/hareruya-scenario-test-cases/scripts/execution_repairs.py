@@ -87,6 +87,11 @@ def _viewpoint(repo) -> dict:
     return json.loads(path.read_text()) if path.exists() else {}
 
 
+def retired_scenarios(repo) -> dict[str, str]:
+    """業務の裁定で成り立たなくなったシナリオ（scenario_id → 理由）。生成しない。"""
+    return {r["scenario_id"]: r["reason"] for r in _viewpoint(repo).get("retired_scenarios", [])}
+
+
 def step_target(s, number: int, seed: dict) -> tuple[str, str | None] | None:
     """観点の当てはめ契約の step_targets から、工程 number の対象（入力/対象の文）と照合キーの項目名を返す。"""
     for record in _viewpoint(getattr(s, "repo", REPO)).get("step_targets", []):

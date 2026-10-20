@@ -30,9 +30,10 @@ class OrdersExecutionRepairTests(unittest.TestCase):
     def contract(self, cid):
         return next(c for c in self.data["step_resolutions"] if c["contract_id"] == cid)
 
-    def test_all_58_scenarios_render_without_unbound_values(self):
+    def test_all_50_scenarios_render_without_unbound_values(self):
         # 2026-10-20 観点の当てはめで通販に経路10本（SCN-TSUHAN-*-910〜919）を足した（48→58）。
-        self.assertEqual(len(self.scenarios),58)
+        # 同日、依頼者の裁定（支払はクレジットカード決済だけ）で通販の9本を外し、921 を足した（58→50）。
+        self.assertEqual(len(self.scenarios),50)
         for s in self.scenarios:
             text = g.render_scenario(s, REPO)
             self.assertNotIn("{{", text, s.sid)
@@ -66,14 +67,14 @@ class OrdersExecutionRepairTests(unittest.TestCase):
             with self.assertRaises(ValueError):recipe(self.scenario("ORDER",4).sid,oid,ono,"2026-10-09")
 
     def test_purchase_has_no_initial_order_and_correct_payment(self):
-        for code,n in (("TSUHAN",1),("TSUHAN",2),("TSUHAN",901),("ORDER",1),("ORDER",3)):
+        for code,n in (("TSUHAN",1),("TSUHAN",921),("ORDER",1),("ORDER",3)):
             v=g.execution_seed(self.scenario(code,n))
             self.assertEqual(v["注文開始状態"],"未注文・未採番")
             self.assertIn("未決済",v["決済状態"])
-        # 16_通販受注管理.md: 決済方法確認→購入完了の実線はクレジットカード・代金引換（001）、
-        # →決済処理を行うの実線はコンビニ決済・郵便振替・銀行振込（002、R53）。
+        # 依頼者の裁定 R0（review/通販受注管理/rulings.md）: 支払は SPLINKS のクレジットカード決済だけ。
+        # 決済処理を行う経路（002）は作らない。
         self.assertEqual(g.execution_seed(self.scenario("TSUHAN",1))["支払方法"],"クレジットカード")
-        self.assertEqual(g.execution_seed(self.scenario("TSUHAN",2))["支払方法"],"銀行振込")
+        self.assertFalse(any(s.sid.startswith("SCN-TSUHAN-") and s.sid.endswith("-002") for s in self.scenarios))
 
     def test_pickup_customer_traverses_cart(self):
         for cid in ("SC-026","SC-031","SC-036","SC-038"):
@@ -147,8 +148,9 @@ class OrdersExecutionRepairTests(unittest.TestCase):
         self.assertIn("原本取得手段が未確定",repairs.resolve_link_origin("スタック用紙","起点","店頭受取受注管理"))
         self.assertIsNone(repairs.resolve_link_origin("並び順ファイル","起点","店頭買取"))
 
-    def test_same_order_901_preserves_two_items_through_purchase_and_pack(self):
-        s=self.scenario("TSUHAN",901)
+    def test_same_order_921_preserves_two_items_through_purchase_and_pack(self):
+        # 921 は 901 から入金の工程を除いた連鎖。購入・出荷指示・梱包の工程番号（1・4・5）は 901 と同じ。
+        s=self.scenario("TSUHAN",921)
         v=g.execution_seed(s)
         self.assertEqual((v["数量"],v["商品代金"]),("2","2,000円"))
         p=g.scenario_route_pattern(s)

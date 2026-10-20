@@ -206,8 +206,17 @@ def publish(summary: dict, items: list[dict], files: list[Path]) -> None:
                       "「根拠待ち」は当てはまるが業務フロー・設計書に期待結果を決める記述が無い観点。台帳の無い業務はまだ当てはめていない。", "",
                       "| 業務 | 判定した観点 | " + " | ".join(kinds) + " | 台帳 |", "|---|---:|" + "---:|" * len(kinds) + "---|"])
         group_rows = []
+        item_ids = {r["テストID"] for r in read_tsv(BASE / "test_items/all_scenario_test_items.tsv")}
+        scenario_ids = {p.name.split("_", 1)[0] for p in (BASE / "scenario").glob("SCN-*.md")}
         for path in ledgers:
             rows = read_tsv(path)
+            for r in rows:
+                assert any(r["判定"].startswith(k) for k in kinds), f"台帳の判定の値が不正: {path.name} {r['観点ID']} {r['判定']}"
+                # 既存テストIDと対象シナリオは、いま実在するものだけを書く（外したシナリオの項目で確認済みとしない）
+                missing = [t for t in re.findall(r"STI-[A-Z]+(?:-[A-Z]+)?-\d{3}-\d{3}", r["既存テストID"]) if t not in item_ids]
+                assert not missing, f"台帳の既存テストIDが実在しない: {path.name} {r['観点ID']} {missing}"
+                gone = [t for t in re.findall(r"SCN-[A-Z]+-[^\s/（）、。,]+?-\d{3}", r["対象シナリオ"]) if t not in scenario_ids]
+                assert not gone, f"台帳の対象シナリオが実在しない: {path.name} {r['観点ID']} {gone}"
             counts = Counter(next((k for k in kinds if r["判定"].startswith(k)), r["判定"]) for r in rows)
             lines.append(f"| {path.stem} | {len(rows)} | " + " | ".join(str(counts.get(k, 0)) for k in kinds)
                          + f" | [{path.name}](coverage/viewpoint_application/{path.name}) |")

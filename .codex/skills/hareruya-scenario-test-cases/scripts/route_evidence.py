@@ -477,10 +477,13 @@ def supplement_data_patterns(s, seed, patterns, g):
 
     if source=='16_通販受注管理.md' and parent=='1':
         direct=s.route.route_id=='R01'
-        for method in (('クレジットカード','代金引換') if direct else ('銀行振込','郵便振替','コンビニ決済')):
+        # 2026-10-20 依頼者の裁定: 支払は SPLINKS のクレジットカード決済だけ
+        # （scenario_test/coverage/viewpoint_application/review/通販受注管理/rulings.md R0）。決済処理の経路は作らない。
+        for method in (('クレジットカード',) if direct else ()):
             add(48,method+'で購入',f"支払方法={method} / 注文商品=3点 / 支払額=注文確定画面に表示された総額",
                 ('同じ受注の注文完了を確認し、振込・入金手続きへ進まないこと。' if direct else '同じ受注番号の支払情報に従って入金し、支払額が注文の支払総額に一致すること。') + ('コンビニ決済では別送された支払方法メールの決済コードと入金記録を照合できること。' if method=='コンビニ決済' else ''),
                 'クレジットカード・代金引換以外の場合',
+                '指定の支払方法が選択できるテスト注文を用意する。SPLINKSの決済検証環境で試験用カードを使えるようにし、実受注番号を採番後に控える。' if direct else
                 '指定の支払方法が選択できるテスト注文を用意する。支払方法に応じて決済検証環境・銀行/郵便の入金記録を準備し、実受注番号を採番後に控える。')
 
     if source=='16_通販受注管理.md' and parent=='7':
