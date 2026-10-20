@@ -30,8 +30,9 @@ class OrdersExecutionRepairTests(unittest.TestCase):
     def contract(self, cid):
         return next(c for c in self.data["step_resolutions"] if c["contract_id"] == cid)
 
-    def test_all_48_scenarios_render_without_unbound_values(self):
-        self.assertEqual(len(self.scenarios),48)
+    def test_all_58_scenarios_render_without_unbound_values(self):
+        # 2026-10-20 観点の当てはめで通販に経路10本（SCN-TSUHAN-*-910〜919）を足した（48→58）。
+        self.assertEqual(len(self.scenarios),58)
         for s in self.scenarios:
             text = g.render_scenario(s, REPO)
             self.assertNotIn("{{", text, s.sid)
@@ -69,8 +70,10 @@ class OrdersExecutionRepairTests(unittest.TestCase):
             v=g.execution_seed(self.scenario(code,n))
             self.assertEqual(v["注文開始状態"],"未注文・未採番")
             self.assertIn("未決済",v["決済状態"])
-        self.assertEqual(g.execution_seed(self.scenario("TSUHAN",1))["支払方法"],"銀行振込")
-        self.assertEqual(g.execution_seed(self.scenario("TSUHAN",2))["支払方法"],"クレジットカード")
+        # 16_通販受注管理.md: 決済方法確認→購入完了の実線はクレジットカード・代金引換（001）、
+        # →決済処理を行うの実線はコンビニ決済・郵便振替・銀行振込（002、R53）。
+        self.assertEqual(g.execution_seed(self.scenario("TSUHAN",1))["支払方法"],"クレジットカード")
+        self.assertEqual(g.execution_seed(self.scenario("TSUHAN",2))["支払方法"],"銀行振込")
 
     def test_pickup_customer_traverses_cart(self):
         for cid in ("SC-026","SC-031","SC-036","SC-038"):

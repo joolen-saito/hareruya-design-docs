@@ -95,7 +95,10 @@ def main():
     grouped = defaultdict(list)
     for row in new:
         grouped[sid(row)].append(row)
-    assert set(grouped) == {sid(r) for r in old}, "修正前後のSCN集合が異なる"
+    # 観点の当てはめで足した経路のSCNは修正前に存在しないので、比較から外す。
+    viewpoint_path = ROOT / "scenario_test/coverage/viewpoint_contracts.json"
+    viewpoint_sids = {r["scenario_id"] for r in json.loads(viewpoint_path.read_text()).get("routes", [])} if viewpoint_path.exists() else set()
+    assert set(grouped) - viewpoint_sids == {sid(r) for r in old}, "修正前後のSCN集合が異なる"
     mapping, unmatched = [], []
     for row in old:
         s, d = sid(row), descriptor(row)

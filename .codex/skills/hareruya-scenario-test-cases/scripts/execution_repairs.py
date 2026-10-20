@@ -29,6 +29,12 @@ def contracts(repo: Path) -> list[dict]:
             for record in rows:
                 cid = record["contract_id"]
                 indexed[cid] = {**indexed.get(cid, {}), **record, "contract_file": str(path.relative_to(repo))}
+    # 観点の当てはめで見つけた工程の補正（同じ contract_id なら既存を上書きする）。
+    viewpoint = repo / "scenario_test/coverage/viewpoint_contracts.json"
+    if viewpoint.exists():
+        for record in json.loads(viewpoint.read_text()).get("step_resolutions", []):
+            cid = record["contract_id"]
+            indexed[cid] = {**indexed.get(cid, {}), **record, "contract_file": str(viewpoint.relative_to(repo))}
     return list(indexed.values())
 
 
@@ -69,7 +75,29 @@ def transform(name, s, values, g):
             value = method(s, values, g)
             if value is not None:
                 values = value
+    if name == "seed":
+        # 観点の当てはめで足した工程ごとの対象（別の受注など）。代表データは変えずに項目を足す。
+        additions = _viewpoint(getattr(s, "repo", REPO)).get("seed_additions", {}).get(s.sid, {})
+        values = {**values, **additions} if additions else values
     return values
+
+
+def _viewpoint(repo) -> dict:
+    path = Path(repo) / "scenario_test/coverage/viewpoint_contracts.json"
+    return json.loads(path.read_text()) if path.exists() else {}
+
+
+def step_target(s, number: int, seed: dict) -> tuple[str, str | None] | None:
+    """観点の当てはめ契約の step_targets から、工程 number の対象（入力/対象の文）と照合キーの項目名を返す。"""
+    for record in _viewpoint(getattr(s, "repo", REPO)).get("step_targets", []):
+        if record["scenario_id"] == s.sid and int(record["step"]) == number:
+            keys = re.findall(r"\{([^}]+)\}", record["target"])
+            missing = [k for k in keys if not seed.get(k)]
+            if missing:
+                raise ValueError(f"工程の対象に使う項目が実行用テストデータに無い: {s.sid} #{number} {missing}")
+            text = re.sub(r"\{([^}]+)\}", lambda m: seed[m.group(1)], record["target"])
+            return text, record.get("chain_key")
+    return None
 
 
 def preparation(s, row_no=None, route=False):

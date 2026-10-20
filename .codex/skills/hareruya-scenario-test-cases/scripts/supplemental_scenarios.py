@@ -36,7 +36,7 @@ def append(repo: Path, scenarios: list, docs: list, g) -> None:
             pattern = g.Pattern(record.get("pattern_number", "連鎖01"), record["pattern_name"], rows, source_path=source)
             evidence = record["basis"] + " " + " / ".join(record.get("known_limits", []))
             route = g.BusinessRoute("R01", record["route_kind"], record.get("route_name", record["pattern_name"]),
-                                    record["precondition"], record["final_state"].rstrip("。") + "ことを確認できること。", tuple(rows), (), record["precondition"],
+                                    record.get("condition", record["precondition"]), record["final_state"].rstrip("。") + "ことを確認できること。", tuple(rows), (), record["precondition"],
                                     tuple(record["seed"].items()), evidence)
             features = {f for step in record["steps"] for f in step["function_ids"]}
             references = {e["file"] for step in record["steps"] for e in step["evidence"]}

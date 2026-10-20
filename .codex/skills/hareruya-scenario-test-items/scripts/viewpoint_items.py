@@ -78,8 +78,8 @@ def items_for(s, start: int, g) -> list:
         observation = g.build_observation(s, tid, ifid, expected, location, operation=contract["item_name"])
         observation += f"\n判定根拠: {refs}"
         pattern_id = pattern.pattern_id if pattern else "-"
-        steps = contract["operation"].replace(
-            "【準備確認】", f"【準備確認】\n経路ID: {s.route_id} / データパターンID: {pattern_id}", 1)
+        head, _, rest = contract["operation"].partition("【準備確認】")
+        steps = f"{head}【準備確認】\n経路ID: {s.route_id} / データパターンID: {pattern_id}\n{rest.lstrip()}"
         input_data = g.pattern_input(pattern, g.primary_seed(s.seed)) + f"\n観点の入力: {contract['input']}"
         priority = "P1" if flow == "異常系" else s.priority
         result.append(g.TestItem(

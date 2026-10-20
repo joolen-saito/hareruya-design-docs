@@ -58,9 +58,10 @@ VERDICT_RANK = [V_NG, V_UNK, V_CHK, V_WARN, V_OK, "対象外(システム外の�
 
 
 # 既知の規模。ここが動く＝SCN側が再生成されたということなので、意図した変化かを人が確認してから直す。
-EXPECTED_SCN = 129
-# execution_repairs/step_count_changes.json: 承認等11工程追加、誤った3工程を整理。
-EXPECTED_STEPS = 830
+# 2026-10-20 観点の当てはめ（通販受注管理）で経路10本・55工程を追加（scenario_test/coverage/viewpoint_contracts.json）。
+EXPECTED_SCN = 139
+# execution_repairs/step_count_changes.json: 承認等11工程追加、誤った3工程を整理。2026-10-20 観点の経路の55工程を追加。
+EXPECTED_STEPS = 885
 
 
 class GateError(Exception):

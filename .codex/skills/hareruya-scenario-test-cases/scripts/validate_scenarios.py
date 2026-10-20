@@ -180,7 +180,9 @@ def validate_route_metadata(text: str) -> list[str]:
         errors.append("final business state does not identify an observable pass/fail result")
     if route_kind in {"主要代替", "業務異常"}:
         condition = bullet_value(text, "業務経路条件")
-        if "実線" not in condition and "原典本文" not in condition:
+        # 観点の当てはめ契約の経路は、業務フローの分岐ではなく設計書本文を根拠にする（引用は監査で照合）。
+        viewpoint_route = "観点の当てはめ契約" in condition and "設計書本文" in condition
+        if "実線" not in condition and "原典本文" not in condition and not viewpoint_route:
             errors.append("alternative/error route has no solid edge or quoted source paragraph")
     return errors
 

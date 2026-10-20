@@ -56,11 +56,14 @@ def main() -> None:
     # 観点の当てはめ契約（項目・経路）の引用も同じ方法で照合する。
     viewpoint_path = BASE / "coverage/viewpoint_contracts.json"
     viewpoint_contracts = json.loads(viewpoint_path.read_text()) if viewpoint_path.is_file() else {}
-    for contract in viewpoint_contracts.get("items", []) + viewpoint_contracts.get("routes", []):
+    step_targets = [{**t, "contract_id": f"{t['scenario_id']}#{t['step']}"} for t in viewpoint_contracts.get("step_targets", [])]
+    for contract in viewpoint_contracts.get("items", []) + viewpoint_contracts.get("routes", []) + step_targets:
         evidence = contract.get("evidence", []) + [e for step in contract.get("steps", []) for e in step.get("evidence", [])]
         assert evidence, f"観点の契約に根拠が無い: {contract['contract_id']}"
         for item in evidence:
             source = item["file"]
+            # functions/ec-cube-enterprise/ は新実装から起こした資料で、期待値の根拠にしない。
+            assert not source.startswith("functions/ec-cube-enterprise/"), f"観点の契約が新実装の資料を根拠にしている: {contract['contract_id']} {source}"
             if source not in normalized_sources:
                 raw = (ROOT / source).read_text()
                 raw_sources[source] = re.sub(r"\s+", "", html.unescape(raw))
@@ -141,6 +144,11 @@ def main() -> None:
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
 
+def viewpoint_contracts_routes() -> list[dict]:
+    path = BASE / "coverage/viewpoint_contracts.json"
+    return json.loads(path.read_text()).get("routes", []) if path.is_file() else []
+
+
 def publish(summary: dict, items: list[dict], files: list[Path]) -> None:
     # 第1部（観点の体系）は 外部資料観点/tools/build.py が生成した断片を取り込む。
     framework_dir = BASE / "外部資料観点"
@@ -189,6 +197,33 @@ def publish(summary: dict, items: list[dict], files: list[Path]) -> None:
         members = by_group.get(gid, [])
         names = " / ".join(f"{v}（{c}）" for v, c in members) or "—"
         lines.append(f"| {gid} | {gname} | {names} | {sum(c for _, c in members)} |")
+    # 業務ごとの観点の当てはめ（判定台帳）と、観点で足した経路
+    ledgers = sorted((BASE / "coverage/viewpoint_application").glob("*.tsv"))
+    if ledgers:
+        kinds = ["既存項目で確認済み", "追加", "他層で確認", "根拠待ち", "適用外"]
+        lines.extend(["", "### 業務ごとの観点の当てはめ", "",
+                      "第1部の観点を業務のシナリオに当てはめ、観点ごとに判定した結果（判定台帳）。「追加」は既存シナリオへの項目追加か新しい経路で確かめる観点、"
+                      "「根拠待ち」は当てはまるが業務フロー・設計書に期待結果を決める記述が無い観点。台帳の無い業務はまだ当てはめていない。", "",
+                      "| 業務 | 判定した観点 | " + " | ".join(kinds) + " | 台帳 |", "|---|---:|" + "---:|" * len(kinds) + "---|"])
+        group_rows = []
+        for path in ledgers:
+            rows = read_tsv(path)
+            counts = Counter(next((k for k in kinds if r["判定"].startswith(k)), r["判定"]) for r in rows)
+            lines.append(f"| {path.stem} | {len(rows)} | " + " | ".join(str(counts.get(k, 0)) for k in kinds)
+                         + f" | [{path.name}](coverage/viewpoint_application/{path.name}) |")
+            by = defaultdict(Counter)
+            for r in rows:
+                by[r["観点ID"][:5]][next((k for k in kinds if r["判定"].startswith(k)), r["判定"])] += 1
+            group_rows.append((path.stem, by))
+        for business, by in group_rows:
+            lines.extend(["", f"{business}の分類ごとの判定:", "", "| 分類 | 名前 | " + " | ".join(kinds) + " |", "|---|---|" + "---:|" * len(kinds)])
+            for gid, gname, _ in groups:
+                lines.append(f"| {gid} | {gname} | " + " | ".join(str(by[gid].get(k, 0)) for k in kinds) + " |")
+        routes = viewpoint_contracts_routes()
+        if routes:
+            lines.extend(["", "観点の当てはめで足した経路（シナリオ）:", "", "| シナリオ | 経路 | 観点 |", "|---|---|---|"])
+            for route in routes:
+                lines.append(f"| {route['scenario_id']} | {route['route_name']} | {'・'.join(route['viewpoint'])} |")
     lines.extend(["", "- 業務分岐とその出典は各SCNの経路条件・データパターンに記載する。",
                   "- データ連鎖は産出側と消費側の照合項目を作成する。終端の工程では成果物を作業元の確定値と照合し、後続工程への受け渡しは判定しない。照合キー未確定は実施保留として残す。",
                   "- 他層委譲は現行の結合テスト正本に実在するIDを参照する。未対応・準備未確定を別表示し、実行済みとは扱わない。",

@@ -1811,9 +1811,10 @@ def execution_seed(s: Scenario) -> dict[str, str]:
         "通販受注管理": {
             "受注番号": f"ST-ORDER-{suffix}",
             "決済状態": "売上確定済み",
-            "受注ステータス": "対応中",
+            # 受注ステータスの既定値は置かない（「対応中」は受注管理の設計書に無い値だった）。
             "返金対象金額": "1,000円",
-            "配送方法": "宅配便",
+            # 0304 ご注文方法指定の配送方法の選択肢（ゆうパケット、ゆうパック、…）に「宅配便」は無い。
+            "配送方法": "ゆうパック",
         },
         "店頭受取受注管理": {
             "受注番号": f"ST-PICKUP-{suffix}",
@@ -2277,10 +2278,13 @@ def data_chain_rows(s: Scenario, seed: "dict[str, str] | None" = None) -> str:
     seed = seed or {}
     lines: list[str] = []
     seen: set[tuple[str, str, str]] = set()
-    for nums in row_candidates:
+    for step_no, nums in enumerate(row_candidates, 1):
+        # 観点の当てはめ契約で工程の対象を別の受注にしたときは、その工程の照合キーも同じ受注にする。
+        import execution_repairs
+        override = execution_repairs.step_target(s, step_no, seed) if seed else None
+        step_seed = {**seed, "受注番号": seed[override[1]]} if override and override[1] else seed
         for number in nums:
             for link in graph.data_links(number, scope):
-                import execution_repairs
                 if execution_repairs.exclude_data_link(s, link):
                     continue
                 # パターン外参照は生成器の欠陥なので、黙って表へ混入させない。
@@ -2294,7 +2298,7 @@ def data_chain_rows(s: Scenario, seed: "dict[str, str] | None" = None) -> str:
                 artifact = f"#{link.artifact_no} {link.artifact_text}"
                 # 照合キーはアーティファクト（原典が名付けたデータオブジェクト）名のみから導出する。
                 # 周辺工程語を混ぜると、返金メール連鎖に受注番号を付ける等の誤りが出る（codex指摘）。
-                derived = chain_key(link.artifact_text, seed)
+                derived = chain_key(link.artifact_text, step_seed)
                 # 単一シードだけでは産出側と消費側の同一性を証明できない。
                 # HTMLに定義があるキーは下段で補い、未確定のものは保留とする。
                 key_cell = derived if derived else "照合キーは原典未定義（実施保留。単一シードで同一性を代用しない）"
@@ -2364,7 +2368,10 @@ def render_execution_steps(s: Scenario, seed: dict[str, str]) -> str:
     for idx, (actor, action, screen, feature, expect, observation) in enumerate(step_rows(s.business_title, route_pattern, s.docs), 1):
         target = step_target(action, seed)
         import supplemental_scenarios
+        import execution_repairs
         target = supplemental_scenarios.step_target(s.sid, idx, seed) or target
+        override = execution_repairs.step_target(s, idx, seed)  # 観点の当てはめ契約で工程の対象を別の受注にしたもの
+        target = override[0] if override else target
         work = row_work_kind(normal_flow_rows(route_pattern)[idx - 1]) if idx - 1 < len(normal_flow_rows(route_pattern)) else WORK_UNKNOWN
         if s.non_eccube:
             operation = f"メール/電話/外部アプリ（Thunderbird等）で「{action}」を実施する（EC-CUBEは参照のみ）"
