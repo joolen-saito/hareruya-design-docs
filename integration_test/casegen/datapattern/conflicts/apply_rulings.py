@@ -19,7 +19,8 @@
   既に行があれば（類型T4 など）新しい値に差し替え、理由と承認に裁定を書き足す。
 
 何度流しても同じ（置き換えは旧が無く新があれば済みとみなす）。
-最後に product_csv/apply.py（商品登録画面で商品を作るシードの書き直し）と runnable/apply.py（書かれたとおりに実行できるようにする直し）も呼ぶ。
+最後に product_csv/apply.py（商品登録画面で商品を作るシードの書き直し）と runnable/apply.py（書かれたとおりに実行できるようにする直し）、
+dummy_url/apply.py（実在しない試験用URLの置き換え。2026-10-21）も呼ぶ。裁定の照合は dummy_url/urlmap.N を当てた文どうしで行う。
 流す順は merge（sheetmap・nosheet・ga・gapfill・datapattern/merge_dp.py）→ seed_screen/apply.py → これ → exclude_open.py
 → exclude_scope.py → build_all_test_cases.py → precond/gate_precond.py --all。seed_screen/apply.py が cases/ と oracle_changes/ を書き直すので、必ずその後に流す。
 """
@@ -28,6 +29,8 @@ import importlib.util, pathlib, sys
 G = pathlib.Path(__file__).resolve().parent
 CG = G.parents[1]
 PC = CG / "precond"
+sys.path.insert(0, str(CG / "dummy_url"))
+from urlmap import N  # noqa: E402  実在しない試験用URLの置き換え（2026-10-21）。裁定は置き換えた後の文で照合する
 DAY = "2026-10-16"  # 裁定日の欄が空の行の裁定日
 APPROVAL = "%s 依頼者裁定（既存ケースと設計書の食い違いの裁定。datapattern/conflicts/rulings.tsv %s）"
 
@@ -42,10 +45,11 @@ def write(p, h, rs):
 
 
 def pairs(s):
-    return [tuple(x.split("⇒", 1)) for x in s.split("‖") if x]
+    return [tuple(N(y) for y in x.split("⇒", 1)) for x in s.split("‖") if x]
 
 
 def replace(text, spec, where, err):
+    text = N(text)
     for old, new in pairs(spec):
         if old in new and new in text:  # 書き足し（新が旧を含む）は、新が既にあれば済み
             continue
@@ -62,7 +66,8 @@ def later_applied():
     import hashlib
     p = CG / "runnable/work/applied.tsv"
     led = {(r[0], r[1], r[2]): r[3] for r in rows(p)[1]} if p.exists() else {}
-    return led, (lambda t: hashlib.sha1(t.encode("utf-8")).hexdigest())
+    sha = lambda t: hashlib.sha1(t.encode("utf-8")).hexdigest()
+    return led, (lambda t: {sha(t), sha(N(t))})   # 置き換え前・後のどちらの文のハッシュでもよい
 
 
 def append_once(s, add):
@@ -112,7 +117,12 @@ def main():
         sh, S = rows(sp)
         bp = PC / f"baseline/{fid}_test_cases.tsv"
         base = {r[0] for r in rows(bp)[1]} if bp.exists() else set()
-        ci = {c: i for i, c in enumerate(ch)}
+        # 別の機能IDから付け替えたケース（precond/moved_cases.tsv）も、移す前の基線で照合されるので宣言を書く（2026-10-23。
+        # 前提条件の検査 gate_precond.py の G6 と同じ扱い。M04-08 は基線のファイルが無く、付け替えたケースだけが基線を持つ）
+        mvp = PC / "moved_cases.tsv"
+        if mvp.exists():
+            base |= {r[1] for r in rows(mvp)[1] if r[1].startswith(f"IT-{fid}-")}
+        ci ={c: i for i, c in enumerate(ch)}
         si = {c: i for i, c in enumerate(sh)}
         for rl in [r for r in R if r["テストID"][3:9] == fid]:
             tid, item = rl["テストID"], rl["項目"]
@@ -152,23 +162,23 @@ def main():
             before = state()
             if rl.get("新出典"):
                 put("出典", rl["新出典"])
-            if rl["事前準備の置換"] and LATER.get(("ケース", tid, "事前準備")) != SHA(get("事前準備")):
+            if rl["事前準備の置換"] and LATER.get(("ケース", tid, "事前準備")) not in SHA(get("事前準備")):
                 put("事前準備", replace(get("事前準備"), rl["事前準備の置換"], f"{tid} 事前準備", err))
-            if rl["手順の置換"] and LATER.get(("ケース", tid, "手順")) != SHA(get("手順")):
+            if rl["手順の置換"] and LATER.get(("ケース", tid, "手順")) not in SHA(get("手順")):
                 put("手順", replace(get("手順"), rl["手順の置換"], f"{tid} 手順", err))
             if rl["新期待結果"]:
-                put("期待結果", rl["新期待結果"])
+                put("期待結果", N(rl["新期待結果"]))
             for spec in [x for x in rl["シードの置換"].split("‖") if x]:
                 sid, col, rep = spec.split("|", 2)
                 srow = next((x for x in S if x[0] == sid), None)
                 if srow is None:
                     err.append(f"{tid}: シード {sid} が cases/ に無い")
                     continue
-                if LATER.get(("シード", sid, col)) == SHA(srow[si[col]]):
+                if LATER.get(("シード", sid, col)) in SHA(srow[si[col]]):
                     continue
                 srow[si[col]] = replace(srow[si[col]], rep, f"{sid} {col}", err)
             for a in [a for a in A if a["テストID"] == tid and a["項目"] == item]:
-                new = [a[c] for c in sh]
+                new = [N(a[c]) for c in sh]
                 at = next((i for i, x in enumerate(S) if x[0] == a["シードID"]), None)
                 if at is None:
                     S.append(new)
@@ -221,7 +231,13 @@ def main():
     ra = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(ra)
     rr = ra.main()
-    return 1 if err or rc or rr else 0
+    # 実在しない試験用URLの置き換え（2026-10-21 依頼者決定。../../dummy_url/）。前段の書き直しはどれも置き換え前の文で
+    # 書かれているので、すべて当てた後の最後に当てる
+    spec = importlib.util.spec_from_file_location("dummy_url_apply", CG / "dummy_url/apply.py")
+    da = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(da)
+    rd = da.main()
+    return 1 if err or rc or rr or rd else 0
 
 
 if __name__ == "__main__":

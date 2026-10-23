@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+"""FPから見て足したケース（fp_gap/cases・13列）を、機能ごとのケースファイル（cases/・11列）へ足す。 merge_fg.py
+
+../combination/merge_cb.py を 2026-10-23 に写した（cb を fg に、組IDを項目IDに読み替えた）。合流は ../ut_layer/merge_added.py の後に流す（自分の行だけを入れ替える）。
+
+../gapfill/merge_into_cases.py と同じ作り。何度実行しても同じ結果になる: 以前足した行（fg_map.tsv のテストID・fg_seeds.tsv のシードID）を
+cases/ から取り除いてから、fp_gap/cases の今の内容を末尾へ足す。既存のケースとシードには触れない。
+判定IDと項目IDは fg_map.tsv に残す。足したテストIDは precond/added_cases.tsv に載せる。
+sheetmap・nosheet・ga・gapfill の merge を流すと該当機能のファイルが作り直されるので、その後にこれを流し直す。
+流したあとは ../seed_screen/apply.py → ../datapattern/conflicts/apply_rulings.py → ../exclude_open.py → ../exclude_scope.py → ../exclude_dup.py → ../exclude_ut.py → ../build_all_test_cases.py → ../precond/gate_precond.py --all。
+"""
+import csv, glob, pathlib, re
+
+G = pathlib.Path(__file__).resolve().parent
+CG = G.parent
+HDR = ["テストID", "要求ID", "連鎖ID", "観点ID", "優先度", "実行区分", "使用シード", "事前準備", "手順", "期待結果", "出典"]
+SHDR = ["シードID", "区分", "論理名", "状態・属性", "用途", "投入方法", "共有"]
+DAY = "2026-10-23"
+csv.field_size_limit(10**9)
+
+
+def rows(p):
+    r = list(csv.reader(p.open(encoding="utf-8"), delimiter="\t"))
+    return r[0], [x for x in r[1:] if x]
+
+
+def write(p, hdr, rs):
+    with p.open("w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f, delimiter="\t", lineterminator="\n")
+        w.writerow(hdr); w.writerows(rs)
+
+
+def main():
+    old = set()
+    if (G / "fg_map.tsv").exists():
+        old = {r[0] for r in rows(G / "fg_map.tsv")[1]}
+    m, n = [], 0
+    oph, op = rows(CG / "precond/open_preconditions.tsv")
+    fids = sorted(pathlib.Path(p).name.split("_")[0] for p in glob.glob(str(G / "cases/*_fg_test_cases.tsv")))
+    newseed = set()
+    for fid in fids:
+        newseed |= {r[0] for r in rows(G / f"cases/{fid}_fg_seed_data.tsv")[1]}
+    # 前回足したシード（著者が外した・番号を振り直した分を含む）も取り除く
+    cur_seed = [[r[0], fid] for fid in fids for r in rows(G / f"cases/{fid}_fg_seed_data.tsv")[1]]
+    if (G / "fg_seeds.tsv").exists():
+        newseed |= {r[0] for r in rows(G / "fg_seeds.tsv")[1]}
+    op = [r for r in op if r[1] not in newseed and not r[4].startswith("fp_gap/")]
+    for fid in fids:
+        h, C = rows(G / f"cases/{fid}_fg_test_cases.tsv")
+        _, S = rows(G / f"cases/{fid}_fg_seed_data.tsv")
+        # ケースが1件も無かった機能（ケースファイルが無い）は、見出しだけのファイルから始める。足すケースも無ければ作らない
+        if not C and not (CG / f"cases/{fid}_test_cases.tsv").exists():
+            continue
+        if not (CG / f"cases/{fid}_test_cases.tsv").exists():
+            write(CG / f"cases/{fid}_test_cases.tsv", HDR, [])
+        if not (CG / f"cases/{fid}_seed_data.tsv").exists():
+            write(CG / f"cases/{fid}_seed_data.tsv", SHDR, [])
+        ch, base = rows(CG / f"cases/{fid}_test_cases.tsv")
+        assert ch == HDR, fid
+        new_ids = {x[0] for x in C}
+        base = [x for x in base if x[0] not in old and x[0] not in new_ids]
+        write(CG / f"cases/{fid}_test_cases.tsv", HDR, base + [x[1 - 1:1] + x[2:12] for x in C])
+        sh, sbase = rows(CG / f"cases/{fid}_seed_data.tsv")
+        assert sh == SHDR, fid
+        sids = {x[0] for x in S}
+        write(CG / f"cases/{fid}_seed_data.tsv", SHDR, [x for x in sbase if x[0] not in newseed] + S)
+        m += [[x[0], x[1], fid, x[12]] for x in C]
+        n += len(C)
+        for sd in S:
+            how = sd[5]
+            if "未確定" in how or "未整備" in how:
+                use = [x[0] for x in C if sd[0] in [v.strip() for v in x[7].replace("、", ",").split(",")]]
+                op.append([fid, sd[0], how, ",".join(use), f"fp_gap/cases/{fid}_fg_seed_data.tsv",
+                           "未整備" if "未整備" in how and "未確定" not in how else "未確定"])
+    # 既存の未確定・未整備のシード（共有可）を追加ケースが使うときは、その分の行を足す（ゲートG9）。
+    # 既存の行は対象の書き方がまちまちなので書き換えず、手がかりが fp_gap/ で始まる行を自分の行として作り直す
+    UNS = re.compile("未確定|未整備")
+    for fid in fids:
+        if not (CG / f"cases/{fid}_seed_data.tsv").exists():   # ケースもシードも足さなかった機能
+            continue
+        _, sbase = rows(CG / f"cases/{fid}_seed_data.tsv")
+        uns = {x[0]: x[5] for x in sbase if x[0] not in newseed and UNS.search(x[5])}
+        use = {}
+        for x in rows(G / f"cases/{fid}_fg_test_cases.tsv")[1]:
+            for s_ in [v.strip() for v in x[7].replace("、", ",").split(",") if v.strip()]:
+                if s_ in uns:
+                    use.setdefault(s_, []).append(x[0])
+        for s_, ts in use.items():
+            op.append([fid, s_, uns[s_], ",".join(ts), "fp_gap/（既存シードの未確定の前提を追加ケースが使う）",
+                       "未整備" if "未整備" in uns[s_] and "未確定" not in uns[s_] else "未確定"])
+    write(G / "fg_map.tsv", ["テストID", "判定ID", "機能ID", "項目ID"], m)
+    write(G / "fg_seeds.tsv", ["シードID", "機能ID"], cur_seed)
+    write(CG / "precond/open_preconditions.tsv", oph, op)
+    ah, A = rows(CG / "precond/added_cases.tsv")
+    new = {x[0] for x in m}
+    write(CG / "precond/added_cases.tsv", ah, [r for r in A if r[0] not in old and r[0] not in new]
+          + [[t, DAY, f"FPから見た追加（{j}。{g}）"] for t, j, _, g in m])
+    print(f"{len(fids)}機能 {n}件を cases/ へ足した")
+
+
+if __name__ == "__main__":
+    main()

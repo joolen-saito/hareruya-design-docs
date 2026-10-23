@@ -48,7 +48,7 @@
 
 ## 合流の順
 
-`../datapattern/merge_dp.py` → `merge_cb.py` → `../seed_screen/apply.py` → `../datapattern/conflicts/apply_rulings.py`（ここで `product_csv/apply.py` と `runnable/apply.py` も当たる）→ `../exclude_open.py` → `../exclude_scope.py` → `../build_all_test_cases.py` → `../precond/gate_precond.py --all`・`../datapattern/gate_dp.py`。
+`../datapattern/merge_dp.py` → `merge_cb.py` → `../seed_screen/apply.py` → `../datapattern/conflicts/apply_rulings.py`（ここで `product_csv/apply.py`・`runnable/apply.py`・`dummy_url/apply.py` も当たる）→ `../exclude_open.py` → `../exclude_scope.py` → `../build_all_test_cases.py` → `../precond/gate_precond.py --all`・`../datapattern/gate_dp.py`。
 sheetmap・nosheet・ga・gapfill の merge を流すと該当機能のファイルが作り直されるので、そのあとは merge_dp から流し直す。
 
 ## 試行（F04-02・M05-11、2026-10-20）

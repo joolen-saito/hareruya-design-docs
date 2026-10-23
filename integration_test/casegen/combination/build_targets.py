@@ -36,7 +36,9 @@ def note(t):
 for p in glob.glob(str(CG / "cases/*_test_cases.tsv")):
     for l in open(p, encoding="utf-8"):
         note(l.split("\t")[0])
-for fn in ("excluded_hold_cases.tsv", "excluded_open_cases.tsv", "excluded_scope_cases.tsv"):
+for fn in ("excluded_hold_cases.tsv", "excluded_open_cases.tsv", "excluded_scope_cases.tsv", "excluded_dup_cases.tsv", "excluded_ut_cases.tsv"):
+    if not (CG / fn).exists():
+        continue
     for r in rd(CG / fn):
         note(r["テストID"]); note(r.get("元_テストID", ""))
 for r in rd(CG / "precond/moved_cases.tsv"):

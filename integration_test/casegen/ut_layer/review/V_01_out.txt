@@ -1,0 +1,1588 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15c7f-bf1e-7852-b5f8-11d7090fed57
+--------
+user
+# 単体テストレベルの判定の事実確認（V_01）
+
+作業場所は `/home/y-saito/Developments/hareruya-design-docs`。読むだけで、ファイルは書き換えない。
+
+結合テストケースのうち「単体テストで確かめるべき内容（1つの部品の中だけで結果が決まり、部品どうしのつながりを確かめていない）」として外すとされたケースが、本当にそうかを確かめる。判定の決まりは `integration_test/casegen/ut_layer/UT_PROMPT.md`。線引きは 2026-08-31 の決裁（`integration_test/ut_layer_audit/DECISION.md`）と同じ: 1項目・相関の入力チェック、1つの値の書式・変換、計算式、検索の一致のしかた・並び順、サニタイズは単体へ。
+
+## 確かめる対象
+
+`integration_test/casegen/ut_layer/review/V_01_targets.tsv`（外すテストID・区分・理由）。ケースの全文は `integration_test/casegen/ut_layer/inputs/<機能ID>.md`、設計書の写しは `integration_test/casegen/combination/units/<機能ID>/design.txt`。
+
+## 見ること（行ごと）
+
+1. 期待結果と手順が、本当に1つの部品の判定・整形・計算・並びだけを確かめているか。値が保存されてDB・別の画面・CSV・メール・外部へ渡ることや、画面遷移・権限・状態遷移・トランザクション（巻き戻り）・業務の絞り込み条件（公開・在庫・ステータス・店舗・期間など、どのデータが対象になるか）を確かめていれば、外してはいけない。
+2. 結果が他の機能の設定値やDBにある別のデータ（マスタの存在・在庫数・重複の有無など）を読んで決まるなら、外してはいけない。
+3. 「並び順」とされたものが、一覧の並べ替えではなく、業務の優先順（複数の候補から1件を選ぶ優先度、ピッキングの順序など設計書が業務の定めとして書いたもの）なら、外してはいけない。
+4. 区分が内容と合っているか。
+
+疑わしいときは「戻す」にする（外しすぎは結合テストの抜けになる）。外す側の見落とし（ほかにも単体レベルがある）は探さなくてよい。
+
+## 出力
+
+最後に次の形の表だけを、`===BEGIN===` と `===END===` の行で挟んで出す（タブ区切り、1行目は見出し、対象の全行に1行ずつ）。
+
+```
+===BEGIN===
+外すテストID	判定	理由
+IT-XXX-XX-NNN	採る	（短く）
+IT-XXX-XX-NNN	戻す	保存の結果も確かめている: …
+===END===
+```
+
+判定は「採る」か「戻す」。
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-21T03:27:32.018715Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象一覧、判定基準、各ケースの手順と期待結果を照合します。判定が曖昧な行は設計書も確認します。
+exec
+/bin/bash -lc 'cat integration_test/ut_layer_audit/DECISION.md' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/ut_layer/review/V_01_targets.tsv && head -n 12 integration_test/casegen/ut_layer/review/V_01_targets.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "rg --files -g AGENTS.md -g '"'!vendor'"' /home/y-saito/Developments/hareruya-design-docs /home/y-saito/Developments 2>/dev/null | head -n 30" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'cat integration_test/casegen/ut_layer/UT_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 388ms:
+# 単体テストレベルのケースの判定（機能 {FIDS}）
+
+作業場所は `/home/y-saito/Developments/hareruya-design-docs`。結合テストケースのうち、**単体テストで確かめるべき内容**（1つの部品の中だけで結果が決まり、部品どうしのつながりを確かめていないもの）を選ぶ。**迷ったら残す。**
+
+依頼者の決定（2026-10-21）: 「結合テストケースにおいて単体テストレベルの項目があれば除外してほしい」。線引きは 2026-08-31 の決裁（観点表の74行を単体へ送った: `integration_test/ut_layer_audit/DECISION.md`）と同じ。
+
+## 読むもの
+
+- 機能ごとのケース一覧: `integration_test/casegen/ut_layer/inputs/<機能ID>.md`（先頭に設計書の写しの場所）
+- 設計書の写し: `integration_test/casegen/combination/units/<機能ID>/design.txt`（必要なときだけ）
+
+ケースの印: `[E2E]` テストコードがある、`[PW:…]` Playwright の結果がある、`[組 …]` 要因の組合せのケース、`[DP]` データパターン監査で足したケース。
+
+## 判定の問い
+
+**「このケースが見つける不具合は、1つの部品（入力チェック、書式・計算の処理、検索の問い合わせ、テンプレートなど）を単独で動かせば見つかるか」**。見つかるなら単体。画面→サーバ→DB→別の画面・別の機能・外部・メール・CSV へ値や状態が渡ることを確かめて初めて見つかるなら結合（残す）。
+
+## 外す（単体レベル）の区分
+
+| 区分 | どういうケースか |
+| --- | --- |
+| 入力チェック | 1項目または相関の入力チェックの判定だけを確かめる。必須・文字数・桁数・文字種・書式（日付・メール・URL・コード値）・数値範囲・相関必須で、エラーメッセージが出る／出ない、画面に留まる、登録されない（DBが変わらない）ことだけを見る |
+| 書式・変換 | 1つの値の表示書式や変換だけを確かめる。日付・金額・桁区切り・税込表示の形、CSV・メール・電文・ログの1項目の書式（引用符・エスケープ・改行・文字コード・BOM・区切り文字・見出し行・列の並び）、メールの件名・本文の文言や差し込みの形 |
+| 計算 | 計算式そのものを確かめる。端数処理・按分・税・ポイント・合計の式の値で、計算に使う値をその場で入れて結果の数値だけを見る |
+| 一致条件・並び順 | 検索の一致のしかた（前方・部分・完全一致、大文字小文字、全角半角、複数語、AND/OR）や、一覧・CSVの並び順（昇順・降順・第2キー） |
+| サニタイズ | HTMLエスケープ・スクリプト文字列の無害化など、入力値を無害化する処理 |
+
+## 残す（結合レベル）
+
+1. 入力チェックを通った値が**保存・受け渡し**される結果を確かめるもの（登録された値がDB・別の画面・一覧・CSV・メール・外部へ正しく渡る）。最大文字数ちょうどの値が保存されDBに入ることを確かめるものは、画面とDBの両方の制約を通すので残す。
+2. 画面遷移・復帰先、権限・認可、状態遷移、トランザクション（途中の失敗で巻き戻る）、排他・二重送信、バッチ・非同期・キャッシュ、外部連携・メール送信（送られる・宛先・件数）・ファイルの出力そのもの（出る・出ない・件数）。
+3. どのデータが表示・出力・処理の対象になるかの**業務の条件**（公開のみ、在庫あり、ステータス、店舗、期間、権限による絞り込み）。一致のしかたや並び順とは別。
+4. 他の機能の設定値・他の機能が作ったデータを読んで結果が変わることを確かめるもの。
+5. 要因の組合せのケース（`[組 …]`）は、組の値が効く処理の結合を確かめるので原則残す。
+6. `[E2E]`・`[PW:…]` の付いたケースは外さない。
+7. 1つのケースで単体レベルの確認と結合レベルの確認を両方しているものは残す。
+
+## 書くもの（機能ごとに1ファイル。外すケースが無い機能も見出しだけのファイルを書く）
+
+`integration_test/casegen/ut_layer/judg/<機能ID>.tsv`（タブ区切り・1行目は見出し）
+
+| 列 | 中身 |
+| --- | --- |
+| 外すテストID | 単体レベルのケース |
+| 区分 | 入力チェック｜書式・変換｜計算｜一致条件・並び順｜サニタイズ |
+| 理由 | 何を確かめていて、なぜ1つの部品で見つかるか。1〜2文。セルの中にタブと改行を入れない |
+
+ほかのファイルは書き換えない。最後に、機能ごとの外す件数（区分ごと）と、迷って残した例を2〜3件短く報告する。
+
+ succeeded in 423ms:
+# 決定と適用結果: 単体粒度74行を単体テストへ送り、結合テストから除外
+
+決裁: 依頼者（2026-08-31）。「単体に送れといってる内容は単体にして除外して。Cはソート順は単体にして除外して。」
+codex R1 の単体送り候補74行を、区分A〜Dすべて採用した。R3の「結合に維持」裁定を覆す。
+
+## 適用した変更
+
+### 1. `archive/integration-test-viewpoints.md`（528行）
+
+74行の `テスト層` を `UT` へ変更（結合39／委譲35 からの移動）。`層メモ` に根拠を記録した。
+
+| 層 | 変更前 | 変更後 |
+| --- | --- | --- |
+| 結合 | 232 | **193** |
+| 委譲 | 143 | **108** |
+| UT | 108 | **182** |
+| e2e | 33 | 33 |
+| 統合 / 非機能 / 対象外 | 6 / 5 / 1 | 6 / 5 / 1 |
+
+### 2. `MIGRATION_MAP.tsv`（375行）
+
+74行の `状態` を `単体へ送る`、`旧テスト層` を `UT`、`新観点ID`／`新観点名` を空にした。
+
+| 状態 | 変更前 | 変更後 |
+| --- | --- | --- |
+| 移行 | 228 | **192** |
+| 委譲(機能別チェックリスト) | 132 | **108** |
+| 単体へ送る | 14 | **74** |
+| e2eへ送る | 1 | 1 |
+
+## 送った74行の区分
+
+| 区分 | 行数 | 旧No |
+| --- | --- | --- |
+| A. 既にMIGRATION_MAPで単体送り済み | 14 | 1,2,8,164,179,180,181,241,256,292,293,294,344,361 |
+| B. R3で「結合に維持」と裁定していた行（決裁で覆した） | 19 | 41-48, 67, 86, 113, 114, 115, 178, 240, 255, 291, 429, 430 |
+| C. ソート順family | 10 | 190,198,260,309,335,337,339,345,348,362 |
+| D. codex R1の新規指摘 | 31 | 28,29,30,31,49,50,55,56,116,118,129,170,228,231,232,245,246,283,342,363,405,421,439,441,443,459,461,463,476,478,480 |
+
+Bで覆した過去の裁定は次の3件。`viewpoint_review/R3_RESULT.md` に元の理由が残る。
+
+- No.41-48（検索の一致条件）: R3指摘#1で「過剰削除」として復元した行
+- No.113-115（再計算・按分・丸め）: R3指摘#2で不採用にした行。R3自身が「純度を優先するなら単体へ送ることになる」と明記していた
+- No.67/86/178/240/255/291（サニタイジング）: R3でclaudeが検出し結合へ復元した行
+
+## 現行観点表（63観点）への影響
+
+**裏付けを失った観点は0件。** 裏付け0の25観点は変更前から0で、IPA由来の新規追加分（COM-01〜13ほか）である。
+
+裏付け件数が減った観点は7つ。
+
+| 観点ID | 大項目 / テスト観点 | 変更前 → 変更後 |
+| --- | --- | --- |
+| ITA-11 | 制御 / 条件網羅 | 32 → 18 |
+| ITA-06 | インタフェース / データ変換 | 24 → 12 |
+| ITA-23 | 情報保護 / 情報保護・改ざん防止 | 11 → 5 |
+| ITA-08 | 入力条件 / NULL・空データ | 9 → 5 |
+| ITA-10 | 入力条件 / 仕様範囲外 | 10 → 8 |
+| ITA-05 | インタフェース / データ受渡し | 22 → 21 |
+| ITA-02 | 機能 / 機能網羅 | 4 → 1 |
+
+ITA-11 と ITA-06 は裏付けが半減した。観点そのものは残るが、旧資産から受ける具体観点は薄くなる。
+
+## 母集合25,549ケースへの影響
+
+`archive/all_it_cases.tsv` を `I/FID`＋`テスト観点` で突合した。
+
+**除外対象 2,234ケース（8.7%）／284機能。**
+
+| I/FID | テスト観点 | ケース数 |
+| --- | --- | --- |
+| IT-22 | 相関バリデーション | 1,120 |
+| IT-22 | 必須バリデーション | 560 |
+| IT-22 | 文字列長バリデーション | 280 |
+| IT-02 | 表示順 | 274 |
+
+## 未解決: 74行のうち59行は母集合から機械的に除外できない
+
+生成済みケースは行Noではなく `I/FID`＋`テスト観点`（＝観点表の小項目、空なら中項目）を参照している。
+この粒度で単体送りを表現できるのは74行中**15行**だけで、残る**59行**は同じラベルを
+結合／委譲の行と共有しているため、ラベル一致では切り分けられない。
+
+ラベルを共有している組（層が混在しているもの）:
+
+`IT-23 検索条件` `IT-23 実行結果` `IT-26 登録内容` `IT-26 更新内容` `IT-18 フォーマット定義`
+`IT-24 出力内容` `IT-28 ヘッダ` `IT-28 件名` `IT-28 本文` `IT-29 出力内容` `IT-12 画面レイアウト`
+`IT-25 UI部品` `IT-14 UI部品` `IT-14 一覧` `IT-25 画面表示データ` `IT-14 画面表示データ`
+`IT-30 実行結果` `IT-12 エラー` `IT-31 エラー` `IT-10 エラー`
+
+FACTS.md の F6（IT-IDの粒度が層の分割を表現できない）が、そのまま除外作業の障害として出た。
+59行分を母集合から落とすには、ケース側に旧No相当の識別子を持たせるか、
+ケース本文を1件ずつ判定する必要がある。**未着手。**
+
+## バックアップ
+
+変更前の3ファイルは
+`/tmp/claude-1000/-home-y-saito-Developments-hareruya-design-docs/302bdd22-261c-4b18-89c0-adcebc665ac2/scratchpad/backup_ut_send/` にある。
+
+ succeeded in 434ms:
+63 integration_test/casegen/ut_layer/review/V_01_targets.tsv
+外すテストID	区分	理由
+IT-A02-01-007	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-01-008	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-01-009	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-01-014	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-01-021	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-01-023	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-006	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-007	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-008	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-009	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-010	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+
+ succeeded in 861ms:
+/home/y-saito/Developments/ai-driven-documents/AGENTS.md
+/home/y-saito/Developments/ec-cube-enterprise/AGENTS.md
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/ut_layer/review/V_01_targets.tsv' in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "cut -f1 integration_test/casegen/ut_layer/review/V_01_targets.tsv | tail -n +2 | sed -E 's/"'^IT-([''^-]+)-.*/'"\\1/' | sort | uniq -c" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'find integration_test/casegen/ut_layer/inputs -maxdepth 1 -type f | wc -l' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 45ms:
+外すテストID	区分	理由
+IT-A02-01-007	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-01-008	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-01-009	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-01-014	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-01-021	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-01-023	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-006	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-007	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-008	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-009	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-010	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-011	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-012	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-013	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-014	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-015	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-016	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-017	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-018	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-019	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-020	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-030	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-031	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-032	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-033	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-034	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-035	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-036	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-037	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-038	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-02-039	一致条件・並び順	並び順の優先条件だけで返す1件が決まる検索の問い合わせのケースで、問い合わせ単体にデータを与えれば見つかる。
+IT-A02-03-006	一致条件・並び順	複数の旧商品ID一致から返す1件を決める並び順のうち特殊カードセットの段だけを確かめており、引き当ての問い合わせ単体で見つかる。
+IT-A02-03-007	一致条件・並び順	複数一致から返す1件を決める並び順のうちプロモーションの段だけを確かめており、引き当ての問い合わせ単体で見つかる。
+IT-A02-03-008	一致条件・並び順	複数一致から返す1件を決める並び順のうちリリース日の段だけを確かめており、引き当ての問い合わせ単体で見つかる。
+IT-A02-03-009	一致条件・並び順	複数一致から返す1件を決める並び順のうちFoilの段だけを確かめており、引き当ての問い合わせ単体で見つかる。
+IT-A05-01-018	書式・変換	高額欄に固定値「□」が出るかだけを見ており、受注データに依らないため印刷情報の組み立て部品単体で見つかる。
+IT-A06-01-004	入力チェック	ログインIDが空のときに「ログインIDまたはパスワードが入力されていません」の401が返り、トークンが出ないことだけを見る必須チェックで、入力チェックの部品を単独で動かせば見つかる。
+IT-A06-01-005	入力チェック	パスワードが空のときの必須チェックのエラーと401だけを見るもので、入力チェックの部品を単独で動かせば見つかる。
+IT-A06-02-007	一致条件・並び順	応答配列の店頭買取IDが昇順で並ぶことだけを見る並び順の確認で、検索の問い合わせを単独で動かせば見つかる。
+IT-A06-02-011	書式・変換	applyDateとbirthがISO8601形式の文字列で出ることだけを見る1項目の書式確認で、変換処理を単独で動かせば見つかる。
+IT-A06-03-030	入力チェック	order_status未指定時の必須エラーだけを見ており、入力チェック部品単独で見つかる。
+IT-A06-03-031	入力チェック	存在しないステータス値のエラーメッセージだけを見ており、入力チェック単独で見つかる。
+IT-A06-03-032	入力チェック	order_details未指定の必須エラーだけを見ており、入力チェック単独で見つかる。
+IT-A06-03-034	入力チェック	order_detailsが配列でない場合の入力検証エラーだけを見ており、入力チェック単独で見つかる。
+IT-A06-03-035	入力チェック	商品名必須の検証メッセージだけを見ており、入力チェック単独で見つかる。
+IT-A06-03-037	入力チェック	商品名65536文字の文字数超過エラーだけを見ており、入力チェック単独で見つかる。
+IT-A06-03-038	入力チェック	各項目の整数形式エラーメッセージだけを見ており、入力チェック単独で見つかる。
+IT-A06-03-039	入力チェック	端末取引IDの形式不正エラーだけを見ており、入力チェック単独で見つかる。
+IT-A06-03-040	入力チェック	商品規格ID未指定のエラーメッセージだけを見ており、入力チェック単独で見つかる。
+IT-A06-03-042	入力チェック	複数項目の検証メッセージが全て出るかだけを見ており、入力チェック単独で見つかる。
+IT-A06-03-043	入力チェック	不正ステータスで検証エラーとなり何も変わらないことだけを見ており、入力チェック単独で見つかる。
+IT-A06-03-048	入力チェック	order_statusの形式不正エラーだけを見ており、入力チェック単独で見つかる。
+IT-A06-03-049	入力チェック	確認フラグの形式不正エラーだけを見ており、入力チェック単独で見つかる。
+IT-A06-03-056	入力チェック	明細2件分の商品名必須メッセージが出るかだけを見ており、入力チェック単独で見つかる。
+IT-A06-04-005	入力チェック	free_comment未指定でHTTP 400になることだけを見ており、入力チェック単独で見つかる。
+IT-A06-04-006	入力チェック	free_comment未指定で更新されないことだけを見ており、入力チェックの判定だけで見つかる。
+IT-A06-04-017	入力チェック	free_comment未指定時のエラー文言だけを見ており、入力チェック単独で見つかる。
+IT-A06-05-017	入力チェック	存在しないstatus値でHTTP 400とerrorsが返ることだけを見ており、入力チェック単独で見つかる。
+IT-A06-05-018	入力チェック	存在しないstatus値で受注と履歴が変わらないことだけを見ており、入力チェックの判定だけで見つかる。
+IT-A06-05-019	入力チェック	status=xの形式不正でHTTP 400になることだけを見ており、入力チェック単独で見つかる。
+IT-A06-05-020	入力チェック	status=xの形式不正で受注と履歴が変わらないことだけを見ており、入力チェックの判定だけで見つかる。
+IT-A06-05-023	入力チェック	status未指定のエラーと更新されないことだけを見ており、入力チェック単独で見つかる。
+
+ succeeded in 37ms:
+     35 A02
+      1 A05
+     26 A06
+
+ succeeded in 107ms:
+346
+
+exec
+/bin/bash -lc "rg --files integration_test/casegen/ut_layer/inputs | rg '/(A02|A05|A06)' | sort" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/ut_layer/inputs/A02-01.md
+integration_test/casegen/ut_layer/inputs/A02-02.md
+integration_test/casegen/ut_layer/inputs/A02-03.md
+integration_test/casegen/ut_layer/inputs/A02-04.md
+integration_test/casegen/ut_layer/inputs/A02-05.md
+integration_test/casegen/ut_layer/inputs/A05-01.md
+integration_test/casegen/ut_layer/inputs/A05-02.md
+integration_test/casegen/ut_layer/inputs/A05-03.md
+integration_test/casegen/ut_layer/inputs/A05-04.md
+integration_test/casegen/ut_layer/inputs/A06-01.md
+integration_test/casegen/ut_layer/inputs/A06-02.md
+integration_test/casegen/ut_layer/inputs/A06-03.md
+integration_test/casegen/ut_layer/inputs/A06-04.md
+integration_test/casegen/ut_layer/inputs/A06-05.md
+integration_test/casegen/ut_layer/inputs/A06-06.md
+integration_test/casegen/ut_layer/inputs/A06-07.md
+integration_test/casegen/ut_layer/inputs/A06-08.md
+integration_test/casegen/ut_layer/inputs/A06-11.md
+integration_test/casegen/ut_layer/inputs/A06-12.md
+integration_test/casegen/ut_layer/inputs/A06-13.md
+
+exec
+/bin/bash -lc "rg --files integration_test/casegen/combination/units | rg '/(A02|A05|A06)["'^/]*/design.txt$'"' | sort" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/units/A02-01/design.txt
+integration_test/casegen/combination/units/A02-02/design.txt
+integration_test/casegen/combination/units/A02-03/design.txt
+integration_test/casegen/combination/units/A02-04/design.txt
+integration_test/casegen/combination/units/A02-05/design.txt
+integration_test/casegen/combination/units/A05-01/design.txt
+integration_test/casegen/combination/units/A05-02/design.txt
+integration_test/casegen/combination/units/A05-03/design.txt
+integration_test/casegen/combination/units/A05-04/design.txt
+integration_test/casegen/combination/units/A06-01/design.txt
+integration_test/casegen/combination/units/A06-02/design.txt
+integration_test/casegen/combination/units/A06-03/design.txt
+integration_test/casegen/combination/units/A06-04/design.txt
+integration_test/casegen/combination/units/A06-05/design.txt
+integration_test/casegen/combination/units/A06-06/design.txt
+integration_test/casegen/combination/units/A06-07/design.txt
+integration_test/casegen/combination/units/A06-08/design.txt
+integration_test/casegen/combination/units/A06-11/design.txt
+integration_test/casegen/combination/units/A06-12/design.txt
+integration_test/casegen/combination/units/A06-13/design.txt
+
+exec
+/bin/bash -lc "sed -n '1,85p' integration_test/casegen/ut_layer/inputs/A06-03.md" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '1,95p' integration_test/casegen/ut_layer/inputs/A02-01.md" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc 'wc -l integration_test/casegen/ut_layer/inputs/{A02-01,A02-02,A02-03,A05-01,A06-01,A06-02,A06-03,A06-04,A06-05}.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 36ms:
+# A06-03 店頭買取受注詳細更新（56件）
+
+- 設計書の写し: integration_test/casegen/combination/units/A06-03/design.txt（行頭 L0001…。シート: 0506 sheet-5 店頭買取情報更新）
+- 共通シート: なし（integration_test/casegen/combination/units/_common/）
+- 要因表: integration_test/casegen/combination/factors/A06-03_factors.tsv
+
+### IT-A06-03-001 
+- 観点ID: ITA-03,ITA-04
+- 出典: 0506 店頭買取情報更新 / 処理概要、機能仕様 処理概要
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）でMTGBuyerへログイン済みである（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-001〕（登録時に振られた査定IDを控えてある）が査定中で、商品規格ID 〔商品規格ID-A0603-001〕（登録時に振られた商品規格IDを控えてある）の注文詳細1件を持つ（S-A06-03-CASE-001）／③ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／④ 開始時に経理チームメールアドレスをaccounting-a0603-001@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. MTGBuyerの書類確認画面で査定ID 〔査定ID-A0603-001〕を開く／2. 開発者ツールのNetworkを記録状態にする／3. 経理払い出し待ちにするボタンを押す／4. 記録された要求を確認する
+- 期待結果: PUTメソッドで「/api/admin/otcBuyOrder/〔査定ID-A0603-001〕.json」へ要求が1件送信されること
+
+### IT-A06-03-002 
+- 観点ID: ITA-04,ITA-07
+- 出典: 0506 店頭買取情報更新 / リクエストパラメータ、ステータスコード、レスポンスデータ
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-002〕（登録時に振られた査定IDを控えてある）が査定中で、商品規格ID 〔商品規格ID-A0603-002〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-002）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-002@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. ブラウザの開発者ツールから、有効なjwt-tokenヘッダとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-002〕,""name"":""テスト商品A"",""quantity"":2,""price"":123,""sell_price"":300,""section_id"":〔部門ID-A0603-共有〕}]}」を指定し、PUTで「/api/admin/otcBuyOrder/〔査定ID-A0603-002〕.json」へ送信する／2. Networkで応答を確認する"
+- 期待結果: HTTP 200となり、レスポンスデータがないこと
+
+### IT-A06-03-003 
+- 観点ID: ITA-11,ITA-12
+- 出典: 0506 店頭買取情報更新 / 機能仕様 カスタマイズ説明、現行仕様 業務ロジック 更新対象の特定
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 管理者ID 〔管理者ID-A0603-共有B〕（登録時に振られた管理者IDを控えてある）が稼働中である（S-A06-03-OTHER-ADM）／③ 査定ID 〔査定ID-A0603-003〕（登録時に振られた査定IDを控えてある）はステータス=査定中、更新前担当者ID=〔管理者ID-A0603-共有B〕で、商品規格ID 〔商品規格ID-A0603-003〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-003）／④ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／⑤ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑥ 開始時に経理チームメールアドレスをaccounting-a0603-003@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. S-A06-03-ADMのjwt-tokenを使用し、JSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-003〕,""name"":""経理待ち商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-003〕へ送信する／2. DBで査定ID 〔査定ID-A0603-003〕を確認する"
+- 期待結果: 更新前のステータスおよび担当者にかかわらず、査定ID 〔査定ID-A0603-003〕のステータスが経理払い出し待ちになること
+
+### IT-A06-03-005 
+- 観点ID: ITA-11,ITA-12
+- 出典: 0506 店頭買取情報更新 / 機能仕様 送られてきたステータスが「買取成立」の場合
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-005〕（登録時に振られた査定IDを控えてある）は査定中、端末取引ID=null、注文詳細0件、個別入力商品0件で、商品規格ID 〔商品規格ID-A0603-005〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-005）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 1が買取成立、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":1,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":6039001,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-005〕,""name"":""登録済商品"",""quantity"":2,""price"":500,""sell_price"":700,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-005〕へ送信する／2. DBで査定ID 〔査定ID-A0603-005〕を確認する"
+- 期待結果: 個別入力商品が0件の査定ID 〔査定ID-A0603-005〕のステータスが入庫待ちになること
+
+### IT-A06-03-007 
+- 観点ID: ITA-05
+- 出典: 0506 店頭買取情報更新 / 機能仕様 カスタマイズ説明、リクエストパラメータ
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-007〕（登録時に振られた査定IDを控えてある）は査定中、端末取引ID=nullで、商品規格ID 〔商品規格ID-A0603-007〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-007）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 1が買取成立、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":1,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":6039001,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-007〕,""name"":""端末取引商品"",""quantity"":1,""price"":1000,""sell_price"":1200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-007〕へ送信する／2. DBで査定ID 〔査定ID-A0603-007〕を確認する"
+- 期待結果: 査定ID 〔査定ID-A0603-007〕の端末取引IDに6039001が保存されること
+
+### IT-A06-03-008 
+- 観点ID: ITA-12
+- 出典: 0506 店頭買取情報更新 / 機能仕様 処理概要、店頭買取情報
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-008〕（登録時に振られた査定IDを控えてある）は査定中、買取キャンセル日=nullで、商品規格ID 〔商品規格ID-A0603-008〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-008）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 2が買取キャンセルとして登録済みである（S-A06-03-STATUSES）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":2,""qualified_invoice_issuer_confirmation_flg"":""false"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-008〕,""name"":""キャンセル商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-008〕へ送信する／2. DBで査定ID 〔査定ID-A0603-008〕を確認する"
+- 期待結果: 査定ID 〔査定ID-A0603-008〕のステータスが買取キャンセルになること
+
+### IT-A06-03-011 
+- 観点ID: ITA-03,ITA-07,ITA-17
+- 出典: 0506 店頭買取情報更新 / 機能仕様 登録済み情報の削除、送信情報の登録
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-011〕（登録時に振られた査定IDを控えてある）は査定中で、注文詳細ID 604001011、個別入力商品ID 604101011、実在庫ID 604201011、実在庫履歴ID 604301011が各1件あり、商品規格ID 〔商品規格ID-A0603-011A〕（登録時に振られた商品規格IDを控えてある）・〔商品規格ID-A0603-011B〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-011）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-011@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-011A〕,""name"":""最新商品A"",""quantity"":2,""price"":123,""sell_price"":300,""section_id"":〔部門ID-A0603-共有〕},{""product_class_id"":〔商品規格ID-A0603-011B〕,""name"":""最新商品B"",""quantity"":1,""price"":77,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-011〕へ送信する／2. DBで査定ID 〔査定ID-A0603-011〕の注文詳細、個別入力商品、実在庫および実在庫履歴を確認する"
+- 期待結果: 更新前の注文詳細、個別入力商品、実在庫および実在庫履歴が残らず、送信した最新情報から作成されたレコードだけになること
+
+### IT-A06-03-012 
+- 観点ID: ITA-05,ITA-11
+- 出典: 0506 店頭買取情報更新 / 機能仕様 送信情報の登録 ①
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-012〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件、個別入力商品0件で、商品規格ID 〔商品規格ID-A0603-012〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-012）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-012@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-012〕,""name"":""規格商品A"",""quantity"":2,""price"":123,""sell_price"":300,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-012〕へ送信する／2. DBで査定ID 〔査定ID-A0603-012〕の商品情報を確認する"
+- 期待結果: 商品規格ID 〔商品規格ID-A0603-012〕の情報が店頭買取注文詳細に1件登録され、店頭買取注文個別入力商品には登録されないこと
+
+### IT-A06-03-018 
+- 観点ID: ITA-05,ITA-06
+- 出典: 0506 店頭買取情報更新 / 現行仕様 業務ロジック 買取合計金額
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-018〕（登録時に振られた査定IDを控えてある）は査定中、買取合計金額=900円で、商品規格ID 〔商品規格ID-A0603-018〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-018）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-018@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-018〕,""name"":""合計商品A"",""quantity"":2,""price"":123,""sell_price"":300,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-018〕へ送信する／2. DBで査定ID 〔査定ID-A0603-018〕の合計金額を確認する"
+- 期待結果: 単価123円×数量2の246円を10円単位へ切り上げた250円が買取合計金額に保存されること
+
+### IT-A06-03-020 
+- 観点ID: ITA-05,ITA-11
+- 出典: 0506 店頭買取情報更新 / リクエストパラメータ、現行仕様 業務ロジック 受注への反映
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-020〕（登録時に振られた査定IDを控えてある）は査定中、適格請求書発行事業者=true、確認済みフラグ=falseで、商品規格ID 〔商品規格ID-A0603-020〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-020）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-020@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-020〕,""name"":""適格商品A"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-020〕へ送信する／2. DBで査定ID 〔査定ID-A0603-020〕を確認する"
+- 期待結果: 適格請求書発行事業者に該当する査定ID 〔査定ID-A0603-020〕の確認済みフラグがtrueになること
+
+### IT-A06-03-021 
+- 観点ID: ITA-05,ITA-11
+- 出典: 0506 店頭買取情報更新 / リクエストパラメータ、現行仕様 業務ロジック 受注への反映
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-021〕（登録時に振られた査定IDを控えてある）は査定中、適格請求書発行事業者=true、確認済みフラグ=trueで、商品規格ID 〔商品規格ID-A0603-021〕（登録時に振られた商品規格IDを控えてある）の注文詳細1件を持つ（S-A06-03-CASE-021）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-021@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""false"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-021〕,""name"":""適格商品B"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-021〕へ送信する／2. DBで査定ID 〔査定ID-A0603-021〕を確認する"
+- 期待結果: 適格請求書発行事業者に該当する査定ID 〔査定ID-A0603-021〕の確認済みフラグがfalseになること
+
+### IT-A06-03-022 
+- 観点ID: ITA-11,ITA-24
+
+ succeeded in 27ms:
+   174 integration_test/casegen/ut_layer/inputs/A02-01.md
+   398 integration_test/casegen/ut_layer/inputs/A02-02.md
+   181 integration_test/casegen/ut_layer/inputs/A02-03.md
+   335 integration_test/casegen/ut_layer/inputs/A05-01.md
+    76 integration_test/casegen/ut_layer/inputs/A06-01.md
+   146 integration_test/casegen/ut_layer/inputs/A06-02.md
+   398 integration_test/casegen/ut_layer/inputs/A06-03.md
+   104 integration_test/casegen/ut_layer/inputs/A06-04.md
+   223 integration_test/casegen/ut_layer/inputs/A06-05.md
+  2035 total
+
+ succeeded in 60ms:
+# A02-01 ポップアップ用商品情報取得（24件）
+
+- 設計書の写し: integration_test/casegen/combination/units/A02-01/design.txt（行頭 L0001…。シート: 0502 sheet-3 ポップアップ用商品情報取得）
+- 共通シート: なし（integration_test/casegen/combination/units/_common/）
+- 要因表: integration_test/casegen/combination/factors/A02-01_factors.tsv
+
+### IT-A02-01-001 
+- 観点ID: ITB-06,ITB-08
+- 出典: 0502 ポップアップ用商品情報取得 / 処理概要 プロトコル・メソッド・認証の有無・レスポンス書式、機能仕様 処理概要・リクエストパラメータサンプル・ステータスコード
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 公開中・未削除の商品ID 〔商品ID-A0201-001〕と表示・未削除の商品規格ID 〔商品規格ID-A0201-001〕を紐付け、販売価格500、店舗ID 1・在庫場所EC-CUBEの在庫7、言語JP、状態NM、非Foil、週間販売数量2、商品規格画像img/goods/A02-01/sub-201011001.jpg、商品画像img/goods/A02-01/main-20101001.jpgとして登録する（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-001〕・〔商品規格ID-A0201-001〕）（S-A02-01-BASE-001）／④ 未認証の専用ブラウザセッションを使用する
+- 手順: 1. ブラウザの開発者ツールから認証情報を付けず、HTTP GETで「/api/popup/product/ja/〔商品ID-A0201-001〕」へ要求を送信する／2. Networkで要求メソッド、HTTPステータスおよび応答本文を確認する
+- 期待結果: GET要求のHTTPステータスが200となり、JSON形式の商品情報が返ること
+
+### IT-A02-01-002 
+- 観点ID: ITA-05,ITB-06
+- 出典: 0502 ポップアップ用商品情報取得 / 機能仕様 処理概要・レスポンスデータ・レスポンスデータサンプル
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 商品ID 〔商品ID-A0201-002〕を商品名「A02-01基本商品」・商品名英語「A02-01 Base Product」で公開中・未削除とし、表示・未削除の商品規格ID 〔商品規格ID-A0201-002〕を販売価格500、店舗ID 1・在庫場所EC-CUBEの在庫7、言語JP、状態NM、非Foil、週間販売数量2、商品規格画像img/goods/A02-01/sub-201011002.jpg、商品画像img/goods/A02-01/main-20101002.jpgとして登録する（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-002〕・〔商品規格ID-A0201-002〕）（S-A02-01-BASE-002）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-002〕」へ要求を送信する／2. Networkで応答JSONのルート構造、項目名および値を確認する
+- 期待結果: 応答JSONが単一オブジェクトで、productId=〔商品ID-A0201-002〕、name=「A02-01基本商品」、productClassId=〔商品規格ID-A0201-002〕、nameEn=「A02-01 Base Product」、subFileName=「img/goods/A02-01/sub-201011002.jpg」、fileName=「img/goods/A02-01/main-20101002.jpg」、code=「JP」、conditionCode=「NM」、productUrlが商品ID 〔商品ID-A0201-002〕の商品詳細URLとなり、price01・price02・stock・foilFlg・weeklySoldの各フィールドも含むこと
+
+### IT-A02-01-003 
+- 観点ID: ITA-05,ITB-07
+- 出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 値の取り方
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 公開中・未削除の商品ID 〔商品ID-A0201-003〕と表示・未削除の商品規格ID 〔商品規格ID-A0201-003〕を紐付け、通常価格123、販売価格456、店舗ID 1・在庫場所EC-CUBEの在庫7、言語JP、状態NMとして登録する（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-003〕・〔商品規格ID-A0201-003〕）（S-A02-01-RAW-003）
+- 手順: 1. DBで商品規格ID 〔商品規格ID-A0201-003〕のprice01、price02および在庫数を確認する／2. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-003〕」へ要求を送信する／3. Networkで応答JSONのprice01、price02およびstockを確認する
+- 期待結果: 応答JSONのprice01、price02およびstockが、DBから取得した123、456および7から再計算・丸めされずに返ること
+
+### IT-A02-01-004 
+- 観点ID: ITA-08,ITB-06
+- 出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 値の取り方
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 公開中・未削除の商品ID 〔商品ID-A0201-004〕と表示・未削除の商品規格ID 〔商品規格ID-A0201-004〕を紐付け、販売価格100、店舗ID 1・在庫場所EC-CUBEの在庫1、言語JP、状態NMとし、商品規格画像と商品画像をどちらも持たない状態にする（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-004〕・〔商品規格ID-A0201-004〕）（S-A02-01-NOIMAGE-004）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-004〕」へ要求を送信する／2. Networkで応答JSONのsubFileNameとfileNameを確認する
+- 期待結果: 商品規格画像と商品画像が無いため、応答JSONのsubFileNameとfileNameがいずれもnullとなること
+
+### IT-A02-01-005 
+- 観点ID: ITA-11
+- 出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方・対象の条件
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 公開中・未削除の商品ID 〔商品ID-A0201-005〕に、表示・未削除・販売価格100・在庫1の商品規格ID 〔商品規格ID-A0201-005A〕、削除済み（販売状態=廃止かつ非表示）・販売価格200・在庫9の商品規格ID 〔商品規格ID-A0201-005B〕、表示・未削除・販売価格0・在庫9の商品規格ID 〔商品規格ID-A0201-005C〕を紐付け、全商品規格を言語JP・状態NMとする（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-005〕・〔商品規格ID-A0201-005A〕・〔商品規格ID-A0201-005B〕・〔商品規格ID-A0201-005C〕）（S-A02-01-MIXED-005）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-005〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+- 期待結果: 削除されておらず販売価格が0より大きい商品規格ID 〔商品規格ID-A0201-005A〕が返り、削除済みの商品規格ID 〔商品規格ID-A0201-005B〕および販売価格0の商品規格ID 〔商品規格ID-A0201-005C〕が返らないこと
+
+### IT-A02-01-006 
+- 観点ID: ITA-11,ITA-14,ITB-06
+- 出典: 0502 ポップアップ用商品情報取得 / 機能仕様 ステータスコード、現行仕様 業務ロジック 返す1件の選び方・対象の条件、入出力 該当が無いときの応答本文、表示メッセージ
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 商品ID 〔商品ID-A0201-006A〕は削除済みで商品レコードが存在しない状態、商品ID 〔商品ID-A0201-006B〕は未削除だが非公開の状態、商品ID 〔商品ID-A0201-006C〕は公開中・未削除で、唯一の商品規格ID 〔商品規格ID-A0201-006C〕を削除済み（販売状態=廃止かつ非表示）とし表示・未削除の商品規格が0件の状態、商品ID 〔商品ID-A0201-006D〕は公開中・未削除だが販売価格が0より大きい商品規格が0件の状態にする（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-006A〕・〔商品ID-A0201-006B〕・〔商品ID-A0201-006C〕・〔商品ID-A0201-006D〕・〔商品規格ID-A0201-006C〕）（S-A02-01-NOTFOUND-006）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-006A〕」、「/api/popup/product/ja/〔商品ID-A0201-006B〕」、「/api/popup/product/ja/〔商品ID-A0201-006C〕」、「/api/popup/product/ja/〔商品ID-A0201-006D〕」へ順に要求を送信する／2. Networkで各要求のHTTPステータスと応答本文を確認する
+- 期待結果: 削除済み商品、非公開商品、削除されていない商品規格が0件の商品および販売価格が0より大きい商品規格が0件の商品では、いずれもHTTPステータスが404となり、応答本文が処理結果コード404とメッセージ「Not Found」の2項目だけとなること
+
+### IT-A02-01-007 
+- 観点ID: ITA-11
+- 出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方・並び順
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 公開中・未削除の商品ID 〔商品ID-A0201-007〕に、販売価格100・店舗ID 1・在庫場所EC-CUBEの在庫0・言語JP・状態NMの商品規格ID 〔商品規格ID-A0201-007A〕と、販売価格100・同在庫1・言語EN・状態HPの商品規格ID 〔商品規格ID-A0201-007B〕を紐付け、両商品規格を表示・未削除とする（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-007〕・〔商品規格ID-A0201-007A〕・〔商品規格ID-A0201-007B〕）（S-A02-01-STOCK-007）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-007〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+- 期待結果: 在庫数0の日本語・NMの商品規格ID 〔商品規格ID-A0201-007A〕より、在庫数1の英語・HPの商品規格ID 〔商品規格ID-A0201-007B〕が優先されて返ること
+
+### IT-A02-01-008 
+- 観点ID: ITA-11
+- 出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方・並び順
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 公開中・未削除の商品ID 〔商品ID-A0201-008〕に、販売価格100・店舗ID 1・在庫場所EC-CUBEの在庫5・言語JP・状態HPの商品規格ID 〔商品規格ID-A0201-008A〕と、販売価格100・同在庫5・言語EN・状態NMの商品規格ID 〔商品規格ID-A0201-008B〕を紐付け、両商品規格を表示・未削除とする（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-008〕・〔商品規格ID-A0201-008A〕・〔商品規格ID-A0201-008B〕）（S-A02-01-LANGUAGE-008）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-008〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+- 期待結果: 在庫数が等しい場合、英語・NMの商品規格ID 〔商品規格ID-A0201-008B〕より、指定言語に一致する日本語・HPの商品規格ID 〔商品規格ID-A0201-008A〕が優先されて返ること
+
+### IT-A02-01-009 
+- 観点ID: ITA-11
+- 出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方・並び順
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 商品ID 〔商品ID-A0201-009A〕にNM・SP・MP・HPの商品規格ID 〔商品規格ID-A0201-009A〕・〔商品規格ID-A0201-009B〕・〔商品規格ID-A0201-009C〕・〔商品規格ID-A0201-009D〕、商品ID 〔商品ID-A0201-009B〕にSP・MP・HPの商品規格ID 〔商品規格ID-A0201-009E〕・〔商品規格ID-A0201-009F〕・〔商品規格ID-A0201-009G〕、商品ID 〔商品ID-A0201-009C〕にMP・HPの商品規格ID 〔商品規格ID-A0201-009H〕・〔商品規格ID-A0201-009I〕を紐付ける。全商品を公開中・未削除、全商品規格を表示・未削除・販売価格100・店舗ID 1・在庫場所EC-CUBEの在庫5・言語JP・画像なしとする（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-009A〕・〔商品ID-A0201-009B〕・〔商品ID-A0201-009C〕・〔商品規格ID-A0201-009A〕・〔商品規格ID-A0201-009B〕・〔商品規格ID-A0201-009C〕・〔商品規格ID-A0201-009D〕・〔商品規格ID-A0201-009E〕・〔商品規格ID-A0201-009F〕・〔商品規格ID-A0201-009G〕・〔商品規格ID-A0201-009H〕・〔商品規格ID-A0201-009I〕）（S-A02-01-CONDITION-009）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-009A〕」、「/api/popup/product/ja/〔商品ID-A0201-009B〕」、「/api/popup/product/ja/〔商品ID-A0201-009C〕」へ順に要求を送信する／2. Networkで各応答JSONのproductClassIdとconditionCodeを確認する
+- 期待結果: 商品ID 〔商品ID-A0201-009A〕ではNMの商品規格ID 〔商品規格ID-A0201-009A〕、商品ID 〔商品ID-A0201-009B〕ではSPの商品規格ID 〔商品規格ID-A0201-009E〕、商品ID 〔商品ID-A0201-009C〕ではMPの商品規格ID 〔商品規格ID-A0201-009H〕が返り、カードの状態がNM・SP・MP・HPの順で優先されること
+
+### IT-A02-01-010 
+- 観点ID: ITA-11
+- 出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 公開中・未削除の商品ID 〔商品ID-A0201-010〕には、表示・未削除・販売価格100・店舗ID 1・在庫場所EC-CUBEの在庫3・言語EN・状態NMの商品規格ID 〔商品規格ID-A0201-010〕だけを紐付け、JPの商品規格を0件にする（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-010〕・〔商品規格ID-A0201-010〕）（S-A02-01-FALLBACK-010）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-010〕」へ要求を送信する／2. NetworkでHTTPステータスと応答JSONのproductClassIdを確認する
+- 期待結果: 日本語の商品規格を持たない場合もHTTPステータスが200となり、英語の商品規格ID 〔商品規格ID-A0201-010〕が1件返ること
+
+### IT-A02-01-011 
+- 観点ID: ITA-05,ITA-06
+- 出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 週間販売数の数え方
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 公開中・未削除の商品ID 〔商品ID-A0201-011〕に、ENの商品規格ID 〔商品規格ID-A0201-011A〕・〔商品規格ID-A0201-011B〕・〔商品規格ID-A0201-011C〕を状態NM・SP・MP、店舗ID 1・EC販売分の週間販売数量2・3・4として紐付け、JPの商品規格ID 〔商品規格ID-A0201-011D〕を状態NM・同週間販売数量100として紐付ける。全商品規格を表示・未削除・販売価格100・店舗ID 1・在庫場所EC-CUBEの在庫5とする（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-011〕・〔商品規格ID-A0201-011A〕・〔商品規格ID-A0201-011B〕・〔商品規格ID-A0201-011C〕・〔商品規格ID-A0201-011D〕）（S-A02-01-WEEKLY-011）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/en/〔商品ID-A0201-011〕」へ要求を送信する／2. Networkで応答JSONのproductClassId、codeおよびweeklySoldを確認する
+- 期待結果: 英語の商品規格ID 〔商品規格ID-A0201-011A〕が返り、weeklySoldが同じ商品に属する英語の商品規格3件の週間販売数量2・3・4を合計した9となり、日本語の商品規格の週間販売数量100を含まないこと
+
+### IT-A02-01-014 
+- 観点ID: ITA-11
+- 出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 公開中・未削除の商品ID 〔商品ID-A0201-014〕に、画像順位2の商品規格ID 〔商品規格ID-A0201-014A〕と画像順位1の商品規格ID 〔商品規格ID-A0201-014B〕を紐付け、両商品規格を表示・未削除・販売価格100・店舗ID 1・在庫場所EC-CUBEの在庫5・言語JP・状態NMとする（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-014〕・〔商品規格ID-A0201-014A〕・〔商品規格ID-A0201-014B〕）（S-A02-01-IMGRANK-014）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/en/〔商品ID-A0201-014〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+- 期待結果: 在庫有無、言語およびカードの状態が等しい2件のうち、指定言語enに対応する順位1の商品規格画像を持つ商品規格ID 〔商品規格ID-A0201-014B〕が返り、順位2の商品規格画像を持つ商品規格ID 〔商品規格ID-A0201-014A〕が返らないこと
+
+### IT-A02-01-015 
+- 観点ID: ITA-11
+- 出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 公開中・未削除の商品ID 〔商品ID-A0201-015〕に商品規格ID 〔商品規格ID-A0201-015A〕と〔商品規格ID-A0201-015B〕を紐付け、両商品規格を表示・未削除・販売価格100・店舗ID 1・在庫場所EC-CUBEの在庫5・言語JP・状態NM・商品規格画像なしとする（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-015〕・〔商品規格ID-A0201-015A〕・〔商品規格ID-A0201-015B〕）（S-A02-01-TIE-015）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/en/〔商品ID-A0201-015〕」へ要求を送信する／2. NetworkでHTTPステータスと応答JSONのproductClassIdを確認する
+
+codex
+候補は62件で、A02の「並び順」が多数を占めます。複数候補から返す1件を選ぶ優先度かどうかを、ケース本文と設計書で確認します。
+exec
+/bin/bash -lc "rg -n '返す1件|並び順|優先|対象の条件' integration_test/casegen/combination/units/{A02-01,A02-02,A02-03}/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/units/A02-03/design.txt:82:L0081	取得対象の絞り込みと優先順位
+integration_test/casegen/combination/units/A02-03/design.txt:85:L0084	条件に合う商品が複数あるときは、次の優先順に並べて先頭の1件だけを返す。
+integration_test/casegen/combination/units/A02-03/design.txt:91:L0090	パスの言語コードに対応する画像優先度を持つ画像のもの
+integration_test/casegen/combination/units/A02-03/design.txt:92:L0091	6条件がすべて等しい商品が複数あるときは、どれを返すかを定めない。6条件より後の並び順は無い。
+integration_test/casegen/combination/units/A02-01/design.txt:79:L0078	返す1件の選び方
+integration_test/casegen/combination/units/A02-01/design.txt:80:L0079	同じ商品に商品規格が複数あるとき、次の条件を満たすものだけを対象とし、並び順の先頭1件を返す。対象が1件も無いときは該当なしとする。
+integration_test/casegen/combination/units/A02-01/design.txt:82:L0081	対象の条件	商品が削除されておらず公開中であること／商品規格が削除されていないこと／商品規格の販売価格が0より大きいこと
+integration_test/casegen/combination/units/A02-01/design.txt:83:L0082	並び順	1. 在庫数が0より大きいものを先にする 2. 商品規格の言語コードが指定言語と一致するものを先にする 3. カードの状態が良い順（NM・SP・MP・HP の順） 4. 指定言語に対応する順位の商品規格画像を持つものを先にする
+integration_test/casegen/combination/units/A02-01/design.txt:84:L0083	指定言語は絞り込みには使わず、並び順の優先にだけ使う。そのため指定言語の商品規格を持たない商品でも、他の言語の商品規格を1件返す。
+integration_test/casegen/combination/units/A02-01/design.txt:85:L0084	並び順4の指定言語に対応する順位は、指定言語が jp のとき2、en のとき1である。商品規格画像の順位がこの値と一致する商品規格を先にする。
+integration_test/casegen/combination/units/A02-01/design.txt:86:L0085	並び順の4条件がすべて等しい商品規格が複数あるときは、どれを返すかを定めない。4条件より後の並び順は無い。
+integration_test/casegen/combination/units/A02-02/design.txt:78:L0077	指定されたカードIDに紐づく商品規格のうち、商品と商品規格がいずれも削除されておらず、かつ商品の公開状態が公開であるものだけを対象とする。対象を後述の優先順で並べ、先頭の1件だけを返す。
+integration_test/casegen/combination/units/A02-02/design.txt:79:L0078	並び順の優先順位
+integration_test/casegen/combination/units/A02-02/design.txt:84:L0083	3	常に	特殊なカードセットでないものを優先
+integration_test/casegen/combination/units/A02-02/design.txt:85:L0084	4	常に	プロモーションでないものを優先
+integration_test/casegen/combination/units/A02-02/design.txt:86:L0085	5	常に	カードセットの発売日が新しいものを優先
+integration_test/casegen/combination/units/A02-02/design.txt:87:L0086	6	フォイル有無の指定が無いとき	非フォイルを優先
+integration_test/casegen/combination/units/A02-02/design.txt:88:L0087	7	常に	在庫数が1以上のものを優先
+integration_test/casegen/combination/units/A02-02/design.txt:89:L0088	8	常に	指定された言語コードと一致する言語のものを優先
+integration_test/casegen/combination/units/A02-02/design.txt:92:L0091	11	常に	サブ画像のファイル名を持つものを優先
+integration_test/casegen/combination/units/A02-02/design.txt:93:L0092	フォイル有無の指定があるときは、その指定が特殊セット・プロモーション・発売日より優先される。指定が無いときの非フォイル優先はそれらより後に効く。
+integration_test/casegen/combination/units/A02-02/design.txt:103:L0102	foil_flg	クエリ	string	任意	フォイル有無の指定。指定があるときだけ並び順の第1優先に使う
+integration_test/casegen/combination/units/A02-02/design.txt:104:L0103	price	クエリ	string	任意	価格の並び指定。指定があるときだけ販売価格を並び順に使う
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv,re,pathlib
+p=pathlib.Path('integration_test/casegen/ut_layer')
+ids=[r['外すテストID'] for r in csv.DictReader((p/'review/V_01_targets.tsv').open(),delimiter='\\t') if r['外すテストID'].startswith('IT-A02')]
+for tid in ids:
+ fid=tid[3:-4]; data=(p/'inputs'/f'{fid}.md').read_text(); m=re.search(r'"'^### '"'+re.escape(tid)+r'\\s*\\n(.*?)(?="'^### |'"\\Z)',data,re.M|re.S)
+ print('\\n'+tid)
+ if not m: print('MISSING'); continue
+ d={k:v for k,v in re.findall(r'"'^- ([''^:]+): (.*)$'"',m.group(1),re.M)}
+ for k in ('出典','手順','期待結果'): print(k+': '+d.get(k,''))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+
+IT-A02-01-007
+出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方・並び順
+手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-007〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 在庫数0の日本語・NMの商品規格ID 〔商品規格ID-A0201-007A〕より、在庫数1の英語・HPの商品規格ID 〔商品規格ID-A0201-007B〕が優先されて返ること
+
+IT-A02-01-008
+出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方・並び順
+手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-008〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 在庫数が等しい場合、英語・NMの商品規格ID 〔商品規格ID-A0201-008B〕より、指定言語に一致する日本語・HPの商品規格ID 〔商品規格ID-A0201-008A〕が優先されて返ること
+
+IT-A02-01-009
+出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方・並び順
+手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-009A〕」、「/api/popup/product/ja/〔商品ID-A0201-009B〕」、「/api/popup/product/ja/〔商品ID-A0201-009C〕」へ順に要求を送信する／2. Networkで各応答JSONのproductClassIdとconditionCodeを確認する
+期待結果: 商品ID 〔商品ID-A0201-009A〕ではNMの商品規格ID 〔商品規格ID-A0201-009A〕、商品ID 〔商品ID-A0201-009B〕ではSPの商品規格ID 〔商品規格ID-A0201-009E〕、商品ID 〔商品ID-A0201-009C〕ではMPの商品規格ID 〔商品規格ID-A0201-009H〕が返り、カードの状態がNM・SP・MP・HPの順で優先されること
+
+IT-A02-01-014
+出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方
+手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/en/〔商品ID-A0201-014〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 在庫有無、言語およびカードの状態が等しい2件のうち、指定言語enに対応する順位1の商品規格画像を持つ商品規格ID 〔商品規格ID-A0201-014B〕が返り、順位2の商品規格画像を持つ商品規格ID 〔商品規格ID-A0201-014A〕が返らないこと
+
+IT-A02-01-021
+出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方
+手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-021〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 在庫有無、言語およびカードの状態が等しい2件のうち、日本語指定に対応する順位2の商品規格画像を持つ商品規格ID 〔商品規格ID-A0201-021B〕が返り、順位1の商品規格画像を持つ商品規格ID 〔商品規格ID-A0201-021A〕が返らないこと
+
+IT-A02-01-023
+MISSING
+
+IT-A02-02-006
+出典: 0502 ポップアップ用カード情報取得 / 現行仕様 業務ロジック 並び順の優先順位、入出力 入出力: クエリパラメータ
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-006〕?foil_flg=1」、「/api/popup/card/ja/〔カードID-A0202-006〕?foil_flg=false」、「/api/popup/card/ja/〔カードID-A0202-006〕?foil_flg=1&price=high」、「/api/popup/card/ja/〔カードID-A0202-006〕?foil_flg=0」、「/api/popup/card/ja/〔カードID-A0202-006〕?foil_flg=」へ順に要求を送信する／2. Networkで各応答JSONのproductClassIdを確認する
+期待結果: foil_flgが1、false、および1かつpriceがhighの3要求ではフォイルを先にして特殊セット・プロモーション・古い発売日・販売価格100の商品規格ID 〔商品規格ID-A0202-006A〕が返り、foil_flgが0および空文字の2要求では非フォイルを先にして商品規格ID 〔商品規格ID-A0202-006B〕が返ること
+
+IT-A02-02-007
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位2、入出力 クエリパラメータ price
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-007〕?price=high」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 販売価格が高い商品規格ID 〔商品規格ID-A0202-007B〕が1件返ること
+
+IT-A02-02-008
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位2、入出力 クエリパラメータ price
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-008〕?price=low」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: priceにhigh以外の値を指定したため、販売価格が低い商品規格ID 〔商品規格ID-A0202-008A〕が1件返ること
+
+IT-A02-02-009
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位3
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-009〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 特殊なカードセットでない商品規格ID 〔商品規格ID-A0202-009A〕が1件返ること
+
+IT-A02-02-010
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位4
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-010〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: プロモーションでない商品規格ID 〔商品規格ID-A0202-010A〕が1件返ること
+
+IT-A02-02-011
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位5
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-011〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 発売日が新しいカードセットの商品規格ID 〔商品規格ID-A0202-011B〕が1件返ること
+
+IT-A02-02-012
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位6
+手順: 1. ブラウザの開発者ツールからfoil_flgを付けずにGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-012〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 非フォイルの商品規格ID 〔商品規格ID-A0202-012A〕が1件返ること
+
+IT-A02-02-013
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位7
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-013〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 在庫数が1の商品規格ID 〔商品規格ID-A0202-013A〕が、在庫数0の商品規格より優先されて1件返ること
+
+IT-A02-02-014
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位8、機能仕様 リクエストパラメータ・レスポンスデータ
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-014〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdとcodeを確認する
+期待結果: 指定された言語コードに一致する日本語の商品規格ID 〔商品規格ID-A0202-014A〕が1件返り、codeが「JP」となること
+
+IT-A02-02-015
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位9
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-015〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: カードの状態の昇順で先となる商品規格ID 〔商品規格ID-A0202-015A〕が1件返ること
+
+IT-A02-02-016
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位10
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-016〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 商品規格に結び付いた画像の順序が先の商品規格ID 〔商品規格ID-A0202-016A〕が1件返ること
+
+IT-A02-02-017
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位11
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-017〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: サブ画像のファイル名を持つ商品規格ID 〔商品規格ID-A0202-017A〕が1件返ること
+
+IT-A02-02-018
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位3・6、フォイル指定有無による優先順位
+手順: 1. ブラウザの開発者ツールからfoil_flgを付けずにGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-018〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 非フォイルであることより特殊なカードセットでないことが優先され、フォイルの商品規格ID 〔商品規格ID-A0202-018A〕が1件返ること
+
+IT-A02-02-019
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位4・6、フォイル指定有無による優先順位
+手順: 1. ブラウザの開発者ツールからfoil_flgを付けずにGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-019〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 非フォイルであることよりプロモーションでないことが優先され、フォイルの商品規格ID 〔商品規格ID-A0202-019A〕が1件返ること
+
+IT-A02-02-020
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位5・6、フォイル指定有無による優先順位
+手順: 1. ブラウザの開発者ツールからfoil_flgを付けずにGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-020〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 非フォイルであることよりカードセットの発売日が新しいことが優先され、フォイルの商品規格ID 〔商品規格ID-A0202-020A〕が1件返ること
+
+IT-A02-02-030
+出典: 0502 ポップアップ用カード情報取得 / 機能仕様 リクエストパラメータ・レスポンスデータ、業務ロジック 並び順の優先順位 順位8
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/en/〔カードID-A0202-030〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdとcodeを確認する
+期待結果: 指定された言語コードenに一致する英語の商品規格ID 〔商品規格ID-A0202-030B〕が1件返り、codeが「EN」となること
+
+IT-A02-02-031
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位3・4
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-031〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 特殊なカードセットでないことがプロモーションでないことより優先され、通常カードセット・プロモーションの商品規格ID 〔商品規格ID-A0202-031B〕が1件返ること
+
+IT-A02-02-032
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位4・5
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-032〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: プロモーションでないことがカードセットの発売日が新しいことより優先され、発売日2025-01-01の非プロモーションの商品規格ID 〔商品規格ID-A0202-032B〕が1件返ること
+
+IT-A02-02-033
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位6・7
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-033〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: フォイル有無の指定が無いとき、非フォイルであることが在庫数が1以上であることより優先され、在庫0の非フォイルの商品規格ID 〔商品規格ID-A0202-033B〕が1件返ること
+
+IT-A02-02-034
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位7・8
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-034〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 在庫数が1以上であることが指定された言語コードjaと一致することより優先され、在庫1の英語の商品規格ID 〔商品規格ID-A0202-034B〕が1件返ること
+
+IT-A02-02-035
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位8・9
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-035〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 指定された言語コードjaと一致することがカードの状態の昇順より優先され、状態SPの日本語の商品規格ID 〔商品規格ID-A0202-035B〕が1件返ること
+
+IT-A02-02-036
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位9・10
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-036〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: カードの状態の昇順が商品規格に結び付いた画像の順序より優先され、状態NMの商品規格ID 〔商品規格ID-A0202-036B〕が1件返ること
+
+IT-A02-02-037
+出典: 0502 ポップアップ用カード情報取得 / 業務ロジック 並び順の優先順位 順位10・11
+手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-037〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+期待結果: 商品規格に結び付いた画像の順序がサブ画像のファイル名を持つことより優先され、画像順序1の商品規格ID 〔商品規格ID-A0202-037A〕が1件返ること
+
+IT-A02-02-038
+MISSING
+
+IT-A02-02-039
+MISSING
+
+IT-A02-03-006
+出典: 0502 ポップアップ用商品情報取得（旧商品ID） / 業務ロジック 取得対象の絞り込みと優先順位
+手順: 1. APIベースURLの「/popup/old/ja/A0203PR1-006.json」を開く／2. 応答JSONのproductIdを確認する
+期待結果: 特殊カードセットではない商品〔商品ID-A0203-006A〕が、特殊カードセットの商品〔商品ID-A0203-006B〕より後続の優先条件で不利でも返ること
+
+IT-A02-03-007
+出典: 0502 ポップアップ用商品情報取得（旧商品ID） / 業務ロジック 取得対象の絞り込みと優先順位
+手順: 1. APIベースURLの「/popup/old/ja/A0203PR2-007.json」を開く／2. 応答JSONのproductIdを確認する
+期待結果: プロモーションではない商品〔商品ID-A0203-007A〕が、プロモーションの商品〔商品ID-A0203-007B〕より後続の優先条件で不利でも返ること
+
+IT-A02-03-008
+出典: 0502 ポップアップ用商品情報取得（旧商品ID） / 業務ロジック 取得対象の絞り込みと優先順位
+手順: 1. APIベースURLの「/popup/old/ja/A0203PR3-008.json」を開く／2. 応答JSONのproductIdを確認する
+期待結果: カードセットのリリース日が2026-01-01の商品〔商品ID-A0203-008A〕が、リリース日2025-01-01の商品〔商品ID-A0203-008B〕より後続の優先条件で不利でも返ること
+
+IT-A02-03-009
+出典: 0502 ポップアップ用商品情報取得（旧商品ID） / 業務ロジック 取得対象の絞り込みと優先順位
+手順: 1. APIベースURLの「/popup/old/ja/A0203PR4-009.json」を開く／2. 応答JSONのproductIdを確認する
+期待結果: Foilではない商品〔商品ID-A0203-009A〕が、Foilの商品〔商品ID-A0203-009B〕より後続の優先条件で不利でも返ること
+
+exec
+/bin/bash -lc "sed -n '78,96p' integration_test/casegen/combination/units/A02-03/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0077	functions/pf-api/a02-03_api_product_popup_product_old.md
+L0078	現行仕様
+L0079	A02-03 ポップアップ用商品情報取得（旧商品ID） / API 商品管理 — ポップアップ用商品情報取得（旧商品ID）
+L0080	業務ロジック
+L0081	取得対象の絞り込みと優先順位
+L0082	パスの旧商品IDは、カードの旧商品IDと旧英語商品IDのどちらか一方に一致すれば対象とする。
+L0083	対象にするのは、削除済みでない商品・削除済みでない商品規格で、かつ公開状態の商品だけである。
+L0084	条件に合う商品が複数あるときは、次の優先順に並べて先頭の1件だけを返す。
+L0085	特殊カードセットでないもの
+L0086	プロモーションでないもの
+L0087	カードセットのリリース日が新しいもの
+L0088	Foilでないもの
+L0089	パスの言語コードと一致する言語のもの
+L0090	パスの言語コードに対応する画像優先度を持つ画像のもの
+L0091	6条件がすべて等しい商品が複数あるときは、どれを返すかを定めない。6条件より後の並び順は無い。
+L0092	旧商品IDを持つのはカードだけである。カード詳細とカードが紐づかない商品は、どの旧商品IDを指定しても対象にならない。
+L0093	販売数の集計
+L0094	週間販売数は、返す商品とパスの言語コードに紐づく商品規格の販売数を合計した値である。商品規格が複数あるときは合算する。
+L0095	金額・在庫数の加工
+
+exec
+/bin/bash -lc "sed -n '73,111p' integration_test/casegen/combination/units/A02-02/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0072	functions/pf-api/a02-02_api_product_popup_card.md
+L0073	現行仕様
+L0074	A02-02 ポップアップ用カード情報取得 / API 商品管理 — ポップアップ用カード情報取得
+L0075	業務ロジック
+L0076	取得の対象
+L0077	指定されたカードIDに紐づく商品規格のうち、商品と商品規格がいずれも削除されておらず、かつ商品の公開状態が公開であるものだけを対象とする。対象を後述の優先順で並べ、先頭の1件だけを返す。
+L0078	並び順の優先順位
+L0079	対象が複数あるときにどの1件を返すかは、次の順で決める。上の条件で並びが決まらないときに、次の条件へ移る。
+L0080	順位	適用する場面	並び
+L0081	1	フォイル有無の指定があるとき	フォイル区分。指定が真値なら降順、偽値なら昇順
+L0082	2	価格の並び指定があるとき	販売価格。high なら降順、それ以外の値なら昇順
+L0083	3	常に	特殊なカードセットでないものを優先
+L0084	4	常に	プロモーションでないものを優先
+L0085	5	常に	カードセットの発売日が新しいものを優先
+L0086	6	フォイル有無の指定が無いとき	非フォイルを優先
+L0087	7	常に	在庫数が1以上のものを優先
+L0088	8	常に	指定された言語コードと一致する言語のものを優先
+L0089	9	常に	カードの状態の昇順
+L0090	10	常に	商品規格に結び付いた画像に定められた順序の昇順
+L0091	11	常に	サブ画像のファイル名を持つものを優先
+L0092	フォイル有無の指定があるときは、その指定が特殊セット・プロモーション・発売日より優先される。指定が無いときの非フォイル優先はそれらより後に効く。
+L0093	週間販売数の求め方
+L0094	週間販売数は、取得した商品規格と同じ商品かつ同じ言語コードを持つ商品規格すべての1週間販売数を合計した値を返す。取得した1件分だけの値ではない。
+L0095	応答の値の扱い
+L0096	取得時点の値をそのまま返し、金額・在庫数の再計算や丸めは行わない。
+L0097	該当が無いときの応答本文
+L0098	該当する商品規格が1件も無いとき、応答本文はコードとメッセージだけを持つJSONになり、メッセージは Not Found を返す。商品情報のフィールドは含まない。
+L0099	入出力
+L0100	入出力: クエリパラメータ
+L0101	パラメータ	位置	型	必須／任意	説明
+L0102	foil_flg	クエリ	string	任意	フォイル有無の指定。指定があるときだけ並び順の第1優先に使う
+L0103	price	クエリ	string	任意	価格の並び指定。指定があるときだけ販売価格を並び順に使う
+L0104	foil_flg が空文字か 0 のときは偽値として扱う。それ以外の値のときは、false を含めて真値として扱う。
+L0105	入出力: 値を持たないことがあるフィールド
+L0106	フィールド	値が無いときの応答
+L0107	subFileName	null
+L0108	fileName	null
+L0109	beltUrl	null。帯リンクのURLで、応答には常に含める
+L0110	リニューアル後の仕様
+
+exec
+/bin/bash -lc "rg -n 'IT-A02-(01-023|02-038|02-039)' integration_test/casegen/ut_layer/inputs/{A02-01,A02-02}.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/ut_layer/inputs/A02-02.md:238:### IT-A02-02-038 [DP]
+integration_test/casegen/ut_layer/inputs/A02-02.md:245:### IT-A02-02-039 [DP]
+integration_test/casegen/ut_layer/inputs/A02-01.md:133:### IT-A02-01-023 [DP]
+
+exec
+/bin/bash -lc "sed -n '130,145p' integration_test/casegen/ut_layer/inputs/A02-01.md" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '235,255p' integration_test/casegen/ut_layer/inputs/A02-02.md" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv,re,pathlib
+p=pathlib.Path('integration_test/casegen/ut_layer')
+ids=[r['外すテストID'] for r in csv.DictReader((p/'review/V_01_targets.tsv').open(),delimiter='\\t') if r['外すテストID'].startswith(('IT-A05','IT-A06'))]
+for tid in ids:
+ fid=tid[3:-4]; data=(p/'inputs'/f'{fid}.md').read_text(); m=re.search(r'"'^### '"'+re.escape(tid)+r'(?:["'^'"\\n]*)\\n(.*?)(?="'^### |'"\\Z)',data,re.M|re.S)
+ print('\\n'+tid + (' MISSING' if not m else ''))
+ if not m: continue
+ d={k:v for k,v in re.findall(r'"'^- ([''^:]+): (.*)$'"',m.group(1),re.M)}
+ for k in ('出典','手順','期待結果'): print(k+': '+d.get(k,''))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 59ms:
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-022〕」へ要求を送信する／2. NetworkでHTTPステータスと応答JSONのproductClassIdおよびstockを確認する
+- 期待結果: 全商品規格の在庫数が0ちょうどの商品でもHTTPステータスが200となり、商品規格ID 〔商品規格ID-A0201-022〕がproductClassIdとして1件返り、stockが0となること
+
+### IT-A02-01-023 [DP]
+- 観点ID: ITA-11
+- 出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 返す1件の選び方・並び順
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 公開中・未削除の商品ID 〔商品ID-A0201-023〕に、表示・未削除・販売価格100・店舗ID 1・在庫場所EC-CUBEの在庫5・言語JP・状態NM・商品規格画像なしの商品規格ID 〔商品規格ID-A0201-023A〕と、同じ価格・在庫・言語で状態HP・商品規格画像（順位2、ファイル名A02-01-023-hp-rank2.jpg）ありの商品規格ID 〔商品規格ID-A0201-023B〕を紐付ける（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-023〕・〔商品規格ID-A0201-023A〕・〔商品規格ID-A0201-023B〕）（S-A02-01-CONDIMG-023）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-023〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdおよびconditionCodeを確認する
+- 期待結果: 在庫数と言語が等しい2件のうち、カードの状態が良いNMで商品規格画像なしの商品規格ID 〔商品規格ID-A0201-023A〕が返り、状態HPで指定言語jaに対応する順位2の商品規格画像を持つ商品規格ID 〔商品規格ID-A0201-023B〕は返らず、conditionCodeがNMとなること
+
+### IT-A02-01-024 [DP]
+- 観点ID: ITA-07
+- 出典: 0502 ポップアップ用商品情報取得 / 現行仕様 業務ロジック 週間販売数の数え方
+- 事前準備: ① 開始時にブラウザの接続先をA02-01結合試験のAPIベースURLへ設定する（S-A02-01-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1・2をJP・EN、カード状態ID 1・2・3・4をNM・SP・MP・HPとして登録済みにする（S-A02-01-MASTER）／③ 公開中・未削除の商品ID 〔商品ID-A0201-024〕に、表示・未削除の商品規格ID 〔商品規格ID-A0201-024〕を紐付け、販売価格100、店舗ID 1・在庫場所EC-CUBEの在庫5、言語JP、状態NM、店舗ID 1・EC販売分の週間販売数量2として登録する。同じ商品に言語JPの商品規格は他に無い（登録時に振られた商品ID・商品規格IDを控えてある。〔商品ID-A0201-024〕・〔商品規格ID-A0201-024〕）（S-A02-01-WEEKLY1-024）
+- 手順: 1. ブラウザの開発者ツールからHTTP GETで「/api/popup/product/ja/〔商品ID-A0201-024〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdおよびweeklySoldを確認する
+- 期待結果: 商品規格ID 〔商品規格ID-A0201-024〕が返り、weeklySoldが同じ言語の商品規格1件の週間販売数量である2となること
+
+ succeeded in 50ms:
+- 手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-037〕」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+- 期待結果: 商品規格に結び付いた画像の順序がサブ画像のファイル名を持つことより優先され、画像順序1の商品規格ID 〔商品規格ID-A0202-037A〕が1件返ること
+
+### IT-A02-02-038 [DP]
+- 観点ID: ITA-11
+- 出典: 0502 ポップアップ用カード情報取得 / 現行仕様 業務ロジック 並び順の優先順位 順位1・3・4・5、フォイル指定有無による優先順位、入出力 入出力: クエリパラメータ
+- 事前準備: ① 開始時にブラウザのAPIベースURLとEC-CUBEベースURLをA02-02結合試験環境へ設定する（S-A02-02-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1をJP、カード状態ID 1をNMとして登録済みにする（S-A02-02-MASTER）／③ カードID 〔カードID-A0202-038〕に、商品規格ID 〔商品規格ID-A0202-038A〕を特殊カードセット・プロモーション・発売日2025-01-01・非フォイル、商品規格ID 〔商品規格ID-A0202-038B〕を通常カードセット・非プロモーション・発売日2026-01-01・フォイルとして紐付ける。両候補を販売価格500、公開・未削除・表示、在庫1、言語JP、状態NMとする（登録時に振られたカードID・商品規格IDを控えてある。〔カードID-A0202-038〕〔商品規格ID-A0202-038A〕〔商品規格ID-A0202-038B〕）（S-A02-02-FOILFALSE-SET-038）
+- 手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-038〕?foil_flg=0」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+- 期待結果: foil_flgが0のときは非フォイルが先になり、特殊カードセット・プロモーション・発売日2025-01-01の商品規格ID 〔商品規格ID-A0202-038A〕が1件返り、通常カードセット・非プロモーション・発売日2026-01-01のフォイルの商品規格ID 〔商品規格ID-A0202-038B〕は返らないこと
+
+### IT-A02-02-039 [DP]
+- 観点ID: ITA-11
+- 出典: 0502 ポップアップ用カード情報取得 / 現行仕様 業務ロジック 並び順の優先順位 順位1・2、入出力 入出力: クエリパラメータ
+- 事前準備: ① 開始時にブラウザのAPIベースURLとEC-CUBEベースURLをA02-02結合試験環境へ設定する（S-A02-02-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1をJP、カード状態ID 1をNMとして登録済みにする（S-A02-02-MASTER）／③ カードID 〔カードID-A0202-039〕に、商品規格ID 〔商品規格ID-A0202-039A〕を販売価格100・通常カードセット・非プロモーション・発売日2026-01-01・非フォイル、商品規格ID 〔商品規格ID-A0202-039B〕を販売価格900・特殊カードセット・プロモーション・発売日2025-01-01・フォイルとして紐付ける。両候補を公開・未削除・表示、在庫1、言語JP、状態NMとする（登録時に振られたカードID・商品規格IDを控えてある。〔カードID-A0202-039〕〔商品規格ID-A0202-039A〕〔商品規格ID-A0202-039B〕）（S-A02-02-FOILFALSE-PRICE-039）
+- 手順: 1. ブラウザの開発者ツールからGETでAPIベースURLの「/api/popup/card/ja/〔カードID-A0202-039〕?foil_flg=0&price=high」へ要求を送信する／2. Networkで応答JSONのproductClassIdを確認する
+- 期待結果: foil_flgが0かつpriceがhighのときも、フォイル区分が販売価格より先に効いて販売価格100の非フォイルの商品規格ID 〔商品規格ID-A0202-039A〕が1件返り、販売価格900のフォイルの商品規格ID 〔商品規格ID-A0202-039B〕は返らないこと
+
+### IT-A02-02-040 [組 CB-A02-02-001: 並び順のどの段で返す1件が決まるか=フォイル区分の段で決まる／foil_flgの指定=foil_flgが真値／priceの指定=priceがhigh以外／リクエストの言語コード=en]
+- 観点ID: ITA-11
+- 出典: 0502 ポップアップ用カード情報取得 / 現行仕様 業務ロジック 並び順の優先順位 順位1、入出力 入出力: クエリパラメータ
+- 事前準備: ① 開始時にブラウザのAPIベースURLとEC-CUBEベースURLをA02-02結合試験環境へ設定する（S-A02-02-ENV）／② 店舗ID 1をTC東京、在庫場所をEC-CUBE、言語ID 1をJP、言語ID 2をEN、カード状態ID 1をNM、カード状態ID 2をSPとして登録済みにする（S-A02-02-MASTER）／③ カードID 〔カードID-A0202-040〕に、商品規格ID 〔商品規格ID-A0202-040A〕を販売価格300、非フォイル、通常カードセット・非プロモーション、発売日2026-01-01、在庫1、言語EN、状態NM、画像なし、商品規格ID 〔商品規格ID-A0202-040B〕を販売価格500、フォイル、通常カードセット・非プロモーション、発売日2026-01-01、在庫1、言語EN、状態NM、画像なしとして紐付ける。両候補は公開・未削除・表示、店舗ID 1・在庫場所EC-CUBEの在庫は上記のとおりとする（登録時に振られたカードID・商品規格IDを控えてある。〔カードID-A0202-040〕〔商品規格ID-A0202-040A〕〔商品規格ID-A0202-040B〕）（S-A02-02-CBFOIL-040）
+
+ succeeded in 180ms:
+
+IT-A05-01-018
+出典: 0505 注文印刷_印刷情報をプリンタへ送信 / 機能仕様 印刷レイアウトデータの動的変更箇所
+手順: 1. ブラウザで「/order/prints/〔店舗ID-A0501-018〕」を開く／2. 受注情報ID 〔受注情報ID-A0501-018〕の高額欄を確認する
+期待結果: 高額欄に固定値「□」が出力されること
+
+IT-A06-01-004
+出典: 0506 買取アプリ用ログイン / 機能仕様 リクエストパラメータ・ステータスコード、リニューアル後の仕様 表示メッセージ A06-01-MSG-001
+手順: 1. login_idを空文字、passwordを「Passw0rd!A0601」として、ブラウザの開発者ツールからPOSTで「/api/admin/login.json」へ送信する／2. NetworkでHTTPステータスと応答JSONを確認する
+期待結果: HTTP 401となり、JSONのerrors配列に「ログインIDまたはパスワードが入力されていません」が含まれ、jwtTokenとして使用できる値が返らないこと
+
+IT-A06-01-005
+出典: 0506 買取アプリ用ログイン / 機能仕様 リクエストパラメータ・ステータスコード、リニューアル後の仕様 表示メッセージ A06-01-MSG-001
+手順: 1. login_idを「a0601_admin-005」、passwordを空文字として、ブラウザの開発者ツールからPOSTで「/api/admin/login.json」へ送信する／2. NetworkでHTTPステータスと応答JSONを確認する
+期待結果: HTTP 401となり、JSONのerrors配列に「ログインIDまたはパスワードが入力されていません」が含まれ、jwtTokenとして使用できる値が返らないこと
+
+IT-A06-02-007
+出典: 0506 店頭買取情報取得 / 現行仕様 業務ロジック 取得対象
+手順: 1. S-A06-02-ADM-007の有効なjwt-tokenヘッダを指定し、GETで「/api/admin/otcBuyOrders.json」へ送信する／2. Networkで応答配列の店頭買取IDを先頭から記録する
+期待結果: 取得対象の店頭買取IDが〔店頭買取ID-A0602-共有A〕、〔店頭買取ID-A0602-共有B〕、〔店頭買取ID-A0602-共有C〕、〔店頭買取ID-A0602-共有D〕の昇順で並ぶこと
+
+IT-A06-02-011
+出典: 0506 店頭買取情報取得 / 現行仕様 入出力 出力: 値の表し方と未設定時のふるまい
+手順: 1. S-A06-02-ADM-011の有効なjwt-tokenヘッダを指定し、GETで「/api/admin/otcBuyOrders.json」へ送信する／2. Networkで店頭買取ID 〔店頭買取ID-A0602-共有A〕のapplyDateとcustomerInfo.birthを確認する
+期待結果: applyDateとcustomerInfo.birthがいずれもISO8601形式の日時文字列であること
+
+IT-A06-03-030
+出典: 0506 店頭買取情報更新 / リクエストパラメータ、現行仕様 入出力 出力: レスポンス（失敗）
+手順: "1. order_statusを省略したJSON「{""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-030〕,""name"":""状態未指定商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」を有効なjwt-tokenで査定ID 〔査定ID-A0603-030〕へPUT送信する／2. Networkで応答を確認する"
+期待結果: HTTP 400となり、JSONのerrors配列に「ステータスを選択してください。」が含まれること
+
+IT-A06-03-031
+出典: 0506 店頭買取情報更新 / リクエストパラメータ、現行仕様 入出力 出力: レスポンス（失敗）
+手順: "1. 有効なjwt-tokenとJSON「{""order_status"":699999031,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-031〕,""name"":""状態不存在商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-031〕へ送信する／2. Networkで応答を確認する"
+期待結果: HTTP 400となり、JSONのerrors配列に「MtbOtcBuyOrderStatusに699999031が見つかりません。」が含まれること
+
+IT-A06-03-032
+出典: 0506 店頭買取情報更新 / リクエストパラメータ、現行仕様 入出力 出力: レスポンス（失敗）
+手順: "1. order_detailsを省略したJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null}」を有効なjwt-tokenで査定ID 〔査定ID-A0603-032〕へPUT送信する／2. Networkで応答を確認する"
+期待結果: HTTP 400となり、JSONのerrors配列に「1つ以上の商品を選んでください。」が含まれること
+
+IT-A06-03-034
+出典: 0506 店頭買取情報更新 / リクエストパラメータ order_details、現行仕様 エラー時の扱い
+手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":""not-array""}」をPUTで査定ID 〔査定ID-A0603-034〕へ送信する／2. Networkで応答を確認する"
+期待結果: 入力検証エラーとしてHTTP 400のJSON応答が返ること
+
+IT-A06-03-035
+出典: 0506 店頭買取情報更新 / リクエストパラメータ name、現行仕様 入出力 出力: レスポンス（失敗）
+手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-035〕,""name"":"""",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-035〕へ送信する／2. Networkで応答を確認する"
+期待結果: HTTP 400となり、JSONのerrors配列に商品名必須の検証メッセージが含まれること
+
+IT-A06-03-037
+出典: 0506 店頭買取情報更新 / リクエストパラメータ name、現行仕様 入出力 出力: レスポンス（失敗）
+手順: 1. ブラウザの開発者ツールで「商」を65536文字連結した商品名を作る／2. その商品名とproduct_class_id=〔商品規格ID-A0603-037〕、quantity=1、price=100、sell_price=200、section_id=〔部門ID-A0603-共有〕を持つorder_details、およびorder_status=10をJSONで査定ID 〔査定ID-A0603-037〕へPUT送信する／3. Networkで応答を確認する
+期待結果: HTTP 400となり、JSONのerrors配列に「商品名は、 65535 以下で入力してください。」が含まれること
+
+IT-A06-03-038
+出典: 0506 店頭買取情報更新 / リクエストパラメータ、現行仕様 入出力 出力: レスポンス（失敗）
+手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":""x"",""name"":""整数検証商品"",""quantity"":""x"",""price"":""x"",""sell_price"":""x"",""section_id"":""x""}]}」をPUTで査定ID 〔査定ID-A0603-038〕へ送信する／2. Networkで応答を確認する"
+期待結果: HTTP 400となり、JSONのerrors配列に商品規格ID、数量、単価、販売価格および部門IDの整数形式メッセージがすべて含まれること
+
+IT-A06-03-039
+出典: 0506 店頭買取情報更新 / リクエストパラメータ smaregi_transaction_id、現行仕様 エラー時の扱い
+手順: "1. 有効なjwt-tokenとJSON「{""order_status"":1,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":""x"",""order_details"":[{""product_class_id"":〔商品規格ID-A0603-039〕,""name"":""端末ID検証商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-039〕へ送信する／2. Networkで応答を確認する"
+期待結果: 端末取引IDの入力検証エラーとしてHTTP 400のJSON応答が返ること
+
+IT-A06-03-040
+出典: 0506 店頭買取情報更新 / リニューアル後の仕様 表示メッセージ A06-03-MSG-001
+手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":null,""name"":""規格ID未指定商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-040〕へ送信する／2. Networkで応答を確認する"
+期待結果: HTTP 400となり、JSONのerrors配列に「商品規格IDが指定されていません」が含まれること
+
+IT-A06-03-042
+出典: 0506 店頭買取情報更新 / 現行仕様 エラー時の扱い、入出力 出力: レスポンス（失敗）
+手順: "1. order_statusを省略し、JSON「{""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-042〕,""name"":"""",""quantity"":""x"",""price"":""x"",""sell_price"":""x"",""section_id"":""x""}]}」を有効なjwt-tokenで査定ID 〔査定ID-A0603-042〕へPUT送信する／2. Networkで応答を確認する"
+期待結果: HTTP 400となり、JSONのerrors配列にステータス未指定、商品名必須、数量、単価、販売価格および部門IDの全検証メッセージが含まれること
+
+IT-A06-03-043
+出典: 0506 店頭買取情報更新 / 現行仕様 エラー時の扱い
+手順: "1. 有効なjwt-tokenとJSON「{""order_status"":699999043,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-043〕,""name"":""保存抑止商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-043〕へ送信する／2. DBで査定ID 〔査定ID-A0603-043〕の受注、注文詳細、個別入力商品、実在庫、実在庫履歴およびステータス履歴を確認する"
+期待結果: 入力検証前に存在した受注と関連レコードが削除・追加・更新されず、シード投入時の内容のまま残ること
+
+IT-A06-03-048
+出典: 0506 店頭買取情報更新 / リクエストパラメータ order_status、現行仕様 エラー時の扱い
+手順: "1. 有効なjwt-tokenとJSON「{""order_status"":""x"",""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-048〕,""name"":""状態型検証商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-048〕へ送信する／2. Networkで応答を確認する"
+期待結果: order_statusの入力検証エラーとしてHTTP 400のJSON応答が返ること
+
+IT-A06-03-049
+出典: 0506 店頭買取情報更新 / リクエストパラメータ qualified_invoice_issuer_confirmation_flg、現行仕様 エラー時の扱い
+手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""yes"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-049〕,""name"":""確認フラグ検証商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-049〕へ送信する／2. Networkで応答を確認する"
+期待結果: 適格請求書発行事業者確認フラグの入力検証エラーとしてHTTP 400のJSON応答が返ること
+
+IT-A06-03-056
+出典: 0506 店頭買取情報更新 / 現行仕様 エラー時の扱い、入出力 出力: レスポンス（失敗）
+手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idにnull、order_detailsに2件（1件目={product_class_id=〔商品規格ID-A0603-056〕、name=空文字、quantity=1、price=100、sell_price=200、section_id=null}、2件目={product_class_id=〔商品規格ID-A0603-056〕、name=空文字、quantity=1、price=100、sell_price=200、section_id=null}。nameは2件とも空文字）を指定し、PUTで査定ID 〔査定ID-A0603-056〕へ送信する／2. Networkで応答を確認する
+期待結果: HTTP 400となり、JSONのerrors配列に商品名必須の検証メッセージが明細2件分の2件含まれること
+
+IT-A06-04-005
+出典: 0506 店頭買取情報コメント更新 / 機能仕様 リクエストパラメータ free_comment、現行仕様 業務ロジック 更新の判定順序・入出力 失敗時出力
+手順: 1. S-A06-04-ADMの有効な認証用トークンをリクエストヘッダに設定し、free_commentを付けずにPUTで「/api/admin/otcBuyOrder/〔受注ID-A0604-005〕/freeComment.json」へ送信する／2. NetworkでHTTPステータスを確認する
+期待結果: HTTP 400が返ること
+
+IT-A06-04-006
+出典: 0506 店頭買取情報コメント更新 / 現行仕様 業務ロジック 更新の判定順序、表示メッセージの後続処理
+手順: 1. S-A06-04-ADMの有効な認証用トークンをリクエストヘッダに設定し、free_commentを付けずにPUTで「/api/admin/otcBuyOrder/〔受注ID-A0604-006〕/freeComment.json」へ送信する／2. DBで受注ID 〔受注ID-A0604-006〕を確認する
+期待結果: フリーコメントが「更新前コメント」、更新担当者が管理者ID 〔管理者ID-A0604-共有B〕から更新されないこと
+
+IT-A06-04-017
+出典: 0506 店頭買取情報コメント更新 / 現行仕様 業務ロジック 更新の判定順序 順序3、表示メッセージ 応答本文のエラー内容
+手順: 1. S-A06-04-ADMの有効な認証用トークンをリクエストヘッダに設定し、free_commentを付けずにPUTで「/api/admin/otcBuyOrder/〔受注ID-A0604-017〕/freeComment.json」へ送信する／2. Networkで応答本文のエラー内容を確認する
+期待結果: 応答本文のエラー内容に「コメントを入力してください」が含まれること
+
+IT-A06-05-017
+出典: 0506 店頭買取情報ステータス更新 / リクエストパラメータ、業務ロジック 更新の判定順序・エラー時の扱い、表示メッセージ ステータスIDが存在しないとき
+手順: 1. S-A06-05-ADMの有効なjwt-tokenでstatus=699999を受注ID 〔受注ID-A0605-共有BASE〕へPUT送信する／2. Networkで応答を確認する
+期待結果: HTTP 400となり、JSON応答にerrors配列が含まれること
+
+IT-A06-05-018
+出典: 0506 店頭買取情報ステータス更新 / 業務ロジック 更新の判定順序・エラー時の扱い、表示メッセージ ステータスIDが存在しないとき
+手順: 1. S-A06-05-ADMの有効なjwt-tokenでstatus=699999を受注ID 〔受注ID-A0605-共有BASE〕へPUT送信する／2. DBで受注ID 〔受注ID-A0605-共有BASE〕とステータス変更履歴を確認する
+期待結果: 受注ID 〔受注ID-A0605-共有BASE〕の受注レコードおよびステータス変更履歴がシード投入時から書き換わらないこと
+
+IT-A06-05-019
+出典: 0506 店頭買取情報ステータス更新 / リクエストパラメータ 店頭買取注文ステータス、業務ロジック エラー時の扱い
+手順: 1. S-A06-05-ADMの有効なjwt-tokenでstatus=xを受注ID 〔受注ID-A0605-共有BASE〕へPUT送信する／2. Networkで応答を確認する
+期待結果: 入力不正としてHTTP 400のJSON応答が返ること
+
+IT-A06-05-020
+出典: 0506 店頭買取情報ステータス更新 / リクエストパラメータ 店頭買取注文ステータス、業務ロジック エラー時の扱い
+手順: 1. S-A06-05-ADMの有効なjwt-tokenでstatus=xを受注ID 〔受注ID-A0605-共有BASE〕へPUT送信する／2. DBで受注ID 〔受注ID-A0605-共有BASE〕とステータス変更履歴を確認する
+期待結果: 受注ID 〔受注ID-A0605-共有BASE〕の受注レコードおよびステータス変更履歴がシード投入時から書き換わらないこと
+
+IT-A06-05-023
+出典: 0506 店頭買取情報ステータス更新 / リクエストパラメータ 店頭買取注文ステータス、現行仕様 業務ロジック 更新の判定順序
+手順: 1. S-A06-05-ADMの有効なjwt-tokenを指定し、店頭買取注文ステータスを付けずに受注ID 〔受注ID-A0605-共有BASE〕へPUTで「/api/admin/otcBuyOrder/〔受注ID-A0605-共有BASE〕/status.json」を送信する／2. NetworkでHTTPステータスと応答JSONを確認する／3. DBで受注ID 〔受注ID-A0605-共有BASE〕のステータス、査定担当者、更新日時およびステータス変更履歴を確認する
+期待結果: 入力不正としてHTTP 400のerrors配列を含むJSONが返り、受注ID 〔受注ID-A0605-共有BASE〕のステータスが査定前、査定担当者が管理者ID 〔管理者ID-A0605-共有OTHER-ADM〕、更新日時がT0のまま変わらず、ステータス変更履歴が0件のままであること
+
+exec
+/bin/bash -lc "rg -n '存在しない|ステータスID|更新の判定順序|エラー時の扱い|入力検証|必須|ISO8601|高額欄|昇順|取得対象' integration_test/casegen/combination/units/{A05-01,A06-01,A06-02,A06-03,A06-04,A06-05}/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/combination/units/A06-03/design.txt:63:L0062	項目名	型	必須	最大文字数
+integration_test/casegen/combination/units/A06-03/design.txt:99:L0098	エラー時の扱い
+integration_test/casegen/combination/units/A06-03/design.txt:102:L0101	受注が存在しない	該当なし（HTTP 404）とする
+integration_test/casegen/combination/units/A06-03/design.txt:103:L0102	入力検証エラー	入力不正（HTTP 400）とし、全メッセージをerrors配列で返す。削除・登録・保存は行わない
+integration_test/casegen/combination/units/A06-03/design.txt:108:L0107	パラメータ	位置	型	必須／任意	説明
+integration_test/casegen/combination/units/A06-03/design.txt:109:L0108	jwt-token	ヘッダ	string	必須	認証用のトークン
+integration_test/casegen/combination/units/A06-03/design.txt:115:L0114	400	ステータスIDが店頭買取ステータスマスタに存在しない	errorsに「MtbOtcBuyOrderStatusに{指定ID}が見つかりません。」を含む
+integration_test/casegen/combination/units/A06-03/design.txt:117:L0116	400	明細の商品名が未入力	errorsに商品名必須の検証メッセージを含む
+integration_test/casegen/combination/units/A06-03/design.txt:131:L0130	A06-03-MSG-002	API応答JSON（errors配列）	商品規格IDが存在しません	店頭買取受注詳細更新APIで、指定された商品規格IDに該当する商品規格が存在しない場合。	HTTP 400のJSON errorsで処理中止。
+integration_test/casegen/combination/units/A05-01/design.txt:30:L0029	スマレジの商品コードが存在しない場合はスマレジコードが採番されていない可能性があるため何もしない
+integration_test/casegen/combination/units/A05-01/design.txt:36:L0035	項目名	型	必須	最大文字数
+integration_test/casegen/combination/units/A05-01/design.txt:44:L0043	404 店舗ID(shop_id)が無い、整数以外の型、存在しない店舗ID(shop_id) ※支店での処理を踏襲
+integration_test/casegen/combination/units/A06-05/design.txt:46:L0045	項目名	型	必須	最大文字数
+integration_test/casegen/combination/units/A06-05/design.txt:64:L0063	更新の判定順序
+integration_test/casegen/combination/units/A06-05/design.txt:68:L0067	3	指定ステータスIDが店頭買取ステータスに存在するか	存在しなければ入力不正（HTTP 400）
+integration_test/casegen/combination/units/A06-05/design.txt:70:L0069	ステータスIDを省略したときも、店頭買取ステータスに存在しないときと同じく入力不正（HTTP 400）とし、受注も履歴も書き換えない。
+integration_test/casegen/combination/units/A06-05/design.txt:73:L0072	エラー時の扱い
+integration_test/casegen/combination/units/A06-05/design.txt:76:L0075	受注が存在しない	該当なし（HTTP 404）とする。errors配列を持つ応答本文は返さない
+integration_test/casegen/combination/units/A06-05/design.txt:77:L0076	ステータスIDが不正	入力不正（HTTP 400）とし、エラー内容を含むJSONを返す
+integration_test/casegen/combination/units/A06-05/design.txt:89:L0088	A06-05-MSG-001	API応答JSON（errors配列）	買取情報が見つかりません	ステータス更新時、指定した店頭買取受注IDが存在しない	HTTP 404のJSONを返し、更新処理を中止する
+integration_test/casegen/combination/units/A06-05/design.txt:91:L0090	—	API応答JSON（errors配列）	正しい店頭買取ステータスIDを入力してください	指定したステータスIDが店頭買取ステータスに存在しないとき	HTTP 400のJSONを返し、更新しない
+integration_test/casegen/combination/units/A06-04/design.txt:26:L0025	項目名	型	必須	最大文字数
+integration_test/casegen/combination/units/A06-04/design.txt:43:L0042	更新の判定順序
+integration_test/casegen/combination/units/A06-04/design.txt:54:L0053	入力	更新対象の店頭買取受注のID（エンドポイントのパス・必須）、認証用トークン（リクエストヘッダ・必須）
+integration_test/casegen/combination/units/A06-01/design.txt:32:L0031	項目名	型	必須	最大文字数
+integration_test/casegen/combination/units/A06-02/design.txt:25:L0024	・取得対象ステータスは「査定前」「査定中」「査定中断」「査定再開」
+integration_test/casegen/combination/units/A06-02/design.txt:27:L0026	項目名 型 必須 最大文字数
+integration_test/casegen/combination/units/A06-02/design.txt:42:L0041	otcOrderStatusId	文字列	買取ステータスID
+integration_test/casegen/combination/units/A06-02/design.txt:66:L0065	取得対象
+integration_test/casegen/combination/units/A06-02/design.txt:67:L0066	取得対象の買取情報は店頭買取受注IDの昇順で返す。該当が無い場合は空配列を返す。職業または国が紐づいていない受注は、対象ステータスであっても結果に含まれない。
+integration_test/casegen/combination/units/A06-02/design.txt:69:L0068	認証した管理者会員に会員サブ情報が無く所属店舗が定まらない場合は、店舗による絞り込みを行わず、取得対象の買取情報を一律に返す。
+integration_test/casegen/combination/units/A06-02/design.txt:72:L0071	エラー時の扱い
+integration_test/casegen/combination/units/A06-02/design.txt:79:L0078	applyDate	ISO8601形式の日時文字列で返す。
+integration_test/casegen/combination/units/A06-02/design.txt:84:L0083	customerInfo.birth	ISO8601形式の日時文字列で返す。
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import re,pathlib
+p=pathlib.Path('integration_test/casegen/ut_layer/inputs')
+ids=['IT-A05-01-018','IT-A06-01-004','IT-A06-01-005','IT-A06-02-007','IT-A06-02-011','IT-A06-03-031','IT-A06-03-043','IT-A06-04-006','IT-A06-05-017','IT-A06-05-018','IT-A06-05-019','IT-A06-05-020','IT-A06-05-023']
+for tid in ids:
+ d=(p/(tid[3:-4]+'.md')).read_text(); m=re.search(r'"'^### '"'+re.escape(tid)+r'["'^'"\\n]*\\n(.*?)(?="'^### |'"\\Z)',d,re.M|re.S)
+ fields={k:v for k,v in re.findall(r'"'^- ([''^:]+): (.*)$'"',m.group(1),re.M)}
+ print('\\n'+tid+'\\n'+fields.get('事前準備',''))
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+
+IT-A05-01-018
+① 開始時にテスト端末の送信元IPを許可リストへ設定する（S-A05-01-ENV）／② 店舗ID 〔店舗ID-A0501-018〕（登録時に振られた店舗IDを控えてある）を本店・有効にし、受注情報ID 〔受注情報ID-A0501-018〕（登録時に振られた受注情報IDを控えてある）を店頭受取・未印刷・注文番号〔注文番号-A0501-018〕（登録時に振られた注文番号を控えてある）・店頭注文番号〔店頭注文番号-A0501-018〕（登録時に振られた店頭注文番号を控えてある）・対応状況は注文受領・スマレジコード2905010180019・注文日2026/09/03・カナ氏名「テスト イチロウ」・氏名「検証 一郎」・合計金額1500・問合せ本文「確認依頼」・配送1件・ブラウザ印刷フラグなしにする。当該店舗にほかの印刷対象受注を置かない（S-A05-01-RICH-018）
+
+IT-A06-01-004
+① 標準認証値をPassw0rd!A0601とする（S-A06-01-CREDENTIALS）／② 管理者ID 〔管理者ID-A0601-004〕（登録時に振られた管理者IDを控えてある）、名前A06-01管理者-004、ログインID a0601_admin-004、パスワードPassw0rd!A0601、稼働中、システム管理者権限、所属店舗ID 〔店舗ID-A0601-004〕（登録時に振られた店舗IDを控えてある）、店舗名A06-01店舗-004、店舗住所東京都千代田区晴海1-1で登録されている（S-A06-01-ADM-004）
+
+IT-A06-01-005
+① 標準認証値をPassw0rd!A0601とする（S-A06-01-CREDENTIALS）／② 管理者ID 〔管理者ID-A0601-005〕（登録時に振られた管理者IDを控えてある）、名前A06-01管理者-005、ログインID a0601_admin-005、パスワードPassw0rd!A0601、稼働中、システム管理者権限、所属店舗ID 〔店舗ID-A0601-005〕（登録時に振られた店舗IDを控えてある）、店舗名A06-01店舗-005、店舗住所東京都千代田区晴海1-1で登録されている（S-A06-01-ADM-005）
+
+IT-A06-02-007
+① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定する（S-A06-02-AUTH-ENV）／② 店舗ID 〔店舗ID-A0602-共有A〕、ステータスID 5・6・7・8・9、国の日本、東京都および会社員を記載値で登録する（登録時に振られた店舗IDを控えてある）（S-A06-02-MASTERS）／③ 店舗〔店舗ID-A0602-共有A〕に、取得対象の店頭買取ID 〔店頭買取ID-A0602-共有A〕・〔店頭買取ID-A0602-共有B〕・〔店頭買取ID-A0602-共有C〕・〔店頭買取ID-A0602-共有D〕、払い出し待ちの〔店頭買取ID-A0602-共有E〕、職業が紐づかない〔店頭買取ID-A0602-共有G〕、国が紐づかない〔店頭買取ID-A0602-共有H〕を登録し、取得対象となる受注を〔店頭買取ID-A0602-共有A〕〜〔店頭買取ID-A0602-共有D〕の4件だけにする（登録時に振られた店舗ID・店頭買取IDを控えてある）（S-A06-02-ORDERS）／④ 管理者ID 〔管理者ID-A0602-007〕を稼働中・所属店舗ID 〔店舗ID-A0602-共有A〕で登録し、a0602adm007とZxA0602c007で買取アプリ用ログインAPIへログインして有効なjwt-tokenを取得する（登録時に振られた管理者ID・店舗IDを控えてある）（S-A06-02-ADM-007）
+
+IT-A06-02-011
+① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定する（S-A06-02-AUTH-ENV）／② 店舗ID 〔店舗ID-A0602-共有A〕、ステータスID 5、国の日本、東京都および会社員を記載値で登録する（登録時に振られた店舗IDを控えてある）（S-A06-02-MASTERS）／③ 店頭買取ID 〔店頭買取ID-A0602-共有A〕を店舗〔店舗ID-A0602-共有A〕・査定前・査定申込日=2026-09-03 10:00:00+09:00・生年月日=2000-01-02 00:00:00+09:00・職業と国が紐づく状態で登録する（登録時に振られた店頭買取ID・店舗IDを控えてある）（S-A06-02-ORDERS）／④ 管理者ID 〔管理者ID-A0602-011〕を稼働中・所属店舗ID 〔店舗ID-A0602-共有A〕で登録し、a0602adm011とZxA0602c011で買取アプリ用ログインAPIへログインして有効なjwt-tokenを取得する（登録時に振られた管理者ID・店舗IDを控えてある）（S-A06-02-ADM-011）
+
+IT-A06-03-031
+① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-031〕（登録時に振られた査定IDを控えてある）が査定中で、商品規格ID 〔商品規格ID-A0603-031〕（登録時に振られた商品規格IDを控えてある）が存在し、ステータスID 699999031は存在しない（S-A06-03-CASE-031）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）
+
+IT-A06-03-043
+① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 管理者ID 〔管理者ID-A0603-共有B〕（登録時に振られた管理者IDを控えてある）が稼働中である（S-A06-03-OTHER-ADM）／③ 査定ID 〔査定ID-A0603-043〕（登録時に振られた査定IDを控えてある）は査定中、担当者ID=〔管理者ID-A0603-共有B〕、確認済みフラグ=false、合計金額=900円、端末取引ID=null、成立日・キャンセル日=nullで、注文詳細ID 604001043、個別入力商品ID 604101043、実在庫ID 604201043、実在庫履歴ID 604301043、ステータス履歴ID 604401043を各1件持ち、ステータスID 699999043は存在しない（S-A06-03-CASE-043）／④ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）
+
+IT-A06-04-006
+① 開始時に試験端末の送信元IPを許可対象に設定し、APIが稼働し、DB確認手段が利用できることを確認する（S-A06-04-ENV）／② 開始時に署名方式をHS256、認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=に設定する（S-A06-04-AUTH）／③ 管理者ID 〔管理者ID-A0604-共有A〕（登録時に振られた管理者IDを控えてある）が稼働中・システム管理者・店舗ID 〔店舗ID-A0604-共有〕（登録時に振られた店舗IDを控えてある）所属で、有効なjwt-tokenを取得している（S-A06-04-ADM）／④ 管理者ID 〔管理者ID-A0604-共有B〕（登録時に振られた管理者IDを控えてある）が稼働中・店舗ID 〔店舗ID-A0604-共有〕所属である（S-A06-04-OTHER-ADM）／⑤ 開始時に店舗ID 〔店舗ID-A0604-共有〕を稼働中、店頭買取ステータスID 5を査定前、職業を会社員、国を日本、都道府県を東京都に設定する（S-A06-04-REFERENCES）／⑥ 受注ID 〔受注ID-A0604-006〕（登録時に振られた受注IDを控えてある）が店舗ID 〔店舗ID-A0604-共有〕の未削除の店頭買取受注で、査定前、査定申込日時2026-09-30 10:00:00+09:00、フリーコメント「更新前コメント」、更新担当者ID 〔管理者ID-A0604-共有B〕、更新日時2026-09-29 09:00:00+09:00である（S-A06-04-BASE-006）
+
+IT-A06-05-017
+① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 管理者ID 〔管理者ID-A0605-共有OTHER-ADM〕が店舗ID 1所属・稼働中である（登録時に振られた管理者IDを控えてある）（S-A06-05-OTHER-ADM）／④ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／⑤ 受注ID 〔受注ID-A0605-共有BASE〕が店舗ID 1の店頭買取受注で、査定前、査定担当者ID 〔管理者ID-A0605-共有OTHER-ADM〕、更新日時T0（2026-09-03 10:00:00）、金額900円、税90円、ポイント90、在庫数量9、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-BASE）／⑥ ステータスID 699999が未登録である（S-A06-05-NOSTATUS）
+
+IT-A06-05-018
+① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 管理者ID 〔管理者ID-A0605-共有OTHER-ADM〕が店舗ID 1所属・稼働中である（登録時に振られた管理者IDを控えてある）（S-A06-05-OTHER-ADM）／④ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／⑤ 受注ID 〔受注ID-A0605-共有BASE〕が店舗ID 1の店頭買取受注で、査定前、査定担当者ID 〔管理者ID-A0605-共有OTHER-ADM〕、更新日時T0（2026-09-03 10:00:00）、金額900円、税90円、ポイント90、在庫数量9、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-BASE）／⑥ ステータスID 699999が未登録である（S-A06-05-NOSTATUS）
+
+IT-A06-05-019
+① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 管理者ID 〔管理者ID-A0605-共有OTHER-ADM〕が店舗ID 1所属・稼働中である（登録時に振られた管理者IDを控えてある）（S-A06-05-OTHER-ADM）／④ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／⑤ 受注ID 〔受注ID-A0605-共有BASE〕が店舗ID 1の店頭買取受注で、査定前、査定担当者ID 〔管理者ID-A0605-共有OTHER-ADM〕、更新日時T0（2026-09-03 10:00:00）、金額900円、税90円、ポイント90、在庫数量9、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-BASE）
+
+IT-A06-05-020
+① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 管理者ID 〔管理者ID-A0605-共有OTHER-ADM〕が店舗ID 1所属・稼働中である（登録時に振られた管理者IDを控えてある）（S-A06-05-OTHER-ADM）／④ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／⑤ 受注ID 〔受注ID-A0605-共有BASE〕が店舗ID 1の店頭買取受注で、査定前、査定担当者ID 〔管理者ID-A0605-共有OTHER-ADM〕、更新日時T0（2026-09-03 10:00:00）、金額900円、税90円、ポイント90、在庫数量9、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-BASE）
+
+IT-A06-05-023
+① 接続元IPが許可され、APIとDB確認手段が利用できる（S-A06-05-ENV）／② 管理者ID 〔管理者ID-A0605-共有ADM〕が店舗ID 1所属・稼働中で、有効なjwt-tokenが発行されている（登録時に振られた管理者IDを控えてある）（S-A06-05-ADM）／③ 管理者ID 〔管理者ID-A0605-共有OTHER-ADM〕が店舗ID 1所属・稼働中である（登録時に振られた管理者IDを控えてある）（S-A06-05-OTHER-ADM）／④ 開始時にステータスをID 1=買取成立、ID 2=買取キャンセル、ID 5=査定前、ID 6=査定中、ID 8=査定中断、ID 9=査定再開、ID 10=経理払い出し待ち、ID 11=入庫済み、ID 12=未登録在庫あり、ID 13=入庫待ち、ID 14=管理者取消に設定する（S-A06-05-STATUSES）／⑤ 受注ID 〔受注ID-A0605-共有BASE〕が店舗ID 1の店頭買取受注で、査定前、査定担当者ID 〔管理者ID-A0605-共有OTHER-ADM〕、更新日時T0（2026-09-03 10:00:00）、金額900円、税90円、ポイント90、在庫数量9、履歴0件、未削除である（登録時に振られた受注IDを控えてある）（S-A06-05-BASE）
+
+codex
+A02の候補は、設計書が定める「複数候補から返す1件」の優先順を確認していました。A06では、マスタの存在確認と、入力エラー時に受注や履歴が変わらないことを確かめるケースを分けて見ています。
+exec
+/bin/bash -lc "sed -n '57,110p' integration_test/casegen/combination/units/A06-03/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '37,70p' integration_test/casegen/combination/units/A06-04/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0056	・個別入力商品がある場合は未登録在庫ありと判断してステータスを未登録在庫ありに変更する
+L0057	・個別入力商品がない場合は未登録在庫なし判断して入庫待ちにする
+L0058	・端末取引IDをECCUBEに連携する
+L0059	★店頭買取実在庫登録時、実際に買い取った買取価格、買取小計（買取価格×買取個数）を登録する
+L0060	・買取商品を入庫する際の原価として使用する
+L0061	リクエストパラメータ
+L0062	項目名	型	必須	最大文字数
+L0063	または最大値	入力例	備考
+L0064	order_status	数値(整数)	〇		1	店頭買取注文ステータス、マスターにあるステータス以外はエラー
+L0065	qualified_invoice_issuer
+L0066	_confirmation_flg	文字列			True	適格請求書発行事業者確認フラグ、trueまたはfalse
+L0067	smaregi_transaction_id	数値(整数)				端末取引ID
+L0068	order_details	配列				査定を行った商品情報
+L0069	product_class_id	数値(整数)			123456	商品規格ID
+L0070	name	文字列	〇	65535	【EN】セラの天使	商品名
+L0071	quantity	数値(整数)			1	数量
+L0072	price	数値(整数)			1000	買取金額
+L0073	sell_price	数値(整数)			1000	販売価格
+L0074	section_id	数値(整数)			1	部門ID
+L0075	リクエストパラメータサンプル
+L0076	ステータスコード
+L0077	コード 説明
+L0078	200
+L0079	レスポンスデータ
+L0080	名前 型 説明
+L0081	なし
+L0082	レスポンスデータサンプル
+L0083	Source:
+L0084	functions/pf-api/a06-03_api_store_purchase_otc_buy_order_update.md
+L0085	現行仕様
+L0086	A06-03 店頭買取受注詳細更新 / API 店頭買取管理 — 店頭買取受注詳細更新
+L0087	業務ロジック
+L0088	更新対象の特定
+L0089	指定された受注IDの店頭買取受注1件を更新対象とする。該当が無いときは該当なし（HTTP 404）とする。受注の現在のステータスや担当者による更新制限は本APIでは課さない。
+L0090	部門の設定と実在庫の集約
+L0091	明細・個別入力商品には、部門IDが指定され、かつ該当する部門が存在するときだけ部門を設定する。該当する部門が無い部門IDは無視し、部門なしで登録する。
+L0092	実在庫は商品規格ごとに数量を合算して1件にまとめる。同じ商品規格の明細が複数送られたときも、実在庫は商品規格につき1件になる。実在庫履歴には合算後の数量・査定担当者・現在日時を記録する。
+L0093	買取合計金額
+L0094	送られた査定明細すべて（個別入力商品を含む）について単価×数量を合算し、10円単位へ切り上げた額を買取合計金額とする。
+L0095	受注への反映
+L0096	査定担当者には認証した管理者会員を、更新日時には現在日時を設定する。適格請求書発行事業者に該当する受注のときだけ、確認済みフラグを指定値で更新する（該当しない受注では、指定されても更新しない）。
+L0097	更新前と指定ステータスが異なるときだけ、ステータス変更履歴を1件登録する。同じステータスが指定されたときは履歴を残さない。
+L0098	エラー時の扱い
+L0099	エラー内容	処理
+L0100	認証不可	認証拒否（HTTP 401）とする
+L0101	受注が存在しない	該当なし（HTTP 404）とする
+L0102	入力検証エラー	入力不正（HTTP 400）とし、全メッセージをerrors配列で返す。削除・登録・保存は行わない
+L0103	削除・登録・保存処理中の例外	共通例外処理に委ねる（HTTP 500相当）
+L0104	検証エラーは複数件をまとめる。受注全体の検証と明細各件の検証を合算した全メッセージを返す。
+L0105	入出力
+L0106	入力: リクエスト
+L0107	パラメータ	位置	型	必須／任意	説明
+L0108	jwt-token	ヘッダ	string	必須	認証用のトークン
+L0109	出力: レスポンス（失敗）
+
+ succeeded in 0ms:
+L0036	レスポンスデータサンプル
+L0037	Source:
+L0038	functions/pf-api/a06-04_api_store_purchase_otc_buy_order_free_comment.md
+L0039	現行仕様
+L0040	A06-04 店頭買取受注コメント更新 / API 店頭買取管理 — 店頭買取受注コメント更新
+L0041	業務ロジック
+L0042	更新の判定順序
+L0043	順序	判定	結果
+L0044	1	認証用トークンを検証できないとき	認証拒否（HTTP 401）とする
+L0045	2	指定した受注IDに該当する店頭買取受注が無いとき	該当なし（HTTP 404）とする
+L0046	3	コメントの項目自体が送られていないとき	入力不正（HTTP 400）とし、「コメントを入力してください」を返す
+L0047	4	上記のいずれにも該当しないとき	コメントを更新し、あわせて更新担当者に認証した管理者会員を設定する
+L0048	コメントの項目が空文字で送られたときは未指定として扱わず、コメントを空にして更新する。
+L0049	認証の判定
+L0050	認証用トークンの署名方式はHS256とする。トークンに含まれる利用者IDから管理者会員を引き、トークンが無いとき・署名が不正なとき・該当する管理者会員が無いときは、いずれも認証拒否（HTTP 401）とする。
+L0051	入出力
+L0052	種類	内容
+L0053	入力	更新対象の店頭買取受注のID（エンドポイントのパス・必須）、認証用トークン（リクエストヘッダ・必須）
+L0054	失敗時出力	認証できないときはHTTP 401、受注が無いときはHTTP 404、コメントが送られていないときはHTTP 400
+L0055	入出力: 受け付けるパス
+L0056	エンドポイントは拡張子 .json の付いたパスと、付かないパスの双方を同じ処理として受け付ける。
+L0057	入出力: 永続化
+L0058	操作	契機
+L0059	更新	認証と対象の確認を通過し、コメントが送られているとき。店頭買取受注のフリーコメントと更新担当者
+L0060	リニューアル後の仕様
+L0061	表示メッセージ
+L0062	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0063	—	応答本文のエラー内容	コメントを入力してください	コメントを指定せずに更新したとき	更新せず、入力不正（HTTP 400）を返す
+
+exec
+/bin/bash -lc "sed -n '60,95p' integration_test/casegen/combination/units/A06-05/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0059	A06-05 店頭買取受注ステータス更新 / API 店頭買取管理 — 店頭買取受注ステータス更新
+L0060	業務ロジック
+L0061	認証と担当者
+L0062	トークンはリクエストヘッダで受け取る。トークンの欠落・署名不正・該当する管理者会員なしのいずれのときも認証拒否（HTTP 401）とし、受注も履歴も書き換えない。認証で特定した管理者会員を、更新時に記録する査定担当者として扱う。トークンの原値と署名の秘密値は本書に記載しない。
+L0063	更新の判定順序
+L0064	順序	判定	結果
+L0065	1	認証できるか	できないなら認証拒否（HTTP 401）
+L0066	2	受注IDに該当する店頭買取受注があるか	無ければ該当なし（HTTP 404）
+L0067	3	指定ステータスIDが店頭買取ステータスに存在するか	存在しなければ入力不正（HTTP 400）
+L0068	4	更新前ステータスと指定ステータスが異なるか	異なるときだけ書き込む。同じときは受注も履歴も書き換えず成功として応答する
+L0069	ステータスIDを省略したときも、店頭買取ステータスに存在しないときと同じく入力不正（HTTP 400）とし、受注も履歴も書き換えない。
+L0070	更新の内容
+L0071	更新前後のステータスが異なるときだけ書き込みを行う。このとき店頭買取受注には、査定担当者と更新日時も記録する。金額・税・ポイント・在庫数量の再計算や丸めは行わない。
+L0072	エラー時の扱い
+L0073	事象	扱い
+L0074	認証不可	認証拒否（HTTP 401）とする。errors配列を持つ応答本文は返さない
+L0075	受注が存在しない	該当なし（HTTP 404）とする。errors配列を持つ応答本文は返さない
+L0076	ステータスIDが不正	入力不正（HTTP 400）とし、エラー内容を含むJSONを返す
+L0077	入出力
+L0078	種類	内容
+L0079	成功時出力	更新前後が同じステータスでも成功（HTTP 200）を返す
+L0080	失敗時出力	HTTP 401（認証不可）、HTTP 404（受注なし）、HTTP 400（入力不正）
+L0081	入出力: 永続化
+L0082	操作	契機
+L0083	更新	更新前後のステータスが異なるとき、店頭買取受注に査定担当者と更新日時を記録する
+L0084	追加	同じ契機で、ステータス変更履歴を1件残す。履歴は対象の受注、設定したステータス、登録した管理者会員、登録日時を持つ
+L0085	リニューアル後の仕様
+L0086	表示メッセージ
+L0087	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0088	A06-05-MSG-001	API応答JSON（errors配列）	買取情報が見つかりません	ステータス更新時、指定した店頭買取受注IDが存在しない	HTTP 404のJSONを返し、更新処理を中止する
+L0089	A06-05-MSG-002	API応答JSON（errors配列）	不正なステータス遷移です	店頭買取受注ステータス更新APIで、受注の現在ステータスが取得できない場合。	HTTP 400のJSON errorsで更新中止。
+L0090	—	API応答JSON（errors配列）	正しい店頭買取ステータスIDを入力してください	指定したステータスIDが店頭買取ステータスに存在しないとき	HTTP 400のJSONを返し、更新しない
+L0091	—	API応答JSON（errors配列）	この査定はすでに終了しているため開くことができません。	更新前ステータスが査定終了で、指定ステータスが査定中・査定再開のとき	HTTP 400のJSONを返し、更新しない
+L0092	—	API応答JSON（errors配列）	この査定はすでに終了しているためステータスの更新に失敗しました。	更新前ステータスが査定終了で、指定ステータスがそれ以外のとき	HTTP 400のJSONを返し、更新しない
+L0093	—	API応答JSON（errors配列）	この受注は「（査定担当者名）」が査定中です。	査定中・査定再開の受注を、査定担当者本人以外が査定中・査定再開へ更新しようとしたとき	HTTP 400のJSONを返し、更新しない
+
+exec
+/bin/bash -lc "sed -n '58,88p' integration_test/casegen/combination/units/A06-02/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '18,68p' integration_test/casegen/combination/units/A06-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0057	jobName	文字列	職業名
+L0058	address	文字列	住所
+L0059	レスポンスデータサンプル
+L0060	Source:
+L0061	functions/pf-api/a06-02_api_store_purchase_otc_buy_order_list.md
+L0062	現行仕様
+L0063	A06-02 店頭買取受注一覧取得 / API 店頭買取管理 — 店頭買取受注一覧取得
+L0064	業務ロジック
+L0065	取得対象
+L0066	取得対象の買取情報は店頭買取受注IDの昇順で返す。該当が無い場合は空配列を返す。職業または国が紐づいていない受注は、対象ステータスであっても結果に含まれない。
+L0067	店舗による絞り込み
+L0068	認証した管理者会員に会員サブ情報が無く所属店舗が定まらない場合は、店舗による絞り込みを行わず、取得対象の買取情報を一律に返す。
+L0069	認証
+L0070	認証用トークンのヘッダを検証し、その利用者IDから管理者会員を特定する。署名方式はHS256である。ヘッダ欠落・署名不正・該当する管理者会員なしのいずれも認証拒否（HTTP 401）とする。トークン原値・署名シークレットは本書に記載しない。
+L0071	エラー時の扱い
+L0072	エラー内容	処理
+L0073	認証不可	認証拒否（HTTP 401）とする
+L0074	受注取得・整形処理中の例外	共通例外処理に委ねる（HTTP 500相当）
+L0075	入出力
+L0076	出力: 値の表し方と未設定時のふるまい
+L0077	フィールド	ふるまい
+L0078	applyDate	ISO8601形式の日時文字列で返す。
+L0079	freeComment	未設定の場合はnull。
+L0080	memberName	査定担当者が紐づいていない場合はnull。
+L0081	identificationId	本人確認が未登録の場合は0。
+L0082	qualifiedInvoiceIssuerCode	適格請求書発行事業者の口座が紐づいていない場合はnull。
+L0083	customerInfo.birth	ISO8601形式の日時文字列で返す。
+L0084	customerInfo.address	国が日本のときは都道府県名・住所1・住所2、それ以外の国のときは国名・住所2・住所1 の順に、半角空白区切りで連結した1つの文字列で返す。
+L0085	リニューアル後の仕様
+L0086	表示メッセージ
+L0087	本APIは画面メッセージを扱わない。
+
+ succeeded in 0ms:
+L0017	/api/admin/login.json
+L0018	プロトコル HTTP メソッド POST 認証の有無 有 認証方式 IP制限
+L0019	トークン リクエスト書式 クエリ レスポンス書式 JSON
+L0020	カスタマイズ説明
+L0021	現行踏襲
+L0022	機能仕様処理概要（★はカスタマイズ項目）
+L0023	・MTGBuyerでログインを行うためのAPI、ログインボタン押下時に呼ばれる
+L0024	・本店管理画面側に実装されているのログインAPI機能を使ってログインを行う
+L0025	・本店管理画面の/admin/loginを呼び出しCookieを取得する
+L0026	・取得したCookieはAPIサーバの/tmp/login{$loginId}.cookieファイルに保存する
+L0027	・本店管理画面の/admin_api/login_checkを呼び出しログインを実行する、取得済みのCookieを送信する
+L0028	・ログインに成功した場合はMTGBuyerにログインする
+L0029	・ログインに失敗した場合は以下のようにエラーを表示する
+L0030	リクエストパラメータ
+L0031	項目名	型	必須	最大文字数
+L0032	または最大値	入力例	備考
+L0033	login_id	文字列	〇		test_id	ログインID
+L0034	password	文字列	〇		password123	パスワード
+L0035	リクエストパラメータサンプル
+L0036	ステータスコード
+L0037	コード 説明
+L0038	200 認証成功
+L0039	401 認証失敗
+L0040	レスポンスデータ
+L0041	名前	型	説明
+L0042	memberName	文字列	ログイン者の名前
+L0043	memberId	文字列	ログイン者のID
+L0044	shopName	文字列	ログイン者の所属店舗
+L0045	shopAddr	文字列	ログイン者の所属店舗の住所
+L0046	jwtToken	文字列	初回ログイン以降、APIを呼び出す際に一緒にヘッダ情報として送るトークン、トークンが正しければAPIにアクセス可能
+L0047	レスポンスデータサンプル
+L0048	Source:
+L0049	functions/pf-api/a06-01_api_store_purchase_admin_login.md
+L0050	現行仕様
+L0051	A06-01 買取アプリ用ログイン / API 店頭買取管理 — 買取アプリ用ログイン
+L0052	業務ロジック
+L0053	失敗したときの応答本文
+L0054	事象	応答
+L0055	中継先が認証情報を返さない（認証失敗）	処理結果コードとメッセージの2項目を返す。メッセージは中継先のログイン画面に出る理由文言をそのまま用い、改行表記を取り除いたもの。本API独自の文言は設けない
+L0056	中継先へ到達できない	到達の成否を判定しない。中継先の応答が得られないときも、認証情報が返らないときと同じ扱いになる
+L0057	トークンの発行と以降の利用
+L0058	発行されるトークンは、発行者と利用者ID（認証した管理者会員のID）を持つ。以降の各APIは受け取ったトークンの利用者IDから管理者会員を引いて認可し、会員を引けないときは認可しない。
+L0059	トークン原値・署名シークレット・パスワードは本書に記載しない。
+L0060	ログイン成功後の買取アプリ
+L0061	買取アプリは、本APIが認証情報を返したとき、応答の利用者情報を保持してモード選択画面へ移る。モード選択画面は店頭買取・ネット買取・入庫モードを選ぶ画面である。
+L0062	入出力
+L0063	店舗が紐づかない会員のとき
+L0064	認証した会員に店舗が紐づかない場合、店舗名・店舗住所は空文字を返す。
+L0065	リニューアル後の仕様
+L0066	表示メッセージ
+L0067	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+
+exec
+/bin/bash -lc "rg -n '高額|印刷情報|プリンタ|動的変更' integration_test/casegen/combination/units/A05-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+1:##### 0505 sheet-3 注文印刷_印刷情報をプリンタへ送信
+2:L0001	注文印刷_印刷情報をプリンタへ送信
+11:L0010	機能名注文印刷_印刷情報をプリンタへ送信
+12:L0011	概要アクセスしてきた店舗のプリンタに対して印刷情報を返す
+19:L0018	本店・支店のシステムを統合するので、注文印刷情報のAPIも処理を一本化する。
+20:L0019	本店のプリンタはエンドポイントURLに店舗IDを追加する必要があるので、設定変更が必要
+21:L0020	本店・支店のシステムを統合するので、支店側のプリンタに設定されているエンドポイントURLはドメインが変更となるので全て設定変更が必要
+27:L0026	★ 各店舗に設置されているプリンタから定期的(間隔:30秒)にこのAPIにアクセス(エンドポイントURL変更)
+31:L0030	・店舗IDからその店舗の未印刷の注文データを抽出し、各注文データごとに印刷できるようにプリンタ仕様に合わせてXMLの書式にして返す。
+33:L0032	※ プリンタのxmlの仕様 https://www2.epson.jp/support/manual/SDP_UM_JA_REVW.ZIP
+48:L0047	印刷データの動的変更部分については、別表「印刷レイアウトデータの動的変更箇所」参照のこと
+50:L0049	印刷レイアウトデータの動的変更箇所
+52:L0051	受注情報ID	数値(整数)	注文詳細URLと生成と、印刷情報データを一意に定めるXML向けの情報として使用
+61:L0060	高額	文字型	固定値で「□」を出力
+122:L0121	<text>高額 {$order['expensive']}</text>
+138:L0137	A05-01 注文印刷_印刷情報をプリンタへ送信 / API 受注管理 — 注文印刷（印刷情報の送信）
+146:L0145	1件の受注に配送が複数あっても、印刷情報は受注1件につき1枚にまとめる。
+155:L0154	印刷情報は本文をストリーム送信する。応答の内容種別（Content-Type）は application/octet-stream とする。
+
+exec
+/bin/bash -lc "rg -n 'IT-A06-03-031|IT-A06-01-004|IT-A06-01-005|IT-A06-02-007' integration_test/casegen/ut_layer/review -g '*.tsv' | head -n 20" in /home/y-saito/Developments/hareruya-design-docs
+exec
+/bin/bash -lc "sed -n '64,85p' integration_test/casegen/combination/units/A06-01/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/ut_layer/review/V_01_targets.tsv:38:IT-A06-01-004	入力チェック	ログインIDが空のときに「ログインIDまたはパスワードが入力されていません」の401が返り、トークンが出ないことだけを見る必須チェックで、入力チェックの部品を単独で動かせば見つかる。
+integration_test/casegen/ut_layer/review/V_01_targets.tsv:39:IT-A06-01-005	入力チェック	パスワードが空のときの必須チェックのエラーと401だけを見るもので、入力チェックの部品を単独で動かせば見つかる。
+integration_test/casegen/ut_layer/review/V_01_targets.tsv:40:IT-A06-02-007	一致条件・並び順	応答配列の店頭買取IDが昇順で並ぶことだけを見る並び順の確認で、検索の問い合わせを単独で動かせば見つかる。
+integration_test/casegen/ut_layer/review/V_01_targets.tsv:43:IT-A06-03-031	入力チェック	存在しないステータス値のエラーメッセージだけを見ており、入力チェック単独で見つかる。
+
+ succeeded in 0ms:
+L0063	店舗が紐づかない会員のとき
+L0064	認証した会員に店舗が紐づかない場合、店舗名・店舗住所は空文字を返す。
+L0065	リニューアル後の仕様
+L0066	表示メッセージ
+L0067	メッセージID	表示位置	画面上の文言	表示条件	後続処理
+L0068	A06-01-MSG-001	API応答JSON（errors配列）	ログインIDまたはパスワードが入力されていません	ログインAPIでログインIDまたはパスワードが空のとき	HTTP 401を返し、トークンを発行しない
+L0069	A06-01-MSG-002	API応答JSON（errors配列）	ログインIDまたはパスワードが正しくありません	ログインAPIで有効なログインIDに対応する会員が見つからないとき	HTTP 401を返し、トークンを発行しない
+L0070	A06-01-MSG-003	API応答JSON（errors配列）	ログインIDまたはパスワードが正しくありません	ログインAPIで会員は見つかったが、パスワード検証に失敗したとき	HTTP 401を返し、トークンを発行しない
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import csv
+rows=list(csv.DictReader(open('integration_test/casegen/ut_layer/review/V_01_targets.tsv'),delimiter='\\t'))
+for i,r in enumerate(rows,1): print(f'{i:02d} {r[\"外すテストID\"]}')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+01 IT-A02-01-007
+02 IT-A02-01-008
+03 IT-A02-01-009
+04 IT-A02-01-014
+05 IT-A02-01-021
+06 IT-A02-01-023
+07 IT-A02-02-006
+08 IT-A02-02-007
+09 IT-A02-02-008
+10 IT-A02-02-009
+11 IT-A02-02-010
+12 IT-A02-02-011
+13 IT-A02-02-012
+14 IT-A02-02-013
+15 IT-A02-02-014
+16 IT-A02-02-015
+17 IT-A02-02-016
+18 IT-A02-02-017
+19 IT-A02-02-018
+20 IT-A02-02-019
+21 IT-A02-02-020
+22 IT-A02-02-030
+23 IT-A02-02-031
+24 IT-A02-02-032
+25 IT-A02-02-033
+26 IT-A02-02-034
+27 IT-A02-02-035
+28 IT-A02-02-036
+29 IT-A02-02-037
+30 IT-A02-02-038
+31 IT-A02-02-039
+32 IT-A02-03-006
+33 IT-A02-03-007
+34 IT-A02-03-008
+35 IT-A02-03-009
+36 IT-A05-01-018
+37 IT-A06-01-004
+38 IT-A06-01-005
+39 IT-A06-02-007
+40 IT-A06-02-011
+41 IT-A06-03-030
+42 IT-A06-03-031
+43 IT-A06-03-032
+44 IT-A06-03-034
+45 IT-A06-03-035
+46 IT-A06-03-037
+47 IT-A06-03-038
+48 IT-A06-03-039
+49 IT-A06-03-040
+50 IT-A06-03-042
+51 IT-A06-03-043
+52 IT-A06-03-048
+53 IT-A06-03-049
+54 IT-A06-03-056
+55 IT-A06-04-005
+56 IT-A06-04-006
+57 IT-A06-04-017
+58 IT-A06-05-017
+59 IT-A06-05-018
+60 IT-A06-05-019
+61 IT-A06-05-020
+62 IT-A06-05-023
+
+codex
+===BEGIN===
+外すテストID	判定	理由
+IT-A02-01-007	戻す	在庫のある商品規格を返す業務上の優先順を確かめている
+IT-A02-01-008	戻す	指定言語の商品規格を返す業務上の優先順を確かめている
+IT-A02-01-009	戻す	カード状態によって返す商品規格を選ぶ優先順を確かめている
+IT-A02-01-014	戻す	画像順位によって返す商品規格を選ぶ優先順を確かめている
+IT-A02-01-021	戻す	指定言語に対応する画像順位で返す商品規格を選ぶ優先順を確かめている
+IT-A02-01-023	戻す	カード状態と画像順位の業務上の優先順を確かめている
+IT-A02-02-006	戻す	foil_flgの指定によって返す1件が変わる業務上の優先順を確かめている
+IT-A02-02-007	戻す	価格指定によって返す1件を選ぶ業務上の優先順を確かめている
+IT-A02-02-008	戻す	価格指定によって返す1件を選ぶ業務上の優先順を確かめている
+IT-A02-02-009	戻す	特殊カードセットかどうかで返す1件を選んでいる
+IT-A02-02-010	戻す	プロモーションかどうかで返す1件を選んでいる
+IT-A02-02-011	戻す	発売日によって返す1件を選んでいる
+IT-A02-02-012	戻す	非フォイルを返す業務上の優先順を確かめている
+IT-A02-02-013	戻す	在庫の有無によって返す1件を選んでいる
+IT-A02-02-014	戻す	指定言語によって返す1件を選び、応答の言語コードも確かめている
+IT-A02-02-015	戻す	カード状態によって返す1件を選んでいる
+IT-A02-02-016	戻す	画像の順序によって返す1件を選んでいる
+IT-A02-02-017	戻す	サブ画像の有無によって返す1件を選んでいる
+IT-A02-02-018	戻す	特殊カードセットとフォイルの業務上の優先順を確かめている
+IT-A02-02-019	戻す	プロモーションとフォイルの業務上の優先順を確かめている
+IT-A02-02-020	戻す	発売日とフォイルの業務上の優先順を確かめている
+IT-A02-02-030	戻す	指定言語によって返す1件を選び、応答の言語コードも確かめている
+IT-A02-02-031	戻す	特殊カードセットとプロモーションの業務上の優先順を確かめている
+IT-A02-02-032	戻す	プロモーションと発売日の業務上の優先順を確かめている
+IT-A02-02-033	戻す	フォイルと在庫の業務上の優先順を確かめている
+IT-A02-02-034	戻す	在庫と言語の業務上の優先順を確かめている
+IT-A02-02-035	戻す	言語とカード状態の業務上の優先順を確かめている
+IT-A02-02-036	戻す	カード状態と画像順序の業務上の優先順を確かめている
+IT-A02-02-037	戻す	画像順序とサブ画像の有無の業務上の優先順を確かめている
+IT-A02-02-038	戻す	フォイル指定が他の候補条件より先に効く業務上の優先順を確かめている
+IT-A02-02-039	戻す	フォイル区分が価格より先に効く業務上の優先順を確かめている
+IT-A02-03-006	戻す	旧商品IDに一致した複数商品から、特殊カードセット以外を選ぶ優先順を確かめている
+IT-A02-03-007	戻す	旧商品IDに一致した複数商品から、非プロモーションを選ぶ優先順を確かめている
+IT-A02-03-008	戻す	旧商品IDに一致した複数商品から、リリース日で選ぶ優先順を確かめている
+IT-A02-03-009	戻す	旧商品IDに一致した複数商品から、非Foilを選ぶ優先順を確かめている
+IT-A05-01-018	採る	高額欄の固定値「□」という1項目の出力だけを確かめている
+IT-A06-01-004	採る	ログインIDが空のときの必須エラーとトークン未発行を確かめている
+IT-A06-01-005	採る	パスワードが空のときの必須エラーとトークン未発行を確かめている
+IT-A06-02-007	戻す	昇順に加え、ステータスや職業・国の紐づきによる取得対象4件を確かめている
+IT-A06-02-011	採る	二つの日時項目がISO8601形式になる書式だけを確かめている
+IT-A06-03-030	採る	order_status未指定時の必須エラーだけを確かめている
+IT-A06-03-031	戻す	指定ステータスがマスタに存在しないことを読んで結果が決まる
+IT-A06-03-032	採る	order_details未指定時の必須エラーだけを確かめている
+IT-A06-03-034	採る	order_detailsの型に対する入力エラーだけを確かめている
+IT-A06-03-035	採る	商品名が空のときの必須エラーだけを確かめている
+IT-A06-03-037	採る	商品名の文字数超過エラーだけを確かめている
+IT-A06-03-038	採る	各項目の整数形式エラーだけを確かめている
+IT-A06-03-039	採る	端末取引IDの形式エラーだけを確かめている
+IT-A06-03-040	採る	商品規格ID未指定時のエラーだけを確かめている
+IT-A06-03-042	採る	複数の入力エラーをまとめて返す検証処理を確かめている
+IT-A06-03-043	戻す	存在しないステータスマスタの判定に加え、受注と複数の関連レコードの維持を確かめている
+IT-A06-03-048	採る	order_statusの形式エラーだけを確かめている
+IT-A06-03-049	採る	確認フラグの形式エラーだけを確かめている
+IT-A06-03-056	採る	明細2件それぞれの商品名必須メッセージを確かめている
+IT-A06-04-005	採る	free_comment未指定時の必須エラーだけを確かめている
+IT-A06-04-006	採る	free_comment未指定時にDBが変わらないことだけを確かめている
+IT-A06-04-017	採る	free_comment未指定時のエラー文言だけを確かめている
+IT-A06-05-017	戻す	指定ステータスがマスタに存在しないことを読んで結果が決まる
+IT-A06-05-018	戻す	ステータスマスタの存在判定と、受注・履歴が変わらないことを確かめている
+IT-A06-05-019	採る	statusの整数形式エラーだけを確かめている
+IT-A06-05-020	採る	statusの形式不正でDBが変わらないことだけを確かめている
+IT-A06-05-023	採る	status未指定時の必須エラーとDBが変わらないことだけを確かめている
+===END===
+tokens used
+71,705
+===BEGIN===
+外すテストID	判定	理由
+IT-A02-01-007	戻す	在庫のある商品規格を返す業務上の優先順を確かめている
+IT-A02-01-008	戻す	指定言語の商品規格を返す業務上の優先順を確かめている
+IT-A02-01-009	戻す	カード状態によって返す商品規格を選ぶ優先順を確かめている
+IT-A02-01-014	戻す	画像順位によって返す商品規格を選ぶ優先順を確かめている
+IT-A02-01-021	戻す	指定言語に対応する画像順位で返す商品規格を選ぶ優先順を確かめている
+IT-A02-01-023	戻す	カード状態と画像順位の業務上の優先順を確かめている
+IT-A02-02-006	戻す	foil_flgの指定によって返す1件が変わる業務上の優先順を確かめている
+IT-A02-02-007	戻す	価格指定によって返す1件を選ぶ業務上の優先順を確かめている
+IT-A02-02-008	戻す	価格指定によって返す1件を選ぶ業務上の優先順を確かめている
+IT-A02-02-009	戻す	特殊カードセットかどうかで返す1件を選んでいる
+IT-A02-02-010	戻す	プロモーションかどうかで返す1件を選んでいる
+IT-A02-02-011	戻す	発売日によって返す1件を選んでいる
+IT-A02-02-012	戻す	非フォイルを返す業務上の優先順を確かめている
+IT-A02-02-013	戻す	在庫の有無によって返す1件を選んでいる
+IT-A02-02-014	戻す	指定言語によって返す1件を選び、応答の言語コードも確かめている
+IT-A02-02-015	戻す	カード状態によって返す1件を選んでいる
+IT-A02-02-016	戻す	画像の順序によって返す1件を選んでいる
+IT-A02-02-017	戻す	サブ画像の有無によって返す1件を選んでいる
+IT-A02-02-018	戻す	特殊カードセットとフォイルの業務上の優先順を確かめている
+IT-A02-02-019	戻す	プロモーションとフォイルの業務上の優先順を確かめている
+IT-A02-02-020	戻す	発売日とフォイルの業務上の優先順を確かめている
+IT-A02-02-030	戻す	指定言語によって返す1件を選び、応答の言語コードも確かめている
+IT-A02-02-031	戻す	特殊カードセットとプロモーションの業務上の優先順を確かめている
+IT-A02-02-032	戻す	プロモーションと発売日の業務上の優先順を確かめている
+IT-A02-02-033	戻す	フォイルと在庫の業務上の優先順を確かめている
+IT-A02-02-034	戻す	在庫と言語の業務上の優先順を確かめている
+IT-A02-02-035	戻す	言語とカード状態の業務上の優先順を確かめている
+IT-A02-02-036	戻す	カード状態と画像順序の業務上の優先順を確かめている
+IT-A02-02-037	戻す	画像順序とサブ画像の有無の業務上の優先順を確かめている
+IT-A02-02-038	戻す	フォイル指定が他の候補条件より先に効く業務上の優先順を確かめている
+IT-A02-02-039	戻す	フォイル区分が価格より先に効く業務上の優先順を確かめている
+IT-A02-03-006	戻す	旧商品IDに一致した複数商品から、特殊カードセット以外を選ぶ優先順を確かめている
+IT-A02-03-007	戻す	旧商品IDに一致した複数商品から、非プロモーションを選ぶ優先順を確かめている
+IT-A02-03-008	戻す	旧商品IDに一致した複数商品から、リリース日で選ぶ優先順を確かめている
+IT-A02-03-009	戻す	旧商品IDに一致した複数商品から、非Foilを選ぶ優先順を確かめている
+IT-A05-01-018	採る	高額欄の固定値「□」という1項目の出力だけを確かめている
+IT-A06-01-004	採る	ログインIDが空のときの必須エラーとトークン未発行を確かめている
+IT-A06-01-005	採る	パスワードが空のときの必須エラーとトークン未発行を確かめている
+IT-A06-02-007	戻す	昇順に加え、ステータスや職業・国の紐づきによる取得対象4件を確かめている
+IT-A06-02-011	採る	二つの日時項目がISO8601形式になる書式だけを確かめている
+IT-A06-03-030	採る	order_status未指定時の必須エラーだけを確かめている
+IT-A06-03-031	戻す	指定ステータスがマスタに存在しないことを読んで結果が決まる
+IT-A06-03-032	採る	order_details未指定時の必須エラーだけを確かめている
+IT-A06-03-034	採る	order_detailsの型に対する入力エラーだけを確かめている
+IT-A06-03-035	採る	商品名が空のときの必須エラーだけを確かめている
+IT-A06-03-037	採る	商品名の文字数超過エラーだけを確かめている
+IT-A06-03-038	採る	各項目の整数形式エラーだけを確かめている
+IT-A06-03-039	採る	端末取引IDの形式エラーだけを確かめている
+IT-A06-03-040	採る	商品規格ID未指定時のエラーだけを確かめている
+IT-A06-03-042	採る	複数の入力エラーをまとめて返す検証処理を確かめている
+IT-A06-03-043	戻す	存在しないステータスマスタの判定に加え、受注と複数の関連レコードの維持を確かめている
+IT-A06-03-048	採る	order_statusの形式エラーだけを確かめている
+IT-A06-03-049	採る	確認フラグの形式エラーだけを確かめている
+IT-A06-03-056	採る	明細2件それぞれの商品名必須メッセージを確かめている
+IT-A06-04-005	採る	free_comment未指定時の必須エラーだけを確かめている
+IT-A06-04-006	採る	free_comment未指定時にDBが変わらないことだけを確かめている
+IT-A06-04-017	採る	free_comment未指定時のエラー文言だけを確かめている
+IT-A06-05-017	戻す	指定ステータスがマスタに存在しないことを読んで結果が決まる
+IT-A06-05-018	戻す	ステータスマスタの存在判定と、受注・履歴が変わらないことを確かめている
+IT-A06-05-019	採る	statusの整数形式エラーだけを確かめている
+IT-A06-05-020	採る	statusの形式不正でDBが変わらないことだけを確かめている
+IT-A06-05-023	採る	status未指定時の必須エラーとDBが変わらないことだけを確かめている
+===END===

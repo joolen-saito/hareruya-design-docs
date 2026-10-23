@@ -40,6 +40,12 @@ back_hits = []   # 「除外済み」と判定したケースのうち、監査�
 EXC = ids_of("excluded_hold_cases.tsv") | ids_of("excluded_open_cases.tsv")
 if (C / "excluded_scope_cases.tsv").exists():   # 2026-10-16 フェーズ2見送り・実装しない機能として外したもの
     EXC |= ids_of("excluded_scope_cases.tsv")
+if (C / "excluded_dup_cases.tsv").exists():     # 2026-10-21 ほかのケースと同じ確認として外したもの（../exclude_dup.py）
+    EXC |= ids_of("excluded_dup_cases.tsv")
+    RULED |= ids_of("excluded_dup_cases.tsv")
+if (C / "excluded_ut_cases.tsv").exists():      # 2026-10-21 単体テストレベルとして外したもの（../exclude_ut.py）
+    EXC |= ids_of("excluded_ut_cases.tsv")
+    RULED |= ids_of("excluded_ut_cases.tsv")
 
 
 def nlines(p):

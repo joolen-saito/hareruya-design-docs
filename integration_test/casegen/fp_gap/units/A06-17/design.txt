@@ -1,0 +1,49 @@
+##### 機能設計書 functions/pf-api/a06-17_api_buying_products_by_detail.md
+L0001	# API 店頭買取管理 — カード詳細IDから買取用商品情報を取得
+L0002	## 業務ロジック
+L0003	### 取得の対象
+L0004	指定されたカード詳細IDが属するカードに紐づく買取用商品を取得する。取得結果が空のときは、ページが見つからない扱い（404）とする。
+L0005	### 応答の組み立て
+L0006	応答はカードIDをキーとする階層構造とし、カードの配下にカード詳細ID、言語コード、状態コードの順で入れ子にする。応答フィールドは取得時点の値を返し、金額・税・ポイント・在庫数量の再計算や表示用の丸めは行わない。表示用の加工は呼び出し元の設計に委ねる。
+L0007	### エラー時の扱い
+L0008	| 事象 | 扱い |
+L0009	| --- | --- |
+L0010	| 該当する買取用商品が無い | ページが見つからない扱い（404）とし、メッセージを含む標準の例外応答を返す |
+L0011	## 入出力
+L0012	| 種類 | 内容 |
+L0013	| --- | --- |
+L0014	| 入力 | カード詳細ID |
+L0015	| 成功時出力 | HTTP 200。買取用商品情報のJSON |
+L0016	| 失敗時出力 | HTTP 404。該当する買取用商品が無いとき |
+L0017	### 入出力: リクエスト
+L0018	| パラメータ | 位置 | 型 | 必須／任意 | 説明 |
+L0019	| --- | --- | --- | --- | --- |
+L0020	| `detailId` | パス | integer | 必須 | 取得対象のカード詳細ID。このIDが属するカードに紐づく買取用商品を取得する |
+L0021	### 入出力: 応答フィールド
+L0022	| フィールド | 型 | 説明 |
+L0023	| --- | --- | --- |
+L0024	| `cards` | object | カードIDをキーとするオブジェクト。値は各カードの情報 |
+L0025	| `cards.<cardId>.cardNameJp` | string | カードの日本語名 |
+L0026	| `cards.<cardId>.cardNameEn` | string | カードの英語名 |
+L0027	| `cards.<cardId>.imageFileName` | string | カード画像のファイル名 |
+L0028	| `cards.<cardId>.details` | object | カード詳細IDをキーとするオブジェクト。値は各カード詳細の情報 |
+L0029	| `…details.<detailId>.cardsetCode` | string | カードセットのコード。カードセット未設定のときはnull |
+L0030	| `…details.<detailId>.cardsetName` | string | カードセットの日本語名。カードセット未設定のときはnull |
+L0031	| `…details.<detailId>.foilFlg` | boolean | フォイルか否か |
+L0032	| `…details.<detailId>.cardNo` | string | カード番号 |
+L0033	| `…details.<detailId>.promotionName` | string | プロモーションの日本語名。プロモーション未設定のときはnull |
+L0034	| `…details.<detailId>.productId` | integer | 商品ID |
+L0035	| `…details.<detailId>.productNameJp` | string | 商品の日本語名 |
+L0036	| `…details.<detailId>.productNameEn` | string | 商品の英語名 |
+L0037	| `…details.<detailId>.rarityCode` | string | レアリティのコード |
+L0038	| `…details.<detailId>.storageCodeName` | string | 保管コードの名称。未設定のときはnull |
+L0039	| `…details.<detailId>.languageClasses` | object | 言語コードをキーとするオブジェクト |
+L0040	| `…languageClasses.<languageCode>.conditionClasses` | object | 状態コードをキーとするオブジェクト。値は商品規格単位の情報 |
+L0041	| `…conditionClasses.<conditionCode>.productClassId` | integer | 商品規格ID |
+L0042	| `…conditionClasses.<conditionCode>.productCode` | string | 商品コード |
+L0043	| `…conditionClasses.<conditionCode>.buyPrice` | integer | 買取価格。未設定のときはnull |
+L0044	| `…conditionClasses.<conditionCode>.price` | string | 販売価格 |
+L0045	| `…conditionClasses.<conditionCode>.stock` | string | 在庫数 |
+L0046	| `…conditionClasses.<conditionCode>.sectionId` | integer | 部門ID。未設定のときはnull |
+L0047	## 表示メッセージ
+L0048	この機能は画面を持たないためメッセージを扱わない。

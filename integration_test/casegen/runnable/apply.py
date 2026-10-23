@@ -12,14 +12,18 @@ gate.py に合格したファイルだけを当てる。何度流しても同じ
 - 基線（../precond/baseline/）にあるケースの手順・期待結果を変えたら宣言を書く。項目「控えた番号」は
   類型T4（oracle_changes の承認「類型承認T4」、step_changes の種別「発番値控え」）。ほかの手順の変更は種別「裁定訂正」。
   控えた番号へ置き換えたケースは ../precond/screen_noted_cases.tsv に足す。
+- 照合は ../dummy_url/urlmap.N（実在しない試験用URLの置き換え。2026-10-21）を当てた文どうしで行う。置き換えはこの後に
+  dummy_url/apply.py が当てるので、流し直しでは cases/ の文が置き換え後になっている。
 - 流す順: merge → seed_screen/apply.py → datapattern/conflicts/apply_rulings.py（最後に product_csv/apply.py と
-  これを呼ぶ）→ exclude_open.py → exclude_scope.py → build_all_test_cases.py → precond/gate_precond.py --all。
+  これと dummy_url/apply.py を呼ぶ）→ exclude_open.py → exclude_scope.py → build_all_test_cases.py → precond/gate_precond.py --all。
 """
 import hashlib, importlib.util, os, pathlib, re, sys, collections
 
 R = pathlib.Path(__file__).resolve().parent
 CG = R.parent
 PC = CG / "precond"
+sys.path.insert(0, str(CG / "dummy_url"))
+from urlmap import N  # noqa: E402
 DAY = "2026-10-19"
 T4 = "類型承認T4（画面が自動で振る番号は、画面で登録したときに控えた値を使う。2026-10-09 依頼者）"
 WHY_T4 = "画面が自動で振る番号を固定値で書いていた。登録時に控えた番号を使う（runnable/）"
@@ -108,12 +112,14 @@ def set_text(tb, applied, kind, tid, col, snap, new, err):
         err.append(f"{kind} {tid}: 当てる先が無い"); return None
     key = (kind, tid, col)
     res = "済み"
+    snap, new = N(snap), N(new)
+    final = N(FINAL[key]) if key in FINAL else None
     for p, r, c in locs:
         i = tb.col(p, c)
-        cur = r[i]
-        if cur == new or cur == FINAL.get(key):
+        cur = N(r[i])
+        if cur == new or cur == final:
             continue
-        if cur == snap or digest(cur) == applied.get(key):
+        if cur == snap or applied.get(key) in (digest(r[i]), digest(cur)):
             r[i] = new
             tb.dirty.add(p)
             res = "置き換えた"
@@ -122,7 +128,7 @@ def set_text(tb, applied, kind, tid, col, snap, new, err):
         else:
             err.append(f"{kind} {tid} {col}: 今の文が直しを書いたときの文と違う（{p.name}。上流で変わったので書き直す）")
             return None
-    applied[key] = digest(FINAL.get(key, new)) if res == "済み" and FINAL.get(key) else digest(new)
+    applied[key] = digest(final) if res == "済み" and final else digest(new)
     return res
 
 

@@ -5,6 +5,8 @@
 - ケース: cases/<機能ID>.tsv にあるテストIDの 事前準備・手順・期待結果 を置き換える。
 - 前提条件の検査（precond/gate_precond.py）は、書き直し前の基線から期待結果・手順を変えるときに宣言を求める。
   基線にあるケースについて、precond/oracle_changes/・step_changes/ に宣言を書く（類型T4: 画面が振る番号は控えた値を使う）。
+- 実在しない試験用URLは、../dummy_url/urlmap.N（2026-10-21 依頼者決定）を当てた文で書く（置き換えた後の文と照合して、
+  URLの違いだけで宣言を書き足さない）。
 - 何度流しても同じ。sheetmap・nosheet・gapfill・ga の merge_into_cases.py を流すと ../cases/ が作業ファイルの内容へ戻るので、
   そのあとに必ずこれを流し直す。gate.py が合格した機能だけを当てる。
 """
@@ -12,6 +14,8 @@ import csv, pathlib, re, subprocess, sys
 G = pathlib.Path(__file__).resolve().parent
 CG = G.parent
 PC = CG / "precond"
+sys.path.insert(0, str(CG / "dummy_url"))
+from urlmap import N  # noqa: E402
 csv.field_size_limit(10**9)
 T4 = "類型承認T4（画面が自動で振る番号は、画面で登録したときに控えた値を使う。2026-10-09 依頼者）"
 WHY = "画面が自動で振る番号を固定値で書いていた。データを画面で作る形に改め、登録時に控えた番号を使う"
@@ -55,7 +59,7 @@ def main(fids):
         h, rs = rows(CG / f"cases/{fid}_seed_data.tsv")
         for r in rs:
             if r[0] in S:
-                r[3], r[5] = S[r[0]]["新しい状態・属性"].strip(), S[r[0]]["新しい投入方法"].strip(); ns += 1
+                r[3], r[5] = N(S[r[0]]["新しい状態・属性"].strip()), N(S[r[0]]["新しい投入方法"].strip()); ns += 1
         write(CG / f"cases/{fid}_seed_data.tsv", h, rs)
         C = {r["テストID"].strip(): r for r in dicts(G / f"cases/{fid}.tsv")}
         h, rs = rows(CG / f"cases/{fid}_test_cases.tsv")
@@ -64,7 +68,7 @@ def main(fids):
             c = C.get(r[0])
             if not c:
                 continue
-            a, b, e = c["新事前準備"].strip(), c["新手順"].strip(), c["新期待結果"].strip()
+            a, b, e = (N(c[k].strip()) for k in ("新事前準備", "新手順", "新期待結果"))
             if r[0] not in added:      # 基線にあるケースは宣言が要る
                 if e != r[ic] or (PC / f"oracle_changes/{fid}.tsv").exists() and any(x[0] == r[0] for x in rows(PC / f"oracle_changes/{fid}.tsv")[1]):
                     upsert(PC / f"oracle_changes/{fid}.tsv", ["テストID", "新期待結果", "理由", "承認"], r[0],

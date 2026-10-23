@@ -44,7 +44,9 @@ def main(apply):
     _, done = rd(mp)
     done_old = {r[0] for r in done}
     taken = collections.defaultdict(int)          # 除外したケースの番号も避ける
-    for name in ("excluded_hold_cases.tsv", "excluded_open_cases.tsv", "excluded_scope_cases.tsv"):
+    for name in ("excluded_hold_cases.tsv", "excluded_open_cases.tsv", "excluded_scope_cases.tsv", "excluded_dup_cases.tsv", "excluded_ut_cases.tsv"):
+        if not (CG / name).exists():
+            continue
         _, rows = rd(CG / name)
         for r in rows:
             m = re.match(r"IT-(\w\d\d-\d\d)-(\d{3})$", r[0])

@@ -7,7 +7,8 @@
   今の値が targets.tsv の元の値と同じなら置き換え、既に新しい値なら済みとみなす。前にこれが当てた値
   （work/applied.tsv に文のハッシュを控える。out/ を直したあと、seed_screen/apply.py が戻さないシードに残る）も置き換える。
   どれでもなければ誤り（上流の作業がシードの文を変えたので、書き直しをやり直す）として止める。
-- 何度流しても同じ。
+- 何度流しても同じ。照合は ../dummy_url/urlmap.N（実在しない試験用URLの置き換え。2026-10-21）を当てた文どうしで行う
+  （置き換えは最後に dummy_url/apply.py が当てるので、流し直しでは cases/ の文が置き換え後になっている）。
 - 流す順: merge → seed_screen/apply.py → datapattern/conflicts/apply_rulings.py → これ → exclude_open.py → exclude_scope.py。
   apply_rulings.py が最後にこれを呼ぶので、ふつうは apply_rulings.py を流せばよい。
 """
@@ -15,6 +16,8 @@ import hashlib, importlib.util, pathlib, sys
 
 P = pathlib.Path(__file__).resolve().parent
 CG = P.parent
+sys.path.insert(0, str(CG / "dummy_url"))
+from urlmap import N  # noqa: E402
 
 
 def rows(p):
@@ -75,19 +78,21 @@ def main():
             if o is None or s is None:
                 err.append(f"{fid} {sid}: targets.tsv か cases/ に無い")
                 continue
-            pairs = [(mi, "投入方法", o["元の投入方法"], f["新しい投入方法"])]
+            pairs = [(mi, "投入方法", N(o["元の投入方法"]), N(f["新しい投入方法"]))]
             if f["新しい状態・属性"]:
-                pairs.append((ai, "状態・属性", o["元の状態・属性"], f["新しい状態・属性"]))
+                pairs.append((ai, "状態・属性", N(o["元の状態・属性"]), N(f["新しい状態・属性"])))
+            cur = {i: N(s[i]) for i, _, _, _ in pairs}
+            hashes = lambda i: {digest(s[i]), digest(cur[i])}   # 置き換え前・後のどちらの文のハッシュでもよい
             for i, col, _, new in pairs:
-                if s[i] == new:
+                if cur[i] == new:
                     applied[(sid, col)] = digest(new)
-            if all(s[i] == new for i, _, _, new in pairs):
+            if all(cur[i] == new for i, _, _, new in pairs):
                 done["済み"] += 1
                 continue
-            if all(s[i] == new or later.get(("シード", sid, col)) == digest(s[i]) for i, col, _, new in pairs):
+            if all(cur[i] == new or later.get(("シード", sid, col)) in hashes(i) for i, col, _, new in pairs):
                 done["済み"] += 1   # 後段の直し（../runnable/apply.py）がこの書き直しの上に重ねた文
                 continue
-            if any(s[i] not in (old, new) and digest(s[i]) != applied.get((sid, col)) for i, col, old, new in pairs):
+            if any(cur[i] not in (old, new) and applied.get((sid, col)) not in hashes(i) for i, col, old, new in pairs):
                 err.append(f"{fid} {sid}: シードの文が書き直しの元と違う（上流で変わった）")
                 continue
             for i, col, _, new in pairs:

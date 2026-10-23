@@ -10,6 +10,8 @@ import csv, glob, re, sys, pathlib, collections
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import terms  # noqa: E402
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "dummy_url"))
+import urlmap  # noqa: E402  実在しない試験用URLの置き換え（依頼者決定 2026-10-21）
 
 CG = pathlib.Path(__file__).resolve().parents[1]
 PC = CG / "precond"
@@ -179,11 +181,12 @@ def check(fid, own_all):
             if ob:
                 base[r["新テストID"]] = dict(ob, テストID=r["新テストID"])
                 moved_src.add(sfid)
-    # 用語の置き換え（依頼者決定 2026-10-06。terms.py）。基線は書き換えず、照合の前に当てる
+    # 用語の置き換え（依頼者決定 2026-10-06。terms.py）と、実在しない試験用URLの置き換え（依頼者決定 2026-10-21。
+    # ../dummy_url/urlmap.py）。基線は書き換えず、照合の前に当てる
     for b in base.values():
         if b["実行区分"] != "保留":
             for c in ("手順", "期待結果"):
-                b[c] = terms.T(b[c])
+                b[c] = urlmap.N(terms.T(b[c]))
     rn = renames(fid)
     sc_all = step_changes(fid)
     oc_all = oracle_changes(fid)
@@ -234,6 +237,9 @@ def check(fid, own_all):
     noted = {r["テストID"] for r in read(np_)} if np_.exists() else set()
     exo_ = CG / "excluded_open_cases.tsv"      # 外したケースの改名は、改名先を定義するシードも外れているので検査しない
     noted |= {r["テストID"] for r in read(exo_)} if exo_.exists() else set()
+    for _n in ("excluded_dup_cases.tsv", "excluded_ut_cases.tsv"):   # 重複・単体レベルとして外したケースも同じ（2026-10-21）
+        _p = CG / _n
+        noted |= {r["テストID"] for r in read(_p)} if _p.exists() else set()
     for t, pairs in rn.items():
         if t in noted:
             continue
@@ -273,6 +279,12 @@ def check(fid, own_all):
     # フェーズ2見送り・実装しない機能のケースは excluded_scope_cases.tsv へ移した（依頼者決定 2026-10-16。exclude_scope.py）
     exs = CG / "excluded_scope_cases.tsv"
     excluded |= {r["テストID"] for r in read(exs)} if exs.exists() else set()
+    # ほかのケースと同じことを確かめる類似・重複のケースは excluded_dup_cases.tsv へ移した（依頼者決定 2026-10-21。exclude_dup.py）
+    exd = CG / "excluded_dup_cases.tsv"
+    excluded |= {r["テストID"] for r in read(exd)} if exd.exists() else set()
+    # 単体テストレベルのケースは excluded_ut_cases.tsv へ移した（依頼者決定 2026-10-21。exclude_ut.py）
+    exu = CG / "excluded_ut_cases.tsv"
+    excluded |= {r["テストID"] for r in read(exu)} if exu.exists() else set()
     # 書き直しの後で足したケース（機能間データ連携など）は added_cases.tsv に載せる。基線は書き換えない
     adp = PC / "added_cases.tsv"
     added = {r["テストID"] for r in read(adp) if r["テストID"].startswith(f"IT-{fid}-")} if adp.exists() else set()

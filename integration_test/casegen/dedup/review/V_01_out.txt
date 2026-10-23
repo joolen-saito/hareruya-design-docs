@@ -1,0 +1,1402 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/y-saito/Developments/hareruya-design-docs
+model: gpt-6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a15a5c-58c8-7f82-96a2-1502c0d13ee2
+--------
+user
+# 類似・重複ケースの判定の事実確認（V_01）
+
+作業場所は `/home/y-saito/Developments/hareruya-design-docs`。読むだけで、ファイルは書き換えない。
+
+結合テストケースのうち「ほかのケースと同じことを確かめていて、外しても見つけられる不具合が減らない」とされたケースが、本当にそうかを確かめる。判定の決まりは `integration_test/casegen/dedup/DEDUP_PROMPT.md`（機能をまたぐ組は `CROSS_PROMPT.md` も）。依頼者の線引きは「同じ確認に加えて、設計書上で同じ扱いになる値（同値）を別々のケースで確かめているものは代表1件に絞る。境界の両側と、設計書が別の結果を定める値は残す」。
+
+## 確かめる対象
+
+`integration_test/casegen/dedup/review/V_01_targets.tsv`（外すテストID・残すテストID・種別・根拠・理由）。各行の両ケースの全文は `integration_test/casegen/dedup/inputs/<機能ID>.md`、設計書の写しは `integration_test/casegen/combination/units/<機能ID>/design.txt`。
+
+## 見ること（行ごと）
+
+1. 外す側が確かめていることを、残す側が全部確かめているか。外す側にしかない条件・操作・確かめる所（画面の表示、DB、メール、CSV の列、遷移先など）が1つでもあれば誤り。
+2. 同値なら、根拠の行に、両方の値が同じ1つの定めの同じ側に入ることが書かれているか。設計書が別々の条件・別々の結果として書いた値、境目の値とその隣の値、設計書がはっきり同じ扱いと書いていない表記・画面・言語・店舗・会員区分・権限の違いは、外してはいけない。
+3. 要因の組合せのケース（inputs の `[組 …]`）を、組の値が違うのに外していないか。
+4. 機能をまたぐ組は、同じ画面の同じ操作で同じ結果を確かめているか。
+
+疑わしいときは「戻す」にする（外しすぎはテストの抜けになる）。外す側の見落とし（ほかにも重複がある）は探さなくてよい。
+
+## 出力
+
+最後に次の形の表だけを、`===BEGIN===` と `===END===` の行で挟んで出す（タブ区切り、1行目は見出し、対象の全行に1行ずつ）。
+
+```
+===BEGIN===
+外すテストID	判定	理由
+IT-XXX-XX-NNN	採る	（短く）
+IT-XXX-XX-NNN	戻す	外す側にしかない確かめる所: …
+===END===
+```
+
+判定は「採る」か「戻す」。戻すときは理由に、外す側にしかないもの、または同値と言えない根拠（設計書の行）を書く。
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+2026-10-20T17:29:26.892495Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer resource_metadata=\"https://mcp.firecrawl.dev/.well-known/oauth-protected-resource/v2/mcp-oauth\", error=\"invalid_token\", error_description=\"Firecrawl credentials required: OAuth access token (Authorization: Bearer fco_...) or API key (x-firecrawl-api-key)\"" })
+codex
+対象TSV、判定基準、各ケースの全文と設計書を照合します。各行について、外す側だけの確認点や同値といえない条件がないかを確かめます。
+exec
+/bin/bash -lc "wc -l integration_test/casegen/dedup/review/V_01_targets.tsv && sed -n '1,120p' integration_test/casegen/dedup/review/V_01_targets.tsv" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+43 integration_test/casegen/dedup/review/V_01_targets.tsv
+外すテストID	残すテストID	種別	根拠	理由
+IT-A01-01-002	IT-A01-01-047	同値	L0082,L0084,L0135	店頭受取分以外のスマレジ売上で在庫区分02は出庫処理になる定め(L0082)で、数量は相対値(L0135)。違いは販売数量2個と1個だけで、同じ定めの同じ側(在庫が減る)に入り、確かめる所(DBのスマレジ在庫の増減)も同じ。残す側は最小数量1のケース。
+IT-A01-01-004	IT-A01-01-048	同値	L0033,L0082,L0083	全キャンセルで在庫区分12返品は入庫処理になる定め(L0082,L0083)で、数量は相対値。違いは取り消す販売数量2個と1個だけで、同じ定めの同じ側(在庫が戻る)に入り、確かめる所(DBのスマレジ在庫)も同じ。残す側は最小数量1のケース。
+IT-A02-04-003	IT-A02-04-002	包含	—	旧商品ID AER000022JN系の1件一致の取得を同じ条件（公開・表示対象・カード対応済み・在庫あり・画像あり・言語JP・NM）で開き、002はproductIdが一致する商品情報を含む全項目を確かめるので、003の「旧商品IDが一致する商品ID〔商品ID-A0204-003〕の商品情報が表示される」は002に含まれ、003にしかない条件・操作・確認はない。
+IT-A06-03-033	IT-A06-03-032	同値	L0115	設計書は「明細が未指定または空」を同じ1つの条件として同じ400・同じメッセージ「1つ以上の商品を選んでください。」と定めており、order_details省略と空配列はその同じ側に入り、確かめる結果も同じ。
+IT-A06-03-016	IT-A06-03-052	包含	—	052は同じ商品規格の明細2件（数量2と3）を同じ事前状態で送り実在庫・履歴が数量5の1件になることを確かめており、016の確認をすべて含む（052はさらに別規格の明細も確かめる）。
+IT-A06-03-017	IT-A06-03-053	包含	—	053は数量2・買取価格123の明細を同じ事前状態で送り買取価格123・買取小計246の登録を確かめており、017の確認を全部含む（別規格の明細も確かめる）。
+IT-A06-03-014	IT-A06-03-054	包含	—	054は有効な部門ID指定の明細で注文詳細の部門IDが設定されることを同じ事前状態（注文詳細0件）で確かめており、014の確認を含む。
+IT-A06-03-015	IT-A06-03-054	包含	—	054は存在しない部門ID（015の699997015と別の値だが同じく存在しない）の明細が部門なしで登録されることを確かめており、015の確認を含む。
+IT-A06-03-023	IT-A06-03-063	包含	—	063は査定中から経理払い出し待ちへ送り、ステータス履歴が開始時1件から2件になることを確かめており、023の確認を含む（063は他の項目も確かめる）。
+IT-A06-03-024	IT-A06-03-064	包含	—	064は経理払い出し待ちのまま経理払い出し待ちを送り、ステータス履歴が1件のまま増えないことを確かめており、024の確認を含む（064は他の項目も確かめる）。
+IT-A06-03-004	IT-A06-03-063	包含	—	063は同じ件名「店頭買取振込依頼 【査定ID: …】」の振込依頼メールが経理宛てに1通届くことを査定中から経理払い出し待ちへの更新で確かめており、004の確認を含む。
+IT-A06-03-008	IT-A06-03-069	包含	—	069は査定中から買取キャンセルへ更新し、ステータスが買取キャンセルになることとキャンセル日の登録を確かめており、008の確認を含む（端末取引IDの有無の違いはキャンセルの結果に影響しない）。
+IT-A06-06-006	IT-A06-06-012	包含	—	両者は事前準備（カードセット・プロモーション・略称タグ・買取価格・部門IDが未設定の同じ構成）と操作が同じで、012は006が確かめる各項目（cardsetCode等6項目）が省略されず含まれることに加え値がnullであることまで確かめている。
+IT-A06-13-002	IT-A06-13-014	包含	—	両者は同じ事前準備でidentification=2のPUTを同じURLへ送る操作で、002が確かめるHTTP 200を014も確かめ、014は応答本文まで確かめている。
+IT-A14-03-014	IT-A14-03-012	同値	L0021,L0065	どちらも英語版が優先される側のlang指定（jpとfr、設計書は ja 以外の値を指定したときも英語になると定める）で、候補の構成・操作・確かめる結果（英語版の画像URLが選ばれる）が同じ。違いはlangの値だけで同じ側に入る。
+IT-A15-04-002	IT-A15-04-008	包含	—	両者とも認証トークン無しで存在するデッキユーザーIDを指定しGET /userを呼び、002が確かめるHTTP 200は008がHTTP 200として確かめており、008はさらに返る3項目の値も確かめる。
+IT-A15-08-051	IT-A15-08-050	同値	L0019	設計書はトークンの検証をしないと明記しており、トークン無しと検証できない値のトークンは同じ扱いで、どちらもHTTP 200・総件数1・同一カード1件を確かめる。
+IT-A15-10-029	IT-A15-10-027	同値	L0011,L0027	公開範囲を省略した要求が400になることだけを確かめる点が同じで、違いは即時保存が「偽」か「指定なし」かだけであり、設計書は「偽または指定が無いとき」を同じ扱い（整合性検証のうえ一時保存）と定めているため結果も同じ。
+IT-A15-10-030	IT-A15-10-028	同値	L0011,L0027	公開範囲を省略した要求で一時保存が作られないことだけを確かめる点が同じで、違いは即時保存が「偽」か「指定なし」かだけであり、設計書は「偽または指定が無いとき」を同じ扱いと定めているため結果も同じ。
+IT-A15-11-012	IT-A15-11-018	包含	—	両者とも所有者が一時保存「{}」を持つ未削除デッキを削除しRedisのキー deck_〈デッキID〉 が無くなることを確かめており、IT-A15-11-018 は同じ条件・操作でそれに加え応答200・削除日時・別デッキの残存まで確かめるため、012 にしかない条件・確認は無い。
+IT-A15-12-004	IT-A15-12-034	包含	—	両者は公開範囲が公開・プレイヤーA所有・下書きなしの保存済みデッキを、認証用トークンも閲覧用トークンも付けずに参照する同じ条件と操作で、034はHTTPステータス200に加えて処理結果コード・メッセージ・デッキ名まで確かめており004の確認を含む。
+IT-A15-14-019	IT-A15-14-020	包含	—	両者は登録済みと未登録の混在配列を同じ構成のデータで送る同じ操作で、020は応答にformatsとして登録済み分だけが含まれ未登録分は含まれないことまで確かめており、019の「404でなく200で返る」を含む。
+IT-A17-04-011	IT-A17-04-026	包含	—	非カード商品をlang=JPで取得しcard_detailがnullになることだけを確かめており、IT-A17-04-026は同じ非カード商品を同じ操作で取得してcard_detailがnullになることを含めて確かめている。
+IT-A17-04-012	IT-A17-04-029	包含	—	パワー・タフネス・忠誠度が未設定のカード商品でpower_toughnessとloyaltyがnullになることだけを確かめており、IT-A17-04-029は同じ条件のカード商品で同じ2項目のnullを含めて確かめている。
+IT-B02-04-018	IT-B02-04-020	包含	—	同じ batch 起動と通知メール本文確認で、018は廃止の規格を除き公開の規格だけが載ることを確かめるが、020は同じ条件（公開以外の廃止・部門未設定・未削除と公開の通知対象）で非公開と廃止の両方が載らないことまで確かめており、018にしかない条件と確かめる所は無い。
+IT-B05-08-002	IT-B05-08-014	包含	—	014の受信対象Aは002と同じ条件（フラグ=オン・DB残高120・外部残高900）で同じバッチを動かし、外部側の残高が120になること（絶対値更新）を確かめており、002の確認を全部含む（014は別の受注Bも確かめる）。
+IT-B05-08-003	IT-B05-08-015	包含	—	015の受注Aは003と同じ条件でバッチを動かしDBの連携エラーフラグがオフになることを確かめており、003の確認を全部含む（015は別の受注Bも確かめる）。
+IT-B06-01-015	IT-B06-01-024	包含	—	024の手順5は015と同じ条件（TC東京2F・店頭買取12入庫待ち・実在庫数1・買取単価900・在庫10/総原価10000）で在庫検索一覧の在庫11・総原価10900・原価単価991を確かめており、015の確認を全部含む。
+IT-B06-01-018	IT-B06-01-024	包含	—	024の手順6は018と同じ条件（本店・ネット買取16入庫待ち・実在庫数1・買取単価900・在庫10/総原価10000）で在庫検索一覧の在庫11・総原価10900・原価単価991を確かめており、018の確認を全部含む。
+IT-B06-02-006	IT-B06-02-030	包含	—	030（組）は006と同じ条件（買取合計100・明細95・端数5が正）で端数調整部門の買取金額5・売価金額0の行を確かめており、006の確認を全部含む（030は既存集計の置換も確かめる）。
+IT-B06-02-007	IT-B06-02-031	包含	—	031（組）は007と同じ2件（端数0と-10）で端数調整部門の行が登録されないことを確かめており、007の確認を全部含む（031は既存集計の置換とカード部門の合算も確かめる）。
+IT-B06-02-029	IT-B06-02-035	包含	—	035（組）は部門未設定商品が無い日の買取で端数0のとき通知先に受信メールが0通であることを確かめ、029の「未設定商品一覧メールが0通」を全部含む。
+IT-B08-01-004	IT-B08-01-018	包含	—	018の会員B（最終更新日2025-09-10 09:59・キー設定済み）は004と同じ条件で、同じバッチ実行後に受信0件を確かめており、004の確認を全部含む（018は送信対象と別の非対象も同時に確かめる）。
+IT-B08-01-005	IT-B08-01-018	包含	—	018の会員C（最終更新日2025-09-10 10:01・キーNULL）は005と同じ条件で、同じバッチ実行後に受信0件を確かめており、005の確認を全部含む。
+IT-B08-03-008	IT-B08-03-022	包含	—	022（組）は008と同じ英語メール（日本国外・30日前・指定日獲得が有効期限間近ポイントになる）で宛先・送信元・件名・英語本文全文・ポイント数・D/M/Y形式の期限日を確かめており、008の確認を全部含む。違いは金額の数値（90と60）だけ。
+IT-B08-07-001	IT-B08-07-015	包含	—	同じ条件（オンライン本人確認済み・有効期限が1年前の会員）で同じバッチを起動し管理者宛メール1通の本文に会員IDが載ることを確かめる。015は同条件の会員を含む3名分を確かめており、001にしかない条件・確認は無い。
+IT-B08-07-003	IT-B08-07-015	包含	—	003の2名（オンライン本人確認済みと簡易書留確認済み・ともに期限切れ）は015の会員1・2と同じ条件で、確認する結果（管理者宛メール1通に全員のIDが載る）も015が全部含む。
+IT-B08-07-004	IT-B08-07-006	包含	—	004はオンライン本人確認済みの期限切れ会員1名のバッチ後の身分証有効期限日がNULLになることを確かめる。006は同条件の会員を含む3名で同じ項目を確かめており、004にしかない条件・確認は無い。
+IT-B08-07-024	IT-B08-07-064	同値	L0088,L0102	管理者宛の通知先設定が空の期限切れ会員1名で、it_common宛メールが0通になることを確かめる点は同じ。違いは本人確認の方法（オンライン/簡易書留）だけで、L0088は対象を本人確認ステータスで絞り込まないとあり、L0102の空設定時の挙動も方法に依らない。064はit_common宛0通も確かめる。
+IT-B08-07-025	IT-B08-07-064	同値	L0088,L0040,L0102	通知先設定が空の期限切れ会員1名に会員宛メールが1通届くことを確かめる点は同じ。違いは本人確認の方法だけで、L0088は対象をステータスで絞らず、L0040の会員宛送信もL0102の通知先空でも済んでいる。064は会員宛1通を確かめる。
+IT-B08-07-059	IT-B08-07-064	同値	L0036,L0088,L0102	通知先設定が空のときの身分証有効期限日がNULLになることを確かめる点は同じ。違いは本人確認の方法だけで、L0036の有効期限日の初期化は方法に依らず、L0088も対象をステータスで絞らない。064は有効期限日NULLも確かめる。
+IT-B08-07-026	IT-B08-07-063	同値	L0088,L0101	カンマ区切りの複数通知先を設定した期限切れ会員1名で、2つの通知先それぞれに管理者宛メールが1通届くことを確かめる点は同じ。違いは本人確認の方法だけで、L0088は対象をステータスで絞らず、L0101の宛先決定も方法に依らない。063は本文の会員IDと氏名も確かめる。
+
+exec
+/bin/bash -lc "pwd && rg --files -g 'AGENTS.md' -g 'DEDUP_PROMPT.md' -g 'CROSS_PROMPT.md' -g 'V_01_targets.tsv'" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+/home/y-saito/Developments/hareruya-design-docs
+integration_test/casegen/dedup/DEDUP_PROMPT.md
+integration_test/casegen/dedup/review/V_01_targets.tsv
+integration_test/casegen/dedup/CROSS_PROMPT.md
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/dedup/DEDUP_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 類似・重複ケースの判定（機能 {FIDS}）
+
+作業場所は `/home/y-saito/Developments/hareruya-design-docs`。結合テストケースのうち、ほかのケースと同じことを確かめていて、外しても見つけられる不具合が減らないケースを選ぶ。**迷ったら残す。** 外しすぎはテストの抜けになり、残しすぎは手間が増えるだけなので、外す側に倒さない。
+
+依頼者の決定（2026-10-21）: 「類似および重複のテストケースがあれば除外する」。線引きは「同じ確認に加えて、設計書上で同じ扱いになる値（同値）を別々のケースで確かめているものは代表1件に絞る。境界の両側と、設計書が別の結果を定める値は残す」。
+
+## 読むもの
+
+- 機能ごとのケース一覧: `integration_test/casegen/dedup/inputs/<機能ID>.md`（先頭に設計書の写しと要因表の場所）
+- 設計書の写し: `integration_test/casegen/combination/units/<機能ID>/design.txt`（行頭 L0001…）。共通シートは `combination/units/_common/`
+- 要因表（あれば）: `combination/factors/<機能ID>_factors.tsv`。値は設計書の分かれ目ごとに選んだ代表で、値が違えば別の扱い
+
+ケースの印: `[E2E]` テストコードがある、`[PW:合格]` などは Playwright の結果がある、`[組 CB-…: …]` 要因の組合せのケース（組の値つき）、`[DP]` データパターン監査で足したケース。
+
+## 外してよい3種
+
+| 種別 | どういうときか |
+| --- | --- |
+| 同一 | 事前準備の条件・操作・確かめる結果が同じ。違うのはテストID、シードの名前・番号、データの名前（商品名・会員名など）、言い回し、確かめる順番だけ |
+| 包含 | 残す側が、外す側と同じ条件で同じ操作をし、外す側が確かめる結果を全部確かめている（残す側がそれ以上を確かめるのはよい）。外す側にしかない条件・操作・確かめる所が1つも無い |
+| 同値 | 違いのある値（データ・入力値・設定値）が、設計書の同じ1つの定めの同じ側に入り（同じ結果になり）、確かめる結果も同じ。設計書の写しの行を根拠に挙げる。違いが2か所以上あるときは、どの違いも同値であること |
+
+## 外さない（残す）もの
+
+1. 設計書が別々の定め・別々の結果として書いたもの。別のメッセージ、別の分岐、条件の列挙の別の項目は別のケース。例: 「公開・状態NM・買取価格1円以上のものを出す」の外れ方（非公開／NM以外／0円）は別々の条件の確認なのでどれも残す。同値は、**同じ1つの条件**に入る値どうしだけ。
+2. 境界。設計書が数・文字数・桁・日時・金額・件数の境目を書いているとき、境目の値とその隣の値（上限と上限+1、下限と下限-1、ちょうどと超え）は残す。境目から離れた値で、同じ側に境目の値のケースがあるものは同値として外してよい（残す側は境目の値のケース）。
+3. 表記の違い（大文字と小文字、全角と半角、空と未設定、前後の空白、0 と空）や、画面・表示言語・店舗（本店/支店）・会員区分・権限・端末・ブラウザの違いは、設計書が同じ扱いと**はっきり書いているときだけ**同値。書いていなければ残す。
+4. 確かめる所が違うもの（画面の表示だけ／DB／メール／CSV の中身／ログ／遷移先）。同じ操作でも確かめる所が違えば別のケース。ただし包含に当たれば外してよい。
+5. 異常系で、何が不正か（どの項目のどんな誤りか）が違うもの。同じエラーメッセージでも項目が違えば残す。同じ項目の同じ種類の誤り（例: 数字欄に英字「abc」と「xyz」）は同値。
+6. 要因の組合せのケース（`[組 …]`）どうしは、組の値が全部同じとき（同一・包含）だけ外せる。組の値が違えば同値として外さない（2つの要因の値の組が埋まらなくなる）。組でないケースが組合せのケースに含まれるときは、包含で組でないケースを外してよい。
+7. `[E2E]` か `[PW:…]` の付いたケースは外さない。重複の組に入っていれば残す側にする。両方に付いていれば両方残す。
+8. 状態を積み上げる一連の確認（前のケースの結果を使う）や、同じデータを2回操作して2回目の動きを確かめるもの（二重登録・再実行）は、1回目だけのケースと別。
+
+## 残す側の選び方
+
+`[E2E]`・`[PW:…]` の付いたもの → 包含で確かめる所が多いもの → 境目の値のもの → テストIDの番号が小さいもの。外すケースの残す側に、外すケースを指さない（残す側は必ず残るケース）。同じ重複の組は1件の残す側にまとめる。
+
+## 進め方の目安
+
+1. ケース一覧で、手順と期待結果が似たケースの組を拾う（並びが離れていても見る。番号が離れた所に、後の監査や組合せで足した同じ確認があることが多い）。
+2. 組ごとに事前準備の違いを書き出し、違いが同一・包含・同値のどれかに当たるか、当たらないかを決める。
+3. 同値は設計書の写しで、両方の値が入る定めの行を確かめてから書く。行を確かめられなければ残す。
+
+## 書くもの（機能ごとに1ファイル。外すケースが無い機能も見出しだけのファイルを書く）
+
+`integration_test/casegen/dedup/judg/<機能ID>.tsv`（タブ区切り・1行目は見出し）
+
+| 列 | 中身 |
+| --- | --- |
+| 外すテストID | 外すケース |
+| 残すテストID | 同じことを確かめていて残るケース（同じ機能） |
+| 種別 | 同一｜包含｜同値 |
+| 根拠 | 同値は設計書の写しの行（例 `L0123,L0130-L0132`）。同一・包含は `—` |
+| 理由 | 何が同じで、何が違い、その違いがなぜ結果を変えないか。1〜2文。セルの中にタブと改行を入れない |
+
+ほかのファイルは書き換えない（ケースの正本・inputs・設計書には触らない）。最後に、機能ごとの外す件数（種別ごと）と、迷って残した組があれば2〜3件を短く報告する。
+
+exec
+/bin/bash -lc 'cat integration_test/casegen/dedup/CROSS_PROMPT.md' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+# 機能をまたいだ類似・重複ケースの判定（{XFILE}）
+
+作業場所は `/home/y-saito/Developments/hareruya-design-docs`。まず `integration_test/casegen/dedup/DEDUP_PROMPT.md` を読み、そこに書いた決まり（外してよい3種・外さないもの・残す側の選び方）に従う。違いは、ここで見るのが**別々の機能のケースの組**であること。
+
+- 組の一覧: `integration_test/casegen/dedup/inputs/{XFILE}.md`（手順と期待結果の文字がよく似た組。似ているだけで重複とは限らない）
+- 設計書の写し: `integration_test/casegen/combination/units/<機能ID>/design.txt`
+
+## 機能をまたぐときの決まり
+
+- 外せるのは、**同じ画面の同じ操作で同じ結果を確かめる**とき（同一・包含・同値）だけ。例: マイページの「ポイント履歴」ボタンでポイント履歴画面へ遷移することを、マイページの機能とポイント履歴の機能の両方で確かめている。
+- 別の画面・別の出力・別の処理は、書き方が同じでも別の機能の確認なので残す。例: 受注一覧CSV と 受注詳細CSV の引用符の付け方、商品CSV登録 と カードCSV登録 の同じ形の検査。
+- 残す側は、その動きを定める設計書のシートを持つ機能のケース（ケースの出典が指すシートで決める）。決まらなければ `[E2E]`・`[PW:…]` → 確かめる所が多いもの → 番号が小さいもの。
+
+## 書くもの
+
+`integration_test/casegen/dedup/judg/{XFILE}.tsv`（タブ区切り・1行目は見出し。外すものが無ければ見出しだけ）。列は DEDUP_PROMPT.md と同じ（外すテストID・残すテストID・種別・根拠・理由）。残すテストIDは別の機能のケースになる。理由には、両方が同じ画面の同じ操作だと言える根拠（出典のシートなど）を書く。
+
+ほかのファイルは書き換えない。最後に、外す件数と、迷って残した組があれば2〜3件を短く報告する。
+
+exec
+/bin/bash -lc 'rg --files integration_test/casegen/dedup/inputs | head -30 && rg --files integration_test/casegen/combination/units | head -20' in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+integration_test/casegen/dedup/inputs/M14-07.md
+integration_test/casegen/dedup/inputs/F06-24.md
+integration_test/casegen/dedup/inputs/A17-05.md
+integration_test/casegen/dedup/inputs/M07-10.md
+integration_test/casegen/dedup/inputs/A06-06.md
+integration_test/casegen/dedup/inputs/M13-07.md
+integration_test/casegen/dedup/inputs/M05-04.md
+integration_test/casegen/dedup/inputs/M03-20.md
+integration_test/casegen/dedup/inputs/F04-02.md
+integration_test/casegen/dedup/inputs/B05-03.md
+integration_test/casegen/dedup/inputs/M03-18.md
+integration_test/casegen/dedup/inputs/M13-14.md
+integration_test/casegen/dedup/inputs/F03-06.md
+integration_test/casegen/dedup/inputs/M15-04.md
+integration_test/casegen/dedup/inputs/M16-07.md
+integration_test/casegen/dedup/inputs/M15-10.md
+integration_test/casegen/dedup/inputs/A07-03.md
+integration_test/casegen/dedup/inputs/A15-06.md
+integration_test/casegen/dedup/inputs/F06-03.md
+integration_test/casegen/dedup/inputs/F06-22.md
+integration_test/casegen/dedup/inputs/M10-03.md
+integration_test/casegen/dedup/inputs/M04-23.md
+integration_test/casegen/dedup/inputs/A15-18.md
+integration_test/casegen/dedup/inputs/M13-03.md
+integration_test/casegen/dedup/inputs/A08-01.md
+integration_test/casegen/dedup/inputs/M13-12.md
+integration_test/casegen/dedup/inputs/M13-02.md
+integration_test/casegen/dedup/inputs/M03-23.md
+integration_test/casegen/dedup/inputs/B08-02.md
+integration_test/casegen/dedup/inputs/M11-05.md
+integration_test/casegen/combination/units/B08-06/excluded.tsv
+integration_test/casegen/combination/units/M12-01/excluded.tsv
+integration_test/casegen/combination/units/B08-06/design.txt
+integration_test/casegen/combination/units/M12-01/design.txt
+integration_test/casegen/combination/units/M05-04/excluded.tsv
+integration_test/casegen/combination/units/M05-04/design.txt
+integration_test/casegen/combination/units/M08-09/excluded.tsv
+integration_test/casegen/combination/units/M08-09/design.txt
+integration_test/casegen/combination/units/M03-05/excluded.tsv
+integration_test/casegen/combination/units/M03-05/design.txt
+integration_test/casegen/combination/units/M08-01/excluded.tsv
+integration_test/casegen/combination/units/M08-01/design.txt
+integration_test/casegen/combination/units/M06-10/excluded.tsv
+integration_test/casegen/combination/units/M06-10/design.txt
+integration_test/casegen/combination/units/M03-02/excluded.tsv
+integration_test/casegen/combination/units/M03-02/design.txt
+integration_test/casegen/combination/units/M13-12/excluded.tsv
+integration_test/casegen/combination/units/M13-12/design.txt
+integration_test/casegen/combination/units/M03-30/excluded.tsv
+integration_test/casegen/combination/units/M03-30/design.txt
+
+exec
+/bin/bash -lc "rg -n 'IT-A06-03-016|IT-A06-03-052' integration_test/casegen/dedup/inputs/A06-03.md && sed -n '1,100p' integration_test/casegen/dedup/inputs/A06-03.md" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+84:### IT-A06-03-016 
+308:### IT-A06-03-052 [DP]
+# A06-03 店頭買取受注詳細更新（63件）
+
+- 設計書の写し: integration_test/casegen/combination/units/A06-03/design.txt（行頭 L0001…。シート: 0506 sheet-5 店頭買取情報更新）
+- 共通シート: なし（integration_test/casegen/combination/units/_common/）
+- 要因表: integration_test/casegen/combination/factors/A06-03_factors.tsv
+
+### IT-A06-03-001 
+- 観点ID: ITA-03,ITA-04
+- 出典: 0506 店頭買取情報更新 / 処理概要、機能仕様 処理概要
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）でMTGBuyerへログイン済みである（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-001〕（登録時に振られた査定IDを控えてある）が査定中で、商品規格ID 〔商品規格ID-A0603-001〕（登録時に振られた商品規格IDを控えてある）の注文詳細1件を持つ（S-A06-03-CASE-001）／③ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／④ 開始時に経理チームメールアドレスをaccounting-a0603-001@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. MTGBuyerの書類確認画面で査定ID 〔査定ID-A0603-001〕を開く／2. 開発者ツールのNetworkを記録状態にする／3. 経理払い出し待ちにするボタンを押す／4. 記録された要求を確認する
+- 期待結果: PUTメソッドで「/api/admin/otcBuyOrder/〔査定ID-A0603-001〕.json」へ要求が1件送信されること
+
+### IT-A06-03-002 
+- 観点ID: ITA-04,ITA-07
+- 出典: 0506 店頭買取情報更新 / リクエストパラメータ、ステータスコード、レスポンスデータ
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-002〕（登録時に振られた査定IDを控えてある）が査定中で、商品規格ID 〔商品規格ID-A0603-002〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-002）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-002@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. ブラウザの開発者ツールから、有効なjwt-tokenヘッダとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-002〕,""name"":""テスト商品A"",""quantity"":2,""price"":123,""sell_price"":300,""section_id"":〔部門ID-A0603-共有〕}]}」を指定し、PUTで「/api/admin/otcBuyOrder/〔査定ID-A0603-002〕.json」へ送信する／2. Networkで応答を確認する"
+- 期待結果: HTTP 200となり、レスポンスデータがないこと
+
+### IT-A06-03-003 
+- 観点ID: ITA-11,ITA-12
+- 出典: 0506 店頭買取情報更新 / 機能仕様 カスタマイズ説明、現行仕様 業務ロジック 更新対象の特定
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 管理者ID 〔管理者ID-A0603-共有B〕（登録時に振られた管理者IDを控えてある）が稼働中である（S-A06-03-OTHER-ADM）／③ 査定ID 〔査定ID-A0603-003〕（登録時に振られた査定IDを控えてある）はステータス=査定中、更新前担当者ID=〔管理者ID-A0603-共有B〕で、商品規格ID 〔商品規格ID-A0603-003〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-003）／④ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／⑤ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑥ 開始時に経理チームメールアドレスをaccounting-a0603-003@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. S-A06-03-ADMのjwt-tokenを使用し、JSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-003〕,""name"":""経理待ち商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-003〕へ送信する／2. DBで査定ID 〔査定ID-A0603-003〕を確認する"
+- 期待結果: 更新前のステータスおよび担当者にかかわらず、査定ID 〔査定ID-A0603-003〕のステータスが経理払い出し待ちになること
+
+### IT-A06-03-004 
+- 観点ID: ITA-05,ITA-07,ITA-11
+- 出典: 0506 店頭買取情報更新 / 機能仕様 経理払い出し待ちの場合は経理にメールを送信する
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-004〕（登録時に振られた査定IDを控えてある）が査定中で、商品規格ID 〔商品規格ID-A0603-004〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-004）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-004@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-004〕,""name"":""振込依頼商品"",""quantity"":1,""price"":1000,""sell_price"":1500,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-004〕へ送信する／2. accounting-a0603-004@example.testのメール受信確認画面を開く"
+- 期待結果: 経理チームのメールアドレスへ、件名「店頭買取振込依頼 【査定ID: 〔査定ID-A0603-004〕】」の振込依頼メールが1通表示されること
+
+### IT-A06-03-005 
+- 観点ID: ITA-11,ITA-12
+- 出典: 0506 店頭買取情報更新 / 機能仕様 送られてきたステータスが「買取成立」の場合
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-005〕（登録時に振られた査定IDを控えてある）は査定中、端末取引ID=null、注文詳細0件、個別入力商品0件で、商品規格ID 〔商品規格ID-A0603-005〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-005）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 1が買取成立、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":1,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":6039001,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-005〕,""name"":""登録済商品"",""quantity"":2,""price"":500,""sell_price"":700,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-005〕へ送信する／2. DBで査定ID 〔査定ID-A0603-005〕を確認する"
+- 期待結果: 個別入力商品が0件の査定ID 〔査定ID-A0603-005〕のステータスが入庫待ちになること
+
+### IT-A06-03-007 
+- 観点ID: ITA-05
+- 出典: 0506 店頭買取情報更新 / 機能仕様 カスタマイズ説明、リクエストパラメータ
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-007〕（登録時に振られた査定IDを控えてある）は査定中、端末取引ID=nullで、商品規格ID 〔商品規格ID-A0603-007〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-007）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 1が買取成立、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":1,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":6039001,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-007〕,""name"":""端末取引商品"",""quantity"":1,""price"":1000,""sell_price"":1200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-007〕へ送信する／2. DBで査定ID 〔査定ID-A0603-007〕を確認する"
+- 期待結果: 査定ID 〔査定ID-A0603-007〕の端末取引IDに6039001が保存されること
+
+### IT-A06-03-008 
+- 観点ID: ITA-12
+- 出典: 0506 店頭買取情報更新 / 機能仕様 処理概要、店頭買取情報
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-008〕（登録時に振られた査定IDを控えてある）は査定中、買取キャンセル日=nullで、商品規格ID 〔商品規格ID-A0603-008〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-008）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 2が買取キャンセルとして登録済みである（S-A06-03-STATUSES）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":2,""qualified_invoice_issuer_confirmation_flg"":""false"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-008〕,""name"":""キャンセル商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-008〕へ送信する／2. DBで査定ID 〔査定ID-A0603-008〕を確認する"
+- 期待結果: 査定ID 〔査定ID-A0603-008〕のステータスが買取キャンセルになること
+
+### IT-A06-03-011 
+- 観点ID: ITA-03,ITA-07,ITA-17
+- 出典: 0506 店頭買取情報更新 / 機能仕様 登録済み情報の削除、送信情報の登録
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-011〕（登録時に振られた査定IDを控えてある）は査定中で、注文詳細ID 604001011、個別入力商品ID 604101011、実在庫ID 604201011、実在庫履歴ID 604301011が各1件あり、商品規格ID 〔商品規格ID-A0603-011A〕（登録時に振られた商品規格IDを控えてある）・〔商品規格ID-A0603-011B〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-011）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-011@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-011A〕,""name"":""最新商品A"",""quantity"":2,""price"":123,""sell_price"":300,""section_id"":〔部門ID-A0603-共有〕},{""product_class_id"":〔商品規格ID-A0603-011B〕,""name"":""最新商品B"",""quantity"":1,""price"":77,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-011〕へ送信する／2. DBで査定ID 〔査定ID-A0603-011〕の注文詳細、個別入力商品、実在庫および実在庫履歴を確認する"
+- 期待結果: 更新前の注文詳細、個別入力商品、実在庫および実在庫履歴が残らず、送信した最新情報から作成されたレコードだけになること
+
+### IT-A06-03-012 
+- 観点ID: ITA-05,ITA-11
+- 出典: 0506 店頭買取情報更新 / 機能仕様 送信情報の登録 ①
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-012〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件、個別入力商品0件で、商品規格ID 〔商品規格ID-A0603-012〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-012）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-012@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-012〕,""name"":""規格商品A"",""quantity"":2,""price"":123,""sell_price"":300,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-012〕へ送信する／2. DBで査定ID 〔査定ID-A0603-012〕の商品情報を確認する"
+- 期待結果: 商品規格ID 〔商品規格ID-A0603-012〕の情報が店頭買取注文詳細に1件登録され、店頭買取注文個別入力商品には登録されないこと
+
+### IT-A06-03-014 
+- 観点ID: ITA-05,ITA-11
+- 出典: 0506 店頭買取情報更新 / リクエストパラメータ、現行仕様 業務ロジック 部門の設定と実在庫の集約
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-014〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件で、商品規格ID 〔商品規格ID-A0603-014〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-014）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-014@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-014〕,""name"":""部門商品A"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-014〕へ送信する／2. DBで登録された店頭買取注文詳細を確認する"
+- 期待結果: 登録された店頭買取注文詳細の部門IDが〔部門ID-A0603-共有〕になること
+
+### IT-A06-03-015 
+- 観点ID: ITA-08,ITA-11
+- 出典: 0506 店頭買取情報更新 / 現行仕様 業務ロジック 部門の設定と実在庫の集約
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-015〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件で、商品規格ID 〔商品規格ID-A0603-015〕（登録時に振られた商品規格IDを控えてある）が存在し、部門ID 699997015は存在しない（S-A06-03-CASE-015）／③ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／④ 開始時に経理チームメールアドレスをaccounting-a0603-015@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-015〕,""name"":""部門なし商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":699997015}]}」をPUTで査定ID 〔査定ID-A0603-015〕へ送信する／2. DBで登録された店頭買取注文詳細を確認する"
+- 期待結果: 存在しない部門ID 699997015が無視され、店頭買取注文詳細が部門なしで登録されること
+
+### IT-A06-03-016 
+- 観点ID: ITA-05,ITA-06
+- 出典: 0506 店頭買取情報更新 / 現行仕様 業務ロジック 部門の設定と実在庫の集約
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-016〕（登録時に振られた査定IDを控えてある）は査定中、実在庫0件、実在庫履歴0件で、商品規格ID 〔商品規格ID-A0603-016〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-016）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-016@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""""order_status"""":10,""""qualified_invoice_issuer_confirmation_flg"""":""""true"""",""""smaregi_transaction_id"""":null,""""order_details"""":[{""""product_class_id"""":〔商品規格ID-A0603-016〕,""""name"""":""""集約商品A-1"""",""""quantity"""":2,""""price"""":123,""""sell_price"""":300,""""section_id"""":〔部門ID-A0603-共有〕},{""""product_class_id"""":〔商品規格ID-A0603-016〕,""""name"""":""""集約商品A-2"""",""""quantity"""":3,""""price"""":123,""""sell_price"""":300,""""section_id"""":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-016〕へ送信する／2. DBで査定ID 〔査定ID-A0603-016〕の実在庫と実在庫履歴を確認する"
+- 期待結果: 商品規格ID 〔商品規格ID-A0603-016〕の実在庫が数量5の1件に集約され、対応する履歴も合算後数量5の1件になること
+
+### IT-A06-03-017 
+- 観点ID: ITA-05,ITA-06
+- 出典: 0506 店頭買取情報更新 / 機能仕様 店頭買取実在庫登録時の買取価格・買取小計
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-017〕（登録時に振られた査定IDを控えてある）は査定中、実在庫0件で、商品規格ID 〔商品規格ID-A0603-017〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-017）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-017@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-017〕,""name"":""原価商品A"",""quantity"":2,""price"":123,""sell_price"":300,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-017〕へ送信する／2. DBで商品規格ID 〔商品規格ID-A0603-017〕の店頭買取実在庫を確認する"
+- 期待結果: 店頭買取実在庫に買取価格123円と買取小計246円が登録されること
+
+### IT-A06-03-018 
+- 観点ID: ITA-05,ITA-06
+- 出典: 0506 店頭買取情報更新 / 現行仕様 業務ロジック 買取合計金額
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import csv,re
+p=Path('integration_test/casegen/dedup/review/V_01_targets.tsv')
+rows=list(csv.DictReader(p.open(),delimiter='\\t'))[:11]
+for row in rows:
+ print('\\n'+'='*70+'\\n'+row['外すテストID']+' -> '+row['残すテストID'])
+ for id in (row['外すテストID'],row['残すテストID']):
+  fid=re.match(r'IT-([A-Z]\\d\\d-\\d\\d)-',id).group(1)
+  s=Path(f'integration_test/casegen/dedup/inputs/{fid}.md').read_text()
+  m=re.search(rf'(?ms)"'^### {re.escape(id)}'"\\b.*?(?="'^### |'"\\Z)',s)
+  print(m.group(0) if m else 'NOT FOUND')
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+
+======================================================================
+IT-A01-01-002 -> IT-A01-01-047
+### IT-A01-01-002 
+- 観点ID: ITA-05,ITA-12,ITB-08,ITB-09
+- 出典: 0501 スマレジ連携処理 / 機能仕様 スマレジ連携方式一覧、1-1 B. 在庫変動履歴情報取得API、1-2. ECCUBE上のスマレジ在庫情報を更新
+- 事前準備: ① ECCUBEがスマレジ試験環境へ接続でき、店舗ID 1がスマレジ試験環境の店舗に対応付けられ、スマレジからのWebhookがECCUBEの/smaregi/stocksへ届き、非同期処理が動いている。本機能で「商品ID SMA-…」はスマレジ試験環境に商品コードSMA-…で登録した商品を指す（S-A01-01-ENV）／② 商品ID SMA-A01-001-002が、ECCUBEの店舗ID 1・在庫場所スマレジの在庫10、スマレジ試験環境の在庫10で登録されている。店頭受取分ではない（S-A01-01-SALE-002）／③ 非同期処理のジョブの状態を確認するため、システム管理者の権限を持つ管理者で別のブラウザからログインしている（S-A01-01-DASH）
+- 手順: 1. スマレジで商品ID SMA-A01-001-002を2個販売して取引を完了する／2. 手順1の操作の後に受信したWebhookが受信済みとして確認できるまで待ち、続けて受信したスマレジWebhookと非同期処理のジョブの待機中・実行中がいずれも0件になるまで待つ（合わせて最長5分。超えた場合は失敗として記録する）／3. DBで店舗ID 1の商品ID SMA-A01-001-002のスマレジ在庫を確認する
+- 期待結果: 在庫区分02:売上の数量-2が反映され、ECCUBEのスマレジ在庫が10から8になること
+
+
+### IT-A01-01-047 [DP]
+- 観点ID: ITA-07
+- 出典: 0501 スマレジ連携処理 / 機能仕様 スマレジ連携方式一覧、1-1 B. 在庫変動履歴情報取得API、1-2. ECCUBE上のスマレジ在庫情報を更新
+- 事前準備: ① ECCUBEがスマレジ試験環境へ接続でき、店舗ID 1がスマレジ試験環境の店舗に対応付けられ、スマレジからのWebhookがECCUBEの/smaregi/stocksへ届き、非同期処理が動いている。本機能で「商品ID SMA-…」はスマレジ試験環境に商品コードSMA-…で登録した商品を指す（S-A01-01-ENV）／② 商品ID SMA-A0101-047が、ECCUBEの店舗ID 1・在庫場所スマレジの在庫10、スマレジ試験環境の在庫10で登録されている。店頭受取分ではない（S-A01-01-SALE-047）／③ 非同期処理のジョブの状態を確認するため、システム管理者の権限を持つ管理者で別のブラウザからログインしている（S-A01-01-DASH）
+- 手順: 1. スマレジで商品ID SMA-A0101-047を1個販売して取引を完了する／2. 手順1の操作の後に受信したWebhookが受信済みとして確認できるまで待ち、続けて受信したスマレジWebhookと非同期処理のジョブの待機中・実行中がいずれも0件になるまで待つ（合わせて最長5分。超えた場合は失敗として記録する）／3. DBで店舗ID 1の商品ID SMA-A0101-047のスマレジ在庫を確認する
+- 期待結果: 在庫区分02:売上の数量-1が反映され、ECCUBEのスマレジ在庫が10から9になること
+
+
+
+======================================================================
+IT-A01-01-004 -> IT-A01-01-048
+### IT-A01-01-004 
+- 観点ID: ITA-05,ITA-12,ITB-08,ITB-09
+- 出典: 0501 スマレジ連携処理 / 機能仕様 スマレジ連携方式一覧、1-2. ECCUBE上のスマレジ在庫情報を更新
+- 事前準備: ① ECCUBEがスマレジ試験環境へ接続でき、店舗ID 1がスマレジ試験環境の店舗に対応付けられ、スマレジからのWebhookがECCUBEの/smaregi/stocksへ届き、非同期処理が動いている。本機能で「商品ID SMA-…」はスマレジ試験環境に商品コードSMA-…で登録した商品を指す（S-A01-01-ENV）／② 商品ID SMA-A01-002-004が、ECCUBEの店舗ID 1・在庫場所スマレジの在庫10、スマレジ試験環境の在庫10で登録されている（S-A01-01-RETURN-004）／③ スマレジ試験環境のレジで店舗ID 1に対応する店舗を選び、商品ID SMA-A01-002-004を2個販売して取引を完了し、取引IDを控える。ECCUBEの店舗ID 1・在庫場所スマレジの在庫とスマレジ試験環境の在庫がともに8になったことを確認する。ならなければ本ケースは前提不成立として記録し、実施しない／④ 非同期処理のジョブの状態を確認するため、システム管理者の権限を持つ管理者で別のブラウザからログインしている（S-A01-01-DASH）
+- 手順: 1. スマレジで事前準備③で控えた取引（商品ID SMA-A01-002-004を2個販売した取引）を全キャンセルする／2. 手順1の操作の後に受信したWebhookが受信済みとして確認できるまで待ち、続けて受信したスマレジWebhookと非同期処理のジョブの待機中・実行中がいずれも0件になるまで待つ（合わせて最長5分。超えた場合は失敗として記録する）／3. DBで店舗ID 1の商品ID SMA-A01-002-004のスマレジ在庫を確認する
+- 期待結果: 在庫区分12:返品の数量+2が反映され、ECCUBEのスマレジ在庫が8から10に戻ること
+
+
+### IT-A01-01-048 [DP]
+- 観点ID: ITA-07
+- 出典: 0501 スマレジ連携処理 / 機能仕様 スマレジ連携方式一覧、1-1 B. 在庫変動履歴情報取得API、1-2. ECCUBE上のスマレジ在庫情報を更新
+- 事前準備: ① ECCUBEがスマレジ試験環境へ接続でき、店舗ID 1がスマレジ試験環境の店舗に対応付けられ、スマレジからのWebhookがECCUBEの/smaregi/stocksへ届き、非同期処理が動いている。本機能で「商品ID SMA-…」はスマレジ試験環境に商品コードSMA-…で登録した商品を指す（S-A01-01-ENV）／② 商品ID SMA-A0101-048が、ECCUBEの店舗ID 1・在庫場所スマレジの在庫10、スマレジ試験環境の在庫10で登録されている（S-A01-01-RETURN-048）／③ スマレジ試験環境のレジで店舗ID 1に対応する店舗を選び、商品ID SMA-A0101-048を1個販売して取引を完了し、取引IDを控える。ECCUBEの店舗ID 1・在庫場所スマレジの在庫とスマレジ試験環境の在庫がともに9になったことを確認する。ならなければ本ケースは前提不成立として記録し、実施しない／④ 非同期処理のジョブの状態を確認するため、システム管理者の権限を持つ管理者で別のブラウザからログインしている（S-A01-01-DASH）
+- 手順: 1. スマレジで事前準備③で控えた取引（商品ID SMA-A0101-048を1個販売した取引）を全キャンセルする／2. 手順1の操作の後に受信したWebhookが受信済みとして確認できるまで待ち、続けて受信したスマレジWebhookと非同期処理のジョブの待機中・実行中がいずれも0件になるまで待つ（合わせて最長5分。超えた場合は失敗として記録する）／3. DBで店舗ID 1の商品ID SMA-A0101-048のスマレジ在庫を確認する
+- 期待結果: 在庫区分12:返品の数量+1が反映され、ECCUBEのスマレジ在庫が9から10に戻ること
+
+
+
+======================================================================
+IT-A02-04-003 -> IT-A02-04-002
+### IT-A02-04-003 
+- 観点ID: ITA-07,ITA-11
+- 出典: 0502 ポップアップ用カード情報取得（旧商品ID） / 現行仕様 業務ロジック 対象カードの引き当て
+- 事前準備: ① 店舗ID 1、本店の在庫場所EC-CUBE、商品状態の公開、言語JPおよびカード状態NMが記載値で登録済みである（S-A02-04-REF）／② カードID 〔カードID-A0204-003〕の旧商品IDがAER000022JN-003で、カード詳細ID 〔カード詳細ID-A0204-003〕に商品ID 〔商品ID-A0204-003〕が紐付き、商品規格ID 〔商品規格ID-A0204-003〕は表示対象である。商品と商品規格は未削除で、店舗ID 1のEC-CUBE在庫および商品画像・商品規格画像があり、同じ旧商品IDに一致する取得対象は1件だけである。カードID・カード詳細ID・商品IDおよび商品規格IDは登録時に振られた番号を控えてある（S-A02-04-BASE-003）／③ APIベースURLがA02-04結合試験環境を指し、APIサーバが起動して試験用DBへ接続しており、未認証ブラウザから参照できる（S-A02-04-ENV）
+- 手順: 1. ブラウザでカードの旧商品ID「AER000022JN-003」を指定した「/api/popup/old/AER000022JN-003」をGETで開く／2. 応答JSONを確認する
+- 期待結果: 旧商品IDが一致する商品ID 〔商品ID-A0204-003〕の商品情報が表示されること
+
+
+### IT-A02-04-002 
+- 観点ID: ITB-06
+- 出典: 0502 ポップアップ用カード情報取得（旧商品ID） / 機能仕様 処理概要、レスポンスデータ、レスポンスデータサンプル
+- 事前準備: ① 店舗ID 1、本店の在庫場所EC-CUBE、商品状態の公開、言語ID 1・コードJPおよびカード状態ID 1・コードNMが記載値で登録済みである（S-A02-04-REF）／② カードID 〔カードID-A0204-002〕の旧商品IDがAER000022JN-002で、商品ID 〔商品ID-A0204-002〕・商品規格ID 〔商品規格ID-A0204-002〕が公開・表示対象かつカード対応済みである。商品名は《生真面目な補充兵/Solemn Recruit》[AER] 白R、英語商品名は《Solemn Recruit》 [AER]、商品画像と商品規格画像はimg/goods/L/AER/jp/22_jpn-002.jpg、店舗ID 1のEC-CUBE在庫は17であり、同じ旧商品IDに一致する取得対象は1件だけである。カードID・商品IDおよび商品規格IDは登録時に振られた番号を控えてある（S-A02-04-BASE-002）／③ APIベースURLがA02-04結合試験環境を指し、APIサーバが起動して試験用DBへ接続しており、未認証ブラウザから参照できる（S-A02-04-ENV）
+- 手順: 1. ブラウザで「/api/popup/old/AER000022JN-002」をGETで開く／2. 応答JSONを確認する
+- 期待結果: productIdが〔商品ID-A0204-002〕、nameが「《生真面目な補充兵/Solemn Recruit》[AER] 白R」、productClassIdが〔商品規格ID-A0204-002〕、nameEnが「《Solemn Recruit》 [AER]」、subFileNameとfileNameが「img/goods/L/AER/jp/22_jpn-002.jpg」、codeが「JP」、conditionCodeが「NM」となり、productUrlに商品ID 〔商品ID-A0204-002〕の商品詳細URLが表示されること
+
+
+
+======================================================================
+IT-A06-03-033 -> IT-A06-03-032
+### IT-A06-03-033 
+- 観点ID: ITA-08,ITA-14
+- 出典: 0506 店頭買取情報更新 / 現行仕様 入出力 出力: レスポンス（失敗）
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-033〕（登録時に振られた査定IDを控えてある）が査定中で、関連商品情報は0件である（S-A06-03-CASE-033）／③ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[]}」をPUTで査定ID 〔査定ID-A0603-033〕へ送信する／2. Networkで応答を確認する"
+- 期待結果: HTTP 400となり、JSONのerrors配列に「1つ以上の商品を選んでください。」が含まれること
+
+
+### IT-A06-03-032 
+- 観点ID: ITA-08,ITA-14
+- 出典: 0506 店頭買取情報更新 / リクエストパラメータ、現行仕様 入出力 出力: レスポンス（失敗）
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-032〕（登録時に振られた査定IDを控えてある）が査定中で、関連商品情報は0件である（S-A06-03-CASE-032）／③ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）
+- 手順: "1. order_detailsを省略したJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null}」を有効なjwt-tokenで査定ID 〔査定ID-A0603-032〕へPUT送信する／2. Networkで応答を確認する"
+- 期待結果: HTTP 400となり、JSONのerrors配列に「1つ以上の商品を選んでください。」が含まれること
+
+
+
+======================================================================
+IT-A06-03-016 -> IT-A06-03-052
+### IT-A06-03-016 
+- 観点ID: ITA-05,ITA-06
+- 出典: 0506 店頭買取情報更新 / 現行仕様 業務ロジック 部門の設定と実在庫の集約
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-016〕（登録時に振られた査定IDを控えてある）は査定中、実在庫0件、実在庫履歴0件で、商品規格ID 〔商品規格ID-A0603-016〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-016）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-016@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""""order_status"""":10,""""qualified_invoice_issuer_confirmation_flg"""":""""true"""",""""smaregi_transaction_id"""":null,""""order_details"""":[{""""product_class_id"""":〔商品規格ID-A0603-016〕,""""name"""":""""集約商品A-1"""",""""quantity"""":2,""""price"""":123,""""sell_price"""":300,""""section_id"""":〔部門ID-A0603-共有〕},{""""product_class_id"""":〔商品規格ID-A0603-016〕,""""name"""":""""集約商品A-2"""",""""quantity"""":3,""""price"""":123,""""sell_price"""":300,""""section_id"""":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-016〕へ送信する／2. DBで査定ID 〔査定ID-A0603-016〕の実在庫と実在庫履歴を確認する"
+- 期待結果: 商品規格ID 〔商品規格ID-A0603-016〕の実在庫が数量5の1件に集約され、対応する履歴も合算後数量5の1件になること
+
+
+### IT-A06-03-052 [DP]
+- 観点ID: ITA-11
+- 出典: 0506 店頭買取情報更新 / 機能仕様 送信情報の登録 ③④、現行仕様 業務ロジック 部門の設定と実在庫の集約
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-052〕（登録時に振られた査定IDを控えてある）は査定中、実在庫0件、実在庫履歴0件で、商品規格ID 〔商品規格ID-A0603-052A〕（登録時に振られた商品規格IDを控えてある）と商品規格ID 〔商品規格ID-A0603-052B〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-MIXSTOCK-052）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-052@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idにnull、order_detailsに3件（1件目={product_class_id=〔商品規格ID-A0603-052A〕、name=混在商品A-1、quantity=2、price=123、sell_price=300、section_id=〔部門ID-A0603-共有〕}、2件目={product_class_id=〔商品規格ID-A0603-052A〕、name=混在商品A-2、quantity=3、price=123、sell_price=300、section_id=〔部門ID-A0603-共有〕}、3件目={product_class_id=〔商品規格ID-A0603-052B〕、name=混在商品B、quantity=1、price=77、sell_price=200、section_id=〔部門ID-A0603-共有〕}）を指定し、PUTで査定ID 〔査定ID-A0603-052〕へ送信する／2. DBで査定ID 〔査定ID-A0603-052〕の実在庫と実在庫履歴を確認する
+- 期待結果: 商品規格ID 〔商品規格ID-A0603-052A〕の実在庫が数量5の1件、商品規格ID 〔商品規格ID-A0603-052B〕の実在庫が数量1の1件になり、実在庫履歴も〔商品規格ID-A0603-052A〕が数量5の1件、〔商品規格ID-A0603-052B〕が数量1の1件になること
+
+
+
+======================================================================
+IT-A06-03-017 -> IT-A06-03-053
+### IT-A06-03-017 
+- 観点ID: ITA-05,ITA-06
+- 出典: 0506 店頭買取情報更新 / 機能仕様 店頭買取実在庫登録時の買取価格・買取小計
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-017〕（登録時に振られた査定IDを控えてある）は査定中、実在庫0件で、商品規格ID 〔商品規格ID-A0603-017〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-017）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-017@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-017〕,""name"":""原価商品A"",""quantity"":2,""price"":123,""sell_price"":300,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-017〕へ送信する／2. DBで商品規格ID 〔商品規格ID-A0603-017〕の店頭買取実在庫を確認する"
+- 期待結果: 店頭買取実在庫に買取価格123円と買取小計246円が登録されること
+
+
+### IT-A06-03-053 [DP]
+- 観点ID: ITA-07
+- 出典: 0506 店頭買取情報更新 / 処理概要、機能仕様 処理概要 ★店頭買取実在庫登録時
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-053〕（登録時に振られた査定IDを控えてある）は査定中、実在庫0件で、商品規格ID 〔商品規格ID-A0603-053A〕（登録時に振られた商品規格IDを控えてある）と商品規格ID 〔商品規格ID-A0603-053B〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-STOCKPRICE-053）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-053@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idにnull、order_detailsに2件（1件目={product_class_id=〔商品規格ID-A0603-053A〕、name=価格商品A、quantity=2、price=123、sell_price=300、section_id=〔部門ID-A0603-共有〕}、2件目={product_class_id=〔商品規格ID-A0603-053B〕、name=価格商品B、quantity=1、price=77、sell_price=200、section_id=〔部門ID-A0603-共有〕}）を指定し、PUTで査定ID 〔査定ID-A0603-053〕へ送信する／2. DBで査定ID 〔査定ID-A0603-053〕の実在庫を確認する
+- 期待結果: 商品規格ID 〔商品規格ID-A0603-053A〕の実在庫に買取価格123・買取小計246、商品規格ID 〔商品規格ID-A0603-053B〕の実在庫に買取価格77・買取小計77が登録されること
+
+
+
+======================================================================
+IT-A06-03-014 -> IT-A06-03-054
+### IT-A06-03-014 
+- 観点ID: ITA-05,ITA-11
+- 出典: 0506 店頭買取情報更新 / リクエストパラメータ、現行仕様 業務ロジック 部門の設定と実在庫の集約
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-014〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件で、商品規格ID 〔商品規格ID-A0603-014〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-014）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-014@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-014〕,""name"":""部門商品A"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-014〕へ送信する／2. DBで登録された店頭買取注文詳細を確認する"
+- 期待結果: 登録された店頭買取注文詳細の部門IDが〔部門ID-A0603-共有〕になること
+
+
+### IT-A06-03-054 [DP]
+- 観点ID: ITA-11
+- 出典: 0506 店頭買取情報更新 / リクエストパラメータ、現行仕様 業務ロジック 部門の設定と実在庫の集約
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-054〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件で、商品規格ID 〔商品規格ID-A0603-054〕（登録時に振られた商品規格IDを控えてある）が存在し、部門ID 699997054は存在しない（S-A06-03-SECMIX-054）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-054@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idにnull、order_detailsに2件（1件目={product_class_id=〔商品規格ID-A0603-054〕、name=部門あり商品054、quantity=1、price=100、sell_price=200、section_id=〔部門ID-A0603-共有〕}、2件目={product_class_id=〔商品規格ID-A0603-054〕、name=部門なし商品054、quantity=1、price=100、sell_price=200、section_id=699997054}）を指定し、PUTで査定ID 〔査定ID-A0603-054〕へ送信する／2. DBで査定ID 〔査定ID-A0603-054〕の店頭買取注文詳細を確認する
+- 期待結果: 商品名「部門あり商品054」の店頭買取注文詳細の部門IDが〔部門ID-A0603-共有〕になり、商品名「部門なし商品054」の店頭買取注文詳細は部門なしで登録されること
+
+
+
+======================================================================
+IT-A06-03-015 -> IT-A06-03-054
+### IT-A06-03-015 
+- 観点ID: ITA-08,ITA-11
+- 出典: 0506 店頭買取情報更新 / 現行仕様 業務ロジック 部門の設定と実在庫の集約
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-015〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件で、商品規格ID 〔商品規格ID-A0603-015〕（登録時に振られた商品規格IDを控えてある）が存在し、部門ID 699997015は存在しない（S-A06-03-CASE-015）／③ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／④ 開始時に経理チームメールアドレスをaccounting-a0603-015@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-015〕,""name"":""部門なし商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":699997015}]}」をPUTで査定ID 〔査定ID-A0603-015〕へ送信する／2. DBで登録された店頭買取注文詳細を確認する"
+- 期待結果: 存在しない部門ID 699997015が無視され、店頭買取注文詳細が部門なしで登録されること
+
+
+### IT-A06-03-054 [DP]
+- 観点ID: ITA-11
+- 出典: 0506 店頭買取情報更新 / リクエストパラメータ、現行仕様 業務ロジック 部門の設定と実在庫の集約
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-054〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件で、商品規格ID 〔商品規格ID-A0603-054〕（登録時に振られた商品規格IDを控えてある）が存在し、部門ID 699997054は存在しない（S-A06-03-SECMIX-054）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-054@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idにnull、order_detailsに2件（1件目={product_class_id=〔商品規格ID-A0603-054〕、name=部門あり商品054、quantity=1、price=100、sell_price=200、section_id=〔部門ID-A0603-共有〕}、2件目={product_class_id=〔商品規格ID-A0603-054〕、name=部門なし商品054、quantity=1、price=100、sell_price=200、section_id=699997054}）を指定し、PUTで査定ID 〔査定ID-A0603-054〕へ送信する／2. DBで査定ID 〔査定ID-A0603-054〕の店頭買取注文詳細を確認する
+- 期待結果: 商品名「部門あり商品054」の店頭買取注文詳細の部門IDが〔部門ID-A0603-共有〕になり、商品名「部門なし商品054」の店頭買取注文詳細は部門なしで登録されること
+
+
+
+======================================================================
+IT-A06-03-023 -> IT-A06-03-063
+### IT-A06-03-023 
+- 観点ID: ITA-12,ITA-21
+- 出典: 0506 店頭買取情報更新 / 機能仕様 店頭買取情報ステータス履歴、現行仕様 業務ロジック 受注への反映
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-023〕（登録時に振られた査定IDを控えてある）は査定中で、開始時のステータス履歴はID 604401023の1件、商品規格ID 〔商品規格ID-A0603-023〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-023）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-023@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-023〕,""name"":""履歴商品A"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-023〕へ送信する／2. DBで査定ID 〔査定ID-A0603-023〕のステータス変更履歴を確認する"
+- 期待結果: 更新前と異なる経理払い出し待ちのステータス変更履歴が1件追加されること
+
+
+### IT-A06-03-063 [組 CB-A06-03-001: 送信されたステータス=経理払い出し待ち／個別入力商品=個別入力商品がない／同じ商品規格の明細=同じ商品規格の明細は1件／更新前と送信ステータスの比較=更新前と異なるステータス／端末取引ID=端末取引IDなし]
+- 観点ID: ITA-11
+- 出典: 0506 店頭買取情報更新 / 機能仕様 送られてきたステータスが「買取成立」の場合、現行仕様 業務ロジック 部門の設定と実在庫の集約・買取合計金額・受注への反映｜0506 店頭買取情報更新 / 表示メッセージ
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 管理者ID 〔管理者ID-A0603-共有B〕（登録時に振られた管理者IDを控えてある）が稼働中である（S-A06-03-OTHER-ADM）／③ 査定ID 〔査定ID-A0603-063〕（登録時に振られた査定IDを控えてある）、受注ID 〔受注ID-A0603-063〕（登録時に振られた受注IDを控えてある）は査定中、端末取引ID=null、成立日・キャンセル日=null、合計金額=0円、注文詳細0件、個別入力商品0件、実在庫0件、実在庫履歴0件で、開始時のステータス履歴はID 604401063の1件（ステータス=査定中）、商品規格ID 〔商品規格ID-A0603-063〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CBKEIRI-063）／④ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／⑤ ステータスID 1が買取成立、ID 2が買取キャンセル、ID 6が査定中、ID 8が査定中断、ID 10が経理払い出し待ち、ID 12が未登録在庫あり、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）／⑥ 開始時に経理チームメールアドレスをaccounting-a0603cb063@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10（経理払い出し待ち）、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idにnull、order_detailsに1件（1件目={product_class_id=〔商品規格ID-A0603-063〕、name=A0603CB063商品A、quantity=2、price=123、sell_price=223、section_id=〔部門ID-A0603-共有〕}。product_class_idを書いていない明細は個別入力商品）を指定し（送信するステータス=経理払い出し待ち、個別入力商品がない、同じ商品規格の明細は1件、更新前と異なるステータス、端末取引IDなし）、PUTで受注ID 〔受注ID-A0603-063〕の「/api/admin/otcBuyOrder/〔受注ID-A0603-063〕.json」へ送信する／2. DBで査定ID 〔査定ID-A0603-063〕の受注、個別入力商品、実在庫、実在庫履歴およびステータス履歴を確認する／3. accounting-a0603cb063@example.testのメール受信確認画面を開く
+- 期待結果: 査定ID 〔査定ID-A0603-063〕の受注のステータスが経理払い出し待ち、合計金額が250円、端末取引IDが空のままで、ステータス変更履歴が開始時の1件から2件になり、商品規格ID 〔商品規格ID-A0603-063〕の実在庫が数量2の1件、実在庫履歴が数量2の1件にな、経理チームのメールアドレスaccounting-a0603cb063@example.testの受信箱に、件名「店頭買取振込依頼 【査定ID: 〔査定ID-A0603-063〕】」の振込依頼メールが1通表示されること
+
+
+
+======================================================================
+IT-A06-03-024 -> IT-A06-03-064
+### IT-A06-03-024 
+- 観点ID: ITA-11,ITA-21
+- 出典: 0506 店頭買取情報更新 / 現行仕様 業務ロジック 受注への反映
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-024〕（登録時に振られた査定IDを控えてある）は経理払い出し待ちで、開始時のステータス履歴はID 604401024の1件、商品規格ID 〔商品規格ID-A0603-024〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-024）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-024@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-024〕,""name"":""履歴商品B"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-024〕へ送信する／2. DBで査定ID 〔査定ID-A0603-024〕のステータス変更履歴件数を確認する"
+- 期待結果: 更新前と同じ経理払い出し待ちを指定したため、ステータス変更履歴が追加されないこと
+
+
+### IT-A06-03-064 [組 CB-A06-03-002: 送信されたステータス=経理払い出し待ち／個別入力商品=個別入力商品がある／同じ商品規格の明細=同じ商品規格の明細が複数／更新前と送信ステータスの比較=更新前と同じステータス／端末取引ID=端末取引IDあり]
+- 観点ID: ITA-11
+- 出典: 0506 店頭買取情報更新 / 機能仕様 送られてきたステータスが「買取成立」の場合、現行仕様 業務ロジック 部門の設定と実在庫の集約・買取合計金額・受注への反映｜0506 店頭買取情報更新 / 表示メッセージ
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 管理者ID 〔管理者ID-A0603-共有B〕（登録時に振られた管理者IDを控えてある）が稼働中である（S-A06-03-OTHER-ADM）／③ 査定ID 〔査定ID-A0603-064〕（登録時に振られた査定IDを控えてある）、受注ID 〔受注ID-A0603-064〕（登録時に振られた受注IDを控えてある）は経理払い出し待ち、端末取引ID=null、成立日・キャンセル日=null、合計金額=0円、注文詳細0件、個別入力商品0件、実在庫0件、実在庫履歴0件で、開始時のステータス履歴はID 604401064の1件（ステータス=経理払い出し待ち）、商品規格ID 〔商品規格ID-A0603-064〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CBKEIRIDUP-064）／④ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／⑤ ステータスID 1が買取成立、ID 2が買取キャンセル、ID 6が査定中、ID 8が査定中断、ID 10が経理払い出し待ち、ID 12が未登録在庫あり、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）／⑥ 開始時に経理チームメールアドレスをaccounting-a0603cb064@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10（経理払い出し待ち）、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idに6039064、order_detailsに3件（1件目={product_class_id=〔商品規格ID-A0603-064〕、name=A0603CB064商品A-1、quantity=2、price=123、sell_price=223、section_id=〔部門ID-A0603-共有〕}、2件目={product_class_id=〔商品規格ID-A0603-064〕、name=A0603CB064商品A-2、quantity=3、price=123、sell_price=223、section_id=〔部門ID-A0603-共有〕}、3件目={name=A0603CB064個別商品、quantity=1、price=55、sell_price=155、section_id=〔部門ID-A0603-共有〕}。product_class_idを書いていない明細は個別入力商品）を指定し（送信するステータス=経理払い出し待ち、個別入力商品がある、同じ商品規格の明細が複数、更新前と同じステータス、端末取引IDあり）、PUTで受注ID 〔受注ID-A0603-064〕の「/api/admin/otcBuyOrder/〔受注ID-A0603-064〕.json」へ送信する／2. DBで査定ID 〔査定ID-A0603-064〕の受注、個別入力商品、実在庫、実在庫履歴およびステータス履歴を確認する／3. accounting-a0603cb064@example.testのメール受信確認画面を開く
+- 期待結果: 査定ID 〔査定ID-A0603-064〕の受注のステータスが経理払い出し待ちのまま、合計金額が670円、ステータス変更履歴が開始時の1件のまま増えず、個別入力商品が1件登録され、商品規格ID 〔商品規格ID-A0603-064〕の実在庫が数量5の1件、実在庫履歴が数量5の1件にな、経理チームのメールアドレスaccounting-a0603cb064@example.testの受信箱に、件名「店頭買取振込依頼 【査定ID: 〔査定ID-A0603-064〕】」の振込依頼メールが1通表示されること
+
+
+
+======================================================================
+IT-A06-03-004 -> IT-A06-03-063
+### IT-A06-03-004 
+- 観点ID: ITA-05,ITA-07,ITA-11
+- 出典: 0506 店頭買取情報更新 / 機能仕様 経理払い出し待ちの場合は経理にメールを送信する
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-004〕（登録時に振られた査定IDを控えてある）が査定中で、商品規格ID 〔商品規格ID-A0603-004〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-004）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-004@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-004〕,""name"":""振込依頼商品"",""quantity"":1,""price"":1000,""sell_price"":1500,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-004〕へ送信する／2. accounting-a0603-004@example.testのメール受信確認画面を開く"
+- 期待結果: 経理チームのメールアドレスへ、件名「店頭買取振込依頼 【査定ID: 〔査定ID-A0603-004〕】」の振込依頼メールが1通表示されること
+
+
+### IT-A06-03-063 [組 CB-A06-03-001: 送信されたステータス=経理払い出し待ち／個別入力商品=個別入力商品がない／同じ商品規格の明細=同じ商品規格の明細は1件／更新前と送信ステータスの比較=更新前と異なるステータス／端末取引ID=端末取引IDなし]
+- 観点ID: ITA-11
+- 出典: 0506 店頭買取情報更新 / 機能仕様 送られてきたステータスが「買取成立」の場合、現行仕様 業務ロジック 部門の設定と実在庫の集約・買取合計金額・受注への反映｜0506 店頭買取情報更新 / 表示メッセージ
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 管理者ID 〔管理者ID-A0603-共有B〕（登録時に振られた管理者IDを控えてある）が稼働中である（S-A06-03-OTHER-ADM）／③ 査定ID 〔査定ID-A0603-063〕（登録時に振られた査定IDを控えてある）、受注ID 〔受注ID-A0603-063〕（登録時に振られた受注IDを控えてある）は査定中、端末取引ID=null、成立日・キャンセル日=null、合計金額=0円、注文詳細0件、個別入力商品0件、実在庫0件、実在庫履歴0件で、開始時のステータス履歴はID 604401063の1件（ステータス=査定中）、商品規格ID 〔商品規格ID-A0603-063〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CBKEIRI-063）／④ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／⑤ ステータスID 1が買取成立、ID 2が買取キャンセル、ID 6が査定中、ID 8が査定中断、ID 10が経理払い出し待ち、ID 12が未登録在庫あり、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）／⑥ 開始時に経理チームメールアドレスをaccounting-a0603cb063@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10（経理払い出し待ち）、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idにnull、order_detailsに1件（1件目={product_class_id=〔商品規格ID-A0603-063〕、name=A0603CB063商品A、quantity=2、price=123、sell_price=223、section_id=〔部門ID-A0603-共有〕}。product_class_idを書いていない明細は個別入力商品）を指定し（送信するステータス=経理払い出し待ち、個別入力商品がない、同じ商品規格の明細は1件、更新前と異なるステータス、端末取引IDなし）、PUTで受注ID 〔受注ID-A0603-063〕の「/api/admin/otcBuyOrder/〔受注ID-A0603-063〕.json」へ送信する／2. DBで査定ID 〔査定ID-A0603-063〕の受注、個別入力商品、実在庫、実在庫履歴およびステータス履歴を確認する／3. accounting-a0603cb063@example.testのメール受信確認画面を開く
+- 期待結果: 査定ID 〔査定ID-A0603-063〕の受注のステータスが経理払い出し待ち、合計金額が250円、端末取引IDが空のままで、ステータス変更履歴が開始時の1件から2件になり、商品規格ID 〔商品規格ID-A0603-063〕の実在庫が数量2の1件、実在庫履歴が数量2の1件にな、経理チームのメールアドレスaccounting-a0603cb063@example.testの受信箱に、件名「店頭買取振込依頼 【査定ID: 〔査定ID-A0603-063〕】」の振込依頼メールが1通表示されること
+
+
+
+exec
+/bin/bash -lc "rg -n '"'^(L0082|L0083|L0084|L0135|L0033)'"\\b' integration_test/casegen/combination/units/A01-01/design.txt && rg -n '"'^L0115'"\\b' integration_test/casegen/combination/units/A06-03/design.txt && rg -n '"'^L(0021|0065)'"\\b' integration_test/casegen/combination/units/A14-03/design.txt && rg -n '"'^L0019'"\\b' integration_test/casegen/combination/units/A15-08/design.txt && rg -n '"'^L(0011|0027)'"\\b' integration_test/casegen/combination/units/A15-10/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+34:L0033	スマレジ	スマレジで取引全キャンセル	1:webhook	スマレジでの受注が全キャンセルされた結果をwebhookで受信し、スマレジ在庫数を戻す
+83:L0082	在庫区分が02:売上の時は出庫処理, 12:の時は入庫処理を実施
+84:L0083	取得したスマレジ在庫変更履歴情報の在庫区分が02:売上と12:返品のみ、情報更新処理を実施。それ以外は無視する
+85:L0084	店頭受取分の商品IDの場合、スマレジ側の在庫は変動しないので無視する
+136:L0135	数量 入出庫数(相対値で設定)
+116:L0115	400	明細が未指定または空	errorsに「1つ以上の商品を選んでください。」を含む
+22:L0021	・リクエストパラメータ「lang」が未指定の場合は、英語版(en)のカード情報を優先して返す
+66:L0065	優先言語は日本語と英語の2つで、カード言語に ja 以外の値を指定したときも英語になる。
+20:L0019	本APIは認証を行わない。トークンの検証もプレイヤーの照合も行わないため、認証起因の拒否（HTTP 401）を返さない。呼び出し可能なクライアントはデッキビルダーアプリであり、利用者の状態によらず参照できる。
+12:L0011	即時保存の指定が真のときは、整合性を検証したうえで確定保存し、当該デッキの一時保存を削除する。偽または指定が無いときは、整合性を検証したうえで内容を下書きとして一時保存する。
+28:L0027	入力	デッキID（パス・必須）、認証用トークン（ヘッダ・必須）、公開範囲（必須。公開1・非公開2・限定公開3）。即時保存の指定・デッキ名・フォーマットの識別子・アーキタイプの識別子・代表カード画像に用いるカードID・キャンペーンタグの識別子・採用カードは、いずれも指定が無いときは扱わない
+
+codex
+42行あり、同値の根拠行に加えて、残す側の手順と期待結果を突き合わせています。組合せケースを残す側にした行は、元ケースの条件と確認点がその中に実際に含まれるかを重点的に見ています。
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import csv,re
+rows=list(csv.DictReader(Path('integration_test/casegen/dedup/review/V_01_targets.tsv').open(),delimiter='\\t'))[11:23]
+for row in rows:
+ print('\\n'+'='*35+' '+row['外すテストID']+' > '+row['残すテストID'])
+ for id in (row['外すテストID'],row['残すテストID']):
+  fid=re.match(r'IT-([A-Z]\\d\\d-\\d\\d)-',id).group(1)
+  s=Path(f'integration_test/casegen/dedup/inputs/{fid}.md').read_text()
+  m=re.search(rf'(?ms)"'^### {re.escape(id)}'"\\b.*?(?="'^### |'"\\Z)',s)
+  if not m: print('MISSING',id);continue
+  for line in m.group(0).splitlines():
+   if line.startswith(('###','- 事前準備:','- 手順:','- 期待結果:')): print(line)
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+
+=================================== IT-A06-03-008 > IT-A06-03-069
+### IT-A06-03-008 
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-008〕（登録時に振られた査定IDを控えてある）は査定中、買取キャンセル日=nullで、商品規格ID 〔商品規格ID-A0603-008〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-008）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 2が買取キャンセルとして登録済みである（S-A06-03-STATUSES）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":2,""qualified_invoice_issuer_confirmation_flg"":""false"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-008〕,""name"":""キャンセル商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-008〕へ送信する／2. DBで査定ID 〔査定ID-A0603-008〕を確認する"
+- 期待結果: 査定ID 〔査定ID-A0603-008〕のステータスが買取キャンセルになること
+### IT-A06-03-069 [組 CB-A06-03-007: 送信されたステータス=買取キャンセル／個別入力商品=個別入力商品がない／同じ商品規格の明細=同じ商品規格の明細は1件／更新前と送信ステータスの比較=更新前と異なるステータス／端末取引ID=端末取引IDあり]
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 管理者ID 〔管理者ID-A0603-共有B〕（登録時に振られた管理者IDを控えてある）が稼働中である（S-A06-03-OTHER-ADM）／③ 査定ID 〔査定ID-A0603-069〕（登録時に振られた査定IDを控えてある）、受注ID 〔受注ID-A0603-069〕（登録時に振られた受注IDを控えてある）は査定中、端末取引ID=null、成立日・キャンセル日=null、合計金額=0円、注文詳細0件、個別入力商品0件、実在庫0件、実在庫履歴0件で、開始時のステータス履歴はID 604401069の1件（ステータス=査定中）、商品規格ID 〔商品規格ID-A0603-069〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CBCANCELTXN-069）／④ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／⑤ ステータスID 1が買取成立、ID 2が買取キャンセル、ID 6が査定中、ID 8が査定中断、ID 10が経理払い出し待ち、ID 12が未登録在庫あり、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに2（買取キャンセル）、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idに6039069、order_detailsに1件（1件目={product_class_id=〔商品規格ID-A0603-069〕、name=A0603CB069商品A、quantity=3、price=123、sell_price=223、section_id=〔部門ID-A0603-共有〕}。product_class_idを書いていない明細は個別入力商品）を指定し（送信するステータス=買取キャンセル、個別入力商品がない、同じ商品規格の明細は1件、更新前と異なるステータス、端末取引IDあり）、PUTで受注ID 〔受注ID-A0603-069〕の「/api/admin/otcBuyOrder/〔受注ID-A0603-069〕.json」へ送信する／2. DBで査定ID 〔査定ID-A0603-069〕の受注、個別入力商品、実在庫、実在庫履歴およびステータス履歴を確認する
+- 期待結果: 査定ID 〔査定ID-A0603-069〕の受注のステータスが買取キャンセル、買取キャンセル日が登録されて空でなくなり、買取成立日が空のまま、合計金額が370円で、ステータス変更履歴が開始時の1件から2件になり、商品規格ID 〔商品規格ID-A0603-069〕の実在庫が数量3の1件、実在庫履歴が数量3の1件になること
+
+=================================== IT-A06-06-006 > IT-A06-06-012
+### IT-A06-06-006 
+- 事前準備: ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-006〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-006〕（登録時に振られたカード詳細IDを控えてある）・商品ID 〔商品ID-A0606-006〕（登録時に振られた商品IDを控えてある）・商品規格ID 〔商品規格ID-A0606-006〕（登録時に振られた商品規格IDを控えてある）が紐付き、カードセット、プロモーション、略称タグ、買取価格、部門IDは未設定、基準価格2345、商品画像1件、レアリティーR、言語JP、状態NM、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫7であり、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-OPTIONAL-006）
+- 手順: 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-006〕.json」へ要求を送信する／2. Networkで応答JSONを確認する
+- 期待結果: カードセット、プロモーション、略称タグ、買取価格および部門IDが設定されていない商品規格も応答から除外されず、cardsetCode、cardsetName、promotionName、storageCodeName、buyPrice、sectionIdの各項目が省略されないこと
+### IT-A06-06-012 
+- 事前準備: ① ログインID a0606_admin_aの管理者が有効で、所属店舗IDが〔店舗ID-A0606-共有A〕（登録時に振られた店舗IDを控えてある）であり、この管理者としてログインしている（S-A06-06-ADM-A）／② カードID 〔カードID-A0606-012〕（登録時に振られたカードIDを控えてある）・カード詳細ID 〔カード詳細ID-A0606-012〕（登録時に振られたカード詳細IDを控えてある）・商品ID 〔商品ID-A0606-012〕（登録時に振られた商品IDを控えてある）・商品規格ID 〔商品規格ID-A0606-012〕（登録時に振られた商品規格IDを控えてある）が紐付き、カードセット、プロモーション、略称タグ、買取価格、部門IDは未設定、基準価格2345、商品画像1件、レアリティーR、言語JP、状態NM、店舗ID 〔店舗ID-A0606-共有A〕のEC在庫7であり、商品と商品規格は削除されておらず、高額商品コードがない（S-A06-06-OPTIONAL-012）
+- 手順: 1. ブラウザの開発者ツールからGETで「/api/buying/〔カード詳細ID-A0606-012〕.json」へ要求を送信する／2. Networkで応答JSONのカード詳細ID 〔カード詳細ID-A0606-012〕配下のcardsetCode、cardsetName、promotionName、storageCodeName、buyPriceおよびsectionIdを確認する
+- 期待結果: cardsetCode、cardsetName、promotionName、storageCodeName、buyPriceおよびsectionIdの各項目が省略されずに含まれ、値がいずれも空文字ではなくJSONのnullとなること
+
+=================================== IT-A06-13-002 > IT-A06-13-014
+### IT-A06-13-002 
+- 事前準備: ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定して試験端末の送信元IPを許可し、管理者ID 〔管理者ID-A0613-共有〕（登録時に振られた管理者IDを控えてある）を稼働中・システム管理者権限・所属店舗ID 〔店舗ID-A0613-共有〕（登録時に振られた店舗IDを控えてある）で登録する。a0613_adminとZxA0613c001で有効なjwt-tokenを取得する（S-A06-13-AUTH）／② 店舗ID 〔店舗ID-A0613-共有〕、更新前担当者ID 〔更新前担当者ID-A0613-共有〕（登録時に振られた管理者IDを控えてある）、査定前ステータス、本人確認証明書ID 1の自動車運転免許証とID 2のパスポート、会社員、日本および東京都を記載値で登録する（S-A06-13-REFERENCES）／③ 店頭買取ID 〔店頭買取ID-A0613-002〕（登録時に振られた店頭買取IDを控えてある）を店舗ID 〔店舗ID-A0613-共有〕、査定前、本人確認証明書ID=1、更新担当者ID=〔更新前担当者ID-A0613-共有〕、更新日時=2026-09-03 09:00:00で登録する（S-A06-13-ORDER-002）
+- 手順: 1. ブラウザの開発者ツールからS-A06-13-AUTHの有効なjwt-tokenヘッダを指定し、クエリ「identification=2」を付けたHTTP PUT要求を「/api/admin/otcBuyOrder/〔店頭買取ID-A0613-002〕/identification.json」へ送信する／2. Networkで要求メソッドとHTTPステータスを確認する
+- 期待結果: 「/api/admin/otcBuyOrder/〔店頭買取ID-A0613-002〕/identification.json」へPUT要求が送信され、HTTPステータスが200となること
+### IT-A06-13-014 
+- 事前準備: ① 開始時に認証用署名シークレットをdGVzdF9qd3Rfc2VjcmV0X2tleV8zMmJ5dGVzX2xvbmc=、署名方式をHS256に設定して試験端末の送信元IPを許可し、管理者ID 〔管理者ID-A0613-共有〕（登録時に振られた管理者IDを控えてある）を稼働中・システム管理者権限・所属店舗ID 〔店舗ID-A0613-共有〕（登録時に振られた店舗IDを控えてある）で登録する。a0613_adminとZxA0613c001で有効なjwt-tokenを取得する（S-A06-13-AUTH）／② 店舗ID 〔店舗ID-A0613-共有〕、更新前担当者ID 〔更新前担当者ID-A0613-共有〕（登録時に振られた管理者IDを控えてある）、査定前ステータス、本人確認証明書ID 1の自動車運転免許証とID 2のパスポートを登録する（S-A06-13-REFERENCES）／③ 店頭買取ID 〔店頭買取ID-A0613-014〕（登録時に振られた店頭買取IDを控えてある）の既存データを削除し、店舗ID 〔店舗ID-A0613-共有〕、査定前、本人確認証明書ID=1、更新担当者ID=〔更新前担当者ID-A0613-共有〕、更新日時=2026-09-03 09:00:00で再登録する（S-A06-13-ORDER-014）
+- 手順: 1. ブラウザの開発者ツールからS-A06-13-AUTHの有効なjwt-tokenヘッダを指定し、クエリ「identification=2」を付けたHTTP PUT要求を「/api/admin/otcBuyOrder/〔店頭買取ID-A0613-014〕/identification.json」へ送信する／2. NetworkでHTTPステータスと応答本文を確認する
+- 期待結果: HTTPステータスが200となり、応答本文が空本文や空オブジェクトではなく、処理結果コード（code）200の1項目だけを持つJSONオブジェクトとなること
+
+=================================== IT-A14-03-014 > IT-A14-03-012
+### IT-A14-03-014 
+- 事前準備: ① 開始時にAPIベースURLをA14-03試験環境の公開URLに設定し、カード検索APIが試験用データベースへ接続していることを確認する（S-A14-03-ENV）／② カードID 〔カードID-A1403-014〕（登録時に振られたカードIDを控えてある）はカード名(日)「言語優先カード-014」・カード名(英)「Language-014 Priority Card」・通常版・カードセット発売日2026-01-14・非フォイル・非プロモーションであり、カード詳細ID 141350014、カードセットID 〔カードセットID-A1403-014〕（登録時に振られたカードセットIDを控えてある）、日本語画像ID 〔日本語画像ID-A1403-014〕（登録時に振られた番号で、管理画面に表示されないためURLで見分ける）・URL「img/goods/a14-03-014/lang-jp.jpg」、英語画像ID 〔英語画像ID-A1403-014〕（登録時に振られた番号で、管理画面に表示されないためURLで見分ける）・URL「img/goods/a14-03-014/lang-en.jpg」が関連付けられている。関連画像はこの2件だけで、両カード名に一致するカードはこの1件だけである（S-A14-03-LANG-014）
+- 手順: 1. APIベースURLの「/card?name=Language-014%20Priority%20Card&lang=fr」をブラウザで開く／2. 応答のidとimage_urlを確認する
+- 期待結果: ja以外の値が指定されたため英語版が優先され、id=〔カードID-A1403-014〕、image_url=img/goods/a14-03-014/lang-en.jpgのカード情報1件が返ること
+### IT-A14-03-012 
+- 事前準備: ① 開始時にAPIベースURLをA14-03試験環境の公開URLに設定し、カード検索APIが試験用データベースへ接続していることを確認する（S-A14-03-ENV）／② カードID 〔カードID-A1403-012〕（登録時に振られたカードIDを控えてある）はカード名(日)「言語優先カード-012」・カード名(英)「Language-012 Priority Card」・通常版・カードセット発売日2026-01-12・非フォイル・非プロモーションであり、カード詳細ID 141350012、カードセットID 〔カードセットID-A1403-012〕（登録時に振られたカードセットIDを控えてある）、日本語画像ID 〔日本語画像ID-A1403-012〕（登録時に振られた番号で、管理画面に表示されないためURLで見分ける）・URL「img/goods/a14-03-012/lang-jp.jpg」、英語画像ID 〔英語画像ID-A1403-012〕（登録時に振られた番号で、管理画面に表示されないためURLで見分ける）・URL「img/goods/a14-03-012/lang-en.jpg」が関連付けられている。関連画像はこの2件だけで、両カード名に一致するカードはこの1件だけである（S-A14-03-LANG-012）
+- 手順: 1. APIベースURLの「/card?name=言語優先カード-012&lang=jp」をブラウザで開く／2. 応答のidとimage_urlを確認する
+- 期待結果: langにja以外の値「jp」を指定したため英語版が優先され、id=〔カードID-A1403-012〕、image_url=img/goods/a14-03-012/lang-en.jpgのカード情報1件が返ること
+
+=================================== IT-A15-04-002 > IT-A15-04-008
+### IT-A15-04-002 
+- 事前準備: ① プレイヤーID （登録時に振られたプレイヤーIDを控えてある。〔プレイヤーID-A1504-002〕）・デッキユーザーID （登録時に振られたデッキユーザーIDを控えてある。〔デッキユーザーID-A1504-002〕）・ニックネーム「ニックネーム1504-002-A」・プロフィール「プロフィール1504-002-A」のプレイヤーが未削除で登録済みである（S-A15-04-OK-002）
+- 手順: 1. ブラウザの開発者ツールを開く／2. 認証トークンのヘッダを付けず、クエリのデッキユーザーIDに「〔デッキユーザーID-A1504-002〕」を指定してユーザー情報参照（GET /user）へ要求を送信する／3. Networkで応答のHTTPステータスを確認する
+- 期待結果: HTTPステータスが200となること
+### IT-A15-04-008 
+- 事前準備: ① プレイヤーID （登録時に振られたプレイヤーIDを控えてある。〔プレイヤーID-A1504-008〕）・デッキユーザーID （登録時に振られたデッキユーザーIDを控えてある。〔デッキユーザーID-A1504-008〕）・ニックネーム「ニックネーム1504-008-A」・プロフィール「プロフィール1504-008-A」のプレイヤーが未削除で登録済みである（S-A15-04-NOHDR-008）
+- 手順: 1. ブラウザの開発者ツールを開く／2. 認証トークンのヘッダを一切付けず、クエリのデッキユーザーIDに「〔デッキユーザーID-A1504-008〕」を指定してユーザー情報参照（GET /user）へ要求を送信する／3. Networkで応答のHTTPステータスとニックネーム・プロフィール・デッキユーザーIDを確認する
+- 期待結果: HTTPステータス401とならずHTTPステータス200で、ニックネーム「ニックネーム1504-008-A」、プロフィール「プロフィール1504-008-A」、デッキユーザーID「〔デッキユーザーID-A1504-008〕」が返ること
+
+=================================== IT-A15-08-051 > IT-A15-08-050
+### IT-A15-08-051 
+- 事前準備: ① カード名（日本語名・英語名）に「A1508-051」を含むカードは次の分だけである。カードの識別子〔カードID-A1508-051〕・日本語名「A1508-051-J1」・英語名「A1508-051-E1」（カードの識別子は、登録時に振られた番号を控えてある）（S-A15-08-BADTOKEN-051）
+- 手順: 1. ブラウザの開発者ツールを開く／2. jwt-tokenヘッダに署名を検証できない値「A1508-051-invalid」を付けて、カード名に「A1508-051」を指定してカード検索APIへ、指定した条件をすべてクエリとして要求を送信する／3. Networkで応答を確認する
+- 期待結果: （トークンの検証は行われない）HTTPステータス200となり（HTTP 401にならない）、総件数が1、カード配列がカードの識別子〔カードID-A1508-051〕の1件となること
+### IT-A15-08-050 
+- 事前準備: ① カード名（日本語名・英語名）に「A1508-050」を含むカードは次の分だけである。カードの識別子〔カードID-A1508-050〕・日本語名「A1508-050-J1」・英語名「A1508-050-E1」（カードの識別子は、登録時に振られた番号を控えてある）（S-A15-08-NOAUTH-050）
+- 手順: 1. ブラウザの開発者ツールを開く／2. jwt-tokenヘッダを付けずに、カード名に「A1508-050」を指定してカード検索APIへ、指定した条件をすべてクエリとして要求を送信する／3. Networkで応答を確認する
+- 期待結果: HTTPステータス200となり（HTTP 401にならない）、総件数が1、カード配列がカードの識別子〔カードID-A1508-050〕の1件となること
+
+=================================== IT-A15-10-029 > IT-A15-10-027
+### IT-A15-10-029 
+- 事前準備: ① デッキ情報更新APIへ要求でき、DBの保存内容とRedisの一時保存を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2およびデッキの参照マスタが登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-029〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「A1510-029-更新前」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲2、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数1であり、当該デッキの一時保存は存在しない。開始時にRedisからデッキID 〔デッキID-A1510-029〕の一時保存を削除し、存在しないことを確認する。〔デッキID-A1510-029〕は登録時に振られたデッキIDを控えてある（S-A15-10-DRAFT-029）
+- 手順: 1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-029〕、デッキ名「A1510-029-下書き」を指定し、即時保存を偽にし、必須の公開範囲を指定せずデッキ情報更新APIへ要求を送信する／2. Networkで応答のHTTPステータスを確認する
+- 期待結果: 応答のHTTPステータスが400であること
+### IT-A15-10-027 
+- 事前準備: ① デッキ情報更新APIへ要求でき、DBの保存内容とRedisの一時保存を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2およびデッキの参照マスタが登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-027〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「A1510-027-更新前」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲2、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数1であり、当該デッキの一時保存は存在しない。開始時にRedisからデッキID 〔デッキID-A1510-027〕の一時保存を削除し、存在しないことを確認する。〔デッキID-A1510-027〕は登録時に振られたデッキIDを控えてある（S-A15-10-DRAFT-027）
+- 手順: 1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-027〕、デッキ名「A1510-027-下書き」を指定し、必須の公開範囲を指定せずデッキ情報更新APIへ要求を送信する／2. Networkで応答のHTTPステータスを確認する
+- 期待結果: 応答のHTTPステータスが400であること
+
+=================================== IT-A15-10-030 > IT-A15-10-028
+### IT-A15-10-030 
+- 事前準備: ① デッキ情報更新APIへ要求でき、DBの保存内容とRedisの一時保存を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2およびデッキの参照マスタが登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-030〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「A1510-030-更新前」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲2、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数1であり、当該デッキの一時保存は存在しない。開始時にRedisからデッキID 〔デッキID-A1510-030〕の一時保存を削除し、存在しないことを確認する。〔デッキID-A1510-030〕は登録時に振られたデッキIDを控えてある（S-A15-10-DRAFT-030）
+- 手順: 1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-030〕、デッキ名「A1510-030-下書き」を指定し、即時保存を偽にし、必須の公開範囲を指定せずデッキ情報更新APIへ要求を送信する／2. RedisにデッキID 〔デッキID-A1510-030〕の一時保存があるか確認する
+- 期待結果: RedisにデッキID 〔デッキID-A1510-030〕の一時保存が作られないこと
+### IT-A15-10-028 
+- 事前準備: ① デッキ情報更新APIへ要求でき、DBの保存内容とRedisの一時保存を確認できる（S-A15-10-ENV）／② 顧客ID 〔顧客ID-A1510-共有A〕とプレイヤーID 〔プレイヤーID-A1510-共有A〕が対応し、所有者Aの正規署名済み認証用トークンがある。〔顧客ID-A1510-共有A〕・〔プレイヤーID-A1510-共有A〕は登録時に振られた番号を控えてある（S-A15-10-PLAYERS）／③ 公開範囲ID 1・2およびデッキの参照マスタが登録されている（S-A15-10-MASTERS）／④ デッキID 〔デッキID-A1510-028〕はプレイヤーID 〔プレイヤーID-A1510-共有A〕が所有し、デッキ名「A1510-028-更新前」、フォーマットID 〔フォーマットID-A1510-共有A〕、アーキタイプID 〔アーキタイプID-A1510-共有A〕、公開範囲2、代表カード画像用カードID 〔カードID-A1510-共有A〕、キャンペーンタグID 〔キャンペーンタグID-A1510-共有A〕、採用カードはカードID 〔カードID-A1510-共有B〕・区画1・枚数1であり、当該デッキの一時保存は存在しない。開始時にRedisからデッキID 〔デッキID-A1510-028〕の一時保存を削除し、存在しないことを確認する。〔デッキID-A1510-028〕は登録時に振られたデッキIDを控えてある（S-A15-10-DRAFT-028）
+- 手順: 1. 所有者Aの有効な認証用トークン、デッキID 〔デッキID-A1510-028〕、デッキ名「A1510-028-下書き」を指定し、必須の公開範囲を指定せずデッキ情報更新APIへ要求を送信する／2. RedisにデッキID 〔デッキID-A1510-028〕の一時保存があるか確認する
+- 期待結果: RedisにデッキID 〔デッキID-A1510-028〕の一時保存が作られないこと
+
+=================================== IT-A15-11-012 > IT-A15-11-018
+### IT-A15-11-012 
+- 事前準備: ① 開始時に署名方式をHS256、発行側と検証側の署名設定を試験環境で保管するA15-11試験用署名値に設定し、API、DBおよび一時保存領域へ接続できることを確認する（S-A15-11-ENV）／② 通常会員、本人確認ステータス未確認、公開およびユーザーデッキの参照データが登録済みである（S-A15-11-MASTERS）／③ 顧客ID 〔顧客ID-A1511-012〕とプレイヤーID 〔プレイヤーID-A1511-012〕が対応し、両者は未削除で、顧客ID 〔顧客ID-A1511-012〕を含む有効な認証トークンを取得済みである（登録時に振られた顧客IDとプレイヤーIDを控えてある）（S-A15-11-PLAYERS-012）／④ デッキID 〔デッキID-A1511-012〕がプレイヤーID 〔プレイヤーID-A1511-012〕の所有、削除日時は値なし、採用カード0件であり、当該デッキの一時保存が値「{}」で存在して読み出せる（登録時に振られたデッキIDを控えてある。〔デッキID-A1511-012〕）（S-A15-11-OWNED-012）
+- 手順: 1. Redisでキー「deck_〔デッキID-A1511-012〕」があることを確認する／2. 所有者Aの有効な認証トークンとデッキID 〔デッキID-A1511-012〕を指定してデッキ情報削除APIへ要求を送信する／3. Redisでキー「deck_〔デッキID-A1511-012〕」を確認する
+- 期待結果: 削除要求の後に、Redisからキー「deck_〔デッキID-A1511-012〕」の一時保存が無くなること
+### IT-A15-11-018 [DP]
+- 事前準備: ① 開始時に署名方式をHS256、発行側と検証側の署名設定を試験環境で保管するA15-11試験用署名値に設定し、API、DBおよび一時保存領域へ接続できることを確認する（S-A15-11-ENV）／② 通常会員、本人確認ステータス未確認、公開およびユーザーデッキの参照データが登録済みである（S-A15-11-MASTERS）／③ 顧客ID 〔顧客ID-A1511-018〕とプレイヤーID 〔プレイヤーID-A1511-018〕が対応し、両者は未削除で、顧客ID 〔顧客ID-A1511-018〕を含む有効な認証トークンを取得済みである（登録時に振られた顧客IDとプレイヤーIDを控えてある）（S-A15-11-PLAYERS-018）／④ プレイヤーID 〔プレイヤーID-A1511-018〕が所有するデッキが2件ある。デッキID 〔デッキID-A1511-018A〕は名称A15-11混在削除対象-018A、デッキID 〔デッキID-A1511-018B〕は名称A15-11混在残存-018Bで、どちらも削除日時は値なし、採用カード0件であり、それぞれの一時保存が値「{}」で存在して読み出せる（登録時に振られたデッキIDを控えてある）（S-A15-11-DECKS-018）
+- 手順: 1. Redisでキー「deck_〔デッキID-A1511-018A〕」とキー「deck_〔デッキID-A1511-018B〕」がどちらもあることを確認する／2. 所有者の有効な認証トークンとデッキID 〔デッキID-A1511-018A〕を指定してデッキ情報削除APIへ要求を送信する／3. Networkで応答を確認する／4. DBでデッキID 〔デッキID-A1511-018A〕とデッキID 〔デッキID-A1511-018B〕の削除日時を確認する／5. Redisでキー「deck_〔デッキID-A1511-018A〕」とキー「deck_〔デッキID-A1511-018B〕」を確認する
+- 期待結果: HTTPステータス200となり、デッキID 〔デッキID-A1511-018A〕だけに削除日時が設定されてキー「deck_〔デッキID-A1511-018A〕」の一時保存が無くなり、デッキID 〔デッキID-A1511-018B〕は削除日時が値なしのままでキー「deck_〔デッキID-A1511-018B〕」の一時保存が残ること
+
+=================================== IT-A15-12-004 > IT-A15-12-034
+### IT-A15-12-004 
+- 事前準備: ①開始時に試験用署名鍵（呼び名「A15-12-JWT-KEY」、実際の設定値は有効なBase64形式の文字列）を署名方式HS256でデッキビルダーAPIの認証に使える状態に設定し、一時保存先を利用可能にする（S-A15-12-ENV）／②プレイヤーA（会員ID 〔会員ID-A1512-共有A〕（登録時に振られた会員IDを控えてある）、メールアドレスa1512-owner@example.test、パスワードOwnerA1512!、本会員・未削除、デッキ利用者ID a1512-user-a、ニックネーム「A1512所有者」）を登録済みにする（S-A15-12-PLAYERS）／③フォーマット〔フォーマットID-A1512-共有A〕（登録時に振られたフォーマットIDを控えてある）（日本語名「A1512フォーマットα」、英語名「A1512 Format Alpha」）を登録済みにする（S-A15-12-MASTERS）／④デッキID 〔デッキID-A1512-004〕（登録時に振られたデッキIDを控えてある）は保存済みで、デッキ名「A1512-004-PUBLIC」、フォーマット〔フォーマットID-A1512-共有A〕、ユーザーデッキ、公開範囲は公開（1）、プレイヤーA所有（S-A15-12-PUBLIC-004）
+- 手順: 1. ブラウザの開発者ツールを開く／2. デッキ情報参照API（GET /deck/〔デッキID-A1512-004〕）へ、要求ヘッダ jwt-token を付けず、限定公開デッキの閲覧用トークンも指定せずに要求を送信する／3. Networkで応答を確認する
+- 期待結果: HTTPステータス200となること
+### IT-A15-12-034 
+- 事前準備: ①開始時に試験用署名鍵（呼び名「A15-12-JWT-KEY」、実際の設定値は有効なBase64形式の文字列）を署名方式HS256でデッキビルダーAPIの認証に使える状態に設定し、一時保存先を利用可能にする（S-A15-12-ENV）／②プレイヤーA（会員ID 〔会員ID-A1512-共有A〕（登録時に振られた会員IDを控えてある）、メールアドレスa1512-owner@example.test、パスワードOwnerA1512!、本会員・未削除、デッキ利用者ID a1512-user-a、ニックネーム「A1512所有者」）を登録済みにする（S-A15-12-PLAYERS）／③フォーマット〔フォーマットID-A1512-共有A〕（登録時に振られたフォーマットIDを控えてある）（日本語名「A1512フォーマットα」、英語名「A1512 Format Alpha」）を登録済みにする（S-A15-12-MASTERS）／④デッキID 〔デッキID-A1512-034〕（登録時に振られたデッキIDを控えてある）は保存済みで、デッキ名「A1512-034-PUBLIC」、フォーマット〔フォーマットID-A1512-共有A〕、ユーザーデッキ、公開範囲は公開（1）、プレイヤーA所有（S-A15-12-RESP-034）
+- 手順: 1. ブラウザの開発者ツールを開く／2. デッキ情報参照API（GET /deck/〔デッキID-A1512-034〕）へ、要求ヘッダ jwt-token を付けず、限定公開デッキの閲覧用トークンも指定せずに要求を送信する／3. Networkで応答を確認する
+- 期待結果: 処理結果コード200、メッセージ「Get deck success」、デッキ名「A1512-034-PUBLIC」が返ること
+
+=================================== IT-A15-14-019 > IT-A15-14-020
+### IT-A15-14-019 
+- 事前準備: ① フォーマット〔フォーマット識別子-A1514-019〕（登録時に振られたフォーマット識別子を控えてある）をメタ範囲7日で登録済みとし、表示状態・未削除のアーキタイプ〔アーキタイプ識別子-A1514-019A〕・〔アーキタイプ識別子-A1514-019B〕（登録時に振られたアーキタイプ識別子を控えてある）を紐付ける。実行日の12:00:00大会の公開・大会デッキを〔アーキタイプ識別子-A1514-019A〕へ3件、〔アーキタイプ識別子-A1514-019B〕へ1件とし、ほかの集計対象を0件にする。フォーマット〔フォーマット識別子-A1514-019〕のメタゲーム集計の一時保存結果を消去する（S-A15-14-MIXED-019）／② フォーマット識別子15140199の登録件数を0件にする（S-A15-14-MIXED-019）
+- 手順: 1. ブラウザの開発者ツールを開く／2. クエリのformat_idに登録済みの〔フォーマット識別子-A1514-019〕と未登録の15140199の配列を指定し、countを指定せずメタゲーム情報参照APIへ要求を送信する／3. Networkで応答を確認する
+- 期待結果: HTTPステータス404とならず200となること
+### IT-A15-14-020 
+- 事前準備: ① フォーマット〔フォーマット識別子-A1514-020〕（登録時に振られたフォーマット識別子を控えてある）をメタ範囲7日で登録済みとし、表示状態・未削除のアーキタイプ〔アーキタイプ識別子-A1514-020A〕・〔アーキタイプ識別子-A1514-020B〕（登録時に振られたアーキタイプ識別子を控えてある）を紐付ける。実行日の12:00:00大会の公開・大会デッキを〔アーキタイプ識別子-A1514-020A〕へ3件、〔アーキタイプ識別子-A1514-020B〕へ1件とし、ほかの集計対象を0件にする。フォーマット〔フォーマット識別子-A1514-020〕のメタゲーム集計の一時保存結果を消去する（S-A15-14-MIXED-020）／② フォーマット識別子15140209の登録件数を0件にする（S-A15-14-MIXED-020）
+- 手順: 1. ブラウザの開発者ツールを開く／2. クエリのformat_idに登録済みの〔フォーマット識別子-A1514-020〕と未登録の15140209の配列を指定し、countを指定せずメタゲーム情報参照APIへ要求を送信する／3. Networkで応答を確認する
+- 期待結果: formatsにフォーマット識別子〔フォーマット識別子-A1514-020〕の集計結果だけが含まれ、そのarchetypesがアーキタイプ識別子〔アーキタイプ識別子-A1514-020A〕・〔アーキタイプ識別子-A1514-020B〕、deck_countが3・1で返り、フォーマット識別子15140209の集計結果は含まれないこと
+
+=================================== IT-A17-04-011 > IT-A17-04-026
+### IT-A17-04-011 
+- 事前準備: ① 状態ID 1は状態コードNMである（S-A17-04-STATE）／② 商品ID 〔商品ID-A1704-共有NONCARD〕が公開・未削除で、カード情報を持たず、言語コードJP・状態ID 1・販売価格1・未削除の商品規格ID 〔商品規格ID-A1704-共有NONCARD〕を持つ。亀甲括弧で示した番号は登録時に振られた番号を控えてある（S-A17-04-NONCARD）
+- 手順: 1. ブラウザの開発者ツールを開く／2. langに「JP」を指定し、HTTP GETで「/api/product/detail/〔商品ID-A1704-共有NONCARD〕.json」へ要求を送信する／3. Networkでcard_detailを確認する
+- 期待結果: カード情報を持たない商品ではcard_detailがnullとして返ること
+### IT-A17-04-026 [組 CB-A17-04-001: 商品の公開状態=公開／商品規格の削除=未削除／商品規格の販売価格=正で下限未満／商品規格の状態=NM／カード詳細情報の出力=カード商品でない／商品規格の備考=登録あり]
+- 事前準備: ① 状態ID 1=NM・並び順1、状態ID 2=SP・並び順2である（S-A17-04-STATE）／② 開始時に状態表示下限価格を100に設定する（S-A17-04-MINPRICE）／③ 商品ID 〔商品ID-A1704-026〕が公開・未削除で、カード情報を持たず（カード商品でない）、言語ID 1・言語コードJPで未削除の商品規格ID 〔商品規格ID-A1704-026A〕（状態NM・商品コード「A1704-CB026-NM」・販売価格99（正で下限未満）・備考「備考A1704-CB026」登録あり）だけを持つ。亀甲括弧で示した番号は登録時に振られた番号を控えてある（S-A17-04-CBNOTE-026）
+- 手順: 1. ブラウザの開発者ツールを開く／2. langに「JP」を指定し、HTTP GETで「/api/product/detail/〔商品ID-A1704-026〕.json」へ要求を送信する／3. Networkで応答JSONのproduct_classesの商品規格IDとpriceとcard_condition_code、およびcard_detailを確認する
+- 期待結果: 商品規格ID 〔商品規格ID-A1704-026A〕が販売価格99、card_condition_codeが備考の値「備考A1704-CB026」としてproduct_classesに返り、card_detailがnullとなること
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import csv,re
+rows=list(csv.DictReader(Path('integration_test/casegen/dedup/review/V_01_targets.tsv').open(),delimiter='\\t'))[23:33]
+for row in rows:
+ print('\\n'+'='*30+' '+row['外すテストID']+' > '+row['残すテストID'])
+ for id in (row['外すテストID'],row['残すテストID']):
+  fid=re.match(r'IT-([A-Z]\\d\\d-\\d\\d)-',id).group(1)
+  s=Path(f'integration_test/casegen/dedup/inputs/{fid}.md').read_text()
+  m=re.search(rf'(?ms)"'^### {re.escape(id)}'"\\b.*?(?="'^### |'"\\Z)',s)
+  if not m: print('MISSING',id);continue
+  for line in m.group(0).splitlines():
+   if line.startswith(('###','- 事前準備:','- 手順:','- 期待結果:')): print(line)
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+
+============================== IT-A17-04-012 > IT-A17-04-029
+### IT-A17-04-012 
+- 事前準備: ① 状態ID 1は状態コードNMである（S-A17-04-STATE）／② 商品ID 〔商品ID-A1704-共有CARDNULL〕が公開・未削除で、言語コードJP・状態ID 1・販売価格1・未削除の商品規格ID 〔商品規格ID-A1704-共有CARDNULL〕とカード情報ID 〔カード情報ID-A1704-共有CARDNULL〕を持ち、パワー・タフネス・忠誠度はいずれも未設定である。亀甲括弧で示した番号は登録時に振られた番号を控えてある（S-A17-04-CARD-NULL）
+- 手順: 1. ブラウザの開発者ツールを開く／2. langに「JP」を指定し、HTTP GETで「/api/product/detail/〔商品ID-A1704-共有CARDNULL〕.json」へ要求を送信する／3. Networkでcard_detailのpower_toughnessとloyaltyを確認する
+- 期待結果: パワー、タフネスおよび忠誠度が未設定のカード商品では、power_toughnessとloyaltyがいずれもnullとして返ること
+### IT-A17-04-029 [組 CB-A17-04-004: 商品の公開状態=公開／商品規格の削除=未削除／商品規格の販売価格=下限以上／商品規格の状態=NM以外／カード詳細情報の出力=カード商品で値なし／商品規格の備考=登録あり]
+- 事前準備: ① 状態ID 1=NM・並び順1、状態ID 2=SP・並び順2である（S-A17-04-STATE）／② 開始時に状態表示下限価格を100に設定する（S-A17-04-MINPRICE）／③ 商品ID 〔商品ID-A1704-029〕が公開・未削除で、パワー・タフネス・忠誠度がいずれも未設定のカード情報ID 〔カード情報ID-A1704-029〕（カード商品で値なし）を持ち、言語ID 1・言語コードJPで未削除の商品規格ID 〔商品規格ID-A1704-029A〕（状態NM・商品コード「A1704-CB029-NM」・販売価格150・備考なし）と、未削除の商品規格ID 〔商品規格ID-A1704-029B〕（状態SP＝NM以外・商品コード「A1704-CB029-SP」・販売価格150で下限以上・備考「備考A1704-CB029」登録あり）だけを持つ。亀甲括弧で示した番号は登録時に振られた番号を控えてある（S-A17-04-CBCARDN-029）
+- 手順: 1. ブラウザの開発者ツールを開く／2. langに「JP」を指定し、HTTP GETで「/api/product/detail/〔商品ID-A1704-029〕.json」へ要求を送信する／3. Networkで応答JSONのproduct_classesの商品規格IDとpriceとcard_condition_code、およびcard_detailを確認する
+- 期待結果: 商品規格ID 〔商品規格ID-A1704-029B〕が販売価格150、card_condition_codeが備考の値「備考A1704-CB029」としてproduct_classesに返り、card_detailのpower_toughnessとloyaltyがいずれもnullとなること
+
+============================== IT-B02-04-018 > IT-B02-04-020
+### IT-B02-04-018 [DP]
+- 事前準備: ① 商品管理バッチを起動でき、出力と終了コードを確認できる（S-B02-04-CONSOLE）／② 商品規格ID 〔商品規格ID-B0204-018A〕は商品B0204-018-A・PC-B0204-018-Aで公開ステータスが廃止・部門未設定、〔商品規格ID-B0204-018B〕は商品B0204-018-B・PC-B0204-018-Bで公開ステータスが公開・部門未設定・未削除であり、通知対象は〔商品規格ID-B0204-018B〕の1件だけである（登録時に振られた商品IDと商品規格IDを控えてある）（S-B02-04-ABOLISHED-018）／③ 部門ID 〔部門ID-B0204-共有〕のB02-04対象外部門が有効で、本シード以外の公開・未削除・部門未設定の商品規格は、開始時に部門ID 〔部門ID-B0204-共有〕へ一時更新して通知対象を0件にし、ケース終了後に部門未設定へ戻す（登録時に振られた部門IDを控えてある）（S-B02-04-SECTION）／④ 開始時に買取部門集計送信メールアドレスをadmin-a@example.testに設定する（S-B02-04-CONFIG）／⑤ 開始時に店舗基本情報を店名=B02-04試験店、メールアドレス=from-b0204@example.test、返信先=reply-b0204@example.test、エラー返送先=error-b0204@example.testに設定する（S-B02-04-SHOP）／⑥ 件名が部門未設定商品通知メールで、本文に商品規格ID昇順の商品名と商品コードを出力するメール定義が登録されている（S-B02-04-MAIL-TEMPLATE）／⑦ admin-a@example.test宛ての受信メールを0件にする（S-B02-04-MAILBOX）
+- 手順: 1. 実行コンソールで「product:batch checkNoSectionProduct」を起動する／2. admin-a@example.testで受信した通知メールの本文を確認する
+- 期待結果: 本文の一覧に「商品B0204-018-B,PC-B0204-018-B」だけが記載され、公開ステータスが廃止の「商品B0204-018-A,PC-B0204-018-A」は記載されないこと
+### IT-B02-04-020 [組 CB-B02-04-001: 商品の公開ステータス=公開以外／商品規格の部門=（効かない）／商品と商品規格の削除=（効かない）／買取部門集計送信メールアドレス=（効かない。1件のアドレス・カンマ区切りで複数から選ぶ）／コマンド名=（効かない。対象のコマンド名から選ぶ）]
+- 事前準備: ① 商品管理バッチを起動でき、出力と終了コードを確認できる（S-B02-04-CONSOLE）／② 商品ID 〔商品ID-B0204-020A〕・商品規格ID 〔商品規格ID-B0204-020A〕の商品A（商品名B0204-CB020-商品A・商品コードB0204-CB020-A）は公開・部門未設定・未削除、商品ID 〔商品ID-B0204-020B〕・商品規格ID 〔商品規格ID-B0204-020B〕の商品B（商品名B0204-CB020-商品B・商品コードB0204-CB020-B）は公開ステータスが公開以外の非公開で部門未設定・未削除、商品ID 〔商品ID-B0204-020C〕・商品規格ID 〔商品規格ID-B0204-020C〕の商品C（商品名B0204-CB020-商品C・商品コードB0204-CB020-C）は公開ステータスが公開以外の廃止で部門未設定・未削除であり、商品Aだけが公開・部門未設定・未削除の通知対象である（登録時に振られた商品IDと商品規格IDを控えてある）（S-B02-04-CBSTATUS-020）／③ 開始時に買取部門集計送信メールアドレスは1件のアドレスのadmin-a@example.testに設定する（S-B02-04-CONFIG）／④ 開始時に店舗基本情報を店名=B02-04試験店、メールアドレス=from-b0204@example.test、返信先=reply-b0204@example.test、エラー返送先=error-b0204@example.testに設定する（S-B02-04-SHOP）／⑤ 件名が部門未設定商品通知メールで、本文に商品名と商品コードの一覧を出力するメール定義が登録されている（S-B02-04-MAIL-TEMPLATE）／⑥ admin-a@example.test宛ての受信メールを0件にする（S-B02-04-MAILBOX）／⑦ 部門ID 〔部門ID-B0204-共有〕のB02-04対象外部門が有効で、本シード以外の公開・未削除・部門未設定の商品規格は、開始時に部門ID 〔部門ID-B0204-共有〕へ一時更新して通知対象を0件にし、ケース終了後に部門未設定へ戻す（登録時に振られた部門IDを控えてある）（S-B02-04-SECTION）
+- 手順: 1. 実行コンソールで「product:batch checkNoSectionProduct」を起動する（対象のコマンド名を指定する）／2. admin-a@example.testのテスト用メール受信箱を確認する
+- 期待結果: admin-a@example.test宛てに、件名が「部門未設定商品通知メール」で、本文の一覧に「B0204-CB020-商品A,B0204-CB020-A」だけが記載され、公開ステータスが非公開の「B0204-CB020-商品B,B0204-CB020-B」と廃止の「B0204-CB020-商品C,B0204-CB020-C」は記載されないメールを1通受信すること
+
+============================== IT-B05-08-002 > IT-B05-08-014
+### IT-B05-08-002 
+- 事前準備: ① B05-08の定期起動を停止し、スマレジ接続先がスマレジプラットフォームAPI試験環境であることを確認する（S-B05-08-ENV）／② 受注ID 〔受注ID-B0508-002〕（この番号と以下の各番号は、登録時に振られたものを控えてある）・受注番号〔受注番号-B0508-002〕は会員ID 〔会員ID-B0508-002〕・プレイヤーID 〔プレイヤーID-B0508-002〕に紐づき、スマレジ連携エラーフラグ=オン、スマレジID=〔スマレジID-B0508-002〕、DBポイント残高=120、外部ポイント残高=900であり、本受注以外の再連携対象は0件である（S-B05-08-SUCCESS-002）
+- 手順: 1. バッチB05-08「スマレジEC受注連携エラー再連携」を起動する／2. 実行完了後、スマレジプラットフォームAPI試験環境でスマレジID 〔スマレジID-B0508-002〕のポイント残高を確認する
+- 期待結果: スマレジID 〔スマレジID-B0508-002〕のポイント残高が更新前の900への加減算ではなく、DBから取得したポイント残高の絶対値120になること
+### IT-B05-08-014 [DP]
+- 事前準備: ① B05-08の定期起動を停止し、スマレジ接続先がスマレジプラットフォームAPI試験環境であることを確認する（S-B05-08-ENV）／② 受注ID 〔受注ID-B0508-014-A〕（この番号と以下の各番号は、登録時に振られたものを控えてある）・受注番号〔受注番号-B0508-014-A〕は会員ID 〔会員ID-B0508-014-A〕・プレイヤーID 〔プレイヤーID-B0508-014-A〕に紐づき、スマレジ連携エラーフラグ=オン、スマレジID=〔スマレジID-B0508-014-A〕、DBポイント残高=120、外部ポイント残高=900／③ 受注ID 〔受注ID-B0508-014-B〕・受注番号〔受注番号-B0508-014-B〕は会員ID 〔会員ID-B0508-014-B〕・プレイヤーID 〔プレイヤーID-B0508-014-B〕に紐づき、スマレジ連携エラーフラグ=オン、スマレジID=〔スマレジID-B0508-014-B〕、DBポイント残高=340、外部ポイント残高=700であり、この2件以外の再連携対象は0件である（S-B05-08-MULTI-014）
+- 手順: 1. バッチB05-08「スマレジEC受注連携エラー再連携」を起動する／2. 実行完了後、スマレジプラットフォームAPI試験環境でスマレジID 〔スマレジID-B0508-014-A〕と〔スマレジID-B0508-014-B〕のポイント残高を確認する
+- 期待結果: スマレジID 〔スマレジID-B0508-014-A〕のポイント残高が120、スマレジID 〔スマレジID-B0508-014-B〕のポイント残高が340になること
+
+============================== IT-B05-08-003 > IT-B05-08-015
+### IT-B05-08-003 
+- 事前準備: ① B05-08の定期起動を停止し、スマレジ接続先がスマレジプラットフォームAPI試験環境であることを確認する（S-B05-08-ENV）／② 受注ID 〔受注ID-B0508-003〕（この番号と以下の各番号は、登録時に振られたものを控えてある）・受注番号〔受注番号-B0508-003〕は会員ID 〔会員ID-B0508-003〕・プレイヤーID 〔プレイヤーID-B0508-003〕に紐づき、スマレジ連携エラーフラグ=オン、スマレジID=〔スマレジID-B0508-003〕、DBポイント残高=120、外部ポイント残高=900であり、本受注以外の再連携対象は0件である（S-B05-08-SUCCESS-003）
+- 手順: 1. バッチB05-08「スマレジEC受注連携エラー再連携」を起動する／2. 実行完了後、DBで受注ID 〔受注ID-B0508-003〕のスマレジ連携エラーフラグを確認する
+- 期待結果: リトライに成功した受注ID 〔受注ID-B0508-003〕のスマレジ連携エラーフラグがオフになること
+### IT-B05-08-015 [DP]
+- 事前準備: ① B05-08の定期起動を停止し、スマレジ接続先がスマレジプラットフォームAPI試験環境であることを確認する（S-B05-08-ENV）／② 受注ID 〔受注ID-B0508-015-A〕（この番号と以下の各番号は、登録時に振られたものを控えてある）・受注番号〔受注番号-B0508-015-A〕は会員ID 〔会員ID-B0508-015-A〕・プレイヤーID 〔プレイヤーID-B0508-015-A〕に紐づき、スマレジ連携エラーフラグ=オン、スマレジID=〔スマレジID-B0508-015-A〕、DBポイント残高=120、外部ポイント残高=900／③ 受注ID 〔受注ID-B0508-015-B〕・受注番号〔受注番号-B0508-015-B〕は会員ID 〔会員ID-B0508-015-B〕・プレイヤーID 〔プレイヤーID-B0508-015-B〕に紐づき、スマレジ連携エラーフラグ=オン、スマレジID=〔スマレジID-B0508-015-B〕、DBポイント残高=340、外部ポイント残高=700であり、この2件以外の再連携対象は0件である（S-B05-08-MULTI-015）
+- 手順: 1. バッチB05-08「スマレジEC受注連携エラー再連携」を起動する／2. 実行完了後、DBで受注ID 〔受注ID-B0508-015-A〕と〔受注ID-B0508-015-B〕のスマレジ連携エラーフラグを確認する
+- 期待結果: 受注ID 〔受注ID-B0508-015-A〕と〔受注ID-B0508-015-B〕のスマレジ連携エラーフラグがともにオフになっていること
+
+============================== IT-B06-01-015 > IT-B06-01-024
+### IT-B06-01-015 
+- 事前準備: ① 新しいブラウザセッションで、ログインID=b0601l_admin、パスワード=Passw0rd!B0601L、稼働中でロックなし、在庫管理と買取管理を操作でき、TC東京2Fと本店を編集可能店舗とする管理者として管理画面にログインしている（S-B06-01-L-ADM）／② TC東京2Fと本店が閉店でない店舗として登録済みで、各店舗でEC-CUBE在庫を使用でき、試験者が「買取自動入庫バッチ」を実行して実行状態を確認できる（S-B06-01-L-ENV）／③ 店頭買取ID 906010015・査定ID SA-B0601L-001は12: 入庫待ち、買取店舗TC東京2F、申込者は会員ID 906010016の会員で、実在庫は商品コードB0601L-001（商品名 B06-01連携試験商品001）の実在庫数1・買取単価900である。TC東京2FのEC-CUBE在庫は在庫数10・総原価10000（原価単価1000）、在庫履歴は0件、入庫待ちの店頭買取情報とネット買取情報はこの1件以外0件である（S-B06-01-L-STORE-015）
+- 手順: 1. 「買取自動入庫バッチ」を実行する／2. バッチの実行一覧で、手順1の実行の状態が「成功」になるまで待つ（上限10分）／3. 管理画面の在庫検索一覧(検索入力)画面を開く／4. 検索条件のコードに「B0601L-001」を入力し、店舗に「TC東京2F」だけを選択して検索ボタンを押す／5. 検索結果一覧の店舗・商品コード・在庫・原価単価・総原価の各列を確認する
+- 期待結果: 検索結果一覧に、店舗が「TC東京2F」で商品コードが「B0601L-001」の行が表示され、その行の在庫が11、総原価が10900、原価単価が991であること
+### IT-B06-01-024 [DP]
+- 事前準備: ① 新しいブラウザセッションで、ログインID=b0601l_admin、稼働中でロックなし、在庫管理と買取管理を操作でき、TC東京2Fと本店を編集可能店舗とする管理者として管理画面にログインしている（S-B06-01-L-ADM）／② TC東京2Fと本店が閉店でない店舗として登録済みで、各店舗でEC-CUBE在庫を使用でき、試験者が「買取自動入庫バッチ」を実行して実行状態を確認できる（S-B06-01-L-ENV）／③ 店頭買取ID 9060102401・査定ID SA-B0601-024-A は12: 入庫待ち、買取店舗TC東京2F、申込者は会員ID 9060102402の会員で、実在庫は商品コードB0601-024-A（商品名 B06-01データ試験商品024-A）の実在庫数1・買取単価900である。TC東京2FのEC-CUBE在庫は在庫数10・総原価10000（原価単価1000）、在庫履歴は0件である（S-B06-01-DP-STORE-024）／④ ネット買取ID 〔ネット買取ID-B0601-024〕・買取番号 〔買取番号-B0601-024〕は16: 入庫待ち、申込者は会員ID 〔会員ID-B0601-024〕の会員で、実在庫は商品コードB0601-024-B（商品名 データ試験商品B0601-024B）の実在庫数1・買取単価900である。本店のEC-CUBE在庫は在庫数10・総原価10000（原価単価1000）、在庫履歴は0件である。ネット買取ID・買取番号・会員IDは登録時に振られた番号を控えてある。入庫待ちの店頭買取情報とネット買取情報は③の店頭1件と④のネット1件以外0件である（S-B06-01-DP-NET-024）
+- 手順: 1. 「買取自動入庫バッチ」を実行する／2. バッチの実行一覧で、手順1の実行の状態が「成功」になるまで待つ（上限10分）／3. 管理画面の在庫検索一覧(検索入力)画面を開く／4. 検索条件のコードに「B0601-024-A」を入力し、店舗に「TC東京2F」だけを選択して検索ボタンを押す／5. 検索結果一覧の店舗・商品コード・在庫・原価単価・総原価の各列を確認する／6. 同じ在庫検索一覧(検索入力)画面で、コードを「B0601-024-B」に変え、店舗に「本店」だけを選択して検索ボタンを押し、検索結果一覧の各列を確認する
+- 期待結果: 手順5の検索結果一覧に店舗が「TC東京2F」で商品コードが「B0601-024-A」の行の在庫が11、総原価が10900、原価単価が991、手順6の検索結果一覧に店舗が「本店」で商品コードが「B0601-024-B」の行の在庫が11、総原価が10900、原価単価が991がそれぞれ表示されること
+
+============================== IT-B06-01-018 > IT-B06-01-024
+### IT-B06-01-018 
+- 事前準備: ① 新しいブラウザセッションで、ログインID=b0601l_admin、パスワード=Passw0rd!B0601L、稼働中でロックなし、在庫管理と買取管理を操作でき、TC東京2Fと本店を編集可能店舗とする管理者として管理画面にログインしている（S-B06-01-L-ADM）／② TC東京2Fと本店が閉店でない店舗として登録済みで、各店舗でEC-CUBE在庫を使用でき、試験者が「買取自動入庫バッチ」を実行して実行状態を確認できる（S-B06-01-L-ENV）／③ ネット買取ID 〔ネット買取ID-B0601-018〕・買取番号 〔買取番号-B0601-018〕は16: 入庫待ち、申込者は会員ID 〔会員ID-B0601-018〕の会員で、実在庫は商品コードB0601L-004（商品名 B06-01連携試験商品004）の実在庫数1・買取単価900である。本店のEC-CUBE在庫は在庫数10・総原価10000（原価単価1000）、在庫履歴は0件、入庫待ちの店頭買取情報とネット買取情報はこの1件以外0件である。ネット買取ID・買取番号・会員IDは登録時に振られた番号を控えてある（S-B06-01-L-NET-018）
+- 手順: 1. 「買取自動入庫バッチ」を実行する／2. バッチの実行一覧で、手順1の実行の状態が「成功」になるまで待つ（上限10分）／3. 管理画面の在庫検索一覧(検索入力)画面を開く／4. 検索条件のコードに「B0601L-004」を入力し、店舗に「本店」だけを選択して検索ボタンを押す／5. 検索結果一覧の店舗・商品コード・在庫・原価単価・総原価の各列を確認する
+- 期待結果: 検索結果一覧に、店舗が「本店」で商品コードが「B0601L-004」の行が表示され、その行の在庫が11、総原価が10900、原価単価が991であること
+### IT-B06-01-024 [DP]
+- 事前準備: ① 新しいブラウザセッションで、ログインID=b0601l_admin、稼働中でロックなし、在庫管理と買取管理を操作でき、TC東京2Fと本店を編集可能店舗とする管理者として管理画面にログインしている（S-B06-01-L-ADM）／② TC東京2Fと本店が閉店でない店舗として登録済みで、各店舗でEC-CUBE在庫を使用でき、試験者が「買取自動入庫バッチ」を実行して実行状態を確認できる（S-B06-01-L-ENV）／③ 店頭買取ID 9060102401・査定ID SA-B0601-024-A は12: 入庫待ち、買取店舗TC東京2F、申込者は会員ID 9060102402の会員で、実在庫は商品コードB0601-024-A（商品名 B06-01データ試験商品024-A）の実在庫数1・買取単価900である。TC東京2FのEC-CUBE在庫は在庫数10・総原価10000（原価単価1000）、在庫履歴は0件である（S-B06-01-DP-STORE-024）／④ ネット買取ID 〔ネット買取ID-B0601-024〕・買取番号 〔買取番号-B0601-024〕は16: 入庫待ち、申込者は会員ID 〔会員ID-B0601-024〕の会員で、実在庫は商品コードB0601-024-B（商品名 データ試験商品B0601-024B）の実在庫数1・買取単価900である。本店のEC-CUBE在庫は在庫数10・総原価10000（原価単価1000）、在庫履歴は0件である。ネット買取ID・買取番号・会員IDは登録時に振られた番号を控えてある。入庫待ちの店頭買取情報とネット買取情報は③の店頭1件と④のネット1件以外0件である（S-B06-01-DP-NET-024）
+- 手順: 1. 「買取自動入庫バッチ」を実行する／2. バッチの実行一覧で、手順1の実行の状態が「成功」になるまで待つ（上限10分）／3. 管理画面の在庫検索一覧(検索入力)画面を開く／4. 検索条件のコードに「B0601-024-A」を入力し、店舗に「TC東京2F」だけを選択して検索ボタンを押す／5. 検索結果一覧の店舗・商品コード・在庫・原価単価・総原価の各列を確認する／6. 同じ在庫検索一覧(検索入力)画面で、コードを「B0601-024-B」に変え、店舗に「本店」だけを選択して検索ボタンを押し、検索結果一覧の各列を確認する
+- 期待結果: 手順5の検索結果一覧に店舗が「TC東京2F」で商品コードが「B0601-024-A」の行の在庫が11、総原価が10900、原価単価が991、手順6の検索結果一覧に店舗が「本店」で商品コードが「B0601-024-B」の行の在庫が11、総原価が10900、原価単価が991がそれぞれ表示されること
+
+============================== IT-B06-02-006 > IT-B06-02-030
+### IT-B06-02-006 
+- 事前準備: ① 対象日を指定してB06-02を手動起動でき、完了後に買取集計データを参照できる権限を持つ（S-B06-02-EXEC）／② 店舗ID 〔店舗ID-B0602-共有A〕が東京店、部門ID 〔部門ID-B0602-共有A〕がカード部門、部門ID 〔部門ID-B0602-共有C〕が端数調整部門として登録されている（登録時に振られた店舗IDと部門IDを控えてある）（S-B06-02-MASTERS）／③ 開始時に端数調整先を部門ID 〔部門ID-B0602-共有C〕に設定する（S-B06-02-FIXED-SECTION）／④ 2026-09-03の店頭買取は店頭買取ID 906020601だけで、東京店・買取成立・買取合計金額100、カード部門の明細ID 906020611は単価95・元数量1・売価単価150、対象日の集計データ0件である（S-B06-02-ROUNDING-POSITIVE-006）
+- 手順: 1. バッチB06-02「買取集計バッチ」を対象日「2026-09-03」で手動実行する／2. 実行完了後、DBの買取集計データで2026-09-03・東京店・端数調整部門の行を確認する
+- 期待結果: 買取合計金額100から明細の買取金額95を引いた端数5が端数調整部門の買取金額として計上され、売価金額が0となること
+### IT-B06-02-030 [組 CB-B06-02-001: 対象日の集計対象の状態の店頭買取=あり／対象日の既存の集計データ=あり／買取合計金額から明細と個別入力商品の金額を引いた端数=端数が正]
+- 事前準備: ① 対象日を指定してB06-02を手動起動でき、完了後に買取集計データを参照できる権限を持つ（S-B06-02-EXEC）／② 店舗ID 〔店舗ID-B0602-共有A〕が東京店、部門ID 〔部門ID-B0602-共有A〕がカード部門、部門ID 〔部門ID-B0602-共有C〕が端数調整部門として登録されている（登録時に振られた店舗IDと部門IDを控えてある）（S-B06-02-MASTERS）／③ 開始時に端数調整先を部門ID 〔部門ID-B0602-共有C〕に設定する（S-B06-02-FIXED-SECTION）／④ 2026-09-20の店頭買取は店頭買取ID 906023001だけで、東京店・買取成立・買取合計金額100、カード部門の明細ID 906023011は単価95・元数量1・売価単価150である。対象日の既存の集計データはあり、集計ID 906023021の2026-09-20・東京店・カード部門・買取金額999・売価金額999の1件である。買取合計金額から明細の金額を引いた端数は端数が正（5）である（S-B06-02-CBROUNDREP-030）
+- 手順: 1. バッチB06-02「買取集計バッチ」を対象日「2026-09-20」で手動実行する／2. 実行完了後、DBの買取集計データで2026-09-20・東京店の行を確認する
+- 期待結果: 2026-09-20の東京店の買取集計データが、カード部門の買取金額95・売価金額150の行と、端数調整部門の買取金額5・売価金額0の行の2件だけとなり、既存の集計ID 906023021（買取金額999・売価金額999）の行が残らないこと
+
+============================== IT-B06-02-007 > IT-B06-02-031
+### IT-B06-02-007 
+- 事前準備: ① 対象日を指定してB06-02を手動起動でき、完了後に買取集計データを参照できる権限を持つ（S-B06-02-EXEC）／② 店舗ID 〔店舗ID-B0602-共有A〕が東京店、部門ID 〔部門ID-B0602-共有A〕がカード部門、部門ID 〔部門ID-B0602-共有C〕が端数調整部門として登録されている（登録時に振られた店舗IDと部門IDを控えてある）（S-B06-02-MASTERS）／③ 開始時に端数調整先を部門ID 〔部門ID-B0602-共有C〕に設定する（S-B06-02-FIXED-SECTION）／④ 2026-09-03の店頭買取は店頭買取ID 906020701と906020702だけで、1件目は買取合計金額100・明細買取金額100で端数0、2件目は買取合計金額100・明細買取金額110で端数-10、両件が東京店・カード部門・買取成立、対象日の集計データ0件である（S-B06-02-ROUNDING-NONPOSITIVE-007）
+- 手順: 1. バッチB06-02「買取集計バッチ」を対象日「2026-09-03」で手動実行する／2. 実行完了後、DBの買取集計データで2026-09-03・東京店・端数調整部門の行を確認する
+- 期待結果: 端数が0または-10となる店頭買取による端数調整部門の集計データが登録されないこと
+### IT-B06-02-031 [組 CB-B06-02-002: 対象日の集計対象の状態の店頭買取=あり／対象日の既存の集計データ=あり／買取合計金額から明細と個別入力商品の金額を引いた端数=端数が0以下]
+- 事前準備: ① 対象日を指定してB06-02を手動起動でき、完了後に買取集計データを参照できる権限を持つ（S-B06-02-EXEC）／② 店舗ID 〔店舗ID-B0602-共有A〕が東京店、部門ID 〔部門ID-B0602-共有A〕がカード部門、部門ID 〔部門ID-B0602-共有C〕が端数調整部門として登録されている（登録時に振られた店舗IDと部門IDを控えてある）（S-B06-02-MASTERS）／③ 開始時に端数調整先を部門ID 〔部門ID-B0602-共有C〕に設定する（S-B06-02-FIXED-SECTION）／④ 2026-09-21の店頭買取は店頭買取ID 906023101と906023102だけで、1件目は買取合計金額100・カード部門の明細ID 906023111が単価100・元数量1・売価単価150で端数0、2件目は買取合計金額100・カード部門の明細ID 906023112が単価110・元数量1・売価単価160で端数-10、両件が東京店・買取成立である。対象日の既存の集計データはあり、集計ID 906023121の2026-09-21・東京店・カード部門・買取金額999・売価金額999の1件である。端数は端数が0以下である（S-B06-02-CBROUNDREP-031）
+- 手順: 1. バッチB06-02「買取集計バッチ」を対象日「2026-09-21」で手動実行する／2. 実行完了後、DBの買取集計データで2026-09-21・東京店の行を確認する
+- 期待結果: 2026-09-21の東京店の買取集計データが、カード部門の買取金額210・売価金額310の1件だけとなり、端数調整部門の行が無く、既存の集計ID 906023121（買取金額999・売価金額999）の行が残らないこと
+
+============================== IT-B06-02-029 > IT-B06-02-035
+### IT-B06-02-029 [DP]
+- 事前準備: ① 新しいブラウザセッションで、ログインID=linkb0602admin、稼働中、デフォルト検索表示店舗=全店、買取集計データ画面を利用できる管理者として管理画面にログインしている。バッチB06-02「買取集計バッチ」を対象日を指定して手動実行でき、実行履歴を確認できる（S-B06-02-L-ADM、S-B06-02-L-EXEC）／② 店舗ID 〔店舗ID-B0602-L共有〕=リンク試験東京店が稼働中で、部門ID 〔部門ID-B0602-L共有A〕=コードLD01・リンク試験カード部門、部門ID 〔部門ID-B0602-L共有B〕=コードLD02・リンク試験サプライ部門が登録されている（登録時に振られた店舗IDと部門IDを控えてある）（S-B06-02-L-MASTERS）／③ 追加システム設定の買取部門集計送信メールアドレスに dpb0602-029@example.test が設定済みで、同アドレス宛の受信箱は0通である（S-B06-02-DP-MAIL-029）／④ 2026-09-16に買取成立日時を持つ店頭買取は店頭買取ID 960202901（査定ID=DPB0602-029-A・リンク試験東京店・買取成立日時=2026-09-16 12:00:00・ステータス=買取成立・買取合計金額200）の1件だけで、明細ID 960202911は部門ID 〔部門ID-B0602-L共有A〕・単価100・元数量2・売価単価300、個別入力商品は0件であり、部門未設定の商品はこの日の買取に1件も無く、2026-09-16の買取集計データは0件である（S-B06-02-DP-DATA-029）
+- 手順: 1. バッチB06-02「買取集計バッチ」を対象日「2026-09-16」で手動実行する／2. バッチの実行履歴で、手順1の実行が成功で完了するまで待つ（上限10分）／3. 試験環境のメール受信箱で、宛先 dpb0602-029@example.test 宛のメールの件数を確認する
+- 期待結果: 宛先 dpb0602-029@example.test の受信箱にある部門未設定商品の一覧を含むメールが0通であること
+### IT-B06-02-035 [組 CB-B06-02-006: 通知先の設定=（効かない）／集計・登録中の例外=なし]
+- 事前準備: ① 対象日を指定してB06-02を手動起動でき、完了後に買取集計データを参照できる権限を持つ（S-B06-02-EXEC）／② 店舗ID 〔店舗ID-B0602-共有A〕が東京店、部門ID 〔部門ID-B0602-共有A〕がカード部門、部門ID 〔部門ID-B0602-共有C〕が端数調整部門として登録されている（登録時に振られた店舗IDと部門IDを控えてある）（S-B06-02-MASTERS）／③ 開始時に端数調整先を部門ID 〔部門ID-B0602-共有C〕に設定する（S-B06-02-FIXED-SECTION）／④ 開始時に買取集計通知先をcbb0602-035@example.testに設定する（S-B06-02-MAIL-SETTING）／⑤ 2026-09-22の店頭買取は店頭買取ID 906023501だけで、東京店・買取成立・買取合計金額100、カード部門の明細ID 906023511は単価100・元数量1・売価単価150であり、端数は0、部門未設定の商品はこの日の買取に1件も無く、集計・登録中の例外=なし（例外を起こす操作は行わない）。対象日の集計データ0件である（S-B06-02-CBDATA-035）／⑥ cbb0602-035@example.test 宛の受信箱が0件である（S-B06-02-CBMAIL-035）
+- 手順: 1. バッチB06-02「買取集計バッチ」を対象日「2026-09-22」で手動実行する／2. 実行完了後、cbb0602-035@example.test 宛の受信メールを確認する
+- 期待結果: 集計・登録中に例外が起きないとき、cbb0602-035@example.test 宛の受信メールが0通で、集計エラーの内容を含む通知が届かないこと
+
+============================== IT-B08-01-004 > IT-B08-01-018
+### IT-B08-01-004 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-01ケース専用データが存在せず、送信対象会員を0件にする（S-B08-01-DB）／② 開始時に送信元をinfo@hareruyamtg.com、返信先をreply-b0801@example.test、エラー返送先をreturn-b0801@example.test、日本語・英語の件名と本文を0408記載値に設定し、他のB08-01実行とメール送信処理を停止する（S-B08-01-MAIL-SETTINGS）／③ 会員ID 〔会員ID-B0801-004〕（登録時に振られた会員IDを控えてある）を、現行ECサイト取込会員、before-date-b0801-004@example.test、国=日本、最終更新日=2025-09-10 09:59、パスワード再設定キーコード=BEFORE-8080104-004、メール送信履歴0件で登録する（S-B08-01-NONTARGET-DATE-004）／④ 開始時にbefore-date-b0801-004@example.testの受信履歴とB08-01の送信記録を0件にする（S-B08-01-MAILBOX）
+- 手順: 1. 実行コンソールで「customer:batch sendAccountMigration 202509101000」を起動する／2. before-date-b0801-004@example.testのメール受信確認画面を開く
+- 期待結果: 最終更新日が指定日時より1分前のbefore-date-b0801-004@example.testについて、パスワードリセットメールの受信件数が0件であること
+### IT-B08-01-018 [DP]
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-01ケース専用データが存在せず、本ケース専用の3会員以外の送信対象会員を0件にする（S-B08-01-DB）／② 開始時に送信元をinfo@hareruyamtg.com、返信先をreply-b0801@example.test、エラー返送先をreturn-b0801@example.test、日本語・英語の件名と本文を0408記載値に設定し、他のB08-01実行とメール送信処理を停止する（S-B08-01-MAIL-SETTINGS）／③ 会員ID 〔会員ID-B0801-018A〕（登録時に振られた会員IDを控えてある）をtarget-b0801-018@example.test・国=日本・最終更新日2025-09-10 10:01・キーKEY-B0801-018-A、会員ID 〔会員ID-B0801-018B〕（登録時に振られた会員IDを控えてある）をbefore-b0801-018@example.test・国=日本・最終更新日2025-09-10 09:59・キーKEY-B0801-018-B、会員ID 〔会員ID-B0801-018C〕（登録時に振られた会員IDを控えてある）をnokey-b0801-018@example.test・国=日本・最終更新日2025-09-10 10:01・キーNULLとし、3会員を現行ECサイト取込会員、メール送信履歴0件で登録する（S-B08-01-MIXED-018）／④ 開始時に3会員の受信履歴とB08-01の送信記録を0件にする（S-B08-01-MAILBOX-018）
+- 手順: 1. DBでメール送信履歴データの件数を記録する／2. 実行コンソールで「customer:batch sendAccountMigration 202509101000」を起動する／3. target-b0801-018@example.test、before-b0801-018@example.test、nokey-b0801-018@example.testそれぞれのメール受信確認画面を開く／4. DBで追加されたメール送信履歴データを確認する
+- 期待結果: target-b0801-018@example.testの受信件数が1件、before-b0801-018@example.testとnokey-b0801-018@example.testの受信件数がそれぞれ0件であり、メール送信履歴データが1件だけ追加され、そのユーザーIDが〔会員ID-B0801-018A〕であること
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import csv,re
+rows=list(csv.DictReader(Path('integration_test/casegen/dedup/review/V_01_targets.tsv').open(),delimiter='\\t'))[33:]
+for row in rows:
+ print('\\n'+'='*30+' '+row['外すテストID']+' > '+row['残すテストID'])
+ for id in (row['外すテストID'],row['残すテストID']):
+  fid=re.match(r'IT-([A-Z]\\d\\d-\\d\\d)-',id).group(1)
+  s=Path(f'integration_test/casegen/dedup/inputs/{fid}.md').read_text()
+  m=re.search(rf'(?ms)"'^### {re.escape(id)}'"\\b.*?(?="'^### |'"\\Z)',s)
+  if not m: print('MISSING',id);continue
+  for line in m.group(0).splitlines():
+   if line.startswith(('###','- 事前準備:','- 手順:','- 期待結果:')): print(line)
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+
+============================== IT-B08-01-005 > IT-B08-01-018
+### IT-B08-01-005 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-01ケース専用データが存在せず、送信対象会員を0件にする（S-B08-01-DB）／② 開始時に送信元をinfo@hareruyamtg.com、返信先をreply-b0801@example.test、エラー返送先をreturn-b0801@example.test、日本語・英語の件名と本文を0408記載値に設定し、他のB08-01実行とメール送信処理を停止する（S-B08-01-MAIL-SETTINGS）／③ 会員ID 〔会員ID-B0801-005〕（登録時に振られた会員IDを控えてある）を、現行ECサイト取込会員、no-reset-key-b0801-005@example.test、国=日本、最終更新日=2025-09-10 10:01、パスワード再設定キーコード=NULL、メール送信履歴0件で登録する（S-B08-01-NONTARGET-KEY-005）／④ 開始時にno-reset-key-b0801-005@example.testの受信履歴とB08-01の送信記録を0件にする（S-B08-01-MAILBOX）
+- 手順: 1. 実行コンソールで「customer:batch sendAccountMigration 202509101000」を起動する／2. no-reset-key-b0801-005@example.testのメール受信確認画面を開く
+- 期待結果: 最終更新日が指定日時以降でパスワード再設定キーコードが未設定のno-reset-key-b0801-005@example.testについて、パスワードリセットメールの受信件数が0件であること
+### IT-B08-01-018 [DP]
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-01ケース専用データが存在せず、本ケース専用の3会員以外の送信対象会員を0件にする（S-B08-01-DB）／② 開始時に送信元をinfo@hareruyamtg.com、返信先をreply-b0801@example.test、エラー返送先をreturn-b0801@example.test、日本語・英語の件名と本文を0408記載値に設定し、他のB08-01実行とメール送信処理を停止する（S-B08-01-MAIL-SETTINGS）／③ 会員ID 〔会員ID-B0801-018A〕（登録時に振られた会員IDを控えてある）をtarget-b0801-018@example.test・国=日本・最終更新日2025-09-10 10:01・キーKEY-B0801-018-A、会員ID 〔会員ID-B0801-018B〕（登録時に振られた会員IDを控えてある）をbefore-b0801-018@example.test・国=日本・最終更新日2025-09-10 09:59・キーKEY-B0801-018-B、会員ID 〔会員ID-B0801-018C〕（登録時に振られた会員IDを控えてある）をnokey-b0801-018@example.test・国=日本・最終更新日2025-09-10 10:01・キーNULLとし、3会員を現行ECサイト取込会員、メール送信履歴0件で登録する（S-B08-01-MIXED-018）／④ 開始時に3会員の受信履歴とB08-01の送信記録を0件にする（S-B08-01-MAILBOX-018）
+- 手順: 1. DBでメール送信履歴データの件数を記録する／2. 実行コンソールで「customer:batch sendAccountMigration 202509101000」を起動する／3. target-b0801-018@example.test、before-b0801-018@example.test、nokey-b0801-018@example.testそれぞれのメール受信確認画面を開く／4. DBで追加されたメール送信履歴データを確認する
+- 期待結果: target-b0801-018@example.testの受信件数が1件、before-b0801-018@example.testとnokey-b0801-018@example.testの受信件数がそれぞれ0件であり、メール送信履歴データが1件だけ追加され、そのユーザーIDが〔会員ID-B0801-018A〕であること
+
+============================== IT-B08-03-008 > IT-B08-03-022
+### IT-B08-03-008 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-03ケース専用データが存在せず、本ケース専用会員以外の30日前・7日前通知対象会員を0件にする（S-B08-03-DB）／② 開始時にポイント有効期間を183日、事前通知日数を30日と7日、送信元をinfo@hareruyamtg.com、日本語件名を※重要【晴れる屋】ポイント有効期限のお知らせ、英語件名を【Hareruya】 Your points are about to expire、両本文を0408記載値に設定し、B08-03の実行中件数を0件にする（S-B08-03-ENV）／③ 会員ID 〔会員ID-B0803-008A〕（登録時に振られた会員IDを控えてある）をjp-language-b0803-008@example.test・東京都・稼働中・未削除・プレイヤーID 〔プレイヤーID-B0803-008A〕（登録時に振られたプレイヤーIDを控えてある）・スマレジ会員ID SM-B0803-008-001・ポイント残高120・指定日獲得150・残ポイント200、会員ID 〔会員ID-B0803-008B〕（登録時に振られた会員IDを控えてある）をen-language-b0803-008@example.test・日本国外・稼働中・未削除・プレイヤーID 〔プレイヤーID-B0803-008B〕（登録時に振られたプレイヤーIDを控えてある）・スマレジ会員ID SM-B0803-008-002・ポイント残高150・指定日獲得90・残ポイント120とし、両会員のメール送信履歴を0件にする（S-B08-03-LANGUAGE-008）／④ 開始時にjp-language-b0803-008@example.testとen-language-b0803-008@example.testの受信履歴を0件にする（S-B08-03-MAILBOX）
+- 手順: 1. バッチB08-03「ポイント有効期限通知」を起動する／2. en-language-b0803-008@example.testで受信したメールとメールヘッダを開く
+- 期待結果: 都道府県が「日本国外」の会員へ、宛先en-language-b0803-008@example.test、送信元info@hareruyamtg.com、件名「【Hareruya】 Your points are about to expire」で送信され、本文が0408「英語メール本文」の全文となり、有効期限間近ポイント90ポイントと実行日から30日後の有効期限日がD/M/Y形式で記載されること
+### IT-B08-03-022 [組 CB-B08-03-001: 通知の区分=30日前／会員ステータス=通常会員／スマレジ会員ID=設定済み／ポイント残高=1以上／指定日に獲得したポイント=あり／指定日までの残ポイント=プラス／会員の都道府県=日本国外／有効期限間近ポイント数が決まる項目=指定日獲得が最小]
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-03ケース専用データが存在せず、本ケース専用会員以外の30日前・7日前通知対象会員を0件にする（S-B08-03-DB）／② 開始時にポイント有効期間を183日、事前通知日数を30日と7日、送信元をinfo@hareruyamtg.com、日本語・英語の件名と本文を0408記載値に設定し、B08-03の実行中件数を0件にする（S-B08-03-ENV）／会員ステータス=通常会員／スマレジ会員ID=設定済み／ポイント残高=1以上／指定日に獲得したポイント=あり／指定日までの残ポイント=プラス／会員の都道府県=日本国外／有効期限間近ポイント数が決まる項目=指定日獲得が最小】会員ID 〔会員ID-B0803-022〕（登録時に振られた会員IDを控えてある）、メールアドレスen30a-cbb0803-022@example.test、日本国外、通常会員（稼働中、未削除）、プレイヤーID 〔プレイヤーID-B0803-022〕（登録時に振られたプレイヤーIDを控えてある）、スマレジ会員ID設定済み（SM-CBB0803-022-001）、ポイント残高150（1以上）、ポイント履歴ID 〔ポイント履歴ID-B0803-022A〕（登録時に振られたポイント履歴IDを控えてある）は実行日の154日前12:00に+60、ポイント履歴ID 〔ポイント履歴ID-B0803-022B〕（登録時に振られたポイント履歴IDを控えてある）は実行日の153日前12:00に+60、30日前通知の指定日（実行日の153日前）に獲得したポイントあり（指定日獲得ポイント60）、指定日までの残ポイント120（プラス）、メール送信履歴0件で登録する（S-B08-03-CBMEMBER-022）／③ 開始時にen30a-cbb0803-022@example.testの受信履歴を0件にする（S-B08-03-CBMAILBOX-022）
+- 手順: 1. バッチB08-03「ポイント有効期限通知」を起動する／2. en30a-cbb0803-022@example.testで受信したメールとメールヘッダを開く
+- 期待結果: 都道府県が「日本国外」の会員へ、宛先en30a-cbb0803-022@example.test、送信元info@hareruyamtg.com、件名「【Hareruya】 Your points are about to expire」で送信され、本文が0408「英語メール本文」の全文となり、有効期限間近ポイント60ポイントと実行日から30日後の有効期限日がD/M/Y形式で記載されること
+
+============================== IT-B08-07-001 > IT-B08-07-015
+### IT-B08-07-001 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値をit_common@hareruyamtg.comにし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員1名を登録し、その会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-RETR-001）。〔会員ID-807001001〕・名前(姓)=B0807-001-S1・名前(名)=B0807-001-N1・メールアドレス=b0807-001-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. メール試験サーバーの it_common@hareruyamtg.com の受信メール一覧を開き、受信したメールの本文を開く
+- 期待結果: it_common@hareruyamtg.com宛のメールが1通受信され、本文に〔会員ID-807001001〕 が記載されること
+### IT-B08-07-015 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値をit_common@hareruyamtg.comにし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員3名を登録し、各会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-ALLONE-015）。会員1: 〔会員ID-807015001〕・名前(姓)=B0807-015-S1・名前(名)=B0807-015-N1・メールアドレス=b0807-015-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付／会員2: 〔会員ID-807015002〕・名前(姓)=B0807-015-S2・名前(名)=B0807-015-N2・メールアドレス=b0807-015-02@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=簡易書留確認済み・身分証有効期限=実行日の1年前の日付／会員3: 〔会員ID-807015003〕・名前(姓)=B0807-015-S3・名前(名)=B0807-015-N3・メールアドレス=b0807-015-03@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. メール試験サーバーの it_common@hareruyamtg.com の受信メール一覧を開き、受信したメールの本文を開く
+- 期待結果: it_common@hareruyamtg.com宛のメールが1通受信され、本文に〔会員ID-807015001〕・〔会員ID-807015002〕・〔会員ID-807015003〕 の3名が記載されること
+
+============================== IT-B08-07-003 > IT-B08-07-015
+### IT-B08-07-003 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値をit_common@hareruyamtg.comにし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員2名を登録し、各会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-BOTH-003）。会員1: 〔会員ID-807003001〕・名前(姓)=B0807-003-S1・名前(名)=B0807-003-N1・メールアドレス=b0807-003-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付／会員2: 〔会員ID-807003002〕・名前(姓)=B0807-003-S2・名前(名)=B0807-003-N2・メールアドレス=b0807-003-02@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=簡易書留確認済み・身分証有効期限=実行日の1年前の日付
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. メール試験サーバーの it_common@hareruyamtg.com の受信メール一覧を開き、受信したメールの本文を開く
+- 期待結果: it_common@hareruyamtg.com宛のメールが1通受信され、本文に〔会員ID-807003001〕 と 〔会員ID-807003002〕 の両方が記載されること
+### IT-B08-07-015 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値をit_common@hareruyamtg.comにし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員3名を登録し、各会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-ALLONE-015）。会員1: 〔会員ID-807015001〕・名前(姓)=B0807-015-S1・名前(名)=B0807-015-N1・メールアドレス=b0807-015-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付／会員2: 〔会員ID-807015002〕・名前(姓)=B0807-015-S2・名前(名)=B0807-015-N2・メールアドレス=b0807-015-02@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=簡易書留確認済み・身分証有効期限=実行日の1年前の日付／会員3: 〔会員ID-807015003〕・名前(姓)=B0807-015-S3・名前(名)=B0807-015-N3・メールアドレス=b0807-015-03@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. メール試験サーバーの it_common@hareruyamtg.com の受信メール一覧を開き、受信したメールの本文を開く
+- 期待結果: it_common@hareruyamtg.com宛のメールが1通受信され、本文に〔会員ID-807015001〕・〔会員ID-807015002〕・〔会員ID-807015003〕 の3名が記載されること
+
+============================== IT-B08-07-004 > IT-B08-07-006
+### IT-B08-07-004 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値をit_common@hareruyamtg.comにし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員1名を登録し、その会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-EXPNULL-004）。〔会員ID-807004001〕・名前(姓)=B0807-004-S1・名前(名)=B0807-004-N1・メールアドレス=b0807-004-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. DBで〔会員ID-807004001〕 の身分証有効期限日を開く
+- 期待結果: 〔会員ID-807004001〕 の身分証有効期限日が未設定値(NULL)であること
+### IT-B08-07-006 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値をit_common@hareruyamtg.comにし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員3名を登録し、各会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-COUNT-006）。会員1: 〔会員ID-807006001〕・名前(姓)=B0807-006-S1・名前(名)=B0807-006-N1・メールアドレス=b0807-006-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付／会員2: 〔会員ID-807006002〕・名前(姓)=B0807-006-S2・名前(名)=B0807-006-N2・メールアドレス=b0807-006-02@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付／会員3: 〔会員ID-807006003〕・名前(姓)=B0807-006-S3・名前(名)=B0807-006-N3・メールアドレス=b0807-006-03@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=簡易書留確認済み・身分証有効期限=実行日の1年前の日付
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. DBで〔会員ID-807006001〕・〔会員ID-807006002〕・〔会員ID-807006003〕 の身分証有効期限日を開く
+- 期待結果: 〔会員ID-807006001〕・〔会員ID-807006002〕・〔会員ID-807006003〕 の3名とも身分証有効期限日が未設定値(NULL)であること
+
+============================== IT-B08-07-024 > IT-B08-07-064
+### IT-B08-07-024 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値を空にし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員1名を登録し、その会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-ADMEMPTY-024）。〔会員ID-807024001〕・名前(姓)=B0807-024-S1・名前(名)=B0807-024-N1・メールアドレス=b0807-024-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. メール試験サーバーの it_common@hareruyamtg.com の受信メール一覧を開く
+- 期待結果: it_common@hareruyamtg.com宛のメールが0通であること
+### IT-B08-07-064 [組 CB-B08-07-002: 本人確認の方法=簡易書留／身分証有効期限日=基準日以前／管理者宛の通知先の設定=空]
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値を空にし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員1名を登録し、その会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-CBEMPTY-064）。〔会員ID-B0807-064〕・名前(姓)=B0807-CB064-S1・名前(名)=B0807-CB064-N1・メールアドレス=cbb0807-064-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=簡易書留確認済み・身分証有効期限=実行日の1年前の日付（基準日以前）
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. メール試験サーバーの it_common@hareruyamtg.com の受信メール一覧を開く／3. DBで〔会員ID-B0807-064〕 の身分証有効期限日を開く／4. 管理画面の会員検索一覧で〔会員ID-B0807-064〕 を検索し、会員登録編集画面を開いて本人確認ステータスの選択を見る／5. メール試験サーバーの cbb0807-064-01@example.test の受信メール一覧を開く
+- 期待結果: 〔会員ID-B0807-064〕 の身分証有効期限日が未設定値(NULL)で本人確認ステータスが「簡易書留確認済み」のままであり、cbb0807-064-01@example.test宛のメールが1通受信され、it_common@hareruyamtg.com宛のメールが0通であること
+
+============================== IT-B08-07-025 > IT-B08-07-064
+### IT-B08-07-025 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値を空にし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員1名を登録し、その会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-EMPTYMEM-025）。〔会員ID-807025001〕・名前(姓)=B0807-025-S1・名前(名)=B0807-025-N1・メールアドレス=b0807-025-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. メール試験サーバーの b0807-025-01@example.test の受信メール一覧を開く
+- 期待結果: b0807-025-01@example.test宛のメールが1通受信されること
+### IT-B08-07-064 [組 CB-B08-07-002: 本人確認の方法=簡易書留／身分証有効期限日=基準日以前／管理者宛の通知先の設定=空]
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値を空にし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員1名を登録し、その会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-CBEMPTY-064）。〔会員ID-B0807-064〕・名前(姓)=B0807-CB064-S1・名前(名)=B0807-CB064-N1・メールアドレス=cbb0807-064-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=簡易書留確認済み・身分証有効期限=実行日の1年前の日付（基準日以前）
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. メール試験サーバーの it_common@hareruyamtg.com の受信メール一覧を開く／3. DBで〔会員ID-B0807-064〕 の身分証有効期限日を開く／4. 管理画面の会員検索一覧で〔会員ID-B0807-064〕 を検索し、会員登録編集画面を開いて本人確認ステータスの選択を見る／5. メール試験サーバーの cbb0807-064-01@example.test の受信メール一覧を開く
+- 期待結果: 〔会員ID-B0807-064〕 の身分証有効期限日が未設定値(NULL)で本人確認ステータスが「簡易書留確認済み」のままであり、cbb0807-064-01@example.test宛のメールが1通受信され、it_common@hareruyamtg.com宛のメールが0通であること
+
+============================== IT-B08-07-059 > IT-B08-07-064
+### IT-B08-07-059 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値を空にし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員1名を登録し、その会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-ADMEMPTYEXP-059）。会員ID 〔会員ID-B0807-059〕（登録時に振られた会員IDを控えてある）・名前(姓)=B0807-059-S1・名前(名)=B0807-059-N1・メールアドレス=b0807-059-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. DBで会員ID 〔会員ID-B0807-059〕 の身分証有効期限日を開く
+- 期待結果: 会員ID 〔会員ID-B0807-059〕 の身分証有効期限日が未設定値(NULL)であること
+### IT-B08-07-064 [組 CB-B08-07-002: 本人確認の方法=簡易書留／身分証有効期限日=基準日以前／管理者宛の通知先の設定=空]
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値を空にし、it_common@hareruyamtg.comのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員1名を登録し、その会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-CBEMPTY-064）。〔会員ID-B0807-064〕・名前(姓)=B0807-CB064-S1・名前(名)=B0807-CB064-N1・メールアドレス=cbb0807-064-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=簡易書留確認済み・身分証有効期限=実行日の1年前の日付（基準日以前）
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. メール試験サーバーの it_common@hareruyamtg.com の受信メール一覧を開く／3. DBで〔会員ID-B0807-064〕 の身分証有効期限日を開く／4. 管理画面の会員検索一覧で〔会員ID-B0807-064〕 を検索し、会員登録編集画面を開いて本人確認ステータスの選択を見る／5. メール試験サーバーの cbb0807-064-01@example.test の受信メール一覧を開く
+- 期待結果: 〔会員ID-B0807-064〕 の身分証有効期限日が未設定値(NULL)で本人確認ステータスが「簡易書留確認済み」のままであり、cbb0807-064-01@example.test宛のメールが1通受信され、it_common@hareruyamtg.com宛のメールが0通であること
+
+============================== IT-B08-07-026 > IT-B08-07-063
+### IT-B08-07-026 
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値を「it_common@hareruyamtg.com,b0807-026-admin@example.test」（カンマ区切り）にし、it_common@hareruyamtg.comとb0807-026-admin@example.testのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員1名を登録し、その会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-MULTI-026）。〔会員ID-807026001〕・名前(姓)=B0807-026-S1・名前(名)=B0807-026-N1・メールアドレス=b0807-026-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=オンライン本人確認済み・身分証有効期限=実行日の1年前の日付
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. メール試験サーバーの it_common@hareruyamtg.com の受信メール一覧を開き、受信したメールの本文を開く／3. メール試験サーバーの b0807-026-admin@example.test の受信メール一覧を開く
+- 期待結果: it_common@hareruyamtg.com宛とb0807-026-admin@example.test宛にそれぞれ管理者宛メールが1通受信されること
+### IT-B08-07-063 [組 CB-B08-07-001: 本人確認の方法=簡易書留／身分証有効期限日=基準日以前／管理者宛の通知先の設定=複数設定]
+- 事前準備: ① 試験DBへ基準データを再投入し、本ケース以外のB08-07ケース専用会員が存在せず、本ケース専用会員以外の会員を0件にする（S-B08-07-DB）／② 身分証の有効期限切れ会員送信メールアドレスの設定値を「it_common@hareruyamtg.com,cbb0807-063-admin@example.test」（カンマ区切りの複数設定）にし、it_common@hareruyamtg.comとcbb0807-063-admin@example.testのメールボックスの受信履歴を0件にする（S-B08-07-MAIL）／③ 次の会員1名を登録し、その会員のメールボックスを用意して受信履歴を0件にする（S-B08-07-CBMULTI-063）。〔会員ID-B0807-063〕・名前(姓)=B0807-CB063-S1・名前(名)=B0807-CB063-N1・メールアドレス=cbb0807-063-01@example.test・退会者フラグ=無効（稼働中）・本人確認ステータス=簡易書留確認済み・身分証有効期限=実行日の1年前の日付（基準日以前）
+- 手順: 1. バッチB08-07「身分証有効期限切れ通知」を起動し、終了するまで待つ／2. メール試験サーバーの it_common@hareruyamtg.com の受信メール一覧を開く／3. メール試験サーバーの cbb0807-063-admin@example.test の受信メール一覧を開く／4. DBで〔会員ID-B0807-063〕 の身分証有効期限日を開く／5. 管理画面の会員検索一覧で〔会員ID-B0807-063〕 を検索し、会員登録編集画面を開いて本人確認ステータスの選択を見る／6. メール試験サーバーの cbb0807-063-01@example.test の受信メール一覧を開く／7. 手順2・3で開いた管理者宛メールの本文を開く
+- 期待結果: 〔会員ID-B0807-063〕 の身分証有効期限日が未設定値(NULL)で本人確認ステータスが「簡易書留確認済み」のままであり、cbb0807-063-01@example.test宛のメールが1通、it_common@hareruyamtg.com宛とcbb0807-063-admin@example.test宛にそれぞれ管理者宛メールが1通受信され、各本文に〔会員ID-B0807-063〕 と「B0807-CB063-S1 B0807-CB063-N1」が記載されること
+
+exec
+/bin/bash -lc "sed -n '25,46p;80,108p' integration_test/casegen/combination/units/B08-07/design.txt && sed -n '12,34p;58,71p' integration_test/casegen/combination/units/A14-03/design.txt && rg -n 'HTTP|200|レスポンス|形式' integration_test/casegen/combination/units/A15-12/design.txt | head -35 && rg -n 'HTTP|200|404|フォーマット' integration_test/casegen/combination/units/A15-14/design.txt | head -35" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+L0024	・ユーザー宛に身分証有効期限切れ通知メールを送信
+L0025	・上記処理後に、該当ユーザーのユーザーIDおよび氏名の一覧を作成し、管理者にメールを送信
+L0026	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日8:00
+L0027	入力データ元 DB 出力先(フォーマット) DB / メール
+L0028	入力データ詳細
+L0029	・プレイヤーデータにある身分証有効期限(idExpirationDate)から2週間前に有効期限が切れるユーザーを取得します。
+L0030	・該当者がいない場合には、処理を終了する。
+L0031	入力データ検索条件
+L0032	項目名 条件 備考
+L0033	プレイヤーデータ.身分証有効期限日 <= 2週間前の日付
+L0034	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0035	・「入力データ詳細」で取得した一覧からユーザー毎に以下の処理を行う
+L0036	・プレイヤーデータにある身分証有効期限(idExpirationDate)を未設定値(null)へ更新する
+L0037	・オンライン本人確認の場合は、プレイヤーデータにある本人確認ステータスID(identity_confirm_status_id)を0(未設定)へ更新する
+L0038	簡易書留で確認している場合は、本人確認ステータスの変更は行わない
+L0039	・メール送信
+L0040	・メール送信先は会員データにあるメールアドレス宛に送信する
+L0041	・メール送信元は[info@hareruyamtg.com]に設定
+L0042	・メール本文
+L0043	・件名: 【晴れる屋】オンライン本人確認の更新手続きのお願い
+L0044	・本文(例)
+L0045	大変お世話になっております。晴れる屋です。
+L0079	エラーハンドリング
+L0080	・該当処理なし
+L0081	Source:
+L0082	functions/pf-eccube3/b08-07_batch_customer_id_expire_notification.md
+L0083	現行仕様
+L0084	B08-07 身分証有効期限切れ通知 / バッチ 会員管理 — 身分証有効期限切れ通知
+L0085	業務ロジック
+L0086	対象の判定
+L0087	実行した日に事前通知日数を加えた日の0時0分を基準日時とし、身分証有効期限日が基準日時以前の会員を対象とする。身分証有効期限日が既に過ぎている会員も対象に含む。
+L0088	対象は身分証有効期限日だけで決め、本人確認ステータスでは絞り込まない。身分証有効期限日が未設定の会員は対象にならない。
+L0089	対象の並び順は定めていない。
+L0090	会員ごとの更新と送信
+L0091	対象の会員を1件ずつ処理する。会員ごとに、更新を確定してから、その会員へメールを送る。
+L0092	途中で異常が起きて処理が中断したときは、その時点で打ち切る。それまでに処理した会員の更新と送信は取り消さない。打ち切ったときは管理者宛メールを送らない。
+L0093	メールの送信結果が0通のときは異常として扱わない。配信履歴を保存して次の会員へ進み、最後に管理者宛メールも送る。
+L0094	会員宛メール
+L0095	会員宛メールの件名と本文は、メールテンプレート「身分証有効期限切れ通知メール」に登録されたものを使う。
+L0096	本文に会員ごとの差し込みは無く、すべての会員に同じ文面を送る。会員の住所や表示言語によらず、日本語の文面を送る。
+L0097	返信先には基本情報の返信受付メールアドレスを、送信エラーの戻り先には基本情報の送信エラー受付メールアドレスを設定する。
+L0098	送信した件名・本文・送信日時を、その会員のメール配信履歴として保存する。配信履歴には使用したメールテンプレートを紐づけ、作成者は設定しない。
+L0099	管理者宛メール
+L0100	管理者宛メールは、対象の会員すべての処理が終わった後に1通だけ送る。
+L0101	宛先は、追加システム設定の「身分証の有効期限切れ会員送信メールアドレス」に設定されたメールアドレスとする。カンマで区切った複数のメールアドレスが設定されているときは、そのすべてに送る。
+L0102	この設定が空のときは、管理者宛メールを送らずに終える。このときも、会員の更新と会員宛メールの送信は済んでいる。
+L0103	本文の氏名は、会員の姓と名を半角空白でつないだものとする。
+L0104	返信先と送信エラーの戻り先は、会員宛メールと同じものを設定する。
+L0105	管理者宛メールはメール配信履歴に保存しない。
+L0106	実行するバッチの名前
+L0107	実行するバッチの名前を引数で受け取る。引数が無いとき、または実行できるバッチの名前と一致しないときは、実行日時を添えたメッセージを出力し、何も処理せずに異常終了する。
+L0011	概要検索クエリに一致するカード情報1件を取得できる
+L0012	処理概要（★はカスタマイズ項目）
+L0013	GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+L0014	エンドポイントURL
+L0015	/card?name={name}&lang={lang}
+L0016	プロトコル HTTP メソッド GET 認証の有無 無 認証方式 無 リクエスト書式 クエリ レスポンス書式 JSON
+L0017	カスタマイズ説明
+L0018	・現行踏襲のためカスタマイズ要件はなし
+L0019	機能仕様処理概要（★はカスタマイズ項目）
+L0020	・リクエストパラメータで指定された条件に基づき、データベースから検索したカード情報を1件を返す
+L0021	・リクエストパラメータ「lang」が未指定の場合は、英語版(en)のカード情報を優先して返す
+L0022	リクエストパラメータ
+L0023	項目名	型	必須	最大文字数
+L0024	または最大値	入力例	備考
+L0025	name	文字型	〇	-	ゲイラキャット / Gaelicat	日本語、英語のカード名を「 / 」で区切り入力できる
+L0026	半角英数の場合は英語、それ以外を日本語のカード名とする
+L0027	lang	文字型	-	-	ja	優先して取得するカード情報の言語を入力できる
+L0028	未指定の場合、英語版(en)のカード情報を優先して返す
+L0029	リクエストパラメータサンプル
+L0030	/card?name=ゲイラキャット / Gaelicat&lang=en
+L0031	ステータスコード
+L0032	コード 説明
+L0033	200.0 正常終了
+L0057	カード名が一致しても、カード詳細・カードセット・カード画像のいずれかを持たないカードは該当として扱わない。
+L0058	複数一致したときの選び方
+L0059	条件に一致するカードが複数あるとき、および同じカードがカード画像を複数持つときは、次の優先順で並べた先頭の1件だけを返す。応答のカード画像URLもこの並びで決まる。
+L0060	優先言語のカード画像を持つもの
+L0061	特殊版でないもの
+L0062	発売日が新しいもの
+L0063	フォイルでないもの
+L0064	プロモーションでないもの
+L0065	優先言語は日本語と英語の2つで、カード言語に ja 以外の値を指定したときも英語になる。
+L0066	入出力
+L0067	入出力: 該当が無いときの応答本文
+L0068	該当が無いときの応答本文は、コードとメッセージ「Not Found」を持つ。
+L0069	リニューアル後の仕様
+L0070	表示メッセージ
+25:L0024	デッキが存在しない	該当なし（HTTP 404、「Deck is not found」）とする
+26:L0025	公開範囲の判定で参照不可	該当なし（HTTP 404、「Deck is not found」）とし、存在の有無を区別しない
+30:L0029	成功時出力	HTTP 200。処理結果コード200と「Get deck success」、デッキ情報
+31:L0030	失敗時出力	HTTP 404。処理結果コードとメッセージ「Deck is not found」
+51:L0050	—	API応答JSON	Get deck success	参照できる条件を満たしてデッキ情報を返すとき	処理結果コード200で応答する
+52:L0051	—	API応答JSON	Deck is not found	デッキが存在しない、または公開範囲の判定で参照不可のとき	HTTP 404で応答する
+7:L0006	format_id に一致するフォーマットを取得する。単一値・複数値のいずれも指定できる。各フォーマットについて、フォーマットのメタ範囲で区切った集計範囲内の公開・大会デッキを、アーキタイプ別に件数集計する。count を指定したときは、件数上位から最大 count 件のアーキタイプに絞る。アーキタイプ別集計は件数降順で返す。
+10:L0009	フォーマットごとに全アーキタイプの件数合計を求め、各アーキタイプの件数を合計で割って占有率を算出する。占有率は百分率で小数第2位までとする。
+12:L0011	本APIは認証を行わない。認証用のトークンヘッダの検証とプレイヤーの特定をいずれも行わず、誰でも呼び出せる参照系である。認証起因のHTTP 401は返さない。公開デッキのみを集計対象とし、利用者状態によらず同一の集計結果を返す。呼び出し可能なクライアントはデッキビルダーアプリ。
+15:L0014	フォーマットが存在し集計対象のデッキが0件のときは、HTTP 200・処理結果コード200で、そのフォーマットのアーキタイプ別集計を空の配列で返す。 アーキタイプ別集計の項目に、金額・ポイント・ステータスに当たる項目は無い。 デッキ件数は保存された値ではなく、集計対象のデッキを数えて求める。 占有率は保存された値ではなく、デッキ件数から算出する。
+18:L0017	format_id 未指定	入力不正（HTTP 400）とし、「invalid request parameter」を返す
+19:L0018	該当フォーマットなし	該当なし（HTTP 404）とし、「format not found」を返す
+20:L0019	集計処理中の異常	共通の異常処理に委ねる（HTTP 500相当）
+24:L0023	成功時出力	HTTP 200。処理結果コードとフォーマットごとの集計結果を持つJSON。JSONキーはsnake_caseで組み立てる
+25:L0024	失敗時出力	HTTP 400（format_id 未指定）、HTTP 404（該当フォーマットなし）。いずれも {code, message} の形。HTTP 500 は共通の異常処理に委ねる
+28:L0027	code	integer	処理結果コード。成功時は200。
+29:L0028	formats	array	フォーマットごとの集計結果の配列。
+30:L0029	formats[].id	integer	フォーマット識別子。
+31:L0030	formats[].name_jp	string	フォーマットの日本語名。
+32:L0031	formats[].name_en	string	フォーマットの英語名。
+40:L0039	formats[].archetypes[].rate	number	フォーマット内での占有率（百分率、小数第2位まで）。
+43:L0042	"code": 200,
+74:L0073	—	API応答JSON	invalid request parameter	format_id が未指定のとき	HTTP 400 を返す
+75:L0074	—	API応答JSON	format not found	format_id に一致するフォーマットが1件も無いとき	HTTP 404 を返す
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+from pathlib import Path
+import csv,re
+rows=list(csv.DictReader(Path('integration_test/casegen/dedup/review/V_01_targets.tsv').open(),delimiter='\\t'))[5:11]
+for row in rows:
+ print('\\n'+'='*22+' '+row['外すテストID']+' > '+row['残すテストID'])
+ for id in (row['外すテストID'],row['残すテストID']):
+  fid=re.match(r'IT-([A-Z]\\d\\d-\\d\\d)-',id).group(1)
+  s=Path(f'integration_test/casegen/dedup/inputs/{fid}.md').read_text()
+  m=re.search(rf'(?ms)"'^### {re.escape(id)}'"\\b.*?(?="'^### |'"\\Z)',s)
+  for line in m.group(0).splitlines():
+   if line.startswith(('###','- 事前準備:','- 手順:','- 期待結果:')): print(line)
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+
+====================== IT-A06-03-017 > IT-A06-03-053
+### IT-A06-03-017 
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-017〕（登録時に振られた査定IDを控えてある）は査定中、実在庫0件で、商品規格ID 〔商品規格ID-A0603-017〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-017）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-017@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-017〕,""name"":""原価商品A"",""quantity"":2,""price"":123,""sell_price"":300,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-017〕へ送信する／2. DBで商品規格ID 〔商品規格ID-A0603-017〕の店頭買取実在庫を確認する"
+- 期待結果: 店頭買取実在庫に買取価格123円と買取小計246円が登録されること
+### IT-A06-03-053 [DP]
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-053〕（登録時に振られた査定IDを控えてある）は査定中、実在庫0件で、商品規格ID 〔商品規格ID-A0603-053A〕（登録時に振られた商品規格IDを控えてある）と商品規格ID 〔商品規格ID-A0603-053B〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-STOCKPRICE-053）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-053@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idにnull、order_detailsに2件（1件目={product_class_id=〔商品規格ID-A0603-053A〕、name=価格商品A、quantity=2、price=123、sell_price=300、section_id=〔部門ID-A0603-共有〕}、2件目={product_class_id=〔商品規格ID-A0603-053B〕、name=価格商品B、quantity=1、price=77、sell_price=200、section_id=〔部門ID-A0603-共有〕}）を指定し、PUTで査定ID 〔査定ID-A0603-053〕へ送信する／2. DBで査定ID 〔査定ID-A0603-053〕の実在庫を確認する
+- 期待結果: 商品規格ID 〔商品規格ID-A0603-053A〕の実在庫に買取価格123・買取小計246、商品規格ID 〔商品規格ID-A0603-053B〕の実在庫に買取価格77・買取小計77が登録されること
+
+====================== IT-A06-03-014 > IT-A06-03-054
+### IT-A06-03-014 
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-014〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件で、商品規格ID 〔商品規格ID-A0603-014〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-014）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-014@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-014〕,""name"":""部門商品A"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-014〕へ送信する／2. DBで登録された店頭買取注文詳細を確認する"
+- 期待結果: 登録された店頭買取注文詳細の部門IDが〔部門ID-A0603-共有〕になること
+### IT-A06-03-054 [DP]
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-054〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件で、商品規格ID 〔商品規格ID-A0603-054〕（登録時に振られた商品規格IDを控えてある）が存在し、部門ID 699997054は存在しない（S-A06-03-SECMIX-054）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-054@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idにnull、order_detailsに2件（1件目={product_class_id=〔商品規格ID-A0603-054〕、name=部門あり商品054、quantity=1、price=100、sell_price=200、section_id=〔部門ID-A0603-共有〕}、2件目={product_class_id=〔商品規格ID-A0603-054〕、name=部門なし商品054、quantity=1、price=100、sell_price=200、section_id=699997054}）を指定し、PUTで査定ID 〔査定ID-A0603-054〕へ送信する／2. DBで査定ID 〔査定ID-A0603-054〕の店頭買取注文詳細を確認する
+- 期待結果: 商品名「部門あり商品054」の店頭買取注文詳細の部門IDが〔部門ID-A0603-共有〕になり、商品名「部門なし商品054」の店頭買取注文詳細は部門なしで登録されること
+
+====================== IT-A06-03-015 > IT-A06-03-054
+### IT-A06-03-015 
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-015〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件で、商品規格ID 〔商品規格ID-A0603-015〕（登録時に振られた商品規格IDを控えてある）が存在し、部門ID 699997015は存在しない（S-A06-03-CASE-015）／③ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／④ 開始時に経理チームメールアドレスをaccounting-a0603-015@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-015〕,""name"":""部門なし商品"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":699997015}]}」をPUTで査定ID 〔査定ID-A0603-015〕へ送信する／2. DBで登録された店頭買取注文詳細を確認する"
+- 期待結果: 存在しない部門ID 699997015が無視され、店頭買取注文詳細が部門なしで登録されること
+### IT-A06-03-054 [DP]
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-054〕（登録時に振られた査定IDを控えてある）は査定中、注文詳細0件で、商品規格ID 〔商品規格ID-A0603-054〕（登録時に振られた商品規格IDを控えてある）が存在し、部門ID 699997054は存在しない（S-A06-03-SECMIX-054）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-054@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idにnull、order_detailsに2件（1件目={product_class_id=〔商品規格ID-A0603-054〕、name=部門あり商品054、quantity=1、price=100、sell_price=200、section_id=〔部門ID-A0603-共有〕}、2件目={product_class_id=〔商品規格ID-A0603-054〕、name=部門なし商品054、quantity=1、price=100、sell_price=200、section_id=699997054}）を指定し、PUTで査定ID 〔査定ID-A0603-054〕へ送信する／2. DBで査定ID 〔査定ID-A0603-054〕の店頭買取注文詳細を確認する
+- 期待結果: 商品名「部門あり商品054」の店頭買取注文詳細の部門IDが〔部門ID-A0603-共有〕になり、商品名「部門なし商品054」の店頭買取注文詳細は部門なしで登録されること
+
+====================== IT-A06-03-023 > IT-A06-03-063
+### IT-A06-03-023 
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-023〕（登録時に振られた査定IDを控えてある）は査定中で、開始時のステータス履歴はID 604401023の1件、商品規格ID 〔商品規格ID-A0603-023〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-023）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-023@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-023〕,""name"":""履歴商品A"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-023〕へ送信する／2. DBで査定ID 〔査定ID-A0603-023〕のステータス変更履歴を確認する"
+- 期待結果: 更新前と異なる経理払い出し待ちのステータス変更履歴が1件追加されること
+### IT-A06-03-063 [組 CB-A06-03-001: 送信されたステータス=経理払い出し待ち／個別入力商品=個別入力商品がない／同じ商品規格の明細=同じ商品規格の明細は1件／更新前と送信ステータスの比較=更新前と異なるステータス／端末取引ID=端末取引IDなし]
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 管理者ID 〔管理者ID-A0603-共有B〕（登録時に振られた管理者IDを控えてある）が稼働中である（S-A06-03-OTHER-ADM）／③ 査定ID 〔査定ID-A0603-063〕（登録時に振られた査定IDを控えてある）、受注ID 〔受注ID-A0603-063〕（登録時に振られた受注IDを控えてある）は査定中、端末取引ID=null、成立日・キャンセル日=null、合計金額=0円、注文詳細0件、個別入力商品0件、実在庫0件、実在庫履歴0件で、開始時のステータス履歴はID 604401063の1件（ステータス=査定中）、商品規格ID 〔商品規格ID-A0603-063〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CBKEIRI-063）／④ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／⑤ ステータスID 1が買取成立、ID 2が買取キャンセル、ID 6が査定中、ID 8が査定中断、ID 10が経理払い出し待ち、ID 12が未登録在庫あり、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）／⑥ 開始時に経理チームメールアドレスをaccounting-a0603cb063@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10（経理払い出し待ち）、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idにnull、order_detailsに1件（1件目={product_class_id=〔商品規格ID-A0603-063〕、name=A0603CB063商品A、quantity=2、price=123、sell_price=223、section_id=〔部門ID-A0603-共有〕}。product_class_idを書いていない明細は個別入力商品）を指定し（送信するステータス=経理払い出し待ち、個別入力商品がない、同じ商品規格の明細は1件、更新前と異なるステータス、端末取引IDなし）、PUTで受注ID 〔受注ID-A0603-063〕の「/api/admin/otcBuyOrder/〔受注ID-A0603-063〕.json」へ送信する／2. DBで査定ID 〔査定ID-A0603-063〕の受注、個別入力商品、実在庫、実在庫履歴およびステータス履歴を確認する／3. accounting-a0603cb063@example.testのメール受信確認画面を開く
+- 期待結果: 査定ID 〔査定ID-A0603-063〕の受注のステータスが経理払い出し待ち、合計金額が250円、端末取引IDが空のままで、ステータス変更履歴が開始時の1件から2件になり、商品規格ID 〔商品規格ID-A0603-063〕の実在庫が数量2の1件、実在庫履歴が数量2の1件にな、経理チームのメールアドレスaccounting-a0603cb063@example.testの受信箱に、件名「店頭買取振込依頼 【査定ID: 〔査定ID-A0603-063〕】」の振込依頼メールが1通表示されること
+
+====================== IT-A06-03-024 > IT-A06-03-064
+### IT-A06-03-024 
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-024〕（登録時に振られた査定IDを控えてある）は経理払い出し待ちで、開始時のステータス履歴はID 604401024の1件、商品規格ID 〔商品規格ID-A0603-024〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-024）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-024@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-024〕,""name"":""履歴商品B"",""quantity"":1,""price"":100,""sell_price"":200,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-024〕へ送信する／2. DBで査定ID 〔査定ID-A0603-024〕のステータス変更履歴件数を確認する"
+- 期待結果: 更新前と同じ経理払い出し待ちを指定したため、ステータス変更履歴が追加されないこと
+### IT-A06-03-064 [組 CB-A06-03-002: 送信されたステータス=経理払い出し待ち／個別入力商品=個別入力商品がある／同じ商品規格の明細=同じ商品規格の明細が複数／更新前と送信ステータスの比較=更新前と同じステータス／端末取引ID=端末取引IDあり]
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 管理者ID 〔管理者ID-A0603-共有B〕（登録時に振られた管理者IDを控えてある）が稼働中である（S-A06-03-OTHER-ADM）／③ 査定ID 〔査定ID-A0603-064〕（登録時に振られた査定IDを控えてある）、受注ID 〔受注ID-A0603-064〕（登録時に振られた受注IDを控えてある）は経理払い出し待ち、端末取引ID=null、成立日・キャンセル日=null、合計金額=0円、注文詳細0件、個別入力商品0件、実在庫0件、実在庫履歴0件で、開始時のステータス履歴はID 604401064の1件（ステータス=経理払い出し待ち）、商品規格ID 〔商品規格ID-A0603-064〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CBKEIRIDUP-064）／④ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／⑤ ステータスID 1が買取成立、ID 2が買取キャンセル、ID 6が査定中、ID 8が査定中断、ID 10が経理払い出し待ち、ID 12が未登録在庫あり、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）／⑥ 開始時に経理チームメールアドレスをaccounting-a0603cb064@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10（経理払い出し待ち）、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idに6039064、order_detailsに3件（1件目={product_class_id=〔商品規格ID-A0603-064〕、name=A0603CB064商品A-1、quantity=2、price=123、sell_price=223、section_id=〔部門ID-A0603-共有〕}、2件目={product_class_id=〔商品規格ID-A0603-064〕、name=A0603CB064商品A-2、quantity=3、price=123、sell_price=223、section_id=〔部門ID-A0603-共有〕}、3件目={name=A0603CB064個別商品、quantity=1、price=55、sell_price=155、section_id=〔部門ID-A0603-共有〕}。product_class_idを書いていない明細は個別入力商品）を指定し（送信するステータス=経理払い出し待ち、個別入力商品がある、同じ商品規格の明細が複数、更新前と同じステータス、端末取引IDあり）、PUTで受注ID 〔受注ID-A0603-064〕の「/api/admin/otcBuyOrder/〔受注ID-A0603-064〕.json」へ送信する／2. DBで査定ID 〔査定ID-A0603-064〕の受注、個別入力商品、実在庫、実在庫履歴およびステータス履歴を確認する／3. accounting-a0603cb064@example.testのメール受信確認画面を開く
+- 期待結果: 査定ID 〔査定ID-A0603-064〕の受注のステータスが経理払い出し待ちのまま、合計金額が670円、ステータス変更履歴が開始時の1件のまま増えず、個別入力商品が1件登録され、商品規格ID 〔商品規格ID-A0603-064〕の実在庫が数量5の1件、実在庫履歴が数量5の1件にな、経理チームのメールアドレスaccounting-a0603cb064@example.testの受信箱に、件名「店頭買取振込依頼 【査定ID: 〔査定ID-A0603-064〕】」の振込依頼メールが1通表示されること
+
+====================== IT-A06-03-004 > IT-A06-03-063
+### IT-A06-03-004 
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 査定ID 〔査定ID-A0603-004〕（登録時に振られた査定IDを控えてある）が査定中で、商品規格ID 〔商品規格ID-A0603-004〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CASE-004）／③ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／④ ステータスID 10が経理払い出し待ちとして登録済みである（S-A06-03-STATUSES）／⑤ 開始時に経理チームメールアドレスをaccounting-a0603-004@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: "1. 有効なjwt-tokenとJSON「{""order_status"":10,""qualified_invoice_issuer_confirmation_flg"":""true"",""smaregi_transaction_id"":null,""order_details"":[{""product_class_id"":〔商品規格ID-A0603-004〕,""name"":""振込依頼商品"",""quantity"":1,""price"":1000,""sell_price"":1500,""section_id"":〔部門ID-A0603-共有〕}]}」をPUTで査定ID 〔査定ID-A0603-004〕へ送信する／2. accounting-a0603-004@example.testのメール受信確認画面を開く"
+- 期待結果: 経理チームのメールアドレスへ、件名「店頭買取振込依頼 【査定ID: 〔査定ID-A0603-004〕】」の振込依頼メールが1通表示されること
+### IT-A06-03-063 [組 CB-A06-03-001: 送信されたステータス=経理払い出し待ち／個別入力商品=個別入力商品がない／同じ商品規格の明細=同じ商品規格の明細は1件／更新前と送信ステータスの比較=更新前と異なるステータス／端末取引ID=端末取引IDなし]
+- 事前準備: ① 管理者ID 〔管理者ID-A0603-共有A〕（登録時に振られた管理者IDを控えてある）の有効なjwt-tokenを発行する（S-A06-03-ADM）／② 管理者ID 〔管理者ID-A0603-共有B〕（登録時に振られた管理者IDを控えてある）が稼働中である（S-A06-03-OTHER-ADM）／③ 査定ID 〔査定ID-A0603-063〕（登録時に振られた査定IDを控えてある）、受注ID 〔受注ID-A0603-063〕（登録時に振られた受注IDを控えてある）は査定中、端末取引ID=null、成立日・キャンセル日=null、合計金額=0円、注文詳細0件、個別入力商品0件、実在庫0件、実在庫履歴0件で、開始時のステータス履歴はID 604401063の1件（ステータス=査定中）、商品規格ID 〔商品規格ID-A0603-063〕（登録時に振られた商品規格IDを控えてある）が存在する（S-A06-03-CBKEIRI-063）／④ 部門ID 〔部門ID-A0603-共有〕（登録時に振られた部門IDを控えてある）が有効である（S-A06-03-SECTIONS）／⑤ ステータスID 1が買取成立、ID 2が買取キャンセル、ID 6が査定中、ID 8が査定中断、ID 10が経理払い出し待ち、ID 12が未登録在庫あり、ID 13が入庫待ちとして登録済みである（S-A06-03-STATUSES）／⑥ 開始時に経理チームメールアドレスをaccounting-a0603cb063@example.testに設定し、その受信箱を0件にする（S-A06-03-MAIL）
+- 手順: 1. 有効なjwt-tokenヘッダを付け、order_statusに10（経理払い出し待ち）、qualified_invoice_issuer_confirmation_flgにtrue、smaregi_transaction_idにnull、order_detailsに1件（1件目={product_class_id=〔商品規格ID-A0603-063〕、name=A0603CB063商品A、quantity=2、price=123、sell_price=223、section_id=〔部門ID-A0603-共有〕}。product_class_idを書いていない明細は個別入力商品）を指定し（送信するステータス=経理払い出し待ち、個別入力商品がない、同じ商品規格の明細は1件、更新前と異なるステータス、端末取引IDなし）、PUTで受注ID 〔受注ID-A0603-063〕の「/api/admin/otcBuyOrder/〔受注ID-A0603-063〕.json」へ送信する／2. DBで査定ID 〔査定ID-A0603-063〕の受注、個別入力商品、実在庫、実在庫履歴およびステータス履歴を確認する／3. accounting-a0603cb063@example.testのメール受信確認画面を開く
+- 期待結果: 査定ID 〔査定ID-A0603-063〕の受注のステータスが経理払い出し待ち、合計金額が250円、端末取引IDが空のままで、ステータス変更履歴が開始時の1件から2件になり、商品規格ID 〔商品規格ID-A0603-063〕の実在庫が数量2の1件、実在庫履歴が数量2の1件にな、経理チームのメールアドレスaccounting-a0603cb063@example.testの受信箱に、件名「店頭買取振込依頼 【査定ID: 〔査定ID-A0603-063〕】」の振込依頼メールが1通表示されること
+
+exec
+/bin/bash -lc "rg -n '適格|qualified_invoice|端末取引ID|ステータス変更履歴|買取キャンセル' integration_test/casegen/combination/units/A06-03/design.txt | head -65 && rg -n '部門|同じ商品規格|集約' integration_test/casegen/combination/units/A06-03/design.txt | head -45 && sed -n '1,44p' integration_test/casegen/combination/units/B06-02/design.txt" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+21:L0020	・買取成立、買取キャンセル以外に経理払い出し待ちにする際に呼ばれるようになる
+26:L0025	・端末取引IDをECCUBEに連携する
+29:L0028	★MTGBuyerの書類確認画面で買取成立または買取キャンセルまたは新たに追加する経理払い出し待ちにするボタンをクリックした際に呼ばれるAPI
+46:L0045	⑤-6買取キャンセルの場合は買取キャンセル日
+47:L0046	⑤-7適格請求書発行事業者確認フラグ
+59:L0058	・端末取引IDをECCUBEに連携する
+66:L0065	qualified_invoice_issuer
+67:L0066	_confirmation_flg	文字列			True	適格請求書発行事業者確認フラグ、trueまたはfalse
+68:L0067	smaregi_transaction_id	数値(整数)				端末取引ID
+97:L0096	査定担当者には認証した管理者会員を、更新日時には現在日時を設定する。適格請求書発行事業者に該当する受注のときだけ、確認済みフラグを指定値で更新する（該当しない受注では、指定されても更新しない）。
+98:L0097	更新前と指定ステータスが異なるときだけ、ステータス変更履歴を1件登録する。同じステータスが指定されたときは履歴を残さない。
+75:L0074	section_id	数値(整数)			1	部門ID
+91:L0090	部門の設定と実在庫の集約
+92:L0091	明細・個別入力商品には、部門IDが指定され、かつ該当する部門が存在するときだけ部門を設定する。該当する部門が無い部門IDは無視し、部門なしで登録する。
+93:L0092	実在庫は商品規格ごとに数量を合算して1件にまとめる。同じ商品規格の明細が複数送られたときも、実在庫は商品規格につき1件になる。実在庫履歴には合算後の数量・査定担当者・現在日時を記録する。
+119:L0118	400	明細の商品規格ID・数量・単価・販売価格・部門IDが整数でない	errorsに該当項目の整数形式メッセージを含む
+##### 0406 sheet-4 買取集計バッチ
+L0001	買取集計バッチ
+L0002	ドキュメント名店頭買取管理 基本設計
+L0003	セクション—
+L0004	プロジェクト名店頭買取管理機能
+L0005	作成者石川
+L0006	作成日2025-07-17
+L0007	更新者石川
+L0008	更新日2025-09-06
+L0009	機能NoB06-02
+L0010	機能名買取集計バッチ
+L0011	概要店頭買取を部門ごとに集計する
+L0012	処理概要（★はカスタマイズ項目）
+L0013	カスタマイズ説明
+L0014	・新しく追加された買取ステータスを買取集計対象にする
+L0015	機能仕様処理概要（★はカスタマイズ項目）
+L0016	・店舗ごと、買取成立日ごと、部門ごとに店頭買取情報を集計する
+L0017	・集計対象日はバッチの引数があれば引数の日付、なければバッチ実行日の前日の00:00:00から23:59:59
+L0018	★集計対象のステータスは「買取成立」「入庫済み」「未登録在庫あり」「入庫待ち」とする
+L0019	・店頭買取注文詳細の金額、店頭買取注文個別入力商品の金額、買取合計金額から店頭買取注文詳細と店頭買取注文個別入力商品の金額をマイナスした端数の金額を集計する
+L0020	・集計対象日の集計データがすでにある場合は集計データを削除する
+L0021	・集計データを登録する
+L0022	実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日3時
+L0023	入力データ元 DB 出力先(フォーマット) DB
+L0024	入力データ詳細
+L0025	・買取成立日が指定日またはバッチ実行日前日の00:00:00から23:59:59の店頭買取情報
+L0026	入力データ検索条件
+L0027	項目名 条件 備考
+L0028	店頭買取情報.買取成立日 指定日またはバッチ実行日前日の00:00:00から23:59:59
+L0029	実行結果詳細 ※主にDBの登録・更新結果について記載
+L0030	・集計データの削除
+L0031	・集計データの登録
+L0032	エラーハンドリング
+L0033	・部門が登録されていない商品が存在する場合は、エラーメールを送信する
+L0034	Source:
+L0035	functions/pf-eccube3/b06-02_batch_purchase_purchase_summary.md
+L0036	現行仕様
+L0037	B06-02 買取集計バッチ / バッチ 買取管理 — 買取集計バッチ
+L0038	業務ロジック
+L0039	集計対象とする明細
+L0040	明細は元数量が0より大きい行、個別入力商品は数量が0より大きい行を集計する。
+L0041	集計する値
+L0042	項目	算出
+L0043	買取金額	明細と個別入力商品のそれぞれで単価と数量を掛け、合算する
+
+exec
+/bin/bash -lc "rg -n 'card_detail|下限|パワー|忠誠|カード情報' integration_test/casegen/combination/units/A17-04/design.txt | head -65 && rg -n '端数|集計データ|メール' integration_test/casegen/combination/units/B06-02/design.txt | head -65 && rg -n 'HTTP|メソッド|レスポンス' integration_test/casegen/combination/units/A06-13/design.txt | head -30" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+53:L0052	card_detail	オブジェクト	カード詳細情報
+54:L0053	card_detail.card_name	文字列	カード名
+55:L0054	card_detail.colors	文字列	色
+56:L0055	card_detail.mana_cost	文字列	マナ・コスト
+57:L0056	card_detail.rarity	文字列	レアリティ
+58:L0057	card_detail.card_type	文字列	カードタイプ
+59:L0058	card_detail.card_text	文字列	ルールテキスト（日）
+60:L0059	card_detail.flavor	文字列	フレーバーテキスト(日)
+61:L0060	card_detail.power_toughness	文字列	パワーとタフネス、パワー/タフネスの形式で出力
+62:L0061	card_detail.loyalty	文字列	忠誠度
+63:L0062	card_detail.cardset	文字列	カードセット
+64:L0063	card_detail.cardsetblock	文字列	カードセットブロック
+65:L0064	card_detail.illustrator	文字列	イラストレーター
+66:L0065	card_detail.formats	文字列	リーガリティ
+130:L0129	"card_detail": {
+156:L0155	カード情報を持つ商品（カード商品）のときは、商品名の先頭に言語コードを付す。カード商品でないときはカード詳細情報を空（null）で返す。パワーとタフネスは値が無いとき空（null）とし、忠誠度も値が無いとき空（null）とする。
+158:L0157	明細のうち、状態がニアミント（NM）であるもの、または販売価格が状態表示の下限価格以上のものだけを商品規格として返す。並び順は状態、商品規格IDの昇順とする。
+20:L0019	・店頭買取注文詳細の金額、店頭買取注文個別入力商品の金額、買取合計金額から店頭買取注文詳細と店頭買取注文個別入力商品の金額をマイナスした端数の金額を集計する
+21:L0020	・集計対象日の集計データがすでにある場合は集計データを削除する
+22:L0021	・集計データを登録する
+31:L0030	・集計データの削除
+32:L0031	・集計データの登録
+34:L0033	・部門が登録されていない商品が存在する場合は、エラーメールを送信する
+46:L0045	端数調整分	オプションで指定した特定部門の買取金額として計上し、当該分の売価金額は0とする。端数が0以下になる買取は計上しない
+50:L0049	集計対象が0件	集計データの登録を行わずに完了する
+18:L0017	プロトコル HTTP メソッド PUT 認証の有無 有 認証方式 IP制限
+19:L0018	トークン リクエスト書式 クエリ レスポンス書式 JSON
+40:L0039	レスポンスデータ
+43:L0042	レスポンスデータサンプル
+50:L0049	認証用トークンをヘッダ jwt-token で受け取り、署名方式 HS256 で検証したうえで、トークンが指す管理者会員を特定する。ヘッダが無いとき、署名が不正なとき、トークンが指す管理者会員が存在しないときは、いずれも認証拒否（HTTP 401）とし、更新しない。
+61:L0060	更新できたときは HTTP 200 とし、処理結果コード200だけを持つJSON（{"code":200}）を応答本文として返す。空の本文や空のオブジェクトは返さない。
+63:L0062	HTTPステータス	条件
+66:L0065	拡張子 .json を付けないパス（/api/admin/otcBuyOrder/{id}/identification）でも、同じメソッドで同じ更新を受け付ける。
+73:L0072	A06-13-MSG-001	API応答JSON（errors配列）	買取情報が見つかりません	本人確認更新で、パスの受注IDに対応する店頭買取受注が存在しないとき	HTTP 404・{code, errors}を返し、更新しない
+74:L0073	A06-13-MSG-002	API応答JSON（errors配列）	正しい証明書IDを入力してください	本人確認更新で本人確認証明書のIDが未指定のとき	HTTP 400・{code, errors}を返し、更新しない
+75:L0074	A06-13-MSG-003	API応答JSON（errors配列）	正しい証明書IDを入力してください	本人確認更新で指定した本人確認証明書のIDがマスタに存在しないとき	HTTP 404・{code, errors}を返し、更新しない
+76:L0075	A06-13-MSG-004	API応答JSON（errors配列）	認証エラー	本人確認更新で認証済み利用者を管理者会員として取得できないとき	HTTP 401・{code, errors}を返し、更新しない
+
+exec
+/bin/bash -lc "rg -n '有効期限間近|最小|30日|日本国外|都道府県|ポイント数' integration_test/casegen/combination/units/B08-03/design.txt | head -65 && python3 - <<'PY'
+import csv
+p='integration_test/casegen/dedup/review/V_01_targets.tsv'
+for i,r in enumerate(csv.DictReader(open(p),delimiter='\\t'),1): print(i,r['外すテストID'])
+PY" in /home/y-saito/Developments/hareruya-design-docs
+ succeeded in 0ms:
+25:L0024	・ポイント有効期限メール通知は有効期限切れ「30日前」および「１週間前」の２回通知を行う
+34:L0033	1. 有効期限から指定日数(30日 or 7日)遡った日付に取得したポイントがある場合(以下 指定日獲得ポイント)
+36:L0035	有効期限30日前は2025/5/1になり、その日に獲得したポイントの有無を確認し、ある場合には対象
+37:L0036	2. 有効期限から指定日数(30日 or 7日)遡った日付までで残ポイントがある場合(以下 残ポイント)
+39:L0038	有効期限30日前は2025/5/1までの全獲得ポイント合計から使用ポイント合計を差し引いて、その結果がプラス(残ポイント)がある場合
+43:L0042	ポイント履歴データ.ポイント発行日	>= 183日前の日時 + (30日 or 7日)	有効期限は半年間(183日)から30日前もしくは7日前
+46:L0045	・通知する有効期限間近ポイント数
+47:L0046	いずれかの値のうち、最小ポイントのものを有効期限間近ポイントとして案内する
+61:L0060	[有効期限間近ポイント] ポイント 有効期限 [有効期限日時]
+82:L0081	[有効期限間近ポイント] points
+96:L0095	※テンプレート内に有効期限間近ポイント数および有効期限日を記載する箇所がないため追記
+114:L0113	会員の住所の都道府県が「日本国外」のときは英語のメールを、それ以外のときは日本語のメールを送る。
+1 IT-A01-01-002
+2 IT-A01-01-004
+3 IT-A02-04-003
+4 IT-A06-03-033
+5 IT-A06-03-016
+6 IT-A06-03-017
+7 IT-A06-03-014
+8 IT-A06-03-015
+9 IT-A06-03-023
+10 IT-A06-03-024
+11 IT-A06-03-004
+12 IT-A06-03-008
+13 IT-A06-06-006
+14 IT-A06-13-002
+15 IT-A14-03-014
+16 IT-A15-04-002
+17 IT-A15-08-051
+18 IT-A15-10-029
+19 IT-A15-10-030
+20 IT-A15-11-012
+21 IT-A15-12-004
+22 IT-A15-14-019
+23 IT-A17-04-011
+24 IT-A17-04-012
+25 IT-B02-04-018
+26 IT-B05-08-002
+27 IT-B05-08-003
+28 IT-B06-01-015
+29 IT-B06-01-018
+30 IT-B06-02-006
+31 IT-B06-02-007
+32 IT-B06-02-029
+33 IT-B08-01-004
+34 IT-B08-01-005
+35 IT-B08-03-008
+36 IT-B08-07-001
+37 IT-B08-07-003
+38 IT-B08-07-004
+39 IT-B08-07-024
+40 IT-B08-07-025
+41 IT-B08-07-059
+42 IT-B08-07-026
+
+codex
+===BEGIN===
+外すテストID	判定	理由
+IT-A01-01-002	採る	販売数量だけが異なり、両方とも在庫区分02の相対値による出庫を確認する（L0082、L0135）。
+IT-A01-01-004	採る	取消数量だけが異なり、両方とも在庫区分12の相対値による入庫を確認する（L0082、L0135）。
+IT-A02-04-003	採る	同じ旧商品IDの1件一致を確認しており、残す側は一致した商品IDを含む商品情報を確認する。
+IT-A06-03-033	採る	設計書は明細の省略と空を同じ条件・同じエラーに定めている（L0115）。
+IT-A06-03-016	採る	残す側は同一商品規格の明細2件を数量5の実在庫・履歴各1件に集約する確認を含む。
+IT-A06-03-017	採る	残す側は数量2・単価123の明細について、実在庫の買取価格123と小計246を確認する。
+IT-A06-03-014	採る	残す側は有効な部門IDを指定した明細の注文詳細に、その部門IDが設定されることを確認する。
+IT-A06-03-015	採る	残す側は存在しない部門IDの明細が部門なしで登録されることを確認する（L0091）。
+IT-A06-03-023	戻す	外す側は追加された履歴のステータスが「経理払い出し待ち」であることを確認するが、残す側は履歴件数だけを確認する。
+IT-A06-03-024	採る	残す側は更新前と同じステータスを送った後、履歴が1件のまま増えないことを確認する。
+IT-A06-03-004	採る	残す側は同じステータス更新による経理宛メールの件数と件名を確認する。
+IT-A06-03-008	戻す	外す側だけが確認フラグfalse・端末取引IDなしでのキャンセルを操作する。残す側はtrue・端末取引IDありで、確認フラグと端末取引IDは設計書上の別項目（L0066-L0067、L0096）。
+IT-A06-06-006	採る	残す側は同じ未設定の6項目が省略されず、さらに値がnullであることを確認する。
+IT-A06-13-002	戻す	外す側だけがNetworkで要求メソッドがPUTであることを確認する。残す側の確認対象はHTTPステータスと応答本文。
+IT-A14-03-014	戻す	外す側は英語名で検索し、残す側は日本語名で検索する。設計書は名前の文字種で検索に使う言語を分けている（L0025-L0026）。
+IT-A15-04-002	採る	残す側は同じトークンなしのGETでHTTP 200を確認する。
+IT-A15-08-051	採る	設計書はトークンを検証しないため、無効値とヘッダなしは同じ結果となる（L0019）。
+IT-A15-10-029	採る	即時保存の偽と省略は同じ一時保存側の指定で、両方とも公開範囲未指定のHTTP 400を確認する（L0011）。
+IT-A15-10-030	採る	即時保存の偽と省略は同じ一時保存側の指定で、両方とも公開範囲未指定時に一時保存が作られないことを確認する（L0011）。
+IT-A15-11-012	採る	残す側は同じ値「{}」の一時保存キーが削除後に無くなることを確認する。
+IT-A15-12-004	戻す	外す側だけがHTTPステータス200を確認する。残す側の期待結果は応答本文の処理結果コード200で、設計書も両者を別項目としている（L0029）。
+IT-A15-14-019	戻す	外す側だけがHTTPステータス200を確認する。残す側はformatsの内容を確認するが、HTTPステータスを期待結果に含めていない（L0023）。
+IT-A17-04-011	採る	両方ともJPの非カード商品でcard_detail=nullを確認し、残す側の価格99は下限100の直下にある（L0155、L0157）。
+IT-A17-04-012	戻す	外す側は価格1・状態NM、残す側は価格150・状態SPを含む。設計書はNMと価格下限以上を別の表示条件に定めている（L0157）。
+IT-B02-04-018	採る	残す側は同じ通知メール本文で、公開商品を載せ廃止商品を載せないことを確認する。
+IT-B05-08-002	戻す	外す側だけが再連携対象1件のみのバッチ実行を確認する。残す側は対象2件を同時に処理する。
+IT-B05-08-003	戻す	外す側だけが再連携対象1件のみのバッチ実行後にエラーフラグがオフになることを確認する。残す側は対象2件を同時に処理する。
+IT-B06-01-015	戻す	外す側だけが店頭買取1件のみを入庫する条件で在庫検索結果を確認する。残す側は店頭買取とネット買取を同時に入庫する。
+IT-B06-01-018	戻す	外す側だけがネット買取1件のみを入庫する条件で在庫検索結果を確認する。残す側は店頭買取とネット買取を同時に入庫する。
+IT-B06-02-006	戻す	外す側は既存集計0件、残す側は既存集計あり。設計書は既存集計がある場合の削除を別に定めている（L0020）。
+IT-B06-02-007	戻す	外す側は既存集計0件、残す側は既存集計あり。設計書は既存集計がある場合の削除を別に定めている（L0020）。
+IT-B06-02-029	採る	両方とも部門未設定商品がない日のバッチで、残す側は通知先の受信メール全体が0通であることを確認する。
+IT-B08-01-004	戻す	外す側だけが送信対象会員0件での未送信を確認する。残す側には送信対象会員が1件いる。
+IT-B08-01-005	戻す	外す側だけが送信対象会員0件での未送信を確認する。残す側には送信対象会員が1件いる。
+IT-B08-03-008	戻す	外す側は日本国内・国外の会員が同時にいる状態で国外会員への英語メールを確認する。残す側は国外会員のみで、設計書は国内外でメール言語を分ける（L0113）。
+IT-B08-07-001	戻す	外す側だけが対象会員1名のみのときに管理者宛メールが1通となることを確認する。残す側は3名を同時に処理する。
+IT-B08-07-003	戻す	外す側だけが対象会員2名のみのときに管理者宛メール1通へ両IDが載ることを確認する。残す側は3名を同時に処理する。
+IT-B08-07-004	戻す	外す側だけが対象会員1名のみのときの期限日NULL更新を確認する。残す側は3名を同時に処理する。
+IT-B08-07-024	戻す	本人確認方法がオンラインと簡易書留で異なり、設計書は方法別に本人確認ステータスの更新結果を分けている（L0037-L0038）。
+IT-B08-07-025	戻す	本人確認方法がオンラインと簡易書留で異なり、設計書は方法別に本人確認ステータスの更新結果を分けている（L0037-L0038）。
+IT-B08-07-059	戻す	本人確認方法がオンラインと簡易書留で異なり、設計書は方法別に本人確認ステータスの更新結果を分けている（L0037-L0038）。
+IT-B08-07-026	戻す	本人確認方法がオンラインと簡易書留で異なり、設計書は方法別に本人確認ステータスの更新結果を分けている（L0037-L0038）。
+===END===
+tokens used
+109,744
+===BEGIN===
+外すテストID	判定	理由
+IT-A01-01-002	採る	販売数量だけが異なり、両方とも在庫区分02の相対値による出庫を確認する（L0082、L0135）。
+IT-A01-01-004	採る	取消数量だけが異なり、両方とも在庫区分12の相対値による入庫を確認する（L0082、L0135）。
+IT-A02-04-003	採る	同じ旧商品IDの1件一致を確認しており、残す側は一致した商品IDを含む商品情報を確認する。
+IT-A06-03-033	採る	設計書は明細の省略と空を同じ条件・同じエラーに定めている（L0115）。
+IT-A06-03-016	採る	残す側は同一商品規格の明細2件を数量5の実在庫・履歴各1件に集約する確認を含む。
+IT-A06-03-017	採る	残す側は数量2・単価123の明細について、実在庫の買取価格123と小計246を確認する。
+IT-A06-03-014	採る	残す側は有効な部門IDを指定した明細の注文詳細に、その部門IDが設定されることを確認する。
+IT-A06-03-015	採る	残す側は存在しない部門IDの明細が部門なしで登録されることを確認する（L0091）。
+IT-A06-03-023	戻す	外す側は追加された履歴のステータスが「経理払い出し待ち」であることを確認するが、残す側は履歴件数だけを確認する。
+IT-A06-03-024	採る	残す側は更新前と同じステータスを送った後、履歴が1件のまま増えないことを確認する。
+IT-A06-03-004	採る	残す側は同じステータス更新による経理宛メールの件数と件名を確認する。
+IT-A06-03-008	戻す	外す側だけが確認フラグfalse・端末取引IDなしでのキャンセルを操作する。残す側はtrue・端末取引IDありで、確認フラグと端末取引IDは設計書上の別項目（L0066-L0067、L0096）。
+IT-A06-06-006	採る	残す側は同じ未設定の6項目が省略されず、さらに値がnullであることを確認する。
+IT-A06-13-002	戻す	外す側だけがNetworkで要求メソッドがPUTであることを確認する。残す側の確認対象はHTTPステータスと応答本文。
+IT-A14-03-014	戻す	外す側は英語名で検索し、残す側は日本語名で検索する。設計書は名前の文字種で検索に使う言語を分けている（L0025-L0026）。
+IT-A15-04-002	採る	残す側は同じトークンなしのGETでHTTP 200を確認する。
+IT-A15-08-051	採る	設計書はトークンを検証しないため、無効値とヘッダなしは同じ結果となる（L0019）。
+IT-A15-10-029	採る	即時保存の偽と省略は同じ一時保存側の指定で、両方とも公開範囲未指定のHTTP 400を確認する（L0011）。
+IT-A15-10-030	採る	即時保存の偽と省略は同じ一時保存側の指定で、両方とも公開範囲未指定時に一時保存が作られないことを確認する（L0011）。
+IT-A15-11-012	採る	残す側は同じ値「{}」の一時保存キーが削除後に無くなることを確認する。
+IT-A15-12-004	戻す	外す側だけがHTTPステータス200を確認する。残す側の期待結果は応答本文の処理結果コード200で、設計書も両者を別項目としている（L0029）。
+IT-A15-14-019	戻す	外す側だけがHTTPステータス200を確認する。残す側はformatsの内容を確認するが、HTTPステータスを期待結果に含めていない（L0023）。
+IT-A17-04-011	採る	両方ともJPの非カード商品でcard_detail=nullを確認し、残す側の価格99は下限100の直下にある（L0155、L0157）。
+IT-A17-04-012	戻す	外す側は価格1・状態NM、残す側は価格150・状態SPを含む。設計書はNMと価格下限以上を別の表示条件に定めている（L0157）。
+IT-B02-04-018	採る	残す側は同じ通知メール本文で、公開商品を載せ廃止商品を載せないことを確認する。
+IT-B05-08-002	戻す	外す側だけが再連携対象1件のみのバッチ実行を確認する。残す側は対象2件を同時に処理する。
+IT-B05-08-003	戻す	外す側だけが再連携対象1件のみのバッチ実行後にエラーフラグがオフになることを確認する。残す側は対象2件を同時に処理する。
+IT-B06-01-015	戻す	外す側だけが店頭買取1件のみを入庫する条件で在庫検索結果を確認する。残す側は店頭買取とネット買取を同時に入庫する。
+IT-B06-01-018	戻す	外す側だけがネット買取1件のみを入庫する条件で在庫検索結果を確認する。残す側は店頭買取とネット買取を同時に入庫する。
+IT-B06-02-006	戻す	外す側は既存集計0件、残す側は既存集計あり。設計書は既存集計がある場合の削除を別に定めている（L0020）。
+IT-B06-02-007	戻す	外す側は既存集計0件、残す側は既存集計あり。設計書は既存集計がある場合の削除を別に定めている（L0020）。
+IT-B06-02-029	採る	両方とも部門未設定商品がない日のバッチで、残す側は通知先の受信メール全体が0通であることを確認する。
+IT-B08-01-004	戻す	外す側だけが送信対象会員0件での未送信を確認する。残す側には送信対象会員が1件いる。
+IT-B08-01-005	戻す	外す側だけが送信対象会員0件での未送信を確認する。残す側には送信対象会員が1件いる。
+IT-B08-03-008	戻す	外す側は日本国内・国外の会員が同時にいる状態で国外会員への英語メールを確認する。残す側は国外会員のみで、設計書は国内外でメール言語を分ける（L0113）。
+IT-B08-07-001	戻す	外す側だけが対象会員1名のみのときに管理者宛メールが1通となることを確認する。残す側は3名を同時に処理する。
+IT-B08-07-003	戻す	外す側だけが対象会員2名のみのときに管理者宛メール1通へ両IDが載ることを確認する。残す側は3名を同時に処理する。
+IT-B08-07-004	戻す	外す側だけが対象会員1名のみのときの期限日NULL更新を確認する。残す側は3名を同時に処理する。
+IT-B08-07-024	戻す	本人確認方法がオンラインと簡易書留で異なり、設計書は方法別に本人確認ステータスの更新結果を分けている（L0037-L0038）。
+IT-B08-07-025	戻す	本人確認方法がオンラインと簡易書留で異なり、設計書は方法別に本人確認ステータスの更新結果を分けている（L0037-L0038）。
+IT-B08-07-059	戻す	本人確認方法がオンラインと簡易書留で異なり、設計書は方法別に本人確認ステータスの更新結果を分けている（L0037-L0038）。
+IT-B08-07-026	戻す	本人確認方法がオンラインと簡易書留で異なり、設計書は方法別に本人確認ステータスの更新結果を分けている（L0037-L0038）。
+===END===
