@@ -47,9 +47,8 @@ def main(fids):
     if (CG / "excluded_open_cases.tsv").exists():
         exo_ids = {r["テストID"] for r in read(CG / "excluded_open_cases.tsv")}
     all_old = {s for v in other_seed.values() for s, _ in v}
-    with open(CG / "all_test_cases.tsv", encoding="utf-8", newline="") as f:
-        rr = csv.reader(f, delimiter="\t"); next(rr)
-        all_live = {row[0] for row in rr if row} - gfmap
+    # 一覧のテストIDは機能ごとに振り直した連番なので（2026-10-23）、対応表で cases/ のテストIDを引く
+    all_live = {r["cases/のテストID"] for r in read(CG / "all_test_cases_id_map.tsv")} - gfmap
     warn_total = 0
     total = bad = 0
     PT = {(r["機能ID"], r["部"]): r for r in read(G / "parts.tsv")} if (G / "parts.tsv").exists() else {}

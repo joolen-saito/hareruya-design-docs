@@ -27,7 +27,8 @@ def ids_of(fn, col="テストID"):
         return {r[col] for r in csv.DictReader(f, delimiter="\t")}
 
 
-ALL = ids_of("all_test_cases.tsv")
+# 一覧のテストIDは機能ごとに振り直した連番なので（2026-10-23）、対応表で cases/ のテストIDを引く
+ALL = ids_of("all_test_cases_id_map.tsv", "cases/のテストID")
 # 監査の後、既存ケースと設計書の食い違いの裁定（2026-10-16。conflicts/）で保留へ外したケース（論点ID QD-）。
 # 監査が「ケースあり」で挙げたテストIDがこれに当たるときは、テストIDの実在の検査を通し、件数だけを出す
 RULED = {r[0] for r in rows(C / "excluded_hold_cases.tsv")[1:] if r[2].startswith("QD-")}   # 列: テストID 機能ID 論点ID …

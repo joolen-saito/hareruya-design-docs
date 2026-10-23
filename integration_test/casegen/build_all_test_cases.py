@@ -24,6 +24,11 @@ cases/ の実行区分は変えない（E2E がDB確認の可否を cases/ の�
 - 観点ID・使用シード: 区切りの「,」「、」で改行する（依頼者決定 2026-10-20）。
 一覧では出典の見出しを「基本設計書」（中身は基本設計仕様書のシートと節）、実行区分を「検証方法」、使用シードを「テストデータ」にする
 （依頼者決定 2026-10-20）。cases/ の見出しは元のまま（E2E の e2e/lib/catalog.ts が11列の見出しを厳密に照合するため）。
+一覧のテストIDは機能ごとに 001 からの抜けの無い連番に振り直す（依頼者決定 2026-10-23）。cases/ のテストIDは除外したケースの分が
+抜けたままだが、E2E のコード・playwright_cases.tsv・除外の一覧（excluded_*_cases.tsv）が cases/ のテストIDで引くので、cases/ は変えない。
+一覧のテストIDと cases/ のテストIDの対応は all_test_cases_id_map.tsv に書く。一覧からケースのテストIDを引く検査は、この対応表で cases/ の
+テストIDに戻して使う。セルの中に出てくる他のケースのテストID（「IT-M13-15-005は…」など）も一覧のテストIDに置き換える。
+ケースを足したり外したりすると、その機能の後ろのケースの一覧のテストIDはずれる。
 """
 import csv, glob, io, pathlib, re
 
@@ -33,6 +38,8 @@ PLAYWRIGHT = "Playwright"      # Playwright で流して合格したケースの
 RESULTS = ("合格", "不合格")   # playwright_cases.tsv の結果の値
 ORDER = ("テストID", "観点ID", "出典", "実行区分", "使用シード", "事前準備", "手順", "期待結果")  # 一覧の列の並び
 RENAME = {"出典": "基本設計書", "実行区分": "検証方法", "使用シード": "テストデータ"}  # 一覧での見出し（cases/ の見出しは変えない）
+ID_MAP = "all_test_cases_id_map.tsv"   # 一覧のテストID と cases/ のテストID の対応表
+ID_RE = re.compile(r"IT-([A-Z]\d\d-\d\d)-\d{3}")
 
 CIRCLED = "[①-⑳㉑-㉟]"
 OPEN, CLOSE = "（(「『【〔［", "）)」』】〕］"
@@ -137,13 +144,31 @@ def main():
     assert all(h in hdr for h in OMIT), f"落とす列が見出しに無い: {hdr}"
     assert sorted(ORDER) == sorted(h for h in hdr if h not in OMIT), f"一覧の列の並び ORDER が見出しと合わない: {hdr}"
     assert not any("\n" in v or "\r" in v for x in rows for v in x), "cases/ に改行を含むセルがある"
+    # 一覧のテストIDを機能ごとの 001 からの連番にする（行の並びは cases/ のまま）
+    seq, renum = {}, {}
+    for t in ids:
+        m = ID_RE.fullmatch(t)
+        assert m, f"テストIDの形が IT-<機能ID>-<3桁> でない: {t}"
+        seq[m.group(1)] = seq.get(m.group(1), 0) + 1
+        assert seq[m.group(1)] <= 999, f"1機能のケースが999件を超えた: {m.group(1)}"
+        renum[t] = f"IT-{m.group(1)}-{seq[m.group(1)]:03d}"
+    dangling = sorted({m.group(0) for x in rows for v in x[1:] for m in ID_RE.finditer(v)} - set(renum))
+    assert not dangling, f"セルの中に cases/ に無いテストIDがある（外したケースを指している。一覧のIDに置き換えられない）: {dangling[:5]}"
+    for x in rows:
+        x[0] = renum[x[0]]
+        x[1:] = [ID_RE.sub(lambda m: renum[m.group(0)], v) for v in x[1:]]
     keep = [hdr.index(h) for h in ORDER]
     brk = [BREAK.get(h, lambda v: v) for h in ORDER]
     b = io.StringIO()
     w = csv.writer(b, delimiter="\t", lineterminator="\n")   # 改行を含むセルは "" で囲まれる（スプレッドシートに貼ると1セルに収まる）
     w.writerow([RENAME.get(h, h) for h in ORDER]); w.writerows([[f(x[i]) for i, f in zip(keep, brk)] for x in rows])
     (CG / "all_test_cases.tsv").write_text(b.getvalue(), encoding="utf-8")
-    print(f"{len(rows)} 件 / {len({i[3:9] for i in ids})} 機能（うち検証方法 {PLAYWRIGHT} {len(pw_ids)} 件。Playwright で流して不合格の {len(pw) - len(pw_ids)} 件は元の区分のまま）")
+    m = io.StringIO()
+    w = csv.writer(m, delimiter="\t", lineterminator="\n")
+    w.writerow(["一覧のテストID", "cases/のテストID"]); w.writerows([[renum[t], t] for t in ids])
+    (CG / ID_MAP).write_text(m.getvalue(), encoding="utf-8")
+    print(f"{len(rows)} 件 / {len({i[3:9] for i in ids})} 機能（うち検証方法 {PLAYWRIGHT} {len(pw_ids)} 件。Playwright で流して不合格の {len(pw) - len(pw_ids)} 件は元の区分のまま）"
+          f"。テストIDを振り直したケース {sum(a != b for a, b in renum.items())} 件（対応は {ID_MAP}）")
 
 
 if __name__ == "__main__":

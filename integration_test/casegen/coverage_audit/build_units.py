@@ -2,7 +2,7 @@
 """被覆監査の単位（シート1枚）ごとに材料を作る。 build_units.py
 
 units/<書番>_<シートID>/sheet.txt   いまのHTML設計書の該当シートを文字に起こしたもの。行頭に L0001 の行番号
-units/<書番>_<シートID>/cases.tsv   そのシートに対応する機能のケース（除外した保留ケースは 実行区分=保留除外 で併せて載せる）
+units/<書番>_<シートID>/cases.tsv   そのシートに対応する機能のケース（除外した保留ケースは 検証方法=保留除外 で併せて載せる）
 units.tsv                           単位の一覧（書番/シートID/シート名/機能/区分/扱い/行数/ケース数）
 
 扱い: 監査 / 対象外（表紙・目次）/ 対象外（標準機能）/ 対象外（依頼者決定） / 対象外（フェーズ2・廃止・未実装）
@@ -13,6 +13,10 @@ ROOT = pathlib.Path(__file__).resolve().parents[3]
 A = ROOT / "integration_test/casegen/coverage_audit"
 C = ROOT / "integration_test/casegen"
 csv.field_size_limit(10**9)
+
+
+# 一覧の見出し → 保留除外の表（cases/ と同じ見出しに「元_」を付けたもの）の見出し（2026-10-20 に一覧の見出しを変えた）
+LIST_TO_CASES = {"基本設計書": "出典", "検証方法": "実行区分", "テストデータ": "使用シード"}
 
 
 def rd(p):
@@ -52,14 +56,18 @@ def main():
         unlisted[(r.get("書番", ""), r.get("シート名", ""))] = r
     cases = collections.defaultdict(list)
     all_rows = rd(C / "all_test_cases.tsv")
+    # 一覧のテストIDは機能ごとに振り直した連番なので（2026-10-23）、対応表で cases/ のテストIDを引く
+    to_cases = {r["一覧のテストID"]: r["cases/のテストID"] for r in rd(C / "all_test_cases_id_map.tsv")}
+    for r in all_rows:
+        r["テストID"] = to_cases[r["テストID"]]
     head = list(all_rows[0].keys())
     for r in all_rows:
         cases[re.sub(r"^IT-|-\d+$", "", r["テストID"])].append(r)
     for r in rd(C / "excluded_hold_cases.tsv"):
         tid = r.get("テストID", "")
-        row = {k: r.get("元_" + k, "") for k in head}
+        row = {k: r.get("元_" + LIST_TO_CASES.get(k, k), "") for k in head}
         row["テストID"] = tid
-        row["実行区分"] = "保留除外"
+        row["検証方法"] = "保留除外"
         cases[re.sub(r"^IT-|-\d+$", "", tid)].append(row)
 
     out = []

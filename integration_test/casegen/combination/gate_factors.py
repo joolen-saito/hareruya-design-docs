@@ -73,10 +73,9 @@ def check_ref(fid, s, err, where):
 
 def live_ids():
     ids = set()
-    with open(CG / "all_test_cases.tsv", encoding="utf-8", newline="") as f:
-        r = csv.reader(f, delimiter="\t")
-        next(r)
-        ids |= {row[0] for row in r if row}
+    # 一覧のテストIDは機能ごとに振り直した連番なので（2026-10-23）、対応表で cases/ のテストIDを引く
+    with open(CG / "all_test_cases_id_map.tsv", encoding="utf-8", newline="") as f:
+        ids |= {r["cases/のテストID"] for r in csv.DictReader(f, delimiter="\t")}
     return ids
 
 

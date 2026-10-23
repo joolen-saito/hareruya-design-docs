@@ -5,7 +5,10 @@ spec = importlib.util.spec_from_file_location("sd", S/"srcdiff_lib.py"); sd = im
 diff = json.load(open(S/"srcdiff.json", encoding="utf-8"))
 rows = list(csv.reader(open(NEW/"integration_test/casegen/all_test_cases.tsv", encoding="utf-8"), delimiter="\t"))   # 一覧はセル内で改行している（2026-10-19）。行で切らない
 hdr, rows = rows[0], rows[1:]
-ik = hdr.index("実行区分")   # 一覧の列は変わることがある（2026-10-16 に要求ID・優先度を外した）。位置でなく見出しで引く
+# 一覧のテストIDは機能ごとに振り直した連番なので（2026-10-23）、対応表で cases/ のテストIDを引く
+to_cases = {r["一覧のテストID"]: r["cases/のテストID"] for r in csv.DictReader(open(NEW/"integration_test/casegen/all_test_cases_id_map.tsv", encoding="utf-8"), delimiter="\t")}
+for r in rows: r[0] = to_cases[r[0]]
+ik = hdr.index("検証方法")   # 一覧の列は変わることがある（2026-10-16 に要求ID・優先度を外した。2026-10-20 に実行区分の見出しを検証方法にした）。位置でなく見出しで引く
 byf = collections.defaultdict(list)
 for r in rows:
     if r[ik] == "保留": byf["-".join(r[0].split("-")[1:3])].append(r)

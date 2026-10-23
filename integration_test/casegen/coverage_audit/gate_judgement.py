@@ -14,7 +14,8 @@ A = ROOT / "integration_test/casegen/coverage_audit"
 C = ROOT / "integration_test/casegen"
 csv.field_size_limit(10**9)
 VERDICTS = {"ケースあり", "一部抜け", "抜け", "保留除外", "対象外", "説明文"}
-live = {r["テストID"] for r in csv.DictReader(open(C / "all_test_cases.tsv", encoding="utf-8"), delimiter="\t")}
+# 一覧のテストIDは機能ごとに振り直した連番なので（2026-10-23）、対応表で cases/ のテストIDを引く
+live = {r["cases/のテストID"] for r in csv.DictReader(open(C / "all_test_cases_id_map.tsv", encoding="utf-8"), delimiter="\t")}
 hold = {r["テストID"] for r in csv.DictReader(open(C / "excluded_hold_cases.tsv", encoding="utf-8"), delimiter="\t")}
 
 

@@ -40,7 +40,8 @@ def functions():
 def main(codes):
     groups = {r["群"]: r for r in read(P / "groups.tsv")}
     cat = functions()
-    live = {r["テストID"] for r in read(CG / "all_test_cases.tsv")}
+    # 一覧のテストIDは機能ごとに振り直した連番なので（2026-10-23）、対応表で cases/ のテストIDを引く
+    live = {r["cases/のテストID"] for r in read(CG / "all_test_cases_id_map.tsv")}
     old_seed = set()
     for p in glob.glob(str(CG / "cases/*_seed_data.tsv")):
         # 合流で写したこの作業場所のシード（S-<機能ID>-C<英字>- の形）は既存に数えない
