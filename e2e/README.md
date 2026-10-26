@@ -16,6 +16,37 @@ npm run typecheck
 npm run coverage                        # 正本のケースのうち、テストがある件数。テストコードの形の検査も行う（下記）
 ```
 
+## エビデンス（手順ごとの画面つきの記録）
+
+ケースを流すと、`evidence/<機能ID>/<テストID>/` にエビデンスが出る（git の対象外）。テストコード側の書き足しは要らない。
+
+```bash
+tools/run_evidence.sh M03-14                 # 機能のテストがあるケースを全部、1件ずつ流す（pw_run.sh のロックで全体1本）
+tools/run_evidence.sh M03-14 016 026         # 番号を指定
+tools/run_evidence.sh M03-14 --todo          # エビデンスが無いか、正本が変わって古くなったケースだけ（中断しても続きから）
+tools/run_evidence.sh M03-14 --failed        # いま合格でないケースだけ
+node tools/evidence_index.mjs                # 一覧（MD・HTML・TSV）を作り直す
+node tools/evidence_check.mjs M03-14         # 記録の形・合格の中身・正本との一致・判定の有無を検査する
+python3 tools/evidence_judgements.py todo M03-14     # 判定が要るケース
+tools/evidence_pack.sh M03-14                # 固めて渡す（evidence/_packs/）
+```
+
+| 出るもの | 中身 |
+| --- | --- |
+| `evidence/<機能ID>/<テストID>/evidence.html`・`evidence.md` | 正本の事前準備・手順・期待結果の文（控えた番号つき）、手順1の前・各手順のあと・期待結果を確かめたあとの画面、確かめた項目ごとの合否、注記、エラー |
+| `…/result.json` | 機械が読む記録（一覧の元）。正本の指紋・実施日時・E2E とアプリのコミットを含む |
+| `…/Playwrightの画面_N.png`・`trace.zip` | 落ちたときだけ |
+| `evidence/<機能ID>/index.html`・`index.md`・`results.tsv`・`history.tsv` | 機能の一覧と実施の履歴 |
+| `evidence/index.html`・`index.md`・`results.tsv` | 全機能の一覧 |
+
+- 画面は caseTest が自動で撮る（`lib/evidence.ts`）。手順の途中も残したいときはケースの `capture("ラベル")`。キャプチャは合否に関わらない（撮れなければ理由を残す）。`E2E_EVIDENCE=viewport|off` で切り替える。
+- 自動判定は、手順か期待結果で落ちたものだけを「不合格」にし、事前準備（シード）やログインで止まったもの・時間切れ・中断は「未判定」にする。
+- ケースの中身（正本）か spec ファイルが変わると、そのエビデンスは「要再実行」になり、`--todo` で流し直される。
+- `pw_run.sh` はテストIDのタグ（`@IT-…`。caseTest が付ける）でケースを1件だけ選ぶ。
+- 人（担当）の判定は `review/judgements/<機能ID>.tsv` に書く（`tools/evidence_judgements.py set …`）。判定は、どの実施への判定かを実施日時で持つ。流し直すと「判定が古い」になる。
+- 合否の一覧（`integration_test/casegen/playwright_cases.tsv`）へは `evidence_judgements.py sync <機能ID> --apply` で、判定済みの「合格（条件なし）」「不合格（条件付きでない）」だけを載せる。
+- 進め方の全体（実装→実行→判定→記録）はスキル `.codex/skills/hareruya-e2e-case-evidence/SKILL.md`。
+
 ## 環境の切り替え
 
 `E2E_ENV` で切り替える（`config/env.ts`）。
@@ -56,11 +87,14 @@ lib/seeds.ts         defineSeed: シード1件＝画面操作の作り方1つ
 lib/notes.ts         控えた番号（〔イベントID-M1302-002〕の形の呼び名で引く）
 lib/session.ts       管理画面へのログイン
 lib/db.ts            DB確認（参照だけ）
+lib/evidence.ts      エビデンスの画面を撮る（caseTest が呼ぶ）
+lib/evidence_reporter.ts  エビデンスの書き出し（Playwright のレポーター）
 pages/               画面ごとの操作（セレクタはここにだけ書く）
 seeds/<機能>.ts      その機能のシードの作り方
 db/<領域>.ts         DB確認の照会（物理名はここの SQL にだけ書く）
 spec/<機能群>/       テスト
-tools/coverage.mjs   正本との対応の集計
+tools/coverage.mjs   正本との対応の集計（--list でテストのあるケースの一覧）
+tools/run_evidence.sh・evidence_*.mjs・evidence_judgements.py・evidence_pack.sh  エビデンスつきの実行・一覧・検査・判定・固め
 ```
 
 ### ケースの書き方

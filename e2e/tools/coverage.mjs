@@ -2,6 +2,7 @@
 /**
  * ケースの正本と、テストコード・シードの作り方の対応を数え、テストコードの形を検査する。
  *   node tools/coverage.mjs [機能ID...]
+ *   node tools/coverage.mjs --list <機能ID...>   テストがあるケースを「テストID<TAB>specのパス」で出す（tools/run_evidence.sh が使う）
  * テストコードは TypeScript の構文として読む（コメントや文字列の中のIDは数えない）。次のものは誤りとして終了コード1で終わる。
  *   - 同じテストID・同じシードIDの二重定義／正本に無いID
  *   - テストIDが文字列でその場に書かれていない
@@ -61,6 +62,15 @@ for (const sf of sources("seeds")) {
   }
 }
 
+if (process.argv.includes("--list")) {
+  const fids = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+  if (errors.length) { errors.forEach((e) => console.error(e)); process.exit(1); }
+  for (const [id, at] of [...tested].sort(([a], [b]) => a.localeCompare(b))) {
+    if (fids.length && !fids.some((f) => id.startsWith(`IT-${f}-`))) continue;
+    console.log(`${id}\t${at.replace(/:\d+$/, "")}`);
+  }
+  process.exit(0);
+}
 const rows = (file) => fs.readFileSync(file, "utf-8").split("\n").slice(1).filter(Boolean).map((l) => l.split("\t"));
 const want = process.argv.slice(2);
 const known = new Set(), knownSeeds = new Set();

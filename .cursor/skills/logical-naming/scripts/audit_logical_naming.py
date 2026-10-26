@@ -57,7 +57,8 @@ EXCLUDE_RELPATHS = {LEDGER_RELPATH.as_posix()}
 # 実行されるシード・スキーマ定義は物理名そのものが実行値であり、論理名に置き換えられない。
 # セレクタと同じ扱いで規約の対象外とする（[[logical-naming]] 「対象外」）。
 # functions/_archive は5分類化で本文から外した節の退避先。現役の設計書ではないので対象外。
-EXCLUDE_DIR_PREFIXES = ("e2e/seed", "e2e/db", "functions/_archive")
+# e2e/.runs（実行ごとの test-results の写し）と e2e/evidence（エビデンス）は test-results と同じ実行の生成物。
+EXCLUDE_DIR_PREFIXES = ("e2e/seed", "e2e/db", "functions/_archive", "e2e/.runs", "e2e/evidence")
 # 実行されるSQLの行も同じ理由で対象外。説明文ではなく実行文であることを大文字SQL語で判定する。
 SQL_LINE_RE = re.compile(
     r"\b(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM|FROM|JOIN|TRUNCATE|ALTER\s+TABLE|CREATE\s+TABLE)\b"

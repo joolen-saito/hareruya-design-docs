@@ -8,7 +8,7 @@
 #   ロックが取れずに予算が尽きたケースは「BUSY: 番号」を出す。出た番号で呼び直す。
 # - テスト1件の制限時間は PW_TIMEOUT_MS（既定1800000。手元の環境が遅く、設定ファイルの900秒では環境のせいの時間切れが出る）。
 # - 1件ごとのログは .runs/<機能>-<番号>.log、結果は .json、その回の test-results の写しは .runs/results-<機能>-<番号>/。
-# - HTML レポートは作らない（他の実行のレポートを上書きしないため）。
+# - HTML レポートは作らない（他の実行のレポートを上書きしないため）。エビデンスは evidence/<機能>/<テストID>/ に書き出す（lib/evidence_reporter.ts）。
 set -u
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 OUT=${PW_RUN_DIR:-$ROOT/.runs}
@@ -36,7 +36,7 @@ for n in "$@"; do
     # 手元の localstack にログがたまっていたら、流す前に消す（tools/cw_logs_clear.sh。ロックは持ったまま）
     "$ROOT/tools/cw_logs_clear.sh" --locked
     PLAYWRIGHT_JSON_OUTPUT_NAME="$json" PLAYWRIGHT_JSON_OUTPUT_FILE="$json" \
-      npx playwright test "$spec" -g "IT-$fid-$n" --timeout "$TIMEOUT" --reporter=list,json > "$log" 2>&1
+      npx playwright test "$spec" -g "@IT-$fid-$n( |\$)" --timeout "$TIMEOUT" --reporter=list,json,./lib/evidence_reporter.ts > "$log" 2>&1
     rc=$?
     rm -rf "$OUT/results-$tag-$n"
     [ -d test-results ] && cp -r test-results "$OUT/results-$tag-$n"

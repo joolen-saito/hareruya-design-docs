@@ -54,7 +54,12 @@ e2e/spec/m13/            M13-02 のテスト（7ファイル・80件）
 e2e/spec/m03/            M03-01（36件）・M03-11（30件、m03-11.spec.ts）・M03-14（39件、m03-14.spec.ts）のテスト
 e2e/tools/coverage.mjs   正本との対応の集計と、テストコードの形の検査
 e2e/review/              codex レビューの記録（R1・R2 の指摘と扱い）
+e2e/lib/evidence.ts・lib/evidence_reporter.ts   エビデンス（手順ごとの画面・確かめの合否）を撮って書き出す（2026-10-26〜）
+e2e/tools/run_evidence.sh  機能ごとに1件ずつ流してエビデンスを作る入口（中で pw_run.sh のロックを取る）
+e2e/review/judgements/   エビデンスへの判定の表（1ケース1行。playwright_cases.tsv へは evidence_judgements.py sync で載せる）
 ```
+
+2026-10-26 から、ケースを流すとエビデンスが `e2e/evidence/<機能ID>/`（git の対象外）に出る。実装→実行→エビデンス→判定→記録の進め方はスキル `.codex/skills/hareruya-e2e-case-evidence/SKILL.md`（Claude Code からは `.claude/skills/` のリンク）。使い方は `e2e/README.md` の「エビデンス」。
 
 書き方の決まりは `e2e/README.md` にある。要点は次のとおり。
 

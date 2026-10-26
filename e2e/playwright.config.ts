@@ -14,7 +14,8 @@ export default defineConfig({
   // シードを画面から作る時間を含む（イベント31件を登録するケースがある）
   timeout: 900_000,
   expect: { timeout: 10_000 },
-  reporter: [["list"], ["html", { open: "never" }]],
+  // エビデンス（手順ごとの画面・確かめの合否）は evidence/ に書き出す（lib/evidence_reporter.ts）
+  reporter: [["list"], ["html", { open: "never" }], ["./lib/evidence_reporter.ts"]],
   use: {
     baseURL: BASE_URL,
     ignoreHTTPSErrors: true,
