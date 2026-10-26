@@ -2,8 +2,8 @@
  * M13-02 イベント登録/編集（イベント属性の登録・更新。IT-M13-02-005、008〜029、032）
  * ケースの正本: integration_test/casegen/cases/M13-02_test_cases.tsv（手順・期待結果の文は正本から引く）
  */
-import { expect, test } from "@playwright/test";
-import { CaseBody, caseTest } from "../../lib/case";
+import { test } from "@playwright/test";
+import { expect, CaseBody, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { openEventCreate, openEventEdit, EventForm } from "../../pages/admin/event";
 import { 保存イベント, 保存されているイベント, イベント名で探す, 登録者のイベント件数, 最大のイベントID } from "../../db/event";

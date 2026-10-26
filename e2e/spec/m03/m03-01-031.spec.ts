@@ -1,6 +1,5 @@
 /** IT-M03-01-031: 正本に商品選択がない状態で一括編集ボタンを押し、遷移期待を確認する。 */
-import { expect } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { ProductSearchPage } from "../../pages/admin/product_search";
 import { M0301_ADMIN } from "../../seeds/m03-01";

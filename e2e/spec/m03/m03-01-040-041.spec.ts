@@ -1,7 +1,7 @@
 /** M03-01-040・041: 商品マスター(検索結果)の「完全に削除」の完了と取消。 */
-import { expect, test } from "@playwright/test";
+import { test } from "@playwright/test";
 import { 商品の件数 } from "../../db/product";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import {
   DELETE_DONE_MESSAGE, ProductBulkDelete, documentWasReloaded, markCurrentDocument,

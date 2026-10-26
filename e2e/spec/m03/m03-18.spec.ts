@@ -1,7 +1,7 @@
 /** M03-18 部門登録/編集。正本: cases/M03-18_test_cases.tsv */
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { 保存された部門, 部門, 部門コードが前方一致する部門, 部門コードの部門, 部門名の部門 } from "../../db/m03_18_department";
-import { CaseCtx, caseTest } from "../../lib/case";
+import { expect, CaseCtx, caseTest } from "../../lib/case";
 import { csvRecords, parseCsv } from "../../lib/csv";
 import { Account, loginAdmin } from "../../lib/session";
 import { tamperToken } from "../../pages/admin/devtools";

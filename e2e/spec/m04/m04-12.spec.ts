@@ -5,8 +5,8 @@
  * ほかの25件は、使用シード（BASE・STATUS・PAGING・JOINCHK-041・SPLITDST-042・MIXED-043）が登録日・承認日・在庫数をDBへ直接設定し、
  * ほかの在庫分割結合データをDBで退避するので実装しない（記録 e2e/review/M04-12_progress_2026-10-21.md）。
  */
-import { expect, test } from "@playwright/test";
-import { CaseCtx, caseTest } from "../../lib/case";
+import { test } from "@playwright/test";
+import { expect, CaseCtx, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { SplitJoinListPage } from "../../pages/admin/m04_13_split_join";
 import { CsvKind, SplitJoinCsvButtons } from "../../pages/admin/m04_12_split_join_list";

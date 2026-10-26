@@ -1,6 +1,5 @@
 /** IT-M03-01-051: 日本語名には無い英語名の検索語で、甲の商品だけを得る。 */
-import { expect } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { ProductSearchPage } from "../../pages/admin/product_search";
 import { M0301_ADMIN } from "../../seeds/m03-01";

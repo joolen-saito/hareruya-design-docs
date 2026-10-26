@@ -1,8 +1,8 @@
 /** M03-22 購入グループ管理。正本: cases/M03-22_test_cases.tsv */
-import { BrowserContext, expect, Page, test } from "@playwright/test";
+import { BrowserContext, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { 購入グループ, 保存された購入グループ } from "../../db/m03_22_purchase_group";
-import { CaseCtx, caseTest } from "../../lib/case";
+import { expect, CaseCtx, caseTest } from "../../lib/case";
 import { Account, hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { tamperToken } from "../../pages/admin/devtools";
 import { openProductEdit } from "../../pages/admin/product_edit";

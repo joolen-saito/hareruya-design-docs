@@ -1,7 +1,7 @@
 /** M03-01-035〜039・042: 商品マスター(検索結果)の表示件数・ページ送りと、検索条件の保持・破棄。 */
-import { expect, test } from "@playwright/test";
+import { test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { adminUrl, hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { ProductPageCountPage } from "../../pages/admin/m03_01_page_count";
 import {

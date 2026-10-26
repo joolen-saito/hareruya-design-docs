@@ -9,8 +9,8 @@
  * 実装していないケース: 部門31〜33のシード（S-M03-35-SECTIONS）がスマレジ試験用部門IDをDBへ直接設定するもの、
  * 取込履歴をDBフィクスチャで入れるもの（004〜007）ほか。理由は e2e/review/M03-35_progress_2026-10-21.md。
  */
-import { expect, Page, test } from "@playwright/test";
-import { CaseCtx, caseTest } from "../../lib/case";
+import { Page, test } from "@playwright/test";
+import { expect, CaseCtx, caseTest } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { Account, loginAdmin } from "../../lib/session";
 import { DepartmentPage } from "../../pages/admin/m03_18_department";

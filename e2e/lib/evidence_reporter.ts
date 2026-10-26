@@ -65,7 +65,15 @@ const safe = (s: string) => s.replace(/[\\/:*?"<>|#\s]+/g, "_").slice(0, 60);
 
 type Shot = { file: string; 場面: string; URL?: string; 注記?: string };
 type Scene = { 種類: "開始時" | "手順" | "期待結果"; 番号?: number; 文: string; 状態: "済" | "失敗" | "未実行"; 秒?: number; 画像: Shot[]; 撮れなかった: string[]; エラー?: string };
-type Check = { 項目: string; 結果: "合格" | "不合格"; エラー?: string };
+type Check = { 項目: string; 結果: "合格" | "不合格"; 期待?: string; 実際?: string; エラー?: string };
+
+/** 落ちた確かめのエラー出力から、期待と実際を拾う（記録の無い確かめのため） */
+function fromError(msg: string): { 期待?: string; 実際?: string } {
+  const pick = (re: RegExp) => re.exec(msg)?.[1]?.trim();
+  const 期待 = pick(/^\s*Expected[^:\n]*:\s*(.+)$/m);
+  const 実際 = pick(/^\s*Received[^:\n]*:\s*(.+)$/m);
+  return { ...(期待 ? { 期待 } : {}), ...(実際 ? { 実際 } : {}) };
+}
 
 /** caseTest は lib/case.ts の中で test() を呼ぶので、テストの位置はファイルの単位から取り、行はテストIDの文字列で探す */
 function specLocation(test: TestCase, testId: string): string {
@@ -126,6 +134,29 @@ function mergeAnnotations(a: { type: string; description?: string }[], b: { type
     if (n < Math.max(ca.get(k) ?? 0, cb.get(k) ?? 0)) { out.push(x); seen.set(k, n + 1); }
   }
   return out;
+}
+
+const firstLineOf = (s: string) => s.split("\n").map((x) => x.trim()).find((x) => x && !/^Error:\s*$/.test(x))?.replace(/^Error:\s*/, "") ?? "";
+function pick0(result: TestResult): string {
+  return result.annotations.filter((a) => a.type === "skip").map((a) => a.description ?? "").join(" / ");
+}
+
+/** 期待結果に対して、実際はどういう状態だったかを文にする（エビデンスの先頭と一覧に出す） */
+function summarize(判定: string, 場面: string, checks: Check[], scenes: Scene[], errors: string[], skip: string): string {
+  const line = (k: Check) => `「${k.項目}」は${k.期待 ? `${k.期待}を期待したのに対し、` : ""}実際は${k.実際 ?? "（記録なし）"}`;
+  if (判定 === "スキップ") return `流していない（${skip || "スキップ"}）。`;
+  const ng = checks.filter((k) => k.結果 === "不合格");
+  const exp = scenes[scenes.length - 1];
+  if (exp.状態 !== "未実行" && (判定 === "合格" || 場面 === "期待結果" || ng.length)) {
+    if (!ng.length) {
+      const shown = checks.filter((k) => k.実際).slice(0, 6).map((k) => `${k.項目}: ${k.実際}`);
+      return `期待結果のとおり。確かめた${checks.length}項目すべてが期待どおりだった${shown.length ? `（${shown.join("／")}${checks.length > shown.length ? "／…" : ""}）` : ""}。`;
+    }
+    const okN = checks.length - ng.length;
+    return `期待結果と違う。${ng.map(line).join("。")}。${okN ? `ほかの${okN}項目は期待どおり。` : ""}`;
+  }
+  const why = firstLineOf(errors[0] ?? "");
+  return `${場面 || "途中"}で止まり、期待結果を確かめていない${why ? `（${why.slice(0, 200)}）` : ""}。`;
 }
 
 export default class EvidenceReporter implements Reporter {
@@ -220,6 +251,7 @@ export default class EvidenceReporter implements Reporter {
     }
     const expectedStep = expectedSteps[expectedSteps.length - 1];
     const checks: Check[] = [];
+    const stepChecks: Check[] = [];
     if (expectedSteps.length) {
       const exp = scenes[scenes.length - 1];
       exp.状態 = expectedSteps.some(hasError) ? "失敗" : "済";
@@ -229,10 +261,23 @@ export default class EvidenceReporter implements Reporter {
       for (const e of expectedSteps) {
         walk(e, (s) => {
           if (s.category !== "expect" || s === e) return;
-          checks.push({ 項目: s.title, 結果: s.error ? "不合格" : "合格", ...(s.error ? { エラー: clean(s.error.message).split("\n").slice(0, 12).join("\n") } : {}) });
+          const err = s.error ? clean(s.error.message) : "";
+          stepChecks.push({ 項目: s.title, 結果: s.error ? "不合格" : "合格", ...(s.error ? { ...fromError(err), エラー: err.split("\n").slice(0, 12).join("\n") } : {}) });
         });
       }
     }
+
+    // 確かめ: caseTest が記録した期待と実際の状態（lib/evidence_expect.ts）を正とし、記録に無い確かめ（画面の部品の中の確かめなど）は
+    // 実行の記録（step）から足す。記録が無い古い形では、実行の記録だけを使う
+    const recAtt = [...result.attachments].reverse().find((a) => a.name === `${EVIDENCE_PREFIX}確かめの記録` && a.body);
+    const recorded: Check[] = recAtt ? (JSON.parse(recAtt.body!.toString("utf-8")) as Check[]) : [];
+    const used = new Set<number>();
+    for (const r of recorded) {
+      const i = stepChecks.findIndex((k, j) => !used.has(j) && k.項目 === r.項目);
+      if (i >= 0) used.add(i);
+      checks.push({ ...r, ...(i >= 0 && stepChecks[i].エラー ? { エラー: stepChecks[i].エラー } : {}) });
+    }
+    stepChecks.forEach((k, j) => { if (!used.has(j) && (!recorded.length || k.結果 === "不合格")) checks.push(k); });
 
     // 画像の写し
     let seq = 0;
@@ -294,6 +339,7 @@ export default class EvidenceReporter implements Reporter {
     if (result.status === "timedOut" && 自動判定 === "不合格") 自動判定 = "未判定"; // 時間切れは環境の遅さのことが多い。人が判定する
     const 時間切れ = result.status === "timedOut";
 
+    const 実際の状態 = summarize(自動判定, 落ちた場面, checks, scenes, result.errors.map((e) => clean(e.message ?? e.value ?? "")), pick0(result));
     const annotations = mergeAnnotations(test.annotations, result.annotations ?? []);
     const pick = (t: string) => annotations.filter((a) => a.type === t).map((a) => a.description ?? "");
     const notesOut = annotations.filter((a) => !["観点ID", "優先度", "実行区分", "出典", "skip"].includes(a.type)).map((a) => ({ 種類: a.type, 内容: a.description ?? "" }));
@@ -315,6 +361,7 @@ export default class EvidenceReporter implements Reporter {
       Playwrightの結果: result.status,
       時間切れ,
       落ちた場面,
+      実際の状態,
       スキップの理由: pick("skip").join(" / "),
       実施日時: jst(result.startTime),
       所要秒: Math.round(result.duration / 100) / 10,

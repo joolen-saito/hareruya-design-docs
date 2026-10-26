@@ -71,6 +71,10 @@ for (const fid of fids) {
       if (rec.確かめ.length === 0) errors.push(`${id}: 合格なのに確かめ（expect）が記録されていない`);
       if (rec.確かめ.some((k) => k.結果 !== "合格")) errors.push(`${id}: 合格なのに落ちた確かめがある`);
     }
+    // 期待結果に対する実際の状態（新しい形の記録だけ。古い形は流し直すと出る）
+    if ("実際の状態" in rec && !String(rec.実際の状態 ?? "").trim()) errors.push(`${id}: 期待結果に対する実際の状態が空`);
+    if ("実際の状態" in rec && rec.確かめ.some((k) => k.項目 === "（メッセージの無い確かめ）")) warns.push(`${id}: メッセージの無い確かめがある（何を確かめたかがエビデンスで分からない。expect の第2引数を書く）`);
+    if (!("実際の状態" in rec)) warns.push(`${id}: 古い形の記録（期待結果に対する実際の状態が無い。流し直すと出る）`);
     // 記録にある画像・落ちたときの画面・操作の記録が、ファイルとして在ること
     const files = [...rec.場面.flatMap((s) => s.画像.map((im) => im.file)), ...(rec.失敗時の画面 ?? []), ...(rec.trace ? [rec.trace] : [])];
     for (const f of files) {

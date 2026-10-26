@@ -7,9 +7,9 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { STATE_DIR } from "../../config/env";
-import { CaseCtx, caseTest } from "../../lib/case";
+import { expect, CaseCtx, caseTest } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { loginAdmin } from "../../lib/session";
 import * as price from "../../db/m03_30_price";

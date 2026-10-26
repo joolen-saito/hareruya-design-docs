@@ -15,9 +15,9 @@
  *   金額の書き方（¥・桁区切り）だけをそろえて「10000円以上の商品の合計」と比べる（閾値の値と「以上/未満の商品の合計」の文は変えない）。
  * - シードは、正本の外で承認する管理者を補い、在庫移動指示検索で店舗も選んでいる（seeds/m04-25.ts の冒頭）。どのケースもその上に成り立つ。
  */
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { 紐づく在庫移動, 発送状況, 在庫移動指示, 送り状Noと備考, 送り状Noの形, 備考の形 } from "../../db/m04_25_move_instruction";
-import { caseTest, CaseCtx } from "../../lib/case";
+import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { Account, loginAdmin } from "../../lib/session";
 import { pathOf, topMessages } from "../../pages/admin/m04_24_move_instruction";
 import { readMoveIdOnScreen } from "../../pages/admin/m04_24_stock_move";

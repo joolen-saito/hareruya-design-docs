@@ -9,9 +9,9 @@
  * - 正本の手順・期待結果の文はコードに写さない（報告には正本の文が出る）。
  */
 import fs from "node:fs";
-import { expect, Locator, Page, test } from "@playwright/test";
+import { Locator, Page, test } from "@playwright/test";
 import * as dbm from "../../db/m04_09_move";
-import { CaseBody, caseTest } from "../../lib/case";
+import { expect, CaseBody, caseTest } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { Account, adminUrl, hideDebugToolbar, loginAdmin } from "../../lib/session";
 import {

@@ -1,7 +1,7 @@
 /** M03-11 カテゴリ登録/編集。正本: cases/M03-11_test_cases.tsv */
-import { Dialog, expect, Locator, Page, test } from "@playwright/test";
+import { Dialog, Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
-import { CaseBody, caseTest } from "../../lib/case";
+import { expect, CaseBody, caseTest } from "../../lib/case";
 import { カテゴリ, 名称のカテゴリ } from "../../db/category";
 import { adminUrl, hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { CategoryPage } from "../../pages/admin/category";

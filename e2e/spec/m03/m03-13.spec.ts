@@ -1,7 +1,7 @@
 /** M03-13 タグ登録/編集。正本: cases/M03-13_test_cases.tsv */
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { 保存されたタグ, 優先表示の行, 優先表示順, 名称のタグ, タグ } from "../../db/m03_13_tag";
-import { CaseCtx, caseTest } from "../../lib/case";
+import { expect, CaseCtx, caseTest } from "../../lib/case";
 import { Account, loginAdmin } from "../../lib/session";
 import { tamperToken } from "../../pages/admin/devtools";
 import { pressTagChooser, tagCandidateButton, tagCandidates } from "../../pages/admin/m03_13_product";

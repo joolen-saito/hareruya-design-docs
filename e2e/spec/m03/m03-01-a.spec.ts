@@ -1,6 +1,5 @@
 /** M03-01 商品マスター（検索入力）— CSV不要の先行ケース。 */
-import { expect } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import {
   ChoiceObservation, ProductSearchPage, SEARCH_CHOICE_FIELDS, SEARCH_SELECT_FIELDS, SEARCH_TEXT_FIELDS,

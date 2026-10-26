@@ -5,9 +5,9 @@
  * 実装しないケースと理由は e2e/review/M03-23_progress_2026-10-20.md に書く
  * （表示件数の既定値50の設定にアプリの設定ファイルの書き換えが要る 001・002・037、シードや手順にDBでの削除・設定が要るもの）。
  */
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { 語を持つ価格履歴 } from "../../db/m03_23_price_history";
-import { CaseBody, caseTest } from "../../lib/case";
+import { expect, CaseBody, caseTest } from "../../lib/case";
 import { available as dbAvailable } from "../../lib/db";
 import { adminUrl, loginAdmin, withAdminSession } from "../../lib/session";
 import {

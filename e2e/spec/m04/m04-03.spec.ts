@@ -9,8 +9,8 @@
  * 「本店」は手元の環境の店舗ID 1（親店舗）。店名は環境で違う（手元は「Hareruya」）ので、在庫検索一覧の検索欄「店舗」の選択肢から読む。
  * 「承認者で管理画面にログインし直す」は、管理画面のログアウトを開いてから承認者でログインする。
  */
-import { expect, test } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { test } from "@playwright/test";
+import { expect, caseTest } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import {
   checkAndOpenBulkApprove, classStock, confirmBulkApprove, fillBulkEdit, openBulkEdit, openClassListByName,

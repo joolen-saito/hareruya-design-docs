@@ -1,6 +1,6 @@
 /** M03-01-008・011・015〜018・052: カードを紐づけた商品の、商品名・カード名・言語・プロモ・Foil による検索。 */
-import { expect, test } from "@playwright/test";
-import { CaseCtx, caseTest } from "../../lib/case";
+import { test } from "@playwright/test";
+import { expect, CaseCtx, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { ProductResultPaging } from "../../pages/admin/product_result_paging";
 import { ProductSearchPage } from "../../pages/admin/product_search";

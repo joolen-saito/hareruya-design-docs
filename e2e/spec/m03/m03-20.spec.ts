@@ -5,9 +5,9 @@
  * 取込ファイルは、シード（seeds/m03-20.ts）が試験用端末に作ったもの（または e2e/fixtures/m03-20/ のもの）を選ぶ。
  * 実装していないケース: 011・012・021（シードがDBで部門を置く・消す）、023（シードが画像ファイルを置く）。
  */
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { 保存された部門, 部門, 部門の総件数, 部門コードの部門, 部門名の部門 } from "../../db/m03_20_department";
-import { CaseBody, CaseCtx, caseTest } from "../../lib/case";
+import { expect, CaseBody, CaseCtx, caseTest } from "../../lib/case";
 import { csvRecords } from "../../lib/csv";
 import { Account, loginAdmin } from "../../lib/session";
 import { DepartmentPage } from "../../pages/admin/m03_18_department";

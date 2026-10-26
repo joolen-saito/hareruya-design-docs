@@ -7,8 +7,7 @@
  *   063・064 は S-M04-23-L-MASTER（DB投入）、083・084 は S-M04-23-RD-STORES（所属の店舗をDBで直接設定）を使うので実装しない。
  * - 074 は、公開側のブラウザ環境 S-M04-23-QE-ENV（ユニサーチ試験環境へ接続できること）が要るので実装しない。
  */
-import { expect } from "@playwright/test";
-import { CaseBody, caseTest } from "../../lib/case";
+import { expect, CaseBody, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { openSplitJoinList, pressSplitJoinCsvButton, SplitJoinCsvKind, splitJoinCsvModal } from "../../pages/admin/m04_23_split_join_csv";
 import { m0423Admin } from "../../seeds/m04-23";

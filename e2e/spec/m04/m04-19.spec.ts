@@ -1,7 +1,7 @@
 /** M04-19 欠品履歴検索一覧。正本: cases/M04-19_test_cases.tsv */
 import fs from "node:fs";
-import { Download, expect, Page, test } from "@playwright/test";
-import { caseTest, CaseCtx } from "../../lib/case";
+import { Download, Page, test } from "@playwright/test";
+import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { stockEditValue } from "../../pages/admin/m04_19_masters";

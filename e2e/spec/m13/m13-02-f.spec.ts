@@ -2,8 +2,8 @@
  * M13-02 イベント登録/編集（申込・デッキ登録のある日程、有料オンライン受付の日程。IT-M13-02-004、033、034、039、046〜051、077、078、080、082）
  * ケースの正本: integration_test/casegen/cases/M13-02_test_cases.tsv（手順・期待結果の文は正本から引く）
  */
-import { expect, test } from "@playwright/test";
-import { CaseBody, caseTest } from "../../lib/case";
+import { test } from "@playwright/test";
+import { expect, CaseBody, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { openEventEdit, EventForm } from "../../pages/admin/event";
 import { 保存されているイベント } from "../../db/event";

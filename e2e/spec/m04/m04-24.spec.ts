@@ -14,10 +14,10 @@
  * - 手順が実行できないとき、期待結果が画面の表示・遷移なら、その手順で止めて不合格にする。期待結果がDBで確かめられるもの（023・025）は、
  *   注記を残して続け、DBで確かめる。CSVの登録の送信は、送れたことを確かめてから進む（送らずに「更新されない」を合格にしない）。
  */
-import { expect, Locator, Page, test } from "@playwright/test";
+import { Locator, Page, test } from "@playwright/test";
 import fs from "node:fs";
 import { 在庫移動指示, 発送状況, 紐づく在庫移動, 送り状Noの形 } from "../../db/m04_24_move_instruction";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import {
   AdminSidebar, InstructionRow, MoveInstructionDetailPage, moveInstructionDetailPath, moveInstructionListPath, MoveInstructionSearchPage,

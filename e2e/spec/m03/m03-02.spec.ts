@@ -1,6 +1,6 @@
 /** M03-02 商品登録編集。正本: cases/M03-02_test_cases.tsv（画面だけで準備できる 003・031・036） */
-import { expect, test } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { test } from "@playwright/test";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { ErrorScreen, ProductEditForm, openAndReadErrorScreen } from "../../pages/admin/m03_02_product";
 import { displayedProductId } from "../../pages/admin/product_edit";

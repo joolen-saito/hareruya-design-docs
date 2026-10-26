@@ -1,6 +1,6 @@
 /** M03-41 カテゴリCSV登録。正本: cases/M03-41_test_cases.tsv */
-import { expect, Page, test } from "@playwright/test";
-import { CaseBody, caseTest } from "../../lib/case";
+import { Page, test } from "@playwright/test";
+import { expect, CaseBody, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import {
   カテゴリの保存内容, 名称か英名が一致するカテゴリ, 名称のカテゴリ, 親の下の名称のカテゴリ,

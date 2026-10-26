@@ -8,9 +8,9 @@
  *   表示する作り（ダウンロードにはならない）。ダウンロードは、ブラウザのダウンロードの発生で確かめる。
  */
 import fs from "node:fs";
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import * as dbm from "../../db/m04_09_move";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { Account, loginAdmin } from "../../lib/session";
 import { collectDialogs, MoveTransferList, printWindowFacts, topMessages } from "../../pages/admin/m04_09_move";

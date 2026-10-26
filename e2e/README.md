@@ -39,6 +39,7 @@ tools/evidence_pack.sh M03-14                # 固めて渡す（evidence/_packs
 | `evidence/<機能ID>/index.html`・`index.md`・`results.tsv`・`history.tsv` | 機能の一覧と実施の履歴 |
 | `evidence/index.html`・`index.md`・`results.tsv` | 全機能の一覧 |
 
+- エビデンスの先頭に「期待結果に対する実際の状態」を文で書き、確かめた項目ごとに「期待」と「実際の状態」を並べる。spec は `expect` を `lib/case` から使う（`lib/evidence_expect.ts`。ふるまいは Playwright の expect と同じで、期待結果の中の確かめだけを記録する）。
 - 画面は caseTest が自動で撮る（`lib/evidence.ts`）。手順の途中も残したいときはケースの `capture("ラベル")`。キャプチャは合否に関わらない（撮れなければ理由を残す）。`E2E_EVIDENCE=viewport|off` で切り替える。
 - 自動判定は、手順か期待結果で落ちたものだけを「不合格」にし、事前準備（シード）やログインで止まったもの・時間切れ・中断は「未判定」にする。
 - ケースの中身（正本）か spec ファイルが変わると、そのエビデンスは「要再実行」になり、`--todo` で流し直される。
@@ -88,6 +89,7 @@ lib/notes.ts         控えた番号（〔イベントID-M1302-002〕の形の�
 lib/session.ts       管理画面へのログイン
 lib/db.ts            DB確認（参照だけ）
 lib/evidence.ts      エビデンスの画面を撮る（caseTest が呼ぶ）
+lib/evidence_expect.ts  期待結果の確かめを「期待」と「実際の状態」の組で記録する expect（spec は lib/case から使う）
 lib/evidence_reporter.ts  エビデンスの書き出し（Playwright のレポーター）
 pages/               画面ごとの操作（セレクタはここにだけ書く）
 seeds/<機能>.ts      その機能のシードの作り方
@@ -100,7 +102,7 @@ tools/run_evidence.sh・evidence_*.mjs・evidence_judgements.py・evidence_pack.
 ### ケースの書き方
 
 ```ts
-caseTest("IT-M13-02-002", async ({ page, notes, step, expected }) => {
+caseTest("IT-M13-02-002", async ({ page, notes, step, expected }) => {   // expect は lib/case から import する
   await loginAdmin(page, M1302_ADMIN);
   await step(1, async () => { form = await openEventEdit(page, notes.get("〔イベントID-M1302-002〕")); });
   await step(2, async () => { … });

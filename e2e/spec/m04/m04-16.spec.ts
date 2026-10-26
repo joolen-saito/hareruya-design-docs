@@ -8,8 +8,8 @@
  * 「TC東京」は店舗ID 1（親店舗）。店名は変えていない（シード S-M04-16-STORE-TC の注記）。試験管理者のデフォルト検索表示店舗は店舗ID 1 なので、
  * 正本が店舗を指定しない手順では、検索欄「店舗」は画面の初期値（店舗ID 1）のまま検索する。
  */
-import { expect, Page, test } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { Page, test } from "@playwright/test";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import {
   checkedCodes, checkRowsOfCode, csvButtonGroup, downloadRecommendCsv, listedCodes, openStockList, readCsvRows, recommendButton,

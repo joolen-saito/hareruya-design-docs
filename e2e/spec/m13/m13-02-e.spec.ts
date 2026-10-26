@@ -2,8 +2,8 @@
  * M13-02 イベント登録/編集（IT-M13-02-066〜076、079、081、083 のうち、申込・デッキ登録のデータが要らないもの）
  * ケースの正本: integration_test/casegen/cases/M13-02_test_cases.tsv（手順・期待結果の文は正本から引く）
  */
-import { expect, Page } from "@playwright/test";
-import { CaseBody, caseTest } from "../../lib/case";
+import { Page } from "@playwright/test";
+import { expect, CaseBody, caseTest } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { openEventCreate, openEventEdit, EventForm } from "../../pages/admin/event";
 import { sendForm } from "../../pages/admin/devtools";

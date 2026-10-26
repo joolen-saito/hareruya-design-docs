@@ -1,6 +1,5 @@
 /** IT-M03-01-034: 商品検索結果の履歴メニューを1回目で表示し、2回目で閉じる。 */
-import { expect } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { ProductSearchPage } from "../../pages/admin/product_search";
 import { M0301_ADMIN } from "../../seeds/m03-01";

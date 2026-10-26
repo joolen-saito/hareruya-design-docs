@@ -12,8 +12,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { expect, Page, test } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { Page, test } from "@playwright/test";
+import { expect, caseTest } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { HistoryRow, numberOf, StockHistoryPage } from "../../pages/admin/m04_17_stock_history";

@@ -6,8 +6,8 @@
  * （記録 e2e/review/M04-30_progress_2026-10-21.md）。
  * 「実行日」は、手元の環境の日付（日本時間。アプリの設定のタイムゾーンと同じ）で数える。
  */
-import { expect, test } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { test } from "@playwright/test";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { BarcodeReplacementListPage } from "../../pages/admin/m04_30_barcode";
 import { M0430_ADMIN } from "../../seeds/m04-30";

@@ -1,6 +1,6 @@
 /** M03-40 棚番号更新CSV登録。正本: cases/M03-40_test_cases.tsv */
-import { expect, test } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { test } from "@playwright/test";
+import { expect, caseTest } from "../../lib/case";
 import { parseCsv } from "../../lib/csv";
 import { loginAdmin } from "../../lib/session";
 import { 棚番号更新CSVの取込履歴件数 } from "../../db/m03_40_shelf_csv_history";

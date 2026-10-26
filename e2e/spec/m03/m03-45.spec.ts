@@ -1,7 +1,7 @@
 /** M03-45 カテゴリ一覧。正本: cases/M03-45_test_cases.tsv */
-import { Dialog, expect, Page, test } from "@playwright/test";
+import { Dialog, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
-import { CaseBody, caseTest } from "../../lib/case";
+import { expect, CaseBody, caseTest } from "../../lib/case";
 import { 名称のカテゴリ } from "../../db/category";
 import { カテゴリの件数, 表示順 } from "../../db/m03_45_category";
 import { hideDebugToolbar, loginAdmin } from "../../lib/session";

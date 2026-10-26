@@ -6,8 +6,8 @@
  * 「検索条件をクリア」はアコーディオンの中の条件だけを空にし、店舗（本店）は残る。シードの履歴はどれも本店・在庫区分 EC-CUBE の在庫に作る。
  */
 import fs from "node:fs";
-import { expect, Page, test } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { Page, test } from "@playwright/test";
+import { expect, caseTest } from "../../lib/case";
 import { csvRecords, decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { loginAdmin } from "../../lib/session";
 import { readClassPrices } from "../../pages/admin/m04_17_seed_ops";

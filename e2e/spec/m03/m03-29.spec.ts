@@ -8,9 +8,9 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { STATE_DIR } from "../../config/env";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { loginAdmin } from "../../lib/session";
 import { pathOf, topMessages } from "../../pages/admin/m03_21_shelf_number";

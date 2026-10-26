@@ -1,6 +1,5 @@
 /** M03-01-009: 商品名・カテゴリ・状態の3条件 AND 検索。 */
-import { expect } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { ProductSearchPage } from "../../pages/admin/product_search";
 import { M0301_ADMIN } from "../../seeds/m03-01";

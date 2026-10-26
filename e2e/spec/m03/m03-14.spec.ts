@@ -1,7 +1,7 @@
 /** M03-14 略称タグ登録/編集。正本: cases/M03-14_test_cases.tsv */
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { 名称の略称タグ, 略称タグ, 略称タグIDの最大値, 略称タグの件数 } from "../../db/short_tag";
-import { CaseCtx, caseTest } from "../../lib/case";
+import { expect, CaseCtx, caseTest } from "../../lib/case";
 import { csvRecords } from "../../lib/csv";
 import { サーバーの時刻, アプリの時刻帯 } from "../../lib/app_config";
 import { Account, loginAdmin } from "../../lib/session";

@@ -2,8 +2,8 @@
  * M13-02 イベント登録/編集（削除・権限外の要求・なりすまし対策トークン。IT-M13-02-052〜056、058〜062）
  * ケースの正本: integration_test/casegen/cases/M13-02_test_cases.tsv（手順・期待結果の文は正本から引く）
  */
-import { expect, Page } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { Page } from "@playwright/test";
+import { expect, caseTest } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { openEventEdit, EventForm } from "../../pages/admin/event";
 import { sendForm, tamperToken, Token } from "../../pages/admin/devtools";

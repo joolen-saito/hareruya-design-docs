@@ -11,6 +11,7 @@
  * - 正本の手順をすべて実行し、期待結果を確かめたことを、終わりに検査する（手順の飛ばし・期待結果の確かめ忘れを落とす）。
  * - DB確認は、実行区分が「ブラウザ+DB確認」のケースでだけ使える。
  * - エビデンスとして、手順1の前・各手順のあと・期待結果を確かめたあとの画面を自動で撮る（lib/evidence.ts）。
+ *   期待結果の中の確かめ（expect）は、期待と実際の状態の組として記録する（lib/evidence_expect.ts。expect はこのファイルから使う）。
  *   手順の途中の画面も残したいときは capture("ラベル") を呼ぶ。撮れても撮れなくても合否は変わらない。
  */
 import { test, expect, Browser, Page } from "@playwright/test";
@@ -21,6 +22,10 @@ import * as dbm from "./db";
 import { assertRunnable, ENV_NAME, SHARED_ENV } from "../config/env";
 import { hideDebugToolbar } from "./session";
 import { EVIDENCE_PREFIX, EvidenceCamera, scene } from "./evidence";
+import { Check, startRecording, stopRecording } from "./evidence_expect";
+
+/** spec はこの expect を使う（Playwright の expect と同じ。期待結果の確かめでは、期待と実際の状態を記録する） */
+export { expect } from "./evidence_expect";
 
 export type CaseCtx = {
   page: Page;
@@ -75,6 +80,8 @@ export function caseTest(testId: string, body: CaseBody): void {
     /** いま実行している手順（期待結果は "expected"）。capture のラベルを場面に振り分ける */
     let current: number | "expected" | undefined;
     let lastStep = 0;
+    /** 期待結果の確かめの記録（期待と実際の状態）。expected() が何度呼ばれても足していく */
+    const checks: Check[] = [];
     let startShot = false;
     const ctx: CaseCtx = {
       page, browser, c, notes,
@@ -96,10 +103,13 @@ export function caseTest(testId: string, body: CaseBody): void {
       expected: async (fn) => {
         if (done.size !== steps.length) throw new Error(`${testId}: 期待結果は、正本の手順 ${steps.length} 個をすべて実行してから確かめる（いま ${done.size} 個）`);
         current = "expected";
+        startRecording();
         try {
           await test.step(`期待結果: ${notes.resolve(c.期待結果)}`, fn);
         } finally {
           current = undefined;
+          checks.push(...stopRecording());
+          await test.info().attach(`${EVIDENCE_PREFIX}確かめの記録`, { body: JSON.stringify(checks), contentType: "application/json" }).catch(() => {});
           await camera.shoot(scene.expected);
         }
         checked += 1;

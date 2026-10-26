@@ -12,9 +12,9 @@
  *   正本の手順が「承認可能な在庫のみ表示」に触れずに「承認ステータスの「未承認」にチェック」と書くもの（104〜106・108・109）は、
  *   チェック欄が選べないのでチェックを付けずに検索し、注記に残す（条件付き）。
  */
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { MAIL_URL } from "../../config/env";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { historiesOf, stockOf } from "../../db/m04_32_approval";
 import { chooseHistoryShopAndZone, classStock, openClassListByName, searchStockByCode } from "../../pages/admin/m04_02_rc_stock";

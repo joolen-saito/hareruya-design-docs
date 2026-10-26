@@ -1,6 +1,6 @@
 /** M03-38 商品公開CSV登録。正本: cases/M03-38_test_cases.tsv */
-import { expect, test } from "@playwright/test";
-import { CaseBody, caseTest } from "../../lib/case";
+import { test } from "@playwright/test";
+import { expect, CaseBody, caseTest } from "../../lib/case";
 import { parseCsv } from "../../lib/csv";
 import { loginAdmin } from "../../lib/session";
 import {

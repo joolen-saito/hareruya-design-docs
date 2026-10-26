@@ -2,8 +2,7 @@
  * M13-02 イベント登録/編集（日程一覧と画面下部の操作。IT-M13-02-003、006、007、035〜038、040〜045）
  * ケースの正本: integration_test/casegen/cases/M13-02_test_cases.tsv（手順・期待結果の文は正本から引く）
  */
-import { expect } from "@playwright/test";
-import { CaseBody, caseTest } from "../../lib/case";
+import { expect, CaseBody, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { openEventEdit, EventForm } from "../../pages/admin/event";
 import { 日程の状態 } from "../../db/schedule";

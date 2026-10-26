@@ -1,6 +1,5 @@
 /** IT-M03-01-007: 初期条件で廃止商品と高額商品を除外する。 */
-import { expect } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { ProductSearchPage } from "../../pages/admin/product_search";
 import { M0301_ADMIN } from "../../seeds/m03-01";

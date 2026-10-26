@@ -18,8 +18,8 @@
 
 ```ts
 /** M03-14 略称タグ登録/編集。正本: cases/M03-14_test_cases.tsv */
-import { expect, test } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { test } from "@playwright/test";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { ShortTagPage } from "../../pages/admin/short_tag";
 import { M0314_ADMIN } from "../../seeds/m03-14";
@@ -44,7 +44,9 @@ caseTest("IT-M03-14-016", async ({ page, notes, step, expected, capture }) => {
 
 - **テストIDは文字列でその場に書く**（`caseTest("IT-…", 関数(…))` も可。`coverage.mjs` が検査する）。正本に無い・除外されたIDは読み込みで落ちる。
 - **正本の手順1つ＝`step(n)` 1つ**。順に全部。飛ばす・まとめる・順を変えると基盤が落とす。手順の文はコードに写さない。
-- **期待結果は `expected()` の中で `expect` する**。確かめのメッセージ（第2引数）は業務の言葉で、何を確かめたかが分かるように書く。これがエビデンスの「確かめた項目」の表になる。
+- **期待結果は `expected()` の中で `expect` する**。`expect` は `@playwright/test` でなく `lib/case` から使う（ふるまいは同じで、期待結果の確かめを「期待」と「実際の状態」の組として記録する）。
+- 確かめのメッセージ（第2引数）は業務の言葉で、何を確かめたかが分かるように書く。これがエビデンスの「確かめた項目」になり、横に期待（「＝ 403」「表示されている」など）と実際の状態（見えた値・文字・件数・URL）が並ぶ。メッセージの無い確かめは「（メッセージの無い確かめ）」と出るので必ず書く。
+- 実際の状態が読めるように、確かめる対象は値・画面の要素（Locator）・ページのどれかにする。`expect(await 何かを数える(), "…").toBe(3)` のように値にしてから確かめると、実際の状態に値が出る。
 - 期待結果に複数の項目があれば `expect.soft`。最後の1つだけを確かめて済ませない。
 - 画面は自動で撮られる。モーダル・確認の画面・ダウンロードの前など、手順の途中の状態も証拠に要るときだけ `capture("確認モーダル")`。
 - 縦に長い画面（8000px 超。表示件数12000件の一覧など）は見えている範囲しか撮られない。確かめた行が画面の外にあるときは、`expected()` の中で `await 行.scrollIntoViewIfNeeded(); await capture("確かめた行");` として残す。

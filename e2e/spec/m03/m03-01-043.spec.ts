@@ -1,6 +1,5 @@
 /** IT-M03-01-043: 未登録の表示件数を選ぶ。 */
-import { expect } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { ProductPageCountPage } from "../../pages/admin/m03_01_page_count";
 import { ProductSearchPage } from "../../pages/admin/product_search";

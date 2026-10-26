@@ -8,8 +8,8 @@
  * 在庫検索一覧を検索条件の指定の無いアドレスで開くと、アプリはセッションの検索条件・ページ番号・選んでいる検索パターンを消す（一覧の画面の処理）。
  * 検索パターンの欄は「検索条件保存」の見出しの下の折りたたみの中にあるので、欄を見る・入れる手順では、見出しを押して開く（手順の注記に残す）。
  */
-import { expect, Page, Request, test } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { Page, Request, test } from "@playwright/test";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { 在庫一覧の検索パターン, 同じ文字の繰り返しの名前の検索パターン, 検索パターン } from "../../db/m04_01_search_pattern";
 import { shortName, StockSearchPatternPage } from "../../pages/admin/m04_01_search_pattern";

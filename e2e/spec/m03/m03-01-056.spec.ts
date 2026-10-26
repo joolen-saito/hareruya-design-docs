@@ -1,6 +1,5 @@
 /** IT-M03-01-056: 商品検索結果の表示件数9選択肢。 */
-import { expect } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { PageCountOption, ProductPageCountPage } from "../../pages/admin/m03_01_page_count";
 import { ProductSearchPage } from "../../pages/admin/product_search";

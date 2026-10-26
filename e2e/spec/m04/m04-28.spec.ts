@@ -13,8 +13,8 @@
  *   （手元のDBには M04-24 のシードの「大阪店」もあり、店名では選べない）。
  * - CSVの項目は設計書の項目名（design.txt L0015〜L0037 の識別ID 1〜23）で引く。見出しの名前が違えば、その項目は「無い」として落とす。
  */
-import { expect, Page, test } from "@playwright/test";
-import { caseTest, CaseCtx } from "../../lib/case";
+import { Page, test } from "@playwright/test";
+import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { Account, loginAdmin } from "../../lib/session";
 import { MoveInstructionSearchPage, SubmitResult } from "../../pages/admin/m04_24_move_instruction";

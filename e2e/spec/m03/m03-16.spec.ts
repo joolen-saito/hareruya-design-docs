@@ -1,7 +1,7 @@
 /** M03-16 略称タグCSV入力。正本: cases/M03-16_test_cases.tsv */
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { 並び順が一致する略称タグ, 名称が一致する略称タグ, 略称タグIDの最大値, 略称タグIDの略称タグ, 取り込まれた略称タグ } from "../../db/m03_16_short_tag_csv";
-import { CaseBody, CaseCtx, caseTest } from "../../lib/case";
+import { expect, CaseBody, CaseCtx, caseTest } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { loginAdmin } from "../../lib/session";
 import {

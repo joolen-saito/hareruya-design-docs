@@ -1,6 +1,6 @@
 /** M03-25 重複商品コード確認。正本: cases/M03-25_test_cases.tsv（画面だけで準備できる 002） */
-import { expect, test } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { test } from "@playwright/test";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { DoublingCheckPage } from "../../pages/admin/m03_25_doubling_check";
 import { M0325_ADMIN } from "../../seeds/m03-25";

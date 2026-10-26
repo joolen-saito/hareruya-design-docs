@@ -2,8 +2,7 @@
  * M13-02 イベント登録/編集（公開側のイベント詳細画面で確かめるもの・検索結果のページ送り。IT-M13-02-030、031、057）
  * ケースの正本: integration_test/casegen/cases/M13-02_test_cases.tsv（手順・期待結果の文は正本から引く）
  */
-import { expect } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { openEventEdit, openEventSearchPage, EventForm } from "../../pages/admin/event";
 import { FrontEventDetail, openFrontEventDetail } from "../../pages/front/event";

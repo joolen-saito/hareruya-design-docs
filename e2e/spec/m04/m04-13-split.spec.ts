@@ -1,10 +1,10 @@
 /** M04-13 在庫分割結合登録編集（分割）。正本: cases/M04-13_test_cases.tsv */
 import fs from "node:fs";
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import {
   DBの時刻, ステータス履歴, 在庫, 在庫IDの在庫, 在庫分割結合, 在庫変動履歴, 商品コードの在庫分割結合, 明細, 明細の登録更新, 登録時の商品名,
 } from "../../db/m04_13_split_join";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { アプリの時刻帯 } from "../../lib/app_config";
 import { Account, loginAdmin } from "../../lib/session";

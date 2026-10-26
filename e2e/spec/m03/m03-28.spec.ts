@@ -10,10 +10,10 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { STATE_DIR } from "../../config/env";
 import { 商品の商品タグ, ファイル名の取込履歴 } from "../../db/m03_28_product_tag";
-import { caseTest, CaseCtx } from "../../lib/case";
+import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { loginAdmin } from "../../lib/session";
 import { downloadedBytes, pathOf, topMessages } from "../../pages/admin/m03_21_shelf_number";

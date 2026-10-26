@@ -1,7 +1,7 @@
 /** M03-21 棚番登録/編集。正本: cases/M03-21_test_cases.tsv */
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { すべての棚番号, 名称の棚番号, 棚番号, 保存された棚番号 } from "../../db/m03_21_shelf_number";
-import { CaseBody, CaseCtx, caseTest } from "../../lib/case";
+import { expect, CaseBody, CaseCtx, caseTest } from "../../lib/case";
 import { csvRecords, parseCsv } from "../../lib/csv";
 import { Notes } from "../../lib/notes";
 import { loginAdmin } from "../../lib/session";

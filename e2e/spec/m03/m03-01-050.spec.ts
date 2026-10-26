@@ -1,6 +1,5 @@
 /** M03-01-050: 商品マスター(検索結果)の商品名リンクから、押した行の商品詳細/編集へ遷移する。 */
-import { expect } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { displayedProductId } from "../../pages/admin/product_edit";
 import { ProductSearchPage } from "../../pages/admin/product_search";

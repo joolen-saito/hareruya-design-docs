@@ -7,8 +7,7 @@
  *   047・048 は S-M04-22-RD-STORES（所属の店舗を「DBで直接設定する」）を使うので実装しない。
  * - 043 は、公開側のブラウザ環境 S-M04-22-QE-ENV（ユニサーチ試験環境へ接続できること）と、ユニサーチへのフィード反映が要るので実装しない。
  */
-import { expect } from "@playwright/test";
-import { CaseBody, caseTest } from "../../lib/case";
+import { expect, CaseBody, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { CsvModalKind, csvModal, openMoveTransferList, pressCsvRegisterButton } from "../../pages/admin/m04_22_move_transfer_csv";
 import { M0422_EDIT } from "../../seeds/m04-22";

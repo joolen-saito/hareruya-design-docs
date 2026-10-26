@@ -9,9 +9,9 @@
  * 実装していないケース（理由は e2e/review/M03-37_progress_2026-10-21.md）: 003〜007・015〜018・021〜025・037〜039（シードがDBでの準備）、
  * 013（設定ファイルの区切り文字の書き換え）。
  */
-import { expect, Page, test } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { 商品の略称タグID, 略称タグの件数, 略称タグ更新の取込履歴の件数, 略称タグ更新の同名の取込履歴の件数 } from "../../db/m03_37_short_tag_update";
-import { CaseCtx, caseTest } from "../../lib/case";
+import { expect, CaseCtx, caseTest } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { Account, loginAdmin } from "../../lib/session";
 import { ShortTagUpdateCsvPage, UploadResult } from "../../pages/admin/m03_37_short_tag_update_csv";

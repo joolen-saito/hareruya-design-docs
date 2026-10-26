@@ -1,8 +1,8 @@
 /** M03-17 売上分析タグ登録/編集。正本: cases/M03-17_test_cases.tsv */
-import { BrowserContext, expect, Page, Route, test } from "@playwright/test";
+import { BrowserContext, Page, Route, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { 名称と並び順の売上分析タグ, 名称の売上分析タグ, 売上分析タグ } from "../../db/m03_17_sales_analysis_tag";
-import { CaseCtx, caseTest } from "../../lib/case";
+import { expect, CaseCtx, caseTest } from "../../lib/case";
 import { Account, hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { tamperToken } from "../../pages/admin/devtools";
 import { openProductEdit } from "../../pages/admin/product_edit";

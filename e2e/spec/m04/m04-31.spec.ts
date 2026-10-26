@@ -13,8 +13,8 @@
  * - 棚卸計画一覧の新規作成画面へのボタンの文言は「新規登録」（設計書 L0042 は「新規作成」）。正本の「新規作成ボタン」はこのボタンとして押し、注記に残す。
  * - 新規作成の棚卸名の入力欄はブラウザの必須の印（required）を持つ。空のまま「登録」を押すと、ブラウザが送信を止める。
  */
-import { expect, Page, test } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { Page, test } from "@playwright/test";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { planCountAll, planCountByName, plansByName } from "../../db/m04_31_inventory_plan";
 import { chooseHistoryShopAndZone, searchStockByCode, classStock, openClassListByName } from "../../pages/admin/m04_02_rc_stock";

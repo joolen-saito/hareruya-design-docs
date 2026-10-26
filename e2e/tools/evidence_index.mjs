@@ -132,6 +132,7 @@ function renderCase(dir, rec, v) {
   // Markdown
   const M = [];
   M.push(`# ${rec.テストID} エビデンス`, "", "| 項目 | 内容 |", "| --- | --- |", ...meta.map(([k, x]) => `| ${k} | ${md(x)} |`), "");
+  M.push("## 期待結果に対する実際の状態", "", `**期待結果**: ${rec.期待結果}`, "", `**実際の状態**: ${rec.実際の状態 || "（この記録の形では書いていない。流し直すと出る）"}`, "");
   if (v.理由) M.push("## 判定の理由", "", v.理由, "");
   M.push("## 事前準備", "", ...splitPre(rec.事前準備).map((x) => `- ${x}`), "");
   if (rec.控えた番号.length) M.push("### 控えた番号", "", "| 呼び名 | 値 |", "| --- | --- |", ...rec.控えた番号.map(([k, x]) => `| ${md(k)} | ${md(x)} |`), "");
@@ -140,7 +141,7 @@ function renderCase(dir, rec, v) {
     const head = s.種類 === "手順" ? `## 手順${s.番号}（${s.状態}）` : s.種類 === "期待結果" ? `## 期待結果（${s.状態}）` : "## 手順1の前の画面";
     M.push(head, "");
     if (s.種類 !== "開始時") M.push(s.文, "");
-    if (s.種類 === "期待結果" && rec.確かめ.length) M.push("| 確かめた項目 | 結果 |", "| --- | --- |", ...rec.確かめ.map((k) => `| ${md(k.項目)} | ${k.結果 === "合格" ? "○ 合格" : "✗ 不合格"} |`), "");
+    if (s.種類 === "期待結果" && rec.確かめ.length) M.push("| 確かめた項目 | 期待 | 実際の状態 | 結果 |", "| --- | --- | --- | --- |", ...rec.確かめ.map((k) => `| ${md(k.項目)} | ${md(k.期待 ?? "")} | ${md(k.実際 ?? "")} | ${k.結果 === "合格" ? "○ 合格" : "✗ 不合格"} |`), "");
     for (const im of s.画像) M.push(`![${md(im.場面)}](${encodeURI(im.file)})`, "", `<sub>${md(im.場面)}${im.URL ? ` — ${md(im.URL)}` : ""}${im.注記 ? ` — ${md(im.注記)}` : ""}</sub>`, "");
     for (const x of s.撮れなかった) M.push(`> 画面を撮れなかった: ${x}`, "");
     if (s.エラー) M.push("```text", s.エラー, "```", "");
@@ -160,6 +161,7 @@ function renderCase(dir, rec, v) {
   const H = [];
   H.push(`<p class="muted"><a href="../index.html">${esc(rec.機能ID)} の一覧</a></p>`, `<h1>${esc(rec.テストID)} ${badge(v.結果)}</h1>`, `<p class="muted">画面 ${shots}枚</p>`);
   H.push(`<div class="wrap"><table class="kv">${meta.map(([k, x]) => `<tr><th>${esc(k)}</th><td>${esc(x)}</td></tr>`).join("")}</table></div>`);
+  H.push(`<h2>期待結果に対する実際の状態</h2><div class="wrap"><table class="kv"><tr><th>期待結果</th><td>${esc(rec.期待結果)}</td></tr><tr><th>実際の状態</th><td>${badge(v.結果)} ${esc(rec.実際の状態 || "（この記録の形では書いていない。流し直すと出る）")}</td></tr></table></div>`);
   if (v.理由) H.push(`<h2>判定の理由</h2><p>${esc(v.理由)}</p>`);
   H.push(`<h2>事前準備</h2><ul>${splitPre(rec.事前準備).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`);
   if (rec.控えた番号.length) H.push(`<div class="wrap"><table><tr><th>控えた番号</th><th>値</th></tr>${rec.控えた番号.map(([k, x]) => `<tr><td>${esc(k)}</td><td>${esc(x)}</td></tr>`).join("")}</table></div>`);
@@ -170,7 +172,7 @@ function renderCase(dir, rec, v) {
     const head = s.種類 === "手順" ? `手順${s.番号}` : s.種類 === "期待結果" ? "期待結果" : "手順1の前の画面";
     H.push(`<section class="scene"><h3>${esc(head)} <span class="badge ${st}">${esc(s.状態)}</span>${s.秒 !== undefined ? `<span class="muted">${s.秒}秒</span>` : ""}</h3>`);
     if (s.種類 !== "開始時") H.push(`<div>${esc(s.文)}</div>`);
-    if (s.種類 === "期待結果" && rec.確かめ.length) H.push(`<div class="wrap" style="margin-top:8px"><table><tr><th>確かめた項目</th><th>結果</th></tr>${rec.確かめ.map((k) => `<tr><td>${esc(k.項目)}${k.エラー ? `<details><summary class="muted">詳細</summary><pre>${esc(k.エラー)}</pre></details>` : ""}</td><td>${badge(k.結果)}</td></tr>`).join("")}</table></div>`);
+    if (s.種類 === "期待結果" && rec.確かめ.length) H.push(`<div class="wrap" style="margin-top:8px"><table><tr><th>確かめた項目</th><th>期待</th><th>実際の状態</th><th>結果</th></tr>${rec.確かめ.map((k) => `<tr><td>${esc(k.項目)}${k.エラー ? `<details><summary class="muted">詳細</summary><pre>${esc(k.エラー)}</pre></details>` : ""}</td><td>${esc(k.期待 ?? "")}</td><td>${esc(k.実際 ?? "")}</td><td>${badge(k.結果)}</td></tr>`).join("")}</table></div>`);
     for (const im of s.画像) H.push(`<figure class="shot"><a href="${esc(encodeURI(im.file))}" target="_blank"><img loading="lazy" src="${esc(encodeURI(im.file))}" alt="${esc(im.場面)}"></a><figcaption>${esc(im.場面)}${im.URL ? ` — ${esc(im.URL)}` : ""}${im.注記 ? ` — ${esc(im.注記)}` : ""}</figcaption></figure>`);
     for (const x of s.撮れなかった) H.push(`<p class="muted">画面を撮れなかった: ${esc(x)}</p>`);
     if (s.エラー) H.push(`<details><summary>エラー</summary><pre>${esc(s.エラー)}</pre></details>`);
@@ -188,11 +190,12 @@ function renderCase(dir, rec, v) {
 }
 
 // ---- 一覧 ----
-const COLS = ["テストID", "一覧のテストID", "機能ID", "観点ID", "実行区分", "結果", "自動判定", "判定の区分", "判定の理由", "判定の状態", "落ちた場面", "失敗の要約", "正本との一致", "実施日時", "所要秒", "画面の枚数", "エビデンス", "E2Eのコミット", "アプリのコミット", "環境"];
+const COLS = ["テストID", "一覧のテストID", "機能ID", "観点ID", "実行区分", "結果", "自動判定", "判定の区分", "判定の理由", "判定の状態", "落ちた場面", "失敗の要約", "正本との一致", "実施日時", "所要秒", "画面の枚数", "エビデンス", "E2Eのコミット", "アプリのコミット", "環境", "期待結果", "実際の状態"];
 function rowOf(rec, v, shots, rel) {
   return { テストID: rec.テストID, 一覧のテストID: rec.一覧のテストID, 機能ID: rec.機能ID, 観点ID: rec.観点ID, 実行区分: rec.実行区分, 結果: v.結果, 自動判定: rec.結果,
     判定の区分: v.区分, 判定の理由: v.理由, 判定の状態: v.判定の状態, 落ちた場面: rec.落ちた場面, 失敗の要約: v.失敗の要約, 正本との一致: v.正本, 実施日時: rec.実施日時,
-    所要秒: rec.所要秒, 画面の枚数: shots, エビデンス: rel, E2Eのコミット: rec.E2Eのコミット, アプリのコミット: rec.アプリのコミット, 環境: rec.環境.E2E_ENV };
+    所要秒: rec.所要秒, 画面の枚数: shots, エビデンス: rel, E2Eのコミット: rec.E2Eのコミット, アプリのコミット: rec.アプリのコミット, 環境: rec.環境.E2E_ENV,
+    期待結果: rec.期待結果, 実際の状態: rec.実際の状態 ?? "" };
 }
 const count = (rows) => { const c = { 合格: 0, 不合格: 0, 未判定: 0, スキップ: 0 }; for (const r of rows) c[r.結果] = (c[r.結果] ?? 0) + 1; return c; };
 const stale = (rows) => rows.filter((r) => r.正本との一致 !== "一致").length;
@@ -203,13 +206,13 @@ function writeIndex(dir, title, rows, linkOf, upLink) {
   const tsvText = [COLS.join("\t"), ...rows.map((r) => COLS.map((k) => tsv(r[k])).join("\t"))].join("\n") + "\n";
   writeIfChanged(path.join(dir, "results.tsv"), tsvText);
   const M = [`# ${title}`, "", `合格 ${c.合格}・不合格 ${c.不合格}・未判定 ${c.未判定}・スキップ ${c.スキップ}（計 ${rows.length}件）。要判定 ${pending(rows)}件・正本と合わない ${stale(rows)}件。`, "",
-    "| テストID | 結果 | 判定の状態 | 落ちた場面・失敗の要約 | 正本との一致 | 実施日時 | 画面 |", "| --- | --- | --- | --- | --- | --- | --- |",
-    ...rows.map((r) => `| [${r.テストID}](${encodeURI(linkOf(r, "md"))}) | ${r.結果}${r.判定の区分 ? `（${md(r.判定の区分)}）` : ""} | ${md(r.判定の状態)} | ${md(r.失敗の要約)} | ${md(r.正本との一致)} | ${when(r.実施日時)} | ${r.画面の枚数} |`)];
+    "| テストID | 結果 | 判定の状態 | 期待結果に対する実際の状態 | 正本との一致 | 実施日時 | 画面 |", "| --- | --- | --- | --- | --- | --- | --- |",
+    ...rows.map((r) => `| [${r.テストID}](${encodeURI(linkOf(r, "md"))}) | ${r.結果}${r.判定の区分 ? `（${md(r.判定の区分)}）` : ""} | ${md(r.判定の状態)} | ${md(r.実際の状態 || r.失敗の要約)} | ${md(r.正本との一致)} | ${when(r.実施日時)} | ${r.画面の枚数} |`)];
   writeIfChanged(path.join(dir, "index.md"), M.join("\n") + "\n");
   const H = [upLink ? `<p class="muted"><a href="${upLink}">全機能の一覧</a></p>` : "", `<h1>${esc(title)}</h1>`,
     `<div class="summary">${["合格", "不合格", "未判定", "スキップ"].map((k) => `<div><span class="badge ${RESULT_CLASS[k]}">${k}</span><b>${c[k]}</b></div>`).join("")}<div><span class="muted">要判定</span><b>${pending(rows)}</b></div><div><span class="muted">正本と合わない</span><b>${stale(rows)}</b></div></div>`,
-    `<div class="wrap"><table><tr><th>テストID</th><th>結果</th><th>判定の状態</th><th>落ちた場面・失敗の要約</th><th>正本との一致</th><th>実施日時</th><th>画面</th></tr>`,
-    ...rows.map((r) => `<tr><td><a href="${esc(encodeURI(linkOf(r, "html")))}">${esc(r.テストID)}</a>${r.一覧のテストID && r.一覧のテストID !== r.テストID ? `<div class="muted">一覧 ${esc(r.一覧のテストID)}</div>` : ""}</td><td>${badge(r.結果)}${r.判定の区分 ? `<div class="muted">${esc(r.判定の区分)}</div>` : ""}</td><td>${esc(r.判定の状態)}</td><td>${esc(r.失敗の要約)}</td><td>${esc(r.正本との一致)}</td><td>${esc(when(r.実施日時))}</td><td>${r.画面の枚数}</td></tr>`),
+    `<div class="wrap"><table><tr><th>テストID</th><th>結果</th><th>判定の状態</th><th>期待結果に対する実際の状態</th><th>正本との一致</th><th>実施日時</th><th>画面</th></tr>`,
+    ...rows.map((r) => `<tr><td><a href="${esc(encodeURI(linkOf(r, "html")))}">${esc(r.テストID)}</a>${r.一覧のテストID && r.一覧のテストID !== r.テストID ? `<div class="muted">一覧 ${esc(r.一覧のテストID)}</div>` : ""}</td><td>${badge(r.結果)}${r.判定の区分 ? `<div class="muted">${esc(r.判定の区分)}</div>` : ""}</td><td>${esc(r.判定の状態)}</td><td>${esc(r.実際の状態 || r.失敗の要約)}</td><td>${esc(r.正本との一致)}</td><td>${esc(when(r.実施日時))}</td><td>${r.画面の枚数}</td></tr>`),
     "</table></div>"];
   writeIfChanged(path.join(dir, "index.html"), page(title, H.join("\n")));
   return c;

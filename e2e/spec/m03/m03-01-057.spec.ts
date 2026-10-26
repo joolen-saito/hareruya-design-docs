@@ -1,6 +1,5 @@
 /** M03-01-057: 状態ごとに分けて表示し、在庫数(通販+TC東京)を合算しない。 */
-import { expect } from "@playwright/test";
-import { caseTest } from "../../lib/case";
+import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { ProductResultPaging } from "../../pages/admin/product_result_paging";
 import { ProductSearchPage } from "../../pages/admin/product_search";
