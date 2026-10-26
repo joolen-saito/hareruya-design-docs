@@ -20,7 +20,7 @@
 
 何度流しても同じ（置き換えは旧が無く新があれば済みとみなす）。
 最後に product_csv/apply.py（商品登録画面で商品を作るシードの書き直し）と runnable/apply.py（書かれたとおりに実行できるようにする直し）、
-dummy_url/apply.py（実在しない試験用URLの置き換え。2026-10-21）も呼ぶ。裁定の照合は dummy_url/urlmap.N を当てた文どうしで行う。
+dummy_url/apply.py（実在しない試験用URLの置き換え。2026-10-21）、shared_env/apply.py（共有の設定の後片付けの書き足し。2026-10-26）も呼ぶ。裁定の照合は dummy_url/urlmap.N を当てた文どうしで行う。
 流す順は merge（sheetmap・nosheet・ga・gapfill・datapattern/merge_dp.py）→ seed_screen/apply.py → これ → exclude_open.py
 → exclude_scope.py → build_all_test_cases.py → precond/gate_precond.py --all。seed_screen/apply.py が cases/ と oracle_changes/ を書き直すので、必ずその後に流す。
 """
@@ -237,7 +237,13 @@ def main():
     da = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(da)
     rd = da.main()
-    return 1 if err or rc or rr or rd else 0
+    # 共有の開発環境で1件しかない設定を書き換えるシードへの後片付けの書き足し（2026-10-26 依頼者決定。../../shared_env/）。
+    # 投入方法の末尾に書き足すだけで、前段の照合に効かないよう最後に当てる
+    spec = importlib.util.spec_from_file_location("shared_env_apply", CG / "shared_env/apply.py")
+    sa = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sa)
+    rs = sa.main()
+    return 1 if err or rc or rr or rd or rs else 0
 
 
 if __name__ == "__main__":
