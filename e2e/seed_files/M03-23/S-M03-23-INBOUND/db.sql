@@ -1,0 +1,22 @@
+-- S-M03-23-INBOUND（商品マスター遷移検索データ）
+-- 流す時点: 投入方法の「商品マスター(検索結果)のID列に表示された商品IDを控える（1件目=〔商品ID-M0323-共有A…」を終えたあと。手順書（S-M03-23-INBOUND.md）の「DBへ直接設定する部分（SQL）」と同じ。
+-- 流す前に、下の〔…〕（画面で控えた番号の呼び名）を、控えた番号に置き換える。呼び名が残ったまま流すと、そこで構文エラーになって止まる（何も変わらない）。
+BEGIN;
+
+-- [1] 文（投入方法）: 〔商品ID-M0323-共有A〕の価格履歴の登録日時（NM=2026-08-31 12:00:00、SP=2026-08-31 12:00:00、HP=2026-08-30 12:00:00）は画面で指定できないためDBへ直接設定する
+--     備考: 商品の呼び名で引き、状態ごとの規格の価格履歴の日時を変える。状態ごとの規格が1件ずつあり、価格履歴が1件以上あることを先に確かめる（無ければ止まる。0行の更新で通らない）。日時は日本時間(+09)
+DO $$ DECLARE n bigint; BEGIN SELECT (SELECT count(*) FROM dtb_product WHERE id = 〔商品ID-M0323-共有A〕) INTO n; IF n IS DISTINCT FROM 1 THEN RAISE EXCEPTION '〔商品ID-M0323-共有A〕 の行が1件に決まらない（番号の置き換えを確かめる）（%件）', n; END IF; END $$;
+DO $$ DECLARE n bigint; BEGIN SELECT (SELECT count(*) FROM dtb_product_class WHERE product_id = 〔商品ID-M0323-共有A〕 AND card_condition_id = (SELECT id FROM mtb_card_condition WHERE code = 'NM')) INTO n; IF n IS DISTINCT FROM 1 THEN RAISE EXCEPTION '〔商品ID-M0323-共有A〕 の状態NMの規格が1件に決まらない（%件）', n; END IF; END $$;
+DO $$ DECLARE c bigint; BEGIN SELECT (SELECT count(*) FROM dtb_price_history WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_id = 〔商品ID-M0323-共有A〕 AND card_condition_id = (SELECT id FROM mtb_card_condition WHERE code = 'NM'))) INTO c; IF c < 1 THEN RAISE EXCEPTION '〔商品ID-M0323-共有A〕 の状態NMの規格に価格履歴が無い（%件）', c; END IF; END $$;
+DO $$ DECLARE c bigint; BEGIN SELECT (SELECT count(*) FROM dtb_price_history WHERE product_class_id IN (SELECT id FROM dtb_product_class WHERE product_id = 〔商品ID-M0323-共有A〕 AND card_condition_id = (SELECT id FROM mtb_card_condition WHERE code = 'NM'))) INTO c; IF c < 1 THEN RAISE EXCEPTION '更新する価格履歴（〔商品ID-M0323-共有A〕の規格・状態NM）が1件も無い（%件）', c; END IF; END $$;
+UPDATE dtb_price_history SET create_date = TIMESTAMPTZ '2026-08-31 12:00:00+09' WHERE product_class_id IN (SELECT id FROM dtb_product_class WHERE product_id = 〔商品ID-M0323-共有A〕 AND card_condition_id = (SELECT id FROM mtb_card_condition WHERE code = 'NM'));
+DO $$ DECLARE n bigint; BEGIN SELECT (SELECT count(*) FROM dtb_product_class WHERE product_id = 〔商品ID-M0323-共有A〕 AND card_condition_id = (SELECT id FROM mtb_card_condition WHERE code = 'SP')) INTO n; IF n IS DISTINCT FROM 1 THEN RAISE EXCEPTION '〔商品ID-M0323-共有A〕 の状態SPの規格が1件に決まらない（%件）', n; END IF; END $$;
+DO $$ DECLARE c bigint; BEGIN SELECT (SELECT count(*) FROM dtb_price_history WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_id = 〔商品ID-M0323-共有A〕 AND card_condition_id = (SELECT id FROM mtb_card_condition WHERE code = 'SP'))) INTO c; IF c < 1 THEN RAISE EXCEPTION '〔商品ID-M0323-共有A〕 の状態SPの規格に価格履歴が無い（%件）', c; END IF; END $$;
+DO $$ DECLARE c bigint; BEGIN SELECT (SELECT count(*) FROM dtb_price_history WHERE product_class_id IN (SELECT id FROM dtb_product_class WHERE product_id = 〔商品ID-M0323-共有A〕 AND card_condition_id = (SELECT id FROM mtb_card_condition WHERE code = 'SP'))) INTO c; IF c < 1 THEN RAISE EXCEPTION '更新する価格履歴（〔商品ID-M0323-共有A〕の規格・状態SP）が1件も無い（%件）', c; END IF; END $$;
+UPDATE dtb_price_history SET create_date = TIMESTAMPTZ '2026-08-31 12:00:00+09' WHERE product_class_id IN (SELECT id FROM dtb_product_class WHERE product_id = 〔商品ID-M0323-共有A〕 AND card_condition_id = (SELECT id FROM mtb_card_condition WHERE code = 'SP'));
+DO $$ DECLARE n bigint; BEGIN SELECT (SELECT count(*) FROM dtb_product_class WHERE product_id = 〔商品ID-M0323-共有A〕 AND card_condition_id = (SELECT id FROM mtb_card_condition WHERE code = 'HP')) INTO n; IF n IS DISTINCT FROM 1 THEN RAISE EXCEPTION '〔商品ID-M0323-共有A〕 の状態HPの規格が1件に決まらない（%件）', n; END IF; END $$;
+DO $$ DECLARE c bigint; BEGIN SELECT (SELECT count(*) FROM dtb_price_history WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_id = 〔商品ID-M0323-共有A〕 AND card_condition_id = (SELECT id FROM mtb_card_condition WHERE code = 'HP'))) INTO c; IF c < 1 THEN RAISE EXCEPTION '〔商品ID-M0323-共有A〕 の状態HPの規格に価格履歴が無い（%件）', c; END IF; END $$;
+DO $$ DECLARE c bigint; BEGIN SELECT (SELECT count(*) FROM dtb_price_history WHERE product_class_id IN (SELECT id FROM dtb_product_class WHERE product_id = 〔商品ID-M0323-共有A〕 AND card_condition_id = (SELECT id FROM mtb_card_condition WHERE code = 'HP'))) INTO c; IF c < 1 THEN RAISE EXCEPTION '更新する価格履歴（〔商品ID-M0323-共有A〕の規格・状態HP）が1件も無い（%件）', c; END IF; END $$;
+UPDATE dtb_price_history SET create_date = TIMESTAMPTZ '2026-08-30 12:00:00+09' WHERE product_class_id IN (SELECT id FROM dtb_product_class WHERE product_id = 〔商品ID-M0323-共有A〕 AND card_condition_id = (SELECT id FROM mtb_card_condition WHERE code = 'HP'));
+
+COMMIT;

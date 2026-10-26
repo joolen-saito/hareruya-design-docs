@@ -1,0 +1,11 @@
+-- S-M04-22-MOVE-003（通常移動データ(003)）
+-- 流す時点: 投入方法の「新しく登録した商品のため、本商品を対象とする在庫移動情報・状態履歴・在庫変動履歴は0件である。」を終えたあと。手順書（S-M04-22-MOVE-003.md）の「DBへ直接設定する部分（SQL）」と同じ。
+BEGIN;
+
+-- [1] 文（投入方法）: 同名CSV取込履歴=0件は画面で指定できない（取込履歴を削除する画面が無い）ためDBへ直接設定する（ファイル名「move-normal-003.csv」の取込履歴を削除する）。
+--     備考: 文に書かれたファイル名（move-normal-003.csv）の取込履歴だけを消す（取込種別「在庫移動CSV（番号17）」に限る）。同名の履歴が無ければ何も消えない。履歴に紐づくスマレジ連携ジョブの対応記録は先に消す
+--     備考: 消す前後で件数を確かめない（前回の残りが無ければ0件で正しい）。ファイル名はシード表の文の語「move-normal-003.csv」をそのまま使う
+DELETE FROM dtb_csv_import_smaregi_job_link WHERE csv_import_history_id IN (SELECT id FROM dtb_csv_import_history WHERE file_name = 'move-normal-003.csv' AND csv_import_type_id = 17);
+DELETE FROM dtb_csv_import_history WHERE file_name = 'move-normal-003.csv' AND csv_import_type_id = 17;
+
+COMMIT;

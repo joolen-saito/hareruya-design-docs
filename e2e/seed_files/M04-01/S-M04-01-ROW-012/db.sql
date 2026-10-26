@@ -1,0 +1,31 @@
+-- S-M04-01-ROW-012（一覧項目確認在庫(012)）
+-- 流す時点: 投入方法の「商品規格の登録時に、営業中の全店舗×在庫区分（EC-CUBE・スマレジ）の店舗別在庫が在庫0で自動作…」を終えたあと、次の「販売数=当日1・前日2・3日間3・1週間4・1ヶ月5・90日間6は画面で指定でき…」より前。手順書（S-M04-01-ROW-012.md）の「DBへ直接設定する部分（SQL）」と同じ。
+-- 流す前に、下の〔…〕（画面で控えた番号の呼び名）を、控えた番号に置き換える。呼び名が残ったまま流すと、そこで構文エラーになって止まる（何も変わらない）。
+BEGIN;
+
+-- [1] 文（投入方法）: STK-PART-001-012の東京本店・EC-CUBE以外の店舗別在庫は画面で削除できないためDBで直接削除する。
+--     備考: 残す組(店舗・在庫区分)以外の、その商品コードの店舗別在庫だけを消す(ほかの商品の在庫は消さない)。店舗は店舗名で引き、残す店舗・残す在庫がそれぞれ1件に決まることを確かめる
+DO $$ DECLARE n bigint; BEGIN SELECT (SELECT count(*) FROM dtb_base_info WHERE shop_name = '東京本店') INTO n; IF n IS DISTINCT FROM 1 THEN RAISE EXCEPTION '残す店舗「東京本店」が1件に決まらない（%件）', n; END IF; END $$;
+DO $$ DECLARE n bigint; BEGIN SELECT (SELECT count(*) FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') INTO n; IF n IS DISTINCT FROM 1 THEN RAISE EXCEPTION '商品コードSTK-PART-001-012が1件に決まらない（%件）', n; END IF; END $$;
+DO $$ DECLARE n bigint; BEGIN SELECT (SELECT count(*) FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1) INTO n; IF n IS DISTINCT FROM 1 THEN RAISE EXCEPTION '残す在庫（商品コードSTK-PART-001-012・店舗東京本店・在庫区分1）が1件に決まらない（%件）', n; END IF; END $$;
+DELETE FROM dtb_inventory_plan_detail_edit_history WHERE inventory_plan_detail_id IN (SELECT id FROM dtb_inventory_plan_detail WHERE product_stock_id IN (SELECT id FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1))));
+DELETE FROM dtb_inventory_plan_detail WHERE product_stock_id IN (SELECT id FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1)));
+DELETE FROM dtb_stock_edit_approval_detail WHERE product_stock_id IN (SELECT id FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1)));
+DELETE FROM dtb_stock_history WHERE product_stock_id IN (SELECT id FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1)));
+DELETE FROM dtb_stock_move_transfer_detail WHERE move_from_product_stock_id IN (SELECT id FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1)));
+DELETE FROM dtb_stock_move_transfer_detail WHERE move_to_product_stock_id IN (SELECT id FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1)));
+DELETE FROM dtb_stock_split_join_detail WHERE stock_split_join_id IN (SELECT id FROM dtb_stock_split_join WHERE product_stock_id IN (SELECT id FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1))));
+DELETE FROM dtb_stock_split_join_status_history WHERE stock_split_join_id IN (SELECT id FROM dtb_stock_split_join WHERE product_stock_id IN (SELECT id FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1))));
+DELETE FROM dtb_stock_split_join WHERE product_stock_id IN (SELECT id FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1)));
+DELETE FROM dtb_stock_split_join_detail WHERE subject_product_stock_id IN (SELECT id FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1)));
+DELETE FROM dtb_weekly_stock_history WHERE product_stock_id IN (SELECT id FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1)));
+DELETE FROM dtb_weekly_stock_history_temp WHERE product_stock_id IN (SELECT id FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1)));
+DELETE FROM dtb_product_stock WHERE product_class_id = (SELECT id FROM dtb_product_class WHERE product_code = 'STK-PART-001-012') AND NOT ((base_info_id = (SELECT id FROM dtb_base_info WHERE shop_name = '東京本店') AND stock_location_id = 1));
+
+-- [2] 文（投入方法）: 販売価格=1500は画面で指定できないためDBへ直接設定する。
+--     備考: 販売価格だけを変える(基準価格は変えない)
+DO $$ DECLARE n bigint; BEGIN SELECT (SELECT count(*) FROM dtb_product_class WHERE product_id = 〔商品ID-M0401-012〕) INTO n; IF n IS DISTINCT FROM 1 THEN RAISE EXCEPTION '商品規格「〔商品ID-M0401-012〕の規格」が1件に決まらない（%件）', n; END IF; END $$;
+DO $$ DECLARE n bigint; BEGIN SELECT (SELECT count(*) FROM dtb_product_class WHERE id = (SELECT id FROM dtb_product_class WHERE product_id = 〔商品ID-M0401-012〕)) INTO n; IF n IS DISTINCT FROM 1 THEN RAISE EXCEPTION '更新する商品規格（〔商品ID-M0401-012〕の規格）が1件に決まらない（%件）', n; END IF; END $$;
+UPDATE dtb_product_class SET price02 = 1500 WHERE id = (SELECT id FROM dtb_product_class WHERE product_id = 〔商品ID-M0401-012〕);
+
+COMMIT;
