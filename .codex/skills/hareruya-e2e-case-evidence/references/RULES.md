@@ -51,7 +51,7 @@
 - 結果は TSV と MD の両方に残す。TSV＝判定の表 `e2e/review/judgements/<機能ID>.tsv`（1ケース1行・どの実施への判定かを実施日時で持つ）。MD＝`e2e/review/<機能ID>_progress_<日付>.md`（振り分け・判定の理由・判断待ち）。
 - 合否の一覧 `integration_test/casegen/playwright_cases.tsv` に載せるのは、条件の付かない合格と、正本の外の補いの上に成り立たない不合格だけ（`evidence_judgements.py sync` がこの条件で選ぶ）。シードで止まった未判定は載せない。
 - 一覧（`all_test_cases.tsv`）の検証方法が「Playwright」になるのは合格のケースだけ（`build_all_test_cases.py` が決める）。
-- 一覧の末尾の手書きの4列（実施者・実施日・実施結果・備考）は人が書く列。E2E から書き込まない。
+- 一覧の末尾の実施者・実施日・実施結果は、`build_all_test_cases.py` が playwright_cases.tsv から埋める（依頼者決定 2026-10-26。実施者「E2E（Playwright）」、実施日は判定の表の対象の実施日時か記録のファイル名の日付）。人が書いた値は上書きしない。備考と、人が書いた行は手で書く。一覧のセルを直接書き換えない（作り直しで決まる）。
 
 ## 8. コミット・資格情報
 

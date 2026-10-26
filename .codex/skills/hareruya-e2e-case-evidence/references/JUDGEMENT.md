@@ -55,6 +55,7 @@ python3 tools/evidence_judgements.py sync <機能ID> --apply    # 書き込む
 nice -n 19 ionice -c3 python3 ../integration_test/casegen/build_all_test_cases.py
 ```
 
+- `build_all_test_cases.py` を流すと、一覧の実施者・実施日・実施結果も合否の一覧から埋まる（人が書いた行は残す）。
 - `sync` は既にある行を消さない。いまの判定が載せる条件に当たらない行（前は合格だったが、いまは条件付き など）は注意として出る。消すかは依頼者に聞く。
 - `sync` は正本が変わったケースを飛ばす（流し直してから）。
 

@@ -33,6 +33,11 @@ cases/ の実行区分は変えない（E2E がDB確認の可否を cases/ の�
 一覧の末尾に、手で書き込む列「実施者」「実施日」「実施結果」「備考」を置く（依頼者決定 2026-10-26）。cases/ には無い列で、作り直しても消えないよう、
 作り直す前の一覧と対応表から cases/ のテストIDで値を引き継ぐ（一覧のテストIDは振り直しでずれるため）。
 引き継ぎ先のケースが無くなった（外した）値は消さずに all_test_cases_record_orphans.tsv に書き出し、件数を知らせる。
+E2E（Playwright）で合否が出たケース（playwright_cases.tsv）は、実施者「E2E（Playwright）」・実施日・実施結果（合格／不合格）を埋める
+（依頼者決定 2026-10-26）。実施日は e2e/review/judgements/<機能ID>.tsv の対象の実施日時（エビデンスの実施日時）があればその日付、
+無ければ記録のファイル名の日付（記録を書いた日。夜をまたいで流した分は流した日と1日ずれることがある）。
+人が書いた値（実施者・実施日・実施結果のどれかがあり、実施者が「E2E（Playwright）」でない行）は上書きしない。
+E2E が書いた値は、playwright_cases.tsv に合わせて書き直し、載っていないケースからは消す（備考は残す）。
 """
 import csv, glob, io, pathlib, re
 
@@ -46,6 +51,8 @@ ID_MAP = "all_test_cases_id_map.tsv"   # 一覧のテストID と cases/ のテ�
 ID_RE = re.compile(r"IT-([A-Z]\d\d-\d\d)-\d{3}")
 RECORD = ("実施者", "実施日", "実施結果", "備考")   # 一覧の末尾の手で書き込む列（依頼者決定 2026-10-26）
 ORPHANS = "all_test_cases_record_orphans.tsv"      # 引き継ぎ先のケースが無くなった書き込み
+E2E_AUTHOR = "E2E（Playwright）"                   # E2E の合否で埋めた行の実施者
+JUDGEMENTS = CG.parent.parent / "e2e" / "review" / "judgements"   # E2E の判定の表（対象の実施日時を持つ）
 
 CIRCLED = "[①-⑳㉑-㉟]"
 OPEN, CLOSE = "（(「『【〔［", "）)」』】〕］"
@@ -143,6 +150,39 @@ def previous_records():
     return rec
 
 
+def e2e_date(row):
+    """E2E の実施日。判定の表の対象の実施日時（結果が同じ判定）があればその日付、無ければ記録のファイル名の日付"""
+    t = row["テストID"]
+    jf = JUDGEMENTS / f"{t[3:9]}.tsv"
+    if jf.exists():
+        for j in csv.DictReader(open(jf, encoding="utf-8", newline=""), delimiter="\t"):
+            if j["テストID"] == t and j["判定"] == row["結果"] and re.match(r"\d{4}-\d\d-\d\d", j.get("対象の実施日時") or ""):
+                return j["対象の実施日時"][:10]
+    m = re.search(r"\d{4}-\d\d-\d\d", row["記録"])
+    return m.group(0) if m else ""
+
+
+def fill_e2e(rec, pr):
+    """E2E の合否で手書きの列を埋める（人が書いた値は上書きしない）。数を返す"""
+    by = {x["テストID"]: x for x in pr}
+    filled = kept = cleared = 0
+    for t in set(rec) | set(by):
+        prev = rec.get(t, [""] * len(RECORD))
+        human = any(v.strip() for v in prev[:3]) and prev[0] != E2E_AUTHOR
+        if human:
+            kept += t in by
+            continue
+        if t in by:
+            rec[t] = [E2E_AUTHOR, e2e_date(by[t]), by[t]["結果"], prev[3]]
+            filled += 1
+        elif prev[0] == E2E_AUTHOR:
+            rec[t] = ["", "", "", prev[3]]
+            if not prev[3].strip():
+                del rec[t]
+            cleared += 1
+    return filled, kept, cleared
+
+
 def main():
     rec = previous_records()
     hdr, rows = None, []
@@ -162,6 +202,7 @@ def main():
     assert not missing, f"playwright_cases.tsv のテストIDが cases/ に無い（除外されたケースか、IDの誤り）: {missing[:5]}"
     bad = [x["テストID"] for x in pr if x.get("結果") not in RESULTS or not (x.get("記録") or "").strip()]
     assert not bad, f"playwright_cases.tsv の結果が「合格」「不合格」でないか、記録が空の行がある: {bad[:5]}"
+    e2e_filled, e2e_kept, e2e_cleared = fill_e2e(rec, pr)
     kind, pw_ids = hdr.index("実行区分"), {x["テストID"] for x in pr if x["結果"] == "合格"}
     for x in rows:
         if x[0] in pw_ids:
@@ -205,7 +246,8 @@ def main():
     w.writerow(["一覧のテストID", "cases/のテストID"]); w.writerows([[renum[t], t] for t in ids])
     (CG / ID_MAP).write_text(m.getvalue(), encoding="utf-8")
     print(f"{len(rows)} 件 / {len({i[3:9] for i in ids})} 機能（うち検証方法 {PLAYWRIGHT} {len(pw_ids)} 件。Playwright で流して不合格の {len(pw) - len(pw_ids)} 件は元の区分のまま）"
-          f"。テストIDを振り直したケース {sum(a != b for a, b in renum.items())} 件（対応は {ID_MAP}）。手書きの列を引き継いだケース {sum(t in rec for t in ids)} 件")
+          f"。テストIDを振り直したケース {sum(a != b for a, b in renum.items())} 件（対応は {ID_MAP}）。手書きの列を引き継いだケース {sum(t in rec for t in ids)} 件"
+          f"（うち E2E の合否で埋めた {e2e_filled} 件・人の値を残した {e2e_kept} 件・E2E の値を消した {e2e_cleared} 件）")
 
 
 if __name__ == "__main__":
