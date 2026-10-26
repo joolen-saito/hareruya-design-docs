@@ -13,9 +13,9 @@ import { ProductSearchPage } from "./product_search";
 import { StockApprovalListPage, StockEditInput, StockListPage, fillStockEdit } from "./stock_edit";
 import { ensureTenant } from "./tenant";
 
-/** 正本の呼び名と、画面に出す名前 */
-export const 試験店舗A = "試験店舗A";
-export const 試験所属A = "試験所属A";
+/** 正本の呼び名と、画面に出す名前（店名・所属名は裁定 E09 で機能IDを付けた名前。M04-09・M04-08 の「試験店舗A」「試験所属A」と重ならない） */
+export const 試験店舗A = "試験店舗A（M04-13）";
+export const 試験所属A = "試験所属A（M04-13）";
 export const 作業者名 = "M04-13作業者";
 export const 承認者名 = "M04-13承認者";
 export const 権限なし名 = "M04-13権限なしユーザー";
@@ -23,7 +23,7 @@ export const 連携作業者名 = "M04-13連携作業者";
 
 export type 在庫区分 = "EC-CUBE" | "スマレジ";
 
-/** 店舗登録で試験店舗A（開店）を、あれば使い、無ければ登録する */
+/** 店舗登録で試験店舗A（M04-13）（開店）を、あれば使い、無ければ登録する */
 export async function ensureStoreA(page: Page, onIssue: (m: string) => void): Promise<string> {
   return ensureTenant(page, {
     店名: 試験店舗A, 店名カナ: "シケンテンポエー", 店名英語: "Test Store A", 支店URL: "m0413a", 店名略称3文字: "試験A", ショップ名略称: 試験店舗A,
@@ -252,7 +252,7 @@ export async function stockRowValues(row: Locator): Promise<{ 在庫: string; �
 export type StockIn = { code: string; zone: 在庫区分; quantity: number; unitPrice: number };
 
 /**
- * 在庫検索一覧で店舗を試験店舗A・在庫区分を指定して商品コードで検索し、商品名のリンクから在庫編集画面を開き、
+ * 在庫検索一覧で店舗を試験店舗A（M04-13）・在庫区分を指定して商品コードで検索し、商品名のリンクから在庫編集画面を開き、
  * 在庫変動区分「入庫/その他」・在庫変動理由「試験データ準備」・在庫増減数と仕入単価・承認通知先に承認するメンバーを入れて登録する。
  */
 export async function registerStockIns(page: Page, ins: StockIn[], approverName: string, onWarning: (w: string) => void): Promise<void> {
@@ -280,7 +280,7 @@ async function registerStockEditAndWait(page: Page, v: StockEditInput, what: str
 }
 
 /**
- * 登録者とは別の、試験店舗Aを承認できるメンバーで、在庫編集承認一覧(検索結果)の未承認の行を承認する。
+ * 登録者とは別の、試験店舗A（M04-13）を承認できるメンバーで、在庫編集承認一覧(検索結果)の未承認の行を承認する。
  * 一覧には商品コードが出ないので、登録者・店舗/在庫区分・在庫変動区分・増減数で行を決める。同じ条件の行が複数あれば先頭（新しいもの）を取り、問題として知らせる。
  */
 export async function approveStockIns(page: Page, ins: StockIn[], registrantName: string, onIssue: (m: string) => void): Promise<void> {

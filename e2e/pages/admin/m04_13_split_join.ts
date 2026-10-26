@@ -282,14 +282,14 @@ export async function pressStockListAction(page: Page, code: string, zone: 在�
   return dialogs;
 }
 
-/** 在庫検索一覧で店舗を試験店舗A・在庫区分・商品コードで検索し、行を選んで「在庫分割登録」を押す */
+/** 在庫検索一覧で店舗を試験店舗A（M04-13）・在庫区分・商品コードで検索し、行を選んで「在庫分割登録」を押す */
 export async function openSplitNew(page: Page, code: string, zone: 在庫区分 = "EC-CUBE"): Promise<SplitNewPage> {
   await searchStockList(page, { store: 試験店舗A, zone, code });
   await pressStockListAction(page, code, zone, "在庫分割登録");
   return new SplitNewPage(page);
 }
 
-/** 在庫検索一覧で店舗を試験店舗A・EC-CUBE・商品コードで検索し、行を選んで「在庫結合登録」を押す */
+/** 在庫検索一覧で店舗を試験店舗A（M04-13）・EC-CUBE・商品コードで検索し、行を選んで「在庫結合登録」を押す */
 export async function openJoinNew(page: Page, code: string, zone: 在庫区分 = "EC-CUBE"): Promise<JoinNewPage> {
   await searchStockList(page, { store: 試験店舗A, zone, code });
   await pressStockListAction(page, code, zone, "在庫結合登録");

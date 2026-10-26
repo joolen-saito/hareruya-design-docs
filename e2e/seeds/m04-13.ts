@@ -8,8 +8,8 @@
  *    「サプライ・グッズ・予約グッズ・情報商材のカテゴリだけを選べる」。空から作ったDBでは、この値をアプリの取込が受け付けない（記録の「範囲と集計」）。
  *    正本が商品コードを決めている商品は、登録の前に商品マスターで同じ商品コードの商品が無いことを確かめる（正本に清掃の手順が無いので、
  *    残っていれば作らずに止める。流し直しは依頼者の判断）。「他のデータと重ならない任意の値」の商品コードは、実行のたびに新しく作る。
- * 2. M04-13作業者で、在庫検索一覧（店舗=試験店舗A・在庫区分・商品コード）から在庫編集を開き、入庫/その他・試験データ準備・在庫増減数・仕入単価・
- *    承認通知先（M04-13承認者）で登録する。M04-13承認者（登録者とは別の、試験店舗Aを承認できるメンバー）が在庫編集承認一覧で承認する。
+ * 2. M04-13作業者で、在庫検索一覧（店舗=試験店舗A（M04-13）・在庫区分・商品コード）から在庫編集を開き、入庫/その他・試験データ準備・在庫増減数・仕入単価・
+ *    承認通知先（M04-13承認者）で登録する。M04-13承認者（登録者とは別の、試験店舗A（M04-13）を承認できるメンバー）が在庫編集承認一覧で承認する。
  * 3. M04-13作業者で、在庫検索一覧から在庫分割登録・在庫結合登録を行い、在庫分割結合検索一覧で商品コードを検索して行のIDを控える。
  * 4. 分割先の追加と承認申請、結合元の追加・結合元商品登録・欠品登録・承認申請は、分割先登録画面・結合元登録画面・結合計画承認申請画面で行う。
  *    承認・却下は M04-13承認者で行う。
@@ -74,7 +74,7 @@ defineSeed("S-M04-13-L-ENV", async ({ browser, seed }) => {
   });
 });
 
-/** 所属店舗＝試験店舗A・所属＝試験所属A・システム管理者の権限・編集可能店舗＝試験店舗A のメンバー */
+/** 所属店舗＝試験店舗A（M04-13）・所属＝試験所属A（M04-13）・システム管理者の権限・編集可能店舗＝試験店舗A（M04-13） のメンバー */
 async function storeAMember(browser: SeedCtx["browser"], account: Account, 名前: string, email: string): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, (page) => ensureMemberWithDepartment(page, {
     名前, 所属店舗: 試験店舗A, 所属: 試験所属A, ログインID: account.loginId, メールアドレス: email, パスワード: account.password,
@@ -98,9 +98,9 @@ defineSeed("S-M04-13-L-OP", { needs: ["S-M04-13-L-ENV"] }, async ({ browser }) =
 
 defineSeed("S-M04-13-NOAUTH", { needs: ["S-M04-13-ENV"] }, async ({ browser }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    // 試験店舗Aを編集可能店舗に含めない。所属店舗・編集可能店舗は、試験店舗A以外で画面の先頭の店舗にする（正本は指定しない）
+    // 試験店舗A（M04-13）を編集可能店舗に含めない。所属店舗・編集可能店舗は、試験店舗A（M04-13）以外で画面の先頭の店舗にする（正本は指定しない）
     const other = (await memberStoreChoices(page)).find((s) => s !== 試験店舗A);
-    if (!other) throw new Error("S-M04-13-NOAUTH: 試験店舗A以外の店舗が、メンバー登録の所属店舗の選択肢に無い");
+    if (!other) throw new Error(`S-M04-13-NOAUTH: ${試験店舗A}以外の店舗が、メンバー登録の所属店舗の選択肢に無い`);
     await ensureMemberWithDepartment(page, {
       名前: 権限なし名, 所属店舗: other, 所属: 試験所属A, ログインID: M0413_NOAUTH.loginId, メールアドレス: "m0413_noauth@example.test",
       パスワード: M0413_NOAUTH.password, 権限: "システム管理者", デフォルト検索表示店舗: other, 編集可能店舗: [other],

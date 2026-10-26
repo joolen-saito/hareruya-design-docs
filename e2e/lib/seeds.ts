@@ -93,3 +93,10 @@ export async function buildSeeds(browser: Browser, seedIds: string[], notes: Not
 export function destructiveSeeds(seedIds: string[]): string[] {
   return order(seedIds).filter((id) => /削除|消す|消して|0件にする/.test(getSeed(id).投入方法));
 }
+
+// ---- シードだけを作る実行（spec/seed_only.spec.ts）が使う入口 ----
+
+/** シードの依存先（needs）。作り方が無ければ undefined */
+export function seedNeeds(seedId: string): string[] | undefined {
+  return registry.get(seedId)?.needs;
+}
