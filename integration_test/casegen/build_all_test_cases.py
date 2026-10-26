@@ -29,6 +29,10 @@ cases/ の実行区分は変えない（E2E がDB確認の可否を cases/ の�
 一覧のテストIDと cases/ のテストIDの対応は all_test_cases_id_map.tsv に書く。一覧からケースのテストIDを引く検査は、この対応表で cases/ の
 テストIDに戻して使う。セルの中に出てくる他のケースのテストID（「IT-M13-15-005は…」など）も一覧のテストIDに置き換える。
 ケースを足したり外したりすると、その機能の後ろのケースの一覧のテストIDはずれる。
+
+一覧の末尾に、手で書き込む列「実施者」「実施日」「実施結果」「備考」を置く（依頼者決定 2026-10-26）。cases/ には無い列で、作り直しても消えないよう、
+作り直す前の一覧と対応表から cases/ のテストIDで値を引き継ぐ（一覧のテストIDは振り直しでずれるため）。
+引き継ぎ先のケースが無くなった（外した）値は消さずに all_test_cases_record_orphans.tsv に書き出し、件数を知らせる。
 """
 import csv, glob, io, pathlib, re
 
@@ -40,6 +44,8 @@ ORDER = ("テストID", "観点ID", "出典", "実行区分", "使用シード",
 RENAME = {"出典": "基本設計書", "実行区分": "検証方法", "使用シード": "テストデータ"}  # 一覧での見出し（cases/ の見出しは変えない）
 ID_MAP = "all_test_cases_id_map.tsv"   # 一覧のテストID と cases/ のテストID の対応表
 ID_RE = re.compile(r"IT-([A-Z]\d\d-\d\d)-\d{3}")
+RECORD = ("実施者", "実施日", "実施結果", "備考")   # 一覧の末尾の手で書き込む列（依頼者決定 2026-10-26）
+ORPHANS = "all_test_cases_record_orphans.tsv"      # 引き継ぎ先のケースが無くなった書き込み
 
 CIRCLED = "[①-⑳㉑-㉟]"
 OPEN, CLOSE = "（(「『【〔［", "）)」』】〕］"
@@ -119,7 +125,26 @@ BREAK = {"事前準備": break_precondition, "手順": break_steps, "出典": br
          "観点ID": break_list, "使用シード": break_list}
 
 
+def previous_records():
+    """作り直す前の一覧の手書きの列を、cases/ のテストID → 値 で返す"""
+    lp, mp = CG / "all_test_cases.tsv", CG / ID_MAP
+    if not lp.exists() or not mp.exists():
+        return {}
+    old = list(csv.DictReader(open(lp, encoding="utf-8", newline=""), delimiter="\t"))
+    if not old or not all(h in old[0] for h in RECORD):
+        return {}
+    to_case = {r["一覧のテストID"]: r["cases/のテストID"] for r in csv.DictReader(open(mp, encoding="utf-8"), delimiter="\t")}
+    rec = {}
+    for r in old:
+        vals = [r[h] or "" for h in RECORD]
+        if any(v.strip() for v in vals):
+            assert r["テストID"] in to_case, f"一覧のテストIDが対応表に無い（手書きの列を引き継げない）: {r['テストID']}"
+            rec[to_case[r["テストID"]]] = vals
+    return rec
+
+
 def main():
+    rec = previous_records()
     hdr, rows = None, []
     for p in sorted(glob.glob(str(CG / "cases/*_test_cases.tsv"))):
         r = list(csv.reader(open(p, encoding="utf-8"), delimiter="\t"))
@@ -161,14 +186,26 @@ def main():
     brk = [BREAK.get(h, lambda v: v) for h in ORDER]
     b = io.StringIO()
     w = csv.writer(b, delimiter="\t", lineterminator="\n")   # 改行を含むセルは "" で囲まれる（スプレッドシートに貼ると1セルに収まる）
-    w.writerow([RENAME.get(h, h) for h in ORDER]); w.writerows([[f(x[i]) for i, f in zip(keep, brk)] for x in rows])
+    w.writerow([RENAME.get(h, h) for h in ORDER] + list(RECORD))
+    w.writerows([[f(x[i]) for i, f in zip(keep, brk)] + rec.get(t, [""] * len(RECORD)) for t, x in zip(ids, rows)])
+    lost = {t: v for t, v in rec.items() if t not in set(ids)}
+    op = CG / ORPHANS
+    if lost or op.exists():
+        prev = list(csv.reader(open(op, encoding="utf-8", newline=""), delimiter="\t"))[1:] if op.exists() else []
+        keep_prev = [r for r in prev if r and r[0] not in set(ids) and r[0] not in lost]
+        o = io.StringIO()
+        ow = csv.writer(o, delimiter="\t", lineterminator="\n")
+        ow.writerow(["cases/のテストID"] + list(RECORD)); ow.writerows(keep_prev + [[t] + v for t, v in sorted(lost.items())])
+        op.write_text(o.getvalue(), encoding="utf-8")
+        if lost:
+            print(f"注意: 手書きの列の値があるケース {len(lost)} 件が一覧から無くなった。値は {ORPHANS} に残した")
     (CG / "all_test_cases.tsv").write_text(b.getvalue(), encoding="utf-8")
     m = io.StringIO()
     w = csv.writer(m, delimiter="\t", lineterminator="\n")
     w.writerow(["一覧のテストID", "cases/のテストID"]); w.writerows([[renum[t], t] for t in ids])
     (CG / ID_MAP).write_text(m.getvalue(), encoding="utf-8")
     print(f"{len(rows)} 件 / {len({i[3:9] for i in ids})} 機能（うち検証方法 {PLAYWRIGHT} {len(pw_ids)} 件。Playwright で流して不合格の {len(pw) - len(pw_ids)} 件は元の区分のまま）"
-          f"。テストIDを振り直したケース {sum(a != b for a, b in renum.items())} 件（対応は {ID_MAP}）")
+          f"。テストIDを振り直したケース {sum(a != b for a, b in renum.items())} 件（対応は {ID_MAP}）。手書きの列を引き継いだケース {sum(t in rec for t in ids)} 件")
 
 
 if __name__ == "__main__":
