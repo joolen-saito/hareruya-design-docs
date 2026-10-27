@@ -91,10 +91,16 @@ export function caseTest(testId: string, body: CaseBody): void {
         if (n !== done.size + 1) throw new Error(`${testId} の手順は順に実行する（次は手順 ${done.size + 1}）`);
         if (!startShot) { startShot = true; await camera.shoot(scene.start); }
         current = n;
+        // 手順の中の確かめも、期待と実際の状態の組として残す（期待結果の一部を手順の中で確かめるケースがある）
+        startRecording();
         try {
           await test.step(notes.resolve(steps[n - 1]), fn);
         } finally {
           current = undefined;
+          const stepChecks = stopRecording();
+          if (stepChecks.length) {
+            await test.info().attach(`${EVIDENCE_PREFIX}手順${n}:確かめの記録`, { body: JSON.stringify(stepChecks), contentType: "application/json" }).catch(() => {});
+          }
           await camera.shoot(scene.step(n)); // 手順が落ちたときも、落ちた時点の画面を残す
         }
         done.add(n);

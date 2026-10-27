@@ -2,7 +2,7 @@
 import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import {
-  ChoiceObservation, ProductSearchPage, SEARCH_CHOICE_FIELDS, SEARCH_SELECT_FIELDS, SEARCH_TEXT_FIELDS,
+  ChoiceObservation, ProductSearchPage, SEARCH_CHOICE_FIELDS, SEARCH_SELECT_FIELDS, SEARCH_TEXT_FIELDS, searchFieldLabel,
 } from "../../pages/admin/product_search";
 import { M0301_ADMIN } from "../../seeds/m03-01";
 
@@ -146,11 +146,11 @@ caseTest("IT-M03-01-006", async ({ page, notes, step, expected }) => {
     expect.soft(conditionBeforeClear, "クリア前の状態はSP").toEqual([{ value: "2", label: "SP" }]);
     expect.soft(expensiveBeforeClear, "クリア前は高額商品のみ表示").toEqual([{ value: "1", label: "高額商品のみ表示" }]);
     const state = await search.snapshot();
-    for (const field of SEARCH_TEXT_FIELDS) expect.soft(state[field], `${field} はクリア`).toBe("");
-    for (const field of SEARCH_SELECT_FIELDS) expect.soft(state[field], `${field} は未選択`).toEqual([]);
+    for (const field of SEARCH_TEXT_FIELDS) expect.soft(state[field], `${searchFieldLabel(field)} はクリア`).toBe("");
+    for (const field of SEARCH_SELECT_FIELDS) expect.soft(state[field], `${searchFieldLabel(field)} は未選択`).toEqual([]);
     for (const field of SEARCH_CHOICE_FIELDS) {
       const want = field === "status" || field === "card_condition" ? ["1"] : field === "expensive" ? ["2"] : [];
-      expect.soft(state[field], `${field} は初期状態`).toEqual(want);
+      expect.soft(state[field], `${searchFieldLabel(field)} は初期状態`).toEqual(want);
     }
     expect.soft(await search.checkedChoices("status"), "公開状態は『公開』へ復帰").toEqual([{ value: "1", label: "公開" }]);
     expect.soft(await search.checkedChoices("card_condition"), "状態は『NM』へ復帰").toEqual([{ value: "1", label: "NM" }]);

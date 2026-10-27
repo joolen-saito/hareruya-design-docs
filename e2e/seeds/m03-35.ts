@@ -15,9 +15,11 @@
  * ファイルの中身で、正本が決めていない部分（解釈。記録の注記に書く）:
  * - m0335_invalid-021.png: 「有効なPNGバイナリ」だけが指定。1×1画素の透明のPNG（68バイト）にした。
  * - m0335_oversize-023.csv: 「5MB+1バイト」だけが指定。5MB は 5×1024×1024 バイトと読み（M03-20 の022と同じ）、5,242,881 バイトにした。
- *   中身は部門更新CSVフォーマットの見出し行（S-M03-35-CASE-025 の見出しと同じ「商品コード,部門コード(ID)」）のあとを改行で埋めた。
+ *   中身は部門更新CSVフォーマットの見出し行（設計書の写しの部門更新CSVフォーマットの表 L0091〜L0092 の「商品コード,部門コード(ID)」）のあとを改行で埋めた。
  *   アプリの大きさの上限は 5,000,000 バイト（Symfony の「5M」）なので、どちらの読み方でも上限を超える。
- * - m0335_header_only-027.csv: 「正しい見出しのみ」。同じ機能の S-M03-35-CASE-025 が書く見出し「商品コード,部門コード(ID)」にした。
+ * - m0335_header_only-027.csv: 「正しい見出しのみ」。設計書の写し（datapattern/units/M03-35/design.txt）の部門更新CSVフォーマットの表
+ *   （L0091〜L0092、識別ID 1「商品コード」・2「部門コード(ID)」）の見出し「商品コード,部門コード(ID)」にした。前は同じ機能の
+ *   S-M03-35-CASE-025 が書く見出しから借りていたが、そのシードは 2026-10-21 の重複の除外で正本から外れた。
  * - m0335_three_columns-027.csv: データ行「UNUSED-027,32,EXTRA」だけが指定で、見出し行は指定が無い。上と同じ見出し行を足した。
  * - 改行は LF、末尾に改行1個、先頭の印（BOM）なし（e2e/fixtures/README.md の決まり）。
  * - m0335_empty-027.csv・m0335l_assign-001.csv・m0335l_assign-002.csv は e2e/fixtures/m03-35/ のもの（正本で中身が確定。照合は tools/verify-m03-35-fixtures.mjs）。
@@ -28,7 +30,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { Page } from "@playwright/test";
-import { REPO_ROOT, SETUP_ADMIN, STATE_DIR } from "../config/env";
+import { CASEGEN_DIR, REPO_ROOT, SETUP_ADMIN, STATE_DIR } from "../config/env";
 import { CSV入出力設定 } from "../lib/app_config";
 import { getSeed } from "../lib/catalog";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
@@ -55,8 +57,22 @@ const PREPARED = new Set<string>();
 /** 送るときの形式種別（ブラウザがファイルの拡張子から決めるものと同じ） */
 const MIME: Record<string, string> = { csv: "text/csv", png: "image/png" };
 
-/** 部門更新CSVフォーマットの見出し行（S-M03-35-CASE-025 の「商品コード,部門コード(ID)の見出しのみ」と同じ） */
+/** 部門更新CSVフォーマットの見出し行（設計書の写しの部門更新CSVフォーマットの表 L0091〜L0092 の項目名の順） */
 const 見出し行 = "商品コード,部門コード(ID)";
+
+/** 見出し行が、設計書の写しの「部門更新CSVフォーマット」の表（識別IDの順）の項目名と同じであること。違えば止める */
+function expectHeaderMatchesDesign(id: string): void {
+  const lines = fs.readFileSync(path.join(CASEGEN_DIR, "datapattern", "units", "M03-35", "design.txt"), "utf-8").split("\n");
+  const start = lines.findIndex((l) => /^L\d{4}\t機能名部門更新CSVフォーマット/.test(l));
+  if (start < 0) throw new Error(`${id}: 設計書の写しに「部門更新CSVフォーマット」の表が無い`);
+  const items: string[] = [];
+  for (const l of lines.slice(start + 1)) {
+    if (/^L\d{4}\tカスタマイズ説明/.test(l)) break;
+    const m = l.match(/^L\d{4}\t(\d+)\t([^\t]+)\t/);
+    if (m) items.push(m[2].trim());
+  }
+  if (items.join(",") !== 見出し行) throw new Error(`${id}: 設計書の部門更新CSVフォーマットの項目（${items.join(",")}）が見出し行（${見出し行}）と違う`);
+}
 /** 「5MB」の読み方（解釈）。5×1024×1024 バイト */
 export const 五MB = 5 * 1024 * 1024;
 /** 1×1画素の透明のPNG */
@@ -180,7 +196,7 @@ defineSeed("S-M03-35-CASE-023", async ({ browser, seed }) => {
 defineSeed("S-M03-35-CASE-027", async ({ browser, seed }) => {
   const id = seed.シードID;
   expectInSeed(id, ["m0335_empty-027.csv=0バイト", "m0335_header_only-027.csvは正しい見出しのみ", "m0335_three_columns-027.csvはデータ=UNUSED-027,32,EXTRA", "UTF-8"]);
-  expectInSeed("S-M03-35-CASE-025", [`${見出し行}の見出しのみ`]);
+  expectHeaderMatchesDesign(id);
   useFixture(id, "m0335_empty-027.csv", 0);
   writeRuntime(id, "m0335_header_only-027.csv", Buffer.from(`${見出し行}\n`, "utf-8"));
   writeRuntime(id, "m0335_three_columns-027.csv", Buffer.from(`${見出し行}\nUNUSED-027,32,EXTRA\n`, "utf-8"));

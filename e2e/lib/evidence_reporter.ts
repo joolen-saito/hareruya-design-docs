@@ -64,7 +64,7 @@ const clean = (s: string | undefined) => (s ?? "").replace(ANSI, "").trimEnd();
 const safe = (s: string) => s.replace(/[\\/:*?"<>|#\s]+/g, "_").slice(0, 60);
 
 type Shot = { file: string; 場面: string; URL?: string; 注記?: string };
-type Scene = { 種類: "開始時" | "手順" | "期待結果"; 番号?: number; 文: string; 状態: "済" | "失敗" | "未実行"; 秒?: number; 画像: Shot[]; 撮れなかった: string[]; エラー?: string };
+type Scene = { 種類: "開始時" | "手順" | "期待結果"; 番号?: number; 文: string; 状態: "済" | "失敗" | "未実行"; 秒?: number; 画像: Shot[]; 撮れなかった: string[]; エラー?: string; 確かめ?: Check[] };
 type Check = { 項目: string; 結果: "合格" | "不合格"; 期待?: string; 実際?: string; エラー?: string };
 
 /** 落ちた確かめのエラー出力から、期待と実際を拾う（記録の無い確かめのため） */
@@ -106,19 +106,25 @@ function jst(d: Date): string {
   return `${t}+09:00`;
 }
 
-function walk(step: TestStep, fn: (s: TestStep) => void): void {
-  fn(step);
-  for (const c of step.steps) walk(c, fn);
-}
-
 /**
  * 手順（または期待結果）が落ちたか。手順そのものが例外で終わったか、中の確かめ（expect。soft を含む）が落ちたときだけ。
  * 手順の中で受け止めて済ませた操作の失敗（待ちの時間切れを捕まえて別の道を行く など）は数えない。
  */
 function hasError(step: TestStep): boolean {
   let e = !!step.error;
-  walk(step, (s) => { if (s.category === "expect" && s.error) e = true; });
+  walkChecks(step, (s) => { if (s.error) e = true; });
   return e;
+}
+
+/**
+ * 中の確かめ（expect の step）を順に渡す。確かめの中へは降りない: expect.poll・toPass は、通るまでの空振りを
+ * 子の step（落ちた確かめ）として持つので、降りると、最後に通った確かめを落ちたと数えてしまう（M03-01 の038）。
+ */
+function walkChecks(step: TestStep, fn: (s: TestStep) => void): void {
+  for (const c of step.steps) {
+    if (c.category === "expect") fn(c);
+    else walkChecks(c, fn);
+  }
 }
 
 /** テストの注記と、実行中に足された注記は重なって届くことがある。同じものは多い方の数だけ残す */
@@ -150,11 +156,17 @@ function summarize(判定: string, 場面: string, checks: Check[], scenes: Scen
   if (exp.状態 !== "未実行" && (判定 === "合格" || 場面 === "期待結果" || ng.length)) {
     if (!ng.length) {
       const shown = checks.filter((k) => k.実際).slice(0, 6).map((k) => `${k.項目}: ${k.実際}`);
-      return `期待結果のとおり。確かめた${checks.length}項目すべてが期待どおりだった${shown.length ? `（${shown.join("／")}${checks.length > shown.length ? "／…" : ""}）` : ""}。`;
+      const stepN = scenes.reduce((n, s) => n + (s.確かめ?.filter((k) => k.結果 === "合格").length ?? 0), 0);
+      return `期待結果のとおり。確かめた${checks.length}項目すべてが期待どおりだった${shown.length ? `（${shown.join("／")}${checks.length > shown.length ? "／…" : ""}）` : ""}。`
+        + (stepN ? `手順の中でも${stepN}項目を確かめた（手順と画面の表）。` : "");
     }
     const okN = checks.length - ng.length;
     return `期待結果と違う。${ng.map(line).join("。")}。${okN ? `ほかの${okN}項目は期待どおり。` : ""}`;
   }
+  // 手順の中の確かめで落ちたなら、その期待と実際の状態を書く
+  const stopped = scenes.find((s) => s.種類 === "手順" && s.状態 === "失敗");
+  const stepNg = (stopped?.確かめ ?? []).filter((k) => k.結果 === "不合格");
+  if (stepNg.length) return `${場面 || "途中"}で止まり、期待結果を確かめていない。${stepNg.map(line).join("。")}。`;
   const why = firstLineOf(errors[0] ?? "");
   return `${場面 || "途中"}で止まり、期待結果を確かめていない${why ? `（${why.slice(0, 200)}）` : ""}。`;
 }
@@ -259,8 +271,7 @@ export default class EvidenceReporter implements Reporter {
       const err = expectedSteps.find((e) => e.error)?.error;
       if (err) exp.エラー = clean(err.message);
       for (const e of expectedSteps) {
-        walk(e, (s) => {
-          if (s.category !== "expect" || s === e) return;
+        walkChecks(e, (s) => {
           const err = s.error ? clean(s.error.message) : "";
           stepChecks.push({ 項目: s.title, 結果: s.error ? "不合格" : "合格", ...(s.error ? { ...fromError(err), エラー: err.split("\n").slice(0, 12).join("\n") } : {}) });
         });
@@ -269,6 +280,12 @@ export default class EvidenceReporter implements Reporter {
 
     // 確かめ: caseTest が記録した期待と実際の状態（lib/evidence_expect.ts）を正とし、記録に無い確かめ（画面の部品の中の確かめなど）は
     // 実行の記録（step）から足す。記録が無い古い形では、実行の記録だけを使う
+    // 手順の中の確かめ（caseTest が手順ごとに記録する）
+    for (const sc of scenes) {
+      if (sc.種類 !== "手順") continue;
+      const att = [...result.attachments].reverse().find((a) => a.name === `${EVIDENCE_PREFIX}手順${sc.番号}:確かめの記録` && a.body);
+      if (att) sc.確かめ = JSON.parse(att.body!.toString("utf-8")) as Check[];
+    }
     const recAtt = [...result.attachments].reverse().find((a) => a.name === `${EVIDENCE_PREFIX}確かめの記録` && a.body);
     const recorded: Check[] = recAtt ? (JSON.parse(recAtt.body!.toString("utf-8")) as Check[]) : [];
     const used = new Set<number>();
@@ -365,7 +382,7 @@ export default class EvidenceReporter implements Reporter {
       スキップの理由: pick("skip").join(" / "),
       実施日時: jst(result.startTime),
       所要秒: Math.round(result.duration / 100) / 10,
-      環境: { E2E_ENV: ENV_NAME, 接続先: BASE_URL },
+      環境: { E2E_ENV: ENV_NAME, 接続先: BASE_URL, 実行の形: process.env.E2E_RUN_MODE || "単独" },
       キャプチャ: (process.env.E2E_EVIDENCE || "full").toLowerCase(),
       E2Eのコミット: this.e2eRev,
       アプリのコミット: this.sutRev,

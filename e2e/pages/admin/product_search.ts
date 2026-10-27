@@ -19,6 +19,19 @@ export const SEARCH_CHOICE_FIELDS = [
   "frame", "promotion", "order_date", "expensive",
 ] as const;
 
+/** 入力欄の項目名（設計 0204「商品マスター(検索入力)」の画面項目定義の名称）。確かめの名前・結果に使う */
+const SEARCH_FIELD_LABEL: Record<string, string> = {
+  product_name: "商品名(日/英)", card_name: "カード名", product_id: "ID", product_code: "コード",
+  sell_price_from: "販売価格(From)", sell_price_to: "販売価格(To)", stock_from: "在庫(From)", stock_to: "在庫(To)",
+  order_quantity_from: "期間別販売数 販売数(From)", order_quantity_to: "期間別販売数 販売数(To)",
+  update_date_from: "規格更新日(From)", update_date_to: "規格更新日(To)",
+  category_id: "カテゴリ", cardset: "エキスパンション", tag_id: "タグ", storage_code_id: "略称タグ",
+  tag_sales_analysis: "売上分析タグ", section: "部門", shelf_number: "棚番号",
+  status: "公開状態", rarity: "レアリティ", language: "言語", card_condition: "状態", foil: "Foil",
+  frame: "フレーム", promotion: "プロモ", order_date: "期間別販売数 販売期間", expensive: "高額商品（のみ表示・除外する）",
+};
+export const searchFieldLabel = (name: string): string => SEARCH_FIELD_LABEL[name] ?? name;
+
 export type SearchSnapshot = Record<string, string | string[]>;
 export type ChoiceObservation = {
   value: string;
@@ -163,13 +176,13 @@ export class ProductSearchPage {
   /** 新規セッションの検索入力画面で、以前の検索指定が画面に復元されていないことを確認。 */
   async expectNoRetainedSearchConditions(): Promise<void> {
     const state = await this.snapshot();
-    for (const name of SEARCH_TEXT_FIELDS) expect(state[name], `${name} に以前の入力がない`).toBe("");
-    for (const name of SEARCH_SELECT_FIELDS) expect(state[name], `${name} に以前の選択がない`).toEqual([]);
+    for (const name of SEARCH_TEXT_FIELDS) expect(state[name], `${searchFieldLabel(name)} に以前の入力がない`).toBe("");
+    for (const name of SEARCH_SELECT_FIELDS) expect(state[name], `${searchFieldLabel(name)} に以前の選択がない`).toEqual([]);
     for (const name of SEARCH_CHOICE_FIELDS) {
       // 既定チェックの有無そのものは各ケースの期待値で確認する。
       const defaultValues = name === "status" || name === "card_condition" ? ["1"] : name === "expensive" ? ["2"] : [];
       const selected = state[name] as string[];
-      expect(selected.every((value) => defaultValues.includes(value)), `${name} に以前の選択がない`).toBe(true);
+      expect(selected.every((value) => defaultValues.includes(value)), `${searchFieldLabel(name)} に以前の選択がない`).toBe(true);
     }
     await expect(this.page.locator("#form_bulk"), "以前の検索結果一覧が表示されない").toHaveCount(0);
   }
@@ -184,20 +197,20 @@ export class ProductSearchPage {
   async missingDetailControls(): Promise<string[]> {
     const missing: string[] = [];
     for (const name of SEARCH_TEXT_FIELDS.filter((field) => field !== "product_name")) {
-      if (await this.detail.locator(`#${PREFIX}_${name}`).count() !== 1) missing.push(name);
+      if (await this.detail.locator(`#${PREFIX}_${name}`).count() !== 1) missing.push(searchFieldLabel(name));
     }
     for (const name of SEARCH_SELECT_FIELDS) {
-      if (await this.detail.locator(`#${PREFIX}_${name}`).count() !== 1) missing.push(name);
+      if (await this.detail.locator(`#${PREFIX}_${name}`).count() !== 1) missing.push(searchFieldLabel(name));
     }
     for (const name of SEARCH_CHOICE_FIELDS) {
-      if (await this.detail.locator(`input[name^="${PREFIX}[${name}]"]`).count() === 0) missing.push(name);
+      if (await this.detail.locator(`input[name^="${PREFIX}[${name}]"]`).count() === 0) missing.push(searchFieldLabel(name));
     }
     // 高額商品は No.27「のみ表示」と No.28「除外する」の2つのチェック欄。
     for (const value of ["1", "2"]) {
       if (await this.detail.locator(`input[name^="${PREFIX}[expensive]"][value="${value}"]`).count() !== 1)
-        missing.push(`expensive:${value}`);
+        missing.push(value === "1" ? "高額商品のみ表示" : "高額商品を除外する");
     }
-    if (await this.detail.locator("#search_box_main__clear .search-clear").count() !== 1) missing.push("clear");
+    if (await this.detail.locator("#search_box_main__clear .search-clear").count() !== 1) missing.push("検索条件をクリア");
     return missing;
   }
 

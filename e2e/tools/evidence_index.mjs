@@ -66,7 +66,13 @@ const tsv = (s) => String(s ?? "").replace(/[\t\r\n]+/g, " ").trim();
 const splitPre = (s) => String(s ?? "").split(/／(?=[①-⑳])/).map((x) => x.trim()).filter(Boolean);
 const firstLine = (s) => String(s ?? "").split("\n").map((x) => x.trim()).find(Boolean) ?? "";
 const when = (iso) => String(iso ?? "").replace("T", " ").replace(/\+09:00$/, "");
-const writeIfChanged = (file, text) => { if (!fs.existsSync(file) || fs.readFileSync(file, "utf-8") !== text) fs.writeFileSync(file, text); };
+// 並べて流す回が同時に書くことがあるので、一時ファイルに書いてから置き換える（読む側が書きかけを見ない）
+const writeIfChanged = (file, text) => {
+  if (fs.existsSync(file) && fs.readFileSync(file, "utf-8") === text) return;
+  const tmp = `${file}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, text);
+  fs.renameSync(tmp, file);
+};
 const RESULT_CLASS = { 合格: "ok", 不合格: "ng", 未判定: "na", スキップ: "skip" };
 
 const CSS = `
@@ -126,7 +132,7 @@ function renderCase(dir, rec, v) {
     ["正本との一致", v.正本],
     ["観点ID", rec.観点ID], ["実行区分", rec.実行区分], ["出典", rec.出典],
     ["実施日時", when(rec.実施日時)], ["所要", `${rec.所要秒}秒`],
-    ["環境", `${rec.環境.E2E_ENV}（${rec.環境.接続先}）`], ["E2Eのコミット", rec.E2Eのコミット], ["アプリのコミット", rec.アプリのコミット],
+    ["環境", `${rec.環境.E2E_ENV}（${rec.環境.接続先}）${rec.環境.実行の形 ? `・${rec.環境.実行の形}` : ""}`], ["E2Eのコミット", rec.E2Eのコミット], ["アプリのコミット", rec.アプリのコミット],
     ["テストコード", rec.テストコード], ["使用シード", rec.使用シード],
   ];
   // Markdown
@@ -141,6 +147,7 @@ function renderCase(dir, rec, v) {
     const head = s.種類 === "手順" ? `## 手順${s.番号}（${s.状態}）` : s.種類 === "期待結果" ? `## 期待結果（${s.状態}）` : "## 手順1の前の画面";
     M.push(head, "");
     if (s.種類 !== "開始時") M.push(s.文, "");
+    if (s.種類 === "手順" && s.確かめ?.length) M.push("手順の中の確かめ:", "", "| 確かめた項目 | 期待 | 実際の状態 | 結果 |", "| --- | --- | --- | --- |", ...s.確かめ.map((k) => `| ${md(k.項目)} | ${md(k.期待 ?? "")} | ${md(k.実際 ?? "")} | ${k.結果 === "合格" ? "○ 合格" : "✗ 不合格"} |`), "");
     if (s.種類 === "期待結果" && rec.確かめ.length) M.push("| 確かめた項目 | 期待 | 実際の状態 | 結果 |", "| --- | --- | --- | --- |", ...rec.確かめ.map((k) => `| ${md(k.項目)} | ${md(k.期待 ?? "")} | ${md(k.実際 ?? "")} | ${k.結果 === "合格" ? "○ 合格" : "✗ 不合格"} |`), "");
     for (const im of s.画像) M.push(`![${md(im.場面)}](${encodeURI(im.file)})`, "", `<sub>${md(im.場面)}${im.URL ? ` — ${md(im.URL)}` : ""}${im.注記 ? ` — ${md(im.注記)}` : ""}</sub>`, "");
     for (const x of s.撮れなかった) M.push(`> 画面を撮れなかった: ${x}`, "");
@@ -172,6 +179,7 @@ function renderCase(dir, rec, v) {
     const head = s.種類 === "手順" ? `手順${s.番号}` : s.種類 === "期待結果" ? "期待結果" : "手順1の前の画面";
     H.push(`<section class="scene"><h3>${esc(head)} <span class="badge ${st}">${esc(s.状態)}</span>${s.秒 !== undefined ? `<span class="muted">${s.秒}秒</span>` : ""}</h3>`);
     if (s.種類 !== "開始時") H.push(`<div>${esc(s.文)}</div>`);
+    if (s.種類 === "手順" && s.確かめ?.length) H.push(`<div class="wrap" style="margin-top:8px"><table><tr><th>手順の中で確かめた項目</th><th>期待</th><th>実際の状態</th><th>結果</th></tr>${s.確かめ.map((k) => `<tr><td>${esc(k.項目)}</td><td>${esc(k.期待 ?? "")}</td><td>${esc(k.実際 ?? "")}</td><td>${badge(k.結果)}</td></tr>`).join("")}</table></div>`);
     if (s.種類 === "期待結果" && rec.確かめ.length) H.push(`<div class="wrap" style="margin-top:8px"><table><tr><th>確かめた項目</th><th>期待</th><th>実際の状態</th><th>結果</th></tr>${rec.確かめ.map((k) => `<tr><td>${esc(k.項目)}${k.エラー ? `<details><summary class="muted">詳細</summary><pre>${esc(k.エラー)}</pre></details>` : ""}</td><td>${esc(k.期待 ?? "")}</td><td>${esc(k.実際 ?? "")}</td><td>${badge(k.結果)}</td></tr>`).join("")}</table></div>`);
     for (const im of s.画像) H.push(`<figure class="shot"><a href="${esc(encodeURI(im.file))}" target="_blank"><img loading="lazy" src="${esc(encodeURI(im.file))}" alt="${esc(im.場面)}"></a><figcaption>${esc(im.場面)}${im.URL ? ` — ${esc(im.URL)}` : ""}${im.注記 ? ` — ${esc(im.注記)}` : ""}</figcaption></figure>`);
     for (const x of s.撮れなかった) H.push(`<p class="muted">画面を撮れなかった: ${esc(x)}</p>`);

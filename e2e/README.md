@@ -21,7 +21,8 @@ npm run coverage                        # 正本のケースのうち、テス�
 ケースを流すと、`evidence/<機能ID>/<テストID>/` にエビデンスが出る（git の対象外）。テストコード側の書き足しは要らない。
 
 ```bash
-tools/run_evidence.sh M03-14                 # 機能のテストがあるケースを全部、1件ずつ流す（pw_run.sh のロックで全体1本）
+tools/run_evidence.sh M03-14                 # 機能のテストがあるケースを全部流す（8件ずつまとめて1回の起動で）
+tools/run_lanes.sh "M03-16 M03-17" "M04-01 M04-02" "M13-02"   # 機能の列を同じDBへ並べて流す（3本まで）
 tools/run_evidence.sh M03-14 016 026         # 番号を指定
 tools/run_evidence.sh M03-14 --todo          # エビデンスが無いか、正本が変わって古くなったケースだけ（中断しても続きから）
 tools/run_evidence.sh M03-14 --failed        # いま合格でないケースだけ
@@ -39,11 +40,13 @@ tools/evidence_pack.sh M03-14                # 固めて渡す（evidence/_packs
 | `evidence/<機能ID>/index.html`・`index.md`・`results.tsv`・`history.tsv` | 機能の一覧と実施の履歴 |
 | `evidence/index.html`・`index.md`・`results.tsv` | 全機能の一覧 |
 
-- エビデンスの先頭に「期待結果に対する実際の状態」を文で書き、確かめた項目ごとに「期待」と「実際の状態」を並べる。spec は `expect` を `lib/case` から使う（`lib/evidence_expect.ts`。ふるまいは Playwright の expect と同じで、期待結果の中の確かめだけを記録する）。
+- エビデンスの先頭に「期待結果に対する実際の状態」を文で書き、確かめた項目ごとに「期待」と「実際の状態」を並べる（手順の中の確かめも、手順ごとに並べる）。spec は `expect` を `lib/case` から使う（`lib/evidence_expect.ts`。ふるまいは Playwright の expect と同じで、期待結果の中の確かめだけを記録する）。
 - 画面は caseTest が自動で撮る（`lib/evidence.ts`）。手順の途中も残したいときはケースの `capture("ラベル")`。キャプチャは合否に関わらない（撮れなければ理由を残す）。`E2E_EVIDENCE=viewport|off` で切り替える。
 - 自動判定は、手順か期待結果で落ちたものだけを「不合格」にし、事前準備（シード）やログインで止まったもの・時間切れ・中断は「未判定」にする。
 - ケースの中身（正本）か spec ファイルが変わると、そのエビデンスは「要再実行」になり、`--todo` で流し直される。
-- `pw_run.sh` はテストIDのタグ（`@IT-…`。caseTest が付ける）でケースを1件だけ選ぶ。
+- `pw_run.sh` はテストIDのタグ（`@IT-…`。caseTest が付ける）でケースを選ぶ。`PW_BATCH` 件ずつ1回の起動で流し（共有シードは1回の起動で1度だけ作る・確かめる）、`PW_SLOTS`（3まで）の本数まで同じDBへ並べて流す（依頼者の承認 2026-10-26）。`PW_SLOTS=1`（既定）の回は並べず、ほかの回が終わるのを待って1本だけで流す。ロックは `tools/pw_lock.sh`。
+- 共有の設定を書き換えるケース（`tools/solo_cases.mjs`。シードの目印「≪共有の設定≫」と `config/solo_cases.tsv`。確かめるだけのシードは `config/parallel_ok_seeds.tsv`）は、ほかの回が終わるのを待って1本だけで流す。並べて流して合格でなかったケースは、`run_evidence.sh` が最後に1本だけで流し直す。`run_lanes.sh` で流すときは、この2つを並べている間は流さずに書き留め（`.runs/lanes/deferred.tsv`）、全部のレーンが終わってから `tools/run_deferred.sh` が機能ごとに1本だけで流す（単独の回が入るたびに3本とも止まるのを避ける）。自分の列を流し終えたレーンは、ほかのレーンの列の残りを後ろから引き取る（`PW_LANE_CLAIM_DIR` の受け持ちの印）。エビデンスの「環境」に、並列か単独かが出る。
+- 調べるための一時テスト・保守の操作（`tools/remove_products.sh`・`tools/remove_sales_analysis_tags.sh`）は、ほかの回が終わるのを待って1本だけで流す（`. tools/pw_lock.sh; pw_lock_exclusive 3600; …; pw_lock_release`）。
 - 人（担当）の判定は `review/judgements/<機能ID>.tsv` に書く（`tools/evidence_judgements.py set …`）。判定は、どの実施への判定かを実施日時で持つ。流し直すと「判定が古い」になる。
 - 合否の一覧（`integration_test/casegen/playwright_cases.tsv`）へは `evidence_judgements.py sync <機能ID> --apply` で、判定済みの「合格（条件なし）」「不合格（条件付きでない）」だけを載せる。
 - 進め方の全体（実装→実行→判定→記録）はスキル `.codex/skills/hareruya-e2e-case-evidence/SKILL.md`。

@@ -2,10 +2,10 @@
 
 ## 流す前に確かめること
 
-1. ほかの Playwright が流れていないか: `pgrep -af "playwright test"`。流れていれば終わるのを待つ（`run_evidence.sh` はロックを待つが、待ちが長いと止まる）。
+1. ほかの Playwright が何本流れているか: `pgrep -af "playwright test"`。同じDBへは3本まで（`run_evidence.sh` は空いた枠を待つが、待ちが長いと止まる）。
 2. 環境が動いているか: `docker ps`（ec-cube-enterprise-ec-cube-1 が healthy）と、ログイン画面が開くか。`run_evidence.sh` も流す前に確かめ、応答しなければ止まる。
 3. DB の状態: `e2e/HANDOFF_codex.md` の「手元環境の注意」の先頭が、いまの DB。ダンプに戻したあとか、空から作ったか、前回の実行のデータが残っているか。
-4. 再実行の制約: `e2e/review/<機能ID>_progress_*.md` に「同じDBでは流さない」と書かれたケース（固定の商品コードが残るもの など）は、依頼者の許可なしに流さない。`run_evidence.sh <機能ID> <番号…>` で外して流す。
+4. 再実行の制約: `e2e/review/<機能ID>_progress_*.md` に「同じDBでは流さない」と書かれたケースを確かめる。残った**商品**で止まるなら `tools/remove_products.sh <商品コード>…`、残った**売上分析タグ**なら `tools/remove_sales_analysis_tags.sh <名称>…` で画面から消して流し直してよい（RULES.md 3章。ほかのタグは同じ形の保守の操作を `tools/maint/` に足す）。商品とタグ以外の残りで止まるものは依頼者に聞く。
 
 ## 流す
 
@@ -16,9 +16,12 @@ tools/run_evidence.sh <機能ID>                     # テストのあるケー�
 tools/run_evidence.sh <機能ID> 003 007             # 番号で
 tools/run_evidence.sh <機能ID> --todo              # エビデンスが無いか、正本が変わったケースだけ
 tools/run_evidence.sh <機能ID> --failed            # いま合格でないケースだけ
+tools/run_lanes.sh "<機能ID…>" "<機能ID…>" ["<機能ID…>"] [-- --todo]   # 機能の列を同じDBへ並べて流す（レーンはモジュールで分ける）
 ```
 
-- 1件ずつ `tools/pw_run.sh` を呼ぶ（ロック・ログ `.runs/<機能>-<番号>.log`・結果 `.runs/<機能>-<番号>.json`）。1件のエビデンスは終わるたびに書かれるので、途中で止めても流したぶんは残る。`--todo` で続きから。
+- `tools/pw_run.sh` を、8件（`PW_BATCH`）ずつまとめて呼ぶ（ロック・ログ `.runs/<機能>-<先頭>_<末尾>.log`・結果 `.json`）。1件のエビデンスは終わるたびに書かれるので、途中で止めても流したぶんは残る。`--todo` で続きから。
+- `run_lanes.sh` はレーンの数を同時に流す本数（`PW_SLOTS`）にする。共有の設定を書き換えるケースと、並べて流して合格でなかったケースは、並べている間は書き留めるだけにし（`.runs/lanes/deferred.tsv`）、全部のレーンが終わってから `tools/run_deferred.sh` が機能ごとに1本だけで流す（出力は `.runs/lanes/<機能ID>.deferred.log`）。判定はその単独の回のエビデンスに対して行う。自分の列を流し終えたレーンは、ほかのレーンの列の残りを後ろから引き取る（機能ごとの受け持ちの印。印のある機能はほかのレーンが流さない）。機能ごとの出力は `.runs/lanes/<機能ID>.log`。
+- 手元の localstack のログは、並べて流す回では20MBを超えたら手が空いたときに、40MBを超えたら60秒だけ待ち、手が空かなければロックなしで消す（`tools/cw_logs_clear.sh --needed`／`--needed-hard`／`--no-lock`）。単独の回は始めに消す。
 - 1件に1〜10分かかる（シードを画面から作るため）。担当は `run_evidence.sh` を裏で流し（コマンドの制限時間を超えるため）、終わりの知らせを待つ。見張りのループを回さない。
 - 終了コード: 0＝流し終えた（合否は問わない）、1＝エビデンスの検査で誤り、3＝環境が応答しない・ロックが取れずに止めた（残りのケースを出す）、4＝流したのにエビデンスが書かれなかったケースがある（`.runs/<機能>-<番号>.log` を見る）。
 - 撮り方の切り替え: `E2E_EVIDENCE=viewport`（見えている範囲だけ）・`off`（撮らない。キャプチャが動きに影響していないかを切り分けるときだけ）。`E2E_EVIDENCE_FORMAT=jpeg` で小さくなる。
