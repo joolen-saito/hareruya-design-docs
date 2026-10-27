@@ -40,12 +40,13 @@ defineSeed("S-M13-02-MASTERS", async ({ browser, notes, seed }) => {
 });
 
 // 店舗Aが先に要る（シード表の投入方法: 店舗Aだけに編集権限を設定する）。店舗は S-M13-02-MASTERS が作る
-defineSeed("S-M13-02-ADM", { needs: ["S-M13-02-MASTERS"] }, async ({ browser }) => {
+defineSeed("S-M13-02-ADM", { needs: ["S-M13-02-MASTERS"] }, async ({ browser, notes }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    await ensureMember(page, {
+    // シード表: 登録したあとメンバー編集画面のアドレスの番号を管理者IDとして控える（〔管理者ID-M1302-共有〕）
+    notes.set("〔管理者ID-M1302-共有〕", await ensureMember(page, {
       名前: "M13-02 試験管理者", 所属店舗: "店舗A", ログインID: M1302_ADMIN.loginId, メールアドレス: "m1302_admin@example.test",
       パスワード: M1302_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A"],
-    });
+    }));
   });
 });
 
