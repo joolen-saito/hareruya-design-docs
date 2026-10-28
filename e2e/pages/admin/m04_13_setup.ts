@@ -285,7 +285,7 @@ async function registerStockEditAndWait(page: Page, v: StockEditInput, what: str
  * 一覧には商品コードが出ず、並びは「未承認が上・登録日の古い順」なので、前の実行で残った未承認の行が1ページ目を埋めると、
  * いま登録した行は後ろのページに回る。以前は1ページ目から登録者・店舗/在庫区分・増減数だけで行を選んでいて、別の商品の古い行を
  * 承認し、自分の商品の在庫が0のままになった（2026-10-27 夜からの M04-13 の在庫分割のシードの止まり）。
- * いまは、商品コードの未承認の入庫の在庫編集IDをDBの参照で読み、在庫編集承認一覧をそのID（画面のほかの画面からのリンクと
+ * いまは、商品コードの未承認の入庫の在庫編集ID（在庫編集承認とその明細。未承認の間は在庫履歴の行がまだ無い）をDBの参照で読み、在庫編集承認一覧をそのID（画面のほかの画面からのリンクと
  * 同じ ?id= の入口）で絞り込んで開き、出た1行が登録者・店舗/在庫区分・在庫変動区分・増減数と合うことを画面で確かめてから承認する。
  */
 export async function approveStockIns(page: Page, ins: StockIn[], registrantName: string, onIssue: (m: string) => void): Promise<void> {
@@ -295,11 +295,11 @@ export async function approveStockIns(page: Page, ins: StockIn[], registrantName
     const found = query(
       `select a.history_source_id::text as src
          from dtb_stock_approval_list a
-         join dtb_stock_history sh on sh.history_source_id = a.history_source_id and sh.history_source_type = a.history_source_type_id
-         join dtb_product_stock ps on ps.id = sh.product_stock_id
+         join dtb_stock_edit_approval_detail d on d.stock_edit_approval_id = a.history_source_id
+         join dtb_product_stock ps on ps.id = d.product_stock_id
          join dtb_product_class pc on pc.id = ps.product_class_id
          join dtb_base_info bi on bi.id = a.base_info_id
-        where pc.product_code = $1 and bi.shop_name = $2 and sh.stock_change_quantity = $3::int and a.approval_status = 1
+        where a.history_source_type_id = 1 and pc.product_code = $1 and bi.shop_name = $2 and d.edit_quantity = $3::int and a.approval_status = 1
         order by a.id desc`,
       [s.code, 試験店舗A, s.quantity]);
     if (found.length === 0) throw new Error(`${what}の未承認の行がDBに無い`);
