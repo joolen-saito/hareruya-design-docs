@@ -4,6 +4,7 @@
  * 在庫の入庫（在庫編集と在庫編集承認一覧）を、すべて管理画面から行う。
  */
 import { expect, Locator, Page } from "@playwright/test";
+import { query } from "../../lib/db";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 import { findMemberId } from "./member";
@@ -281,21 +282,37 @@ async function registerStockEditAndWait(page: Page, v: StockEditInput, what: str
 
 /**
  * 登録者とは別の、試験店舗A（M04-13）を承認できるメンバーで、在庫編集承認一覧(検索結果)の未承認の行を承認する。
- * 一覧には商品コードが出ないので、登録者・店舗/在庫区分・在庫変動区分・増減数で行を決める。同じ条件の行が複数あれば先頭（新しいもの）を取り、問題として知らせる。
+ * 一覧には商品コードが出ず、並びは「未承認が上・登録日の古い順」なので、前の実行で残った未承認の行が1ページ目を埋めると、
+ * いま登録した行は後ろのページに回る。以前は1ページ目から登録者・店舗/在庫区分・増減数だけで行を選んでいて、別の商品の古い行を
+ * 承認し、自分の商品の在庫が0のままになった（2026-10-27 夜からの M04-13 の在庫分割のシードの止まり）。
+ * いまは、商品コードの未承認の入庫の在庫編集IDをDBの参照で読み、在庫編集承認一覧をそのID（画面のほかの画面からのリンクと
+ * 同じ ?id= の入口）で絞り込んで開き、出た1行が登録者・店舗/在庫区分・在庫変動区分・増減数と合うことを画面で確かめてから承認する。
  */
 export async function approveStockIns(page: Page, ins: StockIn[], registrantName: string, onIssue: (m: string) => void): Promise<void> {
   const list = new StockApprovalListPage(page);
-  await list.open(試験店舗A);
-  const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrantName
-    && r.shop.startsWith(試験店舗A) && r.changeType.endsWith("入庫/その他"));
-  const ids: string[] = [];
   for (const s of ins) {
-    const hit = rows.filter((r) => r.shop.endsWith(s.zone) && r.quantity.replace(/,/g, "") === String(s.quantity) && !ids.includes(r.id));
-    if (hit.length === 0) throw new Error(`${s.code}（${s.zone}）の在庫編集（${s.quantity}）の未承認の行が在庫編集承認一覧に無い`);
-    if (hit.length > 1) onIssue(`${s.code}（${s.zone}）と同じ数量（${s.quantity}）の未承認の行が${hit.length}件あり、一覧の先頭を承認した`);
-    ids.push(hit[0].id);
+    const what = `${s.code}（${s.zone}）の在庫編集（${s.quantity}）`;
+    const found = query(
+      `select a.history_source_id::text as src
+         from dtb_stock_approval_list a
+         join dtb_stock_history sh on sh.history_source_id = a.history_source_id and sh.history_source_type = a.history_source_type_id
+         join dtb_product_stock ps on ps.id = sh.product_stock_id
+         join dtb_product_class pc on pc.id = ps.product_class_id
+         join dtb_base_info bi on bi.id = a.base_info_id
+        where pc.product_code = $1 and bi.shop_name = $2 and sh.stock_change_quantity = $3::int and a.approval_status = 1
+        order by a.id desc`,
+      [s.code, 試験店舗A, s.quantity]);
+    if (found.length === 0) throw new Error(`${what}の未承認の行がDBに無い`);
+    if (found.length > 1) onIssue(`${what}の未承認の行が${found.length}件あり、いちばん新しいものを承認した`);
+    await page.goto(adminUrl(`/product/stock/approval_list?id=${found[0].src}`));
+    await expect(page.locator("#form_search_stock_approval_list_update"), "在庫編集承認一覧の結果").toBeVisible();
+    await page.waitForLoadState("load");
+    const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrantName
+      && r.shop.startsWith(試験店舗A) && r.shop.endsWith(s.zone) && r.changeType.endsWith("入庫/その他")
+      && r.quantity.replace(/,/g, "") === String(s.quantity));
+    if (rows.length !== 1) throw new Error(`${what}: 在庫編集ID ${found[0].src} で絞り込んだ在庫編集承認一覧に、合う未承認の行が ${rows.length} 件（1件のはず）`);
+    await approveRowsAndWait(page, [rows[0].id], `${what}の承認`, onIssue);
   }
-  await approveRowsAndWait(page, ids, `在庫編集の承認（${ids.length}件）`, onIssue);
 }
 
 /**
