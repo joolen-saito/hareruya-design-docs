@@ -78,6 +78,10 @@ class CellFacts:
 
     @property
     def fully_struck(self) -> bool:
+        if not self.is_string:
+            # 数値・日付・数式セルは表示文字列を持たないので、セルフォントの取り消し線で決める
+            # （例: 0203 受注詳細CSV出力!B74 の No.67）。
+            return self.has_value and self.cell_font_struck
         return bool(self.raw_text.strip()) and not self.kept_text.strip()
 
     @property
