@@ -2,6 +2,7 @@
 import { expect, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { expectSaved } from "./common";
+import { uploadProductImages } from "./f03_06_products";
 
 export type CardAssignment = {
   productId: string;
@@ -12,6 +13,8 @@ export type CardAssignment = {
   /** シード表の「状態・属性」の商品名。カードを選んで書き換わったら、この値に入力し直す */
   productNameJp: string;
   productNameEn: string;
+  /** 「商品を登録」の前に商品画像へ追加する画像ファイル（順に追加する。F03-06 が使う） */
+  images?: { name: string; buffer: Buffer }[];
 };
 
 /**
@@ -48,6 +51,11 @@ export async function assignCardOnProductEdit(page: Page, a: CardAssignment, onI
       onIssue(`カードを選ぶと${label}が「${now}」に書き換わったので、シード表の状態・属性の「${want}」に入力し直した`);
       await field.fill(want);
     }
+  }
+
+  if (a.images?.length) {
+    const added = await uploadProductImages(page, a.images);
+    if (added < a.images.length) onIssue(`商品画像の追加欄に画像ファイルを渡しても、サムネイルが増えず画像を追加できなかった（${added}/${a.images.length}件）。画像なしで登録した`);
   }
 
   // 必須（「必須」の印がある行）で未選択の選択欄に、先頭の選択肢を選ぶ。未入力の必須の入力欄は値を推測しない

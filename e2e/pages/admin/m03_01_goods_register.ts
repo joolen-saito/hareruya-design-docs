@@ -2,13 +2,20 @@
 import { Page } from "@playwright/test";
 import { Notes } from "../../lib/notes";
 import { expectSaved } from "./common";
+import { 公開状態の値 } from "./m03_13_product";
 import {
   buildGoodsCsv, downloadGoodsCsvTemplate, publishedValue,
   readExistingSellGroupName, readJapaneseLanguageId, uploadGoodsCsv,
 } from "./m03_01_goods_csv";
 
 /** CSV の1行。正本が行ごとに定めた商品コード・商品名と、共通の値と違う列（言語・価格など）を書く */
-export type GoodsLine = { code: string; nameJp: string; nameEn: string; values?: Record<string, string> };
+export type GoodsLine = {
+  code: string; nameJp: string; nameEn: string; values?: Record<string, string>;
+  /** 行ごとの商品公開ステータス（省略すると共通の値＝公開）。F03-06 が非公開の商品を作るために指定する */
+  productStatus?: "公開" | "非公開";
+  /** 行ごとの支店の商品公開ステータス（省略すると args.branchStatus、それも無ければ公開） */
+  branchStatus?: "公開" | "非公開";
+}
 
 /**
  * 「商品カテゴリ(ID)はグッズ配下の既存カテゴリのID」には、共有マスタが画面で照合して控えた「M03カテゴリA」を使う。
@@ -37,6 +44,8 @@ export async function registerGoodsCsv(page: Page, args: {
   onWarning: (warning: string) => void;
   /** 取込の結果の画面へ移るまで待つ最大の時間（数千行の取込で使う） */
   uploadWaitMs?: number;
+  /** 支店の商品公開ステータス。省略すると公開（F03-08 が「非公開」を指定する） */
+  branchStatus?: "公開" | "非公開";
 }): Promise<{ japaneseLanguageId: string }> {
   const template = await downloadGoodsCsvTemplate(page);
   const japaneseLanguageId = await readJapaneseLanguageId(page);
@@ -44,7 +53,8 @@ export async function registerGoodsCsv(page: Page, args: {
   const common: Record<string, string> = {
     "商品ID": "", "言語(ID)": japaneseLanguageId,
     "商品公開ステータス": publishedValue(template, "商品公開ステータス"),
-    "支店の商品公開ステータス": publishedValue(template, "支店の商品公開ステータス"),
+    "支店の商品公開ステータス": args.branchStatus === "非公開"
+      ? 公開状態の値(template, "支店の商品公開ステータス", "非公開") : publishedValue(template, "支店の商品公開ステータス"),
     "サイズ": "1", "重量": "1", "商品カテゴリ(ID)": args.categoryId,
     "購入グループ名称": sellGroupName, "基準価格": "100", "販売価格": "100",
     "買取価格": "10", "原価単価": "10", "部門ID": "",
@@ -53,6 +63,8 @@ export async function registerGoodsCsv(page: Page, args: {
   const csv = buildGoodsCsv(template, args.lines.map((line) => ({
     ...common,
     "商品コード": line.code, "商品名(日)": line.nameJp, "商品名(英)": line.nameEn,
+    ...(line.productStatus === "非公開" ? { "商品公開ステータス": 公開状態の値(template, "商品公開ステータス", "非公開") } : {}),
+    ...(line.branchStatus ? { "支店の商品公開ステータス": 公開状態の値(template, "支店の商品公開ステータス", line.branchStatus) } : {}),
     ...line.values,
   })));
   await uploadGoodsCsv(page, csv, args.fileName, args.uploadWaitMs);
