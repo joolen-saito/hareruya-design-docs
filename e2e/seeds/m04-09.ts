@@ -27,6 +27,7 @@
  *   （入庫承認申請の所属を未選択にする補いは、裁定 E11 で正本が「所属は選ばない」になったので無くなった。2026-10-23）
  * - 権限の名前: 正本は「承認権限なし」とだけ書き、権限の作り方を書かない。権限管理の表に承認権限の列があるので、その列だけを外した権限を作った。
  */
+import { rc, unrcText } from "../lib/run_marker";
 import { Browser, expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { getSeed } from "../lib/catalog";
@@ -185,7 +186,7 @@ export type Op =
   | { op: "instruction"; label: string; by?: 役 };
 
 const 理由 = "M04-09結合テスト";
-const 送り状No = "M0409-TEST";
+const 送り状No = rc("M0409-TEST");
 
 /** 英語の言語ID（商品マスターの検索欄の言語の選択肢から読む） */
 async function readLanguageId(page: Page, label: string): Promise<string> {
@@ -203,7 +204,8 @@ async function readLanguageId(page: Page, label: string): Promise<string> {
 function mustMention(seedId: string, fragments: string[]): void {
   const s = getSeed(seedId);
   const text = s["状態・属性"] + s.投入方法;
-  const missing = fragments.filter((f) => !text.includes(f));
+  // 実行の印（lib/run_marker）を付けた値は、印を外した正本の値で照らす
+  const missing = fragments.filter((f) => !text.includes(unrcText(f)));
   if (missing.length) throw new Error(`${seedId}: 作り方の値がシード表に無い: ${missing.join(" / ")}`);
 }
 
@@ -635,7 +637,7 @@ function defineTransferSeed(seedId: string, src: string, dest: string, label: st
 
 /** 振替2件（1件目・2件目）を登録して承認待ちのままにするシード */
 function defineTwoTransfersSeed(seedId: string, n: string): void {
-  const [a, ta, b, tb] = [`M409-TR-A-${n}`, `M409-TR-TO-A-${n}`, `M409-TR-B-${n}`, `M409-TR-TO-B-${n}`];
+  const [a, ta, b, tb] = [rc(`M409-TR-A-${n}`), rc(`M409-TR-TO-A-${n}`), rc(`M409-TR-B-${n}`), rc(`M409-TR-TO-B-${n}`)];
   defineScenarioSeed(seedId, [
     { op: "goods", items: [g(a), g(ta), g(b), g(tb)] },
     { op: "in", items: [inA(a, 10, 100), inA(ta, 4, 150), inA(b, 10, 100), inA(tb, 4, 150)] },
@@ -648,52 +650,52 @@ function defineTwoTransfersSeed(seedId: string, n: string): void {
 // ---------------------------------------------------------------- 共有のシード（完了・却下の表示データ。使う各ケースの開始時に作り直す）
 
 defineScenarioSeed("S-M04-09-MOVE-FINAL", [
-  { op: "goods", items: [g("M409-FIN-DONE"), g("M409-FIN-REJ")] },
-  { op: "in", items: [inA("M409-FIN-DONE", 10, 100), inA("M409-FIN-REJ", 10, 100)] },
-  { op: "move", label: "〔在庫移動ID-M0409-共有A〕", ...AtoB, lines: [{ code: "M409-FIN-DONE", qty: 1 }], memo: "完了メモ", until: "done" },
-  { op: "move", label: "〔在庫移動ID-M0409-共有B〕", ...AtoB, lines: [{ code: "M409-FIN-REJ", qty: 1 }], memo: "却下メモ", until: "rejected" },
+  { op: "goods", items: [g(rc("M409-FIN-DONE")), g(rc("M409-FIN-REJ"))] },
+  { op: "in", items: [inA(rc("M409-FIN-DONE"), 10, 100), inA(rc("M409-FIN-REJ"), 10, 100)] },
+  { op: "move", label: "〔在庫移動ID-M0409-共有A〕", ...AtoB, lines: [{ code: rc("M409-FIN-DONE"), qty: 1 }], memo: "完了メモ", until: "done" },
+  { op: "move", label: "〔在庫移動ID-M0409-共有B〕", ...AtoB, lines: [{ code: rc("M409-FIN-REJ"), qty: 1 }], memo: "却下メモ", until: "rejected" },
 ], ["S-M04-09-APP-B"]);
 
 defineScenarioSeed("S-M04-09-TRANSFER-FINAL", [
-  { op: "goods", items: [g("M409-TRF-DONE-A"), g("M409-TRF-DONE-TO"), g("M409-TRF-REJ-A"), g("M409-TRF-REJ-TO")] },
-  { op: "in", items: [inA("M409-TRF-DONE-A", 10, 100), inA("M409-TRF-DONE-TO", 4, 150), inA("M409-TRF-REJ-A", 10, 100), inA("M409-TRF-REJ-TO", 4, 150)] },
-  { op: "transfer", label: "〔在庫振替ID-M0409-共有A〕", store: 店A, zone: EC, lines: [{ code: "M409-TRF-DONE-A", dest: "M409-TRF-DONE-TO", qty: 1 }], until: "done" },
-  { op: "transfer", label: "〔在庫振替ID-M0409-共有B〕", store: 店A, zone: EC, lines: [{ code: "M409-TRF-REJ-A", dest: "M409-TRF-REJ-TO", qty: 1 }], until: "rejected", reject: "振替内容不一致" },
+  { op: "goods", items: [g(rc("M409-TRF-DONE-A")), g(rc("M409-TRF-DONE-TO")), g(rc("M409-TRF-REJ-A")), g(rc("M409-TRF-REJ-TO"))] },
+  { op: "in", items: [inA(rc("M409-TRF-DONE-A"), 10, 100), inA(rc("M409-TRF-DONE-TO"), 4, 150), inA(rc("M409-TRF-REJ-A"), 10, 100), inA(rc("M409-TRF-REJ-TO"), 4, 150)] },
+  { op: "transfer", label: "〔在庫振替ID-M0409-共有A〕", store: 店A, zone: EC, lines: [{ code: rc("M409-TRF-DONE-A"), dest: rc("M409-TRF-DONE-TO"), qty: 1 }], until: "done" },
+  { op: "transfer", label: "〔在庫振替ID-M0409-共有B〕", store: 店A, zone: EC, lines: [{ code: rc("M409-TRF-REJ-A"), dest: rc("M409-TRF-REJ-TO"), qty: 1 }], until: "rejected", reject: "振替内容不一致" },
 ]);
 
 // ---------------------------------------------------------------- 在庫移動の登録（商品と在庫だけ）
 
-defineProductSeed("S-M04-09-PRODUCTS-015", "M409-MOV-A-015", { name: "移動商品A" });
-defineProductSeed("S-M04-09-PRODUCTS-017", "M409-MOV-A-017");
-defineProductSeed("S-M04-09-PRODUCTS-018", "M409-MOV-A-018");
+defineProductSeed("S-M04-09-PRODUCTS-015", rc("M409-MOV-A-015"), { name: "移動商品A" });
+defineProductSeed("S-M04-09-PRODUCTS-017", rc("M409-MOV-A-017"));
+defineProductSeed("S-M04-09-PRODUCTS-018", rc("M409-MOV-A-018"));
 defineScenarioSeed("S-M04-09-BOUNDARY-019", [
-  { op: "goods", items: [g("M409-MOV-MIN-019"), g("M409-MOV-MAX-019")] },
-  { op: "in", items: [inA("M409-MOV-MIN-019", 1, 100), inA("M409-MOV-MAX-019", 1000000, 1)] },
+  { op: "goods", items: [g(rc("M409-MOV-MIN-019")), g(rc("M409-MOV-MAX-019"))] },
+  { op: "in", items: [inA(rc("M409-MOV-MIN-019"), 1, 100), inA(rc("M409-MOV-MAX-019"), 1000000, 1)] },
 ]);
-defineProductSeed("S-M04-09-PRODUCTS-021", "M409-MOV-A-021");
-defineProductSeed("S-M04-09-PRODUCTS-022", "M409-MOV-A-022");
-defineProductSeed("S-M04-09-PRODUCTS-024", "M409-MOV-B-024", { unit: 200 });
-defineProductSeed("S-M04-09-PRODUCTS-026", "M409-MOV-A-026");
-defineProductSeed("S-M04-09-PRODUCTS-027", "M409-MOV-A-027");
-defineProductSeed("S-M04-09-PRODUCTS-028", "M409-MOV-A-028");
-defineProductSeed("S-M04-09-GF-STOCK-095", "M0409-095-A", { b: [5, 100] });
-defineProductSeed("S-M04-09-GF-STOCK-096", "M0409-096-A");
-defineProductSeed("S-M04-09-GF-STOCK-099", "M0409-099-A");
-defineProductSeed("S-M04-09-GF-PRODUCTS-102", "M0409-102-A", { name: "M0409-102-A 日本語商品名", lang: "英語" });
-defineProductSeed("S-M04-09-GF-PRODUCTS-103", "M0409-103-A", { name: "M0409-103-A 日本語商品名", lang: "英語" });
-defineProductSeed("S-M04-09-CBMOVEREG-170", "M0409-CB170-A");
+defineProductSeed("S-M04-09-PRODUCTS-021", rc("M409-MOV-A-021"));
+defineProductSeed("S-M04-09-PRODUCTS-022", rc("M409-MOV-A-022"));
+defineProductSeed("S-M04-09-PRODUCTS-024", rc("M409-MOV-B-024"), { unit: 200 });
+defineProductSeed("S-M04-09-PRODUCTS-026", rc("M409-MOV-A-026"));
+defineProductSeed("S-M04-09-PRODUCTS-027", rc("M409-MOV-A-027"));
+defineProductSeed("S-M04-09-PRODUCTS-028", rc("M409-MOV-A-028"));
+defineProductSeed("S-M04-09-GF-STOCK-095", rc("M0409-095-A"), { b: [5, 100] });
+defineProductSeed("S-M04-09-GF-STOCK-096", rc("M0409-096-A"));
+defineProductSeed("S-M04-09-GF-STOCK-099", rc("M0409-099-A"));
+defineProductSeed("S-M04-09-GF-PRODUCTS-102", rc("M0409-102-A"), { name: "M0409-102-A 日本語商品名", lang: "英語" });
+defineProductSeed("S-M04-09-GF-PRODUCTS-103", rc("M0409-103-A"), { name: "M0409-103-A 日本語商品名", lang: "英語" });
+defineProductSeed("S-M04-09-CBMOVEREG-170", rc("M0409-CB170-A"));
 
 // ---------------------------------------------------------------- 在庫移動（新規登録のまま）
 
-defineTwoMoveSeed("S-M04-09-MOVE-NEW-031", "M409-MOV-A-031", "M409-MOV-B-031", "〔在庫移動ID-M0409-031〕", "new", 3, 2);
-defineMoveSeed("S-M04-09-MOVE-NEW-033", "M409-MOV-A-033", "〔在庫移動ID-M0409-033〕", "new");
-defineMoveSeed("S-M04-09-MOVE-NEW-034", "M409-MOV-A-034", "〔在庫移動ID-M0409-034〕", "new");
-defineMoveSeed("S-M04-09-MOVE-NEW-035", "M409-MOV-A-035", "〔在庫移動ID-M0409-035〕", "new");
-defineTwoMoveSeed("S-M04-09-MOVE-NEW-039", "M409-MOV-A-039", "M409-MOV-B-039", "〔在庫移動ID-M0409-039〕", "new", 1, 1);
-defineTwoMoveSeed("S-M04-09-MOVE-NEW-040", "M409-MOV-A-040", "M409-MOV-B-040", "〔在庫移動ID-M0409-040〕", "new", 1, 1);
-defineMoveSeed("S-M04-09-GF-MOVE-NEW-106", "M0409-106-A", "〔在庫移動ID-M0409-106〕", "new");
-defineMoveSeed("S-M04-09-GF-MOVE-NEW-115", "M0409-115-A", "〔在庫移動ID-M0409-115〕", "new", { postCheck: [chk("M0409-115-A", 店A, EC, 7, 700)] });
-defineMoveSeed("S-M04-09-GF-MOVE-NEW-116", "M0409-116-A", "〔在庫移動ID-M0409-116〕", "new");
+defineTwoMoveSeed("S-M04-09-MOVE-NEW-031", rc("M409-MOV-A-031"), rc("M409-MOV-B-031"), "〔在庫移動ID-M0409-031〕", "new", 3, 2);
+defineMoveSeed("S-M04-09-MOVE-NEW-033", rc("M409-MOV-A-033"), "〔在庫移動ID-M0409-033〕", "new");
+defineMoveSeed("S-M04-09-MOVE-NEW-034", rc("M409-MOV-A-034"), "〔在庫移動ID-M0409-034〕", "new");
+defineMoveSeed("S-M04-09-MOVE-NEW-035", rc("M409-MOV-A-035"), "〔在庫移動ID-M0409-035〕", "new");
+defineTwoMoveSeed("S-M04-09-MOVE-NEW-039", rc("M409-MOV-A-039"), rc("M409-MOV-B-039"), "〔在庫移動ID-M0409-039〕", "new", 1, 1);
+defineTwoMoveSeed("S-M04-09-MOVE-NEW-040", rc("M409-MOV-A-040"), rc("M409-MOV-B-040"), "〔在庫移動ID-M0409-040〕", "new", 1, 1);
+defineMoveSeed("S-M04-09-GF-MOVE-NEW-106", rc("M0409-106-A"), "〔在庫移動ID-M0409-106〕", "new");
+defineMoveSeed("S-M04-09-GF-MOVE-NEW-115", rc("M0409-115-A"), "〔在庫移動ID-M0409-115〕", "new", { postCheck: [chk(rc("M0409-115-A"), 店A, EC, 7, 700)] });
+defineMoveSeed("S-M04-09-GF-MOVE-NEW-116", rc("M0409-116-A"), "〔在庫移動ID-M0409-116〕", "new");
 
 /** 店舗内の移動（A・EC-CUBE 10点 → A・スマレジ 4点。移動点数3。新規登録のまま） */
 function defineInternalMoveSeed(seedId: string, code: string, label: string): void {
@@ -704,56 +706,56 @@ function defineInternalMoveSeed(seedId: string, code: string, label: string): vo
     { op: "check", items: [chk(code, 店A, EC, 7, 700), chk(code, 店A, SM, 4, 400)] },
   ]);
 }
-defineInternalMoveSeed("S-M04-09-MOVE-INTERNAL-038", "M409-MOV-A-038", "〔在庫移動ID-M0409-038〕");
-defineInternalMoveSeed("S-M04-09-GF-MOVE-INTERNAL-114", "M0409-114-A", "〔在庫移動ID-M0409-114〕");
-defineInternalMoveSeed("S-M04-09-DP-MOVE-INTERNAL-158", "M0409-158-A", "〔在庫移動ID-M0409-158〕");
+defineInternalMoveSeed("S-M04-09-MOVE-INTERNAL-038", rc("M409-MOV-A-038"), "〔在庫移動ID-M0409-038〕");
+defineInternalMoveSeed("S-M04-09-GF-MOVE-INTERNAL-114", rc("M0409-114-A"), "〔在庫移動ID-M0409-114〕");
+defineInternalMoveSeed("S-M04-09-DP-MOVE-INTERNAL-158", rc("M0409-158-A"), "〔在庫移動ID-M0409-158〕");
 
 // ---------------------------------------------------------------- 在庫移動（出庫承認待ち）
 
 function defineOutwaitSeed(seedId: string, code: string, n: string, opts: { shortages?: number } = {}): void {
   defineMoveSeed(seedId, code, `〔在庫移動ID-M0409-${n}〕`, "outwait", { shortages: opts.shortages, postCheck: [chk(code, 店A, EC, 7, 700)] });
 }
-defineOutwaitSeed("S-M04-09-MOVE-OUTWAIT-042", "M409-MOV-A-042", "042");
-defineOutwaitSeed("S-M04-09-MOVE-OUTWAIT-043", "M409-MOV-A-043", "043");
-defineOutwaitSeed("S-M04-09-MOVE-OUTWAIT-044", "M409-MOV-A-044", "044");
-defineOutwaitSeed("S-M04-09-MOVE-OUTWAIT-045", "M409-MOV-A-045", "045");
-defineOutwaitSeed("S-M04-09-MOVE-OUTWAIT-046", "M409-MOV-A-046", "046");
-defineMoveSeed("S-M04-09-GF-MOVE-OUTWAIT-107", "M0409-107-A", "〔在庫移動ID-M0409-107〕", "outwait");
-defineOutwaitSeed("S-M04-09-GF-MOVE-OUTWAIT-122", "M0409-122-A", "122");
-defineOutwaitSeed("S-M04-09-GF-MOVE-OUTWAIT-123", "M0409-123-A", "123");
-defineOutwaitSeed("S-M04-09-GF-MOVE-OUTWAIT-131", "M0409-131-A", "131");
-defineOutwaitSeed("S-M04-09-DP-MOVE-OUTWAIT-157", "M0409-157-A", "157");
-defineOutwaitSeed("S-M04-09-CBOUTWAIT-178", "M0409-CB178-A", "178");
-defineOutwaitSeed("S-M04-09-CBOUTWAIT-179", "M0409-CB179-A", "179", { shortages: 1 });
+defineOutwaitSeed("S-M04-09-MOVE-OUTWAIT-042", rc("M409-MOV-A-042"), "042");
+defineOutwaitSeed("S-M04-09-MOVE-OUTWAIT-043", rc("M409-MOV-A-043"), "043");
+defineOutwaitSeed("S-M04-09-MOVE-OUTWAIT-044", rc("M409-MOV-A-044"), "044");
+defineOutwaitSeed("S-M04-09-MOVE-OUTWAIT-045", rc("M409-MOV-A-045"), "045");
+defineOutwaitSeed("S-M04-09-MOVE-OUTWAIT-046", rc("M409-MOV-A-046"), "046");
+defineMoveSeed("S-M04-09-GF-MOVE-OUTWAIT-107", rc("M0409-107-A"), "〔在庫移動ID-M0409-107〕", "outwait");
+defineOutwaitSeed("S-M04-09-GF-MOVE-OUTWAIT-122", rc("M0409-122-A"), "122");
+defineOutwaitSeed("S-M04-09-GF-MOVE-OUTWAIT-123", rc("M0409-123-A"), "123");
+defineOutwaitSeed("S-M04-09-GF-MOVE-OUTWAIT-131", rc("M0409-131-A"), "131");
+defineOutwaitSeed("S-M04-09-DP-MOVE-OUTWAIT-157", rc("M0409-157-A"), "157");
+defineOutwaitSeed("S-M04-09-CBOUTWAIT-178", rc("M0409-CB178-A"), "178");
+defineOutwaitSeed("S-M04-09-CBOUTWAIT-179", rc("M0409-CB179-A"), "179", { shortages: 1 });
 defineScenarioSeed("S-M04-09-DP-MOVE-OUTWAIT-153", [
-  { op: "goods", items: [g("M0409-153-A"), g("M0409-153-B")] },
-  { op: "in", items: [inA("M0409-153-A", 10, 100), inA("M0409-153-B", 10, 100)] },
-  { op: "move", label: "〔在庫移動ID-M0409-153〕", ...AtoB, lines: [{ code: "M0409-153-A", qty: 3 }, { code: "M0409-153-B", qty: 2 }], shortages: [{ code: "M0409-153-A", qty: 1 }], until: "outwait" },
-  { op: "check", items: [chk("M0409-153-A", 店A, EC, 7, 700), chk("M0409-153-B", 店A, EC, 8, 800)] },
+  { op: "goods", items: [g(rc("M0409-153-A")), g(rc("M0409-153-B"))] },
+  { op: "in", items: [inA(rc("M0409-153-A"), 10, 100), inA(rc("M0409-153-B"), 10, 100)] },
+  { op: "move", label: "〔在庫移動ID-M0409-153〕", ...AtoB, lines: [{ code: rc("M0409-153-A"), qty: 3 }, { code: rc("M0409-153-B"), qty: 2 }], shortages: [{ code: rc("M0409-153-A"), qty: 1 }], until: "outwait" },
+  { op: "check", items: [chk(rc("M0409-153-A"), 店A, EC, 7, 700), chk(rc("M0409-153-B"), 店A, EC, 8, 800)] },
 ]);
 defineScenarioSeed("S-M04-09-DP-MOVE-OUTWAIT-156", [
-  { op: "goods", items: [g("M0409-156-A"), g("M0409-156-B")] },
-  { op: "in", items: [inA("M0409-156-A", 10, 100), inA("M0409-156-B", 10, 100)] },
-  { op: "move", label: "〔在庫移動ID-M0409-156〕", ...AtoB, lines: [{ code: "M0409-156-A", qty: 3 }, { code: "M0409-156-B", qty: 2 }], until: "outwait" },
-  { op: "check", items: [chk("M0409-156-A", 店A, EC, 7, 700), chk("M0409-156-B", 店A, EC, 8, 800)] },
+  { op: "goods", items: [g(rc("M0409-156-A")), g(rc("M0409-156-B"))] },
+  { op: "in", items: [inA(rc("M0409-156-A"), 10, 100), inA(rc("M0409-156-B"), 10, 100)] },
+  { op: "move", label: "〔在庫移動ID-M0409-156〕", ...AtoB, lines: [{ code: rc("M0409-156-A"), qty: 3 }, { code: rc("M0409-156-B"), qty: 2 }], until: "outwait" },
+  { op: "check", items: [chk(rc("M0409-156-A"), 店A, EC, 7, 700), chk(rc("M0409-156-B"), 店A, EC, 8, 800)] },
 ]);
 
 // ---------------------------------------------------------------- 在庫移動（移動中）
 
-defineTwoMoveSeed("S-M04-09-MOVE-TRANSIT-041", "M409-MOV-A-041", "M409-MOV-B-041", "〔在庫移動ID-M0409-041〕", "transit", 1, 1);
-defineTwoMoveSeed("S-M04-09-MOVE-TRANSIT-047", "M409-MOV-A-047", "M409-MOV-B-047", "〔在庫移動ID-M0409-047〕", "transit", 1, 1);
-defineTwoMoveSeed("S-M04-09-MOVE-TRANSIT-048", "M409-MOV-A-048", "M409-MOV-B-048", "〔在庫移動ID-M0409-048〕", "transit", 3, 2);
-defineMoveSeed("S-M04-09-MOVE-TRANSIT-050", "M409-MOV-A-050", "〔在庫移動ID-M0409-050〕", "transit");
-defineMoveSeed("S-M04-09-MOVE-TRANSIT-053", "M409-MOV-A-053", "〔在庫移動ID-M0409-053〕", "transit", { qty: 1 });
-defineTwoMoveSeed("S-M04-09-MOVE-TRANSIT-056", "M409-MOV-A-056", "M409-MOV-B-056", "〔在庫移動ID-M0409-056〕", "transit", 1, 1);
-defineTwoMoveSeed("S-M04-09-MOVE-TRANSIT-058", "M409-MOV-A-058", "M409-MOV-B-058", "〔在庫移動ID-M0409-058〕", "transit", 1, 1);
-defineMoveSeed("S-M04-09-GF-MOVE-TRANSIT-108", "M0409-108-A", "〔在庫移動ID-M0409-108〕", "transit");
-defineMoveSeed("S-M04-09-GF-MOVE-TRANSIT-126", "M0409-126-A", "〔在庫移動ID-M0409-126〕", "transit");
-defineMoveSeed("S-M04-09-GF-MOVE-TRANSIT-128", "M0409-128-A", "〔在庫移動ID-M0409-128〕", "transit");
+defineTwoMoveSeed("S-M04-09-MOVE-TRANSIT-041", rc("M409-MOV-A-041"), rc("M409-MOV-B-041"), "〔在庫移動ID-M0409-041〕", "transit", 1, 1);
+defineTwoMoveSeed("S-M04-09-MOVE-TRANSIT-047", rc("M409-MOV-A-047"), rc("M409-MOV-B-047"), "〔在庫移動ID-M0409-047〕", "transit", 1, 1);
+defineTwoMoveSeed("S-M04-09-MOVE-TRANSIT-048", rc("M409-MOV-A-048"), rc("M409-MOV-B-048"), "〔在庫移動ID-M0409-048〕", "transit", 3, 2);
+defineMoveSeed("S-M04-09-MOVE-TRANSIT-050", rc("M409-MOV-A-050"), "〔在庫移動ID-M0409-050〕", "transit");
+defineMoveSeed("S-M04-09-MOVE-TRANSIT-053", rc("M409-MOV-A-053"), "〔在庫移動ID-M0409-053〕", "transit", { qty: 1 });
+defineTwoMoveSeed("S-M04-09-MOVE-TRANSIT-056", rc("M409-MOV-A-056"), rc("M409-MOV-B-056"), "〔在庫移動ID-M0409-056〕", "transit", 1, 1);
+defineTwoMoveSeed("S-M04-09-MOVE-TRANSIT-058", rc("M409-MOV-A-058"), rc("M409-MOV-B-058"), "〔在庫移動ID-M0409-058〕", "transit", 1, 1);
+defineMoveSeed("S-M04-09-GF-MOVE-TRANSIT-108", rc("M0409-108-A"), "〔在庫移動ID-M0409-108〕", "transit");
+defineMoveSeed("S-M04-09-GF-MOVE-TRANSIT-126", rc("M0409-126-A"), "〔在庫移動ID-M0409-126〕", "transit");
+defineMoveSeed("S-M04-09-GF-MOVE-TRANSIT-128", rc("M0409-128-A"), "〔在庫移動ID-M0409-128〕", "transit");
 /** 移動中の在庫移動（M0409-CB<n>-A・移動点数1）と、明細に無い差分商品の候補（M0409-CB<n>-B。別のCSVで登録） */
 function defineDiffCandidateSeed(seedId: string, n: string): void {
-  const a = `M0409-CB${n}-A`;
-  const b = `M0409-CB${n}-B`;
+  const a = rc(`M0409-CB${n}-A`);
+  const b = rc(`M0409-CB${n}-B`);
   defineScenarioSeed(seedId, [
     { op: "goods", items: [g(a)] },
     { op: "goods", items: [g(b)] },
@@ -767,96 +769,96 @@ defineDiffCandidateSeed("S-M04-09-CBDIFFSTAT-196", "196");
 // ---------------------------------------------------------------- 在庫移動（入庫承認待ち・入庫完了・却下）
 
 defineScenarioSeed("S-M04-09-MOVE-INWAIT-SHORT-059", [
-  { op: "goods", items: [g("M409-MOV-A-059"), g("M409-MOV-B-059")] },
-  { op: "in", items: [inA("M409-MOV-A-059", 10, 100), inA("M409-MOV-B-059", 10, 100)] },
-  { op: "move", label: "〔在庫移動ID-M0409-059〕", ...AtoB, lines: [{ code: "M409-MOV-A-059", qty: 3 }, { code: "M409-MOV-B-059", qty: 1 }], until: "inwait", diffs: [{ code: "M409-MOV-A-059", qty: 1 }] },
+  { op: "goods", items: [g(rc("M409-MOV-A-059")), g(rc("M409-MOV-B-059"))] },
+  { op: "in", items: [inA(rc("M409-MOV-A-059"), 10, 100), inA(rc("M409-MOV-B-059"), 10, 100)] },
+  { op: "move", label: "〔在庫移動ID-M0409-059〕", ...AtoB, lines: [{ code: rc("M409-MOV-A-059"), qty: 3 }, { code: rc("M409-MOV-B-059"), qty: 1 }], until: "inwait", diffs: [{ code: rc("M409-MOV-A-059"), qty: 1 }] },
 ], ["S-M04-09-APP-B"]);
 const inwaitAB = (code: string) => [chk(code, 店A, EC, 7, 700), chk(code, 店B, EC, 5, 500)];
-defineMoveSeed("S-M04-09-MOVE-INWAIT-SHORT-060", "M409-MOV-A-060", "〔在庫移動ID-M0409-060〕", "inwait", { b: [5, 100], diff: 1, postCheck: inwaitAB("M409-MOV-A-060") });
-defineMoveSeed("S-M04-09-MOVE-INWAIT-NORMAL-061", "M409-MOV-A-061", "〔在庫移動ID-M0409-061〕", "inwait", { b: [5, 100], postCheck: inwaitAB("M409-MOV-A-061") });
-defineMoveSeed("S-M04-09-MOVE-INWAIT-SHORT-062", "M409-MOV-A-062", "〔在庫移動ID-M0409-062〕", "inwait", { b: [5, 100], diff: 1, postCheck: inwaitAB("M409-MOV-A-062") });
+defineMoveSeed("S-M04-09-MOVE-INWAIT-SHORT-060", rc("M409-MOV-A-060"), "〔在庫移動ID-M0409-060〕", "inwait", { b: [5, 100], diff: 1, postCheck: inwaitAB(rc("M409-MOV-A-060")) });
+defineMoveSeed("S-M04-09-MOVE-INWAIT-NORMAL-061", rc("M409-MOV-A-061"), "〔在庫移動ID-M0409-061〕", "inwait", { b: [5, 100], postCheck: inwaitAB(rc("M409-MOV-A-061")) });
+defineMoveSeed("S-M04-09-MOVE-INWAIT-SHORT-062", rc("M409-MOV-A-062"), "〔在庫移動ID-M0409-062〕", "inwait", { b: [5, 100], diff: 1, postCheck: inwaitAB(rc("M409-MOV-A-062")) });
 /** 出庫元を在庫9・総原価1800にする（移動中のあと、2点・仕入単価550の入庫） */
 const topUp = (code: string): Op[] => [
   { op: "in", items: [inA(code, 2, 550)], check: [chk(code, 店A, EC, 9, 1800), chk(code, 店B, EC, 0, 0)] },
 ];
-defineMoveSeed("S-M04-09-MOVE-INWAIT-SURPLUS-063", "M409-MOV-A-063", "〔在庫移動ID-M0409-063〕", "inwait", { diff: -1, after: topUp("M409-MOV-A-063") });
-defineMoveSeed("S-M04-09-MOVE-INWAIT-NOSTOCK-064", "M409-MOV-A-064", "〔在庫移動ID-M0409-064〕", "inwait", {
-  inQty: 3, diff: -1, postCheck: [chk("M409-MOV-A-064", 店A, EC, 0, 0), chk("M409-MOV-A-064", 店B, EC, 0, 0)],
+defineMoveSeed("S-M04-09-MOVE-INWAIT-SURPLUS-063", rc("M409-MOV-A-063"), "〔在庫移動ID-M0409-063〕", "inwait", { diff: -1, after: topUp(rc("M409-MOV-A-063")) });
+defineMoveSeed("S-M04-09-MOVE-INWAIT-NOSTOCK-064", rc("M409-MOV-A-064"), "〔在庫移動ID-M0409-064〕", "inwait", {
+  inQty: 3, diff: -1, postCheck: [chk(rc("M409-MOV-A-064"), 店A, EC, 0, 0), chk(rc("M409-MOV-A-064"), 店B, EC, 0, 0)],
 });
-defineMoveSeed("S-M04-09-MOVE-INWAIT-SHORT-065", "M409-MOV-A-065", "〔在庫移動ID-M0409-065〕", "inwait", { b: [5, 100], diff: 1, postCheck: inwaitAB("M409-MOV-A-065") });
-defineMoveSeed("S-M04-09-GF-MOVE-INWAIT-109", "M0409-109-A", "〔在庫移動ID-M0409-109〕", "inwait");
-defineMoveSeed("S-M04-09-GF-MOVE-INWAIT-127", "M0409-127-A", "〔在庫移動ID-M0409-127〕", "inwait", { b: [5, 100], diff: 1, postCheck: inwaitAB("M0409-127-A") });
-defineMoveSeed("S-M04-09-GF-MOVE-INWAIT-130", "M0409-130-A", "〔在庫移動ID-M0409-130〕", "inwait", { b: [5, 100], postCheck: [chk("M0409-130-A", 店B, EC, 5, 500)] });
-defineMoveSeed("S-M04-09-GF-MOVE-INWAIT-132", "M0409-132-A", "〔在庫移動ID-M0409-132〕", "inwait", { b: [5, 100], diff: 1, postCheck: inwaitAB("M0409-132-A") });
-defineMoveSeed("S-M04-09-GF-MOVE-INWAIT-133", "M0409-133-A", "〔在庫移動ID-M0409-133〕", "inwait", { diff: -1, after: topUp("M0409-133-A") });
+defineMoveSeed("S-M04-09-MOVE-INWAIT-SHORT-065", rc("M409-MOV-A-065"), "〔在庫移動ID-M0409-065〕", "inwait", { b: [5, 100], diff: 1, postCheck: inwaitAB(rc("M409-MOV-A-065")) });
+defineMoveSeed("S-M04-09-GF-MOVE-INWAIT-109", rc("M0409-109-A"), "〔在庫移動ID-M0409-109〕", "inwait");
+defineMoveSeed("S-M04-09-GF-MOVE-INWAIT-127", rc("M0409-127-A"), "〔在庫移動ID-M0409-127〕", "inwait", { b: [5, 100], diff: 1, postCheck: inwaitAB(rc("M0409-127-A")) });
+defineMoveSeed("S-M04-09-GF-MOVE-INWAIT-130", rc("M0409-130-A"), "〔在庫移動ID-M0409-130〕", "inwait", { b: [5, 100], postCheck: [chk(rc("M0409-130-A"), 店B, EC, 5, 500)] });
+defineMoveSeed("S-M04-09-GF-MOVE-INWAIT-132", rc("M0409-132-A"), "〔在庫移動ID-M0409-132〕", "inwait", { b: [5, 100], diff: 1, postCheck: inwaitAB(rc("M0409-132-A")) });
+defineMoveSeed("S-M04-09-GF-MOVE-INWAIT-133", rc("M0409-133-A"), "〔在庫移動ID-M0409-133〕", "inwait", { diff: -1, after: topUp(rc("M0409-133-A")) });
 defineScenarioSeed("S-M04-09-DP-MOVE-INWAIT-155", [
-  { op: "goods", items: [g("M0409-155-A"), g("M0409-155-B"), g("M0409-155-C")] },
-  { op: "in", items: [inA("M0409-155-A", 10, 100), inA("M0409-155-B", 10, 100), inA("M0409-155-C", 10, 100), inB("M0409-155-A", 5, 100), inB("M0409-155-B", 5, 100)] },
-  { op: "move", label: "〔在庫移動ID-M0409-155〕", ...AtoB, lines: [{ code: "M0409-155-A", qty: 3 }, { code: "M0409-155-B", qty: 3 }, { code: "M0409-155-C", qty: 3 }], until: "transit" },
-  { op: "in", items: [inA("M0409-155-C", 2, 550)], check: [chk("M0409-155-C", 店A, EC, 9, 1800), chk("M0409-155-C", 店B, EC, 0, 0)] },
-  { op: "inbound", label: "〔在庫移動ID-M0409-155〕", diffs: [{ code: "M0409-155-B", qty: 1 }, { code: "M0409-155-C", qty: -1 }], until: "inwait" },
-  { op: "check", items: [...inwaitAB("M0409-155-A"), ...inwaitAB("M0409-155-B")] },
+  { op: "goods", items: [g(rc("M0409-155-A")), g(rc("M0409-155-B")), g(rc("M0409-155-C"))] },
+  { op: "in", items: [inA(rc("M0409-155-A"), 10, 100), inA(rc("M0409-155-B"), 10, 100), inA(rc("M0409-155-C"), 10, 100), inB(rc("M0409-155-A"), 5, 100), inB(rc("M0409-155-B"), 5, 100)] },
+  { op: "move", label: "〔在庫移動ID-M0409-155〕", ...AtoB, lines: [{ code: rc("M0409-155-A"), qty: 3 }, { code: rc("M0409-155-B"), qty: 3 }, { code: rc("M0409-155-C"), qty: 3 }], until: "transit" },
+  { op: "in", items: [inA(rc("M0409-155-C"), 2, 550)], check: [chk(rc("M0409-155-C"), 店A, EC, 9, 1800), chk(rc("M0409-155-C"), 店B, EC, 0, 0)] },
+  { op: "inbound", label: "〔在庫移動ID-M0409-155〕", diffs: [{ code: rc("M0409-155-B"), qty: 1 }, { code: rc("M0409-155-C"), qty: -1 }], until: "inwait" },
+  { op: "check", items: [...inwaitAB(rc("M0409-155-A")), ...inwaitAB(rc("M0409-155-B"))] },
 ], ["S-M04-09-APP-B"]);
 defineScenarioSeed("S-M04-09-GF-MOVE-FINAL-110", [
-  { op: "goods", items: [g("M0409-110-A"), g("M0409-110-B")] },
-  { op: "in", items: [inA("M0409-110-A", 10, 100), inA("M0409-110-B", 10, 100)] },
-  { op: "move", label: "〔在庫移動ID-M0409-110A〕", ...AtoB, lines: [{ code: "M0409-110-A", qty: 3 }], until: "done" },
-  { op: "move", label: "〔在庫移動ID-M0409-110B〕", ...AtoB, lines: [{ code: "M0409-110-B", qty: 3 }], until: "rejected" },
+  { op: "goods", items: [g(rc("M0409-110-A")), g(rc("M0409-110-B"))] },
+  { op: "in", items: [inA(rc("M0409-110-A"), 10, 100), inA(rc("M0409-110-B"), 10, 100)] },
+  { op: "move", label: "〔在庫移動ID-M0409-110A〕", ...AtoB, lines: [{ code: rc("M0409-110-A"), qty: 3 }], until: "done" },
+  { op: "move", label: "〔在庫移動ID-M0409-110B〕", ...AtoB, lines: [{ code: rc("M0409-110-B"), qty: 3 }], until: "rejected" },
 ], ["S-M04-09-APP-B"]);
 
 // ---------------------------------------------------------------- 在庫振替
 
 defineScenarioSeed("S-M04-09-TRANSFER-PRODUCTS-067", [
-  { op: "goods", items: [g("M409-TR-A-067"), g("M409-TR-B-067")] },
-  { op: "card", code: "M409-TR-A-067" },
-  { op: "card", code: "M409-TR-B-067" },
-  { op: "in", items: [inA("M409-TR-A-067", 10, 100), inA("M409-TR-B-067", 10, 100)] },
+  { op: "goods", items: [g(rc("M409-TR-A-067")), g(rc("M409-TR-B-067"))] },
+  { op: "card", code: rc("M409-TR-A-067") },
+  { op: "card", code: rc("M409-TR-B-067") },
+  { op: "in", items: [inA(rc("M409-TR-A-067"), 10, 100), inA(rc("M409-TR-B-067"), 10, 100)] },
 ]);
 defineScenarioSeed("S-M04-09-TRANSFER-PRODUCTS-068", [
-  { op: "goods", items: [g("M409-TR-A-068"), g("M409-TR-TO-A-068")] },
-  { op: "card", code: "M409-TR-A-068" },
-  { op: "card", code: "M409-TR-TO-A-068" },
-  { op: "in", items: [inA("M409-TR-A-068", 10, 100), inA("M409-TR-TO-A-068", 4, 150)] },
+  { op: "goods", items: [g(rc("M409-TR-A-068")), g(rc("M409-TR-TO-A-068"))] },
+  { op: "card", code: rc("M409-TR-A-068") },
+  { op: "card", code: rc("M409-TR-TO-A-068") },
+  { op: "in", items: [inA(rc("M409-TR-A-068"), 10, 100), inA(rc("M409-TR-TO-A-068"), 4, 150)] },
 ]);
 defineScenarioSeed("S-M04-09-SEARCH-PRODUCTS", [
-  { op: "goods", items: [g("M409-DIFF-01", { name: "差分候補商品" })] },
-  { op: "candidate", code: "M409-DIFF-01", highCode: "M409DIFF01" },
-  { op: "productId", code: "M409-DIFF-01", label: "〔商品ID-M0409-共有〕" },
+  { op: "goods", items: [g(rc("M409-DIFF-01"), { name: "差分候補商品" })] },
+  { op: "candidate", code: rc("M409-DIFF-01"), highCode: "M409DIFF01" },
+  { op: "productId", code: rc("M409-DIFF-01"), label: "〔商品ID-M0409-共有〕" },
 ]);
 defineScenarioSeed("S-M04-09-TRANSFER-PRODUCTS-069", [
-  { op: "goods", items: [g("M409-TR-A-069"), g("M409-TR-TO-A-069", { name: "振替候補商品" })] },
-  { op: "candidate", code: "M409-TR-TO-A-069", highCode: "M409TRTOA069" },
-  { op: "in", items: [inA("M409-TR-A-069", 10, 100), inA("M409-TR-TO-A-069", 4, 150)] },
-  { op: "productId", code: "M409-TR-TO-A-069", label: "〔商品ID-M0409-069〕" },
+  { op: "goods", items: [g(rc("M409-TR-A-069")), g(rc("M409-TR-TO-A-069"), { name: "振替候補商品" })] },
+  { op: "candidate", code: rc("M409-TR-TO-A-069"), highCode: "M409TRTOA069" },
+  { op: "in", items: [inA(rc("M409-TR-A-069"), 10, 100), inA(rc("M409-TR-TO-A-069"), 4, 150)] },
+  { op: "productId", code: rc("M409-TR-TO-A-069"), label: "〔商品ID-M0409-069〕" },
 ]);
-defineProductSeed("S-M04-09-TRANSFER-PRODUCTS-078", "M409-TR-A-078");
-defineProductSeed("S-M04-09-GF-TRANSFER-PRODUCTS-139", "M0409-139-A");
+defineProductSeed("S-M04-09-TRANSFER-PRODUCTS-078", rc("M409-TR-A-078"));
+defineProductSeed("S-M04-09-GF-TRANSFER-PRODUCTS-139", rc("M0409-139-A"));
 defineScenarioSeed("S-M04-09-TRANSFER-PRODUCTS-074", [
-  { op: "goods", items: [g("M409-TR-A-074"), g("M409-TR-TO-A-074")] },
-  { op: "in", items: [inA("M409-TR-A-074", 10, 100), inA("M409-TR-TO-A-074", 4, 150)] },
+  { op: "goods", items: [g(rc("M409-TR-A-074")), g(rc("M409-TR-TO-A-074"))] },
+  { op: "in", items: [inA(rc("M409-TR-A-074"), 10, 100), inA(rc("M409-TR-TO-A-074"), 4, 150)] },
 ]);
 defineScenarioSeed("S-M04-09-GF-TRANSFER-PRODUCTS-141", [
-  { op: "goods", items: [g("M0409-141-A"), g("M0409-141-B", { name: "M0409-141-B 振替先商品", lang: "英語", 基準価格: 800, 販売価格: 800, 買取価格: 800 })] },
-  { op: "in", items: [inA("M0409-141-A", 10, 100), inA("M0409-141-B", 4, 150)] },
+  { op: "goods", items: [g(rc("M0409-141-A")), g(rc("M0409-141-B"), { name: "M0409-141-B 振替先商品", lang: "英語", 基準価格: 800, 販売価格: 800, 買取価格: 800 })] },
+  { op: "in", items: [inA(rc("M0409-141-A"), 10, 100), inA(rc("M0409-141-B"), 4, 150)] },
 ]);
 defineScenarioSeed("S-M04-09-GF-TRANSFER-PRODUCTS-142", [
-  { op: "goods", items: [g("M0409-142-A"), g("M0409-142-B", { name: "M0409-142-B 振替候補", lang: "英語", 基準価格: 800, 販売価格: 800, 買取価格: 800 })] },
-  { op: "in", items: [inA("M0409-142-A", 10, 100), inA("M0409-142-B", 4, 150)] },
-  { op: "productId", code: "M0409-142-B", label: "〔商品ID-M0409-142〕" },
+  { op: "goods", items: [g(rc("M0409-142-A")), g(rc("M0409-142-B"), { name: "M0409-142-B 振替候補", lang: "英語", 基準価格: 800, 販売価格: 800, 買取価格: 800 })] },
+  { op: "in", items: [inA(rc("M0409-142-A"), 10, 100), inA(rc("M0409-142-B"), 4, 150)] },
+  { op: "productId", code: rc("M0409-142-B"), label: "〔商品ID-M0409-142〕" },
 ]);
 defineTwoTransfersSeed("S-M04-09-TRANSFER-WAIT-080", "080");
 defineTwoTransfersSeed("S-M04-09-TRANSFER-WAIT-081", "081");
 defineTwoTransfersSeed("S-M04-09-TRANSFER-WAIT-085", "085");
-defineTransferSeed("S-M04-09-TRANSFER-WAIT-082", "M409-TR-A-082", "M409-TR-TO-A-082", "〔在庫振替ID-M0409-082〕", "wait");
-defineTransferSeed("S-M04-09-TRANSFER-WAIT-083", "M409-TR-A-083", "M409-TR-TO-A-083", "〔在庫振替ID-M0409-083〕", "wait");
-defineTransferSeed("S-M04-09-TRANSFER-WAIT-084", "M409-TR-A-084", "M409-TR-TO-A-084", "〔在庫振替ID-M0409-084〕", "wait");
-defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-124", "M0409-124-A", "M0409-124-B", "〔在庫振替ID-M0409-124〕", "wait");
-defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-125", "M0409-125-A", "M0409-125-B", "〔在庫振替ID-M0409-125〕", "wait");
-defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-135", "M0409-135-A", "M0409-135-B", "〔在庫振替ID-M0409-135〕", "wait");
-defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-136", "M0409-136-A", "M0409-136-B", "〔在庫振替ID-M0409-136〕", "wait");
-defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-144", "M0409-144-A", "M0409-144-B", "〔在庫振替ID-M0409-144〕", "wait", { check: false });
-defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-145", "M0409-145-A", "M0409-145-B", "〔在庫振替ID-M0409-145〕", "wait", { by: "承認者" });
-defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-146", "M0409-146-A", "M0409-146-B", "〔在庫振替ID-M0409-146〕", "wait", { by: "承認者" });
+defineTransferSeed("S-M04-09-TRANSFER-WAIT-082", rc("M409-TR-A-082"), rc("M409-TR-TO-A-082"), "〔在庫振替ID-M0409-082〕", "wait");
+defineTransferSeed("S-M04-09-TRANSFER-WAIT-083", rc("M409-TR-A-083"), rc("M409-TR-TO-A-083"), "〔在庫振替ID-M0409-083〕", "wait");
+defineTransferSeed("S-M04-09-TRANSFER-WAIT-084", rc("M409-TR-A-084"), rc("M409-TR-TO-A-084"), "〔在庫振替ID-M0409-084〕", "wait");
+defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-124", rc("M0409-124-A"), rc("M0409-124-B"), "〔在庫振替ID-M0409-124〕", "wait");
+defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-125", rc("M0409-125-A"), rc("M0409-125-B"), "〔在庫振替ID-M0409-125〕", "wait");
+defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-135", rc("M0409-135-A"), rc("M0409-135-B"), "〔在庫振替ID-M0409-135〕", "wait");
+defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-136", rc("M0409-136-A"), rc("M0409-136-B"), "〔在庫振替ID-M0409-136〕", "wait");
+defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-144", rc("M0409-144-A"), rc("M0409-144-B"), "〔在庫振替ID-M0409-144〕", "wait", { check: false });
+defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-145", rc("M0409-145-A"), rc("M0409-145-B"), "〔在庫振替ID-M0409-145〕", "wait", { by: "承認者" });
+defineTransferSeed("S-M04-09-GF-TRANSFER-WAIT-146", rc("M0409-146-A"), rc("M0409-146-B"), "〔在庫振替ID-M0409-146〕", "wait", { by: "承認者" });
 
 /** 試験店舗A・B の店舗ID（シードが用意したもの） */
 export function m0409StoreIds(): { A: string; B: string } {

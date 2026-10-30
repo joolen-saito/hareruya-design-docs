@@ -1,4 +1,5 @@
 /** M04-13 在庫分割結合登録編集（分割）。正本: cases/M04-13_test_cases.tsv */
+import { rc } from "../../lib/run_marker";
 import fs from "node:fs";
 import { Page, test } from "@playwright/test";
 import {
@@ -78,7 +79,7 @@ function splitSnapshot(id: string) {
 
 caseTest("IT-M04-13-001", async ({ page, step, expected }) => {
   await signIn(page);
-  const code = "M0413-SRC-001";
+  const code = rc("M0413-SRC-001");
   await step(1, async () => { await searchStockList(page, { store: 試験店舗A, zone: "EC-CUBE", code }); });
   await step(2, async () => { await pressStockListAction(page, code, "EC-CUBE", "在庫分割登録"); });
   await expected(async () => {
@@ -104,7 +105,7 @@ caseTest("IT-M04-13-001", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-13-002", async ({ page, step, expected }) => {
   await signIn(page);
-  const code = "M0413-SRC-002";
+  const code = rc("M0413-SRC-002");
   await step(1, async () => { await searchStockList(page, { store: 試験店舗A, zone: "EC-CUBE", code }); });
   await step(2, async () => { await pressStockListAction(page, code, "EC-CUBE", "在庫分割登録"); });
   await step(3, async () => { await new SplitNewPage(page).pressBackToStockList(); });
@@ -120,7 +121,7 @@ caseTest("IT-M04-13-002", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-13-003", async ({ page, step, expected }) => {
   await signIn(page);
-  const code = "M0413-SRC-003";
+  const code = rc("M0413-SRC-003");
   let split!: SplitNewPage;
   let t0 = 0, t1 = 0;
   let rows: ReturnType<typeof 商品コードの在庫分割結合> = [];
@@ -160,7 +161,7 @@ caseTest("IT-M04-13-003", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-13-004", async ({ page, step, expected }) => {
   await signIn(page);
-  const code = "M0413-SRC-004";
+  const code = rc("M0413-SRC-004");
   let split!: SplitNewPage;
   // 期待結果の「10から」「1000から」を確かめるため、登録ボタンを押す前の在庫を読んでおく（手順1は画面を開いて入力するだけで、在庫を変えない）
   const before = 在庫(code, 試験店舗A, EC);
@@ -180,7 +181,7 @@ caseTest("IT-M04-13-004", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-13-005", async ({ page, step, expected }) => {
   await signIn(page);
-  const code = "M0413-SRC-005";
+  const code = rc("M0413-SRC-005");
   let t0 = 0, t1 = 0;
   let id = "";
   let hist: ReturnType<typeof 在庫変動履歴> = [];
@@ -210,7 +211,7 @@ caseTest("IT-M04-13-006", async ({ page, step, expected }) => {
   await signIn(page);
   let split!: SplitNewPage;
   let stamps: string[] = [];
-  await step(1, async () => { split = await openSplitNew(page, "M0413-SRC-006"); await split.分割数.fill("4"); });
+  await step(1, async () => { split = await openSplitNew(page, rc("M0413-SRC-006")); await split.分割数.fill("4"); });
   await step(2, async () => {
     // 登録の操作の日時（アプリの時刻帯の年月日 時:分）。押す前と押したあとで分が変われば2つ
     const before = appTime(Date.now()).ymdhm;
@@ -235,7 +236,7 @@ caseTest("IT-M04-13-006", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-13-007", async ({ page, step, expected }) => {
   await signIn(page);
-  const code = "M0413-SRC-007";
+  const code = rc("M0413-SRC-007");
   let split!: SplitNewPage;
   let rows: ReturnType<typeof 商品コードの在庫分割結合> = [];
   let stock: ReturnType<typeof 在庫> = null;
@@ -255,10 +256,10 @@ caseTest("IT-M04-13-010", async ({ page, notes, step, expected }) => {
   await signIn(page);
   const edit = new SplitEditPage(page, notes.get("〔在庫分割結合ID-M0413-010〕"));
   await step(1, async () => { await edit.open(); await edit.pressAddDestination(); });
-  await step(2, async () => { await edit.searchAndSelect("M0413-DST-A-010"); });
-  await step(3, async () => { await edit.decide("M0413-DST-A-010"); await noteAlerts(page, "決定のあと"); });
+  await step(2, async () => { await edit.searchAndSelect(rc("M0413-DST-A-010")); });
+  await step(3, async () => { await edit.decide(rc("M0413-DST-A-010")); await noteAlerts(page, "決定のあと"); });
   await expected(async () => {
-    expect((await edit.destinations()).map((r) => r["商品コード"]), "分割先商品一覧の商品コード").toEqual(["M0413-DST-A-010"]);
+    expect((await edit.destinations()).map((r) => r["商品コード"]), "分割先商品一覧の商品コード").toEqual([rc("M0413-DST-A-010")]);
   });
 });
 
@@ -267,10 +268,10 @@ caseTest("IT-M04-13-011", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔在庫分割結合ID-M0413-011〕");
   const edit = new SplitEditPage(page, id);
   let details: ReturnType<typeof 明細> = [];
-  await step(1, async () => { await edit.open(); await edit.addDestination("M0413-DST-A-011"); });
+  await step(1, async () => { await edit.open(); await edit.addDestination(rc("M0413-DST-A-011")); });
   await step(2, async () => { details = 明細(id); });
   await expected(async () => {
-    expect.soft((await edit.destinations()).map((r) => r["商品コード"]), "画面の分割先商品").toEqual(["M0413-DST-A-011"]);
+    expect.soft((await edit.destinations()).map((r) => r["商品コード"]), "画面の分割先商品").toEqual([rc("M0413-DST-A-011")]);
     expect.soft(details.map((d) => d.商品コード), `ID ${id} の分割先商品（DB）`).toEqual([]);
   });
 });
@@ -285,13 +286,13 @@ caseTest("IT-M04-13-014", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await edit.open(); await edit.pressAddDestination(); });
   await step(2, async () => {
     // 検索の失敗（要求の応答の異常・失敗の表示）は握りつぶさずに落とす
-    await edit.modal.searchAllowingNone("M0413-UNKNOWN");
-    if ((await edit.modal.resultCount("M0413-UNKNOWN")) === 0) {
+    await edit.modal.searchAllowingNone(rc("M0413-UNKNOWN"));
+    if ((await edit.modal.resultCount(rc("M0413-UNKNOWN"))) === 0) {
       note("商品コード M0413-UNKNOWN で検索すると、該当する商品の行が出ない。選ぶ行が無いので「決定」ボタンは押せない。"
         + "期待結果のうち「分割先商品一覧へ追加されず」は決定の操作の結果を見るものなので、不合格とする（DBの確かめは行う）");
     } else {
-      await edit.modal.select("M0413-UNKNOWN");
-      await edit.decide("M0413-UNKNOWN");
+      await edit.modal.select(rc("M0413-UNKNOWN"));
+      await edit.decide(rc("M0413-UNKNOWN"));
       decided = true;
       listAfter = (await edit.destinations()).map((r) => r["商品コード"]);
       note(`決定のあとの分割先商品一覧: ${listAfter.join(" / ") || "なし"}`);
@@ -301,7 +302,7 @@ caseTest("IT-M04-13-014", async ({ page, notes, step, expected }) => {
   await step(3, async () => { details = 明細(id); });
   await expected(async () => {
     expect.soft(decided, "手順2の「決定」ボタンを押せた（押せなければ、一覧へ追加されないことを操作の結果として確かめられない）").toBe(true);
-    if (decided) expect.soft(listAfter, "決定のあとの分割先商品一覧").not.toContain("M0413-UNKNOWN");
+    if (decided) expect.soft(listAfter, "決定のあとの分割先商品一覧").not.toContain(rc("M0413-UNKNOWN"));
     expect.soft(details, `ID ${id} の分割先商品（DB）`).toEqual([]);
   });
 });
@@ -314,9 +315,9 @@ caseTest("IT-M04-13-015", async ({ page, notes, step, expected }) => {
   let after!: ReturnType<typeof splitSnapshot>;
   await step(1, async () => {
     await edit.open();
-    await edit.addDestination("M0413-SRC-015");
+    await edit.addDestination(rc("M0413-SRC-015"));
     await noteAlerts(page, "分割元と同じ商品を追加したあと");
-    if ((await edit.destRow("M0413-SRC-015").count()) === 1) await edit.setDestinationQuantity("M0413-SRC-015", "1");
+    if ((await edit.destRow(rc("M0413-SRC-015")).count()) === 1) await edit.setDestinationQuantity(rc("M0413-SRC-015"), "1");
     else note("分割元と同じ M0413-SRC-015 は分割先商品一覧に入らず、分割先在庫数の欄が無いので1を入力できない");
   });
   await step(2, async () => { await edit.chooseApprovalTargets(試験所属A, 承認者名); });
@@ -338,12 +339,12 @@ caseTest("IT-M04-13-016", async ({ page, notes, step, expected }) => {
   const edit = new SplitEditPage(page, id);
   const before = 明細(id);
   let after: ReturnType<typeof 明細> = [];
-  await step(1, async () => { await edit.open(); await edit.addDestination("M0413-DST-A-016"); });
-  await step(2, async () => { await edit.pressDelete("M0413-DST-A-016"); });
+  await step(1, async () => { await edit.open(); await edit.addDestination(rc("M0413-DST-A-016")); });
+  await step(2, async () => { await edit.pressDelete(rc("M0413-DST-A-016")); });
   await step(3, async () => { await edit.confirmDelete(); await noteAlerts(page, "削除のあと"); });
   await step(4, async () => { after = 明細(id); });
   await expected(async () => {
-    expect.soft((await edit.destinations()).map((r) => r["商品コード"]), "画面の分割先商品").not.toContain("M0413-DST-A-016");
+    expect.soft((await edit.destinations()).map((r) => r["商品コード"]), "画面の分割先商品").not.toContain(rc("M0413-DST-A-016"));
     expect.soft(after, "DBの分割先商品（更新されない）").toEqual(before);
   });
 });
@@ -353,13 +354,13 @@ caseTest("IT-M04-13-017", async ({ page, notes, step, expected }) => {
   const edit = new SplitEditPage(page, notes.get("〔在庫分割結合ID-M0413-017〕"));
   await step(1, async () => {
     await edit.open();
-    await edit.addDestination("M0413-DST-A-017");
-    await edit.setDestinationQuantity("M0413-DST-A-017", "2");
+    await edit.addDestination(rc("M0413-DST-A-017"));
+    await edit.setDestinationQuantity(rc("M0413-DST-A-017"), "2");
   });
-  await step(2, async () => { await edit.addDestination("M0413-DST-B-017"); });
+  await step(2, async () => { await edit.addDestination(rc("M0413-DST-B-017")); });
   await expected(async () => {
     const rows = await edit.destinations();
-    expect(rows.map((r) => r["商品コード"]), "分割先商品一覧の並び（B が先頭、A がその後）").toEqual(["M0413-DST-B-017", "M0413-DST-A-017"]);
+    expect(rows.map((r) => r["商品コード"]), "分割先商品一覧の並び（B が先頭、A がその後）").toEqual([rc("M0413-DST-B-017"), rc("M0413-DST-A-017")]);
     expect.soft(rows[1]?.["分割先在庫数"], "数量入力済みの M0413-DST-A-017 の分割先在庫数").toBe("2");
   });
 });
@@ -409,7 +410,7 @@ caseTest("IT-M04-13-019", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     // 開き直さずに、商品登録ボタンのあとの画面の一覧を読む（取込に成功したのに画面が読み込み直されなければ、手順3で落ちる）
     const rows = await edit.destinations();
-    expect.soft(rows.map((r) => [r["商品コード"], r["分割先在庫数"]]), "分割先商品一覧（CSVの数量2）").toEqual([["M0413-DST-A-019", "2"], ["M0413-DST-B-019", "2"]]);
+    expect.soft(rows.map((r) => [r["商品コード"], r["分割先在庫数"]]), "分割先商品一覧（CSVの数量2）").toEqual([[rc("M0413-DST-A-019"), "2"], [rc("M0413-DST-B-019"), "2"]]);
     expect.soft(details, "DBの分割先商品").toEqual([]);
   });
 });
@@ -437,11 +438,11 @@ caseTest("IT-M04-13-023", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-13-024", async ({ page, notes, step, expected }) => {
   await signIn(page);
   const edit = new SplitEditPage(page, notes.get("〔在庫分割結合ID-M0413-024〕"));
-  await step(1, async () => { await edit.open(); await edit.addDestination("M0413-DST-A-024"); });
+  await step(1, async () => { await edit.open(); await edit.addDestination(rc("M0413-DST-A-024")); });
   await step(2, async () => { await edit.openCsvModal(); await uploadSplitCsv(edit, "split_replace-024.csv"); });
   await expected(async () => {
     // 開き直さずに、CSV登録のあとの画面の一覧を読む
-    expect((await edit.destinations()).map((r) => r["商品コード"]), "分割先商品一覧（A が消え、C だけ）").toEqual(["M0413-DST-C-024"]);
+    expect((await edit.destinations()).map((r) => r["商品コード"]), "分割先商品一覧（A が消え、C だけ）").toEqual([rc("M0413-DST-C-024")]);
   });
 });
 
@@ -472,8 +473,8 @@ caseTest("IT-M04-13-026", async ({ page, notes, step, expected }) => {
   let after!: ReturnType<typeof splitSnapshot>;
   await step(1, async () => {
     await edit.open();
-    await edit.addDestination("M0413-DST-A-026");
-    await edit.setDestinationQuantity("M0413-DST-A-026", "2");
+    await edit.addDestination(rc("M0413-DST-A-026"));
+    await edit.setDestinationQuantity(rc("M0413-DST-A-026"), "2");
   });
   await step(2, async () => {
     await edit.chooseApprovalTargets(試験所属A, null);
@@ -502,7 +503,7 @@ caseTest("IT-M04-13-027", async ({ page, notes, step, expected }) => {
   await step(1, async () => {
     s0 = DBの時刻();
     await edit.open();
-    for (const c of ["M0413-DST-A-027", "M0413-DST-B-027"]) { await edit.addDestination(c); await edit.setDestinationQuantity(c, "2"); }
+    for (const c of [rc("M0413-DST-A-027"), rc("M0413-DST-B-027")]) { await edit.addDestination(c); await edit.setDestinationQuantity(c, "2"); }
   });
   await step(2, async () => { await edit.メモ.fill("分割承認申請"); });
   await step(3, async () => { await edit.chooseApprovalTargets(試験所属A, 承認者名); });
@@ -513,8 +514,10 @@ caseTest("IT-M04-13-027", async ({ page, notes, step, expected }) => {
   });
   await step(5, async () => { head = 在庫分割結合(id); details = 明細(id); history = ステータス履歴(id); audit = 明細の登録更新(id); });
   await expected(async () => {
-    expect.soft(details.map((d) => [d.商品コード, d.在庫数, d.数量]), "分割先2件（商品・登録時在庫数・数量）").toEqual([["M0413-DST-A-027", 5, 2], ["M0413-DST-B-027", 8, 2]]);
-    expect.soft(details.map((d) => d.商品名), "分割先の商品情報（商品名）").toEqual(["M04-13 M0413-DST-A-027", "M04-13 M0413-DST-B-027"]);
+    // 正本は2件の並び順を決めていないので、商品コードの順に並べて比べる
+    const byCode = <T extends { 商品コード: string }>(a: T, b: T) => a.商品コード.localeCompare(b.商品コード);
+    expect.soft([...details].sort(byCode).map((d) => [d.商品コード, d.在庫数, d.数量]), "分割先2件（商品・登録時在庫数・数量）").toEqual([[rc("M0413-DST-A-027"), 5, 2], [rc("M0413-DST-B-027"), 8, 2]]);
+    expect.soft([...details].sort(byCode).map((d) => d.商品名), "分割先の商品情報（商品名）").toEqual([`M04-13 ${rc("M0413-DST-A-027")}`, `M04-13 ${rc("M0413-DST-B-027")}`]);
     for (const k of ["登録日時", "更新日時", "登録者", "更新者"] as const) {
       if (!audit.保存先[k]) {
         note(`分割先商品（在庫分割結合の明細）の表に${k}を保存する項目が無い。保存先が無いので保存されない`);
@@ -557,13 +560,13 @@ caseTest("IT-M04-13-028", async ({ page, notes, step, expected }) => {
   const edit = new SplitEditPage(page, id);
   let details: ReturnType<typeof 明細> = [];
   let head: ReturnType<typeof 在庫分割結合> = null;
-  await step(1, async () => { await applyWith(edit, [["M0413-DST-A-028", "2"], ["M0413-DST-B-028", "2"]]); });
+  await step(1, async () => { await applyWith(edit, [[rc("M0413-DST-A-028"), "2"], [rc("M0413-DST-B-028"), "2"]]); });
   await step(2, async () => { await confirmApply(edit); });
   await step(3, async () => { details = 明細(id); head = 在庫分割結合(id); });
   await expected(async () => {
     const byCode = Object.fromEntries(details.map((d) => [d.商品コード, d.仕入総価格]));
-    expect.soft(byCode["M0413-DST-A-028"], "M0413-DST-A-028 の仕入総価格").toBe(160);
-    expect.soft(byCode["M0413-DST-B-028"], "M0413-DST-B-028 の仕入総価格").toBe(240);
+    expect.soft(byCode[rc("M0413-DST-A-028")], "M0413-DST-A-028 の仕入総価格").toBe(160);
+    expect.soft(byCode[rc("M0413-DST-B-028")], "M0413-DST-B-028 の仕入総価格").toBe(240);
     expect.soft(details.reduce((s, d) => s + (d.仕入総価格 ?? 0), 0), "仕入総価格の合計と分割元の出庫総原価").toBe(head?.出庫総原価);
   });
 });
@@ -586,7 +589,7 @@ caseTest("IT-M04-13-031", async ({ page, notes, step, expected }) => {
   await signIn(page, M0413_APP);
   const id = notes.get("〔在庫分割結合ID-M0413-031〕");
   const approval = new SplitApprovalPage(page, id);
-  const before = { A: 在庫("M0413-DST-A-031", 試験店舗A, EC), B: 在庫("M0413-DST-B-031", 試験店舗A, EC) };
+  const before = { A: 在庫(rc("M0413-DST-A-031"), 試験店舗A, EC), B: 在庫(rc("M0413-DST-B-031"), 試験店舗A, EC) };
   let t0 = 0, t1 = 0;
   let head: ReturnType<typeof 在庫分割結合> = null;
   let history: ReturnType<typeof ステータス履歴> = [];
@@ -597,7 +600,7 @@ caseTest("IT-M04-13-031", async ({ page, notes, step, expected }) => {
   await step(3, async () => { await approval.pressApprove(); t0 = DBの時刻(); await approval.confirm("approve"); t1 = DBの時刻(); await noteAlerts(page, "承認のあと"); });
   await step(4, async () => {
     head = 在庫分割結合(id); history = ステータス履歴(id);
-    after = { A: 在庫("M0413-DST-A-031", 試験店舗A, EC), B: 在庫("M0413-DST-B-031", 試験店舗A, EC) };
+    after = { A: 在庫(rc("M0413-DST-A-031"), 試験店舗A, EC), B: 在庫(rc("M0413-DST-B-031"), 試験店舗A, EC) };
     histA = before.A ? 在庫変動履歴(before.A.在庫ID).filter((h) => within(h.作成日時, t0, t1)) : [];
     histB = before.B ? 在庫変動履歴(before.B.在庫ID).filter((h) => within(h.作成日時, t0, t1)) : [];
   });
@@ -752,7 +755,7 @@ caseTest("IT-M04-13-036", async ({ page, notes, step, expected }) => {
 
 caseTest("IT-M04-13-080", async ({ page, step, expected }) => {
   await signIn(page, M0413L_OP);
-  const code = "M0413L-SRC-001";
+  const code = rc("M0413L-SRC-001");
   let split!: SplitNewPage;
   let dates: string[] = [];
   let list!: SplitJoinListPage;
@@ -823,7 +826,7 @@ caseTest("IT-M04-13-084", async ({ page, notes, step, expected }) => {
     expect(errors, "エラーが1件").toHaveLength(1);
     note("「CSVの該当行の行番号」は、CSVファイル上の行番号（見出しを1行目と数える）とした。M0413-DST-A-084 の行は2行目");
     expect.soft(errors[0], "エラーにCSVの該当行の行番号（2行目）").toMatch(/(^|\D)2\s*行目/);
-    expect.soft(errors[0], "エラーに商品コード").toContain("M0413-DST-A-084");
+    expect.soft(errors[0], "エラーに商品コード").toContain(rc("M0413-DST-A-084"));
     expect.soft(errors[0], "エラーに商品名").toContain("M04-13分割先-084");
   });
 });
@@ -833,7 +836,7 @@ caseTest("IT-M04-13-086", async ({ page, step, expected }) => {
   let split!: SplitNewPage;
   let dates: string[] = [];
   let rows: Record<string, string>[] = [];
-  await step(1, async () => { split = await openSplitNew(page, "M0413-SRC-086"); await split.分割数.fill("4"); });
+  await step(1, async () => { split = await openSplitNew(page, rc("M0413-SRC-086")); await split.分割数.fill("4"); });
   await step(2, async () => {
     const before = appTime(Date.now()).ymd;
     noteSubmit(await split.pressRegister(), "登録ボタン");
@@ -853,12 +856,12 @@ caseTest("IT-M04-13-087", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔在庫分割結合ID-M0413-087〕");
   const list = new SplitJoinListPage(page);
   await step(1, async () => { await list.open(); });
-  await step(2, async () => { await list.search("M0413-SRC-087"); });
+  await step(2, async () => { await list.search(rc("M0413-SRC-087")); });
   await step(3, async () => { await list.openById(id); expect(pathOf(page), "分割先登録画面").toBe(splitEditPath(id)); });
   await step(4, async () => { await new SplitEditPage(page, id).pressListLink(); });
   await expected(async () => {
     expect(pathOf(page), "在庫分割結合検索一覧画面").toBe(splitJoinListPath);
-    expect.soft(await list.商品コード.inputValue(), "商品コード欄").toBe("M0413-SRC-087");
+    expect.soft(await list.商品コード.inputValue(), "商品コード欄").toBe(rc("M0413-SRC-087"));
     expect.soft(await list.checkedTargets(), "商品名・商品コード検索対象").toEqual(["分割元・結合先"]);
     expect.soft((await list.rows()).map((r) => r.ID), "検索結果の行").toContain(id);
   });
@@ -873,7 +876,7 @@ caseTest("IT-M04-13-094", async ({ page, notes, step, expected }) => {
   await signIn(page, M0413_APP);
   const id = notes.get("〔在庫分割結合ID-M0413-094〕");
   const approval = new SplitApprovalPage(page, id);
-  const sA = 在庫("M0413-DST-A-094", 試験店舗A, EC), sB = 在庫("M0413-DST-B-094", 試験店舗A, EC);
+  const sA = 在庫(rc("M0413-DST-A-094"), 試験店舗A, EC), sB = 在庫(rc("M0413-DST-B-094"), 試験店舗A, EC);
   let t0 = 0, t1 = 0;
   let hA: ReturnType<typeof 在庫変動履歴> = [], hB: ReturnType<typeof 在庫変動履歴> = [];
   await step(1, async () => { await approval.open(); });
@@ -881,12 +884,12 @@ caseTest("IT-M04-13-094", async ({ page, notes, step, expected }) => {
   await step(3, async () => { t0 = DBの時刻(); await approval.confirm("approve"); t1 = DBの時刻(); await noteAlerts(page, "承認のあと"); });
   await step(4, async () => { hA = historiesBetween(sA?.在庫ID, t0, t1); hB = historiesBetween(sB?.在庫ID, t0, t1); });
   await expected(async () => {
-    for (const [code, h] of [["M0413-DST-A-094", hA], ["M0413-DST-B-094", hB]] as const) {
+    for (const [code, h] of [[rc("M0413-DST-A-094"), hA], [rc("M0413-DST-B-094"), hB]] as const) {
       expect.soft(h.length, `${code} の在庫変動履歴が1件`).toBe(1);
       const r = h[0];
       expect.soft(r?.在庫変動区分, `${code} の在庫変動区分`).toBe("分割(加算)");
       expect.soft(r?.在庫変動理由 ?? "", `${code} の在庫変動理由の書き出し`).toMatch(/^在庫分割による加算/);
-      for (const part of ["M0413-SRC-094", "M0413-DST-A-094", "M0413-DST-B-094", id]) expect.soft(r?.在庫変動理由 ?? "", `${code} の在庫変動理由に「${part}」`).toContain(part);
+      for (const part of [rc("M0413-SRC-094"), rc("M0413-DST-A-094"), rc("M0413-DST-B-094"), id]) expect.soft(r?.在庫変動理由 ?? "", `${code} の在庫変動理由に「${part}」`).toContain(part);
     }
   });
 });
@@ -895,7 +898,7 @@ caseTest("IT-M04-13-095", async ({ page, notes, step, expected }) => {
   await signIn(page, M0413_APP);
   const id = notes.get("〔在庫分割結合ID-M0413-095〕");
   const approval = new SplitApprovalPage(page, id);
-  const s = 在庫("M0413-SRC-095", 試験店舗A, EC);
+  const s = 在庫(rc("M0413-SRC-095"), 試験店舗A, EC);
   let t0 = 0, t1 = 0;
   let h: ReturnType<typeof 在庫変動履歴> = [];
   await step(1, async () => { await approval.open(); });
@@ -906,7 +909,7 @@ caseTest("IT-M04-13-095", async ({ page, notes, step, expected }) => {
     expect.soft(h.length, "M0413-SRC-095 の在庫変動履歴が1件").toBe(1);
     expect.soft(h[0]?.在庫変動区分, "在庫変動区分").toBe("分割(棄却)");
     expect.soft(h[0]?.在庫変動理由 ?? "", "在庫変動理由の書き出し").toMatch(/^在庫分割棄却による戻し/);
-    for (const part of ["M0413-SRC-095", "M0413-DST-A-095", "M0413-DST-B-095", id]) expect.soft(h[0]?.在庫変動理由 ?? "", `在庫変動理由に「${part}」`).toContain(part);
+    for (const part of [rc("M0413-SRC-095"), rc("M0413-DST-A-095"), rc("M0413-DST-B-095"), id]) expect.soft(h[0]?.在庫変動理由 ?? "", `在庫変動理由に「${part}」`).toContain(part);
   });
 });
 
@@ -914,16 +917,16 @@ caseTest("IT-M04-13-096", async ({ page, step, expected }) => {
   await signIn(page);
   let id = "";
   let h: ReturnType<typeof 在庫変動履歴> = [];
-  await step(1, async () => { id = await (await openSplitNew(page, "M0413-SUB-096")).register("4", null, "分割数4の登録"); });
+  await step(1, async () => { id = await (await openSplitNew(page, rc("M0413-SUB-096"))).register("4", null, "分割数4の登録"); });
   await step(2, async () => {
-    const s = 在庫("M0413-SUB-096", 試験店舗A, EC);
+    const s = 在庫(rc("M0413-SUB-096"), 試験店舗A, EC);
     h = s ? 在庫変動履歴(s.在庫ID).filter((x) => x.登録元ID === id) : [];
   });
   await expected(async () => {
     expect.soft(h.length, `登録で採番された在庫結合分割番号 ${id} に紐づく在庫変動履歴が1件`).toBe(1);
     expect.soft(h[0]?.在庫変動区分, "在庫変動区分").toBe("分割(減算)");
     expect.soft(h[0]?.在庫変動理由 ?? "", "在庫変動理由の書き出し").toMatch(/^在庫分割による減算/);
-    for (const part of ["M0413-SUB-096", id]) expect.soft(h[0]?.在庫変動理由 ?? "", `在庫変動理由に「${part}」`).toContain(part);
+    for (const part of [rc("M0413-SUB-096"), id]) expect.soft(h[0]?.在庫変動理由 ?? "", `在庫変動理由に「${part}」`).toContain(part);
   });
 });
 
@@ -933,11 +936,11 @@ caseTest("IT-M04-13-098", async ({ page, notes, step, expected }) => {
   const edit = new SplitEditPage(page, id);
   let details: ReturnType<typeof 明細> = [];
   let head: ReturnType<typeof 在庫分割結合> = null;
-  await step(1, async () => { await applyWith(edit, [["M0413-DST-A-098", "1"]]); });
+  await step(1, async () => { await applyWith(edit, [[rc("M0413-DST-A-098"), "1"]]); });
   await step(2, async () => { await confirmApply(edit); });
   await step(3, async () => { details = 明細(id); head = 在庫分割結合(id); });
   await expected(async () => {
-    expect.soft(details.map((d) => [d.商品コード, d.仕入総価格]), "M0413-DST-A-098 の仕入総価格").toEqual([["M0413-DST-A-098", 400]]);
+    expect.soft(details.map((d) => [d.商品コード, d.仕入総価格]), "M0413-DST-A-098 の仕入総価格").toEqual([[rc("M0413-DST-A-098"), 400]]);
     expect.soft(head?.ステータス, "ステータス").toBe("分割承認待ち");
   });
 });
@@ -953,7 +956,7 @@ caseTest("IT-M04-13-100", async ({ page, notes, step, expected }) => {
   await step(4, async () => { details = 明細(id); });
   await expected(async () => {
     // 開き直さずに、商品登録ボタンのあとの画面の一覧を読む
-    expect.soft((await edit.destinations()).map((r) => [r["商品コード"], r["分割先在庫数"]]), "分割先商品一覧（数量2の1件だけ）").toEqual([["M0413-DST-A-100", "2"]]);
+    expect.soft((await edit.destinations()).map((r) => [r["商品コード"], r["分割先在庫数"]]), "分割先商品一覧（数量2の1件だけ）").toEqual([[rc("M0413-DST-A-100"), "2"]]);
     expect.soft(details, "DBの分割先商品").toEqual([]);
   });
 });
@@ -974,9 +977,9 @@ caseTest("IT-M04-13-101", async ({ page, step, expected }) => {
   await signIn(page);
   let rows: ReturnType<typeof 商品コードの在庫分割結合> = [];
   let stock: ReturnType<typeof 在庫> = null;
-  const before = 在庫("M0413-SRC-101", 試験店舗A, EC);
-  await splitFromList(page, step, "M0413-SRC-101", "EC-CUBE", "10");
-  await step(4, async () => { rows = 商品コードの在庫分割結合("M0413-SRC-101", 試験店舗A, "在庫分割"); stock = 在庫("M0413-SRC-101", 試験店舗A, EC); });
+  const before = 在庫(rc("M0413-SRC-101"), 試験店舗A, EC);
+  await splitFromList(page, step, rc("M0413-SRC-101"), "EC-CUBE", "10");
+  await step(4, async () => { rows = 商品コードの在庫分割結合(rc("M0413-SRC-101"), 試験店舗A, "在庫分割"); stock = 在庫(rc("M0413-SRC-101"), 試験店舗A, EC); });
   await expected(async () => {
     expect.soft(rows.length, "在庫分割が登録される").toBe(1);
     expectFrom(before, [10, 1000], "M0413-SRC-101 の登録前の在庫数と総原価");
@@ -1004,7 +1007,7 @@ caseTest("IT-M04-13-103", async ({ page, notes, step, expected }) => {
     expect(errors, "エラーが1件").toHaveLength(1);
     note("「CSVの該当行の行番号」は、CSVファイル上の行番号（見出しを1行目と数える）とした。M0413-DST-C-103 の行は3行目（2行目は正しい M0413-DST-A-103 の行）");
     expect.soft(errors[0], "エラーにCSVの該当行の行番号（3行目）").toMatch(/(^|\D)3\s*行目/);
-    expect.soft(errors[0], "エラーに商品コード").toContain("M0413-DST-C-103");
+    expect.soft(errors[0], "エラーに商品コード").toContain(rc("M0413-DST-C-103"));
     expect.soft(errors[0], "エラーに商品名").toContain("M04-13分割先-103");
     expect.soft(rows, "分割先商品一覧は0件のまま").toEqual([]);
     expect.soft(details, "DBの分割先商品は0件のまま").toEqual([]);
@@ -1014,9 +1017,9 @@ caseTest("IT-M04-13-103", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-13-105", async ({ page, step, expected }) => {
   await signIn(page);
   let sm: ReturnType<typeof 在庫> = null, ec: ReturnType<typeof 在庫> = null;
-  const before = { sm: 在庫("M0413-SRC-105", 試験店舗A, SMAREGI), ec: 在庫("M0413-SRC-105", 試験店舗A, EC) };
-  await splitFromList(page, step, "M0413-SRC-105", "スマレジ", "3");
-  await step(4, async () => { sm = 在庫("M0413-SRC-105", 試験店舗A, SMAREGI); ec = 在庫("M0413-SRC-105", 試験店舗A, EC); });
+  const before = { sm: 在庫(rc("M0413-SRC-105"), 試験店舗A, SMAREGI), ec: 在庫(rc("M0413-SRC-105"), 試験店舗A, EC) };
+  await splitFromList(page, step, rc("M0413-SRC-105"), "スマレジ", "3");
+  await step(4, async () => { sm = 在庫(rc("M0413-SRC-105"), 試験店舗A, SMAREGI); ec = 在庫(rc("M0413-SRC-105"), 試験店舗A, EC); });
   await expected(async () => {
     expectFrom(before.sm, [7, 840], "スマレジ在庫の登録前の在庫数と総原価");
     expectFrom(before.ec, [10, 1000], "EC-CUBE在庫の登録前の在庫数と総原価（「のまま」の前）");
@@ -1029,9 +1032,9 @@ caseTest("IT-M04-13-106", async ({ page, step, expected }) => {
   await signIn(page);
   let stock: ReturnType<typeof 在庫> = null;
   let rows: ReturnType<typeof 商品コードの在庫分割結合> = [];
-  const before = 在庫("M0413-SRC-106", 試験店舗A, EC);
-  await splitFromList(page, step, "M0413-SRC-106", "EC-CUBE", "1");
-  await step(4, async () => { stock = 在庫("M0413-SRC-106", 試験店舗A, EC); rows = 商品コードの在庫分割結合("M0413-SRC-106", 試験店舗A, "在庫分割"); });
+  const before = 在庫(rc("M0413-SRC-106"), 試験店舗A, EC);
+  await splitFromList(page, step, rc("M0413-SRC-106"), "EC-CUBE", "1");
+  await step(4, async () => { stock = 在庫(rc("M0413-SRC-106"), 試験店舗A, EC); rows = 商品コードの在庫分割結合(rc("M0413-SRC-106"), 試験店舗A, "在庫分割"); });
   await expected(async () => {
     expectFrom(before, [3, 1000], "M0413-SRC-106 の登録前の在庫数と総原価");
     expect.soft([stock?.在庫数, stock?.総原価], "在庫数（3から）と総原価（1000から）").toEqual([2, 667]);
@@ -1045,12 +1048,12 @@ caseTest("IT-M04-13-107", async ({ page, notes, step, expected }) => {
   const edit = new SplitEditPage(page, id);
   let details: ReturnType<typeof 明細> = [];
   let head: ReturnType<typeof 在庫分割結合> = null;
-  await step(1, async () => { await applyWith(edit, [["M0413-DST-A-107", "1"], ["M0413-DST-B-107", "1"], ["M0413-DST-C-107", "1"]]); });
+  await step(1, async () => { await applyWith(edit, [[rc("M0413-DST-A-107"), "1"], [rc("M0413-DST-B-107"), "1"], [rc("M0413-DST-C-107"), "1"]]); });
   await step(2, async () => { await confirmApply(edit); });
   await step(3, async () => { details = 明細(id); head = 在庫分割結合(id); });
   await expected(async () => {
     const byCode = Object.fromEntries(details.map((d) => [d.商品コード, d.仕入総価格]));
-    expect.soft([byCode["M0413-DST-A-107"], byCode["M0413-DST-B-107"], byCode["M0413-DST-C-107"]], "仕入総価格（A・B・C）").toEqual([34, 33, 33]);
+    expect.soft([byCode[rc("M0413-DST-A-107")], byCode[rc("M0413-DST-B-107")], byCode[rc("M0413-DST-C-107")]], "仕入総価格（A・B・C）").toEqual([34, 33, 33]);
     expect.soft(details.reduce((s, d) => s + (d.仕入総価格 ?? 0), 0), "仕入総価格の合計と出庫総原価").toBe(head?.出庫総原価);
     expect.soft(head?.出庫総原価, "出庫総原価").toBe(100);
   });
@@ -1060,10 +1063,10 @@ caseTest("IT-M04-13-108", async ({ page, notes, step, expected }) => {
   await signIn(page, M0413_APP);
   const approval = new SplitApprovalPage(page, notes.get("〔在庫分割結合ID-M0413-108〕"));
   let totals: (number | undefined)[] = [];
-  const beforeTotals = ["A", "B", "C"].map((x) => 在庫(`M0413-DST-${x}-108`, 試験店舗A, EC)?.総原価);
+  const beforeTotals = ["A", "B", "C"].map((x) => 在庫(rc(`M0413-DST-${x}-108`), 試験店舗A, EC)?.総原価);
   await step(1, async () => { await approval.open(); });
   await step(2, async () => { await approval.pressApprove(); await approval.confirm("approve"); await noteAlerts(page, "承認のあと"); });
-  await step(3, async () => { totals = ["A", "B", "C"].map((x) => 在庫(`M0413-DST-${x}-108`, 試験店舗A, EC)?.総原価); });
+  await step(3, async () => { totals = ["A", "B", "C"].map((x) => 在庫(rc(`M0413-DST-${x}-108`), 試験店舗A, EC)?.総原価); });
   await expected(async () => {
     expect.soft(beforeTotals, "承認前の総原価（期待結果の「A は500から・B は800から・C は300から」）").toEqual([500, 800, 300]);
     expect.soft(totals, "総原価（A は500から・B は800から・C は300から）").toEqual([534, 833, 333]);
@@ -1074,11 +1077,11 @@ caseTest("IT-M04-13-109", async ({ page, notes, step, expected }) => {
   await signIn(page, M0413_APP);
   const approval = new SplitApprovalPage(page, notes.get("〔在庫分割結合ID-M0413-109〕"));
   let total: number | undefined;
-  const beforeTotal = 在庫("M0413-SRC-109", 試験店舗A, EC)?.総原価;
+  const beforeTotal = 在庫(rc("M0413-SRC-109"), 試験店舗A, EC)?.総原価;
   await step(1, async () => { await approval.open(); });
   await step(2, async () => { await approval.却下理由.fill("分割内容不一致"); });
   await step(3, async () => { await approval.pressReject(); await approval.confirm("reject"); await noteAlerts(page, "却下のあと"); });
-  await step(4, async () => { total = 在庫("M0413-SRC-109", 試験店舗A, EC)?.総原価; });
+  await step(4, async () => { total = 在庫(rc("M0413-SRC-109"), 試験店舗A, EC)?.総原価; });
   await expected(async () => {
     expect.soft(beforeTotal, "M0413-SRC-109 の却下前の総原価（期待結果の「667から」）").toBe(667);
     expect.soft(total, "M0413-SRC-109 の総原価（667から）").toBe(1000);
@@ -1089,9 +1092,9 @@ caseTest("IT-M04-13-110", async ({ page, step, expected }) => {
   await signIn(page);
   let stock: ReturnType<typeof 在庫> = null;
   let rows: ReturnType<typeof 商品コードの在庫分割結合> = [];
-  const before = 在庫("M0413-SRC-110", 試験店舗A, EC);
-  await splitFromList(page, step, "M0413-SRC-110", "EC-CUBE", "4");
-  await step(4, async () => { stock = 在庫("M0413-SRC-110", 試験店舗A, EC); rows = 商品コードの在庫分割結合("M0413-SRC-110", 試験店舗A, "在庫分割"); });
+  const before = 在庫(rc("M0413-SRC-110"), 試験店舗A, EC);
+  await splitFromList(page, step, rc("M0413-SRC-110"), "EC-CUBE", "4");
+  await step(4, async () => { stock = 在庫(rc("M0413-SRC-110"), 試験店舗A, EC); rows = 商品コードの在庫分割結合(rc("M0413-SRC-110"), 試験店舗A, "在庫分割"); });
   await expected(async () => {
     expectFrom(before, [6, 600], "M0413-SRC-110 の登録前の在庫数と総原価");
     expect.soft([stock?.在庫数, stock?.総原価], "在庫数（6から）と総原価（600から）").toEqual([2, 200]);
@@ -1115,6 +1118,6 @@ caseTest("IT-M04-13-111", async ({ page, notes, step, expected }) => {
   await step(3, async () => { rows = await edit.destinations(); });
   await expected(async () => {
     expect(rows.map((r) => [r["商品コード"], r["分割先在庫数"]]), "分割先商品一覧（各数量2で1行ずつ、計2件）")
-      .toEqual([["M0413-DST-A-111", "2"], ["M0413-DST-B-111", "2"]]);
+      .toEqual([[rc("M0413-DST-A-111"), "2"], [rc("M0413-DST-B-111"), "2"]]);
   });
 });

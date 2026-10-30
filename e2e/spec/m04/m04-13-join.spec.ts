@@ -1,4 +1,5 @@
 /** M04-13 在庫分割結合登録編集（結合）。正本: cases/M04-13_test_cases.tsv */
+import { rc } from "../../lib/run_marker";
 import fs from "node:fs";
 import { Page, test } from "@playwright/test";
 import {
@@ -87,7 +88,7 @@ async function fillReasonAfterRejectButton(page: Page, approval: JoinApprovalPag
 
 caseTest("IT-M04-13-040", async ({ page, step, expected }) => {
   await signIn(page);
-  const code = "M0413-JOIN-DST-040";
+  const code = rc("M0413-JOIN-DST-040");
   await step(1, async () => { await searchStockList(page, { store: 試験店舗A, zone: "EC-CUBE", code }); });
   await step(2, async () => { await pressStockListAction(page, code, "EC-CUBE", "在庫結合登録"); });
   await step(3, async () => { await new JoinNewPage(page).pressBackToStockList(); });
@@ -103,7 +104,7 @@ caseTest("IT-M04-13-040", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-13-041", async ({ page, step, expected }) => {
   await signIn(page);
-  const code = "M0413-JOIN-DST-041";
+  const code = rc("M0413-JOIN-DST-041");
   let join!: JoinNewPage;
   await step(1, async () => { join = await openJoinNew(page, code); });
   await expected(async () => {
@@ -129,7 +130,7 @@ caseTest("IT-M04-13-041", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-13-042", async ({ page, step, expected }) => {
   await signIn(page);
-  const code = "M0413-JOIN-DST-042";
+  const code = rc("M0413-JOIN-DST-042");
   let join!: JoinNewPage;
   let t0 = 0, t1 = 0;
   let rows: ReturnType<typeof 商品コードの在庫分割結合> = [];
@@ -166,7 +167,7 @@ caseTest("IT-M04-13-043", async ({ page, step, expected }) => {
   await signIn(page);
   let join!: JoinNewPage;
   let stamps: string[] = [];
-  await step(1, async () => { join = await openJoinNew(page, "M0413-JOIN-DST-043"); await join.結合数.fill("2"); });
+  await step(1, async () => { join = await openJoinNew(page, rc("M0413-JOIN-DST-043")); await join.結合数.fill("2"); });
   await step(2, async () => {
     // 登録の操作の日時（アプリの時刻帯の年月日 時:分）。押す前と押したあとで分が変われば2つ。006 と同じ確かめ方（2026-10-20 に、形だけの確かめから直した）
     const before = appYmdhm(Date.now());
@@ -189,7 +190,7 @@ caseTest("IT-M04-13-043", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-13-044", async ({ page, step, expected }) => {
   await signIn(page);
-  const code = "M0413-JOIN-DST-044";
+  const code = rc("M0413-JOIN-DST-044");
   let join!: JoinNewPage;
   let rows: ReturnType<typeof 商品コードの在庫分割結合> = [];
   await step(1, async () => { join = await openJoinNew(page, code); });
@@ -205,14 +206,14 @@ caseTest("IT-M04-13-047", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔在庫分割結合ID-M0413-047〕");
   const list = new SplitJoinListPage(page);
   let fromList = "", afterNew = "", newId = "", afterNewName = "";
-  await step(1, async () => { await list.open(); await list.search("M0413-JOIN-DST-047"); await list.openById(id); });
+  await step(1, async () => { await list.open(); await list.search(rc("M0413-JOIN-DST-047")); await list.openById(id); });
   await step(2, async () => {
     fromList = pathOf(page);
     const 画面 = await 今の結合の画面(page);
     note(`一覧から選んで移った画面: ${画面.名前 ?? "結合の画面のどれでもない"}（題名「${画面.題名}」）`);
   });
   await step(3, async () => {
-    const join = await openJoinNew(page, "M0413-JOIN-DST-047");
+    const join = await openJoinNew(page, rc("M0413-JOIN-DST-047"));
     await join.結合数.fill("2");
     noteSubmit(await join.pressRegister(), "登録ボタン");
     await noteAlerts(page, "登録のあと");
@@ -235,13 +236,13 @@ caseTest("IT-M04-13-048", async ({ page, notes, step, expected }) => {
   const edit = new JoinEditPage(page, id);
   let details: ReturnType<typeof 明細> = [];
   await step(1, async () => { await edit.open(); await edit.pressAddSource(); });
-  await step(2, async () => { await edit.searchAndSelect("M0413-JOIN-A-048"); });
-  await step(3, async () => { await edit.decide("M0413-JOIN-A-048"); await noteAlerts(page, "決定のあと"); });
+  await step(2, async () => { await edit.searchAndSelect(rc("M0413-JOIN-A-048")); });
+  await step(3, async () => { await edit.decide(rc("M0413-JOIN-A-048")); await noteAlerts(page, "決定のあと"); });
   await step(4, async () => { details = 明細(id); });
   await expected(async () => {
-    expect.soft(details.map((d) => d.商品コード), "DBの結合元商品（即時登録）").toEqual(["M0413-JOIN-A-048"]);
+    expect.soft(details.map((d) => d.商品コード), "DBの結合元商品（即時登録）").toEqual([rc("M0413-JOIN-A-048")]);
     await edit.open();
-    expect.soft((await edit.sources()).map((r) => r["商品コード"]), "再読み込み後の一覧").toEqual(["M0413-JOIN-A-048"]);
+    expect.soft((await edit.sources()).map((r) => r["商品コード"]), "再読み込み後の一覧").toEqual([rc("M0413-JOIN-A-048")]);
   });
 });
 
@@ -252,14 +253,14 @@ caseTest("IT-M04-13-050", async ({ page, notes, step, expected }) => {
   let details: ReturnType<typeof 明細> = [];
   let summary!: Awaited<ReturnType<JoinEditPage["summary"]>>;
   let rows: Record<string, string>[] = [];
-  await step(1, async () => { await edit.open(); await edit.addSource("M0413-JOIN-A-050"); await edit.addSource("M0413-JOIN-B-050"); });
+  await step(1, async () => { await edit.open(); await edit.addSource(rc("M0413-JOIN-A-050")); await edit.addSource(rc("M0413-JOIN-B-050")); });
   await step(2, async () => {
     note(`A の保存の応答: ${JSON.stringify(await edit.setSourceQuantity("M0413-JOIN-A-050", "4"))}`);
     note(`B の保存の応答: ${JSON.stringify(await edit.setSourceQuantity("M0413-JOIN-B-050", "2"))}`);
   });
   await step(3, async () => { details = 明細(id); summary = await edit.summary(); rows = await edit.sources(); note(`画面の合計欄: ${JSON.stringify(summary)}`); });
   await expected(async () => {
-    expect.soft(details.map((d) => [d.商品コード, d.数量]), "DBの結合元在庫数").toEqual([["M0413-JOIN-A-050", 4], ["M0413-JOIN-B-050", 2]]);
+    expect.soft(details.map((d) => [d.商品コード, d.数量]), "DBの結合元在庫数").toEqual([[rc("M0413-JOIN-A-050"), 4], [rc("M0413-JOIN-B-050"), 2]]);
     expect.soft(summary.点数, "結合元商品合計").toBe("6");
     const std = rows.reduce((s, r) => s + toNum(r["基準価格"]) * toNum(r["結合元在庫数"]), 0);
     const cost = rows.reduce((s, r) => s + toNum(r["原価単価"]) * toNum(r["結合元在庫数"]), 0);
@@ -277,16 +278,16 @@ caseTest("IT-M04-13-058", async ({ page, notes, step, expected }) => {
   let details: ReturnType<typeof 明細> = [];
   await step(1, async () => {
     await edit.open();
-    await edit.addSource("M0413-JOIN-A-058"); await edit.setSourceQuantity("M0413-JOIN-A-058", "4");
-    await edit.addSource("M0413-JOIN-B-058"); await edit.setSourceQuantity("M0413-JOIN-B-058", "2");
+    await edit.addSource(rc("M0413-JOIN-A-058")); await edit.setSourceQuantity(rc("M0413-JOIN-A-058"), "4");
+    await edit.addSource(rc("M0413-JOIN-B-058")); await edit.setSourceQuantity(rc("M0413-JOIN-B-058"), "2");
   });
   await step(2, async () => { await edit.メモ.fill("結合元登録完了"); });
   await step(3, async () => { t0 = DBの時刻(); await edit.pressFooterSourceRegister(); t1 = DBの時刻(); await noteAlerts(page, "結合元商品登録のあと"); });
   await step(4, async () => { head = 在庫分割結合(id); details = 明細(id); });
   await expected(async () => {
     const byCode = Object.fromEntries(details.map((d) => [d.商品コード, d.仕入総価格]));
-    expect.soft(byCode["M0413-JOIN-A-058"], "M0413-JOIN-A-058 の仕入総価格").toBe(400);
-    expect.soft(byCode["M0413-JOIN-B-058"], "M0413-JOIN-B-058 の仕入総価格").toBe(200);
+    expect.soft(byCode[rc("M0413-JOIN-A-058")], "M0413-JOIN-A-058 の仕入総価格").toBe(400);
+    expect.soft(byCode[rc("M0413-JOIN-B-058")], "M0413-JOIN-B-058 の仕入総価格").toBe(200);
     expect.soft(within(head?.更新日時 ?? null, t0, t1), "更新日時").toBe(true);
     expect.soft(head?.更新者, "更新者").toBe(作業者名);
     expect.soft(head?.メモ, "メモ").toBe("結合元登録完了");
@@ -360,7 +361,7 @@ caseTest("IT-M04-13-061", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-13-063", async ({ page, notes, step, expected }) => {
   await signIn(page);
   const edit = new JoinEditPage(page, notes.get("〔在庫分割結合ID-M0413-063〕"));
-  const c = "M0413-JOIN-A-063";
+  const c = rc("M0413-JOIN-A-063");
   let saved!: Awaited<ReturnType<JoinEditPage["pressShortageButton"]>>;
   await step(1, async () => { await edit.openShortageEntry(); await edit.fillShortage(c, "1"); });
   await step(2, async () => {
@@ -383,7 +384,7 @@ caseTest("IT-M04-13-063", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-13-064", async ({ page, notes, step, expected }) => {
   await signIn(page);
   const edit = new JoinEditPage(page, notes.get("〔在庫分割結合ID-M0413-064〕"));
-  const c = "M0413-JOIN-A-064";
+  const c = rc("M0413-JOIN-A-064");
   let screen = { 値: "", ボタン: "" };
   let cancel!: Awaited<ReturnType<JoinEditPage["pressShortageButton"]>>;
   await step(1, async () => {
@@ -417,7 +418,7 @@ caseTest("IT-M04-13-064", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-13-065", async ({ page, notes, step, expected }) => {
   await signIn(page);
   const edit = new JoinEditPage(page, notes.get("〔在庫分割結合ID-M0413-065〕"));
-  const c = "M0413-JOIN-A-065";
+  const c = rc("M0413-JOIN-A-065");
   await edit.openShortageEntry();
   const enabled: Record<string, boolean> = {};
   for (const [n, v] of [[1, "0"], [2, "4"], [3, "5"]] as const) {
@@ -431,7 +432,7 @@ caseTest("IT-M04-13-065", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-13-066", async ({ page, notes, step, expected }) => {
   await signIn(page);
   const edit = new JoinEditPage(page, notes.get("〔在庫分割結合ID-M0413-066〕"));
-  const c = "M0413-JOIN-SHORT-MAX-066";
+  const c = rc("M0413-JOIN-SHORT-MAX-066");
   await edit.openShortageEntry();
   let at1000000 = false, at1000001 = true;
   await step(1, async () => { await edit.fillShortage(c, "1000000"); });
@@ -448,7 +449,7 @@ caseTest("IT-M04-13-068", async ({ page, notes, step, expected }) => {
   await signIn(page);
   const id = notes.get("〔在庫分割結合ID-M0413-068〕");
   const edit = new JoinEditPage(page, id);
-  const c = "M0413-JOIN-A-068";
+  const c = rc("M0413-JOIN-A-068");
   const stockA = 在庫(c, 試験店舗A, EC);
   let t0 = 0, t1 = 0;
   let head: ReturnType<typeof 在庫分割結合> = null;
@@ -599,7 +600,7 @@ caseTest("IT-M04-13-074", async ({ page, notes, step, expected }) => {
   await signIn(page, M0413_APP);
   const id = notes.get("〔在庫分割結合ID-M0413-074〕");
   const approval = new JoinApprovalPage(page, id);
-  const sA = 在庫("M0413-JOIN-A-074", 試験店舗A, EC), sB = 在庫("M0413-JOIN-B-074", 試験店舗A, EC);
+  const sA = 在庫(rc("M0413-JOIN-A-074"), 試験店舗A, EC), sB = 在庫(rc("M0413-JOIN-B-074"), 試験店舗A, EC);
   let t0 = 0, t1 = 0;
   let head: ReturnType<typeof 在庫分割結合> = null;
   let history: ReturnType<typeof ステータス履歴> = [];
@@ -610,7 +611,7 @@ caseTest("IT-M04-13-074", async ({ page, notes, step, expected }) => {
   await step(3, async () => { t0 = DBの時刻(); await approval.confirm("reject"); t1 = DBの時刻(); await noteAlerts(page, "却下のあと"); });
   await step(4, async () => {
     head = 在庫分割結合(id); history = ステータス履歴(id);
-    a = 在庫("M0413-JOIN-A-074", 試験店舗A, EC); b = 在庫("M0413-JOIN-B-074", 試験店舗A, EC);
+    a = 在庫(rc("M0413-JOIN-A-074"), 試験店舗A, EC); b = 在庫(rc("M0413-JOIN-B-074"), 試験店舗A, EC);
     hA = sA ? 在庫変動履歴(sA.在庫ID).filter((h) => within(h.作成日時, t0, t1)).length : 0;
     hB = sB ? 在庫変動履歴(sB.在庫ID).filter((h) => within(h.作成日時, t0, t1)).length : 0;
   });
@@ -683,7 +684,7 @@ caseTest("IT-M04-13-076", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-13-077", async ({ page, notes, step, expected }) => {
   await signIn(page, M0413_NOAUTH);
   const ids = { A: notes.get("〔在庫分割結合ID-M0413-077A〕"), B: notes.get("〔在庫分割結合ID-M0413-077B〕"), C: notes.get("〔在庫分割結合ID-M0413-077C〕") };
-  const dst = "M0413-JOIN-DST-077";
+  const dst = rc("M0413-JOIN-DST-077");
   const beforeJoins = 商品コードの在庫分割結合(dst, 試験店舗A, "在庫結合").length;
   const beforeDst = 在庫(dst, 試験店舗A, EC);
   if (!beforeDst) throw new Error(`${dst} の在庫（試験店舗A・EC-CUBE）が DB に無い`);
@@ -707,7 +708,7 @@ caseTest("IT-M04-13-077", async ({ page, notes, step, expected }) => {
       const e = new JoinEditPage(page, ids.A);
       await e.open();
       note(`ID ${ids.A} の結合元登録画面の結合元（追加の前）: ${(await e.sources()).map((r) => r["商品コード"]).join(" / ") || "なし"}`);
-      await e.addSource("M0413-JOIN-B-077");
+      await e.addSource(rc("M0413-JOIN-B-077"));
       await noteAlerts(page, `ID ${ids.A} への結合元追加の決定の直後`);
       await e.open();
       addA = { 操作できた: true, 一覧: (await e.sources()).map((r) => r["商品コード"]) };
@@ -728,7 +729,7 @@ caseTest("IT-M04-13-077", async ({ page, notes, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(addA.操作できた, `ID ${ids.A} への結合元追加を画面で行い、結合元の一覧を画面で確かめられた（DBには結合元追加が入らないので、画面で確かめられなければこの部分は合格にしない）`).toBe(true);
-    if (addA.操作できた) expect.soft(addA.一覧, `ID ${ids.A} の結合元の一覧（画面。M0413-JOIN-B-077 が追加されない）`).not.toContain("M0413-JOIN-B-077");
+    if (addA.操作できた) expect.soft(addA.一覧, `ID ${ids.A} の結合元の一覧（画面。M0413-JOIN-B-077 が追加されない）`).not.toContain(rc("M0413-JOIN-B-077"));
     expect.soft(afterJoins, `${dst} の在庫結合（追加されない）`).toBe(beforeJoins);
     expect.soft([afterDst?.在庫数, afterDst?.総原価], `${dst} の在庫と総原価`).toEqual([beforeDst.在庫数, beforeDst.総原価]);
     expect.soft(afterDstHistory, `${dst} の在庫変動履歴の件数`).toBe(beforeDstHistory);
@@ -746,7 +747,7 @@ caseTest("IT-M04-13-077", async ({ page, notes, step, expected }) => {
 
 caseTest("IT-M04-13-081", async ({ page, step, expected }) => {
   await signIn(page, M0413L_OP);
-  const code = "M0413L-DST-002";
+  const code = rc("M0413L-DST-002");
   let join!: JoinNewPage;
   let dates: string[] = [];
   let list!: SplitJoinListPage;
@@ -783,7 +784,7 @@ caseTest("IT-M04-13-088", async ({ page, step, expected }) => {
   await signIn(page);
   let target: Record<string, string> = {};
   let join!: JoinNewPage;
-  await step(1, async () => { join = await openJoinNew(page, "M0413-JOIN-DST-088"); });
+  await step(1, async () => { join = await openJoinNew(page, rc("M0413-JOIN-DST-088")); });
   await step(2, async () => { target = await join.target(); note(`結合先商品: ${JSON.stringify(target)}`); });
   await expected(async () => {
     expect.soft(target["基準価格"], "基準価格").toBe(yen(500));
@@ -798,7 +799,7 @@ caseTest("IT-M04-13-089", async ({ page, step, expected }) => {
   let join!: JoinNewPage;
   let dates: string[] = [];
   let rows: Record<string, string>[] = [];
-  await step(1, async () => { join = await openJoinNew(page, "M0413-JOIN-DST-089"); await join.結合数.fill("2"); });
+  await step(1, async () => { join = await openJoinNew(page, rc("M0413-JOIN-DST-089")); await join.結合数.fill("2"); });
   await step(2, async () => {
     const before = appYmd(Date.now());
     noteSubmit(await join.pressRegister(), "登録ボタン");
@@ -828,24 +829,24 @@ caseTest("IT-M04-13-090", async ({ page, notes, step, expected }) => {
   let savedName!: ReturnType<typeof 明細の登録時の商品名>;
   let dates: string[] = [];
   await step(1, async () => { await edit.open(); await edit.pressAddSource(); });
-  await step(2, async () => { await edit.searchAndSelect("M0413-JOIN-A-090"); });
+  await step(2, async () => { await edit.searchAndSelect(rc("M0413-JOIN-A-090")); });
   await step(3, async () => {
     const before = appYmd(Date.now());
-    await edit.decide("M0413-JOIN-A-090");
+    await edit.decide(rc("M0413-JOIN-A-090"));
     dates = [...new Set([before, appYmd(Date.now())])];
     note(`操作を行った日付（控えた日付）: ${dates.join(" または ")}`);
   });
   await step(4, async () => { details = 明細(id); audit = 明細の登録更新(id); savedName = 明細の登録時の商品名(id); });
   await expected(async () => {
     // 項目ごとに結果を出す（1件目が無くても、ほかの項目の結果を報告に残す）
-    expect.soft(details.map((d) => d.商品コード), "結合元商品が1件").toEqual(["M0413-JOIN-A-090"]);
+    expect.soft(details.map((d) => d.商品コード), "結合元商品が1件").toEqual([rc("M0413-JOIN-A-090")]);
     // 商品名は、明細に保存された「登録時の商品名」と比べる（設計書: [結合元]商品名 在庫先登録時の商品名）。商品マスターの今の名前は参考
     if (details[0]) note(`参考: 商品マスターの今の商品名「${details[0].商品名}」（保存された値ではない）`);
     if (!savedName.保存先) note("結合元商品（在庫分割結合の明細）の表に、登録時の商品名を保存する項目が無い。保存先が無いので保存されない");
     expect.soft(savedName.保存先, "結合元商品の登録時の商品名の保存先（DBの明細の項目）").toBe(true);
-    if (savedName.保存先) expect.soft(savedName.行.find((r) => r.商品コード === "M0413-JOIN-A-090")?.値, "商品名").toBe("M04-13結合元-090");
+    if (savedName.保存先) expect.soft(savedName.行.find((r) => r.商品コード === rc("M0413-JOIN-A-090"))?.値, "商品名").toBe("M04-13結合元-090");
     expect.soft(details[0]?.在庫数, "登録時の在庫数").toBe(10);
-    const row = audit.行.find((r) => r.商品コード === "M0413-JOIN-A-090");
+    const row = audit.行.find((r) => r.商品コード === rc("M0413-JOIN-A-090"));
     const ymd = (t: number | null | undefined) => (t === null || t === undefined ? "（空）" : appYmd(t * 1000));
     for (const k of ["登録日時", "更新日時", "登録者", "更新者"] as const) {
       if (!audit.保存先[k]) {
@@ -867,7 +868,7 @@ caseTest("IT-M04-13-092", async ({ page, notes, step, expected }) => {
   let 画面: Awaited<ReturnType<typeof 今の結合の画面>> = { 名前: null, 番号: null, 題名: "" };
   await step(1, async () => {
     const list = new SplitJoinListPage(page);
-    await list.open(); await list.search("M0413-JOIN-DST-092"); await list.openById(id);
+    await list.open(); await list.search(rc("M0413-JOIN-DST-092")); await list.openById(id);
     // どの画面に移ったかを、アドレスと題名で確かめる。設計書 sheet-19 は、状態が「結合元登録」のものを一覧から選ぶと
     // 結合計画承認申請画面へ移ると定める。手順2の画面名「結合元登録画面」とは食い違う（裁定案23）
     画面 = await 今の結合の画面(page);
@@ -882,8 +883,8 @@ caseTest("IT-M04-13-092", async ({ page, notes, step, expected }) => {
   });
   await expected(async () => {
     const price = Object.fromEntries(rows.map((r) => [r["商品コード"], r["基準価格"]]));
-    expect.soft(price["M0413-JOIN-A-092"], "M0413-JOIN-A-092 の基準価格").toBe(yen(200));
-    expect.soft(price["M0413-JOIN-B-092"], "M0413-JOIN-B-092 の基準価格").toBe(yen(300));
+    expect.soft(price[rc("M0413-JOIN-A-092")], "M0413-JOIN-A-092 の基準価格").toBe(yen(200));
+    expect.soft(price[rc("M0413-JOIN-B-092")], "M0413-JOIN-B-092 の基準価格").toBe(yen(300));
   });
 });
 
@@ -891,7 +892,7 @@ caseTest("IT-M04-13-093", async ({ page, notes, step, expected }) => {
   await signIn(page, M0413_APP);
   const id = notes.get("〔在庫分割結合ID-M0413-093〕");
   const approval = new JoinApprovalPage(page, id);
-  const sA = 在庫("M0413-JOIN-A-093", 試験店舗A, EC), sB = 在庫("M0413-JOIN-B-093", 試験店舗A, EC);
+  const sA = 在庫(rc("M0413-JOIN-A-093"), 試験店舗A, EC), sB = 在庫(rc("M0413-JOIN-B-093"), 試験店舗A, EC);
   let t0 = 0, t1 = 0;
   let hA: ReturnType<typeof 在庫変動履歴> = [], hB: ReturnType<typeof 在庫変動履歴> = [];
   await step(1, async () => { await approval.open(); });
@@ -905,11 +906,11 @@ caseTest("IT-M04-13-093", async ({ page, notes, step, expected }) => {
     hB = sB ? 在庫変動履歴(sB.在庫ID).filter((h) => within(h.作成日時, t0, t1)) : [];
   });
   await expected(async () => {
-    for (const [code, h] of [["M0413-JOIN-A-093", hA], ["M0413-JOIN-B-093", hB]] as const) {
+    for (const [code, h] of [[rc("M0413-JOIN-A-093"), hA], [rc("M0413-JOIN-B-093"), hB]] as const) {
       expect.soft(h.length, `${code} の在庫変動履歴が1件`).toBe(1);
       expect.soft(h[0]?.在庫変動区分, `${code} の在庫変動区分`).toBe("結合(棄却)");
       expect.soft(h[0]?.在庫変動理由 ?? "", `${code} の在庫変動理由の書き出し`).toMatch(/^在庫結合棄却による戻し/);
-      for (const part of ["M0413-JOIN-A-093", "M0413-JOIN-B-093", "M0413-JOIN-DST-093", id]) expect.soft(h[0]?.在庫変動理由 ?? "", `${code} の在庫変動理由に「${part}」`).toContain(part);
+      for (const part of [rc("M0413-JOIN-A-093"), rc("M0413-JOIN-B-093"), rc("M0413-JOIN-DST-093"), id]) expect.soft(h[0]?.在庫変動理由 ?? "", `${code} の在庫変動理由に「${part}」`).toContain(part);
     }
   });
 });
@@ -919,12 +920,12 @@ caseTest("IT-M04-13-099", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔在庫分割結合ID-M0413-099〕");
   const edit = new JoinEditPage(page, id);
   let details: ReturnType<typeof 明細> = [];
-  await step(1, async () => { await edit.open(); await edit.addSource("M0413-JOIN-A-099"); await edit.setSourceQuantity("M0413-JOIN-A-099", "4"); });
+  await step(1, async () => { await edit.open(); await edit.addSource(rc("M0413-JOIN-A-099")); await edit.setSourceQuantity(rc("M0413-JOIN-A-099"), "4"); });
   await step(2, async () => { await edit.メモ.fill("結合元登録完了"); });
   await step(3, async () => { await edit.pressFooterSourceRegister(); await noteAlerts(page, "結合元商品登録のあと"); });
   await step(4, async () => { details = 明細(id); });
   await expected(async () => {
-    expect.soft(details.map((d) => [d.商品コード, d.仕入総価格]), "M0413-JOIN-A-099 の仕入総価格").toEqual([["M0413-JOIN-A-099", 400]]);
+    expect.soft(details.map((d) => [d.商品コード, d.仕入総価格]), "M0413-JOIN-A-099 の仕入総価格").toEqual([[rc("M0413-JOIN-A-099"), 400]]);
   });
 });
 
@@ -932,7 +933,7 @@ caseTest("IT-M04-13-102", async ({ page, notes, step, expected }) => {
   await signIn(page);
   const id = notes.get("〔在庫分割結合ID-M0413-102〕");
   const edit = new JoinEditPage(page, id);
-  const stocks = ["M0413-JOIN-A-102", "M0413-JOIN-B-102"].map((c) => ({ c, s: 在庫(c, 試験店舗A, EC) }));
+  const stocks = [rc("M0413-JOIN-A-102"), rc("M0413-JOIN-B-102")].map((c) => ({ c, s: 在庫(c, 試験店舗A, EC) }));
   let details: ReturnType<typeof 明細> = [];
   let shortHist: number[] = [];
   await step(1, async () => { await edit.openShortageEntry(); await edit.chooseApprovalTargets(試験所属A, 承認者名); });

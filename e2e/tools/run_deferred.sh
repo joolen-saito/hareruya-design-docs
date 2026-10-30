@@ -20,7 +20,7 @@ for fid in $(awk -F'\t' '!seen[$1]++ {print $1}' "$F"); do
   bk="$LOG/backup/$fid"; mkdir -p "$bk"
   for n in $nums; do d="$ROOT/evidence/$fid/IT-$fid-$n"; [ -d "$d" ] && { rm -rf "${bk:?}/IT-$fid-$n"; cp -a "$d" "$bk/"; }; done
   # shellcheck disable=SC2086
-  PW_SLOTS=1 PW_DEFER_SOLO_FILE= tools/run_evidence.sh "$fid" $nums > "$LOG/$fid.deferred.log" 2>&1; rc=$?
+  PW_SLOTS=1 PW_DEFER_SOLO_FILE= PW_LANE_CLAIM_DIR= tools/run_evidence.sh "$fid" $nums > "$LOG/$fid.deferred.log" 2>&1; rc=$?
   for n in $nums; do
     d="$ROOT/evidence/$fid/IT-$fid-$n"; b="$bk/IT-$fid-$n"
     [ -f "$d/result.json" ] && [ -f "$b/result.json" ] || continue
@@ -33,6 +33,8 @@ for fid in $(awk -F'\t' '!seen[$1]++ {print $1}' "$F"); do
   echo "$(date '+%F %T') 単独: $fid 終了コード $rc — $(grep -E "^$fid: 合格" "$LOG/$fid.deferred.log" | tail -1)"
   (( rc > worst )) && worst=$rc
   if [ $rc -eq 3 ]; then echo "環境・ロックで止めたので、残りは流さない（$F に残す）"; break; fi
+  # 流さずに終わった（受け持ちの印などで流していない）機能は、一覧から除かない（2026-10-29）
+  if grep -q "ほかのレーンが受け持った" "$LOG/$fid.deferred.log"; then echo "$(date '+%F %T') 単独: $fid は流していないので、一覧に残す"; worst=3; continue; fi
   awk -F'\t' -v f="$fid" '$1!=f' "$F" > "$F.tmp" && mv -f "$F.tmp" "$F"
 done
 exit $worst

@@ -65,7 +65,8 @@ done
 for p in "${pids[@]}"; do wait "$p"; done
 
 echo "$(date '+%F %T') 書き留めた単独のケースを1本だけで流す"
-tools/run_deferred.sh "$PW_DEFER_SOLO_FILE"; drc=$?
+# 受け持ちの印は並べて流す間だけのもの。1本だけの流し直しに残すと、どの機能も「ほかのレーンが受け持った」で流さずに終わる（2026-10-29）
+PW_LANE_CLAIM_DIR= tools/run_deferred.sh "$PW_DEFER_SOLO_FILE"; drc=$?
 
 echo "---- 結果"
 worst=0

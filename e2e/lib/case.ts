@@ -15,7 +15,8 @@
  *   手順の途中の画面も残したいときは capture("ラベル") を呼ぶ。撮れても撮れなくても合否は変わらない。
  */
 import { test, expect, Browser, Page } from "@playwright/test";
-import { CaseRow, getCase, seedIdsOf, stepsOf } from "./catalog";
+import { CaseRow, getCase, getSeed, seedIdsOf, stepsOf } from "./catalog";
+import { markedIn } from "./run_marker";
 import { Notes } from "./notes";
 import { buildSeeds, destructiveSeeds, seedIssues } from "./seeds";
 import * as dbm from "./db";
@@ -73,7 +74,10 @@ export function caseTest(testId: string, body: CaseBody): void {
       }
       // ケースの文に出てくる呼び名が、すべて控えてあること
       for (const l of Notes.labelsIn(c.事前準備 + c.手順 + c.期待結果)) notes.get(l);
-      await test.info().attach(`${EVIDENCE_PREFIX}控えた番号`, { body: JSON.stringify(notes.entries()), contentType: "application/json" });
+      // 決め打ちの値に付けた実行の印（依頼者決定 2026-10-28）も、正本の値と実際の値の対応として残す
+      const seedText = usedSeedIds.map((id) => { const s = getSeed(id); return s["状態・属性"] + s.投入方法; }).join(" ");
+      const marked = markedIn(c.事前準備 + c.手順 + c.期待結果 + seedText).map(([v, a]) => [`実行の印: ${v}`, a] as [string, string]);
+      await test.info().attach(`${EVIDENCE_PREFIX}控えた番号`, { body: JSON.stringify([...notes.entries(), ...marked]), contentType: "application/json" });
     });
     const done = new Set<number>();
     let checked = 0;

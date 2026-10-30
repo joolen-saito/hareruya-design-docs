@@ -21,6 +21,7 @@
  * - 商品カテゴリは「登録済みのグッズのカテゴリ」として、カテゴリ一覧の最上位の「サプライ・グッズ」を使う。
  * - 地域別販売制限は正本に値が無いので「0」（制限なし。同じ機能の QB-PROD のシードが書く値）にする。
  */
+import { rc } from "../lib/run_marker";
 import { expect } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { CSV入出力設定 } from "../lib/app_config";
@@ -215,13 +216,13 @@ async function buildProduct(browser: Parameters<typeof withAdminSession>[0], not
 }
 
 const PRODUCTS: ProductSpec[] = [
-  { seedId: "S-M03-38-L-PROD-034", label: "〔商品ID-M0338-034〕", code: "M0338L-034", name: "CSV連携公開確認商品-L001M0338n034", finalState: { 商品公開ステータス: "公開", 支店の商品公開ステータス: "公開" } },
-  { seedId: "S-M03-38-L-PROD-035", label: "〔商品ID-M0338-035〕", code: "M0338L-035", name: "CSV連携公開確認商品-L002M0338n035", finalState: { 商品公開ステータス: "非公開", 支店の商品公開ステータス: "非公開" } },
-  { seedId: "S-M03-38-L-PROD-036", label: "〔商品ID-M0338-036〕", code: "M0338L-036", name: "CSV連携公開確認商品-L003M0338n036", finalState: { 商品公開ステータス: "公開", 支店の商品公開ステータス: "公開" } },
-  { seedId: "S-M03-38-L-PROD-037", label: "〔商品ID-M0338-037〕", code: "M0338L-037", name: "CSV連携公開確認商品-L004M0338n037", finalState: { 商品公開ステータス: "公開", 支店の商品公開ステータス: "公開" } },
-  { seedId: "S-M03-38-CBPUB-046", label: "〔商品ID-M0338-046〕", code: "M0338-CB046", name: "CB公開確認商品-M0338n046", finalState: { 商品公開ステータス: "公開", 支店の商品公開ステータス: "公開" } },
+  { seedId: "S-M03-38-L-PROD-034", label: "〔商品ID-M0338-034〕", code: rc("M0338L-034"), name: rc("CSV連携公開確認商品-L001M0338n034"), finalState: { 商品公開ステータス: "公開", 支店の商品公開ステータス: "公開" } },
+  { seedId: "S-M03-38-L-PROD-035", label: "〔商品ID-M0338-035〕", code: rc("M0338L-035"), name: rc("CSV連携公開確認商品-L002M0338n035"), finalState: { 商品公開ステータス: "非公開", 支店の商品公開ステータス: "非公開" } },
+  { seedId: "S-M03-38-L-PROD-036", label: "〔商品ID-M0338-036〕", code: rc("M0338L-036"), name: rc("CSV連携公開確認商品-L003M0338n036"), finalState: { 商品公開ステータス: "公開", 支店の商品公開ステータス: "公開" } },
+  { seedId: "S-M03-38-L-PROD-037", label: "〔商品ID-M0338-037〕", code: rc("M0338L-037"), name: rc("CSV連携公開確認商品-L004M0338n037"), finalState: { 商品公開ステータス: "公開", 支店の商品公開ステータス: "公開" } },
+  { seedId: "S-M03-38-CBPUB-046", label: "〔商品ID-M0338-046〕", code: rc("M0338-CB046"), name: rc("CB公開確認商品-M0338n046"), finalState: { 商品公開ステータス: "公開", 支店の商品公開ステータス: "公開" } },
   // 047 の正本は、在庫の承認のあとに商品登録編集の手順を持たない（取り込んだときの非公開・非公開のまま）
-  { seedId: "S-M03-38-CBPUB-047", label: "〔商品ID-M0338-047〕", code: "M0338-CB047", name: "CB公開確認商品-M0338n047" },
+  { seedId: "S-M03-38-CBPUB-047", label: "〔商品ID-M0338-047〕", code: rc("M0338-CB047"), name: rc("CB公開確認商品-M0338n047") },
 ];
 
 function productSpec(seedId: string): ProductSpec {

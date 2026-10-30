@@ -16,6 +16,8 @@
  * - 在庫変更CSV登録（シード）: 画面の雛形をダウンロードし、見出し行の下にシード表の1行を足したファイルを、正本のファイル名で置いて登録する（M04-21 と同じ作り）。
  * - 商品コードは正本の固定の値で、正本に清掃の手順が無い。前の実行の商品が残っていれば作らずに止める。
  */
+import { rc as markCode } from "../lib/run_marker";
+import { query } from "../lib/db";
 import fs from "node:fs";
 import { Browser, expect, Page, test } from "@playwright/test";
 import { MAIL_URL, SETUP_ADMIN } from "../config/env";
@@ -179,6 +181,9 @@ export function defineStockSeed(seedId: string, o: {
       }
     });
     let dept = "";
+    // 承認の行は、このシードが動き出す前からあった行（前の実行で残った同じ支店の未承認の行）を数えない。
+    // 支店の名前は決め打ちなので、残りが同じ支店に溜まり「1件のはず」で止まっていた（2026-10-30）。DB は参照だけ
+    const baseline = Number(query("select coalesce(max(id), 0)::text as m from dtb_stock_approval_list")[0]?.m ?? "0");
     for (const [i, op] of o.ops.entries()) {
       if (i < startOp) continue;
       const what = `${seedId} の操作${i + 1}（${op.op}）`;
@@ -200,7 +205,7 @@ export function defineStockSeed(seedId: string, o: {
           if (r.承認ステータス === "選べない") {
             issue(`補い: ${what}: シード表は承認ステータスの「未承認」を指定するが、「承認可能な在庫のみ表示」のチェック（初期で付いている）でチェック欄が選べない（設計書 L0048 のとおり）。初期のまま検索した`);
           }
-          const rows = (await listRows(page)).filter((x) => x.承認対象 === op.target && x.承認状態 === "未承認" && x.チェックボックス);
+          const rows = (await listRows(page)).filter((x) => x.承認対象 === op.target && x.承認状態 === "未承認" && x.チェックボックス && (x.id === null || Number(x.id) > baseline));
           const want = op.行数 ?? 1;
           if (rows.length !== want) throw new Error(`${what}: 承認対象「${op.target}」の未承認の行が ${rows.length} 件（${want} 件のはず）: ${JSON.stringify(await listRows(page))}`);
           for (const row of rows) await checkRow(page, row, what);
@@ -272,12 +277,12 @@ export const DP104 = org32("dp0432-104", "DP0432-104", "Passw0rd-DP0432104");
 export const DP104_STORE = branch32("DP0432-104支店", "dp0432s104", "D04");
 defineStockSeed("S-M04-32-APPR2STOCK-104", {
   org: DP104, store: DP104_STORE, withOrg: true,
-  products: [{ 商品コード: "DP0432-104-CODE1", 商品名: "DP0432-104-NAME1" }, { 商品コード: "DP0432-104-CODE2", 商品名: "DP0432-104-NAME2" }],
+  products: [{ 商品コード: markCode("DP0432-104-CODE1"), 商品名: "DP0432-104-NAME1" }, { 商品コード: markCode("DP0432-104-CODE2"), 商品名: "DP0432-104-NAME2" }],
   ops: [
-    入庫10("DP0432-104-CODE1"), 入庫10("DP0432-104-CODE2"),
-    { op: "承認", target: "在庫編集", 行数: 2, 未承認: true, 確認: [{ code: "DP0432-104-CODE1", 在庫: 10 }, { code: "DP0432-104-CODE2", 在庫: 10 }] },
-    { op: "在庫編集", code: "DP0432-104-CODE1", 区分: "入庫/その他", 理由: "試験データ", 数: "3", 単価: "100" },
-    { op: "在庫編集", code: "DP0432-104-CODE2", 区分: "入庫/その他", 理由: "試験データ", 数: "3", 単価: "100" },
+    入庫10(markCode("DP0432-104-CODE1")), 入庫10(markCode("DP0432-104-CODE2")),
+    { op: "承認", target: "在庫編集", 行数: 2, 未承認: true, 確認: [{ code: markCode("DP0432-104-CODE1"), 在庫: 10 }, { code: markCode("DP0432-104-CODE2"), 在庫: 10 }] },
+    { op: "在庫編集", code: markCode("DP0432-104-CODE1"), 区分: "入庫/その他", 理由: "試験データ", 数: "3", 単価: "100" },
+    { op: "在庫編集", code: markCode("DP0432-104-CODE2"), 区分: "入庫/その他", 理由: "試験データ", 数: "3", 単価: "100" },
   ],
 });
 
@@ -291,13 +296,13 @@ defineStockSeed("S-M04-32-APPRMAIL-105", {
   前回の残り: {
     理由: "2026-10-22 15:18 の105。シードは作り終え、ケースは手順2の登録者（メンバー選択）の2人目の選択（データを変えない）で止まった",
     行: [{ 承認状態: "未承認", 承認対象: "在庫編集", 合計在庫増減数: "3" }, { 承認状態: "未承認", 承認対象: "在庫編集", 合計在庫増減数: "3" }],
-    在庫: [{ code: "DP0432-105-CODE1", 在庫: 0 }, { code: "DP0432-105-CODE2", 在庫: 0 }],
+    在庫: [{ code: markCode("DP0432-105-CODE1"), 在庫: 0 }, { code: markCode("DP0432-105-CODE2"), 在庫: 0 }],
   },
   org: DP105, store: DP105_STORE, withOrg: true,
-  products: [{ 商品コード: "DP0432-105-CODE1", 商品名: "DP0432-105-NAME1" }, { 商品コード: "DP0432-105-CODE2", 商品名: "DP0432-105-NAME2" }],
+  products: [{ 商品コード: markCode("DP0432-105-CODE1"), 商品名: "DP0432-105-NAME1" }, { 商品コード: markCode("DP0432-105-CODE2"), 商品名: "DP0432-105-NAME2" }],
   ops: [
-    { op: "在庫編集", by: 0, code: "DP0432-105-CODE1", 区分: "入庫/その他", 理由: "試験データ", 数: "3", 単価: "100" },
-    { op: "在庫編集", by: 1, code: "DP0432-105-CODE2", 区分: "入庫/その他", 理由: "試験データ", 数: "3", 単価: "100" },
+    { op: "在庫編集", by: 0, code: markCode("DP0432-105-CODE1"), 区分: "入庫/その他", 理由: "試験データ", 数: "3", 単価: "100" },
+    { op: "在庫編集", by: 1, code: markCode("DP0432-105-CODE2"), 区分: "入庫/その他", 理由: "試験データ", 数: "3", 単価: "100" },
   ],
   mailsToClear: ["dp0432-105-ap1@example.test", "dp0432-105-ap2@example.test"],
 });
@@ -306,11 +311,11 @@ defineStockSeed("S-M04-32-APPRMAIL-105", {
 export const DP106 = org32("dp0432-106", "DP0432-106", "Passw0rd-DP0432106");
 export const DP106_STORE = branch32("DP0432-106支店", "dp0432s106", "D06");
 defineStockSeed("S-M04-32-DISPMODAL-106", {
-  org: DP106, store: DP106_STORE, withOrg: true, products: [{ 商品コード: "DP0432-106-CODE", 商品名: "DP0432-106-NAME" }],
+  org: DP106, store: DP106_STORE, withOrg: true, products: [{ 商品コード: markCode("DP0432-106-CODE"), 商品名: "DP0432-106-NAME" }],
   ops: [
-    { op: "在庫編集", code: "DP0432-106-CODE", 区分: "入庫/その他", 理由: "試験データ", 数: "5", 単価: "100" },
-    承認して("DP0432-106-CODE", 5, true),
-    { op: "在庫編集", code: "DP0432-106-CODE", 区分: "廃棄/廃棄(破損)", 理由: "試験データ", 数: "-2" },
+    { op: "在庫編集", code: markCode("DP0432-106-CODE"), 区分: "入庫/その他", 理由: "試験データ", 数: "5", 単価: "100" },
+    承認して(markCode("DP0432-106-CODE"), 5, true),
+    { op: "在庫編集", code: markCode("DP0432-106-CODE"), 区分: "廃棄/廃棄(破損)", 理由: "試験データ", 数: "-2" },
   ],
 });
 
@@ -318,7 +323,7 @@ defineStockSeed("S-M04-32-DISPMODAL-106", {
 function odd(no: string, digit: string) {
   const org = org32(`dp0432-${no}`, `DP0432-${no}`, `Passw0rd-DP0432${no}`);
   const store = branch32(`DP0432-${no}支店`, `dp0432s${no}`, digit);
-  const code = `DP0432-${no}-CODE`;
+  const code = markCode(`DP0432-${no}-CODE`);
   return {
     org, store, code,
     ops: [
@@ -338,7 +343,7 @@ defineStockSeed("S-M04-32-ODDREJ-109", { org: DP109.org, store: DP109.store, wit
 // 110〜116（RC-*。組織は別のシード）
 export type Rc32 = { org: Org32; store: Store32; code: string; name: string; label: string };
 function rc(no: string, store: Store32): Rc32 {
-  return { org: org32(`rc0432-${no}`, `RC0432-${no}`, `Passw0rd-RC0432${no}`), store, code: `RC0432${no}CODE`, name: `RC0432-${no}-NAME`, label: `RC0432-${no}` };
+  return { org: org32(`rc0432-${no}`, `RC0432-${no}`, `Passw0rd-RC0432${no}`), store, code: markCode(`RC0432${no}CODE`), name: `RC0432-${no}-NAME`, label: `RC0432-${no}` };
 }
 export const RC110 = rc("001", branch32("RC0432-001支店", "rc0432s001", "S01"));
 export const RC111 = rc("002", branch32("RC0432-002支店", "rc0432s002", "S02"));
@@ -372,7 +377,7 @@ export function cbm(no: string, digit: string): Cb32 {
   const shop = `CBM0432-${no}支店`;
   return {
     org: org32(`cbm0432-${no}`, `CBM0432-${no}`, `Passw0rd-CBM0432${no}`), store: branch32(shop, `cbm0432s${no}`, digit),
-    code: `CBM0432-${no}-CODE`, name: `CBM0432-${no}-NAME`, label: `CBM0432-${no}`, shop,
+    code: markCode(`CBM0432-${no}-CODE`), name: `CBM0432-${no}-NAME`, label: `CBM0432-${no}`, shop,
   };
 }
 export const CB: Record<string, Cb32> = {};
@@ -398,7 +403,7 @@ defineCb("120", cbProduct("120"), [...cbBase("120"), cbIn3("120")]);
 defineCb("122", cbProduct("122"), [...cbBase("122"), cbIn3("122")], {
   理由: "2026-10-22 02:52 の122。シードは作り終え、ケースは手順2の検索欄の操作（データを変えない）で止まった",
   行: [{ 承認状態: "承認済", 承認対象: "在庫編集", 合計在庫増減数: "10" }, { 承認状態: "未承認", 承認対象: "在庫編集", 合計在庫増減数: "3" }],
-  在庫: [{ code: "CBM0432-122-CODE", 在庫: 10 }],
+  在庫: [{ code: markCode("CBM0432-122-CODE"), 在庫: 10 }],
 });
 defineCb("124", cbProduct("124"), [...cbBase("124"), cbIn3("124"), { op: "承認", target: "在庫編集" }]);
 defineCb("125", cbProduct("125"), [...cbBase("125"), cbIn3("125"), { op: "却下", target: "在庫編集", 理由: "CBM0432-125-却下" }]);
@@ -407,11 +412,11 @@ defineCb("127", cbProduct("127"), [...cbBase("127"), cbIn3("127")]);
 defineCb("130", cbProduct("130"), [...cbBase("130"), cbIn3("130"), { op: "承認", target: "在庫編集" }]);
 defineCb("131", cbProduct("131"), [...cbBase("131"), cbIn3("131"), { op: "却下", target: "在庫編集", 理由: "CBM0432-131-却下" }]);
 defineCb("133", cbProduct("133"), [...cbBase("133"), 廃棄3(CB["133"].code, "CBM0432-133-廃棄")]);
-defineCb("134", [{ 商品コード: "CBM0432-134-CODEA", 商品名: "CBM0432-134-NAMEA" }, { 商品コード: "CBM0432-134-CODEB", 商品名: "CBM0432-134-NAMEB" }], [
-  { op: "在庫編集", code: "CBM0432-134-CODEA", 区分: "入庫/その他", 理由: "試験データ", 数: "10", 単価: "100" },
-  承認して("CBM0432-134-CODEA", 10),
-  { op: "在庫編集", code: "CBM0432-134-CODEA", 区分: "入庫/問屋仕入", 理由: "CBM0432-134-入庫", 数: "3", 単価: "300" },
-  { op: "在庫変更CSV", code: "CBM0432-134-CODEB", 区分: "入庫/問屋仕入", 理由: "CBM0432-134-入庫", 増減数: "2", 単価: "100", file: "cbm0432-134-stock.csv", 所属選択: false },
+defineCb("134", [{ 商品コード: markCode("CBM0432-134-CODEA"), 商品名: "CBM0432-134-NAMEA" }, { 商品コード: markCode("CBM0432-134-CODEB"), 商品名: "CBM0432-134-NAMEB" }], [
+  { op: "在庫編集", code: markCode("CBM0432-134-CODEA"), 区分: "入庫/その他", 理由: "試験データ", 数: "10", 単価: "100" },
+  承認して(markCode("CBM0432-134-CODEA"), 10),
+  { op: "在庫編集", code: markCode("CBM0432-134-CODEA"), 区分: "入庫/問屋仕入", 理由: "CBM0432-134-入庫", 数: "3", 単価: "300" },
+  { op: "在庫変更CSV", code: markCode("CBM0432-134-CODEB"), 区分: "入庫/問屋仕入", 理由: "CBM0432-134-入庫", 増減数: "2", 単価: "100", file: "cbm0432-134-stock.csv", 所属選択: false },
 ]);
 
 // 136〜144（組織と在庫が1つのシード）
@@ -420,7 +425,7 @@ export function cbx(no: string): Cbx {
   const shop = `CB0432-${no}支店`;
   return {
     org: org32(`cbm0432-${no}`, `CB0432-${no}`, `Passw0rd-CBM0432${no}`), store: branch32(shop, `cbm0432s${no}`, `B${no.slice(1)}`),
-    code: `CB0432${no}CODE`, name: `CB0432-${no}-NAME`, shop, label: `CB0432-${no}`,
+    code: markCode(`CB0432${no}CODE`), name: `CB0432-${no}-NAME`, shop, label: `CB0432-${no}`,
   };
 }
 export const CBX: Record<string, Cbx> = {};
@@ -444,7 +449,7 @@ defineCbx("S-M04-32-CBCSVWASTEAPPR-136", "136", [
 ], {
   理由: "2026-10-22 09:16 の136。在庫変更CSV登録は行われた（画面は「保存しました」）が、シード表の文「商品登録CSVファイルをアップロードしました。」が出ないのでシードを止めた",
   行: [{ 承認状態: "承認済", 承認対象: "在庫編集", 合計在庫増減数: "10" }, { 承認状態: "未承認", 承認対象: "在庫変更CSV登録", 合計在庫増減数: "-3" }],
-  在庫: [{ code: "CB0432136CODE", 在庫: 7 }],
+  在庫: [{ code: markCode("CB0432136CODE"), 在庫: 7 }],
   再開: 3,
 });
 defineCbx("S-M04-32-CBCSVINREJ-137", "137", [

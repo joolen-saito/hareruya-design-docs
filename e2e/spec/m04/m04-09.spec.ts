@@ -8,6 +8,7 @@
  *   期待結果がDBで確かめられるもの（在庫移動が追加されない など）は、注記を残して続け、DBで確かめる（HANDOFF 2章）。
  * - 正本の手順・期待結果の文はコードに写さない（報告には正本の文が出る）。
  */
+import { rc } from "../../lib/run_marker";
 import fs from "node:fs";
 import { Locator, Page, test } from "@playwright/test";
 import * as dbm from "../../db/m04_09_move";
@@ -73,7 +74,7 @@ async function pressRegister(form: MoveNewPage): Promise<boolean> {
 
 caseTest("IT-M04-09-015", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const code = "M409-MOV-A-015";
+  const code = rc("M409-MOV-A-015");
   let form: MoveNewPage | undefined;
   await step(1, async () => {
     await searchStock(page, 店A, "EC-CUBE", code);
@@ -130,22 +131,22 @@ function notRegisteredCase(code: string, fill: (form: MoveNewPage) => Promise<vo
   };
 }
 
-caseTest("IT-M04-09-017", notRegisteredCase("M409-MOV-A-017", async (form) => {
+caseTest("IT-M04-09-017", notRegisteredCase(rc("M409-MOV-A-017"), async (form) => {
   await form.chooseToStore("");
   await form.chooseToZone("");
-  await form.quantity("M409-MOV-A-017").fill("1");
+  await form.quantity(rc("M409-MOV-A-017")).fill("1");
 }, { confirm: true }));
 
-caseTest("IT-M04-09-018", notRegisteredCase("M409-MOV-A-018", async (form) => {
+caseTest("IT-M04-09-018", notRegisteredCase(rc("M409-MOV-A-018"), async (form) => {
   await form.chooseToStore(店B);
   await form.chooseToZone("EC-CUBE");
-  await form.quantity("M409-MOV-A-018").fill("");
+  await form.quantity(rc("M409-MOV-A-018")).fill("");
 }));
 
 caseTest("IT-M04-09-019", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const min = "M409-MOV-MIN-019";
-  const max = "M409-MOV-MAX-019";
+  const min = rc("M409-MOV-MIN-019");
+  const max = rc("M409-MOV-MAX-019");
   let form: MoveNewPage | undefined;
   let id = "";
   await step(1, async () => { form = await openMoveNew(page, 店A, "EC-CUBE", [min, max]); });
@@ -174,7 +175,7 @@ caseTest("IT-M04-09-019", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-09-021", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const code = "M409-MOV-A-021";
+  const code = rc("M409-MOV-A-021");
   let form: MoveNewPage | undefined;
   let id = "";
   await step(1, async () => { form = await openMoveNew(page, 店A, "EC-CUBE", [code]); });
@@ -199,7 +200,7 @@ caseTest("IT-M04-09-021", async ({ page, step, expected }) => {
 });
 
 caseTest("IT-M04-09-022", async ({ page, step, expected }) => {
-  const code = "M409-MOV-A-022";
+  const code = rc("M409-MOV-A-022");
   await login(page, M0409_OP);
   let form: MoveNewPage | undefined;
   let modal = false;
@@ -225,7 +226,7 @@ caseTest("IT-M04-09-022", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-09-024", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const code = "M409-MOV-B-024";
+  const code = rc("M409-MOV-B-024");
   let form: MoveNewPage | undefined;
   await step(1, async () => {
     form = await openMoveNew(page, 店A, "EC-CUBE", [code]);
@@ -245,7 +246,7 @@ caseTest("IT-M04-09-024", async ({ page, step, expected }) => {
 });
 
 caseTest("IT-M04-09-026", async ({ page, step, expected }) => {
-  const code = "M409-MOV-A-026";
+  const code = rc("M409-MOV-A-026");
   await login(page, M0409_OP);
   let form: MoveNewPage | undefined;
   await step(1, async () => { form = await openMoveNew(page, 店A, "EC-CUBE", [code]); });
@@ -267,7 +268,7 @@ caseTest("IT-M04-09-026", async ({ page, step, expected }) => {
 });
 
 caseTest("IT-M04-09-027", async ({ page, step, expected }) => {
-  const code = "M409-MOV-A-027";
+  const code = rc("M409-MOV-A-027");
   await login(page, M0409_OP);
   let form: MoveNewPage | undefined;
   await step(1, async () => {
@@ -287,7 +288,7 @@ caseTest("IT-M04-09-027", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-09-028", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const code = "M409-MOV-A-028";
+  const code = rc("M409-MOV-A-028");
   await step(1, async () => {
     await searchStock(page, 店A, "EC-CUBE", code);
     await checkStockRows(page, [code], 店A, "EC-CUBE");
@@ -403,15 +404,15 @@ caseTest("IT-M04-09-031", async ({ page, notes, step, expected }) => {
     expect.soft(rows[0], "見出し").toEqual(["商品コード", "商品名", "移動点数", "欠品点数"]);
     const body = rows.slice(1);
     expect.soft(body.length, "全明細（2行）").toBe(2);
-    expect.soft(body.find((r) => r[0] === "M409-MOV-A-031"), "M409-MOV-A-031 の行").toEqual(["M409-MOV-A-031", "M409-MOV-A-031", "3", ""]);
-    expect.soft(body.find((r) => r[0] === "M409-MOV-B-031"), "M409-MOV-B-031 の行").toEqual(["M409-MOV-B-031", "M409-MOV-B-031", "2", ""]);
+    expect.soft(body.find((r) => r[0] === rc("M409-MOV-A-031")), "M409-MOV-A-031 の行").toEqual([rc("M409-MOV-A-031"), rc("M409-MOV-A-031"), "3", ""]);
+    expect.soft(body.find((r) => r[0] === rc("M409-MOV-B-031")), "M409-MOV-B-031 の行").toEqual([rc("M409-MOV-B-031"), rc("M409-MOV-B-031"), "2", ""]);
   });
 });
 
 caseTest("IT-M04-09-033", async ({ page, notes, step, expected }) => {
   await login(page, M0409_OP);
   const id = notes.get("〔在庫移動ID-M0409-033〕");
-  const code = "M409-MOV-A-033";
+  const code = rc("M409-MOV-A-033");
   const req = new OutboundRequestPage(page);
   await step(1, async () => { await req.open(id); await expect(req.form, "移動ピック・出庫承認申請画面").toBeVisible(); });
   await step(2, async () => {
@@ -430,7 +431,7 @@ caseTest("IT-M04-09-033", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-034", async ({ page, notes, step, expected }) => {
   await login(page, M0409_OP);
   const id = notes.get("〔在庫移動ID-M0409-034〕");
-  const code = "M409-MOV-A-034";
+  const code = rc("M409-MOV-A-034");
   const req = new OutboundRequestPage(page);
   await req.open(id);
   await expect(req.form, "移動ピック・出庫承認申請画面").toBeVisible();
@@ -476,7 +477,7 @@ caseTest("IT-M04-09-035", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-038", async ({ page, notes, step, expected }) => {
   await login(page, M0409_OP);
   const id = notes.get("〔在庫移動ID-M0409-038〕");
-  const code = "M409-MOV-A-038";
+  const code = rc("M409-MOV-A-038");
   const req = new OutboundRequestPage(page);
   const histBefore = dbm.在庫変動履歴(code, 店A, "スマレジ").length;
   const statusBefore = dbm.ステータス変更履歴(id).length;
@@ -538,7 +539,7 @@ caseTest("IT-M04-09-039", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-040", async ({ page, notes, step, expected }) => {
   await login(page, M0409_NOAUTH);
   const id = notes.get("〔在庫移動ID-M0409-040〕");
-  const codes = ["M409-MOV-A-040", "M409-MOV-B-040"].map((code) => ({ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }));
+  const codes = [rc("M409-MOV-A-040"), rc("M409-MOV-B-040")].map((code) => ({ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }));
   const before = snapshot(id, codes);
   await step(1, async () => {
     await page.goto(adminUrl(`/product/stock/move/outbound_approval_request/${id}`));
@@ -557,7 +558,7 @@ caseTest("IT-M04-09-040", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-041", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫移動ID-M0409-041〕");
-  const codes = ["M409-MOV-A-041", "M409-MOV-B-041"].flatMap((code) => [{ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }, { code, store: 店B, zone: "EC-CUBE" as 在庫区分 }]);
+  const codes = [rc("M409-MOV-A-041"), rc("M409-MOV-B-041")].flatMap((code) => [{ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }, { code, store: 店B, zone: "EC-CUBE" as 在庫区分 }]);
   const before = snapshot(id, codes);
   await step(1, async () => {
     await page.goto(adminUrl(`/product/stock/move/outbound_approval/${id}`));
@@ -574,7 +575,7 @@ caseTest("IT-M04-09-041", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-042", async ({ page, notes, step, expected }) => {
   await login(page, M0409_NOAUTH);
   const id = notes.get("〔在庫移動ID-M0409-042〕");
-  const codes = [{ code: "M409-MOV-A-042", store: 店A, zone: "EC-CUBE" as 在庫区分 }];
+  const codes = [{ code: rc("M409-MOV-A-042"), store: 店A, zone: "EC-CUBE" as 在庫区分 }];
   const before = snapshot(id, codes);
   await step(1, async () => {
     await page.goto(adminUrl(`/product/stock/move/outbound_approval/${id}`));
@@ -609,7 +610,7 @@ async function openViaList(page: Page, id: string, want: RegExp): Promise<void> 
 caseTest("IT-M04-09-043", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫移動ID-M0409-043〕");
-  const codes = [{ code: "M409-MOV-A-043", store: 店A, zone: "EC-CUBE" as 在庫区分 }];
+  const codes = [{ code: rc("M409-MOV-A-043"), store: 店A, zone: "EC-CUBE" as 在庫区分 }];
   const before = snapshot(id, codes);
   let modal = false;
   await step(1, async () => { await openOutboundApproval(page, id); });
@@ -634,7 +635,7 @@ caseTest("IT-M04-09-043", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-044", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫移動ID-M0409-044〕");
-  const code = "M409-MOV-A-044";
+  const code = rc("M409-MOV-A-044");
   const hist = dbm.在庫変動履歴(code, 店A, "EC-CUBE").length;
   const status = dbm.ステータス変更履歴(id).length;
   const updatedBefore = dbm.在庫移動振替(id)?.更新日;
@@ -698,7 +699,7 @@ caseTest("IT-M04-09-045", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-046", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫移動ID-M0409-046〕");
-  const codes = [{ code: "M409-MOV-A-046", store: 店A, zone: "EC-CUBE" as 在庫区分 }];
+  const codes = [{ code: rc("M409-MOV-A-046"), store: 店A, zone: "EC-CUBE" as 在庫区分 }];
   const before = snapshot(id, codes);
   await step(1, async () => {
     await openOutboundApproval(page, id);
@@ -727,7 +728,7 @@ const both = (codes: string[]) => codes.flatMap((code) => [{ code, store: 店A, 
 caseTest("IT-M04-09-047", async ({ page, notes, step, expected }) => {
   await login(page, M0409_NOAUTH);
   const id = notes.get("〔在庫移動ID-M0409-047〕");
-  const codes = both(["M409-MOV-A-047", "M409-MOV-B-047"]);
+  const codes = both([rc("M409-MOV-A-047"), rc("M409-MOV-B-047")]);
   const before = snapshot(id, codes);
   await step(1, async () => {
     await page.goto(adminUrl(`/product/stock/move/inbound_approval_request/${id}`));
@@ -759,15 +760,15 @@ caseTest("IT-M04-09-048", async ({ page, notes, step, expected }) => {
     expect.soft(rows[0], "見出し").toEqual(["商品コード", "商品名", "実移動点数", "差分点数"]);
     const body = rows.slice(1);
     expect.soft(body.length, "全明細（2行）").toBe(2);
-    expect.soft(body.find((r) => r[0] === "M409-MOV-A-048"), "M409-MOV-A-048 の行").toEqual(["M409-MOV-A-048", "M409-MOV-A-048", "3", ""]);
-    expect.soft(body.find((r) => r[0] === "M409-MOV-B-048"), "M409-MOV-B-048 の行").toEqual(["M409-MOV-B-048", "M409-MOV-B-048", "2", ""]);
+    expect.soft(body.find((r) => r[0] === rc("M409-MOV-A-048")), "M409-MOV-A-048 の行").toEqual([rc("M409-MOV-A-048"), rc("M409-MOV-A-048"), "3", ""]);
+    expect.soft(body.find((r) => r[0] === rc("M409-MOV-B-048")), "M409-MOV-B-048 の行").toEqual([rc("M409-MOV-B-048"), rc("M409-MOV-B-048"), "2", ""]);
   });
 });
 
 caseTest("IT-M04-09-050", async ({ page, notes, step, expected }) => {
   await login(page, M0409_RCV);
   const id = notes.get("〔在庫移動ID-M0409-050〕");
-  const code = "M409-MOV-A-050";
+  const code = rc("M409-MOV-A-050");
   const req = new InboundRequestPage(page);
   await openViaList(page, id, inboundRequestPath(id));
   await step(1, async () => {
@@ -844,8 +845,8 @@ caseTest("IT-M04-09-059", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await openViaList(page, id, inboundApprovalPath(id)); });
   await step(2, async () => { rows = await inboundApprovalRows(page); note(`商品一覧（上から）: ${rows.map((r) => `${r.商品コード}（差分 ${r.差分点数}）`).join(" / ")}`); });
   await expected(async () => {
-    const a = rows.findIndex((r) => r.商品コード === "M409-MOV-A-059");
-    const b = rows.findIndex((r) => r.商品コード === "M409-MOV-B-059");
+    const a = rows.findIndex((r) => r.商品コード === rc("M409-MOV-A-059"));
+    const b = rows.findIndex((r) => r.商品コード === rc("M409-MOV-B-059"));
     expect.soft(rows[a]?.差分点数, "M409-MOV-A-059 の差分点数").toBe("1");
     expect(a >= 0 && b >= 0 && a < b, "差分点数のある M409-MOV-A-059 が、差分点数のない明細より上").toBe(true);
   });
@@ -900,7 +901,7 @@ caseTest("IT-M04-09-061", async ({ page, notes, step, expected }) => {
   // 事前準備のログインは M04-09承認者（裁定 E14・2026-10-23。入庫承認申請はシードで M04-09入庫担当者 がした）
   await login(page, M0409_APP);
   const id = notes.get("〔在庫移動ID-M0409-061〕");
-  const code = "M409-MOV-A-061";
+  const code = rc("M409-MOV-A-061");
   const hist = dbm.在庫変動履歴(code, 店B, "EC-CUBE").length;
   const status = dbm.ステータス変更履歴(id).length;
   await step(1, async () => {
@@ -936,7 +937,7 @@ caseTest("IT-M04-09-061", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-062", async ({ page, notes, step, expected }) => {
   await login(page, M0409_RCV);
   const id = notes.get("〔在庫移動ID-M0409-062〕");
-  const code = "M409-MOV-A-062";
+  const code = rc("M409-MOV-A-062");
   const histA = dbm.在庫変動履歴(code, 店A, "EC-CUBE").length;
   await step(1, async () => { await approveInbound(page, id); });
   await step(2, async () => { note(`DB: 入庫先 ${JSON.stringify(dbm.在庫(code, 店B, "EC-CUBE"))}・出庫元 ${JSON.stringify(dbm.在庫(code, 店A, "EC-CUBE"))}`); });
@@ -952,7 +953,7 @@ caseTest("IT-M04-09-062", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-063", async ({ page, notes, step, expected }) => {
   await login(page, M0409_RCV);
   const id = notes.get("〔在庫移動ID-M0409-063〕");
-  const code = "M409-MOV-A-063";
+  const code = rc("M409-MOV-A-063");
   const histA = dbm.在庫変動履歴(code, 店A, "EC-CUBE").length;
   await step(1, async () => { await approveInbound(page, id); });
   await step(2, async () => { note(`DB: 入庫先 ${JSON.stringify(dbm.在庫(code, 店B, "EC-CUBE"))}・出庫元 ${JSON.stringify(dbm.在庫(code, 店A, "EC-CUBE"))}`); });
@@ -968,7 +969,7 @@ caseTest("IT-M04-09-063", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-064", async ({ page, notes, step, expected }) => {
   await login(page, M0409_RCV);
   const id = notes.get("〔在庫移動ID-M0409-064〕");
-  const code = "M409-MOV-A-064";
+  const code = rc("M409-MOV-A-064");
   await step(1, async () => { await approveInbound(page, id); });
   await step(2, async () => { note(`DB: 入庫先 ${JSON.stringify(dbm.在庫(code, 店B, "EC-CUBE"))}・出庫元 ${JSON.stringify(dbm.在庫(code, 店A, "EC-CUBE"))}`); });
   await expected(async () => {
@@ -980,7 +981,7 @@ caseTest("IT-M04-09-064", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-065", async ({ page, notes, step, expected }) => {
   await login(page, M0409_RCV);
   const id = notes.get("〔在庫移動ID-M0409-065〕");
-  const codes = both(["M409-MOV-A-065"]);
+  const codes = both([rc("M409-MOV-A-065")]);
   const before = snapshot(id, codes);
   await step(1, async () => {
     await openViaList(page, id, inboundApprovalPath(id));
@@ -1038,11 +1039,11 @@ async function openTransferNew(page: Page, codes: string[]): Promise<TransferNew
 
 caseTest("IT-M04-09-074", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const src = "M409-TR-A-074";
+  const src = rc("M409-TR-A-074");
   let form: TransferNewPage | undefined;
   await step(1, async () => {
     form = await openTransferNew(page, [src]);
-    await form.dest(src).fill("M409-TR-TO-A-074");
+    await form.dest(src).fill(rc("M409-TR-TO-A-074"));
     await form.dest(src).blur();
     await form.qty(src).fill("1");
   });
@@ -1060,7 +1061,7 @@ caseTest("IT-M04-09-074", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-09-078", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const code = "M409-TR-A-078";
+  const code = rc("M409-TR-A-078");
   await step(1, async () => {
     await searchStock(page, 店A, "EC-CUBE", code);
     await checkStockRows(page, [code], 店A, "EC-CUBE");
@@ -1100,7 +1101,7 @@ function transferRefusedCase(n: string, account: Account): CaseBody {
     await login(page, account);
     const a = notes.get(`〔在庫振替ID-M0409-${n}A〕`);
     const b = notes.get(`〔在庫振替ID-M0409-${n}B〕`);
-    const codes = [`M409-TR-A-${n}`, `M409-TR-TO-A-${n}`, `M409-TR-B-${n}`, `M409-TR-TO-B-${n}`].map((code) => ({ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }));
+    const codes = [rc(`M409-TR-A-${n}`), rc(`M409-TR-TO-A-${n}`), rc(`M409-TR-B-${n}`), rc(`M409-TR-TO-B-${n}`)].map((code) => ({ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }));
     const before = { a: snapshot(a, codes), b: snapshot(b, []) };
     await step(1, async () => {
       await page.goto(adminUrl(`/product/stock/transfer/${a}/approval`));
@@ -1132,7 +1133,7 @@ caseTest("IT-M04-09-081", transferRefusedCase("081", M0409_OP));
 caseTest("IT-M04-09-082", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫振替ID-M0409-082〕");
-  const codes = ["M409-TR-A-082", "M409-TR-TO-A-082"].map((code) => ({ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }));
+  const codes = [rc("M409-TR-A-082"), rc("M409-TR-TO-A-082")].map((code) => ({ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }));
   const before = snapshot(id, codes);
   let modal = false;
   await step(1, async () => { await openTransferApproval(page, id); });
@@ -1157,7 +1158,7 @@ caseTest("IT-M04-09-082", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-083", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫振替ID-M0409-083〕");
-  const dest = "M409-TR-TO-A-083";
+  const dest = rc("M409-TR-TO-A-083");
   const hist = dbm.在庫変動履歴(dest, 店A, "EC-CUBE").length;
   const status = dbm.ステータス変更履歴(id).length;
   let t0 = 0;
@@ -1193,7 +1194,7 @@ caseTest("IT-M04-09-083", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-084", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫振替ID-M0409-084〕");
-  const src = "M409-TR-A-084";
+  const src = rc("M409-TR-A-084");
   const hist = dbm.在庫変動履歴(src, 店A, "EC-CUBE").length;
   const status = dbm.ステータス変更履歴(id).length;
   const updatedBefore = dbm.在庫移動振替(id)?.更新日;
@@ -1229,7 +1230,7 @@ caseTest("IT-M04-09-085", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const a = notes.get("〔在庫振替ID-M0409-085A〕");
   const b = notes.get("〔在庫振替ID-M0409-085B〕");
-  const codes = ["M409-TR-A-085", "M409-TR-TO-A-085", "M409-TR-B-085", "M409-TR-TO-B-085"].map((code) => ({ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }));
+  const codes = [rc("M409-TR-A-085"), rc("M409-TR-TO-A-085"), rc("M409-TR-B-085"), rc("M409-TR-TO-B-085")].map((code) => ({ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }));
   const before = { a: snapshot(a, codes), b: snapshot(b, []) };
   await step(1, async () => {
     await openTransferApproval(page, a);
@@ -1279,7 +1280,7 @@ caseTest("IT-M04-09-086", async ({ page, notes, step, expected }) => {
 
 caseTest("IT-M04-09-095", async ({ page, step, expected }) => {
   await login(page, M0409_NOAUTH);
-  const code = "M0409-095-A";
+  const code = rc("M0409-095-A");
   let moved = false;
   await step(1, async () => {
     await searchStock(page, 店A, "EC-CUBE", code);
@@ -1310,7 +1311,7 @@ caseTest("IT-M04-09-095", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-09-096", async ({ page, step, expected }) => {
   await login(page, M0409_NOAUTH);
-  const code = "M0409-096-A";
+  const code = rc("M0409-096-A");
   let r: { moved: boolean; dialogs: string[] } | undefined;
   await step(1, async () => {
     await searchStock(page, 店A, "EC-CUBE", code);
@@ -1336,7 +1337,7 @@ async function shownLabels(page: Page, root: string): Promise<{ 見出し: strin
 
 caseTest("IT-M04-09-099", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const code = "M0409-099-A";
+  const code = rc("M0409-099-A");
   let labels: { 見出し: string; 値: string }[] = [];
   await step(1, async () => {
     await searchStock(page, 店A, "EC-CUBE", code);
@@ -1357,7 +1358,7 @@ caseTest("IT-M04-09-099", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-09-102", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const code = "M0409-102-A";
+  const code = rc("M0409-102-A");
   let cell = "";
   await step(1, async () => {
     await searchStock(page, 店A, "EC-CUBE", code);
@@ -1380,7 +1381,7 @@ caseTest("IT-M04-09-102", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-09-103", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const code = "M0409-103-A";
+  const code = rc("M0409-103-A");
   let cell = "";
   await step(1, async () => {
     await searchStock(page, 店A, "EC-CUBE", code);
@@ -1478,7 +1479,7 @@ caseTest("IT-M04-09-115", async ({ page, notes, step, expected }) => {
   const req = new OutboundRequestPage(page);
   let v: { 移動前在庫数: string; 移動後在庫数: string; 移動点数: string } | undefined;
   await step(1, async () => { await openViaList(page, id, outboundRequestPath(id)); });
-  await step(2, async () => { v = await req.rowValues("M0409-115-A"); note(`行の表示: ${JSON.stringify(v)}`); });
+  await step(2, async () => { v = await req.rowValues(rc("M0409-115-A")); note(`行の表示: ${JSON.stringify(v)}`); });
   await expected(async () => {
     expect(v, "移動前在庫数・移動後在庫数・移動点数").toEqual({ 移動前在庫数: "10", 移動後在庫数: "7", 移動点数: "3" });
   });
@@ -1533,15 +1534,15 @@ function rejectLengthCase(label: string, n: number, kind: "移動" | "振替", c
   };
 }
 
-caseTest("IT-M04-09-122", rejectLengthCase("〔在庫移動ID-M0409-122〕", 65535, "移動", ["M0409-122-A"]));
-caseTest("IT-M04-09-123", rejectLengthCase("〔在庫移動ID-M0409-123〕", 65536, "移動", ["M0409-123-A"]));
-caseTest("IT-M04-09-124", rejectLengthCase("〔在庫振替ID-M0409-124〕", 65535, "振替", ["M0409-124-A", "M0409-124-B"]));
-caseTest("IT-M04-09-125", rejectLengthCase("〔在庫振替ID-M0409-125〕", 65536, "振替", ["M0409-125-A", "M0409-125-B"]));
+caseTest("IT-M04-09-122", rejectLengthCase("〔在庫移動ID-M0409-122〕", 65535, "移動", [rc("M0409-122-A")]));
+caseTest("IT-M04-09-123", rejectLengthCase("〔在庫移動ID-M0409-123〕", 65536, "移動", [rc("M0409-123-A")]));
+caseTest("IT-M04-09-124", rejectLengthCase("〔在庫振替ID-M0409-124〕", 65535, "振替", [rc("M0409-124-A"), rc("M0409-124-B")]));
+caseTest("IT-M04-09-125", rejectLengthCase("〔在庫振替ID-M0409-125〕", 65536, "振替", [rc("M0409-125-A"), rc("M0409-125-B")]));
 
 caseTest("IT-M04-09-126", async ({ page, notes, step, expected }) => {
   await login(page, M0409_RCV);
   const id = notes.get("〔在庫移動ID-M0409-126〕");
-  const code = "M0409-126-A";
+  const code = rc("M0409-126-A");
   const req = new InboundRequestPage(page);
   const states: string[] = [];
   const tryValue = async (v: string) => {
@@ -1561,7 +1562,7 @@ caseTest("IT-M04-09-126", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-127", async ({ page, notes, step, expected }) => {
   await login(page, M0409_NOAUTH);
   const id = notes.get("〔在庫移動ID-M0409-127〕");
-  const codes = both(["M0409-127-A"]);
+  const codes = both([rc("M0409-127-A")]);
   const before = snapshot(id, codes);
   await step(1, async () => {
     await page.goto(adminUrl(`/product/stock/move/inbound_approval/${id}`));
@@ -1617,7 +1618,7 @@ function addedHistory(code: string, store: 店, before: number, 区分: string):
 caseTest("IT-M04-09-130", async ({ page, notes, step, expected }) => {
   await login(page, M0409_RCV);
   const id = notes.get("〔在庫移動ID-M0409-130〕");
-  const code = "M0409-130-A";
+  const code = rc("M0409-130-A");
   const before = dbm.在庫変動履歴(code, 店B, "EC-CUBE").length;
   await step(1, async () => { await openViaList(page, id, inboundApprovalPath(id)); });
   await step(2, async () => {
@@ -1640,7 +1641,7 @@ caseTest("IT-M04-09-130", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-131", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫移動ID-M0409-131〕");
-  const code = "M0409-131-A";
+  const code = rc("M0409-131-A");
   const before = dbm.在庫変動履歴(code, 店A, "EC-CUBE").length;
   await step(1, async () => { await openViaList(page, id, outboundApprovalPath(id)); });
   await step(2, async () => { await page.locator('textarea[name$="[rejected_memo]"]').fill("出庫内容不一致"); });
@@ -1667,7 +1668,7 @@ function diffHistoryCase(n: string, 区分: string, before: [number, number, num
   return async ({ page, notes, step, expected }) => {
     await login(page, M0409_RCV);
     const id = notes.get(`〔在庫移動ID-M0409-${n}〕`);
-    const code = `M0409-${n}-A`;
+    const code = rc(`M0409-${n}-A`);
     const count = dbm.在庫変動履歴(code, 店A, "EC-CUBE").length;
     await step(1, async () => { await openViaList(page, id, inboundApprovalPath(id)); });
     await step(2, async () => {
@@ -1693,7 +1694,7 @@ caseTest("IT-M04-09-133", diffHistoryCase("133", "在庫移動(差分減算)", [
 caseTest("IT-M04-09-135", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫振替ID-M0409-135〕");
-  const dest = "M0409-135-B";
+  const dest = rc("M0409-135-B");
   const before = dbm.在庫変動履歴(dest, 店A, "EC-CUBE").length;
   await step(1, async () => { await openViaList(page, id, transferApprovalPath(id)); });
   await step(2, async () => {
@@ -1708,14 +1709,14 @@ caseTest("IT-M04-09-135", async ({ page, notes, step, expected }) => {
     expect.soft([h[0].変更前在庫, h[0].変更後在庫, h[0].増減数], "変更前在庫・変更後在庫・増減数").toEqual([4, 7, 3]);
     expect.soft(h[0].仕入総価格, "仕入総価格").toBe(300);
     expect.soft(h[0].履歴登録元ID, "履歴登録元ID").toBe(id);
-    for (const w of ["在庫振替による加算", "商品コードM0409-135-AからM0409-135-B", id]) expect.soft(h[0].理由, `理由に「${w}」`).toContain(w);
+    for (const w of ["在庫振替による加算", `商品コード${rc("M0409-135-A")}から${rc("M0409-135-B")}`, id]) expect.soft(h[0].理由, `理由に「${w}」`).toContain(w);
   });
 });
 
 caseTest("IT-M04-09-136", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫振替ID-M0409-136〕");
-  const src = "M0409-136-A";
+  const src = rc("M0409-136-A");
   const before = dbm.在庫変動履歴(src, 店A, "EC-CUBE").length;
   await step(1, async () => { await openViaList(page, id, transferApprovalPath(id)); });
   await step(2, async () => { await page.locator('textarea[name$="[rejected_memo]"]').fill("振替内容不一致"); });
@@ -1731,7 +1732,7 @@ caseTest("IT-M04-09-136", async ({ page, notes, step, expected }) => {
     expect(h.length, "振替元に在庫振替(棄却)の履歴が1件").toBe(1);
     expect.soft([h[0].変更前在庫, h[0].変更後在庫, h[0].増減数], "変更前在庫・変更後在庫・増減数").toEqual([7, 10, 3]);
     expect.soft(h[0].履歴登録元ID, "履歴登録元ID").toBe(id);
-    for (const w of ["在庫振替棄却による戻し", "商品コードM0409-136-AからM0409-136-B", id]) expect.soft(h[0].理由, `理由に「${w}」`).toContain(w);
+    for (const w of ["在庫振替棄却による戻し", `商品コード${rc("M0409-136-A")}から${rc("M0409-136-B")}`, id]) expect.soft(h[0].理由, `理由に「${w}」`).toContain(w);
   });
 });
 
@@ -1739,7 +1740,7 @@ caseTest("IT-M04-09-136", async ({ page, notes, step, expected }) => {
 
 caseTest("IT-M04-09-139", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const code = "M0409-139-A";
+  const code = rc("M0409-139-A");
   let labels: { 見出し: string; 値: string }[] = [];
   let cards: string[] = [];
   await step(1, async () => {
@@ -1765,7 +1766,7 @@ caseTest("IT-M04-09-139", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-09-141", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const src = "M0409-141-A";
+  const src = rc("M0409-141-A");
   let form: TransferNewPage | undefined;
   await step(1, async () => {
     await searchStock(page, 店A, "EC-CUBE", src);
@@ -1777,7 +1778,7 @@ caseTest("IT-M04-09-141", async ({ page, step, expected }) => {
     form = new TransferNewPage(page);
     await form.ready();
   });
-  await step(3, async () => { await form!.dest(src).fill("M0409-141-B"); });
+  await step(3, async () => { await form!.dest(src).fill(rc("M0409-141-B")); });
   await step(4, async () => {
     const res = page.waitForResponse((r) => r.url().includes("/dest-product-class-info"), { timeout: 30_000 }).catch(() => null);
     await form!.dest(src).blur();
@@ -1797,7 +1798,7 @@ caseTest("IT-M04-09-141", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-09-142", async ({ page, notes, step, expected }) => {
   await login(page, M0409_OP);
-  const src = "M0409-142-A";
+  const src = rc("M0409-142-A");
   const destId = notes.get("〔商品ID-M0409-142〕");
   let form: TransferNewPage | undefined;
   await step(1, async () => {
@@ -1824,9 +1825,9 @@ caseTest("IT-M04-09-142", async ({ page, notes, step, expected }) => {
   await step(5, async () => {
     const row = page.locator("#searchProductModalList tr").filter({ has: page.locator(`button.add-order-item[data-product-id="${destId}"]`) });
     await expect(row, `検索結果の商品ID ${destId} の行`).toHaveCount(1);
-    await row.locator('select[name="product_class"]').selectOption({ label: "M0409-142-B" }).catch(async () => {
+    await row.locator('select[name="product_class"]').selectOption({ label: rc("M0409-142-B") }).catch(async () => {
       const opts = await row.locator('select[name="product_class"] option').allInnerTexts();
-      const hit = opts.find((o) => o.includes("M0409-142-B"));
+      const hit = opts.find((o) => o.includes(rc("M0409-142-B")));
       if (!hit) throw new Error(`商品コードの選択肢に M0409-142-B が無い（${opts.join(" / ")}）`);
       await row.locator('select[name="product_class"]').selectOption({ label: hit });
     });
@@ -1835,7 +1836,7 @@ caseTest("IT-M04-09-142", async ({ page, notes, step, expected }) => {
     await res;
   });
   await expected(async () => {
-    await expect.soft(form!.dest(src), "振替先商品コード").toHaveValue("M0409-142-B");
+    await expect.soft(form!.dest(src), "振替先商品コード").toHaveValue(rc("M0409-142-B"));
     await expect.poll(async () => (await form!.destInfo(src))["product_name_code"], { timeout: 15_000 }).not.toBe("");
     const d = await form!.destInfo(src);
     note(`振替先の表示: ${JSON.stringify(d)}`);
@@ -1889,7 +1890,7 @@ function selfApproveCase(n: string, mode: "承認" | "却下"): CaseBody {
   return async ({ page, notes, step, expected }) => {
     await login(page, M0409_APP);
     const id = notes.get(`〔在庫振替ID-M0409-${n}〕`);
-    const codes = [`M0409-${n}-A`, `M0409-${n}-B`].map((code) => ({ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }));
+    const codes = [rc(`M0409-${n}-A`), rc(`M0409-${n}-B`)].map((code) => ({ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }));
     const before = snapshot(id, codes);
     let i = 1;
     await step(i++, async () => { await openViaList(page, id, transferApprovalPath(id)); });
@@ -1918,8 +1919,8 @@ caseTest("IT-M04-09-146", selfApproveCase("146", "却下"));
 caseTest("IT-M04-09-153", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫移動ID-M0409-153〕");
-  const a = "M0409-153-A";
-  const b = "M0409-153-B";
+  const a = rc("M0409-153-A");
+  const b = rc("M0409-153-B");
   const haList = dbm.在庫変動履歴(a, 店A, "EC-CUBE");
   const ha = haList.length;
   const hb = dbm.在庫変動履歴(b, 店A, "EC-CUBE");
@@ -1949,7 +1950,7 @@ caseTest("IT-M04-09-153", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-155", async ({ page, notes, step, expected }) => {
   await login(page, M0409_RCV);
   const id = notes.get("〔在庫移動ID-M0409-155〕");
-  const [a, b, c] = ["M0409-155-A", "M0409-155-B", "M0409-155-C"];
+  const [a, b, c] = [rc("M0409-155-A"), rc("M0409-155-B"), rc("M0409-155-C")];
   const hb = dbm.在庫変動履歴(b, 店A, "EC-CUBE").length;
   const hc = dbm.在庫変動履歴(c, 店A, "EC-CUBE").length;
   await step(1, async () => {
@@ -1978,7 +1979,7 @@ caseTest("IT-M04-09-155", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-156", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫移動ID-M0409-156〕");
-  const [a, b] = ["M0409-156-A", "M0409-156-B"];
+  const [a, b] = [rc("M0409-156-A"), rc("M0409-156-B")];
   const ha = dbm.在庫変動履歴(a, 店A, "EC-CUBE").length;
   const hb = dbm.在庫変動履歴(b, 店A, "EC-CUBE").length;
   await step(1, async () => { await openViaList(page, id, outboundApprovalPath(id)); });
@@ -2001,7 +2002,7 @@ caseTest("IT-M04-09-156", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-157", async ({ page, notes, step, expected }) => {
   await login(page, M0409_APP);
   const id = notes.get("〔在庫移動ID-M0409-157〕");
-  const a = "M0409-157-A";
+  const a = rc("M0409-157-A");
   const before = dbm.在庫変動履歴(a, 店A, "EC-CUBE");
   // 事前準備（裁定 E15）: シードの在庫編集の入庫の履歴1件と登録時の在庫移動(減算)1件の2件だけ
   note(`操作の前の在庫変動履歴: ${before.map((h) => h.区分).join("・")}`);
@@ -2026,7 +2027,7 @@ caseTest("IT-M04-09-157", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-158", async ({ page, notes, step, expected }) => {
   await login(page, M0409_OP);
   const id = notes.get("〔在庫移動ID-M0409-158〕");
-  const code = "M0409-158-A";
+  const code = rc("M0409-158-A");
   const hist = dbm.在庫変動履歴(code, 店A, "スマレジ").length;
   const req = new OutboundRequestPage(page);
   await step(1, async () => { await openViaList(page, id, outboundRequestPath(id)); });
@@ -2050,7 +2051,7 @@ function rejectStockCase(n: string, total: number): CaseBody {
   return async ({ page, notes, step, expected }) => {
     await login(page, M0409_APP);
     const id = notes.get(`〔在庫移動ID-M0409-${n}〕`);
-    const code = `M0409-CB${n}-A`;
+    const code = rc(`M0409-CB${n}-A`);
     await step(1, async () => { await openViaList(page, id, outboundApprovalPath(id)); });
     await step(2, async () => { await page.locator('textarea[name$="[rejected_memo]"]').fill("出庫内容不一致"); });
     await step(3, async () => {
@@ -2093,7 +2094,7 @@ async function addDiffProduct(page: Page, code: string): Promise<void> {
 caseTest("IT-M04-09-195", async ({ page, notes, step, expected }) => {
   await login(page, M0409_RCV);
   const id = notes.get("〔在庫移動ID-M0409-195〕");
-  const code = "M0409-CB195-B";
+  const code = rc("M0409-CB195-B");
   await openViaList(page, id, inboundRequestPath(id));
   await step(1, async () => {
     await page.locator('button[data-bs-target="#moveDifferentialProductSearchModal"]').click();
@@ -2134,7 +2135,7 @@ caseTest("IT-M04-09-195", async ({ page, notes, step, expected }) => {
 caseTest("IT-M04-09-196", async ({ page, browser, notes, step, expected }) => {
   await login(page, M0409_RCV);
   const id = notes.get("〔在庫移動ID-M0409-196〕");
-  const code = "M0409-CB196-B";
+  const code = rc("M0409-CB196-B");
   await step(1, async () => { await openViaList(page, id, inboundRequestPath(id)); });
   await step(2, async () => {
     const ctx = await browser.newContext();
@@ -2230,9 +2231,9 @@ caseTest("IT-M04-09-053", async ({ page, notes, step, expected }) => {
     const row = page.locator("#moveDifferentialProductSearchModalList tr").filter({ has: page.locator(`button.add-order-item[data-product-id="${productId}"]`) });
     await expect(row, "M409-DIFF-01 の行").toHaveCount(1);
     const opts = await row.locator('select[name="product_class"] option').allInnerTexts();
-    option = clean(opts.find((o) => o.includes("M409-DIFF-01")) ?? "");
+    option = clean(opts.find((o) => o.includes(rc("M409-DIFF-01"))) ?? "");
     note(`商品コードの選択肢: ${opts.map(clean).join(" / ")}`);
-    await row.locator('select[name="product_class"]').selectOption({ label: opts.find((o) => o.includes("M409-DIFF-01"))! });
+    await row.locator('select[name="product_class"]').selectOption({ label: opts.find((o) => o.includes(rc("M409-DIFF-01")))! });
   });
   await expected(async () => {
     expect.soft(found.filter((f) => !f.出たか).map((f) => f.条件), "各検索で M409-DIFF-01 が表示される").toEqual([]);
@@ -2245,8 +2246,8 @@ caseTest("IT-M04-09-053", async ({ page, notes, step, expected }) => {
 
 caseTest("IT-M04-09-069", async ({ page, notes, step, expected }) => {
   await login(page, M0409_OP);
-  const src = "M409-TR-A-069";
-  const dest = "M409-TR-TO-A-069";
+  const src = rc("M409-TR-A-069");
+  const dest = rc("M409-TR-TO-A-069");
   const productId = notes.get("〔商品ID-M0409-069〕");
   const form = await openTransferNew(page, [src]);
   let found: { 条件: string; 出たか: boolean }[] = [];
@@ -2296,7 +2297,7 @@ async function stockRowInfo(page: Page, code: string): Promise<{ 商品名: stri
 
 caseTest("IT-M04-09-067", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const [a, b] = ["M409-TR-A-067", "M409-TR-B-067"];
+  const [a, b] = [rc("M409-TR-A-067"), rc("M409-TR-B-067")];
   const ref = { [a]: await stockRowInfo(page, a), [b]: await stockRowInfo(page, b) };
   note(`在庫検索一覧の表示（比べる値）: ${JSON.stringify(ref)}`);
   await step(1, async () => {
@@ -2337,7 +2338,7 @@ caseTest("IT-M04-09-067", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-09-068", async ({ page, step, expected }) => {
   await login(page, M0409_OP);
-  const [src, dest] = ["M409-TR-A-068", "M409-TR-TO-A-068"];
+  const [src, dest] = [rc("M409-TR-A-068"), rc("M409-TR-TO-A-068")];
   const ref = await stockRowInfo(page, dest);
   note(`振替先の在庫検索一覧の表示（比べる値）: ${JSON.stringify(ref)}`);
   const form = await openTransferNew(page, [src]);

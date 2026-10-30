@@ -12,6 +12,7 @@
  *   正本の手順が「承認可能な在庫のみ表示」に触れずに「承認ステータスの「未承認」にチェック」と書くもの（104〜106・108・109）は、
  *   チェック欄が選べないのでチェックを付けずに検索し、注記に残す（条件付き）。
  */
+import { rc as markCode } from "../../lib/run_marker";
 import { Page, test } from "@playwright/test";
 import { MAIL_URL } from "../../config/env";
 import { expect, caseTest } from "../../lib/case";
@@ -84,7 +85,7 @@ caseTest("IT-M04-32-104", async ({ page, step, expected, c }) => {
     note(`承認の確認の文「${r.確認の文}」・承認のあとのメッセージ ${JSON.stringify(r.メッセージ)}`);
   });
   await step(5, async () => {
-    after = { CODE1: stockOf("DP0432-104-CODE1", shop, 1).在庫, CODE2: stockOf("DP0432-104-CODE2", shop, 1).在庫 };
+    after = { CODE1: stockOf(markCode("DP0432-104-CODE1"), shop, 1).在庫, CODE2: stockOf(markCode("DP0432-104-CODE2"), shop, 1).在庫 };
     note(`DBの在庫（${shop}・EC-CUBE）: ${JSON.stringify(after)}`);
   });
   await expected(async () => {
@@ -143,7 +144,7 @@ caseTest("IT-M04-32-106", async ({ page, step, expected, c }) => {
   });
   await expected(async () => {
     expect(items, "確認モーダルの一覧は1行").toHaveLength(1);
-    expect.soft(items[0]["商品名/商品コード"], "商品名「DP0432-106-NAME」・商品コード「DP0432-106-CODE」").toBe("DP0432-106-NAME / DP0432-106-CODE");
+    expect.soft(items[0]["商品名/商品コード"], "商品名「DP0432-106-NAME」・商品コード「DP0432-106-CODE」").toBe(`DP0432-106-NAME / ${markCode("DP0432-106-CODE")}`);
     expect.soft(num(items[0]["在庫増減数"]), "在庫増減数が-2").toBe(-2);
   });
 });
@@ -610,8 +611,8 @@ caseTest("IT-M04-32-134", async ({ page, step, expected }) => {
     noteLines(items);
   });
   await expected(async () => {
-    expectLine(items, "CBM0432-134-CODEA", { 在庫増減数: 3, 変更前在庫: 10, 変更後在庫: 13 });
-    expect.soft(lineOf(items, "CBM0432-134-CODEB"), "商品コード「CBM0432-134-CODEB」の行は表示されない").toEqual([]);
+    expectLine(items, markCode("CBM0432-134-CODEA"), { 在庫増減数: 3, 変更前在庫: 10, 変更後在庫: 13 });
+    expect.soft(lineOf(items, markCode("CBM0432-134-CODEB")), "商品コード「CBM0432-134-CODEB」の行は表示されない").toEqual([]);
   });
 });
 
