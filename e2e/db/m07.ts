@@ -42,10 +42,10 @@ export function 買取状況の名前(買取番号: string): string | null {
   return r ? (r.v as string) : null;
 }
 
-/** 商品コードの規格の在庫の合計（本店・全在庫場所の合計。参照だけ） */
+/** 商品コードの規格の、買取に紐づく実在庫の数量の合計（参照だけ） */
 export function 在庫数量(コード: string): number | null {
   const r = query(
-    "select sum(ps.stock) as n from dtb_product_stock ps join dtb_product_class pc on pc.id = ps.product_class_id where pc.product_code = $1",
+    "select sum(bos.quantity) as n from dtb_buy_order_stock bos join dtb_product_class pc on pc.id = bos.product_class_id where pc.product_code = $1",
     [コード],
   )[0];
   return r && r.n !== null ? Number(r.n) : null;

@@ -83,6 +83,8 @@ export async function 複数を申込む(page: Page, 商品: { 商品ID: string;
   await page.goto(front("/purchase/cart"), { timeout: 60_000 });
   await page.waitForLoadState("load");
   const proceed = page.locator("button.js-purchase-cart-proceed");
+  // 続けて申込むと、カートが空に見えることがある。見えなければ開き直す
+  if (!(await proceed.waitFor({ state: "visible", timeout: 8_000 }).then(() => true, () => false))) { await page.reload({ timeout: 60_000 }); await page.waitForLoadState("load"); }
   await expect(proceed, "買取カートの「買取手続きへ」ボタン").toBeVisible({ timeout: OPEN });
   await Promise.all([page.waitForURL(/\/purchase\/(fill|login)/, { timeout: 60_000 }), proceed.dispatchEvent("click")]);
   await page.waitForLoadState("load");

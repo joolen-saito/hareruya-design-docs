@@ -158,6 +158,39 @@ export class BuyListPage {
     return msgs;
   }
 
+  /** 表示件数を選ぶ（選択肢の表示名。例 50件）。選ぶと画面が開き直る */
+  async 件数を選ぶ(件数: number): Promise<void> {
+    await Promise.all([this.page.waitForLoadState("load"), this.表示件数の選択().selectOption({ label: `${件数}件` }, { timeout: OPEN })]);
+    await this.page.waitForLoadState("load");
+  }
+
+  /** 選ばれている表示件数（数） */
+  async 選ばれた件数(): Promise<number> {
+    return Number(((await this.表示件数の選択().locator("option:checked").innerText()).replace(/\D/g, "")));
+  }
+
+  /** 並べかえ（見出しの項目名と、昇順/降順）を選ぶ */
+  async 並べかえる(項目: string, 順: "昇順" | "降順"): Promise<void> {
+    await this.page.locator("#result_list_main__sort_menu button.dropdown-toggle").click({ timeout: OPEN });
+    const item = this.page.locator("#result_list_main__sort_menu li.toggle-sort-key").filter({ hasText: 項目 }).first();
+    await item.hover({ timeout: OPEN });
+    const link = item.locator("ul.dropdown-menu-sort a", { hasText: 順 });
+    await Promise.all([this.page.waitForLoadState("load"), link.dispatchEvent("click")]);
+    await this.page.waitForLoadState("load");
+  }
+
+  /** 並べかえの表示（ボタンの文） */
+  async 並べかえの表示(): Promise<string> {
+    return (await this.page.locator("#result_list_main__sort_menu button.dropdown-toggle").innerText()).replace(/\s+/g, " ").trim();
+  }
+
+  /** ページングの番号を押す */
+  async ページを開く(番号: number): Promise<void> {
+    const link = this.ページング().getByRole("link", { name: String(番号), exact: true });
+    await Promise.all([this.page.waitForLoadState("load"), link.click({ timeout: OPEN })]);
+    await this.page.waitForLoadState("load");
+  }
+
   /** ダウンロード▼を開く */
   async ダウンロードを開く(): Promise<void> { await this.ダウンロードのボタン().click({ timeout: OPEN }); }
 
@@ -180,8 +213,13 @@ export class BuyListPage {
       await item.click({ timeout: OPEN });
       const res = await resp;
       const file = pdf ? null : await download;
-      const win = pdf ? await popup : null;
-      if (win) await win.waitForLoadState("load").catch(() => undefined);
+      let win = pdf ? await popup : null;
+      if (win) {
+        // エラーのとき、画面のスクリプトは開いたウィンドウをすぐ閉じる。閉じたものは「表示されなかった」とみなす
+        await this.page.waitForTimeout(2_000);
+        if (win.isClosed()) win = null;
+        else await win.waitForLoadState("load").catch(() => undefined);
+      }
       await this.page.waitForLoadState("load").catch(() => undefined);
       return { file, popup: win, ダイアログ: dialogs, 応答: res ? res.status() : null };
     } finally {
@@ -197,7 +235,7 @@ export async function 戻しリストを読む(popup: Page): Promise<{ 作成日
   await popup.waitForLoadState("load").catch(() => undefined);
   await expect(popup.locator(".ContentsAll"), "戻しリストPDFの本文").toBeVisible({ timeout: 30_000 });
   const 全文 = (await popup.locator("body").innerText()).replace(/[ \t]+/g, " ");
-  const 作成日時 = /作成日時[:：]\s*([0-9\/\-: ]+)/.exec(全文)?.[1]?.trim() ?? "";
+  const 作成日時 = /作成日時?[:：]\s*([0-9\/\-: ]+)/.exec(全文)?.[1]?.trim() ?? "";
   const 行 = await popup.locator(".multipage").evaluateAll((pages) => pages.flatMap((pg) => {
     const title = (pg.querySelector("div")?.textContent ?? "").replace(/\s+/g, " ").trim().replace(/\s*\d+\/\d+$/, "");
     return Array.from(pg.querySelectorAll("tr.data")).map((tr) => {

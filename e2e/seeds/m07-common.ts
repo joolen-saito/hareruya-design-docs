@@ -83,7 +83,7 @@ export async function 先頭の買取番号(page: Page, 注文者名: string): P
  * 会員でフロントにログインして買取の申込みを n 回行い、申込みのたびに一覧の先頭行から買取番号を控える。
  * 買取番号（数字）を申込の順に返す。
  */
-export async function 申込みを行う(browser: Browser, 会員: 試験会員, 回数: number, 申込後?: (回: number, 番号: string, adminPage: Page) => Promise<void>): Promise<string[]> {
+export async function 申込みを行う(browser: Browser, 会員: 試験会員, 回数: number, 申込後?: (回: number, 番号: string, adminPage: Page) => Promise<void>, 照合: "毎回" | "最初と最後だけ" = "毎回"): Promise<string[]> {
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   const out: string[] = [];
   try {
@@ -94,6 +94,7 @@ export async function 申込みを行う(browser: Browser, 会員: 試験会員,
     const 商品ID = await 買取する商品を選ぶ(page);
     for (let i = 1; i <= 回数; i++) {
       const done = await 申込む(page, 商品ID);
+      if (照合 === "最初と最後だけ" && i !== 1 && i !== 回数) { out.push(done); continue; }
       const 番号 = await withAdminSession(browser, SETUP_ADMIN, async (a) => {
         a.setDefaultTimeout(60_000);
         const first = await 先頭の買取番号(a, 会員.姓);
@@ -164,5 +165,27 @@ export async function 売却を設定する(browser: Browser, 買取番号: stri
     await edit.査定確定する();
     await edit.保存する(`買取番号 ${買取番号} の買取明細の売却を「${売却}」にする`);
     return n;
+  });
+}
+
+/** 注文者名で検索し、番号が [下限, 上限] の外の行を削除する（前の実行の残りを片付ける。件数が多いときは1ページずつ） */
+export async function 注文者名の範囲外を削除する(browser: Browser, 注文者名: string, 下限: string, 上限: string): Promise<number> {
+  return withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    let removed = 0;
+    for (let round = 0; round < 400; round++) {
+      const list = new BuyListPage(page);
+      await list.open();
+      await list.注文者名を入れる(注文者名);
+      await list.検索する();
+      // 古い順に並べて、範囲の下側の残りが1ページ目に出るようにする
+      await page.goto(adminUrl("/purchase/page/1?sort=default&order=ASC"), { timeout: 60_000 });
+      await page.waitForLoadState("load");
+      const rows = (await list.行()).filter((r) => Number(r.番号) < Number(下限) || Number(r.番号) > Number(上限));
+      if (rows.length === 0) return removed;
+      await list.削除する(rows[0].番号, "OK");
+      removed++;
+    }
+    throw new Error(`注文者名「${注文者名}」の範囲外の行が片付かない`);
   });
 }

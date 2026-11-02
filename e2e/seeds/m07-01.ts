@@ -7,7 +7,7 @@
  */
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { rc } from "../lib/run_marker";
-import { 売却を設定する } from "./m07-common";
+import { 売却を設定する, 注文者名の範囲外を削除する } from "./m07-common";
 import { Account } from "../lib/session";
 import { 試験管理者を用意する, 会員を作る, 申込みを行う, 買取状況を設定する, 本人確認を設定する, 注文者名の残りを削除する, 試験会員 } from "./m07-common";
 
@@ -105,3 +105,29 @@ function 売却つき(seedId: string, ラベル: string, 番号: string, 売却:
 }
 売却つき("S-M07-01-DISPLAY-035", "〔買取番号-M0701-035〕", "035", "しない");
 売却つき("S-M07-01-DISPLAY-NOCANCEL-084", "〔買取番号-M0701-084〕", "084", "する");
+
+/**
+ * 共有シード PAGING: 注文者名「ページ試験」の会員で申込を続けて61回行う（注文日時は買取番号の昇順と一致）。
+ * 1回目と61回目の買取番号を控える。各ケースの開始時に、この範囲の外の「ページ試験」の買取（前の実行の残り）を一覧から削除する。
+ */
+defineSeed("S-M07-01-PAGING", { needs: ["S-M07-01-ADM"] }, async ({ browser, notes, seed }) => {
+  const m = await 会員を作る(browser, "ページ試験", "paging");
+  const nums = await 申込みを行う(browser, m, 61, undefined, "最初と最後だけ");
+  notes.set("〔買取番号-M0701-共有ページA〕", nums[0]);
+  notes.set("〔買取番号-M0701-共有ページB〕", nums[60]);
+  const n = await 注文者名の範囲外を削除する(browser, "ページ試験", nums[0], nums[60]);
+  if (n) reportSeedIssue(seed.シードID, `作った買取の範囲外の「ページ試験」の買取（前の実行の残り）${n} 件を一覧から削除した`);
+});
+
+/** 申込をまとめて n 回。1回目・k回目の番号を控える（削除保持・削除最終）。申込の前に同じ注文者名の残りを全部削除する（シード表の手順） */
+function 削除用(seedId: string, 姓: string, 回数: number, 控え: [number, string][]): void {
+  defineSeed(seedId, { needs: ["S-M07-01-ADM"] }, async ({ browser, notes, seed }) => {
+    const r = await 注文者名の残りを削除する(browser, 姓, []);
+    if (r) reportSeedIssue(seed.シードID, `前の実行の残り（注文者名「${姓}」の買取 ${r} 件）を一覧から削除してから始めた`);
+    const m = await 会員を作る(browser, 姓, "del");
+    const nums = await 申込みを行う(browser, m, 回数);
+    for (const [i, label] of 控え) notes.set(label, nums[i - 1]);
+  });
+}
+削除用("S-M07-01-DELETE-PAGE-049", "削除保持", 21, [[1, "〔買取番号-M0701-049A〕"], [11, "〔買取番号-M0701-049B〕"], [21, "〔買取番号-M0701-049C〕"]]);
+削除用("S-M07-01-DELETE-LAST-050", "削除最終", 11, [[1, "〔買取番号-M0701-050A〕"], [11, "〔買取番号-M0701-050B〕"]]);
