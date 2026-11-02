@@ -3,7 +3,7 @@ import { Page, expect } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { mailIds, waitForMailTo } from "../../lib/mail";
 
-export type FrontMember = { 姓: string; 名: string; セイ: string; メイ: string; メール: string; パスワード: string };
+export type FrontMember = { 姓: string; 名: string; セイ: string; メイ: string; メール: string; パスワード: string; 住所3?: string };
 
 /**
  * 会員情報登録画面で登録する。お名前・フリガナ・メールアドレス・パスワードは渡した値、
@@ -30,6 +30,7 @@ export async function registerFrontMember(page: Page, v: FrontMember): Promise<v
   await f("address][pref").selectOption({ label: "東京都" });
   await f("address][addr01").fill("千代田区千代田");
   await f("address][addr02").fill("1-1");
+  if (v.住所3 !== undefined && (await f("address][addr03").count()) > 0) await f("address][addr03").fill(v.住所3);
   await f("tel][tel01").fill("03");
   await f("tel][tel02").fill("0000");
   await f("tel][tel03").fill("0000");

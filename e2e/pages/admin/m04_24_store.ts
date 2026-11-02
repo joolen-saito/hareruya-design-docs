@@ -37,7 +37,7 @@ const field = (page: Page, name: string) => page.locator(`[name="mall_tenant_sho
 const digits = (v: string) => v.replace(/-/g, "");
 
 /** 店舗登録画面で登録する（そのほかの必須項目は、正本の「任意の有効な値」として固定の値を入れる） */
-export async function createStore(page: Page, v: M0424StoreInput): Promise<void> {
+export async function createStore(page: Page, v: M0424StoreInput, 店舗種別: "本店" | "支店" = "支店"): Promise<void> {
   await page.goto(adminUrl("/mall/tenant/create"));
   await page.waitForLoadState("load");
   await field(page, "company_name").fill(v.会社名);
@@ -46,7 +46,7 @@ export async function createStore(page: Page, v: M0424StoreInput): Promise<void>
   await field(page, "shop_kana").fill(v.店名カナ);
   await field(page, "shop_name_eng").fill(v.店名英語);
   await field(page, "html_class_name").fill(v.支店URL);
-  await page.getByLabel("支店", { exact: true }).check();
+  await page.getByLabel(店舗種別, { exact: true }).check();
   await page.getByLabel("公開", { exact: true }).check();
   await page.getByLabel("開店", { exact: true }).check();
   await page.getByLabel("表示する", { exact: true }).check();
@@ -93,12 +93,12 @@ export async function expectStore(page: Page, id: string, v: M0424StoreInput): P
  * あれば内容を確かめて使い、無ければ登録する。店舗一覧の行に表示された店舗IDを返す。
  * 登録の送信がエラー画面になっても、店舗一覧に出ていれば内容を確かめて先へ進み、onIssue で知らせる（握りつぶさない）。
  */
-export async function ensureStore(page: Page, v: M0424StoreInput, onIssue: (message: string) => void): Promise<string> {
+export async function ensureStore(page: Page, v: M0424StoreInput, onIssue: (message: string) => void, 店舗種別: "本店" | "支店" = "支店"): Promise<string> {
   let id = await findOpenStoreId(page, v.店名, v.会社名);
   if (!id) {
     let failure = "";
     try {
-      await createStore(page, v);
+      await createStore(page, v, 店舗種別);
     } catch (e) {
       failure = (e as Error).message.split("\n")[0];
     }
