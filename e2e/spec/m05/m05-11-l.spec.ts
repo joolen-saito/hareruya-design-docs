@@ -1,5 +1,5 @@
 /** M05-11 受注情報編集（受注商品情報の価格帯・Foil・フレーム・状態EX・商品名のリンク）。正本: cases/M05-11_test_cases.tsv */
-import { Browser, Page } from "@playwright/test";
+import { Browser, Page, test } from "@playwright/test";
 import { caseTest, expect } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
@@ -8,6 +8,8 @@ import { 明細のコード } from "../../seeds/m05-11-l";
 import { M0511_ADMIN_A, 店舗Aの店名 } from "../../seeds/m05-11";
 
 const NO = "〔受注番号-M0511-共有PRODUCT〕";
+// 共有シード（カード詳細4件・商品5点・EXの規格・在庫承認・注文）の作成に30分以上かかるので、この spec の制限時間を90分にする
+test.beforeEach(async ({}, testInfo) => { testInfo.setTimeout(5_400_000); });
 async function 開く(browser: Browser, page: Page, no: string): Promise<OrderEditPage> {
   const p = new OrderEditPage(page);
   await p.openByOrderNo(no, await 店舗Aの店名(browser));
