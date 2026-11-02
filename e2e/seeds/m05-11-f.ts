@@ -16,6 +16,7 @@ import { savePublishedClass } from "../pages/admin/f03_07_restock";
 import { downloadGoodsCsvTemplate, readExistingGoodsChildCategoryId } from "../pages/admin/m03_01_goods_csv";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { classRowsFromProductEdit, openProductEditByCode, registerCard } from "../pages/admin/m03_23_seed_products";
+import { imageFile, saveProductWithImages } from "../pages/admin/f03_06_products";
 import { ensureCardset } from "../pages/admin/product_masters";
 import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
 import { OrderEditPage, OrderItemsEdit } from "../pages/admin/m05_11_order_edit";
@@ -25,7 +26,7 @@ import { ADMIN_A_NAME, M0511_ADMIN_A, 店舗Aの店名, 試験会員 } from "./m
 import { ポイントを付与する, 会員IDを一覧から読む, メールで受注を開く } from "../pages/admin/m05_11_order_edit";
 import { FrontMember } from "../pages/front/member_entry";
 
-export type 商品 = { カード?: { Foil?: string; フレーム?: string }; 取込の規格は公開しない?: boolean; 追加規格EX?: { code: string }; 在庫コード?: string; code: string; name: string; 価格?: string; 原価単価?: string; 高額商品コード?: string; 入庫: { 数量: number; 仕入単価: string }[] };
+export type 商品 = { 画像?: boolean; カード?: { Foil?: string; フレーム?: string }; 取込の規格は公開しない?: boolean; 追加規格EX?: { code: string }; 在庫コード?: string; code: string; name: string; 価格?: string; 原価単価?: string; 高額商品コード?: string; 入庫: { 数量: number; 仕入単価: string }[] };
 export const 実商品コード = (code: string): string => rc(code);
 
 const productIds = new Map<string, string>();
@@ -70,6 +71,10 @@ export async function 商品を用意する(browser: Browser, seedId: string, de
       if (rows.length !== 1 || rows[0].商品コード !== code) throw new Error(`${seedId}: ${code} の取込直後の商品規格が1件でない`);
       if (rows[0].公開状態 !== "公開" && !d.取込の規格は公開しない) await savePublishedClass(page, { productId, classId: rows[0].商品規格ID, highPriceCode: d.高額商品コード ? rc(d.高額商品コード) : undefined }, `${seedId}: ${code}`, issue);
       productIds.set(code, productId);
+      if (d.画像) {
+        const names = await saveProductWithImages(page, productId, [imageFile(`IMG-${d.code}`)], `${seedId}: ${code} の商品画像`, issue);
+        if (names.length === 0) issue(`${code}: 商品画像の追加欄に画像ファイルを渡しても画像が増えず、画像なしで登録した`);
+      }
       if (d.追加規格EX) {
         // 商品規格一覧の「新規作成」で、言語は日本語・状態は EX の規格を公開で足す（部門は選択肢の先頭）
         await page.goto(adminUrl(`/product/product/class/${productId}`));
