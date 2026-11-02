@@ -64,7 +64,7 @@ async function カートに入れる(page: Page, 商品ID: string, 数量: numbe
 }
 
 /** ご注文手続きで配送方法と支払方法（銀行振込）を選び、注文を確定する。注文番号と選んだ配送方法を返す */
-async function 確定する(page: Page, 配送方法: string, what: string): Promise<{ 注文番号: string; 配送方法: string }> {
+async function 確定する(page: Page, 配送方法: string, what: string, 支払候補: string[] = ["銀行振込"]): Promise<{ 注文番号: string; 配送方法: string; 支払方法: string }> {
   await page.goto(front("/cart"));
   await page.waitForLoadState("load");
   const toShopping = page.locator("a.p-hareruya-cart__checkout-btn");
@@ -94,8 +94,8 @@ async function 確定する(page: Page, 配送方法: string, what: string): Pro
     value: (n as HTMLInputElement).value, checked: (n as HTMLInputElement).checked,
     label: ((n as HTMLInputElement).closest("label")?.textContent ?? "").replace(/\s+/g, " ").trim(),
   })));
-  const pay = choices.find((c) => c.label === "銀行振込");
-  if (!pay) throw new Error(`${what}: 支払方法に「銀行振込」が無い（${choices.map((c) => c.label).join("、")}）`);
+  const pay = 支払候補.map((l) => choices.find((c) => c.label === l)).find(Boolean);
+  if (!pay) throw new Error(`${what}: 支払方法に「${支払候補.join("・")}」が無い（${choices.map((c) => c.label).join("、")}）`);
   if (!pay.checked) {
     await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator(`input[name="_shopping_order[Payment]"][value="${pay.value}"]`).check({ force: true })]);
     await page.waitForLoadState("load");
@@ -116,11 +116,11 @@ async function 確定する(page: Page, 配送方法: string, what: string): Pro
   await expect(heading, `${what}: ご注文完了の画面のご注文番号`).toBeVisible();
   const m = /ご注文番号\s*(\S+)/.exec((await heading.textContent()) ?? "");
   if (!m) throw new Error(`${what}: ご注文番号を読めない`);
-  return { 注文番号: m[1], 配送方法: 選んだ配送 };
+  return { 注文番号: m[1], 配送方法: 選んだ配送, 支払方法: pay.label };
 }
 
 /** 会員でフロントにログインし、明細をカートに入れて、銀行振込・ポイントを使わずに注文する */
-export async function 会員が注文する(browser: Browser, m: FrontMember, 明細: 注文の明細[], what: string): Promise<{ 注文番号: string; 配送方法: string }> {
+export async function 会員が注文する(browser: Browser, m: FrontMember, 明細: 注文の明細[], what: string, opt: { 配送?: string; 支払候補?: string[] } = {}): Promise<{ 注文番号: string; 配送方法: string; 支払方法: string }> {
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
     await hideDebugToolbar(context);
@@ -128,7 +128,7 @@ export async function 会員が注文する(browser: Browser, m: FrontMember, �
     await frontLogin(page, m);
     await clearCart(page, () => undefined);
     for (const it of 明細) await カートに入れる(page, it.商品ID, it.数量, `${what}: 商品をカートに入れる`);
-    return await 確定する(page, "宅配便", `${what}: 注文`);
+    return await 確定する(page, opt.配送 ?? "宅配便", `${what}: 注文`, opt.支払候補);
   } finally {
     await context.close();
   }

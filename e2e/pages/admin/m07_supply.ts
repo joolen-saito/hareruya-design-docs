@@ -3,6 +3,7 @@
  * 正本のシード表の手順（棚番号登録画面・グッズ商品CSV登録・商品マスター・商品規格登録編集）のとおりに画面で行う。
  */
 import { expect, Page } from "@playwright/test";
+import { 棚番号の件数, 次の棚並び順 } from "../../db/m07";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 import { registerGoodsCsv } from "./m03_01_goods_register";
@@ -14,11 +15,12 @@ type Issue = (m: string) => void;
 
 /** 棚番号が未登録なら、名称と並び順（名称の数字の部分。無ければ 1）を入れて登録する */
 export async function 棚番号を登録する(page: Page, 名称: string, onIssue: Issue): Promise<void> {
+  if (棚番号の件数(名称) > 0) { onIssue(`棚番号「${名称}」は登録済みだったので、登録しなかった`); return; }
   const shelf = new ShelfNumberPage(page);
   await shelf.openNew();
   await shelf.名称.fill(名称);
-  const digits = /(\d+)/.exec(名称)?.[1] ?? "1";
-  await shelf.並び順.fill(String(Number(digits.slice(-6))));
+  // 並び順は、まだ使われていない値（正本は「名称の昇順になる値」。登録済みの並び順と重ならない値にした）
+  await shelf.並び順.fill(String(次の棚並び順()));
   await Promise.all([page.waitForNavigation({ waitUntil: "load" }), shelf.登録ボタン.click()]);
   const m = await topMessages(page);
   if (m.エラー.length) {
@@ -35,7 +37,7 @@ export async function サプライ品を登録する(page: Page, 品: サプラ�
   const categoryId = await goodsCsvCategoryId(page, onIssue);
   const lines = 品.map((p) => ({
     code: p.コード, nameJp: p.名前, nameEn: p.名前,
-    values: { "基準価格": p.基準価格, "販売価格": p.基準価格, "買取価格": p.買取価格 },
+    values: (() => { const v = String(Math.max(Number(p.基準価格), Number(p.買取価格) + 1)); return { "基準価格": v, "販売価格": v, "買取価格": p.買取価格 }; })(),
   }));
   await registerGoodsCsv(page, { what: `サプライ品 ${品.map((p) => p.コード).join("・")} のグッズ商品CSV登録`, fileName: `m07-supply-${Date.now()}.csv`, categoryId, lines, common: { "原価単価": "10" }, onWarning: onIssue });
 }
@@ -69,3 +71,13 @@ export async function 規格に棚番号を付けて公開する(page: Page, 商
 }
 
 void adminUrl;
+
+/**
+ * 棚番号の名称は「英大文字1字 - 数字3桁」（例 A-001）しか画面から登録できない（棚番号登録画面の入力チェック）。
+ * 正本の名称（S01・M0709-001-S など）はこの形でないので、「S-」＋名称の数字の下3桁に代えて登録する。
+ */
+export function 登録できる棚名(正本の名称: string): string {
+  if (/^[A-Z]-\d{3}$/.test(正本の名称)) return 正本の名称;
+  const digits = 正本の名称.replace(/\D/g, "");
+  return `S-${digits.slice(-3).padStart(3, "0")}`;
+}

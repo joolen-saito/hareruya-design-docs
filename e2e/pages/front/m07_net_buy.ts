@@ -74,7 +74,12 @@ async function カートに入れる(page: Page, 商品ID: string, 数量?: stri
  * 買取手続きの必須項目には有効な値を入れる（正本が値を決めていない）。
  */
 export async function 申込む(page: Page, 商品ID: string, 条件?: { 箱数?: string; 数量?: string }): Promise<string> {
-  await カートに入れる(page, 商品ID, 条件?.数量);
+  return 複数を申込む(page, [{ 商品ID, 数量: 条件?.数量 }], 条件);
+}
+
+/** 商品を順にカートへ入れ、1回の申込みにまとめて申込む。完了画面の買取番号（数字）を返す */
+export async function 複数を申込む(page: Page, 商品: { 商品ID: string; 数量?: string }[], 条件?: { 箱数?: string }): Promise<string> {
+  for (const p of 商品) await カートに入れる(page, p.商品ID, p.数量);
   await page.goto(front("/purchase/cart"), { timeout: 60_000 });
   await page.waitForLoadState("load");
   const proceed = page.locator("button.js-purchase-cart-proceed");

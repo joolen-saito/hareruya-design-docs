@@ -3,7 +3,7 @@
  *
  * ケース1件（テストIDが IT-… のテスト）が終わるたびに、次の形で書き出す。
  *   evidence/<機能ID>/<テストID>/result.json   機械が読む記録（evidence_index.mjs が MD・HTML・TSV を作る元）
- *   evidence/<機能ID>/<テストID>/NN_<場面>.png   手順ごとの画面（lib/evidence.ts が撮ったもの）
+ *   evidence/<機能ID>/<テストID>/<一覧のテストID>_<連番>.png   手順ごとの画面（lib/evidence.ts が撮ったもの。連番は1から、開始時→手順→期待結果の順）
  *   evidence/<機能ID>/<テストID>/Playwrightの画面_N.png・trace.zip   落ちたときだけ（Playwright が撮ったもの）
  *   evidence/<機能ID>/history.tsv                実施の履歴（1件1行。追記するだけ）
  * ケースのディレクトリは最新の実施だけを持つ（同じケースを流し直すと置き換わる）。履歴は history.tsv に残る。
@@ -296,16 +296,21 @@ export default class EvidenceReporter implements Reporter {
     }
     stepChecks.forEach((k, j) => { if (!used.has(j) && (!recorded.length || k.結果 === "不合格")) checks.push(k); });
 
-    // 画像の写し
+    // 画像の写し。名前は「<一覧のテストID>_<連番>」（依頼者の指定 2026-11-02。連番は1から、開始時（前提条件）→ 手順 → 期待結果 の順）。
+    // 一覧のテストIDが引けないときだけ正本のテストIDを使う
     let seq = 0;
     const copied = new Set<string>();
-    for (const a of result.attachments) {
-      if (!a.name.startsWith(EVIDENCE_PREFIX) || !a.path || !a.contentType.startsWith("image/")) continue;
+    const shotId = this.ids.get(testId) || testId;
+    const shots = result.attachments
+      .map((a, i) => ({ a, i, sc: a.name.startsWith(EVIDENCE_PREFIX) && a.path && a.contentType.startsWith("image/") ? sceneOf(a.name.slice(EVIDENCE_PREFIX.length)) : undefined }))
+      .filter((x) => x.sc && fs.existsSync(x.a.path!))
+      .sort((x, y) => scenes.indexOf(x.sc!) - scenes.indexOf(y.sc!) || x.i - y.i);
+    for (const { a, sc: scene } of shots) {
       const name = a.name.slice(EVIDENCE_PREFIX.length);
-      const sc = sceneOf(name);
-      if (!sc || !fs.existsSync(a.path)) continue;
+      const sc = scene!;
+      if (!a.path) continue;
       seq += 1;
-      const file = `${String(seq).padStart(2, "0")}_${safe(name)}${path.extname(a.path)}`;
+      const file = `${safe(shotId)}_${seq}${path.extname(a.path)}`;
       fs.copyFileSync(a.path, path.join(tmp, file));
       copied.add(a.path);
       const text = (suffix: string) => result.attachments.find((x) => x.name === `${a.name}:${suffix}` && x.body)?.body?.toString("utf-8");

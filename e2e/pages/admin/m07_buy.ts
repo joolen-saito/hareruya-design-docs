@@ -247,7 +247,7 @@ export class BuyEditPage {
     await expect(sel, "買取情報編集画面の買取状況").toBeVisible({ timeout: OPEN });
     const have = (await sel.locator("option").allInnerTexts()).map((t) => t.trim());
     let 選ぶ = 名前;
-    if (!have.includes(選ぶ)) 選ぶ = 名前.replace(/[●★]/g, "");
+    if (!have.includes(選ぶ)) 選ぶ = 名前.replace(/[●★]/g, "").replace(/（[^）]*）$/, "");
     if (!have.includes(選ぶ)) throw new Error(`買取状況に「${名前}」が無い（ある選択肢: ${have.filter(Boolean).join("、")}）`);
     await sel.selectOption({ label: 選ぶ }, { timeout: OPEN });
     await this.保存する(`買取状況を「${選ぶ}」に変える`);
@@ -255,8 +255,8 @@ export class BuyEditPage {
   }
 
   async 保存する(what: string): Promise<void> {
-    await Promise.all([this.page.waitForLoadState("load"), this.page.locator("#save_btn").click({ timeout: OPEN })]);
-    await this.page.waitForLoadState("load");
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }).catch(() => null), this.page.locator("#save_btn").click({ timeout: OPEN, noWaitAfter: true })]);
+    await this.page.waitForLoadState("load", { timeout: 120_000 });
     await expectSaved(this.page, what);
   }
 
@@ -306,6 +306,53 @@ export class BuyEditPage {
     const n = await sels.count();
     for (let i = 0; i < n; i++) await sels.nth(i).selectOption({ label: 売却 }, { timeout: OPEN });
     return n;
+  }
+
+  /** 商品名の明細の行（えらんで買取） */
+  private 明細行(名前: string) {
+    return this.page.locator("#buy_main_cards_field_list tr").filter({ has: this.page.locator('td[id^="purchase_list_main__product_name--"]', { hasText: 名前 }) }).first();
+  }
+
+  /** 査定編集中に、商品名の明細の査定価格・数量・売却を入れる */
+  async 明細を名前で入れる(名前: string, v: { 査定価格?: string; 数量?: string; 売却?: string }): Promise<void> {
+    const row = this.明細行(名前);
+    await expect(row, `買取明細の行（${名前}）`).toBeVisible({ timeout: OPEN });
+    if (v.査定価格 !== undefined) await row.locator('input[name$="[price]"]').fill(v.査定価格, { timeout: OPEN });
+    if (v.数量 !== undefined) await row.locator('input[name$="[count]"]').fill(v.数量, { timeout: OPEN });
+    if (v.売却 !== undefined) {
+      const sel = row.locator('select[name$="[saleFlg]"]');
+      const have = (await sel.locator("option").allInnerTexts()).map((t) => t.trim());
+      // 管理画面の選択肢は「する」「しない」。正本の「売却する」「売却しない」は列の見出し「売却」を含めた言い方
+      const label = have.includes(v.売却) ? v.売却 : v.売却.replace(/^売却/, "");
+      if (!have.includes(label)) throw new Error(`売却の選択肢に「${v.売却}」が無い（ある選択肢: ${have.join("、")}）`);
+      await sel.selectOption({ label }, { timeout: OPEN });
+    }
+  }
+
+  /** 明細の「削除」リンクを押し、確認のダイアログに答える。ダイアログの文を返す */
+  async 明細を削除する(名前: string, 答え: "OK" | "キャンセル"): Promise<string[]> {
+    const msgs: string[] = [];
+    const on = (d: import("@playwright/test").Dialog) => { msgs.push(d.message()); void (答え === "OK" ? d.accept() : d.dismiss()); };
+    this.page.on("dialog", on);
+    try {
+      const link = this.明細行(名前).locator("td[id^='purchase_list_main__delete--'] a");
+      await expect(link, `明細（${名前}）の削除リンク`).toBeVisible({ timeout: OPEN });
+      await Promise.all([this.page.waitForLoadState("load"), link.click({ timeout: OPEN })]);
+      await this.page.waitForLoadState("load");
+    } finally { this.page.off("dialog", on); }
+    return msgs;
+  }
+
+  /** 「一括売却登録」を押し、確認のダイアログに答える。ダイアログの文を返す */
+  async 一括売却登録する(答え: "OK" | "キャンセル"): Promise<string[]> {
+    const msgs: string[] = [];
+    const on = (d: import("@playwright/test").Dialog) => { msgs.push(d.message()); void (答え === "OK" ? d.accept() : d.dismiss()); };
+    this.page.on("dialog", on);
+    try {
+      await Promise.all([this.page.waitForLoadState("load"), this.page.locator("#sell_btn").click({ timeout: OPEN })]);
+      await this.page.waitForLoadState("load");
+    } finally { this.page.off("dialog", on); }
+    return msgs;
   }
 
   /** 送料の入力欄 */

@@ -253,6 +253,8 @@ export type カードの入力 = {
   コスト: string;
   /** 詳細情報のカードセット（選択肢の値＝カードセットID） */
   カードセットID: string;
+  /** Foil・フレームの選択肢の表示名（省略すると選択肢の先頭） */
+  Foil?: string; フレーム?: string;
 };
 
 /** 選択欄で、値が空でない選択肢の先頭を選ぶ。選んだ表示名を返す */
@@ -291,7 +293,16 @@ export async function registerCard(page: Page, v: カードの入力, what: stri
   await cardset.selectOption(v.カードセットID);
   const chosen: string[] = [];
   for (const [field, 項目] of [["rarity", "レアリティ"], ["cardLayout", "レイアウト"], ["promotion", "プロモ種別"], ["foilFlg", "Foil"], ["frameFlg", "フレーム"]] as const) {
-    chosen.push(`${項目}「${await chooseFirst(d.locator(`select[name$="[${field}]"]`), `${what}: 詳細情報の${項目}の欄`)}」`);
+    const want = field === "foilFlg" ? v.Foil : field === "frameFlg" ? v.フレーム : undefined;
+    if (want !== undefined) {
+      const sel = d.locator(`select[name$="[${field}]"]`);
+      const labels = (await sel.locator("option").allTextContents()).map((x) => x.trim());
+      if (!labels.includes(want)) throw new Error(`${what}: ${項目}に「${want}」が無い（${labels.join("、")}）`);
+      await sel.selectOption({ label: want });
+      chosen.push(`${項目}「${want}」`);
+    } else {
+      chosen.push(`${項目}「${await chooseFirst(d.locator(`select[name$="[${field}]"]`), `${what}: 詳細情報の${項目}の欄`)}」`);
+    }
   }
   onIssue(`${what}: 詳細情報の ${chosen.join("・")} は選択肢の先頭を選んだ（正本は値を定めない）`);
   await Promise.all([

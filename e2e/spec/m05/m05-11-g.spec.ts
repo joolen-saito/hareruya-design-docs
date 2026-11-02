@@ -238,7 +238,7 @@ caseTest("IT-M05-11-239", async ({ page, browser, notes, step, expected }) => {
   await step(4, async () => { r = 受注(notes.get(key("239"))); rows = 受注明細(notes.get(key("239"))); });
   await expected(async () => {
     const row = rows.find((y) => y.商品コード === x);
-    expect.soft([row?.価格, row?.数量], "配送商品の価格・数量（1000・2）").toEqual(["1000", "2"]);
+    expect.soft([Number(row?.価格), Number(row?.数量)], "配送商品の価格・数量（1000・2）").toEqual([1000, 2]);
     expect.soft(r.受注ID !== undefined, "受注が保存された").toBe(true);
   });
 });

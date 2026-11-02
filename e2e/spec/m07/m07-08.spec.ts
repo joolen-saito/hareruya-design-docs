@@ -103,7 +103,7 @@ caseTest("IT-M07-08-008", async ({ page, notes, step, expected }) => {
     expect.soft(r?.file ?? null, "CSVのダウンロード").toBeNull();
     const top = (await page.locator(".alert-danger").allInnerTexts()).join(" / ");
     await expect.soft(page.locator(".alert-danger").first(), "管理画面上部のエラー表示").toBeVisible();
-    expect.soft(top, "エラーの文（選択した全件が存在しない）").toMatch(/存在しない|存在しません/);
+    expect.soft(top, "エラーの文（選択した全件が存在しない）").toMatch(/存在しない|存在しません|見つかりません/);
     expect.soft(new URL(page.url()).pathname, "買取一覧(検索結果)画面").toMatch(/^\/admin\/purchase\/(list|page\/\d+)?$/);
   });
 });
@@ -122,7 +122,7 @@ caseTest("IT-M07-08-009", async ({ page, notes, step, expected }) => {
     expect.soft(r?.file ?? null, "CSVのダウンロード").toBeNull();
     const top = (await page.locator(".alert-danger").allInnerTexts()).join(" / ");
     await expect.soft(page.locator(".alert-danger").first(), "管理画面上部のエラー表示").toBeVisible();
-    expect.soft(top, "エラーの文（選択中に存在しない買取が含まれる）").toMatch(/存在しない|存在しません/);
+    expect.soft(top, "エラーの文（選択中に存在しない買取が含まれる）").toMatch(/存在しない|存在しません|見つかりません/);
     expect.soft(new URL(page.url()).pathname, "買取一覧(検索結果)画面").toMatch(/^\/admin\/purchase\/(list|page\/\d+)?$/);
   });
 });

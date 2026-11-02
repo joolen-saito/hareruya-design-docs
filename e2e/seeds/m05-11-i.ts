@@ -33,10 +33,11 @@ const 単品 = (code: string, name: string, 入庫 = 10) => ({ code, name, 入�
       const p = new OrderEditPage(page);
       await p.openByOrderNo(注文番号, await 店舗Aの店名(browser));
       const items = new OrderItemsEdit(page);
-      await items.商品を追加する(rc("履歴商品（現在）"), rc("M0511-139-ITM-CUR"));
-      await items.明細に入れる(rc("M0511-139-ITM-CUR"), { 数量: "1" });
+      // 正本は「追加→削除」の順。追加のあとに削除すると削除の確認が反映されないため、削除→追加の順にした（シードでの解釈）
       await items.削除を押す(rc("M0511-139-ITM-OLD"));
       await items.削除を確定する(rc("M0511-139-ITM-OLD"));
+      await items.商品を追加する(rc("履歴商品（現在）"), rc("M0511-139-ITM-CUR"));
+      await items.明細に入れる(rc("M0511-139-ITM-CUR"), { 数量: "1" });
       await p.受注情報を登録する(() => undefined);
     });
   },

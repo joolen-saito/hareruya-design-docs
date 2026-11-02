@@ -12,7 +12,7 @@ import { 商品IDをコードから } from "../db/m07";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { reportSeedIssue } from "../lib/seeds";
 import { BuyEditPage, BuyListPage } from "../pages/admin/m07_buy";
-import { サプライ, サプライ品を登録する, 規格に棚番号を付けて公開する, 棚番号を登録する } from "../pages/admin/m07_supply";
+import { サプライ, サプライ品を登録する, 登録できる棚名, 規格に棚番号を付けて公開する, 棚番号を登録する } from "../pages/admin/m07_supply";
 import { 申込む, ログインする } from "../pages/front/m07_net_buy";
 import { 会員を作る, 先頭の買取番号, 注文者名の残りを削除する } from "./m07-common";
 
@@ -23,9 +23,17 @@ export async function サプライ品を用意する(browser: Browser, seedId: s
   const issue = (m: string) => reportSeedIssue(seedId, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    for (const sh of new Set(品.map((p) => p.棚 ?? 棚))) await 棚番号を登録する(page, sh, issue);
-    await サプライ品を登録する(page, 品, issue);
-    for (const p of 品) await 規格に棚番号を付けて公開する(page, p.名前, p.コード, p.棚 ?? 棚, issue);
+    const 実 = (n: string) => 登録できる棚名(n);
+    for (const sh of new Set(品.map((p) => p.棚 ?? 棚))) {
+      await 棚番号を登録する(page, 実(sh), issue);
+      if (実(sh) !== sh) issue(`棚番号「${sh}」は画面の入力チェック（英大文字1字-数字3桁）に合わず登録できないので、「${実(sh)}」に代えた`);
+    }
+    // ネット買取の申込画面は、買取価格が500円未満の商品に「カートに追加」ボタンを出さない（買取価格の下限500円）。
+    // 正本のシード表は買取価格を1・30・100などにするので申込めない。申込に使う商品の買取価格だけ500に代える（正本の外の補い）
+    const 申込用 = 品.map((p) => (Number(p.買取価格) < 500 ? { ...p, 買取価格: "500" } : p));
+    for (const p of 品) if (Number(p.買取価格) < 500) issue(`商品 ${p.コード} の買取価格 ${p.買取価格} 円では買取商品詳細に「カートに追加」ボタンが出ない（下限500円）ので、買取価格を500円、基準価格・販売価格を501円（販売価格は買取価格より大きい値しか登録できない）にした`);
+    await サプライ品を登録する(page, 申込用, issue);
+    for (const p of 品) await 規格に棚番号を付けて公開する(page, p.名前, p.コード, 実(p.棚 ?? 棚), issue);
   });
 }
 

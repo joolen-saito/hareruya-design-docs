@@ -105,3 +105,19 @@ export function お届け先の配送項目(注文番号: string): { お届け�
        from dtb_shipping s join dtb_order o on o.id = s.order_id where o.order_number = $1 and o.base_info_id = 1 order by o.id desc, s.id limit 1`, [注文番号])[0];
   return { お届け日: r?.d ?? "", お届け時間: r?.t ?? "", 送り状No: r?.n ?? "" };
 }
+
+/** 受注の商品明細の識別（受注明細ID）。商品コードごと */
+export function 受注明細ID(注文番号: string): Record<string, string> {
+  const rows = query(
+    `select i.product_code as "c", i.id::text as "id" from dtb_order_item i join dtb_order o on o.id = i.order_id
+      where o.order_number = $1 and o.base_info_id = 1 and o.id = (select max(o2.id) from dtb_order o2 where o2.order_number = $1 and o2.base_info_id = 1) and i.order_item_type_id = 1`, [注文番号]);
+  return Object.fromEntries(rows.map((r) => [r.c ?? "", r.id ?? ""]));
+}
+
+/** 受注の商品明細の商品名（商品コードごと） */
+export function 受注明細の商品名(注文番号: string): Record<string, string> {
+  const rows = query(
+    `select i.product_code as "c", i.product_name as "n" from dtb_order_item i join dtb_order o on o.id = i.order_id
+      where o.order_number = $1 and o.base_info_id = 1 and o.id = (select max(o2.id) from dtb_order o2 where o2.order_number = $1 and o2.base_info_id = 1) and i.order_item_type_id = 1`, [注文番号]);
+  return Object.fromEntries(rows.map((r) => [r.c ?? "", r.n ?? ""]));
+}

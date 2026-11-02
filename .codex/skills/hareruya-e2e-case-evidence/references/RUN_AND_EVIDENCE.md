@@ -40,7 +40,8 @@ evidence/
     <テストID>/
       evidence.html・evidence.md         ケース1件のエビデンス
       result.json                        機械が読む記録
-      01_開始時.png・02_手順1.png …        画面
+      <一覧のテストID>_1.png・_2.png …   画面（連番は1から、開始時（前提条件）→ 手順 → 期待結果 の順。依頼者の指定 2026-11-02。
+                                         前の名前 01_開始時.png などは tools/rename_evidence_shots.mjs で付け直す）
       Playwrightの画面_N.png・trace.zip   落ちたときだけ
 ```
 

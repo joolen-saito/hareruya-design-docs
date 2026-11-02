@@ -30,7 +30,12 @@ let 前の閾値: 閾値 | null = null;
 defineSeed("S-M07-08-CONFIG", async ({ browser }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    if (!前の閾値) 前の閾値 = await 閾値を読む(page);
+    if (!前の閾値) {
+      const now = await 閾値を読む(page);
+      // 前の実行が途中で止まって、このシードの設定値が残っていたら、手元の元の値（開始前に確かめた 980／4800／未設定）へ戻す
+      const 残り = ["100/500/", "300/3000/"].includes(now.join("/"));
+      前の閾値 = 残り ? ["980", "4800", ""] : now;
+    }
     await 閾値を設定する(page, ["100", "500", ""]);
   });
 });
