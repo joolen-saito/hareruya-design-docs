@@ -77,7 +77,8 @@ export async function buildSeeds(browser: Browser, seedIds: string[], notes: Not
     await registry.get(id)!.build({ browser, seed, notes });
     const added = notes.entries().filter(([k]) => !before.has(k));
     // シード表が「控える」と書いた呼び名を、作り方が実際に控えたか／シード表に無い呼び名を勝手に控えていないか
-    const promised = Notes.labelsIn(seed["状態・属性"] + seed.投入方法);
+    // 〔カードID-M1209-…〕のように「…」を含む呼び名は、呼び名の書き方を説明する例示で、控える番号ではない
+    const promised = Notes.labelsIn(seed["状態・属性"] + seed.投入方法).filter((l) => !l.includes("…"));
     for (const l of promised) {
       if (!notes.has(l)) throw new Error(`${id} はシード表で ${l} を控えると定めているが、作り方が控えていない`);
     }
