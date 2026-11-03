@@ -101,7 +101,7 @@ export type 作った商品 = { productId: string; classIds: string[] };
 export const STATE_SP = "スライトリープレイド";
 export const STATE_SP_BELOW = "モデレトリープレイド";
 
-async function createProducts(browser: Browser, tag: string, defs: 商品の定義[], issue: (m: string) => void): Promise<作った商品[]> {
+export async function createProducts(browser: Browser, tag: string, defs: 商品の定義[], issue: (m: string) => void): Promise<作った商品[]> {
   return withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const categoryId = await readExistingGoodsChildCategoryId(page);
     await registerGoodsCsv(page, {
@@ -139,7 +139,7 @@ async function createProducts(browser: Browser, tag: string, defs: 商品の定�
 
 export type 依頼の定義 = { product: 作った商品; classIndex: number } | { product: 作った商品; bulk: true };
 
-async function requestAs(browser: Browser, m: 会員, items: 依頼の定義[], tag: string, issue: (m: string) => void): Promise<void> {
+export async function requestAs(browser: Browser, m: 会員, items: 依頼の定義[], tag: string, issue: (m: string) => void): Promise<void> {
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
     await hideDebugToolbar(context);
