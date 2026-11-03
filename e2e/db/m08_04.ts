@@ -8,10 +8,10 @@ export function 会員の保存内容(会員ID: string): Row | undefined {
             c.company_name as 会社名, c.postal_code as 郵便番号, c.abroad_postal_code as 海外用郵便番号,
             pref.name as 都道府県, ctry.name as 国, c.addr01 as 住所1, c.addr02 as 住所2, c.addr03 as 住所3,
             c.email as メールアドレス, c.tel01 as 電話1, c.tel02 as 電話2, c.tel03 as 電話3,
-            c.fax01 as FAX1, c.fax02 as FAX2, c.fax03 as FAX3,
+            c.fax01 as "FAX1", c.fax02 as "FAX2", c.fax03 as "FAX3",
             sx.name as 性別, jb.name as 職業, to_char(c.birth, 'YYYY-MM-DD') as 生年月日,
             st.name as 会員ステータス, c.close_reason as 退会区分, c.del_flg as 削除フラグ, c.password as パスワード,
-            cg.name as 顧客グループ, p.first_name_en as MTG名, p.last_name_en as MTG姓, p.smaregi_id as スマレジID,
+            cg.name as 顧客グループ, p.first_name_en as "MTG名", p.last_name_en as "MTG姓", p.smaregi_id as "スマレジID",
             p.mail_magazine_flg as メルマガ配信, ics.name_jp as 本人確認ステータス,
             to_char(p.id_expiration_date, 'YYYY-MM-DD') as 身分証有効期限, p.id as 本人確認情報ID
        from dtb_customer c

@@ -61,6 +61,8 @@ export type 会員の用意 = {
   文字?: Record<string, string>;
   /** 管理画面で選ぶ選択欄（フォーム項目名 → 表示） */
   選択?: Record<string, string>;
+  /** 控える呼び名を絞る（シード表の文に別の会員の呼び名が出てくるとき） */
+  控える呼び名?: (呼び名: string) => boolean;
   /** 会員ステータス（既定は本会員） */
   会員ステータス?: string;
   /** 管理画面で選ぶラジオ（フォーム項目名 → ラベル） */
@@ -111,14 +113,15 @@ export async function 会員を用意する(ctx: SeedCtx, o: 会員の用意): P
     const 実際 = 会員の保存内容(会員ID)?.本人確認ステータス;
     if (実際 !== 期待) throw new Error(`${seed.シードID} 会員 ${メール} の本人確認ステータスが「${実際}」（求めるのは「${期待}」）`);
   }
-  呼び名を控える(seed, notes, 会員ID);
+  呼び名を控える(seed, notes, 会員ID, o.控える呼び名);
   return { 会員ID, メール };
 }
 
 /** シード表の状態・属性・投入方法にある呼び名を控える。会員ID・本人確認情報ID・会員住所ID（後の2つは画面に表示されないので、DBの参照で控える） */
-export function 呼び名を控える(seed: { 状態・属性: string; 投入方法: string }, notes: Notes, 会員ID: string): void {
+export function 呼び名を控える(seed: { 状態・属性: string; 投入方法: string }, notes: Notes, 会員ID: string, 絞り?: (l: string) => boolean): void {
   for (const l of Notes.labelsIn(seed["状態・属性"] + seed.投入方法)) {
     if (l.includes("…")) continue;
+    if (絞り && !絞り(l)) continue;
     if (/^〔会員ID-/.test(l)) notes.set(l, 会員ID);
     else if (/^〔本人確認情報ID-/.test(l)) {
       const v = 本人確認情報ID(会員ID);
