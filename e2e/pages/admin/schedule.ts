@@ -17,6 +17,11 @@ export type ScheduleInput = {
   オンライン受付?: { 開始: string; 終了: string };
   /** 日程の公開状態（「公開」「非公開」）。書かなければ初期表示（イベントと同じ値）のまま */
   公開状態?: string;
+  /** 日程の定員・参加費。書かなければ初期表示（イベントと同じ値）のまま */
+  定員?: string;
+  参加費?: string;
+  /** 「デッキ登録を終了する」のチェック。書かなければ初期表示のまま */
+  デッキ登録を終了する?: boolean;
 };
 
 const dt = (v: string) => v.replace(" ", "T");
@@ -43,6 +48,9 @@ export async function registerSchedule(page: Page, イベントID: string, v: Sc
     await f("onlineEntryStartDate").fill(dt(v.オンライン受付.開始));
     await f("onlineEntryEndDate").fill(dt(v.オンライン受付.終了));
   }
+  if (v.デッキ登録を終了する !== undefined) await setChecked(f("deadlineFlg"), v.デッキ登録を終了する);
+  if (v.定員 !== undefined) await f("capacity").fill(v.定員);
+  if (v.参加費 !== undefined) await f("entryFee").fill(v.参加費);
   if (v.公開状態 !== undefined) await chooseByLabel(f("disp"), v.公開状態);
   await page.getByRole("button", { name: "登録", exact: true }).click();
   await expectSaved(page, `日程「${v.開始時間}」の登録`);
