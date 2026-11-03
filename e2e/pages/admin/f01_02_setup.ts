@@ -4,6 +4,7 @@ import { Account } from "../../lib/session";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 import { ensureMember } from "./member";
+import { TagPage } from "./m03_13_tag";
 
 export type 管理者 = { 名前: string; account: Account };
 const PASS = "Passw0rd!F0102";
@@ -20,7 +21,7 @@ export async function 支店の管理者を用意する(page: Page, 番号: stri
 }
 
 /** 商品登録編集で、指定のタグにチェックを入れ（nullなら触らない）、割引率を先頭にして「商品を登録」する */
-export async function タグを付けて商品を登録する(page: Page, 商品ID: string, タグID: string | null, 公開状態: "公開" | "廃止" | null, what: string, onIssue: (m: string) => void): Promise<void> {
+export async function タグを付けて商品を登録する(page: Page, 商品ID: string, タグID: string | null, 公開状態: "公開" | "非公開" | "廃止" | null, what: string, onIssue: (m: string) => void): Promise<void> {
   await page.goto(adminUrl(`/product/product/${商品ID}/edit`));
   await page.waitForLoadState("load");
   const form = page.locator("form#form1");
@@ -58,4 +59,122 @@ export async function 規格のセールを設定する(page: Page, 商品ID: st
   }
   await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: 20_000 })]);
   for (const w of await expectSaved(page, `${what}: 商品規格を登録`)) onIssue(w);
+}
+
+// ---- タグ・支店トップページ管理（タイル） ----
+
+/** 同じ実行の中で作ったタグ（名称→タグID）。同じ名称のタグを二重に作らない */
+const 作ったタグ = new Map<string, string>();
+
+/** タグ管理でタグを作り、タグIDを返す（この実行で作った名称なら作らずに返す）。並び順は重ならなくてよいので固定の値 */
+export async function タグを用意する(page: Page, 名称: string, what: string): Promise<string> {
+  const known = 作ったタグ.get(名称);
+  if (known) return known;
+  const tag = new TagPage(page);
+  await tag.openNew();
+  const id = await tag.register({ 名称日: 名称, 名称英: 名称, 並び順: "9999" }, `${what}: タグ管理で「${名称}」を登録`);
+  作ったタグ.set(名称, id);
+  return id;
+}
+
+/** 1x1 の PNG（支店トップページ管理のバナー画像に使う、中身を問わない画像ファイル） */
+const 小さな画像 = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+
+/**
+ * コンテンツ管理＞支店トップページ管理で、支店を選び、「支店共通設定を適用」を外し、バナー画像に任意の画像を選び、
+ * 1行目（上段右）をタイル属性「その他」・タイルタグ＝指定のタグ、残り3行（中段左・中段右・下段左）をタイル属性「ピックアップ商品」にして登録する。
+ */
+export async function 支店トップページにタイルを設定する(page: Page, 支店名: string, タグ名: string, what: string, onIssue: (m: string) => void): Promise<void> {
+  await page.goto(adminUrl("/content/branch_toppage"));
+  await page.waitForLoadState("load");
+  const selector = page.locator('select[name="branch_toppage_management[branch_list]"]');
+  await expect(selector, `${what}: 支店トップページ管理の支店の選択`).toBeVisible();
+  const value = await selector.locator("option").evaluateAll((os, name) => (os as HTMLOptionElement[]).find((o) => (o.textContent ?? "").includes(name as string))?.value ?? "", 支店名);
+  if (!value) throw new Error(`${what}: 支店トップページ管理の支店の選択に「${支店名}」が無い`);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), selector.selectOption(value)]);
+  await expect(page.locator('select[name="branch_toppage_management[branch_list]"]'), `${what}: 選んだ支店`).toHaveValue(value);
+  const common = page.locator("#common-setting");
+  if (await common.isChecked()) await common.uncheck({ timeout: 20_000 });
+  await page.locator("#branch_toppage_management_image_file").setInputFiles({ name: "branch-banner.png", mimeType: "image/png", buffer: 小さな画像 }, { timeout: 20_000 });
+  const rows = page.locator("#tiles .tile-config");
+  await expect(rows, `${what}: タイルの行（4区画）`).toHaveCount(4);
+  const 区画 = [1, 2, 3, 4];
+  for (let i = 0; i < 区画.length; i++) {
+    const section = rows.nth(i).locator('select[id$="_section"]');
+    const type = rows.nth(i).locator('select[id$="_tileType"]');
+    const tag = rows.nth(i).locator('select[id$="_tag"]');
+    await section.selectOption(String(区画[i]), { timeout: 20_000 });
+    if (i === 0) {
+      await chooseByLabel(type, "その他");
+      await expect(tag, `${what}: タイルタグの欄が使える`).toBeEnabled();
+      await chooseByLabel(tag, タグ名);
+    } else {
+      await chooseByLabel(type, "ピックアップ商品");
+    }
+  }
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#ex-conversion-action button[type=submit]").click({ timeout: 20_000 })]);
+  for (const w of await expectSaved(page, `${what}: 支店トップページ管理の登録`)) onIssue(w);
+}
+
+/** 商品規格登録編集で、高額商品コードを入れ、部門は先頭を選んで「商品規格を登録」する */
+export async function 規格の高額商品コードを設定する(page: Page, 商品ID: string, 規格ID: string, コード: string, what: string, onIssue: (m: string) => void): Promise<void> {
+  await page.goto(adminUrl(`/product/product/class/${商品ID}/edit/${規格ID}`));
+  await page.waitForLoadState("load");
+  const form = page.locator("form#form");
+  await expect(form, `${what}: 商品規格登録編集`).toBeVisible();
+  await form.locator("#admin_product_class_high_price_code").fill(コード, { timeout: 20_000 });
+  const section = form.locator("#admin_product_class_Section");
+  if (!(await section.inputValue())) {
+    const first = await section.locator("option").evaluateAll((ns) => ns.map((n) => (n as HTMLOptionElement).value).find((x) => x !== ""));
+    if (first) await section.selectOption(first);
+  }
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: 20_000 })]);
+  for (const w of await expectSaved(page, `${what}: 商品規格を登録`)) onIssue(w);
+}
+
+// ---- 商品規格の追加 ----
+export type 追加する規格 = {
+  言語: "日本語" | "英語"; 状態: "NM" | "SP" | "MP" | "HP"; 商品コード: string;
+  基準価格: string; 販売価格: string; 買取価格: string; セール?: boolean;
+};
+
+/** 商品規格登録編集（新規）で規格を追加する。状態は選択肢の data-code で選ぶ。登録後の商品規格IDを返す */
+export async function 規格を追加する(page: Page, 商品ID: string, v: 追加する規格, what: string, onIssue: (m: string) => void): Promise<string> {
+  await page.goto(adminUrl(`/product/product/class/${商品ID}/new`));
+  await page.waitForLoadState("load");
+  const form = page.locator("form#form");
+  await expect(form, `${what}: 商品規格登録編集画面（新規）`).toBeVisible();
+  await chooseByLabel(form.locator("#admin_product_class_Language"), v.言語);
+  const cond = form.locator("#admin_product_class_CardCondition");
+  const value = await cond.locator(`option[data-code="${v.状態}"]`).getAttribute("value");
+  if (!value) throw new Error(`${what}: 状態「${v.状態}」の選択肢が無い`);
+  await cond.selectOption(value);
+  await form.locator("#admin_product_class_code").fill(v.商品コード);
+  await form.locator("#admin_product_class_standard_price").fill(v.基準価格);
+  await form.locator("#admin_product_class_buy_price").fill(v.買取価格);
+  if (v.セール) await form.locator("#admin_product_class_sale_flg").check({ timeout: 20_000 });
+  await form.locator("#admin_product_class_price02").fill(v.販売価格);
+  if (!(await form.locator("#admin_product_class_sale_type").inputValue())) throw new Error(`${what}: 販売種別が未選択（正本に指定が無く補えない）`);
+  const section = form.locator("#admin_product_class_Section");
+  if (!(await section.inputValue())) {
+    const first = await section.locator("option").evaluateAll((ns) => ns.map((n) => (n as HTMLOptionElement).value).find((x) => x !== ""));
+    if (first) await section.selectOption(first);
+  }
+  await chooseByLabel(form.locator("#admin_product_class_Status"), "公開");
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: 20_000 })]);
+  for (const w of await expectSaved(page, `${what}: 商品規格を登録`)) onIssue(w);
+  const m = new URL(page.url()).pathname.match(/\/class\/\d+\/edit\/(\d+)$/);
+  if (!m) throw new Error(`${what}: 登録後に商品規格の編集画面へ移らない（${page.url()}）`);
+  return m[1];
+}
+
+/** 商品規格登録編集（編集）を開き、「商品規格を削除」を確認つきで行う */
+export async function 規格を削除する(page: Page, 商品ID: string, 規格ID: string, what: string, onIssue: (m: string) => void): Promise<void> {
+  await page.goto(adminUrl(`/product/product/class/${商品ID}/edit/${規格ID}`));
+  await page.waitForLoadState("load");
+  await page.getByRole("link", { name: "商品規格を削除" }).click({ timeout: 20_000 });
+  const modal = page.locator("#deleteConfirmModal");
+  await expect(modal, `${what}: 削除の確認`).toBeVisible();
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), modal.locator('a[data-method="delete"]').click({ timeout: 20_000 })]);
+  for (const w of await expectSaved(page, `${what}: 商品規格の削除`)) onIssue(w);
 }

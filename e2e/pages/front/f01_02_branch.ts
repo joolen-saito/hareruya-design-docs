@@ -13,6 +13,15 @@ export class BranchTopPage {
   get 今週の売れ筋(): Locator { return this.page.locator("section.p-hareruya-branch-top__best-sellers"); }
   /** 見出し「SALE中の商品」の区画 */
   get SALE中(): Locator { return this.page.locator("section.p-hareruya-section").filter({ has: this.page.getByRole("heading", { name: "SALE中の商品" }) }); }
+  /** タイル（見出しに、タグの名称を含む区画）。見出しは「<タグの名称>のカード」 */
+  タイル(タグ名: string): Locator {
+    return this.page.locator(".p-hareruya-feature-grid__item").filter({ has: this.page.locator("h2", { hasText: タグ名 }) });
+  }
+  /** タイルの中の商品カード（商品名で選ぶ）。名称を省くと全部 */
+  タイルの商品(タグ名: string, 商品名?: string): Locator {
+    const cards = this.タイル(タグ名).locator(".p-hareruya-product-card");
+    return 商品名 ? cards.filter({ hasText: 商品名 }) : cards;
+  }
   link(text: string): Locator { return this.page.getByRole("link", { name: text }); }
   async 開いている(): Promise<void> { await expect(this.page.locator("body.shop_top"), "支店ECTOPの画面").toBeAttached(); }
 }

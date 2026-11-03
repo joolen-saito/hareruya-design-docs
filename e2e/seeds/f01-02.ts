@@ -18,7 +18,7 @@ import { searchStockByCode } from "../pages/admin/m04_02_rc_stock";
 import { loggedInMemberName, registerStockEdit, StockApprovalListPage } from "../pages/admin/stock_edit";
 import { 在庫承認の最大ID } from "../db/f03_08";
 
-export const 支店URL = (n: string): string => `f0102c${n}${RUN_MARK.toLowerCase()}`;
+export const 支店URL = (n: string): string => `f0102c${n.toLowerCase()}${RUN_MARK.toLowerCase()}`;
 const 略称 = (s: string): string => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; const L = "ABCDEFGHJKLMNPQRSTUVWXYZ"; return [h % 24, (h >>> 5) % 24, (h >>> 10) % 24].map((i) => L[i]).join(""); };
 export const 支店名 = (n: string): string => rc(`F0102-${n}支店`);
 
