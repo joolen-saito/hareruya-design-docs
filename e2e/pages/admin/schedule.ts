@@ -1,6 +1,6 @@
 /** 日程登録・日程編集（イベント編集画面の「日程追加」から開く） */
 import { Page, expect } from "@playwright/test";
-import { expectSaved, setChecked } from "./common";
+import { chooseByLabel, expectSaved, setChecked } from "./common";
 import { adminUrl } from "../../lib/session";
 import { openEventEdit } from "./event";
 
@@ -15,6 +15,8 @@ export type ScheduleInput = {
   デッキ登録締切?: string;
   /** オンライン受付あり。開始・終了は「2026-10-25 12:00」の形。書かなければチェックを入れないまま */
   オンライン受付?: { 開始: string; 終了: string };
+  /** 日程の公開状態（「公開」「非公開」）。書かなければ初期表示（イベントと同じ値）のまま */
+  公開状態?: string;
 };
 
 const dt = (v: string) => v.replace(" ", "T");
@@ -41,6 +43,7 @@ export async function registerSchedule(page: Page, イベントID: string, v: Sc
     await f("onlineEntryStartDate").fill(dt(v.オンライン受付.開始));
     await f("onlineEntryEndDate").fill(dt(v.オンライン受付.終了));
   }
+  if (v.公開状態 !== undefined) await chooseByLabel(f("disp"), v.公開状態);
   await page.getByRole("button", { name: "登録", exact: true }).click();
   await expectSaved(page, `日程「${v.開始時間}」の登録`);
   const m = /\/schedule\/(\d+)\/edit/.exec(page.url());
