@@ -19,12 +19,13 @@ export const M1304_ADMIN: Account = { loginId: "m1304_admin", password: "Passw0r
 defineSeed("S-M13-04-ADM", async ({ browser, notes, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const issue = (m: string) => reportSeedIssue(seed.シードID, m);
-    notes.set("〔店舗ID-M1304-共有A〕", await ensureTenant(page, { 店名: "店舗A", 店名カナ: "テンポエー", 店名英語: "Shop A", 支店URL: "m1302a", 店名略称3文字: "テA", ショップ名略称: "店舗A" }, issue));
-    notes.set("〔店舗ID-M1304-共有B〕", await ensureTenant(page, { 店名: "店舗B", 店名カナ: "テンポビー", 店名英語: "Shop B", 支店URL: "m1302b", 店名略称3文字: "テB", ショップ名略称: "店舗B" }, issue));
-    notes.set("〔管理者ID-M1304-共有〕", await ensureMember(page, {
+    void notes;
+    await ensureTenant(page, { 店名: "店舗A", 店名カナ: "テンポエー", 店名英語: "Shop A", 支店URL: "m1302a", 店名略称3文字: "テA", ショップ名略称: "店舗A" }, issue);
+    await ensureTenant(page, { 店名: "店舗B", 店名カナ: "テンポビー", 店名英語: "Shop B", 支店URL: "m1302b", 店名略称3文字: "テB", ショップ名略称: "店舗B" }, issue);
+    await ensureMember(page, {
       名前: "M13-04試験管理者", 所属店舗: "店舗A", ログインID: M1304_ADMIN.loginId, メールアドレス: "m1304_admin@example.test",
       パスワード: M1304_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A"],
-    }));
+    });
   });
 });
 

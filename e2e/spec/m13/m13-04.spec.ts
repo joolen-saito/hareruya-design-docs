@@ -7,7 +7,7 @@ import { expect, caseTest } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
 import { RepeatScheduleFormPage, 繰返の入力 } from "../../pages/admin/m13_04_repeat";
-import { イベントの日程 } from "../../db/m13_03";
+import { イベントの日程, 管理者ID } from "../../db/m13_03";
 import { M1304_ADMIN } from "../../seeds/m13-04";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -72,7 +72,7 @@ caseTest("IT-M13-04-004", async ({ page, notes, step, expected }) => {
   let row: ReturnType<typeof の日> = undefined;
   await step(5, async () => { row = の日(イベントの日程(id), "2026/09/10"); });
   await expected(async () => {
-    expect.soft(row?.登録者, "作成された日程の登録者（試験管理者の管理者ID）").toBe(notes.get("〔管理者ID-M1304-共有〕"));
+    expect.soft(row?.登録者, "作成された日程の登録者（試験管理者の管理者ID）").toBe(管理者ID(M1304_ADMIN.loginId));
   });
 });
 

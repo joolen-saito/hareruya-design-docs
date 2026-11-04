@@ -42,3 +42,8 @@ export function 日程(日程ID: string): 日程の記録 | null {
   if (!r) return null;
   return イベントの日程(r.e!, true).find((x) => x.日程ID === 日程ID) ?? null;
 }
+
+/** 管理者のログインIDから、管理者ID（日程の登録者と比べる） */
+export function 管理者ID(ログインID: string): string | null {
+  return query(`select id::text as id from dtb_member where login_id = $1`, [ログインID])[0]?.id ?? null;
+}

@@ -13,7 +13,7 @@ export async function 試験用の祝日を足す(page: Page, 日付: string, �
   let n = await rowsOf().count();
   for (let i = 0; i < n; i++) {
     const text = (await rowsOf().nth(i).innerText()).replace(/\s+/g, " ");
-    if (!/M13-0\d/.test(text)) throw new Error(`祝日一覧の ${日付} に試験用でない祝日がある（${text}）。手元の祝日なので消さずに止める`);
+    if (!/M13-?0\d/.test(text)) throw new Error(`祝日一覧の ${日付} に試験用でない祝日がある（${text}）。手元の祝日なので消さずに止める`);
   }
   if (n > 0) onIssue(`前の実行が足した試験用の祝日 ${n} 件が ${日付} にあった。シード表の「あれば削除」にしたがい、消してから足し直す`);
   while (n > 0) {
