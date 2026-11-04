@@ -3,7 +3,9 @@ import { Page, expect } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { mailIds, waitForMailTo } from "../../lib/mail";
 
-export type FrontMember = { 姓: string; 名: string; セイ: string; メイ: string; メール: string; パスワード: string; 住所3?: string };
+export type FrontMember = { 姓: string; 名: string; セイ: string; メイ: string; メール: string; パスワード: string; 住所3?: string;
+  /** 省略すると登録できる任意の値（東京都千代田区・生年月日1990/1/1・電話03-0000-0000）を入れる */
+  詳細?: { 郵便番号1: string; 郵便番号2: string; 都道府県: string; 住所1: string; 住所2: string; 電話: [string, string, string] } };
 
 /**
  * 会員情報登録画面で登録する。お名前・フリガナ・メールアドレス・パスワードは渡した値、
@@ -25,15 +27,16 @@ export async function registerFrontMember(page: Page, v: FrontMember): Promise<v
   await f("email][second").fill(v.メール);
   await f("plain_password][first").fill(v.パスワード);
   await f("plain_password][second").fill(v.パスワード);
-  await f("postalCode][postalCode01").fill("100");
-  await f("postalCode][postalCode02").fill("0001");
-  await f("address][pref").selectOption({ label: "東京都" });
-  await f("address][addr01").fill("千代田区千代田");
-  await f("address][addr02").fill("1-1");
+  const d = v.詳細 ?? { 郵便番号1: "100", 郵便番号2: "0001", 都道府県: "東京都", 住所1: "千代田区千代田", 住所2: "1-1", 電話: ["03", "0000", "0000"] as [string, string, string] };
+  await f("postalCode][postalCode01").fill(d.郵便番号1);
+  await f("postalCode][postalCode02").fill(d.郵便番号2);
+  await f("address][pref").selectOption({ label: d.都道府県 });
+  await f("address][addr01").fill(d.住所1);
+  await f("address][addr02").fill(d.住所2);
   if (v.住所3 !== undefined && (await f("address][addr03").count()) > 0) await f("address][addr03").fill(v.住所3);
-  await f("tel][tel01").fill("03");
-  await f("tel][tel02").fill("0000");
-  await f("tel][tel03").fill("0000");
+  await f("tel][tel01").fill(d.電話[0]);
+  await f("tel][tel02").fill(d.電話[1]);
+  await f("tel][tel03").fill(d.電話[2]);
   await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.getByRole("button", { name: "同意して確認画面へ" }).click()]);
   await page.waitForLoadState("load");
   const errors = (await page.locator(".ec-errorMessage, .form-error-message, .invalid-feedback, .c-hareruya-form__error").allInnerTexts()).map((t) => t.trim()).filter(Boolean);
