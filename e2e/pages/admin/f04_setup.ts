@@ -63,12 +63,14 @@ const stockCsvName = (seedId: string) => `${seedId.toLowerCase()}-${Date.now()}-
  * 商品を1〜数件、グッズ商品CSV登録で作り（購入グループ「通常商品」・地域別販売制限0）、本店・EC-CUBE に入庫して承認する。
  * 商品コード・商品名は渡された値のまま使う（印は呼ぶ側で付ける）。
  */
-export async function 商品を作って入庫する(browser: Browser, seedId: string, defs: 商品の定め[], issue: (m: string) => void): Promise<作った商品[]> {
-  await 管理者を用意する(browser);
-  const shop = await 本店の店名(browser);
+export async function 商品を作って入庫する(browser: Browser, seedId: string, defs: 商品の定め[], issue: (m: string) => void, opt: { 店舗名?: string; 登録者?: 管理者; 承認者?: 管理者 } = {}): Promise<作った商品[]> {
+  if (!opt.登録者) await 管理者を用意する(browser);
+  const shop = opt.店舗名 ?? (await 本店の店名(browser));
+  const 登録者 = opt.登録者 ?? F04登録者;
+  const 承認者 = opt.承認者 ?? F04承認者;
   const made: 作った商品[] = [];
   if (defs.length === 0) return made;
-  await withAdminSession(browser, F04登録者.account, async (page) => {
+  await withAdminSession(browser, 登録者.account, async (page) => {
     const categoryId = await readExistingGoodsChildCategoryId(page);
     const region = Object.fromEntries((await downloadGoodsCsvTemplate(page)).headers.filter((h) => h.includes("地域") || h.includes("スマレジ連携")).map((h) => [h, "0"]));
     const langs = defs.some((d) => d.言語) ? await readLanguageIds(page) : null;
@@ -91,10 +93,10 @@ export async function 商品を作って入庫する(browser: Browser, seedId: s
       for (const d of defs) {
         const stock = await searchStockByCode(page, { 商品コード: d.商品コード, 店舗: shop, 在庫区分: "EC-CUBE" });
         await stock.openEdit(stock.row(d.商品コード, shop, "EC-CUBE"));
-        await registerStockEdit(page, { changeType: "入庫/その他", reason: "試験用", quantity: String(d.入庫数 ?? 10), purchasePrice: "0", approverName: F04承認者.名前 }, `${seedId}: ${d.商品コード} の在庫編集`, issue);
+        await registerStockEdit(page, { changeType: "入庫/その他", reason: "試験用", quantity: String(d.入庫数 ?? 10), purchasePrice: "0", approverName: 承認者.名前 }, `${seedId}: ${d.商品コード} の在庫編集`, issue);
       }
       const registrant2 = await loggedInMemberName(page);
-      await withAdminSession(browser, F04承認者.account, async (ap) => {
+      await withAdminSession(browser, 承認者.account, async (ap) => {
         const list = new StockApprovalListPage(ap);
         await list.open(shop);
         const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant2 && Number(r.id) > baseline);
@@ -105,12 +107,12 @@ export async function 商品を作って入庫する(browser: Browser, seedId: s
     }
     const total = defs.reduce((s, d) => s + (d.入庫数 ?? 100), 0);
     await registerStockChangeCsv(page, {
-      店舗: shop, 在庫区分: "EC-CUBE", 在庫変動区分: "入庫/その他", 在庫変動理由: "シード作成", 承認者: F04承認者.名前,
+      店舗: shop, 在庫区分: "EC-CUBE", 在庫変動区分: "入庫/その他", 在庫変動理由: "シード作成", 承認者: 承認者.名前,
       行: defs.map((d) => ({ 商品コード: d.商品コード, 在庫増減数: String(d.入庫数 ?? 100), 仕入単価: "100" })),
       ファイル名: stockCsvName(seedId),
     }, `${seedId} の在庫変更CSV登録`, (w) => issue(w));
     const registrant = await loggedInMemberName(page);
-    await withAdminSession(browser, F04承認者.account, async (ap) => {
+    await withAdminSession(browser, 承認者.account, async (ap) => {
       const list = new StockApprovalListPage(ap);
       await list.open(shop);
       const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant && Number(r.id) > baseline && r.quantity === String(total));
@@ -252,4 +254,24 @@ export async function 処理中の受注IDを読む(page: Page, メール: strin
     }
   }
   throw last;
+}
+
+/** 支店（トーナメントセンター 大阪＝店舗ID 5。フロントの店舗ページは /ja/osaka/）でも在庫を扱える登録者と承認者（本店と大阪を編集できるシステム管理者） */
+export const 大阪の店名 = "トーナメントセンター 大阪";
+export const 大阪の店舗ページ = "/osaka";
+export const F04大阪登録者: 管理者 = { 名前: `F04大阪登録者-${RUN_MARK}`, account: { loginId: `f04oreg${RUN_MARK}`.toLowerCase(), password: PASS } };
+export const F04大阪承認者: 管理者 = { 名前: `F04大阪承認者-${RUN_MARK}`, account: { loginId: `f04oapr${RUN_MARK}`.toLowerCase(), password: PASS } };
+let osakaAdminsReady = false;
+export async function 大阪の管理者を用意する(browser: Browser): Promise<void> {
+  if (osakaAdminsReady) return;
+  const shop = await 本店の店名(browser);
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    for (const a of [F04大阪登録者, F04大阪承認者]) {
+      await ensureMember(page, {
+        名前: a.名前, 所属店舗: shop, ログインID: a.account.loginId, メールアドレス: `${a.account.loginId}@example.test`,
+        パスワード: a.account.password, 権限: "システム管理者", デフォルト検索表示店舗: shop, 編集可能店舗: [shop, 大阪の店名],
+      });
+    }
+  });
+  osakaAdminsReady = true;
 }

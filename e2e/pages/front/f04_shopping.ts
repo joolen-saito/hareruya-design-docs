@@ -135,3 +135,25 @@ export class ShippingEditPage {
     await this.page.waitForLoadState("load");
   }
 }
+
+/** 店舗ページ（base: 本店は ""、支店は "/osaka" など）の商品詳細画面で、数量を入れて「カートに入れる」を押す */
+export async function カートに入れる(page: Page, base: string, 商品ID: string, 数量: number, what: string): Promise<void> {
+  await page.goto(front(`${base}/products/detail/${商品ID}`), { timeout: 60_000 });
+  await page.waitForLoadState("load");
+  const form = page.locator(`form#productForm${商品ID}`);
+  await expect(form, `${what}: 商品詳細の画面（商品ID ${商品ID}）`).toHaveCount(1, { timeout: 30_000 });
+  const table = form.locator('[id^="priceTable-"]:visible');
+  await expect(table, `${what}: 商品詳細の価格・在庫の表`).toHaveCount(1, { timeout: 30_000 });
+  const qty = table.locator("tbody tr .qty-label");
+  await expect(qty, `${what}: 数量を入れられる規格の行は1行`).toHaveCount(1, { timeout: 30_000 });
+  await qty.fill(String(数量), { timeout: 20_000 });
+  await qty.blur();
+  await expect(table.locator("tbody tr .qty-input"), `${what}: 入れた数量が送信用の欄へ写る`).toHaveValue(String(数量));
+  const [res] = await Promise.all([
+    page.waitForResponse((r) => r.url().includes(`/products/add_cart/${商品ID}`) && r.request().method() === "POST", { timeout: 60_000 }),
+    form.locator("button.add-cart").dispatchEvent("click"),
+  ]);
+  if (res.status() >= 400) throw new Error(`${what}: カートへの追加の応答が ${res.status()}`);
+  const body = await res.json().catch(() => null) as { done?: boolean; messages?: string[] } | null;
+  if (body && body.done === false) throw new Error(`${what}: カートに入れられない: ${(body.messages ?? []).join(" / ")}`);
+}

@@ -33,3 +33,16 @@ export function 会員の配送先(会員ID: string, 配送先名称: string): �
 export function アドレス帳の件数(会員ID: string): number {
   return Number(query(`select count(*) as n from dtb_customer_address where customer_id = $1 and del_flg = 0`, [会員ID])[0].n);
 }
+
+/** 表示中（有効）の配送方法の名称 */
+export function 表示中の配送方法名(): string[] {
+  return query(`select name from dtb_delivery where visible = true`).map((r) => r.name ?? "");
+}
+/** 表示中（有効）の支払方法の名称 */
+export function 表示中の支払方法名(): string[] {
+  return query(`select payment_method from dtb_payment where visible = true`).map((r) => r.payment_method ?? "");
+}
+/** 受注の備考（お客様の備考欄） */
+export function 受注の備考(受注ID: string): string {
+  return query(`select coalesce(message,'') as m from dtb_order where id = $1`, [受注ID])[0]?.m ?? "";
+}
