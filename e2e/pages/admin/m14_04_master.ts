@@ -6,7 +6,7 @@ import { expect, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { expectSaved } from "./common";
 
-export type 種別 = "カラー" | "色順" | "イラストレーター" | "カードタイプ" | "サブタイプ" | "特殊タイプ";
+export type 種別 = "カラー" | "色順" | "イラストレーター" | "カードタイプ" | "サブタイプ" | "特殊タイプ" | "デッキタグ";
 
 async function openMaster(page: Page, 名: 種別): Promise<void> {
   await page.goto(adminUrl("/data/mtg_master_data"));
@@ -29,7 +29,7 @@ async function rows(page: Page): Promise<{ 名: string; 並び順: number }[]> {
       const m = /^rows\[(.+?)\]\[/.exec(first?.getAttribute("name") ?? "");
       if (!m || m[1] === "new") continue;
       const v = (f: string) => ((tr.querySelector(`[name="rows[${m[1]}][${f}]"]`) as HTMLInputElement | null)?.value ?? "");
-      out.push({ 名: v("name_jp") || v("name"), 並び順: Number(v("sort_no") || v("sortNo")) });
+      out.push({ 名: v("name_jp") || v("nameJp") || v("name"), 並び順: Number(v("sort_no") || v("sortNo")) });
     }
     return out;
   });
@@ -41,7 +41,7 @@ export async function 行を用意する(page: Page, 名: 種別, 日本語名: 
   const all = await rows(page);
   if (all.some((r) => r.名 === 日本語名)) return false;
   const f = (n: string) => page.locator(`[name="rows[new][${n}]"]`);
-  if (await f("name_jp").count()) { await f("name_jp").fill(日本語名); await f("name_en").fill(英語名); } else await f("name").fill(日本語名);
+  if (await f("name_jp").count()) { await f("name_jp").fill(日本語名); await f("name_en").fill(英語名); } else if (await f("nameJp").count()) { await f("nameJp").fill(日本語名); await f("nameEn").fill(英語名); } else await f("name").fill(日本語名);
   const sort = (await f("sort_no").count()) ? f("sort_no") : f("sortNo");
   if (await sort.count()) await sort.fill(String(Math.max(0, ...all.map((r) => r.並び順).filter(Number.isFinite)) + 1));
   await Promise.all([
