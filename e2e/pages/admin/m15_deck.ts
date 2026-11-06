@@ -129,14 +129,14 @@ let 適用度: string | null = null;
 let フォーマット: string | null = null;
 
 /** イベントを登録し、日程（過去または指定の開始時間）を足す。イベントIDと日程IDを返す */
-export async function イベントと日程を用意する(page: Page, v: { 名日: string; 名英: string; 開始時間?: string }, issue: Issue = () => {}): Promise<{ イベントID: string; 日程ID: string }> {
-  if (!店舗) {
+export async function イベントと日程を用意する(page: Page, v: { 名日: string; 名英: string; 開始時間?: string; 店舗?: string }, issue: Issue = () => {}): Promise<{ イベントID: string; 日程ID: string }> {
+  if (!v.店舗 && !店舗) {
     店舗 = await 店舗を決める(page);
     if (!店舗.includes("大阪")) issue(`共有マスタの大阪店が無いため、店舗は「${店舗}」を選んだ（このケースは店舗の中身を確かめない）`);
   }
   if (!適用度) 適用度 = await 先頭の選択肢(page, "rel");
   if (!フォーマット) フォーマット = await 先頭の選択肢(page, "formats");
-  const イベントID = await registerEvent(page, { イベント名日: v.名日, イベント名英: v.名英, 店舗, フォーマット: [フォーマット], ルール適用度: 適用度, 公開状態: "公開", 定員: "16", 参加費: "500" });
+  const イベントID = await registerEvent(page, { イベント名日: v.名日, イベント名英: v.名英, 店舗: v.店舗 ?? 店舗!, フォーマット: [フォーマット], ルール適用度: 適用度, 公開状態: "公開", 定員: "16", 参加費: "500" });
   const 日程ID = await registerSchedule(page, イベントID, { 開始時間: v.開始時間 ?? "2025-01-01 10:00", 受付あり: false, デッキ登録あり: false });
   return { イベントID, 日程ID };
 }
