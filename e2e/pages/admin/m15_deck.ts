@@ -29,6 +29,10 @@ export type デッキ登録内容 = {
   順位?: string; 成績?: string; プレイヤー名?: string; 引用元URL?: string;
   タグ?: string[];
   メイン?: string; サイド?: string; 統率?: string;
+  /** M15-05 追加: 参加人数、デッキリスト公開状態（非公開）のチェック、代表カードの検索語（検索結果の先頭を選ぶ） */
+  参加人数?: string; リスト非公開?: boolean; 代表カード検索語?: string;
+  /** イベントを選んだあとで、自動入力されたイベント名(日)・(英)・開催日を空にする */
+  選択後に空にする?: boolean;
   /** イベント検索でイベント名を検索し、この日程の「選択」を押す */
   イベント?: { 検索語: string; 日程ID: string };
 };
@@ -74,6 +78,7 @@ export async function デッキを登録する(page: Page, v: デッキ登録内
     await 選択.click();
     await expect(f("eventDetailId"), "イベントを選ぶと日程が設定される").toHaveValue(v.イベント.日程ID);
     await expect(modal).toBeHidden();
+    if (v.選択後に空にする) { for (const n of ["eventNameJp", "eventNameEn", "eventDate"]) await f(n).fill(""); }
   }
   if (v.イベント名日 !== undefined) await f("eventNameJp").fill(v.イベント名日);
   if (v.イベント名英 !== undefined) await f("eventNameEn").fill(v.イベント名英);
@@ -82,6 +87,19 @@ export async function デッキを登録する(page: Page, v: デッキ登録内
   if (v.成績 !== undefined) await f("result").fill(v.成績);
   if (v.プレイヤー名 !== undefined) await f("playerName").fill(v.プレイヤー名);
   if (v.引用元URL !== undefined) await f("sourceUrl").fill(v.引用元URL);
+  if (v.参加人数 !== undefined) await f("participants").fill(v.参加人数);
+  if (v.リスト非公開 !== undefined) await f("privateFlg").setChecked(v.リスト非公開);
+  if (v.代表カード検索語) {
+    await page.locator('[data-bs-target="#searchCardImageModal"]').click();
+    const m = page.locator("#searchCardImageModal");
+    await expect(m, "代表カード検索の画面").toBeVisible();
+    await m.locator("#card_image_search_word").fill(v.代表カード検索語);
+    await m.locator("#btn_search_card_image").click();
+    const 決定 = m.locator("button.select-card-image").first();
+    await expect(決定, `代表カード検索の結果に「${v.代表カード検索語}」が出る`).toBeVisible({ timeout: 30_000 });
+    await 決定.click();
+    await expect(m).toBeHidden();
+  }
   if (v.メイン !== undefined) await f("textMain").fill(v.メイン);
   if (v.サイド !== undefined) await f("textSide").fill(v.サイド);
   if (v.統率 !== undefined) await f("textCommand").fill(v.統率);
