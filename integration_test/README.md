@@ -13,7 +13,7 @@
 | `casegen/excluded_*_cases.tsv`・`excluded_*_seeds.tsv` | 除外したケースとシード（未確定・範囲外・重複・単体粒度など） |
 | `viewpoint_canonical/viewpoints_canonical.tsv` | 観点の正本 |
 | `it-target-functions.tsv` | 結合テストの対象機能の正本 |
-| `fid_kubun.tsv` | 機能ID と区分の一覧。メッセージ一覧の生成と Excel の前処理が読む |
+| `fid_kubun.tsv` | 機能ID と区分の一覧。メッセージ一覧の生成が読む |
 
 ## 作り直しの流れ（順に流す）
 
@@ -52,7 +52,6 @@
 | `SCOPE.md` | 適用範囲の決裁 |
 | `TEST_EXECUTION_DECISION.md`・`test-scope-reduction-policy.md` | 実施とケース削減の方針 |
 | `HUMAN_DECISION_LIST.md`・`DECISION_SHEET_oversell.md`・`ESCALATION_*.md` | 人の判断の記録 |
-| `T2_EXCEL_PREPROCESS_SPEC.md`・`CONCRETIZATION_ROLLOUT_PLAN.md` | Excel の前処理の仕様と計画。`../excel_preprocess/` が読む |
 | `duplicate-function-delete-report.md`・`it-target-functions.md` | 対象機能の確定の記録 |
 | `ut_layer_audit/`・`viewpoint_review/` | 単体粒度の層判定と、観点の確定の根拠 |
 | `manual_test_cases/` | 旧結合試験の手作業ケース。総合テストの生成が照合の元として読む |

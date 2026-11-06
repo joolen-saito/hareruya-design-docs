@@ -19,7 +19,6 @@
 | `endpoint_reports/` | 実装差分追補（利用者視点の入口）の元 |
 | `message_inventory/` | メッセージ一覧と、設計書へ埋め込むメッセージID |
 | `genzai_source_attribution/` | 現行踏襲・カスタマイズ機能の参照元ソースの台帳 |
-| `excel_preprocess/`・`excel_blocks/` | Excel の前処理ツールとその出力。<br>仕様の正本は `integration_test/T2_EXCEL_PREPROCESS_SPEC.md` |
 | `item_definition_audit/` | 画面項目定義の監査。結合テストの項目制約の入力 |
 | `reverse_design_audit/` | リバース設計の粒度・レビューの記録 |
 
@@ -75,5 +74,8 @@
   - codex のレビューの出力
   - 呼ばれていない汎用の設計書スキル8本
   - FP によるテスト規模の分析 `fp_scale/`（ケース数の妥当性の根拠。流れからは読まれない）
+  - 7月の Excel 前処理ツール `excel_preprocess/`・`excel_blocks/` と、その仕様・計画（`integration_test/T2_EXCEL_PREPROCESS_SPEC.md`・`CONCRETIZATION_ROLLOUT_PLAN.md`）
+  - 機能設計書を5分類に整えたときに本文から外した節の退避先 `functions/_archive/`
+  - バックアップ（`*.bak`）、codex の出力と依頼文（結論はそれぞれの `*_disposition.md`・`DECISION.md` などに残る）
   - E2E の実行結果
 - 追跡していたものは、git の履歴からも戻せる。
