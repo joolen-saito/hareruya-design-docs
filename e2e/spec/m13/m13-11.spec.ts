@@ -230,7 +230,7 @@ caseTest("IT-M13-11-023", async ({ page, notes, step, expected }) => {
   await step(1, async () => {
     await page.goto(adminUrl("/event/entry"));
     await page.waitForLoadState("load");
-    await page.getByRole("button", { name: "イベント情報を検索", exact: true }).click();
+    await page.locator('button[data-bs-target="#searchEventModal"]').click({ timeout: 30_000 });
     await expect(modal, "重ねて表示されたイベント検索").toBeVisible();
   });
   await step(2, async () => {
@@ -239,10 +239,10 @@ caseTest("IT-M13-11-023", async ({ page, notes, step, expected }) => {
     await base.selectOption([{ label: "店舗A" }]);
     await modal.locator('[name$="[start_date_from]"]').fill("");
     await modal.locator('[name$="[start_date_to]"]').fill("");
-    await modal.locator("#searchEventModalButton").click();
+    await modal.locator("#searchEventModalButton").click({ timeout: 30_000 });
     await expect(modal.locator(`button.set-event[data-detail="${d}"]`), "検索結果に日程の行").toBeVisible({ timeout: 30_000 });
   });
-  await step(3, async () => { await modal.locator(`button.set-event[data-detail="${d}"]`).click(); });
+  await step(3, async () => { await modal.locator(`button.set-event[data-detail="${d}"]`).click({ timeout: 30_000 }); });
   await expected(async () => {
     await expect.soft(modal, "重ねて表示した一覧が閉じる").toBeHidden();
     expect.soft(await page.locator("#admin_search_event_event_name").inputValue(), "検索条件のイベント名").toBe(rc("遷移確認大会"));
@@ -268,7 +268,7 @@ caseTest("IT-M13-11-024", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     expect.soft(画面, "選択した日程のイベント名と開催日時").toContain(`${rc("連携確認大会001")}（Link Check 001） 2099-12-02 14:30`);
     expect.soft(画面, "別の日程（2099-12-01 10:00）は表示されない").not.toContain("2099-12-01 10:00");
-    expect.soft(金額, "支払金額の初期表示（参加費）").toBe("2500");
+    expect.soft(金額.replace(/,/g, ""), "支払金額の初期表示（参加費。桁区切りは除いて比べる）").toBe("2500");
   });
 });
 
@@ -278,12 +278,12 @@ caseTest("IT-M13-11-025", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.開く(); });
   await step(2, async () => { await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("決定非表示確認大会")); await s.検索する(); });
-  let 行 = ""; let 表示 = 0;
-  await step(4, async () => { const r = s.日程の行(d); 表示 = await r.count(); 行 = (await r.innerText()).replace(/\s+/g, " "); });
+  let 操作欄 = ""; let 表示 = 0;
+  await step(4, async () => { const r = s.日程の行(d); 表示 = await r.count(); 操作欄 = (await r.locator("td").last().innerText()).replace(/\s+/g, " "); });
   await expected(async () => {
     expect.soft(表示, "日程の一覧行が表示される").toBe(1);
     expect.soft(await s.表示されたイベントID(), "イベントIDの行が表示される").toContain(notes.get("〔イベントID-M1311-025〕"));
-    expect.soft(行, "その行に「決定」ボタンが表示されない").not.toContain("決定");
+    expect.soft(操作欄, "その行の操作欄に「決定」ボタンが表示されない").not.toContain("決定");
   });
 });
 

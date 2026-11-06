@@ -38,6 +38,17 @@ defineSeed("S-M13-11-ADM-A", { needs: ["S-M13-11-STORES"] }, async ({ browser, n
   });
 });
 
+/** 店舗Cのイベントを登録する管理者（全権限の管理者の店舗の選択肢には店舗Cが無い）。店舗Cだけに編集権限 */
+export const M1311_C_ADMIN: Account = { loginId: "m1311_admin_c", password: "Passw0rd!M1311C" };
+async function 店舗C管理者を用意(browser: import("@playwright/test").Browser): Promise<void> {
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    await ensureMember(page, {
+      名前: "M13-11店舗C管理者", 所属店舗: "店舗C", ログインID: M1311_C_ADMIN.loginId, メールアドレス: "m1311_admin_c@example.test",
+      パスワード: M1311_C_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗C", 編集可能店舗: ["店舗C"],
+    });
+  });
+}
+
 const 開始日時 = (s: string) => s;
 const オンライン = { 開始: "2098-01-01 10:00", 終了: "2098-12-31 10:00" };
 const en = (s: string) => `${s} ${RUN_MARK}`;
@@ -48,7 +59,8 @@ async function 登録(browser: import("@playwright/test").Browser, items: Ev[]):
   const out: [string, string[]][] = [];
   for (const it of items) {
     const 店舗 = it.店舗 ?? "店舗A";
-    await withAdminSession(browser, 店舗 === "店舗C" ? SETUP_ADMIN : M1311_ADMIN, async (page) => {
+    if (店舗 === "店舗C") await 店舗C管理者を用意(browser);
+    await withAdminSession(browser, 店舗 === "店舗C" ? M1311_C_ADMIN : M1311_ADMIN, async (page) => {
       const id = await registerEvent(page, {
         イベント名日: it.名日, イベント名英: it.名英, 店舗, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16", 参加費: "0", ...it.over,
       });
@@ -70,7 +82,8 @@ defineSeed("S-M13-11-PAGING", { needs: ["S-M13-11-ADM-A"] }, async ({ browser, n
   r.forEach(([e, [d]], i) => {
     const n = String(i + 1).padStart(2, "0");
     notes.set(`〔イベントID-M1311-共有ページ${n}〕`, e);
-    notes.set(`〔日程ID-M1311-共有ページ${n}〕`, d);
+    // シード表が控えると定めた日程IDは01・02・11だけ（途中は範囲の書き方）
+    if (n === "01" || n === "02" || n === "11") notes.set(`〔日程ID-M1311-共有ページ${n}〕`, d);
   });
 });
 
@@ -146,6 +159,8 @@ defineSeed("S-M13-11-L-EVENT-024", { needs: ["S-M13-11-L-ADM"] }, async ({ brows
   await withAdminSession(browser, M1311_L_ADMIN, async (page) => {
     const id = await registerEvent(page, {
       イベント名日: rc("連携確認大会001"), イベント名英: "Link Check 001", 店舗: "店舗A", フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16", 参加費: "2500",
+      // オンライン受付ありで有料のときは支払方法が要る（シード表に書かれていない。画面の求めに従い代えた）
+      支払方法: ["クレジットカード決済"],
     });
     const a = await registerSchedule(page, id, { 開始時間: "2099-12-01 10:00", 受付あり: false, デッキ登録あり: false, オンライン受付: オンライン, 公開状態: "公開" });
     const b = await registerSchedule(page, id, { 開始時間: "2099-12-02 14:30", 受付あり: false, デッキ登録あり: false, オンライン受付: オンライン, 公開状態: "公開" });
