@@ -1,7 +1,7 @@
 ---
 name: e2e-test-cases
 description: >-
-  HTML設計書(機能仕様)とテスト観点表・既存IT casesから、E2Eテストケース表を作り、ec-cube-enterprise の Playwright 規約(Page Object＋spec)に沿ったE2Eテストへ橋渡しする。E2E可能な観点だけを自動化対象に分類し、セレクタはTwigテンプレートから根拠付きで導出する。Use when asked to create E2E test cases or Playwright tests from design docs / viewpoints.
+  【旧世代・使わない（2026-11-06）。いまの結合テストは integration_test/casegen/、E2E は hareruya-e2e-case-evidence。このスキルが読む旧世代のファイルの多くはリポジトリの外 ../hareruya-design-docs-archive/2026-11-06/ へ移した】 HTML設計書(機能仕様)とテスト観点表・既存IT casesから、E2Eテストケース表を作り、ec-cube-enterprise の Playwright 規約(Page Object＋spec)に沿ったE2Eテストへ橋渡しする。E2E可能な観点だけを自動化対象に分類し、セレクタはTwigテンプレートから根拠付きで導出する。Use when asked to create E2E test cases or Playwright tests from design docs / viewpoints.
 disable-model-invocation: true
 ---
 

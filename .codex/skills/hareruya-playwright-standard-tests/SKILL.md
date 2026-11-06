@@ -1,6 +1,6 @@
 ---
 name: hareruya-playwright-standard-tests
-description: Implement and audit Playwright E2E test code for Hareruya functions whose functions/todo-list.md customization category is 標準. Use when Codex must convert integration_test/e2e case Markdown into e2e/spec and e2e/pages code, establish screen reachability so transition-only screens (confirm/complete/wizard) are reached by traversal rather than direct URL, create or update the harness that checks coverage, or continue standard-function Playwright rollout without weakening test oracles to match a failing implementation.
+description: 【旧世代・使わない（2026-11-06）。いまの結合テストは integration_test/casegen/、E2E は hareruya-e2e-case-evidence。このスキルが読む旧世代のファイルの多くはリポジトリの外 ../hareruya-design-docs-archive/2026-11-06/ へ移した】 Implement and audit Playwright E2E test code for Hareruya functions whose functions/todo-list.md customization category is 標準. Use when Codex must convert integration_test/e2e case Markdown into e2e/spec and e2e/pages code, establish screen reachability so transition-only screens (confirm/complete/wizard) are reached by traversal rather than direct URL, create or update the harness that checks coverage, or continue standard-function Playwright rollout without weakening test oracles to match a failing implementation.
 ---
 
 # Hareruya Playwright Standard Tests

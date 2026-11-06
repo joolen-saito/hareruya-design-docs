@@ -1,7 +1,7 @@
 ---
 name: integration-test-merge
 description: >-
-  Merges the per-feature integration test cases under .cursor/design/integration_test/ into a single plain TSV. Reads the first ```tsv fence of each *_it_cases.md, keeps one header row, and concatenates all data rows with テストID preserved. Reuses the integration-test-cases skill's format_tsv.py helpers. Use when the user asks to combine/merge the integration_test TSVs into one file, or wants an all-in-one TSV to paste into Excel/Sheets.
+  【旧世代・使わない（2026-11-06）。いまの結合テストは integration_test/casegen/、E2E は hareruya-e2e-case-evidence。このスキルが読む旧世代のファイルの多くはリポジトリの外 ../hareruya-design-docs-archive/2026-11-06/ へ移した】 Merges the per-feature integration test cases under .cursor/design/integration_test/ into a single plain TSV. Reads the first ```tsv fence of each *_it_cases.md, keeps one header row, and concatenates all data rows with テストID preserved. Reuses the integration-test-cases skill's format_tsv.py helpers. Use when the user asks to combine/merge the integration_test TSVs into one file, or wants an all-in-one TSV to paste into Excel/Sheets.
 disable-model-invocation: true
 ---
 

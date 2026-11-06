@@ -1,7 +1,7 @@
 ---
 name: integration-test-cases
 description: >-
-  Builds integration test cases as tab-separated tables; output saves under .cursor/design/integration_test/ from reverse-design Markdown under .cursor/design/functions/ and viewpoints in .cursor/docs/テスト観点.md. TSV columns I/FID=関連ID and テスト観点=観点 column from that file (not IF-xxx or I/F種別). Expectations are one judgment per row; test item names are specific per row. Produces Excel or Google Sheets paste-ready TSV. Use when the user asks for 結合試験, integration tests, IT cases, test perspectives mapped to cases, or TSV test matrices from design docs.
+  【旧世代・使わない（2026-11-06）。いまの結合テストは integration_test/casegen/、E2E は hareruya-e2e-case-evidence。このスキルが読む旧世代のファイルの多くはリポジトリの外 ../hareruya-design-docs-archive/2026-11-06/ へ移した】 Builds integration test cases as tab-separated tables; output saves under .cursor/design/integration_test/ from reverse-design Markdown under .cursor/design/functions/ and viewpoints in .cursor/docs/テスト観点.md. TSV columns I/FID=関連ID and テスト観点=観点 column from that file (not IF-xxx or I/F種別). Expectations are one judgment per row; test item names are specific per row. Produces Excel or Google Sheets paste-ready TSV. Use when the user asks for 結合試験, integration tests, IT cases, test perspectives mapped to cases, or TSV test matrices from design docs.
 disable-model-invocation: true
 ---
 
