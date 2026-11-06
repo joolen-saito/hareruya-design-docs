@@ -32,7 +32,6 @@
 | `integration_test/casegen/all_test_cases.tsv` | 結合テストの一覧。Excel の項目表の元 |
 | `integration_test/casegen/playwright_cases.tsv` | E2E の合否 |
 | `e2e/` | 結合テストケースを流す E2E（Playwright）。テスト・シード・画面の部品・道具・判定と記録。<br>使い方は `e2e/README.md` |
-| `fp_scale/` | FP によるテスト規模の算定（ケース数の妥当性の根拠） |
 
 ## 3. 総合テスト（シナリオテスト）
 
@@ -75,5 +74,6 @@
   - 初期世代の生成物（`casegen/gen_*` など）
   - codex のレビューの出力
   - 呼ばれていない汎用の設計書スキル8本
+  - FP によるテスト規模の分析 `fp_scale/`（ケース数の妥当性の根拠。流れからは読まれない）
   - E2E の実行結果
 - 追跡していたものは、git の履歴からも戻せる。
