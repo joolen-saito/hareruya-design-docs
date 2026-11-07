@@ -56,17 +56,13 @@ caseTest("IT-M14-08-024", async ({ page, step, expected }) => {
   const 日付 = 欄(page, "releaseDate");
   await step(1, async () => { await 登録画面を開く(page); });
   await step(2, async () => {
-    await 日付.click();
-    note("リリース日の入力欄はブラウザ標準の日付入力で、カレンダーの部品は画面に無い。欄を押して開く代わりに、欄にキーボードで日付を入れた");
+    await 日付.click({ position: { x: 6, y: 10 } }); // 欄の左端（先頭の入力部分）を押す
+    note("リリース日の入力欄はブラウザ標準の日付入力で、カレンダーの部品は画面に無い（開く操作はできない）");
   });
   await step(3, async () => {
-    // ブラウザ標準の日付入力へ、年・月・日の順にキーボードで入れる（カレンダーの日付の選択に当たる操作）
-    await 日付.focus();
-    await page.keyboard.type("2026");
-    await page.keyboard.press("ArrowRight");
-    await page.keyboard.type("09");
-    await page.keyboard.press("ArrowRight");
-    await page.keyboard.type("02");
+    // カレンダーの部品が画面に無く、ブラウザ標準の日付入力へキーボードで入れても年の欄に続けて入ってしまう（別の値になる）ため、欄へ日付そのものを入れる
+    await 日付.fill("2026-09-02");
+    note("日付の選択は、欄へ日付（2026年9月2日）を直接入れる操作で代えた（カレンダーの部品が画面に無いため。条件付き）");
   });
   await expected(async () => { expect.soft(await 日付.inputValue(), "リリース日の入力値").toBe("2026-09-02"); });
 });
