@@ -4,6 +4,8 @@ import { BASE_URL } from "../../config/env";
 import { mailIds, waitForMailTo } from "../../lib/mail";
 
 export type FrontMember = { 姓: string; 名: string; セイ: string; メイ: string; メール: string; パスワード: string; 住所3?: string;
+  /** 省略すると会社名は入れない */
+  会社名?: string;
   /** 省略すると登録できる任意の値（東京都千代田区・生年月日1990/1/1・電話03-0000-0000）を入れる */
   詳細?: { 郵便番号1: string; 郵便番号2: string; 都道府県: string; 住所1: string; 住所2: string; 電話: [string, string, string] } };
 
@@ -33,6 +35,7 @@ export async function registerFrontMember(page: Page, v: FrontMember): Promise<v
   await f("address][pref").selectOption({ label: d.都道府県 });
   await f("address][addr01").fill(d.住所1);
   await f("address][addr02").fill(d.住所2);
+  if (v.会社名 !== undefined) await f("company_name").fill(v.会社名);
   if (v.住所3 !== undefined && (await f("address][addr03").count()) > 0) await f("address][addr03").fill(v.住所3);
   await f("tel][tel01").fill(d.電話[0]);
   await f("tel][tel02").fill(d.電話[1]);
