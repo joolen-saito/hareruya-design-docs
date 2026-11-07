@@ -21,7 +21,7 @@ for (const n of ["013", "014"]) {
       notes.set(`〔フォーマットID-M1409-${n}〕`, await フォーマットを登録する(page, { 名日: 使用中, 名英: rc(`Deck Format ${n}`), 並び順: "900" }, seed.シードID));
       await フォーマットを登録する(page, { 名日: 補助, 名英: rc(`Deck Helper Format ${n}`), 並び順: "900" }, seed.シードID);
       const 補助アーキタイプ = await アーキタイプを登録する(page, { 名日: `デッキ用補助アーキタイプ-${n}`, 名英: `DeckHelperArchetype${n}`, フォーマット: 補助 }, (m) => reportSeedIssue(seed.シードID, m));
-      await デッキを登録する(page, { デッキ名: rc(`DECK-M1409-01-${n}`), デッキタイプ: "user", フォーマット: 使用中, アーキタイプ: 補助アーキタイプ, 公開状態: "非公開" }, (m) => reportSeedIssue(seed.シードID, m));
+      await デッキを登録する(page, { デッキ名: rc(`DECK-M1409-01-${n}`), デッキタイプ: "user", フォーマット: 使用中, アーキタイプ: 補助アーキタイプ, アーキタイプのフォーマット: 補助, 公開状態: "非公開" }, (m) => reportSeedIssue(seed.シードID, m));
     });
   });
 }

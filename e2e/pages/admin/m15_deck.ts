@@ -22,6 +22,8 @@ export type デッキ登録内容 = {
   /** 省略は、アーキタイプのあるフォーマットのうち先頭（任意の値） */
   フォーマット?: string;
   アーキタイプ?: string;
+  /** アーキタイプが別のフォーマットに属するとき、その名称。画面は選んだフォーマットのアーキタイプしか出さないので、先にそのフォーマットで選び、あとでフォーマットだけを元に戻す */
+  アーキタイプのフォーマット?: string;
   公開状態?: "公開" | "非公開" | "限定公開";
   イベント名日?: string; イベント名英?: string;
   /** 「2025-07-31T23:59」の形（日時欄の値） */
@@ -63,8 +65,20 @@ export async function デッキを登録する(page: Page, v: デッキ登録内
   const f = (n: string) => page.locator(`[name="admin_deck[${n}]"]`);
   if (v.デッキ名 !== undefined) await f("deckName").fill(v.デッキ名);
   await chooseByLabel(f("DeckType"), v.デッキタイプ ?? "event");
-  await chooseByLabel(f("Format"), v.フォーマット ?? base!.フォーマット);
-  await chooseByLabel(f("Archetype"), v.アーキタイプ ?? base!.アーキタイプ);
+  if (v.アーキタイプのフォーマット) {
+    await chooseByLabel(f("Format"), v.アーキタイプのフォーマット);
+    await chooseByLabel(f("Archetype"), v.アーキタイプ ?? base!.アーキタイプ);
+    // 変更の通知を出さずにフォーマットの値だけ戻す（通知を出すとアーキタイプの選択が外れる）
+    await f("Format").evaluate((el, label) => {
+      const sel = el as HTMLSelectElement;
+      const o = Array.from(sel.options).find((x) => (x.textContent ?? "").trim() === label);
+      if (!o) throw new Error(`フォーマットの選択肢「${label}」が無い`);
+      sel.value = o.value;
+    }, v.フォーマット ?? "");
+  } else {
+    await chooseByLabel(f("Format"), v.フォーマット ?? base!.フォーマット);
+    await chooseByLabel(f("Archetype"), v.アーキタイプ ?? base!.アーキタイプ);
+  }
   await chooseByLabel(f("Disp"), v.公開状態 ?? "非公開");
   if (v.タグ?.length) await chooseByLabel(page.locator('[name="admin_deck[DeckTags][]"]'), v.タグ);
   if (v.イベント) {
