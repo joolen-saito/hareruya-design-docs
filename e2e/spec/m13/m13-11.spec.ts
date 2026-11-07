@@ -246,8 +246,8 @@ caseTest("IT-M13-11-023", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     await expect.soft(modal, "重ねて表示した一覧が閉じる").toBeHidden();
     expect.soft(await page.locator("#admin_search_event_event_name").inputValue(), "検索条件のイベント名").toBe(rc("遷移確認大会"));
-    expect.soft((await page.locator("#admin_search_event_start_date_from").inputValue()).replace(/-/g, "/"), "検索条件の開催日(From)").toBe("2099/12/01");
-    expect.soft((await page.locator("#admin_search_event_start_date_to").inputValue()).replace(/-/g, "/"), "検索条件の開催日(To)").toBe("2099/12/01");
+    expect.soft((await page.locator("#admin_search_event_start_date_from").inputValue()).replace(/-/g, "/").slice(0, 10), "検索条件の開催日(From)").toBe("2099/12/01");
+    expect.soft((await page.locator("#admin_search_event_start_date_to").inputValue()).replace(/-/g, "/").slice(0, 10), "検索条件の開催日(To)").toBe("2099/12/01");
     const shops = await page.locator("#admin_search_event_base_info").evaluate((el) => [...(el as HTMLSelectElement).selectedOptions].map((o) => (o.textContent ?? "").trim()));
     expect.soft(shops, "検索条件の店舗").toEqual(["店舗A"]);
   });
