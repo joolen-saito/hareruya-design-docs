@@ -3,7 +3,7 @@ import { Page, test } from "@playwright/test";
 import { caseTest, CaseBody, expect } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { adminUrl, loginAdmin } from "../../lib/session";
-import { フォーマットの値 } from "../../db/m14_10_format";
+import { デッキ名のデッキID, フォーマットの値 } from "../../db/m14_10_format";
 import { フォーマット入力, 編集画面を開く, 入力する, 登録を押す } from "../../pages/admin/m14_10_format";
 import { デッキを登録する } from "../../pages/admin/m15_deck";
 import { chooseByLabel } from "../../pages/admin/common";
@@ -130,7 +130,7 @@ caseTest("IT-M14-10-057", async ({ page, step, expected }) => {
 // ---------------------------------------------------------------------------
 // 039・065〜067 ハイランダー（管理画面のデッキ登録の警告）
 // ---------------------------------------------------------------------------
-function ハイランダー(n: string, 名: string[], 設定: boolean, 重複: string, 期待あり: boolean): CaseBody {
+function ハイランダー(n: string, 名: string[], 設定: boolean, 重複: string, 期待あり: boolean, 確認の手順あり = true): CaseBody {
   return async ({ page, notes, step, expected }) => {
     await loginAdmin(page, M1410_ADMIN);
     const id = notes.get(`〔フォーマットID-M1410-${n}〕`), 形式 = rc(`連携確認フォーマット-${n}`), アーキタイプ = rc(`連携確認アーキタイプ-${n}`);
@@ -146,8 +146,9 @@ function ハイランダー(n: string, 名: string[], 設定: boolean, 重複: s
     await step(5, async () => {
       const 行 = 名.map((x) => `1 ${rc(x)}`).join("\n");
       await デッキを登録する(page, { デッキ名: rc(`連携確認デッキ-${n}`), デッキタイプ: "event", フォーマット: 形式, アーキタイプ, 公開状態: "非公開", メイン: 行 }, (m) => 警告.push(m));
-      表示 = (await page.locator(".alert").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+      if (!確認の手順あり) 表示 = (await page.locator(".alert").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
     });
+    if (確認の手順あり) await step(6, async () => { 表示 = (await page.locator(".alert").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean); });
     await expected(async () => {
       const 文 = [...警告, ...表示].join(" / ");
       const あり = 文.includes(`行目の ${rc(重複)} が2枚以上登録されています`);
@@ -156,7 +157,7 @@ function ハイランダー(n: string, 名: string[], 設定: boolean, 重複: s
     });
   };
 }
-caseTest("IT-M14-10-039", ハイランダー("039", ["重複試験カード-039", "重複試験カード-039"], true, "重複試験カード-039", true));
+caseTest("IT-M14-10-039", ハイランダー("039", ["重複試験カード-039", "重複試験カード-039"], true, "重複試験カード-039", true, false));
 caseTest("IT-M14-10-065", ハイランダー("065", ["単独試験カードA-065", "単独試験カードB-065"], true, "単独試験カードA-065", false));
 caseTest("IT-M14-10-066", ハイランダー("066", ["重複試験カード-066", "重複試験カード-066"], false, "重複試験カード-066", false));
 caseTest("IT-M14-10-067", ハイランダー("067", ["重複基本土地-067", "重複基本土地-067"], true, "重複基本土地-067", false));
@@ -190,12 +191,14 @@ caseTest("IT-M14-10-047", async ({ page, notes, step, expected }) => {
 // ---------------------------------------------------------------------------
 caseTest("IT-M14-10-031", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1410_ADMIN);
-  const id = notes.get("〔フォーマットID-M1410-031〕"), デッキID = notes.get("〔デッキID-M1410-031〕"), カード名 = rc("日英カード-031");
+  const id = notes.get("〔フォーマットID-M1410-031〕"), デッキ名 = rc("連携確認デッキ-031"), カード名 = rc("日英カード-031");
   let 応答 = 0; let ダウンロード = false; let 一覧: string = ""; let クリップボード = "";
   await step(1, async () => { await 編集を開く(page, id); });
   await step(2, async () => { 保存できた(await 設定して登録(page, { チェック: { ArenaLegalFlg: true } })); });
   await step(3, async () => {
     await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: new URL(page.url()).origin }).catch(() => undefined);
+    const デッキID = デッキ名のデッキID(デッキ名);
+    if (!デッキID) throw new Error("シードのデッキが見つからない");
     const res = await page.goto(前面(`/deck/${デッキID}/show/`), { timeout: 60_000 });
     await page.waitForLoadState("load");
     応答 = res?.status() ?? 0;
@@ -257,7 +260,7 @@ function 分析日数(n: string, ランキングも: boolean): CaseBody {
         // デッキ検索のトップから、メタゲームの画面を経て採用枚数ランキングへ
         await page.goto(前面("/deck/"), { timeout: 60_000 });
         await page.waitForLoadState("load");
-        await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator(`a.deckSearch-top__metagame-title__link[href$="/deck/${id}/metagame/"]`).first().click({ timeout: 30_000 })]);
+        await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator(`a[href$="/deck/${id}/metagame/"]:visible`).first().click({ timeout: 30_000 })]);
         await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator(`a[href$="/deck/${id}/usage_ranking/"]`).first().click({ timeout: 30_000 })]);
         応答 = 200;
       } else {

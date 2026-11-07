@@ -49,3 +49,9 @@ export function フォーマットの指定数(フォーマットID: string | nu
 export function 認定の件数(名: string): number {
   return Number(query(`select count(*) as n from mtb_certification where name_jp = $1`, [名])[0].n);
 }
+
+/** デッキ名で引く（削除されていないもの。新しい順の先頭のデッキID）。無ければ null */
+export function デッキ名のデッキID(デッキ名: string): string | null {
+  const r = query(`select id from dtb_deck where deck_name = $1 and deleted_at is null order by id desc limit 1`, [デッキ名])[0];
+  return r ? String(r.id) : null;
+}

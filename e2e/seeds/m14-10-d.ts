@@ -96,7 +96,7 @@ defineSeed("S-M14-10-DELETE-DECK-047", async ({ browser, notes, seed }) => {
     notes.set("〔フォーマットID-M1410-047〕", f.id);
     const 別 = await 形式を作る(page, "削除制約の補助形式-047", "Deck Helper Format-047", { 並び順: "82" }, seed.シードID);
     const arch = await アーキタイプを登録する(page, { 名日: "削除制約の補助アーキタイプ-047", 名英: "DeleteHelperArchetype047", フォーマット: 別.名日 }, issue);
-    await デッキを登録する(page, { デッキ名: rc("削除制約デッキ-047"), デッキタイプ: "event", フォーマット: f.名日, アーキタイプ: arch, 公開状態: "非公開" }, issue);
+    await デッキを登録する(page, { デッキ名: rc("削除制約デッキ-047"), デッキタイプ: "event", フォーマット: f.名日, アーキタイプ: arch, アーキタイプのフォーマット: 別.名日, 公開状態: "非公開" }, issue);
   });
 });
 
@@ -164,8 +164,7 @@ defineSeed("S-M14-10-DOWNSTREAM-031", { needs: ["S-M14-04-MASTER"] }, async ({ b
     notes.set("〔フォーマットID-M1410-031〕", f.id);
     await カードを登録する(page, { 日: "日英カード-031", 英: "Bilingual Card-031" }, seed.シードID);
     const arch = await アーキタイプを登録する(page, { 名日: "連携確認アーキタイプ-031", 名英: "LinkArchetype031", フォーマット: f.名日 }, issue);
-    const id = await 公開デッキをn日前に作る(page, { 番号: "031", デッキ名: "連携確認デッキ-031", 形式: f.名日, アーキタイプ: arch, 日前: 3, メイン: `4 ${rc("日英カード-031")}` }, issue);
-    notes.set("〔デッキID-M1410-031〕", id);
+    await 公開デッキをn日前に作る(page, { 番号: "031", デッキ名: "連携確認デッキ-031", 形式: f.名日, アーキタイプ: arch, 日前: 3, メイン: `4 ${rc("日英カード-031")}` }, issue);
   });
 });
 

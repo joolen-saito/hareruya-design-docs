@@ -24,6 +24,8 @@ export async function 登録を押す(page: Page): Promise<{ sent: boolean; url:
   await page.locator('button[type="submit"]').filter({ hasText: /^\s*(登録|新規登録)\s*$/ }).first().click({ timeout: 20_000, noWaitAfter: true });
   const res = await resP;
   await page.waitForLoadState("load").catch(() => undefined);
+  // 保存後は画面が読み直される。成功メッセージ（または入力の誤り）が出るまで待ってから結果を見る（読み直し前の画面を見て取り違えない）
+  if (res !== null) await page.locator(".alert-success, .invalid-feedback, .form-error-message").first().waitFor({ state: "visible", timeout: 15_000 }).catch(() => undefined);
   return { sent: res !== null, url: page.url(), status: res?.status() ?? 0 };
 }
 
