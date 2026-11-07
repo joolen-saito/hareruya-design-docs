@@ -79,3 +79,8 @@ export function デッキ(デッキID: string): 大会デッキ | undefined {
 export function 日程の大会デッキ件数(日程ID: string): number {
   return Number(query(`select count(*) as n from dtb_deck where event_detail_id = $1::int and deleted_at is null`, [日程ID])[0].n);
 }
+
+/** デッキを最後に編集した管理者（メンバー）の番号。編集者がいなければ空 */
+export function 編集者ID(デッキID: string): string {
+  return s(query(`select member_id from dtb_deck where id = $1::int`, [デッキID])[0]?.member_id ?? null);
+}
