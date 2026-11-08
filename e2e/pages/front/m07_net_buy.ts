@@ -113,7 +113,7 @@ export async function 複数を申込む(page: Page, 商品: { 商品ID: string;
   await submit.click({ timeout: OPEN });
   const modalSubmit = page.locator("#purchase-confirm-modal [data-js-confirm-modal-submit]");
   await expect(modalSubmit, "確認モーダルの「申込み」ボタン").toBeVisible({ timeout: OPEN });
-  await Promise.all([page.waitForURL(/\/purchase\/complete/, { timeout: 90_000 }), modalSubmit.click({ timeout: OPEN })]);
+  await Promise.all([page.waitForURL(/\/purchase\/complete/, { timeout: 90_000 }), modalSubmit.click({ timeout: OPEN, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   const body = (await page.locator("body").innerText({ timeout: OPEN })).replace(/\s+/g, " ");
   const m = /PU\d{6}-(\d{10})/.exec(body);
