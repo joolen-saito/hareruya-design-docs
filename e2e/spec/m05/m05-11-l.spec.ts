@@ -8,13 +8,24 @@ import { 明細のコード } from "../../seeds/m05-11-l";
 import { M0511_ADMIN_A, 店舗Aの店名 } from "../../seeds/m05-11";
 
 const NO = "〔受注番号-M0511-共有PRODUCT〕";
-// 共有シード（カード詳細4件・商品5点・EXの規格・在庫承認・注文）の作成に30分以上かかるので、この spec の制限時間を90分にする
-test.beforeEach(async ({}, testInfo) => { testInfo.setTimeout(5_400_000); });
+// 共有シード（カード詳細4件・商品5点・在庫承認・注文）の作成に時間がかかるので、この spec の制限時間を60分にする
+test.beforeEach(async ({}, testInfo) => { testInfo.setTimeout(3_600_000); });
 async function 開く(browser: Browser, page: Page, no: string): Promise<OrderEditPage> {
   const p = new OrderEditPage(page);
   await p.openByOrderNo(no, await 店舗Aの店名(browser));
   return p;
 }
+
+caseTest("IT-M05-11-081", async ({ page, browser, notes, step, expected }) => {
+  await loginAdmin(page, M0511_ADMIN_A);
+  await step(1, async () => { await 開く(browser, page, notes.get(NO)); });
+  await step(2, async () => {
+    const link = 明細行(page, rc(明細のコード[0])).locator('a[href*="/product/product/"]').first();
+    const [popup] = await Promise.all([page.context().waitForEvent("page", { timeout: 30_000 }).catch(() => null), link.click({ timeout: 20_000 })]);
+    if (popup) { await popup.waitForLoadState("load"); await page.goto(popup.url()); await popup.close(); } else await page.waitForLoadState("load");
+  });
+  await expected(async () => { expect.soft(new URL(page.url()).pathname, "遷移先（商品の商品編集画面）").toMatch(/\/product\/product\/\d+\/edit$/); });
+});
 
 caseTest("IT-M05-11-078", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M0511_ADMIN_A);
@@ -22,14 +33,15 @@ caseTest("IT-M05-11-078", async ({ page, browser, notes, step, expected }) => {
   await step(1, async () => { await 開く(browser, page, notes.get(NO)); });
   await step(2, async () => {
     // 受注商品情報の表を上から順に読み、価格帯の見出しの行と商品の行から、商品ごとの区分を求める
-    const rows = await page.locator("#table-form-field tr").evaluateAll((trs) => trs.map((tr) => ({
-      item: tr.classList.contains("item_box"),
+    const rows = await page.locator("#table-form-field tr.item_box").evaluateAll((trs) => trs.map((tr) => ({
+      border: tr.classList.contains("class1_border") || tr.classList.contains("class2_border"),
       text: (tr.textContent ?? "").replace(/\s+/g, " ").trim(),
       code: tr.querySelector("span.product-code")?.textContent?.trim() ?? "",
     })));
-    let heading = "";
+    // 価格帯の見出しの行（980円〜・4,800円以上）を境に、その下の商品の区分とする。最初の見出しより上の商品は見出しが無い
+    let heading = "（見出しなし）";
     for (const r of rows) {
-      if (r.item) { if (r.code) 区分[r.code] = heading; } else if (/円/.test(r.text) && r.text.length < 40) heading = r.text;
+      if (r.border) heading = r.text; else if (r.code) 区分[r.code] = heading;
     }
   });
   await expected(async () => {
@@ -40,6 +52,7 @@ caseTest("IT-M05-11-078", async ({ page, browser, notes, step, expected }) => {
   });
 });
 
+// 079 は状態EXの商品を作れず落ちる見込み。落ちるとワーカーが作り直されて共有シードを作り直すので、落ちる見込みのもの（078・079）を後ろに置く
 caseTest("IT-M05-11-079", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M0511_ADMIN_A);
   const n: Record<string, { foil: number; frame: number; ex: number }> = {};
@@ -56,15 +69,4 @@ caseTest("IT-M05-11-079", async ({ page, browser, notes, step, expected }) => {
     expect.soft([p1.frame > 0, p2.frame > 0, p3.frame > 0, p4.frame > 0, p5.frame > 0], "フレームの表示（特殊フレームの商品だけ）").toEqual([false, false, false, true, false]);
     expect.soft([p1.ex > 0, p2.ex > 0, p3.ex > 0, p4.ex > 0, p5.ex > 0], "状態EXのアイコン（EXの商品だけ）").toEqual([false, false, false, false, true]);
   });
-});
-
-caseTest("IT-M05-11-081", async ({ page, browser, notes, step, expected }) => {
-  await loginAdmin(page, M0511_ADMIN_A);
-  await step(1, async () => { await 開く(browser, page, notes.get(NO)); });
-  await step(2, async () => {
-    const link = 明細行(page, rc(明細のコード[0])).locator('a[href*="/product/product/"]').first();
-    const [popup] = await Promise.all([page.context().waitForEvent("page", { timeout: 30_000 }).catch(() => null), link.click({ timeout: 20_000 })]);
-    if (popup) { await popup.waitForLoadState("load"); await page.goto(popup.url()); await popup.close(); } else await page.waitForLoadState("load");
-  });
-  await expected(async () => { expect.soft(new URL(page.url()).pathname, "遷移先（商品の商品編集画面）").toMatch(/\/product\/product\/\d+\/edit$/); });
 });

@@ -94,7 +94,8 @@ async function 確定する(page: Page, 配送方法: string, what: string, 支�
     value: (n as HTMLInputElement).value, checked: (n as HTMLInputElement).checked,
     label: ((n as HTMLInputElement).closest("label")?.textContent ?? "").replace(/\s+/g, " ").trim(),
   })));
-  const pay = 支払候補.map((l) => choices.find((c) => c.label === l)).find(Boolean);
+  // 支払候補に「*」があれば、その会員で選べる支払方法の先頭を選ぶ（会員グループごとに選べる支払方法が違うとき）
+  const pay = 支払候補.includes("*") ? choices[0] : 支払候補.map((l) => choices.find((c) => c.label === l)).find(Boolean);
   if (!pay) throw new Error(`${what}: 支払方法に「${支払候補.join("・")}」が無い（${choices.map((c) => c.label).join("、")}）`);
   if (!pay.checked) {
     await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator(`input[name="_shopping_order[Payment]"][value="${pay.value}"]`).check({ force: true })]);

@@ -8,10 +8,11 @@ const 商品 = [
   { code: "M0511-PRODUCT-2", name: "表示確認商品【日/NM】通常", カード: { Foil: "なし", フレーム: "通常" }, 入庫 },
   { code: "M0511-PRODUCT-3", name: "表示確認商品【日/NM】特殊Foil", カード: { Foil: "特殊" }, 入庫 },
   { code: "M0511-PRODUCT-4", name: "表示確認商品【日/NM】特殊フレーム", カード: { フレーム: "特殊" }, 入庫 },
-  { code: "M0511-PRODUCT-5", name: "表示確認商品【日/EX】", 取込の規格は公開しない: true, 追加規格EX: { code: "M0511-PRODUCT-5-EX" }, 在庫コード: "M0511-PRODUCT-5-EX", 入庫 },
+  // 状態EXの規格は、状態のマスタに EX が無く画面から作れないため、商品5は通常の状態（ニアミント）のまま作る（正本の外の補い）
+  { code: "M0511-PRODUCT-5", name: "表示確認商品【日/NM】状態EXの代わり", 入庫 },
 ];
-/** 受注の明細の商品コード（状態EXの商品は公開のEXの規格） */
-export const 明細のコード = ["M0511-PRODUCT-1", "M0511-PRODUCT-2", "M0511-PRODUCT-3", "M0511-PRODUCT-4", "M0511-PRODUCT-5-EX"];
+/** 受注の明細の商品コード */
+export const 明細のコード = ["M0511-PRODUCT-1", "M0511-PRODUCT-2", "M0511-PRODUCT-3", "M0511-PRODUCT-4", "M0511-PRODUCT-5"];
 const 価格 = ["0", "979", "980", "4799", "4800"];
 
 商品注文のシード("S-M05-11-PRODUCT-READ", {

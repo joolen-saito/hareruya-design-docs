@@ -138,7 +138,11 @@ export async function 入庫する(browser: Browser, seedId: string, items: { co
 }
 
 type 設定 = {
-  番号: string; メール前半: string; 商品: 商品[]; 注文?: { code: string; 数量: number }[];
+  番号: string; メール前半: string; 商品: 商品[];
+  /** 受注番号を控える呼び名（既定は〔受注番号-M0511-番号〕。シード表が別の呼び名で定めるとき） */
+  注文番号の呼び名?: string; 注文?: { code: string; 数量: number }[];
+  /** 手元に既にある商品（商品ID）を注文する（商品を作らない。画像つきの商品など。シードの実行時に求める） */
+  既存商品?: () => { 商品ID: string; 数量: number }[];
   /** 会員のポイントを付ける（会員情報編集の「ポイント履歴追加」で、注文番号は空のまま） */
   ポイント?: number;
   /** 注文の配送方法・支払方法（省略すると 宅配便・銀行振込） */
@@ -146,6 +150,10 @@ type 設定 = {
   整える?: (p: OrderEditPage, items: OrderItemsEdit) => Promise<void>;
   /** 整えたあとに順に変える受注ステータス */
   状態?: string[];
+  /** 会員の用意を差し替える（既定は会員登録だけ）。会員グループを付けるときなど */
+  会員の用意?: (browser: Browser, seedId: string, notes: import("../lib/notes").Notes) => Promise<void>;
+  /** すべて整えたあとに呼ぶ（会員の累計の控えなど） */
+  完了後?: (browser: Browser, seedId: string, ctx: { m: FrontMember; 注文番号: string; notes: import("../lib/notes").Notes }) => Promise<void>;
   注文後?: (browser: Browser, seedId: string, ctx: { m: FrontMember; 注文番号: string; notes: import("../lib/notes").Notes }) => Promise<void>;
 };
 
@@ -154,12 +162,12 @@ export function 商品注文のシード(seedId: string, s: 設定): void {
   defineSeed(seedId, { needs: ["S-M05-11-ADM-A"] }, async ({ browser, notes, seed }) => {
     await 商品を用意する(browser, seedId, s.商品);
     const m = 試験会員(s.メール前半);
-    await 会員を用意する(browser, m);
-    const lines = s.注文 ? s.注文.map((o) => ({ 商品ID: 商品IDの控え(o.code), 数量: o.数量 })) : 販売中の商品(1).map((商品ID) => ({ 商品ID, 数量: 1 }));
+    if (s.会員の用意) await s.会員の用意(browser, seedId, notes); else await 会員を用意する(browser, m);
+    const lines = s.既存商品 ? s.既存商品() : s.注文 ? s.注文.map((o) => ({ 商品ID: 商品IDの控え(o.code), 数量: o.数量 })) : 販売中の商品(1).map((商品ID) => ({ 商品ID, 数量: 1 }));
     await 会員が注文する(browser, m, lines, seed.シードID, { 配送: s.配送, 支払候補: s.支払候補 });
     const shop = await 店舗Aの店名(browser);
     const no = await withAdminSession(browser, M0511_ADMIN_A, async (page) => (await メールで受注を開く(page, m.メール, shop, seedId)).注文番号);
-    notes.set(`〔受注番号-M0511-${s.番号}〕`, no);
+    notes.set(s.注文番号の呼び名 ?? `〔受注番号-M0511-${s.番号}〕`, no);
     if (s.ポイント) await withAdminSession(browser, M0511_ADMIN_A, async (page) => ポイントを付与する(page, await 会員IDを一覧から読む(page, m.メール), s.ポイント!));
     if (s.注文後) await s.注文後(browser, seedId, { m, 注文番号: no, notes });
     if (s.整える || (s.状態 ?? []).length > 0) {
@@ -173,6 +181,7 @@ export function 商品注文のシード(seedId: string, s: 設定): void {
         for (const st of s.状態 ?? []) { await p.ステータスを選ぶ(st); await p.ステータスを変更する(() => undefined); }
       });
     }
+    if (s.完了後) await s.完了後(browser, seedId, { m, 注文番号: no, notes });
   });
 }
 
