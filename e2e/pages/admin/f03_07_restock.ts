@@ -81,7 +81,7 @@ export async function searchProductRequests(page: Page, 商品名: string): Prom
  * 商品規格登録編集画面を直接開き（商品ID・商品規格IDは取込後に一覧で読んだもの）、公開ステータスを公開にし、必要なら高額商品コードを入れて登録する。
  * 部門が未選択なら選択肢の先頭を選ぶ（正本: 任意の部門）。
  */
-export async function savePublishedClass(page: Page, a: { productId: string; classId: string; highPriceCode?: string }, what: string, onIssue: (m: string) => void): Promise<void> {
+export async function savePublishedClass(page: Page, a: { productId: string; classId: string; highPriceCode?: string; memo?: string }, what: string, onIssue: (m: string) => void): Promise<void> {
   await page.goto(adminUrl(`/product/product/class/${a.productId}/edit/${a.classId}`));
   await page.waitForLoadState("load");
   const form = page.locator("form#form");
@@ -99,6 +99,7 @@ export async function savePublishedClass(page: Page, a: { productId: string; cla
     onIssue(`${what}: 部門は選択肢の先頭の「${first.label}」を選んだ`);
   }
   if (a.highPriceCode !== undefined) await form.locator("#admin_product_class_high_price_code").fill(a.highPriceCode);
+  if (a.memo !== undefined) await form.locator("#admin_product_class_memo").fill(a.memo);
   await chooseByLabel(form.locator("#admin_product_class_Status"), "公開");
   await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click()]);
   for (const w of await expectSaved(page, `${what}: 商品規格の登録`)) onIssue(`${what}: 警告「${w}」`);

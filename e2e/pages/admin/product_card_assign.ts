@@ -37,6 +37,14 @@ export async function assignCardOnProductEdit(page: Page, a: CardAssignment, onI
   await modal.locator("#searchCardDetailModalButton").click();
   const row = modal.locator("#searchCardDetailModalList tbody tr")
     .filter({ has: page.locator("td:first-child", { hasText: new RegExp(`^\\s*${a.cardDetailId}\\s*$`) }) });
+  // 検索結果が複数ページに分かれるとき（詳細情報が多いカード）は、行が見つかるまでページを送る
+  await modal.locator("#searchCardDetailModalList tbody tr").first().waitFor({ state: "visible", timeout: 30_000 }).catch(() => undefined);
+  for (let pageNo = 2; pageNo <= 10 && (await row.count()) === 0; pageNo++) {
+    const link = modal.locator("#card_detail_pagination a").filter({ hasText: new RegExp(`^\\s*${pageNo}\\s*$`) });
+    if ((await link.count()) === 0) break;
+    await link.first().click();
+    await page.waitForTimeout(1500);
+  }
   await expect(row, `カード検索の結果に、カード詳細ID ${a.cardDetailId} の「${a.cardNameJp}」がある`).toHaveCount(1);
   await row.getByRole("button", { name: "決定", exact: true }).click();
   await expect(modal, "カードを決定するとカード検索が閉じる").toBeHidden();

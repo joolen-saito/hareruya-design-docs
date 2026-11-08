@@ -255,6 +255,8 @@ export type カードの入力 = {
   カードセットID: string;
   /** Foil・フレームの選択肢の表示名（省略すると選択肢の先頭） */
   Foil?: string; フレーム?: string;
+  /** 詳細情報の件数（省略すると1件）。F06-08 が複数の商品で別々の詳細情報を使うために指定する */
+  詳細数?: number;
 };
 
 /** 選択欄で、値が空でない選択肢の先頭を選ぶ。選んだ表示名を返す */
@@ -273,7 +275,7 @@ async function chooseFirst(select: Locator, what: string): Promise<string> {
  * 詳細情報は「詳細情報を追加」で1件足す。カードセット以外は正本が値を定めないので、選択肢の先頭を選ぶ（選んだ値は onIssue に渡す）。
  * 登録後に開くカードの編集画面のアドレスのカードIDと、詳細情報の見出しのカード詳細IDを返す。
  */
-export async function registerCard(page: Page, v: カードの入力, what: string, onIssue: Issue): Promise<{ カードID: string; カード詳細ID: string }> {
+export async function registerCard(page: Page, v: カードの入力, what: string, onIssue: Issue): Promise<{ カードID: string; カード詳細ID: string; カード詳細IDs: string[] }> {
   await page.goto(adminUrl("/card/new"));
   // 「詳細情報を追加」は画面のスクリプトが動かすので、読み込みを待ってから押す
   await page.waitForLoadState("load");
@@ -284,24 +286,27 @@ export async function registerCard(page: Page, v: カードの入力, what: stri
   await form.locator("#admin_card_cmc").fill(v.点数で見たマナ);
   await form.locator("#admin_card_manaCost").fill(v.コスト);
   const details = page.locator("#card-details-container .detail-card");
-  const before = await details.count();
-  await page.locator("#add-detail").click();
-  await expect(details, `${what}: 「詳細情報を追加」で詳細情報の欄が増える`).toHaveCount(before + 1);
-  const d = details.last();
-  const cardset = d.locator('select[name$="[cardset]"]');
-  await expect(cardset, `${what}: 詳細情報のカードセットの欄`).toHaveCount(1);
-  await cardset.selectOption(v.カードセットID);
+  const 詳細数 = v.詳細数 ?? 1;
   const chosen: string[] = [];
-  for (const [field, 項目] of [["rarity", "レアリティ"], ["cardLayout", "レイアウト"], ["promotion", "プロモ種別"], ["foilFlg", "Foil"], ["frameFlg", "フレーム"]] as const) {
-    const want = field === "foilFlg" ? v.Foil : field === "frameFlg" ? v.フレーム : undefined;
-    if (want !== undefined) {
-      const sel = d.locator(`select[name$="[${field}]"]`);
-      const labels = (await sel.locator("option").allTextContents()).map((x) => x.trim());
-      if (!labels.includes(want)) throw new Error(`${what}: ${項目}に「${want}」が無い（${labels.join("、")}）`);
-      await sel.selectOption({ label: want });
-      chosen.push(`${項目}「${want}」`);
-    } else {
-      chosen.push(`${項目}「${await chooseFirst(d.locator(`select[name$="[${field}]"]`), `${what}: 詳細情報の${項目}の欄`)}」`);
+  for (let k = 0; k < 詳細数; k++) {
+    const before = await details.count();
+    await page.locator("#add-detail").click();
+    await expect(details, `${what}: 「詳細情報を追加」で詳細情報の欄が増える`).toHaveCount(before + 1);
+    const d = details.last();
+    const cardset = d.locator('select[name$="[cardset]"]');
+    await expect(cardset, `${what}: 詳細情報のカードセットの欄`).toHaveCount(1);
+    await cardset.selectOption(v.カードセットID);
+    for (const [field, 項目] of [["rarity", "レアリティ"], ["cardLayout", "レイアウト"], ["promotion", "プロモ種別"], ["foilFlg", "Foil"], ["frameFlg", "フレーム"]] as const) {
+      const want = field === "foilFlg" ? v.Foil : field === "frameFlg" ? v.フレーム : undefined;
+      if (want !== undefined) {
+        const sel = d.locator(`select[name$="[${field}]"]`);
+        const labels = (await sel.locator("option").allTextContents()).map((x) => x.trim());
+        if (!labels.includes(want)) throw new Error(`${what}: ${項目}に「${want}」が無い（${labels.join("、")}）`);
+        await sel.selectOption({ label: want });
+        chosen.push(`${項目}「${want}」`);
+      } else {
+        chosen.push(`${項目}「${await chooseFirst(d.locator(`select[name$="[${field}]"]`), `${what}: 詳細情報の${項目}の欄`)}」`);
+      }
     }
   }
   onIssue(`${what}: 詳細情報の ${chosen.join("・")} は選択肢の先頭を選んだ（正本は値を定めない）`);
@@ -314,7 +319,7 @@ export async function registerCard(page: Page, v: カードの入力, what: stri
   if (!m) throw new Error(`${what}: カードを登録したあと、カードの編集画面へ移らない（${page.url()}）`);
   const headers = (await page.locator("#card-details-container .detail-card .detail-header strong").allInnerTexts()).map((t) => t.trim());
   const ids = headers.map((t) => /カード詳細ID:\s*(\d+)/.exec(t)?.[1]).filter((x): x is string => !!x);
-  if (ids.length !== 1) throw new Error(`${what}: 登録したカードの詳細情報のカード詳細IDを1つに決められない（見出し: ${headers.join(" / ")}）`);
+  if (ids.length !== 詳細数) throw new Error(`${what}: 登録したカードの詳細情報のカード詳細IDを${詳細数}件に決められない（見出し: ${headers.join(" / ")}）`);
   await expect(page.locator("#admin_card_nameJp"), `${what}: 登録後のカード名(日)`).toHaveValue(v.カード名日);
-  return { カードID: m[1], カード詳細ID: ids[0] };
+  return { カードID: m[1], カード詳細ID: ids[0], カード詳細IDs: ids };
 }
