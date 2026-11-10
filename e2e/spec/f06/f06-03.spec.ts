@@ -202,10 +202,10 @@ caseTest("IT-F06-03-042", async ({ page, browser, step, expected }) => {
     });
     await step(4, async () => {
       const cookies = await page.context().cookies();
-      remember = cookies.find((c) => /REMEMBERME/i.test(c.name));
+      remember = cookies.find((c) => /remember_?me/i.test(c.name));
     });
     await expected(async () => {
-      expect.soft(remember?.name ?? "（保持のCookieが無い）", "ログイン状態を保持するCookie").toMatch(/REMEMBERME/i);
+      expect.soft(remember?.name ?? "（保持のCookieが無い）", "ログイン状態を保持するCookie").toMatch(/remember_?me/i);
       const days = remember ? (remember.expires - 前) / 86400 : 0;
       expect.soft(Math.round(days), "有効期限（ログイン成立時刻からの日数。1年後）").toBeGreaterThanOrEqual(364);
       expect.soft(Math.round(days), "有効期限（ログイン成立時刻からの日数。1年後）").toBeLessThanOrEqual(366);

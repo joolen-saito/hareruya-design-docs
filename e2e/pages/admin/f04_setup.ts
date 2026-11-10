@@ -6,7 +6,7 @@
  * 画面の部品は M04-19・F01-02 のものを使う。
  */
 import { Browser, expect, Page } from "@playwright/test";
-import { BASE_URL, ENV_NAME, SETUP_ADMIN } from "../../config/env";
+import { BASE_URL, ENV_NAME, MAIL_URL, SETUP_ADMIN } from "../../config/env";
 import { customerStateByEmail } from "./customer";
 import { FrontMember, registerFrontMember } from "../front/member_entry";
 import { 在庫承認の最大ID } from "../../db/f03_08";
@@ -231,7 +231,8 @@ export async function 会員を登録して待つ(browser: Browser, m: FrontMemb
   const state = await withAdminSession(browser, SETUP_ADMIN, (page) => customerStateByEmail(page, m.メール));
   if (state === "本会員") return;
   if (state === "仮会員") throw new Error(`試験用の会員 ${m.メール} が仮会員のまま`);
-  if (ENV_NAME !== "local") throw new Error(`E2E_ENV=${ENV_NAME} では試験用の会員を登録できない`);
+  // 本登録のメールは、メールの受け口（手元の受け口、または開発環境の受け口 E2E_MAIL_URL）で読む（依頼者決定 2026-10-31・2026-11-10）
+  if (ENV_NAME !== "local" && !MAIL_URL) throw new Error(`E2E_ENV=${ENV_NAME} では試験用の会員を登録できない（メールの受け口 E2E_MAIL_URL が無い）`);
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
     await hideDebugToolbar(context);

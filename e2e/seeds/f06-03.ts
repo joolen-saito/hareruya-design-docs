@@ -21,7 +21,7 @@ import { registerFrontMember } from "../pages/front/member_entry";
 export const mailOf = (前半: string): string => `${rc(前半)}@example.test`;
 export const PW = "ValidPass!603";
 
-async function 会員を作る(browser: Browser, notes: { set: (k: string, v: string) => void }, 前半: string, パスワード: string, 会員IDの呼び名: string, 姓 = "試験", 名 = "ログイン"): Promise<void> {
+export async function 会員を作る(browser: Browser, notes: { set: (k: string, v: string) => void }, 前半: string, パスワード: string, 会員IDの呼び名: string, 姓 = "試験", 名 = "ログイン"): Promise<void> {
   const メール = mailOf(前半);
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {

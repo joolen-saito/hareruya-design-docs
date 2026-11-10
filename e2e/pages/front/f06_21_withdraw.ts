@@ -61,12 +61,18 @@ export class WithdrawPage {
 
   async 押して遷移する(l: Locator): Promise<void> {
     await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    const before = this.page.url();
     const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 });
     try {
       await l.click({ timeout: 10_000 });
     } catch (e) {
-      test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
+      // 押した操作が効いて画面が移り始めていれば（開発環境が遅く、クリックの完了の待ちが時間切れになる）、直接送らずに移るのを待つ
+      if (this.page.url() === before && (await l.count().catch(() => 0)) > 0) {
+        test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
+        await l.dispatchEvent("click", undefined, { timeout: 10_000 }).catch(async (e2) => {
+          if (this.page.url() === before) throw e2;
+        });
+      }
     }
     await nav;
     await this.page.waitForLoadState("load");

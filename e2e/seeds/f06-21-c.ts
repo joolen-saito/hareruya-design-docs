@@ -17,6 +17,7 @@ const PW = "Passw0rd!F0621Ja";
 
 defineSeed("S-F06-21-MAIL", async () => { /* 運営アドレスの書き換えはしない（共有の設定）。退会完了メールのテンプレートは導入時から登録済み */ });
 
+let 選手データID028 = "";
 for (const n of ["026", "027", "028", "032", "033", "034"]) {
   defineSeed(`S-F06-21-MEMBER-JA-${n}`, async ({ browser, notes }) => {
     const 氏名の姓 = n === "027" ? "退会試験027A" : `退会試験${n}`;
@@ -25,7 +26,8 @@ for (const n of ["026", "027", "028", "032", "033", "034"]) {
     notes.set(`〔会員データID-F0621-${key}〕`, id);
     const pid = available ? プレイヤーID(id) : "（DB確認なし）";
     if (!pid) throw new Error("会員の選手情報が見つからない");
-    notes.set(`〔選手データID-F0621-${key}〕`, pid);
+    // 028 の選手データIDは、シード表のとおり選手情報のシード（S-F06-21-PLAYER-028）で控える
+    if (n === "028") 選手データID028 = pid; else notes.set(`〔選手データID-F0621-${key}〕`, pid);
   });
 }
 
@@ -38,4 +40,7 @@ defineSeed("S-F06-21-MEMBER-JA2-027", async ({ browser, notes }) => {
 });
 
 // 選手情報は、会員の登録と同時に作られる（会員を二重には登録しない）。会員の作成を先に行う
-defineSeed("S-F06-21-PLAYER-028", { needs: ["S-F06-21-MEMBER-JA-028"] }, async () => { /* 〔選手データID-F0621-028〕は会員のシードで控えた */ });
+defineSeed("S-F06-21-PLAYER-028", { needs: ["S-F06-21-MEMBER-JA-028"] }, async ({ notes }) => {
+  if (!選手データID028) throw new Error("会員（S-F06-21-MEMBER-JA-028）の選手情報を読めていない");
+  notes.set("〔選手データID-F0621-028〕", 選手データID028);
+});
