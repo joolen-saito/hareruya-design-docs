@@ -12,8 +12,9 @@
   対象の4つのセルだけを置き換える。ほかの部品（共有文字列・書式・ハイパーリンク・ほかのシート）はそのまま写す。
 - 判定は e2e/review/judgements/<機能ID>.tsv の行のうち、いまのエビデンス（evidence/<機能ID>/<テストID>/result.json）の
   実施日時と同じ実施への判定で、エビデンスの環境が dev のものだけ。
-- 判定→実施結果: 合格→合格／不合格→不合格／未判定→実施不可。
-- 流していないが流せないと決まったケース（config/sheet_not_runnable.tsv: テストID・理由）は実施不可。
+- 判定→実施結果: 合格→合格／不合格→不合格／未判定→空欄（備考に理由）。
+- 流していないが流せないと決まったケース（config/sheet_not_runnable.tsv: テストID・理由）は実施結果を空欄にし、備考に理由を書く。
+- 実施者が「齋藤」の行（この道具が前に書いた行）も書き直す。
 - Backlog の課題キー（review/backlog_e2e_ledger.tsv: テストID・課題キー）があれば備考に書く。
 
 使い方:
@@ -39,9 +40,10 @@ NOT_RUNNABLE = E2E / "config" / "sheet_not_runnable.tsv"
 LEDGER = E2E / "review" / "backlog_e2e_ledger.tsv"
 SHEET_NAME = "テストケース"
 EXECUTOR = "齋藤"
-TARGET_EXECUTORS = {"", "E2E（Playwright）"}
+TARGET_EXECUTORS = {"", "E2E（Playwright）", "齋藤"}  # 齋藤＝この道具が前に書いた行（書き直す）
 DATE_STYLE = "48"  # 既存の E2E の行が実施日に使っている書式（yyyy-mm-dd）
-RESULT_OF = {"合格": "合格", "不合格": "不合格", "未判定": "実施不可"}
+# 実施できなかったもの（未判定・流せないケース）は実施結果を空欄にする（依頼者指示 2026-11-10「実施不可はスプレッドシートの実施結果を空欄のままにして」）
+RESULT_OF = {"合格": "合格", "不合格": "不合格", "未判定": ""}
 
 
 def read_tsv(p: Path) -> list[dict]:
@@ -77,9 +79,9 @@ def build_results(only: set[str]) -> dict[str, dict]:
                 continue
             if j["対象の実施日時"] != r["実施日時"]:
                 continue  # 古い実施への判定
-            res = RESULT_OF.get(j["判定"])
-            if not res:
+            if j["判定"] not in RESULT_OF:
                 continue
+            res = RESULT_OF[j["判定"]]
             day = dt.datetime.fromisoformat(r["実施日時"]).date()
             notes = []
             if j["判定"] == "合格" and j["区分"] == "条件付き":
@@ -98,7 +100,7 @@ def build_results(only: set[str]) -> dict[str, dict]:
         tid = n["テストID"]
         if tid in out or (only and tid[3:9] not in only):
             continue
-        out[tid] = {"結果": "実施不可", "日付": dt.date.today(), "備考": f"実施できない: {n['理由']}\nE2EのテストID {tid}"}
+        out[tid] = {"結果": "", "日付": dt.date.today(), "備考": f"実施できない: {n['理由']}\nE2EのテストID {tid}"}
     return out
 
 
@@ -144,9 +146,19 @@ def main() -> int:
         executor = value_of(cells.get("I")).strip()
         if not list_id.startswith("IT-") or executor not in TARGET_EXECUTORS:
             return m.group(0)
+        # 「齋藤」は人が手で実施した行かもしれない。この道具が書いた行（備考に「E2EのテストID」がある行）だけ書き直す
+        if executor == EXECUTOR and "E2EのテストID" not in value_of(cells.get("L")):
+            return m.group(0)
         tid = list_to_case.get(list_id)
         res = results.get(tid) if tid else None
         if not res:
+            # 前にこの道具が「実施不可」と書いた行は、実施結果だけ空欄に直す（依頼者指示 2026-11-10）
+            if executor == EXECUTOR and value_of(cells.get("K")) == "実施不可" and "K" in cells:
+                sm = re.search(r' s="(\d+)"', cells["K"])
+                body2 = body.replace(cells["K"], f'<c r="K{rnum}"{(" s=" + chr(34) + sm.group(1) + chr(34)) if sm else ""}/>', 1)
+                changed += 1
+                plan.append([rnum, list_id, tid or "", *[value_of(cells.get(c)) for c in "IJKL"], executor, value_of(cells.get("J")), "", value_of(cells.get("L")).replace("\n", " / ")])
+                return head + body2 + "</row>"
             return m.group(0)
         before = [value_of(cells.get(c)) for c in "IJKL"]
         new = {
@@ -162,6 +174,8 @@ def main() -> int:
             style = DATE_STYLE if col == "J" else (sm.group(1) if sm else None)
             sattr = f' s="{style}"' if style else ""
             kind, val = new[col]
+            if kind == "s" and val == "":
+                return f'<c r="{col}{rnum}"{sattr}/>'
             if kind == "d":
                 return f'<c r="{col}{rnum}"{sattr}><v>{val}</v></c>'
             return f'<c r="{col}{rnum}"{sattr} t="inlineStr"><is><t xml:space="preserve">{escape(val)}</t></is></c>'
