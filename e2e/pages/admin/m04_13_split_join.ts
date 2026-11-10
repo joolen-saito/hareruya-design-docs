@@ -9,6 +9,7 @@
 import { Download, ElementHandle, expect, Locator, Page, Response, test } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel } from "./common";
+import { GOODS_ROOT_CATEGORY_ID } from "./product_masters";
 import { searchStockList, stockRow, 在庫区分, 試験店舗A } from "./m04_13_setup";
 
 const pathOf = (url: string) => new URL(url).pathname;
@@ -156,8 +157,8 @@ async function chooseApprovalTargets(page: Page, deptSelect: Locator, members: L
   expect(chosen, "承認通知先に選んだメンバー").toEqual([member]);
 }
 
-/** M04-13 の商品は、すべてグッズ商品CSV登録で最上位の「サプライ・グッズ」のカテゴリに作る（seeds/m04-13.ts の作り方の型） */
-const 商品のカテゴリ = "サプライ・グッズ";
+/** M04-13 の商品は、すべてグッズ商品CSV登録で最上位のグッズのカテゴリ（番号2。名前は画面の選択肢から読む）に作る（seeds/m04-13.ts の作り方の型） */
+const 商品のカテゴリ番号 = GOODS_ROOT_CATEGORY_ID;
 
 /** 商品検索のモーダル（在庫選択・商品検索）。商品コードで検索し、コードの規格を選んで「決定」を押す */
 class ProductPickModal {
@@ -166,31 +167,32 @@ class ProductPickModal {
   /**
    * カテゴリの選択欄を決める。「指定なし」の選択肢（値が空）があればそれを選ぶ（商品コードだけで検索する）。
    * 無ければ（いまの画面は、選択欄に「指定なし」が無く、先頭のカテゴリが選ばれていて、そのカテゴリで絞り込まれる）、
-   * 商品のカテゴリ（最上位の「サプライ・グッズ」）を選び、手順の注記に残す（設計書はカテゴリを必須にしておらず、初期値も無い）。
+   * 商品のカテゴリ（最上位のグッズのカテゴリ。番号2）を選び、手順の注記に残す（設計書はカテゴリを必須にしておらず、初期値も無い）。
    */
   private async chooseCategory(): Promise<void> {
     const select = this.modal.locator("#admin_search_product_category_id");
     await expect(select, "商品検索のモーダルのカテゴリの選択欄").toHaveCount(1);
-    const v = await select.evaluate((s, name) => {
+    const v = await select.evaluate((s, categoryId) => {
       const el = s as HTMLSelectElement;
       const options = Array.from(el.options);
       return {
         current: el.value,
         initial: el.selectedIndex >= 0 ? (el.options[el.selectedIndex].textContent ?? "").trim() : "",
         blank: options.some((o) => o.value === ""),
-        values: options.filter((o) => o.textContent === name).map((o) => o.value),
+        values: options.filter((o) => o.value === categoryId).map((o) => o.value),
+        name: (options.find((o) => o.value === categoryId)?.textContent ?? "").trim(),
       };
-    }, 商品のカテゴリ);
+    }, 商品のカテゴリ番号);
     if (v.blank) {
       await select.selectOption("");
       return;
     }
-    if (v.values.length !== 1) throw new Error(`商品検索のモーダルのカテゴリに、最上位の「${商品のカテゴリ}」の選択肢が1つではない（${v.values.length}個）`);
+    if (v.values.length !== 1) throw new Error(`商品検索のモーダルのカテゴリに、グッズのカテゴリ（番号${商品のカテゴリ番号}）の選択肢が1つではない（${v.values.length}個）`);
     // 同じ画面で2回目の検索のときは、前に選んだカテゴリが残っている
     if (v.current === v.values[0]) return;
     await select.selectOption(v.values[0]);
     const description = `在庫選択（商品検索）のモーダルのカテゴリの選択欄には「指定なし」の選択肢が無く、初期は先頭のカテゴリ「${v.initial}」が選ばれていて、`
-      + `そのままでは商品コードで検索しても対象の商品が出ない（設計書はカテゴリを必須にしておらず、初期値も無い）。商品を探すため、商品のカテゴリ「${商品のカテゴリ}」を選んでから検索した`
+      + `そのままでは商品コードで検索しても対象の商品が出ない（設計書はカテゴリを必須にしておらず、初期値も無い）。商品を探すため、商品のカテゴリ（番号${商品のカテゴリ番号}・開発環境での名前: ${v.name}）を選んでから検索した`
       + "（シードの操作と手順の操作の両方）。これは正本の手順に無い操作の補いで、認めるかは依頼者の判断待ち（記録の裁定案7）。"
       + "期待結果がこの検索の結果（一覧への追加・画面の表示）を見るケースは、判断が出るまで合否を確定しない";
     const notes = test.info().annotations;

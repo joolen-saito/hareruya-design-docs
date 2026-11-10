@@ -196,7 +196,7 @@ async function createGoods(page: Page, seedId: string, notes: Notes, items: 商�
   }
   warn(`グッズ商品CSV（${items.map((i) => i.code).join("・")}）: 正本の「確認モーダルでアップロードを確定する」の確認モーダルは出ず、` +
     "「CSVファイルのアップロード」を押すと取り込まれた。商品公開ステータスは、正本の「2（公開）」でなく、画面のCSV形式の説明で公開を表す値を書いた。" +
-    `商品カテゴリ(ID)はサプライ・グッズのカテゴリID ${categoryId}`);
+    `商品カテゴリ(ID)はグッズのカテゴリ（番号2）のカテゴリID ${categoryId}`);
 }
 
 /**

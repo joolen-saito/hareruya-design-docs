@@ -64,7 +64,7 @@ defineSeed("S-M03-02-READ-DISCONTINUED", { needs: ["S-M03-02-ADM"] }, async ({ b
   await withAdminSession(browser, M0302_ADMIN, async (page) => {
     const categoryId = await goodsCsvCategoryId(page, issue);
     notes.set("〔カテゴリID-M0302-共有D〕", categoryId);
-    issue(`正本の「旧カテゴリ」（S-M03-02-MASTERS。最上位のカテゴリ）は作らず、グッズ商品CSVが受け付ける「サプライ・グッズ」（ID ${categoryId}）を商品カテゴリ(ID)に使い、〔カテゴリID-M0302-共有D〕に控えた`);
+    issue(`正本の「旧カテゴリ」（S-M03-02-MASTERS。最上位のカテゴリ）は作らず、グッズ商品CSVが受け付けるグッズのカテゴリ（番号2。開発環境に登録されているもの。ID ${categoryId}）を商品カテゴリ(ID)に使い、〔カテゴリID-M0302-共有D〕に控えた`);
 
     // 共有可: あれば使う（同じ商品コードの商品が1件で、商品名が正本どおりなら）
     let rows = await searchByCodeWithoutFilters(page, DISCONTINUED.code);

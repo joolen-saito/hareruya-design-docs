@@ -26,7 +26,7 @@ export async function registerGoodsProduct(page: Page, a: {
   what: string; code: string; nameJp: string; nameEn: string; values: Record<string, string>; onIssue: Issue;
 }): Promise<void> {
   const categoryId = await readExistingGoodsChildCategoryId(page);
-  a.onIssue(`${a.what}: 商品カテゴリ(ID)は、サプライ・グッズ直下の既存のカテゴリ（並びの先頭。ID ${categoryId}）にした`);
+  a.onIssue(`${a.what}: 商品カテゴリ(ID)は、グッズのカテゴリ（番号2）直下の既存のカテゴリ（並びの先頭。ID ${categoryId}）にした`);
   await registerGoodsCsv(page, {
     what: `${a.what}: グッズ商品CSV登録`,
     fileName: `${a.code}-goods.csv`,

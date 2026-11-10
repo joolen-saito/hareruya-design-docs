@@ -7,22 +7,23 @@
  */
 import { expect, Locator, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { CategoryPage } from "./category";
 import { chooseByLabel, expectSaved } from "./common";
 import { openClassListFromProductEdit, readLanguageChoicesFromClassForm } from "./m03_01_product_class";
 import { ProductSearchPage } from "./product_search";
+import { GOODS_ROOT_CATEGORY_ID, goodsRootCategoryLink } from "./product_masters";
 
 type Issue = (m: string) => void;
 
 /** 商品マスター(検索結果)の行（商品の行。先頭の商品規格の商品コード・言語・状態を出す） */
 const productRows = (page: Page) => page.locator('tr[id^="ex-product-"]');
 
-/** カテゴリ登録/編集画面の最上位の一覧で、「サプライ・グッズ」の行のID欄に表示された値 */
+/** カテゴリ登録/編集画面の最上位の一覧で、グッズのカテゴリ（番号2）の行のID欄に表示された値 */
 export async function readGoodsRootCategoryId(page: Page): Promise<string> {
-  const category = new CategoryPage(page);
-  await category.openTop();
-  const id = await category.idOf("サプライ・グッズ");
-  if (!/^\d+$/.test(id)) throw new Error(`最上位の一覧の「サプライ・グッズ」の行のIDを読めない: ${id}`);
+  await page.goto(adminUrl("/product/category"));
+  const link = goodsRootCategoryLink(page);
+  await expect(link, `最上位にカテゴリ番号${GOODS_ROOT_CATEGORY_ID}が1件ある`).toHaveCount(1);
+  const id = /^ID:(\d+)\s/.exec(((await link.innerText()) ?? "").trim())?.[1] ?? "";
+  if (id !== GOODS_ROOT_CATEGORY_ID) throw new Error(`最上位の一覧のグッズのカテゴリの行のIDを読めない: ${id}`);
   return id;
 }
 

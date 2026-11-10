@@ -8,16 +8,16 @@
 import { expect, Locator, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { expectSaved } from "./common";
-import { goodsRootCategoryLink } from "./product_masters";
+import { goodsRootCategoryLink, readGoodsRootCategoryName } from "./product_masters";
 
-/** カテゴリ管理画面の最上位の「サプライ・グッズ」のカテゴリID（画面の表示「ID:… サプライ・グッズ (…)」から読む） */
+/** カテゴリ管理画面の最上位のグッズのカテゴリ（番号2。開発環境での名前は画面から読む）のカテゴリID（画面の表示「ID:… 名前 (…)」から読む） */
 export async function goodsRootCategoryId(page: Page): Promise<string> {
   await page.goto(adminUrl("/product/category"));
   await page.waitForLoadState("load");
   const link = goodsRootCategoryLink(page);
-  await expect(link, "カテゴリ管理画面の最上位の「サプライ・グッズ」").toHaveCount(1);
+  await expect(link, "カテゴリ管理画面の最上位のグッズのカテゴリ（番号2）").toHaveCount(1);
   const m = ((await link.innerText()) ?? "").trim().match(/^ID:(\d+)\s/);
-  if (!m) throw new Error("「サプライ・グッズ」のカテゴリIDを画面から読めない");
+  if (!m) throw new Error("グッズのカテゴリ（番号2）のIDを画面から読めない");
   return m[1];
 }
 
@@ -30,6 +30,7 @@ export async function goodsRootCategoryId(page: Page): Promise<string> {
  */
 export async function goodsCsvCategoryId(page: Page, onIssue: (m: string) => void): Promise<string> {
   const onScreen = await goodsRootCategoryId(page);
+  const goodsName = await readGoodsRootCategoryName(page);
   await page.goto(adminUrl("/product/product_goods_csv_upload"));
   await page.waitForLoadState("load");
   const rows = await page.locator("table.table-striped.table-bordered:not(#csv_import_history_table) tbody tr").evaluateAll((trs) => trs.map((tr) => {
@@ -40,15 +41,10 @@ export async function goodsCsvCategoryId(page: Page, onIssue: (m: string) => voi
     };
   }));
   const description = rows.find((r) => r.label === "商品カテゴリ(ID)")?.description ?? "";
-  const m = description.match(/(\d+)\s*[:：]\s*サプライ・グッズ/);
+  const m = new RegExp(`(?:^|\\D)(${onScreen})\\s*[:：]`).exec(description);
   if (!m) {
-    onIssue(`グッズ商品CSV登録画面の商品カテゴリ(ID)の説明から「サプライ・グッズ」のIDを読めない（説明「${description}」）。カテゴリ管理画面のID ${onScreen} で進めた`);
+    onIssue(`グッズ商品CSV登録画面の商品カテゴリ(ID)の説明にグッズの番号 ${onScreen} を読めない（説明「${description}」）。グッズのカテゴリ（番号${onScreen}・開発環境での名前: ${goodsName}）で進めた`);
     return onScreen;
-  }
-  if (m[1] !== onScreen) {
-    throw new Error(`グッズ商品CSV登録画面の商品カテゴリ(ID)の説明は「サプライ・グッズ」を ID ${m[1]} とする（説明「${description}」）が、`
-      + `カテゴリ管理画面の「サプライ・グッズ」は ID ${onScreen}。グッズ商品CSVはサプライ・グッズ（ID ${onScreen}）を受け付けないので、`
-      + "データを作る前に止めた（手元のDBのカテゴリの初期データがアプリの固定のIDと合わない。HANDOFF 4章の16）");
   }
   return onScreen;
 }

@@ -1,7 +1,7 @@
 /** M03-01 のグッズ商品 CSV を、管理画面で取得した雛形と選択値から組み立てる。 */
 import { expect, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { goodsRootCategoryLink } from "./product_masters";
+import { expectOnGoodsRootCategoryPage, goodsRootCategoryLink } from "./product_masters";
 
 type CsvColumn = { label: string; description: string; required: boolean };
 export type GoodsCsvTemplate = { headers: string[]; columns: CsvColumn[] };
@@ -116,9 +116,11 @@ export async function readJapaneseLanguageId(page: Page): Promise<string> {
 export async function readExistingGoodsChildCategoryId(page: Page): Promise<string> {
   await page.goto(adminUrl("/product/category"));
   const goods = goodsRootCategoryLink(page);
-  await expect(goods, "グッズ親カテゴリが画面に1件ある").toHaveCount(1);
+  await expect(goods, "グッズ親カテゴリ（番号2）が画面に1件ある").toHaveCount(1);
+  const goodsName = /^ID:\d+\s+(.+)\s+\(\d+\)$/.exec(((await goods.innerText()) ?? "").replace(/\s+/g, " ").trim())?.[1];
+  if (!goodsName) throw new Error("グッズ親カテゴリの名前を画面から読めない");
   await goods.click();
-  await expect(page.locator('nav[aria-label="breadcrumb"] li[aria-current="page"] a').last()).toHaveText("サプライ・グッズ");
+  await expectOnGoodsRootCategoryPage(page, goodsName);
   const children = page.locator('li.sortable-item[data-id][id^="ex-category-"]');
   if (await children.count() === 0) throw new Error("グッズ配下の既存カテゴリが画面に無い");
   const id = await children.first().getAttribute("data-id");

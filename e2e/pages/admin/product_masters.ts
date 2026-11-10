@@ -11,10 +11,34 @@ const singleRow = async (rows: Locator, what: string) => {
   return rows.first();
 };
 
-/** 正本の「グッズ」は管理画面の最上位「サプライ・グッズ」を指す。予約側・同名の下位カテゴリは除く。 */
+/**
+ * 正本の「グッズ（サプライ・グッズ）」として扱うカテゴリの番号。アプリの Category::GOODS_ID（グッズ商品CSVが親として決め打ちする番号）と同じ。
+ * 依頼者の決定（2026-11-10「決め打ちで良いが、開発環境に登録されているカテゴリを使って」）による。
+ * 番号2の名前と、その下のカテゴリは、開発環境に登録されているものをそのまま使う（名前では探さない。開発環境の2番は「スタンダード」など）。
+ */
+export const GOODS_ROOT_CATEGORY_ID = "2";
+
+/** 正本の「グッズ」＝最上位のカテゴリ番号2の行（表示「ID:2 <名前> (<件数>)」）。予約側・同名の下位カテゴリは除く。 */
 export function goodsRootCategoryLink(page: Page): Locator {
   return page.locator("#ex-secondaryCol .c-directoryTree > ul > li > span > a")
-    .filter({ hasText: /^ID:\d+\s+サプライ・グッズ\s+\(\d+\)$/ });
+    .filter({ hasText: new RegExp(`^ID:${GOODS_ROOT_CATEGORY_ID}\\s+.+\\s+\\(\\d+\\)$`) });
+}
+
+/** 番号2のカテゴリの画面上の名前（表示「ID:2 <名前> (<件数>)」から読む）。開発環境ごとに違う。 */
+export async function readGoodsRootCategoryName(page: Page): Promise<string> {
+  await page.goto(adminUrl("/product/category"));
+  const link = goodsRootCategoryLink(page);
+  await expect(link, `最上位にカテゴリ番号${GOODS_ROOT_CATEGORY_ID}が1件ある`).toHaveCount(1);
+  const text = ((await link.innerText()) ?? "").replace(/\s+/g, " ").trim();
+  const m = new RegExp(`^ID:${GOODS_ROOT_CATEGORY_ID} (.+) \\(\\d+\\)$`).exec(text);
+  if (!m) throw new Error(`カテゴリ番号${GOODS_ROOT_CATEGORY_ID}の行から名前を読めない: ${text}`);
+  return m[1];
+}
+
+/** 番号2のカテゴリの画面に移ったことの確かめ（パンくずの最後が、その行で読んだ名前） */
+export async function expectOnGoodsRootCategoryPage(page: Page, name: string): Promise<void> {
+  await expect(page.locator('nav[aria-label="breadcrumb"] li[aria-current="page"] a').last(),
+    `グッズのカテゴリ（番号${GOODS_ROOT_CATEGORY_ID}・名前: ${name}）の画面に移動した`).toHaveText(name);
 }
 
 /** グッズ直下のカテゴリをあれば照合、無ければ「子カテゴリ作成」で登録する。 */
@@ -22,11 +46,12 @@ export async function ensureGoodsChildCategory(page: Page, nameJp: string, nameE
   await page.goto(adminUrl("/product/category"));
   const goods = await singleRow(
     goodsRootCategoryLink(page),
-    "グッズ親カテゴリ",
+    `グッズ親カテゴリ（番号${GOODS_ROOT_CATEGORY_ID}）`,
   );
+  const goodsName = /^ID:\d+\s+(.+)\s+\(\d+\)$/.exec(((await goods.innerText()) ?? "").replace(/\s+/g, " ").trim())?.[1];
+  if (!goodsName) throw new Error("グッズ親カテゴリの名前を画面から読めない");
   await goods.click();
-  await expect(page.locator('nav[aria-label="breadcrumb"] li[aria-current="page"] a').last(),
-    "サプライ・グッズのカテゴリ画面に移動した").toHaveText("サプライ・グッズ");
+  await expectOnGoodsRootCategoryPage(page, goodsName);
   await expect(page.locator("#admin_category_name"), "子カテゴリ作成欄が表示された").toBeVisible();
   const rows = page.locator('li[id^="ex-category-"]').filter({ has: page.getByRole("link", { name: nameJp, exact: true }) });
   if (await rows.count() === 0) {

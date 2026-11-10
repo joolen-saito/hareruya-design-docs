@@ -20,6 +20,7 @@ import {
 import { readGoodsProductId, removeProductsMatchingCode } from "../pages/admin/m03_01_goods_list_seed";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { ensureMember } from "../pages/admin/member";
+import { readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
 
 export const M0311_ADMIN: Account = { loginId: "m0311_admin", password: "Passw0rd!M0311" };
 
@@ -351,8 +352,7 @@ defineCategorySeed("S-M03-11-DELETE-035", (o) => deleteSeed(o, "035", "未使用
  */
 const REL_036 = { code: "REL-001-036", name: "関連商品-M0311-036" };
 defineCategorySeed("S-M03-11-DELETE-036", async (o) => {
-  await o.category.openTop();
-  const goods = await o.category.idOf("サプライ・グッズ");
+  const goods = await readGoodsRootCategoryId(o.page);
   const a = await o.underByCsv(goods, "削除試験親-036");
   o.note(label("036A"), a);
   await o.clearEn(a);

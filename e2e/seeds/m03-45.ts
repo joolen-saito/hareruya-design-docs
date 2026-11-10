@@ -22,6 +22,7 @@ import { Notes } from "../lib/notes";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { CategoryCsvRow, uploadCategoryRows } from "../pages/admin/category";
+import { readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
 import { expectSaved } from "../pages/admin/common";
 import { downloadGoodsCsvTemplate, publishedValue } from "../pages/admin/m03_01_goods_csv";
 import { readGoodsProductId } from "../pages/admin/m03_01_goods_list_seed";
@@ -509,9 +510,9 @@ defineCategorySeed("S-M03-45-DELETE-026", async (o) => {
   await o.clearEn(null, a);
   await o.clearEn(a, b);
 
-  // 商品カテゴリ(ID)は、最上位の一覧の「サプライ・グッズ」の行のID欄の値
+  // 商品カテゴリ(ID)は、最上位の一覧のグッズのカテゴリ（番号2）の行のID欄の値
   await o.list.openTop();
-  const goods = await o.list.idOf("サプライ・グッズ");
+  const goods = await readGoodsRootCategoryId(o.page);
   const template = await downloadGoodsCsvTemplate(o.page);
   for (const [column, seedValue] of [["商品公開ステータス", "2"], ["支店の商品公開ステータス", "1"]]) {
     const value = publishedValue(template, column);

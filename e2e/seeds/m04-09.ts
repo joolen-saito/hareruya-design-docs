@@ -446,15 +446,15 @@ async function noteProductId(ctx: SeedCtx, code: string, label: string): Promise
 /**
  * カテゴリ登録/編集画面に試験カテゴリAが無ければ登録する。カテゴリIDを返す。
  * 画面は最上位（ルート直下）への登録を提供しない（設計書 M03-11 L0130。入力欄は親カテゴリを選んだときだけ出る）。
- * シード表は登録する階層を書いていないので、商品の元のカテゴリ「サプライ・グッズ」の子として登録する（正本の外の補い。報告に出す）。
+ * シード表は登録する階層を書いていないので、商品の元のカテゴリ（グッズ。番号2）の子として登録する（正本の外の補い。報告に出す）。
  */
 async function ensureTestCategoryA(page: Page, issue: (m: string) => void): Promise<string> {
   const rootId = await readGoodsRootCategoryId(page);
   const cat = new CategoryPage(page);
   await cat.openChildrenOf(rootId);
   const has = (await cat.rowValues()).filter((r) => r.nameJp === "試験カテゴリA");
-  if (has.length > 1) throw new Error("サプライ・グッズの下に「試験カテゴリA」が複数ある");
-  issue("カテゴリ「試験カテゴリA」は、最上位に登録する画面が無いので、サプライ・グッズの子として使う（正本の外の補い）");
+  if (has.length > 1) throw new Error("グッズのカテゴリ（番号2）の下に「試験カテゴリA」が複数ある");
+  issue("カテゴリ「試験カテゴリA」は、最上位に登録する画面が無いので、グッズのカテゴリ（番号2）の子として使う（正本の外の補い）");
   if (has.length === 1) return has[0].id;
   return cat.createChild(rootId, { nameJp: "試験カテゴリA", nameEn: "Test Category A" }, issue);
 }

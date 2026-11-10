@@ -17,16 +17,16 @@ type Issue = (message: string) => void;
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
- * カテゴリ登録/編集画面の最上位の一覧で「サプライ・グッズ」の行に表示されたID（正本の「サプライ・グッズのカテゴリID」）。
- * 表示は「ID:2 サプライ・グッズ (12)」の形。
+ * カテゴリ登録/編集画面の最上位の一覧でグッズのカテゴリ（番号2。開発環境での名前は画面の表示のまま）の行に表示されたID（正本の「サプライ・グッズのカテゴリID」）。
+ * 表示は「ID:2 <名前> (12)」の形。
  */
 export async function readSupplyGoodsCategoryId(page: Page): Promise<string> {
   await page.goto(adminUrl("/product/category"));
   const link = goodsRootCategoryLink(page);
-  await expect(link, "最上位のカテゴリに「サプライ・グッズ」が1件ある").toHaveCount(1);
+  await expect(link, "最上位のカテゴリにグッズのカテゴリ（番号2）が1件ある").toHaveCount(1);
   const text = (await link.innerText()).replace(/\s+/g, " ").trim();
-  const m = /^ID:(\d+) サプライ・グッズ/.exec(text);
-  if (!m) throw new Error(`「サプライ・グッズ」の行からIDを読めない: ${text}`);
+  const m = /^ID:(\d+) /.exec(text);
+  if (!m) throw new Error(`グッズのカテゴリ（番号2）の行からIDを読めない: ${text}`);
   return m[1];
 }
 
