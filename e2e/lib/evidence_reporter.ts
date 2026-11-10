@@ -222,7 +222,7 @@ export default class EvidenceReporter implements Reporter {
     fs.mkdirSync(tmp, { recursive: true });
 
     // 控えた番号（事前準備のあとに添付される）
-    const notesAtt = result.attachments.find((a) => a.name === `${EVIDENCE_PREFIX}控えた番号` && a.body);
+    const notesAtt = result.attachments.filter((a) => a.name === `${EVIDENCE_PREFIX}控えた番号` && a.body).pop(); // 最後に添えたもの（手順で控えた呼び名を含む）
     const notes = new Map<string, string>(notesAtt ? (JSON.parse(notesAtt.body!.toString("utf-8")) as [string, string][]) : []);
 
     // 場面の枠: 開始時・手順1..n・期待結果

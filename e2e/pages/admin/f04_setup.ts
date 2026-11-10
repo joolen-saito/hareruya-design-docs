@@ -52,7 +52,15 @@ export async function 管理者を用意する(browser: Browser): Promise<void> 
   adminsReady = true;
 }
 
-export type 商品の定め = { 商品コード: string; 商品名: string; 価格: string; 入庫数?: number; 言語?: "英語"; 入庫方法?: "在庫変更CSV" | "在庫編集" };
+export type 商品の定め = {
+  商品コード: string; 商品名: string; 価格: string; 入庫数?: number; 言語?: "英語"; 入庫方法?: "在庫変更CSV" | "在庫編集";
+  /** 入庫の仕入単価（省略すると在庫編集は0・在庫変更CSVは100） */
+  仕入単価?: string;
+  /** 入庫の在庫変動理由（省略すると在庫編集は「試験用」・在庫変更CSVは「シード作成」） */
+  在庫変動理由?: string;
+  /** グッズ商品CSVの列の値で、共通の値を上書きするもの（販売制限数・売上分析タグ(ID) など） */
+  CSVの値?: Record<string, string>;
+};
 export type 作った商品 = { productId: string; 商品コード: string; 商品名: string };
 
 let fileSeq = 0;
@@ -79,7 +87,7 @@ export async function 商品を作って入庫する(browser: Browser, seedId: s
       common: { "購入グループ名称": "通常商品", ...region },
       lines: defs.map((d) => ({
         code: d.商品コード, nameJp: d.商品名, nameEn: d.商品名,
-        values: { "基準価格": d.価格, "販売価格": d.価格, "買取価格": "100", "原価単価": "10", ...(d.言語 === "英語" && langs ? { "言語(ID)": langs.英語 } : {}) },
+        values: { "基準価格": d.価格, "販売価格": d.価格, "買取価格": "100", "原価単価": "10", ...(d.言語 === "英語" && langs ? { "言語(ID)": langs.英語 } : {}), ...(d.CSVの値 ?? {}) },
       })),
       onWarning: (w) => issue(`グッズ商品CSV登録の警告「${w}」`), uploadWaitMs: 180_000,
     });
@@ -93,7 +101,7 @@ export async function 商品を作って入庫する(browser: Browser, seedId: s
       for (const d of defs) {
         const stock = await searchStockByCode(page, { 商品コード: d.商品コード, 店舗: shop, 在庫区分: "EC-CUBE" });
         await stock.openEdit(stock.row(d.商品コード, shop, "EC-CUBE"));
-        await registerStockEdit(page, { changeType: "入庫/その他", reason: "試験用", quantity: String(d.入庫数 ?? 10), purchasePrice: "0", approverName: 承認者.名前 }, `${seedId}: ${d.商品コード} の在庫編集`, issue);
+        await registerStockEdit(page, { changeType: "入庫/その他", reason: d.在庫変動理由 ?? "試験用", quantity: String(d.入庫数 ?? 10), purchasePrice: d.仕入単価 ?? "0", approverName: 承認者.名前 }, `${seedId}: ${d.商品コード} の在庫編集`, issue);
       }
       const registrant2 = await loggedInMemberName(page);
       await withAdminSession(browser, 承認者.account, async (ap) => {
@@ -108,7 +116,7 @@ export async function 商品を作って入庫する(browser: Browser, seedId: s
     const total = defs.reduce((s, d) => s + (d.入庫数 ?? 100), 0);
     await registerStockChangeCsv(page, {
       店舗: shop, 在庫区分: "EC-CUBE", 在庫変動区分: "入庫/その他", 在庫変動理由: "シード作成", 承認者: 承認者.名前,
-      行: defs.map((d) => ({ 商品コード: d.商品コード, 在庫増減数: String(d.入庫数 ?? 100), 仕入単価: "100" })),
+      行: defs.map((d) => ({ 商品コード: d.商品コード, 在庫増減数: String(d.入庫数 ?? 100), 仕入単価: d.仕入単価 ?? "100" })),
       ファイル名: stockCsvName(seedId),
     }, `${seedId} の在庫変更CSV登録`, (w) => issue(w));
     const registrant = await loggedInMemberName(page);

@@ -66,6 +66,7 @@ export function caseTest(testId: string, body: CaseBody): void {
     test.skip(destructive.length > 0, `E2E_ENV=${ENV_NAME} は複数人が使う環境。データを消すシード（${destructive.join("、")}）を使うケースは実行しない`);
     await hideDebugToolbar(page.context());
     const notes = new Notes();
+    let markedForEvidence: [string, string][] = [];
     const camera = new EvidenceCamera(page, test.info());
     await test.step(`事前準備: ${c.事前準備}`, async () => {
       const usedSeedIds = await buildSeeds(browser, seedIdsOf(c), notes);
@@ -73,10 +74,13 @@ export function caseTest(testId: string, body: CaseBody): void {
         for (const m of seedIssues.get(id) ?? []) test.info().annotations.push({ type: "シード作成時の問題", description: `${id}: ${m}` });
       }
       // ケースの文に出てくる呼び名が、すべて控えてあること
-      for (const l of Notes.labelsIn(c.事前準備 + c.手順 + c.期待結果)) notes.get(l);
+      // ただし、手順の中で「控える（以下〔…〕）」と定める呼び名は、その手順で控えるので除く（読むところで控えたかを確かめる。依頼者了承 2026-11-11）
+      const 手順で控える = new Set(Array.from(c.手順.matchAll(/以下\s*(〔[^〕]+〕)/g), (m) => m[1]));
+      for (const l of Notes.labelsIn(c.事前準備 + c.手順 + c.期待結果)) if (!手順で控える.has(l)) notes.get(l);
       // 決め打ちの値に付けた実行の印（依頼者決定 2026-10-28）も、正本の値と実際の値の対応として残す
       const seedText = usedSeedIds.map((id) => { const s = getSeed(id); return s["状態・属性"] + s.投入方法; }).join(" ");
       const marked = markedIn(c.事前準備 + c.手順 + c.期待結果 + seedText).map(([v, a]) => [`実行の印: ${v}`, a] as [string, string]);
+      markedForEvidence = marked;
       await test.info().attach(`${EVIDENCE_PREFIX}控えた番号`, { body: JSON.stringify([...notes.entries(), ...marked]), contentType: "application/json" });
     });
     const done = new Set<number>();
@@ -120,6 +124,8 @@ export function caseTest(testId: string, body: CaseBody): void {
           current = undefined;
           checks.push(...stopRecording());
           await test.info().attach(`${EVIDENCE_PREFIX}確かめの記録`, { body: JSON.stringify(checks), contentType: "application/json" }).catch(() => {});
+          // 手順の中で控えた呼び名もエビデンスに出るよう、控えた番号を添え直す（報告は最後に添えたものを読む）
+          await test.info().attach(`${EVIDENCE_PREFIX}控えた番号`, { body: JSON.stringify([...notes.entries(), ...markedForEvidence]), contentType: "application/json" }).catch(() => {});
           await camera.shoot(scene.expected);
         }
         checked += 1;

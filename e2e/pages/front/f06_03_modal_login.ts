@@ -16,7 +16,8 @@ const フォーム: Record<モーダルの種類, string> = { 入荷時に通知
  * 戻り値は、押したあとに移った先のパス（移らなければ商品詳細のまま）。
  */
 export async function モーダルでログインを押す(page: Page, 種類: モーダルの種類, mail: string, password: string, waitMs = 30_000): Promise<string> {
-  const form = page.locator(フォーム[種類]);
+  // お気に入りのログインモーダルはヘッダと商品詳細の両方に同じ名前で置かれるので、見えている方を使う
+  const form = page.locator(`${フォーム[種類]}:visible`).first();
   await expect(form, `${種類}のログインモーダルの入力欄`).toBeVisible();
   await form.locator('input[name="login_email"]').fill(mail);
   await form.locator('input[name="login_pass"]').fill(password);
