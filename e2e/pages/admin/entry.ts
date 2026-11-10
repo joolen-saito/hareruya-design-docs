@@ -40,9 +40,8 @@ async function readEntryId(page: Page): Promise<string> {
 export async function registerEntries(page: Page, イベント名: string, 日程ID: string, 開催日: string, 会員の名前: string[]): Promise<string[]> {
   await page.goto(adminUrl("/entry_registration"));
   await page.locator('#search_form [name="admin_search_event[multi]"]').fill(イベント名);
-  // 開催日の開始日は初期表示で今日。それより前の日程は出ないので、日程の開催日以前であることを確かめる
-  const from = await page.locator('#search_form [name="admin_search_event[start_date_from]"]').inputValue();
-  if (from && from > 開催日.slice(0, 10)) throw new Error(`イベント申込登録の検索条件「開催日」の開始日 ${from} が、日程の開催日 ${開催日} より後`);
+  // 開催日の開始日は初期表示で今日。それより前の日程は出ないので、開始日を空にして過去の日程も探す
+  await page.locator('#search_form [name="admin_search_event[start_date_from]"]').fill("");
   await page.locator("#search_form").getByRole("button", { name: "検索", exact: true }).click();
   await page.waitForLoadState("load");
   // 繰り返し流した環境には同じイベント名・同じ開催日の行が複数ある。いま登録した日程の行を、「新規登録」の行き先の日程IDで選ぶ
