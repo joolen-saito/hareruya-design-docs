@@ -11,11 +11,17 @@
 import { expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { defineSeed } from "../lib/seeds";
+import { rc } from "../lib/run_marker";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { CsvUploadPage } from "../pages/admin/m03_26_card_csv_upload";
 import { ensureMember } from "../pages/admin/member";
 
-export const M0327_ADMIN: Account = { loginId: "m0327_admin", password: "Passw0rd!M0327" };
+/**
+ * シード表のログインIDは m0327_admin。開発環境には同じログインIDのメンバー（名前 m0327_admin。手動テスト用に作られたもの）が既にあり、
+ * 同じ値では登録できない。ほかの方のメンバーは使わず、決め打ちの識別の値として実行の印を付けたログインID・名前で作る（依頼者決定 2026-10-28「案A」）。
+ * ケースはログインIDそのものを確かめない（M03-26 と同じ直し）。
+ */
+export const M0327_ADMIN: Account = { loginId: rc("m0327_admin").toLowerCase(), password: "Passw0rd!M0327" };
 
 /** 正本は所属店舗を指定しない。管理画面で利用可能な店舗を1つ選び、商品管理を操作できるシステム管理者の権限を付ける */
 async function createAdmin(page: Page): Promise<void> {
@@ -28,7 +34,7 @@ async function createAdmin(page: Page): Promise<void> {
   if (stores.length === 0) throw new Error("S-M03-27-ADM: メンバーに割り当てられる店舗が画面に無い");
   const store = stores[0];
   await ensureMember(page, {
-    名前: "M03-27試験管理者", 所属店舗: store, ログインID: M0327_ADMIN.loginId, メールアドレス: "m0327_admin@example.test",
+    名前: rc("M03-27試験管理者"), 所属店舗: store, ログインID: M0327_ADMIN.loginId, メールアドレス: `${M0327_ADMIN.loginId}@example.test`,
     パスワード: M0327_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: store, 編集可能店舗: [store],
   });
 }

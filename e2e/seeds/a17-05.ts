@@ -19,6 +19,7 @@
  * - 部門・割引率が未選択なら選択肢の先頭を選んだ（正本: 部門=選択肢の先頭／割引率=未選択なら先頭）。
  * - スマレジ連携の列は0にした（外部のスマレジへ送らない。正本は値を定めない）。
  */
+import { getSeed } from "../lib/catalog";
 import { SETUP_ADMIN } from "../config/env";
 import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
@@ -72,7 +73,12 @@ function 作る(seedId: string, d: 定め): void {
         規格.set(印[i + 1], { id, code: c });
       }
       const n = 規格.size;
-      for (const [k, v] of 規格) notes.set(n === 1 ? `〔規格ID-A1705-${d.番号}〕` : `〔規格ID-A1705-${d.番号}${k}〕`, v.id);
+      // シード表が定める呼び名だけを控える（014 のように規格IDを控えないシードもある）
+      const 定め = getSeed(seedId).状態・属性;
+      for (const [k, v] of 規格) {
+        const 呼び名 = n === 1 ? `〔規格ID-A1705-${d.番号}〕` : `〔規格ID-A1705-${d.番号}${k}〕`;
+        if (定め.includes(呼び名)) notes.set(呼び名, v.id);
+      }
     });
     await 入庫して承認する(browser, seedId, Object.entries(d.入庫 ?? {}).map(([k, q]) => ({ 商品コード: 規格.get(k)!.code, 数量: q })), issue);
     if (d.削除) {
