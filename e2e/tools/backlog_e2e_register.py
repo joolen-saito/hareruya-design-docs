@@ -80,7 +80,8 @@ def parse(p: Path) -> dict:
         if not (E2E / a).exists():
             raise ValueError(f"{p.name}: 添付 {a} が無い")
     # 本文に記入例の行（/* 記入例: … */）は出さない（依頼者指示 2026-11-10）
-    body = "\n".join(l for l in body.splitlines() if not re.match(r"^\s*/\*\s*記入例", l))
+    # 関連のエビデンスは手元のパスでなくキャプチャ（添付）で示す。「- エビデンス: …」の行は出さない（依頼者指示 2026-11-10）
+    body = "\n".join(l for l in body.splitlines() if not re.match(r"^\s*/\*\s*記入例", l) and not re.match(r"^\s*[-・]\s*エビデンス\s*[:：]", l))
     meta["本文"] = body.strip() + "\n"
     return meta
 
