@@ -29,7 +29,7 @@
  * PAGING-025 は使うケースの手順がDBの書き換え）、画面で指定できない日時をDBへ直接設定するもの（DISPLAY-006・EDIT-012・EDIT-013・EDIT-037）。
  */
 import { Browser, expect } from "@playwright/test";
-import { BASE_URL, ENV_NAME, SETUP_ADMIN } from "../config/env";
+import { BASE_URL, ENV_NAME, MAIL_URL, SETUP_ADMIN } from "../config/env";
 import { Notes } from "../lib/notes";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
@@ -213,7 +213,7 @@ async function ensureBuyer(browser: Browser): Promise<購入会員> {
         throw new Error(`購入する試験会員 ${BUYER.メール} がいない。会員の登録には本登録のメールを読む必要があり、` +
           "依頼者の決まり（メールが要るシードを使うケースは実装しない）により登録しない。既存の本会員を使うか、メールでの登録を認めるかの判断待ち");
       }
-      if (ENV_NAME !== "local") throw new Error(`E2E_ENV=${ENV_NAME} では購入する試験会員を登録できない（本登録のメールを読めない）`);
+      if (!MAIL_URL) throw new Error(`E2E_ENV=${ENV_NAME} では購入する試験会員を登録できない（本登録のメールを読めない。E2E_MAIL_URL を与える）`);
       const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
       try {
         await hideDebugToolbar(context);

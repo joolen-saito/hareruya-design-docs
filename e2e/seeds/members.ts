@@ -3,10 +3,10 @@
  * シード表（例: S-M13-02-DATES-004）は「プレイヤー検索に会員登録済みの会員（この日程にまだ申込していない会員。
  * 該当する会員が無ければ、フロントの新規会員登録画面で会員を登録しておく）の名前を入れて」と定める。
  * E2E_MEMBER_NAMES で会員の名前を与えなければ、試験用の会員を会員一覧で探し、いなければフロントの新規会員登録画面で登録する
- * （依頼者決定 2026-10-16）。本登録のメールを読むので、登録できるのは local だけ。
+ * （依頼者決定 2026-10-16）。本登録のメールを読むので、登録できるのはメールの受け口（E2E_MAIL_URL）がある環境だけ。
  */
 import { Browser } from "@playwright/test";
-import { BASE_URL, ENV_NAME, MEMBER_NAMES, SETUP_ADMIN } from "../config/env";
+import { BASE_URL, ENV_NAME, MAIL_URL, MEMBER_NAMES, SETUP_ADMIN } from "../config/env";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { customerStateByEmail } from "../pages/admin/customer";
 import { FrontMember, registerFrontMember } from "../pages/front/member_entry";
@@ -31,7 +31,7 @@ export async function entryMemberNames(browser: Browser, n: number): Promise<str
     const state = await withAdminSession(browser, SETUP_ADMIN, (page) => customerStateByEmail(page, m.メール));
     if (state === "仮会員") throw new Error(`試験用の会員 ${m.メール} が仮会員のまま。本登録のメールのURLを開いて本会員にしてから流す`);
     if (state === null) {
-      if (ENV_NAME !== "local") throw new Error(`E2E_ENV=${ENV_NAME} では試験用の会員を登録できない（本登録のメールを読めない）。会員登録済みの会員の名前を E2E_MEMBER_NAMES で与える`);
+      if (!MAIL_URL) throw new Error(`E2E_ENV=${ENV_NAME} では試験用の会員を登録できない（本登録のメールを読めない。E2E_MAIL_URL を与える）。会員登録済みの会員の名前を E2E_MEMBER_NAMES で与える`);
       const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
       try {
         await hideDebugToolbar(context);

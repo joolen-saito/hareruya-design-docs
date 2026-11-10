@@ -9,7 +9,7 @@
  * 支払方法は「代金引換」（銀行振込以外で、外部の決済画面へ移らない方法）。配送方法は、必要なら出荷指示リストから除外されないものを選ぶ。
  */
 import { Browser, expect, Page } from "@playwright/test";
-import { BASE_URL, ENV_NAME, SETUP_ADMIN } from "../../config/env";
+import { BASE_URL, ENV_NAME, MAIL_URL, SETUP_ADMIN } from "../../config/env";
 import { 販売中の商品ID } from "../../db/m05_front_order";
 import { hideDebugToolbar, withAdminSession } from "../../lib/session";
 import { customerStateByEmail } from "../admin/customer";
@@ -33,7 +33,7 @@ export async function ensureFrontMember(browser: Browser, m: FrontMember): Promi
   const state = await withAdminSession(browser, SETUP_ADMIN, (page) => customerStateByEmail(page, m.メール));
   if (state === "本会員") return;
   if (state === "仮会員") throw new Error(`試験用の会員 ${m.メール} が仮会員のまま。本登録のメールのURLを開いて本会員にしてから流す`);
-  if (ENV_NAME !== "local") throw new Error(`E2E_ENV=${ENV_NAME} では試験用の会員を登録できない（本登録のメールを読めない）`);
+  if (!MAIL_URL) throw new Error(`E2E_ENV=${ENV_NAME} では試験用の会員を登録できない（本登録のメールを読めない。E2E_MAIL_URL を与える）`);
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
     await hideDebugToolbar(context);

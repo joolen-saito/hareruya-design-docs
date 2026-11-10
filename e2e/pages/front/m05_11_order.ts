@@ -6,7 +6,7 @@
  * 配送方法「宅配便」が手元のDBに無いときは、出荷指示リストから除外されない配送方法の先頭を選ぶ（シードでの解釈。注記に残す）。
  */
 import { Browser, expect, Page } from "@playwright/test";
-import { BASE_URL, ENV_NAME, SETUP_ADMIN } from "../../config/env";
+import { BASE_URL, ENV_NAME, MAIL_URL, SETUP_ADMIN } from "../../config/env";
 import { 販売中の商品ID } from "../../db/m05_front_order";
 import { hideDebugToolbar, withAdminSession } from "../../lib/session";
 import { customerStateByEmail } from "../admin/customer";
@@ -30,7 +30,7 @@ export async function 会員を用意する(browser: Browser, m: FrontMember): P
   const state = await withAdminSession(browser, SETUP_ADMIN, (page) => customerStateByEmail(page, m.メール));
   if (state === "本会員") return;
   if (state === "仮会員") throw new Error(`試験用の会員 ${m.メール} が仮会員のまま。本登録のメールのURLを開いて本会員にしてから流す`);
-  if (ENV_NAME !== "local") throw new Error(`E2E_ENV=${ENV_NAME} では試験用の会員を登録できない（本登録のメールを読めない）`);
+  if (!MAIL_URL) throw new Error(`E2E_ENV=${ENV_NAME} では試験用の会員を登録できない（本登録のメールを読めない。E2E_MAIL_URL を与える）`);
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
     await hideDebugToolbar(context);
