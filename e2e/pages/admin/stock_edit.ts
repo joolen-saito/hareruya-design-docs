@@ -96,8 +96,13 @@ export async function fillStockEdit(page: Page, v: StockEditInput): Promise<void
   let found = false;
   for (const d of departments) {
     await department.selectOption(d.value);
-    const names = (await members.locator("option").allTextContents()).map((t) => t.trim());
-    if (names.includes(v.approverName)) { found = true; break; }
+    // メンバーの選択肢は、部署を選ぶと画面のスクリプトが取り直す。開発環境では遅いので、選択肢が出るまで少し待って読む（最大5秒）
+    for (let i = 0; i < 10; i++) {
+      const names = (await members.locator("option").allTextContents()).map((t) => t.trim());
+      if (names.includes(v.approverName)) { found = true; break; }
+      await page.waitForTimeout(500);
+    }
+    if (found) break;
   }
   if (!found) throw new Error(`承認通知先のメンバーに「${v.approverName}」がいる部署が無い`);
   await form.locator("#admin_stock_approval_new_approval_notification_target_members + span.select2 .select2-selection").click();
