@@ -12,8 +12,7 @@
   対象の4つのセルだけを置き換える。ほかの部品（共有文字列・書式・ハイパーリンク・ほかのシート）はそのまま写す。
 - 判定は e2e/review/judgements/<機能ID>.tsv の行のうち、いまのエビデンス（evidence/<機能ID>/<テストID>/result.json）の
   実施日時と同じ実施への判定で、エビデンスの環境が dev のものだけ。
-- 判定→実施結果: 合格→合格／不合格→不合格／未判定→空欄（備考に理由）。
-- 流していないが流せないと決まったケース（config/sheet_not_runnable.tsv: テストID・理由）は実施結果を空欄にし、備考に理由を書く。
+- 判定→実施結果: 合格→合格／不合格→不合格。未判定と、流せないと決まったケース（config/sheet_not_runnable.tsv）は、実施者・実施日・実施結果・備考の4列とも空欄にする（依頼者指示 2026-11-10）。
 - 実施者が「齋藤」の行（この道具が前に書いた行）も書き直す。
 - Backlog の課題キー（review/backlog_e2e_ledger.tsv: テストID・課題キー）があれば備考に書く。
 
@@ -152,21 +151,30 @@ def main() -> int:
         tid = list_to_case.get(list_id)
         res = results.get(tid) if tid else None
         if not res:
-            # 前にこの道具が「実施不可」と書いた行は、実施結果だけ空欄に直す（依頼者指示 2026-11-10）
-            if executor == EXECUTOR and value_of(cells.get("K")) == "実施不可" and "K" in cells:
-                sm = re.search(r' s="(\d+)"', cells["K"])
-                body2 = body.replace(cells["K"], f'<c r="K{rnum}"{(" s=" + chr(34) + sm.group(1) + chr(34)) if sm else ""}/>', 1)
+            # 前にこの道具が書いた行（齋藤・備考に E2EのテストID）で、いま書く結果が無いものは、4列とも空欄に戻す
+            # 合格・不合格が書いてある行は、判定が古くなっただけなので残す（流し直して判定したら書き直す）
+            if executor == EXECUTOR and value_of(cells.get("K")) in ("", "実施不可"):
+                body2 = body
+                for col in "IJKL":
+                    if col in cells:
+                        sm = re.search(r' s="(\d+)"', cells[col])
+                        st = DATE_STYLE if col == "J" and not sm else (sm.group(1) if sm else None)
+                        body2 = body2.replace(cells[col], f'<c r="{col}{rnum}"' + (f' s="{st}"' if st else "") + '/>', 1)
                 changed += 1
-                plan.append([rnum, list_id, tid or "", *[value_of(cells.get(c)) for c in "IJKL"], executor, value_of(cells.get("J")), "", value_of(cells.get("L")).replace("\n", " / ")])
+                plan.append([rnum, list_id, tid or "", *[value_of(cells.get(c)) for c in "IJKL"], "", "", "", ""])
                 return head + body2 + "</row>"
             return m.group(0)
         before = [value_of(cells.get(c)) for c in "IJKL"]
-        new = {
-            "I": ("s", EXECUTOR),
-            "J": ("d", excel_serial(res["日付"])),
-            "K": ("s", res["結果"]),
-            "L": ("s", res["備考"]),
-        }
+        if res["結果"] == "":
+            # 実施できなかったケースは、実施者・実施日・実施結果・備考の4列とも空欄にする（依頼者指示 2026-11-10）
+            new = {"I": ("s", ""), "J": ("s", ""), "K": ("s", ""), "L": ("s", "")}
+        else:
+            new = {
+                "I": ("s", EXECUTOR),
+                "J": ("d", excel_serial(res["日付"])),
+                "K": ("s", res["結果"]),
+                "L": ("s", res["備考"]),
+            }
 
         def render(col: str) -> str:
             old = cells.get(col, "")
@@ -188,7 +196,7 @@ def main() -> int:
                 nxt = next((cells[c] for c in sorted(cells) if len(c) == 1 and c > col), None)
                 body = body.replace(nxt, render(col) + nxt, 1) if nxt else body + render(col)
         changed += 1
-        plan.append([rnum, list_id, tid, *before, EXECUTOR, res["日付"].isoformat(), res["結果"], res["備考"].replace("\n", " / ")])
+        plan.append([rnum, list_id, tid, *before, *([EXECUTOR, res["日付"].isoformat(), res["結果"], res["備考"].replace("\n", " / ")] if res["結果"] else ["", "", "", ""])])
         return head + body + "</row>"
 
     sheet2 = re.sub(r'<row r="(\d+)"([^>]*)>(.*?)</row>', fix_row, sheet, flags=re.S)
