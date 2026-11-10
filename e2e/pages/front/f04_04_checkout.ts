@@ -27,12 +27,15 @@ async function 名前で選ぶ(page: Page, sel: string, 名前: string, 何: str
   const pick = choices.find((c) => c.label === 名前) ?? choices.find((c) => c.label.startsWith(名前));
   if (!pick) throw new Error(`${何}に「${名前}」が無い（ある選択肢: ${choices.map((c) => c.label).join("、")}）`);
   const radio = page.locator(`${sel}[value="${pick.value}"]`);
-  for (let i = 0; i < 3 && !(await radio.isChecked()); i++) {
+  // 選ぶと画面が読み込み直す（読み込み直しの最中は選択肢が見つからない）。読み込みが落ち着いてから、選ばれたかを確かめつつ最大3回選ぶ
+  const 選ばれたか = () => radio.isChecked({ timeout: 10_000 }).catch(() => false);
+  for (let i = 0; i < 3 && !(await 選ばれたか()); i++) {
     await Promise.all([
       page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }).catch(() => undefined),
-      radio.check({ force: true, timeout: T }),
+      radio.check({ force: true, timeout: T }).catch(() => undefined),
     ]);
     await page.waitForLoadState("load");
+    await page.waitForLoadState("networkidle").catch(() => undefined);
   }
   await expect(page.locator(`${sel}[value="${pick.value}"]`), `${何}「${名前}」が選ばれた`).toBeChecked({ timeout: T });
 }
@@ -61,7 +64,16 @@ export class CheckoutPage {
   /** 確定のチェックを付ける */
   async 確定のチェックを付ける(): Promise<void> {
     await expect(this.確定のチェック, "「この内容で注文を確定します。」のチェック").toHaveCount(1, { timeout: T });
-    await this.確定のチェック.check({ force: true, timeout: T });
+    // 支払方法・配送方法を選ぶと画面のスクリプトが注文の欄を作り直し、そのあいだに付けたチェックが外れることがある（開発環境の流し 2026-11-11）。
+    // 読み込みが落ち着いてから、付いたことを確かめつつ最大3回付ける（入力欄は見た目の部品の下にあるので、ラベルを押す）
+    await this.page.waitForLoadState("networkidle").catch(() => undefined);
+    for (let i = 0; i < 3 && !(await this.確定のチェック.isChecked().catch(() => false)); i++) {
+      const label = this.page.locator(`label[for="${await this.確定のチェック.getAttribute("id")}"]`);
+      if (await label.count()) await label.click({ timeout: T }).catch(() => undefined);
+      else await this.確定のチェック.check({ force: true, timeout: T }).catch(() => undefined);
+      await this.page.waitForTimeout(800);
+    }
+    await expect(this.確定のチェック, "「この内容で注文を確定します。」にチェックが付いた").toBeChecked({ timeout: T });
   }
   /** 「注文する」を押し、移った先まで待つ。移った先のパスを返す */
   async 注文するを押す(): Promise<string> {
