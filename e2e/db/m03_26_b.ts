@@ -8,14 +8,15 @@ import { query } from "../lib/db";
 /**
  * 商品の付いていないカード詳細を n 件選ぶ（新しい商品コードが既存の規格の商品コードと重ならないもの）。
  * 取込は「プロモの略称＋カードセットの略称＋Foil の印＋カード番号（5桁）＋言語＋状態」で商品コードを作り、同じコードの規格があると行を飛ばす。
- * そのため、プロモの指定が無く、カードセットの略称とカード番号があり、同じ先頭（言語 JP）の商品コードが無いカード詳細だけを選ぶ。
+ * そのため、プロモの指定が無いか略称の空のプロモ（開発環境の「ノンプロモ」）で、カードセットの略称とカード番号があり、同じ先頭（言語 JP）の商品コードが無いカード詳細だけを選ぶ。
  * ほかの回と同じものを選ばないよう、選ぶ位置を ずらし（0〜）でずらし、除くもの（この回で選んだもの）を外す。
  */
 export function 商品の無いカード詳細(n: number, ずらし: number, 除く: string[]): string[] {
   const rows = query(
     `select d.id from mtb_card_detail d
        join mtb_cardset s on s.id = d.cardset_id
-      where d.promotion_id is null and coalesce(d.card_no, '') <> '' and coalesce(s.code, '') <> ''
+       left join mtb_promotion pr on pr.id = d.promotion_id
+      where coalesce(pr.code, '') = '' and coalesce(d.card_no, '') <> '' and coalesce(s.code, '') <> ''
         and not exists (select 1 from dtb_product p where p.card_detail_id = d.id)
         and not exists (select 1 from dtb_product_class pc
                          where pc.product_code like s.code || (case when d.foil_flg = 1 then 'F' else '' end) || lpad(d.card_no, 5, '0') || 'JP%')
