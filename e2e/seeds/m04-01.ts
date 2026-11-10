@@ -16,32 +16,42 @@
 import { expect } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { rc } from "../lib/run_marker";
 import { Account, withAdminSession } from "../lib/session";
 import { shortName, StockSearchPatternPage } from "../pages/admin/m04_01_search_pattern";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
 import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
 
-export const M0401_ALL: Account = { loginId: "m0401_all", password: "Passw0rd!M0401A" };
-const ALL_NAME = "M04-01全店舗試験管理者";
+/**
+ * シード表のログインIDは m0401_all。開発環境には同じログインIDのメンバー（名前 M0401全権限。手動テスト用に作られたもの）が既にあり、
+ * 同じ値では登録できない。ほかの方のメンバーは使わず、決め打ちの識別の値として実行の印を付けたログインID・名前で作る（依頼者決定 2026-10-28「案A」）。
+ * ケースはログインIDそのものを確かめない。
+ */
+export const M0401_ALL: Account = { loginId: rc("m0401_all").toLowerCase(), password: "Passw0rd!M0401A" };
+export const ALL_NAME = rc("M04-01全店舗試験管理者");
 
 const COMPANY = "株式会社晴れる屋";
 const COMPANY_KANA = "カブシキガイシャハレルヤ";
-const TOKYO: M0424StoreInput = {
+export const TOKYO: M0424StoreInput = {
   店名: "東京本店", 店名カナ: "トウキョウホンテン", 店名英語: "Tokyo Main Store", 支店URL: "m0401tokyo", 店名略称3文字: "Q1T", ショップ名略称: "東京本店",
   会社名: COMPANY, 会社名カナ: COMPANY_KANA, 郵便番号: "100-0005", 都道府県: "東京都", 住所1: "千代田区丸の内1-1-1", 住所2: "晴ビル10F", 電話番号: "03-0401-0001",
 };
-const OSAKA: M0424StoreInput = {
+export const OSAKA: M0424StoreInput = {
   店名: "大阪支店", 店名カナ: "オオサカシテン", 店名英語: "Osaka Branch", 支店URL: "m0401osaka", 店名略称3文字: "Q1O", ショップ名略称: "大阪支店",
   会社名: COMPANY, 会社名カナ: COMPANY_KANA, 郵便番号: "530-0001", 都道府県: "大阪府", 住所1: "大阪市北区梅田2-2-2", 住所2: "晴ビル11F", 電話番号: "06-0401-0002",
 };
+
+/** 東京本店・大阪支店の店舗ID（S-M04-01-ADM-ALL が画面で用意したもの。呼び名はシード表に無いので控えない） */
+export const 店舗ID = { 東京本店: "", 大阪支店: "" };
 
 defineSeed("S-M04-01-ADM-ALL", async ({ browser, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const tokyo = await ensureStore(page, TOKYO, issue);
     const osaka = await ensureStore(page, OSAKA, issue);
+    店舗ID.東京本店 = tokyo; 店舗ID.大阪支店 = osaka;
     await ensureMemberByStoreIds(page, {
-      名前: ALL_NAME, ログインID: M0401_ALL.loginId, メールアドレス: "m0401_all@example.test", パスワード: M0401_ALL.password,
+      名前: ALL_NAME, ログインID: M0401_ALL.loginId, メールアドレス: `${M0401_ALL.loginId}@example.test`, パスワード: M0401_ALL.password,
       権限: "システム管理者", 所属店舗ID: tokyo, デフォルト検索表示店舗ID: tokyo, 編集可能店舗ID: [tokyo, osaka],
     });
   });
