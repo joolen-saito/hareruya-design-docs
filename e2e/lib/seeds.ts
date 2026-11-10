@@ -6,6 +6,8 @@
  * - ケース専用のシード: そのケースのためだけに、ケースの直前に毎回作る。
  * 画面が振る番号は notes に控える。呼び名はシード表の状態・属性に書いてある〔…〕と同じにする。
  */
+import fs from "node:fs";
+import path from "node:path";
 import { Browser } from "@playwright/test";
 import { getSeed, SeedRow } from "./catalog";
 import { Notes } from "./notes";
@@ -90,9 +92,22 @@ export async function buildSeeds(browser: Browser, seedIds: string[], notes: Not
   return usedIds;
 }
 
-/** ケースが使うシード（依存先を含む）に、データを消す作り方のものがあるか。共有環境では、そのケースを実行しない */
+/**
+ * 共有環境でも流してよい「消す」シード。消す相手が E2E 自身の作ったデータ（実行の印・ケース専用の名前・試験会員のカートなど）だけのもの。
+ * config/shared_env_delete_ok.tsv（シードID・判定・理由）の判定が「消してよい」の行（依頼者決定 2026-11-10「E2Eが作ったデータだけ消して流す」）。
+ */
+const deleteOk: Set<string> = (() => {
+  const f = path.join(__dirname, "..", "config", "shared_env_delete_ok.tsv");
+  if (!fs.existsSync(f)) return new Set<string>();
+  return new Set(
+    fs.readFileSync(f, "utf-8").split("\n").slice(1)
+      .map((l) => l.split("\t")).filter((c) => c[0] && c[1]?.trim() === "消してよい").map((c) => c[0].trim()),
+  );
+})();
+
+/** ケースが使うシード（依存先を含む）に、データを消す作り方のものがあるか。共有環境では、そのケースを実行しない（消してよいと仕分けたものは除く） */
 export function destructiveSeeds(seedIds: string[]): string[] {
-  return order(seedIds).filter((id) => /削除|消す|消して|0件にする/.test(getSeed(id).投入方法));
+  return order(seedIds).filter((id) => /削除|消す|消して|0件にする/.test(getSeed(id).投入方法) && !deleteOk.has(id));
 }
 
 // ---- シードだけを作る実行（spec/seed_only.spec.ts）が使う入口 ----
