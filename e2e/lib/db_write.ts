@@ -14,6 +14,7 @@
  * - 物理名は SQL の中にだけ書き、呼び出す側には業務の言葉の関数名で見せる（db/<機能>.ts に包む）。
  */
 import { execFileSync } from "node:child_process";
+import { pgEnvFromUrl, rethrowMasked } from "./pg_conn";
 import fs from "node:fs";
 import path from "node:path";
 import { DB_CONTAINER, DB_MODE, DB_URL, ENV_NAME } from "../config/env";
@@ -47,12 +48,16 @@ function runTx(what: string, body: string, vars: string[], logLine: string): str
   const input = `begin;\n${body}\n\\if :ok\ncommit;\n\\echo E2E_WRITE_OK :n\n\\else\nrollback;\n\\echo E2E_WRITE_NG :n\n\\endif\n`;
   const args = ["-X", "-q", "-v", "ON_ERROR_STOP=1", "-At", ...vars, "-f", "-"];
   // 読み取り専用の既定（PGOPTIONS）を、この接続だけ外す
-  const env = { ...process.env, PGOPTIONS: "-c default_transaction_read_only=off" };
+  // 接続先は引数でなく環境変数で渡す（失敗したときのエラーの文に接続URL・パスワードを出さない。lib/pg_conn.ts）
+  const env = { ...process.env, ...pgEnvFromUrl(), PGOPTIONS: "-c default_transaction_read_only=off" };
   const opt = { input, encoding: "utf-8" as const, env, maxBuffer: 16 * 1024 * 1024 };
-  const out = DB_MODE === "url"
-    ? execFileSync("psql", [DB_URL, ...args], opt)
-    : execFileSync("docker", ["exec", "-i", DB_CONTAINER, "sh", "-c",
-      'PGPASSWORD="$POSTGRES_PASSWORD" exec psql -U "$POSTGRES_USER" -d "${POSTGRES_DB:-eccubedb}" "$@"', "psql", ...args], opt);
+  let out: string;
+  try {
+    out = DB_MODE === "url"
+      ? execFileSync("psql", args, opt)
+      : execFileSync("docker", ["exec", "-i", DB_CONTAINER, "sh", "-c",
+        'PGPASSWORD="$POSTGRES_PASSWORD" exec psql -U "$POSTGRES_USER" -d "${POSTGRES_DB:-eccubedb}" "$@"', "psql", ...args], opt);
+  } catch (e) { rethrowMasked(e); }
   const m = /E2E_WRITE_(OK|NG) (\d+)/.exec(out);
   fs.mkdirSync(path.dirname(LOG), { recursive: true });
   fs.appendFileSync(LOG, [new Date().toISOString(), ENV_NAME, what, m ? m[1] : "?", m ? m[2] : "?", logLine].join("\t") + "\n");

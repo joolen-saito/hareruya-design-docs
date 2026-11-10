@@ -5,6 +5,7 @@
  * 物理名（テーブル・カラム）は SQL の中にだけ書き、呼び出す側には業務の言葉の関数名で見せる。
  */
 import { execFileSync } from "node:child_process";
+import { pgEnvFromUrl, rethrowMasked } from "./pg_conn";
 import { DB_CONTAINER, DB_MODE, DB_URL, ENV_NAME } from "../config/env";
 
 export type Row = Record<string, string | null>;
@@ -22,11 +23,15 @@ export function query(sql: string, params: (string | number)[] = []): Row[] {
   const psqlArgs = ["-X", "-q", "-v", "ON_ERROR_STOP=1", ...vars, "-c", "\\pset format csv", "-f", "-"];
   // 文字列の検査は補助。書き込みを止める根拠は、読み取り専用のトランザクションで流すこと（値を変える関数の呼び出しもDBが拒む）
   const input = `begin transaction read only;\nselect row_to_json(t)::text from (${bound}) t;\nrollback;\n`;
-  const opt = { input, encoding: "utf-8" as const, maxBuffer: 64 * 1024 * 1024 };
-  const out = DB_MODE === "url"
-    ? execFileSync("psql", [DB_URL, ...psqlArgs], opt)
-    : execFileSync("docker", ["exec", "-i", DB_CONTAINER, "sh", "-c",
-      'PGPASSWORD="$POSTGRES_PASSWORD" exec psql -U "$POSTGRES_USER" -d "${POSTGRES_DB:-eccubedb}" "$@"', "psql", ...psqlArgs], opt);
+  // 接続先は引数でなく環境変数で渡す（失敗したときのエラーの文に接続URL・パスワードを出さない。lib/pg_conn.ts）
+  const opt = { input, encoding: "utf-8" as const, maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...pgEnvFromUrl() } };
+  let out: string;
+  try {
+    out = DB_MODE === "url"
+      ? execFileSync("psql", psqlArgs, opt)
+      : execFileSync("docker", ["exec", "-i", DB_CONTAINER, "sh", "-c",
+        'PGPASSWORD="$POSTGRES_PASSWORD" exec psql -U "$POSTGRES_USER" -d "${POSTGRES_DB:-eccubedb}" "$@"', "psql", ...psqlArgs], opt);
+  } catch (e) { rethrowMasked(e); }
   // csv 形式で1列（JSON文字列）。先頭は列名の行
   const lines = out.split("\n").filter((l) => l.length > 0);
   const body = lines.slice(lines.findIndex((l) => l === "row_to_json") + 1);
