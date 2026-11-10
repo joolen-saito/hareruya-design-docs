@@ -32,6 +32,7 @@ E2E（開発環境）の不合格を Backlog へ起票する。
 --apply の前に、登録する内容を依頼者に見せて承認を得る（起票は取り消しにくい）。
 """
 import argparse
+import re
 import datetime as dt
 import sys
 import time
@@ -78,6 +79,8 @@ def parse(p: Path) -> dict:
     for a in meta["添付"]:
         if not (E2E / a).exists():
             raise ValueError(f"{p.name}: 添付 {a} が無い")
+    # 本文に記入例の行（/* 記入例: … */）は出さない（依頼者指示 2026-11-10）
+    body = "\n".join(l for l in body.splitlines() if not re.match(r"^\s*/\*\s*記入例", l))
     meta["本文"] = body.strip() + "\n"
     return meta
 
