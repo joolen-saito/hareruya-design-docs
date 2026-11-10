@@ -62,7 +62,15 @@ function runTx(what: string, body: string, vars: string[], logLine: string): str
   fs.mkdirSync(path.dirname(LOG), { recursive: true });
   fs.appendFileSync(LOG, [new Date().toISOString(), ENV_NAME, what, m ? m[1] : "?", m ? m[2] : "?", logLine].join("\t") + "\n");
   if (!m || m[1] !== "OK") throw new Error(`${what}: DBへの書き込みを取り消した（E2E のものと確かめられない行が含まれる、または件数が違う）。${out.trim()}`);
+  lastOut = out;
   return m[2];
+}
+
+let lastOut = "";
+/** runTx と同じ。psql の出力全体を返す */
+function runTxOut(what: string, body: string, vars: string[], logLine: string): string {
+  runTx(what, body, vars, logLine);
+  return lastOut;
 }
 
 /**
@@ -124,4 +132,36 @@ export function deleteOwnRows(what: string, a: { table: string; key: string; ids
   const body = `with d as (delete from ${t} where ${k}::text = any(string_to_array(:'ids', ',')) and ${k}::text in (select o.k::text from (${o.sql}) o(k)) returning 1)\n` +
     `select count(*) as n, count(*) = ${a.ids.length} as ok from d \\gset`;
   runTx(what, body, vars, JSON.stringify({ table: t, key: k, ids: a.ids, owner: a.owner }));
+}
+
+/**
+ * 親になる行（受注・マスタなど）を新しく足す（依頼者決定 2026-11-10「足してよい。できれば、画面から登録してもらったほうが良い」）。
+ * 画面から登録できるものは画面で作る。画面に登録の手段が無いものだけ、ここで足す。
+ * 足す行の markColumn の値には、必ずこの実行の印（lib/run_marker.ts の RUN_MARK）を含める。含まない行が1つでもあれば書かない。
+ * 足した行の主キーを返す（以後は updateOwnRows・deleteOwnRows の持ち主の確かめに「markColumn に印を含む」を使う）。
+ */
+export function insertMarkedRows(what: string, a: { table: string; key: string; markColumn: string; rows: Record<string, Val>[] }): string[] {
+  assertEnabled(what);
+  if (a.rows.length === 0) throw new Error(`${what}: 足す行が無い`);
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { RUN_MARK } = require("./run_marker") as { RUN_MARK: string };
+  const t = ident(a.table), k = ident(a.key), mc = ident(a.markColumn);
+  const cols = Object.keys(a.rows[0]).map(ident);
+  if (!cols.includes(mc)) throw new Error(`${what}: 足す行に印の列 ${mc} が無い`);
+  for (const r of a.rows) {
+    if (Object.keys(r).length !== cols.length || cols.some((c) => !(c in r))) throw new Error(`${what}: 行ごとに列がそろっていない`);
+    if (!String(r[mc] ?? "").includes(RUN_MARK)) throw new Error(`${what}: 印の列 ${mc} に実行の印 ${RUN_MARK} が無い行がある（E2E の行と分からないので足さない）`);
+  }
+  const vars: string[] = [];
+  const values = a.rows.map((r, ri) => "(" + cols.map((c, ci) => {
+    const v = r[c];
+    if (v === null) return "null";
+    vars.push("-v", `r${ri}_${ci}=${String(v)}`);
+    return `:'r${ri}_${ci}'`;
+  }).join(", ") + ")");
+  const body = `with ins as (insert into ${t} (${cols.join(", ")}) values ${values.join(", ")} returning ${k}::text as k)\n` +
+    `select count(*) as n, count(*) = ${a.rows.length} as ok, string_agg(k, ',') as keys from ins \\gset\n\\echo E2E_KEYS :keys`;
+  const out = runTxOut(what, body, vars, JSON.stringify({ table: t, key: k, markColumn: mc, rows: a.rows }));
+  const m = /E2E_KEYS (\S+)/.exec(out);
+  return m ? m[1].split(",") : [];
 }
