@@ -1,6 +1,6 @@
 /** 在庫検索一覧・在庫編集（承認依頼の登録）・在庫編集承認一覧の画面操作。 */
 import { expect, Locator, Page } from "@playwright/test";
-import { メンバーの部署ID } from "../../db/member";
+import { メンバーの部署名 } from "../../db/member";
 import { available as dbAvailable } from "../../lib/db";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
@@ -98,12 +98,13 @@ export async function fillStockEdit(page: Page, v: StockEditInput): Promise<void
   let found = false;
   // 承認者のいる部署を DB の参照で調べ、先に選ぶ。その部署では選択肢が出るまで長めに待つ（最大60秒）。
   // 開発環境では E2E の試験管理者が部署1に1,600人を超え、部署1のメンバーの選択肢の読み込みが5秒を超える（2026-11-11 夜の F04-01 で「いる部署が無い」）
-  const 先の部署 = dbAvailable ? メンバーの部署ID(v.approverName) : "";
-  const 並び = 先の部署 ? [...departments.filter((d) => d.value === 先の部署), ...departments.filter((d) => d.value !== 先の部署)] : departments;
+  // 部署の選択肢の値は部署の名前。選択肢は「その店舗に所属するメンバーの部署」だけ（新アプリの StockApprovalType）
+  const 先の部署 = dbAvailable ? メンバーの部署名(v.approverName) : "";
+  const 並び = 先の部署 ? [...departments.filter((d) => d.value === 先の部署 || d.label === 先の部署), ...departments.filter((d) => d.value !== 先の部署 && d.label !== 先の部署)] : departments;
   for (const d of 並び) {
     await department.selectOption(d.value);
     // メンバーの選択肢は、部署を選ぶと画面のスクリプトが取り直す。開発環境では遅いので、選択肢が出るまで少し待って読む（最大5秒。承認者の部署は最大60秒）
-    const 回数 = d.value === 先の部署 ? 120 : 10;
+    const 回数 = 先の部署 && (d.value === 先の部署 || d.label === 先の部署) ? 120 : 10;
     for (let i = 0; i < 回数; i++) {
       const names = (await members.locator("option").allTextContents()).map((t) => t.trim());
       if (names.includes(v.approverName)) { found = true; break; }

@@ -23,7 +23,7 @@ import { 会員の店舗のカートID, カートの明細ID, 購入グループ
 import { プレイヤーID } from "../db/f03_07";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
-import { rc, RUN_MARK } from "../lib/run_marker";
+import { rc, RUN_MARK, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { ensureBranch, 支店の入力 } from "../pages/admin/f02_03_store";
@@ -55,8 +55,14 @@ export type 店 = "本店" | "支店A" | "支店B";
 export const 店のページ = (店: 店): string => (店 === "本店" ? "" : 支店のページ(店 === "支店A" ? "A" : "B"));
 
 const PASS = "Passw0rd!F0401";
-const F0401登録者: 管理者 = { 名前: `F0401登録者-${RUN_MARK}`, account: { loginId: `f0401reg${RUN_MARK}`.toLowerCase(), password: PASS } };
-const F0401承認者: 管理者 = { 名前: `F0401承認者-${RUN_MARK}`, account: { loginId: `f0401apr${RUN_MARK}`.toLowerCase(), password: PASS } };
+// 試験管理者は決まった印で1度だけ作って使い回す（2026-11-11 シードの使い回し）。
+// 支店の在庫の承認通知先は、その支店に所属するメンバーの部署だけが選べる（新アプリの StockApprovalType::getDepartmentChoices）ので、
+// 承認者は支店ごとに、その支店の所属で作る（2026-11-12 の夜、本店所属の承認者では「承認通知先のメンバーに…がいる部署が無い」で止まった）
+const F0401登録者: 管理者 = { 名前: rcFixed("F0401登録者"), account: { loginId: rcFixed("f0401reg").toLowerCase(), password: PASS } };
+const F0401承認者: Record<"A" | "B", 管理者> = {
+  A: { 名前: rcFixed("F0401承認者A"), account: { loginId: rcFixed("f0401apra").toLowerCase(), password: PASS } },
+  B: { 名前: rcFixed("F0401承認者B"), account: { loginId: rcFixed("f0401aprb").toLowerCase(), password: PASS } },
+};
 
 defineSeed("S-F04-01-SHOPS", async ({ browser, notes, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
@@ -68,10 +74,10 @@ defineSeed("S-F04-01-SHOPS", async ({ browser, notes, seed }) => {
       店舗ID.set(`支店${k}`, id);
       notes.set(`〔店舗ID-F0401-共有${k}〕`, id);
     }
-    for (const a of [F0401登録者, F0401承認者]) {
+    for (const [a, 所属] of [[F0401登録者, 本店], [F0401承認者.A, 支店の店名("A")], [F0401承認者.B, 支店の店名("B")]] as [管理者, string][]) {
       await ensureMember(page, {
-        名前: a.名前, 所属店舗: 本店, ログインID: a.account.loginId, メールアドレス: `${a.account.loginId}@example.test`,
-        パスワード: a.account.password, 権限: "システム管理者", デフォルト検索表示店舗: 本店, 編集可能店舗: [本店, 支店の店名("A"), 支店の店名("B")],
+        名前: a.名前, 所属店舗: 所属, ログインID: a.account.loginId, メールアドレス: `${a.account.loginId}@example.test`,
+        パスワード: a.account.password, 権限: "システム管理者", デフォルト検索表示店舗: 所属, 編集可能店舗: [本店, 支店の店名("A"), 支店の店名("B")],
       });
     }
   });
@@ -183,7 +189,7 @@ function ケースのシード(seedId: string, d: 定め): void {
       const made = await 商品を作って入庫する(browser, seedId, items.map((p) => ({
         商品コード: 商品コードの(d, p.字), 商品名: 商品コードの(d, p.字), 価格: String(p.価格 ?? 1000), 入庫数: p.在庫, 入庫方法: "在庫編集" as const,
         在庫変動理由: "結合テスト用", ...(p.上限 !== undefined ? { CSVの値: { "販売制限数": String(p.上限) } } : {}),
-      })), issue, 店 === "本店" ? {} : { 店舗名: 店名, 登録者: F0401登録者, 承認者: F0401承認者 });
+      })), issue, 店 === "本店" ? {} : { 店舗名: 店名, 登録者: F0401登録者, 承認者: F0401承認者[店 === "支店A" ? "A" : "B"] });
       items.forEach((p, i) => {
         const 商品規格ID = 商品の商品規格ID(made[i].productId);
         x.品.set(p.字, { 商品ID: made[i].productId, 商品規格ID, 在庫ID: 店舗の在庫ID(商品規格ID, 店舗IDの(店)), 店, 商品コード: made[i].商品コード });

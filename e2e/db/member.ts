@@ -11,7 +11,7 @@ export function 名前のメンバーID(名前: string): string[] {
   return query(`select id::text as id from dtb_member where name = $1 order by id`, [名前]).map((r) => r.id ?? "");
 }
 
-/** 名前のメンバーの部署（所属）ID。いなければ空 */
-export function メンバーの部署ID(名前: string): string {
-  return query(`select coalesce(department_id::text, '') as d from dtb_member where name = $1 order by id limit 1`, [名前])[0]?.d ?? "";
+/** 名前のメンバーの部署（所属）の名前。いなければ空（在庫編集の承認通知先の部署の選択肢は、部署の名前が値） */
+export function メンバーの部署名(名前: string): string {
+  return query(`select coalesce(d.name, '') as d from dtb_member m left join mtb_department d on d.id = m.department_id where m.name = $1 order by m.id limit 1`, [名前])[0]?.d ?? "";
 }
