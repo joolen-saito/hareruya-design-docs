@@ -16,6 +16,7 @@ import { ポイント履歴, ポイント履歴の設定日を設定する, ポ�
 import { Notes } from "../lib/notes";
 import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { 使い回して作る } from "./seed_reuse";
 import { Account, withAdminSession } from "../lib/session";
 import { PointPage } from "../pages/admin/m08_05_07";
 import { 会員が1点注文する, 会員を作る, 作った会員, 控える, 試験管理者を用意する } from "./m08-05-07-common";
@@ -43,13 +44,30 @@ function 履歴が無いこと(seedId: string, 会員ID: string): void {
   if (h.length) throw new Error(`${seedId}: 会員ID ${会員ID} のポイント履歴が ${h.length} 件ある（0件のはず）`);
 }
 
+/**
+ * 使い回し（依頼者決定 2026-11-11「シードの使い回しを進めて」）: BASE-001〜009・011・012・041・042 のシードは中身が同じ（ポイント残高1000・履歴0件の会員）。
+ * 使うケースはどれもポイント付与画面を開いてリンク・戻るボタンを押す、フォームを開閉する、備考の選択肢・カレンダーの日付を見る、アドレスの会員IDを置き換えるだけで、
+ * ポイントを付与しない（登録を押さない）ので、001 の定めで会員を1回の起動で1人だけ作って使い回す。
+ */
+const BASEの元 = "001";
 for (const n of ["001", "002", "003", "004", "005", "006", "007", "008", "009", "011", "012", "041", "042"]) {
   defineSeed(`S-M08-05-BASE-${n}`, async ({ browser, notes, seed }) => {
-    const m = await 会員を作って控える(browser, notes, seed.シードID, n);
-    残高をそろえる(seed.シードID, m.会員ID, 1000);
-    履歴が無いこと(seed.シードID, m.会員ID);
+    const canonical = `S-M08-05-BASE-${BASEの元}`;
+    await 使い回して作る({
+      seedId: seed.シードID, canonical, notes,
+      rename: (l) => l.replace(`-M0805-${BASEの元}`, `-M0805-${n}`),
+      build: async (nn) => {
+        const m = await 会員を作って控える(browser, nn, canonical, BASEの元);
+        残高をそろえる(canonical, m.会員ID, 1000);
+        履歴が無いこと(canonical, m.会員ID);
+        reportSeedIssue(canonical, "ポイント残高1000は画面で指定できないので、E2E の会員の選手情報に DB で書いた（正本の作り方どおり）。会員のメールアドレスの前半に実行の印を付けた");
+      },
+    });
+    // 使い回しても、使うたびに残高・履歴が変わっていないことを確かめる（前のケースが付与していないこと）
+    const 会員ID = notes.get(`〔会員ID-M0805-${n}〕`);
+    if (ポイント残高(会員ID) !== 1000) throw new Error(`${seed.シードID}: 会員ID ${会員ID} のポイント残高が1000でない（使い回しの前のケースで変わった）`);
+    履歴が無いこと(seed.シードID, 会員ID);
     if ((n === "011" || n === "012") && 会員があるか("99999999")) throw new Error(`${seed.シードID}: 会員ID 99999999 の会員がある（ほかの方のデータなので消さずに止める）`);
-    reportSeedIssue(seed.シードID, "ポイント残高1000は画面で指定できないので、E2E の会員の選手情報に DB で書いた（正本の作り方どおり）。会員のメールアドレスの前半に実行の印を付けた");
   });
 }
 
