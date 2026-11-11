@@ -10,7 +10,7 @@ import {
 } from "../pages/admin/card_csv";
 import { goodsCategoryFromSharedMaster, registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import {
-  readGoodsProductId, readGoodsProductIdsByNameAllLanguages, removeProductsMatchingName,
+  readGoodsProductId, readGoodsProductIdsByNameAllLanguages, removeProductsMatchingCode, removeProductsMatchingName,
 } from "../pages/admin/m03_01_goods_list_seed";
 import { readLanguageChoicesFromClassForm } from "../pages/admin/m03_01_product_class";
 import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
@@ -24,6 +24,8 @@ type Card = { nameJp: string; nameEn: string; promo: boolean; foil: "0" | "1" };
 type CardGoodsSeed = {
   /** 登録前に商品名(日/英)で検索し、あれば完全に削除する語（008） */
   cleanupProductName?: string;
+  /** 前の実行（途中で止まった回）が残した、この E2E 自身の固定の商品コードの商品を、登録前に画面から消す（共有の開発環境で再実行が重ならないように） */
+  cleanupProductCodes?: string[];
   /** 登録前にカード名で検索し、該当する商品が無いことを確かめる語（052。削除の指示は無い） */
   expectNoCardNameMatch?: string;
   goods: Goods[];
@@ -40,6 +42,10 @@ function defineCardGoodsSeed(seedId: string, s: CardGoodsSeed): void {
     const categoryId = goodsCategoryFromSharedMaster(notes, seed.シードID);
     await withAdminSession(browser, M0301_ADMIN, async (page) => {
       if (s.cleanupProductName) await removeProductsMatchingName(page, s.cleanupProductName, true);
+      for (const code of s.cleanupProductCodes ?? []) {
+        const removed = await removeProductsMatchingCode(page, code);
+        if (removed.length > 0) issue(`前の実行が残した商品コード ${code} の商品 ${removed.length} 件を、登録前に画面から削除した`);
+      }
       if (s.expectNoCardNameMatch) {
         const search = new ProductSearchPage(page);
         await search.open();
@@ -110,6 +116,7 @@ defineCardGoodsSeed("S-M03-01-TEXT-008", {
 });
 
 defineCardGoodsSeed("S-M03-01-TEXT-011", {
+  cleanupProductCodes: ["M0301S-011A", "M0301S-011B"],
   goods: [
     { code: "M0301S-011A", nameJp: "カード検索商品甲011", nameEn: "カード検索商品甲011", idNote: "〔商品ID-M0301-011A〕" },
     { code: "M0301S-011B", nameJp: "カード検索商品乙011", nameEn: "カード検索商品乙011", idNote: "〔商品ID-M0301-011B〕" },
