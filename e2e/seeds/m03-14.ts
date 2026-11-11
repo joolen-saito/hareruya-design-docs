@@ -10,7 +10,7 @@
  */
 import { expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { CSV入出力設定 } from "../lib/app_config";
+import { CSV入出力設定, 設定値を読めない環境, 読み替え文 } from "../lib/app_config";
 import { Notes } from "../lib/notes";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
@@ -56,7 +56,8 @@ defineSeed("S-M03-14-L-ADM", async ({ browser }) => {
   await withAdminSession(browser, M0314L_ADMIN, (page) => expectCanOpen(page, "M03-14連携試験管理者"));
 });
 
-defineSeed("S-M03-14-L-CONFIG", async () => {
+defineSeed("S-M03-14-L-CONFIG", async ({ seed }) => {
+  if (設定値を読めない環境()) { reportSeedIssue(seed.シードID, 読み替え文); return; }
   // 管理画面に設定項目が無い。設定を書き換えず、値がシード表の状態（アプリの既定値）であることだけを確かめる（違えば止める）。
   const c = CSV入出力設定();
   const want = { 出力区切り文字: ",", 取込区切り文字: ",", 取込囲み文字: '"', アップロード上限MB: 5 };
