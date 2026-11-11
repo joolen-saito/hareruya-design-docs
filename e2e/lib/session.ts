@@ -30,14 +30,40 @@ export async function loginAdmin(page: Page, account: Account): Promise<void> {
   await expect(page.locator("header, nav").first(), why).toContainText("様");
 }
 
+/**
+ * 1回の起動（プロセス）の中で、管理者ごとのログイン状態（Cookie）を覚えておく（依頼者決定 2026-11-11「シードの使い回しを進めて」）。
+ * シードの準備は1件の中で管理画面に7回ほどログインし直し、1回あたり約7秒（ログイン画面＋送信＋ダッシュボード）かかっていた。
+ * 覚えた状態で開くときは、軽い管理画面（新着情報管理の一覧。約1秒・画面上部にログイン中の名前が出る）を開き、
+ * ログイン画面へ移されたら（自動ログアウト・パスワードの変更など）その場でこれまでどおりログインする。
+ * ログインし直したときは続きの処理がダッシュボードから始まり、使い回したときは新着情報管理の一覧から始まる（どちらも管理画面のログイン後の画面）。
+ * E2E_ADMIN_SESSION_REUSE=0 で、毎回ログインする元の動きに戻す。
+ */
+const adminStates = new Map<string, Awaited<ReturnType<BrowserContext["storageState"]>>>();
+const reuseAdminSession = process.env.E2E_ADMIN_SESSION_REUSE !== "0";
+
 /** シードを画面から作るための、別のブラウザセッション（ケースのセッションを汚さない） */
 export async function withAdminSession<T>(browser: Browser, account: Account, fn: (page: Page, context: BrowserContext) => Promise<T>): Promise<T> {
-  const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
+  const saved = reuseAdminSession ? adminStates.get(account.loginId) : undefined;
+  const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true, ...(saved ? { storageState: saved } : {}) });
   try {
     await hideDebugToolbar(context);
     const page = await context.newPage();
-    await loginAdmin(page, account);
-    return await fn(page, context);
+    let loggedIn = false;
+    if (saved) {
+      const res = await page.goto(adminUrl("/content/news"), { timeout: 60_000 }).catch(() => null);
+      loggedIn = !!res && res.ok() && !/\/login/.test(new URL(page.url()).pathname)
+        && (await page.locator("header, nav").first().innerText().catch(() => "")).includes("様");
+    }
+    if (!loggedIn) {
+      if (saved) await context.clearCookies();
+      await loginAdmin(page, account);
+    }
+    const out = await fn(page, context);
+    if (reuseAdminSession) adminStates.set(account.loginId, await context.storageState());
+    return out;
+  } catch (e) {
+    adminStates.delete(account.loginId);
+    throw e;
   } finally {
     await context.close();
   }
