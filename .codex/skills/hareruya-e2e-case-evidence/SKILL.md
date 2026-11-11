@@ -104,3 +104,10 @@ nice -n 19 python3 ../integration_test/casegen/build_all_test_cases.py   # 一�
 
 - 書いたテストを codex に批判的に読ませる（`adversarial-review` スキル。観点: 操作をせずに合格にしていないか・期待結果を弱めていないか・正本の手順を飛ばしていないか・物理名）。指摘は実ソースで確かめてから直す。
 - 依頼者への報告は JUDGEMENT.md の「報告の書き方」。合格・不合格・未判定・スキップの件数、不合格1件ごとの理由、正本を直していないこと（直したら裁定の項目）、基盤を直したならその理由、エビデンスの場所（`tools/evidence_pack.sh <機能ID>` で固めたもの）。
+
+### 8. 開発環境での実施・項目表・Backlog（2026-11-10〜11 依頼者決定）
+
+- E2E は共有の開発環境で流す（`set -a; . ./.env.dev; set +a` のあと `PW_SLOTS=2 tools/run_evidence.sh`。`.env.dev` は git 管理外）。DB は踏み台のトンネル（`tools/dev_db_tunnel.sh`）。DB に書くのは E2E が作った行だけ（`lib/db_write.ts`）。消すシードは `config/shared_env_delete_ok.tsv` で仕分けたものだけ流れる。
+- 受け持ちは栗野さんと業務の群で分けてある（`e2e/review/WORK_SPLIT.tsv`・`WORK_SPLIT_20261111.md`）。こちらの受け持ちの機能だけを実装・流し・判定する。
+- 判定を、共有ドライブの結合試験項目表.xlsx（実施者が空白か「E2E（Playwright）」か、この道具が書いた「齋藤」の行だけ）へ `tools/sheet_writeback.py` で書き戻す。実施できなかったケースは4列とも空欄。書き込む直前に最新を取り直し、変わっていないことを確かめてから上書きする。
+- 不合格は Backlog に起票する。手順はスキル **hareruya-e2e-backlog-register**。
