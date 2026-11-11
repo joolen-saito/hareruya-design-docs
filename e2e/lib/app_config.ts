@@ -13,14 +13,17 @@ export function 設定値を読めない環境(): boolean {
 }
 const 読み替え文 = "読み替え: アプリの設定値はこの環境（共有の開発環境）からは読めず、設定を書き換えてもいない。シード表の値（既定のまま）であるとして進めた（環境の担当者の確認待ち）";
 export { 読み替え文 };
+const 既定値の読み替え文 = "読み替え: アプリの設定値（カテゴリ階層上限・CSV の入出力の設定）はこの環境（共有の開発環境）からは読めず、設定を書き換えてもいない。シード表の値（アプリの既定値）であるとして進めた（環境の担当者の確認待ち）";
 
 /** カテゴリ階層上限（カテゴリを何階層まで作れるか） */
 export function カテゴリ階層上限(): number {
+  if (設定値を読めない環境()) { 注記を一度だけ残す(既定値の読み替え文); return 5; }
   return Number(appParameter("eccube_category_nest_level"));
 }
 
 /** CSVの入出力の設定（CSV出力区切り文字・CSV取込区切り文字・CSV取込囲み文字・CSVアップロードサイズ上限(MB)） */
 export function CSV入出力設定(): { 出力区切り文字: string; 取込区切り文字: string; 取込囲み文字: string; アップロード上限MB: number } {
+  if (設定値を読めない環境()) { 注記を一度だけ残す(既定値の読み替え文); return { 出力区切り文字: ",", 取込区切り文字: ",", 取込囲み文字: '"', アップロード上限MB: 5 }; }
   return {
     出力区切り文字: String(appParameter("eccube_csv_export_separator")),
     取込区切り文字: String(appParameter("eccube_csv_import_delimiter")),

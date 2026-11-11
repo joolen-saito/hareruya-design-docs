@@ -17,7 +17,7 @@
 import { Browser } from "@playwright/test";
 import { getSeed } from "../lib/catalog";
 import { query } from "../lib/db";
-import { CSV入出力設定 } from "../lib/app_config";
+import { CSV入出力設定, 設定値を読めない環境 } from "../lib/app_config";
 import { Notes } from "../lib/notes";
 import { RUN_MARK } from "../lib/run_marker";
 import { Account } from "../lib/session";
@@ -67,7 +67,7 @@ for (const id of ["S-M05-26-SMAREGI-NORMAL", "S-M05-26-QF-SMAREGI", "S-M05-26-RE
 }
 function 区切り文字を確かめる(seedId: string): void {
   let sep: string | null = null;
-  try { sep = CSV入出力設定().取込区切り文字; } catch { /* 設定値を読めない環境 */ }
+  try { if (設定値を読めない環境()) throw new Error("読めない"); sep = CSV入出力設定().取込区切り文字; } catch { /* 設定値を読めない環境 */ }
   if (sep === null) {
     reportSeedIssue(seedId, "読み替え: CSV取込の区切り文字は共有の設定で、この環境からは値を読めない。書き換えていない（カンマのはずとして進めた）");
   } else if (sep !== ",") {
