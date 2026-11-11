@@ -194,9 +194,15 @@ export class ChangePage {
   async 押す(l: Locator, 移るはず = true): Promise<boolean> {
     await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
     const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 移るはず ? 60_000 : 5_000 }).then(() => true, () => false);
+    const before = this.page.url();
     try {
       await l.click({ timeout: 10_000 });
     } catch (e) {
+      // 押せたのに click が待ち切れになり、画面はもう移っていることがある（開発環境 2026-11-11 の 052・053・055）。移っていれば押し直さない
+      if (this.page.url() !== before || await Promise.race([nav, new Promise<boolean>((r) => setTimeout(() => r(false), 3_000))])) {
+        await this.page.waitForLoadState("load");
+        return true;
+      }
       // 固定ヘッダーが要素の上に重なって普通に押せないとき（画面の作りの問題）。押下の操作を要素へ直接送って続け、注記を残す
       test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
       await l.dispatchEvent("click");
