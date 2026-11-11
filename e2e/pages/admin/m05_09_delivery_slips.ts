@@ -23,8 +23,15 @@ export class SlipOrderListPage extends OrderListPage {
     await this.showDetail();
     await this.email.fill(メール);
     const boxes = this.page.locator('#admin_search_order_status input[type="checkbox"]');
+    // 見た目の部品の下の入力欄は、押しても状態が変わらないことがある（2026-11-11 の M05-09 の 004・007「Clicking the checkbox did not change its state」）。
+    // M05-20 の部品と同じく、入力欄の状態を直接付けて change を知らせ、全部付いたことを確かめる
+    await boxes.evaluateAll((ns) => ns.forEach((n) => {
+      const i = n as HTMLInputElement;
+      if (!i.checked) { i.checked = true; i.dispatchEvent(new Event("change", { bubbles: true })); }
+    }));
     const n = await boxes.count();
-    for (let i = 0; i < n; i++) await boxes.nth(i).setChecked(true, { force: true });
+    const on = await boxes.evaluateAll((ns) => ns.filter((x) => (x as HTMLInputElement).checked).length);
+    expect(on, "受注情報検索の対応状況のチェック（全部）").toBe(n);
     await this.clickSearch();
   }
   /** 注文番号の行の選択（配送先ごとに1行。行のチェックボックス） */
