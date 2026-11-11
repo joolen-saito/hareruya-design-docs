@@ -10,3 +10,8 @@ export function 管理者ID(ログインID: string): string | null {
 export function 名前のメンバーID(名前: string): string[] {
   return query(`select id::text as id from dtb_member where name = $1 order by id`, [名前]).map((r) => r.id ?? "");
 }
+
+/** 名前のメンバーの部署（所属）ID。いなければ空 */
+export function メンバーの部署ID(名前: string): string {
+  return query(`select coalesce(department_id::text, '') as d from dtb_member where name = $1 order by id limit 1`, [名前])[0]?.d ?? "";
+}
