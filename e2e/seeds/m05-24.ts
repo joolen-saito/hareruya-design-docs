@@ -30,6 +30,7 @@ import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
 import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { 使い回して作る } from "./seed_reuse";
 import { Account, withAdminSession } from "../lib/session";
 import { 商品を作って入庫する } from "../pages/admin/f04_setup";
 import { ensureM05Admin } from "../pages/admin/m05_admin_member";
@@ -259,7 +260,19 @@ async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め)
   }
 }
 
+/**
+ * 使い回し（依頼者決定 2026-11-11「シードの使い回しを進めて」）: 017・018・019 のシードは中身が同じ（出荷指示の受注1件の出荷指示リスト）。
+ * 使うケースはどれも注文を選ばずにダウンロードを押す（019 は選択なしの要求）だけで、受注・出荷指示リストを変えず、件数も数えないので、017 の定めで1度だけ作って使い回す。
+ */
+const 使い回しの元: Record<string, string> = { "BASE-018": "BASE-017", "BASE-019": "BASE-017" };
+
 for (const [k, d] of Object.entries(定めの表)) {
   const seedId = `S-M05-24-${k}`;
-  defineSeed(seedId, { needs: ["S-M05-24-ADM", "S-M05-24-MASTER"] }, async ({ browser, notes }) => 作る(browser, seedId, notes, d));
+  const 元 = 使い回しの元[k] ?? (Object.values(使い回しの元).includes(k) ? k : undefined);
+  defineSeed(seedId, { needs: ["S-M05-24-ADM", "S-M05-24-MASTER"] }, async ({ browser, notes }) => {
+    if (!元) return 作る(browser, seedId, notes, d);
+    const canonical = `S-M05-24-${元}`;
+    const 元の番号 = 元.slice(-3), 番号 = k.slice(-3);
+    await 使い回して作る({ seedId, canonical, notes, rename: (l) => l.replace(`-M0524-${元の番号}`, `-M0524-${番号}`), build: (n) => 作る(browser, canonical, n, 定めの表[元]) });
+  });
 }
