@@ -86,6 +86,16 @@ def parse(p: Path) -> dict:
     return meta
 
 
+def with_captures(body: str, names: list[str]) -> str:
+    """添付したキャプチャを本文の中に表示する（依頼者指示 2026-11-11「バックログチケット本人にキャプチャを乗せる」）。
+    Backlog の Markdown では「![説明][添付ファイル名]」で添付の画像を本文に出せる。「# 根拠」の前（現在の挙動の終わり）に置く。"""
+    if not names or "![" in body:
+        return body
+    block = "\nキャプチャ:\n" + "\n".join(f"![{n}][{n}]" for n in names) + "\n\n"
+    i = body.find("# 根拠")
+    return body[:i] + block + body[i:] if i >= 0 else body.rstrip() + "\n" + block
+
+
 def read_ledger() -> dict[str, str]:
     if not LEDGER.exists():
         return {}
@@ -139,6 +149,7 @@ def main() -> int:
     if a.show:
         m = parse(drafts[a.show])
         r = resolve(client, m)
+        m["本文"] = with_captures(m["本文"], [Path(x).name for x in m["添付"]])
         print(f"課題名: {m['課題名']}\n種別: {ISSUE_TYPE}（{r['issue_type_id']}）\nカテゴリ: {BASE_CATEGORY}・{m['分類']}（{r['category_ids']}）")
         print(f"不具合解析結果: {m['不具合解析結果']}・重要度: {m['重要度']}（{r['custom_fields']}）\n優先度: 中\n添付: {m['添付']}\n台帳: {ledger.get(a.show, '未登録')}\n---\n{m['本文']}")
         return 0
@@ -154,7 +165,7 @@ def main() -> int:
             att.append(client.upload_attachment(E2E / path)["id"])
             time.sleep(SLEEP)
         issue = client.create_issue(project_id=r["project_id"], issue_type_id=r["issue_type_id"], priority_id=PRIORITY_ID,
-                                    summary=m["課題名"], description=m["本文"], category_ids=r["category_ids"],
+                                    summary=m["課題名"], description=with_captures(m["本文"], [Path(x).name for x in m["添付"]]), category_ids=r["category_ids"],
                                     attachment_ids=att, custom_fields=r["custom_fields"])
         append_ledger(tid, issue["issueKey"])
         print(f"登録  {tid}  {issue['issueKey']}  {m['課題名']}")
