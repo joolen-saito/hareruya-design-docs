@@ -64,9 +64,13 @@ def build_results(only: set[str]) -> dict[str, dict]:
     """cases/ のテストID → {結果, 日付, 備考}"""
     ledger = {r["テストID"]: r["課題キー"] for r in read_tsv(LEDGER)}
     out: dict[str, dict] = {}
+    # 栗野さんの受け持ちの機能（WORK_SPLIT.tsv）は、栗野さんが流して判定し項目表に載せる（2026-11-11 依頼者決定）。ここでは書かない
+    split = {r["機能ID"]: r["受け持ち"] for r in read_tsv(E2E / "review" / "WORK_SPLIT.tsv")}
     for jf in sorted(JUDG.glob("*.tsv")):
         fid = jf.stem
         if only and fid not in only:
+            continue
+        if split.get(fid) == "栗野さん":
             continue
         for j in read_tsv(jf):
             tid = j["テストID"]
@@ -97,7 +101,7 @@ def build_results(only: set[str]) -> dict[str, dict]:
             out[tid] = {"結果": res, "日付": day, "備考": "\n".join(notes)}
     for n in read_tsv(NOT_RUNNABLE):
         tid = n["テストID"]
-        if tid in out or (only and tid[3:9] not in only):
+        if tid in out or (only and tid[3:9] not in only) or split.get(tid[3:9]) == "栗野さん":
             continue
         out[tid] = {"結果": "", "日付": dt.date.today(), "備考": f"実施できない: {n['理由']}\nE2EのテストID {tid}"}
     return out
