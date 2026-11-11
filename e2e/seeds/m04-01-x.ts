@@ -24,6 +24,7 @@ import { 対象以外の店舗別在庫を消す, 店名略称がある, 棚番�
 import { getSeed } from "../lib/catalog";
 import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { 使い回して作る } from "./seed_reuse";
 import { Account, withAdminSession } from "../lib/session";
 import { CategoryPage } from "../pages/admin/category";
 import { expectSaved } from "../pages/admin/common";
@@ -267,7 +268,22 @@ for (const n of ["031", "034", "038"]) 商品(`S-M04-01-ACTION-${n}`, { 先頭: 
 for (const n of ["032", "036"]) 商品(`S-M04-01-ACTION-${n}`, { 先頭: `M0401-AUTH-${n}-01`, 商品: [{ 正本: `M0401-AUTH-${n}-01`, 在庫: T(5), 呼び名: 印(n, "") }] });
 商品("S-M04-01-ACTION-035", { 先頭: "ZERO-M0401-01", 商品: [{ 正本: "ZERO-M0401-01", 在庫: [], 呼び名: 印("035", "") }] });
 for (const n of ["045", "046", "050"]) 商品(`S-M04-01-${n === "050" ? "BTN" : "ACTION"}-${n}`, { 先頭: `M0401-${n}`, 商品: [{ 正本: `M0401-${n}-A`, 在庫: T(5), 呼び名: 印(n, "A") }, { 正本: `M0401-${n}-B`, 在庫: T(3), 呼び名: 印(n, "B") }] });
-for (const n of ["061", "062"]) 商品(`S-M04-01-CBCSVHIDE-${n}`, { 先頭: `M0401-CB${n}-A`, 商品: [{ 正本: `M0401-CB${n}-A`, 在庫: T(2), 呼び名: 印(n, "A") }] });
+/**
+ * 使い回し（依頼者決定 2026-11-11「シードの使い回しを進めて」）: 061・062 のシードは中身が同じ（東京本店に在庫2の商品1件）。
+ * 使うケースは在庫検索一覧を検索せずに開いて、CSV出力ボタンが出ないことを見るだけで、商品も在庫も変えないので、061 の定めで1度だけ作って使い回す。
+ */
+for (const n of ["061", "062"]) {
+  const seedId = `S-M04-01-CBCSVHIDE-${n}`, canonical = "S-M04-01-CBCSVHIDE-061";
+  defineSeed(seedId, { needs: ["S-M04-01-ADM-ALL", "S-M04-01-MASTER"] }, async ({ browser, notes }) => {
+    await 使い回して作る({
+      seedId, canonical, notes, rename: (l) => l.replace("-M0401-061", `-M0401-${n}`),
+      build: async (nn) => {
+        notesBy.set(canonical, nn);
+        await 商品を作る(browser, canonical, { 先頭: "M0401-CB061-A", 商品: [{ 正本: "M0401-CB061-A", 在庫: T(2), 呼び名: 印("061", "A") }] });
+      },
+    });
+  });
+}
 商品("S-M04-01-CBHISTPRICE-064", { 先頭: "M0401-CB064", 消さない: true, 商品: [{ 正本: "M0401-CB064-A", 在庫: [], 呼び名: 印("064", "A") }, { 正本: "M0401-CB064-B", 在庫: [], 呼び名: 印("064", "B") }] });
 商品("S-M04-01-CBMOVEOK-057", { 先頭: "M0401-CB057", 商品: [{ 正本: "M0401-CB057-A", 在庫: T(5), 呼び名: 印("057", "A") }, { 正本: "M0401-CB057-B", 在庫: T(3), 呼び名: 印("057", "B") }] });
 商品("S-M04-01-CBXFERMULTI-058", { 先頭: "M0401-CB058", 商品: [{ 正本: "M0401-CB058-A", 在庫: [{ 店舗: "東京本店", 数: 2 }, { 店舗: "大阪支店", 数: 2 }], 呼び名: 印("058", "A") }] });
