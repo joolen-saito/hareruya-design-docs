@@ -109,7 +109,7 @@ caseTest("IT-M03-08-008", async (ctx) => {
   await ctx.step(2, async () => { await l.廃止規格の開閉を押す(); 見える行 = await l.見えている廃止の行の数(); });
   await ctx.expected(async () => {
     expect.soft(見える行, "見えている廃止規格一覧の行の数").toBeGreaterThan(0);
-    await expect.soft(ctx.page.locator(`#abolishedProductClass #ex-product_class-${規格(ctx, "008")}`), `廃止の規格 ${rc("M0308-RET-01-008")} の行が表示される`).toBeVisible();
+    await expect.soft(ctx.page.locator(`#abolishedProductClass #ex-product_class-${規格(ctx, "008")}`), `廃止の規格（規格ID ${規格(ctx, "008")}）の行が表示される`).toBeVisible();
   });
 });
 

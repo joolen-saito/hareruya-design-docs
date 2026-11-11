@@ -25,6 +25,7 @@ import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
 import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { 使い回して作る } from "./seed_reuse";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { chooseByLabel, expectSaved } from "../pages/admin/common";
 import { F04承認者, F04登録者, 管理者を用意する, 本店の店名 } from "../pages/admin/f04_setup";
@@ -251,6 +252,13 @@ async function 商品を作る(browser: Browser, seedId: string, d: 商品の定
   if (言語なし.length || 状態なし.length) issue(`${seedId}: 言語未設定・状態未設定は画面で選べないので、仮の値（日本語・NM）で登録してから DB で外した（E2E の規格だけ）`);
 }
 
+/**
+ * 使い回すシード（依頼者決定 2026-11-11「シードの使い回しを進めて」）。キーのシードは作らず、値のシードが作った商品を使う（元のシードも同じ）。
+ * - 011（新規作成ボタンを押す）は 001（商品名の表示を見る）と同じ中身（規格0件の商品）。011 は商品名を確かめない。
+ * - 008（「▼」を押して廃止規格一覧を開く）は 007（廃止規格一覧の初期の閉じた状態を見る）と同じ中身（廃止の規格1件）。どちらも商品名・コードを確かめず、開閉は画面の中だけ。
+ */
+const 使い回しの元: Record<string, string> = { "LIST-001": "LIST-001", "NEWLINK-011": "LIST-001", "COLLAPSE-007": "COLLAPSE-007", "EXPAND-008": "COLLAPSE-007" };
+
 for (const [k, d] of Object.entries(定め)) {
   const seedId = `S-M03-08-${k}`;
   defineSeed(seedId, async ({ browser, notes }) => {
@@ -258,7 +266,18 @@ for (const [k, d] of Object.entries(定め)) {
     const s = getSeed(seedId);
     if (!(s["状態・属性"] + s.投入方法).includes(d.商品名)) throw new Error(`${seedId}: シード表に商品名 ${d.商品名} が無い（作り方の表の誤り）`);
     for (const x of d.規格) if (!(s["状態・属性"] + s.投入方法).includes(x.コード)) throw new Error(`${seedId}: シード表に商品コード ${x.コード} が無い（作り方の表の誤り）`);
-    await 商品を作る(browser, seedId, d, notes, issue);
+    const 元 = 使い回しの元[k];
+    if (元) {
+      // 使い回し（依頼者決定 2026-11-11）: 使うケースは商品規格一覧を開く・ボタンを押すだけで、商品と規格を変えず、商品名・コードも確かめない
+      const ds = 定め[元];
+      await 使い回して作る({
+        seedId, canonical: `S-M03-08-${元}`, notes,
+        rename: (l) => l.replace(`-M0308-${ds.番号}`, `-M0308-${d.番号}`),
+        build: (n) => 商品を作る(browser, `S-M03-08-${元}`, ds, n, (m) => reportSeedIssue(`S-M03-08-${元}`, m)),
+      });
+    } else {
+      await 商品を作る(browser, seedId, d, notes, issue);
+    }
     // 「手順で入力する商品コードのデータが無い状態にする（あれば削除する）」は、実行の印を付けた商品コードで無いことを確かめる（印つきの値は前の実行と重ならない）
     const 手順のコード = { "NEW-017": "M0308-NEW-01", "UPDATE-020": "M0308-UPD-01" }[k];
     if (手順のコード && 商品コードの規格の数(rc(手順のコード)) !== 0) throw new Error(`${seedId}: 商品コード ${rc(手順のコード)} の規格がすでにある`);
