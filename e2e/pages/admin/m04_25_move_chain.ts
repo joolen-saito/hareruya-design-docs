@@ -16,6 +16,7 @@ import { chooseByLabel, expectSaved } from "./common";
 import { pressApprove } from "./m04_09_move";
 import { MoveInstructionSearchPage, pathOf } from "./m04_24_move_instruction";
 import { expectStore, findOpenStoreId, M0424StoreInput } from "./m04_24_store";
+import { guardStoreCreate } from "./store_once";
 
 const exact = (text: string) => new RegExp(`^\\s*${text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`);
 const clean = (s: string | null | undefined) => (s ?? "").replace(/\s+/g, " ").trim();
@@ -37,6 +38,7 @@ async function readThresholds(page: Page, id: string): Promise<string[]> {
 
 /** 店舗登録画面で、M04-24 の部品と同じ値に高額商品閾値1〜3を足して登録する（M04-24 の部品は閾値を入れない） */
 async function createStoreWithThresholds(page: Page, v: ThresholdStoreInput): Promise<void> {
+  await guardStoreCreate(page, v.店名, v.会社名, "m04_25_move_chain.createStoreWithThresholds");
   await page.goto(adminUrl("/mall/tenant/create"));
   await page.waitForLoadState("load");
   await storeField(page, "company_name").fill(v.会社名);

@@ -8,12 +8,14 @@ import { query } from "../../lib/db";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 import { findTenantId } from "./tenant";
+import { guardStoreCreate } from "./store_once";
 
 export type 店舗の定め = { 店名: string; 店名英語: string; 公開: boolean; 営業中: boolean; 表示順: string; 受付アドレス: string; 店名略称3文字: string; 支店URL: string };
 
 const f = (page: Page, name: string) => page.locator(`[name="mall_tenant_shop_master[${name}]"]`);
 
 async function 登録する(page: Page, v: 店舗の定め): Promise<void> {
+  await guardStoreCreate(page, v.店名, "試験用会社", "f06_22_stores.登録する");
   await page.goto(adminUrl("/mall/tenant/create"));
   await page.waitForLoadState("load");
   await f(page, "company_name").fill("試験用会社");

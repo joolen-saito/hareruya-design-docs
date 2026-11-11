@@ -7,6 +7,7 @@ import { expect, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 import { findTenantId } from "./tenant";
+import { guardStoreCreate } from "./store_once";
 
 export type 支店の入力 = {
   店名: string; 店名カナ: string; 店名英語: string; 支店URL: string; 店名略称3文字: string; ショップ名略称: string;
@@ -17,6 +18,7 @@ const f = (page: Page, name: string) => page.locator(`[name="mall_tenant_shop_ma
 const digits = (v: string) => v.replace(/-/g, "");
 
 async function create(page: Page, v: 支店の入力): Promise<void> {
+  await guardStoreCreate(page, v.店名, "試験用会社", "f02_03_store.create");
   await page.goto(adminUrl("/mall/tenant/create"));
   await page.waitForLoadState("load");
   await f(page, "company_name").fill("試験用会社");

@@ -14,6 +14,7 @@ import { expect, Locator, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel } from "./common";
 import { M0424StoreInput } from "./m04_24_store";
+import { guardStoreCreate } from "./store_once";
 
 type Issue = (message: string) => void;
 const norm = (s: string | null | undefined) => (s ?? "").replace(/\s+/g, " ").trim();
@@ -322,6 +323,7 @@ export async function storesNamed(page: Page, 店名: string, 会社名: string)
 export async function ensureClosedStore(page: Page, v: M0424StoreInput, onIssue: Issue): Promise<string> {
   let hits = await storesNamed(page, v.店名, v.会社名);
   if (hits.length === 0) {
+    await guardStoreCreate(page, v.店名, v.会社名, "m04_31_inventory_plan.ensureClosedStore");
     await page.goto(adminUrl("/mall/tenant/create"));
     await page.waitForLoadState("load");
     await storeField(page, "company_name").fill(v.会社名);

@@ -2,6 +2,7 @@
 import { Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
+import { guardStoreCreate } from "./store_once";
 
 export type TenantInput = {
   店名: string; 店名カナ: string; 店名英語: string; 支店URL: string; 店名略称3文字: string; ショップ名略称: string;
@@ -21,6 +22,7 @@ export async function findTenantId(page: Page, 店名: string): Promise<string |
 }
 
 export async function createTenant(page: Page, v: TenantInput): Promise<void> {
+  await guardStoreCreate(page, v.店名, "試験用会社", "tenant.createTenant");
   await page.goto(adminUrl("/mall/tenant/create"));
   const f = (name: string) => page.locator(`[name="mall_tenant_shop_master[${name}]"]`);
   await f("company_name").fill("試験用会社");

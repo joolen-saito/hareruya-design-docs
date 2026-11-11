@@ -8,6 +8,7 @@
 import { expect, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
+import { guardStoreCreate } from "./store_once";
 
 export type M0424StoreInput = {
   店名: string; 店名カナ: string; 店名英語: string; 支店URL: string; 店名略称3文字: string; ショップ名略称: string;
@@ -38,6 +39,7 @@ const digits = (v: string) => v.replace(/-/g, "");
 
 /** 店舗登録画面で登録する（そのほかの必須項目は、正本の「任意の有効な値」として固定の値を入れる） */
 export async function createStore(page: Page, v: M0424StoreInput, 店舗種別: "本店" | "支店" = "支店"): Promise<void> {
+  await guardStoreCreate(page, v.店名, v.会社名, "m04_24_store.createStore");
   await page.goto(adminUrl("/mall/tenant/create"));
   await page.waitForLoadState("load");
   await field(page, "company_name").fill(v.会社名);
