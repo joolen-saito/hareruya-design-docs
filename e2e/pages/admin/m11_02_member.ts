@@ -99,7 +99,12 @@ export class MemberEditPage {
       if (v.デフォルト検索表示店舗ID) await this.番号で選ぶ(this.デフォルト検索表示店舗欄, v.デフォルト検索表示店舗ID);
       else await this.デフォルト検索表示店舗欄.selectOption({ value: "" });
     }
-    if (v.稼働) await this.稼働の選択(v.稼働).check({ force: true });
+    if (v.稼働) {
+      // 既存の部品（pages/admin/member.ts）と同じく force を付けずに選ぶ（force だと隠れた入力欄を押して状態が変わらなかった。開発環境 2026-11-11）
+      const r = this.稼働の選択(v.稼働);
+      if (!(await r.isChecked())) await r.check();
+      await expect(r, `稼働の選択（${v.稼働}）`).toBeChecked();
+    }
     if (v.二段階認証 !== undefined) await this.チェック(this.二段階認証欄, v.二段階認証);
     if (v.自動ログアウト !== undefined) await this.チェック(this.自動ログアウト欄, v.自動ログアウト);
     if (v.スマレジ用アカウント !== undefined) await this.チェック(this.スマレジ用アカウント欄, v.スマレジ用アカウント);

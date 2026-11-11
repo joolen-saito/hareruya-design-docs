@@ -9,7 +9,8 @@ import { HistoryRow, StockHistoryPage } from "./m04_17_stock_history";
 import { StockListPage } from "./stock_edit";
 
 const 数 = (t: string): number => {
-  const v = t.replace(/[,\s円]/g, "");
+  // 金額の欄は「￥5,000」「¥5,000」の形で出る（円の記号・桁区切り・空白を外して読む）
+  const v = t.replace(/[,\s円￥¥]/g, "");
   if (!/^-?\d+$/.test(v)) throw new Error(`数を読めない: 「${t}」`);
   return Number(v);
 };

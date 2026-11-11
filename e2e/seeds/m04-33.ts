@@ -53,11 +53,11 @@ const 承認者: Actor = { 名前: rc("M04-33承認者"), account: { loginId: rc
 
 const 共有の店舗: Record<"A" | "B", M0424StoreInput> = {
   A: {
-    店名: "本店2F（M04-33）", 店名カナ: "ホンテンニカイ", 店名英語: "M0433 2F", 支店URL: "m0433f2", 店名略称3文字: "Q3F", ショップ名略称: "本店2F",
+    店名: "本店2F（M04-33）", 店名カナ: "ホンテンニカイ", 店名英語: "Honten Second Floor", 支店URL: "m0433f2", 店名略称3文字: "Q3F", ショップ名略称: "本店2F",
     会社名: "株式会社M04-33試験", 会社名カナ: "カブシキガイシャシケン", 郵便番号: "1000001", 都道府県: "東京都", 住所1: "千代田区千代田1-1", 住所2: "2F", 電話番号: "0300000433",
   },
   B: {
-    店名: "本店B2F（M04-33）", 店名カナ: "ホンテンチカニカイ", 店名英語: "M0433 B2F", 支店URL: "m0433b2", 店名略称3文字: "Q3B", ショップ名略称: "本店B2F",
+    店名: "本店B2F（M04-33）", 店名カナ: "ホンテンチカニカイ", 店名英語: "Honten Basement Second", 支店URL: "m0433b2", 店名略称3文字: "Q3B", ショップ名略称: "本店B2F",
     会社名: "株式会社M04-33試験", 会社名カナ: "カブシキガイシャシケン", 郵便番号: "1000001", 都道府県: "東京都", 住所1: "千代田区千代田1-1", 住所2: "B2F", 電話番号: "0300000433",
   },
 };
@@ -67,9 +67,12 @@ export const 元の閾値 = new Map<string, [string, string, string]>();
 /** 共有A・共有B の店舗ID */
 export const 共有店舗ID: Record<"A" | "B", string> = { A: "", B: "" };
 
-defineSeed("S-M04-33-CONFIG", async ({ browser, notes, seed }) => {
-  const issue = (m: string) => reportSeedIssue(seed.シードID, m);
-  for (const id of [本店3F, 支店]) if (!元の閾値.has(id)) 元の閾値.set(id, 店舗の高額商品閾値(id));
+/**
+ * 本店2F・本店B2F の代わりの店舗（「本店2F（M04-33）」「本店B2F（M04-33）」）を、無ければ店舗登録画面で一度だけ登録し、店舗IDを返す。
+ * M04-34 も同じ店舗を使い回す（ケースごとに店舗を作らない）。
+ */
+export async function 共有の店舗を用意する(browser: Browser, issue: (m: string) => void): Promise<Record<"A" | "B", string>> {
+  const out: Record<"A" | "B", string> = { A: "", B: "" };
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     for (const k of ["A", "B"] as const) {
@@ -81,9 +84,16 @@ defineSeed("S-M04-33-CONFIG", async ({ browser, notes, seed }) => {
         if (!id) throw new Error(`店舗「${v.店名}」を登録できない`);
         issue(`店舗「${v.店名}」を店舗登録画面で登録した（店舗ID ${id}。以後は使い回す）`);
       }
-      共有店舗ID[k] = id;
+      out[k] = id;
     }
   });
+  return out;
+}
+
+defineSeed("S-M04-33-CONFIG", async ({ browser, notes, seed }) => {
+  const issue = (m: string) => reportSeedIssue(seed.シードID, m);
+  for (const id of [本店3F, 支店]) if (!元の閾値.has(id)) 元の閾値.set(id, 店舗の高額商品閾値(id));
+  Object.assign(共有店舗ID, await 共有の店舗を用意する(browser, issue));
   notes.set("〔店舗ID-M0433-共有A〕", 共有店舗ID.A);
   notes.set("〔店舗ID-M0433-共有B〕", 共有店舗ID.B);
   issue(`店舗ID 1・13 の高額商品閾値（書き換える前）: 1=${元の閾値.get(本店3F)!.join("/")}・13=${元の閾値.get(支店)!.join("/")}。ケースが終わるたびにこの値へ戻す`);
