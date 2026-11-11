@@ -4,6 +4,8 @@
  * 正本: cases/M05-09_test_cases.tsv
  */
 import { expect, Locator, Page } from "@playwright/test";
+import { 登録番号 } from "../../db/m05_09";
+import { available as dbAvailable } from "../../lib/db";
 import { adminUrl } from "../../lib/session";
 import { OrderListPage } from "./m05_01_order_list_x";
 import { PickingPrintPage } from "./m05_21_picking";
@@ -196,9 +198,15 @@ export async function 登録番号を設定する(page: Page, 値: string): Prom
   const box = page.locator('[name="shop_master[invoice_registration_number]"]');
   await expect(box, "店舗基本設定の適格請求書発行事業者登録番号の欄").toBeVisible({ timeout: 30_000 });
   await box.fill(値);
-  await Promise.all([page.waitForLoadState("load"), page.locator("form#point_form button[type=submit]").first().click({ timeout: 30_000 })]);
+  // 押したあと画面が移る（保存して読み込み直す）のを待つ。読み込みの終わりだけを待つと、保存の前に先へ進んで画面を閉じ、保存されないことがある
+  // （2026-11-11 夜の M05-09 の 023: 書き換えたつもりの番号が DB に入っておらず、納品書に元の番号が出た）
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
+    page.locator("form#point_form button[type=submit]").first().click({ timeout: 30_000 }),
+  ]);
   await page.waitForLoadState("load");
   await expect(page.locator('[name="shop_master[invoice_registration_number]"]'), "登録後の適格請求書発行事業者登録番号").toHaveValue(値, { timeout: 30_000 });
+  if (dbAvailable) expect(登録番号(), "店舗基本設定の適格請求書発行事業者登録番号が DB に保存された").toBe(値);
 }
 
 /**

@@ -123,6 +123,8 @@ export async function 範囲で出荷指示リストを生成する(page: Page, 
   await page.locator('[name="admin_generate_shipping_standby[order_id_to]"]').fill(to);
   await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator('#generate_form button[type="submit"]').click()]);
   await page.waitForLoadState("load");
-  const err = (await page.locator(".alert-danger").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+  // 開発環境では画面の上に「デバッグモードが有効になっています。」の帯（.alert-danger）がいつも出るので、エラーから外す
+  // （2026-11-11 夜の M05-09 の 010 は、この帯だけで「生成が失敗した」と取り違えて止まった）
+  const err = (await page.locator(".alert-danger").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter((t) => t && !/デバッグモード/.test(t));
   if (err.length) throw new Error(`${what}: 出荷指示リストの生成が失敗した: ${err.join(" / ")}`);
 }
