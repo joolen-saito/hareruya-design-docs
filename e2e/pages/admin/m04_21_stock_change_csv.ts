@@ -13,7 +13,7 @@ import { Download, expect, Locator, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 import { chooseMembers } from "./m04_19_stock_change_csv";
-import { findMemberId } from "./member";
+import { findMemberId, openMemberNew } from "./member";
 
 const form = (page: Page) => page.locator("form#upload-form");
 
@@ -135,9 +135,7 @@ async function selectedValues(page: Page, selector: string): Promise<string> {
 export async function ensureMemberWithDept(page: Page, v: MemberWithDept): Promise<string> {
   const found = await findMemberId(page, v.名前);
   if (!found) {
-    await page.goto(adminUrl("/setting/system/member"));
-    await page.getByRole("link", { name: "新規登録" }).click();
-    await page.waitForLoadState("load");
+    await openMemberNew(page);
     await mf(page, "name").fill(v.名前);
     await mf(page, "baseInfo").selectOption(v.所属店舗ID);
     await chooseByLabel(mf(page, "department"), v.所属);

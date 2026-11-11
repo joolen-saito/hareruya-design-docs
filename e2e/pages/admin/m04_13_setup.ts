@@ -7,7 +7,7 @@ import { expect, Locator, Page } from "@playwright/test";
 import { query } from "../../lib/db";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
-import { findMemberId } from "./member";
+import { findMemberId, openMemberNew } from "./member";
 import { registerGoodsCsv } from "./m03_01_goods_register";
 import { goodsRootCategoryLink } from "./product_masters";
 import { ProductSearchPage } from "./product_search";
@@ -128,8 +128,7 @@ export async function ensureMemberWithDepartment(page: Page, v: M0413Member): Pr
     await expectMemberValues(page, found, v);
     return found;
   }
-  await page.goto(adminUrl("/setting/system/member"));
-  await page.getByRole("link", { name: "新規登録" }).click();
+  await openMemberNew(page);
   await fillMember(page, v, true);
   await page.getByRole("button", { name: "登録", exact: true }).click();
   await expectSaved(page, `メンバー「${v.名前}」の登録`);

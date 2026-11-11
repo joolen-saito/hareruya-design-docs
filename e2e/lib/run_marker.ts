@@ -22,14 +22,30 @@ export function rc(value: string): string {
   return actual;
 }
 
-/** 実際の値から印を外して正本の値に戻す（印の無い値はそのまま） */
+/**
+ * 実行をまたいで使い回す値に付ける、決まった印（依頼者決定 2026-11-11「シードの使い回しを進めて」）。
+ * 試験管理者のように、作ると残り続け、毎回作ると一覧が膨らんで遅くなるもの（開発環境のメンバーは2日で約660人増え、メンバー一覧を開くのに1回30秒）に使う。
+ * 実行ごとの印と同じく、開発環境にある手動テスト用の同じ値とは重ならない。1度だけ作り、2回目からは「あれば確かめて使う」作り方で使い回す。
+ */
+export const FIXED_MARK = "E2E";
+
+/** 正本の値に、実行をまたいで使い回す決まった印を付けた値 */
+export function rcFixed(value: string): string {
+  const actual = `${value}-${FIXED_MARK}`;
+  used.set(value, actual);
+  return actual;
+}
+
+/** 実際の値から印（実行ごとの印・決まった印）を外して正本の値に戻す（印の無い値はそのまま） */
 export function unrc(value: string): string {
-  return value.endsWith(`-${RUN_MARK}`) ? value.slice(0, -(RUN_MARK.length + 1)) : value;
+  if (value.endsWith(`-${RUN_MARK}`)) return value.slice(0, -(RUN_MARK.length + 1));
+  if (value.toUpperCase().endsWith(`-${FIXED_MARK}`)) return value.slice(0, -(FIXED_MARK.length + 1));
+  return value;
 }
 
 /** 文の中の印つきの値を、正本の値に戻す（画面の文と、正本の文を並べて見せるため） */
 export function unrcText(text: string): string {
-  return text.split(`-${RUN_MARK}`).join("");
+  return text.split(`-${RUN_MARK}`).join("").replace(new RegExp(`-${FIXED_MARK}(?![0-9A-Za-z])`, "gi"), "");
 }
 
 /** 印を付けた値のうち、文 text に正本の値が出てくるもの（エビデンスに残す対応） */

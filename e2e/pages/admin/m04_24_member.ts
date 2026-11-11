@@ -7,7 +7,7 @@
 import { expect, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
-import { findMemberId } from "./member";
+import { findMemberId, openMemberNew } from "./member";
 
 export type M0424MemberInput = {
   名前: string; ログインID: string; メールアドレス: string; パスワード: string; 権限: string;
@@ -26,9 +26,7 @@ async function expectOptions(page: Page, selector: string, ids: string[], what: 
 
 /** メンバー登録画面で登録する。遷移したメンバー編集画面のアドレスから管理者IDを読んで返す */
 export async function createMemberByStoreIds(page: Page, v: M0424MemberInput): Promise<string> {
-  await page.goto(adminUrl("/setting/system/member"));
-  await page.getByRole("link", { name: "新規登録" }).click();
-  await page.waitForLoadState("load");
+  await openMemberNew(page);
   await f(page, "name").fill(v.名前);
   await expectOptions(page, '[name="admin_member[baseInfo]"]', [v.所属店舗ID], "所属店舗");
   await f(page, "baseInfo").selectOption(v.所属店舗ID);

@@ -1,5 +1,7 @@
 /** メンバー管理・メンバー登録（メニュー「システム設定」→「メンバー管理」） */
-import { Page } from "@playwright/test";
+import { expect, Page } from "@playwright/test";
+import { 名前のメンバーID } from "../../db/member";
+import { available as dbAvailable } from "../../lib/db";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 
@@ -8,8 +10,17 @@ export type MemberInput = {
   権限: string; デフォルト検索表示店舗: string; 編集可能店舗: string[];
 };
 
-/** メンバー管理の一覧で、名前の行から管理者IDを読む。無ければ null */
+/**
+ * 名前のメンバーの管理者IDを読む。無ければ null。
+ * DB の参照で探す（2026-11-11〜）。開発環境のメンバーは1,500人を超え、メンバー一覧（全件を1画面に出す）を開くのに1回30秒ほどかかるため。
+ * メンバーの表には削除の印が無く、一覧に出るメンバーと同じものを見る。DB を使えない環境では、これまでどおり一覧で探す。
+ */
 export async function findMemberId(page: Page, 名前: string): Promise<string | null> {
+  if (dbAvailable) {
+    const ids = 名前のメンバーID(名前);
+    if (ids.length > 1) throw new Error(`名前「${名前}」のメンバーが複数いる。どれを使うか決められない`);
+    return ids[0] ?? null;
+  }
   // 一覧が開けなかったとき（環境が遅く、時間切れの500になるなど）を「いない」と取り違えて二重に登録しない
   const res = await page.goto(adminUrl("/setting/system/member"));
   if (!res || !res.ok()) throw new Error(`メンバー一覧を開けない（応答 ${res?.status() ?? "なし"}）。名前「${名前}」のメンバーがいるかを確かめられない`);
@@ -20,10 +31,20 @@ export async function findMemberId(page: Page, 名前: string): Promise<string |
   return ((await rows.first().getAttribute("id")) ?? "").replace("ex-member-", "");
 }
 
+/**
+ * メンバー登録画面を開く。一覧の「新規登録」と同じアドレス（admin_setting_system_member_new。引数なし）を直接開く。
+ * 一覧（全件を1画面に出す）を経由すると1回30秒ほどかかるため（2026-11-11）。
+ */
+export async function openMemberNew(page: Page): Promise<void> {
+  const res = await page.goto(adminUrl("/setting/system/member/new"), { timeout: 60_000 });
+  if (!res || !res.ok()) throw new Error(`メンバー登録画面を開けない（応答 ${res?.status() ?? "なし"}）`);
+  await page.waitForLoadState("load");
+  await expect(page.locator('[name="admin_member[name]"]'), "メンバー登録画面の名前の欄").toBeVisible();
+}
+
 /** メンバー登録画面で登録する。遷移したメンバー編集画面のアドレスから管理者IDを読んで返す */
 export async function createMember(page: Page, v: MemberInput): Promise<string> {
-  await page.goto(adminUrl("/setting/system/member"));
-  await page.getByRole("link", { name: "新規登録" }).click();
+  await openMemberNew(page);
   const f = (name: string) => page.locator(`[name="admin_member[${name}]"]`);
   await f("name").fill(v.名前);
   await chooseByLabel(f("baseInfo"), v.所属店舗);
