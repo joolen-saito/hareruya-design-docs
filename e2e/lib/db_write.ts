@@ -105,17 +105,13 @@ export function insertOwnRows(what: string, a: { table: string; parentColumn: st
   const t = ident(a.table), pc = ident(a.parentColumn);
   const cols = Object.keys(a.rows[0]).map(ident);
   if (!cols.includes(pc)) throw new Error(`${what}: 足す行に親の列 ${pc} が無い`);
-  const vars: string[] = [];
-  const values = a.rows.map((r, ri) => "(" + cols.map((c, ci) => {
-    if (Object.keys(r).length !== cols.length || !(c in r)) throw new Error(`${what}: 行ごとに列がそろっていない`);
-    const v = r[c];
-    if (v === null) return "null";
-    vars.push("-v", `r${ri}_${ci}=${String(v)}`);
-    return `:'r${ri}_${ci}'`;
-  }).join(", ") + ")");
+  for (const r of a.rows) if (Object.keys(r).length !== cols.length || cols.some((c) => !(c in r))) throw new Error(`${what}: 行ごとに列がそろっていない`);
+  // 値は表の列の型で読む（json_populate_recordset）。values の一覧で渡すと文字の列になり、数の列へ入れられない（2026-11-11）
+  const json = JSON.stringify(a.rows.map((r) => Object.fromEntries(cols.map((c) => [c, r[c] === null ? null : String(r[c])]))));
+  const vars: string[] = ["-v", `rows=${json}`];
   const o = ownerSelect(a.owner, 0);
   vars.push(...o.vars);
-  const body = `with v(${cols.join(", ")}) as (values ${values.join(", ")}),\n` +
+  const body = `with v as (select ${cols.join(", ")} from json_populate_recordset(null::${t}, :'rows'::json)),\n` +
     `ok_rows as (select v.* from v where v.${pc}::text in (select o.k::text from (${o.sql}) o(k))),\n` +
     `ins as (insert into ${t} (${cols.join(", ")}) select * from ok_rows where (select count(*) from ok_rows) = ${a.rows.length} returning 1)\n` +
     `select count(*) as n, count(*) = ${a.rows.length} as ok from ins \\gset`;
