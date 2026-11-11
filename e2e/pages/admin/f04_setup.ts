@@ -10,6 +10,7 @@ import { BASE_URL, ENV_NAME, MAIL_URL, SETUP_ADMIN } from "../../config/env";
 import { customerStateByEmail } from "./customer";
 import { FrontMember, registerFrontMember } from "../front/member_entry";
 import { 在庫承認の最大ID } from "../../db/f03_08";
+import { 未承認の在庫編集ID } from "../../db/f04_setup";
 import { Account, adminUrl, hideDebugToolbar, withAdminSession } from "../../lib/session";
 import { rc, RUN_MARK } from "../../lib/run_marker";
 import { chooseByLabel, expectSaved } from "./common";
@@ -106,10 +107,17 @@ export async function 商品を作って入庫する(browser: Browser, seedId: s
       const registrant2 = await loggedInMemberName(page);
       await withAdminSession(browser, 承認者.account, async (ap) => {
         const list = new StockApprovalListPage(ap);
-        await list.open(shop);
-        const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant2 && Number(r.id) > baseline);
-        if (rows.length < defs.length) throw new Error(`${seedId}: 在庫編集承認一覧に未承認の行が ${rows.length} 件（${defs.length} 件のはず）`);
-        await 承認する(list, shop, rows.slice(0, defs.length).map((r) => r.id), `${seedId} の在庫編集の承認`, issue);
+        // 一覧は「未承認が上・登録日の古い順」で、開発環境では前の実行で残った未承認の行が1ページ目を埋め、今回の行が後ろのページに回る
+        // （2026-11-11 の F04-04 の 041・042・046 で「未承認の行が 0 件」）。今回の在庫編集の番号を DB で読み、一覧をその番号で絞り込んで開く
+        const srcs = 未承認の在庫編集ID(baseline, defs.map((d) => d.商品コード));
+        if (srcs.length < defs.length) throw new Error(`${seedId}: 今回の在庫編集の未承認の行が DB に ${srcs.length} 件（${defs.length} 件のはず）`);
+        for (const src of srcs.slice(0, defs.length)) {
+          await ap.goto(adminUrl(`/product/stock/approval_list?id=${src}`), { timeout: 60_000 });
+          await ap.waitForLoadState("load");
+          const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant2 && Number(r.id) > baseline);
+          if (rows.length !== 1) throw new Error(`${seedId}: 在庫編集ID ${src} で絞り込んだ在庫編集承認一覧に、未承認の行が ${rows.length} 件（1件のはず）`);
+          await 承認する(list, shop, [rows[0].id], `${seedId} の在庫編集の承認`, issue);
+        }
       });
       return;
     }

@@ -92,7 +92,15 @@ async function 作る({ browser, seed, notes }: SeedCtx, a: 作り方): Promise<
     詳細: { 郵便番号1: "100", 郵便番号2: "0001", 都道府県: "東京都", 住所1: "千代田区千代田", 住所2: "1-1", 電話: ["03", "1234", "5678"] },
   };
   await 会員を登録して待つ(browser, m);
-  const 会員ID = await withAdminSession(browser, SETUP_ADMIN, (page) => 会員IDを一覧から読む(page, m.メール));
+  // 共有の開発環境では、フロントで登録した直後の会員が会員一覧の検索にすぐ出ないことがある（2026-11-11 の 044・055）。見つからないときは間をおいて最大で約1分読み直す
+  const 会員ID = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    for (let i = 0; ; i++) {
+      try { return await 会員IDを一覧から読む(page, m.メール); } catch (e) {
+        if (i >= 5 || !/の会員が 0 人/.test(String(e))) throw e;
+        await page.waitForTimeout(10_000);
+      }
+    }
+  });
   if (a.会員IDの呼び名) {
     if (notes.has(a.会員IDの呼び名)) issue(`${a.会員IDの呼び名} はほかのシードが先に控えている（正本の呼び名の重複）。このケースはシードの会員を直接使う`);
     else notes.set(a.会員IDの呼び名, 会員ID);
