@@ -22,6 +22,7 @@ import { csvLine, decodeCsvBytes, parseCsv } from "../lib/csv";
 import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { 使い回して作る } from "./seed_reuse";
 import { withAdminSession } from "../lib/session";
 import { expectSaved } from "../pages/admin/common";
 import { readGoodsProductId } from "../pages/admin/m03_01_goods_list_seed";
@@ -138,8 +139,22 @@ function defineOps(seedId: string, needs: string[], build: (o: Ops) => Promise<v
 // ---- タグ一覧を記載のタグだけにする形（退避はしない） ----
 
 const 編集前: TagInput = { 名称日: "編集前タグ", 名称英: "BeforeTag", 並び順: "10" };
+/**
+ * 使い回し（依頼者決定 2026-11-11「シードの使い回しを進めて」）: 002・005・034 のシードは中身が同じ（名称・並び順が同じタグ1件）。
+ * 使うケースは一覧を見る・編集ボタンを押して編集欄を見るだけで、タグを変えない（登録を押さない）ので、1回の起動で 002 のタグを1つだけ作って使い回す。
+ */
 for (const [seedId, n] of [["S-M03-13-LIST-002", "002"], ["S-M03-13-BASE-005", "005"], ["S-M03-13-LIST-034", "034"]] as const) {
-  defineOps(seedId, [], async (o) => { o.warn(退避しない); await o.fresh(label(n), 編集前); });
+  defineSeed(seedId, async ({ browser, notes }) => {
+    reportSeedIssue(seedId, 退避しない);
+    await 使い回して作る({
+      seedId, canonical: "S-M03-13-LIST-002", notes,
+      rename: (l) => l.replace(label("002"), label(n)),
+      build: (nn) => withAdminSession(browser, SETUP_ADMIN, async (page) => {
+        page.setDefaultTimeout(60_000);
+        await new Ops(page, "S-M03-13-LIST-002", nn).fresh(label("002"), 編集前);
+      }),
+    });
+  });
 }
 defineOps("S-M03-13-BASE-006", [], async (o) => {
   o.warn(退避しない);
