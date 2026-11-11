@@ -21,7 +21,8 @@ import { 注文IDと配送ID } from "../db/m05_05";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
-import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { customerIdByEmail } from "../pages/admin/f03_07_restock";
 import { createCustomShippingCsv, OrderCsvPage, setShippingCsvOutput } from "../pages/admin/m05_05_custom_csv";
@@ -40,7 +41,7 @@ defineSeed("S-M05-05-ADM", async ({ browser }) => {
 });
 
 /** シード表の呼び名（〔注文ID-M0505-002〕など）を、控えた値から埋める。キーは「種別＋末尾の英字」（例: 注文番号A・定義ID） */
-function noteLabels(seedId: string, notes: Notes, values: Record<string, string>): void {
+export function noteLabels(seedId: string, notes: Notes, values: Record<string, string>): void {
   const seed = getSeed(seedId);
   for (const label of Notes.labelsIn(seed["状態・属性"] + seed.投入方法)) {
     const m = /^〔(.+?)-M0505-\d+([A-Z]?)〕$/.exec(label);
@@ -76,7 +77,7 @@ async function orderAndRead(browser: Browser, seedId: string, 会員: FrontMembe
   });
 }
 
-async function defineCsv(browser: Browser, seedId: string, name: string, items: string[]): Promise<string> {
+export async function defineCsv(browser: Browser, seedId: string, name: string, items: string[]): Promise<string> {
   return withAdminSession(browser, M0505_ADMIN, (page) => createCustomShippingCsv(page, name, items, `${seedId} の定義「${name}」`));
 }
 

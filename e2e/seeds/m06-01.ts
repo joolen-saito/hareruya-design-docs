@@ -17,7 +17,8 @@
 import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { rc } from "../lib/run_marker";
-import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { OtcDetailPage, OtcListPage } from "../pages/admin/m06_otc_list";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
@@ -68,10 +69,10 @@ defineSeed("S-M06-01-BROWSER", async () => {
   // ダウンロードとポップアップは、試験のブラウザが既定で許可している。ケースごとの新しいブラウザセッションで始める
 });
 
-const 支店URL = (店: "A" | "B") => (店 === "A" ? STORE_A.支店URL : STORE_B.支店URL);
+export const 支店URL = (店: "A" | "B") => (店 === "A" ? STORE_A.支店URL : STORE_B.支店URL);
 
 /** 買取詳細のステータス変更（全店管理者で行う。正本の作り方） */
-async function ステータスを変える(browser: Browser, 査定IDs: string[], 変更後: string): Promise<void> {
+export async function ステータスを変える(browser: Browser, 査定IDs: string[], 変更後: string): Promise<void> {
   await withAdminSession(browser, M0601_ADMIN_ALL, async (page) => {
     page.setDefaultTimeout(60_000);
     for (const id of 査定IDs) {
@@ -88,12 +89,12 @@ async function ステータスを変える(browser: Browser, 査定IDs: string[]
 }
 
 /** 申込者名ごとに1件ずつ申込み、申込者名で検索して査定IDを返す */
-async function 一件ずつ申込む(browser: Browser, 店: "A" | "B", 姓: string, 名: string, セイ: string, メイ: string): Promise<string> {
+export async function 一件ずつ申込む(browser: Browser, 店: "A" | "B", 姓: string, 名: string, セイ: string, メイ: string): Promise<string> {
   await 申込を行う(browser, 支店URL(店), [申込者の(姓, 名, セイ, メイ)]);
   return (await 査定IDを読む(browser, 姓, 1))[0];
 }
 
-const 試験者 = (姓: string) => ({ 姓, 名: "一郎", セイ: "カイトリシケン", メイ: "イチロウ" });
+export const 試験者 = (姓: string) => ({ 姓, 名: "一郎", セイ: "カイトリシケン", メイ: "イチロウ" });
 
 // ---- 戻しリストのエラーを確かめるケースのシード ----
 

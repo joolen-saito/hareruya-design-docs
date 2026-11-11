@@ -116,6 +116,14 @@ export class PurchaseHistoryPage {
     return (await link.innerText({ timeout: OPEN })).trim();
   }
 
+  /** 一覧の、買取番号の行の「処理状態」「買取金額合計」の表示 */
+  async 一覧の行(買取番号: string): Promise<{ 処理状態: string; 買取金額合計: string }> {
+    const box = this.page.locator(`.p-hareruya-history-list__box[aria-label="買取番号 ${買取番号}"]`);
+    await expect(box, `買取履歴一覧の買取番号「${買取番号}」の行`).toBeVisible({ timeout: OPEN });
+    const val = async (見出し: string) => (await box.locator(".p-hareruya-history-list__order-info-row").filter({ has: this.page.locator("dt", { hasText: 見出し }) }).locator("dd").first().innerText({ timeout: OPEN })).replace(/\s+/g, " ").trim();
+    return { 処理状態: await val("処理状態"), 買取金額合計: await val("買取金額合計") };
+  }
+
   /** 買取番号のリンクを押して買取履歴詳細画面を開く */
   async openDetail(買取番号: string): Promise<void> {
     const link = this.page.getByRole("link", { name: 買取番号, exact: true }).first();

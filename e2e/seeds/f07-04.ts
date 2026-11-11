@@ -18,7 +18,9 @@ import { SETUP_ADMIN } from "../config/env";
 import { 会員の選手ID, 申込の申込選手ID, 申込の登録時履歴ID } from "../db/f07_04";
 import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
-import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
+import { query } from "../lib/db";
+import { reportSeedIssue, SeedCtx } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { RUN_MARK } from "../lib/run_marker";
 import { createMember } from "../pages/admin/member";
@@ -48,10 +50,13 @@ type 作り方 = {
   n: string; 大会名: string; チーム戦?: boolean; 支払方法?: string[]; 日程: 日程の設定[];
   /** 日程の番号順の、イベント詳細IDの呼び名の末尾（イベント詳細ID-F0704-<これ>） */
   日程の呼び名: string[]; 会員: 会員の指定[];
+  /** シード表が大会ID・イベント詳細IDを控えると書いていないときは true（日程は読み替えの大会に登録するだけ） */
+  大会を控えない?: boolean;
 };
 
 async function 作る(ctx: SeedCtx, p: 作り方): Promise<void> {
   const { browser, notes } = ctx;
+  if (p.支払方法) reportSeedIssue(ctx.seed.シードID, "支払方法「クレジットカード」は、この環境のイベント登録画面の選択肢の名前「クレジットカード決済」にした（画面にある唯一の支払方法）。画面の表示名が「クレジットカード決済」になるため、ケースの「クレジットカード」は、表示名にその文字を含むことで確かめる");
   // 会員は、フロントの新規会員登録で作る（管理画面のセッションと別に）
   const 作った: (Omit<試験会員, "会員ID"> & { 指定: 会員の指定 })[] = [];
   for (const m of p.会員) 作った.push({ ...(await 会員を作る(browser, m.ベース, `S${p.n}${m.符号}`)), 指定: m });
@@ -67,8 +72,10 @@ async function 作る(ctx: SeedCtx, p: 作り方): Promise<void> {
     }
     const 大 = await 大会を登録する(page, { イベント名: rc(p.大会名), チーム戦: p.チーム戦, 支払方法: p.支払方法, 日程: p.日程 });
     大会一覧.set(p.n, 大);
-    notes.set(label("大会ID", p.n), 大.イベントID);
-    p.日程の呼び名.forEach((l, i) => notes.set(label("イベント詳細ID", l), 大.日程ID[i]));
+    if (!p.大会を控えない) {
+      notes.set(label("大会ID", p.n), 大.イベントID);
+      p.日程の呼び名.forEach((l, i) => notes.set(label("イベント詳細ID", l), 大.日程ID[i]));
+    }
     for (const [i, m] of 作った.entries()) {
       const r = await 申込登録で選手を読む(page, 大, m.指定.日程, m.氏名, m.指定.申込符号 !== undefined);
       const 呼び名 = `${p.n}${m.指定.符号}`;
@@ -225,3 +232,56 @@ for (const [seedId, n, 呼び名] of [["S-F07-04-PE-CASE-059", "001", "001"], ["
     });
   });
 }
+
+// ---- 支払方法を使う申込（001〜067）。大会には支払方法「クレジットカード決済」を紐付ける。外部の決済サイトへは送らない ----
+const 支払 = ["クレジットカード決済"];
+
+/** 共有: 支払方法「クレジットカード」。この環境に既にある「クレジットカード決済」を読むだけ（登録も変更もしない）。無ければ止める */
+defineSeed("S-F07-04-PAYMENT", async ({ seed }) => {
+  const n = Number(query(`select count(*) as n from dtb_payment where payment_method = $1`, ["クレジットカード決済"])[0].n);
+  if (n < 1) throw new Error("支払方法「クレジットカード決済」がこの環境に無い（共有の設定なので、試験では登録しない）");
+  reportSeedIssue(seed.シードID, "支払方法「クレジットカード」は、この環境に既にある「クレジットカード決済」を読み替えた（登録・変更はしない）");
+});
+
+/** 有料の日程（参加費の並び）をもつ大会に、会員1人。呼び名は日程が1つなら n、複数なら nA・nB… */
+function 有料(seedId: string, n: string, 参加費: string[], 大会名 = "大会A"): void {
+  defineSeed(seedId, (ctx) => 作る(ctx, {
+    n, 大会名, 支払方法: 支払, 日程: 参加費.map((f) => 中("10", f)),
+    日程の呼び名: 参加費.length === 1 ? [n] : 参加費.map((_, i) => `${n}${"ABCD"[i]}`), 会員: [A(n)],
+  }));
+}
+有料("S-F07-04-CASE-001", "001", ["1000", "500"]);
+for (const n of ["006", "007", "012", "020", "021", "033", "034", "053"]) 有料(`S-F07-04-CASE-${n}`, n, ["1000"]);
+for (const n of ["010", "011", "030", "031"]) 有料(`S-F07-04-CASE-${n}`, n, ["1000", "500"]);
+有料("S-F07-04-FREEPAY-055", "055", ["0"], "大会G");
+有料("S-F07-04-MIXED-066", "066", ["0", "1000"], "大会L");
+有料("S-F07-04-MIXED-067", "067", ["0", "1000"], "大会M");
+// 大会Aに有料の日程A1。大会Zに無料の日程Z1（支払方法なし）。日程は別のイベントのもの
+for (const n of ["023", "035"]) {
+  defineSeed(`S-F07-04-CASE-${n}`, async ({ browser, notes, seed }) => {
+    reportSeedIssue(seed.シードID, "支払方法「クレジットカード」は、この環境のイベント登録画面の選択肢の名前「クレジットカード決済」にした（画面にある唯一の支払方法）");
+    const m = await 会員を作る(browser, `member-a-f0704-${n}`, `S${n}`);
+    await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+      page.setDefaultTimeout(60_000);
+      const 会員ID = await 会員IDをメールから(page, m.メール);
+      const full: 試験会員 = { ...m, 会員ID };
+      会員一覧.set(n, full);
+      notes.set(label("会員ID", n), 会員ID);
+      const A大会 = await 大会を登録する(page, { イベント名: rc("大会A"), 支払方法: 支払, 日程: [中("10", "1000")] });
+      大会一覧.set(n, A大会);
+      notes.set(label("大会ID", `${n}A`), A大会.イベントID);
+      notes.set(label("イベント詳細ID", `${n}A`), A大会.日程ID[0]);
+      const Z大会 = await 大会を登録する(page, { イベント名: rc("大会Z"), 日程: [中("10", "0")] });
+      大会一覧.set(`${n}Z`, Z大会);
+      notes.set(label("大会ID", `${n}B`), Z大会.イベントID);
+      notes.set(label("イベント詳細ID", `${n}B`), Z大会.日程ID[0]);
+      const r = await 申込登録で選手を読む(page, A大会, 0, full.氏名, false);
+      if (会員の選手ID(会員ID) !== r.選手ID) throw new Error(`${n}: プレイヤー検索で読んだ選手ID ${r.選手ID} が、会員の選手と違う`);
+      notes.set(label("選手ID", n), r.選手ID);
+    });
+  });
+}
+// 無料の日程I1・I2（支払方法なし）
+defineSeed("S-F07-04-OUTPERIOD-064", (ctx) => 作る(ctx, { n: "064", 大会名: "大会I", 日程: [中(), 中()], 日程の呼び名: ["064A", "064B"], 会員: [A("064")] }));
+// 申込確認の不正要求（013）。日程は読み替えの大会に登録するだけで、番号は控えない。存在しないイベント詳細ID 99999999 は、ケースが DB の参照で確かめる（あれば止める。削除はしない）
+defineSeed("S-F07-04-CASE-013", (ctx) => 作る(ctx, { n: "013", 大会名: "大会A", 日程: [中()], 日程の呼び名: [], 会員: [A("013")], 大会を控えない: true }));

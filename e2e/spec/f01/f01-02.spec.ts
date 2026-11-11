@@ -28,10 +28,10 @@ caseTest("IT-F01-02-021", async ({ page, step, expected }) => {
 caseTest("IT-F01-02-057", async ({ page, step, expected }) => {
   const top = new BranchTopPage(page);
   let 数 = -1;
-  await step(1, async () => { await top.open(支店URL("057")); await top.開いている(); 数 = await top.link("高額買取はこちら").count(); });
-  await step(2, async () => { await top.link("高額買取はこちら").first().click({ timeout: 20_000 }); await page.waitForLoadState("load"); });
+  await step(1, async () => { await top.open(支店URL("057")); await top.開いている(); 数 = await top.link(/買取をご希望の方はこちら/).count(); });
+  await step(2, async () => { await top.link(/買取をご希望の方はこちら/).first().click({ timeout: 20_000 }); await page.waitForLoadState("load"); });
   await expected(async () => {
-    expect.soft(数, "「高額買取はこちら」のリンクの数").toBeGreaterThan(0);
+    expect.soft(数, "高額買取のバナーのリンク（画像の代替文字「買取をご希望の方はこちら 高価買取サービス」）の数").toBeGreaterThan(0);
     expect.soft(new URL(page.url()).pathname, "遷移先（ネット買取トップページ）").toMatch(/purchase/);
   });
 });

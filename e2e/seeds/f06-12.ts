@@ -6,7 +6,8 @@
  */
 import { 買取依頼の件数 } from "../db/f06_12";
 import { available } from "../lib/db";
-import { defineSeed } from "../lib/seeds";
+import { reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { 本会員を作る, markedMail } from "./f06-member";
 
 export const mailOf = (前半: string): string => markedMail(前半);
@@ -21,3 +22,8 @@ for (const n of ["006", "007"]) {
     }
   });
 }
+
+// 009: ネット買取依頼（ID 61220009）は DB で投入する作り方で、まとめて買取の依頼は画面で作れない。依頼を作らず、同じ番号のアドレスを未ログインで開く
+defineSeed("S-F06-12-BASE-009", async ({ seed }) => {
+  reportSeedIssue(seed.シードID, "ネット買取依頼 ID 61220009（まとめて買取の明細つき）は DB で投入する作り方で、画面で作れない（まとめて買取の依頼）。依頼を作らず、同じ番号のアドレスを未ログインで開く（会員ログインへの誘導は、依頼の有無より前の認証の動き）");
+});

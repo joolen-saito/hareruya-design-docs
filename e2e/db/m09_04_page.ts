@@ -2,14 +2,14 @@
 import { query } from "../lib/db";
 
 export type ページ行 = {
-  ページID: string; ページ名: string | null; URL: string; ファイル名: string | null; 利用者作成: boolean;
+  ページID: string; ページ名: string | null; URL: string; ファイル名: string | null; 利用者作成: boolean; 既定: boolean;
   author: string | null; description: string | null; keyword: string | null; robot: string | null; metatag: string | null;
 };
 
 const 列 = `p.id as id, p.page_name as name, p.url as url, p.file_name as file_name, p.edit_type as edit_type,
   p.author as author, p.description as description, p.keyword as keyword, p.meta_robots as robot, p.meta_tags as metatag`;
 const 変換 = (r: Record<string, string | null>): ページ行 => ({
-  ページID: r.id!, ページ名: r.name, URL: r.url!, ファイル名: r.file_name, 利用者作成: r.edit_type === "0",
+  ページID: r.id!, ページ名: r.name, URL: r.url!, ファイル名: r.file_name, 利用者作成: r.edit_type === "0", 既定: r.edit_type === "2",
   author: r.author, description: r.description, keyword: r.keyword, robot: r.robot, metatag: r.metatag,
 });
 
@@ -24,4 +24,12 @@ export function ページ名で(name: string): ページ行[] {
 export function レイアウトの設定(ページID: string): { 名称: string; 端末種別: string }[] {
   return query(`select l.layout_name as name, l.device_type_id as dev from dtb_page_layout pl join dtb_layout l on l.id = pl.layout_id where pl.page_id = $1 order by pl.sort_no`, [ページID])
     .map((r) => ({ 名称: r.name!, 端末種別: r.dev === "10" ? "PC" : r.dev === "2" || r.dev === "1" ? "モバイル" : `その他(${r.dev})` }));
+}
+export function URLで(url: string): ページ行[] {
+  return query(`select ${列} from dtb_page p where p.url = $1 order by p.id`, [url]).map(変換);
+}
+/** 最終更新日時（画面の表示と同じ「年/月/日 時:分」の形。日本時間） */
+export function 最終更新(ページID: string): string | null {
+  const r = query(`select to_char(p.update_date at time zone 'Asia/Tokyo', 'YYYY/MM/DD HH24:MI') as d from dtb_page p where p.id = $1`, [ページID]);
+  return r.length ? r[0].d : null;
 }

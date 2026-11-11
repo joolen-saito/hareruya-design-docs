@@ -1,7 +1,7 @@
 /**
  * M13-11 イベント申込登録（検索入力）のシード（画面操作）。正本: cases/M13-11_seed_data.tsv
  * - 店舗A・B・C: M13-02 と同じ店名。あればそれを使う。
- * - 管理者: m1311_admin_a は店舗A・店舗Bに編集権限（権限は「店舗オーナー」で代える）。店舗Cのイベントは全権限の管理者で登録する。
+ * - 管理者: m1311_admin_a は店舗A・店舗Bに編集権限（権限は「モールオペレーター」で代える。下の S-M13-11-ADM-A）。店舗Cのイベントは店舗Cの管理者 m1311_admin_c で登録する。
  * - 日程: 開催日はシード表のとおり（2099年）。オンライン受付は開始時間より前の日時で足す。
  * - イベント名・検索語には実行の印を付ける（rc）。
  * - 秒の指定・略称の指定が要るシード（007〜009・013）はDBでの準備が要るので作らない。
@@ -11,7 +11,7 @@ import { rc, RUN_MARK } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { EventInput, registerEvent } from "../pages/admin/event";
-import { ensureMember } from "../pages/admin/member";
+import { changeMemberAuthority, ensureMember, findMemberId } from "../pages/admin/member";
 import { registerSchedule } from "../pages/admin/schedule";
 import { ensureTenant } from "../pages/admin/tenant";
 
@@ -29,11 +29,18 @@ defineSeed("S-M13-11-STORES", async ({ browser, notes, seed }) => {
   });
 });
 
+// 権限は「モールオペレーター」で代える。「店舗オーナー」は所属店舗の店舗しか見えず（DBの行の制限）、
+// 編集可能店舗に店舗Bがあってもイベント登録・検索の店舗の選択肢に店舗Bが出ない（2026-11-09 に確かめた）。
+const M1311_ADMIN_権限 = "モールオペレーター";
 defineSeed("S-M13-11-ADM-A", { needs: ["S-M13-11-STORES"] }, async ({ browser, notes }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    const 名前 = "M13-11試験管理者";
+    // 前に「店舗オーナー」で登録したメンバーが残っていれば、権限だけ画面で変える
+    const found = await findMemberId(page, 名前);
+    if (found) await changeMemberAuthority(page, found, M1311_ADMIN_権限);
     notes.set("〔管理者ID-M1311-共有〕", await ensureMember(page, {
-      名前: "M13-11試験管理者", 所属店舗: "店舗A", ログインID: M1311_ADMIN.loginId, メールアドレス: "m1311_admin_a@example.test",
-      パスワード: M1311_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A", "店舗B"],
+      名前, 所属店舗: "店舗A", ログインID: M1311_ADMIN.loginId, メールアドレス: "m1311_admin_a@example.test",
+      パスワード: M1311_ADMIN.password, 権限: M1311_ADMIN_権限, デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A", "店舗B"],
     }));
   });
 });
@@ -54,7 +61,7 @@ const オンライン = { 開始: "2098-01-01 10:00", 終了: "2098-12-31 10:00"
 const en = (s: string) => `${s} ${RUN_MARK}`;
 type Ev = { 名日: string; 名英: string; 店舗?: string; 日程: { 開始: string; オンライン?: boolean }[]; over?: EventInput };
 
-/** 店舗A・Bは試験管理者、店舗Cは全権限の管理者でイベントと日程を登録し、[イベントID, 日程ID[]] を返す */
+/** 店舗A・Bは試験管理者、店舗Cは店舗Cの管理者でイベントと日程を登録し、[イベントID, 日程ID[]] を返す */
 async function 登録(browser: import("@playwright/test").Browser, items: Ev[]): Promise<[string, string[]][]> {
   const out: [string, string[]][] = [];
   for (const it of items) {
@@ -115,10 +122,11 @@ function 権限確認(seedId: string, n: string): void {
 
 defineSeed("S-M13-11-COMBINATION-EVENTS-011", { needs: ["S-M13-11-ADM-A"] }, async ({ browser, notes }) => {
   const r = await 登録(browser, [
-    { 名日: `${rc("結合対象大会")}`, 名英: en("Combo A"), 店舗: "店舗A", 日程: [{ 開始: "2099-08-15 10:00" }] },
-    { 名日: `${rc("結合対象大会")}`, 名英: en("Combo B"), 店舗: "店舗B", 日程: [{ 開始: "2099-08-15 10:00" }] },
-    { 名日: `${rc("比較対象大会")}`, 名英: en("Combo C"), 店舗: "店舗A", 日程: [{ 開始: "2099-08-15 10:00" }] },
-    { 名日: `${rc("結合対象大会")}`, 名英: en("Combo D"), 店舗: "店舗A", 日程: [{ 開始: "2099-08-16 10:00" }] },
+    // 手順の検索語「結合対象」がイベント名に部分一致する関係を保つため、印は検索語の側に付ける（「結合対象-<印>大会」）
+    { 名日: `${rc("結合対象")}大会`, 名英: en("Combo A"), 店舗: "店舗A", 日程: [{ 開始: "2099-08-15 10:00" }] },
+    { 名日: `${rc("結合対象")}大会`, 名英: en("Combo B"), 店舗: "店舗B", 日程: [{ 開始: "2099-08-15 10:00" }] },
+    { 名日: `${rc("比較対象")}大会`, 名英: en("Combo C"), 店舗: "店舗A", 日程: [{ 開始: "2099-08-15 10:00" }] },
+    { 名日: `${rc("結合対象")}大会`, 名英: en("Combo D"), 店舗: "店舗A", 日程: [{ 開始: "2099-08-16 10:00" }] },
   ]);
   ["A", "B", "C", "D"].forEach((x, i) => { notes.set(`〔イベントID-M1311-011${x}〕`, r[i][0]); notes.set(`〔日程ID-M1311-011${x}〕`, r[i][1][0]); });
 });
@@ -132,7 +140,8 @@ defineSeed("S-M13-11-ONLINE-EVENT-014", { needs: ["S-M13-11-ADM-A"] }, async ({ 
 
 function 単一(seedId: string, label: string, dLabel: string, 語: string, 開始: string, 店舗: string = "店舗A"): void {
   defineSeed(seedId, { needs: ["S-M13-11-ADM-A"] }, async ({ browser, notes }) => {
-    const [[e, [d]]] = await 登録(browser, [{ 名日: rc(語), 名英: en(`Seed ${語}`), 店舗, 日程: [{ 開始 }] }]);
+    // イベント名(英)には検索語・イベント名を含めない（シード表の指定）
+    const [[e, [d]]] = await 登録(browser, [{ 名日: rc(語), 名英: en(`Single Seed ${seedId.slice(-3)}`), 店舗, 日程: [{ 開始 }] }]);
     notes.set(label, e);
     notes.set(dLabel, d);
   });

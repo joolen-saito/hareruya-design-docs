@@ -36,6 +36,19 @@ export class ブロック管理 {
     ]);
     await expect(this.page.locator(".alert").filter({ hasNotText: "デバッグモード" }).first(), "削除のあとのブロック管理(一覧)の帯").toBeVisible({ timeout: 60_000 });
   }
+  /** 削除確認モーダルの削除ボタンを押し、削除の送信の応答と、そのあとの画面の読み込みまで待つ（帯の表示は待たない。削除できなかったときも使う） */
+  async モーダルで削除を押す(ID: string): Promise<void> {
+    await Promise.all([
+      this.page.waitForResponse((r) => r.request().method() === "POST" && /\/content\/block\/\d+\/delete/.test(r.url()), { timeout: 60_000 }),
+      this.モーダル(ID).getByRole("link", { name: "削除" }).click({ timeout: 30_000 }),
+    ]);
+    await this.page.waitForLoadState("load");
+  }
+  /** アドレスでブロック管理(編集)画面を開き、応答の状態コードを返す（エディタの読み込みは待たない） */
+  async 編集をアドレスで開く(ID: string): Promise<number> {
+    const res = await this.page.goto(adminUrl(`/content/block/${ID}/edit`), { waitUntil: "load" });
+    return res?.status() ?? 0;
+  }
   async モーダルでキャンセルする(ID: string): Promise<void> {
     await this.モーダル(ID).getByRole("button", { name: "キャンセル" }).click({ timeout: 30_000 });
     await expect(this.モーダル(ID), "削除確認モーダルが閉じた").toBeHidden({ timeout: 30_000 });

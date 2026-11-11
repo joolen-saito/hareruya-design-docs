@@ -14,7 +14,7 @@ import { expectSaved } from "./common";
 const OPEN = 30_000;
 const SEARCH = "/otcbuyorder";
 
-export type 一覧の行 = { 査定ID: string; 申込者: string; 買取金額: string; 買取店舗: string; ステータス: string };
+export type 一覧の行 = { 査定ID: string; 申込者: string; 買取金額: string; 買取店舗: string; 査定担当者: string; 最終更新者: string; ステータス: string };
 
 export class OtcListPage {
   constructor(readonly page: Page) {}
@@ -66,14 +66,114 @@ export class OtcListPage {
     else await sel.selectOption({ label: 店名 }, { timeout: OPEN });
   }
 
+  /** ステータスの選択（選択肢の表示名）。"" で未選択 */
+  async ステータスを選ぶ(名: string): Promise<void> {
+    const sel = this.box("otc_buy_order_status").locator("select");
+    if (名 === "") await sel.selectOption({ index: 0 }, { timeout: OPEN });
+    else await sel.selectOption({ label: 名 }, { timeout: OPEN });
+  }
+
+  /** 検索欄で選ばれている買取店舗の表示名（未選択は空） */
+  async 買取店舗の選択を読む(): Promise<string> {
+    return this.box("shop").locator("select").evaluate((s) => ((s as HTMLSelectElement).selectedOptions[0]?.textContent ?? "").trim());
+  }
+
+  /** 検索欄の申込者名の入力値 */
+  async 申込者名の入力を読む(): Promise<string> {
+    return this.box("name_multi").locator("input").inputValue({ timeout: OPEN });
+  }
+
+  /** 検索欄の査定IDの入力値 */
+  async 査定IDの入力を読む(): Promise<string> {
+    return this.box("assessment_id").locator("input").inputValue({ timeout: OPEN });
+  }
+
+  /** 表示件数の選択で選ばれている表示名（例「10件」） */
+  async 表示件数の選択を読む(): Promise<string> {
+    return this.表示件数の選択().evaluate((s) => ((s as HTMLSelectElement).selectedOptions[0]?.textContent ?? "").trim());
+  }
+
+  /** アドレス欄から、一覧の指定ページを開く（検索条件・表示件数はセッションが覚えている） */
+  async ページを開く(ページ: number): Promise<void> {
+    const res = await this.page.goto(adminUrl(`${SEARCH}/page/${ページ}`), { timeout: 60_000 });
+    expect(res?.status() ?? 0, `買取一覧 ${ページ}ページ目の応答`).toBeLessThan(400);
+    await this.page.waitForLoadState("load");
+  }
+
+  /**
+   * 結果の1ページ目から順に、最大 最大ページ数 ページ分の行を読む（先頭に検索結果がある状態で呼ぶ）。
+   * 探している査定IDがすべて見つかったら、そこで止める（共有の環境には、ほかの買取が多数ある）。
+   */
+  async 行を順に読む(最大ページ数: number, 探す?: string[]): Promise<一覧の行[]> {
+    const all: 一覧の行[] = [];
+    const total = await this.該当件数();
+    for (let n = 1; n <= 最大ページ数; n++) {
+      if (n > 1) await this.ページを開く(n);
+      const rows = await this.行();
+      all.push(...rows);
+      if (all.length >= total || rows.length === 0) break;
+      if (探す && 探す.every((id) => all.some((r) => r.査定ID === id))) break;
+    }
+    return all;
+  }
+
+  /** ダウンロードのメニューを開き、並んでいる項目の表示名を返す */
+  async ダウンロードの項目を読む(): Promise<string[]> {
+    await this.ダウンロードのボタン().click({ timeout: OPEN });
+    const items = this.page.locator("#result_list__custom_csv_menu .dropdown-menu button.export-link");
+    await expect(items.first(), "ダウンロードの項目").toBeVisible({ timeout: OPEN });
+    return (await items.allInnerTexts()).map((t) => t.trim());
+  }
+
+  /** 査定IDの行のダウンロード対象のチェックボックスの値を差し替える（開発者ツールでの値の変更と同じ） */
+  async 対象の値を差し替える(査定ID: string, 値: string): Promise<void> {
+    const row = this.結果の表().filter({ has: this.page.getByRole("link", { name: 査定ID, exact: true }) });
+    await expect(row, `一覧の査定ID「${査定ID}」の行`).toHaveCount(1, { timeout: OPEN });
+    await row.locator('input[type="checkbox"]').evaluate((el, v) => { (el as HTMLInputElement).value = v; }, 値);
+  }
+
+  private pdfRoute = /\/otcbuyorder\/restock-list\/pdf$/;
+
+  /** 戻しリストPDFのデータ取得の要求を遮断する（開発者ツールでの要求のブロックと同じ） */
+  async 戻しリストPDFの要求を遮断する(): Promise<void> {
+    await this.page.route(this.pdfRoute, (r) => r.abort());
+  }
+
+  /**
+   * 「戻しリストPDF」を押し、開いたウィンドウが閉じるまで待つ。
+   * ウィンドウが開いたか・閉じたか、ダイアログの文、いまの画面のアドレスを返す。
+   */
+  async 戻しリストPDFを押して閉じるのを待つ(): Promise<{ 開いた: boolean; 閉じた: boolean; ダイアログ: string[]; アドレス: string }> {
+    const dialogs: string[] = [];
+    const onDialog = (d: import("@playwright/test").Dialog) => { dialogs.push(d.message()); void d.accept(); };
+    this.page.on("dialog", onDialog);
+    try {
+      await this.ダウンロードのボタン().click({ timeout: OPEN });
+      const item = this.page.locator("#result_list__custom_csv_menu .dropdown-menu button.export-link", { hasText: "戻しリストPDF" });
+      await expect(item, "ダウンロードの項目「戻しリストPDF」").toBeVisible({ timeout: OPEN });
+      const popup = this.page.context().waitForEvent("page", { timeout: 15_000 }).catch(() => null);
+      await item.click({ timeout: OPEN });
+      const win = await popup;
+      let closed = false;
+      if (win) {
+        closed = win.isClosed() || await win.waitForEvent("close", { timeout: 15_000 }).then(() => true).catch(() => win.isClosed());
+      }
+      await this.page.waitForTimeout(500);
+      return { 開いた: win !== null, 閉じた: closed, ダイアログ: dialogs, アドレス: this.page.url() };
+    } finally {
+      this.page.off("dialog", onDialog);
+    }
+  }
+
   /** 検索するボタンを押し、結果の画面が出るまで待つ */
-  async 検索する(): Promise<void> {
+  async 検索する(件数の表示を待つ = true): Promise<void> {
     await Promise.all([
       this.page.waitForLoadState("load"),
       this.検索フォーム().getByRole("button", { name: /検索する/ }).click({ timeout: OPEN }),
     ]);
     await this.page.waitForLoadState("load");
-    await expect(this.該当件数の表示().first(), "検索結果の該当件数の表示").toBeVisible({ timeout: 60_000 });
+    if (件数の表示を待つ) await expect(this.該当件数の表示().first(), "検索結果の該当件数の表示").toBeVisible({ timeout: 60_000 });
+    else await expect(this.page.locator("#result_list_main"), "検索結果の欄（該当なしの表示を含む）").toBeVisible({ timeout: 60_000 });
   }
 
   /** 表示件数を、選べる最大の件数にする（結果が複数ページになるときに、全部を1ページで読む） */
@@ -93,6 +193,13 @@ export class OtcListPage {
     const res = await this.page.goto(adminUrl(`${SEARCH}/page/${ページ}?sort=default&order=${並び}`), { timeout: 60_000 });
     expect(res?.status() ?? 0, "並び順を指定した買取一覧の応答").toBeLessThan(400);
     await this.page.waitForLoadState("load");
+  }
+
+  /** アドレス欄から、並び順のキーと並びを指定して開く。応答の状態を返す（キーが不正なときの動きを見るため、状態は確かめない） */
+  async 並び順のキーを指定して開く(ページ: number, キー: string, 並び: "asc" | "desc"): Promise<number> {
+    const res = await this.page.goto(adminUrl(`${SEARCH}/page/${ページ}?sort=${キー}&order=${並び}`), { timeout: 60_000 });
+    await this.page.waitForLoadState("load");
+    return res?.status() ?? 0;
   }
 
   /** ページングの番号を押す */
@@ -122,7 +229,7 @@ export class OtcListPage {
     await expect(this.page.locator("#result_list_main"), "検索結果の一覧欄").toBeVisible({ timeout: 60_000 });
     return this.結果の表().evaluateAll((trs) => trs.map((tr) => {
       const td = (key: string) => (tr.querySelector(`[id^="result_list_main__${key}--"]`)?.textContent ?? "").replace(/\s+/g, " ").trim();
-      return { 査定ID: td("id"), 申込者: td("name"), 買取金額: td("price"), 買取店舗: td("shop"), ステータス: td("otc_buy_order_status") };
+      return { 査定ID: td("id"), 申込者: td("name"), 買取金額: td("price"), 買取店舗: td("shop"), 査定担当者: td("member1"), 最終更新者: td("member2"), ステータス: td("otc_buy_order_status") };
     }));
   }
 

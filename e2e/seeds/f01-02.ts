@@ -5,7 +5,8 @@
  */
 import { SETUP_ADMIN } from "../config/env";
 import { RUN_MARK, rc } from "../lib/run_marker";
-import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { withAdminSession } from "../lib/session";
 import { ensureTenant } from "../pages/admin/tenant";
 import { Browser } from "@playwright/test";
@@ -16,7 +17,6 @@ import { storeNameById } from "../pages/admin/m04_19_masters";
 import { タグを付けて商品を登録する, 規格のセールを設定する, 支店の管理者を用意する, 管理者 } from "../pages/admin/f01_02_setup";
 import { searchStockByCode } from "../pages/admin/m04_02_rc_stock";
 import { loggedInMemberName, registerStockEdit, StockApprovalListPage } from "../pages/admin/stock_edit";
-import { 在庫承認の最大ID } from "../db/f03_08";
 
 export const 支店URL = (n: string): string => `f0102c${n.toLowerCase()}${RUN_MARK.toLowerCase()}`;
 const 略称 = (s: string): string => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; const L = "ABCDEFGHJKLMNPQRSTUVWXYZ"; return [h % 24, (h >>> 5) % 24, (h >>> 10) % 24].map((i) => L[i]).join(""); };
@@ -74,19 +74,21 @@ async function セールの支店を作る(browser: Browser, seedId: string, n: 
       if (d.フラグ !== false) await 規格のセールを設定する(page, productId, rows[0].商品規格ID, { フラグ: true, 販売価格: d.販売価格 ?? "1" }, `${seedId}: ${code}`, issue);
       ids.set(code, { productId, classId: rows[0].商品規格ID });
     }
-    const 入れる = defs.filter((d) => (d.在庫 ?? 5) > 0);
-    const baseline = 在庫承認の最大ID();
+    // 在庫がある商品規格は廃止にできない（アプリの制約）ので、廃止する商品には在庫を入れない
+    const 在庫数 = (d: セール商品): number => d.在庫 ?? (d.廃止 ? 0 : 5);
+    const 入れる = defs.filter((d) => 在庫数(d) > 0);
     for (const d of 入れる) {
       const code = 商品コード(n, d.suffix);
       const stock = await searchStockByCode(page, { 商品コード: code, 店舗: 支店名(n), 在庫区分: "EC-CUBE" });
       await stock.openEdit(stock.row(code, 支店名(n), "EC-CUBE"));
-      await registerStockEdit(page, { changeType: "入庫/その他", reason: "F01-02試験データ", quantity: String(d.在庫 ?? 5), purchasePrice: "1", approverName: 管.承認者.名前 }, `${seedId}: ${code} の在庫編集`, issue);
+      await registerStockEdit(page, { changeType: "入庫/その他", reason: "F01-02試験データ", quantity: String(在庫数(d)), purchasePrice: "1", approverName: 管.承認者.名前 }, `${seedId}: ${code} の在庫編集`, issue);
     }
     await withAdminSession(browser, 管.承認者.account, async (ap) => {
       const list = new StockApprovalListPage(ap);
       await list.open(支店名(n));
       const registrant = await loggedInMemberName(page);
-      const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant && Number(r.id) > baseline);
+      // 申請した管理者はこの支店・この実行だけのもの（ログインIDに番号と実行の印が入る）なので、その管理者の未承認の行だけを承認する
+      const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant);
       if (rows.length < 入れる.length) throw new Error(`${seedId}: 在庫編集の未承認の行が ${rows.length} 件（${入れる.length} 件のはず）`);
       await list.approve(rows.slice(0, 入れる.length).map((r) => r.id), `${seedId}: 在庫編集の承認`, issue);
     });

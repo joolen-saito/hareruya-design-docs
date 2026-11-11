@@ -111,5 +111,40 @@ export class M08CustomerGroupPage {
     return s;
   }
 
+
+  /** 支払方法のチェックボックス（画面の並びのまま）。id は値、名前はラベル */
+  async 支払方法の選択肢(): Promise<{ id: string; 名前: string; 選択: boolean }[]> {
+    return this.page.locator('input[name="admin_customer_group[Payments][]"]').evaluateAll((els) =>
+      els.map((e) => {
+        const i = e as HTMLInputElement;
+        return { id: i.value, 名前: (i.labels?.[0]?.innerText ?? "").trim(), 選択: i.checked };
+      }),
+    );
+  }
+
+  /** 支払方法を、与えた支払方法IDだけ選択（ほかは外す） */
+  async 支払方法を選ぶ(ids: string[]): Promise<void> {
+    const boxes = this.page.locator('input[name="admin_customer_group[Payments][]"]');
+    const n = await boxes.count();
+    for (let i = 0; i < n; i++) {
+      const b = boxes.nth(i);
+      await b.setChecked(ids.includes(await b.inputValue()), { timeout: T });
+    }
+  }
+
+  /** 選択中の支払方法ID（昇順） */
+  async 選択中の支払方法ID(): Promise<string[]> {
+    return (await this.支払方法の選択肢()).filter((x) => x.選択).map((x) => x.id).sort((a, b) => Number(a) - Number(b));
+  }
+
+  /** 新規登録ボタン（入力欄を新規追加の状態にする） */
+  get newButton(): Locator { return this.page.locator("#ex-conversion-action a.btn-ec-conversion"); }
+
+  /** 一覧の行の名称・ポイント率・支払方法の欄の文字 */
+  async 行の欄(名称: string): Promise<{ ポイント率: string; 支払方法: string }> {
+    const cells = this.rowByName(名称).first().locator("td");
+    return { ポイント率: (await cells.nth(1).innerText()).trim(), 支払方法: (await cells.nth(2).innerText()).trim() };
+  }
+
   get flashes(): Locator { return this.page.locator(".alert"); }
 }

@@ -26,6 +26,55 @@ export class MtgMasterEditPage {
     await this.page.waitForLoadState("load");
   }
   get カード名リスト作成リンク(): Locator { return this.page.getByRole("link", { name: "カード一覧の「カード名リスト作成」" }); }
+
+  /** マスターデータの種別を表示名で選び、「選択」を押して一覧を出す */
+  async 種別を選んで表示する(表示名: string): Promise<void> {
+    await this.選択欄.selectOption({ label: 表示名 });
+    await this.選択を押す();
+    await expect(this.一覧の領域, `「${表示名}」の一覧`).toBeVisible();
+    expect(await this.選ばれている表示名(), "選ばれている種別").toBe(表示名);
+  }
+  async 見出し(): Promise<string[]> { return (await this.一覧の領域.locator("thead th").allInnerTexts()).map((t) => t.trim()); }
+  /** 末尾の入力用の空行を除いた、登録済みの行 */
+  get 登録済みの行(): Locator { return this.一覧の領域.locator("tbody tr").filter({ hasNot: this.page.locator('[name^="rows[new]"]') }); }
+  get 入力用の空行(): Locator { return this.一覧の領域.locator("tbody tr").filter({ has: this.page.locator('[name^="rows[new]"]') }); }
+  /** 行を、その行の識別番号（入力欄の送信名に含まれる番号）で探す */
+  番号の行(番号: number): Locator {
+    return this.一覧の領域.locator("tbody tr").filter({ has: this.page.locator(`[name^="rows[${番号}]["]`) });
+  }
+  /** 行の各列について、入力できない（読み取り専用または無効）かどうか。列の並びは見出しの並び */
+  async 入力できない列(行: Locator): Promise<boolean[]> {
+    return 行.locator("td").evaluateAll((tds) => tds.map((td) => {
+      const c = td.querySelector("input, select") as HTMLInputElement | HTMLSelectElement | null;
+      return !!c && (c.hasAttribute("readonly") || c.disabled);
+    }));
+  }
+  /** 真偽値の選択欄（登録済みの行）に表示されている値 */
+  async 真偽値の表示(): Promise<string[]> {
+    return this.登録済みの行.locator("select option:checked").evaluateAll((os) => os.map((o) => (o.textContent ?? "").trim()));
+  }
+  get 登録の文字のボタン(): Locator { return this.page.getByRole("button", { name: "登録", exact: true }); }
+  get なりすまし対策トークン(): Locator { return this.一覧の領域.locator('input[name$="[_token]"]'); }
+  async トークンを書き換える(値: string): Promise<number> {
+    return this.なりすまし対策トークン.evaluateAll((els, v) => { els.forEach((e) => { (e as HTMLInputElement).value = v; }); return els.length; }, 値);
+  }
+  async 登録を押す(): Promise<void> {
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 45_000 }), this.登録ボタン.click({ timeout: 20_000 })]);
+  }
+  /** 入力エラーとして画面に出ているメッセージ（開発用の帯は除く） */
+  async 入力エラーの文(): Promise<string[]> {
+    const l = this.page.locator(".alert-danger, .invalid-feedback, .form-error-message").filter({ hasNotText: "デバッグモードが有効になっています" });
+    return (await l.allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+  }
+}
+
+/** カードセット管理・デッキ管理の、MTGマスターデータ編集への入口 */
+export class MasterEntryLinks {
+  constructor(readonly page: Page) {}
+  async カードセット管理を開く(): Promise<void> { await this.page.goto(adminUrl("/cardset")); await this.page.waitForLoadState("load"); }
+  async デッキ管理を開く(): Promise<void> { await this.page.goto(adminUrl("/deck")); await this.page.waitForLoadState("load"); }
+  get ブロックの追加(): Locator { return this.page.getByRole("link", { name: "ブロックの追加", exact: true }); }
+  get デッキタグ一覧(): Locator { return this.page.getByRole("link", { name: "デッキタグ一覧", exact: true }).or(this.page.getByRole("button", { name: "デッキタグ一覧", exact: true })); }
 }
 
 /** システム設定のマスターデータ管理の選択欄の選択肢の表示名 */

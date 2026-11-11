@@ -62,6 +62,37 @@ export class ForgotPage {
     const p = this.エラー画面.locator("p").first();
     return (await p.count()) === 0 ? "" : ((await p.innerText()) ?? "").replace(/\s+/g, " ").trim();
   }
+  /** エラー画面の「トップページへ」ボタン */
+  get トップページへ(): Locator { return this.page.locator(".p-hareruya-error__actions a").first(); }
+  /** 共通エラー画面（「404 Page Not Found」）が表示されているか */
+  async 共通エラー404か(): Promise<boolean> {
+    return /404 Page Not Found/.test((await this.page.locator("body").innerText()) ?? "");
+  }
+
+  // ---- 再設定画面の入力・送信 ----
+  get 新しいパスワード確認欄(): Locator { return this.page.locator('form#form1 input[type="password"]').nth(1); }
+  get 変更する(): Locator { return this.page.locator('form#form1 button[type="submit"]'); }
+  async 再設定を入力する(メール: string, パスワード: string, 確認 = パスワード): Promise<void> {
+    await this.メール欄.fill(メール, { timeout: TIMEOUT });
+    await this.新しいパスワード欄.fill(パスワード, { timeout: TIMEOUT });
+    await this.新しいパスワード確認欄.fill(確認, { timeout: TIMEOUT });
+  }
+  async 変更するを押す(): Promise<void> {
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.変更する.click({ timeout: TIMEOUT })]);
+    await this.page.waitForLoadState("load");
+  }
+  async 再設定する(メール: string, パスワード: string): Promise<void> {
+    await this.再設定を入力する(メール, パスワード);
+    await this.変更するを押す();
+  }
+  /** パスワード再設定完了画面か */
+  get 再設定完了画面か(): boolean { return /\/forgot\/resetcomplete/.test(this.path); }
+  /** 完了画面の「戻る」ボタン */
+  get 戻る(): Locator { return this.page.locator(".p-hareruya-entry-complete__actions a").first(); }
+  /** 新しいパスワード欄の下の「メールアドレスとは異なるパスワードを設定してください。」の注意の数 */
+  async 異なる文字列の注意の数(): Promise<number> {
+    return this.page.locator(".p-hareruya-entry__help-text").filter({ hasText: "メールアドレスとは異なるパスワードを設定してください。" }).count();
+  }
 
   // ---- パンくず ----
   get パンくず現在地(): Locator { return this.page.locator(".p-hareruya-breadcrumb__current").first(); }

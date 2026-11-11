@@ -141,6 +141,44 @@ export class ScheduleFormPage {
     await this.page.locator('form#schedule_form input[name$="[_token]"]').evaluate((e, v) => { (e as HTMLInputElement).value = v; }, 値);
   }
 
+  /** 日程の画面をアドレスで直接開き、応答の状態コードを返す（画面の操作では開けないアドレス用） */
+  async アドレスで開く(path: string): Promise<number> {
+    const res = await this.page.goto(adminUrl(path), { waitUntil: "load" });
+    return res?.status() ?? 0;
+  }
+
+  /** 開発者ツールで行うのと同じに、フォームの送信先を書き換える */
+  async 送信先のアドレスを書き換える(path: string): Promise<void> {
+    await this.page.locator("form#schedule_form").evaluate((f, a) => { (f as HTMLFormElement).action = a; }, adminUrl(path));
+  }
+
+  /** 開発者ツールで行うのと同じに、送信ボタンの無効状態を解除する */
+  async 送信ボタンの無効状態を解除する(ボタン: Locator): Promise<boolean> {
+    const wasDisabled = await ボタン.isDisabled();
+    await ボタン.evaluate((b) => { b.removeAttribute("disabled"); });
+    return wasDisabled;
+  }
+
+  /** ボタンを押して送信し、日程の画面への送信の応答の状態コードを返す */
+  async 押して応答の状態を読む(ボタン: Locator): Promise<number> {
+    const [res] = await Promise.all([
+      this.page.waitForResponse((r) => r.request().method() === "POST" && /\/schedule\//.test(r.url()), { timeout: 30_000 }),
+      ボタン.click({ timeout: OPEN }),
+    ]);
+    await this.page.waitForLoadState("load");
+    return res.status();
+  }
+
+  /** 開発者ツールで行うのと同じに、管理画面の画面が持つなりすまし対策の値を付けて日程の削除要求を送り、応答の状態コードを返す */
+  async 日程削除の要求を送る(イベントID: string, 日程ID: string): Promise<number> {
+    await this.page.goto(adminUrl("/"), { waitUntil: "load" });
+    const token = await this.page.locator('meta[name="eccube-csrf-token"]').getAttribute("content");
+    return this.page.evaluate(async ([url, t]) => {
+      const r = await fetch(url!, { method: "DELETE", headers: { "ECCUBE-CSRF-TOKEN": t ?? "", "X-Requested-With": "XMLHttpRequest" }, redirect: "manual", credentials: "same-origin" });
+      return r.status;
+    }, [adminUrl(`/event/${イベントID}/schedule/${日程ID}/delete`), token] as const);
+  }
+
   /** 日程の編集画面のアドレスから日程IDを読む */
   日程IDを画面のアドレスから読む(): string | null {
     return /\/schedule\/(\d+)\/edit/.exec(this.page.url())?.[1] ?? null;

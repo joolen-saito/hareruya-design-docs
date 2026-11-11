@@ -9,6 +9,7 @@ import { loginAdmin } from "../../lib/session";
 import { EventListPage } from "../../pages/admin/m13_01_event_list";
 import { ページ表示件数マスタの既定値, 登録済みのイベントか } from "../../db/m13_01";
 import { M1301_ADMIN } from "../../seeds/m13-01";
+import { OSAKA } from "../../seeds/m13-01-b";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const ids = (s: string) => s.split(",");
@@ -451,4 +452,73 @@ caseTest("IT-M13-01-047", async ({ page, notes, step, expected }) => {
     expect.soft(await list.現在のページ(), "ページ番号（2ページ目のまま）").toBe(2);
     expect.soft(await list.結果のID(), "表示されるイベント（ID 〔イベントID-M1301-047A〕だけ）").toEqual([a]);
   });
+});
+
+// ================= 店舗が複数・複合条件・権限の違う行 =================
+// 手順の「大阪店」は、機能専用の試験店舗（seeds/m13-01-b.ts）の店名として読む
+const 店舗の読み替え = `手順の「大阪店」「名古屋店」は、同名の店舗が複数あって決められないので、機能専用の試験店舗「${OSAKA.店名}」「M1301名古屋店」として読んだ（シード作成時の問題の読み替え）`;
+
+caseTest("IT-M13-01-011", async ({ page, notes, step, expected }) => {
+  await loginAdmin(page, M1301_ADMIN);
+  const list = new EventListPage(page);
+  await step(1, async () => { await list.開く(); });
+  await step(2, async () => { await list.クリアを押す(); });
+  await step(3, async () => { await list.名前略称.fill(rc("店舗複数確認")); await list.店舗を選ぶ(["東京店", OSAKA.店名]); });
+  await step(4, async () => { await list.検索する(); });
+  await expected(async () => {
+    const got = await list.結果のID();
+    expect.soft(got, "検索結果に東京店のID Eと大阪店のID Fが表示される").toEqual(expect.arrayContaining([notes.get("〔イベントID-M1301-共有-FILTER-E〕"), notes.get("〔イベントID-M1301-共有-FILTER-F〕")]));
+    expect.soft(got, "名古屋店のID Gが表示されない").not.toContain(notes.get("〔イベントID-M1301-共有-FILTER-G〕"));
+  });
+  note(店舗の読み替え);
+});
+
+caseTest("IT-M13-01-012", async ({ page, notes, step, expected }) => {
+  await loginAdmin(page, M1301_ADMIN);
+  const list = new EventListPage(page);
+  await step(1, async () => { await list.開く(); });
+  await step(2, async () => { await list.クリアを押す(); });
+  await step(3, async () => {
+    await list.名前略称.fill(rc("複合条件"));
+    await list.日付を入れる(list.開催日From, "2026/08/15");
+    await list.日付を入れる(list.開催日To, "2026/08/15");
+    await list.フォーマット.selectOption({ label: "スタンダード" });
+    await list.店舗を選ぶ(["東京店"]);
+    await list.ルール適用度.selectOption({ label: "競技" });
+  });
+  await step(4, async () => { await list.検索する(); });
+  await expected(async () => {
+    expect(await list.結果のID(), "検索結果に表示されたID（すべての条件を満たすAだけ）").toEqual([notes.get("〔イベントID-M1301-共有-COMBI-A〕")]);
+  });
+  note(店舗の読み替え);
+});
+
+caseTest("IT-M13-01-032", async ({ page, notes, step, expected }) => {
+  await loginAdmin(page, M1301_ADMIN);
+  const list = new EventListPage(page); const id = notes.get("〔イベントID-M1301-共有-DELETE-B〕");
+  await step(1, async () => { await list.開く(); await list.開催日From.fill(""); await list.名前略称で検索する(rc("権限外削除確認")); });
+  await step(2, async () => { await list.編集ボタンを押す(id); });
+  await expected(async () => {
+    expect.soft(await list.結果のID(), "権限外店舗のイベントが検索結果に表示される").toContain(id);
+    expect.soft(await list.メニューの項目(id), "ポップアップメニューの選択肢（「削除」が無い）").not.toContain("削除");
+    await expect.soft(list.メニュー項目(id, "削除"), "メニューの「削除」が表示されない").toHaveCount(0);
+  });
+  note("シード表の権限外店舗「大阪店」は、このシードの前例（M13-02 の店舗B管理者が登録した店舗B）に読み替えた。東京店の管理者は店舗Bの編集権限を持たない");
+});
+
+caseTest("IT-M13-01-048", async ({ page, notes, step, expected }) => {
+  await loginAdmin(page, M1301_ADMIN);
+  const list = new EventListPage(page);
+  const t = notes.get("〔イベントID-M1301-048T〕"), o = notes.get("〔イベントID-M1301-048O〕");
+  await step(1, async () => { await list.開く(); });
+  await step(2, async () => { await list.クリアを押す(); });
+  await step(3, async () => { await list.名前略称.fill(rc("M1301-048")); await list.店舗を選ぶ(["東京店", OSAKA.店名]); await list.検索する(); });
+  let 東京のメニュー: string[] = []; let 大阪のメニュー: string[] = [];
+  await step(4, async () => { await list.編集ボタンを押す(t); 東京のメニュー = await list.メニューの項目(t); await page.keyboard.press("Escape"); });
+  await step(5, async () => { await list.編集ボタンを押す(o); 大阪のメニュー = await list.メニューの項目(o); });
+  await expected(async () => {
+    expect.soft(東京のメニュー, "東京店のID Tのメニューの選択肢（「削除」が表示される）").toContain("削除");
+    expect.soft(大阪のメニュー, "大阪店のID Oのメニューの選択肢（「削除」が表示されない）").not.toContain("削除");
+  });
+  note(店舗の読み替え);
 });

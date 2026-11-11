@@ -1,5 +1,7 @@
 /**
  * M09-04 ページ管理（一覧・登録・編集・削除）。正本: integration_test/casegen/cases/M09-04_test_cases.tsv
+ * 追加で実装（2026-11-11。開発者作成にするなど、印つきのページだけDBで整える）: 001 003 011 012 022 035 037 038 039 052 053 057 063。
+ * まだ実装しない: 004 044 045 047 065 066 069 071 072（理由は review/M09-04_progress_2026-11-11.md）。
  * 実装した: 002 005 006 007 008 009 010 013 014 015 016 017 018 019 020 021 023 024 025 026 029 036 040 041 042 043 046 048 049 050 051 056 058 059 060 061 062 064 067 068 070。
  * 実装しない（シードがDBでの準備・ファイル配置を要する）: 001 003 004 011 012 022 035 037 038 039 044 045 047 052 053 057 063 065 066 069 071 072。
  * 決め打ちの識別の値（ページ名・URL・ファイル名）には実行の印を付ける（seeds/m09-04.ts の 識別）。255文字の境界値は印を付けない。
@@ -10,8 +12,8 @@ import { expect, caseTest } from "../../lib/case";
 import { BASE_URL } from "../../config/env";
 import { hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
-import { ページ管理 } from "../../pages/admin/m09_04_page";
-import { レイアウトの設定, ページIDで, ページ名で } from "../../db/m09_04_page";
+import { ページ管理, ページの値 } from "../../pages/admin/m09_04_page";
+import { レイアウトの設定, ページIDで, ページ名で, URLで } from "../../db/m09_04_page";
 import { ページのテンプレート } from "../../db/m09_template_files";
 import { M0904_ADMIN, 識別, 試験PCレイアウト, 試験モバイルレイアウト, シードのページ } from "../../seeds/m09-04";
 
@@ -660,5 +662,212 @@ caseTest("IT-M09-04-051", async ({ page, browser, notes, step, expected }) => {
       await pwExpect.soft(paA.検索ボックス, "ブラウザAの一覧の検索ボックス").toBeVisible();
     });
   } finally { await ctxB.close(); }
+});
+
+// ---------- 追加分（2026-11-11） ----------
+/** 見えている行のID（画面の並びのまま） */
+const 並びのID = async (pa: ページ管理) => pa.見えている行.evaluateAll((rs) => rs.map((r) => r.id.replace("ex-page-", "")));
+
+caseTest("IT-M09-04-001", async ({ page, notes, step, expected }) => {
+  const 開発者 = notes.get("〔ページID-M0904-001開発者〕"); const モバイル = notes.get("〔ページID-M0904-001モバイル〕"); const PC = notes.get("〔ページID-M0904-001PC〕");
+  const pa = await ログインして(page);
+  let ids: string[] = [];
+  await step(1, async () => { await pa.一覧を開く(); });
+  await step(2, async () => { ids = await 並びのID(pa); });
+  note("既存のページ情報は置き換えない（書き換え・削除をしない方針）ので、「ほかのページが無い」ことは確かめない。印つきの3件（PC・開発者作成／モバイル用レイアウトのみ・利用者作成／PC・利用者作成）で、PCのページが表示され、モバイルのページと ID 0 が表示されず、ID昇順であることを確かめる");
+  await expected(async () => {
+    expect.soft(ids.includes(開発者), `PC・開発者作成のページ（ID ${開発者}）が表示されている`).toBe(true);
+    expect.soft(ids.includes(PC), `PC・利用者作成のページ（ID ${PC}）が表示されている`).toBe(true);
+    expect.soft(ids.includes(モバイル), `モバイルのページ（ID ${モバイル}）が表示されない`).toBe(false);
+    expect.soft(ids.includes("0"), "ID 0 のページが表示されない").toBe(false);
+    const 昇順 = ids.every((v, i) => i === 0 || Number(ids[i - 1]) < Number(v));
+    expect.soft(昇順, "表示されたページがID昇順").toBe(true);
+  });
+});
+
+caseTest("IT-M09-04-003", async ({ page, notes, step, expected }) => {
+  const id = notes.get("〔ページID-M0904-003〕");
+  const 語 = 識別("route_only_beta-003");
+  const pa = await ログインして(page);
+  let 読み込んだ行 = 0; let ids: string[] = []; let ルーティング名欄 = "";
+  await step(1, async () => { await pa.一覧を開く(); 読み込んだ行 = await 全行数(page); });
+  await step(2, async () => { await pa.検索する(語); ids = await 並びのID(pa); if (ids.includes(id)) ルーティング名欄 = (await pa.行(id).locator("td").nth(1).innerText()).trim(); });
+  note("ルーティング名に対応付ける表示URLは設定していない（画面のルート定義は書き換えない方針）。ルーティング名欄の値の一致で確かめる");
+  await expected(async () => {
+    expect.soft(読み込んだ行, "検索の前に読み込まれていた行の数（0件でない）").toBeGreaterThan(0);
+    expect.soft(ids, "検索語に一致して表示されたページのID").toEqual([id]);
+    expect.soft(ルーティング名欄, "そのページのルーティング名欄").toContain(語);
+  });
+});
+
+caseTest("IT-M09-04-011", async ({ page, notes, step, expected }) => {
+  const id = notes.get("〔ページID-M0904-011〕");
+  const pa = await ログインして(page);
+  await step(1, async () => { await pa.編集を開く(id, "ja"); });
+  await step(2, async () => { await pa.設定欄("ページ設定").waitFor({ state: "visible", timeout: 30_000 }); });
+  note("開発者作成のページはDBで設定した（画面では登録できない）。日英テンプレートは置いていないので、コード欄の中身は空");
+  await expected(async () => {
+    expect.soft(await page.locator("#main_edit_url").count(), "URLの入力欄の数").toBe(0);
+    expect.soft(await page.locator("#main_edit_file_name").count(), "twigファイルの入力欄の数").toBe(0);
+    const 読取専用 = await page.evaluate(() => (window as unknown as { editor: { getReadOnly(): boolean } }).editor.getReadOnly());
+    expect.soft(読取専用, "コード欄が読み取り専用（入力できない）").toBe(true);
+  });
+});
+
+caseTest("IT-M09-04-012", async ({ page, notes, step, expected }) => {
+  const id = notes.get("〔ページID-M0904-012〕");
+  const pa = await ログインして(page);
+  await step(1, async () => { await pa.一覧を開く(); });
+  await step(2, async () => { await pa.行(id).scrollIntoViewIfNeeded(); });
+  await expected(async () => {
+    await pwExpect.soft(pa.行(id), `ID ${id} の行が一覧にある`).toBeVisible();
+    expect.soft(await pa.行(id).locator("a[data-bs-target^='#delete_']").count(), `ID ${id} の行の削除ボタンの数`).toBe(0);
+  });
+});
+
+caseTest("IT-M09-04-022", async ({ page, notes, step, expected }) => {
+  const id = notes.get("〔ページID-M0904-022〕");
+  const pa = await ログインして(page);
+  let 表示 = "";
+  await step(1, async () => { await pa.編集を開く(id, "ja"); });
+  await step(2, async () => { 表示 = (await page.locator("#pageDetail .row").filter({ hasText: "最終更新日時" }).first().innerText()).replace(/\s+/g, " ").trim(); });
+  note("最終更新日時は、DBで 2025/10/25 10:30（日本時間）に設定した（画面で指定できないため）");
+  await expected(async () => { expect.soft(表示, "最終更新日時の欄").toContain("2025/10/25 10:30"); });
+});
+
+async function 重複登録ケース(page: Page, step: (n: number, f: () => Promise<void>) => Promise<void>, id: string | null, 入力: ページの値) {
+  const pa = await ログインして(page);
+  await step(1, async () => { if (id) await pa.編集を開く(id); else await pa.新規画面を開く("ja"); });
+  await step(2, async () => { await pa.入力する(入力); });
+  await step(3, async () => { const r = await pa.登録して結果を読む(); if (!r.成功) note(`登録できなかった: ${r.システムエラー ? "システムエラー" : r.入力エラー.join(" / ")}`); });
+  return pa;
+}
+
+caseTest("IT-M09-04-035", async ({ page, notes, step, expected }) => {
+  const 共有 = notes.get("〔ページID-M0904-共有〕");
+  const 名 = 識別("URL重複新規ページ"); const url = 識別("user_data/duplicate_url");
+  await 重複登録ケース(page, step, null, { ページ名: 名, URL: url, ファイル名: 識別("user_data/new_unique_file"), コード: "{% extends 'default_frame.twig' %}{% block main %}URL重複{% endblock %}" });
+  let 同名: ReturnType<typeof ページ名で> = []; let 同URL: ReturnType<typeof URLで> = [];
+  await step(4, async () => { 同名 = ページ名で(名); 同URL = URLで(url); });
+  note("既存の利用者作成ページは、画面で作った印つきのページ（ID は 〔ページID-M0904-共有〕）で読み替えた");
+  await expected(async () => {
+    expect.soft(同名.length, "ページ名「URL重複新規ページ」（印つき）のページの件数").toBe(0);
+    expect.soft(同URL.map((r) => r.ページID), "そのURLを持つページ（既存の1件だけ）").toEqual([共有]);
+  });
+});
+
+type 重複更新 = { 番号: string; 項目: "URL" | "ファイル名"; 新名: string; 新ファイル: string };
+async function 重複更新ケース(page: Page, notes: { get(k: string): string }, step: (n: number, f: () => Promise<void>) => Promise<void>, c: 重複更新) {
+  const { 番号, 項目, 新名, 新ファイル } = c;
+  const id = notes.get(`〔ページID-M0904-${番号}〕`);
+  const v = シードのページ(`S-M09-04-PAGE-${番号}`);
+  const 入力: ページの値 = 項目 === "URL" ? { ページ名: 識別(新名), URL: 識別("user_data/duplicate_url") } : { ページ名: 識別(新名), ファイル名: 識別(新ファイル) };
+  await 重複登録ケース(page, step, id, 入力);
+  return { id, v };
+}
+caseTest("IT-M09-04-037", async ({ page, notes, step, expected }) => {
+  let 行: ReturnType<typeof ページIDで> = null;
+  const { id, v } = await 重複更新ケース(page, notes, step, { 番号: "037", 項目: "URL", 新名: "他ページURL更新試験", 新ファイル: "" });
+  await step(4, async () => { 行 = ページIDで(id); });
+  note("基準のページは、画面で作った印つきのページで読み替えた");
+  await expected(async () => {
+    expect.soft(行?.ページ名, `ID ${id} のページ名が更新前の値のまま`).toBe(v.ページ名);
+    expect.soft(行?.URL, `ID ${id} のURLが更新前の値のまま`).toBe(v.URL);
+  });
+});
+caseTest("IT-M09-04-038", async ({ page, notes, step, expected }) => {
+  let 行: ReturnType<typeof ページIDで> = null;
+  const { id, v } = await 重複更新ケース(page, notes, step, { 番号: "038", 項目: "ファイル名", 新名: "利用者ファイル重複試験", 新ファイル: "user_data/duplicate_user_file" });
+  await step(4, async () => { 行 = ページIDで(id); });
+  note("基準のページは、画面で作った印つきのページで読み替えた");
+  await expected(async () => {
+    expect.soft(行?.ページ名, `ID ${id} のページ名が更新前の値のまま`).toBe(v.ページ名);
+    expect.soft(行?.ファイル名, `ID ${id} のtwigファイルが更新前の値のまま`).toBe(v.ファイル名);
+  });
+});
+caseTest("IT-M09-04-039", async ({ page, notes, step, expected }) => {
+  let 行: ReturnType<typeof ページIDで> = null;
+  const { id, v } = await 重複更新ケース(page, notes, step, { 番号: "039", 項目: "ファイル名", 新名: "標準ファイル重複試験", 新ファイル: "default/duplicate_standard_file" });
+  await step(4, async () => { 行 = ページIDで(id); });
+  note("ID 40 の開発者作成ページは、画面で作った印つきのページ（DBで編集可否区分を既定にした）で読み替えた");
+  await expected(async () => {
+    expect.soft(行?.ページ名, `ID ${id} のページ名が更新前の値のまま`).toBe(v.ページ名);
+    expect.soft(行?.ファイル名, `ID ${id} のtwigファイルが更新前の値のまま`).toBe(v.ファイル名);
+  });
+});
+
+function TOPを確かめる(): string {
+  const top = ページIDで("1");
+  if (!top || top.URL !== "homepage" || top.ファイル名 !== "index" || !top.既定) {
+    throw new Error(`初期データのTOPページ（ID 1）がシード表の前提（URL=homepage・twigファイル=index・編集可否区分=既定）と違う: ${JSON.stringify(top)}（共有のデータなので書き換えない。止める）`);
+  }
+  return top.ページID;
+}
+
+caseTest("IT-M09-04-052", async ({ page, notes, step, expected }) => {
+  const id = notes.get("〔ページID-M0904-052〕");
+  const topId = TOPを確かめる();
+  const pa = await ログインして(page);
+  let TOP入力欄 = -1; let TOP表示 = ""; let 利用者入力欄 = false;
+  await step(1, async () => { await pa.編集を開く(topId, "ja"); TOP入力欄 = await page.locator("#main_edit_url").count(); TOP表示 = (await page.locator("#pageDetail .row").filter({ hasText: "URL" }).first().innerText()).replace(/\s+/g, " ").trim(); });
+  await step(2, async () => { await pa.編集を開く(id, "ja"); 利用者入力欄 = await page.locator("#main_edit_url").isVisible(); });
+  await expected(async () => {
+    expect.soft(TOP入力欄, "TOPページのURLの入力欄の数").toBe(0);
+    expect.soft(TOP表示, "TOPページのURL欄に現在のURLが表示されている").toContain(new URL(BASE_URL).host);
+    expect.soft(利用者入力欄, `利用者作成のID ${id} のURLの入力欄が表示されている`).toBe(true);
+  });
+});
+
+caseTest("IT-M09-04-053", async ({ page, notes, step, expected }) => {
+  const id = notes.get("〔ページID-M0904-053〕");
+  const topId = TOPを確かめる();
+  const pa = await ログインして(page);
+  let TOP入力欄 = -1; let TOP表示 = ""; let 利用者入力欄 = false;
+  await step(1, async () => { await pa.編集を開く(topId, "ja"); TOP入力欄 = await page.locator("#main_edit_file_name").count(); TOP表示 = (await page.locator("#pageDetail .row").filter({ hasText: "ファイル名" }).first().innerText()).replace(/\s+/g, " ").trim(); });
+  await step(2, async () => { await pa.編集を開く(id, "ja"); 利用者入力欄 = await page.locator("#main_edit_file_name").isVisible(); });
+  await expected(async () => {
+    expect.soft(TOP入力欄, "TOPページのファイル名の入力欄の数").toBe(0);
+    expect.soft(TOP表示, "TOPページのファイル名欄に現在のファイル名が表示されている").toContain("index.ja.twig");
+    expect.soft(利用者入力欄, `利用者作成のID ${id} のファイル名の入力欄が表示されている`).toBe(true);
+  });
+});
+
+caseTest("IT-M09-04-057", async ({ page, notes, step, expected }) => {
+  const 名 = 識別("PC同URL新規ページ-M0904-057");
+  const モバイルID = notes.get("〔ページID-M0904-057〕");
+  const pa = await ログインして(page);
+  let 登録: Awaited<ReturnType<ページ管理["登録して結果を読む"]>> | null = null; let ids: string[] = []; let モバイル表示 = 0;
+  await step(1, async () => { await pa.新規画面を開く("ja"); });
+  await step(2, async () => { await pa.入力する({ ページ名: 名, URL: 識別("user_data/m0904-057-same-url"), ファイル名: 識別("user_data/m0904-057-new-file"), コード: "{% extends 'default_frame.twig' %}{% block main %}PC同URL確認M0904-057{% endblock %}" }); });
+  await step(3, async () => { 登録 = await pa.登録して結果を読む(); });
+  await step(4, async () => { await pa.一覧を開く(); });
+  await step(5, async () => {
+    await pa.検索する(名); ids = await 並びのID(pa);
+    for (const id of ids) モバイル表示 += await pa.行(id).locator("td").nth(4).locator("i.fa-mobile").count();
+  });
+  note("モバイルのページは、モバイル欄にレイアウトだけを設定した印つきのページ（ID は 〔ページID-M0904-057〕）。新しいページはレイアウトを設定せずに登録した（PC端末種別の指定は手順に無い）");
+  await expected(async () => {
+    expect.soft(登録?.成功, `登録が成功する（入力エラー: ${登録?.入力エラー.join(" / ") ?? ""}）`).toBe(true);
+    expect.soft(ids.length, "ページ名「PC同URL新規ページ-M0904-057」（印つき）の表示件数").toBe(1);
+    expect.soft(ids.includes(モバイルID), "モバイルのページは検索結果に含まれない").toBe(false);
+    expect.soft(モバイル表示, "表示された行にモバイル端末種別のレイアウト表示が無い").toBe(0);
+  });
+});
+
+caseTest("IT-M09-04-063", async ({ page, notes, step, expected }) => {
+  const 開発者 = notes.get("〔ページID-M0904-063開発者〕"); const 利用者 = notes.get("〔ページID-M0904-063〕");
+  const pa = await ログインして(page);
+  let ids: string[] = [];
+  await step(1, async () => { await pa.一覧を開く(); });
+  await step(2, async () => { await pa.検索する("m0904-063"); });
+  await step(3, async () => { await pwExpect(pa.行(開発者)).toBeVisible({ timeout: 30_000 }); await pwExpect(pa.行(利用者)).toBeVisible({ timeout: 30_000 }); ids = await 並びのID(pa); });
+  await step(4, async () => { await pa.行(開発者).scrollIntoViewIfNeeded(); });
+  await step(5, async () => { await pa.行(利用者).scrollIntoViewIfNeeded(); });
+  note("検索語「m0904-063」には前の実行の印つきのページも当たるので、2行だけとはせず、この実行の2行が並ぶことで確かめた。開発者作成のページは画面で作った印つきのページをDBで開発者作成にしたもの");
+  await expected(async () => {
+    expect.soft(ids.includes(開発者) && ids.includes(利用者), "この実行の開発者作成ページと利用者作成ページの2行が並んでいる").toBe(true);
+    expect.soft(await pa.行(開発者).locator("a[data-bs-target^='#delete_']").count(), `ID ${開発者} の行の削除ボタンの数`).toBe(0);
+    expect.soft(await pa.行(利用者).locator("a[data-bs-target^='#delete_']").count(), `ID ${利用者} の行の削除ボタンの数`).toBe(1);
+  });
 });
 void rc;

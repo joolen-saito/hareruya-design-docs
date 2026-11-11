@@ -6,6 +6,8 @@ import { mailIds, waitForMailTo } from "../../lib/mail";
 export type FrontMember = { 姓: string; 名: string; セイ: string; メイ: string; メール: string; パスワード: string; 住所3?: string;
   /** 省略すると会社名は入れない */
   会社名?: string;
+  /** MTG Companion登録名（姓・名）。省略すると入れない */
+  MTG姓?: string; MTG名?: string;
   /** 省略すると登録できる任意の値（東京都千代田区・生年月日1990/1/1・電話03-0000-0000）を入れる */
   詳細?: { 郵便番号1: string; 郵便番号2: string; 都道府県: string; 住所1: string; 住所2: string; 電話: [string, string, string] } };
 
@@ -40,6 +42,8 @@ export async function registerFrontMember(page: Page, v: FrontMember): Promise<v
   await f("tel][tel01").fill(d.電話[0]);
   await f("tel][tel02").fill(d.電話[1]);
   await f("tel][tel03").fill(d.電話[2]);
+  if (v.MTG姓 !== undefined) await f("Player][lastNameEn").fill(v.MTG姓);
+  if (v.MTG名 !== undefined) await f("Player][firstNameEn").fill(v.MTG名);
   await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.getByRole("button", { name: "同意して確認画面へ" }).click()]);
   await page.waitForLoadState("load");
   const errors = (await page.locator(".ec-errorMessage, .form-error-message, .invalid-feedback, .c-hareruya-form__error").allInnerTexts()).map((t) => t.trim()).filter(Boolean);

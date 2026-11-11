@@ -5,6 +5,10 @@ import { chooseByLabel, expectSaved } from "./common";
 
 export type TenantInput = {
   店名: string; 店名カナ: string; 店名英語: string; 支店URL: string; 店名略称3文字: string; ショップ名略称: string;
+  /** 公開の区分（省くと「公開」） */
+  公開?: "公開" | "非公開";
+  /** X公式アカウントURL（省くと入れない） */
+  X公式アカウントURL?: string;
 };
 
 /** 店舗一覧で、店名の行に表示されたIDを読む。無ければ null */
@@ -26,7 +30,7 @@ export async function createTenant(page: Page, v: TenantInput): Promise<void> {
   await f("shop_name_eng").fill(v.店名英語);
   await f("html_class_name").fill(v.支店URL);
   await page.getByLabel("支店", { exact: true }).check();
-  await page.getByLabel("公開", { exact: true }).check();
+  await page.getByLabel(v.公開 ?? "公開", { exact: true }).check();
   await page.getByLabel("開店", { exact: true }).check();
   await page.getByLabel("表示する", { exact: true }).check();
   await f("postal_code").fill("1600023");
@@ -38,6 +42,7 @@ export async function createTenant(page: Page, v: TenantInput): Promise<void> {
   await f("shop_digit").fill(v.店名略称3文字);
   await f("short_name_jp").fill(v.ショップ名略称);
   await f("rank").fill("0");
+  if (v.X公式アカウントURL !== undefined) await f("x_account_url").fill(v.X公式アカウントURL);
   await page.getByRole("button", { name: "登録", exact: true }).click();
   await expectSaved(page, `店舗「${v.店名}」の登録`);
 }

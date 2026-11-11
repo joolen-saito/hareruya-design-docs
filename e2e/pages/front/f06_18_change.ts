@@ -1,214 +1,188 @@
 /**
- * F06-18 会員情報変更（マイページの会員情報変更画面 → 会員情報変更完了画面）の操作。セレクタはここだけに書く。
- * 入力欄は会員情報登録画面（f06_01_entry.ts）と同じ名前。国を変えると画面が自動で送り直され（国の切り替えの印つき）、入力欄が国ごとに入れ替わる。
- * 正本: cases/F06-18_test_cases.tsv
+ * F06-18 会員情報変更（フロントのマイページ）・会員情報変更完了画面の操作。セレクタはここだけに書く。正本: cases/F06-18_test_cases.tsv
+ * 入力フォームは会員登録と同じ作り（form#entry_form・項目名 entry[...]）なので、F06-01 の会員登録の部品（EntryPage）を引き継ぐ。
+ * 国を変えると、画面のスクリプトがフォームを送り直して入力欄を国ごとに入れ替える（EntryPage.selectCountry が読み込みを待つ）。
  */
-import { expect, Locator, Page, test } from "@playwright/test";
+import { BrowserContext, Cookie, expect, Locator, Page } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { EntryPage } from "./f06_01_entry";
+import { LoginPage } from "./f06_03_login";
 
 const T = 30_000;
+export const 変更画面のパス = "/ja/mypage/change";
+export const 完了画面のパス = "/ja/mypage/change_complete";
 
-/** 画面の項目名 → 入力欄の名前（入力欄の名前はここだけに書く） */
-const 欄名 = {
-  "お名前(姓)": "name][name01", "お名前(名)": "name][name02", "フリガナ(姓)": "kana][kana01", "フリガナ(名)": "kana][kana02",
-  "性別": "sex", "国": "country", "郵便番号(前半)": "postalCode][postalCode01", "郵便番号(後半)": "postalCode][postalCode02",
-  "郵便番号(海外)": "abroadPostalCode", "住所(都道府県)": "address][pref", "住所1": "address][addr01", "住所2": "address][addr02",
-  "住所3": "address][addr03", "会社名": "company_name", "職業": "job",
-  "MTG Campaign 登録名(姓)": "Player][lastNameEn", "MTG Campaign 登録名(名)": "Player][firstNameEn",
-} as const;
-export type 項目 = keyof typeof 欄名;
-
-/** 電話番号の数字を3つの欄へ分ける（10桁は 2/4/4、11桁は 3/4/4） */
-function splitTel(n: string): [string, string, string] {
+/** 電話番号の数字を3つの欄へ分ける（10桁は 2/4/4、11桁は 3/4/4。会員登録の部品と同じ分け方） */
+export function 電話を分ける(n: string): [string, string, string] {
   const d = n.replace(/\D/g, "");
   return d.length >= 11 ? [d.slice(0, 3), d.slice(3, 7), d.slice(7)] : [d.slice(0, 2), d.slice(2, 6), d.slice(6)];
 }
 
-export type 表示値 = {
-  姓: string; 名: string; セイ: string; メイ: string; 生年月日: string; 性別: string; メール: string; メール確認: string;
-  国: string; 郵便番号: string; 都道府県: string; 住所1: string; 住所2: string; 住所3: string; 電話番号: string;
-  会社名: string; 職業: string; MTG姓: string; MTG名: string; 本人確認状況: string;
-};
+export class ChangePage extends EntryPage {
+  constructor(page: Page) { super(page); }
 
-export class ChangePage {
-  constructor(readonly page: Page) { page.setDefaultTimeout(T); }
-  get path(): string { return new URL(this.page.url()).pathname; }
-  get form(): Locator { return this.page.locator("form#entry_form"); }
-  f(name: string): Locator { return this.form.locator(`[name="entry[${name}]"]`); }
-  /** 画面の項目名で入力欄を引く */
-  欄(項目: 項目): Locator { return this.f(欄名[項目]); }
-
-  /** 会員ログイン画面からログインする（本店） */
-  async ログインする(メール: string, パスワード: string): Promise<void> {
-    await this.page.goto(`${BASE_URL}/ja/mypage/login`, { timeout: 60_000 });
-    await this.page.waitForLoadState("load");
-    await this.page.locator("#login_email").fill(メール, { timeout: T });
-    await this.page.locator("#login_pass").fill(パスワード, { timeout: T });
-    await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.page.locator("form#login_mypage button[type=submit]").click({ timeout: T }),
-    ]);
-    await this.page.waitForLoadState("load");
-    if (/\/mypage\/login/.test(this.path)) throw new Error(`会員 ${メール} でログインできない（会員ログイン画面のまま）`);
-  }
-
+  /** 会員情報変更画面のアドレスを開く（ログインしていなければ会員ログイン画面へ移る） */
   async 開く(): Promise<void> {
-    await this.page.goto(`${BASE_URL}/ja/mypage/change`, { timeout: 60_000 });
+    await this.page.goto(`${BASE_URL}${変更画面のパス}`, { timeout: 60_000 });
     await this.page.waitForLoadState("load");
-    await expect(this.form, "会員情報変更画面の入力フォーム").toBeVisible({ timeout: T });
   }
-  async 変更画面である(): Promise<boolean> { return /\/mypage\/change\/?$/.test(this.path) && (await this.form.count()) > 0; }
-  get 完了画面か(): boolean { return /\/mypage\/change_complete\/?$/.test(this.path); }
+  /** 開いて、会員情報変更の入力フォームが出ていることを確かめる */
+  async 開いて待つ(): Promise<void> {
+    await this.開く();
+    await expect(this.変更フォーム, "会員情報変更画面の入力フォーム").toBeVisible({ timeout: T });
+  }
+  /** 会員情報変更画面の入力フォーム（送り先が会員情報変更のもの） */
+  get 変更フォーム(): Locator { return this.page.locator('form#entry_form[action*="/mypage/change"]'); }
+  async 変更画面である(): Promise<boolean> { return (await this.変更フォーム.count()) > 0 && (await this.変更フォーム.isVisible()); }
+  get 完了画面である(): boolean { return this.path === 完了画面のパス; }
 
-  // ---- 入力 ----
-  private async 生で入れる(name: string, 値: string): Promise<void> { await this.f(name).fill(値, { timeout: T }); }
-  async 入れる(項目: 項目, 値: string): Promise<void> { await this.生で入れる(欄名[項目], 値); }
-  async 値(項目: 項目): Promise<string> { return this.欄(項目).inputValue({ timeout: T }); }
-  /** 選択欄を表示の名前で選ぶ。空文字は未選択の選択肢（値が空のもの） */
-  async 選ぶ(項目: 項目, 表示: string): Promise<void> {
-    if (表示 === "") await this.欄(項目).selectOption({ value: "" }, { timeout: T });
-    else await this.欄(項目).selectOption({ label: 表示 }, { timeout: T });
+  // ---- 入力欄 ----
+  async 値(name: string): Promise<string> { return this.f(name).inputValue({ timeout: T }); }
+  async 選択中の表示(name: string): Promise<string> {
+    return ((await this.f(name).locator("option:checked").first().innerText({ timeout: T }).catch(() => "")) ?? "").trim();
   }
-  private async 生の選択中(name: string): Promise<string> {
-    const o = this.f(name).locator("option:checked");
-    return (await o.count()) ? (await o.first().innerText()).trim() : "";
+  async 入れる(name: string, 値: string): Promise<void> { await this.f(name).fill(値, { timeout: T }); }
+  async 選ぶ(name: string, 表示: string): Promise<void> { await this.f(name).selectOption({ label: 表示 }, { timeout: T }); }
+  /** 選択欄を空の選択肢（値が空のもの）にする。空の選択肢が無ければ false */
+  async 選択を空にする(name: string): Promise<boolean> {
+    const has = await this.f(name).locator('option[value=""]').count();
+    if (has === 0) return false;
+    await this.f(name).selectOption("", { timeout: T });
+    return true;
   }
-  async 選択中(項目: 項目): Promise<string> { return this.生の選択中(欄名[項目]); }
-  async 選択肢(項目: 項目): Promise<string[]> { return (await this.欄(項目).locator("option").allInnerTexts()).map((t) => t.trim()); }
-  /** 未選択の選択肢（値が空のもの）があるか */
-  async 未選択の選択肢があるか(項目: 項目): Promise<boolean> { return (await this.欄(項目).locator('option[value=""]').count()) > 0; }
+  async 欄がある(name: string): Promise<boolean> { return (await this.f(name).count()) > 0 && (await this.f(name).first().isVisible()); }
 
-  async お名前(姓: string, 名: string): Promise<void> { await this.生で入れる("name][name01", 姓); await this.生で入れる("name][name02", 名); }
-  async フリガナ(セイ: string, メイ: string): Promise<void> { await this.生で入れる("kana][kana01", セイ); await this.生で入れる("kana][kana02", メイ); }
-  async 生年月日(y: string, m: string, d: string): Promise<void> {
-    for (const [n, v] of [["birth][year", y], ["birth][month", m], ["birth][day", d]] as const) {
-      // 空は未選択の選択肢。ほかは値または表示（会員情報登録画面の部品と同じ選び方）
-      if (v === "") await this.f(n).selectOption({ value: "" }, { timeout: T });
-      else await this.f(n).selectOption(v, { timeout: T });
+  async お名前を入れる(姓: string, 名: string): Promise<void> { await this.入れる("name][name01", 姓); await this.入れる("name][name02", 名); }
+  async フリガナを入れる(セイ: string, メイ: string): Promise<void> { await this.入れる("kana][kana01", セイ); await this.入れる("kana][kana02", メイ); }
+  async 生年月日を選ぶ(年: string, 月: string, 日: string): Promise<void> {
+    await this.f("birth][year").selectOption(年, { timeout: T });
+    await this.f("birth][month").selectOption(月, { timeout: T });
+    await this.f("birth][day").selectOption(日, { timeout: T });
+  }
+  async メールを入れる(メール: string): Promise<void> { await this.入れる("email][first", メール); await this.入れる("email][second", メール); }
+  async パスワードを入れる(パスワード: string): Promise<void> { await this.入れる("plain_password][first", パスワード); await this.入れる("plain_password][second", パスワード); }
+  /** 日本の郵便番号（「100-0001」「1000001」のどちらでも）を2つの欄へ入れる */
+  async 日本の郵便番号を入れる(郵便番号: string): Promise<void> {
+    const z = 郵便番号.replace(/\D/g, "");
+    await this.入れる("postalCode][postalCode01", z.slice(0, 3));
+    await this.入れる("postalCode][postalCode02", z.slice(3));
+  }
+  async 海外の郵便番号を入れる(郵便番号: string): Promise<void> { await this.入れる("abroadPostalCode", 郵便番号); }
+  async 電話番号を入れる(n: string): Promise<void> {
+    const [a, b, c] = 電話を分ける(n);
+    await this.入れる("tel][tel01", a); await this.入れる("tel][tel02", b); await this.入れる("tel][tel03", c);
+  }
+  async MTG登録名を入れる(姓: string, 名: string): Promise<void> { await this.入れる("Player][lastNameEn", 姓); await this.入れる("Player][firstNameEn", 名); }
+  async MTG登録名(): Promise<[string, string]> { return [await this.値("Player][lastNameEn"), await this.値("Player][firstNameEn")]; }
+
+  /**
+   * 国を選ぶ。いまと違う国なら、画面がフォームを送り直すのを待つ（EntryPage.selectCountry）。
+   * いまと同じ国を選んだときは画面は送り直さない（選び直しても変化が無い）。送り直したかを返す。
+   */
+  async 国を選ぶ(国: string): Promise<boolean> {
+    const current = await this.選択中の表示("country");
+    if (current === 国) {
+      await this.f("country").selectOption({ label: 国 }, { timeout: T });
+      return false;
     }
-  }
-  async メールアドレス(v: string): Promise<void> { await this.生で入れる("email][first", v); await this.生で入れる("email][second", v); }
-  async パスワード(v: string): Promise<void> { await this.生で入れる("plain_password][first", v); await this.生で入れる("plain_password][second", v); }
-  /** 日本の郵便番号（「101-0001」「1010001」のどちらでも） */
-  async 日本の郵便番号(v: string): Promise<void> {
-    const z = v.replace(/\D/g, "");
-    await this.生で入れる("postalCode][postalCode01", z.slice(0, 3));
-    await this.生で入れる("postalCode][postalCode02", z.slice(3));
-  }
-  async 電話番号(v: string): Promise<void> {
-    const [a, b, c] = v === "" ? ["", "", ""] : splitTel(v);
-    await this.生で入れる("tel][tel01", a); await this.生で入れる("tel][tel02", b); await this.生で入れる("tel][tel03", c);
+    await this.selectCountry(国);
+    return true;
   }
 
   /**
-   * 国を選ぶ。国の欄を選ぶと画面のスクリプトが入力内容を送り直し、入力欄が国ごとに入れ替わった画面に読み込み直される。
-   * いまと同じ国を選んだときも、選ぶ操作で送り直されることがあるので、送り直されたら読み込み直しを待つ（送り直されたかを返す）
+   * 国を未選択（値が空の選択肢）にする。空の選択肢が無ければ あった=false。
+   * 選ぶと画面のスクリプトがフォームを送り直すので、読み込みを待つ（送り直したかを返す）。
    */
-  async 国を選ぶ(国: string): Promise<boolean> {
-    const 同じ = (await this.選択中("国")) === 国;
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 同じ ? 10_000 : 60_000 }).then(() => true, () => false);
-    await this.f("country").selectOption(国 === "" ? { value: "" } : { label: 国 }, { timeout: T });
-    const moved = await nav;
-    if (!同じ && !moved) throw new Error(`国を「${国}」に変えても、画面が読み込み直されない`);
-    if (moved) {
-      await this.page.waitForLoadState("load");
-      await this.page.waitForLoadState("networkidle").catch(() => undefined);
-      await expect(this.form, "国を選んだあとの会員情報変更画面の入力フォーム").toBeVisible({ timeout: T });
-    }
-    return moved;
+  async 国を空にする(): Promise<{ あった: boolean; 送り直した: boolean }> {
+    if ((await this.f("country").locator('option[value=""]').count()) === 0) return { あった: false, 送り直した: false };
+    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 30_000 }).then(() => true, () => false);
+    await this.f("country").selectOption("", { timeout: T });
+    const 送り直した = await nav;
+    if (送り直した) await this.page.waitForLoadState("load");
+    return { あった: true, 送り直した };
   }
 
+  // ---- 表示 ----
+  /** 本人確認状況の欄に表示されている文 */
+  async 本人確認状況(): Promise<string> {
+    return ((await this.page.locator(".p-hareruya-entry__confirmation-status .c-hareruya-text").first().innerText({ timeout: T })) ?? "").trim();
+  }
+  get オンライン本人確認リンク(): Locator { return this.page.locator('.p-hareruya-entry__confirmation-status a[href*="/mypage/identification"]'); }
+  /** 「郵便番号から自動入力」の名前の、ボタン・リンク・ボタンの形の入力欄の数 */
+  async 郵便番号から自動入力ボタンの数(): Promise<number> {
+    const byRole = await this.page.getByRole("button", { name: /郵便番号から自動入力/ }).count();
+    const byLink = await this.page.getByRole("link", { name: /郵便番号から自動入力/ }).count();
+    const byInput = await this.page.locator('input[type=button][value*="自動入力"], input[type=submit][value*="自動入力"]').count();
+    return byRole + byLink + byInput;
+  }
+  /** 郵便番号の欄の並び（郵便番号の入力欄のまとまり）の文 */
+  async 郵便番号欄の文(): Promise<string> {
+    const jp = this.page.locator('[data-country-dependent="japan"].p-hareruya-entry__postcod');
+    if ((await jp.count()) > 0) return ((await jp.first().innerText()) ?? "").replace(/\s+/g, " ").trim();
+    const os = this.page.locator('[data-country-dependent="overseas"].p-hareruya-entry__postcod-overseas');
+    return (await os.count()) > 0 ? ((await os.first().innerText()) ?? "").replace(/\s+/g, " ").trim() : "";
+  }
+  /** 日本の郵便番号の欄の前に「〒」の印が出ているか */
+  async 郵便番号の印が見えるか(): Promise<boolean> {
+    const m = this.page.locator(".p-hareruya-entry__postcode-mark");
+    return (await m.count()) > 0 && (await m.first().isVisible()) && ((await m.first().innerText()).trim() === "〒");
+  }
+  /** 日本の郵便番号の区切り（「ー」）が見えているか */
+  async 郵便番号の区切りが見えるか(): Promise<boolean> {
+    const m = this.page.locator(".p-hareruya-entry__postcod .p-hareruya-entry__separator");
+    return (await m.count()) > 0 && (await m.first().isVisible());
+  }
   get 変更するボタン(): Locator { return this.page.locator("#submit_button"); }
-  /** 「変更する」を押す。画面の入力チェックで止まって送信されなかったときは sent=false */
-  async 変更するを押す(): Promise<{ sent: boolean }> {
-    const before = this.page.url();
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }).then(() => true, () => false);
-    await this.変更するボタン.click({ timeout: T });
-    const sent = await nav;
-    if (sent) await this.page.waitForLoadState("load");
-    return { sent: sent || this.page.url() !== before };
+  get 戻るボタン(): Locator { return this.page.locator(".p-hareruya-entry__form-actions a.c-hareruya-btn"); }
+
+  /** 「変更する」を押す。ブラウザ側の入力チェックで送信が止まったら sent=false（EntryPage の同意ボタンと同じ #submit_button） */
+  async 変更するを押す(): Promise<{ sent: boolean }> { return this.同意する(); }
+
+  // ---- なりすまし対策トークン（開発者ツールの操作の代わりに、画面の要素をスクリプトで変える） ----
+  get トークン欄(): Locator { return this.form.locator('input[name="entry[_token]"]'); }
+  async トークン欄を消す(): Promise<number> {
+    const n = await this.トークン欄.count();
+    await this.トークン欄.evaluateAll((els) => els.forEach((e) => e.remove()));
+    return n;
+  }
+  async トークンを書き換える(値: string): Promise<number> {
+    const n = await this.トークン欄.count();
+    await this.トークン欄.evaluateAll((els, v) => els.forEach((e) => { (e as HTMLInputElement).value = v; }), 値);
+    return n;
   }
 
-  // ---- なりすまし対策の照合値（開発者ツールの代わりに、画面の要素をスクリプトで変える） ----
-  get 照合値(): Locator { return this.form.locator('input[name="entry[_token]"]'); }
-  async 照合値の入力要素を削除する(): Promise<number> {
-    return this.照合値.evaluateAll((ns) => { ns.forEach((n) => n.remove()); return ns.length; });
-  }
-  async 照合値を変える(v: string): Promise<number> {
-    return this.照合値.evaluateAll((ns, val) => { ns.forEach((n) => { (n as HTMLInputElement).value = val; }); return ns.length; }, v);
-  }
+  // ---- 完了画面 ----
+  get 完了画面の戻るボタン(): Locator { return this.page.locator(".p-hareruya-entry-complete__actions a.c-hareruya-btn"); }
 
-  // ---- 表示の読み取り ----
-  async 日本の郵便番号欄(): Promise<boolean> {
-    return (await this.f("postalCode][postalCode01").isVisible()) && (await this.f("postalCode][postalCode02").isVisible());
+  /** パンくずの現在地を押す（リンクでない要素。押しても移らないことを見るので、読み込みは待たない） */
+  async 現在地を押す(): Promise<void> {
+    const cur = this.パンくず現在地.first();
+    await cur.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await cur.click({ timeout: 10_000 }).catch(async () => { await cur.dispatchEvent("click"); });
+    await this.page.waitForLoadState("load");
+    await this.page.waitForTimeout(1_500);
   }
-  /** 日本の郵便番号の「〒」の印が見えているか */
-  async 郵便番号の印(): Promise<string> {
-    const l = this.page.locator(".p-hareruya-entry__postcode-mark").first();
-    return (await l.count()) && (await l.isVisible()) ? (await l.innerText()).trim() : "";
-  }
-  async 海外の郵便番号欄(): Promise<boolean> { return this.f("abroadPostalCode").isVisible(); }
-  async 都道府県欄(): Promise<boolean> { return this.f("address][pref").isVisible(); }
-  async 住所3欄(): Promise<boolean> { return this.f("address][addr03").isVisible(); }
-  /** 「郵便番号から自動入力」のボタン・リンクの数 */
-  async 郵便番号から自動入力の数(): Promise<number> {
-    const a = await this.page.locator("button, a", { hasText: "郵便番号から自動入力" }).count();
-    const b = await this.page.locator('input[type=button][value*="郵便番号から自動入力"], input[type=submit][value*="郵便番号から自動入力"]').count();
-    return a + b;
-  }
-  get 本人確認状況(): Locator { return this.page.locator(".p-hareruya-entry__confirmation-status .c-hareruya-text").first(); }
-  get オンライン本人確認リンク(): Locator { return this.page.locator(".p-hareruya-entry__confirmation-status a", { hasText: "オンラインで本人確認を行う" }).first(); }
-  get 戻るリンク(): Locator { return this.form.locator("a.c-hareruya-btn", { hasText: "戻る" }).first(); }
-  get 完了画面の戻る(): Locator { return this.page.locator("main a.c-hareruya-btn, a.c-hareruya-btn.u-hareruya-w-full").filter({ hasText: "戻る" }).first(); }
+  /** リンクを押して、移った先の読み込みを待つ（パンくず・戻るボタン） */
+  async リンクを押す(l: Locator): Promise<void> { await this.押して遷移する(l); }
+  /** 本店の ECTOP（/ja/）か */
+  get 本店ECTOPか(): boolean { return this.path.replace(/\/$/, "") === "/ja"; }
+}
 
-  /** 画面に表示されている入力欄の値 */
-  async 表示値(): Promise<表示値> {
-    const v = async (n: string) => ((await this.f(n).count()) && (await this.f(n).isVisible()) ? this.f(n).inputValue() : "");
-    const s = async (n: string) => ((await this.f(n).count()) ? this.生の選択中(n) : "");
-    const z1 = await v("postalCode][postalCode01"), z2 = await v("postalCode][postalCode02");
-    return {
-      姓: await v("name][name01"), 名: await v("name][name02"), セイ: await v("kana][kana01"), メイ: await v("kana][kana02"),
-      生年月日: [await this.f("birth][year").inputValue(), (await this.f("birth][month").inputValue()).padStart(2, "0"), (await this.f("birth][day").inputValue()).padStart(2, "0")].join("-"),
-      性別: await s("sex"), メール: await v("email][first"), メール確認: await v("email][second"),
-      国: await s("country"), 郵便番号: z1 || z2 ? `${z1}-${z2}` : await v("abroadPostalCode"),
-      都道府県: (await this.都道府県欄()) ? await s("address][pref") : "", 住所1: await v("address][addr01"), 住所2: await v("address][addr02"),
-      住所3: await v("address][addr03"),
-      電話番号: (await v("tel][tel01")) + (await v("tel][tel02")) + (await v("tel][tel03")),
-      会社名: await v("company_name"), 職業: await s("job"), MTG姓: await v("Player][lastNameEn"), MTG名: await v("Player][firstNameEn"),
-      本人確認状況: (await this.本人確認状況.count()) ? (await this.本人確認状況.innerText()).trim() : "",
-    };
-  }
-  async エラー文(): Promise<string[]> {
-    return (await this.page.locator(".form-error-message, .invalid-feedback, .c-hareruya-form-input__field-error, .c-hareruya-form-input__field-error--server").allInnerTexts())
-      .map((t) => t.trim()).filter(Boolean);
-  }
+/** 会員ログイン画面でメールアドレスとパスワードを入れてログインする（本店）。ログイン画面のままなら止める */
+export async function 会員としてログインする(page: Page, メール: string, パスワード: string): Promise<void> {
+  const l = new LoginPage(page);
+  await l.ログイン画面を開く("本店");
+  await l.ログインする(メール, パスワード);
+  if (await l.ログイン画面である()) throw new Error(`会員 ${メール} でログインできない（${await l.認証エラー()}）`);
+}
 
-  // ---- パンくず ----
-  get パンくず現在地(): Locator { return this.page.locator(".p-hareruya-breadcrumb__current").first(); }
-  get パンくずホーム(): Locator { return this.page.locator("a.p-hareruya-breadcrumb__link").first(); }
-  async 現在地がリンクか(): Promise<boolean> {
-    const cur = this.パンくず現在地;
-    return (await cur.locator("a").count()) > 0 || (await cur.evaluate((e) => !!e.closest("a")));
-  }
-  /** 押して画面が移るのを待つ（移らないときは待ち切りで続ける。移ったかを返す） */
-  async 押す(l: Locator, 移るはず = true): Promise<boolean> {
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 移るはず ? 60_000 : 5_000 }).then(() => true, () => false);
-    const before = this.page.url();
-    try {
-      await l.click({ timeout: 10_000 });
-    } catch (e) {
-      // 押せたのに click が待ち切れになり、画面はもう移っていることがある（開発環境 2026-11-11 の 052・053・055）。移っていれば押し直さない
-      if (this.page.url() !== before || await Promise.race([nav, new Promise<boolean>((r) => setTimeout(() => r(false), 3_000))])) {
-        await this.page.waitForLoadState("load");
-        return true;
-      }
-      // 固定ヘッダーが要素の上に重なって普通に押せないとき（画面の作りの問題）。押下の操作を要素へ直接送って続け、注記を残す
-      test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
-    }
-    const moved = await nav;
-    if (moved) await this.page.waitForLoadState("load");
-    return moved;
-  }
+/** ブラウザに、自動ログイン用のCookieだけを入れる（会員ログインの認証セッションは入れない） */
+export async function 自動ログイン用Cookieだけを入れる(context: BrowserContext, cookies: Cookie[]): Promise<void> {
+  await context.clearCookies();
+  await context.addCookies(cookies);
+}
+
+/** Cookie のうち、自動ログイン用のもの（名前に remember を含む） */
+export function 自動ログイン用Cookie(cookies: Cookie[]): Cookie[] {
+  return cookies.filter((c) => /remember/i.test(c.name));
 }

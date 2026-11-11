@@ -155,12 +155,17 @@ type 設定 = {
   /** すべて整えたあとに呼ぶ（会員の累計の控えなど） */
   完了後?: (browser: Browser, seedId: string, ctx: { m: FrontMember; 注文番号: string; notes: import("../lib/notes").Notes }) => Promise<void>;
   注文後?: (browser: Browser, seedId: string, ctx: { m: FrontMember; 注文番号: string; notes: import("../lib/notes").Notes }) => Promise<void>;
+  /** 商品を用意したあと、会員が注文する前に行う（商品の規格をDBで整えるなど） */
+  注文前?: (browser: Browser, seedId: string) => Promise<void>;
+  /** 整えて、ステータスを変えたあとの最後に行う（DBでの仕上げなど） */
+  最後に?: (browser: Browser, seedId: string, ctx: { m: FrontMember; 注文番号: string; notes: import("../lib/notes").Notes }) => Promise<void>;
 };
 
 /** 商品→入庫→会員登録→注文→受注番号を控え→（整える）の流れ */
 export function 商品注文のシード(seedId: string, s: 設定): void {
   defineSeed(seedId, { needs: ["S-M05-11-ADM-A"] }, async ({ browser, notes, seed }) => {
     await 商品を用意する(browser, seedId, s.商品);
+    if (s.注文前) await s.注文前(browser, seedId);
     const m = 試験会員(s.メール前半);
     if (s.会員の用意) await s.会員の用意(browser, seedId, notes); else await 会員を用意する(browser, m);
     const lines = s.既存商品 ? s.既存商品() : s.注文 ? s.注文.map((o) => ({ 商品ID: 商品IDの控え(o.code), 数量: o.数量 })) : 販売中の商品(1).map((商品ID) => ({ 商品ID, 数量: 1 }));
@@ -182,6 +187,7 @@ export function 商品注文のシード(seedId: string, s: 設定): void {
       });
     }
     if (s.完了後) await s.完了後(browser, seedId, { m, 注文番号: no, notes });
+    if (s.最後に) await s.最後に(browser, seedId, { m, 注文番号: no, notes });
   });
 }
 

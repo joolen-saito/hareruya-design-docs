@@ -66,6 +66,17 @@ export async function expectMember(page: Page, 管理者ID: string, v: MemberInp
   if (diff.length) throw new Error(`メンバー「${v.名前}」（管理者ID ${管理者ID}）は登録済みだが、内容が違う: ${diff.join(" / ")}`);
 }
 
+/** 登録済みのメンバーの権限を、メンバー編集画面で変えて登録する（ほかの項目は画面の表示のまま） */
+export async function changeMemberAuthority(page: Page, 管理者ID: string, 権限: string): Promise<void> {
+  await page.goto(adminUrl(`/setting/system/member/${管理者ID}/edit`));
+  const sel = page.locator('[name="admin_member[Authority]"]');
+  const now = (await sel.locator("option:checked").allInnerTexts()).map((t) => t.trim()).join("");
+  if (now === 権限) return;
+  await chooseByLabel(sel, 権限);
+  await page.getByRole("button", { name: "登録", exact: true }).click();
+  await expectSaved(page, `管理者ID ${管理者ID} の権限の変更（「${now}」→「${権限}」）`);
+}
+
 /** あれば内容を確かめて使い、無ければ登録する */
 export async function ensureMember(page: Page, v: MemberInput): Promise<string> {
   const found = await findMemberId(page, v.名前);

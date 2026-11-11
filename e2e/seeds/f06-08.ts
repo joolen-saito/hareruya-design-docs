@@ -17,7 +17,7 @@ export const mailOf = (前半: string): string => markedMail(前半);
 export const passwordOf = (n: string): string => `F0608-Passw0rd-${n}!`;
 
 /** 会員を作り、会員ID・プレイヤーIDを控える。ログイン用のメール・パスワードを返す */
-async function 会員(browser: import("@playwright/test").Browser, notes: import("../lib/notes").Notes, n: string, 前半: string, 名: string, パスワード: string): Promise<{ mail: string; password: string; id: string }> {
+export async function 会員(browser: import("@playwright/test").Browser, notes: import("../lib/notes").Notes, n: string, 前半: string, 名: string, パスワード: string): Promise<{ mail: string; password: string; id: string }> {
   const id = await 本会員を作る(browser, { 姓: "晴屋", 名, セイ: "ハレヤ", メイ: "シケン", 前半, パスワード });
   notes.set(`〔会員ID-F0608-${n}〕`, id);
   const pid = available ? プレイヤーID(id) : "（DB確認なし）";

@@ -19,9 +19,10 @@ import { 承認一覧の最大番号 } from "../db/f03_05";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
-import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { withAdminSession } from "../lib/session";
-import { readRecommendDays, setRecommendDays } from "../pages/admin/f03_05_settings";
+import { readRecommendDays } from "../pages/admin/f03_05_settings";
 import { savePublishedClass } from "../pages/admin/f03_07_restock";
 import { ensureStockAdmin, STOCK_ADMIN } from "../pages/admin/f03_08_masters";
 import { readExistingGoodsChildCategoryId } from "../pages/admin/m03_01_goods_csv";
@@ -31,33 +32,28 @@ import { searchStockByCode, stockInRow } from "../pages/admin/m04_02_rc_stock";
 import { loggedInMemberName, registerStockEdit, StockApprovalListPage, StockListPage } from "../pages/admin/stock_edit";
 
 // ---- 共有の設定 ----
+// 共有の開発環境では手で打つ人も使うので、レコメンド検索期間は書き換えない。いまの値を読み、30 なら使い、違えば止める。
 
-/** シードを作る前のレコメンド検索期間（ケースが終わるたびに戻す） */
-let daysBefore: string | null = null;
+async function 検索期間を確かめる(browser: Browser): Promise<string> {
+  return withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    const v = await readRecommendDays(page);
+    if (v !== "30") throw new Error(`レコメンド検索期間（日数）が ${v}（30のはず）。共有の設定なので書き換えない。30にしてから流す`);
+    return v;
+  });
+}
 
 defineSeed("S-F03-05-CONFIG", async ({ browser }) => {
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    if (daysBefore === null) daysBefore = await readRecommendDays(page);
-    reportSeedIssue("S-F03-05-CONFIG", `レコメンド検索期間（日数）のいまの値は ${daysBefore}。ケースが終わったら戻す`);
-    if (daysBefore !== "30") await setRecommendDays(page, "30");
-  });
+  const v = await 検索期間を確かめる(browser);
+  reportSeedIssue("S-F03-05-CONFIG", `レコメンド検索期間（日数）は共有の設定なので書き換えず、いまの値が ${v} であることを確かめて使った（30でなければシードを止める）`);
 });
 
-/** ケースの開始時に、レコメンド検索期間を30にする（前のケースが終わるたびに戻しているため） */
+/** ケースの開始時に、レコメンド検索期間が30であることを確かめる（書き換えない） */
 export async function 開始時に検索期間を30にする(browser: Browser): Promise<void> {
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    if ((await readRecommendDays(page)) !== "30") await setRecommendDays(page, "30");
-  });
+  await 検索期間を確かめる(browser);
 }
 
-/** ケースが終わるたびに、控えた値へ戻す（正本: このシードを使うケースが終わるたびに控えた値へ戻す） */
-export async function restoreRecommendDays(browser: Browser): Promise<void> {
-  if (daysBefore === null) return;
-  const before = daysBefore;
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    if ((await readRecommendDays(page)) !== before) await setRecommendDays(page, before);
-  });
-}
+/** 共有の設定は書き換えないので、戻すものは無い */
+export async function restoreRecommendDays(_browser: Browser): Promise<void> {}
 
 // ---- 商品（在庫5） ----
 

@@ -118,6 +118,5 @@ defineSeed("S-F06-06-FILTER-002", async ({ browser, notes, seed }) => {
 });
 
 // 環境初期化用DBシードのマスタ（店舗・支払方法・BOステータス）。DB シードで登録しない決まりなので、開発環境に既にあるものを使う（作る操作は無い）
-defineSeed("S-F06-06-MASTER", async ({ seed }) => {
-  reportSeedIssue(seed.シードID, "店舗・支払方法・BOステータスのマスタは DB シードで登録せず、開発環境に既にあるものを使った（受取店舗「晴れる屋本店」は本店（店舗ID 1）の店名で読み替え。正本の外の補い）");
-});
+// S-F06-06-MASTER は seeds/f06-06-master.ts に1か所で定める（f06-06-d と f06-06-orders の二重の定義をまとめた 2026-11-11）
+import "./f06-06-master";

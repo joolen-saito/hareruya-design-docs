@@ -2,7 +2,7 @@
 import { Locator, Page, expect } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 
-export type 条件 = { キーワード?: string; 下限?: string; 上限?: string; 平日?: boolean; 休日?: boolean; 過去?: boolean; 大型?: boolean; 無料?: boolean; カテゴリ?: ("beginner" | "casual" | "competitive" | "reservation")[] };
+export type 条件 = { キーワード?: string; 下限?: string; 上限?: string; 平日?: boolean; 休日?: boolean; 過去?: boolean; 大型?: boolean; 無料?: boolean; カテゴリ?: ("beginner" | "casual" | "competitive" | "reservation")[]; フォーマットID?: string[]; 会場ID?: string[] };
 
 const ID: Record<string, string> = { 平日: "event-search-weekday", 休日: "event-search-holiday", 過去: "event-search-allow-past", 大型: "event-search-is-large", 無料: "event-search-is-free" };
 
@@ -32,7 +32,43 @@ export class EventSearchPage {
       await this.チェックにする(id, want);
     }
     for (const cat of c.カテゴリ ?? []) await this.チェックにする(`event-search-category-${cat}`, true);
+    for (const id of c.フォーマットID ?? []) await this.チェックにする(`event-search-format-${id}`, true);
+    for (const id of c.会場ID ?? []) await this.チェックにする(`event-search-venue-${id}`, true);
   }
+  /** 詳細検索の「クリア」ボタンを押す（画面側が次の描画で欄を空にするので、少し待つ） */
+  async クリアする(): Promise<void> {
+    await this.モーダル.locator("[data-search-clear]").click({ timeout: 20_000 });
+    await this.page.waitForTimeout(500);
+  }
+  /** 詳細検索のフォーマット・開催場所の選択肢（並び順のまま。値は番号） */
+  async フォーマットの選択肢(): Promise<{ id: string; 名前: string }[]> { return this.選択肢("format"); }
+  async 会場の選択肢(): Promise<{ id: string; 名前: string }[]> { return this.選択肢("venue"); }
+  private async 選択肢(kind: "format" | "venue"): Promise<{ id: string; 名前: string }[]> {
+    return this.モーダル.locator(`label[for^="event-search-${kind}-"]`).evaluateAll((ls, k) => ls.map((l) => ({
+      id: (l.getAttribute("for") ?? "").replace(`event-search-${k}-`, ""), 名前: (l.textContent ?? "").replace(/\s+/g, " ").trim(),
+    })), kind);
+  }
+  async 入力欄の文字(name: "term" | "from" | "to"): Promise<string> { return this.モーダル.locator(`input[name="${name}"]`).inputValue(); }
+  async チェックされた選択肢(kind: "format" | "venue" | "category"): Promise<string[]> {
+    return this.モーダル.locator(`input[name="${kind === "format" ? "formats" : kind === "venue" ? "venues" : "categories"}[]"]:checked`).evaluateAll((es) => es.map((e) => (e as HTMLInputElement).value));
+  }
+  /** 検索条件のボタン（チップ）の文字（左から） */
+  async チップの文字(): Promise<string[]> {
+    return (await this.page.locator("a.c-hareruya-tag--keyword-event .c-hareruya-tag__text").allInnerTexts()).map((t) => t.trim());
+  }
+  /** 検索条件のボタン（チップ）の「×」を押す（ボタンの名前＝「◯◯ を検索条件から外す」） */
+  async チップを外す(ラベル: string): Promise<void> {
+    await Promise.all([
+      this.page.waitForResponse((r) => r.request().isNavigationRequest() && r.url().includes("/events/list"), { timeout: 60_000 }),
+      this.page.locator(`a.c-hareruya-tag--keyword-event[aria-label="${ラベル} を検索条件から外す"]`).click({ timeout: 20_000 }),
+    ]);
+    await this.page.waitForLoadState("load");
+  }
+  /** 結果の日程のカード（日程IDで探す） */
+  カード(日程ID: string): Locator {
+    return this.page.locator("li.p-hareruya-event-card__item").filter({ has: this.page.locator(`a.p-hareruya-event-card__link[href$="/events/${日程ID}/detail"]`) });
+  }
+  async カードの文字(日程ID: string): Promise<string> { return ((await this.カード(日程ID).innerText()) ?? "").replace(/\s+/g, " ").trim(); }
   private async チェックにする(id: string, on: boolean): Promise<void> {
     const box = this.モーダル.locator(`#${id}`);
     if ((await box.isChecked()) !== on) await this.モーダル.locator(`label[for="${id}"]`).click({ timeout: 20_000 });
