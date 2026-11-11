@@ -20,11 +20,12 @@ import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { StockSearchPatternPage } from "../pages/admin/m04_01_search_pattern";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
+import { expectStore, findOpenStoreId, M0424StoreInput } from "../pages/admin/m04_24_store";
 import { OrderSearchPage } from "../pages/admin/m05_01_order_search";
 
-export const M0501_ADMIN: Account = { loginId: "m0501_admin", password: "Passw0rd!M0501" };
-const ADMIN_NAME = "M05-01試験管理者";
+/** 開発環境に同じログインID・名前の試験管理者（だれの回で書き換えられたか分からない）があるので、ログインID・名前に実行の印を付けて作る（M03-26 などと同じ） */
+export const M0501_ADMIN: Account = { loginId: rc("m0501_admin").toLowerCase(), password: "Passw0rd!M0501" };
+const ADMIN_NAME = rc("M05-01試験管理者");
 
 const COMPANY = "M05-01試験会社";
 const STORE_A: M0424StoreInput = {
@@ -41,10 +42,17 @@ export const 店舗Bの店名 = STORE_B.店名;
 defineSeed("S-M05-01-ADM", async ({ browser, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    const a = await ensureStore(page, STORE_A, issue);
-    const b = await ensureStore(page, STORE_B, issue);
+    // 店舗は作ると消せず、1店で在庫の行が約39万行できる（開発環境 2026-11-11）。開発環境に既にある店舗だけを使い、無ければ作らずに止める
+    const 既存の店舗 = async (v: M0424StoreInput): Promise<string> => {
+      const id = await findOpenStoreId(page, v.店名, v.会社名);
+      if (!id) throw new Error(`店舗「${v.店名}」が開発環境に無い（店舗は作らない。判断待ち）`);
+      await expectStore(page, id, v);
+      return id;
+    };
+    const a = await 既存の店舗(STORE_A);
+    const b = await 既存の店舗(STORE_B);
     await ensureMemberByStoreIds(page, {
-      名前: ADMIN_NAME, ログインID: M0501_ADMIN.loginId, メールアドレス: "m0501_admin@example.test", パスワード: M0501_ADMIN.password,
+      名前: ADMIN_NAME, ログインID: M0501_ADMIN.loginId, メールアドレス: `${M0501_ADMIN.loginId}@example.test`, パスワード: M0501_ADMIN.password,
       権限: "システム管理者", 所属店舗ID: a, デフォルト検索表示店舗ID: a, 編集可能店舗ID: [a, b],
     });
   });
