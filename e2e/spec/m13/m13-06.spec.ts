@@ -186,7 +186,7 @@ caseTest("IT-M13-06-039", async ({ page, step, expected }) => {
     await list.読み込みを待つ();
   });
   await expected(async () => {
-    await expect.soft(page.locator(".alert-danger"), "並び順の不正を示すエラー").toContainText("並べかえ条件に不正な値が設定されています");
+    await expect.soft(page.locator(".alert-danger").filter({ hasNotText: "デバッグモードが有効になっています" }), "並び順の不正を示すエラー").toContainText("並べかえ条件に不正な値が設定されています");
     await 初期表示であることを確かめる(list);
   });
 });

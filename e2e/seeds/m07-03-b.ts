@@ -79,7 +79,7 @@ defineSeed("S-M07-03-CONFIG", async ({ seed }) => {
 });
 
 defineSeed("S-M07-03-MAIL", async ({ seed }) => {
-  reportSeedIssue(seed.シードID, "シード作成時の問題: 試験環境のメール配送設定は画面に無い。既存の環境の設定を使い、変えていない（このシードを使う実装済みのケースはメールの受信を確かめない）");
+  reportSeedIssue(seed.シードID, "シード作成時の問題: 試験環境のメール配送設定は画面に無い。既存の環境の設定を使い、変えていない（開発環境のアプリのメールはメールの受け口に届く。受信を確かめるケースは、宛先に届いたメールを受け口で読む）");
 });
 
 defineSeed("S-M07-03-PRODUCTS", async ({ browser, seed }) => {
@@ -194,8 +194,13 @@ export async function 会員を用意する(browser: Browser, seedId: string, v:
   } finally { await ctx.close(); }
   return withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    await searchCustomer(page, v.メール);
-    const id = await resultCustomerId(page, v.メール);
+    // 共有の開発環境では、フロントで登録した直後の会員が会員一覧にすぐ出ないことがある（2026-11-11 M07-03）。10秒おいて最大6回、検索し直す
+    let id: string | null = null;
+    for (let i = 0; i < 7 && !id; i++) {
+      if (i > 0) await page.waitForTimeout(10_000);
+      await searchCustomer(page, v.メール);
+      id = await resultCustomerId(page, v.メール);
+    }
     if (!id) throw new Error(`会員 ${v.メール} が会員一覧に1件で出ない`);
     const edit = new M08CustomerEditPage(page);
     expect(await edit.open(id), `会員ID ${id} の会員登録編集画面の応答`).toBe(200);

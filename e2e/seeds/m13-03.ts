@@ -1,7 +1,7 @@
 /**
  * M13-03 日程登録/編集 のシードの作り方（画面操作）。正本: cases/M13-03_seed_data.tsv
  *
- * - 管理者・店舗（S-M13-03-ADM）: 店舗A・店舗Bは M13-02 と同じ店名なので、店舗一覧にあればそれを使う。
+ * - 管理者・店舗（S-M13-03-ADM）: 店舗A・店舗Bは、実行の印つきの店名（店舗A-<印>）で店舗登録画面から新しく作って使う（開発環境に同名の店舗が複数あるため。pages/admin/m13_marked_shop.ts）。手順・期待結果の「店舗A」は印つきの店名に読み替える。
  *   試験管理者 m1303_admin は店舗Aだけに編集権限を持つ。権限は正本の「イベント管理を操作できる権限」の代わりに、M13-02 と同じ「店舗オーナー」にした。
  * - 基本イベント（BASE-NNN など）: 試験管理者でイベント登録画面から登録する。イベント名には実行の印を付ける（rc）。
  * - 日程つきイベント（EDIT-NNN など）: 続けて祝日管理に開始日の祝日が無いことを確かめ（手元の祝日には 2026/10/01 は無い）、日程を登録し、日程IDを控える。
@@ -18,7 +18,7 @@ import { Page } from "@playwright/test";
 import { EventInput, registerEvent } from "../pages/admin/event";
 import { ensureMember } from "../pages/admin/member";
 import { registerSchedule, ScheduleInput } from "../pages/admin/schedule";
-import { ensureTenant } from "../pages/admin/tenant";
+import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
 import { 試験用の祝日を足す, 祝日が無いことを確かめる } from "../pages/admin/m13_holiday_setup";
 
 export const M1303_ADMIN: Account = { loginId: "m1303_admin", password: "Passw0rd!M1303" };
@@ -26,11 +26,11 @@ export const M1303_ADMIN: Account = { loginId: "m1303_admin", password: "Passw0r
 defineSeed("S-M13-03-ADM", async ({ browser, notes, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const issue = (m: string) => reportSeedIssue(seed.シードID, m);
-    notes.set("〔店舗ID-M1303-共有A〕", await ensureTenant(page, { 店名: "店舗A", 店名カナ: "テンポエー", 店名英語: "Shop A", 支店URL: "m1302a", 店名略称3文字: "テA", ショップ名略称: "店舗A" }, issue));
-    notes.set("〔店舗ID-M1303-共有B〕", await ensureTenant(page, { 店名: "店舗B", 店名カナ: "テンポビー", 店名英語: "Shop B", 支店URL: "m1302b", 店名略称3文字: "テB", ショップ名略称: "店舗B" }, issue));
+    notes.set("〔店舗ID-M1303-共有A〕", await ensureMarkedTenant(page, "A", issue));
+    notes.set("〔店舗ID-M1303-共有B〕", await ensureMarkedTenant(page, "B", issue));
     notes.set("〔管理者ID-M1303-共有〕", await ensureMember(page, {
-      名前: "M13-03 試験管理者", 所属店舗: "店舗A", ログインID: M1303_ADMIN.loginId, メールアドレス: "m1303_admin@example.test",
-      パスワード: M1303_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A"],
+      名前: "M13-03 試験管理者", 所属店舗: 印店名.A, ログインID: M1303_ADMIN.loginId, メールアドレス: "m1303_admin@example.test",
+      パスワード: M1303_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A],
     }));
   });
 });
@@ -40,7 +40,7 @@ const クレカ = { 支払方法: ["クレジットカード決済"] };
 /** シード表のイベント: 店舗A・初心者歓迎・チーム戦オフ・定員10・参加費0・公開・クレジットカード決済（変えたい項目だけ over で与える） */
 export function 基本イベント(名前: string, over: EventInput = {}): EventInput {
   return {
-    イベント名日: rc(名前), イベント名英: `English ${rc(名前)}`, 店舗: "店舗A", フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎",
+    イベント名日: rc(名前), イベント名英: `English ${rc(名前)}`, 店舗: 印店名.A, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎",
     公開状態: "公開", チーム戦: false, 定員: "10", 参加費: "0", ...クレカ, ...over,
   };
 }

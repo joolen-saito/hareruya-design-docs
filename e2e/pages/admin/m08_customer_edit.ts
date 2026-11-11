@@ -161,6 +161,16 @@ export class M08CustomerEditPage {
     }));
   }
 
+  /** 購入履歴・買取履歴の件数プルダウンで「100件」を選ぶ（選ぶと画面が開き直る。初期は1ページ10件） */
+  async 履歴の件数を100にする(欄: "購入" | "買取"): Promise<void> {
+    const sel = this.page.locator(欄 === "購入" ? "#page_count_pulldown" : "#buy_order_page_count_pulldown");
+    await sel.scrollIntoViewIfNeeded();
+    const label = await sel.locator("option").evaluateAll((os) => (os as HTMLOptionElement[]).map((o) => (o.textContent ?? "").trim()).find((t) => /^100\D*$/.test(t)) ?? "");
+    if (!label) throw new Error("件数プルダウンに100件が無い");
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 45_000 }), sel.selectOption({ label })]);
+    await this.page.waitForLoadState("load");
+  }
+
   /** 買取履歴の行（買取依頼日・買取番号・申込時金額・査定金額・買取ステータス・買取番号のリンク先） */
   async 買取履歴(): Promise<{ 買取依頼日: string; 買取番号: string; 申込時金額: string; 査定金額: string; 買取ステータス: string; href: string }[]> {
     await this.page.locator("#buyOrderHistory").scrollIntoViewIfNeeded();

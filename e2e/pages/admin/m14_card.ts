@@ -190,6 +190,13 @@ export class CardSearchPage {
     return ((await outcome.first().innerText()) ?? "").trim();
   }
 
+  /** 該当が0件のときの「該当なし」の見出し（件数の表示「検索結果：0件が該当しました」とは別の、結果欄の見出し）。出ていなければ null */
+  async 該当なしの見出し(): Promise<string | null> {
+    const heading = this.page.getByText(/^検索条件に合致するデータが見つかりませんでした$/);
+    await expect(this.page.getByText(/^検索結果：\d+件が該当しました$/).first(), "カード検索の検索結果").toBeVisible();
+    return (await heading.count()) > 0 ? ((await heading.first().innerText()) ?? "").trim() : null;
+  }
+
   async 検索結果件数(): Promise<number | null> {
     const m = /検索結果：(\d+)件/.exec(await this.検索結果の文());
     return m ? Number(m[1]) : null;

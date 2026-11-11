@@ -18,8 +18,12 @@
  * - 承認権限なしの権限: 権限管理の表で「承認権限」のチェックが外れている既存の権限を使う（権限のマスターに行を足さない）。
  * - 在庫の入庫: 正本の「在庫変更CSV登録」の代わりに、在庫検索一覧から開く在庫編集で、同じ入庫/その他・試験データ準備・増減数・
  *   仕入単価で登録し、別の承認者が在庫編集承認一覧で承認する（M04-02・M04-21 のシードと同じ部品）。
- * - 受信箱: 開発環境に試験用の受信箱が無い。受信メールを確かめないケース（013〜015・041・045・046・075・078・081）は、受信箱の用意を省く。
+ * - 受信箱: 開発環境のメールの受け口（E2E_MAIL_URL）を読む。承認通知先のメールアドレスは正本の値のまま（承認通知先のメンバーは作り直さないので、
+ *   実行の印を付けない）。受信メールを確かめるケース（016・082）は、操作の前に控えたメールの番号より後に、そのアドレスへ届いたメールだけを数える。
  * - パスワード: 画面の入力規則（半角の英字と数字を含む半角の記号・英数字）に合わない正本のパスワードは、規則に合う代わりの値で登録する。
+ * - QE-DETAIL-074（公開側の商品詳細の在庫）: 店舗は読み替えず本店（店舗ID 1）。申請者・承認者は正本の名前・ログインIDで「あれば使い、無ければ作る」
+ *   （所属は所属のマスタの既存の先頭の名称・権限はシステム管理者・所属店舗と編集可能店舗は本店）。商品コード・商品名に実行の印を付ける。
+ *   公開側の商品詳細に在庫が出るよう、取り込みで作られた規格を公開で登録する（正本の「表示対象」）。QE-ENV（ユニサーチ試験環境への接続）は書き換えない。
  */
 import fs from "node:fs";
 import { Browser, expect, Page, test } from "@playwright/test";
@@ -39,6 +43,9 @@ import { approveRows, readSupplyGoodsCategoryId, uploadGoodsLines } from "../pag
 import { approvalRows, fillStockEdit, searchApprovals, searchStockByCode, stockInRow, submitStockEdit } from "../pages/admin/m04_02_rc_stock";
 import { 印つき商品の在庫数を書き換える } from "../db/m04_23_split_join_csv";
 import { authoritiesWithoutApproval, readDepartmentNames, stockChangeCsvZoneLabels, tenantIdExists } from "../pages/admin/m04_23_split_join_csv";
+import { StockListPage } from "../pages/admin/stock_edit";
+import { savePublishedClass } from "../pages/admin/f03_07_restock";
+import { classRowsFromProductEdit, openProductEditByCode } from "../pages/admin/m03_23_seed_products";
 
 // ================================================================ 共有のシード
 
@@ -251,6 +258,8 @@ type CaseSpec = {
   unknown?: string[];
   /** ケース専用の承認通知先のメンバー（試験店舗A（M04-23）・在庫部に読み替えた所属・システム管理者） */
   approver?: { 名前: string; email: string; login: string };
+  /** 承認通知先が2名のケース（082）の、2人目 */
+  approver2?: { 名前: string; email: string; login: string };
   /** ケース専用の管理者（060・061） */
   admin?: { label: string; login: string; canonPassword: string; substitute: string };
   csv: { file: string; kind: "split" | "join"; rows: string[][] };
@@ -276,6 +285,9 @@ export type M0423CaseData = {
   csvPath: string;
   csvFile: string;
   approver?: string;
+  approver2?: string;
+  /** 承認通知先のメールアドレス（承認通知先が2名のときは2人分） */
+  approverMails: string[];
   admin?: Account;
 };
 const caseData = new Map<string, M0423CaseData>();
@@ -324,12 +336,13 @@ function defineCase(seedId: string, spec: CaseSpec): void {
         what: `${seedId} のグッズ商品CSV登録`, fileName: `${seedId}-goods.csv`, categoryId, onIssue: issue,
         lines: spec.products.map((p) => ({ 商品コード: codes.get(p.code)!, 商品名: nameOf(p), 基準価格: "100", 販売価格: "100", 買取価格: p.buy ?? "10" })),
       });
-      if (spec.approver) {
+      for (const ap of [spec.approver, spec.approver2]) {
+        if (!ap) continue;
         await ensureMemberWithDept(page, {
-          名前: spec.approver.名前, ログインID: spec.approver.login, メールアドレス: spec.approver.email, パスワード: "Passw0rd!M0423Nt",
+          名前: ap.名前, ログインID: ap.login, メールアドレス: ap.email, パスワード: "Passw0rd!M0423Nt",
           権限: "システム管理者", 所属店舗ID: m.A.id, 所属: m.在庫部, デフォルト検索表示店舗ID: m.A.id, 編集可能店舗ID: [m.A.id],
         });
-        issue(`承認通知先「${spec.approver.名前}」の所属店舗・編集可能店舗は ${m.A.店名}、所属は「${m.在庫部}」（在庫部の読み替え）。試験用の受信箱の用意は省いた（開発環境に無い。このケースは受信メールを確かめない）`);
+        issue(`承認通知先「${ap.名前}」の所属店舗・編集可能店舗は ${m.A.店名}、所属は「${m.在庫部}」（在庫部の読み替え）。メールアドレスは ${ap.email}（受信メールは、ケースが操作の前に控えたメールの番号より後に届いたものだけを数えて、受信メール0件に代える）`);
       }
       if (spec.admin) {
         const password = passwordOk(spec.admin.canonPassword) ? spec.admin.canonPassword : spec.admin.substitute;
@@ -379,7 +392,8 @@ function defineCase(seedId: string, spec: CaseSpec): void {
     fs.writeFileSync(csvPath, [head.join(","), ...body].join("\n") + "\n", "utf8");
     if (spec.storeLabel) notes.set(spec.storeLabel, store.id);
     caseData.set(spec.caseNo, {
-      store, csvPath, csvFile: spec.csv.file, approver: spec.approver?.名前,
+      store, csvPath, csvFile: spec.csv.file, approver: spec.approver?.名前, approver2: spec.approver2?.名前,
+      approverMails: [spec.approver?.email, spec.approver2?.email].filter((x): x is string => !!x),
       code: (c) => codes.get(c) ?? c,
       name: (n) => names.get(n) ?? n,
       admin,
@@ -394,6 +408,7 @@ const r = (s: string) => s.split(",");
 const apr1 = (caseNo: string) => ({ 名前: `承認一郎-${caseNo}`, email: `approver1-${caseNo}@example.test`, login: `m0423_apr1_${caseNo}` });
 const dpm = (caseNo: string) => ({ 名前: `承認通知先M0423-${caseNo}`, email: `dpm0423-${caseNo}@example.test`, login: `m0423_dpm_${caseNo}` });
 const sp = (): Prod[] => [{ code: "410001", ec: 100 }, { code: "410002" }];
+const dpmAB = (caseNo: string, x: "a" | "b", 呼び名: "甲" | "乙") => ({ 名前: `承認通知先${呼び名}M0423-${caseNo}`, email: `dpm0423-${caseNo}-${x}@example.test`, login: `m0423_dpm_${caseNo}${x}` });
 const jp = (): Prod[] => [{ code: "420001" }, { code: "420002", sm: 100 }];
 
 // ---- 編集不可の店舗（試験店舗B（M04-23）） ----
@@ -419,6 +434,7 @@ defineCase("S-M04-23-CASE-033", { caseNo: "033", storeLabel: "〔店舗ID-M0423-
 // ---- 開発者ツールで値を書き換える ----
 defineCase("S-M04-23-CASE-036", { noStoreId: "999999", caseNo: "036", storeLabel: "〔店舗ID-M0423-036〕", store: "A", products: sp(), csv: split("split_ok-036.csv", r("410001,10,410002,10")) });
 defineCase("S-M04-23-CASE-037", { noStoreId: "999999", caseNo: "037", storeLabel: "〔店舗ID-M0423-037〕", store: "A", products: jp(), csv: join("join_ok-037.csv", r("420001,10,420002,2,10")) });
+defineCase("S-M04-23-CASE-016", { caseNo: "016", storeLabel: "〔店舗ID-M0423-016〕", store: "A", products: sp(), approver: apr1("016"), csv: split("split_ok-016.csv", r("410001,10,410002,10")) });
 defineCase("S-M04-23-CASE-038", { caseNo: "038", storeLabel: "〔店舗ID-M0423-038〕", store: "A", products: sp(), csv: split("split_ok-038.csv", r("410001,10,410002,10")) });
 
 // ---- 255文字の商品コード・数量の下限 ----
@@ -480,6 +496,10 @@ for (const n of ["076", "077"]) {
     csv: join(`M0423-${n}-join-2src.csv`, r(`M0423-${n}-A,10,M0423-${n}-B,2,10`), r(`M0423-${n}-A,10,M0423-${n}-C,2,20`)),
   });
 }
+defineCase("S-M04-23-DPS-082", {
+  caseNo: "082", storeLabel: "〔店舗ID-M0423-082〕", store: "A", approver: dpmAB("082", "a", "甲"), approver2: dpmAB("082", "b", "乙"),
+  products: [{ code: "M0423-082-A", ec: 100 }, { code: "M0423-082-B" }], csv: split("M0423-082-split-ok.csv", r("M0423-082-A,10,M0423-082-B,10")),
+});
 defineCase("S-M04-23-DPS-078", {
   caseNo: "078", storeLabel: "〔店舗ID-M0423-078〕", store: "A", approver: dpm("078"),
   products: [{ code: "M0423-078-A", ec: 10 }, { code: "M0423-078-B" }], csv: split("M0423-078-split-eq.csv", r("M0423-078-A,10,M0423-078-B,10")),
@@ -583,3 +603,62 @@ function defineSeedRd(seedId: string, n: string, caseNo: string): void {
     notes: ["商品コード・商品名は、ほかの実行の行と見分けるため、正本の値の末尾に実行の印を付けた"],
   });
 }
+
+// ================================================================ 公開側の商品詳細の在庫（QE-*）
+
+export type M0423QE074 = {
+  本店名: string; 所属: string; 申請者: Actor; 承認者: Actor;
+  分割元: { 商品ID: string; 商品コード: string; 商品名: string }; 分割先コード: string; csvPath: string;
+};
+let qe074: M0423QE074 | null = null;
+export function m0423QE074(): M0423QE074 {
+  if (!qe074) throw new Error("S-M04-23-QE-DETAIL-074 をまだ作っていない");
+  return qe074;
+}
+
+defineSeed("S-M04-23-QE-ENV", async ({ seed }) => {
+  reportSeedIssue(seed.シードID, "検索サービス（ユニサーチ）の接続の設定は書き換えない（共有の設定）。公開側のブラウザはケースの新しいブラウザ（日本語・PC・ログアウト）で代える");
+});
+
+defineSeed("S-M04-23-QE-DETAIL-074", async ({ browser, seed, notes }) => {
+  const issue = (m: string) => reportSeedIssue(seed.シードID, m);
+  const src = { 商品コード: rc("QE0423-001-CODE"), 商品名: rc("QE0423-001-NAME") };
+  const dst = { 商品コード: rc("QE0423-001-DST-CODE"), 商品名: rc("QE0423-001-DST-NAME") };
+  const password = "Passw0rd-QE0423001";
+  const ap: Actor = { account: { loginId: "qe0423-001-ap", password }, 名前: "QE0423-001申請者" };
+  const ar: Actor = { account: { loginId: "qe0423-001-ar", password }, 名前: "QE0423-001承認者" };
+  let 本店名 = ""; let 所属 = ""; let 商品ID = "";
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    本店名 = await new StockListPage(page).shopNameById("1");
+    const depts = await readDepartmentNames(page);
+    if (depts.length === 0) throw new Error("所属のマスタに既存の名称が無い（所属を足すかは判断待ち）");
+    所属 = depts[0];
+    for (const [who, mail] of [[ap, "qe0423-001-ap@example.test"], [ar, "qe0423-001-ar@example.test"]] as const) {
+      await ensureMemberWithDept(page, {
+        名前: who.名前, ログインID: who.account.loginId, メールアドレス: mail, パスワード: who.account.password, 権限: "システム管理者",
+        所属店舗ID: "1", 所属, デフォルト検索表示店舗ID: "1", 編集可能店舗ID: ["1"],
+      });
+    }
+    const categoryId = await readSupplyGoodsCategoryId(page);
+    await uploadGoodsLines(page, {
+      what: `${seed.シードID} のグッズ商品CSV登録`, fileName: `qe0423-001-goods-${RUN_MARK}.csv`, categoryId, onIssue: issue,
+      lines: [src, dst].map((p) => ({ 商品コード: p.商品コード, 商品名: p.商品名, 基準価格: "100", 販売価格: "100", 買取価格: "1" })),
+    });
+    for (const p of [src, dst]) {
+      const id = await openProductEditByCode(page, p.商品コード);
+      if (p === src) 商品ID = id;
+      const rows = await classRowsFromProductEdit(page, id);
+      if (rows.length !== 1) throw new Error(`${p.商品コード} の取込直後の商品規格が1件でない: ${JSON.stringify(rows)}`);
+      await savePublishedClass(page, { productId: id, classId: rows[0].商品規格ID }, `${p.商品名} の取り込みで作られた規格`, issue);
+    }
+  });
+  notes.set("〔商品ID-M0423-001〕", 商品ID);
+  for (const who of [ap, ar]) await withAdminSession(browser, who.account, async () => undefined);
+  await stockIn(browser, issue, { 店名: 本店名, code: src.商品コード, zone: "EC-CUBE", qty: 10, unit: 100, reason: "試験データ", reg: ap, app: ar });
+  const csvPath = test.info().outputPath("qe0423-001.csv");
+  fs.writeFileSync(csvPath, [SPLIT_HEAD.join(","), [src.商品コード, "4", dst.商品コード, "4"].join(",")].join("\n") + "\n", "utf8");
+  qe074 = { 本店名, 所属, 申請者: ap, 承認者: ar, 分割元: { 商品ID, ...src }, 分割先コード: dst.商品コード, csvPath };
+  issue(`店舗は本店（${本店名}）。申請者「${ap.名前}」・承認者「${ar.名前}」は所属「${所属}」（所属のマスタの既存の先頭の名称。正本は任意の有効な値で同じ所属）・権限はシステム管理者（承認権限あり）・編集可能店舗は本店（あれば使う）`);
+  issue(`商品コード ${src.商品コード}・${dst.商品コード} で作り、取り込みで作られた規格を公開で登録した。分割元の本店のEC-CUBE在庫へ10を入庫（在庫変動理由「試験データ」・仕入単価100）し、承認者が承認した。CSVの商品コードも印つきの値`);
+});

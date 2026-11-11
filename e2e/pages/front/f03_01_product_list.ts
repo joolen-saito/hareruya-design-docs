@@ -307,6 +307,25 @@ export class FrontProductList {
     await this.結果を待つ();
   }
 
+  // ---- 在庫ありのみ（絞り込みの並びのチェック欄。2026-11-11 索引に載せた商品で確かめるケース） ----
+  /** 絞り込みの並びの「在庫ありのみ」のチェック欄（見た目の欄） */
+  get 在庫ありのみの欄(): Locator { return this.page.locator('[data-product-list-quick-filters] label[data-filter="stock"]:visible').first(); }
+  /** 「在庫ありのみ」が選ばれているか（検索の欄の在庫の値が「在庫ありのみ」） */
+  async 在庫ありのみが選ばれている(): Promise<boolean> {
+    return this.page.locator('[data-qf-hidden-row="stock"] input[value="1"]').first().isChecked().catch(() => false);
+  }
+  /** 「在庫ありのみ」を押し、検索サービスへの問い合わせと結果の描画を待つ */
+  async 在庫ありのみを選ぶ(): Promise<void> {
+    const box = this.在庫ありのみの欄;
+    await box.scrollIntoViewIfNeeded();
+    await Promise.all([
+      this.page.waitForResponse((r) => /\/products\/search\/unisearch/.test(r.url()), { timeout: 30_000 }).catch(() => null),
+      box.click({ timeout: 30_000 }),
+    ]);
+    await this.page.waitForTimeout(500);
+    await this.結果を待つ();
+  }
+
   // ---- ヘッダーの商品検索 ----
   async ヘッダーで検索する(keyword: string): Promise<void> {
     const input = this.page.locator("input.p-hareruya-header__search-input[name=product]:visible").first();
@@ -375,6 +394,20 @@ export class FrontProductList {
         画像: (card.querySelector("img.p-hareruya-product-card__img") as HTMLImageElement | null)?.getAttribute("src") ?? "",
       };
     }));
+  }
+  /** 本表示のカードの商品IDと、商品名のリンク先（絶対アドレス）。並び順 */
+  async カードのリンク先(): Promise<{ 商品ID: string; href: string }[]> {
+    return this.本表示のカード.locator("a.p-hareruya-product-card__name").evaluateAll((as) => as.map((a) => {
+      const href = (a as HTMLAnchorElement).href;
+      return { 商品ID: /\/products\/detail\/(\d+)/.exec(href)?.[1] ?? "", href };
+    }));
+  }
+  /** 本表示のカードの商品名のリンクを押し、商品詳細画面へ移るのを待つ */
+  async カードの商品名を押す(商品ID: string): Promise<void> {
+    const a = this.カード(商品ID).locator("a.p-hareruya-product-card__name").first();
+    await a.scrollIntoViewIfNeeded();
+    await Promise.all([this.page.waitForURL(new RegExp(`/products/detail/${商品ID}`), { waitUntil: "domcontentloaded" }), a.click()]);
+    await this.page.waitForLoadState("load");
   }
   /** 1枚のカードを読む（商品IDと言語で引く） */
   async カード1枚を読む(商品ID: string, 言語 = ""): Promise<カード情報 | undefined> {

@@ -23,6 +23,7 @@ import { カードから大会詳細を開く, 大会詳細, 大会詳細を読�
 import { イベント名で探す, 保存されているイベント, 保存イベント } from "../../db/event";
 import { QK1302_ADMIN, QK連携店舗 } from "../../seeds/m13-02-qk";
 import { M1305_ADMIN, 名, 複製元の名前, あ255, バナー, 賞品, 備考, フリー入力エリアの値 } from "../../seeds/m13-05";
+import { 印店名 } from "../../pages/admin/m13_marked_shop";
 
 const note = (m: string | null) => { if (m) test.info().annotations.push({ type: "手順の注記", description: m }); };
 const path = (url: string) => new URL(url).pathname;
@@ -70,10 +71,11 @@ caseTest("IT-M13-05-003", async ({ page, notes, step, expected }) => {
   let 選択肢: string[] = [];
   await step(1, async () => { form = await openEventCopy(page, notes.get("〔イベントID-M1305-003〕")); });
   await step(2, async () => { await form.店舗.click(); 選択肢 = await form.options(form.店舗); await page.keyboard.press("Escape"); });
+  note("店舗A・店舗B・店舗Cは印つきの店舗（" + 印店名.A + "・" + 印店名.B + "・" + 印店名.C + "）を作って使った");
   await expected(async () => {
-    expect.soft(選択肢, "店舗の選択肢に店舗Aがある").toContain("店舗A");
-    expect.soft(選択肢, "店舗の選択肢に店舗Bがある").toContain("店舗B");
-    expect.soft(選択肢, "店舗の選択肢に店舗Cが無い").not.toContain("店舗C");
+    expect.soft(選択肢, "店舗の選択肢に店舗Aがある").toContain(印店名.A);
+    expect.soft(選択肢, "店舗の選択肢に店舗Bがある").toContain(印店名.B);
+    expect.soft(選択肢, "店舗の選択肢に店舗Cが無い").not.toContain(印店名.C);
   });
 });
 
@@ -427,7 +429,7 @@ caseTest("IT-M13-05-035", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1305_ADMIN);
   const 会場を入れた: boolean[] = [];
   const 入れて登録 = async (form: EventForm, イベント名日: string, イベント名英: string) => {
-    await form.fill({ イベント名日, イベント名英, 店舗: "店舗A", フォーマット: ["形式A"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "10", 参加費: "100" });
+    await form.fill({ イベント名日, イベント名英, 店舗: 印店名.A, フォーマット: ["形式A"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "10", 参加費: "100" });
     const ok = await 会場を選ぶ(form, "会場A");
     if (!ok) note(`「${イベント名日}」: 会場の入力項目が画面に無いので、会場Aは入れられなかった`);
     会場を入れた.push(ok);
@@ -442,7 +444,7 @@ caseTest("IT-M13-05-035", async ({ page, notes, step, expected }) => {
   await step(5, async () => { 新規 = イベント名で探す(名.新規共通仕様); 複製 = イベント名で探す(名.複製共通仕様); });
   await expected(async () => {
     const 値 = (es: 保存イベント[]) => es.map((e) => ({ 店舗: e.店舗, フォーマット: e.フォーマット, ルール適用度: e.ルール適用度, 公開状態: e.公開状態, 定員: e.定員, 参加費: e.参加費 }));
-    const want = [{ 店舗: "店舗A", フォーマット: ["形式A"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "10", 参加費: "100" }];
+    const want = [{ 店舗: 印店名.A, フォーマット: ["形式A"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "10", 参加費: "100" }];
     expect.soft(値(新規), "イベント登録画面から登録したイベント").toEqual(want);
     expect.soft(値(複製), "複製新規の画面から登録したイベント").toEqual(want);
     expect.soft(会場を入れた, "2件とも会場Aを入れて登録できた（会場の入力項目がある）").toEqual([true, true]);

@@ -74,19 +74,27 @@ export async function メールで受注を開く(page: Page, メール: string,
   return { 受注ID: ids[0], 注文番号: ((await no.textContent()) ?? "").trim() };
 }
 
-/** 会員一覧をメールアドレスで検索し、その会員の行に表示された会員IDを返す */
+/**
+ * 会員一覧をメールアドレスで検索し、その会員の行に表示された会員IDを返す。
+ * 共有の開発環境では、フロントで登録した直後の会員が会員一覧の検索にすぐ出ないことがある（2026-11-11 M05-11 の 127・210・219・247）ので、
+ * 0 人のときは10秒おいて最大6回、検索し直す。
+ */
 export async function 会員IDを一覧から読む(page: Page, メール: string): Promise<string> {
-  await page.goto(adminUrl("/customer"));
-  await page.waitForLoadState("load");
-  await page.locator('[name="admin_search_customer[multi]"]').fill(メール);
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click(),
-  ]);
-  await page.waitForLoadState("load");
-  const rows = page.locator('tr[id^="ex-customer-"]');
-  if ((await rows.count()) !== 1) throw new Error(`会員一覧でメールアドレス「${メール}」の会員が ${await rows.count()} 人（1人のはず）`);
-  return ((await rows.first().getAttribute("id")) ?? "").replace("ex-customer-", "");
+  for (let i = 0; ; i++) {
+    await page.goto(adminUrl("/customer"));
+    await page.waitForLoadState("load");
+    await page.locator('[name="admin_search_customer[multi]"]').fill(メール);
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+      page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click(),
+    ]);
+    await page.waitForLoadState("load");
+    const rows = page.locator('tr[id^="ex-customer-"]');
+    const n = await rows.count();
+    if (n === 0 && i < 6) { await page.waitForTimeout(10_000); continue; }
+    if (n !== 1) throw new Error(`会員一覧でメールアドレス「${メール}」の会員が ${n} 人（1人のはず）`);
+    return ((await rows.first().getAttribute("id")) ?? "").replace("ex-customer-", "");
+  }
 }
 
 /** 会員情報編集画面でショップ用メモ欄を入れて登録する */

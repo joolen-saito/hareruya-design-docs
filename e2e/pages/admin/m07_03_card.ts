@@ -35,8 +35,12 @@ export async function カード商品にする(page: Page, 商品ID: string, 商
   const boxes = form.locator('input[name="admin_product[Category][]"]');
   const cats = await boxes.evaluateAll((els) => els.map((e) => ({ id: (e as HTMLInputElement).id, checked: (e as HTMLInputElement).checked, label: ((e as HTMLInputElement).labels?.[0]?.textContent ?? "").trim() })));
   for (const c of cats.filter((x) => x.checked)) await form.locator(`#${c.id}`).uncheck({ timeout: OPEN });
-  const single = cats.filter((x) => x.label === "単体カード");
-  if (single.length === 0) throw new Error(`商品カテゴリに「単体カード」が無い（${cats.map((x) => x.label).slice(0, 20).join("、")}…）`);
+  // 階層の表示で名前の前後に空白・記号が付いていても拾えるよう、完全一致のあと「単体カード」を含む名前も探す。無いときは全カテゴリを報告に出す
+  // 開発環境の最上位カテゴリは「シングルカード」（シード表の「単体カード」）。名前が違うときはこちらを選ぶ
+  const norm = (t: string) => t.replace(/\s+/g, "");
+  const pick = (name: string) => cats.filter((x) => norm(x.label) === name);
+  const single = pick("単体カード").length ? pick("単体カード") : pick("シングルカード").length ? pick("シングルカード") : cats.filter((x) => norm(x.label).includes("単体カード") || norm(x.label).includes("シングルカード"));
+  if (single.length === 0) throw new Error(`商品カテゴリに「単体カード」が無い（全${cats.length}件: ${cats.map((x) => x.label).join("、")}）`);
   await form.locator(`#${single[0].id}`).check({ timeout: OPEN });
 
   // 割引率: 登録済みのもの（選択肢の先頭）を選ぶ

@@ -29,7 +29,7 @@ import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { BASE_URL } from "../config/env";
 import { customerIdByEmail, savePublishedClass } from "../pages/admin/f03_07_restock";
 import { ensureStockAdmin, setFavoriteOption, setProductPrivate, STOCK_ADMIN } from "../pages/admin/f03_08_masters";
-import { customerStateByEmail } from "../pages/admin/customer";
+import { customerStateByEmailWait as customerStateByEmail } from "../pages/admin/customer";
 import { readExistingGoodsChildCategoryId } from "../pages/admin/m03_01_goods_csv";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { searchStockByCode, stockInRow } from "../pages/admin/m04_02_rc_stock";

@@ -2,7 +2,7 @@
  * M13-12 イベント新規申込登録のシード（画面操作）。正本: cases/M13-12_seed_data.tsv
  *
  * - 店舗A・店舗B（S-M13-12-STORE-A・B）: シード表の投入方法は「DBシードで店舗ID 1301・1302 を登録する」。DB へは書かない決まりなので、
- *   店舗登録画面で店名「店舗A」「店舗B」の店舗を用意し（M13-02・M13-11 と同じ店舗。あれば使う）、店舗ID 1301・1302 の代わりにする。
+ *   店舗登録画面で実行の印つきの店名（店舗A-<印>・店舗B-<印>。開発環境に同名の店舗が複数あるため新しく作る。pages/admin/m13_marked_shop.ts）の店舗を用意し、店舗ID 1301・1302 の代わりにする。
  *   ケースは店舗の番号そのものを確かめない（032 は店名「店舗A」を見る）。会場（M13-12会場A・B）は、会場の概念が無くなった（設計書 L0071）ので作らない。
  * - 申込登録用マスタ（S-M13-12-MASTER）: 投入方法は「初期マスタデータとしてDBシードで登録する」。DB へは書かず、
  *   フォーマット「スタンダード」がイベント登録画面の選択肢にあることを確かめる。申込状況「申込済み」・支払方法「管理者追加」は、
@@ -38,6 +38,7 @@ import { 会員IDをメールから } from "../pages/admin/f07_04_setup";
 import { EntryNewPage, 会員を本会員にする, 金額 } from "../pages/admin/m13_12_entry_new";
 import { ensureMember } from "../pages/admin/member";
 import { registerSchedule } from "../pages/admin/schedule";
+import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
 import { ensureTenant } from "../pages/admin/tenant";
 import { registerFrontMember } from "../pages/front/member_entry";
 import { QK1302_ADMIN, QK連携店舗 } from "./m13-02-qk";
@@ -49,19 +50,18 @@ const 会員のパスワード = "Passw0rd!M1312P";
 
 // ---- 店舗・マスタ・管理者 ----
 
-const 店 = (n: string, kana: string, eng: string, url: string, ryaku: string) => ({ 店名: `店舗${n}`, 店名カナ: kana, 店名英語: eng, 支店URL: url, 店名略称3文字: ryaku, ショップ名略称: `店舗${n}` });
 
 defineSeed("S-M13-12-STORE-A", async ({ browser, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    const id = await ensureTenant(page, 店("A", "テンポエー", "Shop A", "m1302a", "テA"), (m) => reportSeedIssue(seed.シードID, m));
-    reportSeedIssue(seed.シードID, `投入方法の「DBシードで店舗ID 1301を登録する」は行わず（DBへ書かない決まり）、店舗登録画面の店名「店舗A」の店舗（店舗ID ${id}）を店舗ID 1301 の代わりにした。会場は設計書で項目が無くなったので作っていない`);
+    const id = await ensureMarkedTenant(page, "A", (m) => reportSeedIssue(seed.シードID, m));
+    reportSeedIssue(seed.シードID, `投入方法の「DBシードで店舗ID 1301を登録する」は行わず（DBへ書かない決まり）、店舗登録画面の店名「店舗A」に実行の印を付けた店舗（店舗ID ${id}）を店舗ID 1301 の代わりにした。会場は設計書で項目が無くなったので作っていない`);
   });
 });
 
 defineSeed("S-M13-12-STORE-B", async ({ browser, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    const id = await ensureTenant(page, 店("B", "テンポビー", "Shop B", "m1302b", "テB"), (m) => reportSeedIssue(seed.シードID, m));
-    reportSeedIssue(seed.シードID, `投入方法の「DBシードで店舗ID 1302を登録する」は行わず（DBへ書かない決まり）、店舗登録画面の店名「店舗B」の店舗（店舗ID ${id}）を店舗ID 1302 の代わりにした。会場は設計書で項目が無くなったので作っていない`);
+    const id = await ensureMarkedTenant(page, "B", (m) => reportSeedIssue(seed.シードID, m));
+    reportSeedIssue(seed.シードID, `投入方法の「DBシードで店舗ID 1302を登録する」は行わず（DBへ書かない決まり）、店舗登録画面の店名「店舗B」に実行の印を付けた店舗（店舗ID ${id}）を店舗ID 1302 の代わりにした。会場は設計書で項目が無くなったので作っていない`);
   });
 });
 
@@ -77,8 +77,8 @@ defineSeed("S-M13-12-MASTER", async ({ browser, seed }) => {
 defineSeed("S-M13-12-ADM", { needs: ["S-M13-12-STORE-A", "S-M13-12-STORE-B"] }, async ({ browser }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-12試験管理者", 所属店舗: "店舗A", ログインID: M1312_ADMIN.loginId, メールアドレス: "m1312_admin@example.test",
-      パスワード: M1312_ADMIN.password, 権限: "モールオペレーター", デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A"],
+      名前: "M13-12試験管理者", 所属店舗: 印店名.A, ログインID: M1312_ADMIN.loginId, メールアドレス: "m1312_admin@example.test",
+      パスワード: M1312_ADMIN.password, 権限: "モールオペレーター", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A],
     });
   });
   // ログインでき（稼働中）、イベント管理の画面を開けること
@@ -88,8 +88,8 @@ defineSeed("S-M13-12-ADM", { needs: ["S-M13-12-STORE-A", "S-M13-12-STORE-B"] }, 
 async function 店舗B管理者を用意する(browser: Browser): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-12店舗B管理者", 所属店舗: "店舗B", ログインID: M1312_ADMIN_B.loginId, メールアドレス: "m1312_admin_b@example.test",
-      パスワード: M1312_ADMIN_B.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗B", 編集可能店舗: ["店舗B"],
+      名前: "M13-12店舗B管理者", 所属店舗: 印店名.B, ログインID: M1312_ADMIN_B.loginId, メールアドレス: "m1312_admin_b@example.test",
+      パスワード: M1312_ADMIN_B.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.B, 編集可能店舗: [印店名.B],
     });
   });
 }
@@ -112,7 +112,7 @@ async function イベントと日程を登録する(browser: Browser, account: A
   return withAdminSession(browser, account, async (page) => {
     待ちを区切る(page);
     const id = await registerEvent(page, {
-      イベント名日: v.名日, イベント名英: v.名英, 店舗: v.店舗 ?? "店舗A", フォーマット: ["スタンダード"], 支払方法: ["クレジットカード決済"],
+      イベント名日: v.名日, イベント名英: v.名英, 店舗: v.店舗 ?? 印店名.A, フォーマット: ["スタンダード"], 支払方法: ["クレジットカード決済"],
       参加費, ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16",
     });
     const d = await registerSchedule(page, id, {
@@ -152,7 +152,7 @@ defineSeed("S-M13-12-EVENT-001", { needs: ["S-M13-12-ADM"] }, async ({ browser, 
   const [ea, da] = await イベントと日程を登録する(browser, M1312_ADMIN, { 名日: `${権限制御の検索語()}-A`, 名英: "M13-12 Permission Event 001 A" });
   await 店舗B管理者を用意する(browser);
   const [eb, db] = await イベントと日程を登録する(browser, M1312_ADMIN_B, {
-    名日: `${権限制御の検索語()}-B`, 名英: "M13-12 Permission Event 001 B", 店舗: "店舗B", 参加費: "3000", 開始: "2026-10-11 13:00",
+    名日: `${権限制御の検索語()}-B`, 名英: "M13-12 Permission Event 001 B", 店舗: 印店名.B, 参加費: "3000", 開始: "2026-10-11 13:00",
   });
   notes.set("〔イベントID-M1312-001A〕", ea);
   notes.set("〔イベント日程ID-M1312-001A〕", da);

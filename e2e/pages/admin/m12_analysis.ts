@@ -127,6 +127,19 @@ export class ProductRequestPage {
   get CSVリンク(): Locator { return this.page.locator('a[href*="/analysis/product-request/export"]'); }
   get 該当なしの表示(): Locator { return this.page.locator("#result_list_main .box-title").filter({ hasText: "検索条件に該当するデータがありませんでした" }); }
 
+  /** 入荷通知一覧CSV出力リンクを押し、ダウンロードされたCSVを行と列にして返す（見出しの行を含む。空の行は除く） */
+  async CSVを出力する(): Promise<string[][]> {
+    const [dl] = await Promise.all([this.page.waitForEvent("download", { timeout: 60_000 }), this.CSVリンク.first().click({ timeout: 20_000 })]);
+    const chunks: Buffer[] = [];
+    for await (const c of await dl.createReadStream()) chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c));
+    return parseCsv(decodeCsvBytes(Buffer.concat(chunks))).filter((r) => r.some((c) => c.trim() !== ""));
+  }
+
+  /** 表示件数の選択肢のうち、表示名（またはその値）が n のものを選ぶ */
+  async 表示件数を選ぶ(n: string): Promise<void> {
+    await this.表示件数.selectOption({ label: n }, { timeout: 20_000 }).catch(async () => { await this.表示件数.selectOption(n, { timeout: 20_000 }); });
+  }
+
   /** 検索ボタンを押し、結果の画面（同じ画面）が出るのを待つ */
   async 検索する(): Promise<void> {
     await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.検索ボタン.click({ timeout: 20_000 })]);

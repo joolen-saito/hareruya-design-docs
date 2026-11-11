@@ -208,4 +208,76 @@ export class FrontDetailSearch {
     const u = new URL(this.page.url());
     return { パス: decodeURIComponent(u.pathname), 引数: [...u.searchParams.entries()], 文: decodeURIComponent(u.pathname + u.search) };
   }
+
+  // ---- 追加分（2026-11-11 索引に載せた商品で検索結果を確かめるケース） ----
+
+  /** 見出し（legend・見出しの label）がちょうど 見出し の項目の囲み */
+  項目(見出し: string): Locator {
+    const re = new RegExp(`^\\s*${見出し.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`);
+    return this.フォーム.locator(".p-hareruya-form-block").filter({ has: this.page.locator("legend .c-hareruya-heading--lev3, label.c-hareruya-heading--lev3").filter({ hasText: re }) }).first();
+  }
+
+  /**
+   * 項目の中のチェック欄・ラジオの選択肢を、表示名（色はアイコンの名前）で選ぶ。既に選ばれていれば何もしない。
+   * 選んだ欄の名前と値を返す（記録の注記に使う）。
+   */
+  async 選択肢を選ぶ(見出し: string, 表示名: string): Promise<{ name: string; value: string }> {
+    const block = this.項目(見出し);
+    await block.waitFor({ state: "attached", timeout: 15_000 });
+    const labels = block.locator("label");
+    const n = await labels.count();
+    for (let i = 0; i < n; i++) {
+      const l = labels.nth(i);
+      const input = l.locator("input").first();
+      if ((await input.count()) === 0) continue;
+      const aria = ((await input.getAttribute("aria-label")) ?? "").trim();
+      const text = ((await l.innerText().catch(() => "")) ?? "").replace(/\s+/g, " ").trim();
+      if (aria !== 表示名 && text !== 表示名) continue;
+      if (!(await input.isChecked())) {
+        await l.scrollIntoViewIfNeeded();
+        await l.click();
+        await this.page.waitForTimeout(200);
+      }
+      if (!(await input.isChecked())) throw new Error(`商品詳細検索の「${見出し}」の「${表示名}」を押しても選ばれない`);
+      return { name: (await input.getAttribute("name")) ?? "", value: (await input.getAttribute("value")) ?? "" };
+    }
+    throw new Error(`商品詳細検索の「${見出し}」に「${表示名}」の選択肢が無い`);
+  }
+
+  /** 項目の中で選ばれているチェック欄の選択を外す（前の検索の条件がモーダルに残っているとき）。外した選択肢の表示名を返す */
+  async 選択を外す(見出し: string): Promise<string[]> {
+    const block = this.項目(見出し);
+    const 外した: string[] = [];
+    for (const l of await block.locator("label").all()) {
+      const input = l.locator('input[type="checkbox"]').first();
+      if ((await input.count()) === 0 || !(await input.isChecked())) continue;
+      外した.push(((await input.getAttribute("aria-label")) ?? "").trim() || ((await l.innerText().catch(() => "")) ?? "").replace(/\s+/g, " ").trim());
+      await l.scrollIntoViewIfNeeded();
+      await l.click();
+      await this.page.waitForTimeout(200);
+    }
+    return 外した;
+  }
+
+  /** 項目の中の選択欄（サブタイプ・イラストレーター・価格など）で、表示名がちょうど 表示名 の選択肢を選ぶ */
+  async 選択欄で選ぶ(select: Locator, 表示名: string, what: string): Promise<void> {
+    const opts = await select.locator("option").evaluateAll((os) => os.map((o) => ({ v: (o as HTMLOptionElement).value, t: (o.textContent ?? "").replace(/\s+/g, " ").trim() })));
+    const hit = opts.filter((o) => o.t === 表示名);
+    if (hit.length !== 1) throw new Error(`商品詳細検索の${what}に「${表示名}」の選択肢が ${hit.length} 件（選択肢: ${opts.map((o) => o.t).slice(0, 30).join("、")}）`);
+    await select.selectOption(hit[0].v);
+  }
+
+  get サブタイプの選択欄(): Locator { return this.フォーム.locator(".p-hareruya-search-form__subtype select").first(); }
+  get イラストレーターの選択欄(): Locator { return this.フォーム.locator(".p-hareruya-search-form__illustrator select").first(); }
+
+  /** 「禁止カードも表示する」のチェック欄 */
+  get 禁止カードも表示する(): Locator {
+    return this.フォーム.locator(".p-hareruya-search-form__format label.p-hareruya-search-form__checkbox").filter({ hasText: /^\s*禁止カードも表示する\s*$/ }).first();
+  }
+
+  /** 商品名の入力欄の下に出る候補（ユニサジェスト）の文 */
+  async 候補の文(): Promise<string[]> {
+    return (await this.フォーム.locator("[data-search-keyword-suggest] li").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+  }
+
 }

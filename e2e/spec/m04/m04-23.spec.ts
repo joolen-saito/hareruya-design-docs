@@ -6,8 +6,11 @@
  * 商品コード→ケース・実行ごとの商品、所属→所属のマスタの既存の名称、在庫の入庫→在庫編集と在庫編集承認一覧。
  *
  * 実装しないケース（実施不可の候補）:
- * - 016・082: 承認通知先の試験用の受信箱を開いて通知メールを確かめる。開発環境に受信箱が無い（S-M04-23-CASE-016・S-M04-23-DPS-082）。
- * - 074: 公開側のブラウザがユニサーチ試験環境へ接続できること（S-M04-23-QE-ENV。外部の試験環境）。
+ * - 016・082: 承認通知先の試験用の受信箱は、開発環境のメールの受け口（E2E_MAIL_URL）で読む。「登録」の前に控えたメールの番号より後に、
+ *   承認通知先のメールアドレスへ届いたメールだけを数える。
+ *
+ * 074: 公開側の商品詳細（ブラウザB）は、ケースの中で開く新しいブラウザ（日本語・PC・ログアウト）。商品詳細の在庫は表示中の価格・在庫の表の
+ *   状態NMの行の在庫の欄の数字で読む（桁区切り・単位を除く）。商品詳細は検索サービスの索引を使わないので、フィードは送らない。
  *
  * 046・051 の在庫数 999999999 は、シードが実行の印つきの商品の在庫の行だけをDBで書き換えて作る（依頼者の承認 2026-11-10）。
  *
@@ -19,6 +22,7 @@
 import { Page, test } from "@playwright/test";
 import { expect, CaseBody, caseTest } from "../../lib/case";
 import { Account, loginAdmin } from "../../lib/session";
+import { mailIds, 届くのを待つ } from "../../pages/mail_inbox";
 import { 商品コードに関わる在庫分割結合, 店舗の在庫数 } from "../../db/m04_23_split_join_csv";
 import { searchStockList, stockRow, stockRowValues } from "../../pages/admin/m04_13_setup";
 import { numberOf, StockHistoryPage } from "../../pages/admin/m04_17_stock_history";
@@ -28,7 +32,11 @@ import {
 } from "../../pages/admin/m04_23_split_join_csv";
 import {
   m0423Admin, m0423Case, M0423CaseData, m0423Master, M0423L_ADMIN, RD_APR, RD_OP, 一般三郎, 承認一郎, 承認次郎,
+  m0423QE074,
 } from "../../seeds/m04-23";
+import { FrontDetail, 店 } from "../../pages/front/f03_02_detail";
+import { hideDebugToolbar } from "../../lib/session";
+import { BASE_URL } from "../../config/env";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const SPLIT: SplitJoinCsvKind = "在庫分割CSV登録";
@@ -442,4 +450,84 @@ caseTest("IT-M04-23-084", async ({ page, step, expected }) => {
     expect.soft(a && { 店舗: a.店舗, 在庫区分: a.在庫区分, 在庫: numberOf(a.在庫), 総原価: numberOf(a.総原価) }, "手順4: 分割元の行の店舗・在庫区分・在庫・総原価")
       .toEqual({ 店舗: d.store.店名, 在庫区分: "EC-CUBE", 在庫: 6, 総原価: 600 });
   });
+});
+
+// ================================================================ 016・082（承認通知メールの受信）
+
+/** 承認通知のメールが宛先ごとに1件届くこと（登録の前に控えたメールの番号より後に届いたものだけを数える） */
+function notified(kind: SplitJoinCsvKind, caseNo: string, who: (d: M0423CaseData) => (string | undefined)[], mails: (d: M0423CaseData) => string[]): CaseBody {
+  return async ({ page, step, expected }) => {
+    await loginAdmin(page, m0423Admin());
+    const d = m0423Case(caseNo);
+    const modal = new SplitJoinCsvModal(page, kind);
+    const 控え = await mailIds();
+    await step(1, () => modal.open());
+    await step(2, async () => {
+      await modal.chooseStore(d.store.店名);
+      await modal.chooseZone("EC-CUBE");
+      await modal.chooseMembers(who(d).filter((x): x is string => !!x));
+      await modal.chooseFile(d.csvPath);
+    });
+    await step(3, () => register(page, modal));
+    const 受信: { 宛先: string; 件名: string; 件数: number }[] = [];
+    let n = 4;
+    for (const a of mails(d)) {
+      await step(n++, async () => {
+        const m = await 届くのを待つ(a, 控え);
+        受信.push({ 宛先: a, 件名: m.件名, 件数: m.件数 });
+      });
+    }
+    await expected(async () => {
+      expect.soft(受信.length, "受信箱で確かめた承認通知先の数").toBe(mails(d).length);
+      for (const r of 受信) expect.soft(r.件数, `承認通知先 ${r.宛先} の受信メール一覧の、在庫分割の承認通知メールの件数`).toBe(1);
+    });
+    for (const r of 受信) note(`承認通知先 ${r.宛先} に届いたメールの件名: 「${r.件名}」`);
+    note("受信箱は、「登録」の前に控えたメールの番号より後に、承認通知先のメールアドレスへ届いたメールだけを数えた（受信メール0件の準備の代わり）。承認通知先は、メンバー名のメールアドレス（正本の値のまま）");
+  };
+}
+
+caseTest("IT-M04-23-016", notified(SPLIT, "016", (d) => [d.approver], (d) => d.approverMails));
+caseTest("IT-M04-23-082", notified(SPLIT, "082", (d) => [d.approver, d.approver2], (d) => d.approverMails));
+
+// ================================================================ 074（公開側の商品詳細の在庫）
+
+caseTest("IT-M04-23-074", async ({ page, browser, notes, step, expected }) => {
+  const d = m0423QE074();
+  const id = notes.get("〔商品ID-M0423-001〕");
+  const b = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true, viewport: { width: 1280, height: 900 } });
+  await hideDebugToolbar(b);
+  const detail = new FrontDetail(await b.newPage());
+  const NMの在庫 = async (when: string): Promise<string> => {
+    const rows = await detail.行の文();
+    note(`${when}: ブラウザBの商品詳細（商品ID ${id}）の価格・在庫の表: ${rows.map((r) => `${r.状態}・${r.価格}・在庫${r.在庫}`).join(" / ") || "（行が無い）"}`);
+    const nm = rows.filter((r) => /^(NM|ニアミント)/.test(r.状態));
+    return (nm[0] ?? rows[0])?.在庫.replace(/[^0-9]/g, "") ?? "";
+  };
+  const modal = new SplitJoinCsvModal(page, SPLIT);
+  let 前 = ""; let 後 = "";
+  try {
+    await step(1, async () => {
+      const res = await detail.open(店.本店, id);
+      expect(res?.status() ?? 0, "ブラウザBの商品詳細の応答").toBeLessThan(400);
+      前 = await NMの在庫("手順1");
+    });
+    await step(2, async () => { await loginAdmin(page, d.申請者.account); });
+    await step(3, async () => { await openSplitJoinList(page); await modal.openOnList(); });
+    await step(4, async () => {
+      await modal.chooseStore(d.本店名);
+      await modal.chooseZone("EC-CUBE");
+      await modal.chooseDepartment(d.所属);
+      await modal.chooseMembers([d.承認者.名前]);
+      await modal.chooseFile(d.csvPath);
+      await register(page, modal);
+    });
+    await step(5, async () => {
+      await detail.open(店.本店, id);
+      後 = await NMの在庫("手順5");
+    });
+    await expected(async () => {
+      expect.soft(前, "手順1の商品詳細の在庫の項目（数字）").toBe("10");
+      expect.soft(後, "手順5（分割の登録後・承認前）の商品詳細の在庫の項目（数字）").toBe("6");
+    });
+  } finally { await b.close(); }
 });

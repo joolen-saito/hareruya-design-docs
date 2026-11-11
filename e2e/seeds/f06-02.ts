@@ -3,12 +3,12 @@
  *
  * - 「この秘密鍵を持つ会員は0件」（NOUSER）: シード表は「DBで0件を確認し、存在すれば試験データを削除する」と定める。DBへは書き込まない決まりのため、
  *   DBの参照で0件であることを確かめるだけにする（残っていれば止める）。秘密鍵は英数字だけの書式を確かめる値なので実行の印は付けない（正本の外の補い）。
- * - 本会員（REGULAR-004）: 仮会員機能（共有の設定）を有効にして、フロントの会員登録で仮会員を作り、届いた本登録のメールのURLは開かずに秘密鍵を控え、
+ * - 本会員（REGULAR-004）: 仮会員機能（共有の設定）が有効であることを前提に（共有の環境では書き換えず、無効なら止める。手元の環境では有効にして終わりに戻す）、フロントの会員登録で仮会員を作り、届いた本登録のメールのURLは開かずに秘密鍵を控え、
  *   管理画面で会員ステータスを本会員にして保存する。メールアドレスの前半に実行の印を付ける（依頼者決定 2026-10-28）。
  * - 仮会員でスマレジIDを持つ会員（LINKED-005・006）は、スマレジIDを画面で指定できずDBへ直接設定する作り方のため、実装しない。
  */
 import { Browser } from "@playwright/test";
-import { BASE_URL, SETUP_ADMIN } from "../config/env";
+import { BASE_URL, SETUP_ADMIN, SHARED_ENV } from "../config/env";
 import { プレイヤーID } from "../db/f03_07";
 import { 秘密鍵を持つ会員数 } from "../db/f06_02";
 import { 仮会員機能が有効か } from "../db/f06_01";
@@ -47,8 +47,13 @@ defineSeed("S-F06-02-REGULAR-004", async ({ browser, notes }) => {
   const mail = mailOf("it-f0602-regular-004");
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    if (前の仮会員機能 === null) 前の仮会員機能 = await readTempMember(page);
-    await setTempMember(page, true);
+    const now = await readTempMember(page);
+    if (!now) {
+      // 共有の環境では共有の設定を書き換えない。仮会員を作るので、いまの設定が有効のときだけ作れる
+      if (SHARED_ENV) throw new Error("共有の環境では仮会員機能（共有の設定）を書き換えない。いまは無効で、仮会員（このシードの前提は有効）を作れない");
+      if (前の仮会員機能 === null) 前の仮会員機能 = now;
+      await setTempMember(page, true);
+    }
   });
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   let 秘密鍵 = "";

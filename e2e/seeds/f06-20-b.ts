@@ -1,7 +1,7 @@
 /**
  * F06-20 配送先 の画面シード（-b）。正本: cases/F06-20_seed_data.tsv
  *
- * - 会員は、フロントの会員情報登録 → 本登録のメールのURL → 管理画面の会員一覧で会員IDを控える、の順で作る（依頼者決定 2026-10-31）。
+ * - 会員は、フロントの会員情報登録 → 本登録のメールのURL（仮会員機能は共有の設定のため書き換えない）→ 管理画面の会員一覧で会員IDを控える、の順で作る（依頼者決定 2026-10-31）。
  *   配送先は、フロントのマイページの配送先一覧から登録し、一覧の編集リンクの番号を控える。
  * - メールアドレスの前半に実行の印を付ける（依頼者決定 2026-10-28）。パスワードには付けない。
  * - 会員の氏名は、シード表の「会員名」を姓と名に分けた値（「配送太郎-008」→ 姓「配送」・名「太郎-008」）。
@@ -22,7 +22,7 @@ import { resultCustomerId, searchCustomer } from "../pages/admin/f06_customer";
 import { LoginPage } from "../pages/front/f06_03_login";
 import { DeliveryPage, 既定の入力, 配送先の入力 } from "../pages/front/f06_20_delivery";
 import { registerFrontMember } from "../pages/front/member_entry";
-import { markedMail, 仮登録から本会員にする } from "./f06-member";
+import { markedMail, 本会員を作る } from "./f06-member";
 
 export const PW = "Passw0rd!F0620";
 export const PC_PW = "Passw0rd-PC0620a";
@@ -189,7 +189,7 @@ defineSeed("S-F06-20-PC-ENV", async () => {
 });
 for (const [n, 前半, 名, 追加] of [["052", "pc-f0620-001", "太郎", false], ["053", "pc-f0620-002", "太郎", false], ["054", "pc-f0620-003", "太郎", true]] as const) {
   defineSeed(`S-F06-20-PC-MEMBER-${n}`, async ({ browser, notes }) => {
-    const 会員ID = await 仮登録から本会員にする(browser, { 姓: "配送", 名, セイ: "ハイソウ", メイ: "タロウ", 前半, パスワード: PC_PW, 電話番号: "0312345678" });
+    const 会員ID = await 本会員を作る(browser, { 姓: "配送", 名, セイ: "ハイソウ", メイ: "タロウ", 前半, パスワード: PC_PW, 電話番号: "0312345678" });
     notes.set(`〔会員ID-F0620-PC${{ "052": "001", "053": "002", "054": "003" }[n]}〕`, 会員ID);
     if (追加) {
       await フロント会員で(browser, mailOf(前半), PC_PW, async (page, d) => {

@@ -10,6 +10,7 @@ import { rc } from "../../lib/run_marker";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { EntrySearchPage } from "../../pages/admin/m13_11_entry_search";
 import { M1311_ADMIN, M1311_L_ADMIN } from "../../seeds/m13-11";
+import { 印店名 } from "../../pages/admin/m13_marked_shop";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 全店舗: string[] = [];
@@ -20,15 +21,16 @@ caseTest("IT-M13-11-001", async ({ page, step, expected }) => {
   await step(1, async () => { await s.開く(); });
   let 店舗: string[] = []; let from = "";
   await step(2, async () => { 店舗 = await s.選ばれている店舗(); from = await s.日付の値(s.開催日From); });
+  note("店舗Aは印つきの店舗（" + 印店名.A + "）を作って使った");
   await expected(async () => {
     const d = new Date(); const today = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
-    expect.soft(店舗, "店舗の初期値").toEqual(["店舗A"]);
+    expect.soft(店舗, "店舗の初期値").toEqual([印店名.A]);
     expect.soft(from, "開催日(From)の初期値（実行日当日）").toBe(today);
   });
 });
 
 {
-  const 店舗 = ["店舗A", "店舗B"]; const ラベル = "002";
+  const 店舗 = [印店名.A, 印店名.B]; const ラベル = "002";
   caseTest("IT-M13-11-002", async ({ page, notes, step, expected }) => {
     await loginAdmin(page, M1311_ADMIN);
     const s = new EntrySearchPage(page);
@@ -70,7 +72,7 @@ caseTest("IT-M13-11-011", async ({ page, notes, step, expected }) => {
   let 検索前 = "";
   await step(2, async () => {
     検索前 = before();
-    await s.店舗を選ぶ(["店舗A"]); await s.検索イベント名.fill(rc("結合対象"));
+    await s.店舗を選ぶ([印店名.A]); await s.検索イベント名.fill(rc("結合対象"));
     await s.日付を入れる(s.開催日From, "2099/08/15"); await s.日付を入れる(s.開催日To, "2099/08/15");
   });
   await step(3, async () => { await s.検索する(); });
@@ -85,7 +87,7 @@ caseTest("IT-M13-11-014", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1311_ADMIN);
   const s = new EntrySearchPage(page);
   await step(1, async () => { await s.開く(); });
-  await step(2, async () => { await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
+  await step(2, async () => { await s.店舗を選ぶ([印店名.A]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("受付判定大会")); await s.検索する(); });
   await expected(async () => {
     const ds = await s.新規登録ボタンの日程ID();
@@ -98,7 +100,7 @@ caseTest("IT-M13-11-014", async ({ page, notes, step, expected }) => {
 /** 「ページング大会」の検索（015・017〜019） */
 async function ページング検索(s: EntrySearchPage): Promise<void> {
   await s.開く();
-  await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, "");
+  await s.店舗を選ぶ([印店名.A]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, "");
   await s.検索イベント名.fill(rc("ページング大会")); await s.検索する();
 }
 const nn = (i: number) => String(i).padStart(2, "0");
@@ -107,7 +109,7 @@ caseTest("IT-M13-11-015", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1311_ADMIN);
   const s = new EntrySearchPage(page);
   await step(1, async () => { await s.開く(); });
-  await step(2, async () => { await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
+  await step(2, async () => { await s.店舗を選ぶ([印店名.A]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("ページング大会")); await s.検索する(); });
   let ds: string[] = []; let 行数 = 0;
   await step(4, async () => { ds = await s.新規登録ボタンの日程ID(); 行数 = await s.日程の行数(); });
@@ -121,7 +123,7 @@ caseTest("IT-M13-11-017", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1311_ADMIN);
   const s = new EntrySearchPage(page);
   await step(1, async () => { await s.開く(); });
-  await step(2, async () => { await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
+  await step(2, async () => { await s.店舗を選ぶ([印店名.A]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("ページング大会")); await s.検索する(); });
   await step(4, async () => { await s.ページを選ぶ(2); });
   await expected(async () => {
@@ -134,7 +136,7 @@ caseTest("IT-M13-11-018", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1311_ADMIN);
   const s = new EntrySearchPage(page);
   await step(1, async () => {
-    await s.開く(); await s.店舗を選ぶ(["店舗A"]); await s.検索イベント名.fill(rc("ページング大会"));
+    await s.開く(); await s.店舗を選ぶ([印店名.A]); await s.検索イベント名.fill(rc("ページング大会"));
     await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); await s.検索する();
   });
   await step(2, async () => { await s.ページを選ぶ(2); });
@@ -150,7 +152,7 @@ caseTest("IT-M13-11-019", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1311_ADMIN);
   const s = new EntrySearchPage(page);
   await step(1, async () => {
-    await s.開く(); await s.店舗を選ぶ(["店舗A"]); await s.検索イベント名.fill(rc("ページング大会"));
+    await s.開く(); await s.店舗を選ぶ([印店名.A]); await s.検索イベント名.fill(rc("ページング大会"));
     await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); await s.検索する();
   });
   let p1: string[] = []; let p2: string[] = [];
@@ -164,7 +166,7 @@ caseTest("IT-M13-11-019", async ({ page, notes, step, expected }) => {
 
 /** 「並び順大会」の検索（020・021） */
 async function 並び順検索(s: EntrySearchPage): Promise<void> {
-  await s.開く(); await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, "");
+  await s.開く(); await s.店舗を選ぶ([印店名.A]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, "");
   await s.検索イベント名.fill(rc("並び順大会")); await s.検索する();
 }
 
@@ -172,7 +174,7 @@ caseTest("IT-M13-11-020", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1311_ADMIN);
   const s = new EntrySearchPage(page); const a = notes.get("〔イベントID-M1311-共有並びA〕");
   await step(1, async () => { await s.開く(); });
-  await step(2, async () => { await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
+  await step(2, async () => { await s.店舗を選ぶ([印店名.A]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("並び順大会")); await s.検索する(); });
   let ds: string[] = []; let span = ""; let 名span = "";
   await step(4, async () => {
@@ -196,7 +198,7 @@ caseTest("IT-M13-11-021", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1311_ADMIN);
   const s = new EntrySearchPage(page); const a = notes.get("〔イベントID-M1311-共有並びA〕");
   await step(1, async () => { await s.開く(); });
-  await step(2, async () => { await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
+  await step(2, async () => { await s.店舗を選ぶ([印店名.A]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("並び順大会")); await s.検索する(); });
   let 名欄 = ""; let 日程欄: string[] = [];
   await step(4, async () => {
@@ -207,7 +209,7 @@ caseTest("IT-M13-11-021", async ({ page, notes, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(名欄, "イベント名（日）").toContain(rc("並び順大会"));
-    expect.soft(名欄, "イベント名（英）に相当する表示は一覧に無く、店舗名").toContain("店舗A");
+    expect.soft(名欄, "イベント名（英）に相当する表示は一覧に無く、店舗名").toContain(印店名.A);
     expect.soft(名欄, "フォーマット（スタンダード）").toContain("スタンダード");
     expect.soft(名欄, "フォーマット（モダン）").toContain("モダン");
     expect.soft(名欄, "イベント名（英）").toContain("Ordering Tournament");
@@ -219,7 +221,7 @@ caseTest("IT-M13-11-022", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1311_ADMIN);
   const s = new EntrySearchPage(page); const d = notes.get("〔日程ID-M1311-022〕");
   await step(1, async () => { await s.開く(); });
-  await step(2, async () => { await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
+  await step(2, async () => { await s.店舗を選ぶ([印店名.A]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("遷移確認大会")); await s.検索する(); });
   await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), s.日程の行(d).locator(`a[href$="/entry_registration/new/${d}"]`).click()]); });
   await expected(async () => {
@@ -240,7 +242,7 @@ caseTest("IT-M13-11-023", async ({ page, notes, step, expected }) => {
   await step(2, async () => {
     await modal.locator('[name$="[event_name]"]').fill(rc("遷移確認大会"));
     const base = modal.locator('select[name*="base_info"]');
-    await base.selectOption([{ label: "店舗A" }]);
+    await base.selectOption([{ label: 印店名.A }]);
     await modal.locator('[name$="[start_date_from]"]').fill("");
     await modal.locator('[name$="[start_date_to]"]').fill("");
     await modal.locator("#searchEventModalButton").click({ timeout: 30_000 });
@@ -253,7 +255,7 @@ caseTest("IT-M13-11-023", async ({ page, notes, step, expected }) => {
     expect.soft((await page.locator("#admin_search_event_start_date_from").inputValue()).replace(/-/g, "/").slice(0, 10), "検索条件の開催日(From)").toBe("2099/12/01");
     expect.soft((await page.locator("#admin_search_event_start_date_to").inputValue()).replace(/-/g, "/").slice(0, 10), "検索条件の開催日(To)").toBe("2099/12/01");
     const shops = await page.locator("#admin_search_event_base_info").evaluate((el) => [...(el as HTMLSelectElement).selectedOptions].map((o) => (o.textContent ?? "").trim()));
-    expect.soft(shops, "検索条件の店舗").toEqual(["店舗A"]);
+    expect.soft(shops, "検索条件の店舗").toEqual([印店名.A]);
   });
 });
 
@@ -261,7 +263,7 @@ caseTest("IT-M13-11-024", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1311_L_ADMIN);
   const s = new EntrySearchPage(page); const b = notes.get("〔日程ID-M1311-024B〕");
   await step(1, async () => { await s.開く(); });
-  await step(2, async () => { await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
+  await step(2, async () => { await s.店舗を選ぶ([印店名.A]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("連携確認大会001")); await s.検索する(); });
   await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), s.日程の行(b).locator(`a[href$="/entry_registration/new/${b}"]`).click()]); });
   let 画面 = ""; let 金額 = "";
@@ -281,7 +283,7 @@ caseTest("IT-M13-11-025", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1311_ADMIN);
   const s = new EntrySearchPage(page); const d = notes.get("〔日程ID-M1311-025〕");
   await step(1, async () => { await s.開く(); });
-  await step(2, async () => { await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
+  await step(2, async () => { await s.店舗を選ぶ([印店名.A]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("決定非表示確認大会")); await s.検索する(); });
   let 操作欄 = ""; let 表示 = 0;
   await step(4, async () => { const r = s.日程の行(d); 表示 = await r.count(); 操作欄 = (await r.locator("td").last().innerText()).replace(/\s+/g, " "); });
@@ -296,7 +298,7 @@ caseTest("IT-M13-11-026", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1311_ADMIN);
   const s = new EntrySearchPage(page);
   await step(1, async () => { await s.開く(); });
-  await step(2, async () => { await s.店舗を選ぶ(["店舗C"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
+  await step(2, async () => { await s.店舗を選ぶ([印店名.C]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("M1311-026大会")); await s.検索する(); });
   await expected(async () => {
     expect.soft((await page.locator("body").innerText()).replace(/\s+/g, " "), "一覧領域のメッセージ").toContain("検索条件に該当するデータがありませんでした。");
