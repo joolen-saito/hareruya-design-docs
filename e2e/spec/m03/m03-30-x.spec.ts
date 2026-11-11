@@ -13,7 +13,7 @@ import * as x from "../../db/m03_30_x";
 import { PriceCsvUploadPage, priceCsvUploadPath, 画面上部のメッセージ, 画面の見出し } from "../../pages/admin/m03_30_price_csv";
 import { PriceHistoryPage } from "../../pages/admin/m03_23_price_history";
 import { searchStockByCode } from "../../pages/admin/m04_02_rc_stock";
-import { トークンを書き換える, トークンを消す, 在庫の行の価格, 項目を足す } from "../../pages/admin/m03_30_x";
+import { トークンを書き換える, トークンを消す, 在庫の行の価格, フォームの項目を足す } from "../../pages/admin/m03_30_x";
 import { M0330_ADMIN } from "../../seeds/m03-30";
 import { RB_ADMIN, RB_ADMIN_NAME, RBの, 作ったものの, 本店の店名 } from "../../seeds/m03-30-x";
 
@@ -88,8 +88,8 @@ caseTest("IT-M03-30-035", async (ctx) => {
   await step(1, async () => { await upload.open(); });
   await step(2, async () => { await upload.choose(s.ファイル); });
   await step(3, async () => {
-    await 項目を足す(page, "unexpected_field", "1");
-    note("開発者ツールの代わりに、画面の取込のフォームへ隠し項目 unexpected_field（値1）をスクリプトで足して送信した");
+    const 名前 = await フォームの項目を足す(page, "unexpected_field", "1");
+    note(`開発者ツールの代わりに、画面の取込のフォームへ隠し項目 ${名前}（値1。フォームの名前つき）をスクリプトで足して送信した`);
     const r = await upload.submit();
     note(`送信の結果: ${r.sent ? `応答 ${r.status}・移った画面 ${new URL(page.url()).pathname}` : "送られない"}`);
   });
@@ -294,10 +294,10 @@ caseTest("IT-M03-30-036", async ({ page, step, expected }) => {
   });
   await step(4, async () => {
     await upload.open(); await upload.choose(s.ファイル);
-    await 項目を足す(page, "unexpected_field", "1");
+    const 足した名前 = await フォームの項目を足す(page, "unexpected_field", "1");
     const r = await upload.submit();
     行き先.push(new URL(page.url()).pathname);
-    note(`未対応の項目 unexpected_field（値1）を足して送信: ${r.sent ? `応答 ${r.status}` : "送られない"}・移った画面 ${行き先[1]}`);
+    note(`未対応の項目 ${足した名前}（値1。フォームの名前つき）を足して送信: ${r.sent ? `応答 ${r.status}` : "送られない"}・移った画面 ${行き先[1]}`);
   });
   await expected(async () => {
     expect.soft(行き先[0], "1回目の送信のあとの画面（商品価格CSVアップロード画面）").toBe(セール用の画面);

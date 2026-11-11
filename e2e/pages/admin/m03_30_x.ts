@@ -28,6 +28,24 @@ export async function 項目を足す(page: Page, 名前: string, 値: string): 
   }, { name: 名前, value: 値 });
 }
 
+/**
+ * 取込のフォームに、フォームの名前つきの項目（例: admin_csv_import[unexpected_field]）を足す。名前を返す。
+ * フォームの外の名前（unexpected_field）で足すとアプリのフォームが受け取らず、「追加の項目」をはじく確かめにならない（2026-11-11 流し直しのセッションの気づき）。
+ * フォームの名前は、フォームの中の既存の入力欄の名前（「名前[…]」）から読む。
+ */
+export async function フォームの項目を足す(page: Page, 名前: string, 値: string): Promise<string> {
+  const full = await page.locator("form#upload-form").evaluate((f, a) => {
+    const prefix = Array.from(f.querySelectorAll("input[name],select[name],textarea[name]"))
+      .map((n) => /^([A-Za-z0-9_]+)\[/.exec((n as HTMLInputElement).name)?.[1]).find(Boolean);
+    if (!prefix) throw new Error("取込のフォームの名前を読めない");
+    const i = document.createElement("input");
+    i.type = "hidden"; i.name = `${prefix}[${a.name}]`; i.value = a.value;
+    f.appendChild(i);
+    return i.name;
+  }, { name: 名前, value: 値 });
+  return full;
+}
+
 /** 基準価格変更CSVアップロード画面（開いた状態）の「雛形ファイルダウンロード」で取った雛形の見出し行 */
 export async function 雛形の見出し(page: Page, 置き場: string): Promise<string[]> {
   const upload = new PriceCsvUploadPage(page, "基準価格変更");
