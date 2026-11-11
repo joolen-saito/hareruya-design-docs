@@ -2,6 +2,8 @@
 import { expect, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
+import { 規格のある商品ID } from "../../db/product_pick";
+import { available as dbAvailable } from "../../lib/db";
 
 type ReplaceClassValues = {
   productId: string;
@@ -35,15 +37,25 @@ export async function openClassListFromProductEdit(page: Page, productId: string
  * 規格は保存しない。
  */
 export async function readLanguageChoicesFromClassForm(page: Page): Promise<{ id: string; label: string }[]> {
-  await page.goto(adminUrl("/product"));
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator("form#search_form .admin-product-search-submit").click(),
-  ]);
-  const first = page.locator('tr[id^="ex-product-"]').first();
-  await expect(first, "言語の番号を読むための既存の商品が一覧にある").toBeVisible();
-  const productId = (await first.locator("td:nth-child(2)").innerText()).trim();
-  await first.locator("td:nth-child(3) a").click();
+  // 開く既存の商品は DB の参照で選び、商品登録編集画面を直接開く（2026-11-11〜）。
+  // 開発環境の商品は約5万6千件あり、条件なしの検索の結果が10秒以内に出ず、M03-30 の35件がここで止まった。DB を使えない環境では、これまでどおり検索で選ぶ
+  const picked = dbAvailable ? 規格のある商品ID() : "";
+  let productId: string;
+  if (picked) {
+    productId = picked;
+    const res = await page.goto(adminUrl(`/product/product/${productId}/edit`), { timeout: 120_000 });
+    if (!res || !res.ok()) throw new Error(`言語の番号を読むための既存の商品（商品ID ${productId}）の商品登録編集画面を開けない（応答 ${res?.status() ?? "なし"}）`);
+  } else {
+    await page.goto(adminUrl("/product"));
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+      page.locator("form#search_form .admin-product-search-submit").click(),
+    ]);
+    const first = page.locator('tr[id^="ex-product-"]').first();
+    await expect(first, "言語の番号を読むための既存の商品が一覧にある").toBeVisible();
+    productId = (await first.locator("td:nth-child(2)").innerText()).trim();
+    await first.locator("td:nth-child(3) a").click();
+  }
   await openClassListFromProductEdit(page, productId);
   await page.locator('#ex-product_class-header a[href$="/new"]').click();
   const language = page.locator("form#form #admin_product_class_Language");

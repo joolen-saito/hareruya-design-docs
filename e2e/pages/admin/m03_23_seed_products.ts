@@ -232,7 +232,14 @@ async function searchLanguageValue(page: Page, label: string): Promise<string> {
  * その他言語（日本語と英語以外の言語）は商品規格の登録画面の言語の欄の選択肢のうち、日本語・英語の次に並ぶもの。
  * 商品規格の登録画面は既存の商品から開くので、商品が1件以上あるときに呼ぶ（保存はしない）。
  */
+let 言語のIDの控え: { 日本語: string; 英語: string; その他言語: { id: string; label: string } } | null = null;
 export async function readLanguageIds(page: Page): Promise<{ 日本語: string; 英語: string; その他言語: { id: string; label: string } }> {
+  // 言語のマスタは流している間に変わらないので、1回の起動の中で一度だけ読む（2026-11-11 シードの使い回し）
+  if (言語のIDの控え) return 言語のIDの控え;
+  言語のIDの控え = await 言語のIDを読む(page);
+  return 言語のIDの控え;
+}
+async function 言語のIDを読む(page: Page): Promise<{ 日本語: string; 英語: string; その他言語: { id: string; label: string } }> {
   const jp = await searchLanguageValue(page, "日本語");
   const en = await searchLanguageValue(page, "英語");
   const all = await readLanguageChoicesFromClassForm(page);
