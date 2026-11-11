@@ -24,7 +24,7 @@
 import { rc } from "../lib/run_marker";
 import { expect } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { CSV入出力設定 } from "../lib/app_config";
+import { CSV入出力設定, 設定値を読めない環境, 読み替え文 } from "../lib/app_config";
 import { Notes } from "../lib/notes";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
@@ -91,6 +91,7 @@ defineSeed("S-M03-38-L-ADM", async ({ browser }) => {
  * であることだけを確かめる（違えば止める。M03-41 の S-M03-41-CONFIG と同じ形）。
  */
 defineSeed("S-M03-38-CONFIG", async ({ seed }) => {
+  if (設定値を読めない環境()) { reportSeedIssue(seed.シードID, 読み替え文); return; }
   const c = CSV入出力設定();
   const got = { 取込区切り文字: c.取込区切り文字, 出力区切り文字: c.出力区切り文字, アップロード上限MB: c.アップロード上限MB };
   const want = { 取込区切り文字: ",", 出力区切り文字: ",", アップロード上限MB: 5 };

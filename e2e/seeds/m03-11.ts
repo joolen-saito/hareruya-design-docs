@@ -10,7 +10,7 @@
  */
 import { expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { カテゴリ階層上限 } from "../lib/app_config";
+import { カテゴリ階層上限, 設定値を読めない環境, 読み替え文 } from "../lib/app_config";
 import { Notes } from "../lib/notes";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
@@ -57,7 +57,8 @@ defineSeed("S-M03-11-ADM", async ({ browser }) => {
   });
 });
 
-defineSeed("S-M03-11-CONFIG", async () => {
+defineSeed("S-M03-11-CONFIG", async ({ seed }) => {
+  if (設定値を読めない環境()) { reportSeedIssue(seed.シードID, 読み替え文); return; }
   // 管理画面に設定項目が無い。設定を変えず、値が既定の5であることだけを確かめる（違えば止める）。
   const level = カテゴリ階層上限();
   if (level !== 5) {

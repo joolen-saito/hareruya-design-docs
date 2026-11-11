@@ -18,7 +18,7 @@
  */
 import { expect, Page, test } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { CSV入出力設定, カテゴリ階層上限 } from "../lib/app_config";
+import { CSV入出力設定, カテゴリ階層上限, 設定値を読めない環境, 読み替え文 } from "../lib/app_config";
 import { Notes } from "../lib/notes";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
@@ -120,6 +120,9 @@ defineSeed("S-M03-41-ADM", async ({ browser }) => {
 defineSeed("S-M03-41-CONFIG", async ({ browser, seed }) => {
   const id = seed.シードID;
   // 管理画面に設定項目が無いアプリの設定は、書き換えず、値がシード表のとおりであることだけを確かめる（違えば止める）。
+  if (設定値を読めない環境()) {
+    reportSeedIssue(id, 読み替え文);
+  } else {
   const level = カテゴリ階層上限();
   if (level !== 5) throw new Error(`${id}: カテゴリ階層上限が ${level}（シード表は5）。設定を直してアプリのキャッシュを作り直してから流す`);
   const c = CSV入出力設定();
@@ -127,6 +130,7 @@ defineSeed("S-M03-41-CONFIG", async ({ browser, seed }) => {
   const got = { 取込区切り文字: c.取込区切り文字, 取込囲み文字: c.取込囲み文字, 出力区切り文字: c.出力区切り文字 };
   if (JSON.stringify(got) !== JSON.stringify(want)) {
     throw new Error(`${id}: CSVの入出力の設定が ${JSON.stringify(got)}（シード表は ${JSON.stringify(want)}）。設定を直してアプリのキャッシュを作り直してから流す`);
+  }
   }
   // CSV出力の文字コード（シード表はシフトJIS）は、設定値を読む部品（lib/app_config.ts）に読む手段が無い。
   // 雛形ファイルは出力の設定の文字コードで書き出されるので、カテゴリCSV登録画面の雛形ファイルダウンロードで得たファイルの文字コードで見る。

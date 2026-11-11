@@ -6,6 +6,13 @@
 import { execFileSync } from "node:child_process";
 import { APP_CONTAINER, ENV_NAME, SHARED_ENV } from "../config/env";
 
+/** 共有の開発環境など、アプリの設定値を読む手段が無い環境か（local 以外は読めない） */
+export function 設定値を読めない環境(): boolean {
+  return ENV_NAME !== "local" || SHARED_ENV;
+}
+const 読み替え文 = "読み替え: アプリの設定値はこの環境（共有の開発環境）からは読めず、設定を書き換えてもいない。シード表の値（既定のまま）であるとして進めた（環境の担当者の確認待ち）";
+export { 読み替え文 };
+
 /** カテゴリ階層上限（カテゴリを何階層まで作れるか） */
 export function カテゴリ階層上限(): number {
   return Number(appParameter("eccube_category_nest_level"));

@@ -31,7 +31,7 @@ import path from "node:path";
 import { expect, Page } from "@playwright/test";
 import { SETUP_ADMIN, STATE_DIR } from "../config/env";
 import { 略称タグ更新の同名の取込履歴の件数 } from "../db/m03_37_short_tag_update";
-import { CSV入出力設定 } from "../lib/app_config";
+import { CSV入出力設定, 設定値を読めない環境, 読み替え文 } from "../lib/app_config";
 import { getSeed } from "../lib/catalog";
 import { available as dbAvailable } from "../lib/db";
 import { Notes } from "../lib/notes";
@@ -84,6 +84,7 @@ defineSeed("S-M03-37-L-ADM", async ({ browser }) => {
 });
 
 function expectCsvConfig(seedId: string): void {
+  if (設定値を読めない環境()) { reportSeedIssue(seedId, 読み替え文); return; }
   const c = CSV入出力設定();
   const got = { 取込区切り文字: c.取込区切り文字, 取込囲み文字: c.取込囲み文字, アップロード上限MB: c.アップロード上限MB };
   const want = { 取込区切り文字: ",", 取込囲み文字: '"', アップロード上限MB: 5 };
