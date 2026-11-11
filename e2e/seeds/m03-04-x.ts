@@ -21,6 +21,7 @@ import { 廃止にする } from "../db/m03_04_x";
 import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { 使い回して作る } from "./seed_reuse";
 import { withAdminSession } from "../lib/session";
 import { 取込の商品と規格を読む, 規格を足す, 規格を削除する } from "../pages/admin/a17_05_setup";
 import { downloadGoodsCsvTemplate } from "../pages/admin/m03_01_goods_csv";
@@ -116,19 +117,32 @@ defineSeed("S-M03-04-PAGING-009", { needs: ["S-M03-04-MASTER"] }, async ({ brows
   });
   await 商品を作る(browser, seed.シードID, notes, defs, (m) => reportSeedIssue(seed.シードID, m));
 });
-for (const n of ["012", "013"]) {
+/**
+ * 使い回し（依頼者決定 2026-11-11「シードの使い回しを進めて」）: 012・013 のシードは中身が同じ（対象の商品1件と補助商品10件。商品名の番号だけ違う）。
+ * 使うケースは商品一覧の2ページ目で対象を選び、存在しない商品IDを足して出力を押すだけで、商品を変えず、ダウンロードもされないので、012 の定めで1度だけ作って使い回す。
+ * ケースの検索語（商品名）は、作った元（012）の商品名で読む（spec の 二ページ目で足す が ページングの元 を使う）。
+ */
+export const ページングの元 = (_n: "012" | "013"): "012" => "012";
+
+async function ページングの商品を作る(browser: Browser, seedId: string, n: string, notes: Notes, issue: Issue): Promise<void> {
+  // 商品IDは登録した順に大きくなる。対象の商品を先に、補助商品10件を後に取り込む（商品ID降順の2ページ目に対象が来る）
+  await 商品を作る(browser, seedId, notes, [{ 商品コード: rc(`M0304-${n}-T`), 商品名日: `${検索語(`M0304CASE${n}`)}-TARGET`, 商品の呼び名: `〔商品ID-M0304-${n}〕`, 規格の呼び名: `〔規格ID-M0304-${n}〕` }], issue);
+  // 補助商品の呼び名は、シード表が書く両端（01・10）だけを控える（あいだの 02〜09 はシード表に呼び名が無い）
+  await 商品を作る(browser, seedId, notes, Array.from({ length: 10 }, (_, i) => {
+    const k = String(i + 1).padStart(2, "0");
+    const 端 = k === "01" || k === "10";
+    return { 商品コード: rc(`M0304-${n}-${k}`), 商品名日: `${検索語(`M0304CASE${n}`)}-${k}`, ...(端 ? { 商品の呼び名: `〔補助商品ID-M0304-${n}-${k}〕`, 規格の呼び名: `〔補助規格ID-M0304-${n}-${k}〕` } : {}) };
+  }), issue);
+}
+for (const n of ["012", "013"] as const) {
   defineSeed(`S-M03-04-PAGING-NOTFOUND-${n}`, { needs: ["S-M03-04-MASTER"] }, async ({ browser, notes, seed }) => {
-    const issue = (m: string) => reportSeedIssue(seed.シードID, m);
-    // 商品IDは登録した順に大きくなる。対象の商品を先に、補助商品10件を後に取り込む（商品ID降順の2ページ目に対象が来る）
-    await 商品を作る(browser, seed.シードID, notes, [{ 商品コード: rc(`M0304-${n}-T`), 商品名日: `${検索語(`M0304CASE${n}`)}-TARGET`, 商品の呼び名: `〔商品ID-M0304-${n}〕`, 規格の呼び名: `〔規格ID-M0304-${n}〕` }], issue);
-    await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-      page.setDefaultTimeout(60_000);
-      await 取り込む(page, seed.シードID, Array.from({ length: 10 }, (_, i) => {
-        const k = String(i + 1).padStart(2, "0");
-        return { 商品コード: rc(`M0304-${n}-${k}`), 商品名日: `${検索語(`M0304CASE${n}`)}-${k}` };
-      }), issue);
+    const 元 = ページングの元(n);
+    const canonical = `S-M03-04-PAGING-NOTFOUND-${元}`;
+    await 使い回して作る({
+      seedId: seed.シードID, canonical, notes,
+      rename: (l) => l.replace(`-M0304-${元}`, `-M0304-${n}`),
+      build: (nn) => ページングの商品を作る(browser, canonical, 元, nn, (m) => reportSeedIssue(canonical, m)),
     });
-    issue("補助商品10件の商品ID・規格IDは、ケースが使わないので控えていない");
   });
 }
 defineSeed("S-M03-04-MULTI-027", { needs: ["S-M03-04-MASTER"] }, async ({ browser, notes, seed }) => {

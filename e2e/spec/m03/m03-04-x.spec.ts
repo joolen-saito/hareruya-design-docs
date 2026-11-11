@@ -14,7 +14,7 @@ import {
   この画面から送る, ページを開く, 一覧の商品ID, 出力の結果, 出力を押す, 商品を選ぶ, 商品名で検索する, 該当件数, 選択済みの商品IDを変える, 選択済みの商品IDを足す,
 } from "../../pages/admin/m03_04_x";
 import { M0304_ADMIN } from "../../seeds/m03-04";
-import { 検索語 } from "../../seeds/m03-04-x";
+import { ページングの元, 検索語 } from "../../seeds/m03-04-x";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
@@ -124,14 +124,16 @@ function 二ページ目で足す(n: "012" | "013"): (ctx: CaseCtx) => Promise<v
     let r: 出力の結果 | null = null;
     expect(商品があるか(足す), `商品ID ${足す} は未登録`).toBe(false);
     await loginAdmin(page, M0304_ADMIN);
-    await 商品名で検索する(page, 検索語(`M0304CASE${n}`), { 件数: "10" });
+    // 012・013 は同じ商品を使い回す（依頼者決定 2026-11-11 シードの使い回し）。検索語は作った元のシードの商品名
+    const 元 = ページングの元(n);
+    await 商品名で検索する(page, 検索語(`M0304CASE${元}`), { 件数: "10" });
     expect(await 該当件数(page), "検索結果が11件").toBe(11);
     await step(1, async () => { await ページを開く(page, 2); expect(await 一覧の商品ID(page), "2ページ目に対象の商品").toContain(id); });
     await step(2, async () => { await 商品を選ぶ(page, id); });
     await step(3, async () => { await 選択済みの商品IDを足す(page, 足す); note(`開発者ツールの代わりに、一覧のフォームへ選択済みの商品ID ${足す} をスクリプトで足した`); });
     await step(4, async () => { r = await 出力を押す(page); note(結果の文(r)); });
     await expected(async () => {
-      印の読み替え(`M0304CASE${n}`);
+      印の読み替え(`M0304CASE${元}`);
       if (n === "012") {
         expect.soft(r!.ファイル, "CSVファイルがダウンロードされない").toBeNull();
       } else {
