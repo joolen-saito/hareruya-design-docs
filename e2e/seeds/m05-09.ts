@@ -38,7 +38,7 @@ import { ensureM05Admin } from "../pages/admin/m05_admin_member";
 import { 出荷指示リストを生成する } from "../pages/admin/m05_20_standby";
 import { OrderEditPage, OrderItemsEdit } from "../pages/admin/m05_11_order_edit";
 import { 範囲で出荷指示リストを生成する } from "../pages/admin/m05_21_picking";
-import { 住所の入力, 住所を入れる, 受注情報編集を開く, 商品名を変える } from "../pages/admin/m05_09_delivery_slips";
+import { 住所の入力, 住所を入れる, 受注情報編集を開く, 商品名を変える, 配送方法を選ぶ } from "../pages/admin/m05_09_delivery_slips";
 import { 会員が商品を注文する } from "../pages/front/m05_front_order";
 import { markedMail, 本会員を作る } from "./f06-member";
 
@@ -174,7 +174,7 @@ async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め)
       if (!変える) continue;
       await 受注情報編集を開く(page, 受注ID[i]);
       if (今の配送.some((x) => x !== 配送)) {
-        await page.locator("#order_Shipping_Delivery").selectOption({ label: 配送 }, { timeout: 20_000 });
+        await 配送方法を選ぶ(page, 配送);
         await page.waitForTimeout(1500);
         if (o.配送方法 === undefined) issue(`${注文番号[i]}: 注文で選ばれた配送方法（${今の配送.join("・")}）を、受注情報編集でゆうパックにした`);
       }

@@ -113,6 +113,19 @@ export async function 受注情報編集を開く(page: Page, 受注ID: string):
   expect(res?.status() ?? 0, `受注ID ${受注ID} の受注情報編集画面の応答`).toBeLessThan(400);
   await page.waitForLoadState("load");
   await expect(page.locator("#order_OrderStatus"), "受注情報編集画面").toBeVisible({ timeout: 30_000 });
+  await 出荷情報の欄を開く(page);
+}
+
+/**
+ * 受注情報編集の「出荷情報」の欄（#shippingInfo。お届け先の住所・配送方法など）を開く。既存の受注を開くと畳まれて出る
+ * （新アプリの edit.twig: collapse {{ id ? '' : 'show' }}。2026-11-11 の M05-09 で配送方法の選択欄が見えずに止まった）。
+ */
+export async function 出荷情報の欄を開く(page: Page): Promise<void> {
+  const box = page.locator("#shippingInfo");
+  if ((await box.count()) !== 1) return;
+  if (await box.evaluate((e) => e.classList.contains("show"))) return;
+  await page.locator('a[href="#shippingInfo"]').first().click();
+  await expect(box, "出荷情報の欄が開いた").toHaveClass(/\bshow\b/, { timeout: 10_000 });
 }
 
 export type 住所の入力 = {
@@ -179,4 +192,15 @@ export async function 登録番号を設定する(page: Page, 値: string): Prom
   await Promise.all([page.waitForLoadState("load"), page.locator("form#point_form button[type=submit]").first().click({ timeout: 30_000 })]);
   await page.waitForLoadState("load");
   await expect(page.locator('[name="shop_master[invoice_registration_number]"]'), "登録後の適格請求書発行事業者登録番号").toHaveValue(値, { timeout: 30_000 });
+}
+
+/**
+ * 受注情報編集の画面で、配送方法を選ぶ。既存の受注を開くと「出荷情報」の欄（#shippingInfo）が畳まれて出るので、開いてから選ぶ
+ * （新アプリの edit.twig: collapse {{ id ? '' : 'show' }}。2026-11-11 の M05-09 で選択欄が見えずに止まった）。
+ */
+export async function 配送方法を選ぶ(page: Page, 名前: string): Promise<void> {
+  await 出荷情報の欄を開く(page);
+  const sel = page.locator("#order_Shipping_Delivery");
+  await expect(sel, "配送方法の選択欄").toBeVisible({ timeout: 10_000 });
+  await sel.selectOption({ label: 名前 }, { timeout: 20_000 });
 }
