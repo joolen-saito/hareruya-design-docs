@@ -71,8 +71,19 @@ export async function タグを用意する(page: Page, 名称: string, what: st
   const known = 作ったタグ.get(名称);
   if (known) return known;
   const tag = new TagPage(page);
-  await tag.openNew();
-  const id = await tag.register({ 名称日: 名称, 名称英: 名称, 並び順: "9999" }, `${what}: タグ管理で「${名称}」を登録`);
+  // 共有の開発環境では、同じ管理者で並べて実行するため、まれに画面の入力が受け付けられず「登録できませんでした。」と戻る
+  // （入力の誤りの表示は無い）。画面を開き直して入れ直せば通るので、3回まで試す。3回とも戻ったら、そのまま止める。
+  let id = "";
+  for (let attempt = 1; ; attempt++) {
+    await tag.openNew();
+    try {
+      id = await tag.register({ 名称日: 名称, 名称英: 名称, 並び順: "9999" }, `${what}: タグ管理で「${名称}」を登録`);
+      break;
+    } catch (e) {
+      if (attempt >= 3 || !String((e as Error).message).includes("登録できませんでした")) throw e;
+      await page.waitForTimeout(3000);
+    }
+  }
   作ったタグ.set(名称, id);
   return id;
 }
@@ -177,4 +188,124 @@ export async function 規格を削除する(page: Page, 商品ID: string, 規格
   await expect(modal, `${what}: 削除の確認`).toBeVisible();
   await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), modal.locator('a[data-method="delete"]').click({ timeout: 20_000 })]);
   for (const w of await expectSaved(page, `${what}: 商品規格の削除`)) onIssue(w);
+}
+
+// ---- 2026-11-10 追加（残りのケースの部品） ----
+
+/** 商品規格登録編集で、公開ステータス（表示対象＝公開／表示対象外＝非公開）を選び、部門は先頭を選んで「商品規格を登録」する */
+export async function 規格の公開状態を設定する(page: Page, 商品ID: string, 規格ID: string, 状態: "公開" | "非公開", what: string, onIssue: (m: string) => void): Promise<void> {
+  await page.goto(adminUrl(`/product/product/class/${商品ID}/edit/${規格ID}`));
+  await page.waitForLoadState("load");
+  const form = page.locator("form#form");
+  await expect(form, `${what}: 商品規格登録編集`).toBeVisible();
+  await chooseByLabel(form.locator("#admin_product_class_Status"), 状態);
+  const section = form.locator("#admin_product_class_Section");
+  if (!(await section.inputValue())) {
+    const first = await section.locator("option").evaluateAll((ns) => ns.map((n) => (n as HTMLOptionElement).value).find((x) => x !== ""));
+    if (first) await section.selectOption(first);
+  }
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: 20_000 })]);
+  for (const w of await expectSaved(page, `${what}: 商品規格を登録`)) onIssue(w);
+}
+
+/**
+ * 商品登録編集の「カード指定 >」で、カード検索をカード名を空にして流し、結果に出た既存のカード詳細のうち、
+ * Foil の印（[Foil]）の有無が求めるものの先頭を「決定」して、商品名を指定の名前に入力し直し、割引率は先頭を選んで「商品を登録」する。
+ * カードのマスタは書き換えない（既存のカードを商品に紐づけるだけ）。選んだカードの表示（ID と名前）を返す。
+ */
+export async function 既存のカードを指定する(page: Page, 商品ID: string, v: { Foil: boolean; 商品名: string }, what: string, onIssue: (m: string) => void): Promise<string> {
+  await page.goto(adminUrl(`/product/product/${商品ID}/edit`));
+  await page.waitForLoadState("load");
+  const form = page.locator("form#form1");
+  const open = page.locator('button[data-bs-target="#searchCardDetailModal"]');
+  await expect(open, `${what}: 「カード指定 >」を押せる`).toBeEnabled({ timeout: 30_000 });
+  await open.click();
+  const modal = page.locator("#searchCardDetailModal");
+  await expect(modal, `${what}: カード検索`).toBeVisible();
+  await modal.locator("#admin_search_card_detail_card_name").fill("");
+  await modal.locator("#searchCardDetailModalButton").click();
+  const rows = modal.locator("#searchCardDetailModalList tbody tr");
+  let chosen = "";
+  for (let p = 1; p <= 15 && !chosen; p++) {
+    await expect(rows.first(), `${what}: カード検索の結果（${p}ページ目）`).toBeVisible({ timeout: 60_000 });
+    const texts = await rows.evaluateAll((ns) => ns.map((n) => ({ id: (n.querySelector("td")?.textContent ?? "").trim(), card: (n.querySelectorAll("td")[2]?.textContent ?? "").replace(/\s+/g, " ").trim() })));
+    const hit = texts.findIndex((t) => t.card.startsWith("[Foil]") === v.Foil);
+    if (hit >= 0) {
+      chosen = `カード詳細ID ${texts[hit].id}「${texts[hit].card}」`;
+      await rows.nth(hit).getByRole("button", { name: "決定", exact: true }).click();
+      break;
+    }
+    const next = modal.locator("#card_detail_pagination a").filter({ hasText: new RegExp(`^\\s*${p + 1}\\s*$`) }).first();
+    if ((await next.count()) === 0) break;
+    const firstId = texts[0]?.id ?? "";
+    await next.click();
+    await expect.poll(async () => (await rows.first().locator("td").first().textContent())?.trim() ?? "", { timeout: 60_000 }).not.toBe(firstId);
+  }
+  if (!chosen) throw new Error(`${what}: カード検索の結果に、Foil の印が${v.Foil ? "ある" : "無い"}カード詳細が見つからない（15ページまで）`);
+  await expect(modal, `${what}: カードを決定するとカード検索が閉じる`).toBeHidden({ timeout: 30_000 });
+  for (const name of ['input[name="admin_product[name]"]', 'input[name="admin_product[name_en]"]']) {
+    const field = form.locator(name);
+    if ((await field.inputValue()) !== v.商品名) await field.fill(v.商品名);
+  }
+  const discount = form.locator('select[name="admin_product[Discount]"]');
+  if (!(await discount.inputValue())) {
+    const first = await discount.locator("option").evaluateAll((ns) => ns.map((n) => (n as HTMLOptionElement).value).find((x) => x !== ""));
+    if (first) await discount.selectOption(first);
+  }
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator("button[type=submit]").filter({ hasText: /^\s*商品を登録\s*$/ }).click({ timeout: 20_000 })]);
+  for (const w of await expectSaved(page, `${what}: カードを指定して商品を登録`)) onIssue(w);
+  onIssue(`${what}: 既存の${chosen}を商品に指定した（カードのマスタは書き換えていない。商品名はシード表の名前に入力し直した）`);
+  return chosen;
+}
+
+export type タイル行 = { 属性: "ピックアップ商品" | "その他"; タグ?: string };
+/**
+ * コンテンツ管理＞支店トップページ管理で、支店を選び、「支店共通設定を適用」を外し、バナー画像（渡さなければ任意の小さな画像）・バナーリンクタグ（渡したとき）を選び、
+ * タイル4行（上段右・中段左・中段右・下段左）を指定どおりにして登録する。
+ */
+export async function 支店トップページを設定する(page: Page, 支店名: string, v: { 画像?: { name: string; mimeType: string; buffer: Buffer }; バナーリンクタグ?: string; タイル: タイル行[] }, what: string, onIssue: (m: string) => void): Promise<void> {
+  if (v.タイル.length !== 4) throw new Error(`${what}: タイルの行は4つ指定する`);
+  await page.goto(adminUrl("/content/branch_toppage"));
+  await page.waitForLoadState("load");
+  const selector = page.locator('select[name="branch_toppage_management[branch_list]"]');
+  await expect(selector, `${what}: 支店トップページ管理の支店の選択`).toBeVisible();
+  const value = await selector.locator("option").evaluateAll((os, name) => (os as HTMLOptionElement[]).find((o) => (o.textContent ?? "").trim() === name)?.value ?? "", 支店名);
+  if (!value) throw new Error(`${what}: 支店トップページ管理の支店の選択に「${支店名}」が無い`);
+  if ((await selector.inputValue()) !== value) await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), selector.selectOption(value)]);
+  await expect(page.locator('select[name="branch_toppage_management[branch_list]"]'), `${what}: 選んだ支店`).toHaveValue(value);
+  const common = page.locator("#common-setting");
+  if (await common.isChecked()) await common.uncheck({ timeout: 20_000 });
+  await page.locator("#branch_toppage_management_image_file").setInputFiles(v.画像 ?? { name: "branch-banner.png", mimeType: "image/png", buffer: 小さな画像 }, { timeout: 20_000 });
+  if (v.バナーリンクタグ) await chooseByLabel(page.locator("#branch_toppage_management_banner_image_tag"), v.バナーリンクタグ);
+  const rows = page.locator("#tiles .tile-config");
+  await expect(rows, `${what}: タイルの行（4区画）`).toHaveCount(4);
+  for (let i = 0; i < 4; i++) {
+    await rows.nth(i).locator('select[id$="_section"]').selectOption(String(i + 1), { timeout: 20_000 });
+    await chooseByLabel(rows.nth(i).locator('select[id$="_tileType"]'), v.タイル[i].属性);
+    const tag = v.タイル[i].タグ;
+    if (tag) await chooseByLabel(rows.nth(i).locator('select[id$="_tag"]'), tag);
+  }
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#ex-conversion-action button[type=submit]").click({ timeout: 20_000 })]);
+  for (const w of await expectSaved(page, `${what}: 支店トップページ管理の登録`)) onIssue(w);
+}
+
+/**
+ * コンテンツ管理＞ページ管理で「支店トップページ」のページを開いてPCのレイアウトを読み、そのレイアウト管理(編集)画面で、
+ * 未使用ブロック以外の置き場に置かれているブロックの名前を返す（読むだけ。登録しない）。
+ */
+export async function 支店トップページのレイアウトのブロック(page: Page, what: string): Promise<{ レイアウト: string; ブロック: string[] }> {
+  await page.goto(adminUrl("/content/page"));
+  await page.waitForLoadState("load");
+  const link = page.getByRole("link", { name: "支店トップページ", exact: true });
+  await expect(link, `${what}: ページ管理の「支店トップページ」`).toHaveCount(1, { timeout: 30_000 });
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), link.click()]);
+  const pc = page.locator('select[name="main_edit[PcLayout]"]');
+  await expect(pc, `${what}: ページ管理(編集)のPCのレイアウト`).toHaveCount(1, { timeout: 30_000 });
+  const layoutId = await pc.inputValue();
+  const layoutName = ((await pc.locator("option:checked").textContent()) ?? "").trim();
+  if (!layoutId) throw new Error(`${what}: 支店トップページにPCのレイアウトが割り当てられていない`);
+  await page.goto(adminUrl(`/content/layout/${layoutId}/edit`), { waitUntil: "load", timeout: 60_000 });
+  await expect(page.locator("#position_0"), `${what}: レイアウト管理(編集)の未使用ブロック`).toBeAttached({ timeout: 30_000 });
+  const names = await page.locator('[id^="position_"]:not(#position_0) > [id^="detail_box__layout_item--"] .view_readme').allInnerTexts();
+  return { レイアウト: `${layoutName}（ID ${layoutId}）`, ブロック: names.map((t) => t.trim()) };
 }

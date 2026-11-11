@@ -59,6 +59,53 @@ export class WaitingTagPage {
     return (await this.page.locator("tbody.sortable-container tr.sortable-item td:first-child").allInnerTexts()).map((t) => t.trim());
   }
 
+  private 行(札: string) {
+    return this.page.locator("tbody.sortable-container tr.sortable-item").filter({ has: this.page.locator("td:first-child", { hasText: new RegExp(`^\\s*${札}\\s*$`) }) });
+  }
+  /** 番号札の行の削除ボタン（無ければ0件） */
+  削除ボタン(札: string) { return this.行(札).locator("a.btn").filter({ hasText: /^\s*削除\s*$/ }); }
+  /** 登録後や削除後の一覧の画面か（登録・削除の送信先ではなく、一覧のアドレス） */
+  一覧の画面か(): boolean { return /\/order\/waiting_tag(\?.*)?$/.test(this.page.url()); }
+
+  get 削除確認() { return this.page.locator("#DeleteModal"); }
+  /** 番号札の削除ボタンを押して、削除確認を開く */
+  async 削除確認を開く(札: string): Promise<void> {
+    await expect(this.削除ボタン(札), `番号札「${札}」の削除ボタン`).toHaveCount(1);
+    await this.削除ボタン(札).click();
+    await expect(this.削除確認, "削除確認").toBeVisible();
+    await expect(this.削除確認.locator("p.modal-message"), "削除確認の文に番号札が入る").toContainText(札);
+  }
+  async 削除確認でキャンセルする(): Promise<void> {
+    await this.削除確認.getByRole("button", { name: "キャンセル", exact: true }).click();
+    await expect(this.削除確認, "削除確認が閉じる").toBeHidden();
+  }
+  /** 削除確認の「削除」（ボタンの見た目のリンク）を押し、結果の画面の読み込みを待つ */
+  async 削除確認で削除する(): Promise<void> {
+    const ok = this.削除確認.locator("a.btn-ec-delete");
+    await expect(ok, "削除確認の削除ボタン").toBeVisible();
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), ok.click()]);
+    await this.page.waitForLoadState("load");
+  }
+  /** 画面上のメッセージ（成功・警告・エラー）の文 */
+  async メッセージ(): Promise<string[]> {
+    return (await this.page.locator(".alert").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+  }
+
+  /** 一覧の中に、並び順を選ぶ項目（選択欄・並び順の文字）があるか */
+  async 並び順の項目の数(): Promise<number> {
+    const card = this.page.locator("table.table");
+    return (await card.locator("select, [name*='sort'], [name*='order_by']").count()) + (await card.getByText("並び順").count());
+  }
+
+  /** 「確認」ボタンを押して、別タブで開くフロント側の画面を返す */
+  async 確認を押す(): Promise<Page> {
+    const link = this.page.locator("a.btn").filter({ hasText: /^\s*確認\s*$/ });
+    await expect(link, "確認ボタン").toHaveCount(1);
+    const [popup] = await Promise.all([this.page.context().waitForEvent("page"), link.click()]);
+    await popup.waitForLoadState("load");
+    return popup;
+  }
+
   /** 番号札の行の削除ボタンに設定されたURLに含まれる番号（番号札ID）。開発者ツールで読む */
   async 番号札ID(札: string): Promise<string> {
     const row = this.page.locator("tbody.sortable-container tr.sortable-item").filter({ has: this.page.locator("td:first-child", { hasText: new RegExp(`^\\s*${札}\\s*$`) }) });

@@ -96,4 +96,53 @@ export class M08CustomerMailPage {
     ]);
     await this.page.waitForLoadState("load");
   }
+
+  async メール送信を押す(): Promise<void> {
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.page.locator("#complete").click({ timeout: T })]);
+    await this.page.waitForLoadState("load");
+  }
+
+  // ---- 完了画面 ----
+  async 完了画面である(): Promise<boolean> { return (await this.page.getByText("メール送信完了しました").count()) > 0; }
+  /** 完了画面の本文の文（空白をそろえる） */
+  async 完了画面の文(): Promise<string> {
+    return (await this.page.locator("#main, main, .c-contentsArea").first().innerText({ timeout: T })).replace(/\s+/g, " ").trim();
+  }
+  async 完了画面の宛先の行数(): Promise<number> { return this.page.locator('tr[id^="ex-customer-"]').count(); }
+  /** 入力画面・完了画面の左下の「会員一覧」（戻りのリンク）を押す */
+  async 会員一覧を押す(): Promise<void> {
+    await Promise.all([
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
+      this.page.locator("a.c-baseLink", { hasText: "会員一覧" }).first().click({ timeout: T }),
+    ]);
+    await this.page.waitForLoadState("load");
+  }
+  /** 確認画面の「検索結果へ戻る」（ボタンまたはリンク）を押す。画面に無ければ、この確かめが落ちる */
+  async 検索結果へ戻るを押す(): Promise<void> {
+    const b = this.page.getByRole("button", { name: "検索結果へ戻る", exact: true }).or(this.page.getByRole("link", { name: "検索結果へ戻る", exact: true }));
+    await expect(b, "メール一括送信確認画面に「検索結果へ戻る」のボタンまたはリンクが1つある").toHaveCount(1, { timeout: 5_000 });
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), b.first().click({ timeout: T })]);
+    await this.page.waitForLoadState("load");
+  }
+}
+
+/** メール配信履歴画面（会員検索一覧の行の「メール履歴」から開く） */
+export class M08MailHistoryPage {
+  constructor(readonly page: Page) { page.setDefaultTimeout(T); }
+  private 行(件名: string): Locator {
+    return this.page.locator("tbody tr").filter({ has: this.page.locator("a.btn-link", { hasText: 件名 }) });
+  }
+  async 件名の行の数(件名: string): Promise<number> { return this.行(件名).count(); }
+  /** 件名の行の処理日と通知メール（1行目） */
+  async 行の内容(件名: string): Promise<{ 処理日: string; 通知メール: string }> {
+    const tds = this.行(件名).first().locator("td");
+    return { 処理日: (await tds.nth(0).innerText({ timeout: T })).trim(), 通知メール: (await tds.nth(1).innerText({ timeout: T })).trim() };
+  }
+  /** 件名リンクを押して出るポップアップの件名と本文 */
+  async 件名を押してポップアップを読む(件名: string): Promise<{ 件名: string; 本文: string }> {
+    await this.行(件名).first().locator("a.btn-link").click({ timeout: T });
+    const m = this.page.locator(".modal.show");
+    await expect(m, "件名リンクのポップアップ").toBeVisible({ timeout: T });
+    return { 件名: (await m.locator(".modal-title").innerText()).trim(), 本文: (await m.locator("p.text-start").innerText()).trim() };
+  }
 }

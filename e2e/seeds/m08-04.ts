@@ -11,7 +11,7 @@
  */
 import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { defineSeed } from "../lib/seeds";
+import { defineSeed, reportCurrentSeedIssue } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { ensureJob } from "../pages/admin/f06_masters";
 import { ensureM08Admin } from "../pages/admin/m08_common";
@@ -19,6 +19,9 @@ import { M08CustomerGroupPage } from "../pages/admin/m08_customer_group";
 import { M08CustomerEditPage } from "../pages/admin/m08_customer_edit";
 import { M08CustomerListPage } from "../pages/admin/m08_customer_list";
 import { 会員を用意する, 会員の用意, mailOf } from "./m08-common";
+import { お届け先を足す } from "../pages/admin/f06_18_setup";
+import { 受注を足す, 受注を101件足す, 買取を足す, 買取を101件足す, スマレジIDを設定する } from "../db/m08_04_write";
+import { 会員の値を設定する } from "../db/m08_01_write";
 
 export const M0804_ADMIN: Account = { loginId: "m0804_admin", password: "Passw0rd!M0804" };
 defineSeed("S-M08-04-ADM", async ({ browser }) => { await ensureM08Admin(browser, "M08-04試験管理者", M0804_ADMIN); });
@@ -155,4 +158,150 @@ defineSeed("S-M08-04-CBCOMPANY-094", async (ctx) => {
 });
 defineSeed("S-M08-04-CBNOEXP-095", async (ctx) => {
   await 会員を用意する(ctx, { 前半: "cbm0804-095", 姓: "期限空欄", 名: "会員", セイ: "キゲン", メイ: "カイイン", 住所1: "期限住所1", 住所2: "期限住所2", パスワード: "Passw0rd-CBM0804095", 本人確認: { オンライン: true } });
+});
+
+// =====================================================================================================
+// ここから: 残りのケース（2026-11-11 追加。依頼者方針 2026-11-10）
+//
+// 読み替え（各シードの注記に残す）:
+//  - 選択項目の試験マスター（試験国A・試験都道府県A・試験性別A・試験職業A・試験顧客グループA）は、共有のマスタに足さない。ケースの手順では、既存の別の選択肢を選ぶ。
+//  - 画面で作れない値（累計注文回数・金額、受注、買取、スマレジID）は、実行の印つきの会員に限り DB に書く（db/m08_01_write.ts・db/m08_04_write.ts）。
+//  - 受注ID・買取ID・お届け先IDは、画面・DBが振る番号を使う（正本の固定の番号にしない）。受注番号は正本の値を使う。支払方法の表示名は受注の文字としてだけ入れる（支払方法マスタには足さない）。
+//  - 作らないシード: 101件の購入履歴・買取履歴（PURCHASE-101-READ・BUY-101-READ。大量データ）、RH-EVENT-092（イベント申込）。
+// =====================================================================================================
+const DB設定 = (内容: string[], 会員: string): void => { if (内容.length) reportCurrentSeedIssue(`DBで会員ID ${会員} の${内容.join("・")}を設定した（画面で入力できない値）`); };
+
+defineSeed("S-M08-04-MASTERS", async () => {
+  reportCurrentSeedIssue("国・都道府県・性別・職業・顧客グループの「試験…A」は、共有のマスタに足さず、既存の別の選択肢で読み替えた（国と職業と顧客グループは、いまの選択と違う最初の選択肢。都道府県は大阪府。性別は女性）");
+});
+
+defineSeed("S-M08-04-BASE-002", async (ctx) => {
+  const m = await 会員を用意する(ctx, { 前半: "m0804-002", ...旧 });
+  DB設定(会員の値を設定する(m.会員ID, { EC購入回数: 12, EC購入金額: 345600 }), m.会員ID);
+});
+基本("008");
+
+const 簡易書留 = { オンライン: true as const, 期限: "2027-12-31", 簡易書留: true };
+const 郵便の文字 = { abroadPostalCode: "1000001" };
+defineSeed("S-M08-04-VERIFY-027", async (ctx) => {
+  await 会員を用意する(ctx, { 前半: "m0804-027", 姓: "書留", 名: "会員", セイ: "カキトメ", メイ: "カイイン", ...確認住所, 文字: 郵便の文字, 本人確認: 簡易書留 });
+});
+defineSeed("S-M08-04-VERIFY-029", async (ctx) => {
+  await 会員を用意する(ctx, { 前半: "m0804-029", 姓: "書留", 名: "会員", セイ: "カキトメ", メイ: "カイイン", ...確認住所, 本人確認: 簡易書留 });
+});
+for (const [id, k] of [["COUNTRY-074", "074"], ["ZIP-075", "075"], ["OVERSEAS-076", "076"], ["PREF-077", "077"], ["ADDR1-078", "078"], ["ADDR2-079", "079"]]) {
+  defineSeed(`S-M08-04-VERIFY-ONLINE-${id}`, async (ctx) => {
+    await 会員を用意する(ctx, { 前半: `m0804-${k}`, 姓: "確認", 名: "会員", セイ: "カクニン", メイ: "カイイン", ...確認住所, 文字: 郵便の文字, 本人確認: { オンライン: true, 期限: "2027-12-31" } });
+  });
+}
+
+// ---- お届け先 ----
+type お届け = { 配送先名称: string; 姓: string; 名: string; セイ: string; メイ: string; 郵便番号: string; 都道府県: string; 住所1: string; 住所2: string; 会社名: string; 電話: string };
+const 太郎 = (電話: string): お届け => ({ 配送先名称: "配送太郎", 姓: "配送", 名: "太郎", セイ: "ハイソウ", メイ: "タロウ", 郵便番号: "100-0001", 都道府県: "東京都", 住所1: "千代田区", 住所2: "1-1", 会社名: "", 電話 });
+const 花子 = (電話: string): お届け => ({ 配送先名称: "配送花子", 姓: "配送", 名: "花子", セイ: "ハイソウ", メイ: "ハナコ", 郵便番号: "105-0001", 都道府県: "東京都", 住所1: "港区", 住所2: "2-2", 会社名: "", 電話 });
+async function お届け先を作る(ctx: { browser: Browser; notes: { set: (k: string, v: string) => void } }, 会員ID: string, 一覧: [string, お届け][]): Promise<void> {
+  await withAdminSession(ctx.browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    for (const [呼び名, v] of 一覧) {
+      await お届け先を足す(page, 会員ID, v, `会員ID ${会員ID} のお届け先「${v.姓} ${v.名}」`);
+      const did = /\/delivery\/(\d+)\/edit/.exec(page.url())?.[1];
+      if (!did) throw new Error(`お届け先を登録した後の画面のアドレスからお届け先IDを控えられない（${page.url()}）`);
+      ctx.notes.set(呼び名, did);
+    }
+  });
+}
+for (const k of ["033", "034", "035", "036"]) {
+  defineSeed(`S-M08-04-DELIVERY-${k}`, async (ctx) => {
+    const m = await 会員を用意する(ctx, { 前半: `m0804-${k}`, 姓: "配送", 名: "会員", セイ: "ハイソウ", メイ: "カイイン", 住所1: "会員住所1", 住所2: "会員住所2" });
+    await お届け先を作る(ctx, m.会員ID, [[`〔お届け先ID-M0804-${k}〕`, 太郎("03-1111-2222")]]);
+  });
+}
+for (const k of ["088", "089"]) {
+  defineSeed(`S-M08-04-DELIVERY-${k}`, async (ctx) => {
+    const m = await 会員を用意する(ctx, { 前半: `dpm0804-${k}`, 姓: "配送", 名: "会員", セイ: "ハイソウ", メイ: "カイイン", 住所1: "会員住所1", 住所2: "会員住所2" });
+    await お届け先を作る(ctx, m.会員ID, [[`〔お届け先ID-M0804-${k}-A〕`, 太郎("03-0884-1111")], [`〔お届け先ID-M0804-${k}-B〕`, 花子("03-0884-2222")]]);
+  });
+}
+
+// ---- 購入履歴・買取履歴 ----
+const 購入会員 = { 姓: "購入", 名: "会員", セイ: "コウニュウ", メイ: "カイイン" };
+const 受注の読み替え = (): void => reportCurrentSeedIssue("受注は画面で作れないため、DBで会員に受注を足した（受注IDは振られた番号。受注番号と注文日時・購入金額・発送日・支払方法の表示名・対応状況は正本の値）。支払方法の表示名「試験支払A」は受注の文字としてだけ入れ、支払方法マスタには足していない");
+defineSeed("S-M08-04-PURCHASE-READ", async (ctx) => {
+  const m = await 会員を用意する(ctx, { 前半: "m0804-purchase-read", ...購入会員 });
+  受注の読み替え();
+  受注を足す(m.会員ID, { 注文番号: "920001", 注文日時: "2026-08-01 10:00", 購入金額: 1200, 発送日: "2026-08-02 00:00", 支払方法: "試験支払A", 対応状況: "入金済み" });
+});
+defineSeed("S-M08-04-PURCHASE-STATUS-039", async (ctx) => {
+  const m = await 会員を用意する(ctx, { 前半: "m0804-039", ...購入会員 });
+  受注の読み替え();
+  受注を足す(m.会員ID, { 注文番号: "930001", 注文日時: "2026-08-01 10:00", 購入金額: 1200, 支払方法: "試験支払A", 対応状況: "決済処理中" });
+  受注を足す(m.会員ID, { 注文番号: "930002", 注文日時: "2026-08-02 10:00", 購入金額: 3400, 支払方法: "試験支払A", 対応状況: "購入処理中" });
+});
+defineSeed("S-M08-04-PURCHASE-042", async (ctx) => {
+  const m = await 会員を用意する(ctx, { 前半: "m0804-042", ...購入会員 });
+  受注の読み替え();
+  受注を足す(m.会員ID, { 注文日時: "2026-08-01 11:00", 購入金額: 1200, 支払方法: "試験支払A", 対応状況: "入金済み" });
+});
+defineSeed("S-M08-04-MIXED-082", async (ctx) => {
+  const m = await 会員を用意する(ctx, { 前半: "dpm0804-082", 姓: "混在", 名: "会員", セイ: "コンザイ", メイ: "カイイン" });
+  受注の読み替え();
+  受注を足す(m.会員ID, { 注文番号: "940821", 注文日時: "2026-08-01 10:00", 購入金額: 1200, 支払方法: "試験支払A", 対応状況: "入金済み" });
+  受注を足す(m.会員ID, { 注文番号: "940822", 注文日時: "2026-08-02 10:00", 購入金額: 3400, 支払方法: "試験支払A", 対応状況: "決済処理中" });
+});
+const 買取の読み替え = (): void => reportCurrentSeedIssue("買取は画面で作れないため、DBで会員に買取を足した（買取IDは振られた番号。買取依頼日・申込時金額・査定金額・買取ステータスは正本の値）");
+for (const [id, 前半] of [["BUY-045", "m0804-045"], ["BUY-READ", "m0804-buy-read"]]) {
+  defineSeed(`S-M08-04-${id}`, async (ctx) => {
+    const m = await 会員を用意する(ctx, { 前半, 姓: "買取", 名: "会員", セイ: "カイトリ", メイ: "カイイン" });
+    買取の読み替え();
+    const 買取ID = 買取を足す(m.会員ID, { 依頼日時: "2026-08-03 12:00", 申込時金額: 5000, 査定金額: 4500, 買取状況: "査定済み" });
+    ctx.notes.set(id === "BUY-045" ? "〔買取ID-M0804-045〕" : "〔買取ID-M0804-共有買取〕", 買取ID);
+  });
+}
+
+defineSeed("S-M08-04-SMAREGI-070", async (ctx) => {
+  const m = await 会員を用意する(ctx, { 前半: "m0804-070", ...旧 });
+  スマレジIDを設定する(m.会員ID, "7080070");
+  reportCurrentSeedIssue(`DBで会員ID ${m.会員ID} のスマレジIDを7080070に設定した（画面で入力できない）`);
+});
+
+// ---- 更新の反映（QH）・連携（RH） ----
+export const M0804_QH_ADMIN: Account = { loginId: "m0804qh_admin", password: "Passw0rd-M0804QH" };
+defineSeed("S-M08-04-QH-ADM", async ({ browser }) => { await ensureM08Admin(browser, "M08-04QH試験管理者", M0804_QH_ADMIN); });
+export const QH会員のメール = (k: "001" | "002"): string => mailOf(`qh0804-${k}`);
+export const QH会員のパスワード = (k: "001" | "002"): string => `Passw0rd-QH0804-${k}`;
+for (const k of ["001", "002"] as const) {
+  defineSeed(`S-M08-04-QH-MEMBER-${k === "001" ? "080" : "081"}`, async (ctx) => {
+    reportCurrentSeedIssue("メールアドレスの前半に実行の印を付けた（qh0804-" + k + " の前に印）。電話番号は画面の既定（03-1234-5678）のまま（ケースは電話番号を確かめない）");
+    await 会員を用意する(ctx, { 前半: `qh0804-${k}`, 姓: `旧姓${k}`, 名: `旧名${k}`, セイ: "キュウセイ", メイ: "キュウメイ", 会社名: `旧会社M0804QH${k}`, 住所1: `千代田区旧町${k}`, 住所2: `旧ビル${k}`, パスワード: QH会員のパスワード(k) });
+  });
+}
+
+export const M0804_RH_ADMIN: Account = { loginId: "m0804rh_admin", password: "Passw0rd-M0804RH" };
+defineSeed("S-M08-04-RH-ADM", async ({ browser }) => { await ensureM08Admin(browser, "M08-04RH試験管理者", M0804_RH_ADMIN); });
+defineSeed("S-M08-04-RH-MASTER", async () => {
+  reportCurrentSeedIssue("本人確認ステータス4状態と買取状況「注文」は既存のマスタにあるものを使う（足さない）");
+});
+defineSeed("S-M08-04-RH-CUST-090", async (ctx) => {
+  const m = await 会員を用意する(ctx, { 前半: "m0804rh-001", 姓: "更新前", 名: "太郎", セイ: "コウシンマエ", メイ: "タロウ" });
+  買取の読み替え();
+  ctx.notes.set("〔買取番号-M0804-001〕", 買取を足す(m.会員ID, { 依頼日時: "2026-08-03 12:00", 申込時金額: 1000, 査定金額: 1000, 買取状況: "注文" }));
+});
+defineSeed("S-M08-04-RH-CUST-091", async (ctx) => {
+  const m = await 会員を用意する(ctx, { 前半: "m0804rh-002", 姓: "降格", 名: "花子", セイ: "コウカク", メイ: "ハナコ", 住所2: "結合ビル804B", 本人確認: { オンライン: true, 期限: "2028-05-31" } });
+  買取の読み替え();
+  ctx.notes.set("〔買取番号-M0804-002〕", 買取を足す(m.会員ID, { 依頼日時: "2026-08-03 12:00", 申込時金額: 1000, 査定金額: 1000, 買取状況: "注文" }));
+});
+
+// ---- 101件（購入履歴・買取履歴の100件上限） ----
+defineSeed("S-M08-04-PURCHASE-101-READ", async (ctx) => {
+  const m = await 会員を用意する(ctx, { 前半: "m0804-purchase-101-read", ...購入会員 });
+  reportCurrentSeedIssue("受注101件は画面で作れないため、DBで会員に足した（受注番号910001〜910101・入金済み・注文日時は1分間隔。受注IDは振られた番号）");
+  受注を101件足す(m.会員ID);
+});
+defineSeed("S-M08-04-BUY-101-READ", async (ctx) => {
+  const m = await 会員を用意する(ctx, { 前半: "m0804-buy-101-read", 姓: "買取", 名: "会員", セイ: "カイトリ", メイ: "カイイン" });
+  reportCurrentSeedIssue("買取101件は画面で作れないため、DBで会員に足した（依頼日時は1分間隔。買取IDは振られた番号で、最古・最新を控えた）");
+  const r = 買取を101件足す(m.会員ID);
+  ctx.notes.set("〔買取ID-M0804-共有買取101-最古〕", r.最古);
+  ctx.notes.set("〔買取ID-M0804-共有買取101-最新〕", r.最新);
 });

@@ -1,5 +1,5 @@
 /** M16-03 祝日追加・削除（メニュー「データ管理」→「祝日管理」） */
-import { Locator, Page, expect } from "@playwright/test";
+import { Dialog, Locator, Page, Response, expect } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 
 export class HolidayPage {
@@ -44,4 +44,65 @@ export class HolidayPage {
   /** 開発者ツールで行うのと同じに、属性を消す・書き換える */
   async 属性を消す(欄: Locator, 属性: string): Promise<void> { await 欄.evaluate((e, a) => e.removeAttribute(a), 属性); }
   async 属性を書き換える(欄: Locator, 属性: string, 値: string): Promise<void> { await 欄.evaluate((e, [a, v]) => e.setAttribute(a, v), [属性, 値]); }
+
+  // ---- 祝日一覧の行・削除（追加の部品。既存の操作は変えない） ----
+
+  get 一覧の行(): Locator { return this.page.locator("table.holiday-table tbody tr"); }
+  /** 日付（2040/04/15 の形）の行 */
+  日付の行(日付: string): Locator { return this.一覧の行.filter({ hasText: 日付 }); }
+  /** 祝日IDの行（削除リンクのリンク先に含まれる番号で探す） */
+  番号の行(祝日ID: string): Locator { return this.一覧の行.filter({ has: this.page.locator(`a[href$="/holiday/${祝日ID}/delete"]`) }); }
+  削除リンク(祝日ID: string): Locator { return this.page.locator(`a[href$="/holiday/${祝日ID}/delete"]`); }
+  /** 行の削除リンクのリンク先に含まれる番号 */
+  async 行の番号(行: Locator): Promise<string> {
+    const href = (await 行.locator("a", { hasText: "削除" }).first().getAttribute("href")) ?? "";
+    return /\/holiday\/(\d+)\/delete/.exec(href)?.[1] ?? "";
+  }
+  /** 一覧の全行の（名称, 日付）を上から順に */
+  async 一覧の内容(): Promise<{ 名称: string; 日付: string }[]> {
+    const rows = await this.一覧の行.all();
+    const out: { 名称: string; 日付: string }[] = [];
+    for (const r of rows) {
+      const tds = r.locator("td");
+      out.push({ 名称: ((await tds.nth(0).innerText()) ?? "").trim(), 日付: ((await tds.nth(1).innerText()) ?? "").trim() });
+    }
+    return out;
+  }
+
+  /** 削除リンクを押して、確認ダイアログ（ブラウザの確認）が出るまで待つ。答えるのは ダイアログに答える */
+  async 削除を選ぶ(祝日ID: string): Promise<Dialog> {
+    const dialogP = this.page.waitForEvent("dialog", { timeout: 20_000 });
+    void this.削除リンク(祝日ID).click({ timeout: 20_000 }).catch(() => {});
+    return dialogP;
+  }
+  /** OK（accept=true）またはキャンセルを押す。OK のときは、削除要求の応答を返す（キャンセルのときは null） */
+  async ダイアログに答える(d: Dialog, ok: boolean): Promise<Response | null> {
+    if (!ok) { await d.dismiss(); return null; }
+    const resP = this.page.waitForResponse((r) => r.request().method() === "POST" && /\/data\/holiday\/\d+\/delete/.test(r.url()), { timeout: 30_000 });
+    await d.accept();
+    const res = await resP;
+    await this.page.waitForLoadState("load");
+    return res;
+  }
+  /** 開発者ツールで行うのと同じに、削除リンクのなりすまし対策トークンを書き換える */
+  async 削除要求のトークンを書き換える(祝日ID: string, 値: string): Promise<void> {
+    await this.削除リンク(祝日ID).evaluate((e, v) => e.setAttribute("token-for-anchor", v), 値);
+  }
+
+  /** 画面上部のメッセージ（帯）の文。開発用の設定の赤い帯は除く */
+  async 画面上部のメッセージ(): Promise<string[]> {
+    const out: string[] = [];
+    for (const e of await this.page.locator(".alert").all()) {
+      if (!(await e.isVisible())) continue;
+      const t = (await e.innerText()).replace(/\s+/g, " ").trim();
+      if (t && !t.includes("デバッグモードが有効になっています")) out.push(t);
+    }
+    return out;
+  }
+  /** 期間指定の入力（開始日・終了日）をして決定を押す。要求が送られた結果を返す */
+  async 期間を指定して決定する(開始: string, 終了: string): Promise<{ sent: boolean; status: number; path: string }> {
+    await this.取得開始日.fill(開始);
+    await this.取得終了日.fill(終了);
+    return this.送信する(this.決定ボタン);
+  }
 }

@@ -155,6 +155,35 @@ export async function イベントと日程を用意する(page: Page, v: { 名�
   return { イベントID, 日程ID };
 }
 
+/** デッキ登録の既定（任意の値）に使った、アーキタイプとそのフォーマット（デッキを登録したあとだけ） */
+export function 基線のアーキタイプ(): { フォーマット: string; アーキタイプ: string } {
+  if (!基線) throw new Error("デッキの既定のフォーマット・アーキタイプがまだ決まっていない（デッキを登録していない）");
+  return 基線;
+}
+
+/** イベントに選んだ店舗（イベントを用意したあとだけ。シード表の「東京店」の読み替え） */
+export function 選んだ店舗(): string {
+  if (!店舗) throw new Error("イベントの店舗がまだ決まっていない（イベントを用意していない）");
+  return 店舗;
+}
+
+/** デッキ新規登録画面のデッキタグの選択肢から、先頭の n 件（既存のタグ。共有のマスタに足さない）。足りなければ止める */
+export async function 使えるタグ(page: Page, n: number): Promise<string[]> {
+  await page.goto(adminUrl("/deck/new"));
+  await page.waitForLoadState("load");
+  const labels = (await page.locator('[name="admin_deck[DeckTags][]"] option').allInnerTexts()).map((t) => t.trim()).filter(Boolean);
+  const uniq = [...new Set(labels)];
+  if (uniq.length < n) throw new Error(`デッキタグの選択肢が ${uniq.length} 件しかない（${n} 件要る。共有のマスタには足さないので、止める）`);
+  return uniq.slice(0, n);
+}
+
+/** デッキ編集画面で、選ばれているデッキタグの名前（登録内容の確かめ。参照だけ） */
+export async function デッキのタグ(page: Page, デッキID: string): Promise<string[]> {
+  await page.goto(adminUrl(`/deck/${デッキID}/edit`));
+  await page.waitForLoadState("load");
+  return (await page.locator('[name="admin_deck[DeckTags][]"] option:checked').allInnerTexts()).map((t) => t.trim()).filter(Boolean);
+}
+
 async function 先頭の選択肢(page: Page, name: string): Promise<string> {
   await page.goto(adminUrl("/event/create"));
   await page.waitForLoadState("load");

@@ -144,4 +144,68 @@ export class FrontDetailSearch {
   async 選ばれている表示名(select: Locator): Promise<string> {
     return (await select.locator("option:checked").first().innerText()).trim();
   }
+
+  // ---- 追加分（F03-03 の表示元・検索の実行・アドレスの確認） ----
+
+  /** 公開側の任意の画面（店舗の入口からのパス）を開き、モーダルのカテゴリ選択欄が組み立つまで待つ。応答の番号を返す */
+  async 画面を開く(path: string): Promise<number> {
+    const res = await this.page.goto(`${BASE_URL}${path}`, { waitUntil: "domcontentloaded" });
+    await this.page.waitForLoadState("load");
+    await this.page.locator('#product-detailed-search-form [data-product-search-category-selects] select').first().waitFor({ state: "attached" });
+    return res?.status() ?? 0;
+  }
+
+  /** PC版ナビゲーション（画面上部）の「詳細検索」ボタン */
+  PC版ナビの詳細検索ボタン(): Locator {
+    return this.page.locator('.p-hareruya-header__nav-right-link[data-modal-open="search"]:visible').first();
+  }
+
+  /** SP版ナビゲーション（画面下端）の「詳細検索」ボタン */
+  SP版ナビの詳細検索ボタン(): Locator {
+    return this.page.locator('.p-hareruya-bottom-nav__search-btn[data-modal-open="search"]:visible').first();
+  }
+
+  /** 見えている「詳細検索」の入口を押し、モーダルが開くのを待つ */
+  async 入口を押す(button: Locator): Promise<void> {
+    await button.waitFor({ state: "visible", timeout: 30_000 });
+    await button.click({ timeout: 30_000 });
+    await this.モーダル.waitFor({ state: "attached" });
+    await this.page.waitForFunction(() => document.querySelector("#product-detailed-search-modal")?.classList.contains("is-visible") === true, null, { timeout: 15_000 });
+  }
+
+  /** モーダルの「商品名」の入力欄 */
+  get 商品名の入力欄(): Locator {
+    return this.フォーム.locator("[data-search-keyword-input]");
+  }
+
+  /** モーダルの検索ボタン */
+  get 検索ボタン(): Locator {
+    return this.フォーム.locator("[data-search-submit]");
+  }
+
+  /** Foil の選択肢（通常・Foil・特殊）を名前で選ぶ（チェックを付ける） */
+  async Foilを選ぶ(名称: string): Promise<void> {
+    const label = this.フォーム.locator(".p-hareruya-search-form__foil label.p-hareruya-search-form__checkbox")
+      .filter({ has: this.page.locator("span", { hasText: new RegExp(`^\\s*${名称}\\s*$`) }) }).first();
+    await label.scrollIntoViewIfNeeded();
+    await label.click();
+    await this.page.waitForTimeout(200);
+  }
+
+  /** 検索ボタンを押し、アドレスが変わる（検索の送信後の画面になる）のを待つ。送信前のアドレスを返す */
+  async 検索する(): Promise<string> {
+    const before = this.page.url();
+    await Promise.all([
+      this.page.waitForURL((u) => u.toString() !== before, { waitUntil: "domcontentloaded", timeout: 30_000 }),
+      this.検索ボタン.click(),
+    ]);
+    await this.page.waitForLoadState("load");
+    return before;
+  }
+
+  /** いまのアドレス（パスと、引数の名前・値の組。読みやすく復号したもの） */
+  アドレス(): { パス: string; 引数: [string, string][]; 文: string } {
+    const u = new URL(this.page.url());
+    return { パス: decodeURIComponent(u.pathname), 引数: [...u.searchParams.entries()], 文: decodeURIComponent(u.pathname + u.search) };
+  }
 }

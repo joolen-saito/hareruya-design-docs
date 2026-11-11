@@ -137,7 +137,7 @@ async function checkout(page: Page, what: string, 除外されない配送: bool
 }
 
 /** 会員でフロントにログインして、販売中の商品1点を注文し、ご注文番号を返す */
-export async function 会員が注文する(browser: Browser, m: { メール: string; パスワード: string }, what: string, opt: { 出荷指示リストに載る配送?: boolean } = {}): Promise<string> {
+export async function 会員が注文する(browser: Browser, m: { メール: string; パスワード: string }, what: string, opt: { 出荷指示リストに載る配送?: boolean; 商品ID?: string } = {}): Promise<string> {
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
     await hideDebugToolbar(context);
@@ -145,7 +145,7 @@ export async function 会員が注文する(browser: Browser, m: { メール: st
     page.setDefaultTimeout(60_000);
     await frontLogin(page, m);
     await clearCart(page, () => undefined);
-    await addFirstAvailable(page, 販売中の商品ID(), `${what}: 商品をカートに入れる`);
+    await addFirstAvailable(page, opt.商品ID ?? 販売中の商品ID(), `${what}: 商品をカートに入れる`);
     return await checkout(page, `${what}: 注文`, opt.出荷指示リストに載る配送 ?? false);
   } finally {
     await context.close();

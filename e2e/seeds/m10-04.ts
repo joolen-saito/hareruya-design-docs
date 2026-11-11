@@ -9,12 +9,14 @@
  */
 import { Browser, Page, expect } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { rc } from "../lib/run_marker";
 import { expectSaved } from "../pages/admin/common";
 import { PurchaseGroupPage } from "../pages/admin/m03_22_purchase_group";
 import { PaymentPage, 画像, 支払方法の入力 } from "../pages/admin/m10_04_payment";
+import { 受注を足す, 表示順を最後にする, 表示順を先頭にする } from "../db/m10_04_payment";
 import { ensureAnalysisAdmin } from "./m12-common";
 
 export const M1004L_ADMIN: Account = { loginId: "m1004l-admin", password: "Passw0rd!M1004L" };
@@ -104,3 +106,80 @@ defineSeed("S-M10-04-DEL-038", async ({ browser }) => { await 作る(browser, �
 defineSeed("S-M10-04-DEL-041", async ({ browser }) => { await 作る(browser, 既定(名.p041(), "G041M1004n041-en")); });
 defineSeed("S-M10-04-DEL-042", async ({ browser }) => { await 作る(browser, 既定(名.p042(), "G042M1004n042-en")); });
 defineSeed("S-M10-04-DEL-059", async ({ browser }) => { await 作る(browser, 既定(名.p059(), "G059M1004n059-en")); });
+
+// ---- 追加分（依頼者の方針 2026-11-10: 既存データ・画面で作ったデータへの読み替え。画面で作れない部分は印つきの支払方法に限ってDBへ書く） ----
+const 読み替え = "シード表は「支払方法はこの1件／この3件だけ」と定めるが、支払方法は共有の環境に元からあり、ほかの支払方法を取り除かないので、画面で作った印つきの支払方法の並び・有無だけで確かめる（表示順の値は共有の支払方法の後ろに振られるため、実際の値でなく差で読む）。メール管理の「M10-04連携試験テンプレート」は作らず、元からある注文確認（銀行振込）のテンプレートを選ぶ。画面で作った支払方法は、DBの固定扱いの値が既定のまま（画面の操作の可否には使われていない）";
+
+export const 基本 = (n: string) => ({ 既存: rc(`G${n}M1004n${n}既存支払方法`), 検証: rc(`G${n}M1004n${n}入力検証支払方法`), 途中: rc(`G${n}M1004n${n}入力途中支払方法`) });
+/** 並びを確かめるシードの3件（表示順は 丙<乙<甲） */
+export const 三件 = (n: string) => ({ 甲: rc(`G${n}M1004n${n}甲`), 乙: rc(`G${n}M1004n${n}乙`), 丙: rc(`G${n}M1004n${n}丙`) });
+export const 壱弐参 = () => ({ 壱: rc("G049M1004n049壱"), 弐: rc("G049M1004n049弐"), 参: rc("G049M1004n049参"), 削除済み: rc("G049M1004n049削除済み") });
+export const 名追加 = {
+  p024: () => rc("G024M1004n024全項目支払方法"),
+  p040: () => rc("G040M1004n040関連データ有支払方法"),
+  p051: () => rc("G051M1004n051固定扱い支払方法"),
+  p066新規: () => rc("G066M1004n066新規支払方法"),
+};
+
+/** 1つの管理画面の操作で、順に作る（表示順は登録のたびに最大+1） */
+async function 順に作る(browser: Browser, 入力: 支払方法の入力[]): Promise<void> {
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    for (const v of 入力) await 支払方法を作る(page, v);
+  });
+}
+/** 丙→乙→甲の順に作る（甲が最大の表示順で一覧の上） */
+async function 三件を作る(browser: Browser, n: string): Promise<void> {
+  const x = 三件(n);
+  await 順に作る(browser, [既定(x.丙, `G${n}-hei-en`), 既定(x.乙, `G${n}-otsu-en`), 既定(x.甲, `G${n}-kou-en`)]);
+}
+
+// 入力に誤りがあって登録されないことを確かめるケースの土台（既存の支払方法を1件、画面で作る）
+for (const n of ["019", "020", "021", "022", "023", "027", "028", "030", "031", "033", "034", "035", "036", "037", "061", "048"]) {
+  defineSeed(`S-M10-04-BASE-${n}`, async ({ browser, seed }) => {
+    reportSeedIssue(seed.シードID, 読み替え);
+    await 作る(browser, 既定(基本(n).既存, `G${n}M1004n${n}-base-en`));
+  });
+}
+defineSeed("S-M10-04-UNREG-024", async () => {});
+defineSeed("S-M10-04-MAILS-024", async ({ seed }) => {
+  reportSeedIssue(seed.シードID, "メール管理に専用のテンプレートは作らず、元からある注文確認（銀行振込）の日本語・英語のテンプレートを選ぶ。ほかのメールテンプレートは共有の設定なので削除済みにしない");
+});
+defineSeed("S-M10-04-MAILS-026", async ({ seed }) => {
+  reportSeedIssue(seed.シードID, "メール管理に専用のテンプレート2件は作らず、ほかのメールテンプレートも削除済みにしない（共有の設定）。手元のメール管理の一覧にあるテンプレートと、支払方法の選択肢が一致することで確かめる");
+});
+for (const n of ["039", "043", "044", "045", "047", "052", "060"]) {
+  defineSeed(`S-M10-04-ORD-${n}`, async ({ browser, seed }) => { reportSeedIssue(seed.シードID, 読み替え); await 三件を作る(browser, n); });
+}
+defineSeed("S-M10-04-ORD-046", async ({ browser, seed }) => {
+  reportSeedIssue(seed.シードID, 読み替え);
+  await 三件を作る(browser, "046");
+  const x = 三件("046");
+  表示順を先頭にする(x.甲);
+  表示順を最後にする(x.丙);
+  reportSeedIssue(seed.シードID, "共有の支払方法が一覧にあるため、DBで甲の表示順をほかのどれより大きく、丙の表示順をほかのどれより小さく設定した（甲を一覧の先頭、丙を末尾にするため）");
+});
+defineSeed("S-M10-04-ORD-049", async ({ browser, seed }) => {
+  reportSeedIssue(seed.シードID, 読み替え);
+  const x = 壱弐参();
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    for (const [名, 英] of [[x.壱, "G049-1-en"], [x.弐, "G049-2-en"], [x.参, "G049-3-en"], [x.削除済み, "G049-deleted-en"]]) await 支払方法を作る(page, 既定(名, 英));
+    const p = new PaymentPage(page);
+    await p.openList();
+    await p.削除を押す(p.行(x.削除済み));
+    await p.モーダルで削除する();
+    await expectSaved(page, "支払方法の削除");
+  });
+  reportSeedIssue(seed.シードID, "「削除済み」の支払方法は、画面で作ったあと一覧の削除で取り除いた（このアプリは削除した支払方法の行を残さない）");
+});
+defineSeed("S-M10-04-DP-MAXORD-066", async ({ browser, seed }) => { reportSeedIssue(seed.シードID, 読み替え); await 三件を作る(browser, "066"); });
+defineSeed("S-M10-04-FIX-051", async ({ browser, seed }) => {
+  reportSeedIssue(seed.シードID, "画面で作った支払方法は、DBの固定扱いの値が既定で「固定扱い」になる（シード表の「固定扱いはDBで設定」は、すでにその値のため書き込まない）");
+  await 作る(browser, 既定(名追加.p051(), "G051M1004n051-en"));
+});
+defineSeed("S-M10-04-REL-040", async ({ browser, seed }) => {
+  reportSeedIssue(seed.シードID, "管理画面に受注を新規登録する画面が無く、フロントの注文は共有の商品の在庫を減らすので、DBで、この印つきの支払方法を設定した受注を1件追加した（購入者名・商品の明細は無い）");
+  await 作る(browser, 既定(名追加.p040(), "G040M1004n040-en"));
+  受注を足す(名追加.p040());
+});

@@ -82,7 +82,7 @@ caseTest("IT-F01-02-030", async ({ page, step, expected }) => {
   await step(1, async () => { await top.open(支店URL("030")); await top.開いている(); });
   await step(2, async () => {
     await expect(top.SALE中, "SALE中の商品の区画").toHaveCount(1);
-    await Promise.all([page.waitForLoadState("load"), top.SALE中.getByRole("link", { name: /もっと見る/ }).click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForLoadState("load"), top.SALE中.getByRole("link", { name: /もっと見る/ }).locator("visible=true").first().click({ timeout: 20_000 })]);
     await page.waitForLoadState("load");
     await expect(page.getByText(rc("F0102-030商品A")).first(), "商品一覧の「F0102-030商品A」").toBeVisible({ timeout: 30_000 }).catch(() => note("商品一覧に「F0102-030商品A」が見つからなかった"));
     for (const x of ["A", "B", "C"]) 数[x] = await page.getByText(rc(`F0102-030商品${x}`)).count();
@@ -113,8 +113,10 @@ function カート(n: string, 商品名: string, 目標: number): CaseBody {
     await step(3, async () => { await card().locator("button.add-cart").click({ timeout: 20_000 }); await page.waitForTimeout(1500); });
     await step(4, async () => {
       const link = page.locator(".p-hareruya-cart-popup__link").first();
-      if (await link.isVisible().catch(() => false)) await Promise.all([page.waitForURL(/\/cart/, { timeout: 30_000 }).catch(() => undefined), link.click({ timeout: 10_000 })]);
-      else { note("カートに入れた後の案内の画面が見えなかったので、カートを直接開いた"); await page.goto(`${BASE_URL}/cart`); }
+      const 押せた = await link.isVisible().catch(() => false)
+        ? await Promise.all([page.waitForURL(/\/cart/, { timeout: 30_000 }).catch(() => undefined), link.click({ timeout: 10_000 })]).then(() => true, () => false)
+        : false;
+      if (!押せた) { note("カートに入れた後の案内の画面が見えない、または押せなかったので、カートを直接開いた"); await page.goto(`${BASE_URL}/cart`); }
       await page.waitForLoadState("load");
       const item = page.locator(".p-hareruya-cart-item").filter({ hasText: rc(商品名) }).first();
       await expect(item, `カートの「${商品名}」`).toBeVisible({ timeout: 30_000 }).catch(() => note(`カートに「${商品名}」が見つからなかった`));

@@ -1,14 +1,18 @@
 /**
  * F03-03 商品詳細検索。正本: cases/F03-03_test_cases.tsv
  *
- * 実装したのは、商品を検索用の外部の試験索引へ反映しなくても成り立つケース（モーダルの開閉・項目・選択肢・カテゴリの階層）だけ。
- * 検索結果の商品を確かめるケースと、商品を作って索引へ反映するシードを使うケースは実装しない（記録 e2e/review/F03-03_progress_2026-10-29.md）。
+ * 実装したのは、商品を検索用の外部の試験索引へ反映しなくても成り立つケース（モーダルの開閉・項目・選択肢・カテゴリの階層）と、
+ * 2026-11-10 の方針で足した 001・005・025・027（モーダルの表示元・検索後のアドレスだけを確かめ、検索結果の商品には依らない。シードは既存データへの読み替え）。
+ * 検索結果の商品を確かめるケース（006〜010・018〜021・023・024・031・035）と DB での準備を含む 007 は実装しない
+ * （画面で作った商品は外部の検索索引にすぐ出ず、既存の商品で代えると期待を弱めるため。前回の記録 e2e/review/F03-03_progress_2026-10-29.md）。
  */
 import { test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { FrontDetailSearch } from "../../pages/front/f03_03_detail_search";
 import { 共有マスタ } from "../../seeds/f03-03";
+import { FrontDetail } from "../../pages/front/f03_02_detail";
+import { FrontProductList } from "../../pages/front/f03_01_product_list";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -264,5 +268,126 @@ caseTest("IT-F03-03-034", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(選択後の欄数, `子カテゴリを持たない第3階層の「${C}」を選んだあとのカテゴリ選択欄の数（第3階層まで）`).toBe(3);
     await expect.soft(search.カテゴリ選択欄(3), "第4階層のカテゴリ選択欄").toHaveCount(0);
+  });
+});
+
+// ---- 2026-11-10 の方針で足したケース ----
+
+type アドレスの形 = { パス: string; 引数: [string, string][]; 文: string };
+
+/** モーダルの表示元の確認で、その表示元で記録する値 */
+type 表示元の結果 = { モーダルが開いた: boolean; 遷移しなかった: boolean };
+
+caseTest("IT-F03-03-001", async ({ page, notes, step, expected }) => {
+  const search = new FrontDetailSearch(page);
+  const 商品ID = notes.get("〔商品ID-F0303-001〕");
+  const 結果: Record<string, 表示元の結果> = {};
+  /** 表示元の画面を開き、入口を押してモーダルが画面の上に開くことを記録し、閉じるボタンで閉じる */
+  async function 表示元(名前: string, path: string, 幅: "PC" | "SP", 入口: () => ReturnType<FrontDetailSearch["PC版ナビの詳細検索ボタン"]>): Promise<void> {
+    await page.setViewportSize(幅 === "SP" ? { width: 390, height: 844 } : { width: 1280, height: 720 });
+    const status = await search.画面を開く(path);
+    expect(status, `${名前}の応答`).toBeLessThan(400);
+    expect(await search.モーダルが開いている(), `${名前}を開いた直後、商品詳細検索モーダルが閉じている`).toBe(false);
+    const before = new URL(page.url());
+    await search.入口を押す(入口());
+    const after = new URL(page.url());
+    結果[名前] = {
+      モーダルが開いた: await search.モーダルが開いている(),
+      遷移しなかった: after.pathname === before.pathname && after.search === before.search,
+    };
+    await search.閉じるボタン.click({ timeout: 30_000 });
+    await search.開閉後のモーダル();
+  }
+  await step(1, async () => { await 表示元("本店PC版のTOP画面", "/ja", "PC", () => search.PC版ナビの詳細検索ボタン()); });
+  await step(2, async () => { await 表示元("本店SP版のTOP画面", "/ja", "SP", () => search.SP版ナビの詳細検索ボタン()); });
+  await step(3, async () => { await 表示元("TC大阪支店PC版のTOP画面", "/ja/osaka", "PC", () => search.PC版ナビの詳細検索ボタン()); });
+  await step(4, async () => { await 表示元("TC大阪支店SP版のTOP画面", "/ja/osaka", "SP", () => search.SP版ナビの詳細検索ボタン()); });
+  await step(5, async () => { await 表示元("本店ECTOP", "/ja", "PC", () => search.詳細検索の入口().first()); });
+  await step(6, async () => { await 表示元("支店ECTOP", "/ja/osaka", "PC", () => search.詳細検索の入口().first()); });
+  await step(7, async () => { await 表示元("商品一覧画面", "/ja/products/search", "PC", () => search.詳細検索の入口().first()); });
+  await step(8, async () => {
+    note("商品HQ-001-F0303-001は作らず、本店の商品一覧にある既存の商品（シードの注記）の商品詳細画面で押した。TOP画面とECTOPは同じアドレス（本店 /ja・支店 /ja/osaka）で、TOP画面はPC版・SP版のナビゲーション、ECTOPは見えている「詳細検索」の入口を押した");
+    await 表示元("商品詳細画面", `/ja/products/detail/${商品ID}`, "PC", () => search.詳細検索の入口().first());
+  });
+  await expected(async () => {
+    expect.soft(Object.keys(結果), "確かめた表示元の数").toHaveLength(8);
+    for (const [名前, r] of Object.entries(結果)) {
+      expect.soft(r.モーダルが開いた, `${名前}の上に商品詳細検索モーダルが表示される`).toBe(true);
+      expect.soft(r.遷移しなかった, `${名前}から独立した商品詳細検索画面へ遷移しない（アドレスが変わらない）`).toBe(true);
+    }
+  });
+});
+
+caseTest("IT-F03-03-005", async ({ page, notes, step, expected }) => {
+  const search = new FrontDetailSearch(page);
+  const タグID = notes.get("〔タグID-F0303-005〕");
+  const カテゴリID = notes.get("〔カテゴリID-F0303-共有B〕");
+  let 結果: アドレスの形 = { パス: "", 引数: [], 文: "" };
+  await step(1, async () => {
+    expect(await search.画面を開く(`/ja/products/search/tags/${タグID}`), "タグで絞り込んだ商品一覧の応答").toBeLessThan(400);
+  });
+  await step(2, async () => { await search.入口を押す(search.詳細検索の入口().first()); });
+  await step(3, async () => {
+    await search.カテゴリを選ぶ(0, 共有マスタ.表示対象親カテゴリ);
+    await search.カテゴリを選ぶ(1, 共有マスタ.表示対象カテゴリ);
+    await search.Foilを選ぶ("特殊");
+    await search.検索する();
+  });
+  await step(4, async () => {
+    結果 = search.アドレス();
+    note(`検索後のアドレス: ${結果.文}（Foil「特殊」はFoilの欄の値として送られたものを見る）`);
+  });
+  await expected(async () => {
+    expect.soft(結果.パス, `タグ「T-F0303-005」（タグID ${タグID}）がアドレスのパスに含まれる`).toMatch(new RegExp(`/tags/${タグID}(?:/|$)`));
+    expect.soft(結果.パス, `カテゴリ「${共有マスタ.表示対象カテゴリ}」（カテゴリID ${カテゴリID}）がアドレスのパスに含まれる`).toMatch(new RegExp(`/cate/${カテゴリID}(?:/|$)`));
+    expect.soft(結果.引数.filter(([k]) => /foil/i.test(k)).map(([, v]) => v), "Foil「特殊」がGETパラメータに含まれる（Foilの欄の値が1つ送られる）").toHaveLength(1);
+    expect.soft(結果.引数.some(([k]) => /^(tags|category)(\[|$)/.test(k)), "タグとカテゴリはGETパラメータではなくパスに入る（パラメータに残らない）").toBe(false);
+  });
+});
+
+caseTest("IT-F03-03-025", async ({ page, notes, step, expected }) => {
+  const search = new FrontDetailSearch(page);
+  const list = new FrontProductList(page);
+  const カードID = notes.get("〔カードID-F0303-025A〕");
+  let 結果: アドレスの形 = { パス: "", 引数: [], 文: "" };
+  let 開始 = "";
+  await step(1, async () => {
+    // 並び順「価格(高い順)」のIDは、一覧の並び順のボタン（表示名「価格（高い順）」）から読む
+    await search.画面を開く("/ja/products/search");
+    const 並び順の欄 = await list.並び順の欄の名前();
+    const 並び順ID = await list.並び順のID("価格（高い順）");
+    expect(並び順ID, "並び順「価格(高い順)」の番号（一覧の並び順のボタンから読む。正本の表記は半角括弧、画面は全角括弧）").not.toBe("");
+    await search.画面を開く(`/ja/products/search?cardId=${カードID}&${並び順の欄}=${並び順ID}&pageno=2`);
+    開始 = search.アドレス().文;
+    note(`開始時のアドレス: ${開始}`);
+  });
+  await step(2, async () => { await search.入口を押す(search.詳細検索の入口().first()); });
+  await step(3, async () => { await search.商品名の入力欄.fill("F0303-CARRY-025"); await search.検索する(); });
+  await step(4, async () => { 結果 = search.アドレス(); note(`検索後のアドレス: ${結果.文}`); });
+  await expected(async () => {
+    const keys = 結果.引数.map(([k]) => k);
+    expect.soft(keys.filter((k) => /^orderby$/i.test(k)), "検索後のアドレスに遷移元の並び順が含まれない").toHaveLength(0);
+    expect.soft(keys.filter((k) => /^pageno$/i.test(k)), "検索後のアドレスに遷移元のページ番号が含まれない").toHaveLength(0);
+    expect.soft(keys.filter((k) => /^card_?id$/i.test(k)), `検索後のアドレスに遷移元のカードID（${カードID}）が含まれない`).toHaveLength(0);
+    expect.soft(結果.引数.some(([, v]) => v === カードID && /card/i.test(結果.文)), "カードIDの値がアドレスに残らない").toBe(false);
+  });
+});
+
+caseTest("IT-F03-03-027", async ({ page, step, expected }) => {
+  const search = new FrontDetailSearch(page);
+  let 結果: アドレスの形 = { パス: "", 引数: [], 文: "" };
+  await step(1, async () => {
+    await search.画面を開く("/ja/products/search");
+    await search.入口を押す(search.詳細検索の入口().first());
+  });
+  await step(2, async () => { await search.商品名の入力欄.fill("F0303-CARRY-027"); await search.検索する(); });
+  await step(3, async () => {
+    結果 = search.アドレス();
+    note(`検索後のアドレス: ${結果.文}。「検索条件」は、商品名・カテゴリ・色などの絞り込みの項目。表示件数・並び順・ページ番号・画面の動作の指定は検索条件に数えない`);
+  });
+  await expected(async () => {
+    const 条件 = 結果.引数.filter(([k]) => !/^(disp_?number|orderby|pageno|mode|pick_up)$/i.test(k));
+    expect.soft(条件.map(([k, v]) => `${k}=${v}`), "商品名「F0303-CARRY-027」だけが検索条件としてアドレスに含まれる").toEqual([expect.stringMatching(/^(.*\[)?product(\])?=F0303-CARRY-027$/)]);
+    expect.soft(結果.引数.filter(([, v]) => v === ""), "未入力・未選択の検索条件（値が空のもの）がアドレスに含まれない").toHaveLength(0);
   });
 });

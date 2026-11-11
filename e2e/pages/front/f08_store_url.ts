@@ -5,9 +5,9 @@
 import { Page } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 
-export type 入口 = "申込前ログイン" | "申込フォーム" | "会員登録フォーム" | "登録確認";
+export type 入口 = "申込前ログイン" | "申込フォーム" | "会員登録フォーム" | "登録確認" | "登録完了";
 
-const PATH: Record<入口, string> = { "申込前ログイン": "/entry", "申込フォーム": "", "会員登録フォーム": "/register_customer", "登録確認": "/confirm" };
+const PATH: Record<入口, string> = { "申込前ログイン": "/entry", "申込フォーム": "", "会員登録フォーム": "/register_customer", "登録確認": "/confirm", "登録完了": "/complete" };
 
 export const 入口のURL = (店舗識別名: string, 入口: 入口) => `${BASE_URL}/ja/otcbuy/${店舗識別名}${PATH[入口]}`;
 

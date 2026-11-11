@@ -23,10 +23,12 @@
 import { Browser, Page, expect } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { プレイヤーID, 規格の依頼ID, 商品単位の依頼ID } from "../db/f03_07";
+import { 依頼に削除日時を設定する } from "../db/f03_07_write";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
-import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { Account, adminUrl, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { BASE_URL } from "../config/env";
 import { customerIdByEmail, readArrivalMax, savePublishedClass, setArrivalMax } from "../pages/admin/f03_07_restock";
@@ -275,6 +277,11 @@ defineStandard({ sfx: "CBLIST-056", member: { local: "cbf0307-056", password: "P
 // 連携（051）: 会員のメールアドレス・パスワードは固定
 defineStandard({ sfx: "PF-REQ-051", member: { local: "f0307-pf-001", password: "Passw0rd-PF001" }, product: { name: "連携入荷通知商品F0307PF001", classes: [S("F0307PF001-NM")] } });
 
+// 018 商品詳細を開いたあとに商品規格を削除する（削除は手順の中で、管理画面から行う）
+defineStandard({ sfx: "CASE-018", member: false, product: { name: "削除判定商品-018", classes: [S("DELETE-AFTER-OPEN-018")] } });
+// 024 会員登録途中の戻り先。会員の登録はケースの手順で行う（メールアドレスは実行の印つき。印つきなので、既存の会員・仮会員・プレイヤーに当たらない）
+defineStandard({ sfx: "CASE-024", member: false, product: { name: "通知単位確認商品-024", classes: [S("UNIT-NM-024")] } });
+
 // 013 会員A・会員Bと、会員ごとの入荷待ち商品
 defineSeed("S-F03-07-CASE-013", async ({ browser, notes }) => {
   const seedId = "S-F03-07-CASE-013";
@@ -372,4 +379,58 @@ defineSeed("S-F03-07-PF-ADM", async ({ browser }) => {
     });
   });
   reportSeedIssue("S-F03-07-PF-ADM", "権限は、分析・集計管理機能を含む「システム管理者」にした（正本に権限の名前が無い）");
+});
+
+// ---- 017 非有効な依頼が混ざる会員 ----
+
+/**
+ * 正本: 有効な依頼19件・取り消し済み1件・削除日時 2026-09-01 12:00:00 の依頼1件を持つ会員Aと、会員Aの依頼が0件の商品規格 LIMIT-ACTIVE-NEW-017。入荷通知最大数は20。
+ * 作り方: 入荷通知最大数は共有の設定なので書き換えない。いまの値が20でなければ止める（前提と違う）。
+ * 依頼は画面で作る（有効19件、取り消し用1件を押して取り消す、削除日時用1件）。削除日時は画面で指定できないので、
+ * 印つきの会員の依頼に限って DB で設定した（db/f03_07_write.ts）。
+ */
+defineSeed("S-F03-07-CASE-017", { needs: ["S-F03-07-ARRIVAL-LIMIT"] }, async ({ browser, notes }) => {
+  const seedId = "S-F03-07-CASE-017";
+  const issue = (m: string) => reportSeedIssue(seedId, m);
+  const max = await withAdminSession(browser, SETUP_ADMIN, (page) => readArrivalMax(page));
+  if (max !== "20") throw new Error(`${seedId}: 追加システム設定の入荷通知最大数が ${max}（前提は20）。共有の設定なので書き換えずに止める`);
+  const m = await createMember(browser, "f0307-a-017", passwordOf("f0307-a-017"), issue);
+  const defs: 商品の定義[] = [{ name: "非有効依頼除外商品", classes: [S("LIMIT-ACTIVE-NEW-017")] }];
+  for (let i = 1; i <= 19; i++) {
+    const nn = String(i).padStart(2, "0");
+    defs.push({ name: `有効依頼商品-${nn}-017`, classes: [S(`LIMIT-ACTIVE-${nn}-017`)] });
+  }
+  defs.push({ name: "取消済み依頼商品-017", classes: [S("LIMIT-CANCELED-017")] }, { name: "削除日時つき依頼商品-017", classes: [S("LIMIT-DELETED-017")] });
+  const ps = await createProducts(browser, seedId, defs, issue);
+  const target = ps[0], canceled = ps[20], deleted = ps[21];
+  await requestAs(browser, m, [...ps.slice(1, 20).map((p) => ({ product: p, classIndex: 0 })), { product: canceled, classIndex: 0 }], seedId, issue);
+  const idA = 規格の依頼ID(m.id, canceled.classIds[0]);
+  if (!idA) throw new Error(`${seedId}: 取消用の依頼を画面で登録したのに、DBの参照で依頼IDが見つからない`);
+  // 取消用の依頼を、もう一度通知ボタンを押して取り消す
+  const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
+  try {
+    await hideDebugToolbar(context);
+    const front = new FrontRestock(await context.newPage());
+    await front.login(m.mail, m.password);
+    await front.openDetail(canceled.productId);
+    const r = await front.press(front.classButton(canceled.classIds[0]));
+    if (!r.通知が出た || !/解除|キャンセル/.test(r.通知の文)) throw new Error(`${seedId}: 取消用の依頼を取り消す通知が出ない（${JSON.stringify(r)}）`);
+  } finally {
+    await context.close();
+  }
+  await requestAs(browser, m, [{ product: deleted, classIndex: 0 }], seedId, issue);
+  const idB = 規格の依頼ID(m.id, deleted.classIds[0]);
+  if (!idB) throw new Error(`${seedId}: 削除日時用の依頼を画面で登録したのに、DBの参照で依頼IDが見つからない`);
+  依頼に削除日時を設定する(idB, "2026-09-01 12:00:00");
+  issue("DBで入荷通知依頼（削除日時用の1件）の削除日時を 2026-09-01 12:00:00（日本時間）に設定した（画面では日時を指定できない。印つきの会員の依頼だけに書いた）");
+  issue("入荷通知最大数は共有の設定なので書き換えず、いまの値が20であることを確かめて使った");
+  for (const label of Notes.labelsIn(getSeed(seedId)["状態・属性"] + getSeed(seedId).投入方法)) {
+    const mm = /^〔(.+?)-F0307-(.+)〕$/.exec(label);
+    if (!mm) throw new Error(`${seedId}: 呼び名 ${label} の形が読めない`);
+    if (mm[1] === "会員ID") notes.set(label, m.id);
+    else if (mm[1] === "プレイヤーID") { const p = プレイヤーID(m.id); if (!p) throw new Error(`${seedId}: 会員のプレイヤーが見つからない`); notes.set(label, p); }
+    else if (mm[1] === "商品規格ID") notes.set(label, target.classIds[0]);
+    else if (mm[1] === "依頼ID") notes.set(label, mm[2] === "017A" || mm[2] === "A" ? idA : idB);
+    else throw new Error(`${seedId}: 呼び名 ${label} の種類が未対応`);
+  }
 });

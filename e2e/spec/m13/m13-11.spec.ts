@@ -70,7 +70,7 @@ caseTest("IT-M13-11-011", async ({ page, notes, step, expected }) => {
   let 検索前 = "";
   await step(2, async () => {
     検索前 = before();
-    await s.店舗を選ぶ(["店舗A"]); await s.検索イベント名.fill(rc("結合対象大会"));
+    await s.店舗を選ぶ(["店舗A"]); await s.検索イベント名.fill(rc("結合対象"));
     await s.日付を入れる(s.開催日From, "2099/08/15"); await s.日付を入れる(s.開催日To, "2099/08/15");
   });
   await step(3, async () => { await s.検索する(); });
@@ -91,7 +91,7 @@ caseTest("IT-M13-11-014", async ({ page, notes, step, expected }) => {
     const ds = await s.新規登録ボタンの日程ID();
     expect.soft(ds, "オンライン受付ありの日程が表示される").toContain(notes.get("〔日程ID-M1311-014A〕"));
     expect.soft(ds, "オンライン受付なしの日程は表示されない").not.toContain(notes.get("〔日程ID-M1311-014B〕"));
-    expect.soft(ds.length, "表示された日程の数").toBe(1);
+    expect.soft(await s.日程の行数(), "表示された日程の行数").toBe(1);
   });
 });
 
@@ -109,10 +109,10 @@ caseTest("IT-M13-11-015", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.開く(); });
   await step(2, async () => { await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("ページング大会")); await s.検索する(); });
-  let ds: string[] = [];
-  await step(4, async () => { ds = await s.新規登録ボタンの日程ID(); });
+  let ds: string[] = []; let 行数 = 0;
+  await step(4, async () => { ds = await s.新規登録ボタンの日程ID(); 行数 = await s.日程の行数(); });
   await expected(async () => {
-    expect.soft(ds.length, "1ページ目の日程件数").toBe(10);
+    expect.soft(行数, "1ページ目の日程件数（行数）").toBe(10);
     expect.soft(ds, "11件目の日程は1ページ目に表示されない").not.toContain(notes.get("〔日程ID-M1311-共有ページ01〕"));
   });
 });
@@ -174,16 +174,20 @@ caseTest("IT-M13-11-020", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.開く(); });
   await step(2, async () => { await s.店舗を選ぶ(["店舗A"]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("並び順大会")); await s.検索する(); });
-  let ds: string[] = []; let span = "";
+  let ds: string[] = []; let span = ""; let 名span = "";
   await step(4, async () => {
     ds = await s.新規登録ボタンの日程ID();
-    span = (await s.結果の行.locator("td[rowspan]", { hasText: new RegExp(`^\\s*${a}\\s*$`) }).first().getAttribute("rowspan")) ?? "";
+    const idCell = s.結果の行.locator("td[rowspan]", { hasText: new RegExp(`^\\s*${a}\\s*$`) }).first();
+    span = (await idCell.getAttribute("rowspan")) ?? "";
+    // イベント名の欄は、イベントIDの欄のすぐ右の結合セル
+    名span = (await idCell.locator("xpath=following-sibling::td[1]").getAttribute("rowspan")) ?? "";
   });
   await expected(async () => {
     const want = [notes.get("〔日程ID-M1311-共有並びA3〕"), notes.get("〔日程ID-M1311-共有並びA2〕"), notes.get("〔日程ID-M1311-共有並びA1〕")];
     const at = ds.indexOf(want[0]);
     expect.soft(ds.slice(at, at + 3), "イベントAの3日程が日程A3・A2・A1の順に並ぶ").toEqual(want);
-    expect.soft(span, "イベントIDとイベント名が3日程をまたぐ1行にまとまる（行の結合数）").toBe("3");
+    expect.soft(span, "イベントIDが3日程をまたぐ1行にまとまる（行の結合数）").toBe("3");
+    expect.soft(名span, "イベント名が3日程をまたぐ1行にまとまる（行の結合数）").toBe("3");
     expect.soft(ds.indexOf(want[0]), "イベントAがイベントBより前（イベントIDの大きい順）").toBeLessThan(ds.indexOf(notes.get("〔日程ID-M1311-共有並びB1〕")));
   });
 });
@@ -263,7 +267,8 @@ caseTest("IT-M13-11-024", async ({ page, notes, step, expected }) => {
   let 画面 = ""; let 金額 = "";
   await step(5, async () => {
     画面 = (await page.locator("form").first().innerText()).replace(/\s+/g, " ");
-    金額 = await page.locator('[name$="[price]"]').first().inputValue();
+    // 画面は桁区切りのカンマつきで表示する（例「2,500」）。金額として比べるためカンマを除く
+    金額 = (await page.locator('[name$="[price]"]').first().inputValue()).replace(/,/g, "");
   });
   await expected(async () => {
     expect.soft(画面, "選択した日程のイベント名と開催日時").toContain(`${rc("連携確認大会001")}（Link Check 001） 2099-12-02 14:30`);

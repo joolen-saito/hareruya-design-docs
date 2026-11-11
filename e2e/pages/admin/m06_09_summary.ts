@@ -42,4 +42,46 @@ export class SummaryPage {
   async 日別の文(): Promise<string> {
     return (await this.日別の欄().innerText({ timeout: OPEN })).replace(/\s+/g, " ").trim();
   }
+
+  /** 部門（複数選択）を、部門名を含む選択肢だけにする */
+  async 部門を選ぶ(部門名: string): Promise<void> {
+    await this.選択肢だけにする('select[name="admin_otc_buy_order_summary[section][]"]', 部門名, "部門");
+  }
+
+  /** 買取店舗（複数選択）を、店名の選択肢だけにする */
+  async 買取店舗を選ぶ(店名: string): Promise<void> {
+    await this.選択肢だけにする('select[name="admin_otc_buy_order_summary[shop][]"]', 店名, "買取店舗");
+  }
+
+  private async 選択肢だけにする(selector: string, 名前: string, 何: string): Promise<void> {
+    const sel = this.page.locator(selector);
+    await expect(sel, `買取集計データ画面の${何}の選択欄`).toBeAttached({ timeout: OPEN });
+    const values = await sel.evaluate((s, n) => Array.from((s as HTMLSelectElement).options).filter((o) => (o.textContent ?? "").trim() === n).map((o) => o.value), 名前);
+    if (values.length !== 1) throw new Error(`${何}の選択肢に「${名前}」が ${values.length} 件（1件のはず）`);
+    await sel.selectOption(values, { timeout: OPEN });
+  }
+
+  /** 期間全体の集計の行（部門コード・部門・買取金額・販売金額。金額は数字だけ） */
+  async 期間全体の行(): Promise<{ 部門コード: string; 部門: string; 買取金額: number; 販売金額: number }[]> {
+    return this.集計の行("#result_list_entire tbody tr", 0);
+  }
+
+  /** 日別の集計の行（集計日・部門コード・部門・買取金額・販売金額） */
+  async 日別の行(): Promise<{ 集計日: string; 部門コード: string; 部門: string; 買取金額: number; 販売金額: number }[]> {
+    const rows = await this.集計の行("#result_list_days tbody tr", 1);
+    return rows as { 集計日: string; 部門コード: string; 部門: string; 買取金額: number; 販売金額: number }[];
+  }
+
+  private async 集計の行(selector: string, 日付の列: 0 | 1) {
+    const cells = await this.page.locator(selector).evaluateAll((trs) => trs.map((tr) => Array.from(tr.querySelectorAll("td")).map((td) => (td.textContent ?? "").replace(/\s+/g, " ").trim())));
+    const num = (t: string) => Number(t.replace(/[^0-9-]/g, ""));
+    return cells.map((c) => ({
+      ...(日付の列 === 1 ? { 集計日: c[0] } : {}), 部門コード: c[日付の列], 部門: c[日付の列 + 1], 買取金額: num(c[日付の列 + 2]), 販売金額: num(c[日付の列 + 3]),
+    }));
+  }
+
+  /** 期間全体の欄の文（集計が無いときの案内文を含む） */
+  async 期間全体の文(): Promise<string> {
+    return (await this.期間全体の欄().innerText({ timeout: OPEN })).replace(/\s+/g, " ").trim();
+  }
 }

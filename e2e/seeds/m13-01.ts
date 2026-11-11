@@ -8,7 +8,8 @@
  */
 import { SETUP_ADMIN } from "../config/env";
 import { rc, RUN_MARK } from "../lib/run_marker";
-import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { EventInput, openEventCreate, registerEvent } from "../pages/admin/event";
 import { ensureMember } from "../pages/admin/member";
@@ -47,7 +48,7 @@ defineSeed("S-M13-01-MASTER", { needs: ["S-M13-01-ADM"] }, async ({ browser, see
 });
 
 /** 東京店の管理者で、イベントを登録して番号を返す。日程があれば足す */
-async function 登録(browser: import("@playwright/test").Browser, items: { 名日: string; 名英: string; 日程?: string[]; over?: EventInput }[]): Promise<string[]> {
+export async function 登録(browser: import("@playwright/test").Browser, items: { 名日: string; 名英: string; 日程?: string[]; over?: EventInput }[]): Promise<string[]> {
   const ids: string[] = [];
   await withAdminSession(browser, M1301_ADMIN, async (page) => {
     for (const it of items) {
@@ -58,7 +59,7 @@ async function 登録(browser: import("@playwright/test").Browser, items: { 名�
   });
   return ids;
 }
-const en = (s: string) => `${s} ${RUN_MARK}`;
+export const en = (s: string) => `${s} ${RUN_MARK}`;
 
 defineSeed("S-M13-01-SEARCH", { needs: ["S-M13-01-MASTER"] }, async ({ browser, notes }) => {
   const [id] = await 登録(browser, [{ 名日: rc("M13-01通常イベント"), 名英: en("M13-01 Normal Event") }]);
@@ -72,19 +73,7 @@ defineSeed("S-M13-01-DATE", { needs: ["S-M13-01-MASTER"] }, async ({ browser, no
   ["A", "B", "C", "D"].forEach((x, i) => notes.set(`〔イベントID-M1301-共有-DATE-${x}〕`, ids[i]));
 });
 
-// 大阪店・名古屋店のイベント（F・G）は東京店で代える（店舗の件を参照）。009・010 はこの2件を確かめない
-defineSeed("S-M13-01-FILTER", { needs: ["S-M13-01-MASTER"] }, async ({ browser, notes }) => {
-  const [a, b, c, d, e, f, g] = await 登録(browser, [
-    { 名日: `${rc("形式確認")}A`, 名英: en("M1301 FILTER A") },
-    { 名日: `${rc("形式確認")}B`, 名英: en("M1301 FILTER B"), over: { フォーマット: ["モダン"] } },
-    { 名日: `${rc("ルール確認")}C`, 名英: en("M1301 FILTER C"), over: { ルール適用度: "競技" } },
-    { 名日: `${rc("ルール確認")}D`, 名英: en("M1301 FILTER D") },
-    { 名日: `${rc("店舗複数確認")}E`, 名英: en("M1301 FILTER E") },
-    { 名日: `${rc("店舗複数確認")}F`, 名英: en("M1301 FILTER F") },
-    { 名日: `${rc("店舗複数確認")}G`, 名英: en("M1301 FILTER G") },
-  ]);
-  [a, b, c, d, e, f, g].forEach((id, i) => notes.set(`〔イベントID-M1301-共有-FILTER-${"ABCDEFG"[i]}〕`, id));
-});
+// S-M13-01-FILTER は seeds/m13-01-b.ts（大阪店・名古屋店に当たる機能専用の試験店舗を使う）
 
 defineSeed("S-M13-01-SORT", { needs: ["S-M13-01-MASTER"] }, async ({ browser, notes }) => {
   // 検索語「SORT」は英語名に含める（印つき）。登録の順（い→あ→う）でイベントIDが大きくなる

@@ -5,10 +5,19 @@
 import { Locator, Page } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 
-export const 入口 = { 本店: "/ja", TC大阪支店: "/ja/osaka" } as const;
+export const 入口 = { 本店: "/ja", TC大阪支店: "/ja/osaka", 本店英語版: "/en" } as const;
 
 export class FrontCategoryList {
-  constructor(readonly page: Page) {}
+  /** root: 一覧を探す範囲（既定は画面全体。スマホ版のモーダルや商品一覧の左メニューに絞るときに渡す） */
+  constructor(readonly page: Page, readonly root: Locator = page.locator("html")) {}
+
+  /** パスを指定して画面を開き、カテゴリ一覧の描画が終わるのを待つ（商品一覧・商品詳細の左メニューなど） */
+  async パスを開く(path: string): Promise<number> {
+    const res = await this.page.goto(`${BASE_URL}${path}`, { waitUntil: "domcontentloaded" });
+    await this.page.waitForLoadState("load");
+    await this.描画を待つ();
+    return res?.status() ?? 0;
+  }
 
   /** ECTOPを開き、カテゴリ一覧の描画（3つの枠の取得）が終わるのを待つ */
   async ECTOPを開く(店の入口: string): Promise<number> {
@@ -27,9 +36,9 @@ export class FrontCategoryList {
   }
 
   /** 「その他」の枠（第一階層が最新セット・フォーマット以外のカテゴリ） */
-  get その他の枠(): Locator { return this.page.locator('[data-category-level1-container="others"]:visible').first(); }
+  get その他の枠(): Locator { return this.root.locator('[data-category-level1-container="others"]:visible').first(); }
   /** 3つの枠すべての第一階層 */
-  get 第一階層の項目(): Locator { return this.page.locator("[data-category-level1-container]:visible > .p-hareruya-category-item"); }
+  get 第一階層の項目(): Locator { return this.root.locator("[data-category-level1-container]:visible > .p-hareruya-category-item"); }
 
   private 名称(button: Locator): Promise<string[]> {
     return button.evaluateAll((ns) => ns.map((n) => (n.textContent ?? "").replace(/\s+/g, " ").trim()));

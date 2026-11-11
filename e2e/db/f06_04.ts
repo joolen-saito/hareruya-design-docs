@@ -16,3 +16,20 @@ export function リセットの状態(メール: string): リセット | null {
   if (r.length !== 1) return null;
   return { 会員ID: r[0].id!, リセットキー: r[0].reset_key ?? null, 有効までの時間: r[0].hours === null ? null : Number(r[0].hours) };
 }
+
+/** メールアドレスの会員（削除済み・退会済みも含む）のパスワードの保存値。会員が1件でなければ null */
+export function パスワードの保存値(メール: string): string | null {
+  const r = query("select password from dtb_customer where email = $1 order by id", [メール]);
+  return r.length === 1 ? (r[0].password ?? "") : null;
+}
+
+/** メールアドレスの会員（削除済み・退会済みも含む）のリセットキー。会員が1件でなければ undefined、キーが無ければ null */
+export function リセットキーの保存値(メール: string): string | null | undefined {
+  const r = query("select reset_key from dtb_customer where email = $1 order by id", [メール]);
+  return r.length === 1 ? (r[0].reset_key ?? null) : undefined;
+}
+
+/** このリセットキーを持つ会員の数 */
+export function リセットキーを持つ会員数(キー: string): number {
+  return Number(query("select count(*) as n from dtb_customer where reset_key = $1", [キー])[0]?.n ?? 0);
+}

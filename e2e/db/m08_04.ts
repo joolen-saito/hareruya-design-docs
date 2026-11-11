@@ -44,3 +44,10 @@ export function 会員住所ID(会員ID: string): string | null {
 export function 会員レコード全体(会員ID: string): string {
   return query(`select row_to_json(c)::text as v from dtb_customer c where c.id = $1::int`, [会員ID])[0]?.v ?? "";
 }
+
+/** 会員のお届け先（会員住所＝既定の配送先を除く。削除されていないもの）の氏名の一覧 */
+export function お届け先の氏名(会員ID: string): string[] {
+  return query(
+    `select a.name01 || ' ' || a.name02 as 氏名 from dtb_customer_address a where a.customer_id = $1::int and a.del_flg = 0 and a.default_flg = false order by a.id`,
+    [会員ID]).map((r) => String(r.氏名));
+}

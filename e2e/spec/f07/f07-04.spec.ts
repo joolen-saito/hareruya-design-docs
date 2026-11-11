@@ -488,3 +488,374 @@ caseTest("IT-F07-04-058", async ({ page, notes, step, expected }) => {
     expect.soft(新しいエラー.length, `記録した位置以降の新しいエラーログの件数${新しいエラー.length ? `（${新しいエラー[0].slice(0, 160)}）` : ""}`).toBe(0);
   });
 });
+
+// ================= 支払方法・日程の選択・不正な要求（001〜067） =================
+const 円文 = (t: string): string => t.replace(/,/g, "");
+const 金額あり = (t: string, 金額: string): boolean => new RegExp(`[¥￥]\\s*${金額}(?!\\d)`).test(円文(t));
+/** 日程の開催日時の、画面の書き方（2026/12/11 10:00） */
+const 開催日時文 = (大: { 開催日: string[] }, i: number): string => { const [y, m, d] = 大.開催日[i].split("-"); return `${y}/${Number(m)}/${Number(d)} 10:00`; };
+const 存在しない日程ID = "99999999";
+const 支払名 = "クレジットカード";
+type Step = (n: number, f: () => Promise<void>) => Promise<void>;
+
+caseTest("IT-F07-04-001", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "001");
+  const a = notes.get("〔イベント詳細ID-F0704-001A〕"), b = notes.get("〔イベント詳細ID-F0704-001B〕");
+  const 大 = 大会一覧.get("001")!;
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(a); });
+  let 選択済み = false, 選択カード = "", 別カード = "", 別数 = 0, 選択肢: string[] = [];
+  await step(2, async () => {
+    await expect(e.日程チェック(a)).toBeAttached();
+    選択済み = await e.日程チェック(a).isChecked();
+    選択カード = (await e.選択済みのカード(a).innerText()).replace(/\s+/g, " ");
+    別数 = await page.locator(`#alternative-event-${b}`).count();
+    別カード = 別数 ? (await e.別日程のカード(b).innerText()).replace(/\s+/g, " ") : "";
+    選択肢 = await e.支払方法の選択肢.allInnerTexts();
+    note(`開催日時は、シード表の固定の日時（2026-10-10 10:00）でなく、実行日の30日後の10:00（${開催日時文(大, 0)}）で登録した日程を読む（過去の日時では日程を登録できない）。支払方法「クレジットカード」は、画面の選択肢の名前「クレジットカード決済」を読む`);
+  });
+  await expected(async () => {
+    expect.soft(選択済み, "日程A1が選択済みで表示されている").toBe(true);
+    expect.soft(選択カード.includes(大.イベント名), `イベント名「大会A」（${大.イベント名}）が表示されている`).toBe(true);
+    expect.soft(選択カード.includes(開催日時文(大, 0)), `開催日時（${開催日時文(大, 0)}）が表示されている`).toBe(true);
+    expect.soft(金額あり(選択カード, "1000"), "参加費1000円が表示されている").toBe(true);
+    expect.soft(別数, "別日程の日程A2のチェック欄の数").toBe(1);
+    expect.soft(別カード.includes(開催日時文(大, 1)), `別日程の日程A2（${開催日時文(大, 1)}）が表示されている`).toBe(true);
+    expect.soft(選択肢.some((t) => t.includes(支払名)), `支払方法「クレジットカード」が選択肢に表示されている（${選択肢.join("、")}）`).toBe(true);
+  });
+});
+
+caseTest("IT-F07-04-006", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "006");
+  const id = notes.get("〔イベント詳細ID-F0704-006〕");
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(id); });
+  await step(2, async () => { await e.支払説明を開くボタン.click({ timeout: 15_000 }); });
+  await expected(async () => {
+    await expect.soft(e.支払説明のモーダル, "支払いについてのモーダルウィンドウ").toBeVisible();
+    await expect.soft(e.支払説明のモーダル, "モーダルの見出し").toContainText("お支払いについて");
+  });
+});
+
+caseTest("IT-F07-04-007", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "007");
+  const id = notes.get("〔イベント詳細ID-F0704-007〕");
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(id); });
+  let 開いた = new URL("about:blank");
+  await step(2, async () => {
+    const popup = page.waitForEvent("popup", { timeout: 30_000 });
+    await e.キャンセルポリシーのリンク.click({ timeout: 15_000 });
+    const p = await popup;
+    try { await p.waitForLoadState("load"); 開いた = new URL(p.url()); } finally { await p.close(); }
+  });
+  await expected(async () => {
+    expect.soft(開いた.pathname, "新しいウィンドウで開いた画面のパス").toBe("/ja/user_data/help_event");
+    expect.soft(開いた.hash, "新しいウィンドウで開いた画面の位置指定").toBe("#block_event_cancel_policy");
+  });
+});
+
+caseTest("IT-F07-04-010", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "010");
+  const a = notes.get("〔イベント詳細ID-F0704-010A〕"), b = notes.get("〔イベント詳細ID-F0704-010B〕");
+  const 大 = 大会一覧.get("010")!;
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(a); });
+  await step(2, async () => { await e.選択済みの日程を外す(a); await e.別日程を選ぶ(b); });
+  await step(3, async () => { await e.支払方法を選ぶ(支払名); });
+  await step(4, async () => { await e.同意して支払いへ進む(); });
+  await expected(async () => {
+    expect.soft(await e.申込確定画面か(), "申込確定画面が表示された").toBe(true);
+    const 日程 = (await e.確定画面の日程カード.allInnerTexts()).map((t) => t.replace(/\s+/g, " "));
+    expect.soft(日程.length, "申込確定画面に表示された日程の数（日程A2だけ）").toBe(1);
+    expect.soft(日程.some((t) => t.includes(開催日時文(大, 1))), "日程A2が表示されている").toBe(true);
+    expect.soft(日程.some((t) => t.includes(開催日時文(大, 0))), "日程A1は表示されない").toBe(false);
+    expect.soft(金額あり(await e.確定画面の合計金額.innerText(), "500"), "合計金額が500円").toBe(true);
+    expect.soft(await e.確定画面の支払方法.innerText(), "支払方法").toContain(支払名);
+  });
+});
+
+caseTest("IT-F07-04-011", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "011");
+  const a = notes.get("〔イベント詳細ID-F0704-011A〕"), b = notes.get("〔イベント詳細ID-F0704-011B〕");
+  const 大 = 大会一覧.get("011")!;
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(a); });
+  await step(2, async () => {
+    if (!(await e.日程チェック(a).isChecked())) await e.選択済みのカード(a).click({ timeout: 15_000 });
+    await e.別日程を選ぶ(b);
+    await expect(e.日程チェック(a), "日程A1が選ばれている").toBeChecked();
+  });
+  await step(3, async () => { await e.支払方法を選ぶ(支払名); });
+  await step(4, async () => { await e.同意して支払いへ進む(); });
+  await expected(async () => {
+    expect.soft(await e.申込確定画面か(), "申込確定画面が表示された").toBe(true);
+    const 日程 = (await e.確定画面の日程カード.allInnerTexts()).map((t) => t.replace(/\s+/g, " "));
+    expect.soft(日程.length, "申込確定画面に表示された日程の数").toBe(2);
+    expect.soft(日程.some((t) => t.includes(開催日時文(大, 0))), "日程A1が表示されている").toBe(true);
+    expect.soft(日程.some((t) => t.includes(開催日時文(大, 1))), "日程A2が表示されている").toBe(true);
+    expect.soft(金額あり(await e.確定画面の合計金額.innerText(), "1500"), "合計金額が1500円").toBe(true);
+    expect.soft(await e.確定画面の支払方法.innerText(), "支払方法").toContain(支払名);
+  });
+});
+
+caseTest("IT-F07-04-012", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "012");
+  const id = notes.get("〔イベント詳細ID-F0704-012〕");
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(id); });
+  await step(2, async () => {
+    await Promise.all([page.waitForURL(new RegExp(`/events/${id}/detail`), { timeout: 45_000, waitUntil: "load" }), e.申込確認のキャンセルボタン.click({ timeout: 15_000 })]);
+  });
+  await expected(async () => {
+    expect.soft(new URL(page.url()).pathname, "戻った画面（日程A1の大会詳細画面）").toMatch(detailPath(id));
+  });
+});
+
+caseTest("IT-F07-04-013", async ({ page, step, expected }) => {
+  await ログイン(page, "013");
+  // 事前準備: イベント詳細ID 99999999 のデータが無い状態。画面では指定できないので、無いことをDBの参照で確かめる（あれば止める。消さない）
+  if (DB.日程が存在するか(存在しない日程ID)) throw new Error(`イベント詳細ID ${存在しない日程ID} のデータがある。共有のデータなので消さずに止める`);
+  const e = new EventEntryPage(page);
+  let res: Awaited<ReturnType<EventEntryPage["申込確認を開く"]>> = null;
+  await step(1, async () => { res = await e.申込確認を開く(存在しない日程ID); });
+  let status = 0;
+  await step(2, async () => { status = res?.status() ?? 0; });
+  await expected(async () => {
+    expect.soft(status, "イベント申込確認画面を開いた応答（HTTPの状態）").toBe(404);
+    expect.soft(await e.申込確認の本体.count(), "イベント申込確認画面の本体の数").toBe(0);
+  });
+});
+
+caseTest("IT-F07-04-020", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "020");
+  const id = notes.get("〔イベント詳細ID-F0704-020〕");
+  if (DB.日程が存在するか(存在しない日程ID)) throw new Error(`イベント詳細ID ${存在しない日程ID} のデータがある。共有のデータなので消さずに止める`);
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(id); });
+  await step(2, async () => { await e.主対象を書き換える(存在しない日程ID); });
+  let res: Awaited<ReturnType<EventEntryPage["同意して支払いへ進む"]>> = null;
+  await step(3, async () => { res = await e.同意して支払いへ進む(); });
+  let status = 0;
+  await step(4, async () => { status = res?.status() ?? 0; });
+  await expected(async () => {
+    expect.soft(status, "申込内容の確認の応答（HTTPの状態）").toBe(404);
+  });
+});
+
+caseTest("IT-F07-04-021", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "021");
+  const id = notes.get("〔イベント詳細ID-F0704-021〕");
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(id); });
+  await step(2, async () => {
+    DB.日程の受付を終了にする(id);
+    note("DBで、この実行で作った日程A1のオンライン受付の終了日時を、現在の1日前に変えた（手順がDBでの変更を求める。画面では受付中の日程を受付終了にできない）");
+  });
+  await step(3, async () => { await e.同意して支払いへ進む(); });
+  await expected(async () => {
+    expect.soft(new URL(page.url()).pathname, "戻った画面（日程A1の大会詳細画面）").toMatch(detailPath(id));
+    expect.soft(await e.申込確定画面か(), "申込確定画面へ進まない").toBe(false);
+  });
+});
+
+caseTest("IT-F07-04-023", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "023");
+  const a = notes.get("〔イベント詳細ID-F0704-023A〕"), z = notes.get("〔イベント詳細ID-F0704-023B〕");
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(a); });
+  await step(2, async () => { await e.隠し欄を足す("form#filter_form", "details[]", z); });
+  await step(3, async () => { await e.支払方法を選ぶ(支払名); });
+  let res: Awaited<ReturnType<EventEntryPage["同意して支払いへ進む"]>> = null;
+  await step(4, async () => { res = await e.同意して支払いへ進む(); });
+  let status = 0;
+  await step(5, async () => { status = res?.status() ?? 0; });
+  await expected(async () => {
+    expect.soft(status, "申込内容の確認の応答（HTTPの状態）").toBe(400);
+  });
+});
+
+/** 2つの日程（A1・A2）を選んで申込確定画面へ進む。外部の決済サイトへは移らないようにする */
+async function 二日程で確定画面へ(e: EventEntryPage, a: string, b: string): Promise<void> {
+  await e.外部への移動を止める();
+  await e.申込確認を開く(a);
+  await e.別日程を選ぶ(b);
+  await e.支払方法を選ぶ(支払名);
+  await e.同意して支払いへ進む();
+  expect(await e.申込確定画面か(), "申込確定画面へ進んだ").toBe(true);
+}
+
+caseTest("IT-F07-04-030", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "030");
+  const a = notes.get("〔イベント詳細ID-F0704-030A〕"), b = notes.get("〔イベント詳細ID-F0704-030B〕");
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await 二日程で確定画面へ(e, a, b); });
+  let r: { status: number; json: Record<string, unknown> | null } = { status: 0, json: null };
+  await step(2, async () => {
+    r = await e.申込するを押す();
+    note("申込登録の応答のあと、画面は外部の決済サイトへ移ろうとするが、試験では移動を止めた（決済サイトへは送らない）");
+  });
+  const 読む = (d: string) => ({ 申込: DB.日程の申込一覧(d), 番号: DB.日程の申込の支払番号(d), 申込選手: DB.日程の申込選手の件数(d, 会員("030").会員ID), 履歴: DB.日程の申込履歴の件数(d) });
+  let 結果: Record<string, ReturnType<typeof 読む>> = {};
+  await step(3, async () => { await page.waitForTimeout(1_000); 結果 = { 日程A1: 読む(a), 日程A2: 読む(b) }; });
+  await expected(async () => {
+    expect.soft(r.status, "申込登録の応答（HTTPの状態）").toBe(200);
+    for (const 名 of ["日程A1", "日程A2"]) {
+      expect.soft(結果[名].申込.map((x) => x.申込状況), `${名}の申込（決済中）`).toEqual(["決済中"]);
+      expect.soft(結果[名].申込選手, `${名}の会員Aの申込選手の件数`).toBe(1);
+      expect.soft(結果[名].履歴, `${名}の申込履歴の件数`).toBe(1);
+      expect.soft(結果[名].番号.length === 1 && 結果[名].番号[0] !== "", `${名}の申込に支払番号が設定されている`).toBe(true);
+    }
+    expect.soft(結果["日程A1"].番号[0], "2件の申込の支払番号が共通").toBe(結果["日程A2"].番号[0]);
+  });
+});
+
+caseTest("IT-F07-04-031", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "031");
+  const a = notes.get("〔イベント詳細ID-F0704-031A〕"), b = notes.get("〔イベント詳細ID-F0704-031B〕");
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await 二日程で確定画面へ(e, a, b); });
+  let 応答: ReturnType<EventEntryPage["申込登録の応答を待ち受ける"]> | undefined;
+  await step(2, async () => { 応答 = e.申込登録の応答を待ち受ける(); });
+  await step(3, async () => { await e.申込するボタン.click({ timeout: 20_000 }); });
+  let r: { status: number; json: Record<string, unknown> | null } = { status: 0, json: null };
+  await step(4, async () => { r = await 応答!; });
+  await expected(async () => {
+    const 番号 = DB.日程の申込の支払番号(a);
+    expect.soft(r.status, "申込登録の応答（HTTPの状態）").toBe(200);
+    expect.soft(String(r.json?.PaymentNo ?? ""), "応答に返された支払番号が、DBへ登録された共通の支払番号").toBe(番号[0] ?? "(DBに無い)");
+    expect.soft(DB.日程の申込の支払番号(b)[0], "日程A2の申込の支払番号も同じ").toBe(番号[0] ?? "(DBに無い)");
+    expect.soft(Number(r.json?.Amount), "応答に返された合計金額").toBe(1500);
+  });
+});
+
+/** 申込確認で支払方法の値を書き換えて「支払いへ進む」を押し、申込内容の確認の応答の状態を返す（033・034） */
+async function 支払方法を書き換えて進む(e: EventEntryPage, id: string, 値: string, step: Step): Promise<number> {
+  await step(1, async () => { await e.申込確認を開く(id); });
+  await step(2, async () => { await e.支払方法の値を書き換える(値); });
+  let res: Awaited<ReturnType<EventEntryPage["同意して支払いへ進む"]>> = null;
+  await step(3, async () => { res = await e.同意して支払いへ進む(); });
+  let status = 0;
+  await step(4, async () => { status = res?.status() ?? 0; });
+  return status;
+}
+
+caseTest("IT-F07-04-033", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "033");
+  const id = notes.get("〔イベント詳細ID-F0704-033〕");
+  const status = await 支払方法を書き換えて進む(new EventEntryPage(page), id, "", step);
+  await expected(async () => {
+    expect.soft(status, "申込内容の確認の応答（HTTPの状態）").toBe(400);
+  });
+});
+
+caseTest("IT-F07-04-034", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "034");
+  const id = notes.get("〔イベント詳細ID-F0704-034〕");
+  // 事前準備: 支払方法ID 999999 が大会Aに設定されていない。画面では設定できない値なので、設定が無いことをDBの参照で確かめる（あれば止める。消さない）
+  if (DB.日程の大会に紐づく支払方法の件数("999999", id) > 0) throw new Error("支払方法ID 999999 が大会に紐づいている。共有の設定なので消さずに止める");
+  const status = await 支払方法を書き換えて進む(new EventEntryPage(page), id, "999999", step);
+  await expected(async () => {
+    expect.soft(status, "申込内容の確認の応答（HTTPの状態）").toBe(400);
+  });
+});
+
+caseTest("IT-F07-04-035", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "035");
+  const a = notes.get("〔イベント詳細ID-F0704-035A〕"), z = notes.get("〔イベント詳細ID-F0704-035B〕");
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.外部への移動を止める(); await 確定画面まで進む(e, a); });
+  await step(2, async () => { await e.隠し欄を足す("form#form-registration", "details[]", z); });
+  let r: { status: number; json: Record<string, unknown> | null } = { status: 0, json: null };
+  await step(3, async () => { r = await e.申込するを押す(); });
+  let status = 0;
+  await step(4, async () => { status = r.status; });
+  await expected(async () => {
+    expect.soft(status, "申込登録の応答（HTTPの状態）").toBe(400);
+  });
+});
+
+caseTest("IT-F07-04-053", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "053");
+  const id = notes.get("〔イベント詳細ID-F0704-053〕");
+  const 位置 = エラーログの末尾位置(); // 事前準備③: エラーログの試験開始時点の末尾位置を記録する
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(id); });
+  await step(2, async () => { await e.支払方法の値を書き換える(""); });
+  await step(3, async () => { await e.同意して支払いへ進む(); });
+  let ログ: string[] = [];
+  await step(4, async () => { await page.waitForTimeout(1_500); ログ = 位置以降のエラーログ(位置); });
+  await expected(async () => {
+    expect.soft(ログ.some((l) => l.includes("支払い前イベント登録エラー")), `エラーログに「支払い前イベント登録エラー」が記録された（新しいエラーログ${ログ.length}件${ログ[0] ? `: ${ログ[0].slice(0, 160)}` : ""}）`).toBe(true);
+    expect.soft(ログ.some((l) => l.includes("支払い前イベント登録エラー") && /支払方法|payment/i.test(l)), "同じ記録に、支払方法の検証エラーの内容がある").toBe(true);
+  });
+});
+
+caseTest("IT-F07-04-055", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "055");
+  const id = notes.get("〔イベント詳細ID-F0704-055〕");
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(id); });
+  let 選択数 = -1, 候補 = -1;
+  await step(2, async () => {
+    await expect(e.申込確認の本体, "申込確認画面が表示された").toBeVisible();
+    選択数 = await e.支払方法の選択.count();
+    候補 = (await e.支払方法の選択肢.allInnerTexts()).filter((t) => t.includes(支払名)).length;
+  });
+  await expected(async () => {
+    expect.soft(選択数, "支払方法選択（セレクトボックス）の数").toBe(0);
+    expect.soft(候補, "選択肢「クレジットカード」の数").toBe(0);
+  });
+});
+
+caseTest("IT-F07-04-064", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "064");
+  const a = notes.get("〔イベント詳細ID-F0704-064A〕"), b = notes.get("〔イベント詳細ID-F0704-064B〕");
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(a); await e.別日程を選ぶ(b); });
+  await step(2, async () => {
+    DB.日程の受付を終了にする(b);
+    note("DBで、この実行で作った日程I2のオンライン受付の終了日時を、現在の1日前に変えた（手順がDBでの変更を求める。画面では受付中の日程を受付終了にできない）");
+  });
+  let res: Awaited<ReturnType<EventEntryPage["同意して支払いへ進む"]>> = null;
+  await step(3, async () => { res = await e.同意して支払いへ進む(); });
+  let status = 0;
+  await step(4, async () => { status = res?.status() ?? 0; });
+  await expected(async () => {
+    expect.soft(status, "申込内容の確認の応答（HTTPの状態）").toBe(400);
+  });
+});
+
+caseTest("IT-F07-04-066", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "066");
+  const a = notes.get("〔イベント詳細ID-F0704-066A〕"), b = notes.get("〔イベント詳細ID-F0704-066B〕");
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.申込確認を開く(a); await e.別日程を選ぶ(b); });
+  await step(2, async () => { await e.支払方法を選ぶ(支払名); });
+  await step(3, async () => { await e.同意して支払いへ進む(); });
+  await step(4, async () => { await expect(e.確定画面の合計金額, "申込確定画面の合計金額").toBeVisible(); });
+  await expected(async () => {
+    expect.soft(金額あり(await e.確定画面の合計金額.innerText(), "1000"), "合計金額が1000円").toBe(true);
+    expect.soft(await e.確定画面の支払方法.innerText(), "お支払い方法").toContain(支払名);
+  });
+});
+
+caseTest("IT-F07-04-067", async ({ page, notes, step, expected }) => {
+  await ログイン(page, "067");
+  const a = notes.get("〔イベント詳細ID-F0704-067A〕"), b = notes.get("〔イベント詳細ID-F0704-067B〕");
+  const e = new EventEntryPage(page);
+  await step(1, async () => { await e.外部への移動を止める(); await e.申込確認を開く(a); await e.別日程を選ぶ(b); });
+  await step(2, async () => { await e.支払方法を選ぶ(支払名); await e.同意して支払いへ進む(); });
+  let 応答: ReturnType<EventEntryPage["申込登録の応答を待ち受ける"]> | undefined;
+  await step(3, async () => {
+    expect(await e.申込確定画面か(), "申込確定画面へ進んだ").toBe(true);
+    応答 = e.申込登録の応答を待ち受ける();
+    await e.確定画面の支払方法を書き換える("");
+  });
+  await step(4, async () => { await e.申込するボタン.click({ timeout: 20_000 }); });
+  let r: { status: number; json: Record<string, unknown> | null } = { status: 0, json: null };
+  await step(5, async () => { r = await 応答!; });
+  await expected(async () => {
+    expect.soft(r.status, "申込登録の応答（HTTPの状態）").toBe(400);
+  });
+});

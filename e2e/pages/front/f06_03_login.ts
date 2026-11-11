@@ -113,4 +113,27 @@ export class LoginPage {
     await this.page.waitForLoadState("load");
     return true;
   }
+
+  // ---- パスワード設定（ポリシー違反用）画面 ----
+  get パスワード設定フォーム(): Locator { return this.page.locator("form#password-change-form"); }
+  async パスワード設定画面である(): Promise<boolean> {
+    return /\/mypage\/password_change\/?$/.test(this.path()) && (await this.パスワード設定フォーム.count()) > 0;
+  }
+  /** パスワードとパスワード(確認)に同じ値を入れて「変更する」を押す */
+  async パスワードを設定する(新: string): Promise<void> {
+    const inputs = this.パスワード設定フォーム.locator("input[type=password]");
+    await inputs.nth(0).fill(新, { timeout: T });
+    await inputs.nth(1).fill(新, { timeout: T });
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.パスワード設定フォーム.locator("button[type=submit]").click({ timeout: T })]);
+    await this.page.waitForLoadState("load");
+  }
+
+  // ---- 保持のCookie ----
+  async 保持のCookie(): Promise<{ name: string; expires: number } | undefined> {
+    return (await this.page.context().cookies()).find((c) => /REMEMBERME/i.test(c.name));
+  }
+  /** メール欄の値（欄が無ければ null） */
+  async メール欄の値(): Promise<string | null> {
+    return (await this.メール欄.count()) > 0 ? this.メール欄.inputValue({ timeout: T }) : null;
+  }
 }

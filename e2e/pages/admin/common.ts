@@ -17,7 +17,10 @@ const ENV_BANNERS = ["デバッグモードが有効になっています。"];
  */
 export async function expectSaved(page: Page, what: string): Promise<string[]> {
   const ok = page.locator(".alert-success");
-  const ng = page.locator(".alert-danger, .invalid-feedback, .form-error-message");
+  // 開発用の設定の帯（赤い帯）は送信の前の画面にも出ているので、保存の結果として待たない（共有の開発環境では、送信の前の画面で
+  // この帯が見えた時点で待ちが終わり、成功メッセージが出る前に「成功メッセージが表示されない」で落ちていた。2026-11-10）
+  let ng = page.locator(".alert-danger, .invalid-feedback, .form-error-message");
+  for (const b of ENV_BANNERS) ng = ng.filter({ hasNotText: b });
   const sys = page.getByText("システムエラーが発生しました");
   await expect(ok.or(ng).or(sys).first(), `${what}: 保存の結果が表示されない`).toBeVisible();
   if (await sys.first().isVisible()) throw new Error(`${what}: システムエラーの画面になった`);

@@ -8,9 +8,11 @@
  */
 import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { 会員のプレイヤーID } from "../db/m08_12";
+import { 会員のプレイヤーID, 顧客グループの件数, 本店が登録済みか, 読み替える支払方法3件 } from "../db/m08_12";
+import { 更新日時を設定する } from "../db/m08_12_write";
 import { rc } from "../lib/run_marker";
-import { defineSeed, SeedCtx } from "../lib/seeds";
+import { SeedCtx } from "../lib/seeds";
+import { defineSeed, reportCurrentSeedIssue } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { ensureM08Admin } from "../pages/admin/m08_common";
 import { M08CustomerGroupPage } from "../pages/admin/m08_customer_group";
@@ -23,12 +25,13 @@ defineSeed("S-M08-12-ADM", async ({ browser }) => { await ensureM08Admin(browser
 /** 名称に実行の印を付けた顧客グループの名称 */
 export const 名称 = (正本の名称: string): string => rc(正本の名称);
 
-async function グループを作る(browser: Browser, 名称の値: string, 還元率: string, 店内: boolean, 支店: boolean): Promise<string> {
+async function グループを作る(browser: Browser, 名称の値: string, 還元率: string, 店内: boolean, 支店: boolean, 支払方法ID?: string[]): Promise<string> {
   return withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     const g = new M08CustomerGroupPage(page);
     await g.open();
     await g.入れる({ 名称: 名称の値, 還元率, 店内注文専用: 店内, 支店店内注文専用: 支店 });
+    if (支払方法ID) await g.支払方法を選ぶ(支払方法ID);
     const r = await g.登録する();
     if (!r.sent) throw new Error(`顧客グループ「${名称の値}」の登録: ブラウザの入力チェックが送信を止めた`);
     await g.open();
@@ -85,4 +88,61 @@ defineSeed("S-M08-12-CBNONEMY-047", async (ctx) => {
 });
 defineSeed("S-M08-12-CBBRMY-048", async (ctx) => {
   await 所属会員つき(ctx, "048", 名称("CB顧客グループ-M0812CB048"), "0", false, true, "cbm0812-048", "試験M0812CB048", PW048);
+});
+
+// ---- 支払方法（共有のマスタ。足さず・書き換えず、既にあるものを読み替える） ----
+export const 支払ラベル = { A: "〔支払方法ID-M0812-共有A〕", B: "〔支払方法ID-M0812-共有B〕", C: "〔支払方法ID-M0812-共有C〕" } as const;
+defineSeed("S-M08-12-PAYMENTS", async ({ notes }) => {
+  const p = 読み替える支払方法3件();
+  if (p.length < 3) throw new Error("読み替えに使える支払方法（名前も表示順も他と重ならないもの）が3件無い。共有のマスタなので足さずに止める（判断待ち）");
+  notes.set(支払ラベル.A, p[0].id);
+  notes.set(支払ラベル.B, p[1].id);
+  notes.set(支払ラベル.C, p[2].id);
+  reportCurrentSeedIssue(
+    `支払方法「試験支払A・B・C」（表示順30・20・10）は共有のマスタなので足さず・書き換えず、既にある支払方法で読み替えた（試験支払A=「${p[0].名前}」表示順${p[0].表示順}、試験支払B=「${p[1].名前}」表示順${p[1].表示順}、試験支払C=「${p[2].名前}」表示順${p[2].表示順}。名前も表示順も他と重ならない支払方法の、表示順の降順の上から3件）`,
+  );
+});
+
+/** 本店（フロントの既定のアドレスが本店として判定される）。共有の設定なので書き換えず、いまの値を確かめる */
+defineSeed("S-M08-12-MAIN-SHOP", async () => {
+  if (!本店が登録済みか()) throw new Error("店舗ID 1 が本店として登録されていない。共有の設定なので書き換えずに止める");
+  reportCurrentSeedIssue("本店は共有の設定なので書き換えず、既にある本店（店舗ID 1）のフロント（既定のアドレス）を使った。試験用の本店は作っていない");
+});
+
+// ---- 名称が「ない」状態（印つきの名称にして、前の実行の残りと取り違えない） ----
+for (const [k, n] of [["005", "新規GroupＡ"], ["006", "任意項目空グループ"], ["044", "一件支払M0812-044"], ["045", "支店のみM0812-045"]] as const) {
+  defineSeed(`S-M08-12-NEW-${k}`, async ({ browser }) => {
+    await 名称で消す(browser, 名称(n));
+    reportCurrentSeedIssue(`名称は実行の印を付けた「${名称(n)}」で読み替えた（同名の他人のグループを消さない）`);
+  });
+}
+
+// ---- 編集前の顧客グループ（名称・ポイント還元率5・支店店内注文専用・支払方法B・更新日時2026-01-01 00:00:00） ----
+for (const k of ["002", "003", "008", "009", "013", "014", "016", "017", "018", "029", "030", "033"]) {
+  defineSeed(`S-M08-12-BASE-${k}`, { needs: ["S-M08-12-PAYMENTS"] }, async ({ browser, notes }) => {
+    const id = await グループを作る(browser, 名称(`編集前顧客グループ-${k}`), "5", false, true, [notes.get(支払ラベル.B)]);
+    notes.set(`〔顧客グループID-M0812-${k}〕`, id);
+    更新日時を設定する(id, "2026-01-01 00:00:00");
+    if (k === "033" && 顧客グループの件数("999999") !== 0) throw new Error("顧客グループID 999999 が登録されている（不存在の前提を満たさない）");
+    reportCurrentSeedIssue("名称は実行の印を付けた値で読み替えた。DBで、画面で作った印つきの顧客グループの更新日時を2026-01-01 00:00:00に設定した（更新日時は画面で指定できない）");
+  });
+}
+for (const [k, n, r, ids] of [["042", "M0812-042-GROUP", "37", ["B"]], ["043", "M0812-043-GROUP", "8", ["A", "C"]]] as const) {
+  defineSeed(`S-M08-12-LIST-${k}`, { needs: ["S-M08-12-PAYMENTS"] }, async ({ browser, notes }) => {
+    const id = await グループを作る(browser, 名称(n), r, false, false, ids.map((x) => notes.get(支払ラベル[x])));
+    notes.set(`〔顧客グループID-M0812-${k}〕`, id);
+    reportCurrentSeedIssue("名称は実行の印を付けた値で読み替えた");
+  });
+}
+
+// ---- 店内注文専用・支店店内注文専用の会員 ----
+export const OTC会員 = { "035": { 前半: "otc_m0812-035", pw: "Passw0rd-035!M0812O" }, "036": { 前半: "branch_m0812-036", pw: "Passw0rd-036!M0812B" }, "046": { 前半: "cbm0812-046", pw: "Passw0rd-CBM0812046" } } as const;
+defineSeed("S-M08-12-OTC-CUSTOMER-035", async (ctx) => {
+  await 所属会員つき(ctx, "035", 名称("店内注文専用試験グループ-035"), "0", true, false, OTC会員["035"].前半, "試験035", OTC会員["035"].pw);
+});
+defineSeed("S-M08-12-BRANCH-CUSTOMER-036", async (ctx) => {
+  await 所属会員つき(ctx, "036", 名称("支店店内注文専用試験グループ-036"), "0", false, true, OTC会員["036"].前半, "試験036", OTC会員["036"].pw);
+});
+defineSeed("S-M08-12-CBOTCMAIN-046", async (ctx) => {
+  await 所属会員つき(ctx, "046", 名称("CB顧客グループ-M0812CB046"), "0", true, false, OTC会員["046"].前半, "試験M0812CB046", OTC会員["046"].pw);
 });

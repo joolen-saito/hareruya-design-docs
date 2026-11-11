@@ -4,15 +4,14 @@
  * 作るシード: サプライ品だけで準備できるもの（棚番号・グッズ商品CSV登録・商品規格・会員登録・ネット買取の申込・買取状況・実在庫）。
  * カード商品（カード登録・カード詳細・略称タグ・色・レアリティ）を使うシードは作らない。
  * - ENV: ポップアップの許可は、Playwright のブラウザが標準で許可しているので何もしない。
- * - MASTER: 言語・状態・色・レアリティの並び順と略称タグの登録（カード商品の並び順の試験が使う）。サプライ品だけのケースは参照しないので作らず、報告に残す。
- * - CONFIG: 本店の高額商品閾値を 300／3000／未設定にする（シード表のとおり。元の値へは戻さない＝シード表は「各ケースが開始時に自分で設定する」）。
+ * - MASTER: 言語・状態・色・レアリティの並び順と略称タグは書き換えず、いまの値を読んで控える（カード商品のシードが確かめる）。
+ * - CONFIG: 本店の高額商品閾値は書き換えず、いまの値を読んで控える（依頼者の方針 2026-11-10。カード商品のシードが 300/3000 を読み替える）。
  * 決め打ちの商品コード・商品名には実行ごとの印を付ける。注文者名は、ケースが検索欄へそのまま入れる正本の値のまま使い、前の実行の残りは先に一覧から削除する。
  */
-import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { rc } from "../lib/run_marker";
-import { SETUP_ADMIN } from "../config/env";
-import { Account, withAdminSession } from "../lib/session";
-import { 閾値を設定する } from "../pages/admin/m07_config";
+import { Account } from "../lib/session";
+import { 閾値を控える, マスタを控える } from "./m07-09-card";
 import { 試験管理者を用意する } from "./m07-common";
 import { 戻し買取, 戻しの試験データを作る } from "./m07-stock";
 import { サプライ } from "../pages/admin/m07_supply";
@@ -25,15 +24,14 @@ defineSeed("S-M07-09-ADM", async ({ browser }) => {
   await 試験管理者を用意する(browser, M0709_ADMIN, "M07-09試験管理者");
 });
 
-defineSeed("S-M07-09-CONFIG", async ({ browser }) => {
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    page.setDefaultTimeout(60_000);
-    await 閾値を設定する(page, ["300", "3000", ""]);
-  });
+// CONFIG・MASTER は共有の設定・共有のマスタ。依頼者の方針（2026-11-10）で書き換えず、いまの値を画面で読んで控える（seeds/m07-09-card.ts）。
+// サプライ品だけのケースは閾値・並びを使わないので、読んだ値が前提と合わなくても止めない（カード商品のシードが、要るものを確かめて止める）。
+defineSeed("S-M07-09-CONFIG", async ({ browser, seed }) => {
+  await 閾値を控える(browser, seed.シードID);
 });
 
-defineSeed("S-M07-09-MASTER", async ({ seed }) => {
-  reportSeedIssue(seed.シードID, "言語・状態・色・レアリティの並び順と略称タグの登録は、サプライ品だけを使うこのケースでは参照しないので作らなかった（カード商品の並び順の試験が使う）");
+defineSeed("S-M07-09-MASTER", async ({ browser, seed }) => {
+  await マスタを控える(browser, seed.シードID);
 });
 
 /** 商品の呼び名（印つき）。品の商品名は商品コードと同じ値 */

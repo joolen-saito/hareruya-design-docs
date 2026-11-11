@@ -24,7 +24,19 @@ async function 全ステータスを選ぶ(page: Page): Promise<void> {
   if ((await box.count()) === 0) return;
   if (!(await box.isVisible())) await page.locator('button[data-bs-target="#searchDetail"]').first().click({ timeout: 20_000 });
   const boxes = box.locator('input[type="checkbox"]');
-  for (let i = 0; i < (await boxes.count()); i++) await boxes.nth(i).check({ force: true });
+  // 強制のクリックは、ほかの要素（画面下に固定の帯など）に重なった箇所を押して状態が変わらないことがある（2026-11-10 の開発環境の実行
+  // M05-11 076・128・129・142）。重なりを避けて押し、それでも変わらなければ、その選択肢の文字（ラベル）を押す
+  for (let i = 0; i < (await boxes.count()); i++) {
+    const cb = boxes.nth(i);
+    if (await cb.isChecked()) continue;
+    try {
+      await cb.check({ timeout: 10_000 });
+    } catch {
+      const id = await cb.getAttribute("id");
+      if (id) await box.locator(`label[for="${id}"]`).click({ timeout: 10_000 });
+    }
+    await expect(cb, "受注ステータスの検索条件の選択肢を選んだ").toBeChecked();
+  }
 }
 
 /** 受注一覧をメールアドレスで検索し、その受注の受注情報編集画面を開く。受注IDと注文番号を返す（1件のはず） */
@@ -358,3 +370,20 @@ export class OrderItemsEdit {
     if (v.値引き !== undefined) await this.page.locator("#order_discount").fill(v.値引き, { timeout: 20_000 });
   }
 }
+
+/** 受注情報の日付の「クリア」を押す（押すと画面が再読込される）。ピック中は注文確定日 */
+export type 日付欄 = "ピック中" | "入金日" | "出荷指示日" | "出荷日" | "キャンセル日" | "店頭予約";
+const 日付の対象: Record<日付欄, string> = { ピック中: "confirm_date", 入金日: "payment_date", 出荷指示日: "commit_date", 出荷日: "shipping_date", キャンセル日: "cancel_date", 店頭予約: "otc_rsv_date" };
+export async function 日付をクリアする(page: Page, 欄: 日付欄): Promise<void> {
+  const btn = page.locator(`button.clear-date[data-target="${日付の対象[欄]}"]`);
+  await expect(btn, `${欄}の「クリア」ボタン`).toBeVisible();
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), btn.click({ timeout: 20_000 })]);
+  await page.waitForLoadState("load");
+}
+/** 折りたたみのブロック（タイトルのリンクと中身） */
+export const ブロック: Record<"注文者情報" | "お支払情報" | "お届け先情報" | "ポイント連携エラー", { 見出し: string; 中身: string }> = {
+  注文者情報: { 見出し: 'a[href="#ordererInfo"]', 中身: "#ordererInfo" },
+  お支払情報: { 見出し: 'a[href="#paymentInfo"]', 中身: "#paymentInfo" },
+  お届け先情報: { 見出し: 'a[href="#shippingInfo"]', 中身: "#shippingInfo" },
+  ポイント連携エラー: { 見出し: 'a[href="#pointErrorMessage"]', 中身: "#pointErrorMessage" },
+};

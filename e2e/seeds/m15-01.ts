@@ -9,7 +9,8 @@
  */
 import { Browser, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { rc } from "../lib/run_marker";
 import { ensureM05Admin } from "../pages/admin/m05_admin_member";
@@ -17,7 +18,9 @@ import { registerFormat } from "../pages/admin/m12_09_used_card";
 import { アーキタイプを登録する } from "../pages/admin/m12_deck_seed";
 import { 行を用意する } from "../pages/admin/m14_04_master";
 import { カードを登録する } from "../pages/admin/m14_card";
-import { イベントと日程を用意する, デッキを登録する, デッキ登録内容, 公開用 } from "../pages/admin/m15_deck";
+import { イベントと日程を用意する, デッキを登録する, デッキ登録内容, 公開用, 使えるタグ } from "../pages/admin/m15_deck";
+import { 記事を紐づける } from "../db/m15_05_prep";
+import { アーキタイプを未設定にする } from "../db/m15_01_prep";
 
 export const M1501_ADMIN_A: Account = { loginId: "m1501_admin_a", password: "Passw0rd!M1501A" };
 export const M1501_ADMIN_B: Account = { loginId: "m1501_admin_b", password: "Passw0rd!M1501B" };
@@ -232,4 +235,165 @@ defineSeed("S-M15-01-MIX4-096", { needs: ["S-M15-01-ADM-A"] }, async ({ browser,
 単独デッキのシード("S-M15-01-PAGING-097", Array.from({ length: 11 }, (_, i) => ({
   key: `097${"ABCDEFGHIJK"[i]}`, デッキ名: `${rc("M1501-097")}-${String(i + 1).padStart(2, "0")}`,
 })));
+
+// ===========================================================================
+// 2026-11-11 追加分（DBでの準備が要るとして見送っていたケース）。依頼者の方針（2026-11-10）:
+// - 「本シード以外の同名のデッキを削除する」は行わない。デッキ名の語に実行の印を付け、検索をその語で絞って読み替える。
+// - シード表の共有マスタ（Standard・Modern・タグA・タグB・東京店 など）には試験の値を足さない。既存のマスタを使う（注記に残す）。
+// ===========================================================================
+
+/** 検索選択肢の確かめ（011）用に作る、実行の印つきのフォーマットとアーキタイプの名前 */
+export const マスタ名 = () => ({
+  フォーマットA: rc("M1501-MST-FmtA"), フォーマットB: rc("M1501-MST-FmtB"), フォーマットC: rc("M1501-MST-FmtC"),
+  アーキタイプ青: rc("M1501-MST-Blue Control"), アーキタイプ赤: rc("M1501-MST-Red Aggro"),
+});
+
+defineSeed("S-M15-01-MASTER", { needs: ["S-M15-01-ADM-A"] }, async ({ browser }) => {
+  const issue = (m: string) => reportSeedIssue("S-M15-01-MASTER", m);
+  await 管理画面(browser, async (page) => {
+    // 並び順: A=B（登録はAが先）> C。表示は C → A → B になるはず（表示順、同順位は登録の古い順）
+    const n = マスタ名();
+    await registerFormat(page, { 名日: n.フォーマットA, 名英: n.フォーマットA, 並び順: "9012", メタ日数: "30" }, issue);
+    await registerFormat(page, { 名日: n.フォーマットB, 名英: n.フォーマットB, 並び順: "9012", メタ日数: "30" }, issue);
+    await registerFormat(page, { 名日: n.フォーマットC, 名英: n.フォーマットC, 並び順: "9011", メタ日数: "30" }, issue);
+    await アーキタイプを登録する(page, { 名日: "M1501-MST-Blue Control", 名英: "M1501-MST-Blue Control", フォーマット: n.フォーマットA }, issue);
+    await アーキタイプを登録する(page, { 名日: "M1501-MST-Red Aggro", 名英: "M1501-MST-Red Aggro", フォーマット: n.フォーマットB }, issue);
+    issue("シード表のStandard・Modern・Pioneer・カラー・タグA・タグBなどは、共有のマスタに試験の値を足さないため作らず、既存のマスタ（検索欄に出る選択肢）を使う。フォーマットとアーキタイプの並びを確かめるケースだけ、実行の印つきのフォーマット3件・アーキタイプ2件を画面で作った");
+  });
+});
+
+/** 件数・ページ送りの確かめ用の、デッキ11件（名前は「ページ試験-<番号>」に実行の印を付けた語の末尾に連番） */
+export const ページ試験の語 = (no: string) => rc(`ページ試験-${no}`);
+for (const no of ["004", "032", "037", "041"]) {
+  単独デッキのシード(`S-M15-01-PAGING-${no}`, Array.from({ length: 11 }, (_, i) => ({
+    key: `${no}${"ABCDEFGHIJK"[i]}`, デッキ名: `${ページ試験の語(no)}-${String(i + 1).padStart(2, "0")}`,
+  })));
+}
+
+/** 青空の検索（006・029）。デッキ名は「A-青空-006」→「A-青空-006-印」（検索語は印つき） */
+export const 青空の語 = (no: "006" | "029") => rc(`青空-${no}`);
+単独デッキのシード("S-M15-01-SEARCH-006", ["A", "B"].map((x) => ({ key: `006${x}`, デッキ名: `${x}-${青空の語("006")}` })));
+単独デッキのシード("S-M15-01-COUNT-029", ["A", "B"].map((x) => ({ key: `029${x}`, デッキ名: `${x}-${青空の語("029")}` })));
+
+/** 開催店舗（020）: Aはイベントの日程経由で店舗に紐づき、Bはイベントなし */
+export const 店舗の語020 = () => rc("M1501-020");
+defineSeed("S-M15-01-SHOP-020", { needs: ["S-M15-01-ADM-A"] }, async ({ browser, notes }) => {
+  const issue = (m: string) => reportSeedIssue("S-M15-01-SHOP-020", m);
+  await 管理画面(browser, async (page) => {
+    const ev = await 過去のイベント(page, "M1501-020", issue);
+    notes.set("〔デッキID-M1501-020A〕", await デッキを登録する(page, { デッキ名: `${店舗の語020()}-A`, イベント: { 検索語: ev.検索語, 日程ID: ev.日程ID } }, issue));
+    notes.set("〔デッキID-M1501-020B〕", await デッキを登録する(page, { デッキ名: `${店舗の語020()}-B` }, issue));
+    issue("東京店は共有のマスタなので作らず、イベントの店舗は選択肢にある店舗（大阪店があればそれ、無ければ先頭）で代えた。検索の絞り込みに、デッキ名の印つきの語を足した");
+  });
+});
+
+/** 最終更新者（021）: A・C・Dは試験管理者A、Bは試験管理者Bが登録（最終更新者になる） */
+export const 更新者の語021 = () => rc("M1501-021");
+defineSeed("S-M15-01-UPDATER-021", { needs: ["S-M15-01-ADM-A", "S-M15-01-ADM-B"] }, async ({ browser, notes }) => {
+  const issue = (m: string) => reportSeedIssue("S-M15-01-UPDATER-021", m);
+  await 管理画面(browser, async (page) => {
+    for (const x of ["A", "C", "D"]) notes.set(`〔デッキID-M1501-021${x}〕`, await デッキを登録する(page, { デッキ名: `${更新者の語021()}-${x}` }, issue));
+  }, M1501_ADMIN_A);
+  await 管理画面(browser, async (page) => {
+    notes.set("〔デッキID-M1501-021B〕", await デッキを登録する(page, { デッキ名: `${更新者の語021()}-B` }, issue));
+  }, M1501_ADMIN_B);
+  issue("「最終更新者がAのほかのデッキを削除する」は行わず、検索をデッキ名の印つきの語で絞った");
+});
+
+/** カード名の完全一致（026）: カード名(日)「稲穂確認」を持つデッキ */
+export const 稲穂確認のカード名日 = () => rc("稲穂確認");
+defineSeed("S-M15-01-CARD-026", { needs: ["S-M15-01-ADM-A"] }, async ({ browser, notes }) => {
+  const issue = (m: string) => reportSeedIssue("S-M15-01-CARD-026", m);
+  await 管理画面(browser, async (page) => {
+    const 英 = rc("InahoCheck-026");
+    await カードを登録する(page, { カード名日: 稲穂確認のカード名日(), カード名英: 英, 点数で見たマナ: "0" }, "M1501-026-カード", issue);
+    notes.set("〔デッキID-M1501-026〕", await デッキを登録する(page, { デッキ名: `${rc("M1501-026")}-デッキ`, メイン: `4 ${英}` }, issue));
+    issue("カード名(日)に実行の印を付けた（印つきの「稲穂確認-…」。「稲」だけのカードは作らない）");
+  });
+});
+
+/** タグ（027・094）: タグA・タグBの代わりに、既存のデッキタグの先頭2件を使う */
+export const タグ検索の語 = (no: "027" | "094") => rc(`M1501-${no}`);
+defineSeed("S-M15-01-TAG-027", { needs: ["S-M15-01-ADM-A", "S-M15-01-MASTER"] }, async ({ browser, notes }) => {
+  const issue = (m: string) => reportSeedIssue("S-M15-01-TAG-027", m);
+  await 管理画面(browser, async (page) => {
+    const タグ = await 使えるタグ(page, 2);
+    notes.set("〔デッキID-M1501-027〕", await デッキを登録する(page, { デッキ名: `${タグ検索の語("027")}-デッキ`, タグ }, issue));
+    issue(`タグA・タグBは共有のマスタに足さず、既存のデッキタグの先頭2件（${タグ.join("・")}）で代えた。検索をデッキ名の印つきの語で絞った`);
+  });
+});
+defineSeed("S-M15-01-TAGMIX-094", { needs: ["S-M15-01-ADM-A", "S-M15-01-MASTER"] }, async ({ browser, notes }) => {
+  const issue = (m: string) => reportSeedIssue("S-M15-01-TAGMIX-094", m);
+  await 管理画面(browser, async (page) => {
+    const [t1, t2] = await 使えるタグ(page, 2);
+    notes.set("〔デッキID-M1501-094A〕", await デッキを登録する(page, { デッキ名: `${タグ検索の語("094")}-A`, タグ: [t1] }, issue));
+    notes.set("〔デッキID-M1501-094B〕", await デッキを登録する(page, { デッキ名: `${タグ検索の語("094")}-B`, タグ: [t2] }, issue));
+    notes.set("〔デッキID-M1501-094C〕", await デッキを登録する(page, { デッキ名: `${タグ検索の語("094")}-C`, タグ: [t1, t2] }, issue));
+    issue(`タグA・タグBは共有のマスタに足さず、既存のデッキタグの先頭2件（${t1}・${t2}）で代えた。デッキ名は「M1501-094-A」→印つき`);
+  });
+});
+
+/** 該当なし（028） */
+defineSeed("S-M15-01-NONE-028", { needs: ["S-M15-01-ADM-A"] }, async () => { /* デッキ名に「存在しない名称」（印つき）を含むデータは作らない。作っていないので成り立つ */ });
+
+/** 記事に関連するデッキ（048）。記事は外部の投稿の連携が作る行で、画面では作れないため、DBで紐づけを書く */
+defineSeed("S-M15-01-ARTICLE-048", { needs: ["S-M15-01-ADM-A"] }, async ({ browser, notes }) => {
+  const issue = (m: string) => reportSeedIssue("S-M15-01-ARTICLE-048", m);
+  await 管理画面(browser, async (page) => {
+    const 名 = `${rc("M1501-048")}-デッキ`;
+    const id = await デッキを登録する(page, { デッキ名: 名 }, issue);
+    記事を紐づける(id, 名);
+    notes.set("〔デッキID-M1501-048〕", id);
+    issue("DBで、このデッキに紐づく記事（外部の投稿の連携が作る行）を1件作って紐づけた（画面では記事を作れないため。実行の印つきのデッキにだけ書いた）");
+  });
+});
+
+単独デッキのシード("S-M15-01-CSV-053", [{ key: "053" }]);
+
+/** 一括編集の全項目（055）: 更新後のフォーマット・アーキタイプ（Modern・Red Aggroの代わり）。タグは既存の先頭2件 */
+export const 一括後の型 = () => ({ フォーマット: rc("M1501-055-Fmt"), アーキタイプ: rc("M1501-055-Arc") });
+export const 一括前の値 = { イベント名日: "更新前大会", イベント名英: "Before Event", 順位: "1", 成績: "更新前成績", プレイヤー名: "更新前選手", 引用元URL: "https://example.com/before" };
+defineSeed("S-M15-01-BULK-055", { needs: ["S-M15-01-ADM-A", "S-M15-01-MASTER"] }, async ({ browser, notes }) => {
+  const issue = (m: string) => reportSeedIssue("S-M15-01-BULK-055", m);
+  await 管理画面(browser, async (page) => {
+    const 型 = 一括後の型();
+    await registerFormat(page, { 名日: 型.フォーマット, 名英: 型.フォーマット, 並び順: "9055", メタ日数: "30" }, issue);
+    await アーキタイプを登録する(page, { 名日: "M1501-055-Arc", 名英: "M1501-055-Arc", フォーマット: 型.フォーマット }, issue);
+    const [t1] = await 使えるタグ(page, 2);
+    for (const x of ["A", "B", "C"]) {
+      notes.set(`〔デッキID-M1501-055${x}〕`, await デッキを登録する(page, { 公開状態: "公開", ...一括前の値, 開催日: "2025-01-01T10:00", タグ: [t1] }, issue));
+    }
+    issue("更新前のフォーマット・アーキタイプはStandard・Blue Controlの代わりに既存のマスタの先頭の組、更新後はModern・Red Aggroの代わりに実行の印つきのフォーマットとアーキタイプを画面で作った。タグは既存の先頭2件（更新前が先頭、更新後が2件目）");
+  }, M1501_ADMIN_A);
+});
+
+/** 一括編集で変えない項目は元のまま（098） */
+export const 一括の前後098 = { 前: { イベント名日: "M1501-098-Ev-Before", 順位: "1", 成績: "M1501-098-Rec-Before", プレイヤー名: "M1501-098-Pl-Before", 引用元URL: "https://example.com/m1501-098-before" } };
+defineSeed("S-M15-01-BULKMIX-098", { needs: ["S-M15-01-ADM-A", "S-M15-01-MASTER"] }, async ({ browser, notes }) => {
+  const issue = (m: string) => reportSeedIssue("S-M15-01-BULKMIX-098", m);
+  await 管理画面(browser, async (page) => {
+    const v = 一括の前後098.前;
+    notes.set("〔デッキID-M1501-098〕", await デッキを登録する(page, { デッキ名: `${rc("M1501-098")}-デッキ`, 公開状態: "公開", イベント名日: v.イベント名日, イベント名英: "M1501-098-EvEn", 開催日: "2026-01-15T10:00", 順位: v.順位, 成績: v.成績, プレイヤー名: v.プレイヤー名, 引用元URL: v.引用元URL }, issue));
+    issue("Standard・Blue Controlは共有のマスタなので作らず、既存のマスタの先頭の組を使った（このケースは種類を確かめない）。デッキ名に実行の印を付けた");
+  });
+});
+
+/** 一括編集の組合せ（100〜103）: 非公開・アーキタイプ未設定のイベントデッキ。アーキタイプの未設定はデッキ登録画面では作れないのでDBで設定する */
+export const 組合せの選手前 = (no: string) => `${rc(`M1501-CB${no}`)}組合せ選手`;
+export const 組合せの選手後 = (no: string) => `${rc(`M1501-CB${no}`)}一括後選手`;
+for (const no of ["100", "101", "102", "103"]) {
+  defineSeed(`S-M15-01-CBBULK-${no}`, { needs: ["S-M15-01-ADM-A", "S-M15-01-MASTER"] }, async ({ browser, notes }) => {
+    const issue = (m: string) => reportSeedIssue(`S-M15-01-CBBULK-${no}`, m);
+    await 管理画面(browser, async (page) => {
+      const 名 = `${rc(`M1501-CB${no}`)}-デッキ`;
+      const id = await デッキを登録する(page, {
+        デッキ名: 名, 公開状態: "非公開", イベント名日: `${rc(`M1501-CB${no}`)}大会`, イベント名英: `${rc(`M1501-CB${no}`)} Event`,
+        開催日: 日時(-3).replace(" ", "T"), プレイヤー名: 組合せの選手前(no),
+      }, issue);
+      アーキタイプを未設定にする(id, 名);
+      notes.set(`〔デッキID-M1501-${no}〕`, id);
+      issue("DBで、このデッキ（実行の印つき）のアーキタイプを未設定にした（デッキ登録画面ではアーキタイプが必須のため）。フォーマットは既存のマスタの先頭、開催日は実行日の3日前");
+    }, M1501_ADMIN_A);
+  });
+}
 

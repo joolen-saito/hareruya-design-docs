@@ -45,6 +45,73 @@ export class EventEntryPage {
     return res;
   }
 
+
+  // ---- イベント申込確認画面の、日程・支払方法まわり ----
+  /** 選択済みの日程のカード（イベント名・開催日時・参加費の文） */
+  選択済みのカード(日程ID: string): Locator { return this.page.locator(`label[for="event-${日程ID}"]`); }
+  別日程のカード(日程ID: string): Locator { return this.page.locator(`label[for="alternative-event-${日程ID}"]`); }
+  get 支払方法の選択(): Locator { return this.page.locator("#payment-method"); }
+  get 支払方法の選択肢(): Locator { return this.page.locator("#payment-method option"); }
+  get 支払説明を開くボタン(): Locator { return this.page.locator('button[data-js-modal-trigger="payment-help-modal"]'); }
+  get 支払説明のモーダル(): Locator { return this.page.locator("#payment-help-modal"); }
+  get キャンセルポリシーのリンク(): Locator { return this.page.locator('a[href*="#block_event_cancel_policy"]'); }
+  get 申込確認のキャンセルボタン(): Locator { return this.page.locator(".p-hareruya-event-entry__payment-actions a", { hasText: "キャンセル" }); }
+
+  /** 選択済みの日程のチェックを外す（ラベルを押す。別日程があるときだけ外せる） */
+  async 選択済みの日程を外す(日程ID: string): Promise<void> {
+    await this.選択済みのカード(日程ID).click({ timeout: 15_000 });
+    await expect(this.日程チェック(日程ID), "選択済みの日程のチェックが外れた").not.toBeChecked();
+  }
+  async 別日程を選ぶ(日程ID: string): Promise<void> {
+    await this.別日程のカード(日程ID).click({ timeout: 15_000 });
+    await expect(this.page.locator(`#alternative-event-${日程ID}`), "別日程のチェックが入った").toBeChecked();
+  }
+  /** 支払方法を、名前（の一部）で選ぶ */
+  async 支払方法を選ぶ(名前: string): Promise<void> {
+    const v = await this.支払方法の選択肢.filter({ hasText: 名前 }).first().getAttribute("value", { timeout: 15_000 });
+    if (v === null) throw new Error(`支払方法の選択肢に「${名前}」が無い`);
+    await this.支払方法の選択.selectOption(v);
+  }
+  /** 開発者ツールで、支払方法の値を書き換える（必須の指定は外し、その値だけの選択肢にする。空文字も可） */
+  async 支払方法の値を書き換える(値: string): Promise<void> {
+    await this.支払方法の選択.evaluate((s, v) => {
+      const sel = s as HTMLSelectElement;
+      sel.removeAttribute("required");
+      sel.innerHTML = "";
+      const o = document.createElement("option");
+      o.value = v; o.selected = true;
+      sel.appendChild(o);
+      sel.value = v;
+    }, 値);
+  }
+  /** 開発者ツールで、送る要求の欄（name の値）を書き換える・足す。formSelector の中に隠し欄として足す */
+  async 隠し欄を足す(フォーム: string, name: string, 値: string): Promise<void> {
+    await this.page.locator(フォーム).evaluate((f, [n, v]) => {
+      const i = document.createElement("input");
+      i.type = "hidden"; i.name = n; i.value = v;
+      f.appendChild(i);
+    }, [name, 値]);
+  }
+  /** 開発者ツールで、主対象のイベント詳細ID（隠し欄）を書き換える */
+  async 主対象を書き換える(値: string): Promise<void> {
+    await this.page.locator('form#filter_form input[name="detail"]').evaluate((e, v) => { (e as HTMLInputElement).value = v; }, 値);
+  }
+  /** 外部の決済サイトへの移動（画面の移動）だけを止める。試験で決済サイトへ送らない（登録の応答までは通常どおり） */
+  async 外部への移動を止める(): Promise<void> {
+    const origin = new URL(BASE_URL).origin;
+    await this.page.route((u) => u.origin !== origin, (r) => (r.request().isNavigationRequest() ? r.abort() : r.continue()));
+  }
+
+  // ---- 申込確定画面の表示 ----
+  get 確定画面の日程カード(): Locator { return this.page.locator(".p-hareruya-event-confirm__event-list .c-hareruya-event-card"); }
+  get 確定画面の合計金額(): Locator { return this.page.locator(".p-hareruya-event-confirm__total-card .c-hareruya-event-card__detail-value"); }
+  get 確定画面の支払方法(): Locator { return this.page.locator(".p-hareruya-event-confirm__payment-method-value"); }
+  get 確定画面の隠し支払方法(): Locator { return this.page.locator('#form-registration input[name="payment"]'); }
+  /** 開発者ツールで、申込登録の要求の欄を書き換える・足す（申込確定画面） */
+  async 確定画面の支払方法を書き換える(値: string): Promise<void> {
+    await this.確定画面の隠し支払方法.evaluate((e, v) => { (e as HTMLInputElement).value = v; }, 値);
+  }
+
   // ---- 申込確定画面 ----
   get 申込するボタン(): Locator { return this.page.locator("#submit-button-forward"); }
   get 確定画面のトークン(): Locator { return this.page.locator('#form-registration input[name="_token"]'); }
