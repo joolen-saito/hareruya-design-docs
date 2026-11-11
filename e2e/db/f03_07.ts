@@ -52,3 +52,17 @@ export function 商品単位の依頼ID(会員ID: string, 商品ID: string): str
     `select r.id from dtb_product_request r join dtb_player p on p.id = r.player_id
       where p.customer_id = $1 and r.product_id = $2 and r.product_class_id is null and r.deleted_at is null order by r.id desc limit 1`, [会員ID, 商品ID])[0]?.id ?? null;
 }
+
+/** 商品規格に対する入荷通知依頼の件数（会員を問わない）。有効（削除日時が空）と、削除日時が設定されたものを分けて返す */
+export function 規格への依頼件数(商品規格ID: string): { 有効: number; 削除済み: number } {
+  const r = query(
+    `select count(*) filter (where deleted_at is null) as active, count(*) filter (where deleted_at is not null) as removed
+       from dtb_product_request where product_class_id = $1::int`, [商品規格ID])[0];
+  return { 有効: Number(r.active), 削除済み: Number(r.removed) };
+}
+
+/** 本登録用のURLの末尾になる値（仮会員のメールアドレスから読む。メールの受け口が無い環境で、本登録のメールのURLを組み立てるため） */
+export function 本登録の鍵(メール: string): string {
+  const rows = query(`select secret_key as v from dtb_customer where email = $1 order by id desc limit 1`, [メール]);
+  return String(rows[0]?.v ?? "");
+}

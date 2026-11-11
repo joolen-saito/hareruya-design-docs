@@ -52,6 +52,86 @@ export class BranchNavPage {
     await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 5 });
   }
 
+  // ---- カードセット選択・商品検索（ヘッダ） ----
+  readonly カードセット選択メニュー = () => this.page.locator("header button[data-search-category-toggle]").first();
+  readonly カードセットの表示 = () => this.page.locator("header [data-search-category-text]").first();
+  readonly カードセットの値 = () => this.page.locator("header input[data-search-category-input]").first();
+  /** 選択肢（「カードセット」の未選択の項目を除く）の名前と値 */
+  async カードセットの選択肢(): Promise<{ 名前: string; 値: string }[]> {
+    return this.page.locator("header [data-search-category-item]").evaluateAll((bs) => bs
+      .map((b) => ({ 名前: (b.textContent ?? "").replace(/\s+/g, " ").trim(), 値: (b as HTMLElement).dataset.value ?? "" }))
+      .filter((o) => o.値 !== ""));
+  }
+  async カードセットメニューを開く(): Promise<void> {
+    await this.カードセット選択メニュー().click({ timeout: T });
+    await expect(this.page.locator("header [data-search-category-dropdown]").first(), "カードセットの選択肢の一覧").toBeVisible({ timeout: T });
+  }
+  /** メニューを開いて値（カードセットID）の選択肢を選ぶ */
+  async カードセットを選ぶ(値: string): Promise<void> {
+    await this.カードセットメニューを開く();
+    await this.page.locator(`header [data-search-category-item][data-value="${値}"]`).first().click({ timeout: T });
+  }
+  readonly 商品検索の入力 = () => this.page.locator("header input[data-search-keyword-input]").first();
+  readonly 検索ボタン = () => this.page.locator("header #leftmenu_search_goods_submit").first();
+  readonly 検索の候補 = () => this.page.locator("#header_search_suggest");
+  /** 商品検索テキストボックスに1文字ずつ入れる（入力のたびに候補を求める画面の作りに合わせる） */
+  async 商品検索に入れる(語: string): Promise<void> {
+    const box = this.商品検索の入力();
+    await expect(box, "商品検索テキストボックス").toBeVisible({ timeout: T });
+    await box.click({ timeout: T });
+    await box.pressSequentially(語, { delay: 80 });
+  }
+
+  // ---- カテゴリバー（PC） ----
+  readonly カテゴリバーのボタン = (type: string) => this.page.locator(`.p-hareruya-header__category-btn[data-category="${type}"]`).first();
+  readonly カテゴリバーの全ボタン = () => this.page.locator(".p-hareruya-header__category-btn");
+  readonly カテゴリのドロップダウン = (type: string) => this.page.locator(`[data-category-dropdown][data-category-type="${type}"]`).first();
+  /** ドロップダウンの n 列目（1始まり）の項目（表示名と、子を持つか） */
+  カテゴリの項目(type: string, 列: number): Locator {
+    return this.カテゴリのドロップダウン(type).locator(`[data-column="${列}"] .p-hareruya-header__category-dropdown-item`);
+  }
+  async カテゴリの項目の名前(type: string, 列: number): Promise<string[]> {
+    return (await this.カテゴリの項目(type, 列).locator(".p-hareruya-header__category-dropdown-item-text").allTextContents()).map((t) => t.replace(/\s+/g, " ").trim());
+  }
+
+  // ---- カート（マウスオーバーで開く一覧） ----
+  readonly カートのドロップダウン = () => this.page.locator("[data-cart-dropdown]").first();
+  readonly カートの合計数の表示 = () => this.page.locator("[data-cart-dropdown] .p-hareruya-header__cart-dropdown-count span").first();
+  readonly カートページへの導線 = () => this.page.locator("[data-cart-dropdown] .p-hareruya-header__cart-dropdown-footer a").first();
+  /** カート内の商品の名前の並び（表示順。【Foil】の接頭辞を含む） */
+  async カートの商品名の並び(): Promise<string[]> {
+    return (await this.カートの商品概要().locator(".p-hareruya-header__cart-item-name-text").allTextContents()).map((t) => t.replace(/\s+/g, " ").trim());
+  }
+  /** 商品名（接頭辞の【Foil】を除いた名前）で引くカート内の商品概要 */
+  カートの商品(名前: string): Locator {
+    const esc = 名前.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return this.カートの商品概要().filter({ has: this.page.locator(".p-hareruya-header__cart-item-name-text", { hasText: new RegExp(`^\\s*(【Foil】)?${esc}\\s*$`) }) });
+  }
+  /** カートにマウスを乗せて、一覧が開いたことを待つ */
+  async カートを開く(): Promise<void> {
+    await this.マウスオーバーする(this.カートのリンク());
+    await expect(this.カートのドロップダウン(), "カートの商品一覧が開く").toHaveClass(/is-active/, { timeout: T });
+  }
+
+  // ---- 狭い画面（画面幅390px）の画面下部の並び ----
+  readonly 下のナビ = () => this.page.locator("nav.p-hareruya-bottom-nav");
+  readonly 下のナビのリンク = (名前: string) => this.下のナビ().locator("a.p-hareruya-bottom-nav__link", { hasText: 名前 });
+  readonly ヘッダのリンク = (名前: string) => this.page.locator("header a", { hasText: 名前 });
+
+  /** 新しいタブで開くリンクを押し、開いた先のアドレス（読み込めなければ、最初に要求したアドレス）を返す */
+  async 押して新しいタブのアドレスを読む(l: Locator): Promise<string> {
+    const ctx = this.page.context();
+    const 要求: string[] = [];
+    const on = (r: import("@playwright/test").Request) => { try { if (r.isNavigationRequest() && r.frame() === r.frame().page()?.mainFrame() && r.frame().page() !== this.page) 要求.push(r.url()); } catch { /* 閉じたフレーム */ } };
+    ctx.on("request", on);
+    try {
+      const [tab] = await Promise.all([ctx.waitForEvent("page", { timeout: T }), l.click({ timeout: T })]);
+      await tab.waitForLoadState("domcontentloaded", { timeout: 60_000 }).catch(() => undefined);
+      const url = tab.url();
+      return /^https?:/.test(url) ? url : (要求[0] ?? url);
+    } finally { ctx.off("request", on); }
+  }
+
   async テキスト(l: Locator): Promise<string> { return (await l.innerText({ timeout: T })).replace(/\s+/g, " ").trim(); }
 
   /** ご当地晴れる屋くんの画像（表示されている画像）の中身のバイト列 */

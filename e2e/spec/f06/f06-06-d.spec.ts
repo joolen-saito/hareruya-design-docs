@@ -9,6 +9,7 @@ import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
 import { HistoryListPage } from "../../pages/front/f06_06_history";
 import { 注文の } from "../../seeds/f06-06-d";
 import { 受注の注文番号, 受注の注文日の表示 } from "../../db/f06_06_d";
+import "../../seeds/f06-06-orders"; // 取り込みで抜けた登録を戻す: main 側が作り方を登録している seeds を読み込む（二重定義ではない）
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };

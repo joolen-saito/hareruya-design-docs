@@ -50,6 +50,8 @@ export class EntrySearchPage {
     return hrefs.map((h) => /new\/(\d+)/.exec(h)?.[1] ?? "");
   }
   async 結果の表が表示されている(): Promise<boolean> { return (await this.結果の行.count()) > 0; }
+  /** 結果表の日程の行数（1行＝1日程。新規登録ボタンの有無に関わらず数える） */
+  async 日程の行数(): Promise<number> { return this.結果の行.count(); }
   日程の行(日程ID: string): Locator {
     return this.page.locator("table.table tbody tr").filter({ has: this.page.locator(`a[href$="/entry_registration/new/${日程ID}"]`) });
   }

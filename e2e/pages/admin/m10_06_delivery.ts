@@ -94,4 +94,125 @@ export class DeliveryPage {
     await this.page.locator('#DeleteModal .modal-footer button[data-bs-dismiss="modal"]').click({ timeout: 30_000 });
     await expect(this.page.locator("#DeleteModal"), "削除確認モーダルが閉じる").toBeHidden({ timeout: 30_000 });
   }
+
+  // ---- 基本情報・送料・お届け時間・並べ替え（M10-06 の残りのケース） ----
+
+  /** 基本情報の欄に入れる（指定したものだけ） */
+  async 基本情報を入れる(v: { 配送業者名?: string; 名称?: string; 英語名称?: string; 伝票URL?: string; 上限サイズ?: string }): Promise<void> {
+    if (v.配送業者名 !== undefined) await this.page.locator(nm("name")).fill(v.配送業者名, { timeout: 30_000 });
+    if (v.名称 !== undefined) await this.page.locator(nm("service_name")).fill(v.名称, { timeout: 30_000 });
+    if (v.英語名称 !== undefined) await this.page.locator(nm("service_name_en")).fill(v.英語名称, { timeout: 30_000 });
+    if (v.伝票URL !== undefined) await this.page.locator(nm("confirm_url")).fill(v.伝票URL, { timeout: 30_000 });
+    if (v.上限サイズ !== undefined) await this.page.locator(nm("max_size")).fill(v.上限サイズ, { timeout: 30_000 });
+  }
+  async 基本情報を読む(): Promise<{ 名称: string; 英語名称: string; 伝票URL: string; 上限サイズ: string }> {
+    const v = (n: string) => this.page.locator(nm(n)).inputValue({ timeout: 30_000 });
+    return { 名称: await v("service_name"), 英語名称: await v("service_name_en"), 伝票URL: await v("confirm_url"), 上限サイズ: await v("max_size") };
+  }
+  get 国外配送の箱() { return this.page.locator(nm("is_abroad")); }
+
+  /** 一覧の行の配送業者名のリンクのアドレスの配送方法ID（行のID欄と見比べる） */
+  async 行のリンクのID(配送業者名: string): Promise<string> {
+    const href = (await this.行(配送業者名).locator("a[href$='/edit']").first().getAttribute("href", { timeout: 30_000 })) ?? "";
+    return /\/delivery\/(\d+)\/edit/.exec(href)?.[1] ?? "";
+  }
+
+  /** 編集画面のまま（登録の確認画面や一覧に移っていない）か */
+  async 編集画面か(): Promise<boolean> {
+    return /\/setting\/shop\/delivery\/(new|\d+\/edit)$/.test(new URL(this.page.url()).pathname) && (await this.page.locator(nm("name")).isVisible());
+  }
+
+  // お届け時間
+  async お届け時間を足す(名前: string): Promise<void> {
+    await this.page.locator("#add-delivery-time-value").fill(名前, { timeout: 30_000 });
+    await this.page.locator("#add-delivery-time-button").click({ timeout: 30_000 });
+  }
+  async お届け時間の一覧(): Promise<string[]> {
+    return this.page.locator('#delivery-time-group input[name*="[delivery_time]"]').evaluateAll((ns) => (ns as HTMLInputElement[]).map((n) => n.value));
+  }
+
+  // 都道府県別送料
+  get 送料の行() { return this.page.locator("#delivery-fee-group li.delivery-fee-item"); }
+  /** 追加用の欄に入れて「新規登録」を押す（地域は表示名で選ぶ。null なら選ばない） */
+  async 送料の行を足す(v: { 地域: string | null; サイズ?: string; 送料?: string }): Promise<void> {
+    if (v.地域 !== null) await this.page.locator("#add-delivery-fee-pref").selectOption({ label: v.地域 }, { timeout: 30_000 });
+    if (v.サイズ !== undefined) await this.page.locator("#add-delivery-fee-size").fill(v.サイズ, { timeout: 30_000 });
+    if (v.送料 !== undefined) await this.page.locator("#add-delivery-fee-value").fill(v.送料, { timeout: 30_000 });
+    await this.page.locator("#add-delivery-fee-button").click({ timeout: 30_000 });
+  }
+  /** 追加用の欄の下の赤い注意（地域・送料の入力漏れ） */
+  async 追加欄のエラー(): Promise<string> {
+    return ((await this.page.locator("#add-delivery-fee-form-error").textContent()) ?? "").replace(/\s+/g, " ").trim();
+  }
+  /** 送料の行の表示（地域・サイズ・送料。送料は桁区切りを外した数字）を、画面の並びのまま読む */
+  async 送料の行を読む(): Promise<{ 地域: string; サイズ: string; 送料: string }[]> {
+    return this.送料の行.evaluateAll((ns) => ns.map((n) => {
+      const t = (c: string) => (n.querySelector(c)?.textContent ?? "").trim();
+      return { 地域: t(".display-label-pref"), サイズ: t(".display-label-size"), 送料: t(".display-label-fee").replace(/,/g, "") };
+    }));
+  }
+  /** 地域（とサイズ）の行。サイズを指定しなければ、その地域の最初の行 */
+  送料の行の絞り込み(地域: string, サイズ?: string): Locator {
+    let l = this.送料の行.filter({ has: this.page.locator(".display-label-pref", { hasText: new RegExp(`^\\s*${esc(地域)}\\s*$`) }) });
+    if (サイズ !== undefined) l = l.filter({ has: this.page.locator(".display-label-size", { hasText: new RegExp(`^\\s*${esc(サイズ)}\\s*$`) }) });
+    return l;
+  }
+  /** 行の鉛筆を押して入力欄を出す */
+  async 送料の行を編集にする(行: Locator): Promise<void> {
+    await 行.locator("a.action-edit").click({ timeout: 30_000 });
+    await expect(行.locator(".mode-edit"), "送料の行の入力欄").toBeVisible({ timeout: 30_000 });
+  }
+  /** 行の入力欄（サイズ・送料）。入力欄の種類を数値からテキストに書き換えて、数値でない値も入れられるようにする */
+  async 行の入力欄をテキストにして入れる(行: Locator, 欄: "size" | "fee", 値: string): Promise<void> {
+    const input = 行.locator(`input[name*="[${欄}]"]`);
+    await input.evaluate((n) => (n as HTMLInputElement).setAttribute("type", "text"));
+    await input.fill(値, { timeout: 30_000 });
+  }
+  async 行の入力欄に入れる(行: Locator, 欄: "size" | "fee", 値: string): Promise<void> {
+    await 行.locator(`input[name*="[${欄}]"]`).fill(値, { timeout: 30_000 });
+  }
+  /** 行の×を押して削除の確認モーダルを開き、その文（<br>を改行にしたもの）を返す */
+  async 送料の行の削除を押す(行: Locator): Promise<string> {
+    await 行.locator(".remove-delivery-fee-item").click({ timeout: 30_000 });
+    const modal = this.page.locator("#delivery-fee-delete-modal");
+    await expect(modal, "送料の行の削除確認モーダル").toBeVisible({ timeout: 30_000 });
+    return (await modal.locator("p.modal-message").evaluate((n) => (n as HTMLElement).innerHTML.replace(/<br\s*\/?>/g, "\n"))).trim();
+  }
+  async 送料の行の削除を確定する(): Promise<void> {
+    await this.page.locator("#delivery-fee-delete-confirm").click({ timeout: 30_000 });
+    await expect(this.page.locator("#delivery-fee-delete-modal"), "送料の行の削除確認モーダルが閉じる").toBeHidden({ timeout: 30_000 });
+  }
+
+  // 一覧の並べ替え
+  /** 一覧の並び（配送業者名のリンクの前半。上から） */
+  async 一覧の並び(): Promise<string[]> {
+    const t = await this.page.locator("li.sortable-item a[href$='/edit']").allInnerTexts();
+    return t.map((x) => x.replace(/\s+/g, " ").trim().split(" / ")[0]);
+  }
+  /** 行のつまみ（三本線）から、別の行の上端へドラッグして放す。「並び順を変更しますか？」のモーダルが出るまで */
+  async 上へドラッグする(配送業者名: string, 上の行の配送業者名: string): Promise<void> {
+    const handle = this.行(配送業者名).locator("i.fa-bars");
+    const target = this.行(上の行の配送業者名);
+    await target.scrollIntoViewIfNeeded();
+    await handle.scrollIntoViewIfNeeded();
+    const h = (await handle.boundingBox())!;
+    await this.page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+    await this.page.mouse.down();
+    await this.page.mouse.move(h.x + h.width / 2, h.y + h.height / 2 - 5, { steps: 5 });
+    const t = (await target.boundingBox())!;
+    await this.page.mouse.move(h.x + h.width / 2, t.y + 3, { steps: 20 });
+    await this.page.mouse.up();
+    await expect(this.page.locator("#ConfirmModal"), "並び順を変更しますか？のモーダル").toBeVisible({ timeout: 30_000 });
+    await expect(this.page.locator("#ConfirmModal p.modal-message"), "並べ替えの確認の文").toHaveText("並び順を変更しますか？", { timeout: 10_000 });
+  }
+  async 並べ替えを確定する(): Promise<void> {
+    const saved = this.page.waitForResponse((r) => r.url().includes("/setting/shop/delivery/sort_no/move"), { timeout: 30_000 });
+    await this.page.locator("#ConfirmModal .btn-confirm").click({ timeout: 30_000 });
+    await saved;
+    await expect(this.page.locator("#ConfirmModal"), "並べ替えの確認のモーダルが閉じる").toBeHidden({ timeout: 30_000 });
+  }
+  async 並べ替えをキャンセルする(): Promise<void> {
+    await this.page.locator('#ConfirmModal .modal-footer button[data-bs-dismiss="modal"]').click({ timeout: 30_000 });
+    await expect(this.page.locator("#ConfirmModal"), "並べ替えの確認のモーダルが閉じる").toBeHidden({ timeout: 30_000 });
+  }
 }

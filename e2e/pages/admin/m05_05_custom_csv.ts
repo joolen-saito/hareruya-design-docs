@@ -101,6 +101,13 @@ export class OrderCsvPage {
     return (await item.getAttribute("href")) ?? "";
   }
 
+  /** カスタムCSVのダウンロード先のアドレスを、そのまま開いてCSVを受け取る（検索条件を持たない状態の出力。ボタンを押さずにアドレスを開く） */
+  async URLを開いてダウンロードする(url: string): Promise<ダウンロード結果> {
+    return this.receive(async () => {
+      await this.page.goto(new URL(url, this.page.url()).toString()).catch(() => undefined); // ダウンロードが始まる画面は、遷移が中断される
+    });
+  }
+
   /** 一覧のダウンロード先のアドレスを、定義IDだけ置き換えて開く。ダウンロードされたか、応答の状態を返す */
   async 定義IDを置き換えて開く(元のURL: string, 新しい定義ID: string): Promise<{ ダウンロードされた: boolean; 応答: number | null; ファイル名: string | null }> {
     const url = new URL(元のURL, this.page.url());

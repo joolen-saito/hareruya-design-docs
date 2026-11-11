@@ -101,7 +101,7 @@ export async function denyApprovalForAuthority(page: Page, authorityName: string
 // ---- 在庫移動・振替検索一覧 ----
 
 export type CsvModalKind = "在庫移動CSV登録" | "在庫振替CSV登録";
-const MODAL_ID: Record<CsvModalKind, string> = { 在庫移動CSV登録: "#stockMoveCsvRegisterModal", 在庫振替CSV登録: "#stockTransferCsvRegisterModal" };
+export const MODAL_ID: Record<CsvModalKind, string> = { 在庫移動CSV登録: "#stockMoveCsvRegisterModal", 在庫振替CSV登録: "#stockTransferCsvRegisterModal" };
 
 /** 在庫移動・振替検索一覧を開く（メニューから開くのと同じ画面） */
 export async function openMoveTransferList(page: Page): Promise<void> {

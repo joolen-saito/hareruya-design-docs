@@ -1,5 +1,7 @@
 /** F07-04 イベント申込（フロント）のDB確認（参照だけ）。物理名はこのファイルの SQL の中にだけ書く */
 import { query } from "../lib/db";
+import { writeTestData } from "./write_adapter";
+import { RUN_MARK } from "../lib/run_marker";
 
 /** 会員の選手ID（会員ごとに1つ。無ければ null） */
 export function 会員の選手ID(会員ID: string): string | null {
@@ -58,4 +60,35 @@ export function 申込の登録時履歴ID(申込ID: string): string {
   const rows = query(`select min(id) as id from dtb_entry_history where event_entry_id = $1::int`, [申込ID]);
   if (!rows[0]?.id) throw new Error(`申込 ${申込ID} の履歴が無い`);
   return rows[0].id;
+}
+
+/** 日程（イベント詳細ID）が存在するか（削除済みも含めて、行があるか） */
+export function 日程が存在するか(日程ID: string): boolean {
+  return Number(query(`select count(*) as n from dtb_event_detail where id = $1::int`, [日程ID])[0].n) > 0;
+}
+
+/** 日程の有効な申込の支払番号（古い順。未設定は空文字） */
+export function 日程の申込の支払番号(日程ID: string): string[] {
+  return query(`select coalesce(payment_no, '') as no from dtb_event_entry where event_detail_id = $1::int and deleted_at is null order by id`, [日程ID]).map((r) => r.no ?? "");
+}
+
+/**
+ * この実行で作った大会の日程の、オンライン受付の終了日時を、現在より前（1日前）にする。
+ * 画面からは、受付中の日程を受付終了にできない（開始時間より前・現在より後の入力しか通らない）ので、DB で書き換える（依頼者承認 2026-11-10。実行の印つきの大会だけ）。
+ */
+export function 日程の受付を終了にする(日程ID: string): number {
+  return writeTestData({
+    理由: "手順がオンライン受付の終了日時を現在より前へ変える。画面では登録済みの受付中の日程を受付終了にできないため、この実行で作った大会の日程だけ書き換える",
+    sql: `update dtb_event_detail set online_entry_end_date = now() - interval '1 day' where id = $1::int`, params: [日程ID],
+    対象の確かめ: `select e.name_jp as name from dtb_event_detail d join dtb_event e on e.id = d.event_id where d.id = $1::int`, 確かめのparams: [日程ID],
+    印: RUN_MARK, 最大行数: 1,
+  });
+}
+
+/** 支払方法IDが、日程の大会に紐づいている件数（紐づけが無いことの確かめ） */
+export function 日程の大会に紐づく支払方法の件数(支払方法ID: string, 日程ID: string): number {
+  return Number(query(
+    `select count(*) as n from dtb_event_payment ep where ep.payment_id = $1::int
+        and ep.event_id = (select event_id from dtb_event_detail where id = $2::int)`, [支払方法ID, 日程ID],
+  )[0].n);
 }

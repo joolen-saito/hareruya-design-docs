@@ -5,6 +5,14 @@ import { BASE_URL } from "../../config/env";
 const T = 30_000;
 export type 言語 = "ja" | "en";
 
+/** お問い合わせ画面の件名の選択肢（種別ID＝選択肢の値と、表示の名前）。シードが使う種別を決めるのに使う */
+export async function 件名の種別一覧(page: Page, 言: 言語): Promise<{ 種別ID: string; 名称: string }[]> {
+  await page.goto(`${BASE_URL}/${言}/contact`, { timeout: 60_000 });
+  await page.waitForLoadState("load");
+  return page.locator("#contact_subject option").evaluateAll((os) => os
+    .map((o) => ({ 種別ID: (o as HTMLOptionElement).value, 名称: (o.textContent ?? "").trim() })).filter((o) => o.種別ID !== "" && o.名称 !== ""));
+}
+
 export class ContactHistoryPage {
   constructor(readonly page: Page, readonly 言語: 言語 = "ja") { page.setDefaultTimeout(T); }
   get path(): string { return new URL(this.page.url()).pathname; }
@@ -36,6 +44,30 @@ export class ContactHistoryPage {
     const c = this.page.locator(".p-hareruya-toolbar__count");
     return (await c.count()) === 0 ? "" : ((await c.first().innerText()) ?? "").replace(/\s+/g, " ").trim();
   }
+  // ---- 一覧の行 ----
+  get 一覧の行(): Locator { return this.page.locator(".p-hareruya-contact-list__item"); }
+  /** 一覧の行（上から順）の問い合わせ日時・お問い合わせ種別・お問い合わせ番号 */
+  async 行の内容(): Promise<{ 日時: string; 種別: string; 番号: string }[]> {
+    const rows = this.一覧の行;
+    const out: { 日時: string; 種別: string; 番号: string }[] = [];
+    for (let i = 0; i < (await rows.count()); i++) {
+      const r = rows.nth(i);
+      const t = async (sel: string) => ((await r.locator(sel).first().innerText().catch(() => "")) ?? "").replace(/\s+/g, " ").trim();
+      out.push({ 日時: await t(".p-hareruya-contact-list__date"), 種別: await t(".p-hareruya-contact-list__subject"), 番号: /(\d+)/.exec(await t(".p-hareruya-contact-list__number"))?.[1] ?? "" });
+    }
+    return out;
+  }
+  /** 一覧のうち、問い合わせ日時の表示が一致する行（無ければ undefined） */
+  async 日時の行(日時: string): Promise<{ 日時: string; 種別: string; 番号: string } | undefined> {
+    return (await this.行の内容()).find((r) => r.日時 === 日時);
+  }
+  /** 番号の行の、押す対象（種別・番号） */
+  番号の行(番号: string): Locator {
+    return this.一覧の行.filter({ has: this.page.locator(".p-hareruya-contact-list__number", { hasText: new RegExp(`[：:]\\s*${番号}\\s*[）)]`) }) });
+  }
+  get 行の種別(): string { return ".p-hareruya-contact-list__subject"; }
+  get 行の番号(): string { return ".p-hareruya-contact-list__number"; }
+
   async 履歴なしの案内(): Promise<string> {
     const m = this.page.locator(".p-hareruya-history-list__title .p-hareruya-message-box--info");
     return (await m.count()) === 0 ? "" : ((await m.first().innerText()) ?? "").replace(/\s+/g, " ").trim();

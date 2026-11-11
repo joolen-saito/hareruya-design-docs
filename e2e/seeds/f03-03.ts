@@ -2,9 +2,13 @@
  * F03-03 商品詳細検索の画面シード。正本: cases/F03-03_seed_data.tsv
  *
  * 作ったシード: 検索環境の確認（ENV）、検索選択肢の共通マスタ（MASTERS）、カテゴリの階層（CATTREE-028〜030・032〜034）。
+ * 2026-11-10 の方針で足したシード（既存データ・画面で作ったデータへの読み替え。読み替えは「シード作成時の問題（読み替え）」に残す）:
+ *   STORE-001（商品詳細を開く既存の商品）・CARRY-005（固定名のタグを無いときだけ作る＋既存の商品）・CARRY-025（既存のカード2件）・CARRY-027（参照だけ）。
+ *   この4つを使うケース（001・005・025・027）は、確かめるのがモーダルの表示元とアドレスで、検索結果の商品には依らない。
+ *
  * 作らないシード（記録 e2e/review/F03-03_progress_2026-10-29.md）:
- * - 商品を作って「商品検索用試験索引へ直接反映する」ところまでを定めるシード（STORE-001・CARRY-005・STORE-006・FOIL-FRAME-008/009・
- *   COLOR-TYPE-010・SUGGEST-018・MANA-LANG-019/020・STOCK-RULE-021/023・CARRY-024/025/027・PRICE-031・COLOR-MULTI-035）。
+ * - 商品を作って「商品検索用試験索引へ直接反映する」ところまでを定めるシード（STORE-006・FOIL-FRAME-008/009・
+ *   COLOR-TYPE-010・SUGGEST-018・MANA-LANG-019/020・STOCK-RULE-021/023・CARRY-024・PRICE-031・COLOR-MULTI-035）。
  *   索引への反映は画面で指定できず、外部の検索サービスの試験環境が要る。
  * - DETAIL-007: 投入方法にDBでの準備を含む。
  *
@@ -13,12 +17,17 @@
 import { expect, Page } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { rc } from "../lib/run_marker";
-import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { Account, adminUrl, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { Browser } from "@playwright/test";
 import { CategoryPage, createTopByCsv } from "../pages/admin/category";
 import { expectSaved } from "../pages/admin/common";
 import { FormatPage, MtgMasterPage } from "../pages/admin/f03_03_masters";
+import { CardSearchPage } from "../pages/admin/m14_card";
+import { TagPage } from "../pages/admin/m03_13_tag";
+import { allTagRows, unusedSortNo } from "../pages/admin/m03_28_seed_ops";
+import { FrontProductList } from "../pages/front/f03_01_product_list";
 
 // ---- S-F03-03-ENV ----
 
@@ -43,16 +52,16 @@ defineSeed("S-F03-03-ENV", async ({ browser }) => {
 });
 
 /** シードの画面操作は、1つの待ちを1分、全体を8分で打ち切る（同じ原因で長く止まらないため） */
-async function 画面で作る(browser: Browser, what: string, fn: (page: Page) => Promise<void>): Promise<void> {
+async function 画面で作る<T = void>(browser: Browser, what: string, fn: (page: Page) => Promise<T>): Promise<T> {
   const 上限 = 8 * 60_000;
   let timer: NodeJS.Timeout | undefined;
   const deadline = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error(`${what}が ${上限 / 60_000} 分で終わらない`)), 上限); });
   try {
-    await Promise.race([
+    return await Promise.race([
       withAdminSession(browser, SETUP_ADMIN as Account, async (page) => {
         page.setDefaultTimeout(60_000);
         page.setDefaultNavigationTimeout(60_000);
-        await fn(page);
+        return await fn(page);
       }),
       deadline,
     ]);
@@ -220,6 +229,85 @@ defineSeed("S-F03-03-MASTERS", async ({ browser, notes, seed }) => {
     // シード表の文中の総称「〔…〕」（以下の〔…〕）は、控えた番号の一覧として控える
     notes.set("〔…〕", notes.entries().filter(([k]) => /共有/.test(k)).map(([, v]) => v).join(","));
   });
+});
+
+// ---- 2026-11-10 の方針で足したシード ----
+
+const 読み替え = (seedId: string, m: string) => reportSeedIssue(seedId, `シード作成時の問題（読み替え）: ${m}`);
+
+/** 公開側（本店）の商品一覧から、商品詳細を開ける既存の商品を1件探す（読むだけ。何も書き換えない） */
+async function 既存の商品を探す(browser: Browser, seedId: string): Promise<{ 商品ID: string; 規格ID: string; 商品名: string }> {
+  const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
+  try {
+    await hideDebugToolbar(context);
+    const page = await context.newPage();
+    page.setDefaultTimeout(60_000);
+    const list = new FrontProductList(page);
+    const pick = async () => (await list.カードを読む()).find((c) => c.商品ID !== "" && c.行.length > 0 && c.行[0].規格ID !== "");
+    await list.open(F0303_店舗.本店);
+    await list.結果を待つ();
+    let c = await pick();
+    if (!c) {
+      const cats = (await list.左メニューのカテゴリ(false)).slice(0, 20);
+      for (const cat of cats) {
+        await list.openCategory(F0303_店舗.本店, cat.id);
+        c = await pick();
+        if (c) break;
+      }
+    }
+    if (!c) throw new Error(`${seedId}: 本店の商品一覧に、商品詳細を開ける既存の商品が見つからない`);
+    return { 商品ID: c.商品ID, 規格ID: c.行[0].規格ID, 商品名: c.商品名 };
+  } finally {
+    await context.close();
+  }
+}
+
+defineSeed("S-F03-03-STORE-001", async ({ browser, notes }) => {
+  const id = "S-F03-03-STORE-001";
+  const p = await 既存の商品を探す(browser, id);
+  notes.set("〔商品ID-F0303-001〕", p.商品ID);
+  notes.set("〔商品規格ID-F0303-001〕", p.規格ID);
+  読み替え(id, `商品HQ-001-F0303-001（F0303-MODAL-001）を作って商品検索用試験索引へ反映する前提は、反映が画面で指定できないため作らず、本店の商品一覧にある既存の商品「${p.商品名}」（商品ID ${p.商品ID}・商品規格ID ${p.規格ID}）で代えた。このケースは8つの表示元でモーダルが開くことだけを確かめ、商品詳細は本店の商品詳細が開けるこの商品で開く。TC大阪支店で非公開という条件は使わない`);
+});
+
+/** 005 のタグの固定の名称（無いときだけタグ登録画面で作り、あれば使い回す） */
+const タグ005 = "T-F0303-005";
+
+defineSeed("S-F03-03-CARRY-005", async ({ browser, notes }) => {
+  const id = "S-F03-03-CARRY-005";
+  const タグID = await 画面で作る(browser, `${id} の作成`, async (page) => {
+    const rows = await allTagRows(page);
+    const hit = rows.filter((r) => r.名称日 === タグ005);
+    if (hit.length > 1) throw new Error(`タグ「${タグ005}」が ${hit.length} 件ある（1件のはず）`);
+    if (hit.length === 1) return hit[0].ID;
+    const tag = new TagPage(page);
+    await tag.openNew();
+    return tag.register({ 名称日: タグ005, 名称英: "Tag F0303 Url Check", 並び順: unusedSortNo(rows) }, `${id}: タグの登録`);
+  });
+  notes.set("〔タグID-F0303-005〕", タグID);
+  const p = await 既存の商品を探す(browser, id);
+  notes.set("〔商品ID-F0303-005〕", p.商品ID);
+  notes.set("〔商品規格ID-F0303-005〕", p.規格ID);
+  読み替え(id, `タグ「${タグ005}」（タグID ${タグID}）はタグ登録画面で、固定の名称で無いときだけ作り、あれば使い回す。商品URL-F0303-005（表示対象カテゴリ所属・タグ設定・本店公開・在庫1）を作って索引へ反映する前提は、反映が画面で指定できず、共有の既存の商品にタグを付けると書き換えになるため作らず、既存の商品（商品ID ${p.商品ID}）を控えるだけにした。このケースはアドレスの形だけを確かめ、検索結果の商品には依らない`);
+});
+
+defineSeed("S-F03-03-CARRY-025", async ({ browser, notes }) => {
+  const id = "S-F03-03-CARRY-025";
+  const ids = await 画面で作る(browser, `${id} の作成`, async (page) => {
+    const cards = new CardSearchPage(page);
+    await cards.open();
+    await cards.検索する();
+    const got = await cards.表示中のカードID();
+    if (got.length < 2) throw new Error(`${id}: カード一覧に既存のカードが ${got.length} 件しかない（2件要る）`);
+    return got.slice(0, 2);
+  });
+  notes.set("〔カードID-F0303-025A〕", ids[0]);
+  notes.set("〔カードID-F0303-025B〕", ids[1]);
+  読み替え(id, `商品CARRY-A-025・CARRY-B-025（F0303-CARRY-025）とそのカードを作って索引へ反映する前提は、反映が画面で指定できないため作らず、カード一覧にある既存のカード2件（カードID ${ids[0]}・${ids[1]}）のIDを控えた。このケースは検索後のアドレスに遷移元のカードID・並び順・ページ番号が残らないことだけを確かめ、検索結果の商品には依らない`);
+});
+
+defineSeed("S-F03-03-CARRY-027", async () => {
+  読み替え("S-F03-03-CARRY-027", "商品CARRY-A-027・CARRY-B-027（F0303-CARRY-027）を作って索引へ反映する前提は、反映が画面で指定できないため作らない。このケースは商品名だけを入れて検索したあとのアドレスだけを確かめ、検索結果の商品には依らない");
 });
 
 void adminUrl;

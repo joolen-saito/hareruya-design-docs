@@ -5,10 +5,14 @@ import { rc } from "../../lib/run_marker";
 import {
   商品に属する有効な依頼件数, 規格の依頼件数, 商品単位の依頼件数, 有効な依頼件数,
 } from "../../db/f03_07";
-import { loginAdmin } from "../../lib/session";
+import { loginAdmin, withAdminSession } from "../../lib/session";
+import { SETUP_ADMIN, BASE_URL } from "../../config/env";
+import { 規格への依頼件数, 本登録の鍵 } from "../../db/f03_07";
+import { deleteClassOnEdit, openClassEdit, openClassList } from "../../pages/admin/m03_30_products";
+import { EntryPage } from "../../pages/front/f06_01_entry";
 import { openRequestSearch, searchProductRequests, 依頼一覧の行 } from "../../pages/admin/f03_07_restock";
 import { FRONT, FrontRestock, 押した結果 } from "../../pages/front/f03_07_restock_notify";
-import { classOf, memberOf, PF_ADMIN, restoreArrivalMax } from "../../seeds/f03-07";
+import { classOf, mailOf, memberOf, PF_ADMIN, restoreArrivalMax } from "../../seeds/f03-07";
 import { Page } from "@playwright/test";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -568,5 +572,95 @@ caseTest("IT-F03-07-056", async ({ page, step, expected }) => {
     expect.soft(got.カード, "商品一覧にF0307-CB056-LISTが表示されている").toBe(1);
     expect.soft(got.文言, "F0307-CB056-LISTの入荷通知のボタンの表示（依頼済みを示す）").toContain("通知待ち");
     expect.soft(got.文言, "「入荷時に通知」のボタンの表示がない").not.toContain("入荷時に通知");
+  });
+});
+
+// ---- 017 非有効な依頼は上限の件数に入らない（入荷通知最大数は共有の設定なので書き換えない。シードが20であることを確かめる） ----
+
+caseTest("IT-F03-07-017", async ({ page, step, expected }) => {
+  const front = new FrontRestock(page);
+  const m = memberOf("f0307-a-017");
+  const { productId, classId } = classOf("LIMIT-ACTIVE-NEW-017");
+  const got = { 前: -1, 後: -1, 対象の依頼: { 有効: -1, 削除済み: -1 } };
+  let r!: 押した結果;
+  await step(1, async () => { await loginAs(front, "f0307-a-017"); });
+  await step(2, async () => { await front.openDetail(productId); });
+  await step(3, async () => {
+    got.前 = 有効な依頼件数(m.id);
+    r = await front.press(front.classButton(classId));
+    noteResult("通知ボタンを押した", r);
+  });
+  await step(4, async () => { got.後 = 有効な依頼件数(m.id); got.対象の依頼 = 規格の依頼件数(m.id, classId); });
+  await expected(async () => {
+    expect.soft(got.前, "押す前の会員Aの有効な入荷通知依頼件数（取り消し済み・削除日時つきを除く）").toBe(19);
+    expect.soft(got.対象の依頼.有効, "LIMIT-ACTIVE-NEW-017の依頼が保存された").toBe(1);
+    expect.soft(got.後, "新しい依頼の保存後の会員Aの有効な入荷通知依頼件数").toBe(20);
+  });
+});
+
+// ---- 018 商品規格が削除されたあとに通知ボタンを押す（削除はDBでなく、管理画面の商品規格の削除で行う） ----
+
+caseTest("IT-F03-07-018", async ({ page, browser, step, expected }) => {
+  supplement("手順2「DBで商品規格を削除済みにする」は、画面で行える操作なので、管理画面の商品規格登録編集画面の「商品規格を削除」で行った（DBは書き換えていない）");
+  const front = new FrontRestock(page);
+  const { productId, classId } = classOf("DELETE-AFTER-OPEN-018");
+  let r!: 押した結果;
+  let 依頼: { 有効: number; 削除済み: number } = { 有効: -1, 削除済み: -1 };
+  await step(1, async () => { await front.openDetail(productId); });
+  await step(2, async () => {
+    await withAdminSession(browser, SETUP_ADMIN, async (admin) => {
+      await openClassList(admin, productId);
+      await openClassEdit(admin, productId, classId);
+      await deleteClassOnEdit(admin, "DELETE-AFTER-OPEN-018", (m) => note(m));
+    });
+  });
+  await step(3, async () => {
+    r = await front.press(front.classButton(classId));
+    noteResult("通知ボタンを押した", r);
+  });
+  await step(4, async () => { 依頼 = 規格への依頼件数(classId); });
+  await expected(async () => {
+    expect.soft(r.通知が出た && /削除/.test(r.通知の文), "対象商品が削除済みであることを示す通知が表示された").toBe(true);
+    expect.soft(r.ログインモーダルが開いた, "ログインモーダルが表示されない").toBe(false);
+    expect.soft(依頼.有効, "DELETE-AFTER-OPEN-018の入荷通知依頼が保存されない").toBe(0);
+  });
+});
+
+// ---- 024 通知ボタン → 新規会員登録 → 本会員登録のURL → 商品詳細へ戻る ----
+
+caseTest("IT-F03-07-024", async ({ page, step, expected }) => {
+  supplement("手順4の「会員登録確認メールに記載されたURL」は、開発環境にメールの受け口が無いので、DBの参照で読んだ本登録用の値から組み立てたURL（/ja/entry/activate/…）で開いた");
+  const front = new FrontRestock(page);
+  const entry = new EntryPage(page);
+  const { productId, classId } = classOf("UNIT-NM-024");
+  const detailPath = `/ja/products/detail/${productId}`;
+  const mail = mailOf("f0307-new");
+  const landed: string[] = [];
+  await step(1, async () => { await front.openDetail(productId); });
+  await step(2, async () => { noteResult("通知ボタンを押した", await front.press(front.classButton(classId))); });
+  await step(3, async () => {
+    const link = front.ログインモーダル.locator('a[href$="/entry"]');
+    await expect(link, "ログインモーダルの「新規会員登録」").toBeVisible();
+    await Promise.all([page.waitForURL(/\/entry/, { timeout: 10_000 }), link.click()]);
+    await page.waitForLoadState("load");
+    await entry.fill({
+      姓: "試験会員", 名: "戻り先", セイ: "シケンカイイン", メイ: "モドリサキ", メール: mail, パスワード: "Passw0rd!f0307new",
+      国: "Japan", 郵便番号: "100-0001", 都道府県: "東京都", 住所1: "千代田区千代田", 住所2: "1-1", 電話番号: "0300000000",
+    });
+    expect((await entry.同意する()).sent, "会員情報登録画面から確認画面へ進めた").toBe(true);
+    await entry.登録する();
+    expect(entry.完了画面か, `会員登録を完了した（仮会員登録完了画面。いまの画面 ${entry.path}）`).toBe(true);
+  });
+  await step(4, async () => {
+    const key = 本登録の鍵(mail);
+    if (!key) throw new Error(`会員 ${mail} の本登録用の値をDBの参照で読めない`);
+    await page.goto(`${BASE_URL}/ja/entry/activate/${key}`);
+    await page.waitForLoadState("load");
+    landed.push(pathOf(page));
+  });
+  await step(5, async () => { await front.openMypage(); landed.push(pathOf(page)); });
+  await expected(async () => {
+    expect.soft(landed[0], "手順4の後の画面（会員登録完了の画面ではなく、通知単位確認商品-024の商品詳細画面）").toBe(detailPath);
+    expect.soft(landed[1], "手順5の後の画面（マイページ）").toMatch(/\/mypage\/?$/);
   });
 });

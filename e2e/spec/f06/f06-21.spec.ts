@@ -2,13 +2,15 @@
  * F06-21 退会。正本: cases/F06-21_test_cases.tsv
  * 実装するのは、退会そのものを行わないケース（画面の遷移・表示・パンくず・パスワードの誤りと未入力）。
  * 実装しないケース: 退会を完了するもの（026〜034・038〜041）、なりすまし対策の照合値を開発者ツールで書き換えるもの（020〜023）、
- * スマレジ・メール・環境設定の書き換えを要するもの。記録 review/F06-21_progress_2026-11-04.md
+ * スマレジ・メール・環境設定の書き換えを要するもの。
+ * 2026-11-11 追加: 020〜023（照合値の改ざん）・026〜028・032〜034（退会を完了する。専用の会員を本会員として登録して使う）。
+ * 実装しない: 030・031・041（メールの宛先・本文の確認。開発環境にメールの受け口が無い）、038〜040（スマレジ試験環境・アプリの環境設定の書き換え）。記録 review/F06-21_progress_2026-11-04.md
  */
 import { caseTest, expect } from "../../lib/case";
-import { 退会試験の会員 } from "../../db/f06_21";
+import { メール送信履歴の件数, 退会試験の会員, 選手の削除日時, 番号の会員 } from "../../db/f06_21";
 import { available } from "../../lib/db";
-import { WithdrawPage } from "../../pages/front/f06_21_withdraw";
-import { mailOf, PW } from "../../seeds/f06-21";
+import { WithdrawPage } from "../../pages/front/f06_21_withdraw_k";
+import { mailOf, PW, PW2 } from "../../seeds/f06-21";
 
 const 会員 = () => ({ メール: mailOf("f0621-ja"), PW });
 
@@ -244,3 +246,15 @@ caseTest("IT-F06-21-037", async ({ page, step, expected }) => {
     expect.soft(状態[0]?.削除済み, "削除フラグ（0のまま）").toBe("0");
   });
 });
+
+// ---- 2026-11-11 追加 ----
+// 退会前・退会確認の画面で、なりすまし対策の照合値を開発者ツールの操作と同じ方法（画面の要素の削除・値の変更）で改ざんする
+async function 共有会員で退会前を開く(w: WithdrawPage): Promise<void> { await ログイン(w); }
+
+// ---- 退会を完了する（専用の会員） ----
+async function 退会を完了する(w: WithdrawPage, メール: string, パスワード: string): Promise<void> {
+  await w.ログインする(メール, パスワード);
+  await w.退会前を開く();
+  await w.押して遷移する(w.退会手続きへ);
+  await w.退会を確定する(パスワード);
+}

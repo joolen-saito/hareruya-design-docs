@@ -9,7 +9,8 @@
  */
 import { expect } from "@playwright/test";
 import { getSeed } from "../lib/catalog";
-import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { rc } from "../lib/run_marker";
 import { SETUP_ADMIN } from "../config/env";
 import { Account, withAdminSession } from "../lib/session";
@@ -34,7 +35,7 @@ export function シードのブロック群(seedId: string): シードのブロ�
   return triples.map((t, i) => ({ ラベル: labels[i], ブロック名: ブロック名の識別(t[1]), ファイル名: ファイル名の識別(t[2]), 日本語コード: t[3], 英語コード: triples.length === 1 ? en : undefined }));
 }
 
-async function ブロックを作る(browser: import("@playwright/test").Browser, notes: { set(l: string, v: string): void }, seedId: string): Promise<void> {
+export async function ブロックを作る(browser: import("@playwright/test").Browser, notes: { set(l: string, v: string): void }, seedId: string): Promise<void> {
   const list = シードのブロック群(seedId);
   await withAdminSession(browser, M0907_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);

@@ -1,10 +1,12 @@
 /**
  * M08（会員管理）のシードが使う、フロントの新規会員登録（会員情報登録画面 → 確認画面 → 登録。仮会員なら本登録のメールのURLを開いて本会員にする）。
  * 画面の操作は F06-01 の会員登録の部品（pages/front/f06_01_entry.ts）を使い、本登録のメールは手元の受け口で読む（依頼者決定 2026-10-31）。
+ * 本登録のメールを読めない環境では、仮会員になった会員を管理画面で本会員にする（pages/admin/member_activate.ts）。
  */
 import { Browser, expect } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { mailIds, waitForMailTo } from "../../lib/mail";
+import { メールの代わりに管理画面で本会員にする, 本登録のメールを読める } from "../admin/member_activate";
 import { hideDebugToolbar } from "../../lib/session";
 import { EntryPage, 入力値 } from "./f06_01_entry";
 
@@ -25,10 +27,16 @@ export async function フロントで会員登録する(browser: Browser, v: M08
     if (!r.sent) throw new Error(`会員「${v.姓} ${v.名}」の会員情報登録: ブラウザの入力チェックが送信を止めた`);
     const errors = await entry.エラー文();
     if (errors.length) throw new Error(`会員「${v.姓} ${v.名}」の会員情報登録で入力エラー: ${errors.join(" / ")}`);
-    const before = await mailIds();
+    const mailReadable = 本登録のメールを読める();
+    const before = mailReadable ? await mailIds() : new Set<number>();
     await entry.登録する();
     if (本登録しない) {
       if (!entry.完了画面か) throw new Error(`会員「${v.姓} ${v.名}」が仮会員にならない（${page.url()}）。仮会員機能が無効の恐れ`);
+      return;
+    }
+    if (entry.完了画面か && !mailReadable) {
+      // 仮会員になったが、本登録のメールを読めない環境。管理画面で本会員にする
+      await メールの代わりに管理画面で本会員にする(page, v.メール);
       return;
     }
     if (entry.完了画面か) {

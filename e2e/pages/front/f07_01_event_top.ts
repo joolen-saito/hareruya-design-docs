@@ -15,6 +15,27 @@ export class EventTopPage {
     return { status: res?.status() ?? 0, headers: res ? await res.allHeaders() : {} };
   }
 
+  /**
+   * 複数日程イベントの日別画面を開く。設計書にアドレスの定めが無く、アプリにも該当の画面が見つからない。
+   * 過去の検討で使った形 /ja/events/<イベント識別子>/<日付指定> を開く（日付指定は Ymd または all）。応答の状態と開いた先のアドレスを返す。
+   */
+  async 日別画面を開く(イベントID: string, 日付指定: string): Promise<{ status: number; url: string }> {
+    const res = await this.page.goto(`${BASE_URL}/ja/events/${イベントID}/${日付指定}`, { timeout: 60_000 });
+    await this.page.waitForLoadState("load");
+    return { status: res?.status() ?? 0, url: this.page.url() };
+  }
+
+  /** 詳細検索ボタン（見えているもの）を押し、モーダルが開くまで待つ */
+  async 詳細検索を押す(): Promise<void> {
+    await this.page.locator('[data-modal-open="event-search"]:visible').first().click({ timeout: 20_000 });
+    await expect(this.詳細検索モーダル, "詳細検索モーダル").toHaveClass(/is-visible/, { timeout: 20_000 });
+  }
+  get 詳細検索モーダル(): Locator { return this.page.locator('[data-modal="event-search"]'); }
+
+  /** 定番イベントの行にある、特別イベントのアイコンと無料イベントのアイコン */
+  特別イベントのアイコン(行: Locator): Locator { return 行.locator(".p-hareruya-event-card__tag[data-event-scale-id]"); }
+  無料イベントのアイコン(行: Locator): Locator { return 行.locator("[data-free-tag]"); }
+
   /** イベント一覧の描画（アプリの画面スクリプトが一覧を取得して組み立てる）を待つ */
   async 一覧の表示を待つ(): Promise<void> {
     await expect(this.page.locator("[data-event-list-root] > *").first(), "イベント一覧の描画").toBeAttached({ timeout: 45_000 });

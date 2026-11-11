@@ -47,12 +47,13 @@ export class PaymentPage {
   }
   get 支払方法欄() { return this.page.locator(sel("method")); }
   get 手数料欄() { return this.page.locator(sel("charge")); }
-  async 入れる(v: 支払方法の入力, メール = { 日: メール日, 英: メール英 }): Promise<void> {
+  /** メールの日・英を null にすると、その選択はしない（未選択のまま） */
+  async 入れる(v: 支払方法の入力, メール: { 日: string | null; 英: string | null } = { 日: メール日, 英: メール英 }): Promise<void> {
     await this.page.locator(sel("method")).fill(v.方法, { timeout: 30_000 });
     await this.page.locator(sel("payment_method_en")).fill(v.英, { timeout: 30_000 });
     await this.page.locator(sel("charge")).fill(v.手数料, { timeout: 30_000 });
-    await this.page.locator(sel("mail_template_jp")).selectOption({ label: メール.日 }, { timeout: 30_000 });
-    await this.page.locator(sel("mail_template_en")).selectOption({ label: メール.英 }, { timeout: 30_000 });
+    if (メール.日 !== null) await this.page.locator(sel("mail_template_jp")).selectOption({ label: メール.日 }, { timeout: 30_000 });
+    if (メール.英 !== null) await this.page.locator(sel("mail_template_en")).selectOption({ label: メール.英 }, { timeout: 30_000 });
     await this.page.locator(sel("rule_min")).fill(v.下限 ?? "", { timeout: 30_000 });
     await this.page.locator(sel("rule_max")).fill(v.上限 ?? "", { timeout: 30_000 });
   }
@@ -131,6 +132,67 @@ export class PaymentPage {
       const res = await fetch(location.pathname.replace(/\/payment\/.*$/, "/payment/image/process"), { method: "POST", headers, body: fd });
       return { status: res.status, body: (await res.text()).slice(0, 200) };
     }, { name: f.name, mimeType: f.mimeType, b64: f.buffer.toString("base64"), async: opt.非同期の見出し });
+  }
+
+  /** 登録を押し、送信の応答を待つ（入力に誤りがあるときも、編集画面が出し直されるまで待つ）。ブラウザ側の入力チェックで送信されなかったときは null */
+  async 登録を押して応答を待つ(): Promise<number | null> {
+    const resp = this.page.waitForResponse((r) => r.request().method() === "POST" && /\/payment\/(new|\d+\/edit)$/.test(r.url()), { timeout: 15_000 }).catch(() => null);
+    await this.登録ボタン.click({ timeout: 30_000 });
+    const r = await resp;
+    await this.page.waitForLoadState("load");
+    return r ? r.status() : null;
+  }
+  /** 編集画面の「支払方法一覧」へ戻るリンク（登録せずに戻る） */
+  async 一覧に戻る(): Promise<void> {
+    await Promise.all([this.page.waitForLoadState("load"), this.page.locator('a.c-baseLink[href$="/setting/shop/payment"]').first().click({ timeout: 30_000 })]);
+    await expect(this.page.locator("li.sortable-item").first(), "支払方法一覧").toBeVisible({ timeout: 30_000 });
+  }
+  /** 一覧に表示されている支払方法の名称（上から） */
+  async 一覧の名称(): Promise<string[]> {
+    return (await this.page.locator("li.sortable-item div.col-2 a").allInnerTexts()).map((t) => t.trim());
+  }
+  /** 行の操作リンク。上へ・下へは、無い／無効の見た目（押せない）／押せる、を分ける */
+  async 操作を読む(行: Locator): Promise<{ 編集: number; 削除: number; 上へ: "なし" | "無効" | "有効"; 下へ: "なし" | "無効" | "有効" }> {
+    await expect(行, "操作を読む支払方法の行").toHaveCount(1, { timeout: 30_000 });
+    const 向き = async (cls: string): Promise<"なし" | "無効" | "有効"> => {
+      const a = 行.locator(`a.${cls}`);
+      if ((await a.count()) === 0) return "なし";
+      return (await a.first().getAttribute("class"))?.split(/\s+/).includes("disabled") ? "無効" : "有効";
+    };
+    return {
+      編集: await 行.locator('a[href$="/edit"]').count(),
+      削除: await 行.locator('a[data-bs-target="#DeleteModal"]').count(),
+      上へ: await 向き("action-up"),
+      下へ: await 向き("action-down"),
+    };
+  }
+  /** 行の「上へ」「下へ」を押し、表示順を送る非同期の要求の応答（HTTPの状態）を返す */
+  async 動かす(行: Locator, 向き: "上へ" | "下へ"): Promise<number | null> {
+    await expect(行, "動かす支払方法の行").toHaveCount(1, { timeout: 30_000 });
+    const resp = this.page.waitForResponse((r) => r.request().method() === "POST" && /payment\/sort_no\/move$/.test(r.url()), { timeout: 20_000 }).catch(() => null);
+    await 行.locator(向き === "上へ" ? "a.action-up" : "a.action-down").click({ timeout: 30_000 });
+    const r = await resp;
+    await this.page.waitForTimeout(500);
+    return r ? r.status() : null;
+  }
+  /** 以降の非同期要求に付くなりすまし対策トークンを書き換える（開発者ツールのコンソールで設定する操作に当たる） */
+  async 非同期要求のトークンを書き換える(token: string): Promise<void> {
+    await this.page.evaluate((t) => { (window as unknown as { $: { ajaxSetup: (o: unknown) => void } }).$.ajaxSetup({ headers: { "ECCUBE-CSRF-TOKEN": t } }); }, token);
+  }
+  /** 編集画面で選ばれているメールテンプレートの表示名 */
+  async 選ばれたメール(欄: "日" | "英"): Promise<string> {
+    return ((await this.page.locator(sel(欄 === "日" ? "mail_template_jp" : "mail_template_en")).locator("option:checked").innerText()) ?? "").trim();
+  }
+  /** 編集画面のメールテンプレートの選択肢（見出しの選択肢を除く） */
+  async メールの選択肢(欄: "日" | "英"): Promise<string[]> {
+    return this.page.locator(sel(欄 === "日" ? "mail_template_jp" : "mail_template_en")).locator("option").evaluateAll((os) =>
+      (os as HTMLOptionElement[]).filter((o) => o.value !== "").map((o) => (o.textContent ?? "").trim()));
+  }
+  /** メール管理のメールテンプレート一覧に表示されているテンプレート名 */
+  async メール管理の一覧(): Promise<string[]> {
+    await this.page.goto(adminUrl("/mall/mail/list"), { timeout: 60_000 });
+    await this.page.waitForLoadState("load");
+    return (await this.page.locator("section[data-mail-template-id] h5").allInnerTexts()).map((t) => t.trim());
   }
 
   /** 購入グループ管理画面の支払方法の選択肢 */

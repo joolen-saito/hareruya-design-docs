@@ -27,6 +27,8 @@ caseTest("IT-F01-02-064", async ({ page, step, expected }) => {
   const count: Record<string, number> = {};
   await step(1, async () => { await top.open(支店URL("064")); await top.開いている(); });
   await step(2, async () => {
+    // カテゴリ一覧は開いたあとに読み込まれる（読み込み中は灰色の枠）ので、表示のカテゴリが出るまで待ってから数える
+    await expect(page.getByText(表示).filter({ visible: true }).first()).toBeVisible({ timeout: 30_000 }).catch(() => undefined);
     count[表示] = await page.getByText(表示).filter({ visible: true }).count();
     count[非表示] = await page.getByText(非表示).filter({ visible: true }).count();
     if (count[表示] === 0) note("支店ECTOPのどこにも「支店表示カテゴリ-064」が見つからなかった");

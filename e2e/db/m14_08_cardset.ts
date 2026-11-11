@@ -9,3 +9,8 @@ export function カードセットの値(id: string | number): カードセッ�
   if (!r) return null;
   return { カードセットID: String(r.id), 名日: String(r.name_jp), 名英: String(r.name_en), 略称: String(r.code), ブロック: r.block, リリース日: r.rd, 特殊セット: r.special_flg === "true", シンボル画像: r.symbol_image };
 }
+
+/** 名称（日本語）が一致するカードセットの件数 */
+export function 名称のカードセット件数(名日: string): number {
+  return Number(query(`select count(*) as n from mtb_cardset where name_jp = $1`, [名日])[0].n);
+}

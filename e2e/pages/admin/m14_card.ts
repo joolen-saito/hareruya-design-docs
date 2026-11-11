@@ -17,6 +17,8 @@ type Issue = (m: string) => void;
 
 export type カード入力 = {
   カード名日?: string; カード名英: string;
+  /** アリーナカード名(日)・(英)。省略すると入れない（空のまま） */
+  アリーナ名日?: string; アリーナ名英?: string;
   ルールテキスト日?: string; ルールテキスト英?: string;
   /** 点数で見たマナ・コスト */
   点数で見たマナ: string;
@@ -30,6 +32,8 @@ export type カード入力 = {
 };
 export type 詳細入力 = {
   カードセット?: string; レアリティ?: string; レイアウト?: string; イラストレーター?: string; プロモ種別?: string; Foil?: string; フレーム?: string;
+  /** 名前を指定せず「この名前以外の選択肢」から選ぶ（先頭から探す。無ければ止める。マスターには足さない） */
+  以外?: { レアリティ?: string[]; レイアウト?: string[]; プロモ種別?: string[] };
 };
 
 /** 展開式の選択（チェック群）で、ラベルが label の入力を押す */
@@ -58,11 +62,11 @@ async function addSelect(select: Locator, labels: string[], what: string): Promi
   await select.selectOption(values);
 }
 
-async function firstOption(select: Locator, what: string): Promise<{ value: string; label: string }> {
+async function firstOption(select: Locator, what: string, 除く: string[] = []): Promise<{ value: string; label: string }> {
   await expect(select, what).toHaveCount(1);
-  const first = await select.locator("option").evaluateAll((ns) => ns
-    .map((n) => ({ value: (n as HTMLOptionElement).value, label: (n.textContent ?? "").trim() })).find((o) => o.value !== ""));
-  if (!first) throw new Error(`${what}に選べる値が無い`);
+  const first = await select.locator("option").evaluateAll((ns, ex) => ns
+    .map((n) => ({ value: (n as HTMLOptionElement).value, label: (n.textContent ?? "").trim() })).find((o) => o.value !== "" && !ex.includes(o.label)), 除く);
+  if (!first) throw new Error(`${what}に選べる値が無い${除く.length ? `（「${除く.join("」「")}」以外の選択肢が無い。マスターには足さない）` : ""}`);
   return first;
 }
 
@@ -78,6 +82,8 @@ export async function カードを登録する(page: Page, v: カード入力, w
   const t = (id: string, value?: string) => value === undefined ? Promise.resolve() : form.locator(`#admin_card_${id}`).fill(value);
   await t("nameJp", v.カード名日);
   await t("nameEn", v.カード名英);
+  await t("arenaFormatNameJp", v.アリーナ名日);
+  await t("arenaFormatNameEn", v.アリーナ名英);
   await t("textJp", v.ルールテキスト日);
   await t("textEn", v.ルールテキスト英);
   await t("cmc", v.点数で見たマナ);
@@ -106,9 +112,9 @@ export async function カードを登録する(page: Page, v: カード入力, w
       const det = details.last();
       const sel = (f: string) => det.locator(`select[name$="[${f}]"]`);
       if (d.カードセット) await sel("cardset").selectOption({ label: d.カードセット });
-      for (const [f, label, want] of [["rarity", "レアリティ", d.レアリティ], ["cardLayout", "レイアウト", d.レイアウト], ["promotion", "プロモ種別", d.プロモ種別]] as const) {
+      for (const [f, label, want, 除く] of [["rarity", "レアリティ", d.レアリティ, d.以外?.レアリティ], ["cardLayout", "レイアウト", d.レイアウト, d.以外?.レイアウト], ["promotion", "プロモ種別", d.プロモ種別, d.以外?.プロモ種別]] as const) {
         if (want) await sel(f).selectOption({ label: want });
-        else await sel(f).selectOption((await firstOption(sel(f), `${what}: 詳細情報の${label}`)).value);
+        else await sel(f).selectOption((await firstOption(sel(f), `${what}: 詳細情報の${label}`, 除く ?? [])).value);
       }
       if (d.イラストレーター) await sel("illustrator").selectOption({ label: d.イラストレーター });
       await sel("foilFlg").selectOption({ label: d.Foil ?? "なし" });
@@ -295,6 +301,29 @@ export class CardSearchPage {
       this.page.locator('#DeleteModal a[data-method="delete"]').click(),
     ]);
     await this.page.waitForLoadState("load");
+  }
+
+  /**
+   * 「カード名リスト作成」を押す。確認ダイアログ（バッチを実行するかの確認）が出る。
+   * 返す関数で確認を受け入れ、バッチ完了のメッセージ（ダイアログ）まで待つ。表示された文（確認・完了）を返す。
+   */
+  async カード名リスト作成を押す(): Promise<{ 確認の文: string; 実行する: () => Promise<string[]>; キャンセルする: () => Promise<void> }> {
+    const dialogP = this.page.waitForEvent("dialog", { timeout: 30_000 });
+    const clickP = this.page.getByRole("link", { name: "カード名リスト作成", exact: true }).click({ timeout: 30_000 });
+    const dialog = await dialogP;
+    return {
+      確認の文: dialog.message(),
+      実行する: async () => {
+        const doneP = this.page.waitForEvent("dialog", { timeout: 240_000 });
+        await dialog.accept();
+        const done = await doneP;
+        const msg = done.message();
+        await done.accept();
+        await clickP.catch(() => undefined);
+        return [dialog.message(), msg];
+      },
+      キャンセルする: async () => { await dialog.dismiss(); await clickP.catch(() => undefined); },
+    };
   }
 
   async 確認ポップアップでキャンセルする(): Promise<void> {

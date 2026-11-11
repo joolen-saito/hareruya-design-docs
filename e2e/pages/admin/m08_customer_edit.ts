@@ -134,4 +134,62 @@ export class M08CustomerEditPage {
     ]);
     await this.page.waitForLoadState("load");
   }
+
+  // ---- 表示項目・購入履歴・買取履歴・お届け先住所 ----
+  /** 項目名（左の列の見出し）に対する右の列の文（例「累計注文回数」→「12回」） */
+  async 項目の値(見出し: string): Promise<string> {
+    const row = this.page.locator(".row.mb-2").filter({ has: this.page.locator(".col-3 span", { hasText: new RegExp(`^\\s*${見出し}\\s*$`) }) });
+    await expect(row, `項目「${見出し}」が1つある`).toHaveCount(1, { timeout: T });
+    return ((await row.locator(":scope > .col").innerText({ timeout: T })) ?? "").replace(/\s+/g, " ").trim();
+  }
+
+  /** 選択欄の選択肢のうち、いま選ばれているもの・空の選択肢以外で最初のもの（共有のマスタに試験の値を足さず、既存の選択肢で代える） */
+  async 別の選択肢(name: string): Promise<string> {
+    const now = await this.選択中(name);
+    const have = (await this.f(name).locator("option").evaluateAll((os) => (os as HTMLOptionElement[]).filter((o) => o.value !== "").map((o) => (o.textContent ?? "").trim()))).filter(Boolean);
+    const hit = have.find((t) => t !== now);
+    if (!hit) throw new Error(`${name} に、いまの選択（${now}）と別の選択肢が無い`);
+    return hit;
+  }
+
+  /** 購入履歴の行（注文日時・受注番号・購入金額・発送日・支払方法・受注番号のリンク先） */
+  async 購入履歴(): Promise<{ 注文日時: string; 受注番号: string; 購入金額: string; 発送日: string; 支払方法: string; href: string }[]> {
+    await this.page.locator("#orderHistory").scrollIntoViewIfNeeded();
+    return this.page.locator("#orderHistory table tbody tr").evaluateAll((trs) => trs.map((tr) => {
+      const td = Array.from(tr.querySelectorAll("td")).map((e) => (e.textContent ?? "").replace(/\s+/g, " ").trim());
+      return { 注文日時: td[0] ?? "", 受注番号: td[1] ?? "", 購入金額: td[2] ?? "", 発送日: td[3] ?? "", 支払方法: td[4] ?? "", href: tr.querySelector("a")?.getAttribute("href") ?? "" };
+    }));
+  }
+
+  /** 買取履歴の行（買取依頼日・買取番号・申込時金額・査定金額・買取ステータス・買取番号のリンク先） */
+  async 買取履歴(): Promise<{ 買取依頼日: string; 買取番号: string; 申込時金額: string; 査定金額: string; 買取ステータス: string; href: string }[]> {
+    await this.page.locator("#buyOrderHistory").scrollIntoViewIfNeeded();
+    return this.page.locator("#buyOrderHistory table tbody tr").evaluateAll((trs) => trs.map((tr) => {
+      const td = Array.from(tr.querySelectorAll("td")).map((e) => (e.textContent ?? "").replace(/\s+/g, " ").trim());
+      return { 買取依頼日: td[0] ?? "", 買取番号: td[1] ?? "", 申込時金額: td[2] ?? "", 査定金額: td[3] ?? "", 買取ステータス: td[4] ?? "", href: tr.querySelector("a")?.getAttribute("href") ?? "" };
+    }));
+  }
+
+  /** お届け先住所欄の行のうち、お届け先の氏名（姓 名）に語を含む行 */
+  お届け先の行(氏名: string): Locator {
+    return this.page.locator("#delivery tbody tr").filter({ has: this.page.locator("td:nth-child(2)", { hasText: new RegExp(氏名.replace(/\s+/g, "\\s*")) }) });
+  }
+  async お届け先の文(氏名: string): Promise<string> {
+    const row = this.お届け先の行(氏名);
+    await expect(row, `お届け先住所欄に、氏名「${氏名}」の行が1つある`).toHaveCount(1, { timeout: T });
+    return ((await row.innerText({ timeout: T })) ?? "").replace(/\s+/g, " ").trim();
+  }
+  get お届け先住所を追加ボタン(): Locator { return this.page.locator('#delivery a.btn[href$="/delivery/new"]'); }
+  /** お届け先の行の削除ボタンを押す（モーダルが開く） */
+  async お届け先の削除ボタンを押す(氏名: string): Promise<void> {
+    await this.お届け先の行(氏名).locator("a.btn-ec-actionIcon").click({ timeout: T });
+  }
+  /** 開いているお届け先削除のモーダルの削除ボタンを押す */
+  async お届け先削除のモーダルで削除する(氏名: string): Promise<void> {
+    const modal = this.お届け先の行(氏名).locator(".modal.show, .modal");
+    const btn = modal.locator("a.btn-ec-delete");
+    await expect(btn, "お届け先削除のモーダルの削除ボタン").toBeVisible({ timeout: T });
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), btn.click({ timeout: T })]);
+    await this.page.waitForLoadState("load");
+  }
 }

@@ -14,7 +14,8 @@
  */
 import { Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { reportSeedIssue } from "../lib/seeds";
+import { defineSeed } from "./current_seed";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
 import { createStore } from "../pages/admin/m04_24_store";
@@ -59,9 +60,14 @@ defineSeed("S-M06-05-SHOPS", async ({ browser }) => {
   });
 });
 
-function 東京店のID(): string {
+export function 東京店のID(): string {
   if (!shopIds) throw new Error("東京店・大阪店のシードがまだ作られていない");
   return shopIds.東京店;
+}
+
+export function 大阪店のID(): string {
+  if (!shopIds) throw new Error("東京店・大阪店のシードがまだ作られていない");
+  return shopIds.大阪店;
 }
 
 defineSeed("S-M06-05-ADM-TOKYO", { needs: ["S-M06-05-SHOPS"] }, async ({ browser }) => {

@@ -9,9 +9,18 @@ import { expect, caseTest, CaseBody } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
-import { デッキ一覧 } from "../../pages/admin/m15_deck";
-import { M1501_ADMIN_A, M1501_ADMIN_B } from "../../seeds/m15-01";
-import { デッキの文字項目, メインボードのカード, 最終更新者の名前 } from "../../db/m15_deck";
+import { デッキ一覧, デッキのタグ, 基線のアーキタイプ, 選んだ店舗 } from "../../pages/admin/m15_deck";
+import { chooseByLabel } from "../../pages/admin/common";
+import { デッキ一括編集, デッキIDで検索する } from "../../pages/admin/m15_04_bulk_edit";
+import { DeckSearchModal, DeckTopPage } from "../../pages/front/f09_01_deck_top";
+import { DeckResultPage } from "../../pages/front/f09_02_deck_result";
+import { BASE_URL } from "../../config/env";
+import { hideDebugToolbar } from "../../lib/session";
+import { available as DB使える } from "../../lib/db";
+import {
+  M1501_ADMIN_A, M1501_ADMIN_B, マスタ名, ページ試験の語, 青空の語, 店舗の語020, 更新者の語021, 稲穂確認のカード名日, タグ検索の語, 一括後の型, 一括の前後098, 組合せの選手前, 組合せの選手後,
+} from "../../seeds/m15-01";
+import { デッキの文字項目, デッキの保存内容を読む, メインボードのカード, 最終更新者の名前, 店舗の表示順 } from "../../db/m15_deck";
 
 /** ログイン。操作の待ちは時間切れを付けて、止まったら落とす */
 async function login(page: Page, a: typeof M1501_ADMIN_A): Promise<void> {
@@ -631,3 +640,533 @@ caseTest("IT-M15-01-099", async ({ page, step, expected, notes, db }) => {
     expect.soft(カード, "DBのメインボードのカードリスト（空行を含まない2行）").toEqual([{ カード名英: rc("M1501-099-CardA"), 枚数: 4 }, { カード名英: rc("M1501-099-CardB"), 枚数: 3 }]);
   });
 });
+
+// ===========================================================================
+// 2026-11-11 追加分。依頼者の方針（2026-11-10）:
+// - シード表の「本シード以外の同名のデッキを削除する」は行わない。デッキ名の語に実行の印を付け、検索をその語で絞って、今回作ったデッキだけを見る。
+// - 共有のマスタ（Standard・Modern・タグA・タグB・東京店 など）には試験の値を足さない。既存のマスタの選択肢で代える（各ケースの注記）。
+// - 実装しない: 039（デッキ12001件を作る大量データ）
+// ===========================================================================
+const 絞りの注記 = "シード表の「本シード以外の同名のデッキを削除する」は行わない（依頼者の方針）。検索のデッキ名は、実行の印を付けた語で、今回作ったデッキだけに絞った";
+const 検索結果の文 = /検索結果：\d+件が該当しました/;
+
+/** 手順: 日付クリア → デッキ名に語 → 検索する（一覧は開いてある前提） */
+async function 日付クリアして名前で検索する(l: デッキ一覧, 語: string, 追加?: () => Promise<void>) {
+  await l.日付クリア.click();
+  await l.f("deck_name").fill(語);
+  if (追加) await 追加();
+  await l.検索する();
+}
+
+/** 管理画面のサイドメニューから、デッキ検索・一覧を初期表示する（開けなければアドレスを直接開く。注記に残す） */
+async function メニューから一覧を開く(page: Page, l: デッキ一覧) {
+  await page.getByRole("link", { name: "デッキ管理" }).first().click().catch(() => {});
+  const m = page.getByRole("link", { name: "デッキ一覧" }).first();
+  if (await m.isVisible().catch(() => false)) { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), m.click()]); }
+  else { note("サイドメニューからデッキ一覧を開けなかったため、デッキ一覧のアドレスを直接開いた"); await l.開く(); }
+}
+
+caseTest("IT-M15-01-004", async ({ page, step, expected }) => {
+  note(絞りの注記);
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const 語 = ページ試験の語("004");
+  await l.開く();
+  await step(1, async () => { await l.日付クリア.click(); });
+  await step(2, async () => { await l.f("deck_name").fill(語); await l.検索する(); });
+  await step(3, async () => {
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.件数選択.selectOption({ label: "10件" })]);
+    await l.結果を待つ();
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("ul.pagination a.page-link", { hasText: "2" }).first().click()]);
+    await l.結果を待つ();
+  });
+  let 入力済み: string[] = [], 結果あり = true, 初期の件数選択: string | null = null;
+  await step(4, async () => {
+    await メニューから一覧を開く(page, l);
+    入力済み = await page.locator('#admin_search_deck [name^="admin_search_deck["]').evaluateAll((es) => es.filter((e) => {
+      const n = (e as HTMLInputElement).name;
+      if (/event_date_from|sortKey|sortOrder|_token/.test(n)) return false;
+      if (e instanceof HTMLSelectElement) return Array.from(e.selectedOptions).some((o) => o.value !== "");
+      const i = e as HTMLInputElement;
+      return i.type === "checkbox" || i.type === "radio" ? i.checked : i.value !== "";
+    }).map((e) => (e as HTMLInputElement).name));
+    結果あり = (await page.getByText(検索結果の文).count()) > 0 || (await page.locator(".deck-result-table").count()) > 0;
+    初期の件数選択 = (await l.件数選択.count()) ? (await l.件数選択.locator("option:checked").innerText()).trim() : null;
+  });
+  await expected(async () => {
+    const d = new Date(`${日付(new Date())}T00:00:00+09:00`); d.setMonth(d.getMonth() - 3);
+    expect.soft(入力済み, "検索条件のうち、入力・選択の残っている項目（イベント開催日(From)を除く）").toEqual([]);
+    expect.soft((await l.f("event_date_from").inputValue()).replace(/\//g, "-"), "イベント開催日(From)（実行日の3か月前）").toBe(日付(d));
+    expect.soft(結果あり, "一覧が表示されている（空＝false）").toBe(false);
+    // ページ番号・表示件数は初期表示の画面に出ない。保持している値を引き継いで開く別タブで読む
+    const tab = await page.context().newPage();
+    try {
+      await tab.goto(adminUrl("/deck?resume=1")); await tab.waitForLoadState("load");
+      const t = new デッキ一覧(tab);
+      await t.結果を待つ();
+      const 件数表示 = 初期の件数選択 ?? (await t.件数選択.locator("option:checked").innerText()).trim();
+      expect.soft(件数表示, "表示件数").toBe("100件");
+      const 現在 = await tab.locator("ul.pagination li.page-item.active").first().innerText().catch(() => "1");
+      expect.soft(現在.trim(), "ページ番号").toBe("1");
+    } finally { await tab.close(); }
+    note("ページ番号と表示件数は初期表示の画面に出ないため、保持された値を引き継いで開く別タブ（一覧のアドレスに、保持値を引き継ぐ指定を付けて開く）で、現在のページと表示件数を読んだ");
+  });
+});
+
+caseTest("IT-M15-01-006", async ({ page, step, expected, notes }) => {
+  note(絞りの注記);
+  note("デッキ名はシード表の「A-青空」「B-青空」に実行の印を付けた「A-青空-006-印」「B-青空-006-印」。検索語はその印つきの語（青空-006-印）");
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const [A, B] = ["A", "B"].map((x) => notes.get(`〔デッキID-M1501-006${x}〕`));
+  const 語 = 青空の語("006");
+  await l.開く();
+  await step(1, async () => { await l.日付クリア.click(); });
+  await step(2, async () => { await l.f("deck_name").fill(語); await l.検索する(); });
+  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.CSV出力.click()]); });
+  await expected(async () => {
+    expect.soft(path(page).startsWith(一覧のパス) && !/\/(new|\d+\/edit)$/.test(path(page)), "表示された画面（デッキ検索・一覧）").toBe(true);
+    expect.soft(await l.f("deck_name").inputValue(), "デッキ名の検索条件").toBe(語);
+    expect.soft([...(await l.表示されたID())].sort(), "検索結果のデッキ（A・B）").toEqual([A, B].sort());
+  });
+});
+
+caseTest("IT-M15-01-010", async ({ page, step, expected }) => {
+  note("シード表のStandard・タグA・イベント詳細ID「501」のうち、フォーマットとタグは共有のマスタに足さず、検索欄の選択肢の先頭を選んだ（このケースは選んだ値でなく、すべて空に戻ることを確かめる）");
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  await step(1, async () => { await l.開く(); });
+  const 先頭 = async (name: string) => (await l.f(name).locator("option").allInnerTexts()).map((t) => t.trim()).filter(Boolean)[0];
+  await step(2, async () => {
+    await l.f("deck_id").fill("1501");
+    await l.f("deck_name").fill("青空");
+    await chooseByLabel(l.f("formats"), await 先頭("formats"));
+    await chooseByLabel(l.f("deck_tags"), await 先頭("deck_tags"));
+    await l.f("event_detail_id").fill("501");
+  });
+  await step(3, async () => { await l.条件をクリアする(); });
+  await expected(async () => {
+    for (const [name, 欄] of [["deck_id", "デッキID"], ["deck_name", "デッキ名"], ["event_detail_id", "イベント詳細ID"]] as const) {
+      expect.soft(await l.f(name).inputValue(), `${欄}の入力欄`).toBe("");
+    }
+    for (const [name, 欄] of [["formats", "フォーマット"], ["deck_tags", "タグ"]] as const) {
+      const 選択 = await l.f(name).evaluate((e) => Array.from((e as HTMLSelectElement).selectedOptions).filter((o) => o.value !== "").map((o) => (o.textContent ?? "").trim()));
+      expect.soft(選択, `${欄}の選択`).toEqual([]);
+    }
+  });
+});
+
+caseTest("IT-M15-01-011", async ({ page, step, expected }) => {
+  note("シード表のStandard・Modern・Pioneer・カラー・タグ・店舗・管理者の並びのうち、フォーマットとアーキタイプは、実行の印つきのフォーマット3件（並び順 9012・9012・9011、登録はこの順）とアーキタイプ2件を画面で作って並びを確かめた。カラーとタグは共有のマスタに足さず、既存の選択肢があることを確かめた");
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const n = マスタ名();
+  await step(1, async () => { await l.開く(); });
+  const 候補: Record<string, string[]> = {};
+  await step(2, async () => {
+    for (const name of ["formats", "color", "archetypes", "deck_tags", "shop", "member"]) {
+      候補[name] = (await l.f(name).locator("option").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter((t) => t && t !== "単一選択");
+    }
+  });
+  await expected(async () => {
+    const 位置 = ["フォーマットC", "フォーマットA", "フォーマットB"].map((k) => 候補.formats.indexOf(n[k as "フォーマットA"]));
+    expect.soft(位置.every((p) => p >= 0), "フォーマットの選択肢に、作った3件がある").toBe(true);
+    expect.soft(位置[0] < 位置[1] && 位置[1] < 位置[2], "フォーマットが表示順（同順位は登録の古い順）に並ぶ（C → A → B）").toBe(true);
+    const 正規化 = (s: string) => s.replace(/\s+/g, "").replace(/（/g, "(").replace(/）/g, ")");
+    const arc = 候補.archetypes.map(正規化);
+    expect.soft(arc.includes(正規化(`${n.アーキタイプ青}(${n.フォーマットA})`)), "アーキタイプが「名前（フォーマット）」の形で表示される（青の組）").toBe(true);
+    expect.soft(arc.includes(正規化(`${n.アーキタイプ赤}(${n.フォーマットB})`)), "アーキタイプが「名前（フォーマット）」の形で表示される（赤の組）").toBe(true);
+    expect.soft(候補.color.length > 0, "カラーを選択できる（選択肢がある）").toBe(true);
+    expect.soft(候補.deck_tags.length > 0, "タグを選択できる（選択肢がある）").toBe(true);
+    const a = 候補.member.indexOf("M15-01試験管理者A"), b = 候補.member.indexOf("M15-01試験管理者B");
+    expect.soft(a >= 0 && b >= 0 && a < b, "最終更新者の選択肢が表示順に並ぶ（試験管理者A → B）").toBe(true);
+    if (DB使える) {
+      const 順 = 店舗の表示順();
+      const rk = 候補.shop.map((s) => 順.find((x) => x.店舗名 === s)?.順 ?? -1);
+      expect.soft(rk.length > 0 && rk.every((r, i) => r >= 0 && (i === 0 || rk[i - 1] <= r)), "開催店舗の選択肢が表示順に並ぶ").toBe(true);
+    } else {
+      expect.soft(候補.shop.length > 0, "開催店舗を選択できる（選択肢がある）").toBe(true);
+      note("DBへの接続先が無い環境のため、開催店舗は選択肢があることだけを確かめた（並び順の確かめはDBの表示順と照らす）");
+    }
+  });
+});
+
+caseTest("IT-M15-01-020", async ({ page, step, expected, notes }) => {
+  note(絞りの注記);
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const [A, B] = ["A", "B"].map((x) => notes.get(`〔デッキID-M1501-020${x}〕`));
+  const 店 = 選んだ店舗();
+  note(`東京店は共有のマスタのため作らず、イベントの店舗に選んだ「${店}」で絞った。検索のデッキ名にも、印つきの語を入れた`);
+  await l.開く();
+  await step(1, async () => { await l.日付クリア.click(); });
+  await step(2, async () => { await chooseByLabel(l.f("shop"), 店); await l.f("deck_name").fill(店舗の語020()); });
+  let ids: string[] = [];
+  await step(3, async () => { await l.検索する(); ids = await l.表示されたID(); });
+  await expected(async () => {
+    expect.soft(ids.includes(A), "イベント詳細を経由して店舗に紐づくデッキAが表示される").toBe(true);
+    expect.soft(ids.includes(B), "イベント詳細を持たないデッキBが表示されない").toBe(false);
+    expect.soft([...ids].sort(), "表示されたのはデッキAだけ").toEqual([A]);
+  });
+});
+
+caseTest("IT-M15-01-021", async ({ page, step, expected, notes }) => {
+  note(絞りの注記);
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const [A, , C, D] = ["A", "B", "C", "D"].map((x) => notes.get(`〔デッキID-M1501-021${x}〕`));
+  await l.開く();
+  await step(1, async () => { await l.日付クリア.click(); });
+  await step(2, async () => { await chooseByLabel(l.f("member"), "M15-01試験管理者A"); await l.f("deck_name").fill(更新者の語021()); });
+  let ids: string[] = [];
+  await step(3, async () => { await l.検索する(); ids = await l.表示されたID(); });
+  await expected(async () => {
+    expect.soft([...ids].sort(), "表示されたのは、最終更新者が試験管理者AのデッキA・C・Dだけ").toEqual([A, C, D].sort());
+  });
+});
+
+caseTest("IT-M15-01-026", async ({ page, step, expected, notes }) => {
+  note("カード名(日)に実行の印を付けた「稲穂確認-…」のカードを作って使った（「稲」だけのカードは作らない）。ほかの開発用データを消す指定は行わない");
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const id = notes.get("〔デッキID-M1501-026〕");
+  note(`デッキのカード名(日): ${稲穂確認のカード名日()}`);
+  await l.開く();
+  await step(1, async () => { await l.日付クリア.click(); });
+  await step(2, async () => { await l.f("card").fill("稲"); });
+  let ids: string[] = [];
+  await step(3, async () => { await l.検索する(); ids = await l.表示されたID(); });
+  await expected(async () => {
+    expect.soft(ids.includes(id), "カード名が部分一致するだけのデッキが検索結果に表示されない").toBe(false);
+  });
+});
+
+caseTest("IT-M15-01-027", async ({ page, step, expected, notes }) => {
+  note(絞りの注記);
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const id = notes.get("〔デッキID-M1501-027〕");
+  const タグ = await デッキのタグ(page, id);
+  note(`タグA・タグBは共有のマスタに足さず、既存のデッキタグの先頭2件（${タグ.join("・")}）で代えた`);
+  await l.開く();
+  await step(1, async () => { await l.日付クリア.click(); });
+  await step(2, async () => { await chooseByLabel(l.f("deck_tags"), タグ); await l.f("deck_name").fill(タグ検索の語("027")); });
+  let ids: string[] = [];
+  await step(3, async () => { await l.検索する(); ids = await l.表示されたID(); });
+  await expected(async () => {
+    expect.soft(タグ.length, "デッキが持つタグの数").toBe(2);
+    expect.soft([...ids].sort(), "表示されたのは、両方のタグを持つデッキだけ").toEqual([id]);
+  });
+});
+
+caseTest("IT-M15-01-028", async ({ page, step, expected }) => {
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  await l.開く();
+  await step(1, async () => { await l.日付クリア.click(); });
+  await step(2, async () => { await l.f("deck_name").fill(rc("存在しない名称")); });
+  await step(3, async () => { await l.検索する(); });
+  await expected(async () => {
+    await expect.soft(page.getByText("検索条件に合致するデータが見つかりませんでした").first(), "検索の結果（該当なし）が表示されている").toBeVisible();
+    await expect.soft(l.検索ボタン, "検索条件の入力欄が表示される").toBeVisible();
+    expect.soft(await page.locator(".deck-result-table").count(), "デッキ一覧の表").toBe(0);
+    expect.soft(await page.locator("ul.pagination").count(), "ページ送り").toBe(0);
+  });
+});
+
+caseTest("IT-M15-01-029", async ({ page, step, expected, notes }) => {
+  note(絞りの注記);
+  note("デッキ名はシード表の「A-青空-029」「B-青空-029」に実行の印を付けたもの。検索語は印つきの「青空-029-印」");
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const [A, B] = ["A", "B"].map((x) => notes.get(`〔デッキID-M1501-029${x}〕`));
+  await l.開く();
+  await step(1, async () => { await l.日付クリア.click(); });
+  await step(2, async () => { await l.f("deck_name").fill(青空の語("029")); });
+  let ids: string[] = [], 件数 = 0;
+  await step(3, async () => { await l.検索する(); ids = await l.表示されたID(); 件数 = await l.件数(); });
+  await expected(async () => {
+    expect.soft(件数, "該当件数").toBe(2);
+    expect.soft([...ids].sort(), "表示されたデッキ情報（A・B）").toEqual([A, B].sort());
+  });
+});
+
+caseTest("IT-M15-01-032", async ({ page, step, expected }) => {
+  note(絞りの注記);
+  note("検索開始時の表示件数10件は、検索したあとに件数で10件を選んで整えた");
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const 語 = ページ試験の語("032");
+  await l.開く();
+  await step(1, async () => {
+    await 日付クリアして名前で検索する(l, 語);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.件数選択.selectOption({ label: "10件" })]);
+    await l.結果を待つ();
+  });
+  await step(2, async () => {
+    const v = (await l.件数選択.locator("option", { hasText: /^\s*10件\s*$/ }).getAttribute("value")) ?? "";
+    const u = new URL(v, page.url());
+    if (u.searchParams.get("page_count") !== "10") throw new Error(`件数10件の選択肢のアドレスに表示件数の指定（10）が無い（${v}）`);
+    u.searchParams.set("page_count", "11");
+    await page.goto(u.toString()); await page.waitForLoadState("load");
+    await l.結果を待つ();
+  });
+  await expected(async () => {
+    expect.soft((await l.件数選択.locator("option:checked").innerText()).trim(), "表示件数").toBe("10件");
+    expect.soft((await l.表示されたID()).length, "1ページに表示されたデッキ情報の数（11件が該当）").toBe(10);
+    expect.soft(await l.件数(), "該当件数").toBe(11);
+  });
+});
+
+caseTest("IT-M15-01-037", async ({ page, browser, step, expected }) => {
+  note(絞りの注記);
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const 語 = ページ試験の語("037");
+  await l.開く();
+  let url = "";
+  await step(1, async () => {
+    await 日付クリアして名前で検索する(l, 語);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.件数選択.selectOption({ label: "10件" })]);
+    await l.結果を待つ();
+    const href = (await page.locator("ul.pagination a.page-link", { hasText: "2" }).first().getAttribute("href")) ?? "";
+    url = new URL(href, page.url()).toString();
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("ul.pagination a.page-link", { hasText: "2" }).first().click()]);
+  });
+  const ctxB = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
+  try {
+    await hideDebugToolbar(ctxB);
+    const pageB = await ctxB.newPage();
+    await login(pageB, M1501_ADMIN_A);
+    const b = new デッキ一覧(pageB);
+    await step(2, async () => { await pageB.goto(url); await pageB.waitForLoadState("load"); });
+    await expected(async () => {
+      await expect.soft(b.検索ボタン, "検索条件の入力欄（初期画面）が表示される").toBeVisible();
+      expect.soft(await pageB.getByText(検索結果の文).count(), "検索結果の件数表示").toBe(0);
+      expect.soft(await pageB.locator(".deck-result-table").count(), "検索結果の一覧").toBe(0);
+    });
+  } finally { await ctxB.close(); }
+});
+
+caseTest("IT-M15-01-041", async ({ page, step, expected }) => {
+  note(絞りの注記);
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const 語 = ページ試験の語("041");
+  const 状態 = async () => page.locator("input.searched_deck_id").evaluateAll((es) => ({ 総数: es.length, 選択: es.filter((e) => (e as HTMLInputElement).checked).length }));
+  await step(1, async () => { await 名前で検索する(l, 語); });
+  await step(2, async () => { await l.全選択.check(); });
+  let オン = { 総数: 0, 選択: 0 };
+  await step(3, async () => { オン = await 状態(); });
+  await step(4, async () => { await l.全選択.uncheck(); });
+  await expected(async () => {
+    const オフ = await 状態();
+    expect.soft(オン.総数, "表示されたデッキ情報の数").toBe(11);
+    expect.soft(オン.選択, "オンにしたあと選択されているデッキ情報の数（表示中のすべて）").toBe(オン.総数);
+    expect.soft(オフ.選択, "オフにしたあと選択されているデッキ情報の数").toBe(0);
+  });
+});
+
+caseTest("IT-M15-01-048", async ({ page, step, expected, notes }) => {
+  note("デッキに関連する記事は、画面では作れないため、DBで記事とデッキの紐づけを作った（実行の印つきのデッキにだけ）");
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const id = notes.get("〔デッキID-M1501-048〕");
+  await step(1, async () => { await l.開く(); await l.日付クリア.click(); await l.f("deck_id").fill(id); await l.検索する(); });
+  await step(2, async () => { await l.選択(id).check(); });
+  let 遷移先 = "";
+  await step(3, async () => {
+    page.once("dialog", (d) => { void d.accept(); });
+    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.一括削除.click()]);
+    遷移先 = path(page);
+  });
+  let ids: string[] = [];
+  await step(4, async () => { await l.開く(); await l.日付クリア.click(); await l.f("deck_id").fill(id); await l.検索する(); ids = await l.表示されたID(); });
+  await expected(async () => {
+    expect.soft(遷移先.startsWith(一覧のパス) && !/\/(new|\d+\/edit)$/.test(遷移先), "遷移した画面（デッキ検索・一覧）").toBe(true);
+    expect.soft(ids, "記事に使用されているデッキが検索結果に残る").toEqual([id]);
+  });
+});
+
+caseTest("IT-M15-01-053", async ({ page, step, expected, notes }) => {
+  note("「デッキID 999999は未登録」は、実行前に確かめていない。登録済みなら、CSVが出力されて画面が移らず、不合格になる");
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const id = notes.get("〔デッキID-M1501-053〕");
+  await step(1, async () => { await l.開く(); await l.日付クリア.click(); await l.f("deck_id").fill(id); await l.検索する(); await l.選択(id).check(); });
+  await step(2, async () => { await l.選択(id).evaluate((e) => { (e as HTMLInputElement).value = "999999"; }); });
+  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.CSV出力.click()]); });
+  await expected(async () => {
+    expect.soft(path(page).startsWith(一覧のパス) && !/\/(new|\d+\/edit)$/.test(path(page)), "遷移した画面（デッキ検索・一覧）").toBe(true);
+  });
+});
+
+caseTest("IT-M15-01-094", async ({ page, step, expected, notes }) => {
+  note(絞りの注記);
+  await login(page, M1501_ADMIN_A);
+  const l = new デッキ一覧(page);
+  const [A, B, C] = ["A", "B", "C"].map((x) => notes.get(`〔デッキID-M1501-094${x}〕`));
+  const タグ = await デッキのタグ(page, C);
+  note(`タグA・タグBは共有のマスタに足さず、既存のデッキタグの先頭2件（${タグ.join("・")}）で代えた。デッキ名「M1501-094」は印つきの語`);
+  await l.開く();
+  await step(1, async () => { await l.日付クリア.click(); });
+  await step(2, async () => { await l.f("deck_name").fill(タグ検索の語("094")); });
+  await step(3, async () => { await chooseByLabel(l.f("deck_tags"), タグ); });
+  let ids: string[] = [];
+  await step(4, async () => { await l.検索する(); ids = await l.表示されたID(); });
+  await expected(async () => {
+    expect.soft([...ids].sort(), "表示されたのは、両方のタグを持つデッキCだけ").toEqual([C]);
+    expect.soft(ids.includes(A) || ids.includes(B), "片方のタグだけを持つデッキA・Bが表示される").toBe(false);
+  });
+});
+
+/** 一括編集の区画を、デッキIDで検索して選んで開く */
+async function 一括編集を始める(page: Page, ids: string[], 選ぶ: string[]) {
+  const l = await デッキIDで検索する(page, ids.join(","));
+  const b = new デッキ一括編集(page);
+  for (const id of 選ぶ) await b.デッキを選ぶ(l, id);
+  return { l, b };
+}
+
+caseTest("IT-M15-01-055", async ({ page, step, expected, notes, db }) => {
+  void db;
+  note("検索で日付クリアを押した（シード表の手順に無いが、更新前の開催日が3か月より前のため、初期のイベント開催日(From)のままでは一覧に出ない）。Standard・Modern・Blue Control・Red Aggro・タグA・タグBは共有のマスタに足さず、更新前は既存のマスタの先頭の組とタグ、更新後は実行の印つきのフォーマット・アーキタイプと2件目のタグで代えた。「デッキリスト公開状態を偽」は、デッキリストを公開する側（更新前と同じ値）を選んだ");
+  await login(page, M1501_ADMIN_A);
+  const [A, B, C] = ["A", "B", "C"].map((x) => notes.get(`〔デッキID-M1501-055${x}〕`));
+  const 前 = { A: デッキの保存内容を読む(A), C: デッキの保存内容を読む(C) };
+  const 後 = 一括後の型();
+  const 後の値 = { イベント名日: "一括更新大会", イベント名英: "Bulk Event", 開催日: "2025-12-01 09:30", 順位: "3", 成績: "3-0", プレイヤー名: "一括選手", 引用元URL: "https://example.com/deck/bulk" };
+  let l!: デッキ一覧, b!: デッキ一括編集;
+  await step(1, async () => { const l1 = await デッキIDで検索する(page, `${A},${B},${C}`); l = l1; b = new デッキ一括編集(page); });
+  await step(2, async () => { await b.デッキを選ぶ(l, A); await b.デッキを選ぶ(l, B); });
+  await step(3, async () => { await b.開く(); });
+  const 後のタグ = 前.A.タグ.length ? (await b.区画.locator('[name="admin_deck_bulk_update[deckTags][]"] option').allInnerTexts()).map((t) => t.trim()).filter((t) => t && !前.A.タグ.includes(t))[0] : "";
+  await step(4, async () => {
+    await b.チェック("format", true); await b.フォーマットを選ぶ(後.フォーマット);
+    await b.チェック("archetype", true); await b.アーキタイプを選ぶ(後.アーキタイプ);
+    await b.チェック("disp", true); await b.公開状態を選ぶ("非公開");
+    await b.チェック("privateFlg", true); await b.デッキリスト公開状態を選ぶ("公開");
+    await b.チェック("eventNameJp", true); await b.入れる("eventNameJp", 後の値.イベント名日);
+    await b.チェック("eventNameEn", true); await b.入れる("eventNameEn", 後の値.イベント名英);
+    await b.チェック("eventDate", true); await b.入れる("eventDate", 後の値.開催日.replace(" ", "T"));
+    await b.チェック("ranking", true); await b.入れる("ranking", 後の値.順位);
+    await b.チェック("result", true); await b.入れる("result", 後の値.成績);
+    await b.チェック("playerName", true); await b.入れる("playerName", 後の値.プレイヤー名);
+    await b.チェック("deckTags", true); await b.タグを選ぶ([後のタグ]);
+    await b.チェック("sourceUrl", true); await b.入れる("sourceUrl", 後の値.引用元URL);
+  });
+  let 結果 = { 成功: [] as string[], エラー: [] as string[], 入力の不足: [] as string[] };
+  await step(5, async () => { 結果 = await b.実行する(); });
+  let 保存: Record<string, ReturnType<typeof デッキの保存内容を読む>> = {};
+  await step(6, async () => { 保存 = { A: デッキの保存内容を読む(A), B: デッキの保存内容を読む(B), C: デッキの保存内容を読む(C) }; });
+  await expected(async () => {
+    expect.soft(結果.エラー, "一括編集実行のエラー表示").toEqual([]);
+    for (const k of ["A", "B"]) {
+      const s = 保存[k];
+      expect.soft(s.フォーマット, `デッキ${k}のフォーマット`).toBe(後.フォーマット);
+      expect.soft(s.アーキタイプ, `デッキ${k}のアーキタイプ`).toBe(後.アーキタイプ);
+      expect.soft(s.公開状態, `デッキ${k}の公開状態`).toBe("非公開");
+      expect.soft(s.デッキリスト非公開, `デッキ${k}のデッキリスト公開状態（偽）`).toBe(false);
+      expect.soft(s.イベント名日, `デッキ${k}のイベント名(日)`).toBe(後の値.イベント名日);
+      expect.soft(s.イベント名英, `デッキ${k}のイベント名(英)`).toBe(後の値.イベント名英);
+      expect.soft(s.開催日, `デッキ${k}のイベント開催日`).toBe(後の値.開催日);
+      expect.soft(s.順位, `デッキ${k}の順位`).toBe(後の値.順位);
+      expect.soft(s.成績, `デッキ${k}の成績`).toBe(後の値.成績);
+      expect.soft(s.プレイヤー名, `デッキ${k}のプレイヤー名`).toBe(後の値.プレイヤー名);
+      expect.soft(s.タグ, `デッキ${k}のタグ`).toEqual([後のタグ]);
+      expect.soft(s.引用元URL, `デッキ${k}の引用元URL`).toBe(後の値.引用元URL);
+    }
+    expect.soft(保存.C, "選択しなかったデッキCは更新前の値を維持している").toEqual(前.C);
+  });
+});
+
+caseTest("IT-M15-01-098", async ({ page, step, expected, notes, db }) => {
+  void db;
+  note("Standard・Blue Controlは共有のマスタなので作らず、既存のマスタの先頭の組を使った（このケースは種類を確かめない）。入力するが変更チェックはオフのままの項目は、チェックを付けて値を入れ、そのあとチェックを外した（入れた値は欄に残り、一緒に送られる）");
+  await login(page, M1501_ADMIN_A);
+  const id = notes.get("〔デッキID-M1501-098〕");
+  const 前 = 一括の前後098.前;
+  let l!: デッキ一覧;
+  const b = new デッキ一括編集(page);
+  await step(1, async () => { l = await デッキIDで検索する(page, id); });
+  await step(2, async () => { await b.デッキを選ぶ(l, id); });
+  await step(3, async () => { await b.開く(); });
+  await step(4, async () => {
+    await b.チェック("result", true); await b.入れる("result", "M1501-098-Rec-After");
+    await b.チェック("playerName", true); await b.入れる("playerName", "M1501-098-Pl-After");
+  });
+  await step(5, async () => {
+    for (const [k, v] of [["eventNameJp", "M1501-098-Ev-After"], ["ranking", "5"], ["sourceUrl", "https://example.com/m1501-098-after"]] as const) {
+      await b.チェック(k, true); await b.入れる(k, v); await b.チェック(k, false);
+    }
+  });
+  let 結果 = { 成功: [] as string[], エラー: [] as string[], 入力の不足: [] as string[] };
+  await step(6, async () => { 結果 = await b.実行する(); });
+  let s = デッキの保存内容を読む(id);
+  await step(7, async () => { s = デッキの保存内容を読む(id); });
+  await expected(async () => {
+    expect.soft(結果.エラー, "一括編集実行のエラー表示").toEqual([]);
+    expect.soft(s.成績, "成績").toBe("M1501-098-Rec-After");
+    expect.soft(s.プレイヤー名, "プレイヤー名").toBe("M1501-098-Pl-After");
+    expect.soft(s.イベント名日, "イベント名(日)は変更チェックがオフのため更新前のまま").toBe(前.イベント名日);
+    expect.soft(s.順位, "順位は更新前のまま").toBe(前.順位);
+    expect.soft(s.引用元URL, "引用元URLは更新前のまま").toBe(前.引用元URL);
+  });
+});
+
+/** 一括編集の組合せ（100〜103）。操作: 公開状態・アーキタイプの変更チェックの付け方 */
+function 組合せの一括編集(no: "100" | "101" | "102" | "103", 操作: { プレイヤー?: boolean; アーキタイプ?: boolean; 公開?: boolean }, 期待: { 公開状態: "公開" | "非公開"; アーキタイプあり: boolean; 店頭に載る: boolean }): CaseBody {
+  return async ({ page, browser, step, expected, notes, db }) => {
+    void db;
+    note("Standard・Red Aggro・Blue Controlは共有のマスタなので作らず、アーキタイプは既存のマスタの先頭の組（デッキ登録の既定のアーキタイプ）で代えた。アーキタイプの未設定は、DBで設定した（デッキ登録画面ではアーキタイプが必須のため）");
+    await login(page, M1501_ADMIN_A);
+    const id = notes.get(`〔デッキID-M1501-${no}〕`);
+    // 検索するプレイヤー名: プレイヤー名を一括編集で変えるケース（100）は変更後の名前、それ以外は元の名前
+    const 名後 = 操作.プレイヤー ? 組合せの選手後(no) : 組合せの選手前(no);
+    const アーキ = 基線のアーキタイプ().アーキタイプ;
+    let l!: デッキ一覧;
+    const b = new デッキ一括編集(page);
+    await step(1, async () => { l = await デッキIDで検索する(page, id); });
+    await step(2, async () => { await b.デッキを選ぶ(l, id); });
+    await step(3, async () => { await b.開く(); });
+    await step(4, async () => {
+      if (操作.プレイヤー) { await b.チェック("playerName", true); await b.入れる("playerName", 名後); }
+      if (操作.公開) { await b.チェック("disp", true); await b.公開状態を選ぶ("公開"); }
+      if (操作.アーキタイプ) { await b.チェック("archetype", true); await b.アーキタイプを選ぶ(アーキ); }
+    });
+    let 結果 = { 成功: [] as string[], エラー: [] as string[], 入力の不足: [] as string[] };
+    await step(5, async () => { 結果 = await b.実行する(); });
+    let s = デッキの保存内容を読む(id);
+    await step(6, async () => { s = デッキの保存内容を読む(id); });
+    let 載る = false;
+    const ctx = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
+    try {
+      await hideDebugToolbar(ctx);
+      const p = await ctx.newPage();
+      p.setDefaultTimeout(60_000); p.setDefaultNavigationTimeout(90_000);
+      const top = new DeckTopPage(p);
+      const m = new DeckSearchModal(p);
+      await step(7, async () => { await top.開く(); });
+      await step(8, async () => { await m.開く(); await m.クリアする(); });
+      await step(9, async () => {
+        note("「クリア」とプレイヤー名の欄は、デッキ検索TOPの画面上部の「詳細検索」で開く画面の中にある。開いてから押した");
+        await m.入れる("player", 名後);
+        await m.検索する();
+        const 行 = await new DeckResultPage(p).行();
+        載る = 行.some((r) => r.プレイヤー === 名後);
+      });
+    } finally { await ctx.close(); }
+    await expected(async () => {
+      expect.soft(結果.エラー, "一括編集実行のエラー表示").toEqual([]);
+      expect.soft(s.公開状態, "表示区分").toBe(期待.公開状態);
+      if (期待.アーキタイプあり) expect.soft(s.アーキタイプ, "アーキタイプ").toBe(アーキ);
+      else expect.soft(s.アーキタイプ, "アーキタイプ（未設定のまま）").toBeNull();
+      if (操作.プレイヤー) expect.soft(s.プレイヤー名, "プレイヤー名").toBe(名後);
+      expect.soft(載る, `フロントのデッキ検索で、プレイヤー名「${名後}」のデッキが一覧に載る`).toBe(期待.店頭に載る);
+    });
+  };
+}
+caseTest("IT-M15-01-100", 組合せの一括編集("100", { プレイヤー: true }, { 公開状態: "非公開", アーキタイプあり: false, 店頭に載る: false }));
+caseTest("IT-M15-01-101", 組合せの一括編集("101", { アーキタイプ: true }, { 公開状態: "非公開", アーキタイプあり: true, 店頭に載る: false }));
+caseTest("IT-M15-01-102", 組合せの一括編集("102", { 公開: true }, { 公開状態: "公開", アーキタイプあり: false, 店頭に載る: false }));
+caseTest("IT-M15-01-103", 組合せの一括編集("103", { 公開: true, アーキタイプ: true }, { 公開状態: "公開", アーキタイプあり: true, 店頭に載る: true }));
