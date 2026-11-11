@@ -11,6 +11,7 @@
  */
 import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
+import { rc } from "../lib/run_marker";
 import { defineSeed } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { ensureJob } from "../pages/admin/f06_masters";
@@ -20,8 +21,9 @@ import { M08CustomerEditPage } from "../pages/admin/m08_customer_edit";
 import { M08CustomerListPage } from "../pages/admin/m08_customer_list";
 import { 会員を用意する, 会員の用意, mailOf } from "./m08-common";
 
-export const M0804_ADMIN: Account = { loginId: "m0804_admin", password: "Passw0rd!M0804" };
-defineSeed("S-M08-04-ADM", async ({ browser }) => { await ensureM08Admin(browser, "M08-04試験管理者", M0804_ADMIN); });
+/** 開発環境に同じログインIDの手動テスト用のメンバーがありうるので、ログインID・名前に実行の印を付けて作る（M03-26 などと同じ） */
+export const M0804_ADMIN: Account = { loginId: rc("m0804_admin").toLowerCase(), password: "Passw0rd!M0804" };
+defineSeed("S-M08-04-ADM", async ({ browser }) => { await ensureM08Admin(browser, rc("M08-04試験管理者"), M0804_ADMIN); });
 
 /** 長いメールアドレス（値そのものを確かめるので、印を付けない） */
 export const 長いメール010 = "a".repeat(73) + "@example.com";
