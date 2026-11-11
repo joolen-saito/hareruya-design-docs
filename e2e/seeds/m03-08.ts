@@ -154,12 +154,12 @@ async function 本店に入庫する(browser: Browser, code: string, 数: number
   await withAdminSession(browser, F04承認者.account, async (page) => {
     page.setDefaultTimeout(60_000);
     const list = new StockApprovalListPage(page);
-    await list.open(shop);
+    await list.openAll(shop);
     const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant && Number(r.id) > baseline && r.quantity === String(数));
     if (rows.length === 0) throw new Error(`${what}: 在庫編集承認一覧に、登録者「${registrant}」の未承認の行が無い`);
     try { await list.approve([rows[0].id], `${what}: 在庫編集の承認`, issue); } catch (err) {
       if (!String(err).includes("成功メッセージ")) throw err;
-      await list.open(shop);
+      await list.openAll(shop);
       if ((await list.rowValues()).some((r) => r.id === rows[0].id && r.status === "未承認")) throw err;
       issue(`${what}: 承認の成功の表示は出なかったが、承認一覧の行は未承認でなくなった`);
     }

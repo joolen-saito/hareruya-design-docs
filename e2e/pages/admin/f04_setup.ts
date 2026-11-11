@@ -137,7 +137,7 @@ export async function 商品を作って入庫する(browser: Browser, seedId: s
         await ap.goto(adminUrl(`/product/stock/approval_list?id=${srcs[0]}`), { timeout: 60_000 });
         await ap.waitForLoadState("load");
       } else {
-        await list.open(shop);
+        await list.openAll(shop);
       }
       const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant && Number(r.id) > baseline && r.quantity === String(total));
       if (rows.length === 0) throw new Error(`${seedId}: 在庫編集承認一覧に、登録者「${registrant}」の未承認の行（合計 ${total}）が無い`);
@@ -153,7 +153,7 @@ async function 承認する(list: StockApprovalListPage, shop: string, ids: stri
     await list.approve(ids, what, issue);
   } catch (e) {
     if (!String(e).includes("成功メッセージ")) throw e;
-    await list.open(shop);
+    await list.openAll(shop);
     const remain = (await list.rowValues()).filter((r) => ids.includes(r.id) && r.status === "未承認");
     if (remain.length) throw e;
     issue(`${what}: 成功の表示は出なかったが、承認一覧の該当の行は未承認でなくなった`);

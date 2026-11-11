@@ -149,6 +149,19 @@ export class StockApprovalListPage {
     await this.page.waitForLoadState("load");
   }
 
+  /**
+   * open と同じ絞り込みで、1ページの表示件数を1000件にして開く（シードの承認で使う。2026-11-11）。
+   * 一覧は「未承認が上・登録日の古い順」で、開発環境の本店には8月からの未承認の行が163件残っており、今回の行が1ページ目に出ない。
+   * 表示件数は一覧の「/page/1/count/{件数}」で、検索の条件（店舗の絞り込み）はそのまま残る。この一覧そのものを試すケースは open を使う。
+   */
+  async openAll(shopName: string): Promise<void> {
+    await this.open(shopName);
+    const res = await this.page.goto(adminUrl("/product/stock/approval_list/page/1/count/1000"), { timeout: 120_000 });
+    if (!res || !res.ok()) throw new Error(`在庫編集承認一覧を1000件の表示で開けない（応答 ${res?.status() ?? "なし"}）`);
+    await expect(this.page.locator("#form_search_stock_approval_list_update"), "在庫編集承認一覧の結果（1000件の表示）").toBeVisible();
+    await this.page.waitForLoadState("load");
+  }
+
   /** 行の表示（承認状態・店舗/在庫区分・増減数・在庫変動区分・登録者） */
   async rowValues(): Promise<{ id: string; status: string; shop: string; quantity: string; changeType: string; registrant: string }[]> {
     return this.rows.evaluateAll((trs) => trs.map((tr) => {
