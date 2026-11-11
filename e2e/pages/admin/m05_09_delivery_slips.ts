@@ -117,6 +117,8 @@ export async function 受注情報編集を開く(page: Page, 受注ID: string):
 
 export type 住所の入力 = {
   姓?: string; 名?: string; 都道府県?: string; 国?: string; 海外郵便番号?: string; 住所1?: string; 住所2?: string; 電話?: [string, string, string];
+  /** 住所3（国外の住所で使う。M05-10 で足した） */
+  住所3?: string;
 };
 
 /** 受注情報編集画面の注文者情報（"order"）・お届け先情報（"order_Shipping"）の欄に入れる。折りたたみを開いてから */
@@ -133,6 +135,7 @@ export async function 住所を入れる(page: Page, 欄: "注文者" | "お届�
   if (v.海外郵便番号 !== undefined) await page.locator(`#${p}_abroad_postal_code`).fill(v.海外郵便番号);
   if (v.住所1 !== undefined) await page.locator(`#${p}_address_addr01`).fill(v.住所1);
   if (v.住所2 !== undefined) await page.locator(`#${p}_address_addr02`).fill(v.住所2);
+  if (v.住所3 !== undefined) await page.locator(`#${p}_address_addr03`).fill(v.住所3);
   if (v.電話) {
     await page.locator(`#${p}_tel_tel01`).fill(v.電話[0]);
     await page.locator(`#${p}_tel_tel02`).fill(v.電話[1]);
