@@ -27,7 +27,7 @@ import path from "node:path";
 import { Browser, expect, Page } from "@playwright/test";
 import { SETUP_ADMIN, STATE_DIR } from "../config/env";
 import { getSeed } from "../lib/catalog";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { csvLine } from "../lib/csv";
 import { Notes } from "../lib/notes";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
@@ -42,7 +42,7 @@ import {
 } from "../pages/admin/m03_30_products";
 
 // 開発環境には手動テスト用に同じログインID・名前のメンバーがいることがあるので、ログインIDと名前に実行の印を付ける（2026-11-11。期待結果は管理者の名前を見ない）
-export const M0331_ADMIN: Account = { loginId: rc("m0331_admin").toLowerCase(), password: "Passw0rd!M0331" };
+export const M0331_ADMIN: Account = { loginId: rcFixed("m0331_admin").toLowerCase(), password: "Passw0rd!M0331" };
 
 /** 設計書の7列（L0164〜L0173） */
 export const M0331_COLUMNS = ["商品ID", "言語ID", "販売価格", "買取価格", "セールフラグ", "帯URL", "タグ(ID)"];
@@ -75,7 +75,7 @@ async function createAdmin(page: Page): Promise<void> {
   if (stores.length === 0) throw new Error("S-M03-31-ADM: メンバーに割り当てられる店舗が画面に無い");
   const store = stores[0];
   await ensureMember(page, {
-    名前: rc("M03-31試験管理者"), 所属店舗: store, ログインID: M0331_ADMIN.loginId, メールアドレス: `${M0331_ADMIN.loginId}@example.test`,
+    名前: rcFixed("M03-31試験管理者"), 所属店舗: store, ログインID: M0331_ADMIN.loginId, メールアドレス: `${M0331_ADMIN.loginId}@example.test`,
     パスワード: M0331_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: store, 編集可能店舗: [store],
   });
 }

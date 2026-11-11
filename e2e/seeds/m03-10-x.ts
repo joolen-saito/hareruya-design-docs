@@ -28,7 +28,7 @@ import * as x from "../db/m03_10_x";
 import { 未承認の在庫編集ID } from "../db/f04_setup";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { F04承認者, 管理者を用意する, 本店の店名 } from "../pages/admin/f04_setup";
@@ -40,8 +40,8 @@ import { 割引率を選んで登録する, 規格の高額コードと公開を
 import { loggedInMemberName, registerStockEdit, StockApprovalListPage } from "../pages/admin/stock_edit";
 
 /** 試験管理者（開発環境に同じログインIDの手動テスト用メンバーがいるので、ログインID・名前に実行の印を付ける） */
-export const M0310_ADMIN: Account = { loginId: rc("m0310_admin").toLowerCase(), password: "Passw0rd!M0310" };
-export const M0310_ADMIN_NAME = rc("M03-10試験管理者");
+export const M0310_ADMIN: Account = { loginId: rcFixed("m0310_admin").toLowerCase(), password: "Passw0rd!M0310" };
+export const M0310_ADMIN_NAME = rcFixed("M03-10試験管理者");
 
 type 状態 = "NM" | "SP" | "MP" | "HP";
 const 状態の名前: Record<状態, string> = { NM: "ニアミント", SP: "スライトリープレイド", MP: "モデレトリープレイド", HP: "ヘビープレイド" };

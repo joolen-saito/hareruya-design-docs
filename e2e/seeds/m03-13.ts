@@ -18,7 +18,7 @@
 import { expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { downloadGoodsCsvTemplate } from "../pages/admin/m03_01_goods_csv";
@@ -34,8 +34,8 @@ import { TagInput, TagPage } from "../pages/admin/m03_13_tag";
 import { openProductEdit } from "../pages/admin/product_edit";
 
 /** 開発環境に同じログインIDの手動テスト用のメンバーがあることがあるので、ログインID・名前に実行の印を付けて作る（M03-26 などと同じ。2026-11-11） */
-export const M0313_ADMIN: Account = { loginId: rc("m0313_admin").toLowerCase(), password: "Passw0rd!M0313" };
-export const M0313L_ADMIN: Account = { loginId: rc("m0313l_admin").toLowerCase(), password: "Passw0rd!M0313L" };
+export const M0313_ADMIN: Account = { loginId: rcFixed("m0313_admin").toLowerCase(), password: "Passw0rd!M0313" };
+export const M0313L_ADMIN: Account = { loginId: rcFixed("m0313l_admin").toLowerCase(), password: "Passw0rd!M0313L" };
 
 /** 一覧の全件を1ページに出す表示件数（画面の件数欄の最大） */
 const ALL = "12000";
@@ -64,12 +64,12 @@ async function expectCanOpen(page: Page, who: string): Promise<void> {
 }
 
 defineSeed("S-M03-13-ADM", async ({ browser }) => {
-  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, rc("M03-13試験管理者"), M0313_ADMIN, `${M0313_ADMIN.loginId}@example.test`));
+  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, rcFixed("M03-13試験管理者"), M0313_ADMIN, `${M0313_ADMIN.loginId}@example.test`));
   await withAdminSession(browser, M0313_ADMIN, (page) => expectCanOpen(page, "M03-13試験管理者"));
 });
 
 defineSeed("S-M03-13-L-ADM", async ({ browser }) => {
-  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, rc("M03-13連携試験管理者"), M0313L_ADMIN, `${M0313L_ADMIN.loginId}@example.test`));
+  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, rcFixed("M03-13連携試験管理者"), M0313L_ADMIN, `${M0313L_ADMIN.loginId}@example.test`));
   await withAdminSession(browser, M0313L_ADMIN, (page) => expectCanOpen(page, "M03-13連携試験管理者"));
 });
 

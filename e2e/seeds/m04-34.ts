@@ -25,7 +25,7 @@ import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { withAdminSession } from "../lib/session";
 import { 棚番号の名前を書き換える } from "../db/m04_01_x";
@@ -46,8 +46,8 @@ import { 共有の店舗を用意する } from "./m04-33";
 export const 出庫元 = "5";
 export const 本店3F = "1";
 export const 支店 = "13";
-export const M0434_ADMIN: Actor = { 名前: rc("M04-34試験管理者"), account: { loginId: rc("m0434_admin").toLowerCase(), password: "Passw0rd!M0434" } };
-const 承認者: Actor = { 名前: rc("M04-34承認者"), account: { loginId: rc("m0434_apr").toLowerCase(), password: "Passw0rd!M0434apr" } };
+export const M0434_ADMIN: Actor = { 名前: rcFixed("M04-34試験管理者"), account: { loginId: rcFixed("m0434_admin").toLowerCase(), password: "Passw0rd!M0434" } };
+const 承認者: Actor = { 名前: rcFixed("M04-34承認者"), account: { loginId: rcFixed("m0434_apr").toLowerCase(), password: "Passw0rd!M0434apr" } };
 
 /** 店舗ID 1・13 の、書き換える前の高額商品閾値（CONFIG のシードが控える。spec が戻すのに使う） */
 export const 元の閾値 = new Map<string, [string, string, string]>();

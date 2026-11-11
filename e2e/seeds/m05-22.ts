@@ -34,7 +34,7 @@ import { 受注の出荷指示リスト, 注文番号の範囲の受注 } from "
 import { サブ情報の表がある, 出荷指示の対応状況がある, 出荷指示リストから外れる配送方法か, 受注の対応状況名, 明細の商品を外す, 配送先の配送方法を外す } from "../db/m05_22";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
-import { rc, RUN_MARK } from "../lib/run_marker";
+import { rc, RUN_MARK, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { 商品を作って入庫する } from "../pages/admin/f04_setup";
@@ -47,7 +47,7 @@ import { 会員が商品を注文する } from "../pages/front/m05_front_order";
 import { markedMail, 本会員を作る } from "./f06-member";
 
 /** 開発環境に手動テスト用の同じログインIDのメンバーがあることがある（M03-26・M03-27 で起きた）ので、実行の印つきで作る */
-export const M0522_ADMIN: Account = { loginId: rc("m0522_admin").toLowerCase(), password: "Passw0rd!M0522" };
+export const M0522_ADMIN: Account = { loginId: rcFixed("m0522_admin").toLowerCase(), password: "Passw0rd!M0522" };
 export const 受注日時 = "2026-09-01 10:00:00";
 const PW = "Passw0rd!M0522C";
 /** 「宅配便」（国内配送）・「国際配送」（海外配送）の読み替え */
@@ -56,7 +56,7 @@ export const 国際配送 = "EMS";
 const スムーズ店頭受取 = "スムーズ店頭受取";
 
 defineSeed("S-M05-22-ADM", async ({ browser }) => {
-  await ensureM05Admin(browser, { 名前: rc("M05-22管理者"), account: M0522_ADMIN, メール: `${M0522_ADMIN.loginId}@example.test` });
+  await ensureM05Admin(browser, { 名前: rcFixed("M05-22管理者"), account: M0522_ADMIN, メール: `${M0522_ADMIN.loginId}@example.test` });
   reportSeedIssue("S-M05-22-ADM", "権限は受注管理・出荷指示リスト・納品書印刷を操作できる「システム管理者」、所属店舗・既定の検索店舗は本店。ログインID・名前に実行の印を付けた（開発環境に同じログインIDのメンバーがありうるため）");
 });
 

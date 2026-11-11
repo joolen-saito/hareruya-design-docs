@@ -18,7 +18,7 @@ import { expect, Page } from "@playwright/test";
 import { SETUP_ADMIN, STATE_DIR } from "../config/env";
 import { decodeCsvBytes, parseCsv } from "../lib/csv";
 import { defineSeed } from "../lib/seeds";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { CsvUploadPage } from "../pages/admin/m03_26_card_csv_upload";
 import { downloadedBytes } from "../pages/admin/m03_21_shelf_number";
@@ -29,7 +29,7 @@ import { ensureMember } from "../pages/admin/member";
  * 同じ値では登録できない。ほかの方のメンバーは使わず、決め打ちの識別の値として実行の印を付けたログインIDで作る（依頼者決定 2026-10-28「案A」）。
  * ケースはログインIDそのものを確かめない。
  */
-export const M0326_ADMIN: Account = { loginId: rc("m0326_admin").toLowerCase(), password: "Passw0rd!M0326" };
+export const M0326_ADMIN: Account = { loginId: rcFixed("m0326_admin").toLowerCase(), password: "Passw0rd!M0326" };
 
 /** 正本は所属店舗を指定しない。管理画面で利用可能な店舗を1つ選び、商品管理を操作できるシステム管理者の権限を付ける */
 async function createAdmin(page: Page): Promise<void> {
@@ -42,7 +42,7 @@ async function createAdmin(page: Page): Promise<void> {
   if (stores.length === 0) throw new Error("S-M03-26-ADM: メンバーに割り当てられる店舗が画面に無い");
   const store = stores[0];
   await ensureMember(page, {
-    名前: rc("M03-26試験管理者"), 所属店舗: store, ログインID: M0326_ADMIN.loginId, メールアドレス: `${M0326_ADMIN.loginId}@example.test`,
+    名前: rcFixed("M03-26試験管理者"), 所属店舗: store, ログインID: M0326_ADMIN.loginId, メールアドレス: `${M0326_ADMIN.loginId}@example.test`,
     パスワード: M0326_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: store, 編集可能店舗: [store],
   });
 }

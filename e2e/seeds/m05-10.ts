@@ -23,7 +23,7 @@ import { 受注IDの, 受注の配送先ID, 受注の配送方法, 受注日時�
 import { 受注の明細ID, 受注の金額を書き足す, 受注から会員を外す, 配送先を受注から外す } from "../db/m05_10";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { 商品を作って入庫する } from "../pages/admin/f04_setup";
@@ -34,7 +34,7 @@ import { 会員が商品を注文する } from "../pages/front/m05_front_order";
 import { markedMail, 本会員を作る } from "./f06-member";
 
 /** 開発環境に手動テスト用の同じログインIDのメンバーがあることがある（M03-26・M03-27 で起きた）ので、実行の印つきで作る */
-export const M0510_ADMIN: Account = { loginId: rc("m0510_admin").toLowerCase(), password: "Passw0rd!M0510" };
+export const M0510_ADMIN: Account = { loginId: rcFixed("m0510_admin").toLowerCase(), password: "Passw0rd!M0510" };
 const PW = "Passw0rd!M0510C";
 
 /** 国外配送区分・国内配送区分の配送方法（開発環境の既存のもので読み替える） */
@@ -42,7 +42,7 @@ export const 国外の配送方法 = "EMS";
 export const 国内の配送方法 = "ゆうパック";
 
 defineSeed("S-M05-10-ADM", async ({ browser }) => {
-  await ensureM05Admin(browser, { 名前: rc("M05-10管理者"), account: M0510_ADMIN, メール: `${M0510_ADMIN.loginId}@example.test` });
+  await ensureM05Admin(browser, { 名前: rcFixed("M05-10管理者"), account: M0510_ADMIN, メール: `${M0510_ADMIN.loginId}@example.test` });
   reportSeedIssue("S-M05-10-ADM", "権限は受注管理を操作できる「システム管理者」、所属店舗・既定の検索店舗は本店。ログインID・名前に実行の印を付けた（開発環境に同じログインIDのメンバーがありうるため）");
 });
 

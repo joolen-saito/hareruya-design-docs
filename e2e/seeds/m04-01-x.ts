@@ -22,7 +22,7 @@ import { SETUP_ADMIN } from "../config/env";
 import { 在庫承認の最大ID } from "../db/f03_08";
 import { 対象以外の店舗別在庫を消す, 店名略称がある, 棚番号の名前がある, 棚番号の名前を書き換える, 部門コードがある, 表示件数の選択肢 } from "../db/m04_01_x";
 import { getSeed } from "../lib/catalog";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { CategoryPage } from "../pages/admin/category";
@@ -60,9 +60,9 @@ function 先頭に印(先頭: string, 全体: string): string {
 
 // ---- 管理者 ----
 const PASS = "Passw0rd!M0401X";
-export const M0401_LIMIT: Account = { loginId: rc("m0401_limit").toLowerCase(), password: "Passw0rd!M0401L" };
-const LIMIT_NAME = rc("M04-01東京本店だけの試験管理者");
-const 承認者: { 名前: string; account: Account } = { 名前: rc("M04-01承認試験管理者"), account: { loginId: rc("m0401_apr").toLowerCase(), password: PASS } };
+export const M0401_LIMIT: Account = { loginId: rcFixed("m0401_limit").toLowerCase(), password: "Passw0rd!M0401L" };
+const LIMIT_NAME = rcFixed("M04-01東京本店だけの試験管理者");
+const 承認者: { 名前: string; account: Account } = { 名前: rcFixed("M04-01承認試験管理者"), account: { loginId: rcFixed("m0401_apr").toLowerCase(), password: PASS } };
 
 let 承認者あり = false;
 async function 承認者を用意する(browser: Browser): Promise<void> {

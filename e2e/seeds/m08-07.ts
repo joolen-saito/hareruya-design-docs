@@ -17,15 +17,15 @@ import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { メールテンプレート, メール履歴, メール履歴の数, メール履歴を設定する, 会員があるか, 既存のメールテンプレート } from "../db/m08_05_07";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { 会員にメールを送る } from "../pages/admin/m08_05_07";
 import { 会員を作る, 作った会員, 控える, 試験管理者を用意する } from "./m08-05-07-common";
 
-export const M0807_ADMIN: Account = { loginId: rc("m0807_admin").toLowerCase(), password: "Passw0rd!M0807" };
+export const M0807_ADMIN: Account = { loginId: rcFixed("m0807_admin").toLowerCase(), password: "Passw0rd!M0807" };
 
-defineSeed("S-M08-07-ADM", async ({ browser }) => { await 試験管理者を用意する(browser, rc("M08-07試験管理者"), M0807_ADMIN); });
+defineSeed("S-M08-07-ADM", async ({ browser }) => { await 試験管理者を用意する(browser, rcFixed("M08-07試験管理者"), M0807_ADMIN); });
 
 /** テンプレートA・Bの読み替え（開発環境に既にあるテンプレートの ID の小さい2件） */
 export function テンプレートAB(): { A: メールテンプレート; B: メールテンプレート } {

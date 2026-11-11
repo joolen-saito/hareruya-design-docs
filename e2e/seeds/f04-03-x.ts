@@ -21,7 +21,7 @@ import { Page } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { 既定のお届け先を削除済みにする, 完了した受注ID一覧, 受注の配送一覧, 二件目の配送を足す } from "../db/f04_03_x";
 import { 処理中受注ID一覧 } from "../db/f04_02";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { 会員を登録して待つ, 商品を作って入庫する, 作った商品 } from "../pages/admin/f04_setup";
@@ -234,12 +234,12 @@ defineSeed("S-F04-03-PA-ENV", async ({ seed }) => {
 });
 
 /** 受注情報を確かめる試験管理者（059）。開発環境に同じログインIDの手動テスト用のメンバーがありうるので、ログインID・名前に実行の印を付ける */
-export const F0403PA_ADMIN: Account = { loginId: rc("f0403pa-admin").toLowerCase(), password: "Passw0rd-PA0403" };
+export const F0403PA_ADMIN: Account = { loginId: rcFixed("f0403pa-admin").toLowerCase(), password: "Passw0rd-PA0403" };
 defineSeed("S-F04-03-PA-ADM", async ({ browser }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     await ensureMemberByStoreIds(page, {
-      名前: rc("F04-03受注確認者"), ログインID: F0403PA_ADMIN.loginId, メールアドレス: `${F0403PA_ADMIN.loginId}@example.test`, パスワード: F0403PA_ADMIN.password,
+      名前: rcFixed("F04-03受注確認者"), ログインID: F0403PA_ADMIN.loginId, メールアドレス: `${F0403PA_ADMIN.loginId}@example.test`, パスワード: F0403PA_ADMIN.password,
       権限: "システム管理者", 所属店舗ID: "1", デフォルト検索表示店舗ID: "1", 編集可能店舗ID: ["1"],
     });
   });

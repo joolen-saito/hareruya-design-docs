@@ -26,7 +26,7 @@ import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
-import { rc, RUN_MARK } from "../lib/run_marker";
+import { rc, RUN_MARK, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { withAdminSession } from "../lib/session";
 import { 棚番号の名前を書き換える } from "../db/m04_01_x";
@@ -48,8 +48,8 @@ import { Actor, buildInstruction, ensureActor, stockInByCsv } from "./m04-25";
 export const 出庫元 = "5";
 export const 本店3F = "1";
 export const 支店 = "13";
-export const M0433_ADMIN: Actor = { 名前: rc("M04-33試験管理者"), account: { loginId: rc("m0433_admin").toLowerCase(), password: "Passw0rd!M0433" } };
-const 承認者: Actor = { 名前: rc("M04-33承認者"), account: { loginId: rc("m0433_apr").toLowerCase(), password: "Passw0rd!M0433apr" } };
+export const M0433_ADMIN: Actor = { 名前: rcFixed("M04-33試験管理者"), account: { loginId: rcFixed("m0433_admin").toLowerCase(), password: "Passw0rd!M0433" } };
+const 承認者: Actor = { 名前: rcFixed("M04-33承認者"), account: { loginId: rcFixed("m0433_apr").toLowerCase(), password: "Passw0rd!M0433apr" } };
 
 const 共有の店舗: Record<"A" | "B", M0424StoreInput> = {
   A: {

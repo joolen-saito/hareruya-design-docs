@@ -28,7 +28,7 @@ import { 受注の対応状況名 } from "../db/m05_22";
 import { 会員IDの, 会員の性別と職業を外す, 会員の値, 受注の日時, 受注の日時を書き足す, 受注の明細IDの一覧, 商品規格IDの, 二件目の配送を足す } from "../db/m05_07_24";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { 商品を作って入庫する } from "../pages/admin/f04_setup";
@@ -42,12 +42,12 @@ import { 会員が商品を注文する } from "../pages/front/m05_front_order";
 import { markedMail, 本会員を作る } from "./f06-member";
 
 /** 開発環境に手動テスト用の同じログインIDのメンバーがあることがある（M03-26・M03-27 で起きた）ので、実行の印つきで作る */
-export const M0524_ADMIN: Account = { loginId: rc("m0524_admin").toLowerCase(), password: "Passw0rd!M0524" };
+export const M0524_ADMIN: Account = { loginId: rcFixed("m0524_admin").toLowerCase(), password: "Passw0rd!M0524" };
 const PW = "Passw0rd!M0524C";
 const 共有の商品コード = () => rc("M0524-COMMON");
 
 defineSeed("S-M05-24-ADM", async ({ browser, seed }) => {
-  await ensureM05Admin(browser, { 名前: rc("M05-24試験管理者"), account: M0524_ADMIN, メール: `${M0524_ADMIN.loginId}@example.test` });
+  await ensureM05Admin(browser, { 名前: rcFixed("M05-24試験管理者"), account: M0524_ADMIN, メール: `${M0524_ADMIN.loginId}@example.test` });
   reportSeedIssue(seed.シードID, "権限は出荷指示リスト・受注CSV出力・出荷実績インポートを操作できる「システム管理者」、所属店舗・既定の検索店舗は本店。ログインID・名前に実行の印を付けた（開発環境に同じログインIDのメンバーがありうるため）");
 });
 

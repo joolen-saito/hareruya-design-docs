@@ -9,7 +9,7 @@
  */
 import { expect } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { storeNameById } from "../pages/admin/m04_19_masters";
@@ -17,7 +17,7 @@ import { ensureMember } from "../pages/admin/member";
 import { ProductSearchPage } from "../pages/admin/product_search";
 
 /** 開発環境に同じログインIDの試験管理者（だれの回で作られたか分からない）がありうるので、ログインID・名前に実行の印を付けて作る（M03-26 などと同じ） */
-export const M0304_ADMIN: Account = { loginId: rc("m0304_admin").toLowerCase(), password: "Passw0rd!M0304" };
+export const M0304_ADMIN: Account = { loginId: rcFixed("m0304_admin").toLowerCase(), password: "Passw0rd!M0304" };
 
 /** アプリが本店（親店舗）として扱う店舗ID（正本: 所属先=本店） */
 const MAIN_SHOP_ID = "1";
@@ -26,7 +26,7 @@ defineSeed("S-M03-04-ADM", async ({ browser }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const shop = await storeNameById(page, MAIN_SHOP_ID);
     await ensureMember(page, {
-      名前: rc("M03-04試験管理者"), 所属店舗: shop, ログインID: M0304_ADMIN.loginId, メールアドレス: `${M0304_ADMIN.loginId}@example.test`,
+      名前: rcFixed("M03-04試験管理者"), 所属店舗: shop, ログインID: M0304_ADMIN.loginId, メールアドレス: `${M0304_ADMIN.loginId}@example.test`,
       パスワード: M0304_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: shop, 編集可能店舗: [shop],
     });
   });

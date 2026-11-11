@@ -17,14 +17,14 @@ import { MAIL_URL } from "../config/env";
 import { 会員IDがある, 会員の送信履歴, 自動送信のテンプレート, テンプレート, 本店の基本情報 } from "../db/m05_06";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account } from "../lib/session";
 import { ensureM05Admin } from "../pages/admin/m05_admin_member";
 import { markedMail, 本会員を作る } from "./f06-member";
 
-export const M0808_ADMIN: Account = { loginId: rc("m0808_admin").toLowerCase(), password: "Passw0rd!M0808" };
-export const M0808RH_ADMIN: Account = { loginId: rc("m0808rh_admin").toLowerCase(), password: "Passw0rd-M0808RH" };
+export const M0808_ADMIN: Account = { loginId: rcFixed("m0808_admin").toLowerCase(), password: "Passw0rd!M0808" };
+export const M0808RH_ADMIN: Account = { loginId: rcFixed("m0808rh_admin").toLowerCase(), password: "Passw0rd-M0808RH" };
 const PW = "Passw0rd!M0808C";
 
 /** テンプレートの読み替え（開発環境に既にある手動送信用のテンプレートの番号） */
@@ -33,11 +33,11 @@ export const テンプレの正本の名前 = { A会員: "A-会員", B会員英�
 export const 自動送信の読み替え = () => 自動送信のテンプレート();
 
 defineSeed("S-M08-08-ADM", async ({ browser, seed }) => {
-  await ensureM05Admin(browser, { 名前: rc("M08-08管理者"), account: M0808_ADMIN, メール: `${M0808_ADMIN.loginId}@example.test` });
+  await ensureM05Admin(browser, { 名前: rcFixed("M08-08管理者"), account: M0808_ADMIN, メール: `${M0808_ADMIN.loginId}@example.test` });
   reportSeedIssue(seed.シードID, "権限は会員管理を操作できる「システム管理者」。所属の「M08-08試験店舗」は、店舗を新しく作らないので本店にした。ログインID・名前に実行の印を付けた（開発環境に同じログインIDのメンバーがありうるため）");
 });
 defineSeed("S-M08-08-RH-ADM", async ({ browser, seed }) => {
-  await ensureM05Admin(browser, { 名前: rc("M08-08RH管理者"), account: M0808RH_ADMIN, メール: `${M0808RH_ADMIN.loginId}@example.test` });
+  await ensureM05Admin(browser, { 名前: rcFixed("M08-08RH管理者"), account: M0808RH_ADMIN, メール: `${M0808RH_ADMIN.loginId}@example.test` });
   reportSeedIssue(seed.シードID, "権限は会員管理を操作できる「システム管理者」。所属の「M0808RH店舗」は、店舗を新しく作らないので本店にした。ログインID・名前に実行の印を付けた");
 });
 

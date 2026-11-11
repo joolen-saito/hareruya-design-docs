@@ -16,7 +16,7 @@
 import { expect } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { Account, withAdminSession } from "../lib/session";
 import { shortName, StockSearchPatternPage } from "../pages/admin/m04_01_search_pattern";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
@@ -27,8 +27,8 @@ import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
  * 同じ値では登録できない。ほかの方のメンバーは使わず、決め打ちの識別の値として実行の印を付けたログインID・名前で作る（依頼者決定 2026-10-28「案A」）。
  * ケースはログインIDそのものを確かめない。
  */
-export const M0401_ALL: Account = { loginId: rc("m0401_all").toLowerCase(), password: "Passw0rd!M0401A" };
-export const ALL_NAME = rc("M04-01全店舗試験管理者");
+export const M0401_ALL: Account = { loginId: rcFixed("m0401_all").toLowerCase(), password: "Passw0rd!M0401A" };
+export const ALL_NAME = rcFixed("M04-01全店舗試験管理者");
 
 const COMPANY = "株式会社晴れる屋";
 const COMPANY_KANA = "カブシキガイシャハレルヤ";

@@ -23,7 +23,7 @@ import { 在庫承認の最大ID } from "../db/f03_08";
 import { 規格の言語を外す, 規格の状態を外す, 規格を削除済みにする, 商品がある, 商品コードの規格の数 } from "../db/m03_08";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { chooseByLabel, expectSaved } from "../pages/admin/common";
@@ -36,8 +36,8 @@ import { ClassEditPage } from "../pages/admin/m03_09_class_edit";
 import { loggedInMemberName, registerStockEdit, StockApprovalListPage } from "../pages/admin/stock_edit";
 
 /** 試験管理者（ログインID・名前に実行の印） */
-export const M0308_ADMIN: Account = { loginId: rc("m0308_admin").toLowerCase(), password: "Passw0rd!M0308" };
-const ADMIN_NAME = rc("M03-08試験管理者");
+export const M0308_ADMIN: Account = { loginId: rcFixed("m0308_admin").toLowerCase(), password: "Passw0rd!M0308" };
+const ADMIN_NAME = rcFixed("M03-08試験管理者");
 
 defineSeed("S-M03-08-ADM", async ({ browser, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {

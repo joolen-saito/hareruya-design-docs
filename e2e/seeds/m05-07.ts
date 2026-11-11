@@ -21,7 +21,7 @@ import { 受注IDの, 受注の対応状況を書き足す, 受注の配送方�
 import { 受注の値, 受注の日時, 受注の日時を書き足す } from "../db/m05_07_24";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { 商品を作って入庫する } from "../pages/admin/f04_setup";
@@ -34,7 +34,7 @@ import { 会員が商品を注文する } from "../pages/front/m05_front_order";
 import { markedMail, 本会員を作る } from "./f06-member";
 
 /** 開発環境に手動テスト用の同じログインIDのメンバーがあることがある（M03-26・M03-27 で起きた）ので、実行の印つきで作る */
-export const M0507_ADMIN: Account = { loginId: rc("m0507admin").toLowerCase(), password: "Passw0rd!M0507" };
+export const M0507_ADMIN: Account = { loginId: rcFixed("m0507admin").toLowerCase(), password: "Passw0rd!M0507" };
 const PW = "Passw0rd!M0507C";
 
 defineSeed("S-M05-07-ADM", async ({ browser, notes, seed }) => {
@@ -42,7 +42,7 @@ defineSeed("S-M05-07-ADM", async ({ browser, notes, seed }) => {
   const id = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     return ensureMember(page, {
-      名前: rc("M05-07試験管理者"), 所属店舗: shop, ログインID: M0507_ADMIN.loginId, メールアドレス: `${M0507_ADMIN.loginId}@example.test`,
+      名前: rcFixed("M05-07試験管理者"), 所属店舗: shop, ログインID: M0507_ADMIN.loginId, メールアドレス: `${M0507_ADMIN.loginId}@example.test`,
       パスワード: M0507_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: shop, 編集可能店舗: [shop],
     });
   });

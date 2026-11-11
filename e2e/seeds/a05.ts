@@ -25,7 +25,7 @@ import { SETUP_ADMIN } from "../config/env";
 import { 受注IDの } from "../db/m05_09";
 import { 受注を印刷待ちにする, 印刷待ちの定め, 店舗がある, 店舗の受注の数, 店舗の店頭注文番号の数, 店舗の店名, 店舗の番号札, 対応状況の番号, 試験店舗の番号札を消す } from "../db/a05";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { 商品を作って入庫する } from "../pages/admin/f04_setup";
@@ -154,13 +154,13 @@ defineSeed("S-A05-03-EMPTY-005", { needs: ["S-A05-03-ENV"] }, async ({ browser, 
 });
 
 /** 開発環境に手動テスト用の同じログインIDのメンバーがありうるので、ログインID・名前に実行の印を付けて作る */
-export const A0503_ADMIN: Account = { loginId: rc("a0503_admin").toLowerCase(), password: "Passw0rd!A0503" };
+export const A0503_ADMIN: Account = { loginId: rcFixed("a0503_admin").toLowerCase(), password: "Passw0rd!A0503" };
 defineSeed("S-A05-03-ADM", { needs: ["S-A05-03-CHAIN-003"] }, async ({ browser, seed }) => {
   const 店舗ID = 試験店舗の店舗ID(連鎖試験店.店名);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     await ensureMemberByStoreIds(page, {
-      名前: rc("A05-03試験管理者"), ログインID: A0503_ADMIN.loginId, メールアドレス: `${A0503_ADMIN.loginId}@example.test`, パスワード: A0503_ADMIN.password,
+      名前: rcFixed("A05-03試験管理者"), ログインID: A0503_ADMIN.loginId, メールアドレス: `${A0503_ADMIN.loginId}@example.test`, パスワード: A0503_ADMIN.password,
       権限: "システム管理者", 所属店舗ID: 店舗ID, デフォルト検索表示店舗ID: 店舗ID, 編集可能店舗ID: [店舗ID],
     });
   });

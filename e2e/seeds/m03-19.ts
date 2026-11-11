@@ -9,16 +9,16 @@
  *   UTF-8・カンマを前提とするケースは、そのまま流す。
  */
 import { 部門の一覧, 部門の値 } from "../db/m03_19";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account } from "../lib/session";
 import { ensureM05Admin } from "../pages/admin/m05_admin_member";
 
 /** 開発環境に手動テスト用の同じログインIDのメンバーがあることがある（M03-26・M03-27 で起きた）ので、実行の印つきで作る */
-export const M0319_ADMIN: Account = { loginId: rc("m0319_admin").toLowerCase(), password: "Passw0rd!M0319" };
+export const M0319_ADMIN: Account = { loginId: rcFixed("m0319_admin").toLowerCase(), password: "Passw0rd!M0319" };
 
 defineSeed("S-M03-19-ADM", async ({ browser, seed }) => {
-  await ensureM05Admin(browser, { 名前: rc("M03-19試験管理者"), account: M0319_ADMIN, メール: `${M0319_ADMIN.loginId}@example.test` });
+  await ensureM05Admin(browser, { 名前: rcFixed("M03-19試験管理者"), account: M0319_ADMIN, メール: `${M0319_ADMIN.loginId}@example.test` });
   reportSeedIssue(seed.シードID, "商品管理を操作できる「システム管理者」で作った（所属店舗は本店）。ログインID・名前に実行の印を付けた（開発環境に同じログインIDのメンバーがありうるため）");
 });
 

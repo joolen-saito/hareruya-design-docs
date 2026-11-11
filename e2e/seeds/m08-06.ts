@@ -14,14 +14,14 @@
 import { Browser } from "@playwright/test";
 import { ポイント種別, ポイント履歴, ポイント履歴を足す, ポイント残高, ポイント残高を設定する, 会員があるか, 選手情報ID, 足す履歴 } from "../db/m08_05_07";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account } from "../lib/session";
 import { 会員が1点注文する, 会員を作る, 控える, 試験管理者を用意する } from "./m08-05-07-common";
 
-export const M0806_ADMIN: Account = { loginId: rc("m0806_admin").toLowerCase(), password: "Passw0rd!M0806" };
+export const M0806_ADMIN: Account = { loginId: rcFixed("m0806_admin").toLowerCase(), password: "Passw0rd!M0806" };
 
-defineSeed("S-M08-06-ADM", async ({ browser }) => { await 試験管理者を用意する(browser, rc("M08-06試験管理者"), M0806_ADMIN); });
+defineSeed("S-M08-06-ADM", async ({ browser }) => { await 試験管理者を用意する(browser, rcFixed("M08-06試験管理者"), M0806_ADMIN); });
 
 defineSeed("S-M08-06-POINT-TYPE", async ({ seed }) => {
   const t = ポイント種別();

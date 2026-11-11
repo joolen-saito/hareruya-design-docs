@@ -33,7 +33,7 @@ import { Page } from "@playwright/test";
 import { CASEGEN_DIR, REPO_ROOT, SETUP_ADMIN, STATE_DIR } from "../config/env";
 import { CSV入出力設定 } from "../lib/app_config";
 import { getSeed } from "../lib/catalog";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { DepartmentPage } from "../pages/admin/m03_18_department";
@@ -44,9 +44,9 @@ import { onlyProductClassIdOf, SectionUpdateCsvPage, 取込ファイル } from "
 import { ensureMember } from "../pages/admin/member";
 
 /** 開発環境に同じログインIDの試験管理者（だれの回で作られたか分からない）があるので、ログインID・名前に実行の印を付けて作る（M03-26 などと同じ） */
-export const M0335_ADMIN: Account = { loginId: rc("m0335_admin").toLowerCase(), password: "Passw0rd!M0335" };
-export const M0335L_ADMIN: Account = { loginId: rc("m0335l_admin").toLowerCase(), password: "Passw0rd!M0335L" };
-export const M0335_ADMIN_NAME = rc("M03-35試験管理者");
+export const M0335_ADMIN: Account = { loginId: rcFixed("m0335_admin").toLowerCase(), password: "Passw0rd!M0335" };
+export const M0335L_ADMIN: Account = { loginId: rcFixed("m0335l_admin").toLowerCase(), password: "Passw0rd!M0335L" };
+export const M0335_ADMIN_NAME = rcFixed("M03-35試験管理者");
 
 // ---- ファイル ----
 
@@ -157,7 +157,7 @@ defineSeed("S-M03-35-ADM", async ({ browser }) => {
 });
 
 defineSeed("S-M03-35-L-ADM", async ({ browser }) => {
-  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, rc("M03-35連携試験管理者"), M0335L_ADMIN, `${M0335L_ADMIN.loginId}@example.test`));
+  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, rcFixed("M03-35連携試験管理者"), M0335L_ADMIN, `${M0335L_ADMIN.loginId}@example.test`));
   await withAdminSession(browser, M0335L_ADMIN, async (page) => {
     await expectCanOpen(page);
     await new DepartmentPage(page).openNew();

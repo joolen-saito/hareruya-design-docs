@@ -16,7 +16,7 @@ import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { 会員があるか, 既定の配送先ID, 既定の配送先を消す, 国がある, 都道府県がある, 配送先があるか, 配送先を設定する } from "../db/m08_09";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { expectSaved } from "../pages/admin/common";
@@ -24,7 +24,7 @@ import { DeliveryEditPage, 配送先の入力 } from "../pages/admin/m08_09_deli
 import { ensureMember } from "../pages/admin/member";
 import { 本会員を作る } from "./f06-member";
 
-export const M0809_ADMIN: Account = { loginId: rc("m0809_admin").toLowerCase(), password: "Passw0rd!M0809" };
+export const M0809_ADMIN: Account = { loginId: rcFixed("m0809_admin").toLowerCase(), password: "Passw0rd!M0809" };
 /** 正本のマスタの名前を、開発環境のマスタの名前で読み替えた値 */
 export const 国名 = { Japan: "Japan", 米国: "United States" } as const;
 export const 海外 = "日本国外";
@@ -38,7 +38,7 @@ defineSeed("S-M08-09-ADM", async ({ browser }) => {
       .map((o) => o as HTMLOptionElement).filter((o) => o.value !== "").map((o) => o.textContent?.trim() ?? "").filter(Boolean));
     if (stores.length === 0) throw new Error("S-M08-09-ADM: メンバーに割り当てられる店舗が画面に無い");
     await ensureMember(page, {
-      名前: rc("M08-09試験管理者"), 所属店舗: stores[0], ログインID: M0809_ADMIN.loginId, メールアドレス: `${M0809_ADMIN.loginId}@example.test`,
+      名前: rcFixed("M08-09試験管理者"), 所属店舗: stores[0], ログインID: M0809_ADMIN.loginId, メールアドレス: `${M0809_ADMIN.loginId}@example.test`,
       パスワード: M0809_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: stores[0], 編集可能店舗: [stores[0]],
     });
   });

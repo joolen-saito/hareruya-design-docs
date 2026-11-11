@@ -25,7 +25,7 @@ import { CSV入出力設定 } from "../lib/app_config";
 import { getSeed } from "../lib/catalog";
 import { available as dbAvailable } from "../lib/db";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
@@ -35,7 +35,7 @@ import { HighPriceCsvUploadPage, registerHighPriceClass, 取込画面の種類, 
 import { ensureMember } from "../pages/admin/member";
 
 /** 開発環境に同じログインIDの試験管理者（だれの回で作られたか分からない）があるので、ログインID・名前に実行の印を付けて作る（M03-26 などと同じ） */
-export const M0332_ADMIN: Account = { loginId: rc("m0332_admin").toLowerCase(), password: "Passw0rd!M0332" };
+export const M0332_ADMIN: Account = { loginId: rcFixed("m0332_admin").toLowerCase(), password: "Passw0rd!M0332" };
 
 /** 正本は所属店舗を指定しない。管理画面で利用可能な店舗を1つ選び、商品管理を操作できるシステム管理者の権限を付ける（M03-29 と同じ作り方） */
 export async function createTestAdmin(page: Page, seedId: string, 名前: string, account: Account): Promise<void> {
@@ -54,7 +54,7 @@ export async function createTestAdmin(page: Page, seedId: string, 名前: string
 }
 
 defineSeed("S-M03-32-ADM", async ({ browser, seed }) => {
-  await withAdminSession(browser, SETUP_ADMIN, (page) => createTestAdmin(page, seed.シードID, rc("M03-32試験管理者"), M0332_ADMIN));
+  await withAdminSession(browser, SETUP_ADMIN, (page) => createTestAdmin(page, seed.シードID, rcFixed("M03-32試験管理者"), M0332_ADMIN));
   reportSeedIssue(seed.シードID, "管理者ID 33200001 は画面のメンバー登録で指定できない（画面が振る）。ログインID・パスワード・稼働中は正本どおり");
   // ログインでき（稼働中・ロックなし）、高額商品価格変更CSVアップロード画面を開けることを、ケースとは別のセッションで確かめる
   await withAdminSession(browser, M0332_ADMIN, async (page) => {

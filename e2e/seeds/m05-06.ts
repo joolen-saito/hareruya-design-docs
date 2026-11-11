@@ -27,7 +27,7 @@ import { 受注IDの, 受注の配送先ID, 受注日時を書き足す } from "
 import { 受注の対応状況名 } from "../db/m05_22";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { 商品を作って入庫する } from "../pages/admin/f04_setup";
@@ -38,8 +38,8 @@ import { 会員が商品を注文する } from "../pages/front/m05_front_order";
 import { markedMail, 本会員を作る } from "./f06-member";
 
 /** 開発環境に手動テスト用の同じログインIDのメンバーがあることがあるので、実行の印つきで作る */
-export const M0506_ADMIN: Account = { loginId: rc("m0506_admin").toLowerCase(), password: "Passw0rd!M0506" };
-export const M0506RE_ADMIN: Account = { loginId: rc("m0506re_admin").toLowerCase(), password: "Passw0rd-M0506RE" };
+export const M0506_ADMIN: Account = { loginId: rcFixed("m0506_admin").toLowerCase(), password: "Passw0rd!M0506" };
+export const M0506RE_ADMIN: Account = { loginId: rcFixed("m0506re_admin").toLowerCase(), password: "Passw0rd-M0506RE" };
 const PW = "Passw0rd!M0506C";
 
 /** テンプレートの読み替え（開発環境に既にある手動送信用のテンプレートの番号） */
@@ -47,11 +47,11 @@ export const テンプレの読み替え = { テンプレA: "101", テンプレB
 const テンプレの名前 = { テンプレA: "M0506テンプレA", テンプレB: "M0506テンプレB", 注文者名なし: "M0506注文者名なし", RE連携: "M0506RE連携テンプレ" } as const;
 
 defineSeed("S-M05-06-ADM", async ({ browser, seed }) => {
-  await ensureM05Admin(browser, { 名前: rc("M05-06管理者"), account: M0506_ADMIN, メール: `${M0506_ADMIN.loginId}@example.test` });
+  await ensureM05Admin(browser, { 名前: rcFixed("M05-06管理者"), account: M0506_ADMIN, メール: `${M0506_ADMIN.loginId}@example.test` });
   reportSeedIssue(seed.シードID, "権限は受注管理・メール管理を操作できる「システム管理者」、所属店舗・既定の検索店舗は本店。ログインID・名前に実行の印を付けた（開発環境に同じログインIDのメンバーがありうるため）。支店・スマレジ受注の参照は、支店・スマレジの受注を作らないので確かめていない");
 });
 defineSeed("S-M05-06-RE-ADM", async ({ browser, seed }) => {
-  await ensureM05Admin(browser, { 名前: rc("M05-06RE管理者"), account: M0506RE_ADMIN, メール: `${M0506RE_ADMIN.loginId}@example.test` });
+  await ensureM05Admin(browser, { 名前: rcFixed("M05-06RE管理者"), account: M0506RE_ADMIN, メール: `${M0506RE_ADMIN.loginId}@example.test` });
   reportSeedIssue(seed.シードID, "権限は受注管理・メール管理・会員管理を操作できる「システム管理者」、所属店舗は本店。ログインID・名前に実行の印を付けた");
 });
 

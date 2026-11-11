@@ -17,15 +17,15 @@
 import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { Notes } from "../lib/notes";
-import { rc, RUN_MARK } from "../lib/run_marker";
+import { rc, RUN_MARK, rcFixed } from "../lib/run_marker";
 import { defineSeed } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { ensureM08Admin } from "../pages/admin/m08_common";
 import { M0813BlacklistPage } from "../pages/admin/m08_13_blacklist";
 import { 自分の行のキーワードを書き換える } from "../db/m08_13";
 
-export const M0813_ADMIN: Account = { loginId: rc("m0813_admin").toLowerCase(), password: "Passw0rd!M0813" };
-defineSeed("S-M08-13-ADM", async ({ browser }) => { await ensureM08Admin(browser, rc("M08-13試験管理者"), M0813_ADMIN); });
+export const M0813_ADMIN: Account = { loginId: rcFixed("m0813_admin").toLowerCase(), password: "Passw0rd!M0813" };
+defineSeed("S-M08-13-ADM", async ({ browser }) => { await ensureM08Admin(browser, rcFixed("M08-13試験管理者"), M0813_ADMIN); });
 
 /** ブラックリスト項目（正本: 1=氏名・2=電話番号・3=住所）。開発環境の初期データを確かめるだけ */
 export const ブラックリスト項目 = [{ 値: "1", 表示: "氏名" }, { 値: "2", 表示: "電話番号" }, { 値: "3", 表示: "住所" }];

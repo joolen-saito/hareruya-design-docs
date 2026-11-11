@@ -8,7 +8,7 @@
 import { expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { CSV入出力設定 } from "../lib/app_config";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { ensureMember } from "../pages/admin/member";
@@ -16,8 +16,8 @@ import { CsvFile } from "../pages/admin/m03_38_product_status_csv";
 import { ShelfNumberCsvScreen } from "../pages/admin/m03_40_shelf_number_csv";
 
 /** 開発環境に同じログインIDの試験管理者（だれの回で作られたか分からない）があるので、ログインID・名前に実行の印を付けて作る（M03-26 などと同じ） */
-export const M0340_ADMIN: Account = { loginId: rc("m0340_admin").toLowerCase(), password: "Passw0rd!M0340" };
-export const M0340_ADMIN_NAME = rc("M03-40試験管理者");
+export const M0340_ADMIN: Account = { loginId: rcFixed("m0340_admin").toLowerCase(), password: "Passw0rd!M0340" };
+export const M0340_ADMIN_NAME = rcFixed("M03-40試験管理者");
 
 /** 棚番号更新CSVの正規の見出し（設計書 M03-40 の棚番号更新CSVフォーマット 識別ID 1・2。L0108・L0109） */
 export const SHELF_CSV_HEADERS = ["商品コード", "棚番号名称"];
