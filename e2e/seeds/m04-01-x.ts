@@ -3,7 +3,7 @@
  * 実施不可の見直し（not_runnable_seed_recheck2.tsv。依頼者決定 2026-11-10「E2E が作った行だけ DB に書いてよい」）で流せる見込みになったケースのもの。
  *
  * 作り方:
- * - S-M04-01-MASTER（共有可・1回の起動で一度）: 店舗（東京本店・大阪支店は S-M04-01-ADM-ALL と同じ店舗。上野閉店は登録してから閉店にする）、
+ * - S-M04-01-MASTER（共有可・1回の起動で一度）: 店舗（東京本店・大阪支店は S-M04-01-ADM-ALL と同じ店舗。上野閉店（M04-01）は閉店の店舗として1度だけ登録して使い回す）、
  *   カテゴリ（グッズの親カテゴリ＝番号2の下に「子カテゴリ作成」）・カードセット・タグ・部門・略称タグ・売上分析タグを画面で登録する。
  *   棚番号「A-01」は名前の入力チェック（英大文字-数字3桁）を通らないので、チェックを通る名前で画面から登録し、その E2E の棚番号の名前だけ DB で書き換える。
  *   表示件数の10件・12000件は、マスタデータ管理の最大ページ表示にあることを DB の参照で確かめる（無ければ止める。全員が使うマスタなので足さない）。
@@ -14,7 +14,7 @@
  * シードでの解釈（記録にも書く）:
  * - 決め打ちの名前・商品コードには実行の印を付ける（依頼者決定 2026-10-28「案A」）。ケースが検索に使う先頭の部分（例「M0401-AUTH-029」）に印を付け、
  *   その後ろに正本の残り（例「-01」）を続ける（前の実行の商品・マスタを検索で拾わないため）。ケースの文の同じ値も、同じ対応で読む（コード()）。
- * - 東京本店・大阪支店は印を付けない（S-M04-01-ADM-ALL と同じ。期待結果が店名そのものを見る）。上野閉店・マスタの名前は印を付ける。
+ * - 東京本店・大阪支店は印を付けない（S-M04-01-ADM-ALL と同じ。期待結果が店名そのものを見る）。上野閉店は決まった名前「上野閉店（M04-01）」（店舗は1度だけ作る決まり）。マスタの名前は印を付ける。
  * - シード表が在庫を定めない商品（件数・ページング・CSV の比較用など）は在庫を入れない（在庫0の行を残す）。
  */
 import { Browser, Page } from "@playwright/test";
@@ -37,7 +37,8 @@ import { openProductEditByCode } from "../pages/admin/m03_23_seed_products";
 import { addClass, openClassList } from "../pages/admin/m03_30_products";
 import { searchStockByCode } from "../pages/admin/m04_02_rc_stock";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { createStore, findOpenStoreId, M0424StoreInput } from "../pages/admin/m04_24_store";
+import { M0424StoreInput } from "../pages/admin/m04_24_store";
+import { ensureClosedStore } from "../pages/admin/m04_31_inventory_plan";
 import { ensureCardset, GOODS_ROOT_CATEGORY_ID } from "../pages/admin/product_masters";
 import { ShortTagPage } from "../pages/admin/short_tag";
 import { registerStockEdit, StockApprovalListPage } from "../pages/admin/stock_edit";
@@ -91,19 +92,11 @@ export const マスタ = { 上野閉店: "", カードゲームA: "", カード�
 let マスタあり = false;
 
 const UENO: M0424StoreInput = {
-  店名: rc("上野閉店"), 店名カナ: "ウエノヘイテン", 店名英語: "Ueno Closed", 支店URL: rc("m0401ueno").toLowerCase().replace(/[^a-z0-9]/g, ""), 店名略称3文字: "",
-  ショップ名略称: rc("上野閉店"), 会社名: "株式会社晴れる屋", 会社名カナ: "カブシキガイシャハレルヤ", 郵便番号: "110-0005", 都道府県: "東京都",
+  // 店舗は決まった名前で1度だけ作って使い回す（依頼者決定 2026-11-11）。実行の印は付けない
+  店名: "上野閉店（M04-01）", 店名カナ: "ウエノヘイテン", 店名英語: "Ueno Closed", 支店URL: "m0401uenoclosed", 店名略称3文字: "",
+  ショップ名略称: "上野閉店（M04-01）", 会社名: "株式会社晴れる屋", 会社名カナ: "カブシキガイシャハレルヤ", 郵便番号: "110-0005", 都道府県: "東京都",
   住所1: "台東区上野1-1-1", 住所2: "晴ビル12F", 電話番号: "03-0401-0003",
 };
-
-/** 店舗編集画面で閉店にして登録する */
-async function 閉店にする(page: Page, id: string, what: string): Promise<void> {
-  await page.goto(adminUrl(`/mall/tenant/detail/${id}`));
-  await page.waitForLoadState("load");
-  await page.getByLabel("閉店", { exact: true }).check();
-  await page.getByRole("button", { name: "登録", exact: true }).click();
-  await expectSaved(page, what);
-}
 
 /** 3文字の店名略称（英大文字）を、使われていないものから選ぶ */
 function 店名略称(): string {
@@ -122,13 +115,9 @@ defineSeed("S-M04-01-MASTER", { needs: ["S-M04-01-ADM-ALL"] }, async ({ browser,
   for (const n of ["10", "12000"]) if (!pm.includes(n)) throw new Error(`マスタデータ管理の最大ページ表示に ${n} が無い（全員が使うマスタなので足さない）`);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    // 上野閉店: 登録してから閉店にする（閉店の店舗は開店の店舗の検索で探せないので、実行ごとに印つきで作る）
-    if (!(await findOpenStoreId(page, UENO.店名, UENO.会社名))) {
-      try { await createStore(page, { ...UENO, 店名略称3文字: 店名略称() }); } catch (e) { issue(`上野閉店の登録で画面が成功を表示しなかった（${String(e).split("\n")[0].slice(0, 120)}）`); }
-    }
-    const ueno = await findOpenStoreId(page, UENO.店名, UENO.会社名);
+    // 上野閉店: 閉店の店舗として1度だけ登録し、2回目からは閉店も含めて探して使い回す（m04_31 の ensureClosedStore）
+    const ueno = await ensureClosedStore(page, { ...UENO, 店名略称3文字: 店名略称() }, issue);
     if (!ueno) throw new Error("上野閉店を登録できない");
-    await 閉店にする(page, ueno, "上野閉店を閉店にする");
     マスタ.上野閉店 = UENO.店名;
 
     // カテゴリ: グッズの親カテゴリ（番号2）の下に、子カテゴリとして2つ作る
