@@ -18,8 +18,10 @@ import { Account, adminUrl, hideDebugToolbar, loginAdmin } from "../../lib/sessi
 import {
   cancelModal, checkStockRows, chooseApprovalTarget, moveTransferListPath, inboundApprovalPath, InboundRequestPage, inboundRequestPath, moveCompletePath, MoveNewPage, moveInfo, moveNewPath, MoveTransferList, outboundApprovalPath, OutboundRequestPage,
   outboundRequestPath, pressApprove, transferApprovalPath, transferCompletePath, TransferNewPage, transferNewPath, pressReject, pressStockListAction, searchStock, setRejectReason, shownMoveId, stockListPath, topMessages, 在庫区分, 店, 店A, 店B,
-  承認者名, 作業者名, 所属A, printWindowFacts,
+  承認者名, 作業者名, 所属A, printWindowFacts, 入庫担当者名,
 } from "../../pages/admin/m04_09_move";
+import * as dbx from "../../db/m04_09_x";
+import { StockHistoryPage } from "../../pages/admin/m04_17_stock_history";
 import { M0409_APP, M0409_NOAUTH, M0409_OP, M0409_RCV } from "../../seeds/m04-09";
 
 /** ログインし、1つの操作の待ちを3分までにする（テスト全体の制限時間まで待ち続けない） */
@@ -2356,5 +2358,433 @@ caseTest("IT-M04-09-068", async ({ page, step, expected }) => {
     expect.soft(d["card_condition"], `状態（在庫検索一覧の「${ref.状態}」の略号）`).toBe(conditionCode(ref.状態));
     expect.soft(d["foil"], "Foil").not.toBe("");
     expect.soft(d["standard_price"], "基準価格").toMatch(/1,?000/);
+  });
+});
+
+// ---------------------------------------------------------------- 仕分け直し（recheck2）で流せる見込みになったもの（2026-11-11）
+// シードは、画面で作れない状態だけ E2E の行へ DB で書き足す（seeds/m04-09.ts の末尾・db/m04_09_x.ts）。
+
+/** 登録の前後で、DB の在庫移動・振替のうち、この商品コードの明細を持つものが1件増えたこと。増えた番号を返す */
+function addedMoveId(code: string, before: string[]): string {
+  const added = dbm.商品の在庫移動振替(code).filter((x) => !before.includes(x));
+  expect(added, `${code} の在庫移動・振替が1件登録される`).toHaveLength(1);
+  return added[0];
+}
+
+caseTest("IT-M04-09-023", async ({ page, step, expected }) => {
+  await login(page, M0409_OP);
+  const code = rc("M409-MOV-A-023");
+  const before = dbm.商品の在庫移動振替(code);
+  const histBefore = dbm.在庫変動履歴(code, 店A, "EC-CUBE").length;
+  const totalBefore = dbm.在庫(code, 店A, "EC-CUBE")?.総原価 ?? NaN;
+  let form: MoveNewPage | undefined;
+  let t0 = 0;
+  let t1 = 0;
+  await step(1, async () => { form = await openMoveNew(page, 店A, "EC-CUBE", [code]); });
+  await step(2, async () => {
+    await form!.chooseToStore(店B);
+    await form!.chooseToZone("EC-CUBE");
+    await form!.quantity(code).fill("3");
+    await form!.memo.fill("店舗間移動試験");
+  });
+  await step(3, async () => {
+    expect(await pressRegister(form!), "確認モーダルが出る").toBe(true);
+    t0 = Date.now();
+    await form!.confirmRegister();
+    t1 = Date.now();
+    const m = await topMessages(page);
+    note(`登録の結果: ${page.url()} 成功「${m.成功.join(" / ")}」 エラー「${m.エラー.join(" / ")}」`);
+  });
+  await step(4, async () => {
+    const ids = dbm.商品の在庫移動振替(code).filter((x) => !before.includes(x));
+    note(`DB: ${JSON.stringify(ids.map((i) => ({ 在庫移動振替: dbm.在庫移動振替(i), 登録日時: dbx.登録日時(i), 明細: dbx.明細の商品(i), ステータス変更履歴: dbm.ステータス変更履歴(i) })))}・在庫 ${JSON.stringify(dbm.在庫(code, 店A, "EC-CUBE"))}`);
+  });
+  await expected(async () => {
+    const id = addedMoveId(code, before);
+    const t = dbm.在庫移動振替(id)!;
+    expect.soft(t.移動タイプ, "在庫移動タイプ").toBe("在庫移動");
+    expect.soft([t.出庫元店舗, t.出庫元在庫区分, t.入庫先店舗, t.入庫先在庫区分], "出入庫店舗・区分").toEqual([店A, "EC-CUBE", 店B, "EC-CUBE"]);
+    expect.soft(t.メモ, "メモ").toBe("店舗間移動試験");
+    expect.soft(t.登録者, "登録者").toBe(作業者名);
+    expectOperationTime("登録日時", null, dbx.登録日時(id), t0, t1);
+    const lines = dbx.明細の商品(id);
+    expect.soft(lines.map((l) => [l.商品コード, l.商品名, l.基準価格, l.登録時在庫数, l.移動点数]), "明細（商品コード・商品名・基準価格・登録時在庫数・移動点数）")
+      .toEqual([[code, code, 1000, 10, 3]]);
+    expect.soft(dbm.ステータス変更履歴(id).length, "ステータス変更履歴が登録される").toBeGreaterThan(0);
+    const s = dbm.在庫(code, 店A, "EC-CUBE");
+    expect.soft(s?.在庫, "出庫元在庫数が10から7").toBe(7);
+    expect.soft((s?.総原価 ?? NaN) < totalBefore, `出庫元総原価が登録前（${totalBefore}）より減少（${s?.総原価}）`).toBe(true);
+    expect.soft(dbm.在庫変動履歴(code, 店A, "EC-CUBE").length, "在庫変動履歴が登録される").toBeGreaterThan(histBefore);
+  });
+});
+
+caseTest("IT-M04-09-030", async ({ page, step, expected }) => {
+  await login(page, M0409_OP);
+  const a = rc("M409-LOCK-A-030");
+  const b = rc("M409-LOCK-B-030");
+  const codes = [a, b].map((code) => ({ code, store: 店A, zone: "EC-CUBE" as 在庫区分 }));
+  // 事前準備③: 両商品を選んだ在庫移動初期登録画面を開いた状態で、DB から M409-LOCK-B-030 の在庫を0へ更新する（総原価は500のまま）
+  const form = await openMoveNew(page, 店A, "EC-CUBE", [a, b]);
+  dbx.在庫数と総原価を整える("IT-M04-09-030 事前準備③（登録直前に在庫を0へ）", b, 店A, "EC-CUBE", 0, 500);
+  const before = { 在庫: codes.map((c) => ({ code: c.code, 在庫: dbm.在庫(c.code, 店A, "EC-CUBE"), 履歴: dbm.在庫変動履歴(c.code, 店A, "EC-CUBE").length })), 移動: [a, b].map((c) => dbm.商品の在庫移動振替(c)) };
+  note(`登録直前のDB: ${JSON.stringify(before)}`);
+  await step(1, async () => {
+    await form.chooseToStore(店B);
+    await form.chooseToZone("EC-CUBE");
+    await form.quantity(a).fill("1");
+    await form.quantity(b).fill("1");
+  });
+  await step(2, async () => {
+    const modal = await pressRegister(form);
+    if (modal) await form.confirmRegister();
+    const m = await topMessages(page);
+    note(`登録を確定した結果: ${page.url()} 成功「${m.成功.join(" / ")}」 エラー「${m.エラー.join(" / ")}」`);
+  });
+  await step(3, async () => {
+    note(`DB: ${JSON.stringify({ 在庫: codes.map((c) => ({ code: c.code, 在庫: dbm.在庫(c.code, 店A, "EC-CUBE"), 履歴: dbm.在庫変動履歴(c.code, 店A, "EC-CUBE").length })), 移動: [a, b].map((c) => dbm.商品の在庫移動振替(c)) })}`);
+  });
+  await expected(async () => {
+    expect.soft(dbm.在庫(a, 店A, "EC-CUBE"), `${a} の在庫・総原価が登録直前のまま`).toEqual({ 在庫: 5, 総原価: 500 });
+    expect.soft(dbm.在庫(b, 店A, "EC-CUBE"), `${b} の在庫・総原価が登録直前のまま`).toEqual({ 在庫: 0, 総原価: 500 });
+    expect.soft([a, b].map((c) => dbm.商品の在庫移動振替(c)), "在庫移動情報・明細が登録されない").toEqual(before.移動);
+    expect.soft([a, b].map((c) => dbm.在庫変動履歴(c, 店A, "EC-CUBE").length), "在庫変動履歴が登録されない").toEqual(before.在庫.map((x) => x.履歴));
+  });
+});
+
+caseTest("IT-M04-09-055", async ({ page, notes, step, expected }) => {
+  await login(page, M0409_RCV);
+  const id = notes.get("〔在庫移動ID-M0409-055〕");
+  const codes = [rc("M409-MOV-A-055"), rc("M409-DIFF-NODEST"), rc("M409-DIFF-NOSOURCE")];
+  const before = dbm.明細(id);
+  await openViaList(page, id, inboundRequestPath(id));
+  const tryAdd = async (code: string) => {
+    try {
+      await addDiffProduct(page, code);
+    } catch (e) {
+      note(`${code} の差分商品追加: ${(e as Error).message.split("\n")[0]}`);
+      await page.keyboard.press("Escape").catch(() => undefined);
+    }
+    const m = await topMessages(page);
+    note(`${code} の差分商品追加の結果: ${page.url()} 成功「${m.成功.join(" / ")}」 エラー「${m.エラー.join(" / ")}」`);
+    if (!inboundRequestPath(id).test(new URL(page.url()).pathname)) await openViaList(page, id, inboundRequestPath(id));
+  };
+  await step(1, async () => { await tryAdd(codes[0]); });
+  await step(2, async () => { await tryAdd(codes[1]); });
+  await step(3, async () => { await tryAdd(codes[2]); });
+  await step(4, async () => { note(`DBの明細: 前 ${JSON.stringify(before)} → 後 ${JSON.stringify(dbm.明細(id))}`); });
+  await expected(async () => {
+    expect(dbm.明細(id), "3商品が差分商品として追加されない（明細が変わらない）").toEqual(before);
+  });
+});
+
+caseTest("IT-M04-09-077", async ({ page, step, expected }) => {
+  await login(page, M0409_OP);
+  const src = rc("M409-TR-A-077");
+  const dest = rc("M409-TR-TO-A-077");
+  const before = dbm.商品の在庫移動振替(src);
+  const histBefore = dbm.在庫変動履歴(src, 店A, "EC-CUBE").length;
+  let form: TransferNewPage | undefined;
+  let t0 = 0;
+  let t1 = 0;
+  await step(1, async () => {
+    form = await openTransferNew(page, [src]);
+    await form.dest(src).fill(dest);
+    await form.dest(src).blur();
+    await form.qty(src).fill("3");
+    await page.locator('[name="admin_stock_transfer_new[memo]"]').fill("振替登録試験");
+  });
+  await step(2, async () => {
+    await chooseApprovalTarget(page, "admin_stock_transfer_new", 所属A, [承認者名]);
+    t0 = Date.now();
+    const r = await form!.pressRegister();
+    t1 = Date.now();
+    const m = await topMessages(page);
+    note(`「登録」の結果: 画面が移ったか ${r.moved}・入力チェックで止まった項目 ${r.invalid.join(" / ") || "なし"}・${page.url()} エラー「${m.エラー.join(" / ")}」`);
+  });
+  await step(3, async () => {
+    const ids = dbm.商品の在庫移動振替(src).filter((x) => !before.includes(x));
+    note(`DB: ${JSON.stringify(ids.map((i) => ({ 在庫移動振替: dbm.在庫移動振替(i), 登録日時: dbx.登録日時(i), 明細: dbm.明細(i), 商品: dbx.明細の商品(i), ステータス変更履歴: dbm.ステータス変更履歴(i) })))}`);
+  });
+  await expected(async () => {
+    const id = addedMoveId(src, before);
+    expect.soft(id, "自動採番ID").toMatch(/^\d+$/);
+    const t = dbm.在庫移動振替(id)!;
+    expect.soft(t.移動タイプ, "移動タイプ").toBe("在庫振替");
+    expect.soft(t.ステータス, "ステータス").toBe("振替承認待ち");
+    expectOperationTime("登録日時", null, dbx.登録日時(id), t0, t1);
+    expectOperationTime("更新日時", null, t.更新日, t0, t1);
+    expect.soft([t.登録者, t.更新者], "登録者・更新者").toEqual([作業者名, 作業者名]);
+    expect.soft([t.出庫元店舗, t.出庫元在庫区分], "店舗・在庫区分").toEqual([店A, "EC-CUBE"]);
+    expect.soft(t.メモ, "メモ").toBe("振替登録試験");
+    const d = dbm.明細(id);
+    expect.soft(d.map((x) => [x.商品コード, x.振替先商品コード, x.移動点数]), "振替元・振替先の商品と振替点数").toEqual([[src, dest, 3]]);
+    expect.soft(dbx.明細の商品(id).map((x) => [x.商品名, x.基準価格, x.登録時在庫数]), "振替元の商品情報（商品名・基準価格・登録時在庫数）").toEqual([[src, 1000, 10]]);
+    const s = dbm.在庫(src, 店A, "EC-CUBE");
+    expect.soft(s?.在庫, "振替元在庫数が10から7").toBe(7);
+    expect.soft((s?.総原価 ?? NaN) < 1000, `振替元総原価が登録前（1000）より減少（${s?.総原価}）`).toBe(true);
+    expect.soft(dbm.在庫変動履歴(src, 店A, "EC-CUBE").length, "在庫変動履歴が登録される").toBeGreaterThan(histBefore);
+    expect.soft(dbm.ステータス変更履歴(id).length, "ステータス変更履歴が登録される").toBeGreaterThan(0);
+    expect.soft(transferApprovalPath(id).test(new URL(page.url()).pathname), `在庫振替承認画面へ移る（${page.url()}）`).toBe(true);
+  });
+});
+
+caseTest("IT-M04-09-079", async ({ page, notes, step, expected }) => {
+  await login(page, M0409_APP);
+  const id = notes.get("〔在庫振替ID-M0409-079〕");
+  let info: Record<string, string> = {};
+  let history: string[][] = [];
+  let notify = 0;
+  let reject: string[] = [];
+  let qty: string[] = [];
+  await step(1, async () => {
+    await page.goto(adminUrl(`/product/stock/transfer/${id}/approval`));
+    await page.waitForLoadState("load");
+    expect(transferApprovalPath(id).test(new URL(page.url()).pathname), `在庫振替承認画面が開く（${page.url()}）`).toBe(true);
+    info = await moveInfo(page);
+    history = await page.locator("#statusChangeHistory tbody tr").evaluateAll((trs) => trs.map((tr) => Array.from(tr.querySelectorAll("td")).map((td) => (td.textContent ?? "").replace(/\s+/g, " ").trim())));
+    notify = await page.locator('[id$="_approval_notification_target_members"], [id$="_approval_department"]').count();
+    reject = await page.locator("#rejectionReason textarea").evaluateAll((ns) => ns.map((n) => (n as HTMLTextAreaElement).value));
+    qty = (await page.locator("#stockTransferDetails tbody tr").evaluateAll((trs) => trs.map((tr) => {
+      const tds = tr.querySelectorAll("td");
+      return tds.length > 1 ? (tds[tds.length - 1].textContent ?? "").replace(/\s+/g, " ").trim() : "";
+    }))).filter(Boolean);
+    note(`在庫移動・振替情報: ${JSON.stringify(info)}・振替点数の欄 ${JSON.stringify(qty)}・却下理由の欄 ${JSON.stringify(reject)}・ステータス変更履歴の行: ${JSON.stringify(history)}・承認通知先の欄 ${notify} 個・DBの履歴 ${JSON.stringify(dbm.ステータス変更履歴(id))}`);
+  });
+  await expected(async () => {
+    expect.soft(info["ステータス"], "ステータス").toBe("振替承認待ち");
+    expect.soft(info["店舗"], "店舗").toBe(店A);
+    expect.soft(info["在庫区分"], "在庫区分").toBe("EC-CUBE");
+    expect.soft(qty, "振替点数").toEqual(["3"]);
+    expect.soft(reject, "却下理由（なし）の欄が表示される").toEqual([""]);
+    expect.soft(history.length, "ステータス変更履歴が2件表示される").toBe(2);
+    const dbHist = dbm.ステータス変更履歴(id).map((h) => h.更新日).sort().reverse();
+    note(`DBの更新日（降順）: ${dbHist.join(" / ")}`);
+    const shown = history.map((r) => r.find((c) => /\d{4}[/-]\d{1,2}[/-]\d{1,2}/.test(c)) ?? "");
+    const asNum = shown.map((x) => Date.parse(x.replace(/\//g, "-").replace(" ", "T")));
+    expect.soft(asNum.length === 2 && asNum[0] > asNum[1], `履歴が更新日の降順（表示: ${shown.join(" / ")}）`).toBe(true);
+    expect.soft(notify, "承認通知先が表示されない").toBe(0);
+  });
+});
+
+/** 画面のすべての「見出し（label）→ 値（.form-control-plaintext）」（在庫移動・振替情報と在庫移動情報の両方。同じ見出しは先のもの） */
+async function allInfo(page: Page): Promise<Record<string, string>> {
+  return page.locator(".c-primaryCol").first().evaluate((root) => {
+    const out: Record<string, string> = {};
+    for (const label of Array.from(root.querySelectorAll("label"))) {
+      const key = (label.textContent ?? "").replace(/\s+/g, " ").trim();
+      const value = label.closest(".row")?.querySelector(".form-control-plaintext");
+      if (key && value && !(key in out)) out[key] = (value.textContent ?? "").replace(/\s+/g, " ").trim();
+    }
+    return out;
+  });
+}
+
+caseTest("IT-M04-09-104", async ({ page, notes, step, expected }) => {
+  await login(page, M0409_OP);
+  const id = notes.get("〔在庫移動ID-M0409-104〕");
+  let text = "";
+  let info: Record<string, string> = {};
+  await step(1, async () => { await new MoveTransferList(page).searchById(id); });
+  await step(2, async () => {
+    await new MoveTransferList(page).openFromRow(id);
+    expect(moveCompletePath(id).test(new URL(page.url()).pathname), `在庫移動完了画面が開く（${page.url()}）`).toBe(true);
+  });
+  await step(3, async () => {
+    info = await allInfo(page);
+    text = clean(await page.locator(".c-primaryCol").first().innerText());
+    note(`在庫移動・振替情報: ${JSON.stringify(info)}・DB ${JSON.stringify({ ...dbm.在庫移動振替(id), ...dbx.移動の日時と送り状(id) })}`);
+  });
+  await expected(async () => {
+    const want: [string, RegExp][] = [
+      ["出庫承認日", /2026[/-]0?3[/-]0?2 10:00(:00)?/], ["出庫承認者", new RegExp(`^${承認者名}$`)],
+      ["入庫承認日", /2026[/-]0?3[/-]0?3 11:00(:00)?/], ["入庫承認者", new RegExp(`^${入庫担当者名}$`)],
+      ["出庫日時", /2026[/-]0?3[/-]0?2 15:00(:00)?/], ["入庫日時", /2026[/-]0?3[/-]0?3 10:30(:00)?/], ["送り状No.", /^INV-M0409-103$/],
+    ];
+    for (const [k, re] of want) {
+      const key = Object.keys(info).find((x) => x === k) ?? Object.keys(info).find((x) => x.startsWith(k.replace(/\.$/, "")));
+      expect.soft(key ? info[key] : `（「${k}」の欄が無い。画面の文: ${text}）`, k).toMatch(re);
+    }
+  });
+});
+
+caseTest("IT-M04-09-112", async ({ page, notes, step, expected }) => {
+  await login(page, M0409_RCV);
+  const id = notes.get("〔在庫移動ID-M0409-112〕");
+  const before = { 在庫移動振替: dbm.在庫移動振替(id), 明細: dbm.明細(id), 履歴: dbm.ステータス変更履歴(id) };
+  await step(1, async () => { await openViaList(page, id, inboundRequestPath(id)); });
+  await step(2, async () => { await chooseApprovalTarget(page, "admin_stock_move_inbound_approval_request", "", [承認者名]); });
+  await step(3, async () => {
+    await page.locator("#stock_move_inbound_approval_request_submit_btn").click();
+    const modal = page.locator("#stockMoveInboundConfirmModal");
+    await expect(modal, "承認申請の確認モーダル").toBeVisible();
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }), modal.locator('button[type="submit"]').click()]);
+    const m = await topMessages(page);
+    note(`承認申請の結果: ${page.url()} 成功「${m.成功.join(" / ")}」 エラー「${m.エラー.join(" / ")}」`);
+  });
+  await step(4, async () => { note(`DB: 前 ${JSON.stringify(before)} → 後 ${JSON.stringify({ 在庫移動振替: dbm.在庫移動振替(id), 明細: dbm.明細(id), 履歴: dbm.ステータス変更履歴(id) })}`); });
+  await expected(async () => {
+    const t = dbm.在庫移動振替(id)!;
+    expect.soft(t.ステータス, "ステータス").toBe("入庫承認待ち");
+    // 事前準備の出庫承認者は空。シードの移動中までの操作（出庫承認・在庫移動指示）を M04-09承認者 が行ったので、その前からある履歴の更新者は除き、
+    // 承認申請で変わった項目・増えた履歴に M04-09承認者 が入っていないことを確かめる（記録の解釈）
+    const b = before.在庫移動振替 as unknown as Record<string, string | null>;
+    const changed = Object.entries(t as unknown as Record<string, string | null>).filter(([k, v]) => b?.[k] !== v);
+    note(`承認申請で変わった在庫移動情報の項目: ${JSON.stringify(changed)}`);
+    expect.soft(changed.filter(([, v]) => v === 承認者名), "在庫移動情報に承認通知先のメンバーが保存されない").toEqual([]);
+    expect.soft(Object.values(t).filter((v) => v === 承認者名), "在庫移動情報のどの項目にも M04-09承認者 が無い").toEqual([]);
+    expect.soft(JSON.stringify(dbm.明細(id)), "明細").not.toContain(承認者名);
+    const added = dbm.ステータス変更履歴(id).slice(before.履歴.length);
+    expect.soft(added.length, "ステータス変更履歴が増える").toBeGreaterThan(0);
+    expect.soft(added.filter((h) => h.更新者 === 承認者名), "増えたステータス変更履歴に M04-09承認者 が無い").toEqual([]);
+  });
+});
+
+caseTest("IT-M04-09-120", async ({ page, notes, step, expected }) => {
+  await login(page, M0409_APP);
+  const id = notes.get("〔在庫移動ID-M0409-120〕");
+  const code = rc("M0409-120-A");
+  const before = dbm.在庫変動履歴(code, 店A, "EC-CUBE");
+  note(`操作の前の在庫変動履歴: ${JSON.stringify(before)}`);
+  await step(1, async () => { await openOutboundApproval(page, id); });
+  await step(2, async () => {
+    await pressApprove(page, "outbound_approval_approve_btn");
+    const m = await topMessages(page);
+    note(`承認の結果: ${page.url()} 成功「${m.成功.join(" / ")}」 エラー「${m.エラー.join(" / ")}」`);
+  });
+  await step(3, async () => { note(`増えた在庫変動履歴: ${JSON.stringify(dbm.在庫変動履歴(code, 店A, "EC-CUBE").slice(before.length))}`); });
+  await expected(async () => {
+    expect.soft(before.map((h) => h.区分), "事前準備: 在庫変動履歴は登録時の在庫移動(減算)1件だけ").toEqual(["在庫移動(減算)"]);
+    const added = dbm.在庫変動履歴(code, 店A, "EC-CUBE").slice(before.length);
+    const plus = added.filter((h) => h.区分 === "欠品加算(移動)");
+    const minus = added.filter((h) => h.区分 === "欠品減算(移動)");
+    expect(plus.length, `欠品加算（移動）の履歴が1件（増えた履歴の区分: ${added.map((h) => h.区分).join("・")}）`).toBe(1);
+    expect(minus.length, "欠品減算（移動）の履歴が1件").toBe(1);
+    expect.soft([plus[0].増減数, plus[0].仕入総価格, plus[0].変更前在庫, plus[0].変更後在庫, plus[0].変更前総原価, plus[0].変更後総原価], "欠品加算（増減数・仕入総価格・在庫・総原価）").toEqual([1, 769, 10, 11, 7692, 8461]);
+    expect.soft(plus[0].理由, "欠品加算の理由").toBe(`欠品による加算 在庫移動振替ID：${id}`);
+    expect.soft([minus[0].増減数, minus[0].変更後在庫, minus[0].変更後総原価], "欠品減算（増減数・変更後在庫・変更後総原価）").toEqual([-1, 10, 7692]);
+    expect.soft(minus[0].理由, "欠品減算の理由").toBe(`欠品による減算 在庫移動振替ID：${id}`);
+    expect.soft([plus[0].履歴登録元ID, minus[0].履歴登録元ID], "履歴登録元ID").toEqual([id, id]);
+  });
+});
+
+caseTest("IT-M04-09-121", async ({ page, notes, step, expected }) => {
+  await login(page, M0409_APP);
+  const id = notes.get("〔在庫移動ID-M0409-121〕");
+  const code = rc("M0409-121-A");
+  await step(1, async () => { await openOutboundApproval(page, id); });
+  await step(2, async () => {
+    await pressApprove(page, "outbound_approval_approve_btn");
+    const m = await topMessages(page);
+    note(`承認の結果: ${page.url()} 成功「${m.成功.join(" / ")}」 エラー「${m.エラー.join(" / ")}」・ステータス ${dbm.在庫移動振替(id)?.ステータス}`);
+  });
+  await step(3, async () => { note(`DBの在庫: ${JSON.stringify(dbm.在庫(code, 店A, "EC-CUBE"))}`); });
+  await expected(async () => {
+    expect(dbm.在庫(code, 店A, "EC-CUBE"), "出庫元の在庫数・総原価").toEqual({ 在庫: 10, 総原価: 7692 });
+  });
+});
+
+caseTest("IT-M04-09-129", async ({ page, step, expected }) => {
+  await login(page, M0409_OP);
+  const code = rc("M0409-129-A");
+  const before = dbm.商品の在庫移動振替(code);
+  const histBefore = dbm.在庫変動履歴(code, 店A, "EC-CUBE").length;
+  let form: MoveNewPage | undefined;
+  await step(1, async () => {
+    await searchStock(page, 店A, "EC-CUBE", code);
+    await checkStockRows(page, [code], 店A, "EC-CUBE");
+  });
+  await step(2, async () => {
+    const r = await pressStockListAction(page, "在庫移動登録", moveNewPath);
+    expect(r.moved, `在庫移動初期登録画面へ移る（ポップアップ: ${r.dialogs.join(" / ")}）`).toBe(true);
+    form = new MoveNewPage(page);
+    await form.ready();
+  });
+  await step(3, async () => {
+    await form!.chooseToStore(店B);
+    await form!.chooseToZone("EC-CUBE");
+    await form!.quantity(code).fill("3");
+  });
+  await step(4, async () => {
+    expect(await pressRegister(form!), "確認モーダルが出る").toBe(true);
+    await form!.confirmRegister();
+  });
+  let id = "";
+  await step(5, async () => { id = dbm.商品の在庫移動振替(code).filter((x) => !before.includes(x)).join(","); note(`登録された在庫移動・振替ID: ${id || "なし"}`); });
+  await step(6, async () => { note(`出庫元の在庫変動履歴: ${JSON.stringify(dbm.在庫変動履歴(code, 店A, "EC-CUBE"))}`); });
+  await expected(async () => {
+    expect(id, "採番された在庫移動・振替ID（1件）").toMatch(/^\d+$/);
+    const h = dbm.在庫変動履歴(code, 店A, "EC-CUBE").slice(histBefore);
+    expect(h.map((x) => x.区分), "出庫元に在庫移動(減算)の履歴が1件").toEqual(["在庫移動(減算)"]);
+    expect.soft([h[0].変更前在庫, h[0].変更後在庫, h[0].増減数, h[0].変更前総原価, h[0].変更後総原価], "変更前在庫・変更後在庫・増減数・変更前総原価・変更後総原価").toEqual([10, 7, -3, 1000, 700]);
+    expect.soft(h[0].履歴登録元ID, "履歴登録元ID").toBe(id);
+    for (const w of ["在庫移動による減算", `${店A}から${店B}`, id]) expect.soft(h[0].理由, `理由に「${w}」`).toContain(w);
+  });
+});
+
+caseTest("IT-M04-09-134", async ({ page, step, expected }) => {
+  await login(page, M0409_OP);
+  const src = rc("M0409-134-A");
+  const dest = rc("M0409-134-B");
+  const before = dbm.商品の在庫移動振替(src);
+  const histBefore = dbm.在庫変動履歴(src, 店A, "EC-CUBE").length;
+  let form: TransferNewPage | undefined;
+  await step(1, async () => {
+    await searchStock(page, 店A, "EC-CUBE", src);
+    await checkStockRows(page, [src], 店A, "EC-CUBE");
+  });
+  await step(2, async () => {
+    const r = await pressStockListAction(page, "在庫振替登録", transferNewPath);
+    expect(r.moved, `在庫振替初期登録画面へ移る（ポップアップ: ${r.dialogs.join(" / ")}）`).toBe(true);
+    form = new TransferNewPage(page);
+    await form.ready();
+  });
+  await step(3, async () => {
+    await form!.dest(src).fill(dest);
+    await form!.dest(src).blur();
+    await form!.qty(src).fill("3");
+    await chooseApprovalTarget(page, "admin_stock_transfer_new", 所属A, [承認者名]);
+  });
+  await step(4, async () => {
+    const r = await form!.pressRegister();
+    const m = await topMessages(page);
+    note(`「登録」の結果: 画面が移ったか ${r.moved}・${page.url()} エラー「${m.エラー.join(" / ")}」`);
+  });
+  let id = "";
+  await step(5, async () => { id = dbm.商品の在庫移動振替(src).filter((x) => !before.includes(x)).join(","); note(`登録された在庫移動・振替ID: ${id || "なし"}`); });
+  await step(6, async () => { note(`振替元の在庫変動履歴: ${JSON.stringify(dbm.在庫変動履歴(src, 店A, "EC-CUBE"))}`); });
+  await expected(async () => {
+    expect(id, "採番された在庫移動・振替ID（1件）").toMatch(/^\d+$/);
+    const h = dbm.在庫変動履歴(src, 店A, "EC-CUBE").slice(histBefore);
+    expect(h.map((x) => x.区分), "振替元に在庫振替(減算)の履歴が1件").toEqual(["在庫振替(減算)"]);
+    expect.soft([h[0].変更前在庫, h[0].変更後在庫, h[0].増減数], "変更前在庫・変更後在庫・増減数").toEqual([10, 7, -3]);
+    expect.soft(h[0].履歴登録元ID, "履歴登録元ID").toBe(id);
+    for (const w of ["在庫振替による減算", `商品コード${src}から${dest}`, id]) expect.soft(h[0].理由, `理由に「${w}」`).toContain(w);
+  });
+});
+
+caseTest("IT-M04-09-147", async ({ page, notes, step, expected }) => {
+  await login(page, M0409_OP);
+  const id = notes.get("〔在庫移動ID-M0409-147〕");
+  const code = rc("M0409-147-A");
+  const h = new StockHistoryPage(page);
+  let rows: Record<string, string>[] = [];
+  await step(1, async () => { await h.open(); });
+  await step(2, async () => { await h.clearConditions(); });
+  await step(3, async () => {
+    await h.fillKeyword(code);
+    expect(await h.submit(), "検索の応答").toBe(200);
+    rows = await h.rows();
+    note(`検索結果: ${JSON.stringify(rows)}`);
+  });
+  await expected(async () => {
+    expect(rows.length, `${code} の履歴が1件`).toBe(1);
+    const r = rows[0];
+    const v = (k: string) => { const key = Object.keys(r).find((x) => x === k) ?? Object.keys(r).find((x) => x.startsWith(k)); return key ? clean(r[key]) : `（「${k}」の列が無い）`; };
+    expect.soft(v("変更前在庫"), "変更前在庫").toBe("10");
+    expect.soft(v("変更後在庫"), "変更後在庫").toBe("7");
+    expect.soft(v("在庫変動数"), "在庫増減数").toBe("-3");
+    expect.soft(v("登録元"), "登録元").toBe("在庫移動");
+    expect.soft(v("登録元ID"), "登録元ID").toBe(id);
+    expect.soft(v("在庫変動理由"), "在庫変動理由").toBe(`在庫移動による減算 ${店A}から${店B} 在庫移動振替番号：${id}`);
   });
 });

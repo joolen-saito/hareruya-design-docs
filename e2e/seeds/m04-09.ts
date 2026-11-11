@@ -27,7 +27,7 @@
  *   （入庫承認申請の所属を未選択にする補いは、裁定 E11 で正本が「所属は選ばない」になったので無くなった。2026-10-23）
  * - 権限の名前: 正本は「承認権限なし」とだけ書き、権限の作り方を書かない。権限管理の表に承認権限の列があるので、その列だけを外した権限を作った。
  */
-import { rc, unrcText } from "../lib/run_marker";
+import { rc, RUN_MARK, unrcText } from "../lib/run_marker";
 import { Browser, expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { getSeed } from "../lib/catalog";
@@ -54,11 +54,17 @@ import { chooseByLabel } from "../pages/admin/common";
 import { idsByExactCode, openClassEdit, productRowsByCode, saveClass } from "../pages/admin/m04_19_masters";
 import { openProductEdit } from "../pages/admin/product_edit";
 import { adminUrl } from "../lib/session";
+import * as dbm from "../db/m04_09_move";
+import * as dbx from "../db/m04_09_x";
 
-export const M0409_OP: Account = { loginId: "m0409_operator", password: "Passw0rd!M0409Op" };
-export const M0409_APP: Account = { loginId: "m0409_approver", password: "Passw0rd!M0409Ap" };
-export const M0409_RCV: Account = { loginId: "m0409_receiver", password: "Passw0rd!M0409Rc" };
-export const M0409_NOAUTH: Account = { loginId: "m0409_noauth", password: "Passw0rd!M0409No" };
+/** 開発環境には手動テスト用に同じログインID・名前のメンバーがいるので、ログインID・名前に実行の印を付けて作る（M03-26・M03-32 などと同じ） */
+const 印つきのID = (id: string): string => rc(id).toLowerCase();
+/** 印つきのログインIDから、シード表のログインIDに戻す */
+const 正本のID = (id: string): string => id.split(`-${RUN_MARK.toLowerCase()}`).join("");
+export const M0409_OP: Account = { loginId: 印つきのID("m0409_operator"), password: "Passw0rd!M0409Op" };
+export const M0409_APP: Account = { loginId: 印つきのID("m0409_approver"), password: "Passw0rd!M0409Ap" };
+export const M0409_RCV: Account = { loginId: 印つきのID("m0409_receiver"), password: "Passw0rd!M0409Rc" };
+export const M0409_NOAUTH: Account = { loginId: 印つきのID("m0409_noauth"), password: "Passw0rd!M0409No" };
 
 export type 役 = "作業者" | "承認者" | "入庫担当者";
 export const ACCOUNTS: Record<役, Account> = { 作業者: M0409_OP, 承認者: M0409_APP, 入庫担当者: M0409_RCV };
@@ -95,8 +101,8 @@ defineSeed("S-M04-09-MASTER", async ({ browser, seed }) => { await ensureEnv(bro
 /** シード表のログインID・パスワードと、ここに書いた値が同じこと */
 function expectAccount(seedId: string, a: Account): void {
   const s = getSeed(seedId);
-  if (!s["状態・属性"].includes(`ログインID=${a.loginId}`) || !s["状態・属性"].includes(`パスワード=${a.password}`)) {
-    throw new Error(`${seedId}: シード表のログインID・パスワードが ${a.loginId} / ${a.password} でない`);
+  if (!s["状態・属性"].includes(`ログインID=${正本のID(a.loginId)}`) || !s["状態・属性"].includes(`パスワード=${a.password}`)) {
+    throw new Error(`${seedId}: シード表のログインID・パスワードが ${正本のID(a.loginId)} / ${a.password} でない`);
   }
 }
 
@@ -171,6 +177,8 @@ export type Op =
     by?: 役; notify?: { 所属: string; メンバー: string }; approver?: 役;
     /** シード表の文との照合を、店名でなく別の書き方で行うとき */
     mention?: string[];
+    /** 移動中にするときの送り状No.（既定は実行の印つきの M0409-TEST） */
+    tracking?: string;
   }
   | { op: "inbound"; label: string; diffs?: { code: string; qty: number }[]; until: "inwait" | "done" }
   | {
@@ -183,7 +191,9 @@ export type Op =
   /** 商品登録編集の「カード指定 >」で、カード検索の結果の先頭のカードを指定して「商品を登録」（商品名などはカードの値のまま） */
   | { op: "card"; code: string }
   /** 在庫移動・振替検索一覧で行を選んで「在庫移動指示作成」を押す（送り状No.は登録しない） */
-  | { op: "instruction"; label: string; by?: 役 };
+  | { op: "instruction"; label: string; by?: 役 }
+  /** 画面で作れない状態だけ、E2E の行へ DB で書き足す（db/m04_09_x.ts。シード表が「DBへ直接設定する」とするもの） */
+  | { op: "do"; run: (ctx: SeedCtx) => Promise<void> | void };
 
 const 理由 = "M04-09結合テスト";
 const 送り状No = rc("M0409-TEST");
@@ -393,7 +403,7 @@ async function move(ctx: SeedCtx, o: Extract<Op, { op: "move" }>): Promise<void>
     const s = await search.searchById(state.移動指示リストID, { 出庫元店舗ID: ids[o.from.store === 店A ? "A" : "B"], 入庫先店舗ID: ids[o.to.store === 店A ? "A" : "B"] });
     if (!s.sent) throw new Error(`${seedId}: 在庫移動指示検索の検索が止まった: ${s.止めた項目.join(" / ")}`);
     await search.pressTrackingRegister(state.移動指示リストID);
-    const t = await search.submitTracking(state.移動指示リストID, 送り状No);
+    const t = await search.submitTracking(state.移動指示リストID, o.tracking ?? 送り状No);
     if (!t.sent) throw new Error(`${seedId}: 送り状No.の登録が止まった: ${t.止めた項目.join(" / ")}`);
     for (const w of await expectSaved(page, `${seedId}: 在庫移動指示 ${state.移動指示リストID} の送り状No.の登録`)) issue(w);
     await expectStatus(page, seedId, id, "移動中");
@@ -555,6 +565,7 @@ export async function runScenario(ctx: SeedCtx, ops: Op[]): Promise<void> {
       case "productId": await noteProductId(ctx, o.code, o.label); break;
       case "candidate": await makeCandidate(ctx, o.code, o.highCode); break;
       case "card": await assignFirstCard(ctx, o.code); break;
+      case "do": await o.run(ctx); break;
       case "instruction": {
         const id = ctx.notes.get(o.label);
         await session(ctx.browser, ACCOUNTS[o.by ?? "作業者"], async (page) => {
@@ -865,3 +876,135 @@ export function m0409StoreIds(): { A: string; B: string } {
   if (!storeIds) throw new Error("試験店舗A・B の店舗IDをまだ読んでいない（シードを作る前）");
   return storeIds;
 }
+
+// ---------------------------------------------------------------- 仕分け直し（recheck2）で流せる見込みになったもの
+// シード表が「画面で指定できないためDBへ直接設定する」とする状態だけ、画面で作った E2E の行へ DB で書き足す（db/m04_09_x.ts・lib/db_write.ts）。
+
+type 在庫の値 = { code: string; store: 店; zone: 在庫区分; stock: number; total: number };
+
+/** 在庫数と総原価を DB で整え（在庫変動履歴は作らない）、在庫検索一覧で確かめる。mention はシード表のその値の書き方 */
+function setStock(items: 在庫の値[], mention: (v: 在庫の値) => string): Op[] {
+  return [
+    {
+      op: "do", run: (ctx) => {
+        mustMention(ctx.seed.シードID, [...items.map(mention), "画面で指定できないためDBへ直接設定する"]);
+        for (const v of items) dbx.在庫数と総原価を整える(`${ctx.seed.シードID}: ${v.code}（${v.store}・${v.zone}）の在庫数・総原価`, v.code, v.store, v.zone, v.stock, v.total);
+      },
+    },
+    { op: "check", items: items.map((v) => chk(v.code, v.store, v.zone, v.stock, v.total)) },
+  ];
+}
+/** シード表の「<コード>の<店>・在庫区分<区分>は在庫数n・総原価m」の書き方 */
+const 在庫の書き方 = (v: 在庫の値) => `${v.code}の${v.store}・在庫区分${v.zone}は在庫数${v.stock}・総原価${v.total}`;
+const st = (code: string, store: 店, stock: number, total: number): 在庫の値 => ({ code, store, zone: EC, stock, total });
+
+defineScenarioSeed("S-M04-09-PRODUCTS-023", [
+  { op: "goods", items: [g(rc("M409-MOV-A-023"))] },
+  ...setStock([st(rc("M409-MOV-A-023"), 店A, 10, 1000), st(rc("M409-MOV-A-023"), 店B, 5, 500)], 在庫の書き方),
+]);
+defineScenarioSeed("S-M04-09-LOCK-030", [
+  { op: "goods", items: [g(rc("M409-LOCK-A-030")), g(rc("M409-LOCK-B-030"))] },
+  ...setStock([st(rc("M409-LOCK-A-030"), 店A, 5, 500), st(rc("M409-LOCK-B-030"), 店A, 5, 500)], 在庫の書き方),
+]);
+defineScenarioSeed("S-M04-09-DIFF-INVALID", [
+  { op: "goods", items: [g(rc("M409-DIFF-NODEST")), g(rc("M409-DIFF-NOSOURCE"))] },
+  {
+    op: "do", run: (ctx) => {
+      const seedId = ctx.seed.シードID;
+      mustMention(seedId, ["M409-DIFF-NODESTの入庫先（試験店舗B）の在庫の行", "M409-DIFF-NOSOURCEの出庫元（試験店舗A）の在庫の行", "該当する在庫の行を削除する"]);
+      // 在庫区分はシード表が決めていない。手順の移動（試験店舗A・EC-CUBE → 試験店舗B・EC-CUBE）の在庫区分 EC-CUBE の行を消す（正本の外の補い）
+      reportSeedIssue(seedId, "消す在庫の行の在庫区分はシード表に無いので、手順の在庫移動と同じ EC-CUBE の行を消した（スマレジの行は残した）");
+      dbx.在庫の行を消す(`${seedId}: 入庫先の在庫の行が無い商品`, rc("M409-DIFF-NODEST"), 店B, EC);
+      dbx.在庫の行を消す(`${seedId}: 出庫元の在庫の行が無い商品`, rc("M409-DIFF-NOSOURCE"), 店A, EC);
+      if (dbx.在庫の行がある(rc("M409-DIFF-NODEST"), 店B, EC) || dbx.在庫の行がある(rc("M409-DIFF-NOSOURCE"), 店A, EC)) throw new Error(`${seedId}: 在庫の行を消せていない`);
+    },
+  },
+]);
+defineMoveSeed("S-M04-09-MOVE-TRANSIT-055", rc("M409-MOV-A-055"), "〔在庫移動ID-M0409-055〕", "transit", { qty: 1 });
+defineScenarioSeed("S-M04-09-TRANSFER-PRODUCTS-077", [
+  { op: "goods", items: [g(rc("M409-TR-A-077")), g(rc("M409-TR-TO-A-077"))] },
+  ...setStock([st(rc("M409-TR-A-077"), 店A, 10, 1000), st(rc("M409-TR-TO-A-077"), 店A, 4, 600)], 在庫の書き方),
+]);
+defineScenarioSeed("S-M04-09-TRANSFER-WAIT-079", [
+  { op: "goods", items: [g(rc("M409-TR-A-079")), g(rc("M409-TR-TO-A-079"))] },
+  { op: "in", items: [inA(rc("M409-TR-A-079"), 10, 100), inA(rc("M409-TR-TO-A-079"), 4, 150)] },
+  { op: "transfer", label: "〔在庫振替ID-M0409-079〕", store: 店A, zone: EC, lines: [{ code: rc("M409-TR-A-079"), dest: rc("M409-TR-TO-A-079"), qty: 3 }], until: "wait" },
+  { op: "check", items: [chk(rc("M409-TR-A-079"), 店A, EC, 7, 700), chk(rc("M409-TR-TO-A-079"), 店A, EC, 4, 600)] },
+  {
+    op: "do", run: (ctx) => {
+      const seedId = ctx.seed.シードID;
+      mustMention(seedId, ["更新日時の異なる2件目の履歴は画面で指定できないためDBへ直接設定する", "1件目と異なる更新日時の履歴を1件足す"]);
+      // 2件目の更新日時・ステータス・更新者はシード表が決めていない。1件目と同じステータス・更新者で、1日前の更新日時にした（正本の外の補い）
+      const at = dbx.ステータス変更履歴を足す(`${seedId}: 2件目のステータス変更履歴`, ctx.notes.get("〔在庫振替ID-M0409-079〕"), 24 * 60 * 60 * 1000);
+      reportSeedIssue(seedId, `2件目のステータス変更履歴は、1件目と同じステータス・更新者で、更新日時を1件目の1日前（${at}）にして足した（シード表は値を決めていない）`);
+    },
+  },
+]);
+defineScenarioSeed("S-M04-09-GF-MOVE-DONE-104", [
+  { op: "goods", items: [g(rc("M0409-104-A"))] },
+  { op: "in", items: [inA(rc("M0409-104-A"), 10, 100)] },
+  { op: "move", label: "〔在庫移動ID-M0409-104〕", ...AtoB, lines: [{ code: rc("M0409-104-A"), qty: 3 }], until: "done", tracking: "INV-M0409-103" },
+  {
+    op: "do", run: (ctx) => {
+      const seedId = ctx.seed.シードID;
+      const id = ctx.notes.get("〔在庫移動ID-M0409-104〕");
+      mustMention(seedId, ["送り状No.=INV-M0409-103", "出庫承認日=2026-03-02 10:00:00", "入庫承認日=2026-03-03 11:00:00", "出庫日時=2026-03-02 15:00:00", "入庫日時=2026-03-03 10:30:00", "画面で指定できないためDBへ直接設定する"]);
+      // シード表の日時は時差を書いていない。画面の表示（日本時間）と同じ日本時間の値として書く
+      dbx.移動の日時を整える(`${seedId}: 出庫承認日・入庫承認日・出庫日時・入庫日時`, id, {
+        出庫承認日: "2026-03-02 10:00:00+09", 入庫承認日: "2026-03-03 11:00:00+09", 出庫日時: "2026-03-02 15:00:00+09", 入庫日時: "2026-03-03 10:30:00+09",
+      });
+      reportSeedIssue(seedId, "出庫承認日・入庫承認日・出庫日時・入庫日時は、シード表に時差が無いので日本時間の値としてDBに書いた");
+      const t = dbm.在庫移動振替(id);
+      if (t?.入庫承認者 !== 入庫担当者名) {
+        // 画面は入庫承認申請をした本人の入庫承認を拒むので、入庫承認は M04-09承認者 が行った（inbound の補い）。シード表の入庫承認者に DB で合わせる
+        dbx.入庫承認者を整える(`${seedId}: 入庫承認者`, id, 入庫担当者名);
+        reportSeedIssue(seedId, `入庫承認者は画面では「${t?.入庫承認者 ?? "なし"}」になった（申請した本人は承認できない作り）。シード表の入庫承認者（M04-09入庫担当者）にDBで合わせた`);
+      }
+    },
+  },
+], ["S-M04-09-APP-B"]);
+defineScenarioSeed("S-M04-09-GF-MOVE-TRANSIT-112", [
+  { op: "goods", items: [g(rc("M0409-112-A"))] },
+  { op: "in", items: [inA(rc("M0409-112-A"), 10, 100)] },
+  { op: "move", label: "〔在庫移動ID-M0409-112〕", ...AtoB, lines: [{ code: rc("M0409-112-A"), qty: 3 }], until: "transit" },
+  {
+    op: "do", run: (ctx) => {
+      const seedId = ctx.seed.シードID;
+      mustMention(seedId, ["出庫承認日・出庫承認者を空にする"]);
+      dbx.出庫承認を空にする(`${seedId}: 出庫承認日・出庫承認者`, ctx.notes.get("〔在庫移動ID-M0409-112〕"));
+      const t = dbm.在庫移動振替(ctx.notes.get("〔在庫移動ID-M0409-112〕"));
+      if (t?.出庫承認日 || t?.出庫承認者 || t?.ステータス !== "移動中") throw new Error(`${seedId}: 出庫承認を空にしたあとの状態が違う: ${JSON.stringify(t)}`);
+    },
+  },
+]);
+function defineOutwaitStockSeed(seedId: string, n: string): void {
+  const code = rc(`M0409-${n}-A`);
+  defineScenarioSeed(seedId, [
+    { op: "goods", items: [g(code)] },
+    ...setStock([st(code, 店A, 13, 10000)], (v) => `${v.code}の${v.store}・在庫区分${v.zone}の在庫を、在庫数${v.stock}・総原価${v.total}とする`),
+    { op: "move", label: `〔在庫移動ID-M0409-${n}〕`, ...AtoB, lines: [{ code, qty: 3 }], shortages: [{ code, qty: 1 }], until: "outwait" },
+    { op: "check", items: [chk(code, 店A, EC, 10, 7692)] },
+  ]);
+}
+defineOutwaitStockSeed("S-M04-09-GF-MOVE-OUTWAIT-120", "120");
+defineOutwaitStockSeed("S-M04-09-GF-MOVE-OUTWAIT-121", "121");
+defineScenarioSeed("S-M04-09-GF-STOCK-129", [
+  { op: "goods", items: [g(rc("M0409-129-A"))] },
+  ...setStock([st(rc("M0409-129-A"), 店A, 10, 1000), st(rc("M0409-129-A"), 店B, 5, 500)], 在庫の書き方),
+]);
+defineScenarioSeed("S-M04-09-GF-TRANSFER-PRODUCTS-134", [
+  { op: "goods", items: [g(rc("M0409-134-A")), g(rc("M0409-134-B"))] },
+  ...setStock([st(rc("M0409-134-A"), 店A, 10, 1000), st(rc("M0409-134-B"), 店A, 4, 600)], 在庫の書き方),
+]);
+defineScenarioSeed("S-M04-09-GF-HIST-147", [
+  { op: "goods", items: [g(rc("M0409-147-A"))] },
+  {
+    op: "do", run: (ctx) => {
+      // 総原価はシード表が「指定がないため任意」とする。仕入単価100の形（1000）にした
+      reportSeedIssue(ctx.seed.シードID, "移動前の総原価はシード表が任意とするので1000にした");
+    },
+  },
+  ...setStock([st(rc("M0409-147-A"), 店A, 10, 1000)], (v) => `${v.code}の${v.store}・在庫区分${v.zone}の在庫を、在庫数${v.stock}とする`),
+  { op: "move", label: "〔在庫移動ID-M0409-147〕", ...AtoB, lines: [{ code: rc("M0409-147-A"), qty: 3 }], until: "new" },
+  { op: "check", items: [chk(rc("M0409-147-A"), 店A, EC, 7, 700)] },
+]);

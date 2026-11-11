@@ -11,6 +11,7 @@
  * 画面のスクリプトの読み込み（load）を待ってから押す（確認モーダル・入力チェックはスクリプトで動く）。
  */
 import { Dialog, expect, Locator, Page } from "@playwright/test";
+import { rc } from "../../lib/run_marker";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 import { searchStockList, stockRow, stockRowValues } from "./m04_13_setup";
@@ -20,10 +21,11 @@ export const 店A = "試験店舗A";
 export const 店B = "試験店舗B";
 export const 所属A = "試験所属A";
 export const 所属B = "試験所属B";
-export const 作業者名 = "M04-09作業者";
-export const 承認者名 = "M04-09承認者";
-export const 入庫担当者名 = "M04-09入庫担当者";
-export const 権限なし名 = "M04-09権限なしユーザー";
+// 開発環境には手動テスト用に同じ名前のメンバーがいるので、名前に実行の印を付けて作る（ログインIDも。seeds/m04-09.ts）
+export const 作業者名 = rc("M04-09作業者");
+export const 承認者名 = rc("M04-09承認者");
+export const 入庫担当者名 = rc("M04-09入庫担当者");
+export const 権限なし名 = rc("M04-09権限なしユーザー");
 
 export type 店 = typeof 店A | typeof 店B;
 export type 在庫区分 = "EC-CUBE" | "スマレジ";

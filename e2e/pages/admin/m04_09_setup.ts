@@ -6,14 +6,14 @@
  *   ほかの機能が同じ店名で作った店舗は使わないとする。共通の部品（tenant.ts・m04_24_store.ts）は店舗種別を「支店」に決め打ちしているので、
  *   店舗種別・公開・開店・売上集計の検索項目を選べる局所の部品にした。
  *   この機能が作った店舗は、店名と会社名（この機能の値）で見分ける。同じ店名でほかの会社名の店舗があれば、画面の選択肢で見分けられないので止める。
- *   新しい店舗の登録は、保存されたうえでシステムエラーの画面になる（M04-24 と同じ）。店舗一覧に出ていれば先へ進み、知らせる。
+ *   店舗は作らない（2026-11-11 12:40 からの決まり。開発環境では店舗1つで在庫の行が約39万行でき、店舗は消せない）。
+ *   開発環境に既にある店舗（店名と会社名で見つける）の内容を確かめて使い、無ければ止める（判断待ち）。
  * - 権限: 正本の「承認権限なし」の管理者（M04-09作業者・M04-09権限なしユーザー）に使う権限。M04-22 の部品
  *   （マスタデータ管理で権限のマスターに1行足し、権限管理でその行の「承認権限」のチェックを外す）を使う。
  *   新しい権限は、承認権限のほかはすべて許可（権限管理の表のほかの列は商品管理の画面だけ）なので、在庫の画面は操作できる。
  */
 import { expect, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { chooseByLabel, expectSaved } from "./common";
 import { denyApprovalForAuthority, ensureAuthorityMasterRow } from "./m04_22_move_transfer_csv";
 
 export type M0409Store = {
@@ -49,36 +49,6 @@ async function findOwnStore(page: Page, 店名: string): Promise<string | null> 
 
 const field = (page: Page, name: string) => page.locator(`[name="mall_tenant_shop_master[${name}]"]`);
 
-/** 店舗登録画面で、正本の値（店舗種別・公開・開店・売上集計の検索項目）と、任意の有効な値で登録する */
-async function createStore(page: Page, v: M0409Store): Promise<void> {
-  await page.goto(adminUrl("/mall/tenant/create"), { timeout: 120_000 });
-  await page.waitForLoadState("load");
-  await field(page, "company_name").fill(M0409_COMPANY);
-  await field(page, "company_kana").fill("シケンガイシャ");
-  await field(page, "shop_name").fill(v.店名);
-  await field(page, "shop_kana").fill(v.店名カナ);
-  await field(page, "shop_name_eng").fill(v.店名英語);
-  await field(page, "html_class_name").fill(v.支店URL);
-  await page.getByLabel(v.店舗種別, { exact: true }).check();
-  await page.getByLabel("公開", { exact: true }).check();
-  await page.getByLabel("開店", { exact: true }).check();
-  await page.getByLabel("表示する", { exact: true }).check();
-  await field(page, "postal_code").fill("1600023");
-  await chooseByLabel(page.locator('[name="mall_tenant_shop_master[address][pref]"]'), "東京都");
-  await page.locator('[name="mall_tenant_shop_master[address][addr01]"]').fill("新宿区西新宿");
-  await page.locator('[name="mall_tenant_shop_master[address][addr02]"]').fill("4-9-1");
-  await field(page, "phone_number").fill("0304090001");
-  for (const m of ["email01", "email02", "email03", "email04"]) await field(page, m).fill(`${v.支店URL}@example.test`);
-  await field(page, "shop_digit").fill(v.店名略称3文字);
-  await field(page, "short_name_jp").fill(v.店名);
-  await field(page, "rank").fill("0");
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
-    page.getByRole("button", { name: "登録", exact: true }).click(),
-  ]);
-  await expectSaved(page, `店舗「${v.店名}」の登録`);
-}
-
 /** 店舗編集画面で、正本が定めた選択（店舗種別・公開・開店・売上集計の検索項目）になっていること */
 async function expectStoreChoices(page: Page, id: string, v: M0409Store): Promise<void> {
   const res = await page.goto(adminUrl(`/mall/tenant/detail/${id}`), { timeout: 120_000 });
@@ -97,19 +67,14 @@ async function expectStoreChoices(page: Page, id: string, v: M0409Store): Promis
   if (diff.length) throw new Error(`店舗「${v.店名}」（店舗ID ${id}）の内容が正本と違う: ${diff.join(" / ")}`);
 }
 
-/** この機能の店舗を、あれば内容を確かめて使い、無ければ店舗登録画面で登録する。店舗IDを返す */
-export async function ensureM0409Store(page: Page, v: M0409Store, onIssue: (m: string) => void): Promise<string> {
-  let id = await findOwnStore(page, v.店名);
+/**
+ * この機能の店舗を、開発環境に既にあるもの（店名と会社名で見つける）だけ、内容を確かめて使う。店舗IDを返す。
+ * 店舗は作らない（2026-11-11 12:40 からの決まり: 開発環境では店舗1つで在庫の行が約39万行でき、店舗は消せない）。無ければ止める（判断待ち）。
+ */
+export async function ensureM0409Store(page: Page, v: M0409Store, _onIssue: (m: string) => void): Promise<string> {
+  const id = await findOwnStore(page, v.店名);
   if (!id) {
-    let failure = "";
-    try {
-      await createStore(page, v);
-    } catch (e) {
-      failure = (e as Error).message.split("\n")[0];
-    }
-    id = await findOwnStore(page, v.店名);
-    if (!id) throw new Error(`店舗「${v.店名}」を登録できない: ${failure || "店舗一覧に出ない"}`);
-    if (failure) onIssue(`店舗登録画面で「${v.店名}」を登録したとき、登録は行われたが画面は成功を表示しなかった（${failure}）`);
+    throw new Error(`店名「${v.店名}」・会社名「${M0409_COMPANY}」の店舗が開発環境に無い。店舗は新しく作らない決まり（2026-11-11）なので止めた（判断待ち）`);
   }
   await expectStoreChoices(page, id, v);
   return id;
