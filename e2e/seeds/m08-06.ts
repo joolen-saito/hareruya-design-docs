@@ -16,6 +16,7 @@ import { ポイント種別, ポイント履歴, ポイント履歴を足す, �
 import { Notes } from "../lib/notes";
 import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { 使い回して作る } from "./seed_reuse";
 import { Account } from "../lib/session";
 import { 会員が1点注文する, 会員を作る, 控える, 試験管理者を用意する } from "./m08-05-07-common";
 
@@ -91,6 +92,22 @@ async function 作る(browser: Browser, notes: Notes, seedId: string, d: 会員�
     (d.履歴.length ? `履歴IDは DB が振る番号（${d.履歴.slice(0, 4).map((h) => `${h.正本ID}→${読み替え.get(h.正本ID)}`).join("、")}${d.履歴.length > 4 ? " ほか" : ""}）に読み替えた` : ""));
 }
 
+/**
+ * 使い回し（依頼者決定 2026-11-11「シードの使い回しを進めて」）: 010・011 のシードは中身が同じ（ポイント履歴0件の会員）。
+ * 使うケースはポイント履歴確認画面を開いて、アドレスの会員IDを置き換える（010）・「会員編集画面に戻る」を押す（011）だけで、会員を変えないので、010 の定めで1度だけ作って使い回す。
+ * 006・007（履歴IDの読み替えをケースごとに持つ）と 012・013（同じく120件の履歴IDの読み替え）は使い回さない。
+ */
+const 使い回しの元: Record<string, string> = { "010": "010", "011": "010" };
+
 for (const d of 定め) {
-  defineSeed(シードID(d.n), { needs: ["S-M08-06-POINT-TYPE"] }, async ({ browser, notes, seed }) => { await 作る(browser, notes, seed.シードID, d); });
+  const 元 = 使い回しの元[d.n];
+  defineSeed(シードID(d.n), { needs: ["S-M08-06-POINT-TYPE"] }, async ({ browser, notes, seed }) => {
+    if (!元) return 作る(browser, notes, seed.シードID, d);
+    const dm = 定め.find((x) => x.n === 元)!;
+    await 使い回して作る({
+      seedId: seed.シードID, canonical: シードID(元), notes,
+      rename: (l) => l.replace(`-M0806-${元}`, `-M0806-${d.n}`),
+      build: (n) => 作る(browser, n, シードID(元), dm),
+    });
+  });
 }
