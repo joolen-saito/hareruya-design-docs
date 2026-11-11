@@ -20,3 +20,16 @@ export function 未承認の在庫編集ID(baseline: number, codes: string[]): s
       order by a.id desc`,
     [baseline, codes.join("\t")]).map((r) => r.src ?? "");
 }
+
+/**
+ * 在庫編集承認一覧の、baseline より後に足された未承認の行のうち、登録者の名前と在庫の増減の合計が合うものの絞り込みの値（一覧を ?id= で開く値）。新しい順。
+ * 在庫変更CSV登録の承認に使う（一覧の1ページ目が前の実行の未承認の行で埋まり、今回の行が後ろのページに回るため）。
+ */
+export function 未承認の行の絞り込みの値(baseline: number, 登録者名: string, 合計: number): string[] {
+  return query(
+    `select a.history_source_id::text as src
+       from dtb_stock_approval_list a join dtb_member m on m.id = a.registered_member_id
+      where a.approval_status = 1 and a.id > $1::int and m.name = $2 and a.inventory_change_total_count = $3::int
+      order by a.id desc`,
+    [baseline, 登録者名, 合計]).map((r) => r.src ?? "");
+}

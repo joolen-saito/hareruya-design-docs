@@ -10,7 +10,7 @@ import { BASE_URL, ENV_NAME, MAIL_URL, SETUP_ADMIN } from "../../config/env";
 import { customerStateByEmail } from "./customer";
 import { FrontMember, registerFrontMember } from "../front/member_entry";
 import { 在庫承認の最大ID } from "../../db/f03_08";
-import { 未承認の在庫編集ID } from "../../db/f04_setup";
+import { 未承認の在庫編集ID, 未承認の行の絞り込みの値 } from "../../db/f04_setup";
 import { Account, adminUrl, hideDebugToolbar, withAdminSession } from "../../lib/session";
 import { rc, RUN_MARK } from "../../lib/run_marker";
 import { chooseByLabel, expectSaved } from "./common";
@@ -130,7 +130,15 @@ export async function 商品を作って入庫する(browser: Browser, seedId: s
     const registrant = await loggedInMemberName(page);
     await withAdminSession(browser, 承認者.account, async (ap) => {
       const list = new StockApprovalListPage(ap);
-      await list.open(shop);
+      // 一覧の1ページ目が前の実行の未承認の行で埋まり、今回の行が後ろのページに回る（2026-11-11 の M05-09 で「未承認の行が無い」）。
+      // 今回の行の絞り込みの値を DB で読み、一覧をその値で開く。DB で見つからなければ、これまでどおり1ページ目から探す
+      const srcs = 未承認の行の絞り込みの値(baseline, registrant, total);
+      if (srcs.length > 0) {
+        await ap.goto(adminUrl(`/product/stock/approval_list?id=${srcs[0]}`), { timeout: 60_000 });
+        await ap.waitForLoadState("load");
+      } else {
+        await list.open(shop);
+      }
       const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant && Number(r.id) > baseline && r.quantity === String(total));
       if (rows.length === 0) throw new Error(`${seedId}: 在庫編集承認一覧に、登録者「${registrant}」の未承認の行（合計 ${total}）が無い`);
       await 承認する(list, shop, [rows[0].id], `${seedId} の在庫変更CSV登録の承認`, issue);
