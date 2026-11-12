@@ -10,7 +10,7 @@ import { Download, expect, Locator, Page } from "@playwright/test";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { adminUrl } from "../../lib/session";
 
-export type 行の値 = { 商品ID: string; 商品名: string; 商品コード: string; 店舗: string; 在庫区分: string; 在庫: string; 基準価格: string; 販売価格: string };
+export type 行の値 = { 商品ID: string; 商品名: string; 商品コード: string; 店舗: string; 在庫区分: string; 在庫: string; 総原価: string; 基準価格: string; 販売価格: string };
 export type 押した結果 = { アラート: string[]; 移った先: string; 移った: boolean };
 
 const ID = (name: string) => `#admin_search_stock_list_${name}`;
@@ -120,7 +120,8 @@ export class StockListX {
       const prices = Array.from(tr.querySelectorAll("td.col-price")).map((td) => (td.textContent ?? "").replace(/\s+/g, " ").trim());
       return {
         商品ID: t("td.col-id"), 商品名: t("td.col-name a"), 商品コード: t("td.col-name .text-muted"),
-        店舗: t("td.col-shop > div:first-child"), 在庫区分: t("td.col-shop > div.text-muted"), 在庫: t("td.col-stock"),
+        // 在庫の欄は「在庫」と「総原価」の2段（新アプリの stock_list_index.twig の td.col-stock）。1段目が在庫（2026-11-13 の 053・055 で欄全体「5 0」を在庫と読んでいた）
+        店舗: t("td.col-shop > div:first-child"), 在庫区分: t("td.col-shop > div.text-muted"), 在庫: t("td.col-stock > div:nth-child(1)"), 総原価: t("td.col-stock > div:nth-child(2)"),
         基準価格: prices[0] ?? "", 販売価格: prices[1] ?? "",
       };
     }));
