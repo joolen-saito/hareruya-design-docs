@@ -12,14 +12,20 @@
  */
 import { SETUP_ADMIN } from "../config/env";
 import { アプリの接続利用者, 商品サブ情報の表がある, 商品関連の参照権限 } from "../db/m03_25_product_access";
+import { rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { storeNameById } from "../pages/admin/m04_19_masters";
 import { ensureMember, findMemberId } from "../pages/admin/member";
 import { ProductSearchPage } from "../pages/admin/product_search";
 
-export const M0325_ADMIN: Account = { loginId: "m0325_admin", password: "Passw0rd!M0325" };
-const NAME = "M03-25試験管理者";
+/**
+ * シード表のログインIDは m0325_admin・名前は M03-25試験管理者。開発環境には同じ名前のメンバー（管理者ID 325000000 で、ログインIDが数字・店舗が空。
+ * 手動テストの準備でほかの方が登録したもの）が既にあり、どれも使えない。決め打ちの識別の値として実行をまたいで使い回す決まった印
+ * （lib/run_marker.ts の rcFixed。依頼者決定 2026-11-11）を付けたログインID・名前・メールアドレスで作る。ケースはこれらの値そのものを確かめない。
+ */
+export const M0325_ADMIN: Account = { loginId: rcFixed("m0325_admin").toLowerCase(), password: "Passw0rd!M0325" };
+const NAME = rcFixed("M03-25試験管理者");
 
 /** アプリが本店（親店舗）として扱う店舗ID。正本は所属店舗を指定しないので本店にする */
 const MAIN_SHOP_ID = "1";
@@ -28,7 +34,7 @@ defineSeed("S-M03-25-ADM", async ({ browser, seed }) => {
   const id = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const shop = await storeNameById(page, MAIN_SHOP_ID);
     await ensureMember(page, {
-      名前: NAME, 所属店舗: shop, ログインID: M0325_ADMIN.loginId, メールアドレス: "m0325_admin@example.test",
+      名前: NAME, 所属店舗: shop, ログインID: M0325_ADMIN.loginId, メールアドレス: `${M0325_ADMIN.loginId}@example.test`,
       パスワード: M0325_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: shop, 編集可能店舗: [shop],
     });
     return findMemberId(page, NAME);
