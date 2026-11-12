@@ -35,7 +35,7 @@ import { CSV入出力設定, 設定値を読めない環境, 読み替え文 } f
 import { getSeed } from "../lib/catalog";
 import { available as dbAvailable } from "../lib/db";
 import { Notes } from "../lib/notes";
-import { rcFixed } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { readGoodsProductId } from "../pages/admin/m03_01_goods_list_seed";
@@ -178,31 +178,35 @@ type 商品 = { label: string; code: string; tag: "POR" | "PRE" | string };
  */
 async function createGoods(page: Page, seedId: string, notes: Notes, items: 商品[], tagIds: Record<string, string>): Promise<void> {
   const warn = (m: string) => reportSeedIssue(seedId, m);
+  // 商品コードは正本の決め打ちの値。前の実行の商品や、ほかの方が登録した同じ商品コードの商品が残り得るので、実行ごとの印を付けた商品コードで作る
+  // （lib/run_marker.ts の rc。ケースは商品コードの値そのものを確かめず、取込ファイルは商品IDで指定する）
   for (const it of items) {
-    const left = await productIdsByCode(page, it.code);
+    const left = await productIdsByCode(page, rc(it.code));
     if (left.length > 0) {
-      throw new Error(`${seedId}: 商品コード ${it.code} の商品が前の実行で残っている（商品ID ${left.join("・")}）。正本に清掃の手順が無いので、同じDBでは流し直さない`);
+      throw new Error(`${seedId}: 商品コード ${rc(it.code)} の商品が前の実行で残っている（商品ID ${left.join("・")}）。正本に清掃の手順が無いので、同じDBでは流し直さない`);
     }
   }
   const categoryId = await goodsCsvCategoryId(page, warn);
+  let noModal = false;
   for (const it of items) {
     const suffix = it.code.replace(/^M0337-/, "");
     const nameJp = `M0337商品-${suffix}`;
     const tagId = tagIds[it.tag];
     if (!tagId) throw new Error(`${seedId}: 略称タグ「${it.tag}」のIDを控えていない`);
-    await registerGoodsCsv(page, {
+    const reg = await registerGoodsCsv(page, {
       what: `${seedId} のグッズ商品CSV登録（${it.code}）`, fileName: `${seedId}-${suffix}.csv`, categoryId,
-      lines: [{ code: it.code, nameJp, nameEn: `M0337-Product-${suffix}` }],
+      lines: [{ code: rc(it.code), nameJp, nameEn: `M0337-Product-${suffix}` }],
       common: {
         "購入グループ名称": "通常商品", "略称タグ(ID)": tagId, "基準価格": "1000", "販売価格": "1000", "買取価格": "1000",
         "原価単価": "10", "地域別販売制限": "0", "スマレジ連携フラグ": "0", "スマレジ商品コード": "", "部門ID": "",
       },
       onWarning: warn,
     });
-    notes.set(it.label, await readGoodsProductId(page, it.code, nameJp));
+    notes.set(it.label, await readGoodsProductId(page, rc(it.code), nameJp));
+    if (!reg.confirmModal) noModal = true;
   }
-  warn(`グッズ商品CSV（${items.map((i) => i.code).join("・")}）: 正本の「確認モーダルでアップロードを確定する」の確認モーダルは出ず、` +
-    "「CSVファイルのアップロード」を押すと取り込まれた。商品公開ステータスは、正本の「2（公開）」でなく、画面のCSV形式の説明で公開を表す値を書いた。" +
+  warn(`グッズ商品CSV（${items.map((i) => i.code).join("・")}）: ` + (noModal ? "正本の「確認モーダルでアップロードを確定する」の確認モーダルは出ず、「CSVファイルのアップロード」を押すと取り込まれた。" : "確認モーダルで「確認」を押して確定した。") +
+    "商品公開ステータスは、正本の「2（公開）」でなく、画面のCSV形式の説明で公開を表す値を書いた。" +
     `商品カテゴリ(ID)はグッズのカテゴリ（番号2）のカテゴリID ${categoryId}`);
 }
 

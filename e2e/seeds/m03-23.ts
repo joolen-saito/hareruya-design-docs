@@ -171,7 +171,7 @@ class SeedOps {
   async importGoods(rows: 商品行[]): Promise<void> {
     this.files += 1;
     const categoryId = await this.goodsCategory();
-    await registerGoodsCsv(this.page, {
+    const reg = await registerGoodsCsv(this.page, {
       what: `${this.seedId} のグッズ商品CSV登録`, fileName: `${this.seedId}-${this.files}.csv`, categoryId,
       lines: rows.map((r) => ({
         code: r.商品コード, nameJp: r.商品名日, nameEn: r.商品名英,
@@ -180,8 +180,10 @@ class SeedOps {
       common: { "原価単価": "10", "地域別販売制限": "0" },
       onWarning: this.warn,
     });
-    this.warn(`グッズ商品CSV（${rows.map((r) => r.商品コード).join("・")}）: 正本の「確認モーダルでアップロードを確定する」の確認モーダルは出ず、` +
-      "「CSVファイルのアップロード」を押すと取り込まれた（依頼者の判断待ちの点）");
+    if (!reg.confirmModal) {
+      this.warn(`グッズ商品CSV（${rows.map((r) => r.商品コード).join("・")}）: 正本の「確認モーダルでアップロードを確定する」の確認モーダルは出ず、` +
+        "「CSVファイルのアップロード」を押すと取り込まれた（依頼者の判断待ちの点）");
+    }
     this.warn(`グッズ商品CSV: 商品カテゴリ(ID)はグッズのカテゴリ（番号2。開発環境に登録されているもの）のカテゴリID ${categoryId}。商品公開ステータスは、正本の「2（公開）」でなく、` +
       "画面のCSV形式の説明で公開を表す値を書いた（説明は「1:公開 2:非公開 3:廃止」）");
   }

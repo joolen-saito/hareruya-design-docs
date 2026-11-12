@@ -179,13 +179,15 @@ export async function createHighPriceGoods(
     throw new Error(`${seedId}: 商品コード ${v.商品コード} の商品が前の実行で残っている（商品ID ${left.join("・")}）。正本に清掃の手順が無いので、同じDBでは流し直さない`);
   }
   const categoryId = await goodsCsvCategoryId(page, warn);
-  await registerGoodsCsv(page, {
+  const { confirmModal } = await registerGoodsCsv(page, {
     what: `${seedId} のグッズ商品CSV登録`, fileName: `${seedId}.csv`, categoryId,
     lines: [{ code: v.商品コード, nameJp: v.商品名, nameEn: v.商品名, values: { "基準価格": v.CSV.基準価格, "販売価格": v.CSV.販売価格, "買取価格": v.CSV.買取価格 } }],
     common: { "原価単価": "10", "地域別販売制限": "0", "スマレジ連携フラグ": "0", "スマレジ商品コード": "", "部門ID": "" },
     onWarning: (w) => warn(`グッズ商品CSV登録で出た警告「${w}」`),
   });
-  warn(`グッズ商品CSV（${v.商品コード}）: 正本の「確認モーダルでアップロードを確定する」の確認モーダルは出ず、「CSVファイルのアップロード」を押すと取り込まれた（依頼者の判断待ちの点）`);
+  if (!confirmModal) {
+    warn(`グッズ商品CSV（${v.商品コード}）: 正本の「確認モーダルでアップロードを確定する」の確認モーダルは出ず、「CSVファイルのアップロード」を押すと取り込まれた（依頼者の判断待ちの点）`);
+  }
   warn(`グッズ商品CSV: 商品カテゴリ(ID)はグッズのカテゴリ（番号2。開発環境に登録されているもの）のカテゴリID ${categoryId}。商品公開ステータスは、正本の「2（公開）」でなく、画面のCSV形式の説明で公開を表す値を書いた`);
   const productId = await openProductEditByCode(page, v.商品コード);
   notes.set(labels.商品ID, productId);

@@ -46,7 +46,7 @@ export async function registerGoodsCsv(page: Page, args: {
   uploadWaitMs?: number;
   /** 支店の商品公開ステータス。省略すると公開（F03-08 が「非公開」を指定する） */
   branchStatus?: "公開" | "非公開";
-}): Promise<{ japaneseLanguageId: string }> {
+}): Promise<{ japaneseLanguageId: string; confirmModal: boolean }> {
   const template = await downloadGoodsCsvTemplate(page);
   const japaneseLanguageId = await readJapaneseLanguageId(page);
   const sellGroupName = await readExistingSellGroupName(page);
@@ -67,7 +67,7 @@ export async function registerGoodsCsv(page: Page, args: {
     ...(line.branchStatus ? { "支店の商品公開ステータス": 公開状態の値(template, "支店の商品公開ステータス", line.branchStatus) } : {}),
     ...line.values,
   })));
-  await uploadGoodsCsv(page, csv, args.fileName, args.uploadWaitMs);
+  const confirmModal = await uploadGoodsCsv(page, csv, args.fileName, args.uploadWaitMs);
   for (const warning of await expectSaved(page, args.what)) args.onWarning(warning);
-  return { japaneseLanguageId };
+  return { japaneseLanguageId, confirmModal };
 }

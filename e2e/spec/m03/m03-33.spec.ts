@@ -15,6 +15,7 @@ import { Download, Page, test } from "@playwright/test";
 import { STATE_DIR } from "../../config/env";
 import { 商品規格の状態, 取込履歴の件数, 取込種別 } from "../../db/m03_32_high_price";
 import { expect, CaseCtx, caseTest } from "../../lib/case";
+import { rc } from "../../lib/run_marker";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { loginAdmin } from "../../lib/session";
 import { HighPriceCsvUploadPage, pathOf, SubmitResult, uploadPath } from "../../pages/admin/m03_32_high_price_csv";
@@ -94,7 +95,7 @@ caseTest("IT-M03-33-006", async ({ page, notes, step, expected, db }) => {
   });
   await expected(async () => {
     expect(after, `商品規格ID ${classId} の商品規格`).not.toBeNull();
-    expect.soft(after!.商品コード, "商品規格の商品コード").toBe("HP-OFF-01-006");
+    expect.soft(after!.商品コード, "商品規格の商品コード").toBe(rc("HP-OFF-01-006"));
     expect.soft(after!.帯URL === null || after!.帯URL === "", `帯URLが未設定になる（取込後の値: ${JSON.stringify(after!.帯URL)}）`).toBe(true);
   });
 });
@@ -140,7 +141,7 @@ caseTest("IT-M03-33-019", async ({ page, step, expected }) => {
 function noChangeCase(n: string, file: string) {
   return async ({ page, notes, step, expected, db }: CaseCtx) => {
     const classId = notes.get(`〔商品規格ID-M0333-${n}〕`);
-    const before = snapshot(classId, `HP-OFF-01-${n}`);
+    const before = snapshot(classId, rc(`HP-OFF-01-${n}`));
     const upload = await signIn(page);
     await step(1, async () => {
       await upload.open();
@@ -164,7 +165,7 @@ caseTest("IT-M03-33-030", noChangeCase("030", "header_only-030.csv"));
 
 caseTest("IT-M03-33-046", async ({ page, notes, step, expected, db }) => {
   const classId = notes.get("〔商品規格ID-M0333-046〕");
-  const before = snapshot(classId, "HP-OFF-01-046");
+  const before = snapshot(classId, rc("HP-OFF-01-046"));
   const upload = await signIn(page);
   const results: { r: SubmitResult; エラー: string[]; 成功: string[]; path: string; 見出し: string }[] = [];
   const record = async (r: SubmitResult) => {
@@ -215,7 +216,7 @@ caseTest("IT-M03-33-046", async ({ page, notes, step, expected, db }) => {
 
 caseTest("IT-M03-33-047", async ({ page, notes, step, expected, db }) => {
   const classId = notes.get("〔商品規格ID-M0333-047〕");
-  const before = snapshot(classId, "HP-OFF-01-047");
+  const before = snapshot(classId, rc("HP-OFF-01-047"));
   const upload = await signIn(page);
   let r!: SubmitResult;
   await step(1, async () => {
@@ -248,7 +249,7 @@ caseTest("IT-M03-33-047", async ({ page, notes, step, expected, db }) => {
 
 caseTest("IT-M03-33-048", async ({ page, notes, step, expected, db }) => {
   const classId = notes.get("〔商品規格ID-M0333-048〕");
-  const before = snapshot(classId, "HP-OFF-01-048");
+  const before = snapshot(classId, rc("HP-OFF-01-048"));
   const upload = await signIn(page);
   let r!: SubmitResult;
   await step(1, async () => {

@@ -23,7 +23,7 @@ import { REPO_ROOT, SETUP_ADMIN, STATE_DIR } from "../config/env";
 import { getSeed } from "../lib/catalog";
 import { csvLine, decodeCsvBytes, parseCsv } from "../lib/csv";
 import { Notes } from "../lib/notes";
-import { rcFixed } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { downloadedBytes } from "../pages/admin/m03_21_shelf_number";
@@ -86,10 +86,17 @@ function dataRowInSeed(seedId: string, file: string): string {
   return m[1];
 }
 
+/**
+ * 商品コード（＝高額商品コード）は正本の決め打ちの値。開発環境には前の実行の商品（在庫の記録が付いて消せないことがある）や、ほかの方が登録した
+ * 同じ商品コードの商品が残り得るので、実行ごとの印を付けた商品コードで作る（lib/run_marker.ts の rc。ケースは商品コードの値そのものを確かめない）。
+ * 取込ファイルのデータ行の商品コードにも同じ値を使う。
+ */
+const offCode = (n: string): string => rc(`HP-OFF-01-${n}`);
+
 /** M03-33 の通常（セール外）の高額商品。基準価格1500・販売価格1500・買取価格600・セールなし・高額商品コード＝商品コード */
 async function offProduct(page: Page, seedId: string, n: string, notes: Notes, 帯URL?: string): Promise<void> {
-  const code = `HP-OFF-01-${n}`;
-  expectInSeed(seedId, [`商品コード=${code}`, "基準価格1500", "販売価格1500", "買取価格600", "セール無効", ...(帯URL ? [`帯URL=${帯URL}`] : [])]);
+  const code = offCode(n);
+  expectInSeed(seedId, [`商品コード=HP-OFF-01-${n}`, "基準価格1500", "販売価格1500", "買取価格600", "セール無効", ...(帯URL ? [`帯URL=${帯URL}`] : [])]);
   await createHighPriceGoods(page, seedId, {
     商品コード: code, 商品名: `M0333-${n}`,
     CSV: { 基準価格: "1500", 販売価格: "1500", 買取価格: "600" },
@@ -122,7 +129,7 @@ defineSeed("S-M03-33-BRANCH-006", { needs: ["S-M03-33-ADM"] }, async ({ browser,
   // 「商品コードHP-OFF-01-006・販売価格1500・買取価格600・セールフラグ0・帯URLは空・タグ(ID)は空・スマレジ連携フラグ0のデータ行」
   //  （状態・属性「帯URLを空、他の値をHP-OFF-01-006,1500,600,0,タグ空,0とする」）。値の並びは正本の他のデータ行（off_on-001.csv など）と同じ
   expectInSeed(seed.シードID, ["belt_empty-006.csvは帯URLを空、他の値をHP-OFF-01-006,1500,600,0,タグ空,0とする"]);
-  await branchSeed(browser, seed.シードID, "006", notes, headerPlusRow("belt_empty-006.csv", "HP-OFF-01-006,1500,600,0,,,0"), "https://before.example/");
+  await branchSeed(browser, seed.シードID, "006", notes, headerPlusRow("belt_empty-006.csv", `${offCode("006")},1500,600,0,,,0`), "https://before.example/");
 });
 
 defineSeed("S-M03-33-BRANCH-029", { needs: ["S-M03-33-ADM"] }, async ({ browser, seed, notes }) => {
@@ -149,7 +156,7 @@ async function offOnSeed(browser: Browser, seedId: string, n: string, notes: Not
   const file = `off_on-${n}.csv`;
   const row = dataRowInSeed(seedId, file);
   if (row !== `HP-OFF-01-${n},1200,700,1,https://replace-dev.hareruyamtg.com:8443/new,"2,3",1`) throw new Error(`${seedId}: ${file} のデータ行の読み取りが想定と違う: ${row}`);
-  await branchSeed(browser, seedId, n, notes, headerPlusRow(file, row));
+  await branchSeed(browser, seedId, n, notes, headerPlusRow(file, row.replace(`HP-OFF-01-${n}`, offCode(n))));
 }
 
 defineSeed("S-M03-33-BRANCH-046", { needs: ["S-M03-33-ADM"] }, async ({ browser, seed, notes }) => { await offOnSeed(browser, seed.シードID, "046", notes); });

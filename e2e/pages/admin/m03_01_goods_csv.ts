@@ -184,7 +184,8 @@ export function buildGoodsCsv(
 /**
  * waitMs を渡すと、取込の結果の画面へ移るまで最大その時間待つ（数千行の取込は保存の結果の既定の待ち時間を超えるため）。
  */
-export async function uploadGoodsCsv(page: Page, csv: Buffer, name: string, waitMs?: number): Promise<void> {
+/** 確認モーダルが出て「確認」を押したら true（出ずにそのまま送信されたら false）を返す */
+export async function uploadGoodsCsv(page: Page, csv: Buffer, name: string, waitMs?: number): Promise<boolean> {
   await page.goto(adminUrl("/product/product_goods_csv_upload"));
   await page.locator("#upload-form input[type=file]").setInputFiles({ name, mimeType: "text/csv", buffer: csv });
   // 新アプリは 2026-11-11 から、アップロードを押すと確認モーダル（「グッズ商品CSVをアップロードします。よろしいですか？」）を出し、
@@ -198,6 +199,9 @@ export async function uploadGoodsCsv(page: Page, csv: Buffer, name: string, wait
     nav.then(() => "sent" as const, () => "none" as const),
   ]);
   if (outcome === "modal") await confirm.click();
-  if (waitMs === undefined) return;
-  await nav;
+  if (waitMs !== undefined) await nav;
+  // 待ち時間を指定しないときも、確認を押したあとの取込の結果の画面へ移るまで最大45秒待つ（共有の開発環境は取込に10秒以上かかることがあり、
+  // 保存の結果の表示を10秒で見に行くと「結果が表示されない」で止まる。移らなければ、あとの保存の結果の確かめが落とす）
+  else if (outcome === "modal") await Promise.race([nav.then(() => undefined, () => undefined), new Promise((r) => setTimeout(r, 45_000))]);
+  return outcome === "modal";
 }
