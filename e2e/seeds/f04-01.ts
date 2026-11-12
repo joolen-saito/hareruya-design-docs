@@ -19,7 +19,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { Browser } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN, STATE_DIR } from "../config/env";
-import { 会員の店舗のカートID, カートの明細ID, 購入グループID, 商品の商品規格ID, 店舗の在庫ID } from "../db/f04_01";
+import { 会員の店舗のカートID, カートの明細ID, 購入グループID, 商品の商品規格ID, 店舗の在庫ID, 本店の送料無料条件 } from "../db/f04_01";
+import { available as dbAvailable } from "../lib/db";
+import { expectSaved } from "../pages/admin/common";
 import { プレイヤーID } from "../db/f03_07";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
@@ -88,25 +90,50 @@ type 設定の値 = { 金額: string; 数量: string; 入荷通知上限: string
 const 控え = path.join(STATE_DIR, "f04_01_shared_original.json");
 defineSeed("S-F04-01-SETTINGS", async () => { /* 書き換えはケースの開始時（spec の 共有の設定を整える）。ここでは何もしない */ });
 
+/** 画面の金額・数量は「30,000」のように桁区切りが付くことがあるので、数字だけにして比べる・控える */
+const 数字だけ = (v: string): string => v.replace(/[,\s]/g, "");
+
 async function 今の値(browser: Browser): Promise<設定の値> {
   return withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     const p = new ShopBasicPage(page);
     await p.open();
-    const 金額 = await p.値("送料無料条件(金額)");
-    const 数量 = await p.値("送料無料条件(数量)");
+    const 金額 = 数字だけ(await p.値("送料無料条件(金額)"));
+    const 数量 = 数字だけ(await p.値("送料無料条件(数量)"));
     return { 金額, 数量, 入荷通知上限: await readArrivalMax(page) };
   });
 }
+
+/** DB の本店の送料無料条件が v になるまで待つ（最大 waitMs）。DB を使えない環境では true */
+async function DBの送料無料条件を待つ(v: 設定の値, waitMs: number): Promise<boolean> {
+  if (!dbAvailable) return true;
+  const until = Date.now() + waitMs;
+  for (;;) {
+    const d = 本店の送料無料条件();
+    if (d.金額 === 数字だけ(v.金額) && d.数量 === 数字だけ(v.数量)) return true;
+    if (Date.now() > until) return false;
+    await new Promise((r) => setTimeout(r, 3_000));
+  }
+}
+
 async function 書く(browser: Browser, v: 設定の値, 今: 設定の値, what: string): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    if (v.金額 !== 今.金額 || v.数量 !== 今.数量) {
+    if (数字だけ(v.金額) !== 数字だけ(今.金額) || 数字だけ(v.数量) !== 数字だけ(今.数量)) {
       const p = new ShopBasicPage(page);
       await p.open();
-      await p.入れる("送料無料条件(金額)", v.金額);
-      await p.入れる("送料無料条件(数量)", v.数量);
-      await p.押して保存を確かめる(`${what}（送料無料条件 金額「${v.金額 || "設定なし"}」・数量「${v.数量 || "設定なし"}」）`);
+      await p.入れる("送料無料条件(金額)", 数字だけ(v.金額));
+      await p.入れる("送料無料条件(数量)", 数字だけ(v.数量));
+      // 押したあと画面が移る（保存して読み込み直す）のを待つ。読み込みの終わりだけを待つと、保存の前に先へ進んで画面を閉じ、
+      // 開発環境が遅いときに保存の要求が途中で切れる（2026-11-13 夜: 戻したつもりの送料無料条件が 5,000 のまま残った）
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+        p.設定ボタン.click({ timeout: 30_000 }),
+      ]);
+      await page.waitForLoadState("load");
+      await expectSaved(page, `${what}（送料無料条件 金額「${v.金額 || "設定なし"}」・数量「${v.数量 || "設定なし"}」）`);
+      // 保存されたことを DB で確かめる（画面を閉じる前に）
+      if (!(await DBの送料無料条件を待つ(v, 60_000))) throw new Error(`${what}: 送料無料条件が DB で ${JSON.stringify(本店の送料無料条件())} のまま（入れた値 金額「${v.金額}」・数量「${v.数量}」）`);
     }
     if (v.入荷通知上限 !== 今.入荷通知上限) await setArrivalMax(page, v.入荷通知上限);
   });
@@ -120,17 +147,26 @@ export async function 共有の設定を整える(browser: Browser, v: 設定の
   }
   await 書く(browser, v, 今, "共有の設定をケースの開始時の値にする");
 }
-/** 共有の設定を元の値へ戻し、戻った値を画面で確かめて返す（戻せなかったときは文を返す） */
+/**
+ * 共有の設定を元の値へ戻し、戻った値を確かめて返す（戻せなかったときは文を返す）。
+ * 送料無料条件は DB で、入荷通知最大数は画面で確かめ、戻っていなければ最大3回まで戻し直す。控えのファイルは、元の値に戻ったと確かめてから消す。
+ */
 export async function 共有の設定を戻す(browser: Browser): Promise<string> {
   if (!fs.existsSync(控え)) return "";
-  const 元 = JSON.parse(fs.readFileSync(控え, "utf-8")) as 設定の値;
-  await 書く(browser, 元, await 今の値(browser), "共有の設定を元の値へ戻す");
-  const 後 = await 今の値(browser);
-  if (後.金額 !== 元.金額 || 後.数量 !== 元.数量 || 後.入荷通知上限 !== 元.入荷通知上限) {
-    return `共有の設定を元の値へ戻せていない（元 ${JSON.stringify(元)}・今 ${JSON.stringify(後)}）`;
+  const 元読み = JSON.parse(fs.readFileSync(控え, "utf-8")) as 設定の値;
+  const 元: 設定の値 = { 金額: 数字だけ(元読み.金額), 数量: 数字だけ(元読み.数量), 入荷通知上限: 元読み.入荷通知上限 };
+  let 後: 設定の値 = await 今の値(browser);
+  let 失敗 = "";
+  for (let i = 0; i < 3; i++) {
+    try { await 書く(browser, 元, 後, `共有の設定を元の値へ戻す（${i + 1}回目）`); } catch (e) { 失敗 = (e as Error).message.split("\n")[0]; }
+    後 = await 今の値(browser);
+    const DBで戻った = await DBの送料無料条件を待つ(元, 5_000);
+    if (DBで戻った && 後.金額 === 元.金額 && 後.数量 === 元.数量 && 後.入荷通知上限 === 元.入荷通知上限) {
+      fs.rmSync(控え, { force: true });
+      return "";
+    }
   }
-  fs.rmSync(控え, { force: true });
-  return "";
+  return `共有の設定を元の値へ戻せていない（元 ${JSON.stringify(元)}・今 ${JSON.stringify(後)}・DB ${dbAvailable ? JSON.stringify(本店の送料無料条件()) : "見られない"}${失敗 ? `・${失敗}` : ""}）`;
 }
 
 // ---- ケースのシード ----
