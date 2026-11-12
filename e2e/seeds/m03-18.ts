@@ -114,14 +114,6 @@ class SeedOps {
     // （入力の誤りの表示は無い）。画面を開き直し、登録されていないことを確かめてから入れ直す（3回まで。3回とも戻ったらそのまま止める）。
     let id = "";
     for (let attempt = 1; ; attempt++) {
-      // 前の実行（や、画面が「登録できませんでした。」と戻したが保存はされていた回）が残した、同じ内容の部門が1件だけあれば、それを使う
-      const same = (await this.s.allRows()).filter((r) => r.部門名 === v.部門名 || r.部門コード === v.部門コード);
-      if (same.length === 1 && same[0].部門名 === v.部門名 && same[0].部門コード === v.部門コード && same[0].免税区分 === v.免税区分
-        && same[0].MTGBuyer表示フラグ === (v.MTGBuyer表示フラグ ? "表示" : "非表示")) {
-        this.warn(`部門名「${v.部門名}」・部門コード ${v.部門コード} の同じ内容の部門（ID ${same[0].ID}）が前から残っていたので、登録せずそれを使った`);
-        this.notes.set(label, same[0].ID);
-        return same[0].ID;
-      }
       await this.expectAbsent(v);
       try {
         id = await this.s.register(v, `${this.seedId}: 部門名「${v.部門名}」の登録`);
