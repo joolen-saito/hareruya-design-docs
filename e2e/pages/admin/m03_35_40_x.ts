@@ -61,7 +61,11 @@ export async function 商品を作る(page: Page, a: { 商品コード: string; 
   if (rows.length !== 1) throw new Error(`${what}: グッズ商品CSV登録でできた商品規格が ${rows.length} 件（1件のはず）`);
   const ids = [rows[0].商品規格ID];
   if (a.規格の数 === 2) {
-    const id = await 規格を足す(page, productId, { 言語: "日本語", 状態: "EX", 商品コード: a.商品コード, 価格: "100", 買取価格: "10" }, `${what}: 同じ商品コードの2件目の規格`, issue);
+    // 開発環境の状態の選択肢に EX が無い（ニアミント・スライトリープレイド・モデレトリープレイド・ヘビープレイド・その他。2026-11-12）。
+    // 2件目は1件目（NM）と状態が違えばよいので、スライトリープレイドで作る（規格を足す は表示名そのものでも選べる）
+    const 二件目の状態 = "スライトリープレイド" as unknown as "EX";
+    issue(`${what}: 2件目の規格の状態 EX は開発環境に無いので、スライトリープレイドで作った（正本の外の補い）`);
+    const id = await 規格を足す(page, productId, { 言語: "日本語", 状態: 二件目の状態, 商品コード: a.商品コード, 価格: "100", 買取価格: "10" }, `${what}: 同じ商品コードの2件目の規格`, issue);
     // 規格を足す は部門に選択肢の先頭を選ぶので、1件目と同じ部門にし直す
     if (a.部門ID) await 規格の部門と棚番号を選んで登録する(page, { 商品ID: productId, 商品規格ID: id, 部門ID: a.部門ID }, `${what}: 2件目の規格の部門`, issue);
     ids.push(id);
