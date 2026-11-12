@@ -128,7 +128,8 @@ export class ProductCsvUploadScreen {
     ]);
     let confirmed = false;
     if (outcome === "modal") {
-      const ok = modal.getByRole("button", { name: /^(OK|はい|アップロード|登録|確定)$/ });
+      // 新アプリは 2026-11-11 から、確定のボタンの名前が「確認」（#product-status-csv-upload-confirm・csv_product_status.twig 49行・7197222c86）
+      const ok = modal.getByRole("button", { name: /^(OK|はい|アップロード|登録|確定|確認)$/ });
       await expect(ok, "確認モーダルの確定ボタン").toHaveCount(1);
       await ok.click();
       confirmed = true;
