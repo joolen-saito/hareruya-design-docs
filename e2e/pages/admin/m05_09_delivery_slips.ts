@@ -68,7 +68,12 @@ export class SlipStandbyPage extends PickingPrintPage {
     await this.page.evaluate(([from, to]) => {
       const f = document.querySelector("#form_bulk") as HTMLFormElement | null;
       if (!f) throw new Error("出荷指示リスト編集の送信用のフォームが無い");
-      f.addEventListener("submit", () => { f.action = f.action.replace(`/standby/${from}/print/delivery/`, `/standby/${to}/print/delivery/`); }, true);
+      // 画面は「納品書印刷（日本語）」を押すと、スクリプトが送り先を入れて jQuery で送信する。jQuery の送信はフォームの submit 関数を呼び、
+      // submit の出来事が呼ばれないので、関数も差し替えて書き換える（M05-22 の部品と同じ。2026-11-13 の 016 で書き換えが効かなかった）
+      const native = HTMLFormElement.prototype.submit;
+      const rewrite = () => { f.action = f.action.replace(`/standby/${from}/print/delivery/`, `/standby/${to}/print/delivery/`); };
+      (f as HTMLFormElement & { submit: () => void }).submit = function (this: HTMLFormElement) { rewrite(); native.call(this); };
+      f.addEventListener("submit", rewrite, true);
     }, [元のID, 新しいID]);
   }
 }
