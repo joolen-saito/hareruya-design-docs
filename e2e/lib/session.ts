@@ -52,7 +52,16 @@ export async function loginAdmin(page: Page, account: Account): Promise<void> {
       page.getByRole("button", { name: "ログイン" }).click(),
     ]);
     const why = `管理画面にログインできない（${account.loginId}）`;
-    expect(res?.status() ?? 0, `${why}: 応答が異常`).toBeLessThan(400);
+    let status = res?.status() ?? 0;
+    // 新着情報管理の一覧を開く権限の無い管理者（権限を絞った試験管理者など）は、その画面にログイン後の表示が出ない。
+    // そのときは、アプリのもとの行き先（ダッシュボード）を開き直す（2026-11-13 M04-31 の 031）
+    const onNews = new URL(page.url()).pathname.endsWith("/content/news");
+    const header = async () => (await page.locator("header, nav").first().innerText().catch(() => ""));
+    if (skipDashboard && onNews && (status >= 400 || !(await header()).includes("様"))) {
+      const again = await page.goto(adminUrl("/"), { waitUntil: "domcontentloaded", timeout: 120_000 });
+      status = again?.status() ?? 0;
+    }
+    expect(status, `${why}: 応答が異常`).toBeLessThan(400);
     await expect(page, why).not.toHaveURL(/\/login/);
     // ログイン後の画面だけにある表示（画面上部の「○○ 様」）
     await expect(page.locator("header, nav").first(), why).toContainText("様");
