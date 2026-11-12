@@ -15,19 +15,50 @@ export async function hideDebugToolbar(context: BrowserContext): Promise<void> {
   await context.route("**/_wdt/**", (route) => route.abort());
 }
 
+/**
+ * ログインの送信のあと、アプリはダッシュボードへ移す。ダッシュボードは売上の集計などの重い処理をし、共有の開発環境では
+ * 30秒以上返らないことがある（2026-11-12。ほかの管理画面は1秒以内）。テストはログインのたびにダッシュボードを開いていて、
+ * それ自体が環境の負荷になりうる。そこでログインの間だけ、ダッシュボードへの移動をブラウザの中で新着情報管理の一覧へ差し替え、
+ * サーバーにダッシュボードを要求しない（ログイン後にダッシュボードの中身を確かめるテストは無い）。
+ * E2E_LOGIN_SKIP_DASHBOARD=0 で、ダッシュボードへ移る元の動きに戻す。
+ */
+const skipDashboard = process.env.E2E_LOGIN_SKIP_DASHBOARD !== "0";
+const isLoginPost = (u: URL): boolean => u.toString().split("?")[0] === adminUrl("/login");
+const isDashboardUrl = (loc: string): boolean => {
+  const url = new URL(loc, adminUrl("/login"));
+  const base = new URL(adminUrl(""));
+  return url.host === base.host && url.pathname.replace(/\/+$/, "") === base.pathname.replace(/\/+$/, "");
+};
+
 export async function loginAdmin(page: Page, account: Account): Promise<void> {
   await page.goto(adminUrl("/login"));
   await page.locator("#login_id").fill(account.loginId);
   await page.locator("#password").fill(account.password);
-  const [res] = await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.getByRole("button", { name: "ログイン" }).click(),
-  ]);
-  const why = `管理画面にログインできない（${account.loginId}）`;
-  expect(res?.status() ?? 0, `${why}: 応答が異常`).toBeLessThan(400);
-  await expect(page, why).not.toHaveURL(/\/login/);
-  // ログイン後の画面だけにある表示（画面上部の「○○ 様」）
-  await expect(page.locator("header, nav").first(), why).toContainText("様");
+  // ログインの送信の応答（ダッシュボードへの転送）を受け取り、転送先だけを新着情報管理の一覧に書き換えて返す（Cookie などの見出しはそのまま）。
+  // ブラウザが自動でたどる転送の先は差し替えられないので、送信の応答の側で書き換える
+  const toNews = async (route: import("@playwright/test").Route) => {
+    if (route.request().method() !== "POST") return route.fallback();
+    const res = await route.fetch({ maxRedirects: 0 });
+    const headers = res.headers();
+    if (res.status() >= 300 && res.status() < 400 && headers.location && isDashboardUrl(headers.location)) {
+      return route.fulfill({ response: res, headers: { ...headers, location: adminUrl("/content/news") } });
+    }
+    return route.fulfill({ response: res });
+  };
+  if (skipDashboard) await page.route(isLoginPost, toNews);
+  try {
+    const [res] = await Promise.all([
+      page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+      page.getByRole("button", { name: "ログイン" }).click(),
+    ]);
+    const why = `管理画面にログインできない（${account.loginId}）`;
+    expect(res?.status() ?? 0, `${why}: 応答が異常`).toBeLessThan(400);
+    await expect(page, why).not.toHaveURL(/\/login/);
+    // ログイン後の画面だけにある表示（画面上部の「○○ 様」）
+    await expect(page.locator("header, nav").first(), why).toContainText("様");
+  } finally {
+    if (skipDashboard) await page.unroute(isLoginPost, toNews).catch(() => undefined);
+  }
 }
 
 /**
