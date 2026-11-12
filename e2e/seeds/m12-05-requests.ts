@@ -44,13 +44,13 @@ export const 商品名 = (base: string, suffix = ""): string => rc(base) + suffi
 type 言語 = "ja" | "en" | "fr";
 const 言語ID: Record<言語, string> = { ja: "1", en: "2", fr: "5" };
 
-type 商品 = {
+export type 商品 = {
   /** 〔商品ID-M1205-…〕の接尾 */
   s: string; base: string; suffix?: string; lang?: 言語; price: number;
   /** 〔商品規格ID-M1205-…〕の接尾（並び順に規格を作る）。省略すると [s] */
   classes?: string[]; tag?: boolean;
 };
-type 依頼 = {
+export type 依頼 = {
   /** 〔入荷通知依頼ID-M1205-…〕の接尾 */
   id: string;
   /** 〔会員ID-M1205-…〕の接尾 */
@@ -62,13 +62,19 @@ type 依頼 = {
   /** 画面ではなくDBで足す */
   db?: boolean;
 };
-type 定義 = {
+export type 定義 = {
+  /** 控える呼び名・商品コードの機能の印（省略すると M1205。M12-06 など、同じ作り方を使う機能が渡す） */
+  prefix?: string;
+  /** 控える呼び名を絞る（シード表が名前で書いた呼び名だけを控えるため。省略すると全部） */
+  keep?: (label: string) => boolean;
+  /** 商品の作り方を差し替える（省略するとグッズ商品CSV登録。M12-06 はグッズ商品CSVの不具合 ECCUBE_HARERUYA-3966 のため、カード商品で作る） */
+  makeProducts?: (browser: Browser, d: 定義, issue: (m: string) => void) => Promise<作った商品[]>;
   seedId: string; sfx: string; members: string[]; shareMember?: boolean; names?: Record<string, [string, string]>;
   products: 商品[]; requests: 依頼[];
 };
 
-const DEF_AT = "2026-07-15 12:00:00";
-const DEF_DEL = "2026-07-16 00:00:00";
+export const DEF_AT = "2026-07-15 12:00:00";
+export const DEF_DEL = "2026-07-16 00:00:00";
 const STATE_SP = "スライトリープレイド";
 
 type 会員 = { mail: string; password: string; id: string };
@@ -92,17 +98,17 @@ async function createMember(browser: Browser, local: string, name: [string, stri
   return { mail, password, id };
 }
 
-type 作った商品 = { productId: string; classIds: string[] };
+export type 作った商品 = { productId: string; classIds: string[] };
 
 async function createProducts(browser: Browser, d: 定義, issue: (m: string) => void): Promise<作った商品[]> {
-  const code = (i: number, j: number) => rc(`M1205-${d.sfx}-P${i + 1}${j > 0 ? `-C${j + 1}` : ""}`);
+  const code = (i: number, j: number) => rc(`${d.prefix ?? "M1205"}-${d.sfx}-P${i + 1}${j > 0 ? `-C${j + 1}` : ""}`);
   return withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     const categoryId = await readExistingGoodsChildCategoryId(page);
     await registerGoodsCsv(page, {
       what: `${d.seedId} のグッズ商品CSV登録`, fileName: `${d.seedId}.csv`, categoryId,
       lines: d.products.map((p, i) => ({
-        code: code(i, 0), nameJp: 商品名(p.base, p.suffix), nameEn: rc(`M1205-${d.sfx}-EN${i + 1}`),
+        code: code(i, 0), nameJp: 商品名(p.base, p.suffix), nameEn: rc(`${d.prefix ?? "M1205"}-${d.sfx}-EN${i + 1}`),
         values: { "基準価格": String(p.price), "販売価格": String(p.price), ...(p.lang && p.lang !== "ja" ? { "言語(ID)": 言語ID[p.lang] } : {}) },
       })),
       onWarning: (w) => issue(`${d.seedId}: グッズ商品CSV登録の警告「${w}」`),
@@ -130,17 +136,19 @@ async function createProducts(browser: Browser, d: 定義, issue: (m: string) =>
   });
 }
 
-async function build(d: 定義, browser: Browser, notes: Notes): Promise<void> {
+async function build(d: 定義, browser: Browser, rawNotes: Notes): Promise<void> {
   const issue = (m: string) => reportSeedIssue(d.seedId, m);
+  const pf = d.prefix ?? "M1205";
+  const notes = { set: (label: string, v: string) => { if (!d.keep || d.keep(label)) rawNotes.set(label, v); } };
   // 会員
   const real = d.shareMember ? [d.members[0]] : d.members;
   const mem = new Map<string, 会員>();
   for (const [i, s] of real.entries()) {
-    mem.set(s, await createMember(browser, `m1205-${d.sfx.toLowerCase()}-m${i + 1}`, d.names?.[s] ?? ["試験会員", "入荷通知依頼"], issue));
+    mem.set(s, await createMember(browser, `${(d.prefix ?? "M1205").toLowerCase()}-${d.sfx.toLowerCase()}-m${i + 1}`, d.names?.[s] ?? ["試験会員", "入荷通知依頼"], issue));
   }
   const memberOf = (s: string): 会員 => (d.shareMember ? mem.get(d.members[0])! : mem.get(s)!);
   // 商品
-  const made = await createProducts(browser, d, issue);
+  const made = await (d.makeProducts ?? createProducts)(browser, d, issue);
   const productOf = new Map(d.products.map((p, i) => [p.s, { def: p, made: made[i] }]));
   const classOf = (p: string, c?: string): { productId: string; classId: string } => {
     const x = productOf.get(p)!;
@@ -190,28 +198,28 @@ async function build(d: 定義, browser: Browser, notes: Notes): Promise<void> {
     if (r.bulk) {
       const { productId } = classOf(r.p, r.c);
       依頼を足す({ プレイヤーID: player, 商品ID: productId, 言語ID: 言語ID[productOf.get(r.p)!.def.lang ?? "ja"], 依頼日時: r.at, 削除日時: del });
-      notes.set(`〔入荷通知依頼ID-M1205-${r.id}〕`, 依頼IDを引く(player, { 商品ID: productId }));
+      notes.set(`〔入荷通知依頼ID-${pf}-${r.id}〕`, 依頼IDを引く(player, { 商品ID: productId }));
       continue;
     }
     const { classId } = classOf(r.p, r.c);
     if (r.db || screenMissing.has(r)) 依頼を足す({ プレイヤーID: player, 商品規格ID: classId, 依頼日時: r.at, 削除日時: del });
     else 規格の依頼日時を設定(player, classId, r.at, del);
-    notes.set(`〔入荷通知依頼ID-M1205-${r.id}〕`, 依頼IDを引く(player, { 商品規格ID: classId }));
+    notes.set(`〔入荷通知依頼ID-${pf}-${r.id}〕`, 依頼IDを引く(player, { 商品規格ID: classId }));
   }
   // 控え（商品・規格・会員）
   for (const p of d.products) {
-    notes.set(`〔商品ID-M1205-${p.s}〕`, productOf.get(p.s)!.made.productId);
-    (p.classes ?? [p.s]).forEach((cs, j) => notes.set(`〔商品規格ID-M1205-${cs}〕`, productOf.get(p.s)!.made.classIds[j]));
+    notes.set(`〔商品ID-${pf}-${p.s}〕`, productOf.get(p.s)!.made.productId);
+    (p.classes ?? [p.s]).forEach((cs, j) => notes.set(`〔商品規格ID-${pf}-${cs}〕`, productOf.get(p.s)!.made.classIds[j]));
   }
-  for (const s of d.members) notes.set(`〔会員ID-M1205-${s}〕`, memberOf(s).id);
+  for (const s of d.members) notes.set(`〔会員ID-${pf}-${s}〕`, memberOf(s).id);
   if (d.shareMember && d.members.length > 1) issue("シード表は会員を複数書くが、会員の数が結果に効かないので、会員1人が複数の商品へ依頼した形にした（〔会員ID-…〕はすべて同じ会員のID）");
 }
 
-function seed(d: 定義) {
+export function seed(d: 定義) {
   return ({ browser, notes }: { browser: Browser; notes: Notes }) => build(d, browser, notes);
 }
 
-const one = (sfx: string): { members: string[]; shareMember: true } => ({ members: [sfx], shareMember: true });
+export const one = (sfx: string): { members: string[]; shareMember: true } => ({ members: [sfx], shareMember: true });
 
 defineSeed("S-M12-05-KEYWORD-001", seed({
   seedId: "S-M12-05-KEYWORD-001", sfx: "KEYWORD-001", ...one("001"),

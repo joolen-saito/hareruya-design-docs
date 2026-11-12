@@ -39,7 +39,7 @@ caseTest("IT-M14-01-019", async ({ page, step, expected }) => {
   await step(1, async () => { await l.open(); });
   await step(2, async () => { await l.キーワードで検索する("存在しないカード名XYZ"); });
   await expected(async () => {
-    expect.soft(await l.検索結果の文(), "検索結果の見出し").toBe("検索条件に合致するデータが見つかりませんでした");
+    expect.soft(await l.該当なしの見出し(), "検索結果の見出し（該当なし）").toBe("検索条件に合致するデータが見つかりませんでした");
     expect.soft(await l.行.count(), "表示されたカードの行数").toBe(0);
   });
 });

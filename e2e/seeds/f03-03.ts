@@ -108,8 +108,7 @@ function defineCategoryChain(seedId: string, 名前: string[], 呼び名: string
         notes.set(呼び名[i], id);
         parent = id;
       }
-      // シード表の文中の総称「〔…〕」（以下の〔…〕）は、控えた番号の一覧として控える
-      notes.set("〔…〕", 呼び名.map((l) => notes.get(l)).join(","));
+      // シード表の文中の総称「〔…〕」（以下の〔…〕）は例示で、控える番号ではない（基盤が「シード表に無い呼び名」として止めるので控えない）
     });
   });
 }
@@ -226,8 +225,7 @@ defineSeed("S-F03-03-MASTERS", async ({ browser, notes, seed }) => {
     notes.set("〔イラストレーターID-F0303-共有B〕", await ensureByEnglishName(page, "illustrator", 共有マスタ.イラストレーターB, undefined, issue));
     notes.set("〔サブタイプID-F0303-共有A〕", await ensureByEnglishName(page, "subtype", 共有マスタ.サブタイプA英, 共有マスタ.サブタイプA日, issue));
     notes.set("〔サブタイプID-F0303-共有B〕", await ensureByEnglishName(page, "subtype", 共有マスタ.サブタイプB英, 共有マスタ.サブタイプB日, issue));
-    // シード表の文中の総称「〔…〕」（以下の〔…〕）は、控えた番号の一覧として控える
-    notes.set("〔…〕", notes.entries().filter(([k]) => /共有/.test(k)).map(([, v]) => v).join(","));
+    // シード表の文中の総称「〔…〕」（以下の〔…〕）は例示で、控える番号ではない（基盤が「シード表に無い呼び名」として止めるので控えない）
   });
 });
 

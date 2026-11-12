@@ -109,8 +109,8 @@ export class ページ管理 {
     const ng = p.locator(".alert-danger, .invalid-feedback, .form-error-message").filter({ hasNotText: "デバッグモード" });
     const sys = p.getByText("システムエラーが発生しました");
     const wait = p.getByText("該当ファイルが見つかりませんでした。");
-    // 登録はテンプレートの保存・ファイル置き場への送信を含み、手元の環境では1分を超えることがある
-    await expect(ok.or(ng).or(sys).or(wait).first(), "登録の結果が表示されない").toBeVisible({ timeout: 240_000 });
+    // 登録はテンプレートの保存・ファイル置き場への送信を含み、手元の環境では1分を超えることがあり、開発環境の遅い時間帯（朝〜14時）は4分でも返らなかった（2026-11-11）ので7分まで待つ
+    await expect(ok.or(ng).or(sys).or(wait).first(), "登録の結果が表示されない").toBeVisible({ timeout: 420_000 });
     const texts = async (l: Locator) => (await l.allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
     const 案内 = await wait.first().isVisible().catch(() => false);
     if (案内) test.info().annotations.push({ type: "手順の注記", description: "登録後の画面が「該当ファイルが見つかりませんでした。同期が完了していない可能性があります。…1分ほど待ってから再度アクセスしてください。」の案内になった（保存そのものはDBに残る）" });

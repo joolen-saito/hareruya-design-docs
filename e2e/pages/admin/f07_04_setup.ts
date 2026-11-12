@@ -38,16 +38,24 @@ export async function 会員を作る(browser: Browser, ベース: string, 識�
   return { メール, パスワード, 姓, 名, 氏名: `${姓} ${名}` };
 }
 
-/** 管理画面の会員一覧をメールアドレスで検索し、その会員の会員IDを返す */
+/**
+ * 管理画面の会員一覧をメールアドレスで検索し、その会員の会員IDを返す。
+ * 登録した直後の会員が会員一覧にすぐ出ない共有環境があるので、見つかるまで10秒おいて最大6回、検索し直す（F03-08 と同じ）
+ */
 export async function 会員IDをメールから(page: Page, メール: string): Promise<string> {
-  await page.goto(adminUrl("/customer"));
-  await page.waitForLoadState("load");
-  await page.locator('[name="admin_search_customer[multi]"]').fill(メール);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click()]);
-  await page.waitForLoadState("load");
-  const id = /ex-customer-(\d+)/.exec((await page.locator('tr[id^="ex-customer-"]').first().getAttribute("id")) ?? "")?.[1];
-  if (!id) throw new Error(`会員 ${メール} が会員一覧に無い`);
-  return id;
+  for (let i = 0; i < 7; i++) {
+    if (i > 0) await page.waitForTimeout(10_000);
+    await page.goto(adminUrl("/customer"));
+    await page.waitForLoadState("load");
+    await page.locator('[name="admin_search_customer[multi]"]').fill(メール);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click()]);
+    await page.waitForLoadState("load");
+    const row = page.locator('tr[id^="ex-customer-"]').first();
+    if ((await row.count()) === 0) continue;
+    const id = /ex-customer-(\d+)/.exec((await row.getAttribute("id", { timeout: 10_000 })) ?? "")?.[1];
+    if (id) return id;
+  }
+  throw new Error(`会員 ${メール} が会員一覧に無い`);
 }
 
 /** 会員を作り、会員IDまで読む（管理画面のセッションで） */

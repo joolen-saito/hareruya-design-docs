@@ -78,6 +78,121 @@ export class FrontDetail {
   /** 「他のバージョン」のボタンと欄 */
   get 他のバージョンのボタン(): Locator { return this.page.locator('a[href="#other-versions"]'); }
   get 他のバージョンの欄(): Locator { return this.page.locator("#other-versions"); }
+  // ---- 他のバージョンの欄の中身（検索サービスの結果から描く。2026-11-11 索引に載せた商品で確かめるケース） ----
+  /** 他のバージョンの欄の、規格ごとの商品カード */
+  get 他のバージョンのカード(): Locator { return this.page.locator("#sameNameProducts .sameNameProduct"); }
+  /** 他のバージョンの欄の読み込み（検索サービスへの問い合わせと商品の描画）が済むのを待つ */
+  async 他のバージョンを待つ(timeout = 60_000): Promise<void> {
+    await this.page.waitForLoadState("load");
+    await this.page.waitForFunction(() => {
+      const l = document.querySelector("#sameNameProducts");
+      if (!l) return true;
+      return !l.querySelector(".same-name-loading") && l.children.length > 0;
+    }, null, { timeout }).catch(() => undefined);
+    await this.page.waitForTimeout(800);
+  }
+  /** 他のバージョンの欄のうち、その商品の規格のカード（状態の表示で絞れる） */
+  他のバージョンの商品(商品ID: string, 状態?: string): Locator {
+    let l = this.他のバージョンのカード.filter({ has: this.page.locator(`a.p-hareruya-product-card__name[href*="/products/detail/${商品ID}"]`) });
+    if (状態) l = l.filter({ has: this.page.locator(".p-hareruya-product-card__condition", { hasText: new RegExp(`^\\s*${状態}\\s*$`) }) });
+    return l;
+  }
+  /** 他のバージョンのカードの部品 */
+  カードのお気に入り(card: Locator): Locator { return card.locator(".js-product-list-favorite").first(); }
+  カードの数量(card: Locator): Locator { return card.locator("input.p-hareruya-product-card__quantity-input").first(); }
+  カードのカートに追加(card: Locator): Locator { return card.locator("button.addCart").first(); }
+  カードの通知ボタン(card: Locator): Locator { return card.locator(".js-product-list-notify").first(); }
+  /** 他のバージョンの欄の規格のカードを読む（商品ID・状態・規格ID・お気に入りのボタンとその選択の印） */
+  async 他のバージョンを読む(): Promise<{ 商品ID: string; 状態: string; 規格ID: string; お気に入り済み: boolean; お気に入りボタン: boolean }[]> {
+    return this.他のバージョンのカード.evaluateAll((cards) => cards.map((c) => {
+      const a = c.querySelector("a.p-hareruya-product-card__name") as HTMLAnchorElement | null;
+      const fav = c.querySelector(".js-product-list-favorite");
+      const cls = (c.querySelector("[data-productclass]") as HTMLElement | null)?.dataset.productclass ?? "";
+      return {
+        商品ID: /\/products\/detail\/(\d+)/.exec(a?.href ?? "")?.[1] ?? "",
+        状態: (c.querySelector(".p-hareruya-product-card__condition")?.textContent ?? "").trim(),
+        規格ID: cls,
+        お気に入り済み: !!fav && fav.classList.contains("is-selected"),
+        お気に入りボタン: !!fav && (fav as HTMLElement).offsetParent !== null,
+      };
+    }));
+  }
+
+  // ---- 他のバージョンの欄の絞り込み・並び順・ページ送り（2026-11-11。画面のスクリプト product_detail_same_name_js で動く） ----
+  /** 絞り込みのボタン。key は jp・en・other・normal・foil・tokusyu・soldout（在庫ありのみ） */
+  他版の絞り込み(key: "jp" | "en" | "other" | "normal" | "foil" | "tokusyu" | "soldout"): Locator {
+    return this.page.locator(`#other-versions .same-name-filter[data-filter="${key}"]`).first();
+  }
+  async 他版の絞り込みを押す(key: Parameters<FrontDetail["他版の絞り込み"]>[0]): Promise<void> {
+    const b = this.他版の絞り込み(key);
+    await b.scrollIntoViewIfNeeded();
+    await b.click();
+    await this.page.waitForTimeout(500);
+  }
+  /** 欄の上の商品数（絞り込み後の件数） */
+  async 他版の商品数(): Promise<number | null> {
+    const t = norm(await this.page.locator("#other-versions .same-name-filtered-count").first().textContent().catch(() => ""));
+    return /^\d+$/.test(t) ? Number(t) : null;
+  }
+  /** 並び順のタブ（price_asc＝価格(低い順)・price_desc＝価格(高い順)） */
+  他版の並び順(key: "price_asc" | "price_desc"): Locator { return this.page.locator(`#other-versions .same-name-sort[data-sort-key="${key}"]`).first(); }
+  /** 並び順のタブを押し、選び直しで読み込みが走ったら終わるまで待つ。読み込みが走ったかを返す */
+  async 他版の並び順を押す(key: "price_asc" | "price_desc"): Promise<boolean> {
+    const [res] = await Promise.all([
+      this.page.waitForResponse((r) => /\/products\/search\/unisearch\/lazy/.test(r.url()), { timeout: 8_000 }).then(() => true, () => false),
+      this.他版の並び順(key).click(),
+    ]);
+    if (res) await this.他のバージョンを待つ();
+    return res;
+  }
+  /** 欄のすべての商品（絞り込みで外れたもの・別のページのものも含む。並びは欄の並び）。見えているか・価格・在庫切れの印 */
+  async 他版のすべて(): Promise<{ 商品ID: string; 見えている: boolean; 価格: number | null; 在庫切れ: boolean; 言語ID: string; Foil: string }[]> {
+    return this.他のバージョンのカード.evaluateAll((cards) => cards.map((c) => {
+      const a = c.querySelector("a.p-hareruya-product-card__name") as HTMLAnchorElement | null;
+      const price = /([\d,]+)/.exec(c.querySelector(".p-hareruya-product-card__price")?.textContent ?? "")?.[1];
+      const el = c as HTMLElement;
+      return {
+        商品ID: /\/products\/detail\/(\d+)/.exec(a?.href ?? "")?.[1] ?? "",
+        見えている: el.offsetParent !== null && getComputedStyle(el).display !== "none",
+        価格: price ? Number(price.replace(/,/g, "")) : null,
+        在庫切れ: el.dataset.soldout === "1",
+        言語ID: el.dataset.languageId ?? "",
+        Foil: el.dataset.foilFlg ?? "",
+      };
+    }));
+  }
+  /** ページ送りの項目（前へ・次へを含む li） */
+  get 他版のページ送り(): Locator { return this.page.locator("#other-versions .same-name-pagination .p-hareruya-pagination__item"); }
+  他版のページ番号(n: number): Locator { return this.page.locator(`#other-versions .same-name-pagination .same-name-page-num-${n}`).first(); }
+  get 他版の前へ(): Locator { return this.page.locator("#other-versions .same-name-pagination .p-hareruya-pagination__item--prev").first(); }
+  get 他版の次へ(): Locator { return this.page.locator("#other-versions .same-name-pagination .p-hareruya-pagination__item--next").first(); }
+  get 他版の省略(): Locator { return this.page.locator("#other-versions .same-name-pagination .p-hareruya-pagination__item--ellipsis"); }
+  /** 表示中のページ番号 */
+  async 他版の表示中のページ(): Promise<string> {
+    return norm(await this.page.locator("#other-versions .same-name-pagination .p-hareruya-pagination__item--current").first().textContent().catch(() => ""));
+  }
+  /** ページ番号の並び（前へ・次へを除く。省略は「...」） */
+  async 他版のページの並び(): Promise<string[]> {
+    return this.他版のページ送り.evaluateAll((lis) => lis
+      .filter((li) => !li.classList.contains("p-hareruya-pagination__item--prev") && !li.classList.contains("p-hareruya-pagination__item--next"))
+      .map((li) => (li.classList.contains("p-hareruya-pagination__item--ellipsis") ? "..." : (li.textContent ?? "").replace(/\s+/g, "").trim())));
+  }
+  /** 項目（li）がページ遷移のリンクを持つか */
+  async 他版の項目がリンクか(item: Locator): Promise<boolean> {
+    return (await item.locator("a[href]").count()) > 0;
+  }
+  /** 項目（li）を押す。中にリンクがあればリンクを、無ければ項目そのものを押す */
+  async 他版の項目を押す(item: Locator): Promise<void> {
+    await item.scrollIntoViewIfNeeded();
+    const a = item.locator("a").first();
+    if ((await a.count()) > 0) await a.click(); else await item.click();
+    await this.page.waitForTimeout(500);
+  }
+  /** カード情報の「セット名」「イラストレーター」のリンク（表示名で引く） */
+  カード情報のリンク(表示名: string): Locator {
+    return this.page.locator("a.p-hareruya-product-detail__specs-link").filter({ hasText: new RegExp(`^\\s*${表示名.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`) }).first();
+  }
+
   /** 「掲載記事一覧」のリンク */
   get 掲載記事一覧(): Locator { return this.page.locator("a.p-hareruya-kiji-btn"); }
   /** 「買取情報を見る」のリンク（買取商品詳細画面へ） */

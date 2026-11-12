@@ -20,3 +20,16 @@ export async function customerStateByEmail(page: Page, メール: string): Promi
   if (n > 1) throw new Error(`メールアドレス ${メール} の会員が ${n} 人いる`);
   return (await rows.locator('[data-bs-target^="#discontinuance_cus_"]').count()) > 0 ? "仮会員" : "本会員";
 }
+
+/**
+ * 登録した直後の会員が会員一覧にすぐ出ない共有環境向け。見つかるまで10秒おいて最大6回、検索し直す
+ * （2026-11-11 夕方 F03-08。本登録の完了画面までは出ているのに、一覧に出るのが遅れた）
+ */
+export async function customerStateByEmailWait(page: Page, メール: string): Promise<会員の状態 | null> {
+  let state = await customerStateByEmail(page, メール);
+  for (let i = 0; i < 6 && state === null; i++) {
+    await page.waitForTimeout(10_000);
+    state = await customerStateByEmail(page, メール);
+  }
+  return state;
+}

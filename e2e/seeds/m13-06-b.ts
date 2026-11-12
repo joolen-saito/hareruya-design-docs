@@ -34,18 +34,21 @@ const 固定日程 = (開始時間: string, オンライン: boolean): ScheduleI
 
 // ---- イベント情報検索のモーダル ----
 
-defineSeed("S-M13-06-MODAL-005", { needs: ["S-M13-06-ADM"] }, async ({ browser }) => {
+defineSeed("S-M13-06-MODAL-005", { needs: ["S-M13-06-ADM"] }, async ({ browser, notes }) => {
   const k = rc("M1306MODAL-005");
   await withAdminSession(browser, M1306_ADMIN, async (page) => {
     const a = await registerEvent(page, イベント(`${k}-A`, 英名("005A"), "新宿店"));
-    await registerSchedule(page, a, 固定日程("2026-09-10 10:00", true));
+    notes.set("〔イベントID-M1306-005A〕", a);
+    notes.set("〔日程ID-M1306-005A〕", await registerSchedule(page, a, 固定日程("2026-09-10 10:00", true)));
     const b = await registerEvent(page, イベント(`${k}-B`, 英名("005B"), "新宿店"));
-    await registerSchedule(page, b, 固定日程("2026-09-11 10:00", false));
+    notes.set("〔イベントID-M1306-005B〕", b);
+    notes.set("〔日程ID-M1306-005B〕", await registerSchedule(page, b, 固定日程("2026-09-11 10:00", false)));
   });
   await 池袋店の管理者を用意する(browser);
   await withAdminSession(browser, M1306_IKEBUKURO_ADMIN, async (page) => {
     const c = await registerEvent(page, イベント(`${k}-C`, 英名("005C"), "池袋店"));
-    await registerSchedule(page, c, 固定日程("2026-09-12 10:00", true));
+    notes.set("〔イベントID-M1306-005C〕", c);
+    notes.set("〔日程ID-M1306-005C〕", await registerSchedule(page, c, 固定日程("2026-09-12 10:00", true)));
   });
 });
 /** 005 のイベント名（検索語に、末尾の A・B・C を付けたもの） */
@@ -53,15 +56,17 @@ export const モーダル005 = () => ({ 語: rc("M1306MODAL-005"), A: `${rc("M13
 
 /** 006: 新宿店・オンライン受付ありの日程12件（11イベント。最後のイベントだけ2日程） */
 export const モーダル006の語 = () => rc("M1306MODAL-006");
-defineSeed("S-M13-06-MODAL-006", { needs: ["S-M13-06-ADM"] }, async ({ browser, seed }) => {
+defineSeed("S-M13-06-MODAL-006", { needs: ["S-M13-06-ADM"] }, async ({ browser, seed, notes }) => {
   const k = モーダル006の語();
   開催日の読み替えを残す(seed.シードID, "2026-09-10 10:00");
   await withAdminSession(browser, M1306_ADMIN, async (page) => {
     for (let i = 1; i <= 11; i++) {
       const nn = String(i).padStart(2, "0");
       const id = await registerEvent(page, イベント(`${k}-${nn}`, 英名(`006-${nn}`), "新宿店"));
-      await registerSchedule(page, id, 日程("2026-09-10 10:00"));
-      if (i === 11) await registerSchedule(page, id, 日程("2026-09-11 10:00"));
+      const 文字 = "ABCDEFGHIJKL";
+      notes.set(`〔イベントID-M1306-006${文字[i - 1]}〕`, id);
+      notes.set(`〔日程ID-M1306-006${文字[i - 1]}〕`, await registerSchedule(page, id, 日程("2026-09-10 10:00")));
+      if (i === 11) notes.set("〔日程ID-M1306-006L〕", await registerSchedule(page, id, 日程("2026-09-11 10:00")));
     }
   });
 });

@@ -45,7 +45,7 @@ import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
 import { rc, RUN_MARK } from "../lib/run_marker";
-import { reportSeedIssue } from "../lib/seeds";
+import { buildSeeds, reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { adminUrl, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { customerStateByEmail } from "../pages/admin/customer";
@@ -61,6 +61,8 @@ import { デッキを登録する, 公開用 } from "../pages/admin/m15_deck";
 import { FrontFavorite } from "../pages/front/f03_08_favorite";
 import { FrontRestock } from "../pages/front/f03_07_restock_notify";
 import { お気に入り件数 } from "../db/f03_08";
+import { イラストレーターを用意する, カードセットを登録する, 作った索引の商品, 索引の商品, 店舗に入庫する, 属性つきカードを登録する } from "../pages/admin/f03_index_seed";
+import { 索引のまとめ, 索引の組 } from "./f03_index_common";
 import { registerFrontMember } from "../pages/front/member_entry";
 
 const ENV_SEED = "S-F03-02-ENV";
@@ -600,3 +602,231 @@ defineMemberSeed("S-F03-02-MEMBER-025", "f0302-member-025", "Passw0rd-F0302-025!
 defineMemberSeed("S-F03-02-MEMBER-026", "f0302-member-026", "Passw0rd-F0302-026!", { needs: BASE, after: (b, m) => JPをお気に入りにする(b, "S-F03-02-MEMBER-026", m) });
 defineMemberSeed("S-F03-02-MEMBER-119", "dpf0302-119", "Passw0rd-F0302119", { needs: BASE, after: (b, m) => JPをお気に入りにする(b, "S-F03-02-MEMBER-119", m) });
 defineMemberSeed("S-F03-02-MEMBER-120", "dpf0302-120", "Passw0rd-F0302120", { needs: BASE, after: (b, m) => JPをまとめて入荷通知にする(b, "S-F03-02-MEMBER-120", m) });
+
+// ---- 2026-11-11: 検索サービスの索引に載せる商品（001 の BASE-CARD・096〜099 の他のバージョン） ----
+//
+// 依頼者の決定（2026-11-11 夜）で開発環境のフィード連携ができるようになったので、前回まで見送っていた 001・096〜099 のシードを作る。
+// 4 つの「他のバージョン」の組（FAVVER-096・097・BULKVER-098・NOTIFYVER-099）と、BASE-CARD の反映の組（BROWSER-001）を、
+// 最初にどれかが呼ばれたときにまとめて作り、フィードを1回だけ送り、公開側の検索に出るまで待つ（seeds/f03_index_common.ts）。
+// - 他のバージョンの組: カード詳細(登録)で詳細情報を2件持つカードを登録し、カード商品CSV登録で1件目・2件目の詳細情報の商品を1件ずつ取り込む
+//   （同じカードIDの2商品）。JPのNMの規格の価格を入れ、要らない状態の規格を消し、在庫を入れる。
+// - BROWSER-001: 正本は「閲覧履歴0件・カート0件・ログアウトのブラウザ」で作るものは無いが、001 は BASE-CARD を商品一覧から開くので、
+//   BASE-CARD（共有のカード商品）を索引へ送って反映を待つことをここで行う（BASE-CARD はまだならこの組の中で作る）。
+// 正本の外で補ったこと: EX は手元の環境に無いので SP、NM以外の状態の価格は200円以下（スマレジ連携の対象にしない。既存の F03-02 と同じ）。
+//   正本の「試験用の価格」は 200。カード名は「他版カード F0302-096」のように、組ごとに印つきの試験用の名前にした。
+
+type 他版の版 = { 商品名: string; NM価格: string; NM在庫: number; SP?: { 価格: string; 在庫: number } };
+type 他版の定義 = { seedId: string; 番号: string; 支店: "公開" | "非公開"; A: 他版の版; B: 他版の版 };
+
+const 他版の一覧: 他版の定義[] = [
+  { seedId: "S-F03-02-FAVVER-096", 番号: "096", 支店: "非公開", A: { 商品名: "他版基準カード F0302-096-A", NM価格: "500", NM在庫: 2 }, B: { 商品名: "他版お気に入りカード F0302-096-B", NM価格: "500", NM在庫: 2 } },
+  { seedId: "S-F03-02-FAVVER-097", 番号: "097", 支店: "公開", A: { 商品名: "他版基準カード F0302-097-A", NM価格: "500", NM在庫: 2 }, B: { 商品名: "他版お気に入りカード F0302-097-B", NM価格: "500", NM在庫: 2 } },
+  { seedId: "S-F03-02-BULKVER-098", 番号: "098", 支店: "非公開", A: { 商品名: "一括基準カード F0302-098-A", NM価格: "200", NM在庫: 0 }, B: { 商品名: "一括他版カード F0302-098-B", NM価格: "700", NM在庫: 3, SP: { 価格: "200", 在庫: 4 } } },
+  { seedId: "S-F03-02-NOTIFYVER-099", 番号: "099", 支店: "非公開", A: { 商品名: "通知基準カード F0302-099-A", NM価格: "200", NM在庫: 0 }, B: { 商品名: "通知他版カード F0302-099-B", NM価格: "200", NM在庫: 0 } },
+];
+
+/** 他版の組を作る（同じカードの2商品）。商品名（印つき）→ 作った商品 を返す。商品規格ID は JP の NM の規格 */
+async function 他版の組を作る(browser: Browser, d: 他版の定義, issue: (m: string) => void): Promise<Map<string, 作った索引の商品>> {
+  const out = new Map<string, 作った索引の商品>();
+  const 入庫: { 商品コード: string; 店舗: "本店"; 数: number }[] = [];
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const env = await 共通の値を読む(page, issue);
+    const card = await 属性つきカードを登録する(page, { カード名: rc(`他版カード F0302-${d.番号}`), 詳細数: 2 }, `${d.seedId}: カード`, issue);
+    const langId = env.言語.get("日本語");
+    if (!langId) throw new Error(`${d.seedId}: 言語「日本語」のIDを画面から読めない`);
+    for (const [i, v] of [d.A, d.B].entries()) {
+      const name = rc(v.商品名);
+      await カード商品CSVを登録する(page, {
+        言語ID: langId, 商品公開ステータス: "公開", 支店の商品公開ステータス: d.支店, 商品名: name,
+        商品カテゴリID: env.カードのカテゴリ, 購入グループ名称: env.購入グループ, 割引率ID: env.割引率.value,
+        基準価格: "200", 販売価格: "200", 買取価格: "0", カード詳細ID: card.カード詳細IDs[i], 地域別販売制限: "0",
+      }, `${d.seedId.toLowerCase()}-${"ab"[i]}-${RUN_MARK}.csv`, `${d.seedId}: カード商品CSV登録（${v.商品名}）`, issue);
+      const productId = await 商品名で商品IDを読む(page, name);
+      const classes = await 規格の一覧(page, productId);
+      let nm = "";
+      for (const c of classes) {
+        const 当たる = (s: string) => 行が当たる({ ...c, 公開状態: "" }, "JP", s);
+        if (当たる("NM")) {
+          nm = c.商品規格ID;
+          if (v.NM価格 !== "200") await 規格を登録する(page, productId, c.商品規格ID, { 基準価格: v.NM価格, 販売価格: v.NM価格 }, `${d.seedId}: ${v.商品名} の NM`, issue);
+          if (v.NM在庫) 入庫.push({ 商品コード: c.商品コード, 店舗: "本店", 数: v.NM在庫 });
+        } else if (v.SP && 当たる("SP")) {
+          if (v.SP.在庫) 入庫.push({ 商品コード: c.商品コード, 店舗: "本店", 数: v.SP.在庫 });
+        } else {
+          await 規格を削除する(page, productId, c.商品規格ID, `${d.seedId}: ${v.商品名} の ${c.言語}・${c.状態}`, issue);
+        }
+      }
+      if (!nm) throw new Error(`${d.seedId}: ${v.商品名} に JP の NM の商品規格が無い`);
+      out.set(name, { 商品ID: productId, 商品規格ID: nm, カードID: card.カードID, カード詳細ID: card.カード詳細IDs[i] });
+      issue(`${v.商品名}: 商品ID ${productId}・JPのNMの規格 ${nm}（価格 ${v.NM価格}・在庫 ${v.NM在庫}）${v.SP ? `、SPの規格（価格 ${v.SP.価格}・在庫 ${v.SP.在庫}）` : ""}を残し、ほかの状態の規格を消した`);
+    }
+  });
+  await 店舗に入庫する(browser, 入庫, d.seedId, issue);
+  if (d.B.SP) issue(`${EX読み替え}。一括他版カードのEXの価格500円は、SPの価格200円にした（NM以外の状態の価格を300円以上にすると外部のスマレジへ送られるため。ケースは数量だけを見る）`);
+  return out;
+}
+
+const BASE_CARD = "S-F03-02-BASE-CARD";
+
+export const F0302索引 = new 索引のまとめ("F03-02", [
+  ...他版の一覧.map((d): 索引の組 => ({
+    名前: d.seedId,
+    作る: (browser, issue) => 他版の組を作る(browser, d, issue),
+    確かめ: () => [{ 店: "/ja", 検索語: rc(d.A.商品名), 商品コード: [rc(d.A.商品名)] }, { 店: "/ja", 検索語: rc(d.B.商品名), 商品コード: [rc(d.B.商品名)] }],
+  })),
+  {
+    名前: "S-F03-02-BROWSER-001",
+    作る: async (browser, issue) => {
+      // BASE-CARD（共有のカード商品）がこの起動でまだなら、ここで作る（共有可なので、あとのケースはこれを使い回す）
+      await buildSeeds(browser, [ENV_SEED, BASE_CARD], new Notes());
+      const p = productsOf(BASE_CARD)[0];
+      issue(`共有のカード商品「結合試験カード」（商品ID ${p.productId}）を、索引へ送る商品に含めた`);
+      return new Map([[rc("結合試験カード"), { 商品ID: p.productId, 商品規格ID: "" }]]);
+    },
+    確かめ: () => [{ 店: "/ja", 検索語: rc("結合試験カード"), 商品コード: [rc("結合試験カード")] }],
+  },
+]);
+
+/** ケースから: 他版の組の、正本の商品名の商品の商品ID・JPのNMの商品規格ID */
+export function F0302の他版(seedId: string, 正本の商品名: string): 作った索引の商品 {
+  return F0302索引.作った(seedId, rc(正本の商品名));
+}
+
+function defineOtherVersionSeed(seedId: string): void {
+  const d = 他版の一覧.find((x) => x.seedId === seedId);
+  if (!d) throw new Error(`${seedId} の定めが無い`);
+  defineSeed(seedId, { needs: [ENV_SEED] }, async ({ browser, notes }) => {
+    const r = await F0302索引.用意する(browser, seedId);
+    const a = r.商品.get(rc(d.A.商品名))!;
+    const b = r.商品.get(rc(d.B.商品名))!;
+    notes.set(`〔カードID-F0302-${d.番号}〕`, a.カードID!);
+    notes.set(`〔商品ID-F0302-${d.番号}A〕`, a.商品ID);
+    notes.set(`〔商品ID-F0302-${d.番号}B〕`, b.商品ID);
+    reportSeedIssue(seedId, "シード作成時の問題（読み替え）: 「ユニサーチ試験環境への登録」は、商品管理「ユニサーチフィード作成」の「フィードファイルを更新する」で検索サービスへ送り、公開側の検索に出るまで待つことにした（F03-02 の索引用の組をまとめて1回送る）。カード名・商品名には実行の印を付けた");
+  });
+}
+defineOtherVersionSeed("S-F03-02-FAVVER-096");
+defineOtherVersionSeed("S-F03-02-FAVVER-097");
+defineOtherVersionSeed("S-F03-02-BULKVER-098");
+defineOtherVersionSeed("S-F03-02-NOTIFYVER-099");
+
+defineSeed("S-F03-02-BROWSER-001", { needs: [ENV_SEED, BASE_CARD] }, async ({ browser }) => {
+  await F0302索引.用意する(browser, "S-F03-02-BROWSER-001");
+  reportSeedIssue("S-F03-02-BROWSER-001", "ケースは新しいブラウザ（閲覧履歴・カートが空、EC会員はログアウト）で始まる。001 は「結合試験カード」を商品一覧から開くので、共有のカード商品を検索サービスへ送り、公開側の検索に出るまで待った");
+});
+defineBrowserSeed("S-F03-02-BROWSER-096");
+defineBrowserSeed("S-F03-02-BROWSER-097");
+defineBrowserSeed("S-F03-02-BROWSER-098");
+defineBrowserSeed("S-F03-02-BROWSER-099");
+
+/** 会員でログインし、他版の商品（JP）の商品詳細のお気に入りボタンを押してお気に入りを1件作る */
+async function 他版をお気に入りにする(browser: Browser, seedId: string, m: 会員, 他版: string, 商品名: string): Promise<void> {
+  const productId = F0302の他版(他版, 商品名).商品ID;
+  await 会員で操作する(browser, m, async (page) => {
+    const front = new FrontFavorite(page);
+    await front.login(m.mail, m.password);
+    await front.openDetail(productId, "JP");
+    const r = await front.押す();
+    if (!r.通知が出た) throw new Error(`${seedId}: お気に入りのボタンを押しても、登録の通知が出ない（${JSON.stringify(r)}）`);
+  });
+  const n = お気に入り件数(m.id, productId, "JP");
+  if (n !== 1) throw new Error(`${seedId}: 会員 ${m.mail} の商品 ${productId} のJPのお気に入りが ${n} 件（1件のはず）`);
+  reportSeedIssue(seedId, `会員でログインし、「${商品名}」（商品ID ${productId}）のJP商品詳細のお気に入りボタンを押してJPのお気に入りを1件作った（正本の「商品ID 32180xx」は、ケースの文が指す「${商品名}」のこととして読んだ。選手情報は登録していない）`);
+}
+
+defineMemberSeed("S-F03-02-MEMBER-096", "f0302-member-096", "Passw0rd-F0302-096!", {
+  needs: ["S-F03-02-FAVVER-096"], after: (b, m) => 他版をお気に入りにする(b, "S-F03-02-MEMBER-096", m, "S-F03-02-FAVVER-096", "他版お気に入りカード F0302-096-B"),
+});
+defineMemberSeed("S-F03-02-MEMBER-097", "f0302-member-097", "Passw0rd-F0302-097!", {
+  needs: ["S-F03-02-FAVVER-097"], after: (b, m) => 他版をお気に入りにする(b, "S-F03-02-MEMBER-097", m, "S-F03-02-FAVVER-097", "他版お気に入りカード F0302-097-B"),
+});
+defineMemberSeed("S-F03-02-MEMBER-099", "f0302-member-099", "Passw0rd-F0302-099!", {
+  needs: ["S-F03-02-NOTIFYVER-099"],
+  after: async () => { reportSeedIssue("S-F03-02-MEMBER-099", "登録したばかりの会員で、入荷通知依頼は0件（消すものが無い）。選手情報は登録していない"); },
+});
+
+// ---- 2026-11-11: 他のバージョンの欄（102件）のケース 054・055・057〜063・100〜105・112 ----
+//
+// PM の指示（2026-11-11 夜）: 共有シード BASE-CARD は使わず、この束専用の印つきのカードを新しく作る（S-F03-02-OTHER-VERSIONS は共有可で、この束だけが使う）。
+// 作り方: 印つきのカードセット「テストセット」を登録し、イラストレーター「試験太郎」を共通のマスタに用意し（無ければ1行足す）、
+// カード詳細(登録)で詳細情報3件（Foil なし・通常・特殊。どれもカードセット「テストセット」・イラストレーター「試験太郎」）を持つ専用のカードを登録する。
+// グッズ商品CSV登録で102件をまとめて取り込み、商品ごとに「カード指定 >」で専用のカードの詳細情報を紐づける（同じカードIDの商品群）。
+// 102件の内訳（正本の状態・属性のとおり）: 基準の商品「結合試験カード 他版確認用」1件（JP・Foilなし）＋追加の商品101件。
+//   JPかつFoil「特殊」は「特殊Foil版カード」の1件だけ／在庫1以上51件・在庫0 51件／TC大阪支店公開60件・非公開42件／
+//   価格は100・200・300・400・500円の繰り返し／JP通常・JP Foil・EN通常を含む。在庫は本店に1ずつ入れる。
+// フィードはこの束で1回送り、基準の商品と「特殊Foil版カード」が公開側の検索に出るまで待つ。
+// ケースは、正本の「結合試験カード」（BASE-CARD）の代わりに、この束の基準の商品の商品詳細を開く（読み替え。ケースの使用シードの BASE-CARD は基盤が作る）。
+
+export const 他版102の名前 = { 基準: "結合試験カード 他版確認用", 特殊: "特殊Foil版カード" } as const;
+
+type 他版102の結果 = { 基準ID: string; 特殊ID: string; カードセットID: string; イラストレーターID: string; 非公開ID: string[]; 在庫ありID: string[]; 価格: Map<string, number> };
+
+const 他版102 = new 索引のまとめ("F03-02 他のバージョン102件", [{
+  名前: "S-F03-02-OTHER-VERSIONS",
+  前の準備: async (page, issue) => {
+    const cardset = await カードセットを登録する(page, { 名: rc("テストセット"), 略称: `TS${RUN_MARK}`.slice(0, 16), リリース日: new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(new Date()) }, "S-F03-02-OTHER-VERSIONS: カードセット");
+    const illustrator = await イラストレーターを用意する(page, "試験太郎", "S-F03-02-OTHER-VERSIONS", issue);
+    const card = await 属性つきカードを登録する(page, { カード名: rc("他版102カード F0302"), 詳細数: 3, 詳細のFoil: ["なし", "通常", "特殊"], カードセットID: cardset, イラストレーター: "試験太郎" }, "S-F03-02-OTHER-VERSIONS: カード", issue);
+    issue(`カードセット「テストセット」は印つきの名前「${rc("テストセット")}」で登録した（カードセットID ${cardset}）。イラストレーター「試験太郎」（ID ${illustrator}）は共通のマスタにあれば使い、無ければ1行足す`);
+    return { カードID: card.カードID, なし: card.カード詳細IDs[0], 通常: card.カード詳細IDs[1], 特殊: card.カード詳細IDs[2], カードセットID: cardset, イラストレーターID: illustrator };
+  },
+  商品: (前) => 他版102の商品(前),
+  確かめ: () => [
+    { 店: "/ja", 検索語: rc(他版102の名前.基準), 商品コード: [rc("F0302-OV-000")] },
+    { 店: "/ja", 検索語: rc(他版102の名前.特殊), 商品コード: [rc("F0302-OV-001")] },
+  ],
+}]);
+
+/** 102件の商品の定め（0 が基準、1 が特殊Foil版、2〜101 が追加） */
+function 他版102の商品(前: Record<string, string>): 索引の商品[] {
+  const card = (k: "なし" | "通常" | "特殊") => ({ カード名: rc("他版102カード F0302"), カード詳細ID: 前[k], カードID: 前.カードID });
+  return Array.from({ length: 102 }, (_, n) => {
+    const name = n === 0 ? 他版102の名前.基準 : n === 1 ? 他版102の名前.特殊 : `他版カード F0302-OV-${String(n).padStart(3, "0")}`;
+    // 2〜101: 偶数はJP（Foilなし・通常を交互）、奇数はEN（Foilなし・特殊を交互）。JPかつ特殊は1だけ
+    const 言語: "日本語" | "英語" = n <= 1 || n % 2 === 0 ? "日本語" : "英語";
+    const foil: "なし" | "通常" | "特殊" = n === 0 ? "なし" : n === 1 ? "特殊" : 言語 === "日本語" ? (n % 4 === 0 ? "なし" : "通常") : (n % 4 === 1 ? "なし" : "特殊");
+    return {
+      商品コード: rc(`F0302-OV-${String(n).padStart(3, "0")}`), 商品名: rc(name), 言語,
+      本店: "公開" as const, 支店: n < 60 ? ("公開" as const) : ("非公開" as const),
+      価格: String(((n % 5) + 1) * 100), 在庫: n < 51 ? { 本店: 1 } : {}, 既存のカード: card(foil),
+    };
+  });
+}
+
+/** ケースから: この束の基準の商品などの値 */
+export function 他版102の値(): 他版102の結果 {
+  const items = 他版102の商品({});
+  const id = (code: string) => 他版102.作った("S-F03-02-OTHER-VERSIONS", code).商品ID;
+  return {
+    基準ID: id(items[0].商品コード), 特殊ID: id(items[1].商品コード),
+    カードセットID: 他版102の前.カードセットID ?? "", イラストレーターID: 他版102の前.イラストレーターID ?? "",
+    非公開ID: items.filter((i) => i.支店 === "非公開").map((i) => id(i.商品コード)),
+    在庫ありID: items.filter((i) => i.在庫?.本店).map((i) => id(i.商品コード)),
+    価格: new Map(items.map((i) => [id(i.商品コード), Number(i.価格)])),
+  };
+}
+let 他版102の前: Record<string, string> = {};
+
+defineSeed("S-F03-02-OTHER-VERSIONS", { needs: [ENV_SEED] }, async ({ browser }) => {
+  const r = await 他版102.用意する(browser, "S-F03-02-OTHER-VERSIONS");
+  他版102の前 = r.前;
+  reportSeedIssue("S-F03-02-OTHER-VERSIONS", "シード作成時の問題（読み替え）: 「DBシードで同一カードIDを持つ101商品…を登録し、ユニサーチ試験環境へ登録する」は、画面で、この束専用の印つきのカード（詳細情報3件）と、そのカードを指定したグッズ商品102件（基準の商品「結合試験カード 他版確認用」を含む）を作り、商品管理「ユニサーチフィード作成」で検索サービスへ送って反映を待つことに読み替えた。正本の「BASE-CARDと合わせて102件」は、基準の商品と追加の101件で102件。カードID CARD-F0302-A はこのカードのカードID");
+});
+
+defineBrowserSeed("S-F03-02-BROWSER-054");
+defineBrowserSeed("S-F03-02-BROWSER-055");
+defineBrowserSeed("S-F03-02-BROWSER-057");
+defineBrowserSeed("S-F03-02-BROWSER-058");
+defineBrowserSeed("S-F03-02-BROWSER-059");
+defineBrowserSeed("S-F03-02-BROWSER-060");
+defineBrowserSeed("S-F03-02-BROWSER-061");
+defineBrowserSeed("S-F03-02-BROWSER-062");
+defineBrowserSeed("S-F03-02-BROWSER-063");
+defineBrowserSeed("S-F03-02-BROWSER-100");
+defineBrowserSeed("S-F03-02-BROWSER-101");
+defineBrowserSeed("S-F03-02-BROWSER-102");
+defineBrowserSeed("S-F03-02-BROWSER-103");
+defineBrowserSeed("S-F03-02-BROWSER-104");
+defineBrowserSeed("S-F03-02-BROWSER-105");
+defineBrowserSeed("S-F03-02-BROWSER-112");

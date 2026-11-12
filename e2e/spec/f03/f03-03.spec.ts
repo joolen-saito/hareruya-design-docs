@@ -59,7 +59,8 @@ caseTest("IT-F03-03-003", async ({ page, step, expected }) => {
   await step(2, async () => { 見出し = await search.項目の見出し(); note(`モーダルの検索条件の見出し: ${見出し.join("、")}`); });
   await expected(async () => {
     expect.soft(見出し.filter((h) => h.includes("カードセット")), "カードセットの見出し").toHaveLength(0);
-    await expect.soft(search.フォーム.getByText("カードセット"), "モーダルの中の「カードセット」の表示").toHaveCount(0);
+    // 表示が「カードセット」だけの要素（見出し・ラベル）を探す。カテゴリの選択肢にある名前（開発環境の「その他カードセット」など）は入力項目ではないので含めない
+    await expect.soft(search.フォーム.getByText(/^\s*カードセット\s*$/), "モーダルの中の「カードセット」の表示").toHaveCount(0);
     await expect.soft(search.フォーム.locator('[name*="cardset" i], [id*="cardset" i]'), "カードセットの入力項目").toHaveCount(0);
   });
 });

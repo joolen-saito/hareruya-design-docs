@@ -15,9 +15,17 @@
  * - NOGTM-047: 買い物かご画面（ページ管理の URL が「cart」のページ）のPCのレイアウトの先頭部に置いたブロックのコードを、ブロック管理(編集)画面で読み、
  *   タグの管理サービスのスクリプト（googletagmanager・gtag）と受け渡し領域（dataLayer）へ積むコードが無いことを確かめる（書き換えない）。
  *
+ * - 商品一覧の検索に出す商品（LIST-IDS-025・LIST-LANG-026・LIST-MEMBER-029・LIST-EN-030・STRUCT-LISTTYPE-038・NOUPD-LIST-053・NOUPD-LISTCART-056）:
+ *   7つのシードの商品を1つの束（seeds/unisearch_batch.ts）でまとめて作り、商品管理「ユニサーチフィード作成」で1回だけ送り、
+ *   本店の商品一覧（日本語・英語）の商品名の検索に出るまで待つ（依頼者 2026-11-11「ユニサーチのフィード連携はしてもいい」）。
+ *   商品名は「検索語＋記号」の形（例 F1003-025-<印>-A）にする。ケースの「商品名にF1003-025を指定して検索する」は、実行の印を付けた検索語
+ *   「F1003-025-<印>」で検索する（前の実行の同じ名前の商品が索引に残っていても、この実行の商品だけが当たる）。商品コードは正本の値に印を付ける。
+ *
  * 作らないシード（ケースを実装しない。記録 review/F10-03_progress_2026-11-10.md・2026-11-11）:
- * - 特定の商品が索引に載る前提（LIST-IDS-025・LIST-LANG-026・LIST-MEMBER-029・LIST-EN-030・STRUCT-LISTTYPE-038・TOP-*・DETSAME-CARD/LAND・NOUPD-LIST/TOPCART/TOPPROD/LISTCART）。
- *   画面で作った商品は索引へ反映されず、既存の商品で代えると期待（特定の商品IDの並び）を弱めるため。027・028・039・044 は期待が商品に依らないので、画面・既存データで作った。
+ * - TOP-ONE-040・TOP-THREE-041・NOUPD-TOPCART-054・NOUPD-TOPPROD-055: 本店のTOP画面の商品リストの配置（共有のレイアウト）を書き換え、
+ *   新着などのリストの対象タグ（アプリが番号で決め打ちする共有のタグ）を持つ商品を、作った商品だけにする前提（共有の既存の商品からタグを外す）。
+ * - DETSAME-CARD-042・DETSAME-LAND-043: 事前準備は「同じカードに紐付くカードの商品（043 は基本土地）」だが、シード表の投入方法はグッズ商品CSV登録だけで、
+ *   カードの登録・商品へのカードの指定の手順が無い（作り方がシード表から決まらない）。
  * - MARKER-046: 買い物かご画面（共有のページ）のレイアウトの先頭部へ試験用ブロックを置き、戻さない（共有のレイアウトは書き換えない）。
  */
 import { Browser, expect, Page } from "@playwright/test";
@@ -38,6 +46,7 @@ import { FrontRestock } from "../pages/front/f03_07_restock_notify";
 import { FrontFavorite } from "../pages/front/f03_08_favorite";
 import { markedMail, 本会員を作る } from "./f06-member";
 import { ensureAnalysisAdmin } from "./m12-common";
+import { 索引の束, 束の注記 } from "./unisearch_batch";
 
 const ENV_SEED = "S-F10-03-ENV";
 
@@ -87,6 +96,8 @@ type 商品の定義 = {
   足す?: 足す規格[];
   /** 取り込みで作られた規格は、非公開のときだけ公開にする（057。シード表に公開の登録が無い） */
   非公開なら公開?: boolean;
+  /** 実際の商品名（与えると、正本の値に印を付けた名前の代わりにこれを使う。検索に出す商品の「検索語＋記号」の名前） */
+  実名?: string;
 };
 
 const 言語の名前: Record<言語, string> = { JP: "日本語", EN: "英語" };
@@ -126,7 +137,7 @@ async function グッズを作る(browser: Browser, seedId: string, notes: Notes
     await registerGoodsCsv(page, {
       what: `${seedId} のグッズ商品CSV登録`, fileName: `${seedId.toLowerCase()}-${RUN_MARK}.csv`, categoryId, branchStatus: "公開",
       lines: defs.map((d) => ({
-        code: rc(d.コード), nameJp: rc(d.名前 ?? d.コード), nameEn: rc(d.名前 ?? d.コード), productStatus: d.公開 ?? "公開",
+        code: rc(d.コード), nameJp: d.実名 ?? rc(d.名前 ?? d.コード), nameEn: d.実名 ?? rc(d.名前 ?? d.コード), productStatus: d.公開 ?? "公開",
         values: {
           "言語(ID)": langId(d.言語), "基準価格": d.価格, "販売価格": d.価格, "買取価格": d.買取 ?? "10", "原価単価": "10",
           "地域別販売制限": "0", "スマレジ連携フラグ": "0",
@@ -271,6 +282,7 @@ defineSeed("S-F10-03-NOGTM-047", async ({ browser, notes }) => {
 
 export type F1003会員 = { 前半: string; パスワード: string };
 export const 会員: Record<string, F1003会員> = {
+  "S-F10-03-LIST-MEMBER-029": { 前半: "f1003-029", パスワード: "Pw-F1003-029!" },
   "S-F10-03-FAV-045": { 前半: "f1003-045", パスワード: "Pw-F1003-045!" },
   "S-F10-03-WAITLIST-048": { 前半: "f1003-048", パスワード: "Pw-F1003-048!" },
 };
@@ -416,3 +428,78 @@ function define複数当たる検索語(seedId: string, 正本: string): void {
 }
 define複数当たる検索語("S-F10-03-LIST-ONCE-028", "商品A・商品B（商品名F1003-028-A・B）が一覧に出る前提");
 define複数当たる検索語("S-F10-03-STRUCT-LISTNEST-039", "商品A・商品B（商品名F1003-039-A・B）が一覧に出る前提");
+
+// ---------------------------------------------------------------------------
+// 商品一覧の検索に出す商品（検索サービスの索引に載せる。7つのシードを1つの束で作り、フィードを1回だけ送る）
+// ---------------------------------------------------------------------------
+
+/** ケースの「商品名に F1003-025 を指定して検索する」の検索語（実行の印つき） */
+export const 一覧の検索語 = (正本の値: string): string => rc(正本の値);
+/** 検索に出す商品の名前（検索語＋記号。記号が無ければ検索語そのもの） */
+export const 一覧の商品名 = (正本の検索語: string, 記号?: string): string => (記号 ? `${rc(正本の検索語)}-${記号}` : rc(正本の検索語));
+
+type 一覧の商品 = { seedId: string; 検索語: string; 入口: "/ja" | "/en"; defs: 商品の定義[] };
+const 一覧の商品たち: 一覧の商品[] = [
+  { seedId: "S-F10-03-LIST-IDS-025", 検索語: "F1003-025", 入口: "/ja", defs: [
+    { 記号: "A", コード: "F1003-025-A", 実名: 一覧の商品名("F1003-025", "A"), 言語: "JP", 価格: "100", 控え: "〔商品ID-F1003-025A〕" },
+    { 記号: "B", コード: "F1003-025-B", 実名: 一覧の商品名("F1003-025", "B"), 言語: "JP", 価格: "200", 控え: "〔商品ID-F1003-025B〕" },
+    { 記号: "C", コード: "F1003-025-C", 実名: 一覧の商品名("F1003-025", "C"), 言語: "JP", 価格: "300", 控え: "〔商品ID-F1003-025C〕" },
+  ] },
+  { seedId: "S-F10-03-LIST-LANG-026", 検索語: "F1003-026", 入口: "/ja", defs: [
+    { 記号: "P", コード: "F1003-026-P", 実名: 一覧の商品名("F1003-026", "P"), 言語: "JP", 価格: "100", 控え: "〔商品ID-F1003-026P〕",
+      足す: [{ 言語: "EN", 状態: "NM", コード: "F1003-026-P-EN", 価格: "150" }] },
+    { 記号: "Q", コード: "F1003-026-Q", 実名: 一覧の商品名("F1003-026", "Q"), 言語: "JP", 価格: "200", 控え: "〔商品ID-F1003-026Q〕" },
+  ] },
+  { seedId: "S-F10-03-LIST-MEMBER-029", 検索語: "F1003-029", 入口: "/ja", defs: [
+    { 記号: "X", コード: "F1003-029-X", 実名: 一覧の商品名("F1003-029", "X"), 言語: "JP", 価格: "500", 控え: "〔商品ID-F1003-029〕" },
+  ] },
+  { seedId: "S-F10-03-LIST-EN-030", 検索語: "F1003-030", 入口: "/en", defs: [
+    { 記号: "X", コード: "F1003-030", 実名: 一覧の商品名("F1003-030"), 言語: "EN", 価格: "500", 控え: "〔商品ID-F1003-030〕" },
+  ] },
+  { seedId: "S-F10-03-STRUCT-LISTTYPE-038", 検索語: "F1003-038", 入口: "/ja", defs: [
+    { 記号: "A", コード: "F1003-038-A", 実名: 一覧の商品名("F1003-038", "A"), 言語: "JP", 価格: "100", 控え: "〔商品ID-F1003-038A〕" },
+    { 記号: "B", コード: "F1003-038-B", 実名: 一覧の商品名("F1003-038", "B"), 言語: "JP", 価格: "200", 控え: "〔商品ID-F1003-038B〕" },
+  ] },
+  { seedId: "S-F10-03-NOUPD-LIST-053", 検索語: "F1003-053", 入口: "/ja", defs: [
+    { 記号: "A", コード: "F1003-053", 実名: 一覧の商品名("F1003-053"), 言語: "JP", 価格: "500", 控え: "〔商品ID-F1003-053〕" },
+  ] },
+  { seedId: "S-F10-03-NOUPD-LISTCART-056", 検索語: "F1003-056", 入口: "/ja", defs: [
+    { 記号: "A", コード: "F1003-056", 実名: 一覧の商品名("F1003-056"), 言語: "JP", 価格: "500", 控え: "〔商品ID-F1003-056〕" },
+  ] },
+];
+
+/** 束が作った商品の商品ID（呼び名 → 番号） */
+type 一覧の束の結果 = Map<string, string>;
+
+const 一覧の束 = new 索引の束<一覧の束の結果>("F10-03（商品一覧の受け渡し領域）", async (browser) => {
+  const out: 一覧の束の結果 = new Map();
+  for (const g of 一覧の商品たち) {
+    const n = new Notes();
+    await グッズを作る(browser, g.seedId, n, g.defs, 10);
+    for (const [k, v] of n.entries()) out.set(k, v);
+  }
+  return out;
+}, async (ctx, r) => {
+  const list = new FrontProductList(await ctx.newPage());
+  const 様子: string[] = [];
+  let ok = true;
+  for (const g of 一覧の商品たち) {
+    await list.open(g.入口, `/products/search?product=${encodeURIComponent(一覧の検索語(g.検索語))}`);
+    await list.結果を待つ().catch(() => undefined);
+    const ids = (await list.カードを読む()).map((c) => c.商品ID);
+    const want = g.defs.map((d) => r.get(d.控え)!);
+    if (!want.every((id) => ids.includes(id))) ok = false;
+    様子.push(`${g.入口}「${一覧の検索語(g.検索語)}」→ ${ids.join(",") || "なし"}（待つ ${want.join(",")}）`);
+  }
+  return { ok, 様子: 様子.join("／") };
+});
+
+for (const g of 一覧の商品たち) {
+  defineSeed(g.seedId, async ({ browser, notes, seed }) => {
+    const r = await 一覧の束.用意する(browser);
+    for (const d of g.defs) notes.set(d.控え, r.get(d.控え)!);
+    reportSeedIssue(seed.シードID, 束の注記("F10-03（025・026・029・030・038・053・056）"));
+    reportSeedIssue(seed.シードID, `商品名は検索語に実行の印を付けた「${一覧の検索語(g.検索語)}」＋記号（${g.defs.map((d) => d.実名).join("・")}）。本店の EC-CUBE 在庫へ10を入庫し、別の管理者が承認した`);
+    if (g.seedId === "S-F10-03-LIST-MEMBER-029") notes.set("〔会員ID-F1003-029〕", await 会員を作る(browser, g.seedId, "連携F1003-029"));
+  });
+}

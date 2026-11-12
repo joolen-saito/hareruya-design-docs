@@ -14,6 +14,7 @@ import { registerEvent } from "../pages/admin/event";
 import { ensureMember } from "../pages/admin/member";
 import { registerSchedule } from "../pages/admin/schedule";
 import { 基本イベント, M1303_ADMIN } from "./m13-03";
+import { 印店名 } from "../pages/admin/m13_marked_shop";
 
 export const M1303_ADMIN_B: Account = { loginId: "m1303_b_admin", password: "Passw0rd!M1303B" };
 
@@ -21,8 +22,8 @@ export const M1303_ADMIN_B: Account = { loginId: "m1303_b_admin", password: "Pas
 async function 店舗B管理者を用意する(browser: Browser, seedId: string): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-03 店舗B試験管理者", 所属店舗: "店舗B", ログインID: M1303_ADMIN_B.loginId, メールアドレス: "m1303_b_admin@example.test",
-      パスワード: M1303_ADMIN_B.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗B", 編集可能店舗: ["店舗B"],
+      名前: "M13-03 店舗B試験管理者", 所属店舗: 印店名.B, ログインID: M1303_ADMIN_B.loginId, メールアドレス: "m1303_b_admin@example.test",
+      パスワード: M1303_ADMIN_B.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.B, 編集可能店舗: [印店名.B],
     });
   });
   reportSeedIssue(seedId, "権限外店舗（店舗B）のイベントを作るため、店舗Bだけを編集できる管理者 m1303_b_admin を足した（シード表には無い）");
@@ -43,7 +44,7 @@ function 権限外(seedId: string, no: string, 名前: string, 日程あり: boo
   defineSeed(seedId, { needs: ["S-M13-03-ADM"] }, async ({ browser, notes, seed }) => {
     await 店舗B管理者を用意する(browser, seed.シードID);
     await withAdminSession(browser, M1303_ADMIN_B, async (page) => {
-      const id = await registerEvent(page, 基本イベント(名前, { 店舗: "店舗B" }));
+      const id = await registerEvent(page, 基本イベント(名前, { 店舗: 印店名.B }));
       notes.set(`〔イベントID-M1303-${no}〕`, id);
       if (日程あり) notes.set(`〔日程ID-M1303-${no}〕`, await registerSchedule(page, id, { 開始時間: "2026-10-01 18:00", 受付あり: false, デッキ登録あり: false, 定員: "16", 参加費: "500", 公開状態: "公開" }));
     });

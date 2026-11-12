@@ -133,13 +133,15 @@ caseTest("IT-M05-11-202", async ({ page, browser, notes, step, expected }) => {
   let ha: ReturnType<typeof 在庫変動履歴> = [], hb: ReturnType<typeof 在庫変動履歴> = [];
   await step(1, async () => { p = await 開く(browser, page, notes.get(key("202"))); });
   await step(2, async () => { await p.ステータスを選ぶ("キャンセル"); });
-  await step(3, async () => { await p.ステータスを変更する(onDialog); });
-  await step(4, async () => { ha = 在庫変動履歴(a); hb = 在庫変動履歴(b); });
+  // キャンセル前の履歴の件数（注文したときにも、数量が正で注文番号入りの履歴が残るので、キャンセルで増えた分だけを見る）
+  let 前a = 0, 前b = 0;
+  await step(3, async () => { 前a = 在庫変動履歴(a).length; 前b = 在庫変動履歴(b).length; await p.ステータスを変更する(onDialog); });
+  await step(4, async () => { ha = 在庫変動履歴(a).slice(前a); hb = 在庫変動履歴(b).slice(前b); });
   await expected(async () => {
     const no = notes.get(key("202"));
     const fa = ha.filter((h) => h.増減数 === 2 && h.理由.includes(no)), fb = hb.filter((h) => h.増減数 === 1 && h.理由.includes(no));
-    expect.soft(fa.length, "商品Aの在庫変動履歴（+2・注文番号入りの理由）の件数").toBe(1);
-    expect.soft(fb.length, "商品Bの在庫変動履歴（+1・注文番号入りの理由）の件数").toBe(1);
+    expect.soft(fa.length, "商品Aのキャンセルで増えた在庫変動履歴（+2・注文番号入りの理由）の件数").toBe(1);
+    expect.soft(fb.length, "商品Bのキャンセルで増えた在庫変動履歴（+1・注文番号入りの理由）の件数").toBe(1);
   });
 });
 caseTest("IT-M05-11-203", async ({ page, browser, notes, step, expected }) => {

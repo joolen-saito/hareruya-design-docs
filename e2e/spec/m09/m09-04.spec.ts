@@ -9,7 +9,7 @@
  */
 import { test, expect as pwExpect, Page } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
-import { BASE_URL } from "../../config/env";
+import { BASE_URL, SHARED_ENV } from "../../config/env";
 import { hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
 import { ページ管理, ページの値 } from "../../pages/admin/m09_04_page";
@@ -28,7 +28,13 @@ type 公開 = { 状態: number; 本文: string; タイトル: string; 開いた�
 /** 公開側のページを開く。正本のアドレス（言語＋ページのURL欄の値）をそのまま開く。開けないときは、別のタブで画面が示すアドレス（前置きにuser_dataを含む）も試して注記に残す */
 async function 公開側を開く(page: Page, 言語: "ja" | "en", url: string): Promise<公開> {
   const 開く = `${BASE_URL}/${言語}/${url}`;
-  const res = await page.goto(開く, { waitUntil: "load", timeout: 60_000 });
+  let res = await page.goto(開く, { waitUntil: "load", timeout: 60_000 });
+  // 共有の開発環境は、保存したページのテンプレートが公開側に届くまで時間がかかり、保存直後は 404 になる（保存後の画面の「1分ほど待ってから」の案内）。
+  // 届くのを最大3分待つ（2026-11-11 開発環境で 025 067 068 が保存直後の 404）。待っても 404 なら、そのまま 404 として確かめる
+  for (let i = 0; SHARED_ENV && (res?.status() ?? 0) === 404 && i < 12; i++) {
+    await page.waitForTimeout(15_000);
+    res = await page.goto(開く, { waitUntil: "load", timeout: 60_000 });
+  }
   const 状態 = res?.status() ?? 0;
   const r: 公開 = { 状態, 本文: (await page.locator("body").innerText().catch(() => "")).trim(), タイトル: await page.title(), 開いたアドレス: page.url() };
   if (状態 >= 400) {

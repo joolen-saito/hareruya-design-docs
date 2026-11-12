@@ -20,6 +20,7 @@ import { QK1302_ADMIN } from "../../seeds/m13-02-qk";
 import {
   M1312_ADMIN, M1312_RI_ADMIN, QKイベント名, QK会員, RIイベント名, RI会員の姓, ページ対象の検索語, 会員の姓, 会員の氏名, 権限制御の検索語,
 } from "../../seeds/m13-12";
+import { 印店名 } from "../../pages/admin/m13_marked_shop";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 整える = (s: string) => s.replace(/ /g, " ").replace(/\s+/g, " ").trim();
@@ -368,8 +369,9 @@ caseTest("IT-M13-12-032", async ({ page, notes, step, expected }) => {
   await step(1, async () => { f = await 開いておく(page, notes.get("〔イベント日程ID-M1312-032〕")); });
   let 店舗 = ""; let フォーマット = "";
   await step(2, async () => { 店舗 = await f.欄の表示("店舗"); フォーマット = await f.欄の表示("フォーマット"); });
+  note("店舗Aは印つきの店舗（" + 印店名.A + "）を作って使った");
   await expected(async () => {
-    expect.soft(店舗, "店舗に「店舗A」が表示される").toBe("店舗A");
+    expect.soft(店舗, "店舗に「店舗A」が表示される").toBe(印店名.A);
     expect.soft(フォーマット, "フォーマットに「スタンダード」が表示される").toBe("スタンダード");
     const 入力欄 = await f.申込情報.locator("div.row").filter({ has: page.locator("label.col-form-label", { hasText: /^\s*(店舗|フォーマット)\s*$/ }) }).locator("input:not([type=hidden]), select, textarea").count();
     expect.soft(入力欄, "店舗・フォーマットは入力欄でなくラベルで表示される").toBe(0);

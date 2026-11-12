@@ -94,7 +94,7 @@ async function readCommon(page: Page, seedId: string): Promise<共通の値> {
 // ---- カード商品の定義 ----
 
 type 規格の指定 = { 商品コード?: string; 買取?: number; 画像?: string };
-type カード商品の定義 = {
+export type カード商品の定義 = {
   /** 正本の商品名 */
   名: string;
   /** 言語（JP は必ず。EN は続けて取り込む） */
@@ -111,9 +111,11 @@ type カード商品の定義 = {
   カテゴリID?: string;
 };
 
-async function カード商品を作る(
+export async function カード商品を作る(
   browser: Browser, seedId: string, notes: Notes,
   card: { 名英: string; 任意の説明?: boolean; 基本土地?: F0504カードの入力["基本土地"] }, def: カード商品の定義,
+  /** 他の機能（F05-06 など）が使うときは false（シード表の呼び名の形が F0504 のものだけを控えるため） */
+  呼び名を控える = true,
 ): Promise<F0504の商品> {
   const issue = (m: string) => reportSeedIssue(seedId, m);
   let out: F0504の商品 | null = null;
@@ -182,7 +184,7 @@ async function カード商品を作る(
     out = { 商品ID: productId, 規格, 画像: Object.fromEntries(imageFileOf) };
   });
   built.set(def.名, out!);
-  noteLabels(seedId, notes, { 商品: [out!.商品ID], カード: [cardId] });
+  if (呼び名を控える) noteLabels(seedId, notes, { 商品: [out!.商品ID], カード: [cardId] });
   return out!;
 }
 
@@ -444,7 +446,7 @@ export function f0504カテゴリID(正本の名: string): string {
 }
 
 defineSeed("S-F05-04-SEARCH-ENV", async () => {
-  reportSeedIssue("S-F05-04-SEARCH-ENV", "ネット買取の商品検索サービス接続先・商品フィード連携先（共有の設定）は書き換えず、何も設定していない。検索サービスの索引から出る一覧（他のバージョン商品・カテゴリ検索の一覧）は、画面で作った商品がすぐには出ないので、確かめる手順は実装していない");
+  reportSeedIssue("S-F05-04-SEARCH-ENV", "ネット買取の商品検索サービス接続先・商品フィード連携先（共有の設定）は書き換えず、何も設定していない。環境に設定済みの値を使う。索引から出る一覧（他のバージョン商品・カテゴリ検索の一覧）を確かめるケースの商品は、seeds/f05-04-index.ts が作ってユニサーチフィード作成で送る");
 });
 
 defineSeed("S-F05-04-CATEGORY", { needs: ["S-F05-01-CATEGORY-ROOTS"] }, async ({ browser, notes }) => {

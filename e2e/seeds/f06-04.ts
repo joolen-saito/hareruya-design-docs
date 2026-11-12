@@ -1,9 +1,9 @@
 /**
  * F06-04 パスワード再発行の画面シード。正本: cases/F06-04_seed_data.tsv
  *
- * - 会員（REG-A-…・REG-B-…）: 仮会員機能（共有の設定）を有効にして、フロントの会員登録で登録し、本登録のメールのURLを開いて本会員にする。
+ * - 会員（REG-A-…・REG-B-…）: 仮会員機能（共有の設定）は書き換えず（シード表の「有効にして」は読み替え。今の設定のまま登録し、仮会員になったときは）、フロントの会員登録で登録し、本登録のメールのURLを開いて本会員にする。
  *   管理画面の会員検索一覧で会員IDを控える。パスワード再発行は申し込まない。メールアドレスの前半に実行の印を付ける（依頼者決定 2026-10-28）。
- * - 仮会員（PROVISIONAL-…）: 同じ登録で、メールのURLを開かない。
+ * - 仮会員（PROVISIONAL-…・RESET-PROVISIONAL）: 同じ登録で、メールのURLを開かない。今の設定が仮会員機能＝有効のときだけ作れる。無効なら、共有の環境（SHARED_ENV）では書き換えずに止め、手元の環境では有効にして終わりに戻す。
  * - メール受信環境（MAILBOX）: 手元の環境のメール受け口を使う（メールアドレスの前半に実行の印を付けるので、開始時に宛先ごとの受信メールは0件）。
  *   受け口に届いているかを読むだけで、書き換えない。
  * - リセットキーを持つ会員（RESET-A-…・RESET-EXPIRED・RESET-WITHDRAWN・CBRESET）（依頼者の方針 2026-11-10。読み替え）:
@@ -17,7 +17,7 @@
  * - リセットキーを持つ会員が0件のキー（NOKEY）: 作らない。実在しないキーを使う（DBで0件であることを確かめる）。
  */
 import { Browser, Page } from "@playwright/test";
-import { BASE_URL, MAIL_URL, SETUP_ADMIN } from "../config/env";
+import { BASE_URL, MAIL_URL, SETUP_ADMIN, SHARED_ENV } from "../config/env";
 import { 仮会員機能が有効か } from "../db/f06_01";
 import { available } from "../lib/db";
 import { mailIds } from "../lib/mail";
@@ -42,7 +42,11 @@ let 前の仮会員機能: boolean | null = null;
 async function 仮会員機能を有効にする(browser: Browser): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    if (前の仮会員機能 === null) 前の仮会員機能 = await readTempMember(page);
+    const now = await readTempMember(page);
+    if (now) return; // すでに有効。書き換えない
+    // 共有の環境では共有の設定を書き換えない。「仮会員のまま」の会員は、いまの設定が有効のときだけ作れる
+    if (SHARED_ENV) throw new Error("共有の環境では仮会員機能（共有の設定）を書き換えない。いまは無効で、仮会員のままの会員（このシードの前提は有効）を作れない");
+    if (前の仮会員機能 === null) 前の仮会員機能 = now;
     await setTempMember(page, true);
   });
 }
@@ -62,7 +66,7 @@ defineSeed("S-F06-04-MAILBOX", async () => {
 /** 会員を登録し、管理画面で会員IDを控える。本会員にする（本登録のメールのURLを開く）かは registerFrontMember が仮会員機能の状態で決める */
 export async function 会員を作る(browser: Browser, 前半: string, パスワード: string, 仮会員のまま: boolean): Promise<string> {
   const mail = mailOf(前半);
-  await 仮会員機能を有効にする(browser);
+  if (仮会員のまま) await 仮会員機能を有効にする(browser); // 本会員は今の設定のまま登録して作る（仮会員になったときは本登録のメールのURLを開く）
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
     await hideDebugToolbar(context);

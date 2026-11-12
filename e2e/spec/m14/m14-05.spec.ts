@@ -134,7 +134,9 @@ caseTest("IT-M14-05-001", async ({ page, step, expected }) => {
   await step(2, async () => { r = await u.選ばずに押す(); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "押したあとの画面（カード登録CSVアップロード）").toMatch(/\/card\/csv_upload$/);
-    if (!r.送信した) note("ファイルを選ばずに押しても、要求は送られなかった（ブラウザの入力チェックが止めた）");
+    await expect.soft(page.locator("#upload-form"), "カード登録CSVアップロードの入力欄が表示されたまま").toBeVisible();
+    // 要求が送られたかどうかは確かめない（送られなくても、取込画面に留まれば期待結果を満たす）
+    if (!r.送信した) note("ファイルを選ばずに押すと、ブラウザの入力チェックで送信が止まり、取込画面に留まった（期待結果のとおり）");
   });
 });
 

@@ -863,7 +863,12 @@ function 購入101(k: "040" | "041") {
     const id = notes.get("〔会員ID-M0804-共有購入101〕");
     let 番号: string[] = [];
     await step(1, async () => { await 開く(page, id); });
-    await step(2, async () => { 番号 = (await new M08CustomerEditPage(page).購入履歴()).map((x) => x.受注番号); });
+    await step(2, async () => {
+      const e = new M08CustomerEditPage(page);
+      await e.履歴の件数を100にする("購入");
+      番号 = (await e.購入履歴()).map((x) => x.受注番号);
+      note("購入履歴は初期で1ページ10件のため、件数プルダウンで100件を選んでから数えた");
+    });
     await expected(async () => {
       if (k === "040") {
         expect.soft(番号.length, "購入履歴の表示件数").toBe(100);
@@ -883,7 +888,7 @@ function 買取101(k: "047" | "048") {
     const 最古 = Number(notes.get("〔買取ID-M0804-共有買取101-最古〕")); const 最新 = Number(notes.get("〔買取ID-M0804-共有買取101-最新〕"));
     let 番号: string[] = [];
     await step(1, async () => { await 開く(page, id); });
-    await step(2, async () => { 番号 = (await new M08CustomerEditPage(page).買取履歴()).map((x) => x.買取番号); note(`買取IDは振られた番号（最古 ${最古}・最新 ${最新}）を使った（正本の1〜101ではない）`); });
+    await step(2, async () => { const e = new M08CustomerEditPage(page); await e.履歴の件数を100にする("買取"); 番号 = (await e.買取履歴()).map((x) => x.買取番号); note(`買取履歴は初期で1ページ10件のため、件数プルダウンで100件を選んでから数えた。` + `買取IDは振られた番号（最古 ${最古}・最新 ${最新}）を使った（正本の1〜101ではない）`); });
     await expected(async () => {
       if (k === "047") {
         expect.soft(番号.length, "買取履歴の表示件数").toBe(100);

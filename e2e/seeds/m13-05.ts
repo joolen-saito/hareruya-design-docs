@@ -1,7 +1,7 @@
 /**
  * M13-05 複製新規 のシードの作り方（画面操作）。正本: cases/M13-05_seed_data.tsv
  *
- * - 店舗・フォーマット（S-M13-05-MASTER）: 店舗A・店舗Bは M13-02 と同じ店名なので、店舗一覧にあればそれを使う。店舗Cは無ければ登録する
+ * - 店舗・フォーマット（S-M13-05-MASTER）: 店舗A・B・Cは、実行の印つきの店名（店舗A-<印>）で店舗登録画面から新しく作って使う（開発環境に同名の店舗が複数あるため。pages/admin/m13_marked_shop.ts）。手順・期待結果の「店舗A」は印つきの店名に読み替える
  *   （店名英語は入力規則が半角英字とスペースだけなので「Shop C」）。形式A・形式Bは、イベント登録画面のフォーマットの選択肢にあればその番号を使い、
  *   無ければフォーマット登録画面で登録する（フォーマット名(英)は必須で半角英数字だけなので「M1305 Format A」など）。
  *   会場A・会場B（会場ID 1350511・1350512）はシード表が「DBへ直接設定する」としていて、画面からは作れない。DB へは書かず、作らなかったことを報告に出す
@@ -29,7 +29,7 @@ import { Account, withAdminSession } from "../lib/session";
 import { Page } from "@playwright/test";
 import { EventInput, FreeArea, ensureNoEvent, openEventCreate } from "../pages/admin/event";
 import { ensureMember } from "../pages/admin/member";
-import { ensureTenant } from "../pages/admin/tenant";
+import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
 import { ensureFormat, 複製元を登録する, 長い名前のイベントを無くす } from "../pages/admin/m13_05_copy";
 import { QK1302_ADMIN, QK連携店舗 } from "./m13-02-qk";
 
@@ -51,14 +51,13 @@ export const 名 = {
 /** 022 のイベント名(日)。文字数そのものを確かめるので印を付けない */
 export const あ255 = "あ".repeat(255);
 
-const 店舗C = { 店名: "店舗C", 店名カナ: "テンポシー", 店名英語: "Shop C", 支店URL: "m1305c", 店名略称3文字: "テC", ショップ名略称: "店舗C" };
 
 defineSeed("S-M13-05-MASTER", async ({ browser, notes, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const issue = (m: string) => reportSeedIssue(seed.シードID, m);
-    notes.set("〔店舗ID-M1305-共有A〕", await ensureTenant(page, { 店名: "店舗A", 店名カナ: "テンポエー", 店名英語: "Shop A", 支店URL: "m1302a", 店名略称3文字: "テA", ショップ名略称: "店舗A" }, issue));
-    notes.set("〔店舗ID-M1305-共有B〕", await ensureTenant(page, { 店名: "店舗B", 店名カナ: "テンポビー", 店名英語: "Shop B", 支店URL: "m1302b", 店名略称3文字: "テB", ショップ名略称: "店舗B" }, issue));
-    notes.set("〔店舗ID-M1305-共有C〕", await ensureTenant(page, 店舗C, issue));
+    notes.set("〔店舗ID-M1305-共有A〕", await ensureMarkedTenant(page, "A", issue));
+    notes.set("〔店舗ID-M1305-共有B〕", await ensureMarkedTenant(page, "B", issue));
+    notes.set("〔店舗ID-M1305-共有C〕", await ensureMarkedTenant(page, "C", issue));
     notes.set("〔フォーマットID-M1305-共有A〕", await ensureFormat(page, "形式A", "M1305 Format A"));
     notes.set("〔フォーマットID-M1305-共有B〕", await ensureFormat(page, "形式B", "M1305 Format B"));
     issue("会場A（会場ID 1350511）・会場B（会場ID 1350512）は、シード表が DB への直接設定としているため作っていない（イベント登録画面にも会場の入力項目が無い）");
@@ -79,12 +78,12 @@ defineSeed("S-M13-05-MASTER", async ({ browser, notes, seed }) => {
 defineSeed("S-M13-05-ADM", { needs: ["S-M13-05-MASTER"] }, async ({ browser, notes }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     notes.set("〔管理者ID-M1305-共有〕", await ensureMember(page, {
-      名前: "M13-05 試験管理者", 所属店舗: "店舗A", ログインID: M1305_ADMIN.loginId, メールアドレス: "m1305_admin@example.test",
-      パスワード: M1305_ADMIN.password, 権限: "モールオペレーター", デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A", "店舗B"],
+      名前: "M13-05 試験管理者", 所属店舗: 印店名.A, ログインID: M1305_ADMIN.loginId, メールアドレス: "m1305_admin@example.test",
+      パスワード: M1305_ADMIN.password, 権限: "モールオペレーター", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A, 印店名.B],
     }));
     await ensureMember(page, {
-      名前: "M13-05 複製元登録者", 所属店舗: "店舗A", ログインID: M1305_SOURCE_ADMIN.loginId, メールアドレス: "m1305_source_admin@example.test",
-      パスワード: M1305_SOURCE_ADMIN.password, 権限: "モールオペレーター", デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A", "店舗C"],
+      名前: "M13-05 複製元登録者", 所属店舗: 印店名.A, ログインID: M1305_SOURCE_ADMIN.loginId, メールアドレス: "m1305_source_admin@example.test",
+      パスワード: M1305_SOURCE_ADMIN.password, 権限: "モールオペレーター", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A, 印店名.C],
     });
   });
 });
@@ -92,7 +91,7 @@ defineSeed("S-M13-05-ADM", { needs: ["S-M13-05-MASTER"] }, async ({ browser, not
 /** 複製元に共通の値（店舗A・形式A・初心者歓迎・限定公開・定員32・参加費1000）。シードごとの値は over で与える。書いていない項目は初期表示のまま */
 export function 複製元(n: string, over: EventInput = {}): EventInput {
   return {
-    イベント名日: 複製元の名前(n), イベント名英: `Source Event-M1305-${n}`, 店舗: "店舗A", フォーマット: ["形式A"], ルール適用度: "初心者歓迎",
+    イベント名日: 複製元の名前(n), イベント名英: `Source Event-M1305-${n}`, 店舗: 印店名.A, フォーマット: ["形式A"], ルール適用度: "初心者歓迎",
     公開状態: "限定公開", 定員: "32", 参加費: "1000", ...over,
   };
 }
@@ -126,7 +125,7 @@ function defineSourceSeed(seedId: string, label: string, input: EventInput, opt:
 const 無くす = (...names: string[]) => async (page: Page) => { for (const x of names) await ensureNoEvent(page, x); };
 
 defineSourceSeed("S-M13-05-SOURCE-001", "〔イベントID-M1305-001〕", 複製元("001", 全項目("001")), { 備考 });
-defineSourceSeed("S-M13-05-SOURCE-NOAUTH-002", "〔イベントID-M1305-002〕", 複製元("002", { イベント名日: 名.権限外店舗, イベント名英: "Unauthorized Shop Event-M1305-002", 店舗: "店舗C" }));
+defineSourceSeed("S-M13-05-SOURCE-NOAUTH-002", "〔イベントID-M1305-002〕", 複製元("002", { イベント名日: 名.権限外店舗, イベント名英: "Unauthorized Shop Event-M1305-002", 店舗: 印店名.C }));
 defineSourceSeed("S-M13-05-SOURCE-003", "〔イベントID-M1305-003〕", 複製元("003", { ...形式AB, ...大型, ...チーム戦, ...クレカ }));
 defineSourceSeed("S-M13-05-SOURCE-004", "〔イベントID-M1305-004〕", 複製元("004"), { after: 無くす(名.権限エラー) });
 defineSourceSeed("S-M13-05-SOURCE-005", "〔イベントID-M1305-005〕", 複製元("005"), { after: 無くす(名.権限外登録) });

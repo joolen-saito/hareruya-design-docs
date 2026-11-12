@@ -22,7 +22,8 @@ export async function expectSaved(page: Page, what: string): Promise<string[]> {
   let ng = page.locator(".alert-danger, .invalid-feedback, .form-error-message");
   for (const b of ENV_BANNERS) ng = ng.filter({ hasNotText: b });
   const sys = page.getByText("システムエラーが発生しました");
-  await expect(ok.or(ng).or(sys).first(), `${what}: 保存の結果が表示されない`).toBeVisible();
+  // 開発環境が遅い時間帯（朝7時〜14時ごろ）は、送信後の画面が出るまで10秒を超える。待ちを60秒に延ばす（2026-11-11 F09-01 ほか）
+  await expect(ok.or(ng).or(sys).first(), `${what}: 保存の結果が表示されない`).toBeVisible({ timeout: 60_000 });
   if (await sys.first().isVisible()) throw new Error(`${what}: システムエラーの画面になった`);
   const errors = (await texts(ng)).filter((t) => !ENV_BANNERS.includes(t));
   if (errors.length) throw new Error(`${what}: 保存できなかった: ${errors.join(" / ")}`);

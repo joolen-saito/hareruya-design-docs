@@ -155,6 +155,11 @@ export class StockApprovalListPage {
     await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), form.locator('button[type="submit"]').click()]);
     await expect(this.page.locator("#form_search_stock_approval_list_update"), "在庫編集承認一覧の結果").toBeVisible();
     await this.page.waitForLoadState("load");
+    // 共有の開発環境には前の実行の未承認の行が溜まっていて、1ページ（100件）に収まらない。並びは登録日の古い順なので、
+    // いま登録した行が2ページ目に回り「未承認の行が無い」で落ちていた（2026-11-11 M07-03）。1ページの件数を 500 に広げて開き直す（検索の条件はセッションに残る）
+    await this.page.goto(adminUrl("/product/stock/approval_list/page/1/count/500"));
+    await expect(this.page.locator("#form_search_stock_approval_list_update"), "在庫編集承認一覧の結果（1ページ500件）").toBeVisible();
+    await this.page.waitForLoadState("load");
   }
 
   /**

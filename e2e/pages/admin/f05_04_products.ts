@@ -37,7 +37,7 @@ export type F0504カードの入力 = {
   /** シード表が値を定めずに「入れる」とした項目（007）。カード名(日)・ルールテキスト(日)は与えた値、カードタイプ・カラーは選択肢の先頭 */
   任意の説明?: { カード名日: string; ルールテキスト日: string };
   /** 詳細情報（1件ずつ）。カードセットはこのシード専用のカードセット、カード番号は重ならない番号 */
-  詳細: { カードセットID: string; カード番号: string; Foil?: string }[];
+  詳細: { カードセットID: string; カード番号: string; Foil?: string; /** 省略すると基本土地以外の先頭。与えるとそのレアリティ（マスタのID）を選ぶ */ レアリティID?: string }[];
   /**
    * 基本土地の組合せシード（060・061・063）の入力。カードタイプ（選択肢の表示名。「英語名 / 日本語名」の末尾一致も許す）、
    * パワー・タフネス（登録ありのとき。カードと詳細情報の両方の欄に入れる）、忠誠度（登録ありのとき）。
@@ -104,7 +104,7 @@ export async function F0504カードを登録する(page: Page, v: F0504カー�
     await sel("cardset").selectOption(d.カードセットID);
     await det.locator('input[name$="[cardNo]"]').fill(d.カード番号);
     // 基本土地は同名カード（他のバージョン）を出さない作りなので、基本土地の組合せシード以外は、レアリティを基本土地以外にする
-    const rarity = (await options(sel("rarity"))).find((o) => v.基本土地 ? /基本土地|Basic Land/i.test(o.label) : !/基本土地|Basic Land/i.test(o.label));
+    const rarity = (await options(sel("rarity"))).find((o) => d.レアリティID ? o.value === d.レアリティID : v.基本土地 ? /基本土地|Basic Land/i.test(o.label) : !/基本土地|Basic Land/i.test(o.label));
     if (!rarity) throw new Error(`${what}: レアリティに${v.基本土地 ? "基本土地" : "基本土地以外"}の選択肢が無い`);
     if (v.基本土地?.パワー !== undefined) {
       await det.locator('input[name$="[power]"]').fill(v.基本土地.パワー);

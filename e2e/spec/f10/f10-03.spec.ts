@@ -7,8 +7,12 @@
  * - 「商品規格NM（SP）を選んで」: グッズの商品の商品詳細には状態の欄が出ないので、その商品規格の行の数量の欄に数量を入れ、ほかの行の数量を0にして選ぶ。
  * - 「画面上で商品規格／表示言語を切り替える」: 画面の切替の操作（状態の欄のリンク・言語のボタン）を押す。画面に無ければ手順が実行できないとして落とす。
  * - 値の比べ方: 「その値が X」は値の文字で比べる。「数値の X」「数値の配列」は型も含めて比べる（文字の "500" は数値の 500 と違う）。
- * 実装しないケース（記録 review/F10-03_progress_2026-11-10.md・2026-11-11）: 025・026・029・030・038・040〜043・053〜056（特定の商品が索引に載る前提。既存の商品で代えると期待を弱める）、
- * 046（共有のページ＝買い物かご画面のレイアウトへ試験用ブロックを置く。共有のレイアウトは書き換えない）。
+ * - 025・026・029・030・038・053・056: シードが印つきの商品を作り、検索サービス（ユニサーチ）へフィードを送って商品一覧の検索に出るまで待つ。
+ *   「商品名にF1003-025を指定して検索する」は、実行の印を付けた検索語（シードの 一覧の検索語）を、商品一覧画面のヘッダーの商品検索に入れて検索する。
+ * 実装しないケース（記録 review/F10-03_progress_2026-11-10.md・2026-11-11）:
+ * - 040・041・054・055: 本店TOPの商品リストの配置（共有のレイアウト）と、リストの対象タグ（共有のタグ）を持つ商品を作った商品だけにする前提。
+ * - 042・043: 同じカードに紐付くカードの商品（043は基本土地）の作り方がシード表の投入方法に無い（グッズ商品CSV登録だけ）。
+ * - 046: 共有のページ＝買い物かご画面のレイアウトへ試験用ブロックを置く。共有のレイアウトは書き換えない。
  */
 import { Page, test } from "@playwright/test";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
@@ -21,7 +25,7 @@ import {
   画面で商品規格を切り替える, 画面で言語を切り替える, 買い物かごの明細, 買い物かごを開く, 項目を持つ要素, 読んだ領域,
 } from "../../pages/front/f10_03_retargeting";
 import { FrontProductList, 店舗の入口 } from "../../pages/front/f03_01_product_list";
-import { F1003_GF_ADMIN, 検索語の値, メールの値, パスワードの値, 商品名, 規格IDの値 } from "../../seeds/f10-03";
+import { F1003_GF_ADMIN, 検索語の値, メールの値, パスワードの値, 商品名, 規格IDの値, 一覧の検索語, 一覧の商品名 } from "../../seeds/f10-03";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -487,6 +491,150 @@ caseTest("IT-F10-03-039", async ({ page, step, expected }) => {
     const els = 項目を持つ要素(d!, "gtm_search_ids");
     expect.soft(els.length, `項目名 gtm_search_ids を持つ要素の数（値: ${値の一覧(d!, "gtm_search_ids")}）`).toBe(1);
     expect.soft((els[0]?.項目名 ?? []).join(","), "その要素が持つ項目の名前").toBe("gtm_search_ids");
+  });
+});
+
+/** 商品一覧を開き、印つきの検索語で検索する（手順の「商品名にF1003-0nnを指定して検索する」）。出た商品IDを返す */
+async function 印つきの語で検索する(page: Page, list: FrontProductList, 正本の語: string): Promise<string[]> {
+  const kw = 一覧の検索語(正本の語);
+  note(`商品名「${正本の語}」は、実行の印を付けた「${kw}」で検索した（商品一覧画面のヘッダーの商品検索。この実行で作った商品だけが当たる）`);
+  await list.ヘッダーで検索する(kw);
+  const ids = (await list.カードを読む()).map((x) => x.商品ID);
+  note(`一覧に出た商品カード（本表示・上から）の商品ID: ${ids.join("、") || "なし"}`);
+  return ids;
+}
+
+/** 価格(低い順)を選び、並んだ商品IDを注記に残す（手順の括弧書きの並びを確かめる） */
+async function 価格の低い順にする(list: FrontProductList, 期待の並び: string[], 何: string): Promise<void> {
+  await list.並び順を選ぶ("価格(低い順)");
+  const ids = (await list.カードを読む()).map((x) => x.商品ID);
+  note(`価格(低い順)を選んだあとの商品カードの商品ID（上から）: ${ids.join("、") || "なし"}`);
+  expect(ids, `価格(低い順)の一覧の並び（${何}）`).toEqual(期待の並び);
+}
+
+/** 項目名 gtm_search_ids を持つ要素が1件あり、その値が商品IDの並び（この順）であること */
+function 検索の並び(d: 読んだ領域, ids: string[], 一回だけ?: string): 確かめ[] {
+  const els = 項目を持つ要素(d, "gtm_search_ids");
+  const v = els[0]?.値.gtm_search_ids;
+  const out = [
+    c(els.length, `項目名 gtm_search_ids を持つ要素の数（値: ${値の一覧(d, "gtm_search_ids")}）`, 1),
+    c(並びの文(v), "項目名 gtm_search_ids の値（商品IDの並び）", ids.join("、")),
+  ];
+  if (一回だけ) out.push(c(Array.isArray(v) ? v.filter((x) => String(x) === 一回だけ).length : 0, `項目名 gtm_search_ids の値に商品ID ${一回だけ} が含まれる回数`, 1));
+  return out;
+}
+
+caseTest("IT-F10-03-025", async ({ page, notes, step, expected }) => {
+  const list = new FrontProductList(page);
+  const ids = ["〔商品ID-F1003-025A〕", "〔商品ID-F1003-025B〕", "〔商品ID-F1003-025C〕"].map((l) => notes.get(l));
+  let d: 読んだ領域 | undefined;
+  await step(1, async () => { await list.open(店舗の入口.本店); });
+  await step(2, async () => { await 印つきの語で検索する(page, list, "F1003-025"); });
+  await step(3, async () => { await 価格の低い順にする(list, ids, "A、B、Cの順"); });
+  await step(4, async () => { d = await 表示する(page); });
+  await expected(async () => { for (const x of 検索の並び(d!, ids)) expect.soft(x.実際, x.何).toBe(x.期待); });
+});
+
+caseTest("IT-F10-03-026", async ({ page, notes, step, expected }) => {
+  const list = new FrontProductList(page);
+  const P = notes.get("〔商品ID-F1003-026P〕");
+  const Q = notes.get("〔商品ID-F1003-026Q〕");
+  let d: 読んだ領域 | undefined;
+  await step(1, async () => { await list.open(店舗の入口.本店); });
+  await step(2, async () => { await 印つきの語で検索する(page, list, "F1003-026"); });
+  await step(3, async () => {
+    await list.並び順を選ぶ("価格(低い順)");
+    const cards = await list.カードを読む();
+    note(`価格(低い順)を選んだあとの行（上から）: ${cards.map((x) => `${x.表示名 || x.商品名}（商品ID ${x.商品ID}・言語 ${x.言語 || x.言語ラベル || "指定なし"}）`).join("、") || "なし"}`);
+    expect(cards.map((x) => x.商品ID), "価格(低い順)の一覧の並び（商品Pの日本語版、商品Pの英語版、商品Qの3行）").toEqual([P, P, Q]);
+  });
+  await step(4, async () => { d = await 表示する(page); });
+  await expected(async () => { for (const x of 検索の並び(d!, [P, Q], P)) expect.soft(x.実際, x.何).toBe(x.期待); });
+});
+
+caseTest("IT-F10-03-029", async ({ page, notes, step, expected }) => {
+  const list = new FrontProductList(page);
+  const X = notes.get("〔商品ID-F1003-029〕");
+  let d: 読んだ領域 | undefined;
+  await step(1, async () => {
+    note(`会員のメールアドレスは、前半に実行の印を付けた ${メールの値("S-F10-03-LIST-MEMBER-029")}（パスワードは正本の値）`);
+    await new FrontFavorite(page).login(メールの値("S-F10-03-LIST-MEMBER-029"), パスワードの値("S-F10-03-LIST-MEMBER-029"));
+  });
+  await step(2, async () => { await list.open(店舗の入口.本店); });
+  await step(3, async () => { await 印つきの語で検索する(page, list, "F1003-029"); });
+  await step(4, async () => { d = await 表示する(page); });
+  await expected(async () => { for (const x of 検索の並び(d!, [X])) expect.soft(x.実際, x.何).toBe(x.期待); });
+});
+
+caseTest("IT-F10-03-030", async ({ page, notes, step, expected }) => {
+  const list = new FrontProductList(page);
+  const X = notes.get("〔商品ID-F1003-030〕");
+  let d: 読んだ領域 | undefined;
+  await step(1, async () => { await list.open("/en"); });
+  await step(2, async () => { await 印つきの語で検索する(page, list, "F1003-030"); });
+  await step(3, async () => { d = await 表示する(page); });
+  await expected(async () => { for (const x of 検索の並び(d!, [X])) expect.soft(x.実際, x.何).toBe(x.期待); });
+});
+
+caseTest("IT-F10-03-038", async ({ page, notes, step, expected }) => {
+  const list = new FrontProductList(page);
+  const A = notes.get("〔商品ID-F1003-038A〕");
+  const B = notes.get("〔商品ID-F1003-038B〕");
+  let d: 読んだ領域 | undefined;
+  await step(1, async () => { await list.open(店舗の入口.本店); });
+  await step(2, async () => { await 印つきの語で検索する(page, list, "F1003-038"); });
+  await step(3, async () => { await list.並び順を選ぶ("価格(低い順)"); });
+  await step(4, async () => { d = await 表示する(page); });
+  await expected(async () => {
+    const v = 項目を持つ要素(d!, "gtm_search_ids")[0]?.値.gtm_search_ids;
+    expect.soft(v, `項目名 gtm_search_ids の値が数値の配列 [${A}, ${B}]（値: ${値の一覧(d!, "gtm_search_ids")}）`).toEqual([Number(A), Number(B)]);
+  });
+});
+
+caseTest("IT-F10-03-053", async ({ page, notes, step, expected }) => {
+  const list = new FrontProductList(page);
+  const A = notes.get("〔商品ID-F1003-053〕");
+  await step(1, async () => { await list.open(店舗の入口.本店); });
+  await step(2, async () => {
+    const ids = await 印つきの語で検索する(page, list, "F1003-053");
+    expect(ids, `商品名${一覧の商品名("F1003-053")}の1件が表示される`).toEqual([A]);
+  });
+  await step(3, async () => { await loginAdmin(page, F1003_GF_ADMIN); });
+  await step(4, async () => {
+    const id = await 商品名で検索して編集を開く(page, 一覧の商品名("F1003-053"));
+    note(`商品マスターを商品名 ${一覧の商品名("F1003-053")} で検索し、商品ID ${id} の商品登録編集画面を開いた`);
+  });
+  await expected(async () => {
+    expect.soft(await 商品の公開状態(page), "商品の公開状態").toBe("公開");
+    const rows = await 商品規格の表(page);
+    note(`商品規格の表: ${rows.map((r) => `${r.言語}・${r.状態}・${r.商品コード}・在庫${r.在庫}・${r.価格}`).join(" / ")}`);
+    const nm = rows.filter((r) => /^(日本語|JP)$/.test(r.言語) && /^(NM|ニアミント)$/.test(r.状態));
+    expect.soft(nm.length, "日本語版の商品規格NMの行の数").toBe(1);
+    expect.soft(nm[0]?.在庫 ?? "", "日本語版の商品規格NMの在庫").toBe("10");
+    expect.soft((nm[0]?.価格 ?? "").replace(/[^0-9]/g, ""), "日本語版の商品規格NMの価格（税抜。桁区切り・通貨の記号を除いた数字）").toBe("500");
+  });
+});
+
+caseTest("IT-F10-03-056", async ({ page, notes, step, expected }) => {
+  const list = new FrontProductList(page);
+  const A = notes.get("〔商品ID-F1003-056〕");
+  let 前: { 商品名: string; 数量: string }[] = [];
+  let 後: { 商品名: string; 数量: string }[] = [];
+  await step(1, async () => {
+    note(`商品名F1003-056（実際の商品名 ${一覧の商品名("F1003-056")}）の商品詳細画面は、シードが控えた商品ID ${A} で開いた`);
+    await 詳細でカートに入れる(page, 入口.日本語, A, { 数量: 2 }, "商品A");
+  });
+  await step(2, async () => { 前 = await かごを開く(page); });
+  await step(3, async () => {
+    await list.open(店舗の入口.本店);
+    const ids = await 印つきの語で検索する(page, list, "F1003-056");
+    expect(ids, `商品名${一覧の商品名("F1003-056")}の1件が表示される`).toEqual([A]);
+  });
+  await step(4, async () => { 後 = await かごを開く(page); });
+  await expected(async () => {
+    const 文 = (rows: { 商品名: string; 数量: string }[]) => rows.map((r) => `${r.商品名}×${r.数量}`).join("、");
+    expect.soft(文(後), "手順4の買い物かごの明細（商品名×数量）").toBe(`${一覧の商品名("F1003-056")}×2`);
+    expect.soft(文(後), "手順4の明細が手順2の表示から変わっていない").toBe(文(前));
   });
 });
 

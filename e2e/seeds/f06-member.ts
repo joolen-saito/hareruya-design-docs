@@ -12,7 +12,9 @@ import { registerFrontMember } from "../pages/front/member_entry";
 /** メールアドレス（前半に実行の印を付ける） */
 export const markedMail = (前半: string): string => `${rc(前半)}@example.test`;
 
-export type 試験会員 = { 姓: string; 名: string; セイ: string; メイ: string; 前半: string; パスワード: string };
+export type 試験会員 = { 姓: string; 名: string; セイ: string; メイ: string; 前半: string; パスワード: string;
+  /** 省略すると 0300000000。ハイフンなしの10桁（市外局番2桁・局番4桁・番号4桁に分けて入れる） */
+  電話番号?: string };
 
 /** 会員を登録して本会員にし、会員IDを返す */
 export async function 本会員を作る(browser: Browser, m: 試験会員): Promise<string> {
@@ -20,7 +22,11 @@ export async function 本会員を作る(browser: Browser, m: 試験会員): Pro
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
     await hideDebugToolbar(context);
-    await registerFrontMember(await context.newPage(), { 姓: m.姓, 名: m.名, セイ: m.セイ, メイ: m.メイ, メール, パスワード: m.パスワード });
+    await registerFrontMember(await context.newPage(), {
+      姓: m.姓, 名: m.名, セイ: m.セイ, メイ: m.メイ, メール, パスワード: m.パスワード,
+      ...(m.電話番号 ? { 詳細: { 郵便番号1: "100", 郵便番号2: "0001", 都道府県: "東京都", 住所1: "千代田区千代田", 住所2: "1-1",
+        電話: [m.電話番号.slice(0, 2), m.電話番号.slice(2, 6), m.電話番号.slice(6)] as [string, string, string] } } : {}),
+    });
   } finally { await context.close(); }
   const id = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
@@ -38,54 +44,23 @@ export async function 本会員を作る(browser: Browser, m: 試験会員): Pro
   return id;
 }
 
-// ---- 仮会員のまま登録し、本登録のメールのURLは開かず、管理画面で本会員にする（スマレジ会員番号を設定させない作り方） ----
-import { EntryPage } from "../pages/front/f06_01_entry";
-import { 仮会員機能が有効か } from "../db/f06_01";
+import { 選手のスマレジ連携 } from "../db/f06_21";
+import { スマレジ連携を外す } from "../db/f06_21_prep";
 import { available } from "../lib/db";
-import { readTempMember, setTempMember } from "../pages/admin/f06_masters";
-import { M08CustomerEditPage } from "../pages/admin/m08_customer_edit";
-import { openEditFromResult } from "../pages/admin/f06_customer";
+
+export const スマレジ番号を外した注記 = "本会員として登録するとスマレジ会員番号が付くため、DBで実行の印つきの会員の選手情報のスマレジ会員番号を未設定に設定した（シード表は「スマレジ会員番号未設定」。仮会員機能の共有の設定は書き換えず、本会員として登録して作った。シード表の「仮会員機能を有効にして」は読み替え）";
 
 /**
- * 仮会員機能（共有の設定）を有効にして会員を仮会員として登録し、管理画面で本会員にする。仮会員機能は登録のあいだだけ有効にし、元の値へ戻してDBの参照で確かめる。
- * 本登録のメールのURLは開かない。
+ * 本会員を作り、選手情報のスマレジ会員番号が付いていればDBで外す（スマレジ会員番号が「未設定」の会員が要るとき）。
+ * 共有の設定（仮会員機能）は書き換えない。外したときは true を返す（呼び出し側が注記に残す）。DBを参照できない環境では外さない。
  */
-export async function 仮登録から本会員にする(browser: Browser, m: 試験会員 & { 電話番号: string }): Promise<string> {
+export async function スマレジ会員番号なしの本会員を作る(browser: Browser, m: 試験会員): Promise<{ 会員ID: string; 外した: boolean }> {
+  const 会員ID = await 本会員を作る(browser, m);
+  if (!available) return { 会員ID, 外した: false };
   const メール = markedMail(m.前半);
-  const 前 = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    page.setDefaultTimeout(60_000);
-    const v = await readTempMember(page);
-    await setTempMember(page, true);
-    return v;
-  });
-  try {
-    const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
-    try {
-      await hideDebugToolbar(context);
-      const e = new EntryPage(await context.newPage());
-      await e.open();
-      await e.fill({
-        姓: m.姓, 名: m.名, セイ: m.セイ, メイ: m.メイ, 生年月日: ["1990", "1", "1"], メール, パスワード: m.パスワード,
-        国: "Japan", 郵便番号: "1000001", 都道府県: "東京都", 住所1: "千代田区千代田", 住所2: "1-1", 電話番号: m.電話番号,
-      });
-      if (!(await e.同意する()).sent) throw new Error(`会員 ${メール} の登録: 「同意する」を押しても確認画面へ進めない`);
-      await e.登録する();
-      if (!e.完了画面か) throw new Error(`会員 ${メール} の登録が仮会員登録完了画面にならない（${e.path}）`);
-    } finally { await context.close(); }
-  } finally {
-    await withAdminSession(browser, SETUP_ADMIN, async (page) => { page.setDefaultTimeout(60_000); await setTempMember(page, 前); });
-    if (available && 仮会員機能が有効か() !== 前) throw new Error(`仮会員機能を元の値（${前 ? "有効" : "無効"}）へ戻せていない`);
-  }
-  return withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    page.setDefaultTimeout(60_000);
-    await searchCustomer(page, メール);
-    const id = await resultCustomerId(page, メール);
-    if (!id) throw new Error(`会員 ${メール} が管理画面の会員一覧で1件に定まらない`);
-    await openEditFromResult(page, メール);
-    const ed = new M08CustomerEditPage(page);
-    await ed.選ぶ("status", "本会員");
-    await ed.登録する();
-    if (!(await ed.成功メッセージ())) throw new Error(`会員 ${メール} を本会員にする保存が成功の表示にならない（${(await ed.エラー文()).join(" / ")}）`);
-    return id;
-  });
+  const s = 選手のスマレジ連携(メール);
+  if (!s) throw new Error(`会員 ${メール} の選手情報が見つからない`);
+  if (s.番号 === "" && s.存在フラグ !== "t") return { 会員ID, 外した: false };
+  スマレジ連携を外す(メール);
+  return { 会員ID, 外した: true };
 }
