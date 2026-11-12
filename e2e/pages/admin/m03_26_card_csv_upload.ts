@@ -4,7 +4,7 @@
  * - 取込ファイルの欄・「CSVファイルをアップロード」ボタン・「雛形ファイルダウンロード」ボタン・CSVの形式の表・取込履歴の一覧が1つの画面にある。
  * - 取込ファイルの欄は必須で、空のままだとブラウザの入力チェックが送信を止める（送信の処理が始まらないので、確認モーダルも出ない）。
  * - カード商品CSVは、送信の処理の初めに確認モーダル（画面の中のダイアログ）を出し、モーダルの「確定」でフォームを送る。
- *   グッズ商品CSVは確認モーダルを出さずにそのまま送る（画面のスクリプトは読み込み中の表示を出すだけ）。
+ *   グッズ商品CSVも 2026-11-11 から確認モーダルを出す（「確認」で送る。pressUpload の中で押す）。
  * - 取込の要求は、成功・失敗とも、この画面へ戻す（画面上部に完了またはエラーのメッセージ）。
  */
 import { Download, expect, Locator, Page } from "@playwright/test";
@@ -95,7 +95,12 @@ export class CsvUploadPage {
       await expect(this.確認モーダル, "アップロードの確認モーダル").toBeVisible();
       return null;
     }
-    return this.waitImport(() => this.アップロードボタン.click());
+    // グッズ商品CSVも 2026-11-11 から確認モーダルを出す（csv_product_goods.twig・7197222c86）。出たら「確認」を押して送る。出なければ、これまでどおり送信がそのまま進む
+    return this.waitImport(async () => {
+      await this.アップロードボタン.click();
+      const ok = this.page.locator("#goods-product-csv-upload-confirm");
+      if (await ok.waitFor({ state: "visible", timeout: 10_000 }).then(() => true, () => false)) await ok.click();
+    });
   }
 
   /** 確認モーダルが開いているか */

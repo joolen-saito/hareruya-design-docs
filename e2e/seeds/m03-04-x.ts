@@ -75,8 +75,9 @@ defineSeed("S-M03-04-MASTER", async ({ browser, seed }) => {
     await s.open();
     await s.ensureDetailVisible();
     const 状態 = (await s.choiceOptions("card_condition")).map((c) => c.label);
-    for (const want of ["ニアミント", "スライトリープレイド", "モデレトリープレイド"]) {
-      if (!状態.some((l) => l.startsWith(want))) throw new Error(`商品一覧の状態の選択肢に「${want}」が無い（${状態.join("、")}）`);
+    // 開発環境の商品一覧の状態の選択肢は略称（NM・SP・MP など）で出る（2026-11-12）。正式名か略称のどちらかがあればよい
+    for (const [want, 略称] of [["ニアミント", "NM"], ["スライトリープレイド", "SP"], ["モデレトリープレイド", "MP"]] as const) {
+      if (!状態.some((l) => l.startsWith(want) || l.trim() === 略称)) throw new Error(`商品一覧の状態の選択肢に「${want}」（${略称}）が無い（${状態.join("、")}）`);
     }
   });
   reportSeedIssue(seed.シードID, "参照マスタと店舗・在庫場所は DB シードで登録せず、開発環境に既にあるものを使った（状態 NM・SP・MP があることを商品一覧の選択肢で確かめた）");

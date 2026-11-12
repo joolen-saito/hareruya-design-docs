@@ -31,7 +31,9 @@ export async function 商品名で検索する(page: Page, 商品名: string, op
     await s.ensureDetailVisible();
     const choices = await s.choiceOptions("card_condition");
     for (const name of opt.状態) {
-      const hit = choices.filter((c) => c.label === name || c.label.startsWith(name));
+      // 開発環境の商品一覧の状態の選択肢は略称（NM・SP・MP など）で出る（2026-11-12）。正式名で渡されたら略称でも探す
+      const 略称 = ({ ニアミント: "NM", スライトリープレイド: "SP", モデレトリープレイド: "MP", ヘビリープレイド: "HP" } as Record<string, string>)[name];
+      const hit = choices.filter((c) => c.label === name || c.label.startsWith(name) || (略称 !== undefined && c.label.trim() === 略称));
       if (hit.length !== 1) throw new Error(`状態の選択肢「${name}」が1件でない（${choices.map((c) => c.label).join("、")}）`);
       await s.setChecked("card_condition", hit[0].value, true);
     }

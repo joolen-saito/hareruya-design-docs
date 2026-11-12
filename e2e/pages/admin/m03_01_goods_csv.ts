@@ -187,12 +187,17 @@ export function buildGoodsCsv(
 export async function uploadGoodsCsv(page: Page, csv: Buffer, name: string, waitMs?: number): Promise<void> {
   await page.goto(adminUrl("/product/product_goods_csv_upload"));
   await page.locator("#upload-form input[type=file]").setInputFiles({ name, mimeType: "text/csv", buffer: csv });
-  if (waitMs === undefined) {
-    await page.locator("#upload-button").click();
-    return;
-  }
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: waitMs }),
-    page.locator("#upload-button").click(),
+  // 新アプリは 2026-11-11 から、アップロードを押すと確認モーダル（「グッズ商品CSVをアップロードします。よろしいですか？」）を出し、
+  // 「確認」を押すと送信する（csv_product_goods.twig・7197222c86）。モーダルが出たら「確認」を押す。出なければ、これまでどおり送信がそのまま進む
+  const nav = page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: waitMs ?? 120_000 });
+  nav.catch(() => undefined);
+  await page.locator("#upload-button").click();
+  const confirm = page.locator("#goods-product-csv-upload-confirm");
+  const outcome = await Promise.race([
+    confirm.waitFor({ state: "visible", timeout: 10_000 }).then(() => "modal" as const, () => "none" as const),
+    nav.then(() => "sent" as const, () => "none" as const),
   ]);
+  if (outcome === "modal") await confirm.click();
+  if (waitMs === undefined) return;
+  await nav;
 }
