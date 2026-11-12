@@ -16,6 +16,7 @@
  * このシードを使ったケースの結果に、その旨を「シード作成時の問題」として毎回出す。承認されなければ、使うケースを実装しない側へ移す。
  */
 import { expect, Page } from "@playwright/test";
+import { E2Eが作った商品か確かめる } from "../db/product_owner";
 import { SETUP_ADMIN } from "../config/env";
 import { Notes } from "../lib/notes";
 import { rc, rcFixed } from "../lib/run_marker";
@@ -215,6 +216,9 @@ defineTagSeed("S-M03-13-L-PRODUCT", async (o) => {
   if (found.length !== 1) throw new Error(`${o.seedId}: 公開状態を非公開にして商品名「${name}」で検索した結果が${found.length}件（1件のはず）`);
   if (found[0].商品コード !== code) throw new Error(`${o.seedId}: 商品名「${name}」の商品の商品コードが ${found[0].商品コード}（このシードが作るのは ${code}）。作り方の違う商品は使わない`);
   const productId = found[0].商品ID;
+  // 開発環境には、ほかの方が手動テストの準備で同じ名前・コードの商品を作っていることがある。前からあった商品を使う（このあと登録し直す）ときは、
+  // E2E の管理者が作った商品か DB で確かめ、違えば使わずに止める（2026-11-12 流し直しのセッションの知らせ）
+  if (!made) E2Eが作った商品か確かめる([productId], `${o.seedId}: 前からある商品「${name}」を使う前`);
   o.notes.set("〔商品ID-M0313-連携共有〕", productId);
   // ③ 検索結果の商品名のリンクから商品登録編集画面を開き、販売制限が5であることを確かめ、割引率を選んでタグは選ばずに「商品を登録」を押す。
   // 商品登録編集画面の「販売制限」は地域の選択（制限なし・日本国内のみ・海外のみ）で、5の値は無い。
