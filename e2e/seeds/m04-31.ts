@@ -125,19 +125,21 @@ function definePrefixZero(seedId: string, prefix: string): void {
   });
 }
 
-definePrefixZero("S-M04-31-NEWINIT-019", "M0431-019-");
-definePrefixZero("S-M04-31-NEWOPT-020", "M0431-020-");
-definePrefixZero("S-M04-31-REGOK-021", "M0431-021-");
-definePrefixZero("S-M04-31-REGNAV-022", "M0431-022-");
-definePrefixZero("S-M04-31-REGB-023", "M0431-023-");
-definePrefixZero("S-M04-31-REGDB-024", "M0431-024-");
+definePrefixZero("S-M04-31-NEWINIT-019", 棚卸名の接頭辞("019"));
+definePrefixZero("S-M04-31-NEWOPT-020", 棚卸名の接頭辞("020"));
+definePrefixZero("S-M04-31-REGOK-021", 棚卸名の接頭辞("021"));
+definePrefixZero("S-M04-31-REGNAV-022", 棚卸名の接頭辞("022"));
+definePrefixZero("S-M04-31-REGB-023", 棚卸名の接頭辞("023"));
+definePrefixZero("S-M04-31-REGDB-024", 棚卸名の接頭辞("024"));
 /** 025 の棚卸名の接頭辞（実行ごとの印つき。前の実行の棚卸計画は削除の画面が無く消せないので、印で重ならないようにする。案A）。ケースは棚卸名の書式・文字数・重複を確かめない */
-export const PREFIX025 = `${rc("M0431-025")}-`;
+export function 棚卸名の接頭辞(k: string): string { return `${rc(`M0431-${k}`)}-`; }
+export function 棚卸名(k: string, 枝 = "A"): string { return `${棚卸名の接頭辞(k)}${枝}`; }
+export const PREFIX025 = 棚卸名の接頭辞("025");
 definePrefixZero("S-M04-31-REGNOMEMO-025", PREFIX025);
-definePrefixZero("S-M04-31-REGMAX-027", "M0431-027-");
-definePrefixZero("S-M04-31-REGNOEDIT-031", "M0431-031-");
-definePrefixZero("S-M04-31-CBREGAS-163", "M0431-CB163-");
-definePrefixZero("S-M04-31-CBREGBE-164", "M0431-CB164-");
+definePrefixZero("S-M04-31-REGMAX-027", 棚卸名の接頭辞("027"));
+definePrefixZero("S-M04-31-REGNOEDIT-031", 棚卸名の接頭辞("031"));
+definePrefixZero("S-M04-31-CBREGAS-163", 棚卸名の接頭辞("CB163"));
+definePrefixZero("S-M04-31-CBREGBE-164", 棚卸名の接頭辞("CB164"));
 
 /** 「全棚卸計画が0件」: 作れないので、店舗A・EC-CUBE の棚卸計画が0件であることだけを確かめる */
 function defineAllZero(seedId: string): void {

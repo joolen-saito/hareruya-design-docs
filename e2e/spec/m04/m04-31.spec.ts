@@ -23,7 +23,7 @@ import {
   headings, InventoryPlanEditPage, InventoryPlanListPage, InventoryPlanNewPage, PlanRow, pressReflectExecute, topMessages,
 } from "../../pages/admin/m04_31_inventory_plan";
 import {
-  M0431_ADMIN, M0431_NOEDIT, PREFIX025, RC160, RC160_PLAN, RC161, RC161_PLAN, RC162, RC162_PLAN, RcPlan,
+  M0431_ADMIN, M0431_NOEDIT, PREFIX025, 棚卸名, RC160, RC160_PLAN, RC161, RC161_PLAN, RC162, RC162_PLAN, RcPlan,
 } from "../../seeds/m04-31";
 import { mainShopName } from "../../seeds/m04-02";
 
@@ -119,10 +119,10 @@ function registerAndList(no: string, v: { 棚卸名: string; 店舗: string; 在
   };
 }
 
-caseTest("IT-M04-31-021", registerAndList("021", { 棚卸名: "M0431-021-A", 店舗: "店舗A", 在庫区分: "EC-CUBE", 備考: "M0431-021-備考" }));
-caseTest("IT-M04-31-023", registerAndList("023", { 棚卸名: "M0431-023-A", 店舗: "店舗B", 在庫区分: "スマレジ" }));
-caseTest("IT-M04-31-163", registerAndList("163", { 棚卸名: "M0431-CB163-A", 店舗: "店舗A", 在庫区分: "スマレジ" }));
-caseTest("IT-M04-31-164", registerAndList("164", { 棚卸名: "M0431-CB164-A", 店舗: "店舗B", 在庫区分: "EC-CUBE" }));
+caseTest("IT-M04-31-021", registerAndList("021", { 棚卸名: 棚卸名("021"), 店舗: "店舗A", 在庫区分: "EC-CUBE", 備考: "M0431-021-備考" }));
+caseTest("IT-M04-31-023", registerAndList("023", { 棚卸名: 棚卸名("023"), 店舗: "店舗B", 在庫区分: "スマレジ" }));
+caseTest("IT-M04-31-163", registerAndList("163", { 棚卸名: 棚卸名("CB163"), 店舗: "店舗A", 在庫区分: "スマレジ" }));
+caseTest("IT-M04-31-164", registerAndList("164", { 棚卸名: 棚卸名("CB164"), 店舗: "店舗B", 在庫区分: "EC-CUBE" }));
 
 // ---- 022・025・027: 登録して編集画面へ移る ----
 
@@ -131,7 +131,7 @@ caseTest("IT-M04-31-022", async ({ page, step, expected }) => {
   await step(1, () => new InventoryPlanListPage(page).open());
   await step(2, () => pressNew(page));
   await step(3, async () => {
-    await new InventoryPlanNewPage(page).fill({ 棚卸名: "M0431-022-A", 店舗: "店舗A", 在庫区分: "EC-CUBE" });
+    await new InventoryPlanNewPage(page).fill({ 棚卸名: 棚卸名("022"), 店舗: "店舗A", 在庫区分: "EC-CUBE" });
     await submitNew(page);
   });
   await expected(async () => {
@@ -139,7 +139,7 @@ caseTest("IT-M04-31-022", async ({ page, step, expected }) => {
     expect.soft((await topMessages(page)).成功, "「棚卸計画を登録しました。」が表示される").toContain("棚卸計画を登録しました。");
     expect.soft(edit.planIdInUrl(), "棚卸計画編集画面（アドレスが棚卸計画IDの編集画面）").not.toBeNull();
     expect.soft(await headings(page), "棚卸計画編集画面の見出し").toContain("棚卸計画編集");
-    expect.soft(await edit.name(), "棚卸名「M0431-022-A」の棚卸計画編集画面").toBe("M0431-022-A");
+    expect.soft(await edit.name(), "棚卸名「M0431-022-A」の棚卸計画編集画面").toBe(棚卸名("022"));
   });
 });
 
@@ -199,12 +199,12 @@ caseTest("IT-M04-31-024", async ({ page, step, expected }) => {
   await step(1, () => new InventoryPlanListPage(page).open());
   await step(2, () => pressNew(page));
   await step(3, async () => {
-    await new InventoryPlanNewPage(page).fill({ 棚卸名: "M0431-024-A", 店舗: "店舗A", 在庫区分: "EC-CUBE", 備考: "M0431-024-備考" });
+    await new InventoryPlanNewPage(page).fill({ 棚卸名: 棚卸名("024"), 店舗: "店舗A", 在庫区分: "EC-CUBE", 備考: "M0431-024-備考" });
     await submitNew(page);
   });
   await step(4, async () => {
     after = planCountAll();
-    saved = plansByName("M0431-024-A");
+    saved = plansByName(棚卸名("024"));
     note(`DBの棚卸計画: 件数 ${before} → ${after}・棚卸名「M0431-024-A」の行 ${JSON.stringify(saved)}`);
   });
   await expected(async () => {
@@ -265,14 +265,14 @@ caseTest("IT-M04-31-031", async ({ page, step, expected }) => {
   await step(1, () => new InventoryPlanListPage(page).open());
   await step(2, () => pressNew(page));
   await step(3, async () => {
-    await new InventoryPlanNewPage(page).fill({ 棚卸名: "M0431-031-A", 店舗: "店舗A", 在庫区分: "EC-CUBE" });
+    await new InventoryPlanNewPage(page).fill({ 棚卸名: 棚卸名("031"), 店舗: "店舗A", 在庫区分: "EC-CUBE" });
     after = await captureAfterSubmit(page, await submitNew(page));
     pageText = norm(await page.locator(".c-contentsArea").first().innerText());
     const fieldErrors = (await page.locator(".invalid-feedback, .form-error-message").allInnerTexts()).map(norm).filter(Boolean);
     note(`「登録」のあと: ${JSON.stringify(after)}・入力欄の下のエラー ${JSON.stringify(fieldErrors)}`);
   });
   await step(4, async () => {
-    count = planCountByName("M0431-031-A");
+    count = planCountByName(棚卸名("031"));
     note(`DBの棚卸名「M0431-031-A」の棚卸計画: ${count} 件`);
   });
   await expected(async () => {
