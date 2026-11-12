@@ -1,6 +1,7 @@
 /** M03-01 のグッズ商品を商品マスター画面で照合し、正本指定時だけ同名商品を片付ける。 */
 import { expect, Page } from "@playwright/test";
 import { ProductSearchPage } from "./product_search";
+import { E2Eが作った商品か確かめる } from "../../db/product_owner";
 
 /** CSV 取込後に商品コードで1件を特定し、画面が振った商品 ID を返す。 */
 export async function readGoodsProductId(page: Page, code: string, name: string): Promise<string> {
@@ -95,6 +96,7 @@ export async function removeProductsMatchingName(page: Page, name: string, inclu
       await expect(page.locator("#form_bulk"), `${name} の商品が残っていない`).toHaveCount(0);
       return;
     }
+    const listed: string[] = [];
     for (const row of await rows.all()) {
       const id = (await row.locator("td:nth-child(2)").innerText()).trim();
       const nameLink = row.locator("td:nth-child(3) a");
@@ -118,7 +120,9 @@ export async function removeProductsMatchingName(page: Page, name: string, inclu
       }
       if (removedIds.has(id)) throw new Error(`${name} の商品 ID ${id} は完全削除後も残っている`);
       removedIds.add(id);
+      listed.push(id);
     }
+    E2Eが作った商品か確かめる(listed, `商品名「${name}」の清掃`);
     await bulkDeleteListed(page, name);
   }
 }
@@ -139,6 +143,7 @@ export async function removeProductsMatchingCode(page: Page, code: string): Prom
       await expect(page.locator("#form_bulk"), `商品コード ${code} の商品が残っていない`).toHaveCount(0);
       return [...removedIds];
     }
+    const listed: string[] = [];
     for (const row of await rows.all()) {
       const id = (await row.locator("td:nth-child(2)").innerText()).trim();
       const actual = (await row.locator("td:nth-child(4)").innerText()).trim();
@@ -146,7 +151,9 @@ export async function removeProductsMatchingCode(page: Page, code: string): Prom
       if (actual !== code) throw new Error(`商品コード ${code} の検索結果に別の商品コードの行がある（ID=${id}, 商品コード=${actual}）。消さずに止める`);
       if (removedIds.has(id)) throw new Error(`商品コード ${code} の商品 ID ${id} は完全削除後も残っている`);
       removedIds.add(id);
+      listed.push(id);
     }
+    E2Eが作った商品か確かめる(listed, `商品コード ${code} の清掃`);
     await bulkDeleteListed(page, `商品コード ${code}`);
   }
 }
