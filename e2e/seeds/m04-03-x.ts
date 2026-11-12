@@ -11,7 +11,7 @@
  *   カードのマスタは新しく作らず、開発環境に既にある商品の付いていないカード詳細を使う（Foil「特殊」で使えるものは 11/11 時点で2件）。
  *   商品コード・商品名に実行の印を付け、ケースの文の同じ値も印つきで読む。
  * - 在庫変動区分・言語・状態の選択肢（MASTER の DB 設定）は、開発環境のマスタをそのまま使う（書き換えない）。
- * - 試験管理者（ADM）・入庫の承認者: メンバー登録画面で作る。名前・ログインIDに実行の印を付ける（開発環境に手動テスト用の同じものがありうる）。
+ * - 試験管理者（ADM）・入庫の承認者: メンバー登録画面で作る。名前・ログインIDに決まった印（-E2E）を付け、1度だけ作って使い回す（開発環境に手動テスト用の同じものがありうる。2026-11-12）。入庫の承認者は店舗ごとの所属で作る。
  *   権限は「システム管理者」（M04-02 と同じ。シード表の「在庫承認権限なし」は、今回の範囲のケースが確かめない）。
  * - ケースの規格（CASE-*）: 商品規格一覧の「新規作成」で共通の商品に規格を足し、在庫IDは DB の参照で読んで控える。
  *   在庫数はシード表のとおり在庫編集で入庫し、別のメンバー（承認者）が在庫編集承認一覧で承認する（画面で作れる）。
@@ -21,7 +21,7 @@
 import { Browser, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { getSeed } from "../lib/catalog";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { 在庫IDの, 在庫数と総原価を整える, 在庫の最新の承認ID, 期間別販売数量を足す, 商品の無いカード詳細 } from "../db/m04_03_x";
@@ -63,10 +63,22 @@ const 管理者の = (名前: string, loginId: string, password: string): 管理
   const id = rc(loginId).toLowerCase();
   return { 名前: rc(名前), account: { loginId: id, password }, email: `${id}@example.test` };
 };
+/** 実行をまたいで使い回す試験管理者（決まった印。1度だけ作る。2026-11-12 シードの使い回し） */
+const 使い回す管理者 = (名前: string, loginId: string, password: string): 管理者 => {
+  const id = rcFixed(loginId).toLowerCase();
+  return { 名前: rcFixed(名前), account: { loginId: id, password }, email: `${id}@example.test` };
+};
 /** S-M04-03-ADM（M04-03試験管理者。TC東京・大阪店の在庫を編集できる） */
-export const 試験管理者 = 管理者の("M04-03試験管理者", "m0403_admin", "Passw0rd!M0403");
-/** シードの入庫を承認するメンバー（シード表の「店舗の在庫承認権限を持つ別のメンバー」） */
-export const 入庫の承認者 = 管理者の("M04-03入庫承認者", "m0403_seed_apr", "Passw0rd!M0403Ap");
+export const 試験管理者 = 使い回す管理者("M04-03試験管理者", "m0403_admin", "Passw0rd!M0403");
+/**
+ * シードの入庫を承認するメンバー（シード表の「店舗の在庫承認権限を持つ別のメンバー」）。
+ * 承認通知先の部署の選択肢は「その店舗に所属するメンバーの部署」だけ（新アプリの StockApprovalType）なので、入庫する店舗ごとにその店舗の所属で作る
+ * （2026-11-12、TC東京所属の承認者1人では大阪店の入庫で「承認通知先のメンバーに…がいる部署が無い」になる。F04-01・M04-01 と同じ）
+ */
+export const 入庫の承認者: Record<"TC東京" | "大阪店", 管理者> = {
+  TC東京: 使い回す管理者("M04-03入庫承認者", "m0403_seed_apr", "Passw0rd!M0403Ap"),
+  大阪店: 使い回す管理者("M04-03大阪店入庫承認者", "m0403_seed_apr_osk", "Passw0rd!M0403Ap"),
+};
 /** 054〜061 の登録者・承認者（S-M04-03-GF-REG-<番号>・GF-APR・DP-REG・DP-APR） */
 export const 登録者の = (番号: string): 管理者 => 管理者の(`M0403-${番号}-登録者`, `m0403-${番号}-reg`, `Qz${番号}r7Tm!`);
 export const 承認者の = (番号: string): 管理者 => 管理者の(`M0403-${番号}-承認者`, `m0403-${番号}-apr`, `Qz${番号}a5Tm!`);
@@ -125,7 +137,8 @@ defineSeed("S-M04-03-ADM", { needs: ["S-M04-03-MASTER"] }, async ({ browser }) =
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     await メンバーを用意する(page, 試験管理者, [店舗IDの("TC東京"), 店舗IDの("大阪店")]);
-    await メンバーを用意する(page, 入庫の承認者, [店舗IDの("TC東京"), 店舗IDの("大阪店")]);
+    await メンバーを用意する(page, 入庫の承認者.TC東京, [店舗IDの("TC東京"), 店舗IDの("大阪店")]);
+    await メンバーを用意する(page, 入庫の承認者.大阪店, [店舗IDの("大阪店"), 店舗IDの("TC東京")]);
   });
 });
 
@@ -159,13 +172,13 @@ async function 入庫して承認する(browser: Browser, seedId: string, 在庫
   await withAdminSession(browser, 試験管理者.account, async (page) => {
     page.setDefaultTimeout(60_000);
     await 在庫編集を開く(page, 在庫ID);
-    await registerStockEdit(page, { changeType: "入庫/問屋仕入", reason: `${seedId}の入庫`, quantity: String(数量), purchasePrice: String(仕入単価), approverName: 入庫の承認者.名前 },
+    await registerStockEdit(page, { changeType: "入庫/問屋仕入", reason: `${seedId}の入庫`, quantity: String(数量), purchasePrice: String(仕入単価), approverName: 入庫の承認者[店].名前 },
       `${seedId}: 在庫ID ${在庫ID} の在庫編集（入庫 ${数量}）`, issue);
   });
   const 承認ID = 在庫の最新の承認ID(在庫ID);
   if (!承認ID) throw new Error(`${seedId}: 在庫ID ${在庫ID} の在庫編集の承認が見つからない`);
   const 行 = 承認一覧の行の番号(承認ID);
-  await withAdminSession(browser, 入庫の承認者.account, async (page) => {
+  await withAdminSession(browser, 入庫の承認者[店].account, async (page) => {
     page.setDefaultTimeout(60_000);
     const list = new StockApprovalListPage(page);
     await list.open(店名);
