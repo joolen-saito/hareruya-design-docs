@@ -8,7 +8,9 @@
  * - 同じファイル名を1か月以内に登録していると、警告を出して登録しない。ファイル名は呼ぶ側で毎回変える。
  */
 import { expect, Locator, Page } from "@playwright/test";
+import { メンバーの部署名 } from "../../db/member";
 import { csvLine } from "../../lib/csv";
+import { available as dbAvailable } from "../../lib/db";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 
@@ -77,8 +79,19 @@ export async function registerStockChangeCsv(page: Page, v: 在庫変更CSVの�
   // 店舗（選ぶと承認通知先の選択肢が入れ替わる）
   const members = form.locator("#admin_stock_change_csv_list_approval_notification_target_members");
   await chooseByLabel(form.locator("#admin_stock_change_csv_list_change_base_info"), v.店舗);
+  // 承認通知先の所属は、承認者のいる所属を DB の参照で調べて先に選ぶ（開発環境は所属1に1,600人を超えるメンバーがいて、
+  // 選択肢の先頭の所属では承認者が出ない・出るまで遅い）。選択肢が出るまで長めに待つ（最大90秒）
+  const department0 = form.locator("#admin_stock_change_csv_list_approval_department");
+  const 先の所属 = dbAvailable ? メンバーの部署名(v.承認者) : "";
+  let 所属を選んだ = false;
+  if (先の所属 && (await department0.count()) > 0) {
+    const opts = await department0.locator("option").evaluateAll((nodes) => nodes
+      .map((n) => ({ value: (n as HTMLOptionElement).value, label: (n.textContent ?? "").trim() })).filter((o) => o.value));
+    const hit = opts.find((o) => o.value === 先の所属 || o.label === 先の所属);
+    if (hit) { await department0.selectOption(hit.value); 所属を選んだ = true; }
+  }
   await expect(members.locator("option").filter({ hasText: new RegExp(`^\\s*${v.承認者}\\s*$`) }),
-    `店舗「${v.店舗}」の承認通知先に「${v.承認者}」が出る`).toHaveCount(1, { timeout: 30_000 });
+    `店舗「${v.店舗}」の承認通知先に「${v.承認者}」が出る`).toHaveCount(1, { timeout: 90_000 });
 
   await (await radioByLabel(form.locator('input[name="admin_stock_change_csv_list[change_stock_location_id]"]'), v.在庫区分)).check();
 
@@ -92,7 +105,7 @@ export async function registerStockChangeCsv(page: Page, v: 在庫変更CSVの�
 
   // 承認通知先: 所属は、メンバー登録で選ぶ所属（選択肢の先頭）にそろえる。メンバーは名前で選ぶ
   const department = form.locator("#admin_stock_change_csv_list_approval_department");
-  if ((await department.count()) > 0) await department.selectOption({ index: 1 });
+  if ((await department.count()) > 0 && !所属を選んだ) await department.selectOption({ index: 1 });
   await chooseMembers(members, [v.承認者]);
 
   // 「ファイルを選択」を押してファイルを選ぶ（押したときに、選んだファイルを受け取る処理が付く）
