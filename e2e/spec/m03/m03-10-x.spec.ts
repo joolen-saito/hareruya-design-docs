@@ -29,7 +29,8 @@ async function 選んで一括編集を開く(ctx: CaseCtx, 言葉: string, 商�
   await loginAdmin(page, M0310_ADMIN);
   const m = new 商品マスター(page);
   await step(1, async () => {
-    await m.検索する({ コード: 言葉 });
+    await m.検索する({ コード: 言葉, 初期の絞り込みを外す: true });
+    supplement("商品マスター(検索入力)の初期の絞り込み（公開状態＝公開・状態＝NM・高額商品を除外する）を外して検索した（選ぶ商品が必ず出るように）");
     const ids = await m.行の商品ID();
     for (const id of 商品ID) if (!ids.includes(id)) throw new Error(`商品マスター(検索結果)の1ページ目に商品ID ${id} の行が無い（出た行: ${ids.slice(0, 20).join("、")}）`);
     for (const id of 商品ID) await m.選ぶ(id);

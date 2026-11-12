@@ -32,9 +32,13 @@ export function 価格履歴を足す(what: string, 規格: { 商品規格ID: st
   insertOwnRows(what, { table: "dtb_price_history", parentColumn: "product_class_id", rows, owner: 規格の持ち主([規格.商品コード]) });
 }
 
-/** 商品規格を削除済みにする（025・026 の手順3「DBで NM 規格を削除済みに変更する」。アプリの商品規格の削除と同じ印） */
+/**
+ * 商品規格を削除済みにする（025・026 の手順3「DBで NM 規格を削除済みに変更する」。アプリの商品規格の削除と同じ印）。
+ * 新アプリの商品規格の削除は、公開ステータスを「廃止」（3）にする論理削除（ProductBulkUpdateBuyPriceStoreAction の「規格の削除は廃止ステータスへの論理削除」）。
+ * 2026-11-12 までは表示の印（visible）だけを外していて、アプリが削除と見なさなかった。表示の印も合わせて外す（a02 の削除済みと同じ）
+ */
 export function 規格を削除済みにする(what: string, 規格: { 商品規格ID: string; 商品コード: string }): void {
-  updateOwnRows(what, { table: "dtb_product_class", key: "id", ids: [規格.商品規格ID], set: { visible: false }, owner: 規格の持ち主([規格.商品コード]) });
+  updateOwnRows(what, { table: "dtb_product_class", key: "id", ids: [規格.商品規格ID], set: { product_status_id: 3, visible: false }, owner: 規格の持ち主([規格.商品コード]) });
 }
 
 // ---- 確かめ（参照だけ） ----

@@ -343,7 +343,15 @@ function 定めの文(seedId: string): string {
 function 控える(notes: Notes, seedId: string, 呼び名: string | null, 値: string): void {
   if (!呼び名) return;
   const label = `〔${呼び名}〕`;
-  if (!定めの文(seedId).includes(label)) throw new Error(`${seedId}: シード表に ${label} が無い`);
+  const 文 = 定めの文(seedId);
+  if (!文.includes(label)) {
+    // シード表が「〔商品ID-M0310-009A〕〜〔商品ID-M0310-009K〕」のように範囲でまとめて書いた呼び名（B〜J）は、文にそのままの形では出ない。
+    // ケースもその呼び名を書かないので、控えずに進む（2026-11-12 の 009・016 の止まりの直し）
+    const m = /^(.*?)([A-Z])$/.exec(呼び名);
+    const 範囲 = m ? [...文.matchAll(/〔([^〔〕]*?)([A-Z])〕〜〔([^〔〕]*?)([A-Z])〕/g)].some((r) => r[1] === m[1] && r[3] === m[1] && r[2] <= m[2] && m[2] <= r[4]) : false;
+    if (範囲) return;
+    throw new Error(`${seedId}: シード表に ${label} が無い`);
+  }
   notes.set(label, 値);
 }
 

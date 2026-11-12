@@ -29,12 +29,28 @@ export class 商品マスター {
   constructor(readonly page: Page) { this.search = new ProductSearchPage(page); }
 
   /** 商品マスター(検索入力)を開き、商品名（またはコード）を入れて検索する */
-  async 検索する(v: { 商品名?: string; コード?: string }): Promise<void> {
+  async 検索する(v: { 商品名?: string; コード?: string; 初期の絞り込みを外す?: boolean }): Promise<void> {
     await this.search.open();
     await this.search.ensureDetailVisible();
     if (v.商品名 !== undefined) await this.search.field("product_name").fill(v.商品名);
     if (v.コード !== undefined) await this.search.field("product_code").fill(v.コード);
+    if (v.初期の絞り込みを外す) await this.初期の絞り込みを外す();
     await this.search.submitAndWaitForResult();
+  }
+  /**
+   * 商品マスター(検索入力)は「公開状態＝公開・状態＝NM・高額商品を除外する」に印が付いた状態で開く（新アプリ。2026-11-12 の流しで、
+   * NM が非公開で高額商品コードつきの商品・NM の規格が無い商品が検索結果に出ず、003・004・022 が手順1で止まった）。
+   * 選ぶ商品が必ず出るよう、公開状態は公開・非公開の両方に印を付け、状態と高額商品の印は外す（正本の外の補い。手順は「検索結果で選ぶ」だけを定める）。
+   */
+  async 初期の絞り込みを外す(): Promise<void> {
+    await this.page.evaluate(() => {
+      const set = (sel: string, on: boolean) => document.querySelectorAll<HTMLInputElement>(sel).forEach((i) => {
+        if (i.checked !== on) { i.checked = on; i.dispatchEvent(new Event("change", { bubbles: true })); }
+      });
+      set('input[name="admin_search_product[status][]"]', true);
+      set('input[name="admin_search_product[card_condition][]"]', false);
+      set('input[name="admin_search_product[expensive][]"]', false);
+    });
   }
   /** 検索結果の表示件数の選択欄で件数を選ぶ（選ぶと1ページ目が開き直される） */
   async 表示件数を選ぶ(件数: number): Promise<void> {
@@ -203,7 +219,8 @@ export async function 割引率を選んで登録する(page: Page, 割引率: s
   const discount = form.locator('select[name="admin_product[Discount]"]');
   await expect(discount, `${what}: 割引率の欄`).toHaveCount(1);
   const opts = await discount.locator("option").evaluateAll((ns) => ns.map((n) => ({ value: (n as HTMLOptionElement).value, label: (n.textContent ?? "").trim() })).filter((o) => o.value !== ""));
-  const pick = 割引率 === null ? opts[0] : opts.find((o) => o.label === 割引率);
+  // 選択肢の表示は「4 【NM】1【SP】0.9【MP】0.8【HP】0.7」のように名前のあとに率が続く（開発環境 2026-11-12）。名前（先頭の語）で探す
+  const pick = 割引率 === null ? opts[0] : (opts.find((o) => o.label === 割引率) ?? opts.find((o) => o.label.split(/[\s【]/)[0] === 割引率));
   if (!pick) throw new Error(`${what}: 割引率に「${割引率 ?? "選択肢"}」が無い（ある選択肢: ${opts.map((o) => o.label).join("、")}）`);
   await discount.selectOption(pick.value);
   const buyDiscount = form.locator('select[name="admin_product[BuyDiscount]"]');
