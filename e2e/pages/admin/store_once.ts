@@ -40,6 +40,12 @@ export async function guardStoreCreate(page: Page, 店名: string, 会社名: st
   if (same.length > 0) {
     throw new Error(`店舗「${店名}」（会社名「${会社名}」）は登録しない: すでにある（店舗ID ${same.map((s) => `${s.id}・${s.開店}`).join("、")}）。作らずに使い回す（依頼者決定 2026-11-11）`);
   }
+  // 前に登録を試して店舗ができていない（保存が時間内に終わらなかった）なら、やり直さない。
+  // 店舗の登録は1店で在庫の行を約39万行作る重い処理で、共有の開発環境ではやり直すたびに負荷を重ねる（2026-11-13 に M04-33 が10回やり直した）
+  const tried = fs.existsSync(LOG) ? fs.readFileSync(LOG, "utf-8").split("\n").filter((l) => { const c = l.split("\t"); return c[1] === ENV_NAME && c[2] === 店名 && c[3] === 会社名; }) : [];
+  if (tried.length > 0 && process.env.E2E_STORE_RETRY !== "1") {
+    throw new Error(`店舗「${店名}」（会社名「${会社名}」）は登録しない: 前に登録を試したが店舗ができていない（${tried.length}回・最後 ${tried[tried.length - 1].split("\t")[0]}）。店舗の登録は重いので、やり直さずに判断待ちにする（やり直すときは E2E_STORE_RETRY=1）`);
+  }
   fs.mkdirSync(path.dirname(LOG), { recursive: true });
   fs.appendFileSync(LOG, [new Date().toISOString(), ENV_NAME, 店名, 会社名, 呼び出し元].join("\t") + "\n");
 }
