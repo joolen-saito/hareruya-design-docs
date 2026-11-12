@@ -142,12 +142,12 @@ export async function ensureGoods(browser: Browser, by: Account, seedId: string,
       return;
     }
     if (counts.some((n) => n > 0)) throw new Error(`${seedId}: 商品コード ${goods.map((g, i) => `${g.商品コード}=${counts[i]}件`).join("・")}。一部だけ登録済みで、どう作るか決められない`);
-    await registerGoodsCsv(page, {
+    const reg = await registerGoodsCsv(page, {
       what: `${seedId}: グッズ商品CSV登録（${goods.length}行）`, fileName: `${seedId.toLowerCase()}-goods-${Date.now()}.csv`,
       categoryId: await readGoodsRootCategoryId(page), onWarning: issue,
       lines: goods.map((g) => ({ code: g.商品コード, nameJp: g.商品コード, nameEn: g.商品コード, values: { 基準価格: String(g.基準価格), 販売価格: String(g.販売価格) } })),
     });
-    issue("グッズ商品CSVのアップロードのあと、確認モーダルは出ず、そのまま取り込まれた（設計書 M03-27 L0092 は確認モーダルでの確定を定める。依頼者の判断待ち）");
+    if (!reg.confirmModal) issue("グッズ商品CSVのアップロードのあと、確認モーダルは出ず、そのまま取り込まれた（設計書 M03-27 L0092 は確認モーダルでの確定を定める。依頼者の判断待ち）");
   });
 }
 

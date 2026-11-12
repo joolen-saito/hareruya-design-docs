@@ -23,7 +23,7 @@ import {
   headings, InventoryPlanEditPage, InventoryPlanListPage, InventoryPlanNewPage, PlanRow, pressReflectExecute, topMessages,
 } from "../../pages/admin/m04_31_inventory_plan";
 import {
-  M0431_ADMIN, M0431_NOEDIT, RC160, RC160_PLAN, RC161, RC161_PLAN, RC162, RC162_PLAN, RcPlan,
+  M0431_ADMIN, M0431_NOEDIT, PREFIX025, RC160, RC160_PLAN, RC161, RC161_PLAN, RC162, RC162_PLAN, RcPlan,
 } from "../../seeds/m04-31";
 import { mainShopName } from "../../seeds/m04-02";
 
@@ -151,14 +151,14 @@ caseTest("IT-M04-31-025", async ({ page, step, expected }) => {
     const form = new InventoryPlanNewPage(page);
     note(`店舗と在庫区分は初期値のまま（店舗「${await form.selectedStore()}」・在庫区分「${(await form.selectedZone()).join("、")}」）`);
     expect(await form.memo().inputValue(), "備考は空欄").toBe("");
-    await form.fill({ 棚卸名: "M0431-025-A" });
+    await form.fill({ 棚卸名: `${PREFIX025}A` });
     await submitNew(page);
   });
   await expected(async () => {
     const edit = new InventoryPlanEditPage(page);
     expect.soft(edit.planIdInUrl(), "棚卸計画編集画面へ遷移する").not.toBeNull();
     expect.soft(await headings(page), "棚卸計画編集画面の見出し").toContain("棚卸計画編集");
-    expect.soft(await edit.name(), "棚卸名が「M0431-025-A」").toBe("M0431-025-A");
+    expect.soft(await edit.name(), "棚卸名が「M0431-025-A」（実行ごとの印つき）").toBe(`${PREFIX025}A`);
     expect.soft(await edit.memo(), "備考が空").toBe("");
   });
 });

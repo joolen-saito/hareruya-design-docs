@@ -20,6 +20,7 @@
 import { Browser, expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { openStoreCount, planCountAll, planCountByName, planCountByPrefix, planCountByStore } from "../db/m04_31_inventory_plan";
+import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession as withAdminSessionRaw } from "../lib/session";
 import {
@@ -130,7 +131,9 @@ definePrefixZero("S-M04-31-REGOK-021", "M0431-021-");
 definePrefixZero("S-M04-31-REGNAV-022", "M0431-022-");
 definePrefixZero("S-M04-31-REGB-023", "M0431-023-");
 definePrefixZero("S-M04-31-REGDB-024", "M0431-024-");
-definePrefixZero("S-M04-31-REGNOMEMO-025", "M0431-025-");
+/** 025 の棚卸名の接頭辞（実行ごとの印つき。前の実行の棚卸計画は削除の画面が無く消せないので、印で重ならないようにする。案A）。ケースは棚卸名の書式・文字数・重複を確かめない */
+export const PREFIX025 = `${rc("M0431-025")}-`;
+definePrefixZero("S-M04-31-REGNOMEMO-025", PREFIX025);
 definePrefixZero("S-M04-31-REGMAX-027", "M0431-027-");
 definePrefixZero("S-M04-31-REGNOEDIT-031", "M0431-031-");
 definePrefixZero("S-M04-31-CBREGAS-163", "M0431-CB163-");
@@ -174,9 +177,9 @@ defineRcOrg("S-M04-31-RC-ORG-161", RC161, RC161_STORE);
 defineRcOrg("S-M04-31-RC-ORG-162", RC162, RC162_STORE);
 
 export type RcPlan = { 商品コード: string; 商品名: string; 棚卸名: string; 棚卸数量: string; 呼び名: string };
-export const RC160_PLAN: RcPlan = { 商品コード: "RC0431001CODE", 商品名: "RC0431-001-NAME", 棚卸名: "RC0431-001-PLAN", 棚卸数量: "8", 呼び名: "〔棚卸計画ID-M0431-RC001〕" };
-export const RC161_PLAN: RcPlan = { 商品コード: "RC0431002CODE", 商品名: "RC0431-002-NAME", 棚卸名: "RC0431-002-PLAN", 棚卸数量: "13", 呼び名: "〔棚卸計画ID-M0431-RC002〕" };
-export const RC162_PLAN: RcPlan = { 商品コード: "RC0431003CODE", 商品名: "RC0431-003-NAME", 棚卸名: "RC0431-003-PLAN", 棚卸数量: "13", 呼び名: "〔棚卸計画ID-M0431-RC003〕" };
+export const RC160_PLAN: RcPlan = { 商品コード: rc("RC0431001CODE"), 商品名: rc("RC0431-001-NAME"), 棚卸名: rc("RC0431-001-PLAN"), 棚卸数量: "8", 呼び名: "〔棚卸計画ID-M0431-RC001〕" };
+export const RC161_PLAN: RcPlan = { 商品コード: rc("RC0431002CODE"), 商品名: rc("RC0431-002-NAME"), 棚卸名: rc("RC0431-002-PLAN"), 棚卸数量: "13", 呼び名: "〔棚卸計画ID-M0431-RC002〕" };
+export const RC162_PLAN: RcPlan = { 商品コード: rc("RC0431003CODE"), 商品名: rc("RC0431-003-NAME"), 棚卸名: rc("RC0431-003-PLAN"), 棚卸数量: "13", 呼び名: "〔棚卸計画ID-M0431-RC003〕" };
 
 /**
  * 商品をグッズ商品CSV登録で作って規格を公開にし、申請者の在庫編集（入庫/その他・試験データ・10・仕入単価100）を承認者が承認して在庫10にする。

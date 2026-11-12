@@ -201,11 +201,11 @@ async function ensureStock(browser: Browser, notes: Notes, seedId: string, from:
       if (await countProductsByCode(page, STOCK_PRODUCT.商品コード) > 0) {
         throw new Error(`${seedId}: 商品コード ${STOCK_PRODUCT.商品コード} の商品はあるが、${from}・${STOCK_LOCATION} の在庫の行が無い（店舗より先に商品が作られている）`);
       }
-      await registerGoodsCsv(page, {
+      const reg = await registerGoodsCsv(page, {
         what: `${seedId}: 在庫移動用商品のグッズ商品CSV登録`, fileName: "m04-24-stock-product.csv", categoryId: await readGoodsRootCategoryId(page),
         lines: [{ code: STOCK_PRODUCT.商品コード, nameJp: STOCK_PRODUCT.商品名, nameEn: STOCK_PRODUCT.英語名 }], onWarning: issue,
       });
-      issue("在庫移動用商品のグッズ商品CSVのアップロードのあと、確認モーダルは出ず、そのまま取り込まれた（設計書 M03-27 L0092 は確認モーダルでの確定を定める。依頼者の判断待ち）");
+      if (!reg.confirmModal) issue("在庫移動用商品のグッズ商品CSVのアップロードのあと、確認モーダルは出ず、そのまま取り込まれた（設計書 M03-27 L0092 は確認モーダルでの確定を定める。依頼者の判断待ち）");
     });
     stock = await readStock(browser, storeId, from);
     if (stock === null) throw new Error(`${seedId}: グッズ商品CSVで在庫移動用商品を作ったが、在庫検索一覧に ${from}・${STOCK_LOCATION} の行が出ない`);
