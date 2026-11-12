@@ -44,11 +44,18 @@ import {
   readLanguageIds, registerCard, saveShopMemo, shopMemoOf, 同名のカードセットのID,
 } from "../pages/admin/m03_23_seed_products";
 import { goodsCsvCategoryId } from "../pages/admin/m03_22_product";
+import { rcFixed } from "../lib/run_marker";
 import { ensureMember } from "../pages/admin/member";
 import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
 import { ensureCardset } from "../pages/admin/product_masters";
 
-export const M0323_ADMIN: Account = { loginId: "m0323_admin", password: "Passw0rd!M0323" };
+/**
+ * シード表のログインIDは m0323_admin。開発環境には同じ名前（M03-23試験管理者）のメンバーが複数あり（手動テストの準備でほかの方が登録したもの）、
+ * どれも使えない。決め打ちの識別の値として実行をまたいで使い回す決まった印（lib/run_marker.ts の rcFixed。依頼者決定 2026-11-11）を付けた
+ * ログインID・名前・メールアドレスで作る。ケースはこれらの値そのものを確かめない。
+ */
+export const M0323_ADMIN: Account = { loginId: rcFixed("m0323_admin").toLowerCase(), password: "Passw0rd!M0323" };
+const M0323_ADMIN_NAME = rcFixed("M03-23試験管理者");
 
 /** 正本は所属店舗を指定しない。管理画面で利用可能な店舗を1つ選び、商品管理を操作できるシステム管理者の権限を付ける（M03-14 と同じ作り方） */
 async function createAdmin(page: Page): Promise<void> {
@@ -61,7 +68,7 @@ async function createAdmin(page: Page): Promise<void> {
   if (stores.length === 0) throw new Error("S-M03-23-ADM: メンバーに割り当てられる店舗が画面に無い");
   const store = stores[0];
   await ensureMember(page, {
-    名前: "M03-23試験管理者", 所属店舗: store, ログインID: M0323_ADMIN.loginId, メールアドレス: "m0323_admin@example.test",
+    名前: M0323_ADMIN_NAME, 所属店舗: store, ログインID: M0323_ADMIN.loginId, メールアドレス: `${M0323_ADMIN.loginId}@example.test`,
     パスワード: M0323_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: store, 編集可能店舗: [store],
   });
 }
