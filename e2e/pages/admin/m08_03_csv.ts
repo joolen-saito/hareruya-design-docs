@@ -49,13 +49,38 @@ export async function 出力項目を設定する(page: Page, 番号: string[], 
   await expectSaved(page, `${何}: CSV出力項目設定（会員）の登録`);
 }
 
-/** 全項目を、項目の番号の昇順（識別ID順）に出力する設定にする。書き換える前の並びは控えのファイルに残す（既にあれば残さない）。出力した項目の名前を返す */
+/**
+ * 設計書 0207 顧客情報CSV出力項目設定（顧客CSV出力項目設定。1486行以降の対応表）の、識別ID 1〜39 の項目名の並び。
+ * 正本の「識別ID 1〜39の全39項目を識別ID順に出力」は、この並びで出力項目を設定することをいう。
+ */
+const 設計の項目名 = [
+  "会員ID", "お名前(姓)", "お名前(名)", "お名前(セイ)", "お名前(メイ)", "登録日", "スマレジID", "メールアドレス", "保有ポイント", "最終購入日",
+  "初回購入日", "職業(ID)", "都道府県(名称)", "郵便番号1", "郵便番号2", "性別(名称)", "購入金額", "購入回数", "誕生日", "会員ステータス(名称)",
+  "更新日", "会社名", "FAX1", "FAX2", "FAX3", "職業(名称)", "ショップ用メモ欄", "住所1", "住所2", "住所3",
+  "TEL1", "TEL2", "TEL3", "本人確認ステータス(ID)", "本人確認ステータス(名称)", "都道府県(ID)", "性別(ID)", "会員ステータス(ID)", "退会区分",
+];
+
+/**
+ * 全項目を、設計書の識別ID 1〜39 の順（項目名の並び）に出力する設定にする。選択肢は表示名で拾って並べる（内部番号の順ではない）。
+ * 同じ表示名の選択肢が複数あるとき（「購入金額」が2つ）は、設定を書き換える前から出力していた（既定で出力する）ほうを使い、なければ内部番号の小さいほうを使う。
+ * 書き換える前の並びは控えのファイルに残す（既にあれば残さない）。出力した項目の名前を返す
+ */
 export async function 全項目を識別ID順に出力する(page: Page): Promise<string[]> {
   const before = await 出力項目を読む(page);
   if (!fs.existsSync(控え)) fs.writeFileSync(控え, JSON.stringify({ 控えた日時: new Date().toISOString(), 出力: before.出力 }));
+  const saved = JSON.parse(fs.readFileSync(控え, "utf-8")) as { 出力: 項目[] };
+  const wasOutput = new Set(saved.出力.map((o) => o.value));
   const all = [...before.出力, ...before.出力しない].sort((a, b) => Number(a.value) - Number(b.value));
-  await 出力項目を設定する(page, all.map((o) => o.value), "全項目の出力");
-  return all.map((o) => o.label);
+  const picked: 項目[] = [];
+  const missing: string[] = [];
+  for (const name of 設計の項目名) {
+    const hits = all.filter((o) => o.label === name);
+    const hit = hits.find((o) => wasOutput.has(o.value)) ?? hits[0];
+    if (!hit) missing.push(name); else picked.push(hit);
+  }
+  if (missing.length) throw new Error(`CSV出力項目設定（会員）の選択肢に、設計書の項目名が無い: ${missing.join("、")}`);
+  await 出力項目を設定する(page, picked.map((o) => o.value), "全項目の出力");
+  return picked.map((o) => o.label);
 }
 
 export function 控えがあるか(): boolean { return fs.existsSync(控え); }

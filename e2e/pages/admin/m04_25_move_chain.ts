@@ -61,7 +61,12 @@ async function createStoreWithThresholds(page: Page, v: ThresholdStoreInput): Pr
   await storeField(page, "short_name_jp").fill(v.ショップ名略称);
   await storeField(page, "rank").fill("0");
   for (const [i, n] of [1, 2, 3].entries()) await storeField(page, `expensive_threshold${n}`).fill(v.高額商品閾値[i]);
-  await page.getByRole("button", { name: "登録", exact: true }).click();
+  // 店舗の登録は、店舗ごとの在庫の行を作るので、共有の開発環境では数分かかることがある（送信の応答を最大15分待つ。2026-11-12）。
+  // ブラウザの入力チェックで送信されないときは移動しないので、待ち切れても落とさず、下の保存の結果の確かめで原因を出す
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "load", timeout: 900_000 }).catch(() => undefined),
+    page.getByRole("button", { name: "登録", exact: true }).click(),
+  ]);
   await expectSaved(page, `店舗「${v.店名}」の登録`);
 }
 

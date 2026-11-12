@@ -41,8 +41,14 @@ export class BarcodeReplacementListPage {
   }
 
   /** 出力対象店舗で、表示が店名と一致する選択肢を選ぶ（利用者が選択欄で選ぶのと同じく、選択欄の値を切り替える） */
-  async chooseStore(店名: string): Promise<void> {
+  async chooseStore(店名: string, 店舗ID?: string): Promise<void> {
     await expect(this.出力対象店舗, "出力対象店舗の選択欄").toBeEnabled();
+    if (店舗ID) {
+      // 同じ店名の店舗が複数ある環境（共有の開発環境）では、控えた店舗IDの選択肢（値）で選ぶ
+      expect(await this.出力対象店舗.locator(`option[value="${店舗ID}"]`).count(), `出力対象店舗の選択肢「${店名}」（店舗ID ${店舗ID}）の数`).toBe(1);
+      await this.出力対象店舗.selectOption(店舗ID);
+      return;
+    }
     expect(await this.optionCount(店名), `出力対象店舗の選択肢「${店名}」の数`).toBe(1);
     await this.出力対象店舗.selectOption({ label: 店名 });
   }

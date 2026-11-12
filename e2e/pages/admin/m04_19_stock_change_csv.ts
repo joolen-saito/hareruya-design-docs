@@ -18,6 +18,8 @@ export type 在庫変更CSVの行 = { 商品コード: string; 在庫増減数: 
 
 export type 在庫変更CSVの入力 = {
   店舗: string;
+  /** 同じ店名の店舗が複数ある環境（共有の開発環境）で、店舗を番号で選ぶときに与える（無ければ店名で選ぶ） */
+  店舗ID?: string;
   在庫区分: "EC-CUBE" | "スマレジ";
   /** 在庫変動区分の表示名から先頭の印を除いたもの（例: 入庫/その他） */
   在庫変動区分: string;
@@ -78,7 +80,8 @@ export async function registerStockChangeCsv(page: Page, v: 在庫変更CSVの�
 
   // 店舗（選ぶと承認通知先の選択肢が入れ替わる）
   const members = form.locator("#admin_stock_change_csv_list_approval_notification_target_members");
-  await chooseByLabel(form.locator("#admin_stock_change_csv_list_change_base_info"), v.店舗);
+  if (v.店舗ID) await form.locator("#admin_stock_change_csv_list_change_base_info").selectOption(v.店舗ID);
+  else await chooseByLabel(form.locator("#admin_stock_change_csv_list_change_base_info"), v.店舗);
   // 承認通知先の所属は、承認者のいる所属を DB の参照で調べて先に選ぶ（開発環境は所属1に1,600人を超えるメンバーがいて、
   // 選択肢の先頭の所属では承認者が出ない・出るまで遅い）。選択肢が出るまで長めに待つ（最大90秒）
   const department0 = form.locator("#admin_stock_change_csv_list_approval_department");

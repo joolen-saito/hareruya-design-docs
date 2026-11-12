@@ -35,6 +35,7 @@ import { Browser, expect, Page } from "@playwright/test";
 import { APP_CONTAINER, ENV_NAME, REPO_ROOT, SETUP_ADMIN, SHARED_ENV, STATE_DIR } from "../config/env";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
+import { 読み替え文 } from "../lib/app_config";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { expectSaved } from "../pages/admin/common";
@@ -133,7 +134,11 @@ async function ensureApprover(browser: Browser, notes: Notes, from: FromStore): 
  * 共通の部品に関数が足されたら、この関数をそれに置き換えて逸脱を無くす（記録 e2e/review/M04-24_progress_2026-10-20.md の「共通の部品への要望」）。
  */
 function 在庫移動指示一覧の初期表示件数(): number {
-  if (ENV_NAME !== "local" || SHARED_ENV) throw new Error(`E2E_ENV=${ENV_NAME} ではアプリの設定値を読めない。環境の担当者に値を確かめてもらう`);
+  if (ENV_NAME !== "local" || SHARED_ENV) {
+    // 共有の環境では読む手段が無い。M03-16 などと同じく、アプリの既定値（50）であるとして進め、注記に残す（設定は書き換えない）
+    reportSeedIssue("S-M04-24-LIST-CONFIG", 読み替え文);
+    return 50;
+  }
   const name = "eccube_admin_stock_move_instruction_list_page_count";
   const out = execFileSync("docker", ["exec", APP_CONTAINER, "php", "bin/console", "debug:container", `--parameter=${name}`, "--format=json"],
     { encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] });

@@ -158,7 +158,7 @@ export async function stockInByCsv(browser: Browser, seedId: string, v: {
   const issue = (m: string) => reportSeedIssue(seedId, m);
   const reason = `${seedId}試験用`;
   await withAdminSession(browser, v.registrant.account, (page) => registerStockChangeCsv(page, {
-    店舗: v.店名, 在庫区分: "EC-CUBE", 在庫変動区分: "入庫/その他", 在庫変動理由: reason, 承認者: v.approver.名前,
+    店舗: v.店名, 店舗ID: v.店舗ID, 在庫区分: "EC-CUBE", 在庫変動区分: "入庫/その他", 在庫変動理由: reason, 承認者: v.approver.名前,
     行: v.行.map((r) => ({ 商品コード: r.商品コード, 在庫増減数: String(r.在庫増減数), 仕入単価: String(r.仕入単価) })),
     ファイル名: `${seedId.toLowerCase()}-stock-${Date.now()}.csv`,
   }, `${seedId}: 在庫変更CSV登録（${v.行.length}行）`, issue));

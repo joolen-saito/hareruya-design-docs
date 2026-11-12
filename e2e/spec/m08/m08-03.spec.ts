@@ -3,7 +3,7 @@
  * 実装しないケース（記録 review/M08-03_progress_*.md）: シードが会員の値（累計・日時など）をDBで設定するもの。
  * CSV出力項目設定（共有の設定）を書き換えるので、基盤が1本だけで流す。書き換える前の並びは .runs/m0803_csv_original.json に控え、afterAll で戻してDBの参照で確かめる。
  */
-import { test } from "@playwright/test";
+import { chromium, test } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
@@ -17,17 +17,25 @@ import { M0803_ADMIN, メール, 姓 } from "../../seeds/m08-03";
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const LOG = path.resolve(__dirname, "../../.runs/m0803_csv_restore.log");
 
-test.afterAll(async ({ browser }) => {
+test.afterAll(async ({}, testInfo) => {
   if (!控えがあるか()) return;
+  // 戻す処理は、ケースの時間切れ・ブラウザの終了（「Test ended」）に当たらないよう、専用のブラウザで十分な時間をかけて行う（2026-11-12）。
+  // 共有の設定を戻せなかったときは、必ずログに残し、この回を失敗にして報告させる（控えのファイルは残す）
+  testInfo.setTimeout(900_000);
   const t = new Date().toISOString();
+  const own = await chromium.launch();
   try {
-    const r = await withAdminSession(browser, SETUP_ADMIN, (page) => 控えへ戻す(page));
+    const r = await withAdminSession(own, SETUP_ADMIN, (page) => 控えへ戻す(page));
     const db = 会員CSVの出力項目の番号();
     const ok = !!r && JSON.stringify(r.控え) === JSON.stringify(db);
     fs.appendFileSync(LOG, `${t}\t元の出力項目へ戻した\t${ok ? "DBの参照で一致" : `不一致 控え=${r?.控え.join(",")} DB=${db.join(",")}`}\n`);
     if (ok) 控えを捨てる();
+    else throw new Error(`共有の会員CSVの出力項目を元の並びへ戻したが、DBの参照と一致しない（控え=${r?.控え.join(",")} DB=${db.join(",")}）。控えのファイルは残してある`);
   } catch (e) {
     fs.appendFileSync(LOG, `${t}\t戻せなかった（控えのファイルは残してある）\t${String(e)}\n`);
+    throw e;
+  } finally {
+    await own.close().catch(() => undefined);
   }
 });
 

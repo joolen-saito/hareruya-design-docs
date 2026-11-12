@@ -56,8 +56,15 @@ defineSeed("S-M04-30-STORES", async ({ browser, notes, seed }) => {
         if (failure) issue(`店舗登録画面で「${name}」を登録したとき、登録は行われたが画面は成功を表示しなかった（${failure}）`);
         await expectStore(page, hits[0].id, s.input);
       } else {
-        if (hits.length > 1) throw new Error(`${seed.シードID}: 店名「${name}」の店舗が${hits.length}件ある（ID ${hits.map((h) => h.id).join("・")}）。「各1件」を満たせない`);
-        issue(`店名「${name}」の店舗は登録済み（店舗ID ${hits[0].id}・会社名「${hits[0].会社名}」）だったので、それを使った（ほかの必須項目は任意の値）`);
+        if (hits.length > 1) {
+          // 依頼者決定 2026-11-12: 開発環境に同名の店舗が2件ずつあり「各1件」を満たせないため、M04-22 の店舗（会社名「M04-22試験会社」の開店の1件）を使う
+          const m0422 = hits.filter((h) => h.会社名 === s.input.会社名 && h.開店 === "開店");
+          if (m0422.length !== 1) throw new Error(`${seed.シードID}: 店名「${name}」の店舗が${hits.length}件あり（ID ${hits.map((h) => h.id).join("・")}）、会社名「${s.input.会社名}」の開店の店舗が1件に決まらない`);
+          issue(`依頼者決定 2026-11-12: 開発環境に同名の店舗が${hits.length}件ずつあり「各1件」を満たせないため、M04-22 の店舗（店舗ID ${m0422[0].id}）を使った`);
+          hits = m0422;
+        } else {
+          issue(`店名「${name}」の店舗は登録済み（店舗ID ${hits[0].id}・会社名「${hits[0].会社名}」）だったので、それを使った（ほかの必須項目は任意の値）`);
+        }
       }
       if (hits[0].開店 !== "開店") throw new Error(`${seed.シードID}: 店舗「${name}」（店舗ID ${hits[0].id}）が開店でない（${hits[0].開店}）`);
       notes.set(s.呼び名, hits[0].id);
@@ -65,9 +72,14 @@ defineSeed("S-M04-30-STORES", async ({ browser, notes, seed }) => {
     const screen = new BarcodeReplacementListPage(page);
     await screen.open();
     for (const s of STORES) {
-      expect(await screen.optionCount(s.input.店名), `${seed.シードID}: 出力対象店舗の選択肢「${s.input.店名}」の数`).toBe(1);
-      const value = await screen.出力対象店舗.locator("option").filter({ hasText: new RegExp(`^\\s*${s.input.店名}\\s*$`) }).getAttribute("value");
-      expect(value, `${seed.シードID}: 出力対象店舗の選択肢「${s.input.店名}」の店舗ID`).toBe(notes.get(s.呼び名));
+      const count = await screen.optionCount(s.input.店名);
+      if (count === 1) {
+        const value = await screen.出力対象店舗.locator("option").filter({ hasText: new RegExp(`^\\s*${s.input.店名}\\s*$`) }).getAttribute("value");
+        expect(value, `${seed.シードID}: 出力対象店舗の選択肢「${s.input.店名}」の店舗ID`).toBe(notes.get(s.呼び名));
+      } else {
+        // 同名が複数ある環境では、控えた店舗IDの選択肢があることだけ確かめる（上の依頼者決定）
+        expect(await screen.出力対象店舗.locator(`option[value="${notes.get(s.呼び名)}"]`).count(), `${seed.シードID}: 出力対象店舗に店舗ID ${notes.get(s.呼び名)} の選択肢がある`).toBe(1);
+      }
     }
   });
 });

@@ -49,11 +49,11 @@ caseTest("IT-M04-30-002", async ({ page, notes, step, expected }) => {
   const screen = new BarcodeReplacementListPage(page);
   await step(1, async () => { await screen.open(); });
   await step(2, async () => {
-    await screen.chooseStore("店舗A");
+    await screen.chooseStore("店舗A", notes.get("〔店舗ID-M0430-共有A〕"));
     note(`「店舗A」を選んだあとの選択: ${(await screen.selectedStores()).map((s) => s.表示).join("、") || "なし"}`);
   });
   await step(3, async () => {
-    await screen.chooseStore("店舗B");
+    await screen.chooseStore("店舗B", notes.get("〔店舗ID-M0430-共有B〕"));
   });
   await expected(async () => {
     const multiple = await screen.出力対象店舗.evaluate((n) => (n as HTMLSelectElement).multiple);

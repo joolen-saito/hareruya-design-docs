@@ -19,6 +19,12 @@ import { guardStoreCreate } from "./store_once";
 type Issue = (message: string) => void;
 const norm = (s: string | null | undefined) => (s ?? "").replace(/\s+/g, " ").trim();
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/**
+ * 同じ店名の店舗が複数ある環境（共有の開発環境の「店舗A」「店舗B」）で、シード S-M04-31-BASES が使うと決めた店舗の店舗ID（店名で引く）。
+ * 入っている店名は、店名の表示ではなく店舗ID（選択肢の値）で選ぶ（依頼者決定 2026-11-12 の M04-30 と同じ扱い。M04-22 の店舗を使う）。
+ */
+export const 店舗IDの指定 = new Map<string, string>();
+
 export const exactText = (s: string) => new RegExp(`^\\s*${escapeRe(s)}\\s*$`);
 
 /** 画面上部のメッセージ（成功・エラー）。開発用の設定の帯は除く */
@@ -68,9 +74,15 @@ export class InventoryPlanListPage {
   /** 店舗選択に店名の店舗（選択肢の表示名が一致するもの1つ）を選び、在庫区分のチェックを付けて「検索」を押す */
   async search(v: { 店舗: string; 在庫区分: string[] }): Promise<void> {
     const select = this.form.locator("#admin_stock_inventory_plan_list_base_info");
-    const hits = select.locator("option").filter({ hasText: exactText(v.店舗) });
-    await expect(hits, `店舗選択の選択肢「${v.店舗}」は1つ`).toHaveCount(1);
-    await chooseByLabel(select, v.店舗);
+    const id = 店舗IDの指定.get(v.店舗);
+    if (id) {
+      await expect(select.locator(`option[value="${id}"]`), `店舗選択の選択肢「${v.店舗}」（店舗ID ${id}）は1つ`).toHaveCount(1);
+      await select.selectOption(id);
+    } else {
+      const hits = select.locator("option").filter({ hasText: exactText(v.店舗) });
+      await expect(hits, `店舗選択の選択肢「${v.店舗}」は1つ`).toHaveCount(1);
+      await chooseByLabel(select, v.店舗);
+    }
     const boxes = this.form.locator('input[name="admin_stock_inventory_plan_list[stock_location_id][]"]');
     for (const zone of ["EC-CUBE", "スマレジ"]) {
       const box = boxes.and(this.page.getByLabel(zone, { exact: true }));
@@ -159,9 +171,15 @@ export class InventoryPlanNewPage {
   async fill(v: { 棚卸名?: string; 店舗?: string; 在庫区分?: string; 備考?: string }): Promise<void> {
     if (v.棚卸名 !== undefined) await this.name().fill(v.棚卸名);
     if (v.店舗 !== undefined) {
-      const hits = this.store().locator("option").filter({ hasText: exactText(v.店舗) });
-      await expect(hits, `店舗の選択肢「${v.店舗}」は1つ`).toHaveCount(1);
-      await chooseByLabel(this.store(), v.店舗);
+      const id = 店舗IDの指定.get(v.店舗);
+      if (id) {
+        await expect(this.store().locator(`option[value="${id}"]`), `店舗の選択肢「${v.店舗}」（店舗ID ${id}）は1つ`).toHaveCount(1);
+        await this.store().selectOption(id);
+      } else {
+        const hits = this.store().locator("option").filter({ hasText: exactText(v.店舗) });
+        await expect(hits, `店舗の選択肢「${v.店舗}」は1つ`).toHaveCount(1);
+        await chooseByLabel(this.store(), v.店舗);
+      }
     }
     if (v.在庫区分 !== undefined) {
       await expect(this.zone(v.在庫区分), `在庫区分「${v.在庫区分}」のラジオボタンは1つ`).toHaveCount(1);

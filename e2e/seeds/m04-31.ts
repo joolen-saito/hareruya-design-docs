@@ -29,7 +29,7 @@ import { expectNoProductCodes } from "../pages/admin/m04_17_seed_ops";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
 import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
 import {
-  ensureClosedStore, InventoryPlanEditPage, InventoryPlanListPage, InventoryPlanNewPage, pressDiffConfirm, topMessages,
+  ensureClosedStore, 店舗IDの指定, InventoryPlanEditPage, InventoryPlanListPage, InventoryPlanNewPage, pressDiffConfirm, topMessages,
 } from "../pages/admin/m04_31_inventory_plan";
 import { createGoodsProduct } from "../pages/admin/m04_31_seed_ops";
 import { defineRcOrg, rcOrg, RcOrg, RcStore, storeNameOf } from "./m04-02";
@@ -78,6 +78,8 @@ defineSeed("S-M04-31-BASES", async ({ browser, seed }) => {
     storeIds.set("店舗A", await ensureStore(page, STORE_A, issue));
     storeIds.set("店舗B", await ensureStore(page, STORE_B, issue));
     storeIds.set("店舗C", await ensureClosedStore(page, STORE_C, issue));
+    // 同じ店名の店舗が複数ある環境（共有の開発環境）では、使うと決めた店舗を店舗IDで選ぶ
+    for (const n of ["店舗A", "店舗B"]) 店舗IDの指定.set(n, storeIds.get(n) ?? "");
   });
   issue(`店舗A（店舗ID ${storeIds.get("店舗A")}）・店舗B（${storeIds.get("店舗B")}）は M04-22 のシードと同じ値の店舗を使った。店舗C（${storeIds.get("店舗C")}）は閉店で登録した`);
   const open = openStoreCount();
