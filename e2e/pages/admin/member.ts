@@ -74,11 +74,18 @@ export async function expectMember(page: Page, 管理者ID: string, v: MemberInp
   await page.goto(adminUrl(`/setting/system/member/${管理者ID}/edit`));
   const f = (name: string) => page.locator(`[name="admin_member[${name}]"]`);
   const sel = async (name: string) => (await page.locator(`[name="admin_member[${name}]"] option:checked`).allInnerTexts()).map((t) => t.trim()).sort().join("、");
-  const got: Record<string, string> = {
+  const read = async (): Promise<Record<string, string>> => ({
     名前: await f("name").inputValue(), ログインID: await f("login_id").inputValue(), 所属店舗: await sel("baseInfo"), 権限: await sel("Authority"),
     デフォルト検索表示店舗: await sel("defaultSearchBaseInfo"), 編集可能店舗: await sel("editableBaseInfos]["),
     稼働: (await page.getByLabel("稼働", { exact: true }).isChecked()) ? "稼働" : "非稼働",
-  };
+  });
+  // 編集可能店舗・デフォルト検索表示店舗の選択肢は画面の読み込み後に入る。共有の開発環境は遅く、読み込み前の空の状態を読むことがあるので、
+  // 求める内容になるまで最長20秒待って読み直す（20秒たっても違えば、そのまま違いとして落とす）
+  let got = await read();
+  for (let i = 0; i < 20 && (got.編集可能店舗 !== [...v.編集可能店舗].sort().join("、") || got.デフォルト検索表示店舗 !== v.デフォルト検索表示店舗); i++) {
+    await page.waitForTimeout(1000);
+    got = await read();
+  }
   const want: Record<string, string> = {
     名前: v.名前, ログインID: v.ログインID, 所属店舗: v.所属店舗, 権限: v.権限, デフォルト検索表示店舗: v.デフォルト検索表示店舗,
     編集可能店舗: [...v.編集可能店舗].sort().join("、"), 稼働: "稼働",
