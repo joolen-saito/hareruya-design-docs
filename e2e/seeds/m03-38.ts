@@ -160,7 +160,7 @@ async function buildProduct(browser: Parameters<typeof withAdminSession>[0], not
     };
     issue(`グッズ商品CSVの非公開を表す値は、雛形の項目説明から 商品公開ステータス=${hide["商品公開ステータス"]}・支店の商品公開ステータス=${hide["支店の商品公開ステータス"]} とした`);
     const categoryId = await supplyGoodsCategoryId(page);
-    await registerGoodsCsv(page, {
+    const reg = await registerGoodsCsv(page, {
       what: `${p.seedId} の1行グッズ商品CSV登録`, fileName: `${p.code}.csv`, categoryId,
       lines: [{ code: p.code, nameJp: p.name, nameEn: p.name }],
       // 地域別販売制限は正本に値が無い。空のまま取り込むと、商品登録編集画面の保存で必須の地域別販売制限が未選択になり保存できない
@@ -169,7 +169,7 @@ async function buildProduct(browser: Parameters<typeof withAdminSession>[0], not
       onWarning: issue,
     });
     issue("地域別販売制限は正本に値が無いので、同じ機能の S-M03-38-QB-PROD-041〜044 が書く値「0」（制限なし）を入れた（空では商品登録編集画面で保存できない）");
-    issue("グッズ商品CSV登録画面に確認モーダルは無く、確定の操作はせずに取込の結果（成功の表示）を確かめた");
+    issue(reg.confirmModal ? "グッズ商品CSV登録画面の確認モーダルで「確認」を押して確定し、取込の結果（成功の表示）を確かめた" : "グッズ商品CSV登録画面に確認モーダルは出ず、確定の操作はせずに取込の結果（成功の表示）を確かめた");
 
     // 2. 商品マスターで商品名を入れて検索し、商品IDを控える
     const id = await findProductIdByName(page, p.name, p.code);
