@@ -250,6 +250,8 @@ export async function openClassListByName(page: Page, 商品名: string): Promis
 /** 商品規格一覧の、商品コードの行の在庫数（見出し「在庫」の列） */
 export async function classStock(page: Page, 商品コード: string): Promise<number> {
   const table = page.locator("#ex-product_class").first();
+  // 画面の読み込みを待つ（遅い開発環境では、移動の直後は見出しがまだ無く、空の見出しを読んで「在庫の列が無い」と誤っていた）
+  await expect(table.locator("thead th").first(), "商品規格一覧の見出し").toBeVisible({ timeout: 60_000 });
   const heads = (await table.locator("thead th").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim());
   const col = heads.findIndex((h) => /^在庫(数)?$/.test(h));
   if (col < 0) throw new Error(`商品規格一覧の見出しに在庫の列が無い: ${heads.join("、")}`);
