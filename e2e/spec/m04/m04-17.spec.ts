@@ -14,7 +14,7 @@ import { readClassPrices } from "../../pages/admin/m04_17_seed_ops";
 import {
   firstDayOfThisMonth, HistoryRow, numberOf, StockHistoryPage, 在庫変動履歴CSVだけの見出し, 欠品履歴CSVだけの見出し,
 } from "../../pages/admin/m04_17_stock_history";
-import { M0417_ADMIN, MAIN_SHOP } from "../../seeds/m04-17";
+import { M0417_ADMIN, MAIN_SHOP, mk } from "../../seeds/m04-17";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -50,10 +50,10 @@ caseTest("IT-M04-17-012", async ({ page, step, expected }) => {
   await step(1, () => h.open());
   await step(2, () => h.clearConditions());
   await step(3, async () => {
-    await h.fillKeyword("RANGE-M0417-012");
+    await h.fillKeyword(mk("RANGE-M0417-012"));
     await h.fillSellPrice("500", "1000");
   });
-  await step(4, () => search(h, "RANGE-M0417-012"));
+  await step(4, () => search(h, mk("RANGE-M0417-012")));
   await expected(async () => {
     const rows = await h.rows();
     expect.soft(namesOf(rows), "表示されるのは RANGE-01-012・RANGE-02-012 の2件だけ").toEqual(["RANGE-01-012", "RANGE-02-012"]);
@@ -69,10 +69,10 @@ caseTest("IT-M04-17-016", async ({ page, step, expected }) => {
   await step(1, () => h.open());
   await step(2, () => h.clearConditions());
   await step(3, async () => {
-    await h.fillKeyword("RANGE-M0417-016");
+    await h.fillKeyword(mk("RANGE-M0417-016"));
     await h.fillReason("境界理由");
   });
-  await step(4, () => search(h, "RANGE-M0417-016"));
+  await step(4, () => search(h, mk("RANGE-M0417-016")));
   await expected(async () => {
     const rows = await h.rows();
     expect.soft(namesOf(rows), "表示されるのは RANGE-01-016・RANGE-02-016 の2件だけ").toEqual(["RANGE-01-016", "RANGE-02-016"]);
@@ -128,7 +128,7 @@ caseTest("IT-M04-17-020", async ({ page, step, expected }) => {
     await expect.soft(h.在庫変動理由欄, "欠品理由（在庫変動理由・欠品理由の欄）が非活性").toBeDisabled();
     const headers = await h.headers();
     expect.soft(headers.includes("変更前在庫") && !headers.includes("欠品点数"), `在庫履歴検索一覧（欠品履歴検索一覧ではない）が表示される（見出し: ${headers.join("・") || "一覧なし"}）`).toBe(true);
-    expect.soft(codesOf(await h.rows()), "在庫履歴検索一覧に STOCK-001-020 が表示される").toContain("STOCK-001-020");
+    expect.soft(codesOf(await h.rows()), "在庫履歴検索一覧に STOCK-001-020 が表示される").toContain(mk("STOCK-001-020"));
   });
 });
 
@@ -138,12 +138,12 @@ caseTest("IT-M04-17-023", async ({ page, step, expected }) => {
   await step(1, () => h.open());
   await step(2, () => h.clearConditions());
   await step(3, async () => {
-    await h.fillKeyword("BASE-001-023");
-    await search(h, "BASE-001-023");
+    await h.fillKeyword(mk("BASE-001-023"));
+    await search(h, mk("BASE-001-023"));
   });
   await expected(async () => {
     expect.soft(await h.resultCount(), "検索結果件数は1件").toBe(1);
-    expect.soft(codesOf(await h.rows()), "検索結果一覧は BASE-001-023 の1行").toEqual(["BASE-001-023"]);
+    expect.soft(codesOf(await h.rows()), "検索結果一覧は BASE-001-023 の1行").toEqual([mk("BASE-001-023")]);
   });
 });
 
@@ -156,15 +156,15 @@ caseTest("IT-M04-17-026", async ({ page, step, expected }) => {
   await step(1, () => h.open());
   await step(2, () => h.clearConditions());
   await step(3, async () => {
-    await h.fillKeyword("BASE-001-026");
-    await search(h, "BASE-001-026");
+    await h.fillKeyword(mk("BASE-001-026"));
+    await search(h, mk("BASE-001-026"));
   });
   await expected(async () => {
-    const rows = (await h.rows()).filter((r) => r["商品コード"] === "BASE-001-026");
+    const rows = (await h.rows()).filter((r) => r["商品コード"] === mk("BASE-001-026"));
     expect.soft(rows.length, "BASE-001-026 の履歴は1行").toBe(1);
     expect.soft(rows.map((r) => numberOf(r["変更時販売価格"])), "変更時販売価格は履歴作成時の1000（現在の1200ではない）").toEqual([1000]);
     // 一覧を読み終えてから、商品規格の編集画面へ移って現在の販売価格を読む
-    const current = await readClassPrices(page, "BASE-001-026", "BASE-001-026");
+    const current = await readClassPrices(page, mk("BASE-001-026"), mk("BASE-001-026"));
     note(`BASE-001-026 の商品規格の編集画面: 基準価格「${current.基準価格}」・販売価格「${current.販売価格}」`);
     expect.soft(numberOf(current.販売価格), "BASE-001-026 の現在の販売価格（商品規格の編集画面）は1200").toBe(1200);
   });
@@ -176,11 +176,11 @@ caseTest("IT-M04-17-031", async ({ page, step, expected }) => {
   await step(1, () => h.open());
   await step(2, () => h.clearConditions());
   await step(3, async () => {
-    await h.fillKeyword("PENDING-M0417-031");
-    await search(h, "PENDING-M0417-031");
+    await h.fillKeyword(mk("PENDING-M0417-031"));
+    await search(h, mk("PENDING-M0417-031"));
   });
   await expected(async () => {
-    expect.soft(codesOf(await h.rows()).filter((c) => c === "PENDING-M0417-031"), "入庫承認待ちの PENDING-M0417-031 は表示されない").toEqual([]);
+    expect.soft(codesOf(await h.rows()).filter((c) => c === mk("PENDING-M0417-031")), "入庫承認待ちの PENDING-M0417-031 は表示されない").toEqual([]);
   });
 });
 
@@ -220,8 +220,8 @@ caseTest("IT-M04-17-037", async ({ page, step, expected }) => {
   await step(1, () => h.open());
   await step(2, () => h.clearConditions());
   await step(3, async () => {
-    await h.fillKeyword("BASE-001-037");
-    await search(h, "BASE-001-037");
+    await h.fillKeyword(mk("BASE-001-037"));
+    await search(h, mk("BASE-001-037"));
   });
   await step(4, async () => {
     const download = await h.downloadCsv();
@@ -245,7 +245,7 @@ caseTest("IT-M04-17-037", async ({ page, step, expected }) => {
       expect.soft(headers, `在庫変動履歴CSV: 見出しに欠品履歴CSVにだけある「${列}」が無い（欠品履歴CSVではない）`).not.toContain(列);
     }
     const records = csvRecords(text);
-    expect.soft(records.map((r) => r["商品コード"]), "在庫変動履歴CSVの明細は、検索結果の BASE-001-037 の履歴1行").toEqual(["BASE-001-037"]);
+    expect.soft(records.map((r) => r["商品コード"]), "在庫変動履歴CSVの明細は、検索結果の BASE-001-037 の履歴1行").toEqual([mk("BASE-001-037")]);
   });
 });
 
@@ -255,13 +255,13 @@ caseTest("IT-M04-17-055", async ({ page, step, expected }) => {
   await step(1, () => h.open());
   await step(2, () => h.clearConditions());
   await step(3, async () => {
-    await h.fillKeyword("MIX-M0417-055");
-    await search(h, "MIX-M0417-055");
+    await h.fillKeyword(mk("MIX-M0417-055"));
+    await search(h, mk("MIX-M0417-055"));
   });
   await expected(async () => {
     const codes = codesOf(await h.rows());
     expect.soft(await h.resultCount(), "検索結果件数は1件").toBe(1);
-    expect.soft(codes, "一覧は MIX-M0417-055-N だけ").toEqual(["MIX-M0417-055-N"]);
-    expect.soft(codes, "入庫承認待ちの MIX-M0417-055-P は表示されない").not.toContain("MIX-M0417-055-P");
+    expect.soft(codes, "一覧は MIX-M0417-055-N だけ").toEqual([mk("MIX-M0417-055", "-N")]);
+    expect.soft(codes, "入庫承認待ちの MIX-M0417-055-P は表示されない").not.toContain(mk("MIX-M0417-055", "-P"));
   });
 });

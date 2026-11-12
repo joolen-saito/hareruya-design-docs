@@ -14,6 +14,7 @@
  */
 import { Browser, expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
+import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { ensureMember, MemberInput } from "../pages/admin/member";
@@ -64,6 +65,13 @@ async function ensureApprover(browser: Browser): Promise<void> {
 }
 
 /** 在庫編集の1件。承認する が false の行は承認・却下をしない（入庫承認待ちのまま） */
+/**
+ * 商品コードに付ける実行ごとの印（案A。2026-10-28 依頼者決定）。固定の商品コードで作ると、前の実行の商品が残って「前の実行から残っている」で止まる
+ * （共有の開発環境では、残った商品を消せない）。検索語（キーワード）の前方一致が前の実行の商品に当たらないよう「検索語＋印＋枝番」の形にする。
+ * ケースは商品コードの書式・文字数・重複を確かめない。商品名は変えない（変えるのはコードが商品名を兼ねるものだけ）。
+ */
+export const mk = (検索語: string, 枝番 = ""): string => `${rc(検索語)}${枝番}`;
+
 type StockIn = { 商品コード: string; 在庫変動理由?: string; 在庫増減数?: string; 承認する: boolean };
 
 const goods = (商品コード: string, 商品名: string, 価格 = "100", 買取価格 = "10"): GoodsLine =>
@@ -128,39 +136,39 @@ function expectOneNewRow(fresh: PendingRow[], what: string, quantity: string): P
 
 // ---- 1商品の形 ----
 
-defineHistorySeed("S-M04-17-MODE-020", [goods("STOCK-001-020", "STOCK-001-020")], [approved("STOCK-001-020")]);
-defineHistorySeed("S-M04-17-BASE-023", [goods("BASE-001-023", "BASE-001-023")], [approved("BASE-001-023")]);
-defineHistorySeed("S-M04-17-PENDING-031", [goods("PENDING-M0417-031", "PENDING-M0417-031")], [pending("PENDING-M0417-031")]);
-defineHistorySeed("S-M04-17-BASE-037", [goods("BASE-001-037", "BASE-001-037")], [approved("BASE-001-037")]);
+defineHistorySeed("S-M04-17-MODE-020", [goods(mk("STOCK-001-020"), mk("STOCK-001-020"))], [approved(mk("STOCK-001-020"))]);
+defineHistorySeed("S-M04-17-BASE-023", [goods(mk("BASE-001-023"), mk("BASE-001-023"))], [approved(mk("BASE-001-023"))]);
+defineHistorySeed("S-M04-17-PENDING-031", [goods(mk("PENDING-M0417-031"), mk("PENDING-M0417-031"))], [pending(mk("PENDING-M0417-031"))]);
+defineHistorySeed("S-M04-17-BASE-037", [goods(mk("BASE-001-037"), mk("BASE-001-037"))], [approved(mk("BASE-001-037"))]);
 
 // 承認のあと、商品規格登録編集画面で基準価格と販売価格を1200に変える（履歴作成時の販売価格は1000のまま残る）
-defineHistorySeed("S-M04-17-BASE-026", [goods("BASE-001-026", "BASE-001-026", "1000")], [approved("BASE-001-026")],
-  (adm, issue) => changeClassPrices(adm, { 商品コード: "BASE-001-026", 商品名: "BASE-001-026", 価格: "1200", onIssue: issue }));
+defineHistorySeed("S-M04-17-BASE-026", [goods(mk("BASE-001-026"), mk("BASE-001-026"), "1000")], [approved(mk("BASE-001-026"))],
+  (adm, issue) => changeClassPrices(adm, { 商品コード: mk("BASE-001-026"), 商品名: mk("BASE-001-026"), 価格: "1200", onIssue: issue }));
 
 // ---- 複数の商品の形 ----
 
 // 承認済み（N）と入庫承認待ち（P）。N だけを承認する
 defineHistorySeed("S-M04-17-MIX-055",
-  [goods("MIX-M0417-055-N", "MIX-M0417-055-N"), goods("MIX-M0417-055-P", "MIX-M0417-055-P")],
-  [approved("MIX-M0417-055-N"), pending("MIX-M0417-055-P")]);
+  [goods(mk("MIX-M0417-055", "-N"), mk("MIX-M0417-055", "-N")), goods(mk("MIX-M0417-055", "-P"), mk("MIX-M0417-055", "-P"))],
+  [approved(mk("MIX-M0417-055", "-N")), pending(mk("MIX-M0417-055", "-P"))]);
 
 // 変更時販売価格 500・1000・2000・0（0 の商品は基準価格・販売価格・買取価格とも0）
 defineHistorySeed("S-M04-17-RANGE-012", [
-  goods("RANGE-M0417-012-01", "RANGE-01-012", "500"),
-  goods("RANGE-M0417-012-02", "RANGE-02-012", "1000"),
-  goods("RANGE-M0417-012-03", "RANGE-03-012", "2000"),
-  goods("RANGE-M0417-012-NULL", "RANGE-NULL-012", "0", "0"),
-], ["RANGE-M0417-012-01", "RANGE-M0417-012-02", "RANGE-M0417-012-03", "RANGE-M0417-012-NULL"].map((c) => approved(c)));
+  goods(mk("RANGE-M0417-012", "-01"), "RANGE-01-012", "500"),
+  goods(mk("RANGE-M0417-012", "-02"), "RANGE-02-012", "1000"),
+  goods(mk("RANGE-M0417-012", "-03"), "RANGE-03-012", "2000"),
+  goods(mk("RANGE-M0417-012", "-NULL"), "RANGE-NULL-012", "0", "0"),
+], [mk("RANGE-M0417-012", "-01"), mk("RANGE-M0417-012", "-02"), mk("RANGE-M0417-012", "-03"), mk("RANGE-M0417-012", "-NULL")].map((c) => approved(c)));
 
 // 在庫変動理由に「境界理由」を含むのは 01・02 だけ
 defineHistorySeed("S-M04-17-RANGE-016", [
-  goods("RANGE-M0417-016-01", "RANGE-01-016"),
-  goods("RANGE-M0417-016-02", "RANGE-02-016"),
-  goods("RANGE-M0417-016-03", "RANGE-03-016"),
-  goods("RANGE-M0417-016-NULL", "RANGE-NULL-016"),
+  goods(mk("RANGE-M0417-016", "-01"), "RANGE-01-016"),
+  goods(mk("RANGE-M0417-016", "-02"), "RANGE-02-016"),
+  goods(mk("RANGE-M0417-016", "-03"), "RANGE-03-016"),
+  goods(mk("RANGE-M0417-016", "-NULL"), "RANGE-NULL-016"),
 ], [
-  approved("RANGE-M0417-016-01", "境界理由 01"),
-  approved("RANGE-M0417-016-02", "02 境界理由"),
-  approved("RANGE-M0417-016-03"),
-  approved("RANGE-M0417-016-NULL"),
+  approved(mk("RANGE-M0417-016", "-01"), "境界理由 01"),
+  approved(mk("RANGE-M0417-016", "-02"), "02 境界理由"),
+  approved(mk("RANGE-M0417-016", "-03")),
+  approved(mk("RANGE-M0417-016", "-NULL")),
 ]);
