@@ -15,7 +15,7 @@ import {
   checkedCodes, checkRowsOfCode, csvButtonGroup, downloadRecommendCsv, listedCodes, openStockList, readCsvRows, recommendButton,
   resultCount, searchByCode, selectedShops,
 } from "../../pages/admin/m04_16_recommend_csv";
-import { M0416_ADMIN } from "../../seeds/m04-16";
+import { M0416_ADMIN, mk } from "../../seeds/m04-16";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -37,7 +37,7 @@ caseTest("IT-M04-16-001", async ({ page, step, expected }) => {
   await loginAdmin(page, M0416_ADMIN);
   await step(1, async () => { await openStockList(page); });
   await step(2, async () => {
-    await searchByCode(page, "REC-M04-16-A-001");
+    await searchByCode(page, mk("REC-M04-16-A-001"));
     await noteSearch(page);
   });
   let buttons: string[] = [];
@@ -46,7 +46,7 @@ caseTest("IT-M04-16-001", async ({ page, step, expected }) => {
     note(`検索結果のボタン表示グループ: ${JSON.stringify(buttons)}`);
   });
   await expected(async () => {
-    expect.soft(await listedCodes(page), "検索結果に REC-M04-16-A-001 が出ている（検索結果がある）").toEqual(["REC-M04-16-A-001"]);
+    expect.soft(await listedCodes(page), "検索結果に REC-M04-16-A-001 が出ている（検索結果がある）").toEqual([mk("REC-M04-16-A-001")]);
     await expect(recommendButton(page), "検索結果に在庫リコメンドCSV出力ボタンが表示される").toBeVisible();
   });
 });
@@ -58,20 +58,20 @@ caseTest("IT-M04-16-002", async ({ page, step, expected }) => {
   await loginAdmin(page, M0416_ADMIN);
   await step(1, async () => { await openStockList(page); });
   await step(2, async () => {
-    await searchByCode(page, "REC-M04-16-A-002");
+    await searchByCode(page, mk("REC-M04-16-A-002"));
     await noteSearch(page);
   });
   await step(3, async () => {
-    const n = await checkRowsOfCode(page, "REC-M04-16-A-002-1");
+    const n = await checkRowsOfCode(page, mk("REC-M04-16-A-002", "-1"));
     note(`REC-M04-16-A-002-1 の行（${n}行。店舗・在庫区分ごと）にだけチェックを付けた`);
-    expect([...new Set(await checkedCodes(page))], "チェックが付いているのは REC-M04-16-A-002-1 の行だけ").toEqual(["REC-M04-16-A-002-1"]);
+    expect([...new Set(await checkedCodes(page))], "チェックが付いているのは REC-M04-16-A-002-1 の行だけ").toEqual([mk("REC-M04-16-A-002", "-1")]);
   });
   await step(4, async () => { rows = await readCsvRows(await downloadRecommendCsv(page)); });
   await step(5, async () => { note(`CSVの行: ${JSON.stringify(rows)}`); });
   await expected(async () => {
     const codes = codesOf(rows);
-    expect.soft([...codes].sort(), "データ行は検索条件に一致する REC-M04-16-A-002-1 と REC-M04-16-A-002-2 の2件").toEqual(["REC-M04-16-A-002-1", "REC-M04-16-A-002-2"]);
-    expect.soft(codes, "REC-M04-16-B-002-1 は含まれない").not.toContain("REC-M04-16-B-002-1");
+    expect.soft([...codes].sort(), "データ行は検索条件に一致する REC-M04-16-A-002-1 と REC-M04-16-A-002-2 の2件").toEqual([mk("REC-M04-16-A-002", "-1"), mk("REC-M04-16-A-002", "-2")]);
+    expect.soft(codes, "REC-M04-16-B-002-1 は含まれない").not.toContain(mk("REC-M04-16-B-002", "-1"));
   });
 });
 
@@ -82,7 +82,7 @@ caseTest("IT-M04-16-007", async ({ page, step, expected }) => {
   await loginAdmin(page, M0416_ADMIN);
   await step(1, async () => { await openStockList(page); });
   await step(2, async () => {
-    await searchByCode(page, "REC-M04-16-LANG-007");
+    await searchByCode(page, mk("REC-M04-16-LANG-007"));
     await noteSearch(page);
   });
   await step(3, async () => { rows = await readCsvRows(await downloadRecommendCsv(page)); });
@@ -93,8 +93,8 @@ caseTest("IT-M04-16-007", async ({ page, step, expected }) => {
     const lang = head.indexOf("言語ID");
     expect(lang, "CSVの見出しに「言語ID」がある").toBeGreaterThanOrEqual(0);
     const langOf = (c: string) => rows.slice(1).filter((r) => r[code] === c).map((r) => r[lang]);
-    expect.soft(langOf("REC-M04-16-LANG-007-JP"), "日本語商品（REC-M04-16-LANG-007-JP）の言語IDは1").toEqual(["1"]);
-    expect.soft(langOf("REC-M04-16-LANG-007-EN"), "英語商品（REC-M04-16-LANG-007-EN）の言語IDは2").toEqual(["2"]);
+    expect.soft(langOf(mk("REC-M04-16-LANG-007", "-JP")), "日本語商品（REC-M04-16-LANG-007-JP）の言語IDは1").toEqual(["1"]);
+    expect.soft(langOf(mk("REC-M04-16-LANG-007", "-EN")), "英語商品（REC-M04-16-LANG-007-EN）の言語IDは2").toEqual(["2"]);
   });
 });
 
@@ -109,7 +109,7 @@ caseTest("IT-M04-16-010", async ({ page, step, expected }) => {
   await loginAdmin(page, M0416_ADMIN);
   await step(1, async () => { await openStockList(page); });
   await step(2, async () => {
-    await searchByCode(page, "REC-M04-16-A-010");
+    await searchByCode(page, mk("REC-M04-16-A-010"));
     await noteSearch(page);
   });
   await step(3, async () => { rows = await readCsvRows(await downloadRecommendCsv(page)); });
@@ -118,7 +118,7 @@ caseTest("IT-M04-16-010", async ({ page, step, expected }) => {
     expect.soft(rows[0], "先頭はヘッダ行（設計書のCSV出力項目の名前の行）").toEqual(DESIGN_HEADER);
     const codes = codesOf(rows);
     expect.soft(codes, "ヘッダ行のあとは REC-M04-16-A-010-1 と REC-M04-16-A-010-2 の2行だけ").toHaveLength(2);
-    expect.soft(codes.filter((c) => c === "REC-M04-16-A-010-1"), "REC-M04-16-A-010-1 は1件1行").toHaveLength(1);
-    expect.soft(codes.filter((c) => c === "REC-M04-16-A-010-2"), "REC-M04-16-A-010-2 は1件1行").toHaveLength(1);
+    expect.soft(codes.filter((c) => c === mk("REC-M04-16-A-010", "-1")), "REC-M04-16-A-010-1 は1件1行").toHaveLength(1);
+    expect.soft(codes.filter((c) => c === mk("REC-M04-16-A-010", "-2")), "REC-M04-16-A-010-2 は1件1行").toHaveLength(1);
   });
 });
