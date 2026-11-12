@@ -63,17 +63,26 @@ function 先頭に印(先頭: string, 全体: string): string {
 const PASS = "Passw0rd!M0401X";
 export const M0401_LIMIT: Account = { loginId: rcFixed("m0401_limit").toLowerCase(), password: "Passw0rd!M0401L" };
 const LIMIT_NAME = rcFixed("M04-01東京本店だけの試験管理者");
-const 承認者: { 名前: string; account: Account } = { 名前: rcFixed("M04-01承認試験管理者"), account: { loginId: rcFixed("m0401_apr").toLowerCase(), password: PASS } };
+// 在庫の承認通知先の部署の選択肢は「その店舗に所属するメンバーの部署」だけ（新アプリの StockApprovalType）なので、
+// 承認者は在庫を入れる店舗ごとに、その店舗の所属で作る（2026-11-12、東京本店所属の承認者では大阪支店の入庫で「いる部署が無い」）
+type 承認する店 = "東京本店" | "大阪支店";
+const 承認者: Record<承認する店, { 名前: string; account: Account }> = {
+  東京本店: { 名前: rcFixed("M04-01承認試験管理者"), account: { loginId: rcFixed("m0401_apr").toLowerCase(), password: PASS } },
+  大阪支店: { 名前: rcFixed("M04-01大阪支店承認試験管理者"), account: { loginId: rcFixed("m0401_apr_osk").toLowerCase(), password: PASS } },
+};
 
 let 承認者あり = false;
 async function 承認者を用意する(browser: Browser): Promise<void> {
   if (承認者あり) return;
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    await ensureMemberByStoreIds(page, {
-      名前: 承認者.名前, ログインID: 承認者.account.loginId, メールアドレス: `${承認者.account.loginId}@example.test`, パスワード: 承認者.account.password,
-      権限: "システム管理者", 所属店舗ID: 店舗ID.東京本店, デフォルト検索表示店舗ID: 店舗ID.東京本店, 編集可能店舗ID: [店舗ID.東京本店, 店舗ID.大阪支店],
-    });
+    for (const 店 of ["東京本店", "大阪支店"] as 承認する店[]) {
+      const a = 承認者[店];
+      await ensureMemberByStoreIds(page, {
+        名前: a.名前, ログインID: a.account.loginId, メールアドレス: `${a.account.loginId}@example.test`, パスワード: a.account.password,
+        権限: "システム管理者", 所属店舗ID: 店舗ID[店], デフォルト検索表示店舗ID: 店舗ID[店], 編集可能店舗ID: [店舗ID.東京本店, 店舗ID.大阪支店],
+      });
+    }
   });
   承認者あり = true;
 }
@@ -222,20 +231,20 @@ async function 商品を作る(browser: Browser, seedId: string, d: シードの
     for (const z of 入庫) {
       const stock = await searchStockByCode(page, { 商品コード: z.code, 店舗: z.店舗, 在庫区分: "EC-CUBE" });
       await stock.openEdit(stock.row(z.code, z.店舗, "EC-CUBE"));
-      await registerStockEdit(page, { changeType: "入庫/その他", reason: "試験データ登録", quantity: String(z.数), purchasePrice: "0", approverName: 承認者.名前 }, `${seedId}: ${z.code} の在庫編集（${z.店舗}）`, issue);
+      await registerStockEdit(page, { changeType: "入庫/その他", reason: "試験データ登録", quantity: String(z.数), purchasePrice: "0", approverName: 承認者[z.店舗 as 承認する店].名前 }, `${seedId}: ${z.code} の在庫編集（${z.店舗}）`, issue);
     }
     if (入庫.length) {
-      await withAdminSession(browser, 承認者.account, async (ap) => {
-        ap.setDefaultTimeout(60_000);
-        for (const 店舗 of [...new Set(入庫.map((z) => z.店舗))]) {
+      for (const 店舗 of [...new Set(入庫.map((z) => z.店舗))]) {
+        await withAdminSession(browser, 承認者[店舗 as 承認する店].account, async (ap) => {
+          ap.setDefaultTimeout(60_000);
           const list = new StockApprovalListPage(ap);
           await list.open(店舗);
           const want = 入庫.filter((z) => z.店舗 === 店舗).length;
           const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === ALL_NAME && Number(r.id) > baseline);
           if (rows.length < want) throw new Error(`${seedId}: 在庫編集承認一覧（${店舗}）に未承認の行が ${rows.length} 件（${want} 件のはず）`);
           await list.approve(rows.slice(0, want).map((r) => r.id), `${seedId} の在庫編集の承認（${店舗}）`, issue);
-        }
-      });
+        });
+      }
     }
   });
   // 対象以外の店舗別在庫（自動で作られた在庫0の行）を消す（シード表のとおり。E2E の商品の行だけ）
