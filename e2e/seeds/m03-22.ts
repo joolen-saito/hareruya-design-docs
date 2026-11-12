@@ -21,12 +21,18 @@ import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { readGoodsProductId, readGoodsProductIdByName } from "../pages/admin/m03_01_goods_list_seed";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { productIdsByCode } from "../pages/admin/m03_17_product";
+import { rcFixed } from "../lib/run_marker";
 import { ensureMember } from "../pages/admin/member";
 import { openProductEdit } from "../pages/admin/product_edit";
 import { goodsCsvCategoryId, saveFromSearchResult, selectedPurchaseGroup } from "../pages/admin/m03_22_product";
 import { PurchaseGroupInput, PurchaseGroupPage } from "../pages/admin/m03_22_purchase_group";
 
-export const M0322_ADMIN: Account = { loginId: "m0322_admin", password: "Passw0rd!M0322" };
+/**
+ * シード表のログインIDは m0322_admin。開発環境には同じログインIDのメンバー（メールアドレスが @joolen.com。2026-10-28 に手動テスト用に作られたもの。
+ * デフォルト検索表示店舗・編集可能店舗が空）が既にあり、同じ値では登録できず、ほかの方のメンバーは使えない。決め打ちの識別の値として
+ * 実行をまたいで使い回す決まった印（lib/run_marker.ts の rcFixed。依頼者決定 2026-11-11）を付けたログインID・名前で作る。ケースはこれらの値そのものを確かめない。
+ */
+export const M0322_ADMIN: Account = { loginId: rcFixed("m0322_admin").toLowerCase(), password: "Passw0rd!M0322" };
 export const M0322L_ADMIN: Account = { loginId: "m0322l-admin", password: "Passw0rd!M0322L" };
 
 /** 正本は所属店舗を指定しない。管理画面で利用可能な店舗を1つ選び、商品管理を操作できるシステム管理者の権限を付ける（M03-14 と同じ作り方） */
@@ -53,8 +59,8 @@ async function expectCanOpen(page: Page, who: string): Promise<void> {
 }
 
 defineSeed("S-M03-22-ADM", async ({ browser }) => {
-  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, "M03-22試験管理者", M0322_ADMIN, "m0322_admin@example.test"));
-  await withAdminSession(browser, M0322_ADMIN, (page) => expectCanOpen(page, "M03-22試験管理者"));
+  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, rcFixed("M03-22試験管理者"), M0322_ADMIN, `${M0322_ADMIN.loginId}@example.test`));
+  await withAdminSession(browser, M0322_ADMIN, (page) => expectCanOpen(page, rcFixed("M03-22試験管理者")));
 });
 
 defineSeed("S-M03-22-L-ADM", async ({ browser }) => {
