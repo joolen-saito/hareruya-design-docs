@@ -155,6 +155,7 @@ caseTest("IT-M03-28-009", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔商品ID-M0328-009〕");
   let r!: SubmitResult;
   let got: ReturnType<typeof 商品の商品タグ> = [];
+  const before009 = 取込前の履歴ID("clear-009.csv");
   await step(1, async () => { await up.open(); });
   await step(2, async () => { r = await upload(page, up, "clear-009.csv"); });
   await step(3, async () => { got = readTags(id, "取込のあと"); });
@@ -164,7 +165,7 @@ caseTest("IT-M03-28-009", async ({ page, notes, step, expected }) => {
     const m = await topMessages(page);
     expect.soft(m.エラー, "画面上部のエラー").toEqual([]);
     expect.soft(m.成功, "画面上部の完了の表示").toContain("登録が完了しました。");
-    expect.soft(ファイル名の取込履歴("clear-009.csv").length, "clear-009.csv の取込履歴").toBe(1);
+    expect.soft(増えた履歴("clear-009.csv", before009).length, "clear-009.csv の取込履歴（今回の取込で増えた分）").toBe(1);
     expect.soft(got.map((t) => t.タグID), `商品ID ${id} の商品タグ（0件）`).toEqual([]);
   });
 });
@@ -197,6 +198,13 @@ caseTest("IT-M03-28-047", async ({ page, notes, step, expected }) => {
   });
 });
 
+/**
+ * 同じファイル名の取込履歴は、実行をまたいで（ほかの方の取込も含め）共有の開発環境に残る。取込の前の履歴IDを控え、取込のあとに増えた分だけを
+ * 「このファイルの取込履歴」として数える（正本の「履歴は1件」を、今回の取込が作った履歴で確かめる。既存の履歴は消さない）。
+ */
+const 取込前の履歴ID = (file: string): Set<string> => new Set(ファイル名の取込履歴(file).map((h) => h.履歴ID));
+const 増えた履歴 = (file: string, before: Set<string>) => ファイル名の取込履歴(file).filter((h) => !before.has(h.履歴ID));
+
 /** 048・049: ファイルを選び、「CSVファイルをアップロード」を押して確認モーダルを確定し、DBで商品タグと取込履歴を確かめる */
 function callbackCase(file: string, label: string, tags: string[]) {
   return async ({ page, notes, step, expected }: CaseCtx) => {
@@ -205,6 +213,7 @@ function callbackCase(file: string, label: string, tags: string[]) {
     let r!: SubmitResult;
     let got: ReturnType<typeof 商品の商品タグ> = [];
     let histories: ReturnType<typeof ファイル名の取込履歴> = [];
+    const before = 取込前の履歴ID(file);
     await step(1, async () => { await up.open(); });
     await step(2, async () => {
       await up.choose(m0328CsvPath(file));
@@ -218,8 +227,8 @@ function callbackCase(file: string, label: string, tags: string[]) {
     });
     await step(4, async () => {
       got = readTags(id, "取込のあと");
-      histories = ファイル名の取込履歴(file);
-      note(`${file} の商品タグ更新の取込履歴: ${histories.map((h) => `履歴ID ${h.履歴ID}（利用者ID ${h.利用者ID}）`).join("、") || "なし"}`);
+      histories = 増えた履歴(file, before);
+      note(`${file} の商品タグ更新の取込履歴（取込の前にあった ${before.size} 件のほかに、今回の取込で増えた分）: ${histories.map((h) => `履歴ID ${h.履歴ID}（利用者ID ${h.利用者ID}）`).join("、") || "なし"}`);
     });
     await expected(async () => {
       expect.soft(r.sent, `${file} の取込の要求が送られた`).toBe(true);

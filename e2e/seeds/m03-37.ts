@@ -35,6 +35,7 @@ import { CSV入出力設定, 設定値を読めない環境, 読み替え文 } f
 import { getSeed } from "../lib/catalog";
 import { available as dbAvailable } from "../lib/db";
 import { Notes } from "../lib/notes";
+import { rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { readGoodsProductId } from "../pages/admin/m03_01_goods_list_seed";
@@ -46,8 +47,13 @@ import { 取込ファイル } from "../pages/admin/m03_37_short_tag_update_csv";
 import { ensureMember } from "../pages/admin/member";
 import { ShortTagInput, ShortTagPage } from "../pages/admin/short_tag";
 
-export const M0337_ADMIN: Account = { loginId: "m0337_admin", password: "Passw0rd!M0337" };
-export const M0337L_ADMIN: Account = { loginId: "m0337l_admin", password: "Passw0rd!M0337L" };
+/**
+ * シード表のログインID・名前は、開発環境にほかの方が手動テストの準備で登録した同じ値のメンバーがあり得る（同名・同じログインIDは登録できず、
+ * ほかの方のメンバーは使えない）。決め打ちの識別の値として実行をまたいで使い回す決まった印（lib/run_marker.ts の rcFixed。依頼者決定 2026-11-11）を
+ * 付けたログインID・名前・メールアドレスで作る。ケースはこれらの値そのものを確かめない。
+ */
+export const M0337_ADMIN: Account = { loginId: rcFixed("m0337_admin").toLowerCase(), password: "Passw0rd!M0337" };
+export const M0337L_ADMIN: Account = { loginId: rcFixed("m0337l_admin").toLowerCase(), password: "Passw0rd!M0337L" };
 
 // ---- 管理者・設定 ----
 
@@ -74,13 +80,13 @@ async function expectCanOpen(page: Page, who: string): Promise<void> {
 }
 
 defineSeed("S-M03-37-ADM", async ({ browser }) => {
-  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, "M03-37試験管理者", M0337_ADMIN, "m0337_admin@example.test"));
-  await withAdminSession(browser, M0337_ADMIN, (page) => expectCanOpen(page, "M03-37試験管理者"));
+  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, rcFixed("M03-37試験管理者"), M0337_ADMIN, `${M0337_ADMIN.loginId}@example.test`));
+  await withAdminSession(browser, M0337_ADMIN, (page) => expectCanOpen(page, rcFixed("M03-37試験管理者")));
 });
 
 defineSeed("S-M03-37-L-ADM", async ({ browser }) => {
-  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, "M03-37連携試験管理者", M0337L_ADMIN, "m0337l_admin@example.test"));
-  await withAdminSession(browser, M0337L_ADMIN, (page) => expectCanOpen(page, "M03-37連携試験管理者"));
+  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, rcFixed("M03-37連携試験管理者"), M0337L_ADMIN, `${M0337L_ADMIN.loginId}@example.test`));
+  await withAdminSession(browser, M0337L_ADMIN, (page) => expectCanOpen(page, rcFixed("M03-37連携試験管理者")));
 });
 
 function expectCsvConfig(seedId: string): void {

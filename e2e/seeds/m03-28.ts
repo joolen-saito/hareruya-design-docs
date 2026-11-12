@@ -31,6 +31,7 @@ import { REPO_ROOT, SETUP_ADMIN, STATE_DIR } from "../config/env";
 import { getSeed } from "../lib/catalog";
 import { csvLine, decodeCsvBytes, parseCsv } from "../lib/csv";
 import { Notes } from "../lib/notes";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { downloadGoodsCsvTemplate } from "../pages/admin/m03_01_goods_csv";
@@ -40,12 +41,18 @@ import { TagPage } from "../pages/admin/m03_13_tag";
 import { downloadedBytes } from "../pages/admin/m03_21_shelf_number";
 import { goodsCsvCategoryId } from "../pages/admin/m03_22_product";
 import { productIdsByCode } from "../pages/admin/m03_23_seed_products";
+import { ファイル名の取込履歴, 試験管理者の取込履歴を消す } from "../db/m03_28_product_tag";
 import { ProductTagCsvUploadPage } from "../pages/admin/m03_28_product_tag_csv_upload";
 import { allTagRows, expectNoProductWithId, unusedSortNo } from "../pages/admin/m03_28_seed_ops";
 import { ensureMember } from "../pages/admin/member";
 import { openProductEdit } from "../pages/admin/product_edit";
 
-export const M0328_ADMIN: Account = { loginId: "m0328_admin", password: "Passw0rd!M0328" };
+/**
+ * シード表のログインID・名前は、開発環境にほかの方が手動テストの準備で登録した同じ値のメンバーがあり得る（同名・同じログインIDは登録できず、
+ * ほかの方のメンバーは使えない）。決め打ちの識別の値として実行をまたいで使い回す決まった印（lib/run_marker.ts の rcFixed。依頼者決定 2026-11-11）を
+ * 付けたログインID・名前・メールアドレスで作る。ケースはこれらの値そのものを確かめない。
+ */
+export const M0328_ADMIN: Account = { loginId: rcFixed("m0328_admin").toLowerCase(), password: "Passw0rd!M0328" };
 
 // ---- 管理者 ----
 
@@ -60,7 +67,7 @@ async function createAdmin(page: Page): Promise<string> {
   if (stores.length === 0) throw new Error("S-M03-28-ADM: メンバーに割り当てられる店舗が画面に無い");
   const store = stores[0];
   return ensureMember(page, {
-    名前: "M03-28試験管理者", 所属店舗: store, ログインID: M0328_ADMIN.loginId, メールアドレス: "m0328_admin@example.test",
+    名前: rcFixed("M03-28試験管理者"), 所属店舗: store, ログインID: M0328_ADMIN.loginId, メールアドレス: `${M0328_ADMIN.loginId}@example.test`,
     パスワード: M0328_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: store, 編集可能店舗: [store],
   });
 }
@@ -148,13 +155,25 @@ function expectFileNamed(seedId: string, file: string): void {
   if (!getSeed(seedId)["状態・属性"].includes(file)) throw new Error(`${seedId}: シード表の状態・属性にファイル名 ${file} が無い`);
 }
 
-/** 商品タグ更新CSVアップロード画面の取込履歴（全件）に、そのファイル名の行が無いことを確かめる。あれば止める */
-async function expectNoHistoryNamed(page: Page, seedId: string, file: string): Promise<void> {
+/**
+ * 商品タグ更新CSVアップロード画面の取込履歴（全件）に、そのファイル名の行が無いことを確かめる。
+ * あるとき、すべてが試験管理者の取込で作られた履歴（前の実行の残り）なら、DBで消す（シード表の作り方どおり。依頼者決定 2026-11-10）。
+ * ほかの方が作った履歴が混じるときは、DBを書き換えず止める。
+ */
+async function expectNoHistoryNamed(page: Page, seedId: string, file: string, adminId: string): Promise<void> {
   const rows = await new ProductTagCsvUploadPage(page).allHistoryRows();
-  const hit = rows.filter((r) => r.ファイル名 === file);
+  let hit = rows.filter((r) => r.ファイル名 === file);
+  if (hit.length) {
+    const made = ファイル名の取込履歴(file);
+    if (made.length > 0 && made.length === hit.length && made.every((h) => h.利用者ID === adminId)) {
+      試験管理者の取込履歴を消す(made.map((h) => h.履歴ID), adminId);
+      await page.reload();
+      hit = (await new ProductTagCsvUploadPage(page).allHistoryRows()).filter((r) => r.ファイル名 === file);
+    }
+  }
   if (hit.length) {
     throw new Error(`${seedId}: 商品タグ更新CSVアップロード画面の取込履歴に、ファイル名 ${file} の行が${hit.length}件ある。`
-      + "正本の作り方は、行があるときはDBへ直接設定する（取込履歴を削除する画面が無い）ので、ここで止める（DBを書き換えない）");
+      + "正本の作り方は、行があるときはDBへ直接設定する（取込履歴を削除する画面が無い）。試験管理者の取込でない履歴が混じるので、ここで止める（DBを書き換えない）");
   }
 }
 
@@ -172,9 +191,12 @@ class SeedOps {
    * 商品公開ステータスの値は、雛形の説明（「1:公開 2:非公開 3:廃止」）で正本の意味（公開・廃止）と同じかを確かめてから入れる。
    */
   async createProduct(p: Product): Promise<string> {
-    const left = await productIdsByCode(this.page, p.code);
+    // 商品コードは正本の決め打ちの値。開発環境には前の実行の商品（在庫の記録が付いて消せないことがある）やほかの方が登録した同じ商品コードの商品が残り得るので、
+    // 実行ごとの印を付けた商品コードで作る（lib/run_marker.ts の rc）。ケースは商品コードの値そのものを確かめない（取込ファイルは商品IDで指定する）
+    const code = rc(p.code);
+    const left = await productIdsByCode(this.page, code);
     if (left.length) {
-      throw new Error(`${this.seedId}: 商品コード ${p.code} の商品（商品ID ${left.join("、")}）が前の実行から残っている。正本に片付けの手順が無いので、作り直してよいかの判断が要る`);
+      throw new Error(`${this.seedId}: 商品コード ${code} の商品（商品ID ${left.join("、")}）が前の実行から残っている。正本に片付けの手順が無いので、作り直してよいかの判断が要る`);
     }
     const template = await downloadGoodsCsvTemplate(this.page);
     const desc = template.columns.find((c) => c.label === "商品公開ステータス")?.description ?? "";
@@ -184,14 +206,14 @@ class SeedOps {
     }
     const categoryId = await goodsCsvCategoryId(this.page, this.warn);
     await registerGoodsCsv(this.page, {
-      what: `${this.seedId} のグッズ商品CSV登録（商品コード ${p.code}）`, fileName: `${this.seedId.toLowerCase()}-goods.csv`, categoryId,
-      lines: [{ code: p.code, nameJp: p.nameJp, nameEn: p.nameEn }],
+      what: `${this.seedId} のグッズ商品CSV登録（商品コード ${code}）`, fileName: `${this.seedId.toLowerCase()}-goods.csv`, categoryId,
+      lines: [{ code, nameJp: p.nameJp, nameEn: p.nameEn }],
       common: { "商品公開ステータス": p.公開, "タグ(ID)": p.tags.join(","), "スマレジ連携フラグ": "0" },
       onWarning: this.warn,
     });
     // 正本: 商品マスターの検索でコードを入れて検索し、検索結果の商品ID列に表示された番号を控える
-    const ids = await productIdsByCode(this.page, p.code);
-    if (ids.length !== 1) throw new Error(`${this.seedId}: 商品マスターの検索で、商品コード ${p.code} の商品が1件でない（${ids.join("、") || "0件"}）`);
+    const ids = await productIdsByCode(this.page, code);
+    if (ids.length !== 1) throw new Error(`${this.seedId}: 商品マスターの検索で、商品コード ${code} の商品が1件でない（${ids.join("、") || "0件"}）`);
     return ids[0];
   }
 
@@ -233,7 +255,7 @@ function defineOneProductSeed(seedId: string, args: {
     await o.expectProductTags(id, args.tags.map((l) => TAG_NAME[l]));
     const header = await templateHeader(o.page);
     writeCsv(args.file, [header, [id, args.fileTags.map((l) => o.notes.get(l)).join(",")]]);
-    if (args.checkHistory) await expectNoHistoryNamed(o.page, seedId, args.file);
+    if (args.checkHistory) await expectNoHistoryNamed(o.page, seedId, args.file, o.notes.get("〔利用者ID-M0328-共有〕"));
   });
 }
 

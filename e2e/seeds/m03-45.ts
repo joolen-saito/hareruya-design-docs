@@ -19,6 +19,7 @@
 import { expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { Notes } from "../lib/notes";
+import { rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { CategoryCsvRow, uploadCategoryRows } from "../pages/admin/category";
@@ -32,7 +33,12 @@ import {
 } from "../pages/admin/m03_45_category_list";
 import { ensureMember } from "../pages/admin/member";
 
-export const M0345_ADMIN: Account = { loginId: "m0345_admin", password: "Passw0rd!M0345" };
+/**
+ * シード表のログインID・名前は、開発環境にほかの方が手動テストの準備で登録した同じ値のメンバーがあり得る（同名・同じログインIDは登録できず、
+ * ほかの方のメンバーは使えない）。決め打ちの識別の値として実行をまたいで使い回す決まった印（lib/run_marker.ts の rcFixed。依頼者決定 2026-11-11）を
+ * 付けたログインID・名前・メールアドレスで作る。ケースはこれらの値そのものを確かめない。
+ */
+export const M0345_ADMIN: Account = { loginId: rcFixed("m0345_admin").toLowerCase(), password: "Passw0rd!M0345" };
 
 /** CSVを確かめるケースが開始時に出力対象にする、カテゴリCSVの出力項目（正本 S-M03-45-CSV-CONFIG） */
 export const CATEGORY_CSV_ITEMS = ["カテゴリID", "カテゴリ名(日)", "カテゴリ名(英)"];
@@ -53,7 +59,7 @@ async function createAdmin(page: Page): Promise<void> {
   if (stores.length === 0) throw new Error("S-M03-45-ADM: メンバーに割り当てられる店舗が画面に無い");
   const store = stores[0];
   await ensureMember(page, {
-    名前: "M03-45試験管理者", 所属店舗: store, ログインID: M0345_ADMIN.loginId, メールアドレス: "m0345_admin@example.test",
+    名前: rcFixed("M03-45試験管理者"), 所属店舗: store, ログインID: M0345_ADMIN.loginId, メールアドレス: `${M0345_ADMIN.loginId}@example.test`,
     パスワード: M0345_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: store, 編集可能店舗: [store],
   });
 }

@@ -20,6 +20,7 @@ import { expect, Page, test } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { CSV入出力設定, カテゴリ階層上限, 設定値を読めない環境, 読み替え文 } from "../lib/app_config";
 import { Notes } from "../lib/notes";
+import { rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { CategoryCsvRow, createTopByCsv, uploadCategoryRows } from "../pages/admin/category";
@@ -29,7 +30,12 @@ import {
 } from "../pages/admin/m03_41_category_csv";
 import { buildCaseCsv, CaseCsvFile } from "../pages/admin/m03_41_csv_file";
 
-export const M0341_ADMIN: Account = { loginId: "m0341_admin", password: "Passw0rd!M0341" };
+/**
+ * シード表のログインID・名前は、開発環境にほかの方が手動テストの準備で登録した同じ値のメンバーがあり得る（同名・同じログインIDは登録できず、
+ * ほかの方のメンバーは使えない）。決め打ちの識別の値として実行をまたいで使い回す決まった印（lib/run_marker.ts の rcFixed。依頼者決定 2026-11-11）を
+ * 付けたログインID・名前・メールアドレスで作る。ケースはこれらの値そのものを確かめない。
+ */
+export const M0341_ADMIN: Account = { loginId: rcFixed("m0341_admin").toLowerCase(), password: "Passw0rd!M0341" };
 
 /** 正本が削除の指定に使う列（雛形には無い） */
 export const DELETE_FLAG = "削除フラグ";
@@ -102,7 +108,7 @@ async function createAdmin(page: Page): Promise<void> {
   if (stores.length === 0) throw new Error("S-M03-41-ADM: メンバーに割り当てられる店舗が画面に無い");
   const store = stores[0];
   await ensureMember(page, {
-    名前: "M03-41試験管理者", 所属店舗: store, ログインID: M0341_ADMIN.loginId, メールアドレス: "m0341_admin@example.test",
+    名前: rcFixed("M03-41試験管理者"), 所属店舗: store, ログインID: M0341_ADMIN.loginId, メールアドレス: `${M0341_ADMIN.loginId}@example.test`,
     パスワード: M0341_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: store, 編集可能店舗: [store],
   });
 }

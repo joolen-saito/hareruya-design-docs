@@ -23,16 +23,22 @@ import { REPO_ROOT, SETUP_ADMIN, STATE_DIR } from "../config/env";
 import { getSeed } from "../lib/catalog";
 import { csvLine, decodeCsvBytes, parseCsv } from "../lib/csv";
 import { Notes } from "../lib/notes";
+import { rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { downloadedBytes } from "../pages/admin/m03_21_shelf_number";
 import { HighPriceCsvUploadPage } from "../pages/admin/m03_32_high_price_csv";
 import { createHighPriceGoods, createTestAdmin, expectNoSameNameHistory, onePixelPng } from "./m03-32";
 
-export const M0333_ADMIN: Account = { loginId: "m0333_admin", password: "Passw0rd!M0333" };
+/**
+ * シード表のログインID・名前は、開発環境にほかの方が手動テストの準備で登録した同じ値のメンバーがあり得る（同名・同じログインIDは登録できず、
+ * ほかの方のメンバーは使えない）。決め打ちの識別の値として実行をまたいで使い回す決まった印（lib/run_marker.ts の rcFixed。依頼者決定 2026-11-11）を
+ * 付けたログインID・名前・メールアドレスで作る。ケースはこれらの値そのものを確かめない。
+ */
+export const M0333_ADMIN: Account = { loginId: rcFixed("m0333_admin").toLowerCase(), password: "Passw0rd!M0333" };
 
 defineSeed("S-M03-33-ADM", async ({ browser, seed }) => {
-  await withAdminSession(browser, SETUP_ADMIN, (page) => createTestAdmin(page, seed.シードID, "M03-33試験管理者", M0333_ADMIN));
+  await withAdminSession(browser, SETUP_ADMIN, (page) => createTestAdmin(page, seed.シードID, rcFixed("M03-33試験管理者"), M0333_ADMIN));
   reportSeedIssue(seed.シードID, "管理者ID 33033 は画面のメンバー登録で指定できない（画面が振る）。ログインID・パスワード・稼働中は正本どおり");
   await withAdminSession(browser, M0333_ADMIN, async (page) => {
     const upload = new HighPriceCsvUploadPage(page, "セール用高額商品価格変更");

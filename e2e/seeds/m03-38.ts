@@ -27,6 +27,7 @@ import { SETUP_ADMIN } from "../config/env";
 import { CSV入出力設定, 設定値を読めない環境, 読み替え文 } from "../lib/app_config";
 import { Notes } from "../lib/notes";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { rcFixed } from "../lib/run_marker";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { ensureMember } from "../pages/admin/member";
 import { downloadGoodsCsvTemplate } from "../pages/admin/m03_01_goods_csv";
@@ -39,8 +40,13 @@ import { goodsRootCategoryLink } from "../pages/admin/product_masters";
 import { loggedInMemberName, registerStockEdit, StockApprovalListPage, StockListPage } from "../pages/admin/stock_edit";
 import { Page } from "@playwright/test";
 
-export const M0338_ADMIN: Account = { loginId: "m0338_admin", password: "Passw0rd!M0338" };
-export const M0338L_ADMIN: Account = { loginId: "m0338l_admin", password: "Passw0rd!M0338L" };
+/**
+ * シード表のログインID・名前は、開発環境にほかの方が手動テストの準備で登録した同じ値のメンバーがあり得る（同名・同じログインIDは登録できず、
+ * ほかの方のメンバーは使えない）。決め打ちの識別の値として実行をまたいで使い回す決まった印（lib/run_marker.ts の rcFixed。依頼者決定 2026-11-11）を
+ * 付けたログインID・名前・メールアドレスで作る。ケースはこれらの値そのものを確かめない。
+ */
+export const M0338_ADMIN: Account = { loginId: rcFixed("m0338_admin").toLowerCase(), password: "Passw0rd!M0338" };
+export const M0338L_ADMIN: Account = { loginId: rcFixed("m0338l_admin").toLowerCase(), password: "Passw0rd!M0338L" };
 
 /** 本店（店舗ID 1）。アプリの親店舗。店名は在庫検索一覧の検索欄「店舗」から読む */
 const MAIN_SHOP_ID = "1";
@@ -76,13 +82,13 @@ async function expectCanOpenStatusCsv(browser: Parameters<typeof withAdminSessio
 }
 
 defineSeed("S-M03-38-ADM", async ({ browser }) => {
-  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, "M03-38試験管理者", M0338_ADMIN, "m0338_admin@example.test"));
-  await expectCanOpenStatusCsv(browser, M0338_ADMIN, "M03-38試験管理者");
+  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, rcFixed("M03-38試験管理者"), M0338_ADMIN, `${M0338_ADMIN.loginId}@example.test`));
+  await expectCanOpenStatusCsv(browser, M0338_ADMIN, rcFixed("M03-38試験管理者"));
 });
 
 defineSeed("S-M03-38-L-ADM", async ({ browser }) => {
-  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, "M03-38連携試験管理者", M0338L_ADMIN, "m0338l_admin@example.test"));
-  await expectCanOpenStatusCsv(browser, M0338L_ADMIN, "M03-38連携試験管理者");
+  await withAdminSession(browser, SETUP_ADMIN, (page) => createAdmin(page, rcFixed("M03-38連携試験管理者"), M0338L_ADMIN, `${M0338L_ADMIN.loginId}@example.test`));
+  await expectCanOpenStatusCsv(browser, M0338L_ADMIN, rcFixed("M03-38連携試験管理者"));
 });
 
 /**

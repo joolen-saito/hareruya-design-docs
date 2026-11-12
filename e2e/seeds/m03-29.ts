@@ -24,12 +24,18 @@ import { REPO_ROOT, SETUP_ADMIN, STATE_DIR } from "../config/env";
 import { CSV入出力設定 } from "../lib/app_config";
 import { getSeed } from "../lib/catalog";
 import { csvLine } from "../lib/csv";
+import { rcFixed } from "../lib/run_marker";
 import { defineSeed } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { ensureMember } from "../pages/admin/member";
 import { SalesTagCsvUploadPage } from "../pages/admin/m03_29_sales_tag_csv_upload";
 
-export const M0329_ADMIN: Account = { loginId: "m0329_admin", password: "Passw0rd!M0329" };
+/**
+ * シード表のログインID・名前は、開発環境にほかの方が手動テストの準備で登録した同じ値のメンバーがあり得る（同名・同じログインIDは登録できず、
+ * ほかの方のメンバーは使えない）。決め打ちの識別の値として実行をまたいで使い回す決まった印（lib/run_marker.ts の rcFixed。依頼者決定 2026-11-11）を
+ * 付けたログインID・名前・メールアドレスで作る。ケースはこれらの値そのものを確かめない。
+ */
+export const M0329_ADMIN: Account = { loginId: rcFixed("m0329_admin").toLowerCase(), password: "Passw0rd!M0329" };
 
 /** 正本は所属店舗を指定しない。管理画面で利用可能な店舗を1つ選び、商品管理を操作できるシステム管理者の権限を付ける（M03-14 と同じ作り方） */
 async function createAdmin(page: Page): Promise<void> {
@@ -42,7 +48,7 @@ async function createAdmin(page: Page): Promise<void> {
   if (stores.length === 0) throw new Error("S-M03-29-ADM: メンバーに割り当てられる店舗が画面に無い");
   const store = stores[0];
   await ensureMember(page, {
-    名前: "M03-29試験管理者", 所属店舗: store, ログインID: M0329_ADMIN.loginId, メールアドレス: "m0329_admin@example.test",
+    名前: rcFixed("M03-29試験管理者"), 所属店舗: store, ログインID: M0329_ADMIN.loginId, メールアドレス: `${M0329_ADMIN.loginId}@example.test`,
     パスワード: M0329_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: store, 編集可能店舗: [store],
   });
 }
