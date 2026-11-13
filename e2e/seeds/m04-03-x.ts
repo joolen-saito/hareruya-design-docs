@@ -3,8 +3,8 @@
  * 仕分け直し（e2e/review/not_runnable_seed_recheck2.tsv）で流せる見込みになったケースのうち、所属のマスタ（在庫管理第一部・第二部）を使わないもの。
  *
  * 作り方（シード表の投入方法の順。画面で作れない状態だけ、E2E の行へ DB で書き足す。依頼者決定 2026-11-10）:
- * - 店舗（MASTER）: 「TC東京」は開発環境に無いので、店舗登録画面で一度だけ作り、以後は使い回す（ショップ名略称「TC東京」は期待結果が見る）。
- *   「大阪店」は開発環境に同じ名前の店舗が2つあり（ほかの方のもの）名前で決まらないので、E2E 用に「大阪店（M04-03）」を一度だけ作る
+ * - 店舗（MASTER）: 試験店舗の使い回し（2026-11-13 依頼者決定。pages/admin/reuse_store.ts）で店舗は作らない。前に作った「TC東京」「大阪店（M04-03）」は
+ *   片付ける一覧に入ったので、「TC東京」は「試験支店」、「大阪店」は本店（店舗ID 1）で読み替える（ショップ名略称を見る期待結果は、読み替えた店舗のショップ名略称で見る）。
  *   （大阪店の名前を期待結果が見るケースは今回の範囲に無い）。店舗の番号（403070001 など）はシード表の決め打ちだが、画面が振る番号を使う。
  * - 共通の商品（MASTER）: グッズ商品CSV登録で「一括商品A」「一括商品B」「大阪商品」の3行を取り込み、商品登録編集の「カード指定」で
  *   一括商品A に Foil「通常」、一括商品B に Foil「特殊」のカード詳細を紐付け、代表画像（bulk-a.png・bulk-b.png。色の違う小さな画像）を追加する。
@@ -32,23 +32,18 @@ import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { classRowsFromProductEdit, openProductEditByCode } from "../pages/admin/m03_23_seed_products";
 import { addClass, openClassList } from "../pages/admin/m03_30_products";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
+import { 試験支店, 試験支店の店舗ID, 本店の店舗ID, 本店の店名DB } from "../pages/admin/reuse_store";
 import { 在庫編集を開く } from "../pages/admin/m04_03_bulk_x";
 import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
 import { registerStockEdit, StockApprovalListPage } from "../pages/admin/stock_edit";
 
 // ---- 店舗 ----
 
-export const TC東京: M0424StoreInput = {
-  店名: "TC東京", 店名カナ: "ティーシートウキョウ", 店名英語: "TC Tokyo", 支店URL: "m0403tct", 店名略称3文字: "M3T", ショップ名略称: "TC東京",
-  会社名: "株式会社晴れる屋", 会社名カナ: "カブシキガイシャハレルヤ", 郵便番号: "160-0022", 都道府県: "東京都", 住所1: "新宿区新宿3-3-3",
-  住所2: "晴ビル3F", 電話番号: "03-0403-0001",
-};
-export const 大阪店: M0424StoreInput = {
-  店名: "大阪店（M04-03）", 店名カナ: "オオサカテンエムゼロヨンゼロサン", 店名英語: "Osaka Test Branch", 支店URL: "m0403osk", 店名略称3文字: "M3O", ショップ名略称: "大阪店",
-  会社名: "株式会社晴れる屋", 会社名カナ: "カブシキガイシャハレルヤ", 郵便番号: "530-0001", 都道府県: "大阪府", 住所1: "大阪市北区梅田3-3-3",
-  住所2: "晴ビル3F", 電話番号: "06-0403-0002",
-};
+/** 正本の店舗「TC東京」の読み替え（試験支店）。店名・ショップ名略称は試験支店のもの */
+export const TC東京 = { 正本の店名: "TC東京", 店名: 試験支店.店名, ショップ名略称: 試験支店.店名 } as const;
+/** 正本の店舗「大阪店」の読み替え（本店＝店舗ID 1）。店名は本店の店名 */
+export const 大阪店 = { 正本の店名: "大阪店", 店名: (() => { try { return 本店の店名DB(); } catch (e) { return `（本店の店名を読めない: ${(e as Error).message}）`; } })() } as const;
+export const 店の読み替え = (): string => `正本の店舗「TC東京」「大阪店」は、試験店舗の使い回し（2026-11-13 依頼者決定）で「${TC東京.店名}」と本店「${大阪店.店名}」（店舗ID 1）に読み替えた`;
 const 店舗の番号 = { TC東京: "", 大阪店: "" };
 export function 店舗IDの(店: "TC東京" | "大阪店"): string {
   const id = 店舗の番号[店];
@@ -69,15 +64,16 @@ const 使い回す管理者 = (名前: string, loginId: string, password: string
   return { 名前: rcFixed(名前), account: { loginId: id, password }, email: `${id}@example.test` };
 };
 /** S-M04-03-ADM（M04-03試験管理者。TC東京・大阪店の在庫を編集できる） */
-export const 試験管理者 = 使い回す管理者("M04-03試験管理者", "m0403_admin", "Passw0rd!M0403");
+// 2026-11-13 試験店舗の使い回しで店舗が試験支店・本店に変わったので、前の試験管理者とは別の決まった名前で作る
+export const 試験管理者 = 使い回す管理者("M04-03試験管理者（試験支店・本店）", "m0403_admin2", "Passw0rd!M0403");
 /**
  * シードの入庫を承認するメンバー（シード表の「店舗の在庫承認権限を持つ別のメンバー」）。
  * 承認通知先の部署の選択肢は「その店舗に所属するメンバーの部署」だけ（新アプリの StockApprovalType）なので、入庫する店舗ごとにその店舗の所属で作る
  * （2026-11-12、TC東京所属の承認者1人では大阪店の入庫で「承認通知先のメンバーに…がいる部署が無い」になる。F04-01・M04-01 と同じ）
  */
 export const 入庫の承認者: Record<"TC東京" | "大阪店", 管理者> = {
-  TC東京: 使い回す管理者("M04-03入庫承認者", "m0403_seed_apr", "Passw0rd!M0403Ap"),
-  大阪店: 使い回す管理者("M04-03大阪店入庫承認者", "m0403_seed_apr_osk", "Passw0rd!M0403Ap"),
+  TC東京: 使い回す管理者("M04-03試験支店入庫承認者", "m0403_seed_apr_shi", "Passw0rd!M0403Ap"),
+  大阪店: 使い回す管理者("M04-03本店入庫承認者", "m0403_seed_apr_hon", "Passw0rd!M0403Ap"),
 };
 /** 054〜061 の登録者・承認者（S-M04-03-GF-REG-<番号>・GF-APR・DP-REG・DP-APR） */
 export const 登録者の = (番号: string): 管理者 => 管理者の(`M0403-${番号}-登録者`, `m0403-${番号}-reg`, `Qz${番号}r7Tm!`);
@@ -108,9 +104,9 @@ defineSeed("S-M04-03-MASTER", async ({ browser, notes, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    店舗の番号.TC東京 = await ensureStore(page, TC東京, issue);
-    店舗の番号.大阪店 = await ensureStore(page, 大阪店, issue);
-    issue(`店舗「TC東京」（店舗ID ${店舗の番号.TC東京}）と、E2E 用の「大阪店（M04-03）」（店舗ID ${店舗の番号.大阪店}）を使う（無ければ一度だけ画面で作る。開発環境の「大阪店」は同名が2つあり名前で決まらないため）`);
+    店舗の番号.TC東京 = 試験支店の店舗ID();
+    店舗の番号.大阪店 = 本店の店舗ID;
+    issue(店の読み替え());
     const categoryId = await readExistingGoodsChildCategoryId(page);
     await registerGoodsCsv(page, {
       what: `${seed.シードID} のグッズ商品CSV登録`, fileName: `${seed.シードID.toLowerCase()}-${Date.now()}.csv`, categoryId,

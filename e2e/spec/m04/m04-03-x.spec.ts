@@ -16,12 +16,14 @@ import {
   一括編集の画面, 一括編集の行, 一括編集を開く, 一括編集を登録する, 行の仕入単価, 行の位置, 行を入れる, 行を選ぶ, 在庫一括編集を押す, 在庫一覧リンク,
   在庫を検索する, 在庫変動区分の選択肢, 在庫変動区分を選ぶ, 承認通知先メンバーを選ぶ, 一覧の在庫ID,
 } from "../../pages/admin/m04_03_bulk_x";
-import { TC東京, 大阪店, 一括商品, 試験管理者, 商品コードの, 登録者の, 承認者の } from "../../seeds/m04-03-x";
+import { TC東京, 大阪店, 店の読み替え, 一括商品, 試験管理者, 商品コードの, 登録者の, 承認者の } from "../../seeds/m04-03-x";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
 const issue = (m: string) => note(`画面の警告: ${m}`);
 const 共通の語 = (番号: string) => `-${番号}-${RUN_MARK}`;
+// 試験店舗の使い回し（2026-11-13 依頼者決定）: どのケースも、正本の TC東京・大阪店を試験支店・本店で読み替える
+test.beforeEach(() => { supplement(店の読み替え()); });
 
 /** 在庫ID（呼び名）を対象に在庫一括編集画面を開く: 商品コードと店舗で検索し、行を選んで「在庫一括編集」を押す */
 async function 対象に開く(ctx: CaseCtx, 番号: string, 控え: string[], 店: string[] = [TC東京.店名]): Promise<void> {
@@ -66,7 +68,6 @@ caseTest("IT-M04-03-004", async (ctx) => {
   const { page, notes, step, expected } = ctx;
   await loginAdmin(page, 試験管理者.account);
   let r!: Awaited<ReturnType<typeof 在庫一括編集を押す>>;
-  supplement(`大阪店は、開発環境の同名の店舗が2つあり名前で決まらないので、E2E 用の「${大阪店.店名}」（ショップ名略称「大阪店」）を使った`);
   await step(1, async () => { await 在庫を検索する(page, { 商品コード: 共通の語("004"), 店舗: [TC東京.店名, 大阪店.店名] }); });
   await step(2, async () => { await 行を選ぶ(page, [notes.get("〔在庫ID-M0403-004A〕"), notes.get("〔在庫ID-M0403-004B〕")]); });
   await step(3, async () => { r = await 在庫一括編集を押す(page); note(`移った先 ${r.パス}・警告 ${r.警告.join(" / ") || "なし"}`); });
@@ -112,7 +113,7 @@ function 絞り込み(番号: string, 条件: { 言語?: string[]; 状態?: stri
     const { page, notes, step, expected } = ctx;
     await loginAdmin(page, 試験管理者.account);
     let 規格: string[] = [];
-    supplement(`在庫検索一覧には開発環境のほかの商品も出るので、商品名「${`絞込確認商品-${番号}`}」（実行の印つき）と店舗「TC東京」も検索の条件に入れた`);
+    supplement(`在庫検索一覧には開発環境のほかの商品も出るので、商品名「${`絞込確認商品-${番号}`}」（実行の印つき）と店舗「${TC東京.店名}」（正本の TC東京）も検索の条件に入れた`);
     await step(1, async () => { await 在庫を検索する(page, { 商品名: `絞込確認商品-${番号}-${RUN_MARK}`, 店舗: [TC東京.店名], ...条件 }); });
     await step(2, async () => {
       const ids = await 一覧の在庫ID(page);
@@ -162,7 +163,7 @@ caseTest("IT-M04-03-010", async (ctx) => {
 caseTest("IT-M04-03-013", async (ctx) => {
   const { page, notes, step, expected } = ctx;
   await loginAdmin(page, 試験管理者.account);
-  supplement("在庫検索一覧には開発環境のほかの商品も出るので、商品名「絞込確認商品-013」（実行の印つき）と店舗「TC東京」も検索の条件に入れた");
+  supplement(`在庫検索一覧には開発環境のほかの商品も出るので、商品名「絞込確認商品-013」（実行の印つき）と店舗「${TC東京.店名}」（正本の TC東京）も検索の条件に入れた`);
   await step(1, async () => { await 在庫を検索する(page, { 商品名: `絞込確認商品-013-${RUN_MARK}`, 店舗: [TC東京.店名], 言語: ["日本語"], 状態: ["NM"] }); });
   await step(2, async () => { await 一括編集を開く(page, [notes.get("〔在庫ID-M0403-013A〕")]); });
   await step(3, async () => {
