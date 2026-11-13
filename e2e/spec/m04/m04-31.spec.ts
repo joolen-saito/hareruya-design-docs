@@ -23,7 +23,7 @@ import {
   headings, InventoryPlanEditPage, InventoryPlanListPage, InventoryPlanNewPage, PlanRow, pressReflectExecute, topMessages,
 } from "../../pages/admin/m04_31_inventory_plan";
 import {
-  M0431_ADMIN, M0431_NOEDIT, PREFIX025, 棚卸名, RC160, RC160_PLAN, RC161, RC161_PLAN, RC162, RC162_PLAN, RcPlan,
+  M0431_ADMIN, M0431_NOEDIT, PREFIX025, 棚卸名, 表示名, RC160, RC160_PLAN, RC161, RC161_PLAN, RC162, RC162_PLAN, RcPlan,
 } from "../../seeds/m04-31";
 import { mainShopName } from "../../seeds/m04-02";
 
@@ -91,7 +91,7 @@ caseTest("IT-M04-31-019", async ({ page, step, expected }) => {
   await step(1, () => new InventoryPlanListPage(page).open());
   await step(2, () => pressNew(page));
   await expected(async () => {
-    expect.soft(await form.selectedStore(), "店舗が「店舗A」に選択されている").toBe("店舗A");
+    expect.soft(await form.selectedStore(), "店舗が「店舗A」（試験支店）に選択されている").toBe(表示名("店舗A"));
     expect.soft(await form.selectedZone(), "在庫区分が「EC-CUBE」に選択されている").toEqual(["EC-CUBE"]);
   });
 });
@@ -113,7 +113,7 @@ function registerAndList(no: string, v: { 棚卸名: string; 店舗: string; 在
     await expected(async () => {
       const hit = rows.filter((r) => r.棚卸名 === v.棚卸名);
       expect(hit, `棚卸計画一覧に棚卸名「${v.棚卸名}」の行が1件`).toHaveLength(1);
-      expect.soft(hit[0].店舗と在庫区分, `店舗名が「${v.店舗}」、在庫区分名が「${v.在庫区分}」`).toBe(`${v.店舗} ${v.在庫区分}`);
+      expect.soft(hit[0].店舗と在庫区分, `店舗名が「${v.店舗}」（${表示名(v.店舗)}）、在庫区分名が「${v.在庫区分}」`).toBe(`${表示名(v.店舗)} ${v.在庫区分}`);
       if (v.備考 !== undefined) expect.soft(hit[0].備考, `備考が「${v.備考}」`).toBe(v.備考);
     });
   };

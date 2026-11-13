@@ -22,6 +22,7 @@ import { SETUP_ADMIN } from "../config/env";
 import { openStoreCount, planCountAll, planCountByName, planCountByPrefix, planCountByStore } from "../db/m04_31_inventory_plan";
 import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { 本店ID, 店舗読み替えの注記, 試験支店ID, 試験店舗の名前を読む } from "../pages/admin/test_store";
 import { Account, withAdminSession as withAdminSessionRaw } from "../lib/session";
 import {
   approveOne, fillStockEdit, searchApprovals, searchStockByCode, stockInRow, submitStockEdit,
@@ -60,10 +61,11 @@ export const STORE_C: M0424StoreInput = {
   住所1: "新宿区新宿4-31-1", 住所2: "試験ビル", 電話番号: "03-0431-0001",
 };
 
-export const M0431_ADMIN: Account = { loginId: "m0431_admin", password: "Passw0rd!M0431" };
-export const M0431_NOEDIT: Account = { loginId: "m0431_noedit", password: "Passw0rd!M0431" };
-export const ADMIN_NAME = "試験管理者A";
-export const NOEDIT_NAME = "試験管理者B";
+/** 試験管理者は、所属店舗を試験支店／本店にして作り直した（前の管理者は消す予定の店舗に結びついている。2026-11-13） */
+export const M0431_ADMIN: Account = { loginId: "m0431_admin_t", password: "Passw0rd!M0431" };
+export const M0431_NOEDIT: Account = { loginId: "m0431_noedit_t", password: "Passw0rd!M0431" };
+export const ADMIN_NAME = "試験管理者A（試験支店）";
+export const NOEDIT_NAME = "試験管理者B（本店）";
 
 const storeIds = new Map<string, string>();
 /** S-M04-31-BASES が確かめた店舗ID（店名で引く） */
@@ -73,16 +75,27 @@ export function storeIdOf(v: M0424StoreInput): string {
   return known;
 }
 
+/** 論理名（シード表の店名「店舗A」「店舗B」）→ 実際の店名（読み替えた店舗の店名）。読み替え前は論理名のまま */
+const 実際の店名 = new Map<string, string>();
+export function 表示名(論理名: string): string { return 実際の店名.get(論理名) ?? 論理名; }
+
+/**
+ * 店舗A・店舗Bは、依頼者決定（2026-11-13）で「試験支店」（店舗ID 1574）と本店（店舗ID 1）に読み替える（店舗は登録しない）。
+ * 店舗Aは試験支店、店舗Bは本店。店舗C（閉店）は、これを使うケース（020）を実装していないので作らない。
+ * 棚卸計画の店舗選択は、店舗IDの指定（同名が複数ある環境でも店舗IDで選ぶ）で行う。
+ */
 defineSeed("S-M04-31-BASES", async ({ browser, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    storeIds.set("店舗A", await ensureStore(page, STORE_A, issue));
-    storeIds.set("店舗B", await ensureStore(page, STORE_B, issue));
-    storeIds.set("店舗C", await ensureClosedStore(page, STORE_C, issue));
-    // 同じ店名の店舗が複数ある環境（共有の開発環境）では、使うと決めた店舗を店舗IDで選ぶ
+    const names = await 試験店舗の名前を読む(page);
+    storeIds.set("店舗A", 試験支店ID);
+    storeIds.set("店舗B", 本店ID);
+    実際の店名.set("店舗A", names.試験支店);
+    実際の店名.set("店舗B", names.本店);
     for (const n of ["店舗A", "店舗B"]) 店舗IDの指定.set(n, storeIds.get(n) ?? "");
+    issue(店舗読み替えの注記("店舗A", names.試験支店, 試験支店ID));
+    issue(店舗読み替えの注記("店舗B", names.本店, 本店ID));
   });
-  issue(`店舗A（店舗ID ${storeIds.get("店舗A")}）・店舗B（${storeIds.get("店舗B")}）は M04-22 のシードと同じ値の店舗を使った。店舗C（${storeIds.get("店舗C")}）は閉店で登録した`);
   const open = openStoreCount();
   issue(`補い: 「営業中の店舗は店舗Aと店舗Bの2件だけ」は作っていない（手元のDBの開店中の店舗は ${open} 店。ほかの店舗を閉店にするとほかの担当の共有データを壊す）`);
   issue("補い: 「試験環境の時刻設定で日付を2026/10/19に固定する」は画面で行えないので行っていない（実行日の日付のまま）");
@@ -94,7 +107,7 @@ defineSeed("S-M04-31-ADM", { needs: ["S-M04-31-BASES"] }, async ({ browser, seed
   const b = storeIdOf(STORE_B);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMemberByStoreIds(page, {
-      名前: ADMIN_NAME, ログインID: M0431_ADMIN.loginId, メールアドレス: "m0431_admin@example.test", パスワード: M0431_ADMIN.password,
+      名前: ADMIN_NAME, ログインID: M0431_ADMIN.loginId, メールアドレス: "m0431_admin_t@example.test", パスワード: M0431_ADMIN.password,
       権限: "システム管理者", 所属店舗ID: a, デフォルト検索表示店舗ID: a, 編集可能店舗ID: [a, b],
     });
   });
@@ -107,7 +120,7 @@ defineSeed("S-M04-31-ADM-NOEDIT", { needs: ["S-M04-31-BASES"] }, async ({ browse
   const b = storeIdOf(STORE_B);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMemberByStoreIds(page, {
-      名前: NOEDIT_NAME, ログインID: M0431_NOEDIT.loginId, メールアドレス: "m0431_noedit@example.test", パスワード: M0431_NOEDIT.password,
+      名前: NOEDIT_NAME, ログインID: M0431_NOEDIT.loginId, メールアドレス: "m0431_noedit_t@example.test", パスワード: M0431_NOEDIT.password,
       権限: "システム管理者", 所属店舗ID: b, デフォルト検索表示店舗ID: b, 編集可能店舗ID: [b],
     });
   });

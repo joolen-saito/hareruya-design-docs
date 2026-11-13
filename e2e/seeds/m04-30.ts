@@ -21,65 +21,31 @@ import { SETUP_ADMIN } from "../config/env";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { createStore, expectStore, M0424StoreInput } from "../pages/admin/m04_24_store";
-import { BarcodeReplacementListPage, listedStores } from "../pages/admin/m04_30_barcode";
+import { 本店ID, 店舗読み替えの注記, 試験支店ID, 試験店舗の名前を読む } from "../pages/admin/test_store";
+import { BarcodeReplacementListPage } from "../pages/admin/m04_30_barcode";
 
-export const M0430_ADMIN: Account = { loginId: "m0430_admin", password: "M0430AdminShared!" };
-const ADMIN_NAME = "M04-30試験管理者";
+export const M0430_ADMIN: Account = { loginId: "m0430_admin_t", password: "M0430AdminShared!" };
+/** 試験管理者は、所属店舗を試験支店にして作り直した（前の「M04-30試験管理者」は消す予定の店舗に結びついている。2026-11-13） */
+const ADMIN_NAME = "M04-30試験管理者（試験支店）";
 
-/** 無ければ登録するときの値。M04-22 のシード（seeds/m04-22.ts の STORE_A・STORE_B）と同じ値にして、2つにならないようにする */
-const store = (店名: string, url: string, digit: string): M0424StoreInput => ({
-  店名, 店名カナ: "テンポ", 店名英語: `M0422 ${url}`, 支店URL: url, 店名略称3文字: digit, ショップ名略称: 店名,
-  会社名: "M04-22試験会社", 会社名カナ: "エムゼロヨンニジュウニシケンガイシャ", 郵便番号: "160-0022", 都道府県: "東京都",
-  住所1: "新宿区新宿4-22-1", 住所2: "試験ビル", 電話番号: "03-0422-0001",
-});
-const STORES = [
-  { 呼び名: "〔店舗ID-M0430-共有A〕", input: store("店舗A", "m0422a", "Q2A") },
-  { 呼び名: "〔店舗ID-M0430-共有B〕", input: store("店舗B", "m0422b", "Q2B") },
-];
-
+/**
+ * 店舗A・店舗Bは、依頼者決定（2026-11-13）で「試験支店」（店舗ID 1574）と本店（店舗ID 1）に読み替える（店舗は登録しない）。
+ * 店舗Aは試験支店、店舗Bは本店。店名は画面の選択肢から読む（手順・期待結果の店名はこの店名で読む）。
+ */
 defineSeed("S-M04-30-STORES", async ({ browser, notes, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    for (const s of STORES) {
-      const name = s.input.店名;
-      let hits = (await listedStores(page)).filter((r) => r.店名 === name);
-      if (hits.length === 0) {
-        let failure = "";
-        try {
-          await createStore(page, s.input);
-        } catch (e) {
-          failure = (e as Error).message.split("\n")[0];
-        }
-        hits = (await listedStores(page)).filter((r) => r.店名 === name);
-        if (hits.length !== 1) throw new Error(`${seed.シードID}: 店舗「${name}」を登録できない（${failure || "店舗一覧に出ない"}）`);
-        if (failure) issue(`店舗登録画面で「${name}」を登録したとき、登録は行われたが画面は成功を表示しなかった（${failure}）`);
-        await expectStore(page, hits[0].id, s.input);
-      } else {
-        if (hits.length > 1) {
-          // 依頼者決定 2026-11-12: 開発環境に同名の店舗が2件ずつあり「各1件」を満たせないため、M04-22 の店舗（会社名「M04-22試験会社」の開店の1件）を使う
-          const m0422 = hits.filter((h) => h.会社名 === s.input.会社名 && h.開店 === "開店");
-          if (m0422.length !== 1) throw new Error(`${seed.シードID}: 店名「${name}」の店舗が${hits.length}件あり（ID ${hits.map((h) => h.id).join("・")}）、会社名「${s.input.会社名}」の開店の店舗が1件に決まらない`);
-          issue(`依頼者決定 2026-11-12: 開発環境に同名の店舗が${hits.length}件ずつあり「各1件」を満たせないため、M04-22 の店舗（店舗ID ${m0422[0].id}）を使った`);
-          hits = m0422;
-        } else {
-          issue(`店名「${name}」の店舗は登録済み（店舗ID ${hits[0].id}・会社名「${hits[0].会社名}」）だったので、それを使った（ほかの必須項目は任意の値）`);
-        }
-      }
-      if (hits[0].開店 !== "開店") throw new Error(`${seed.シードID}: 店舗「${name}」（店舗ID ${hits[0].id}）が開店でない（${hits[0].開店}）`);
-      notes.set(s.呼び名, hits[0].id);
-    }
+    const names = await 試験店舗の名前を読む(page);
+    notes.set("〔店舗ID-M0430-共有A〕", 試験支店ID);
+    notes.set("〔店舗ID-M0430-共有B〕", 本店ID);
+    notes.set("〔店名-M0430-共有A〕", names.試験支店);
+    notes.set("〔店名-M0430-共有B〕", names.本店);
+    issue(店舗読み替えの注記("店舗A", names.試験支店, 試験支店ID));
+    issue(店舗読み替えの注記("店舗B", names.本店, 本店ID));
     const screen = new BarcodeReplacementListPage(page);
     await screen.open();
-    for (const s of STORES) {
-      const count = await screen.optionCount(s.input.店名);
-      if (count === 1) {
-        const value = await screen.出力対象店舗.locator("option").filter({ hasText: new RegExp(`^\\s*${s.input.店名}\\s*$`) }).getAttribute("value");
-        expect(value, `${seed.シードID}: 出力対象店舗の選択肢「${s.input.店名}」の店舗ID`).toBe(notes.get(s.呼び名));
-      } else {
-        // 同名が複数ある環境では、控えた店舗IDの選択肢があることだけ確かめる（上の依頼者決定）
-        expect(await screen.出力対象店舗.locator(`option[value="${notes.get(s.呼び名)}"]`).count(), `${seed.シードID}: 出力対象店舗に店舗ID ${notes.get(s.呼び名)} の選択肢がある`).toBe(1);
-      }
+    for (const id of [試験支店ID, 本店ID]) {
+      expect(await screen.出力対象店舗.locator(`option[value="${id}"]`).count(), `${seed.シードID}: 出力対象店舗に店舗ID ${id} の選択肢がある`).toBe(1);
     }
   });
 });
@@ -88,7 +54,7 @@ defineSeed("S-M04-30-ADM", { needs: ["S-M04-30-STORES"] }, async ({ browser, not
   const a = notes.get("〔店舗ID-M0430-共有A〕");
   const b = notes.get("〔店舗ID-M0430-共有B〕");
   await withAdminSession(browser, SETUP_ADMIN, (page) => ensureMemberByStoreIds(page, {
-    名前: ADMIN_NAME, ログインID: M0430_ADMIN.loginId, メールアドレス: "m0430_admin@example.test", パスワード: M0430_ADMIN.password,
+    名前: ADMIN_NAME, ログインID: M0430_ADMIN.loginId, メールアドレス: "m0430_admin_t@example.test", パスワード: M0430_ADMIN.password,
     権限: "システム管理者", 所属店舗ID: a, デフォルト検索表示店舗ID: a, 編集可能店舗ID: [a, b],
   }));
   // ログインでき（ロックされていない）、バーコード貼替リストCSV出力画面を開けることを、ケースとは別のセッションで確かめる
