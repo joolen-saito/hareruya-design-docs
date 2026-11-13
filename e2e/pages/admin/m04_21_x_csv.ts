@@ -102,7 +102,8 @@ export type 押した結果 =
   | { 結果: "送信"; パス: string; 成功: string[]; 誤り: string[]; 警告: string[] }
   | { 結果: "画面の誤り"; 誤り: string[] }
   | { 結果: "確認の窓" }
-  | { 結果: "押せない" };
+  | { 結果: "押せない" }
+  | { 結果: "ブラウザの入力チェック"; 欄: string[] };
 
 /** ファイルを選ぶ（「ファイルを選択」を押してファイルを渡す） */
 export async function ファイルを選ぶ(page: Page, filePath: string): Promise<void> {
@@ -121,6 +122,19 @@ export async function 一括登録を押す(page: Page, waitMs = 180_000): Promi
   const upload = page.locator("#upload-button");
   await expect(upload, "「一括登録を実行」のボタン").toBeVisible();
   if (!(await upload.isEnabled())) return { 結果: "押せない" };
+  // 必須の選択欄が空だと、ブラウザの入力チェック（「Please select an item in the list.」など）で送信が止まり、画面は移らない。
+  // そのときは押して止まったことを返す（2026-11-14 006・038 が「画面が移らない」で止まっていた）
+  const invalid = await upload.evaluate((b) => {
+    const f = (b as HTMLButtonElement).form ?? b.closest("form");
+    if (!f || f.checkValidity()) return null;
+    return Array.from(f.elements).filter((e) => typeof (e as HTMLInputElement).checkValidity === "function" && !(e as HTMLInputElement).checkValidity())
+      .map((e) => `${(e as HTMLInputElement).name || (e as HTMLElement).id}: ${(e as HTMLInputElement).validationMessage}`);
+  });
+  if (invalid) {
+    await upload.click();
+    await page.waitForTimeout(1_000);
+    return { 結果: "ブラウザの入力チェック", 欄: invalid };
+  }
   const before = page.url();
   const navigated = page.waitForNavigation({ waitUntil: "load", timeout: waitMs }).then(() => "送信" as const, () => "時間切れ" as const);
   const shownErrors = page.locator("#csv-validate-errors").waitFor({ state: "visible", timeout: waitMs }).then(() => "画面の誤り" as const, () => "時間切れ" as const);
@@ -207,7 +221,11 @@ export async function 承認一覧を店舗で検索する(page: Page, 店名: s
   const f = page.locator("form#form_search_stock_approval_list");
   await expect(f, "在庫編集承認一覧の検索欄").toBeVisible();
   await page.waitForLoadState("load");
-  await page.locator("#btn_search_clear").click();
+  // 一覧の行が多いと、画面のスクリプトが終わるまで「検索条件をクリア」の押下が返らない（2026-11-14 047・048 が60秒で止まった）。
+  // 読み込みが落ち着くのを待ち、待ちを3分にする。それでも返らなければ要素へ直接クリックを送る
+  await page.waitForLoadState("networkidle", { timeout: 120_000 }).catch(() => undefined);
+  const clear = page.locator("#btn_search_clear");
+  await clear.click({ timeout: 180_000 }).catch(async () => { await clear.dispatchEvent("click"); });
   const select = f.locator("#admin_search_stock_approval_list_base_info");
   await expect.poll(async () => (await select.evaluate((n) => Array.from((n as HTMLSelectElement).selectedOptions).length)), "検索条件をクリアで店舗の選択が外れる").toBe(0);
   const box = select.locator("xpath=following-sibling::span[contains(@class,'select2')][1]");
