@@ -34,8 +34,11 @@ export function 会員があるか(会員ID: string): boolean {
 export function ポイント種別(): Record<string, string> {
   return Object.fromEntries(query(`select t.id::text as id, t.name as name from mtb_point_type t order by t.id`).map((r) => [String(r.id), String(r.name)]));
 }
+/** 画面（ご注文完了・受注一覧）が出す注文番号の受注ID。画面の注文番号は order_number の列（order_no は別の番号）。見つからなければ order_no でも探す */
 export function 受注ID(注文番号: string): string {
-  return String(query(`select o.id from dtb_order o where o.order_no = $1`, [注文番号])[0]?.id ?? "");
+  const r = query(`select o.id from dtb_order o where o.order_number = $1 and o.deleted_at is null order by o.id desc limit 1`, [注文番号])[0]
+    ?? query(`select o.id from dtb_order o where o.order_no = $1 order by o.id desc limit 1`, [注文番号])[0];
+  return String(r?.id ?? "");
 }
 
 export type ポイント履歴の行 = { 履歴ID: string; 受注ID: string | null; 種別: string | null; 増減量: number; 備考: string | null; 発行日: string; 設定日: string | null };
