@@ -3,8 +3,8 @@
  * 仕分け直し（e2e/review/not_runnable_seed_recheck2.tsv）で流せる見込みになったケースのうち、在庫編集画面の登録・表示を見るもの。
  *
  * 作り方（シード表の投入方法の順。画面で作れない状態だけ、E2E の行へ DB で書き足す。依頼者決定 2026-11-10）:
- * - 店舗「TC東京2F」（S-M04-02-MASTER の①）: 店舗登録画面で登録する。開発環境に無ければ一度だけ作り、あれば内容を確かめて使う
- *   （店名・ショップ名略称は期待結果が値そのものを見るので、実行の印を付けない）。
+ * - 店舗「TC東京2F」（S-M04-02-MASTER の①）: 試験店舗の使い回し（2026-11-13 依頼者決定。pages/admin/reuse_store.ts）で店舗は作らず、
+ *   「試験支店」で読み替える。店名・ショップ名略称を見る期待結果は、試験支店の店名・ショップ名略称（どちらも「試験支店」）で見る。
  * - 共通の商品「在庫試験商品A」（MASTER の②③）: グッズ商品CSV登録で1行を取り込み、商品登録編集の「カード指定」でカードを紐付ける。
  *   カードのマスタは新しく作らず、開発環境に既にある、商品の付いていない Foil「通常」のカード詳細を使う（M03-26 と同じ扱い）。
  *   商品コードに実行の印を付ける。商品名も印を付けた値で作る（ケースの文の「在庫試験商品A」も印つきで読む）。
@@ -34,17 +34,14 @@ import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { openProductEditByCode } from "../pages/admin/m03_23_seed_products";
 import { addClass, openClassList } from "../pages/admin/m03_30_products";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
+import { 試験支店, 試験支店の店舗ID, 店名の読み替え } from "../pages/admin/reuse_store";
 import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
 
 // ---- 店舗・管理者 ----
 
-/** 店舗「TC東京2F」。店名・ショップ名略称（在庫編集画面の店舗の表示）はシード表の値。ほかの必須項目は「任意の値」 */
-export const TC東京2F: M0424StoreInput = {
-  店名: "TC東京2F", 店名カナ: "ティーシートウキョウニエフ", 店名英語: "TC Tokyo Second Floor", 支店URL: "m0402tc2f", 店名略称3文字: "T2F", ショップ名略称: "TC東京2F",
-  会社名: "株式会社晴れる屋", 会社名カナ: "カブシキガイシャハレルヤ", 郵便番号: "160-0022", 都道府県: "東京都", 住所1: "新宿区新宿2-2-2",
-  住所2: "晴ビル2F", 電話番号: "03-0402-2002",
-};
+/** 正本の店舗「TC東京2F」の読み替え（試験支店）。店名・ショップ名略称は試験支店のもの */
+export const TC東京2F = { 正本の店名: "TC東京2F", 店名: 試験支店.店名, ショップ名略称: 試験支店.店名 } as const;
+export const 店の読み替え = (): string => 店名の読み替え(TC東京2F.正本の店名, TC東京2F.店名);
 
 export type 管理者 = { 名前: string; account: Account; email: string };
 const 管理者の = (名前: string, loginId: string, password: string): 管理者 => {
@@ -88,7 +85,8 @@ defineSeed("S-M04-02-MASTER", async ({ browser, notes, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    店舗ID = await ensureStore(page, TC東京2F, issue);
+    店舗ID = 試験支店の店舗ID();
+    issue(店の読み替え());
     notes.set("〔店舗ID-M0402-共有〕", 店舗ID);
     const categoryId = await readExistingGoodsChildCategoryId(page);
     await registerGoodsCsv(page, {

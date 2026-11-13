@@ -17,7 +17,8 @@ import {
   checkAndOpenBulkApprove, chooseHistoryShopAndZone, classStock, confirmBulkApprove, fillStockEdit, openClassListByName,
   searchApprovals, searchStockByCode, submitStockEdit,
 } from "../../pages/admin/m04_02_rc_stock";
-import { mainShopName, RC073, RC073_BRANCH_NAME, RC074 } from "../../seeds/m04-02";
+import { mainShopName, RC073, RC073_BRANCH_NAME, RC073_BRANCH_正本の店名, RC074 } from "../../seeds/m04-02";
+import { 店名の読み替え } from "../../pages/admin/reuse_store";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const issue = (m: string) => note(`画面の警告: ${m}`);
@@ -54,6 +55,7 @@ async function searchHistory(page: Page): Promise<HistoryRow[]> {
 caseTest("IT-M04-02-073", async ({ page, step, expected }) => {
   let before: HistoryRow[] = [];
   let after: HistoryRow[] = [];
+  note(店名の読み替え(RC073_BRANCH_正本の店名, BRANCH073));
   await step(1, () => loginAdmin(page, RC073.申請者.account));
   await step(2, async () => {
     before = await searchHistory(page);

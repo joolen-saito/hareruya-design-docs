@@ -8,7 +8,8 @@
  *   権限グループは「在庫管理を操作できるもの（承認者は権限管理で承認権限の列にチェックのある権限）」で、どちらもシステム管理者にした
  *   （在庫編集の承認通知先・在庫編集承認一覧の承認は、システム管理者の承認する管理者で通ることを M04-17・M03-01 の057 で確かめている）。
  *   デフォルト検索表示店舗はシード表に無いが、メンバー登録画面で必須で、所属店舗と同じ店舗しか選べない。
- * - 支店（RC-ORG-073）: 店舗登録で「RC0402-001支店」（支店URL rc0402s001・支店・公開・開店）を登録する。あれば内容を確かめて使う。
+ * - 支店（RC-ORG-073）: シード表は店舗登録で「RC0402-001支店」を登録する。試験店舗の使い回し（2026-11-13 依頼者決定。pages/admin/reuse_store.ts）で
+ *   店舗は作らず、「試験支店」で読み替える（ケースの店名も試験支店で見る）。
  * - 本店（RC-ORG-074 など）: 既存の店舗「本店」を使う。手元の環境の本店は店舗ID 1（アプリの設定の親店舗）で、店名は環境で違う（手元は「Hareruya」）。
  *   在庫検索一覧の検索欄「店舗」の選択肢から店舗ID 1 の店名を読んで使う（HANDOFF の M03-01 の057 と同じ）。
  * - 商品・在庫（RC-STOCK-*）: グッズ商品CSV登録で1行を取り込み、商品規格一覧から取り込みで作られた規格を開いて公開にし、
@@ -28,6 +29,7 @@ import {
 import { numberOf, StockHistoryPage } from "../pages/admin/m04_17_stock_history";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
 import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
+import { 試験支店, 試験支店の店舗ID } from "../pages/admin/reuse_store";
 import { StockListPage } from "../pages/admin/stock_edit";
 
 /** 本店（店舗ID 1。アプリの設定の親店舗）の店名を、在庫検索一覧の検索欄「店舗」の選択肢から読む */
@@ -50,11 +52,13 @@ export function rcOrg(prefix: string, label: string, password: string): RcOrg {
 }
 
 /** 店舗の決め方: 本店（店舗ID 1）か、店舗登録で用意する支店 */
-export type RcStore = { 本店: true } | { 支店: M0424StoreInput };
+/** 店舗の決め方。「支店」（店舗登録で用意する）は M04-31 が使う（M04-02 は試験店舗の使い回しで「試験支店」を使う） */
+export type RcStore = { 本店: true } | { 試験支店: true } | { 支店: M0424StoreInput };
 
 /** 店舗IDと店名（在庫検索一覧の選択肢の表示名）。シードの中で決め、ケースはシードと同じ関数で読み直す */
 async function resolveStore(page: Page, store: RcStore, onIssue: (m: string) => void): Promise<{ id: string; 店名: string }> {
   if ("本店" in store) return { id: "1", 店名: await mainShopName(page) };
+  if ("試験支店" in store) return { id: 試験支店の店舗ID(), 店名: 試験支店.店名 };
   const id = await ensureStore(page, store.支店, onIssue);
   return { id, 店名: store.支店.店名 };
 }
@@ -80,6 +84,7 @@ export type RcProduct = { 商品コード: string; 商品名: string };
 
 /** 店舗の店名（本店は在庫検索一覧の選択肢から読む） */
 export async function storeNameOf(browser: Browser, account: Account, store: RcStore): Promise<string> {
+  if ("試験支店" in store) return 試験支店.店名;
   if (!("本店" in store)) return store.支店.店名;
   return withAdminSession(browser, account, (page) => mainShopName(page));
 }
@@ -160,15 +165,10 @@ async function expectLeftoverIsSeedState(browser: Browser, org: RcOrg, shop: str
 export const RC073 = rcOrg("rc0402-001", "RC0402-001", "Passw0rd-RC0402001");
 export const RC074 = rcOrg("rc0402-002", "RC0402-002", "Passw0rd-RC0402002");
 
-/** 073 の支店。店名・支店URL・支店・公開・開店はシード表の値。そのほかの必須項目は「任意の有効な値」 */
-export const RC073_BRANCH_NAME = "RC0402-001支店";
-export const RC073_BRANCH: RcStore = {
-  支店: {
-    店名: RC073_BRANCH_NAME, 店名カナ: "アールシーシテン", 店名英語: "RC Branch", 支店URL: "rc0402s001", 店名略称3文字: "R21", ショップ名略称: "RC0402-001支店",
-    会社名: "株式会社晴れる屋", 会社名カナ: "カブシキガイシャハレルヤ", 郵便番号: "160-0022", 都道府県: "東京都", 住所1: "新宿区新宿2-2-2",
-    住所2: "晴ビル21F", 電話番号: "03-0402-0001",
-  },
-};
+/** 073 の支店（シード表の店名「RC0402-001支店」）。試験店舗の使い回しで店舗を作らず、試験支店で読み替える */
+export const RC073_BRANCH_正本の店名 = "RC0402-001支店";
+export const RC073_BRANCH_NAME: string = 試験支店.店名;
+export const RC073_BRANCH: RcStore = { 試験支店: true };
 export const MAIN_STORE: RcStore = { 本店: true };
 
 defineRcOrg("S-M04-02-RC-ORG-073", RC073, RC073_BRANCH);

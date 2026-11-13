@@ -18,9 +18,11 @@ import {
   在庫の表示, 在庫一覧に戻る, 在庫変動区分を選ぶ, 在庫編集画面である, 在庫編集画面を開く, 検索欄の店舗と在庫区分, 仕入単価の欄, 店舗と在庫区分で検索する, 登録を押す,
 } from "../../pages/admin/m04_02_stock_x";
 import { StockApprovalListPage, StockListPage } from "../../pages/admin/stock_edit";
-import { TC東京2F, 共通の商品, 商品コードの, 承認者の, 担当者, 権限外担当者, 青木承認者, TC東京2FのID } from "../../seeds/m04-02-x";
+import { TC東京2F, 店の読み替え, 共通の商品, 商品コードの, 承認者の, 担当者, 権限外担当者, 青木承認者, TC東京2FのID } from "../../seeds/m04-02-x";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
+// 試験店舗の使い回し（2026-11-13 依頼者決定）: どのケースも、正本の店舗「TC東京2F」を試験支店で読み替える
+test.beforeEach(() => { test.info().annotations.push({ type: "正本の外の補い", description: 店の読み替え() }); });
 const 今日 = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date());
 const 在庫IDの = (ctx: CaseCtx, n: string) => ctx.notes.get(`〔在庫ID-M0402-${n}〕`);
 
