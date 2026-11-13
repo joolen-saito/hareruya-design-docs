@@ -14,7 +14,10 @@ import { readClassPrices } from "../../pages/admin/m04_17_seed_ops";
 import {
   firstDayOfThisMonth, HistoryRow, numberOf, StockHistoryPage, 在庫変動履歴CSVだけの見出し, 欠品履歴CSVだけの見出し,
 } from "../../pages/admin/m04_17_stock_history";
-import { M0417_ADMIN, MAIN_SHOP, mk } from "../../seeds/m04-17";
+import { M0417_ADMIN, MAIN_SHOP, mk, 正本のMAIN_SHOP } from "../../seeds/m04-17";
+import { 店名の読み替え } from "../../pages/admin/reuse_store";
+// 試験店舗の使い回し（2026-11-13 依頼者決定）: 正本の店舗「本店」を試験支店で読み替える
+test.beforeEach(() => { test.info().annotations.push({ type: "正本の外の補い", description: 店名の読み替え(正本のMAIN_SHOP, MAIN_SHOP) }); });
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 

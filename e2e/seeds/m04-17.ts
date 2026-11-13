@@ -4,7 +4,8 @@
  * 作るのは、画面だけで準備できるケース（017・020・023・026・031・036・037・055・012・016）が使うシードだけ。
  * - S-M04-17-ADM: 試験管理者。デフォルト検索表示店舗は「本店」。
  *   「本店」は S-M04-17-MASTER が店舗登録画面で登録する店舗で、ADM の作り方には店舗の用意が書かれていない。
- *   デフォルト検索表示店舗に選ぶには店舗が要るので、S-M04-17-MASTER と同じ操作（店舗登録。登録済みならそのまま使う）で「本店」を用意してから登録する。
+ *   試験店舗の使い回し（2026-11-13 依頼者決定。pages/admin/reuse_store.ts）で店舗は作らず、正本の「本店」は「試験支店」で読み替える
+ *   （前に名前「本店」で探して使っていた店舗は M04-24 が作ったもので、片付ける一覧に入った）。
  *   S-M04-17-MASTER そのもの（A店舗・支店A・スマレジ実店舗・カテゴリ・カードセット・所属・メンバー）は作らない。
  * - 商品・在庫変動履歴のシード: グッズ商品CSV登録で商品を作り、在庫検索一覧から在庫編集で入庫を登録し、
  *   登録したメンバーとは別の、承認権限のあるメンバーが在庫編集承認一覧で承認する。
@@ -14,7 +15,7 @@
  */
 import { Browser, expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { ensureMember, MemberInput } from "../pages/admin/member";
@@ -23,17 +24,16 @@ import {
   approveRows, changeClassPrices, expectNoProductCodes, GoodsLine, pendingApprovalRows, PendingRow,
   readSupplyGoodsCategoryId, registerStockIn, uploadGoodsLines,
 } from "../pages/admin/m04_17_seed_ops";
-import { ensureTenant, TenantInput } from "../pages/admin/tenant";
+import { 試験支店, 試験支店の店舗ID, 店名の読み替え } from "../pages/admin/reuse_store";
 
-export const M0417_ADMIN: Account = { loginId: "m0417_admin", password: "Passw0rd!M0417" };
-const ADMIN_NAME = "M04-17試験管理者";
-const APPROVER: Account = { loginId: "m0417_approver", password: "Passw0rd!M0417R" };
-const APPROVER_NAME = "M04-17試験承認者";
-/** 正本の「本店」。店舗登録画面で登録する店舗の名前 */
-export const MAIN_SHOP = "本店";
-const MAIN_SHOP_INPUT: TenantInput = {
-  店名: MAIN_SHOP, 店名カナ: "ホンテン", 店名英語: "Main Store", 支店URL: "m0417honten", 店名略称3文字: "HNT", ショップ名略称: MAIN_SHOP,
-};
+// 2026-11-13 試験店舗の使い回しで所属の店舗が試験支店に変わったので、前の試験管理者（M04-24 の「本店」の所属）とは別の決まった名前で作る
+export const M0417_ADMIN: Account = { loginId: rcFixed("m0417_admin").toLowerCase(), password: "Passw0rd!M0417" };
+const ADMIN_NAME = rcFixed("M04-17試験管理者");
+const APPROVER: Account = { loginId: rcFixed("m0417_approver").toLowerCase(), password: "Passw0rd!M0417R" };
+const APPROVER_NAME = rcFixed("M04-17試験承認者");
+/** 正本の「本店」（店舗登録画面で登録する店舗）。試験店舗の使い回しで「試験支店」に読み替える */
+export const 正本のMAIN_SHOP = "本店";
+export const MAIN_SHOP: string = 試験支店.店名;
 const STOCK_IN_REASON = "M0417試験入庫";
 
 /** 本店に所属し、本店を編集でき、デフォルト検索表示店舗が本店のシステム管理者（在庫編集・在庫編集承認ができる） */
@@ -45,8 +45,9 @@ const mainShopMember = (名前: string, account: Account, メールアドレス:
 defineSeed("S-M04-17-ADM", async ({ browser, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    await ensureTenant(page, MAIN_SHOP_INPUT, issue);
-    await ensureMember(page, mainShopMember(ADMIN_NAME, M0417_ADMIN, "m0417_admin@example.test"));
+    試験支店の店舗ID();
+    issue(店名の読み替え(正本のMAIN_SHOP, MAIN_SHOP));
+    await ensureMember(page, mainShopMember(ADMIN_NAME, M0417_ADMIN, `${M0417_ADMIN.loginId}@example.test`));
   });
   // ログインでき、在庫履歴検索一覧の店舗の初期値がデフォルト検索表示店舗の「本店」であること
   await withAdminSession(browser, M0417_ADMIN, async (page) => {
@@ -60,7 +61,7 @@ defineSeed("S-M04-17-ADM", async ({ browser, seed }) => {
 let approverReady = false;
 async function ensureApprover(browser: Browser): Promise<void> {
   if (approverReady) return;
-  await withAdminSession(browser, SETUP_ADMIN, (page) => ensureMember(page, mainShopMember(APPROVER_NAME, APPROVER, "m0417_approver@example.test")));
+  await withAdminSession(browser, SETUP_ADMIN, (page) => ensureMember(page, mainShopMember(APPROVER_NAME, APPROVER, `${APPROVER.loginId}@example.test`)));
   approverReady = true;
 }
 
