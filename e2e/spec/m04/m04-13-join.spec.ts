@@ -255,8 +255,8 @@ caseTest("IT-M04-13-050", async ({ page, notes, step, expected }) => {
   let rows: Record<string, string>[] = [];
   await step(1, async () => { await edit.open(); await edit.addSource(rc("M0413-JOIN-A-050")); await edit.addSource(rc("M0413-JOIN-B-050")); });
   await step(2, async () => {
-    note(`A の保存の応答: ${JSON.stringify(await edit.setSourceQuantity("M0413-JOIN-A-050", "4"))}`);
-    note(`B の保存の応答: ${JSON.stringify(await edit.setSourceQuantity("M0413-JOIN-B-050", "2"))}`);
+    note(`A の保存の応答: ${JSON.stringify(await edit.setSourceQuantity(rc("M0413-JOIN-A-050"), "4"))}`);
+    note(`B の保存の応答: ${JSON.stringify(await edit.setSourceQuantity(rc("M0413-JOIN-B-050"), "2"))}`);
   });
   await step(3, async () => { details = 明細(id); summary = await edit.summary(); rows = await edit.sources(); note(`画面の合計欄: ${JSON.stringify(summary)}`); });
   await expected(async () => {
