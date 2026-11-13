@@ -151,9 +151,12 @@ export async function 共有の設定を戻す(browser: Browser): Promise<string
   let 後: 設定の値 = await 今の値(browser);
   let 失敗 = "";
   for (let i = 0; i < 3; i++) {
-    try { await 書く(browser, 元, 後, `共有の設定を元の値へ戻す（${i + 1}回目）`); } catch (e) { 失敗 = (e as Error).message.split("\n")[0]; }
+    // 書き直すかは、DB を見られるなら DB の送料無料条件で決める。画面が元の値（30,000）を出していても DB が 5,000 のままのことがあり、
+    // 画面の値だけで決めると書き直さずに終わっていた（2026-11-13 夜 053: 画面 30,000・DB 5,000）
+    const 判断の値: 設定の値 = dbAvailable ? { ...後, ...本店の送料無料条件() } : 後;
+    try { await 書く(browser, 元, 判断の値, `共有の設定を元の値へ戻す（${i + 1}回目）`); } catch (e) { 失敗 = (e as Error).message.split("\n")[0]; }
     後 = await 今の値(browser);
-    const DBで戻った = await DBの送料無料条件を待つ(元, 5_000);
+    const DBで戻った = await DBの送料無料条件を待つ(元, 30_000);
     if (DBで戻った && 後.金額 === 元.金額 && 後.数量 === 元.数量 && 後.入荷通知上限 === 元.入荷通知上限) {
       fs.rmSync(控え, { force: true });
       return "";
