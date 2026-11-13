@@ -10,7 +10,7 @@ import { test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { BarcodeReplacementListPage } from "../../pages/admin/m04_30_barcode";
-import { M0430_ADMIN } from "../../seeds/m04-30";
+import { M0430_ADMIN, 店名A, 店名B } from "../../seeds/m04-30";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -38,7 +38,7 @@ caseTest("IT-M04-30-001", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     // 実行日をまたいで流れたときは、確かめの前後で日付が変わる。そのときは落として流し直す
     expect(jstDate(0), "確かめの間に日付が変わっていない").toBe(today);
-    expect.soft(stores, "出力対象店舗（ログイン者のデフォルト検索店舗「店舗A」＝試験支店）").toEqual([{ 表示: notes.get("〔店名-M0430-共有A〕"), 値: notes.get("〔店舗ID-M0430-共有A〕") }]);
+    expect.soft(stores, "出力対象店舗（ログイン者のデフォルト検索店舗「店舗A」＝試験支店）").toEqual([{ 表示: 店名A(), 値: notes.get("〔店舗ID-M0430-共有A〕") }]);
     expect.soft(from, "価格調整発生期間の From（実行日の前日）").toBe(yesterday);
     expect.soft(to, "価格調整発生期間の To（実行日）").toBe(today);
   });
@@ -49,15 +49,15 @@ caseTest("IT-M04-30-002", async ({ page, notes, step, expected }) => {
   const screen = new BarcodeReplacementListPage(page);
   await step(1, async () => { await screen.open(); });
   await step(2, async () => {
-    await screen.chooseStore(notes.get("〔店名-M0430-共有A〕"), notes.get("〔店舗ID-M0430-共有A〕"));
+    await screen.chooseStore(店名A(), notes.get("〔店舗ID-M0430-共有A〕"));
     note(`「店舗A」を選んだあとの選択: ${(await screen.selectedStores()).map((s) => s.表示).join("、") || "なし"}`);
   });
   await step(3, async () => {
-    await screen.chooseStore(notes.get("〔店名-M0430-共有B〕"), notes.get("〔店舗ID-M0430-共有B〕"));
+    await screen.chooseStore(店名B(), notes.get("〔店舗ID-M0430-共有B〕"));
   });
   await expected(async () => {
     const multiple = await screen.出力対象店舗.evaluate((n) => (n as HTMLSelectElement).multiple);
     note(`出力対象店舗の選択欄は${multiple ? "複数選べる" : "1つだけ選べる"}作り`);
-    expect.soft(await screen.selectedStores(), "出力対象店舗で選ばれているのは「店舗B」（本店）だけ").toEqual([{ 表示: notes.get("〔店名-M0430-共有B〕"), 値: notes.get("〔店舗ID-M0430-共有B〕") }]);
+    expect.soft(await screen.selectedStores(), "出力対象店舗で選ばれているのは「店舗B」（本店）だけ").toEqual([{ 表示: 店名B(), 値: notes.get("〔店舗ID-M0430-共有B〕") }]);
   });
 });

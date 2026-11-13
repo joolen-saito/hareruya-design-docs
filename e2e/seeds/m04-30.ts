@@ -32,14 +32,19 @@ const ADMIN_NAME = "M04-30試験管理者（試験支店）";
  * 店舗A・店舗Bは、依頼者決定（2026-11-13）で「試験支店」（店舗ID 1574）と本店（店舗ID 1）に読み替える（店舗は登録しない）。
  * 店舗Aは試験支店、店舗Bは本店。店名は画面の選択肢から読む（手順・期待結果の店名はこの店名で読む）。
  */
+/** 店舗A・店舗Bに読み替えた店舗の店名（画面の選択肢から読んだもの。シードの中で決め、ケースは同じワーカーで読む）。シード表に無い呼び名を控えに使わないため、変数で持つ */
+const 実際の店名 = new Map<string, string>();
+export const 店名A = (): string => 実際の店名.get("A") ?? "試験支店";
+export const 店名B = (): string => 実際の店名.get("B") ?? "本店";
+
 defineSeed("S-M04-30-STORES", async ({ browser, notes, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const names = await 試験店舗の名前を読む(page);
     notes.set("〔店舗ID-M0430-共有A〕", 試験支店ID);
     notes.set("〔店舗ID-M0430-共有B〕", 本店ID);
-    notes.set("〔店名-M0430-共有A〕", names.試験支店);
-    notes.set("〔店名-M0430-共有B〕", names.本店);
+    実際の店名.set("A", names.試験支店);
+    実際の店名.set("B", names.本店);
     issue(店舗読み替えの注記("店舗A", names.試験支店, 試験支店ID));
     issue(店舗読み替えの注記("店舗B", names.本店, 本店ID));
     const screen = new BarcodeReplacementListPage(page);
