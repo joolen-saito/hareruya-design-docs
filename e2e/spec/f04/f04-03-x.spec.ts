@@ -32,9 +32,12 @@ async function 変更のボタン(page: Page): Promise<Locator> {
   if (!p) throw new Error(`ご注文方法指定画面に「お届け先情報を変更する」ボタンが無い（${paths.join("、") || "配送先のボタンなし"}）`);
   return page.locator(`button[data-path="${p}"]`).first();
 }
-async function 新規の入力を開く(page: Page): Promise<ShippingEditPage> {
+async function 新規の入力を開く(page: Page, 直接 = false): Promise<ShippingEditPage> {
   const sp = new ShoppingPage(page);
-  await sp.買い物かごから開く();
+  // 直接=true: ご注文方法指定画面をアドレスから開く。買い物かごから購入手続きへ進み直すと、アプリが注文手続きを作り直し、
+  // シードで DB に足した2件目の配送が別の注文手続きに残る（029。2026-11-13 開発環境で、1件目・2件目の配送が見つからなかった）
+  if (直接) await sp.直接開く();
+  else await sp.買い物かごから開く();
   await sp.押して配送先画面へ(await 新規のボタン(page));
   return new ShippingEditPage(page);
 }
@@ -348,7 +351,11 @@ caseTest("IT-F04-03-029", async ({ page, notes, step, expected }) => {
   let 記録: ReturnType<typeof 受注の配送一覧> = [];
   let ed = new ShippingEditPage(page);
   await step(1, async () => { 記録 = 受注の配送一覧(受注ID()); expect(記録.length, "注文手続き中の配送の件数").toBe(2); });
-  await step(2, async () => { ed = await 新規の入力を開く(page); });
+  await step(2, async () => {
+    ed = await 新規の入力を開く(page, true);
+    // 開いた画面が、シードで控えた1件目の配送のものであること（注文手続きが作り直されていない）
+    expect(new URL(page.url()).pathname, "開いた配送先の新規登録・変更画面の配送の番号").toMatch(new RegExp(`/shipping_edit/${notes.get("〔配送ID-F0403-029〕")}/?$`));
+  });
   await step(3, async () => { await 国を選ぶ(ed, "Japan"); await 日本の住所を入れる(ed, { 名称: "複数配送確認住所", 住所1: "港区芝公園" }); await ed.確認画面へ(); });
   await step(4, async () => { await ed.確認画面で登録する(); });
   let 後: ReturnType<typeof 受注の配送一覧> = [];

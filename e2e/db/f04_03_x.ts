@@ -112,7 +112,8 @@ export function 完了した受注ID一覧(会員ID: string): string[] {
 
 /** 都道府県のマスタの「日本国外」の番号と、東京都の番号 */
 export function 都道府県の番号(): { 国外: string; 東京都: string } {
-  const r = query(`select (select id::text from mtb_pref where name = '日本国外') as o, (select id::text from mtb_pref where name = '東京都') as t`)[0];
-  if (!r?.o || !r?.t) throw new Error("都道府県のマスタに「日本国外」または「東京都」が無い");
-  return { 国外: r.o, 東京都: r.t };
+  const r = query(`select (select id::text from mtb_pref where name = '日本国外') as o, (select id::text from mtb_pref where name = '東京都') as tokyo`)[0];
+  // 列の名前を t にすると、DB の窓口が包む「row_to_json(t)」の t と重なって止まる（2026-11-13 開発環境で 036〜039 が止まった）
+  if (!r?.o || !r?.tokyo) throw new Error("都道府県のマスタに「日本国外」または「東京都」が無い");
+  return { 国外: r.o, 東京都: r.tokyo };
 }

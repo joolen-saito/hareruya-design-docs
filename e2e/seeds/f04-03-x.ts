@@ -23,6 +23,7 @@ import { 既定のお届け先を削除済みにする, 完了した受注ID一�
 import { 処理中受注ID一覧 } from "../db/f04_02";
 import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
+import { Notes } from "../lib/notes";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { 会員を登録して待つ, 商品を作って入庫する, 作った商品 } from "../pages/admin/f04_setup";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
@@ -67,6 +68,8 @@ type 定め = {
 
 export type 状態 = { 会員: FrontMember; 会員ID: string; 商品: 作った商品; 言語: "ja" | "en"; 処理中の受注ID: string };
 const built = new Map<string, 状態>();
+/** シード表が控えると定めていない番号（範囲の間の配送先IDなど）。同じ実行の中だけ持つ */
+export const 控えの外 = new Map<string, string>();
 export function 状態の(seedId: string): 状態 {
   const s = built.get(seedId);
   if (!s) throw new Error(`${seedId} はまだ作っていない`);
@@ -151,8 +154,15 @@ async function 作る({ browser, seed, notes }: SeedCtx, d: 定め): Promise<voi
   let 二件目ID = "";
   if (d.二件目) 二件目ID = 二件目の配送を足す(seed.シードID, 処理中の受注ID, m.メール, d.二件目);
 
-  const 控える = (l: string, v: string) => { if (v) notes.set(l, v); };
-  // ケースの文はシード表に無い呼び名（〔注文手続き中ID-F0403-053〕など）も使うので、番号から呼び名を作って控える
+  // シード表が控えると定めた呼び名だけを控える（基盤が、シード表に無い呼び名を控えると止める）。
+  // 〔配送先ID-F0403-008A〕〜〔配送先ID-F0403-008T〕のような範囲の書き方は、両端の2つだけが呼び名として読まれるので、間の番号はここに持つ。
+  // ケースの文だけが使い、シード表が定めない呼び名（〔注文手続き中ID-F0403-053〕など）も控えない（正本の問題。ケースは呼び名が無いで止まる）。
+  const 定めた = new Set(Notes.labelsIn(seed["状態・属性"] + seed.投入方法));
+  const 控える = (l: string, v: string) => {
+    if (!v) return;
+    if (定めた.has(l)) notes.set(l, v);
+    else 控えの外.set(l, v);
+  };
   控える(`〔会員ID-F0403-${d.番号}〕`, 会員ID);
   控える(`〔商品ID-F0403-${d.番号}〕`, 商品.productId);
   控える(`〔注文手続き中ID-F0403-${d.番号}〕`, d.開かない ? "（ケースの手順1でご注文方法指定画面を開いたときに振られる。番号は控えない）" : 処理中の受注ID);
