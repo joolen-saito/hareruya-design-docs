@@ -12,10 +12,14 @@ import { registerGoodsCsv } from "./m03_01_goods_register";
 import { goodsRootCategoryLink } from "./product_masters";
 import { ProductSearchPage } from "./product_search";
 import { StockApprovalListPage, StockEditInput, StockListPage, fillStockEdit } from "./stock_edit";
-import { ensureTenant } from "./tenant";
+import { 試験支店, 試験支店の店舗ID } from "./reuse_store";
 
-/** 正本の呼び名と、画面に出す名前（店名・所属名は裁定 E09 で機能IDを付けた名前。M04-09・M04-08 の「試験店舗A」「試験所属A」と重ならない） */
-export const 試験店舗A = "試験店舗A（M04-13）";
+/**
+ * 正本の呼び名と、画面に出す名前（所属名は裁定 E09 で機能IDを付けた名前。M04-09・M04-08 の「試験所属A」と重ならない）。
+ * 店舗「試験店舗A（M04-13）」は、試験店舗の使い回し（2026-11-13 依頼者決定。pages/admin/reuse_store.ts）で作らず、「試験支店」で読み替える。
+ */
+export const 正本の試験店舗A = "試験店舗A（M04-13）";
+export const 試験店舗A: string = 試験支店.店名;
 export const 試験所属A = "試験所属A（M04-13）";
 export const 作業者名 = "M04-13作業者";
 export const 承認者名 = "M04-13承認者";
@@ -24,11 +28,11 @@ export const 連携作業者名 = "M04-13連携作業者";
 
 export type 在庫区分 = "EC-CUBE" | "スマレジ";
 
-/** 店舗登録で試験店舗A（M04-13）（開店）を、あれば使い、無ければ登録する */
-export async function ensureStoreA(page: Page, onIssue: (m: string) => void): Promise<string> {
-  return ensureTenant(page, {
-    店名: 試験店舗A, 店名カナ: "シケンテンポエー", 店名英語: "Test Store A", 支店URL: "m0413a", 店名略称3文字: "試験A", ショップ名略称: 試験店舗A,
-  }, onIssue);
+/** 試験店舗A（M04-13）の代わりの試験支店の店舗IDを返す。店舗は作らない（試験店舗の使い回し・2026-11-13 依頼者決定） */
+export async function ensureStoreA(_page: Page, onIssue: (m: string) => void): Promise<string> {
+  const id = 試験支店の店舗ID();
+  onIssue(`店舗「${正本の試験店舗A}」は作らず、「${試験店舗A}」（店舗ID ${id}）で読み替えた（試験店舗の使い回し・2026-11-13 依頼者決定）`);
+  return id;
 }
 
 /** マスタデータ管理で所属のマスタを開く。行は「ID」「名称」の2つの入力欄 */
