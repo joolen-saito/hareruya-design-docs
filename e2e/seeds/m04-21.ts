@@ -19,6 +19,7 @@
  * 「本店」は手元の環境の店舗ID 1（親店舗）。店名は環境で違う（手元は「Hareruya」）ので、在庫検索一覧の検索欄「店舗」の選択肢から読む。
  */
 import fs from "node:fs";
+import { rcFixed } from "../lib/run_marker";
 import { expect, Page, test } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
@@ -66,6 +67,16 @@ defineSeed("S-M04-21-TEMPLATE-044", async () => {
 export type RcPerson = { 名前: string; account: Account; email: string };
 export type RcOrg = { 申請者: RcPerson; 承認者: RcPerson; 所属: string };
 
+/** rcOrg と同じ形で、名前・ログインID・メールアドレスに決まった印（実行をまたいで使い回す）を付けたもの */
+function rcOrgFixed(prefix: string, label: string, password: string): RcOrg {
+  const o = rcOrg(prefix, label, password);
+  const fix = (p: RcPerson): RcPerson => {
+    const loginId = rcFixed(p.account.loginId).toLowerCase();
+    return { 名前: rcFixed(p.名前), account: { loginId, password: p.account.password }, email: `${loginId}@example.test` };
+  };
+  return { 申請者: fix(o.申請者), 承認者: fix(o.承認者), 所属: o.所属 };
+}
+
 function rcOrg(prefix: string, label: string, password: string): RcOrg {
   return {
     申請者: { 名前: `${label}申請者`, account: { loginId: `${prefix}-ap`, password }, email: `${prefix}-ap@example.test` },
@@ -74,7 +85,11 @@ function rcOrg(prefix: string, label: string, password: string): RcOrg {
   };
 }
 
-export const RC057 = rcOrg("rc0421-001", "RC0421-001", "Passw0rd-RC0421001");
+/**
+ * 057 の申請者・承認者。前の回に「RC0421-001支店」（片付ける店舗）の所属で作った人がいるので、試験支店に所属する人として、
+ * 決まった印（rcFixed）付きの別の名前・ログインIDで作り直す（試験店舗の使い回し・2026-11-13。前の人は書き換えない）
+ */
+export const RC057 = rcOrgFixed("rc0421-001", "RC0421-001", "Passw0rd-RC0421001");
 export const RC058 = rcOrg("rc0421-002", "RC0421-002", "Passw0rd-RC0421002");
 
 /** 057 の支店（シード表の店名「RC0421-001支店」）。試験店舗の使い回しで店舗を作らず、既にある試験支店で読み替える */
