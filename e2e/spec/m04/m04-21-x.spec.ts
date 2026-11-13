@@ -677,8 +677,10 @@ caseTest("IT-M04-21-042", async (ctx) => {
     if (記録.length !== 1) { note(`${name} の取込の記録が ${記録.length} 件で、開くファイルが決まらない`); return; }
     const 取り出した = await 履歴のファイルを取り出す(ctx.page, 記録[0]);
     const 送った = fs.readFileSync(caseCsvPath(name));
-    同じ内容 = 取り出した.equals(送った);
-    note(`取り出したファイル ${取り出した.length} バイト・アップロードしたファイル ${送った.length} バイト・同じ内容 ${同じ内容}`);
+    // アプリはアップロード時に先頭の BOM（EF BB BF）を除いて保存する。BOM は中身ではないので、両方から除いて比べる（2026-11-14 流し直しのセッションの確かめ）
+    const BOMを除く = (b: Buffer): Buffer => (b.length >= 3 && b[0] === 0xef && b[1] === 0xbb && b[2] === 0xbf ? b.subarray(3) : b);
+    同じ内容 = BOMを除く(取り出した).equals(BOMを除く(送った));
+    note(`取り出したファイル ${取り出した.length} バイト・アップロードしたファイル ${送った.length} バイト（先頭の BOM を除いて比べた）・同じ内容 ${同じ内容}`);
   });
   await ctx.expected(async () => {
     expect.soft(h.length, "M0421-042-A の在庫変動履歴の件数").toBe(1);
