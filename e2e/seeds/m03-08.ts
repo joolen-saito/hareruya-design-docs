@@ -16,7 +16,7 @@
  *   006 はシード表が「廃止の規格の在庫はDBへ直接設定する」と定めるが、廃止にする前に画面で入庫して同じ状態にした（正本の外の補い）。
  * - スマレジ連携有効（003）・スマレジ在庫（009・032）は作らない（スマレジは後回しの決定。review/recheck_not_buildable_M03-08.tsv）。
  */
-import { Browser, Page } from "@playwright/test";
+import { Browser, Locator, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { ある言語, 部門が有効か, 状態の名前 } from "../db/m03_09";
 import { 在庫承認の最大ID } from "../db/f03_08";
@@ -138,6 +138,11 @@ async function 規格を整える(page: Page, v: { 言語?: string; 状態?: 状
   if (!/\/product\/product\/class\/\d+\/edit\/\d+$/.test(p) && !(v.公開 === "廃止" && /\/product\/product\/class\/\d+$/.test(p))) throw new Error(`${what}: 登録後に商品規格登録編集画面へ移らない（${r.URL}）`);
 }
 
+/** 選択欄で選ばれている選択肢の表示（読み取りだけの欄も読む） */
+async function 選ばれている表示(sel: Locator): Promise<string> {
+  return ((await sel.locator("option:checked").first().innerText({ timeout: 30_000 }).catch(() => "")) ?? "").trim();
+}
+
 /** 本店・EC-CUBE の在庫編集で入庫し、別のメンバーが在庫編集承認一覧で承認する */
 async function 本店に入庫する(browser: Browser, code: string, 数: number, what: string, issue: (m: string) => void): Promise<void> {
   await 管理者を用意する(browser);
@@ -207,7 +212,14 @@ async function 商品を作る(browser: Browser, seedId: string, d: 商品の定
       if (k === 取込の規格) {
         const e = new ClassEditPage(page);
         await e.編集で開く(商品ID, 仮の規格ID);
-        await 規格を整える(page, { 言語: 仮の言語, 状態: 仮の状態, 公開, 販売制限数: k.販売制限数, 価格: k.価格 }, what, issue);
+        // 商品規格編集画面では言語・状態は選べない（既にある規格は読み取りだけの欄）。シード表もここでは公開ステータス・部門・スマレジ連携だけを入れる。
+        // 取り込みが作った言語（CSV の言語(ID)＝日本語）と状態（NM）が、この規格に要る値（仮の値を含む）と同じかを確かめる
+        const 今の言語 = await 選ばれている表示(e.言語);
+        const 今の状態 = await 選ばれている表示(e.状態);
+        if (今の言語 !== 仮の言語 || 今の状態 !== 状態の名[仮の状態]) {
+          throw new Error(`${what}: 取り込みでできた規格の言語・状態が「${今の言語}・${今の状態}」で、シード表の「${仮の言語}・${状態の名[仮の状態]}」と違う（編集画面では変えられない）`);
+        }
+        await 規格を整える(page, { 公開, 販売制限数: k.販売制限数, 価格: k.価格 }, what, issue);
         ids.set(k.呼び名, 仮の規格ID);
       } else {
         await openClassList(page, 商品ID);
