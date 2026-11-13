@@ -21,6 +21,7 @@ import { query } from "../lib/db";
 import fs from "node:fs";
 import { Browser, expect, Page, test } from "@playwright/test";
 import { MAIL_URL, SETUP_ADMIN } from "../config/env";
+import { RUN_MARK } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession as withAdminSessionRaw } from "../lib/session";
 import { fillStockEdit, searchStockByCode, stockInRow, submitStockEdit } from "../pages/admin/m04_02_rc_stock";
@@ -388,11 +389,12 @@ defineRc("116", RC116, 廃棄3(RC116.code, "RC0432-007-廃棄"));
 
 // 118〜134（CBORG・CBSTOCK）
 export type Cb32 = { org: Org32; store: Store32; code: string; name: string; label: string; shop: string };
+/** 試験支店は共有なので、申請者・承認者に実行ごとの印を付け、前の実行の承認待ちの行（消せない）と混ざらないようにする */
 export function cbm(no: string, digit: string): Cb32 {
   const shop = `CBM0432-${no}支店`;
   return {
-    org: org32(`cbm0432-${no}`, `CBM0432-${no}`, `Passw0rd-CBM0432${no}`), store: branch32(shop, `cbm0432s${no}`, digit),
-    code: markCode(`CBM0432-${no}-CODE`), name: `CBM0432-${no}-NAME`, label: `CBM0432-${no}`, shop,
+    org: org32(`cbm0432-${no}-${RUN_MARK.toLowerCase()}`, `CBM0432-${no}-${RUN_MARK}`, `Passw0rd-CBM0432${no}`), store: branch32(shop, `cbm0432s${no}`, digit),
+    code: markCode(`CBM0432-${no}-CODE`), name: `CBM0432-${no}-NAME`, label: `CBM0432-${no}`, shop: 試験支店の店名(shop),
   };
 }
 export const CB: Record<string, Cb32> = {};
@@ -439,8 +441,8 @@ export type Cbx = { org: Org32; store: Store32; code: string; name: string; shop
 export function cbx(no: string): Cbx {
   const shop = `CB0432-${no}支店`;
   return {
-    org: org32(`cbm0432-${no}`, `CB0432-${no}`, `Passw0rd-CBM0432${no}`), store: branch32(shop, `cbm0432s${no}`, `B${no.slice(1)}`),
-    code: markCode(`CB0432${no}CODE`), name: `CB0432-${no}-NAME`, shop, label: `CB0432-${no}`,
+    org: org32(`cbm0432-${no}-${RUN_MARK.toLowerCase()}`, `CB0432-${no}-${RUN_MARK}`, `Passw0rd-CBM0432${no}`), store: branch32(shop, `cbm0432s${no}`, `B${no.slice(1)}`),
+    code: markCode(`CB0432${no}CODE`), name: `CB0432-${no}-NAME`, shop: 試験支店の店名(shop), label: `CB0432-${no}`,
   };
 }
 export const CBX: Record<string, Cbx> = {};
