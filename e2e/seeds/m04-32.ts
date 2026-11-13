@@ -30,7 +30,8 @@ import {
 } from "../pages/admin/m04_21_stock_change_csv";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
 import { registerMove, requestOutboundApproval, searchStock } from "../pages/admin/m04_24_stock_move";
-import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
+import { M0424StoreInput } from "../pages/admin/m04_24_store";
+import { 店舗読み替えの注記, 試験支店ID } from "../pages/admin/test_store";
 import { createGoodsProduct } from "../pages/admin/m04_31_seed_ops";
 import {
   checkRow, confirmApprove, confirmReject, deleteMailsTo, expectDone, listRows, mailsTo, openBulk, searchApprovalList, topMessages,
@@ -57,7 +58,8 @@ const person = (loginId: string, 名前: string, password: string): Person => ({
 
 /** ログインIDの接頭辞・表示名の接頭辞・パスワードから申請者1人・承認者1人の組を作る（例: rc0432-001 / RC0432-001） */
 export function org32(prefix: string, label: string, password: string): Org32 {
-  return { 申請者: [person(`${prefix}-ap`, `${label}申請者`, password)], 承認者: person(`${prefix}-ar`, `${label}承認者`, password) };
+  // 依頼者決定（2026-11-13）で支店は試験支店（1574）に読み替えたので、申請者・承認者も作り直す（前の管理者は消す予定の支店に結びついている）
+  return { 申請者: [person(`${prefix}t-ap`, `${label}申請者（試験支店）`, password)], 承認者: person(`${prefix}t-ar`, `${label}承認者（試験支店）`, password) };
 }
 
 /** 支店（店名・支店URLはシード表の値、店名略称3文字はほかと重ならない値。そのほかは「任意の有効な値」） */
@@ -79,15 +81,22 @@ export function branch32(店名: string, 支店URL: string, 略称: string): Sto
 export const MAIN: Store32 = { 本店: true };
 
 /** 店舗IDと店名。本店は在庫検索一覧の検索欄「店舗」の選択肢から店舗ID 1 の店名を読む */
+let 試験支店の店名キャッシュ: string | null = null;
+/** シード表の支店名（論理名）を、読み替えた試験支店の実際の店名にする（読む前は店名「試験支店」）。ケースの期待値・検索の店名に使う */
+export function 試験支店の店名(_シード表の支店名: string): string { return 試験支店の店名キャッシュ ?? "試験支店"; }
+
 async function resolveStore(page: Page, store: Store32, issue: (m: string) => void): Promise<{ id: string; 店名: string }> {
   if ("本店" in store) return { id: "1", 店名: await new StockListPage(page).shopNameById("1") };
-  return { id: await ensureStore(page, store.支店, issue), 店名: store.支店.店名 };
+  // 依頼者決定（2026-11-13）: 試験店舗は試験支店（1574）と本店で読み替える（支店は登録しない）
+  const 店名 = await new StockListPage(page).shopNameById(試験支店ID);
+  試験支店の店名キャッシュ = 店名;
+  issue(店舗読み替えの注記(store.支店.店名, 店名, 試験支店ID));
+  return { id: 試験支店ID, 店名 };
 }
 
 /** 店舗の店名（シードを作らずに読むだけ） */
 export async function storeName(browser: Browser, account: Account, store: Store32): Promise<string> {
-  if (!("本店" in store)) return store.支店.店名;
-  return withAdminSession(browser, account, (page) => new StockListPage(page).shopNameById("1"));
+  return withAdminSession(browser, account, (page) => new StockListPage(page).shopNameById("本店" in store ? "1" : 試験支店ID));
 }
 
 /** 店舗を用意し、申請者・承認者を登録する（あれば内容を確かめて使う）。全員ログインできることを確かめる */
@@ -225,7 +234,7 @@ export function defineStockSeed(seedId: string, o: {
         });
       } else if (op.op === "在庫変更CSV") {
         if (!dept) dept = await departmentOf(browser, o.org.承認者.名前);
-        const storeId = "本店" in o.store ? "1" : await withAdminSession(browser, SETUP_ADMIN, (page) => ensureStore(page, (o.store as { 支店: M0424StoreInput }).支店, issue));
+        const storeId = "本店" in o.store ? "1" : 試験支店ID;
         await withAdminSession(browser, o.org.申請者[0].account, async (page) => {
           await openStockChangeCsv(page);
           const template = await downloadBytes(await downloadStockChangeTemplate(page));
@@ -252,7 +261,7 @@ export function defineStockSeed(seedId: string, o: {
           issue(`${what}: ファイル ${op.file}（${op.code},${op.増減数},${op.単価}）を登録した: ${JSON.stringify(m.成功)}`);
         });
       } else if (op.op === "在庫移動") {
-        const storeId = "本店" in o.store ? "1" : await withAdminSession(browser, SETUP_ADMIN, (page) => ensureStore(page, (o.store as { 支店: M0424StoreInput }).支店, issue));
+        const storeId = "本店" in o.store ? "1" : 試験支店ID;
         await withAdminSession(browser, o.org.申請者[0].account, async (page) => {
           const list = await searchStock(page, op.code, storeId);
           const moveId = await registerMove(page, list.row(op.code, shop, "EC-CUBE"), { 入庫先店舗ID: "1", 入庫先在庫区分: "EC-CUBE", 移動点数: op.点数 }, what);

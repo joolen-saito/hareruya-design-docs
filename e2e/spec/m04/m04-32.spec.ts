@@ -24,7 +24,7 @@ import {
   ApprovalSearch, checkRow, closeModal, confirmApprove, confirmReject, downloadModalCsv, LineItem, ListRow, listRows, mailsTo,
   modalButtons, modalLineItems, modalLineText, num, openBulk, openModalFromRow, searchApprovalList,
 } from "../../pages/admin/m04_32_approval_list";
-import { CB, CBX, DP104, DP105, DP106, DP108, DP109, Org32, RC110, RC111, RC112, RC113, RC114, RC115, RC116 } from "../../seeds/m04-32";
+import { 試験支店の店名, CB, CBX, DP104, DP105, DP106, DP108, DP109, Org32, RC110, RC111, RC112, RC113, RC114, RC115, RC116 } from "../../seeds/m04-32";
 import { StockListPage } from "../../pages/admin/stock_edit";
 
 // 待ちの上限（誤ったセレクタや移らない画面でロックを長く持たないように。共通の設定は変えず、このファイルのテストだけに効かせる）
@@ -69,7 +69,7 @@ const applicants = (org: Org32) => org.申請者.map((p) => p.名前);
 // ---- 104・105: 2行を一括承認 ----
 
 caseTest("IT-M04-32-104", async ({ page, step, expected, c }) => {
-  const shop = "DP0432-104支店";
+  const shop = 試験支店の店名("DP0432-104支店");
   let after: { CODE1: number; CODE2: number } = { CODE1: NaN, CODE2: NaN };
   await step(1, () => loginAdmin(page, DP104.承認者.account));
   let rows: ListRow[] = [];
@@ -95,7 +95,7 @@ caseTest("IT-M04-32-104", async ({ page, step, expected, c }) => {
 });
 
 caseTest("IT-M04-32-105", async ({ page, step, expected, c }) => {
-  const shop = "DP0432-105支店";
+  const shop = 試験支店の店名("DP0432-105支店");
   const addr = ["dp0432-105-ap1@example.test", "dp0432-105-ap2@example.test"];
   const got: Record<string, string[]> = {};
   await step(1, () => loginAdmin(page, DP105.承認者.account));
@@ -132,7 +132,7 @@ caseTest("IT-M04-32-105", async ({ page, step, expected, c }) => {
 // ---- 106: 廃棄の申請の確認モーダル ----
 
 caseTest("IT-M04-32-106", async ({ page, step, expected, c }) => {
-  const shop = "DP0432-106支店";
+  const shop = 試験支店の店名("DP0432-106支店");
   let items: LineItem[] = [];
   await step(1, () => loginAdmin(page, DP106.承認者.account));
   let rows: ListRow[] = [];
@@ -152,7 +152,7 @@ caseTest("IT-M04-32-106", async ({ page, step, expected, c }) => {
 // ---- 108・109: 端数の総原価 ----
 
 caseTest("IT-M04-32-108", async ({ page, step, expected, c }) => {
-  const shop = "DP0432-108支店";
+  const shop = 試験支店の店名("DP0432-108支店");
   const code = DP108.code;
   let modal: number | null = null;
   let csv: number | null = null;
@@ -188,7 +188,7 @@ caseTest("IT-M04-32-108", async ({ page, step, expected, c }) => {
 });
 
 caseTest("IT-M04-32-109", async ({ page, step, expected, c }) => {
-  const shop = "DP0432-109支店";
+  const shop = 試験支店の店名("DP0432-109支店");
   const code = DP109.code;
   let modal: number | null = null;
   let total = NaN;
@@ -250,7 +250,7 @@ const ymdhm = (d: Date) => `${d.getFullYear()}/${String(d.getMonth() + 1).padSta
 
 caseTest("IT-M04-32-110", async ({ page, step, expected }) => {
   const r = RC110;
-  const shop = "RC0432-001支店";
+  const shop = 試験支店の店名("RC0432-001支店");
   let before: HistoryRow[] = [];
   let after: HistoryRow[] = [];
   await step(1, () => loginAdmin(page, r.org.承認者.account));
@@ -313,7 +313,7 @@ async function decide(page: Page, shop: string, org: Org32, which: "一括承認
 
 caseTest("IT-M04-32-111", async ({ page, step, expected }) => {
   const r = RC111;
-  const shop = "RC0432-002支店";
+  const shop = 試験支店の店名("RC0432-002支店");
   let before = { 在庫: NaN, 原価単価: NaN, 総原価: NaN };
   let after = { 在庫: NaN, 原価単価: NaN, 総原価: NaN };
   await step(1, () => loginAdmin(page, r.org.承認者.account));
@@ -328,7 +328,7 @@ caseTest("IT-M04-32-111", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-32-112", async ({ page, step, expected }) => {
   const r = RC112;
-  const shop = "RC0432-003支店";
+  const shop = 試験支店の店名("RC0432-003支店");
   let before = NaN;
   let after = NaN;
   await step(1, () => loginAdmin(page, r.org.承認者.account));
@@ -382,7 +382,7 @@ caseTest("IT-M04-32-115", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-32-114", async ({ page, step, expected }) => {
   const r = RC114;
-  const shop = "RC0432-005支店";
+  const shop = 試験支店の店名("RC0432-005支店");
   let before: HistoryRow[] = [];
   let after: HistoryRow[] = [];
   await step(1, () => loginAdmin(page, r.org.承認者.account));
@@ -403,7 +403,7 @@ caseTest("IT-M04-32-114", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-32-116", async ({ page, step, expected }) => {
   const r = RC116;
-  const shop = "RC0432-007支店";
+  const shop = 試験支店の店名("RC0432-007支店");
   let before: HistoryRow[] = [];
   let after: HistoryRow[] = [];
   let shownBefore = "";
