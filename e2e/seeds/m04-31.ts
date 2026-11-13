@@ -172,8 +172,9 @@ defineAllZero("S-M04-31-REGMEMO1025-029");
 
 // ---- RC-*（棚卸結果の在庫反映が他機能へ届くケース） ----
 
-export const RC160 = rcOrg("rc0431-001", "RC0431-001", "Passw0rd-RC0431001");
-export const RC161 = rcOrg("rc0431-002", "RC0431-002", "Passw0rd-RC0431002");
+/** 160・161 は、依頼者決定（2026-11-13）で支店を登録せず本店に読み替えた（試験店舗は試験支店と本店だけ）。管理者は本店所属で作り直す（前の管理者は消す予定の支店に結びついている） */
+export const RC160 = rcOrg("rc0431t-001", "RC0431T-001", "Passw0rd-RC0431001");
+export const RC161 = rcOrg("rc0431t-002", "RC0431T-002", "Passw0rd-RC0431002");
 export const RC162 = rcOrg("rc0431-003", "RC0431-003", "Passw0rd-RC0431003");
 
 const branch = (no: string, digit: string): RcStore => ({
@@ -183,8 +184,8 @@ const branch = (no: string, digit: string): RcStore => ({
     都道府県: "東京都", 住所1: "新宿区新宿2-2-2", 住所2: "晴ビル31F", 電話番号: "03-0431-0" + no,
   },
 });
-export const RC160_STORE = branch("001", "R31");
-export const RC161_STORE = branch("002", "R32");
+export const RC160_STORE: RcStore = { 本店: true };
+export const RC161_STORE: RcStore = { 本店: true };
 export const RC162_STORE: RcStore = { 本店: true };
 
 defineRcOrg("S-M04-31-RC-ORG-160", RC160, RC160_STORE);

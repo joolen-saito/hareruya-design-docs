@@ -322,11 +322,15 @@ async function searchHistory(page: Page, code: string, shop: string): Promise<Hi
 
 caseTest("IT-M04-31-160", async ({ page, step, expected, notes }) => {
   const plan = RC160_PLAN;
-  const shop = "RC0431-001支店";
+  let shop = "";
   const id = notes.get(plan.呼び名);
   let before: HistoryRow[] = [];
   let after: HistoryRow[] = [];
-  await step(1, () => loginAdmin(page, RC160.承認者.account));
+  await step(1, async () => {
+    await loginAdmin(page, RC160.承認者.account);
+    shop = await mainShopName(page);
+    note(`依頼者決定 2026-11-13: 試験店舗は試験支店と本店で読み替えた（シード表の店名「RC0431-001支店」の代わりに、本店（店舗ID 1）「${shop}」を使った）`);
+  });
   await step(2, async () => {
     before = await searchHistory(page, plan.商品コード, shop);
     note("期待結果の「在庫増減数」は一覧の見出し「在庫変動数」、「在庫区分」は見出し「在庫場所」の列で見た");
@@ -370,11 +374,15 @@ async function readStockRow(page: Page, code: string, shop: string): Promise<{ �
 
 caseTest("IT-M04-31-161", async ({ page, step, expected, notes }) => {
   const plan = RC161_PLAN;
-  const shop = "RC0431-002支店";
+  let shop = "";
   const id = notes.get(plan.呼び名);
   let before = { 在庫: NaN, 原価単価: NaN, 総原価: NaN };
   let after = { 在庫: NaN, 原価単価: NaN, 総原価: NaN };
-  await step(1, () => loginAdmin(page, RC161.承認者.account));
+  await step(1, async () => {
+    await loginAdmin(page, RC161.承認者.account);
+    shop = await mainShopName(page);
+    note(`依頼者決定 2026-11-13: 試験店舗は試験支店と本店で読み替えた（シード表の店名「RC0431-002支店」の代わりに、本店（店舗ID 1）「${shop}」を使った）`);
+  });
   await step(2, async () => { before = await readStockRow(page, plan.商品コード, shop); });
   await step(3, async () => { await new InventoryPlanListPage(page).open(); });
   await step(4, () => openPlanFromList(page, shop, plan, id));
