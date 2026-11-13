@@ -21,6 +21,21 @@ export function 規格を削除済みにする(what: string, 商品規格ID: str
   updateOwnRows(`${what}: 削除済み`, { table: "dtb_product_class", key: "id", ids: 商品規格ID, set: { product_status_id: 3, visible: false }, owner: 持ち主() });
 }
 
+/** E2E の商品規格の本店・EC-CUBE の在庫数を変える（シード表の「廃止の規格の本店ECCUBE在庫はDBへ直接設定する」。廃止の規格は在庫編集で入庫できず、在庫がある規格は廃止にできない） */
+export function 本店ECCUBE在庫を設定する(what: string, 商品規格ID: string, 在庫数: number): void {
+  const r = query(`select ps.id::text as id from dtb_product_stock ps where ps.product_class_id = $1::int and ps.base_info_id = 1 and ps.stock_location_id = 1`, [商品規格ID]);
+  if (r.length !== 1) throw new Error(`${what}: 本店・EC-CUBE の在庫の行が1行でない（${r.length}行）`);
+  updateOwnRows(`${what}: 本店ECCUBE在庫${在庫数}`, {
+    table: "dtb_product_stock", key: "id", ids: [String(r[0].id)], set: { stock: 在庫数 },
+    owner: { sql: `select ps.id from dtb_product_stock ps join dtb_product_class pc on pc.id = ps.product_class_id where pc.product_code like $1`, params: [`%-${RUN_MARK}`] },
+  });
+}
+/** 本店・EC-CUBE の在庫数 */
+export function 本店ECCUBE在庫(商品規格ID: string): number | null {
+  const r = query(`select ps.stock::text as n from dtb_product_stock ps where ps.product_class_id = $1::int and ps.base_info_id = 1 and ps.stock_location_id = 1`, [商品規格ID])[0];
+  return r ? Number(r.n) : null;
+}
+
 export type 規格の状態 = { 削除済み: boolean; 言語あり: boolean; 状態あり: boolean };
 /** 商品規格の削除状態と、言語・状態が設定されているか */
 export function 規格の状態(商品規格ID: string): 規格の状態 | null {

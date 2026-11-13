@@ -12,15 +12,15 @@
  * - 画面で作れない状態は、E2E が作った商品規格だけに DB で書き足す（依頼者決定 2026-11-10。db/m03_08.ts）:
  *   言語未設定・状態未設定（画面は仮の値で登録し、DB で外す）。
  *   「商品規格0件（取り込みでできた規格をDBで直接削除する）」は、アプリの商品規格の削除と同じく、公開ステータスを廃止にして削除済みの印を付ける（行は消さない。正本の外の補い）。
- * - 在庫（006 の本店ECCUBE在庫1・033 の本店ECCUBE在庫5）: 在庫検索一覧から本店・EC-CUBE の在庫編集で入庫し、別のメンバーが承認する（F04 の登録者・承認者）。
- *   006 はシード表が「廃止の規格の在庫はDBへ直接設定する」と定めるが、廃止にする前に画面で入庫して同じ状態にした（正本の外の補い）。
+ * - 在庫: 033 の本店ECCUBE在庫5は、在庫検索一覧から本店・EC-CUBE の在庫編集で入庫し、別のメンバーが承認する（F04 の登録者・承認者）。
+ *   006 の廃止の規格の本店ECCUBE在庫1は、シード表のとおり廃止にしたあと DB で設定する（アプリは在庫がある規格を廃止にできず、2026-11-13 の流しで止まった）。
  * - スマレジ連携有効（003）・スマレジ在庫（009・032）は作らない（スマレジは後回しの決定。review/recheck_not_buildable_M03-08.tsv）。
  */
 import { Browser, Locator, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { ある言語, 部門が有効か, 状態の名前 } from "../db/m03_09";
 import { 在庫承認の最大ID } from "../db/f03_08";
-import { 規格の言語を外す, 規格の状態を外す, 規格を削除済みにする, 商品がある, 商品コードの規格の数 } from "../db/m03_08";
+import { 規格の言語を外す, 規格の状態を外す, 規格を削除済みにする, 商品がある, 商品コードの規格の数, 本店ECCUBE在庫を設定する, 本店ECCUBE在庫 } from "../db/m03_08";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
 import { rc, rcFixed } from "../lib/run_marker";
@@ -231,10 +231,9 @@ async function 商品を作る(browser: Browser, seedId: string, d: 商品の定
       notes.set(`〔規格ID-M0308-${k.呼び名}〕`, ids.get(k.呼び名)!);
     }
   });
-  // 2) 在庫（廃止にする前に入庫する）
-  for (const k of d.規格) if (k.在庫) {
+  // 2) 在庫（公開・非公開の規格は在庫編集で入庫して承認する。廃止の規格はシード表のとおり、廃止にしたあと DB で設定する＝5)）
+  for (const k of d.規格) if (k.在庫 && k.公開 !== "廃止") {
     await 本店に入庫する(browser, 印つき(k.コード), k.在庫, `${seedId}: ${印つき(k.コード)}`, issue);
-    if (k.公開 === "廃止") issue(`${seedId}: シード表は廃止の規格の本店ECCUBE在庫${k.在庫}をDBへ直接設定すると定めるが、廃止にする前に在庫編集で入庫して同じ状態にした（正本の外の補い）`);
   }
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
@@ -256,6 +255,12 @@ async function 商品を作る(browser: Browser, seedId: string, d: 商品の定
   if (仮の規格の扱い === "DBで削除済み") {
     規格を削除済みにする(seedId, [仮の規格ID]);
     issue(`${seedId}: 「商品規格0件（取り込みでできた規格をDBで直接削除）」は、アプリの商品規格の削除と同じく、その規格を公開ステータス廃止・削除済みの印にした（行は消さない。正本の外の補い）`);
+  }
+  for (const k of d.規格) if (k.在庫 && k.公開 === "廃止") {
+    // アプリは在庫がある規格を廃止にできない（「在庫がある商品規格は廃止にできません」）。シード表のとおり、廃止にしたあと DB で設定する
+    本店ECCUBE在庫を設定する(`${seedId}: ${印つき(k.コード)}`, ids.get(k.呼び名)!, k.在庫);
+    if (本店ECCUBE在庫(ids.get(k.呼び名)!) !== k.在庫) throw new Error(`${seedId}: ${印つき(k.コード)} の本店・EC-CUBE の在庫が ${k.在庫} にならない`);
+    issue(`${seedId}: 廃止の規格の本店ECCUBE在庫${k.在庫}は、シード表のとおり廃止にしたあと DB で設定した（E2E の規格の在庫の行だけ）`);
   }
   const 言語なし = d.規格.filter((k) => k.言語 === "未設定").map((k) => ids.get(k.呼び名)!);
   const 状態なし = d.規格.filter((k) => k.状態 === "未設定").map((k) => ids.get(k.呼び名)!);
