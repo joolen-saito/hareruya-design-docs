@@ -93,8 +93,16 @@ export async function registerStockChangeCsv(page: Page, v: 在庫変更CSVの�
     const hit = opts.find((o) => o.value === 先の所属 || o.label === 先の所属);
     if (hit) { await department0.selectOption(hit.value); 所属を選んだ = true; }
   }
-  await expect(members.locator("option").filter({ hasText: new RegExp(`^\\s*${v.承認者}\\s*$`) }),
-    `店舗「${v.店舗}」の承認通知先に「${v.承認者}」が出る`).toHaveCount(1, { timeout: 90_000 });
+  try {
+    await expect(members.locator("option").filter({ hasText: new RegExp(`^\\s*${v.承認者}\\s*$`) }),
+      `店舗「${v.店舗}」の承認通知先に「${v.承認者}」が出る`).toHaveCount(1, { timeout: 90_000 });
+  } catch (e) {
+    // 原因を探る材料: 選ばれている店舗の番号・所属・候補の数
+    const shopValue = await form.locator("#admin_stock_change_csv_list_change_base_info").inputValue().catch(() => "?");
+    const dept = await department0.inputValue().catch(() => "?");
+    const names = await members.locator("option").allTextContents().catch(() => []);
+    throw new Error(`${(e as Error).message.split("\n")[0]}（選ばれている店舗ID ${shopValue}・所属「${dept}」・承認通知先の候補 ${names.length} 件。指定の店舗ID ${v.店舗ID ?? "なし"}・DBで調べた承認者の所属「${先の所属}」）`);
+  }
 
   await (await radioByLabel(form.locator('input[name="admin_stock_change_csv_list[change_stock_location_id]"]'), v.在庫区分)).check();
 

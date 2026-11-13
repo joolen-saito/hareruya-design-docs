@@ -21,10 +21,11 @@ import { 試験支店, 試験支店の店舗ID } from "./reuse_store";
 export const 正本の試験店舗A = "試験店舗A（M04-13）";
 export const 試験店舗A: string = 試験支店.店名;
 export const 試験所属A = "試験所属A（M04-13）";
-export const 作業者名 = "M04-13作業者";
-export const 承認者名 = "M04-13承認者";
-export const 権限なし名 = "M04-13権限なしユーザー";
-export const 連携作業者名 = "M04-13連携作業者";
+/** 管理者は、試験支店の所属で作り直した（前の管理者は消す予定の試験店舗A（M04-13）に結びついている。2026-11-13） */
+export const 作業者名 = "M04-13作業者（試験支店）";
+export const 承認者名 = "M04-13承認者（試験支店）";
+export const 権限なし名 = "M04-13権限なしユーザー（試験支店）";
+export const 連携作業者名 = "M04-13連携作業者（試験支店）";
 
 export type 在庫区分 = "EC-CUBE" | "スマレジ";
 

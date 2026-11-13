@@ -38,10 +38,10 @@ import {
   SplitApprovalPage, splitApprovalPath, SplitEditPage, splitEditPath, SplitJoinListPage,
 } from "../pages/admin/m04_13_split_join";
 
-export const M0413_OP: Account = { loginId: "m0413_operator", password: "Passw0rd!M0413Op" };
-export const M0413_APP: Account = { loginId: "m0413_approver", password: "Passw0rd!M0413Ap" };
-export const M0413_NOAUTH: Account = { loginId: "m0413_noauth", password: "Passw0rd!M0413No" };
-export const M0413L_OP: Account = { loginId: "m0413l_operator", password: "Passw0rd!M0413L" };
+export const M0413_OP: Account = { loginId: "m0413t_operator", password: "Passw0rd!M0413Op" };
+export const M0413_APP: Account = { loginId: "m0413t_approver", password: "Passw0rd!M0413Ap" };
+export const M0413_NOAUTH: Account = { loginId: "m0413t_noauth", password: "Passw0rd!M0413No" };
+export const M0413L_OP: Account = { loginId: "m0413tl_operator", password: "Passw0rd!M0413L" };
 
 /** 分割先CSV（正本のシードが名前を決めて作るファイル）の置き場 */
 export const M0413_CSV_DIR = path.join(STATE_DIR, "m04-13");
@@ -86,15 +86,15 @@ async function storeAMember(browser: SeedCtx["browser"], account: Account, 名�
 }
 
 defineSeed("S-M04-13-OP", { needs: ["S-M04-13-ENV"] }, async ({ browser }) => {
-  await storeAMember(browser, M0413_OP, 作業者名, "m0413_operator@example.test");
+  await storeAMember(browser, M0413_OP, 作業者名, "m0413t_operator@example.test");
 });
 
 defineSeed("S-M04-13-APP", { needs: ["S-M04-13-ENV"] }, async ({ browser }) => {
-  await storeAMember(browser, M0413_APP, 承認者名, "m0413_approver@example.test");
+  await storeAMember(browser, M0413_APP, 承認者名, "m0413t_approver@example.test");
 });
 
 defineSeed("S-M04-13-L-OP", { needs: ["S-M04-13-L-ENV"] }, async ({ browser }) => {
-  await storeAMember(browser, M0413L_OP, 連携作業者名, "m0413l_operator@example.test");
+  await storeAMember(browser, M0413L_OP, 連携作業者名, "m0413tl_operator@example.test");
 });
 
 defineSeed("S-M04-13-NOAUTH", { needs: ["S-M04-13-ENV"] }, async ({ browser }) => {
@@ -103,7 +103,7 @@ defineSeed("S-M04-13-NOAUTH", { needs: ["S-M04-13-ENV"] }, async ({ browser }) =
     const other = (await memberStoreChoices(page)).find((s) => s !== 試験店舗A);
     if (!other) throw new Error(`S-M04-13-NOAUTH: ${試験店舗A}以外の店舗が、メンバー登録の所属店舗の選択肢に無い`);
     await ensureMemberWithDepartment(page, {
-      名前: 権限なし名, 所属店舗: other, 所属: 試験所属A, ログインID: M0413_NOAUTH.loginId, メールアドレス: "m0413_noauth@example.test",
+      名前: 権限なし名, 所属店舗: other, 所属: 試験所属A, ログインID: M0413_NOAUTH.loginId, メールアドレス: "m0413t_noauth@example.test",
       パスワード: M0413_NOAUTH.password, 権限: "システム管理者", デフォルト検索表示店舗: other, 編集可能店舗: [other],
     });
   });
