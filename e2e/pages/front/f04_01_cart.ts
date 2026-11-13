@@ -79,6 +79,23 @@ export class CartPage {
     await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), l.click()]);
     await this.page.waitForLoadState("load");
   }
+  /**
+   * 商品の削除ボタンを押し、出た確認ダイアログを OK で閉じて、画面が読み込み直されるのを待つ。ダイアログの文を返す（出なければ空）。
+   * 削除ボタンは共通のスクリプト（token-for-anchor のリンク）で、data-confirm が無いので確認ダイアログを出す。
+   * Playwright は何もしないとダイアログをキャンセルで閉じ、画面が移らない（2026-11-13 夜の 013・064 が60秒待って止まった）。
+   */
+  async 削除を押して移る(l: Locator): Promise<string> {
+    let msg = "";
+    const h = (d: import("@playwright/test").Dialog) => { msg = d.message(); d.accept().catch(() => undefined); };
+    this.page.once("dialog", h);
+    try {
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), l.click()]);
+      await this.page.waitForLoadState("load");
+    } finally {
+      this.page.off("dialog", h);
+    }
+    return msg;
+  }
   /** カート一括削除を押し、確認ダイアログで実行（true）かキャンセル（false）を選ぶ。ダイアログの文を返す */
   async 一括削除を押す(実行: boolean): Promise<string> {
     let msg = "";

@@ -4,7 +4,7 @@
  * どのケースも共有の設定（本店の送料無料条件・入荷通知最大数。≪共有の設定≫）を開始時に正本の値にし、終わるたびに元の値へ戻す（基盤が1本だけで流す）。
  * 事前準備の「ケース専用ブラウザで会員Aにログインする」は、ケースのブラウザで手順1の前にログインする。
  */
-import { test } from "@playwright/test";
+import { test, Locator } from "@playwright/test";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { BASE_URL } from "../../config/env";
 import { 在庫と購入上限, 在庫数を変える, 購入上限を変える } from "../../db/f04_01";
@@ -14,6 +14,12 @@ import { 試験支店, 店名の読み替え } from "../../pages/admin/reuse_sto
 import { ケースの定め, 会員の, 共有の設定を整える, 共有の設定を戻す, 作ったものの, 支店のページ } from "../../seeds/f04-01";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
+const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
+/** 商品の削除ボタンを押す（アプリが出す確認ダイアログを OK で閉じる。正本の手順に無い操作なので補いに残す） */
+async function 商品を削除する(c: CartPage, l: Locator): Promise<void> {
+  const 文 = await c.削除を押して移る(l);
+  if (文) supplement(`削除ボタンを押すと確認ダイアログ「${文}」が出た。正本の手順に無いので、OK で閉じて進めた`);
+}
 const yen = (n: number) => n.toLocaleString("ja-JP");
 
 type 設定 = { 金額: string; 数量: string; 入荷通知上限: string };
@@ -100,7 +106,7 @@ caseTest("IT-F04-01-066", (ctx) => ケース("066", async ({ step, expected }, c
 caseTest("IT-F04-01-013", (ctx) => ケース("013", async ({ step, expected }, c, x) => {
   let 見えた: string[] = [];
   await step(1, async () => { await c.開く(支店のページ("A")); });
-  await step(2, async () => { await c.押して移る(c.削除(規格(x, "C"))); 見えた = await 表示中の字(c, x); });
+  await step(2, async () => { await 商品を削除する(c, c.削除(規格(x, "C"))); 見えた = await 表示中の字(c, x); });
   await expected(async () => {
     expect.soft(c.パス, "買い物かご画面のまま（再読み込みされた）").toBe(`/ja${支店のページ("A")}/cart`);
     expect.soft(見えた, "支店Aのカートの商品（商品Cだけ消え、商品Dが残る）").toEqual(["D"]);
@@ -110,7 +116,7 @@ caseTest("IT-F04-01-013", (ctx) => ケース("013", async ({ step, expected }, c
 店が足りず流さない("IT-F04-01-014", (ctx) => ケース("014", async ({ step, expected }, c, x) => {
   const 見えた: Record<string, string[]> = {};
   await step(1, async () => { await c.開く(支店のページ("A")); });
-  await step(2, async () => { await c.押して移る(c.削除(規格(x, "C"))); });
+  await step(2, async () => { await 商品を削除する(c, c.削除(規格(x, "C"))); });
   await step(3, async () => { await c.開く(); 見えた.本店 = await 表示中の字(c, x); });
   await step(4, async () => { await c.開く(支店のページ("B")); 見えた.支店B = await 表示中の字(c, x); });
   await expected(async () => {
@@ -254,7 +260,7 @@ caseTest("IT-F04-01-049", (ctx) => ケース("049", async ({ step, expected }, c
 caseTest("IT-F04-01-064", (ctx) => ケース("064", async ({ step, expected }, c, x) => {
   let 見えた: string[] = [];
   await step(1, async () => { await c.開く(); });
-  await step(2, async () => { await c.押して移る(c.削除(規格(x, "A"))); 見えた = await 表示中の字(c, x); });
+  await step(2, async () => { await 商品を削除する(c, c.削除(規格(x, "A"))); 見えた = await 表示中の字(c, x); });
   await expected(async () => {
     expect.soft(c.パス, "買い物かご画面のまま（再読み込みされた）").toBe("/ja/cart");
     expect.soft(見えた, "本店のカートの商品（商品Aだけ消え、商品Bが残る）").toEqual(["B"]);
