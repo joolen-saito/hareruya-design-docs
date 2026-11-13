@@ -16,9 +16,19 @@ import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 import { searchStockList, stockRow, stockRowValues } from "./m04_13_setup";
 import { StockApprovalListPage, StockEditInput, StockListPage } from "./stock_edit";
+import { 試験支店, 本店の店名DB } from "./reuse_store";
 
-export const 店A = "試験店舗A";
-export const 店B = "試験店舗B";
+/**
+ * 正本（M04-08・M04-09）の店舗「試験店舗A」「試験店舗B」。2026-11-13 試験店舗の使い回し（依頼者決定。pages/admin/reuse_store.ts）で
+ * 店舗は作らず、試験店舗A は「試験支店」、試験店舗B は本店（店舗ID 1）で読み替える。画面の選択肢・一覧に出る店名は 店A・店B。
+ */
+export const 正本の店A = "試験店舗A";
+export const 正本の店B = "試験店舗B";
+export const 店A: string = 試験支店.店名;
+/** 本店の店名（開発環境の店舗表から読む。読めないときは、画面で見つからずに止まる値） */
+export const 店B: string = (() => { try { return 本店の店名DB(); } catch (e) { return `（本店の店名を読めない: ${(e as Error).message}）`; } })();
+/** 正本の文（シード表）と照らすときに、読み替えた店名を正本の店名へ戻す */
+export const 正本の店名へ = (text: string): string => text.split(店A).join(正本の店A).split(店B).join(正本の店B);
 export const 所属A = "試験所属A";
 export const 所属B = "試験所属B";
 // 開発環境には手動テスト用に同じ名前のメンバーがいるので、名前に実行の印を付けて作る（ログインIDも。seeds/m04-09.ts）
@@ -27,7 +37,7 @@ export const 承認者名 = rc("M04-09承認者");
 export const 入庫担当者名 = rc("M04-09入庫担当者");
 export const 権限なし名 = rc("M04-09権限なしユーザー");
 
-export type 店 = typeof 店A | typeof 店B;
+export type 店 = string;
 export type 在庫区分 = "EC-CUBE" | "スマレジ";
 
 const clean = (s: string | null | undefined) => (s ?? "").replace(/\s+/g, " ").trim();

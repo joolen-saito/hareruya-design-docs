@@ -42,12 +42,13 @@ export function session<T>(browser: Browser, account: Account, fn: (page: Page, 
 import { expectSaved } from "../pages/admin/common";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { countProductsByCode, ensureDepartment, ensureMemberWithDepartment, memberStoreChoices, readGoodsRootCategoryId } from "../pages/admin/m04_13_setup";
-import { ensureM0409Store, ensureNoApprovalAuthority, M0409_NO_APPROVAL_AUTHORITY } from "../pages/admin/m04_09_setup";
+import { ensureNoApprovalAuthority, M0409_NO_APPROVAL_AUTHORITY } from "../pages/admin/m04_09_setup";
+import { 試験支店の店舗ID, 本店の店舗ID } from "../pages/admin/reuse_store";
 import { MoveInstructionSearchPage } from "../pages/admin/m04_24_move_instruction";
 import {
   approveStockIns, chooseApprovalTarget, confirmInStore, inboundApprovalPath, InboundRequestPage, inboundRequestPath, MoveTransferList, outboundApprovalPath,
   pressApprove, pressReject, readStock, registerMove, registerStockIn, registerTransfer, requestInbound, requestOutbound, searchStock,
-  stockListRow, topMessages, transferApprovalPath, 入庫, 入庫担当者名, 在庫区分, 店, 店A, 店B, 所属A, 所属B, 承認者名, 権限なし名, 作業者名,
+  stockListRow, topMessages, transferApprovalPath, 入庫, 入庫担当者名, 在庫区分, 店, 店A, 店B, 正本の店A, 正本の店B, 正本の店名へ, 所属A, 所属B, 承認者名, 権限なし名, 作業者名,
 } from "../pages/admin/m04_09_move";
 import { CategoryPage } from "../pages/admin/category";
 import { chooseByLabel } from "../pages/admin/common";
@@ -79,13 +80,16 @@ let storeIds: { A: string; B: string } | null = null;
 export async function ensureEnv(browser: Browser, seedId: string): Promise<{ A: string; B: string }> {
   if (storeIds) return storeIds;
   mustMention("S-M04-09-MASTER", [
-    `店名に「${店A}」`, "店舗種別で「本店」", `店名に「${店B}」`, "店舗種別で「支店」", "公開で「公開」", "開店で「開店」", "売上集計の検索項目で「表示する」",
+    `店名に「${正本の店A}」`, "店舗種別で「本店」", `店名に「${正本の店B}」`, "店舗種別で「支店」", "公開で「公開」", "開店で「開店」", "売上集計の検索項目で「表示する」",
     `「${所属A}」の行が無ければ`, `「${所属B}」の行を足して`,
   ]);
   const issue = (m: string) => reportSeedIssue(seedId, m);
   storeIds = await session(browser, SETUP_ADMIN, async (page) => {
-    const A = await ensureM0409Store(page, { 店名: 店A, 店舗種別: "本店", 店名カナ: "シケンテンポエー", 店名英語: "Test Store A", 支店URL: "m0409a", 店名略称3文字: "Q9A" }, issue);
-    const B = await ensureM0409Store(page, { 店名: 店B, 店舗種別: "支店", 店名カナ: "シケンテンポビー", 店名英語: "Test Store B", 支店URL: "m0409b", 店名略称3文字: "Q9B" }, issue);
+    // 店舗は作らない。試験店舗A は試験支店、試験店舗B は本店（店舗ID 1）で読み替える（試験店舗の使い回し・2026-11-13 依頼者決定）。
+    // 正本の店舗種別（A=本店・B=支店）・公開・開店・売上集計の検索項目は、使い回す店舗の設定を書き換えないので合わせない
+    const A = 試験支店の店舗ID();
+    const B = 本店の店舗ID;
+    issue(`店舗「${正本の店A}」「${正本の店B}」は作らず、「${店A}」（店舗ID ${A}）と本店「${店B}」（店舗ID ${B}）で読み替えた（試験店舗の使い回し・2026-11-13 依頼者決定）`);
     await ensureDepartment(page, 所属A);
     await ensureDepartment(page, 所属B);
     await ensureNoApprovalAuthority(page);
@@ -215,7 +219,8 @@ function mustMention(seedId: string, fragments: string[]): void {
   const s = getSeed(seedId);
   const text = s["状態・属性"] + s.投入方法;
   // 実行の印（lib/run_marker）を付けた値は、印を外した正本の値で照らす
-  const missing = fragments.filter((f) => !text.includes(unrcText(f)));
+  // 試験店舗の使い回し（2026-11-13）で読み替えた店名（試験支店・本店）は、正本の店名（試験店舗A・B）へ戻して照らす
+  const missing = fragments.filter((f) => !text.includes(正本の店名へ(unrcText(f))));
   if (missing.length) throw new Error(`${seedId}: 作り方の値がシード表に無い: ${missing.join(" / ")}`);
 }
 
