@@ -38,13 +38,11 @@ import { openProductEditByCode } from "../pages/admin/m03_23_seed_products";
 import { addClass, openClassList } from "../pages/admin/m03_30_products";
 import { searchStockByCode } from "../pages/admin/m04_02_rc_stock";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { M0424StoreInput } from "../pages/admin/m04_24_store";
-import { ensureClosedStore } from "../pages/admin/m04_31_inventory_plan";
 import { ensureCardset, GOODS_ROOT_CATEGORY_ID } from "../pages/admin/product_masters";
 import { ShortTagPage } from "../pages/admin/short_tag";
 import { registerStockEdit, StockApprovalListPage } from "../pages/admin/stock_edit";
 import { adminUrl } from "../lib/session";
-import { ALL_NAME, M0401_ALL, OSAKA, TOKYO, 店舗ID } from "./m04-01";
+import { ALL_NAME, M0401_ALL, 店名, 店舗ID } from "./m04-01";
 
 // ---- 正本の値 → 実際の値（実行の印） ----
 const 対応 = new Map<string, string>();
@@ -61,14 +59,15 @@ function 先頭に印(先頭: string, 全体: string): string {
 
 // ---- 管理者 ----
 const PASS = "Passw0rd!M0401X";
-export const M0401_LIMIT: Account = { loginId: rcFixed("m0401_limit").toLowerCase(), password: "Passw0rd!M0401L" };
-const LIMIT_NAME = rcFixed("M04-01東京本店だけの試験管理者");
+// 2026-11-13 試験店舗の使い回しで東京本店＝本店・大阪支店＝試験支店に読み替えたので、前の試験管理者とは別の決まった名前で作る
+export const M0401_LIMIT: Account = { loginId: rcFixed("m0401_limit2").toLowerCase(), password: "Passw0rd!M0401L" };
+const LIMIT_NAME = rcFixed("M04-01本店だけの試験管理者");
 // 在庫の承認通知先の部署の選択肢は「その店舗に所属するメンバーの部署」だけ（新アプリの StockApprovalType）なので、
 // 承認者は在庫を入れる店舗ごとに、その店舗の所属で作る（2026-11-12、東京本店所属の承認者では大阪支店の入庫で「いる部署が無い」）
 type 承認する店 = "東京本店" | "大阪支店";
 const 承認者: Record<承認する店, { 名前: string; account: Account }> = {
-  東京本店: { 名前: rcFixed("M04-01承認試験管理者"), account: { loginId: rcFixed("m0401_apr").toLowerCase(), password: PASS } },
-  大阪支店: { 名前: rcFixed("M04-01大阪支店承認試験管理者"), account: { loginId: rcFixed("m0401_apr_osk").toLowerCase(), password: PASS } },
+  東京本店: { 名前: rcFixed("M04-01本店承認試験管理者"), account: { loginId: rcFixed("m0401_apr_hon").toLowerCase(), password: PASS } },
+  大阪支店: { 名前: rcFixed("M04-01試験支店承認試験管理者"), account: { loginId: rcFixed("m0401_apr_shi").toLowerCase(), password: PASS } },
 };
 
 let 承認者あり = false;
@@ -101,22 +100,6 @@ defineSeed("S-M04-01-ADM-LIMIT", { needs: ["S-M04-01-ADM-ALL"] }, async ({ brows
 export const マスタ = { 上野閉店: "", カードゲームA: "", カードゲームB: "", カードゲームAのID: "", SET_A: "", SET_B: "", 在庫タグA: "", カード部門: "", 棚番号A01: "", 略称A: "", 分析A: "" };
 let マスタあり = false;
 
-const UENO: M0424StoreInput = {
-  // 店舗は決まった名前で1度だけ作って使い回す（依頼者決定 2026-11-11）。実行の印は付けない
-  店名: "上野閉店（M04-01）", 店名カナ: "ウエノヘイテン", 店名英語: "Ueno Closed", 支店URL: "m0401uenoclosed", 店名略称3文字: "",
-  ショップ名略称: "上野閉店（M04-01）", 会社名: "株式会社晴れる屋", 会社名カナ: "カブシキガイシャハレルヤ", 郵便番号: "110-0005", 都道府県: "東京都",
-  住所1: "台東区上野1-1-1", 住所2: "晴ビル12F", 電話番号: "03-0401-0003",
-};
-
-/** 3文字の店名略称（英大文字）を、使われていないものから選ぶ */
-function 店名略称(): string {
-  for (let i = 0; i < 50; i++) {
-    const c = "U" + String.fromCharCode(65 + Math.floor(Math.random() * 26)) + String.fromCharCode(65 + Math.floor(Math.random() * 26));
-    if (!店名略称がある(c)) return c;
-  }
-  throw new Error("使われていない店名略称（3文字）を選べない");
-}
-
 defineSeed("S-M04-01-MASTER", { needs: ["S-M04-01-ADM-ALL"] }, async ({ browser, seed }) => {
   if (マスタあり) return;
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
@@ -125,10 +108,9 @@ defineSeed("S-M04-01-MASTER", { needs: ["S-M04-01-ADM-ALL"] }, async ({ browser,
   for (const n of ["10", "12000"]) if (!pm.includes(n)) throw new Error(`マスタデータ管理の最大ページ表示に ${n} が無い（全員が使うマスタなので足さない）`);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    // 上野閉店: 閉店の店舗として1度だけ登録し、2回目からは閉店も含めて探して使い回す（m04_31 の ensureClosedStore）
-    const ueno = await ensureClosedStore(page, { ...UENO, 店名略称3文字: 店名略称() }, issue);
-    if (!ueno) throw new Error("上野閉店を登録できない");
-    マスタ.上野閉店 = UENO.店名;
+    // 上野閉店（閉店の店舗）は作らない（試験店舗の使い回し・2026-11-13 依頼者決定）。使う 004 は流さない
+    マスタ.上野閉店 = "";
+    issue("上野閉店（閉店の店舗）は作らない（試験店舗の使い回し・2026-11-13 依頼者決定）。使う 004 は流さない");
 
     // カテゴリ: グッズの親カテゴリ（番号2）の下に、子カテゴリとして2つ作る
     const cat = new CategoryPage(page);
@@ -229,8 +211,8 @@ async function 商品を作る(browser: Browser, seedId: string, d: シードの
     const baseline = 在庫承認の最大ID();
     const 入庫 = 実.flatMap((p) => p.在庫.filter((z) => z.数 > 0).map((z) => ({ code: p.実, 店舗: z.店舗, 数: z.数 })));
     for (const z of 入庫) {
-      const stock = await searchStockByCode(page, { 商品コード: z.code, 店舗: z.店舗, 在庫区分: "EC-CUBE" });
-      await stock.openEdit(stock.row(z.code, z.店舗, "EC-CUBE"));
+      const stock = await searchStockByCode(page, { 商品コード: z.code, 店舗: 店名[z.店舗], 在庫区分: "EC-CUBE" });
+      await stock.openEdit(stock.row(z.code, 店名[z.店舗], "EC-CUBE"));
       await registerStockEdit(page, { changeType: "入庫/その他", reason: "試験データ登録", quantity: String(z.数), purchasePrice: "0", approverName: 承認者[z.店舗 as 承認する店].名前 }, `${seedId}: ${z.code} の在庫編集（${z.店舗}）`, issue);
     }
     if (入庫.length) {
@@ -238,7 +220,7 @@ async function 商品を作る(browser: Browser, seedId: string, d: シードの
         await withAdminSession(browser, 承認者[店舗 as 承認する店].account, async (ap) => {
           ap.setDefaultTimeout(60_000);
           const list = new StockApprovalListPage(ap);
-          await list.open(店舗);
+          await list.open(店名[店舗]);
           const want = 入庫.filter((z) => z.店舗 === 店舗).length;
           const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === ALL_NAME && Number(r.id) > baseline);
           if (rows.length < want) throw new Error(`${seedId}: 在庫編集承認一覧（${店舗}）に未承認の行が ${rows.length} 件（${want} 件のはず）`);
@@ -353,4 +335,3 @@ defineSeed("S-M04-01-SUGGEST-049", { needs: ["S-M04-01-ADM-ALL"] }, async ({ bro
   });
 });
 
-export { TOKYO, OSAKA };

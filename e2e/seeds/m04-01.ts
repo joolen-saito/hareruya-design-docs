@@ -2,6 +2,9 @@
  * M04-01 在庫検索/一覧の画面シード。正本: cases/M04-01_seed_data.tsv
  *
  * 作るのは、画面だけで準備できるケース（016・018〜022。検索条件保存の欄）が使うシードだけ。
+ * 2026-11-13 試験店舗の使い回し（依頼者決定。pages/admin/reuse_store.ts・e2e/review/store_cleanup_20261113.md）: 前に作った「東京本店」「大阪支店」は
+ * 片付ける一覧に入ったので、店舗は作らず、東京本店は本店（店舗ID 1）、大阪支店は「試験支店」で読み替える（下の 店名）。試験管理者は編集できる店舗が
+ * 変わったので、前のものとは別の決まった名前で作る。
  * - S-M04-01-ADM-ALL: 全店舗試験管理者。メンバー管理で登録し、所属店舗・デフォルト検索表示店舗を東京本店、編集可能店舗を東京本店と大阪支店にする。
  *   東京本店・大阪支店は、シード表では S-M04-01-MASTER（検索選択肢マスタ）が店舗登録画面で登録する店舗で、ADM-ALL の作り方には店舗の用意が書かれていない。
  *   MASTER は棚番号を「DBへ直接設定する」ので作らない。編集権限に選ぶには店舗が要るので、MASTER と同じ操作（店舗登録画面で、店名・開店を指定し、
@@ -20,26 +23,23 @@ import { rc, rcFixed } from "../lib/run_marker";
 import { Account, withAdminSession } from "../lib/session";
 import { shortName, StockSearchPatternPage } from "../pages/admin/m04_01_search_pattern";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
+import { 試験支店, 試験支店の店舗ID, 本店の店舗ID, 本店の店名DB } from "../pages/admin/reuse_store";
 
 /**
  * シード表のログインIDは m0401_all。開発環境には同じログインIDのメンバー（名前 M0401全権限。手動テスト用に作られたもの）が既にあり、
  * 同じ値では登録できない。ほかの方のメンバーは使わず、決め打ちの識別の値として実行の印を付けたログインID・名前で作る（依頼者決定 2026-10-28「案A」）。
  * ケースはログインIDそのものを確かめない。
  */
-export const M0401_ALL: Account = { loginId: rcFixed("m0401_all").toLowerCase(), password: "Passw0rd!M0401A" };
-export const ALL_NAME = rcFixed("M04-01全店舗試験管理者");
+export const M0401_ALL: Account = { loginId: rcFixed("m0401_all2").toLowerCase(), password: "Passw0rd!M0401A" };
+export const ALL_NAME = rcFixed("M04-01全店舗試験管理者（本店・試験支店）");
 
-const COMPANY = "株式会社晴れる屋";
-const COMPANY_KANA = "カブシキガイシャハレルヤ";
-export const TOKYO: M0424StoreInput = {
-  店名: "東京本店", 店名カナ: "トウキョウホンテン", 店名英語: "Tokyo Main Store", 支店URL: "m0401tokyo", 店名略称3文字: "Q1T", ショップ名略称: "東京本店",
-  会社名: COMPANY, 会社名カナ: COMPANY_KANA, 郵便番号: "100-0005", 都道府県: "東京都", 住所1: "千代田区丸の内1-1-1", 住所2: "晴ビル10F", 電話番号: "03-0401-0001",
+/** 正本の店名と、読み替えた店舗の店名（画面の選択肢・一覧に出る名前）。東京本店＝本店（店舗ID 1）・大阪支店＝試験支店 */
+export type 正本の店 = "東京本店" | "大阪支店";
+export const 店名: Record<正本の店, string> = {
+  東京本店: (() => { try { return 本店の店名DB(); } catch (e) { return `（本店の店名を読めない: ${(e as Error).message}）`; } })(),
+  大阪支店: 試験支店.店名,
 };
-export const OSAKA: M0424StoreInput = {
-  店名: "大阪支店", 店名カナ: "オオサカシテン", 店名英語: "Osaka Branch", 支店URL: "m0401osaka", 店名略称3文字: "Q1O", ショップ名略称: "大阪支店",
-  会社名: COMPANY, 会社名カナ: COMPANY_KANA, 郵便番号: "530-0001", 都道府県: "大阪府", 住所1: "大阪市北区梅田2-2-2", 住所2: "晴ビル11F", 電話番号: "06-0401-0002",
-};
+export const 店の読み替え = (): string => `正本の店舗「東京本店」「大阪支店」は、試験店舗の使い回し（2026-11-13 依頼者決定）で本店「${店名.東京本店}」（店舗ID 1）と「${店名.大阪支店}」に読み替えた`;
 
 /** 東京本店・大阪支店の店舗ID（S-M04-01-ADM-ALL が画面で用意したもの。呼び名はシード表に無いので控えない） */
 export const 店舗ID = { 東京本店: "", 大阪支店: "" };
@@ -47,8 +47,9 @@ export const 店舗ID = { 東京本店: "", 大阪支店: "" };
 defineSeed("S-M04-01-ADM-ALL", async ({ browser, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    const tokyo = await ensureStore(page, TOKYO, issue);
-    const osaka = await ensureStore(page, OSAKA, issue);
+    const tokyo = 本店の店舗ID;
+    const osaka = 試験支店の店舗ID();
+    issue(店の読み替え());
     店舗ID.東京本店 = tokyo; 店舗ID.大阪支店 = osaka;
     await ensureMemberByStoreIds(page, {
       名前: ALL_NAME, ログインID: M0401_ALL.loginId, メールアドレス: `${M0401_ALL.loginId}@example.test`, パスワード: M0401_ALL.password,

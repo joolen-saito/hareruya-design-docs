@@ -9,14 +9,19 @@ import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { 在庫一覧の検索パターン } from "../../db/m04_01_search_pattern";
 import { StockListX } from "../../pages/admin/m04_01_stock_list_x";
-import { M0401_ALL } from "../../seeds/m04-01";
+import { M0401_ALL, 店名, 店の読み替え } from "../../seeds/m04-01";
+import type { CaseBody } from "../../lib/case";
 import { M0401_LIMIT, コード, マスタ } from "../../seeds/m04-01-x";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
 
-async function 全店舗で(page: Page): Promise<StockListX> { await loginAdmin(page, M0401_ALL); return new StockListX(page); }
-async function 東京本店だけで(page: Page): Promise<StockListX> { await loginAdmin(page, M0401_LIMIT); return new StockListX(page); }
+async function 全店舗で(page: Page): Promise<StockListX> { note(店の読み替え()); await loginAdmin(page, M0401_ALL); return new StockListX(page); }
+async function 東京本店だけで(page: Page): Promise<StockListX> { note(店の読み替え()); await loginAdmin(page, M0401_LIMIT); return new StockListX(page); }
+const 東京本店 = 店名.東京本店;
+const 大阪支店 = 店名.大阪支店;
+/** 閉店の店舗（上野閉店）が要る 004 は流さない。試験店舗の使い回し（2026-11-13 依頼者決定）で閉店の店舗は作らない（caseTest に渡さないので数えない） */
+const 閉店の店舗が無く流さない = (_testId: string, _body: CaseBody): void => undefined;
 const 在庫検索一覧のまま = (url: string) => /\/product\/stock(\/page\/\d+)?(\?.*)?$/.test(new URL(url).pathname + new URL(url).search) || new URL(url).pathname.endsWith("/product/stock");
 
 /** コードで検索する（検索欄の店舗・在庫区分は事前に選ぶ） */
@@ -26,7 +31,7 @@ async function コードで検索(l: StockListX, 正本: string): Promise<void> 
 }
 
 // ---- 店舗の選択肢（004） ----
-caseTest("IT-M04-01-004", async ({ page, step, expected }) => {
+閉店の店舗が無く流さない("IT-M04-01-004", async ({ page, step, expected }) => {
   const l = await 全店舗で(page);
   let opts: string[] = [];
   await step(1, () => l.open());
@@ -38,8 +43,8 @@ caseTest("IT-M04-01-004", async ({ page, step, expected }) => {
     await page.keyboard.press("Escape");
   });
   await expected(async () => {
-    expect.soft(opts.includes("東京本店"), "店舗の選択肢に営業中の「東京本店」が出る").toBe(true);
-    expect.soft(opts.includes("大阪支店"), "店舗の選択肢に営業中の「大阪支店」が出る").toBe(true);
+    expect.soft(opts.includes(東京本店), "店舗の選択肢に営業中の「東京本店」が出る").toBe(true);
+    expect.soft(opts.includes(大阪支店), "店舗の選択肢に営業中の「大阪支店」が出る").toBe(true);
     expect.soft(opts.includes(マスタ.上野閉店), "閉店済みの「上野閉店」は出ない").toBe(false);
   });
 });
@@ -82,7 +87,7 @@ caseTest("IT-M04-01-017", async ({ page, step, expected, db }) => {
   await step(1, () => l.open());
   await step(2, async () => {
     await l.入れる("product_name", 名前);
-    await l.選ぶ("base_info", ["東京本店"]);
+    await l.選ぶ("base_info", [東京本店]);
     const ec = l.在庫区分("EC-CUBE"); await ec.check(); ecValue = (await ec.getAttribute("value")) ?? "";
     await l.詳細検索を開く();
     await l.選ぶ("category_id", [マスタ.カードゲームA]);
@@ -150,7 +155,7 @@ function 移る(検索語: string, 選ぶ: string[], ボタン: 操作, 行き�
       if (区分) await l.在庫区分(区分).check();
       await コードで検索(l, 検索語);
     });
-    await step(3, async () => { for (const c of 選ぶ) await l.チェックする(l.行の(コード(c), "東京本店", "EC-CUBE"), c); });
+    await step(3, async () => { for (const c of 選ぶ) await l.チェックする(l.行の(コード(c), 東京本店, "EC-CUBE"), c); });
     await step(4, async () => {
       r = await l.押す(l.ボタン(ボタン));
       body = (await page.locator("body").innerText().catch(() => "")).replace(/\s+/g, " ");
@@ -167,7 +172,7 @@ function 移る(検索語: string, 選ぶ: string[], ボタン: 操作, 行き�
 caseTest("IT-M04-01-029", 移る("M0401-AUTH-029", ["M0401-AUTH-029-01", "M0401-AUTH-029-02"], "在庫一括編集", /\/product\/stock\/stock-bulk-approval\/new$/));
 caseTest("IT-M04-01-032", 移る("M0401-AUTH-032-01", ["M0401-AUTH-032-01"], "在庫分割登録", /\/split\/new$/));
 caseTest("IT-M04-01-036", 移る("M0401-AUTH-036-01", ["M0401-AUTH-036-01"], "在庫結合登録", /\/join\/new$/));
-caseTest("IT-M04-01-057", 移る("M0401-CB057", ["M0401-CB057-A", "M0401-CB057-B"], "在庫移動登録", /\/product\/stock\/move\/new$/, ["東京本店"], "EC-CUBE"));
+caseTest("IT-M04-01-057", 移る("M0401-CB057", ["M0401-CB057-A", "M0401-CB057-B"], "在庫移動登録", /\/product\/stock\/move\/new$/, [東京本店], "EC-CUBE"));
 
 // ---- 行を選んで操作のボタンを押す（留まる） ----
 type 選ぶ行 = { コード: string; 店舗: string; 区分?: string };
@@ -194,21 +199,21 @@ function 留まる(who: "全店舗" | "東京本店だけ", 検索語: string, �
     });
   };
 }
-const 大阪 = (c: string): 選ぶ行 => ({ コード: c, 店舗: "大阪支店" });
-const 東京 = (c: string, 区分?: string): 選ぶ行 => ({ コード: c, 店舗: "東京本店", 区分 });
-caseTest("IT-M04-01-030", 留まる("東京本店だけ", "NOAUTH-M0401-01-030", [大阪("NOAUTH-M0401-01-030")], "在庫一括編集", { 店舗: ["大阪支店"] }));
-caseTest("IT-M04-01-033", 留まる("東京本店だけ", "NOAUTH-M0401-01-033", [大阪("NOAUTH-M0401-01-033")], "在庫分割登録", { 店舗: ["大阪支店"] }));
-caseTest("IT-M04-01-037", 留まる("東京本店だけ", "NOAUTH-M0401-01-037", [大阪("NOAUTH-M0401-01-037")], "在庫結合登録", { 店舗: ["大阪支店"] }));
-caseTest("IT-M04-01-031", 留まる("全店舗", "M0401-MULTI-031", [東京("M0401-MULTI-031-TOKYO"), 大阪("M0401-MULTI-031-OSAKA")], "在庫一括編集", { 店舗: ["東京本店", "大阪支店"] }));
-caseTest("IT-M04-01-034", 留まる("全店舗", "M0401-MULTI-034", [東京("M0401-MULTI-034-TOKYO"), 大阪("M0401-MULTI-034-OSAKA")], "在庫分割登録", { 店舗: ["東京本店", "大阪支店"] }));
-caseTest("IT-M04-01-038", 留まる("全店舗", "M0401-MULTI-038", [東京("M0401-MULTI-038-TOKYO"), 大阪("M0401-MULTI-038-OSAKA")], "在庫結合登録", { 店舗: ["東京本店", "大阪支店"] }));
+const 大阪 = (c: string): 選ぶ行 => ({ コード: c, 店舗: 大阪支店 });
+const 東京 = (c: string, 区分?: string): 選ぶ行 => ({ コード: c, 店舗: 東京本店, 区分 });
+caseTest("IT-M04-01-030", 留まる("東京本店だけ", "NOAUTH-M0401-01-030", [大阪("NOAUTH-M0401-01-030")], "在庫一括編集", { 店舗: [大阪支店] }));
+caseTest("IT-M04-01-033", 留まる("東京本店だけ", "NOAUTH-M0401-01-033", [大阪("NOAUTH-M0401-01-033")], "在庫分割登録", { 店舗: [大阪支店] }));
+caseTest("IT-M04-01-037", 留まる("東京本店だけ", "NOAUTH-M0401-01-037", [大阪("NOAUTH-M0401-01-037")], "在庫結合登録", { 店舗: [大阪支店] }));
+caseTest("IT-M04-01-031", 留まる("全店舗", "M0401-MULTI-031", [東京("M0401-MULTI-031-TOKYO"), 大阪("M0401-MULTI-031-OSAKA")], "在庫一括編集", { 店舗: [東京本店, 大阪支店] }));
+caseTest("IT-M04-01-034", 留まる("全店舗", "M0401-MULTI-034", [東京("M0401-MULTI-034-TOKYO"), 大阪("M0401-MULTI-034-OSAKA")], "在庫分割登録", { 店舗: [東京本店, 大阪支店] }));
+caseTest("IT-M04-01-038", 留まる("全店舗", "M0401-MULTI-038", [東京("M0401-MULTI-038-TOKYO"), 大阪("M0401-MULTI-038-OSAKA")], "在庫結合登録", { 店舗: [東京本店, 大阪支店] }));
 caseTest("IT-M04-01-035", 留まる("全店舗", "ZERO-M0401-01", [東京("ZERO-M0401-01")], "在庫分割登録"));
 caseTest("IT-M04-01-045", 留まる("全店舗", "M0401-045", [東京("M0401-045-A"), 東京("M0401-045-B")], "在庫分割登録", { アラート: true }));
 caseTest("IT-M04-01-046", 留まる("全店舗", "M0401-046", [東京("M0401-046-A"), 東京("M0401-046-B")], "在庫結合登録", { アラート: true }));
 caseTest("IT-M04-01-058", 留まる("全店舗", "M0401-CB058-A", [東京("M0401-CB058-A"), 大阪("M0401-CB058-A")], "在庫振替登録",
-  { 店舗: ["東京本店", "大阪支店"], 区分: ["EC-CUBE"], アラート: "複数の店舗の商品規格が選択されています。同一の店舗の在庫のみ選択してください。" }));
+  { 店舗: [東京本店, 大阪支店], 区分: ["EC-CUBE"], アラート: "複数の店舗の商品規格が選択されています。同一の店舗の在庫のみ選択してください。" }));
 caseTest("IT-M04-01-060", 留まる("全店舗", "M0401-CB060", [東京("M0401-CB060-A"), 東京("M0401-CB060-B")], "在庫振替登録",
-  { 店舗: ["東京本店"], 区分: ["EC-CUBE"], アラート: "在庫数が0の在庫が選択されています。在庫数が1以上の在庫のみ選択してください。" }));
+  { 店舗: [東京本店], 区分: ["EC-CUBE"], アラート: "在庫数が0の在庫が選択されています。在庫数が1以上の在庫のみ選択してください。" }));
 
 // ---- ボタンの非活性（050） ----
 caseTest("IT-M04-01-050", async ({ page, step, expected }) => {
@@ -278,12 +283,12 @@ caseTest("IT-M04-01-055", async ({ page, step, expected }) => {
   const l = await 全店舗で(page);
   let rows: Awaited<ReturnType<StockListX["行"]>> = [];
   await step(1, () => l.open());
-  await step(2, async () => { await l.選ぶ("base_info", ["東京本店", "大阪支店"]); await コードで検索(l, "M0401-055-A"); });
+  await step(2, async () => { await l.選ぶ("base_info", [東京本店, 大阪支店]); await コードで検索(l, "M0401-055-A"); });
   await step(3, async () => { rows = await l.行(); note(`行: ${JSON.stringify(rows.map((r) => [r.店舗, r.在庫区分, r.在庫]))}`); });
   await expected(async () => {
     expect.soft(rows.length, "表示された行の数（2行）").toBe(2);
-    expect.soft(rows.find((r) => r.店舗 === "東京本店")?.在庫 ?? "（行が無い）", "東京本店の行の在庫").toBe("3");
-    expect.soft(rows.find((r) => r.店舗 === "大阪支店")?.在庫 ?? "（行が無い）", "大阪支店の行の在庫").toBe("5");
+    expect.soft(rows.find((r) => r.店舗 === 東京本店)?.在庫 ?? "（行が無い）", "東京本店の行の在庫").toBe("3");
+    expect.soft(rows.find((r) => r.店舗 === 大阪支店)?.在庫 ?? "（行が無い）", "大阪支店の行の在庫").toBe("5");
   });
 });
 
@@ -323,8 +328,8 @@ caseTest("IT-M04-01-064", async ({ page, step, expected }) => {
   const l = await 全店舗で(page);
   let text = "";
   await step(1, () => l.open());
-  await step(2, async () => { await l.選ぶ("base_info", ["大阪支店"]); await l.在庫区分("EC-CUBE").check(); await コードで検索(l, "M0401-CB064-A"); });
-  await step(3, async () => { await l.行のメニューを開く(l.行の(コード("M0401-CB064-A"), "大阪支店", "EC-CUBE")); });
+  await step(2, async () => { await l.選ぶ("base_info", [大阪支店]); await l.在庫区分("EC-CUBE").check(); await コードで検索(l, "M0401-CB064-A"); });
+  await step(3, async () => { await l.行のメニューを開く(l.行の(コード("M0401-CB064-A"), 大阪支店, "EC-CUBE")); });
   await step(4, async () => {
     await l.開いたメニューの項目を押す("価格履歴");
     text = (await page.locator("body").innerText()).replace(/\s+/g, " ");
