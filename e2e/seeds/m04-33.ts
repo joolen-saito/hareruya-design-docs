@@ -2,8 +2,9 @@
  * M04-33 戻しリストCSV の画面シード（カードのマスタを使わない 003〜006・012・037〜041・043・046・049）。正本: cases/M04-33_seed_data.tsv
  *
  * 作り方（シード表の投入方法の順。画面で作り、画面で作れない状態だけ E2E の行に DB で書き足す。依頼者決定 2026-11-10）:
- * - S-M04-33-CONFIG: 店舗ID 1（入庫先「本店3F」）・5（出庫元）・13（支店）は開発環境の店舗をそのまま使う。本店2F・本店B2F は、
- *   店舗登録画面で「本店2F（M04-33）」「本店B2F（M04-33）」を一度だけ登録して使い回す（〔店舗ID-M0433-共有A〕・〔店舗ID-M0433-共有B〕）。
+ * - S-M04-33-CONFIG: 店舗ID 1（入庫先「本店3F」）・5（出庫元）・13（支店）は開発環境の店舗をそのまま使う。本店2F・本店B2F（共有A・共有B）は、
+ *   試験店舗の使い回し（2026-11-13 依頼者決定。pages/admin/reuse_store.ts）で店舗を作らない。共有A・共有B の店舗の高額商品閾値を書き換える
+ *   ケース（005・043・046・049）は、使い回す試験支店・本店の設定を書き換えることになるので流さない（〔店舗ID-M0433-共有A〕・〔店舗ID-M0433-共有B〕は控えない）。
  *   高額商品閾値は≪共有の設定≫。店舗ID 1・13 の今の値を控え、ケースの開始時に spec が書き換え、終わるたびに控えた値へ戻す。
  * - S-M04-33-ADM: 「M04-33試験管理者」。店舗ID 1・5・13・共有A・共有B を編集できるシステム管理者。開発環境に手動テスト用の同じログインIDの
  *   メンバーがありうるので、ログインID・名前に実行の印を付ける（M03-26・M04-01 と同じ）。承認（在庫の入庫・出庫承認）は、シード表の
@@ -39,7 +40,6 @@ import { ClassEditPage } from "../pages/admin/m03_09_class_edit";
 import { ShelfNumberPage } from "../pages/admin/m03_21_shelf_number";
 import { openProductEditByCode } from "../pages/admin/m03_23_seed_products";
 import { storeNameById } from "../pages/admin/m04_19_masters";
-import { createStore, findOpenStoreId, M0424StoreInput } from "../pages/admin/m04_24_store";
 import { ShortTagPage } from "../pages/admin/short_tag";
 import { Actor, buildInstruction, ensureActor, stockInByCsv } from "./m04-25";
 
@@ -48,61 +48,28 @@ import { Actor, buildInstruction, ensureActor, stockInByCsv } from "./m04-25";
 export const 出庫元 = "5";
 export const 本店3F = "1";
 export const 支店 = "13";
-export const M0433_ADMIN: Actor = { 名前: rcFixed("M04-33試験管理者"), account: { loginId: rcFixed("m0433_admin").toLowerCase(), password: "Passw0rd!M0433" } };
-const 承認者: Actor = { 名前: rcFixed("M04-33承認者"), account: { loginId: rcFixed("m0433_apr").toLowerCase(), password: "Passw0rd!M0433apr" } };
-
-const 共有の店舗: Record<"A" | "B", M0424StoreInput> = {
-  A: {
-    店名: "本店2F（M04-33）", 店名カナ: "ホンテンニカイ", 店名英語: "Honten Second Floor", 支店URL: "m0433f2", 店名略称3文字: "Q3F", ショップ名略称: "本店2F",
-    会社名: "株式会社M04-33試験", 会社名カナ: "カブシキガイシャシケン", 郵便番号: "1000001", 都道府県: "東京都", 住所1: "千代田区千代田1-1", 住所2: "2F", 電話番号: "0300000433",
-  },
-  B: {
-    店名: "本店B2F（M04-33）", 店名カナ: "ホンテンチカニカイ", 店名英語: "Honten Basement Second", 支店URL: "m0433b2", 店名略称3文字: "Q3B", ショップ名略称: "本店B2F",
-    会社名: "株式会社M04-33試験", 会社名カナ: "カブシキガイシャシケン", 郵便番号: "1000001", 都道府県: "東京都", 住所1: "千代田区千代田1-1", 住所2: "B2F", 電話番号: "0300000433",
-  },
-};
+// 2026-11-13 試験店舗の使い回しで編集できる店舗が 1・5・13 だけになったので、前の試験管理者（本店2F（M04-33）も編集できる）とは別の名前で作る
+export const M0433_ADMIN: Actor = { 名前: rcFixed("M04-33試験管理者3店"), account: { loginId: rcFixed("m0433_admin3").toLowerCase(), password: "Passw0rd!M0433" } };
+const 承認者: Actor = { 名前: rcFixed("M04-33承認者3店"), account: { loginId: rcFixed("m0433_apr3").toLowerCase(), password: "Passw0rd!M0433apr" } };
 
 /** 店舗ID 1・13 の、書き換える前の高額商品閾値（CONFIG のシードが控える。spec が戻すのに使う） */
 export const 元の閾値 = new Map<string, [string, string, string]>();
 /** 共有A・共有B の店舗ID */
 export const 共有店舗ID: Record<"A" | "B", string> = { A: "", B: "" };
 
-/**
- * 本店2F・本店B2F の代わりの店舗（「本店2F（M04-33）」「本店B2F（M04-33）」）を、無ければ店舗登録画面で一度だけ登録し、店舗IDを返す。
- * M04-34 も同じ店舗を使い回す（ケースごとに店舗を作らない）。
- */
-export async function 共有の店舗を用意する(browser: Browser, issue: (m: string) => void): Promise<Record<"A" | "B", string>> {
-  const out: Record<"A" | "B", string> = { A: "", B: "" };
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    page.setDefaultTimeout(60_000);
-    for (const k of ["A", "B"] as const) {
-      const v = 共有の店舗[k];
-      let id = await findOpenStoreId(page, v.店名, v.会社名);
-      if (!id) {
-        try { await createStore(page, v, "支店"); } catch (e) { issue(`店舗「${v.店名}」の登録の表示: ${(e as Error).message.split("\n")[0]}`); }
-        id = await findOpenStoreId(page, v.店名, v.会社名);
-        if (!id) throw new Error(`店舗「${v.店名}」を登録できない`);
-        issue(`店舗「${v.店名}」を店舗登録画面で登録した（店舗ID ${id}。以後は使い回す）`);
-      }
-      out[k] = id;
-    }
-  });
-  return out;
-}
+/** 本店2F・本店B2F（共有A・共有B）は使わない（試験店舗の使い回し・2026-11-13）。使うケースは流さない */
+const 共有の店舗は無い = (k: string): never => { throw new Error(`共有${k} の店舗（本店2F・本店B2F）は用意しない（試験店舗の使い回し・2026-11-13 依頼者決定。使うケースは流さない）`); };
 
-defineSeed("S-M04-33-CONFIG", async ({ browser, notes, seed }) => {
+defineSeed("S-M04-33-CONFIG", async ({ seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   for (const id of [本店3F, 支店]) if (!元の閾値.has(id)) 元の閾値.set(id, 店舗の高額商品閾値(id));
-  Object.assign(共有店舗ID, await 共有の店舗を用意する(browser, issue));
-  notes.set("〔店舗ID-M0433-共有A〕", 共有店舗ID.A);
-  notes.set("〔店舗ID-M0433-共有B〕", 共有店舗ID.B);
   issue(`店舗ID 1・13 の高額商品閾値（書き換える前）: 1=${元の閾値.get(本店3F)!.join("/")}・13=${元の閾値.get(支店)!.join("/")}。ケースが終わるたびにこの値へ戻す`);
 });
 
 let 管理者あり = false;
 defineSeed("S-M04-33-ADM", { needs: ["S-M04-33-CONFIG"] }, async ({ browser }) => {
   if (管理者あり) return;
-  const 店舗 = [本店3F, 出庫元, 支店, 共有店舗ID.A, 共有店舗ID.B];
+  const 店舗 = [本店3F, 出庫元, 支店];
   await ensureActor(browser, M0433_ADMIN, { 所属店舗ID: 本店3F, 編集可能店舗ID: 店舗, email: `${M0433_ADMIN.account.loginId}@example.test` });
   await ensureActor(browser, 承認者, { 所属店舗ID: 本店3F, 編集可能店舗ID: 店舗, email: `${承認者.account.loginId}@example.test` });
   管理者あり = true;
@@ -123,7 +90,7 @@ export type 品 = {
 };
 export type ケースの定め = { 番号: string; 日時: string; 品: 品[] };
 
-const 入庫先の店舗ID = (k: 入庫先): string => (k === "本店3F" ? 本店3F : k === "支店" ? 支店 : 共有店舗ID[k === "共有A" ? "A" : "B"]);
+const 入庫先の店舗ID = (k: 入庫先): string => (k === "本店3F" ? 本店3F : k === "支店" ? 支店 : 共有の店舗は無い(k === "共有A" ? "A" : "B"));
 const 店名 = new Map<string, string>();
 async function 店名を読む(browser: Browser, id: string): Promise<string> {
   if (!店名.has(id)) 店名.set(id, await withAdminSession(browser, SETUP_ADMIN, (page) => storeNameById(page, id)));

@@ -39,15 +39,15 @@ import { ShelfNumberPage } from "../pages/admin/m03_21_shelf_number";
 import { openProductEditByCode } from "../pages/admin/m03_23_seed_products";
 import { storeNameById } from "../pages/admin/m04_19_masters";
 import { Actor, buildInstruction, ensureActor, stockInByCsv } from "./m04-25";
-import { 共有の店舗を用意する } from "./m04-33";
 
 // ---------------------------------------------------------------- 店舗・管理者
 
 export const 出庫元 = "5";
 export const 本店3F = "1";
 export const 支店 = "13";
-export const M0434_ADMIN: Actor = { 名前: rcFixed("M04-34試験管理者"), account: { loginId: rcFixed("m0434_admin").toLowerCase(), password: "Passw0rd!M0434" } };
-const 承認者: Actor = { 名前: rcFixed("M04-34承認者"), account: { loginId: rcFixed("m0434_apr").toLowerCase(), password: "Passw0rd!M0434apr" } };
+// 2026-11-13 試験店舗の使い回しで編集できる店舗が 1・5・13 だけになったので、前の試験管理者（本店2F（M04-33）も編集できる）とは別の名前で作る
+export const M0434_ADMIN: Actor = { 名前: rcFixed("M04-34試験管理者3店"), account: { loginId: rcFixed("m0434_admin3").toLowerCase(), password: "Passw0rd!M0434" } };
+const 承認者: Actor = { 名前: rcFixed("M04-34承認者3店"), account: { loginId: rcFixed("m0434_apr3").toLowerCase(), password: "Passw0rd!M0434apr" } };
 
 /** 店舗ID 1・13 の、書き換える前の高額商品閾値（CONFIG のシードが控える。spec が戻すのに使う） */
 export const 元の閾値 = new Map<string, [string, string, string]>();
@@ -56,18 +56,16 @@ export const 共有店舗ID: Record<"A" | "B", string> = { A: "", B: "" };
 
 defineSeed("S-M04-34-ENV", async () => { /* 試験のブラウザは既定でポップアップを開ける。ケースごとの新しいブラウザセッションで始める */ });
 
-defineSeed("S-M04-34-CONFIG", async ({ browser, seed }) => {
+defineSeed("S-M04-34-CONFIG", async ({ seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   for (const id of [本店3F, 支店]) if (!元の閾値.has(id)) 元の閾値.set(id, 店舗の高額商品閾値(id));
-  if (!共有店舗ID.A || !共有店舗ID.B) Object.assign(共有店舗ID, await 共有の店舗を用意する(browser, issue));
-  issue(`本店2F・本店B2F の代わりに、店舗ID ${共有店舗ID.A}（本店2F（M04-33））・${共有店舗ID.B}（本店B2F（M04-33））を使い回す（店舗種別は支店）`);
   issue(`店舗ID 1・13 の高額商品閾値（書き換える前）: 1=${元の閾値.get(本店3F)!.join("/")}・13=${元の閾値.get(支店)!.join("/")}。ケースが終わるたびにこの値へ戻す`);
 });
 
 let 管理者あり = false;
 defineSeed("S-M04-34-ADM", { needs: ["S-M04-34-CONFIG"] }, async ({ browser }) => {
   if (管理者あり) return;
-  const 店舗 = [本店3F, 出庫元, 支店, 共有店舗ID.A, 共有店舗ID.B];
+  const 店舗 = [本店3F, 出庫元, 支店];
   await ensureActor(browser, M0434_ADMIN, { 所属店舗ID: 本店3F, 編集可能店舗ID: 店舗, email: `${M0434_ADMIN.account.loginId}@example.test` });
   await ensureActor(browser, 承認者, { 所属店舗ID: 本店3F, 編集可能店舗ID: 店舗, email: `${承認者.account.loginId}@example.test` });
   管理者あり = true;
@@ -87,7 +85,9 @@ export type 品 = { 商品コード: string; 商品名: string; 基準価格: nu
 export type 移動の定め = { 呼び名: string; 入庫先: 入庫先; 品: 品[] };
 export type ケースの定め = { 番号: string; 日時: string; 移動: 移動の定め[]; 店舗の呼び名?: string };
 
-export const 入庫先の店舗ID = (k: 入庫先): string => (k === "本店3F" ? 本店3F : k === "支店" ? 支店 : 共有店舗ID[k === "共有A" ? "A" : "B"]);
+/** 本店2F・本店B2F（共有A・共有B）は使わない（試験店舗の使い回し・2026-11-13 依頼者決定）。使う 034〜041 は流さない */
+const 共有の店舗は無い = (k: string): never => { throw new Error(`共有${k} の店舗（本店2F・本店B2F）は用意しない（試験店舗の使い回し・2026-11-13 依頼者決定。使うケースは流さない）`); };
+export const 入庫先の店舗ID = (k: 入庫先): string => (k === "本店3F" ? 本店3F : k === "支店" ? 支店 : 共有の店舗は無い(k === "共有A" ? "A" : "B"));
 const 店名 = new Map<string, string>();
 async function 店名を読む(browser: Browser, id: string): Promise<string> {
   if (!店名.has(id)) 店名.set(id, await withAdminSession(browser, SETUP_ADMIN, (page) => storeNameById(page, id)));

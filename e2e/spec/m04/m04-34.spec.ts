@@ -7,11 +7,18 @@
 import { Browser, test } from "@playwright/test";
 import { SETUP_ADMIN } from "../../config/env";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
+import type { CaseBody } from "../../lib/case";
 import { loginAdmin, withAdminSession } from "../../lib/session";
 import { 店舗の高額商品閾値 } from "../../db/m04_33";
 import { ReturnListPage, setStoreThresholds } from "../../pages/admin/m04_33_return_list";
 import { 全行, 戻しリスト, 戻しリストPDFを出力する } from "../../pages/admin/m04_34_return_list_pdf";
 import { M0434_ADMIN, 入庫先, 入庫先の店舗ID, 印つきの名前, 作ったもの, 作った移動, 元の閾値, 支店, 本店3F } from "../../seeds/m04-34";
+
+/**
+ * 本店2F・本店B2F（共有A・共有B）の店舗の高額商品閾値を書き換えるケースは流さない。試験店舗の使い回し（2026-11-13 依頼者決定）で
+ * 本店2F・本店B2F の店舗は作らず、代わりの試験支店・本店の店舗の設定は書き換えない（ほかの機能・全員が使う）。テストの中身は残す（caseTest に渡さないので数えない）。
+ */
+const 店舗が無く流さない = (_testId: string, _body: CaseBody): void => undefined;
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
@@ -244,14 +251,14 @@ function CB(番号: string, 日: string, 店: 入庫先, 期待の仕訳: string
 caseTest("IT-M04-34-031", 戻しリストPDF(...CB("031", "01", "本店3F", "100円未満", false, true)));
 caseTest("IT-M04-34-032", 戻しリストPDF(...CB("032", "02", "本店3F", "100円以上200円未満", false, true)));
 caseTest("IT-M04-34-033", 戻しリストPDF(...CB("033", "03", "本店3F", "サプライ", true, true)));
-caseTest("IT-M04-34-034", 戻しリストPDF(...CB("034", "04", "共有A", "100円未満", false, true)));
-caseTest("IT-M04-34-035", 戻しリストPDF(...CB("035", "05", "共有A", "100円以上200円未満", false, true)));
-caseTest("IT-M04-34-036", 戻しリストPDF(...CB("036", "06", "共有A", "200円以上", false, true)));
-caseTest("IT-M04-34-037", 戻しリストPDF(...CB("037", "07", "共有A", "サプライ", true, true)));
-caseTest("IT-M04-34-038", 戻しリストPDF(...CB("038", "08", "共有B", "100円未満", false, true)));
-caseTest("IT-M04-34-039", 戻しリストPDF(...CB("039", "09", "共有B", "100円以上200円未満", false, true)));
-caseTest("IT-M04-34-040", 戻しリストPDF(...CB("040", "10", "共有B", "200円以上", false, true)));
-caseTest("IT-M04-34-041", 戻しリストPDF(...CB("041", "11", "共有B", "サプライ", true, true)));
+店舗が無く流さない("IT-M04-34-034", 戻しリストPDF(...CB("034", "04", "共有A", "100円未満", false, true)));
+店舗が無く流さない("IT-M04-34-035", 戻しリストPDF(...CB("035", "05", "共有A", "100円以上200円未満", false, true)));
+店舗が無く流さない("IT-M04-34-036", 戻しリストPDF(...CB("036", "06", "共有A", "200円以上", false, true)));
+店舗が無く流さない("IT-M04-34-037", 戻しリストPDF(...CB("037", "07", "共有A", "サプライ", true, true)));
+店舗が無く流さない("IT-M04-34-038", 戻しリストPDF(...CB("038", "08", "共有B", "100円未満", false, true)));
+店舗が無く流さない("IT-M04-34-039", 戻しリストPDF(...CB("039", "09", "共有B", "100円以上200円未満", false, true)));
+店舗が無く流さない("IT-M04-34-040", 戻しリストPDF(...CB("040", "10", "共有B", "200円以上", false, true)));
+店舗が無く流さない("IT-M04-34-041", 戻しリストPDF(...CB("041", "11", "共有B", "サプライ", true, true)));
 caseTest("IT-M04-34-042", 戻しリストPDF(...CB("042", "12", "支店", "100円以上200円未満", false, false)));
 caseTest("IT-M04-34-043", 戻しリストPDF(...CB("043", "13", "支店", "200円以上", false, false)));
 caseTest("IT-M04-34-044", 戻しリストPDF(...CB("044", "14", "支店", "サプライ", true, false)));

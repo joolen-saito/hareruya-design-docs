@@ -6,10 +6,17 @@
 import { Browser, test } from "@playwright/test";
 import { SETUP_ADMIN } from "../../config/env";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
+import type { CaseBody } from "../../lib/case";
 import { loginAdmin, withAdminSession } from "../../lib/session";
 import { 店舗の高額商品閾値 } from "../../db/m04_33";
 import { ReturnListPage, setStoreThresholds } from "../../pages/admin/m04_33_return_list";
 import { M0433_ADMIN, 印つきの名前, 元の閾値, 共有店舗ID, 作ったもの, 支店, 本店3F } from "../../seeds/m04-33";
+
+/**
+ * 本店2F・本店B2F（共有A・共有B）の店舗の高額商品閾値を書き換えるケースは流さない。試験店舗の使い回し（2026-11-13 依頼者決定）で
+ * 本店2F・本店B2F の店舗は作らず、代わりの試験支店・本店の店舗の設定は書き換えない（ほかの機能・全員が使う）。テストの中身は残す（caseTest に渡さないので数えない）。
+ */
+const 店舗が無く流さない = (_testId: string, _body: CaseBody): void => undefined;
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
@@ -92,7 +99,7 @@ caseTest("IT-M04-33-004", 戻しリスト(
     区分が("M0433-P004-A", "セール価格確認カードのピッキング区分", "4800円以上"),
   ]));
 
-caseTest("IT-M04-33-005", async ({ page, browser, step, expected }) => {
+店舗が無く流さない("IT-M04-33-005", async ({ page, browser, step, expected }) => {
   const 店ごと = [["M0433-P005-A", "3F"], ["M0433-P005-B", "2F"], ["M0433-P005-C", "B2F"], ["M0433-P005-D", "支店"]] as const;
   const csv = new Map<string, Record<string, string>[]>();
   try {
@@ -154,6 +161,6 @@ caseTest("IT-M04-33-038", 戻しリスト(...サプライ("038", "2033-05-07", {
 caseTest("IT-M04-33-039", 戻しリスト(...サプライ("039", "2033-05-08", { 店: "本店3F", 値: ["100", "200", ""] }, true, 名前("スリーブM0433-CB039-A"))));
 caseTest("IT-M04-33-040", 戻しリスト(...サプライ("040", "2033-05-09", { 店: "支店", 値: ["700", "800", ""] }, false, 名前("スリーブM0433-CB040-A[M0433-CB040-TAG]"))));
 caseTest("IT-M04-33-041", 戻しリスト(...サプライ("041", "2033-05-10", { 店: "支店", 値: ["700", "800", ""] }, false, 名前("スリーブM0433-CB041-A"))));
-caseTest("IT-M04-33-043", 戻しリスト(...サプライ("043", "2033-05-12", { 店: "共有A", 値: ["300", "400", ""] }, true, 名前("スリーブM0433-CB043-A"), 店の補い)));
-caseTest("IT-M04-33-046", 戻しリスト(...サプライ("046", "2033-05-15", { 店: "共有B", 値: ["500", "600", ""] }, true, 名前("スリーブM0433-CB046-A[M0433-CB046-TAG]"), 店の補い)));
-caseTest("IT-M04-33-049", 戻しリスト(...サプライ("049", "2033-05-18", { 店: "共有A", 値: ["300", "400", ""] }, true, 名前("スリーブM0433-CB049-A[M0433-CB049-TAG]"), 店の補い)));
+店舗が無く流さない("IT-M04-33-043", 戻しリスト(...サプライ("043", "2033-05-12", { 店: "共有A", 値: ["300", "400", ""] }, true, 名前("スリーブM0433-CB043-A"), 店の補い)));
+店舗が無く流さない("IT-M04-33-046", 戻しリスト(...サプライ("046", "2033-05-15", { 店: "共有B", 値: ["500", "600", ""] }, true, 名前("スリーブM0433-CB046-A[M0433-CB046-TAG]"), 店の補い)));
+店舗が無く流さない("IT-M04-33-049", 戻しリスト(...サプライ("049", "2033-05-18", { 店: "共有A", 値: ["300", "400", ""] }, true, 名前("スリーブM0433-CB049-A[M0433-CB049-TAG]"), 店の補い)));
