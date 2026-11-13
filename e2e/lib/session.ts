@@ -32,8 +32,9 @@ const isDashboardUrl = (loc: string): boolean => {
 
 export async function loginAdmin(page: Page, account: Account): Promise<void> {
   await page.goto(adminUrl("/login"));
-  await page.locator("#login_id").fill(account.loginId);
-  await page.locator("#password").fill(account.password);
+  // 待ち時間を付ける（付けないと、入力欄の無い画面でテスト全体の時間切れ＝30分まで待つ。2026-11-13 M03-13 の 051）
+  await page.locator("#login_id").fill(account.loginId, { timeout: 60_000 });
+  await page.locator("#password").fill(account.password, { timeout: 60_000 });
   // ログインの送信の応答（ダッシュボードへの転送）を受け取り、転送先だけを新着情報管理の一覧に書き換えて返す（Cookie などの見出しはそのまま）。
   // ブラウザが自動でたどる転送の先は差し替えられないので、送信の応答の側で書き換える
   const toNews = async (route: import("@playwright/test").Route) => {
@@ -56,7 +57,7 @@ export async function loginAdmin(page: Page, account: Account): Promise<void> {
     // 新着情報管理の一覧を開く権限の無い管理者（権限を絞った試験管理者など）は、その画面にログイン後の表示が出ない。
     // そのときは、アプリのもとの行き先（ダッシュボード）を開き直す（2026-11-13 M04-31 の 031）
     const onNews = new URL(page.url()).pathname.endsWith("/content/news");
-    const header = async () => (await page.locator("header, nav").first().innerText().catch(() => ""));
+    const header = async () => (await page.locator("header, nav").first().innerText({ timeout: 15_000 }).catch(() => ""));
     if (skipDashboard && onNews && (status >= 400 || !(await header()).includes("様"))) {
       const again = await page.goto(adminUrl("/"), { waitUntil: "domcontentloaded", timeout: 120_000 });
       status = again?.status() ?? 0;
@@ -92,7 +93,8 @@ export async function withAdminSession<T>(browser: Browser, account: Account, fn
     if (saved) {
       const res = await page.goto(adminUrl("/content/news"), { timeout: 60_000 }).catch(() => null);
       loggedIn = !!res && res.ok() && !/\/login/.test(new URL(page.url()).pathname)
-        && (await page.locator("header, nav").first().innerText().catch(() => "")).includes("様");
+        // 待ち時間を付ける（画面上部の無い画面でテスト全体の時間切れまで待っていた。2026-11-13 M03-13 の 021）。読めなければログインし直す
+        && (await page.locator("header, nav").first().innerText({ timeout: 15_000 }).catch(() => "")).includes("様");
     }
     if (!loggedIn) {
       if (saved) await context.clearCookies();
