@@ -17,7 +17,8 @@
  * - A05-02 の支店の受注（001B）は、開発環境の店舗ID 2（支店）の受注として、注文した受注の店舗を DB で書き換えた（支店のフロントで注文する手段が無い）。
  * - A05-02 の 008 の受注ID 520006008・商品ID 205020008・在庫ID 305020008 は指定できないので、画面が振った番号で読み替えた（spec が手順の
  *   printjobid にも同じ番号を使う）。金額1000・税100・ポイント50 は DB で書き、在庫数7は入庫8・注文1で作る。
- * - A05-03 の試験店舗（「A05-03連鎖試験店-003」「A05-03空データ試験店-005」）は、決まった名前で1度だけ登録して使い回す（依頼者決定 2026-11-11）。
+ * - A05-03 の試験店舗（「A05-03連鎖試験店-003」「A05-03空データ試験店-005」）は、試験店舗の使い回し（2026-11-13 依頼者決定）で作らない。
+ *   どちらも E2E だけが使う空の店舗（番号札・受注が0件）が前提で、使い回す試験支店ではそうできないので、003・005 は流さない。
  *   003 は前の実行で登録した番号札を、開始前に DB で消して0件にする（その店舗はこの E2E だけが使う）。
  */
 import { Browser } from "@playwright/test";
@@ -30,7 +31,7 @@ import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { 商品を作って入庫する } from "../pages/admin/f04_setup";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
+import { M0424StoreInput } from "../pages/admin/m04_24_store";
 import { 会員が商品を注文する } from "../pages/front/m05_front_order";
 import { markedMail, 本会員を作る } from "./f06-member";
 
@@ -128,9 +129,9 @@ export const 試験店舗の店舗ID = (店名: string): string => {
 async function 試験店舗を用意する(browser: Browser, v: M0424StoreInput, issue: (m: string) => void): Promise<string> {
   const known = 店舗の番号.get(v.店名);
   if (known) return known;
-  const id = await withAdminSession(browser, SETUP_ADMIN, async (page) => { page.setDefaultTimeout(60_000); return ensureStore(page, v, issue); });
-  店舗の番号.set(v.店名, id);
-  return id;
+  // 試験店舗の使い回し（2026-11-13 依頼者決定）で店舗は作らない。E2E だけが使う空の店舗（番号札・受注が0件）が要る 003・005 は流さない
+  void browser; void issue;
+  throw new Error(`試験店舗「${v.店名}」は作らない（試験店舗の使い回し・2026-11-13 依頼者決定。使い回す試験支店はほかの機能も使い、番号札・受注を0件にできない）`);
 }
 
 defineSeed("S-A05-03-CHAIN-003", { needs: ["S-A05-03-ENV"] }, async ({ browser, notes, seed }) => {

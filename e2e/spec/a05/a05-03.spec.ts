@@ -7,17 +7,20 @@
  */
 import { test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
+import type { CaseBody } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { WaitingTagPage } from "../../pages/admin/a05_03_waiting_tag";
 import { JSONの配列, 開く, 応答 } from "../../pages/api/a05_print";
 import { A0503_ADMIN, 連鎖試験店 } from "../../seeds/a05";
+/** E2E だけが使う空の試験店舗が要る 003・005 は流さない（試験店舗の使い回し・2026-11-13 依頼者決定。使い回す試験支店はほかの機能も使う）。caseTest に渡さないので数えない */
+const 空の店舗が無く流さない = (_testId: string, _body: CaseBody): void => undefined;
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const NETWORK = "開発者ツールの Network の代わりに、開いたページの応答（状態・本文）をそのまま読む";
 const 見る = (r: 応答) => note(`応答: 状態 ${r.状態}・本文 ${r.本文.length > 300 ? `${r.本文.slice(0, 300)}…（${r.本文.length}文字）` : `「${r.本文}」`}`);
 
 // ---- 003: 店頭注文番号札管理で登録した番号札が返る ----
-caseTest("IT-A05-03-003", async ({ page, notes, step, expected }) => {
+空の店舗が無く流さない("IT-A05-03-003", async ({ page, notes, step, expected }) => {
   const 店舗ID = notes.get("〔店舗ID-A0503-003〕");
   const w = new WaitingTagPage(page);
   let r!: 応答;
@@ -30,7 +33,7 @@ caseTest("IT-A05-03-003", async ({ page, notes, step, expected }) => {
 });
 
 // ---- 005: 受注・番号札が0件の店舗は空の配列 ----
-caseTest("IT-A05-03-005", async ({ page, notes, step, expected }) => {
+空の店舗が無く流さない("IT-A05-03-005", async ({ page, notes, step, expected }) => {
   const 店舗ID = notes.get("〔店舗ID-A0503-005〕");
   let r!: 応答;
   await step(1, async () => { r = await 開く(page, `/waiting_api/get_waiting/${店舗ID}`); });
