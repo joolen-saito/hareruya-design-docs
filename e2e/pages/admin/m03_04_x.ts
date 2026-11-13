@@ -122,7 +122,23 @@ async function 押して受け取る(page: Page, 押す: () => Promise<unknown>)
     const d = await dlP;
     if (d) ファイル = { 名前: d.suggestedFilename(), 中身: await 中身(d) };
   } else {
+    // 誤りのときアプリは参照元へリダイレクトする。応答（3xx）を受けた時点ではまだ元の画面なので、移った先の読み込みを待つ
+    // （待たずに読むと、移る途中で「Execution context was destroyed」になる。2026-11-13 M03-04 015）
+    const location = headers["location"] ?? "";
+    if (状態 >= 300 && 状態 < 400 && location) {
+      const to = new URL(location, page.url()).toString();
+      await page.waitForURL((u) => u.toString() === to, { waitUntil: "load", timeout: 60_000 }).catch(() => undefined);
+    }
     await page.waitForLoadState("load");
   }
-  return { ファイル, 状態, 型, 移った先: page.url(), 誤り: await topErrors(page) };
+  return { ファイル, 状態, 型, 移った先: page.url(), 誤り: await 誤りを読む(page) };
+}
+
+/** 上部のエラーの帯を読む。読む途中で画面が移ったら、読み込みを待って1度だけ読み直す */
+async function 誤りを読む(page: Page): Promise<string[]> {
+  try { return await topErrors(page); } catch (e) {
+    if (!/Execution context was destroyed|navigation/i.test(String(e))) throw e;
+    await page.waitForLoadState("load");
+    return topErrors(page);
+  }
 }

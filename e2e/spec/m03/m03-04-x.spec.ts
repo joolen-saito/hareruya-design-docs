@@ -248,7 +248,10 @@ caseTest("IT-M03-04-034", async ({ page, notes, step, expected }) => {
   let r: 出力の結果 | null = null;
   await loginAdmin(page, M0304_ADMIN);
   await step(1, async () => {
-    await 商品名で検索する(page, 検索語("M0304-CB034"));
+    // 商品一覧の状態の初期の検索条件は NM だけ（設計書の画面項目定義「初期検索条件として 状態：NMにチェック」）。商品A は状態SPの規格だけを持つので、
+    // 正本の「商品A・商品Bの2件」を出すため、状態の条件に SP を足して検索する（008 と同じく状態を指定する）
+    await 商品名で検索する(page, 検索語("M0304-CB034"), { 状態: ["ニアミント", "スライトリープレイド"] });
+    supplement("商品一覧の状態の初期の検索条件は NM だけなので、状態SPの規格だけを持つ商品A を出すため、状態の条件に SP を足して検索した");
     expect((await 一覧の商品ID(page)).sort(), "検索結果が商品A・商品Bの2件だけ").toEqual([A, B].sort());
   });
   await step(2, async () => { await 商品を選ぶ(page, A); await 商品を選ぶ(page, B); });

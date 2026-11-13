@@ -112,9 +112,11 @@ defineSeed("S-M03-04-VALUES-023", { needs: ["S-M03-04-MASTER"] }, async ({ brows
 
 // ---- 複数の商品 ----
 defineSeed("S-M03-04-PAGING-009", { needs: ["S-M03-04-MASTER"] }, async ({ browser, notes, seed }) => {
+  // 呼び名は、シード表が書く両端（01・11）だけを控える（あいだの 02〜10 はシード表に呼び名が無い。012 と同じ）
   const defs = Array.from({ length: 11 }, (_, i) => {
     const k = String(i + 1).padStart(2, "0");
-    return { 商品コード: rc(`M0304-009-${k}`), 商品名日: `${検索語("M0304CASE009")}-${k}`, 商品の呼び名: `〔商品ID-M0304-009-${k}〕`, 規格の呼び名: `〔規格ID-M0304-009-${k}〕` };
+    const 端 = k === "01" || k === "11";
+    return { 商品コード: rc(`M0304-009-${k}`), 商品名日: `${検索語("M0304CASE009")}-${k}`, ...(端 ? { 商品の呼び名: `〔商品ID-M0304-009-${k}〕`, 規格の呼び名: `〔規格ID-M0304-009-${k}〕` } : {}) };
   });
   await 商品を作る(browser, seed.シードID, notes, defs, (m) => reportSeedIssue(seed.シードID, m));
 });
