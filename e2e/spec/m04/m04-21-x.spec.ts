@@ -2,7 +2,7 @@
  * M04-21 在庫変更CSV登録の続き（-x）。仕分け直し（not_runnable_recheck_cases2.tsv）で流せる見込みになったケース。
  * 正本: cases/M04-21_test_cases.tsv。振り分けと解釈は記録 review/M04-21_progress_2026-11-11_dev.md。
  *
- * - 店舗「試験店舗A（M04-21）」・所属「試験所属A（M04-21）」は、開発環境の試験用の店舗「試験店舗A」・所属「試験所属A」で読む（作らない。seeds/m04-21-x.ts）。
+ * - 店舗「試験店舗A（M04-21）」・所属「試験所属A（M04-21）」は、開発環境の店舗「試験支店」（2026-11-13 試験店舗の使い回し）・所属「試験所属A」で読む（作らない。seeds/m04-21-x.ts）。
  * - 「M04-21試験管理者」「M04-21承認者A」などの名前・ログインID、商品コード・商品名・ファイル名は、実行の印を付けた値で読む。
  * - 事前準備①のログインは、手順1の前に行う（手順1がログインのケースを除く）。
  * - 手順が「入庫/問屋仕入を選択する」だけのケースは、ほかの欄を事前準備③の入力値で入れる。
@@ -28,7 +28,7 @@ import {
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
-const 読み替え = () => note("店舗「試験店舗A（M04-21）」・所属「試験所属A（M04-21）」は、開発環境の試験用の店舗「試験店舗A」・所属「試験所属A」で読んだ（シード S-M04-21-MASTER）");
+const 読み替え = () => note("店舗「試験店舗A（M04-21）」・所属「試験所属A（M04-21）」は、開発環境の店舗「試験支店」（試験店舗の使い回し・2026-11-13 依頼者決定）・所属「試験所属A」で読んだ（シード S-M04-21-MASTER）");
 const CSV画面 = (path: string) => path.endsWith("/product/stock/change/new");
 const 在庫IDの = (ctx: CaseCtx, n: string) => ctx.notes.get(`〔在庫ID-M0421-${n}〕`);
 const 結果の文 = (r: 押した結果 | { 結果: "閉じた"; 窓が見える: boolean }) => JSON.stringify(r);
@@ -548,7 +548,7 @@ caseTest("IT-M04-21-030", async (ctx) => {
 // ---- 038: 編集権限の無い店舗 ----
 caseTest("IT-M04-21-038", async (ctx) => {
   ctx.page.setDefaultTimeout(60_000);
-  note("店舗「M0421-038-ST-A」「M0421-038-ST-B」は、開発環境の試験用の店舗「試験店舗A」「試験店舗B」で読んだ（シード S-M04-21-STOREPERM-038）");
+  note(`店舗「M0421-038-ST-A」「M0421-038-ST-B」は、試験店舗の使い回し（2026-11-13 依頼者決定）で「試験支店」と本店「${試験店舗B().店名}」で読んだ（シード S-M04-21-STOREPERM-038）`);
   const name = ファイル名の("perm-b-038.csv");
   let r: 押した結果 = { 結果: "押せない" };
   await ctx.step(1, async () => { await loginAdmin(ctx.page, ユーザー038.account); });
@@ -558,7 +558,7 @@ caseTest("IT-M04-21-038", async (ctx) => {
     await ctx.page.waitForLoadState("networkidle").catch(() => undefined);
     const 候補 = await 承認通知先の候補(ctx.page);
     if (候補.includes(承認者A.名前)) await 入力する(ctx.page, { 承認者: [承認者A.名前] });
-    else note(`店舗「${試験店舗B().店名}」の承認通知先（メンバー選択）の候補に M04-21承認者A がいない（承認者Aは試験店舗Aだけを編集できる）ので選べなかった。候補: ${候補.join("、") || "なし"}`);
+    else note(`店舗「${試験店舗B().店名}」の承認通知先（メンバー選択）の候補に M04-21承認者A がいない（承認者Aは試験支店だけを編集できる）ので選べなかった。候補: ${候補.join("、") || "なし"}`);
   });
   await ctx.step(3, async () => { await ファイルを選ぶ(ctx.page, caseCsvPath(name)); r = await 一括登録を押す(ctx.page); note(`「一括登録を実行」を押したあと: ${結果の文(r)}`); });
   let 行 = -1;

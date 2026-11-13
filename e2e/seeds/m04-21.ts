@@ -7,7 +7,8 @@
  *   権限はシステム管理者（M04-02・M04-17 などと同じ）。所属は選択肢の先頭。
  * - S-M04-21-TEMPLATE-044: ダウンロードの保存先のフォルダ M0421-044-DL を、そのケースの出力の場所に作って空にする。
  * - RC-ORG-*: 申請者と承認者。所属はマスタデータ管理で所属のマスタに足した「RC0421-00N所属」（空いているID＝いまの最大＋1）。
- *   所属店舗・デフォルト検索表示店舗・編集可能店舗はその店舗（057 は店舗登録で作る支店、058 は本店＝店舗ID 1）。
+ *   所属店舗・デフォルト検索表示店舗・編集可能店舗はその店舗（057 は支店、058 は本店＝店舗ID 1）。
+ *   057 の支店「RC0421-001支店」は、試験店舗の使い回し（2026-11-13 依頼者決定。pages/admin/reuse_store.ts）で作らず、既にある「試験支店」で読み替える。
  *   権限グループは「在庫管理を操作できるもの（承認者は承認権限の列にチェックのある権限）」で、どちらもシステム管理者にした。
  *   デフォルト検索表示店舗はシード表に無いが、メンバー登録画面で必須。
  * - RC-STOCK-*: グッズ商品CSV登録で1行を取り込み、商品規格一覧から取り込みで作られた規格を開いて公開にし、
@@ -33,7 +34,7 @@ import {
   downloadBytes, downloadStockChangeTemplate, ensureMemberWithDept, historyRowsOfFile, openStockChangeCsv,
 } from "../pages/admin/m04_21_stock_change_csv";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
+import { 試験支店, 試験支店の店舗ID } from "../pages/admin/reuse_store";
 import { StockListPage } from "../pages/admin/stock_edit";
 
 // ---- 044 ----
@@ -76,20 +77,18 @@ function rcOrg(prefix: string, label: string, password: string): RcOrg {
 export const RC057 = rcOrg("rc0421-001", "RC0421-001", "Passw0rd-RC0421001");
 export const RC058 = rcOrg("rc0421-002", "RC0421-002", "Passw0rd-RC0421002");
 
-/** 057 の支店。店名・支店URL・支店・公開・開店はシード表の値。そのほかの必須項目は「任意の有効な値」 */
-export const RC057_BRANCH: M0424StoreInput = {
-  店名: "RC0421-001支店", 店名カナ: "アールシーシテン", 店名英語: "RC Branch One", 支店URL: "rc0421s001", 店名略称3文字: "R41",
-  ショップ名略称: "RC0421-001支店", 会社名: "RC0421試験会社", 会社名カナ: "アールシーシケンガイシャ", 郵便番号: "160-0022",
-  都道府県: "東京都", 住所1: "新宿区新宿4-21-1", 住所2: "試験ビル", 電話番号: "03-0421-0001",
-};
+/** 057 の支店（シード表の店名「RC0421-001支店」）。試験店舗の使い回しで店舗を作らず、既にある試験支店で読み替える */
+export const RC057_BRANCH_正本の店名 = "RC0421-001支店";
+export const RC057_BRANCH = { 店名: 試験支店.店名 } as const;
 
-export type RcStore = { 本店: true } | { 支店: M0424StoreInput };
+export type RcStore = { 本店: true } | { 試験支店: true };
 export const MAIN_STORE: RcStore = { 本店: true };
 
 /** 店舗IDと店名（在庫検索一覧の選択肢の表示名）。本店は店舗ID 1 の店名を在庫検索一覧の選択肢から読む */
 export async function resolveStore(page: Page, store: RcStore, onIssue: (m: string) => void): Promise<{ id: string; 店名: string }> {
   if ("本店" in store) return { id: "1", 店名: await new StockListPage(page).shopNameById("1") };
-  return { id: await ensureStore(page, store.支店, onIssue), 店名: store.支店.店名 };
+  void onIssue;
+  return { id: 試験支店の店舗ID(), 店名: 試験支店.店名 };
 }
 
 function defineRcOrg(seedId: string, org: RcOrg, store: RcStore): void {
@@ -161,9 +160,9 @@ function defineRcStock(seedId: string, orgSeedId: string, org: RcOrg, store: RcS
   });
 }
 
-defineRcOrg("S-M04-21-RC-ORG-057", RC057, { 支店: RC057_BRANCH });
+defineRcOrg("S-M04-21-RC-ORG-057", RC057, { 試験支店: true });
 defineRcOrg("S-M04-21-RC-ORG-058", RC058, MAIN_STORE);
-defineRcStock("S-M04-21-RC-STOCK-057", "S-M04-21-RC-ORG-057", RC057, { 支店: RC057_BRANCH }, {
+defineRcStock("S-M04-21-RC-STOCK-057", "S-M04-21-RC-ORG-057", RC057, { 試験支店: true }, {
   商品コード: "RC0421001CODE", 商品名: "RC0421-001-NAME", csv: { ファイル名: "rc0421-001.csv", 行: ["RC0421001CODE", "-3", "999"] },
 });
 defineRcStock("S-M04-21-RC-STOCK-058", "S-M04-21-RC-ORG-058", RC058, MAIN_STORE, {

@@ -24,7 +24,8 @@ import {
   chooseFileAndRegister, downloadStockChangeTemplate, fillStockChangeCsvForm, openStockChangeCsv,
 } from "../../pages/admin/m04_21_stock_change_csv";
 import { StockListPage } from "../../pages/admin/stock_edit";
-import { caseCsvPath, M0421_ADMIN, RC057, RC057_BRANCH, RC058, templateDownloadDir } from "../../seeds/m04-21";
+import { caseCsvPath, M0421_ADMIN, RC057, RC057_BRANCH, RC057_BRANCH_正本の店名, RC058, templateDownloadDir } from "../../seeds/m04-21";
+import { 店名の読み替え } from "../../pages/admin/reuse_store";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -89,6 +90,7 @@ async function searchHistory057(page: Page): Promise<HistoryRow[]> {
 caseTest("IT-M04-21-057", async ({ page, step, expected }) => {
   let before: HistoryRow[] = [];
   let after: HistoryRow[] = [];
+  note(店名の読み替え(RC057_BRANCH_正本の店名, BRANCH057));
   await step(1, () => loginAdmin(page, RC057.申請者.account));
   await step(2, async () => {
     before = await searchHistory057(page);

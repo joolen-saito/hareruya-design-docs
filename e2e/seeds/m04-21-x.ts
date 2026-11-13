@@ -3,8 +3,10 @@
  * 仕分け直し（e2e/review/not_runnable_recheck_cases2.tsv）で流せる見込みになったケースのシード。振り分けと解釈は記録 review/M04-21_progress_2026-11-11_dev.md。
  *
  * 作り方（シード表の投入方法の順。画面で作れない状態だけ、E2E の行へ DB で書き足す。依頼者決定 2026-11-10）:
- * - S-M04-21-MASTER: 店舗・所属は作らない。開発環境に既にある試験用の店舗「試験店舗A」・所属「試験所属A」を、
- *   シード表の「試験店舗A（M04-21）」「試験所属A（M04-21）」として使う（店舗は作ると在庫の行が約36万行でき消せない・所属のマスタは全員が使う）。
+ * - S-M04-21-MASTER: 店舗・所属は作らない。開発環境に既にある店舗「試験支店」・所属「試験所属A」を、
+ *   シード表の「試験店舗A（M04-21）」「試験所属A（M04-21）」として使う（店舗は作ると在庫の行が約36万行できる・所属のマスタは全員が使う）。
+ *   2026-11-13 試験店舗の使い回し（依頼者決定。pages/admin/reuse_store.ts）で、前に使っていた「試験店舗A」「試験店舗B」は片付ける一覧に入ったので、
+ *   試験店舗A の代わりは「試験支店」、038 の2つ目の店舗（試験店舗B の代わり）は本店（店舗ID 1）にした。
  *   店舗IDは店名で DB の参照から読んで控える。在庫区分（EC-CUBE・スマレジ）・在庫変動区分（入庫/問屋仕入・廃棄/廃棄(破損)）は開発環境のマスタにあるので書き足さない。
  *   続けて、試験店舗A の在庫を編集できる試験管理者「M04-21試験管理者」を作る（下の注記1）。
  * - S-M04-21-APPROVERS: 承認者A・B をメンバー登録画面で登録する（所属 試験所属A・所属店舗と編集可能店舗 試験店舗A・権限 システム管理者）。
@@ -42,13 +44,12 @@ import { 在庫編集画面を開く } from "../pages/admin/m04_02_stock_x";
 import { downloadBytes, downloadStockChangeTemplate, ensureMemberWithDept, historyRowsOfFile, openStockChangeCsv } from "../pages/admin/m04_21_stock_change_csv";
 import { ファイルを選ぶ, 一括登録を押す, 入力する, 承認通知先の候補, 規格の商品コードを変える } from "../pages/admin/m04_21_x_csv";
 import { caseCsvPath } from "./m04-21";
+import { 試験支店, 試験支店の店舗ID, 本店の店舗ID, 本店の店名DB } from "../pages/admin/reuse_store";
 
 // ---- 店舗・所属・メンバー ----
 
-/** シード表の「試験店舗A（M04-21）」として使う、開発環境の試験用の店舗 */
-export const 試験店舗Aの店名 = "試験店舗A";
-/** 038 の「M0421-038-ST-B」として使う、開発環境の試験用の店舗 */
-export const 試験店舗Bの店名 = "試験店舗B";
+/** シード表の「試験店舗A（M04-21）」として使う店舗（試験店舗の使い回しの試験支店） */
+export const 試験店舗Aの店名 = 試験支店.店名;
 /** シード表の「試験所属A（M04-21）」として使う、開発環境の所属 */
 export const 試験所属A = "試験所属A";
 
@@ -58,8 +59,9 @@ export function 店舗IDの(店名: string): string {
   if (!店舗IDの控え.has(店名)) 店舗IDの控え.set(店名, db.店名の店舗ID(店名));
   return 店舗IDの控え.get(店名)!;
 }
-export const 試験店舗A = () => ({ ID: 店舗IDの(試験店舗Aの店名), 店名: 試験店舗Aの店名 });
-export const 試験店舗B = () => ({ ID: 店舗IDの(試験店舗Bの店名), 店名: 試験店舗Bの店名 });
+export const 試験店舗A = () => ({ ID: 試験支店の店舗ID(), 店名: 試験店舗Aの店名 });
+/** 038 の「M0421-038-ST-B」として使う店舗（本店＝店舗ID 1。店名は本店の店名） */
+export const 試験店舗B = () => ({ ID: 本店の店舗ID, 店名: 本店の店名DB() });
 
 export type 管理者 = { 名前: string; account: Account; email: string };
 const 人の = (名前: string, loginId: string, password: string): 管理者 => {
