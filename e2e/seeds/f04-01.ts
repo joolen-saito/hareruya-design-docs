@@ -1,11 +1,11 @@
 /**
  * F04-01 買い物かごの画面シード。正本: cases/F04-01_seed_data.tsv
  *
- * - S-F04-01-SHOPS（共有）: 本店（店舗ID 1）は既存の店舗を使う。支店A・支店Bは F02-03 の部品（店舗登録画面）で登録する。
- *   シードでの解釈: 店名は「支店A（F04-01）」「支店B（F04-01）」（ほかの機能の同名と分ける。M04-09 の前例）、支店URLは画面の入力チェックを通る
- *   「f0401a」「f0401b」（正本の識別子 shop-a-f0401 はハイフンを含み画面で入らない。ケースの文はこの識別子を使わないので DB へは書き足さない）。
- *   正本の固定の配送方法ID（940100101〜103）も、ケースの文が使わないので作らない（支店の配送方法は、開発環境の支店の作りのまま）。
- *   支店の在庫を入庫・承認するため、本店・支店A・支店Bを編集できる試験用の登録者・承認者を作る（印つき）。
+ * - S-F04-01-SHOPS（共有）: 本店（店舗ID 1）は既存の店舗を使う。
+ *   シードでの解釈（試験店舗の使い回し・2026-11-13 依頼者決定。pages/admin/reuse_store.ts）: 支店Aは店舗を作らず、既にある「試験支店」で読み替える。
+ *   支店Bは用意しない（本店・支店A・支店Bの3店が要る 001・014・025 は流さない。config/sheet_not_runnable.tsv）。
+ *   正本の固定の配送方法ID（940100101〜103）は、ケースの文が使わないので作らない（支店の配送方法は、開発環境の試験支店の作りのまま）。
+ *   支店の在庫を入庫・承認するため、本店・試験支店を編集できる試験用の登録者・承認者を作る（決まった印）。
  * - S-F04-01-SETTINGS（共有・≪共有の設定≫）: 送料無料条件（金額・数量）と入荷通知最大数は、ケースの開始時に spec が
  *   「共有の設定を整える」で正本の値にし、終わるたびに「共有の設定を戻す」で元の値へ戻す。元の値は控えのファイルにも残し、途中で止まっても次の回に戻す。
  * - ケースのシード: 会員はフロントの会員登録（本登録のメールは開発環境の受け口）。商品はグッズ商品CSV登録（購入グループ「通常商品」）と在庫編集・別の管理者の承認。
@@ -28,7 +28,7 @@ import { Notes } from "../lib/notes";
 import { rc, RUN_MARK, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
-import { ensureBranch, 支店の入力 } from "../pages/admin/f02_03_store";
+import { 試験支店, 試験支店の店舗ID } from "../pages/admin/reuse_store";
 import { readArrivalMax, setArrivalMax } from "../pages/admin/f03_07_restock";
 import { 管理者, 商品を作って入庫する, 本店の店名 } from "../pages/admin/f04_setup";
 import { ShopBasicPage } from "../pages/admin/m10_01_shop";
@@ -38,15 +38,10 @@ import { カートに入れる } from "../pages/front/f04_shopping";
 import { CartPage } from "../pages/front/f04_01_cart";
 import { markedMail, 本会員を作る } from "./f06-member";
 
-// ---- 支店（共有） ----
-const 支店の定め = (k: "A" | "B"): 支店の入力 => ({
-  店名: `支店${k}（F04-01）`, 店名カナ: `シテン${k === "A" ? "エー" : "ビー"}`, 店名英語: `Cart Branch ${k}`, 支店URL: `f0401${k.toLowerCase()}`,
-  店名略称3文字: `F4${k}`, ショップ名略称: `支店${k}（F04-01）`,
-  郵便番号: "100-0001", 都道府県: "東京都", 住所1: "千代田区試験", 住所2: "4-1", 電話番号: "03-0000-0401",
-  地図URL: `${BASE_URL}/maps/f0401${k.toLowerCase()}`,
-});
-export const 支店のページ = (k: "A" | "B"): string => `/f0401${k.toLowerCase()}`;
-export const 支店の店名 = (k: "A" | "B"): string => `支店${k}（F04-01）`;
+// ---- 支店（共有）。支店Aは使い回しの試験支店で読み替える。支店Bは用意しない ----
+const 支店Bは無い = (): never => { throw new Error("支店Bは用意しない（試験店舗の使い回し・2026-11-13 依頼者決定。3店が要るケースは流さない）"); };
+export const 支店のページ = (k: "A" | "B"): string => (k === "A" ? 試験支店.ページ : 支店Bは無い());
+export const 支店の店名 = (k: "A" | "B"): string => (k === "A" ? 試験支店.店名 : 支店Bは無い());
 const 店舗ID = new Map<string, string>([["本店", "1"]]);
 export const 店舗IDの = (店: 店): string => {
   const id = 店舗ID.get(店);
@@ -59,27 +54,25 @@ export const 店のページ = (店: 店): string => (店 === "本店" ? "" : �
 const PASS = "Passw0rd!F0401";
 // 試験管理者は決まった印で1度だけ作って使い回す（2026-11-11 シードの使い回し）。
 // 支店の在庫の承認通知先は、その支店に所属するメンバーの部署だけが選べる（新アプリの StockApprovalType::getDepartmentChoices）ので、
-// 承認者は支店ごとに、その支店の所属で作る（2026-11-12 の夜、本店所属の承認者では「承認通知先のメンバーに…がいる部署が無い」で止まった）
-const F0401登録者: 管理者 = { 名前: rcFixed("F0401登録者"), account: { loginId: rcFixed("f0401reg").toLowerCase(), password: PASS } };
-const F0401承認者: Record<"A" | "B", 管理者> = {
-  A: { 名前: rcFixed("F0401承認者A"), account: { loginId: rcFixed("f0401apra").toLowerCase(), password: PASS } },
-  B: { 名前: rcFixed("F0401承認者B"), account: { loginId: rcFixed("f0401aprb").toLowerCase(), password: PASS } },
+// 承認者は支店（試験支店）の所属で作る（2026-11-12 の夜、本店所属の承認者では「承認通知先のメンバーに…がいる部署が無い」で止まった）。
+// 2026-11-13 試験店舗の使い回しで、編集できる店舗が本店・試験支店に変わったので、前の試験管理者（支店A・B を編集できる）とは別の名前で作る。
+const F0401登録者: 管理者 = { 名前: rcFixed("F0401登録者試験支店"), account: { loginId: rcFixed("f0401regt").toLowerCase(), password: PASS } };
+const F0401承認者: Record<"A", 管理者> = {
+  A: { 名前: rcFixed("F0401承認者試験支店"), account: { loginId: rcFixed("f0401aprt").toLowerCase(), password: PASS } },
 };
 
-defineSeed("S-F04-01-SHOPS", async ({ browser, notes, seed }) => {
-  const issue = (m: string) => reportSeedIssue(seed.シードID, m);
+defineSeed("S-F04-01-SHOPS", async ({ browser, notes }) => {
   const 本店 = await 本店の店名(browser);
+  const id = 試験支店の店舗ID();
+  店舗ID.set("支店A", id);
+  notes.set("〔店舗ID-F0401-共有A〕", id);
+  notes.set("〔店舗ID-F0401-共有B〕", "（支店Bは用意しない。試験店舗の使い回しで、3店が要るケースは流さない）");
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    for (const k of ["A", "B"] as const) {
-      const id = await ensureBranch(page, 支店の定め(k), issue);
-      店舗ID.set(`支店${k}`, id);
-      notes.set(`〔店舗ID-F0401-共有${k}〕`, id);
-    }
-    for (const [a, 所属] of [[F0401登録者, 本店], [F0401承認者.A, 支店の店名("A")], [F0401承認者.B, 支店の店名("B")]] as [管理者, string][]) {
+    for (const [a, 所属] of [[F0401登録者, 本店], [F0401承認者.A, 試験支店.店名]] as [管理者, string][]) {
       await ensureMember(page, {
         名前: a.名前, 所属店舗: 所属, ログインID: a.account.loginId, メールアドレス: `${a.account.loginId}@example.test`,
-        パスワード: a.account.password, 権限: "システム管理者", デフォルト検索表示店舗: 所属, 編集可能店舗: [本店, 支店の店名("A"), 支店の店名("B")],
+        パスワード: a.account.password, 権限: "システム管理者", デフォルト検索表示店舗: 所属, 編集可能店舗: [本店, 試験支店.店名],
       });
     }
   });
@@ -225,7 +218,7 @@ function ケースのシード(seedId: string, d: 定め): void {
       const made = await 商品を作って入庫する(browser, seedId, items.map((p) => ({
         商品コード: 商品コードの(d, p.字), 商品名: 商品コードの(d, p.字), 価格: String(p.価格 ?? 1000), 入庫数: p.在庫, 入庫方法: "在庫編集" as const,
         在庫変動理由: "結合テスト用", ...(p.上限 !== undefined ? { CSVの値: { "販売制限数": String(p.上限) } } : {}),
-      })), issue, 店 === "本店" ? {} : { 店舗名: 店名, 登録者: F0401登録者, 承認者: F0401承認者[店 === "支店A" ? "A" : "B"] });
+      })), issue, 店 === "本店" ? {} : { 店舗名: 店名, 登録者: F0401登録者, 承認者: 店 === "支店A" ? F0401承認者.A : 支店Bは無い() });
       items.forEach((p, i) => {
         const 商品規格ID = 商品の商品規格ID(made[i].productId);
         x.品.set(p.字, { 商品ID: made[i].productId, 商品規格ID, 在庫ID: 店舗の在庫ID(商品規格ID, 店舗IDの(店)), 店, 商品コード: made[i].商品コード });
