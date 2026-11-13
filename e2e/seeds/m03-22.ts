@@ -21,7 +21,7 @@ import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { readGoodsProductId, readGoodsProductIdByName } from "../pages/admin/m03_01_goods_list_seed";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { productIdsByCode } from "../pages/admin/m03_17_product";
-import { rcFixed } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { ensureMember } from "../pages/admin/member";
 import { openProductEdit } from "../pages/admin/product_edit";
 import { goodsCsvCategoryId, saveFromSearchResult, selectedPurchaseGroup } from "../pages/admin/m03_22_product";
@@ -148,8 +148,10 @@ async function expectProductUsesGroup(o: SeedOps, 商品ID: string, 購入グル
 }
 
 const used = (n: string) => async (o: SeedOps) => {
-  const groupName = `使用中購入グループ-${n}`;
-  const code = `USED-GROUP-001-${n}`;
+  // 購入グループの名称・商品コードは正本の決め打ちの値。前の実行の残り（購入グループは使用中の商品があると画面から消せない）や、ほかの方が登録した
+  // 同じ値と重ならないよう、実行ごとの印を付けて作る（lib/run_marker.ts の rc。ケースは購入グループを控えたIDで扱い、名称・商品コードの値そのものを確かめない）
+  const groupName = rc(`使用中購入グループ-${n}`);
+  const code = rc(`USED-GROUP-001-${n}`);
   const productName = `使用確認商品-${n}`;
   // 何かを作る前に、グッズ商品CSVが「サプライ・グッズ」のカテゴリIDを受け付けるかを画面で確かめる（受け付けなければ止める）
   const categoryId = await goodsCsvCategoryId(o.page, o.warn);
@@ -160,7 +162,7 @@ const used = (n: string) => async (o: SeedOps) => {
   }
   // グッズ商品CSVは購入グループを名称で引く。同じ名称の購入グループが残っていると、どれに付くか決まらないので止める
   await o.expectNoRowNamed(groupName, "グッズ商品CSVが購入グループを名称で引くので、どの行に付くか決まらない。消してよいかの判断が要る");
-  const groupId = await o.registerAndNote(label(n), group(groupName, `UsedGroup-${n}`));
+  const groupId = await o.registerAndNote(label(n), group(groupName, rc(`UsedGroup-${n}`)));
   await registerGoodsWithGroup(o, categoryId, { code, nameJp: productName, nameEn: `M0322 used group product ${n}` }, groupName);
   // 正本: 商品マスターを商品名で検索し、検索結果の行に表示された商品IDを控える
   const productId = await readGoodsProductIdByName(o.page, productName, code);
