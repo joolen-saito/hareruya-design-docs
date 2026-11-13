@@ -42,7 +42,8 @@ import { ShelfNumberPage } from "../pages/admin/m03_21_shelf_number";
 import { openProductEditByCode } from "../pages/admin/m03_23_seed_products";
 import { storeNameById } from "../pages/admin/m04_19_masters";
 import { ShortTagPage } from "../pages/admin/short_tag";
-import { Actor, buildInstruction, ensureActor, stockInByCsv } from "./m04-25";
+import { Actor, buildInstruction, ensureActor } from "./m04-25";
+import { 入庫して承認する } from "../pages/admin/m04_33_stock_in";
 
 // ---------------------------------------------------------------- 店舗・管理者
 
@@ -52,6 +53,8 @@ export const 支店 = "13";
 // 2026-11-13 試験店舗の使い回しで編集できる店舗が 1・5・13 だけになったので、前の試験管理者（本店2F（M04-33）も編集できる）とは別の名前で作る
 export const M0433_ADMIN: Actor = { 名前: rcFixed("M04-33試験管理者3店"), account: { loginId: rcFixed("m0433_admin3").toLowerCase(), password: "Passw0rd!M0433" } };
 const 承認者: Actor = { 名前: rcFixed("M04-33承認者3店"), account: { loginId: rcFixed("m0433_apr3").toLowerCase(), password: "Passw0rd!M0433apr" } };
+// 出庫承認申請の承認通知先の選択肢は「出庫元の店舗に所属するメンバー」だけ（アプリの作り）。本店所属の承認者は出ないので、出庫元（店舗ID 5）所属の承認者を別に作る（正本の外の補い・2026-11-14）
+const 出庫承認者: Actor = { 名前: rcFixed("M04-33出庫承認者"), account: { loginId: rcFixed("m0433_outapr").toLowerCase(), password: "Passw0rd!M0433out" } };
 
 /** 店舗ID 1・13 の、書き換える前の高額商品閾値（CONFIG のシードが控える。spec が戻すのに使う） */
 export const 元の閾値 = new Map<string, [string, string, string]>();
@@ -78,6 +81,7 @@ defineSeed("S-M04-33-ADM", { needs: ["S-M04-33-CONFIG"] }, async ({ browser }) =
   const 店舗 = [本店3F, 出庫元, 支店];
   await ensureActor(browser, M0433_ADMIN, { 所属店舗ID: 本店3F, 編集可能店舗ID: 店舗, email: `${M0433_ADMIN.account.loginId}@example.test` });
   await ensureActor(browser, 承認者, { 所属店舗ID: 本店3F, 編集可能店舗ID: 店舗, email: `${承認者.account.loginId}@example.test` });
+  await ensureActor(browser, 出庫承認者, { 所属店舗ID: 出庫元, 編集可能店舗ID: 店舗, email: `${出庫承認者.account.loginId}@example.test` });
   管理者あり = true;
 });
 
@@ -175,13 +179,13 @@ async function 作る(ctx: SeedCtx, d: ケースの定め): Promise<void> {
 
   // 入庫（入庫先に10・出庫元に移動点数。在庫変更CSV登録と別のメンバーの承認）
   const 出庫元の店名 = await 店名を読む(browser, 出庫元);
-  await stockInByCsv(browser, seedId, {
+  await 入庫して承認する(browser, seedId, {
     registrant: M0433_ADMIN, approver: 承認者, 店舗ID: 出庫元, 店名: 出庫元の店名,
     行: d.品.map((p) => ({ 商品コード: rc(p.商品コード), 在庫増減数: p.数量, 仕入単価: 10 })),
   });
   for (const k of [...new Set(d.品.map((p) => p.入庫先))]) {
     const id = 入庫先の店舗ID(k);
-    await stockInByCsv(browser, seedId, {
+    await 入庫して承認する(browser, seedId, {
       registrant: M0433_ADMIN, approver: 承認者, 店舗ID: id, 店名: await 店名を読む(browser, id),
       行: d.品.filter((p) => p.入庫先 === k).map((p) => ({ 商品コード: rc(p.商品コード), 在庫増減数: 10, 仕入単価: 10 })),
     });
@@ -193,7 +197,7 @@ async function 作る(ctx: SeedCtx, d: ケースの定め): Promise<void> {
     const local = new Notes();
     await buildInstruction({ browser, notes: local, seed }, {
       出庫元: { 店舗ID: 出庫元, 店名: 出庫元の店名 }, 入庫先: { 店舗ID: 入庫先の店舗ID(k) },
-      operator: M0433_ADMIN, approver: 承認者,
+      operator: M0433_ADMIN, approver: 出庫承認者,
       moves: ps.map((p) => ({ 方法: "csv" as const, 行: [{ 商品コード: rc(p.商品コード), 移動点数: p.数量 }], 呼び名: `〔在庫移動-${p.記号}〕` })),
       呼び名: "〔在庫移動指示〕", 送り状No: `TRACK-M0433-${d.番号}`,
     });
