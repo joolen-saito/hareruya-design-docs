@@ -20,7 +20,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { Browser, BrowserContext, Cookie } from "@playwright/test";
+import { Browser, BrowserContext, Cookie, chromium, test } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN, STATE_DIR } from "../config/env";
 import { 購入完了フリーエリアのブロックID } from "../db/f04_04";
 import { 処理中受注ID一覧, 表示中の支払方法名, 表示中の配送方法名 } from "../db/f04_02";
@@ -271,3 +271,17 @@ export async function 購入完了フリーエリアを戻す(browser: Browser):
   }
   return `購入完了画面用ブロックを元のコードへ戻せていない（控え ${フリーエリアの控え}）${失敗 ? `・${失敗}` : ""}`;
 }
+
+// 戻しの保険（ケースの時間切れ・ブラウザの終了で、ケースの最後の戻しが届かなかったとき）。控えが残っていれば、専用のブラウザで元へ戻して確かめ、戻せなければこの回を失敗にする
+// （spec の中に書くとほかのケースの「テストコードが変わった」になるので、シードの側に置く）
+test.afterAll(async ({}, testInfo) => {
+  if (!fs.existsSync(フリーエリアの控え)) return;
+  testInfo.setTimeout(900_000);
+  const own = await chromium.launch();
+  try {
+    const m = await 購入完了フリーエリアを戻す(own);
+    if (m) throw new Error(m);
+  } finally {
+    await own.close().catch(() => undefined);
+  }
+});
