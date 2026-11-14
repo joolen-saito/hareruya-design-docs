@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { Download, Page, test } from "@playwright/test";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
+import { rc } from "../../lib/run_marker";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { stockEditValue } from "../../pages/admin/m04_19_masters";
 import { readOrderEditIds } from "../../pages/admin/m04_19_order_shortage";
@@ -87,7 +88,7 @@ caseTest("IT-M04-19-002", async ({ page, step, expected }) => {
     for (const k of ["欠品点数", "欠品時販売価格", "欠品理由"]) expect.soft(heads, `欠品履歴検索一覧(検索結果)の列「${k}」`).toContain(k);
     // FILTER-HQ-002 の行があるかどうかは期待結果の外。一覧は商品コードの降順で、表示件数は既定50件なので、
     // コードが後ろに並ぶ欠品履歴（M419-PAGE-… など）が50件以上あれば1ページ目に出ない。確かめずに注記に残す
-    note(`FILTER-HQ-002 の行: このページに ${await h.rowByCode("FILTER-HQ-002").count()} 件（件数の表示 ${await h.件数() ?? "なし"} 件・今のページ ${await h.今のページ() ?? "ページ送りなし"}）`);
+    note(`FILTER-HQ-002 の行: このページに ${await h.rowByCode(rc("FILTER-HQ-002")).count()} 件（件数の表示 ${await h.件数() ?? "なし"} 件・今のページ ${await h.今のページ() ?? "ページ送りなし"}）`);
   });
 });
 
@@ -95,9 +96,9 @@ caseTest("IT-M04-19-002", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-19-007", async ({ page, notes, step, expected }) => {
   const h = await signIn(page);
-  await clearAndSearch(h, step, "M419-DISPLAY-007");
+  await clearAndSearch(h, step, rc("M419-DISPLAY-007"));
   await expected(async () => {
-    const r = await rowOf(h, "M419-DISPLAY-007");
+    const r = await rowOf(h, rc("M419-DISPLAY-007"));
     note(`行: ${JSON.stringify(r)}`);
     expect.soft(r.登録元, "受注の欠品履歴（登録元）").toContain("受注");
     expect.soft(r.登録元ID, "受注の欠品履歴（登録元IDが受注ID）").toBe(notes.get("〔受注ID-M0419-007〕"));
@@ -107,9 +108,9 @@ caseTest("IT-M04-19-007", async ({ page, notes, step, expected }) => {
 
 caseTest("IT-M04-19-008", async ({ page, notes, step, expected }) => {
   const h = await signIn(page);
-  await clearAndSearch(h, step, "M419-MOVE-008");
+  await clearAndSearch(h, step, rc("M419-MOVE-008"));
   await expected(async () => {
-    const r = await rowOf(h, "M419-MOVE-008");
+    const r = await rowOf(h, rc("M419-MOVE-008"));
     note(`行: ${JSON.stringify(r)}`);
     expect.soft(r.登録元, "移動の欠品履歴（登録元）").toContain("在庫移動");
     expect.soft(r.登録元ID, "移動の欠品履歴（登録元IDが在庫移動振替ID）").toBe(notes.get("〔在庫移動振替ID-M0419-008〕"));
@@ -119,13 +120,13 @@ caseTest("IT-M04-19-008", async ({ page, notes, step, expected }) => {
 
 caseTest("IT-M04-19-036", async ({ page, notes, step, expected }) => {
   const h = await signIn(page);
-  await clearAndSearch(h, step, "M0419-MIX-036");
+  await clearAndSearch(h, step, rc("M0419-MIX-036"));
   await expected(async () => {
     const rows = await h.readRows();
     note(`行: ${JSON.stringify(rows)}`);
     expect.soft(rows.length, "欠品履歴検索一覧(検索結果)の行の数").toBe(2);
-    const ord = rows.filter((r) => r.商品コード === "M0419-MIX-036-ORD");
-    const mov = rows.filter((r) => r.商品コード === "M0419-MIX-036-MOV");
+    const ord = rows.filter((r) => r.商品コード === `${rc("M0419-MIX-036")}-ORD`);
+    const mov = rows.filter((r) => r.商品コード === `${rc("M0419-MIX-036")}-MOV`);
     expect.soft(ord.length, "M0419-MIX-036-ORD の行").toBe(1);
     expect.soft(mov.length, "M0419-MIX-036-MOV の行").toBe(1);
     if (ord[0]) {
@@ -143,7 +144,7 @@ caseTest("IT-M04-19-036", async ({ page, notes, step, expected }) => {
 
 caseTest("IT-M04-19-009", async ({ page, notes, step, expected }) => {
   const h = await signIn(page);
-  const code = "M419-DISPLAY-009";
+  const code = rc("M419-DISPLAY-009");
   let popup: Page | null = null;
   await step(1, () => showShortage(h, code));
   await step(2, async () => {
@@ -165,7 +166,7 @@ caseTest("IT-M04-19-009", async ({ page, notes, step, expected }) => {
 
 caseTest("IT-M04-19-010", async ({ page, notes, step, expected }) => {
   const h = await signIn(page);
-  const code = "M419-DISPLAY-010";
+  const code = rc("M419-DISPLAY-010");
   const 受注ID = notes.get("〔受注ID-M0419-010〕");
   let popup: Page | null = null;
   await step(1, () => showShortage(h, code));
@@ -187,7 +188,7 @@ caseTest("IT-M04-19-010", async ({ page, notes, step, expected }) => {
 
 caseTest("IT-M04-19-011", async ({ page, notes, step, expected }) => {
   const h = await signIn(page);
-  const code = "M419-MOVE-011";
+  const code = rc("M419-MOVE-011");
   const moveId = notes.get("〔在庫移動振替ID-M0419-011〕");
   let popup: Page | null = null;
   await step(1, () => showShortage(h, code));
@@ -213,7 +214,7 @@ caseTest("IT-M04-19-011", async ({ page, notes, step, expected }) => {
 
 caseTest("IT-M04-19-014", async ({ page, step, expected }) => {
   const h = await signIn(page);
-  const code = "M419-STATE-MEMO-014";
+  const code = rc("M419-STATE-MEMO-014");
   let 状態 = "";
   await step(1, () => showShortage(h, code));
   await step(2, async () => { 状態 = (await rowOf(h, code)).状態; note(`状態欄: 「${状態}」`); });
@@ -224,7 +225,7 @@ caseTest("IT-M04-19-014", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-19-015", async ({ page, step, expected }) => {
   const h = await signIn(page);
-  const code = "M419-STATE-NOMEMO-015";
+  const code = rc("M419-STATE-NOMEMO-015");
   let 状態 = "";
   await step(1, () => showShortage(h, code));
   await step(2, async () => { 状態 = (await rowOf(h, code)).状態; note(`状態欄: 「${状態}」`); });
@@ -252,7 +253,7 @@ caseTest("IT-M04-19-019", async ({ page, step, expected }) => {
   const h = await signIn(page);
   let 選択肢: { 表示: string; 選択中: boolean }[] = [];
   await step(1, async () => { await h.openFromMenu(); await h.checkShortageList(); });
-  await step(2, () => h.fillKeyword("M419-PAGE-019"));
+  await step(2, () => h.fillKeyword(rc("M419-PAGE-019")));
   await step(3, () => h.search());
   await step(4, async () => {
     選択肢 = await h.表示件数の選択肢();
@@ -269,49 +270,49 @@ caseTest("IT-M04-19-019", async ({ page, step, expected }) => {
 caseTest("IT-M04-19-020", async ({ page, step, expected }) => {
   const h = await signIn(page);
   await step(1, async () => { await h.openFromMenu(); await h.checkShortageList(); });
-  await step(2, async () => { await h.fillKeyword("M419-PAGE-020"); await h.search(); });
+  await step(2, async () => { await h.fillKeyword(rc("M419-PAGE-020")); await h.search(); });
   await step(3, () => h.choosePageCount("10件"));
   await step(4, () => h.gotoPage(2));
   await expected(async () => {
-    await expect.soft(h.商品名などの欄, "商品コードの条件「M419-PAGE-020」が保持される").toHaveValue("M419-PAGE-020");
+    await expect.soft(h.商品名などの欄, "商品コードの条件「M419-PAGE-020」が保持される").toHaveValue(rc("M419-PAGE-020"));
     expect.soft(await h.選択中の表示件数(), "表示件数10件が保持される").toBe("10件");
     expect.soft(await h.今のページ(), "2ページ目").toBe("2");
     const codes = await h.codes();
     note(`2ページ目の商品コード: ${codes.join("・")}`);
     expect.soft(codes.length, "2ページ目の欠品履歴の数").toBe(10);
-    expect.soft(codes.every((c) => c.startsWith("M419-PAGE-020-")), "2ページ目の欠品履歴は M419-PAGE-020 のもの").toBe(true);
+    expect.soft(codes.every((c) => c.startsWith(`${rc("M419-PAGE-020")}-`)), "2ページ目の欠品履歴は M419-PAGE-020 のもの").toBe(true);
   });
 });
 
 caseTest("IT-M04-19-021", async ({ page, step, expected }) => {
   const h = await signIn(page);
-  await step(1, () => searchWord(h, "M419-PAGE-021"));
+  await step(1, () => searchWord(h, rc("M419-PAGE-021")));
   await step(2, () => h.choosePageCount("10件"));
   await step(3, async () => { await h.sendPageCountRequest("999"); note("表示件数の変更の要求の件数を999に変えて送った"); });
   await expected(async () => {
     expect.soft(await h.選択中の表示件数(), "保持済みの10件が選ばれている（999件は採用されない）").toBe("10件");
     const codes = await h.codes();
     expect.soft(codes.length, "一覧の行の数（10件で表示）").toBe(10);
-    expect.soft(codes.every((c) => c.startsWith("M419-PAGE-021-")), "欠品履歴一覧は M419-PAGE-021 のもの").toBe(true);
+    expect.soft(codes.every((c) => c.startsWith(`${rc("M419-PAGE-021")}-`)), "欠品履歴一覧は M419-PAGE-021 のもの").toBe(true);
   });
 });
 
 caseTest("IT-M04-19-022", async ({ page, step, expected }) => {
   const h = await signIn(page);
   await step(1, () => h.openFromMenu());
-  await step(2, async () => { await h.checkShortageList(); await h.fillKeyword("M419-PAGE-022"); await h.search(); });
+  await step(2, async () => { await h.checkShortageList(); await h.fillKeyword(rc("M419-PAGE-022")); await h.search(); });
   await step(3, async () => { await h.sendPageCountRequest("999"); note("表示件数の変更の要求の件数を999に変えて送った"); });
   await expected(async () => {
     expect.soft(await h.選択中の表示件数(), "既定の50件が選ばれている（999件は採用されない）").toBe("50件");
     const codes = await h.codes();
     expect.soft(codes.length, "一覧の行の数（50件で表示）").toBe(50);
-    expect.soft(codes.every((c) => c.startsWith("M419-PAGE-022-")), "欠品履歴一覧は M419-PAGE-022 のもの").toBe(true);
+    expect.soft(codes.every((c) => c.startsWith(`${rc("M419-PAGE-022")}-`)), "欠品履歴一覧は M419-PAGE-022 のもの").toBe(true);
   });
 });
 
 caseTest("IT-M04-19-023", async ({ page, step, expected }) => {
   const h = await signIn(page);
-  await step(1, () => searchWord(h, "M419-PAGE-023"));
+  await step(1, () => searchWord(h, rc("M419-PAGE-023")));
   await step(2, async () => {
     const chosen = await h.選択中の表示件数();
     note(`表示件数: ${chosen}`);
@@ -323,7 +324,7 @@ caseTest("IT-M04-19-023", async ({ page, step, expected }) => {
     expect.soft(await h.今のページ(), "2ページ目").toBe("2");
     const codes = await h.codes();
     note(`2ページ目の商品コード: ${codes.join("・")}`);
-    expect.soft(codes, "2ページ目に移動先範囲の M419-PAGE-023-001").toContain("M419-PAGE-023-001");
+    expect.soft(codes, "2ページ目に移動先範囲の M419-PAGE-023-001").toContain(`${rc("M419-PAGE-023")}-001`);
   });
 });
 
@@ -331,7 +332,7 @@ caseTest("IT-M04-19-024", async ({ page, step, expected }) => {
   const h = await signIn(page);
   let first: string[] = [];
   let second: string[] = [];
-  await step(1, () => searchWord(h, "M419-PAGE-024"));
+  await step(1, () => searchWord(h, rc("M419-PAGE-024")));
   await step(2, async () => {
     const chosen = await h.選択中の表示件数();
     note(`表示件数: ${chosen}`);
@@ -343,13 +344,13 @@ caseTest("IT-M04-19-024", async ({ page, step, expected }) => {
     const all = [...first, ...second];
     expect.soft(all.length, "2ページを通した欠品履歴の数").toBe(51);
     expect.soft(new Set(all).size, "重複なく1回ずつ").toBe(all.length);
-    expect.soft([...all].sort(), "欠落なく M419-PAGE-024-001〜051").toEqual(pageCodes("M419-PAGE-024"));
+    expect.soft([...all].sort(), "欠落なく M419-PAGE-024-001〜051").toEqual(pageCodes(rc("M419-PAGE-024")));
   });
 });
 
 caseTest("IT-M04-19-026", async ({ page, step, expected }) => {
   const h = await signIn(page);
-  await step(1, () => searchWord(h, "M419-PAGE-026"));
+  await step(1, () => searchWord(h, rc("M419-PAGE-026")));
   await step(2, () => h.choosePageCount("10件"));
   await step(3, () => h.gotoPage(2));
   await step(4, () => h.openFromMenu());
@@ -370,7 +371,7 @@ caseTest("IT-M04-19-026", async ({ page, step, expected }) => {
       const ページ = await h.今のページ();
       note(`戻ったときのページ送りの今のページ: ${ページ ?? "ページ送りなし"}・件数の表示: ${(await h.件数()) ?? "なし"}`);
       expect.soft(ページ === null || ページ === "1", `戻ったときのページは1（2ページ目の指定が残っていない。今のページ: ${ページ ?? "ページ送りなし"}）`).toBe(true);
-      const 残った行 = (await h.codes()).filter((c) => c.startsWith("M419-PAGE-026-"));
+      const 残った行 = (await h.codes()).filter((c) => c.startsWith(`${rc("M419-PAGE-026")}-`));
       expect.soft(残った行, "戻ったときの一覧に M419-PAGE-026 の2ページ目（M419-PAGE-026 の行）が出ない").toEqual([]);
     }
     // 初期表示の画面には一覧が無く、表示件数の欄も出ない。もう一度メニューから開き、同じ語で検索し直して、選ばれる表示件数を見る
@@ -378,7 +379,7 @@ caseTest("IT-M04-19-026", async ({ page, step, expected }) => {
     await page.goto(adminUrl("/"));
     await h.openFromMenu();
     await h.checkShortageList();
-    await h.fillKeyword("M419-PAGE-026");
+    await h.fillKeyword(rc("M419-PAGE-026"));
     await h.search();
     expect.soft(await h.選択中の表示件数(), "表示件数が50件").toBe("50件");
     expect.soft((await h.codes()).length, "検索し直した一覧の行の数（50件で表示）").toBe(50);
@@ -390,10 +391,10 @@ caseTest("IT-M04-19-026", async ({ page, step, expected }) => {
 caseTest("IT-M04-19-027", async ({ page, notes, step, expected }) => {
   const h = await signIn(page);
   await step(1, async () => { await h.openFromMenu(); await h.checkShortageList(); });
-  await step(2, () => h.fillKeyword("M419-CALC-027"));
+  await step(2, () => h.fillKeyword(rc("M419-CALC-027")));
   await step(3, () => h.search());
   await expected(async () => {
-    const r = await rowOf(h, "M419-CALC-027");
+    const r = await rowOf(h, rc("M419-CALC-027"));
     note(`行: ${JSON.stringify(r)}`);
     expect.soft(r.履歴ID, "履歴ID").toBe(notes.get("〔履歴ID-M0419-027〕"));
     expect.soft(数字だけ(r.欠品点数), "記録済みの欠品点数（現在の在庫数10から再計算されない）").toBe("2");
@@ -407,10 +408,10 @@ caseTest("IT-M04-19-028", async ({ page, notes, step, expected }) => {
   const downloads: Download[] = [];
   page.on("download", (d) => { downloads.push(d); });
   await step(1, async () => { await h.openFromMenu(); await h.checkShortageList(); });
-  await step(2, () => h.fillKeyword("M419-DISPLAY-028"));
+  await step(2, () => h.fillKeyword(rc("M419-DISPLAY-028")));
   await step(3, async () => {
     await h.search();
-    expect(await h.historyIdOf(h.rowByCode("M419-DISPLAY-028")), "一覧の欠品履歴の履歴ID").toBe(notes.get("〔履歴ID-M0419-028〕"));
+    expect(await h.historyIdOf(h.rowByCode(rc("M419-DISPLAY-028"))), "一覧の欠品履歴の履歴ID").toBe(notes.get("〔履歴ID-M0419-028〕"));
   });
   await step(4, async () => { await h.downloadCsv(); });
   await step(5, async () => {
@@ -442,7 +443,7 @@ caseTest("IT-M04-19-033", async ({ page, step, expected }) => {
     expect.soft(await h.見出し(), "在庫履歴検索一覧の画面").toBe("在庫履歴一覧");
     await expect.soft(h.件数の表示, "検索結果の件数の表示（検索が実行されない）").toHaveCount(0);
     await expect.soft(h.rows, "欠品履歴一覧の行（空）").toHaveCount(0);
-    await expect.soft(h.rowByCode("M0419-033-A"), "M0419-033-A の行").toHaveCount(0);
+    await expect.soft(h.rowByCode(`${rc("M0419-033")}-A`), "M0419-033-A の行").toHaveCount(0);
   });
 });
 
@@ -468,19 +469,19 @@ async function badSortSteps(h: ShortageHistoryPage, step: CaseCtx["step"], 語: 
 
 caseTest("IT-M04-19-034", async ({ page, step, expected }) => {
   const h = await signIn(page);
-  const sent = await badSortSteps(h, step, "M0419-034");
+  const sent = await badSortSteps(h, step, rc("M0419-034"));
   await expected(async () => {
     // 並び順を変えて送れないまま、元の画面を見て合格にしない（期待結果は送った結果を見るもの）
     expect.soft(sent(), "並び順の送信値を「invalid」に変えて検索ボタンを押した").toBe(true);
     await expect.soft(h.件数の表示, "検索結果件数の表示（初期表示に戻る）").toHaveCount(0);
     await expect.soft(h.rows, "欠品履歴一覧の行（初期表示に戻る）").toHaveCount(0);
-    await expect.soft(h.rowByCode("M0419-034-A"), "M0419-034-A の行").toHaveCount(0);
+    await expect.soft(h.rowByCode(`${rc("M0419-034")}-A`), "M0419-034-A の行").toHaveCount(0);
   });
 });
 
 caseTest("IT-M04-19-035", async ({ page, step, expected }) => {
   const h = await signIn(page);
-  const sent = await badSortSteps(h, step, "M0419-035");
+  const sent = await badSortSteps(h, step, rc("M0419-035"));
   await expected(async () => {
     expect.soft(sent(), "並び順の送信値を「invalid」に変えて検索ボタンを押した").toBe(true);
     const m = await h.上部のメッセージ();

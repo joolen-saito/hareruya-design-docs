@@ -31,6 +31,7 @@
 import { Browser, expect } from "@playwright/test";
 import { BASE_URL, ENV_NAME, MAIL_URL, SETUP_ADMIN } from "../config/env";
 import { Notes } from "../lib/notes";
+import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { customerStateByEmail } from "../pages/admin/customer";
@@ -326,19 +327,19 @@ const NEEDS = ["S-M04-19-ADM", "S-M04-19-MASTER"];
 // ---- 受注の欠品 ----
 
 defineSeed("S-M04-19-FILTER-002", { needs: NEEDS }, async ({ browser, seed }) => {
-  await orderShortage(browser, seed.シードID, "FILTER-HQ-002", [
-    { 商品コード: "FILTER-HQ-002", 商品名: "M04-19試験商品(002)", 価格: "1000", 入庫数: 2, 注文数: 2, 欠品数: 1 },
+  await orderShortage(browser, seed.シードID, rc("FILTER-HQ-002"), [
+    { 商品コード: rc("FILTER-HQ-002"), 商品名: "M04-19試験商品(002)", 価格: "1000", 入庫数: 2, 注文数: 2, 欠品数: 1 },
   ]);
 });
 
 defineSeed("S-M04-19-DISPLAY-007", { needs: NEEDS }, async ({ browser, notes, seed }) => {
-  noteOrder(notes, "007", await orderShortage(browser, seed.シードID, "M419-DISPLAY-007", [
-    { 商品コード: "M419-DISPLAY-007", 商品名: "M04-19試験商品(007)", 価格: "1980", 入庫数: 3, 注文数: 3, 欠品数: 2 },
+  noteOrder(notes, "007", await orderShortage(browser, seed.シードID, rc("M419-DISPLAY-007"), [
+    { 商品コード: rc("M419-DISPLAY-007"), 商品名: "M04-19試験商品(007)", 価格: "1980", 入庫数: 3, 注文数: 3, 欠品数: 2 },
   ]));
 });
 
 defineSeed("S-M04-19-DISPLAY-009", { needs: NEEDS }, async ({ browser, notes, seed }) => {
-  const code = "M419-DISPLAY-009";
+  const code = rc("M419-DISPLAY-009");
   noteOrder(notes, "009", await orderShortage(browser, seed.シードID, code, [
     { 商品コード: code, 商品名: "欠品表示商品", 価格: "1000", 入庫数: 2, 注文数: 2, 欠品数: 1 },
   ]));
@@ -355,7 +356,7 @@ defineSeed("S-M04-19-DISPLAY-009", { needs: NEEDS }, async ({ browser, notes, se
 });
 
 defineSeed("S-M04-19-DISPLAY-010", { needs: NEEDS }, async ({ browser, notes, seed }) => {
-  const code = "M419-DISPLAY-010";
+  const code = rc("M419-DISPLAY-010");
   noteOrder(notes, "010", await orderShortage(browser, seed.シードID, code, [
     { 商品コード: code, 商品名: "M04-19試験商品(010)", 価格: "1000", 入庫数: 2, 注文数: 2, 欠品数: 1 },
   ]));
@@ -363,7 +364,7 @@ defineSeed("S-M04-19-DISPLAY-010", { needs: NEEDS }, async ({ browser, notes, se
 });
 
 defineSeed("S-M04-19-STATE-014", { needs: NEEDS }, async ({ browser, seed }) => {
-  const code = "M419-STATE-MEMO-014";
+  const code = rc("M419-STATE-MEMO-014");
   await orderShortage(browser, seed.シードID, code, [
     { 商品コード: code, 商品名: "M04-19試験商品(014)", 価格: "1000", 入庫数: 2, 注文数: 2, 欠品数: 1 },
   ]);
@@ -376,7 +377,7 @@ defineSeed("S-M04-19-STATE-014", { needs: NEEDS }, async ({ browser, seed }) => 
 });
 
 defineSeed("S-M04-19-STATE-015", { needs: NEEDS }, async ({ browser, seed }) => {
-  const code = "M419-STATE-NOMEMO-015";
+  const code = rc("M419-STATE-NOMEMO-015");
   await orderShortage(browser, seed.シードID, code, [
     { 商品コード: code, 商品名: "M04-19試験商品(015)", 価格: "1000", 入庫数: 2, 注文数: 2, 欠品数: 1 },
   ]);
@@ -389,7 +390,7 @@ defineSeed("S-M04-19-STATE-015", { needs: NEEDS }, async ({ browser, seed }) => 
 });
 
 defineSeed("S-M04-19-CALC-027", { needs: NEEDS }, async ({ browser, notes, seed }) => {
-  const code = "M419-CALC-027";
+  const code = rc("M419-CALC-027");
   await orderShortage(browser, seed.シードID, code, [
     { 商品コード: code, 商品名: "M04-19試験商品(027)", 価格: "1300", 入庫数: 13, 注文数: 3, 欠品数: 2 },
   ]);
@@ -403,7 +404,7 @@ defineSeed("S-M04-19-CALC-027", { needs: NEEDS }, async ({ browser, notes, seed 
 });
 
 defineSeed("S-M04-19-DISPLAY-028", { needs: NEEDS }, async ({ browser, notes, seed }) => {
-  const code = "M419-DISPLAY-028";
+  const code = rc("M419-DISPLAY-028");
   noteOrder(notes, "028", await orderShortage(browser, seed.シードID, code, [
     { 商品コード: code, 商品名: "M04-19試験商品(028)", 価格: "1000", 入庫数: 2, 注文数: 2, 欠品数: 1 },
   ]));
@@ -414,10 +415,11 @@ defineSeed("S-M04-19-DISPLAY-028", { needs: NEEDS }, async ({ browser, notes, se
 /** 033・034・035: 商品コード「M0419-0NN-A」の受注の欠品1件。語「M0419-0NN」の欠品履歴が1件だけ */
 function defineSingleShortageSeed(seedId: string, n: string): void {
   defineSeed(seedId, { needs: NEEDS }, async ({ browser, seed }) => {
-    await orderShortage(browser, seed.シードID, `M0419-${n}`, [
-      { 商品コード: `M0419-${n}-A`, 商品名: `M04-19試験商品(${n})`, 価格: "1000", 入庫数: 2, 注文数: 2, 欠品数: 1 },
+    const 語 = rc(`M0419-${n}`);
+    await orderShortage(browser, seed.シードID, 語, [
+      { 商品コード: `${語}-A`, 商品名: `M04-19試験商品(${n})`, 価格: "1000", 入庫数: 2, 注文数: 2, 欠品数: 1 },
     ]);
-    await expectShortageCount(browser, seed.シードID, `M0419-${n}`, 1);
+    await expectShortageCount(browser, seed.シードID, 語, 1);
   });
 }
 defineSingleShortageSeed("S-M04-19-NOCOND-033", "033");
@@ -427,7 +429,7 @@ defineSingleShortageSeed("S-M04-19-BADSORT-B-035", "035");
 /** 019〜024・026: 商品コード M419-PAGE-0NN-001〜051 の51商品を1回の注文で買い、51行それぞれ欠品1。語「M419-PAGE-0NN」の欠品履歴が51件だけ */
 function definePagingSeed(seedId: string, n: string): void {
   defineSeed(seedId, { needs: NEEDS }, async ({ browser, seed }) => {
-    const 語 = `M419-PAGE-${n}`;
+    const 語 = rc(`M419-PAGE-${n}`);
     const items = Array.from({ length: 51 }, (_, i) => {
       const code = `${語}-${String(i + 1).padStart(3, "0")}`;
       return { 商品コード: code, 商品名: code, 価格: "1000", 入庫数: 2, 注文数: 2, 欠品数: 1 };
@@ -447,13 +449,13 @@ definePagingSeed("S-M04-19-PAGING-026", "026");
 // ---- 移動の欠品 ----
 
 defineSeed("S-M04-19-MOVE-008", { needs: NEEDS }, async ({ browser, notes, seed }) => {
-  notes.set("〔在庫移動振替ID-M0419-008〕", await moveShortage(browser, seed.シードID, "M419-MOVE-008", {
-    商品コード: "M419-MOVE-008", 商品名: "M04-19試験商品(008)", 価格: "2500", 入庫数: 3, 移動点数: 3, 欠品点数: 2, 送状No: "M0419008",
+  notes.set("〔在庫移動振替ID-M0419-008〕", await moveShortage(browser, seed.シードID, rc("M419-MOVE-008"), {
+    商品コード: rc("M419-MOVE-008"), 商品名: "M04-19試験商品(008)", 価格: "2500", 入庫数: 3, 移動点数: 3, 欠品点数: 2, 送状No: "M0419008",
   }));
 });
 
 defineSeed("S-M04-19-MOVE-011", { needs: NEEDS }, async ({ browser, notes, seed }) => {
-  const code = "M419-MOVE-011";
+  const code = rc("M419-MOVE-011");
   notes.set("〔在庫移動振替ID-M0419-011〕", await moveShortage(browser, seed.シードID, code, {
     商品コード: code, 商品名: "M04-19試験商品(011)", 価格: "1000", 入庫数: 2, 移動点数: 2, 欠品点数: 1, 送状No: "M0419011",
   }));
@@ -463,12 +465,13 @@ defineSeed("S-M04-19-MOVE-011", { needs: NEEDS }, async ({ browser, notes, seed 
 defineSeed("S-M04-19-MIX-036", { needs: NEEDS }, async ({ browser, notes, seed }) => {
   // 購入する会員が用意できることと、語「M0419-MIX-036」を含む商品が無いことを先に確かめる（2つの商品のどちらかが残っていれば止める）
   await ensureBuyer(browser);
-  await expectNoProducts(browser, seed.シードID, "M0419-MIX-036");
-  noteOrder(notes, "036", await orderShortage(browser, seed.シードID, "M0419-MIX-036-ORD", [
-    { 商品コード: "M0419-MIX-036-ORD", 商品名: "M04-19試験商品(036-ORD)", 価格: "1980", 入庫数: 3, 注文数: 3, 欠品数: 2 },
+  const 混在の語 = rc("M0419-MIX-036");
+  await expectNoProducts(browser, seed.シードID, 混在の語);
+  noteOrder(notes, "036", await orderShortage(browser, seed.シードID, `${混在の語}-ORD`, [
+    { 商品コード: `${混在の語}-ORD`, 商品名: "M04-19試験商品(036-ORD)", 価格: "1980", 入庫数: 3, 注文数: 3, 欠品数: 2 },
   ]));
-  notes.set("〔在庫移動振替ID-M0419-036M〕", await moveShortage(browser, seed.シードID, "M0419-MIX-036-MOV", {
-    商品コード: "M0419-MIX-036-MOV", 商品名: "M04-19試験商品(036-MOV)", 価格: "2500", 入庫数: 3, 移動点数: 3, 欠品点数: 2, 送状No: "M0419036",
+  notes.set("〔在庫移動振替ID-M0419-036M〕", await moveShortage(browser, seed.シードID, `${混在の語}-MOV`, {
+    商品コード: `${混在の語}-MOV`, 商品名: "M04-19試験商品(036-MOV)", 価格: "2500", 入庫数: 3, 移動点数: 3, 欠品点数: 2, 送状No: "M0419036",
   }));
 });
 
