@@ -34,10 +34,10 @@ import { defineSeed } from "./current_seed";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { chooseByLabel, expectSaved } from "../pages/admin/common";
 import { findMemberId } from "../pages/admin/member";
-import { ensureTenant, TenantInput } from "../pages/admin/tenant";
+import { 試験支店, 試験支店の店舗ID, 本店の店舗ID, 本店の店名DB } from "../pages/admin/reuse_store";
 import { expectMemberByStoreIds } from "../pages/admin/m04_24_member";
 import { ensureMemberWithDept } from "../pages/admin/m04_21_stock_change_csv";
-import { countProductsByCode } from "../pages/admin/m04_13_setup";
+import { countProductsByCode, ensureDepartment } from "../pages/admin/m04_13_setup";
 import { SplitJoinListPage } from "../pages/admin/m04_13_split_join";
 import { approveRows, readSupplyGoodsCategoryId, uploadGoodsLines } from "../pages/admin/m04_17_seed_ops";
 import { approvalRows, fillStockEdit, searchApprovals, searchStockByCode, stockInRow, submitStockEdit } from "../pages/admin/m04_02_rc_stock";
@@ -49,14 +49,16 @@ import { classRowsFromProductEdit, openProductEditByCode } from "../pages/admin/
 
 // ================================================================ 共有のシード
 
-/** 正本の店名（裁定 E09） */
-const 試験店舗A = "試験店舗A（M04-23）";
-const 試験店舗B = "試験店舗B（M04-23）";
-const STORE_A: TenantInput = { 店名: 試験店舗A, 店名カナ: "シケンテンポエー", 店名英語: "Test Store A", 支店URL: "m0423a", 店名略称3文字: "Q3A", ショップ名略称: 試験店舗A };
-const STORE_B: TenantInput = { 店名: 試験店舗B, 店名カナ: "シケンテンポビー", 店名英語: "Test Store B", 支店URL: "m0423b", 店名略称3文字: "Q3B", ショップ名略称: 試験店舗B };
-
-const NAME = "M04-23試験管理者";
-const LOGIN_ID = "m0423_admin";
+/**
+ * 店舗は作らない（依頼者決定 2026-11-13）。正本の「試験店舗A（M04-23）」は試験支店（店舗ID 1574）、「試験店舗B（M04-23）」は本店（店舗ID 1）で読み替える。
+ * 管理者（承認一郎・承認次郎・一般三郎・試験管理者など）は、前のもの（前に作った試験店舗A（M04-23）に結びついている）とは別に、
+ * 名前に「（試験支店）」を付け、ログインIDも変えて作り直す（2026-11-14）。
+ */
+const 試験店舗A = 試験支店.店名;
+/** 所属のマスタに足す所属（機能ID付きの決まった名前。1度だけ。依頼者決定 2026-11-14）。足した順が並び順 */
+const 所属名 = { 在庫部: "在庫部（M04-23）", 承認部: "承認部（M04-23）", 他店舗部: "他店舗部（M04-23）" } as const;
+const NAME = "M04-23試験管理者（試験支店）";
+const LOGIN_ID = "m0423t_admin";
 /** 正本のパスワード */
 const CANON_PASSWORD = "M0423共通管理者用";
 /** 正本のパスワードを画面が拒んだときに使う代わりの値（入力規則: 半角の英字と数字を含む、半角の記号・英数字） */
@@ -81,7 +83,7 @@ async function tryRegister(page: Page, storeId: string, password: string): Promi
   await f("baseInfo").selectOption(storeId);
   await f("department").selectOption({ index: 1 });
   await f("login_id").fill(LOGIN_ID);
-  await f("email").fill("m0423_admin@example.test");
+  await f("email").fill("m0423t_admin@example.test");
   await page.locator('[name="admin_member[plain_password][first]"]').fill(password);
   await page.locator('[name="admin_member[plain_password][second]"]').fill(password);
   await chooseByLabel(f("Authority"), "システム管理者");
@@ -104,8 +106,8 @@ defineSeed("S-M04-23-AUTH", async ({ browser, seed }) => {
   // 今回登録したときは、登録できた値。登録済みを使うとき（流し直し）は、正本の値が入力規則に合えば正本の値、合わなければ代わりの値
   let password = passwordOk(CANON_PASSWORD) ? CANON_PASSWORD : SUBSTITUTE_PASSWORD;
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    const storeId = await ensureTenant(page, STORE_A, issue);
-    issue(`正本の店舗ID 423000001・管理者ID 423000021 は画面で指定できない。店舗は店舗一覧の「${試験店舗A}」（店舗ID ${storeId}）を使った`);
+    const storeId = 試験支店の店舗ID();
+    issue(`正本の店舗ID 423000001・管理者ID 423000021 は画面で指定できない。店舗は作らず、試験支店「${試験店舗A}」（店舗ID ${storeId}）で読み替えた（依頼者決定 2026-11-13）`);
     let id = await findMemberId(page, NAME);
     if (!id) {
       const first = await tryRegister(page, storeId, CANON_PASSWORD);
@@ -119,7 +121,7 @@ defineSeed("S-M04-23-AUTH", async ({ browser, seed }) => {
       }
     }
     await expectMemberByStoreIds(page, id, {
-      名前: NAME, ログインID: LOGIN_ID, メールアドレス: "m0423_admin@example.test", パスワード: "", 権限: "システム管理者",
+      名前: NAME, ログインID: LOGIN_ID, メールアドレス: "m0423t_admin@example.test", パスワード: "", 権限: "システム管理者",
       所属店舗ID: storeId, デフォルト検索表示店舗ID: storeId, 編集可能店舗ID: [storeId],
     });
   });
@@ -147,38 +149,46 @@ export function m0423Master(): M0423Master {
   return master;
 }
 
-export const 承認一郎 = "承認一郎";
-export const 承認次郎 = "承認次郎";
-export const 一般三郎 = "一般三郎";
-export const M0423_APR1: Account = { loginId: "m0423_apr1", password: "Passw0rd!M0423Ap1" };
-export const M0423_APR2: Account = { loginId: "m0423_apr2", password: "Passw0rd!M0423Ap2" };
-const M0423_GEN3: Account = { loginId: "m0423_gen3", password: "Passw0rd!M0423Gn3" };
+export const 承認一郎 = "承認一郎（試験支店）";
+export const 承認次郎 = "承認次郎（試験支店）";
+export const 一般三郎 = "一般三郎（試験支店）";
+export const M0423_APR1: Account = { loginId: "m0423t_apr1", password: "Passw0rd!M0423Ap1" };
+export const M0423_APR2: Account = { loginId: "m0423t_apr2", password: "Passw0rd!M0423Ap2" };
+const M0423_GEN3: Account = { loginId: "m0423t_gen3", password: "Passw0rd!M0423Gn3" };
 /** 承認権限なしの権限として先に探す名前（M04-09 のシードが作る試験用の権限。あればそれを使う） */
 const PREFERRED_NO_APPROVAL = "M04-09試験権限（承認なし）";
 
 defineSeed("S-M04-23-MASTER", async ({ browser, seed, notes }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    const a = await ensureTenant(page, STORE_A, issue);
-    const b = await ensureTenant(page, STORE_B, issue);
-    const depts = await readDepartmentNames(page);
-    if (depts.length < 3) throw new Error(`所属のマスタの既存の名称が3つ未満（${depts.join("、")}）。在庫部・承認部・他店舗部に読み替えられない（共有のマスタに足すかは判断待ち）`);
+    const a = 試験支店の店舗ID();
+    const b = 本店の店舗ID;
+    // 所属は、所属のマスタに機能ID付きの決まった名前で1度だけ足す（依頼者決定 2026-11-14）。足した順が並び順（在庫部 < 承認部 < 他店舗部）
+    await ensureDepartment(page, 所属名.在庫部);
+    await ensureDepartment(page, 所属名.承認部);
+    await ensureDepartment(page, 所属名.他店舗部);
+    const depts = [所属名.在庫部, 所属名.承認部, 所属名.他店舗部];
     const noApproval = await authoritiesWithoutApproval(page);
     if (noApproval.length === 0) throw new Error("権限管理に「承認権限」のチェックが外れている既存の権限が無い。一般三郎（承認権限なし）を作れない（権限を足すかは判断待ち）");
     const noAuth = noApproval.includes(PREFERRED_NO_APPROVAL) ? PREFERRED_NO_APPROVAL : noApproval[0];
     master = {
-      A: { id: a, 店名: 試験店舗A }, B: { id: b, 店名: 試験店舗B },
+      A: { id: a, 店名: 試験店舗A }, B: { id: b, 店名: 本店の店名DB() },
       在庫部: depts[0], 承認部: depts[1], 他店舗部: depts[2], 所属の並び: depts, 承認権限なしの権限: noAuth,
     };
-    issue(`所属のマスタ（共有のマスタ）に行を足さず、既存の所属に読み替えた: 在庫部→「${depts[0]}」・承認部→「${depts[1]}」・他店舗部→「${depts[2]}」（所属のマスタの画面の並び順の1〜3番目）。正本の所属ID 423000011〜423000013・所属が属する店舗・並び順のDBでの設定は行わない（アプリの承認通知先の所属は、その店舗の承認権限を持つメンバーの所属から作られ、所属に店舗の項目は無い）`);
+    issue(`所属は、所属のマスタに足した（依頼者決定 2026-11-14。機能IDを付けた決まった名前で1度だけ）: 在庫部→「${depts[0]}」・承認部→「${depts[1]}」・他店舗部→「${depts[2]}」（足した順が並び順。並び順10・20・30は画面が保存順に振る値のまま）。正本の所属ID 423000011〜423000013・所属が属する店舗はアプリが持たない（承認通知先の所属は、その店舗の承認権限を持つメンバーの所属から作られる）ので、他店舗部は「本店に所属する承認権限ありのメンバー」の所属にした`);
     issue(`一般三郎の「承認権限を付けていない権限グループ」は、権限管理で承認権限のチェックが外れている既存の権限「${noAuth}」にした。承認一郎・承認次郎の「承認権限を付けた権限グループ」はシステム管理者`);
-    issue(`承認一郎・承認次郎は、在庫の入庫の承認者・登録者にも使うため、編集可能店舗を試験店舗A（M04-23）・試験店舗B（M04-23）の2店にした（正本は編集可能店舗を書かない）`);
+    issue(`承認一郎・承認次郎は、在庫の入庫の承認者・登録者にも使うため、編集可能店舗を試験支店・本店の2店にした（正本は編集可能店舗を書かない。試験店舗A（M04-23）→試験支店・試験店舗B（M04-23）→本店の読み替え）`);
     const members: [string, Account, string, string, string[], string][] = [
       [承認一郎, M0423_APR1, depts[0], "approver1@example.test", [a, b], "システム管理者"],
       [承認次郎, M0423_APR2, depts[1], "approver2@example.test", [a, b], "システム管理者"],
-      [一般三郎, M0423_GEN3, depts[0], "m0423_gen3@example.test", [a], noAuth],
+      [一般三郎, M0423_GEN3, depts[0], "m0423t_gen3@example.test", [a], noAuth],
     ];
     const ids: string[] = [];
+    // 他店舗部: 本店（正本の試験店舗B）だけを編集できる承認権限ありのメンバーの所属にする（試験支店の承認通知先の所属には出ない）
+    await ensureMemberWithDept(page, {
+      名前: "他店舗部メンバー（M04-23）", ログインID: "m0423t_other", メールアドレス: "m0423t_other@example.test", パスワード: "Passw0rd!M0423Ot", 権限: "システム管理者",
+      所属店舗ID: b, 所属: depts[2], デフォルト検索表示店舗ID: b, 編集可能店舗ID: [b],
+    });
     for (const [名前, acc, 所属, email, editable, 権限] of members) {
       ids.push(await ensureMemberWithDept(page, {
         名前, ログインID: acc.loginId, メールアドレス: email, パスワード: acc.password, 権限,
@@ -527,14 +537,14 @@ defineCase("S-M04-23-CBJSM-086", {
 
 // ================================================================ 連携（L-*）
 
-export const M0423L_ADMIN: Account = { loginId: "m0423-ladmin", password: "M0423L-Admin1" };
-export const L_ADMIN_NAME = "M04-23連携管理者";
+export const M0423L_ADMIN: Account = { loginId: "m0423t-ladmin", password: "M0423L-Admin1" };
+export const L_ADMIN_NAME = "M04-23連携管理者（試験支店）";
 
 defineSeed("S-M04-23-L-ADM", { needs: ["S-M04-23-MASTER"] }, async ({ browser, seed }) => {
   const m = m0423Master();
   reportSeedIssue(seed.シードID, `各ケース専用店舗（連携分割店舗001・連携結合店舗002）は ${m.A.店名} に読み替えたので、編集可能店舗は ${m.A.店名}。名前・メールアドレス・所属・権限（システム管理者）は正本に無いのでE2Eで決めた`);
   await withAdminSession(browser, SETUP_ADMIN, (page) => ensureMemberWithDept(page, {
-    名前: L_ADMIN_NAME, ログインID: M0423L_ADMIN.loginId, メールアドレス: "m0423-ladmin@example.test", パスワード: M0423L_ADMIN.password,
+    名前: L_ADMIN_NAME, ログインID: M0423L_ADMIN.loginId, メールアドレス: "m0423t-ladmin@example.test", パスワード: M0423L_ADMIN.password,
     権限: "システム管理者", 所属店舗ID: m.A.id, 所属: m.在庫部, デフォルト検索表示店舗ID: m.A.id, 編集可能店舗ID: [m.A.id],
   }));
   await withAdminSession(browser, M0423L_ADMIN, async () => undefined);
@@ -567,8 +577,8 @@ defineCase("S-M04-23-L-CASE-064", {
 
 // ================================================================ 他機能への反映（RD-*）
 
-export const RD_OP: Actor = { account: { loginId: "m0423rd-op", password: "Passw0rd-M0423RDop" }, 名前: "M04-23 RD作業者" };
-export const RD_APR: Actor = { account: { loginId: "m0423rd-apr", password: "Passw0rd-M0423RDapr" }, 名前: "M04-23 RD承認者" };
+export const RD_OP: Actor = { account: { loginId: "m0423t-rd-op", password: "Passw0rd-M0423RDop" }, 名前: "M04-23 RD作業者（試験支店）" };
+export const RD_APR: Actor = { account: { loginId: "m0423t-rd-apr", password: "Passw0rd-M0423RDapr" }, 名前: "M04-23 RD承認者（試験支店）" };
 
 defineSeed("S-M04-23-RD-STORES", { needs: ["S-M04-23-MASTER"] }, async ({ seed }) => {
   const m = m0423Master();
@@ -586,10 +596,10 @@ async function ensureRdMember(browser: Browser, seedId: string, who: Actor, emai
 }
 
 defineSeed("S-M04-23-RD-OP", { needs: ["S-M04-23-RD-STORES"] }, async ({ browser, seed }) => {
-  await ensureRdMember(browser, seed.シードID, RD_OP, "m0423rd-op@example.test", m0423Master().承認権限なしの権限);
+  await ensureRdMember(browser, seed.シードID, RD_OP, "m0423t-rd-op@example.test", m0423Master().承認権限なしの権限);
 });
 defineSeed("S-M04-23-RD-APR", { needs: ["S-M04-23-RD-STORES"] }, async ({ browser, seed }) => {
-  await ensureRdMember(browser, seed.シードID, RD_APR, "m0423rd-apr@example.test", "システム管理者");
+  await ensureRdMember(browser, seed.シードID, RD_APR, "m0423t-rd-apr@example.test", "システム管理者");
 });
 
 for (const [n, caseNo] of [["001", "083"], ["002", "084"]] as const) {

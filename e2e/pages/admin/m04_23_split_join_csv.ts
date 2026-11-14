@@ -12,7 +12,7 @@
  * - 送信のボタンの表示名は「CSVから登録」。正本の「登録」ボタンはこれ。
  * - 送信すると、登録の処理のあと在庫分割結合検索/一覧へ戻る（誤りのときは前回の検索条件の一覧へ戻り、上部にメッセージが出る）。
  */
-import { expect, Locator, Page } from "@playwright/test";
+import { expect, Locator, Page, test } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel } from "./common";
 
@@ -154,13 +154,22 @@ export class SplitJoinCsvModal {
 
   /** 承認通知先（メンバー選択）で、名前の候補を1つずつ選ぶ（select2 の欄を開いて候補を押す） */
   async chooseMembers(names: string[]): Promise<void> {
-    const box = this.メンバー.locator("xpath=following-sibling::span[contains(@class,'select2')][1]");
+    // 承認通知先の所属を選ぶと、画面のスクリプトが select2 を作り直す。古い欄が残ることがあるので、いちばん後ろ（いま使われている）欄を使う（2026-11-14 083・084 で候補を押す操作が戻らなかった）
+    const box = this.メンバー.locator("xpath=following-sibling::span[contains(@class,'select2')]").last();
     await expect(box, "承認通知先（メンバー選択）の欄").toBeVisible();
     for (const name of names) {
       await box.locator(".select2-selection").click();
       const option = this.page.locator(".select2-container--open .select2-results__option").filter({ hasText: exactText(name) });
       await expect(option, `承認通知先（メンバー選択）の候補「${name}」は1件`).toHaveCount(1);
-      await option.click();
+      // 所属を選んだあとは、画面のスクリプトが select2 を作り直し、候補を押す操作が戻らないことがある（2026-11-14 083・084。押す操作が戻らず420秒の時間切れ）。
+      // 押せないときは、検索の入力欄に名前を入れて Enter で選ぶ（キーボードで選ぶ利用者の操作）。そうしたことは注記に残す
+      const pressed = await option.click({ timeout: 20_000 }).then(() => true, () => false);
+      if (!pressed) {
+        test.info().annotations.push({ type: "手順の注記", description: `承認通知先（メンバー選択）の候補「${name}」を押す操作が20秒で完了しなかったので、検索の入力欄に名前を入れて Enter で選んだ（所属を選んだあとの select2）` });
+        const search = this.page.locator(".select2-container--open .select2-search__field, .select2-container--focus .select2-search__field").first();
+        await search.fill(name);
+        await this.page.keyboard.press("Enter");
+      }
       await this.page.keyboard.press("Escape");
     }
     const chosen = (await this.memberChoices()).filter((o) => o.選択).map((o) => o.名前);

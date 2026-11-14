@@ -86,7 +86,7 @@ caseTest("IT-M04-23-004", async ({ page, step, expected }) => {
   await loginAdmin(page, m0423Admin());
   const m = m0423Master();
   const modal = new SplitJoinCsvModal(page, SPLIT);
-  note(`在庫部・承認部・他店舗部は、所属のマスタの既存の「${m.在庫部}」「${m.承認部}」「${m.他店舗部}」に読み替えた（マスタの並び順はこの順）`);
+  note(`在庫部・承認部・他店舗部は、所属のマスタに足した「${m.在庫部}」「${m.承認部}」「${m.他店舗部}」に読み替えた（依頼者決定 2026-11-14。足した順がマスタの並び順）。店舗は、試験店舗A（M04-23）→試験支店、試験店舗B（M04-23）→本店`);
   let depts: string[] = [];
   await step(1, () => modal.open());
   await step(2, () => modal.chooseStore(m.A.店名));
@@ -119,7 +119,7 @@ caseTest("IT-M04-23-006", async ({ page, step, expected }) => {
   await loginAdmin(page, m0423Admin());
   const m = m0423Master();
   const modal = new SplitJoinCsvModal(page, SPLIT);
-  note(`承認部は所属のマスタの既存の「${m.承認部}」、在庫部は「${m.在庫部}」に読み替えた`);
+  note(`承認部は所属のマスタに足した「${m.承認部}」、在庫部は「${m.在庫部}」に読み替えた（依頼者決定 2026-11-14）`);
   await step(1, () => modal.open());
   await step(2, () => modal.chooseStore(m.A.店名));
   await step(3, () => modal.chooseMembers([承認一郎]));
@@ -394,7 +394,7 @@ caseTest("IT-M04-23-083", async ({ page, step, expected }) => {
   const m = m0423Master();
   const code = d.code("M0423RD-001-S");
   const modal = new SplitJoinCsvModal(page, SPLIT);
-  note(`M04-23 RD店舗A は ${d.store.店名}、M04-23 RD所属A は「${m.在庫部}」に読み替えた。商品コードは ${code}`);
+  note(`M04-23 RD店舗A は ${d.store.店名}、M04-23 RD所属A は、所属のマスタに足した「${m.在庫部}」に読み替えた。商品コードは ${code}`);
   note("一覧の見出しは、正本の「在庫区分」が「在庫場所」、「在庫増減数」が「在庫変動数」");
   let before: { 件数: number | null; 行: number } = { 件数: null, 行: -1 };
   let after: Record<string, string>[] = [];
@@ -430,7 +430,7 @@ caseTest("IT-M04-23-084", async ({ page, step, expected }) => {
   const m = m0423Master();
   const code = d.code("M0423RD-002-S");
   const modal = new SplitJoinCsvModal(page, SPLIT);
-  note(`M04-23 RD店舗A は ${d.store.店名}、M04-23 RD所属A は「${m.在庫部}」に読み替えた。商品コードは ${code}`);
+  note(`M04-23 RD店舗A は ${d.store.店名}、M04-23 RD所属A は、所属のマスタに足した「${m.在庫部}」に読み替えた。商品コードは ${code}`);
   type V = Awaited<ReturnType<typeof stockRowValues>>;
   let before: V | null = null;
   let after: V | null = null;
