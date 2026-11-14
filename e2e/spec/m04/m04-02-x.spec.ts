@@ -18,6 +18,7 @@ import {
   在庫の表示, 在庫一覧に戻る, 在庫変動区分を選ぶ, 在庫編集画面である, 在庫編集画面を開く, 検索欄の店舗と在庫区分, 仕入単価の欄, 店舗と在庫区分で検索する, 登録を押す,
 } from "../../pages/admin/m04_02_stock_x";
 import { StockApprovalListPage, StockListPage } from "../../pages/admin/stock_edit";
+import { filterBox } from "../../pages/admin/m04_32_approval_list";
 import { TC東京2F, 店の読み替え, 共通の商品, 商品コードの, 承認者の, 担当者, 権限外担当者, 青木承認者, TC東京2FのID } from "../../seeds/m04-02-x";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -143,8 +144,15 @@ caseTest("IT-M04-02-013", async (ctx) => {
     expect(a.length, "登録した在庫編集承認情報がある").toBe(1);
     const list = new StockApprovalListPage(ctx.page);
     await list.open(TC東京2F.店名);
-    const row = list.rows.filter({ has: ctx.page.locator(`input[name="approval_list_ids[]"][value="${承認一覧の行の番号(a[0].承認ID)}"]`) });
+    // 「承認可能な在庫のみ表示」は、自分が登録した行（承認できない行）を隠すので、外して探す
+    await filterBox(ctx.page).setChecked(false);
+    await Promise.all([ctx.page.waitForNavigation({ waitUntil: "domcontentloaded" }), ctx.page.locator('form#form_search_stock_approval_list button[type="submit"]').click()]);
+    // 登録者本人の行は選択欄（承認操作の対象）が出ないことがあるので、選択欄に頼らず、この実行の担当者（実行の印つきで1人だけ）が登録した行で探す
+    const row = ctx.page.locator("#form_search_stock_approval_list_update tbody tr").filter({ has: ctx.page.locator("td") }).filter({ hasText: 担当者.名前 });
+    const 全行 = await ctx.page.locator("#form_search_stock_approval_list_update tbody tr").allInnerTexts();
+    note(`承認一覧の行数 ${全行.length}・探す登録者 ${担当者.名前}・末尾3行: ${JSON.stringify(全行.slice(-3).map((t) => t.replace(/\s+/g, " ")))}`);
     await expect(row, "在庫編集承認一覧に、登録した承認情報の行がある").toHaveCount(1);
+    note(`承認一覧の行の番号（${承認一覧の行の番号(a[0].承認ID)}）の行を、登録者（この実行の担当者）で探した。「承認可能な在庫のみ表示」は外した（自分が登録した行は承認できないので、付いていると出ない）`);
     行の文 = (await row.innerText()).replace(/\s+/g, " ").trim();
     note(`在庫編集承認一覧の行: ${行の文}`);
   });
