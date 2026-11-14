@@ -29,7 +29,7 @@ import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { withAdminSession } from "../lib/session";
 import { 棚番号の名前を書き換える } from "../db/m04_01_x";
-import { 在庫移動の作成日時, 在庫移動の作成日時を書き換える, 在庫移動の明細, 商品規格ID, 店舗の高額商品閾値, 棚番号の名前がある, 言語コードのID, 商品規格の状態を書き換える, 商品規格の状態 } from "../db/m04_33";
+import { 在庫移動の作成日時, 在庫移動の作成日時を書き換える, 在庫移動の明細, 商品規格ID, 店舗の高額商品閾値, 流す前の高額商品閾値, 棚番号の名前がある, 言語コードのID, 商品規格の状態を書き換える, 商品規格の状態 } from "../db/m04_33";
 import { カードを登録する, カード詳細IDs } from "../pages/admin/m14_card";
 import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
 import { ShortTagPage } from "../pages/admin/short_tag";
@@ -64,7 +64,13 @@ defineSeed("S-M04-34-ENV", async () => { /* 試験のブラウザは既定でポ
 
 defineSeed("S-M04-34-CONFIG", async ({ seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
-  for (const id of [本店3F, 支店]) if (!元の閾値.has(id)) 元の閾値.set(id, 店舗の高額商品閾値(id));
+  for (const id of [本店3F, 支店]) {
+    if (元の閾値.has(id)) continue;
+    const 今 = 店舗の高額商品閾値(id);
+    // 流す前の値と違えば、前の回が戻し損ねた見込み。その値を「元」として控えると戻し損ねが続くので、書き換えずに止める（2026-11-15）
+    if (今.join("/") !== 流す前の高額商品閾値.join("/")) throw new Error(`店舗ID ${id} の高額商品閾値が、流す前の値（${流す前の高額商品閾値.join("/")}）でなく「${今.join("/")}」。前の回が戻し損ねた見込みなので、書き換えずに止める（≪共有の設定≫。値を戻してから流す）`);
+    元の閾値.set(id, 今);
+  }
   issue(`店舗ID 1・13 の高額商品閾値（書き換える前）: 1=${元の閾値.get(本店3F)!.join("/")}・13=${元の閾値.get(支店)!.join("/")}。ケースが終わるたびにこの値へ戻す`);
 });
 

@@ -8,6 +8,7 @@ import { csvRecords, decodeCsvBytes } from "../../lib/csv";
 import { adminUrl } from "../../lib/session";
 import { expectSaved } from "./common";
 import { downloadedBytes } from "./m03_21_shelf_number";
+import { 店舗の高額商品閾値 } from "../../db/m04_33";
 
 const T = 60_000;
 const storeField = (page: Page, name: string) => page.locator(`[name="mall_tenant_shop_master[${name}]"]`);
@@ -21,19 +22,30 @@ export async function readStoreThresholds(page: Page, 店舗ID: string): Promise
   return [out[0], out[1], out[2]];
 }
 
-/** 店舗編集画面で高額商品閾値1〜3だけを入れ直して登録する（ほかの項目は画面に出ている値のまま送る） */
-export async function setStoreThresholds(page: Page, 店舗ID: string, 閾値: [string, string, string], what: string): Promise<void> {
-  const now = await readStoreThresholds(page, 店舗ID);
-  if (now.join("/") === 閾値.join("/")) return;
-  await page.waitForLoadState("load");
-  for (const [i, n] of [1, 2, 3].entries()) await storeField(page, `expensive_threshold${n}`).fill(閾値[i], { timeout: T });
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: "load", timeout: T }).catch(() => undefined),
-    page.getByRole("button", { name: "登録", exact: true }).click({ timeout: T }),
-  ]);
-  await expectSaved(page, what);
-  const after = await readStoreThresholds(page, 店舗ID);
-  if (after.join("/") !== 閾値.join("/")) throw new Error(`${what}: 登録したが、高額商品閾値が「${after.join("/")}」（求めるのは「${閾値.join("/")}」）`);
+/**
+ * 店舗編集画面で高額商品閾値1〜3だけを入れ直して登録する（ほかの項目は画面に出ている値のまま送る）。
+ * 保存するかどうか・保存できたかは、画面でなく DB の値で決める（空と null は同じ）。合わなければ3回まで登録し直し、それでも合わなければ落とす
+ * （2026-11-15 画面の読み取りで「同じ」と見て保存せずに返り、共有の設定が戻らなかった）
+ */
+export async function setStoreThresholds(page: Page, 店舗ID: string, 閾値: readonly [string, string, string], what: string): Promise<void> {
+  const 整える = (v: readonly string[]) => v.map((x) => (x ?? "").replace(/,/g, "").trim()).join("/");
+  const 求める = 整える(閾値);
+  if (整える(店舗の高額商品閾値(店舗ID)) === 求める) return;
+  let 最後 = "";
+  for (let 回 = 1; 回 <= 3; 回++) {
+    await readStoreThresholds(page, 店舗ID); // 店舗編集画面を開く
+    await page.waitForLoadState("load");
+    for (const [i, n] of [1, 2, 3].entries()) await storeField(page, `expensive_threshold${n}`).fill(閾値[i] ?? "", { timeout: T });
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: "load", timeout: T }).catch(() => undefined),
+      page.getByRole("button", { name: "登録", exact: true }).click({ timeout: T }),
+    ]);
+    try { await expectSaved(page, `${what}（${回}回目）`); } catch (e) { 最後 = String(e).split("\n")[0]; }
+    const db = 整える(店舗の高額商品閾値(店舗ID));
+    if (db === 求める) return;
+    最後 = `${最後 ? 最後 + "・" : ""}DB の値が「${db}」`;
+  }
+  throw new Error(`${what}: 3回登録しても、DB の高額商品閾値が求める「${求める}」にならない（${最後}）`);
 }
 
 /** 在庫移動・振替検索一覧 */

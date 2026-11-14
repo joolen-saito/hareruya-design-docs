@@ -51,6 +51,12 @@ export function 商品規格ID(商品コード: string): string[] {
   return query(`select id from dtb_product_class where product_code = $1 order by id`, [商品コード]).map((r) => r.id ?? "");
 }
 
+/**
+ * 店舗ID 1・13 の高額商品閾値の、流す前の開発環境の値（どちらも 980・4800・空。記録 M04-33_progress の30行目）。
+ * ≪共有の設定≫なので、M04-33・M04-34 は流す前にこの値であることを確かめ、終わるたびにこの値へ戻す（2026-11-15 前の回の戻し損ねを次の回が「元」として控えた）
+ */
+export const 流す前の高額商品閾値: readonly [string, string, string] = ["980", "4800", ""];
+
 /** 店舗の高額商品閾値1〜3（空は ""） */
 export function 店舗の高額商品閾値(店舗ID: string): [string, string, string] {
   const r = query(`select expensive_threshold1 as a, expensive_threshold2 as b, expensive_threshold3 as c from dtb_base_info where id = $1::int`, [店舗ID])[0];
