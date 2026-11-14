@@ -52,11 +52,10 @@ async function searchWord(h: ShortageHistoryPage, 語: string): Promise<void> {
   await h.search();
 }
 
-/** 在庫変動履歴CSVの列（設計書 0202「在庫変動履歴CSV出力」CSV出力項目 識別ID 1〜27） */
-const 在庫変動履歴CSVの列 = [
-  "商品コード", "商品名", "言語", "状態", "Foil", "店舗", "在庫区分", "登録元", "登録元ID", "変更前在庫", "変更後在庫", "在庫増減数",
-  "在庫変動理由区分", "在庫変動理由", "変更時販売価格", "仕入単価", "変更前原価単価", "変更後原価単価", "総原価増減数", "変更前総原価", "変更後総原価",
-  "登録日", "登録者", "承認日", "承認者", "最終更新日", "最終更新者",
+/** 欠品履歴CSVの列（設計書 0202「欠品履歴CSV出力」（機能No M04-20）CSV出力項目 識別ID 1〜16。欠品一覧のCSVの項目定義はこのシートで、在庫変動履歴CSV出力の27項目ではない） */
+const 欠品履歴CSVの列 = [
+  "商品コード", "商品名", "言語", "状態", "Foil", "店舗", "在庫区分", "登録元", "登録元ID", "欠品点数", "欠品時販売価格", "欠品理由",
+  "登録日", "登録者", "最終更新日", "最終更新者",
 ];
 
 const pageCodes = (語: string) => Array.from({ length: 51 }, (_, i) => `${語}-${String(i + 1).padStart(3, "0")}`);
@@ -424,7 +423,7 @@ caseTest("IT-M04-19-028", async ({ page, notes, step, expected }) => {
       const file = await downloads[0].path();
       const rows = parseCsv(decodeCsvBytes(fs.readFileSync(file)));
       note(`CSVの見出し: ${(rows[0] ?? []).join(",")}／明細 ${rows.length - 1} 行`);
-      expect.soft(rows[0], "在庫変動履歴CSVの列（設計書 0202「在庫変動履歴CSV出力」の識別ID 1〜27）").toEqual(在庫変動履歴CSVの列);
+      expect.soft(rows[0], "欠品履歴CSVの列（設計書 0202「欠品履歴CSV出力」の識別ID 1〜16）").toEqual(欠品履歴CSVの列);
     }
   });
 });
