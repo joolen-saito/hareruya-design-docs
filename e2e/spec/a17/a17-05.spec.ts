@@ -1,6 +1,7 @@
 /**
  * A17-05 [任意門]商品名から商品詳細の情報を取得（商品名検索API）。正本: cases/A17-05_test_cases.tsv
- * 実装しないケース（記録 review/A17-05_progress_2026-11-10_dev.md）: 007・011・025（DBでの準備）、012・013（カードのマスタの登録。後回し）。
+ * 実装しないケース（記録 review/A17-05_progress_2026-11-10_dev.md）: 007（公開のまま削除済みの商品は作れない。商品の削除は行ごと消す作り）、012・013（カードのマスタの登録。後回し）。
+ * 011・025 は、画面で作れない状態だけを E2E の行に DB で書き足して流す（2026-11-15）。
  * ケースの「ブラウザで開く／開発者ツールの Network で確かめる」は、ページで API を開き、その応答（状態・本文・送った要求の見出し）を読む。
  * 商品名には実行の印を付けて作っているので、ケースの検索語・期待結果の商品名・商品コードも同じ印を付けた値で読む（seeds/a17-05.ts）。
  */
@@ -97,11 +98,11 @@ caseTest("IT-A17-05-008", 規格の選別("008", "規格選別商品-008", ["A",
 caseTest("IT-A17-05-015", 規格の選別("015", "状態境界商品-015", ["A", "B"], ["C"], "A=NM、B=SP・販売価格100、C=MP・販売価格99"));
 
 // ---- 009・010: 404 ----
-function 見つからない(商品名: string | null) {
+function 見つからない(商品名: string | null | (() => string)) {
   return async ({ page, step, expected }: CaseCtx): Promise<void> => {
     let r!: 応答;
     await step(1, async () => { note(NETWORK); });
-    await step(2, async () => { r = await 商品名で開く(page, 商品名); 見る(r); });
+    await step(2, async () => { r = await 商品名で開く(page, typeof 商品名 === "function" ? 商品名() : 商品名); 見る(r); });
     await step(3, async () => { note(`応答の項目: ${項目の名前(r).join("、")}`); });
     await expected(async () => {
       const x = 処理結果(r);
@@ -115,6 +116,8 @@ function 見つからない(商品名: string | null) {
 }
 caseTest("IT-A17-05-009", 見つからない(null));
 caseTest("IT-A17-05-010", 見つからない("存在しない商品名A1705"));
+// 011: 利用できる商品規格が0件の商品（取込の唯一の規格を、E2E の行だけ DB で削除済みにした。seeds/a17-05.ts）
+caseTest("IT-A17-05-011", 見つからない(() => rc("サブクラスなし商品-011")));
 
 // ---- 014: カード詳細の無い商品の商品名 ----
 caseTest("IT-A17-05-014", async ({ page, notes, step, expected }) => {
@@ -176,6 +179,21 @@ caseTest("IT-A17-05-020", async ({ page, notes, step, expected }) => {
     const c = 規格IDの(商品IDの(r, notes.get("〔商品ID-A1705-020〕")), notes.get("〔規格ID-A1705-020〕"));
     expect.soft(r.状態, "応答の状態").toBe(200);
     expect.soft(c?.product_class_images ?? "（規格が無い）", "規格画像のURL").toEqual(["https://stg-files.hareruyamtg.com/img/goods/L/M21/JP/0204-020.jpg"]);
+  });
+});
+
+// ---- 025: 規格画像が2件のときの URL ----
+caseTest("IT-A17-05-025", async ({ page, notes, step, expected }) => {
+  let r!: 応答;
+  await step(1, async () => { r = await 商品名で開く(page, rc("画像2件商品-025")); 見る(r); });
+  await step(2, async () => { note(`商品の一覧の件数 ${r.商品.length}`); });
+  await expected(async () => {
+    const c = 規格IDの(商品IDの(r, notes.get("〔商品ID-A1705-025〕")), notes.get("〔規格ID-A1705-025〕"));
+    expect.soft(r.状態, "応答の状態").toBe(200);
+    expect.soft(c?.product_class_images ?? "（規格が無い）", "規格画像のURL（2件）").toEqual([
+      "https://stg-files.hareruyamtg.com/img/goods/L/M21/JP/0204-025-front.jpg",
+      "https://stg-files.hareruyamtg.com/img/goods/L/M21/JP/0204-025-back.jpg",
+    ]);
   });
 });
 
