@@ -32,7 +32,9 @@ import { rc, RUN_MARK, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { withAdminSession } from "../lib/session";
 import { 棚番号の名前を書き換える } from "../db/m04_01_x";
-import { 在庫移動の作成日時, 在庫移動の作成日時を書き換える, 在庫移動の明細, 商品規格ID, 店舗の高額商品閾値, 棚番号の名前がある } from "../db/m04_33";
+import { 在庫移動の作成日時, 在庫移動の作成日時を書き換える, 在庫移動の明細, 商品規格ID, 店舗の高額商品閾値, 棚番号の名前がある, 言語コードのID, 商品規格の状態を書き換える, 商品規格の状態 } from "../db/m04_33";
+import { カードを登録する, カード詳細IDs } from "../pages/admin/m14_card";
+import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
 import { chooseByLabel, expectSaved } from "../pages/admin/common";
 import { GOODS_ROOT_CATEGORY_ID } from "../pages/admin/product_masters";
 import { downloadGoodsCsvTemplate } from "../pages/admin/m03_01_goods_csv";
@@ -97,6 +99,16 @@ export type 入庫先 = "本店3F" | "共有A" | "共有B" | "支店";
 export type 品 = {
   記号: string; 商品コード: string; 商品名: string; 基準価格: number; 販売価格?: number; セール?: boolean;
   サプライ: boolean; 略称?: string; 棚番号?: string; 数量: number; 入庫先: 入庫先;
+  /** 略称タグの並び順・アルファベット順ソートフラグ（同じ略称の品は1つの略称タグを使う。省略すると並び順1・OFF） */
+  略称並び順?: string; 略称アルファベット?: boolean;
+  /** 棚番号の並び順（同じ棚番号の品は1つの棚番号を使う。省略すると1） */
+  棚並び順?: string;
+  /** 言語コード（グッズ商品CSVの言語(ID)。省略すると CSV に入れない） */
+  言語?: string;
+  /** 状態コード（グッズ商品CSVは NM の規格を作る。NM 以外は E2E の商品規格だけ DB で書き換える） */
+  状態?: string;
+  /** カード（依頼者決定 2026-11-14「マスタは作ってよい」。印つきの試験用カードを作り、商品登録編集の「カード指定」で紐づける） */
+  カード?: { 英名?: string; レアリティ?: string; Foil?: "なし" | "通常" | "特殊"; カード番号?: string; 色順?: string };
 };
 export type ケースの定め = { 番号: string; 日時: string; 品: 品[] };
 
@@ -121,22 +133,31 @@ async function 作る(ctx: SeedCtx, d: ケースの定め): Promise<void> {
 
   await withAdminSession(browser, M0433_ADMIN.account, async (page) => {
     page.setDefaultTimeout(90_000);
-    // 略称タグ
+    // 略称タグ（同じ名前の品は1つの略称タグを使う）
+    const 略称の名前ID = new Map<string, string>();
     for (const p of d.品.filter((x) => x.略称)) {
-      const st = new ShortTagPage(page);
-      await st.openNew();
-      const id = await st.register({ 名称: 印つきの名前(p.略称!), 並び順: "1", アルファベット順: false }, `${seedId}: 略称タグ「${p.略称}」の登録`);
+      if (!略称の名前ID.has(p.略称!)) {
+        const st = new ShortTagPage(page);
+        await st.openNew();
+        const id = await st.register({ 名称: 印つきの名前(p.略称!), 並び順: p.略称並び順 ?? "1", アルファベット順: p.略称アルファベット ?? false }, `${seedId}: 略称タグ「${p.略称}」の登録`);
+        略称の名前ID.set(p.略称!, id);
+      }
+      const id = 略称の名前ID.get(p.略称!)!;
       略称ID.set(p.記号, id);
       控える(`〔略称タグID-M0433-${d.番号}${末尾(p)}〕`, id);
+      控える(`〔略称タグID-M0433-${d.番号}〕`, id);
     }
     // 棚番号（入力チェックを通る名前で登録し、E2E の棚番号の名前だけ正本の名前に書き換える）
+    const 作った棚 = new Set<string>();
     for (const p of d.品.filter((x) => x.棚番号)) {
+      if (作った棚.has(p.棚番号!)) continue;
+      作った棚.add(p.棚番号!);
       const shelf = new ShelfNumberPage(page);
       await shelf.openNew();
       let tmp = "";
       for (let i = 0; i < 40; i++) { const c = `Q-${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`; if (!棚番号の名前がある(c)) { tmp = c; break; } }
       if (!tmp) throw new Error(`${seedId}: 使われていない棚番号の名前を選べない`);
-      const shelfId = await shelf.register({ 名称: tmp, 並び順: "1" }, `${seedId}: 棚番号「${tmp}」の登録`);
+      const shelfId = await shelf.register({ 名称: tmp, 並び順: p.棚並び順 ?? "1" }, `${seedId}: 棚番号「${tmp}」の登録`);
       棚番号の名前を書き換える(`${seedId}: 棚番号の名前を ${p.棚番号} にする（入力チェックを通らない名前）`, shelfId, tmp, 印つきの名前(p.棚番号!));
       issue(`棚番号「${p.棚番号}」は名前の入力チェックを通らないので、「${tmp}」で画面から登録し、その棚番号の名前だけ DB で「${印つきの名前(p.棚番号!)}」に書き換えた`);
     }
@@ -151,6 +172,7 @@ async function 作る(ctx: SeedCtx, d: ケースの定め): Promise<void> {
           "基準価格": String(p.基準価格), "販売価格": String(p.基準価格), "買取価格": "10", "原価単価": "10",
           "商品カテゴリ(ID)": p.サプライ ? GOODS_ROOT_CATEGORY_ID : "5",
           ...(略称ID.has(p.記号) ? { "略称タグ(ID)": 略称ID.get(p.記号)! } : {}),
+          ...(p.言語 ? { "言語(ID)": 言語コードのID(p.言語) } : {}),
         },
       })),
       onWarning: (w) => issue(`グッズ商品CSV登録の警告「${w}」`), uploadWaitMs: 180_000,
@@ -176,6 +198,37 @@ async function 作る(ctx: SeedCtx, d: ケースの定め): Promise<void> {
       控える(`〔商品規格ID-M0433-${d.番号}${末尾(p)}〕`, ids[0]);
     }
   });
+
+  // カード（印つきの試験用カードを作り、商品登録編集の「カード指定」で紐づける。依頼者決定 2026-11-14「マスタは作ってよい」）
+  const カード付き = d.品.filter((p) => p.カード);
+  if (カード付き.length > 0) {
+    await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+      page.setDefaultTimeout(60_000);
+      for (const p of カード付き) {
+        const c = p.カード!;
+        const 名 = rc(p.商品コード);
+        const 英名 = c.英名 ? rc(c.英名) : 名;
+        const カードID = await カードを登録する(page, {
+          カード名日: 名, カード名英: 英名, 点数で見たマナ: "0", 色順: c.色順,
+          詳細: { レアリティ: c.レアリティ, Foil: c.Foil ?? "なし", カード番号: c.カード番号 },
+        }, `${seedId}: ${名} のカードの登録`, issue);
+        const ids = await カード詳細IDs(page);
+        if (ids.length !== 1) throw new Error(`${seedId}: ${名} のカードのカード詳細が ${ids.length} 件（1件のはず）`);
+        const m = 作ったもの.get(p.商品コード)!;
+        await assignCardOnProductEdit(page, { productId: m.商品ID, cardNameJp: 名, cardDetailId: ids[0], productNameJp: m.商品名, productNameEn: m.商品名 }, issue);
+        控える(`〔カードID-M0433-${d.番号}${末尾(p)}〕`, カードID);
+        控える(`〔カード詳細ID-M0433-${d.番号}${末尾(p)}〕`, ids[0]);
+      }
+    });
+    issue(`印つきの試験用カードを ${カード付き.length} 枚作り（${カード付き.map((p) => `${rc(p.商品コード)}: 英語名 ${p.カード!.英名 ? rc(p.カード!.英名) : rc(p.商品コード)}・レアリティ ${p.カード!.レアリティ ?? "選択肢の先頭"}・Foil ${p.カード!.Foil ?? "なし"}${p.カード!.カード番号 ? `・コレクター番号 ${p.カード!.カード番号}` : ""}${p.カード!.色順 ? `・色順 ${p.カード!.色順}` : ""}`).join("／")}）、商品登録編集の「カード指定」で紐づけた（依頼者決定 2026-11-14「マスタは作ってよい」）`);
+  }
+  // 状態（グッズ商品CSVは NM の規格を作り、商品規格の編集画面では状態を選べないので、E2E の商品規格だけ DB で書き換える）
+  for (const p of d.品.filter((x) => x.状態 && x.状態 !== "NM")) {
+    const id = 作ったもの.get(p.商品コード)!.商品規格ID;
+    商品規格の状態を書き換える(`${seedId}: 商品規格 ${id} の状態を ${p.状態} にする（画面で選べない）`, id, p.状態!);
+    if (商品規格の状態(id) !== p.状態) throw new Error(`${seedId}: 商品規格 ${id} の状態が ${商品規格の状態(id)}（${p.状態} のはず）`);
+    issue(`商品規格 ${id}（${rc(p.商品コード)}）の状態を DB で ${p.状態} にした（グッズ商品CSV登録は NM の規格を作り、商品規格の編集画面では状態を選べない。E2E の商品規格だけ）`);
+  }
 
   // 入庫（入庫先に10・出庫元に移動点数。在庫変更CSV登録と別のメンバーの承認）
   const 出庫元の店名 = await 店名を読む(browser, 出庫元);
@@ -252,3 +305,44 @@ const サプライ = (番号: string, 日時: string, 基準価格: number, 入�
 ケース("S-M04-33-CBSUPPLY-043", サプライ("043", "2033-05-12 10:00:00", 350, "共有A", false));
 ケース("S-M04-33-CBSUPPLY-046", サプライ("046", "2033-05-15 10:00:00", 550, "共有B", true));
 ケース("S-M04-33-CBSUPPLY-049", サプライ("049", "2033-05-18 10:00:00", 450, "共有A", true));
+
+// ---------------------------------------------------------------- カードのマスタを使う並び順のケース（依頼者決定 2026-11-14「マスタは作ってよい」）
+// どの品も、カード（レアリティ M＝神話レア・非Foil）・言語 JP・状態 NM・基準価格150・入庫先 本店3F が既定。ケースが変える属性だけを上書きする。
+const M = "神話レア";
+const カード品 = (記号: string, 番号: string, 名前: string, 追加: Partial<品> = {}, カード: 品["カード"] = {}): 品 =>
+  品(記号, 番号, 名前, 150, { 言語: "JP", 略称: `M0433-COM-${番号}`, 棚番号: `M0433-SH-COM-${番号}`, ...追加, カード: { レアリティ: M, Foil: "なし", ...カード } });
+
+ケース("S-M04-33-SHELF-SORT-013", { 番号: "013", 日時: "2033-04-13 10:00:00", 品: [
+  カード品("A", "013", "棚B商品-013", { 棚番号: "3F-B02", 棚並び順: "2" }),
+  カード品("B", "013", "棚A商品-013", { 棚番号: "3F-A01", 棚並び順: "1" }),
+] });
+ケース("S-M04-33-BRANCH-SORT-014", { 番号: "014", 日時: "2033-04-14 10:00:00", 品: [
+  カード品("A", "014", "支店JPカード", { 棚番号: "B02", 棚並び順: "2", 言語: "JP", 入庫先: "支店" }),
+  カード品("B", "014", "支店ENカード", { 棚番号: "A01", 棚並び順: "1", 言語: "EN", 入庫先: "支店" }),
+] });
+ケース("S-M04-33-LANGUAGE-SORT-015", { 番号: "015", 日時: "2033-04-15 10:00:00", 品: [
+  カード品("A", "015", "言語FRカード", { 言語: "FR" }), カード品("B", "015", "言語ENカード", { 言語: "EN" }), カード品("C", "015", "言語JPカード", { 言語: "JP" }),
+] });
+ケース("S-M04-33-CONDITION-SORT-016", { 番号: "016", 日時: "2033-04-16 10:00:00", 品: [
+  カード品("A", "016", "状態HPカード", { 状態: "HP" }), カード品("B", "016", "状態NMカード", { 状態: "NM" }),
+] });
+ケース("S-M04-33-FOIL-SORT-017", { 番号: "017", 日時: "2033-04-17 10:00:00", 品: [
+  カード品("A", "017", "Foilカード", {}, { Foil: "通常" }), カード品("B", "017", "非Foilカード", {}, { Foil: "なし" }),
+] });
+ケース("S-M04-33-ABBR-SORT-018", { 番号: "018", 日時: "2033-04-18 10:00:00", 品: [
+  カード品("A", "018", "略称BBB商品-018", { 略称: "BBB", 略称並び順: "2" }), カード品("B", "018", "略称AAA商品-018", { 略称: "AAA", 略称並び順: "1" }),
+] });
+ケース("S-M04-33-RARITY-SORT-019", { 番号: "019", 日時: "2033-04-19 10:00:00", 品: [
+  カード品("A", "019", "レアリティC商品-019", {}, { レアリティ: "コモン" }), カード品("B", "019", "レアリティM商品-019", {}, { レアリティ: M }),
+] });
+ケース("S-M04-33-COLOR-SORT-020", { 番号: "020", 日時: "2033-04-20 10:00:00", 品: [
+  カード品("A", "020", "赤商品-020", {}, { 色順: "赤" }), カード品("B", "020", "青商品-020", {}, { 色順: "青" }),
+] });
+ケース("S-M04-33-COLLECTOR-SORT-021", { 番号: "021", 日時: "2033-04-21 10:00:00", 品: [
+  カード品("A", "021", "コレクター010商品-021", { 略称: "COL", 略称アルファベット: false }, { カード番号: "010" }),
+  カード品("B", "021", "コレクター002商品-021", { 略称: "COL", 略称アルファベット: false }, { カード番号: "002" }),
+] });
+ケース("S-M04-33-ALPHA-SORT-022", { 番号: "022", 日時: "2033-04-22 10:00:00", 品: [
+  カード品("A", "022", "Zulu商品-022", { 略称: "ALP", 略称アルファベット: true }, { 英名: "Zulu Card" }),
+  カード品("B", "022", "Alpha商品-022", { 略称: "ALP", 略称アルファベット: true }, { 英名: "Alpha Card" }),
+] });

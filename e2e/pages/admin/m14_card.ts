@@ -24,6 +24,8 @@ export type カード入力 = {
   点数で見たマナ: string;
   マナ・コスト?: string;
   カラー?: string[]; 固有色?: string[];
+  /** 色順（色の並び順のマスタ。選択肢の名前）。省略すると選ばない（M04-33 の色の並び順のケースが使う。2026-11-14） */
+  色順?: string;
   カードタイプ?: string[]; サブタイプ?: string[]; 特殊タイプ?: string[];
   /** リーガリティの行（フォーマット名・リーガリティ名） */
   リーガリティ?: { フォーマット: string; リーガリティ: string }[];
@@ -92,6 +94,7 @@ export async function カードを登録する(page: Page, v: カード入力, w
   await t("manaCost", v.マナ・コスト);
   for (const c of v.カラー ?? []) await checkByLabel(page, "admin_card_colors_", c, `${what}: カラー`);
   for (const c of v.固有色 ?? []) await checkByLabel(page, "admin_card_colorIdentities_", c, `${what}: 固有色`);
+  if (v.色順) await form.locator("#admin_card_colorSequence").selectOption({ label: v.色順 });
   if (v.カードタイプ?.length) await addSelect(form.locator('select[name="admin_card[cardtypes][]"]'), v.カードタイプ, `${what}: カードタイプ`);
   if (v.サブタイプ?.length) await addSelect(form.locator('select[name="admin_card[subtypes][]"]'), v.サブタイプ, `${what}: サブタイプ`);
   if (v.特殊タイプ?.length) await addSelect(form.locator('select[name="admin_card[specialtypes][]"]'), v.特殊タイプ, `${what}: 特殊タイプ`);

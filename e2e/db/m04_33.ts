@@ -68,3 +68,34 @@ export function 店名の店舗ID(店名: string): string[] {
 export function 棚番号の名前がある(名前: string): boolean {
   return query(`select id from dtb_shelf_number where name = $1`, [名前]).length > 0;
 }
+
+/** 言語コード（JP・EN・FR など）の言語ID（グッズ商品CSVの「言語(ID)」に入れる） */
+export function 言語コードのID(コード: string): string {
+  const r = query(`select id from mtb_language where code = $1`, [コード]);
+  if (r.length !== 1) throw new Error(`言語コード ${コード} の言語が ${r.length} 件（1件のはず）`);
+  return r[0].id ?? "";
+}
+
+/** 状態コード（NM・HP など）の状態ID */
+export function 状態コードのID(コード: string): string {
+  const r = query(`select id from mtb_card_condition where code = $1`, [コード]);
+  if (r.length !== 1) throw new Error(`状態コード ${コード} の状態が ${r.length} 件（1件のはず）`);
+  return r[0].id ?? "";
+}
+
+/**
+ * 画面で作った E2E の商品規格の状態を書き換える（グッズ商品CSV登録は状態ニアミントの規格を1件作り、商品規格の編集画面では状態を選べない）。
+ * 持ち主の確かめは「実行の印の付いた商品コードの商品規格」。
+ */
+export function 商品規格の状態を書き換える(what: string, 商品規格ID: string, 状態コード: string): void {
+  updateOwnRows(what, {
+    table: "dtb_product_class", key: "id", ids: [商品規格ID], set: { card_condition_id: 状態コードのID(状態コード) },
+    owner: { sql: `select id from dtb_product_class where product_code like '%' || $1`, params: [`-${RUN_MARK}`] },
+  });
+}
+
+/** 商品規格の状態コード */
+export function 商品規格の状態(商品規格ID: string): string {
+  const r = query(`select c.code from dtb_product_class pc left join mtb_card_condition c on c.id = pc.card_condition_id where pc.id = $1::int`, [商品規格ID])[0];
+  return r?.code ?? "";
+}
