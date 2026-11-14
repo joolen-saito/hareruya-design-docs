@@ -184,15 +184,23 @@ caseTest("IT-M03-40-038", async (ctx) => {
 
 // ---- 取り込まれないもの（棚番号が変わらず、取込履歴も増えない） ----
 
-function 変わらない(nnn: string, ファイル: string[], 商品: [string, string][], 何: string) {
+/**
+ * 開くを分ける=true: 正本の手順が「1. 画面を開く／2. ファイルを選んでアップロード／3. DB を確かめる」の形（015・018・030・031）。
+ * 開くを分ける=false: 正本の手順が「1. 画面で1つ目をアップロード／2. 画面で2つ目をアップロード／3. DB を確かめる」の形（029）。
+ */
+function 変わらない(nnn: string, ファイル: string[], 商品: [string, string][], 何: string, 開くを分ける = false) {
   return async (ctx: CaseCtx) => {
     const csv = await signIn(ctx);
     const got: Record<string, (string | null)[]> = {};
     const n: Record<string, number> = {};
-    for (const [i, f] of ファイル.entries()) {
-      await ctx.step(i + 1, async () => { await csv.open(); await upload(csv, f); });
+    let 手順 = 0;
+    if (開くを分ける) {
+      await ctx.step(++手順, async () => { await csv.open(); });
+      for (const f of ファイル) await ctx.step(++手順, async () => { await upload(csv, f); });
+    } else {
+      for (const f of ファイル) await ctx.step(++手順, async () => { await csv.open(); await upload(csv, f); });
     }
-    await ctx.step(ファイル.length + 1, async () => {
+    await ctx.step(++手順, async () => {
       for (const [code] of 商品) got[code] = 棚(nnn, code);
       for (const f of ファイル) n[f] = 履歴(f);
     });
@@ -202,11 +210,11 @@ function 変わらない(nnn: string, ファイル: string[], 商品: [string, s
     });
   };
 }
-caseTest("IT-M03-40-015", 変わらない("015", ["m0340-110000-015.csv"], [["4030", 棚1]], "データレコード110000件"));
-caseTest("IT-M03-40-018", 変わらない("018", ["m0340-size-over-018.csv"], [["4018", 棚1]], "アップロードサイズ上限を1バイト超えるファイル"));
+caseTest("IT-M03-40-015", 変わらない("015", ["m0340-110000-015.csv"], [["4030", 棚1]], "データレコード110000件", true));
+caseTest("IT-M03-40-018", 変わらない("018", ["m0340-size-over-018.csv"], [["4018", 棚1]], "アップロードサイズ上限を1バイト超えるファイル", true));
 caseTest("IT-M03-40-029", 変わらない("029", ["m0340-unknown-product-029.csv", "m0340-deleted-product-029.csv"], [["4099", 棚1]], "未登録・削除済みの商品コード"));
-caseTest("IT-M03-40-030", 変わらない("030", ["m0340-unknown-shelf-030.csv"], [["34003001", 棚1]], "未登録の棚番号名称"));
-caseTest("IT-M03-40-031", 変わらない("031", ["m0340-rollback-031.csv"], [["34003101", 棚1], ["34003102", 棚2]], "2件目が未登録の商品コード"));
+caseTest("IT-M03-40-030", 変わらない("030", ["m0340-unknown-shelf-030.csv"], [["34003001", 棚1]], "未登録の棚番号名称", true));
+caseTest("IT-M03-40-031", 変わらない("031", ["m0340-rollback-031.csv"], [["34003101", 棚1], ["34003102", 棚2]], "2件目が未登録の商品コード", true));
 
 caseTest("IT-M03-40-040", async (ctx) => {
   const csv = await signIn(ctx);
