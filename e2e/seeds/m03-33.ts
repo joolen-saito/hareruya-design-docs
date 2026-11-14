@@ -28,6 +28,7 @@ import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { downloadedBytes } from "../pages/admin/m03_21_shelf_number";
 import { HighPriceCsvUploadPage } from "../pages/admin/m03_32_high_price_csv";
+import { 価格履歴を消す } from "../db/m03_30_x";
 import { createHighPriceGoods, createTestAdmin, expectNoSameNameHistory, onePixelPng } from "./m03-32";
 
 /**
@@ -169,3 +170,35 @@ defineSeed("S-M03-33-BRANCH-048", { needs: ["S-M03-33-ADM"] }, async ({ browser,
     return "invalid-048.png";
   });
 });
+
+// ---- 価格履歴（009〜012。2026-11-14 追加） ----
+// 商品は画面（グッズ商品CSV登録・商品規格の登録）で作る。商品規格を登録すると、そのときの価格履歴が1件できて、消す画面が無いので、
+// シード表の「価格履歴0件」は、E2E が作った商品規格の価格履歴の行だけを DB で消して作る（db/m03_30_x.ts の 価格履歴を消す・lib/db_write.ts。
+// 依頼者決定 2026-11-10「E2E が作った行だけ書いてよい」）。商品コードには実行ごとの印を付ける（ほかの BRANCH と同じ）。
+
+const histCode = (kind: string, n: string): string => rc(`HP-HIST-${kind}-${n}`);
+
+async function historySeed(browser: Browser, seedId: string, kind: string, n: string, notes: Notes, sale: boolean): Promise<void> {
+  const file = `history_${{ S: "sell", B: "buy", BOTH: "both", NONE: "none" }[kind]}-${n}.csv`;
+  const row = dataRowInSeed(seedId, file);
+  const code = histCode(kind, n);
+  const 販売価格 = sale ? "1000" : "1500";
+  expectInSeed(seedId, [`商品コード=HP-HIST-${kind}-${n}`, "基準価格1500", `販売価格${販売価格}`, "買取価格600", sale ? "セール有効" : "セール無効", "価格履歴0件"]);
+  await withAdminSession(browser, M0333_ADMIN, async (page) => {
+    await headerPlusRow(file, row.replace(`HP-HIST-${kind}-${n}`, code).replace(/空/g, ""))(page, seedId);
+    await expectNoSameNameHistory(page, "セール用高額商品価格変更", seedId, file);
+    await createHighPriceGoods(page, seedId, {
+      商品コード: code, 商品名: `M0333-${n}`,
+      CSV: { 基準価格: "1500", 販売価格: 販売価格, 買取価格: "600" },
+      規格: { 高額商品コード: code, セール: sale, 基準価格: "1500", 販売価格: 販売価格, 買取価格: "600" },
+    }, { 商品ID: `〔商品ID-M0333-${n}〕`, 商品規格ID: `〔商品規格ID-M0333-${n}〕` }, notes);
+  });
+  const n消 = 価格履歴を消す(seedId, [{ 商品規格ID: notes.get(`〔商品規格ID-M0333-${n}〕`), 商品コード: code }]);
+  reportSeedIssue(seedId, `価格履歴0件: 商品規格を画面で登録するとできる価格履歴（${n消} 件）を、E2E が作ったこの商品規格の分だけ DB で消した（lib/db_write.ts）。` +
+    `取込ファイルは画面の雛形の見出し行の下に、シード表のデータ行（「空」は空の値・商品コードは実行の印つき）を入れた。同名取込履歴0件は画面のCSVインポート履歴で確かめた`);
+}
+
+defineSeed("S-M03-33-HISTORY-PRODUCTS-009", { needs: ["S-M03-33-ADM"] }, async ({ browser, seed, notes }) => { await historySeed(browser, seed.シードID, "S", "009", notes, true); });
+defineSeed("S-M03-33-HISTORY-PRODUCTS-010", { needs: ["S-M03-33-ADM"] }, async ({ browser, seed, notes }) => { await historySeed(browser, seed.シードID, "B", "010", notes, true); });
+defineSeed("S-M03-33-HISTORY-PRODUCTS-011", { needs: ["S-M03-33-ADM"] }, async ({ browser, seed, notes }) => { await historySeed(browser, seed.シードID, "BOTH", "011", notes, true); });
+defineSeed("S-M03-33-HISTORY-PRODUCTS-012", { needs: ["S-M03-33-ADM"] }, async ({ browser, seed, notes }) => { await historySeed(browser, seed.シードID, "NONE", "012", notes, false); });

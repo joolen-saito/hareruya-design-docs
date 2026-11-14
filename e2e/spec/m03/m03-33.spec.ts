@@ -13,6 +13,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Download, Page, test } from "@playwright/test";
 import { STATE_DIR } from "../../config/env";
+import { 価格履歴の行, メンバーID } from "../../db/m03_30_x";
 import { 商品規格の状態, 取込履歴の件数, 取込種別 } from "../../db/m03_32_high_price";
 import { expect, CaseCtx, caseTest } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
@@ -269,3 +270,57 @@ caseTest("IT-M03-33-048", async ({ page, notes, step, expected, db }) => {
     await expectOnUploadScreen(page, upload, r);
   });
 });
+
+// ---- 価格履歴（009〜012。2026-11-14 追加。シードは E2E の商品規格の価格履歴だけを DB で消して0件にする） ----
+
+/** 取込のあとの価格履歴の行（DBの参照）を確かめる。期待は「1件追加・指定の項目の更新前後・操作した担当者」 */
+function historyCase(n: string, file: string, check: (rows: ReturnType<typeof 価格履歴の行>, メンバー: string) => void, 前に件数を記録 = false) {
+  return async ({ page, notes, step, expected, db }: CaseCtx): Promise<void> => {
+    const classId = notes.get(`〔商品規格ID-M0333-${n}〕`);
+    const upload = await signIn(page);
+    let 前 = -1; let rows: ReturnType<typeof 価格履歴の行> = [];
+    const s = 前に件数を記録 ? 1 : 0;
+    if (前に件数を記録) {
+      await step(1, async () => { expect(db.available, "DB確認の接続先").toBe(true); 前 = 価格履歴の行(classId).length; note(`取込前の価格履歴の件数（DBの参照）: ${前}`); });
+    } else 前 = 価格履歴の行(classId).length;
+    await step(1 + s, async () => {
+      await upload.open();
+      await chooseFile(upload, file);
+      await noteSubmit(upload, await upload.submit());
+    });
+    await step(2 + s, async () => {
+      expect(db.available, "DB確認の接続先").toBe(true);
+      rows = 価格履歴の行(classId);
+      note(`取込後の価格履歴（DBの参照・古い順）: ${JSON.stringify(rows)}`);
+    });
+    await expected(async () => {
+      expect.soft(前, "取込前の価格履歴の件数（シード表の0件）").toBe(0);
+      check(rows, メンバーID(M0333_ADMIN.loginId));
+    });
+  };
+}
+
+caseTest("IT-M03-33-009", historyCase("009", "history_sell-009.csv", (rows, m) => {
+  expect.soft(rows.length, "価格履歴が1件追加される").toBe(1);
+  expect.soft([rows[0]?.変更前販売価格, rows[0]?.販売価格], "販売価格の更新前・更新後").toEqual(["1000", "1100"]);
+  expect.soft(rows[0]?.登録者ID, "操作した担当者（M03-33試験管理者のメンバーID）").toBe(m);
+  expect.soft([rows[0]?.変更前買取価格, rows[0]?.買取価格], "買取価格の変更値が記録されない（更新前・更新後とも空）").toEqual(["", ""]);
+}));
+
+caseTest("IT-M03-33-010", historyCase("010", "history_buy-010.csv", (rows, m) => {
+  expect.soft(rows.length, "価格履歴が1件追加される").toBe(1);
+  expect.soft([rows[0]?.変更前買取価格, rows[0]?.買取価格], "買取価格の更新前・更新後").toEqual(["600", "650"]);
+  expect.soft(rows[0]?.登録者ID, "操作した担当者（M03-33試験管理者のメンバーID）").toBe(m);
+  expect.soft([rows[0]?.変更前販売価格, rows[0]?.販売価格], "販売価格の変更値が記録されない（更新前・更新後とも空）").toEqual(["", ""]);
+}));
+
+caseTest("IT-M03-33-011", historyCase("011", "history_both-011.csv", (rows, m) => {
+  expect.soft(rows.length, "価格履歴が1件追加される").toBe(1);
+  expect.soft([rows[0]?.変更前販売価格, rows[0]?.販売価格], "販売価格の更新前・更新後").toEqual(["1000", "1100"]);
+  expect.soft([rows[0]?.変更前買取価格, rows[0]?.買取価格], "買取価格の更新前・更新後").toEqual(["600", "650"]);
+  expect.soft(rows[0]?.登録者ID, "操作した担当者（M03-33試験管理者のメンバーID）").toBe(m);
+}));
+
+caseTest("IT-M03-33-012", historyCase("012", "history_none-012.csv", (rows) => {
+  expect.soft(rows.length, "価格履歴が追加されない（取込前の0件のまま）").toBe(0);
+}, true));
