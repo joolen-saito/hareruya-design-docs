@@ -11,7 +11,7 @@ import { Page, test } from "@playwright/test";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import {
-  在庫の, 在庫の承認待ちの明細, 在庫の承認情報, 在庫の変動履歴, 承認一覧の行の番号,
+  在庫の, 在庫の承認待ちの明細, 在庫の承認情報, 在庫の変動履歴, 承認一覧の行の番号, 承認一覧の列の説明,
 } from "../../db/m04_02_x";
 import { fillStockEdit } from "../../pages/admin/m04_02_rc_stock";
 import {
@@ -89,7 +89,9 @@ caseTest("IT-M04-02-009", async (ctx) => {
     expect.soft(x?.登録者, "登録者").toBe(担当者.名前);
     expect.soft(x?.承認日 ?? null, "承認日（空）").toBeNull();
     expect.soft(x?.承認者 ?? null, "承認者（承認待ち＝承認者なし）").toBeNull();
-    expect.soft(d[0]?.変更前仕入単価 ?? null, "変更前の原価単価は登録されない（空）").toBeNull();
+    // 設計書 3-6 の注記は承認一覧への登録の話。承認一覧の登録先に、変更前後の原価単価・総原価の列が無いことで確かめる（明細の申請時点の変更前仕入単価は別の表の項目で、保存する決まり）
+    const 列 = 承認一覧の列の説明();
+    expect.soft(列.filter((c) => /(変更前|変更後).*(原価単価|総原価)/.test(c)), "変更前後の原価単価・総原価の列は登録先に無い").toEqual([]);
   });
 });
 

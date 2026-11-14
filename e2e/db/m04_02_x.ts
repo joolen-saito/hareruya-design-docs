@@ -174,3 +174,18 @@ export function 承認一覧の行の番号(承認ID: string): string {
   if (r.length !== 1) throw new Error(`在庫編集の承認 ${承認ID} の承認一覧の行が ${r.length} 件（1件のはず）`);
   return String(r[0].id);
 }
+
+/**
+ * 在庫編集承認一覧（承認情報の登録先）の列の説明の一覧。
+ * 「変更前後の原価単価・総原価は登録しない」（設計書 3-6）を、登録先に変更前後の原価単価・総原価の列が無いことで確かめるのに使う。
+ * 承認の明細（入庫承認待ち在庫情報）は別の表で、申請時点の変更前の仕入単価を保存する決まり（3820）なので、ここでは見ない。
+ */
+export function 承認一覧の列の説明(): string[] {
+  return query(
+    `select coalesce(col_description(a.attrelid, a.attnum), a.attname) as comment
+       from pg_attribute a
+      where a.attrelid = 'dtb_stock_approval_list'::regclass and a.attnum > 0 and not a.attisdropped
+      order by a.attnum`,
+    [],
+  ).map((r) => String(r.comment));
+}
