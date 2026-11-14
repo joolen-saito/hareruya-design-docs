@@ -245,7 +245,10 @@ export function defineStockSeed(seedId: string, o: {
           if (/\r|\n/.test(head)) throw new Error(`${what}: 在庫変更CSVの雛形が見出しの1行だけではない`);
           const body = Buffer.concat([template.subarray(0, Buffer.byteLength(head, "latin1")),
             Buffer.from(`${eol}${op.code},${op.増減数},${op.単価}${eol}`, "ascii")]);
-          const file = test.info().outputPath(op.file);
+          // 同じファイル名の在庫変更CSVは1か月以内に再登録できない（画面は警告を出して登録しない）ので、ファイル名に実行ごとの印を付ける
+          // （依頼者決定 2026-10-28 案A。ケースは登録するファイルの名前そのものを確かめない。2026-11-14 136・137）
+          const fileName = `${markCode(op.file.replace(/\.csv$/, ""))}.csv`;
+          const file = test.info().outputPath(fileName);
           fs.writeFileSync(file, body);
           await fillStockChangeCsvForm(page, {
             店舗ID: storeId, 店名: shop, 在庫区分: "EC-CUBE", 在庫変動区分: op.区分, 在庫変動理由: op.理由, 所属: dept, 承認者: o.org.承認者.名前,
@@ -259,7 +262,7 @@ export function defineStockSeed(seedId: string, o: {
             if (!m.成功.includes("保存しました")) throw new Error(`${what}: 「${op.成功の文}」も「保存しました」も表示されない（${JSON.stringify(m)}）`);
             issue(`補い: ${what}: シード表は「${op.成功の文}」と表示されたことを確かめると書くが、画面は「保存しました」を出す。「保存しました」が出たことで登録できたとみなした`);
           }
-          issue(`${what}: ファイル ${op.file}（${op.code},${op.増減数},${op.単価}）を登録した: ${JSON.stringify(m.成功)}`);
+          issue(`${what}: ファイル ${fileName}（${op.code},${op.増減数},${op.単価}）を登録した: ${JSON.stringify(m.成功)}`);
         });
       } else if (op.op === "在庫移動") {
         const storeId = "本店" in o.store ? "1" : 試験支店ID;
