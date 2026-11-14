@@ -35,6 +35,8 @@ import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
 import { 試験支店, 試験支店の店舗ID, 本店の店舗ID, 本店の店名DB } from "../pages/admin/reuse_store";
 import { 在庫編集を開く } from "../pages/admin/m04_03_bulk_x";
 import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
+import { ensureDepartment, ensureMemberWithDepartment } from "../pages/admin/m04_13_setup";
+import { ensureNoApprovalAuthority, M0409_NO_APPROVAL_AUTHORITY } from "../pages/admin/m04_09_setup";
 import { registerStockEdit, StockApprovalListPage } from "../pages/admin/stock_edit";
 
 // ---- 店舗 ----
@@ -213,6 +215,39 @@ const 定め: Record<string, 規格の定め[]> = {
   "S-M04-03-DP-STOCK-061": [{ 控え: "061", 商品: "A", 商品コード: "M0403-061-BULK", 言語: "日本語", 状態: "ニアミント", 店: "TC東京", 在庫: { DB: [10, 10000] } }],
 };
 
+
+// ---- 所属のマスタを使うケース（2026-11-14 依頼者決定: 所属のマスタに行を足してよい）。在庫数・総原価はシード表のとおり DB で書き足す ----
+const 一括A = (番号: string, 在庫: [number, number] = [10, 10000]): 規格の定め => ({ 控え: 番号, 商品: "A", 商品コード: `BULK-A-${番号}`, 言語: "日本語", 状態: "ニアミント", 店: "TC東京", 在庫: { DB: 在庫 } });
+const AとB = (番号: string): 規格の定め[] => [
+  { 控え: `${番号}A`, 商品: "A", 商品コード: `BULK-A-${番号}`, 言語: "日本語", 状態: "ニアミント", 店: "TC東京", 在庫: { DB: [10, 10000] } },
+  { 控え: `${番号}B`, 商品: "B", 商品コード: `BULK-B-${番号}`, 言語: "英語", 状態: "スライトリープレイド", 店: "TC東京", 在庫: { DB: [20, 16000] } },
+];
+Object.assign(定め, {
+  ...Object.fromEntries(["011", "012", "018", "019", "021", "029", "038", "039", "040"].map((n) => [`S-M04-03-CASE-${n}`, [一括A(n)]])),
+  ...Object.fromEntries(["015", "016", "017", "025", "027", "028", "035", "041"].map((n) => [`S-M04-03-CASE-${n}`, AとB(n)])),
+  "S-M04-03-CASE-031": [{ 控え: "031", 商品: { 名前: "境界商品-031", 取込の商品コード: "M0403-ZERO-031" }, 商品コード: "M0403-ZERO-031", 言語: "日本語", 状態: "ニアミント", 店: "TC東京", 在庫: { DB: [0, 0] }, 取込の規格: true }],
+  "S-M04-03-CASE-033": [{ 控え: "033", 商品: { 名前: "境界商品-033", 取込の商品コード: "M0403-MAX-033" }, 商品コード: "M0403-MAX-033", 言語: "日本語", 状態: "ニアミント", 店: "TC東京", 在庫: { DB: [99999999, 99999999] }, 取込の規格: true }],
+  "S-M04-03-CASE-043": [一括A("043")],
+  "S-M04-03-GF-STOCK-051": [一括A("051")],
+  "S-M04-03-CASE-044": [{ 控え: "044", 商品: { 名前: "削除確認商品-044", 取込の商品コード: "M0403-044-BASE" }, 商品コード: "DELETE-A-044", 言語: "日本語", 状態: "スライトリープレイド", 店: "TC東京", 在庫: { DB: [8, 8000] } }],
+  "S-M04-03-CASE-045": [
+    { ...一括A("045"), 控え: "045A" },
+    { 控え: "045B", 商品: { 名前: "削除確認商品-045", 取込の商品コード: "M0403-045-BASE" }, 商品コード: "DELETE-A-045", 言語: "日本語", 状態: "スライトリープレイド", 店: "TC東京", 在庫: { DB: [8, 8000] } },
+  ],
+  "S-M04-03-L-STOCK-049": [
+    { 控え: "049A", 商品: "A", 商品コード: "BULK-A-L001", 言語: "日本語", 状態: "ニアミント", 店: "TC東京", 在庫: { DB: [10, 10000] } },
+    { 控え: "049B", 商品: "B", 商品コード: "BULK-B-L001", 言語: "英語", 状態: "スライトリープレイド", 店: "TC東京", 在庫: { DB: [20, 16000] } },
+  ],
+  "S-M04-03-L-STOCK-050": [
+    { 控え: "050A", 商品: "A", 商品コード: "BULK-A-L002", 言語: "日本語", 状態: "ニアミント", 店: "TC東京", 在庫: { DB: [10, 10000] } },
+    { 控え: "050B", 商品: "B", 商品コード: "BULK-B-L002", 言語: "英語", 状態: "スライトリープレイド", 店: "TC東京", 在庫: { DB: [20, 16000] } },
+  ],
+  "S-M04-03-CASE-042": [
+    { ...一括A("042"), 控え: "042A" },
+    { 控え: "042B", 商品: "C", 商品コード: "OSAKA-A-042", 言語: "日本語", 状態: "ニアミント", 店: "大阪店", 在庫: { DB: [10, 10000] } },
+  ],
+});
+
 /** 絞込確認商品（006・007・013）の商品ID（シード表が控えると定める） */
 const 絞込の商品ID = new Map<string, string>();
 
@@ -278,3 +313,105 @@ async function 取込の規格ID(page: Page, 商品ID: string, 商品コード: 
   if (hit.length !== 1) throw new Error(`取込で作られた規格 ${商品コード} が ${hit.length} 件（1件のはず）`);
   return hit[0].商品規格ID;
 }
+
+// ---- 所属・メンバー（S-M04-03-ORG-MEMBERS）。2026-11-14 依頼者決定: 所属のマスタに足す行は、機能IDを付けた決まった名前で1度だけ作る ----
+
+/** 正本の所属「在庫管理第一部」「在庫管理第二部」の、所属のマスタの実際の名称（機能ID付き） */
+export const 承認通知先所属 = { 第一部: "在庫管理第一部（M04-03）", 第二部: "在庫管理第二部（M04-03）" } as const;
+/** 正本の所属名から、実際の名称へ（ケースの手順で選ぶ所属） */
+export const 所属の実名 = (正本の名前: string): string => {
+  if (正本の名前 === "在庫管理第一部") return 承認通知先所属.第一部;
+  if (正本の名前 === "在庫管理第二部") return 承認通知先所属.第二部;
+  throw new Error(`正本の所属「${正本の名前}」の読み替えが無い`);
+};
+const 通知先メンバー = (名前: string, loginId: string): 管理者 => ({ 名前, account: { loginId, password: "Passw0rd!M0403Ap" }, email: `${loginId}@example.test` });
+/** シード表の承認者A・承認者B・一般担当者（TC東京＝試験支店所属）・承認者C（大阪店＝本店所属）。実際の名前は機能ID付き（決まった名前・使い回す） */
+export const 承認通知先 = {
+  A: 通知先メンバー("承認者A（M04-03）", "m0403_apr_a"),
+  B: 通知先メンバー("承認者B（M04-03）", "m0403_apr_b"),
+  一般担当者: 通知先メンバー("一般担当者（M04-03）", "m0403_general"),
+  C: 通知先メンバー("承認者C（M04-03）", "m0403_apr_c"),
+} as const;
+export const 承認通知先の注記 = (): string =>
+  `正本の所属「在庫管理第一部」「在庫管理第二部」は、所属のマスタに「${承認通知先所属.第一部}」「${承認通知先所属.第二部}」として足した（依頼者決定 2026-11-14。決まった名前で1度だけ）。メンバー「承認者A」「承認者B」「一般担当者」「承認者C」は「承認者A（M04-03）」などの名前で作った（所属店舗は、TC東京＝試験支店・大阪店＝本店）`;
+
+defineSeed("S-M04-03-ORG-MEMBERS", { needs: ["S-M04-03-MASTER"] }, async ({ browser, notes, seed }) => {
+  const issue = (m: string) => reportSeedIssue(seed.シードID, m);
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    issue(承認通知先の注記());
+    issue("所属の並び順（10・20）は、所属のマスタの画面が保存順に振る値のまま（DB では書き換えない。ほかの方の行の並び順を動かさないため）");
+    await ensureDepartment(page, 承認通知先所属.第一部);
+    await ensureDepartment(page, 承認通知先所属.第二部);
+    await ensureNoApprovalAuthority(page);
+    const tc = TC東京.店名, osaka = 大阪店.店名;
+    const 登録 = async (m: 管理者, 店名: string, 所属: string, 権限: string): Promise<string> => ensureMemberWithDepartment(page, {
+      名前: m.名前, 所属店舗: 店名, 所属, ログインID: m.account.loginId, メールアドレス: m.email, パスワード: m.account.password,
+      権限, デフォルト検索表示店舗: 店名, 編集可能店舗: [店名],
+    });
+    notes.set("〔メンバーID-M0403-共有A〕", await 登録(承認通知先.A, tc, 承認通知先所属.第一部, "システム管理者"));
+    notes.set("〔メンバーID-M0403-共有B〕", await 登録(承認通知先.B, tc, 承認通知先所属.第二部, "システム管理者"));
+    notes.set("〔メンバーID-M0403-共有C〕", await 登録(承認通知先.一般担当者, tc, 承認通知先所属.第一部, M0409_NO_APPROVAL_AUTHORITY));
+    notes.set("〔メンバーID-M0403-共有D〕", await 登録(承認通知先.C, osaka, 承認通知先所属.第一部, "システム管理者"));
+    issue("「在庫承認権限なし」の一般担当者の権限は、E2E が作った承認権限なしの権限（M04-09 と同じ）を使った。承認権限あり（承認者A・B・C）はシステム管理者");
+  });
+});
+
+/** S-M04-03-INPUT（入力値の取り決め。投入は不要） */
+defineSeed("S-M04-03-INPUT", async () => undefined);
+
+// ---- 043・051: 別のブラウザで在庫編集の権限（編集可能店舗）を外される管理者と、外すメンバー管理者 ----
+/** S-M04-03-ADM-MANAGER（M04-03メンバー管理者）。実行をまたいで使い回す（決まった印）。メンバーの編集ができる権限はシステム管理者 */
+export const メンバー管理者 = 使い回す管理者("M04-03メンバー管理者（試験支店）", "m0403_manager_t", "Passw0rd!M0403Mgr");
+/** 権限を外される管理者（M04-03試験管理者-043・M04-03補完試験管理者-051）。外すと戻らないので、実行ごとの印を付けて毎回作る */
+export const 権限変更対象 = (番号: "043" | "051"): 管理者 => 管理者の(番号 === "043" ? "M04-03試験管理者-043" : "M04-03補完試験管理者-051", 番号 === "043" ? "m0403_admin-043" : "m0403-051-adm", `Qz${番号}k9Tm!Pw1`);
+const 権限変更対象のID = new Map<string, string>();
+export const 権限変更対象の管理者ID = (番号: "043" | "051"): string => {
+  const id = 権限変更対象のID.get(番号);
+  if (!id) throw new Error(`権限を外される管理者（${番号}）をまだ作っていない`);
+  return id;
+};
+defineSeed("S-M04-03-ADM-MANAGER", { needs: ["S-M04-03-MASTER"] }, async ({ browser, seed }) => {
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    await メンバーを用意する(page, メンバー管理者, [店舗IDの("TC東京")]);
+    reportSeedIssue(seed.シードID, "メンバーの権限編集ができる権限は、システム管理者（在庫承認権限は確かめない）。所属店舗・編集可能店舗は試験支店");
+  });
+  await withAdminSession(browser, メンバー管理者.account, async () => undefined);
+});
+for (const [seedId, 番号] of [["S-M04-03-ADM-TARGET-043", "043"], ["S-M04-03-GF-ADM-051", "051"]] as const) {
+  defineSeed(seedId, { needs: ["S-M04-03-MASTER"] }, async ({ browser, notes }) => {
+    const m = 権限変更対象(番号);
+    await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+      page.setDefaultTimeout(60_000);
+      // 所属店舗は本店、編集可能店舗は本店と試験支店（開始時は試験支店＝TC東京の在庫編集権限あり。あとで試験支店だけを外す）
+      const id = await ensureMemberByStoreIds(page, {
+        名前: m.名前, ログインID: m.account.loginId, メールアドレス: m.email, パスワード: m.account.password, 権限: "システム管理者",
+        所属店舗ID: 本店の店舗ID, デフォルト検索表示店舗ID: 本店の店舗ID, 編集可能店舗ID: [本店の店舗ID, 店舗IDの("TC東京")],
+      });
+      権限変更対象のID.set(番号, id);
+      notes.set(番号 === "043" ? "〔メンバーID-M0403-043〕" : "〔メンバーID-M0403-051〕", id);
+      reportSeedIssue(seedId, `「${m.名前}」は所属店舗・デフォルト検索表示店舗を本店、編集可能店舗を本店と試験支店（正本の TC東京）にして作った（試験支店だけを外せるように）。権限はシステム管理者`);
+    });
+  });
+}
+
+// ---- 連携のケース（049・050）。L-MASTER・L-ORG・L-ADM-SHARED は、同じ内容の MASTER・ORG-MEMBERS・ADM を使う ----
+defineSeed("S-M04-03-L-MASTER", { needs: ["S-M04-03-MASTER"] }, async ({ seed }) => {
+  reportSeedIssue(seed.シードID, "連携用の商品「一括商品A」「一括商品B」は、同じ内容の共通の商品（S-M04-03-MASTER）を使った（商品コード M0403-LM-A・LM-B の別の取込はしない）。店舗は試験支店（正本の TC東京）");
+});
+defineSeed("S-M04-03-L-ORG", { needs: ["S-M04-03-ORG-MEMBERS"] }, async ({ seed }) => {
+  reportSeedIssue(seed.シードID, `連携用の承認通知先は、同じ内容の S-M04-03-ORG-MEMBERS（所属「${承認通知先所属.第一部}」・メンバー「${承認通知先.A.名前}」）を使った`);
+});
+defineSeed("S-M04-03-L-ADM-SHARED", { needs: ["S-M04-03-ADM"] }, async ({ seed }) => {
+  reportSeedIssue(seed.シードID, `共有の試験管理者は、S-M04-03-ADM の「${試験管理者.名前}」を使った（TC東京・大阪店＝試験支店・本店の在庫編集権限あり）`);
+});
+/** S-M04-03-L-ADM-049（M04-03連携管理者-001）。実行ごとの印つきで毎回作る */
+export const 連携管理者 = 管理者の("M04-03連携管理者-001", "m0403l001", "Passw0rd!M0403L1");
+defineSeed("S-M04-03-L-ADM-049", { needs: ["S-M04-03-MASTER"] }, async ({ browser, notes }) => {
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    notes.set("〔メンバーID-M0403-049〕", await メンバーを用意する(page, 連携管理者, [店舗IDの("TC東京")]));
+  });
+  reportSeedIssue("S-M04-03-L-ADM-049", "権限はシステム管理者（在庫編集権限・在庫承認権限あり）。所属店舗・編集可能店舗は試験支店");
+});

@@ -23,6 +23,22 @@ async function chooseSelect2(page: Page, select: Locator, labels: string[], what
     if (await chosen.count() > 0) continue;
     await box.locator(".select2-selection").click();
     const option = page.locator(".select2-container--open .select2-results__option").filter({ hasText: exact(label) });
+    // 2つ目の候補を選ぶとき、欄を押しても候補の一覧が開かない・候補が出ないことがある（2026-11-14 004）。
+    // そのときは、閉じて開き直し、それでも出なければ、検索の入力欄に店名を入れて絞り込む
+    if (await option.count() === 0) { await page.waitForTimeout(1000); }
+    if (await option.count() === 0) {
+      await page.keyboard.press("Escape");
+      await box.locator(".select2-selection").click();
+      await page.waitForTimeout(500);
+    }
+    if (await option.count() === 0) {
+      const search = page.locator(".select2-container--open .select2-search__field, .select2-container--focus .select2-search__field").first();
+      const inline = box.locator(".select2-search__field").first();
+      const field = (await search.count()) > 0 ? search : inline;
+      await field.click();
+      await field.fill(label);
+      await page.waitForTimeout(500);
+    }
     await expect(option, `${what}の候補「${label}」は1件`).toHaveCount(1, { timeout: T });
     await option.click();
     await page.keyboard.press("Escape");
@@ -202,4 +218,63 @@ export async function 在庫編集を開く(page: Page, 在庫ID: string): Promi
   expect(res?.status() ?? 0, `在庫ID ${在庫ID} の在庫編集画面の応答`).toBeLessThan(400);
   await expect(page.locator("form#stock_approval_form"), "在庫編集の画面").toBeVisible({ timeout: T });
   await page.waitForLoadState("load");
+}
+
+// ---- 承認通知先所属（所属のマスタに足した所属。2026-11-14 依頼者決定） ----
+
+/** 承認通知先所属の選択欄 */
+export const 承認通知先所属の欄 = (page: Page): Locator => 一括編集の画面(page).locator(".js-bulk-approval-department");
+
+/** 承認通知先所属の選択肢（空を除く） */
+export async function 承認通知先所属の選択肢(page: Page): Promise<string[]> {
+  return 承認通知先所属の欄(page).locator("option").evaluateAll((os) => os
+    .filter((o) => (o as HTMLOptionElement).value).map((o) => (o.textContent ?? "").trim()));
+}
+
+/** 承認通知先所属を表示名で選ぶ（選択肢に無ければ、有る選択肢を挙げて落とす） */
+export async function 承認通知先所属を選ぶ(page: Page, 名前: string): Promise<void> {
+  const select = 承認通知先所属の欄(page);
+  const options = await select.locator("option").evaluateAll((os) => os
+    .map((o) => ({ value: (o as HTMLOptionElement).value, label: (o.textContent ?? "").trim() })).filter((o) => o.value));
+  const hit = options.filter((o) => o.label === 名前);
+  if (hit.length !== 1) throw new Error(`承認通知先所属「${名前}」が選択肢に1つではない（${hit.length}件）。選択肢: ${options.map((o) => o.label).join("、")}`);
+  await select.selectOption(hit[0].value);
+}
+
+/** 承認通知先メンバーの選択肢の表示名（空を除く。並び順のまま） */
+export async function 承認通知先メンバーの選択肢(page: Page): Promise<string[]> {
+  return 一括編集の画面(page).locator(".js-bulk-approval-members option").evaluateAll((os) => os
+    .filter((o) => (o as HTMLOptionElement).value).map((o) => (o.textContent ?? "").trim()));
+}
+
+/** 承認通知先メンバーの選ばれている表示名 */
+export async function 承認通知先メンバーの選択中(page: Page): Promise<string[]> {
+  return 一括編集の画面(page).locator(".js-bulk-approval-members option:checked").evaluateAll((os) => os
+    .filter((o) => (o as HTMLOptionElement).value).map((o) => (o.textContent ?? "").trim()));
+}
+
+/** 画面の入力欄の送信対象の在庫ID（hidden）の値 */
+export async function 送信対象の在庫ID(page: Page): Promise<string[]> {
+  return 一括編集の画面(page).locator('input[type="hidden"][name="productStockId[]"], input[type="hidden"][name="productStockIds[]"]')
+    .evaluateAll((ns) => ns.map((n) => (n as HTMLInputElement).value));
+}
+
+/** 開発者ツールの操作に当たる: 送信対象の在庫ID（hidden）を、画面の中で書き換える・消す・足す */
+export async function 送信対象の在庫IDを変える(page: Page, 操作: { 消す?: boolean; 置換?: Record<string, string>; 追加?: string[] }): Promise<void> {
+  await 一括編集の画面(page).evaluate((form, op) => {
+    const f = form as HTMLFormElement;
+    const inputs = Array.from(f.querySelectorAll<HTMLInputElement>('input[type="hidden"][name="productStockId[]"], input[type="hidden"][name="productStockIds[]"]'));
+    if (op.消す) inputs.forEach((n) => n.remove());
+    for (const n of inputs) if (op.置換 && op.置換[n.value] !== undefined) n.value = op.置換[n.value];
+    for (const v of op.追加 ?? []) {
+      const n = document.createElement("input");
+      n.type = "hidden"; n.name = "productStockId[]"; n.value = v;
+      f.appendChild(n);
+    }
+  }, 操作);
+}
+
+/** 在庫履歴検索一覧の店舗（select2 の複数選択の欄）を、表示名で選ぶ（いまの選択は外す） */
+export async function 在庫履歴の店舗を選ぶ(page: Page, 店名: string): Promise<void> {
+  await chooseSelect2(page, page.locator("form#search_form #admin_stock_history_base_info"), [店名], "在庫履歴検索一覧の店舗");
 }
