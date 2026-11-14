@@ -205,6 +205,18 @@ caseTest("IT-M03-31-050", async ({ page, step, expected }) => {
   });
 });
 
+// ---- 051（不備行による巻き戻しで、取込履歴が増えない） ----
+caseTest("IT-M03-31-051", async ({ page, step, expected }) => {
+  const s = 作ったものの("S-M03-31-DATA-051");
+  const upload = await 開く(page);
+  let n = -1;
+  await step(1, async () => { await upload.open(); });
+  await step(2, async () => { await upload.choose(s.ファイル); note(`取込ファイル: ${s.ファイル名}`); });
+  await step(3, async () => { await 取り込む(page, upload, s.ファイル); });
+  await step(4, async () => { n = price.取込履歴の件数("セール用価格変更", s.ファイル名); note(`取込履歴（${s.ファイル名}）: ${n} 件（ファイル名に実行の印があるので、前の実行の履歴は数えない。シードは0件を確かめてある）`); });
+  await expected(async () => { expect.soft(n, `ファイル名「${s.ファイル名}」の取込履歴の件数（0件のまま）`).toBe(0); });
+});
+
 // ---- 077（3行の取込） ----
 caseTest("IT-M03-31-077", async ({ page, step, expected }) => {
   const s = 作ったものの("S-M03-31-DPDATA-077");
