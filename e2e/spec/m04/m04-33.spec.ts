@@ -3,14 +3,14 @@
  * 実装しないケースは記録 review/M04-33_progress_2026-11-11_dev.md の振り分け。カードのマスタは依頼者決定 2026-11-14「マスタは作ってよい」で印つきの試験用カードを作る。
  * 店舗の高額商品閾値は≪共有の設定≫。基盤が1本だけで流し、ケースの開始時に書き換え、終わるたびに店舗ID 1・13 を控えた値へ戻して DB で確かめる。
  */
-import { Browser, test } from "@playwright/test";
+import { Browser, chromium, test } from "@playwright/test";
 import { SETUP_ADMIN } from "../../config/env";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import type { CaseBody } from "../../lib/case";
 import { loginAdmin, withAdminSession } from "../../lib/session";
-import { 店舗の高額商品閾値 } from "../../db/m04_33";
+import { 店舗の高額商品閾値, 流す前の高額商品閾値 } from "../../db/m04_33";
 import { ReturnListPage, setStoreThresholds } from "../../pages/admin/m04_33_return_list";
-import { M0433_ADMIN, 印つきの名前, 元の閾値, 共有店舗ID, 作ったもの, 支店, 本店3F } from "../../seeds/m04-33";
+import { M0433_ADMIN, 印つきの名前, 共有店舗ID, 作ったもの, 支店, 本店3F } from "../../seeds/m04-33";
 
 /**
  * 本店2F・本店B2F（共有A・共有B）の店舗の高額商品閾値を書き換えるケースは流さない。試験店舗の使い回し（2026-11-13 依頼者決定）で
@@ -29,19 +29,20 @@ async function 閾値を整える(browser: Browser, 定め: 閾値の定め[]): 
     for (const t of 定め) await setStoreThresholds(page, 店舗IDの(t.店), t.値, `事前準備: 店舗ID ${店舗IDの(t.店)} の高額商品閾値を ${t.値.join("/")} にする（共有の設定）`);
   });
 }
-/** 店舗ID 1・13 の高額商品閾値を、控えた値へ戻して DB で確かめる */
+/**
+ * 店舗ID 1・13 の高額商品閾値を、流す前の決まった値（980/4800/空）へ戻して DB で確かめる。
+ * テストが時間切れで打ち切られると、渡されたブラウザが閉じていて画面を開けないので、そのときは新しいブラウザを立てて戻す（2026-11-15 M04-34 の 004 で残った）。
+ * それでも戻せなければ、起動の終わり（lib/teardown_shared_thresholds.ts）が印を見て戻す。
+ */
 async function 閾値を戻す(browser: Browser): Promise<void> {
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    for (const id of [本店3F, 支店]) {
-      const v = 元の閾値.get(id);
-      if (!v) continue;
-      await setStoreThresholds(page, id, v, `終わりに: 店舗ID ${id} の高額商品閾値を元の ${v.join("/")} へ戻す（共有の設定）`);
-    }
+  const 戻す = async (b: Browser) => withAdminSession(b, SETUP_ADMIN, async (page) => {
+    for (const id of [本店3F, 支店]) await setStoreThresholds(page, id, 流す前の高額商品閾値, `終わりに: 店舗ID ${id} の高額商品閾値を流す前の ${流す前の高額商品閾値.join("/")} へ戻す（共有の設定）`);
   });
-  for (const id of [本店3F, 支店]) {
-    const v = 元の閾値.get(id);
-    if (v) expect(店舗の高額商品閾値(id), `共有の設定（店舗ID ${id} の高額商品閾値）を元の値へ戻せた`).toEqual(v);
+  try { await 戻す(browser); } catch {
+    const fresh = await chromium.launch();
+    try { await 戻す(fresh); } finally { await fresh.close().catch(() => undefined); }
   }
+  for (const id of [本店3F, 支店]) expect(店舗の高額商品閾値(id), `共有の設定（店舗ID ${id} の高額商品閾値）を流す前の値へ戻せた`).toEqual([...流す前の高額商品閾値]);
 }
 
 /** 正本の商品コードの在庫移動ID */

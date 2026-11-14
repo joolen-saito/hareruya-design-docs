@@ -8,7 +8,8 @@ import { csvRecords, decodeCsvBytes } from "../../lib/csv";
 import { adminUrl } from "../../lib/session";
 import { expectSaved } from "./common";
 import { downloadedBytes } from "./m03_21_shelf_number";
-import { 店舗の高額商品閾値 } from "../../db/m04_33";
+import { 店舗の高額商品閾値, 流す前の高額商品閾値 } from "../../db/m04_33";
+import { 印を置く } from "../../lib/shared_threshold_marker";
 
 const T = 60_000;
 const storeField = (page: Page, name: string) => page.locator(`[name="mall_tenant_shop_master[${name}]"]`);
@@ -27,10 +28,12 @@ export async function readStoreThresholds(page: Page, 店舗ID: string): Promise
  * 保存するかどうか・保存できたかは、画面でなく DB の値で決める（空と null は同じ）。合わなければ3回まで登録し直し、それでも合わなければ落とす
  * （2026-11-15 画面の読み取りで「同じ」と見て保存せずに返り、共有の設定が戻らなかった）
  */
-export async function setStoreThresholds(page: Page, 店舗ID: string, 閾値: readonly [string, string, string], what: string): Promise<void> {
+export async function setStoreThresholds(page: Page, 店舗ID: string, 閾値: readonly [string, string, string], what: string, opt: { 印を置かない?: boolean } = {}): Promise<void> {
   const 整える = (v: readonly string[]) => v.map((x) => (x ?? "").replace(/,/g, "").trim()).join("/");
   const 求める = 整える(閾値);
   if (整える(店舗の高額商品閾値(店舗ID)) === 求める) return;
+  // ≪共有の設定≫（店舗ID 1・13）を決まった値から書き換える前に印を置く。テストが打ち切られても、起動の終わり（lib/teardown_shared_thresholds.ts）が戻す（2026-11-15）
+  if (!opt.印を置かない && (店舗ID === "1" || 店舗ID === "13") && 求める !== 整える(流す前の高額商品閾値)) 印を置く(店舗ID, 流す前の高額商品閾値);
   let 最後 = "";
   for (let 回 = 1; 回 <= 3; 回++) {
     await readStoreThresholds(page, 店舗ID); // 店舗編集画面を開く
@@ -64,7 +67,13 @@ export class ReturnListPage {
     await this.page.goto(adminUrl("/product/stock/move_transfer"), { timeout: T });
     await this.page.waitForLoadState("load");
     await expect(this.form, "在庫移動・振替検索一覧の検索欄").toBeVisible();
-    await this.form.locator('[name="admin_search_stock_move_transfer[create_date_start]"]').fill(開始);
+    // 作成日は畳まれた「詳細検索」（#stockMoveTransferSearchDetail）の中にある。畳まれていれば開いてから入れる（2026-11-15 欄が見えず60秒で止まった）
+    const 作成日 = this.form.locator('[name="admin_search_stock_move_transfer[create_date_start]"]');
+    if (!(await 作成日.isVisible())) {
+      await this.page.locator('[href="#stockMoveTransferSearchDetail"]').first().click({ timeout: T });
+      await expect(作成日, "詳細検索の作成日の欄").toBeVisible({ timeout: T });
+    }
+    await 作成日.fill(開始);
     await this.form.locator('[name="admin_search_stock_move_transfer[create_date_end]"]').fill(終了);
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "load", timeout: T }),

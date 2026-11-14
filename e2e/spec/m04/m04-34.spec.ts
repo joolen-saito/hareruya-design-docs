@@ -4,15 +4,15 @@
  * 店舗の高額商品閾値（金額閾値）は全員が使う設定。config/solo_cases.tsv で機能ごと1本だけで流し、ケースの開始時に書き換え、
  * 終わるたびに店舗ID 1・13 を控えた値へ戻して DB で確かめる。本店2F・本店B2F の代わりの店舗（E2E が作った店舗）は戻さない。
  */
-import { Browser, test } from "@playwright/test";
+import { Browser, chromium, test } from "@playwright/test";
 import { SETUP_ADMIN } from "../../config/env";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import type { CaseBody } from "../../lib/case";
 import { loginAdmin, withAdminSession } from "../../lib/session";
-import { 店舗の高額商品閾値 } from "../../db/m04_33";
+import { 店舗の高額商品閾値, 流す前の高額商品閾値 } from "../../db/m04_33";
 import { ReturnListPage, setStoreThresholds } from "../../pages/admin/m04_33_return_list";
 import { 全行, 戻しリスト, 戻しリストPDFを出力する } from "../../pages/admin/m04_34_return_list_pdf";
-import { M0434_ADMIN, 入庫先, 入庫先の店舗ID, 印つきの名前, 作ったもの, 作った移動, 元の閾値, 支店, 本店3F } from "../../seeds/m04-34";
+import { M0434_ADMIN, 入庫先, 入庫先の店舗ID, 印つきの名前, 作ったもの, 作った移動, 支店, 本店3F } from "../../seeds/m04-34";
 
 /**
  * 本店2F・本店B2F（共有A・共有B）の店舗の高額商品閾値を書き換えるケースは流さない。試験店舗の使い回し（2026-11-13 依頼者決定）で
@@ -44,18 +44,20 @@ async function 閾値を整える(browser: Browser, 定め: 閾値の定め[]): 
     }
   });
 }
-/** 店舗ID 1・13 の高額商品閾値を、控えた値へ戻して DB で確かめる */
+/**
+ * 店舗ID 1・13 の高額商品閾値を、流す前の決まった値（980/4800/空）へ戻して DB で確かめる。
+ * テストが時間切れで打ち切られると、渡されたブラウザが閉じていて画面を開けないので、そのときは新しいブラウザを立てて戻す（2026-11-15 M04-34 の 004 で残った）。
+ * それでも戻せなければ、起動の終わり（lib/teardown_shared_thresholds.ts）が印を見て戻す。
+ */
 async function 閾値を戻す(browser: Browser): Promise<void> {
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    for (const id of [本店3F, 支店]) {
-      const v = 元の閾値.get(id);
-      if (v) await setStoreThresholds(page, id, v, `終わりに: 店舗ID ${id} の高額商品閾値を元の ${v.join("/")} へ戻す（全員が使う設定）`);
-    }
+  const 戻す = async (b: Browser) => withAdminSession(b, SETUP_ADMIN, async (page) => {
+    for (const id of [本店3F, 支店]) await setStoreThresholds(page, id, 流す前の高額商品閾値, `終わりに: 店舗ID ${id} の高額商品閾値を流す前の ${流す前の高額商品閾値.join("/")} へ戻す（共有の設定）`);
   });
-  for (const id of [本店3F, 支店]) {
-    const v = 元の閾値.get(id);
-    if (v) expect(店舗の高額商品閾値(id), `全員が使う設定（店舗ID ${id} の高額商品閾値）を元の値へ戻せた`).toEqual(v);
+  try { await 戻す(browser); } catch {
+    const fresh = await chromium.launch();
+    try { await 戻す(fresh); } finally { await fresh.close().catch(() => undefined); }
   }
+  for (const id of [本店3F, 支店]) expect(店舗の高額商品閾値(id), `共有の設定（店舗ID ${id} の高額商品閾値）を流す前の値へ戻せた`).toEqual([...流す前の高額商品閾値]);
 }
 
 /** 呼び名の在庫移動・振替ID */

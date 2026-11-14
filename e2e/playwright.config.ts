@@ -16,6 +16,8 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   // エビデンス（手順ごとの画面・確かめの合否）は evidence/ に書き出す（lib/evidence_reporter.ts）
   reporter: [["list"], ["html", { open: "never" }], ["./lib/evidence_reporter.ts"]],
+  // ≪共有の設定≫（店舗ID 1・13 の高額商品閾値）を M04-33・M04-34 が書き換えたまま残していれば、起動の終わりに決まった値へ戻す。印が無ければ何もしない（2026-11-15）
+  globalTeardown: "./lib/teardown_shared_thresholds.ts",
   use: {
     baseURL: BASE_URL,
     ignoreHTTPSErrors: true,
