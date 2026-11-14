@@ -14,6 +14,8 @@ import { readGoodsRootCategoryId, readLanguageIds } from "./m03_23_seed_products
 import { assignCardOnProductEdit } from "./product_card_assign";
 import { Issue, 取込の商品と規格を読む } from "./a17_05_setup";
 import { カードを登録する, カード詳細IDs } from "./m14_card";
+import { カードセットを用意する } from "./m14_05_card_csv_upload";
+import { rcFixed } from "../../lib/run_marker";
 
 export type 取込の商品 = {
   商品コード: string; 商品名日: string; 商品名英: string; 価格: string;
@@ -50,13 +52,29 @@ export async function 商品を取り込む(page: Page, seedId: string, v: 取�
  */
 export async function 試験用のカードを作る(page: Page, v: { カード名日: string; カード名英: string; 詳細数: number }, what: string, issue: Issue):
   Promise<{ カードID: string; カード詳細IDs: string[]; カード名: string }> {
+  // カード詳細にはカードセットを付ける。旧商品IDのポップアップ（A02-03）はカードセットの無いカード詳細を対象にしない
+  // （アプリの問い合わせがカードセットを内部結合する）。シード表の大半は「通常カードセット・リリース日2026-01-01」なので、
+  // その条件の試験用カードセットを決まった印で1つだけ用意して使い回す（依頼者決定 2026-11-14「マスタは作ってよい」）
+  const セット名 = await 試験用のカードセットを用意する(page, what, issue);
   const カードID = await カードを登録する(page, {
     カード名日: v.カード名日, カード名英: v.カード名英, 点数で見たマナ: "0",
-    詳細: Array.from({ length: v.詳細数 }, () => ({})),
+    詳細: Array.from({ length: v.詳細数 }, () => ({ カードセット: セット名 })),
   }, what, issue);
   const ids = await カード詳細IDs(page);
   if (ids.length !== v.詳細数) throw new Error(`${what}: 登録したカード（カードID ${カードID}）のカード詳細が ${ids.length} 件（${v.詳細数} 件のはず）`);
   return { カードID, カード詳細IDs: ids, カード名: v.カード名日 };
+}
+
+/** A02 の試験用カードセット（通常カードセット・リリース日2026-01-01・特殊セットフラグなし）を、決まった印で1度だけ用意する。カードセット名（日本語）を返す */
+let 用意したセット: string | null = null;
+export async function 試験用のカードセットを用意する(page: Page, what: string, issue: Issue): Promise<string> {
+  const 名 = rcFixed("A02 Test Cardset");
+  if (用意したセット === 名) return 名;
+  const 作った = await カードセットを用意する(page, 名, rcFixed("A02S"), `${what}: 試験用のカードセット`);
+  if (作った.length) issue(`試験用のカードセット「${名}」（通常カードセット・リリース日2026-01-01）を、カードセット詳細(登録)画面で1度だけ登録した`);
+  else issue(`試験用のカードセット「${名}」（通常カードセット・リリース日2026-01-01）を使い回した（シード表はシードごとにカードセットを登録すると定めるが、ケースが使う条件は同じ）`);
+  用意したセット = 名;
+  return 名;
 }
 
 /** 商品登録編集の「カード指定」で、既にあるカード詳細を商品に紐付けて「商品を登録」する（商品名は取込の値に入れ直す） */
