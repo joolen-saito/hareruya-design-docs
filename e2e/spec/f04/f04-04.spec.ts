@@ -1,7 +1,7 @@
 /**
  * F04-04 決済〜購入完了。正本: cases/F04-04_test_cases.tsv
  * 実装しないケース（記録 review/F04-04_progress_2026-11-10_dev.md）: 手順で DB を書き換えるもの（010〜015・048・049）、在庫無制限を DB で設定するシード（050・060）、
- * 購入完了画面用ブロックの文章（全員が使うコンテンツ）を書き換えるシード（025）、開発環境に無い店舗「TC東京」の店内アカウント（057）、ほか（DB での準備・外部の決済など）。
+開発環境に無い店舗「TC東京」の店内アカウント（057）、ほか（DB での準備・外部の決済など）。
  * 事前準備の「専用ブラウザで完全ログインし、購入処理中の受注がある」は、シードの専用ブラウザの Cookie をケースのブラウザへ移して作る（seeds/f04-04.ts）。
  */
 import { Browser, BrowserContext, Page, test } from "@playwright/test";
@@ -15,7 +15,7 @@ import { 在庫と総原価, 在庫を検索する, 在庫履歴を検索する,
 import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
 import { CheckoutPage } from "../../pages/front/f04_04_checkout";
 import { カートに入れる } from "../../pages/front/f04_shopping";
-import { PB_ADM, 専用ブラウザにする, 準備の } from "../../seeds/f04-04";
+import { PB_ADM, 専用ブラウザにする, 準備の, 購入完了フリーエリアを整える, 購入完了フリーエリアを戻す } from "../../seeds/f04-04";
 import { adminUrl } from "../../lib/session";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -73,6 +73,29 @@ caseTest("IT-F04-04-022", async (ctx) => {
     expect.soft(lines.some((t) => /^ご注文番号\s*\S+/.test(t)), `ご注文番号が表示される（番号の行: ${lines.join(" / ") || "なし"}）`).toBe(true);
     expect.soft(lines.some((t) => /TC注文番号/.test(t)), "TC注文番号へ切り替わらない").toBe(false);
   });
+});
+
+// ---- 025: 購入完了画面のフリースペース（全員が見るブロックの文章を書き換えて、終わるたびに戻す。夜の回に1本だけで流す） ----
+const フリースペースの文章 = "F04-04購入完了フリースペース";
+caseTest("IT-F04-04-025", async (ctx) => {
+  let 見えた = false;
+  let 戻し = "";
+  try {
+    await 購入完了フリーエリアを整える(ctx.browser, フリースペースの文章);
+    note(`開始時に、ブロック管理の「購入完了 フリーエリア」（日本語）のコードを「${フリースペースの文章}」にした（依頼者決定 2026-11-14。終わったら元のコードへ戻す）`);
+    const c = await 銀行振込の注文まで(ctx, "S-F04-04-NORMAL-025", async (c) => {
+      見えた = await ctx.page.getByText(フリースペースの文章, { exact: false }).first().isVisible().catch(() => false);
+      note(`購入完了画面に「${フリースペースの文章}」が見える: ${見えた}`);
+    });
+    await ctx.expected(async () => {
+      expect.soft(await c.購入完了画面か(), "購入完了画面へ移った").toBe(true);
+      expect.soft(見えた, `ブロック管理で設定した「${フリースペースの文章}」が購入完了画面に表示される`).toBe(true);
+    });
+  } finally {
+    戻し = await 購入完了フリーエリアを戻す(ctx.browser);
+    if (戻し) note(戻し);
+  }
+  expect(戻し, "購入完了画面用ブロックを元のコードへ戻せた").toBe("");
 });
 
 caseTest("IT-F04-04-027", async (ctx) => {

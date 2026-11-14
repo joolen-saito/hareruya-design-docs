@@ -41,3 +41,8 @@ export function 商品コードの総在庫(商品コード: string): number {
     [商品コード])[0];
   return Number(r?.s ?? 0);
 }
+
+/** 購入完了画面のフリーエリア（ブロック管理の「購入完了 フリーエリア」）のブロックID。無ければ空 */
+export function 購入完了フリーエリアのブロックID(): string {
+  return String(query("select id::text as id from dtb_block where file_name = 'shopping_complete_free_area' order by id limit 1")[0]?.id ?? "");
+}

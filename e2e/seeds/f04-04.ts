@@ -18,8 +18,11 @@
  * - 「グッズ商品CSVの原価単価」は取り込まれない列（アプリの列定義が dummy）なので、総原価は入庫の仕入単価から決まる。
  * - 管理者の権限はシステム管理者（在庫管理・会員管理・在庫編集承認を含む）。名前は F0404PB管理者・F0404PB承認者。
  */
+import fs from "node:fs";
+import path from "node:path";
 import { Browser, BrowserContext, Cookie } from "@playwright/test";
-import { BASE_URL, SETUP_ADMIN } from "../config/env";
+import { BASE_URL, SETUP_ADMIN, STATE_DIR } from "../config/env";
+import { 購入完了フリーエリアのブロックID } from "../db/f04_04";
 import { 処理中受注ID一覧, 表示中の支払方法名, 表示中の配送方法名 } from "../db/f04_02";
 import { rc } from "../lib/run_marker";
 import { getSeed } from "../lib/catalog";
@@ -31,6 +34,7 @@ import { addToCart, clearCart, frontLogin } from "../pages/admin/m04_19_order_sh
 import { 会員IDを一覧から読む } from "../pages/admin/m05_11_order_edit";
 import { ensureMember } from "../pages/admin/member";
 import { CheckoutPage } from "../pages/front/f04_04_checkout";
+import { ブロック管理 } from "../pages/admin/m09_07_block";
 import { FrontMember } from "../pages/front/member_entry";
 
 export const PB_ADM: 管理者 = { 名前: "F0404PB管理者", account: { loginId: "f0404pb-admin", password: "Passw0rd-PB0404" } };
@@ -188,6 +192,7 @@ const 通常 = (n: string, メール: string, 商品: 商品の作り方[], extr
 通常("S-F04-04-NORMAL-022", "f0404-normal-022", [在庫編集("F0404-NORMAL-022", 3, 10, "0")]);
 通常("S-F04-04-NORMAL-027", "f0404-normal-027", [在庫編集("F0404-NORMAL-027", 3, 10, "0")]);
 通常("S-F04-04-EXACT-047", "f0404-exact-047", [在庫編集("F0404-EXACT-047", 3, 3, "0", { "販売制限数": "3" })]);
+通常("S-F04-04-NORMAL-025", "f0404-normal-025", [在庫編集("F0404-NORMAL-025", 3, 10, "0")]);
 通常("S-F04-04-CBCHKSTOCK-061", "cbf0404-stock-061", [在庫編集("CBF0404-STOCK-061", 2, 3, "0", { "販売制限数": "3" })]);
 const タグつき = (コード: string, タグ: string | null, 呼び名: string): 商品の作り方 =>
   ({ コード, 数量: 1, 入庫数: 100, 入庫方法: "在庫変更CSV", 仕入単価: "100", 在庫変動理由: "シード作成", CSVの値: タグ ? { "売上分析タグ(ID)": タグ } : undefined, 商品IDの呼び名: 呼び名 });
@@ -210,3 +215,59 @@ PB("S-F04-04-DPSTOCK-045", "dpf0404-045", "Passw0rd-F0404045", "在庫連携F040
 PB("S-F04-04-DPHIST-046", "dpf0404-046", "Passw0rd-F0404046", "在庫連携F0404DP046", [PB品("F0404DP-046A", 1), PB品("F0404DP-046B", 2, "400")]);
 PB("S-F04-04-DPSTOCK-054", "dpf0404-054", "Passw0rd-F0404054", "在庫連携F0404DP054", [PB品("F0404DP-054", 3)]);
 PB("S-F04-04-DPHIST-055", "dpf0404-055", "Passw0rd-F0404055", "在庫連携F0404DP055", [PB品("F0404DP-055", 3)]);
+
+
+// ---- 025: 購入完了画面用ブロック（全員が見る画面の文章）。ケースの開始時に書き換え、終わるたびに元へ戻す ----
+// 依頼者決定 2026-11-14「画面の文章も作ってよい（流したあと元に戻す）」。全員が見るので夜の回に1本だけで流す。元のコードは控えのファイルにも残す。
+const フリーエリアの控え = path.join(STATE_DIR, "f04_04_free_area_original.json");
+defineSeed("S-F04-04-FREE-AREA", async ({ seed }) => {
+  reportSeedIssue(seed.シードID, "購入完了画面用ブロック（ブロック管理の「購入完了 フリーエリア」・日本語）の文章は、ケースの開始時に書き換え、終わるたびに元のコードへ戻す（全員が見る画面のため夜の回に1本だけで流す）");
+});
+
+async function フリーエリアのコード(browser: Browser, what: string): Promise<{ ID: string; コード: string }> {
+  const ID = 購入完了フリーエリアのブロックID();
+  if (!ID) throw new Error(`${what}: ブロック管理に「購入完了 フリーエリア」のブロックが無い`);
+  const コード = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const b = new ブロック管理(page);
+    await b.編集を開く(ID, "ja");
+    return b.コードを読む();
+  });
+  return { ID, コード };
+}
+
+async function フリーエリアに書く(browser: Browser, ID: string, コード: string, what: string): Promise<void> {
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const b = new ブロック管理(page);
+    await b.編集を開く(ID, "ja");
+    await b.コードを入れる(コード);
+    const r = await b.登録して結果を読む();
+    if (!r.成功) throw new Error(`${what}: ブロックを保存できない（${r.システムエラー ? "システムエラー" : r.入力エラー.join(" / ")}）`);
+  });
+}
+
+/** 購入完了画面用ブロックの文章を 文章 にする（元のコードは控えのファイルに残す。前の回の控えがあれば、それが元のコード） */
+export async function 購入完了フリーエリアを整える(browser: Browser, 文章: string): Promise<void> {
+  const 今 = await フリーエリアのコード(browser, "購入完了フリーエリアを整える");
+  if (!fs.existsSync(フリーエリアの控え)) {
+    fs.mkdirSync(STATE_DIR, { recursive: true });
+    fs.writeFileSync(フリーエリアの控え, JSON.stringify(今));
+  }
+  if (今.コード !== 文章) await フリーエリアに書く(browser, 今.ID, 文章, "購入完了画面用ブロックの文章をケースの開始時の値にする");
+}
+
+/** 購入完了画面用ブロックを元のコードへ戻し、戻ったことを確かめる（戻せなかったときは文を返す）。控えは戻ったと確かめてから消す */
+export async function 購入完了フリーエリアを戻す(browser: Browser): Promise<string> {
+  if (!fs.existsSync(フリーエリアの控え)) return "";
+  const 元 = JSON.parse(fs.readFileSync(フリーエリアの控え, "utf-8")) as { ID: string; コード: string };
+  let 失敗 = "";
+  for (let i = 0; i < 3; i++) {
+    try {
+      const 今 = await フリーエリアのコード(browser, "購入完了フリーエリアを戻す");
+      if (今.コード === 元.コード) { fs.rmSync(フリーエリアの控え, { force: true }); return ""; }
+      await フリーエリアに書く(browser, 元.ID, 元.コード, `購入完了画面用ブロックを元のコードへ戻す（${i + 1}回目）`);
+    } catch (e) { 失敗 = (e as Error).message.split("\n")[0]; }
+  }
+  return `購入完了画面用ブロックを元のコードへ戻せていない（控え ${フリーエリアの控え}）${失敗 ? `・${失敗}` : ""}`;
+}
