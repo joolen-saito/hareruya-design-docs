@@ -13,6 +13,7 @@ import { downloadGoodsCsvTemplate } from "./m03_01_goods_csv";
 import { readGoodsRootCategoryId, readLanguageIds } from "./m03_23_seed_products";
 import { assignCardOnProductEdit } from "./product_card_assign";
 import { Issue, 取込の商品と規格を読む } from "./a17_05_setup";
+import { カードを登録する, カード詳細IDs } from "./m14_card";
 
 export type 取込の商品 = {
   商品コード: string; 商品名日: string; 商品名英: string; 価格: string;
@@ -40,6 +41,22 @@ export async function 商品を取り込む(page: Page, seedId: string, v: 取�
     onWarning: (w) => issue(`グッズ商品CSV登録の警告「${w}」`), uploadWaitMs: 300_000,
   });
   return 取込の商品と規格を読む(page, v.商品コード, issue);
+}
+
+/**
+ * 試験用のカードを、カード詳細(登録)画面で1枚登録する（依頼者決定 2026-11-14「マスタは作ってよい」）。
+ * カード名には呼ぶ側が実行の印を付ける。詳細情報を 詳細数 件足し、登録後の編集画面に出るカード詳細IDを読む。
+ * レアリティ・レイアウト・プロモ種別は選択肢の先頭（m14_card の決まり）。点数で見たマナ・コストは 0。
+ */
+export async function 試験用のカードを作る(page: Page, v: { カード名日: string; カード名英: string; 詳細数: number }, what: string, issue: Issue):
+  Promise<{ カードID: string; カード詳細IDs: string[]; カード名: string }> {
+  const カードID = await カードを登録する(page, {
+    カード名日: v.カード名日, カード名英: v.カード名英, 点数で見たマナ: "0",
+    詳細: Array.from({ length: v.詳細数 }, () => ({})),
+  }, what, issue);
+  const ids = await カード詳細IDs(page);
+  if (ids.length !== v.詳細数) throw new Error(`${what}: 登録したカード（カードID ${カードID}）のカード詳細が ${ids.length} 件（${v.詳細数} 件のはず）`);
+  return { カードID, カード詳細IDs: ids, カード名: v.カード名日 };
 }
 
 /** 商品登録編集の「カード指定」で、既にあるカード詳細を商品に紐付けて「商品を登録」する（商品名は取込の値に入れ直す） */

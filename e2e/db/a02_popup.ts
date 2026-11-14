@@ -146,3 +146,38 @@ export function 週間販売数量を足す(what: string, 規格ID: string, 数�
       sales_quantity_06: 0, sales_quantity_07: 0, sales_quantity_08: 0, update_date: new Date().toISOString(), sales_location: 1 }],
   });
 }
+
+/** 試験用のカードの名前の頭（カード名(日)。印はこの後ろに付く） */
+export const 試験用カードの名前の頭 = "A02-03試験カード-";
+
+/**
+ * この実行で作った試験用のカード（カード名が実行の印で終わる）に、旧商品ID・旧英語商品IDを書く。
+ * カード詳細(登録)画面に旧商品IDの欄が無いので、画面で作った E2E のカードの行にだけ書き足す（依頼者決定 2026-11-10・11-14）。
+ * 旧商品IDの列は20文字までで実行の印を付けられないので、シード表の値のまま書く（前の実行の試験用カードの値は先に外す）。
+ */
+export function 試験用カードに旧商品IDを書く(what: string, カードID: string, 旧商品ID: string, 旧英語商品ID: string | null): void {
+  updateOwnRows(what, {
+    table: "mtb_card", key: "id", ids: [カードID],
+    set: { old_product_id: 旧商品ID, old_en_product_id: 旧英語商品ID },
+    owner: { sql: "select id from mtb_card where id = $1::int and name_jp like '%-' || $2", params: [カードID, RUN_MARK] },
+  });
+}
+
+/**
+ * 旧商品ID・旧英語商品IDのどちらかに 値 を持つカードのうち、前の実行の試験用カード（名前の頭が 試験用カードの名前の頭）の値を外す。
+ * ほかの方のカード（名前の頭が違う）が同じ値を持っていれば止める（書き換えない）。外した件数を返す。
+ */
+export function 前の試験用カードの旧商品IDを外す(what: string, 値: string[]): number {
+  const rows = query(
+    "select id::text as id, coalesce(name_jp, '') as name_jp from mtb_card where old_product_id = any(string_to_array($1, ',')) or old_en_product_id = any(string_to_array($1, ','))",
+    [値.join(",")]);
+  const 他 = rows.filter((r) => !String(r.name_jp).startsWith(試験用カードの名前の頭));
+  if (他.length) throw new Error(`${what}: 旧商品ID「${値.join("・")}」を、試験用でないカード（カードID ${他.map((r) => r.id).join("・")}）が持っている（書き換えない）`);
+  if (!rows.length) return 0;
+  updateOwnRows(what, {
+    table: "mtb_card", key: "id", ids: rows.map((r) => String(r.id)),
+    set: { old_product_id: null, old_en_product_id: null },
+    owner: { sql: "select id from mtb_card where name_jp like $1 || '%'", params: [試験用カードの名前の頭] },
+  });
+  return rows.length;
+}

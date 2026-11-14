@@ -1,10 +1,14 @@
 /**
  * A02-01 ポップアップ用商品情報取得（商品ID）のシード。正本: cases/A02-01_seed_data.tsv。作り方は seeds/a02-builder.ts（正本の外の補いもそこに書く）。
- * カード・カード詳細・カードセットは新しく作らず、開発環境に既にある商品の付いていないカード詳細を1商品に1件ずつ紐付ける。
+ * カードは、依頼者決定 2026-11-14「マスタは作ってよい」で、1商品に1枚ずつ試験用のカード（カード名に実行の印）をカード詳細(登録)画面で登録して紐付ける。
  * 006A の「削除済みで商品レコードが存在しない商品」は、画面で登録して商品IDを控えたあと商品登録編集の「削除」で消す（シード表のとおり）。
  */
-import { 商品の無いカード詳細 } from "../db/a02_popup";
+import { Browser } from "@playwright/test";
+import { SETUP_ADMIN } from "../config/env";
+import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
+import { withAdminSession } from "../lib/session";
+import { 試験用のカードを作る } from "../pages/admin/a02_setup";
 import { 商品の定め, 商品を作る, 規格の定め } from "./a02-builder";
 
 const 頭 = (番号: string) => `A0201-${番号}`;
@@ -18,11 +22,25 @@ const 規格 = (印: string, 言語: "日本語" | "英語", 状態: 規格の�
 /** 1つのシードで作る商品（カードは作るときに選ぶ） */
 type 作り方 = { 番号: string; 商品: (Omit<商品の定め, "カード"> & { カードなし?: boolean })[] };
 
+/** 1商品に1枚、試験用のカード（カード詳細1件）を登録する */
+async function 試験用のカード(browser: Browser, seedId: string, 名: string): Promise<{ カードID: string; カード詳細ID: string; カード名: string }> {
+  let made: { カードID: string; カード詳細IDs: string[]; カード名: string } | undefined;
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    made = await 試験用のカードを作る(page, { カード名日: rc(`A02-01試験カード-${名}`), カード名英: rc(`A02-01 Test Card ${名}`), 詳細数: 1 },
+      `${seedId}: 試験用のカード`, (m) => reportSeedIssue(seedId, m));
+  });
+  if (!made) throw new Error(`${seedId}: 試験用のカードを作れなかった`);
+  return { カードID: made.カードID, カード詳細ID: made.カード詳細IDs[0], カード名: made.カード名 };
+}
+
 function defineA0201Seed(seedId: string, d: 作り方): void {
   defineSeed(seedId, async ({ browser, notes }) => {
     for (const p of d.商品) {
-      await 商品を作る(browser, seedId, 頭(d.番号), { ...p, カード: p.カードなし ? null : 商品の無いカード詳細() }, notes);
+      const カード = p.カードなし ? null : await 試験用のカード(browser, seedId, `${d.番号}${p.印}`);
+      await 商品を作る(browser, seedId, 頭(d.番号), { ...p, カード }, notes);
     }
+    if (d.商品.some((p) => !p.カードなし)) reportSeedIssue(seedId, "カードのマスタは、1商品に1枚ずつ試験用のカードをカード詳細(登録)画面で登録した（依頼者決定 2026-11-14「マスタは作ってよい」。カード名に実行の印。シード表の決め打ちのカード詳細IDは画面が振った番号で読み替えた）");
   });
 }
 
