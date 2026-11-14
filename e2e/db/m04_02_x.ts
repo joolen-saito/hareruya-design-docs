@@ -20,6 +20,8 @@ export function 商品の無いFoil通常のカード詳細(): { カード詳細
     `select d.id, c.name_jp from mtb_card_detail d join mtb_card c on c.id = d.card_id
       where d.foil_flg = 1 and coalesce(c.name_jp, '') <> ''
         and not exists (select 1 from dtb_product p where p.card_detail_id = d.id)
+        -- カード検索の結果は10ページまでしか送らないので、同じ名前のカード詳細が多いカード（基本土地の「森」など）は避ける（2026-11-14 007・008）
+        and (select count(*) from mtb_card c2 join mtb_card_detail d2 on d2.card_id = c2.id where c2.name_jp = c.name_jp) < 30
       order by d.id desc limit 1`,
   )[0];
   if (!r) throw new Error("商品の付いていない、Foil が「通常」のカード詳細が開発環境に無い");
@@ -60,7 +62,7 @@ export function 在庫の承認情報(在庫ID: string): 承認情報[] {
   return query(
     `select a.id, a.approval_status, coalesce(st.source_name, '') as source_name, a.base_info_id, (case l.stock_location_id when 1 then 'EC-CUBE' when 2 then 'スマレジ' else '' end) as location,
             coalesce(l.product_stock_total_count, 0) as product_count, coalesce(l.inventory_change_total_count, 0) as qty,
-            (select coalesce(sum(d2.outbound_total_cost), 0) from dtb_stock_edit_approval_detail d2 where d2.stock_edit_approval_id = a.id) as cost,
+            coalesce(l.total_cost_price_before, 0) as cost,
             coalesce(t.name, '') || '/' || coalesce(td.child_name, '') as change_type,
             (select string_agg(d3.stock_change_reason, E'\\n' order by d3.id) from dtb_stock_edit_approval_detail d3 where d3.stock_edit_approval_id = a.id) as reasons,
             to_char(a.registered_at at time zone 'Asia/Tokyo', 'YYYY-MM-DD') as registered_on, rm.name as registrant,
@@ -89,13 +91,13 @@ export type 承認待ちの明細 = {
   登録日時: string; 更新日時: string; 登録者: string; 更新者: string; 変更前仕入単価: string | null;
 };
 
-/** 在庫に関係する入庫承認待ち在庫情報（在庫編集の承認の明細。登録の新しい順） */
+/** 在庫に関係する入庫承認待ち在庫情報（在庫編集の承認の明細。登録の新しい順）。入庫の総原価増減数は、承認一覧に登録された合計総原価増減数（明細が1件のとき）か、仕入単価×在庫増減数。出庫のときだけ明細の出庫総原価を使う（明細の出庫総原価は入庫では総原価増減数でない） */
 export function 在庫の承認待ちの明細(在庫ID: string): 承認待ちの明細[] {
   return query(
     `select d.id, d.stock_edit_approval_id, a.approval_status, pc.product_code, p.name as product_name, coalesce(lg.name_jp, '') as language,
             coalesce(cc.code, '') as condition, ps.base_info_id, (case ps.stock_location_id when 1 then 'EC-CUBE' when 2 then 'スマレジ' else '' end) as location,
             coalesce(t.name, '') || '/' || coalesce(td.child_name, '') as change_type, d.stock_change_reason, d.edit_quantity,
-            d.purchase_unit_price, d.outbound_total_cost, d.create_date, d.update_date, rm.name as registrant, um.name as updater,
+            d.purchase_unit_price, (case when d.edit_quantity > 0 then (case when (select count(*) from dtb_stock_edit_approval_detail dx where dx.stock_edit_approval_id = a.id) = 1 and l.id is not null then l.total_cost_price_before else d.purchase_unit_price * d.edit_quantity end) else d.outbound_total_cost end) as outbound_total_cost, d.create_date, d.update_date, rm.name as registrant, um.name as updater,
             d.before_purchase_unit_price
        from dtb_stock_edit_approval_detail d
        join dtb_stock_edit_approval a on a.id = d.stock_edit_approval_id
@@ -108,6 +110,7 @@ export function 在庫の承認待ちの明細(在庫ID: string): 承認待ち�
        left join mtb_stock_change_type t on t.id = td.stock_change_type_id
        left join dtb_member rm on rm.id = a.registered_member_id
        left join dtb_member um on um.id = d.member_id
+       left join dtb_stock_approval_list l on l.history_source_id = a.id and l.history_source_type_id = 1
       where d.product_stock_id = $1
       order by d.id desc`,
     [在庫ID],
