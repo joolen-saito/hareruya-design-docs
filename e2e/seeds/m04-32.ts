@@ -356,10 +356,10 @@ export const DP109 = odd("109", "D09");
 defineStockSeed("S-M04-32-ODDCSV-108", { org: DP108.org, store: DP108.store, withOrg: true, products: [{ 商品コード: DP108.code, 商品名: "DP0432-108-NAME" }], ops: DP108.ops });
 defineStockSeed("S-M04-32-ODDREJ-109", { org: DP109.org, store: DP109.store, withOrg: true, products: [{ 商品コード: DP109.code, 商品名: "DP0432-109-NAME" }], ops: DP109.ops });
 
-// 110〜116（RC-*。組織は別のシード）
+// 110〜116（RC-*。組織は別のシード）。本店・試験支店は共有なので、申請者・承認者と商品名に実行ごとの印を付け、前の実行の承認待ちの行（消せない）・商品と混ざらないようにする（2026-11-14 113・115）
 export type Rc32 = { org: Org32; store: Store32; code: string; name: string; label: string };
 function rc(no: string, store: Store32): Rc32 {
-  return { org: org32(`rc0432-${no}`, `RC0432-${no}`, `Passw0rd-RC0432${no}`), store, code: markCode(`RC0432${no}CODE`), name: `RC0432-${no}-NAME`, label: `RC0432-${no}` };
+  return { org: org32(`rc0432-${no}-${RUN_MARK.toLowerCase()}`, `RC0432-${no}-${RUN_MARK}`, `Passw0rd-RC0432${no}`), store, code: markCode(`RC0432${no}CODE`), name: markCode(`RC0432-${no}-NAME`), label: `RC0432-${no}` };
 }
 export const RC110 = rc("001", branch32("RC0432-001支店", "rc0432s001", "S01"));
 export const RC111 = rc("002", branch32("RC0432-002支店", "rc0432s002", "S02"));
