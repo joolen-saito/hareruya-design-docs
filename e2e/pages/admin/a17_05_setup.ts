@@ -117,6 +117,12 @@ export async function 取込の商品と規格を読む(page: Page, 商品コー
     if (ids.length !== 1) throw new Error(`商品マスター(検索結果)に、既定の条件を外しても商品コード ${商品コード} の行が ${ids.length} 件ある（1件のはず）`);
     商品ID = ids[0];
     issue(`${商品コード}: 商品マスターの既定の検索条件（公開の商品だけ）では出ない非公開の商品なので、既定の条件を外して探した`);
+    // 条件を外した検索は商品マスター(検索結果)で終わるので、見つけた行の商品名のリンクから商品登録編集画面を開く
+    // （classRowsFromProductEdit は商品登録編集画面から始まる。2026-11-14 A02-03 の 022 で、検索結果の画面のまま進んで止まった）
+    const link = page.locator(`tr#ex-product-${商品ID} td:nth-child(3) a`);
+    await Promise.all([page.waitForURL((u) => u.pathname.endsWith(`/product/product/${商品ID}/edit`)), link.click()]);
+    await page.waitForLoadState("load");
+    await expect(page.locator("form#form1"), `商品コード ${商品コード} の商品登録編集画面`).toBeVisible();
   }
   const rows = await classRowsFromProductEdit(page, 商品ID);
   const hit = rows.filter((r) => r.商品コード === 商品コード);
