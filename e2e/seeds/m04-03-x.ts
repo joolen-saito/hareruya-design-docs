@@ -75,9 +75,9 @@ export const 入庫の承認者: Record<"TC東京" | "大阪店", 管理者> = {
   TC東京: 使い回す管理者("M04-03試験支店入庫承認者", "m0403_seed_apr_shi", "Passw0rd!M0403Ap"),
   大阪店: 使い回す管理者("M04-03本店入庫承認者", "m0403_seed_apr_hon", "Passw0rd!M0403Ap"),
 };
-/** 054〜061 の登録者・承認者（S-M04-03-GF-REG-<番号>・GF-APR・DP-REG・DP-APR） */
-export const 登録者の = (番号: string): 管理者 => 管理者の(`M0403-${番号}-登録者`, `m0403-${番号}-reg`, `Qz${番号}r7Tm!`);
-export const 承認者の = (番号: string): 管理者 => 管理者の(`M0403-${番号}-承認者`, `m0403-${番号}-apr`, `Qz${番号}a5Tm!`);
+/** 054〜061 の登録者・承認者（S-M04-03-GF-REG-<番号>・GF-APR・DP-REG・DP-APR）。パスワードは開発環境の決まり（12文字以上）に合わせる（2026-11-14、10文字で「値が短すぎます」になった） */
+export const 登録者の = (番号: string): 管理者 => 管理者の(`M0403-${番号}-登録者`, `m0403-${番号}-reg`, `Qz${番号}r7Tm!Reg2`);
+export const 承認者の = (番号: string): 管理者 => 管理者の(`M0403-${番号}-承認者`, `m0403-${番号}-apr`, `Qz${番号}a5Tm!Apr2`);
 
 async function メンバーを用意する(page: Page, m: 管理者, 店舗IDs: string[]): Promise<string> {
   return ensureMemberByStoreIds(page, {

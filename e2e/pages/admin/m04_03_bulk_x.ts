@@ -18,6 +18,9 @@ async function chooseSelect2(page: Page, select: Locator, labels: string[], what
     await page.keyboard.press("Escape");
   }
   for (const label of labels) {
+    // 画面は「いまの店舗」（本店など）を初めから選んでいる。外せずに残った選択や、既に選んだ候補は、select2 が候補の一覧から外すので、選ばれていれば選び直さない（2026-11-14 004 が本店「Hareruya」の候補0件で止まった）
+    const chosen = box.locator(".select2-selection__choice").filter({ hasText: new RegExp(`(^|×|\\s)${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`) });
+    if (await chosen.count() > 0) continue;
     await box.locator(".select2-selection").click();
     const option = page.locator(".select2-container--open .select2-results__option").filter({ hasText: exact(label) });
     await expect(option, `${what}の候補「${label}」は1件`).toHaveCount(1, { timeout: T });
