@@ -8,7 +8,7 @@ import { Page, test } from "@playwright/test";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { loginAdmin, withAdminSession } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
-import { 登録番号 } from "../../db/m05_09";
+import { 流す前の登録番号, 登録番号 } from "../../db/m05_09";
 import { 納品書のページ, 納品書を読む, 窓の様子, 登録番号を設定する } from "../../pages/admin/m05_09_delivery_slips";
 import { StandbySlipPage } from "../../pages/admin/m05_22_standby_slips";
 import { M0522_ADMIN, 作ったものの, 宅配便 } from "../../seeds/m05-22";
@@ -154,18 +154,20 @@ caseTest("IT-M05-22-014", リストから("S-M05-22-SIGNATURE-014", "〔出荷�
 // 共有の設定（本店の適格請求書発行事業者登録番号）を書き換えるケース（015・019）。開始時に控えて書き換え、終わるたびに戻して DB で確かめる
 let 元の登録番号: string | null = null;
 async function 登録番号を別の窓で設定する(ctx: CaseCtx, 値: string): Promise<void> {
-  await withAdminSession(ctx.browser, M0522_ADMIN, async (p) => { p.setDefaultTimeout(60_000); await 登録番号を設定する(p, 値); });
+  await withAdminSession(ctx.browser, M0522_ADMIN, async (p) => { p.setDefaultTimeout(60_000); await 登録番号を設定する(p, 値, note); });
 }
 const 登録番号を書き換える: 前後 = {
   開始時: async (ctx) => {
     const 元 = 登録番号();
-    元の登録番号 = 元;
+    // 流す前の値と違えば、前の回が戻し損ねた。その値を「元」と控えると狂った値へ戻すので、書き換えずに止める（2026-11-15）
+    if (元 !== 流す前の登録番号) throw new Error(`本店の適格請求書発行事業者登録番号が流す前の値（${流す前の登録番号}）でなく「${元 || "空"}」。前の回が戻し損ねたので、書き換えずに止める`);
+    元の登録番号 = 流す前の登録番号; // 書き換える前に控える（書き換えに入る前に止まっても、戻す値を取り違えない）
     await 登録番号を別の窓で設定する(ctx, "T5220000000001");
     note(`事前準備: 本店の適格請求書発行事業者登録番号を、元の値（${元 || "空"}）から T5220000000001 にした（終わったら戻す）`);
   },
   終了時: async (ctx) => {
     if (元の登録番号 === null) return;
-    const 元 = 元の登録番号;
+    const 元 = 流す前の登録番号; // 控えた値でなく、流す前の決まった値へ戻す
     if (登録番号() !== 元) await 登録番号を別の窓で設定する(ctx, 元);
     expect(登録番号(), "共有の設定（本店の適格請求書発行事業者登録番号）を元の値へ戻せた").toBe(元);
     元の登録番号 = null;

@@ -35,6 +35,12 @@ export function 配送方法(id: number): { 名前: string; 国外: boolean } | 
 export function 都道府県がある(名前: string): boolean { return query(`select id from mtb_pref where name = $1`, [名前]).length === 1; }
 export function 国がある(名前: string): boolean { return query(`select id from mtb_country where name = $1`, [名前]).length === 1; }
 
+/**
+ * 本店の適格請求書発行事業者登録番号の、流す前の開発環境の値（共有の設定）。書き換えるケースは、控えた値がこれと違えば
+ * 前の回が戻し損ねたとみて書き換えずに止め、終わりにはこの値へ戻す（2026-11-15 夜の M05-09 の 023 で試験用の値のまま残った）
+ */
+export const 流す前の登録番号 = "T1011101061821";
+
 /** 店舗ID 1（本店）の適格請求書発行事業者登録番号 */
 export function 登録番号(): string {
   return String(query(`select coalesce(invoice_registration_number, '') as v from dtb_base_info where id = 1`)[0]?.v ?? "");

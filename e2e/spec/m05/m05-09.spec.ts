@@ -8,7 +8,7 @@ import { Page, test } from "@playwright/test";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { loginAdmin, withAdminSession } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
-import { 登録番号 } from "../../db/m05_09";
+import { 流す前の登録番号, 登録番号 } from "../../db/m05_09";
 import { SlipOrderListPage, SlipStandbyPage, 納品書のページ, 納品書を読む, 窓の様子, 登録番号を設定する } from "../../pages/admin/m05_09_delivery_slips";
 import { M0509_ADMIN, 作ったものの, 会員のメール } from "../../seeds/m05-09";
 
@@ -140,7 +140,7 @@ caseTest("IT-M05-09-021", 一覧から("S-M05-09-SIGNATURE-021", "021", ["〔注
 }));
 let 元の登録番号: string | null = null;
 async function 登録番号を別の窓で設定する(ctx: CaseCtx, 値: string): Promise<void> {
-  await withAdminSession(ctx.browser, M0509_ADMIN, async (p) => { p.setDefaultTimeout(60_000); await 登録番号を設定する(p, 値); });
+  await withAdminSession(ctx.browser, M0509_ADMIN, async (p) => { p.setDefaultTimeout(60_000); await 登録番号を設定する(p, 値, note); });
 }
 caseTest("IT-M05-09-023", 一覧から("S-M05-09-COMPANY-023", "023", ["〔注文番号-M0509-023〕"], (pages) => {
   expect.soft(pages.length, "納品書が出た").toBe(1);
@@ -149,13 +149,15 @@ caseTest("IT-M05-09-023", 一覧から("S-M05-09-COMPANY-023", "023", ["〔注�
   // 事前準備③: ケースの開始時に本店の登録番号を設定する（共有の設定）。終わるたびに元の値へ戻して DB で確かめる
   開始時: async (ctx) => {
     const 元 = 登録番号();
-    元の登録番号 = 元; // 書き換える前に控える（書き換えに入る前に止まっても、戻す値を取り違えない）
+    // 流す前の値と違えば、前の回が戻し損ねた。その値を「元」と控えると狂った値へ戻すので、書き換えずに止める（2026-11-15）
+    if (元 !== 流す前の登録番号) throw new Error(`本店の適格請求書発行事業者登録番号が流す前の値（${流す前の登録番号}）でなく「${元 || "空"}」。前の回が戻し損ねたので、書き換えずに止める`);
+    元の登録番号 = 流す前の登録番号; // 書き換える前に控える（書き換えに入る前に止まっても、戻す値を取り違えない）
     await 登録番号を別の窓で設定する(ctx, "T1234567890123");
     note(`事前準備③: 本店の適格請求書発行事業者登録番号を、元の値（${元の登録番号 || "空"}）から T1234567890123 にした（終わったら戻す）`);
   },
   終了時: async (ctx) => {
     if (元の登録番号 === null) return; // 控える前に止まった（書き換えていない）
-    const 元 = 元の登録番号;
+    const 元 = 流す前の登録番号; // 控えた値でなく、流す前の決まった値へ戻す
     if (登録番号() !== 元) await 登録番号を別の窓で設定する(ctx, 元);
     expect(登録番号(), "共有の設定（本店の適格請求書発行事業者登録番号）を元の値へ戻せた").toBe(元);
     元の登録番号 = null;

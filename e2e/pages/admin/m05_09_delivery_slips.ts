@@ -196,22 +196,38 @@ export async function 商品名を変える(page: Page, 商品ID: string, 名前
   await expect(form.locator('input[name="admin_product[name]"]'), "登録後の商品名(日)").toHaveValue(名前, { timeout: 30_000 });
 }
 
-/** 店舗基本設定の「適格請求書発行事業者登録番号」を入れて登録する（全員が使う共有の設定。呼ぶ側が元の値へ戻す） */
-export async function 登録番号を設定する(page: Page, 値: string): Promise<void> {
-  await page.goto(adminUrl("/setting/shop"), { timeout: 60_000 });
-  await page.waitForLoadState("load");
-  const box = page.locator('[name="shop_master[invoice_registration_number]"]');
-  await expect(box, "店舗基本設定の適格請求書発行事業者登録番号の欄").toBeVisible({ timeout: 30_000 });
-  await box.fill(値);
-  // 押したあと画面が移る（保存して読み込み直す）のを待つ。読み込みの終わりだけを待つと、保存の前に先へ進んで画面を閉じ、保存されないことがある
-  // （2026-11-11 夜の M05-09 の 023: 書き換えたつもりの番号が DB に入っておらず、納品書に元の番号が出た）
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-    page.locator("form#point_form button[type=submit]").first().click({ timeout: 30_000 }),
-  ]);
-  await page.waitForLoadState("load");
-  await expect(page.locator('[name="shop_master[invoice_registration_number]"]'), "登録後の適格請求書発行事業者登録番号").toHaveValue(値, { timeout: 30_000 });
-  if (dbAvailable) expect(登録番号(), "店舗基本設定の適格請求書発行事業者登録番号が DB に保存された").toBe(値);
+/**
+ * 店舗基本設定の「適格請求書発行事業者登録番号」を入れて登録する（全員が使う共有の設定。呼ぶ側が元の値へ戻す）。
+ * 保存できたかは DB で確かめ、合わなければ画面を開き直して最大3回まで登録し直す。3回とも合わなければ落とす
+ * （2026-11-15 夜の M05-09 の 023: 戻す登録が保存されず、試験用の番号のまま残った）。画面に出た誤りの文は 記録 に渡す。
+ */
+export async function 登録番号を設定する(page: Page, 値: string, 記録?: (s: string) => void): Promise<void> {
+  const 理由: string[] = [];
+  for (let 回 = 1; 回 <= 3; 回++) {
+    if (dbAvailable && 登録番号() === 値) return;
+    await page.goto(adminUrl("/setting/shop"), { timeout: 60_000 });
+    await page.waitForLoadState("load");
+    const box = page.locator('[name="shop_master[invoice_registration_number]"]');
+    await expect(box, "店舗基本設定の適格請求書発行事業者登録番号の欄").toBeVisible({ timeout: 30_000 });
+    await box.fill(値);
+    // 押したあと画面が移る（保存して読み込み直す）のを待つ。読み込みの終わりだけを待つと、保存の前に先へ進んで画面を閉じ、保存されないことがある
+    // （2026-11-11 夜の M05-09 の 023: 書き換えたつもりの番号が DB に入っておらず、納品書に元の番号が出た）
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }).catch(() => undefined),
+      page.locator("form#point_form button[type=submit]").first().click({ timeout: 30_000 }),
+    ]);
+    await page.waitForLoadState("load");
+    if (!dbAvailable) {
+      await expect(page.locator('[name="shop_master[invoice_registration_number]"]'), "登録後の適格請求書発行事業者登録番号").toHaveValue(値, { timeout: 30_000 });
+      return;
+    }
+    if (登録番号() === 値) return;
+    const 誤り = ((await page.locator(".alert-danger, .invalid-feedback, .form-error-message").allInnerTexts().catch(() => [])) as string[])
+      .map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean).join(" / ");
+    理由.push(`${回}回目: 登録したが DB は「${登録番号() || "空"}」${誤り ? `（画面の誤り: ${誤り}）` : "（画面に誤りの文は無い）"}`);
+    記録?.(`本店の適格請求書発行事業者登録番号を「${値}」へ登録し直す: ${理由[理由.length - 1]}`);
+  }
+  throw new Error(`本店の適格請求書発行事業者登録番号を「${値}」にできなかった（3回登録した）: ${理由.join("・")}`);
 }
 
 /**
