@@ -124,7 +124,9 @@ caseTest("IT-M03-27-050", async (ctx) => {
   await ctx.step(2, async () => { x = await 選んで押す(ctx.page, up, "multiple-errors-050.csv"); });
   await ctx.step(3, async () => { await モーダルを確かめる(ctx.page); });
   await ctx.step(4, async () => {
-    const lines = x.エラー.flatMap((t) => t.split(/\s*(?=\d+\s*行目)/)).filter((t) => /\S/.test(t));
+    // 1件のメッセージは「… は必須項目です。 2 行目のデータを確認してください。」の形で、途中の「2 行目」で分けると1件を2件と数える（11/14 に直した）。
+    // 「確認してください。」の終わりで分ける（1つの帯に複数のメッセージが並ぶときも数えられる）
+    const lines = x.エラー.flatMap((t) => t.split(/(?<=確認してください。)\s*/)).filter((t) => /\S/.test(t));
     件数 = lines.length;
     note(`画面上部のエラー: ${x.エラー.join(" / ") || "なし"}（行に分けた件数 ${件数}）`);
   });
