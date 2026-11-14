@@ -19,9 +19,12 @@ const note = (m: string) => { test.info().annotations.push({ type: "手順の注
 const login = async (page: Page, seedId: string) => { await frontLogin(page, 状態の(seedId).会員); };
 
 /** ご注文方法指定画面の、配送1件目の「新しいお届け先情報を登録する」（言語によらず、行き先の番号の形で見分ける） */
-async function 新規のボタン(page: Page): Promise<Locator> {
+async function 新規のボタン(page: Page, 配送ID = ""): Promise<Locator> {
   const paths = await page.locator('button[data-path*="/shopping/shipping_edit/"]').evaluateAll((bs) => bs.map((b) => b.getAttribute("data-path") ?? ""));
-  const p = paths.find((x) => /\/shopping\/shipping_edit\/\d+\/?$/.test(x));
+  // 配送ID を渡したときは、その配送の「新しいお届け先情報を登録する」を選ぶ（複数配送の画面では配送ごとにボタンがあり、最初のボタンが1件目とは限らない。029・2026-11-14）
+  const p = 配送ID
+    ? paths.find((x) => new RegExp(`/shopping/shipping_edit/${配送ID}/?$`).test(x))
+    : paths.find((x) => /\/shopping\/shipping_edit\/\d+\/?$/.test(x));
   if (!p) throw new Error(`ご注文方法指定画面に「新しいお届け先情報を登録する」ボタンが無い（${paths.join("、") || "配送先のボタンなし"}）`);
   return page.locator(`button[data-path="${p}"]`).first();
 }
@@ -32,13 +35,13 @@ async function 変更のボタン(page: Page): Promise<Locator> {
   if (!p) throw new Error(`ご注文方法指定画面に「お届け先情報を変更する」ボタンが無い（${paths.join("、") || "配送先のボタンなし"}）`);
   return page.locator(`button[data-path="${p}"]`).first();
 }
-async function 新規の入力を開く(page: Page, 直接 = false): Promise<ShippingEditPage> {
+async function 新規の入力を開く(page: Page, 直接 = false, 配送ID = ""): Promise<ShippingEditPage> {
   const sp = new ShoppingPage(page);
   // 直接=true: ご注文方法指定画面をアドレスから開く。買い物かごから購入手続きへ進み直すと、アプリが注文手続きを作り直し、
   // シードで DB に足した2件目の配送が別の注文手続きに残る（029。2026-11-13 開発環境で、1件目・2件目の配送が見つからなかった）
   if (直接) await sp.直接開く();
   else await sp.買い物かごから開く();
-  await sp.押して配送先画面へ(await 新規のボタン(page));
+  await sp.押して配送先画面へ(await 新規のボタン(page, 配送ID));
   return new ShippingEditPage(page);
 }
 async function 変更の入力を開く(page: Page, 名称: string): Promise<ShippingEditPage> {
@@ -352,7 +355,7 @@ caseTest("IT-F04-03-029", async ({ page, notes, step, expected }) => {
   let ed = new ShippingEditPage(page);
   await step(1, async () => { 記録 = 受注の配送一覧(受注ID()); expect(記録.length, "注文手続き中の配送の件数").toBe(2); });
   await step(2, async () => {
-    ed = await 新規の入力を開く(page, true);
+    ed = await 新規の入力を開く(page, true, notes.get("〔配送ID-F0403-029〕"));
     // 開いた画面が、シードで控えた1件目の配送のものであること（注文手続きが作り直されていない）
     expect(new URL(page.url()).pathname, "開いた配送先の新規登録・変更画面の配送の番号").toMatch(new RegExp(`/shipping_edit/${notes.get("〔配送ID-F0403-029〕")}/?$`));
   });
