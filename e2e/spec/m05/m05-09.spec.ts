@@ -218,3 +218,59 @@ caseTest("IT-M05-09-047", 一覧から("S-M05-09-CBLINE-047", "047", ["〔注文
   expect.soft(names.includes(rc("M0509-CB047-OK")), "商品を持つ明細の行が表示される").toBe(true);
   expect.soft(names.includes(rc("M0509-CB047-NG")), "商品規格を持たない明細の行が表示されない").toBe(false);
 }));
+
+/** 並び順のケース: 商品情報の行（商品名＝印つきの商品コード）が、この順に並ぶ。試験用カードは印つきで作って紐づけた（シードの注記・2026-11-14 依頼者決定「マスタは作ってよい」） */
+function 行の位置(pages: 納品書のページ[], コード: string[]): number[] {
+  const names = 全部の行(pages).map((r) => r.商品名);
+  note(`納品書の商品情報の行: ${names.join("・")}`);
+  supplement("試験用のカードは印つきでカード詳細(登録)画面から作り、商品登録編集の「カード指定」で紐づけた。商品カテゴリの付け替えはしていない（並びはカード詳細で決まる。実ソース SortProductTrait）");
+  return コード.map((c) => names.findIndex((n) => n.includes(rc(c))));
+}
+caseTest("IT-M05-09-030", 一覧から("S-M05-09-SORT-CARD-030", "030", ["〔注文番号-M0509-030〕"], (pages) => {
+  const 位置 = 行の位置(pages, ["M0509-030-CARD", "M0509-030-GOODS"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-030-CARD・M0509-030-GOODS がある").toBe(true);
+  expect.soft(位置, "商品情報の行がカードの商品が先（M0509-030-CARD→M0509-030-GOODS）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-035", 一覧から("S-M05-09-SORT-FOIL-035", "035", ["〔注文番号-M0509-035〕"], (pages) => {
+  const 位置 = 行の位置(pages, ["M0509-035-PLAIN", "M0509-035-FOIL"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-035-PLAIN・M0509-035-FOIL がある").toBe(true);
+  expect.soft(位置, "商品情報の行が非Foil が先（M0509-035-PLAIN→M0509-035-FOIL）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-037", 一覧から("S-M05-09-SORT-RARITY-037", "037", ["〔注文番号-M0509-037〕"], (pages) => {
+  const 位置 = 行の位置(pages, ["M0509-037-M", "M0509-037-C"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-037-M・M0509-037-C がある").toBe(true);
+  expect.soft(位置, "商品情報の行がレアリティ M が先（M0509-037-M→M0509-037-C）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-039", 一覧から("S-M05-09-SORT-COLLNO-039", "039", ["〔注文番号-M0509-039〕"], (pages) => {
+  const 位置 = 行の位置(pages, ["M0509-039-N02", "M0509-039-N10"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-039-N02・M0509-039-N10 がある").toBe(true);
+  expect.soft(位置, "商品情報の行がコレクター番号 002 が先（M0509-039-N02→M0509-039-N10）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-053", 一覧から("S-M05-09-CBSORTCARD-053", "053", ["〔注文番号-M0509-CB053〕"], (pages) => {
+  const 位置 = 行の位置(pages, ["M0509-CB053-CARD", "M0509-CB053-GOODS"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-CB053-CARD・M0509-CB053-GOODS がある").toBe(true);
+  expect.soft(位置, "商品情報の行がカードの商品が先（M0509-CB053-CARD→M0509-CB053-GOODS）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-055", 一覧から("S-M05-09-CBSORTFOIL-055", "055", ["〔注文番号-M0509-CB055〕"], (pages) => {
+  const 位置 = 行の位置(pages, ["M0509-CB055-PLAIN", "M0509-CB055-FOIL"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-CB055-PLAIN・M0509-CB055-FOIL がある").toBe(true);
+  expect.soft(位置, "商品情報の行が非Foil が先（M0509-CB055-PLAIN→M0509-CB055-FOIL）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-057", 一覧から("S-M05-09-CBSORTRARITY-057", "057", ["〔注文番号-M0509-CB057〕"], (pages) => {
+  const 位置 = 行の位置(pages, ["M0509-CB057-M", "M0509-CB057-C"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-CB057-M・M0509-CB057-C がある").toBe(true);
+  expect.soft(位置, "商品情報の行がレアリティ M が先（M0509-CB057-M→M0509-CB057-C）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-059", 一覧から("S-M05-09-CBSORTCOLLNO-059", "059", ["〔注文番号-M0509-CB059〕"], (pages) => {
+  const 位置 = 行の位置(pages, ["M0509-CB059-N02", "M0509-CB059-N10"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-CB059-N02・M0509-CB059-N10 がある").toBe(true);
+  expect.soft(位置, "商品情報の行がコレクター番号 002 が先（M0509-CB059-N02→M0509-CB059-N10）の順").toEqual([...位置].sort((a, b) => a - b));
+}));

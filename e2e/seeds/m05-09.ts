@@ -34,6 +34,8 @@ import { rc, RUN_MARK, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { 商品を作って入庫する } from "../pages/admin/f04_setup";
+import { カードを登録する, カード詳細IDs } from "../pages/admin/m14_card";
+import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
 import { ensureM05Admin } from "../pages/admin/m05_admin_member";
 import { 出荷指示リストを生成する } from "../pages/admin/m05_20_standby";
 import { OrderEditPage, OrderItemsEdit } from "../pages/admin/m05_11_order_edit";
@@ -71,7 +73,12 @@ defineSeed("S-M05-09-BASEINFO", async () => {
 
 // ---- ケース専用のシード ----
 
-type 明細の定め = { コード: string; 名前: string; 価格?: number; 数量?: number };
+/**
+ * カード（並び順のケース 030・035・037・039 と CB の 053・055・057・059）: カード詳細(登録)画面で印つきの試験用カードを1枚作り、
+ * 商品登録編集の「カード指定」でその商品に紐づける（依頼者決定 2026-11-14「マスタは作ってよい」）。指定の無い値は2行とも同じ（選択肢の先頭・Foil なし）。
+ */
+type カードの定め = { レアリティ?: string; Foil?: "なし" | "通常" | "特殊"; カード番号?: string };
+type 明細の定め = { コード: string; 名前: string; 価格?: number; 数量?: number; カード?: カードの定め };
 type 受注の定め = {
   明細: 明細の定め[];
   注文者?: 住所の入力; お届け先?: 住所の入力; 配送方法?: string;
@@ -94,6 +101,8 @@ const P = (番号: string, n = 1, 価格 = 1000): 明細の定め[] => Array.fro
   return { コード: `M0509-${番号}${s}`, 名前: `M0509-${番号}${s}`, 価格 };
 });
 const ゆうパック = "ゆうパック";
+const G = (コード: string): 明細の定め => ({ コード, 名前: コード });
+const C = (コード: string, カード: カードの定め): 明細の定め => ({ コード, 名前: コード, カード });
 
 const 定めの表: Record<string, 定め> = {
   "STANDBY-002": { 受注: [{ 明細: P("002A") }, { 明細: P("002B") }], 出荷指示リスト: true },
@@ -117,6 +126,15 @@ const 定めの表: Record<string, 定め> = {
   "TAX-028": { 受注: [{ 明細: P("028"), 送料: "0", 手数料: "100", 値引き: "0" }] },
   "ADDR-SHIPTO-041": { 受注: [{ 明細: P("041"), 注文者: { 住所1: "大阪市北区梅田4-5-6", 住所2: "M0509-041-タワー9F", 電話: ["06", "9876", "5432"], 姓: "佐藤", 名: "花子" }, お届け先: { 住所1: "渋谷区道玄坂1-2-3", 住所2: "M0509-041-ビル5F", 電話: ["03", "1234", "5678"], 姓: "山田", 名: "太郎" } }] },
   "ADDR-SENDER-042": { 受注: [{ 明細: P("042"), 注文者: { 住所1: "大阪市北区梅田4-5-6", 住所2: "M0509-042-タワー9F", 電話: ["06", "9876", "5432"], 姓: "佐藤", 名: "花子" }, お届け先: { 住所1: "渋谷区道玄坂1-2-3", 住所2: "M0509-042-ビル5F", 電話: ["03", "1234", "5678"], 姓: "山田", 名: "太郎" } }] },
+  // 並び順（明細は期待する並びと逆の順に登録する。シード表「明細ID・商品IDが小さい方が後に並ぶ側」）
+  "SORT-CARD-030": { 受注: [{ 明細: [G("M0509-030-GOODS"), C("M0509-030-CARD", {})] }] },
+  "SORT-FOIL-035": { 受注: [{ 明細: [C("M0509-035-FOIL", { Foil: "通常" }), C("M0509-035-PLAIN", { Foil: "なし" })] }] },
+  "SORT-RARITY-037": { 受注: [{ 明細: [C("M0509-037-C", { レアリティ: "コモン" }), C("M0509-037-M", { レアリティ: "神話レア" })] }] },
+  "SORT-COLLNO-039": { 受注: [{ 明細: [C("M0509-039-N10", { カード番号: "010" }), C("M0509-039-N02", { カード番号: "002" })] }] },
+  "CBSORTCARD-053": { 受注: [{ 明細: [G("M0509-CB053-GOODS"), C("M0509-CB053-CARD", {})] }] },
+  "CBSORTFOIL-055": { 受注: [{ 明細: [C("M0509-CB055-FOIL", { Foil: "通常" }), C("M0509-CB055-PLAIN", { Foil: "なし" })] }] },
+  "CBSORTRARITY-057": { 受注: [{ 明細: [C("M0509-CB057-C", { レアリティ: "コモン" }), C("M0509-CB057-M", { レアリティ: "神話レア" })] }] },
+  "CBSORTCOLLNO-059": { 受注: [{ 明細: [C("M0509-CB059-N10", { カード番号: "010" }), C("M0509-CB059-N02", { カード番号: "002" })] }] },
   "CBBASE-046": { 受注: [{ 明細: [{ コード: "M0509-CB046-P1", 名前: "M0509-CB046-P1" }] }] },
   "CBLINE-047": { 受注: [{ 明細: [{ コード: "M0509-CB047-OK", 名前: "M0509-CB047-OK" }, { コード: "M0509-CB047-NG", 名前: "M0509-CB047-NG" }], 商品規格なしの明細: "M0509-CB047-NG" }] },
 };
@@ -151,6 +169,27 @@ async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め)
     商品コード: rc(x.コード), 商品名: rc(x.名前), 価格: String(x.価格 ?? 1000), 入庫数: (x.数量 ?? 1) + 2,
   })), issue);
   const 商品ID = new Map(made.map((m, i) => [明細の一覧[i].コード, m.productId]));
+
+  // 2b. カード（並び順のケース）: 商品の登録の順に、印つきの試験用カードを作って紐づける
+  if (/-CBSORT/.test(seedId)) issue("シード表の「支店の受注」は、本店の受注で読み替えた（試験会員は本店のフロントで注文する。納品書の並びで支店と本店が違うのは棚番だけで、このケースは棚番を使わない。実ソース SortProductTrait）");
+  const カード付き = 明細の一覧.filter((x) => x.カード);
+  if (カード付き.length > 0) {
+    await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+      page.setDefaultTimeout(60_000);
+      for (const x of カード付き) {
+        const 名 = rc(x.コード);
+        const カードの値 = x.カード!;
+        await カードを登録する(page, {
+          カード名日: 名, カード名英: 名, 点数で見たマナ: "0",
+          詳細: { レアリティ: カードの値.レアリティ, Foil: カードの値.Foil ?? "なし", カード番号: カードの値.カード番号 },
+        }, `${seedId}: ${名} のカードの登録`, issue);
+        const ids = await カード詳細IDs(page);
+        if (ids.length !== 1) throw new Error(`${seedId}: ${名} のカードのカード詳細が ${ids.length} 件（1件のはず）`);
+        await assignCardOnProductEdit(page, { productId: 商品ID.get(x.コード)!, cardNameJp: 名, cardDetailId: ids[0], productNameJp: 名, productNameEn: 名 }, issue);
+      }
+    });
+    issue(`カード詳細(登録)画面で、印つきの試験用カードを ${カード付き.length} 枚作り（${カード付き.map((x) => `${rc(x.コード)}: レアリティ ${x.カード!.レアリティ ?? "選択肢の先頭"}・Foil ${x.カード!.Foil ?? "なし"}${x.カード!.カード番号 ? `・カード番号 ${x.カード!.カード番号}` : ""}`).join("／")}）、商品登録編集の「カード指定」で紐づけた。シード表の「商品カテゴリを単体カードに付け替える」はしていない（納品書の並びはカード詳細の有無・Foil・レアリティ・カード番号で決まり、カテゴリは使わない。実ソース SortProductTrait）`);
+  }
 
   // 3. 受注（続けて注文する）
   const 注文番号: string[] = [];

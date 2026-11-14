@@ -32,6 +32,8 @@ export type カード入力 = {
 };
 export type 詳細入力 = {
   カードセット?: string; レアリティ?: string; レイアウト?: string; イラストレーター?: string; プロモ種別?: string; Foil?: string; フレーム?: string;
+  /** カード番号（コレクター番号）。省略すると入れない（M05-09 の並び順のケースが使う。2026-11-14） */
+  カード番号?: string;
   /** 名前を指定せず「この名前以外の選択肢」から選ぶ（先頭から探す。無ければ止める。マスターには足さない） */
   以外?: { レアリティ?: string[]; レイアウト?: string[]; プロモ種別?: string[] };
 };
@@ -117,6 +119,7 @@ export async function カードを登録する(page: Page, v: カード入力, w
         else await sel(f).selectOption((await firstOption(sel(f), `${what}: 詳細情報の${label}`, 除く ?? [])).value);
       }
       if (d.イラストレーター) await sel("illustrator").selectOption({ label: d.イラストレーター });
+      if (d.カード番号 !== undefined) await det.locator('input[name$="[cardNo]"]').fill(d.カード番号);
       await sel("foilFlg").selectOption({ label: d.Foil ?? "なし" });
       await sel("frameFlg").selectOption({ label: d.フレーム ?? "通常" });
     }
