@@ -1,4 +1,4 @@
-/** M03-02 商品登録編集。正本: cases/M03-02_test_cases.tsv（画面だけで準備できる 003・031・036） */
+/** M03-02 商品登録編集。正本: cases/M03-02_test_cases.tsv（画面だけで準備できる 003・031・036、E2E の行だけ DB で書き足す 004） */
 import { test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
@@ -85,5 +85,23 @@ caseTest("IT-M03-02-036", async ({ page, notes, step, expected }) => {
     await expect.soft(edit.商品を登録, "「商品を登録」ボタンが無い（商品情報を保存できない）").toHaveCount(0);
     await expect.soft(edit.商品公開ステータス, "商品公開ステータスの欄が無い（変更できない）").toHaveCount(0);
     expect.soft(await edit.商品名.inputValue(), "開き直した商品編集画面の商品名が変わっていない").toBe("廃止済み商品");
+  });
+});
+
+// 004: 商品規格0件（取込の唯一の規格を削除済みにした）・非公開の商品の編集画面
+caseTest("IT-M03-02-004", async ({ page, notes, step, expected }) => {
+  await loginAdmin(page, M0302_ADMIN);
+  const id = notes.get("〔商品ID-M0302-共有B〕");
+  const edit = new ProductEditForm(page);
+  let 開いた画面の商品ID = "";
+  await step(1, async () => {
+    await edit.open(id);
+    開いた画面の商品ID = await displayedProductId(page);
+    note(`商品ID ${id} の商品編集画面を開いた（画面の商品ID ${開いた画面の商品ID}）。商品公開ステータスの欄の数: ${await edit.商品公開ステータス.count()}`);
+  });
+  await expected(async () => {
+    expect.soft(開いた画面の商品ID, "開いた画面の商品ID").toBe(id);
+    // 期待結果「商品公開ステータス欄が表示されないこと」
+    await expect.soft(edit.商品公開ステータス.first(), "商品公開ステータスの欄（表示されない）").toBeHidden();
   });
 });

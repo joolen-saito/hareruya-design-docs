@@ -1,11 +1,11 @@
 /**
  * M03-02 商品登録編集の画面シード。正本: cases/M03-02_seed_data.tsv
  *
- * 作るシード: ADM・NOTFOUND-003・READ-DISCONTINUED（ケース 003・031・036 が使う）。
+ * 作るシード: ADM・NOTFOUND-003・READ-DISCONTINUED（ケース 003・031・036 が使う）・READ-NOVARIANT（004。2026-11-15）。
  *
  * 作らないシード（実装しないケースだけが使う）:
  * - DBへの直接設定が要る: S-M03-02-MASTERS（販売割引率・買取減額率）・QA-MASTERS（販売割引率）・RA-MASTER、
- *   READ-BASE・READ-NOVARIANT（画像・登録日・更新日など）・CARDS・DATE-026・MISSING-IMAGE-029・L-GOODS-048・L-SALE-049・
+ *   READ-BASE（画像・登録日・更新日など）・CARDS・DATE-026・MISSING-IMAGE-029・L-GOODS-048・L-SALE-049・
  *   L-DETAIL-050・CBKEEP-093 と、これらに頼るケース専用のシード
  *
  * READ-DISCONTINUED は、正本の作り方が共有マスタ（S-M03-02-MASTERS）の「旧カテゴリ」「購入グループA」「割引率A」を使う。
@@ -27,6 +27,9 @@ import { goodsCsvCategoryId } from "../pages/admin/m03_22_product";
 import { storeNameById } from "../pages/admin/m04_19_masters";
 import { ensureMember } from "../pages/admin/member";
 import { ProductSearchPage } from "../pages/admin/product_search";
+import { rc } from "../lib/run_marker";
+import { 取込の商品と規格を読む } from "../pages/admin/a17_05_setup";
+import { 規格を削除済みにする } from "../db/a02_popup";
 
 export const M0302_ADMIN: Account = { loginId: "m0302_admin", password: "Passw0rd!M0302" };
 
@@ -118,5 +121,51 @@ defineSeed("S-M03-02-READ-DISCONTINUED", { needs: ["S-M03-02-ADM"] }, async ({ b
     // 保存のあと、廃止済みの画面（商品公開ステータスの欄と「商品を登録」が無い）になったこと
     await edit.open(notes.get("〔商品ID-M0302-共有D〕"));
     await expect(edit.商品を登録, "廃止にしたあと、「商品を登録」ボタンが無い").toHaveCount(0);
+  });
+});
+
+/**
+ * 004 の「商品規格0件・商品公開ステータス非公開」の商品（2026-11-15）。
+ * グッズ商品CSV登録で1行を取り込み（READ-DISCONTINUED と同じ読み替え: カテゴリ・購入グループ・割引率は画面にある値）、
+ * 取込でできた唯一の商品規格を、E2E が作った行だけ DB で削除済み（廃止・非表示。アプリの「商品規格を削除」と同じ印）にする。
+ * 有効な規格の最後の1件は画面で削除できず、シード表の「商品規格1件を削除」は行ごと消さずに、アプリの削除と同じ印で読み替える。
+ * 商品コードには実行の印を付ける（DB へ書く行が E2E のものと確かめるため）。
+ */
+defineSeed("S-M03-02-READ-NOVARIANT", { needs: ["S-M03-02-ADM"] }, async ({ browser, seed, notes }) => {
+  const issue = (m: string) => reportSeedIssue(seed.シードID, m);
+  const code = rc("M0302-READ-NOVARIANT");
+  await withAdminSession(browser, M0302_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const categoryId = await goodsCsvCategoryId(page, issue);
+    issue(`商品カテゴリ(ID)は、正本の「旧カテゴリ」（S-M03-02-MASTERS）でなく、グッズ商品CSVが受け付けるグッズのカテゴリ（ID ${categoryId}）を使った`);
+    const template = await downloadGoodsCsvTemplate(page);
+    await registerGoodsCsv(page, {
+      what: `${seed.シードID}: グッズ商品CSV登録`,
+      fileName: "m0302-read-novariant.csv",
+      categoryId,
+      lines: [{ code, nameJp: "規格未登録商品", nameEn: "No Variant Product" }],
+      common: {
+        "商品公開ステータス": statusValue(template, "商品公開ステータス", "非公開"), "支店の商品公開ステータス": statusValue(template, "支店の商品公開ステータス", "公開"),
+        "サイズ": "10", "重量": "20", "販売制限数": "5", "基準価格": "100", "販売価格": "100", "買取価格": "10", "スマレジ連携フラグ": "0",
+      },
+      onWarning: issue,
+    });
+    issue("購入グループ名称は、正本の「購入グループA」（S-M03-02-MASTERS）でなく、画面の一覧の先頭の既存の購入グループを使った");
+    issue(`商品コードは正本の M0302-READ-NOVARIANT に実行の印を付けた ${code}（DB へ書く行が E2E の行と確かめるため）`);
+    const { 商品ID, 規格ID } = await 取込の商品と規格を読む(page, code, issue);
+    notes.set("〔商品ID-M0302-共有B〕", 商品ID);
+    const edit = new ProductEditForm(page);
+    await edit.open(商品ID);
+    const discounts = await edit.割引率の選択肢();
+    if (discounts.length === 0) throw new Error("割引率に選べる値が無い");
+    await edit.割引率.selectOption({ label: discounts[0] });
+    issue(`割引率は、正本の「割引率A」でなく、選択肢の先頭「${discounts[0]}」を選んだ`);
+    if (!(await edit.販売制限の選択())) {
+      await edit.販売制限を選ぶ("制限なし");
+      issue("販売制限が未選択で保存できないので、商品編集画面で「制限なし」を選んだ（正本の作り方の外）");
+    }
+    for (const w of await edit.登録(`${seed.シードID}: 割引率を選んで「商品を登録」`)) issue(`保存のときの警告: ${w}`);
+    規格を削除済みにする(`${seed.シードID}: 取込の規格 ${規格ID} を削除済みに`, 規格ID);
+    issue(`取込でできた唯一の商品規格 ${規格ID} を、DB で削除済み（廃止・非表示。アプリの「商品規格を削除」と同じ印）にした（有効な規格の最後の1件は画面で削除できない。シード表の「商品規格1件を削除」を、行ごと消さずにアプリの削除と同じ印で読み替えた。E2E が作った規格の行だけ。lib/db_write.ts）`);
   });
 });
