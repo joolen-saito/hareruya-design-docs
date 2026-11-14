@@ -16,7 +16,7 @@ import { expectSaved } from "./common";
 import { 本店の店名, 管理者 } from "./f04_setup";
 import { downloadGoodsCsvTemplate } from "./m03_01_goods_csv";
 import { registerGoodsCsv } from "./m03_01_goods_register";
-import { classRowsFromProductEdit, openProductEditByCode, readGoodsRootCategoryId } from "./m03_23_seed_products";
+import { classRowsFromProductEdit, openProductEditByCode, productIdsByCode, readGoodsRootCategoryId } from "./m03_23_seed_products";
 import { addClass, deleteClassOnEdit, openClassList } from "./m03_30_products";
 import { searchStockByCode } from "./m04_02_rc_stock";
 import { ensureMember } from "./member";
@@ -106,7 +106,18 @@ export async function グッズ商品を取り込む(page: Page, seedId: string,
 
 /** 商品マスターで商品コードを検索して商品IDを読み、商品規格一覧で取込で作られた商品規格の商品規格IDを読む（商品規格一覧を開いた状態で終わる） */
 export async function 取込の商品と規格を読む(page: Page, 商品コード: string, issue: Issue): Promise<{ 商品ID: string; 規格ID: string }> {
-  const 商品ID = await openProductEditByCode(page, 商品コード);
+  // 商品マスターの検索は、画面の既定の条件（公開の商品だけ）のままだと、取込で非公開にした商品（A02-01 の 006B など）が出ない。
+  // 既定の条件で1件も出なかったときだけ、既定の条件を外して商品コードで探し直す（シードの準備の手段で、期待結果には関わらない）
+  let 商品ID: string;
+  try {
+    商品ID = await openProductEditByCode(page, 商品コード);
+  } catch (e) {
+    if (!/の行が 0 件ある/.test(String(e))) throw e;
+    const ids = await productIdsByCode(page, 商品コード);
+    if (ids.length !== 1) throw new Error(`商品マスター(検索結果)に、既定の条件を外しても商品コード ${商品コード} の行が ${ids.length} 件ある（1件のはず）`);
+    商品ID = ids[0];
+    issue(`${商品コード}: 商品マスターの既定の検索条件（公開の商品だけ）では出ない非公開の商品なので、既定の条件を外して探した`);
+  }
   const rows = await classRowsFromProductEdit(page, 商品ID);
   const hit = rows.filter((r) => r.商品コード === 商品コード);
   if (hit.length !== 1) throw new Error(`商品ID ${商品ID} の商品規格一覧に、商品コード ${商品コード} の行が ${hit.length} 件（1件のはず）: ${JSON.stringify(rows)}`);
