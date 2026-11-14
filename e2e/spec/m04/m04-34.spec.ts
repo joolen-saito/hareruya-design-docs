@@ -89,7 +89,8 @@ async function 出力する(l: ReturnListPage): Promise<戻しリスト> {
   return list;
 }
 
-type 確かめ = { 項目: string; 実際: (list: 戻しリスト | null) => unknown; 期待: unknown };
+/** 期待は値か、テストの中で求める関数（シードで作った商品名など、読み込みの時点ではまだ無い値を使うとき） */
+type 確かめ = { 項目: string; 実際: (list: 戻しリスト | null) => unknown; 期待: unknown | (() => unknown) };
 type 流しの定め = { 日付: string; 閾値: 閾値の定め[]; 選ぶ: string[]; 補い?: string };
 /** 手順「1. 一覧を開く／2. 行だけを選ぶ／3. 戻しリストPDF出力を押す（／4. ポップアップを確かめる）」の流し */
 function 戻しリストPDF(d: 流しの定め, 確かめ: 確かめ[]) {
@@ -110,7 +111,7 @@ function 戻しリストPDF(d: 流しの定め, 確かめ: 確かめ[]) {
       if (手順の数 >= 4) await step(4, async () => { await list!.画面.bringToFront(); note(`商品仕訳を上から: ${list!.ページ.map((p) => p.見出し).join(" → ")}`); });
       await expected(async () => {
         await list!.画面.bringToFront();
-        for (const k of 確かめ) expect.soft(k.実際(list), k.項目).toEqual(k.期待);
+        for (const k of 確かめ) expect.soft(k.実際(list), k.項目).toEqual(typeof k.期待 === "function" ? (k.期待 as () => unknown)() : k.期待);
       });
     } finally { await 閾値を戻す(browser); }
   };
@@ -276,7 +277,7 @@ caseTest("IT-M04-34-045", 戻しリストPDF({ 日付: "2034-07-01", 閾値: [�
 ]));
 
 // ---------------------------------------------------------------- カードのマスタを使う表示・並び順のケース
-const 並びが = (codes: string[], 項目: string): 確かめ => ({ 項目, 実際: (list) => 名前の並び(list).filter((n) => codes.some((c) => n === 名(c))), 期待: codes.map(名) });
+const 並びが = (codes: string[], 項目: string): 確かめ => ({ 項目, 実際: (list) => 名前の並び(list).filter((n) => codes.some((c) => n === 名(c))), 期待: () => codes.map(名) });
 const 支店6000 = [金額閾値("支店", "6000")];
 const マスタの並びの補い = (何: string) => `${何}の表示順は、開発環境のマスタの並びが正本の順と同じだった（全員が使うマスタの順は書き換えていない）`;
 
