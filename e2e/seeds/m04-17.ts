@@ -25,6 +25,7 @@ import {
   readSupplyGoodsCategoryId, registerStockIn, uploadGoodsLines,
 } from "../pages/admin/m04_17_seed_ops";
 import { 試験支店, 試験支店の店舗ID, 店名の読み替え } from "../pages/admin/reuse_store";
+import { 在庫変動履歴の登録日時を書き足す } from "../db/m04_17_x";
 
 // 2026-11-13 試験店舗の使い回しで所属の店舗が試験支店に変わったので、前の試験管理者（M04-24 の「本店」の所属）とは別の決まった名前で作る
 export const M0417_ADMIN: Account = { loginId: rcFixed("m0417_admin").toLowerCase(), password: "Passw0rd!M0417" };
@@ -173,3 +174,16 @@ defineHistorySeed("S-M04-17-RANGE-016", [
   approved(mk("RANGE-M0417-016", "-03")),
   approved(mk("RANGE-M0417-016", "-NULL")),
 ]);
+
+// 登録日時 2026/08/01 00:00・08/15 12:00・08/31 23:59・07/01 00:00（2026-11-14 追加）。登録日時は画面で指定できないので、
+// 承認のあと、E2E が作ったこの商品の在庫変動履歴の登録日時だけを DB で書き換える（lib/db_write.ts。依頼者決定 2026-11-10）
+const RANGE_009: [string, string, string][] = [["-01", "RANGE-01-009", "2026-08-01 00:00:00+09"], ["-02", "RANGE-02-009", "2026-08-15 12:00:00+09"],
+  ["-03", "RANGE-03-009", "2026-08-31 23:59:00+09"], ["-NULL", "RANGE-NULL-009", "2026-07-01 00:00:00+09"]];
+defineHistorySeed("S-M04-17-RANGE-009", RANGE_009.map(([s, name]) => goods(mk("RANGE-M0417-009", s), name)),
+  RANGE_009.map(([s]) => approved(mk("RANGE-M0417-009", s))),
+  async (_adm, issue) => {
+    for (const [s, name, at] of RANGE_009) {
+      const n = 在庫変動履歴の登録日時を書き足す("S-M04-17-RANGE-009", mk("RANGE-M0417-009", s), at);
+      issue(`${name}: 在庫変動履歴（${n} 件）の登録日時を ${at.replace("+09", "")} に DB で書き換えた（E2E が作ったこの商品の在庫変動履歴だけ。画面で指定できない）`);
+    }
+  });

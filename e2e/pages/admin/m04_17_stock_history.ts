@@ -71,6 +71,12 @@ export class StockHistoryPage {
     await this.在庫変動理由欄.fill(value);
   }
 
+  /** 登録日(from)・登録日(to)。画面の入力欄は日付だけ（YYYY-MM-DD の形。時刻は入らない） */
+  async fillCreateDate(from: string, to: string): Promise<void> {
+    await this.field("create_date_from").fill(from);
+    await this.field("create_date_to").fill(to);
+  }
+
   async fillSellPrice(from: string, to: string): Promise<void> {
     await this.field("sell_price_from").fill(from);
     await this.field("sell_price_to").fill(to);

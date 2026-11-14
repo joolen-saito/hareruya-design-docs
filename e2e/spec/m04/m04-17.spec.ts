@@ -268,3 +268,20 @@ caseTest("IT-M04-17-055", async ({ page, step, expected }) => {
     expect.soft(codes, "入庫承認待ちの MIX-M0417-055-P は表示されない").not.toContain(mk("MIX-M0417-055", "-P"));
   });
 });
+
+// 登録日の下限・上限（2026-11-14 追加）。画面の登録日の欄は日付だけで、正本の時刻（00:00・12:00）は入れられない
+caseTest("IT-M04-17-009", async ({ page, step, expected }) => {
+  const h = await signIn(page);
+  await step(1, () => h.open());
+  await step(2, () => h.clearConditions());
+  await step(3, async () => {
+    await h.fillKeyword(mk("RANGE-M0417-009"));
+    await h.fillCreateDate("2026-08-01", "2026-08-15");
+    test.info().annotations.push({ type: "正本の外の補い", description: "登録日(from)・登録日(to)の欄は日付だけを入れる作りなので、正本の「2026/08/01 00:00」「2026/08/15 12:00」は日付の 2026-08-01・2026-08-15 で入れた（時刻は入らない）" });
+  });
+  await step(4, () => search(h, mk("RANGE-M0417-009")));
+  await expected(async () => {
+    const rows = await h.rows();
+    expect.soft(namesOf(rows), "表示されるのは RANGE-01-009・RANGE-02-009 の2件だけ").toEqual(["RANGE-01-009", "RANGE-02-009"]);
+  });
+});
