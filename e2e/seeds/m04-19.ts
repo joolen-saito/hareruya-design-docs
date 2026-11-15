@@ -40,7 +40,7 @@ import {
   classMemo, ensurePageCounts, goodsCategoryIdForCsv, idsByExactCode, openClassEdit, productRowsByCode, setClassMemo, setClassPrices, stockEditValue,
   storeNameById,
 } from "../pages/admin/m04_19_masters";
-import { addToCart, checkout, clearCart, frontLogin, openOrderEditByProductCode, registerShortages, 購入会員 } from "../pages/admin/m04_19_order_shortage";
+import { addToCart, checkoutWithDeliveryChoice, clearCart, frontLogin, openOrderEditByProductCode, registerShortages, 購入会員 } from "../pages/admin/m04_19_order_shortage";
 import { ShortageHistoryPage } from "../pages/admin/m04_19_shortage_history";
 import { 語を含む欠品履歴の数 } from "../db/m04_19_shortage";
 import { available as dbAvailable } from "../lib/db";
@@ -241,7 +241,7 @@ async function frontOrder(browser: Browser, seedId: string, items: { 商品ID: s
     await frontLogin(page, buyer);
     await clearCart(page, (m) => issue(`カートに前の実行の商品が残っていたので、カート一括削除のダイアログを受け入れた: ${m}`));
     for (const it of items) await addToCart(page, it.商品ID, it.数量, `${seedId} の「${it.商品コード}」をカートに入れる`);
-    const { 注文番号, 支払方法 } = await checkout(page, PAYMENTS, `${seedId} の注文`);
+    const { 注文番号, 支払方法 } = await checkoutWithDeliveryChoice(page, PAYMENTS, `${seedId} の注文`);
     if (支払方法 !== PAYMENTS[0]) issue(`支払方法に「${PAYMENTS[0]}」が無く、「${支払方法}」を選んだ`);
     return 注文番号;
   } finally {

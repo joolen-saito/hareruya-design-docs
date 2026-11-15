@@ -141,6 +141,77 @@ export async function checkout(page: Page, prefer: string[], what: string): Prom
 }
 
 /**
+ * checkout と同じ。ただし、ご注文手続きで既定の配送方法に希望の支払方法が無いとき（配送方法ごとに選べる支払方法が違い、既定が
+ * 銀行振込だけの便になっていることがある）、購入者として配送方法を選び直して、希望の支払方法が出る配送方法で注文する。
+ * どの配送方法にも無ければ checkout と同じ誤りで止まる。
+ */
+export async function checkoutWithDeliveryChoice(page: Page, prefer: string[], what: string): Promise<{ 注文番号: string; 支払方法: string }> {
+  await page.goto(front("/cart"));
+  await page.waitForLoadState("load");
+  const toShopping = page.locator("a.p-hareruya-cart__checkout-btn");
+  await expect(toShopping, `${what}: カートの「購入手続きへ」`).toHaveCount(1);
+  await Promise.all([page.waitForURL(/\/shopping(\?.*)?$/, { waitUntil: "domcontentloaded" }), toShopping.click()]);
+  await page.waitForLoadState("load");
+
+  const radios = page.locator('input[name="_shopping_order[Payment]"]');
+  await expect(radios.first(), `${what}: ご注文手続きの支払方法の選択肢`).toBeAttached();
+  const labelsNow = async () => radios.evaluateAll((nodes) => nodes.map((n) => ((n as HTMLInputElement).closest("label")?.textContent ?? "").replace(/\s+/g, " ").trim()));
+  if (!(await labelsNow()).some((l) => prefer.includes(l))) {
+    // 配送方法ごとに選べる支払方法が違う。既定の配送方法に希望の支払方法が無いときは、購入者として配送方法を選び直す（店頭受取は選ばない）
+    const dsel = 'input[name="_shopping_order[Shippings][0][Delivery]"]';
+    const ds = await page.locator(dsel).evaluateAll((nodes) => nodes.map((n) => ({
+      value: (n as HTMLInputElement).value,
+      label: ((n as HTMLInputElement).closest("label")?.textContent ?? "").replace(/\s+/g, " ").trim(),
+      checked: (n as HTMLInputElement).checked,
+    })));
+    const tried: string[] = [];
+    for (const d of ds) {
+      if (d.checked || d.label.includes("店頭受取")) continue;
+      await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator(`${dsel}[value="${d.value}"]`).check({ force: true })]);
+      await page.waitForLoadState("load");
+      const now = await labelsNow();
+      tried.push(`${d.label}（${now.join("・")}）`);
+      if (now.some((l) => prefer.includes(l))) break;
+    }
+  }
+  const choices = await radios.evaluateAll((nodes) => nodes.map((n) => ({
+    value: (n as HTMLInputElement).value,
+    label: ((n as HTMLInputElement).closest("label")?.textContent ?? "").replace(/\s+/g, " ").trim(),
+    checked: (n as HTMLInputElement).checked,
+  })));
+  const pick = prefer.map((p) => choices.find((c) => c.label === p)).find(Boolean);
+  if (!pick) throw new Error(`${what}: 支払方法に ${prefer.join("・")} のどれも無い（ある選択肢: ${choices.map((c) => c.label).join("、")}）`);
+  if (!pick.checked) {
+    // 選ぶと画面のスクリプトが送信して画面を作り直す
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+      page.locator(`input[name="_shopping_order[Payment]"][value="${pick.value}"]`).check({ force: true }),
+    ]);
+    await page.waitForLoadState("load");
+    await expect(page.locator(`input[name="_shopping_order[Payment]"][value="${pick.value}"]`), `${what}: 支払方法「${pick.label}」が選ばれた`).toBeChecked();
+  }
+
+  const accept = page.locator('input[name="_shopping_order[accept_order]"]');
+  await expect(accept, `${what}: 「この内容で注文を確定します。」`).toHaveCount(1);
+  await accept.check({ force: true });
+  const submit = page.locator("button[data-js-payment-submit]");
+  await expect(submit, `${what}: 確定のチェックで注文のボタンが押せる`).toBeEnabled();
+  // 押すと注文の確認と確定の要求を送り、ご注文完了の画面（確定できなければご注文手続きの画面かエラーの画面）へ移る
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), submit.click()]);
+  await page.waitForLoadState("load");
+  if (!/\/shopping\/complete/.test(page.url())) {
+    const errors = (await page.locator(".p-hareruya-message-box--error, .ec-alert-warning, .error, .c-hareruya-form-input__field-error--server")
+      .allTextContents()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+    throw new Error(`${what}: 注文が確定しない（${page.url()}）: ${errors.join(" / ") || "画面にエラーの表示なし"}`);
+  }
+  const heading = page.getByText(/ご注文番号\s*\S+/).first();
+  await expect(heading, `${what}: ご注文完了の画面のご注文番号`).toBeVisible();
+  const m = /ご注文番号\s*(\S+)/.exec((await heading.textContent()) ?? "");
+  if (!m) throw new Error(`${what}: ご注文番号を読めない`);
+  return { 注文番号: m[1], 支払方法: pick.label };
+}
+
+/**
  * 受注情報検索 一覧で、商品コードを入れて検索し、その受注の受注情報編集画面を開く。受注IDと注文番号を返す。
  * 店舗の絞り込みが空のときは、受注の店舗（本店）を選ぶ（店舗の欄は必須で、空のままではブラウザの入力チェックが送信を止める）。
  */
