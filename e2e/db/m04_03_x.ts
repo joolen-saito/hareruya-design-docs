@@ -64,13 +64,20 @@ export function 在庫の最新の承認ID(在庫ID: string): string | null {
   return r ? String(r.approval_id) : null;
 }
 
-/** 在庫の在庫変動履歴のうち、仕入総価格・原価単価の前後・履歴登録元の番号（新しい順） */
+/**
+ * 在庫の在庫変動履歴のうち、仕入総価格・原価単価の前後・履歴登録元の番号（新しい順）。
+ * 履歴に仕入総価格の列は無い（履歴の buy_price は「変更時買取価格」で、商品規格の買取価格が入る）。仕入総価格は総原価増減数と同じ値
+ * （Backlog 3614 で決着）なので、変更後総原価 − 変更前総原価で読む（M05-11 の spec と同じ。2026-11-16 起票の担当の指摘）
+ */
 export function 在庫の変動履歴の金額(在庫ID: string): { 仕入総価格: number | null; 変更前原価単価: number | null; 変更後原価単価: number | null; 履歴登録元ID: string | null }[] {
   const n = (v: unknown) => (v === null || v === undefined || v === "" ? null : Number(v));
   return query(
-    `select h.buy_price, h.unit_cost_price_before, h.unit_cost_price_after, h.history_source_id from dtb_stock_history h where h.product_stock_id = $1 order by h.id desc`,
+    `select h.total_cost_price_before, h.total_cost_price_after, h.unit_cost_price_before, h.unit_cost_price_after, h.history_source_id from dtb_stock_history h where h.product_stock_id = $1 order by h.id desc`,
     [在庫ID],
-  ).map((r) => ({ 仕入総価格: n(r.buy_price), 変更前原価単価: n(r.unit_cost_price_before), 変更後原価単価: n(r.unit_cost_price_after), 履歴登録元ID: r.history_source_id === null ? null : String(r.history_source_id) }));
+  ).map((r) => {
+    const 前 = n(r.total_cost_price_before), 後 = n(r.total_cost_price_after);
+    return { 仕入総価格: 前 === null || 後 === null ? null : 後 - 前, 変更前原価単価: n(r.unit_cost_price_before), 変更後原価単価: n(r.unit_cost_price_after), 履歴登録元ID: r.history_source_id === null ? null : String(r.history_source_id) };
+  });
 }
 
 /** 名前がちょうど一致する店舗の番号（開いているもの） */
