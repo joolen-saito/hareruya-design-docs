@@ -76,9 +76,9 @@ export class MailAllPage {
   /** テンプレ選択の選択肢（表示の名前） */
   async テンプレの選択肢(): Promise<string[]> { return (await this.template.locator("option").allInnerTexts()).map(整える); }
   async 件名(): Promise<string> { return this.subject.inputValue(); }
-  /** メッセージ本文の欄の文（本文の中の入力欄（ヘッダー・フッター）の値も、その場所に入れて読む） */
+  /** メッセージ本文の欄の文（見出しの「メッセージ本文」は含めない。2026-11-16 003 で見出しを本文と読んだため直した。本文の中の入力欄（ヘッダー・フッター）の値も、その場所に入れて読む） */
   async 本文(): Promise<string> {
-    return this.page.locator("#mail_edit_box__body").evaluate((el) => {
+    return this.page.locator("#mail_edit_box__body > div").evaluate((el) => {
       const c = el.cloneNode(true) as HTMLElement;
       const src = el.querySelectorAll("textarea");
       c.querySelectorAll("textarea").forEach((t, i) => { t.replaceWith(document.createTextNode((src[i] as HTMLTextAreaElement).value)); });
