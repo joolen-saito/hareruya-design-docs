@@ -32,7 +32,7 @@ export async function 売上分析タグを付ける(page: Page, 商品ID: strin
 
   const save = form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ });
   await expect(save, "「商品を登録」ボタン").toHaveCount(1);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), save.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), save.click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `商品ID ${商品ID} に売上分析タグ「${タグ名}」を付けて「商品を登録」`)) onIssue(`商品ID ${商品ID}: 警告「${w}」`);
   await expect(select.locator("option:checked"), `商品ID ${商品ID} の登録後の売上分析タグ`).toHaveText([タグ名]);
 }

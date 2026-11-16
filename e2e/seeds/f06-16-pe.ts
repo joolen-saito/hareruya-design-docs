@@ -2,6 +2,7 @@
  * F06-16 大会デッキ登録編集 の連携ケース（063）のシード（画面操作）。正本: cases/F06-16_seed_data.tsv
  * 既存の seeds/f06-16.ts・f06-16-b.ts は変えない。連携店・連携形式・カード・管理者は共有シード S-F06-16-PE-REF が（実行の印つきで）作る。
  */
+import { 店名を読む } from "../lib/store_pick";
 import { SETUP_ADMIN } from "../config/env";
 import { 会員の選手ID } from "../db/f06_16";
 import { rc } from "../lib/run_marker";
@@ -10,7 +11,8 @@ import { Account, withAdminSession } from "../lib/session";
 import { 会員を用意する, 試験会員, 大会を登録する } from "../pages/admin/f06_16_setup";
 import { 連携の用意を作る } from "../pages/admin/f06_pe_setup";
 
-export const 店名 = "連携店F0616";
+/** 店舗は作らない（依頼者 2026-11-15）。連携店は使い回す E2E の店舗 221 で表す */
+export const 店名 = 店名を読む("221");
 export const 形式名 = "連携形式F0616";
 export let 管理者: Account = { loginId: "", password: "" };
 export let カード: { 日: string; 英: string }[] = [];

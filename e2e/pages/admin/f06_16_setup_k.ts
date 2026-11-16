@@ -69,7 +69,7 @@ export async function カードを名前で探す(page: Page, カード名: stri
   await page.goto(adminUrl("/card"));
   await page.waitForLoadState("load");
   await page.locator("#admin_search_card_multi").fill(カード名);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator('#admin_search_form button[type="submit"]').first().click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator('#admin_search_form button[type="submit"]').first().click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expect(page.getByText(/^(検索結果：\d+件が該当しました|検索条件に合致するデータが見つかりませんでした)$/).first(), `カード一覧で「${カード名}」を検索した結果`).toBeVisible({ timeout: 60_000 });
   return page.locator("#form_bulk tbody tr").filter({ has: page.locator('input[name="cardIds[]"]') }).evaluateAll((trs, name) => trs

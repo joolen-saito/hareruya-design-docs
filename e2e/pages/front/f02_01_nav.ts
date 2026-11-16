@@ -156,7 +156,7 @@ export class MainNavPage {
   }
   /** 同じタブで遷移するリンクを押す */
   async 押して遷移する(l: Locator): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /**

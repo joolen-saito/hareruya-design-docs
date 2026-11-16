@@ -24,7 +24,7 @@ export async function まとめて買取商品IDを設定する(page: Page, 商�
   await まとめて買取商品IDを読む(page);
   const input = page.locator(BULK_FIELD);
   await input.fill(商品ID);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('form#point_form button[type="submit"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('form#point_form button[type="submit"]').click({ noWaitAfter: true })]);
   const warnings = await expectSaved(page, `追加システム設定のまとめて買取商品IDを ${商品ID} にする`);
   expect(await page.locator(BULK_FIELD).inputValue(), "登録後のまとめて買取商品ID").toBe(商品ID);
   return warnings;

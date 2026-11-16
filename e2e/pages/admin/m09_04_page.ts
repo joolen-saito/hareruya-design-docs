@@ -104,13 +104,28 @@ export class ページ管理 {
    */
   async 登録して結果を読む(): Promise<{ 成功: boolean; 入力エラー: string[]; システムエラー: boolean; 遷移先: string; 同期待ちの案内: boolean }> {
     const p = this.page;
+    // 登録（POST）の応答を控える。応答が 200 のときは、保存されずに登録画面がもう一度描かれている
+    let 戻った = false;
+    const posted = p.waitForResponse((r) => r.request().method() === "POST" && /\/content\/page\/(new|\d+\/edit)/.test(new URL(r.url()).pathname), { timeout: 420_000 })
+      .then((r) => { 戻った = r.status() === 200; }).catch(() => undefined);
     await this.登録を押す();
     const ok = p.locator(".alert-success");
     const ng = p.locator(".alert-danger, .invalid-feedback, .form-error-message").filter({ hasNotText: "デバッグモード" });
     const sys = p.getByText("システムエラーが発生しました");
     const wait = p.getByText("該当ファイルが見つかりませんでした。");
+    const 結果 = ok.or(ng).or(sys).or(wait).first();
     // 登録はテンプレートの保存・ファイル置き場への送信を含み、手元の環境では1分を超えることがあり、開発環境の遅い時間帯（朝〜14時）は4分でも返らなかった（2026-11-11）ので7分まで待つ
-    await expect(ok.or(ng).or(sys).or(wait).first(), "登録の結果が表示されない").toBeVisible({ timeout: 420_000 });
+    await Promise.race([結果.waitFor({ state: "visible", timeout: 420_000 }).catch(() => undefined), posted]);
+    if (戻った && !(await 結果.isVisible().catch(() => false))) {
+      // 登録画面が描き直されたのにメッセージが出ないのは、フォーム全体のエラー（CSRF トークンなど）。この画面はフォーム全体のエラーを表示しない作り
+      // （page_edit.twig は項目ごとの form_errors だけを出す）ので、7分待たずに読み終える（2026-11-11 夜の開発環境で M09-04 の14件が7分待って止まった）
+      await p.waitForLoadState("load");
+      await 結果.waitFor({ state: "visible", timeout: 15_000 }).catch(() => undefined);
+      if (!(await 結果.isVisible().catch(() => false))) {
+        return { 成功: false, 入力エラー: ["登録を押すと、保存されずに登録画面がもう一度表示され、メッセージは出なかった（応答 200。フォーム全体のエラー＝CSRF トークンなどは画面に出ない作り）"], システムエラー: false, 遷移先: p.url(), 同期待ちの案内: false };
+      }
+    }
+    await expect(結果, "登録の結果が表示されない").toBeVisible({ timeout: 420_000 });
     const texts = async (l: Locator) => (await l.allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
     const 案内 = await wait.first().isVisible().catch(() => false);
     if (案内) test.info().annotations.push({ type: "手順の注記", description: "登録後の画面が「該当ファイルが見つかりませんでした。同期が完了していない可能性があります。…1分ほど待ってから再度アクセスしてください。」の案内になった（保存そのものはDBに残る）" });

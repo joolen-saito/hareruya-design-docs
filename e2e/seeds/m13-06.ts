@@ -14,20 +14,21 @@
  */
 import { Browser, Page } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
-import { rc, RUN_MARK } from "../lib/run_marker";
+import { rc, RUN_MARK, rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { EventInput, registerEvent, searchEventIds } from "../pages/admin/event";
-import { ensureMember } from "../pages/admin/member";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
 import { EntryListPage, フォーマットを用意する, プレイヤーのデッキを登録する, プレイヤーを検索する, プレイヤー検索の行を読む, 新規申込登録画面を開く, 申込を登録する, 申込状況を変える } from "../pages/admin/m13_06_entry_list";
 import { registerSchedule, ScheduleInput } from "../pages/admin/schedule";
-import { ensureTenant } from "../pages/admin/tenant";
+import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
 import { registerFrontMember } from "../pages/front/member_entry";
 
-export const M1306_ADMIN: Account = { loginId: "m1306_admin", password: "Passw0rd!M1306" };
+// 店舗を決まった名前の試験店舗（m13_marked_shop.ts）にしたので、管理者も決まった印の名前・ログインIDで1度だけ作って使い回す（同名の別の店舗に所属した前の管理者とぶつけない）
+export const M1306_ADMIN: Account = { loginId: rcFixed("m1306_admin").toLowerCase(), password: "Passw0rd!M1306" };
 /** 池袋店に編集権限を持つ別の管理者（シード表の投入方法が「池袋店に編集権限を持つ別の管理者」と定める。行は無い） */
-export const M1306_IKEBUKURO_ADMIN: Account = { loginId: "m1306_admin_ikebukuro", password: "Passw0rd!M1306I" };
+export const M1306_IKEBUKURO_ADMIN: Account = { loginId: rcFixed("m1306_admin_ikebukuro").toLowerCase(), password: "Passw0rd!M1306I" };
 
 /** 試験管理者の権限。「店舗オーナー」は所属店舗の店舗しか見えない（DBの行の制限）ので、全店舗が見える「モールオペレーター」で代える */
 const 試験管理者の権限 = "モールオペレーター";
@@ -38,8 +39,8 @@ export const 申込状況の並び = ["決済中", "入金待ち", "申込済み
 defineSeed("S-M13-06-MASTER", async ({ browser, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    await ensureTenant(page, { 店名: "新宿店", 店名カナ: "シンジュクテン", 店名英語: "Shinjuku", 支店URL: "m1306shinjuku", 店名略称3文字: "新宿店", ショップ名略称: "新宿店" }, issue);
-    await ensureTenant(page, { 店名: "池袋店", 店名カナ: "イケブクロテン", 店名英語: "Ikebukuro", 支店URL: "m1306ikebukuro", 店名略称3文字: "池袋店", ショップ名略称: "池袋店" }, issue);
+    await ensureMarkedTenant(page, "新宿", issue);
+    await ensureMarkedTenant(page, "池袋", issue);
     // 共有の設定（支払方法の表示順・申込状況）は書き換えず、イベント申込一覧の選択肢の並びで確かめる
     const list = new EntryListPage(page);
     await list.開く();
@@ -53,8 +54,8 @@ defineSeed("S-M13-06-MASTER", async ({ browser, seed }) => {
 defineSeed("S-M13-06-ADM", { needs: ["S-M13-06-MASTER"] }, async ({ browser }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-06試験管理者", 所属店舗: "新宿店", ログインID: M1306_ADMIN.loginId, メールアドレス: "m1306_admin@example.test",
-      パスワード: M1306_ADMIN.password, 権限: 試験管理者の権限, デフォルト検索表示店舗: "新宿店", 編集可能店舗: ["新宿店"],
+      名前: rcFixed("M13-06試験管理者"), 所属店舗: 印店名.新宿, ログインID: M1306_ADMIN.loginId, メールアドレス: "m1306_admin-e2e@example.test",
+      パスワード: M1306_ADMIN.password, 権限: 試験管理者の権限, デフォルト検索表示店舗: 印店名.新宿, 編集可能店舗: [印店名.新宿],
     });
   });
 });
@@ -62,8 +63,8 @@ defineSeed("S-M13-06-ADM", { needs: ["S-M13-06-MASTER"] }, async ({ browser }) =
 export async function 池袋店の管理者を用意する(browser: Browser): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-06池袋店管理者", 所属店舗: "池袋店", ログインID: M1306_IKEBUKURO_ADMIN.loginId, メールアドレス: "m1306_admin_ikebukuro@example.test",
-      パスワード: M1306_IKEBUKURO_ADMIN.password, 権限: 試験管理者の権限, デフォルト検索表示店舗: "池袋店", 編集可能店舗: ["池袋店"],
+      名前: rcFixed("M13-06池袋店管理者"), 所属店舗: 印店名.池袋, ログインID: M1306_IKEBUKURO_ADMIN.loginId, メールアドレス: "m1306_admin_ikebukuro-e2e@example.test",
+      パスワード: M1306_IKEBUKURO_ADMIN.password, 権限: 試験管理者の権限, デフォルト検索表示店舗: 印店名.池袋, 編集可能店舗: [印店名.池袋],
     });
   });
 }
@@ -161,7 +162,7 @@ export async function 申込だけが出ることを確かめる(page: Page, イ
 }
 
 export type 申込の定め = { label?: string; 姓: string; 名?: string; 状況?: string; デッキ?: { label?: string } };
-export type 申込シード = { 名日: string; 名英?: string; 店舗?: "新宿店" | "池袋店"; 開始?: string; 申込: 申込の定め[]; 後処理?: (申込ID: string[]) => Promise<void> | void };
+export type 申込シード = { 名日: string; 名英?: string; 店舗?: string; 開始?: string; 申込: 申込の定め[]; 後処理?: (申込ID: string[]) => Promise<void> | void };
 
 /**
  * イベントと日程（オンライン受付あり）を登録し、会員を登録して申込を登録し（必要なら申込状況を変え）、デッキを登録して、申込IDとデッキIDを控える。
@@ -169,12 +170,12 @@ export type 申込シード = { 名日: string; 名英?: string; 店舗?: "新�
  */
 export function defineEntrySeed(seedId: string, n: string, v: 申込シード): void {
   defineSeed(seedId, { needs: ["S-M13-06-ADM"] }, async ({ browser, notes }) => {
-    const 店舗 = v.店舗 ?? "新宿店";
+    const 店舗 = v.店舗 ?? 印店名.新宿;
     const 開始 = v.開始 ?? "2026-09-10 10:00";
     開催日の読み替えを残す(seedId, 開始);
     for (const [i, a] of v.申込.entries()) await 会員を登録する(browser, 検証会員(a.姓, a.名), `${n}-${i}`);
-    if (店舗 === "池袋店") await 池袋店の管理者を用意する(browser);
-    await withAdminSession(browser, 店舗 === "池袋店" ? M1306_IKEBUKURO_ADMIN : M1306_ADMIN, async (page) => {
+    if (店舗 === 印店名.池袋) await 池袋店の管理者を用意する(browser);
+    await withAdminSession(browser, 店舗 === 印店名.池袋 ? M1306_IKEBUKURO_ADMIN : M1306_ADMIN, async (page) => {
       const id = await registerEvent(page, イベント(v.名日, v.名英 ?? 英名(n), 店舗));
       const d = await registerSchedule(page, id, 日程(開始));
       const ids: string[] = [];
@@ -205,11 +206,11 @@ defineSeed("S-M13-06-CSV-029", { needs: ["S-M13-06-ADM"] }, async ({ browser, no
     const items: [string, string, string, string][] = [[rc("M1306CSVAPP-029"), "2026-09-10 10:00", 姓[0], "〔申込ID-M1306-029A〕"], [rc("M1306CSVDECK-029"), "2026-09-11 10:00", 姓[1], "〔申込ID-M1306-029B〕"]];
     for (const [名日, 開始, s, label] of items) {
       開催日の読み替えを残す(seed.シードID, 開始);
-      const id = await registerEvent(page, イベント(名日, 英名(`029${label.slice(-2, -1)}`), "新宿店"));
+      const id = await registerEvent(page, イベント(名日, 英名(`029${label.slice(-2, -1)}`), 印店名.新宿));
       const d = await registerSchedule(page, id, 日程(開始));
       const e = await 申込を登録する(page, 名日, d, s);
       notes.set(label, e);
-      await プレイヤーのデッキを登録する(page, { デッキ名: "M1306-029-DECK", プレイヤー名: s, イベント名: 名日, 店舗: "新宿店", 日程ID: d, 開催日: 読み替えた開催日(開始).slice(0, 10).replace(/-/g, "/") });
+      await プレイヤーのデッキを登録する(page, { デッキ名: "M1306-029-DECK", プレイヤー名: s, イベント名: 名日, 店舗: 印店名.新宿, 日程ID: d, 開催日: 読み替えた開催日(開始).slice(0, 10).replace(/-/g, "/") });
     }
   });
 });
@@ -232,7 +233,7 @@ defineSeed("S-M13-06-FILTER-044", { needs: ["S-M13-06-ADM"] }, async ({ browser,
   await 会員を登録する(browser, 検証会員(姓), "044");
   await withAdminSession(browser, M1306_ADMIN, async (page) => {
     const 名日 = rc("M1306FILTER-044");
-    const id = await registerEvent(page, イベント(名日, 英名("044"), "新宿店"));
+    const id = await registerEvent(page, イベント(名日, 英名("044"), 印店名.新宿));
     const d = await registerSchedule(page, id, 日程("2026-09-10 10:00"));
     notes.set("〔イベントID-M1306-044〕", id);
     notes.set("〔日程ID-M1306-044〕", d);
@@ -246,7 +247,7 @@ defineSeed("S-M13-06-INBOUND-046", { needs: ["S-M13-06-ADM"] }, async ({ browser
   await 会員を登録する(browser, { 姓: 新規参加者.姓, 名: 新規参加者.名, セイ: "シンキ", メイ: "サンカシャ" }, "046");
   await withAdminSession(browser, M1306_ADMIN, async (page) => {
     const 名日 = rc("M1306INBOUND-046");
-    const id = await registerEvent(page, イベント(名日, 英名("046"), "新宿店", { 参加費: "1000", 支払方法: ["クレジットカード決済"] }));
+    const id = await registerEvent(page, イベント(名日, 英名("046"), 印店名.新宿, { 参加費: "1000", 支払方法: ["クレジットカード決済"] }));
     const d = await registerSchedule(page, id, { 開始時間: "2027-09-10 10:00", 受付あり: true, 受付時間: { 開始: "09:00", 終了: "09:30" }, デッキ登録あり: false, オンライン受付: { 開始: "2027-08-01 00:00", 終了: "2027-08-31 00:00" } });
     notes.set("〔イベントID-M1306-046〕", id);
     notes.set("〔日程ID-M1306-046〕", d);
@@ -272,7 +273,7 @@ defineEntrySeed("S-M13-06-DECKHAVE-071", "071", { 名日: rc("M1306-071"), 申�
 defineEntrySeed("S-M13-06-DECKCHK-059", "059", { 名日: rc("M1306-059"), 申込: [{ label: "〔申込ID-M1306-059〕", 姓: rc("検証M1306-059"), デッキ: { label: "〔デッキID-M1306-059〕" } }] });
 defineEntrySeed("S-M13-06-DECKBULK-061", "061", { 名日: rc("M1306-061"), 申込: [{ label: "〔申込ID-M1306-061〕", 姓: rc("検証M1306-061"), 状況: "入金待ち", デッキ: { label: "〔デッキID-M1306-061〕" } }] });
 // 068: 池袋店（池袋店の管理者で作る）
-defineEntrySeed("S-M13-06-DECKSHOP-068", "068", { 名日: rc("M1306-068"), 店舗: "池袋店", 申込: [{ label: "〔申込ID-M1306-068〕", 姓: rc("検証M1306-068"), デッキ: {} }] });
+defineEntrySeed("S-M13-06-DECKSHOP-068", "068", { 名日: rc("M1306-068"), 店舗: 印店名.池袋, 申込: [{ label: "〔申込ID-M1306-068〕", 姓: rc("検証M1306-068"), デッキ: {} }] });
 // 069・070: 申込3件の申込状況
 defineEntrySeed("S-M13-06-FILTSTAT-069", "069", { 名日: rc("M1306-069"), 申込: [申込("069", "A", { 状況: "入金待ち" }), 申込("069", "B"), 申込("069", "C", { 状況: "キャンセル済み" })] });
 defineEntrySeed("S-M13-06-FILTSTAT-070", "070", { 名日: rc("M1306-070"), 申込: [申込("070", "A"), 申込("070", "B", { 状況: "入金待ち" }), 申込("070", "C", { 状況: "決済中" })] });
@@ -291,10 +292,10 @@ function defineDeckOnlySeed(seedId: string, n: "060" | "063" | "064", 名日: st
     開催日の読み替えを残す(seedId, "2026-09-10 10:00");
     await 会員を登録する(browser, { ...m }, n);
     await withAdminSession(browser, M1306_ADMIN, async (page) => {
-      const id = await registerEvent(page, イベント(名日, 英名(n), "新宿店"));
+      const id = await registerEvent(page, イベント(名日, 英名(n), 印店名.新宿));
       const d = await registerSchedule(page, id, 日程("2026-09-10 10:00", false));
       if (日程label) notes.set(日程label, d);
-      notes.set(`〔デッキID-M1306-${n}〕`, await プレイヤーのデッキを登録する(page, { デッキ名: `M1306-${n}-DECK`, プレイヤー名: m.姓, イベント名: 検索語, 店舗: "新宿店", 日程ID: d, 開催日: 読み替えた開催日("2026-09-10 10:00").slice(0, 10).replace(/-/g, "/") }));
+      notes.set(`〔デッキID-M1306-${n}〕`, await プレイヤーのデッキを登録する(page, { デッキ名: `M1306-${n}-DECK`, プレイヤー名: m.姓, イベント名: 検索語, 店舗: 印店名.新宿, 日程ID: d, 開催日: 読み替えた開催日("2026-09-10 10:00").slice(0, 10).replace(/-/g, "/") }));
       // 確認: イベント申込を検索は0件、デッキ登録を検索は上のデッキ1行だけ
       const e = await 申込一覧で検索する(page, 検索語, "イベント申込を検索");
       if (e.rows.length !== 0) throw new Error(`イベント申込一覧で「${検索語}」のイベント申込を検索すると ${e.rows.length} 行出る（0件のはず）`);
@@ -312,7 +313,7 @@ export const イベント057 = { 名日: `${rc("M1306-057")}-晴大会`, 名英:
 defineSeed("S-M13-06-MODAL-057", { needs: ["S-M13-06-ADM"] }, async ({ browser, notes }) => {
   await withAdminSession(browser, M1306_ADMIN, async (page) => {
     await フォーマットを用意する(page, { 名前日: イベント057.フォーマット, 名前英: "M1306-057-FMT", コード: "M1306057", 並び順: "9000" });
-    const id = await registerEvent(page, イベント(イベント057.名日, イベント057.名英, "新宿店", { フォーマット: [イベント057.フォーマット] }));
+    const id = await registerEvent(page, イベント(イベント057.名日, イベント057.名英, 印店名.新宿, { フォーマット: [イベント057.フォーマット] }));
     notes.set("〔イベントID-M1306-057〕", id);
     // 057 はモーダルの開催日 2026/09/01〜2026/09/30 で探すので、開催日は読み替えない（シード表のまま）
     notes.set("〔日程ID-M1306-057〕", await registerSchedule(page, id, { 開始時間: "2026-09-10 10:00", 受付あり: true, 受付時間: { 開始: "09:00", 終了: "09:30" }, デッキ登録あり: false, オンライン受付: { 開始: "2026-08-01 00:00", 終了: "2026-08-31 00:00" } }));

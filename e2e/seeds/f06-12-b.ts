@@ -11,7 +11,7 @@ import { Browser } from "@playwright/test";
 import { 会員の最新のネット買取依頼ID, 会員の最新の店頭買取依頼ID } from "../db/f06_12";
 import { available } from "../lib/db";
 import { defineSeed } from "../lib/seeds";
-import { 店舗を用意する, 店頭買取を申込む, ネット買取を申込む, OWNERS_STORE, OWNERS_URL } from "./f06-11-b";
+import { 店舗を用意する, 店頭買取を申込む, ネット買取を申込む, OWNERS_STORE } from "./f06-11-b";
 import { 本会員を作る } from "./f06-member";
 
 export type 依頼 = { 持ち主のメール前半: string; 買取依頼ID: string };
@@ -52,7 +52,7 @@ defineSeed("S-F06-12-OTC-010", async ({ browser, seed }) => {
   const 前半 = "f0612_member-010";
   const 会員ID = await 会員を作る(browser, 前半, 参照会員のパスワード("010"), "会員010");
   await 店舗を用意する(browser, OWNERS_STORE, seed.シードID);
-  await 店頭買取を申込む(browser, OWNERS_URL, 前半, 参照会員のパスワード("010"), 1);
+  await 店頭買取を申込む(browser, OWNERS_STORE.支店URL, 前半, 参照会員のパスワード("010"), 1);
   if (!available) throw new Error("この環境はDB確認ができないため、作った店頭買取依頼のIDを読めない");
   const id = 会員の最新の店頭買取依頼ID(会員ID);
   if (!id) throw new Error(`会員 ${前半} の店頭買取依頼が作られていない`);

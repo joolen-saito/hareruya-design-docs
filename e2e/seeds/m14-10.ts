@@ -227,7 +227,10 @@ defineSeed("S-M14-10-SORT-024", { needs: 管理者 }, async ({ browser, notes, s
     for (const [x, 名日, 名英, 並び順] of [["A", "並び順10形式-024", "Sort 10 Format-024", "10"], ["B", "編集前フォーマット-024", "Before Format-024", "50"], ["C", "並び順30形式-024", "Sort 30 Format-024", "30"]]) {
       notes.set(`〔フォーマットID-M1410-024${x}〕`, await フォーマットを作る(page, { 名日: 名(名日), 名英: 名(名英), 並び順, メタゲーム分析日数: "14", デッキ検索: true }, seed.シードID, issue));
     }
-    const ids = await new FormatListPage(page).行のフォーマットID();
+    // 一覧を開き直して読む（登録の直後の画面は一覧でないことがあり、画面のままだと行が読めない）
+    const list = new FormatListPage(page);
+    await list.open();
+    const ids = await list.行のフォーマットID();
     for (const x of ["A", "B", "C"]) if (!ids.includes(notes.get(`〔フォーマットID-M1410-024${x}〕`))) throw new Error(`${seed.シードID}: 登録したフォーマット ${x} が管理画面のフォーマット一覧に無い`);
   });
   issue(`読み替え: ${コード空("BEFORE_1-024")}`);

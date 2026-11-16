@@ -60,6 +60,8 @@ defineSeed("S-M07-02-MASTER", { needs: ADM }, async ({ browser, seed }) => {
     if (miss.length) throw new Error(`買取状況の選択肢に ${miss.join("・")} が無い（ある選択肢: ${have.join("、")}）`);
     const names = await page.locator('input[name*="identityConfirmStatus"]').evaluateAll((os) => os.map((o) => ((o as HTMLInputElement).labels?.[0]?.textContent ?? "").trim()));
     if (!names.includes("オンライン本人確認済み")) throw new Error(`本人確認の選択肢に「オンライン本人確認済み」が無い（ある選択肢: ${names.join("、")}）`);
+    // 表示件数の選択は、検索結果の一覧に出る（検索入力の画面にはまだ無い）。条件を入れずに検索してから読む
+    await l.検索する();
     const counts = (await page.locator("#page_count_pulldown option").allInnerTexts()).map((t) => t.trim());
     if (!counts.includes("10件")) throw new Error(`表示件数の選択肢に「10件」が無い（ある選択肢: ${counts.join("、")}）`);
   });

@@ -50,13 +50,32 @@ async function 項目があることを確かめる(browser: Browser, seedId: st
   });
 }
 
+/**
+ * 006 が使う、商品CSVの無効の項目2つ。正本の無効の項目（CSV商品名・CSV公開状態）は画面に無いので、画面にある無効の項目で代える。
+ * 以前は「送料」「税率」と決め打ちだったが、開発環境の商品CSVにその項目が無く（2026-11-15）止まったので、DBの無効の項目から画面にあるものを2つ選ぶ。
+ */
+let 無効の項目006: [string, string] | null = null;
+export function 無効の項目(): [string, string] {
+  if (!無効の項目006) throw new Error("S-M10-13-FIELDS がまだ006の無効の項目を決めていない");
+  return 無効の項目006;
+}
+
 defineSeed("S-M10-13-FIELDS", async ({ browser, seed }) => {
-  await 項目があることを確かめる(browser, seed.シードID, "1", ["公開ステータス名称", "商品コード", "商品名(日)", "商品ID", "送料", "税率"]);
+  await 項目があることを確かめる(browser, seed.シードID, "1", ["公開ステータス名称", "商品コード", "商品名(日)", "商品ID"]);
   await 項目があることを確かめる(browser, seed.シードID, "10", ["商品コード", "商品ID", "商品名"]);
-  // 006 は「有効・無効の両方」を確かめる。無効の項目「送料」「税率」と有効の項目「商品コード」「商品ID」であることを、参照で確かめる
+  // 006 は「有効・無効の両方」を確かめる。商品CSVの無効の項目（画面にあるもの）から2つと、有効の項目「商品コード」「商品ID」を使う
   const 無効 = 無効な出力項目名("1");
-  for (const x of ["送料", "税率"]) if (!無効.includes(x)) throw new Error(`${seed.シードID}: 商品CSVの項目「${x}」が無効になっていない（006 の前提）`);
   for (const x of ["商品コード", "商品ID"]) if (無効.includes(x)) throw new Error(`${seed.シードID}: 商品CSVの項目「${x}」が無効になっている（006 の前提）`);
+  const 画面の項目 = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const p = new CustomCsvPage(page);
+    await p.open("1");
+    return [...(await p.出力しない項目名()), ...(await p.出力する項目名())];
+  });
+  const 使う = 画面の項目.filter((x) => 無効.includes(x));
+  if (使う.length < 2) throw new Error(`${seed.シードID}: 商品CSVに、画面にある無効の項目が2つ無い（無効の項目: ${無効.join("、") || "なし"}。共有のマスタは書き換えない。006 の前提）`);
+  無効の項目006 = [使う[0], 使う[1]];
+  reportSeedIssue(seed.シードID, `006 の無効の項目は、商品CSVの画面にある無効の項目「${使う[0]}」「${使う[1]}」で代えた（正本の無効の項目は画面に無い）`);
   await 項目があることを確かめる(browser, seed.シードID, "3", ["注文番号"]);
   await 項目があることを確かめる(browser, seed.シードID, "4", ["出荷ID"]);
   reportSeedIssue(seed.シードID, "出力項目はDBで揃える作り方だが、共有のマスタに試験の項目は足さず、画面にある項目（商品CSV: 公開ステータス名称・商品コード・商品名(日)・商品ID、在庫CSV: 商品コード・商品ID・商品名、受注CSV: 注文番号、配送CSV: 出荷ID）があることを確かめて読み替えた");
@@ -89,14 +108,14 @@ async function 商品を作る(browser: Browser, seedId: string, lines: { code: 
 // ---- 既存の定義（商品CSV）----
 for (const n of ["006", "007", "008", "010", "011", "012", "013", "014", "015", "018", "025"]) {
   defineSeed(`S-M10-13-BASE-${n}`, { needs: NEEDS }, async ({ browser, notes, seed }) => {
-    // 006 は「有効・無効の両方が出力する項目に含まれる」ことを確かめるので、無効の項目「送料」を CSV公開状態の代わりにする
-    const 項目 = n === "006" ? ["送料", "商品コード"] : ["公開ステータス名称", "商品コード"];
+    // 006 は「有効・無効の両方が出力する項目に含まれる」ことを確かめるので、無効の項目（S-M10-13-FIELDS が決めた1つ目）を CSV公開状態の代わりにする
+    const 項目 = n === "006" ? [無効の項目()[0], "商品コード"] : ["公開ステータス名称", "商品コード"];
     notes.set(`〔カスタム定義ID-M1013-${n}${n === "008" ? "A" : ""}〕`, await 定義を作る(browser, "1", 既存商品名(n), 項目, `${seed.シードID} の定義「${既存商品名(n)}」`));
     if (n === "008") {
       notes.set("〔カスタム定義ID-M1013-008B〕", await 定義を作る(browser, "1", rc("商品CSV予備-008"), [], `${seed.シードID} の定義「商品CSV予備-008」`));
     }
     reportSeedIssue(seed.シードID, n === "006"
-      ? "出力順は、正本の「CSV公開状態」「CSV商品コード」の代わりに、画面にある無効の項目「送料」と有効の項目「商品コード」にした（ケースが有効・無効の両方を確かめるため）"
+      ? `出力順は、正本の「CSV公開状態」「CSV商品コード」の代わりに、画面にある無効の項目「${無効の項目()[0]}」と有効の項目「商品コード」にした（ケースが有効・無効の両方を確かめるため）`
       : 読み替え);
   });
 }

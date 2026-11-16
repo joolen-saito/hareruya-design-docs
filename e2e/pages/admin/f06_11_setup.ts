@@ -29,7 +29,7 @@ export async function 表示件数のマスタを読む(page: Page): Promise<マ
 }
 
 /** 店頭買取の買取一覧で申込者名・買取店舗を検索し、1件の行のステータスを返す（登録直後は検索に出るまで遅れることがあるので数回検索し直す） */
-export async function 店頭買取のステータスを読む(page: Page, 申込者名: string, 店名: string): Promise<string> {
+export async function 店頭買取のステータスを読む(page: Page, 申込者名: string, 店名: string, ステータスで絞る?: string): Promise<string> {
   const list = new OtcListPage(page);
   let last = "";
   for (let i = 0; i < 6; i++) {
@@ -38,6 +38,8 @@ export async function 店頭買取のステータスを読む(page: Page, 申込
     await list.日時を空にする();
     await list.買取店舗を選ぶ(店名);
     await list.申込者名を入れる(申込者名);
+    // ステータスを選ばない検索は、買取キャンセルの買取を一覧に出さない（アプリの作り）。キャンセルにした買取の行を読むときは、そのステータスで絞る
+    if (ステータスで絞る) await list.ステータスを選ぶ(ステータスで絞る);
     await list.検索する();
     const rows = (await list.結果の表().count()) === 0 ? [] : await list.行();
     if (rows.length === 1) return rows[0].ステータス;

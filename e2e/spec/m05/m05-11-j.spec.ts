@@ -51,13 +51,24 @@ caseTest("IT-M05-11-216", async ({ page, browser, notes, step, expected }) => {
 caseTest("IT-M05-11-027", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M0511_ADMIN_A);
   let p!: OrderEditPage;
-  let rows: ReturnType<typeof 受注明細> = [];
+  let rows: ReturnType<typeof 受注明細> = [], 前: ReturnType<typeof 受注明細> = [];
+  let 押した = { 送信: false, 入力チェック: "" };
   const a = rc("PICK-A"), b = rc("PICK-B");
-  await step(1, async () => { p = await 開く(browser, page, notes.get(key("共有PICKUP"))); });
+  // 操作前の明細（数量・価格・総原価・欠品数量まで）。キャンセル前のまま残ることを、内容ごと比べる
+  await step(1, async () => { p = await 開く(browser, page, notes.get(key("共有PICKUP"))); 前 = 受注明細(notes.get(key("共有PICKUP"))); });
   await step(2, async () => { await new OrderItemsEdit(page).削除を押す(b); await new OrderItemsEdit(page).削除を確定する(b); });
-  await step(3, async () => { await p.登録を押す(onDialog); });
-  await step(4, async () => { rows = 受注明細(notes.get(key("共有PICKUP"))); });
-  await expected(async () => { expect.soft(rows.map((r) => r.商品コード).sort(), "受注明細（PICK-A・PICK-B の2明細がそのまま残る）").toEqual([a, b].sort()); });
+  await step(3, async () => { 押した = await p.登録を押して送信を見る(onDialog); });
+  await step(4, async () => {
+    rows = 受注明細(notes.get(key("共有PICKUP")));
+    // 登録のあとの画面は、差し戻された入力（PICK-B を消したまま）を表示する。保存されている内容を画面でも残すため開き直す
+    await p.開き直す(notes.get(key("共有PICKUP")));
+  });
+  await expected(async () => {
+    expect.soft(押した.送信 || 押した.入力チェック !== "", "「受注情報を登録」を押して、送信されたか入力チェックで差し止められた（押せずに変わらなかったのではない）").toBe(true);
+    expect.soft(rows.map((r) => r.商品コード).sort(), "受注明細（PICK-A・PICK-B の2明細がそのまま残る）").toEqual([a, b].sort());
+    expect.soft(rows, "受注明細の内容（数量・価格・総原価・欠品数量がキャンセル前のまま）").toEqual(前);
+    expect.soft(前.map((r) => r.商品コード).sort(), "操作前の受注明細（前提: PICK-A・PICK-B の2明細）").toEqual([a, b].sort());
+  });
 });
 
 caseTest("IT-M05-11-099", async ({ page, browser, notes, step, expected }) => {

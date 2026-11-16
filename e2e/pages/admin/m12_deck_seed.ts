@@ -83,7 +83,7 @@ async function registerCardWithTypes(page: Page, d: カード定義, cardsetId: 
     }
     issue(`${what}: 詳細情報の ${chosen.join("・")} は選択肢の先頭を選んだ（正本は任意の選択肢と定める）`);
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}の登録`)) issue(w);
   const m = /\/card\/(\d+)\/edit/.exec(page.url());
   if (!m) throw new Error(`${what}: 登録後にカードの編集画面へ移らない（${page.url()}）`);
@@ -191,7 +191,7 @@ export async function デッキを一括削除する(page: Page, フォーマッ
     // 検索欄の開催日(From)は、初期表示で3か月前の日付が入っている。範囲の指定が無いときは、古いデッキも消すために空にする
     await page.locator('[name="admin_search_deck[event_date_from]"]').fill(開催日 ? 開催日.from.replace(/\//g, "-") : "");
     await page.locator('[name="admin_search_deck[event_date_to]"]').fill(開催日 ? 開催日.to.replace(/\//g, "-") : "");
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('form[name="admin_search_deck"] button[type="submit"], #search_form button[type="submit"]').first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('form[name="admin_search_deck"] button[type="submit"], #search_form button[type="submit"]').first().click({ noWaitAfter: true })]);
     const result = page.getByText(/検索結果：\d+件が該当しました|検索条件に合致するデータが見つかりませんでした/).first();
     await expect(result, "デッキ一覧の検索結果").toBeVisible();
     const rows = page.locator('input.searched_deck_id');
@@ -199,7 +199,7 @@ export async function デッキを一括削除する(page: Page, フォーマッ
     if (n === 0) return 消した;
     await page.locator("#allCheck").check();
     page.once("dialog", (d) => { void d.accept(); });
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("#bulk_delete").click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#bulk_delete").click({ noWaitAfter: true })]);
     await expectSaved(page, "デッキの一括削除");
     消した += n;
   }

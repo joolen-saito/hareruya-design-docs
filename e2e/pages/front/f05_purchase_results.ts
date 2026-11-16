@@ -91,7 +91,7 @@ export class ネット買取の検索結果 {
     await this.page.locator("#purchase_header_search_goods_name").fill(語);
     await Promise.all([
       this.page.waitForURL((u) => u.pathname.includes("/purchase/search"), { waitUntil: "load", timeout: 60_000 }),
-      this.page.locator("#purchase_header_search_goods_submit").click(),
+      this.page.locator("#purchase_header_search_goods_submit").click({ noWaitAfter: true }),
     ]);
   }
 
@@ -165,7 +165,7 @@ export class ネット買取の検索結果 {
   async 同名商品検索を押す(row: Locator): Promise<void> {
     await Promise.all([
       this.page.waitForURL((u) => u.searchParams.has("cardId"), { waitUntil: "load", timeout: 60_000 }),
-      row.locator('a[href*="cardId="]').first().click(),
+      row.locator('a[href*="cardId="]').first().click({ noWaitAfter: true }),
     ]);
   }
 
@@ -181,6 +181,8 @@ export class ネット買取の検索結果 {
     }
     return disabled;
   }
+  /** 行のマイナスのボタン */
+  マイナスのボタン(row: Locator): Locator { return row.locator(".purchase-detail-qty .btn-minus"); }
   /** 行の「カートに追加」を押し、追加の要求の応答の状態を返す */
   async カートに追加を押す(row: Locator): Promise<number> {
     const res = this.page.waitForResponse((r) => new URL(r.url()).pathname.endsWith("/purchase/add") && r.request().method() === "POST", { timeout: 30_000 });

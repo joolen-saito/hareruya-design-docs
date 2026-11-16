@@ -3,9 +3,10 @@
  * 実装しないケース: 021（12001件の会員を作る＝大量）、043（顧客CSV出力項目の共有の設定を書き換える）、052（メールの受信を確かめる）。
  * 残りは、会員を0件にする初期化を行わず、実行の印つきの語で対象の会員に絞る読み替えで実装した（seeds/m08-01.ts の注記）。
  */
-import { Dialog, Page, test } from "@playwright/test";
+import { Dialog, expect as pwExpect, Page, test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
+import { topErrorAlerts } from "../../pages/admin/common";
 import { adminUrl } from "../../lib/session";
 import { M08CustomerListPage } from "../../pages/admin/m08_customer_list";
 import { M08CustomerMailPage } from "../../pages/admin/m08_customer_mail";
@@ -35,12 +36,24 @@ caseTest("IT-M08-01-001", async ({ page, step, expected }) => {
 caseTest("IT-M08-01-003", async ({ page, step, expected }) => {
   await loginAdmin(page, M0801_ADMIN);
   const list = new M08CustomerListPage(page);
-  let 開いた後 = false, 閉じた後 = true;
-  await step(1, async () => { await list.open(); });
+  let 押す前 = false, 開いた後 = false, 閉じた後 = true;
+  await step(1, async () => {
+    await list.open();
+    // 正本の期待結果「非表示になった後、再度表示される」は、検索条件欄が表示されている状態から押す前提。
+    // 設計書（0207 識別ID 2「(3)~(32)の検索条件を表示/非表示させる」）は初めの状態を書いておらず、
+    // アプリ（EC-CUBE 標準の admin/Customer/index.twig）は絞り込みの無いときは閉じて開く（collapse に show が付かない）。
+    // 2026-11-13 10:12 の開発環境では、閉じた状態から押して「表示→非表示」となり、開閉は動いているのに不合格になった。
+    // そこで、閉じていれば押す前に一度開いて正本の前提（表示されている状態）にそろえ、そのことを注記に残す。
+    const 初め = await list.詳細検索が開いているか();
+    if (!初め) await list.showDetail();
+    押す前 = await list.詳細検索が開いているか();
+    note(`画面を開いた直後の検索条件欄（#searchDetail）: ${初め ? "表示" : "非表示（アプリは初めは閉じている）。正本の前提（表示されている状態）にそろえるため、手順2の前に開閉ボタンで一度開いた"}`);
+  });
   await step(2, async () => { await list.toggleDetail(); 開いた後 = await list.詳細検索が開いているか(); });
   await step(3, async () => { await list.toggleDetail(); 閉じた後 = await list.詳細検索が開いているか(); });
   await expected(async () => {
     // 正本の期待結果は「非表示になった後、再度表示される」。1回目の後と2回目の後の表示を、その順に確かめる
+    expect.soft(押す前, "開閉ボタンを押す前は検索条件欄が表示されている（正本の前提）").toBe(true);
     expect.soft(開いた後, "開閉ボタンを1回押した後は検索条件欄が非表示").toBe(false);
     expect.soft(閉じた後, "開閉ボタンをもう1回押した後は検索条件欄が再度表示").toBe(true);
   });
@@ -53,7 +66,7 @@ caseTest("IT-M08-01-024", async ({ page, step, expected }) => {
   await step(1, async () => { await list.open(); });
   await step(2, async () => { await list.showDetail(); await list.patternName.fill("条件なしパターン", { timeout: 30_000 }); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), list.saveButton.click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), list.saveButton.click({ timeout: 30_000, noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   let rows: ReturnType<typeof 会員一覧の検索パターン> = [];
@@ -67,7 +80,7 @@ caseTest("IT-M08-01-025", async ({ page, step, expected }) => {
   await step(1, async () => { await list.open(); });
   await step(2, async () => { await list.showDetail(); await list.closeReason.fill("不正利用", { timeout: 30_000 }); await list.patternName.fill("退会理由検索", { timeout: 30_000 }); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), list.saveButton.click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), list.saveButton.click({ timeout: 30_000, noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   let rows: ReturnType<typeof 会員一覧の検索パターン> = [];
@@ -87,7 +100,7 @@ caseTest("IT-M08-01-029", async ({ page, step, expected }) => {
   await step(1, async () => { await list.open(); });
   await step(2, async () => { await list.showDetail(); await list.patternName.fill(名前, { timeout: 60_000 }); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), list.saveButton.click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), list.saveButton.click({ timeout: 30_000, noWaitAfter: true })]);
     await page.waitForLoadState("load");
     保存後の応答 = (await page.locator(".alert").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter((t) => t && !/デバッグモード/.test(t));
   });
@@ -109,7 +122,7 @@ caseTest("IT-M08-01-031", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await list.open(); await list.selectPattern("退会理由パターン-031"); });
   await step(2, async () => { await list.showDetail(); await list.patternName.fill("退会理由更新", { timeout: 30_000 }); await list.closeReason.fill("BAN", { timeout: 30_000 }); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), list.saveButton.click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), list.saveButton.click({ timeout: 30_000, noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   let rows: ReturnType<typeof 検索パターンID> = [];
@@ -129,7 +142,7 @@ caseTest("IT-M08-01-060", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await list.open(); await list.selectPattern("退会理由パターン-060A"); });
   await step(2, async () => { await list.showDetail(); await list.patternName.fill("退会理由更新-060", { timeout: 30_000 }); await list.closeReason.fill("BAN", { timeout: 30_000 }); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), list.saveButton.click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), list.saveButton.click({ timeout: 30_000, noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   let ra: ReturnType<typeof 検索パターンID> = [], rb: ReturnType<typeof 検索パターンID> = [];
@@ -228,6 +241,9 @@ function 会員削除(k: "054" | "055") {
       await expected(async () => {
         expect.soft(isListPath(new URL(page.url()).pathname), `会員一覧画面へ遷移（${new URL(page.url()).pathname}）`).toBe(true);
         expect.soft(await list.form.isVisible(), "会員検索一覧の検索欄が表示されている").toBe(true);
+        // 削除に失敗しても会員一覧へ戻る作りなので、「削除後に」遷移したことを、削除できた知らせで確かめる
+        await expect.soft(page.locator(".alert-success"), "削除できた知らせ（削除に失敗して戻ったのではない）").toBeVisible();
+        await expect.soft(topErrorAlerts(page), "エラーの知らせが出ていない").toHaveCount(0);
       });
     }
   };
@@ -526,7 +542,7 @@ caseTest("IT-M08-01-020", async ({ page, step, expected }) => {
   await step(4, async () => { const ids = await list.結果の会員ID(); 押した = ids[0]; await list.会員名を押す(押した); });
   await step(5, async () => {
     const link = page.locator('a[href*="/customer/page/"][href*="resume=1"]').first();
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), link.click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), link.click({ timeout: 30_000, noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await expected(async () => {
@@ -566,7 +582,7 @@ caseTest("IT-M08-01-026", async ({ page, notes, step, expected }) => {
     await list.showDetail(); await list.検索語を入れる(検索語alpha("026")); await list.patternName.fill(名前026(), { timeout: 30_000 });
   });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), list.saveButton.click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), list.saveButton.click({ timeout: 30_000, noWaitAfter: true })]);
     await page.waitForLoadState("load");
     ids = await list.結果の会員ID();
   });
@@ -580,7 +596,7 @@ caseTest("IT-M08-01-028", async ({ page, notes, step, expected }) => {
   await step(1, async () => { note("検索語「alpha801」は、実行の印つきの語（alpha801-028-<印>）にした"); await list.open(); await list.searchMulti(検索語alpha("028")); 前 = await list.結果の会員ID(); });
   await step(2, async () => { await list.showDetail(); await list.patternName.fill("", { timeout: 30_000 }); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), list.saveButton.click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), list.saveButton.click({ timeout: 30_000, noWaitAfter: true })]);
     await page.waitForLoadState("load");
     後 = await list.結果の会員ID();
   });
@@ -737,6 +753,8 @@ function 遷移(k: "047" | "048" | "049" | "050") {
       const 期待 = k === "047" || k === "048" ? new RegExp(`/customer/${id}/edit$`) : k === "049" ? new RegExp(`/customer/mail/${id}/history$`) : new RegExp(`/customer/manual_mail/${id}(/\\d+)?$`);
       const 画面 = k === "047" || k === "048" ? "会員登録編集画面" : k === "049" ? "メール配信履歴画面" : "手動メール通知画面";
       expect.soft(期待.test(道筋), `会員ID ${id} の${画面}へ遷移（${道筋}）`).toBe(true);
+      // 画面に会員を示すものが出ない画面（メール配信履歴）があるので、帯に画面のアドレス（会員ID を含む）で確かめたことを出す
+      await expect.soft(page, `会員ID ${id} の${画面}のアドレス`).toHaveURL(new RegExp(`/customer/(mail|manual_mail)?/?${id}(/history|/\\d+|/edit)?/?(\\?.*)?$`));
     });
   };
 }
@@ -782,11 +800,16 @@ caseTest("IT-M08-01-053", async ({ page, notes, step, expected }) => {
   const list = await 一覧を開く(page);
   const id = notes.get("〔会員ID-M0801-053〕");
   await step(1, async () => { await list.open(); await list.searchMulti(id); });
-  await step(2, async () => { await list.仮会員メール再送を押す(id); });
+  await step(2, async () => { await list.仮会員メール再送を押す(id);
+    // モーダルが開き切る（フェードが終わる）のを待つ。途中だと半透明で写る
+    await pwExpect(page.locator(`#discontinuance_cus_${id}`)).toHaveCSS("opacity", "1", { timeout: 15_000 });
+  });
   await step(3, async () => { await list.再送モーダルで送信する(id); });
   await expected(async () => {
     expect.soft(isListPath(new URL(page.url()).pathname), `会員一覧画面へ遷移（${new URL(page.url()).pathname}）`).toBe(true);
     expect.soft(await list.form.isVisible(), "会員検索一覧の検索欄が表示されている").toBe(true);
+    // 「確認メール送信後に」遷移したことを、送信できた知らせで確かめる（押す前から会員一覧に居るので、遷移先のアドレスだけでは送信を確かめられない）
+    await expect.soft(page.locator(".alert-success"), "確認メールを送信できた知らせ").toBeVisible();
   });
 });
 

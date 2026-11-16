@@ -2,9 +2,10 @@
  * F09-06 デッキリスト詳細（フロント・デッキ検索）。正本: cases/F09-06_test_cases.tsv
  *
  * 実装しないケース（理由）:
- * - 026・027: 手順の中で、DBの画像の候補の特殊セットを書き換える（DB への書き込み）
  * - 029: デッキのフォーマットを未設定にする準備をDBへ直接行う（デッキ編集画面ではフォーマットが必須）
  * - 051・054・063・064: 旧デッキIDをDBへ直接設定する準備（画面で指定できない）
+ *
+ * 026・027 は、手順の「DBで候補Wの特殊セットを更新する」を管理画面のカードセット管理の編集に読み替えて実装した（下の キャッシュ()）。
  *
  * どのケースも、シード表の「敗数『未設定』をDBへ直接設定する」は行わずに作ったデッキで確かめる（seeds/f09-06.ts の冒頭。判定は条件付き）。
  * 決め打ちの名前（デッキ名・カード名など）は実行の印つきの値（seeds/f09-06.ts の N()）で読む。
@@ -15,9 +16,11 @@ import { caseTest, CaseCtx, expect } from "../../lib/case";
 import { DeckShowPage, 一括購入のカードリスト, 検索条件の選択, 結果のデッキID } from "../../pages/front/f09_06_deck_show";
 import { 情報欄 } from "../../pages/front/m15_05_deck_show";
 import { DeckSearchModal } from "../../pages/front/f09_01_deck_top";
-import { 画像のファイル名 } from "../../pages/admin/f09_06_setup";
+import { カードセットの特殊セットフラグを変える, 画像のファイル名 } from "../../pages/admin/f09_06_setup";
+import { SETUP_ADMIN } from "../../config/env";
+import { withAdminSession } from "../../lib/session";
 import { 行数と更新日時 } from "../../db/f09_06";
-import { アリーナ対応, N } from "../../seeds/f09-06";
+import { アリーナ対応, N, 作ったカードセットの番号 } from "../../seeds/f09-06";
 import "../../seeds/f09-06";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -75,6 +78,9 @@ caseTest("IT-F09-06-007", async (ctx) => {
   await ctx.step(1, async () => { await v.開く(デッキID(ctx, "007")); });
   await ctx.expected(async () => {
     await expect(v.情報欄の領域, "デッキリスト詳細が表示されている（情報欄）").toBeVisible();
+    // 要点「カードリストに1枚も無い」の場所（カードリストの領域）に赤枠を付ける
+    await expect.soft(v.カードリスト, "カードリストの領域（カードが1枚も表示されない）").toBeVisible();
+    await expect.soft(v.カードリスト.locator(".deckSearch-deckList__deckList__container__text > div:not(.deckSearch-deckList__deckList__totalNumber)"), "カードリストに並ぶカードの行（0）").toHaveCount(0);
     const c = await v.表示されたカード();
     expect.soft(c.行, "カードリストに並ぶカードの行の数").toBe(0);
     expect.soft(c.画像, "カードの画像の数").toBe(0);
@@ -155,7 +161,7 @@ function 画像の選択(ケース: string, 英語: boolean) {
     await ctx.step(1, async () => {
       if (英語) {
         await v.英語に切り替えて開く(デッキID(ctx, ケース));
-        note("日本語表示でデッキリスト詳細を開き、画面上部の言語切替（EN）で英語表示に切り替えた（同じデッキの英語表示の画面へ移る）");
+        note("先にトップ画面で言語切替（EN）を押して英語表示に切り替え、そのあとで初めてこのデッキのデッキリスト詳細を開いた（事前に日本語表示で開いていない）");
         expect(await v.表示言語(), "英語表示に切り替わった").toBe("en");
       } else await v.開く(デッキID(ctx, ケース));
     });
@@ -212,7 +218,7 @@ function 画像なし(ケース: string, 英語: boolean) {
     await ctx.step(1, async () => {
       if (英語) {
         await v.英語に切り替えて開く(デッキID(ctx, ケース));
-        note("日本語表示でデッキリスト詳細を開き、画面上部の言語切替（EN）で英語表示に切り替えた");
+        note("先にトップ画面で言語切替（EN）を押して英語表示に切り替え、そのあとで初めてこのデッキのデッキリスト詳細を開いた（事前に日本語表示で開いていない）");
         expect(await v.表示言語(), "英語表示に切り替わった").toBe("en");
       } else await v.開く(デッキID(ctx, ケース));
     });
@@ -270,6 +276,65 @@ caseTest("IT-F09-06-065", async (ctx) => {
   });
 });
 
+/**
+ * 026・027: 画像の選択結果のキャッシュ（保持600秒）。手順1で開いてから、決めた秒数だけ待って開き直す。
+ * 手順2の「DBで候補Wの特殊セットを『はい』に更新する」は、管理画面のカードセット管理の編集で、候補Wのカードセット
+ * （このケースのためだけに作ったもの）の特殊セットフラグにチェックを入れて登録する操作に読み替える（DB への書き込みはしない）。
+ * カードセットの編集の保存は、画像の選択結果のキャッシュを消さない作り（アプリの CardsetController・CardsetSaveAction を確認）。
+ */
+function キャッシュ(ケース: string, 待つ秒: number, 保持内: boolean) {
+  return async (ctx: CaseCtx) => {
+    test.setTimeout(40 * 60_000);
+    const v = new DeckShowPage(ctx.page);
+    const 名 = 画像の名(ケース);
+    let 前 = "";
+    let 起点 = 0;
+    await ctx.step(1, async () => {
+      // 保持内（026）は開く前、保持外（027）は開き終えた後を起点にして、どちらも判定に不利な側へ寄せて待つ
+      if (保持内) 起点 = Date.now();
+      await v.開く(デッキID(ctx, ケース));
+      if (!保持内) 起点 = Date.now();
+      前 = 画像のファイル名((await v.画像の状態(名)).取得元);
+      note(`手順1で控えた画像のファイル名: ${前}`);
+      expect(前, `手順1の画面のカード『${N(ケース, "術")}』の画像のファイル名（前提: 詳細IDの小さい候補W）`).toBe(`f0906-${ケース}-w`);
+    });
+    await ctx.step(2, async () => {
+      const セット = 作ったカードセットの番号.get(`〔カードセットID-F0906-${ケース}W〕`);
+      if (!セット) throw new Error(`候補Wのカードセットの番号を、このケースのシードが控えていない（${ケース}）`);
+      note(`「DBで候補Wの特殊セットを『はい』に更新する」は、管理画面のカードセット管理の編集で、候補Wのカードセット（番号 ${セット}・${N(ケース, "SET-W")}）の特殊セットフラグにチェックを入れて登録する操作に読み替えた（DB への書き込みはしない）`);
+      const 特殊 = await withAdminSession(ctx.browser, SETUP_ADMIN, (page) => カードセットの特殊セットフラグを変える(page, セット, true));
+      expect(特殊, `候補Wのカードセット（${N(ケース, "SET-W")}）の特殊セットフラグが「はい」で保存された`).toBe(true);
+    });
+    await ctx.step(3, async () => {
+      const 残り = 起点 + 待つ秒 * 1000 - Date.now();
+      if (残り > 0) await ctx.page.waitForTimeout(残り);
+      note(`手順1で画面を${保持内 ? "開き始めて" : "開き終えて"}から ${Math.round((Date.now() - 起点) / 1000)} 秒待った（${待つ秒}秒、${保持内 ? "600秒に満たない" : "600秒を超える"}時間）`);
+    });
+    let 後 = { 数: 0, 取得元: "", 入口: "" };
+    await ctx.step(4, async () => {
+      await v.開く(デッキID(ctx, ケース));
+      if (保持内) {
+        const 経過 = (Date.now() - 起点) / 1000;
+        note(`開き直し終えたのは、手順1で開き始めてから ${Math.round(経過)} 秒後`);
+        expect(経過, "開き直したのは、手順1で開いてから600秒以内（キャッシュの保持時間内）").toBeLessThan(600);
+      }
+      後 = await v.画像の状態(名);
+    });
+    await ctx.expected(async () => {
+      const ファイル名 = 画像のファイル名(後.取得元);
+      expect.soft(後.数, `開き直した画面のカード『${N(ケース, "術")}』の画像の数`).toBeGreaterThan(0);
+      if (保持内) {
+        expect.soft(ファイル名, `開き直した画面のカード『${N(ケース, "術")}』の画像の取得元のファイル名（${後.取得元}）`).toBe(`f0906-${ケース}-w`);
+        expect.soft(ファイル名, "候補Xの画像に変わらない").not.toBe(`f0906-${ケース}-x`);
+      } else {
+        expect.soft(ファイル名, `開き直した画面のカード『${N(ケース, "術")}』の画像の取得元のファイル名（${後.取得元}）`).toBe(`f0906-${ケース}-x`);
+      }
+    });
+  };
+}
+caseTest("IT-F09-06-026", キャッシュ("026", 540, true));
+caseTest("IT-F09-06-027", キャッシュ("027", 660, false));
+
 // ---------------------------------------------------------------------------
 // 情報欄
 // ---------------------------------------------------------------------------
@@ -308,6 +373,7 @@ caseTest("IT-F09-06-060", async (ctx) => {
   await ctx.step(2, async () => { i = await 情報欄(ctx.page); });
   await ctx.expected(async () => {
     const t = i["タグ"] ?? "";
+    await expect.soft(new DeckShowPage(ctx.page).情報欄の欄("タグ"), "情報欄のタグの欄").toBeVisible();
     expect.soft([`${N("060", "タグA")}, ${N("060", "タグB")}`, `${N("060", "タグB")}, ${N("060", "タグA")}`], `情報欄のタグの欄（${t}）`).toContain(t);
   });
 });
@@ -397,8 +463,8 @@ caseTest("IT-F09-06-040", async (ctx) => {
 /** 日本時間の今日の6か月前の日付「yyyy/mm/dd」（画面の開催日時の初期値の書式） */
 function 六か月前(): string {
   const [y, m, d] = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Tokyo" }).format(new Date()).split("-").map(Number);
+  // 6か月前の月に無い日（例: 8/31 の6か月前）は、画面の日付の計算と同じく翌月へ繰り越す（F09-03・F09-04 と同じ）
   const t = new Date(Date.UTC(y, m - 1 - 6, d));
-  if (t.getUTCDate() !== d) t.setUTCDate(0); // 月末の繰り上がりは前の月の末日
   return t.toISOString().slice(0, 10).replace(/-/g, "/");
 }
 
@@ -516,13 +582,16 @@ function 通知のケース(k: "049" | "056", 入口: string) {
       await ctx.page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: new URL(ctx.page.url()).origin });
       await v.入口を押して要求を待つ(入口);
     });
+    // 通知は自動で消えるので、出た直後（手順の中）に読んで控え、期待結果は控えで判定する
     let 文 = "";
+    let 出た = false;
     await ctx.step(3, async () => {
-      await v.通知.first().waitFor({ state: "visible", timeout: 30_000 }).catch(() => undefined);
-      文 = (await v.通知.count()) ? (await v.通知.first().innerText()).trim() : "";
+      出た = await v.通知.first().waitFor({ state: "visible", timeout: 30_000 }).then(() => true, () => false);
+      // 閉じるボタンの「×」を除いた本文だけを控える
+      if (出た) 文 = (await v.通知.first().innerText()).replace(/^\s*[×✕✖]\s*/, "").trim();
     });
     await ctx.expected(async () => {
-      await expect.soft(v.通知.first(), "書き出し完了の通知").toBeVisible();
+      expect.soft(出た, "書き出し完了の通知が出た").toBe(true);
       expect.soft(文, "通知の文").toMatch(/^クリップボードにコピーしました。/);
     });
   };
@@ -543,6 +612,8 @@ caseTest("IT-F09-06-055", async (ctx) => {
   await ctx.expected(async () => {
     expect.soft(new URL(要求).pathname, "取得要求の経路（表示言語が英語の経路）").toMatch(/^\/en\/deck\/arena\/\d+$/);
     expect.soft(await v.表示言語(), "画面の表示言語（日本語のまま）").toBe("ja");
+    await expect.soft(v.日本語の文言.first(), "画面に見える見出し・ボタンの文言が日本語のまま").toBeVisible();
+    await expect.soft(v.戻る.first(), "画面下部のボタンの文言（日本語の「戻る」）").toHaveText(/戻る/);
     expect.soft(new URL(ctx.page.url()).pathname, "画面のアドレス（日本語のまま）").toMatch(/^\/ja\/deck\/\d+\/show\/$/);
   });
 });

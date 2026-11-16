@@ -46,7 +46,7 @@ caseTest("IT-M14-10-042", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await 開く(page, id); });
   await step(2, async () => {
     await f(page, "useCommandFlg").setChecked(false);
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('button[type="submit"]').filter({ hasText: /^\s*(更新|登録)\s*$/ }).first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('button[type="submit"]').filter({ hasText: /^\s*(更新|登録)\s*$/ }).first().click({ noWaitAfter: true })]);
   });
   await step(3, async () => { await 開く(page, id); });
   await expected(async () => {

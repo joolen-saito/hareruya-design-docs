@@ -52,6 +52,8 @@ caseTest("IT-M07-01-028", async ({ page, step, expected }) => {
     // 開発者ツールで、件数の選択肢の送信値（アドレスの page_count）を25に書き換えて送信する
     const url = await l.表示件数の選択().locator("option:checked").getAttribute("value");
     const changed = (url ?? "").replace(/page_count=\d+/, "page_count=25");
+    // 書き換えられなければ今の画面を開き直すだけで「50件のまま」になるので、送信値を25に書き換えられたことを確かめる
+    expect(changed, "件数の選択肢の送信値（アドレスの page_count）を25に書き換えた").toMatch(/page_count=25/);
     await Promise.all([page.waitForLoadState("load"), page.goto(new URL(changed, page.url()).toString())]);
     await page.waitForLoadState("load");
   });

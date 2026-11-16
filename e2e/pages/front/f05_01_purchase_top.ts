@@ -66,7 +66,7 @@ export class PurchaseTopPage {
 
   /** リンクを押して、移った先の読み込みを待つ */
   async 押して移る(link: Locator): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), link.click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), link.click({ timeout: 20_000, noWaitAfter: true })]);
   }
 
   /** 枠に並ぶ第一階層の名称（表示順） */

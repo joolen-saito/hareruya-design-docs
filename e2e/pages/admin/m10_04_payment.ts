@@ -25,6 +25,18 @@ export function 画像(name: string): { name: string; mimeType: string; buffer: 
   return { name, mimeType: mime, buffer: Buffer.from(B64[ext], "base64") };
 }
 
+/** 選んだ形式が画面で見分けられる色つきの画像（160×80。gif=赤・jpeg=緑・png=青。いずれも1MB以下）。プレビューの表示を画像で確かめるケースに使う */
+const 色つき = {
+  gif: "R0lGODdhoABQAJEAAAAAANwoKP///wAAACH5BAQAAAAALAAAAACgAFAAAAKGjI+py+0Po5y02ouz3rz7D4biSJbmiabqyrbuC8fyTNf2jef6zvf+DwwKh8Si8YhMKpfMpvMJjUqn1Kr1is1qt9yu9wsOi8fksvmMTqvX7Lb7DY/L5/S6/Y7P6/f8vv8PGCg4SFhoeIiYqLjI2Oj4CBkpOUlZaXmJmam5ydnp+QkaKjpKVQAAOw==",
+  png: "iVBORw0KGgoAAAANSUhEUgAAAKAAAABQCAIAAAARP+ljAAAAlUlEQVR42u3RQQ0AAAjEsJODHPwHMZjgRZpMwZrq0eNiAWABFmABFmABFmDAAizAAizAAizAgAVYgAVYgAVYgAUYsAALsAALsAALMGABFmABFmABFmDAAizAAizAAizAAgxYgAVYgAVYgAUYsAALsAALsAALMGAXAAuwAAuwAAuwAAMWYAEWYAEWYAEGLMACLMACrKsWLBZr3zUdkeQAAAAASUVORK5CYII=",
+  jpg: "/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAoKADAAQAAAABAAAAUAAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/8AAEQgAUACgAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMABAQEBAQEBgQEBgkGBgYJDAkJCQkMDwwMDAwMDxIPDw8PDw8SEhISEhISEhUVFRUVFRkZGRkZHBwcHBwcHBwcHP/bAEMBBAUFBwcHDAcHDB0UEBQdHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHf/dAAQACv/aAAwDAQACEQMRAD8AwaKKK+DPxcKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//0MGiiivgz8XCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/9HBooor4M/FwooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD//SwaKKK+DPxcKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//08Giiivgz8XCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/9k=",
+};
+export function 色つきの画像(name: string): { name: string; mimeType: string; buffer: Buffer } {
+  const ext = name.split(".").pop()!.toLowerCase() as "png" | "gif" | "jpg";
+  const mime = { png: "image/png", gif: "image/gif", jpg: "image/jpeg" }[ext];
+  return { name, mimeType: mime, buffer: Buffer.from(色つき[ext], "base64") };
+}
+
 export class PaymentPage {
   constructor(readonly page: Page) {}
 
@@ -75,6 +87,21 @@ export class PaymentPage {
     await input.setInputFiles(f, { timeout: 30_000 });
   }
   get ロゴのプレビュー() { return this.page.locator(".filepond--item"); }
+  /** ロゴ画像欄の画像そのもののプレビュー（読み込みが済むと描かれる） */
+  get ロゴの画像プレビュー() { return this.page.locator(".filepond--item .filepond--image-preview-wrapper canvas"); }
+  /** ロゴ画像欄の読み込み（登録済みの画像の取得・選んだ画像のアップロード）が済み、画像のプレビューが描かれるまで待つ。描かれた数を返す */
+  async 画像プレビューを待つ(timeout = 60_000): Promise<number> {
+    await expect(this.ロゴのプレビュー.first(), "ロゴ画像欄のファイルの欄").toBeVisible({ timeout }).catch(() => undefined);
+    await expect.poll(async () => this.page.locator('.filepond--item[data-filepond-item-state="idle"], .filepond--item[data-filepond-item-state="processing-complete"]').count(),
+      { timeout, message: "ロゴ画像欄の読み込みが済むまで" }).toBeGreaterThan(0).catch(() => undefined);
+    await expect(this.ロゴの画像プレビュー.first(), "ロゴ画像欄の画像のプレビュー").toBeVisible({ timeout }).catch(() => undefined);
+    await this.page.waitForTimeout(1_000); // 描かれたあとのフェードイン
+    return this.ロゴの画像プレビュー.count();
+  }
+  /** ロゴ画像欄に出ているファイル名（読み込み中・完了などの状態の文字を除く） */
+  async ロゴのファイル名(): Promise<string> {
+    return ((await this.page.locator(".filepond--item .filepond--file-info-main").first().textContent({ timeout: 5_000 }).catch(() => "")) ?? "").trim();
+  }
   get ロゴの値() { return this.page.locator(sel("payment_image")); }
   /** ロゴ画像のプレビューの削除（取消）操作 */
   async ロゴを取り消す(): Promise<void> {

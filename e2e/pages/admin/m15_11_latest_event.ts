@@ -145,7 +145,9 @@ export async function 直近の大会を空にしてから入れる(page: Page, 
   await p.開く();
   for (let i = 0; i < rows.length; i++) {
     const got = await p.読む(i);
-    if (JSON.stringify(got) !== JSON.stringify(rows[i])) throw new Error(`${what}: ${i + 1}行目が入れた値と違う（入れた ${JSON.stringify(rows[i])} / 画面 ${JSON.stringify(got)}）`);
+    // 値の比べ合い（項目を書く順は問わない）
+    const 並べる = (o: object) => JSON.stringify(Object.entries(o).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+    if (並べる(got) !== 並べる(rows[i])) throw new Error(`${what}: ${i + 1}行目が入れた値と違う（入れた ${JSON.stringify(rows[i])} / 画面 ${JSON.stringify(got)}）`);
   }
 }
 

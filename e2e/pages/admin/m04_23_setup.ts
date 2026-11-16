@@ -12,7 +12,7 @@ import { registerStockChangeCsv } from "./m04_19_stock_change_csv";
 import { openStockApprovalListForStore } from "./m04_24_stock_move";
 import { ensureMemberByStoreIds, M0424MemberInput } from "./m04_24_member";
 import { MemberEditPage } from "./m11_02_member";
-import { ensureTenant, TenantInput } from "./tenant";
+import { ensureTenant, TenantInput } from "./tenant_k";
 
 // ---------------------------------------------------------------- 店舗
 

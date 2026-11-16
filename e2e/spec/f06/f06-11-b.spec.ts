@@ -7,7 +7,7 @@
 import { test } from "@playwright/test";
 import { CaseCtx, caseTest, expect } from "../../lib/case";
 import { PurchaseHistoryPageB } from "../../pages/front/f06_11_purchase_history_b";
-import { mailOf } from "../../seeds/f06-11-b";
+import { mailOf, OWNERS_STORE } from "../../seeds/f06-11-b";
 
 const 依頼日の補い = () => test.info().annotations.push({ type: "正本の外の補い", description: "シード表が依頼日をDBで直接設定する手順は行わなかった（依頼日は申込みの日になる）。このケースは依頼日を確かめない" });
 
@@ -41,7 +41,7 @@ caseTest("IT-F06-11-007", async ({ page, notes, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(店["共有A"], "ネット買取の買取店舗").toBe("オンラインショップ");
-    expect.soft(店["共有B"], "店頭買取の買取店舗").toBe("晴れる屋テスト店");
+    expect.soft(店["共有B"], "店頭買取の買取店舗").toBe(OWNERS_STORE.店名);
   });
 });
 

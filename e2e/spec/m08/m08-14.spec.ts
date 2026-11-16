@@ -22,9 +22,17 @@ const note = (m: string) => { test.info().annotations.push({ type: "手順の注
 const isListPath = (p: string) => /^\/admin\/customer(\/page\/\d+)?\/?$/.test(p);
 const 日付 = (): string => new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
+/** 画面に出ている成功の表示（緑の帯）の文 */
+async function 成功の表示(page: import("@playwright/test").Page): Promise<string> {
+  await page.locator(".alert-success").first().waitFor({ state: "visible", timeout: 10_000 }).catch(() => undefined);
+  return (await page.locator(".alert-success").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).join(" / ");
+}
+
 /** 結果の行のサブメニュー（…）を開き、再送リンクが見えるか */
 async function サブメニューを開いて再送リンクを見る(r: M0814ResendPage, id: string): Promise<boolean> {
   await r.サブメニューを開く(id);
+  // サブメニューが開いていないと「表示されない」は確かめにならないため、開いたこと（編集などの項目が見える）を確かめてから見る
+  await expect(r.page.locator(`#result_list_main__menu--${id}`), `会員ID ${id} のサブメニューが開いた`).toBeVisible({ timeout: 10_000 });
   return r.再送リンクが見える(id);
 }
 
@@ -98,12 +106,16 @@ caseTest("IT-M08-14-009", async ({ page, notes, step, expected }) => {
   const list = new M08CustomerListPage(page);
   const r = new M0814ResendPage(page);
   let 前 = "", 後 = "";
+  let 応答 = 0, 完了の表示 = "";
   await step(1, async () => { 前 = 会員レコード全体(id); });
   await step(2, async () => { await list.open(); await list.searchMulti(id); });
   await step(3, async () => { await r.サブメニューを開く(id); await r.再送リンクを押す(id); });
-  await step(4, async () => { note("確認の「OK」は、画面内の確認モーダルの「送信」を押した"); await r.送信して応答を読む(id); });
+  await step(4, async () => { note("確認の「OK」は、画面内の確認モーダルの「送信」を押した"); 応答 = await r.送信して応答を読む(id); 完了の表示 = await 成功の表示(page); });
   await step(5, async () => { 後 = 会員レコード全体(id); });
   await expected(async () => {
+    // 再送が失敗して更新されなかっただけのときに合格にしないため、再送が成功したこと（応答と完了の表示）も確かめる
+    expect.soft(応答, "再送要求の応答のHTTPステータス（成功して一覧へ戻す応答。400未満）").toBeLessThan(400);
+    expect.soft(完了の表示, "再送の完了の表示「メールを送信しました」").toContain("メールを送信しました");
     expect.soft(前.length, "再送前の会員データを読めた").toBeGreaterThan(0);
     expect.soft(後, `会員ID ${id} の会員データが再送前から更新されない`).toBe(前);
   });
@@ -116,8 +128,12 @@ caseTest("IT-M08-14-010", async ({ page, notes, step, expected }) => {
   const r = new M0814ResendPage(page);
   await step(1, async () => { await list.open(); await list.searchMulti(id); });
   await step(2, async () => { await r.サブメニューを開く(id); await r.再送リンクを押す(id); });
-  await step(3, async () => { note("確認の「OK」は、画面内の確認モーダルの「送信」を押した"); await r.送信して応答を読む(id); });
+  let 応答 = 0, 完了の表示 = "";
+  await step(3, async () => { note("確認の「OK」は、画面内の確認モーダルの「送信」を押した"); 応答 = await r.送信して応答を読む(id); 完了の表示 = await 成功の表示(page); });
   await expected(async () => {
+    // 送信の前から会員一覧画面にいるので、アドレスだけでは「再送の完了後に遷移した」ことにならない。再送の応答と完了の表示も確かめる
+    expect.soft(応答, "再送要求の応答のHTTPステータス（成功して一覧へ戻す応答。400未満）").toBeLessThan(400);
+    expect.soft(完了の表示, "再送の完了の表示「メールを送信しました」").toContain("メールを送信しました");
     expect.soft(isListPath(new URL(page.url()).pathname), `会員一覧画面へ遷移（${new URL(page.url()).pathname}）`).toBe(true);
     expect.soft(await list.form.isVisible(), "会員検索一覧の検索欄が表示されている").toBe(true);
   });

@@ -59,7 +59,7 @@ async function fillApplication(page: Page, a: 申込者): Promise<void> {
 async function confirmAndComplete(page: Page): Promise<string> {
   const apply = page.locator("button#otcBuyOrderApply");
   await expect(apply, "申込確認画面の「査定申込み」ボタン").toBeVisible({ timeout: OPEN });
-  await Promise.all([page.waitForURL(/\/otcbuy\/\w+\/complete/, { timeout: 60_000 }), apply.click({ timeout: OPEN })]);
+  await Promise.all([page.waitForURL(/\/otcbuy\/\w+\/complete/, { timeout: 60_000 }), apply.click({ timeout: OPEN, noWaitAfter: true })]);
   await expect(page.getByText("査定申込みが完了しました。"), "申込完了の表示").toBeVisible({ timeout: OPEN });
   const text = (await page.getByText(/査定番号\s*\S+/).first().innerText({ timeout: OPEN })).replace(/\s+/g, " ");
   const m = /査定番号\s*(\S+)/.exec(text);
@@ -74,11 +74,11 @@ export async function applyAsGuest(page: Page, 支店URL: string, a: 申込者):
   await page.getByRole("link", { name: "アカウントをお持ちでない方はこちら" }).click({ timeout: OPEN });
   await page.waitForLoadState("load");
   await fillApplication(page, a);
-  await Promise.all([page.waitForURL(/\/otcbuy\/\w+\/register_customer/, { timeout: 60_000 }), page.locator("button#otcBuyOrderApply").click({ timeout: OPEN })]);
+  await Promise.all([page.waitForURL(/\/otcbuy\/\w+\/register_customer/, { timeout: 60_000 }), page.locator("button#otcBuyOrderApply").click({ timeout: OPEN, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   const skip = page.getByRole("link", { name: "会員登録をスキップする" });
   await expect(skip, "会員登録の画面の「会員登録をスキップする」").toBeVisible({ timeout: OPEN });
-  await Promise.all([page.waitForURL(/\/otcbuy\/\w+\/confirm/, { timeout: 60_000 }), skip.click({ timeout: OPEN })]);
+  await Promise.all([page.waitForURL(/\/otcbuy\/\w+\/confirm/, { timeout: 60_000 }), skip.click({ timeout: OPEN, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   return confirmAndComplete(page);
 }
@@ -93,7 +93,7 @@ export async function applyAsMember(page: Page, 支店URL: string, 会員: { メ
   await Promise.all([page.waitForURL(/\/otcbuy\/\w+(\?|$)/, { timeout: 60_000 }), form.locator('button[type="submit"]').dispatchEvent("click")]);
   await page.waitForLoadState("load");
   await fillApplication(page, a);
-  await Promise.all([page.waitForURL(/\/otcbuy\/\w+\/confirm/, { timeout: 60_000 }), page.locator("button#otcBuyOrderApply").click({ timeout: OPEN })]);
+  await Promise.all([page.waitForURL(/\/otcbuy\/\w+\/confirm/, { timeout: 60_000 }), page.locator("button#otcBuyOrderApply").click({ timeout: OPEN, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   return confirmAndComplete(page);
 }

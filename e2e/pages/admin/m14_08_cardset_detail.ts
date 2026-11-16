@@ -71,7 +71,7 @@ export class CardsetDetailPage {
   }
   /** 登録して、登録後の編集画面のアドレスのカードセットIDを返す（シード用。画面が保存できなければ落とす） */
   async 登録して控える(what: string): Promise<string> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.登録ボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.登録ボタン.click({ noWaitAfter: true })]);
     await expectSaved(this.page, `${what}: カードセットの登録`);
     const m = /\/cardset\/(\d+)\/edit/.exec(this.page.url());
     if (!m) throw new Error(`${what}: 登録後にカードセットの編集画面へ移らない（${this.page.url()}）`);
@@ -79,7 +79,7 @@ export class CardsetDetailPage {
   }
   /** 更新して、成功メッセージまで確かめる（シード用） */
   async 更新する(what: string): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.登録ボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.登録ボタン.click({ noWaitAfter: true })]);
     await expectSaved(this.page, `${what}: カードセットの更新`);
   }
 
@@ -141,8 +141,8 @@ export class CardsetDetailPage {
   /** 「カードセット管理」リンクを押す */
   async カードセット管理を押す(): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "load" }),
-      this.操作部.locator("a.c-baseLink").filter({ hasText: "カードセット管理" }).click(),
+      this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+      this.操作部.locator("a.c-baseLink").filter({ hasText: "カードセット管理" }).click({ noWaitAfter: true }),
     ]);
   }
 }

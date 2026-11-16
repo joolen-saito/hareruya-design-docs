@@ -39,7 +39,7 @@ export class NetBuyCart05Page {
     await this.page.locator("#login_pass").fill(パスワード);
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.page.locator("form#login_mypage button[type=submit]").click(),
+      this.page.locator("form#login_mypage button[type=submit]").click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     expect(this.パス, "ログイン後の画面（ログイン画面のままではない）").not.toMatch(/\/login/);
@@ -162,6 +162,30 @@ export class NetBuyCart05Page {
 
   // ---- なりすまし対策トークン ----
 
+  /** 実際にサーバーへ届いた数量の一覧の更新の要求の本文（トークンの値は先頭8文字だけ） */
+  readonly 届いた要求の本文: string[] = [];
+  /**
+   * 画面のスクリプトはフォームの欄ではなく meta のトークンや .qty-input から値を集めて送るため、欄を書き換えても要求には反映されない。
+   * そこで、サーバーへ届く直前の要求（/ja/purchase/cart の POST）の本文を書き換える。書き換えた後の本文を 届いた要求の本文 に残す。
+   */
+  async 要求の本文を書き換える(変換: (p: URLSearchParams) => void): Promise<void> {
+    await this.page.route(
+      (u) => u.pathname === "/ja/purchase/cart",
+      async (route) => {
+        const req = route.request();
+        if (req.method() !== "POST") { await route.continue(); return; }
+        const p = new URLSearchParams(req.postData() ?? "");
+        変換(p);
+        const body = p.toString();
+        const t = p.get("_token");
+        this.届いた要求の本文.push(body.replace(/_token=[^&]*/, `_token=${t === null ? "" : t.slice(0, 8)}`) || "（本文なし）");
+        await route.continue({ postData: body });
+      },
+    );
+  }
+  /** 本文から消した・変えた結果、サーバーに届いた要求の本文（注記用） */
+  get 届いた要求の注記(): string { return `サーバーへ届いた要求の本文: ${this.届いた要求の本文.join(" | ") || "なし"}`; }
+
   get トークン入力(): Locator { return this.page.locator('#purchase-cart-form input[name="_token"]'); }
 
   // ---- 商品詳細の追加のあとの知らせ ----
@@ -180,7 +204,7 @@ export class NetBuyCart05Page {
   async 知らせからカートへ進む(): Promise<void> {
     const link = this.知らせ.locator("a.p-hareruya-cart-popup__link");
     await expect(link, "知らせのカートへのリンク").toBeVisible();
-    await Promise.all([this.page.waitForURL(/\/purchase\/cart(\?.*)?$/, { timeout: 60_000, waitUntil: "load" }), link.click()]);
+    await Promise.all([this.page.waitForURL(/\/purchase\/cart(\?.*)?$/, { timeout: 60_000, waitUntil: "load" }), link.click({ noWaitAfter: true })]);
     await expect(this.page.locator("#purchase-cart-form"), "ネット買取カートの画面").toBeVisible();
   }
 

@@ -19,12 +19,15 @@
  * - アーキタイプの番号（024 の確かめに使う）はシード表が控えると定めないので、このファイルの中だけで持つ（番号）。
  */
 import { Browser, Page } from "@playwright/test";
-import { SETUP_ADMIN } from "../config/env";
+import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { rc } from "../lib/run_marker";
 import { adminUrl, withAdminSession } from "../lib/session";
 import { アーキタイプを登録する, デッキを登録する, フォーマットを登録する, 日付 } from "../pages/admin/f09_01_setup";
+import { buildCardCsv, downloadCardCsvTemplate, readExistingCardValues, uploadCardCsv } from "../pages/admin/card_csv";
+import { ファイルを上げる } from "../pages/admin/f01_02_layout";
+import { 画像 } from "../pages/admin/m10_04_payment";
 
 /** 正本の値「F0903-<ケース>-<名>」を、実行の印つきの値にする（印はケースの前半に付ける） */
 export const N = (ケース: string, 名: string) => `${rc(`F0903-${ケース}`)}-${名}`;
@@ -62,10 +65,14 @@ type D = {
   /** フォーマットの記号（省略は先頭のフォーマット） */
   フォーマット?: string;
 };
-type 計画 = { ケース: string; フォーマット: F[]; アーキタイプ: { 名: string; フォーマット?: string }[]; デッキ: D[] };
+type 計画 = { ケース: string; フォーマット: F[]; アーキタイプ: { 名: string; フォーマット?: string; 代表カード?: string }[]; デッキ: D[] };
 
 function definePlanSeed(seedId: string, p: 計画): void {
-  defineSeed(seedId, async ({ browser, notes }) => {
+  defineSeed(seedId, async ({ browser, notes }) => { await 計画を作る(browser, notes, seedId, p); });
+}
+
+async function 計画を作る(browser: Browser, notes: { set: (k: string, v: string) => void }, seedId: string, p: 計画): Promise<void> {
+  {
     const issue = (m: string) => reportSeedIssue(seedId, m);
     const n = (名: string) => N(p.ケース, 名);
     await 管理画面(browser, async (page) => {
@@ -77,7 +84,7 @@ function definePlanSeed(seedId: string, p: 計画): void {
       }
       const 先頭 = p.フォーマット[0].名;
       for (const a of p.アーキタイプ) {
-        番号.set(n(a.名), await アーキタイプを登録する(page, { 名: n(a.名), フォーマット: n(a.フォーマット ?? 先頭) }, issue));
+        番号.set(n(a.名), await アーキタイプを登録する(page, { 名: n(a.名), フォーマット: n(a.フォーマット ?? 先頭), ...(a.代表カード ? { 代表カード名英: n(a.代表カード) } : {}) }, issue));
       }
       for (const d of p.デッキ) {
         for (let i = 0; i < (d.件数 ?? 1); i++) {
@@ -90,7 +97,7 @@ function definePlanSeed(seedId: string, p: 計画): void {
         }
       }
     });
-  });
+  }
 }
 
 /** フォーマット1つ・アーキタイプ A に大会デッキ・公開のデッキを件数だけ持つ形 */
@@ -212,4 +219,42 @@ definePlanSeed("S-F09-03-CBSEARCH0-037", {
 definePlanSeed("S-F09-03-CBSEARCH1-038", {
   ケース: "CB038", フォーマット: [{ 名: "F", 控え: "〔フォーマット識別子-F0903-CB038〕", 検索対象: true }], アーキタイプ: [{ 名: "A" }, { 名: "B" }],
   デッキ: [{ アーキタイプ: "A", 日前: 1, 件数: 2 }, { アーキタイプ: "B", 日前: 1 }],
+});
+
+// ---------------------------------------------------------------------------
+// 019: 代表カード画像のあるアーキタイプ
+// ---------------------------------------------------------------------------
+// 画像ファイルの名前・カード名には実行の印を付ける（F0903-019-A.jpg → F0903-019-<印>-A.jpg。前の実行のファイル・カードに当たらないため）。
+// シード表の「前回の実施分が残っているときは消す」は、印で前の実行に当たらないので行わない（消す対象が無い）。
+// カードCSVは、シード表が値を定めるカード名(英語)・レアリティ・レイアウト・画像URL(英語)に加え、カード名(日本語)にも英語と同じ名前を入れた
+// （代表カード検索は日本語名と英語名を並べて表示するため。F09-04・M15-09 の取り込みと同じ形）。
+defineSeed("S-F09-03-ITEMS-019", async ({ browser, notes }) => {
+  const seedId = "S-F09-03-ITEMS-019";
+  const issue = (m: string) => reportSeedIssue(seedId, m);
+  const n = (名: string) => N("019", 名);
+  await 管理画面(browser, async (page) => {
+    const 画像URL: Record<string, string> = {};
+    for (const a of ["A", "B"]) {
+      const パス = await ファイルを上げる(page, 画像(`${n(a)}.jpg`), `${seedId}: 画像ファイル ${n(a)}.jpg`, issue);
+      const url = new URL(パス, BASE_URL).href;
+      if (url.length > 128) throw new Error(`${seedId}: 画像のURLが128文字を超える（${url.length}文字: ${url}）`);
+      // 管理画面で上げたファイルが公開側から開けるまでに時間がかかることがある（管理画面と公開側が別のサーバー）。最大で約90秒、間をおいて開き直す
+      let res = await page.request.get(url);
+      for (let i = 0; i < 9 && res.status() !== 200; i++) { await page.waitForTimeout(10_000); res = await page.request.get(url); }
+      if (res.status() !== 200) throw new Error(`${seedId}: 上げた画像 ${url} を開くと応答 ${res.status()}（画像が表示されない。90秒待っても開けない）`);
+      画像URL[a] = url;
+    }
+    const 既存 = await readExistingCardValues(page);
+    const headers = await downloadCardCsvTemplate(page);
+    const rows = ["A", "B"].map((a) => ({
+      name_jp: n(`CARD-${a}`), name_en: n(`CARD-${a}`), rarity: 既存.rarity, layout: 既存.layout, image_en: 画像URL[a], image_jp: "", card_detail_id: "",
+    }));
+    await uploadCardCsv(page, buildCardCsv(headers, rows), "f0903_019_cards.csv", `${seedId}: カードCSVアップロード`, (w) => issue(`カードCSVの警告「${w}」`));
+    issue(`画像ファイル ${n("A")}.jpg・${n("B")}.jpg をファイル管理の最上位に上げ（中身は小さいJPEG画像）、そのURLを画像URL(英語)にしたカード ${n("CARD-A")}・${n("CARD-B")} をカードCSVで登録した（レアリティ「${既存.rarity}」・レイアウト「${既存.layout}」は既存のカードにある英語名）`);
+  });
+  await 計画を作る(browser, notes, seedId, {
+    ケース: "019", フォーマット: [{ 名: "F", 控え: "〔フォーマット識別子-F0903-019〕" }],
+    アーキタイプ: [{ 名: "A", 代表カード: "CARD-A" }, { 名: "B", 代表カード: "CARD-B" }],
+    デッキ: [{ アーキタイプ: "A", 日前: 1, 件数: 3 }, { アーキタイプ: "B", 日前: 1 }],
+  });
 });

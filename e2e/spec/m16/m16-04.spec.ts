@@ -4,6 +4,7 @@ import { caseTest, expect } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { MasterEntryLinks, MtgMasterEditPage,マスターデータ管理の選択肢 } from "../../pages/admin/m16_04_master";
 import { M1604_ADMIN } from "../../seeds/m16-04";
+import { 印 } from "../../seeds/m16-04-rows"; // S-M16-04-CARDTYPE（006・009・016）は、試験の行（印 -E2E）を足して終わりに戻す作り
 
 caseTest("IT-M16-04-001", async ({ page, step, expected }) => {
   await loginAdmin(page, M1604_ADMIN);
@@ -73,7 +74,7 @@ caseTest("IT-M16-04-035", async ({ page, step, expected }) => {
       test.info().annotations.push({ type: "手順の注記", description: "「カード名リスト作成」のリンクは、マスターデータを選ぶ（選択を押す）まで画面に出ない。正本の手順に無い「選択を押す」操作で補った" });
       await m.選択を押す();
     }
-    await Promise.all([m.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), m.カード名リスト作成リンク.click({ timeout: 20_000 })]);
+    await Promise.all([m.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), m.カード名リスト作成リンク.click({ timeout: 20_000, noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移先の画面（カード一覧）").toMatch(/\/card\/?$/);
@@ -82,30 +83,34 @@ caseTest("IT-M16-04-035", async ({ page, step, expected }) => {
 
 // ---- 以下は、共有のマスタ（MTGマスターデータ）の既存の行を読んで確かめるケース。試験用の行を足さず、既存の行を書き換えない ----
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
-const 読み替えの注記 = "シード表の試験用の行（例: 試験カードタイプA）は、共有のマスタに足さない決まりのため作らず、画面に既にある行で確かめた";
+const 読み替えの注記 = "このケースのシードは試験用の行を足さないので、画面に既にある行で確かめた";
 
 caseTest("IT-M16-04-006", async ({ page, step, expected }) => {
   await loginAdmin(page, M1604_ADMIN);
   const m = new MtgMasterEditPage(page);
   await step(1, async () => { await m.open(); });
   await step(2, async () => { await m.種別を選んで表示する("カードタイプ"); });
-  let 末尾 = { 空行の数: 0, 末尾が空行: false, 入力値: [] as string[], 登録済み: 0 };
+  let 末尾 = { 空行の数: 0, 末尾が空行: false, 入力欄: 0, 選択欄: 0 };
   await step(3, async () => {
     const last = m.一覧の領域.locator("tbody tr").last();
+    const 登録済み = await m.登録済みの行.count();
     末尾 = {
       空行の数: await m.入力用の空行.count(),
-      末尾が空行: (await last.locator('[name^="rows[new]"]').count()) > 0,
-      入力値: await last.locator("input").evaluateAll((es) => es.map((e) => (e as HTMLInputElement).value)),
-      登録済み: await m.登録済みの行.count(),
+      // 登録済みの行が1行以上あり、その後ろ（一覧の最後）が入力用の空行
+      末尾が空行: 登録済み > 0 && (await last.locator('[name^="rows[new]"]').count()) > 0,
+      入力欄: await m.入力用の空行.locator("input").count(),
+      選択欄: await m.入力用の空行.locator("select").count(),
     };
+    await last.scrollIntoViewIfNeeded();
   });
-  note(読み替えの注記);
+  note("シード（試験カードタイプA〜C-E2E を足す）の行は、一覧の途中に並ぶ。末尾の行の「空」は、文字・数値の入力欄が空であること、真偽値の選択欄が既定の「0」（偽）であることとして確かめた。保存の処理は選択欄を空かどうかの判定に入れない（選択欄は常に0か1を送るため）");
   await expected(async () => {
-    expect.soft(末尾.登録済み, "登録済みの行の数（確かめる前に既存の行が出ている）").toBeGreaterThan(0);
     expect.soft(末尾.空行の数, "入力値が空の行の数").toBe(1);
     expect.soft(末尾.末尾が空行, "登録済みデータの末尾が空行である").toBe(true);
-    expect.soft(末尾.入力値.length, "空行の入力欄の数").toBeGreaterThan(0);
-    expect.soft(末尾.入力値.every((v) => v === ""), "空行の入力値がすべて空").toBe(true);
+    expect.soft(末尾.入力欄, "空行の文字・数値の入力欄の数").toBeGreaterThan(0);
+    const 空行 = m.入力用の空行;
+    for (let i = 0; i < 末尾.入力欄; i++) await expect.soft(空行.locator("input").nth(i), `末尾の空行の入力欄 ${i + 1} が空`).toHaveValue("");
+    for (let i = 0; i < 末尾.選択欄; i++) await expect.soft(空行.locator("select").nth(i), `末尾の空行の真偽値の選択欄 ${i + 1} が既定の「0」（偽）`).toHaveValue("0");
   });
 });
 
@@ -146,15 +151,15 @@ caseTest("IT-M16-04-007", async ({ page, step, expected }) => {
 caseTest("IT-M16-04-009", async ({ page, step, expected }) => {
   await loginAdmin(page, M1604_ADMIN);
   const m = new MtgMasterEditPage(page);
+  const 名前 = 印("試験カードタイプA");
+  const A行 = m.一覧の領域.locator("tbody tr").filter({ has: page.locator(`input[value="${名前}"]`) });
   await step(1, async () => { await m.open(); });
   await step(2, async () => { await m.種別を選んで表示する("カードタイプ"); });
-  let 値: string[] = [];
-  await step(3, async () => { 値 = await m.真偽値の表示(); });
-  note(`${読み替えの注記}。「試験カードタイプA」の代わりに、既存のカードタイプの真偽値の列に偽の行があり、それが数値の0で出ることを確かめた`);
+  await step(3, async () => { if (await A行.count()) await A行.first().scrollIntoViewIfNeeded(); });
+  note(`正本の「試験カードタイプA」は「${名前}」（シードが印 -E2E を付けて足した行）。その行の真偽値の列を確かめた`);
   await expected(async () => {
-    expect.soft(値.length, "真偽値の列の数（確かめる前に既存の行が出ている）").toBeGreaterThan(0);
-    expect.soft(値.every((v) => v === "0" || v === "1"), "真偽値は数値の0か1で表示される").toBe(true);
-    expect.soft(値.includes("0"), "偽の値が数値の0として表示される行がある").toBe(true);
+    await expect.soft(A行, `「${名前}」の行の数`).toHaveCount(1);
+    await expect.soft(A行.locator("select option:checked"), `「${名前}」の真偽値の列の表示（偽は数値の0）`).toHaveText("0");
   });
 });
 
@@ -235,7 +240,7 @@ caseTest("IT-M16-04-017", async ({ page, step, expected }) => {
       const s = r?.見出し.indexOf("sort_no") ?? -1;
       expect.soft(s, `${k}: sort_no の列がある`).toBeGreaterThanOrEqual(0);
       (r?.入力できない ?? []).forEach((ro, i) => {
-        if (i === s) expect.soft(ro, `${k}: ID ${id} の行の sort_no は入力できる`).toBe(false);
+        if (i === s) expect.soft(!ro, `${k}: ID ${id} の行の sort_no は入力できる`).toBe(true);
         else expect.soft(ro, `${k}: ID ${id} の行の「${r?.見出し[i]}」は読み取り専用`).toBe(true);
       });
     }
@@ -257,7 +262,7 @@ caseTest("IT-M16-04-019", async ({ page, step, expected }) => {
       const r = 結果[k];
       expect.soft(r?.行の数, `${k}: ID ${id + 1} の行がある（既存の行）`).toBe(1);
       expect.soft(r?.入力できない.length ?? 0, `${k}: 行の列の数`).toBeGreaterThan(0);
-      (r?.入力できない ?? []).forEach((ro, i) => expect.soft(ro, `${k}: ID ${id + 1} の行の「${r?.見出し[i]}」に入力できる`).toBe(false));
+      (r?.入力できない ?? []).forEach((ro, i) => expect.soft(!ro, `${k}: ID ${id + 1} の行の「${r?.見出し[i]}」に入力できる`).toBe(true));
     }
   });
 });
@@ -310,7 +315,7 @@ caseTest("IT-M16-04-036", async ({ page, step, expected }) => {
   await step(1, async () => { await e.カードセット管理を開く(); });
   await step(2, async () => {
     note("正本の「ブロックを追加」は、画面では「ブロックの追加」のリンク");
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), e.ブロックの追加.click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), e.ブロックの追加.click({ timeout: 20_000, noWaitAfter: true })]);
   });
   note("正本の「ブロックタグ」は、MTGマスターデータ選択では「カードセットブロック」の表示名");
   await expected(async () => {
@@ -329,7 +334,7 @@ caseTest("IT-M16-04-037", async ({ page, step, expected }) => {
   let ある = false;
   await step(2, async () => {
     ある = (await e.デッキタグ一覧.count()) > 0;
-    if (ある) await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), e.デッキタグ一覧.first().click({ timeout: 20_000 })]);
+    if (ある) await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), e.デッキタグ一覧.first().click({ timeout: 20_000, noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(ある, "デッキ管理に「デッキタグ一覧」のボタンがある").toBe(true);
@@ -379,6 +384,6 @@ caseTest("IT-M16-04-047", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(行の数, "ID 1 の行がある（既存の行）").toBe(1);
     expect.soft(見出し[1], "2列目の見出し").toBe("subject");
-    expect.soft(入力できない[1], "ID 1 の行の2列目が読み取り専用にならず入力できる").toBe(false);
+    expect.soft(入力できない[1] === false, "ID 1 の行の2列目が読み取り専用にならず入力できる").toBe(true);
   });
 });

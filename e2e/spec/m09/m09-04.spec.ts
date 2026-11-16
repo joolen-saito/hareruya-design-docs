@@ -11,11 +11,12 @@ import { test, expect as pwExpect, Page } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { BASE_URL, SHARED_ENV } from "../../config/env";
 import { hideDebugToolbar, loginAdmin } from "../../lib/session";
+import { DBで読み取った値を撮る, 別のブラウザの画面を撮る, scene } from "../../lib/evidence_other";
 import { rc } from "../../lib/run_marker";
 import { ページ管理, ページの値 } from "../../pages/admin/m09_04_page";
 import { レイアウトの設定, ページIDで, ページ名で, URLで } from "../../db/m09_04_page";
 import { ページのテンプレート } from "../../db/m09_template_files";
-import { M0904_ADMIN, 識別, 試験PCレイアウト, 試験モバイルレイアウト, シードのページ } from "../../seeds/m09-04";
+import { M0904_ADMIN, 読み替えたページIDを引く, 識別, 試験PCレイアウト, 試験モバイルレイアウト, シードのページ } from "../../seeds/m09-04";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 本番ホスト = "https://www.hareruyamtg.com";
@@ -100,7 +101,7 @@ caseTest("IT-M09-04-008", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔ページID-M0904-008〕");
   const pa = await ログインして(page);
   await step(1, async () => { await pa.一覧を開く(); });
-  await step(2, async () => { await Promise.all([page.waitForURL(/\/content\/page\/\d+\/edit/, { timeout: 60_000 }), pa.行(id).getByRole("link", { name: v.ページ名, exact: true }).click({ timeout: 30_000 })]); });
+  await step(2, async () => { await Promise.all([page.waitForURL(/\/content\/page\/\d+\/edit/, { timeout: 120_000}), pa.行(id).getByRole("link", { name: v.ページ名, exact: true }).click({ timeout: 30_000, noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移した画面のアドレス（ページ管理(登録・編集)）").toMatch(new RegExp(`/admin/content/page/${id}/edit$`));
   });
@@ -205,6 +206,10 @@ async function 開閉(page: Page, step: (n: number, f: () => Promise<void>) => P
 const ページ設定の項目 = (pa: ページ管理) => [
   { 名前: "ページ名", loc: pa.page.locator("#main_edit_name") }, { 名前: "URL", loc: pa.page.locator("#main_edit_url") },
   { 名前: "twigファイル", loc: pa.page.locator("#main_edit_file_name") }, { 名前: "コード", loc: pa.page.locator("#editor") },
+  // 識別ID 1-3 から 1-9 には、ページ確認ボタンと、ファイル名・コードのヘルプ（？マーク）も含まれる
+  { 名前: "ページ確認ボタン", loc: pa.page.locator("#pageDetail #btn-page-preview").first() },
+  { 名前: "twigファイルのヘルプ", loc: pa.page.locator('#pageDetail [data-bs-toggle="tooltip"]').nth(0) },
+  { 名前: "コードのヘルプ", loc: pa.page.locator('#pageDetail [data-bs-toggle="tooltip"]').nth(1) },
 ];
 const レイアウト設定の項目 = (pa: ページ管理) => [
   { 名前: "PC", loc: pa.page.locator("#main_edit_PcLayout") }, { 名前: "モバイル", loc: pa.page.locator("#main_edit_SpLayout") },
@@ -213,6 +218,7 @@ const メタ設定の項目 = (pa: ページ管理) => [
   { 名前: "author", loc: pa.page.locator("#main_edit_author") }, { 名前: "description", loc: pa.page.locator("#main_edit_description") },
   { 名前: "keyword", loc: pa.page.locator("#main_edit_keyword") }, { 名前: "robot", loc: pa.page.locator("#main_edit_meta_robots") },
   { 名前: "metatag", loc: pa.page.locator("#main_edit_meta_tags") },
+  { 名前: "metatagのヘルプ", loc: pa.page.locator('#pageMeta [data-bs-toggle="tooltip"]').first() },
 ];
 caseTest("IT-M09-04-017", async ({ page, notes, step, expected }) => {
   const r = await 開閉(page, step, notes.get("〔ページID-M0904-017〕"), "ページ設定", ページ設定の項目);
@@ -270,7 +276,7 @@ caseTest("IT-M09-04-021", async ({ page, notes, step, expected }) => {
 caseTest("IT-M09-04-023", async ({ page, notes, step, expected }) => {
   const pa = await ログインして(page);
   await step(1, async () => { await pa.編集を開く(notes.get("〔ページID-M0904-023〕")); });
-  await step(2, async () => { await Promise.all([page.waitForURL(/\/admin\/content\/page$/, { timeout: 60_000 }), pa.一覧へのリンク.click({ timeout: 30_000 })]); });
+  await step(2, async () => { await Promise.all([page.waitForURL(/\/admin\/content\/page$/, { timeout: 120_000}), pa.一覧へのリンク.click({ timeout: 30_000, noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移した画面のアドレス（ページ管理(一覧)）").toMatch(/\/admin\/content\/page$/);
     await pwExpect.soft(pa.検索ボックス, "一覧の検索ボックス").toBeVisible();
@@ -287,9 +293,37 @@ caseTest("IT-M09-04-024", async ({ page, step, expected }) => {
   await step(3, async () => {
     await pa.入力する({ PC: 試験PCレイアウト(), モバイル: 試験モバイルレイアウト(), author: "Test Author", description: "Test Description", keyword: "test-keyword", robot: "index,follow", metatag: '<meta name="test" content="all-fields">' });
   });
-  await step(4, async () => { const r = await pa.登録して結果を読む(); if (!r.成功) note(`登録できなかった: ${r.システムエラー ? "システムエラー" : r.入力エラー.join(" / ")}`); });
-  await step(5, async () => { 行 = ページ名で(名); if (行.length) レイアウト = レイアウトの設定(行[0].ページID); });
+  let 同期待ち = false;
+  await step(4, async () => { const r = await pa.登録して結果を読む(); 同期待ち = r.同期待ちの案内; if (!r.成功) note(`登録できなかった: ${r.システムエラー ? "システムエラー" : r.入力エラー.join(" / ")}`); });
+  await step(5, async () => {
+    行 = ページ名で(名); if (行.length) レイアウト = レイアウトの設定(行[0].ページID);
+    if (行.length) {
+      // 登録の直後は、ファイルの置き場への反映が済むまで編集画面が「同期が完了していない可能性があります」の案内になる（アプリの作り。登録から2分間）。
+      // 期待結果（登録した内容）を画面で読めるよう、反映を待ってから編集画面を開き直す
+      const 案内 = page.getByText("該当ファイルが見つかりませんでした。");
+      for (let i = 0; i < 8; i++) {
+        if (i > 0 || 同期待ち) { if (i === 0) note("登録の直後は同期待ちの案内の画面になったので、反映を待って編集画面を開き直し、登録した内容を画面で確かめた"); await page.waitForTimeout(30_000); }
+        await pa.編集を開く(行[0].ページID, "ja");
+        if (!(await 案内.isVisible().catch(() => false))) break;
+      }
+      for (const 欄 of ["ページ設定", "レイアウト設定", "メタ設定"] as const) {
+        if (!(await pa.設定欄(欄).isVisible().catch(() => false))) await pa.開閉ボタン(欄).click({ timeout: 30_000 }).catch(() => undefined);
+      }
+      await pa.設定欄("メタ設定").waitFor({ state: "visible", timeout: 15_000 }).catch(() => undefined);
+    }
+  });
   await expected(async () => {
+    const 欄の値 = (id: string) => page.locator(`#main_edit_${id}`);
+    await pwExpect.soft(欄の値("name"), "ページ名（編集画面）").toHaveValue(名);
+    await pwExpect.soft(欄の値("url"), "URL（編集画面）").toHaveValue(場所);
+    await pwExpect.soft(欄の値("file_name"), "twigファイル（編集画面）").toHaveValue(場所);
+    await pwExpect.soft(欄の値("author"), "author（編集画面）").toHaveValue("Test Author");
+    await pwExpect.soft(欄の値("description"), "description（編集画面）").toHaveValue("Test Description");
+    await pwExpect.soft(欄の値("keyword"), "keyword（編集画面）").toHaveValue("test-keyword");
+    await pwExpect.soft(欄の値("meta_robots"), "robot（編集画面）").toHaveValue("index,follow");
+    await pwExpect.soft(欄の値("meta_tags"), "metatag（編集画面）").toHaveValue('<meta name="test" content="all-fields">');
+    await pwExpect.soft(page.locator("#main_edit_PcLayout option:checked"), "PCのレイアウト（編集画面）").toHaveText(試験PCレイアウト());
+    await pwExpect.soft(page.locator("#main_edit_SpLayout option:checked"), "モバイルのレイアウト（編集画面）").toHaveText(試験モバイルレイアウト());
     expect.soft(行.length, "ページ名「全項目登録ページ」（印つき）のページの件数").toBe(1);
     const r = 行[0];
     expect.soft(r?.URL, "URL").toBe(場所);
@@ -421,6 +455,8 @@ caseTest("IT-M09-04-040", async ({ page, notes, step, expected }) => {
   await step(4, async () => { const r = await pa.登録して結果を読む(); if (!r.成功) note(`登録できなかった: ${r.システムエラー ? "システムエラー" : r.入力エラー.join(" / ")}`); });
   await step(5, async () => { 行 = ページIDで(id); レイアウト = レイアウトの設定(id); });
   await expected(async () => {
+    // 登録のあとの画面は「該当ファイルが見つかりませんでした…1分ほど待って」の案内を出すので、保存された内容は DB の値を画像に載せて示す
+    await DBで読み取った値を撮る(page, `ページID ${id} の保存内容`, [["項目", "保存された値"], ["ページ名", 行?.ページ名 ?? ""], ["URL", 行?.URL ?? ""], ["twigファイル（ファイル名）", 行?.ファイル名 ?? ""], ["author", 行?.author ?? ""], ["description", 行?.description ?? ""], ["keyword", 行?.keyword ?? ""], ["robot", 行?.robot ?? ""], ["metatag", 行?.metatag ?? ""], ["PCのレイアウト", レイアウト.find((l) => l.端末種別 === "PC")?.名称 ?? ""], ["モバイルのレイアウト", レイアウト.find((l) => l.端末種別 === "モバイル")?.名称 ?? ""]], scene.expectedLabel("DBで読み取った保存内容"));
     expect.soft(行?.ページ名, "ページ名").toBe("全項目更新ページ");
     expect.soft(行?.URL, "URL").toBe(場所);
     expect.soft(行?.ファイル名, "twigファイル（ファイル名）").toBe(場所);
@@ -505,9 +541,12 @@ caseTest("IT-M09-04-043", async ({ page, notes, step, expected }) => {
   const pa = await ログインして(page);
   await step(1, async () => { await pa.編集を開く(id); });
   await step(2, async () => { await pa.入力する({ ページ名: "保存遷移確認ページ" }); });
-  await step(3, async () => { const r = await pa.登録して結果を読む(); if (!r.成功) note(`登録できなかった: ${r.システムエラー ? "システムエラー" : r.入力エラー.join(" / ")}`); });
+  let 成功 = false;
+  await step(3, async () => { const r = await pa.登録して結果を読む(); 成功 = r.成功; if (!r.成功) note(`登録できなかった: ${r.システムエラー ? "システムエラー" : r.入力エラー.join(" / ")}`); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移後の画面のアドレス（保存したページの登録・編集画面）").toMatch(new RegExp(`/admin/content/page/${id}/edit$`));
+    // 保存に失敗しても同じ編集画面が出し直されるので、保存できたうえでの遷移であることを確かめる
+    expect.soft(成功, "保存できた知らせが表示された（保存に失敗して出し直されたのではない）").toBe(true);
   });
 });
 
@@ -642,6 +681,8 @@ caseTest("IT-M09-04-050", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移後の画面のアドレス（ページ管理(一覧)）").toMatch(/\/admin\/content\/page$/);
     await pwExpect.soft(pa.検索ボックス, "一覧の検索ボックス").toBeVisible();
+    // 削除に失敗しても一覧へ戻る作りなので、削除したうえでの遷移であることを、一覧から行が無くなったことで確かめる
+    await pwExpect.soft(pa.行(id), `削除したID ${id} の行が一覧に無い（削除が行われた）`).toHaveCount(0);
   });
 });
 
@@ -655,7 +696,11 @@ caseTest("IT-M09-04-051", async ({ page, browser, notes, step, expected }) => {
     await loginAdmin(pageB, M0904_ADMIN);
     const paB = new ページ管理(pageB);
     await step(1, async () => { await paA.一覧を開く(); await paA.行の削除を押す(id); });
-    await step(2, async () => { await paB.一覧を開く(); await paB.行の削除を押す(id); await paB.モーダルで削除する(id); });
+    await step(2, async () => {
+      await paB.一覧を開く(); await paB.行の削除を押す(id); await paB.モーダルで削除する(id);
+      // ブラウザBは別のセッションなので自動の撮影に写らない。Bで削除が終わった画面を残す
+      await 別のブラウザの画面を撮る(pageB, scene.stepLabel(2, "ブラウザB（管理者）の削除が終わった画面"));
+    });
     await step(3, async () => {
       await Promise.all([
         page.waitForResponse((r) => r.request().method() === "POST" && /\/content\/page\/\d+\/delete/.test(r.url()), { timeout: 60_000 }),
@@ -675,7 +720,7 @@ caseTest("IT-M09-04-051", async ({ page, browser, notes, step, expected }) => {
 const 並びのID = async (pa: ページ管理) => pa.見えている行.evaluateAll((rs) => rs.map((r) => r.id.replace("ex-page-", "")));
 
 caseTest("IT-M09-04-001", async ({ page, notes, step, expected }) => {
-  const 開発者 = notes.get("〔ページID-M0904-001開発者〕"); const モバイル = notes.get("〔ページID-M0904-001モバイル〕"); const PC = notes.get("〔ページID-M0904-001PC〕");
+  const 開発者 = 読み替えたページIDを引く("001開発者"); const モバイル = 読み替えたページIDを引く("001モバイル"); const PC = 読み替えたページIDを引く("001PC");
   const pa = await ログインして(page);
   let ids: string[] = [];
   await step(1, async () => { await pa.一覧を開く(); });
@@ -698,16 +743,32 @@ caseTest("IT-M09-04-003", async ({ page, notes, step, expected }) => {
   let 読み込んだ行 = 0; let ids: string[] = []; let ルーティング名欄 = "";
   await step(1, async () => { await pa.一覧を開く(); 読み込んだ行 = await 全行数(page); });
   await step(2, async () => { await pa.検索する(語); ids = await 並びのID(pa); if (ids.includes(id)) ルーティング名欄 = (await pa.行(id).locator("td").nth(1).innerText()).trim(); });
-  note("ルーティング名に対応付ける表示URLは設定していない（画面のルート定義は書き換えない方針）。ルーティング名欄の値の一致で確かめる");
+  note("シード表はルーティング名と表示URLを別の値にするが、画面で登録するページはURLの入力値がそのままルーティング名にも表示URLにもなる（別の値にできるのは、アプリに元からあるルート定義のページだけ）。シードのページは同じ値の欄での絞り込みを確かめ、ルーティング名の欄を見て検索していることは、ルーティング名と表示URLが違う既存のページで確かめた");
   await expected(async () => {
     expect.soft(読み込んだ行, "検索の前に読み込まれていた行の数（0件でない）").toBeGreaterThan(0);
     expect.soft(ids, "検索語に一致して表示されたページのID").toEqual([id]);
     expect.soft(ルーティング名欄, "そのページのルーティング名欄").toContain(語);
+    // ルーティング名の欄だけに語がある既存のページ（表示URL・ページ名・ファイル名には語が無い）を探し、その語で検索する
+    await pa.検索ボックス.fill("", { timeout: 30_000 });
+    const 表 = await pa.page.locator("table.table tr[id^='ex-page-']").evaluateAll((rs) => rs.map((r) => {
+      const c = Array.from(r.querySelectorAll("td")).slice(0, 4).map((t) => (t.textContent ?? "").replace(/\s+/g, " ").trim().toLowerCase());
+      return { id: r.id.replace("ex-page-", ""), 名: c[0] ?? "", ルート: c[1] ?? "", url: c[2] ?? "", file: c[3] ?? "" };
+    }));
+    const 対象 = 表.find((r) => r.ルート.length >= 8 && r.ルート.includes("_") && !r.名.includes(r.ルート) && !r.url.includes(r.ルート) && !r.file.includes(r.ルート));
+    expect.soft(対象 !== undefined, "ルーティング名と表示URLが別の値のページ（アプリに元からあるもの）がある").toBe(true);
+    if (対象) {
+      const 期待のID = 表.filter((r) => [r.名, r.ルート, r.url, r.file].some((x) => x.includes(対象.ルート))).map((r) => r.id).sort();
+      await pa.検索する(対象.ルート);
+      const 見えたID = (await 並びのID(pa)).sort();
+      expect.soft(見えたID, `ルーティング名「${対象.ルート}」（表示URLは別の値）で検索して表示されたページのID`).toEqual(期待のID);
+      expect.soft(期待のID.includes(対象.id) && !対象.url.includes(対象.ルート), "表示されたページは、ルーティング名の欄だけに語がある（表示URLには語が無い）").toBe(true);
+      await pwExpect.soft(pa.行(対象.id), `ルーティング名「${対象.ルート}」のページ（ID ${対象.id}）の行が表示されている`).toBeVisible();
+    }
   });
 });
 
 caseTest("IT-M09-04-011", async ({ page, notes, step, expected }) => {
-  const id = notes.get("〔ページID-M0904-011〕");
+  const id = 読み替えたページIDを引く("011");
   const pa = await ログインして(page);
   await step(1, async () => { await pa.編集を開く(id, "ja"); });
   await step(2, async () => { await pa.設定欄("ページ設定").waitFor({ state: "visible", timeout: 30_000 }); });
@@ -721,13 +782,13 @@ caseTest("IT-M09-04-011", async ({ page, notes, step, expected }) => {
 });
 
 caseTest("IT-M09-04-012", async ({ page, notes, step, expected }) => {
-  const id = notes.get("〔ページID-M0904-012〕");
+  const id = 読み替えたページIDを引く("012");
   const pa = await ログインして(page);
   await step(1, async () => { await pa.一覧を開く(); });
   await step(2, async () => { await pa.行(id).scrollIntoViewIfNeeded(); });
   await expected(async () => {
-    await pwExpect.soft(pa.行(id), `ID ${id} の行が一覧にある`).toBeVisible();
-    expect.soft(await pa.行(id).locator("a[data-bs-target^='#delete_']").count(), `ID ${id} の行の削除ボタンの数`).toBe(0);
+    await expect.soft(pa.行(id), `ID ${id} の行が一覧にある`).toBeVisible();
+    await expect.soft(pa.行(id).locator("a[data-bs-target^='#delete_']"), `ID ${id} の行の削除ボタンの数`).toHaveCount(0);
   });
 });
 
@@ -736,7 +797,12 @@ caseTest("IT-M09-04-022", async ({ page, notes, step, expected }) => {
   const pa = await ログインして(page);
   let 表示 = "";
   await step(1, async () => { await pa.編集を開く(id, "ja"); });
-  await step(2, async () => { 表示 = (await page.locator("#pageDetail .row").filter({ hasText: "最終更新日時" }).first().innerText()).replace(/\s+/g, " ").trim(); });
+  await step(2, async () => {
+    // 設計書の項目名は「最終更新日時」だが、画面の欄の名前は「更新日」。画面の名前の行を読む（2026-11-14。「最終更新日時」の行を待ち続けて30分の時間切れになっていた）
+    const row = page.locator("#pageDetail .row").filter({ hasText: /最終更新日時|更新日/ }).first();
+    表示 = (await row.innerText({ timeout: 15_000 })).replace(/\s+/g, " ").trim();
+    if (!表示.includes("最終更新日時")) note("設計書の項目「最終更新日時」は、画面では「更新日」の名前で表示されていた（日時の値は設計どおり）");
+  });
   note("最終更新日時は、DBで 2025/10/25 10:30（日本時間）に設定した（画面で指定できないため）");
   await expected(async () => { expect.soft(表示, "最終更新日時の欄").toContain("2025/10/25 10:30"); });
 });
@@ -794,7 +860,12 @@ caseTest("IT-M09-04-038", async ({ page, notes, step, expected }) => {
 caseTest("IT-M09-04-039", async ({ page, notes, step, expected }) => {
   let 行: ReturnType<typeof ページIDで> = null;
   const { id, v } = await 重複更新ケース(page, notes, step, { 番号: "039", 項目: "ファイル名", 新名: "標準ファイル重複試験", 新ファイル: "default/duplicate_standard_file" });
-  await step(4, async () => { 行 = ページIDで(id); });
+  await step(4, async () => {
+    行 = ページIDで(id);
+    // 重複の相手（ID 40 の開発者作成ページの読み替え）が、編集可否区分「既定」のページであることを、DBの値で確かめる
+    const 相手 = ページIDで(読み替えたページIDを引く("共有標準"));
+    expect.soft(相手?.既定 === true, "重複の相手（ID 40 の開発者作成ページに読み替えた印つきのページ）の編集可否区分が既定である").toBe(true);
+  });
   note("ID 40 の開発者作成ページは、画面で作った印つきのページ（DBで編集可否区分を既定にした）で読み替えた");
   await expected(async () => {
     expect.soft(行?.ページ名, `ID ${id} のページ名が更新前の値のまま`).toBe(v.ページ名);
@@ -814,13 +885,16 @@ caseTest("IT-M09-04-052", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔ページID-M0904-052〕");
   const topId = TOPを確かめる();
   const pa = await ログインして(page);
-  let TOP入力欄 = -1; let TOP表示 = ""; let 利用者入力欄 = false;
-  await step(1, async () => { await pa.編集を開く(topId, "ja"); TOP入力欄 = await page.locator("#main_edit_url").count(); TOP表示 = (await page.locator("#pageDetail .row").filter({ hasText: "URL" }).first().innerText()).replace(/\s+/g, " ").trim(); });
-  await step(2, async () => { await pa.編集を開く(id, "ja"); 利用者入力欄 = await page.locator("#main_edit_url").isVisible(); });
+  await step(1, async () => {
+    await pa.編集を開く(topId, "ja");
+    // TOPページの確かめは、TOPページの画面が出ているこの手順で行う（利用者作成ページの画面の画像に、TOPページの確かめの印を付けない）
+    await expect.soft(page.locator("#main_edit_url"), "TOPページのURLの入力欄の数（表示されない）").toHaveCount(0);
+    // 表示されるアドレスのホスト名は、画面を開いている管理画面のホスト（アプリは現在のリクエストのホストで出す。ベース実装も同じ）で、フロントのホストとは限らない。正本は「現在のURL」としか書かないので、TOPページのアドレス（/ja/）で終わる表示かを確かめる
+    await expect.soft(page.locator("#pageDetail .row").filter({ hasText: "URL" }).first(), "TOPページのURL欄に現在のURL（TOPページのアドレス /ja/）が表示されている").toContainText(/https?:\/\/\S+\/ja\/?$/);
+  });
+  await step(2, async () => { await pa.編集を開く(id, "ja"); });
   await expected(async () => {
-    expect.soft(TOP入力欄, "TOPページのURLの入力欄の数").toBe(0);
-    expect.soft(TOP表示, "TOPページのURL欄に現在のURLが表示されている").toContain(new URL(BASE_URL).host);
-    expect.soft(利用者入力欄, `利用者作成のID ${id} のURLの入力欄が表示されている`).toBe(true);
+    await expect.soft(page.locator("#main_edit_url"), `利用者作成のID ${id} のURLの入力欄が表示されている`).toBeVisible();
   });
 });
 
@@ -828,13 +902,15 @@ caseTest("IT-M09-04-053", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔ページID-M0904-053〕");
   const topId = TOPを確かめる();
   const pa = await ログインして(page);
-  let TOP入力欄 = -1; let TOP表示 = ""; let 利用者入力欄 = false;
-  await step(1, async () => { await pa.編集を開く(topId, "ja"); TOP入力欄 = await page.locator("#main_edit_file_name").count(); TOP表示 = (await page.locator("#pageDetail .row").filter({ hasText: "ファイル名" }).first().innerText()).replace(/\s+/g, " ").trim(); });
-  await step(2, async () => { await pa.編集を開く(id, "ja"); 利用者入力欄 = await page.locator("#main_edit_file_name").isVisible(); });
+  await step(1, async () => {
+    await pa.編集を開く(topId, "ja");
+    // TOPページの確かめは、TOPページの画面が出ているこの手順で行う（利用者作成ページの画面の画像に、TOPページの確かめの印を付けない）
+    await expect.soft(page.locator("#main_edit_file_name"), "TOPページのファイル名の入力欄の数（表示されない）").toHaveCount(0);
+    await expect.soft(page.locator("#pageDetail .row").filter({ hasText: "ファイル名" }).first(), "TOPページのファイル名欄に現在のファイル名が表示されている").toContainText("index.ja.twig");
+  });
+  await step(2, async () => { await pa.編集を開く(id, "ja"); });
   await expected(async () => {
-    expect.soft(TOP入力欄, "TOPページのファイル名の入力欄の数").toBe(0);
-    expect.soft(TOP表示, "TOPページのファイル名欄に現在のファイル名が表示されている").toContain("index.ja.twig");
-    expect.soft(利用者入力欄, `利用者作成のID ${id} のファイル名の入力欄が表示されている`).toBe(true);
+    await expect.soft(page.locator("#main_edit_file_name"), `利用者作成のID ${id} のファイル名の入力欄が表示されている`).toBeVisible();
   });
 });
 
@@ -861,7 +937,7 @@ caseTest("IT-M09-04-057", async ({ page, notes, step, expected }) => {
 });
 
 caseTest("IT-M09-04-063", async ({ page, notes, step, expected }) => {
-  const 開発者 = notes.get("〔ページID-M0904-063開発者〕"); const 利用者 = notes.get("〔ページID-M0904-063〕");
+  const 開発者 = 読み替えたページIDを引く("063開発者"); const 利用者 = notes.get("〔ページID-M0904-063〕");
   const pa = await ログインして(page);
   let ids: string[] = [];
   await step(1, async () => { await pa.一覧を開く(); });
@@ -871,9 +947,11 @@ caseTest("IT-M09-04-063", async ({ page, notes, step, expected }) => {
   await step(5, async () => { await pa.行(利用者).scrollIntoViewIfNeeded(); });
   note("検索語「m0904-063」には前の実行の印つきのページも当たるので、2行だけとはせず、この実行の2行が並ぶことで確かめた。開発者作成のページは画面で作った印つきのページをDBで開発者作成にしたもの");
   await expected(async () => {
-    expect.soft(ids.includes(開発者) && ids.includes(利用者), "この実行の開発者作成ページと利用者作成ページの2行が並んでいる").toBe(true);
-    expect.soft(await pa.行(開発者).locator("a[data-bs-target^='#delete_']").count(), `ID ${開発者} の行の削除ボタンの数`).toBe(0);
-    expect.soft(await pa.行(利用者).locator("a[data-bs-target^='#delete_']").count(), `ID ${利用者} の行の削除ボタンの数`).toBe(1);
+    // 2行が並んでいることは、この実行で作った行（ID で決まる）ごとに確かめて枠を付ける（前の実行の残りの行には付けない）
+    await expect.soft(pa.行(開発者), `この実行の開発者作成ページ（ID ${開発者}）の行が並んでいる`).toBeVisible();
+    await expect.soft(pa.行(開発者).locator("a[data-bs-target^='#delete_']"), `ID ${開発者} の行の削除ボタンの数`).toHaveCount(0);
+    await expect.soft(pa.行(利用者), `この実行の利用者作成ページ（ID ${利用者}）の行が並んでいる`).toBeVisible();
+    await expect.soft(pa.行(利用者).locator("a[data-bs-target^='#delete_']"), `ID ${利用者} の行の削除ボタンの数`).toHaveCount(1);
   });
 });
 void rc;

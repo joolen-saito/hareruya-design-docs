@@ -83,7 +83,8 @@ function 公開状態を更新(n: string, 公開状態: string): CaseBody {
     await loginAdmin(page, M1302_ADMIN);
     let form!: EventForm;
     await step(1, async () => { form = await openEventEdit(page, id); });
-    await step(2, async () => { await form.fill({ 公開状態 }); await form.submit(form.更新ボタン); });
+    // 送信の応答の画面への移動まで待ってから DB を読む
+    await step(2, async () => { await form.fill({ 公開状態 }); expect((await form.送信して待つ(form.更新ボタン)).応答, "更新の送信が送られた（送信の応答がある）").not.toBeNull(); });
     let 保存値 = "";
     await step(3, async () => { 保存値 = 保存されているイベント(id)?.公開状態 ?? "（イベントがDBに無い）"; });
     await expected(async () => {

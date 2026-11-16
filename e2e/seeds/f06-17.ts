@@ -131,6 +131,8 @@ const 提出内容 = () => ({ メイン: `1 ${カード名.通常A()}`, サイ�
 
 defineCaseSeed("S-F06-17-CASE-001", { n: "001" });
 defineCaseSeed("S-F06-17-CASE-003", { n: "003" });
+// 004: メールアドレスは「f0617-en-004」に実行の印（完了メールの宛先。試験メールの受信箱はメールの受け口で読む）
+defineCaseSeed("S-F06-17-CASE-004", { n: "004", 会員: { ベース: "f0617-en-004" } });
 defineCaseSeed("S-F06-17-CASE-007", { n: "007", 会員: { 姓: "ヤマダ", 名: "ハナコ", セイ: "ヤマダ", メイ: "ハナコ", 英字名: undefined } });
 defineCaseSeed("S-F06-17-CASE-008", { n: "008" });
 defineCaseSeed("S-F06-17-CASE-009", { n: "009" });

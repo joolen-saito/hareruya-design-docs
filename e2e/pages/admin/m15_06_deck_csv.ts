@@ -57,7 +57,7 @@ export class デッキCSV登録画面 {
   /** 「CSVファイルをアップロード」を押し、移った画面の帯（成功・誤り）を読む */
   async アップロードを押す(): Promise<送信の結果> {
     if (!(await this.アップロードボタン.isEnabled())) return { 送った: false, 移った画面: this.page.url(), 成功: [], エラー: [] };
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 600_000 }), this.アップロードボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 600_000 }), this.アップロードボタン.click({ noWaitAfter: true })]);
     await this.読み込みを待つ();
     return { 送った: true, 移った画面: this.page.url(), 成功: await this.帯(".alert-success"), エラー: await this.帯(".alert-danger") };
   }
@@ -97,7 +97,7 @@ export async function 一覧からCSV登録を開く(page: Page): Promise<string
   const b = CSV登録ボタン(page);
   await expect(b, "デッキ一覧のCSV登録ボタン").toHaveCount(1);
   const 名 = (await b.innerText()).trim();
-  await Promise.all([page.waitForURL((u) => pathOf(u.toString()) === CSV登録画面のパス(), { waitUntil: "load" }), b.click()]);
+  await Promise.all([page.waitForURL((u) => pathOf(u.toString()) === CSV登録画面のパス(), { waitUntil: "load", timeout: 120_000 }), b.click({ noWaitAfter: true })]);
   await new デッキCSV登録画面(page).読み込みを待つ();
   return 名;
 }

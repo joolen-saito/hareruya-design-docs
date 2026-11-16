@@ -42,9 +42,9 @@ export function 配送先を受注から外す(what: string, 配送先IDs: strin
 /** 受注の消費税額・利用ポイント・値引き・合計（確かめに使う） */
 export function 受注の金額(受注ID: string): { 小計: number; 送料: number; 手数料: number; 値引き: number; 利用ポイント: number; 合計: number; 消費税額: number } | null {
   const r = query(
-    `select o.subtotal::text as s, o.delivery_fee_total::text as d, o.charge::text as c, o.discount::text as di, o.use_point::text as u, o.total::text as t, o.tax::text as x from dtb_order o where o.id = $1::int`,
+    `select o.subtotal::text as s, o.delivery_fee_total::text as d, o.charge::text as c, o.discount::text as di, o.use_point::text as u, o.total::text as tt, o.tax::text as x from dtb_order o where o.id = $1::int`,
     [受注ID])[0];
   if (!r) return null;
   const n = (v: unknown) => Number(v ?? 0);
-  return { 小計: n(r.s), 送料: n(r.d), 手数料: n(r.c), 値引き: n(r.di), 利用ポイント: n(r.u), 合計: n(r.t), 消費税額: n(r.x) };
+  return { 小計: n(r.s), 送料: n(r.d), 手数料: n(r.c), 値引き: n(r.di), 利用ポイント: n(r.u), 合計: n(r.tt), 消費税額: n(r.x) };
 }

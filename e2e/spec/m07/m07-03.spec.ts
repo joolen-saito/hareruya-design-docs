@@ -13,6 +13,11 @@ import { BuyEditPage, BuyListPage } from "../../pages/admin/m07_buy";
 import { NetHistoryPage } from "../../pages/front/m07_03_history";
 import { ログインする } from "../../pages/front/m07_net_buy";
 import { M0703_ADMIN, QG会員, 品名 } from "../../seeds/m07-03";
+import { scene, 別のブラウザの画面を撮る } from "../../lib/evidence_other";
+
+/** ブラウザA（会員）の画面を、その手順（または期待結果）の画像として撮る。自動のキャプチャはブラウザB（ケースの画面）しか撮らないため */
+const Aを撮る = (A: Page, n: number | "期待結果", 何: string): Promise<void> =>
+  別のブラウザの画面を撮る(A, n === "期待結果" ? scene.expectedLabel(`ブラウザA（会員）の${何}`) : scene.stepLabel(n, `ブラウザA（会員）の${何}`));
 
 /** ブラウザA（会員）を別のコンテキストで開き、ログインする */
 async function ブラウザAを開く(browser: Browser, n: string): Promise<{ page: Page; close: () => Promise<void> }> {
@@ -43,13 +48,14 @@ caseTest("IT-M07-03-137", async ({ page, browser, notes, step, expected }) => {
     const h = new NetHistoryPage(A.page);
     let 前: Awaited<ReturnType<NetHistoryPage["明細"]>> = [], 後: typeof 前 = [];
     let 編集: BuyEditPage;
-    await step(1, async () => { await h.一覧を開く(); await h.詳細を開く(番号); });
-    await step(2, async () => { 前 = await h.明細(); });
+    await step(1, async () => { await h.一覧を開く(); await h.詳細を開く(番号); await Aを撮る(A.page, 1, "買取履歴詳細"); });
+    await step(2, async () => { 前 = await h.明細(); await Aを撮る(A.page, 2, "買取履歴詳細"); });
     await step(3, async () => { await loginAdmin(page, M0703_ADMIN); 編集 = await 編集を開く(page, 番号); });
     let 文: string[] = [];
     await step(4, async () => { 文 = await 編集!.一括売却登録する("OK"); });
-    await step(5, async () => { await h.一覧を開く(); await h.詳細を開く(番号); 後 = await h.明細(); });
+    await step(5, async () => { await h.一覧を開く(); await h.詳細を開く(番号); 後 = await h.明細(); await Aを撮る(A.page, 5, "買取履歴詳細"); });
     await expected(async () => {
+      await Aを撮る(A.page, "期待結果", "買取履歴詳細");
       const f = (rows: typeof 前, 枝: string) => rows.find((r) => r.商品名 === 品名("001", 枝))?.売却 ?? "（明細が無い）";
       expect.soft(f(前, "B"), "手順2の明細QG0703-001-Bの選択").toBe("売却しない");
       for (const 枝 of ["A", "B", "C"]) expect.soft(f(後, 枝), `手順5の明細QG0703-001-${枝}の選択`).toBe("売却する");
@@ -65,12 +71,13 @@ caseTest("IT-M07-03-138", async ({ page, browser, notes, step, expected }) => {
     const h = new NetHistoryPage(A.page);
     let 前 = { 処理状態: "", 買取金額合計: "" }, 後 = { 処理状態: "", 買取金額合計: "" };
     let 編集: BuyEditPage;
-    await step(1, async () => { await h.一覧を開く(); });
-    await step(2, async () => { const b = await h.箱の文(番号); 前 = { 処理状態: b.処理状態, 買取金額合計: b.買取金額合計 }; });
+    await step(1, async () => { await h.一覧を開く(); await Aを撮る(A.page, 1, "買取履歴一覧"); });
+    await step(2, async () => { const b = await h.箱の文(番号); 前 = { 処理状態: b.処理状態, 買取金額合計: b.買取金額合計 }; await Aを撮る(A.page, 2, "買取履歴一覧"); });
     await step(3, async () => { await loginAdmin(page, M0703_ADMIN); 編集 = await 編集を開く(page, 番号); });
     await step(4, async () => { await 編集!.買取状況を変えて保存する("査定内容承諾"); });
-    await step(5, async () => { await h.一覧を開く(); const b = await h.箱の文(番号); 後 = { 処理状態: b.処理状態, 買取金額合計: b.買取金額合計 }; });
+    await step(5, async () => { await h.一覧を開く(); const b = await h.箱の文(番号); 後 = { 処理状態: b.処理状態, 買取金額合計: b.買取金額合計 }; await Aを撮る(A.page, 5, "買取履歴一覧"); });
     await expected(async () => {
+      await Aを撮る(A.page, "期待結果", "買取履歴一覧");
       expect.soft(前.処理状態, "手順2の処理状態").toContain("査定完了");
       expect.soft(前.買取金額合計.replace(/[^0-9]/g, ""), "手順2の買取金額合計（表示されない）").toBe("");
       expect.soft(後.処理状態, "手順5の処理状態").toContain("振込待ち");
@@ -86,8 +93,8 @@ caseTest("IT-M07-03-139", async ({ page, browser, notes, step, expected }) => {
     const h = new NetHistoryPage(A.page);
     let 前: Awaited<ReturnType<NetHistoryPage["明細"]>> = [], 後: typeof 前 = [];
     let 編集: BuyEditPage;
-    await step(1, async () => { await h.一覧を開く(); await h.詳細を開く(番号); });
-    await step(2, async () => { 前 = await h.明細(); });
+    await step(1, async () => { await h.一覧を開く(); await h.詳細を開く(番号); await Aを撮る(A.page, 1, "買取履歴詳細"); });
+    await step(2, async () => { 前 = await h.明細(); await Aを撮る(A.page, 2, "買取履歴詳細"); });
     await step(3, async () => { await loginAdmin(page, M0703_ADMIN); 編集 = await 編集を開く(page, 番号); });
     await step(4, async () => { await 編集!.明細に商品を追加する(品名("003", "SUP")); });
     await step(5, async () => {
@@ -96,8 +103,9 @@ caseTest("IT-M07-03-139", async ({ page, browser, notes, step, expected }) => {
       await 編集!.査定確定する();
       await 編集!.保存する("明細の追加と査定の保存");
     });
-    await step(6, async () => { await h.一覧を開く(); await h.詳細を開く(番号); 後 = await h.明細(); });
+    await step(6, async () => { await h.一覧を開く(); await h.詳細を開く(番号); 後 = await h.明細(); await Aを撮る(A.page, 6, "買取履歴詳細"); });
     await expected(async () => {
+      await Aを撮る(A.page, "期待結果", "買取履歴詳細");
       expect.soft(前.some((r) => r.商品名 === 品名("003", "SUP")), "手順2のえらんで買取の明細にQG0703-003-SUPが表示される").toBe(false);
       const r = 後.find((x) => x.商品名 === 品名("003", "SUP"));
       expect.soft(r !== undefined, "手順6の明細にQG0703-003-SUPが表示される").toBe(true);
@@ -116,12 +124,13 @@ caseTest("IT-M07-03-140", async ({ page, browser, notes, step, expected }) => {
     let 前: Awaited<ReturnType<NetHistoryPage["明細"]>> = [], 後: typeof 前 = [];
     let 編集: BuyEditPage;
     let 文: string[] = [];
-    await step(1, async () => { await h.一覧を開く(); await h.詳細を開く(番号); });
-    await step(2, async () => { 前 = await h.明細(); });
+    await step(1, async () => { await h.一覧を開く(); await h.詳細を開く(番号); await Aを撮る(A.page, 1, "買取履歴詳細"); });
+    await step(2, async () => { 前 = await h.明細(); await Aを撮る(A.page, 2, "買取履歴詳細"); });
     await step(3, async () => { await loginAdmin(page, M0703_ADMIN); 編集 = await 編集を開く(page, 番号); });
     await step(4, async () => { 文 = await 編集!.明細を削除する(品名("004", "B"), "OK"); });
-    await step(5, async () => { await h.一覧を開く(); await h.詳細を開く(番号); 後 = await h.明細(); });
+    await step(5, async () => { await h.一覧を開く(); await h.詳細を開く(番号); 後 = await h.明細(); await Aを撮る(A.page, 5, "買取履歴詳細"); });
     await expected(async () => {
+      await Aを撮る(A.page, "期待結果", "買取履歴詳細");
       expect.soft(前.map((r) => r.商品名).sort(), "手順2の明細の商品名").toEqual([品名("004", "A"), 品名("004", "B")].sort());
       expect.soft(後.map((r) => r.商品名), "手順5の明細の商品名（QG0703-004-Aの1件だけ）").toEqual([品名("004", "A")]);
       expect.soft(文.join(" / "), "削除の確認ダイアログの文").toContain("を削除してもよろしいですか？");
@@ -136,12 +145,13 @@ caseTest("IT-M07-03-141", async ({ page, browser, notes, step, expected }) => {
     const h = new NetHistoryPage(A.page);
     let 前 = { 状態: "", ボタン: -1 }, 後 = { 状態: "", ボタン: -1 };
     let 編集: BuyEditPage;
-    await step(1, async () => { await h.一覧を開く(); await h.詳細を開く(番号); });
-    await step(2, async () => { 前 = { 状態: await h.項目("処理状態"), ボタン: await h.承諾確定ボタン().count() }; });
+    await step(1, async () => { await h.一覧を開く(); await h.詳細を開く(番号); await Aを撮る(A.page, 1, "買取履歴詳細"); });
+    await step(2, async () => { 前 = { 状態: await h.項目("処理状態"), ボタン: await h.承諾確定ボタン().count() }; await Aを撮る(A.page, 2, "買取履歴詳細"); });
     await step(3, async () => { await loginAdmin(page, M0703_ADMIN); 編集 = await 編集を開く(page, 番号); });
     await step(4, async () => { await 編集!.買取状況を変えて保存する("査定内容連絡済み"); });
-    await step(5, async () => { await h.一覧を開く(); await h.詳細を開く(番号); 後 = { 状態: await h.項目("処理状態"), ボタン: await h.承諾確定ボタン().count() }; });
+    await step(5, async () => { await h.一覧を開く(); await h.詳細を開く(番号); 後 = { 状態: await h.項目("処理状態"), ボタン: await h.承諾確定ボタン().count() }; await Aを撮る(A.page, 5, "買取履歴詳細"); });
     await expected(async () => {
+      await Aを撮る(A.page, "期待結果", "買取履歴詳細");
       expect.soft(前.状態, "手順2の処理状態").toContain("査定中");
       expect.soft(前.ボタン, "手順2の承諾確定ボタンの数（表示されない）").toBe(0);
       expect.soft(後.状態, "手順5の処理状態").toContain("査定完了");
@@ -157,12 +167,13 @@ caseTest("IT-M07-03-142", async ({ page, browser, notes, step, expected }) => {
     const h = new NetHistoryPage(A.page);
     let 前 = "", 後 = "";
     let 編集: BuyEditPage;
-    await step(1, async () => { await h.一覧を開く(); });
-    await step(2, async () => { 前 = (await h.箱の文(番号)).全文; });
+    await step(1, async () => { await h.一覧を開く(); await Aを撮る(A.page, 1, "買取履歴一覧"); });
+    await step(2, async () => { 前 = (await h.箱の文(番号)).全文; await Aを撮る(A.page, 2, "買取履歴一覧"); });
     await step(3, async () => { await loginAdmin(page, M0703_ADMIN); 編集 = await 編集を開く(page, 番号); });
     await step(4, async () => { await 編集!.一括売却登録する("OK"); });
-    await step(5, async () => { await h.一覧を開く(); 後 = (await h.箱の文(番号)).全文; });
+    await step(5, async () => { await h.一覧を開く(); 後 = (await h.箱の文(番号)).全文; await Aを撮る(A.page, 5, "買取履歴一覧"); });
     await expected(async () => {
+      await Aを撮る(A.page, "期待結果", "買取履歴一覧");
       expect.soft(前, "手順2の買取依頼内容に代表商品QG0703-006-C").toContain(品名("006", "C"));
       expect.soft(前, "手順2の買取依頼内容の「ほか1件」").toContain("ほか1件");
       expect.soft(後, "手順5の買取依頼内容に代表商品QG0703-006-C").toContain(品名("006", "C"));

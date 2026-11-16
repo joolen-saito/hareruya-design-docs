@@ -26,24 +26,26 @@
 import { Browser } from "@playwright/test";
 import { BASE_URL, MEMBER_NAMES, SETUP_ADMIN } from "../config/env";
 import { 申込に参加者を足す, 申込の申込履歴ID } from "../db/m13_10";
-import { rc, RUN_MARK } from "../lib/run_marker";
+import { rc, RUN_MARK, rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed, reportCurrentSeedIssue } from "./current_seed";
+import { Notes } from "../lib/notes";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { openEventCreate, registerEvent } from "../pages/admin/event";
 import { プレイヤーIDを読んで申込する, 会員IDを氏名から, 何も変えずに登録する } from "../pages/admin/m13_10_entry_edit";
-import { ensureMember } from "../pages/admin/member";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
 import { registerSchedule } from "../pages/admin/schedule";
-import { ensureTenant } from "../pages/admin/tenant";
+import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
 import { FrontMember, registerFrontMember } from "../pages/front/member_entry";
 import { QK1302_ADMIN, QK連携店舗 } from "./m13-02-qk";
 import { entryMemberNames } from "./members";
 import { customerStateByEmail } from "../pages/admin/customer";
 import { 管理画面で本会員にする, 管理画面で本会員にした注記, 本登録のメールを読める } from "../pages/admin/member_activate";
 
-export const M1310_ADMIN_A: Account = { loginId: "m1310_admin_a", password: "Passw0rd!M1310A" };
-export const M1310_ADMIN_B: Account = { loginId: "m1310_admin_b", password: "Passw0rd!M1310B" };
-export const M1310_ADMIN_DPA: Account = { loginId: "m1310_dp_admin_a", password: "Passw0rd!M1310DP" };
+// 店舗を決まった名前の試験店舗（m13_marked_shop.ts）にしたので、管理者も決まった印の名前・ログインIDで1度だけ作って使い回す（同名の別の店舗に所属した前の管理者とぶつけない）
+export const M1310_ADMIN_A: Account = { loginId: rcFixed("m1310_admin_a").toLowerCase(), password: "Passw0rd!M1310A" };
+export const M1310_ADMIN_B: Account = { loginId: rcFixed("m1310_admin_b").toLowerCase(), password: "Passw0rd!M1310B" };
+export const M1310_ADMIN_DPA: Account = { loginId: rcFixed("m1310_dp_admin_a").toLowerCase(), password: "Passw0rd!M1310DP" };
 
 // ---- 店舗・マスタ・管理者 ----
 
@@ -52,8 +54,8 @@ const 店 = (n: string, kana: string, eng: string, url: string, ryaku: string) =
 defineSeed("S-M13-10-MASTER", async ({ browser, notes, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    notes.set("〔店舗ID-M1310-共有A〕", await ensureTenant(page, 店("A", "テンポエー", "Shop A", "m1302a", "テA"), issue));
-    notes.set("〔店舗ID-M1310-共有B〕", await ensureTenant(page, 店("B", "テンポビー", "Shop B", "m1302b", "テB"), issue));
+    notes.set("〔店舗ID-M1310-共有A〕", await ensureMarkedTenant(page, "A", issue));
+    notes.set("〔店舗ID-M1310-共有B〕", await ensureMarkedTenant(page, "B", issue));
     const form = await openEventCreate(page);
     const have = await form.options(form.フォーマット);
     if (!have.includes("スタンダード")) throw new Error(`${seed.シードID}: イベント登録画面のフォーマットに「スタンダード」が無い（ある選択肢: ${have.join("、")}）`);
@@ -61,7 +63,7 @@ defineSeed("S-M13-10-MASTER", async ({ browser, notes, seed }) => {
   issue("フォーマット「スタンダード」はイベント登録画面の選択肢にあることを確かめた。支払方法「管理画面登録」・申込状況6種はイベント申込詳細・編集画面にだけ出るので、ケースの画面で確かめる（DB へは書かない）");
 });
 
-type 管理者 = { 名前: string; account: Account; 店舗: "店舗A" | "店舗B"; メール: string };
+type 管理者 = { 名前: string; account: Account; 店舗: string; メール: string };
 
 function defineAdminSeed(seedId: string, v: 管理者): void {
   defineSeed(seedId, { needs: ["S-M13-10-MASTER"] }, async ({ browser, seed }) => {
@@ -76,9 +78,9 @@ function defineAdminSeed(seedId: string, v: 管理者): void {
     reportSeedIssue(seed.シードID, `管理者IDは画面が振る番号のまま。権限は「モールオペレーター」（編集可能店舗は${v.店舗}だけ）で代えた（「店舗オーナー」は所属店舗の申込しか見えない）`);
   });
 }
-defineAdminSeed("S-M13-10-ADM-A", { 名前: "M13-10店舗A管理者", account: M1310_ADMIN_A, 店舗: "店舗A", メール: "m1310_admin_a@example.test" });
-defineAdminSeed("S-M13-10-ADM-B", { 名前: "M13-10店舗B管理者", account: M1310_ADMIN_B, 店舗: "店舗B", メール: "m1310_admin_b@example.test" });
-defineAdminSeed("S-M13-10-ADM-DPA", { 名前: "M13-10追加ケース店舗A管理者", account: M1310_ADMIN_DPA, 店舗: "店舗A", メール: "m1310_dp_admin_a@example.test" });
+defineAdminSeed("S-M13-10-ADM-A", { 名前: rcFixed("M13-10店舗A管理者"), account: M1310_ADMIN_A, 店舗: 印店名.A, メール: "m1310_admin_a-e2e@example.test" });
+defineAdminSeed("S-M13-10-ADM-B", { 名前: rcFixed("M13-10店舗B管理者"), account: M1310_ADMIN_B, 店舗: 印店名.B, メール: "m1310_admin_b-e2e@example.test" });
+defineAdminSeed("S-M13-10-ADM-DPA", { 名前: rcFixed("M13-10追加ケース店舗A管理者"), account: M1310_ADMIN_DPA, 店舗: 印店名.A, メール: "m1310_dp_admin_a-e2e@example.test" });
 
 // ---- イベント・日程・申込 ----
 
@@ -144,7 +146,7 @@ function defineEntrySeed(seedId: string, v: 申込シード): void {
     const n = v.n; const account = v.account ?? M1310_ADMIN_A;
     const [氏名] = await entryMemberNames(browser, 1);
     const 名日 = イベント名(n);
-    const [e, d] = await イベントと日程を登録する(browser, account, { 名日, 名英: `M1310-${n} Event`, 店舗: "店舗A", 参加費: v.参加費 });
+    const [e, d] = await イベントと日程を登録する(browser, account, { 名日, 名英: `M1310-${n} Event`, 店舗: 印店名.A, 参加費: v.参加費 });
     notes.set(`〔イベントID-M1310-${n}〕`, e);
     notes.set(`〔イベント日程ID-M1310-${n}〕`, d);
     const 会員ID = await 会員IDを読む(browser, 氏名);
@@ -190,14 +192,14 @@ defineSeed("S-M13-10-DATA-005", async ({ seed }) => {
 defineSeed("S-M13-10-DATA-008", { needs: ["S-M13-10-ADM-A", "S-M13-10-ADM-B"] }, async ({ browser, notes, seed }) => {
   const [氏名A, 氏名B] = await entryMemberNames(browser, 2);
   const 名A = イベント名("008"); const 名B = rc("M1310-008店舗Bイベント");
-  const [ea, da] = await イベントと日程を登録する(browser, M1310_ADMIN_A, { 名日: 名A, 名英: "M1310-008 Event", 店舗: "店舗A" });
+  const [ea, da] = await イベントと日程を登録する(browser, M1310_ADMIN_A, { 名日: 名A, 名英: "M1310-008 Event", 店舗: 印店名.A });
   notes.set("〔店舗AイベントID-M1310-008〕", ea);
   notes.set("〔店舗Aイベント日程ID-M1310-008〕", da);
   notes.set("〔店舗A会員ID-M1310-008〕", await 会員IDを読む(browser, 氏名A));
   const a = await 申込する(browser, M1310_ADMIN_A, 名A, da, 氏名A);
   notes.set("〔店舗AプレイヤーID-M1310-008〕", a.プレイヤーID);
   notes.set("〔店舗Aイベント申込ID-M1310-008〕", a.申込ID);
-  const [eb, db] = await イベントと日程を登録する(browser, M1310_ADMIN_B, { 名日: 名B, 名英: "M1310-008 Shop B Event", 店舗: "店舗B" });
+  const [eb, db] = await イベントと日程を登録する(browser, M1310_ADMIN_B, { 名日: 名B, 名英: "M1310-008 Shop B Event", 店舗: 印店名.B });
   notes.set("〔店舗BイベントID-M1310-008〕", eb);
   notes.set("〔店舗Bイベント日程ID-M1310-008〕", db);
   notes.set("〔店舗B会員ID-M1310-008〕", await 会員IDを読む(browser, 氏名B));
@@ -211,7 +213,7 @@ defineSeed("S-M13-10-DATA-008", { needs: ["S-M13-10-ADM-A", "S-M13-10-ADM-B"] },
 defineSeed("S-M13-10-DATA-024", { needs: ["S-M13-10-ADM-A"] }, async ({ browser, notes, seed }) => {
   const [氏名1, 氏名2] = await entryMemberNames(browser, 2);
   const 名日 = イベント名("024");
-  const [e, d] = await イベントと日程を登録する(browser, M1310_ADMIN_A, { 名日, 名英: "M1310-024 Event", 店舗: "店舗A" });
+  const [e, d] = await イベントと日程を登録する(browser, M1310_ADMIN_A, { 名日, 名英: "M1310-024 Event", 店舗: 印店名.A });
   notes.set("〔イベントID-M1310-024〕", e);
   notes.set("〔イベント日程ID-M1310-024〕", d);
   const 会員1 = await 会員IDを読む(browser, 氏名1);
@@ -231,7 +233,7 @@ function defineDupSeed(seedId: string, n: string, 履歴2件: boolean): void {
   defineSeed(seedId, { needs: ["S-M13-10-ADM-A"] }, async ({ browser, notes, seed }) => {
     const [氏名1, 氏名2] = await entryMemberNames(browser, 2);
     const 名日 = イベント名(n);
-    const [e, d] = await イベントと日程を登録する(browser, M1310_ADMIN_A, { 名日, 名英: `M1310-${n} Event`, 店舗: "店舗A" });
+    const [e, d] = await イベントと日程を登録する(browser, M1310_ADMIN_A, { 名日, 名英: `M1310-${n} Event`, 店舗: 印店名.A });
     notes.set(`〔イベントID-M1310-${n}〕`, e);
     notes.set(`〔イベント日程ID-M1310-${n}〕`, d);
     notes.set(`〔編集中会員ID-M1310-${n}〕`, await 会員IDを読む(browser, 氏名1));
@@ -340,38 +342,79 @@ const 追加の注記 = "画面で代えられない DB の設定（チーム人
  * 控える: 〔イベント申込ID〕・〔参加者プレイヤーID-A〕（1人目）・〔参加者プレイヤーID-B〕（2人目）・〔参加者プレイヤーID-C〕（3人目）・
  * 〔追加プレイヤーID〕（足さずに検索で選ぶ会員。追加が有るときだけ）・申込履歴
  */
-function defineMultiSeed(seedId: string, v: { n: string; 参加者: number; 追加検索: boolean; 履歴1件?: boolean; account: Account; needs: string }): void {
+function defineMultiSeed(seedId: string, v: { n: string; 参加者: number; 追加検索: boolean; 履歴1件?: boolean; account: Account; needs: string; 表の呼び名?: boolean;
+  /** シード表が参加者ごと・追加の検索ごとに別の呼び名を定めるもの（042・044・045）。呼び名の接頭（既定は番号）と、参加者の順の呼び名 */
+  独自?: { 番号: string; 参加者: { プレイヤー: string; 会員: string }[]; 追加?: { プレイヤー: string; 会員: string } } }): void {
   defineSeed(seedId, { needs: [v.needs] }, async ({ browser, notes, seed }) => {
     const names = await 申込の会員(browser, v.参加者 + (v.追加検索 ? 1 : 0));
     const 名日 = イベント名(v.n);
-    const [e, d] = await イベントと日程を登録する(browser, v.account, { 名日, 名英: `M1310-${v.n} Event`, 店舗: "店舗A" });
-    notes.set(`〔イベントID-M1310-${v.n}〕`, e);
-    notes.set(`〔イベント日程ID-M1310-${v.n}〕`, d);
+    const [e, d] = await イベントと日程を登録する(browser, v.account, { 名日, 名英: `M1310-${v.n} Event`, 店舗: 印店名.A });
+    const 番号 = v.独自?.番号 ?? v.n;
+    notes.set(`〔イベントID-M1310-${番号}〕`, e);
+    notes.set(`〔イベント日程ID-M1310-${番号}〕`, d);
     const r = await 申込する(browser, v.account, 名日, d, names[0]);
-    notes.set(`〔イベント申込ID-M1310-${v.n}〕`, r.申込ID);
-    notes.set(`〔参加者プレイヤーID-M1310-${v.n}A〕`, r.プレイヤーID);
+    notes.set(`〔イベント申込ID-M1310-${番号}〕`, r.申込ID);
+    // 控える呼び名は、シード表が定めたものだけ（表に無い呼び名を控えると止まる）。表の呼び名を使う seed（表の呼び名: true）は、表のとおりに控える
+    const 表 = v.表の呼び名 ? new Set(Notes.labelsIn(seed["状態・属性"] + seed.投入方法)) : null;
+    const 控える = (l: string, 値: string) => { if (!表 || 表.has(l)) notes.set(l, 値); };
+    const pids: string[] = [r.プレイヤーID];
     for (let i = 1; i < v.参加者; i++) {
       const pid = await プレイヤーIDだけ読む(browser, v.account, 名日, d, names[i]);
       申込に参加者を足す(r.申込ID, pid, i + 1, RUN_MARK);
-      notes.set(`〔参加者プレイヤーID-M1310-${v.n}${"ABC"[i]}〕`, pid);
+      pids.push(pid);
     }
-    if (v.追加検索) notes.set(`〔追加プレイヤーID-M1310-${v.n}〕`, await プレイヤーIDだけ読む(browser, v.account, 名日, d, names[v.参加者]));
-    if (v.履歴1件) 履歴IDを控える(notes, r.申込ID, [`〔申込履歴ID-M1310-${v.n}A〕`]);
-    reportSeedIssue(seed.シードID, `参加者の会員は、シード表の姓の会員を作らず、会員登録済みの会員「${names.join("」「")}」で代えた（会員を作らない）。${追加の注記}${v.参加者 > 1 ? `。2人目以降の参加者は、DBで申込（実行の印つき）に足した` : ""}`);
+    const 検索 = v.追加検索 ? await プレイヤーIDだけ読む(browser, v.account, 名日, d, names[v.参加者]) : "";
+    if (v.独自) {
+      // シード表が参加者ごと（継続・外す）と追加の検索に別の呼び名を定めるもの。会員IDは、画面の会員一覧から氏名で読む
+      for (let i = 0; i < v.参加者; i++) {
+        notes.set(v.独自.参加者[i].プレイヤー, pids[i]);
+        notes.set(v.独自.参加者[i].会員, await 会員IDを読む(browser, names[i]));
+      }
+      if (v.独自.追加) {
+        notes.set(v.独自.追加.プレイヤー, 検索);
+        notes.set(v.独自.追加.会員, await 会員IDを読む(browser, names[v.参加者]));
+      }
+    } else if (!表) {
+      pids.forEach((pid, i) => notes.set(`〔参加者プレイヤーID-M1310-${v.n}${"ABC"[i]}〕`, pid));
+      if (v.追加検索) notes.set(`〔追加プレイヤーID-M1310-${v.n}〕`, 検索);
+    } else {
+      // 参加者1人なら末尾の英字なし、複数なら A・B・C。会員は、画面の会員一覧から氏名で会員IDを読む
+      const 末尾 = (i: number) => (v.参加者 > 1 ? "ABC"[i] : "");
+      for (let i = 0; i < v.参加者; i++) {
+        控える(`〔プレイヤーID-M1310-${v.n}${末尾(i)}〕`, pids[i]);
+        控える(`〔参加者プレイヤーID-M1310-${v.n}${末尾(i)}〕`, pids[i]);
+        if (表.has(`〔会員ID-M1310-${v.n}${末尾(i)}〕`) || 表.has(`〔参加者会員ID-M1310-${v.n}${末尾(i)}〕`) || (i === 0 && 表.has(`〔支払会員ID-M1310-${v.n}〕`))) {
+          const 会員ID = await 会員IDを読む(browser, names[i]);
+          控える(`〔会員ID-M1310-${v.n}${末尾(i)}〕`, 会員ID);
+          控える(`〔参加者会員ID-M1310-${v.n}${末尾(i)}〕`, 会員ID);
+          if (i === 0) 控える(`〔支払会員ID-M1310-${v.n}〕`, 会員ID);
+        }
+      }
+      if (v.追加検索) {
+        控える(`〔検索プレイヤーID-M1310-${v.n}〕`, 検索);
+        if (表.has(`〔検索会員ID-M1310-${v.n}〕`)) 控える(`〔検索会員ID-M1310-${v.n}〕`, await 会員IDを読む(browser, names[v.参加者]));
+      }
+    }
+    if (v.履歴1件 && !v.独自) 履歴IDを控える(notes, r.申込ID, [`〔申込履歴ID-M1310-${v.n}A〕`]);
+    if (v.履歴1件 && v.独自 && 申込の申込履歴ID(r.申込ID).length !== 1) throw new Error(`申込 ${r.申込ID} の申込履歴が ${申込の申込履歴ID(r.申込ID).length} 件（シード表では 1 件）`);
+    reportSeedIssue(seed.シードID, `参加者の会員は、シード表の姓の会員を作らず、会員登録済みの会員「${names.join("」「")}」で代えた（会員を作らない）。${追加の注記}${v.参加者 > 1 ? `。2人目以降の参加者は、DBで申込（実行の印つき）に足した` : ""}${表 ? "。支払会員は参加者の会員のままで、支払会員IDにはその会員の会員IDを控えた" : ""}`);
   });
 }
 
-defineMultiSeed("S-M13-10-DATA-003", { n: "003", 参加者: 1, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A" });
-defineMultiSeed("S-M13-10-DATA-004", { n: "004", 参加者: 3, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A" });
-defineMultiSeed("S-M13-10-DATA-006", { n: "006", 参加者: 1, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A" });
-defineMultiSeed("S-M13-10-DATA-010", { n: "010", 参加者: 1, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A" });
-defineMultiSeed("S-M13-10-DATA-011", { n: "011", 参加者: 1, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A" });
-defineMultiSeed("S-M13-10-DATA-012", { n: "012", 参加者: 1, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A" });
-defineMultiSeed("S-M13-10-DATA-014", { n: "014", 参加者: 1, 追加検索: true, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A" });
-defineMultiSeed("S-M13-10-DATA-018", { n: "018", 参加者: 1, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A" });
-defineMultiSeed("S-M13-10-KEEPSWAP-042", { n: "042", 参加者: 3, 追加検索: true, account: M1310_ADMIN_DPA, needs: "S-M13-10-ADM-DPA" });
-defineMultiSeed("S-M13-10-CBKEEPALL-044", { n: "044", 参加者: 3, 追加検索: false, 履歴1件: true, account: M1310_ADMIN_DPA, needs: "S-M13-10-ADM-DPA" });
-defineMultiSeed("S-M13-10-CBREMOVEONLY-045", { n: "045", 参加者: 3, 追加検索: false, 履歴1件: true, account: M1310_ADMIN_DPA, needs: "S-M13-10-ADM-DPA" });
+defineMultiSeed("S-M13-10-DATA-003", { n: "003", 参加者: 1, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A", 表の呼び名: true });
+defineMultiSeed("S-M13-10-DATA-004", { n: "004", 参加者: 3, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A", 表の呼び名: true });
+defineMultiSeed("S-M13-10-DATA-006", { n: "006", 参加者: 1, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A", 表の呼び名: true });
+defineMultiSeed("S-M13-10-DATA-010", { n: "010", 参加者: 1, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A", 表の呼び名: true });
+defineMultiSeed("S-M13-10-DATA-011", { n: "011", 参加者: 1, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A", 表の呼び名: true });
+defineMultiSeed("S-M13-10-DATA-012", { n: "012", 参加者: 1, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A", 表の呼び名: true });
+defineMultiSeed("S-M13-10-DATA-014", { n: "014", 参加者: 1, 追加検索: true, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A", 表の呼び名: true });
+defineMultiSeed("S-M13-10-DATA-018", { n: "018", 参加者: 1, 追加検索: false, account: M1310_ADMIN_A, needs: "S-M13-10-ADM-A", 表の呼び名: true });
+defineMultiSeed("S-M13-10-KEEPSWAP-042", { n: "042", 参加者: 3, 追加検索: true, account: M1310_ADMIN_DPA, needs: "S-M13-10-ADM-DPA",
+  独自: { 番号: "042", 参加者: [{ プレイヤー: "〔継続プレイヤーID-M1310-042A〕", 会員: "〔継続会員ID-M1310-042A〕" }, { プレイヤー: "〔外すプレイヤーID-M1310-042〕", 会員: "〔外す会員ID-M1310-042〕" }, { プレイヤー: "〔継続プレイヤーID-M1310-042C〕", 会員: "〔継続会員ID-M1310-042C〕" }], 追加: { プレイヤー: "〔追加プレイヤーID-M1310-042〕", 会員: "〔追加会員ID-M1310-042〕" } } });
+defineMultiSeed("S-M13-10-CBKEEPALL-044", { n: "044", 参加者: 3, 追加検索: false, 履歴1件: true, account: M1310_ADMIN_DPA, needs: "S-M13-10-ADM-DPA",
+  独自: { 番号: "CB044", 参加者: ["A", "B", "C"].map((x) => ({ プレイヤー: `〔継続プレイヤーID-M1310-CB044${x}〕`, 会員: `〔継続会員ID-M1310-CB044${x}〕` })) } });
+defineMultiSeed("S-M13-10-CBREMOVEONLY-045", { n: "045", 参加者: 3, 追加検索: false, 履歴1件: true, account: M1310_ADMIN_DPA, needs: "S-M13-10-ADM-DPA",
+  独自: { 番号: "CB045", 参加者: [{ プレイヤー: "〔継続プレイヤーID-M1310-CB045A〕", 会員: "〔継続会員ID-M1310-CB045A〕" }, { プレイヤー: "〔外すプレイヤーID-M1310-CB045〕", 会員: "〔外す会員ID-M1310-CB045〕" }, { プレイヤー: "〔継続プレイヤーID-M1310-CB045C〕", 会員: "〔継続会員ID-M1310-CB045C〕" }] } });
 
 // 017: 編集中の申込（会員1）と、同じ日程の別の申込（会員2＝重複選手）。028・029 と同じ作り
 defineDupSeed("S-M13-10-DATA-017", "017", false);
@@ -382,7 +425,7 @@ defineSeed("S-M13-10-OTHERDATE-041", { needs: ["S-M13-10-ADM-DPA"] }, async ({ b
   const 名日 = イベント名("041");
   const [e, x, y] = await withAdminSession(browser, M1310_ADMIN_DPA, async (page) => {
     page.setDefaultTimeout(120_000);
-    const id = await registerEvent(page, { イベント名日: 名日, イベント名英: "M1310-041 Event", 店舗: "店舗A", フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16", 参加費: "0" });
+    const id = await registerEvent(page, { イベント名日: 名日, イベント名英: "M1310-041 Event", 店舗: 印店名.A, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16", 参加費: "0" });
     const dx = await registerSchedule(page, id, { 開始時間: "2026-09-10 10:00", 受付あり: true, 受付時間: { 開始: "09:00", 終了: "09:30" }, デッキ登録あり: false, 公開状態: "公開" });
     const dy = await registerSchedule(page, id, { 開始時間: "2026-09-11 10:00", 受付あり: true, 受付時間: { 開始: "09:00", 終了: "09:30" }, デッキ登録あり: false, 公開状態: "公開" });
     return [id, dx, dy];
@@ -396,5 +439,8 @@ defineSeed("S-M13-10-OTHERDATE-041", { needs: ["S-M13-10-ADM-DPA"] }, async ({ b
   const b = await 申込する(browser, M1310_ADMIN_DPA, 名日, y, 氏名2);
   notes.set("〔別日程イベント申込ID-M1310-041〕", b.申込ID);
   notes.set("〔別日程プレイヤーID-M1310-041〕", b.プレイヤーID);
+  // シード表は編集中・別日程の会員IDも控えると定める（参加者の会員は会員登録済みの会員で代えたので、その会員の会員ID）
+  notes.set("〔編集中会員ID-M1310-041〕", await 会員IDを読む(browser, 氏名1));
+  notes.set("〔別日程会員ID-M1310-041〕", await 会員IDを読む(browser, 氏名2));
   reportSeedIssue(seed.シードID, `編集中の申込の参加者は「${氏名1}」、別の日程の申込の参加者（別日程プレイヤー）は「${氏名2}」で代えた（会員を作らない）。${追加の注記}`);
 });

@@ -39,11 +39,11 @@ export class BuyPriceEditPage {
   async 買取価格(): Promise<string> { return await this.買取価格欄.inputValue(); }
   async 入力する(値: string): Promise<void> { await this.買取価格欄.fill(値); }
   async 更新を押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 45_000 }).catch(() => undefined), this.更新ボタン.click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 45_000 }).catch(() => undefined), this.更新ボタン.click({ timeout: 20_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   async 戻るを押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 45_000 }), this.戻るボタン.click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), this.戻るボタン.click({ timeout: 20_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 開発者ツールで、買取価格の入力欄を文字列を入力できる形にする */

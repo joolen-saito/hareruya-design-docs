@@ -19,7 +19,8 @@ export type 枠の値 = {
 export class BannerSettingPage {
   constructor(readonly page: Page) {}
 
-  get バナー設定ボタン(): Locator { return this.page.locator("button.js-event-banner-setting-submit"); }
+  /** 「バナー設定」ボタンは一覧の上と下に同じものが2つある（どちらも同じフォームを送る）。上のものを使う */
+  get バナー設定ボタン(): Locator { return this.page.locator("button.js-event-banner-setting-submit").first(); }
   get 画像設定へのリンク(): Locator { return this.page.getByRole("link", { name: "▼画像設定", exact: true }).first(); }
   get 入力のエラー(): Locator { return this.page.locator("form[name=event_banner] .invalid-feedback, form[name=event_banner] .form-error-message, form[name=event_banner] .errormsg"); }
 
@@ -103,8 +104,8 @@ export class BannerSettingPage {
   /** 「バナー設定」ボタンで保存し、保存の完了（保存しました）まで待つ。入力エラーで保存されなかったときは止まる */
   async 保存する(): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.バナー設定ボタン.first().click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      this.バナー設定ボタン.click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     await expect(this.page.locator(".alert-success").filter({ hasText: "保存しました" }).first(), "バナー設定の保存の完了表示").toBeVisible({ timeout: 30_000 });

@@ -32,7 +32,7 @@ import { M0511_ADMIN_A } from "./m05-11";
         if (first) await discount.selectOption(first);
       }
       await expect(form.locator('input[type="radio"][name="admin_product[RegionRestriction]"]:checked'), "販売制限が選ばれている").toHaveCount(1);
-      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator("button[type=submit]").filter({ hasText: /^\s*商品を登録\s*$/ }).click({ timeout: 20_000 })]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator("button[type=submit]").filter({ hasText: /^\s*商品を登録\s*$/ }).click({ timeout: 20_000, noWaitAfter: true })]);
       await expectSaved(page, "商品名の変更");
     });
   },

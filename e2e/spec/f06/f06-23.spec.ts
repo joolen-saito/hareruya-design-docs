@@ -6,6 +6,7 @@
 import { CaseCtx, caseTest, expect } from "../../lib/case";
 import { ContactHistoryPage, 言語 } from "../../pages/front/f06_23_contact_history";
 import { mailOf } from "../../seeds/f06-23";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 const 会員 = (区分: string, 文字: string, n: string) => ({ メール: mailOf(`f0623_member_${区分}-${n}`), PW: `F0623Pass${文字}${n}` });
 
@@ -31,7 +32,7 @@ caseTest("IT-F06-23-003", async ({ page, step, expected }) => {
   await h.ログインする(m.メール, m.PW);
   await step(1, async () => { await h.開く(); });
   await step(2, async () => { await h.押して遷移する(h.パンくずホーム); });
-  await expected(async () => { expect.soft(h.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(h.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(h.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 caseTest("IT-F06-23-004", async ({ page, step, expected }) => {
   const h = new ContactHistoryPage(page);
@@ -43,6 +44,8 @@ caseTest("IT-F06-23-004", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(await h.履歴画面である(), "お問い合わせ履歴画面が表示される").toBe(true);
     expect.soft(上部, "画面上部にユーザ名（会員の氏名）が表示されない").not.toMatch(/F06-23|会員A004/);
+    // 見出しまわりの外（ヘッダー・パンくず）に出ていても「画面上部のユーザ名」に当たるので、画面全体でも会員の氏名が出ないことを確かめる
+    expect.soft(await page.locator("body").innerText(), "画面のどこにもユーザ名（会員の氏名「会員A004」）が表示されない").not.toContain("会員A004");
   });
 });
 
@@ -54,7 +57,8 @@ function 件数(n: string, 区分: string, 文字: string, 言: 言語, 期待: 
     await step(1, async () => { await h.開く(); });
     await expected(async () => {
       expect.soft(await h.履歴画面である(), "お問い合わせ履歴一覧画面が表示される").toBe(true);
-      expect.soft(await h.件数の表示(), "問い合わせ件数の表示").toContain(期待);
+      // 「10件」「20件」なども「0件」を含むので、件数の欄の文がちょうどその値であることを確かめる
+      expect.soft(await h.件数の表示(), "問い合わせ件数の表示").toBe(期待);
     });
   };
 }

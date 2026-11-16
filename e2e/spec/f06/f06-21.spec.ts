@@ -11,6 +11,7 @@ import { メール送信履歴の件数, 退会試験の会員, 選手の削除�
 import { available } from "../../lib/db";
 import { WithdrawPage } from "../../pages/front/f06_21_withdraw_k";
 import { mailOf, PW, PW2 } from "../../seeds/f06-21";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 const 会員 = () => ({ メール: mailOf("f0621-ja"), PW });
 
@@ -43,13 +44,13 @@ caseTest("IT-F06-21-014", async ({ page, step, expected }) => {
   const w = new WithdrawPage(page);
   await step(1, async () => { await w.退会完了を開く(); });
   await step(2, async () => { await w.押して遷移する(w.パンくずホーム); });
-  await expected(async () => { expect.soft(w.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(w.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(w.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 caseTest("IT-F06-21-015", async ({ page, step, expected }) => {
   const w = new WithdrawPage(page);
   await step(1, async () => { await w.退会完了を開く(); });
   await step(2, async () => { await w.押して遷移する(w.ホームへ戻る); });
-  await expected(async () => { expect.soft(w.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(w.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(w.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 caseTest("IT-F06-21-018", async ({ page, step, expected }) => {
   const w = new WithdrawPage(page);
@@ -164,7 +165,7 @@ caseTest("IT-F06-21-012", async ({ page, step, expected }) => {
   await ログイン(w);
   await step(1, async () => { await w.退会前を開く(); });
   await step(2, async () => { await w.押して遷移する(w.パンくずホーム); });
-  await expected(async () => { expect.soft(w.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(w.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(w.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 caseTest("IT-F06-21-013", async ({ page, step, expected }) => {
   const w = new WithdrawPage(page);
@@ -172,7 +173,7 @@ caseTest("IT-F06-21-013", async ({ page, step, expected }) => {
   await step(1, async () => { await w.退会前を開く(); });
   await step(2, async () => { await w.押して遷移する(w.退会手続きへ); });
   await step(3, async () => { await w.押して遷移する(w.パンくずホーム); });
-  await expected(async () => { expect.soft(w.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(w.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(w.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 caseTest("IT-F06-21-016", async ({ page, step, expected }) => {
   const w = new WithdrawPage(page);

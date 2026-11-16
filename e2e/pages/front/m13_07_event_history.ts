@@ -20,3 +20,8 @@ export async function カードの開催日時(card: Locator): Promise<string> {
 export async function 画面の本文(page: Page): Promise<string> {
   return 整える(await page.locator("main, body").first().innerText());
 }
+
+/** 一覧が0件のときの案内（「予約済みの大会はありません。」。確かめる要点の要素。赤枠はここに付く） */
+export function ゼロ件案内(page: Page): Locator {
+  return page.locator(".p-hareruya-message-box--info");
+}

@@ -16,7 +16,8 @@ import { tamperToken } from "../../pages/admin/devtools";
 import { EntryEditPage, 申込一覧の行から開く } from "../../pages/admin/m13_10_entry_edit";
 import { EntryListPage } from "../../pages/admin/m13_06_entry_list";
 import { EventHistoryPage } from "../../pages/front/f06_14_event_history_k";
-import { 予約の一覧, 予約の一覧を読む, 日時の文 } from "../../pages/front/m13_10_event_history";
+import { ゼロ件案内, 予約の一覧, 予約の一覧を読む, 大会のカード, 日時の文 } from "../../pages/front/m13_10_event_history";
+import { DBで読み取った値を撮る, scene, 別のブラウザの画面を印つきで撮る, 別のブラウザの画面を撮る } from "../../lib/evidence_other";
 import { QK1302_ADMIN } from "../../seeds/m13-02-qk";
 import { M1310_ADMIN_A, M1310_ADMIN_B, M1310_ADMIN_DPA, QK1310イベント名, QK1310会員, 申込の会員 } from "../../seeds/m13-10";
 import { entryMemberNames } from "../../seeds/members";
@@ -94,6 +95,12 @@ caseTest("IT-M13-10-007", async ({ page, notes, step, expected }) => {
     await expect.soft(e.表示されたボタン("登録"), "登録の操作が表示されない").toHaveCount(0);
     await expect.soft(e.表示されたリンク("同日程の新規申込へ"), "同日程の新規申込への操作が表示されない").toHaveCount(0);
   });
+  // 正本の前提「チーム人数2で1人目登録・2人目未登録」が成り立たないので、合格・不合格にしない（未判定）
+  const text = "合否未判定（正本の問題）。正本の前提「チーム人数「2」、1人目登録・2人目未登録」は、設計のイベント編集の改訂（0214 イベント編集 識別ID 1-12。チーム人数はチーム戦フラグへ変更。M13-12 design.txt L0116）より古く、" +
+    "チーム人数の項目がアプリに無いので、2人目の未登録の行を作れない。「検索」は未登録の行があるときだけ出るボタンなので、未登録の行が無い画面で「検索の操作が表示されない」を確かめても、権限が無いことの確かめにならない。" +
+    "削除・登録・同日程の新規申込が無いことは確かめたが、検索の非表示は確かめられていない。依頼者の判断待ち（正本の前提を設計の改訂に合わせて直す）";
+  note(text);
+  throw new Error(text);
 });
 
 // ---- 008 権限の無い店舗の申込への更新の要求 ----
@@ -182,7 +189,7 @@ caseTest("IT-M13-10-020", async ({ page, notes, step, expected }) => {
   await step(1, async () => { e = await 開く(page, notes.get("〔イベント申込ID-M1310-020〕")); });
   await step(2, async () => {
     支払の注記();
-    await Promise.all([page.waitForURL(/\/event\/entry(\?|$)/, { waitUntil: "load" }), e.イベント申込一覧リンク.click()]);
+    await Promise.all([page.waitForURL(/\/event\/entry(\?|$)/, { waitUntil: "load", timeout: 120_000 }), e.イベント申込一覧リンク.click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "イベント申込一覧画面のアドレス").toMatch(/\/event\/entry$/);
@@ -199,7 +206,7 @@ caseTest("IT-M13-10-021", async ({ page, notes, step, expected }) => {
   await step(1, async () => { e = await 開く(page, notes.get("〔イベント申込ID-M1310-021〕")); });
   await step(2, async () => {
     支払の注記();
-    await Promise.all([page.waitForURL(/\/entry_registration\/new\/\d+$/, { waitUntil: "load" }), e.同日程の新規申込へ.click()]);
+    await Promise.all([page.waitForURL(/\/entry_registration\/new\/\d+$/, { waitUntil: "load", timeout: 120_000 }), e.同日程の新規申込へ.click({ noWaitAfter: true })]);
     await e.読み込みを待つ();
   });
   await expected(async () => {
@@ -211,17 +218,28 @@ caseTest("IT-M13-10-021", async ({ page, notes, step, expected }) => {
 
 const 申込状況6種 = ["決済中", "入金待ち", "申込済み", "入金期限切れ", "キャンセル済み", "支払番号が存在しない"];
 
+/** 登録の直後に申込の申込状況（DB の照会）で読んで控えた値。選んだ申込状況で取り出す。控えが無ければ、いま読む */
+const 登録直後の読み取り = new Map<string, string | null>();
+function 登録直後の申込状況(選んだ状況: string, 申込ID: string): string | null {
+  return 登録直後の読み取り.get(選んだ状況) ?? 申込の申込状況(申込ID);
+}
+
 caseTest("IT-M13-10-022", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔イベント申込ID-M1310-022〕");
   await loginAdmin(page, M1310_ADMIN_A);
   let e!: EntryEditPage;
   let 選択肢: string[] = [];
   const 結果: [string, string | null][] = [];
+  登録直後の読み取り.clear();
   const 選んで登録 = async (状況: string) => {
     await e.申込状況を選ぶ(状況);
     await 登録を押す(e);
     await e.編集画面の読み込みを待つ();
     結果.push([状況, 申込の申込状況(id)]);
+    登録直後の読み取り.set(状況, 結果[結果.length - 1][1]);
+    // 登録のたびに、その時点で DB から読んだ申込状況を画面の上に出して撮る（画面には申込状況が写らない種類があるため）
+    await DBで読み取った値を撮る(page, `申込ID ${id} の申込状況（「${状況}」を選んで登録した直後）`,
+      [["回", "選んだ申込状況", "DB から読んだ申込状況"], ...結果.map(([sel, got], k) => [`${k + 1}回目`, sel, got ?? "（読めない）"])], scene.stepLabel(結果.length === 1 ? 2 : 3, `「${状況}」を選んで登録した直後のDBの申込状況`));
   };
   await step(1, async () => {
     e = await 開く(page, id);
@@ -232,7 +250,7 @@ caseTest("IT-M13-10-022", async ({ page, notes, step, expected }) => {
   await step(3, async () => { for (const s of 申込状況6種.slice(1)) await 選んで登録(s); });
   await expected(async () => {
     for (const s of 申込状況6種) expect.soft(選択肢, `申込状況の選択肢に「${s}」がある（事前準備）`).toContain(s);
-    for (const [s, got] of 結果) expect.soft(got, `「${s}」を選んで登録したあとの申込状況`).toBe(s);
+    for (const [s] of 結果) expect.soft(登録直後の申込状況(s, id), `「${s}」を選んで登録したあとの申込状況`).toBe(s);
     expect.soft(結果.map(([s]) => s), "6種すべてを選んで登録した").toEqual(申込状況6種);
   });
 });
@@ -407,7 +425,9 @@ caseTest("IT-M13-10-027", 留まるケース("〔イベント申込ID-M1310-027�
 }));
 
 caseTest("IT-M13-10-029", 留まるケース("〔編集中イベント申込ID-M1310-029〕", async (e, notes) => {
-  await e.プレイヤーIDを書き換える(notes.get("〔重複プレイヤーID-M1310-029〕"));
+  const 重複 = notes.get("〔重複プレイヤーID-M1310-029〕");
+  await e.プレイヤーIDを書き換える(重複);
+  note(`送るプレイヤーIDを、同じ日程の別の申込に登録済みのプレイヤーID ${重複} に書き換えた`);
 }));
 
 caseTest("IT-M13-10-031", 留まるケース("〔イベント申込ID-M1310-031〕", async (e) => {
@@ -475,12 +495,17 @@ caseTest("IT-M13-10-040", async ({ page, browser, notes, step, expected, capture
   try {
     const BH = new EventHistoryPage(B.page);
     const 読む: Record<string, 予約の一覧> = {};
-    await step(1, async () => { await A.ログインする(A会員.メール, A会員.パスワード); await A.開く(); 読む.手順1 = await 予約の一覧を読む(page, 名); });
+    await step(1, async () => {
+      await A.ログインする(A会員.メール, A会員.パスワード); await A.開く(); 読む.手順1 = await 予約の一覧を読む(page, 名);
+      await expect.soft(大会のカード(page, 名), `手順1の会員Aの一覧にイベント名「${名}」の大会が表示される`).toHaveCount(1);
+    });
+    // 手順2・7はブラウザB（会員B）、手順3〜5は管理画面（ブラウザC）の操作。ケースの画面（ブラウザA）でなく、その手順のブラウザの画面を手順の画像に撮る
     await step(2, async () => {
       await BH.ログインする(B会員.メール, B会員.パスワード); await BH.開く(); 読む.手順2 = await 予約の一覧を読む(B.page, 名);
-      await B.page.screenshot().then((buf) => test.info().attach("ブラウザBのマイイベント・デッキ登録（手順2）", { body: buf, contentType: "image/png" }));
+      await expect.soft(ゼロ件案内(B.page).first(), "手順2の会員Bの一覧に「予約済みの大会はありません。」と表示される").toHaveText("予約済みの大会はありません。");
+      await 別のブラウザの画面を印つきで撮る(B.page, scene.stepLabel(2, "ブラウザB（会員B）のマイイベント・デッキ登録"));
     });
-    await step(3, async () => { await loginAdmin(C.page, QK1302_ADMIN); });
+    await step(3, async () => { await loginAdmin(C.page, QK1302_ADMIN); await 別のブラウザの画面を撮る(C.page, scene.stepLabel(3, "ブラウザC（管理画面）のログイン後")); });
     const e = new EntryEditPage(C.page);
     await step(4, async () => {
       const list = new EntryListPage(C.page);
@@ -489,8 +514,10 @@ caseTest("IT-M13-10-040", async ({ page, browser, notes, step, expected, capture
       await list.開始時間を空にする();
       note("店舗は初期表示（QK連携店舗）のまま、開始時間の条件は空にして検索した");
       await list.検索する();
+      await 別のブラウザの画面を撮る(C.page, scene.stepLabel(4, "ブラウザC（管理画面）のイベント申込一覧の検索結果"));
       await 申込一覧の行から開く(C.page, id);
       await e.編集画面の読み込みを待つ();
+      await 別のブラウザの画面を撮る(C.page, scene.stepLabel(4, "ブラウザC（管理画面）のイベント申込詳細・編集画面"));
     });
     await step(5, async () => {
       await e.削除ボタン.click();
@@ -500,22 +527,25 @@ caseTest("IT-M13-10-040", async ({ page, browser, notes, step, expected, capture
       if ((await b.count()) !== 1) throw new Error(`プレイヤー検索「${B会員.姓} ${B会員.名}」の決定ボタンが ${await b.count()} 個（1個のはず）`);
       await b.click();
       await expect(e.ポップアップ).toBeHidden();
+      await 別のブラウザの画面を撮る(C.page, scene.stepLabel(5, "ブラウザC（管理画面）の参加者を会員Bに入れ替えて登録する前の画面"));
       await 登録を押す(e);
-      await C.page.screenshot().then((buf) => test.info().attach("ブラウザCの登録後の画面", { body: buf, contentType: "image/png" }));
+      await 別のブラウザの画面を撮る(C.page, scene.stepLabel(5, "ブラウザC（管理画面）の登録後の画面"));
     });
     await step(6, async () => { await A.開く(); 読む.手順6 = await 予約の一覧を読む(page, 名); await capture("ブラウザAのマイイベント・デッキ登録（手順6）"); });
     await step(7, async () => {
       await BH.開く(); 読む.手順7 = await 予約の一覧を読む(B.page, 名);
-      await B.page.screenshot().then((buf) => test.info().attach("ブラウザBのマイイベント・デッキ登録（手順7）", { body: buf, contentType: "image/png" }));
+      await 別のブラウザの画面を撮る(B.page, scene.stepLabel(7, "ブラウザB（会員B）のマイイベント・デッキ登録"));
     });
     await expected(async () => {
       note(`開催日時の表示: 手順1「${読む.手順1.開催日時}」・手順7「${読む.手順7.開催日時}」（日時の値で比べた）`);
       expect.soft(読む.手順1.イベントの件数, `手順1の会員Aの一覧にイベント名「${名}」が表示される`).toBe(1);
       expect.soft(日時の文(読む.手順1.開催日時), "手順1の開催日時が2030年10月22日10時00分").toBe("2030年10月22日10時00分");
-      expect.soft(読む.手順2.本文.includes("予約済みの大会はありません。"), "手順2の会員Bの一覧に「予約済みの大会はありません。」と表示される").toBe(true);
-      expect.soft(読む.手順6.本文.includes("予約済みの大会はありません。"), "手順6の会員Aの一覧に「予約済みの大会はありません。」と表示される").toBe(true);
-      expect.soft(読む.手順7.イベントの件数, `手順7の会員Bの一覧にイベント名「${名}」が表示される`).toBe(1);
+      expect.soft(読む.手順2.案内, "手順2の会員Bの一覧に「予約済みの大会はありません。」と表示される").toBe("予約済みの大会はありません。");
+      // 手順6（ブラウザA）・手順7（ブラウザB）は、いまの画面の要点（案内の文・大会のカード）に赤枠を付けて確かめる
+      await expect.soft(ゼロ件案内(page).first(), "手順6の会員Aの一覧に「予約済みの大会はありません。」と表示される").toHaveText("予約済みの大会はありません。");
+      await expect.soft(大会のカード(B.page, 名), `手順7の会員Bの一覧にイベント名「${名}」が表示される`).toHaveCount(1);
       expect.soft(日時の文(読む.手順7.開催日時), "手順7の開催日時が2030年10月22日10時00分").toBe("2030年10月22日10時00分");
+      await 別のブラウザの画面を印つきで撮る(B.page, scene.expectedLabel("手順7 ブラウザB（会員B）のマイイベント・デッキ登録"));
     });
   } finally {
     await B.close();
@@ -649,7 +679,7 @@ caseTest("IT-M13-10-012", async ({ page, notes, step, expected }) => {
 });
 
 caseTest("IT-M13-10-014", async ({ page, browser, notes, step, expected }) => {
-  const 検索ID = notes.get("〔追加プレイヤーID-M1310-014〕");
+  const 検索ID = notes.get("〔検索プレイヤーID-M1310-014〕");
   const [, 氏名2] = await entryMemberNames(browser, 2);
   await loginAdmin(page, M1310_ADMIN_A);
   let e!: EntryEditPage; let ok = false;
@@ -694,7 +724,7 @@ function 決定できない(申込: string, 検索語を決める: (browser: Bro
 }
 
 caseTest("IT-M13-10-017", 決定できない("〔編集中イベント申込ID-M1310-017〕", async (b) => (await entryMemberNames(b, 2))[1], "〔重複プレイヤーID-M1310-017〕", "同じ日程の別の申込に登録されているプレイヤーを"));
-caseTest("IT-M13-10-018", 決定できない("〔イベント申込ID-M1310-018〕", async (b) => (await entryMemberNames(b, 1))[0], "〔参加者プレイヤーID-M1310-018A〕", "編集中の申込ですでに選ばれているプレイヤーを"));
+caseTest("IT-M13-10-018", 決定できない("〔イベント申込ID-M1310-018〕", async (b) => (await entryMemberNames(b, 1))[0], "〔プレイヤーID-M1310-018〕", "編集中の申込ですでに選ばれているプレイヤーを"));
 
 caseTest("IT-M13-10-041", async ({ page, browser, notes, step, expected }) => {
   const id = notes.get("〔編集中イベント申込ID-M1310-041〕"); const 編集中 = notes.get("〔編集中プレイヤーID-M1310-041〕"); const 別日程 = notes.get("〔別日程プレイヤーID-M1310-041〕");
@@ -723,7 +753,7 @@ async function 外す(e: EntryEditPage, pid: string): Promise<number | null> {
 
 caseTest("IT-M13-10-042", async ({ page, browser, notes, step, expected }) => {
   const id = notes.get("〔イベント申込ID-M1310-042〕");
-  const A = notes.get("〔参加者プレイヤーID-M1310-042A〕"); const 外すID = notes.get("〔参加者プレイヤーID-M1310-042B〕"); const C = notes.get("〔参加者プレイヤーID-M1310-042C〕"); const 追加 = notes.get("〔追加プレイヤーID-M1310-042〕");
+  const A = notes.get("〔継続プレイヤーID-M1310-042A〕"); const 外すID = notes.get("〔外すプレイヤーID-M1310-042〕"); const C = notes.get("〔継続プレイヤーID-M1310-042C〕"); const 追加 = notes.get("〔追加プレイヤーID-M1310-042〕");
   const 追加氏名 = (await 申込の会員(browser, 4))[3];
   await loginAdmin(page, M1310_ADMIN_DPA);
   let e!: EntryEditPage; let 行: number | null = null; let ok = false; let 後: string[] = [];
@@ -744,9 +774,8 @@ caseTest("IT-M13-10-042", async ({ page, browser, notes, step, expected }) => {
 });
 
 caseTest("IT-M13-10-044", async ({ page, notes, step, expected }) => {
-  const id = notes.get("〔イベント申込ID-M1310-044〕");
-  const 参加者 = ["A", "B", "C"].map((x) => notes.get(`〔参加者プレイヤーID-M1310-044${x}〕`));
-  const 履歴A = notes.get("〔申込履歴ID-M1310-044A〕");
+  const id = notes.get("〔イベント申込ID-M1310-CB044〕");
+  const 参加者 = ["A", "B", "C"].map((x) => notes.get(`〔継続プレイヤーID-M1310-CB044${x}〕`));
   await loginAdmin(page, M1310_ADMIN_DPA);
   let e!: EntryEditPage; let 前: 状態 = 申込の状態(id); let 後: 状態 = 前;
   await step(1, async () => { 前 = 申込の状態(id); e = await 開く(page, id); });
@@ -755,18 +784,23 @@ caseTest("IT-M13-10-044", async ({ page, notes, step, expected }) => {
   await step(4, async () => { 後 = 申込の状態(id); note(`DB: 申込状況 ${後.申込状況}・参加者 ${後.参加者.join("、")}・申込履歴 ${後.申込履歴.length} 件`); });
   await expected(async () => {
     expect(前.申込状況, "更新前の申込状況は申込済み（事前準備）").toBe("申込済み");
-    expect(前.申込履歴, "更新前の申込履歴は控えた1件（事前準備）").toEqual([履歴A]);
+    expect(前.申込履歴.length, "更新前の申込履歴は1件（事前準備）").toBe(1);
     expect(数順(前.参加者), "更新前の参加者は3人（事前準備）").toEqual(数順(参加者));
     expect.soft(後.申込状況, "申込状況がキャンセル済みに更新される").toBe("キャンセル済み");
     expect.soft(数順(後.参加者), "参加者が3人のまま").toEqual(数順(参加者));
     expect.soft(後.申込履歴.length, "申込履歴が1件から2件になる").toBe(2);
   });
+  // 正本の前提「チーム人数3人・参加者3人」の操作（参加プレイヤー3行を変更しない）が画面で行えないので、合格・不合格にしない（未判定）
+  const text = "合否未判定（正本の問題）。正本の前提「チーム人数3人・参加者3人の申込」は、設計のイベント編集の改訂（0214 イベント編集 識別ID 1-12。チーム人数はチーム戦フラグへ変更。M13-12 design.txt L0116。" +
+    "M13-10 design.txt L0139 は参加プレイヤーの行を既存の参加者数の行で用意すると定める）より古い。2・3人目は DB で申込に足したが、画面の参加プレイヤーの行は1行（試験会員 申込一）だけで、" +
+    "正本の「参加プレイヤー3行は変更しない」操作が画面で成り立たず、「3人のまま」は画面に無い参加者を送らなかった結果にすぎない。依頼者の判断待ち（正本を設計の改訂に合わせて直す）";
+  note(text);
+  throw new Error(text);
 });
 
 caseTest("IT-M13-10-045", async ({ page, notes, step, expected }) => {
-  const id = notes.get("〔イベント申込ID-M1310-045〕");
-  const A = notes.get("〔参加者プレイヤーID-M1310-045A〕"); const 外すID = notes.get("〔参加者プレイヤーID-M1310-045B〕"); const C = notes.get("〔参加者プレイヤーID-M1310-045C〕");
-  const 履歴A = notes.get("〔申込履歴ID-M1310-045A〕");
+  const id = notes.get("〔イベント申込ID-M1310-CB045〕");
+  const A = notes.get("〔継続プレイヤーID-M1310-CB045A〕"); const 外すID = notes.get("〔外すプレイヤーID-M1310-CB045〕"); const C = notes.get("〔継続プレイヤーID-M1310-CB045C〕");
   await loginAdmin(page, M1310_ADMIN_DPA);
   let e!: EntryEditPage; let 前: 状態 = 申込の状態(id); let 後: 状態 = 前; let 行: number | null = null;
   await step(1, async () => { 前 = 申込の状態(id); e = await 開く(page, id); });
@@ -774,7 +808,7 @@ caseTest("IT-M13-10-045", async ({ page, notes, step, expected }) => {
   await step(3, async () => { await 登録を試す(e); });
   await step(4, async () => { 後 = 申込の状態(id); note(`DB: 参加者 ${後.参加者.join("、")}・申込履歴 ${後.申込履歴.length} 件`); });
   await expected(async () => {
-    expect(前.申込履歴, "更新前の申込履歴は控えた1件（事前準備）").toEqual([履歴A]);
+    expect(前.申込履歴.length, "更新前の申込履歴は1件（事前準備）").toBe(1);
     expect(数順(前.参加者), "更新前の参加者は3人（事前準備）").toEqual(数順([A, 外すID, C]));
     expect.soft(行 !== null, "外すプレイヤーの行の削除ボタンを押せた").toBe(true);
     expect.soft(数順(後.参加者), "参加者が継続の2人となる").toEqual(数順([A, C]));

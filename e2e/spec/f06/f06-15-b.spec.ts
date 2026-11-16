@@ -6,6 +6,7 @@
  */
 import { test } from "@playwright/test";
 import { CaseCtx, caseTest, expect } from "../../lib/case";
+import { scene, 別のブラウザの画面を印つきで撮る } from "../../lib/evidence_other";
 import { 買取状況ID } from "../../db/f06_15";
 import { available } from "../../lib/db";
 import { NetDetailPageB } from "../../pages/front/f06_15_net_detail_b";
@@ -41,7 +42,11 @@ caseTest("IT-F06-15-006", async (ctx) => {
   補い();
   const d = await 詳細を開く(ctx, "006", 番号の呼び名("006"));
   await ctx.step(3, async () => { await d.押して遷移する(d.マイページボタン); });
-  await ctx.expected(async () => { expect.soft(d.path, "遷移した画面（マイページ）").toMatch(/^\/ja\/mypage\/?$/); });
+  await ctx.expected(async () => {
+    expect.soft(d.path, "遷移した画面（マイページ）").toMatch(/^\/ja\/mypage\/?$/);
+    await expect.soft(d.page.locator("h1.c-hareruya-heading--lev1").first(), "遷移先の見出し（マイページ）").toHaveText("マイページ");
+    expect.soft(await d.page.locator(".p-hareruya-mypage__barcode-name").count(), "マイページの会員名の表示がある").toBeGreaterThan(0);
+  });
 });
 
 caseTest("IT-F06-15-007", async (ctx) => {
@@ -59,17 +64,20 @@ caseTest("IT-F06-15-008", async (ctx) => {
   補い();
   const { notes, step, expected } = ctx;
   const d = new NetDetailPageB(ctx.page);
-  const 状態: Record<string, string> = {};
   await step(1, async () => { await d.ログインする(mailOf("f0615-008"), PW); });
   let i = 2;
   for (const k of ["A", "B", "C", "D"]) {
-    await step(i++, async () => { await d.履歴一覧を開く(); await d.一覧から詳細を開く(notes.get(`〔買取番号-F0615-008${k}〕`)); 状態[k] = await 処理状態の文(d); });
+    await step(i++, async () => { await d.履歴一覧を開く(); await d.一覧から詳細を開く(notes.get(`〔買取番号-F0615-008${k}〕`)); });
   }
+  // 4件それぞれの詳細を開き直し、その詳細の処理状態の欄に赤枠を付けて撮る（正本の期待結果の4つの値）
+  const 期待: [string, string, string][] = [["A", "注文の処理状態", "受付完了"], ["B", "査定中の処理状態", "査定中"], ["C", "査定内容連絡済みの処理状態", "査定完了"], ["D", "査定内容承諾の処理状態", "振込待ち"]];
   await expected(async () => {
-    expect.soft(状態["A"], "注文の処理状態").toBe("受付完了");
-    expect.soft(状態["B"], "査定中の処理状態").toBe("査定中");
-    expect.soft(状態["C"], "査定内容連絡済みの処理状態").toBe("査定完了");
-    expect.soft(状態["D"], "査定内容承諾の処理状態").toBe("振込待ち");
+    for (const [k, 見出し, 値] of 期待) {
+      await d.履歴一覧を開く();
+      await d.一覧から詳細を開く(notes.get(`〔買取番号-F0615-008${k}〕`));
+      await expect.soft(d.page.locator(".c-hareruya-label--status").first(), `${見出し}（買取番号 008${k} の詳細）`).toHaveText(値);
+      await 別のブラウザの画面を印つきで撮る(d.page, scene.expectedLabel(`買取番号 008${k} の詳細（${見出し}）`));
+    }
   });
 });
 
@@ -96,7 +104,10 @@ caseTest("IT-F06-15-012", async (ctx) => {
   const 値: Record<string, string | null> = {};
   await ctx.step(3, async () => { for (const k of ["査定日", "承諾日", "振込日"]) 値[k] = await d.項目(k); });
   await ctx.expected(async () => {
-    for (const k of ["査定日", "承諾日", "振込日"]) expect.soft(値[k], `${k}の表示（項目はあり、値は空欄）`).toBe("");
+    for (const k of ["査定日", "承諾日", "振込日"]) {
+      expect.soft(値[k], `${k}の表示（項目はあり、値は空欄）`).toBe("");
+      await expect.soft(d.項目の欄(k), `${k}の欄（項目はあり、値は空欄）`).toHaveText("");
+    }
   });
 });
 
@@ -108,6 +119,8 @@ caseTest("IT-F06-15-015", async (ctx) => {
   await ctx.expected(async () => {
     expect.soft(値["査定金額合計"], "査定金額合計の数値").toBe(25000);
     expect.soft(値["査定承諾金額合計"], "査定承諾金額合計の数値").toBe(18000);
+    await expect.soft(d.項目の欄("査定金額合計"), "査定金額合計の欄").toHaveText(/25,000/);
+    await expect.soft(d.項目の欄("査定承諾金額合計"), "査定承諾金額合計の欄").toHaveText(/18,000/);
   });
 });
 
@@ -157,6 +170,8 @@ caseTest("IT-F06-15-031", async (ctx) => {
     expect.soft(await d.まとめて買取の一覧.count(), "まとめて買取の一覧の数").toBe(0);
     expect.soft(文, "500円未満カードの一覧は表示されない").not.toContain("円未満のカード");
     expect.soft(await d.全部売却するチェック.count(), "500円未満のカードをすべて売却するかどうかの選択の数").toBe(0);
+    // 無いことの確かめは、明細の領域全体に赤枠を付ける
+    await expect.soft(d.明細の領域, "明細の領域（まとめて買取・500円未満カード・すべて売却するの選択は表示されない）").not.toContainText("円未満のカード");
   });
 });
 
@@ -201,6 +216,8 @@ caseTest("IT-F06-15-037", async (ctx) => {
     expect.soft(欄["A"], "商品Aの査定価格欄").toContain("査定中");
     expect.soft(欄["B"], "商品Bの査定価格欄は「査定中」でない").not.toContain("査定中");
     expect.soft(欄["B"], "商品Bの査定価格欄").toMatch(/800/);
+    await expect.soft(d.明細の査定価格の欄(品名("037", "A")), "商品Aの査定価格欄（画面）").toContainText("査定中");
+    await expect.soft(d.明細の査定価格の欄(品名("037", "B")), "商品Bの査定価格欄（画面）").toContainText(/800/);
   });
 });
 

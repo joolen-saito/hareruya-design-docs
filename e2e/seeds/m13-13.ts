@@ -34,14 +34,16 @@ import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { ensureNoEvent, openEventCreate, registerEvent, searchEventIds } from "../pages/admin/event";
 import { EventBulkCsvPage, ダウンロードした文字, 所属店舗の選択肢, 雛形の見出し } from "../pages/admin/m13_13_event_bulk_csv";
-import { changeMemberAuthority, ensureMember, findMemberId } from "../pages/admin/member";
-import { ensureTenant } from "../pages/admin/tenant";
+import { changeMemberAuthority, ensureMemberFixed as ensureMember, findMemberId } from "../pages/admin/member";
+import { 店舗IDで選ぶ, 表の店舗 } from "../pages/admin/store_pick";
 import { QK1302_ADMIN, QK連携店舗 } from "./m13-02-qk";
 
 export const M1313_ADMIN: Account = { loginId: "m1313_admin", password: "Passw0rd!M1313" };
 export const M1313_RI_ADMIN: Account = { loginId: "m1313_ri_admin", password: "Passw0rd-M1313RI" };
-export const TC東京 = "トーナメントセンター 東京";
-export const 連携店舗 = "連携店舗M1313";
+/** 正本の店舗「トーナメントセンター 東京」は E2E の店舗 221、「大阪店」は E2E の店舗 4973、「連携店舗M1313」は店舗ID 6（元からある店舗）に読み替える（店舗は作らない。依頼者 2026-11-15）。QK連携店舗は店舗ID 4 */
+export const TC東京 = 表の店舗("221").店名;
+export const 大阪店 = 表の店舗("4973").店名;
+export const 連携店舗 = 表の店舗("6").店名;
 /** 取込で登録するイベントのイベント名(日)（実行の印つき） */
 export const QK大会名 = rc("QK取込大会-1313-001");
 export const RI大会名 = rc("RI取込大会-001");
@@ -100,16 +102,12 @@ const 設計書の44項目 = [
 const M1313_ADMIN_権限 = "モールオペレーター";
 
 /**
- * 店舗「トーナメントセンター 東京」が無い環境（共有の開発環境）では、店舗登録画面で同じ名前の店舗を作って読み替える
- * （テストデータは自作のデータへ読み替えてよい。チームの手順）。手元の環境のように、すでにあればそれを使う。
- * 作ったことはシードの注記に残す（項目表の備考に書く）。
+ * 店舗「トーナメントセンター 東京」は作らない（依頼者 2026-11-15）。E2E の店舗 221 に読み替える（正本の店名は TC東京 の定数＝その店名）。
+ * 読み替えをシードの注記に残す。
  */
 async function TC東京を用意する(page: import("@playwright/test").Page, issue: (m: string) => void): Promise<void> {
-  if ((await 所属店舗の選択肢(page)).includes(TC東京)) return;
-  const id = await ensureTenant(page, {
-    店名: TC東京, 店名カナ: "トーナメントセンタートウキョウ", 店名英語: "Tournament Center Tokyo", 支店URL: "m1313tctokyo", 店名略称3文字: "TC東", ショップ名略称: TC東京,
-  }, issue);
-  issue(`店舗「${TC東京}」が無い環境なので（シード表の投入方法はDBシード）、店舗登録画面で同じ名前の店舗を登録して読み替えた（店舗ID ${id}）`);
+  await 店舗IDで選ぶ(page, "221", "トーナメントセンター 東京", issue);
+  await 店舗IDで選ぶ(page, "4973", "大阪店", issue);
 }
 
 defineSeed("S-M13-13-ADM", async ({ browser, seed }) => {
@@ -179,9 +177,7 @@ defineSeed("S-M13-13-QK-FILE-039", { needs: ["S-M13-02-QK-ADM"] }, async ({ brow
 
 defineSeed("S-M13-13-RI-ADM", async ({ browser, notes, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    notes.set("〔店舗ID-M1313-RI共有〕", await ensureTenant(page, {
-      店名: 連携店舗, 店名カナ: "レンケイテンポエムイチサンイチサン", 店名英語: "Link Shop RI Thirteen", 支店URL: "m1313ri", 店名略称3文字: "R13", ショップ名略称: 連携店舗,
-    }, (m) => reportSeedIssue(seed.シードID, m)));
+    notes.set("〔店舗ID-M1313-RI共有〕", (await 店舗IDで選ぶ(page, "6", "連携店舗M1313", (m) => reportSeedIssue(seed.シードID, m))).id);
     await ensureMember(page, {
       名前: "M13-13連携試験管理者", 所属店舗: 連携店舗, ログインID: M1313_RI_ADMIN.loginId, メールアドレス: "m1313_ri_admin@example.test",
       パスワード: M1313_RI_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 連携店舗, 編集可能店舗: [連携店舗],
@@ -227,7 +223,7 @@ defineSeed("S-M13-13-MASTER", async ({ browser, seed }) => {
     await TC東京を用意する(page, issue);
     const missing: string[] = [];
     const 店舗 = await 所属店舗の選択肢(page);
-    for (const n of [TC東京, "大阪店"]) {
+    for (const n of [TC東京, 大阪店]) {
       const k = 店舗.filter((x) => x === n).length;
       if (k === 0) missing.push(`店舗「${n}」（メンバー登録画面の所属店舗の選択肢）`);
       if (k > 1) issue(`店舗「${n}」がメンバー登録画面の所属店舗の選択肢に ${k} 件ある（同名の店舗が複数）。取込は店舗を名前で引くので、どれが使われるかは画面から決められない`);
@@ -244,7 +240,7 @@ defineSeed("S-M13-13-MASTER", async ({ browser, seed }) => {
     if (!支払.includes(クレジットカード支払)) missing.push(`支払方法「${クレジットカード支払}」（ある選択肢: ${支払.join("、")}）`);
     if (missing.length) throw new Error(`${seed.シードID}: 画面に無い: ${missing.join(" / ")}`);
   });
-  issue(`投入方法の「DBシードで各マスタとクレジットカード支払方法を登録する」は行わず（DBへ書かない決まり。依頼者の方針 2026-11-09）、店舗「${TC東京}」「大阪店」がメンバー登録画面の所属店舗の選択肢に、フォーマット「パウパー」「モダン」・ルール適用度「カジュアル」・公開状態「公開」「非公開」・支払方法「${クレジットカード支払}」がイベント登録画面の選択肢にあることを確かめた。会場「TC 東京」は設計書（L0047）で項目が削除され画面にも無いので確かめていない`);
+  issue(`投入方法の「DBシードで各マスタとクレジットカード支払方法を登録する」は行わず（DBへ書かない決まり。依頼者の方針 2026-11-09）、店舗「${TC東京}」「${大阪店}」がメンバー登録画面の所属店舗の選択肢に、フォーマット「パウパー」「モダン」・ルール適用度「カジュアル」・公開状態「公開」「非公開」・支払方法「${クレジットカード支払}」がイベント登録画面の選択肢にあることを確かめた。会場「TC 東京」は設計書（L0047）で項目が削除され画面にも無いので確かめていない`);
 });
 
 // ---- 取込ファイル（S-M13-13-ADM を使うケース） ----
@@ -366,7 +362,7 @@ defineFileSeed("S-M13-13-PAYMENTS-011", () => ({
 
 export const 名013 = rc("編集不可店舗イベント-013");
 defineFileSeed("S-M13-13-UNEDITABLE-013", () => ({
-  名前: "M13-13-UNEDITABLE-013.csv", 会場: "TC 東京", 無くす: [名013], 行: [親(名013, "Uneditable-Shop-M1313-013", { 店舗: "大阪店" })],
+  名前: "M13-13-UNEDITABLE-013.csv", 会場: "TC 東京", 無くす: [名013], 行: [親(名013, "Uneditable-Shop-M1313-013", { 店舗: 大阪店 })],
 }));
 
 export const 頭020 = rc("マスタ欠落確認-020");
@@ -496,7 +492,9 @@ defineFileSeed("S-M13-13-CBS-047", () => ({
   行: [{ ...親(名047, "M1313-CB047-Card-Yes-SlotPaid", { クレジットカード支払い: "あり", 参加費: "0" }), ...日程("2027-02-04 15:00", { 参加費_日程: "800" }) }],
 }));
 /** 048・049: 開始時間は空、受付・デッキ登録・オンライン受付は「なし」、そのほかの日程項目は空（シード表のとおり） */
-const 日程なしの受付なし = { 受付: "なし", デッキ登録: "なし", オンライン受付: "なし" };
+// 正本（048・049）が日程の列で値を決めているのはオンライン受付=なしだけ。受付・デッキ登録は正本に無いので空のままにする
+// （以前は「なし」も入れていた。アプリは開始時間が空で日程の列が1つでも入っていると「日程列のみ入力することはできません」で行を止める）
+const 日程なしの受付なし = { オンライン受付: "なし" };
 export const 名048 = rc("M1313-CB048-カード有開始時間なし");
 defineFileSeed("S-M13-13-CBN-048", () => ({
   名前: "M13-13-CB048.csv", 無くす: [名048], 行: [親(名048, "M1313-CB048-Card-Yes-NoStart", { クレジットカード支払い: "あり", 参加費: "0", ...日程なしの受付なし })],

@@ -13,6 +13,7 @@ import { rc } from "../../lib/run_marker";
 import { FrontRestock } from "../../pages/front/f03_07_restock_notify";
 import { NotifyListPage, 言語 } from "../../pages/front/f06_08_notifylist";
 import { mailOf, passwordOf } from "../../seeds/f06-08";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
 
@@ -92,7 +93,7 @@ caseTest("IT-F06-08-011", async ({ page, step, expected }) => {
   await n.ログインする(mailOf("f0608_home-011"), passwordOf("011"));
   await step(1, async () => { await n.開く(); });
   await step(2, async () => { await n.押して遷移する(n.パンくずホーム); });
-  await expected(async () => { expect.soft(n.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(n.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(n.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 caseTest("IT-F06-08-032", async ({ page, step, expected }) => {
   const n = new NotifyListPage(page);

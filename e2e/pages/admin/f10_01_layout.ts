@@ -39,11 +39,15 @@ export async function 先頭部へブロックを置く(page: Page, レイアウ
     const item = 置き場のブロック(page, 未使用, name);
     await expect(item, `${what}: 未使用ブロックに「${name}」が1件ある`).toHaveCount(1, { timeout: T });
     await item.scrollIntoViewIfNeeded();
-    await item.locator(".block-context-menu").click({ timeout: T });
-    const menu = page.locator(".popover .context-movesection").filter({ visible: true }).first();
-    await expect(menu, `${what}: 「${name}」のメニューの「セクションに移動」`).toBeVisible({ timeout: T });
-    await menu.click({ timeout: T });
     const modal = page.locator("#clickStreamConfirm");
+    // 「…」のメニューは出てすぐ押すと、画面の側の「セクションに移動」の押下の処理がまだ付いておらず、確認の窓が開かないことがある。開かなければメニューから押し直す
+    for (let i = 0; i < 4; i++) {
+      if (!(await page.locator(".popover .context-movesection").filter({ visible: true }).count())) await item.locator(".block-context-menu").click({ timeout: T });
+      const menu = page.locator(".popover .context-movesection").filter({ visible: true }).first();
+      await expect(menu, `${what}: 「${name}」のメニューの「セクションに移動」`).toBeVisible({ timeout: T });
+      await menu.click({ timeout: T });
+      if (await modal.waitFor({ state: "visible", timeout: 5_000 }).then(() => true, () => false)) break;
+    }
     await expect(modal, `${what}: セクションの移動の確認`).toBeVisible({ timeout: T });
     await modal.locator("#move-section").selectOption(先頭部, { timeout: T });
     await modal.locator("#move-to-section").click({ timeout: T });
@@ -52,7 +56,7 @@ export async function 先頭部へブロックを置く(page: Page, レイアウ
   }
   await Promise.all([
     page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
-    page.locator("#form1 button[type=submit]").filter({ hasText: "登録" }).click({ timeout: T }),
+    page.locator("#form1 button[type=submit]").filter({ hasText: "登録" }).click({ timeout: T, noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator(".alert-success"), `${what}: レイアウトの登録結果`).toBeVisible({ timeout: 60_000 });

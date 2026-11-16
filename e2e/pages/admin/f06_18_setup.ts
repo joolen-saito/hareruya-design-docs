@@ -54,8 +54,8 @@ export async function お届け先を足す(page: Page, 会員ID: string, v: お
   await f("tel][tel02").fill(tel.slice(2, 6));
   await f("tel][tel03").fill(tel.slice(6));
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }),
-    page.locator("form button[type=submit]").filter({ hasText: /登録/ }).first().click({ timeout: T }),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000}),
+    page.locator("form button[type=submit]").filter({ hasText: /登録/ }).first().click({ timeout: T, noWaitAfter: true }),
   ]);
   await expectSaved(page, `${what}: お届け先の登録`);
 }

@@ -80,7 +80,7 @@ export class CheckoutPage {
     await expect(this.注文するボタン, "「注文する」ボタンが押せる").toBeEnabled({ timeout: T });
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
-      this.注文するボタン.click({ timeout: T }),
+      this.注文するボタン.click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     return this.パス;

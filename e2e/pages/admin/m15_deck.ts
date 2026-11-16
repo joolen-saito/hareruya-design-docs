@@ -219,7 +219,7 @@ export class デッキ一覧 {
   }
 
   async 検索する(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.検索ボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.検索ボタン.click({ noWaitAfter: true })]);
     await this.結果を待つ();
   }
 

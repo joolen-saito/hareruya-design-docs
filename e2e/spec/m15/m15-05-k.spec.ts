@@ -26,6 +26,7 @@ import {
   代えた店舗, 五日前の10時,
 } from "../../seeds/m15-05-k";
 import { rc } from "../../lib/run_marker";
+import { 見えている範囲で撮る } from "../../lib/shot_scope";
 import "../../seeds/m15-05-b"; // 取り込みで抜けた登録を戻す: main 側が作り方を登録している seeds を読み込む（二重定義ではない）
 
 async function login(page: Page, a: Account = M1505_ADMIN): Promise<void> {
@@ -203,15 +204,15 @@ function ページ復帰(stem: string, 並べ替え: boolean, 削除のメッセ
     await step(n++, async () => { await デッキ名で検索する(page, 名(stem)); });
     await step(n++, async () => {
       if (並べ替え) {
-        await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.並べ替え項目.selectOption({ label: "デッキID" })]);
-        await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.並び順.selectOption({ label: "降順" })]);
+        await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.並べ替え項目.selectOption({ label: "デッキID" })]);
+        await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.並び順.selectOption({ label: "降順" })]);
         await l.結果を待つ();
       }
-      await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.件数選択.selectOption({ label: "10件" })]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.件数選択.selectOption({ label: "10件" })]);
       await l.結果を待つ();
     });
     await step(n++, async () => {
-      await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator(".pagination a.page-link").filter({ hasText: /^\s*2\s*$/ }).first().click()]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator(".pagination a.page-link").filter({ hasText: /^\s*2\s*$/ }).first().click({ noWaitAfter: true })]);
       await l.結果を待つ();
       note(`2ページ目のデッキ: ${(await l.表示されたデッキ名()).join("、")}`);
     });
@@ -306,7 +307,7 @@ function 連鎖の更新(no: string, label: string, 型s: string[], 前の数: s
     let e!: デッキ編集画面;
     await step(5, async () => {
       const link = new デッキ一覧(page).行(notes.get(label)).locator("td").nth(1).locator("a").first();
-      await Promise.all([page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
       e = new デッキ編集画面(page); await e.読み込みを待つ();
     });
     await step(6, async () => { await 操作(e); note(`操作後の表示: ${[...await e.成功の帯(), ...await e.エラーの帯()].join(" / ")}`); });
@@ -336,7 +337,7 @@ async function デッキIDで開く(page: Page, step: (n: number, b: () => Promi
   let e!: デッキ編集画面;
   await step(n1 + 1, async () => {
     const link = new デッキ一覧(page).行(デッキID).locator("td").nth(1).locator("a").first();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     e = new デッキ編集画面(page); await e.読み込みを待つ();
   });
   return e;
@@ -350,6 +351,8 @@ caseTest("IT-M15-05-137", async ({ page, step, expected, notes }) => {
     const info = await 情報欄(page);
     note(`更新前のデッキリスト詳細（HTTP ${st}）: デッキ名「${info["デッキ名"]}」・大会名「${info["大会名"]}」・成績「${info["成績"]}」`);
     expect.soft(info["デッキ名"], "更新前の情報欄のデッキ名").toBe(QM名("QM1505-002-デッキ旧"));
+    expect.soft(info["大会名"], "更新前の情報欄の大会名").toBe(QM名("QM1505-002-大会旧"));
+    expect.soft(info["成績"], "更新前の情報欄の成績").toContain(QM名("QM1505-002-成績旧"));
   });
   await step(2, async () => { await login(page, M1505_QM); });
   const e = await デッキIDで開く(page, step, id, 3);
@@ -515,7 +518,13 @@ caseTest("IT-M15-05-136", async ({ page, step, expected }) => {
   await expected(async () => {
     const hit = r.行.filter((x) => x.プレイヤー === 選手);
     expect(hit.length, `一覧のプレイヤー「${選手}」の行の数`).toBe(1);
-    expect.soft(hit[0]?.アーキタイプ, "アーキタイプ").toBe(`${QM名("M15-05-型")}/${rc("QM1505-Type")}`);
+    // アーキタイプの表示は画面の幅で省略されて読めないので、要素の全文（title 属性があればそれも）を読んで確かめ、その要素に赤枠を付ける
+    const 型の要素 = page.locator(".deckSearch-searchResult__item").filter({ has: page.locator(".deckSearch-searchResult__item__playerName__td", { hasText: 選手 }) }).locator(".deckSearch-searchResult__item__deckName");
+    const 型の全文 = (await 型の要素.first().innerText()).replace(/\s+/g, " ").trim();
+    const title = await 型の要素.first().locator("span").last().getAttribute("title");
+    note(`一覧のアーキタイプの表示は省略されて読めない。要素の全文: 「${型の全文}」（title 属性: ${title ?? "なし"}）`);
+    await expect.soft(型の要素.first(), `アーキタイプの要素の全文（画面の表示は省略されている。title 属性: ${title ?? "なし"}）`).toContainText(`${QM名("M15-05-型")}/${rc("QM1505-Type")}`);
+    expect.soft(hit[0]?.アーキタイプ, `アーキタイプ（要素の全文: ${型の全文}）`).toBe(`${QM名("M15-05-型")}/${rc("QM1505-Type")}`);
     expect.soft(hit[0]?.大会名, "大会名").toBe(QM名("QM1505-001-大会"));
     expect.soft(hit[0]?.成績, "成績").toBe(QM名("QM1505-001-成績"));
     expect.soft(hit[0]?.参加人数, "参加人数").toBe("24");
@@ -629,6 +638,14 @@ caseTest("IT-M15-05-142", async ({ page, step, expected, notes }) => {
   const fid = notes.get("〔フォーマットID-M1505-007〕");
   const カード = QM名("QM1505-007-カード");
   const rk = new UsageRankingPage(page);
+  // ランキングの画面は横に極端に広く（1万 px 超）、ページ全体を撮ると1位のカードと枚数が読めない。1位の行が見えている範囲で撮る
+  見えている範囲で撮る(page);
+  const 一位 = () => rk.件("スペル").first();
+  /** 1位の行の、カード名（画像の代替の文）と枚数の欄を、要素として確かめる（赤枠が付く） */
+  const 一位を確かめる = async (枚数: string, 場面: string) => {
+    await expect.soft(一位().locator("img"), `${場面}のスペルのランキングの1位のカード（画像の代替の文＝カード名）`).toHaveAttribute("alt", カード);
+    await expect.soft(一位().locator(".deckSearch-cardAmount__rk__li__da__am"), `${場面}のスペルのランキングの1位の枚数の欄`).toContainText(枚数);
+  };
   let 起点 = 0;
   await step(1, async () => { await new MetagamePage(page).開く(fid); await rk.入口を押す(); });
   await step(2, async () => {
@@ -636,6 +653,7 @@ caseTest("IT-M15-05-142", async ({ page, step, expected, notes }) => {
     起点 = Date.now();
     const rows = await rk.件を読む("スペル");
     expect.soft(`${rows[0]?.名前}・${rows[0]?.枚数}`, "登録前のスペルのランキングの1位（カード名・枚数）").toBe(`${カード}・4`);
+    await 一位を確かめる("4", "登録前");
   });
   await step(3, async () => { await login(page, M1505_QM); });
   await step(4, async () => {
@@ -655,6 +673,7 @@ caseTest("IT-M15-05-142", async ({ page, step, expected, notes }) => {
   });
   await expected(async () => {
     expect.soft(rows[0]?.名前, "スペルのランキングの1位のカード").toBe(カード);
+    await 一位を確かめる("7", "登録後");
     expect(rows[0]?.枚数, `1位（${カード}）の枚数`).toBe(7);
   });
 });

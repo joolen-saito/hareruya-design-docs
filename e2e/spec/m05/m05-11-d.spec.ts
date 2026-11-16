@@ -18,10 +18,16 @@ async function 開く(browser: Browser, page: Page, no: string): Promise<OrderEd
 // ---- 最大文字数など、注文者とお届け先の項目の保存 ----
 
 /** 画面の項目の識別（例: name_name01）から、保存値の項目名（name01）へ */
-/** ふりがなはひらがなで入れてもカタカナで保存される。文字の種類の違いは同じ文字として比べる */
-const 仮名正規化 = (s: string): string => s.replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+/** ふりがなはひらがなで入れてもカタカナで保存される（画面の部品がカタカナへ変える）。期待の値もカタカナへ変えて、保存された値そのものと比べる */
+const カタカナに = (s: string): string => s.replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
 const 保存名 = (id: string): string => id.replace(/^[a-zA-Z]+_/, "").replace("postalCode_postalCode", "postal_code").replace("address_", "");
 
+/** 保存値の項目名を業務の呼び名へ（確かめのメッセージに使う） */
+const 呼び名: Record<string, string> = {
+  name01: "お名前（姓）", name02: "お名前（名）", kana01: "ふりがな（姓）", kana02: "ふりがな（名）",
+  addr01: "住所1", addr02: "住所2", addr03: "住所3", postal_code: "郵便番号", abroad_postal_code: "海外用郵便番号",
+  tel01: "電話番号1", tel02: "電話番号2", tel03: "電話番号3", fax01: "FAX番号1", fax02: "FAX番号2", fax03: "FAX番号3", company_name: "会社名",
+};
 function 項目の保存(n: string, 両方: [string, string][], 注文者のみ: [string, string][], 期待: Record<string, string>): CaseBody {
   return async ({ page, browser, notes, step, expected }) => {
     await loginAdmin(page, M0511_ADMIN_A);
@@ -33,12 +39,18 @@ function 項目の保存(n: string, 両方: [string, string][], 注文者のみ:
       for (const [id, v] of 注文者のみ) await page.locator(`#order_${id}`).fill(v, { timeout: 20_000 });
     });
     await step(3, async () => { await p.受注情報を登録する(onDialog); });
-    await step(4, async () => { o = 注文者の項目(notes.get(key(n))); s = お届け先の項目(notes.get(key(n))); });
+    await step(4, async () => {
+      o = 注文者の項目(notes.get(key(n))); s = お届け先の項目(notes.get(key(n)));
+      // 保存された内容を画面でも残す（登録のあとの画面は送った入力のままのことがあるため、開き直してお届け先の欄も開く）
+      await p.開き直す(notes.get(key(n))); await p.お届け先情報を開く();
+    });
     await expected(async () => {
-      for (const [k, v] of Object.entries(期待)) {
-        const f = k.startsWith("kana") ? 仮名正規化 : (z: string) => z;
-        expect.soft(f(o[k] ?? ""), `注文者の保存値（${k}）`).toBe(v);
-        if (!注文者のみ.some(([id]) => 保存名(id) === k)) expect.soft(f(s[k] ?? ""), `お届け先の保存値（${k}）`).toBe(v);
+      for (const [k, v0] of Object.entries(期待)) {
+        const かな = k.startsWith("kana");
+        const v = かな ? カタカナに(v0) : v0;
+        const 注 = かな && v !== v0 ? "（ひらがなで入れた値はカタカナで保存される）" : "";
+        expect.soft(o[k] ?? "", `注文者の保存値（${呼び名[k] ?? k}）${注}`).toBe(v);
+        if (!注文者のみ.some(([id]) => 保存名(id) === k)) expect.soft(s[k] ?? "", `お届け先の保存値（${呼び名[k] ?? k}）${注}`).toBe(v);
       }
     });
   };

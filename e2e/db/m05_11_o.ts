@@ -120,9 +120,9 @@ export function 在庫変動履歴の件数(商品コード: string, v: { 変更
 
 /** 会員の最終購入日時（日本時間 YYYY-MM-DD HH:MI:SS。無ければ空）と累計注文金額 */
 export function 会員の購入の記録(メール: string): { 最終購入日時: string; 累計注文金額: number } {
-  const r = query(`select coalesce(to_char(c.last_buy_date at time zone 'Asia/Tokyo', 'YYYY-MM-DD HH24:MI:SS'), '') as d, coalesce(c.buy_total, 0)::text as t from dtb_customer c where c.email = $1`, [メール]);
+  const r = query(`select coalesce(to_char(c.last_buy_date at time zone 'Asia/Tokyo', 'YYYY-MM-DD HH24:MI:SS'), '') as d, coalesce(c.buy_total, 0)::text as tt from dtb_customer c where c.email = $1`, [メール]);
   if (r.length !== 1) throw new Error(`会員「${メール}」が ${r.length} 人（1人のはず）`);
-  return { 最終購入日時: r[0].d ?? "", 累計注文金額: Number(r[0].t) };
+  return { 最終購入日時: r[0].d ?? "", 累計注文金額: Number(r[0].tt) };
 }
 
 /** 会員の連絡先（姓・名・郵便番号・都道府県・住所1・住所2・メール・電話） */

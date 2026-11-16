@@ -17,7 +17,7 @@ export class ShoppingPage {
     await this.page.waitForLoadState("load");
     const toShopping = this.page.locator("a.p-hareruya-cart__checkout-btn");
     await expect(toShopping, "買い物かごの「購入手続きへ」").toHaveCount(1, { timeout: 30_000 });
-    await Promise.all([this.page.waitForURL(/\/shopping(\?.*)?$/, { waitUntil: "domcontentloaded", timeout: 60_000 }), toShopping.click({ timeout: 30_000 })]);
+    await Promise.all([this.page.waitForURL(/\/shopping(\?.*)?$/, { waitUntil: "domcontentloaded", timeout: 60_000 }), toShopping.click({ timeout: 30_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -60,7 +60,7 @@ export class ShoppingPage {
     return this.page.locator('button[data-path*="/shopping/shipping_edit/"]').filter({ hasText: "新しいお届け先" });
   }
   async 押して配送先画面へ(btn: Locator): Promise<void> {
-    await Promise.all([this.page.waitForURL(/\/shopping\/shipping_edit\//, { waitUntil: "domcontentloaded", timeout: 60_000 }), btn.click({ timeout: 30_000 })]);
+    await Promise.all([this.page.waitForURL(/\/shopping\/shipping_edit\//, { waitUntil: "domcontentloaded", timeout: 60_000 }), btn.click({ timeout: 30_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -126,12 +126,12 @@ export class ShippingEditPage {
   }
   /** 「確認画面へ」を押す */
   async 確認画面へ(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.page.locator("form.h-adr button[type=submit]").first().click({ timeout: 30_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.page.locator("form.h-adr button[type=submit]").first().click({ timeout: 30_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 確認画面の「登録する」を押す（戻るボタンは押さない） */
   async 確認画面で登録する(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.page.getByRole("button", { name: "登録する" }).click({ timeout: 30_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.page.getByRole("button", { name: "登録する" }).click({ timeout: 30_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 }

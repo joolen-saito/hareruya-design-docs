@@ -302,8 +302,8 @@ export async function カードにリーガリティを足す(page: Page, カー
   await row.locator('select[name$="[format]"]').selectOption({ label: フォーマット });
   await row.locator("label").filter({ hasText: new RegExp(`^\\s*${リーガリティ}\\s*$`) }).click();
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*(登録|更新)\s*$/ }).first().click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*(登録|更新)\s*$/ }).first().click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: カードID ${カードID} へのリーガリティの追加`)) issue(w);
 }

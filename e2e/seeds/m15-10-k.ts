@@ -123,6 +123,45 @@ async function 画像を直す(page: Page, seedId: string, カード名: string,
   }
 }
 
+/**
+ * S-M15-10-CARD-IMAGES: 「Test Card」（実行の印つきの名前）の画像6件 A〜F を、カード登録CSVを1件ずつ取り込んで作り、取り込むたびに代表カード検索で最も大きい画像IDを控える。
+ * 取り込んだあと、コレクターNo M1510-A・M1510-B の画像の言語を日本語に、M1510-D の画像の表示面を裏面にして登録し、画像の番号が変わらないことを確かめる（シード表のとおり）。
+ * 以前は「画面から登録できない」として何も作らず、〔画像ID-M1510-共有A〕〜F を控えなかったため、使うケースが「控えると定めているが…」で止まっていた（2026-11-15）。
+ */
+defineSeed("S-M15-10-CARD-IMAGES", { needs: ["S-M15-10-ADM"] }, async ({ browser, notes, seed }) => {
+  const id = seed.シードID;
+  const issue = (m: string) => reportSeedIssue(id, m);
+  await 管理画面(browser, async (page) => {
+    const n = await カード一覧から消す(page, テストカード);
+    if (n) issue(`カード「${テストカード}」が ${n} 件あったので消した`);
+    const setA = rc("M1510 Set A");
+    const setB = rc("M1510 Set B");
+    for (const w of await カードセットを登録する(page, { 名: setA, 略称: "M15A", リリース日: "2025-01-01" }, id)) issue(w);
+    for (const w of await カードセットを登録する(page, { 名: setB, 略称: "M15B", リリース日: "2025-02-01" }, id)) issue(w);
+    if (await マスターを用意する(page, "レアリティ", "Uncommon", id)) issue("レアリティ Uncommon が無かったので登録した");
+    if (await マスターを用意する(page, "カードレイアウト", "Normal", id)) issue("カードレイアウト Normal が無かったので登録した");
+    // F のプロモ種別: プロモーションの一覧のうち、プロモなし（先頭の行）以外の先頭の英語名
+    const promos = (await マスターの行を読む(page, "プロモーション")).filter((r) => r.英語名);
+    const promo = promos.slice(1).find((r) => !/^(none|no promo|プロモなし)/i.test(r.英語名))?.英語名;
+    if (!promo) throw new Error(`${id}: プロモーションに、プロモなし以外の行が無い（共有のマスタなので登録しない）`);
+    issue(`Fのプロモ種別は、プロモーションの一覧のうちプロモなし（先頭の行）以外の先頭の英語名「${promo}」にした`);
+    const 行 = (k: string, set: string, foil: string, プロモ: string): カードCSVの行 => ({
+      "カード名(英語)": テストカード, レアリティ: "Uncommon", レイアウト: "Normal", カードセット: set, カードNo: `M1510-${k}`,
+      Foil: foil, プロモ種別: プロモ, "画像URL(英語)": `img/m1510/test-card-${k.toLowerCase()}.jpg`,
+    });
+    const 取込 = [
+      { k: "A", 行: 行("A", setA, "0", "") }, { k: "B", 行: 行("B", setB, "0", "") }, { k: "C", 行: 行("C", setB, "0", "") },
+      { k: "D", 行: 行("D", setB, "0", "") }, { k: "E", 行: 行("E", setB, "1", "") }, { k: "F", 行: 行("F", setB, "0", promo) },
+    ].map((x) => ({ 呼び名: `〔画像ID-M1510-共有${x.k}〕`, 行: x.行, ファイル: `test-card-${x.k.toLowerCase()}.csv` }));
+    const ids = await カードを1件ずつ取り込む(page, id, notes, テストカード, 取込);
+    await 画像を直す(page, id, テストカード, [
+      { コレクターNo: "M1510-A", 言語: "日本語" },
+      { コレクターNo: "M1510-B", 言語: "日本語" },
+      { コレクターNo: "M1510-D", 表示面: "裏面" },
+    ], ids);
+  });
+});
+
 defineSeed("S-M15-10-CARD-IMAGES-037", { needs: ["S-M15-10-ADM"] }, async ({ browser, notes, seed }) => {
   const id = seed.シードID;
   const issue = (m: string) => reportSeedIssue(id, m);

@@ -2,13 +2,15 @@
  * F06-17 大会デッキ登録確認〜完了 のシードが使う操作。フォーマット（6件）・カード（画像あり7件＝カードCSV、画像なし1件＝カード新規登録画面）。
  * 会員・大会・日程は f06_16_setup.ts のものを使う。
  */
+import { 店名を読む } from "../../lib/store_pick";
 import { Page } from "@playwright/test";
 import { rc } from "../../lib/run_marker";
 import { buildCardCsv, downloadCardCsvTemplate, readExistingCardValues, uploadCardCsv } from "./card_csv";
 import { findFormat } from "./m14_card";
 import { フォーマットを登録する } from "./m14_10_format";
 
-export const 店名17 = "晴れる屋テスト店";
+/** 店舗は作らない（依頼者 2026-11-15）。「晴れる屋テスト店」は使い回す E2E の店舗 5007 で表す */
+export const 店名17 = 店名を読む("5007");
 
 export type フォーマット17 = { 名: string; 英名: string; コード: string; 並び順: string; メイン?: [string, string]; サイド?: [string, string] };
 export const フォーマット一覧17: フォーマット17[] = [
@@ -43,9 +45,10 @@ type 行 = { 日: string; 英: string; 使用可: string[]; 制限?: string[]; �
 export async function 画像ありカードを取り込む(page: Page, 行一覧: 行[], file: string, onWarning: (w: string) => void): Promise<void> {
   const base = await readExistingCardValues(page);
   const headers = await downloadCardCsvTemplate(page);
+  // カード詳細IDは空にして、アプリに新しく振らせる（「最大+1」を指定すると、同じ時刻に他の機能が登録したカードの番号とぶつかり、取り込みが止まった。2026-11-14 の夜）
   const csv = buildCardCsv(headers, 行一覧.map((x, i) => ({
     name_jp: x.日, name_en: x.英, cmc: "2", rarity: base.rarity, layout: base.layout, promotion_type: "Non Promotion", foil: "0", frame: "Normal",
-    image_en: `img/f0617/${file}-${i + 1}.jpg`, card_detail_id: String(base.nextUnusedDetailId + i), set: base.set,
+    image_en: `img/f0617/${file}-${i + 1}.jpg`, card_detail_id: "", set: base.set,
     ...(x.使用可.length ? { format: x.使用可.join(",") } : {}), ...(x.制限?.length ? { restriction_format: x.制限.join(",") } : {}), ...(x.禁止?.length ? { ban_format: x.禁止.join(",") } : {}),
   })));
   await uploadCardCsv(page, csv, `${file}.csv`, `F06-17 参照カードのカードCSV登録`, onWarning);

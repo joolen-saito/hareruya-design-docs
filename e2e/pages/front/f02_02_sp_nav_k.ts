@@ -4,8 +4,9 @@
  * 画面下部固定エリア（カート・お気に入り・詳細検索・カテゴリ・ログイン/マイページ）、画面下部エリア（バナー・サイトマップ・会社情報・お得な情報・ロゴ）。
  * 画面の作りはアプリのテンプレートで確かめた。期待値はここに書かない（ケースの spec が正本から確かめる）。
  */
-import { Locator, Page, Request, expect } from "@playwright/test";
+import { Locator, Page, Request, expect, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { トップを開く, トップの待ち } from "./open_top";
 
 const T = 30_000;
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -37,9 +38,10 @@ export class SpNavPage {
 
   path(): string { return new URL(this.page.url()).pathname; }
 
+  /** ECTOP（トップ）は開発環境で重く、ときに 504 を返すので、120秒待ち、504 なら開き直す（pages/front/open_top.ts） */
   async ECTOPを開く(言語: 言語 = "ja"): Promise<number> {
-    const res = await this.page.goto(`${BASE_URL}/${言語}/`, { timeout: 60_000 });
-    await this.page.waitForLoadState("load");
+    const res = await トップを開く(this.page, `${BASE_URL}/${言語}/`);
+    await this.page.waitForLoadState("load", { timeout: トップの待ち });
     return res?.status() ?? 0;
   }
   async 商品一覧を開く(): Promise<number> {
@@ -106,8 +108,26 @@ export class SpNavPage {
     await this.page.waitForTimeout(700); // 開閉・表示の切り替えの動きを待つ
   }
 
+  /**
+   * 画面下部固定エリアのリンクを押し、移った先を返す。
+   * ECTOP 画面は横幅が画面より広く（ブラウザが縮小して表示する）、画面に固定の下部のナビを押す位置に、
+   * 本文（お知らせの欄など）が当たって普通のクリックが通らないことがある。そのときは、クリックの操作をリンクへ直接送る（注記「正本の外の補い」を残す）。
+   */
+  async 下部のリンクを押して移った先(l: Locator, 何: string): Promise<移った先> {
+    return this.押して移った先(l, 何, true);
+  }
+
+  /**
+   * 画面下部のリンクを、利用者と同じ押し方（指で画面の押す位置をタップ）で押す。押す位置を別の要素が覆っていれば、
+   * 何が覆っているかを注記に残し、その位置のタップが実際に届いた先のとおりに進む（リンクへ直接クリックを送らない）。
+   * 覆われていて画面が移らなければ、「押しても画面が移らない」で止まる（アプリ側の重なり）。
+   */
+  async 下部のリンクを利用者と同じ押し方で押して移った先(l: Locator, 何: string): Promise<移った先> {
+    return this.押して移った先(l, 何, "タップ");
+  }
+
   /** リンクを押し、同じタブで移ったか新しいタブが開いたかを見て、移った先を返す */
-  async 押して移った先(l: Locator, 何: string): Promise<移った先> {
+  async 押して移った先(l: Locator, 何: string, 重なりなら直接送る: boolean | "タップ" = false): Promise<移った先> {
     await expect(l, `${何}（押す前）`).toHaveCount(1, { timeout: T });
     await l.scrollIntoViewIfNeeded({ timeout: T });
     const ctx = this.page.context();
@@ -119,7 +139,45 @@ export class SpNavPage {
     try {
       const tabP = ctx.waitForEvent("page", { timeout: 20_000 }).then((p) => ({ tab: p }), () => null);
       const navP = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }).then((r) => ({ res: r }), () => null);
-      await l.click({ timeout: T });
+      if (!重なりなら直接送る) {
+        await l.click({ timeout: T });
+      } else if (重なりなら直接送る === "タップ") {
+        try {
+          await l.click({ timeout: 10_000 });
+        } catch (e) {
+          if (!/intercepts pointer events/.test(String(e))) throw e;
+          const 覆い = await l.evaluate((el) => {
+            const r = el.getBoundingClientRect();
+            const x = r.left + r.width / 2, y = r.top + r.height / 2;
+            const top = document.elementFromPoint(x, y);
+            const 鎖: string[] = [];
+            for (let n: Element | null = top; n && n !== document.documentElement && 鎖.length < 6; n = n.parentElement) {
+              const cs = getComputedStyle(n);
+              鎖.push(`${n.tagName.toLowerCase()}${n.className ? "." + String(n.className).trim().split(/\s+/).join(".") : ""}(position:${cs.position}, z-index:${cs.zIndex})`);
+            }
+            const nav = getComputedStyle(el.closest("nav") ?? el);
+            return { x: Math.round(x), y: Math.round(y), 鎖, ナビ: `position:${nav.position}, z-index:${nav.zIndex}`, 画面: window.innerWidth, 本文: document.documentElement.scrollWidth, 覆われている: !!top && !el.contains(top) };
+          }).catch(() => null);
+          test.info().annotations.push({
+            type: "押す位置を覆う要素",
+            description: `「${何}」の押す位置（${覆い?.x}, ${覆い?.y}）の一番上にある要素: ${覆い?.鎖.join(" > ") ?? "不明"}。下部のナビ: ${覆い?.ナビ ?? "不明"}。画面の横幅 ${覆い?.画面 ?? "不明"}px・本文の横幅 ${覆い?.本文 ?? "不明"}px。利用者と同じ指のタップで押した`,
+          });
+          await this.page.touchscreen.tap(覆い?.x ?? 0, 覆い?.y ?? 0);
+        }
+      } else {
+        try {
+          await l.click({ timeout: 10_000 });
+        } catch (e) {
+          const m = String(e);
+          if (!/intercepts pointer events/.test(m)) throw e;
+          const 幅 = await this.page.evaluate(() => ({ 画面: window.innerWidth, 本文: document.documentElement.scrollWidth })).catch(() => null);
+          test.info().annotations.push({
+            type: "正本の外の補い",
+            description: `「${何}」は、押す位置に本文の要素が当たり、普通のクリックでは押せなかった（画面の横幅 ${幅?.画面 ?? "不明"}px・本文の横幅 ${幅?.本文 ?? "不明"}px）。クリックの操作をリンクへ直接送って続けた`,
+          });
+          await l.dispatchEvent("click");
+        }
+      }
       const first = await new Promise<{ tab: Page } | { res: Awaited<ReturnType<Page["waitForNavigation"]>> } | null>((resolve) => {
         let n = 0;
         for (const p of [tabP, navP] as Promise<{ tab: Page } | { res: Awaited<ReturnType<Page["waitForNavigation"]>> } | null>[]) {
@@ -150,14 +208,20 @@ export class SpNavPage {
       el.scrollIntoView({ block: "nearest" });
       const r = el.getBoundingClientRect();
       if (r.width < 1 || r.height < 1) return false;
+      // 画面に固定の要素（画面下部固定エリアなど）は、それより外側の枠のはみ出しの隠しを受けない（外側に transform などがあるときを除く）。
+      // 以前は外側の枠の範囲で切っていて、画像では見えている画面下部のカート・お気に入りを「見えていない」と返した（2026-11-14 の 009・011・066〜068）
+      let 固定の内側 = false;
       for (let e: Element | null = el; e; e = e.parentElement) {
         const s = getComputedStyle(e);
         if (s.display === "none" || s.visibility === "hidden" || Number(s.opacity) === 0) return false;
-        if (e !== el && (s.overflowY !== "visible" || s.overflowX !== "visible")) {
+        const 固定を閉じ込める = s.transform !== "none" || s.filter !== "none" || /paint|layout|strict|content/.test(s.contain);
+        if (固定の内側 && 固定を閉じ込める) 固定の内側 = false;
+        if (e !== el && !固定の内側 && (s.overflowY !== "visible" || s.overflowX !== "visible")) {
           const pr = e.getBoundingClientRect();
           if (pr.height < 1 || pr.width < 1) return false;
           if (r.bottom <= pr.top || r.top >= pr.bottom) return false;
         }
+        if (s.position === "fixed") 固定の内側 = true;
       }
       return true;
     });

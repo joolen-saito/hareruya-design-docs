@@ -27,7 +27,7 @@ import { openEditFromResult, resultCustomerId, searchCustomer } from "../pages/a
 import { blacklistRows, ensureBlacklist, 拒否種別 } from "../pages/admin/f06_masters";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { productIdsByCode, readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { ensureStore } from "../pages/admin/m04_24_reuse_k";
 import { M08CustomerEditPage } from "../pages/admin/m08_customer_edit";
 import { EntryPage } from "../pages/front/f06_01_entry";
 import { 申込入力, 申込者 } from "../pages/front/f08_05_confirm";
@@ -113,7 +113,7 @@ for (const id of ["S-F08-02-ENTRY-ABROAD-014", "S-F08-02-ENTRY-PLAYER", "S-F08-0
 
 const 店舗の注記 = (正本の店舗識別名: string) =>
   `店舗識別名「${正本の店舗識別名}」の店舗を新しく作らず（店舗識別名は画面で指定できない）、F08-05 と共通の試験店舗「${PD_STORE.店名}」` +
-  `（支店URL ${PD_STORE.支店URL}。無ければ登録）に読み替えた。手順の店舗識別名もこの店舗の支店URLとして読む。` +
+  `（店舗ID ${PD_STORE.店舗ID}・支店URL ${PD_STORE.支店URL}。店舗は作らない決まり。依頼者 2026-11-15）に読み替えた。手順の店舗識別名もこの店舗の支店URLとして読む。` +
   "店頭買取査定申込み0件の前提は、申込者の姓かメールアドレスに実行の印を付けて、この実行の申込み・会員だけを数えることで代えた";
 
 async function 共通の店舗(browser: Browser, seedId: string): Promise<string> {

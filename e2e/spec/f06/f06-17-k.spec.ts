@@ -5,7 +5,7 @@
  *
  * - 大会名は、シードが実行の印を付けて作る（seeds/f06-17.ts の 大会名()）。手順・期待結果の大会名は印つきの名前として確かめる。
  *   フォーマット・カード・店舗は名前の決まった共有のマスタ（シード表の名前のまま）。
- * - 実装しないケース: DCIナンバーをDBで設定するもの（002・020）、試験メールの受信箱を使うもの（004）、
+ * - 実装しないケース: DCIナンバーをDBで設定するもの（002・020）、
  *   DBで選手情報を消す・イベントのフォーマットを0件にする・デッキ登録なしの日程の登録期限を設定するもの（010・011・013・025）。
  */
 import { test, Page } from "@playwright/test";
@@ -121,9 +121,15 @@ caseTest("IT-F06-17-012", async ({ page, notes, step, expected }) => {
   await step(2, async () => {
     expect(await 送信先のイベント詳細IDを書き換える(d, "61749012"), "書き換えたフォームの送信先").toBe("/ja/deckentry/61749012/update");
   });
-  await step(3, async () => { await 入力する(d, `1 ${名日.A}`, `1 ${名日.B}`); await 提出する(d); note(`送信後の画面のアドレス: ${d.path}`); });
+  let sent = false;
+  await step(3, async () => { await 入力する(d, `1 ${名日.A}`, `1 ${名日.B}`); sent = (await d.提出する()).sent; note(`送信後の画面のアドレス: ${d.path}${sent ? "" : "（送信されなかった）"}`); });
   await step(4, async () => { n = 日程のデッキ件数("61749012"); });
-  await expected(async () => { expect.soft(n, "イベント詳細ID 61749012 のデッキの件数").toBe(0); });
+  await expected(async () => {
+    // 「登録されない」を、送信されなかっただけで合格にしない。書き換えた送信先へ送られたことも見る
+    expect.soft(sent, "送信された（画面が移った）").toBe(true);
+    expect.soft(d.path, "送信先の画面のアドレス（書き換えたイベント詳細ID）").toBe("/ja/deckentry/61749012/update");
+    expect.soft(n, "イベント詳細ID 61749012 のデッキの件数").toBe(0);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -154,6 +160,9 @@ caseTest("IT-F06-17-026", async ({ page, step, expected }) => {
     note(`開いたときの応答は ${status}`);
     expect.soft(await c.完了画面である(), "デッキ登録完了画面が表示されているか").toBe(false);
     expect.soft(await c.見出し.count(), "デッキ登録完了画面の見出しの数").toBe(0);
+    // 画面が開けなかった（ログインが切れた・通信の誤り）だけで合格にしない。画面は「見つからない」（404）を返す
+    expect.soft(new URL(page.url()).pathname, "会員ログイン画面へ戻されていない（ログインしたまま開いた）").not.toMatch(/\/mypage\/login$/);
+    expect.soft(status, "応答の状態（見つからない）").toBe(404);
   });
 });
 
@@ -166,6 +175,9 @@ caseTest("IT-F06-17-028", async ({ page, notes, step, expected }) => {
     note(`開いたときの応答は ${status}`);
     expect.soft(await c.完了画面である(), "デッキ登録完了画面が表示されているか").toBe(false);
     expect.soft(await c.見出し.count(), "デッキ登録完了画面の見出しの数").toBe(0);
+    // 画面が開けなかった（ログインが切れた・通信の誤り）だけで合格にしない。画面は「見つからない」（404）を返す
+    expect.soft(new URL(page.url()).pathname, "会員ログイン画面へ戻されていない（ログインしたまま開いた）").not.toMatch(/\/mypage\/login$/);
+    expect.soft(status, "応答の状態（見つからない）").toBe(404);
   });
 });
 
@@ -221,7 +233,7 @@ async function デッキ情報を押す(page: Page, l: デッキ一覧): Promise
   const ids = await l.表示されたID();
   expect(ids.length, "検索結果のデッキ情報の数").toBe(1);
   const link = l.行(ids[0]).locator("td").nth(1).locator("a").first();
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
   const e = new デッキ編集画面(page);
   await e.読み込みを待つ();
   return e;

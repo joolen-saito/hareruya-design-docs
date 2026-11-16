@@ -59,8 +59,8 @@ export class M08CustomerListPage {
   async searchMulti(語: string): Promise<void> {
     await this.multi.fill(語, { timeout: T });
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.form.locator('button[type=submit]').filter({ hasText: "検索" }).first().click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      this.form.locator('button[type=submit]').filter({ hasText: "検索" }).first().click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -79,8 +79,8 @@ export class M08CustomerListPage {
   /** 削除の確認のモーダルの「削除」を押す（押したあとの会員一覧の画面まで待つ） */
   async 確認モーダルで削除する(会員ID: string): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.page.locator(`#discontinuance-${会員ID} a.btn-ec-delete`).click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      this.page.locator(`#discontinuance-${会員ID} a.btn-ec-delete`).click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -98,8 +98,8 @@ export class M08CustomerListPage {
     const link = this.patternLinks().filter({ hasText: new RegExp(`^\\s*${esc(名前)}\\s*$`) });
     await expect(link, `検索パターン「${名前}」のリンクが1つある`).toHaveCount(1, { timeout: T });
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      link.click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      link.click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     return this.patternIdInUrl() ?? "";
@@ -115,8 +115,8 @@ export class M08CustomerListPage {
     await this.patternName.fill(名前, { timeout: T });
     if (退会区分 !== undefined) await this.closeReason.fill(退会区分, { timeout: T });
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.saveButton.click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      this.saveButton.click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -158,8 +158,8 @@ export class M08CustomerListPage {
   /** 検索するボタンを押し、結果の画面まで待つ */
   async 検索する(): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.form.locator("button[type=submit]").filter({ hasText: "検索" }).first().click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      this.form.locator("button[type=submit]").filter({ hasText: "検索" }).first().click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -286,7 +286,7 @@ export class M08CustomerListPage {
   /** 件数の選択欄で「10件」などを選ぶ（選ぶと画面が移る） */
   async 件数を選ぶ(件: number): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
       this.件数の選択.selectOption({ label: `${件}件` }, { timeout: T }),
     ]);
     await this.page.waitForLoadState("load");
@@ -317,8 +317,8 @@ export class M08CustomerListPage {
     const link = this.page.locator("ul.pagination a.page-link").filter({ hasText: new RegExp(`^\\s*${番号}\\s*$`) });
     await expect(link, `ページングの ${番号} ページ目のリンクが1つある`).toHaveCount(1, { timeout: T });
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      link.click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      link.click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -328,8 +328,8 @@ export class M08CustomerListPage {
     const link = this.page.locator('#nav-customer a[href$="/customer"]');
     await expect(link, "サイドメニューの会員一覧").toHaveCount(1, { timeout: T });
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      link.click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      link.click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -338,8 +338,8 @@ export class M08CustomerListPage {
   /** 結果の行の会員名を押す（会員登録/編集画面へ） */
   async 会員名を押す(会員ID: string): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.row(会員ID).locator(`a[href$="/customer/${会員ID}/edit"]`).first().click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      this.row(会員ID).locator(`a[href$="/customer/${会員ID}/edit"]`).first().click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -360,8 +360,8 @@ export class M08CustomerListPage {
   async サブメニューの項目を押す(会員ID: string, 項目: "編集" | "メール通知"): Promise<string> {
     await this.サブメニューを開く(会員ID);
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.row(会員ID).locator("ul.dropdown-menu a").filter({ hasText: new RegExp(`^\\s*${項目}\\s*$`) }).click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      this.row(会員ID).locator("ul.dropdown-menu a").filter({ hasText: new RegExp(`^\\s*${項目}\\s*$`) }).click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     return new URL(this.page.url()).pathname;
@@ -370,8 +370,8 @@ export class M08CustomerListPage {
   /** メール履歴のアイコンを押す */
   async メール履歴を押す(会員ID: string): Promise<string> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.row(会員ID).locator(`a[href*="/customer/mail/${会員ID}/history"]`).click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      this.row(会員ID).locator(`a[href*="/customer/mail/${会員ID}/history"]`).click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     return new URL(this.page.url()).pathname;
@@ -387,8 +387,8 @@ export class M08CustomerListPage {
   /** 仮会員メール再送のモーダルの送信を押す（押したあとの画面まで待つ） */
   async 再送モーダルで送信する(会員ID: string): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.page.locator(`#discontinuance_cus_${会員ID} a.btn-ec-delete`).click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      this.page.locator(`#discontinuance_cus_${会員ID} a.btn-ec-delete`).click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }

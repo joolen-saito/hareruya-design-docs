@@ -8,7 +8,7 @@
  */
 import { Browser, expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../../config/env";
-import { RUN_MARK } from "../../lib/run_marker";
+import { FIXED_MARK } from "../../lib/run_marker";
 import { Account, adminUrl, withAdminSession } from "../../lib/session";
 import { expectSaved } from "./common";
 import { 本店の店名 } from "./f04_setup";
@@ -17,7 +17,7 @@ import { downloadGoodsCsvTemplate, readExistingGoodsChildCategoryId } from "./m0
 import { registerGoodsCsv } from "./m03_01_goods_register";
 import { openProductEditByCode } from "./m03_23_seed_products";
 import { searchStockByCode, stockInRow } from "./m04_02_rc_stock";
-import { loggedInMemberName, registerStockEdit, StockApprovalListPage } from "./stock_edit";
+import { loggedInMemberName, registerStockEdit, StockApprovalListPage, approveAndSettle } from "./stock_edit";
 
 export type Issue = (m: string) => void;
 
@@ -92,11 +92,12 @@ export async function グッズ商品を登録する(page: Page, seedId: string,
 // ---------------------------------------------------------------------------
 
 const PASS = "Passw0rd!F0201stock";
-const 登録者 = { 名前: `F0201在庫登録者-${RUN_MARK}`, account: { loginId: `f0201reg${RUN_MARK}`.toLowerCase(), password: PASS } as Account };
-const 承認者 = { 名前: `F0201在庫承認者-${RUN_MARK}`, account: { loginId: `f0201apr${RUN_MARK}`.toLowerCase(), password: PASS } as Account };
+// 登録者・承認者は決まった印で1度だけ作り、実行をまたいで使い回す（依頼者の指示 2026-11-12「毎回作らずに1個でいけるやつは使い回す」）
+const 登録者 = { 名前: `F0201在庫登録者-${FIXED_MARK}`, account: { loginId: `f0201reg${FIXED_MARK}`.toLowerCase(), password: PASS } as Account };
+const 承認者 = { 名前: `F0201在庫承認者-${FIXED_MARK}`, account: { loginId: `f0201apr${FIXED_MARK}`.toLowerCase(), password: PASS } as Account };
 let 用意した = false;
 
-/** 在庫の登録者と承認者（どちらも本店を編集できるシステム管理者。この実行だけの者）を一度だけ用意する */
+/** 在庫の登録者と承認者（どちらも本店を編集できるシステム管理者。E2E の決まった者）を、あれば確かめて使い、無ければ作る（実行の中で1度だけ） */
 async function 在庫の管理者を用意する(browser: Browser): Promise<string> {
   const shop = await 本店の店名(browser);
   if (用意した) return shop;
@@ -139,8 +140,10 @@ export async function 在庫を増減して承認する(browser: Browser, seedId
     const list = new StockApprovalListPage(page);
     await list.open(shop);
     const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === 登録者.名前);
-    if (rows.length !== items.length) throw new Error(`${seedId}: 在庫編集承認一覧に、登録者「${登録者.名前}」の未承認の行が ${rows.length} 件（${items.length} 件のはず）`);
-    await list.approve(rows.map((r) => r.id), `${seedId}: 在庫編集の一括承認（${items.length}件）`, issue);
+    if (rows.length < items.length) throw new Error(`${seedId}: 在庫編集承認一覧に、登録者「${登録者.名前}」の未承認の行が ${rows.length} 件（${items.length} 件はあるはず）`);
+    // 登録者は E2E の決まった者なので、前の回に承認されずに残った行（どれも E2E の印つきの商品）があれば合わせて承認する
+    if (rows.length > items.length) issue(`在庫編集承認一覧に、同じ登録者の前の回の未承認の行が ${rows.length - items.length} 件あり、合わせて承認した（どれも E2E の印つきの商品）`);
+    await approveAndSettle(list, rows.map((r) => r.id), `${seedId}: 在庫編集の一括承認（${rows.length}件）`, issue);
     for (const it of items) {
       const after = await searchStockByCode(page, { 商品コード: it.商品コード, 店舗: shop, 在庫区分: "EC-CUBE" });
       const n = await stockInRow(after.row(it.商品コード, shop, "EC-CUBE"));

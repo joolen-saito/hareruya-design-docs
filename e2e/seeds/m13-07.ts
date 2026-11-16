@@ -26,7 +26,7 @@
  */
 import { Browser } from "@playwright/test";
 import { BASE_URL, MEMBER_NAMES, SETUP_ADMIN } from "../config/env";
-import { RUN_MARK, rc } from "../lib/run_marker";
+import { RUN_MARK, rc, rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed, reportCurrentSeedIssue } from "./current_seed";
 import { 管理画面で本会員にした注記, 管理画面で本会員にする, 本登録のメールを読める } from "../pages/admin/member_activate";
@@ -35,27 +35,28 @@ import { customerStateByEmail } from "../pages/admin/customer";
 import { registerEntries } from "../pages/admin/entry";
 import { EventInput, registerEvent } from "../pages/admin/event";
 import { 申込状況を変える } from "../pages/admin/m13_06_entry_list";
-import { ensureMember } from "../pages/admin/member";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
 import { registerSchedule, ScheduleInput } from "../pages/admin/schedule";
-import { ensureTenant } from "../pages/admin/tenant";
+import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
 import { FrontMember, registerFrontMember } from "../pages/front/member_entry";
 import { QK1302_ADMIN, QK連携店舗 } from "./m13-02-qk";
 import { entryMemberNames } from "./members";
 
-export const M1307_ADMIN: Account = { loginId: "m1307_admin", password: "Passw0rd!M1307" };
+// 店舗を決まった名前の試験店舗（m13_marked_shop.ts）にしたので、管理者も決まった印の名前・ログインIDで1度だけ作って使い回す（同名の別の店舗に所属した前の管理者とぶつけない）
+export const M1307_ADMIN: Account = { loginId: rcFixed("m1307_admin").toLowerCase(), password: "Passw0rd!M1307" };
 /** 店舗Bに編集権限を持つ別の管理者（シード表の投入方法が「店舗Bの編集権限を持つ管理者」と定める。行は無い） */
-const M1307_ADMIN_B: Account = { loginId: "m1307_admin_b", password: "Passw0rd!M1307B" };
+const M1307_ADMIN_B: Account = { loginId: rcFixed("m1307_admin_b").toLowerCase(), password: "Passw0rd!M1307B" };
 
 const 店 = (n: string, kana: string, eng: string, url: string, ryaku: string) => ({ 店名: `店舗${n}`, 店名カナ: kana, 店名英語: eng, 支店URL: url, 店名略称3文字: ryaku, ショップ名略称: `店舗${n}` });
 
 defineSeed("S-M13-07-ADM", async ({ browser, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const issue = (m: string) => reportSeedIssue(seed.シードID, m);
-    await ensureTenant(page, 店("A", "テンポエー", "Shop A", "m1302a", "テA"), issue);
-    await ensureTenant(page, 店("B", "テンポビー", "Shop B", "m1302b", "テB"), issue);
+    await ensureMarkedTenant(page, "A", issue);
+    await ensureMarkedTenant(page, "B", issue);
     await ensureMember(page, {
-      名前: "M13-07試験管理者", 所属店舗: "店舗A", ログインID: M1307_ADMIN.loginId, メールアドレス: "m1307_admin@example.test",
-      パスワード: M1307_ADMIN.password, 権限: "モールオペレーター", デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A"],
+      名前: rcFixed("M13-07試験管理者"), 所属店舗: 印店名.A, ログインID: M1307_ADMIN.loginId, メールアドレス: "m1307_admin-e2e@example.test",
+      パスワード: M1307_ADMIN.password, 権限: "モールオペレーター", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A],
     });
   });
 });
@@ -63,8 +64,8 @@ defineSeed("S-M13-07-ADM", async ({ browser, seed }) => {
 async function 店舗Bの管理者を用意する(browser: Browser): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-07店舗B管理者", 所属店舗: "店舗B", ログインID: M1307_ADMIN_B.loginId, メールアドレス: "m1307_admin_b@example.test",
-      パスワード: M1307_ADMIN_B.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗B", 編集可能店舗: ["店舗B"],
+      名前: rcFixed("M13-07店舗B管理者"), 所属店舗: 印店名.B, ログインID: M1307_ADMIN_B.loginId, メールアドレス: "m1307_admin_b-e2e@example.test",
+      パスワード: M1307_ADMIN_B.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.B, 編集可能店舗: [印店名.B],
     });
   });
 }
@@ -129,11 +130,11 @@ const 代えの注記 = (状況: 申込状況[]) =>
  * イベント申込詳細・編集画面で申込状況を変える。イベントID・日程ID・申込IDを控える。
  * 呼び名は〔イベントID-M1307-<id>〕〔日程ID-M1307-<id>〕〔申込ID-M1307-<id><申込の末尾>〕。
  */
-function defineEventSeed(seedId: string, v: { id: string; 名日: string; 名英: string; 店舗: "店舗A" | "店舗B"; 申込: [string, 申込状況][] }): void {
+function defineEventSeed(seedId: string, v: { id: string; 名日: string; 名英: string; 店舗: string; 申込: [string, 申込状況][] }): void {
   defineSeed(seedId, { needs: ["S-M13-07-ADM"] }, async ({ browser, notes, seed }) => {
     const 会員 = await 申込の会員(browser, v.申込.length);
-    if (v.店舗 === "店舗B") await 店舗Bの管理者を用意する(browser);
-    await withAdminSession(browser, v.店舗 === "店舗B" ? M1307_ADMIN_B : M1307_ADMIN, async (page) => {
+    if (v.店舗 === 印店名.B) await 店舗Bの管理者を用意する(browser);
+    await withAdminSession(browser, v.店舗 === 印店名.B ? M1307_ADMIN_B : M1307_ADMIN, async (page) => {
       const イベント: EventInput = {
         イベント名日: v.名日, イベント名英: v.名英, 店舗: v.店舗, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16", 参加費: "0",
       };
@@ -155,14 +156,14 @@ function defineEventSeed(seedId: string, v: { id: string; 名日: string; 名英
 /** 名英には、ほかのシードの検索語（イベント名(日)の語）を含めない */
 const 名英 = (n: string) => `Seed M1307 ${n} ${RUN_MARK}`;
 function defineAuthSeed(seedId: string, n: string, 申込: [string, 申込状況][]): void {
-  defineEventSeed(seedId, { id: n, 名日: 権限店舗のイベント名(n), 名英: 名英(n), 店舗: "店舗A", 申込 });
+  defineEventSeed(seedId, { id: n, 名日: 権限店舗のイベント名(n), 名英: 名英(n), 店舗: 印店名.A, 申込 });
 }
 
 const 三件 = (): [string, 申込状況][] => [["A", "決済中"], ["B", "入金待ち"], ["C", "キャンセル済み"]];
 const 一件 = (): [string, 申込状況][] => [["", "決済中"]];
 defineAuthSeed("S-M13-07-AUTH-001", "001", 三件());
-defineEventSeed("S-M13-07-AUTH-002", { id: "002A", 名日: 権限店舗のイベント名("002"), 名英: 名英("002A"), 店舗: "店舗A", 申込: 一件() });
-defineEventSeed("S-M13-07-NOAUTH-002", { id: "002B", 名日: 権限外店舗のイベント名("002"), 名英: 名英("002B"), 店舗: "店舗B", 申込: 一件() });
+defineEventSeed("S-M13-07-AUTH-002", { id: "002A", 名日: 権限店舗のイベント名("002"), 名英: 名英("002A"), 店舗: 印店名.A, 申込: 一件() });
+defineEventSeed("S-M13-07-NOAUTH-002", { id: "002B", 名日: 権限外店舗のイベント名("002"), 名英: 名英("002B"), 店舗: 印店名.B, 申込: 一件() });
 defineAuthSeed("S-M13-07-AUTH-003", "003", 三件());
 defineAuthSeed("S-M13-07-AUTH-004", "004", 一件());
 defineAuthSeed("S-M13-07-AUTH-005", "005", 一件());
@@ -191,7 +192,8 @@ defineSeed("S-M13-07-QK-ENTRY-014", { needs: ["S-M13-02-QK-ADM"] }, async ({ bro
     const 開始 = "2030-10-23 10:00";
     const d = await registerSchedule(page, id, { 開始時間: 開始, 受付あり: false, デッキ登録あり: false });
     // 申込状況は初期値のまま登録する
-    const [e] = await registerEntries(page, QKイベント名(), d, 開始, [`${m.姓} ${m.名}`]);
+    const [e] = await registerEntries(page, QKイベント名(), d, 開始, [`${m.姓} ${m.名}`], true);
+    reportCurrentSeedIssue("日程はシード表の手順どおり（オンライン受付なし）に作ったため、イベント申込登録（検索結果）に出ない（設計書: オンライン受付ありの日程のみ検索対象）。新規申込登録画面は、日程IDのアドレスを直接開いて代えた");
     notes.set("〔申込ID-M1307-QK001〕", e);
   });
 });

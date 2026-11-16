@@ -3,6 +3,7 @@
  */
 import { Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { 押して移るのを待つ } from "./nav_click";
 
 const T = 30_000;
 
@@ -75,6 +76,10 @@ export class HistoryListPage {
     const 文 = ((await dd.innerText()) ?? "").replace(/\s+/g, " ").trim();
     return { 表示: 文 !== "" || 画像.length > 0, 文, 画像 };
   }
+  /** 行の処理状態の表示（文字の札）。札の文字と地の色を、別添資料の表示画像（文言と地の色）と照らすのに使う */
+  処理状態の札(行: Locator): Locator {
+    return 行.locator(".p-hareruya-history-list__order-info-row").filter({ has: this.page.locator("dt", { hasText: "処理状態" }) }).locator("dd .c-hareruya-label--status").first();
+  }
   /** 行の「注文番号」のリンク */
   注文番号のリンク(行: Locator): Locator { return 行.locator("a.c-hareruya-link").first(); }
   /** 行の処理状態のリンク */
@@ -108,15 +113,7 @@ export class HistoryListPage {
   get マイページボタン(): Locator { return this.page.locator(".p-hareruya-history-list__btn a").first(); }
 
   async 押して遷移する(l: Locator): Promise<void> {
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 });
-    try {
-      await l.click({ timeout: 10_000 });
-    } catch (e) {
-      test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
-    }
-    await nav;
-    await this.page.waitForLoadState("load");
+    // 押す操作だけを行い、移るのを待つ（押せているのに click の待ちが時間切れになり、移った先で押し直してしまうのを防ぐ。pages/front/nav_click.ts）
+    await 押して移るのを待つ(this.page, l, { 直接送るときの注記: "正本の外の補い" });
   }
 }

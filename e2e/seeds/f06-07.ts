@@ -113,8 +113,15 @@ for (const n of ["003", "004"]) {
     } finally { await context.close(); }
     const id = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
       page.setDefaultTimeout(60_000);
-      await searchCustomer(page, メール);
-      return resultCustomerId(page, メール);
+      // 共有の開発環境では、フロントで登録した直後の会員が会員一覧の検索にすぐ出ないことがある。見つからないときは間をおいて検索し直す（最大で約1分）
+      let found: string | null = null;
+      for (let i = 0; ; i++) {
+        await searchCustomer(page, メール);
+        found = await resultCustomerId(page, メール);
+        if (found || i >= 5) break;
+        await page.waitForTimeout(10_000);
+      }
+      return found;
     });
     if (!id) throw new Error(`登録した会員 ${メール} を会員一覧で探せない`);
     notes.set(`〔会員ID-F0607-${n}〕`, id);

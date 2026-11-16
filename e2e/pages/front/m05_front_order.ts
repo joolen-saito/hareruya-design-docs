@@ -74,13 +74,50 @@ async function addFirstAvailable(page: Page, 商品ID: string, what: string): Pr
   if (body && body.done === false) throw new Error(`${what}: カートに入れられない: ${(body.messages ?? []).join(" / ")}`);
 }
 
+/**
+ * 支払方法に「代金引換」が無いときは、配送方法を代金引換を選べるもの（出荷指示リストから除外されないもの）に替える（呼び出し側が求めたときだけ）。
+ * 支払方法の選択肢は配送方法で変わる（開発環境では、小さい商品の既定の「ゆうパケット」では代金引換が出ず、「ゆうパック」では出る）。
+ * 代金引換でないと対応状況が「新規受付」にならない（郵便振替は「注文受領」）シードが使う（2026-11-13 の M10-10 の 019・020 が止まった）。
+ */
+async function 代金引換を選べる配送にする(page: Page, what: string): Promise<void> {
+  const pays = async () => (await page.locator('input[name="_shopping_order[Payment]"]').evaluateAll((nodes) => nodes
+    .map((n) => ((n as HTMLInputElement).closest("label")?.textContent ?? "").replace(/\s+/g, " ").trim())));
+  if ((await pays()).includes("代金引換")) return;
+  const dsel = 'input[name="_shopping_order[Shippings][0][Delivery]"]';
+  const ds = await page.locator(dsel).evaluateAll((nodes) => nodes.map((n) => ({
+    value: (n as HTMLInputElement).value, checked: (n as HTMLInputElement).checked,
+    label: ((n as HTMLInputElement).closest("label")?.textContent ?? "").replace(/\s+/g, " ").trim(),
+  })));
+  const tried: string[] = [];
+  for (const d of ds.filter((x) => !x.checked && !EXCLUDED_DELIVERIES.some((e) => x.label.includes(e)))) {
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator(`${dsel}[value="${d.value}"]`).check({ force: true })]);
+    await page.waitForLoadState("load");
+    tried.push(d.label);
+    if ((await pays()).includes("代金引換")) return;
+  }
+  throw new Error(`${what}: 支払方法に「代金引換」を出す配送方法が無い（試した配送方法: ${tried.join("、") || "なし"}。ある配送方法: ${ds.map((d) => d.label).join("、")}）`);
+}
+
 /** カートからご注文手続きへ進み、配送方法（除外されないもの）と支払方法を選んで注文を確定する。注文番号を返す */
-async function checkout(page: Page, what: string, 除外されない配送: boolean): Promise<string> {
+async function checkout(page: Page, what: string, 除外されない配送: boolean, 代金引換で = false): Promise<string> {
   await page.goto(front("/cart"));
   await page.waitForLoadState("load");
   const toShopping = page.locator("a.p-hareruya-cart__checkout-btn");
   await expect(toShopping, `${what}: カートの「購入手続きへ」`).toHaveCount(1);
-  await Promise.all([page.waitForURL(/\/shopping(\?.*)?$/, { waitUntil: "domcontentloaded" }), toShopping.click()]);
+  // 「購入手続きへ」はカートのロック（/cart/buystep/…）を経てご注文手続きへ移る。購入フローの警告があるとカートへ戻される（お知らせが出ないこともある）ので、
+  // その応答を読んで、戻されたら60秒待たずにその旨で止める（2026-11-13 の IT-F06-06-005・006 は waitForURL の時間切れだけが残った）
+  const buystep = page.waitForResponse((r) => /\/cart\/buystep\//.test(new URL(r.url()).pathname), { timeout: 60_000 });
+  const toShoppingUrl = page.waitForURL(/\/shopping(\?.*)?$/, { waitUntil: "domcontentloaded", timeout: 60_000 });
+  buystep.catch(() => undefined); toShoppingUrl.catch(() => undefined);
+  await toShopping.click({ noWaitAfter: true });
+  const bs = await Promise.race([buystep, toShoppingUrl.then(() => null)]);
+  const 戻り先 = bs?.headers()["location"] ?? "";
+  if (bs && bs.status() >= 300 && bs.status() < 400 && /\/cart\/?$/.test(new URL(戻り先, page.url()).pathname)) {
+    await page.waitForURL(/\/cart\/?$/, { waitUntil: "load" }).catch(() => undefined);
+    const msgs = (await page.locator(".p-hareruya-message-box, .ec-alert-warning, .alert, [role=alert]").allTextContents()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+    throw new Error(`${what}: カートの「購入手続きへ」でカートへ戻された（購入フローの警告。${msgs.join(" / ") || "画面にお知らせなし"}）`);
+  }
+  await toShoppingUrl;
   await page.waitForLoadState("load");
 
   if (除外されない配送) {
@@ -101,14 +138,32 @@ async function checkout(page: Page, what: string, 除外されない配送: bool
     }
   }
 
+  if (代金引換で) await 代金引換を選べる配送にする(page, what);
   const radios = page.locator('input[name="_shopping_order[Payment]"]');
   await expect(radios.first(), `${what}: ご注文手続きの支払方法の選択肢`).toBeAttached();
-  const choices = await radios.evaluateAll((nodes) => nodes.map((n) => ({
+  const readChoices = () => radios.evaluateAll((nodes) => nodes.map((n) => ({
     value: (n as HTMLInputElement).value,
     label: ((n as HTMLInputElement).closest("label")?.textContent ?? "").replace(/\s+/g, " ").trim(),
     checked: (n as HTMLInputElement).checked,
   })));
-  const pick = PAYMENTS.map((p) => choices.find((c) => c.label === p)).find(Boolean);
+  let choices = await readChoices();
+  let pick = PAYMENTS.map((p) => choices.find((c) => c.label === p)).find(Boolean);
+  // 支払方法は配送方法ごとに決まる。いまの配送方法（ほかの試験が作った配送方法のことがある）に選びたい支払方法が無いときは、
+  // 除外されない配送方法を、最初からあった配送方法のほう（一覧の後ろ）から順に選び直して探す
+  if (!pick) {
+    const dsel = 'input[name="_shopping_order[Shippings][0][Delivery]"]';
+    const ds = await page.locator(dsel).evaluateAll((nodes) => nodes.map((n) => ({
+      value: (n as HTMLInputElement).value, checked: (n as HTMLInputElement).checked,
+      label: ((n as HTMLInputElement).closest("label")?.textContent ?? "").replace(/\s+/g, " ").trim(),
+    })));
+    for (const d of ds.filter((x) => !x.checked && !EXCLUDED_DELIVERIES.some((e) => x.label.includes(e))).reverse()) {
+      await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator(`${dsel}[value="${d.value}"]`).check({ force: true })]);
+      await page.waitForLoadState("load");
+      choices = await readChoices();
+      pick = PAYMENTS.map((p) => choices.find((c) => c.label === p)).find(Boolean);
+      if (pick) break;
+    }
+  }
   if (!pick) throw new Error(`${what}: 支払方法に ${PAYMENTS.join("・")} のどれも無い（ある選択肢: ${choices.map((c) => c.label).join("、")}）`);
   if (!pick.checked) {
     await Promise.all([
@@ -122,7 +177,7 @@ async function checkout(page: Page, what: string, 除外されない配送: bool
   await accept.check({ force: true });
   const submit = page.locator("button[data-js-payment-submit]");
   await expect(submit, `${what}: 確定のチェックで注文のボタンが押せる`).toBeEnabled();
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), submit.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), submit.click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   if (!/\/shopping\/complete/.test(page.url())) {
     const errors = (await page.locator(".p-hareruya-message-box--error, .ec-alert-warning, .error, .c-hareruya-form-input__field-error--server").allTextContents())
@@ -137,7 +192,7 @@ async function checkout(page: Page, what: string, 除外されない配送: bool
 }
 
 /** 会員でフロントにログインして、販売中の商品1点を注文し、ご注文番号を返す */
-export async function 会員が注文する(browser: Browser, m: { メール: string; パスワード: string }, what: string, opt: { 出荷指示リストに載る配送?: boolean; 商品ID?: string } = {}): Promise<string> {
+export async function 会員が注文する(browser: Browser, m: { メール: string; パスワード: string }, what: string, opt: { 出荷指示リストに載る配送?: boolean; 商品ID?: string; 代金引換で?: boolean } = {}): Promise<string> {
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
     await hideDebugToolbar(context);
@@ -146,7 +201,7 @@ export async function 会員が注文する(browser: Browser, m: { メール: st
     await frontLogin(page, m);
     await clearCart(page, () => undefined);
     await addFirstAvailable(page, opt.商品ID ?? 販売中の商品ID(), `${what}: 商品をカートに入れる`);
-    return await checkout(page, `${what}: 注文`, opt.出荷指示リストに載る配送 ?? false);
+    return await checkout(page, `${what}: 注文`, opt.出荷指示リストに載る配送 ?? false, opt.代金引換で ?? false);
   } finally {
     await context.close();
   }

@@ -13,6 +13,7 @@
 import { test } from "@playwright/test";
 import { CaseCtx, caseTest, expect } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
+import { CSVの全行, CSVの内容を画面の枠に出す, CSVの枠のセル } from "../../lib/evidence_other";
 import { OtcListPage } from "../../pages/admin/m06_otc_list";
 import { CSVを読む } from "../../pages/admin/m07_buy";
 import { M0610_ADMIN, 査定の呼び名, 品名, 略称ABC } from "../../seeds/m06-10";
@@ -44,11 +45,17 @@ async function 手順1から5(ctx: CaseCtx, 査定ID: string): Promise<CSV> {
   await step(5, async () => {
     expect(file!.file, `戻しリストCSVのファイル（応答 ${file!.status}）`).not.toBeNull();
     csv = await CSVを読む(file!.file!);
+    await list.ダウンロードの選択肢を閉じる();
+    await CSVの内容を画面の枠に出す(page, [{ 題: `ファイル名：${file!.file!.suggestedFilename()}`, 行: CSVの全行(csv) }]);
   });
   return csv!;
 }
 
 const 行 = (csv: CSV, 名: string) => csv.行.find((r) => (r["商品名"] ?? "").includes(品名(名)));
+/** CSVの枠の、商品名（印つきの名前を含む）の行の列のセル（行が無ければ、無い行を指して確かめが落ちる） */
+const 枠のセル = (ctx: CaseCtx, csv: CSV, 名: string, 列: string) => CSVの枠のセル(ctx.page, 0, csv.行.findIndex((r) => (r["商品名"] ?? "").includes(品名(名))), 列);
+/** 桁区切りの有無を問わない表示（「1,000円以上」でも「1000円以上」でも同じ） */
+const 桁区切り可 = (s: string) => new RegExp("^" + s.replace(/\d+/g, (m) => m.split("").join(",?")) + "$");
 
 const 閾値の文 = (店: "本店" | "支店A", 値: string) => `「${店}」は、同じ閾値の試験用の店舗で確かめた（${値}）`;
 
@@ -56,8 +63,7 @@ caseTest("IT-M06-10-002", async (ctx) => {
   const csv = await 手順1から5(ctx, ctx.notes.get(査定の呼び名("M0610-001-002")));
   await ctx.expected(async () => {
     note(`${閾値の文("本店", "閾値 100・500・1000円")}。ピッキング区分は桁区切りを除いて比べた。セール価格50円は商品の販売価格、基準価格1200円は基準価格に入れた`);
-    const r = 行(csv, "基準価格判定カード-002");
-    expect.soft(桁区切りなし(r?.["ピッキング区分"] ?? "（行が無い）"), "「基準価格判定カード-002」のピッキング区分（基準価格1200円で、閾値1000円を参照）").toBe("1000円以上");
+    await expect.soft(枠のセル(ctx, csv, "基準価格判定カード-002", "ピッキング区分"), "「基準価格判定カード-002」のピッキング区分（基準価格1200円で、閾値1000円を参照）").toHaveText(桁区切り可("1000円以上"));
   });
 });
 
@@ -65,8 +71,7 @@ caseTest("IT-M06-10-003", async (ctx) => {
   const csv = await 手順1から5(ctx, ctx.notes.get(査定の呼び名("M0610-002-003")));
   await ctx.expected(async () => {
     note(`${閾値の文("支店A", "閾値 200・700・1200円")}。ピッキング区分は桁区切りを除いて比べた`);
-    const r = 行(csv, "支店閾値判定カード-003");
-    expect.soft(桁区切りなし(r?.["ピッキング区分"] ?? "（行が無い）"), "「支店閾値判定カード-003」のピッキング区分（基準価格1900円で、支店Aの閾値1200円を参照）").toBe("1200円以上");
+    await expect.soft(枠のセル(ctx, csv, "支店閾値判定カード-003", "ピッキング区分"), "「支店閾値判定カード-003」のピッキング区分（基準価格1900円で、支店Aの閾値1200円を参照）").toHaveText(桁区切り可("1200円以上"));
   });
 });
 
@@ -74,8 +79,7 @@ caseTest("IT-M06-10-008", async (ctx) => {
   const csv = await 手順1から5(ctx, ctx.notes.get(査定の呼び名("M0610-006-008")));
   await ctx.expected(async () => {
     note("買取の商品は「通常カード-008」だけ（Foilカード・サプライ品はこのケースが確かめないので作っていない）");
-    const r = 行(csv, "通常カード-008");
-    expect.soft(r?.["数"] ?? "（行が無い）", "「通常カード-008」の数（数量2）").toBe("2");
+    await expect.soft(枠のセル(ctx, csv, "通常カード-008", "数"), "「通常カード-008」の数（数量2）").toHaveText("2");
   });
 });
 
@@ -83,8 +87,7 @@ caseTest("IT-M06-10-009", async (ctx) => {
   const csv = await 手順1から5(ctx, ctx.notes.get(査定の呼び名("M0610-006-009")));
   await ctx.expected(async () => {
     note("買取の商品は「通常カード-009」だけ（Foilカード・サプライ品はこのケースが確かめないので作っていない）");
-    const r = 行(csv, "通常カード-009");
-    expect.soft(r ? 数字(r["基準価格"] ?? "") : "（行が無い）", "「通常カード-009」の基準価格（600円）").toBe("600");
+    await expect.soft(枠のセル(ctx, csv, "通常カード-009", "基準価格"), "「通常カード-009」の基準価格（600円）").toHaveText(/^[^\d]*6[^\d]*0[^\d]*0[^\d]*$/);
   });
 });
 
@@ -92,8 +95,7 @@ caseTest("IT-M06-10-013", async (ctx) => {
   const csv = await 手順1から5(ctx, ctx.notes.get(査定の呼び名("M0610-013-A")));
   await ctx.expected(async () => {
     note("略称ABCは、共有の略称タグに足さず、印つきの名称の略称タグを商品に付けた。CSVの略称は印つきの名称で比べた。サプライ品「略称確認サプライ-013」は作っていない（このケースはサプライ品でない商品の略称だけを確かめる）");
-    const r = 行(csv, "略称確認カード-013");
-    expect.soft(r?.["略称"] ?? "（行が無い）", "サプライ品でない「略称確認カード-013」の略称（ABC）").toBe(略称ABC("S-M06-10-ABBR-013"));
+    await expect.soft(枠のセル(ctx, csv, "略称確認カード-013", "略称"), "サプライ品でない「略称確認カード-013」の略称（ABC）").toHaveText(略称ABC("S-M06-10-ABBR-013"));
   });
 });
 
@@ -101,8 +103,7 @@ caseTest("IT-M06-10-016", async (ctx) => {
   const csv = await 手順1から5(ctx, ctx.notes.get(査定の呼び名("M0610-016")));
   await ctx.expected(async () => {
     note(`${閾値の文("支店A", "閾値 200・700・1200円")}。棚番号は設定していない（本店以外の買取は棚番号が空で出る）。ピッキング区分は桁区切りを除いて比べた`);
-    const r = 行(csv, "支店最低閾値カード-016");
-    expect.soft(桁区切りなし(r?.["ピッキング区分"] ?? "（行が無い）"), "「支店最低閾値カード-016」のピッキング区分（基準価格150円で、支店Aの閾値1の200円を参照）").toBe("200円未満");
-    expect.soft(r?.["棚番号"] ?? "（行が無い）", "「支店最低閾値カード-016」の棚番号（空）").toBe("");
+    await expect.soft(枠のセル(ctx, csv, "支店最低閾値カード-016", "ピッキング区分"), "「支店最低閾値カード-016」のピッキング区分（基準価格150円で、支店Aの閾値1の200円を参照）").toHaveText(桁区切り可("200円未満"));
+    await expect.soft(枠のセル(ctx, csv, "支店最低閾値カード-016", "棚番号"), "「支店最低閾値カード-016」の棚番号（空）").toHaveText("");
   });
 });

@@ -10,6 +10,7 @@
  *   シード表に値の無い必須の項目（郵便番号・番地）は入力チェックを通る値を入れる。
  */
 import { Browser, Page, test } from "@playwright/test";
+import { 店舗の作成は禁止 } from "../../lib/store_create_ban";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { RUN_MARK } from "../../lib/run_marker";
@@ -28,14 +29,28 @@ const 印の注記 = () => note(`店舗は M10-15 の試験用店舗を使い回
 const 選択の注記 = () => note("店舗登録画面に店舗選択の欄は無いので、店舗一覧で店舗IDを検索し、店名のリンクを押してその店舗の店舗登録画面を開いた（＝選んだ）");
 const P1 = (店名: string) => 試験店名("P1", 店名);
 
-async function 押す(p: TenantEditPage): Promise<{ sent: boolean }> {
+async function 押す(p: TenantEditPage): Promise<{ sent: boolean; 止めた項目: string[]; エラー: string[] }> {
   const r = await p.登録を押す();
+  let エラー: string[] = [];
   if (!r.sent) note(`ブラウザの入力チェックが送信を止めた: ${r.止めた項目.join(" / ")}`);
   else {
-    const errs = await p.エラーの文();
-    if (errs.length) note(`登録後の画面のエラー: ${errs.join(" / ")}`);
+    エラー = await p.エラーの文();
+    if (エラー.length) note(`登録後の画面のエラー: ${エラー.join(" / ")}`);
   }
-  return r;
+  return { sent: r.sent, 止めた項目: r.止めた項目, エラー };
+}
+type 押した結果 = Awaited<ReturnType<typeof 押す>>;
+/**
+ * 「更新されない」「追加されない」「留まる」を確かめるケースで、登録ボタンが押されて、その登録が受け付けられなかったこと
+ * （ブラウザの入力チェックが送信を止めた、または送った結果の画面に入力エラーが出て「保存しました」が出ない）を確かめる。
+ * これが無いと、登録が送られなかった・別の理由で失敗しただけでも「変わらない」で合格になりうる。
+ */
+async function 受け付けられなかったことを確かめる(p: TenantEditPage, r: 押した結果 | null): Promise<void> {
+  expect.soft(r !== null, "登録ボタンを押した").toBe(true);
+  if (!r) return;
+  const 知らせ = r.sent ? r.エラー : r.止めた項目;
+  expect.soft(知らせ.length > 0, `登録が受け付けられなかった知らせ（${r.sent ? "送った結果の画面の入力エラー" : "ブラウザの入力チェック"}: ${知らせ.join(" / ") || "なし"}）`).toBe(true);
+  await expect.soft(p.成功の表示, "「保存しました」の表示（出ない）").toHaveCount(0);
 }
 async function 入れて注記(p: TenantEditPage, v: 店舗の値): Promise<void> {
   for (const m of await p.入れる全部(v)) note(m);
@@ -208,7 +223,7 @@ caseTest("IT-M10-15-007", async ({ page, notes, step, expected }) => {
   const p = new TenantEditPage(page);
   const id = notes.get("〔店舗ID-M1015-007〕");
   await step(1, async () => {
-    const res = await page.goto(adminUrl("/mall/tenant/create"), { timeout: 60_000 });
+    const res = await page.goto(店舗の作成は禁止("spec/m10/m10-15.spec.ts"), { timeout: 60_000 });
     await page.waitForLoadState("load");
     note(`店舗登録画面（新規）の応答: ${res?.status() ?? "なし"}`);
   });
@@ -339,9 +354,13 @@ caseTest("IT-M10-15-069", async ({ page, step, expected }) => {
     const 欄 = await page.locator('[name*="login_id"], [name*="plain_password"]').count();
     if (欄 === 0) note("管理者情報のログインID・パスワード・パスワード（確認）の入力欄が店舗登録画面に無いので、「missing_m1015」「Passw0rd!Missing」を入れられなかった");
   });
-  await step(4, async () => { await 押す(p); });
+  let r: 押した結果 | null = null;
+  await step(4, async () => { r = await 押す(p); });
   await step(5, async () => { ids = 店名の店舗(v.店名!); });
-  await expected(async () => { expect.soft(ids, `店名「${v.店名}」の店舗（追加されない）`).toEqual([]); });
+  await expected(async () => {
+    await 受け付けられなかったことを確かめる(p, r);
+    expect.soft(ids, `店名「${v.店名}」の店舗（追加されない）`).toEqual([]);
+  });
 });
 
 // ---- 登録済みの店舗の更新（選ぶ・入れる・登録・DBで確かめる） ----
@@ -363,11 +382,14 @@ function 更新して確かめる(番号: string, u: 更新) {
     for (const m of u.注記 ?? []) note(m);
     const before = 保存値(id);
     let after: Record<string, string | null> = {};
+    let r: 押した結果 | null = null;
     await step(1, async () => { await p.選ぶ(id); });
     await step(2, async () => { await 入れて注記(p, typeof u.入れる === "function" ? await u.入れる() : u.入れる); });
-    await step(3, async () => { await 押す(p); });
+    await step(3, async () => { r = await 押す(p); });
     await step(4, async () => { after = 保存値(id); });
     await expected(async () => {
+      // 更新されないことを確かめるケース（期待の値が無い）は、登録が送られて受け付けられなかったことも確かめる
+      if (!u.期待) await 受け付けられなかったことを確かめる(p, r);
       for (const [k, want] of Object.entries(u.期待 ?? {})) expect.soft(形(k, after[k]), `${k}（更新後の値）`).toBe(形(k, want));
       for (const k of u.そのまま ?? []) expect.soft(形(k, after[k]), `${k}（更新前の値「${形(k, before[k]).slice(0, 30)}」のまま）`).toBe(形(k, before[k]));
     });
@@ -389,15 +411,15 @@ caseTest("IT-M10-15-011", async ({ page, notes, step, expected }) => {
   const p = new TenantEditPage(page);
   const id = notes.get("〔店舗ID-M1015-011〕");
   選択の注記();
-  let r = { sent: false };
+  let r: 押した結果 | null = null;
   await step(1, async () => { await p.選ぶ(id); });
   await step(2, async () => { await 入れて注記(p, { 会社名: "", 店名: "", 表示順: "" }); });
   await step(3, async () => { r = await 押す(p); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname.endsWith(`/mall/tenant/detail/${id}`), `店舗ID ${id} の店舗登録画面に留まっている（${new URL(page.url()).pathname}）`).toBe(true);
-    await expect.soft(p.成功の表示, "保存しましたの表示（出ない）").toHaveCount(0);
+    await 受け付けられなかったことを確かめる(p, r);
     await expect.soft(p.欄("店名"), "店舗登録画面の店名の欄").toBeVisible();
-    if (!r.sent) note("登録は送られず、画面はそのまま（ブラウザの入力チェック）");
+    if (r && !(r as 押した結果).sent) note("登録は送られず、画面はそのまま（ブラウザの入力チェック）");
   });
 });
 caseTest("IT-M10-15-013", 更新して確かめる("013", { 入れる: { 店舗種別: "本店" }, 期待: { 店舗種別: "本店" } }));
@@ -453,11 +475,13 @@ caseTest("IT-M10-15-050", async ({ page, notes, step, expected }) => {
   notes.get("〔店舗ID-M1015-050B〕");
   選択の注記(); 印の注記();
   let after: Record<string, string | null> = {};
+  let r: 押した結果 | null = null;
   await step(1, async () => { await p.選ぶ(a); });
   await step(2, async () => { await 入れて注記(p, { 店名: P1("重複入力店舗"), "店名略称（3文字）": "ABC" }); });
-  await step(3, async () => { await 押す(p); });
+  await step(3, async () => { r = await 押す(p); });
   await step(4, async () => { after = 保存値(a); });
   await expected(async () => {
+    await 受け付けられなかったことを確かめる(p, r);
     expect.soft(after["店名"], "店名（更新前店舗のまま）").toBe(P1("更新前店舗"));
     expect.soft(after["店名略称（3文字）"], "店名略称（3文字）（OLD のまま）").toBe("OLD");
   });
@@ -468,14 +492,14 @@ caseTest("IT-M10-15-051", async ({ page, notes, step, expected }) => {
   const a = notes.get("〔店舗ID-M1015-051A〕");
   notes.get("〔店舗ID-M1015-051B〕");
   選択の注記();
-  let sent = false;
+  let r: 押した結果 | null = null;
   await step(1, async () => { await p.選ぶ(a); });
   await step(2, async () => { await 入れて注記(p, { "店名略称（3文字）": "ABC" }); });
-  await step(3, async () => { sent = (await 押す(p)).sent; });
+  await step(3, async () => { r = await 押す(p); });
   await expected(async () => {
-    expect.soft(sent, "登録の送信が送られた").toBe(true);
+    expect.soft(r !== null && (r as 押した結果).sent, "登録の送信が送られた").toBe(true);
     expect.soft(new URL(page.url()).pathname.endsWith(`/mall/tenant/detail/${a}`), `店舗ID ${a} の店舗登録画面に留まっている（${new URL(page.url()).pathname}）`).toBe(true);
-    await expect.soft(p.成功の表示, "保存しましたの表示（出ない）").toHaveCount(0);
+    await 受け付けられなかったことを確かめる(p, r);
     await expect.soft(p.欄("店名略称（3文字）"), "店名略称（3文字）の欄（入れた値が残る画面）").toBeVisible();
   });
 });
@@ -505,8 +529,14 @@ function アイコン(番号: string, 型: アイコンの型) {
       await p.画像を選ぶ("アイコン", f);
     });
     await step(3, async () => { await 押す(p); });
-    await step(4, async () => { after = 保存値(id)["ショップアイコン"] ?? ""; note(`ショップアイコンの保存値: 更新前「${before}」→ 更新後「${after}」`); });
+    let 会社名 = "";
+    await step(4, async () => { const v = 保存値(id); after = v["ショップアイコン"] ?? ""; 会社名 = v["会社名"] ?? ""; note(`ショップアイコンの保存値: 更新前「${before}」→ 更新後「${after}」`); });
     await expected(async () => {
+      // 画像を選ばない2件は「変わらない」を見るので、登録そのものが保存されたこと（会社名の更新）も確かめる
+      if (型 === "選ばずに維持" || 型 === "選ばずに未設定のまま") {
+        const 入れた会社名 = 型 === "選ばずに維持" ? "画像維持会社" : "画像未設定維持会社";
+        expect.soft(会社名, `登録が保存された（会社名が「${入れた会社名}」に更新された）`).toBe(入れた会社名);
+      }
       const 拡張子 = after.toLowerCase().replace(/^.*\./, "");
       if (型 === "JPEG" || 型 === "GIF" || 型 === "PNGへ差し替え") expect.soft(after, "ショップアイコンが更新前の画像から変わった").not.toBe(before);
       if (型 === "PNGへ差し替え" || 型 === "選ばずに維持") expect.soft(before, "更新前のショップアイコン（old-icon.png を選んだ画像）が設定されていた").not.toBe("");
@@ -538,9 +568,12 @@ caseTest("IT-M10-15-065", async ({ page, notes, step, expected }) => {
   let after = before;
   await step(1, async () => { await p.選ぶ(id); });
   await step(2, async () => { await 入れて注記(p, { 会社名: "在庫維持更新会社" }); });
+  let 会社名 = "";
   await step(3, async () => { await 押す(p); });
-  await step(4, async () => { after = 在庫の様子(id); });
+  await step(4, async () => { after = 在庫の様子(id); 会社名 = 保存値(id)["会社名"] ?? ""; });
   await expected(async () => {
+    // 在庫が「変わらない」ことを見るので、登録そのものが保存されたことも確かめる（送られなければ在庫は当然変わらない）
+    expect.soft(会社名, "登録が保存された（会社名が「在庫維持更新会社」に更新された）").toBe("在庫維持更新会社");
     expect.soft(after.件数, "在庫の件数（登録の前と同じ）").toBe(before.件数);
     expect.soft(after.合計, "在庫の数量の合計（登録の前と同じ）").toBe(before.合計);
     expect.soft(after.指紋, "在庫の行（番号・数量・作成日時。作り直されていない）").toBe(before.指紋);
@@ -557,9 +590,12 @@ caseTest("IT-M10-15-096", async ({ page, notes, step, expected }) => {
   let after = before;
   await step(1, async () => { await p.選ぶ(id); });
   await step(2, async () => { await 入れて注記(p, { 会社名: "更新後会社M1015-096-A" }); });
+  let 会社名 = "";
   await step(3, async () => { await 押す(p); });
-  await step(4, async () => { after = 採番(id); });
+  await step(4, async () => { after = 採番(id); 会社名 = 保存値(id)["会社名"] ?? ""; });
   await expected(async () => {
+    // 採番値が「変わらない」ことを見るので、登録そのものが保存されたことも確かめる
+    expect.soft(会社名, "登録が保存された（会社名が「更新後会社M1015-096-A」に更新された）").toBe("更新後会社M1015-096-A");
     expect.soft(after.注文番号, "注文番号の採番値（登録の前のまま・新たに作られない）").toEqual(before.注文番号);
     expect.soft(after.店頭注文番号, "店頭注文番号の採番値（登録の前のまま・新たに作られない）").toEqual(before.店頭注文番号);
   });
@@ -574,6 +610,9 @@ caseTest("IT-M10-15-067", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await 入れて注記(p, { 会社名: "遷移確認更新会社" }); });
   await step(3, async () => { await 押す(p); });
   await expected(async () => {
+    // 入力エラーでも同じ店舗の画面に戻るので、保存されて移ったこと（「保存しました」）も確かめる
+    await expect.soft(p.成功の表示, "「保存しました」の表示（保存されて移った）").toBeVisible();
+    await expect.soft(p.欄("会社名"), "移った画面の会社名（保存した値）").toHaveValue("遷移確認更新会社");
     expect.soft(p.店舗ID(), "移った店舗登録画面の店舗ID").toBe(id);
     await expect.soft(p.欄("店名"), "移った画面の店名（更新前店舗）").toHaveValue(P1("更新前店舗"));
   });

@@ -76,25 +76,25 @@ export class OrderSearchPage {
   async choosePattern(name: string): Promise<string> {
     const link = this.patternLink(name);
     await expect(link, `検索パターンのリンク「${name}」は1件`).toHaveCount(1);
-    await Promise.all([this.page.waitForURL(/\/order\/search\/pattern\/\d+$/), link.click()]);
+    await Promise.all([this.page.waitForURL(/\/order\/search\/pattern\/\d+$/, { timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     return /\/pattern\/(\d+)$/.exec(this.page.url())![1];
   }
 
   /** 検索パターン保存ボタンを押す。移った先の応答を待つ */
   async clickSave(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.saveButton.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.saveButton.click({ noWaitAfter: true })]);
   }
 
   /** 検索パターン削除ボタンを押す。移った先の応答を待つ */
   async clickDelete(): Promise<void> {
     await expect(this.deleteButton, "検索パターン削除ボタン").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.deleteButton.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.deleteButton.click({ noWaitAfter: true })]);
   }
 
   /** 検索するボタンを押し、結果の件数の表示まで待つ */
   async clickSearch(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.searchButton.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.searchButton.click({ noWaitAfter: true })]);
     await expect(this.page.locator("#search_total_count"), "検索結果の件数の表示").toBeVisible();
   }
 
@@ -134,7 +134,7 @@ export class OrderSearchPage {
       const n = await links.count();
       const idx = i - removed;
       if (idx >= n) break;
-      await Promise.all([this.page.waitForURL(/\/order\/search\/pattern\/\d+$/), links.nth(idx).click()]);
+      await Promise.all([this.page.waitForURL(/\/order\/search\/pattern\/\d+$/, { timeout: 120_000 }), links.nth(idx).click({ noWaitAfter: true })]);
       await this.page.waitForLoadState("load");
       if ((await this.orderNumber.inputValue()) === value) {
         await this.clickDelete();
@@ -151,7 +151,7 @@ export class OrderSearchPage {
       await this.open();
       const links = this.patternBlock.locator(".row.mb-3 > .col-3 a[id^='search_pattern_']");
       if ((await links.count()) === 0) return removed;
-      await Promise.all([this.page.waitForURL(/\/order\/search\/pattern\/\d+$/), links.first().click()]);
+      await Promise.all([this.page.waitForURL(/\/order\/search\/pattern\/\d+$/, { timeout: 120_000 }), links.first().click({ noWaitAfter: true })]);
       await this.page.waitForLoadState("load");
       await this.clickDelete();
       removed++;
@@ -185,6 +185,11 @@ export class OrderSearchPage {
   async pressReload(name: string): Promise<void> {
     const item = this.patternItem(name);
     await item.locator("button.get_count_pattern").click();
+  }
+
+  /** 検索パターンの該当件数欄（要素） */
+  countCell(name: string): Locator {
+    return this.patternItem(name).locator("a span[id^='pattern_id_']");
   }
 
   /** 検索パターンの該当件数欄の文字（「*」など） */
@@ -286,6 +291,11 @@ export class OrderSearchPage {
     const a = this.deleteAnchor(注文番号);
     await expect(a, `注文番号「${注文番号}」の削除のメニュー項目`).toHaveCount(1);
     await a.evaluate((el, t) => { if (t === null) el.removeAttribute("token-for-anchor"); else el.setAttribute("token-for-anchor", t); }, token);
+  }
+
+  /** 手動メール通知画面の注文の欄の、注文番号の値（「注文番号」の見出しの隣の文字だけ。完全一致で確かめるため） */
+  manualMailOrderNumber(): Locator {
+    return this.page.locator("#order_info > span").nth(1);
   }
 
   /** 手動メール通知画面の注文の欄（受注IDの値と、表示された文字） */
@@ -432,7 +442,7 @@ export class OrderSearchPage {
   /** 件数の選択欄で件数（例「10件」）を選ぶ。選ぶと一覧が開き直る */
   async selectPageCount(label: string): Promise<void> {
     await expect(this.pageCountSelect, "件数の選択欄").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.pageCountSelect.selectOption({ label })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.pageCountSelect.selectOption({ label })]);
     await expect(this.totalCount, "検索結果の件数の表示").toBeVisible();
   }
 
@@ -452,7 +462,7 @@ export class OrderSearchPage {
   async goToPage(n: number): Promise<void> {
     const link = this.pageLink(n);
     await expect(link, `ページングの${n}ページ目のリンク`).toHaveCount(1);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await expect(this.totalCount, "検索結果の件数の表示").toBeVisible();
   }
 
@@ -526,7 +536,7 @@ export class OrderSearchPage {
     const link = this.page.locator("#nav-order a").filter({ hasText: /^\s*受注一覧\s*$/ }).first();
     if (!(await link.isVisible())) await this.page.locator('a[href="#nav-order"]').first().click();
     await expect(link, "メニューの受注管理の受注一覧").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await expect(this.form, "受注一覧の検索欄").toBeVisible();
   }
 }

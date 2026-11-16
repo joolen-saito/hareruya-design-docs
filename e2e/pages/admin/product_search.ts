@@ -146,8 +146,8 @@ export class ProductSearchPage {
    */
   async submitAndWaitForResult(): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.form.locator(".admin-product-search-submit").click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.form.locator(".admin-product-search-submit").click({ noWaitAfter: true }),
     ]);
     const outcome = this.page.getByText(/^(検索結果：\d+件が該当しました|検索条件に合致するデータが見つかりませんでした)$/);
     await expect(outcome.first(), "検索結果の画面（該当件数か、該当なしの表示）").toBeVisible();

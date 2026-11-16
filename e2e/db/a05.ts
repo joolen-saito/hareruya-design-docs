@@ -84,8 +84,8 @@ export function 本店のEC在庫数(商品コード: string): number | null {
 
 /** 店舗の店頭注文番号札（登録の順） */
 export function 店舗の番号札(店舗ID: string): { id: string; 札: string }[] {
-  return query(`select id::text as id, waiting_tag as t from dtb_waiting_tag where base_info_id = $1::int order by id`, [店舗ID])
-    .map((r) => ({ id: r.id ?? "", 札: r.t ?? "" }));
+  return query(`select id::text as id, waiting_tag as tag from dtb_waiting_tag where base_info_id = $1::int order by id`, [店舗ID])
+    .map((r) => ({ id: r.id ?? "", 札: r.tag ?? "" }));
 }
 
 /** 店舗の店頭注文番号（受注の番号札）の件数 */

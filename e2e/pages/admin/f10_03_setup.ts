@@ -66,7 +66,7 @@ export async function ブロックのコード(page: Page, ブロックID: strin
 export async function 商品名で検索して編集を開く(page: Page, 商品名: string): Promise<string> {
   const id = await 商品名で商品IDを読む(page, 商品名);
   const link = page.locator(`tr#ex-product-${id} td:nth-child(3) a`).first();
-  await Promise.all([page.waitForURL((u) => u.pathname.endsWith(`/product/product/${id}/edit`), { timeout: 60_000 }), link.click({ timeout: T })]);
+  await Promise.all([page.waitForURL((u) => u.pathname.endsWith(`/product/product/${id}/edit`), { timeout: 120_000}), link.click({ timeout: T, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expect(page.locator("form#form1"), `商品「${商品名}」の商品登録編集画面`).toBeVisible({ timeout: T });
   return id;

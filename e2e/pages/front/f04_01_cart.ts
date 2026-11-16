@@ -76,7 +76,7 @@ export class CartPage {
   }
   /** 削除・一括削除・購入手続きへなど、画面を移すものを押して移るのを待つ */
   async 押して移る(l: Locator): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), l.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), l.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /**
@@ -101,7 +101,7 @@ export class CartPage {
     let msg = "";
     this.page.once("dialog", (d) => { msg = d.message(); (実行 ? d.accept() : d.dismiss()).catch(() => undefined); });
     if (実行) {
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.一括削除.click()]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.一括削除.click({ noWaitAfter: true })]);
       await this.page.waitForLoadState("load");
     } else {
       await this.一括削除.click();

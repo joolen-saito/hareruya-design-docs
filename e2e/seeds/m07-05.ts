@@ -19,6 +19,9 @@ import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { rc } from "../lib/run_marker";
 import { Account, withAdminSession } from "../lib/session";
 import { BuyListPage } from "../pages/admin/m07_buy";
+import { query } from "../lib/db";
+import { 会員IDをメールで } from "../db/m08_05_07";
+import { 会員のプレイヤーID } from "../db/m07_02";
 import { 会員を作る, 試験管理者を用意する, 申込みを行う, 本人確認を設定する } from "./m07-common";
 
 export const M0705_ADMIN: Account = { loginId: "m0705_admin", password: "Passw0rd!M0705" };
@@ -41,6 +44,28 @@ defineSeed("S-M07-05-CONFIG", async ({ seed }) => {
   reportSeedIssue(seed.シードID, "シード作成時の問題: CSV出力設定は共有の設定のため書き換えない。いまの設定のままCSVを読む（読めない設定のときはケースが落ちる）");
 });
 
+
+/**
+ * シード表が呼び名を決めている会員ID・プレイヤーID・銀行口座ID（画面に表示されない番号を含む）を、DBの参照で読んで控える。
+ * 呼び名の末尾（suffix）は、正本の「M0705-」の後ろ（例: 011・005A）。シード表がその呼び名を決めているものだけ控える。
+ */
+function 会員まわりの呼び名を控える(notes: { set(l: string, v: string): void }, seed: { "状態・属性": string; 投入方法: string }, メール: string, suffix: string, 買取注文ID?: string): void {
+  const text = seed["状態・属性"] + seed.投入方法;
+  const 会員ID = 会員IDをメールで(メール);
+  if (!会員ID) throw new Error(`会員 ${メール} の会員IDをDBの参照で読めない`);
+  const want = (l: string) => text.includes(l);
+  const 会員L = `〔会員ID-M0705-${suffix}〕`;
+  if (want(会員L)) notes.set(会員L, 会員ID);
+  const 選手L = `〔プレイヤーID-M0705-${suffix}〕`;
+  if (want(選手L)) notes.set(選手L, 会員のプレイヤーID(会員ID));
+  const 口座L = `〔銀行口座ID-M0705-${suffix}〕`;
+  if (want(口座L) && 買取注文ID) {
+    const r = query("select b.bank_account_id as id from dtb_buy_order b where b.id = $1::int", [買取注文ID]);
+    if (!r[0]?.id) throw new Error(`買取注文 ${買取注文ID} の銀行口座をDBの参照で読めない`);
+    notes.set(口座L, String(r[0].id));
+  }
+}
+
 /** 1人の会員で n 件の買取を作り、呼び名を控える（会員の本人確認ステータスは「オンライン本人確認済み」が既定） */
 function 買取を作る(seedId: string, v: { 姓: string; ラベル: string; 本人確認?: string; 件数: number; 呼び名: (i: number) => string; needs?: string[] }): void {
   defineSeed(seedId, { needs: [...ADM, ...(v.needs ?? [])] }, async ({ browser, notes, seed }) => {
@@ -48,7 +73,9 @@ function 買取を作る(seedId: string, v: { 姓: string; ラベル: string; �
     await 本人確認を設定する(browser, m, v.本人確認 ?? "オンライン本人確認済み");
     const ids = await 申込みを行う(browser, m, v.件数, undefined, v.件数 > 3 ? "最初と最後だけ" : "毎回");
     ids.forEach((id, i) => notes.set(v.呼び名(i), id));
+    会員まわりの呼び名を控える(notes, seed, m.メール, v.ラベル, ids[0]);
     reportSeedIssue(seed.シードID, 口座の注記);
+    reportSeedIssue(seed.シードID, "会員ID・プレイヤーID・銀行口座IDは、画面に表示されないものを含むので、DBの参照で読んで控えた");
   });
 }
 
@@ -64,6 +91,7 @@ defineSeed("S-M07-05-STATUS-003", { needs: ADM }, async ({ browser, notes, seed 
     await 本人確認を設定する(browser, m, s);
     const [id] = await 申込みを行う(browser, m, 1);
     notes.set(`〔買取注文ID-M0705-003${英字(i)}〕`, id);
+    会員まわりの呼び名を控える(notes, seed, m.メール, `003${英字(i)}`, id);
   }
   reportSeedIssue(seed.シードID, 口座の注記);
   reportSeedIssue(seed.シードID, "シード作成時の問題: 4人の会員の注文者名（姓）は、正本の「M0705STATUS003-1」〜「-4」ではなく、共通の「M0705STATUS003」に実行の印を付けた値にした（作った順は A・B・C・D）");

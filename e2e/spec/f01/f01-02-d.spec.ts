@@ -43,9 +43,13 @@ caseTest("IT-F01-02-044", async ({ page, step, expected }) => {
   await step(1, async () => { await top.open(支店URL("044")); await top.開いている(); });
   await step(2, async () => {
     await expect(top.タイル(タグ名).first(), "タイル「上限確認タイル-044」").toBeVisible({ timeout: 30_000 }).catch(() => note("タイル「上限確認タイル-044」が見つからなかった"));
-    数 = await top.タイルの商品(タグ名).count();
+    // 画面で見えているカードだけを数える（画面の幅によっては4枚目以降は非表示の指定で隠れる。隠れたものは表示された商品に数えない）
+    const 全部 = top.タイルの商品(タグ名);
+    const 計 = await 全部.count();
+    数 = await 全部.evaluateAll((ns) => ns.filter((n) => { const r = (n as HTMLElement).getBoundingClientRect(); return getComputedStyle(n).display !== "none" && getComputedStyle(n).visibility !== "hidden" && r.width > 0 && r.height > 0; }).length);
+    note(`「上限確認タイル-044」の商品カード: 画面に見えているもの ${数} 枚、隠れているもの ${計 - 数} 枚（候補は4商品）`);
   });
-  await expected(async () => { expect.soft(数, "「上限確認タイル-044」に表示された商品の数").toBe(3); });
+  await expected(async () => { expect.soft(数, "「上限確認タイル-044」に表示された商品の数（画面で見えているカード）").toBe(3); });
 });
 
 caseTest("IT-F01-02-049", async ({ page, step, expected }) => {
@@ -55,7 +59,11 @@ caseTest("IT-F01-02-049", async ({ page, step, expected }) => {
   await step(1, async () => { await top.open(支店URL("049")); await top.開いている(); });
   await step(2, async () => { await expect(card(), "「タイル画像なし商品」のカード").toBeVisible({ timeout: 30_000 }); });
   await expected(async () => {
-    expect.soft(await card().locator("img.p-hareruya-product-card__img").first().getAttribute("src", { timeout: 15_000 }), "商品画像の表示（代替画像）").toContain("no_image_product");
+    // 正本は「代替画像が表示されること」。画像の種類（ファイル名）は定めていないので、商品画像の枠に画像が実際に描かれている（読み込み済みで大きさがある）ことを確かめる
+    const img = card().locator("img.p-hareruya-product-card__img").first();
+    await expect(img, "商品画像（代替画像）の表示").toBeVisible({ timeout: 15_000 });
+    const 描画 = await img.evaluate((n) => { const i = n as HTMLImageElement; return i.complete && i.naturalWidth > 0 && i.getBoundingClientRect().width > 0; });
+    expect.soft(描画, "商品画像の枠に代替画像が表示されている（画像が読み込まれ、大きさを持つ）").toBe(true);
   });
 });
 
@@ -64,7 +72,7 @@ caseTest("IT-F01-02-052", async ({ page, notes, step, expected }) => {
   const タグ名 = タイルのタグ名("テストタイルA-052");
   const card = () => top.タイルの商品(タグ名, rc("テストタイル商品-052")).first();
   await step(1, async () => { await top.open(支店URL("052")); await top.開いている(); await expect(card()).toBeVisible({ timeout: 30_000 }); });
-  await step(2, async () => { await Promise.all([page.waitForURL(/\/products\/detail\/\d+/, { timeout: 30_000 }).catch(() => undefined), card().locator("a.p-hareruya-product-card__name").first().click({ timeout: 20_000 })]); await page.waitForLoadState("load"); });
+  await step(2, async () => { await Promise.all([page.waitForURL(/\/products\/detail\/\d+/, { timeout: 30_000 }).catch(() => undefined), card().locator("a.p-hareruya-product-card__name").first().click({ timeout: 20_000, noWaitAfter: true })]); await page.waitForLoadState("load"); });
   await expected(async () => {
     const id = notes.get("〔商品ID-F0102-052〕");
     expect.soft(new URL(page.url()).pathname, "遷移先（商品詳細画面）").toMatch(new RegExp(`/products/detail/${id}$`));

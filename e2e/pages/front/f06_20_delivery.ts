@@ -93,7 +93,7 @@ export class DeliveryPage {
   get パンくずの現在地(): Locator { return this.page.locator(".p-hareruya-breadcrumb__current").first(); }
   async 押して遷移する(l: Locator): Promise<void> {
     await expect(l, "押す対象").toBeVisible({ timeout: T });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: NAV }), l.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: NAV }), l.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 押しても遷移しないもの（現在地）を押し、遷移したかを返す */
@@ -165,6 +165,14 @@ export class DeliveryPage {
     }
     if (v.住所1 !== undefined) await this.住所1欄.fill(v.住所1, { timeout: T });
     if (v.住所2 !== undefined) await this.住所2欄.fill(v.住所2, { timeout: T });
+    // 郵便番号の住所の自動入力が、あとから住所の欄を書き換えることがある（住所2が空になり「住所を入力してください」で止まった）。入れた値と違えば、落ち着くのを待って入れ直す
+    for (let 回 = 0; 回 < 3; 回++) {
+      const ずれ = (v.住所1 !== undefined && (await this.住所1欄.inputValue()) !== v.住所1) || (v.住所2 !== undefined && (await this.住所2欄.inputValue()) !== v.住所2);
+      if (!ずれ) break;
+      await this.page.waitForTimeout(1500);
+      if (v.住所1 !== undefined) await this.住所1欄.fill(v.住所1, { timeout: T });
+      if (v.住所2 !== undefined) await this.住所2欄.fill(v.住所2, { timeout: T });
+    }
     if (v.住所3 !== undefined && (await this.住所3欄.count()) > 0) await this.住所3欄.fill(v.住所3, { timeout: T });
     if (v.電話 !== undefined) {
       const parts = v.電話.includes("-") ? v.電話.split("-") : [v.電話.slice(0, 2), v.電話.slice(2, 6), v.電話.slice(6)];
@@ -187,7 +195,7 @@ export class DeliveryPage {
   get 登録する(): Locator { return this.page.getByRole("button", { name: "登録する" }); }
   async 登録するを押す(): Promise<void> {
     await expect(this.登録する, "確認画面の「登録する」").toBeVisible({ timeout: T });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: NAV }), this.登録する.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: NAV }), this.登録する.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -211,7 +219,7 @@ export class DeliveryPage {
     const l = this.削除ボタン(名称);
     await expect(l, `配送先名称「${名称}」の削除ボタン`).toBeVisible({ timeout: T });
     if (OK) {
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: NAV }).catch(() => undefined), l.click({ timeout: T })]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: NAV }).catch(() => undefined), l.click({ timeout: T, noWaitAfter: true })]);
       await this.page.waitForLoadState("load");
     } else {
       await l.click({ timeout: T });

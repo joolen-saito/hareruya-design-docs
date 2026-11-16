@@ -9,6 +9,7 @@
  */
 import { test } from "@playwright/test";
 import { expect, caseTest, CaseBody } from "../../lib/case";
+import { scene, 選択肢を広げて撮る } from "../../lib/evidence_other";
 import { loginAdmin } from "../../lib/session";
 import { EventForm, openEventCreate, openEventEdit } from "../../pages/admin/event";
 import {
@@ -62,6 +63,7 @@ caseTest("IT-M13-05-002", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     await expect.soft(form.イベント名日, "店舗Cのイベントの編集画面が開いている").toHaveValue(名.権限外店舗);
     await expect(form.複製新規ボタン, "「複製新規」ボタンが表示されない").toHaveCount(0);
+    await expect.soft(form.操作部, "画面下部の操作部に「複製新規」ボタンが無い").not.toContainText("複製新規");
   });
 });
 
@@ -70,8 +72,8 @@ caseTest("IT-M13-05-003", async ({ page, notes, step, expected }) => {
   let form!: EventForm;
   let 選択肢: string[] = [];
   await step(1, async () => { form = await openEventCopy(page, notes.get("〔イベントID-M1305-003〕")); });
-  await step(2, async () => { await form.店舗.click(); 選択肢 = await form.options(form.店舗); await page.keyboard.press("Escape"); });
-  note("店舗A・店舗B・店舗Cは印つきの店舗（" + 印店名.A + "・" + 印店名.B + "・" + 印店名.C + "）を作って使った");
+  await step(2, async () => { await form.店舗.click(); 選択肢 = await form.options(form.店舗); await page.keyboard.press("Escape"); await 選択肢を広げて撮る(form.店舗, scene.stepLabel(2, "店舗の選択肢（広げて表示）"), 40); });
+  note("店舗A・店舗B・店舗Cは、店舗を作らず、使い回す店舗（" + 印店名.A + "・" + 印店名.B + "・" + 印店名.C + "）に読み替えた（依頼者 2026-11-15）");
   await expected(async () => {
     expect.soft(選択肢, "店舗の選択肢に店舗Aがある").toContain(印店名.A);
     expect.soft(選択肢, "店舗の選択肢に店舗Bがある").toContain(印店名.B);
@@ -93,6 +95,8 @@ function 権限外の店舗で登録(n: "004" | "005", イベント名: string, 
     if (DB確認) await step(5, async () => { found = イベント名で探す(イベント名); });
     await expected(async () => {
       if (DB確認) {
+        expect.soft(sent, "登録の送信が行われた（送信されたうえで登録されない）").toBe(true);
+        await expect.soft(店舗のエラー(page).first(), "店舗の欄に「選択した値は無効です。」のエラーが表示されている").toContainText(/選択.*値は無効です/);
         expect(found.map((e) => `イベントID ${e.イベントID}（${e.店舗}）`), "入力したイベント名のイベントが登録されていない").toEqual([]);
         return;
       }
@@ -102,6 +106,7 @@ function 権限外の店舗で登録(n: "004" | "005", イベント名: string, 
       await expect.soft(小見出し(page), "再表示された画面の小見出し（新規の登録の画面）").toHaveText("イベント登録");
       await expect.soft(form.イベント名日, "イベント名(日)の入力値が保持されている").toHaveValue(イベント名);
       await expect.soft(店舗のエラー(page).first(), "店舗の欄にエラーが表示されている").toBeVisible();
+      await expect.soft(店舗のエラー(page).first(), "店舗の欄のエラーの文言が「選択した値は無効です。」").toContainText(/選択.*値は無効です/);
     });
   };
 }
@@ -145,15 +150,17 @@ caseTest("IT-M13-05-009", async ({ page, notes, step, expected }) => {
   let 項目 = -1;
   await step(1, async () => { form = await openEventCopy(page, notes.get("〔イベントID-M1305-009〕")); });
   await step(2, async () => {
+    // 数は帯の確認に使わない（値の確かめは赤枠が広がる）。手順では読むだけ
     for (const h of ["チーム人数", "メールアドレス", "席次"]) 見出し[h] = await 見出しのある入力行の数(page, h);
     項目 = await チーム戦以外のチーム項目の数(page);
   });
   await expected(async () => {
     await expect.soft(form.チーム戦, "チーム戦のチェックボックスが表示されている").toBeVisible();
-    expect.soft(見出し["チーム人数"], "チーム人数の入力欄の数").toBe(0);
-    expect.soft(見出し["メールアドレス"], "チームメンバーのメールアドレスの入力欄の数").toBe(0);
-    expect.soft(見出し["席次"], "席次の入力欄の数").toBe(0);
-    expect.soft(項目, "チーム戦のチェック以外の、チームに関する入力項目の数").toBe(0);
+    // 値（数）で確かめると赤枠が画面の欄ぜんぶに付くので、画面の要素そのもので確かめる（赤枠はチーム戦のチェックだけ。無い欄は帯の文で示す）
+    for (const h of ["チーム人数", "メールアドレス", "席次"]) {
+      await expect.soft(page.locator("#event_form .row").filter({ hasText: h }).filter({ hasNot: page.locator(".row") }).locator("input:not([type=hidden]), select, textarea").filter({ visible: true }), `${h}の入力欄が表示されない`).toHaveCount(0);
+    }
+    await expect.soft(page.locator('#event_form [name^="admin_event["][name*="team" i]:not([name="admin_event[isTeamBattle]"])'), "チーム戦のチェック以外の、チームに関する入力項目が表示されない").toHaveCount(0);
   });
 });
 
@@ -276,11 +283,14 @@ caseTest("IT-M13-05-021", async ({ page, notes, step, expected }) => {
   let sent = false;
   await step(1, async () => { form = await openEventCopy(page, notes.get("〔イベントID-M1305-021〕")); });
   await step(2, async () => { await form.イベント名日.fill(名.入力保持); await form.イベント名英.fill(""); });
-  await step(3, async () => { sent = await 登録を押す(form); });
+  await step(3, async () => {
+    sent = await 登録を押す(form);
+    // 正本の期待結果は画面（入力値を保った複製新規画面）だけを求め、サーバーへ送るかは求めていない。送られたかは記録だけ残す
+    if (sent) note("登録の要求はサーバーへ送られ、画面が出し直された");
+  });
   await expected(async () => {
-    expect.soft(sent, "登録の送信が行われ、画面が再表示された").toBe(true);
     expect.soft(編集画面のイベントID(page), "登録されてイベント編集画面へ移っていない").toBe("");
-    await expect.soft(小見出し(page), "再表示された画面の小見出し（新規の登録の画面）").toHaveText("イベント登録");
+    await expect.soft(小見出し(page), "登録されずに同じ画面のままである（小見出しが新規の登録の画面）").toHaveText("イベント登録");
     await expect.soft(form.イベント名日, "イベント名(日)の値").toHaveValue(名.入力保持);
     await expect.soft(form.イベント名英, "イベント名(英)の値（空）").toHaveValue("");
   });
@@ -371,9 +381,10 @@ caseTest("IT-M13-05-030", async ({ page, notes, step, expected }) => {
   await step(4, async () => { got = { A: イベント名で探す(名.選択肢A), B: イベント名で探す(名.選択肢B), C: イベント名で探す(名.選択肢C) }; });
   await expected(async () => {
     const 値 = (es: 保存イベント[]) => es.map((e) => ({ ルール適用度: e.ルール適用度, 公開状態: e.公開状態, イベント規模: e.イベント規模, チーム戦: e.チーム戦 }));
-    expect.soft(値(got.A), "選択肢イベントA").toEqual([{ ルール適用度: "初心者歓迎", 公開状態: "公開", イベント規模: "大型イベント", チーム戦: "偽" }]);
-    expect.soft(値(got.B), "選択肢イベントB").toEqual([{ ルール適用度: "カジュアル対戦", 公開状態: "非公開", イベント規模: "特別イベント", チーム戦: "真" }]);
-    expect.soft(値(got.C), "選択肢イベントC（イベント規模は未選択＝空）").toEqual([{ ルール適用度: "上級者向け", 公開状態: "限定公開", イベント規模: "", チーム戦: "偽" }]);
+    // 確かめる直前に、そのイベントをDBから読む（確かめの帯に、イベントごとの照会条件が出るように）
+    expect.soft(値(イベント名で探す(名.選択肢A)), "選択肢イベントA").toEqual([{ ルール適用度: "初心者歓迎", 公開状態: "公開", イベント規模: "大型イベント", チーム戦: "偽" }]);
+    expect.soft(値(イベント名で探す(名.選択肢B)), "選択肢イベントB").toEqual([{ ルール適用度: "カジュアル対戦", 公開状態: "非公開", イベント規模: "特別イベント", チーム戦: "真" }]);
+    expect.soft(値(イベント名で探す(名.選択肢C)), "選択肢イベントC（イベント規模は未選択＝空）").toEqual([{ ルール適用度: "上級者向け", 公開状態: "限定公開", イベント規模: "", チーム戦: "偽" }]);
   });
 });
 
@@ -417,12 +428,24 @@ caseTest("IT-M13-05-033", async ({ page, notes, step, expected }) => {
   await step(2, async () => { form = await openEventCopy(page, 元); });
   await step(3, async () => { await form.イベント名日.fill(名.複製元非更新); });
   await step(4, async () => { await 登録を押す(form); });
-  await step(5, async () => { 後 = 保存されているイベント(元); });
+  // 期待結果の画像が複製元の画面になるよう、登録のあとに複製元の編集画面を開き直して、DBの値を読む
+  await step(5, async () => { await openEventEdit(page, 元); 後 = 保存されているイベント(元); });
   await expected(async () => {
     expect(後, "複製元のイベントがDBにある").not.toBeNull();
-    expect.soft(入力項目(後!), "複製元の入力項目（登録前に記録した値と同じ）").toEqual(入力項目(前!));
+    // 全項目を1項目ずつ（帯に値が切れずに出るように）、登録前に記録した値と比べる
+    const 項目 = (e: 保存イベント): [string, string][] => {
+      const { イベントID: _i, 登録者の管理者ID: _m, 更新日時: _u, フリー入力エリア, ...rest } = e;
+      return [
+        ...Object.entries(rest).map(([k, v]): [string, string] => [k, Array.isArray(v) ? v.join("・") : String(v)]),
+        ...フリー入力エリア.map((a, i): [string, string] => [`フリー入力エリア${i + 1}`, Object.values(a).join("／")]),
+      ];
+    };
+    const 前の値 = new Map(項目(前!));
+    for (const [k, v] of 項目(後!)) expect.soft(v, `複製元の${k}（登録前に記録した値と同じ）`).toBe(前の値.get(k));
+    expect.soft(後!.更新日時, "複製元の更新日時（登録前と同じ）").toBe(前!.更新日時);
     note(`複製元の更新日時: 登録前 ${前!.更新日時} ／ 登録後 ${後!.更新日時}`);
   });
+  note("登録のあとに複製元の編集画面を開き直して撮った（期待結果の画像は複製元の画面）");
 });
 
 caseTest("IT-M13-05-035", async ({ page, notes, step, expected }) => {

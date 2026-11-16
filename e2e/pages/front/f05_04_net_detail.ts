@@ -111,6 +111,30 @@ export class NetBuyDetailPage {
     return { 応答: r.status(), 知らせ };
   }
   get 知らせ(): Locator { return this.page.locator("#hareruya-app-cart-popup"); }
+  /** 「カートに追加」のあとに出ている知らせ（画面共通の知らせ）。出ていなければ0件 */
+  get 出ている知らせ(): Locator { return this.page.locator("#hareruya-app-cart-popup.is-visible"); }
+  /**
+   * 文を含む、画面の上に開いたダイアログ（モーダル）。ダイアログ・モーダルの作り（role が dialog・alertdialog、aria-modal、開いた dialog 要素、
+   * 開いたモーダル）のうち見えているもの。画面共通の知らせ（役割が「状態の知らせ」の帯）は含めない
+   */
+  開いたダイアログ(文: string): Locator {
+    return this.page.locator('[role="dialog"]:visible, [role="alertdialog"]:visible, [aria-modal="true"]:visible, dialog[open], .modal.show:visible').filter({ hasText: 文 });
+  }
+  /**
+   * 知らせと「カートに追加」ボタンの、画面の上の間（ピクセル。重なっていれば0）。横・縦それぞれの離れ方と、両方の位置を返す。
+   * 知らせかボタンが見えていなければ undefined
+   */
+  async 知らせとカートに追加の間(): Promise<{ 横: number; 縦: number; 知らせ: string; ボタン: string } | undefined> {
+    const a = await this.出ている知らせ.boundingBox().catch(() => null);
+    const b = await this.カートに追加ボタン.boundingBox().catch(() => null);
+    if (!a || !b) return undefined;
+    const gap = (s1: number, e1: number, s2: number, e2: number) => Math.max(0, s2 - e1, s1 - e2);
+    const 位置 = (r: { x: number; y: number; width: number; height: number }) => `左 ${Math.round(r.x)}・上 ${Math.round(r.y)}・幅 ${Math.round(r.width)}・高さ ${Math.round(r.height)}`;
+    return {
+      横: Math.round(gap(a.x, a.x + a.width, b.x, b.x + b.width)), 縦: Math.round(gap(a.y, a.y + a.height, b.y, b.y + b.height)),
+      知らせ: 位置(a), ボタン: 位置(b),
+    };
+  }
   /** 「カートに追加」の規格の指定（data-productclass）を空にする（開発者ツールでの書き換えの代わり） */
   async カートに追加の規格の指定を空にする(): Promise<void> {
     await this.カートに追加ボタン.evaluate((b) => { b.setAttribute("data-productclass", ""); (window as unknown as { jQuery?: (e: Element) => { removeData: (k: string) => void } }).jQuery?.(b).removeData("productclass"); });
@@ -139,6 +163,15 @@ export class NetBuyDetailPage {
 
   /** パンくずリスト（画面幅によって、見えるときと隠れるときがある） */
   get パンくず(): Locator { return this.page.locator(".p-hareruya-product-detail__breadcrumb-wrap nav.p-hareruya-breadcrumb"); }
+  /** SP の狭い画面でパンくずが横にあふれて先頭が隠れるので、撮る前に折り返して全項目を見せる（見せ方だけ。項目は変えない） */
+  async パンくずを折り返して全部見せる(): Promise<void> {
+    await this.パンくず.evaluate((nav) => {
+      const fix = (e: HTMLElement) => { e.style.whiteSpace = "normal"; e.style.overflow = "visible"; e.style.flexWrap = "wrap"; e.style.maxWidth = "100%"; e.scrollLeft = 0; };
+      fix(nav as HTMLElement);
+      nav.querySelectorAll<HTMLElement>("*").forEach((e) => { if (/^(OL|UL|DIV|NAV)$/.test(e.tagName)) fix(e); else e.style.whiteSpace = "normal"; });
+      for (let p = nav.parentElement; p && p !== document.body; p = p.parentElement) { p.style.overflow = "visible"; p.scrollLeft = 0; }
+    });
+  }
   /** パンくずの項目（並び順）。ホームはアイコンだけなので、ホームかどうかの印で持つ。現在のページの項目も印を付ける */
   async パンくずの項目(): Promise<{ ホーム: boolean; 現在: boolean; 名称: string; href: string | null }[]> {
     return this.パンくず.locator("li.p-hareruya-breadcrumb__item").evaluateAll((lis) => lis.map((li) => ({
@@ -163,7 +196,7 @@ export class NetBuyDetailPage {
     await root.locator(".p-hareruya-category-accordion__item").first().waitFor({ state: "attached", timeout: 30_000 });
     const link = root.locator(":scope > ul > .p-hareruya-category-accordion__item > a")
       .filter({ has: this.page.locator("[class$='__text']", { hasText: exact(子) }) });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), link.click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), link.click({ timeout: 20_000, noWaitAfter: true })]);
   }
 
   get シェアの領域(): Locator { return this.page.locator(".p-hareruya-product-detail__share"); }
@@ -205,6 +238,21 @@ export class NetBuyCartPage {
   行(商品ID: string): Locator {
     return this.page.locator(".purchase-cart__line").filter({ has: this.page.locator(`a.p-hareruya-cart-item__name[href*="/purchase/detail/${商品ID}?"]`) });
   }
+  /**
+   * カートを開いたときに出る「ご案内」のモーダル（まとめて買取の案内。明細があり、まとめて買取が無いとき読み込み後に開く）を閉じる。
+   * 開いたままだと明細の行（商品名・商品数）を覆い、エビデンスで読めない。出ていなければ何もしない。閉じたかを返す
+   */
+  async ご案内を閉じる(): Promise<boolean> {
+    const modal = this.page.locator("#purchase-cart-alert-modal");
+    const shown = await modal.waitFor({ state: "visible", timeout: 5_000 }).then(() => true, () => false);
+    if (shown) {
+      await modal.locator("button[data-js-modal-close]").last().click();
+      await expect(modal, "ご案内のモーダルが閉じる").toBeHidden();
+    }
+    return shown;
+  }
+  /** 商品IDの商品の行の商品数の欄 */
+  数量欄(商品ID: string): Locator { return this.行(商品ID).locator(".qty-input"); }
   /** 商品IDの商品の行ごとの数量（行の並び順） */
   async 数量(商品ID: string): Promise<string[]> {
     const out: string[] = [];
@@ -250,6 +298,59 @@ export async function カテゴリ一覧の構成を読む(page: Page): Promise<
         (ns) => ns.map((n) => (n.textContent ?? "").replace(/\s+/g, " ").trim()));
     }
     out.push({ 枠, 第一階層, 展開した項目, 子 });
+  }
+  return out;
+}
+
+/** カテゴリ一覧の1項目の表示（名称・画像（カテゴリのバナー画像かアイコン画像。無ければ null）・子を持つか） */
+export type カテゴリの表示 = { 名前: string; 画像: string | null; 子あり: boolean };
+/** 第一階層の項目と、その項目を展開したときの子（第二階層）の表示 */
+export type カテゴリ一覧の全体 = { 枠: string; 項目: (カテゴリの表示 & { 子: カテゴリの表示[] })[] }[];
+
+/** 画像のアドレスを、場所（パス）だけにする（販売側と買取側で同じ画像かを比べるため） */
+const 画像の場所 = (src: string | null | undefined): string | null => {
+  if (!src) return null;
+  try { return new URL(src, "http://x").pathname; } catch { return src; }
+};
+
+/**
+ * 3つの枠（最新セット・フォーマット別・その他）のすべての第一階層の項目について、名称・画像・子を持つかを読み、
+ * 子を持つ項目はすべて展開して、子（第二階層）の名称・画像・子を持つかを読む（正本の「ツリーの構成と各カテゴリの表示項目」）。
+ * 販売側とネット買取側で同じ操作をして比べる。展開は画面の操作（項目の開閉ボタンを押す）で行う。
+ */
+export async function カテゴリ一覧の全体を読む(page: Page): Promise<カテゴリ一覧の全体> {
+  await カテゴリ一覧の描画を待つ(page);
+  const out: カテゴリ一覧の全体 = [];
+  for (const 枠 of 枠の名前) {
+    const container = page.locator(`.p-hareruya-category-sidebar [data-category-level1-container="${枠}"]`).first();
+    const items = container.locator(":scope > .p-hareruya-category-item");
+    const 項目: カテゴリ一覧の全体[number]["項目"] = [];
+    const n = await items.count();
+    for (let i = 0; i < n; i++) {
+      const item = items.nth(i);
+      const head = item.locator(":scope > .p-hareruya-category-button").first();
+      const 名前 = ((await head.locator(".p-hareruya-category-button__text").first().textContent()) ?? "").replace(/\s+/g, " ").trim();
+      const 画像 = 画像の場所(await head.locator("img").first().getAttribute("src", { timeout: 1_000 }).catch(() => null));
+      const toggle = item.locator(":scope > button[data-category-toggle]");
+      const 子あり = (await toggle.count()) > 0 || (await head.getAttribute("data-category-toggle").catch(() => null)) !== null;
+      let 子: カテゴリの表示[] = [];
+      if ((await toggle.count()) > 0) {
+        await toggle.first().click({ timeout: 30_000 });
+        const root = item.locator(":scope > .p-hareruya-category-accordion");
+        await root.locator(".p-hareruya-category-accordion__item").first().waitFor({ state: "attached", timeout: 30_000 });
+        await page.waitForFunction((el) => el?.getAttribute("data-rendered") === "true", await root.elementHandle(), { timeout: 30_000 });
+        子 = await root.locator(":scope > ul > .p-hareruya-category-accordion__item").evaluateAll((lis) => lis.map((li) => {
+          const first = li.firstElementChild as HTMLElement | null;
+          const text = (first?.querySelector("[class$='__text']")?.textContent ?? first?.textContent ?? "").replace(/\s+/g, " ").trim();
+          const img = first?.querySelector("img")?.getAttribute("src") ?? null;
+          const toggle = !!first && (first.hasAttribute("data-category-toggle") || !!li.querySelector(":scope > button[data-category-toggle]"));
+          return { 名前: text, 画像: img, 子あり: toggle };
+        }));
+        子 = 子.map((c) => ({ ...c, 画像: 画像の場所(c.画像) }));
+      }
+      項目.push({ 名前, 画像, 子あり, 子 });
+    }
+    out.push({ 枠, 項目 });
   }
   return out;
 }

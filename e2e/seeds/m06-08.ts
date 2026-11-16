@@ -24,27 +24,26 @@ import { 他の部門, 部門を名前で探す } from "../db/m06_08_prep";
 import { reportSeedIssue, SeedBuilder } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore } from "../pages/admin/m04_24_store";
-import { storeInput } from "./m06-common";
+import { ensureMemberByStoreIdsFix as ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
+import { ensureStore, 使い回す店舗の入力 } from "../pages/admin/m04_24_reuse_k";
+import { 店名を読む } from "../lib/store_pick";
 
 /** ケース番号ごとの試験管理者 */
 export const M0608_ADMIN = (no: string): Account => ({ loginId: `m0608_admin_${no}`, password: `Passw0rd-M0608${no}` });
 
-/** 試験店舗の店名（東京店の役 A・大阪店の役 B） */
-export const 店名 = (no: string, 役: "A" | "B" = "A") => `M06-08試験店舗${no}${役}`;
+/**
+ * 店舗は作らない（依頼者 2026-11-15「店舗は作るのもう禁止」）。東京店の役 A・大阪店の役 B は、使い回す E2E の店舗で表す: A=店舗ID 221・B=店舗ID 5006（全ケース共通）。
+ * 買取集計データは店舗の日付範囲で消して入れ直すので、集計を入れ替えるケースは、ほかの回と混ざらないよう solo_cases.tsv の一人で流す回に回す。
+ * 試験店舗の店名（東京店の役 A・大阪店の役 B）は店舗のいまの値。
+ */
+const 役の店舗ID = { A: "221", B: "5006" } as const;
+export const 店名 = (_no: string, 役: "A" | "B" = "A") => 店名を読む(役の店舗ID[役]);
 
 const 英語 = ["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "Xray", "Yankee", "Zulu", "Amber", "Birch", "Cedar", "Dune", "Ember", "Fjord", "Grove", "Haze"];
 const カナ = ["ア", "イ", "ウ", "エ", "オ", "カ", "キ", "ク", "ケ", "コ", "サ", "シ", "ス", "セ", "ソ", "タ", "チ", "ツ", "テ", "ト", "ナ", "ニ", "ヌ", "ネ", "ノ", "ハ", "ヒ", "フ", "ヘ", "ホ", "マ", "ミ", "ム", "メ"];
 const 略称字 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-/** 店名の通し番号（全ケースの全店舗で重ならない） */
-const 全店舗 = ["001A", "002A", "003A", "004A", "004B", "005A", "005B", "007A", "008A", "008B", "015A", "015B", "017A", "017B", "018A", "023A", "024A", "024B", "026A", "027A", "028A"];
-
 function 店舗の入力(no: string, 役: "A" | "B") {
-  const i = 全店舗.indexOf(`${no}${役}`);
-  if (i < 0) throw new Error(`試験店舗 ${no}${役} が一覧に無い`);
-  const 略 = `K8${略称字[i % 26]}`;
-  return storeInput(店名(no, 役), `エムゼロハチシケンテンポ${カナ[i]}`, `Kaitori Eight Store ${英語[i]}`, `m0608sum${no}${役.toLowerCase()}`, 略);
+  return 使い回す店舗の入力(役の店舗ID[役], `M06-08試験店舗${no}${役}`);
 }
 
 async function 店舗を用意する(browser: Browser, no: string, 役: "A" | "B", issue: (m: string) => void): Promise<string> {
@@ -72,7 +71,7 @@ export function 三つ目の部門() {
 
 export const 部門の注記 = "部門は共有のマスタなので登録せず、既存の部門「カード」「サプライ」と3つ目の部門（「価格検証部門」。無ければ、その2つ以外の先頭の既存の部門）を使った。"
   + "正本の部門コード D01・D02・D03 は、その部門の実際のコードとして確かめた";
-export const 店舗の注記 = "東京店・大阪店は、ケースごとの試験店舗（店名「M06-08試験店舗NNNA」＝東京店の役、「…NNNB」＝大阪店の役）に代えた（ほかのケースの買取集計データと混ざらないため）";
+export const 店舗の注記 = "東京店・大阪店は、使い回す E2E の店舗（東京店の役=店舗ID 221・大阪店の役=5006）に代えた（店舗は作らない決まり。依頼者 2026-11-15。買取集計を入れ替えるケースは一人で流す回で流す）";
 
 defineSeed("S-M06-08-BROWSER", async ({ seed }) => {
   reportSeedIssue(seed.シードID, "サイトデータの消去・独立した2つのセッション・ダウンロードの許可は、テストの基盤が行う（ケースごとに新しいセッションで始まる）");

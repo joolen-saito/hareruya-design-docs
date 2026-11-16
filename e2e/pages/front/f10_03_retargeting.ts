@@ -155,9 +155,19 @@ export function 再計算ボタン(page: Page): Locator {
 // そのほかの画面
 // ---------------------------------------------------------------------------
 
-export async function ご利用規約を開く(page: Page): Promise<void> {
-  await page.goto(`${BASE_URL}/ja/help/agreement`, { timeout: 60_000, waitUntil: "domcontentloaded" });
+/** 本店のご利用規約画面を開く。応答の状態を返す */
+export async function ご利用規約を開く(page: Page): Promise<number> {
+  const res = await page.goto(`${BASE_URL}/ja/help/agreement`, { timeout: 60_000, waitUntil: "domcontentloaded" });
   await page.waitForLoadState("load");
+  return res?.status() ?? 0;
+}
+/** ご利用規約画面の見出し（Help/agreement.twig の .ec-pageHeader h1） */
+export function ご利用規約の見出し(page: Page): Locator {
+  return page.locator(".ec-pageHeader h1");
+}
+/** 商品詳細画面の、商品IDの商品のフォーム（Product/detail.twig の form#productForm{商品ID}） */
+export function 商品詳細のフォーム(page: Page, 商品ID: string): Locator {
+  return page.locator(`form#productForm${商品ID}`);
 }
 
 /** マイページの「入荷待ち商品一覧」のリンク（マイページのメニュー） */

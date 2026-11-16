@@ -43,7 +43,8 @@ export async function フロントで会員登録する(browser: Browser, v: M08
       const mail = await waitForMailTo(v.メール, before);
       const url = /https?:\/\/[^\s"'<>]+\/entry\/activate\/[^\s"'<>]+/.exec(mail.text)?.[0];
       if (!url) throw new Error(`会員「${v.姓} ${v.名}」の本登録のメール（${mail.subject}）に本登録のURLが無い`);
-      await page.goto(url.replace(/&amp;/g, "&"));
+      // 本登録のURLの応答は開発環境で30秒を超えることがある（2026-11-12）ので、2分まで待つ
+      await page.goto(url.replace(/&amp;/g, "&"), { timeout: 120_000 });
       await page.waitForLoadState("load");
     }
     await expect(page.locator(".p-hareruya-entry-complete__message-text").first(), `会員「${v.姓} ${v.名}」の本登録の完了の表示`).toBeVisible({ timeout: 30_000 });

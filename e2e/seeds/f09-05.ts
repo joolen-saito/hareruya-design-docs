@@ -17,9 +17,13 @@
  *   既存の共有のマスタ（すべてのフォーマットの設定）を書き換えて戻さない。PM の方針（2026-11-09）で書かず、判断待ちとする。
  *   代わりに、フォーマット一覧の全件を編集画面で開いて（書き換えない）、このケースのフォーマットのほかに、ランキング表示も
  *   メタ分布簡易化もチェックの無いフォーマットが無いことを確かめ、あればシードを止める（ケースは未判定になる）。
+ * - 画面で作れない部分（007 のアーキタイプ未設定・008 の開催日時の秒・022 の更新日時）は、画面で登録した印つきのデッキにだけ、
+ *   DB で整える（依頼者の承認 2026-11-10「印つきデータは何でも」。db/f09_02.ts・db/f09_05.ts の writeTestData を通す）。整えたことはシードの注記に残す。
+ * - 031 の画像ファイルは、シード表の「画像置き場へ直接置く」の代わりに、管理画面のファイル管理に上げ、そのURLを画像URL(英語)に持つカードを
+ *   カードCSVで登録して代表カードにする（F09-03 の 019 と同じ作り方）。ファイル名・カード名には実行の印を付ける。
  */
 import { Browser, Page } from "@playwright/test";
-import { SETUP_ADMIN } from "../config/env";
+import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { rc } from "../lib/run_marker";
@@ -27,6 +31,11 @@ import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { ensureMember } from "../pages/admin/member";
 import { 行を用意する } from "../pages/admin/m14_04_master";
 import { デッキを登録する } from "../pages/admin/m15_05_deck_edit";
+import { buildCardCsv, downloadCardCsvTemplate, readExistingCardValues, uploadCardCsv } from "../pages/admin/card_csv";
+import { ファイルを上げる } from "../pages/admin/f01_02_layout";
+import { 画像 } from "../pages/admin/m10_04_payment";
+import { デッキのアーキタイプを未設定にする, デッキの更新日時を設定する } from "../db/f09_02";
+import { デッキの開催日時を設定する } from "../db/f09_05";
 import { 日付 } from "../pages/admin/f09_01_setup";
 import { F0905アーキタイプを登録する, F0905フォーマットを登録する, その他デッキの対象のフォーマット } from "../pages/admin/f09_05_setup";
 
@@ -72,6 +81,14 @@ type D = {
   /** 大会名の後ろ（「大会A」なら "A"）。英語名は「EventA」 */
   大会?: string;
   参加人数?: string; タグ?: string[]; 成績?: string;
+  /** 代表カードに選ぶカード名(日)の記号（実行の印つきにして、代表カード検索で完全一致で選ぶ） */
+  代表カード?: string;
+  /** 画面で登録したあと、DBでアーキタイプを未設定にする（画面はアーキタイプが必須のため） */
+  アーキタイプなし?: boolean;
+  /** 画面で登録したあと、DBで開催日時の時刻を秒まで「hh:mm:ss」にする（画面の欄は分まで） */
+  秒の時刻?: string;
+  /** 画面で登録したあと、DBで更新日時を「yyyy/mm/dd hh:mm:ss」（日本時間）にする（画面に欄が無い） */
+  更新日時?: string;
 };
 type 計画 = { ケース: string; フォーマット: F[]; タグ?: string[]; デッキ: D[] };
 
@@ -120,7 +137,25 @@ async function 計画どおりに作る(page: Page, seedId: string, p: 計画): 
       イベント名日: n(`大会${d.大会 ?? ""}`), イベント名英: n(`Event${d.大会 ?? ""}`),
       開催日: `${日} ${d.時刻 ?? "12:00"}`, 順位: d.順位, 参加人数: d.参加人数 ?? "32",
       ...(d.成績 !== undefined ? { 成績: n(d.成績) } : {}),
+      ...(d.代表カード !== undefined ? { 代表カード: n(d.代表カード) } : {}),
     }, issue);
+  }
+
+  // 画面で作れない部分を、画面で登録した印つきのデッキにだけ DB で整える
+  for (const d of p.デッキ) {
+    if (d.アーキタイプなし) {
+      デッキのアーキタイプを未設定にする(n(d.プレイヤー));
+      issue(`DBで、プレイヤー名「${n(d.プレイヤー)}」のデッキのアーキタイプを未設定にした（画面の登録・編集はアーキタイプが必須で、未設定にできないため。画面で作ったこのシードの印つきのデッキだけに書いた）`);
+    }
+    if (d.秒の時刻) {
+      const 日時 = `${日付(-(d.日前 ?? 30)).replace(/-/g, "/")} ${d.秒の時刻}`;
+      デッキの開催日時を設定する(n(d.プレイヤー), 日時);
+      issue(`DBで、プレイヤー名「${n(d.プレイヤー)}」のデッキの開催日時を ${日時}（日本時間）にした（画面の開催日の欄は分までで、秒を指定できないため。画面では ${d.時刻 ?? "12:00"} で登録した）`);
+    }
+    if (d.更新日時) {
+      デッキの更新日時を設定する(n(d.プレイヤー), d.更新日時);
+      issue(`DBで、プレイヤー名「${n(d.プレイヤー)}」のデッキの更新日時を ${d.更新日時}（日本時間）にした（画面に更新日時の入力欄が無いため）`);
+    }
   }
 }
 
@@ -147,6 +182,11 @@ definePlanSeed("S-F09-05-FLAG-003", 二つのフォーマット("003"));
 definePlanSeed("S-F09-05-FLAG-004", 二つのフォーマット("004"));
 definePlanSeed("S-F09-05-HIDDEN-005", { ケース: "005", フォーマット: [A], デッキ: [甲(), 乙({ 非公開: true })] });
 definePlanSeed("S-F09-05-USERDECK-006", { ケース: "006", フォーマット: [A], デッキ: [甲(), 乙({ ユーザー: true })] });
+definePlanSeed("S-F09-05-NOARCH-007", { ケース: "007", フォーマット: [A], デッキ: [甲(), 乙({ アーキタイプなし: true })] });
+definePlanSeed("S-F09-05-BOUND-008", {
+  ケース: "008", フォーマット: [A],
+  デッキ: [甲({ 日前: 0, 時刻: "23:59", 秒の時刻: "23:59:59" }), 乙({ 日前: -1, 時刻: "00:00" })],
+});
 definePlanSeed("S-F09-05-FUTURE-009", { ケース: "009", フォーマット: [A], デッキ: [甲(), 乙({ 日前: -7 })] });
 definePlanSeed("S-F09-05-PRIV-010", { ケース: "010", フォーマット: [A], デッキ: [甲({ リスト非公開: true })] });
 definePlanSeed("S-F09-05-PUB-011", { ケース: "011", フォーマット: [A], デッキ: [甲(), 乙({ 順位: "2", リスト非公開: true })] });
@@ -186,6 +226,40 @@ definePlanSeed("S-F09-05-INPSEL-018", 入力欄("018"));
 definePlanSeed("S-F09-05-INPNO-019", 入力欄("019"));
 definePlanSeed("S-F09-05-INPGO-020", 入力欄("020"));
 definePlanSeed("S-F09-05-INPGONO-021", 入力欄("021"));
+
+definePlanSeed("S-F09-05-NOUPD-022", {
+  ケース: "022", フォーマット: [A],
+  デッキ: [
+    甲({ 更新日時: "2025/01/10 09:00:00" }),
+    乙({ 順位: "2", 更新日時: "2025/01/10 09:10:00" }),
+    丙({ 順位: "3", 更新日時: "2025/01/10 09:20:00" }),
+  ],
+});
+
+/** 031 の代表カード画像のファイル名（実行の印つき。正本の f0905-031-img.png にあたる） */
+export const F0905_031_画像ファイル = `${N("031", "img")}.png`;
+
+// 031: 代表カード画像のあるデッキ。画像ファイルはファイル管理に上げ、そのURLを画像URL(英語)に持つカードをカードCSVで登録して、デッキの代表カードに選ぶ
+defineSeed("S-F09-05-IMG-031", async ({ browser }) => {
+  const seedId = "S-F09-05-IMG-031";
+  const issue = (m: string) => reportSeedIssue(seedId, m);
+  const n = (名: string) => N("031", 名);
+  await 管理画面(browser, async (page) => {
+    const パス = await ファイルを上げる(page, 画像(F0905_031_画像ファイル), `${seedId}: 画像ファイル ${F0905_031_画像ファイル}`, issue);
+    const url = new URL(パス, BASE_URL).href;
+    if (url.length > 128) throw new Error(`${seedId}: 画像のURLが128文字を超える（${url.length}文字: ${url}）`);
+    // 管理画面で上げたファイルが公開側から開けるまでに時間がかかることがある（管理画面と公開側が別のサーバー）。最大で約90秒、間をおいて開き直す
+    let res = await page.request.get(url);
+    for (let i = 0; i < 9 && res.status() !== 200; i++) { await page.waitForTimeout(10_000); res = await page.request.get(url); }
+    if (res.status() !== 200) throw new Error(`${seedId}: 上げた画像 ${url} を開くと応答 ${res.status()}（画像が表示されない。90秒待っても開けない）`);
+    const 既存 = await readExistingCardValues(page);
+    const headers = await downloadCardCsvTemplate(page);
+    const rows = [{ name_jp: n("画像"), name_en: n("Image"), rarity: 既存.rarity, layout: 既存.layout, image_en: url, image_jp: "", card_detail_id: "" }];
+    await uploadCardCsv(page, buildCardCsv(headers, rows), "f0905_031_cards.csv", `${seedId}: カードCSVアップロード`, (w) => issue(`カードCSVの警告「${w}」`));
+    issue(`画像ファイル ${F0905_031_画像ファイル} をファイル管理の最上位に上げ（中身は小さいPNG画像。シード表の「画像置き場へ直接置く」の代わり）、そのURL（${url}）を画像URL(英語)にしたカード ${n("画像")}（英語名 ${n("Image")}）をカードCSVで登録した（レアリティ「${既存.rarity}」・レイアウト「${既存.layout}」は既存のカードにある値）`);
+    await 計画どおりに作る(page, seedId, { ケース: "031", フォーマット: [A], デッキ: [甲({ 代表カード: "画像" })] });
+  });
+});
 
 definePlanSeed("S-F09-05-QUERY-023", { ケース: "023", フォーマット: [A], デッキ: [甲(), 乙({ 順位: "2" })] });
 

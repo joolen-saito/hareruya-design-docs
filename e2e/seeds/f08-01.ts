@@ -19,8 +19,10 @@ import { defineSeed } from "./current_seed";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { 会員の査定申込み } from "../db/f08_05";
 import { OtcCompletePage } from "../pages/front/f08_03_complete";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { ensureStore } from "../pages/admin/m04_24_reuse_k";
 import { MemberApplyPage } from "../pages/front/f08_05_apply";
+import { OtcListPage } from "../pages/admin/m06_otc_list";
+import { 一覧から詳細を開く } from "../pages/admin/m06_04_status";
 import { OtcInputPage } from "../pages/front/f08_02_input";
 import { F0802会員, PD_STORE, 会員を作る } from "./f08-02";
 
@@ -28,7 +30,7 @@ export { PD_STORE };
 
 const 店舗の注記 = (正本の店舗識別名: string) =>
   `店舗識別名「${正本の店舗識別名}」の店舗を新しく作らず（店舗識別名は画面で指定できない）、F08-05 と共通の試験店舗「${PD_STORE.店名}」` +
-  `（支店URL ${PD_STORE.支店URL}。無ければ登録）に読み替えた。手順の店舗識別名もこの店舗の支店URLとして読む`;
+  `（店舗ID ${PD_STORE.店舗ID}・支店URL ${PD_STORE.支店URL}。店舗は作らない決まり。依頼者 2026-11-15）に読み替えた。手順の店舗識別名もこの店舗の支店URLとして読む`;
 
 for (const n of ["001", "003", "004", "005", "006", "007", "008", "009", "010", "011"]) {
   defineSeed(`S-F08-01-STORE-${n}`, async ({ browser, notes, seed }) => {
@@ -82,7 +84,29 @@ defineSeed("S-F08-01-ORDER-011", { needs: ["S-F08-01-STORE-011", "S-F08-01-MEMBE
   } finally {
     await ctx.close();
   }
-  reportSeedIssue(seed.シードID, "査定申込を会員の画面操作で1件作った。申込日時・更新日時・電話番号・フリーコメントは画面が決める値（シード表の値にできない）。状態は申込直後の状態");
+  // シード表は〔査定申込ID〕〔査定番号〕を控えると定める。査定番号は申込みの完了画面の連番、査定申込IDは管理画面の買取一覧から開いた買取詳細のアドレスの番号
+  if (!査定番号) throw new Error(`${seed.シードID}: 申込みの完了画面から査定番号を読めない`);
+  const 日付 = (() => { const d = new Date(); return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`; })();
+  const 申込 = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const list = new OtcListPage(page);
+    let rows: { 査定ID: string }[] = [];
+    for (let i = 0; i < 6; i++) {
+      if (i > 0) await page.waitForTimeout(5_000);
+      await list.open();
+      await list.日時を空にする();
+      await list.買取店舗を選ぶ(PD_STORE.店名);
+      await list.申込者名を入れる(`${m.姓} ${m.名}`);
+      await list.検索する();
+      rows = ((await list.結果の表().count()) === 0 ? [] : await list.行()).filter((r) => r.査定ID === 査定番号 || (r.査定ID.startsWith(`${日付}-`) && r.査定ID.endsWith(`-${査定番号}`)));
+      if (rows.length >= 1) break;
+    }
+    if (rows.length !== 1) throw new Error(`${seed.シードID}: 買取一覧に、今日の査定番号 ${査定番号}（申込者「${m.姓} ${m.名}」・買取店舗「${PD_STORE.店名}」）の買取が ${rows.length} 件（1件のはず）`);
+    return { 表示: rows[0].査定ID, ID: await 一覧から詳細を開く(page, rows[0].査定ID) };
+  });
+  notes.set("〔査定申込ID-F0801-011〕", 申込.ID);
+  notes.set("〔査定番号-F0801-011〕", 申込.表示);
+  reportSeedIssue(seed.シードID, `査定申込を会員の画面操作で1件作った（査定番号 ${申込.表示}）。申込日時・更新日時・電話番号・フリーコメントは画面が決める値（シード表の値にできない）。状態は申込直後の状態`);
 });
 
 defineSeed("S-F08-01-HELD-INPUT-010", async ({ seed }) => {

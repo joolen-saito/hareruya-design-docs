@@ -1,57 +1,47 @@
 /**
- * M13 のイベント系シードが使う「実行の印つきの店舗」（店舗A・B・C）。
+ * M13 のイベント系シードが使う店舗A・B・C・新宿店・池袋店（正本の店名）に当てる、使い回す店舗。
  *
- * 開発環境には店名「店舗A」などの店舗が複数あり、店名で探すと「どれを使うか決められない」で準備が止まる。
- * そこで正本の店名「店舗A」に実行の印を付けた店名（例「店舗A-1AB2C」）の店舗を店舗登録画面から新しく作り、
- * 控えた店舗ID・店名を使う（依頼者決定 2026-11-11「店舗Aは新しく作って印をつけていい」）。
- * 店舗を足すだけで、既存の店舗・共有のマスタは変えない。同名が複数なら止まる動き（findTenantId）はそのまま。
+ * 依頼者決定 2026-11-15「店舗は作るのもう禁止。それ以上は絶対店舗増やさないで」により、店舗は作らず、E2E が使ってよい店舗の表
+ * （lib/store_create_ban.ts）から店舗IDで選ぶ。以前は「店舗A-E2E」などの決まった印の店舗を、無ければ店舗登録画面で作っていた。
+ * 店舗の設定は書き換えない（読むだけ）。イベント・メンバーの権限など、店舗にぶら下がるデータを足すだけ。
+ *
+ * 当て方（1つの機能のケースの中で、別々の役割の店舗に同じ店舗を当てない。店舗A・B・C は同じ機能で同時に使う）:
+ *   店舗A・新宿店 = 店舗ID 221（E2E の店舗）、店舗B・池袋店 = 店舗ID 4973（E2E の店舗）、店舗C = 店舗ID 2（元からある店舗「成田店」）。
+ *   新宿店・池袋店を使う機能（M13-06・08・11）は、店舗A・B・C を同じケースで使わない。
  */
 import { Page } from "@playwright/test";
-import { rc, RUN_MARK } from "../../lib/run_marker";
-import { createTenant, findTenantId, TenantInput } from "./tenant";
+import { E2Eの店舗, 元からある店舗 } from "../../lib/store_create_ban";
+import { 店舗IDで選ぶ } from "./store_pick";
 
-export type 印店キー = "A" | "B" | "C";
+export type 印店キー = "A" | "B" | "C" | "新宿" | "池袋";
 
-/** 正本の店名「店舗A」に実行の印を付けた店名 */
-export const 印店名 = {
-  A: rc("店舗A"),
-  B: rc("店舗B"),
-  C: rc("店舗C"),
+const 店舗ID: Record<印店キー, string> = { A: "221", B: "4973", C: "2", 新宿: "221", 池袋: "4973" };
+const 表 = [...E2Eの店舗, ...元からある店舗];
+const 店名の値 = (k: 印店キー): string => {
+  const s = 表.find((x) => x.id === 店舗ID[k]);
+  if (!s) throw new Error(`店舗ID ${店舗ID[k]} が店舗の表に無い`);
+  return s.店名;
 };
 
-const KANA: Record<印店キー, string> = { A: "テンポエー", B: "テンポビー", C: "テンポシー" };
+/** 店舗A・B・C・新宿店・池袋店に当てた店舗の店名（店名を画面の選択肢で選ぶ値。実行をまたいで同じ） */
+export const 印店名 = {
+  A: 店名の値("A"),
+  B: 店名の値("B"),
+  C: 店名の値("C"),
+  新宿: 店名の値("新宿"),
+  池袋: 店名の値("池袋"),
+};
+/** 店舗の店舗ID（表のとおり） */
+export const 印店ID = 店舗ID;
 
-/** 店名略称（3文字・店舗間で重複不可）の候補。乱数で作り、重複で登録できなければ別の候補で作り直す */
-function 略称候補(): string {
-  const c = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  return Array.from({ length: 3 }, () => c[Math.floor(Math.random() * c.length)]).join("");
-}
+/** 正本の店名（注記に出す） */
+const 正本の店名: Record<印店キー, string> = { A: "店舗A", B: "店舗B", C: "店舗C", 新宿: "新宿店", 池袋: "池袋店" };
 
 /**
- * 印つきの店舗があれば使い、無ければ店舗登録画面で新しく作る。店舗一覧に表示された店舗IDを返す。
- * 店名略称の重複などで登録できなかったときは、略称を変えて数回やり直す。登録は行われたが成功が表示されなかったときは onIssue で知らせる。
+ * 当てた店舗が店舗一覧にあり、店名が表のとおりであることを確かめ、店舗IDを返す（店舗は作らない）。
+ * 読み替えを onIssue に残す。
  */
 export async function ensureMarkedTenant(page: Page, key: 印店キー, onIssue: (message: string) => void): Promise<string> {
-  const 店名 = 印店名[key];
-  const exist = await findTenantId(page, 店名);
-  if (exist) return exist;
-  let failure = "";
-  for (let i = 0; i < 6; i++) {
-    const v: TenantInput = {
-      店名, 店名カナ: KANA[key], 店名英語: `Shop ${key}`, 支店URL: `m13${key.toLowerCase()}${RUN_MARK.toLowerCase()}`,
-      店名略称3文字: 略称候補(), ショップ名略称: 店名,
-    };
-    try {
-      await createTenant(page, v);
-    } catch (e) {
-      failure = (e as Error).message.split("\n")[0];
-    }
-    const id = await findTenantId(page, 店名);
-    if (id) {
-      if (failure) onIssue(`店舗登録画面で「${店名}」を登録したとき、登録は行われたが画面は成功を表示しなかった（${failure}）`);
-      onIssue(`正本の店名「店舗${key}」は開発環境に同名の店舗が複数あって決められないため、実行の印つきの店舗「${店名}」を新しく作って使った（店舗ID ${id}）`);
-      return id;
-    }
-  }
-  throw new Error(`店舗「${店名}」を登録できない: ${failure || "店舗一覧に出ない"}`);
+  const s = await 店舗IDで選ぶ(page, 店舗ID[key], 正本の店名[key], onIssue);
+  return s.id;
 }

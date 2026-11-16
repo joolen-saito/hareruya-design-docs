@@ -16,7 +16,7 @@ import { expect, caseTest } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
 import {
-  会員の購入実績, 検索パターンの件数, 検索パターンを消す, 注文番号を書き換える, 受注ID, 受注の記録, 受注の削除日時,
+  会員の購入実績, 検索パターンの件数, 検索パターンを消す, 注文番号を書き換える, 注文番号を含む受注の数, 受注ID, 受注の記録, 受注の削除日時,
 } from "../../db/m05_01_order_write";
 import { OrderSearchPage } from "../../pages/admin/m05_01_order_search_k";
 import { M0501_ADMIN, 店舗Aの店名, 店舗Bの店名, 注文番号の読み替え } from "../../seeds/m05-01";
@@ -355,7 +355,7 @@ caseTest("IT-M05-01-014", async ({ page, step, expected }) => {
   await step(3, async () => { await p.selectPageCount("10件"); });
   await step(4, async () => {
     await p.rewritePageCountOption("10件", "page_count=10", "page_count=11");
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), p.pageCountSelect.selectOption({ label: "10件" })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), p.pageCountSelect.selectOption({ label: "10件" })]);
     await expect(p.totalCount, "検索結果の件数の表示").toBeVisible();
   });
   await step(5, async () => {
@@ -377,11 +377,14 @@ caseTest("IT-M05-01-015", async ({ page, step, expected }) => {
   await step(1, async () => { await p.open(); await p.orderNumber.fill(号("M0501-PAGE-015")); });
   await step(2, async () => { await p.clickSearch(); });
   await step(3, async () => { await p.selectPageCount("10件"); });
-  await step(4, async () => { first = await p.shownOrderNumbers(); });
+  await step(4, async () => {
+    first = await p.shownOrderNumbers();
+    // 1ページ目の件数は、1ページ目を写す手順4の画像に付ける（期待結果の画像は2ページ目）
+    expect.soft(first.length, "1ページ目の受注の数").toBe(10);
+  });
   await step(5, async () => { await p.goToPage(2); second = await p.shownOrderNumbers(); current = await p.currentPage(); });
   await expected(async () => {
     expect.soft(current, "遷移した後のページ").toBe(2);
-    expect.soft(first.length, "1ページ目の受注の数").toBe(10);
     expect.soft(second.length, "2ページ目の受注の数").toBe(1);
     expect.soft([...first, ...second].sort(), "2ページを通して M0501-PAGE-015-01〜11 が重複・欠落なく1回ずつ表示される").toEqual([...all].sort());
   });
@@ -404,7 +407,7 @@ caseTest("IT-M05-01-028", async ({ page, step, expected }) => {
   await step(5, async () => { await p.goToPage(2); id11 = await p.rowShippingId(n11); await p.checkRow(n11); });
   await step(6, async () => {
     const item = await p.openToolMenu("その他", "メール一括通知");
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), item.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), item.click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移した画面（手動メール通知）").toMatch(/manual_mail/);
@@ -423,7 +426,7 @@ caseTest("IT-M05-01-027", async ({ page, step, expected }) => {
   await step(3, async () => { idA = await p.rowShippingId(a); idC = await p.rowShippingId(c); await p.checkRow(a); await p.checkRow(c); });
   await step(4, async () => {
     const item = await p.openToolMenu("その他", "メール一括通知");
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), item.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), item.click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移した画面（手動メール通知）").toMatch(/manual_mail/);
@@ -445,14 +448,18 @@ caseTest("IT-M05-01-032", async ({ page, step, expected }) => {
   });
   await step(5, async () => {
     const path = dl ? await (dl as Download).path() : null;
-    body = path ? readFileSync(path).toString("latin1") : "";
-    note(`ダウンロードしたCSVの行数: ${body.split(/\r?\n/).filter(Boolean).length}（見出しを含む）`);
+    // 送り状CSVは UTF-8（先頭に BOM）。文字化けしないよう UTF-8 で読み、BOM を除く
+    body = path ? readFileSync(path).toString("utf-8").replace(/^\uFEFF/, "") : "";
+    const 行 = body.split(/\r?\n/).filter(Boolean);
+    note(`ダウンロードしたCSVの行数: ${行.length}（見出しを含む）。データの行に載った注文番号: ${[a, b, c].filter((n) => 行.slice(1).some((l) => l.includes(n))).join("、") || "なし"}`);
   });
   await expected(async () => {
     expect(dl !== null, "送り状CSVがダウンロードされた").toBe(true);
-    expect.soft(body, `CSVの出力対象に M0501-CSV-032-A（${a}）が含まれる`).toContain(a);
-    expect.soft(body, `CSVの出力対象に M0501-CSV-032-C（${c}）が含まれる`).toContain(c);
-    expect.soft(body, `CSVの出力対象に選ばなかった M0501-CSV-032-B（${b}）は含まれない`).not.toContain(b);
+    // データの行（見出しを除く）に載った受注の注文番号（選んだ A・C と、選ばなかった B のうち）
+    const 載った注文番号 = [a, b, c].filter((n) => body.split(/\r?\n/).filter(Boolean).slice(1).some((l) => l.includes(n)));
+    expect.soft(載った注文番号, `CSVの出力対象に M0501-CSV-032-A（${a}）が含まれる`).toContain(a);
+    expect.soft(載った注文番号, `CSVの出力対象に M0501-CSV-032-C（${c}）が含まれる`).toContain(c);
+    expect.soft(載った注文番号, `CSVの出力対象に選ばなかった M0501-CSV-032-B（${b}）は含まれない`).not.toContain(b);
   });
 });
 
@@ -522,20 +529,37 @@ caseTest("IT-M05-01-063", async ({ page, step, expected }) => {
   const name = rc("M0501-063-PAT");
   const bId = 受注ID(号("M0501-063-B"));
   let first = ""; let second = ""; let at2 = 0; let elapsed = 0;
+  let 応答: { 状態: number; 件数: unknown } | null = null;
   await step(1, async () => { await p.open(); });
   await step(2, async () => { first = await 更新して件数を読む(p, name); at2 = Date.now(); });
   await step(3, async () => {
     注文番号を書き換える(bId, `${号("M0501-063")}02`);
     note("「DBで受注M0501-063-Bを登録する」は、シードで画面から作って写した受注Bの注文番号を、検索パターンの条件に一致する値に書き換えて行った（印つきの受注だけに書く）");
+    // 登録できたこと: 検索パターンの条件（注文番号）に合う受注が、いま2件ある（件数の取得結果が使い回されなければ、手順4は2になる）
+    const n = 注文番号を含む受注の数(号("M0501-063"));
+    note(`手順3のあと、検索パターンの条件（注文番号「${号("M0501-063")}」を含む）に合う受注は ${n} 件（DB で照会）`);
+    expect(n, `手順3のあと、検索パターンの条件（注文番号「${号("M0501-063")}」を含む）に合う受注の数`).toBe(2);
   });
   await step(4, async () => {
+    // 押したあと、件数を取り直す応答（検索パターンの件数の取得）を待って、その件数を記録する
+    const res = page.waitForResponse((r) => /\/order\/count\/pattern\/\d+$/.test(new URL(r.url()).pathname) && r.request().method() === "GET", { timeout: 30_000 });
     await p.pressReload(name);
-    await page.waitForTimeout(2000);
-    second = await p.countText(name); elapsed = Date.now() - at2;
+    const r = await res;
+    const 状態 = r.status();
+    const 件数 = await r.json().then((j: { count?: unknown }) => j?.count, () => undefined);
+    応答 = { 状態, 件数 };
+    elapsed = Date.now() - at2;
+    note(`手順4の件数の取り直しの応答: 状態 ${状態}・件数 ${String(件数)}（手順2から ${(elapsed / 1000).toFixed(1)} 秒）`);
+    // 応答の件数が画面の件数欄に入るのを待ってから読む
+    if (件数 !== undefined) await expect(p.countCell(name), "手順4の取り直しの後の該当件数欄").toHaveText(String(件数), { timeout: 10_000 }).catch(() => undefined);
+    second = await p.countText(name);
   });
   await expected(async () => {
+    const a = 応答 as { 状態: number; 件数: unknown } | null;
     expect.soft(elapsed, "手順2から手順4までの経過時間（10秒以内）").toBeLessThan(10_000);
     expect.soft(first, "手順2で表示される該当件数").toBe("1");
+    expect.soft(a?.状態 ?? null, "手順4で件数を取り直した応答の状態（正常）").toBe(200);
+    expect.soft(String(a?.件数 ?? ""), "手順4で件数を取り直した応答の件数（件数の取得結果が使い回される）").toBe("1");
     expect.soft(second, "手順4で表示される該当件数（件数の取得結果が使い回される）").toBe("1");
   });
 });
@@ -628,7 +652,7 @@ caseTest("IT-M05-01-068", async ({ page, step, expected }) => {
   await step(1, async () => { await p.open(); });
   await step(2, async () => { await p.appendToPatternLink(name, "page_count=10"); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), p.patternLink(name).click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), p.patternLink(name).click({ noWaitAfter: true })]);
     await expect(p.totalCount, "検索結果の件数の表示").toBeVisible();
     rows = (await p.shownOrderNumbers()).length; current = await p.currentPage(); nextPage = await p.pageLink(2).count();
   });

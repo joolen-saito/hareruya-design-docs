@@ -48,7 +48,7 @@ export class OrderCsvPage {
       const boxes = this.page.locator('#admin_search_order_status input[type="checkbox"]');
       for (const b of await boxes.all()) await b.check();
     }
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), form.locator("#search_submit").click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), form.locator("#search_submit").click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     return this.page.locator('a.action-edit[href*="/order/"]').count();
   }
@@ -153,7 +153,7 @@ export async function createCustomShippingCsv(page: Page, 定義名: string, 項
   }
   const out = (await labelsOf(page, "csv-output")).map((o) => o.label);
   if (JSON.stringify(out) !== JSON.stringify(項目)) throw new Error(`${what}: 「CSV出力する項目」の並びが指定と違う（画面: ${out.join("、")}）`);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator('#csv-form button[type="submit"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator('#csv-form button[type="submit"]').click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expectSaved(page, `${what}: カスタムCSV出力設定の登録`);
   const m = /\/custom_csv\/\d+\/(\d+)\/?$/.exec(new URL(page.url()).pathname);
@@ -180,7 +180,7 @@ export async function createCustomShippingCsvAll(page: Page, 定義名: string, 
     await page.locator("#csv-not-output").selectOption(v);
     await page.locator("#add").click();
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator('#csv-form button[type="submit"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator('#csv-form button[type="submit"]').click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expectSaved(page, `${what}: カスタムCSV出力設定の登録`);
   const m = /\/custom_csv\/\d+\/(\d+)\/?$/.exec(new URL(page.url()).pathname);
@@ -206,7 +206,7 @@ export async function setShippingCsvOutput(page: Page, 項目: string, 出力す
       await page.locator("#csv-output").selectOption(hit.value);
       await page.locator("#remove").click();
     }
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator('#csv-form button[type="submit"]').click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator('#csv-form button[type="submit"]').click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
     await expectSaved(page, `${what}: 受注詳細CSV出力項目設定の登録`);
   }

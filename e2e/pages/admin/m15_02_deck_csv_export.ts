@@ -21,7 +21,9 @@ import { expectSaved } from "./common";
 type Issue = (m: string) => void;
 
 /** デッキ一覧の画面のパス（検索のあとのページ番号つきも含む） */
-export const デッキ一覧のパスの形 = (): RegExp => new RegExp(`^${new URL(adminUrl("/deck")).pathname}(/search/\\d+)?$`);
+export const デッキ一覧のパスの形 = (): RegExp => new RegExp(`^${new URL(adminUrl("/deck")).pathname}(/search(/\\d+)?)?$`);
+/** デッキ一覧の画面の見出し */
+export const デッキ一覧の見出し = (page: Page): Locator => page.locator(".c-pageTitle__title, .c-pageTitle h2, h2.c-pageTitle__title").first();
 
 /** 一覧でデッキIDを検索する（「日付クリア」を押してから、デッキIDの欄に入れて「検索する」） */
 export async function デッキIDを入れて検索する(page: Page, ids: string[]): Promise<デッキ一覧> {

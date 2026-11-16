@@ -36,7 +36,7 @@ export async function 入金日をクリアする(page: Page, 注文ID: string):
   await 受注を開き直す(page, 注文ID);
   const clear = page.locator('button.clear-date[data-target="payment_date"]');
   if ((await clear.count()) === 0) return false;
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }).catch(() => undefined), clear.first().click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }).catch(() => undefined), clear.first().click({ timeout: 20_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   return true;
 }

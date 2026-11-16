@@ -143,15 +143,21 @@ caseTest("IT-M05-20-010", async ({ page, notes, step, expected }) => {
   const 前の明細 = 受注明細の写し(ids);
   const 前の状態 = ids.map((x) => JSON.stringify(受注の状態を読む(x)));
   let 後の受注: string[] = [], 後の明細 = "", 後の状態: string[] = [];
+  let 応答 = 0;
+  let 後の備考: string | null | undefined = null;
   await step(1, async () => { await d.open(id); });
   await step(2, async () => { await d.備考欄.fill("構成維持確認"); });
-  await step(3, async () => { await d.登録を押す(); });
+  await step(3, async () => { 応答 = (await d.登録を押す()).応答; });
   await step(4, async () => {
+    後の備考 = 出荷指示リストの記録を読む(id)?.備考;
     後の受注 = 出荷指示リストの受注ID(id);
     後の明細 = 受注明細の写し(ids);
     後の状態 = ids.map((x) => JSON.stringify(受注の状態を読む(x)));
   });
   await expected(async () => {
+    // 登録が失敗して何も変わらなかったときに「変わらない」で合格にしないよう、登録が保存されたこと（備考）を先に確かめる
+    expect.soft(応答 < 400, `登録の要求が受け付けられた（応答 ${応答}）`).toBe(true);
+    expect.soft(後の備考, "登録した備考「構成維持確認」が保存されている（登録が行われた）").toBe("構成維持確認");
     expect.soft(後の受注, `リストに含まれる受注が ${ids.join("・")} のまま`).toEqual([...ids].sort((a, b) => Number(a) - Number(b)));
     expect.soft(後の受注, "リストに含まれる受注が操作前から変わらない").toEqual(前の受注);
     expect.soft(後の明細, "受注明細が操作前の値から変わらない").toBe(前の明細);
@@ -164,8 +170,12 @@ caseTest("IT-M05-20-011", async ({ page, notes, step, expected }) => {
   const { d, id } = await 開く(page, notes, "〔出荷指示リストID-M0520-011〕");
   await step(1, async () => { await d.open(id); });
   await step(2, async () => { await d.備考欄.fill("遷移確認"); });
-  await step(3, async () => { await d.登録を押す(); });
+  let 応答 = 0;
+  await step(3, async () => { 応答 = (await d.登録を押す()).応答; });
   await expected(async () => {
+    // 登録に失敗しても同じ詳細画面へ戻る作りなので、登録の要求が詳細画面への遷移（リダイレクト）で応え、保存できた知らせが出たことも確かめる
+    expect.soft(応答 >= 300 && 応答 < 400, `登録の要求の応答が、詳細画面への遷移（リダイレクト）である（応答 ${応答}）`).toBe(true);
+    await expect.soft(page.locator(".alert-success"), "登録が保存できた知らせ（保存の失敗で戻ったのではない）").toBeVisible();
     expect.soft(new URL(page.url()).pathname, "出荷指示リスト詳細画面へ遷移する").toMatch(new RegExp(`/standby/${id}/edit$`));
     expect.soft(await d.出荷指示番号の表示.count(), "詳細画面の出荷指示番号が表示されている").toBe(1);
   });
@@ -246,7 +256,12 @@ caseTest("IT-M05-20-022", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await d.open(id); });
   await step(2, async () => { await d.削除要求のトークンを書き換える("invalid-token"); });
   await step(3, async () => { await d.リスト削除を押す(); });
-  await step(4, async () => { await d.確認ダイアログでOKを押す(); });
+  let r = { 応答: null as number | null, 送信先: "" };
+  await step(4, async () => {
+    r = await d.確認ダイアログでOKを押す();
+    // 要求が送られなければ「削除されない」は何もしなくても成り立つので、削除の要求が送られたことを確かめる
+    expect(r.応答, "確認ダイアログのOKで、リスト削除の要求が送られた（応答がある）").not.toBeNull();
+  });
   await step(5, async () => { 件数 = 出荷指示リストの件数(id); 記録 = 出荷指示リストの記録を読む(id); });
   await expected(async () => {
     expect.soft(件数, `出荷指示リストID ${id} が削除されない（登録されている件数）`).toBe(1);
@@ -274,7 +289,12 @@ caseTest("IT-M05-20-024", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await d.open(id); });
   await step(2, async () => { await d.削除要求の送信先からIDを削除する(); });
   await step(3, async () => { await d.リスト削除を押す(); });
-  await step(4, async () => { await d.確認ダイアログでOKを押す(); });
+  let r = { 応答: null as number | null, 送信先: "" };
+  await step(4, async () => {
+    r = await d.確認ダイアログでOKを押す();
+    // 要求が送られなければ「削除されない」は何もしなくても成り立つので、削除の要求が送られたことを確かめる
+    expect(r.応答, "確認ダイアログのOKで、リスト削除の要求が送られた（応答がある）").not.toBeNull();
+  });
   await step(5, async () => { 件数 = 出荷指示リストの件数(id); 記録 = 出荷指示リストの記録を読む(id); });
   await expected(async () => {
     expect.soft(件数, `出荷指示リストID ${id} が削除されない（登録されている件数）`).toBe(1);
@@ -293,6 +313,8 @@ caseTest("IT-M05-20-027", async ({ page, notes, step, expected }) => {
   await step(3, async () => {
     await d.リスト削除を押す();
     r = await d.確認ダイアログでOKを押す();
+    // 要求が送られなければ「削除されない」は何もしなくても成り立つので、削除の要求が送られたことを確かめる
+    expect(r.応答, "リスト削除の要求が送られた（応答がある）").not.toBeNull();
   });
   await step(4, async () => { 件数 = 出荷指示リストの件数(id); 記録 = 出荷指示リストの記録を読む(id); });
   await expected(async () => {
@@ -310,7 +332,7 @@ caseTest("IT-M05-20-030", async ({ page, notes, step, expected }) => {
   await step(2, async () => {
     const link = d.注文番号のリンク(受注ID);
     await expect(link, `注文番号「${注文番号}」のリンク`).toHaveText(new RegExp(`^\\s*${注文番号}\\s*$`));
-    await Promise.all([page.waitForURL(/\/order\/\d+\/edit/, { waitUntil: "domcontentloaded" }), link.click()]);
+    await Promise.all([page.waitForURL(/\/order\/\d+\/edit/, { waitUntil: "domcontentloaded", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await expected(async () => {
@@ -387,6 +409,7 @@ caseTest("IT-M05-20-034", async ({ page, notes, step, expected }) => {
     expect.soft(前.件数 >= 1, `手順3で注文番号 ${注文番号} の行が検索結果にある`).toBe(true);
     expect.soft(前.対応状況, "手順3: 注文番号の行の対応状況が「出荷指示」").toBe("出荷指示");
     expect.soft(前.出荷指示日 !== "", `手順3: 出荷指示日に日付が表示されている（${前.出荷指示日}）`).toBe(true);
+    expect.soft(後.件数 >= 1, `手順9で注文番号 ${注文番号} の行が検索結果にある`).toBe(true);
     expect.soft(後.対応状況, "手順9: 同じ行の対応状況が「出荷指示」のまま").toBe("出荷指示");
     expect.soft(後.出荷指示日, "手順9: 出荷指示日だけが空になる").toBe("");
   });

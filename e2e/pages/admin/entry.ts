@@ -37,7 +37,14 @@ async function readEntryId(page: Page): Promise<string> {
  * 日程IDは、その日程を登録したときに控えた番号。
  * 会員の名前には、その日程にまだ申込していない、会員登録済みの会員の名前を渡す。
  */
-export async function registerEntries(page: Page, イベント名: string, 日程ID: string, 開催日: string, 会員の名前: string[]): Promise<string[]> {
+export async function registerEntries(page: Page, イベント名: string, 日程ID: string, 開催日: string, 会員の名前: string[], 検索結果に出ない日程 = false): Promise<string[]> {
+  // オンライン受付なしの日程は、イベント申込登録（検索結果）に出ない（設計書: オンライン受付ありの日程のみ検索対象）。日程IDのアドレスを直接開く
+  if (検索結果に出ない日程) await page.goto(adminUrl(`/entry_registration/new/${日程ID}`));
+  else await openFromSearch(page, イベント名, 日程ID, 開催日);
+  return registerOnOpenedForm(page, イベント名, 会員の名前);
+}
+
+async function openFromSearch(page: Page, イベント名: string, 日程ID: string, 開催日: string): Promise<void> {
   await page.goto(adminUrl("/entry_registration"));
   await page.locator('#search_form [name="admin_search_event[multi]"]').fill(イベント名);
   // 開催日の開始日は初期表示で今日。それより前の日程は出ないので、開始日を空にして過去の日程も探す
@@ -49,6 +56,9 @@ export async function registerEntries(page: Page, イベント名: string, 日�
     .filter({ has: page.locator(`a[href$="/entry_registration/new/${日程ID}"]`) });
   if ((await row.count()) !== 1) throw new Error(`イベント申込登録の検索結果に、「${イベント名}」の日程「${開催日}」（日程ID ${日程ID}）の行が ${await row.count()} 件ある（1件のはず）`);
   await row.getByRole("link", { name: "新規登録" }).click();
+}
+
+async function registerOnOpenedForm(page: Page, イベント名: string, 会員の名前: string[]): Promise<string[]> {
   const ids: string[] = [];
   for (const [i, 名前] of 会員の名前.entries()) {
     if (i > 0) await page.getByRole("link", { name: "同日程の新規申込へ" }).click();

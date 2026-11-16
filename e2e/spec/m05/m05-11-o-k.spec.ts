@@ -4,7 +4,7 @@ import { Browser, Page, test } from "@playwright/test";
 import { caseTest, expect } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
-import { 会員ポイント, 受注, 受注の全項目, 受注明細, 受注明細ID, 商品の在庫 } from "../../db/m05_11";
+import { 会員ポイント, 受注, 受注の全項目, 受注明細, 受注明細ID, 商品の在庫, 配送商品, 配送先の数, 配送商品行 } from "../../db/m05_11";
 import { 会員の累計注文金額, 受注のポイント, 受注のポイント履歴, 受注の日付, 商品の在庫値, 在庫変動履歴の詳細, 週間販売数 } from "../../db/m05_11_write";
 import { OrderEditPage, OrderItemsEdit, 明細行 } from "../../pages/admin/m05_11_order_edit";
 import "../../seeds/m05-11-n-k";
@@ -13,6 +13,7 @@ import { M0511_ADMIN_A, 店舗Aの店名 } from "../../seeds/m05-11";
 
 const key = (n: string) => `〔受注番号-M0511-${n}〕`;
 const onDialog = (m: string) => test.info().annotations.push({ type: "手順の注記", description: `ダイアログを受け入れた: ${m}` });
+const 注記 = (m: string) => test.info().annotations.push({ type: "手順の注記", description: m });
 async function 開く(browser: Browser, page: Page, no: string): Promise<OrderEditPage> {
   const p = new OrderEditPage(page);
   await p.openByOrderNo(no, await 店舗Aの店名(browser));
@@ -24,9 +25,11 @@ const コード = (n: string, k: string) => rc(`CBM0511-${n}-${k}`);
 type 結果 = {
   在庫: Record<string, { 在庫: number; 総原価: number }>; 在庫値: Record<string, string | null>;
   明細: ReturnType<typeof 受注明細>; 履歴: Record<string, number[]>; 累計: number | null;
+  /** 配送先に紐づく配送商品と、受注の配送先の数 */
+  配送: 配送商品行[]; 配送先: number;
 };
 function 読む(no: string, codes: string[], 会員あり: boolean): 結果 {
-  const r: 結果 = { 在庫: {}, 在庫値: {}, 明細: 受注明細(no), 履歴: {}, 累計: 会員あり ? 会員の累計注文金額(no) : null };
+  const r: 結果 = { 在庫: {}, 在庫値: {}, 明細: 受注明細(no), 履歴: {}, 累計: 会員あり ? 会員の累計注文金額(no) : null, 配送: 配送商品(no), 配送先: 配送先の数(no) };
   for (const c of codes) {
     r.在庫[c] = 商品の在庫(c); r.在庫値[c] = 商品の在庫値(c);
     r.履歴[c] = 在庫変動履歴の詳細(c).filter((h) => !h.理由.includes("M05-11試験データ")).map((h) => h.増減数);
@@ -35,6 +38,11 @@ function 読む(no: string, codes: string[], 会員あり: boolean): 結果 {
 }
 const 行 = (r: 結果, code: string) => r.明細.find((x) => x.商品コード === code);
 const 価格数量 = (r: 結果, code: string): [number, string] | undefined => { const x = 行(r, code); return x ? [Number(x.価格), x.数量] : undefined; };
+/** 配送先1件に登録された配送商品（「商品コード・価格・数量」。商品コード順）。配送先が1件でなければ、その数も確かめる */
+function 配送先1件の配送商品(r: 結果): string[] {
+  expect.soft(r.配送先, "受注の配送先の数（1件）").toBe(1);
+  return r.配送.map((m) => `${m.商品コード}・${m.価格}・${m.数量}`).sort();
+}
 
 // ---- 明細の数量を減らす・増やす ----
 type 数量ケース = { 番号: string; 変更後: string; 在庫: number; 総原価: number; 受注数量: string; 受注総原価: number; 履歴: number; 累計?: number; ゲスト?: boolean; 原価?: string };
@@ -55,7 +63,7 @@ function 数量を変える(c: 数量ケース) {
       expect.soft([行(r, x)?.数量, Number(行(r, x)?.総原価)], `受注数量・受注総原価（${c.受注数量}・${c.受注総原価}）`).toEqual([c.受注数量, c.受注総原価]);
       expect.soft(r.履歴[x].filter((h) => h === c.履歴).length, `増減数${c.履歴 > 0 ? "+" : ""}${c.履歴}の在庫変動履歴の件数`).toBe(1);
       if (c.累計 !== undefined) expect.soft(r.累計, `会員の累計注文金額（${c.累計}）`).toBe(c.累計);
-      expect.soft(価格数量(r, x), `配送商品の価格・数量（1000・${c.受注数量}）`).toEqual([1000, c.受注数量]);
+      expect.soft(配送先1件の配送商品(r), `配送先1件の配送商品（商品Xの価格1000・数量${c.受注数量}）`).toEqual([`${x}・1000・${Number(c.受注数量)}`]);
     });
   };
 }
@@ -80,7 +88,7 @@ function 欠品を登録する(n: string) {
       expect.soft([r.在庫[x].在庫, r.在庫[x].総原価], `商品の在庫・商品総原価（${前.在庫}・${前.総原価}のまま）`).toEqual([前.在庫, 前.総原価]);
       expect.soft([行(r, x)?.数量, 行(r, x)?.欠品数量, Number(行(r, x)?.総原価)], "受注数量・欠品数量・受注総原価（2・1・1000）").toEqual(["2", "1", 1000]);
       expect.soft(r.累計, "会員の累計注文金額（10000から9000）").toBe(9000);
-      expect.soft(価格数量(r, x), "配送商品の価格・数量（1000・2）").toEqual([1000, "2"]);
+      expect.soft(配送先1件の配送商品(r), "配送先1件の配送商品（商品Xの価格1000・数量2）").toEqual([`${x}・1000・2`]);
     });
   };
 }
@@ -110,7 +118,7 @@ function 明細を削除する(n: string, 管理する: boolean, ゲスト: bool
       }
       expect.soft(行(r, x), "商品Xの受注明細（削除された）").toBeUndefined();
       if (!ゲスト) expect.soft(r.累計, "会員の累計注文金額（10000から7000）").toBe(7000);
-      expect.soft(r.明細.map((m) => `${m.商品コード}・${Number(m.価格)}・${m.数量}`), "配送商品（商品Yの価格1000・数量2だけ）").toEqual([`${y}・1000・2`]);
+      expect.soft(配送先1件の配送商品(r), "配送先1件の配送商品（商品Yの価格1000・数量2だけ）").toEqual([`${y}・1000・2`]);
     });
   };
 }
@@ -141,7 +149,7 @@ function 商品を追加する(n: string, 在庫: number, ゲスト: boolean) {
       expect.soft(価格数量(r, x)?.[1], "追加した商品Xの受注明細の数量").toBe("2");
       expect.soft(r.履歴[x].filter((h) => h === -2).length, "増減数-2の在庫変動履歴の件数").toBe(1);
       if (!ゲスト) expect.soft(r.累計, "会員の累計注文金額（10000から12000）").toBe(12000);
-      expect.soft(r.明細.map((m) => `${m.商品コード}・${Number(m.価格)}・${m.数量}`).sort(), "配送商品（商品Yと商品Xの2件。価格1000・数量2）").toEqual([`${y}・1000・2`, `${x}・1000・2`].sort());
+      expect.soft(配送先1件の配送商品(r), "配送先1件の配送商品（商品Yと商品Xの2件。価格1000・数量2）").toEqual([`${y}・1000・2`, `${x}・1000・2`].sort());
     });
   };
 }
@@ -206,12 +214,16 @@ caseTest("IT-M05-11-252", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M0511_ADMIN_A);
   const no = notes.get(key("252"));
   let p!: OrderEditPage;
-  let 入金: string | null = null;
-  await step(1, async () => { p = await 開く(browser, page, no); });
+  let 入金: string | null = null, 操作前: string | null = "（未読）";
+  await step(1, async () => { p = await 開く(browser, page, no); 操作前 = 受注の日付(no, "入金日"); 注記(`操作前の受注の入金日: ${操作前 ?? "未登録"}`); });
   await step(2, async () => { await p.ステータスを選ぶ("入金済み"); });
   await step(3, async () => { await p.ステータスを変更する(onDialog); });
   await step(4, async () => { 入金 = 受注の日付(no, "入金日"); });
-  await expected(async () => { expect.soft(入金, "受注の入金日（登録された）").not.toBeNull(); });
+  await expected(async () => {
+    // 操作の前から入金日があると、今回の操作で登録されなくても期待を満たすので、前提（未登録）も確かめる
+    expect.soft(操作前, "操作前の受注の入金日（前提: 未登録）").toBeNull();
+    expect.soft(入金, "受注の入金日（登録された）").not.toBeNull();
+  });
 });
 
 function ステータスで日付が入る(n: string, 変更後: string, 欄: "入金日" | "店頭予約日") {
@@ -219,12 +231,16 @@ function ステータスで日付が入る(n: string, 変更後: string, 欄: "�
     await loginAdmin(page, M0511_ADMIN_A);
     const no = notes.get(key(n));
     let p!: OrderEditPage;
-    let 日: string | null = null;
-    await step(1, async () => { p = await 開く(browser, page, no); });
+    let 日: string | null = null, 操作前: string | null = "（未読）";
+    await step(1, async () => { p = await 開く(browser, page, no); 操作前 = 受注の日付(no, 欄); 注記(`操作前の受注の${欄}: ${操作前 ?? "未登録"}`); });
     await step(2, async () => { await p.ステータスを選ぶ(変更後); });
     await step(3, async () => { await p.ステータスを変更する(onDialog); });
     await step(4, async () => { 日 = 受注の日付(no, 欄); });
-    await expected(async () => { expect.soft(日, `受注の${欄}（登録された）`).not.toBeNull(); });
+    await expected(async () => {
+      // 操作の前から日付があると、今回の操作で登録されなくても期待を満たすので、前提（未登録）も確かめる
+      expect.soft(操作前, `操作前の受注の${欄}（前提: 未登録）`).toBeNull();
+      expect.soft(日, `受注の${欄}（登録された）`).not.toBeNull();
+    });
   };
 }
 caseTest("IT-M05-11-245", ステータスで日付が入る("245", "入金済み", "入金日"));

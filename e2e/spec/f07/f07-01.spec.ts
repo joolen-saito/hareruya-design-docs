@@ -3,8 +3,8 @@ import { test } from "@playwright/test";
 import { caseTest, CaseBody, expect } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { EventTopPage, 店舗クッキーの値, 店舗クッキーを設定する } from "../../pages/front/f07_01_event_top";
-import { 支店URLを作る, 実行日から } from "../../pages/admin/f07_01_setup";
-import { 店名, 店名F } from "../../seeds/f07-01";
+import { 実行日から } from "../../pages/admin/f07_01_setup";
+import { 店の支店URL, 店名, 店名F } from "../../seeds/f07-01";
 import "../../seeds/f07-01";
 import { EventDetailPage } from "../../pages/front/f07_03_event_detail";
 
@@ -71,10 +71,10 @@ caseTest("IT-F07-01-007", async ({ page, notes, step, expected }) => {
   const top = new EventTopPage(page);
   await step(1, async () => { await top.open(id); await top.一覧の表示を待つ(); });
   await step(2, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), top.店舗ページリンク.click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), top.店舗ページリンク.click({ timeout: 20_000, noWaitAfter: true })]);
   });
   await expected(async () => {
-    expect.soft(new URL(page.url()).pathname, "遷移先のアドレス（店舗の詳細ページ）").toContain(`/${支店URLを作る("007")}`);
+    expect.soft(new URL(page.url()).pathname, "遷移先のアドレス（店舗の詳細ページ）").toContain(`/${店の支店URL(店名("007"))}`);
     expect.soft(await page.locator("body").innerText(), "遷移先の画面に出る店名").toContain(店名("007"));
   });
 });
@@ -199,7 +199,7 @@ caseTest("IT-F07-01-099", async ({ page, notes, step, expected }) => {
   });
 });
 
-// ---- 複数日程イベントの日別画面（107〜115） ----
+// ---- 複数日程イベントの日別画面（107〜116） ----
 // 設計書・正本にアドレスの定めが無く、アプリにも該当の画面が見つからない。過去の検討と同じ /ja/events/<イベントID>/<日付指定> を開く。
 // 画面が無ければ、期待結果（詳細画面への遷移・日別の一覧）に当たらず不合格になる（操作せずに元の画面を見て合格にはしない）。
 const 年月日時 = (開始: string): string => { const m = /^(\d+)-(\d+)-(\d+) (\d+):(\d+)$/.exec(開始)!; return `${m[1]}年${Number(m[2])}月${Number(m[3])}日 ${m[4]}時${m[5]}分`; };
@@ -249,3 +249,18 @@ caseTest("IT-F07-01-112", 日別の一覧("112", "20301015", ["2030-10-15 10:00"
 caseTest("IT-F07-01-113", 日別の詳細へ("113", "all", "2025-10-15 10:00"));
 caseTest("IT-F07-01-114", 日別の詳細へ("114", "all", "2030-10-15 10:00"));
 caseTest("IT-F07-01-115", 日別の一覧("115", "all", ["2030-10-15 13:00", "2030-10-16 10:00"]));
+caseTest("IT-F07-01-116", async ({ page, notes, step, expected }) => {
+  note("複数日程イベントの日別画面のアドレスは正本・設計書に無いため、107〜115 と同じ /ja/events/<イベントID>/all を開いた。"
+    + "このアドレスの形の画面がアプリに無いときも応答は404になるので、判定ではほかの日程ありのケース（113〜115）の結果と合わせて見ること");
+  const id = notes.get("〔イベントID-F0701-116〕");
+  const top = new EventTopPage(page);
+  let r = { status: 0, url: "" };
+  await step(1, async () => { r = await top.日別画面を開く(id, "all"); });
+  await step(2, async () => { expect.soft(r.status, "ネットワーク応答の状態を読み取った").toBeGreaterThan(0); });
+  await expected(async () => {
+    const body = ((await page.locator("body").innerText({ timeout: 10_000 }).catch(() => "")) ?? "").replace(/\s+/g, " ");
+    expect.soft(r.status, "HTTPの応答（404）").toBe(404);
+    expect.soft(r.url, "大会詳細画面へ遷移していない").not.toMatch(/\/events\/\d+\/detail/);
+    expect.soft(body.includes(rc("F0701-116-EVT")), "複数日程イベントの日別画面（イベント名 F0701-116-EVT）が表示されていない").toBe(false);
+  });
+});

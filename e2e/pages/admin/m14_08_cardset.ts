@@ -53,8 +53,8 @@ export async function 削除を実行する(page: Page): Promise<void> {
   const modal = page.locator("#DeleteModal");
   await expect(modal, "削除の確認ポップアップ").toBeVisible();
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load", timeout: 30_000 }),
-    modal.locator('[data-method="delete"]').click({ timeout: 20_000 }),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000}),
+    modal.locator('[data-method="delete"]').click({ timeout: 20_000, noWaitAfter: true }),
   ]);
 }
 

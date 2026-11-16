@@ -2,6 +2,7 @@
 import { Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { NetDetailPage } from "./f06_15_net_detail";
+import { 押して移るのを待つ } from "./nav_click";
 
 const T = 30_000;
 
@@ -14,7 +15,7 @@ export class NetDetailPageB extends NetDetailPage {
     const form = this.page.locator("form#login_mypage");
     await form.locator("#login_email").fill(メール, { timeout: T });
     await form.locator("#login_pass").fill(パスワード, { timeout: T });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), form.locator("button[type=submit]").click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), form.locator("button[type=submit]").click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   async 履歴一覧を開く(): Promise<void> {
@@ -34,6 +35,14 @@ export class NetDetailPageB extends NetDetailPage {
     if ((await row.count()) === 0) return null;
     return ((await row.locator("dd").first().innerText({ timeout: T })) ?? "").replace(/\s+/g, " ").trim();
   }
+  /** 基本情報の項目の値の欄（画面の要素。赤枠を付けて確かめるために使う） */
+  項目の欄(見出し: string): Locator {
+    return this.page.locator(".p-hareruya-history-detail__order-info-row").filter({ has: this.page.locator("dt", { hasText: new RegExp(`^\\s*${見出し}\\s*$`) }) }).first().locator("dd").first();
+  }
+  /** 明細の査定価格の欄（画面の要素） */
+  明細の査定価格の欄(商品名: string): Locator { return this.明細の行(商品名).locator(".p-hareruya-purchase-list__col-assessment-price dd").first(); }
+  /** 明細の領域全体（件数・明細の表・まとめて買取の欄を含む） */
+  get 明細の領域(): Locator { return this.page.locator(".p-hareruya-history-detail__table").first(); }
   /** 金額欄の数値（桁区切りと通貨記号を除く） */
   async 金額(見出し: string): Promise<number | null> {
     const v = await this.項目(見出し);
@@ -65,15 +74,7 @@ export class NetDetailPageB extends NetDetailPage {
   async 本文(): Promise<string> { return ((await this.page.locator("main, body").first().innerText({ timeout: T })) ?? "").replace(/\s+/g, " "); }
   /** 要素を押して画面が移るのを待つ（固定ヘッダーに覆われて押せないときは、クリックの操作を直接送って注記を残す） */
   async 押して遷移する(l: Locator): Promise<void> {
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 });
-    try {
-      await l.click({ timeout: 10_000 });
-    } catch (e) {
-      test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
-    }
-    await nav;
-    await this.page.waitForLoadState("load");
+    // 押す操作だけを行い、移るのを待つ（押せているのに click の待ちが時間切れになり、移った先で押し直してしまうのを防ぐ。pages/front/nav_click.ts）
+    await 押して移るのを待つ(this.page, l, { 直接送るときの注記: "正本の外の補い" });
   }
 }

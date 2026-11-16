@@ -24,15 +24,17 @@ import { reportSeedIssue } from "../lib/seeds";
 import { rc } from "../lib/run_marker";
 import { Account, withAdminSession } from "../lib/session";
 import { defineSeed } from "./current_seed";
-import { 申込を行う, 査定IDを読む, 申込者の, storeInput } from "./m06-common";
+import { 申込を行う, 査定IDを読む, 申込者の } from "./m06-common";
 import { 規格を整える, カードを登録する, 実在庫に商品を追加する, 略称タグを登録する } from "../pages/admin/m06_11_setup";
-import { カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 商品規格一覧を読む, 単体カード配下のカテゴリID, 登録済みの割引率ID } from "../pages/admin/f05_04_products";
+import { カード商品CSVの公開の値, カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 商品規格一覧を読む, 単体カード配下のカテゴリID, 登録済みの割引率ID } from "../pages/admin/f05_04_products";
 import { readExistingSellGroupName } from "../pages/admin/m03_01_goods_csv";
 import { readLanguageIds } from "../pages/admin/m03_23_seed_products";
-import { 棚番号を読む, マスタを読む, 商品をカードにする } from "../pages/admin/m07_09_card";
+import { Notes } from "../lib/notes";
+import { 棚番号を全件読む, マスタを読む, 商品をカードにする } from "../pages/admin/m07_09_card";
 import { 行を用意する } from "../pages/admin/m14_04_master";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStoreWithThresholds } from "../pages/admin/m04_25_move_chain";
+import { ensureMemberByStoreIdsFix as ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
+import { ensureStoreWithThresholds } from "../pages/admin/m04_24_reuse_k";
+import { 使い回す店舗の入力 } from "../pages/admin/m04_24_reuse_k";
 import { OtcDetailPage, OtcListPage } from "../pages/admin/m06_otc_list";
 import { ensureCardset } from "../pages/admin/product_masters";
 
@@ -43,9 +45,13 @@ export const M0611_ADMIN: Account = { loginId: "m0611_admin", password: "Passw0r
 // ---------------------------------------------------------------------------
 
 type 店キー = "main" | "branch";
+/**
+ * 店舗は作らない（依頼者 2026-11-15「店舗は作るのもう禁止」）。本店相当・支店Aは、使い回す E2E の店舗（本店相当=店舗ID 221・支店A=店舗ID 4973）で表し、
+ * 高額商品閾値は、ケースの間だけ求める値に書き換えて、ケースの終わりに元へ戻す（pages/admin/store_setting_restore.ts）。書き換えるので、このシードを使うケースは solo_cases.tsv の一人で流す回に回す。
+ */
 const 店の定義 = {
-  main: { 入力: storeInput("M06-11試験店舗（本店相当）", "エムゼロロクイチイチシケンテンポホンテンソウトウ", "Kaitori Test Main", "m0611main", "K1M"), 閾値: ["1000", "5000", "10000"] as [string, string, string] },
-  branch: { 入力: storeInput("M06-11試験支店A", "エムゼロロクイチイチシケンシテンエー", "Kaitori Test Branch A", "m0611brancha", "K1N"), 閾値: ["2000", "7000", "12000"] as [string, string, string] },
+  main: { 入力: 使い回す店舗の入力("221", "M06-11試験店舗（本店相当）"), 閾値: ["1000", "5000", "10000"] as [string, string, string] },
+  branch: { 入力: 使い回す店舗の入力("4973", "M06-11試験支店A"), 閾値: ["2000", "7000", "12000"] as [string, string, string] },
 };
 export const 支店URLの = (k: 店キー): string => 店の定義[k].入力.支店URL;
 /** 商品仕訳の見出しに使う閾値（円） */
@@ -98,7 +104,7 @@ async function 前提を読む(browser: Browser, issue: (m: string) => void): Pr
     const disc = await 登録済みの割引率ID(page);
     const group = await readExistingSellGroupName(page);
     const set = await ensureCardset(page, "M06-11試験カードセット", "M0611 Test Set", "M0611S", issue);
-    const shelves = (await 棚番号を読む(page)).sort((a, b) => a.並び順 - b.並び順);
+    const shelves = (await 棚番号を全件読む(page)).sort((a, b) => a.並び順 - b.並び順);
     return { 言語: { JP: lang.日本語, EN: lang.英語, 他: lang.その他言語.id, 他の名: lang.その他言語.label }, レア: { M: M.名称, C: C.名称, R: R?.名称 ?? "" }, 割引率: disc.id, カテゴリ: cat.id, 購入グループ: group, カードセット: set, 棚: shelves.map((s) => ({ 名称: s.名称, 並び順: s.並び順 })) };
   });
   前提の控え = v;
@@ -175,8 +181,10 @@ async function 作る(browser: Browser, seedId: string, 申込者の姓: string,
       カード.set(x, { 詳細ID: c.カード詳細ID });
     }
     const 見出し = await カード商品CSVの見出し(page);
+    const 公開 = await カード商品CSVの公開の値(page);
+    issue(`カード商品CSVの商品公開ステータスは、「2」（公開のつもり）でなく、画面のCSVの形式の説明で「公開」に当たる値 ${公開.商品公開ステータス} を入れた（説明では 1:公開 2:非公開 3:廃止。2 を入れると非公開になる）。支店の商品公開ステータスは ${公開.支店の商品公開ステータス}（公開）`);
     const row = (x: 品): Record<string, string> => ({
-      "商品ID": "", "言語(ID)": p.言語[x.言語 ?? "JP"], "商品公開ステータス": "2", "支店の商品公開ステータス": "1",
+      "商品ID": "", "言語(ID)": p.言語[x.言語 ?? "JP"], "商品公開ステータス": 公開.商品公開ステータス, "支店の商品公開ステータス": 公開.支店の商品公開ステータス,
       "商品名(日)": rc(x.名), "商品名(英)": rc(x.名), "サイズ": "1", "重量": "1", "商品カテゴリ(ID)": p.カテゴリ,
       "購入グループ名称": p.購入グループ, "割引率(ID)": p.割引率, "基準価格": String(x.価格), "販売価格": String(x.価格), "買取価格": String(x.価格),
       "カード詳細(ID)": カード.get(x)!.詳細ID,
@@ -231,7 +239,19 @@ function 買取シード(seedId: string, 申込者の姓: string, d: 定義): vo
   defineSeed(seedId, { needs: ["S-M06-11-ADM", "S-M06-11-REF"] }, async ({ browser, notes, seed }) => {
     const ids = await 作る(browser, seedId, 申込者の姓, d);
     d.買取.forEach((b, i) => notes.set(b.ラベル, ids[i]));
-    void seed;
+    // シード表の〔実在庫ID-…〕は、画面に表示されない実在庫を「買取詳細画面の実在庫情報で、前記の商品名の行を指す呼び名」と定めたもの。
+    // 控える番号は無いので、呼び名の英字の順に、買取の商品を並べた順の商品名（実行の印つき）を控える（ケースは商品名で行を指す）
+    const 実在庫ラベル = [...new Set(Notes.labelsIn(seed["状態・属性"] + seed.投入方法).filter((l) => /^〔実在庫ID-M0611-[^〕…]+〕$/.test(l)))].sort();
+    const 商品名の並び = d.買取.flatMap((b) => b.品.map((x) => rc(x.名)));
+    実在庫ラベル.forEach((l, i) => { if (i < 商品名の並び.length) notes.set(l, 商品名の並び[i]); });
+    if (実在庫ラベル.length) reportSeedIssue(seedId, `${実在庫ラベル.join("・")} は、画面に表示されない実在庫を商品名の行で指す呼び名なので、買取の商品を並べた順に商品名を控えた`);
+    // シード表が店舗IDを控えると定めるもの（ケース専用の支店）は、代わりに使った試験用の店舗の店舗IDを控える
+    const 店ラベル = Notes.labelsIn(seed["状態・属性"] + seed.投入方法).filter((l) => /^〔店舗ID-M0611-[^〕]+〕$/.test(l));
+    if (店ラベル.length) {
+      const 店ID = await 店舗を用意する(browser, d.店, (m) => reportSeedIssue(seedId, m));
+      for (const l of 店ラベル) notes.set(l, 店ID);
+      reportSeedIssue(seedId, `${店ラベル.join("・")} は、シード表の店舗の代わりに使った試験用の店舗の店舗ID（${店ID}）を控えた`);
+    }
   });
 }
 

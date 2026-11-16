@@ -14,6 +14,7 @@ import { caseTest, CaseBody, expect } from "../../lib/case";
 import { BASE_URL } from "../../config/env";
 import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
 import { EventDetailPage, クエリの値, 検索条件の札 } from "../../pages/front/f07_03_event_detail";
+import { 開催店舗 } from "../../pages/admin/f07_03_setup";
 import { 会員一覧, 大会名一覧 } from "../../seeds/f07-03";
 import "../../seeds/f07-03";
 
@@ -51,15 +52,15 @@ caseTest("IT-F07-03-004", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await 詳細を開く(d, id); });
   let status = 0;
   await step(2, async () => {
-    const link = d.パンくずのリンク("トーナメントセンター東京");
-    await expect(link, "パンくずの「トーナメントセンター東京」").toHaveCount(1);
+    const link = d.パンくずのリンク(開催店舗);
+    await expect(link, `パンくずの「${開催店舗}」（店舗ID 1の画面の店名）`).toHaveCount(1);
     status = (await d.押して移る(link))?.status() ?? 0;
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "移った画面（大会詳細検索の絞り込み結果）").toMatch(/\/events\/list\/?$/);
     expect.soft(status, "絞り込み結果画面の応答").toBe(200);
     expect.soft(クエリの値(page.url(), "venues"), "絞り込みの条件の店舗（店舗ID 1）").toEqual(["1"]);
-    expect.soft(await 検索条件の札(page), "絞り込み結果画面に出た検索条件").toEqual(["トーナメントセンター東京"]);
+    expect.soft(await 検索条件の札(page), "絞り込み結果画面に出た検索条件").toEqual([開催店舗]);
   });
 });
 

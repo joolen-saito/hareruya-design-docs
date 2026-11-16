@@ -9,6 +9,8 @@ export type 一覧の行 = {
   プレイヤー: string; 大会名: string; 成績: string; 参加人数: string; タグ: string[];
   /** 画像の上の印に「非公開」の印（private）が付いている */
   非公開の印: boolean;
+  /** 行の画像の表示（背景画像の参照先。F09-02 のデッキ検索結果と同じ組み立て） */
+  画像: string;
 };
 
 export class OthersListPage {
@@ -21,7 +23,7 @@ export class OthersListPage {
   async 開く(top: DeckTopPage): Promise<number> {
     const res = this.page.waitForResponse((r) => r.request().isNavigationRequest() && /\/deck\/others\//.test(new URL(r.url()).pathname), { timeout: 60_000 });
     await top.その他の入口.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForURL(/\/deck\/others\//, { waitUntil: "load", timeout: 60_000 }), top.その他の入口.click()]);
+    await Promise.all([this.page.waitForURL(/\/deck\/others\//, { waitUntil: "load", timeout: 60_000 }), top.その他の入口.click({ noWaitAfter: true })]);
     const status = (await res).status();
     await this.読み込みを待つ();
     return status;
@@ -47,6 +49,8 @@ export class OthersListPage {
     await this.読み込みを待つ();
     return this.一覧の項目.evaluateAll((lis) => lis.map((li) => {
       const t = (c: string) => (li.querySelector(c)?.textContent ?? "").replace(/\s+/g, " ").trim();
+      const img = li.querySelector(".deckSearch-searchResult__item__img") as HTMLElement | null;
+      const bg = img ? (img.style.backgroundImage || getComputedStyle(img).backgroundImage) : "";
       return {
         プレイヤー: t(".deckSearch-searchResult__item__playerName__td"),
         大会名: t(".deckSearch-searchResult__item__tournamentName__td"),
@@ -54,6 +58,7 @@ export class OthersListPage {
         参加人数: t(".deckSearch-searchResult__item__playerNumber__td"),
         タグ: Array.from(li.querySelectorAll(".deckSearch-searchResult__item__deckTag__link")).map((s) => (s.textContent ?? "").replace(/\s+/g, " ").trim()),
         非公開の印: !!li.querySelector(".deckSearch-searchResult__item__link.private"),
+        画像: bg.replace(/^url\(["']?/, "").replace(/["']?\)$/, ""),
       };
     }));
   }
@@ -78,6 +83,6 @@ export class OthersListPage {
     const link = this.ページ番号(n);
     await expect(link, `一覧のページ送りの「${n}」`).toBeVisible();
     await link.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForURL(/\/deck\/result\//, { waitUntil: "load", timeout: 60_000 }), link.click()]);
+    await Promise.all([this.page.waitForURL(/\/deck\/result\//, { waitUntil: "load", timeout: 60_000 }), link.click({ noWaitAfter: true })]);
   }
 }

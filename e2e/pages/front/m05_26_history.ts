@@ -10,7 +10,7 @@ export class 購入履歴の出荷日Page {
     await frontLogin(this.page, m);
     const link = this.page.locator('a[href$="/mypage/shopping_history"]:visible').first();
     await expect(link, "マイページの「購入履歴」").toBeVisible();
-    await Promise.all([this.page.waitForURL(/\/mypage\/shopping_history/), link.click()]);
+    await Promise.all([this.page.waitForURL(/\/mypage\/shopping_history/), link.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -18,7 +18,7 @@ export class 購入履歴の出荷日Page {
   async 詳細を開く(注文番号: string): Promise<void> {
     const box = this.page.locator(".p-hareruya-history-list__box").filter({ hasText: 注文番号 }).first();
     await expect(box, `購入履歴一覧の注文番号 ${注文番号} の行`).toBeVisible();
-    await Promise.all([this.page.waitForURL(/\/mypage\/shopping_history_detail\//), box.getByRole("link", { name: "詳細を見る" }).first().click()]);
+    await Promise.all([this.page.waitForURL(/\/mypage\/shopping_history_detail\//), box.getByRole("link", { name: "詳細を見る" }).first().click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 

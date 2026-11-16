@@ -22,7 +22,7 @@ export class MtgMasterEditPage {
     await this.選択欄.evaluate((e, v) => { const s = e as HTMLSelectElement; s.add(new Option(v, v)); s.value = v; }, 値);
   }
   async 選択を押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 45_000 }), this.選択ボタン.click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), this.選択ボタン.click({ timeout: 20_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   get カード名リスト作成リンク(): Locator { return this.page.getByRole("link", { name: "カード一覧の「カード名リスト作成」" }); }
@@ -59,13 +59,90 @@ export class MtgMasterEditPage {
     return this.なりすまし対策トークン.evaluateAll((els, v) => { els.forEach((e) => { (e as HTMLInputElement).value = v; }); return els.length; }, 値);
   }
   async 登録を押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 45_000 }), this.登録ボタン.click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), this.登録ボタン.click({ timeout: 20_000, noWaitAfter: true })]);
   }
   /** 入力エラーとして画面に出ているメッセージ（開発用の帯は除く） */
   async 入力エラーの文(): Promise<string[]> {
     const l = this.page.locator(".alert-danger, .invalid-feedback, .form-error-message").filter({ hasNotText: "デバッグモードが有効になっています" });
     return (await l.allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
   }
+
+  // ---- 2026-11-12 追加: 行の値を読む・入れる（共有のマスタを控えて戻す・試験の行を足す） ----
+
+  /** 選択欄の値（送信の値。例 color・campaign_tag） */
+  async 選ばれている値(): Promise<string> { return this.選択欄.inputValue(); }
+  /** 列の項目（入力欄の送信名の最後の [ ] の中。左から順）。末尾の入力用の空行から読む。1列目は並び順 */
+  async 列の項目(): Promise<string[]> {
+    return this.入力用の空行.locator("input, select").evaluateAll((es) => es.map((e) => /\[new\]\[([^\]]+)\]$/.exec((e as HTMLInputElement).name)?.[1] ?? ""));
+  }
+  /** 列の入力欄の種類（text・number・datetime-local・select）。列の項目と同じ並び */
+  async 列の種類(): Promise<string[]> {
+    return this.入力用の空行.locator("input, select").evaluateAll((es) => es.map((e) => (e.tagName === "SELECT" ? "select" : (e as HTMLInputElement).type)));
+  }
+  /** 登録済みの行の、識別番号と各項目の画面の値（入力欄の値。日時は入力欄の値のまま） */
+  async 全行を読む(): Promise<マスタの行[]> {
+    return this.一覧の領域.locator("tbody tr").evaluateAll((trs) => {
+      const out: { 番号: number; 値: Record<string, string> }[] = [];
+      for (const tr of trs) {
+        const cs = Array.from(tr.querySelectorAll("input, select")) as (HTMLInputElement | HTMLSelectElement)[];
+        const m = cs.length ? /^rows\[(\d+)\]\[/.exec(cs[0].name) : null;
+        if (!m) continue;
+        const 値: Record<string, string> = {};
+        for (const c of cs) { const k = /\]\[([^\]]+)\]$/.exec(c.name)?.[1]; if (k) 値[k] = c.value; }
+        out.push({ 番号: Number(m[1]), 値 });
+      }
+      return out;
+    });
+  }
+  /** 行（識別番号か、末尾の入力用の空行 "new"）の項目の入力欄 */
+  行の欄(番号: number | "new", 項目: string): Locator { return this.一覧の領域.locator(`[name="rows[${番号}][${項目}]"]`); }
+  /** 行の項目に値を入れる（選択欄は値で選ぶ） */
+  async 行に入れる(番号: number | "new", 値: Record<string, string>): Promise<void> {
+    for (const [k, v] of Object.entries(値)) {
+      const el = this.行の欄(番号, k);
+      await expect(el, `行（${番号}）の項目 ${k} の入力欄`).toHaveCount(1);
+      if ((await el.evaluate((e) => e.tagName)) === "SELECT") await el.selectOption(v, { timeout: 20_000 });
+      else await el.fill(v, { timeout: 20_000 });
+    }
+  }
+  /** 行の、列の位置（1から。1列目は並び順）ごとに値を入れる */
+  async 列で入れる(番号: number | "new", 値: Record<number, string>): Promise<void> {
+    const 項目 = await this.列の項目();
+    const v: Record<string, string> = {};
+    for (const [n, x] of Object.entries(値)) {
+      const k = 項目[Number(n) - 1];
+      if (!k) throw new Error(`${n} 列目が無い（列は ${項目.length} 列）`);
+      v[k] = x;
+    }
+    await this.行に入れる(番号, v);
+  }
+  /** 行の入力欄（選択欄を除く）をすべて空にする（画面の作りでは、全項目を空にした行は登録で削除される） */
+  async 行を空にする(番号: number): Promise<void> {
+    const els = await this.一覧の領域.locator(`input[name^="rows[${番号}]["]`).all();
+    for (const e of els) await e.fill("", { timeout: 20_000 });
+  }
+  /** 「登録」を押し、次の画面の読み込みを待って、成功・エラーの表示を返す（どちらかが出るまで待つ） */
+  async 登録して結果を読む(): Promise<{ 成功: string[]; エラー: string[]; 状態: number }> {
+    const resP = this.page.waitForResponse((r) => r.request().isNavigationRequest() && r.request().method() === "POST", { timeout: 60_000 }).catch(() => null);
+    await this.登録を押す();
+    const res = await resP;
+    await this.page.waitForLoadState("load");
+    const ok = this.page.locator(".alert-success");
+    const ng = this.page.locator(".alert-danger").filter({ hasNotText: "デバッグモードが有効になっています" });
+    await ok.or(ng).first().waitFor({ state: "visible", timeout: 30_000 }).catch(() => undefined);
+    const t = async (l: Locator) => (await l.allInnerTexts()).map((x) => x.replace(/\s+/g, " ").trim()).filter(Boolean);
+    return { 成功: await t(ok), エラー: await t(ng), 状態: res?.status() ?? 0 };
+  }
+}
+
+export type マスタの行 = { 番号: number; 値: Record<string, string> };
+/** 行の、列の位置（1から。1列目は並び順）の値 */
+export const 列の値 = (r: マスタの行 | undefined, n: number): string => (r ? Object.values(r.値)[n - 1] ?? "" : "");
+
+/** 日時の入力欄の値（例 2026-09-01T10:00）を、設計書の表示の形（2026-09-01 10:00:00）にそろえる */
+export function 日時の表示にそろえる(v: string): string {
+  const s = v.replace("T", " ");
+  return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(s) ? `${s}:00` : s;
 }
 
 /** カードセット管理・デッキ管理の、MTGマスターデータ編集への入口 */

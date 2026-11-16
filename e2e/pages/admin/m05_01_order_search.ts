@@ -75,25 +75,25 @@ export class OrderSearchPage {
   async choosePattern(name: string): Promise<string> {
     const link = this.patternLink(name);
     await expect(link, `検索パターンのリンク「${name}」は1件`).toHaveCount(1);
-    await Promise.all([this.page.waitForURL(/\/order\/search\/pattern\/\d+$/), link.click()]);
+    await Promise.all([this.page.waitForURL(/\/order\/search\/pattern\/\d+$/, { timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     return /\/pattern\/(\d+)$/.exec(this.page.url())![1];
   }
 
   /** 検索パターン保存ボタンを押す。移った先の応答を待つ */
   async clickSave(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.saveButton.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.saveButton.click({ noWaitAfter: true })]);
   }
 
   /** 検索パターン削除ボタンを押す。移った先の応答を待つ */
   async clickDelete(): Promise<void> {
     await expect(this.deleteButton, "検索パターン削除ボタン").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.deleteButton.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.deleteButton.click({ noWaitAfter: true })]);
   }
 
   /** 検索するボタンを押し、結果の件数の表示まで待つ */
   async clickSearch(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.searchButton.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.searchButton.click({ noWaitAfter: true })]);
     await expect(this.page.locator("#search_total_count"), "検索結果の件数の表示").toBeVisible();
   }
 
@@ -133,7 +133,7 @@ export class OrderSearchPage {
       const n = await links.count();
       const idx = i - removed;
       if (idx >= n) break;
-      await Promise.all([this.page.waitForURL(/\/order\/search\/pattern\/\d+$/), links.nth(idx).click()]);
+      await Promise.all([this.page.waitForURL(/\/order\/search\/pattern\/\d+$/, { timeout: 120_000 }), links.nth(idx).click({ noWaitAfter: true })]);
       await this.page.waitForLoadState("load");
       if ((await this.orderNumber.inputValue()) === value) {
         await this.clickDelete();
@@ -150,7 +150,7 @@ export class OrderSearchPage {
       await this.open();
       const links = this.patternBlock.locator(".row.mb-3 > .col-3 a[id^='search_pattern_']");
       if ((await links.count()) === 0) return removed;
-      await Promise.all([this.page.waitForURL(/\/order\/search\/pattern\/\d+$/), links.first().click()]);
+      await Promise.all([this.page.waitForURL(/\/order\/search\/pattern\/\d+$/, { timeout: 120_000 }), links.first().click({ noWaitAfter: true })]);
       await this.page.waitForLoadState("load");
       await this.clickDelete();
       removed++;

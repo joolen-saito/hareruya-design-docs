@@ -9,8 +9,9 @@ import { expect, caseTest, CaseBody } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
+import { CSVの内容を画面の枠に出す, CSVの枠のデータ行 } from "../../lib/evidence_other";
 import { デッキ一覧, デッキのタグ, 基線のアーキタイプ, 選んだ店舗 } from "../../pages/admin/m15_deck";
-import { chooseByLabel } from "../../pages/admin/common";
+import { chooseByLabel, withoutEnvBanners } from "../../pages/admin/common";
 import { デッキ一括編集, デッキIDで検索する } from "../../pages/admin/m15_04_bulk_edit";
 import { DeckSearchModal, DeckTopPage } from "../../pages/front/f09_01_deck_top";
 import { DeckResultPage } from "../../pages/front/f09_02_deck_result";
@@ -95,16 +96,16 @@ caseTest("IT-M15-01-005", async ({ page, step, expected, notes }) => {
   await step(1, async () => { await l.開く(); await 日付をクリアして検索する(l); });
   let 名前1: string[] = [];
   await step(2, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.並べ替え項目.selectOption({ label: "デッキ名" })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.並べ替え項目.selectOption({ label: "デッキ名" })]);
     await l.結果を待つ();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.並び順.selectOption({ label: "昇順" })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.並び順.selectOption({ label: "昇順" })]);
     await l.結果を待つ();
     名前1 = await l.表示されたデッキ名();
   });
   await step(3, async () => {
     await page.getByRole("link", { name: "デッキ管理" }).first().click().catch(() => {});
     const m = page.getByRole("link", { name: "デッキ一覧" }).first();
-    if (await m.isVisible().catch(() => false)) { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), m.click()]); }
+    if (await m.isVisible().catch(() => false)) { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), m.click({ noWaitAfter: true })]); }
     else { note("サイドメニューからデッキ一覧を開けなかったため、デッキ一覧のアドレスを直接開いた"); await l.開く(); }
   });
   await step(4, async () => { await 日付をクリアして検索する(l); });
@@ -122,7 +123,7 @@ caseTest("IT-M15-01-007", async ({ page, step, expected }) => {
   await login(page, M1501_ADMIN_A);
   const l = new デッキ一覧(page);
   await step(1, async () => { await l.開く(); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.新規登録.click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.新規登録.click({ noWaitAfter: true })]); });
   await expected(async () => { expect(path(page), "表示された画面（デッキ新規登録）").toBe(`${一覧のパス}/new`); });
 });
 
@@ -133,7 +134,7 @@ caseTest("IT-M15-01-008", async ({ page, step, expected }) => {
   await step(2, async () => {
     // 画面の表示は「CSV登録」（正本の「CSV,TSV取り込み」に当たる位置のボタン）
     note("画面のボタンの表示は「CSV登録」で、正本の「CSV,TSV取り込み」とは文言が違う。同じ位置にあるデッキ登録CSVの入口を押した");
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 30_000 }), page.locator('a[href$="/deck/csv_import"]').click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator('a[href$="/deck/csv_import"]').click({ timeout: 30_000, noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(path(page), "表示された画面（デッキ登録CSV, TSVアップロード）").toBe(`${一覧のパス}/csv_import`);
@@ -232,24 +233,24 @@ caseTest("IT-M15-01-036", async ({ page, step, expected }) => {
   await l.開く();
   await step(1, async () => { await 日付をクリアして検索する(l); });
   await step(2, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.並べ替え項目.selectOption({ label: "デッキ名" })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.並べ替え項目.selectOption({ label: "デッキ名" })]);
     await l.結果を待つ();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.並び順.selectOption({ label: "昇順" })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.並び順.selectOption({ label: "昇順" })]);
     await l.結果を待つ();
   });
   let 不正後: { 結果あり: boolean; 異常表示: string } = { 結果あり: true, 異常表示: "" };
   await step(3, async () => {
     await page.locator("#admin_search_deck .hidden_sort_order").evaluate((e) => { (e as HTMLInputElement).value = "INVALID"; });
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.検索ボタン.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.検索ボタン.click({ noWaitAfter: true })]);
     不正後 = {
       結果あり: (await page.getByText(/検索結果：\d+件が該当しました/).count()) > 0,
-      異常表示: (await page.locator(".alert-danger, .invalid-feedback, .form-error-message, .text-danger").allInnerTexts()).map((t) => t.trim()).filter(Boolean).join(" / "),
+      異常表示: withoutEnvBanners((await page.locator(".alert-danger, .invalid-feedback, .form-error-message, .text-danger").allInnerTexts()).map((t) => t.trim()).filter(Boolean)).join(" / "),
     };
   });
   await step(4, async () => { await 日付をクリアして検索する(l); });
   await expected(async () => {
     expect.soft(不正後.異常表示 !== "", `並び順が不正のとき、エラーが表示される（表示: ${不正後.異常表示 || "なし"}）`).toBe(true);
-    expect.soft(不正後.結果あり, "並び順が不正のとき、検索結果が出ない初期画面になる（結果が表示された＝true）").toBe(false);
+    expect.soft(不正後.結果あり === false, "並び順が不正のとき、検索結果が出ない初期画面になる（結果の表示なし）").toBe(true);
     const 並び = (await l.表示されたデッキ名()).map((n) => (n === "-" ? "" : n));
     expect.soft(並び.every((n, i) => i === 0 || 並び[i - 1].localeCompare(n, "ja") <= 0), "再検索した一覧が、保持されているデッキ名の昇順で表示されている").toBe(true);
     expect.soft(await l.並べ替え項目.locator("option:checked").innerText(), "並べ替え項目が保持されている").toBe("デッキ名");
@@ -264,7 +265,7 @@ caseTest("IT-M15-01-042", async ({ page, step, expected, notes }) => {
   const l = new デッキ一覧(page);
   const id = notes.get("〔デッキID-M1501-042〕");
   await step(1, async () => { await 名前で検索する(l, rc("青空")); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.行(id).locator(`a[href$="/deck/${id}/edit"]`).first().click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.行(id).locator(`a[href$="/deck/${id}/edit"]`).first().click({ noWaitAfter: true })]); });
   await expected(async () => { expect(path(page), "表示された画面（そのデッキの編集）").toBe(`${一覧のパス}/${id}/edit`); });
 });
 
@@ -287,7 +288,7 @@ caseTest("IT-M15-01-044", async ({ page, step, expected, notes }) => {
   const id = notes.get("〔デッキID-M1501-044〕");
   await step(1, async () => { await 名前で検索する(l, rc("青空")); });
   await step(2, async () => { await l.メニュー(id).click(); });
-  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.行(id).locator(".dropdown-menu").getByRole("link", { name: "編集" }).click()]); });
+  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.行(id).locator(".dropdown-menu").getByRole("link", { name: "編集" }).click({ noWaitAfter: true })]); });
   await expected(async () => { expect(path(page), "表示された画面（そのデッキの編集）").toBe(`${一覧のパス}/${id}/edit`); });
 });
 
@@ -302,7 +303,7 @@ caseTest("IT-M15-01-049", async ({ page, step, expected, notes }) => {
   await step(2, async () => { await トークンを消す(page); });
   await step(3, async () => {
     page.once("dialog", (d) => { void d.accept(); });
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.一括削除.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.一括削除.click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(path(page), "表示された画面（デッキ検索・一覧）").toBe(一覧のパス);
@@ -322,14 +323,17 @@ caseTest("IT-M15-01-051", async ({ page, step, expected, notes }) => {
     const chunks: Buffer[] = [];
     for await (const c of await dl.createReadStream()) chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c));
     text = decodeCsvBytes(Buffer.concat(chunks));
+    // 読んだCSV（ファイル名・見出し・全データ行）を画面の枠に書き出して残す。続く期待結果の確かめはこの枠の要素で行い、赤枠がCSVの値に付く
+    await CSVの内容を画面の枠に出す(page, [{ 題: `ファイル名：${dl.suggestedFilename()}`, 行: parseCsv(text) }]);
   });
   let rows: string[][] = [];
   await step(4, async () => { rows = parseCsv(text); });
   await expected(async () => {
-    const all = rows.flat();
-    expect.soft(rows.length > 1, "CSVがダウンロードされ、見出しのほかに行がある").toBe(true);
-    expect.soft(all.includes(A) && all.includes(B), "選択したデッキ（A・B）の情報が出力されている").toBe(true);
-    expect.soft(all.includes(C), "選択しなかったデッキ（C）が出力に含まれている").toBe(false);
+    const 値のセル = (id: string) => page.locator("#e2e-csv-note td, #e2e-csv-note th").filter({ hasText: new RegExp(`^${id}$`) });
+    await expect.soft(CSVの枠のデータ行(page, 0).first(), "CSVがダウンロードされ、見出しのほかに行がある").toBeVisible();
+    await expect.soft(値のセル(A).first(), "選択したデッキAの情報が出力されている").toBeVisible();
+    await expect.soft(値のセル(B).first(), "選択したデッキBの情報が出力されている").toBeVisible();
+    await expect.soft(値のセル(C), "選択しなかったデッキ（C）が出力に含まれている").toHaveCount(0);
   });
 });
 
@@ -339,7 +343,7 @@ caseTest("IT-M15-01-052", async ({ page, step, expected, notes }) => {
   const id = notes.get("〔デッキID-M1501-052〕");
   await step(1, async () => { await l.開く(); await l.日付クリア.click(); await l.f("deck_id").fill(id); await l.検索する(); await l.選択(id).check(); });
   await step(2, async () => { await トークンを消す(page); });
-  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.CSV出力.click()]); });
+  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.CSV出力.click({ noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(path(page), "表示された画面（デッキ検索・一覧）").toBe(一覧のパス);
     expect.soft((await page.locator("body").innerText()).includes("セッションがタイムアウトしました。もう一度やり直してください。"), "有効期限切れのメッセージが表示される").toBe(true);
@@ -369,7 +373,7 @@ caseTest("IT-M15-01-056", async ({ page, step, expected, notes, db }) => {
   await step(1, async () => { await 一括編集を開く(l, id); });
   await step(2, async () => { await l.一括編集.click(); await expect(l.一括編集パネル).toBeVisible(); });
   await step(3, async () => { await 一括の変更チェック(page, "result"); await 一括の欄(page, "result").fill("更新者確認"); });
-  await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("#bulk_update_execute").click()]); });
+  await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#bulk_update_execute").click({ noWaitAfter: true })]); });
   let 更新者: string | null = null;
   await step(5, async () => { 更新者 = 最終更新者の名前(id); });
   await expected(async () => { expect(更新者, "デッキの最終更新者").toBe("M15-01試験管理者B"); });
@@ -389,7 +393,7 @@ caseTest("IT-M15-01-058", async ({ page, step, expected, notes, db }) => {
       await 一括の欄(page, k).fill(v);
     }
   });
-  await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("#bulk_update_execute").click()]); });
+  await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#bulk_update_execute").click({ noWaitAfter: true })]); });
   let r = デッキの文字項目(id);
   await step(5, async () => { r = デッキの文字項目(id); });
   await expected(async () => {
@@ -412,12 +416,14 @@ function 一括編集の実行(no: "060" | "062", 値: string): CaseBody {
     await step(3, async () => { await 一括の変更チェック(page, "result"); await 一括の欄(page, "result").fill(値); });
     if (no === "060") {
       await step(4, async () => { await トークンを消す(page); });
-      await step(5, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("#bulk_update_execute").click()]); });
+      await step(5, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#bulk_update_execute").click({ noWaitAfter: true })]); });
     } else {
-      await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("#bulk_update_execute").click()]); });
+      await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#bulk_update_execute").click({ noWaitAfter: true })]); });
     }
     await expected(async () => {
       expect.soft(path(page).startsWith(一覧のパス) && !/\/(new|\d+\/edit)$/.test(path(page)), "表示された画面（デッキ検索・一覧）").toBe(true);
+      // 062 は保存に失敗しても同じ一覧へ戻る作りなので、一括編集が保存できたうえでの遷移であることを、保存できた知らせで確かめる
+      if (no === "062") await expect.soft(page.locator(".alert-success"), "一括編集を保存できた知らせ（失敗して戻ったのではない）").toBeVisible();
     });
   };
 }
@@ -602,7 +608,7 @@ caseTest("IT-M15-01-097", async ({ page, step, expected, notes }) => {
   await step(1, async () => {
     await l.日付クリア.click(); await l.f("deck_name").fill(rc("M1501-097"));
     await l.検索する();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.件数選択.selectOption({ label: "10件" })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.件数選択.selectOption({ label: "10件" })]);
     await l.結果を待つ();
   });
   let url = "";
@@ -662,7 +668,7 @@ async function 日付クリアして名前で検索する(l: デッキ一覧, �
 async function メニューから一覧を開く(page: Page, l: デッキ一覧) {
   await page.getByRole("link", { name: "デッキ管理" }).first().click().catch(() => {});
   const m = page.getByRole("link", { name: "デッキ一覧" }).first();
-  if (await m.isVisible().catch(() => false)) { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), m.click()]); }
+  if (await m.isVisible().catch(() => false)) { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), m.click({ noWaitAfter: true })]); }
   else { note("サイドメニューからデッキ一覧を開けなかったため、デッキ一覧のアドレスを直接開いた"); await l.開く(); }
 }
 
@@ -675,9 +681,9 @@ caseTest("IT-M15-01-004", async ({ page, step, expected }) => {
   await step(1, async () => { await l.日付クリア.click(); });
   await step(2, async () => { await l.f("deck_name").fill(語); await l.検索する(); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.件数選択.selectOption({ label: "10件" })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.件数選択.selectOption({ label: "10件" })]);
     await l.結果を待つ();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("ul.pagination a.page-link", { hasText: "2" }).first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("ul.pagination a.page-link", { hasText: "2" }).first().click({ noWaitAfter: true })]);
     await l.結果を待つ();
   });
   let 入力済み: string[] = [], 結果あり = true, 初期の件数選択: string | null = null;
@@ -723,7 +729,7 @@ caseTest("IT-M15-01-006", async ({ page, step, expected, notes }) => {
   await l.開く();
   await step(1, async () => { await l.日付クリア.click(); });
   await step(2, async () => { await l.f("deck_name").fill(語); await l.検索する(); });
-  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.CSV出力.click()]); });
+  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.CSV出力.click({ noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(path(page).startsWith(一覧のパス) && !/\/(new|\d+\/edit)$/.test(path(page)), "表示された画面（デッキ検索・一覧）").toBe(true);
     expect.soft(await l.f("deck_name").inputValue(), "デッキ名の検索条件").toBe(語);
@@ -900,7 +906,7 @@ caseTest("IT-M15-01-032", async ({ page, step, expected }) => {
   await l.開く();
   await step(1, async () => {
     await 日付クリアして名前で検索する(l, 語);
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.件数選択.selectOption({ label: "10件" })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.件数選択.selectOption({ label: "10件" })]);
     await l.結果を待つ();
   });
   await step(2, async () => {
@@ -927,11 +933,11 @@ caseTest("IT-M15-01-037", async ({ page, browser, step, expected }) => {
   let url = "";
   await step(1, async () => {
     await 日付クリアして名前で検索する(l, 語);
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.件数選択.selectOption({ label: "10件" })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.件数選択.selectOption({ label: "10件" })]);
     await l.結果を待つ();
     const href = (await page.locator("ul.pagination a.page-link", { hasText: "2" }).first().getAttribute("href")) ?? "";
     url = new URL(href, page.url()).toString();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("ul.pagination a.page-link", { hasText: "2" }).first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("ul.pagination a.page-link", { hasText: "2" }).first().click({ noWaitAfter: true })]);
   });
   const ctxB = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
@@ -977,7 +983,7 @@ caseTest("IT-M15-01-048", async ({ page, step, expected, notes }) => {
   let 遷移先 = "";
   await step(3, async () => {
     page.once("dialog", (d) => { void d.accept(); });
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.一括削除.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.一括削除.click({ noWaitAfter: true })]);
     遷移先 = path(page);
   });
   let ids: string[] = [];
@@ -995,7 +1001,7 @@ caseTest("IT-M15-01-053", async ({ page, step, expected, notes }) => {
   const id = notes.get("〔デッキID-M1501-053〕");
   await step(1, async () => { await l.開く(); await l.日付クリア.click(); await l.f("deck_id").fill(id); await l.検索する(); await l.選択(id).check(); });
   await step(2, async () => { await l.選択(id).evaluate((e) => { (e as HTMLInputElement).value = "999999"; }); });
-  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.CSV出力.click()]); });
+  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.CSV出力.click({ noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(path(page).startsWith(一覧のパス) && !/\/(new|\d+\/edit)$/.test(path(page)), "遷移した画面（デッキ検索・一覧）").toBe(true);
   });

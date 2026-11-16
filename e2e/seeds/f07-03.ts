@@ -26,7 +26,7 @@ import { reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { ScheduleInput } from "../pages/admin/schedule";
-import { F0703_ADMIN, 大会と日程を登録する, 大会の入力, 試験管理者を用意する, 参照マスタを確かめる } from "../pages/admin/f07_03_setup";
+import { F0703_ADMIN, シード表の開催店舗名, 開催店舗, 大会と日程を登録する, 大会の入力, 試験管理者を用意する, 参照マスタを確かめる } from "../pages/admin/f07_03_setup";
 import { デッキ登録締切を直す, 会員を作る, 申込登録で選手を読む, 試験会員 } from "../pages/admin/f07_04_setup";
 import { frontLogin } from "../pages/admin/m04_19_order_shortage";
 import { DeckEntryEditPage } from "../pages/front/f06_16_deck_entry_k";
@@ -49,7 +49,8 @@ defineSeed("S-F07-03-REF", async ({ browser, seed }) => {
     const r = await 参照マスタを確かめる(page);
     if (r.店舗とフォーマット.length) throw new Error(`${seed.シードID}: 参照マスタがシード表と違う: ${r.店舗とフォーマット.join(" / ")}`);
     for (const m of r.参加対象者層) reportSeedIssue(seed.シードID, m);
-    reportSeedIssue(seed.シードID, "参照マスタは登録せず、イベント登録画面の選択肢に、店舗「トーナメントセンター東京」（番号1）・フォーマット「スタンダード」（番号1）があることを確かめた（シード表の投入方法は DB フィクスチャ）");
+    reportSeedIssue(seed.シードID, `読み替え: 店舗ID 1の画面の店名は「${開催店舗}」（シード表は「${シード表の開催店舗名}」で、間の空白だけが違う）。店舗IDが同じなので同じ店として、画面の店名で選ぶ・確かめる`);
+    reportSeedIssue(seed.シードID, "参照マスタは登録せず、イベント登録画面の選択肢に、店舗ID 1（番号1）・フォーマット「スタンダード」（番号1）があることを確かめた（シード表の投入方法は DB フィクスチャ）");
   });
 });
 

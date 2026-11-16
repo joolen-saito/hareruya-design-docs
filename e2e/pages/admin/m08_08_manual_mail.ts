@@ -32,7 +32,7 @@ export class CustomerManualMailPage {
   async 手動メール通知ボタンを押す(会員ID: string): Promise<void> {
     const a = this.page.locator(`a[href*="/customer/manual_mail/${会員ID}"]`).first();
     await expect(a, "会員登録/編集画面の「手動メール通知」ボタン").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), a.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), a.click({ noWaitAfter: true })]);
   }
   /** 手動メール通知(入力画面)のアドレス（テンプレートを指定しない） */
   入力画面のURL(会員ID: string): string { return adminUrl(`/customer/manual_mail/${会員ID}`); }
@@ -115,7 +115,7 @@ export class CustomerManualMailPage {
   /** 入力画面の「会員編集画面へ戻る」を押す */
   async 入力画面の戻るを押す(): Promise<void> {
     const a = this.page.locator("#manual-mail-form .c-conversionArea__leftBlockItem a.c-baseLink").first();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), a.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), a.click({ noWaitAfter: true })]);
   }
 
   // ---- 確認画面 ----
@@ -137,11 +137,11 @@ export class CustomerManualMailPage {
   /** 確認画面の「送信」を押し、移った先まで待つ（送信の確認の窓が出たら OK を押す） */
   async 送信を押す(): Promise<void> {
     this.page.once("dialog", (d) => { void d.accept(); });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.page.locator("#complete").click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.page.locator("#complete").click({ noWaitAfter: true })]);
   }
   /** 確認画面の「会員編集画面へ戻る」を押す */
   async 確認画面の戻るを押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.page.locator("#back").click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), this.page.locator("#back").click({ noWaitAfter: true })]);
   }
   /** 画面上部のお知らせ */
   async お知らせ(): Promise<string[]> {
@@ -157,7 +157,7 @@ export class CustomerManualMailPage {
     await expect(row, `会員検索一覧(検索結果)にメールアドレス ${メール} の行が1つある`).toHaveCount(1);
     const a = row.locator('a[href$="/history"]').first();
     await expect(a, "行の「メール履歴」アイコン").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), a.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), a.click({ noWaitAfter: true })]);
   }
   /** 会員検索一覧で語を入れて検索し、メールアドレスの行の「メール履歴」アイコンを押す */
   async 一覧からメール履歴を開く(語: string, メール: string): Promise<void> {

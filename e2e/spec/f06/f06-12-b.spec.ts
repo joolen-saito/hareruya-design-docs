@@ -72,7 +72,12 @@ caseTest("IT-F06-12-011", async ({ page, step, expected }) => {
   let 前 = 依頼の状態(d.買取依頼ID);
   let 後 = 前;
   await step(1, async () => { 前 = 依頼の状態(d.買取依頼ID); });
-  await step(2, async () => { await n.開く(`/mypage/purchase_history/net/${d.買取依頼ID}/bulk`); });
+  await step(2, async () => {
+    const status = await n.開く(`/mypage/purchase_history/net/${d.買取依頼ID}/bulk`);
+    // 画面が開けていないと「変わらない」は確かめにならないため、まとめて買取査定結果の画面が表示されたことを先に確かめる
+    expect(status, "まとめて買取査定結果の画面の応答のHTTPステータス").toBe(200);
+    await expect(page.locator(".p-hareruya-purchase-list__item--bulk-all"), "まとめて買取査定結果の一覧が表示されている").toBeVisible();
+  });
   await step(3, async () => { 後 = 依頼の状態(d.買取依頼ID); });
   明細なしの補い();
   note("正本の外の補い", "更新日時を2026-09-11 12:00:00にそろえる準備（DBでの設定）は行わず、画面を開く前後の値を比べた");

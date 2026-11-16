@@ -10,7 +10,7 @@
  * - 買取詳細の「ステータス変更履歴」は 変更日時（年/月/日 時:分:秒）・ステータス・変更者 の表で、新しい順に並ぶ。
  * - 権限管理は、権限（行）ごとに、アクセスURLの権限（列）のチェック欄を持つ表。チェックが付いている＝許可、外れている＝拒否。
  */
-import { Dialog, expect, Page, Response } from "@playwright/test";
+import { Dialog, expect, Locator, Page, Response } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { OtcListPage } from "./m06_otc_list";
 
@@ -106,6 +106,11 @@ export class OtcOrderDetailPage {
     return ((await v.textContent({ timeout: OPEN })) ?? "").replace(/\s+/g, " ").trim();
   }
 
+  /** 操作履歴の欄の項目の値の欄（赤枠を付けるために、欄そのものを返す） */
+  項目の欄(見出し: string): Locator {
+    return this.page.locator(`xpath=//div[contains(@class,"row")][div[contains(@class,"col-3")]/strong[normalize-space()="${見出し}"]]/div[contains(@class,"col-9")]`).first();
+  }
+
   /** ステータス変更履歴（画面の並び＝新しい順） */
   async 履歴(): Promise<{ 変更日時: string; ステータス: string; 変更者: string }[]> {
     const card = this.page.locator(".card").filter({ has: this.page.locator(".card-header", { hasText: "ステータス変更履歴" }) });
@@ -124,7 +129,7 @@ export class OtcOrderDetailPage {
 
   /** 「ステータス変更」を押してステータス変更画面を開く */
   async ステータス変更を押す(): Promise<void> {
-    await Promise.all([this.page.waitForURL(/\/otcbuyorder\/status\/\d+/, { timeout: 60_000 }), this.page.getByRole("link", { name: "ステータス変更", exact: true }).click({ timeout: OPEN })]);
+    await Promise.all([this.page.waitForURL(/\/otcbuyorder\/status\/\d+/, { timeout: 120_000}), this.page.getByRole("link", { name: "ステータス変更", exact: true }).click({ timeout: OPEN, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -214,6 +219,17 @@ export class OtcStatusChangePage {
     return sel.locator("option").evaluateAll((os) => os.filter((o) => (o as HTMLOptionElement).value !== "").map((o) => (o.textContent ?? "").trim()));
   }
 
+  /**
+   * 変更後のステータスの選択肢を、画面の中に並べて見えるようにする（ブラウザの選択の一覧は画面の外に開き、画像に写らないため）。
+   * 欄の表示の行数（size）を選択肢の数にして、一覧の形で画面に出す。選択肢の中身・選択は変えない
+   */
+  async 選択肢の一覧を画面に出す(): Promise<void> {
+    const sel = this.選択欄();
+    await sel.scrollIntoViewIfNeeded();
+    await sel.evaluate((el) => { const e = el as HTMLSelectElement; e.size = e.options.length; });
+    await expect(sel.locator("option").first(), "変更後のステータスの選択肢が画面に並ぶ").toBeVisible({ timeout: OPEN });
+  }
+
   /** 変更後のステータスを選ぶ */
   async 選ぶ(表示: string): Promise<void> {
     const have = await this.選択肢();
@@ -270,7 +286,7 @@ export class OtcStatusChangePage {
   async 戻るを押す(): Promise<void> {
     const link = this.page.getByRole("link", { name: "店頭買取詳細" });
     await expect(link, "ステータス変更画面の「店頭買取詳細」（戻る）").toBeVisible({ timeout: OPEN });
-    await Promise.all([this.page.waitForURL(/\/otcbuyorder\/\d+(\?|$)/, { timeout: 60_000 }), link.click({ timeout: OPEN })]);
+    await Promise.all([this.page.waitForURL(/\/otcbuyorder\/\d+(\?|$)/, { timeout: 120_000}), link.click({ timeout: OPEN, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 

@@ -1,11 +1,13 @@
 /**
  * F02-02 本店のスマホ版ナビゲーション。正本: cases/F02-02_test_cases.tsv
- * 実装しないケース（記録 review/F02-02_progress_2026-11-10_dev.md）: DBでの準備・商品を作る・データを消すシードを使うもの。
+ * 2026-11-12 に 004〜008・036〜039・062 を足した（商品は検索サービスの索引に載せて作る。062 の表示用HTMLは印つきのカードセットに DB で設定）。
+ * そのほかの実装しないケースは記録 review/F02-02_progress_2026-11-10_dev.md。
  * スマートフォン表示は、画面 390×844・スマホの端末の印（isMobile・hasTouch・iPhone の UserAgent）のブラウザで開く（seeds/f02-02.ts の スマホ）。
  * 外部のサイトへのリンクは、新しいタブで開いた先のアドレスを確かめる（外部のサイトの中身は確かめない）。
  */
 import { test } from "@playwright/test";
-import { expect, caseTest, CaseCtx } from "../../lib/case";
+import { expect, caseTest, CaseBody, CaseCtx } from "../../lib/case";
+import { rc } from "../../lib/run_marker";
 import { SpNavPage, 行き先, アドレスの本体, 言語 } from "../../pages/front/f02_02_sp_nav";
 import { カードセット名, スマホ } from "../../seeds/f02-02";
 
@@ -265,7 +267,7 @@ caseTest("IT-F02-02-048", async (ctx) => {
     note(`${行き先の文(r)}・画面の見出し「${見出し}」`);
   });
   await ctx.expected(async () => {
-    expect.soft(r.新しいタブ, "同じタブで移った").toBe(false);
+    expect.soft(!r.新しいタブ, "同じタブで移った").toBe(true);
     expect.soft(見出し, "会員規約画面へ遷移した（画面の見出し）").toContain("会員規約");
   });
 });
@@ -298,6 +300,8 @@ caseTest("IT-F02-02-059", async (ctx) => {
     note("メニューの項目を確かめるため、メニュー表示ボタンを押してメニューを開いた");
     await n.押す(n.メニュー表示ボタン(), "メニュー表示ボタン");
     await ctx.page.waitForTimeout(800);
+    // メニューが開いていないと「買取・デッキ構築の導線が表示されない」は確かめにならないため、開いたことを確かめてから読む
+    await expect(n.メニューの欄(), "メニュー表示ボタンで開いたメニュー").toBeVisible();
     見える = await ctx.page.locator("header a:visible, header button:visible, nav.p-hareruya-bottom-nav a:visible").evaluateAll((els) =>
       els.map((e) => `${(e.textContent ?? "").replace(/\s+/g, " ").trim()} ${(e as HTMLAnchorElement).getAttribute("href") ?? ""}`));
     note(`表示されているナビ・メニューの項目: ${見える.join(" / ")}`);
@@ -333,5 +337,191 @@ caseTest("IT-F02-02-070", async (ctx) => {
     expect.soft(await n.ポイント().count(), "ポイントが表示されない（ポイントの欄が無い）").toBe(0);
     expect.soft((await n.ログインマイページ().innerText()).replace(/\s+/g, " ").trim(), "ログイン/マイページの表示").toBe("ログイン");
     expect.soft(await n.お気に入りの商品数().count(), "お気に入りに商品数が表示されない").toBe(0);
+  });
+});
+
+// =====================================================================================
+// 004〜008・036〜039・062（2026-11-12 追加）。商品は検索サービスの索引に載せて作る（seeds/f02-02.ts）
+// =====================================================================================
+
+/** 商品一覧の商品カードの商品名（見えているもの）。読み込みが済んだ（カードが1件以上出た、または0件の表示が出た）あとで読む */
+async function 一覧の商品名(n: SpNavPage): Promise<string[]> {
+  await n.page.waitForLoadState("load");
+  await n.商品カードたち().first().waitFor({ state: "visible", timeout: 30_000 }).catch(() => undefined);
+  return (await n.商品カードたち().evaluateAll((els) => els.map((e) => (e.textContent ?? "").replace(/\s+/g, " ").trim())));
+}
+
+caseTest("IT-F02-02-004", async (ctx) => {
+  const n = nav(ctx);
+  const A = カードセット名("テストセットA-004-F0202");
+  const 火 = rc("火の試験カード-004"), 別 = rc("火の別セットカード-004"), 水 = rc("水の試験カード-004");
+  let names: string[] = [];
+  await ctx.step(1, async () => { await n.トップを開く(); });
+  await ctx.step(2, async () => {
+    await n.押す(n.カードセット選択メニュー(), "カードセット選択メニュー");
+    await n.押す(n.カードセットの選択肢の(A), `カードセット「${A}」`);
+  });
+  await ctx.step(3, async () => { await n.検索欄に入れる("火"); });
+  await ctx.step(4, async () => {
+    await n.検索を押す();
+    names = await 一覧の商品名(n);
+    note(`移った先 ${n.page.url()}／商品カード ${names.length} 件: ${names.slice(0, 10).join(" ／ ")}`);
+  });
+  await ctx.expected(async () => {
+    const u = new URL(n.page.url());
+    expect.soft(u.searchParams.get("cardset"), "絞り込みのカードセット（テストセットA のカードセットID）").toBe(ctx.notes.get("〔カードセットID-F0202-004A〕"));
+    expect.soft(u.searchParams.get("product"), "絞り込みのキーワード").toBe("火");
+    expect.soft(names.filter((t) => t.includes(火)).length, `「${火}」が表示される`).toBe(1);
+    expect.soft(names.length, "商品一覧に表示される商品は「火の試験カード-004」だけ（件数）").toBe(1);
+    expect.soft(names.some((t) => t.includes(別) || t.includes(水)), "別セットの「火」の商品・カードセットAの「水」の商品は表示されない").toBe(false);
+  });
+});
+
+caseTest("IT-F02-02-005", async (ctx) => {
+  const n = nav(ctx);
+  const 名 = rc("火の試験カード-005");
+  await ctx.step(1, async () => { await n.トップを開く(); });
+  await ctx.step(2, async () => { await n.検索欄に入れる(名); });
+  await ctx.step(3, async () => { await n.検索を押す(); note(`移った先 ${n.page.url()}`); });
+  await ctx.step(4, async () => { await expect(n.商品検索テキストボックス(), "遷移後のスマホ版ナビの商品検索テキストボックス").toBeVisible(); });
+  await ctx.expected(async () => {
+    expect.soft(n.path(), "商品一覧画面へ遷移した").toMatch(/\/ja\/products\/search\/?$/);
+    await expect.soft(n.商品検索テキストボックス(), "商品検索テキストボックスに入力したキーワードが表示されている").toHaveValue(名);
+  });
+});
+
+/** 006・007: 候補リストの取得先（/products/search/unisuggest_api）だけを通信遮断する */
+async function 候補の取得を止める(ctx: CaseCtx): Promise<{ 止めた: () => number }> {
+  let k = 0;
+  await ctx.page.route(/\/products\/search\/unisuggest_api(\?|$)/, async (route) => { k++; await route.abort("failed"); });
+  note("通信遮断の対象は、商品検索の候補リストの取得先（/products/search/unisuggest_api）だけにした。通常の商品検索（/products/search）は通す");
+  return { 止めた: () => k };
+}
+
+caseTest("IT-F02-02-006", async (ctx) => {
+  const n = nav(ctx);
+  const 遮断 = await 候補の取得を止める(ctx);
+  let 見えた = true;
+  await ctx.step(1, async () => { await n.トップを開く(); });
+  await ctx.step(2, async () => { await n.検索欄に入れる(rc("火の試験カード-006")); });
+  await ctx.step(3, async () => {
+    for (let i = 0; i < 20 && 遮断.止めた() === 0; i++) await ctx.page.waitForTimeout(250);
+    await ctx.page.waitForTimeout(1500);
+    見えた = await n.候補リストが見えているか();
+    note(`候補リストの取得要求を ${遮断.止めた()} 回遮断した（取得要求は失敗で完了）`);
+  });
+  await ctx.expected(async () => {
+    expect.soft(遮断.止めた(), `候補リストの取得要求が送られた（遮断した回数 ${遮断.止めた()} 回）`).toBeGreaterThan(0);
+    expect.soft(!見えた, "商品検索の候補リストが表示されない").toBe(true);
+    expect.soft((await n.候補の文()).length, "候補リストの項目の数").toBe(0);
+  });
+});
+
+caseTest("IT-F02-02-007", async (ctx) => {
+  const n = nav(ctx);
+  const 遮断 = await 候補の取得を止める(ctx);
+  const 名 = rc("火の試験カード-007");
+  let names: string[] = [];
+  await ctx.step(1, async () => { await n.トップを開く(); });
+  await ctx.step(2, async () => { await n.検索欄に入れる(名); });
+  await ctx.step(3, async () => { await n.検索を押す(); names = await 一覧の商品名(n); note(`候補の取得要求を ${遮断.止めた()} 回遮断した／移った先 ${n.page.url()}／商品カード ${names.length} 件`); });
+  await ctx.expected(async () => {
+    expect.soft(遮断.止めた(), "候補リストの取得要求が送られて遮断された（回数）").toBeGreaterThan(0);
+    expect.soft(n.path(), "商品一覧画面へ遷移した").toMatch(/\/ja\/products\/search\/?$/);
+    expect.soft(new URL(n.page.url()).searchParams.get("product"), "入力したキーワードで絞り込まれた").toBe(名);
+    expect.soft(names.filter((t) => t.includes(名)).length, `「${名}」が表示される`).toBeGreaterThan(0);
+  });
+});
+
+caseTest("IT-F02-02-008", async (ctx) => {
+  const n = nav(ctx);
+  const 名 = rc("火の試験カード-008");
+  let 候補: string[] = [];
+  await ctx.step(1, async () => { await n.トップを開く(); await n.検索欄に入れる("火"); });
+  await ctx.step(2, async () => {
+    for (let i = 0; i < 20 && !候補.some((t) => t.includes(名)); i++) { await ctx.page.waitForTimeout(500); 候補 = await n.候補の文(); }
+    note(`候補リストの項目（${候補.length}件）: ${候補.join(" / ")}`);
+  });
+  await ctx.expected(async () => {
+    expect.soft(await n.候補リストが見えているか(), "候補リストが表示されている").toBe(true);
+    expect.soft(候補.some((t) => t.includes(名)), `候補リストの商品名サジェストに「${名}」が表示される`).toBe(true);
+  });
+});
+
+// ---- 036〜039 カテゴリアイコン ----
+
+async function カテゴリを開く(ctx: CaseCtx, n: SpNavPage): Promise<void> {
+  await n.押す(n.カテゴリアイコン(), "カテゴリアイコン");
+  for (let i = 0; i < 20 && !(await n.カテゴリモーダルが開いているか()); i++) await ctx.page.waitForTimeout(250);
+}
+
+caseTest("IT-F02-02-036", async (ctx) => {
+  const n = nav(ctx);
+  await ctx.step(1, async () => { await n.トップを開く(); });
+  await ctx.step(2, async () => {
+    await カテゴリを開く(ctx, n);
+    await n.カテゴリの第一階層の項目().first().waitFor({ state: "visible", timeout: 30_000 }).catch(() => undefined);
+  });
+  await ctx.expected(async () => {
+    expect.soft(await n.カテゴリモーダルが開いているか(), "カテゴリのモーダルが開いている").toBe(true);
+    await expect.soft(n.カテゴリモーダル(), "カテゴリのモーダル").toBeVisible();
+    expect.soft(await n.カテゴリの第一階層の項目().count(), "モーダルにカテゴリ第一階層の項目が表示されている（数）").toBeGreaterThan(0);
+  });
+});
+
+/** 037〜039: 開いたことを確かめてから閉じる */
+function 閉じるケース(閉じ方: "アイコン" | "閉じるボタン" | "枠外"): CaseBody {
+  return async (ctx) => {
+    const n = nav(ctx);
+    let 開いた = false;
+    await ctx.step(1, async () => { await n.トップを開く(); });
+    await ctx.step(2, async () => {
+      await カテゴリを開く(ctx, n);
+      開いた = await n.カテゴリモーダルが開いているか();
+      expect(開いた, "カテゴリのモーダルが開いた").toBe(true);
+    });
+    await ctx.step(3, async () => {
+      if (閉じ方 === "アイコン") await n.押す(n.カテゴリアイコン(), "開いているモーダルのカテゴリアイコン");
+      else if (閉じ方 === "閉じるボタン") await n.押す(n.カテゴリモーダルの閉じるボタン(), "カテゴリモーダルの閉じるボタン");
+      else {
+        const box = await n.カテゴリモーダル().boundingBox();
+        const vp = ctx.page.viewportSize()!;
+        // モーダルの中身の外側（画面の端）を押す
+        const x = 3, y = Math.min(vp.height - 3, (box?.y ?? 0) + (box?.height ?? vp.height) - 3);
+        note(`枠外として、画面の座標 (${x}, ${Math.round(y)}) を押した（モーダルの範囲 ${box ? `${Math.round(box.x)},${Math.round(box.y)} ${Math.round(box.width)}×${Math.round(box.height)}` : "読めない"}）`);
+        await ctx.page.mouse.click(x, y);
+      }
+      await ctx.page.waitForTimeout(800);
+    });
+    await ctx.expected(async () => {
+      expect.soft(開いた, "閉じる前にモーダルが開いていた").toBe(true);
+      expect.soft(!(await n.カテゴリモーダルが開いているか()), "カテゴリのモーダルが閉じている").toBe(true);
+    });
+  };
+}
+caseTest("IT-F02-02-037", 閉じるケース("アイコン"));
+caseTest("IT-F02-02-038", 閉じるケース("閉じるボタン"));
+caseTest("IT-F02-02-039", 閉じるケース("枠外"));
+
+caseTest("IT-F02-02-062", async (ctx) => {
+  const n = nav(ctx);
+  const セット = カードセット名("連携試験セット001");
+  const 名 = rc("連携商品001");
+  let names: string[] = [];
+  await ctx.step(1, async () => { await n.トップを開く(); });
+  await ctx.step(2, async () => {
+    await n.押す(n.カードセット選択メニュー(), "カードセット選択メニュー");
+    await n.押す(n.カードセットの選択肢の(セット), `カードセット「${セット}」`);
+  });
+  await ctx.step(3, async () => { await n.検索欄に入れる(名); });
+  await ctx.step(4, async () => { await n.検索を押す(); names = await 一覧の商品名(n); });
+  await ctx.step(5, async () => { note(`移った先 ${n.page.url()}／商品カード ${names.length} 件`); });
+  await ctx.expected(async () => {
+    const banner = ctx.page.getByText("LINK-BANNER-001F0202n062");
+    expect.soft(names.some((t) => t.includes(名)), `商品一覧に「${名}」が表示されている（絞り込みの結果が出た）`).toBe(true);
+    await expect.soft(banner.first(), "カードセットの表示用HTML「LINK-BANNER-001F0202n062」が表示されている").toBeVisible();
+    const b = await banner.first().boundingBox().catch(() => null);
+    const c = await n.商品カードたち().first().boundingBox().catch(() => null);
+    expect.soft(!!b && !!c && b.y < c.y, `表示用HTMLが商品一覧より上にある（表示用HTML ${b ? Math.round(b.y) : "なし"}・先頭の商品 ${c ? Math.round(c.y) : "なし"}）`).toBe(true);
   });
 });

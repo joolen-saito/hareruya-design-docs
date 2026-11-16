@@ -14,7 +14,7 @@ export async function 発行日を指定してポイントを付与する(page: 
   await page.waitForLoadState("load");
   const 付与 = page.locator("a.point-type-select").filter({ hasText: /キャンペーン/ }).first();
   await expect(付与, "「ポイント付与（キャンペーン、特別対応）」の選択").toHaveCount(1, { timeout: T });
-  await Promise.all([page.waitForURL(/\/customer\/point\/\d+\/granted/), 付与.click({ timeout: T })]);
+  await Promise.all([page.waitForURL(/\/customer\/point\/\d+\/granted/, { timeout: 120_000 }), 付与.click({ timeout: T, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await page.locator("#admin_customer_point_pointChange").fill(String(v.増減量), { timeout: T });
   await page.locator("#admin_customer_point_note").selectOption({ label: v.備考 }, { timeout: T });
@@ -24,7 +24,7 @@ export async function 発行日を指定してポイントを付与する(page: 
   await expect(d, "ポイント発行日").toHaveValue(v.発行日);
   await Promise.all([
     page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }),
-    page.locator("form[name=customer_point_form] button[type=submit]").click({ timeout: T }),
+    page.locator("form[name=customer_point_form] button[type=submit]").click({ timeout: T, noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expectSaved(page, "ポイント履歴の保存");

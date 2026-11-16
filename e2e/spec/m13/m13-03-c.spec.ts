@@ -11,6 +11,8 @@ import { M1303_ADMIN } from "../../seeds/m13-03";
 import "../../seeds/m13-03-c";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
+/** 送信が送られたこと（送信の応答がある） */
+const 送られた = (r: { 応答: number | null }): void => { expect(r.応答, "送信が送られた（送信の応答がある）").not.toBeNull(); };
 const すべてオフ = { 受付あり: false, デッキ登録あり: false, オンライン受付あり: false };
 const 基本の入力 = { 開始時間: "2026/09/10 18:00", 定員: "10", 参加費: "0", 公開状態: "公開" };
 
@@ -56,7 +58,8 @@ caseTest("IT-M13-03-034", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await s.入力する({ ...基本の入力, ...すべてオフ }); });
   await step(3, async () => {
     wasDisabled = await s.送信ボタンの無効状態を解除する(s.登録ボタン);
-    await s.押して送信する(s.登録ボタン);
+    // 送信が送られ、応答まで待ってから DB を読む（送られずに「追加されない」では、権限の確かめにならない）
+    送られた(await s.押して送信を待つ(s.登録ボタン));
   });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(4, async () => { rows = イベントの日程(id); });
@@ -77,7 +80,8 @@ caseTest("IT-M13-03-040", async ({ page, notes, step, expected }) => {
   await step(3, async () => {
     note("画面の送信ボタンは「保存」で、「更新」という名前のボタンは無い。手順の「更新ボタン」として、この保存ボタンを押した");
     wasDisabled = await s.送信ボタンの無効状態を解除する(s.保存ボタン);
-    await s.押して送信する(s.保存ボタン);
+    // 送信が送られ、応答まで待ってから DB を読む（送られずに「更新されない」では、権限の確かめにならない）
+    送られた(await s.押して送信を待つ(s.保存ボタン));
   });
   let r: ReturnType<typeof 日程> = null;
   await step(4, async () => { r = 日程(日程ID); });
@@ -96,6 +100,8 @@ caseTest("IT-M13-03-045", async ({ page, notes, step, expected }) => {
   let r: ReturnType<typeof 日程> = null;
   await step(2, async () => { r = 日程(日程ID); });
   await expected(async () => {
+    // 要求が画面の処理まで届いて転送で返ったこと（なりすまし対策・方式の違いで手前で断られたのでは、権限の確かめにならない）
+    expect.soft(status === 0 || (status >= 300 && status < 400), `削除要求が画面の処理まで届き、転送で返った（応答の状態コード ${status}）`).toBe(true);
     expect.soft(r !== null && !r.削除済み, "日程が削除されずに残っている").toBe(true);
   });
   note(`削除要求の応答の状態コード: ${status}（転送の応答は 0 と読める）`);

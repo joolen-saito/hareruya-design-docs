@@ -51,7 +51,8 @@ export function 記事を紐づける(デッキID: string, デッキ名: string)
     sql: `insert into dtb_article (wp_post_id, wp_type_id, url, update_date, create_date)
           select 900000000 + d.id, coalesce((select min(a.wp_type_id) from dtb_article a), 1), $2, now(), now() from dtb_deck d where d.id = $1::int`,
     params: [数字(デッキID), url],
-    対象の確かめ: デッキの確かめ, 確かめのparams: [数字(デッキID)], 印: デッキ名, 最大行数: 1,
+    // 足す行の親の列（投稿ID＝900000000＋デッキID）が確かめの行に無いと「足す行の親の列が…見つからない」で止まるので、投稿IDも返す
+    対象の確かめ: "select d.id, d.deck_name, 900000000 + d.id as wp_post_id from dtb_deck d where d.id = $1::int", 確かめのparams: [数字(デッキID)], 印: デッキ名, 最大行数: 1,
   }), "記事");
   一件(writeTestData({
     理由: `デッキ ${デッキID} に記事を紐づける`,

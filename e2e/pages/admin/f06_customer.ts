@@ -10,8 +10,8 @@ export async function searchCustomer(page: Page, 語: string): Promise<void> {
   await page.waitForLoadState("load");
   await page.locator('[name="admin_search_customer[multi]"]').fill(語, { timeout: 30_000 });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-    page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ timeout: 30_000 }),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+    page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ timeout: 30_000, noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
 }
@@ -33,8 +33,8 @@ export async function openEditFromResult(page: Page, メール: string): Promise
   const row = resultRow(page, メール);
   await expect(row, `検索結果にメールアドレス ${メール} の行が1つある`).toHaveCount(1, { timeout: 30_000 });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-    row.locator('a[href*="/customer/"]').first().click({ timeout: 30_000 }),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+    row.locator('a[href*="/customer/"]').first().click({ timeout: 30_000, noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator('[name="admin_customer[email]"]'), "会員登録/編集画面").toBeVisible({ timeout: 30_000 });

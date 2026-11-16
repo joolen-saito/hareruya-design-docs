@@ -17,8 +17,8 @@ export async function customerIdByEmail(page: Page, メール: string): Promise<
   await page.waitForLoadState("load");
   await page.locator('[name="admin_search_customer[multi]"]').fill(メール);
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   const esc = メール.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -45,7 +45,7 @@ export async function setArrivalMax(page: Page, value: string): Promise<void> {
   await page.waitForLoadState("load");
   const input = page.locator('[name="add_system[arrival_alert_max]"]');
   await input.fill(value);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('form#point_form button[type="submit"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('form#point_form button[type="submit"]').click({ noWaitAfter: true })]);
   await expectSaved(page, `追加システム設定の入荷通知最大数を ${value} にする`);
   expect(await input.inputValue(), "登録後の入荷通知最大数").toBe(value);
 }
@@ -67,7 +67,7 @@ export async function searchProductRequests(page: Page, 商品名: string): Prom
   await form.locator('[name="admin_analysis_product_request[create_date_from]"]').fill("");
   await form.locator('[name="admin_analysis_product_request[create_date_to]"]').fill("");
   await form.locator('[name="admin_analysis_product_request[multi]"]').fill(商品名);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), form.locator('button[type="submit"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator('button[type="submit"]').click({ noWaitAfter: true })]);
   const rows = await page.locator("#result_list_main__list tbody tr").all();
   return Promise.all(rows.map(async (tr) => {
     const c = async (i: number) => (((await tr.locator(`td:nth-child(${i})`).textContent()) ?? "").replace(/\s+/g, " ").trim());
@@ -101,8 +101,77 @@ export async function savePublishedClass(page: Page, a: { productId: string; cla
   if (a.highPriceCode !== undefined) await form.locator("#admin_product_class_high_price_code").fill(a.highPriceCode);
   if (a.memo !== undefined) await form.locator("#admin_product_class_memo").fill(a.memo);
   await chooseByLabel(form.locator("#admin_product_class_Status"), "公開");
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品規格の登録`)) onIssue(`${what}: 警告「${w}」`);
   await expect(form.locator("#admin_product_class_Status option:checked"), `${what}: 登録後の公開ステータス`).toHaveText(/^\s*公開\s*$/);
   if (a.highPriceCode !== undefined) await expect(form.locator("#admin_product_class_high_price_code"), `${what}: 登録後の高額商品コード`).toHaveValue(a.highPriceCode);
+}
+
+// ---- 追加システム設定の入荷通知メールの許可（共有の設定。書き換える前に全項目を控え、ケースの終わりに画面で戻す） ----
+
+const ARRIVAL_MAIL = '[name="add_system[send_notification_arrival_mail]"]';
+
+/** 追加システム設定の入力欄を全部読む（項目の name → 値。CSRF の鍵は除く） */
+export async function 追加システム設定を全部読む(page: Page): Promise<Record<string, string>> {
+  await page.goto(adminUrl(ADD_SYSTEM));
+  await page.waitForLoadState("load");
+  return page.locator("form#point_form").evaluate((form) => {
+    const out: Record<string, string> = {};
+    for (const el of Array.from(form.querySelectorAll("input, select, textarea")) as (HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)[]) {
+      if (!el.name || el.name.endsWith("[_token]") || (el as HTMLInputElement).type === "submit" || (el as HTMLInputElement).type === "button") continue;
+      if ((el as HTMLInputElement).type === "checkbox" || (el as HTMLInputElement).type === "radio") {
+        if ((el as HTMLInputElement).checked) out[el.name] = el.value;
+        else if (!(el.name in out)) out[el.name] = "";
+        continue;
+      }
+      out[el.name] = el.value;
+    }
+    return out;
+  });
+}
+
+/** 控えた全項目を画面に入れ直して「登録」を押す（戻し） */
+export async function 追加システム設定を控えへ戻す(page: Page, 控え: Record<string, string>, what: string): Promise<void> {
+  await page.goto(adminUrl(ADD_SYSTEM));
+  await page.waitForLoadState("load");
+  const form = page.locator("form#point_form");
+  for (const [name, value] of Object.entries(控え)) {
+    const el = form.locator(`[name="${name}"]`);
+    if ((await el.count()) === 0) throw new Error(`${what}: 追加システム設定に項目 ${name} が無い（控えたときにはあった）`);
+    const tag = await el.first().evaluate((n) => `${n.tagName}:${(n as HTMLInputElement).type ?? ""}`);
+    if (tag.startsWith("SELECT")) await el.first().selectOption(value);
+    else if (/checkbox|radio/.test(tag)) { if (value) await form.locator(`[name="${name}"][value="${value}"]`).check(); }
+    else await el.first().fill(value);
+  }
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator('button[type="submit"]').click({ noWaitAfter: true })]);
+  await expectSaved(page, what);
+}
+
+/** 入荷通知メールの許可の、いま選ばれている表示名（「送信する」「送信しない」） */
+export async function 入荷通知メールの許可を読む(page: Page): Promise<string> {
+  await page.goto(adminUrl(ADD_SYSTEM));
+  await page.waitForLoadState("load");
+  return ((await page.locator(`${ARRIVAL_MAIL} option:checked`).textContent()) ?? "").trim();
+}
+
+/** 入荷通知メールの許可を選んで「登録」を押し、開き直して選ばれていることを確かめる */
+export async function 入荷通知メールの許可を設定する(page: Page, 表示名: "送信する" | "送信しない"): Promise<void> {
+  await page.goto(adminUrl(ADD_SYSTEM));
+  await page.waitForLoadState("load");
+  await chooseByLabel(page.locator(ARRIVAL_MAIL), 表示名);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('form#point_form button[type="submit"]').click({ noWaitAfter: true })]);
+  await expectSaved(page, `追加システム設定の入荷通知メールの許可を「${表示名}」にする`);
+  expect(await 入荷通知メールの許可を読む(page), "開き直した入荷通知メールの許可").toBe(表示名);
+}
+
+/** 商品規格登録編集画面を開き、在庫数を入れられる欄があるかを返す（画面の作りでは在庫は表示だけ。表示されている在庫の数も返す） */
+export async function 商品規格の在庫の欄(page: Page, productId: string, classId: string): Promise<{ 入力欄: number; 表示: string }> {
+  await page.goto(adminUrl(`/product/product/class/${productId}/edit/${classId}`));
+  await page.waitForLoadState("load");
+  const form = page.locator("form#form");
+  await expect(form, "商品規格登録編集画面").toBeVisible();
+  const 入力欄 = await form.locator('input[name$="[stock]"], input[name*="[stock_"]:not([name*="unlimited"])').count();
+  const row = form.locator(".row").filter({ has: page.locator(".col-3 span", { hasText: /^\s*在庫数\s*$/ }) }).first();
+  const 表示 = (await row.count()) ? ((await row.locator(".col").first().innerText()).replace(/\s+/g, " ").trim()) : "";
+  return { 入力欄, 表示 };
 }

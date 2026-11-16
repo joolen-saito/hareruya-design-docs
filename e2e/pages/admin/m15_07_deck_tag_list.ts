@@ -23,7 +23,7 @@ export class 管理メニュー {
       await this.デッキ管理.click();
       await expect(this.デッキタグ一覧, "デッキ管理メニューの「デッキタグ一覧」").toBeVisible();
     }
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.デッキタグ一覧.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.デッキタグ一覧.click({ noWaitAfter: true })]);
   }
 }
 

@@ -13,6 +13,8 @@ const 商品 = [
 ];
 /** 受注の明細の商品コード */
 export const 明細のコード = ["M0511-PRODUCT-1", "M0511-PRODUCT-2", "M0511-PRODUCT-3", "M0511-PRODUCT-4", "M0511-PRODUCT-5"];
+/** 受注の明細の商品名（印を付ける前の値。明細のコードと同じ順） */
+export const 明細の商品名 = 明細のコード.map((c) => 商品.find((p) => p.code === c)!.name);
 const 価格 = ["0", "979", "980", "4799", "4800"];
 
 商品注文のシード("S-M05-11-PRODUCT-READ", {

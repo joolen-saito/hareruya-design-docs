@@ -20,7 +20,7 @@ const 一覧のパス = /^\/ja\/purchase\/search\/?$/;
 async function 一覧を開く(s: PurchaseSearchPage): Promise<void> {
   expect(await s.開く(), "ネット買取商品一覧の応答").toBeLessThan(400);
   await expect(s.一覧の印, "ネット買取商品一覧の画面").toHaveCount(1);
-  expect(await s.モーダルが開いている(), "開始時にネット買取商品検索モーダルが閉じている").toBe(false);
+  expect(!(await s.モーダルが開いている()), "開始時にネット買取商品検索モーダルが閉じている").toBe(true);
 }
 
 /** 「詳細検索」を押して、モーダルが開くのを待つ */
@@ -59,17 +59,18 @@ caseTest("IT-F05-02-002", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(閉じた["モーダル外を押したあと"], "モーダル外を押したあと、ネット買取商品検索モーダルが閉じた").toBe(true);
     expect.soft(閉じた["閉じるボタンを押したあと"], "閉じるボタンを押したあと、ネット買取商品検索モーダルが閉じた").toBe(true);
-    expect.soft(await s.モーダルが開いている(), "いまネット買取商品検索モーダルが閉じている").toBe(false);
+    expect.soft(!(await s.モーダルが開いている()), "いまネット買取商品検索モーダルが閉じている").toBe(true);
   });
 });
 
 caseTest("IT-F05-02-003", async ({ page, step, expected, capture }) => {
   const s = new PurchaseSearchPage(page);
   const M = F0502マスタ;
+  let 失敗: string[] = [];
   await 一覧を開く(s);
   await step(1, async () => { await 詳細検索を押す(s); });
   await step(2, async () => {
-    const 失敗 = await s.入れる({
+    失敗 = await s.入れる({
       商品名: "F0502-ALL", カテゴリ: M.カテゴリB, 色: "赤", 固有色: "白", マナコスト: "3", カードタイプ: M.カードタイプA, サブタイプ: M.サブタイプA,
       フォーマット: M.フォーマットA, 禁止カードも表示する: true, 言語: "JP", レアリティ: "神話レア", Foil: "特殊", フレーム: "特殊", イラストレーター: M.イラストレーターA,
     });
@@ -81,6 +82,8 @@ caseTest("IT-F05-02-003", async ({ page, step, expected, capture }) => {
   await step(3, async () => { await s.クリアボタン.click(); await page.waitForTimeout(500); });
   await expected(async () => {
     const 入力 = (l: string, loc: Locator) => expect.soft(loc, l).not.toBeChecked();
+    // 設定できなかった項目は、クリアで空になったかを見ても確かめにならない（もともと空）。設定できたことを先に見る
+    expect.soft(失敗, "手順2で設定できなかった項目（設定してからクリアで空になるかを見る対象）").toEqual([]);
     expect.soft(await s.商品名欄.inputValue(), "商品名の値").toBe("");
     expect.soft(await s.選択欄の値(s.カテゴリの選択欄), "カテゴリの選択（最上位の選択欄）").toBe("");
     expect.soft(await s.カテゴリの送る値.inputValue(), "カテゴリの送る値").toBe("");

@@ -44,7 +44,7 @@ export async function 注文を確定する(page: Page, base: string, 商品ID: 
   await accept.check({ force: true, timeout: 30_000 });
   const submit = page.locator("button[data-js-payment-submit]");
   await expect(submit, `${what}: 確定のチェックで注文のボタンが押せる`).toBeEnabled({ timeout: 30_000 });
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), submit.click({ timeout: 30_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), submit.click({ timeout: 30_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   if (外部決済へ移る && /\/shopping\/sln_card_payment/.test(page.url())) return "";
   if (!/\/shopping\/complete/.test(page.url())) {

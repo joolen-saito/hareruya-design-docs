@@ -90,8 +90,14 @@ function プレイヤー名の確かめ(key: string, 名: string): (ctx: CaseCtx
 function 表示されない(key: string): (ctx: CaseCtx) => Promise<void> {
   return async ({ page, step, expected }) => {
     const d = await ログイン(page, key);
-    await step(1, async () => { const status = await d.開く(大会(key).イベント詳細ID); note(`応答 ${status}・画面のアドレス ${d.path}`); });
-    await expected(async () => { expect.soft(await d.編集画面である(), "大会デッキ登録編集画面が表示されるか").toBe(false); });
+    let status = 0;
+    await step(1, async () => { status = await d.開く(大会(key).イベント詳細ID); note(`応答 ${status}・画面のアドレス ${d.path}`); });
+    await expected(async () => {
+      expect.soft(await d.編集画面である(), "大会デッキ登録編集画面が表示されるか").toBe(false);
+      // 画面が開けなかった（ログインが切れた・通信の誤り）だけで合格にしない。画面は「見つからない」（404）を返す
+      expect.soft(await d.ログイン画面である(), "会員ログイン画面へ戻されていない（ログインしたまま開いた）").toBe(false);
+      expect.soft(status, "応答の状態（見つからない）").toBe(404);
+    });
   };
 }
 
@@ -244,8 +250,12 @@ function 差し戻される(key: string, メイン: string, サイド: string): 
     await step(1, async () => { await 編集画面を開く(d, key); await フォーマットを選ぶ(d, "Standard"); });
     await step(2, async () => { await d.メインボード.fill(メイン); });
     await step(3, async () => { await d.サイドボード.fill(サイド); });
-    await step(4, async () => { const r = await d.提出する(); note(`提出のあとの画面: ${d.path}${r.sent ? "" : "（送信されなかった）"}`); });
+    let sent = false;
+    await step(4, async () => { const r = await d.提出する(); sent = r.sent; note(`提出のあとの画面: ${d.path}${r.sent ? "" : "（送信されなかった）"}`); });
     await expected(async () => {
+      // 失敗しても同じ入力画面に戻る作りなので、送信されて画面が送り直されたこと（送信先 /update の画面）も見る
+      expect.soft(sent, "「デッキリストを提出する」で送信された").toBe(true);
+      expect.soft(d.path, "提出のあとの画面のアドレス（送信先で入力画面が送り直された）").toMatch(/^\/ja\/deckentry\/\d+\/update$/);
       expect.soft(d.完了画面のデッキID(), "デッキ登録完了画面へ移っていない（デッキID）").toBeNull();
       expect.soft((await d.入力フォーム.count()) > 0 && (await d.提出ボタン.count()) > 0, "大会デッキ登録編集画面に留まる（入力フォームと提出ボタンがある）").toBe(true);
       expect.soft(await d.値(d.メインボード), "メインボードの入力が保持される").toBe(メイン);
@@ -268,12 +278,16 @@ function 更新されない(key: string, 書き換え: (d: DeckEntryEditPage) =>
     await step(1, async () => { await 編集画面を開く(d, key); await フォーマットを選ぶ(d, "Standard"); });
     await step(2, async () => { await d.メインボード.fill(`4 ${札("Island")}`); });
     await step(3, async () => { await 書き換え(d); });
-    await step(4, async () => { const r = await d.提出する(); note(`提出のあとの画面: ${d.path}${r.sent ? "" : "（送信されなかった）"}`); });
+    let sent = false;
+    await step(4, async () => { const r = await d.提出する(); sent = r.sent; note(`提出のあとの画面: ${d.path}${r.sent ? "" : "（送信されなかった）"}`); });
     await step(5, async () => {
       件数 = 大会デッキ一覧(詳細(key), 選手(key), notes.get(標準の呼び名)).length;
       新 = 控えを取る(key, 旧.id, 標準の呼び名, notes);
     });
     await expected(async () => {
+      // 「更新されない」を、送信されなかっただけで合格にしない
+      expect.soft(sent, "「デッキリストを提出する」で送信された").toBe(true);
+      expect.soft(d.完了画面のデッキID(), "デッキ登録完了画面へ移っていない").toBeNull();
       expect.soft(件数, "Standardのデッキの件数").toBe(1);
       expect.soft(新?.メイン ?? null, "Standardの内容テキスト（メイン）が保存前の値のまま").toBe(旧.メイン);
       expect.soft(新?.サイド ?? null, "Standardの内容テキスト（サイド）が保存前の値のまま").toBe(旧.サイド);
@@ -301,12 +315,15 @@ caseTest("IT-F06-16-051", async (ctx) => {
   let 新: 控え | null = null, 件数 = 0;
   await step(1, async () => { await 編集画面を開く(d, "051"); await フォーマットを選ぶ(d, "Standard"); });
   await step(2, async () => { await d.メインボード.fill(`4 ${札("Island")}`); });
-  await step(3, async () => { await d.押して遷移する(d.キャンセル); note(`キャンセルのあとの画面: ${d.path}`); });
+  let キャンセル後 = "";
+  await step(3, async () => { await d.押して遷移する(d.キャンセル); キャンセル後 = d.path; note(`キャンセルのあとの画面: ${d.path}`); });
   await step(4, async () => {
     件数 = 大会デッキ一覧(詳細("051"), 選手("051"), notes.get(標準の呼び名)).length;
     新 = 控えを取る("051", 旧.id, 標準の呼び名, notes);
   });
   await expected(async () => {
+    // 「更新されない」を、キャンセルが押せていなかっただけで合格にしない。キャンセルで入力画面を離れたことも見る
+    expect.soft(キャンセル後, "キャンセルのあとの画面（マイイベント・デッキ登録のイベント一覧）").toMatch(/\/mypage\/event_history$/);
     expect.soft(件数, "Standardのデッキの件数").toBe(1);
     expect.soft(新?.メイン ?? null, "Standardの内容テキスト（メイン）が保存前の値のまま").toBe(旧.メイン);
     expect.soft(新?.サイド ?? null, "Standardの内容テキスト（サイド）が保存前の値のまま").toBe(旧.サイド);

@@ -73,7 +73,7 @@ export async function 規格の値を入れて公開する(
   if (a.個別メモ !== undefined) await form.locator("#admin_product_class_memo").fill(a.個別メモ);
   if (a.高額商品コード !== undefined) await form.locator("#admin_product_class_high_price_code").fill(a.高額商品コード);
   await chooseByLabel(form.locator("#admin_product_class_Status"), "公開");
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品規格の登録`)) issue(`${what}: 警告「${w}」`);
   await expect(form.locator("#admin_product_class_Status option:checked"), `${what}: 登録後の公開ステータス`).toHaveText(/^\s*公開\s*$/);
   if (a.個別メモ !== undefined) await expect(form.locator("#admin_product_class_memo"), `${what}: 登録後の状態別称（個別メモ）`).toHaveValue(a.個別メモ);

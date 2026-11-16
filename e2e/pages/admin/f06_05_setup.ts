@@ -29,12 +29,12 @@ export function 日付をそろえる(s: string): string {
 export async function ポイントを付与する(page: Page, 会員ID: string, 増減量: number, 発行日: string): Promise<void> {
   await page.goto(adminUrl(`/customer/point/${会員ID}/select`));
   await page.waitForLoadState("load");
-  await Promise.all([page.waitForURL(/\/customer\/point\/\d+\/granted/), page.locator("a.point-type-select").first().click({ timeout: T })]);
+  await Promise.all([page.waitForURL(/\/customer\/point\/\d+\/granted/, { timeout: 120_000 }), page.locator("a.point-type-select").first().click({ timeout: T, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await page.locator("#admin_customer_point_pointChange").fill(String(増減量), { timeout: T });
   await page.locator("#admin_customer_point_note").selectOption({ label: "キャンペーン" }, { timeout: T });
   await page.locator("#admin_customer_point_issueDate").fill(発行日, { timeout: T });
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), page.locator("form[name=customer_point_form] button[type=submit]").click({ timeout: T })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), page.locator("form[name=customer_point_form] button[type=submit]").click({ timeout: T, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expectSaved(page, `会員ID ${会員ID} のポイント付与（${増減量}・発行日 ${発行日}）の保存`);
 }

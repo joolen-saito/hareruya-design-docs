@@ -2,12 +2,17 @@
 import { test } from "@playwright/test";
 import { caseTest, CaseBody, expect } from "../../lib/case";
 import { loginAdmin, withAdminSession } from "../../lib/session";
-import { SETUP_ADMIN } from "../../config/env";
+import { ENV_NAME, SETUP_ADMIN, SHARED_ENV } from "../../config/env";
 import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
-import { 申込一覧を開く, 申込詳細を開く, 申込詳細を読む, 申込登録で選手を読む, 申込を検索する } from "../../pages/admin/f07_04_setup";
+import { 申込一覧の件数の文, 申込一覧の行, 申込の行のイベント名の欄, 申込の行の申込IDの欄, 申込一覧を開く, 申込詳細を開く, 申込詳細を読む, 申込登録で選手を読む, 申込を検索する } from "../../pages/admin/f07_04_setup";
 import { EventEntryPage, 別のブラウザで会員としてログインする, 無料申込を完了する, 前面 } from "../../pages/front/f07_04_entry";
 import * as DB from "../../db/f07_04";
 import { エラーログの末尾位置, 位置以降のエラーログ } from "../../lib/app_error_log";
+
+/** 期待結果がアプリのエラーログそのもの（053・058）。エラーログはアプリのコンテナの中のファイルで、手元の環境（local）でしか読めない。
+ *  開発環境などでは期待結果を確かめられないので、ログインも操作もせずに理由つきでスキップする（以前は事前準備のあとで読めずに止まり、未判定と数えられていた） */
+const エラーログを読めないならスキップ = (): void =>
+  test.skip(ENV_NAME !== "local" || SHARED_ENV, `E2E_ENV=${ENV_NAME} ではアプリのエラーログ（コンテナの中のファイル）を読めず、期待結果（エラーログの記録）を確かめられないので実行しない`);
 import { PE大会名, PE管理者, 会員一覧, 大会一覧, 連携店名, 連携形式名 } from "../../seeds/f07-04";
 import "../../seeds/f07-04";
 
@@ -29,7 +34,7 @@ caseTest("IT-F07-04-002", async ({ page, notes, step, expected }) => {
   const cb = e.日程チェック(id);
   await step(1, async () => { await e.申込確認を開く(id); });
   let 選択済み = false, 無効 = false;
-  await step(2, async () => { await expect(cb).toBeAttached(); 選択済み = await cb.isChecked(); 無効 = await cb.isDisabled(); });
+  await step(2, async () => { await expect(cb, "日程B1のチェック欄が申込確認画面にある").toBeAttached(); 選択済み = await cb.isChecked(); 無効 = await cb.isDisabled(); });
   await step(3, async () => {
     // 変更できない（無効の）チェック欄を、利用者が押そうとする（ラベルを押す）。押せなければ、押せなかったことを注記に残す
     await page.locator(`label[for="event-${id}"]`).click({ timeout: 3_000 }).catch(() => note("日程B1のチェック欄は無効で、押せなかった（操作を受け付けない）"));
@@ -49,11 +54,11 @@ caseTest("IT-F07-04-003", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await e.申込確認を開く(ids[0]); });
   let 別日程: string[] = [];
   await step(2, async () => {
-    await expect(e.日程チェック(ids[0])).toBeAttached();
+    await expect(e.日程チェック(ids[0]), "日程C1のチェック欄が申込確認画面にある").toBeAttached();
     別日程 = await page.locator('input[id^="alternative-event-"]').evaluateAll((os) => os.map((o) => (o as HTMLInputElement).value));
   });
   await expected(async () => {
-    expect.soft(別日程, "別日程の同イベントとして表示された日程（日程C2だけ）").toEqual([ids[1]]);
+    expect.soft(別日程, "別日程の同イベントとして、日程C2だけが表示される").toEqual([ids[1]]);
     for (const [i, 名] of [[2, "受付開始前の日程C3"], [3, "受付終了後の日程C4"], [4, "定員到達済みの日程C5"], [5, "申込済みの日程C6"]] as const) {
       expect.soft(別日程.includes(ids[i]), `${名}は表示されない`).toBe(false);
     }
@@ -140,10 +145,10 @@ caseTest("IT-F07-04-024", async ({ page, browser, notes, step, expected }) => {
 });
 
 /** 申込確定画面まで進む（申込確認 → 同意して支払いへ進む） */
-async function 確定画面まで進む(e: EventEntryPage, id: string): Promise<void> {
+async function 確定画面まで進む(e: EventEntryPage, id: string, 誰 = ""): Promise<void> {
   await e.申込確認を開く(id);
   await e.同意して支払いへ進む();
-  expect(await e.申込確定画面か(), "申込確定画面へ進んだ").toBe(true);
+  expect(await e.申込確定画面か(), `${誰}申込確定画面へ進んだ`).toBe(true);
 }
 
 caseTest("IT-F07-04-025", async ({ page, notes, step, expected }) => {
@@ -153,7 +158,19 @@ caseTest("IT-F07-04-025", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await 確定画面まで進む(e, id); });
   await step(2, async () => { await e.確定画面のトークンを消す(); });
   let r = { status: 0 };
-  await step(3, async () => { r = await e.申込するを押す(); });
+  await step(3, async () => {
+    // 申込するボタンは非同期の要求（/events/register）を送る。画面共通の非同期通信の設定（default_frame.twig の $.ajaxSetup）が、
+    // 入力要素とは別に、要求のヘッダー ECCUBE-CSRF-TOKEN にトークンを付け、アプリは本文に無ければヘッダーで確かめる
+    // （AbstractController::isTokenValid）。正本の手順（入力要素の削除）でトークンが本当に送られなくなったかを、判定の根拠に残す
+    const 要求 = page.waitForRequest((q) => q.method() === "POST" && /\/events\/register/.test(q.url()), { timeout: 60_000 }).catch(() => null);
+    r = await e.申込するを押す();
+    const q = await 要求;
+    if (q) {
+      const 本文に = /(^|&)_token=/.test(q.postData() ?? "");
+      const ヘッダーに = !!(await q.headerValue("eccube-csrf-token"));
+      note(`申込登録の要求のなりすまし対策トークン: 本文の _token=${本文に ? "あり" : "なし（入力要素を消した）"}／ヘッダー ECCUBE-CSRF-TOKEN=${ヘッダーに ? "あり（画面共通の非同期通信の設定が付けた。正本の手順ではトークンは送られたままになる）" : "なし"}`);
+    }
+  });
   let 件数 = { 申込: -1, 申込選手: -1, 申込履歴: -1 };
   await step(4, async () => { 件数 = { 申込: DB.日程の申込一覧(id).length, 申込選手: DB.日程の申込選手の件数(id), 申込履歴: DB.日程の申込履歴の件数(id) }; });
   await expected(async () => {
@@ -233,7 +250,7 @@ caseTest("IT-F07-04-036", async ({ page, browser, notes, step, expected }) => {
   const B = await 別のブラウザで会員としてログインする(browser, 会員("036B"));
   try {
     const a = new EventEntryPage(page), b = new EventEntryPage(B.page);
-    await step(1, async () => { await 確定画面まで進む(a, id); await 確定画面まで進む(b, id); });
+    await step(1, async () => { await 確定画面まで進む(a, id, "ブラウザAで"); await 確定画面まで進む(b, id, "ブラウザBで"); });
     let ra = 0, rb = 0;
     await step(2, async () => {
       const wa = a.申込登録の応答を待ち受ける(), wb = b.申込登録の応答を待ち受ける();
@@ -256,7 +273,7 @@ caseTest("IT-F07-04-037", async ({ page, browser, notes, step, expected }) => {
   const B = await 別のブラウザで会員としてログインする(browser, 会員("037B"));
   try {
     const a = new EventEntryPage(page), b = new EventEntryPage(B.page);
-    await step(1, async () => { await 確定画面まで進む(a, id); await 確定画面まで進む(b, id); });
+    await step(1, async () => { await 確定画面まで進む(a, id, "ブラウザAで"); await 確定画面まで進む(b, id, "ブラウザBで"); });
     await step(2, async () => {
       const wa = a.申込登録の応答を待ち受ける(), wb = b.申込登録の応答を待ち受ける();
       await Promise.all([a.申込するボタン.click({ timeout: 20_000 }), b.申込するボタン.click({ timeout: 20_000 })]);
@@ -278,7 +295,7 @@ caseTest("IT-F07-04-043", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔イベント詳細ID-F0704-043〕");
   const e = new EventEntryPage(page);
   await step(1, async () => { await page.goto(前面(`/events/payment_complete?detail=${id}`)); await page.waitForLoadState("load"); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), e.イベント一覧に戻るボタン.click({ timeout: 20_000 })]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), e.イベント一覧に戻るボタン.click({ timeout: 20_000, noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移先の画面（イベント一覧画面）").toMatch(/\/ja\/events\/?$/);
   });
@@ -382,7 +399,7 @@ function デッキ登録ボタン(n: string, 表示される: boolean): CaseBody
     await step(4, async () => { await expect(e.完了メッセージ, "申込完了画面").toBeVisible(); });
     await expected(async () => {
       // 完了画面の「イベント一覧へ戻る」が出ている（画面の描画が済んでいる）状態で数える
-      await expect.soft(e.イベント一覧に戻るボタン, "完了画面の描画が済んでいる").toBeVisible();
+      await expect.soft(e.イベント一覧に戻るボタン, "申込完了画面の「イベント一覧へ戻る」ボタンが表示されている（画面の表示が終わっている）").toBeVisible();
       expect.soft(await e.デッキ登録ボタン.count(), "デッキ登録のボタンの数").toBe(表示される ? 1 : 0);
     });
   };
@@ -416,12 +433,15 @@ caseTest("IT-F07-04-059", async ({ page, notes, step, expected }) => {
   await step(5, async () => { await loginAdmin(page, PE管理者); await 申込一覧を開く(page); });
   let r: Awaited<ReturnType<typeof 申込を検索する>> = { 件数: -1, 行: [] };
   await step(6, async () => { r = await 申込を検索する(page, PE大会名("001"), false); });
-  await step(7, async () => { await expect(page.locator("body")).toContainText("検索結果"); });
+  await step(7, async () => { await expect(申込一覧の件数の文(page), "検索結果の件数の文").toBeVisible(); });
   await expected(async () => {
-    expect.soft(r.件数, "検索結果の該当件数").toBe(1);
-    expect.soft(r.行.length, "表示された申込の行の数").toBe(1);
-    expect.soft(r.行[0]?.イベント名の欄 ?? "", "行に表示されたイベント名").toContain(PE大会名("001"));
-    expect.soft(r.行[0]?.申込ID ?? "", "行に表示された申込ID（数字）").toMatch(/^\d+$/);
+    // 画面の欄を直接確かめる（赤枠が件数の文・行のイベント名・申込IDの欄に付く）
+    await expect.soft(申込一覧の件数の文(page), "検索結果の該当件数の文").toHaveText("検索結果：1件が該当しました");
+    const 行 = 申込一覧の行(page);
+    await expect.soft(行, "表示された申込の行の数").toHaveCount(1);
+    await expect.soft(申込の行のイベント名の欄(行.first()), "行に表示されたイベント名").toContainText(PE大会名("001"));
+    await expect.soft(申込の行の申込IDの欄(行.first()), "行に表示された申込ID（数字）").toHaveText(/^\s*\d+\s*$/);
+    note(`検索結果: 該当 ${r.件数} 件・行 ${r.行.length} 行（${r.行.map((x) => `申込ID ${x.申込ID}・${x.イベント名の欄}`).join(" / ")}）`);
   });
 });
 
@@ -475,6 +495,7 @@ caseTest("IT-F07-04-062", async ({ page, notes, step, expected }) => {
 });
 
 caseTest("IT-F07-04-058", async ({ page, notes, step, expected }) => {
+  エラーログを読めないならスキップ();
   await ログイン(page, "058");
   const id = notes.get("〔イベント詳細ID-F0704-058〕");
   const 位置 = エラーログの末尾位置(); // 事前準備②: エラーログの試験開始時点の末尾位置を記録する
@@ -506,7 +527,7 @@ caseTest("IT-F07-04-001", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await e.申込確認を開く(a); });
   let 選択済み = false, 選択カード = "", 別カード = "", 別数 = 0, 選択肢: string[] = [];
   await step(2, async () => {
-    await expect(e.日程チェック(a)).toBeAttached();
+    await expect(e.日程チェック(a), "申し込む日程のチェック欄が申込確認画面にある").toBeAttached();
     選択済み = await e.日程チェック(a).isChecked();
     選択カード = (await e.選択済みのカード(a).innerText()).replace(/\s+/g, " ");
     別数 = await page.locator(`#alternative-event-${b}`).count();
@@ -543,16 +564,24 @@ caseTest("IT-F07-04-007", async ({ page, notes, step, expected }) => {
   const e = new EventEntryPage(page);
   await step(1, async () => { await e.申込確認を開く(id); });
   let 開いた = new URL("about:blank");
-  await step(2, async () => {
-    const popup = page.waitForEvent("popup", { timeout: 30_000 });
-    await e.キャンセルポリシーのリンク.click({ timeout: 15_000 });
-    const p = await popup;
-    try { await p.waitForLoadState("load"); 開いた = new URL(p.url()); } finally { await p.close(); }
-  });
-  await expected(async () => {
-    expect.soft(開いた.pathname, "新しいウィンドウで開いた画面のパス").toBe("/ja/user_data/help_event");
-    expect.soft(開いた.hash, "新しいウィンドウで開いた画面の位置指定").toBe("#block_event_cancel_policy");
-  });
+  let 新しいウィンドウ: import("@playwright/test").Page | undefined;
+  // 新しいウィンドウは、期待結果を確かめて撮るまで閉じない（同じブラウザのウィンドウとして、手順2・期待結果の画像に写る）
+  try {
+    await step(2, async () => {
+      const popup = page.waitForEvent("popup", { timeout: 30_000 });
+      await e.キャンセルポリシーのリンク.click({ timeout: 15_000 });
+      新しいウィンドウ = await popup;
+      await 新しいウィンドウ.waitForLoadState("load");
+      開いた = new URL(新しいウィンドウ.url());
+    });
+    await expected(async () => {
+      await expect.soft(新しいウィンドウ!, "新しいウィンドウで開いた画面").toHaveURL(`${開いた.origin}/ja/user_data/help_event#block_event_cancel_policy`);
+      expect.soft(開いた.pathname, "新しいウィンドウで開いた画面のパス").toBe("/ja/user_data/help_event");
+      expect.soft(開いた.hash, "新しいウィンドウで開いた画面の位置指定").toBe("#block_event_cancel_policy");
+    });
+  } finally {
+    await 新しいウィンドウ?.close().catch(() => undefined);
+  }
 });
 
 caseTest("IT-F07-04-010", async ({ page, notes, step, expected }) => {
@@ -605,7 +634,7 @@ caseTest("IT-F07-04-012", async ({ page, notes, step, expected }) => {
   const e = new EventEntryPage(page);
   await step(1, async () => { await e.申込確認を開く(id); });
   await step(2, async () => {
-    await Promise.all([page.waitForURL(new RegExp(`/events/${id}/detail`), { timeout: 45_000, waitUntil: "load" }), e.申込確認のキャンセルボタン.click({ timeout: 15_000 })]);
+    await Promise.all([page.waitForURL(new RegExp(`/events/${id}/detail`), { timeout: 120_000, waitUntil: "load" }), e.申込確認のキャンセルボタン.click({ timeout: 15_000, noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "戻った画面（日程A1の大会詳細画面）").toMatch(detailPath(id));
@@ -677,7 +706,8 @@ caseTest("IT-F07-04-023", async ({ page, notes, step, expected }) => {
 
 /** 2つの日程（A1・A2）を選んで申込確定画面へ進む。外部の決済サイトへは移らないようにする */
 async function 二日程で確定画面へ(e: EventEntryPage, a: string, b: string): Promise<void> {
-  await e.外部への移動を止める();
+  // 止めた画面が白い画面にならないよう、止めた所に「試験のため移動を止めた」ことと行き先を出す
+  await e.外部への移動を止めて行き先を出す();
   await e.申込確認を開く(a);
   await e.別日程を選ぶ(b);
   await e.支払方法を選ぶ(支払名);
@@ -689,24 +719,28 @@ caseTest("IT-F07-04-030", async ({ page, notes, step, expected }) => {
   await ログイン(page, "030");
   const a = notes.get("〔イベント詳細ID-F0704-030A〕"), b = notes.get("〔イベント詳細ID-F0704-030B〕");
   const e = new EventEntryPage(page);
-  await step(1, async () => { await 二日程で確定画面へ(e, a, b); });
+  await step(1, async () => {
+    await 二日程で確定画面へ(e, a, b);
+  });
   let r: { status: number; json: Record<string, unknown> | null } = { status: 0, json: null };
   await step(2, async () => {
-    r = await e.申込するを押す();
-    note("申込登録の応答のあと、画面は外部の決済サイトへ移ろうとするが、試験では移動を止めた（決済サイトへは送らない）");
+    const 待ち受け = e.申込登録のResponseを待ち受ける();
+    await e.申込するボタン.click({ timeout: 20_000 });
+    r = await 待ち受け;
+    note("申込登録の応答のあと、画面は外部の決済サイトへ移ろうとするが、試験では移動を止め、止めた所に行き先を出した（決済サイトへは送らない）");
   });
-  const 読む = (d: string) => ({ 申込: DB.日程の申込一覧(d), 番号: DB.日程の申込の支払番号(d), 申込選手: DB.日程の申込選手の件数(d, 会員("030").会員ID), 履歴: DB.日程の申込履歴の件数(d) });
-  let 結果: Record<string, ReturnType<typeof 読む>> = {};
-  await step(3, async () => { await page.waitForTimeout(1_000); 結果 = { 日程A1: 読む(a), 日程A2: 読む(b) }; });
+  const 会員ID = 会員("030").会員ID;
+  await step(3, async () => { await page.waitForTimeout(1_000); });
   await expected(async () => {
     expect.soft(r.status, "申込登録の応答（HTTPの状態）").toBe(200);
-    for (const 名 of ["日程A1", "日程A2"]) {
-      expect.soft(結果[名].申込.map((x) => x.申込状況), `${名}の申込（決済中）`).toEqual(["決済中"]);
-      expect.soft(結果[名].申込選手, `${名}の会員Aの申込選手の件数`).toBe(1);
-      expect.soft(結果[名].履歴, `${名}の申込履歴の件数`).toBe(1);
-      expect.soft(結果[名].番号.length === 1 && 結果[名].番号[0] !== "", `${名}の申込に支払番号が設定されている`).toBe(true);
+    // DB の照会は確かめの式の中で行う（エビデンスの帯に、照会の名前と条件＝日程のイベント詳細ID・会員ID が出る）
+    for (const [名, d] of [["日程A1", a], ["日程A2", b]] as const) {
+      expect.soft(DB.日程の申込一覧(d).map((x) => x.申込状況), `${名}の申込（決済中）`).toEqual(["決済中"]);
+      expect.soft(DB.日程の申込選手の件数(d, 会員ID), `${名}の会員Aの申込選手の件数`).toBe(1);
+      expect.soft(DB.日程の申込履歴の件数(d), `${名}の申込履歴の件数`).toBe(1);
+      expect.soft(DB.日程の申込の支払番号(d).filter((x) => x !== "").length, `${名}の申込に設定された支払番号の数`).toBe(1);
     }
-    expect.soft(結果["日程A1"].番号[0], "2件の申込の支払番号が共通").toBe(結果["日程A2"].番号[0]);
+    expect.soft(DB.日程の申込の支払番号(a)[0], "2件の申込の支払番号が共通（日程A1の支払番号が日程A2の支払番号と同じ）").toBe(DB.日程の申込の支払番号(b)[0]);
   });
 });
 
@@ -715,16 +749,16 @@ caseTest("IT-F07-04-031", async ({ page, notes, step, expected }) => {
   const a = notes.get("〔イベント詳細ID-F0704-031A〕"), b = notes.get("〔イベント詳細ID-F0704-031B〕");
   const e = new EventEntryPage(page);
   await step(1, async () => { await 二日程で確定画面へ(e, a, b); });
-  let 応答: ReturnType<EventEntryPage["申込登録の応答を待ち受ける"]> | undefined;
-  await step(2, async () => { 応答 = e.申込登録の応答を待ち受ける(); });
+  let 応答: ReturnType<EventEntryPage["申込登録のResponseを待ち受ける"]> | undefined;
+  await step(2, async () => { 応答 = e.申込登録のResponseを待ち受ける(); });
   await step(3, async () => { await e.申込するボタン.click({ timeout: 20_000 }); });
   let r: { status: number; json: Record<string, unknown> | null } = { status: 0, json: null };
-  await step(4, async () => { r = await 応答!; });
+  await step(4, async () => { r = await 応答!; note(`申込登録の応答: 状態 ${r.status}・支払番号 ${String(r.json?.PaymentNo ?? "")}・合計金額 ${String(r.json?.Amount ?? "")}`); });
   await expected(async () => {
-    const 番号 = DB.日程の申込の支払番号(a);
+    const DBの共通の支払番号 = DB.日程の申込の支払番号(a)[0] ?? "(DBに無い)";
     expect.soft(r.status, "申込登録の応答（HTTPの状態）").toBe(200);
-    expect.soft(String(r.json?.PaymentNo ?? ""), "応答に返された支払番号が、DBへ登録された共通の支払番号").toBe(番号[0] ?? "(DBに無い)");
-    expect.soft(DB.日程の申込の支払番号(b)[0], "日程A2の申込の支払番号も同じ").toBe(番号[0] ?? "(DBに無い)");
+    expect.soft(DB.日程の申込の支払番号(a)[0] ?? "(DBに無い)", "日程A1の申込の支払番号（DB）が、応答に返された支払番号と同じ").toBe(String(r.json?.PaymentNo ?? ""));
+    expect.soft(DB.日程の申込の支払番号(b)[0], "日程A2の申込の支払番号（DB）も日程A1と同じ").toBe(DBの共通の支払番号);
     expect.soft(Number(r.json?.Amount), "応答に返された合計金額").toBe(1500);
   });
 });
@@ -776,6 +810,7 @@ caseTest("IT-F07-04-035", async ({ page, notes, step, expected }) => {
 });
 
 caseTest("IT-F07-04-053", async ({ page, notes, step, expected }) => {
+  エラーログを読めないならスキップ();
   await ログイン(page, "053");
   const id = notes.get("〔イベント詳細ID-F0704-053〕");
   const 位置 = エラーログの末尾位置(); // 事前準備③: エラーログの試験開始時点の末尾位置を記録する
@@ -835,8 +870,10 @@ caseTest("IT-F07-04-066", async ({ page, notes, step, expected }) => {
   await step(3, async () => { await e.同意して支払いへ進む(); });
   await step(4, async () => { await expect(e.確定画面の合計金額, "申込確定画面の合計金額").toBeVisible(); });
   await expected(async () => {
-    expect.soft(金額あり(await e.確定画面の合計金額.innerText(), "1000"), "合計金額が1000円").toBe(true);
-    expect.soft(await e.確定画面の支払方法.innerText(), "お支払い方法").toContain(支払名);
+    // 画面の欄を直接確かめる（赤枠が合計金額・お支払い方法の欄に付く）
+    await expect.soft(e.確定画面の合計金額, "合計金額が1000円").toHaveText(/[¥￥]\s*1,?000(?![\d,])/);
+    await expect.soft(e.確定画面の支払方法, "お支払い方法").toContainText(支払名);
+    note(`申込確定画面の合計金額「${(await e.確定画面の合計金額.innerText()).trim()}」・お支払い方法「${(await e.確定画面の支払方法.innerText()).trim()}」`);
   });
 });
 

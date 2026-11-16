@@ -122,9 +122,9 @@ caseTest("IT-M05-11-005", async ({ page, browser, notes, step, expected }) => {
   await expected(async () => {
     for (const k of 欄) {
       expect.soft(初め[k].タイトル, `${k}: 初期状態でタイトルが表示される`).toBe(true);
-      expect.soft(初め[k].開, `${k}: 初期状態では内容が閉じている`).toBe(false);
+      expect.soft(初め[k].開 === false, `${k}: 初期状態では内容が閉じている`).toBe(true);
       expect.soft(押した[k]?.一回目, `${k}: タイトルを押すと内容が開く`).toBe(true);
-      expect.soft(押した[k]?.二回目, `${k}: もう一度押すと内容が閉じる`).toBe(false);
+      expect.soft(押した[k]?.二回目 === false, `${k}: もう一度押すと内容が閉じる`).toBe(true);
     }
   });
 });
@@ -298,7 +298,8 @@ caseTest("IT-M05-11-057", async ({ page, browser, notes, step, expected }) => {
   await step(4, async () => { await new OrderEditPage(page).登録を押す(onDialog); 注記(`押したあとの画面: ${page.url()}・エラーの表示: ${(await x.エラーの文()).slice(0, 5).join(" / ")}`); });
   await step(5, async () => { 後 = 受注の全項目(no); });
   await expected(async () => {
-    const 変わった = Object.keys(前).filter((k) => k !== "update_date" && String(前[k]) !== String(後[k]));
+    // 更新日時も受注の項目なので比べる（更新日時だけが変わったときも「変わらない」にしない）
+    const 変わった = Object.keys(前).filter((k) => String(前[k]) !== String(後[k]));
     注記(`変わった項目: ${変わった.map((k) => `${k}: ${前[k]} → ${後[k]}`).join(" ／ ") || "なし"}`);
     expect.soft(変わった, "受注の各項目が更新前の値から変わらない（変わった項目）").toEqual([]);
   });

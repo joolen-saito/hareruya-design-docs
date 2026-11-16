@@ -9,7 +9,7 @@
  */
 import { Download, expect, Locator, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { expectSaved } from "./common";
+import { expectSaved, topErrorAlerts } from "./common";
 
 const OPEN = 30_000;
 const SEARCH = "/otcbuyorder";
@@ -23,14 +23,43 @@ export class OtcListPage {
   readonly 結果の表 = () => this.page.locator("#result_list_main table tbody tr");
   readonly 該当件数の表示 = () => this.page.locator("#search_form .fw-bold");
   readonly ダウンロードのボタン = () => this.page.locator("#result_list__custom_csv_menu button.dropdown-toggle");
+  /** ダウンロードのメニュー（開いたとき）と、その項目 */
+  readonly ダウンロードのメニュー = () => this.page.locator("#result_list__custom_csv_menu .dropdown-menu");
+  readonly ダウンロードのメニューの項目 = () => this.page.locator("#result_list__custom_csv_menu .dropdown-menu button.export-link");
+  /** 検索結果の欄（検索したあとの買取一覧に出る） */
+  readonly 検索結果の欄 = () => this.page.locator("#result_list_main");
+  /** 査定IDの行 */
+  readonly 対象の行 = (査定ID: string) => this.結果の表().filter({ has: this.page.getByRole("link", { name: 査定ID, exact: true }) });
   readonly 表示件数の選択 = () => this.page.locator("#page_count_pulldown");
   readonly ページング = () => this.page.locator("#result_list ul.pagination");
-  readonly 上部のエラー = () => this.page.locator(".alert-danger");
+  /** 画面上部のエラーの帯。開発用の設定のときに常に出る帯は除く（それだけで「エラーが出た」にしない） */
+  readonly 上部のエラー = () => topErrorAlerts(this.page);
 
   /** 買取一覧(検索入力)画面を開く（メニューから開いたときの初期表示） */
   async open(): Promise<void> {
     const res = await this.page.goto(adminUrl(SEARCH), { timeout: 60_000 });
     expect(res?.status() ?? 0, "買取一覧(検索入力)画面の応答").toBeLessThan(400);
+    await this.page.waitForLoadState("load");
+    await expect(this.検索フォーム(), "買取一覧(検索入力)画面の検索欄").toBeVisible({ timeout: OPEN });
+  }
+
+  /** 左のメニュー「店頭買取管理」→「買取一覧」を押して開き直す（折りたたまれていれば親の見出しを順に開く） */
+  async メニューから開き直す(): Promise<void> {
+    const link = this.page.locator('.c-mainNavArea a[href$="/otcbuyorder"]').first();
+    await expect(link, "メニューの「買取一覧」").toHaveCount(1, { timeout: OPEN });
+    for (let i = 0; i < 3 && !(await link.isVisible()); i++) {
+      const ids = await link.evaluate((a) => {
+        const out: string[] = [];
+        for (let e: Element | null = a.parentElement; e; e = e.parentElement) if (e.classList.contains("collapse") && e.id) out.push(e.id);
+        return out.reverse();
+      });
+      for (const id of ids) {
+        if (await this.page.locator(`#${id}`).isVisible()) continue;
+        await this.page.locator(`.c-mainNavArea a[href="#${id}"]`).first().click({ timeout: OPEN });
+        await this.page.waitForTimeout(500);
+      }
+    }
+    await Promise.all([this.page.waitForLoadState("load"), link.click({ timeout: OPEN })]);
     await this.page.waitForLoadState("load");
     await expect(this.検索フォーム(), "買取一覧(検索入力)画面の検索欄").toBeVisible({ timeout: OPEN });
   }
@@ -55,6 +84,27 @@ export class OtcListPage {
     }
   }
 
+  /**
+   * 査定申込日時・買取日時の From・To を入れる（M06-01 の 020・022 で足した）。欄は日時の入力欄（日付と時刻）。
+   * 値は「2026/08/10」の形の日付で受け、時刻は 00:00 として入れる（正本は日付だけを入れる定め）。null の欄は触らない。
+   */
+  async 日時の範囲を入れる(欄: "査定申込日時" | "買取日時", から: string | null, まで: string | null): Promise<void> {
+    const 名 = 欄 === "査定申込日時" ? "application_date" : "complete_date";
+    const 値 = (d: string) => `${d.replace(/\//g, "-")}T00:00`;
+    if (から !== null) await this.page.locator(`#otc_buy_order_${名}_from`).fill(値(から), { timeout: OPEN });
+    if (まで !== null) await this.page.locator(`#otc_buy_order_${名}_to`).fill(値(まで), { timeout: OPEN });
+  }
+  /** 買取金額の From・To を入れる（M06-01 の 024 で足した） */
+  async 買取金額の範囲を入れる(から: string, まで: string): Promise<void> {
+    await this.page.locator("#otc_buy_order_price_from").fill(から, { timeout: OPEN });
+    await this.page.locator("#otc_buy_order_price_to").fill(まで, { timeout: OPEN });
+  }
+  /** 日時の入力欄の値（確かめ用） */
+  async 欄の値(欄: "査定申込日時From" | "査定申込日時To" | "買取日時From" | "買取日時To" | "買取金額From" | "買取金額To"): Promise<string> {
+    const id = { 査定申込日時From: "application_date_from", 査定申込日時To: "application_date_to", 買取日時From: "complete_date_from", 買取日時To: "complete_date_to", 買取金額From: "price_from", 買取金額To: "price_to" }[欄];
+    return this.page.locator(`#otc_buy_order_${id}`).inputValue({ timeout: OPEN });
+  }
+
   async 戻し未完了のみ表示(on: boolean): Promise<void> {
     await this.box("restock_incomplete_only").locator('input[type="checkbox"]').setChecked(on, { timeout: OPEN });
   }
@@ -73,9 +123,12 @@ export class OtcListPage {
     else await sel.selectOption({ label: 名 }, { timeout: OPEN });
   }
 
-  /** 検索欄で選ばれている買取店舗の表示名（未選択は空） */
+  /** 検索欄で選ばれている買取店舗の表示名（未選択は空。未選択は、選択肢の値が空かで判定する。画面は未選択のとき「店舗を選択」を出す） */
   async 買取店舗の選択を読む(): Promise<string> {
-    return this.box("shop").locator("select").evaluate((s) => ((s as HTMLSelectElement).selectedOptions[0]?.textContent ?? "").trim());
+    return this.box("shop").locator("select").evaluate((s) => {
+      const o = (s as HTMLSelectElement).selectedOptions[0];
+      return !o || o.value === "" ? "" : (o.textContent ?? "").trim();
+    });
   }
 
   /** 検索欄の申込者名の入力値 */
@@ -136,14 +189,15 @@ export class OtcListPage {
 
   /** 戻しリストPDFのデータ取得の要求を遮断する（開発者ツールでの要求のブロックと同じ） */
   async 戻しリストPDFの要求を遮断する(): Promise<void> {
-    await this.page.route(this.pdfRoute, (r) => r.abort());
+    // 開いたポップアップを画像に残せるよう、遮断（失敗）を少し遅らせる。失敗した結果は同じ
+    await this.page.route(this.pdfRoute, async (r) => { await new Promise((res) => setTimeout(res, 3_000)); await r.abort().catch(() => undefined); });
   }
 
   /**
    * 「戻しリストPDF」を押し、開いたウィンドウが閉じるまで待つ。
    * ウィンドウが開いたか・閉じたか、ダイアログの文、いまの画面のアドレスを返す。
    */
-  async 戻しリストPDFを押して閉じるのを待つ(): Promise<{ 開いた: boolean; 閉じた: boolean; ダイアログ: string[]; アドレス: string }> {
+  async 戻しリストPDFを押して閉じるのを待つ(開いたとき?: (win: Page) => Promise<void>): Promise<{ 開いた: boolean; 閉じた: boolean; ダイアログ: string[]; アドレス: string }> {
     const dialogs: string[] = [];
     const onDialog = (d: import("@playwright/test").Dialog) => { dialogs.push(d.message()); void d.accept(); };
     this.page.on("dialog", onDialog);
@@ -155,6 +209,7 @@ export class OtcListPage {
       await item.click({ timeout: OPEN });
       const win = await popup;
       let closed = false;
+      if (win && 開いたとき) await 開いたとき(win).catch(() => undefined);
       if (win) {
         closed = win.isClosed() || await win.waitForEvent("close", { timeout: 15_000 }).then(() => true).catch(() => win.isClosed());
       }
@@ -246,6 +301,14 @@ export class OtcListPage {
     await expect(link, `一覧の査定ID「${査定ID}」のリンク`).toBeVisible({ timeout: OPEN });
     await Promise.all([this.page.waitForLoadState("load"), link.click({ timeout: OPEN })]);
     await this.page.waitForLoadState("load");
+  }
+
+  /** 開いたままの「ダウンロード▼」の選択肢を閉じる（CSVの内容を載せた画面を撮るとき、選択肢が隠さないように）。閉じていれば何もしない */
+  async ダウンロードの選択肢を閉じる(): Promise<void> {
+    if (await this.ダウンロードのメニュー().isVisible().catch(() => false)) {
+      await this.ダウンロードのボタン().click({ timeout: OPEN });
+      await expect(this.ダウンロードのメニュー(), "ダウンロードの選択肢が閉じる").toBeHidden({ timeout: OPEN });
+    }
   }
 
   /**

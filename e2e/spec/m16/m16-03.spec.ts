@@ -14,6 +14,12 @@ const ここ = /\/data\/holiday\/?$/;
 async function 片付け(browser: Browser, 期間: [string, string][], イベント?: string[]): Promise<void> {
   for (const m of await 後片付け(browser, { 期間, イベント名: イベント, 管理者: M1603_ADMIN })) note(m);
 }
+/** 「祝日追加・削除画面へ遷移」を、アドレスだけでなく画面の見出し（祝日管理）と祝日の一覧の表で確かめる（確かめた要素に赤枠が付く） */
+async function 祝日追加削除画面である(h: HolidayPage, 画面名 = "表示された画面"): Promise<void> {
+  expect.soft(new URL(h.page.url()).pathname, `${画面名}のアドレス（祝日追加・削除画面）`).toMatch(ここ);
+  await expect.soft(h.画面の見出し, `${画面名}の見出し（祝日追加・削除画面＝「祝日管理」）`).toHaveText("祝日管理");
+  await expect.soft(h.一覧の表, `${画面名}の祝日の一覧の表（祝日追加・削除画面の部品）`).toBeVisible();
+}
 const 同日 = (d: string): [string, string] => [d, d];
 
 caseTest("IT-M16-03-002", async ({ page, step, expected }) => {
@@ -178,6 +184,8 @@ caseTest("IT-M16-03-005", async ({ page, browser, step, expected }) => {
     await expected(async () => {
       expect.soft(r.sent, "追加の要求が送られた").toBe(true);
       expect.soft(r.path, "表示された画面（祝日追加・削除画面）").toMatch(ここ);
+      // 追加に失敗しても同じ画面へ戻る作りなので、追加できたうえでの遷移であることを、登録できた知らせで確かめる
+      await expect.soft(page.locator(".alert-success"), "祝日を登録できた知らせ（追加に失敗して戻ったのではない）").toBeVisible();
     });
   } finally { await 片付け(browser, [同日(D.c005)]); }
 });
@@ -209,7 +217,10 @@ caseTest("IT-M16-03-010", async ({ page, browser, notes, step, expected, db }) =
     await step(1, async () => { await h.open(); });
     await step(2, async () => { await h.新規登録を押す(); });
     await step(3, async () => { await h.名称欄.fill("重複祝日"); await h.日付欄.fill(D.c010); });
-    await step(4, async () => { await h.送信する(h.追加ボタン); });
+    await step(4, async () => {
+      // 送られなければ「追加されない」は何もしなくても成り立つので、追加の要求が送られたことを確かめる
+      expect((await h.送信する(h.追加ボタン)).sent, "追加の要求が送られた").toBe(true);
+    });
     await step(5, async () => { 行 = db.query("select id, name from mtb_holiday where date = $1", [D.c010]); });
     await expected(async () => {
       expect.soft(行.length, "その日付の祝日の件数（シードの1件だけ）").toBe(1);
@@ -230,7 +241,8 @@ caseTest("IT-M16-03-011", async ({ page, browser, step, expected }) => {
     await step(4, async () => { r = await h.送信する(h.追加ボタン); });
     await expected(async () => {
       expect.soft(r.sent, "追加の要求が送られた").toBe(true);
-      expect.soft(r.path, "表示された画面（祝日追加・削除画面）").toMatch(ここ);
+      await 祝日追加削除画面である(h);
+      await expect.soft(page.getByText("入力した日付が、登録済みの祝日と重複しています。"), "重複の誤りの表示（追加されずに、この画面へ戻った）").toBeVisible();
     });
   } finally { await 片付け(browser, [同日(D.c011)]); }
 });
@@ -271,6 +283,8 @@ caseTest("IT-M16-03-022", async ({ page, browser, step, expected }) => {
     await expected(async () => {
       expect.soft(r.sent, "決定の要求が送られた").toBe(true);
       expect.soft(r.path, "表示された画面（祝日追加・削除画面）").toMatch(ここ);
+      // 取得・登録に失敗しても同じ画面へ戻る作りなので、登録できたうえでの遷移であることを、登録できた知らせで確かめる
+      await expect.soft(page.locator(".alert-success"), "祝日を登録できた知らせ（失敗して戻ったのではない）").toBeVisible();
     });
   } finally { await 片付け(browser, [[D.c022[0], D.c022[1]]]); }
 });
@@ -302,7 +316,10 @@ caseTest("IT-M16-03-025", async ({ page, browser, notes, step, expected, db }) =
   try {
     await step(1, async () => { await h.open(); });
     await step(2, async () => { await h.取得開始日.fill(D.c025); await h.取得終了日.fill(D.c025); });
-    await step(3, async () => { await h.送信する(h.決定ボタン); });
+    await step(3, async () => {
+      // 送られなければ「追加されない」は何もしなくても成り立つので、決定の要求が送られたことを確かめる
+      expect((await h.送信する(h.決定ボタン)).sent, "決定の要求が送られた").toBe(true);
+    });
     await step(4, async () => { 行 = db.query("select id, name from mtb_holiday where date = $1", [D.c025]); });
     await expected(async () => {
       expect.soft(行.length, "その日付の祝日の件数（シードの1件だけ）").toBe(1);
@@ -321,7 +338,9 @@ caseTest("IT-M16-03-026", async ({ page, browser, step, expected }) => {
     await step(3, async () => { r = await h.送信する(h.決定ボタン); });
     await expected(async () => {
       expect.soft(r.sent, "決定の要求が送られた").toBe(true);
-      expect.soft(r.path, "表示された画面（祝日追加・削除画面）").toMatch(ここ);
+      await 祝日追加削除画面である(h);
+      await expect.soft(page.locator(".alert", { hasText: "指定された期間に、登録可能な祝日がありませんでした。" }).first(), "「登録可能な祝日がありませんでした」の表示").toBeVisible();
+      await expect.soft(page.locator(".alert", { hasText: `${斜線(D.c026)}は、既に祝日が登録されているのでスキップします。` }).first(), `「${斜線(D.c026)}は、既に…スキップします」の表示`).toBeVisible();
     });
   } finally { await 片付け(browser, [同日(D.c026)]); }
 });
@@ -376,6 +395,7 @@ caseTest("IT-M16-03-030", async ({ page, browser, notes, step, expected, db }) =
     await step(4, async () => { 行 = db.query("select id from mtb_holiday where id = $1", [id]); });
     await expected(async () => {
       expect.soft(行.length, `祝日ID ${id} の祝日の件数（残っている）`).toBe(1);
+      await expect.soft(h.削除リンク(id), `祝日ID ${id} の祝日の行（削除リンク）が一覧に残っている`).toBeVisible();
     });
   } finally { await 片付け(browser, [同日(D.c030)]); }
 });
@@ -393,6 +413,7 @@ caseTest("IT-M16-03-031", async ({ page, browser, notes, step, expected, db }) =
     await step(4, async () => { 行 = db.query("select id from mtb_holiday where id = $1", [id]); });
     await expected(async () => {
       expect.soft(行.length, `祝日ID ${id} の祝日の件数（削除されている）`).toBe(0);
+      await expect.soft(page.locator(".alert-success", { hasText: "削除しました" }).first(), "削除の完了の表示（「削除しました」）").toBeVisible();
     });
   } finally { await 片付け(browser, [同日(D.c031)]); }
 });
@@ -409,7 +430,10 @@ caseTest("IT-M16-03-032", async ({ page, browser, notes, step, expected }) => {
     await step(3, async () => { 応答 = await h.ダイアログに答える(dlg, true); });
     await expected(async () => {
       expect.soft(応答 !== null, "確認でOKを押したあと、削除の要求が送られた（確認が閉じた）").toBe(true);
-      expect.soft(new URL(page.url()).pathname, "表示された画面（祝日追加・削除画面）").toMatch(ここ);
+      // 確認はブラウザの確認ダイアログ。OK を押すと閉じ、画面が移る（開いたままなら要求は送られない）
+      await 祝日追加削除画面である(h);
+      await expect.soft(page.locator(".alert-success", { hasText: "削除しました" }).first(), "削除の完了の表示（「削除しました」）").toBeVisible();
+      await expect.soft(h.削除リンク(id), `祝日ID ${id} の行（削除リンク）が一覧に無い`).toHaveCount(0);
     });
   } finally { await 片付け(browser, [同日(D.c032)]); }
 });
@@ -443,7 +467,10 @@ caseTest("IT-M16-03-035", async ({ page, browser, step, expected, db }) => {
     await step(2, async () => { await h.新規登録を押す(); });
     await step(3, async () => { await h.名称欄.fill("期限不正祝日"); await h.日付欄.fill(D.c035); });
     await step(4, async () => { await h.追加のトークン.evaluate((e) => { (e as HTMLInputElement).value = "invalid-token"; }); });
-    await step(5, async () => { await h.送信する(h.追加ボタン); });
+    await step(5, async () => {
+      // 送られなければ「追加されない」は何もしなくても成り立つので、追加の要求が送られたことを確かめる
+      expect((await h.送信する(h.追加ボタン)).sent, "追加の要求が送られた").toBe(true);
+    });
     await step(6, async () => { 行 = db.query("select id from mtb_holiday where name = $1", ["期限不正祝日"]); });
     await expected(async () => {
       expect.soft(行.length, "名称が「期限不正祝日」の祝日の件数").toBe(0);
@@ -464,6 +491,7 @@ caseTest("IT-M16-03-036", async ({ page, browser, notes, step, expected }) => {
     await step(4, async () => { 応答 = await h.ダイアログに答える(dlg, true); });
     await expected(async () => {
       expect.soft(応答?.status() ?? 0, "削除の要求の応答（アクセス拒否）").toBe(403);
+      await expect.soft(page.getByText("アクセスできません。"), "アクセス拒否の画面の表示（「アクセスできません。」）").toBeVisible();
     });
   } finally { await 片付け(browser, [同日(D.c036)]); }
 });
@@ -478,7 +506,10 @@ caseTest("IT-M16-03-037", async ({ page, browser, notes, step, expected, db }) =
     await step(1, async () => { await h.open(); });
     await step(2, async () => { await h.削除要求のトークンを書き換える(id, "invalid-token"); });
     await step(3, async () => { dlg = await h.削除を選ぶ(id); });
-    await step(4, async () => { await h.ダイアログに答える(dlg, true); });
+    await step(4, async () => {
+      // 送られなければ「削除されない」は何もしなくても成り立つので、削除の要求が送られたことを確かめる
+      expect(await h.ダイアログに答える(dlg, true), "確認でOKを押したあと、削除の要求が送られた（応答がある）").not.toBeNull();
+    });
     await step(5, async () => { 行 = db.query("select id from mtb_holiday where id = $1", [id]); });
     await expected(async () => {
       expect.soft(行.length, `祝日ID ${id} の祝日の件数（残っている）`).toBe(1);
@@ -488,20 +519,26 @@ caseTest("IT-M16-03-037", async ({ page, browser, notes, step, expected, db }) =
 
 caseTest("IT-M16-03-042", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M1603_ADMIN);
-  const h = new HolidayPage(page);
   const idA = notes.get("〔祝日ID-M1603-042A〕");
-  const page2 = await page.context().newPage();
-  const h2 = new HolidayPage(page2);
+  // 「1つ目のタブ」で先に削除し、「2つ目のタブ」（削除前の一覧を表示したまま）で同じ祝日の削除をやり直す。
+  // 期待結果の帯と赤枠は、ケースの画面（page）に付くので、エラーになる側の「2つ目のタブ」を page にした（開いた順は結果に関係しない。どちらも同じ管理者の同じ一覧）
+  const h = new HolidayPage(page);
+  const 一つ目 = await page.context().newPage();
+  const h1 = new HolidayPage(一つ目);
   let 応答2: Awaited<ReturnType<HolidayPage["ダイアログに答える"]>> = null;
   try {
-    await step(1, async () => { await h.open(); await h2.open(); });
-    await step(2, async () => { const d = await h.削除を選ぶ(idA); await h.ダイアログに答える(d, true); });
-    await step(3, async () => { const d = await h2.削除を選ぶ(idA); 応答2 = await h2.ダイアログに答える(d, true); });
+    await step(1, async () => {
+      await h1.open(); await h.open();
+      note("画像の「タブ1」はエラーになる側（2つ目のタブ。削除前の一覧を表示したまま）、「タブ2」は先に削除した側（1つ目のタブ）。期待結果の帯と赤枠は、エラーになる側の画像に付く");
+    });
+    await step(2, async () => { const d = await h1.削除を選ぶ(idA); await h1.ダイアログに答える(d, true); });
+    await step(3, async () => { const d = await h.削除を選ぶ(idA); 応答2 = await h.ダイアログに答える(d, true); });
     await expected(async () => {
       expect.soft(応答2?.status() ?? 0, "2つ目のタブの削除の要求の応答（エラー応答）").toBeGreaterThanOrEqual(400);
-      expect.soft(await page2.getByText("削除しました").count(), "「削除しました」の表示数").toBe(0);
+      await expect.soft(page.getByText("404 Page Not Found"), "2つ目のタブの画面（エラーの画面）").toBeVisible();
+      expect.soft(await page.getByText("削除しました").count(), "2つ目のタブの「削除しました」の表示数").toBe(0);
     });
-  } finally { await page2.close().catch(() => {}); await 片付け(browser, [[D.c042[0], D.c042[1]]]); }
+  } finally { await 一つ目.close().catch(() => {}); await 片付け(browser, [[D.c042[0], D.c042[1]]]); }
 });
 
 caseTest("IT-M16-03-043", async ({ page, browser, notes, step, expected, db }) => {
@@ -515,7 +552,11 @@ caseTest("IT-M16-03-043", async ({ page, browser, notes, step, expected, db }) =
   try {
     await step(1, async () => { await h.open(); await h2.open(); });
     await step(2, async () => { const d = await h.削除を選ぶ(idA); await h.ダイアログに答える(d, true); });
-    await step(3, async () => { const d = await h2.削除を選ぶ(idA); await h2.ダイアログに答える(d, true); });
+    await step(3, async () => {
+      const d = await h2.削除を選ぶ(idA);
+      // 2つ目のタブの削除の要求が送られなければ、何もしなくても B は残るので、要求が送られたことを確かめる
+      expect(await h2.ダイアログに答える(d, true), "2つ目のタブで、削除の要求が送られた（応答がある）").not.toBeNull();
+    });
     await step(4, async () => { 行 = db.query("select id, name, date from mtb_holiday where id = $1", [idB]); });
     await expected(async () => {
       expect.soft(行.length, `祝日ID ${idB} の祝日の件数（残っている）`).toBe(1);

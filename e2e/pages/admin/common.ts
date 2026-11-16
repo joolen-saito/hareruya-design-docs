@@ -7,7 +7,19 @@ const texts = async (l: Locator): Promise<string[]> => {
 };
 
 /** 開発用の設定のときに、どの画面にも常に出る帯。保存の結果ではないので、入力エラーとして数えない */
-const ENV_BANNERS = ["デバッグモードが有効になっています。"];
+export const ENV_BANNERS = ["デバッグモードが有効になっています。"];
+
+/** 開発用の設定の帯（ENV_BANNERS）を含む文を除く。画面上部の帯・入力エラーの文の一覧から、本当のエラー・知らせだけを残す */
+export const withoutEnvBanners = (texts: string[]): string[] => texts.filter((t) => !ENV_BANNERS.some((b) => t.includes(b)));
+
+/** 帯・入力エラーの locator から、開発用の設定の帯（ENV_BANNERS）を除く。「エラーが出た」「エラーが無い」を、この帯で取り違えないようにする */
+export function exceptEnvBanners(l: Locator): Locator {
+  for (const b of ENV_BANNERS) l = l.filter({ hasNotText: b });
+  return l;
+}
+
+/** 管理画面上部の赤い帯（.alert-danger）のうち、開発用の設定の帯を除いたもの（本当のエラーの帯） */
+export const topErrorAlerts = (page: Page): Locator => exceptEnvBanners(page.locator(".alert-danger"));
 
 /**
  * 登録・更新の送信後、画面上部の成功メッセージが表示されたことを確かめる。

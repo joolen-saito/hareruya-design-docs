@@ -41,6 +41,12 @@ async function 表示する(page: Page): Promise<受け渡し領域> {
 }
 
 const uidの要素 = (d: 受け渡し領域) => d.要素.filter((e) => e.uidあり);
+
+/** 追加ページの公開URLを開き、ページが開いたこと（応答 200）を確かめる（開けずに「無い」とならないようにする） */
+async function 公開URLを開いて確かめる(page: Page, ページ名: string): Promise<void> {
+  const status = await 公開URLを開く(page, 公開URLの値(ページ名));
+  expect(status, `ページ「${ページ名}」の公開URLの応答（開けた）`).toBe(200);
+}
 const uidが値の要素 = (d: 受け渡し領域, 会員ID: string) => uidの要素(d).filter((e) => e.uidの値 === 会員ID);
 const uidの値の並び = (d: 受け渡し領域) => uidの要素(d).map((e) => `${e.uidの値}（${e.uidの型}）`).join("、") || "なし";
 
@@ -67,7 +73,11 @@ function ログインして無いことを見る(seedId: string, 開く: (page: 
     const l = new LoginPage(page);
     let d: 受け渡し領域 | undefined;
     await step(1, async () => { await l.ログイン画面を開く(); });
-    await step(2, async () => { await ログインする(l, seedId); });
+    await step(2, async () => {
+      await ログインする(l, seedId);
+      // ログインできずに「uid が無い」とならないよう、ログインできたことを確かめてから進む
+      expect(await l.ログイン画面である(), "ログインのあと会員ログイン画面にとどまっていない（ログインできた）").toBe(false);
+    });
     await step(3, async () => { await 開く(page); });
     await step(4, async () => { d = await 表示する(page); });
     await expected(async () => {
@@ -195,7 +205,11 @@ caseTest("IT-F10-01-006", async ({ page, step, expected }) => {
 function 未ログインで開く(開く: (page: Page) => Promise<void>) {
   return async ({ page, step, expected }: CaseCtx): Promise<void> => {
     let d: 受け渡し領域 | undefined;
-    await step(1, async () => { await 開く(page); });
+    await step(1, async () => {
+      await 開く(page);
+      // 画面が開かずに「uid が無い」とならないよう、共通のエラー画面でないことを確かめる
+      await expect(page.locator(".p-hareruya-error"), `開いた画面が共通のエラー画面でない（${new URL(page.url()).pathname}）`).toHaveCount(0);
+    });
     await step(2, async () => { d = await 表示する(page); });
     await expected(async () => {
       expect.soft(uidの要素(d!).length, `項目名 uid を持つ要素の数（受け渡し領域: ${d!.配列か ? `${d!.要素.length}要素` : `型 ${d!.型}`}）`).toBe(0);
@@ -204,13 +218,13 @@ function 未ログインで開く(開く: (page: Page) => Promise<void>) {
 }
 caseTest("IT-F10-01-007", 未ログインで開く((p) => 本店ECTOPを開く(p)));
 caseTest("IT-F10-01-018", 未ログインで開く((p) => 本店ECTOPを開く(p, "en")));
-caseTest("IT-F10-01-019", 未ログインで開く(async (p) => { await 公開URLを開く(p, 公開URLの値("追加ページF1001-019")); }));
+caseTest("IT-F10-01-019", 未ログインで開く(async (p) => { await 公開URLを開いて確かめる(p, "追加ページF1001-019"); }));
 
-caseTest("IT-F10-01-013", ログインして無いことを見る("S-F10-01-MEM-013", async (p) => { await 公開URLを開く(p, 公開URLの値("追加ページF1001-013")); }));
+caseTest("IT-F10-01-013", ログインして無いことを見る("S-F10-01-MEM-013", async (p) => { await 公開URLを開いて確かめる(p, "追加ページF1001-013"); }));
 
 caseTest("IT-F10-01-024", async ({ page, step, expected }) => {
   let 型 = "";
-  await step(1, async () => { await 公開URLを開く(page, 公開URLの値("追加ページF1001-024")); });
+  await step(1, async () => { await 公開URLを開いて確かめる(page, "追加ページF1001-024"); });
   await step(2, async () => { 型 = await 受け渡し領域の型(page); note(`typeof dataLayer の結果: ${型}`); });
   await expected(async () => {
     expect(型, "typeof dataLayer の実行結果（受け渡し領域が用意されていない）").toBe("undefined");

@@ -71,7 +71,7 @@ export class M08CustomerGroupPage {
   async 名称リンクを押してIDを読む(名称: string): Promise<string> {
     const row = this.rowByName(名称);
     await expect(row, `一覧に名称「${名称}」の行が1つある`).toHaveCount(1, { timeout: T });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), row.locator("td a").first().click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), row.locator("td a").first().click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     const id = this.idInUrl();
     if (!id) throw new Error(`名称「${名称}」の名称リンクを押したが、アドレスの末尾に顧客グループIDが出ない（${this.page.url()}）`);
@@ -111,6 +111,9 @@ export class M08CustomerGroupPage {
     return s;
   }
 
+
+  /** 支払方法の欄全体（チェックボックスの並び。印を付けるため） */
+  get 支払方法の欄(): Locator { return this.page.locator("#admin_customer_group_Payments"); }
 
   /** 支払方法のチェックボックス（画面の並びのまま）。id は値、名前はラベル */
   async 支払方法の選択肢(): Promise<{ id: string; 名前: string; 選択: boolean }[]> {

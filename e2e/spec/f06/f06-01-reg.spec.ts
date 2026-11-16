@@ -7,7 +7,9 @@ import { Browser, test } from "@playwright/test";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { 会員, 会員の住所, 会員の選手 } from "../../db/f06_01";
 import { EntryPage, 入力値 } from "../../pages/front/f06_01_entry";
+import { scene, 要素を撮る } from "../../lib/evidence_other";
 import { mailOf, 仮会員機能を戻す } from "../../seeds/f06-01";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
@@ -68,7 +70,11 @@ caseTest("IT-F06-01-019", async ({ page, step, expected }) => {
   const v = jp("it-f0601-jp");
   await step(1, async () => { await e.open(); });
   await step(2, async () => { await e.fill({ ...v, パスワード確認: PW }); });
-  await step(3, async () => { const r = await e.同意する(); if (!r.sent) note(`「同意する」を押しても送信されなかった（ブラウザの入力チェック）: ${(await e.エラー文()).join(" / ")}`); });
+  await step(3, async () => {
+    const r = await e.同意する(); if (!r.sent) note(`「同意する」を押しても送信されなかった（ブラウザの入力チェック）: ${(await e.エラー文()).join(" / ")}`);
+    // 「同意する」は確認画面へ進むだけで、会員はまだ登録されない。期待結果の「登録されない」だけでは入力の誤りが止められたかが分からないので、押したあとの画面を残す
+    note(`「同意する」を押したあとの画面: ${await e.確認画面である() ? "会員登録確認画面へ進んだ（パスワード(確認)の不一致で止まらなかった）" : `会員登録画面に留まった（${(await e.エラー文()).join(" / ") || "エラー文なし"}）`}`);
+  });
   let found: 会員[] = [];
   await step(4, async () => { found = 会員(v.メール); });
   await expected(async () => {
@@ -87,7 +93,11 @@ caseTest("IT-F06-01-025", async ({ page, step, expected }) => {
     await page.evaluate(() => { document.querySelector('[name="entry[_token]"]')?.remove(); });
     expect(await page.locator('[name="entry[_token]"]').count(), "なりすまし対策の照合値を持つ入力要素の数").toBe(0);
   });
-  await step(4, async () => { await e.同意する(); });
+  await step(4, async () => {
+    await e.同意する();
+    // 「同意する」は確認画面へ進むだけで、会員はまだ登録されない。照合値が無いことで止められたかが分かるよう、押したあとの画面を残す
+    note(`「同意する」を押したあとの画面: ${await e.確認画面である() ? "会員登録確認画面へ進んだ（照合値が無くても止まらなかった）" : `会員登録画面に留まった（${(await e.エラー文()).join(" / ") || "エラー文なし"}）`}`);
+  });
   await step(5, async () => { found = 会員(v.メール); });
   await expected(async () => {
     expect.soft(found.length, `メールアドレス「${v.メール}」の会員の数（登録されない）`).toBe(0);
@@ -137,6 +147,7 @@ caseTest("IT-F06-01-028", async ({ page, step, expected }) => {
   await step(4, async () => { await expect(e.パンくず現在地.first(), "パンくずリストの現在表示中ページ").toBeVisible({ timeout: 30_000 }); });
   await expected(async () => {
     expect.soft(await e.現在地がリンクか(), "現在表示中ページが押下可能なリンクになっている").toBe(false);
+    await 要素を撮る(e.パンくず現在地.first().locator("xpath=ancestor::nav[1]"), scene.expectedLabel("パンくずリスト（拡大）"));
   });
 });
 
@@ -148,7 +159,7 @@ caseTest("IT-F06-01-029", async ({ page, step, expected }) => {
   await step(3, async () => { await e.同意する(); });
   await step(4, async () => { await e.押して遷移する(e.パンくずホーム); });
   await expected(async () => {
-    expect.soft(e.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/);
+    expect.soft(e.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(e.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true);
   });
 });
 
@@ -452,7 +463,7 @@ caseTest("IT-F06-01-047", async ({ page, browser, step, expected }) => {
     const e = new EntryPage(page);
     await step(1, async () => { await 完了まで(e, "it-f0601-jp-047"); });
     await step(2, async () => { await e.押して遷移する(e.パンくずホーム); });
-    await expected(async () => { expect.soft(e.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+    await expected(async () => { expect.soft(e.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(e.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
   } finally { await 戻す(browser); }
 });
 
@@ -462,7 +473,7 @@ caseTest("IT-F06-01-048", async ({ page, browser, step, expected }) => {
     const e = new EntryPage(page);
     await step(1, async () => { await 完了まで(e, "it-f0601-jp-048"); });
     await step(2, async () => { await e.押して遷移する(page.getByRole("link", { name: /ホームへ戻る/ })); });
-    await expected(async () => { expect.soft(e.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+    await expected(async () => { expect.soft(e.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(e.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
   } finally { await 戻す(browser); }
 });
 

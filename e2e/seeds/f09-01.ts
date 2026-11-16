@@ -16,7 +16,7 @@
  * - デッキの「任意の値」: 大会名(日)「<ケースの前半>-大会」・大会名(英)「<ケースの前半>-Event」・時刻 12:00・順位と参加人数は空。
  */
 import { Browser, Page } from "@playwright/test";
-import { SETUP_ADMIN } from "../config/env";
+import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { rc } from "../lib/run_marker";
@@ -357,6 +357,15 @@ defineSeed("S-F09-01-CARDASSIST-084", async ({ browser }) => {
     await カードを登録する(page, { カード名日: N("084", "カードA"), カード名英: N("084", "CardA"), 点数で見たマナ: "0", 詳細: false }, seedId, (m) => reportSeedIssue(seedId, m));
     const msg = await カード名リストを作成する(page);
     reportSeedIssue(seedId, `カード一覧の「カード名リスト作成」を実行した（知らせ: ${msg}）`);
+    // 一覧ファイルの書き換えは知らせのあとに終わることがある。ファイルにカード名が載るまで待つ（載らないまま進むと、入力補助が空で不合格と数えられていた）
+    const 名 = N("084", "カードA");
+    let 載った = false;
+    for (const end = Date.now() + 180_000; !載った && Date.now() < end; await page.waitForTimeout(5_000)) {
+      const r = await page.request.get(`${BASE_URL}/user_data/list/cardNameList.json?t=${Date.now()}`, { failOnStatusCode: false, timeout: 60_000 }).catch(() => null);
+      // ファイルは JSON（日本語が \uXXXX で書かれることがある）。読み直してから探す
+      if (r && r.status() === 200) { try { 載った = JSON.stringify(JSON.parse(await r.text())).includes(名); } catch { /* JSON でない */ } }
+    }
+    if (!載った) throw new Error(`${seedId}: カード名リスト作成のあと3分待っても、カード名の一覧ファイル（cardNameList.json）に「${名}」が載らない`);
   });
 });
 

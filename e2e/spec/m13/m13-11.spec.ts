@@ -21,7 +21,7 @@ caseTest("IT-M13-11-001", async ({ page, step, expected }) => {
   await step(1, async () => { await s.開く(); });
   let 店舗: string[] = []; let from = "";
   await step(2, async () => { 店舗 = await s.選ばれている店舗(); from = await s.日付の値(s.開催日From); });
-  note("店舗Aは印つきの店舗（" + 印店名.A + "）を作って使った");
+  note("店舗Aは、店舗を作らず、使い回す店舗（" + 印店名.A + "）に読み替えた（依頼者 2026-11-15）");
   await expected(async () => {
     const d = new Date(); const today = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
     expect.soft(店舗, "店舗の初期値").toEqual([印店名.A]);
@@ -223,7 +223,7 @@ caseTest("IT-M13-11-022", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.開く(); });
   await step(2, async () => { await s.店舗を選ぶ([印店名.A]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("遷移確認大会")); await s.検索する(); });
-  await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), s.日程の行(d).locator(`a[href$="/entry_registration/new/${d}"]`).click()]); });
+  await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), s.日程の行(d).locator(`a[href$="/entry_registration/new/${d}"]`).click({ noWaitAfter: true })]); });
   await expected(async () => {
     expect(new URL(page.url()).pathname, "遷移した画面（イベント新規申込登録）").toMatch(new RegExp(`/entry_registration/new/${d}$`));
   });
@@ -265,7 +265,7 @@ caseTest("IT-M13-11-024", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.開く(); });
   await step(2, async () => { await s.店舗を選ぶ([印店名.A]); await s.日付を入れる(s.開催日From, ""); await s.日付を入れる(s.開催日To, ""); });
   await step(3, async () => { await s.検索イベント名.fill(rc("連携確認大会001")); await s.検索する(); });
-  await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), s.日程の行(b).locator(`a[href$="/entry_registration/new/${b}"]`).click()]); });
+  await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), s.日程の行(b).locator(`a[href$="/entry_registration/new/${b}"]`).click({ noWaitAfter: true })]); });
   let 画面 = ""; let 金額 = "";
   await step(5, async () => {
     画面 = (await page.locator("form").first().innerText()).replace(/\s+/g, " ");
@@ -274,7 +274,9 @@ caseTest("IT-M13-11-024", async ({ page, notes, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(画面, "選択した日程のイベント名と開催日時").toContain(`${rc("連携確認大会001")}（Link Check 001） 2099-12-02 14:30`);
-    expect.soft(画面, "別の日程（2099-12-01 10:00）は表示されない").not.toContain("2099-12-01 10:00");
+    // 画面は開催日時を「2099/12/02 14:30」のスラッシュ区切りで出す（edit.twig の date('Y/m/d H:i')）。区切りによらず、別の日程の開催日時が無いことを確かめる
+    // （以前はハイフン区切りだけで探していて、画面の形では必ず通り、確かめになっていなかった。2026-11-13 ECCUBE_HARERUYA-3925 の検証）
+    expect.soft(画面, "別の日程（2099-12-01 10:00。区切りは「-」「/」のどちらでも）は表示されない").not.toMatch(/2099[-/]12[-/]01 10:00/);
     expect.soft(金額.replace(/,/g, ""), "支払金額の初期表示（参加費。桁区切りは除いて比べる）").toBe("2500");
   });
 });

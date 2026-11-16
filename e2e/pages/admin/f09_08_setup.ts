@@ -44,8 +44,8 @@ export async function 言語マスタの名前(page: Page): Promise<string[]> {
   await page.waitForLoadState("load");
   await page.locator('select[name="entity"]').selectOption({ label: "言語" });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('form[method="get"] button[type="submit"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('form[method="get"] button[type="submit"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator("form#edit_form table.mtg-master-table"), "言語の一覧").toBeVisible();
@@ -149,7 +149,7 @@ export async function カードを指定して商品を登録する(page: Page, 
   await chooseByLabel(form.locator('select[name="admin_product[Status]"]'), v.公開状態);
   await Promise.all([
     page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click(),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click({ noWaitAfter: true }),
   ]);
   const errors = await page.locator(".invalid-feedback, .form-error-message, .alert-danger").evaluateAll((nodes) => nodes
     .filter((n) => (n as HTMLElement).offsetParent !== null && (n.textContent ?? "").trim() !== "")
@@ -200,7 +200,7 @@ async function 規格の欄を入れる(page: Page, form: Locator, v: Partial<�
   await スマレジ連携しないことを確かめる(form, what);
   await Promise.all([
     page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
-    form.getByRole("button", { name: "商品規格を登録", exact: true }).click(),
+    form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: 商品規格を登録`)) issue(`${what}: 警告「${w}」`);
 }

@@ -166,9 +166,12 @@ caseTest("IT-F03-08-006", async ({ page, step, expected }) => {
   const { productId } = productOf("EXIST-001-006");
   let n = -1;
   await step(1, async () => { await loginAs(front, "f0308-a-006"); });
-  await step(2, async () => { await front.openDetail(productId); });
-  await step(3, async () => {
+  await step(2, async () => {
+    await front.openDetail(productId);
+    // 押す前の状態は、押す前の画面（手順2の画像）で確かめる（手順3の画像は押した後なので、赤枠が押した後のボタンに付いていた。2026-11-14 の 006）
     expect(await front.登録済みの表示か(), "押す前のお気に入りボタンが登録済み状態").toBe(true);
+  });
+  await step(3, async () => {
     noteResult("登録済み状態のお気に入りボタンを押した", await front.押す());
   });
   await step(4, async () => { n = お気に入り件数(m.id, productId, "JP"); });
@@ -236,7 +239,7 @@ caseTest("IT-F03-08-011", async ({ page, step, expected }) => {
   });
 });
 
-caseTest("IT-F03-08-012", async ({ page, step, expected }) => {
+caseTest("IT-F03-08-012", async ({ page, step, expected, capture }) => {
   const front = new FrontFavorite(page);
   const name = rc("LANG-LIST-001-012");
   let languages: string[] = [];
@@ -246,6 +249,16 @@ caseTest("IT-F03-08-012", async ({ page, step, expected }) => {
     const cards = front.一覧のカードの商品(name);
     languages = [];
     for (const c of await cards.all()) languages.push(await front.一覧の言語(c));
+    // 一覧のカードには言語が表示されない（2行とも同じ商品名）ので、各行の商品詳細へのリンクを開き、アドレスの言語（lang=）を画像に残す。最後に一覧へ戻る
+    const links: string[] = [];
+    for (const c of await cards.all()) links.push((await c.locator('a[href*="lang="]').first().getAttribute("href").catch(() => "")) ?? "");
+    for (const [i, href] of links.entries()) {
+      if (!href) continue;
+      await page.goto(new URL(href, page.url()).toString());
+      await page.waitForLoadState("load");
+      await capture(`${i + 1}行目の商品詳細（リンクの言語 ${languages[i]}）`);
+    }
+    await front.openFavoriteList();
   });
   await expected(async () => {
     expect.soft(languages.length, "多言語商品LANG-LIST-001-012の行の数").toBe(2);
@@ -262,7 +275,7 @@ caseTest("IT-F03-08-013", async ({ page, step, expected }) => {
   await step(3, async () => { await front.openDetail(productId, "EN"); state.英語 = await front.登録済みの表示か(); });
   await expected(async () => {
     expect.soft(state.日本語, "日本語の商品詳細のお気に入りボタンが登録済み状態").toBe(true);
-    expect.soft(state.英語, "英語の商品詳細のお気に入りボタンが登録済み状態（未登録のはず）").toBe(false);
+    expect.soft(state.英語, "英語の商品詳細のお気に入りボタンが登録済み状態").toBe(false);
   });
 });
 
@@ -331,12 +344,20 @@ caseTest("IT-F03-08-021", async ({ page, browser, step, expected }) => {
     noteResult("事前準備: ブラウザBで解除した", await fb.押す());
     expect(お気に入り件数(m.id, exist.productId, "JP"), "事前準備: ブラウザBの解除のあとのEXIST-001-021のお気に入りの件数").toBe(0);
     expect(お気に入り件数(m.id, other.productId, "JP"), "事前準備: OTHER-001-021のお気に入りの件数").toBe(1);
-    await step(1, async () => { noteResult("ブラウザAで表示済みの登録済み状態のボタンを押した", await a.押す()); });
+    let 解除の通信 = 0;
+    await step(1, async () => {
+      const 数える = (q: import("@playwright/test").Request) => { if (/remove_favorite|favorite\/\d+\/delete/.test(q.url())) 解除の通信++; };
+      page.on("request", 数える);
+      try { noteResult("ブラウザAで表示済みの登録済み状態のボタンを押した", await a.押す()); } finally { page.off("request", 数える); }
+      note(`ブラウザAでボタンを押したときのお気に入り解除の通信: ${解除の通信}件`);
+    });
     await step(2, async () => {
       got.対象 = お気に入り件数(m.id, exist.productId, "JP");
       got.対象外 = お気に入り件数(m.id, other.productId, "JP");
     });
     await expected(async () => {
+      // 押しても通信が出なければ「0件のまま」は何もしなくても成り立つので、解除の通信が出たことを確かめる
+      expect.soft(解除の通信, "ブラウザAでボタンを押したときのお気に入り解除の通信の数").toBeGreaterThan(0);
       expect.soft(got.対象, "商品EXIST-001-021のお気に入りの件数（0件のまま）").toBe(0);
       expect.soft(got.対象外, "対象外の商品OTHER-001-021のお気に入りの件数（1件残る）").toBe(1);
     });
@@ -408,7 +429,7 @@ caseTest("IT-F03-08-025", async ({ page, step, expected }) => {
   await step(3, async () => {
     const link = front.ログインモーダル.locator('a[href$="/entry"]');
     await expect(link, "ログインモーダルの「新規会員登録」").toBeVisible();
-    await Promise.all([page.waitForURL(/\/entry/, { timeout: 10_000 }), link.click()]);
+    await Promise.all([page.waitForURL(/\/entry/, { timeout: 120_000}), link.click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await expected(async () => {
@@ -424,10 +445,13 @@ caseTest("IT-F03-08-026", async ({ page, step, expected }) => {
   let r!: 押した結果;
   await step(1, async () => { await loginAs(front, "f0308-a-026"); });
   await step(2, async () => { await front.openDetail(productId); });
-  await step(3, async () => { await page.route("**/products/add_favorite/**", (route) => route.abort()); });
+  let 遮断した = 0;
+  await step(3, async () => { await page.route("**/products/add_favorite/**", (route) => { 遮断した++; return route.abort(); }); });
   await step(4, async () => { r = await front.押す(); noteResult("通信を遮断してお気に入りボタンを押した", r); });
   await expected(async () => {
-    expect.soft(await front.登録済みの表示か(), "お気に入りボタンが登録済み状態（未登録状態に戻っているはず）").toBe(false);
+    // 押しても登録の通信が出なければ「未登録状態のまま」は何もしなくても成り立つので、登録の通信を実際に遮断したことを確かめる
+    expect.soft(遮断した, "遮断したお気に入り登録の通信の数（ボタンを押して通信が出た）").toBeGreaterThan(0);
+    expect.soft(await front.登録済みの表示か(), "お気に入りボタンが登録済み状態").toBe(false);
     expect.soft(pathOf(page), "いまの画面のパス（商品詳細画面に留まる）").toBe(`/ja/products/detail/${productId}`);
   });
 });
@@ -438,9 +462,12 @@ caseTest("IT-F03-08-027", async ({ page, step, expected }) => {
   let r!: 押した結果;
   await step(1, async () => { await loginAs(front, "f0308-a-027"); });
   await step(2, async () => { await front.openDetail(productId); });
-  await step(3, async () => { await page.route("**/products/remove_favorite/**", (route) => route.abort()); });
+  let 遮断した = 0;
+  await step(3, async () => { await page.route("**/products/remove_favorite/**", (route) => { 遮断した++; return route.abort(); }); });
   await step(4, async () => { r = await front.押す(); noteResult("通信を遮断して登録済み状態のボタンを押した", r); });
   await expected(async () => {
+    // 押しても解除の通信が出なければ「登録済み状態のまま」は何もしなくても成り立つので、解除の通信を実際に遮断したことを確かめる
+    expect.soft(遮断した, "遮断したお気に入り解除の通信の数（ボタンを押して通信が出た）").toBeGreaterThan(0);
     expect.soft(await front.登録済みの表示か(), "お気に入りボタンが登録済み状態").toBe(true);
     expect.soft(pathOf(page), "いまの画面のパス（商品詳細画面に留まる）").toBe(`/ja/products/detail/${productId}`);
   });
@@ -450,11 +477,12 @@ caseTest("IT-F03-08-028", async ({ page, step, expected }) => {
   const front = new FrontFavorite(page);
   const name = rc("EXIST-001-028");
   let names: string[] = [];
+  let 差し替えた = 0;
   await step(1, async () => { await loginAs(front, "f0308-a-028"); });
   await step(2, async () => { await front.openFavoriteList(); });
   await step(3, async () => {
     // 開発者ツールのローカルオーバーライドの代わりに、解除通信の応答を失敗状態（HTTP500）に差し替える
-    await page.route("**/mypage/favorite/*/delete/*", (route) => route.fulfill({ status: 500, contentType: "application/json", body: "{}" }));
+    await page.route("**/mypage/favorite/*/delete/*", (route) => { 差し替えた++; return route.fulfill({ status: 500, contentType: "application/json", body: "{}" }); });
     supplement("ローカルオーバーライドは使わず、同じ効果のネットワークの差し替え（解除通信の応答をHTTP500にする）で行った");
   });
   await step(4, async () => {
@@ -464,6 +492,8 @@ caseTest("IT-F03-08-028", async ({ page, step, expected }) => {
   });
   await expected(async () => {
     names = await front.一覧の商品名();
+    // 押しても解除の通信が出なければ「残っている」は何もしなくても成り立つので、解除の通信の応答を実際に差し替えたことを確かめる
+    expect.soft(差し替えた, "失敗の応答に差し替えた解除の通信の数（ボタンを押して通信が出た）").toBeGreaterThan(0);
     expect.soft(pathOf(page), "いまの画面のパス（お気に入り登録商品一覧に留まる）").toBe("/ja/mypage/favorite");
     expect.soft(names, "一覧に商品EXIST-001-028が残っている").toContain(name);
   });
@@ -488,20 +518,43 @@ caseTest("IT-F03-08-029", async ({ page, step, expected }) => {
 
 // ---- 030・031 完了モーダルを閉じたあと ----
 
-async function 一覧へのリンクの数(page: Page): Promise<number> {
-  return page.locator('a[href$="/mypage/favorite"]:visible').count();
+/**
+ * 押した結果の通知（画面右下）の中の、お気に入り登録商品一覧へのリンク。
+ * 設計書 0303 お気に入りの F03-08-MSG-004（追加）・MSG-005（解除）は、完了の知らせに一覧へのリンクを出す。
+ * アプリは完了のモーダル（「OK」）を出さず、画面右下の通知に「一覧を表示」のリンクを出す（Block/js/product_js.twig）。
+ * 以前はヘッダーに常にあるお気に入りのリンクも数えていて、押した結果と関係なく成り立っていた（2026-11-14 の見直し）
+ */
+type 通知のリンク = { 見えている: boolean; 行き先: string; 文: string };
+async function 通知の一覧へのリンクを読む(front: FrontFavorite): Promise<通知のリンク> {
+  const link = front.通知.locator(".p-hareruya-cart-popup__link").first();
+  const 見えている = await link.isVisible().catch(() => false);
+  const href = (await link.getAttribute("href").catch(() => null)) ?? "";
+  let 行き先 = href;
+  try { 行き先 = new URL(href, front.page.url()).pathname; } catch { /* そのまま */ }
+  const 文 = 見えている ? ((await link.innerText().catch(() => "")) ?? "").replace(/\s+/g, " ").trim() : "";
+  return { 見えている, 行き先, 文 };
 }
+const 通知のリンクの注記 = "正本は完了のモーダルの「OK」を押したあとにリンクを確かめる。アプリは完了のモーダルを出さず、押した結果を画面右下の通知で知らせ、"
+  + "一覧へのリンク（設計書 F03-08-MSG-004・005）はその通知の中に出る。通知を閉じるとリンクも閉じるので、リンクは手順3のあと（閉じる前）に通知の中で読み、手順4で通知を閉じた";
 
 caseTest("IT-F03-08-030", async ({ page, step, expected }) => {
   const front = new FrontFavorite(page);
   const { productId } = productOf("ADD-001-030");
   await step(1, async () => { await loginAs(front, "f0308-a-030"); });
   await step(2, async () => { await front.openDetail(productId); });
-  await step(3, async () => { noteResult("お気に入りボタンを押した", await front.押す()); });
+  let リンク: 通知のリンク = { 見えている: false, 行き先: "", 文: "" };
+  await step(3, async () => {
+    noteResult("お気に入りボタンを押した", await front.押す());
+    // 手順3の画像で、通知の中のリンクに印を付ける（閉じる前の画面）
+    await expect.soft(front.通知.locator(".p-hareruya-cart-popup__link").first(), "押した結果の通知の中の、お気に入り登録商品一覧へのリンク").toBeVisible();
+    リンク = await 通知の一覧へのリンクを読む(front);
+    note(通知のリンクの注記);
+  });
   await step(4, async () => { await closeCompletion(front, "手順4"); });
   await expected(async () => {
     expect.soft(pathOf(page), "いまの画面のパス（追加確認商品ADD-001-030の商品詳細画面に留まる）").toBe(`/ja/products/detail/${productId}`);
-    expect.soft(await 一覧へのリンクの数(page), "お気に入り登録商品一覧へのリンクの表示数").toBeGreaterThan(0);
+    expect.soft(リンク.見えている, `追加の結果の通知（画面右下）に、お気に入り登録商品一覧へのリンクが表示された（手順3のあと。リンクの文「${リンク.文}」）`).toBe(true);
+    expect.soft(リンク.行き先, "通知のリンクの行き先（お気に入り登録商品一覧）").toBe("/ja/mypage/favorite");
   });
 });
 
@@ -510,11 +563,19 @@ caseTest("IT-F03-08-031", async ({ page, step, expected }) => {
   const { productId } = productOf("EXIST-001-031");
   await step(1, async () => { await loginAs(front, "f0308-a-031"); });
   await step(2, async () => { await front.openDetail(productId); });
-  await step(3, async () => { noteResult("登録済み状態のお気に入りボタンを押した", await front.押す()); });
+  let リンク: 通知のリンク = { 見えている: false, 行き先: "", 文: "" };
+  await step(3, async () => {
+    noteResult("登録済み状態のお気に入りボタンを押した", await front.押す());
+    // 手順3の画像で、通知の中のリンクに印を付ける（閉じる前の画面）
+    await expect.soft(front.通知.locator(".p-hareruya-cart-popup__link").first(), "押した結果の通知の中の、お気に入り登録商品一覧へのリンク").toBeVisible();
+    リンク = await 通知の一覧へのリンクを読む(front);
+    note(通知のリンクの注記);
+  });
   await step(4, async () => { await closeCompletion(front, "手順4"); });
   await expected(async () => {
     expect.soft(pathOf(page), "いまの画面のパス（解除確認商品EXIST-001-031の商品詳細画面に留まる）").toBe(`/ja/products/detail/${productId}`);
-    expect.soft(await 一覧へのリンクの数(page), "お気に入り登録商品一覧へのリンクの表示数").toBeGreaterThan(0);
+    expect.soft(リンク.見えている, `解除の結果の通知（画面右下）に、お気に入り登録商品一覧へのリンクが表示された（手順3のあと。リンクの文「${リンク.文}」）`).toBe(true);
+    expect.soft(リンク.行き先, "通知のリンクの行き先（お気に入り登録商品一覧）").toBe("/ja/mypage/favorite");
   });
 });
 
@@ -648,6 +709,8 @@ caseTest("IT-F03-08-040", async ({ page, step, expected }) => {
   await step(4, async () => { await front.login(m.mail, m.password); });
   await step(5, async () => { await front.openFavoriteList(); names = await front.一覧の商品名(); });
   await expected(async () => {
+    // ログインできずにログイン画面へ戻されても「表示されていない」は成り立つので、お気に入り登録商品一覧が表示されていることを確かめる
+    expect.soft(pathOf(page), "いまの画面のパス（お気に入り登録商品一覧。ログインできている）").toBe("/ja/mypage/favorite");
     expect.soft(names, "一覧に商品CBF0308-040-P1が表示されていない").not.toContain(rc("CBF0308-040-P1"));
   });
 });

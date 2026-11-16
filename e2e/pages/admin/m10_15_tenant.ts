@@ -14,9 +14,11 @@
  *   店舗一覧の検索（店名の部分一致）で見つける。無ければ新規登録で作る。シードは、その店舗の全項目をシード表の更新前の値へ
  *   画面で入れ直す（シード表の「店舗を選択せずに店舗登録画面を開く…登録」を「試験用店舗を開いて…登録」に読み替える）。
  */
-import { Browser, BrowserContext, Locator, Page, expect } from "@playwright/test";
-import { adminUrl, hideDebugToolbar } from "../../lib/session";
-import { BASE_URL } from "../../config/env";
+import { Browser, BrowserContext, Locator, Page, expect, test } from "@playwright/test";
+import { 店舗の作成は禁止, 店舗の作成を1回だけ許す } from "../../lib/store_create_ban";
+import { adminUrl, hideDebugToolbar, withAdminSession } from "../../lib/session";
+import { BASE_URL, SETUP_ADMIN } from "../../config/env";
+import { registerRestore } from "../../lib/shared_restore";
 import { chooseByLabel, expectSaved } from "./common";
 import type { 画像 } from "../../fixtures/m10-15/images";
 
@@ -56,9 +58,12 @@ export class TenantEditPage {
     await this.page.waitForLoadState("load");
     await expect(this.欄("店名"), "店舗登録画面の店名の欄").toBeVisible({ timeout: 60_000 });
   }
-  /** 店舗を選ばずに店舗登録画面（新規）を開く */
+  /**
+   * 店舗を選ばずに店舗登録画面（新規）を開く。店舗の作成は禁止（lib/store_create_ban.ts）。
+   * 例外は、登録が成功することを確かめる4件（作ってよいケース）を E2E_STORE_CREATE_ONCE=1 で流したときの1回だけ。
+   */
   async 新規を開く(): Promise<void> {
-    await this.page.goto(adminUrl("/mall/tenant/create"), { timeout: 60_000 });
+    await this.page.goto(店舗の作成は禁止("pages/admin/m10_15_tenant.ts（店舗登録画面の新規）"), { timeout: 60_000 }); // 店舗は作らない（依頼者 2026-11-15。lib/store_create_ban.ts）
     await this.待つ();
   }
   /** 店舗IDの店舗登録画面を直接開く（URL で開く。応答の状態を返す） */
@@ -80,7 +85,7 @@ export class TenantEditPage {
       else await this.page.waitForTimeout(2_000);
     }
     if (!link) throw new Error(`店舗一覧に店舗ID ${店舗ID} の店舗が出ない`);
-    await Promise.all([this.page.waitForURL(new RegExp(`/mall/tenant/detail/${店舗ID}$`), { timeout: 60_000 }), link.click()]);
+    await Promise.all([this.page.waitForURL(new RegExp(`/mall/tenant/detail/${店舗ID}$`), { timeout: 120_000}), link.click({ noWaitAfter: true })]);
     await this.待つ();
   }
   /** 開いている店舗登録画面の店舗ID（URL の末尾）。新規なら null */
@@ -155,7 +160,7 @@ export class TenantEditPage {
       return { sent: false, 止めた項目: blocked };
     }
     // 送信の応答（保存できたら転送先の店舗登録画面、入力エラーなら同じ画面）へ移り終わるまで待つ
-    const [res] = await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }), this.登録ボタン.click()]);
+    const [res] = await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }), this.登録ボタン.click({ noWaitAfter: true })]);
     return { sent: true, status: res?.status() ?? 0, 止めた項目: [] };
   }
   /** 画面のエラーの文（入力エラー・上部のエラー。開発用の設定の帯は除く） */
@@ -210,8 +215,8 @@ export async function 店舗一覧を検索する(page: Page, 語: string): Prom
   await page.waitForLoadState("load");
   await page.locator('[name="enterprise_admin_search_tenant[id]"]').fill(語);
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }),
-    page.locator("form").filter({ has: page.locator('[name="enterprise_admin_search_tenant[id]"]') }).getByRole("button", { name: "検索", exact: true }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000}),
+    page.locator("form").filter({ has: page.locator('[name="enterprise_admin_search_tenant[id]"]') }).getByRole("button", { name: "検索", exact: true }).click({ noWaitAfter: true }),
   ]);
   return page.locator("table.table tbody tr");
 }
@@ -233,6 +238,11 @@ export async function 店名で探す(page: Page, 語: string): Promise<{ 店舗
 // ---- 試験用店舗（共通の試験データ） ----
 
 export type 試験店舗 = "P1" | "P2";
+/**
+ * 試験用店舗の実体（依頼者 2026-11-15「店舗は作るのもう禁止」。M10-15 の登録が成功する4件が作った E2E の店舗を使い回す）。
+ * P1 = 店舗ID 5006、P2 = 店舗ID 5007。店名は試験用店舗の印つきに書き換えるが、ケースの終わりに書き換える前の全項目へ戻す（registerRestore）。
+ */
+export const 試験店舗の店舗ID: Record<試験店舗, string> = { P1: "5006", P2: "5007" };
 /** 店名の末尾に付ける試験用店舗の印 */
 export const 店舗の印 = (s: 試験店舗): string => `-M1015${s}`;
 /** 正本の店名に、試験用店舗の印を付けた値 */
@@ -265,6 +275,55 @@ export type 整える指定 = {
   晴れる屋くん?: 画像 | "なし";
 };
 
+
+const 画面の項目 = Object.keys(欄名).filter((k) => k !== "ショップカラー") as 項目[];
+const ラジオの項目 = Object.keys(ラジオ) as ラジオ項目[];
+type 控え = { 値: Record<string, string>; 選択: Record<string, string>; アイコン: string; 晴れる屋くん: string };
+
+/** 開いている店舗登録画面の全項目の値を読む（戻すための控え） */
+async function 全項目を読む(p: TenantEditPage): Promise<控え> {
+  const 値: Record<string, string> = {}; const 選択: Record<string, string> = {};
+  for (const k of 画面の項目) if (await p.欄がある(k)) 値[k] = await p.値(k);
+  for (const k of ラジオの項目) { const v = await p.選択(k); if (v !== "（選ばれていない）") 選択[k] = v; }
+  return { 値, 選択, アイコン: await p.画像の値("アイコン").inputValue(), 晴れる屋くん: await p.画像の値("晴れる屋くん").inputValue() };
+}
+
+/**
+ * 試験用店舗（E2E の店舗）を書き換える前に、いまの全項目を控えて、ケースの終わりに元へ戻すことを登録する。
+ * ページは開いて待ったあとの店舗登録画面。戻したあと、全項目が控えと同じことを確かめる。
+ */
+export async function 戻すことを登録する(page: Page, 店舗ID: string, 呼び名: string): Promise<void> {
+  const browser = page.context().browser();
+  if (!browser) throw new Error("ブラウザが取れず、試験用店舗を戻す準備ができない");
+  const before = await 全項目を読む(new TenantEditPage(page));
+  registerRestore(`M10-15 試験用店舗${呼び名}（店舗ID ${店舗ID}）の全項目`, before, async () => {
+    await withAdminSession(browser, SETUP_ADMIN, async (pg) => {
+      pg.setDefaultTimeout(60_000);
+      const p = new TenantEditPage(pg);
+      await p.直接開く(店舗ID); await p.待つ();
+      for (const [k, v] of Object.entries(before.値)) { const r = await p.入れる(k as 項目, v); if (r) throw new Error(`戻せない: ${r}`); }
+      for (const [k, v] of Object.entries(before.選択)) await p.入れる(k as ラジオ項目, v);
+      for (const 種類 of ["アイコン", "晴れる屋くん"] as const) {
+        const 元 = 種類 === "アイコン" ? before.アイコン : before.晴れる屋くん;
+        if ((await p.画像の値(種類).inputValue()) === 元) continue;
+        if (元 === "") await p.画像を外す(種類);
+        else await p.画像の値(種類).evaluate((e, v) => { (e as HTMLInputElement).value = v; }, 元);
+      }
+      await 押して保存(p, `試験用店舗${呼び名}（店舗ID ${店舗ID}）を元へ戻す`);
+    });
+  }, async () => {
+    let same = false;
+    await withAdminSession(browser, SETUP_ADMIN, async (pg) => {
+      pg.setDefaultTimeout(60_000);
+      const p = new TenantEditPage(pg);
+      await p.直接開く(店舗ID); await p.待つ();
+      const after = await 全項目を読む(p);
+      same = JSON.stringify(after) === JSON.stringify(before);
+    });
+    return same;
+  });
+}
+
 /**
  * 試験用店舗を用意し、全項目をシードの値（指定の無い項目は既定の値）へ入れ直して登録する。店舗IDを返す。
  * - 店舗一覧で店名に印を含む店舗を探し、無ければ新規登録で作る（1店だけのはず。2店以上は止める）。
@@ -285,12 +344,16 @@ export async function 試験店舗を整える(page: Page, s: 試験店舗, 指�
     await p.直接開く(oid);
     await p.待つ();
     if ((await p.値("店名略称（3文字）")) === v["店名略称（3文字）"]) {
+      await 戻すことを登録する(page, oid, o);
       await p.入れる("店名略称（3文字）", 控えの略称[o]);
       await 押して保存(p, `試験用店舗${o}の店名略称を控えの値へどかす`);
     }
   }
-  if (id) await p.直接開く(id); else await p.新規を開く();
+  // 試験用店舗が無くても作らない（店舗の作成は禁止。作ってよい4件の許可をシードが使わないよう、ここは必ず止める。依頼者 2026-11-15）
+  if (!id) 店舗の作成は禁止(`pages/admin/m10_15_tenant.ts 試験用店舗${s}（${v.店名}）`);
+  await p.直接開く(id);
   await p.待つ();
+  await 戻すことを登録する(page, id, s);
   const 入らない = await p.入れる全部(v);
   for (const m of 入らない) onIssue(`${m}。この項目は入れずに登録した`);
   if (指定.アイコン === "なし") await p.画像を外す("アイコン");
@@ -309,7 +372,7 @@ export async function 試験店舗を整える(page: Page, s: 試験店舗, 指�
   return id;
 }
 
-async function 押して保存(p: TenantEditPage, what: string): Promise<void> {
+export async function 押して保存(p: TenantEditPage, what: string): Promise<void> {
   const r = await p.登録を押す();
   if (!r.sent) throw new Error(`${what}: ブラウザの入力チェックで送信が止まった（${r.止めた項目.join(" / ")}）`);
   const errs = await p.エラーの文();
@@ -319,11 +382,9 @@ async function 押して保存(p: TenantEditPage, what: string): Promise<void> {
 }
 
 /** 試験用店舗の店舗ID（店名に印を含む店舗）。無ければ null */
-export async function 試験店舗のID(page: Page, s: 試験店舗): Promise<string | null> {
-  const found = await 店名で探す(page, 店舗の印(s));
-  const mine = found.filter((f) => f.店名.endsWith(店舗の印(s)));
-  if (mine.length > 1) throw new Error(`試験用店舗${s}の印「${店舗の印(s)}」の店舗が複数ある（${mine.map((m) => `${m.店舗ID}:${m.店名}`).join("、")}）。どれを使うか決められない`);
-  return mine[0]?.店舗ID ?? null;
+export async function 試験店舗のID(_page: Page, s: 試験店舗): Promise<string | null> {
+  // 店名の印で探さず、E2E の店舗の店舗IDで選ぶ（依頼者 2026-11-15）
+  return 試験店舗の店舗ID[s];
 }
 
 // ---- フロント・ほかの画面（下流の確かめ） ----
@@ -390,7 +451,7 @@ export class 集計一覧画面 {
   async 月別を選ぶ(): Promise<string> {
     const r = this.page.locator('input[name="admin_summary[summary_type]"][value="monthly"]');
     const label = ((await r.evaluate((n) => (n as HTMLInputElement).labels?.item(0)?.textContent ?? "")) ?? "").trim();
-    await Promise.all([this.page.waitForURL(/\/analysis\/summary\/monthly/, { timeout: 60_000 }), r.check()]);
+    await Promise.all([this.page.waitForURL(/\/analysis\/summary\/monthly/, { timeout: 120_000}), r.check()]);
     await this.page.waitForLoadState("load");
     return label;
   }

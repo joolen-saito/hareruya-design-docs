@@ -30,19 +30,15 @@ export class DeckShowPage {
   }
 
   /**
-   * 画面上部の言語切替（「English」）で表示言語を英語に切り替えた状態で、デッキリスト詳細を開く。
-   * 日本語表示で開いてから言語切替を押す（言語切替は同じ画面の英語版へ移る）。英語版のアドレスでなければ、英語版を開き直す。
+   * 表示言語を英語に切り替えてから、デッキリスト詳細を初めて開く。
+   * 画像の選択結果のキャッシュの鍵は言語を含まないので、日本語表示でこのデッキを開いてから切り替えない
+   * （正本・シード表は「画像のキャッシュは空・事前にこの画面を開かない」）。デッキとは別の画面（トップ）で言語切替（「English」）を押して英語表示にし、そのあとで英語表示のデッキリスト詳細を開く。
    */
   async 英語に切り替えて開く(デッキID: string): Promise<Response | null> {
-    const first = await this.開く(デッキID);
-    if (!first || first.status() >= 400) return first;
-    const res = this.page.waitForResponse((r) => r.request().isNavigationRequest() && r.request().frame() === this.page.mainFrame(), { timeout: 60_000 }).catch(() => null);
+    await this.page.goto(`${BASE_URL}/ja/`, { waitUntil: "load", timeout: 60_000 });
     await new FrontRecommend(this.page).言語を切り替える();
-    const r = await res;
-    if (!new RegExp(`/en/deck/${デッキID}/show/`).test(new URL(this.page.url()).pathname)) {
-      return this.page.goto(`${BASE_URL}/en/deck/${デッキID}/show/`, { waitUntil: "load", timeout: 60_000 });
-    }
-    return r;
+    if (!/^\/en(\/|$)/.test(new URL(this.page.url()).pathname)) throw new Error(`言語を切り替えても英語表示にならない（${this.page.url()}）`);
+    return this.page.goto(`${BASE_URL}/en/deck/${デッキID}/show/`, { waitUntil: "load", timeout: 60_000 });
   }
 
   /** 英語表示のデッキリスト詳細を開く（表示言語を英語に切り替えたあとの開き直し） */
@@ -69,11 +65,21 @@ export class DeckShowPage {
   /** 画面上部の言語切替を押す（日本語表示なら英語へ） */
   async 言語を切り替える(): Promise<void> { await new FrontRecommend(this.page).言語を切り替える(); }
 
+  /** 画面の見出し・ボタンなど、見えている日本語の文言（「日本語のまま」を確かめる） */
+  get 日本語の文言(): Locator { return this.page.locator(".deckSearch-deckList__button__sameTournament a, .button__container-return a, .deckSearch-deckList__information__list__header").filter({ hasText: /[ぁ-んァ-ン一-龥]/ }); }
+
   /** 表示言語（html の lang） */
   async 表示言語(): Promise<string> { return (await this.page.locator("html").getAttribute("lang")) ?? ""; }
 
   /** 情報欄（デッキリスト詳細であることの印） */
   get 情報欄の領域(): Locator { return this.page.locator(".deckSearch-deckList__information"); }
+
+  /** 情報欄の見出しの欄の内容（赤枠を付けるための場所） */
+  情報欄の欄(見出し: string): Locator {
+    return this.page.locator("ul.deckSearch-deckList__information__flex__list")
+      .filter({ has: this.page.locator(".deckSearch-deckList__information__list__header", { hasText: new RegExp(`^\\s*${正規(見出し)}\\s*$`) }) })
+      .locator(".deckSearch-deckList__information__list__body");
+  }
 
   // ---- カードリスト ----
 
@@ -177,7 +183,7 @@ export class DeckShowPage {
     for (const e of await l.all()) if (await e.isVisible()) { target = e; break; }
     if (!target) throw new Error(`「${what}」が見えていない`);
     await target.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), target.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), target.click({ noWaitAfter: true })]);
   }
 }
 

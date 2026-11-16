@@ -25,6 +25,11 @@ export class FrontCategoryListMore extends FrontCategoryList {
   async 枠の名称(group: 枠): Promise<string[]> {
     return texts(this.root.locator(`[data-category-level1-container="${group}"]:visible > .p-hareruya-category-item > .p-hareruya-category-button .p-hareruya-category-button__text`));
   }
+  /** 枠の第一階層のうち、カテゴリIDが一致する項目（子を持つ項目のボタンに付くカテゴリIDの印で引く）の名称。無ければ null */
+  async 枠の名称ByID(group: 枠, カテゴリID: string): Promise<string | null> {
+    const t = await texts(this.root.locator(`[data-category-level1-container="${group}"]:visible > .p-hareruya-category-item > .p-hareruya-category-button[data-category-id="${カテゴリID}"] .p-hareruya-category-button__text`));
+    return t.length ? t[0] : null;
+  }
 
   /** 展開した枠の直下の子の名称（「すべて見る」を除く、表示順） */
   async 子の名称Of(accordion: Locator): Promise<string[]> {
@@ -59,14 +64,14 @@ export class FrontCategoryListMore extends FrontCategoryList {
   async 第一階層のリンクを押す(名称: string): Promise<void> {
     const link = this.項目(名称).locator(":scope > a.p-hareruya-category-button--link").first();
     await link.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), link.click({ timeout: 30_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), link.click({ timeout: 30_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 展開した枠の中の子のリンクを押して、遷移を待つ */
   async 子のリンクを押す(accordion: Locator, 名称: string): Promise<void> {
     const link = this.子のリンク(accordion, 名称);
     await link.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), link.click({ timeout: 30_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), link.click({ timeout: 30_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 

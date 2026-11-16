@@ -315,6 +315,9 @@ caseTest("IT-M12-09-011", async ({ page, notes, step, expected }) => {
   await step(7, async () => { 後 = 記録(); });
   await expected(async () => {
     expect.soft(csv !== null, "CSVがダウンロードされた").toBe(true);
+    // 比べる元が空だと「変わらない」は当然に成り立つので、手順1でデッキ・デッキ内カード・カード・商品・商品規格を読めたことも確かめる
+    const 件数 = Object.fromEntries(Object.entries(JSON.parse(前 || "{}") as Record<string, unknown[]>).map(([k, v]) => [k, v.length]));
+    for (const k of ["デッキ", "デッキ内カード", "カード", "商品", "商品規格"]) expect.soft(件数[k] ?? 0, `手順1で記録した${k}の件数（1件以上）`).toBeGreaterThan(0);
     expect.soft(後 === 前, "ダウンロードの前後で集計対象データのレコードと値が変わらない").toBe(true);
   });
 });

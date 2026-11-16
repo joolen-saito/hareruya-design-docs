@@ -64,6 +64,19 @@ export class DeliveryPage {
     await Promise.all([this.page.waitForLoadState("load"), this.page.locator("#delivery-registration-button").click({ timeout: 30_000 })]);
     await this.page.waitForLoadState("load");
   }
+  /**
+   * 「設定」を押し、送信の応答と、そのあとの画面の読み込みを待つ（入力に誤りがあって編集画面が出し直されるときも待つ）。
+   * ブラウザ側の入力チェックで送信されなかったときは null（登録を押す() は変えずに足した）
+   */
+  async 登録を押して応答を待つ(): Promise<number | null> {
+    const resp = this.page.waitForResponse((r) => r.request().method() === "POST" && /\/setting\/shop\/delivery\/(new|\d+\/edit)$/.test(new URL(r.url()).pathname), { timeout: 30_000 }).catch(() => null);
+    await this.page.locator("#delivery-registration-button").click({ timeout: 30_000 });
+    const r = await resp;
+    await this.page.waitForLoadState("load");
+    return r ? r.status() : null;
+  }
+  /** フォームの中で、ブラウザの入力チェックに掛かっている入力欄の数 */
+  async 入力チェックに掛かった欄の数(): Promise<number> { return this.page.locator("form :invalid").count(); }
   async 作る(v: 配送方法の入力): Promise<string> {
     await this.新規登録を開く();
     await this.page.locator(nm("name")).fill(v.配送業者名, { timeout: 30_000 });

@@ -40,7 +40,12 @@ function 支払方法が更新されない(n: string): CaseBody {
       if (await box.isDisabled()) note("支払方法のクレジットカード決済は無効になっていて、オフにできない");
       else await box.uncheck();
     });
-    await step(3, async () => { await form.submit(form.更新ボタン); });
+    await step(3, async () => {
+      // 送信の応答の画面への移動まで待ってから DB を読む。送られずに「変わらない」では確かめにならない
+      const r = await form.送信して待つ(form.更新ボタン);
+      note(r.応答 !== null ? `送信の応答 ${r.応答}` : `ブラウザの入力チェックで送信が止まった（${r.入力チェックで止まった.join("・")}）`);
+      expect(r.応答 !== null || r.入力チェックで止まった.length > 0, "送信が送られたか、ブラウザの入力チェックで止まった").toBe(true);
+    });
     let 支払方法: string[] | string = [];
     await step(4, async () => { 支払方法 = 保存されているイベント(id)?.支払方法 ?? "（イベントがDBに無い）"; });
     await expected(async () => {
@@ -69,8 +74,8 @@ async function 日程行の削除を試みる(form: EventForm, 日程: string): 
   if (!(await form.日程メニューの削除(日程).isVisible())) { note("日程行のポップアップメニューに削除が無く、選択できない"); return false; }
   await form.日程メニューの削除(日程).click();
   await expect(form.日程削除の確定(日程)).toBeVisible();
-  await form.日程削除の確定(日程).click();
-  await form.page.waitForLoadState("domcontentloaded");
+  // 応答の画面への移動まで待つ（もとの画面も同じアドレスで、読み込み済みの画面の読み込みを待つだけでは、削除の処理の前に次へ進む）
+  await Promise.all([form.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), form.日程削除の確定(日程).click({ noWaitAfter: true })]);
   return true;
 }
 
@@ -110,8 +115,8 @@ async function 選択不可の日程を含めて一括削除(form: EventForm, a:
   if (手順 === "選択する") { await form.日程チェック(a).check(); await form.日程チェック(b).check(); return; }
   await form.チェックした日程削除ボタン.click();
   await expect(form.一括削除の確定).toBeVisible();
-  await form.一括削除の確定.click();
-  await form.page.waitForLoadState("domcontentloaded");
+  // 応答の画面への移動まで待つ（削除の処理の前に DB を読んだり、もとの画面のアドレスを見たりしない）
+  await Promise.all([form.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), form.一括削除の確定.click({ noWaitAfter: true })]);
 }
 
 caseTest("IT-M13-02-051", async ({ page, notes, step, expected }) => {

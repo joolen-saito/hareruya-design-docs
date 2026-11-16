@@ -8,6 +8,7 @@
  * - 削除のあとは、保持されたページ番号のデッキ一覧（検索結果）へ戻り、画面上部に「削除しました」かエラーの帯が出る
  */
 import { expect, Locator, Page } from "@playwright/test";
+import { withoutEnvBanners } from "./common";
 import { デッキ一覧 } from "./m15_deck";
 
 const 文 = (t: string | null | undefined) => (t ?? "").replace(/\s+/g, " ").trim();
@@ -44,7 +45,7 @@ export class デッキ一括削除 {
     await this.page.waitForLoadState("load"); // 確認の仕掛けは画面の読み込みのあとで付く
     let 確認 = "";
     this.page.once("dialog", (d) => { 確認 = d.message(); void d.accept(); });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.ボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.ボタン.click({ noWaitAfter: true })]);
     expect(確認, "「一括削除」を押したときの確認").not.toBe("");
     return { 確認, 成功: await this.帯(".alert-success"), エラー: await this.帯(".alert-danger") };
   }
@@ -52,14 +53,14 @@ export class デッキ一括削除 {
   private async 帯(sel: string): Promise<string[]> {
     const out: string[] = [];
     for (const e of await this.page.locator(sel).all()) if (await e.isVisible()) out.push(文(await e.innerText()));
-    return out;
+    return withoutEnvBanners(out); // 開発用の設定のときに常に出る赤い帯は、エラーの帯に数えない
   }
 
   /** ページ送りの「N」を押す（結果の表示を待つ） */
   async ページへ移る(n: number): Promise<void> {
     const a = this.ページ送り.locator("a.page-link").filter({ hasText: new RegExp(`^\\s*${n}\\s*$`) }).first();
     await expect(a, `ページ送りの「${n}」`).toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), a.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), a.click({ noWaitAfter: true })]);
     await this.一覧.結果を待つ();
   }
 
@@ -83,15 +84,15 @@ export class デッキ一括削除 {
 
   /** 件数・並べかえ項目・ソート順の選択欄で選ぶ（どれも選ぶと画面が移る） */
   async 件数を選ぶ(表示: string): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.一覧.件数選択.selectOption({ label: 表示 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.一覧.件数選択.selectOption({ label: 表示 })]);
     await this.一覧.結果を待つ();
   }
   async 並べかえ項目を選ぶ(表示: string): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.一覧.並べ替え項目.selectOption({ label: 表示 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.一覧.並べ替え項目.selectOption({ label: 表示 })]);
     await this.一覧.結果を待つ();
   }
   async ソート順を選ぶ(表示: string): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.一覧.並び順.selectOption({ label: 表示 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.一覧.並び順.selectOption({ label: 表示 })]);
     await this.一覧.結果を待つ();
   }
   async 選ばれている(sel: Locator): Promise<string> { return 文(await sel.locator("option:checked").innerText()); }

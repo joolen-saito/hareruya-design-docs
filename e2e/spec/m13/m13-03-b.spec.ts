@@ -6,11 +6,14 @@ import { test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
+import { exceptEnvBanners } from "../../pages/admin/common";
 import { ScheduleFormPage } from "../../pages/admin/m13_03_schedule";
 import { 日程, イベントの日程 } from "../../db/m13_03";
 import { M1303_ADMIN } from "../../seeds/m13-03";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
+/** 送信が送られ、応答の画面まで移ったこと（DB を読む・移った先や表示を見る前に、サーバの処理が終わっていること） */
+const 送られた = (r: { 応答: number | null }): void => { expect(r.応答, "送信が送られた（送信の応答がある）").not.toBeNull(); };
 const 更新の注記 = () => note("画面の送信ボタンは「保存」で、「更新」という名前のボタンは無い。手順の「更新ボタン」として、この保存ボタンを押した");
 
 caseTest("IT-M13-03-011", async ({ page, notes, step, expected }) => {
@@ -36,9 +39,13 @@ caseTest("IT-M13-03-012", async ({ page, notes, step, expected }) => {
     const [p] = await Promise.all([page.context().waitForEvent("page", { timeout: 30_000 }), s.イベントページURLのリンク.click({ timeout: 30_000 })]);
     popup = p;
     await p.waitForLoadState("load");
+    // フロントの「イベント検索」パネルが閉じ切る（半透明で重ならない）まで待ってから撮る
+    await p.waitForFunction(() => document.querySelectorAll(".p-hareruya-search-modal.is-visible").length === 0, undefined, { timeout: 15_000 }).catch(() => undefined);
+    await p.waitForTimeout(500);
   });
   await expected(async () => {
     expect.soft(popup?.url() ?? "", "開いたフロントのイベントページのアドレス").toMatch(new RegExp(`/events/${日程ID}/detail`));
+    if (popup) await expect.soft(popup.locator(".p-hareruya-event-detail h1").first(), "開いたフロントのイベントページのイベント名（編集したイベント）").toContainText(rc("M1303-012編集イベント"));
   });
 });
 
@@ -49,7 +56,7 @@ caseTest("IT-M13-03-037", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程編集画面を開く(イベントID, 日程ID); });
   await step(2, async () => { await s.入力する({ 開始時間: "2026/11/01 19:00", 定員: "32", 参加費: "1000", 賞品日: "更新後賞品", 賞品英: "Updated Prize" }); });
   await step(3, async () => { await s.入力する({ 受付あり: false, デッキ登録あり: false, オンライン受付あり: false, 公開状態: "公開" }); });
-  await step(4, async () => { 更新の注記(); await s.押して送信する(s.保存ボタン); });
+  await step(4, async () => { 更新の注記(); 送られた(await s.押して送信を待つ(s.保存ボタン)); });
   let r: ReturnType<typeof 日程> = null;
   await step(5, async () => { r = 日程(日程ID); });
   await expected(async () => {
@@ -69,7 +76,7 @@ caseTest("IT-M13-03-038", async ({ page, notes, step, expected }) => {
   const イベントID = notes.get("〔イベントID-M1303-038〕");
   await step(1, async () => { await s.日程編集画面を開く(イベントID, notes.get("〔日程ID-M1303-038〕")); });
   await step(2, async () => { await s.入力する({ 定員: "32" }); });
-  await step(3, async () => { 更新の注記(); await s.押して送信する(s.保存ボタン); });
+  await step(3, async () => { 更新の注記(); 送られた(await s.押して送信を待つ(s.保存ボタン)); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "移った先の画面（イベント編集画面）").toBe(`/admin/event/${イベントID}/edit`);
   });
@@ -81,7 +88,7 @@ caseTest("IT-M13-03-041", async ({ page, notes, step, expected }) => {
   const 日程ID = notes.get("〔日程ID-M1303-041〕");
   await step(1, async () => { await s.日程編集画面を開く(notes.get("〔イベントID-M1303-041〕"), 日程ID); });
   await step(2, async () => { await s.削除ボタン.click({ timeout: 30_000 }); });
-  await step(3, async () => { await s.確認画面の削除を押す(日程ID); });
+  await step(3, async () => { await s.確認画面の削除を押して待つ(日程ID); });
   let r: ReturnType<typeof 日程> = null;
   await step(4, async () => { r = 日程(日程ID); });
   await expected(async () => {
@@ -95,7 +102,7 @@ caseTest("IT-M13-03-042", async ({ page, notes, step, expected }) => {
   const イベントID = notes.get("〔イベントID-M1303-042〕"), 日程ID = notes.get("〔日程ID-M1303-042〕");
   await step(1, async () => { await s.日程編集画面を開く(イベントID, 日程ID); });
   await step(2, async () => { await s.削除ボタン.click({ timeout: 30_000 }); });
-  await step(3, async () => { await s.確認画面の削除を押す(日程ID); });
+  await step(3, async () => { await s.確認画面の削除を押して待つ(日程ID); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "移った先の画面（イベント編集画面）").toBe(`/admin/event/${イベントID}/edit`);
   });
@@ -106,7 +113,8 @@ caseTest("IT-M13-03-046", async ({ page, notes, step, expected }) => {
   const s = new ScheduleFormPage(page);
   const イベントID = notes.get("〔イベントID-M1303-046〕");
   await step(1, async () => { await s.日程編集画面を開く(イベントID, notes.get("〔日程ID-M1303-046〕")); });
-  await step(2, async () => { await s.イベント編集リンク.click({ timeout: 30_000 }); await page.waitForLoadState("load"); });
+  // 画面の移動を待つ（読み込み済みの画面の load を待つだけでは、移動の前のアドレスを見る）
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), s.イベント編集リンク.click({ timeout: 30_000, noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "移った先の画面（イベント編集画面）").toBe(`/admin/event/${イベントID}/edit`);
   });
@@ -134,7 +142,7 @@ caseTest("IT-M13-03-063", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する({ 開始時間: "2026/09/10 18:00", 定員: "10", 参加費: "1000", 公開状態: "公開" }); });
   await step(3, async () => { await s.入力する({ 受付あり: false, デッキ登録あり: false, デッキ登録を終了する: false, オンライン受付あり: true, オンライン受付: { 開始: "2026/09/01 09:00", 終了: "2026/09/09 23:00" } }); });
-  await step(4, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(4, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   await step(5, async () => { await expect(s.開始時間, "表示された画面").toBeVisible(); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(6, async () => { rows = イベントの日程(id); });
@@ -152,12 +160,12 @@ caseTest("IT-M13-03-064", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程編集画面を開く(イベントID, 日程ID); });
   await step(2, async () => { await s.入力する({ 参加費: "1000" }); });
   await step(3, async () => { await s.入力する({ オンライン受付あり: true, オンライン受付: { 開始: "2026/09/01 09:00", 終了: "2026/09/30 23:00" } }); });
-  await step(4, async () => { 更新の注記(); await s.押して送信する(s.保存ボタン); });
+  await step(4, async () => { 更新の注記(); 送られた(await s.押して送信を待つ(s.保存ボタン)); });
   await step(5, async () => { await expect(page.locator("body"), "表示された画面").toBeVisible(); });
   let r: ReturnType<typeof 日程> = null;
   await step(6, async () => { r = 日程(日程ID); });
   await expected(async () => {
-    await expect.soft(page.locator(".alert-danger, .invalid-feedback, .form-error-message").first(), "更新のエラー表示").toBeVisible();
+    await expect.soft(exceptEnvBanners(page.locator(".alert-danger, .invalid-feedback, .form-error-message")).first(), "更新のエラー表示").toBeVisible();
     expect.soft(r?.参加費, "参加費（0のまま）").toBe("0");
     expect.soft(r?.オンライン受付あり, "オンライン受付あり（オフのまま）").toBe(false);
   });
@@ -170,7 +178,7 @@ caseTest("IT-M13-03-065", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程編集画面を開く(イベントID, 日程ID); });
   await step(2, async () => { await s.入力する({ 定員: "20" }); });
   await step(3, async () => { await s.入力する({ オンライン受付あり: true, オンライン受付: { 開始: "2026/09/01 09:00", 終了: "2026/09/30 23:00" } }); });
-  await step(4, async () => { 更新の注記(); await s.押して送信する(s.保存ボタン); });
+  await step(4, async () => { 更新の注記(); 送られた(await s.押して送信を待つ(s.保存ボタン)); });
   let r: ReturnType<typeof 日程> = null;
   await step(5, async () => { r = 日程(日程ID); });
   await expected(async () => {

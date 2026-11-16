@@ -7,6 +7,7 @@ const LABEL = /〔[^〕]+〕/g;
 
 export class Notes {
   private readonly map = new Map<string, string>();
+  private readonly extra = new Map<string, string>();
 
   /** 呼び名は〔…〕を含めて書く。同じ呼び名に違う値を控え直すのは誤り（取り違えの検出） */
   set(label: string, value: string | number): void {
@@ -18,14 +19,27 @@ export class Notes {
     this.map.set(label, v);
   }
 
+  /**
+   * シード表が「控える」と定めていない番号（シード表が固定の番号で書いたものを、画面が振った番号に読み替えたときなど）を、ケースが引くために控える。
+   * set と違い、シード表の呼び名との突き合わせ（buildSeeds）の対象に入らない。
+   */
+  setExtra(label: string, value: string | number): void {
+    if (!/^〔[^〕]+〕$/.test(label)) throw new Error(`呼び名は〔…〕の形で書く: ${label}`);
+    const v = String(value);
+    if (!v) throw new Error(`${label} に空の値は控えられない`);
+    const old = this.extra.get(label);
+    if (old !== undefined && old !== v) throw new Error(`${label} は ${old} を控え済みなのに ${v} を控えようとした`);
+    this.extra.set(label, v);
+  }
+
   get(label: string): string {
-    const v = this.map.get(label);
+    const v = this.map.get(label) ?? this.extra.get(label);
     if (v === undefined) throw new Error(`${label} はまだ控えていない（そのシードを作っていないか、呼び名の誤り）`);
     return v;
   }
 
   has(label: string): boolean {
-    return this.map.has(label);
+    return this.map.has(label) || this.extra.has(label);
   }
 
   /** 文中の呼び名を、控えた番号に置き換える（報告用） */

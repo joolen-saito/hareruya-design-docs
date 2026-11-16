@@ -8,6 +8,7 @@
 import { Page, test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
+import { topErrorAlerts } from "../../pages/admin/common";
 import { BuyListPage, PDFの行, 戻しリストを読む } from "../../pages/admin/m07_buy";
 import { M0709_ADMIN, 品名 } from "../../seeds/m07-09";
 import { 在庫数量 } from "../../db/m07";
@@ -41,34 +42,41 @@ async function 手順1から5(ctx: import("../../lib/case").CaseCtx, n: string, 
   return pdf;
 }
 
+/** ポップアップの戻しリストの、商品名を含む明細の行 */
+const ポップアップの行 = (p: PDF, 名: string) => p.popup!.locator("tr.data").filter({ hasText: 名 });
+
 caseTest("IT-M07-09-001", async (ctx) => {
   const p = await 手順1から5(ctx, "001", ["〔買取番号-M0709-001〕"]);
   await ctx.expected(async () => {
-    expect.soft(p.popup !== null, "戻しリストPDFがポップアップで表示される").toBe(true);
-    expect.soft(p.印刷ボタン, "ポップアップに「印刷する」ボタンがある").toBe(true);
+    expect(p.popup !== null, "戻しリストPDFがポップアップで表示される").toBe(true);
+    // ポップアップの「印刷する」ボタンそのものを確かめる（ポップアップを開いたまま撮る）
+    await expect.soft(p.popup!.locator("#printButton"), "ポップアップに「印刷する」ボタンがある").toBeVisible();
   });
 });
 
 caseTest("IT-M07-09-002", async (ctx) => {
   const p = await 手順1から5(ctx, "002", ["〔買取番号-M0709-002A〕"]);
   await ctx.expected(async () => {
-    expect.soft(名前を含む行(p, 品名("002", "A")).length, "商品名に「M0709-002-A」を含む行の数").toBeGreaterThan(0);
-    expect.soft(名前を含む行(p, 品名("002", "B")).length, "商品名に「M0709-002-B」を含む行の数").toBe(0);
+    expect(p.popup !== null, "戻しリストPDFがポップアップで表示される").toBe(true);
+    await expect.soft(ポップアップの行(p, 品名("002", "A")).first(), "商品名に「M0709-002-A」を含む行").toBeVisible();
+    await expect.soft(ポップアップの行(p, 品名("002", "B")), "商品名に「M0709-002-B」を含む行の数（0）").toHaveCount(0);
   });
 });
 
 caseTest("IT-M07-09-003", async (ctx) => {
   const p = await 手順1から5(ctx, "003", ["〔買取番号-M0709-003〕"]);
   await ctx.expected(async () => {
-    expect.soft(名前を含む行(p, 品名("003", "A")).length, "入庫済みの買取の実在庫として商品名に「M0709-003-A」を含む行の数").toBeGreaterThan(0);
+    expect(p.popup !== null, "戻しリストPDFがポップアップで表示される").toBe(true);
+    await expect.soft(ポップアップの行(p, 品名("003", "A")).first(), "入庫済みの買取の実在庫として商品名に「M0709-003-A」を含む行").toBeVisible();
   });
 });
 
 caseTest("IT-M07-09-004", async (ctx) => {
   const p = await 手順1から5(ctx, "004", ["〔買取番号-M0709-004〕"]);
   await ctx.expected(async () => {
-    expect.soft(名前を含む行(p, 品名("004", "A")).length, "商品名に「M0709-004-A」を含む行の数").toBeGreaterThan(0);
-    expect.soft(名前を含む行(p, 品名("004", "D")).length, "商品名に「M0709-004-D」を含む行の数").toBe(0);
+    expect(p.popup !== null, "戻しリストPDFがポップアップで表示される").toBe(true);
+    await expect.soft(ポップアップの行(p, 品名("004", "A")).first(), "商品名に「M0709-004-A」を含む行").toBeVisible();
+    await expect.soft(ポップアップの行(p, 品名("004", "D")), "商品名に「M0709-004-D」を含む行の数（0）").toHaveCount(0);
   });
 });
 
@@ -107,17 +115,17 @@ caseTest("IT-M07-09-039", async (ctx) => {
 caseTest("IT-M07-09-005", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M0709_ADMIN);
   const l = new BuyListPage(page);
-  let r: Awaited<ReturnType<BuyListPage["ダウンロードを押す"]>> | null = null;
+  let ポップアップが開いた = true;
   await step(1, async () => { await l.open(); });
   await step(2, async () => { await l.注文者名を入れる(氏名("005")); await l.検索する(); });
   await step(3, async () => { await l.対象にする(notes.get("〔買取番号-M0709-005A〕")); await l.対象にする(notes.get("〔買取番号-M0709-005B〕")); });
-  await step(4, async () => { r = await l.ダウンロードを押す("戻しリストPDF"); });
+  await step(4, async () => { ポップアップが開いた = (await l.戻しリストPDFを押す()).popup !== null; });
   await step(5, async () => { await page.waitForLoadState("load"); });
   await expected(async () => {
-    const 文 = (await page.locator(".alert-danger").allInnerTexts()).join(" / ");
-    await expect.soft(page.locator(".alert-danger").first(), "買取一覧(検索結果)画面のエラー表示").toBeVisible();
+    const 文 = (await topErrorAlerts(page).allInnerTexts()).join(" / ");
+    await expect.soft(topErrorAlerts(page).first(), "買取一覧(検索結果)画面のエラー表示").toBeVisible();
     expect.soft(文, "エラーの文（入庫待ち・入庫済み以外が対象に選ばれた）").toMatch(/入庫待ち.*入庫済み.*以外|入庫待ち、入庫済み/);
-    expect.soft((r as { popup: Page | null } | null)?.popup ?? null, "戻しリストPDFのポップアップ").toBeNull();
+    expect.soft(ポップアップが開いた, "戻しリストPDFのポップアップ（新しいウィンドウ）が開く").toBe(false);
   });
 });
 
@@ -153,6 +161,9 @@ caseTest("IT-M07-09-007", async ({ page, notes, step, expected }) => {
   await step(5, async () => { await pdf.popup?.close(); });
   await step(6, async () => { 数量 = 在庫数量(品名("007", "A")); });
   await expected(async () => {
+    // 戻しリストPDFが出ていないと「10のまま」は確かめにならないため、PDFが表示され対象の商品の行があったことも確かめる
+    expect.soft(pdf.popup !== null, "戻しリストPDFがポップアップで表示された").toBe(true);
+    expect.soft(名前を含む行(pdf, 品名("007", "A")).length, "戻しリストPDFに商品名「M0709-007-A」を含む行がある").toBeGreaterThan(0);
     expect.soft(数量, "DBの、商品コードM0709-007-Aの実在庫数量").toBe(10);
   });
 });

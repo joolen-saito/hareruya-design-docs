@@ -63,7 +63,7 @@ function 開閉(n: string, 画面: ポイントの画面): CaseBody {
     await step(3, async () => { await p.開閉を押す(); 二回目 = await p.フォームが見えるか(); note(`2回目の押下のあと: ${二回目 ? "表示" : "非表示"}`); });
     await expected(async () => {
       expect.soft(一回目, "1回目の押下でポイント追加フォームが表示される").toBe(true);
-      expect.soft(二回目, "2回目の押下で非表示になる").toBe(false);
+      expect.soft(二回目 === false, "2回目の押下で非表示になる").toBe(true);
     });
   };
 }

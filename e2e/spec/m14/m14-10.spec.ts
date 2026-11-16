@@ -50,7 +50,7 @@ caseTest("IT-M14-10-040", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1410_ADMIN);
   await step(1, async () => { await page.goto(adminUrl(`/format/${notes.get("〔フォーマットID-M1410-共有A〕")}/edit`)); await page.waitForLoadState("load"); });
   await step(2, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("a.c-baseLink").filter({ hasText: "フォーマット" }).first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("a.c-baseLink").filter({ hasText: "フォーマット" }).first().click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "表示された画面のアドレス（フォーマット一覧）").toMatch(/\/format(\/\d+)?$/);

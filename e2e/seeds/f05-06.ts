@@ -35,6 +35,11 @@ import { EntryPage } from "../pages/front/f06_01_entry";
 import { defineSeed } from "./current_seed";
 import { カード商品を作る } from "./f05-04";
 import { markedMail } from "./f06-member";
+import { 追加システム設定を控えて書き換える } from "./add-system-restore";
+import { expectSaved } from "../pages/admin/common";
+import { 商品規格一覧を読む } from "../pages/admin/f05_04_products";
+import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
+import { productIdsByCode, readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
 
 // ---- 管理者 ----
 
@@ -81,14 +86,15 @@ export function f0506商品(キー: string): F0506商品 {
 
 async function 商品を作る(
   browser: Browser, seedId: string, notes: Notes,
-  d: { キー: string; カード名英: string; 名: string; コード: string; 買取: { NM: number; SP?: number; MP?: number } },
+  d: { キー: string; カード名英: string; 名: string; コード: string; 買取: { NM: number; SP?: number; MP?: number }; 英語?: { NM: number; SP: number; MP: number } },
 ): Promise<F0506商品> {
   const 規格: Parameters<typeof カード商品を作る>[4]["規格"] = { "JP-NM": { 商品コード: d.コード, 買取: d.買取.NM } };
   const 残す = ["NM"];
   if (d.買取.SP !== undefined) { 規格["JP-SP"] = { 買取: d.買取.SP }; 残す.push("SP"); }
   if (d.買取.MP !== undefined) { 規格["JP-MP"] = { 買取: d.買取.MP }; 残す.push("MP"); }
+  if (d.英語) { 規格["EN-NM"] = { 買取: d.英語.NM }; 規格["EN-SP"] = { 買取: d.英語.SP }; 規格["EN-MP"] = { 買取: d.英語.MP }; }
   const made = await カード商品を作る(browser, seedId, notes, { 名英: d.カード名英 }, {
-    名: d.名, 言語: ["JP"], 買取: d.買取.NM, 規格, 残す状態: 残す,
+    名: d.名, 言語: d.英語 ? ["JP", "EN"] : ["JP"], 買取: d.買取.NM, 規格, 残す状態: 残す,
   }, false);
   const nm = made.規格["JP-NM"];
   if (!nm) throw new Error(`${seedId}: 商品 ${d.名} の日本語・NMの規格が無い`);
@@ -125,6 +131,10 @@ export function f0506会員(シードID: string): F0506会員 {
 
 type 会員定義 = {
   seed: string; 前半: string; パスワード: string; 姓: string; 名: string; セイ: string; メイ: string; 郵便番号: string; 住所3: string; 電話: string;
+  /** 職業を登録しない（会員情報登録で職業を選ばない） */
+  職業なし?: boolean;
+  /** 生年月日を登録しない（会員情報登録では必須なので仮に入れ、管理画面の会員登録（編集）で未選択に戻す） */
+  生年月日なし?: boolean;
 };
 const 結合: Pick<会員定義, "姓" | "名" | "セイ" | "メイ" | "郵便番号" | "電話"> = { 姓: "結合", 名: "買取", セイ: "ケツゴウ", メイ: "カイトリ", 郵便番号: "160-0023", 電話: "03-1234-5678" };
 const L = (番: string, n: string, 姓: string, セイ: string, 連番: string, パスワード: string): 会員定義 => ({
@@ -158,7 +168,7 @@ async function 会員を作る(browser: Browser, m: 会員定義): Promise<F0506
     await e.open();
     await e.fill({
       姓: m.姓, 名: m.名, セイ: m.セイ, メイ: m.メイ, 生年月日: ["1990", "1", "2"], メール, パスワード: m.パスワード,
-      国: "Japan", 郵便番号: m.郵便番号, 都道府県: "東京都", 住所1: "新宿区", 住所2: "西新宿1-1-1", 電話番号: m.電話, 職業: "会社員",
+      国: "Japan", 郵便番号: m.郵便番号, 都道府県: "東京都", 住所1: "新宿区", 住所2: "西新宿1-1-1", 電話番号: m.電話, 職業: m.職業なし ? undefined : "会社員",
     });
     const addr3 = e.f("address][addr03");
     if ((await addr3.count()) > 0) await addr3.fill(m.住所3);
@@ -187,13 +197,14 @@ async function 会員を作る(browser: Browser, m: 会員定義): Promise<F0506
     }
   });
   if (!会員ID) throw new Error(`${m.seed}: 登録した会員 ${メール} を会員一覧で探せない`);
+  if (m.生年月日なし) await 生年月日を未選択に戻す(browser, m.seed, 会員ID);
   return { メール, パスワード: m.パスワード, 姓: m.姓, 名: m.名, 会員ID };
 }
 
 function defineMemberSeed(seedId: string): void {
-  const m = 会員の定義.find((x) => x.seed === seedId);
-  if (!m) throw new Error(`${seedId} の会員の定義が無い`);
+  const 決めた = 会員の定義.find((x) => x.seed === seedId);
   defineSeed(seedId, async ({ browser, notes, seed }) => {
+    const m = 決めた ?? シード表の会員(seed);
     const made = await 会員を作る(browser, m);
     members.set(m.seed, made);
     for (const l of Notes.labelsIn(seed["状態・属性"] + seed.投入方法)) {
@@ -216,3 +227,120 @@ defineMemberSeed("S-F05-06-AMOUNT-061");
 defineMemberSeed("S-F05-06-CARTLOST-068");
 defineMemberSeed("S-F05-06-PD-MEMBER-073");
 defineMemberSeed("S-F05-06-DP-MEMBER-076");
+
+// ---- 2026-11-12 追加: まとめて買取商品IDの共有設定を書き換えるケース（夜の1本流し）のシード ----
+//
+// - CART-BASE（共有可）: 商品A（商品コード F0506-B・日本語 NM200/SP150/MP100）と商品B（F0506-A・日本語 NM100/SP70/MP40・英語 NM900/SP700/MP400）は、
+//   既存の商品と同じくカード登録 → カード商品CSV登録 → 規格の買取価格で作る（シード表はグッズ商品CSV登録のあとにカードを指定する手順。カード詳細のある商品になる点は同じ）。
+//   商品C（まとめて買取・F0506-BULK・買取価格100）は、カード詳細の無い商品としてグッズ商品CSV登録で作る（商品カテゴリは最上位の「サプライ・グッズ」）。
+// - CART-MEMO（共有可）: 商品D「ITパック」・E「ITサプライ」（買取価格100・カード詳細なし）をグッズ商品CSV登録で作る。
+// - SETTINGS（≪共有の設定を書き換える≫）: 追加システム設定の「まとめて買取商品ID」だけを商品Cの商品IDへ書き換える。
+//   書き換える前に画面の全項目を控え、元の値のまま保存できることを確かめてから、元へ戻すことを登録する（seeds/add-system-restore.ts）。
+//   ケースの終わりに基盤が画面で元の値へ戻し、開き直して全項目が控えと同じかを確かめる。
+// - 会員（MEMBER-0NN・MEMBER-MISSING-0NN・ACCTTYPE-062・BOX20-063・BOX2-067・COMPLETE-069・DP-MEMBER-078〜082）: シード表の状態・属性の値で、
+//   フロントの会員情報登録 → 本登録のメールのURL → 管理画面の会員一覧で会員IDを控える。「職業なし」は職業を選ばずに登録し、
+//   「生年月日なし」は仮に 1990年1月2日 で登録してから、管理画面の会員登録（編集）で生年月日を未選択に戻して登録する（シード表の投入方法のとおり）。
+// - ブラウザごとの準備（ログイン・買取カート）はケースの事前準備（spec）で行う。
+// 商品コード・商品名・メールアドレスの前半には実行の印を付ける（依頼者決定 2026-10-28）。
+
+/** 状態・属性（「項目=値」を「／」で区切った文）から会員の定義を読む */
+function シード表の会員(seed: { シードID: string; "状態・属性": string }): 会員定義 {
+  const t = seed["状態・属性"];
+  const v = (k: string): string => {
+    const m = new RegExp(`(?:^|／)${k}=([^／]+)`).exec(t);
+    if (!m) throw new Error(`${seed.シードID}: 状態・属性に「${k}=」が無い`);
+    return m[1].trim();
+  };
+  const [姓, 名] = v("氏名").split(/\s+/);
+  const [セイ, メイ] = v("フリガナ").split(/\s+/);
+  return {
+    seed: seed.シードID, 前半: v("メールアドレス").split("@")[0], パスワード: v("パスワード"), 姓, 名, セイ, メイ,
+    郵便番号: v("郵便番号"), 住所3: v("住所3"), 電話: v("電話番号"),
+    職業なし: /(?:^|／)職業なし(?:／|$)/.test(t), 生年月日なし: /(?:^|／)生年月日なし(?:／|$)/.test(t),
+  };
+}
+
+/** 管理画面の会員登録（編集）で、生年月日の年・月・日を未選択に戻して登録する */
+async function 生年月日を未選択に戻す(browser: Browser, seedId: string, 会員ID: string): Promise<void> {
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    await page.goto(adminUrl(`/customer/${会員ID}/edit`));
+    await page.waitForLoadState("load");
+    for (const part of ["year", "month", "day"]) await page.locator(`[name="admin_customer[birth][${part}]"]`).selectOption({ value: "" });
+    page.once("dialog", (d) => { void d.accept(); });
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator("#register_btn").click({ noWaitAfter: true })]);
+    await expectSaved(page, `${seedId}: 会員 ${会員ID} の生年月日を未選択に戻す`);
+    const 年 = await page.locator('[name="admin_customer[birth][year]"]').inputValue();
+    if (年 !== "") throw new Error(`${seedId}: 会員 ${会員ID} の生年月日が未選択に戻らない（年「${年}」）`);
+  });
+  reportSeedIssue(seedId, "生年月日は、会員情報登録で仮に 1990年1月2日 を入れて登録し、管理画面の会員登録（編集）で未選択に戻した（シード表の投入方法のとおり）");
+}
+
+/** グッズ商品CSV登録で、カード詳細の無い商品を作る（商品カテゴリは最上位の「サプライ・グッズ」）。商品ID・規格ID を控える */
+async function グッズ商品を作る(browser: Browser, seedId: string, d: { キー: string; コード: string; 名: string; 名英: string; 買取: number }): Promise<F0506商品> {
+  const issue = (m: string) => reportSeedIssue(seedId, m);
+  const p = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const categoryId = await readGoodsRootCategoryId(page);
+    const price = String(d.買取);
+    await registerGoodsCsv(page, {
+      what: `${seedId}: グッズ商品CSV登録（${d.コード}）`, fileName: `${seedId}-${d.キー}.csv`, categoryId,
+      lines: [{ code: rc(d.コード), nameJp: rc(d.名), nameEn: rc(d.名英), values: { "基準価格": "1000", "販売価格": "1000", "原価単価": "0", "買取価格": price } }],
+      onWarning: (w) => issue(`グッズ商品CSV登録の警告「${w}」`),
+      uploadWaitMs: 120_000,
+    });
+    const ids = await productIdsByCode(page, rc(d.コード));
+    if (ids.length !== 1) throw new Error(`${seedId}: 商品コード ${rc(d.コード)} の商品が ${ids.length} 件ある（1件のはず）`);
+    const rows = await 商品規格一覧を読む(page, ids[0]);
+    if (rows.length !== 1) throw new Error(`${seedId}: 商品 ${rc(d.名)} の商品規格が ${rows.length} 件ある（グッズ商品は1件のはず）`);
+    return { 商品ID: ids[0], 規格ID: rows[0].商品規格ID, 商品コード: rc(d.コード), 商品名: rc(d.名) };
+  });
+  products.set(d.キー, p);
+  issue(`商品「${d.名}」（商品コード ${d.コード}・買取価格 ${d.買取}）はグッズ商品CSV登録で作った（カード詳細なし。商品カテゴリは最上位の「サプライ・グッズ」、基準価格・販売価格 1000、原価単価 0）。商品コード・商品名には実行の印を付けた`);
+  return p;
+}
+
+defineSeed("S-F05-06-CART-BASE", async ({ browser, notes, seed }) => {
+  const a = await 商品を作る(browser, seed.シードID, notes, { キー: "A", カード名英: "F0506-B Card A", 名: "F0506-B 買取カードA", コード: "F0506-B", 買取: { NM: 200, SP: 150, MP: 100 } });
+  const b = await 商品を作る(browser, seed.シードID, notes, {
+    キー: "B", カード名英: "F0506-A Card B", 名: "F0506-A 買取カードB", コード: "F0506-A", 買取: { NM: 100, SP: 70, MP: 40 }, 英語: { NM: 900, SP: 700, MP: 400 },
+  });
+  const c = await グッズ商品を作る(browser, seed.シードID, { キー: "C", コード: "F0506-BULK", 名: "まとめて買取", 名英: "Bulk Buyback", 買取: 100 });
+  notes.set("〔商品ID-F0506-共有A〕", a.商品ID);
+  notes.set("〔商品ID-F0506-共有B〕", b.商品ID);
+  notes.set("〔商品ID-F0506-共有C〕", c.商品ID);
+});
+
+defineSeed("S-F05-06-CART-MEMO", { needs: ["S-F05-06-CART-BASE"] }, async ({ browser, notes, seed }) => {
+  const d = await グッズ商品を作る(browser, seed.シードID, { キー: "D", コード: "F0506-ITPACK", 名: "ITパック", 名英: "IT Pack", 買取: 100 });
+  const e = await グッズ商品を作る(browser, seed.シードID, { キー: "E", コード: "F0506-ITSUPPLY", 名: "ITサプライ", 名英: "IT Supply", 買取: 100 });
+  notes.set("〔商品ID-F0506-共有D〕", d.商品ID);
+  notes.set("〔商品ID-F0506-共有E〕", e.商品ID);
+});
+
+defineSeed("S-F05-06-SETTINGS", { needs: ["S-F05-06-CART-BASE"] }, async ({ browser, notes, seed }) => {
+  const c = notes.get("〔商品ID-F0506-共有C〕");
+  await 追加システム設定を控えて書き換える(browser, seed.シードID, { まとめて買取商品ID: c });
+  reportSeedIssue(seed.シードID, `共有の追加システム設定は、画面で全項目の元の値を控えて（元の値のまま保存できることも確かめて）から、「まとめて買取商品ID」だけを商品C（${c}）へ書き換えた。ケースの終わりに基盤が画面で元の値へ戻し、開き直して確かめる`);
+});
+
+defineSeed("S-F05-06-MAIL-ENV", async ({ seed }) => {
+  await mailIds(); // メールの受け口を読めること（読めなければここで止まる）
+  reportSeedIssue(seed.シードID, "メールの配送先の設定は変えていない。試験用のメールの受け口（E2E が読む受け口）を読めることだけを確かめた");
+});
+defineSeed("S-F05-06-INPUT-INVOICE", async ({ seed }) => { reportSeedIssue(seed.シードID, "投入不要（手順で記入画面へ入力する値）"); });
+defineSeed("S-F05-06-CART-BASE-002", async ({ seed }) => {
+  reportSeedIssue(seed.シードID, "シード表の商品ID 50601・50603・50604 は、S-F05-06-CART-BASE の商品A・B・C（数量1・2・1）に読み替えた。未ログインのブラウザの買取カートへの追加は、ケースの事前準備（spec）で行う");
+});
+
+for (const id of [
+  "S-F05-06-MEMBER-004", "S-F05-06-MEMBER-009", "S-F05-06-MEMBER-MISSING-011", "S-F05-06-MEMBER-MISSING-012", "S-F05-06-MEMBER-MISSING-015",
+  "S-F05-06-MEMBER-017", "S-F05-06-MEMBER-023", "S-F05-06-MEMBER-024", "S-F05-06-MEMBER-027", "S-F05-06-MEMBER-028", "S-F05-06-MEMBER-029",
+  "S-F05-06-MEMBER-030", "S-F05-06-MEMBER-033", "S-F05-06-MEMBER-034", "S-F05-06-MEMBER-035", "S-F05-06-MEMBER-036", "S-F05-06-MEMBER-037",
+  "S-F05-06-MEMBER-038", "S-F05-06-MEMBER-039", "S-F05-06-MEMBER-040", "S-F05-06-MEMBER-041", "S-F05-06-MEMBER-042", "S-F05-06-MEMBER-043",
+  "S-F05-06-MEMBER-044", "S-F05-06-MEMBER-045", "S-F05-06-MEMBER-048", "S-F05-06-MEMBER-049", "S-F05-06-MEMBER-050", "S-F05-06-MEMBER-051",
+  "S-F05-06-ACCTTYPE-062", "S-F05-06-BOX20-063", "S-F05-06-BOX2-067", "S-F05-06-COMPLETE-069",
+  "S-F05-06-DP-MEMBER-078", "S-F05-06-DP-MEMBER-079", "S-F05-06-DP-MEMBER-080", "S-F05-06-DP-MEMBER-081", "S-F05-06-DP-MEMBER-082",
+  // 2026-11-13 追加（077 メモ・083 完了後の再申込）
+  "S-F05-06-DP-MEMBER-077", "S-F05-06-DP-MEMBER-083",
+]) defineMemberSeed(id);

@@ -2,7 +2,7 @@
  * 公開側のデッキ検索TOP（F09-01）と、そこから開く画面（デッキ詳細検索のモーダル・アーキタイプの選択画面）。
  * 遷移の先（デッキ検索結果・メタゲーム一覧）は、遷移を確かめるのに要る読み取りだけを置く（それぞれの機能の部品ではない）。
  */
-import { expect, Locator, Page } from "@playwright/test";
+import { expect, Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { フォーマットコード } from "../admin/f09_01_setup";
 
@@ -27,6 +27,32 @@ export class DeckTopPage {
   /** ランキング表示のフォーマットのメタゲームの区画（すべて、上から順） */
   get メタゲームの区画(): Locator { return this.page.locator(".deckSearch-top__flexwrapper--rankingView > .deckSearch-top__metagame__wrapper"); }
 
+  /**
+   * エビデンスのために、メタゲームの区画の並びが全部写るよう、画面（表示の範囲）の高さを広げて上端へ戻す。
+   * 区画の並びの下端が上限（8000px）を超えるときは、上限の高さで上から順に画面を動かし、そのつど撮る（capture）。
+   * 区画が「無いこと」を画像で示すため（並びの上端しか写らないと、無いことが分からない）。返り値は撮った枚数（広げただけなら 0）
+   */
+  async 区画の並びを全部写す(capture: (label: string) => Promise<void>): Promise<{ 枚数: number; 高さ: number }> {
+    const 上限 = 8000;
+    const vp = this.page.viewportSize() ?? { width: 1280, height: 800 };
+    await this.page.evaluate(() => window.scrollTo(0, 0));
+    const 下端 = await this.page.locator(".deckSearch-top__flexwrapper--rankingView").first()
+      .evaluate((e) => Math.ceil(e.getBoundingClientRect().bottom + window.scrollY)).catch(() => 0);
+    const 高さ = Math.min(上限, Math.max(vp.height, 下端 + 120));
+    await this.page.setViewportSize({ width: vp.width, height: 高さ });
+    await this.page.waitForTimeout(500);
+    if (下端 + 120 <= 上限) return { 枚数: 0, 高さ };
+    let 枚数 = 0;
+    for (let y = 0; y < 下端 && 枚数 < 10; y += 高さ - 200) {
+      await this.page.evaluate((top) => window.scrollTo(0, top), y);
+      await this.page.waitForTimeout(300);
+      枚数 += 1;
+      await capture(`メタゲームの区画の並び（${枚数}枚目）`);
+    }
+    await this.page.evaluate(() => window.scrollTo(0, 0));
+    return { 枚数, 高さ };
+  }
+
   /** フォーマット名のメタゲームの区画（見出しが「<フォーマット名>メタゲーム」） */
   区画(フォーマット名: string): Locator {
     return this.メタゲームの区画.filter({ has: this.page.locator(".deckSearch-top__metagame-title", { hasText: new RegExp(`^\\s*${正規(フォーマット名)}メタゲーム`) }) });
@@ -35,6 +61,24 @@ export class DeckTopPage {
   /** 区画の見出しのフォーマット名（上から順） */
   async 区画のフォーマット名(): Promise<string[]> {
     return (await 文(this.メタゲームの区画.locator(".deckSearch-top__metagame-title"))).map((t) => t.replace(/メタゲーム.*$/, ""));
+  }
+
+  /** フォーマット名の区画の見出し（区画の上の「<フォーマット名>メタゲーム」の行） */
+  区画の見出し(フォーマット名: string): Locator { return this.区画(フォーマット名).locator(".deckSearch-top__metagame-title"); }
+
+  /**
+   * フォーマット名の区画が、メタゲームの区画の並びの上から何番目か（1から。区画が1つに定まらなければ 0）。
+   * その区画の見出しだけを読む（エビデンスの赤枠が、確かめた区画の見出しだけに付く。区画のフォーマット名() は全部の見出しを読むので、全部に枠が付いた）。
+   */
+  async 区画の順番(フォーマット名: string): Promise<number> {
+    const head = this.区画の見出し(フォーマット名);
+    if ((await head.count()) !== 1) return 0;
+    return head.evaluate((el) => {
+      const w = el.closest(".deckSearch-top__metagame__wrapper");
+      const p = w?.parentElement;
+      if (!w || !p) return 0;
+      return [...p.children].filter((c) => c.matches(".deckSearch-top__metagame__wrapper")).indexOf(w) + 1;
+    });
   }
 
   /** 区画に示されたアーキタイプ（上から順の、名前とデッキ数の文） */
@@ -48,6 +92,33 @@ export class DeckTopPage {
       });
     }
     return out;
+  }
+
+  /**
+   * 区画に示されたアーキタイプのうち、画面に見えているもの（上から順の、名前とデッキ数の文）。
+   * アプリは上位5件を HTML に出し、PC幅では CSS で4・5件目を隠す（Deck/index.twig・hareruya-deck.css）。「アーキタイプ」は隠れた行まで数えるので、
+   * 画面に出る件数を確かめるときはこちらを使う（2026-11-13 の F09-01-009・010 は、画像では3件なのに4件と読んでいた）
+   */
+  async 見えているアーキタイプ(フォーマット名: string): Promise<{ 名前: string; デッキ数: string }[]> {
+    const items = this.区画(フォーマット名).locator("a.deckSearch-top__archetype__link");
+    const out: { 名前: string; デッキ数: string }[] = [];
+    for (const it of await items.all()) {
+      if (!(await it.isVisible())) continue;
+      out.push({
+        名前: ((await it.locator(".deckSearch-top__archetype-name").innerText()) ?? "").trim(),
+        デッキ数: ((await it.locator(".deckSearch-top__archetype-count").innerText()) ?? "").trim(),
+      });
+    }
+    return out;
+  }
+
+  /** 区画の中の、画面に見えている文と、すべてのリンク先（CSS で隠れた行の文を含めない。「区画の文とリンク」の見えている文の版） */
+  async 区画の見えている文とリンク(フォーマット名: string): Promise<{ 文: string; リンク: string[] }> {
+    const box = this.区画(フォーマット名);
+    return {
+      文: ((await box.innerText()) ?? "").replace(/\s+/g, " "),
+      リンク: await box.locator("a").evaluateAll((as) => as.map((a) => decodeURIComponent((a as HTMLAnchorElement).href))),
+    };
   }
 
   アーキタイプのリンク(フォーマット名: string, アーキタイプ名: string): Locator {
@@ -113,6 +184,26 @@ export class DeckSearchModal {
     await this.page.waitForTimeout(400); // 開く動き（0.3秒）が終わるのを待つ
   }
 
+  /**
+   * エビデンスのために、モーダルの入力欄が上から下まで全部写るよう、画面（表示の範囲）の高さを広げ、モーダルの中を上端へ戻す。
+   * モーダルは画面の高さに合わせて中を動かす作りで、そのままでは下半分（カード名・プレイヤー名・大会名）しか写らない。返り値は広げた高さ
+   */
+  async 全体が写るように広げる(): Promise<number> {
+    const vp = this.page.viewportSize() ?? { width: 1280, height: 800 };
+    const 余り = await this.モーダル.evaluate((root) => {
+      let extra = 0;
+      for (const e of [root, ...Array.from(root.querySelectorAll<HTMLElement>("*"))]) {
+        const st = getComputedStyle(e);
+        if (/(auto|scroll)/.test(st.overflowY) && e.scrollHeight > e.clientHeight + 1) { extra = Math.max(extra, e.scrollHeight - e.clientHeight); e.scrollTop = 0; }
+      }
+      return extra;
+    }).catch(() => 0);
+    const 高さ = Math.min(6000, vp.height + 余り + 80);
+    if (高さ > vp.height) await this.page.setViewportSize({ width: vp.width, height: 高さ });
+    await this.page.waitForTimeout(500);
+    return 高さ;
+  }
+
   /** モーダルの閉じるボタンを押す */
   async 閉じる(): Promise<void> {
     await this.page.locator('[data-modal-close="deck-search"]').first().click();
@@ -171,7 +262,7 @@ export class DeckSearchModal {
     await expect(this.検索ボタン, "「検索」ボタン").toHaveCount(1);
     await expect(this.検索ボタン, "「検索」ボタンの表示").toHaveValue("検索");
     await this.検索ボタン.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForURL(/\/deck\/result\//, { waitUntil: "load", timeout: 60_000 }), this.検索ボタン.click()]);
+    await Promise.all([this.page.waitForURL(/\/deck\/result\//, { waitUntil: "load", timeout: 60_000 }), this.検索ボタン.click({ noWaitAfter: true })]);
   }
 
   async クリアする(): Promise<void> {
@@ -219,7 +310,14 @@ export class DeckSearchModal {
   async タブを押す(フォーマット名: string): Promise<void> {
     const tab = this.選択画面.locator("label.tab-item").filter({ hasText: new RegExp(`^\\s*${正規(フォーマット名)}\\s*$`) });
     await expect(tab, `選択画面のフォーマットのタブ「${フォーマット名}」`).toHaveCount(1);
-    await tab.click();
+    // タブは、選択画面の「フォーマット」で選ばれたフォーマットの分だけ表示される（何も選ばないとタブは出ず、先頭のフォーマットの候補だけが出る。
+    // 開発環境には試験で作った多数のフォーマットがあり、先頭は今回のものではない）。見えていなければ、まず「フォーマット」でそのフォーマットを選ぶ。
+    // タブが見えないまま押すと、押せるまで待ち続けて試験の時間切れまで止まっていた（2026-11-14 F09-01）。
+    if (!(await tab.isVisible())) {
+      await this.選択画面のフォーマットを選ぶ(フォーマット名);
+      test.info().annotations.push({ type: "手順の注記", description: `選択画面でアーキタイプのフォーマットのタブが出ていなかったので、選択画面の「フォーマット」で ${フォーマット名} を選んでから候補を見た` });
+    }
+    if (!(await this.タブが選ばれている(フォーマット名))) await tab.click({ timeout: 15_000 });
   }
 
   /** 選択画面で、フォーマットのタブが選ばれているか。タブはフォーマットコード（f09_01_setup の フォーマットコード()）で区別される */
@@ -260,6 +358,15 @@ export class DeckSearchModal {
     await expect(l.locator("input"), `選択画面のフォーマット「${フォーマット名}」が選ばれる`).toBeChecked();
   }
 
+  /** 選択画面の「フォーマット」でそのフォーマットが選ばれていなければ選ぶ（選ばれていれば何もしない。押して外してしまわないため）。選んだら true */
+  async 選択画面のフォーマットを選んでおく(フォーマット名: string): Promise<boolean> {
+    const l = this.選択画面.locator(".deckSearch-top-archetypeDetail__fmCheck:not(.deckSearch-top-archetypeDetail__fmCheck--color) label.deckSearch-top__checkbox").filter({ hasText: new RegExp(`^\\s*${正規(フォーマット名)}\\s*$`) });
+    await expect(l, `選択画面のフォーマットの選択肢「${フォーマット名}」`).toHaveCount(1);
+    if (await l.locator("input").isChecked()) return false;
+    await this.選択画面のフォーマットを選ぶ(フォーマット名);
+    return true;
+  }
+
   /** 選択画面の「色」の選択肢を押す */
   async 色を選ぶ(色: string): Promise<void> {
     const l = this.選択画面.locator(".deckSearch-top-archetypeDetail__fmCheck--color label.deckSearch-top__checkbox").filter({ hasText: new RegExp(`^\\s*${正規(色)}\\s*$`) });
@@ -271,6 +378,12 @@ export class DeckSearchModal {
   /** 選択画面でいま見えている候補のアーキタイプ名 */
   async 見えている候補(): Promise<string[]> {
     return 文(this.選択画面.locator(".deckSearch-top__archetypedetail__area__container-imgbg:visible .deckSearch-top__archetypedetail__area__archetype-name"));
+  }
+
+  /** 候補の一覧が画面に写るよう、選択画面の中を候補のところまで送る（見せ方だけ） */
+  async 候補の一覧を見せる(): Promise<void> {
+    const c = this.選択画面.locator(".deckSearch-top__archetypedetail__area__container-imgbg:visible").first();
+    if (await c.count()) await c.evaluate((e) => e.scrollIntoView({ block: "center" }));
   }
 
   /** 選択画面のアーキタイプ名の入力欄（「アーキタイプ名を入力してください。」）に打つ */

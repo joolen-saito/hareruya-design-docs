@@ -65,7 +65,7 @@ export class FrontFavorite {
     const form = this.page.locator("form#login_mypage");
     await form.locator('input[name="login_email"]').fill(mail);
     await form.locator('input[name="login_pass"]').fill(password);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), form.locator('button[type="submit"]').click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), form.locator('button[type="submit"]').click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     expect(new URL(this.page.url()).pathname, `会員ログイン（${mail}）後の画面がログイン画面のまま`).not.toMatch(/\/mypage\/login/);
     return true;

@@ -39,7 +39,7 @@ import { 入庫して承認する } from "../pages/admin/f03_02_seed_ops";
 import { savePublishedClass } from "../pages/admin/f03_07_restock";
 import { 先頭部へブロックを置く } from "../pages/admin/f10_01_layout";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
-import { classRowsFromProductEdit, productIdsByCode, readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
+import { classRowsFromProductEdit, openProductEditByCode, readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
 import { M08CustomerEditPage } from "../pages/admin/m08_customer_edit";
 import { ページ管理 } from "../pages/admin/m09_04_page";
 import { ブロック管理 } from "../pages/admin/m09_07_block";
@@ -176,8 +176,8 @@ async function グッズを作る(browser: Browser, seedId: string, 正本のコ
       common: { "基準価格": "500", "販売価格": "500", "買取価格": "0", "原価単価": "0", "地域別販売制限": "0", "スマレジ連携フラグ": "0" },
       onWarning: (w) => issue(`グッズ商品CSV登録の警告「${w}」`), uploadWaitMs: 180_000,
     });
-    const ids = await productIdsByCode(page, code);
-    if (ids.length !== 1) throw new Error(`${seedId}: 商品コード ${code} の商品が ${ids.length} 件（1件のはず）`);
+    // 商品の規格の一覧は、商品登録編集画面から「規格設定」で開く。商品マスターの検索結果から商品の編集画面を開いてから読む
+    const ids = [await openProductEditByCode(page, code)];
     const rows = await classRowsFromProductEdit(page, ids[0]);
     if (rows.length !== 1) throw new Error(`${seedId}: 取込直後の商品規格が1件でない: ${JSON.stringify(rows)}`);
     if (rows[0].公開状態 !== "公開") await savePublishedClass(page, { productId: ids[0], classId: rows[0].商品規格ID }, `${seedId}: ${正本の名前}`, issue);

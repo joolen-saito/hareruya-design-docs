@@ -8,10 +8,10 @@ export function 送信履歴の件数(会員ID: string): number {
 
 export type 送信履歴の行 = { 履歴ID: string; 会員ID: string; 件名: string; 本文: string; 送信日時: number; テンプレートID: string | null; 作成者ID: string | null };
 
-const 履歴の列 = `id, customer_id, mail_subject, mail_body, extract(epoch from send_date)::bigint as t, template_id, creator_id`;
+const 履歴の列 = `id, customer_id, mail_subject, mail_body, extract(epoch from send_date)::bigint as tt, template_id, creator_id`;
 const 履歴の行 = (r: Record<string, string | null>): 送信履歴の行 => ({
   履歴ID: String(r.id), 会員ID: String(r.customer_id), 件名: String(r.mail_subject ?? ""), 本文: String(r.mail_body ?? ""),
-  送信日時: Number(r.t), テンプレートID: r.template_id, 作成者ID: r.creator_id,
+  送信日時: Number(r.tt), テンプレートID: r.template_id, 作成者ID: r.creator_id,
 });
 
 /** 会員の送信履歴（古い順） */
@@ -33,5 +33,5 @@ export function 送信成否の列(): string[] {
 
 /** DB の現在時刻（UNIX 時刻の秒） */
 export function DBの現在時刻(): number {
-  return Number(query(`select extract(epoch from now())::bigint as t`)[0].t);
+  return Number(query(`select extract(epoch from now())::bigint as tt`)[0].tt);
 }

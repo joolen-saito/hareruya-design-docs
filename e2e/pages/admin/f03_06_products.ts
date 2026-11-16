@@ -62,7 +62,10 @@ const thumbs = (page: Page) => page.locator("#product-image-thumb li.product-ima
 
 /**
  * 商品登録編集画面の商品画像へ、画像ファイルを順に1件ずつ追加する（追加するたびにサムネイルが増えるのを待つ）。
- * この環境のアプリは、追加欄にファイルを渡しても画像を取り込む処理が動かず、サムネイルが増えない（記録に書く）。
+ * いまのアプリ（origin/develop 294a414712「商品編集画面から画像をアップロードできないようにする」2026-10-26）は、
+ * 商品登録編集画面の画像アップロード欄（FilePond）と、画像のアップロード用のルート・add_images による登録を削除している。
+ * 隠れた追加欄（admin_product[product_image]）にファイルを渡しても取り込まれず、サムネイルは増えない（記録に書く）。
+ * 設計書（0204 商品登録編集 画面項目 7「ファイルをアップロード」・「商品画像を追加する（非同期）」）とシード表は、まだこの画面で追加する定め。
  * 増えなければ、追加できなかったとして 0 を返す（落とさない。呼び出し側が、画像が要るケースだけ止める）。
  */
 export async function uploadProductImages(page: Page, files: { name: string; buffer: Buffer }[]): Promise<number> {
@@ -99,7 +102,7 @@ export async function saveProductWithImages(page: Page, productId: string, image
   const form = page.locator("form#form1");
   await expect(form, `${what}: 商品登録編集画面`).toBeVisible();
   const added = await uploadProductImages(page, images);
-  if (added < images.length) onIssue(`${what}: 商品画像の追加欄に画像ファイルを渡しても、サムネイルが増えず画像を追加できなかった（${added}/${images.length}件）。画像なしで登録した`);
+  if (added < images.length) onIssue(`${what}: 商品画像の追加欄に画像ファイルを渡しても、サムネイルが増えず画像を追加できなかった（${added}/${images.length}件。アプリは 294a414712 で商品登録編集画面の画像アップロードを削除している）。画像なしで登録した`);
   const discount = form.locator('select[name="admin_product[Discount]"]');
   await expect(discount, `${what}: 割引率の欄`).toHaveCount(1);
   if (!(await discount.inputValue())) {
@@ -111,8 +114,8 @@ export async function saveProductWithImages(page: Page, productId: string, image
   }
   await expect(form.locator('input[type="radio"][name="admin_product[RegionRestriction]"]:checked'), `${what}: 販売制限が選ばれている`).toHaveCount(1);
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: 商品ID ${productId} の「商品を登録」`)) onIssue(`${what}: 警告「${w}」`);
   await expect(page, `${what}: 保存後は商品登録編集画面`).toHaveURL(new RegExp(`/product/product/${productId}/edit$`));
@@ -138,7 +141,7 @@ export async function publishClass(
   if (rows.length !== 1) throw new Error(`${what}: 商品規格一覧の行が ${rows.length} 件ある（取り込みで作られた1件のはず）`);
   const r = rows[0];
   const edit = page.locator(`#ex-product_class-${r.商品規格ID}`).getByRole("link", { name: "編集", exact: true });
-  await Promise.all([page.waitForURL(new RegExp(`/product/product/class/${productId}/edit/${r.商品規格ID}$`)), edit.click()]);
+  await Promise.all([page.waitForURL(new RegExp(`/product/product/class/${productId}/edit/${r.商品規格ID}$`), { timeout: 120_000 }), edit.click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   const form = page.locator("form#form");
   await expect(form, `${what}: 商品規格登録編集画面`).toBeVisible();
@@ -158,8 +161,8 @@ export async function publishClass(
   onIssue(`${what}: 部門は選択肢の先頭の「${first.label}」を選んだ`);
   await chooseByLabel(form.locator("#admin_product_class_Status"), "公開");
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    page.getByRole("button", { name: "商品規格を登録", exact: true }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: 商品規格の登録`)) onIssue(`${what}: 警告「${w}」`);
   const classId = await displayedClassId(page);
@@ -195,7 +198,7 @@ export async function openProductEditByCodeAnyStatus(page: Page, code: string): 
   }
   if (ids.length !== 1) throw new Error(`商品マスター(検索結果)に、商品コード ${code} の行が ${ids.length} 件ある（1件のはず）`);
   const link = page.locator(`tr#ex-product-${ids[0]} td:nth-child(3) a`);
-  await Promise.all([page.waitForURL((u) => u.pathname.endsWith(`/product/product/${ids[0]}/edit`)), link.click()]);
+  await Promise.all([page.waitForURL((u) => u.pathname.endsWith(`/product/product/${ids[0]}/edit`), { timeout: 120_000 }), link.click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expect(page.locator("form#form1"), `商品コード ${code} の商品登録編集画面`).toBeVisible();
   return ids[0];

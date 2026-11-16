@@ -20,7 +20,7 @@ import { M08CustomerEditPage } from "../pages/admin/m08_customer_edit";
 import { M08CustomerListPage } from "../pages/admin/m08_customer_list";
 import { 会員を用意する, 会員の用意, mailOf } from "./m08-common";
 import { お届け先を足す } from "../pages/admin/f06_18_setup";
-import { 受注を足す, 受注を101件足す, 買取を足す, 買取を101件足す, スマレジIDを設定する } from "../db/m08_04_write";
+import { 受注を足す, 受注を101件足す, 買取を足す, 買取を101件足す, スマレジIDを設定する, 買取状況を選ぶ, 査定済みに当たる買取状況 } from "../db/m08_04_write";
 import { 会員の値を設定する } from "../db/m08_01_write";
 
 export const M0804_ADMIN: Account = { loginId: "m0804_admin", password: "Passw0rd!M0804" };
@@ -229,7 +229,9 @@ const 受注の読み替え = (): void => reportCurrentSeedIssue("受注は画�
 defineSeed("S-M08-04-PURCHASE-READ", async (ctx) => {
   const m = await 会員を用意する(ctx, { 前半: "m0804-purchase-read", ...購入会員 });
   受注の読み替え();
-  受注を足す(m.会員ID, { 注文番号: "920001", 注文日時: "2026-08-01 10:00", 購入金額: 1200, 発送日: "2026-08-02 00:00", 支払方法: "試験支払A", 対応状況: "入金済み" });
+  // 043 は受注番号のリンクから受注管理編集画面を開く。編集画面は商品明細の無い受注を 404 にするので、既存の商品を参照する明細を1件付ける
+  受注を足す(m.会員ID, { 注文番号: "920001", 注文日時: "2026-08-01 10:00", 購入金額: 1200, 発送日: "2026-08-02 00:00", 支払方法: "試験支払A", 対応状況: "入金済み", 商品明細: true, 配送と支払: true });
+  reportCurrentSeedIssue("受注番号920001の受注には、受注管理編集画面で開けるように、画面で作った受注が必ず持つ商品明細1件（既存の商品規格を参照するだけ。数量1・単価1200）・配送先1件（会員の氏名・住所を写し、出荷日は発送日。配送方法は既存のマスタの先頭）・支払方法の結び付き（既存のマスタの先頭。表示名の文字は「試験支払A」のまま）を付けた");
 });
 defineSeed("S-M08-04-PURCHASE-STATUS-039", async (ctx) => {
   const m = await 会員を用意する(ctx, { 前半: "m0804-039", ...購入会員 });
@@ -248,13 +250,28 @@ defineSeed("S-M08-04-MIXED-082", async (ctx) => {
   受注を足す(m.会員ID, { 注文番号: "940821", 注文日時: "2026-08-01 10:00", 購入金額: 1200, 支払方法: "試験支払A", 対応状況: "入金済み" });
   受注を足す(m.会員ID, { 注文番号: "940822", 注文日時: "2026-08-02 10:00", 購入金額: 3400, 支払方法: "試験支払A", 対応状況: "決済処理中" });
 });
+/**
+ * DB が振った買取ID。シード表は買取IDを固定値（321045・321・1〜101）で書き、呼び名〔…〕で「控える」と定めていないので、
+ * 控えた番号（notes）に入れると基盤（lib/seeds.ts）が「シード表に無い呼び名を控えた」で止める（2026-11-13 の IT-M08-04-045〜049）。
+ * 同じ実行の中だけ、ここに持つ（seeds/f02-04.ts の「番号」・seeds/m09-04.ts の「読み替えたページID」と同じ）。
+ * キー: "045"・"共有買取"・"共有買取101-最古"・"共有買取101-最新"
+ */
+export const 振られた買取ID = new Map<string, string>();
+export function 振られた買取IDを引く(key: string): string {
+  const v = 振られた買取ID.get(key);
+  if (v === undefined) throw new Error(`買取ID（${key}）はまだ作っていない（そのシードを作っていないか、キーの誤り）`);
+  return v;
+}
 const 買取の読み替え = (): void => reportCurrentSeedIssue("買取は画面で作れないため、DBで会員に買取を足した（買取IDは振られた番号。買取依頼日・申込時金額・査定金額・買取ステータスは正本の値）");
 for (const [id, 前半] of [["BUY-045", "m0804-045"], ["BUY-READ", "m0804-buy-read"]]) {
   defineSeed(`S-M08-04-${id}`, async (ctx) => {
     const m = await 会員を用意する(ctx, { 前半, 姓: "買取", 名: "会員", セイ: "カイトリ", メイ: "カイイン" });
     買取の読み替え();
-    const 買取ID = 買取を足す(m.会員ID, { 依頼日時: "2026-08-03 12:00", 申込時金額: 5000, 査定金額: 4500, 買取状況: "査定済み" });
-    ctx.notes.set(id === "BUY-045" ? "〔買取ID-M0804-045〕" : "〔買取ID-M0804-共有買取〕", 買取ID);
+    const 状況 = 買取状況を選ぶ(査定済みに当たる買取状況);
+    reportCurrentSeedIssue(`正本の買取ステータス「査定済み」はアプリの買取状況マスタに無いので、査定が済んだ状況に当たる番号${状況.ID}「${状況.名前}」（MtbBuyOrderStatus::APPRAISAL_COMPLETE）に読み替えた`);
+    const 買取ID = 買取を足す(m.会員ID, { 依頼日時: "2026-08-03 12:00", 申込時金額: 5000, 査定金額: 4500, 買取状況: 査定済みに当たる買取状況 });
+    振られた買取ID.set(id === "BUY-045" ? "045" : "共有買取", 買取ID);
+    reportCurrentSeedIssue(`シード表の買取ID（固定値）は、DBが振った番号 ${買取ID} で読み替えた`);
   });
 }
 
@@ -295,13 +312,14 @@ defineSeed("S-M08-04-RH-CUST-091", async (ctx) => {
 // ---- 101件（購入履歴・買取履歴の100件上限） ----
 defineSeed("S-M08-04-PURCHASE-101-READ", async (ctx) => {
   const m = await 会員を用意する(ctx, { 前半: "m0804-purchase-101-read", ...購入会員 });
-  reportCurrentSeedIssue("受注101件は画面で作れないため、DBで会員に足した（受注番号910001〜910101・入金済み・注文日時は1分間隔。受注IDは振られた番号）");
+  reportCurrentSeedIssue("受注101件は画面で作れないため、DBで会員に足した（受注番号910001〜910101・入金済み・登録日時と注文日時は1分間隔。受注IDは振られた番号）");
   受注を101件足す(m.会員ID);
 });
 defineSeed("S-M08-04-BUY-101-READ", async (ctx) => {
   const m = await 会員を用意する(ctx, { 前半: "m0804-buy-101-read", 姓: "買取", 名: "会員", セイ: "カイトリ", メイ: "カイイン" });
-  reportCurrentSeedIssue("買取101件は画面で作れないため、DBで会員に足した（依頼日時は1分間隔。買取IDは振られた番号で、最古・最新を控えた）");
+  reportCurrentSeedIssue("買取101件は画面で作れないため、DBで会員に足した（依頼日時は1分間隔。買取IDは振られた番号で、最古・最新を控えた。買取状況は正本に定めが無いので、査定が済んだ状況の番号3「MTGBuyer査定完了」にした）");
   const r = 買取を101件足す(m.会員ID);
-  ctx.notes.set("〔買取ID-M0804-共有買取101-最古〕", r.最古);
-  ctx.notes.set("〔買取ID-M0804-共有買取101-最新〕", r.最新);
+  振られた買取ID.set("共有買取101-最古", r.最古);
+  振られた買取ID.set("共有買取101-最新", r.最新);
+  reportCurrentSeedIssue(`シード表の買取ID 1〜101（固定値）は、DBが振った番号（最古 ${r.最古}・最新 ${r.最新}）で読み替えた`);
 });

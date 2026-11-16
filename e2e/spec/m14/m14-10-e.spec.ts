@@ -8,6 +8,7 @@ import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
 import { マイデッキ取得の絞り込み選択肢 } from "../../pages/admin/m14_10_downstream";
 import { DeckEditPage } from "../../pages/front/f06_16_deck_entry";
 import { M1410_ADMIN } from "../../seeds/m14-10";
+import { 選択肢を広げたままにする } from "../../lib/evidence_select";
 import { 連携の会員, 連携の日程 } from "../../seeds/m14-10-e";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -46,9 +47,13 @@ caseTest("IT-M14-10-064", async ({ page, notes, step, expected }) => {
   await step(3, async () => { await frontLogin(page, 会員); await e.開く(日程ID); });
   await step(4, async () => { await e.マイデッキを開く(); });
   await step(5, async () => { r = await マイデッキ取得の絞り込み選択肢(e); });
+  // 選択欄を、選択肢が画面に並んで見える一覧の形に広げて撮る（撮ったあと元に戻す）
+  const 戻す = r.選択欄あり ? await 選択肢を広げたままにする(e.マイデッキのフォーマット絞り込み) : async () => undefined;
   await expected(async () => {
     expect.soft(r.選択欄あり, "マイデッキ取得の画面に、フォーマットで絞り込む選択欄が表示されている（選択肢を確かめられる状態）").toBe(true);
-    expect.soft(r.選択肢, "セレクトボックスの選択肢に利用未選択のフォーマットBが表示されない").not.toContain(B名);
+    expect.soft(r.選択肢, `セレクトボックスの選択肢（読んだ選択肢：${r.選択肢.join("・")}）に利用未選択のフォーマットBが表示されない`).not.toContain(B名);
+    if (r.選択欄あり) await expect.soft(e.マイデッキのフォーマット絞り込み, `フォーマットで絞り込む選択欄の選択肢（${B名}は並ばない）`).toBeVisible();
   });
+  await 戻す();
   note("マイデッキの所有選手は、プレイヤー検索の全ページから最大IDを探す代わりに、選手IDを入力欄へ直接入れて登録した");
 });

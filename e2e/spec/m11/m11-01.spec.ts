@@ -326,7 +326,7 @@ function 先に削除されてから押す(n: string, 何: 操作): (ctx: CaseCt
       await step(2, async () => {
         繰り下がる相手を確かめる(C);
         await listB.開く(); await listB.確認を開く(C, "削除"); await listB.実行する(C, "削除");
-        expect(いるか(C), "ブラウザBで大阪システム担当を削除した").toBe(false);
+        expect(!いるか(C), "ブラウザBで大阪システム担当を削除した").toBe(true);
       });
       await step(3, async () => {
         const res = await l.実行する(C, 何);

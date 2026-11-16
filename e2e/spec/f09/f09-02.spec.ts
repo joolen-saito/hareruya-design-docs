@@ -144,10 +144,12 @@ caseTest("IT-F09-02-030", async ({ page, step, expected }) => {
   await step(3, async () => { await 検索する(page, modal); });
   await step(4, async () => {
     await r.表示件数の選択欄を開く();
-    note("ブラウザの選択の一覧は画面の外に開くので、表示件数の選択欄に手を置いて、欄の選択肢を読んだ");
+    await r.選択肢の一覧を画面に出す();
+    note("ブラウザの選択の一覧は画面の外に開いて画像に写らないので、表示件数の選択欄の表示の行数を選択肢の数（5）に広げ、5つの選択肢が画面の中に並ぶようにして撮った（選択肢の中身・選択は変えていない）");
   });
   await expected(async () => {
     expect.soft((await r.表示件数の選択肢()).選択肢, "表示件数の選択肢").toEqual(["20件", "40件", "60件", "80件", "100件"]);
+    await expect.soft(r.表示件数の選択欄.locator("option"), "画面に並ぶ表示件数の選択肢（5つ）").toHaveText(["20件", "40件", "60件", "80件", "100件"]);
   });
 });
 
@@ -217,10 +219,13 @@ caseTest("IT-F09-02-037", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "表示された画面のアドレス（デッキ検索結果）").toBe("/ja/deck/result/");
     await expect.soft(r.見出し, "画面上部の見出し").toHaveText(/^\s*デッキ検索結果\s*$/);
-    // 検索条件の入力欄は、結果の画面にも同じモーダルの形で載る
-    await expect.soft(modal.欄("player"), "検索条件の入力欄（プレイヤー名）").toHaveCount(1);
+    // 検索条件の入力欄は、結果の画面にも同じモーダルの形で載る。画面上部の「詳細検索」で開いて、入力欄が見えていることを確かめる
+    await modal.開く();
+    await modal.全体が写るように広げる();
+    note("検索条件の入力欄は「詳細検索」で開くモーダル（デッキ詳細検索）の中にある。モーダルを開き、入力欄が上から下まで写るよう画面の高さを広げて撮った");
+    await expect.soft(modal.欄("player"), "検索条件の入力欄（プレイヤー名）が見える").toBeVisible();
     await expect.soft(modal.欄("player"), "検索条件の入力欄（プレイヤー名）に入れた値が載る").toHaveValue(N("037", "NONE"));
-    await expect.soft(modal.検索ボタン, "検索条件の「検索」ボタン").toHaveCount(1);
+    await expect.soft(modal.検索ボタン, "検索条件の「検索」ボタンが見える").toBeVisible();
   });
 });
 
@@ -299,7 +304,7 @@ caseTest("IT-F09-02-049", async ({ page, step, expected }) => {
   await step(9, async () => {
     await 検索する(page, modal);
     題名 = await r.題名();
-    note(`画面の題名は、ブラウザのタブに出る題名（文書の題名）を読んだ: 「${題名}」`);
+    note(`画面の題名は、ブラウザのタブに出る題名（文書の題名）を読んだ: 「${題名}」。文書の題名の終わりにはサイト共通の「 | 日本最大級 MTG通販サイト『晴れる屋』」が付くので、設計の「（条件の語）のデッキ検索一覧」の終わり方は、これを除いた部分で確かめる`);
   });
   await expected(async () => {
     // 大会名「…-T」はタグ名「…-TAG」の前半と同じ文字なので、文字の有無ではなく、題名の「/」で区切った語として確かめる
@@ -307,7 +312,10 @@ caseTest("IT-F09-02-049", async ({ page, step, expected }) => {
     for (const [語, 名] of [["フォーマット名", "FMT"], ["アーキタイプ名", "ARC"], ["カード名", "カードX"], ["プレイヤー名", "P"], ["大会名", "T"], ["タグ名", "TAG"]] as const) {
       expect.soft(語の並び, `画面の題名に${語} F0902-049-${名} が語として含まれる`).toContain(N("049", 名));
     }
-    expect.soft(題名.endsWith("のデッキ検索一覧"), `画面の題名が「のデッキ検索一覧」で終わる（題名: ${題名}）`).toBe(true);
+    // 文書の題名の終わりには、サイト共通の「 | 日本最大級 MTG通販サイト『晴れる屋』」が付く（全画面共通の付け足し。設計の「（条件の語）のデッキ検索一覧」は、画面の題名として組み立てる部分を指す）。
+    // 付け足しを除いた、条件の語から組み立てた題名の部分が「のデッキ検索一覧」で終わることを確かめる（期待の中身は弱めない）
+    const 組み立てた題名 = 題名.replace(/\s*\|\s*日本最大級.*$/, "");
+    expect.soft(組み立てた題名.endsWith("のデッキ検索一覧"), `画面の題名（サイト共通の「 | 日本最大級…」を除いた部分）が「のデッキ検索一覧」で終わる（題名: ${題名}）`).toBe(true);
   });
 });
 
@@ -320,13 +328,17 @@ const 範囲 = (ケース: string, 桁: number, 始: number, 終: number) =>
   Array.from({ length: 終 - 始 + 1 }, (_, i) => N(ケース, `P${String(始 + i).padStart(桁, "0")}`));
 
 /** 手順1 TOP・2 クリア、条件の入力（手順3〜）、最後の手順 検索 の形で、一覧に載る・載らないデッキを確かめる */
-function 一覧に載るデッキ(ケース: string, 条件: ((m: DeckSearchModal) => Promise<void>)[], 載る: string[], 載らない: string[], 注記?: string): CaseBody {
+function 一覧に載るデッキ(ケース: string, 条件: ((m: DeckSearchModal) => Promise<void>)[], 載る: string[], 載らない: string[], 注記?: string, 送る条件?: { 欄: string; 値: string; 表示: string }): CaseBody {
   return async ({ page, step, expected }) => {
     if (注記) note(注記);
     const modal = await 開いてクリアする(page, step, ケース);
     for (const [i, 入れる] of 条件.entries()) await step(3 + i, async () => { await 入れる(modal); });
     await step(3 + 条件.length, async () => { await 検索する(page, modal); });
     await expected(async () => {
+      // 選んだ条件が検索に送られたこと（既定の選択と同じ結果になる条件でも、操作が効いたことを確かめる）
+      if (送る条件) {
+        expect.soft(new URL(page.url()).searchParams.get(送る条件.欄), `検索結果のアドレスに、選んだ条件（${送る条件.表示}）が載る`).toBe(送る条件.値);
+      }
       const 並ぶ = await 載るデッキ(page);
       expect.soft(並ぶ, `一覧に載るデッキのプレイヤー名（${載る.join("・")} だけ）`).toEqual(名前(ケース, 載る));
       for (const p of 載らない) expect.soft(並ぶ, `一覧に ${N(ケース, p)} が載らない`).not.toContain(N(ケース, p));
@@ -343,10 +355,11 @@ caseTest("IT-F09-02-007", 一覧に載るデッキ("007",
   "開催日の秒まで（23:59:59・00:00:00）は、デッキ登録CSVアップロードで登録した。開催日時の入力欄には日付（Y/m/d）を入れた"));
 caseTest("IT-F09-02-008", 一覧に載るデッキ("008",
   [(m) => m.入れる("capacityFrom", "8"), (m) => m.入れる("capacityTo", "16")], ["PB", "PC"], ["PA", "PD"]));
-caseTest("IT-F09-02-017", 一覧に載るデッキ("017", [(m) => m.選ぶ("優勝デッキのみ")], ["P1"], ["P2", "P8", "P9"]));
-caseTest("IT-F09-02-018", 一覧に載るデッキ("018", [(m) => m.選ぶ("TOP8以上のみ")], ["P1", "P8"], ["P9"]));
-caseTest("IT-F09-02-019", 一覧に載るデッキ("019", [(m) => m.選ぶ("公開リストのみ")], ["PA"], ["PB"]));
-caseTest("IT-F09-02-020", 一覧に載るデッキ("020", [(m) => m.選ぶ("非公開リストを含む")], ["PA", "PB"], []));
+caseTest("IT-F09-02-017", 一覧に載るデッキ("017", [(m) => m.選ぶ("優勝デッキのみ")], ["P1"], ["P2", "P8", "P9"], undefined, { 欄: "grades", 値: "champion", 表示: "成績 優勝デッキのみ" }));
+caseTest("IT-F09-02-018", 一覧に載るデッキ("018", [(m) => m.選ぶ("TOP8以上のみ")], ["P1", "P8"], ["P9"], undefined, { 欄: "grades", 値: "top8", 表示: "成績 TOP8以上のみ" }));
+caseTest("IT-F09-02-019", 一覧に載るデッキ("019", [(m) => m.選ぶ("公開リストのみ")], ["PA"], ["PB"], undefined, { 欄: "public_status", 値: "public", 表示: "公開/非公開 公開リストのみ" }));
+caseTest("IT-F09-02-020", 一覧に載るデッキ("020", [(m) => m.選ぶ("非公開リストを含む")], ["PA", "PB"], [],
+  "「非公開リストを含む」は画面の既定の選択と同じ。選んだ条件が検索に送られたことを、検索結果のアドレスでも確かめた", { 欄: "public_status", 値: "private", 表示: "公開/非公開 非公開リストを含む" }));
 
 // ---- ページ送り ----
 
@@ -355,7 +368,7 @@ const 並びの名前 = async (page: Page) => [...(await 結果(page).プレイ�
 const ページ3のアドレス = (page: Page) => { const u = new URL(page.url()); u.searchParams.set("page", "3"); return u.toString(); };
 const 応答の注記 = (n: number, status: number) => note(`開発者ツールのネットワークの表示の代わりに、手順${n}の検索結果の画面の応答を控えた（HTTP ${status}）`);
 
-caseTest("IT-F09-02-025", async ({ page, step, expected }) => {
+caseTest("IT-F09-02-025", async ({ page, step, expected, capture }) => {
   let 一ページ目: string[] = [];
   let 二ページ目: string[] = [];
   const modal = await 開いてクリアする(page, step, "025");
@@ -364,6 +377,12 @@ caseTest("IT-F09-02-025", async ({ page, step, expected }) => {
   await step(5, async () => { await 結果(page).ページ番号を押す(2); });
   await step(6, async () => { 二ページ目 = await 並びの名前(page); });
   await expected(async () => {
+    // 期待結果の画像にも1ページ目を写す（1ページ目へ戻って、プレイヤー名の欄に赤枠を付けて撮り、2ページ目へ進んで撮る）
+    await 結果(page).ページ番号を押す(1);
+    await expect.soft(結果(page).プレイヤー名の欄, "1ページ目に並ぶプレイヤー名の欄（20件）").toHaveCount(20);
+    await capture("1ページ目（20件）");
+    await 結果(page).ページ番号を押す(2);
+    await expect.soft(結果(page).プレイヤー名の欄, "2ページ目に並ぶプレイヤー名の欄（5件）").toHaveCount(5);
     expect.soft(一ページ目.length, "1ページ目に並ぶ件数").toBe(20);
     expect.soft(二ページ目.length, "2ページ目に並ぶ件数").toBe(5);
     expect.soft([...一ページ目, ...二ページ目].sort(), "控えた25件のプレイヤー名（重複も欠落も無い）").toEqual(範囲("025", 2, 1, 25).sort());
@@ -375,6 +394,7 @@ caseTest("IT-F09-02-026", async ({ page, step, expected }) => {
   await step(3, async () => { await 検索する(page, modal); });
   await expected(async () => {
     const 並ぶ = await 並びの名前(page);
+    await expect.soft(結果(page).プレイヤー名の欄, "一覧に並ぶプレイヤー名の欄（20件）").toHaveCount(20);
     expect.soft([...並ぶ].sort(), "一覧に載るデッキ（順位1位〜20位の20件）").toEqual(範囲("026", 2, 1, 20).sort());
     expect.soft(並ぶ, `一覧に ${N("026", "P21")} が載らない`).not.toContain(N("026", "P21"));
   });

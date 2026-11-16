@@ -36,7 +36,7 @@ export class MemberApplyPage {
   /** 何も変更せず、利用規約同意するにチェックを入れて「次のページへ進む」を押す（確認画面へ移る） */
   async 同意して次へ進む(): Promise<void> {
     await this.page.locator('input[name="otc_buy_order[privacy_flg]"]').check({ timeout: OPEN });
-    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/confirm/, { timeout: 60_000 }), this.page.locator("button#otcBuyOrderApply").click({ timeout: OPEN })]);
+    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/confirm/, { timeout: 60_000 }), this.page.locator("button#otcBuyOrderApply").click({ timeout: OPEN, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -44,7 +44,7 @@ export class MemberApplyPage {
   async 査定申込みする(): Promise<void> {
     const apply = this.page.locator("button#otcBuyOrderApply");
     await expect(apply, "申込確認画面の「査定申込み」ボタン").toBeVisible({ timeout: OPEN });
-    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/complete/, { timeout: 60_000 }), apply.click({ timeout: OPEN })]);
+    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/complete/, { timeout: 60_000 }), apply.click({ timeout: OPEN, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 

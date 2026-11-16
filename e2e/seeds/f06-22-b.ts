@@ -23,7 +23,11 @@ import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { resultCustomerId, searchCustomer } from "../pages/admin/f06_customer";
 import { 件名の値, 件名の表, 件名の表を読む, 件名を書き換える } from "../pages/admin/f06_22_subjects";
 import { registerFrontMember } from "../pages/front/member_entry";
-import { ensureStore, 店舗の定め, 店舗の食い違い } from "../pages/admin/f06_22_stores";
+import { findTenantId } from "../pages/admin/tenant_k";
+import { E2Eの店舗, 元からある店舗 } from "../lib/store_create_ban";
+import { 表示の値の一覧 } from "../db/store_pick";
+import { 店舗を選んだ, 使う店舗 } from "./f06-22";
+import { 店舗の設定をケースの間だけ書き換える } from "../pages/admin/store_setting_restore";
 
 export const PW_A = "Passw0rd!F0622A";
 export const PW_B = "Passw0rd!F0622B";
@@ -145,28 +149,38 @@ export async function 件名を戻す(browser: Browser): Promise<string> {
   return "";
 }
 
-// ---- 店舗（あれば使い、無ければ作る） ----
-const 店舗 = (呼び名: string, 定め: 店舗の定め): [string, 店舗の定め] => [呼び名, 定め];
-const 試験店舗: [string, 店舗の定め][] = [
-  店舗("共有A", { 店名: "公開営業店10", 店名英語: "Open Shop Ten", 公開: true, 営業中: true, 表示順: "10", 受付アドレス: "store-r10@example.test", 店名略称3文字: "ZTA", 支店URL: "f0622s10" }),
-  // 受付アドレスは「空」と定められているが、空にする設定はDBでの直接設定のため、仮の値のままにする
-  店舗("共有B", { 店名: "公開営業店20", 店名英語: "Open Shop Twenty", 公開: true, 営業中: true, 表示順: "20", 受付アドレス: "store-r20-temp@example.test", 店名略称3文字: "ZTB", 支店URL: "f0622s20" }),
-  店舗("共有C", { 店名: "閉店店舗30", 店名英語: "Closed Shop Thirty", 公開: true, 営業中: false, 表示順: "30", 受付アドレス: "store-r30@example.test", 店名略称3文字: "ZTC", 支店URL: "f0622s30" }),
-  店舗("共有D", { 店名: "非公開店舗40", 店名英語: "Private Shop Forty", 公開: false, 営業中: true, 表示順: "40", 受付アドレス: "store-r40@example.test", 店名略称3文字: "ZTD", 支店URL: "f0622s40" }),
-];
+// ---- 店舗（作らない。使い回す店舗の表から選ぶ。依頼者 2026-11-15「店舗は作るのもう禁止」） ----
+/**
+ * 公開営業店10 = お問い合わせ画面の店舗選択の先頭の店舗、公開営業店20 = その次の店舗（どちらも公開・開店。使い回す店舗の表の中で、表示順の小さい順）。
+ * 閉店店舗30・非公開店舗40 は、010・011 が閉店と非公開の店舗を用意する で E2E の店舗の性質をケースの間だけ書き換えて表す。
+ * 店舗の設定（表示順・受付アドレス）は書き換えない。
+ */
+/** 閉店店舗30の役（公開のまま、ケースの間だけ閉店にする E2E の店舗）と、非公開店舗40の役（もとから非公開。ケースの間だけ開店にする E2E の店舗） */
+const C店 = "5007";
+const D店 = "4974";
+
+function 公開営業店を選ぶ(): { A: 使う店舗; B: 使う店舗 } {
+  // 5007（閉店店舗30の役）と 4974（非公開店舗40の役）は、010・011 がケースの間だけ性質を書き換えるので、公開営業店には選ばない
+  const 候補 = [...E2Eの店舗, ...元からある店舗].filter((s) => s.公開 && s.開店 && s.id !== C店 && s.id !== D店).map((s) => s.id);
+  const v = 表示の値の一覧(候補).sort((a, b) => a.表示順 - b.表示順 || Number(a.id) - Number(b.id));
+  if (v.length < 2) throw new Error("店舗を作らない（依頼者 2026-11-15）: 公開・開店の店舗が使い回す店舗の表に2店ない");
+  const 使う = (x: (typeof v)[number]): 使う店舗 => ({ 店舗ID: x.id, 表示: x.略称, 店名: x.店名, 表示順: x.表示順 });
+  return { A: 使う(v[0]), B: 使う(v[1]) };
+}
+/** 公開営業店10（お問い合わせ店舗選択の先頭の店舗）の、画面での表示名。DB が読めないときは正本の店名 */
+export const 店10の表示 = (() => { try { return 公開営業店を選ぶ().A.表示; } catch { return "公開営業店10"; } })();
 defineSeed("S-F06-22-STORES", async ({ browser, notes }) => {
+  const { A, B } = 公開営業店を選ぶ();
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    for (const [呼び名, 定め] of 試験店舗) {
-      const id = await ensureStore(page, 定め, available);
-      if (available) {
-        const d = 店舗の食い違い(id, 定め);
-        if (d) throw new Error(`店舗「${定め.店名}」（店舗ID ${id}）の内容がシード表と違う: ${d}`);
-      }
+    for (const [呼び名, s] of [["共有A", A], ["共有B", B]] as const) {
+      const id = await findTenantId(page, s.店名);
+      if (id !== s.店舗ID) throw new Error(`使い回す店舗「${s.店名}」（店舗ID ${s.店舗ID}）が店舗一覧に無い（${id ?? "なし"}）`);
       notes.set(`〔店舗ID-F0622-${呼び名}〕`, id);
     }
   });
-  reportSeedIssue("S-F06-22-STORES", "公開営業店20の受付アドレスを空にすること・登録済み店舗を4件だけにすることはDBでの設定のため行っていない（公開営業店20の受付アドレスは仮の値、手元の環境にはほかの店舗もある）");
+  店舗を選んだ("A", A); 店舗を選んだ("B", B); 店舗を選んだ("C", null); 店舗を選んだ("D", null);
+  reportSeedIssue("S-F06-22-STORES", `読み替え: 正本の「公開営業店10」は店舗「${A.店名}」（店舗ID ${A.店舗ID}・表示順 ${A.表示順}）、「公開営業店20」は店舗「${B.店名}」（店舗ID ${B.店舗ID}・表示順 ${B.表示順}）で表した（店舗は作らない決まり）。閉店店舗30・非公開店舗40 は、010・011 がケースの間だけ E2E の店舗（5007 を閉店・4974 を開店）で表す。公開営業店20の受付アドレスを空にすること・登録済み店舗を4件だけにすることは行っていない`);
 });
 
 // ---- 環境のシード（作り方は無い） ----
@@ -206,3 +220,20 @@ defineSeed("S-F06-22-NOEVENT-057", async () => {
     if (n !== 0) throw new Error(`イベント詳細ID 6220570 のレコードが ${n} 件ある（シード表は存在しない）`);
   }
 });
+
+/**
+ * 010・011 が使う。閉店店舗30＝E2E の店舗 5007 をケースの間だけ閉店にし、非公開店舗40＝E2E の店舗 4974（非公開）をケースの間だけ開店にして、
+ * ケースの終わりに元へ戻す（registerRestore。依頼者 2026-11-15）。書き換えるので 010・011 は solo_cases.tsv の一人で流す回で流す。
+ */
+export async function 閉店と非公開の店舗を用意する(browser: Browser): Promise<void> {
+  const { A, B } = 公開営業店を選ぶ();
+  const 表示 = 表示の値の一覧([C店, D店]);
+  const 使う = (id: string): 使う店舗 => { const x = 表示.find((v) => v.id === id)!; return { 店舗ID: x.id, 表示: x.略称, 店名: x.店名, 表示順: x.表示順 }; };
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const issue = (m: string) => reportSeedIssue("S-F06-22-STORES", m);
+    await 店舗の設定をケースの間だけ書き換える(page, C店, { 開店: "閉店" }, "閉店店舗30の役の店舗を閉店にする", issue);
+    await 店舗の設定をケースの間だけ書き換える(page, D店, { 開店: "開店" }, "非公開店舗40の役の店舗を開店にする", issue);
+  });
+  店舗を選んだ("A", A); 店舗を選んだ("B", B); 店舗を選んだ("C", 使う(C店)); 店舗を選んだ("D", 使う(D店));
+}

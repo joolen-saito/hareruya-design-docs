@@ -57,6 +57,16 @@ function 発送済みの確かめ(後: 状態, 名前: string, 日時: string, �
   return l;
 }
 
+/** 取込を実行中・DBのロックの失敗など、ファイルの中身を読む前に止まったことを示すエラー */
+const 中身の前のエラー = /実行中です|ロックに失敗/;
+/**
+ * 取込が最後まで行われた（「登録が完了しました。」が表示され、エラーが無い）ことの確かめ。
+ * 取込前後で「変わらない」を確かめるケースで、取込が行われずに変わらなかっただけのときに合格にしないため
+ */
+function 完了の確かめ(r: アップロード結果, 名前 = "アップロード"): 確かめ {
+  return { 名前: `${名前}の取込が最後まで行われた（「登録が完了しました。」が表示され、エラーが無い。表示: 完了「${r.完了.join(" / ")}」・エラー「${r.エラー.join(" / ")}」）`, 実際: r.完了.some((t) => t.includes("登録が完了しました")) && r.エラー.length === 0, 期待: true };
+}
+
 /** 受注の取込前後が同じであることの確かめ */
 function 不変の確かめ(前: 状態, 後: 状態, 名前: string): 確かめ[] {
   return [
@@ -172,7 +182,13 @@ function 不変の本体(d: 不変の定め): CaseBody {
     await step(3, async () => { 後 = d.対象.map((k) => 状態を読む(get(k))); });
     await expected(async () => {
       const l = d.対象.flatMap((k, i) => 不変の確かめ(前[i], 後[i], `注文番号 ${get(k).注文番号}`));
-      if (d.エラー) l.push({ 名前: `取り込み全体が取り消されてエラーが表示される（表示: ${r.エラー.join(" / ")}）`, 実際: r.エラー.length > 0, 期待: true });
+      if (d.エラー) {
+        l.push({ 名前: `取り込み全体が取り消されてエラーが表示される（表示: ${r.エラー.join(" / ")}）`, 実際: r.エラー.length > 0, 期待: true });
+        // 取込の実行中・ロックの失敗で中身を読まずに止まったエラーでは、ファイルの行による取り消しを確かめたことにならない
+        l.push({ 名前: "エラーが、取込の実行中・DBのロックの失敗（ファイルの中身を読む前に止まったもの）ではない", 実際: r.エラー.some((t) => 中身の前のエラー.test(t)), 期待: false });
+      } else {
+        l.push(完了の確かめ(r));
+      }
       for (const c of l) expect.soft(c.実際, c.名前).toEqual(c.期待);
     });
   };
@@ -222,6 +238,8 @@ caseTest("IT-M05-26-008", async ({ page, step, expected, capture }) => {
   await expected(async () => {
     expect.soft(r.エラー, "エラーが表示されない").toEqual([]);
     expect.soft(r.取込画面, "出荷実績インポート登録画面が再表示される").toBe(true);
+    // アップロードが受け付けられずに同じ画面が出ているだけのときに合格にしないため、取込が最後まで行われたことも確かめる
+    expect.soft(r.完了.some((t) => t.includes("登録が完了しました")), `取込が受け付けられ「登録が完了しました。」が表示される（表示: ${r.完了.join(" / ")}）`).toBe(true);
   });
 });
 
@@ -274,7 +292,12 @@ caseTest("IT-M05-26-035", async ({ page, step, expected, capture }) => {
     });
   }
   await expected(async () => {
-    for (const [i, f] of files.entries()) expect.soft(結果[i].取込画面, `${f.名前} のエラー後に出荷実績インポート登録画面が再表示される`).toBe(true);
+    for (const [i, f] of files.entries()) {
+      // 同じ画面へ戻る作りなので、画面のアドレスだけでなく、そのファイルのエラーが表示されたことも確かめる
+      expect.soft(結果[i].エラー.length, `${f.名前} のエラーが表示される（表示: ${結果[i].エラー.join(" / ")}）`).toBeGreaterThan(0);
+      expect.soft(結果[i].エラー.some((t) => 中身の前のエラー.test(t)), `${f.名前} のエラーが、取込の実行中・DBのロックの失敗ではない`).toBe(false);
+      expect.soft(結果[i].取込画面, `${f.名前} のエラー後に出荷実績インポート登録画面が再表示される`).toBe(true);
+    }
   });
 });
 
@@ -303,6 +326,10 @@ caseTest("IT-M05-26-040", async ({ page, step, expected }) => {
   await step(2, async () => { r = await imp.アップロードする(取込ファイル("m0526_invoice_nonint-040.csv", [H3, [o.注文番号, "2026/09/17 11:00", "M0526-040-X"]])); });
   await step(3, async () => { 後 = 状態を読む(o); });
   await expected(async () => {
+    // 取込が行われずに保存されなかっただけのときに合格にしないため、取込が完了したか、ファイルの中身によるエラーで止まったことを確かめる
+    expect.soft(r.システムエラー, "システムエラーの画面ではない").toBe(false);
+    expect.soft(r.完了.some((t) => t.includes("登録が完了しました")) || (r.エラー.length > 0 && !r.エラー.some((t) => 中身の前のエラー.test(t))),
+      `取込が行われた（完了の表示か、ファイルの中身によるエラー。表示: 完了「${r.完了.join(" / ")}」・エラー「${r.エラー.join(" / ")}」）`).toBe(true);
     expect.soft(後.結果.送り状No, "送り状No.が、整数でない値M0526-040-Xのまま保存されない").not.toBe("M0526-040-X");
   });
   note(`アップロード後の画面の表示: 完了「${r.完了.join(" / ")}」・エラー「${r.エラー.join(" / ")}」。送り状No.の保存値: ${後.結果.送り状No ?? "（空）"}`);
@@ -318,10 +345,12 @@ caseTest("IT-M05-26-022", async ({ page, step, expected }) => {
   const 前 = 状態を読む(o);
   note("取込前の状態は、開始時にDBで控えた");
   let 後!: 状態;
+  let r!: アップロード結果;
   await step(1, async () => { await imp.open(); });
-  await step(2, async () => { await imp.アップロードする(既存ファイル("022", o.注文番号)); });
+  await step(2, async () => { r = await imp.アップロードする(既存ファイル("022", o.注文番号)); });
   await step(3, async () => { 後 = 状態を読む(o); });
   await expected(async () => {
+    const c = 完了の確かめ(r); expect.soft(c.実際, c.名前).toEqual(c.期待);
     expect.soft(後.結果.ステータス, "受注情報のステータスが取込前のまま").toBe(前.結果.ステータス);
     expect.soft(後.結果.出荷日, "受注情報の出荷日が取込前のまま").toBe(前.結果.出荷日);
     expect.soft(後.結果.送り状No, "送り状No.が取込前のまま").toBe(前.結果.送り状No);
@@ -335,9 +364,11 @@ caseTest("IT-M05-26-023", async ({ page, step, expected }) => {
   const o = 受注の取得("S-M05-26-EXISTING-023");
   let 前!: 会員のポイント, 後!: 会員のポイント;
   await step(1, async () => { 前 = 会員のポイントを読む(o.会員ID!); });
-  await step(2, async () => { await imp.open(); await imp.アップロードする(既存ファイル("023", o.注文番号)); });
+  let r!: アップロード結果;
+  await step(2, async () => { await imp.open(); r = await imp.アップロードする(既存ファイル("023", o.注文番号)); });
   await step(3, async () => { 後 = 会員のポイントを読む(o.会員ID!); });
   await expected(async () => {
+    const c = 完了の確かめ(r); expect.soft(c.実際, c.名前).toEqual(c.期待);
     expect.soft(後.残高, "会員ポイント残高が取込前から変わらない").toBe(前.残高);
     expect.soft(後.履歴件数, "ポイント履歴件数が取込前から変わらない").toBe(前.履歴件数);
   });
@@ -348,9 +379,11 @@ caseTest("IT-M05-26-024", async ({ page, step, expected }) => {
   const o = 受注の取得("S-M05-26-EXISTING-024");
   let 前 = -1, 後 = -1;
   await step(1, async () => { 前 = 受注のメール送信履歴(o.受注ID).length; });
-  await step(2, async () => { await imp.open(); await imp.アップロードする(既存ファイル("024", o.注文番号)); });
+  let r!: アップロード結果;
+  await step(2, async () => { await imp.open(); r = await imp.アップロードする(既存ファイル("024", o.注文番号)); });
   await step(3, async () => { 後 = 受注のメール送信履歴(o.受注ID).length; });
   await expected(async () => {
+    const c = 完了の確かめ(r); expect.soft(c.実際, c.名前).toEqual(c.期待);
     expect.soft(後, "メール送信履歴件数が取込前から変わらない").toBe(前);
   });
 });
@@ -376,12 +409,14 @@ caseTest("IT-M05-26-026", async ({ page, step, expected }) => {
   const a = 受注の取得("S-M05-26-POINTS-026", "A"), b = 受注の取得("S-M05-26-POINTS-026", "B");
   let 前: 会員のポイント[] = [], 後: 会員のポイント[] = [];
   await step(1, async () => { 前 = [a, b].map((x) => 会員のポイントを読む(x.会員ID!)); });
+  let r!: アップロード結果;
   await step(2, async () => {
     await imp.open();
-    await imp.アップロードする(取込ファイル("m0526_no_points-026.csv", [H2, [a.注文番号, "2026/09/15 11:00"], [b.注文番号, "2026/09/15 12:00"]]));
+    r = await imp.アップロードする(取込ファイル("m0526_no_points-026.csv", [H2, [a.注文番号, "2026/09/15 11:00"], [b.注文番号, "2026/09/15 12:00"]]));
   });
   await step(3, async () => { 後 = [a, b].map((x) => 会員のポイントを読む(x.会員ID!)); });
   await expected(async () => {
+    const c = 完了の確かめ(r); expect.soft(c.実際, c.名前).toEqual(c.期待);
     for (const [i, n] of ["付与ポイントが0の注文番号", "付与ポイントが空の注文番号"].entries()) {
       expect.soft(後[i].残高, `${n}の会員ポイント残高が取込前から変わらない`).toBe(前[i].残高);
       expect.soft(後[i].履歴件数, `${n}のポイント履歴件数が取込前から変わらない`).toBe(前[i].履歴件数);
@@ -503,9 +538,11 @@ caseTest("IT-M05-26-047", async ({ page, step, expected }) => {
     expect.soft(途中.残高, "1回目のあとの会員ポイント残高が600").toBe(600);
     expect.soft(途中.履歴件数, "1回目のあとのポイント履歴が1件").toBe(1);
   });
-  await step(3, async () => { await imp.open(); await imp.アップロードする(f); });
+  let r2!: アップロード結果;
+  await step(3, async () => { await imp.open(); r2 = await imp.アップロードする(f); });
   await step(4, async () => { 後 = 会員のポイントを読む(o.会員ID!); });
   await expected(async () => {
+    const c = 完了の確かめ(r2, "2回目のアップロード"); expect.soft(c.実際, c.名前).toEqual(c.期待);
     expect.soft(後.残高, "2回目のアップロード後も会員ポイント残高が600").toBe(600);
     expect.soft(後.購入取得.length, "購入によるポイント取得の履歴が1件のまま").toBe(1);
   });
@@ -521,9 +558,11 @@ caseTest("IT-M05-26-048", async ({ page, step, expected }) => {
     途中 = 会員のメール送信履歴(o.会員ID!).length;
     expect.soft(途中, "1回目のあとのメール送信履歴が1件").toBe(1);
   });
-  await step(3, async () => { await imp.open(); await imp.アップロードする(f); });
+  let r2!: アップロード結果;
+  await step(3, async () => { await imp.open(); r2 = await imp.アップロードする(f); });
   await step(4, async () => { 後 = 会員のメール送信履歴(o.会員ID!).length; });
   await expected(async () => {
+    const c = 完了の確かめ(r2, "2回目のアップロード"); expect.soft(c.実際, c.名前).toEqual(c.期待);
     expect.soft(後, "2回目のアップロード後も出荷完了メールの送信履歴が1件のまま").toBe(1);
   });
 });

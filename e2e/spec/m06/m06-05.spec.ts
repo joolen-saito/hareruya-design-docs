@@ -8,7 +8,7 @@ import { test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { HistoryPage } from "../../pages/admin/m06_05_history";
-import { M0605_ALL, M0605_TOKYO, prepareRestore0 } from "../../seeds/m06-05";
+import { M0605_ALL, M0605_TOKYO, prepareRestore0, 大阪店の店名, 東京店の店名 } from "../../seeds/m06-05";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -21,9 +21,9 @@ caseTest("IT-M06-05-001", async ({ page, step, expected }) => {
   let selected = "";
   await step(2, async () => { options = await h.買取店舗の選択肢(); selected = await h.買取店舗の選択中(); });
   await expected(async () => {
-    expect.soft(options, "買取店舗の選択肢（店舗マスタの東京店）").toContain("東京店");
-    expect.soft(options, "買取店舗の選択肢（店舗マスタの大阪店）").toContain("大阪店");
-    expect.soft(selected, "選択されている買取店舗（デフォルト検索表示店舗の東京店）").toBe("東京店");
+    expect.soft(options, "買取店舗の選択肢（店舗マスタの東京店）").toContain(東京店の店名());
+    expect.soft(options, "買取店舗の選択肢（店舗マスタの大阪店）").toContain(大阪店の店名());
+    expect.soft(selected, "選択されている買取店舗（デフォルト検索表示店舗の東京店）").toBe(東京店の店名());
   });
 });
 
@@ -61,7 +61,7 @@ caseTest("IT-M06-05-032", async ({ page, step, expected }) => {
   await step(1, async () => { await h.open(); });
   await step(2, async () => { await h.CSVダウンロードで選ぶ("検索結果全件取得"); });
   await expected(async () => {
-    await expect.soft(h.上部のエラー().first(), "管理画面上部にエラーが表示される").toBeVisible();
+    await expect.soft(h.上部のエラーの帯().first(), "管理画面上部にエラーが表示される").toBeVisible();
     expect.soft(new URL(page.url()).pathname, "移った先の画面（買取商品履歴）").toMatch(/\/otcbuyorder\/history(\/page\/\d+)?$/);
     await expect.soft(h.結果の表の行(), "一覧を伴わない").toHaveCount(0);
   });

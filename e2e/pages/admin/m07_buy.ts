@@ -115,6 +115,9 @@ export class BuyListPage {
   /** 買取番号（数字）の行 */
   行の(番号: string): Locator { return this.page.locator(`#result_list_main__item--${Number(番号)}`); }
 
+  /** 買取番号（数字）の行の本人確認の欄 */
+  本人確認の欄(番号: string): Locator { return this.page.locator(`#result_list_main__purchase_identification--${Number(番号)}`); }
+
   async 対象にする(番号: string): Promise<void> {
     const row = this.行の(番号);
     await expect(row, `一覧の買取番号「${買取番号の表示(番号)}」の行`).toHaveCount(1, { timeout: OPEN });
@@ -132,6 +135,26 @@ export class BuyListPage {
   /** 行の三点リーダーを押す */
   async 三点リーダーを押す(番号: string): Promise<void> {
     await this.page.locator(`#result_list_main__menu_box_toggle--${Number(番号)} button.dropdown-menu-toggle`).click({ timeout: OPEN });
+  }
+  /**
+   * 撮影のために、開いた三点リーダーのメニューが結果の表の下端で切れないようにする。メニューを包む要素のはみ出し隠し（overflow）を外し、
+   * いちばん内側の表の包み（table-responsive）の下に、メニューが収まる余白を足す。メニューの中身・押す操作は変えない。
+   */
+  async メニューが切れないようにする(番号: string): Promise<void> {
+    await this.page.locator(`#result_list_main__menu--${Number(番号)}`).evaluate((menu) => {
+      let el: HTMLElement | null = menu.parentElement;
+      while (el && el !== document.body) {
+        const o = getComputedStyle(el).overflow + getComputedStyle(el).overflowX + getComputedStyle(el).overflowY;
+        if (/hidden|auto|scroll/.test(o)) {
+          el.style.setProperty("overflow", "visible", "important");
+          el.style.setProperty("overflow-x", "visible", "important");
+          el.style.setProperty("overflow-y", "visible", "important");
+        }
+        if (el.classList.contains("table-responsive")) el.style.setProperty("padding-bottom", `${Math.ceil(menu.getBoundingClientRect().height) + 40}px`, "important");
+        el = el.parentElement;
+      }
+      menu.scrollIntoView({ block: "center" });
+    });
   }
   メニューの項目(番号: string): Locator { return this.page.locator(`#result_list_main__menu--${Number(番号)} li a`); }
 
@@ -194,10 +217,24 @@ export class BuyListPage {
   /** ダウンロード▼を開く */
   async ダウンロードを開く(): Promise<void> { await this.ダウンロードのボタン().click({ timeout: OPEN }); }
 
+  /** 開いたままの「ダウンロード▼」の選択肢を閉じる（一覧の画面を撮るとき、選択肢が一覧の列を隠さないように）。閉じていれば何もしない */
+  async ダウンロードの選択肢を閉じる(): Promise<void> {
+    const menu = this.page.locator("#result_list__custom_csv_menu .dropdown-menu");
+    if (await menu.isVisible().catch(() => false)) {
+      await this.ダウンロードのボタン().click({ timeout: OPEN });
+      await expect(menu, "ダウンロードの選択肢が閉じる").toBeHidden({ timeout: OPEN });
+    }
+  }
+
   /**
    * ダウンロードの項目を押す。CSV はファイル、戻しリストPDFは別ウィンドウ（ポップアップ）を返す。
    * 警告のアラートは文を返し、出力が始まらない。
    */
+  /** 「ダウンロード▼」の「戻しリストPDF」を押す（ポップアップが開くか見る）。ダウンロードではなく新しいウィンドウの表示を確かめるときの入口 */
+  async 戻しリストPDFを押す(): Promise<{ file: Download | null; popup: Page | null; ダイアログ: string[]; 応答: number | null }> {
+    return this.ダウンロードを押す("戻しリストPDF");
+  }
+
   async ダウンロードを押す(項目: "古物台帳入力用CSV" | "入金CSV" | "買取商品一覧CSV" | "買取商品（キャンセル）CSV" | "戻しリストCSV" | "戻しリストPDF"): Promise<{ file: Download | null; popup: Page | null; ダイアログ: string[]; 応答: number | null }> {
     const dialogs: string[] = [];
     const on = (d: Dialog) => { dialogs.push(d.message()); void d.accept(); };
@@ -244,7 +281,7 @@ export async function 戻しリストを読む(popup: Page): Promise<{ 作成日
     });
   }));
   const 印刷ボタン = await popup.locator("#printButton").isVisible().catch(() => false);
-  return { 作成日時, 行: 行.filter((r) => r.商品名 !== "" && !/^全\d+\s*個$/.test(r.商品名.replace(/\s/g, ""))), 印刷ボタン, 全文 };
+  return { 作成日時, 行: 行.filter((r) => r.商品名 !== "" && !/^全\d+[個点]$/.test(r.商品名.replace(/\s/g, ""))), 印刷ボタン, 全文 };
 }
 
 /** ダウンロードしたCSVを読む（UTF-8でなければ Shift_JIS として読む）。1行目を見出しとして、行を 見出し→値 の組にする */

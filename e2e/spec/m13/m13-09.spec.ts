@@ -66,7 +66,8 @@ caseTest("IT-M13-09-023", async ({ page, step, expected }) => {
     expect.soft(ヘッダ.length, "ヘッダ行の項目数").toBe(35);
     expect.soft(ヘッダ.join("・"), "ヘッダ行の項目（左から順）").toBe(ヘッダ023.join("・"));
     for (const 名 of ["会場ID", "席順", "DCIナンバー", "DCI確認フラグ"]) {
-      expect.soft(ヘッダ.includes(名), `ヘッダ行に「${名}」を含まない`).toBe(false);
+      // 拾った列で比べる（真偽にすると、帯が「ダウンロードが始まったか」の文になるため）
+      expect.soft(ヘッダ.filter((v) => v === 名), `ヘッダ行に「${名}」を含まない`).toEqual([]);
     }
   });
 });

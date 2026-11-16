@@ -13,7 +13,7 @@ import { 購入履歴の出荷日Page } from "../../pages/front/m05_26_history";
 import "../../seeds/m05-11-n-k";
 import "../../seeds/m05-11-o";
 import "../../seeds/m05-11-q";
-import { QF会員, QF管理者 } from "../../seeds/m05-11-q";
+import { QF会員, QF管理者, スマレジ項目確認の受注番号 } from "../../seeds/m05-11-q";
 import { M0511_ADMIN_A, 店舗Aの店名 } from "../../seeds/m05-11";
 
 const key = (n: string) => `〔受注番号-M0511-${n}〕`;
@@ -85,7 +85,7 @@ caseTest("IT-M05-11-150", async ({ page, browser, notes, step, expected }) => {
   const 見出し = ["小計値引き/割引区分", "クーポン値引き", "免税額"];
   let q!: OrderEditQ;
   const 数: Record<string, number> = {};
-  await step(1, async () => { await 開く(browser, page, notes.get(key("150"))); q = new OrderEditQ(page); });
+  await step(1, async () => { await 開く(browser, page, スマレジ項目確認の受注番号()); q = new OrderEditQ(page); });
   await step(2, async () => { for (const h of 見出し) 数[h] = await q.金額欄の見出し(h).count(); });
   await expected(async () => { for (const h of 見出し) expect.soft(数[h], `金額欄に「${h}」が表示される件数`).toBe(1); });
 });

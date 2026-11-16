@@ -15,6 +15,19 @@ export class DeckSearchTop {
   async 検索条件のフォーマット(): Promise<string[]> {
     return (await this.page.locator("form#search_block .deckSearch-top__format").evaluateAll((es) => es.map((e) => (e.closest("label")?.textContent ?? "").trim())));
   }
+  /** 検索条件（デッキ詳細検索のモーダル）を開く。画面上部・下部の「詳細検索」のうち見えているボタンを押す */
+  async 詳細検索を開く(): Promise<void> {
+    await this.page.locator('[data-modal-open="deck-search"]:visible').first().click({ timeout: 20_000 });
+    await this.page.locator('[data-modal="deck-search"]').waitFor({ state: "visible", timeout: 20_000 });
+  }
+  /** 詳細検索モーダルのフォーマットの選択肢（チェック欄の表示名）の行。表示名に 名 を含むもの */
+  フォーマットの行(名: string): Locator {
+    return this.page.locator("form#search_block label.deckSearch-top__checkbox").filter({ has: this.page.locator("input.deckSearch-top__format") }).filter({ hasText: 名 }).first();
+  }
+  /** 詳細検索モーダルのフォーマットの選択肢の全体（チェック欄の並び） */
+  get フォーマットの選択肢の並び(): Locator {
+    return this.page.locator("form#search_block .deckSearch-top__table__td--formats");
+  }
   /** フォーマットのメタゲームの区画（トップのランキング表示。メタゲームの画面へのリンクを持つ区画） */
   区画(フォーマットID: string): Locator {
     return this.page.locator(".deckSearch-top__metagame__wrapper").filter({ has: this.page.locator(`a[href$="/deck/${フォーマットID}/metagame/"]`) });
@@ -37,6 +50,14 @@ export class EventListFront {
     await this.page.locator('[data-modal-open="event-search"]:visible').first().click({ timeout: 20_000 });
     await this.モーダル.waitFor({ state: "visible", timeout: 20_000 });
   }
+  /** 検索条件のフォーマットの選択肢の行（表示名に 名 を含むもの） */
+  フォーマットの行(名: string): Locator {
+    return this.モーダル.locator("label").filter({ has: this.page.locator('input[name="formats[]"]') }).filter({ hasText: 名 }).first();
+  }
+  /** 検索条件のフォーマットの選択肢の行すべて */
+  get フォーマットの行すべて(): Locator {
+    return this.モーダル.locator("label").filter({ has: this.page.locator('input[name="formats[]"]') });
+  }
   /** 検索条件のフォーマットの選択肢の表示名 */
   async 検索条件のフォーマット(): Promise<string[]> {
     return this.モーダル.locator('input[name="formats[]"]').evaluateAll((es) => es.map((e) => (e.closest("label")?.textContent ?? "").trim()));
@@ -57,13 +78,15 @@ export class EventListFront {
     return (await this.page.locator("p.p-hareruya-event-card__title").allInnerTexts()).map((t) => t.trim());
   }
   /** 次のページが無くなるまで（または上限まで）たどって、出ているイベント名を集める */
-  async 全ページのイベント名(上限 = 8): Promise<string[]> {
+  async 全ページのイベント名(上限 = 8, 各ページで?: (ページ番号: number, このページのイベント名: string[]) => Promise<void>): Promise<string[]> {
     const out: string[] = [];
     for (let i = 0; i < 上限; i++) {
-      out.push(...(await this.表示中のイベント名()));
+      const このページ = await this.表示中のイベント名();
+      out.push(...このページ);
+      if (各ページで) await 各ページで(i + 1, このページ);
       const next = this.page.locator("li.p-hareruya-pagination__item--next a");
       if ((await next.count()) === 0) break;
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), next.first().click({ timeout: 20_000 })]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), next.first().click({ timeout: 20_000, noWaitAfter: true })]);
     }
     return out;
   }

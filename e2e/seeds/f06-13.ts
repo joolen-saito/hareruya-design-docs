@@ -57,7 +57,10 @@ function 会員の作り方(n: string, 状態?: ステータス): SeedBuilder {
     const text = seed["状態・属性"];
     const m = /ログインID=(\S+?)@example\.test／パスワード=([^／]+)／/.exec(text);
     if (!m) throw new Error(`${seedId} のログインID・パスワードを読めない`);
-    const [, 前半, パスワード] = m;
+    const [, 前半, 正本のパスワード] = m;
+    // シード表の会員のパスワード（Pw60613003! など11文字）は、会員登録の最小12文字に満たず登録画面が受け付けない。末尾に x を足して12文字にする
+    const パスワード = 正本のパスワード.length >= 12 ? 正本のパスワード : 正本のパスワード + "x".repeat(12 - 正本のパスワード.length);
+    if (パスワード !== 正本のパスワード) reportSeedIssue(seedId, `読み替え: シード表のパスワードは${正本のパスワード.length}文字で、会員登録の最小12文字に満たないため、末尾に x を足した12文字で登録した（ケースはパスワードの値を確かめない）`);
     const 会員ID = await 本会員を作る(browser, { 姓: "F06-13", 名: `会員${n}`, セイ: "シケン", メイ: "カイイン", 前半, パスワード });
     const メール = markedMail(前半);
     if (状態) await ステータスを設定する(browser, メール, 状態);

@@ -15,7 +15,10 @@ export class EventSearchPage {
   }
   get モーダル(): Locator { return this.page.locator('[data-modal="event-search"]'); }
   async モーダルを開く(): Promise<void> {
-    await this.page.locator('[data-modal-open="event-search"]:visible').first().click({ timeout: 20_000 });
+    // 開発環境では一覧の画面の描画が遅く、load のあとも白いままのことがある。押す前に、詳細検索を開くボタンが見えるまで待つ
+    const b = this.page.locator('[data-modal-open="event-search"]:visible').first();
+    await expect(b, "詳細検索を開くボタン").toBeVisible({ timeout: 60_000 });
+    await b.click({ timeout: 20_000 });
     await expect(this.モーダル, "詳細検索モーダル").toHaveClass(/is-visible/, { timeout: 20_000 });
   }
   /** 検索条件の欄を、書いた項目だけ設定する（チェック欄は、書いた値の状態にする） */
@@ -89,6 +92,8 @@ export class EventSearchPage {
     const hrefs = await this.page.locator("a.p-hareruya-event-card__link").evaluateAll((as) => as.map((a) => a.getAttribute("href") ?? ""));
     return hrefs.map((h) => /\/events\/(\d+)\/detail/.exec(h)?.[1] ?? h);
   }
+  /** 検索結果の日程の行（カード） */
+  get 結果の行(): Locator { return this.page.locator("a.p-hareruya-event-card__link"); }
   async 総件数の文字(): Promise<string> { return ((await this.page.locator(".p-hareruya-event-list__result-count").first().textContent()) ?? "").trim(); }
   get 結果なしの表示(): Locator { return this.page.locator(".p-hareruya-event-list__result-none"); }
 }

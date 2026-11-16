@@ -1,8 +1,9 @@
 /**
  * M07-09 戻しリストPDF のカード商品シードが使う画面の操作（セレクタはここにだけ書く）。
  *
- * 依頼者の方針（2026-11-10）: 共有のマスタ（カード・略称タグ・棚番号・言語・状態・色順・レアリティ）には書き込まない。
- * 既存の値を画面で読んで使う。読むのは次の画面:
+ * 依頼者の方針（2026-11-10）: 共有のマスタ（カード・略称タグ・棚番号・言語・状態・色順・レアリティ）は書き換えない。
+ * 既存の値を画面で読んで使う。既存の値で前提が作れないカード・棚番号だけは、決まった名前の試験用のものを1度だけ登録して使い回す
+ * （既存の行は書き換えない。2026-11-13）。読むのは次の画面:
  * - MTGマスターデータ管理（言語・状態・レアリティ・色順の行）: 行の入力欄の名前 rows[ID][項目] から、ID・コード・名称・並び順を読む。
  * - 棚番号登録/編集・略称タグ登録/編集の一覧（どちらも並び順の昇順）。
  * - カード検索（一覧・条件抽出）でカラー・レアリティ・Foil を選んで検索し、カード詳細(編集)画面で、カラー・色順・カード名(英)と、
@@ -35,8 +36,8 @@ export async function マスタを読む(page: Page, 種別: string): Promise<�
   await page.waitForLoadState("load");
   await page.locator('select[name="entity"]').selectOption({ label: 種別 }, { timeout: OPEN });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-    page.locator('form[method="get"] button[type="submit"]').click({ timeout: OPEN }),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+    page.locator('form[method="get"] button[type="submit"]').click({ timeout: OPEN, noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator("form#edit_form table.mtg-master-table"), `MTGマスターデータ管理の${種別}の一覧`).toBeVisible({ timeout: OPEN });
@@ -60,6 +61,14 @@ export type 棚 = { ID: string; 名称: string; 並び順: number };
 export async function 棚番号を読む(page: Page): Promise<棚[]> {
   const p = new ShelfNumberPage(page);
   await p.openNew();
+  return (await p.allRows()).map((r) => ({ ID: r.ID, 名称: r.名称, 並び順: Number(r.並び順) })).filter((r) => r.名称 !== "" && Number.isFinite(r.並び順));
+}
+
+/** 棚番号登録/編集の一覧を、表示件数を多くして読む（1ページ目だけでは並び順が同じ棚番号しか見えないことがある） */
+export async function 棚番号を全件読む(page: Page): Promise<棚[]> {
+  const p = new ShelfNumberPage(page);
+  await page.goto(adminUrl("/product/shelf_number/page/1?page_count=10000"));
+  await p.ready();
   return (await p.allRows()).map((r) => ({ ID: r.ID, 名称: r.名称, 並び順: Number(r.並び順) })).filter((r) => r.名称 !== "" && Number.isFinite(r.並び順));
 }
 
@@ -138,6 +147,102 @@ export async function カード詳細を探す(page: Page, v: { 色: string; レ
   return out;
 }
 
+/**
+ * 決まった名前（カード名(英)）の試験カードを、カード検索のキーワードで探す。カラーが「色」だけ・色順が「色」で、
+ * 詳細情報のレアリティID・Foil が一致するカード詳細を返す（同じ名前が複数あれば、カードIDの小さいものから）。無ければ null。
+ */
+export async function 決まった名前のカードを探す(page: Page, 名前: string, v: { 色: string; レアリティID: string; Foil: "なし" | "通常"; /** 指定すると、コレクター番号も一致する詳細情報だけを返す */ コレクター番号?: string }): Promise<カード詳細 | null> {
+  const s = new CardSearchPage(page);
+  await s.open();
+  await s.キーワードで検索する(名前);
+  const foil = v.Foil === "なし" ? "0" : "1";
+  const ids = (await s.表示中のカードID()).filter((x) => /^\d+$/.test(x)).sort((a, b) => Number(a) - Number(b));
+  for (const id of ids) {
+    const c = await カードを読む(page, id);
+    if (c.カード名英 !== 名前) continue;
+    if (c.カラー.length !== 1 || c.カラー[0] !== v.色 || c.色順 !== v.色) continue;
+    const d = c.詳細.find((x) => x.レアリティID === v.レアリティID && x.Foil === foil && (v.コレクター番号 === undefined || x.コレクター番号 === v.コレクター番号));
+    if (d) return { カードID: id, 詳細ID: d.詳細ID, カード名日: c.カード名日, カード名英: c.カード名英, コレクター番号: d.コレクター番号, 色: v.色, レアリティID: d.レアリティID, Foil: d.Foil };
+  }
+  return null;
+}
+
+/**
+ * カード新規登録画面で、決まった名前の試験カードを1件登録する（カード名(日/英)・点数で見たマナ・コスト0・カラー1色・色順の同じ色、
+ * 詳細情報1件: レアリティ（マスタのID）・Foil・レイアウトとプロモ種別は選択肢の先頭・フレーム通常）。登録したカード詳細を返す。
+ */
+export async function 決まった名前のカードを登録する(page: Page, v: { カード名日: string; カード名英: string; 色: string; レアリティID: string; Foil: "なし" | "通常"; コレクター番号?: string }, onIssue: Issue): Promise<カード詳細> {
+  await page.goto(adminUrl("/card/new"), { timeout: 60_000 });
+  await page.waitForLoadState("load");
+  const form = page.locator("form#form1");
+  await expect(form, "カード新規登録画面").toBeVisible({ timeout: OPEN });
+  await form.locator("#admin_card_nameJp").fill(v.カード名日);
+  await form.locator("#admin_card_nameEn").fill(v.カード名英);
+  await form.locator("#admin_card_cmc").fill("0");
+  const colorLabel = page.locator('label[for^="admin_card_colors_"]').filter({ hasText: new RegExp(`^\\s*${v.色}\\s*$`) });
+  await expect(colorLabel, `カラーの選択肢「${v.色}」`).toHaveCount(1);
+  await page.locator(`#${await colorLabel.getAttribute("for")}`).check({ timeout: OPEN });
+  await chooseByLabel(form.locator('select[name="admin_card[colorSequence]"]'), v.色);
+  const details = page.locator("#card-details-container .detail-card");
+  const before = await details.count();
+  await page.locator("#add-detail").click({ timeout: OPEN });
+  await expect(details, "「詳細情報を追加」で詳細情報が増える").toHaveCount(before + 1);
+  const det = details.last();
+  const sel = (f: string) => det.locator(`select[name$="[${f}]"]`);
+  await sel("rarity").selectOption(v.レアリティID);
+  const first = async (f: string) => {
+    const o = (await sel(f).locator("option").evaluateAll((ns) => ns.map((n) => ({ value: (n as HTMLOptionElement).value, label: (n.textContent ?? "").trim() })))).find((x) => x.value !== "");
+    if (!o) throw new Error(`カード新規登録の詳細情報の ${f} に選べる値が無い`);
+    await sel(f).selectOption(o.value);
+    return o.label;
+  };
+  const layout = await first("cardLayout");
+  const promo = await first("promotion");
+  await sel("foilFlg").selectOption({ label: v.Foil });
+  await sel("frameFlg").selectOption({ label: "通常" });
+  if (v.コレクター番号 !== undefined) await det.locator('input[name$="[cardNo]"]').fill(v.コレクター番号);
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click({ noWaitAfter: true }),
+  ]);
+  for (const w of await expectSaved(page, `試験カード「${v.カード名英}」の登録`)) onIssue(`試験カード「${v.カード名英}」の登録の警告「${w}」`);
+  const m = /\/card\/(\d+)\/edit/.exec(page.url());
+  if (!m) throw new Error(`試験カード「${v.カード名英}」の登録後に、カード詳細(編集)画面へ移らない（${page.url()}）`);
+  const c = await カードを読む(page, m[1]);
+  const foil = v.Foil === "なし" ? "0" : "1";
+  const d = c.詳細.find((x) => x.レアリティID === v.レアリティID && x.Foil === foil && (v.コレクター番号 === undefined || x.コレクター番号 === v.コレクター番号));
+  if (!d) throw new Error(`試験カード「${v.カード名英}」（カードID ${m[1]}）の詳細情報に、レアリティID ${v.レアリティID}・Foil ${v.Foil}${v.コレクター番号 !== undefined ? `・コレクター番号 ${v.コレクター番号}` : ""} の行が無い`);
+  if (c.カラー.length !== 1 || c.カラー[0] !== v.色 || c.色順 !== v.色) throw new Error(`試験カード「${v.カード名英}」（カードID ${m[1]}）のカラー・色順が「${v.色}」になっていない（カラー ${c.カラー.join("・")}・色順 ${c.色順}）`);
+  onIssue(`試験カード「${v.カード名英}」（カードID ${m[1]}・カード詳細ID ${d.詳細ID}）を登録した。詳細情報のレイアウト「${layout}」・プロモ種別「${promo}」・フレーム「通常」は選択肢の先頭（シード表は「ほかの必須項目に任意の値」）`);
+  return { カードID: m[1], 詳細ID: d.詳細ID, カード名日: c.カード名日, カード名英: c.カード名英, コレクター番号: d.コレクター番号, 色: v.色, レアリティID: d.レアリティID, Foil: d.Foil };
+}
+
+/** 棚番号登録/編集の一覧を、表示件数を最も多くして全ページ読む（並び順の昇順） */
+export async function 棚番号をすべて読む(page: Page): Promise<棚[]> {
+  const p = new ShelfNumberPage(page);
+  await p.openNew();
+  const counts = await p.件数.locator("option").evaluateAll((ns) => ns.map((n) => (n as HTMLOptionElement).value).filter((v) => /^\d+$/.test(v)));
+  const max = counts.sort((a, b) => Number(b) - Number(a))[0];
+  if (max) await p.showFirstPageWith(max);
+  const out: 棚[] = [];
+  for (let n = 1; n <= 200; n++) {
+    if (n > 1) {
+      const link = page.locator(".pagination a.page-link", { hasText: new RegExp(`^\\s*${n}\\s*$`) });
+      if ((await link.count()) !== 1) break;
+      await p.choosePage(n);
+    }
+    out.push(...(await p.allRows()).map((r) => ({ ID: r.ID, 名称: r.名称, 並び順: Number(r.並び順) })).filter((r) => r.名称 !== "" && Number.isFinite(r.並び順)));
+  }
+  return out;
+}
+
+/** 棚番号登録/編集で、棚番号を1件登録する（名称・並び順）。登録後のIDを返す */
+export async function 棚番号を登録する(page: Page, v: { 名称: string; 並び順: string }): Promise<string> {
+  const p = new ShelfNumberPage(page);
+  await p.openNew();
+  return p.register(v, `棚番号「${v.名称}」の登録`);
+}
+
 // ---------------------------------------------------------------------------
 // 商品の設定
 // ---------------------------------------------------------------------------
@@ -146,7 +251,7 @@ export async function カード詳細を探す(page: Page, v: { 色: string; レ
  * 商品登録編集で、（カードにするときは）「カード指定 >」でカード詳細を選び、商品名(日/英)を入れ直し、商品カテゴリを単体カードにする。
  * 略称タグを選び、割引率が未選択なら登録済みの先頭を選んで「商品を登録」する。
  */
-export async function 商品をカードにする(page: Page, 商品ID: string, v: { カード?: カード詳細; 商品名: string; 略称タグ: string | null }, onIssue: Issue): Promise<void> {
+export async function 商品をカードにする(page: Page, 商品ID: string, v: { カード?: カード詳細; 商品名: string; 略称タグ: string | null; /** 商品名(英)。省略すると 商品名 と同じ */ 商品名英?: string }, onIssue: Issue): Promise<void> {
   await page.goto(adminUrl(`/product/product/${商品ID}/edit`), { timeout: 60_000 });
   await page.waitForLoadState("load");
   const form = page.locator("form#form1");
@@ -175,9 +280,9 @@ export async function 商品をカードにする(page: Page, 商品ID: string, 
     await decide.click({ timeout: OPEN });
     await expect(modal, "カードを決定するとカード検索が閉じる").toBeHidden({ timeout: OPEN });
   }
-  for (const name of ["admin_product[name]", "admin_product[name_en]"]) {
+  for (const [name, 値] of [["admin_product[name]", v.商品名], ["admin_product[name_en]", v.商品名英 ?? v.商品名]] as const) {
     const f = form.locator(`input[name="${name}"]`);
-    if ((await f.inputValue()) !== v.商品名) await f.fill(v.商品名, { timeout: OPEN });
+    if ((await f.inputValue()) !== 値) await f.fill(値, { timeout: OPEN });
   }
   if (v.略称タグ !== null) await chooseByLabel(form.locator('select[name="admin_product[StorageCode]"]'), v.略称タグ);
   if (v.カード) {
@@ -199,7 +304,11 @@ export async function 商品をカードにする(page: Page, 商品ID: string, 
   }
   await Promise.all([
     page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }).catch(() => null),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click({ timeout: OPEN }),
+    (async () => {
+      const submit = form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ });
+      // 画面の下に固定された表示などで、ボタンが画面の外のままになり押せないことがある。そのときはボタン自身の押す操作（利用者が押すのと同じ送信）で押す
+      try { await submit.click({ timeout: OPEN, noWaitAfter: true }); } catch { await submit.evaluate((b) => (b as HTMLButtonElement).click()); }
+    })(),
   ]);
   for (const w of await expectSaved(page, `商品 ${v.商品名} のカード指定・略称タグ`)) onIssue(w);
 }
@@ -232,7 +341,7 @@ async function 規格を登録する(page: Page, what: string, onIssue: Issue): 
   try {
     await Promise.all([
       page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }),
-      page.getByRole("button", { name: "商品規格を登録" }).click({ timeout: OPEN }),
+      page.getByRole("button", { name: "商品規格を登録" }).click({ timeout: OPEN, noWaitAfter: true }),
     ]);
   } finally { page.off("dialog", on); }
   for (const w of await expectSaved(page, what)) onIssue(w);

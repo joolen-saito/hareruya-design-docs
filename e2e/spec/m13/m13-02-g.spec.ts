@@ -14,7 +14,8 @@ caseTest("IT-M13-02-030", async ({ page, notes, step, expected }) => {
   await step(1, async () => { form = await openEventEdit(page, notes.get("〔イベントID-M1302-030〕")); });
   const area = (n: number) => ({ 項目名日: `案内${n}`, 項目名英: `Guide ${n}`, 内容日: `案内${n}の内容`, 内容英: `Guide ${n} content`, 初期表示は閉じる: true });
   await step(2, async () => { await form.fill({ フリー入力エリア: [area(1), area(2), area(3)] }); });
-  await step(3, async () => { await form.submit(form.更新ボタン); });
+  // 送信の応答の画面への移動（保存の完了）まで待ってから公開側を開く
+  await step(3, async () => { expect((await form.送信して待つ(form.更新ボタン)).応答, "更新の送信が送られた（送信の応答がある）").not.toBeNull(); });
   let front!: FrontEventDetail;
   await step(4, async () => { front = await openFrontEventDetail(page, notes.get("〔日程ID-M1302-030〕")); });
   await expected(async () => {
@@ -36,7 +37,7 @@ caseTest("IT-M13-02-031", async ({ page, notes, step, expected }) => {
   await step(1, async () => { form = await openEventEdit(page, notes.get("〔イベントID-M1302-031〕")); });
   await step(2, async () => {
     await form.fill({ フリー入力エリア: [{ 項目名日: "共通案内", 内容日: "全日程共通内容" }] });
-    await form.submit(form.更新ボタン);
+    expect((await form.送信して待つ(form.更新ボタン)).応答, "更新の送信が送られた（送信の応答がある）").not.toBeNull();
   });
   const 表示: Record<string, { 見出し: string; 内容: string }> = {};
   await step(3, async () => {
@@ -65,18 +66,22 @@ caseTest("IT-M13-02-057", async ({ page, notes, step, expected }) => {
   });
   let form!: EventForm;
   await step(2, async () => {
-    await page.locator("table tbody tr").filter({ has: page.locator("td:first-child", { hasText: new RegExp(`^\\s*${c}\\s*$`) }) }).locator("td").nth(1).getByRole("link").click();
-    await page.waitForLoadState("load");
+    // イベント編集画面への移動を待つ（読み込み済みの一覧の画面の読み込みを待つだけでは、移動の前に次へ進む）
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: "load", timeout: 120_000}),
+      page.locator("table tbody tr").filter({ has: page.locator("td:first-child", { hasText: new RegExp(`^\\s*${c}\\s*$`) }) }).locator("td").nth(1).getByRole("link").click({ noWaitAfter: true }),
+    ]);
+    await expect(page, "イベント編集画面を開いた").toHaveURL(new RegExp(`/event/${c}/edit(\\?.*)?$`));
     form = new EventForm(page);
   });
   await step(3, async () => {
     await form.削除ボタン.click();
     const modal = page.locator(`#event_delete_${c}`);
     await expect(modal).toBeVisible();
-    await modal.locator("a.btn-ec-delete").click();
-    await page.waitForLoadState("load");
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), modal.locator("a.btn-ec-delete").click({ noWaitAfter: true })]);
   });
   await expected(async () => {
+    await expect.soft(page.locator(".alert-success"), "削除しましたの表示").toContainText("削除しました");
     await expect(page, "イベント一覧（検索結果）画面の3ページ目へ遷移する").toHaveURL(/\/event\/page\/3(\?.*)?$/);
   });
 });

@@ -8,6 +8,7 @@ import { test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
+import { scene, ダウンロードしたCSVの内容を撮る } from "../../lib/evidence_other";
 import { UsedCardPage } from "../../pages/admin/m12_09_used_card";
 import { M1210_ADMIN } from "../../seeds/m12-10";
 
@@ -53,7 +54,7 @@ caseTest("IT-M12-10-013", async ({ page, notes, step, expected }) => {
   });
   await step(3, async () => { csv = await 押す(p); });
   await step(4, async () => { await 二段目を探す(p); });
-  await step(5, async () => { rows = CSVの行(csv); });
+  await step(5, async () => { rows = CSVの行(csv); if (csv) await ダウンロードしたCSVの内容を撮る(page, rows, scene.stepLabel(5, "ダウンロードしたCSVの内容")); });
   await expected(async () => {
     expect.soft(csv !== null, "CSVがダウンロードされた").toBe(true);
     expect.soft(rows.length, "CSVの行数（ヘッダ行だけ）").toBe(1);
@@ -74,7 +75,7 @@ caseTest("IT-M12-10-008", async ({ page, notes, step, expected }) => {
   });
   await step(3, async () => { csv = await 押す(p); });
   await step(4, async () => { await 二段目を探す(p); });
-  await step(5, async () => { rows = CSVの行(csv); });
+  await step(5, async () => { rows = CSVの行(csv); if (csv) await ダウンロードしたCSVの内容を撮る(page, rows, scene.stepLabel(5, "ダウンロードしたCSVの内容")); });
   await expected(async () => {
     expect.soft(csv !== null, "CSVがダウンロードされた").toBe(true);
     expect.soft(列(rows, "商品ID"), "データ行の商品ID（順に）").toEqual([notes.get("〔商品ID-M1210-008B〕"), notes.get("〔商品ID-M1210-008A〕")]);
@@ -95,7 +96,7 @@ caseTest("IT-M12-10-015", async ({ page, notes, step, expected }) => {
   });
   await step(3, async () => { csv = await 押す(p); });
   await step(4, async () => { await 二段目を探す(p); });
-  await step(5, async () => { rows = CSVの行(csv); });
+  await step(5, async () => { rows = CSVの行(csv); if (csv) await ダウンロードしたCSVの内容を撮る(page, rows, scene.stepLabel(5, "ダウンロードしたCSVの内容")); });
   await expected(async () => {
     expect.soft(csv !== null, "CSVがダウンロードされた").toBe(true);
     expect.soft(列(rows, "商品ID"), "データ行の商品ID（順に）").toEqual([notes.get("〔商品ID-M1210-CB015X〕")]);
@@ -116,7 +117,7 @@ caseTest("IT-M12-10-016", async ({ page, notes, step, expected }) => {
   });
   await step(3, async () => { csv = await 押す(p); });
   await step(4, async () => { await 二段目を探す(p); });
-  await step(5, async () => { rows = CSVの行(csv); });
+  await step(5, async () => { rows = CSVの行(csv); if (csv) await ダウンロードしたCSVの内容を撮る(page, rows, scene.stepLabel(5, "ダウンロードしたCSVの内容")); });
   await expected(async () => {
     expect.soft(csv !== null, "CSVがダウンロードされた").toBe(true);
     expect.soft(列(rows, "商品ID"), "データ行の商品ID（順に）").toEqual([notes.get("〔商品ID-M1210-CB016Y〕")]);
@@ -138,7 +139,7 @@ caseTest("IT-M12-10-017", async ({ page, notes, step, expected }) => {
   });
   await step(3, async () => { csv = await 押す(p); });
   await step(4, async () => { await 二段目を探す(p); });
-  await step(5, async () => { rows = CSVの行(csv); });
+  await step(5, async () => { rows = CSVの行(csv); if (csv) await ダウンロードしたCSVの内容を撮る(page, rows, scene.stepLabel(5, "ダウンロードしたCSVの内容")); });
   await expected(async () => {
     expect.soft(csv !== null, "CSVがダウンロードされた").toBe(true);
     expect.soft(列(rows, "商品ID"), "データ行の商品ID（順に）").toEqual([notes.get("〔商品ID-M1210-CB017Y〕")]);
@@ -159,7 +160,7 @@ caseTest("IT-M12-10-018", async ({ page, notes, step, expected }) => {
   });
   await step(3, async () => { csv = await 押す(p); });
   await step(4, async () => { await 二段目を探す(p); });
-  await step(5, async () => { rows = CSVの行(csv); });
+  await step(5, async () => { rows = CSVの行(csv); if (csv) await ダウンロードしたCSVの内容を撮る(page, rows, scene.stepLabel(5, "ダウンロードしたCSVの内容")); });
   await expected(async () => {
     expect.soft(csv !== null, "CSVがダウンロードされた").toBe(true);
     expect.soft(列(rows, "商品ID"), "データ行の商品ID（順に）").toEqual([notes.get("〔商品ID-M1210-CB018Y〕")]);

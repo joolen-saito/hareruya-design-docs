@@ -131,7 +131,7 @@ caseTest("IT-F08-04-016", async (c) => {
   await 会員登録して進む(c, p, { メール: m.メール, パスワード: "F0804-016-Pw12" });
   let メール欄 = [""], パスワード欄 = [""];
   await c.expected(async () => {
-    expect.soft(await 確認画面か(p), "店頭買取査定申込確認画面の確定のボタンが見える（見えない）").toBe(false);
+    expect.soft(await 確認画面か(p), "店頭買取査定申込確認画面の確定のボタンが見えない").toBe(false);
     await expect.soft(p.r.フォーム(), "再表示された会員登録フォーム").toBeVisible();
     メール欄 = await p.r.欄の下の文("メールアドレス");
     パスワード欄 = await p.r.欄の下の文("パスワード");
@@ -343,7 +343,7 @@ caseTest("IT-F08-04-033", async (c) => {
     文["パスワード"] = await p.r.欄の下の文("パスワード");
   });
   await c.expected(async () => {
-    expect.soft(await 確認画面か(p), "店頭買取査定申込確認画面の確定のボタンが見える（見えない）").toBe(false);
+    expect.soft(await 確認画面か(p), "店頭買取査定申込確認画面の確定のボタンが見えない").toBe(false);
     expect.soft(文["メールアドレス"], "メールアドレス欄の下に出た文").toEqual([重複メッセージ]);
     expect.soft(文["パスワード"], "パスワード欄の下に出た文").toEqual([同一メッセージ]);
   });
@@ -361,7 +361,7 @@ caseTest("IT-F08-04-034", async (c) => {
   await c.step(7, async () => { await expect(p.r.フォーム(), "再表示された会員登録フォーム").toBeVisible(); });
   await c.step(8, async () => { 欄 = await p.r.入力欄の値(); });
   await c.expected(async () => {
-    expect.soft(await 確認画面か(p), "店頭買取査定申込確認画面の確定のボタンが見える（見えない）").toBe(false);
+    expect.soft(await 確認画面か(p), "店頭買取査定申込確認画面の確定のボタンが見えない").toBe(false);
     expect.soft(欄.メール, "再表示されたメールアドレス").toBe(入れた.メール);
     expect.soft(欄.メール確認, "再表示されたメールアドレス（確認用）").toBe(入れた.メール確認);
     expect.soft(欄.パスワード, "再表示されたパスワードの入力欄の値").toBe(入れた.パスワード);
@@ -486,7 +486,7 @@ caseTest("IT-F08-04-046", async (c) => {
   await 会員登録して進む(c, p, { メール: 同じ, パスワード: 同じ });
   let メール欄 = [""], パスワード欄 = [""];
   await c.expected(async () => {
-    expect.soft(await 確認画面か(p), "店頭買取査定申込確認画面の確定のボタンが見える（見えない）").toBe(false);
+    expect.soft(await 確認画面か(p), "店頭買取査定申込確認画面の確定のボタンが見えない").toBe(false);
     await expect.soft(p.r.フォーム(), "再表示された会員登録フォーム").toBeVisible();
     メール欄 = await p.r.欄の下の文("メールアドレス");
     パスワード欄 = await p.r.欄の下の文("パスワード");

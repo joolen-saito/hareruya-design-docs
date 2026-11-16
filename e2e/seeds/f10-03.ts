@@ -165,8 +165,11 @@ async function グッズを作る(browser: Browser, seedId: string, notes: Notes
       入庫する.push({ 商品コード: base.商品コード, 数: 在庫 ?? 0 });
       for (const a of d.足す ?? []) {
         const c = rc(a.コード);
-        const classId = await 規格を足す(page, productId, { 言語: a.言語, 状態: a.状態, 商品コード: c, 基準価格: a.価格, 買取価格: a.買取 ?? "10" },
-          `${seedId}: ${code} の ${言語の名前[a.言語]}・${a.状態} の商品規格の新規作成`, issue);
+        // 正本の状態「PL」は、アプリの状態のマスタ（NM・SP・MP・HP・OT）に無い。ほかの規格と重ならない状態（同じシード表の057が使う MP）に読み替える
+        const 状態 = a.状態 === "PL" ? "MP" : a.状態;
+        if (状態 !== a.状態) issue(`正本の状態「${a.状態}」は、アプリの状態のマスタ（NM・SP・MP・HP・OT）に無いので、「${状態}」に読み替えた（${言語の名前[a.言語]}の規格。価格は正本のまま）`);
+        const classId = await 規格を足す(page, productId, { 言語: a.言語, 状態, 商品コード: c, 基準価格: a.価格, 買取価格: a.買取 ?? "10" },
+          `${seedId}: ${code} の ${言語の名前[a.言語]}・${状態} の商品規格の新規作成`, issue);
         規格IDの表.set(`${key(seedId, d.記号)}/${a.言語}-${a.状態}`, classId);
         if (a.控え) notes.set(a.控え, classId);
         入庫する.push({ 商品コード: c, 数: 在庫 ?? 0 });

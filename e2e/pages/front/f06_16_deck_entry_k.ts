@@ -34,7 +34,7 @@ export class DeckEntryEditPage {
     const form = this.page.locator("form#login_mypage");
     await form.locator("#login_email").fill(メール);
     await form.locator("#login_pass").fill(パスワード);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), form.locator("button[type=submit]").click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), form.locator("button[type=submit]").click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     if ((await this.page.locator("form#login_mypage").count()) > 0) throw new Error(`会員 ${メール} でログインできない（ログイン画面のまま）`);
   }
@@ -66,7 +66,7 @@ export class DeckEntryEditPage {
   /** リンク・ボタンを押して次の画面の読み込みを待つ（固定ヘッダーに重ならないよう画面の中ほどへ動かしてから押す） */
   async 押して遷移する(l: Locator): Promise<void> {
     await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 押しても画面が移らないかもしれない要素を押す。移ったら true */

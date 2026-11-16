@@ -3,6 +3,7 @@
  * ケースの正本: integration_test/casegen/cases/M13-02_test_cases.tsv（手順・期待結果の文は正本から引く）
  */
 import { expect, caseTest } from "../../lib/case";
+import { 印店名 } from "../../pages/admin/m13_marked_shop";
 import { loginAdmin } from "../../lib/session";
 import { openEventCreate, openEventEdit, EventForm } from "../../pages/admin/event";
 import { 保存されているイベント } from "../../db/event";
@@ -15,7 +16,7 @@ caseTest("IT-M13-02-001", async ({ page, step, expected }) => {
   let 店舗: string[] = [];
   await step(2, async () => { 店舗 = await form.selected(form.店舗); });
   await expected(async () => {
-    expect(店舗, "店舗の初期値").toEqual(["店舗A"]);
+    expect(店舗, "店舗の初期値").toEqual([印店名.A]);
     await expect(form.支払方法("クレジットカード決済"), "支払方法の初期値").toBeChecked();
   });
 });
@@ -29,7 +30,7 @@ caseTest("IT-M13-02-002", async ({ page, notes, step, expected }) => {
     await expect.soft(form.会場, "会場").toHaveValue("会場A");
     await expect.soft(form.イベント名日).toHaveValue("編集前イベント-002");
     await expect.soft(form.イベント名英).toHaveValue("Before Event-002");
-    expect.soft(await form.selected(form.店舗), "店舗").toEqual(["店舗A"]);
+    expect.soft(await form.selected(form.店舗), "店舗").toEqual([印店名.A]);
     expect.soft(await form.selected(form.フォーマット), "フォーマット").toEqual(["スタンダード"]);
     expect.soft(await form.selected(form.ルール適用度), "ルール適用度").toEqual(["初心者歓迎"]);
     expect.soft(await form.selected(form.公開状態), "公開状態").toEqual(["公開"]);

@@ -8,6 +8,7 @@ import { expect, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { csvLine } from "../../lib/csv";
 import { chooseByLabel, expectSaved, setChecked } from "./common";
+import { 代表カードの行を選ぶ, 代表カードを検索する } from "./m15_10_archetype_csv";
 
 type Issue = (m: string) => void;
 
@@ -114,7 +115,7 @@ export async function すべてのフォーマットの欄を外す(page: Page, 
 // ---------------------------------------------------------------------------
 
 /** アーキタイプ一覧の新規登録（アーキタイプ名(日)・(英)・公開・フォーマット・カラー）。アーキタイプの番号を返す */
-export async function アーキタイプを登録する(page: Page, v: { 名: string; フォーマット: string; カラー?: string[] }, issue: Issue): Promise<string> {
+export async function アーキタイプを登録する(page: Page, v: { 名: string; フォーマット: string; カラー?: string[]; 代表カード名英?: string }, issue: Issue): Promise<string> {
   await page.goto(adminUrl("/archetype/new"));
   await page.waitForLoadState("load");
   const f = (n: string) => page.locator(`[name="admin_archetype[${n}]"]`);
@@ -126,6 +127,13 @@ export async function アーキタイプを登録する(page: Page, v: { 名: st
     const label = page.locator('label[for^="admin_archetype_Colors_"]').filter({ hasText: new RegExp(`^\\s*${c}\\s*$`) });
     await expect(label, `アーキタイプ「${v.名}」: カラーの選択肢「${c}」`).toHaveCount(1);
     await setChecked(page.locator(`#${await label.getAttribute("for")}`), true);
+  }
+  if (v.代表カード名英) {
+    // 「代表カード選択」でカード名（英語）を完全一致で検索し、その行の「選択」を押す（F09-03 の 019）
+    const what = `アーキタイプ「${v.名}」の代表カード「${v.代表カード名英}」`;
+    const rows = (await 代表カードを検索する(page, v.代表カード名英, what)).filter((r) => r.名 === v.代表カード名英 || r.名.endsWith(` / ${v.代表カード名英}`));
+    if (rows.length !== 1) throw new Error(`${what}: 代表カード検索の完全一致の行が1件に決まらない（${rows.length}件）`);
+    await 代表カードの行を選ぶ(page, rows[0].ID, what);
   }
   await page.locator('button[type="submit"][form="admin_archetype"]').first().click();
   for (const w of await expectSaved(page, `アーキタイプ「${v.名}」の登録`)) issue(w);
@@ -209,7 +217,7 @@ export async function デッキをCSVで登録する(page: Page, rows: CSVデッ
   await page.locator("#admin_csv_import_import_file").setInputFiles({ name: "f0901_decks.csv", mimeType: "text/csv", buffer: Buffer.from(text, "utf-8") });
   const upload = page.locator("#upload-button");
   await expect(upload, `${what}: 「CSVファイルをアップロード」が押せる`).toBeEnabled();
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), upload.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), upload.click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: デッキ登録CSVアップロード`)) issue(w);
 }
 
@@ -221,7 +229,7 @@ export async function プレイヤー名でデッキを探す(page: Page, プレ
   await page.locator('[name="admin_search_deck[event_date_from]"]').fill("");
   await page.locator('[name="admin_search_deck[event_date_to]"]').fill("");
   await page.locator('[name="admin_search_deck[player_name]"]').fill(プレイヤー名);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('#admin_search_deck button[type="submit"]').first().click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('#admin_search_deck button[type="submit"]').first().click({ noWaitAfter: true })]);
   await expect(page.getByText(/検索結果：\d+件が該当しました|検索条件に合致するデータが見つかりませんでした/).first(), "デッキ一覧の検索結果").toBeVisible({ timeout: 60_000 });
   return page.locator("input.searched_deck_id").evaluateAll((es) => es.map((e) => (e as HTMLInputElement).value));
 }
@@ -271,7 +279,7 @@ export async function デッキタグの番号(page: Page, 日本語名: string)
   await page.goto(adminUrl("/data/mtg_master_data"));
   await page.waitForLoadState("load");
   await page.locator('select[name="entity"]').selectOption({ label: "デッキタグ" });
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator('form[method="get"] button[type="submit"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator('form[method="get"] button[type="submit"]').click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   const id = await page.locator("form#edit_form table.mtg-master-table tbody tr").evaluateAll((trs, name) => {
     for (const tr of trs) {

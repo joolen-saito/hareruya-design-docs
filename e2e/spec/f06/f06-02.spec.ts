@@ -7,6 +7,7 @@ import { test } from "@playwright/test";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { ActivatePage } from "../../pages/front/f06_02_activate";
 import { 仮会員機能を戻す } from "../../seeds/f06-02";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
 const 削除の補い = "シード表は「DBで0件を確認し、存在すれば試験データを削除」と定めるが、DBへは書き込まない決まりのため、DBの参照で0件であることを確かめるだけにした（シードの作り方の中。秘密鍵は書式を確かめる値なので実行の印を付けていない）";
@@ -56,16 +57,20 @@ caseTest("IT-F06-02-004", async ({ page, browser, notes, step, expected }) => {
   }
 });
 
-function トップへ(開く: (a: ActivatePage) => Promise<number>, 補い = "") {
+/** エラー画面（画面名・見出し）で「トップページへ」を押す。正本の画面が出ていなければ押さずに止める（別の画面のボタンを押して合格にしない） */
+function トップへ(開く: (a: ActivatePage) => Promise<number>, 画面: { 名前: string; 見出し: string }, 補い = "") {
   return async ({ page, step, expected }: CaseCtx): Promise<void> => {
     if (補い) supplement(補い);
     const a = new ActivatePage(page);
     await step(1, async () => { await 開く(a); });
-    await step(2, async () => { await a.トップページへを押す(); });
+    await step(2, async () => {
+      expect(await a.見出し(), `${画面.名前}が表示されている（押す前の画面の見出し）`).toBe(画面.見出し);
+      await a.トップページへを押す();
+    });
     await expected(async () => {
-      expect.soft(a.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/);
+      expect.soft(a.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(a.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true);
     });
   };
 }
-caseTest("IT-F06-02-021", トップへ((a) => a.open()));
-caseTest("IT-F06-02-022", トップへ((a) => a.open("F0602NOUSER022"), 削除の補い));
+caseTest("IT-F06-02-021", トップへ((a) => a.open(), { 名前: "秘密鍵書式エラー画面（E-1）", 見出し: E1 }));
+caseTest("IT-F06-02-022", トップへ((a) => a.open("F0602NOUSER022"), { 名前: "ユーザー存在チェックエラー画面（E-2）", 見出し: E2 }, 削除の補い));

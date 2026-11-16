@@ -4,10 +4,10 @@
  *   と、2026-11-11 追加の 002 005 006 007 008 012 014 015 019 020 034 035 036 037 038 040 041 042 043 047 050 051 059 062（24件）。
  * 実装しない（8件）: 049 053 054 057 060 061 063 065。支店共通（支店ID 1）の書き換え、または支店共通の登録内容そのもの（共有の設定）を前提にするため
  *   （依頼者の方針 2026-11-10: 支店共通・既存の支店のバナー・タグ・タイルは書き換えない）。
- * 画面で作れない準備（バナー画像を空にする・タイルを消す・タイルタグを空にする・ピックアップ対象）は、固定の名前の試験店舗・この実行の印つきの商品にだけ、
+ * 画面で作れない準備（バナー画像を空にする・タイルを消す・タイルタグを空にする・ピックアップ対象）は、E2E の店舗・この実行の印つきの商品にだけ、
  * db/write_adapter.ts の writeTestData（lib/db_write.ts の窓口を通す） でDBへ書いて作った（seeds/m09-10.ts の冒頭）。
- * タグの名称・商品コード・商品名には実行の印を付け、店舗は固定の名前の試験店舗を使い回す（seeds/m09-10.ts）。正本のハイフンを含む「省略名」は、
- * 画面で入れられる半角英数字の試験店舗の支店URLで代える（条件付き。注記に残す）。
+ * タグの名称・商品コード・商品名には実行の印を付け、店舗は作らず、E2E の店舗（221・4973・5006・5007）を店舗IDで選んで使い回す（seeds/m09-10.ts。依頼者決定 2026-11-15）。
+ * 正本の「省略名」は、選んだ店舗の支店URLで代える（条件付き。注記に残す）。
  */
 import { test, Browser, Locator, Page } from "@playwright/test";
 import { expect, caseTest, CaseBody } from "../../lib/case";
@@ -20,7 +20,7 @@ import { LOCALの店名, LOCALの支店URL, M0910_ADMIN, QI管理者, タグ名,
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 東京 = () => LOCALの店名("S-M09-10-LOCAL");
 const 省略名の代え = (seedId: string, 正本: string) =>
-  note(`正本の省略名「${正本}」はハイフンを含み画面で入れられない（シード表ではDBへ直接設定する）ので、画面で入れた支店URL「${LOCALの支店URL(seedId)}」を省略名として使った（PM 方針 2026-11-10 の条件付き）`);
+  note(`正本の省略名「${正本}」はハイフンを含み画面で入れられない（シード表ではDBへ直接設定する）ので、選んだ店舗の支店URL「${LOCALの支店URL(seedId)}」を省略名として使った（PM 方針 2026-11-10 の条件付き）`);
 
 /** 管理画面にログインして、支店トップページ管理を開いて支店を選ぶ（正本の「支店トップページ管理画面で「X」を選択する」） */
 async function 支店を選んだ画面(page: Page, 店名: string): Promise<支店トップページ管理> {
@@ -105,7 +105,7 @@ caseTest("IT-M09-10-011", async ({ page, step, expected }) => {
     for (const t of Object.keys(数)) expect.soft(数[t], `支店ナビゲーションの「${t}」の表示数`).toBe(0);
   });
   note("「支店ナビゲーション」は、支店トップページの画面上部のヘッダー（支店のカテゴリのナビゲーションを含む）と読み、その中に見えている文字を数えた");
-  note(`正本の省略名「tc」は、共有の環境の本物の支店と重ならないよう、試験店舗の支店URL「${LOCALの支店URL("S-M09-10-LOCAL")}」で作った支店で確かめた`);
+  note(`正本の省略名「tc」は、店舗は作らない（依頼者 2026-11-15）ので、E2E の店舗（店名「${東京()}」）の支店URL「${LOCALの支店URL("S-M09-10-LOCAL")}」で確かめた`);
 });
 
 caseTest("IT-M09-10-016", async ({ page, step, expected }) => {
@@ -318,7 +318,7 @@ caseTest("IT-M09-10-033", async ({ page, step, expected }) => {
   await step(3, async () => { await top.開く(LOCALの支店URL("S-M09-10-LOCAL-033")); await top.開いている(); });
   await step(4, async () => {
     await expect(top.バナーのリンク, "リンクつきのバナー画像").toHaveCount(1);
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), top.バナーのリンク.click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), top.バナーのリンク.click({ timeout: 20_000, noWaitAfter: true })]);
     名前 = await 商品一覧の商品名(page);
   });
   await expected(async () => {
@@ -408,7 +408,7 @@ function 一件だけのタイル(seedId: string, 支店ID呼び名: string, 見
       タイル = await top.タイルの商品名(top.タイル見出し(見出し));
     });
     await step(3, async () => {
-      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), top.もっと見る(top.タイル見出し(見出し)).click({ timeout: 20_000 })]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), top.もっと見る(top.タイル見出し(見出し)).click({ timeout: 20_000, noWaitAfter: true })]);
       一覧 = await 商品一覧の商品名(page);
     });
     await expected(async () => {
@@ -600,6 +600,8 @@ function バナー未設定で登録(確かめる: "DB" | "画面"): CaseBody {
     await expected(async () => {
       if (確かめる === "DB") {
         expect.soft(前設定.バナー画像, "保存前のバナー画像（未設定）").toBe("");
+        // 保存前がすでに M0910バナータグB なら「更新されない」の確かめにならない（使い回す試験店舗なので、前の実行の結果が残りうる）
+        expect.soft(前設定.バナーリンクタグID, "保存前のバナーリンクタグ（M0910バナータグA）").toBe(notes.get("〔タグID-M0910-共有2〕"));
         expect.soft(後設定.バナーリンクタグID, "DBのバナーリンクタグ（保存前の値から更新されない）").toBe(前設定.バナーリンクタグID);
         expect.soft(タイルの値(後タイル), "DBのタイル（保存前の値から更新されない）").toEqual(タイルの値(前タイル));
       } else {
@@ -608,7 +610,7 @@ function バナー未設定で登録(確かめる: "DB" | "画面"): CaseBody {
         expect.soft(await p.選択中の支店(), "選ばれている支店").toBe(店名);
       }
     });
-    note("バナー画像未設定の状態は、画面では作れないため、試験店舗のバナー画像をDBで空にして作った（seeds/m09-10.ts）");
+    note("バナー画像未設定の状態は、画面では作れないため、E2E の店舗のバナー画像をDBで空にして作った（seeds/m09-10.ts）");
   };
 }
 caseTest("IT-M09-10-019", バナー未設定で登録("DB"));
@@ -636,7 +638,7 @@ caseTest("IT-M09-10-050", async ({ page, step, expected }) => {
     expect.soft(new URL(バナーURL, "http://x").pathname.includes(`/banner/top/${url}/`), `バナー画像のURLのパスに「/banner/top/${url}/」が含まれる（${バナーURL}）`).toBe(true);
   });
   省略名の代え("S-M09-10-DP-NOBANNER-050", "m0910-050-r");
-  note("バナー画像未設定の状態は、画面では作れないため、試験店舗のバナー画像をDBで空にして作った（seeds/m09-10.ts）");
+  note("バナー画像未設定の状態は、画面では作れないため、E2E の店舗のバナー画像をDBで空にして作った（seeds/m09-10.ts）");
 });
 
 // ---- 公開側: タイルの見出しと商品 ----
@@ -676,7 +678,7 @@ function もっと見る(見出し名: () => string, 含む: string[], 含まな
     await step(2, async () => {
       const タイル = top.タイル見出し(見出し名());
       await expect(タイル, `タイル「${見出し表示}」`).toHaveCount(1);
-      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), top.もっと見る(タイル).click({ timeout: 20_000 })]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), top.もっと見る(タイル).click({ timeout: 20_000, noWaitAfter: true })]);
       一覧 = await 商品一覧の商品名(page);
     });
     await expected(async () => {
@@ -702,6 +704,8 @@ caseTest("IT-M09-10-040", async ({ page, step, expected }) => {
   await expected(async () => {
     const だけ = (names: string[], prefix: string) => names.every((n) => 連番(prefix, 4).some((c) => n.includes(印(c))));
     for (const [k, v] of Object.entries(商品)) expect.soft(v.length, `タイル（${k}）の商品の数（3件以下）`).toBeLessThanOrEqual(3);
+    // 空のタイルでは「〜だけが表示される」の確かめにならないので、各タイルに商品が出ていることも見る（各タグに商品4件を紐づけてある）
+    for (const [k, v] of Object.entries(商品)) expect.soft(v.length, `タイル（${k}）に表示された商品の数（1件以上）`).toBeGreaterThan(0);
     expect.soft(だけ(商品.ピックアップ, "PICK"), "ピックアップ商品のタイルにはPICK系商品だけ").toBe(true);
     expect.soft(だけ(商品.モダン, "FMT"), "モダンのタイルにはモダン特集タグの商品だけ").toBe(true);
     expect.soft(だけ(商品.最新, "LATEST"), "最新エキスパンションのタイルにはM0910最新タグの商品だけ").toBe(true);
@@ -736,7 +740,7 @@ caseTest("IT-M09-10-041", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(商品数, "タイルタグが未設定の登録済みタイルに商品が表示されない（支店トップページの商品の数）").toBe(0);
   });
-  note("支店Gの登録済みタイルは1件（その他・タイルタグ未設定）で、ほかの3つの位置はタイル未登録（画面で作れないため、試験店舗のタイルタグ・仮のタイルをDBで書き換えて作った）。この支店には商品が無いので、商品がどこにも表示されないことで確かめた");
+  note("支店Gの登録済みタイルは1件（その他・タイルタグ未設定）で、ほかの3つの位置はタイル未登録（画面で作れないため、E2E の店舗のタイルタグ・仮のタイルをDBで書き換えて作った）。この支店には商品が無いので、商品がどこにも表示されないことで確かめた");
 });
 
 caseTest("IT-M09-10-042", async ({ page, step, expected }) => {
@@ -806,7 +810,7 @@ caseTest("IT-M09-10-059", async ({ page, step, expected }) => {
     expect.soft(数, "タイトル「最新エキスパンション」のタイルが表示される").toBe(1);
     expect.soft(商品.length, "そのタイルの商品の数（1件も表示されない）").toBe(0);
   });
-  note("タイルタグが空の最新エキスパンションのタイルは、画面では保存できないため、試験店舗のタイルのタイルタグをDBで空にして作った（seeds/m09-10.ts）");
+  note("タイルタグが空の最新エキスパンションのタイルは、画面では保存できないため、E2E の店舗のタイルのタイルタグをDBで空にして作った（seeds/m09-10.ts）");
 });
 
 caseTest("IT-M09-10-062", async ({ page, notes, step, expected }) => {
@@ -820,7 +824,7 @@ caseTest("IT-M09-10-062", async ({ page, notes, step, expected }) => {
     タイル = await top.タイルの商品名(top.タイル見出し("ピックアップ商品"));
   });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), top.もっと見る(top.タイル見出し("ピックアップ商品")).click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), top.もっと見る(top.タイル見出し("ピックアップ商品")).click({ timeout: 20_000, noWaitAfter: true })]);
     一覧 = await 商品一覧の商品名(page);
   });
   await expected(async () => {

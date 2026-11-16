@@ -3,8 +3,8 @@ import { Browser, Page, test } from "@playwright/test";
 import { CaseBody, caseTest, expect } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
-import { 受注, 受注明細, 商品の在庫, 在庫変動履歴 } from "../../db/m05_11";
-import { OrderEditPage, OrderItemsEdit } from "../../pages/admin/m05_11_order_edit";
+import { 受注, 受注明細, 商品の在庫, 在庫変動履歴, 受注の合計金額, 受注の金額とポイント, 配送商品, 配送先の数, 商品規格のマスタ, 配送商品行 } from "../../db/m05_11";
+import { OrderEditPage, OrderItemsEdit, 明細行 } from "../../pages/admin/m05_11_order_edit";
 import "../../seeds/m05-11-f";
 import { M0511_ADMIN_A, 店舗Aの店名 } from "../../seeds/m05-11";
 
@@ -64,17 +64,31 @@ caseTest("IT-M05-11-044", async ({ page, browser, notes, step, expected }) => {
 caseTest("IT-M05-11-049", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M0511_ADMIN_A);
   let p!: OrderEditPage;
-  let rows: ReturnType<typeof 受注明細> = [];
+  let rows: 配送商品行[] = [];
+  let 配送先 = -1;
+  let 画面の価格 = NaN;
   const a = rc("BASE-A-049");
   await step(1, async () => { p = await 開く(browser, page, notes.get(key("049"))); });
-  await step(2, async () => { await new OrderItemsEdit(page).明細に入れる(a, { 数量: "1" }); });
+  await step(2, async () => {
+    await new OrderItemsEdit(page).明細に入れる(a, { 数量: "1" });
+    // 更新後の明細の価格（登録する直前の画面の値）。配送商品の価格の期待値にする
+    画面の価格 = Number((await 明細行(page, a).locator('input[name$="[price]"]').inputValue()).replace(/,/g, ""));
+  });
   await step(3, async () => { await p.受注情報を登録する(onDialog); });
-  await step(4, async () => { rows = 受注明細(notes.get(key("049"))); });
+  await step(4, async () => { rows = 配送商品(notes.get(key("049"))); 配送先 = 配送先の数(notes.get(key("049"))); });
   await expected(async () => {
-    const row = rows.find((r) => r.商品コード === a);
+    // 作り直す配送商品には、商品・商品規格・商品名（商品の名称）・商品コード・規格分類名・規格名・価格・数量を写す（設計書 L0593）
+    const m = 商品規格のマスタ(a);
+    const mine = rows.filter((r) => r.商品コード === a);
+    expect.soft(mine.length, `配送先（${配送先}件）それぞれに商品 ${a} の配送商品が1件ずつ`).toBe(配送先);
+    const row = mine[0];
+    expect.soft(row?.商品ID, "配送商品の商品（更新後の明細の商品）").toBe(m.商品ID);
+    expect.soft(row?.商品規格ID, "配送商品の商品規格（更新後の明細の商品規格）").toBe(m.商品規格ID);
+    expect.soft(row?.商品名, "配送商品の商品名（商品の名称）").toBe(m.商品名);
     expect.soft(row?.商品コード, "配送商品の商品コード").toBe(a);
-    expect.soft(row?.数量, "配送商品の数量（更新後の1）").toBe("1");
-    expect.soft(Number(row?.価格 ?? "0") > 0, "配送商品の価格が登録されている").toBe(true);
+    expect.soft([row?.規格名1, row?.規格分類名1, row?.規格名2, row?.規格分類名2], "配送商品の規格名・規格分類名（商品規格の値）").toEqual([m.規格名1, m.規格分類名1, m.規格名2, m.規格分類名2]);
+    expect.soft(row?.価格, `配送商品の価格（更新後の明細の価格 ${画面の価格}）`).toBe(画面の価格);
+    expect.soft(row?.数量, "配送商品の数量（更新後の1）").toBe(1);
   });
 });
 
@@ -115,11 +129,20 @@ caseTest("IT-M05-11-073", async ({ page, browser, notes, step, expected }) => {
     await page.locator("#order_gainedPoints").fill("50", { timeout: 20_000 });
   });
   await step(4, async () => { await p.受注情報を登録する(onDialog); });
-  await step(5, async () => { rows = 受注明細(notes.get(key("073"))); r = 受注(notes.get(key("073"))); });
+  let 金額: Record<string, number> = {};
+  await step(5, async () => { rows = 受注明細(notes.get(key("073"))); r = 受注(notes.get(key("073"))); 金額 = 受注の金額とポイント(notes.get(key("073"))); });
   await expected(async () => {
     const row = rows.find((x) => x.商品コード === a);
-    expect.soft([row?.数量, row?.欠品数量, row?.価格], "受注明細の数量・欠品数量・価格（2・1・1000）").toEqual(["2", "1", "1000"]);
+    expect.soft([Number(row?.数量), Number(row?.欠品数量), Number(row?.価格)], "受注明細の数量・欠品数量・価格（2・1・1000）").toEqual([2, 1, 1000]);
     expect.soft(r.受注ID !== undefined, "受注が保存された").toBe(true);
+    // 入力した整数値が、それぞれの項目に保存されたこと
+    expect.soft(金額.値引き, "値引き（100）").toBe(100);
+    expect.soft(金額.送料, "送料（500）").toBe(500);
+    expect.soft(金額.手数料, "手数料（200）").toBe(200);
+    expect.soft(金額.還元率, "ポイント還元率（5）").toBe(5);
+    // 正本は入力値（50）の保存を求める。設計書 L0596〜L0597 は発生ポイントを計算し直すと定めており、食い違いは正本の問題として報告する（期待は正本のまま）
+    expect.soft(金額.発生, "ポイント発生（50）").toBe(50);
+    expect.soft(金額.使用, "ポイント使用（100）").toBe(100);
   });
 });
 
@@ -127,12 +150,16 @@ caseTest("IT-M05-11-051", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M0511_ADMIN_A);
   let p!: OrderEditPage;
   let rows: ReturnType<typeof 受注明細> = [];
+  let 合計 = NaN;
   const c = rc("LIMIT-001-051");
   await step(1, async () => { p = await 開く(browser, page, notes.get(key("051"))); });
   await step(2, async () => { const items = new OrderItemsEdit(page); await items.明細に入れる(c, { 価格: "9999999999", 数量: "1" }); await items.金額欄({ 値引き: "0", 送料: "0", 手数料: "0" }); });
   await step(3, async () => { await p.受注情報を登録する(onDialog); });
-  await step(4, async () => { rows = 受注明細(notes.get(key("051"))); });
-  await expected(async () => { expect.soft(rows.find((x) => x.商品コード === c)?.価格, "受注明細の価格（合計金額9999999999）").toBe("9999999999"); });
+  await step(4, async () => { rows = 受注明細(notes.get(key("051"))); 合計 = 受注の合計金額(notes.get(key("051"))).合計; });
+  await expected(async () => {
+    expect.soft(合計, "受注の合計金額（9999999999）").toBe(9999999999);
+    expect.soft(Number(rows.find((x) => x.商品コード === c)?.価格), "受注明細の価格（9999999999）").toBe(9999999999);
+  });
 });
 
 caseTest("IT-M05-11-022", async ({ page, browser, notes, step, expected }) => {

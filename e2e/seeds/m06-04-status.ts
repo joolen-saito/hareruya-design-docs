@@ -20,6 +20,7 @@
  * 明細・個別入力商品・金額・買取集計の値がDBでしか入らないシード、MTGバイヤー（買取端末のアプリ）での査定が要るシードは作らない。
  */
 import { Browser, Page } from "@playwright/test";
+import * as prep from "../db/m06_04_prep";
 import { SETUP_ADMIN } from "../config/env";
 import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
@@ -27,8 +28,8 @@ import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { DepartmentPage } from "../pages/admin/m03_18_department";
-import { createMemberByStoreIds, expectMemberByStoreIds, M0424MemberInput } from "../pages/admin/m04_24_member";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { createMemberByStoreIds, 店舗の付け替えを許して確かめる, M0424MemberInput } from "../pages/admin/m04_24_reuse_k";
+import { ensureStore } from "../pages/admin/m04_24_reuse_k";
 import { readFixedPriceSection } from "../pages/admin/m06_04_settings";
 import { OtcOrderDetailPage, 一覧から詳細を開く, 申込者名で査定IDを探す, 権限URL, 権限の許可を読む, 拒否している, 許可している } from "../pages/admin/m06_04_status";
 import { OtcDetailPage } from "../pages/admin/m06_otc_list";
@@ -97,7 +98,7 @@ async function ensureM0604Member(page: Page, v: M0424MemberInput): Promise<strin
   const found = await findMemberId(page, v.名前);
   if (!found) return createMemberByStoreIds(page, v);
   await changeMemberAuthority(page, found, v.権限);
-  await expectMemberByStoreIds(page, found, v);
+  await 店舗の付け替えを許して確かめる(page, found, v);
   return found;
 }
 
@@ -269,7 +270,13 @@ type 買取の定め = {
 function defineOrderSeed(seedId: string, needs: string[], o: 買取の定め): void {
   defineSeed(seedId, { needs: [...needs, ...(o.順?.length ? ["S-M06-04-IT-A"] : [])] }, async ({ browser, notes, seed }) => {
     const r = await 店舗Aで申込む(browser, seed.シードID, o.姓, rc(o.名));
-    const after = o.順?.length ? await ステータスを順に変える(browser, r.受注ID, o.順) : undefined;
+    let after = o.順?.length ? await ステータスを順に変える(browser, r.受注ID, o.順) : undefined;
+    // アプリは「買取成立」の保存で続けて「入庫待ち」（個別入力商品なし）にする。シード表の状態が「買取成立」のものは、DBでステータスだけ戻す
+    if (after && o.状態 === "買取成立" && o.順?.[o.順.length - 1] === "買取成立" && after.ステータス === "入庫待ち") {
+      prep.ステータスだけを変える(r.受注ID, rc(o.名), "買取成立");
+      reportSeedIssue(seed.シードID, "アプリは「買取成立」の保存で続けて「入庫待ち」にするので、ステータス変更画面のあと、DBでステータスだけを「買取成立」に戻した");
+      after = { ...after, ステータス: "買取成立" };
+    }
     if (after && after.ステータス !== o.状態) {
       throw new Error(`ステータス変更画面で「${o.順!.join("」→「")}」と変えたが、ステータスが「${after.ステータス}」で、シード表の「${o.状態}」にならない`);
     }
@@ -302,6 +309,7 @@ const 変更つき = (no: string, 姓: string, 名: string, 順: string[], 状�
 });
 const 決め打ち = (固定: string, 名: string, 順: string[], 状態: string, 読み替え: string): 買取の定め => ({ 姓: "M0604", 名, 順, 状態, 固定, 読み替え });
 const 成立日つき = "決め打ちの買取成立日はDBで入れず、一度「買取成立」にしたときの日時（シードを作った時刻）にした";
+/** 015（入庫の権限が無いので入庫は起きない）だけが使う */
 const 入庫の明細なし = "明細・商品・在庫（数量1の買取商品・ECCUBE在庫5）と決め打ちの買取成立日はDBでしか入らないので、明細の無い買取にした（入庫待ちにするだけ）";
 
 defineOrderSeed("S-M06-04-BASE-001", 店A, 基本("001", "BASE001"));
@@ -316,14 +324,11 @@ defineOrderSeed("S-M06-04-ACCOUNTING-PENDING-010", 店A, 変更つき("010", "M0
 defineOrderSeed("S-M06-04-ACCOUNTING-PENDING-011", 店A, 変更つき("011", "M0604", "PENDING011", ["経理払い出し待ち"], "経理払い出し待ち", "ステータス変更履歴0件はDBでしか作れないので、画面の操作で入った履歴のまま"));
 defineOrderSeed("S-M06-04-ACCOUNTING-WRONG-012", 店A, 基本("012", "WRONG012", ""));
 defineOrderSeed("S-M06-04-ACCOUNTING-WRONG-013", 店A, 基本("013", "WRONG013", ""));
-defineOrderSeed("S-M06-04-STOCKING-PENDING-014", 店A, 決め打ち("600404014", "STOCK014", ["入庫待ち"], "入庫待ち", 入庫の明細なし));
 defineOrderSeed("S-M06-04-STOCKING-PENDING-015", 店A, 決め打ち("600404015", "STOCK015", ["入庫待ち"], "入庫待ち", 入庫の明細なし));
 defineOrderSeed("S-M06-04-BASE-016", 店A, 基本("016", "BASE016", ""));
-defineOrderSeed("S-M06-04-STOCKED-017", 店A, 変更つき("017", "M0604", "STOCKED017", ["入庫済み"], "入庫済み", "決め打ちの買取成立日・入庫日時とステータス変更履歴0件はDBでしか入らないので、画面の操作で入った値のまま（買取成立日は空・入庫日時はシードを作った時刻）"));
 defineOrderSeed("S-M06-04-STOCKED-018", 店A, 変更つき("018", "M0604", "STOCKED018", ["入庫済み"], "入庫済み", "決め打ちの買取成立日・入庫日時とステータス変更履歴0件はDBでしか入らないので、画面の操作で入った値のまま（買取成立日は空・入庫日時はシードを作った時刻）"));
 defineOrderSeed("S-M06-04-BASE-019", 店A, 基本("019", "BASE019"));
 defineOrderSeed("S-M06-04-BASE-020", 店A, 基本("020", "BASE020"));
-defineOrderSeed("S-M06-04-STOCKING-PENDING-021", 店A, 決め打ち("600404021", "STOCK021", ["入庫待ち"], "入庫待ち", 入庫の明細なし));
 defineOrderSeed("S-M06-04-COMPLETE-DATED-022", 店A, 変更つき("022", "M0604", "DATED022", ["買取成立", "管理者取消"], "管理者取消", 成立日つき));
 defineOrderSeed("S-M06-04-BASE-023", 店A, 基本("023", "BASE023"));
 defineOrderSeed("S-M06-04-BASE-024", 店A, 基本("024", "BASE024", "更新日時2026-08-01 09:00:00・担当者seed_owner はDBでしか入らないので、申込で入った更新日時・担当者のまま（ケースは、変更の前の値から変わらないことを見る）"));

@@ -21,7 +21,7 @@ export async function 棚番号を登録する(page: Page, 名称: string, onIss
   await shelf.名称.fill(名称);
   // 並び順は、まだ使われていない値（正本は「名称の昇順になる値」。登録済みの並び順と重ならない値にした）
   await shelf.並び順.fill(String(次の棚並び順()));
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), shelf.登録ボタン.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), shelf.登録ボタン.click({ noWaitAfter: true })]);
   const m = await topMessages(page);
   if (m.エラー.length) {
     if (m.エラー.some((t) => /登録済|既に|重複|使用/.test(t))) { onIssue(`棚番号「${名称}」は登録済みだったので、登録しなかった（${m.エラー.join(" / ")}）`); return; }
@@ -65,7 +65,7 @@ export async function 規格に棚番号を付けて公開する(page: Page, 商
   await chooseByLabel(form.locator("#admin_product_class_Status"), "公開");
   await Promise.all([
     page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }),
-    page.getByRole("button", { name: "商品規格を登録" }).click(),
+    page.getByRole("button", { name: "商品規格を登録" }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `商品規格 ${商品コード} への棚番号と公開の登録`)) onIssue(w);
 }

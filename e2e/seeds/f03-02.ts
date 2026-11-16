@@ -51,11 +51,13 @@ import { adminUrl, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { customerStateByEmail } from "../pages/admin/customer";
 import {
   アーキタイプを用意する, カードを登録する, カード商品CSVを登録する, 割引率の先頭, 規格, 規格の一覧, 規格の値, 規格を削除する, 規格を足す, 規格を登録する,
-  言語IDの一覧, 子カテゴリを登録する, 最上位のカテゴリを登録する, 商品名で商品IDを読む, 商品を登録する, 入庫して承認する, 行が当たる, 新しい規格,
+  言語IDの一覧, 子カテゴリを登録する, 商品名で商品IDを読む, 商品を登録する, 入庫して承認する, 行が当たる, 新しい規格,
 } from "../pages/admin/f03_02_seed_ops";
 import { customerIdByEmail, savePublishedClass } from "../pages/admin/f03_07_restock";
+import { readLanguageChoicesFromClassForm } from "../pages/admin/m03_01_product_class";
 import { readExistingGoodsChildCategoryId, readExistingSellGroupName } from "../pages/admin/m03_01_goods_csv";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
+import { createTopByCsv } from "../pages/admin/category";
 import { classRowsFromProductEdit, readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
 import { デッキを登録する, 公開用 } from "../pages/admin/m15_deck";
 import { FrontFavorite } from "../pages/front/f03_08_favorite";
@@ -142,6 +144,9 @@ function defineBrowserSeed(seedId: string): void {
   defineSeed(seedId, async () => { /* 作るものは無い */ });
 }
 defineBrowserSeed("S-F03-02-BROWSER-003");
+// 014・016: 新しいブラウザは X・LINE にもログインしていない
+defineBrowserSeed("S-F03-02-BROWSER-014");
+defineBrowserSeed("S-F03-02-BROWSER-016");
 defineBrowserSeed("S-F03-02-BROWSER-010");
 defineBrowserSeed("S-F03-02-BROWSER-019");
 defineBrowserSeed("S-F03-02-BROWSER-021");
@@ -192,8 +197,13 @@ type 共通の値 = { 言語: Map<string, string>; 割引率: { value: string; l
 let shared: 共通の値 | null = null;
 async function 共通の値を読む(page: Page, issue: (m: string) => void): Promise<共通の値> {
   if (!shared) {
+    // 商品マスターの検索欄の言語は「日本語・英語・その他言語」だけで、フランス語の番号は無い。商品規格の登録画面の言語欄（全言語）から足す
+    const 言語 = await 言語IDの一覧(page);
+    if (!言語.has("フランス語")) {
+      for (const c of await readLanguageChoicesFromClassForm(page)) if (!言語.has(c.label)) 言語.set(c.label, c.id);
+    }
     shared = {
-      言語: await 言語IDの一覧(page), 割引率: await 割引率の先頭(page),
+      言語, 割引率: await 割引率の先頭(page),
       購入グループ: await readExistingSellGroupName(page), カードのカテゴリ: await readExistingGoodsChildCategoryId(page),
     };
   }
@@ -316,10 +326,21 @@ defineCardSeed("S-F03-02-HIGH", { name: "高額商品コード付きカード", 
 defineCardSeed("S-F03-02-OPTIONAL-EMPTY", { name: "任意カード情報なしカード", csv: { 言語: "JP", 価格: "200", 買取: "0" } });
 defineCardSeed("S-F03-02-DECK-ZERO", { name: "デッキなしカード", card: { フォーマット: ["スタンダード"] }, csv: { 言語: "JP", 価格: "200", 買取: "0" } });
 
+/**
+ * 最上位のカテゴリを、カテゴリ登録CSV（画面）で1件登録してカテゴリIDを返す。
+ * カテゴリ管理の最上位の画面には入力欄が無い（アプリのテンプレートは、親を選んだときか編集のときだけ入力欄を出す）。
+ * 画面の入力欄で登録する部品（最上位のカテゴリを登録する）は入力欄を待って止まった（2026-11-14 の BASE-CARD）。F01-02・F05-04 と同じ作り方。
+ */
+async function 最上位のカテゴリをCSVで登録する(page: Page, 名: string, seedId: string, issue: (m: string) => void): Promise<string> {
+  const id = await createTopByCsv(page, { nameJp: 名, nameEn: 名, frontHide: "0", branchHide: "0" }, `${seedId.toLowerCase()}-top-${Date.now()}.csv`, issue);
+  issue(`最上位のカテゴリ「${名}」は、カテゴリ管理の最上位の画面に入力欄が無いので、カテゴリ登録CSVで登録した（カテゴリID ${id}）`);
+  return id;
+}
+
 // パンくず（カード）: カテゴリ3階層を作り、商品カテゴリを階層3だけにする
 async function 三階層(page: Page, seedId: string, n: string): Promise<{ カテゴリID: string }> {
   const issue = (m: string) => reportSeedIssue(seedId, m);
-  const c1 = await 最上位のカテゴリを登録する(page, rc(`階層1 F0302-${n}-B`), seedId, issue);
+  const c1 = await 最上位のカテゴリをCSVで登録する(page, rc(`階層1 F0302-${n}-B`), seedId, issue);
   const c2 = await 子カテゴリを登録する(page, c1, rc(`階層2 F0302-${n}-C`), seedId, issue);
   const c3 = await 子カテゴリを登録する(page, c2, rc(`階層3 F0302-${n}-D`), seedId, issue);
   issue(`カテゴリ ${c1} > ${c2} > ${c3} を登録した`);
@@ -388,7 +409,10 @@ async function グッズを作る(browser: Browser, seedId: string, defs: グッ
     if (extra.カテゴリID) for (const p of out) await 商品を登録する(page, p.productId, { カテゴリID: extra.カテゴリID }, `${seedId}: 商品登録編集`, issue);
     return out;
   });
-  if (a.在庫) await 入庫して承認する(browser, made.map((p) => ({ 商品コード: p.classes[0].商品コード, 数: a.在庫! })), seedId, issue);
+  if (a.在庫) {
+    await 入庫して承認する(browser, made.map((p) => ({ 商品コード: p.classes[0].商品コード, 数: a.在庫! })), seedId, issue);
+    issue(`シード作成時の問題: 商品 ${made.length} 件の本店EC在庫を ${a.在庫} にした（入庫の承認。在庫が必要なケースの前提。最近チェックした商品の欄はアプリが在庫のある商品だけを出す）`);
+  }
   return made;
 }
 
@@ -404,7 +428,8 @@ defineGoodsSeed("S-F03-02-SUPPLY", [{ code: "F0302-SUPPLY", name: "結合試験�
 defineGoodsSeed("S-F03-02-HISTORY", Array.from({ length: 19 }, (_, i) => {
   const nn = String(i + 1).padStart(2, "0");
   return { code: `F0302-HISTORY-${nn}`, name: `履歴商品${nn}` };
-}));
+}), { 在庫: 1 });
+// 最近チェックした商品の欄は、アプリが本店EC在庫のある商品だけを描く（在庫0の履歴商品は欄に出ない）ので、履歴商品に本店EC在庫1を入れる（正本は在庫を指定していない）
 defineGoodsSeed("S-F03-02-CRUMB-SUPPLY-079", [{ code: "F0302-079-C", name: "パンくずサプライ F0302-079-A" }], { 在庫: 5, before: (page) => 三階層(page, "S-F03-02-CRUMB-SUPPLY-079", "079") });
 defineGoodsSeed("S-F03-02-LANGSUPPLY-111", [{ code: "F0302-111-C", name: "言語非表示サプライ F0302-111-A" }], { 在庫: 5 });
 defineGoodsSeed("S-F03-02-CBSUPHIGH-124", [{ code: "F0302-CB124-C", name: "高額サプライ F0302-CB124-A", 支店: "公開" }], { 在庫: 5, 高額商品コード: "F0302-CB124-HC" });
@@ -445,8 +470,9 @@ function defineMemberSeed(seedId: string, local: string, password: string, a: { 
   });
 }
 
-defineMemberSeed("S-F03-02-MEMBER-022", "f0302-member-022", "Passw0rd-F0302-022!");
-defineMemberSeed("S-F03-02-CBMEMBER-126", "cbf0302-126", "Passw0rd-CBF0302126");
+// 会員の表が指す共有の商品（〔商品ID-F0302-共有-ZERO-STOCK〕）の呼び名は、その商品のシードが控える。先に作らせる（会員のシードが先だと「当たる商品を作っていない」で止まった）
+defineMemberSeed("S-F03-02-MEMBER-022", "f0302-member-022", "Passw0rd-F0302-022!", { needs: ["S-F03-02-ZERO-STOCK"] });
+defineMemberSeed("S-F03-02-CBMEMBER-126", "cbf0302-126", "Passw0rd-CBF0302126", { needs: ["S-F03-02-ZERO-STOCK"] });
 defineMemberSeed("S-F03-02-MEMBER-109", "f0302-member-109", "Passw0rd-F0302-109!", {
   needs: ["S-F03-02-NOTIFYWAIT-109"],
   after: async () => { reportSeedIssue("S-F03-02-MEMBER-109", "登録したばかりの会員で、入荷通知依頼は0件（消すものが無い）"); },
@@ -479,7 +505,7 @@ const EX読み替え = "状態EXは手元の環境に無いので、2番目の�
 /** 商品カテゴリ「テストセット」: 最上位のカテゴリを新しく作る（正本はカードセットのカテゴリ。共有のマスタは書き換えない） */
 async function テストセット(page: Page): Promise<{ カテゴリID: string }> {
   const issue = (m: string) => reportSeedIssue("S-F03-02-BASE-CARD", m);
-  const id = await 最上位のカテゴリを登録する(page, rc("テストセット"), "S-F03-02-BASE-CARD", issue);
+  const id = await 最上位のカテゴリをCSVで登録する(page, rc("テストセット"), "S-F03-02-BASE-CARD", issue);
   issue(`商品カテゴリ「テストセット」は、最上位のカテゴリ（カテゴリID ${id}）を新しく作って選んだ`);
   return { カテゴリID: id };
 }
@@ -830,3 +856,71 @@ defineBrowserSeed("S-F03-02-BROWSER-103");
 defineBrowserSeed("S-F03-02-BROWSER-104");
 defineBrowserSeed("S-F03-02-BROWSER-105");
 defineBrowserSeed("S-F03-02-BROWSER-112");
+// 専用ブラウザだけの残りのシード（作るものは無い。新しいブラウザは閲覧履歴・カートが空で、EC会員はログアウト）
+defineBrowserSeed("S-F03-02-BROWSER-002");
+defineBrowserSeed("S-F03-02-BROWSER-004");
+defineBrowserSeed("S-F03-02-BROWSER-005");
+defineBrowserSeed("S-F03-02-BROWSER-006");
+defineBrowserSeed("S-F03-02-BROWSER-007");
+defineBrowserSeed("S-F03-02-BROWSER-008");
+defineBrowserSeed("S-F03-02-BROWSER-009");
+defineBrowserSeed("S-F03-02-BROWSER-011");
+defineBrowserSeed("S-F03-02-BROWSER-017");
+defineBrowserSeed("S-F03-02-BROWSER-018");
+defineBrowserSeed("S-F03-02-BROWSER-020");
+defineBrowserSeed("S-F03-02-BROWSER-024");
+defineBrowserSeed("S-F03-02-BROWSER-025");
+defineBrowserSeed("S-F03-02-BROWSER-026");
+defineBrowserSeed("S-F03-02-BROWSER-027");
+defineBrowserSeed("S-F03-02-BROWSER-029");
+defineBrowserSeed("S-F03-02-BROWSER-033");
+defineBrowserSeed("S-F03-02-BROWSER-034");
+defineBrowserSeed("S-F03-02-BROWSER-035");
+defineBrowserSeed("S-F03-02-BROWSER-036");
+defineBrowserSeed("S-F03-02-BROWSER-038");
+defineBrowserSeed("S-F03-02-BROWSER-039");
+defineBrowserSeed("S-F03-02-BROWSER-040");
+defineBrowserSeed("S-F03-02-BROWSER-041");
+defineBrowserSeed("S-F03-02-BROWSER-042");
+defineBrowserSeed("S-F03-02-BROWSER-043");
+defineBrowserSeed("S-F03-02-BROWSER-044");
+defineBrowserSeed("S-F03-02-BROWSER-045");
+defineBrowserSeed("S-F03-02-BROWSER-046");
+defineBrowserSeed("S-F03-02-BROWSER-047");
+defineBrowserSeed("S-F03-02-BROWSER-048");
+defineBrowserSeed("S-F03-02-BROWSER-049");
+defineBrowserSeed("S-F03-02-BROWSER-050");
+defineBrowserSeed("S-F03-02-BROWSER-051");
+defineBrowserSeed("S-F03-02-BROWSER-052");
+defineBrowserSeed("S-F03-02-BROWSER-056");
+defineBrowserSeed("S-F03-02-BROWSER-065");
+defineBrowserSeed("S-F03-02-BROWSER-066");
+defineBrowserSeed("S-F03-02-BROWSER-068");
+defineBrowserSeed("S-F03-02-BROWSER-070");
+defineBrowserSeed("S-F03-02-BROWSER-071");
+defineBrowserSeed("S-F03-02-BROWSER-072");
+defineBrowserSeed("S-F03-02-BROWSER-074");
+defineBrowserSeed("S-F03-02-BROWSER-080");
+defineBrowserSeed("S-F03-02-BROWSER-083");
+defineBrowserSeed("S-F03-02-BROWSER-084");
+defineBrowserSeed("S-F03-02-BROWSER-085");
+defineBrowserSeed("S-F03-02-BROWSER-088");
+defineBrowserSeed("S-F03-02-BROWSER-089");
+defineBrowserSeed("S-F03-02-BROWSER-091");
+defineBrowserSeed("S-F03-02-BROWSER-093");
+defineBrowserSeed("S-F03-02-BROWSER-094");
+defineBrowserSeed("S-F03-02-BROWSER-095");
+defineBrowserSeed("S-F03-02-BROWSER-012");
+defineBrowserSeed("S-F03-02-BROWSER-013");
+defineBrowserSeed("S-F03-02-BROWSER-015");
+defineBrowserSeed("S-F03-02-BROWSER-113");
+defineBrowserSeed("S-F03-02-BROWSER-114");
+defineBrowserSeed("S-F03-02-BROWSER-119");
+defineBrowserSeed("S-F03-02-BROWSER-120");
+defineBrowserSeed("S-F03-02-CBBROWSER-128");
+defineBrowserSeed("S-F03-02-CBBROWSER-137");
+defineBrowserSeed("S-F03-02-CBBROWSER-138");
+defineBrowserSeed("S-F03-02-CBBROWSER-139");
+defineBrowserSeed("S-F03-02-CBBROWSER-140");
+defineBrowserSeed("S-F03-02-CBBROWSER-141");
+defineBrowserSeed("S-F03-02-CBBROWSER-142");

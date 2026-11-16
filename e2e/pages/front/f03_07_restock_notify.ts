@@ -9,6 +9,24 @@ import { BASE_URL } from "../../config/env";
 /** 本店の公開側のアドレスの先頭 */
 export const FRONT = `${BASE_URL}/ja`;
 
+/**
+ * 商品一覧（/products/search）の、検索サービス（ユニサーチ）の結果の描画が済むのを待つ。
+ * 一覧の商品カードは画面を開いたあとに JavaScript で検索サービスへ問い合わせて描くので、開いた直後に数えると 0 件になる
+ * （2026-11-13 開発環境の IT-F03-07-012: 「商品数: 1点」なのにカードを読み込み中のうちに数え、シードが30分待ち続けて時間切れ）。
+ * 読み込み中の印・仮の表示のカードが無くなり、結果の領域に中身（カード・0件の案内など）が入るまで待つ（pages/front/f03_01_product_list.ts の 結果を待つ と同じ）。
+ */
+export async function 一覧の描画を待つ(page: Page, timeout = 90_000): Promise<void> {
+  await page.waitForLoadState("load");
+  await expect.poll(() => page.evaluate(() => {
+    const s = document.querySelector("#product-list-unisearch-shelf");
+    if (!s) return true;
+    if (s.querySelector(".product-list-unisearch-loading")) return false;
+    if (s.querySelector(".p-hareruya-product-card--unisearch-temp")) return false;
+    return s.children.length > 0;
+  }), { message: "商品一覧の検索サービスの結果（商品カード）が描き終わる", timeout }).toBe(true);
+  await page.waitForTimeout(500);
+}
+
 export type 押した結果 = {
   /** 画面右下の通知（入荷通知の完了・取消の知らせ）が出たか */
   通知が出た: boolean;
@@ -31,7 +49,7 @@ export class FrontRestock {
     const form = this.page.locator("form#login_mypage");
     await form.locator('input[name="login_email"]').fill(mail);
     await form.locator('input[name="login_pass"]').fill(password);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), form.locator('button[type="submit"]').click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), form.locator('button[type="submit"]').click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     expect(new URL(this.page.url()).pathname, `会員ログイン（${mail}）後の画面がログイン画面のまま`).not.toMatch(/\/mypage\/login/);
   }
@@ -122,6 +140,17 @@ export class FrontRestock {
     }
   }
 
+  /**
+   * 画面右下の通知が自動で消える時計（出てから5秒で消す。アプリの default_frame.twig の通知の表示）を止める。通知の中身・表示は変えない。
+   * 期待結果の画像に、出た通知を写すため（2026-11-13 の IT-F03-07-007 は、撮る前に通知が消えていた）。通知が出たあとに呼ぶ。
+   */
+  async 通知が自動で消えるのを止める(): Promise<void> {
+    await this.page.evaluate(() => {
+      const w = window as unknown as { _hareruyaAppCartPopupTimer?: number };
+      if (w._hareruyaAppCartPopupTimer) window.clearTimeout(w._hareruyaAppCartPopupTimer);
+    });
+  }
+
   async 通知の文(): Promise<string> {
     return (((await this.通知.locator(".p-hareruya-cart-popup__message").textContent()) ?? "")).replace(/\s+/g, " ").trim();
   }
@@ -145,11 +174,11 @@ export class FrontRestock {
 
   // ---- 商品一覧 ----
 
-  /** 商品名で絞った商品一覧を開く */
+  /** 商品名で絞った商品一覧を開き、検索サービスの結果の商品カードが描き終わるまで待つ */
   async openList(productName: string): Promise<void> {
     const res = await this.page.goto(`${FRONT}/products/search?product=${encodeURIComponent(productName)}`);
     expect(res?.status() ?? 0, `商品一覧画面の応答（商品名「${productName}」で絞り込み）`).toBeLessThan(400);
-    await this.page.waitForLoadState("load");
+    await 一覧の描画を待つ(this.page);
   }
 
   listCard(productName: string): Locator {
@@ -159,6 +188,14 @@ export class FrontRestock {
   /** 商品一覧のカードの、商品言語単位／先頭規格の通知ボタン */
   listNotify(productName: string): Locator {
     return this.listCard(productName).locator(".js-product-list-notify");
+  }
+
+  /**
+   * 商品一覧のカードの、商品言語単位の通知ボタン（商品詳細の「まとめて入荷通知」#bulk_restock_notice と同じ単位。商品規格を持たない通知ボタン）。
+   * 一覧の .js-product-list-notify は data-productclass（商品規格ID）を持つ商品規格単位のボタン（Block/product.twig）なので数えない
+   */
+  listBulkNotify(productName: string): Locator {
+    return this.listCard(productName).locator("#bulk_restock_notice, .js-notifylist-bulk-restock, .js-product-list-notify:not([data-productclass])");
   }
 
   // ---- マイページ ----

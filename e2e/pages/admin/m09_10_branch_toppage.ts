@@ -9,8 +9,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { REPO_ROOT } from "../../config/env";
 import { adminUrl } from "../../lib/session";
-import { chooseByLabel, expectSaved } from "./common";
-import { ensureTenant } from "./tenant";
+import { chooseByLabel, expectSaved, topErrorAlerts } from "./common";
 
 /** 画像の入力ファイル（fixtures/m09-10。中身の作りは同じ場所の README.md） */
 const FIXTURES = join(REPO_ROOT, "e2e", "fixtures", "m09-10");
@@ -47,7 +46,7 @@ export class 支店トップページ管理 {
   /** なりすまし対策トークンの入力要素 */
   get トークン(): Locator { return this.page.locator('input[name="branch_toppage_management[_token]"]'); }
   get 成功の表示(): Locator { return this.page.locator(".alert-success"); }
-  get エラーの表示(): Locator { return this.page.locator(".alert-danger"); }
+  get エラーの表示(): Locator { return topErrorAlerts(this.page); } // 開発用の設定のときに常に出る帯は除く
   get 画面の見出し(): Locator { return this.page.locator(".c-pageTitle, .c-pageTitle__title").first(); }
   /** 編集欄（トップページ設定のカード）。項目が無いことを数えるときの範囲 */
   get 編集欄(): Locator { return this.page.locator("form#branch_toppage_management_form"); }
@@ -72,7 +71,7 @@ export class 支店トップページ管理 {
     const hit = options.filter((o) => o.label === 支店名);
     if (hit.length !== 1) throw new Error(`支店の選択に「${支店名}」が ${hit.length} 件ある（1件のはず）`);
     if ((await this.支店の選択.inputValue()) !== hit[0].value) {
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.支店の選択.selectOption(hit[0].value)]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), this.支店の選択.selectOption(hit[0].value)]);
     }
     await this.描画を待つ();
     await expect(this.支店の選択, `選んだ支店「${支店名}」`).toHaveValue(hit[0].value);
@@ -139,7 +138,7 @@ export class 支店トップページ管理 {
 
   /** 登録ボタンを押し、送信の結果の画面を待つ */
   async 登録ボタンを押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.登録ボタン.click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.登録ボタン.click({ timeout: 20_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -167,30 +166,6 @@ export async function 支店トップページを設定する(page: Page, v: ト
   await p.バナーリンクタグを選ぶ(v.バナーリンクタグ);
   for (let i = 0; i < v.タイル.length; i++) await p.タイルを入れる(i + 1, v.タイル[i]);
   await p.登録して保存を確かめる(`${what}: 支店トップページ管理の登録（${v.支店名}）`, onIssue);
-}
-
-// ---- 支店（店舗登録） ----
-
-const 略称 = (s: string): string => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; const L = "ABCDEFGHJKLMNPQRSTUVWXYZ"; return [h % 24, (h >>> 5) % 24, (h >>> 10) % 24].map((i) => L[i]).join(""); };
-
-/**
- * 店舗登録で支店（公開・開店）を登録して店舗IDを返す（あれば使う）。店名略称（3文字）はほかの店舗と重ならない値を選び直す。
- * 店名(英語表記)は半角英字とスペースだけの規則があるので、試験用の固定の英字にする。
- */
-export async function 支店を用意する(page: Page, 店名: string, 支店URL: string, onIssue: (m: string) => void): Promise<string> {
-  let last = "";
-  for (let salt = 0; salt < 6; salt++) {
-    try {
-      return await ensureTenant(page, {
-        店名, 店名カナ: "シケンシテン", 店名英語: "Branch Top Shop", 支店URL, 店名略称3文字: 略称(`${支店URL}${salt || ""}`), ショップ名略称: 店名,
-      }, onIssue);
-    } catch (e) {
-      last = (e as Error).message;
-      if (!/略称/.test(last)) throw e;
-      onIssue(`店名略称が重なって登録できなかったので、略称を変えて登録し直した（${last.split("\n")[0]}）`);
-    }
-  }
-  throw new Error(`店名略称を変えても支店「${店名}」を登録できない: ${last}`);
 }
 
 // ---- メンバーの編集可能店舗 ----

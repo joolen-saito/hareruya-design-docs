@@ -1,30 +1,32 @@
 /**
  * M13-04 繰返日程追加 のシード（画面操作）。正本: cases/M13-04_seed_data.tsv
- * - 管理者（S-M13-04-ADM）: 店舗A・店舗Bは M13-02/03 と同じ店名なので、あればそれを使う。m1304_admin は店舗Aだけに編集権限を持つ。
+ * - 管理者（S-M13-04-ADM）: 店舗A・店舗Bは、開発環境に同名の店舗が複数あって決められないので、M13-03 などと同じ決まった印の店舗（店舗A-E2E・店舗B-E2E。
+ *   pages/admin/m13_marked_shop.ts。無ければ1度だけ作る）に読み替える。m1304_admin（決まった印つき）は店舗Aだけに編集権限を持つ。
  *   権限は正本の「イベント管理を操作できる権限」の代わりに、M13-02 と同じ「店舗オーナー」にした。
  * - イベント: イベント登録画面から登録する。イベント名には実行の印を付ける（rc）。定員64・参加費3000・公開・クレジットカード決済が既定。
  * - 休日マスタ（EVENT-005）: 祝日管理に 2026/09/10 の試験用の祝日を足す。2026/09/09・2026/09/11 に祝日が無いことは確かめるだけ。
  */
 import { SETUP_ADMIN } from "../config/env";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { EventInput, registerEvent } from "../pages/admin/event";
-import { ensureMember } from "../pages/admin/member";
-import { ensureTenant } from "../pages/admin/tenant";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
+import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
 import { 試験用の祝日を足す, 祝日が無いことを確かめる } from "../pages/admin/m13_holiday_setup";
 
-export const M1304_ADMIN: Account = { loginId: "m1304_admin", password: "Passw0rd!M1304" };
+// 店舗を決まった名前にしたので、管理者も決まった印の名前・ログインIDで1度だけ作って使い回す（同名の店舗に所属した前の管理者とぶつけない）
+export const M1304_ADMIN: Account = { loginId: rcFixed("m1304_admin").toLowerCase(), password: "Passw0rd!M1304" };
 
 defineSeed("S-M13-04-ADM", async ({ browser, notes, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const issue = (m: string) => reportSeedIssue(seed.シードID, m);
     void notes;
-    await ensureTenant(page, { 店名: "店舗A", 店名カナ: "テンポエー", 店名英語: "Shop A", 支店URL: "m1302a", 店名略称3文字: "テA", ショップ名略称: "店舗A" }, issue);
-    await ensureTenant(page, { 店名: "店舗B", 店名カナ: "テンポビー", 店名英語: "Shop B", 支店URL: "m1302b", 店名略称3文字: "テB", ショップ名略称: "店舗B" }, issue);
+    await ensureMarkedTenant(page, "A", issue);
+    await ensureMarkedTenant(page, "B", issue);
     await ensureMember(page, {
-      名前: "M13-04試験管理者", 所属店舗: "店舗A", ログインID: M1304_ADMIN.loginId, メールアドレス: "m1304_admin@example.test",
-      パスワード: M1304_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A"],
+      名前: rcFixed("M13-04試験管理者"), 所属店舗: 印店名.A, ログインID: M1304_ADMIN.loginId, メールアドレス: `${M1304_ADMIN.loginId}@example.test`,
+      パスワード: M1304_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A],
     });
   });
 });
@@ -32,7 +34,7 @@ defineSeed("S-M13-04-ADM", async ({ browser, notes, seed }) => {
 const クレカ = ["クレジットカード決済"];
 function イベント(名前: string, over: EventInput = {}): EventInput {
   return {
-    イベント名日: rc(名前), イベント名英: `${rc(名前)} EN`, 店舗: "店舗A", フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎",
+    イベント名日: rc(名前), イベント名英: `${rc(名前)} EN`, 店舗: 印店名.A, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎",
     公開状態: "公開", 定員: "64", 参加費: "3000", 支払方法: クレジットカード(), ...over,
   };
 }

@@ -63,12 +63,16 @@ let 連番 = 0;
 export function 注文を足す(基の受注ID: string, v: 注文の定義): string {
   if (v.明細.length === 0) throw new Error("明細が1件も無い注文は作らない");
   const 注文番号 = `F5${(Date.now() % 2176782336).toString(36)}${(連番++).toString(36)}`;
-  const base = 受注の確かめ(基の受注ID);
-  const oc = 列("dtb_order", ["id", "pre_order_id", "order_number"]);
+  // メールの列を先頭に置き、確かめの行にもメールをそのままの値で出す（書き込みの窓口は、足す行の列を前から見て、確かめの行の値に当たる
+  // 最初の列を親の列とする）。以前は確かめの行が基の受注ID・大文字のメールだけで、足す行のどの列も当たらず「足す行の親の列が…見つからない」
+  // で止まるはずだった（M05-01 の 受注を複製する・会員を複製する と同じ型。2026-11-13 に見つけて直す）
+  const oc = ["email", ...列("dtb_order", ["id", "pre_order_id", "order_number", "email"])];
   writeTestData({
     理由: "基の受注を写して受注を足す",
     sql: `insert into dtb_order (${oc.join(", ")}, order_number) select ${oc.map((c) => `s.${c}`).join(", ")}, $2::text from dtb_order s where s.id = $1::int`,
-    params: [基の受注ID, 注文番号], ...base, 最大行数: 1,
+    params: [基の受注ID, 注文番号],
+    対象の確かめ: `select o.email as メール, o.id as 受注ID, upper(o.email) as 印の確かめ from dtb_order o where o.id = $1::int and upper(o.email) like $2`,
+    確かめのparams: [基の受注ID, `%${印}%`], 印, 最大行数: 1,
   });
   const found = query(`select id from dtb_order where order_number = $1 and deleted_at is null order by id desc limit 1`, [注文番号]);
   if (found.length === 0) throw new Error(`写した受注（注文番号 ${注文番号}）が見つからない`);
@@ -87,15 +91,21 @@ export function 注文を足す(基の受注ID: string, v: 注文の定義): str
     印, 最大行数: 1,
   });
 
+  // 足す明細の持ち主の確かめ: いま写して足した受注（足す行の受注の列が当たる）で、基の受注と同じ印つきのメールの注文であること
+  const 写し = {
+    対象の確かめ: `select n.id as 受注ID, upper(n.email) as メール from dtb_order n join dtb_order b on b.id = $2::int and b.email = n.email
+                    where n.id = $1::int and upper(n.email) like $3`,
+    確かめのparams: [新, 基の受注ID, `%${印}%`], 印,
+  };
   const ic = 列("dtb_order_item", ["id", "order_id", "shipping_id", "product_id", "product_class_id", "product_name", "product_code", "price", "quantity"]);
   for (const m of v.明細) {
     writeTestData({
       理由: "基の受注の明細を写して、商品・単価・数量を設定する",
-      sql: `insert into dtb_order_item (${ic.join(", ")}, order_id, shipping_id, product_id, product_class_id, product_name, product_code, price, quantity)
-              select ${ic.map((c) => `s.${c}`).join(", ")}, $2::int, null, $3::int, $4::int, $5::text, $6::text, $7::numeric, $8::numeric
+      sql: `insert into dtb_order_item (order_id, ${ic.join(", ")}, shipping_id, product_id, product_class_id, product_name, product_code, price, quantity)
+              select $2::int, ${ic.map((c) => `s.${c}`).join(", ")}, null, $3::int, $4::int, $5::text, $6::text, $7::numeric, $8::numeric
               from dtb_order_item s
               where s.id = (select min(x.id) from dtb_order_item x where x.order_id = $1::int and x.product_id is not null)`,
-      params: [基の受注ID, 新, m.商品ID, m.規格ID, m.商品名, m.商品コード, m.単価, m.数量], ...base, 最大行数: 1,
+      params: [基の受注ID, 新, m.商品ID, m.規格ID, m.商品名, m.商品コード, m.単価, m.数量], ...写し, 最大行数: 1,
     });
   }
   return 新;

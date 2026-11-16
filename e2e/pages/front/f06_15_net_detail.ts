@@ -24,7 +24,7 @@ export const 数値 = (s: string): string => (/\d/.test(s) ? s.replace(/[^\d]/g,
 export const 買取番号の表示 = (番号: string): string => String(Number(番号)).padStart(7, "0");
 
 export type 明細の値 = {
-  商品名: string; リンク: boolean; 言語: string; 状態: string; 申込時買取価格: string; 査定価格: string; 数量: string; 小計: string;
+  商品名: string; リンク: boolean; リンク先: string; 区分: string; 言語: string; 状態: string; 申込時買取価格: string; 査定価格: string; 数量: string; 小計: string;
   売却の選択がある: boolean; 売却: string; 売却を変更できる: boolean;
 };
 
@@ -66,7 +66,7 @@ export class NetDetailPage {
     const link = this.一覧の番号リンク(表示).first();
     await link.waitFor({ state: "visible", timeout: T });
     await link.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    await Promise.all([this.page.waitForURL(/\/mypage\/purchase_history\/(net|otc)\/\d+/, { timeout: 60_000 }), link.click({ timeout: T })]);
+    await Promise.all([this.page.waitForURL(/\/mypage\/purchase_history\/(net|otc)\/\d+/, { timeout: 60_000 }), link.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 買取履歴一覧を開き、買取番号のリンクを押して詳細を開く */
@@ -106,7 +106,7 @@ export class NetDetailPage {
   async 承諾する(): Promise<void> {
     const b = this.承諾ボタン.first();
     await b.waitFor({ state: "visible", timeout: T });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), b.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), b.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -130,6 +130,10 @@ export class NetDetailPage {
   明細の行(商品名: string): Locator {
     return this.page.locator(".p-hareruya-purchase-list__row").filter({ has: this.page.locator(".p-hareruya-purchase-list__name-text", { hasText: new RegExp(`^\\s*${商品名.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`) }) }).first();
   }
+  /** 商品名を含む明細の行すべて（画面の要素。赤枠を付けて確かめるために使う） */
+  明細の行の全部(商品名: string): Locator {
+    return this.page.locator(".p-hareruya-purchase-list__row").filter({ has: this.page.locator(".p-hareruya-purchase-list__name-text", { hasText: 商品名 }) });
+  }
   async 明細の数(商品名: string): Promise<number> {
     return this.page.locator(".p-hareruya-purchase-list__row").filter({ has: this.page.locator(".p-hareruya-purchase-list__name-text", { hasText: 商品名 }) }).count();
   }
@@ -143,6 +147,8 @@ export class NetDetailPage {
       return {
         商品名: t(".p-hareruya-purchase-list__name-text"),
         リンク: !!r.querySelector("a.p-hareruya-purchase-list__link"),
+        リンク先: r.querySelector("a.p-hareruya-purchase-list__link")?.getAttribute("href") ?? "",
+        区分: r.closest(".p-hareruya-purchase-list__item--select") ? "えらんで買取" : r.closest("#matomete_list") ? "まとめて買取" : "どちらの区分にも無い",
         言語: t(".p-hareruya-purchase-list__col-language .p-hareruya-purchase-list__value"),
         状態: t(".p-hareruya-purchase-list__col-condition .p-hareruya-purchase-list__value"),
         申込時買取価格: t(".p-hareruya-purchase-list__col-original-price .p-hareruya-purchase-list__value"),
@@ -241,7 +247,7 @@ export class NetDetailPage {
     const b = this.page.locator(".p-hareruya-history-detail__btn a").first();
     await b.waitFor({ state: "visible", timeout: T });
     await b.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), b.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), b.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   async 再読み込みする(): Promise<void> {

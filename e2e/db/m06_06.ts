@@ -25,11 +25,14 @@ export function 買取明細の件数(査定ID: string): number {
                     join dtb_otc_buy_order o on o.id = d.otc_buy_order_id where o.assessment_id = $1`, [査定ID]));
 }
 
-/** 商品コードの商品の在庫数量（商品規格は1件のはず） */
+/**
+ * 商品コードの商品の在庫数量（商品規格は1件のはず）。開発環境は、商品規格ごとに在庫の行が店舗・在庫場所の数だけある（印つきの商品は本店・EC在庫以外は0）ので、合計で数える。
+ */
 export function 在庫数量(商品コード: string): number {
-  const r = query(`select ps.stock as n from dtb_product_stock ps join dtb_product_class pc on pc.id = ps.product_class_id
-                    where pc.product_code = $1`, [商品コード]);
-  if (r.length !== 1) throw new Error(`商品コード ${商品コード} の在庫の行が ${r.length} 件（1件のはず）`);
+  const c = query("select id from dtb_product_class where product_code = $1", [商品コード]);
+  if (c.length !== 1) throw new Error(`商品コード ${商品コード} の商品規格が ${c.length} 件（1件のはず）`);
+  const r = query(`select coalesce(sum(ps.stock), 0) as n, count(*) as k from dtb_product_stock ps where ps.product_class_id = $1::int`, [String(Number(c[0].id))]);
+  if (Number(r[0].k) === 0) throw new Error(`商品コード ${商品コード} の在庫の行が無い`);
   return Number(r[0].n);
 }
 
@@ -39,7 +42,8 @@ export function 在庫数量を設定する(商品コード: string, 数量: num
   if (c.length !== 1) throw new Error(`商品コード ${商品コード} の商品規格が ${c.length} 件（1件のはず）`);
   const n = writeTestData({
     理由: `商品 ${商品コード} の在庫数量を ${数量} にする`,
-    sql: "update dtb_product_stock set stock = $2::int where product_class_id = $1::int",
+    // 在庫の行は店舗・在庫場所ごとにある。商品の在庫数量は、本店・EC在庫の行（実在庫履歴の変更後数量が入る行）に設定する
+    sql: "update dtb_product_stock set stock = $2::int where id = (select ps.id from dtb_product_stock ps where ps.product_class_id = $1::int and ps.base_info_id = 1 and ps.stock_location_id = 1 order by ps.id limit 1)",
     params: [String(Number(c[0].id)), 数量],
     対象の確かめ: "select pc.id, pc.product_code from dtb_product_class pc where pc.id = $1::int", 確かめのparams: [String(Number(c[0].id))],
     印: RUN_MARK, 最大行数: 1,

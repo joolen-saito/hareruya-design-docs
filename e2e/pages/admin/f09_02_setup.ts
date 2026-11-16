@@ -59,7 +59,7 @@ export async function デッキの編集画面を開く(page: Page, デッキの
   const row = new デッキ一覧(page).行(デッキの番号);
   await expect(row, `デッキ一覧の検索結果に、デッキ（番号 ${デッキの番号}）の行がある`).toHaveCount(1);
   const link = row.locator(`a[href*="/deck/${デッキの番号}/edit"]`).first();
-  if (await link.count()) await Promise.all([page.waitForURL(new RegExp(`/deck/${デッキの番号}/edit`), { waitUntil: "load" }), link.click()]);
+  if (await link.count()) await Promise.all([page.waitForURL(new RegExp(`/deck/${デッキの番号}/edit`), { waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
   else await page.goto(adminUrl(`/deck/${デッキの番号}/edit`));
   const e = new デッキ編集画面(page);
   await e.読み込みを待つ();

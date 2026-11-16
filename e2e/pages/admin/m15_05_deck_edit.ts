@@ -10,7 +10,7 @@
  */
 import { expect, Locator, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { chooseByLabel, expectSaved } from "./common";
+import { chooseByLabel, expectSaved, withoutEnvBanners } from "./common";
 import { デッキ一覧 } from "./m15_deck";
 import { buildCardCsv, CardListPage, downloadCardCsvTemplate, uploadCardCsv } from "./card_csv";
 import { findFormatId } from "./m12_09_used_card";
@@ -132,7 +132,7 @@ export class デッキ編集画面 {
   private async 帯(sel: string): Promise<string[]> {
     const out: string[] = [];
     for (const e of await this.page.locator(sel).all()) if (await e.isVisible()) out.push((await e.innerText()).replace(/\s+/g, " ").trim());
-    return out;
+    return withoutEnvBanners(out); // 開発用の設定のときに常に出る赤い帯は、エラーの帯に数えない
   }
 
   async フォーマットを選ぶ(名: string): Promise<void> { await chooseByLabel(this.フォーマット, 名); }
@@ -287,14 +287,14 @@ export class デッキ編集画面 {
 
   /** 送信ボタン（新規登録・更新）を押して、次の画面の読み込みを待つ */
   async 送信する(button: Locator): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), button.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), button.click({ noWaitAfter: true })]);
   }
 
   /** 「削除」を押し、確認ダイアログで OK（または キャンセル）を押す。ダイアログの文を返す */
   async 削除する(ok = true): Promise<string> {
     let 文 = "";
     this.page.once("dialog", (d) => { 文 = d.message(); void (ok ? d.accept() : d.dismiss()); });
-    if (ok) await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.削除ボタン.click()]);
+    if (ok) await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.削除ボタン.click({ noWaitAfter: true })]);
     else { await this.削除ボタン.click(); await expect.poll(() => 文, "確認ダイアログが出る").not.toBe(""); }
     return 文;
   }
@@ -374,7 +374,7 @@ export function デッキ情報のリンク(page: Page, デッキ名: string): L
 export async function デッキ情報を開く(page: Page, デッキ名: string): Promise<デッキ編集画面> {
   const link = デッキ情報のリンク(page, デッキ名);
   await expect(link, `検索結果に「${デッキ名}」の行がある`).toHaveCount(1);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
   const e = new デッキ編集画面(page);
   await e.読み込みを待つ();
   return e;
@@ -383,7 +383,7 @@ export async function デッキ情報を開く(page: Page, デッキ名: string)
 /** デッキ一覧の「新規登録」を押してデッキ新規登録画面を開く */
 export async function 新規登録画面を開く(page: Page, l?: デッキ一覧): Promise<デッキ編集画面> {
   const list = l ?? new デッキ一覧(page);
-  await Promise.all([page.waitForURL(/\/deck\/new$/, { waitUntil: "load" }), list.新規登録.click()]);
+  await Promise.all([page.waitForURL(/\/deck\/new$/, { waitUntil: "load", timeout: 120_000 }), list.新規登録.click({ noWaitAfter: true })]);
   const e = new デッキ編集画面(page);
   await e.読み込みを待つ();
   return e;
@@ -485,7 +485,7 @@ export async function アーキタイプを検索する(page: Page, 語: string)
   await page.goto(adminUrl("/archetype"));
   await page.waitForLoadState("load");
   await page.locator('[name="admin_search_archetype[multi]"]').fill(語);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('form button[type="submit"]').filter({ hasText: /検索する/ }).first().click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('form button[type="submit"]').filter({ hasText: /検索する/ }).first().click({ noWaitAfter: true })]);
   return アーキタイプ検索の結果(page);
 }
 export async function アーキタイプ検索の結果(page: Page): Promise<{ ID: string; 名日: string; 登録デッキ数: string }[]> {

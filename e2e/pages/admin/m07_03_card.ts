@@ -54,7 +54,7 @@ export async function カード商品にする(page: Page, 商品ID: string, 商
 
   await Promise.all([
     page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }).catch(() => null),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click({ timeout: OPEN }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click({ timeout: OPEN, noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `商品 ${商品名} のカード指定`)) onIssue(w);
 }

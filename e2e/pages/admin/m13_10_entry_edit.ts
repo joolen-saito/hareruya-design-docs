@@ -5,8 +5,9 @@
  */
 import { Locator, Page, expect } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { chooseByLabel, expectSaved } from "./common";
+import { chooseByLabel, expectSaved, topErrorAlerts, withoutEnvBanners } from "./common";
 import { EntryNewPage } from "./m13_12_entry_new";
+import { reportCurrentSeedIssue } from "../../seeds/current_seed";
 
 const T = 30_000;
 const 整える = (s: string) => s.replace(/ /g, " ").replace(/\s+/g, " ").trim();
@@ -23,7 +24,7 @@ export class EntryEditPage extends EntryNewPage {
   /** 送るイベント申込ID（画面に見えない欄） */
   get 送るイベント申込ID(): Locator { return this.page.locator('[name="admin_event_entry_detail[eventEntryId]"]'); }
   get 成功のメッセージ(): Locator { return this.page.locator(".alert-success"); }
-  get 失敗のメッセージ(): Locator { return this.page.locator(".alert-danger"); }
+  get 失敗のメッセージ(): Locator { return topErrorAlerts(this.page); } // 開発用の設定のときに常に出る帯は除く
 
   // ---- 参加プレイヤーの行（n 行目。画面の作りは 1 行だけのことがある） ----
   async 行の数(): Promise<number> { return this.プレイヤーの行.count(); }
@@ -107,7 +108,7 @@ export class EntryEditPage extends EntryNewPage {
 
   /** 画面上部のメッセージ（成功・失敗）の文 */
   async メッセージ(): Promise<string[]> {
-    return (await this.page.locator(".alert-success, .alert-danger").allInnerTexts()).map(整える).filter(Boolean);
+    return withoutEnvBanners((await this.page.locator(".alert-success, .alert-danger").allInnerTexts()).map(整える).filter(Boolean));
   }
 }
 
@@ -116,7 +117,7 @@ export async function 会員IDを氏名から(page: Page, 氏名: string): Promi
   await page.goto(adminUrl("/customer"));
   await page.waitForLoadState("load");
   await page.locator('[name="admin_search_customer[multi]"]').fill(氏名);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   const ids: string[] = [];
   for (const r of await page.locator('tr[id^="ex-customer-"]').all()) {
@@ -132,9 +133,13 @@ export async function 会員IDを氏名から(page: Page, 氏名: string): Promi
  * 氏名が一致する行（1行のはず）のID欄のプレイヤーIDを読む。申込するなら、その行の決定を押して登録し、申込IDも返す。
  * 申込しないなら、決定を押さずに閉じるボタンで閉じ、登録を押さずに画面を離れる。
  */
-export async function プレイヤーIDを読んで申込する(page: Page, イベント名: string, 日程ID: string, 氏名: string, 申込する: boolean): Promise<{ プレイヤーID: string; 申込ID?: string }> {
+export async function プレイヤーIDを読んで申込する(page: Page, イベント名: string, 日程ID: string, 氏名: string, 申込する: boolean, 検索結果に出ない日程 = true): Promise<{ プレイヤーID: string; 申込ID?: string }> {
   const f = new EntryNewPage(page);
-  await f.検索結果から開く(イベント名, 日程ID);
+  if (検索結果に出ない日程) {
+    reportCurrentSeedIssue("日程はシード表の手順どおり（オンライン受付なし）に作ったため、イベント申込登録（検索結果）に出ない（設計書: オンライン受付ありの日程のみ検索対象）。新規申込登録画面は、日程IDのアドレスを直接開いて代えた");
+    await f.日程IDのアドレスから開く(日程ID);
+  }
+  else await f.検索結果から開く(イベント名, 日程ID);
   await f.ポップアップを開く();
   await f.プレイヤーを検索する(氏名);
   const rows = (await f.全ページの結果()).filter((r) => r.名前 === 氏名 || r.名前.startsWith(`${氏名} `));
@@ -166,5 +171,5 @@ export async function 何も変えずに登録する(page: Page, 申込ID: strin
 export async function 申込一覧の行から開く(page: Page, 申込ID: string): Promise<void> {
   const link = page.locator(`table:has(#check_all) a[href$="/event/entry/${申込ID}/edit"]`).first();
   if ((await link.count()) === 0) throw new Error(`イベント申込一覧の検索結果に、申込ID ${申込ID} の行が無い`);
-  await Promise.all([page.waitForURL(new RegExp(`/event/entry/${申込ID}/edit$`), { waitUntil: "load" }), link.click()]);
+  await Promise.all([page.waitForURL(new RegExp(`/event/entry/${申込ID}/edit$`), { waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
 }

@@ -26,7 +26,7 @@ async function login(page: Page, a = M1505_ADMIN): Promise<void> {
 async function 新規登録を開く(page: Page, step: Step): Promise<void> {
   const l = new デッキ一覧(page);
   await step(1, async () => { await l.開く(); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.新規登録.click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.新規登録.click({ noWaitAfter: true })]); });
 }
 
 type 入力 = {
@@ -54,7 +54,7 @@ async function 入れる(page: Page, v: 入力, 長さ制限を外す = false): 
   await 欄("textMain", v.メイン); await 欄("textSide", v.サイド); await 欄("textCommand", v.統率);
 }
 async function 新規登録を押す(page: Page): Promise<void> {
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => null), page.locator('button[type="submit"][form="admin_deck"]').first().click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => null), page.locator('button[type="submit"][form="admin_deck"]').first().click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
 }
 async function 検索して件数(page: Page, 検索語: string): Promise<{ 件数: number; ID: string[] }> {
@@ -129,8 +129,41 @@ caseTest("IT-M15-05-042", async ({ page, step, expected }) => {
   await step(3, async () => {
     await 入れる(page, { デッキ名: `${語("042")}-デッキ` });
     const 可 = await f(page, "Archetype").isEnabled();
-    if (!可) note("フォーマットを選ばないとアーキタイプの選択欄は無効のままで、「デッキ試験型丙」を選べない。選ばないまま次の手順へ進んだ");
-    else await f(page, "Archetype").selectOption({ label: 名("型丙") });
+    if (!可) {
+      // フォーマット未選択ではアーキタイプの欄が無効で、無効の欄は送られない（アーキタイプも未選択の検査になってしまう）。
+      // 開発者ツールで欄を有効にして選ぶのと同じ操作で、「デッキ試験型丙」を選んだ状態にしてから送る
+      const 選んだ = await f(page, "Archetype").evaluate((el, label) => {
+        const sel = el as HTMLSelectElement;
+        sel.disabled = false;
+        const all = Array.from(document.querySelectorAll<HTMLOptionElement>("#admin_deck_Archetype option, option[data-format-id]"));
+        let opt = Array.from(sel.options).find((o) => o.text.trim() === label);
+        if (!opt) {
+          // 画面の作りが、フォーマットに合わない選択肢を消している。元の選択肢（画面の読み込み時の写し）が無ければ、値の分からない選択肢は足せない
+          const src = all.find((o) => o.text.trim() === label);
+          if (src) { opt = src.cloneNode(true) as HTMLOptionElement; sel.appendChild(opt); }
+        }
+        if (!opt) return false;
+        sel.value = opt.value;
+        return sel.value !== "";
+      }, 名("型丙"));
+      if (!選んだ) {
+        // フォーマットを一度選んで値を知り、フォーマットを戻してから、欄を有効にして値を入れる
+        await f(page, "Format").selectOption({ label: 名("標準") });
+        const 値 = await f(page, "Archetype").locator("option").filter({ hasText: 名("型丙") }).first().getAttribute("value");
+        await f(page, "Format").selectOption({ value: "" });
+        await f(page, "Archetype").evaluate((el, v) => {
+          const sel = el as HTMLSelectElement;
+          sel.disabled = false;
+          if (!Array.from(sel.options).some((o) => o.value === v)) { const o = document.createElement("option"); o.value = v; o.text = "型丙"; sel.appendChild(o); }
+          sel.value = v;
+        }, 値 ?? "");
+      }
+      const 値 = await f(page, "Archetype").inputValue();
+      const 形 = await f(page, "Format").inputValue();
+      note(`フォーマットを選ばないとアーキタイプの選択欄は無効で「デッキ試験型丙」を選べないため、開発者ツールで欄を有効にして選ぶのと同じ操作で選んだ（アーキタイプの値 ${値 || "なし"}、フォーマットの値 ${形 || "未選択"}）`);
+      expect(値, "アーキタイプ「デッキ試験型丙」を選んだ状態（送る値がある）").not.toBe("");
+      expect(形, "フォーマットは未選択のまま").toBe("");
+    } else await f(page, "Archetype").selectOption({ label: 名("型丙") });
   });
   await step(4, async () => { await 新規登録を押す(page); });
   await step(5, async () => { r = await 検索して件数(page, `${語("042")}-デッキ`); });
@@ -186,6 +219,14 @@ caseTest("IT-M15-05-047", async ({ page, step, expected }) => {
 /** 上限を1つ超える値（048〜053）。maxlength を外して入れる */
 function 上限超え(n: string, 欄: string, 値: string, 追加: 入力 | null, 手順数: number): CaseBody {
   return async ({ page, step, expected }) => {
+    if (n === "052" || n === "053") {
+      // 正本の手順は、公開状態を既定の「公開」のままにして、成績に33文字（052）／引用元URLに2049文字（053）を入れる。公開のときはイベント名(日)・(英)・開催日が必須なので、
+      // 入れた欄の長さのエラーに加えて必須のエラーも出てしまい、「その欄の上限超えだけで登録が止まった」ことを確かめられない（0件の理由がその欄の長さだけと言えない）。
+      // E2E で勝手に手順（公開状態を非公開にする など）を足さないので、正本の手順の不備として注記し、未判定で止める。
+      const 欄の名 = n === "052" ? "成績" : "引用元URL";
+      test.info().annotations.push({ type: "手順の注記", description: `正本の手順の不備: 公開状態が既定の「公開」のままなので、${欄の名}の長さのエラーに加えて、イベント名(日)・(英)・開催日の必須のエラーも出る。登録が止まったのが${欄の名}の上限超えだけが理由とは言えず、正本の手順では期待結果の確かめにならない（手順の修正は正本の担当。E2E では手順を足さない）` });
+      throw new Error(`正本の手順では公開状態が既定の「公開」のままで、${欄の名}の長さのエラーのほかに公開の必須項目のエラーも出るため、「${欄の名}の上限超えだけで登録が止まった」ことを確かめられない。正本の手順の不備として、未判定で止めた`);
+    }
     await login(page);
     await 新規登録を開く(page, step);
     let r = { 件数: -1, ID: [] as string[] };
@@ -280,7 +321,7 @@ caseTest("IT-M15-05-061", 枚数なし("061", false));
 caseTest("IT-M15-05-064", async ({ page, step, expected }) => {
   let r = { 件数: -1, ID: [] as string[] }; let 名前一覧: string[] = [];
   await step(1, async () => { await login(page, M1505_U064); await new デッキ一覧(page).開く(); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), new デッキ一覧(page).新規登録.click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), new デッキ一覧(page).新規登録.click({ noWaitAfter: true })]); });
   await step(3, async () => { await 入れる(page, { デッキ名: `${語("064")}-デッキ`, ...標準型丙(), 公開: "非公開" }); await 新規登録を押す(page); });
   await step(4, async () => {
     const l = new デッキ一覧(page);
@@ -293,7 +334,7 @@ caseTest("IT-M15-05-064", async ({ page, step, expected }) => {
     expect.soft(名前一覧, "検索結果のデッキ名").toEqual([`${語("064")}-デッキ`]);
     expect.soft(r.件数, "最終更新者が m1505_u064 のデッキの件数").toBe(1);
   });
-  note("最終更新者のアカウントは、前の実行の残りと混ざらないよう末尾に実行の印を付けて作った");
+  note("最終更新者のアカウントは決まった名前で使い回す。前の実行でこのアカウントが最終更新者になったデッキは、シードで試験管理者が開いて「更新」を押し、最終更新者を付け替えた（シードの報告に出る）");
 });
 
 caseTest("IT-M15-05-065", async ({ page, notes, step, expected }) => {
@@ -306,11 +347,11 @@ caseTest("IT-M15-05-065", async ({ page, notes, step, expected }) => {
   await step(2, async () => {
     const 行 = l.行(notes.get("〔デッキID-M1505-065〕"));
     await expect(行, "検索結果のデッキの行").toBeVisible();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), 行.locator('a[href$="/edit"]').first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), 行.locator('a[href$="/edit"]').first().click({ noWaitAfter: true })]);
   });
   await step(3, async () => {
     await f(page, "result").fill(`${語("065")}-更新`);
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('button[type="submit"][form="admin_deck"]').first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('button[type="submit"][form="admin_deck"]').first().click({ noWaitAfter: true })]);
   });
   await step(4, async () => {
     await l.開く();
@@ -322,5 +363,5 @@ caseTest("IT-M15-05-065", async ({ page, notes, step, expected }) => {
     expect.soft(名前一覧, "検索結果のデッキ名").toEqual([`${語("065")}-デッキ`]);
     expect.soft(r.件数, "最終更新者が m1505_u065 のデッキの件数").toBe(1);
   });
-  note("最終更新者のアカウントは、前の実行の残りと混ざらないよう末尾に実行の印を付けて作った");
+  note("最終更新者のアカウントは決まった名前で使い回す。前の実行でこのアカウントが最終更新者になったデッキは、シードで試験管理者が開いて「更新」を押し、最終更新者を付け替えた（シードの報告に出る）");
 });

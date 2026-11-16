@@ -111,7 +111,7 @@ export class DeckEntryCheckPage {
   /** リンクを押して次の画面の読み込みを待つ */
   async 押して遷移する(l: Locator): Promise<void> {
     await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 押しても画面が移らないかもしれない要素を押す。移ったら true */

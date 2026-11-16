@@ -2,7 +2,7 @@
 import { Browser, Page, test } from "@playwright/test";
 import { CaseBody, caseTest, expect } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
-import { 会員ポイント, 受注の全項目 } from "../../db/m05_11";
+import { 会員ポイント, 受注, 受注の全項目 } from "../../db/m05_11";
 import { OrderEditPage } from "../../pages/admin/m05_11_order_edit";
 import "../../seeds/m05-11-e";
 import { M0511_ADMIN_A, 店舗Aの店名 } from "../../seeds/m05-11";
@@ -18,22 +18,29 @@ async function 開く(browser: Browser, page: Page, no: string): Promise<OrderEd
 }
 
 /** 変更後のステータスを選んで「受注ステータスを変更」を押し、DBで会員ポイントを確かめる（期待は呼び出し側の関数） */
-function ステータスとポイント(n: string, 変更後: string, 期待: number | "増える", 押す: "ステータス変更" | "登録" = "ステータス変更"): CaseBody {
+function ステータスとポイント(n: string, 変更後: string, 期待: number | { 前: number; 発生: number }, 押す: "ステータス変更" | "登録" = "ステータス変更"): CaseBody {
   return async ({ page, browser, notes, step, expected }) => {
     await loginAdmin(page, M0511_ADMIN_A);
     let p!: OrderEditPage;
-    let pt = -1;
-    await step(1, async () => { p = await 開く(browser, page, notes.get(key(n))); });
+    let pt = -1, 前pt = -1, 前の発生 = -1;
+    await step(1, async () => {
+      p = await 開く(browser, page, notes.get(key(n)));
+      if (typeof 期待 !== "number") { 前pt = 会員ポイント(notes.get(key(n))); 前の発生 = Number(受注(notes.get(key(n))).発生ポイント ?? "-1"); }
+    });
     await step(2, async () => { 名称の注記(変更後); await p.ステータスを選ぶ(実名(変更後)); });
     await step(3, async () => { if (押す === "登録") await p.受注情報を登録する(onDialog); else await p.ステータスを変更する(onDialog); });
     await step(4, async () => { pt = 会員ポイント(notes.get(key(n))); });
     await expected(async () => {
-      if (期待 === "増える") expect.soft(pt, "出荷完了のあとの会員ポイント（操作前は1000。発生ポイントが付与されて増える）").toBeGreaterThan(1000);
-      else expect.soft(pt, `会員ポイント（${期待}）`).toBe(期待);
+      if (typeof 期待 !== "number") {
+        // 発生ポイントがちょうど1回分付与されたこと（少しだけ増える・二重に付与されるのを合格にしない）
+        expect.soft(前pt, `操作前の会員ポイント（前提: ${期待.前}）`).toBe(期待.前);
+        expect.soft(前の発生, `受注の発生ポイント（前提: ${期待.発生}）`).toBe(期待.発生);
+        expect.soft(pt, `${変更後}のあとの会員ポイント（${期待.前}に発生ポイント${期待.発生}が付与されて${期待.前 + 期待.発生}）`).toBe(期待.前 + 期待.発生);
+      } else expect.soft(pt, `会員ポイント（${期待}）`).toBe(期待);
     });
   };
 }
-caseTest("IT-M05-11-019", ステータスとポイント("019", "出荷完了", "増える"));
+caseTest("IT-M05-11-019", ステータスとポイント("019", "出荷完了", { 前: 1000, 発生: 50 }));
 caseTest("IT-M05-11-127", ステータスとポイント("127", "引き渡し済み", 1050));
 caseTest("IT-M05-11-128", ステータスとポイント("128", "引き渡し済み", 1050));
 caseTest("IT-M05-11-210", ステータスとポイント("210", "出荷完了", 1050));

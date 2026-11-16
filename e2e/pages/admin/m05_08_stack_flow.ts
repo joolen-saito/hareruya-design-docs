@@ -46,6 +46,8 @@ export class OrderListStackFlow {
   async 開いて検索する(注文者名: string): Promise<void> {
     const p = new OrderSearchPage(this.page);
     await p.open();
+    // 「お名前」の欄は詳細検索の折りたたみの中にある（開いていなければ開く）
+    await p.showDetail();
     await p.name.fill(注文者名);
     await p.clickSearch();
   }

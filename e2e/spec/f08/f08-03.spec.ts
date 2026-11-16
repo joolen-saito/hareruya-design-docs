@@ -148,11 +148,15 @@ caseTest("IT-F08-03-005", async (c) => {
   await c.step(1, async () => { await 未ログインで入力画面へ(a); });
   await c.step(2, async () => { await 入力して会員登録フォームへ(a, 日本語の入力(申込みの印("005")), 結合太郎); });
   await c.step(3, async () => { await i.会員登録の値を入れる(登録済みメール, F0803_PASSWORD, false); });
+  let 誤り: string[] = [];
   await c.step(4, async () => {
     await i.会員登録の値を入れる(登録済みメール, F0803_PASSWORD, true);
     await i.会員登録ありで進むを押す();
+    誤り = await i.会員登録フォームの誤り();
   });
   await c.expected(async () => {
+    // 押しても何も起きずに同じフォームが出ているだけのときに合格にしないため、押したあとに入力の誤りが表示されたことも確かめる
+    expect.soft(誤り.length, `「次のページへ進む」を押したあと、会員登録フォームに入力の誤りが表示される（表示: ${誤り.join(" / ") || "なし"}）`).toBeGreaterThan(0);
     await expect.soft(i.会員登録フォーム(), "会員登録フォームの再表示").toBeVisible();
     await expect.soft(a.確認の枠("お名前"), "店頭買取査定申込確認画面のお名前の項目の数（確認画面へ移っていない）").toHaveCount(0);
   });

@@ -29,11 +29,13 @@
 import { Browser, Page } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { rc, RUN_MARK } from "../lib/run_marker";
+import { registerRestore } from "../lib/shared_restore";
 import { reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { カードセットを登録する, グッズ商品を登録する, グッズ商品, 作ったグッズ, 在庫を増減して承認する } from "../pages/admin/f02_01_setup";
-import { ensureBranch, 支店の入力 } from "../pages/admin/f02_03_store";
+import { findTenantId } from "../pages/admin/tenant_k";
+import { 店舗の実際を読む, 読み替えの文 } from "../lib/store_pick";
 import { カート用商品を作る } from "../pages/admin/f02_03_cart_setup";
 import { ShopBasicPage } from "../pages/admin/m10_01_shop";
 import { CategoryPage, CategoryCsvRow } from "../pages/admin/category";
@@ -82,11 +84,8 @@ export function カートに入れた商品(n: string): 作ったグッズ[] {
   return v;
 }
 
-export const 支店CB078: 支店の入力 = {
-  店名: "試験支店F0201-CB078-A", 店名カナ: "シケンシテンエフゼロニゼロイチ", 店名英語: "Test Branch Suggest", 支店URL: "f0201cb078", 店名略称3文字: "F1A", ショップ名略称: "試験支店F0201",
-  郵便番号: "100-0001", 都道府県: "東京都", 住所1: "千代田区試験", 住所2: "1-1", 電話番号: "03-0000-0201",
-  地図URL: "https://replace-dev.hareruyamtg.com:8443/maps/f0201-cb078",
-};
+/** 078 の支店。店舗は作らない（依頼者 2026-11-15）。公開・開店の支店なら足りるので、使い回す店舗の表の 店舗ID 4973 を使う */
+export const 支店CB078 = { id: "4973", get 店名(): string { return 店舗の実際を読む("4973").店名; }, get 支店URL(): string { return 店舗の実際を読む("4973").支店URL; } };
 
 // ---------------------------------------------------------------------------
 // 部品
@@ -271,7 +270,9 @@ export const カートの商品名 = (正本の名前: string) => rc(正本の�
 defineSeed("S-F02-01-CBBRANCH-078", async ({ browser, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    await ensureBranch(page, 支店CB078, (m) => reportSeedIssue(seed.シードID, m));
+    const id = await findTenantId(page, 支店CB078.店名);
+    if (id !== 支店CB078.id) throw new Error(`支店（店舗ID ${支店CB078.id}）が店舗一覧に無い`);
+    reportSeedIssue(seed.シードID, 読み替えの文("試験支店F0201-CB078-A", { id, 店名: 支店CB078.店名 }, "公開・開店の支店"));
   });
   await フロントで(browser, async (page) => {
     const res = await page.goto(`${BASE_URL}/ja/${支店CB078.支店URL}/`);
@@ -302,19 +303,34 @@ defineSeed("S-F02-01-CART-028", async (c) => {
   await カートを作る(c, "028", "送料無料確認会員", [{ 商品名: "送料無料商品-028", 商品コード: "CART-F0201-028-A", 価格: "10000", 在庫: 5, 数量: 1 }]);
 });
 
-// ---- 送料無料条件（共有の設定）。書き換えず、いまの値を読んで、シード表の前提（10,000円）と違えば止める ----
+// ---- 送料無料条件（共有の設定）。シード表どおり、いまの値を控えて10,000円にし、ケースの終わりに控えた値へ戻して確かめる ----
 defineSeed("S-F02-01-SHOP-CONFIG", async ({ browser, seed }) => {
-  const 値 = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+  const 読む = () => withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     const shop = new ShopBasicPage(page);
     await shop.open();
     return shop.値("送料無料条件(金額)");
   });
-  const 数 = Number(値.replace(/[,，\s]/g, ""));
-  if (数 !== 10000) {
-    throw new Error(`${seed.シードID}: 本店の送料無料条件（金額）がいま「${値}」で、シード表の前提の10,000円と違う。共有の設定は書き換えないので止める`);
+  const 書く = (値: string, what: string) => withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const shop = new ShopBasicPage(page);
+    await shop.入れて保存する(what, async () => { await shop.入れる("送料無料条件(金額)", 値); });
+  });
+  const 元 = await 読む();
+  const 数 = Number(元.replace(/[,，\s]/g, ""));
+  if (数 === 10000) {
+    reportSeedIssue(seed.シードID, "シード作成時の問題（読み替え）: 送料無料条件（金額）は共有の設定。いまの値が10,000円だったので書き換えなかった");
+    return;
   }
-  reportSeedIssue(seed.シードID, "シード作成時の問題（読み替え）: 送料無料条件（金額）は共有の設定なので書き換えず、いまの値が10,000円であることを管理画面で確かめた（違えば止める）。戻す操作も行わない");
+  // 書き換える前に、元の値を控えて戻す処理を登録する（途中で落ちても、ケースの終わりに戻る）
+  registerRestore(
+    "本店の送料無料条件（金額）",
+    { 金額: 元 },
+    async () => { await 書く(元, "本店の送料無料条件（金額）を元の値へ戻す"); },
+    async () => (await 読む()) === 元,
+  );
+  await 書く("10000", "本店の送料無料条件（金額）を10,000円にする");
+  reportSeedIssue(seed.シードID, `シード作成時の問題（読み替え）: 送料無料条件（金額）は共有の設定。シード表どおり、いまの値「${元}」を控えて10,000円にした（ケースの終わりに控えた値へ戻して確かめる）`);
 });
 
 // ---- カード商品のカート（072・073）。カード指定のある商品をグッズ商品CSV＋カード指定で作る（F02-03 の部品） ----

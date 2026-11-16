@@ -81,6 +81,22 @@ export async function カードセットを登録する(page: Page, v: { 名: st
   return m[1];
 }
 
+/**
+ * カードセット管理の編集画面を開き、特殊セットフラグを指定の状態にして登録ボタンを押す。保存できたことを確かめ、
+ * 保存後の画面の特殊セットフラグの状態を返す。
+ */
+export async function カードセットの特殊セットフラグを変える(page: Page, カードセットID: string, 特殊: boolean): Promise<boolean> {
+  const res = await page.goto(adminUrl(`/cardset/${カードセットID}/edit`));
+  if (!res || !res.ok()) throw new Error(`カードセット（番号 ${カードセットID}）の編集画面を開けない（応答 ${res?.status() ?? "なし"}）`);
+  await page.waitForLoadState("load");
+  const flg = page.locator('[name="admin_cardset[specialFlg]"]');
+  await flg.setChecked(特殊);
+  await page.getByRole("button", { name: "登録", exact: true }).click();
+  await expectSaved(page, `カードセット（番号 ${カードセットID}）の特殊セットフラグの変更`);
+  await page.waitForLoadState("load");
+  return flg.isChecked();
+}
+
 // ---------------------------------------------------------------------------
 // カード
 // ---------------------------------------------------------------------------

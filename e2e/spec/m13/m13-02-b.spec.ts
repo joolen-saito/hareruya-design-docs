@@ -3,6 +3,7 @@
  * ケースの正本: integration_test/casegen/cases/M13-02_test_cases.tsv（手順・期待結果の文は正本から引く）
  */
 import { test } from "@playwright/test";
+import { 印店名 } from "../../pages/admin/m13_marked_shop";
 import { expect, CaseBody, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { openEventCreate, openEventEdit, EventForm } from "../../pages/admin/event";
@@ -19,6 +20,14 @@ async function softly(what: string, fn: () => Promise<void>): Promise<void> {
 const あ = (n: number) => "あ".repeat(n);
 const 必ずある = (e: 保存イベント | null, id: string): 保存イベント => { if (!e) throw new Error(`イベントID ${id} がDBに無い`); return e; };
 const 行末をそろえる = (v: string) => v.replace(/\r\n/g, "\n");
+type 送信の結果 = Awaited<ReturnType<EventForm["送信して待つ"]>>;
+/** 送信が送られ、応答の画面まで移ったこと（保存されたことを DB で見る前に、保存の処理が終わっていること） */
+const 送られた = (r: 送信の結果): void => { expect(r.応答, "登録・更新の送信が送られた（送信の応答がある）").not.toBeNull(); };
+/** 「登録・更新されない」の確かめの前に、送信が送られたか、ブラウザの入力チェックで止まったこと（何も起きずに「変わらない」では確かめにならない） */
+const 送られたか止まった = (r: 送信の結果): void => {
+  note(r.応答 !== null ? `送信の応答 ${r.応答}` : `ブラウザの入力チェックで送信が止まった（${r.入力チェックで止まった.join("・")}）`);
+  expect(r.応答 !== null || r.入力チェックで止まった.length > 0, "送信が送られたか、ブラウザの入力チェックで止まった").toBe(true);
+};
 
 caseTest("IT-M13-02-005", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1302_ADMIN);
@@ -34,6 +43,8 @@ caseTest("IT-M13-02-005", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     for (const h of ["イベント規模", "チーム戦フラグ", "フリー入力エリア1", "フリー入力エリア2", "フリー入力エリア3"]) expect.soft(使える[h], `${h}が使用できる`).toBe(true);
     for (const h of ["備考(日)", "備考(英)", "チーム人数"]) expect.soft(使える[h], `${h}が使用できない`).toBe(false);
+    // 支払方法の選択肢を読めていることを見てから、コンビニ決済が無いことを確かめる
+    expect.soft(支払方法, "支払方法の選択肢を読めている（クレジットカード決済がある）").toContain("クレジットカード決済");
     expect.soft(支払方法, "コンビニ決済が使用できない").not.toContain("コンビニ決済");
   });
 });
@@ -46,20 +57,20 @@ caseTest("IT-M13-02-008", async ({ page, step, expected }) => {
   await step(2, async () => {
     await expect.soft(form.会場, "会場の入力項目が無く、会場A を入力できない").toBeVisible({ timeout: 2000 });
     await softly("イベント属性とイベント説明の入力", () => form.fill({
-      イベント名日: "結合試験イベント", イベント名英: "Integration Event", 店舗: "店舗A", フォーマット: ["スタンダード", "モダン"], ルール適用度: "初心者歓迎",
+      イベント名日: "結合試験イベント", イベント名英: "Integration Event", 店舗: 印店名.A, フォーマット: ["スタンダード", "モダン"], ルール適用度: "初心者歓迎",
       公開状態: "公開", イベント規模: "大型イベント", バナーURL日: "https://example.com/event-jp", バナーURL英: "https://example.com/event-en",
       定員: "16", チーム戦: true, 支払方法: ["クレジットカード決済"], 参加費: "500", 賞品日: "賞品A", 賞品英: "Prize A",
       フリー入力エリア: [area(1), area(2), area(3)],
     }));
   });
-  await step(3, async () => { await form.submit(form.登録ボタン); });
+  await step(3, async () => { 送られた(await form.送信して待つ(form.登録ボタン)); });
   let found: 保存イベント[] = [];
   await step(4, async () => { found = イベント名で探す("結合試験イベント"); });
   await expected(async () => {
     expect(found.length, "イベント名(日)「結合試験イベント」のイベントの件数").toBe(1);
     const { イベントID: _i, 登録者の管理者ID: _m, 更新日時: _u, ...got } = found[0];
     expect.soft(got).toEqual({
-      "イベント名(日)": "結合試験イベント", "イベント名(英)": "Integration Event", 店舗: "店舗A", フォーマット: ["スタンダード", "モダン"], ルール適用度: "初心者歓迎",
+      "イベント名(日)": "結合試験イベント", "イベント名(英)": "Integration Event", 店舗: 印店名.A, フォーマット: ["スタンダード", "モダン"], ルール適用度: "初心者歓迎",
       公開状態: "公開", イベント規模: "大型イベント", "バナーURL(日)": "https://example.com/event-jp", "バナーURL(英)": "https://example.com/event-en",
       定員: "16", チーム戦: "真", 支払方法: ["クレジットカード決済"], 参加費: "500", "賞品(日)": "賞品A", "賞品(英)": "Prize A",
       フリー入力エリア: [1, 2, 3].map((n) => ({ "項目名(日)": `案内${n}`, "項目名(英)": `Guide ${n}`, "内容(日)": `内容${n}`, "内容(英)": `Content ${n}`, 初期表示は閉じる: "偽" })),
@@ -72,9 +83,9 @@ caseTest("IT-M13-02-009", async ({ page, step, expected }) => {
   let form!: EventForm;
   await step(1, async () => { form = await openEventCreate(page); });
   await step(2, async () => {
-    await form.fill({ イベント名日: "正常登録イベント-009", イベント名英: "Valid Event 009", 店舗: "店舗A", フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16", 参加費: "500" });
+    await form.fill({ イベント名日: "正常登録イベント-009", イベント名英: "Valid Event 009", 店舗: 印店名.A, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16", 参加費: "500" });
   });
-  await step(3, async () => { await form.submit(form.登録ボタン); });
+  await step(3, async () => { 送られた(await form.送信して待つ(form.登録ボタン)); });
   await expected(async () => {
     await expect(page, "イベント編集画面へ遷移する").toHaveURL(/\/event\/\d+\/edit/);
     await expect(form.イベント名日, "新しく保存されたイベントの編集画面である").toHaveValue("正常登録イベント-009");
@@ -87,7 +98,7 @@ caseTest("IT-M13-02-010", async ({ page, notes, step, expected }) => {
   let form!: EventForm;
   await step(1, async () => { form = await openEventEdit(page, id); });
   await step(2, async () => { await form.fill({ イベント名日: "更新後イベント", イベント名英: "Updated Event", イベント規模: "特別イベント", 定員: "32", 参加費: "1000" }); });
-  await step(3, async () => { await form.submit(form.更新ボタン); });
+  await step(3, async () => { 送られた(await form.送信して待つ(form.更新ボタン)); });
   let got!: 保存イベント;
   await step(4, async () => { got = 必ずある(保存されているイベント(id), id); });
   await expected(async () => {
@@ -104,7 +115,7 @@ caseTest("IT-M13-02-011", async ({ page, notes, step, expected }) => {
   let form!: EventForm;
   await step(1, async () => { form = await openEventEdit(page, notes.get("〔イベントID-M1302-011〕")); });
   await step(2, async () => { await form.fill({ イベント名日: "遷移確認イベント" }); });
-  await step(3, async () => { await form.submit(form.更新ボタン); });
+  await step(3, async () => { 送られた(await form.送信して待つ(form.更新ボタン)); });
   await expected(async () => {
     await expect(page, "イベント一覧画面へ遷移する").toHaveURL(/\/event(\/page\/\d+)?(\?.*)?$/);
   });
@@ -115,13 +126,13 @@ caseTest("IT-M13-02-012", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1302_ADMIN);
   await step(1, async () => {
     const form = await openEventCreate(page);
-    await form.fill({ イベント名日: "登録者確認イベント", イベント名英: "Before Event-012", 店舗: "店舗A", フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16", 参加費: "500" });
-    await form.submit(form.登録ボタン);
+    await form.fill({ イベント名日: "登録者確認イベント", イベント名英: "Before Event-012", 店舗: 印店名.A, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16", 参加費: "500" });
+    送られた(await form.送信して待つ(form.登録ボタン));
   });
   await step(2, async () => {
     const form = await openEventEdit(page, id);
     await form.fill({ イベント名日: "更新者確認イベント" });
-    await form.submit(form.更新ボタン);
+    送られた(await form.送信して待つ(form.更新ボタン));
   });
   let 新規: 保存イベント[] = [];
   let 更新!: 保存イベント;
@@ -145,13 +156,13 @@ caseTest("IT-M13-02-013", async ({ page, notes, step, expected }) => {
   await step(1, async () => { form = await openEventEdit(page, id); });
   const 空 = { 項目名日: "", 項目名英: "", 内容日: "", 内容英: "", 初期表示は閉じる: false };
   await step(2, async () => { await form.fill({ バナーURL日: "", バナーURL英: "", チーム戦: false, 支払方法: [], 賞品日: "", 賞品英: "", フリー入力エリア: [空, 空, 空] }); });
-  await step(3, async () => { await form.submit(form.更新ボタン); });
+  await step(3, async () => { 送られた(await form.送信して待つ(form.更新ボタン)); });
   let got!: 保存イベント;
   await step(4, async () => { got = 必ずある(保存されているイベント(id), id); });
   await expected(async () => {
     const { イベントID: _i, 登録者の管理者ID: _m, 更新日時: _u, イベント規模: _s, ...rest } = got;
     expect.soft(rest).toEqual({
-      "イベント名(日)": "編集前イベント-013", "イベント名(英)": "Before Event-013", 店舗: "店舗A", フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開",
+      "イベント名(日)": "編集前イベント-013", "イベント名(英)": "Before Event-013", 店舗: 印店名.A, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開",
       "バナーURL(日)": "", "バナーURL(英)": "", 定員: "16", チーム戦: "偽", 支払方法: [], 参加費: "500", "賞品(日)": "", "賞品(英)": "",
       フリー入力エリア: [1, 2, 3].map(() => ({ "項目名(日)": "", "項目名(英)": "", "内容(日)": "", "内容(英)": "", 初期表示は閉じる: "偽" })),
     });
@@ -175,7 +186,7 @@ caseTest("IT-M13-02-014", async ({ page, notes, step, expected }) => {
   let form!: EventForm;
   await step(1, async () => { form = await openEventCreate(page); });
   await step(2, async () => { await 必須項目を空にする(form); });
-  await step(3, async () => { await form.submit(form.登録ボタン); });
+  await step(3, async () => { 送られたか止まった(await form.送信して待つ(form.登録ボタン)); });
   let 件数 = -1, 後の最大 = "";
   await step(4, async () => { 件数 = 登録者のイベント件数(管理者); 後の最大 = 最大のイベントID(); });
   await expected(async () => {
@@ -194,7 +205,7 @@ function 更新されない(n: string, 入力: (form: EventForm) => Promise<void
     let form!: EventForm;
     await step(1, async () => { form = await openEventEdit(page, id); });
     await step(2, async () => { await 入力(form); });
-    await step(3, async () => { await form.submit(form.更新ボタン); });
+    await step(3, async () => { 送られたか止まった(await form.送信して待つ(form.更新ボタン)); });
     let after!: 保存イベント;
     await step(4, async () => { after = 必ずある(保存されているイベント(id), id); });
     await expected(async () => {
@@ -215,7 +226,7 @@ caseTest("IT-M13-02-016", async ({ page, notes, step, expected }) => {
   let form!: EventForm;
   await step(1, async () => { form = await openEventEdit(page, id); });
   await step(2, async () => { await form.fill(文字数ケースの項目名(あ(255))); });
-  await step(3, async () => { await form.submit(form.更新ボタン); });
+  await step(3, async () => { 送られた(await form.送信して待つ(form.更新ボタン)); });
   let got!: 保存イベント;
   await step(4, async () => { got = 必ずある(保存されているイベント(id), id); });
   await expected(async () => {
@@ -235,7 +246,7 @@ caseTest("IT-M13-02-018", async ({ page, notes, step, expected }) => {
   let form!: EventForm;
   await step(1, async () => { form = await openEventEdit(page, id); });
   await step(2, async () => { await form.fill(文字数ケースの内容(あ(4096))); });
-  await step(3, async () => { await form.submit(form.更新ボタン); });
+  await step(3, async () => { 送られた(await form.送信して待つ(form.更新ボタン)); });
   let got!: 保存イベント;
   await step(4, async () => { got = 必ずある(保存されているイベント(id), id); });
   await expected(async () => {
@@ -256,7 +267,7 @@ function 定員参加費が更新される(n: string, 定員: string, 参加費:
     let form!: EventForm;
     await step(1, async () => { form = await openEventEdit(page, id); });
     await step(2, async () => { await form.fill({ 定員, 参加費 }); });
-    await step(3, async () => { await form.submit(form.更新ボタン); });
+    await step(3, async () => { 送られた(await form.送信して待つ(form.更新ボタン)); });
     let got!: 保存イベント;
     await step(4, async () => { got = 必ずある(保存されているイベント(id), id); });
     await expected(async () => {
@@ -273,7 +284,7 @@ function 定員参加費が更新されない(n: string, 入力: (form: EventFor
     let form!: EventForm;
     await step(1, async () => { form = await openEventEdit(page, id); });
     await step(2, async () => { await 入力(form); });
-    await step(3, async () => { await form.submit(form.更新ボタン); });
+    await step(3, async () => { 送られたか止まった(await form.送信して待つ(form.更新ボタン)); });
     let got!: 保存イベント;
     await step(4, async () => { got = 必ずある(保存されているイベント(id), id); });
     await expected(async () => {
@@ -296,10 +307,10 @@ caseTest("IT-M13-02-026", async ({ page, notes, step, expected }) => {
   let form!: EventForm;
   await step(1, async () => { form = await openEventCreate(page); });
   await step(2, async () => {
-    await form.fill({ イベント名日: "権限外登録イベント-026", イベント名英: "Unauthorized Event 026", 店舗: "店舗A", フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16", 参加費: "500" });
+    await form.fill({ イベント名日: "権限外登録イベント-026", イベント名英: "Unauthorized Event 026", 店舗: 印店名.A, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16", 参加費: "500" });
   });
   await step(3, async () => { await form.forceOption(form.店舗, notes.get("〔店舗ID-M1302-共有B〕")); });
-  await step(4, async () => { await form.submit(form.登録ボタン); });
+  await step(4, async () => { 送られた(await form.送信して待つ(form.登録ボタン)); });
   let found: 保存イベント[] = [];
   await step(5, async () => { found = イベント名で探す("権限外登録イベント-026"); });
   await expected(async () => {
@@ -314,11 +325,11 @@ caseTest("IT-M13-02-027", async ({ page, notes, step, expected }) => {
   let form!: EventForm;
   await step(1, async () => { form = await openEventEdit(page, id); });
   await step(2, async () => { await form.forceOption(form.店舗, notes.get("〔店舗ID-M1302-共有B〕")); });
-  await step(3, async () => { await form.submit(form.更新ボタン); });
+  await step(3, async () => { 送られた(await form.送信して待つ(form.更新ボタン)); });
   let got!: 保存イベント;
   await step(4, async () => { got = 必ずある(保存されているイベント(id), id); });
   await expected(async () => {
-    expect(got.店舗, "店舗").toBe("店舗A");
+    expect(got.店舗, "店舗").toBe(印店名.A);
   });
 });
 
@@ -333,7 +344,8 @@ caseTest("IT-M13-02-028", async ({ page, notes, step, expected }) => {
     try {
       const form = await openEventEdit(page, id);
       await form.fill({ [項目]: 選択 });
-      await form.submit(form.更新ボタン);
+      const r = await form.送信して待つ(form.更新ボタン);
+      if (r.応答 === null) throw new Error("更新の送信が送られなかった");
       保存値 = 必ずある(保存されているイベント(id), id)[項目];
     } catch (e) {
       保存値 = `（更新できない: ${(e as Error).message.split("\n")[0]}）`;
@@ -354,9 +366,9 @@ caseTest("IT-M13-02-029", async ({ page, notes, step, expected }) => {
   let form!: EventForm;
   await step(1, async () => { form = await openEventEdit(page, id); });
   let オン = "", オフ = "";
-  await step(2, async () => { await form.fill({ チーム戦: true }); await form.submit(form.更新ボタン); オン = 必ずある(保存されているイベント(id), id).チーム戦; });
+  await step(2, async () => { await form.fill({ チーム戦: true }); 送られた(await form.送信して待つ(form.更新ボタン)); オン = 必ずある(保存されているイベント(id), id).チーム戦; });
   await step(3, async () => { form = await openEventEdit(page, id); });
-  await step(4, async () => { await form.fill({ チーム戦: false }); await form.submit(form.更新ボタン); オフ = 必ずある(保存されているイベント(id), id).チーム戦; });
+  await step(4, async () => { await form.fill({ チーム戦: false }); 送られた(await form.送信して待つ(form.更新ボタン)); オフ = 必ずある(保存されているイベント(id), id).チーム戦; });
   await expected(async () => {
     expect.soft(オン, "チーム戦をオンにして更新したときの保存値").toBe("真");
     expect.soft(オフ, "チーム戦をオフにして更新したときの保存値").toBe("偽");
@@ -374,7 +386,7 @@ caseTest("IT-M13-02-032", async ({ page, notes, step, expected }) => {
     await form.fill({ 賞品日: 入力値.賞品日, 賞品英: 入力値.賞品英, フリー入力エリア: [1, 2, 3].map((n) => ({ 内容日: 入力値.内容日(n), 内容英: 入力値.内容英(n) })) as [object, object, object] });
   });
   await step(3, async () => { await form.改行タグ挿入ボタン.click(); });
-  await step(4, async () => { await form.submit(form.更新ボタン); });
+  await step(4, async () => { 送られた(await form.送信して待つ(form.更新ボタン)); });
   let got!: 保存イベント;
   await step(5, async () => { got = 必ずある(保存されているイベント(id), id); });
   await expected(async () => {

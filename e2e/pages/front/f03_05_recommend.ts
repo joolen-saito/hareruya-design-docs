@@ -4,6 +4,21 @@
  */
 import { expect, Locator, Page } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { 押して移るのを待つ } from "./nav_click";
+
+/** 店の入口（"/ja"・"/ja/osaka"）のログイン画面で、メールアドレスとパスワードを入れてログインする。ログイン画面のままなら止める */
+export async function 店のログイン画面でログインする(page: Page, 店の入口: string, メール: string, パスワード: string): Promise<void> {
+  await page.goto(`${BASE_URL}${店の入口}/mypage/login`, { waitUntil: "domcontentloaded" });
+  const form = page.locator("form#login_mypage");
+  await expect(form, `${店の入口} のログイン画面`).toBeVisible({ timeout: 30_000 });
+  await form.locator('input[name="login_email"]').fill(メール);
+  await form.locator('input[name="login_pass"]').fill(パスワード);
+  await 押して移るのを待つ(page, form.locator('button[type="submit"]'), { 直接送るときの注記: "手順の注記", 移る時間: 120_000, waitUntil: "domcontentloaded" });
+  if (/\/mypage\/login/.test(new URL(page.url()).pathname)) {
+    const why = (await page.locator("form#login_mypage .p-hareruya-login__form-error").allTextContents()).map((t) => t.trim()).filter(Boolean);
+    throw new Error(`${店の入口} でログインできない（${メール}）: ${why.join(" / ") || "ログイン画面のまま"}`);
+  }
+}
 
 /** おすすめ商品枠のある画面。枠の外側の class が画面ごとに違う（Block/user_recommend_product.twig） */
 export type 画面 = "商品詳細" | "マイページ" | "買い物かご";
@@ -29,7 +44,7 @@ export class FrontRecommend {
   async 言語を切り替える(): Promise<void> {
     const link = this.page.locator(".p-hareruya-header__nav-item--lang a").first();
     await link.waitFor({ state: "visible", timeout: 30_000 });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), link.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), link.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -61,24 +76,24 @@ export class FrontRecommend {
       .map((n) => (n.textContent ?? "").replace(/\s+/g, " ").trim()).filter(Boolean));
   }
 
-  /** マイページを開く（本店・日本語） */
-  async マイページを開く(): Promise<number> {
-    const res = await this.page.goto(`${BASE_URL}/ja/mypage`, { waitUntil: "domcontentloaded" });
+  /** マイページを開く（店の入口は本店なら "/ja"、TC大阪支店なら "/ja/osaka"） */
+  async マイページを開く(店の入口 = "/ja"): Promise<number> {
+    const res = await this.page.goto(`${BASE_URL}${店の入口}/mypage`, { waitUntil: "domcontentloaded" });
     await this.page.waitForLoadState("load");
     return res?.status() ?? 0;
   }
 
-  /** 買い物かごを開く（本店・日本語） */
-  async 買い物かごを開く(): Promise<number> {
-    const res = await this.page.goto(`${BASE_URL}/ja/cart`, { waitUntil: "domcontentloaded" });
+  /** 買い物かごを開く（店の入口は本店なら "/ja"、TC大阪支店なら "/ja/osaka"） */
+  async 買い物かごを開く(店の入口 = "/ja"): Promise<number> {
+    const res = await this.page.goto(`${BASE_URL}${店の入口}/cart`, { waitUntil: "domcontentloaded" });
     await this.page.waitForLoadState("load");
     return res?.status() ?? 0;
   }
 
   /** 商品詳細の「カートに入れる」で、数量を入れられる先頭の規格の行に1点を入れる（未ログインでも使える） */
-  async カートに1個入れる(商品ID: string, what: string): Promise<void> {
+  async カートに1個入れる(商品ID: string, what: string, 店の入口 = "/ja"): Promise<void> {
     const page = this.page;
-    await this.商品詳細を開く("/ja", 商品ID);
+    await this.商品詳細を開く(店の入口, 商品ID);
     const form = page.locator(`form#productForm${商品ID}`);
     if ((await form.count()) !== 1) throw new Error(`${what}: 商品詳細の画面（商品ID ${商品ID}）にカートのフォームが無い`);
     const table = form.locator('[id^="priceTable-"]:visible');

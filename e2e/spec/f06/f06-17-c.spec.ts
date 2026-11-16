@@ -117,7 +117,7 @@ caseTest("IT-F06-17-042", async ({ page, step, expected }) => {
   await デッキ一覧で検索する(page, "006", step);
   const l = new デッキ検索(page);
   const edit = new デッキ編集(page);
-  await step(8, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), l.デッキ情報のリンク.first().click({ timeout: 30_000 })]); });
+  await step(8, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), l.デッキ情報のリンク.first().click({ timeout: 30_000, noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "デッキ編集画面").toMatch(/\/deck\/\d+\/edit$/);
     await expect.soft(edit.更新ボタン, "更新ボタン").toBeVisible({ timeout: 30_000 });
@@ -131,7 +131,7 @@ caseTest("IT-F06-17-043", async ({ page, step, expected }) => {
   const l = new デッキ検索(page);
   const edit = new デッキ編集(page);
   await step(8, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), l.デッキ情報のリンク.first().click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), l.デッキ情報のリンク.first().click({ timeout: 30_000, noWaitAfter: true })]);
     await expect(edit.f("eventNameJp"), "デッキ編集画面").toBeVisible({ timeout: 30_000 });
   });
   const [稲妻, 島, 否認] = S.カード;

@@ -1,41 +1,66 @@
 /**
  * F07-01 イベント大会TOP のシード（画面操作）。正本: cases/F07-01_seed_data.tsv
- * 店舗は店舗登録画面、イベントはイベント登録画面・日程追加で作る。店名・イベント名は実行ごとの印を付ける（rc）。
+ * 店舗は店舗登録画面、イベントはイベント登録画面・日程追加で作る。イベント名は実行ごとの印を付ける（rc）。
  * 専用ブラウザのクッキー（イベント店舗）は、ケースの事前準備としてテスト側が設定する（シードの作り方はブラウザの外）。
+ *
+ * 店舗は使い回す（依頼者の指示 2026-11-12「毎回作らずに1個でいけるやつは使い回す」。以前はケースごと・実行ごとに約30店を作っていた）:
+ * - シード表はケースごとに店舗（東京試験店・大阪試験店・F0701-<番号>-店）を作るとするが、決まった名前の2店だけを使う。
+ *   試験店A「F0701試験店A-E2E」: 東京試験店・F0701-<番号>-店の役（どのケースも、店舗の違いでなく、選んだ店舗・その店舗のイベントを確かめる）。
+ *   試験店B「F0701試験店B-E2E」: 大阪試験店の役（003・006 の「別の店舗」）と、119 の他店。
+ *   無ければ1度だけ作り、以後は使い回す。各ケースの〔店舗ID-…〕にはそのどちらかの店舗IDを控える。
+ * - イベントはケースの結果を見るので、これまでどおり実行ごとに印つきで作る。ケースは自分の印つきのイベント名で確かめる。
+ *   117〜119 のカレンダーの「2日後にイベントが無い」は、試験店Aに2日後の公開の日程を持つイベントが無いことを前提にする
+ *   （同じ回の 117・118 の2日後のものは非公開、119 の他店のものは試験店B。前の回の2日後は、今日から見て翌日以前）。
+ * - イベントを登録する管理者も、試験店A・Bを編集できる決まった管理者1人（f07a0701e2e）を使い回す。
  */
-import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { 店舗が登録されている } from "../db/f07_01";
 import { rc } from "../lib/run_marker";
+import { 店名を読む } from "../lib/store_pick";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { withAdminSession } from "../lib/session";
-import { イベントと日程を登録する, 実行日から, 試験店舗の管理者を用意する, 試験店舗を登録する, 日程 } from "../pages/admin/f07_01_setup";
+import { イベントと日程を登録する, 実行日から, 試験店舗の管理者を用意する, 決まった試験店舗の支店URL, 決まった試験店舗を用意する, 日程 } from "../pages/admin/f07_01_setup";
 
-export const 店名 = (n: string, 種別 = "東京試験店"): string => rc(`${種別}-${n}`);
-export const 店名F = (n: string): string => rc(`F0701-${n}-店`);
+/** 店舗は作らない（依頼者 2026-11-15「店舗は作るのもう禁止」）。試験店A=E2E の店舗 5007・試験店B=E2E の店舗 5006（どちらも公開・開店の支店）。店名・支店URLは店舗のいまの値 */
+const 試験店A = { id: "5007", get 店名(): string { return 店名を読む("5007"); }, 通番: "0701a" } as const;
+const 試験店B = { id: "5006", get 店名(): string { return 店名を読む("5006"); }, 通番: "0701b" } as const;
+/** シード表の「東京試験店-<番号>」は試験店A、「大阪試験店-<番号>」は試験店B */
+export const 店名 = (_n: string, 種別 = "東京試験店"): string => (種別 === "大阪試験店" ? 試験店B.店名 : 試験店A.店名);
+/** シード表の「F0701-<番号>-店」は試験店A */
+export const 店名F = (_n: string): string => 試験店A.店名;
+/** シード表の「F0701-119-他店」は試験店B */
+const 他店 = (): string => 試験店B.店名;
+/** 店名の店舗の支店URL（店舗の詳細ページのアドレス） */
+export const 店の支店URL = (名: string): string => 決まった試験店舗の支店URL(名 === 試験店B.店名 ? 試験店B.通番 : 試験店A.通番, 名);
 
-/** 店舗を1つ以上登録し、店舗IDを控える（labels は店舗ごとの呼び名） */
-function defineShopsSeed(seedId: string, shops: { 通番: string; 店名: string; label: string }[]): void {
+/** 店名の決まった試験店舗を用意し、店舗IDを返す（無ければ1度だけ作る） */
+async function 試験店を用意する(page: import("@playwright/test").Page, 名: string, issue: (m: string) => void): Promise<string> {
+  const s = 名 === 試験店B.店名 ? 試験店B : 試験店A;
+  return 決まった試験店舗を用意する(page, s.店名, s.通番, issue);
+}
+
+/** 店舗を1つ以上用意し、店舗IDを控える（labels は店舗ごとの呼び名） */
+function defineShopsSeed(seedId: string, shops: { 店名: string; label: string }[]): void {
   defineSeed(seedId, async ({ browser, notes, seed }) => {
     await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-      for (const s of shops) notes.set(s.label, await 試験店舗を登録する(page, s.店名, s.通番, (m) => reportSeedIssue(seed.シードID, m)));
+      for (const s of shops) notes.set(s.label, await 試験店を用意する(page, s.店名, (m) => reportSeedIssue(seed.シードID, m)));
     });
   });
 }
 
-defineShopsSeed("S-F07-01-SHOPS-002", [{ 通番: "002", 店名: 店名("002"), label: "〔店舗ID-F0701-002〕" }]);
+defineShopsSeed("S-F07-01-SHOPS-002", [{ 店名: 店名("002"), label: "〔店舗ID-F0701-002〕" }]);
 defineShopsSeed("S-F07-01-SHOPS-003", [
-  { 通番: "003a", 店名: 店名("003"), label: "〔店舗ID-F0701-003A〕" },
-  { 通番: "003b", 店名: 店名("003", "大阪試験店"), label: "〔店舗ID-F0701-003B〕" },
+  { 店名: 店名("003"), label: "〔店舗ID-F0701-003A〕" },
+  { 店名: 店名("003", "大阪試験店"), label: "〔店舗ID-F0701-003B〕" },
 ]);
 defineShopsSeed("S-F07-01-SHOPS-006", [
-  { 通番: "006a", 店名: 店名("006"), label: "〔店舗ID-F0701-006A〕" },
-  { 通番: "006b", 店名: 店名("006", "大阪試験店"), label: "〔店舗ID-F0701-006B〕" },
+  { 店名: 店名("006"), label: "〔店舗ID-F0701-006A〕" },
+  { 店名: 店名("006", "大阪試験店"), label: "〔店舗ID-F0701-006B〕" },
 ]);
-defineShopsSeed("S-F07-01-SHOPS-007", [{ 通番: "007", 店名: 店名("007"), label: "〔店舗ID-F0701-007〕" }]);
-defineShopsSeed("S-F07-01-COOKIE-105", [{ 通番: "105", 店名: 店名F("105"), label: "〔店舗ID-F0701-105〕" }]);
-defineShopsSeed("S-F07-01-CBCOOKIESAME-106", [{ 通番: "106", 店名: 店名F("106"), label: "〔店舗ID-F0701-106〕" }]);
+defineShopsSeed("S-F07-01-SHOPS-007", [{ 店名: 店名("007"), label: "〔店舗ID-F0701-007〕" }]);
+defineShopsSeed("S-F07-01-COOKIE-105", [{ 店名: 店名F("105"), label: "〔店舗ID-F0701-105〕" }]);
+defineShopsSeed("S-F07-01-CBCOOKIESAME-106", [{ 店名: 店名F("106"), label: "〔店舗ID-F0701-106〕" }]);
 
 // 店舗ID 999999 は未登録のはず。シード表の投入方法は「あれば試験データを削除する」だが、何も作らず、未登録であることだけ確かめる（参照のみ）
 defineSeed("S-F07-01-SHOPS-005", async () => {
@@ -44,16 +69,19 @@ defineSeed("S-F07-01-SHOPS-005", async () => {
 
 type イベント定義 = { イベント名: string; label?: string; 店舗: string; 公開状態: "公開" | "非公開"; 参加費?: string; 日程: { 開始: string; 公開状態?: "公開" | "非公開" }[] };
 
-/** 店舗を登録し、その店舗を編集できる管理者でイベントと日程を登録する */
-function defineEventsSeed(seedId: string, 通番: string, 店舗: { 店名: string; label?: string }[], events: イベント定義[]): void {
+/** 店舗を用意し、試験店A・Bを編集できる決まった管理者でイベントと日程を登録する */
+function defineEventsSeed(seedId: string, _通番: string, 店舗: { 店名: string; label?: string }[], events: イベント定義[]): void {
   defineSeed(seedId, async ({ browser, notes, seed }) => {
     const issue = (m: string) => reportSeedIssue(seed.シードID, m);
     const account = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-      for (const [i, s] of 店舗.entries()) {
-        const id = await 試験店舗を登録する(page, s.店名, `${通番}${String.fromCharCode(97 + i)}`, issue);
+      for (const s of 店舗) {
+        const id = await 試験店を用意する(page, s.店名, issue);
         if (s.label) notes.set(s.label, id);
       }
-      return 試験店舗の管理者を用意する(page, 通番, 店舗.map((s) => s.店名));
+      // 両方の店舗がそろってから管理者を用意する（編集可能店舗に両方を入れる。管理者は1人を使い回す）
+      await 試験店を用意する(page, 試験店A.店名, issue);
+      await 試験店を用意する(page, 試験店B.店名, issue);
+      return 試験店舗の管理者を用意する(page, "0701", [試験店A.店名, 試験店B.店名]);
     });
     await withAdminSession(browser, account, async (page) => {
       for (const e of events) {
@@ -74,9 +102,9 @@ defineEventsSeed("S-F07-01-CBLIST-118", "118", [{ 店名: 店名F("118"), label:
   { イベント名: rc("F0701-118-PUB"), 店舗: 店名F("118"), 公開状態: "公開", 日程: [{ 開始: 翌日() }] },
   { イベント名: rc("F0701-118-PRIV"), 店舗: 店名F("118"), 公開状態: "公開", 日程: [{ 開始: 二日後(), 公開状態: "非公開" }] },
 ]);
-defineEventsSeed("S-F07-01-CBLIST-119", "119", [{ 店名: 店名F("119"), label: "〔店舗ID-F0701-119〕" }, { 店名: rc("F0701-119-他店") }], [
+defineEventsSeed("S-F07-01-CBLIST-119", "119", [{ 店名: 店名F("119"), label: "〔店舗ID-F0701-119〕" }, { 店名: 他店() }], [
   { イベント名: rc("F0701-119-PUB"), 店舗: 店名F("119"), 公開状態: "公開", 日程: [{ 開始: 翌日() }] },
-  { イベント名: rc("F0701-119-OTHER"), 店舗: rc("F0701-119-他店"), 公開状態: "公開", 日程: [{ 開始: 二日後() }] },
+  { イベント名: rc("F0701-119-OTHER"), 店舗: 他店(), 公開状態: "公開", 日程: [{ 開始: 二日後() }] },
 ]);
 
 // ---- 既定店舗・共有マスタ（書き換えない。読むだけ。依頼者の方針 2026-11-10） ----
@@ -92,7 +120,7 @@ defineSeed("S-F07-01-MASTERS", async ({ seed }) => {
 // 専用ブラウザ（クッキーなし）は、ケースの中で新しいブラウザの文脈を作る（Playwright の page は毎回クッキーなしで始まる）
 defineSeed("S-F07-01-BROWSER-001", async () => {});
 
-defineShopsSeed("S-F07-01-SHOPS-004", [{ 通番: "004", 店名: 店名("004"), label: "〔店舗ID-F0701-004〕" }]);
+defineShopsSeed("S-F07-01-SHOPS-004", [{ 店名: 店名("004"), label: "〔店舗ID-F0701-004〕" }]);
 
 const 十月十五日 = "2030-10-15 10:00";
 defineEventsSeed("S-F07-01-FILTER-040", "040", [{ 店名: 店名F("040"), label: "〔店舗ID-F0701-040〕" }], [
@@ -102,7 +130,7 @@ defineEventsSeed("S-F07-01-ICON-099", "099", [{ 店名: 店名F("099"), label: "
   { イベント名: rc("F0701-099-REG"), 店舗: 店名F("099"), 公開状態: "公開", 参加費: "1000", 日程: [{ 開始: 翌日() }] },
 ]);
 
-/** 107〜115: 複数日程イベントの日別画面。店舗1つ・イベント1つ（公開）・日程（すべて公開）を作り、店舗ID・イベントIDを控える */
+/** 107〜116: 複数日程イベントの日別画面。店舗1つ・イベント1つ（公開）・日程（すべて公開）を作り、店舗ID・イベントIDを控える */
 const 日別の店 = (n: string) => [{ 店名: 店名F(n), label: `〔店舗ID-F0701-${n}〕` }];
 const 日別のイベント = (n: string, 日程一覧: string[]): イベント定義[] => [
   { イベント名: rc(`F0701-${n}-EVT`), label: `〔イベントID-F0701-${n}〕`, 店舗: 店名F(n), 公開状態: "公開", 日程: 日程一覧.map((開始) => ({ 開始 })) },
@@ -116,3 +144,5 @@ defineEventsSeed("S-F07-01-CBDAY-112", "112", 日別の店("112"), 日別のイ�
 defineEventsSeed("S-F07-01-CBDAY-113", "113", 日別の店("113"), 日別のイベント("113", ["2025-10-14 10:00", "2025-10-15 10:00"]));
 defineEventsSeed("S-F07-01-CBDAY-114", "114", 日別の店("114"), 日別のイベント("114", ["2025-10-15 10:00", "2030-10-15 10:00"]));
 defineEventsSeed("S-F07-01-CBDAY-115", "115", 日別の店("115"), 日別のイベント("115", ["2030-10-16 10:00", "2025-10-15 10:00", "2030-10-15 13:00"]));
+// 116: 公開のイベントだけを作り、開催日程は1件も登録しない
+defineEventsSeed("S-F07-01-CBDAY-116", "116", 日別の店("116"), 日別のイベント("116", []));

@@ -18,18 +18,19 @@ import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { ensureMemberByStoreIdsFix as ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
+import { ensureStore, 使い回す店舗の入力 } from "../pages/admin/m04_24_reuse_k";
 import { DepartmentPage } from "../pages/admin/m03_18_department";
 import { customerIdByEmail } from "../pages/admin/m06_04_member";
 import { OtcListPage } from "../pages/admin/m06_otc_list";
 import { readFixedPriceSection, setFixedPriceSection } from "../pages/admin/m06_04_settings";
 import { registerFrontMember } from "../pages/front/member_entry";
 import { applyAsMember, PurchaseHistoryPage } from "../pages/front/m06_otc_buy";
-import { storeInput } from "./m06-common";
+import { 追加システム設定を控えて書き換える } from "./add-system-restore";
 
 export const QG_IT: Account = { loginId: "qg0604it", password: "Passw0rd-Qg0604It" };
-export const QG_STORE = storeInput("QG店頭買取店舗", "キュージーテントウカイトリテンポ", "QG Store", "qgstore", "QGS");
+/** 店舗は作らない（依頼者 2026-11-15）。QG店頭買取店舗は、使い回す E2E の店舗 5006（公開・開店の支店）で表す */
+export const QG_STORE = 使い回す店舗の入力("5006", "QG店頭買取店舗");
 export const QG_MEMBER_PASSWORD = "Passw0rd-QgMember";
 /** 会員のメールアドレス（正本の qg0604-002@example.test の前半に実行の印を付けた値） */
 export const qgMemberEmail = () => `${rc("qg0604-002")}@example.test`;
@@ -64,8 +65,13 @@ defineSeed("S-M06-04-QG-SUMMARY", async ({ browser, notes, seed }) => {
     notes.set("〔部門ID-M0604-QG共有〕", id);
     before = await readFixedPriceSection(page);
     reportSeedIssue(seed.シードID, `追加システム設定の固定価格商品部門IDのいまの値は「${before}」。ケースが終わったら戻す`);
-    reportSeedIssue(seed.シードID, `固定価格商品部門IDを ${id} にした: ${await setFixedPriceSection(page, id)}`);
   });
+  // 共有の設定は、書き換える前に画面の全項目を控え、ケースの終わりに画面で戻して開き直して確かめる（seeds/add-system-restore.ts・lib/shared_restore.ts）。
+  // 戻すのは基盤が行うので、ケースの後の restoreFixedPriceSection では戻さない（before を空にする）
+  const 無い = await 追加システム設定を控えて書き換える(browser, seed.シードID, { 固定価格商品部門ID: notes.get("〔部門ID-M0604-QG共有〕") });
+  if (無い.length) throw new Error(`追加システム設定の画面に ${無い.join("・")} の欄が無い`);
+  before = undefined;
+  reportSeedIssue(seed.シードID, `固定価格商品部門IDを ${notes.get("〔部門ID-M0604-QG共有〕")} にした（全項目を控え、ケースの終わりに画面で戻す）`);
 });
 
 /** ケースが終わるたびに、固定価格商品部門IDを控えた値へ戻す（正本: このシードを使うケースが終わるたびに控えた値へ戻す） */

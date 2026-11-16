@@ -3,20 +3,28 @@
  * 流し終えた m10-13.spec.ts・m10-13-b.spec.ts は触らないので、新しいファイルに書く。 */
 import { test, expect as pwExpect } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
+import { scene, 選択肢を広げて撮る } from "../../lib/evidence_other";
 import { loginAdmin, adminUrl } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
-import { CustomCsvPage, ProductCustomCsvPage, 在庫カスタムCSV出力を押して選択肢を読む } from "../../pages/admin/m10_13_custom_csv";
+import { CustomCsvPage, ProductCustomCsvPage, 在庫カスタムCSV出力, 在庫カスタムCSV出力を押して選択肢を読む } from "../../pages/admin/m10_13_custom_csv";
 import { openStockList, resultCount, searchByCode } from "../../pages/admin/m04_16_recommend_csv";
 import { 出力項目の属性, 定義の出力項目, 定義を読む } from "../../db/m10_13";
 import { M1013_ADMIN } from "../../seeds/m10-13";
-import { M1013L_ADMIN, 既存商品名, 商品コードP, 商品コード039, 商品検索CSV名, 在庫商品コード } from "../../seeds/m10-13-c";
+import { M1013L_ADMIN, 既存商品名, 商品コードP, 商品コード039, 商品検索CSV名, 在庫商品コード, 無効の項目 } from "../../seeds/m10-13-c";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 注記_項目 = "出力項目は、正本の「CSV公開状態」「CSV商品コード」（画面に無い）の代わりに、画面にある「公開ステータス名称」「商品コード」にしたシードの上で行った";
 const 公開 = "公開ステータス名称";
 const コード = "商品コード";
 const 新規 = "新規作成";
+/** 在庫情報カスタムCSV出力の選択肢を読み、閉じた欄では読めないので、欄の表示の行数を広げて選択肢を画面に並べて撮る */
+async function 選択肢を読んで広げて撮る(page: import("@playwright/test").Page, 場面: string): Promise<string[]> {
+  const 選択肢 = await 在庫カスタムCSV出力を押して選択肢を読む(page);
+  await page.keyboard.press("Escape");
+  await 選択肢を広げて撮る(在庫カスタムCSV出力(page), 場面, 40);
+  return 選択肢;
+}
 const 同じ集合 = (a: string[]) => [...a].sort();
 
 /** 商品CSVの既存の定義 0NN を開く（種別は初期値の商品CSV） */
@@ -30,17 +38,18 @@ caseTest("IT-M10-13-006", async ({ page, step, expected }) => {
   await loginAdmin(page, M1013_ADMIN);
   const p = new CustomCsvPage(page);
   let 出力: string[] = [], 非出力: string[] = [];
+  const [無効A, 無効B] = 無効の項目();
   await step(1, async () => { await p.open(); });
   await step(2, async () => { await p.種別を選ぶ("商品CSV"); });
   await step(3, async () => { await p.定義を選ぶ(既存商品名("006")); });
   await step(4, async () => {
     出力 = await p.出力する項目名(); 非出力 = await p.出力しない項目名();
-    note("正本の「CSV公開状態」（無効）「CSV商品コード」（有効）「CSV商品名」（無効）「CSV商品ID」（有効）は画面に無い。有効・無効を確かめるため、出力側を無効の「送料」と有効の「商品コード」にした。出力しない側は画面の項目の並び順（商品IDが先頭）なので、「商品名」「商品ID」の並びは確かめず、無効の「税率」と有効の「商品ID」が含まれることを確かめた");
+    note(`正本の「CSV公開状態」（無効）「CSV商品コード」（有効）「CSV商品名」（無効）「CSV商品ID」（有効）は画面に無い。有効・無効を確かめるため、出力側を無効の「${無効A}」と有効の「商品コード」にした。出力しない側は画面の項目の並び順（商品IDが先頭）なので、「商品名」「商品ID」の並びは確かめず、無効の「${無効B}」と有効の「商品ID」が含まれることを確かめた`);
   });
   await expected(async () => {
-    expect.soft(出力, "CSV出力する項目（上から）").toEqual(["送料", コード]);
-    expect.soft(非出力.includes("税率") && 非出力.includes("商品ID") && !非出力.includes("送料") && !非出力.includes(コード), "CSV出力しない項目に、無効の「税率」と有効の「商品ID」が含まれ、出力側の項目は含まれない").toBe(true);
-    expect.soft(出力.includes("送料") && 出力.includes(コード) && 非出力.includes("税率") && 非出力.includes("商品ID"), "有効・無効の出力項目が両方のリストに含まれる（無効: 送料・税率／有効: 商品コード・商品ID）").toBe(true);
+    expect.soft(出力, "CSV出力する項目（上から）").toEqual([無効A, コード]);
+    expect.soft(非出力.includes(無効B) && 非出力.includes("商品ID") && !非出力.includes(無効A) && !非出力.includes(コード), `CSV出力しない項目に、無効の「${無効B}」と有効の「商品ID」が含まれ、出力側の項目は含まれない`).toBe(true);
+    expect.soft(出力.includes(無効A) && 出力.includes(コード) && 非出力.includes(無効B) && 非出力.includes("商品ID"), `有効・無効の出力項目が両方のリストに含まれる（無効: ${無効A}・${無効B}／有効: 商品コード・商品ID）`).toBe(true);
   });
 });
 
@@ -81,9 +90,9 @@ caseTest("IT-M10-13-009", async ({ page, step, expected }) => {
   await step(3, async () => { await p.名前.fill(名); });
   await step(4, async () => { await p.項目を出力へ移す(コード); note("正本の「CSV在庫コード」（画面に無い）の代わりに、在庫CSVの画面にある「商品コード」を移した。定義の名称は実行の印つきにした"); });
   await step(5, async () => { id = await p.設定する("在庫CSVのカスタム定義の登録"); });
-  await step(6, async () => { d = 定義を読む({ id }); });
+  await step(6, async () => { d = 定義を読む({ 名称: 名 }); });
   await expected(async () => {
-    expect.soft(d.件数, "追加されたカスタム出力定義の数").toBe(1);
+    expect.soft(d.件数, "追加されたカスタム出力定義の数（名称で引く）").toBe(1);
     expect.soft(d.名称, "名称").toBe(名);
     expect.soft(d.種別, "種別").toBe("在庫CSV");
     expect.soft(d.更新者, "更新者").toBe("M10-13試験管理者");
@@ -288,7 +297,7 @@ caseTest("IT-M10-13-034", async ({ page, step, expected }) => {
   await step(5, async () => { await p.設定する("在庫CSVのカスタム定義の登録"); });
   await step(6, async () => { await openStockList(page); });
   await step(7, async () => { await searchByCode(page, 在庫商品コード("001")); if (!(await resultCount(page))) throw new Error("在庫検索一覧に検索結果が無い"); note("在庫明細はDBで作る代わりに、画面で作った印つきの商品（商品コード・規格）の在庫の行で代えた。管理者は所属が本店のシステム管理者。定義の名称・商品コードは実行の印つき"); });
-  await step(8, async () => { 選択肢 = await 在庫カスタムCSV出力を押して選択肢を読む(page); });
+  await step(8, async () => { 選択肢 = await 選択肢を読んで広げて撮る(page, scene.stepLabel(8, "在庫情報カスタムCSV出力の選択肢（広げて表示）")); });
   await expected(async () => { expect.soft(選択肢, "カスタムCSVで作成した出力フォーマットの選択肢").toContain(名); });
 });
 
@@ -300,7 +309,7 @@ caseTest("IT-M10-13-035", async ({ page, step, expected, notes }) => {
   await step(1, async () => { await openStockList(page); });
   await step(2, async () => { await searchByCode(page, 在庫商品コード("002")); if (!(await resultCount(page))) throw new Error("在庫検索一覧に検索結果が無い"); });
   await step(3, async () => {
-    削除前 = await 在庫カスタムCSV出力を押して選択肢を読む(page);
+    削除前 = await 選択肢を読んで広げて撮る(page, scene.stepLabel(3, "削除前の在庫情報カスタムCSV出力の選択肢（広げて表示）"));
     pwExpect(削除前, "削除する前は、リンクとして定義が表示されている").toContain(名);
   });
   await step(4, async () => { await p.open("10"); });
@@ -309,7 +318,7 @@ caseTest("IT-M10-13-035", async ({ page, step, expected, notes }) => {
   await step(7, async () => { await p.削除する(); });
   await step(8, async () => { await openStockList(page); });
   await step(9, async () => { await searchByCode(page, 在庫商品コード("002")); if (!(await resultCount(page))) throw new Error("在庫検索一覧に検索結果が無い"); });
-  await step(10, async () => { 削除後 = await 在庫カスタムCSV出力を押して選択肢を読む(page); note("在庫明細はDBで作る代わりに、画面で作った印つきの商品の在庫の行で代えた。管理者は所属が本店のシステム管理者"); });
+  await step(10, async () => { 削除後 = await 選択肢を読んで広げて撮る(page, scene.stepLabel(10, "削除後の在庫情報カスタムCSV出力の選択肢（広げて表示）")); note("在庫明細はDBで作る代わりに、画面で作った印つきの商品の在庫の行で代えた。管理者は所属が本店のシステム管理者"); });
   await expected(async () => { expect.soft(削除後, "カスタムCSVで作成した出力フォーマットの選択肢（削除した定義が表示されない）").not.toContain(名); });
 });
 

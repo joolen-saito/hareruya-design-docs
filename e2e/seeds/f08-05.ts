@@ -15,33 +15,46 @@
  *   メールアドレスの前半に実行の印を付ける。生年月日は「試験実行日時点で30歳」になる年の1月1日。
  * - ブラックリスト（BLACKLIST-NNN）: シード表の種別「名称」は、ブラックリスト管理の種別「氏名」として登録する。キーワードは印つきの姓＋名。
  *   「一致する行があれば削除」は、印で一致する行が無いので削除しない。
- * - 仮会員設定（ACTIVATE-ON・PD-ACTIVATE・ACTIVATE-OFF-080）: 共有の設定なので、共有の環境では書き換えず、いまの値が前提と同じことを
+ * - 仮会員設定（ACTIVATE-ON・PD-ACTIVATE・ACTIVATE-OFF-080）: 共有の設定なので、共有の環境では（夜の1本流しの回を除き）書き換えず、いまの値が前提と同じことを
  *   確かめて使う（違えば止める）。手元の環境では前提の値にし、ON は実行の最後、OFF-080 はケースの終わりに元の値へ戻す。
- * - メールテンプレート（TPL-JP）: 件名を書き換えず（共有の設定）、名称の確かめだけにする（044 は使用したテンプレートの名称で確かめる）。
+ * - メールテンプレート（TPL-JP）: 037 以外は件名を書き換えず（共有の設定）、名称の確かめだけにする（044 は使用したテンプレートの名称で確かめる）。
+ *   037 のときだけ下のとおり書き換えて戻す。
  * - 管理者（PD-ADM）: 権限は正本が定める細かな権限の代わりに、システム管理者にした（074 から）。
  *
- * 作らないシード（ケースを実装しない）: 受信箱（MAILBOX）・基本情報（BASIC）・英語のテンプレート（TPL-EN）・仮会員設定の無効（GF-ACTIVATE-OFF）と、
- * それだけを使う申込者・店舗（029・037〜043・045・083・085）。
+ * 受信箱（MAILBOX）: 開発環境のメールの受け口（E2E_MAIL_URL）を読む。消さずに、操作の前に控えた番号より後の、宛先一致のメールだけを数える。
+ *
+ * 共有のものを書き換えるシード（037〜041・085 が使う。夜に1本だけで流す回 E2E_ALLOW_SHARED=1 でだけ書き換える。そうでなければ書き換えずに止まる）:
+ * いずれも、書き換える前に今の値を画面から全部控え（lib/shared_restore.ts の registerRestore）、ケースの終わりに基盤が画面で元の値に戻して確かめる。
+ * - 基本情報（BASIC。039〜041）: 店舗基本設定の全項目を控え、送信元メールアドレス・店名・返信先メールアドレス・送信エラー通知メールアドレスを書き換える。
+ *   戻すときは控えた全項目を書き戻す。
+ * - メールテンプレート（TPL-JP は 037 のとき、TPL-EN は 038）: 自動送信メールの設定画面で、名称が完全に一致するテンプレート（1件でなければ止まる）の
+ *   編集欄（名称・件名・ヘッダー・フッター）を全部控え、件名を書き換える。戻すときは控えた欄を全部書き戻す。
+ * - 仮会員設定（ACTIVATE-ON・GF-ACTIVATE-OFF）: 共有の環境の夜の1本流しでは、店舗基本設定の全項目を控えて書き換え、基盤が全項目を戻す。
+ * - 044 など TPL-JP を使うほかのケースは、従来どおり件名を書き換えない。
  */
-import { Browser } from "@playwright/test";
+import { Browser, test } from "@playwright/test";
+import { registerRestore } from "../lib/shared_restore";
+import { ShopBasicPage } from "../pages/admin/m10_01_shop";
+import { テンプレートを開く, テンプレートの欄を保存する, テンプレートの欄を読む } from "../pages/admin/f08_05_member";
 import { BASE_URL, SETUP_ADMIN, SHARED_ENV } from "../config/env";
+import { mailIds } from "../lib/mail";
 import { rc } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { blacklistRows, ensureBlacklist, readTempMember, setTempMember } from "../pages/admin/f06_masters";
 import { 自動送信メールのテンプレート名 } from "../pages/admin/f08_05_member";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
+import { ensureStore, 使い回す店舗の入力 } from "../pages/admin/m04_24_reuse_k";
 import { customerIdByEmail } from "../pages/admin/m06_04_member";
 import { 管理画面で本会員にする } from "../pages/admin/member_activate";
 import { EntryPage } from "../pages/front/f06_01_entry";
 import { 申込入力, 申込者 } from "../pages/front/f08_05_confirm";
 import { registerFrontMember } from "../pages/front/member_entry";
-import { storeInput } from "./m06-common";
 
 export const F0805_ADMIN: Account = { loginId: "f0805pdadmin", password: "Passw0rd-PD0805" };
-export const PD_STORE = storeInput("店頭買取PD0805-003", "テントウカイトリピーディー", "Otc Buy PD Store", "itf0805pd003", "F5P");
+/** 店舗は作らない（依頼者 2026-11-15）。F08-01〜05 共通の店頭買取の店舗は、使い回す E2E の店舗 221（公開・開店の支店）で表す。店名・支店URLは店舗のいまの値 */
+export const PD_STORE = 使い回す店舗の入力("221", "店頭買取PD0805-003");
 export const PD_MEMBER_PASSWORD = "Pw-F0805-PD-003";
 /** 会員のメールアドレス（正本の pd0805-003@example.test の前半に実行の印を付けた値） */
 export const pdMemberEmail = () => `${rc("pd0805-003")}@example.test`;
@@ -86,11 +99,11 @@ export const 会員メール = (n: string) => 申込メール(`member-f0805-${n}
 
 const 入力値の取り決め = [
   "S-F08-05-INPUT-COMMON", "S-F08-05-PASSWORD", "S-F08-05-INVOICE-NO", "S-F08-05-INPUT-US", "S-F08-05-INPUT-EN", "S-F08-05-INPUT-EN-US",
-  "S-F08-05-GF-INPUT-US-ZIP", "S-F08-05-PD-INPUT", "S-F08-05-DP-INPUT-081", "S-F08-05-CBAPPLICANT-086", "S-F08-05-CBAPPLICANT-088",
+  "S-F08-05-GF-INPUT-US-ZIP", "S-F08-05-PD-INPUT", "S-F08-05-DP-INPUT-081", "S-F08-05-CBAPPLICANT-083", "S-F08-05-CBAPPLICANT-085", "S-F08-05-CBAPPLICANT-086", "S-F08-05-CBAPPLICANT-088",
 ];
 /** 申込者の入力値だけのシード（APPLICANT-NNN。メールアドレスを持つものは、印で新しいアドレスになる） */
 const 申込者の番号 = [
-  "001", "002", "003", "005", "006", "007", "009", "013", "014", "015", "016", "017", "018", "019", "020", "021", "022", "024", "025", "026", "027",
+  "037", "038", "039", "040", "041", "001", "002", "003", "005", "006", "007", "009", "013", "029", "042", "043", "045", "014", "015", "016", "017", "018", "019", "020", "021", "022", "024", "025", "026", "027",
   "028", "031", "032", "035", "036", "044", "046", "047", "048", "049", "050", "051", "053", "054", "055", "057", "058", "060", "061", "062", "063",
   "064", "066", "067", "068", "069", "070", "071", "076", "077", "078", "079", "080",
 ];
@@ -106,7 +119,7 @@ for (const n of 申込者の番号) {
 // ---- 店舗 ----
 
 const 店舗の注記 = (店舗: string) =>
-  `店舗「${店舗}」を新しく作らず、F08-05 で共通の試験店舗「${PD_STORE.店名}」（支店URL ${PD_STORE.支店URL}。無ければ登録）に読み替えた。` +
+  `店舗「${店舗}」を新しく作らず、F08-05 で共通の試験店舗「${PD_STORE.店名}」（店舗ID ${PD_STORE.店舗ID}・支店URL ${PD_STORE.支店URL}。店舗は作らない決まり。依頼者 2026-11-15）に読み替えた。` +
   "手順の店舗識別名もこの店舗の支店URLとして読む。査定申込み0件の前提（再実行時はDBで削除）は、申込者の姓に実行の印を付けてこの実行の申込みだけを数えることで代えた";
 
 async function 共通の店舗(browser: Browser, seedId: string): Promise<string> {
@@ -117,7 +130,7 @@ async function 共通の店舗(browser: Browser, seedId: string): Promise<string
 }
 
 const 店舗の番号 = [
-  "001", "002", "003", "005", "006", "007", "008", "009", "013", "014", "015", "016", "017", "018", "019", "020", "021", "022", "024", "025", "026",
+  "037", "038", "039", "040", "041", "001", "002", "003", "005", "006", "007", "008", "009", "013", "029", "042", "043", "045", "014", "015", "016", "017", "018", "019", "020", "021", "022", "024", "025", "026",
   "027", "028", "031", "032", "035", "036", "044", "046", "047", "048", "049", "050", "051", "052", "053", "054", "055", "057", "058", "060", "061",
   "062", "063", "064", "065", "066", "067", "068", "069", "070", "071", "076", "077", "078", "079", "080", "081", "082",
 ];
@@ -127,7 +140,7 @@ for (const n of 店舗の番号) {
     reportSeedIssue(seed.シードID, 店舗の注記(`店頭買取F0805-${n}`));
   });
 }
-for (const n of ["086", "088"]) {
+for (const n of ["083", "085", "086", "088"]) {
   defineSeed(`S-F08-05-CBSTORE-${n}`, async ({ browser, notes, seed }) => {
     notes.set(`〔店舗ID-F0805-CB${n}〕`, await 共通の店舗(browser, seed.シードID));
     reportSeedIssue(seed.シードID, 店舗の注記(`店頭買取F0805-CB${n}`));
@@ -185,7 +198,10 @@ async function 会員を用意する(browser: Browser, n: string, issue: (m: str
     await e.fill({
       姓: `会員F0805-${n}`, 名: "太郎", セイ: "カイイン", メイ: "タロウ", 生年月日: [年, "1", "1"], メール, パスワード: F0805_PASSWORD,
       国: "Japan", 郵便番号: `100-8${n}`, 都道府県: "東京都", 住所1: "千代田区", 住所2: "千代田1-1", 電話番号: `0358050${n}`,
+      // 店頭買取査定申込の入力画面は職業が必須で、会員の職業が空だと「会員情報が反映された状態」のまま「次のページへ進む」を押しても進めない。シード表は職業を定めないので会社員にした
+      職業: "会社員",
     });
+    issue(`会員情報登録で職業を「会社員」にした（シード表は職業を定めない。店頭買取査定申込の入力画面は職業が必須で、空のままだと会員情報が反映された状態で「次のページへ進む」を押しても進めない）`);
     if (await e.f("address][addr03").isVisible()) await e.f("address][addr03").fill(`F0805-${n}ビル`);
     else issue(`会員情報登録画面に住所3の欄が無いので、住所3「F0805-${n}ビル」は入れていない`);
     if (!(await e.同意する()).sent) throw new Error(`会員 ${メール} の登録: 「同意して確認画面へ」を押しても確認画面へ進めない`);
@@ -217,7 +233,7 @@ for (const n of ["008", "052", "065", "082"]) {
 
 // ---- ブラックリスト ----
 
-for (const n of ["013", "028", "031"]) {
+for (const n of ["013", "028", "029", "031"]) {
   defineSeed(`S-F08-05-BLACKLIST-${n}`, async ({ browser, seed }) => {
     const 氏名 = 拒否の氏名(n);
     await withAdminSession(browser, SETUP_ADMIN, async (page) => {
@@ -246,6 +262,40 @@ for (const [caseNo, 氏名, 住所3] of [["072", "査定一太郎", "PD0805-001�
 
 // ---- 仮会員設定（共有の設定） ----
 
+/** 共有の設定を書き換えてよいのは、夜に1本だけで流す回（tools/run_shared_solo.sh が E2E_ALLOW_SHARED=1 を付ける）だけ。ほかの共有の環境では止める */
+export function 共有の書き換えを許す(対象: string): void {
+  if (SHARED_ENV && process.env.E2E_ALLOW_SHARED !== "1") {
+    throw new Error(`共有の環境では${対象}（共有の設定）を書き換えない。夜に1本だけで流す回でだけ書き換える`);
+  }
+}
+
+/** 店舗基本設定の全項目を画面から控え、ケースの終わりに画面で全項目を戻して、同じ値になったことを確かめる登録をする（書き換える前に呼ぶ） */
+export async function 基本設定を控えて戻す登録(browser: Browser, 対象: string): Promise<void> {
+  const 控え = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const p = new ShopBasicPage(page);
+    await p.open();
+    return await p.全部読む();
+  });
+  registerRestore(
+    対象,
+    控え,
+    async () => {
+      await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+        page.setDefaultTimeout(60_000);
+        await new ShopBasicPage(page).控えへ戻して保存する(控え, `${対象}を元の値へ戻す`);
+      });
+    },
+    async () => withAdminSession(browser, SETUP_ADMIN, async (page) => {
+      page.setDefaultTimeout(60_000);
+      const p = new ShopBasicPage(page);
+      await p.open();
+      const 今 = await p.全部読む();
+      return Object.keys(控え).every((k) => 今[k] === 控え[k]) && Object.keys(今).every((k) => k in 控え);
+    }),
+  );
+}
+
 type 戻し = { 範囲: "ケース" | "実行"; 値: boolean };
 const 仮会員設定の戻し: 戻し[] = [];
 
@@ -259,7 +309,15 @@ export async function 仮会員設定を(browser: Browser, 有効: boolean, 範�
     page.setDefaultTimeout(60_000);
     const now = await readTempMember(page);
     if (now === 有効) { issue(`仮会員設定はすでに${名(有効)}だったので、書き換えずに使った`); return; }
-    if (SHARED_ENV) throw new Error(`共有の環境では仮会員設定（共有の設定）を書き換えない。いまは${名(now)}で、このケースの前提（${名(有効)}）と違う`);
+    if (SHARED_ENV) {
+      共有の書き換えを許す(`仮会員設定（いまは${名(now)}で、このケースの前提は${名(有効)}）`);
+      // 夜の1本流しの回: 店舗基本設定の全項目を控え、ケースの終わりに基盤が画面で全項目を戻す
+      await 基本設定を控えて戻す登録(browser, "店舗基本設定（全項目。仮会員設定を書き換える前）");
+      await setTempMember(page, 有効);
+      if ((await readTempMember(page)) !== 有効) throw new Error(`仮会員設定を${名(有効)}にして保存したが、開き直すと${名(!有効)}のまま`);
+      issue(`仮会員設定を${名(有効)}にした（共有の設定。元の値「${名(now)}」を含む店舗基本設定の全項目を控え、ケースの終わりに画面で戻して確かめる）`);
+      return;
+    }
     await setTempMember(page, 有効);
     if ((await readTempMember(page)) !== 有効) throw new Error(`仮会員設定を${名(有効)}にして保存したが、開き直すと${名(!有効)}のまま`);
     仮会員設定の戻し.push({ 範囲, 値: now });
@@ -290,13 +348,93 @@ defineSeed("S-F08-05-ACTIVATE-OFF-080", async ({ browser, seed }) => {
   await 仮会員設定を(browser, false, "ケース", (m) => reportSeedIssue(seed.シードID, m));
 });
 
-// ---- メールテンプレート（共有の設定。書き換えない） ----
+defineSeed("S-F08-05-GF-ACTIVATE-OFF", async ({ browser, seed }) => {
+  await 仮会員設定を(browser, false, "ケース", (m) => reportSeedIssue(seed.シードID, m));
+});
+
+// ---- 基本情報（共有の設定。書き換えて、基盤が戻す） ----
+
+export const 基本情報の値 = {
+  送信元: "f0805-from@example.test", 店名: "F0805テスト店", 返信先: "f0805-reply@example.test", 送信エラー受付: "f0805-bounce@example.test",
+};
+
+defineSeed("S-F08-05-BASIC", async ({ browser, seed }) => {
+  共有の書き換えを許す("基本情報");
+  await 基本設定を控えて戻す登録(browser, "店舗基本設定（全項目。基本情報を書き換える前）");
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const p = new ShopBasicPage(page);
+    await p.入れて保存する("店舗基本設定（基本情報）の書き換え", async () => {
+      await p.入れる("送信元メールアドレス", 基本情報の値.送信元);
+      await p.入れる("店名", 基本情報の値.店名);
+      await p.入れる("返信先メールアドレス", 基本情報の値.返信先);
+      await p.入れる("送信エラー通知メールアドレス", 基本情報の値.送信エラー受付);
+    });
+    await p.open();
+    const 今 = [await p.値("送信元メールアドレス"), await p.値("店名"), await p.値("返信先メールアドレス"), await p.値("送信エラー通知メールアドレス")];
+    if (今.join("|") !== [基本情報の値.送信元, 基本情報の値.店名, 基本情報の値.返信先, 基本情報の値.送信エラー受付].join("|")) {
+      throw new Error(`基本情報を書き換えたが、開き直した画面の値が違う（${今.join(" / ")}）`);
+    }
+  });
+  reportSeedIssue(seed.シードID, "基本情報のメールアドレスは店舗基本設定の「送信元メールアドレス」、店舗名は「店名」として書き換えた（共有の設定。全項目を控え、ケースの終わりに画面で全項目を戻して確かめる）");
+});
+
+// ---- メールテンプレート（共有の設定。037・038 は件名を書き換えて、基盤が戻す） ----
+
+/** メールテンプレートの件名を書き換える。書き換える前に編集欄を全部控え、ケースの終わりに画面で全部戻して確かめる登録をする */
+async function テンプレートの件名を書き換える(browser: Browser, seedId: string, 名称: string, 件名: string): Promise<void> {
+  共有の書き換えを許す(`メールテンプレート「${名称}」`);
+  const 読む = () => withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    await テンプレートを開く(page, 名称);
+    return await テンプレートの欄を読む(page);
+  });
+  const 控え = await 読む();
+  registerRestore(
+    `メールテンプレート「${名称}」の編集欄`,
+    控え,
+    async () => {
+      await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+        page.setDefaultTimeout(60_000);
+        await テンプレートを開く(page, 名称);
+        await テンプレートの欄を保存する(page, 控え, `メールテンプレート「${名称}」を元の値へ戻す`);
+      });
+    },
+    async () => {
+      const 今 = await 読む();
+      return Object.keys(控え).every((k) => 今[k] === 控え[k]) && Object.keys(今).every((k) => k in 控え);
+    },
+  );
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    await テンプレートを開く(page, 名称);
+    await テンプレートの欄を保存する(page, { ...控え, "mail[mail_subject]": 件名 }, `メールテンプレート「${名称}」の件名の書き換え`);
+  });
+  if ((await 読む())["mail[mail_subject]"] !== 件名) throw new Error(`メールテンプレート「${名称}」の件名を書き換えたが、開き直すと違う`);
+  reportSeedIssue(seedId, `メールテンプレート「${名称}」の件名を「${件名}」にした（共有の設定。編集欄を全部控え、ケースの終わりに画面で戻して確かめる）`);
+}
+
+defineSeed("S-F08-05-TPL-EN", async ({ browser, seed }) => {
+  await テンプレートの件名を書き換える(browser, seed.シードID, "【販売/英】仮会員登録", "F0805-EN Confirmation");
+});
 
 defineSeed("S-F08-05-TPL-JP", async ({ browser, seed }) => {
   const 名称 = "【販売/日】仮会員登録";
+  // 件名を書き換えるのは 037 だけ。044 など、ほかのケースは従来どおり書き換えない
+  if (test.info().title.startsWith("IT-F08-05-037 ")) {
+    await テンプレートの件名を書き換える(browser, seed.シードID, 名称, "F0805-JP 確認メール");
+    return;
+  }
   const names = await withAdminSession(browser, SETUP_ADMIN, async (page) => { page.setDefaultTimeout(60_000); return 自動送信メールのテンプレート名(page); });
   reportSeedIssue(seed.シードID, `メールテンプレート「${名称}」の件名を「F0805-JP 確認メール」に書き換えなかった（共有の設定のため）。` +
     `044 の期待結果は使用したテンプレートの名称で確かめるので、件名に依らない。自動送信メールの設定画面の選択肢に「${名称}」が${names.includes(名称) ? "ある" : "見当たらない（ほかの画面のテンプレートの可能性）"}`);
+});
+
+// ---- メールの受け口（開発環境の mailcatcher。E2E_MAIL_URL） ----
+
+defineSeed("S-F08-05-MAILBOX", async ({ seed }) => {
+  await mailIds(); // メールの受け口が読めること（読めなければここで止まる）
+  reportSeedIssue(seed.シードID, "メールの受け口（開発環境の mailcatcher）が読めることを確かめた。受信メールを消さず（共有の受け口）、ケースの操作の前に控えたメールの番号より後に、そのケースの宛先（実行の印つきの申込者のメールアドレス）に届いたメールだけを数えて「受信履歴0件」に代えた");
 });
 
 // ---- 管理者 ----
@@ -305,6 +443,6 @@ defineSeed("S-F08-05-PD-ADM", { needs: ["S-F08-05-PD-STORE-074"] }, async ({ bro
   const id = notes.get("〔店舗ID-F0805-003〕");
   await withAdminSession(browser, SETUP_ADMIN, (page) => ensureMemberByStoreIds(page, {
     名前: "F0805 PD確認用管理者", ログインID: F0805_ADMIN.loginId, メールアドレス: "f0805pdadmin@example.test", パスワード: F0805_ADMIN.password,
-    権限: "システム管理者", 所属店舗ID: id, デフォルト検索表示店舗ID: "", 編集可能店舗ID: [id],
+    権限: "システム管理者", 所属店舗ID: id, デフォルト検索表示店舗ID: "", 編集可能店舗ID: [id], 店舗は付け替える: true,
   }));
 });

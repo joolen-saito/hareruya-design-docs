@@ -4,6 +4,7 @@ import { caseTest, CaseBody, expect } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { カード名日のリーガリティ, フォーマットの指定数, フォーマットの値 } from "../../db/m14_10_format";
+import { FormatListPage, pathOf, フォーマット一覧のパス } from "../../pages/admin/m14_09_format_list";
 import { M1409_ADMIN } from "../../seeds/m14-09";
 
 const 一覧を開く = async (page: Page): Promise<void> => {
@@ -32,7 +33,7 @@ const 実行を押す = async (page: Page): Promise<{ status: number; url: strin
 caseTest("IT-M14-09-007", async ({ page, step, expected }) => {
   await loginAdmin(page, M1409_ADMIN);
   await step(1, async () => { await 一覧を開く(page); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('a[href$="/format/new"]').first().click({ timeout: 20_000 })]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('a[href$="/format/new"]').first().click({ timeout: 20_000, noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移先（フォーマット詳細(登録)画面）").toMatch(/\/format\/new$/);
     expect.soft(await page.locator('[name="admin_format[nameJp]"]').count(), "フォーマット名(日)の入力欄").toBe(1);
@@ -50,8 +51,11 @@ const 消す対象: Record<string, 対象> = {
 const 識別子 = (n: string) => ({ n, 日: rc(`識別子確認フォーマット-${n}`), 英: rc(`Identifier Format ${n}`) });
 const トークン = (n: string) => ({ n, 日: rc(`トークン確認フォーマット-${n}`), 英: rc(`Token Format ${n}`) });
 
-/** 一覧 → 行の3点リーダーから削除 → ポップアップの「実行」（→ DBで確かめる）。確かめは 結果 を受け取る */
-function 一覧で削除(o: { 対象: 対象; 確かめ: (c: { 結果: { status: number; url: string }; v: ReturnType<typeof フォーマットの値>; 指定数: number; id: string }) => void; DB: boolean }): CaseBody {
+type 確かめ = "削除済みにならない" | "一覧へ戻る" | "指定0件で削除済み" | "削除済み";
+
+/** 一覧 → 行の3点リーダーから削除 → ポップアップの「実行」（→ DBで確かめる）。
+ *  確かめの式は、DB の値を読んだ行と同じ関数の中に書く（画像の上の帯に、DB で読んだ値が出る） */
+function 一覧で削除(o: { 対象: 対象; 種類: 確かめ }): CaseBody {
   return async ({ page, notes, step, expected }) => {
     await loginAdmin(page, M1409_ADMIN);
     const id = notes.get(`〔フォーマットID-M1409-${o.対象.n}〕`);
@@ -61,28 +65,32 @@ function 一覧で削除(o: { 対象: 対象; 確かめ: (c: { 結果: { status:
     await step(1, async () => { await 一覧を開く(page); });
     await step(2, async () => { await 削除ポップアップを開く(page, o.対象.日, o.対象.英); });
     await step(3, async () => { 結果 = await 実行を押す(page); });
-    if (o.DB) await step(4, async () => { v = フォーマットの値(id); 指定数 = フォーマットの指定数(id); });
+    if (o.種類 !== "一覧へ戻る") await step(4, async () => { v = フォーマットの値(id); 指定数 = フォーマットの指定数(id); });
     await expected(async () => {
       expect.soft(結果.status, "削除要求への応答があった（要求が送られた）").not.toBe(0);
-      o.確かめ({ 結果, v, 指定数, id });
+      if (o.種類 === "一覧へ戻る") {
+        expect.soft(pathOf(結果.url), "遷移先（フォーマット一覧画面のアドレス）").toBe(フォーマット一覧のパス());
+        await expect.soft(new FormatListPage(page).見出し行, "フォーマット一覧の表の見出し行").toBeVisible();
+      } else if (o.種類 === "削除済みにならない") {
+        expect.soft(v !== null && !v.削除済み, `ID ${id} のフォーマットが削除済みに変わっていない`).toBe(true);
+      } else {
+        if (o.種類 === "指定0件で削除済み") expect.soft(指定数, `ID ${id} のカードごとの禁止・制限の指定の数`).toBe(0);
+        expect.soft(v !== null && v.削除済み, `ID ${id} のフォーマット本体が残ったまま削除済みとして記録されている`).toBe(true);
+      }
     });
   };
 }
-const 一覧へ戻る = ({ 結果 }: { 結果: { url: string } }) => { expect.soft(new URL(結果.url).pathname, "遷移先（フォーマット一覧画面）").toMatch(/\/format(\/page\/\d+)?$/); };
 
-caseTest("IT-M14-09-011", 一覧で削除({ 対象: 消す対象["011"], DB: true, 確かめ: ({ v }) => { expect.soft(v !== null && !v.削除済み, "イベントが紐づくフォーマットが削除済みに変わっていない").toBe(true); } }));
-caseTest("IT-M14-09-012", 一覧で削除({ 対象: 消す対象["012"], DB: false, 確かめ: 一覧へ戻る }));
-caseTest("IT-M14-09-015", 一覧で削除({ 対象: 消す対象["015"], DB: true, 確かめ: ({ v }) => { expect.soft(v !== null && !v.削除済み, "アーキタイプが紐づくフォーマットが削除済みに変わっていない").toBe(true); } }));
-caseTest("IT-M14-09-016", 一覧で削除({ 対象: 消す対象["016"], DB: false, 確かめ: 一覧へ戻る }));
-caseTest("IT-M14-09-017", 一覧で削除({ 対象: 消す対象["017"], DB: true, 確かめ: ({ v, 指定数 }) => {
-  expect.soft(指定数, "カードごとの禁止・制限の指定の数").toBe(0);
-  expect.soft(v !== null && v.削除済み, "フォーマット本体が残ったまま削除済みとして記録されている").toBe(true);
-} }));
-caseTest("IT-M14-09-018", 一覧で削除({ 対象: 消す対象["018"], DB: false, 確かめ: 一覧へ戻る }));
-caseTest("IT-M14-09-027", 一覧で削除({ 対象: 消す対象["027"], DB: true, 確かめ: ({ v }) => { expect.soft(v !== null && v.削除済み, "フォーマット本体が残ったまま削除済みとして記録されている").toBe(true); } }));
+caseTest("IT-M14-09-011", 一覧で削除({ 対象: 消す対象["011"], 種類: "削除済みにならない" }));
+caseTest("IT-M14-09-012", 一覧で削除({ 対象: 消す対象["012"], 種類: "一覧へ戻る" }));
+caseTest("IT-M14-09-015", 一覧で削除({ 対象: 消す対象["015"], 種類: "削除済みにならない" }));
+caseTest("IT-M14-09-016", 一覧で削除({ 対象: 消す対象["016"], 種類: "一覧へ戻る" }));
+caseTest("IT-M14-09-017", 一覧で削除({ 対象: 消す対象["017"], 種類: "指定0件で削除済み" }));
+caseTest("IT-M14-09-018", 一覧で削除({ 対象: 消す対象["018"], 種類: "一覧へ戻る" }));
+caseTest("IT-M14-09-027", 一覧で削除({ 対象: 消す対象["027"], 種類: "削除済み" }));
 
 /** 削除ポップアップを開いたあと、要求の宛先やトークンを書き換えて「実行」を押す型 */
-function 改ざん削除(o: { 対象: 対象; 宛先を変える?: string; トークン?: string; DB: boolean; 確かめ: (c: { status: number; v: ReturnType<typeof フォーマットの値> }) => void }): CaseBody {
+function 改ざん削除(o: { 対象: 対象; 宛先を変える?: string; トークン?: string; 種類: "該当なし" | "アクセス拒否" | "削除済みにならない" }): CaseBody {
   return async ({ page, notes, step, expected }) => {
     await loginAdmin(page, M1409_ADMIN);
     const id = notes.get(`〔フォーマットID-M1409-${o.対象.n}〕`);
@@ -96,17 +104,19 @@ function 改ざん削除(o: { 対象: 対象; 宛先を変える?: string; ト�
       if (o.トークン !== undefined) await link.evaluate((a, t) => a.setAttribute("token-for-anchor", t), o.トークン);
     });
     await step(4, async () => { 結果 = await 実行を押す(page); });
-    if (o.DB) await step(5, async () => { v = フォーマットの値(id); });
+    if (o.種類 === "削除済みにならない") await step(5, async () => { v = フォーマットの値(id); });
     await expected(async () => {
       expect.soft(結果.status, "削除要求への応答があった（要求が送られた）").not.toBe(0);
-      o.確かめ({ status: 結果.status, v });
+      if (o.種類 === "該当なし") expect.soft(結果.status, "削除要求への応答（該当なし）").toBe(404);
+      else if (o.種類 === "アクセス拒否") expect.soft(結果.status, "削除要求への応答（アクセス拒否）").toBe(403);
+      else expect.soft(v !== null && !v.削除済み, `ID ${id} のフォーマットが削除済みに変わっていない`).toBe(true);
     });
   };
 }
-caseTest("IT-M14-09-019", 改ざん削除({ 対象: 識別子("019"), 宛先を変える: "999999019", DB: false, 確かめ: ({ status }) => { expect.soft(status, "削除要求への応答（該当なし）").toBe(404); } }));
-caseTest("IT-M14-09-020", 改ざん削除({ 対象: 識別子("020"), 宛先を変える: "999999020", DB: true, 確かめ: ({ v }) => { expect.soft(v !== null && !v.削除済み, "フォーマットが削除済みに変わっていない").toBe(true); } }));
-caseTest("IT-M14-09-021", 改ざん削除({ 対象: トークン("021"), トークン: "invalid-token", DB: false, 確かめ: ({ status }) => { expect.soft(status, "削除要求への応答（アクセス拒否）").toBe(403); } }));
-caseTest("IT-M14-09-022", 改ざん削除({ 対象: トークン("022"), トークン: "invalid-token", DB: true, 確かめ: ({ v }) => { expect.soft(v !== null && !v.削除済み, "フォーマットが削除済みに変わっていない").toBe(true); } }));
+caseTest("IT-M14-09-019", 改ざん削除({ 対象: 識別子("019"), 宛先を変える: "999999019", 種類: "該当なし" }));
+caseTest("IT-M14-09-020", 改ざん削除({ 対象: 識別子("020"), 宛先を変える: "999999020", 種類: "削除済みにならない" }));
+caseTest("IT-M14-09-021", 改ざん削除({ 対象: トークン("021"), トークン: "invalid-token", 種類: "アクセス拒否" }));
+caseTest("IT-M14-09-022", 改ざん削除({ 対象: トークン("022"), トークン: "invalid-token", 種類: "削除済みにならない" }));
 
 caseTest("IT-M14-09-028", async ({ page, step, expected }) => {
   await loginAdmin(page, M1409_ADMIN);

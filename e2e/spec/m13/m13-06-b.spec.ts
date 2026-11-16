@@ -4,13 +4,15 @@
  * 032（12001件の大量データ）は実装しない。
  */
 import { test } from "@playwright/test";
+import { 印店名 } from "../../pages/admin/m13_marked_shop";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
 import { 申込の申込履歴の件数, 申込の申込状況 } from "../../db/m13_07";
 import { EntryListPage, 結果の行 } from "../../pages/admin/m13_06_entry_list";
 import { BulkEditPage } from "../../pages/admin/m13_07_bulk_edit";
-import { M1306_ADMIN } from "../../seeds/m13-06";
+import { M1306_ADMIN, 英名 } from "../../seeds/m13-06";
+import { 読み替えた開催日 } from "../../seeds/m13-06";
 import { モーダル005, モーダル006の語, 晴屋031, 晴大会, 申込023, 申込日時062, 申込日時067 } from "../../seeds/m13-06-b";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -39,7 +41,7 @@ caseTest("IT-M13-06-005", async ({ page, step, expected }) => {
   await step(1, async () => { await list.開く(); await list.モーダルを開く(); });
   await step(2, async () => {
     await list.モーダルのイベント名.fill(n.語);
-    await list.モーダルの店舗.selectOption({ label: "新宿店" });
+    await list.モーダルの店舗.selectOption({ label: 印店名.新宿 });
     await list.日付を入れる(list.モーダルの開催日From, "2026/09/01");
     await list.日付を入れる(list.モーダルの開催日To, "2026/09/30");
     await list.モーダルで検索する();
@@ -57,6 +59,9 @@ caseTest("IT-M13-06-005", async ({ page, step, expected }) => {
 
 caseTest("IT-M13-06-006", async ({ page, step, expected }) => {
   const list = await ログインして開く(page);
+  // 1ページ目の10件がモーダルの中で途中で切れずに全部写るよう、画面を縦に大きくする（モーダルは画面の高さに収まるまでしか伸びない）
+  await page.setViewportSize({ width: 1280, height: 2600 });
+  note("モーダルの一覧10件が途中で切れずに写るよう、画面の高さを大きくして撮った（操作は同じ）");
   await step(1, async () => {
     await list.開く(); await list.モーダルを開く();
     await list.モーダルのイベント名.fill(モーダル006の語());
@@ -69,6 +74,7 @@ caseTest("IT-M13-06-006", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(p1.length, "1ページ目に表示された日程の数").toBe(10);
     expect.soft(p2.length, "2ページ目に表示された日程の数").toBe(2);
+    await expect.soft(list.モーダルの結果.locator("button.set-event"), "2ページ目に表示された日程の行（モーダルの一覧）").toHaveCount(2);
     expect.soft(p2.filter((x) => p1.includes(x)).length, "1ページ目と2ページ目で重なる日程の数").toBe(0);
   });
 });
@@ -79,7 +85,7 @@ caseTest("IT-M13-06-056", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await list.開く(); await list.モーダルを開く(); });
   await step(2, async () => {
     await list.モーダルのイベント名.fill(rc("M1306-056"));
-    await list.モーダルの店舗.selectOption({ label: "池袋店" });
+    await list.モーダルの店舗.selectOption({ label: 印店名.池袋 });
     await list.日付を入れる(list.モーダルの開催日From, "2026/09/01");
     await list.日付を入れる(list.モーダルの開催日To, "2026/09/30");
     await list.モーダルで検索する();
@@ -110,19 +116,24 @@ caseTest("IT-M13-06-023", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     expect.soft(件数 ?? rows.length, "該当件数").toBe(3);
     const a = 申込IDの行(rows, A)[0], b = 申込IDの行(rows, B)[0], c = 申込IDの行(rows, C)[0];
-    for (const [x, r, 店舗, 姓] of [["A", a, "新宿店", 申込023.姓("A")], ["C", c, "池袋店", 申込023.姓("C")]] as const) {
+    const 正規表現の文字 = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const 欄 = (r: 結果の行 | undefined, n: number) => (r?.行 ?? page.locator("#__no_such_row__")).locator(":scope > td").nth(n);
+    for (const [x, r, 店舗, 姓] of [["A", a, 印店名.新宿, 申込023.姓("A")], ["C", c, 印店名.池袋, 申込023.姓("C")]] as const) {
+      const 名日 = `${申込023.語()}${x}`, 英 = 英名(`023${x}`);
+      const 開催 = 読み替えた開催日(申込023.開催日(x));
       expect.soft(r?.申込ID, `申込${x}の申込ID`).toBeTruthy();
-      expect.soft(r?.プレイヤー欄 ?? "", `申込${x}のプレイヤー名、デッキ登録状況`).toContain(姓);
-      expect.soft(r?.プレイヤー欄 ?? "", `申込${x}のデッキ登録状況`).toContain("デッキ未登録");
-      expect.soft(r?.イベント欄 ?? "", `申込${x}のイベント名・店舗`).toContain(店舗);
-      expect.soft(r?.イベント欄 ?? "", `申込${x}の開催日`).toMatch(/\d{4}\/\d{2}\/\d{2}/);
-      expect.soft(r?.申込欄 ?? "", `申込${x}の申込日時`).toMatch(/\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}/);
-      expect.soft(r?.申込欄 ?? "", `申込${x}の支払番号`).toContain(申込023.支払番号(x));
+      // 一覧の欄ごとに、欄の文字全体を比べる（赤枠はその欄に付く）。プレイヤー名は姓・名とも完全一致、デッキ登録状況は「（登録日時）にデッキ登録」
+      await expect.soft(欄(r, 1), `申込${x}の申込ID`).toHaveText(x === "A" ? A : C);
+      await expect.soft(欄(r, 2), `申込${x}のプレイヤー名、デッキ登録状況（デッキあり）`).toHaveText(new RegExp(`^${正規表現の文字(`${姓} 一郎`)} \\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}にデッキ登録$`));
+      await expect.soft(欄(r, 3), `申込${x}のイベント名・店舗・開催日`).toHaveText(`${名日} ${英} ${店舗} ${ymd(開催)} ${開催.slice(11)}`);
+      await expect.soft(欄(r, 4), `申込${x}の申込日時・支払状況・支払番号`).toHaveText(`${ymd(申込023.申込日時)} ${申込023.申込日時.slice(11)} 申込済み ${申込023.支払番号(x)}`);
     }
-    expect.soft(b?.チェックあり, "新宿店の申込Bのチェックボックス").toBe(true);
-    expect.soft(a?.チェックあり, "新宿店の申込Aのチェックボックスが表示される").toBe(true);
-    expect.soft(c?.チェックあり, "編集権限のない池袋店の申込Cのチェックボックスが表示されない").toBe(false);
+    await expect.soft(欄(b, 2), "申込Bのデッキ登録状況（デッキなし）").toContainText("デッキ未登録");
+    await expect.soft(欄(a, 0).locator("input.playerCheck"), "新宿店の申込Aのチェックボックスが表示される").toHaveCount(1);
+    await expect.soft(欄(b, 0).locator("input.playerCheck"), "新宿店の申込Bのチェックボックスが表示される").toHaveCount(1);
+    await expect.soft(欄(c, 0).locator("input.playerCheck"), "編集権限のない池袋店の申込Cのチェックボックスが表示されない").toHaveCount(0);
   });
+  note("シード表のとおり、申込Aと申込Cはデッキを画面で登録し（デッキ一覧の新規登録）、申込Bはデッキなし。一覧のデッキ登録状況は、Aと Cが「（登録日時）にデッキ登録」、Bが「デッキ未登録」");
 });
 
 caseTest("IT-M13-06-030", async ({ page, notes, step, expected }) => {
@@ -132,7 +143,7 @@ caseTest("IT-M13-06-030", async ({ page, notes, step, expected }) => {
   await step(2, async () => {
     const row = 申込IDの行(await list.行を読む(), id)[0];
     if (!row) throw new Error(`検索結果に申込ID ${id} の行が無い`);
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), row.行.locator(":scope > td").nth(2).locator("a").first().click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), row.行.locator(":scope > td").nth(2).locator("a").first().click({ timeout: 30_000, noWaitAfter: true })]);
   });
   await expected(async () => {
     expect(new URL(page.url()).pathname, "遷移した画面（イベント申込詳細・編集）").toMatch(new RegExp(`/event/entry/${id}/edit$`));
@@ -150,7 +161,7 @@ caseTest("IT-M13-06-031", async ({ page, notes, step, expected }) => {
     if (!row) return { 押せた: false, 遷移先: "（行が無い）" };
     const btn = row.行.getByRole("link", { name: "デッキ表示", exact: true }).or(row.行.getByRole("button", { name: "デッキ表示", exact: true }));
     if ((await btn.count()) === 0) return { 押せた: false, 遷移先: new URL(page.url()).pathname };
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), btn.first().click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), btn.first().click({ timeout: 30_000, noWaitAfter: true })]);
     return { 押せた: true, 遷移先: new URL(page.url()).pathname };
   };
   await step(1, async () => { await 名前で検索する(list, 晴大会("031"), "イベント申込を検索"); });
@@ -198,17 +209,21 @@ function 一括更新(n: "026" | "074", 開始時間を空にする: boolean, �
       note(`「更新」を押すと、ダイアログ「${r.文}」が出た。OK を押して閉じた`);
       await r.閉じる();
     });
-    const 状況: Record<string, string> = {}; const 後履歴: Record<string, number> = {};
-    await step(4, async () => { for (const id of [A, B]) { 状況[id] = 申込の申込状況(id); 後履歴[id] = 申込の申込履歴の件数(id); } });
+    // 後の値は、DBを読んだ関数の結果をそのまま変数に入れる（確かめの帯に、何をDBで読んだかが書かれるように）
+    let 状況A = "", 状況B = "", 増えたA = -1, 増えたB = -1;
+    await step(4, async () => {
+      状況A = 申込の申込状況(A); 増えたA = 申込の申込履歴の件数(A) - 前履歴[A];
+      状況B = 申込の申込状況(B); 増えたB = 申込の申込履歴の件数(B) - 前履歴[B];
+    });
     await expected(async () => {
-      expect.soft(状況[A], `申込ID ${A} の申込状況`).toBe("申込済み");
-      expect.soft(後履歴[A] - 前履歴[A], `申込ID ${A} の申込履歴の増えた件数`).toBe(1);
+      expect.soft(状況A, `申込ID ${A} の申込状況`).toBe("申込済み");
+      expect.soft(増えたA, `申込ID ${A} の申込履歴の増えた件数`).toBe(1);
       if (両方チェック) {
-        expect.soft(状況[B], `申込ID ${B} の申込状況`).toBe("申込済み");
-        expect.soft(後履歴[B] - 前履歴[B], `申込ID ${B} の申込履歴の増えた件数`).toBe(1);
+        expect.soft(状況B, `申込ID ${B} の申込状況`).toBe("申込済み");
+        expect.soft(増えたB, `申込ID ${B} の申込履歴の増えた件数`).toBe(1);
       } else {
-        expect.soft(状況[B], `選択していない申込ID ${B} の申込状況（入金待ちのまま）`).toBe("入金待ち");
-        expect.soft(後履歴[B] - 前履歴[B], `選択していない申込ID ${B} の申込履歴の増えた件数`).toBe(0);
+        expect.soft(状況B, `選択していない申込ID ${B} の申込状況（入金待ちのまま）`).toBe("入金待ち");
+        expect.soft(増えたB, `選択していない申込ID ${B} の申込履歴の増えた件数`).toBe(0);
       }
     });
     note(`申込状況「入金待ち」は画面で変えて作ったので、申込履歴はシード表の0件でなくケースの始めに ${Object.entries(前履歴).map(([id, c]) => `申込ID ${id}=${c}件`).join("、")}。期待は増えた件数で確かめた`);

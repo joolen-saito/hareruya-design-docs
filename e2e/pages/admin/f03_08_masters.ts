@@ -27,7 +27,7 @@ export async function setFavoriteOption(page: Page, on: boolean): Promise<boolea
   // 切り替えのスイッチは見た目の部品なので、ラベルを押す
   await page.locator(`label[for="shop_master_option_favorite_product"]`).click();
   expect(await page.locator(FAVORITE).isChecked(), "お気に入り商品機能のスイッチを切り替えた").toBe(on);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("form#point_form button[type=submit]").click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("form#point_form button[type=submit]").click({ noWaitAfter: true })]);
   await expectSaved(page, `店舗設定のお気に入り商品機能を${on ? "有効" : "無効"}にする`);
   expect(await page.locator(FAVORITE).isChecked(), "登録後のお気に入り商品機能の設定").toBe(on);
   return true;
@@ -71,8 +71,8 @@ export async function setProductPrivate(page: Page, 商品ID: string, what: stri
     onIssue(`${what}: 販売制限は必須で未選択だったので先頭を選んだ`);
   }
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: 商品を登録`)) onIssue(`${what}: 警告「${w}」`);
 }

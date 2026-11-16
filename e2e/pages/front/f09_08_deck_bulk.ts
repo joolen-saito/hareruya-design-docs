@@ -122,6 +122,47 @@ export class DeckBulkPage {
     await this.page.waitForTimeout(1_000);
   }
 
+  /**
+   * 開発者ツールのネットワーク表示で応答の内容を開いて見る代わり。カードリストの確認の応答（状態・処理結果・商品規格IDと数量の組・誤りの一覧・本文そのまま）を、
+   * いまの画面の末尾の枠に書き出す（応答は買い物かごへ移るため画面に残らない。枠は撮る画面にだけ足し、画面の操作には使わない）。
+   * 枠の各行を読めるよう、行ごとの Locator を返す。
+   */
+  async 応答の内容を画面に出す(r: 確認の応答 | undefined): Promise<{ 枠: Locator; 状態: Locator; 処理結果: Locator; 組: Locator; 誤り: Locator }> {
+    const 行 = {
+      状態: `${r?.状態 ?? "応答なし"}`,
+      処理結果: r?.本文 ? (r.本文.success ? "成功" : "失敗") : "本文なし",
+      組: 組の一覧(r).join("、") || "なし",
+      誤り: (r?.本文?.errors ?? []).join("、") || "なし",
+      本文: (r?.生 ?? "").slice(0, 1500),
+    };
+    await this.page.evaluate((v) => {
+      document.getElementById("e2e-bulk-response")?.remove();
+      const box = document.createElement("div");
+      box.id = "e2e-bulk-response";
+      box.setAttribute("style", "all:initial;display:block;margin:16px;padding:12px;border:2px solid #555;background:#fff;color:#000;font:14px/1.6 monospace;white-space:pre-wrap;word-break:break-all;");
+      const add = (key: string, label: string, text: string) => {
+        const d = document.createElement("div");
+        d.setAttribute("data-e2e-line", key);
+        d.textContent = `${label}: ${text}`;
+        box.appendChild(d);
+      };
+      const h = document.createElement("div");
+      h.textContent = "【カードリストの確認の応答の内容（開発者ツールのネットワーク表示の代わりに書き出した）】";
+      box.appendChild(h);
+      add("status", "応答の状態", v.状態);
+      add("result", "処理結果", v.処理結果);
+      add("cart", "商品規格IDと数量の組", v.組);
+      add("errors", "誤りの一覧", v.誤り);
+      add("raw", "応答の本文（そのまま）", v.本文);
+      document.body.appendChild(box);
+    }, 行);
+    const 枠 = this.page.locator("#e2e-bulk-response");
+    return {
+      枠, 状態: 枠.locator('[data-e2e-line="status"]'), 処理結果: 枠.locator('[data-e2e-line="result"]'),
+      組: 枠.locator('[data-e2e-line="cart"]'), 誤り: 枠.locator('[data-e2e-line="errors"]'),
+    };
+  }
+
   /** 画面の誤りの欄に並んだ文（上から順） */
   async 誤りの一覧(): Promise<string[]> {
     return (await this.誤りの欄.allTextContents()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);

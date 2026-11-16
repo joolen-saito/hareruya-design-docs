@@ -116,7 +116,12 @@ caseTest("IT-M05-01-076", async ({ page, step, expected }) => {
   await step(1, async () => { await p.open(); });
   await step(2, async () => { await p.orderNumber.fill(読み替え("S-M05-01-PERPAGEOPT-076", "M0501-076")); });
   await step(3, async () => { await p.clickSearch(); });
-  await step(4, async () => { opts = await p.表示件数の選択肢(); });
+  await step(4, async () => {
+    opts = await p.表示件数の選択肢();
+    // 選択肢を画像で読めるようにする: 件数の選択欄を一覧の形に広げたまま、手順4と期待結果の画像を撮る（このケースではこのあと操作しない）
+    await p.表示件数の選択肢を広げて見せる();
+    note("件数の選択欄は、選択肢がすべて見えるように一覧の形に広げて撮った（選択肢・選んでいる値は変えていない）");
+  });
   await expected(async () => {
     expect.soft(opts, "件数の選択肢（9つだけ）").toEqual(表示件数.map((n) => `${n}件`));
   });

@@ -8,15 +8,23 @@ import { test } from "@playwright/test";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { M0703EditPage, 一覧から編集を開く } from "../../pages/admin/m07_03_edit";
-import { mailIds, 宛先に届いたメール, 待ってから数える } from "../../pages/mail_inbox";
+import { mailIds, 宛先に届いたメール, 待ってから数える, 振込完了メールか, 届いたメール } from "../../pages/mail_inbox";
+import { 買取番号の表示 } from "../../pages/admin/m07_buy";
 import { M0703B_ADMIN, 買取の会員 } from "../../seeds/m07-03-b";
 import "../../seeds/m07-03-d";
-import { 買取の値を読む } from "../../db/m07_03";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
 const メールの注記 = (宛先: string) =>
   `買取依頼者のメールアドレスは正本の値に実行の印を付けた値（${宛先}）。受信箱は、保存の前に控えたメールの番号より後に、このアドレスへ届いたメールだけを数えた（宛先のメールを0件にする代わり）`;
+
+/** 届いたメールのうち、この買取の振込完了メール（件名と本文の【オーダーID】で見分ける）の数 */
+async function 振込完了メールの数(届いた: 届いたメール[], 番号: string): Promise<number> {
+  let n = 0;
+  for (const m of 届いた) if (await 振込完了メールか(m, 買取番号の表示(番号))) n += 1;
+  return n;
+}
+const 件名の一覧 = (届いた: 届いたメール[]) => 届いた.map((m) => `「${m.件名}」`).join("、") || "なし";
 
 /** 事前準備のログインと、手順1（買取情報編集画面を開く）。シードIDの会員のメールアドレスを返す */
 async function 始める(ctx: CaseCtx, 呼び名: string, シードID: string): Promise<{ 番号: string; 宛先: string; e: M0703EditPage }> {
@@ -35,11 +43,13 @@ async function 振込完了で保存する(ctx: CaseCtx, e: M0703EditPage, 手�
   await ctx.step(手順[1], async () => {
     const r = await e.保存を押す();
     note(`保存の結果: 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`);
+    // 保存の要求が送られたこと（送られずにメールが増えなかったのを「追加送信されない」にしない）
+    expect(r.応答, "保存の要求が対象の買取へ送られ、応答があった").not.toBeNull();
   });
 }
 
 caseTest("IT-M07-03-046", async (ctx) => {
-  const { 宛先, e } = await 始める(ctx, "〔買取番号-M0703-046〕", "S-M07-03-CASE-046");
+  const { 番号, 宛先, e } = await 始める(ctx, "〔買取番号-M0703-046〕", "S-M07-03-CASE-046");
   const 控え = await mailIds();
   await 振込完了で保存する(ctx, e, [2, 3]);
   let 届いた: Awaited<ReturnType<typeof 待ってから数える>> = [];
@@ -49,8 +59,10 @@ caseTest("IT-M07-03-046", async (ctx) => {
     while (Date.now() - t0 < 90_000 && (await 宛先に届いたメール(宛先, 控え)).length === 0) await new Promise((r) => setTimeout(r, 1000));
     届いた = await 待ってから数える(宛先, 控え, 5_000);
   });
+  const 振込完了 = await 振込完了メールの数(届いた, 番号);
   await ctx.expected(async () => {
-    expect(届いた.length, `買取依頼者 ${宛先} 宛ての振込完了メールの件数`).toBe(1);
+    expect.soft(届いた.length, `買取依頼者 ${宛先} 宛てに届いたメールの件数（件名: ${件名の一覧(届いた)}）`).toBe(1);
+    expect.soft(振込完了, `そのうち、この買取（買取番号 ${買取番号の表示(番号)}）の振込完了メールの件数`).toBe(1);
   });
   note(メールの注記(宛先));
   if (届いた[0]) note(`届いたメールの件名: 「${届いた[0].件名}」`);
@@ -64,57 +76,71 @@ caseTest("IT-M07-03-047", async (ctx) => {
     await e.買取状況を選ぶ("振込完了");
     const r = await e.保存を押す();
     note(`保存の結果: 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`);
+    expect(r.応答, "保存の要求が対象の買取へ送られ、応答があった").not.toBeNull();
   });
   let 追加: Awaited<ReturnType<typeof 待ってから数える>> = [];
-  let 全部 = 0;
+  let 全部: 届いたメール[] = [];
   await ctx.step(3, async () => {
     追加 = await 待ってから数える(宛先, 控え, 20_000);
-    全部 = (await 宛先に届いたメール(宛先, new Set())).length;
+    全部 = await 宛先に届いたメール(宛先, new Set());
   });
+  const 振込完了 = await 振込完了メールの数(全部, 番号);
   await ctx.expected(async () => {
-    expect.soft(追加.length, `保存のあとに追加で届いた、${宛先} 宛ての振込完了メールの件数`).toBe(0);
-    expect.soft(全部, `${宛先} 宛てのメールの合計（過去の振込完了履歴に対応する1件のみ）`).toBe(1);
+    expect.soft(追加.length, `保存のあとに追加で届いた、${宛先} 宛てのメールの件数（件名: ${件名の一覧(追加)}）`).toBe(0);
+    expect.soft(全部.length, `${宛先} 宛てのメールの合計（過去の振込完了履歴に対応する1件のみ）`).toBe(1);
+    expect.soft(振込完了, `その1件が、この買取（買取番号 ${買取番号の表示(番号)}）の振込完了メールである`).toBe(1);
   });
   note(`${メールの注記(宛先)}。買取番号 ${番号}。追加で送信されないことは、保存のあと20秒待ってから数えて確かめた`);
 });
 
 /** 155〜157 の手順1〜5（買取状況を「振込完了」にして保存 → 受信箱を確認 → 買取状況を確認）。期待結果は各ケースで確かめる */
-async function 個別入力つき(ctx: CaseCtx, n: string): Promise<{ 宛先: string; 全部: number; 状況: string }> {
+async function 個別入力つき(ctx: CaseCtx, n: string): Promise<{ 宛先: string; 全部: number; 振込完了: number; 状況: string }> {
   const { 番号, 宛先, e } = await 始める(ctx, `〔買取番号-M0703-${n}〕`, `S-M07-03-CBMAIL-${n}`);
   const 控え = await mailIds();
   await 振込完了で保存する(ctx, e, [2, 3]);
-  let 全部 = 0;
+  let 全部 = 0, 振込完了 = 0;
   await ctx.step(4, async () => {
     // 1件目が届くのを待つ（156・157 は事前準備の1件が受け口にあるので、保存の後に増えないことを15秒待って確かめる）
     const t0 = Date.now();
     while (n === "155" && Date.now() - t0 < 90_000 && (await 宛先に届いたメール(宛先, 控え)).length === 0) await new Promise((r) => setTimeout(r, 1000));
     await new Promise((r) => setTimeout(r, 15_000));
-    全部 = (await 宛先に届いたメール(宛先, new Set())).length;
+    const 一覧 = await 宛先に届いたメール(宛先, new Set());
+    全部 = 一覧.length;
+    振込完了 = await 振込完了メールの数(一覧, 番号);
+    note(`${宛先} 宛てのメールの件名: ${件名の一覧(一覧)}`);
   });
   let 状況 = "";
-  await ctx.step(5, async () => { 状況 = 買取の値を読む(番号).買取状況; });
-  note(`${メールの注記(宛先)}。買取番号 ${番号}。買取状況は、保存した買取の買取状況の値を読んで確かめた（手順5の「同じ買取情報編集画面で確認する」の代わり）`);
-  return { 宛先, 全部, 状況 };
+  await ctx.step(5, async () => {
+    // 同じ買取情報編集画面（保存後の画面）を読み込み直して、選ばれている買取状況を読む
+    if (!new RegExp(`/purchase/${Number(番号)}/edit$`).test(new URL(ctx.page.url()).pathname)) throw new Error(`保存後の画面が買取番号 ${番号} の買取情報編集画面でない（${ctx.page.url()}）`);
+    await ctx.page.reload({ waitUntil: "load" });
+    状況 = (await e.基本情報()).買取状況;
+  });
+  note(`${メールの注記(宛先)}。買取番号 ${番号}`);
+  return { 宛先, 全部, 振込完了, 状況 };
 }
 
 caseTest("IT-M07-03-155", async (ctx) => {
   const r = await 個別入力つき(ctx, "155");
   await ctx.expected(async () => {
-    expect.soft(r.全部, `${r.宛先} 宛ての振込完了メールの合計（1件届く）`).toBe(1);
-    expect.soft(r.状況, "買取状況").toBe("未登録在庫あり");
+    expect.soft(r.全部, `${r.宛先} 宛てのメールの合計（1件届く）`).toBe(1);
+    expect.soft(r.振込完了, "そのうち、この買取の振込完了メールの件数").toBe(1);
+    expect.soft(r.状況, "同じ買取情報編集画面の買取状況").toBe("未登録在庫あり");
   });
 });
 caseTest("IT-M07-03-156", async (ctx) => {
   const r = await 個別入力つき(ctx, "156");
   await ctx.expected(async () => {
-    expect.soft(r.全部, `${r.宛先} 宛ての振込完了メールの合計（事前準備の1件のまま増えない）`).toBe(1);
-    expect.soft(r.状況, "買取状況").toBe("入庫待ち");
+    expect.soft(r.全部, `${r.宛先} 宛てのメールの合計（事前準備の1件のまま増えない）`).toBe(1);
+    expect.soft(r.振込完了, "その1件が、この買取の振込完了メールである").toBe(1);
+    expect.soft(r.状況, "同じ買取情報編集画面の買取状況").toBe("入庫待ち");
   });
 });
 caseTest("IT-M07-03-157", async (ctx) => {
   const r = await 個別入力つき(ctx, "157");
   await ctx.expected(async () => {
-    expect.soft(r.全部, `${r.宛先} 宛ての振込完了メールの合計（事前準備の1件のまま増えない）`).toBe(1);
-    expect.soft(r.状況, "買取状況").toBe("未登録在庫あり");
+    expect.soft(r.全部, `${r.宛先} 宛てのメールの合計（事前準備の1件のまま増えない）`).toBe(1);
+    expect.soft(r.振込完了, "その1件が、この買取の振込完了メールである").toBe(1);
+    expect.soft(r.状況, "同じ買取情報編集画面の買取状況").toBe("未登録在庫あり");
   });
 });

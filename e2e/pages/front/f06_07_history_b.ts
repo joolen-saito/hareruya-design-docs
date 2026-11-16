@@ -2,6 +2,7 @@
 import { Locator, Page } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { HistoryDetailPage } from "./f06_07_history";
+import { 押して移るのを待つ } from "./nav_click";
 
 export class HistoryDetailViewPage extends HistoryDetailPage {
   constructor(page: Page) { super(page); }
@@ -19,11 +20,8 @@ export class HistoryDetailViewPage extends HistoryDetailPage {
   get 送り主欄(): Locator { return this.page.locator("address.p-hareruya-history-detail__sender").first(); }
   get お届け先欄(): Locator { return this.page.locator("address.p-hareruya-history-detail__receiver").first(); }
   async 押して遷移する(l: Locator): Promise<void> {
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 });
-    try { await l.click({ timeout: 10_000 }); } catch { await l.dispatchEvent("click"); }
-    await nav;
-    await this.page.waitForLoadState("load");
+    // 押す操作だけを行い、移るのを待つ（押せているのに click の待ちが時間切れになり、移った先で押し直してしまうのを防ぐ。pages/front/nav_click.ts）
+    await 押して移るのを待つ(this.page, l, { 直接送るときの注記: "正本の外の補い" });
   }
   async 直接開く(注文ID: string): Promise<number> {
     const res = await this.page.goto(`${BASE_URL}/ja/mypage/shopping_history_detail/${注文ID}`, { timeout: 60_000 });

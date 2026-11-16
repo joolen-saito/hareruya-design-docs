@@ -28,8 +28,8 @@ import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { ensureBlacklist } from "../pages/admin/f06_masters";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
+import { ensureStore } from "../pages/admin/m04_24_reuse_k";
 import { customerIdByEmail } from "../pages/admin/m06_04_member";
 import { 管理画面で本会員にする } from "../pages/admin/member_activate";
 import { EntryPage } from "../pages/front/f06_01_entry";
@@ -80,7 +80,7 @@ function 店舗IDを得る(browser: Browser, issue: (m: string) => void): Promis
 }
 
 const 店舗の注記 = (店舗: string) =>
-  `店舗「${店舗}」を新しく作らず、F08-05 と共通の試験店舗「${PD_STORE.店名}」（支店URL ${PD_STORE.支店URL}。無ければ登録）に読み替えた。` +
+  `店舗「${店舗}」を新しく作らず、F08-05 と共通の試験店舗「${PD_STORE.店名}」（店舗ID ${PD_STORE.店舗ID}・支店URL ${PD_STORE.支店URL}。店舗は作らない決まり。依頼者 2026-11-15）に読み替えた。` +
   "手順の店舗識別名もこの店舗の支店URLとして読む（店舗識別名は画面で指定できず、DBで設定する前提だった）。" +
   "査定申込み0件の前提は、申込みの返却希望サプライ（その他）に実行・ケースの印を入れ、その申込みだけを探して数えることで代えた";
 
@@ -244,7 +244,7 @@ defineSeed("S-F08-03-L-ADM", async ({ browser, seed }) => {
   const 店舗ID = await 店舗IDを得る(browser, (m) => reportSeedIssue(seed.シードID, m));
   await withAdminSession(browser, SETUP_ADMIN, (page) => ensureMemberByStoreIds(page, {
     名前: "F0803 連携参照用管理者", ログインID: F0803_ADMIN.loginId, メールアドレス: "f0803l-admin@example.test", パスワード: F0803_ADMIN.password,
-    権限: "システム管理者", 所属店舗ID: 店舗ID, デフォルト検索表示店舗ID: "", 編集可能店舗ID: [店舗ID],
+    権限: "システム管理者", 所属店舗ID: 店舗ID, デフォルト検索表示店舗ID: "", 編集可能店舗ID: [店舗ID], 店舗は付け替える: true,
   }));
   reportSeedIssue(seed.シードID, "店頭買取管理の参照権限の代わりに、システム管理者にした（デフォルト検索表示店舗は全店）");
 });

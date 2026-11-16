@@ -23,7 +23,8 @@ export class ActivatePage {
   get エラー画面(): Locator { return this.page.locator(".p-hareruya-error"); }
   /** エラー画面の見出し（無ければ空） */
   async 見出し(): Promise<string> {
-    const h = this.エラー画面.locator("h2").first();
+    // E-1 などの画面は h2、共通エラー画面（404 Page Not Found）は h1 が見出し
+    const h = this.エラー画面.locator("h2, h1").first();
     return (await h.count()) === 0 ? "" : ((await h.innerText()) ?? "").replace(/\s+/g, " ").trim();
   }
   get トップページへ(): Locator { return this.エラー画面.locator(".p-hareruya-error__actions a").first(); }
@@ -31,7 +32,8 @@ export class ActivatePage {
   /** 「トップページへ」を押して遷移する */
   async トップページへを押す(): Promise<void> {
     await expect(this.トップページへ, "エラー画面の「トップページへ」ボタン").toBeVisible({ timeout: TIMEOUT });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.トップページへ.click({ timeout: TIMEOUT })]);
+    // 押す操作だけを待ち（noWaitAfter）、ECTOP へ移るのは waitForNavigation で待つ（重い ECTOP で click の待ちが時間切れにならないようにする）
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 90_000 }), this.トップページへ.click({ timeout: TIMEOUT, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 }

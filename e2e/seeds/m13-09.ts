@@ -2,7 +2,7 @@
  * M13-09 CSVダウンロード（イベント管理）のシード（画面操作）。正本: cases/M13-09_seed_data.tsv
  *
  * 作り方は、シード表の投入方法のとおり。シード表と違えたところ（解釈）:
- * - 店舗（S-M13-09-MASTER）: 「M1309-店舗X」「M1309-店舗Y」。あればそれを使い（店舗一覧のIDを控え直す）、無ければ店舗登録画面で登録する。
+ * - 店舗（S-M13-09-MASTER）: 「M1309-店舗X」「M1309-店舗Y」は作らず、E2E の店舗 221・4973 に読み替える（店舗一覧のIDを控える。依頼者 2026-11-15）。
  *   店名(英語表記)「Shop X」「Shop Y」・支店URL「m1309shopx」「m1309shopy」・店名略称（3文字）「M9X」「M9Y」（シード表の例）。
  *   申込状況（決済中・入金待ち・申込済み・入金期限切れ）は既存のマスタ値を使う（登録しない）ので、イベント申込一覧の申込状況の選択肢にあることを確かめる。
  * - 管理者（S-M13-09-ADM）: 管理者ID は画面が振る番号のまま。権限は「モールオペレーター」で代える（「店舗オーナー」「店舗オペレーター」は
@@ -35,14 +35,15 @@ import { 会員IDをメールから } from "../pages/admin/f07_04_setup";
 import { EntryListPage, 申込状況を変える } from "../pages/admin/m13_06_entry_list";
 import { 出力する項目を読む } from "../pages/admin/m13_09_entry_csv";
 import { EntryNewPage, 金額 } from "../pages/admin/m13_12_entry_new";
-import { ensureMember } from "../pages/admin/member";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
 import { registerSchedule } from "../pages/admin/schedule";
-import { ensureTenant } from "../pages/admin/tenant";
+import { 店舗IDで選ぶ, 表の店舗 } from "../pages/admin/store_pick";
 import { registerFrontMember } from "../pages/front/member_entry";
 
 export const M1309_ADMIN: Account = { loginId: "m1309_admin", password: "Passw0rd!M1309" };
-export const 店舗X = "M1309-店舗X";
-export const 店舗Y = "M1309-店舗Y";
+/** 正本の「M1309-店舗X」は E2E の店舗 221、「M1309-店舗Y」は E2E の店舗 4973（店舗は作らない。依頼者 2026-11-15） */
+export const 店舗X = 表の店舗("221").店名;
+export const 店舗Y = 表の店舗("4973").店名;
 const 会員のパスワード = "Passw0rd!M1309M";
 const 申込状況の値 = ["決済中", "入金待ち", "申込済み", "入金期限切れ"];
 
@@ -50,8 +51,8 @@ defineSeed("S-M13-09-MASTER", async ({ browser, notes, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(120_000);
-    notes.set("〔店舗ID-M1309-共有A〕", await ensureTenant(page, { 店名: 店舗X, 店名カナ: "エムイチサンゼロキュウテンポエックス", 店名英語: "Shop X", 支店URL: "m1309shopx", 店名略称3文字: "M9X", ショップ名略称: 店舗X }, issue));
-    notes.set("〔店舗ID-M1309-共有B〕", await ensureTenant(page, { 店名: 店舗Y, 店名カナ: "エムイチサンゼロキュウテンポワイ", 店名英語: "Shop Y", 支店URL: "m1309shopy", 店名略称3文字: "M9Y", ショップ名略称: 店舗Y }, issue));
+    notes.set("〔店舗ID-M1309-共有A〕", (await 店舗IDで選ぶ(page, "221", "M1309-店舗X", issue)).id);
+    notes.set("〔店舗ID-M1309-共有B〕", (await 店舗IDで選ぶ(page, "4973", "M1309-店舗Y", issue)).id);
     // 申込状況は既存のマスタ値を使う。イベント申込一覧の申込状況の選択肢にあることを確かめる（書き換えない）
     const list = new EntryListPage(page);
     await list.開く();
@@ -109,7 +110,9 @@ function defineEntryCsvSeed(seedId: string, n: string, 設定を読む: boolean)
       issue("日程の終了予定時刻（2030-04-01 12:00）は DB への直接の設定なので行わなかった（条件付き。このシードを使うケースは終了予定時刻の値を確かめない）");
       // 申込
       const f = new EntryNewPage(page);
-      await f.検索結果から開く(名日, 日程ID);
+      // 日程はシード表の手順どおりオンライン受付なしなので、イベント申込登録（検索結果）に出ない。日程IDのアドレスを直接開く
+      issue("日程はシード表の手順どおり（オンライン受付なし）に作ったため、イベント申込登録（検索結果）に出ない（設計書: オンライン受付ありの日程のみ検索対象）。新規申込登録画面は、日程IDのアドレスを直接開いて代えた");
+      await f.日程IDのアドレスから開く(日程ID);
       await f.ポップアップを開く();
       await f.プレイヤーを検索する(姓);
       const rows = (await f.結果の行の中身()).filter((r) => r.名前.startsWith(姓));

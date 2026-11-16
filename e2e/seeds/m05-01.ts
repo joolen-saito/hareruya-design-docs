@@ -28,7 +28,7 @@ import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { StockSearchPatternPage } from "../pages/admin/m04_01_search_pattern";
-import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
+import { ensureStore, M0424StoreInput, 使い回す店舗の入力 } from "../pages/admin/m04_24_reuse_k";
 import { OrderSearchPage } from "../pages/admin/m05_01_order_search_k";
 import {
   ensureMemberAligned, storeName, 会員が商品を注文する, 対応状況をそろえる, 注文番号から受注IDを読む, 表示件数マスタを読む, 本店ID, 試験商品を用意する,
@@ -39,11 +39,8 @@ import { FrontMember } from "../pages/front/member_entry";
 export const M0501_ADMIN: Account = { loginId: "m0501_admin", password: "Passw0rd!M0501" };
 const ADMIN_NAME = "M05-01試験管理者";
 
-const COMPANY = "M05-01試験会社";
-const STORE_B: M0424StoreInput = {
-  店名: "試験店舗B（M05-01）", 店名カナ: "シケンテンポビー", 店名英語: "Test Store B Mfive", 支店URL: "m0501storeb", 店名略称3文字: "R5B", ショップ名略称: "試験店舗B",
-  会社名: COMPANY, 会社名カナ: "シケンガイシャ", 郵便番号: "160-0023", 都道府県: "東京都", 住所1: "新宿区西新宿4-9-2", 住所2: "試験ビル2F", 電話番号: "03-0501-0002",
-};
+/** 店舗は作らない（依頼者 2026-11-15）。店舗B「試験店舗B（M05-01）」は、使い回す E2E の店舗 5007（公開・開店の支店）で表す */
+const STORE_B: M0424StoreInput = 使い回す店舗の入力("5007", "試験店舗B（M05-01）");
 let storeAName = "";
 /** 店舗A（本店）の店名。S-M05-01-ADM が画面から読む */
 export function 店舗Aの店名(): string {

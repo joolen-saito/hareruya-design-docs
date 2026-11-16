@@ -25,7 +25,7 @@ import { defineSeed } from "./current_seed";
 import { Notes } from "../lib/notes";
 import { withAdminSession } from "../lib/session";
 import { SETUP_ADMIN } from "../config/env";
-import { ensureStore, M0424StoreInput } from "../pages/admin/m04_24_store";
+import { ensureStore, M0424StoreInput, 使い回す店舗の入力 } from "../pages/admin/m04_24_reuse_k";
 import { OrderSearchPage } from "../pages/admin/m05_01_order_search_k";
 import {
   M0501_ADMIN, M0501_BUYER, savePatterns, 支払方法を登録する, 受注を作る, 注文番号の読み替えを登録, 店舗Bの店名,
@@ -42,14 +42,9 @@ export function 接頭辞(ケース番号: string): string {
 
 // ---------------------------------------------------------------- 試験用の店舗
 
-export const 店舗SM: M0424StoreInput = {
-  店名: "試験スマレジ店舗（M05-01）", 店名カナ: "シケンスマレジテンポ", 店名英語: "Test Store Smaregi Mfive", 支店URL: "m0501storesm", 店名略称3文字: "R5S", ショップ名略称: "試験スマレジ",
-  会社名: "M05-01試験会社", 会社名カナ: "シケンガイシャ", 郵便番号: "160-0023", 都道府県: "東京都", 住所1: "新宿区西新宿4-9-3", 住所2: "試験ビル3F", 電話番号: "03-0501-0003",
-};
-export const 店舗閉店: M0424StoreInput = {
-  店名: "試験閉店店舗（M05-01）", 店名カナ: "シケンヘイテンテンポ", 店名英語: "Test Store Closed Mfive", 支店URL: "m0501storecl", 店名略称3文字: "R5C", ショップ名略称: "試験閉店",
-  会社名: "M05-01試験会社", 会社名カナ: "シケンガイシャ", 郵便番号: "160-0023", 都道府県: "東京都", 住所1: "新宿区西新宿4-9-4", 住所2: "試験ビル4F", 電話番号: "03-0501-0004",
-};
+/** 店舗は作らない（依頼者 2026-11-15）。スマレジ由来の店舗の役は E2E の店舗 5006、閉店の店舗の役は E2E の店舗 4974（非公開・閉店。もとから閉店なので閉店にする書き込みはしない） */
+export const 店舗SM: M0424StoreInput = 使い回す店舗の入力("5006", "試験スマレジ店舗（M05-01）");
+export const 店舗閉店: M0424StoreInput = 使い回す店舗の入力("4974", "試験閉店店舗（M05-01）");
 
 const storeIds = new Map<string, Promise<string>>();
 /** 試験用の店舗（無ければ店舗登録画面で作る）の店舗ID。作った店舗は固定の名前で、2回目からは作らず探す */
@@ -172,7 +167,8 @@ export function defineDbOrderSeed(seedId: string, 設定: 設定): void {
       if (d.控え?.受注ID) notes.set(d.控え.受注ID, id);
     }
     if (設定.会員の控え) notes.set(設定.会員の控え, [...会員.values()][0]);
-    if (閉店ID) 店舗を閉店にする(閉店ID);
+    // 閉店の役の店舗（店舗ID 4974）はもとから閉店なので、閉店にする書き込みはしない（店舗は作らず使い回す。依頼者 2026-11-15）
+    void 閉店ID;
 
     issue("読み替え: 受注は、画面（フロントの購入）で1件作った受注の行をDBで写して作った（注文番号は画面が8桁で振り、画面で指定できないため）。" +
       "注文番号は11文字までなので、シード表の M0501-… は、実行ごとの接頭辞つきの値に読み替えた（ケースの手順の注文番号の入力も同じ）: " +

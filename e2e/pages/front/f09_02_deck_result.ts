@@ -25,6 +25,8 @@ export class DeckResultPage {
   constructor(readonly page: Page) {}
 
   get 一覧の項目(): Locator { return this.page.locator(".deckSearch-searchResult__item:not(.deckSearch-searchResult__item--empty)"); }
+  /** 一覧の各行のプレイヤー名の欄（赤枠を付けて撮る用） */
+  get プレイヤー名の欄(): Locator { return this.page.locator(".deckSearch-searchResult__item:not(.deckSearch-searchResult__item--empty) .deckSearch-searchResult__item__playerName__td"); }
   get 該当なしの案内(): Locator { return this.page.locator(".deckSearch-searchResult__item--empty"); }
   get 表示件数の選択欄(): Locator { return this.page.locator("select#selectPageSize"); }
   get 総件数の表示(): Locator { return this.page.locator(".eventSearchResult__count__text span").first(); }
@@ -79,6 +81,16 @@ export class DeckResultPage {
     await this.表示件数の選択欄.focus();
   }
 
+  /**
+   * 表示件数の選択欄の選択肢を、画面の中に並べて見えるようにする（ブラウザの選択の一覧は画面の外に開き、画像に写らないため）。
+   * 欄の表示の行数（size）を選択肢の数にして、一覧の形で画面に出す。選択肢の中身・選択は変えない
+   */
+  async 選択肢の一覧を画面に出す(): Promise<void> {
+    await this.表示件数の選択欄.scrollIntoViewIfNeeded();
+    await this.表示件数の選択欄.evaluate((el) => { const s = el as HTMLSelectElement; s.size = s.options.length; });
+    await expect(this.表示件数の選択欄.locator("option").first(), "表示件数の選択肢が画面に並ぶ").toBeVisible();
+  }
+
   /** 表示件数の選択欄で件数を選ぶ（画面は選んだ時点で検索し直す）。移った先の応答を返す */
   async 表示件数を選ぶ(件数: "20" | "40" | "60" | "80" | "100"): Promise<Response> {
     await this.表示件数の選択欄.scrollIntoViewIfNeeded();
@@ -108,7 +120,7 @@ export class DeckResultPage {
     await expect(link, `ページ送りの「${n}」`).toHaveCount(1);
     await link.scrollIntoViewIfNeeded();
     const res = 結果の応答(this.page);
-    await Promise.all([this.page.waitForURL((u) => u.searchParams.get("page") === String(n), { waitUntil: "load", timeout: 90_000 }), link.click()]);
+    await Promise.all([this.page.waitForURL((u) => u.searchParams.get("page") === String(n), { waitUntil: "load", timeout: 90_000 }), link.click({ noWaitAfter: true })]);
     const r = await res;
     await this.読み込みを待つ();
     return r;

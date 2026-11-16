@@ -3,9 +3,9 @@
  * M15-05 デッキ編集（管理画面）のシードの作り方（画面操作）。正本: cases/M15-05_seed_data.tsv
  *
  * - 試験管理者（m1505_admin）: メンバー管理で登録する。権限はデッキ管理を操作できる「システム管理者」（正本は権限の名前を定めない。M15-01 と同じ）。
- * - 編集者記録用の管理者（m1505_u064・u065・u098）: 正本の「このアカウントが最終更新者のデッキは他にない」を、同じDBで流し直しても
- *   成り立たせるため、ログインIDと名前に実行の印を付けて毎回作る（名前＝ログインID。デッキ一覧の「最終更新者」は名前で選ぶ）。
- * - 共有のフォーマット・カード・アーキタイプ・デッキタグは、正本の名前のまま（実行の印を付けない）。あれば記載の値へ戻して使う。
+ * - 編集者記録用の管理者（m1505_u064・u065・u098）: 決まった名前で1度だけ作って使い回す（名前＝ログインID）。前の実行の残りのデッキは、
+ *   シードで最終更新者を付け替える（seeds/m15-05-b.ts の 最終更新者を付け替える）。
+ * - 共有のフォーマット・カード・アーキタイプ・デッキタグは、main 側の作り方（seeds/m15-05-b.ts）が実行の印つきの名前で作る。こちらも同じ名前を使う。
  * - カードの画像: カード編集画面の画像情報には画像を足す欄が無い（登録済みの画像の言語・表裏を変えるだけ）。カードは
  *   カードCSVアップロード（カード名・使用可能/使用禁止フォーマット・画像URL）で作り、画像は既存のカードの画像URLを、カードごとに違うものを使う。
  * - デッキ名（ケース専用）: 検索語に使える前半に実行の印を付ける（「M1505-005-デッキ」→「M1505-005-印-デッキ」）。
@@ -15,7 +15,7 @@ import { Browser, Page, expect } from "@playwright/test";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { ensureM05Admin } from "../pages/admin/m05_admin_member";
 import { 行を用意する } from "../pages/admin/m14_04_master";
 import {
@@ -29,11 +29,12 @@ import { デッキIDで検索する, デッキ一括編集 } from "../pages/admi
 import { 日付, 表示日付, プレイヤー名でデッキを探す } from "../pages/admin/f09_01_setup";
 import { カードを登録する } from "../pages/admin/f09_04_setup";
 import { その他デッキの対象のフォーマット } from "../pages/admin/f09_05_setup";
+import { 名 as マスタ名, 代表カードの代役 } from "../pages/admin/m15_05_master";
 
 export const M1505_ADMIN: Account = { loginId: "m1505_admin", password: "Passw0rd!M1505" };
 
 /** 編集者記録用の管理者（ログインIDに実行の印を付ける。名前＝ログインID） */
-export const M1505_U = (n: "064" | "065" | "098"): Account => ({ loginId: rc(`m1505_u${n}`), password: M1505_ADMIN.password });
+export const M1505_U = (n: "064" | "065" | "098"): Account => ({ loginId: rcFixed(`m1505_u${n}`).toLowerCase(), password: M1505_ADMIN.password });
 
 /** 正本のデッキ名に実行の印を付ける（「M1505-012-甲」→「M1505-012-印-甲」、「M1505-012」→「M1505-012-印」） */
 export function 名(正本: string): string {
@@ -42,11 +43,17 @@ export function 名(正本: string): string {
   return `${rc(m[1])}${m[2]}`;
 }
 
-/** 共有のマスタの名前（正本の値のまま） */
-export const 標準 = "デッキ試験標準", 上限 = "デッキ試験上限", 下限 = "デッキ試験下限", 単一 = "デッキ試験単一", 統率なし = "デッキ試験統率なし";
-export const 型甲 = "デッキ試験型甲", 型乙 = "デッキ試験型乙", 型丙 = "デッキ試験型丙";
-export const タグ一 = "試験タグ一", タグ二 = "試験タグ二";
-export const ALPHA = "DeckTestAlpha", BETA = "DeckTestBeta", BANNED = "DeckTestBanned", OUT = "DeckTestOut";
+/**
+ * 共有のマスタの名前。共有のマスタ（S-M15-05-FMT／CARD／ARC）を作るのは main 側の作り方（seeds/m15-05-b.ts・pages/admin/m15_05_master.ts）で、
+ * 名前に実行の印が付く。こちらも同じ印つきの名前を使う（印の無い名前のままだと、作られていない前の実行や他人の同名のマスタに当たり、
+ * 正本どおりの設定（4枚まで・上限5・下限5・単一・統率なし・禁止・範囲外）を確かめないまま動いてしまう）。
+ */
+export const 標準 = マスタ名("標準"), 上限 = マスタ名("上限"), 下限 = マスタ名("下限"), 単一 = マスタ名("単一"), 統率なし = マスタ名("統率なし");
+export const 型甲 = マスタ名("型甲"), 型乙 = マスタ名("型乙"), 型丙 = マスタ名("型丙");
+export const タグ一 = マスタ名("タグ一"), タグ二 = マスタ名("タグ二");
+export const ALPHA = マスタ名("カードA"), BETA = マスタ名("カードB"), BANNED = マスタ名("禁止"), OUT = マスタ名("範囲外");
+/** 共有のカードは画像を持たない（main 側の作り方）。代表カードは画像つきの既存カードで代える（DeckTestAlpha→Lightning Bolt・DeckTestBeta→Saheeli Rai） */
+export const 代役A = 代表カードの代役.A, 代役B = 代表カードの代役.B;
 
 /** 共有のカードの画像URL（カード名(英)→画像URL）。カードのシードが読む。同じ実行の中だけで持ち回す */
 export const カード画像 = new Map<string, string>();
@@ -201,7 +208,7 @@ defineSeed("S-M15-05-NEWREQ-135", { needs: 共通 }, async ({ browser }) => {
     // カード一覧でカード名に「M1505-135」を入れて検索し、0件であることを確かめる
     await page.goto(adminUrl("/card"));
     await page.locator("#admin_search_card_multi").fill("M1505-135");
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator("#admin_search_form button[type=\"submit\"]").click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator("#admin_search_form button[type=\"submit\"]").click({ noWaitAfter: true })]);
     const zero = page.getByText(/^検索条件に合致するデータが見つかりませんでした$/);
     if (!(await zero.first().isVisible())) throw new Error("カード一覧で「M1505-135」を検索すると、カードがある（シード表は0件と定める）");
   });
@@ -216,10 +223,10 @@ export function defineArchetypeSeed(seedId: string, no: string, フォーマッ�
     });
   });
 }
-defineArchetypeSeed("S-M15-05-CBARC-159", "159", 単一, ALPHA);
-defineArchetypeSeed("S-M15-05-CBARC-160", "160", 統率なし, ALPHA);
-defineArchetypeSeed("S-M15-05-CBARC-161", "161", 上限, ALPHA);
-defineArchetypeSeed("S-M15-05-CBARC-162", "162", 下限, ALPHA);
+defineArchetypeSeed("S-M15-05-CBARC-159", "159", 単一, 代役A);
+defineArchetypeSeed("S-M15-05-CBARC-160", "160", 統率なし, 代役A);
+defineArchetypeSeed("S-M15-05-CBARC-161", "161", 上限, 代役A);
+defineArchetypeSeed("S-M15-05-CBARC-162", "162", 下限, 代役A);
 defineArchetypeSeed("S-M15-05-CBARC-166", "166", 標準, undefined);
 
 // ---- イベント（ケース専用） ----

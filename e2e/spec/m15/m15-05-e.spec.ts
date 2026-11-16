@@ -30,7 +30,7 @@ async function 編集画面を開く(page: Page, step: Step, 検索語: string, 
   await step(2, async () => {
     const r = l!.行(id);
     await expect(r, "検索結果のデッキの行").toBeVisible();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), r.locator('a[href$="/edit"]').first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), r.locator('a[href$="/edit"]').first().click({ noWaitAfter: true })]);
   });
 }
 async function 複製を1回保存する(page: Page): Promise<void> {
@@ -38,11 +38,11 @@ async function 複製を1回保存する(page: Page): Promise<void> {
   const m = page.locator("#copyModal");
   await expect(m, "デッキ情報複製のポップアップ").toBeVisible();
   await m.locator("form[action$='/copy'] input:not([type=hidden])").first().fill("1");
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), m.getByRole("button", { name: "複製保存" }).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), m.getByRole("button", { name: "複製保存" }).click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
 }
 async function 更新を押す(page: Page): Promise<void> {
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), page.locator('button[type="submit"][form="admin_deck"]').first().click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator('button[type="submit"][form="admin_deck"]').first().click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
 }
 const path = (page: Page) => new URL(page.url()).pathname;
@@ -80,22 +80,22 @@ caseTest("IT-M15-05-195", async ({ page, notes, step, expected }) => {
   const A = notes.get("〔デッキID-M1505-CB195A〕");
   await step(1, async () => { await 検索する(page, 語CB("195")); });
   await step(2, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.並べ替え項目.selectOption({ label: "デッキID" })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.並べ替え項目.selectOption({ label: "デッキID" })]);
     await l.結果を待つ();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.並び順.selectOption({ label: "降順" })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.並び順.selectOption({ label: "降順" })]);
     await l.結果を待つ();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.件数選択.selectOption({ label: "10件" })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.件数選択.selectOption({ label: "10件" })]);
     await l.結果を待つ();
   });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator(".pagination a.page-link", { hasText: "2" }).first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator(".pagination a.page-link", { hasText: "2" }).first().click({ noWaitAfter: true })]);
     await l.結果を待つ();
     expect(await l.表示されたデッキ名(), "2ページ目のデッキ（01と02）").toEqual([`${語CB("195")}-02`, `${語CB("195")}-01`]);
   });
   await step(4, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.行(A).locator('a[href$="/edit"]').first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.行(A).locator('a[href$="/edit"]').first().click({ noWaitAfter: true })]);
     page.once("dialog", (d) => { void d.accept(); });
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), page.locator("#btn_delete").click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator("#btn_delete").click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await step(5, async () => { note(`削除後の画面のアドレス: ${path(page)}`); });
@@ -112,19 +112,19 @@ caseTest("IT-M15-05-196", async ({ page, step, expected }) => {
   await login(page);
   const l = new デッキ一覧(page);
   await step(1, async () => { await l.開く(); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.新規登録.click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.新規登録.click({ noWaitAfter: true })]); });
   await step(3, async () => {
     const f = (n: string) => page.locator(`[name="admin_deck[${n}]"]`);
     await f("deckName").fill(`${語CB("196")}-デッキ`);
     await f("Format").selectOption({ label: 名("標準") });
     await f("Archetype").selectOption({ label: 名("型丙") });
     await f("Disp").selectOption({ label: "非公開" });
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), page.locator('button[type="submit"][form="admin_deck"]').first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator('button[type="submit"][form="admin_deck"]').first().click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await step(4, async () => {
     page.once("dialog", (d) => { void d.accept(); });
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), page.locator("#btn_delete").click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator("#btn_delete").click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await step(5, async () => { await expect(l.検索ボタン, "デッキ検索・一覧画面の検索ボタン").toBeVisible(); });

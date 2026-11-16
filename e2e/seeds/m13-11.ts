@@ -7,16 +7,17 @@
  * - 秒の指定・略称の指定が要るシード（007〜009・013）はDBでの準備が要るので作らない。
  */
 import { SETUP_ADMIN } from "../config/env";
-import { rc, RUN_MARK } from "../lib/run_marker";
+import { rc, rcFixed, RUN_MARK } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { EventInput, registerEvent } from "../pages/admin/event";
-import { changeMemberAuthority, ensureMember, findMemberId } from "../pages/admin/member";
+import { changeMemberAuthority, ensureMemberFixed as ensureMember, findMemberId } from "../pages/admin/member";
 import { registerSchedule } from "../pages/admin/schedule";
 import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
 
-export const M1311_ADMIN: Account = { loginId: "m1311_admin_a", password: "Passw0rd!M1311A" };
-export const M1311_L_ADMIN: Account = { loginId: "m1311_l_admin", password: "Passw0rd!M1311L" };
+// 店舗を決まった名前（店舗A-E2E など）にしたので、管理者も決まった印の名前・ログインIDで1度だけ作って使い回す（前の実行の印つきの店舗に所属した管理者とぶつけない）
+export const M1311_ADMIN: Account = { loginId: rcFixed("m1311_admin_a").toLowerCase(), password: "Passw0rd!M1311A" };
+export const M1311_L_ADMIN: Account = { loginId: rcFixed("m1311_l_admin").toLowerCase(), password: "Passw0rd!M1311L" };
 
 
 defineSeed("S-M13-11-STORES", async ({ browser, notes, seed }) => {
@@ -33,23 +34,23 @@ defineSeed("S-M13-11-STORES", async ({ browser, notes, seed }) => {
 const M1311_ADMIN_権限 = "モールオペレーター";
 defineSeed("S-M13-11-ADM-A", { needs: ["S-M13-11-STORES"] }, async ({ browser, notes }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    const 名前 = "M13-11試験管理者";
+    const 名前 = rcFixed("M13-11試験管理者");
     // 前に「店舗オーナー」で登録したメンバーが残っていれば、権限だけ画面で変える
     const found = await findMemberId(page, 名前);
     if (found) await changeMemberAuthority(page, found, M1311_ADMIN_権限);
     notes.set("〔管理者ID-M1311-共有〕", await ensureMember(page, {
-      名前, 所属店舗: 印店名.A, ログインID: M1311_ADMIN.loginId, メールアドレス: "m1311_admin_a@example.test",
+      名前, 所属店舗: 印店名.A, ログインID: M1311_ADMIN.loginId, メールアドレス: `${M1311_ADMIN.loginId}@example.test`,
       パスワード: M1311_ADMIN.password, 権限: M1311_ADMIN_権限, デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A, 印店名.B],
     }));
   });
 });
 
 /** 店舗Cのイベントを登録する管理者（全権限の管理者の店舗の選択肢には店舗Cが無い）。店舗Cだけに編集権限 */
-export const M1311_C_ADMIN: Account = { loginId: "m1311_admin_c", password: "Passw0rd!M1311C" };
+export const M1311_C_ADMIN: Account = { loginId: rcFixed("m1311_admin_c").toLowerCase(), password: "Passw0rd!M1311C" };
 async function 店舗C管理者を用意(browser: import("@playwright/test").Browser): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-11店舗C管理者", 所属店舗: 印店名.C, ログインID: M1311_C_ADMIN.loginId, メールアドレス: "m1311_admin_c@example.test",
+      名前: rcFixed("M13-11店舗C管理者"), 所属店舗: 印店名.C, ログインID: M1311_C_ADMIN.loginId, メールアドレス: `${M1311_C_ADMIN.loginId}@example.test`,
       パスワード: M1311_C_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.C, 編集可能店舗: [印店名.C],
     });
   });
@@ -158,7 +159,7 @@ defineSeed("S-M13-11-L-STORE", async ({ browser, notes, seed }) => {
 defineSeed("S-M13-11-L-ADM", { needs: ["S-M13-11-L-STORE"] }, async ({ browser, notes }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     notes.set("〔管理者ID-M1311-共有L〕", await ensureMember(page, {
-      名前: "M13-11連携確認管理者", 所属店舗: 印店名.A, ログインID: M1311_L_ADMIN.loginId, メールアドレス: "m1311_l_admin@example.test",
+      名前: rcFixed("M13-11連携確認管理者"), 所属店舗: 印店名.A, ログインID: M1311_L_ADMIN.loginId, メールアドレス: `${M1311_L_ADMIN.loginId}@example.test`,
       パスワード: M1311_L_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A],
     }));
   });

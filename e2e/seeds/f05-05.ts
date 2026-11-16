@@ -82,7 +82,7 @@ defineMemberSeed("S-F05-05-CBCUS-038", "f0505-user-cb038", "Passw0rd-CBF0505038"
 
 // ---- 商品 ----
 
-export type F0505商品 = { 商品ID: string; 規格ID: string; 商品コード: string; 商品名: string; 買取: number; 数量: number; 言語: "JP" | "EN" };
+export type F0505商品 = { 商品ID: string; カードID: string; 規格ID: string; 商品コード: string; 商品名: string; 買取: number; 数量: number; 言語: "JP" | "EN" };
 const carts = new Map<string, Record<string, F0505商品>>();
 /** カートのシードが作った商品（キーは A・B） */
 export function f0505商品(シードID: string, キー: string): F0505商品 {
@@ -99,9 +99,9 @@ function defineProductSeed(seedId: string, defs: 商品定義[], 注記?: string
     for (const d of defs) out[d.キー] = await 商品を作る(browser, seedId, notes, d);
     carts.set(seedId, out);
     for (const l of Notes.labelsIn(seed["状態・属性"] + seed.投入方法)) {
-      const m = /^〔(商品ID|商品規格ID)-F0505-[A-Z0-9]+([AB])〕$/.exec(l);
-      const p = m ? out[m[2]] : undefined;
-      if (m && p) notes.set(l, m[1] === "商品ID" ? p.商品ID : p.規格ID);
+      const m = /^〔(商品ID|商品規格ID|カードID)-F0505-[A-Z0-9]+?([AB]?)〕$/.exec(l);
+      const p = m ? out[m[2] || "A"] : undefined;
+      if (m && p) notes.set(l, m[1] === "商品ID" ? p.商品ID : m[1] === "カードID" ? p.カードID : p.規格ID);
     }
     reportSeedIssue(seedId, `シード作成時の問題（読み替え）: 商品はカード登録・カード商品CSV登録・規格の商品コードと買取価格で作った。商品コード・商品名には実行の印を付けた。販売価格・基準価格は買取価格と同じ。画像は登録していない${注記 ? `。${注記}` : ""}`);
   });
@@ -116,7 +116,7 @@ async function 商品を作る(browser: Browser, seedId: string, notes: Notes, d
   }, false);
   const 規格ID = made.規格[クラス];
   if (!規格ID) throw new Error(`${seedId}: 商品 ${d.名} の ${クラス} の規格が無い`);
-  return { 商品ID: made.商品ID, 規格ID, 商品コード: rc(d.コード), 商品名: rc(d.名), 買取: d.買取, 数量: d.数量, 言語: d.言語 ?? "JP" };
+  return { 商品ID: made.商品ID, カードID: made.カードID ?? "", 規格ID, 商品コード: rc(d.コード), 商品名: rc(d.名), 買取: d.買取, 数量: d.数量, 言語: d.言語 ?? "JP" };
 }
 
 /** 004〜016 の「更新前カードA（100円）とカードB（200円）」の形 */

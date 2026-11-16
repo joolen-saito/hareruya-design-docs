@@ -13,6 +13,7 @@
 import { Browser, expect, Page } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../../config/env";
 import { Account, adminUrl, hideDebugToolbar, withAdminSession } from "../../lib/session";
+import { withCreateOnceLock } from "../../lib/create_once_lock";
 import { expectSaved } from "./common";
 import { findMemberId } from "./member";
 import { downloadGoodsCsvTemplate } from "./m03_01_goods_csv";
@@ -20,8 +21,9 @@ import { registerGoodsCsv } from "./m03_01_goods_register";
 import { openProductEditByCode } from "./m03_23_seed_products";
 import { goodsCategoryIdForCsv } from "./m04_19_masters";
 import { registerStockChangeCsv } from "./m04_19_stock_change_csv";
-import { createMemberByStoreIds, expectMemberByStoreIds, M0424MemberInput } from "./m04_24_member";
-import { addToCart, checkout, clearCart, frontLogin } from "./m04_19_order_shortage";
+import { createMemberByStoreIds, expectMemberByStoreIds, M0424MemberInput } from "./m04_24_reuse_k";
+import { addToCart, checkoutWithDeliveryChoice, clearCart } from "./m04_19_order_shortage";
+import { フロントにログインする } from "../front/login_without_top";
 import { OrderEditPage } from "./m05_11_order_edit";
 import { OrderSearchPage } from "./m05_01_order_search_k";
 import { loggedInMemberName, StockApprovalListPage } from "./stock_edit";
@@ -93,27 +95,40 @@ async function makeProduct(browser: Browser, 承認者: { 名前: string; accoun
       onWarning: (w) => onIssue(`グッズ商品CSV登録の警告「${w}」`), uploadWaitMs: 180_000,
     });
     const id = await openProductEditByCode(page, 商品コード);
-    await registerStockChangeCsv(page, {
-      店舗: 本店, 在庫区分: "EC-CUBE", 在庫変動区分: "入庫/その他", 在庫変動理由: "シード作成", 承認者: 承認者.名前,
-      行: [{ 商品コード, 在庫増減数: 入庫数, 仕入単価: "100" }], ファイル名: `m0501-stock-${Date.now()}.csv`,
-    }, "M05-01 の試験商品の在庫変更CSV登録", onIssue);
     return { 商品ID: id, registrant: await loggedInMemberName(page) };
   });
-  await withAdminSession(browser, 承認者.account, async (page) => {
-    const list = new StockApprovalListPage(page);
-    await list.open(本店);
-    const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant && r.quantity.replace(/[+,\s]/g, "") === 入庫数);
-    if (rows.length === 0) throw new Error(`在庫編集承認一覧に、登録者「${registrant}」の未承認の行（増減数 ${入庫数}）が無い`);
-    try {
-      await list.approve(rows.map((r) => r.id), "M05-01 の試験商品の入庫の承認", onIssue);
-    } catch (e) {
-      if (!String(e).includes("成功メッセージ")) throw e;
+  // 在庫変更CSV登録と承認は、同じ機械で並べて流している回（Playwright のプロセスごとに1件ずつ商品を作る）と同時にしない。
+  // 登録者・増減数が同じなので、ほかの回の未承認の行も一覧の絞り込みに入り、2つの回が同じ行を承認し合って、
+  // 先に承認された行を含む方が「在庫編集の承認権限がありません。」で落ちた（2026-11-13 13:46 開発環境の IT-M05-01-072。行 6963・6964 を両方選んでいた）。
+  // 鍵の中で、登録の前に一覧に出ていた行を控え、登録のあとに増えた行だけを承認する（前の回が残した未承認の行にも触らない）。
+  await withCreateOnceLock("m0501-stock-approval", async () => {
+    const before = await withAdminSession(browser, 承認者.account, async (page) => {
+      const list = new StockApprovalListPage(page);
       await list.open(本店);
-      const remain = (await list.rowValues()).filter((r) => rows.some((x) => x.id === r.id) && r.status === "未承認");
-      if (remain.length) throw e;
-      onIssue("入庫の承認で成功の表示は出なかったが、承認一覧の該当の行は未承認でなくなった");
-    }
-  });
+      return new Set((await list.rowValues()).map((r) => r.id));
+    });
+    await withAdminSession(browser, 在庫登録者.account, async (page) => {
+      await registerStockChangeCsv(page, {
+        店舗: 本店, 在庫区分: "EC-CUBE", 在庫変動区分: "入庫/その他", 在庫変動理由: "シード作成", 承認者: 承認者.名前,
+        行: [{ 商品コード, 在庫増減数: 入庫数, 仕入単価: "100" }], ファイル名: `m0501-stock-${Date.now()}.csv`,
+      }, "M05-01 の試験商品の在庫変更CSV登録", onIssue);
+    });
+    await withAdminSession(browser, 承認者.account, async (page) => {
+      const list = new StockApprovalListPage(page);
+      await list.open(本店);
+      const rows = (await list.rowValues()).filter((r) => !before.has(r.id) && r.status === "未承認" && r.registrant === registrant && r.quantity.replace(/[+,\s]/g, "") === 入庫数);
+      if (rows.length !== 1) throw new Error(`在庫編集承認一覧に、登録のあとに増えた登録者「${registrant}」の未承認の行（増減数 ${入庫数}）が1件でない（${rows.map((r) => r.id).join("・") || "無い"}）`);
+      try {
+        await list.approve(rows.map((r) => r.id), "M05-01 の試験商品の入庫の承認", onIssue);
+      } catch (e) {
+        if (!String(e).includes("成功メッセージ")) throw e;
+        await list.open(本店);
+        const remain = (await list.rowValues()).filter((r) => rows.some((x) => x.id === r.id) && r.status === "未承認");
+        if (remain.length) throw e;
+        onIssue("入庫の承認で成功の表示は出なかったが、承認一覧の該当の行は未承認でなくなった");
+      }
+    });
+  }, 15 * 60_000);
   return { 商品ID, 商品コード, 商品名 };
 }
 
@@ -130,19 +145,26 @@ export async function storeName(page: Page, 店舗ID: string): Promise<string> {
 let buyerReady = false;
 /** フロントの本店の画面で、試験用の会員が商品1点を注文する。ご注文完了の画面の注文番号と支払方法を返す */
 export async function 会員が商品を注文する(browser: Browser, 会員: FrontMember, 商品ID: string, what: string): Promise<{ 注文番号: string; 支払方法: string }> {
-  if (!buyerReady) { await ensureFrontMember(browser, 会員); buyerReady = true; }
-  const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
-  try {
-    await hideDebugToolbar(context);
-    const page = await context.newPage();
-    page.setDefaultTimeout(60_000);
-    await frontLogin(page, 会員);
-    await clearCart(page, () => undefined);
-    await addToCart(page, 商品ID, 1, what);
-    return await checkout(page, ["代金引換", "郵便振替", "現金書留"], what);
-  } finally {
-    await context.close();
-  }
+  // 試験用の会員は M05-01 の全部の受注で1人を使う。会員のカートはログインした窓ごとでなく会員ごとに持つので、
+  // 並べて流している回が同じ会員で同時に注文すると、ほかの回のカートを空にする操作で注文手続きの途中のカートが消える
+  // （2026-11-13 13:47 開発環境の IT-M05-01-037・030: 支払方法を選んだあとカートの画面へ戻され「現在カート内に商品はございません」）。
+  // 同じ会員の注文（会員の用意を含む）は、同じ機械では1回ずつにする。
+  return withCreateOnceLock(`front-buyer-${会員.メール}`, async () => {
+    if (!buyerReady) { await ensureFrontMember(browser, 会員); buyerReady = true; }
+    const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
+    try {
+      await hideDebugToolbar(context);
+      const page = await context.newPage();
+      page.setDefaultTimeout(60_000);
+      // ログイン後のトップ（/ja/）の表示は待たない（開発環境でトップだけ返らない時間帯がある）
+      await フロントにログインする(page, 会員);
+      await clearCart(page, () => undefined);
+      await addToCart(page, 商品ID, 1, what);
+      return await checkoutWithDeliveryChoice(page, ["代金引換", "郵便振替", "現金書留"], what);
+    } finally {
+      await context.close();
+    }
+  }, 20 * 60_000);
 }
 
 /**

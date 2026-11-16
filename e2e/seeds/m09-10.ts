@@ -2,20 +2,24 @@
  * M09-10 支店トップページ管理 のシード（実装したケースが使うもの）。正本: cases/M09-10_seed_data.tsv
  *
  * - タグの名称・商品コード・商品名は決め打ちの識別の値なので、実行の印を付ける（依頼者決定 2026-10-28）。
- * - 店舗は、実行の印を付けて毎回登録しない（店舗を登録すると全商品の初期在庫が作られ、共有の開発環境に店舗と在庫が増え続けるため。依頼者決定 2026-11-11）。
- *   固定の名前・略称・支店URLの試験店舗14店（「支店トップ試験-M0910-A」〜「-P」）を、無いときだけ作り、あれば使い回す（M10-15・M05-27 と同じ考え方）。
- *   正本の店名・省略名は、シードごとに割り当てた試験店舗の名前・支店URLに読み替える（共有の環境には本物の「トーナメントセンター 東京」（支店URL tc）もあるので、正本の名前のままでは作れない）。
- *   共有可のシードは1店ずつ専用（ワーカーごとに1回だけ作るので、ほかのシードが同じ店を書き換えないように）。ケース専用のシードは、種類ごとに店を分け、
- *   ケースの直前に毎回その店の設定を前提どおりに入れ直す（タイル・在庫・ピックアップ設定を試験店舗の分だけ DB で空に戻してから、画面で設定する）。ケースは直列で流す前提。
+ * - 店舗は作らない（依頼者決定 2026-11-15「店舗は作るのもう禁止」「元々ある店舗を使うのはだめなの？」）。使い回す店舗の表（lib/store_create_ban.ts）の E2E の店舗を、店舗IDで選ぶ。
+ *   正本の店名・省略名・支店URLは、選んだ店舗の店名・支店URLに読み替える（読み替えは reportSeedIssue に残す）。画面でも DB でも店舗登録画面は開かない。
+ *   店舗の割り当て（店舗ID）: 221＝公開側反映確認データ（S-M09-10-PUBLIC。商品と在庫を足す共有のシード。ほかのシードの店舗と分ける）、
+ *   4973＝タイルが0件の支店（S-M09-10-ZERO-TILES。同じ店舗に未登録位置用の商品 S-M09-10-FORMAT-PRODUCTS を足す共有のシード）、
+ *   5006＝商品を足さない支店トップページ設定のシード（LOCAL 系・COMMON-APPLY・NO-BANNER・PARTIAL・LEGACY-NOTAG・INITIAL・DP-NOBANNER）、
+ *   5007＝商品と在庫を足すケース専用のシード（033・048・051・052・058・059・062・064）。
+ *   5006・5007 を使うシードは、ケースごとに前提の状態へ入れ直すので、シードを使い回さない（元に戻すことを登録する。lib/shared_restore.ts）。ケースは直列で流す（workers=1）。
+ *   元からある店舗（ID 1〜31）は使わない（支店トップページの設定の書き換え・DBの準備をしないので、店舗が足りた）。DB で書くのは E2E の店舗だけ。
+ *   在庫・ピックアップ設定を空に戻すのは、この機能のシードが作った商品（実行の印つきの商品コード）の、その店舗の分だけ。
  * - 正本の「省略名」は、画面では支店URL（店舗登録の支店URL）。ハイフンを含む省略名はDBへ直接設定する作り方なので、
- *   画面で入れられる半角英数字の試験店舗の支店URLをそのまま省略名として使う（PM 方針 2026-11-10「画面で作れるものは代える」。条件付き）。
+ *   選んだ店舗の支店URLをそのまま省略名として使う（PM 方針 2026-11-10「画面で作れるものは代える」。条件付き）。
  * - タイルIDは画面に出ないので、シード表のとおり登録後に登録内容を参照して控える。DB確認の接続が無い環境では、
  *   「どの支店の何行目のタイルか」を文で控え、そのことをシードの問題として報告する（タイルIDそのものを使うのはDB確認のケースだけ）。
  * - 依頼者の方針（2026-11-10）: 支店共通（支店ID 1）・既存の支店のバナー画像・リンクタグ・タイルは書き換えない・消さない。
  *   S-M09-10-COMMON（支店共通へ書く）は、書き換えず、いまの内容を読むだけにする。支店共通の内容そのものを前提にするシード
  *   （CBCOMMONKEEP-053・CBCOMMONNEW-054・DP-APPLIED/UNAPPLIED-049・CBFMTNONE-057・CBLATESTCOM-060・CBPICKCOM-061・CBOTHERCOM-063・CBNOTILECOM-065）は書かない。
  * - 画面で作れない準備（バナー画像を空にする・タイルを消す・タイルタグを空にする・ピックアップ対象にする）は、この実行で画面から作った
- *   固定の名前の試験店舗と「実行の印つき」の商品に限り、db/write_adapter.ts の writeTestData（lib/db_write.ts の窓口を通す） でDBへ書く（注記に「DBで〜した」を残す）。
+ *   E2E の店舗と「実行の印つき」の商品に限り、db/write_adapter.ts の writeTestData（lib/db_write.ts の窓口を通す） でDBへ書く（注記に「DBで〜した」を残す）。
  * - 支店の登録と、支店トップページの設定（LOCAL 系）は全権限の管理者（SETUP_ADMIN）で行う（F01-02 と同じ）。
  *   商品の在庫を入れる支店（033・048・052・058・064）は、在庫編集の登録者と承認者を別のメンバーにする。
  */
@@ -23,12 +27,16 @@ import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { writeTestData } from "../db/write_adapter";
 import { available as DBがある } from "../lib/db";
-import { RUN_MARK, rc } from "../lib/run_marker";
+import { FIXED_MARK, RUN_MARK, rc, rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Notes } from "../lib/notes";
 import { Account, withAdminSession } from "../lib/session";
-import { findTenantId } from "../pages/admin/tenant";
+import { registerRestore } from "../lib/shared_restore";
+import { getSeed } from "../lib/catalog";
+import { E2Eの店舗 } from "../lib/store_create_ban";
+import { 店舗の実際を読む } from "../lib/store_pick";
+import { 店舗IDで選ぶ } from "../pages/admin/store_pick";
 import { 本店の店名 } from "../pages/admin/m05_admin_member";
 import { ensureMember } from "../pages/admin/member";
 import { タグを付けて商品を登録する, タグを用意する } from "../pages/admin/f01_02_setup";
@@ -38,7 +46,7 @@ import { openProductEditByCode, publishImportedClass, readGoodsRootCategoryId } 
 import { searchStockByCode } from "../pages/admin/m04_02_rc_stock";
 import { loggedInMemberName, registerStockEdit, StockApprovalListPage } from "../pages/admin/stock_edit";
 import {
-  タイル入力, 支店トップページ管理, 支店トップページを設定する, 支店を用意する, 新バナー画像, 旧バナー画像, 画像ファイル, 編集可能店舗に加える,
+  タイル入力, 支店トップページ管理, 支店トップページを設定する, 新バナー画像, 旧バナー画像, 画像ファイル, 編集可能店舗に加える,
 } from "../pages/admin/m09_10_branch_toppage";
 import { 支店のタイル } from "../db/m09_10_branch_toppage";
 import { ensureAnalysisAdmin } from "./m12-common";
@@ -66,66 +74,74 @@ const 全部ピックアップ = (): タイル入力[] => ([1, 2, 3, 4] as const
 
 const issueOf = (seedId: string) => (m: string) => reportSeedIssue(seedId, m);
 
-// ---- 試験店舗（固定の名前・略称・支店URL。無いときだけ作り、あれば使い回す） ----
+// ---- 使い回す店舗（店舗は作らない。店舗IDで選ぶ） ----
 
-/** 試験店舗の店名に必ず入る固定の印（DB書き込みの対象の確かめで、試験店舗だけに書くことを確かめる） */
-const 店の印 = "-M0910-";
-type 試験店舗 = { 店名: string; url: string };
-const 試験店舗の表: Record<string, 試験店舗> = Object.fromEntries(
-  ["A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P"].map((k) => [k, { 店名: `支店トップ試験${店の印}${k}`, url: `m0910${k.toLowerCase()}` }]),
-);
-/**
- * シードごとの試験店舗。共有可のシード（A〜F）は1店ずつ専用。ケース専用のシードは種類ごとに分ける。
- *   G=支店共通設定を適用の3ケース、H=通常の4タイル、J=タイルが少ない・初期・バナー無し、K=リンク商品あり（033）、
- *   L=タイルに商品を載せる2ケース（048・052）、M=051、N=タイルの表示確認3ケース（058・059・064）、P=ピックアップ（062）
- */
+const 店 = { PUBLIC: "221", ZERO: "4973", 軽い: "5006", 商品: "5007" } as const;
+/** シードごとの店舗ID。共有のシード（PUBLIC・ZERO-TILES）は専用の店舗。ほかは、ケースごとに入れ直す店舗（軽い＝商品なし、商品＝商品と在庫あり） */
 const 店の割当: Record<string, string> = {
-  "S-M09-10-LOCAL": "A", "S-M09-10-NO-BANNER": "B", "S-M09-10-PARTIAL": "C", "S-M09-10-ZERO-TILES": "D", "S-M09-10-PUBLIC": "E", "S-M09-10-LEGACY-NOTAG": "F",
-  "S-M09-10-COMMON-APPLY-006": "G", "S-M09-10-COMMON-APPLY-007": "G", "S-M09-10-COMMON-APPLY-008": "G",
-  "S-M09-10-LOCAL-017": "H", "S-M09-10-LOCAL-018": "H", "S-M09-10-LOCAL-027": "H", "S-M09-10-LOCAL-028": "H", "S-M09-10-LOCAL-029": "H", "S-M09-10-LOCAL-031": "H",
-  "S-M09-10-PARTIAL-015": "J", "S-M09-10-INITIAL-047": "J", "S-M09-10-DP-NOBANNER-050": "J",
-  "S-M09-10-LOCAL-033": "K",
-  "S-M09-10-QI-TILE-048": "L", "S-M09-10-DP-ONEPROD-052": "L",
-  "S-M09-10-DP-MIXTILE-051": "M",
-  "S-M09-10-CBFMTOWN-058": "N", "S-M09-10-CBLATESTNONE-059": "N", "S-M09-10-CBOTHEROWN-064": "N",
-  "S-M09-10-CBPICKOWN-062": "P",
+  "S-M09-10-PUBLIC": 店.PUBLIC, "S-M09-10-ZERO-TILES": 店.ZERO,
+  "S-M09-10-LOCAL": 店.軽い, "S-M09-10-NO-BANNER": 店.軽い, "S-M09-10-PARTIAL": 店.軽い, "S-M09-10-LEGACY-NOTAG": 店.軽い,
+  "S-M09-10-COMMON-APPLY-006": 店.軽い, "S-M09-10-COMMON-APPLY-007": 店.軽い, "S-M09-10-COMMON-APPLY-008": 店.軽い,
+  "S-M09-10-LOCAL-017": 店.軽い, "S-M09-10-LOCAL-018": 店.軽い, "S-M09-10-LOCAL-027": 店.軽い, "S-M09-10-LOCAL-028": 店.軽い, "S-M09-10-LOCAL-029": 店.軽い, "S-M09-10-LOCAL-031": 店.軽い,
+  "S-M09-10-PARTIAL-015": 店.軽い, "S-M09-10-INITIAL-047": 店.軽い, "S-M09-10-DP-NOBANNER-050": 店.軽い,
+  "S-M09-10-LOCAL-033": 店.商品,
+  "S-M09-10-QI-TILE-048": 店.商品, "S-M09-10-DP-ONEPROD-052": 店.商品, "S-M09-10-DP-MIXTILE-051": 店.商品,
+  "S-M09-10-CBFMTOWN-058": 店.商品, "S-M09-10-CBLATESTNONE-059": 店.商品, "S-M09-10-CBOTHEROWN-064": 店.商品, "S-M09-10-CBPICKOWN-062": 店.商品,
 };
-const 店の定め = (seedId: string): 試験店舗 => {
-  const k = 店の割当[seedId];
-  if (!k) throw new Error(`${seedId} に試験店舗を割り当てていない`);
-  return 試験店舗の表[k];
+const 店の定め = (seedId: string): string => {
+  const id = 店の割当[seedId];
+  if (!id) throw new Error(`${seedId} に店舗を割り当てていない`);
+  return id;
 };
-/** シードの試験店舗の、固定の店名と支店URL（ケースが使う） */
-export const 試験店舗の店名 = (seedId: string): string => 店の定め(seedId).店名;
-export const 試験店舗の支店URL = (seedId: string): string => 店の定め(seedId).url;
+/** シードの店舗の、いまの店名と支店URL（ケースが使う。店舗の登録内容を読む） */
+export const 試験店舗の店名 = (seedId: string): string => 店舗の実際を読む(店の定め(seedId)).店名;
+export const 試験店舗の支店URL = (seedId: string): string => {
+  const id = 店の定め(seedId);
+  const u = 店舗の実際を読む(id).支店URL;
+  if (!u) throw new Error(`店舗ID ${id}（${店舗の実際を読む(id).店名}）に支店URLが無く、支店トップページを開けない`);
+  return u;
+};
+/** 店舗ID → 書き込みの持ち主の確かめ。DB に書いてよいのは E2E の店舗だけ（元からある店舗の設定は書かない） */
+function E2Eの店舗の確かめ(支店ID: string): { 対象の確かめ: string; 確かめのparams: string[]; 印: string } {
+  if (!E2Eの店舗.some((s) => s.id === 支店ID)) throw new Error(`店舗ID ${支店ID} は E2E の店舗ではない。元からある店舗の設定は DB で書かない（依頼者 2026-11-15）`);
+  return { 対象の確かめ: "select shop_name from dtb_base_info where id = $1", 確かめのparams: [支店ID], 印: 店舗の実際を読む(支店ID).店名 };
+}
+/** この機能のシードが作る商品の商品コード（実行の印つき）。在庫・ピックアップ設定を空に戻す相手を、この商品だけに絞る */
+const この機能の商品コード = "^(BAN-001-033|BAN-002-033|EXCLUDED-001-033|(FMT|LATEST|PICK|OTHER)-00[1-9]|EXCLUDED-001|M0910-[0-9A-Z-]+)-[0-9A-Z]+$";
 
-/** 使い回す試験店舗を、前の実行の状態から、ケースの前提（タイル・ピックアップ・在庫が空）へ戻す。試験店舗の分だけ DB で消す */
+/** 使い回す E2E の店舗を、前の実行の状態から、ケースの前提（タイル・ピックアップが空）へ戻す。この機能のシードが作った商品の、その店舗の分だけ DB で消す */
 function 試験店舗を前提の状態に戻す(seedId: string, 支店ID: string, 商品あり: boolean): void {
-  const 確かめ = { 対象の確かめ: "select shop_name from dtb_base_info where id = $1", 確かめのparams: [支店ID], 印: 店の印 };
+  const 確かめ = { ...E2Eの店舗の確かめ(支店ID), 最大行数: 50 };
   const t = writeTestData({
-    理由: `${seedId}: 使い回す試験店舗の、前の実行で残ったタイルを消す（設定は前提どおりに画面で入れ直す）`,
-    sql: "delete from dtb_tile where base_info_id = $1", params: [支店ID], ...確かめ, 最大行数: 50,
+    理由: `${seedId}: 使い回す E2E の店舗の、前の実行で残ったタイルを消す（設定は前提どおりに画面で入れ直す）`,
+    sql: "delete from dtb_tile where base_info_id = $1", params: [支店ID], ...確かめ,
   });
   let n = 0;
   if (商品あり) {
     n = writeTestData({
-      理由: `${seedId}: 使い回す試験店舗に前の実行の商品の在庫・ピックアップ設定が残ると、タイルの商品が前提と食い違うので、試験店舗の分だけ空に戻す`,
-      sql: "update dtb_product_stock set stock = 0, pick_up_flg = false where base_info_id = $1 and (stock > 0 or pick_up_flg = true)",
-      params: [支店ID], ...確かめ, 最大行数: 500,
+      理由: `${seedId}: 使い回す E2E の店舗に前の実行の商品の在庫・ピックアップ設定が残ると、タイルの商品が前提と食い違うので、この機能のシードが作った商品の、その店舗の分だけ空に戻す`,
+      sql: "update dtb_product_stock set stock = 0, pick_up_flg = false where base_info_id = $1 and (stock > 0 or pick_up_flg = true) and product_class_id in (select id from dtb_product_class where product_code ~ $2)",
+      params: [支店ID, この機能の商品コード], ...確かめ, 最大行数: 500,
     });
   }
-  reportSeedIssue(seedId, `使い回す試験店舗（支店ID ${支店ID}）の前の実行の状態を、DBで試験店舗の分だけ戻した（タイル ${t}行を削除${商品あり ? `・在庫またはピックアップ設定が残った ${n}行を空に` : ""}）`);
+  reportSeedIssue(seedId, `使い回す E2E の店舗（店舗ID ${支店ID}）の前の実行の状態を、DBでこの機能の分だけ戻した（タイル ${t}行を削除${商品あり ? `・この機能の商品の在庫またはピックアップ設定が残った ${n}行を空に` : ""}）`);
 }
 
-/** 試験店舗を、あれば使い、無ければ作る。あったときは前提の状態へ戻す。支店IDを返す */
+/**
+ * 店舗を、店舗IDで選び（店舗は作らない）、前提の状態へ戻して、店舗IDを返す。
+ * ケースごとに入れ直す店舗（共有でない店舗の割り当て）は、シードを使い回さないよう、元に戻すことを登録する
+ * （E2E の店舗の支店トップページの設定は、次のケースの前に入れ直すので、ケースの終わりには戻さない。戻したかの照合も、入れ直した設定を読むだけ）。
+ */
 async function 試験店舗を用意する(browser: Browser, seedId: string, 商品あり: boolean): Promise<string> {
-  const 店 = 店の定め(seedId);
-  const r = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    const found = await findTenantId(page, 店.店名);
-    return { id: found ?? await 支店を用意する(page, 店.店名, 店.url, issueOf(seedId)), 既存: found !== null };
+  const id = 店の定め(seedId);
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    await 店舗IDで選ぶ(page, id, getSeed(seedId).論理名, issueOf(seedId), "支店トップページ設定の店舗");
   });
-  if (r.既存) 試験店舗を前提の状態に戻す(seedId, r.id, 商品あり);
-  return r.id;
+  試験店舗を前提の状態に戻す(seedId, id, 商品あり);
+  if (id === 店.軽い || id === 店.商品) {
+    registerRestore(`店舗ID ${id} の支店トップページ設定（${seedId}。ケースごとに入れ直す E2E の店舗なので戻さない）`, { 店舗ID: id, シード: seedId }, async () => { /* 次のケースの前に、前提へ入れ直す */ }, async () => true);
+  }
+  return id;
 }
 
 // ---- 管理者・タグ・画像・ブラウザ ----
@@ -168,8 +184,9 @@ defineSeed("S-M09-10-IMAGES", async () => {
 defineSeed("S-M09-10-QI-BROWSER", async () => { /* 公開側は、ケースのページ（管理画面とは別の、ログインしていない新しいブラウザの状態）を日本語のURL /ja/ で、幅1280pxで開く */ });
 
 /** 連携試験の管理者（登録者）と承認者。支店ごとに編集可能店舗を足していくので、実行の印つきのメンバーにする（前の実行の編集可能店舗と食い違わないように） */
-export const QI管理者 = { 名前: () => 印("M09-10連携試験管理者"), account: (): Account => ({ loginId: `m0910qi${RUN_MARK.toLowerCase()}`, password: "Passw0rd-M0910QI" }) };
-export const QI承認者 = { 名前: () => 印("M09-10連携試験承認者"), account: (): Account => ({ loginId: `m0910qiap${RUN_MARK.toLowerCase()}`, password: "Passw0rd-M0910QIAP" }) };
+// 連携試験の管理者・承認者は決まった印で1度だけ作り、実行をまたいで使い回す（依頼者の指示 2026-11-12「毎回作らずに1個でいけるやつは使い回す」。シード表も「共有可」）
+export const QI管理者 = { 名前: () => rcFixed("M09-10連携試験管理者"), account: (): Account => ({ loginId: `m0910qi${FIXED_MARK.toLowerCase()}`, password: "Passw0rd-M0910QI" }) };
+export const QI承認者 = { 名前: () => rcFixed("M09-10連携試験承認者"), account: (): Account => ({ loginId: `m0910qiap${FIXED_MARK.toLowerCase()}`, password: "Passw0rd-M0910QIAP" }) };
 const QIのID = new Map<string, string>();
 
 async function QIメンバーを用意する(browser: Browser, who: typeof QI管理者, key: string): Promise<void> {
@@ -199,32 +216,32 @@ type 支店の定め = {
   後処理?: (c: { seedId: string; 支店ID: string }) => void;
 };
 
-/** DBで、試験店舗のバナー画像を空にする */
+/** DBで、E2E の店舗のバナー画像を空にする */
 function バナー画像を空にする(c: { seedId: string; 支店ID: string }): void {
   const n = writeTestData({
-    理由: `${c.seedId}: バナー画像未設定は画面で指定できないため、試験店舗のバナー画像を空にする`,
+    理由: `${c.seedId}: バナー画像未設定は画面で指定できないため、E2E の店舗のバナー画像を空にする`,
     sql: "update dtb_base_info set banner_image = null where id = $1",
-    params: [c.支店ID], 対象の確かめ: "select shop_name from dtb_base_info where id = $1", 確かめのparams: [c.支店ID], 印: 店の印, 最大行数: 1,
+    params: [c.支店ID], ...E2Eの店舗の確かめ(c.支店ID), 最大行数: 1,
   });
-  reportSeedIssue(c.seedId, `バナー画像未設定は画面で指定できないため、DBで、試験店舗（支店ID ${c.支店ID}）のバナー画像を空にした（${n}行）`);
+  reportSeedIssue(c.seedId, `バナー画像未設定は画面で指定できないため、DBで、E2E の店舗（店舗ID ${c.支店ID}）のバナー画像を空にした（${n}行）`);
 }
 /** DBで、試験店舗のタイルを消す（タイル属性がピックアップ商品のものだけ、または全部） */
 function タイルを消す(c: { seedId: string; 支店ID: string }, 範囲: "全部" | "ピックアップ商品"): void {
   const n = writeTestData({
-    理由: `${c.seedId}: タイルが少ない状態は画面で指定できない（画面は4行そろえて登録する）ため、試験店舗の仮のタイル（${範囲}）を削除する`,
+    理由: `${c.seedId}: タイルが少ない状態は画面で指定できない（画面は4行そろえて登録する）ため、E2E の店舗の仮のタイル（${範囲}）を削除する`,
     sql: 範囲 === "全部" ? "delete from dtb_tile where base_info_id = $1" : "delete from dtb_tile where base_info_id = $1 and tile_type_id = 4",
-    params: [c.支店ID], 対象の確かめ: "select shop_name from dtb_base_info where id = $1", 確かめのparams: [c.支店ID], 印: 店の印, 最大行数: 4,
+    params: [c.支店ID], ...E2Eの店舗の確かめ(c.支店ID), 最大行数: 4,
   });
-  reportSeedIssue(c.seedId, `画面は4行そろえて登録するため、DBで、試験店舗（支店ID ${c.支店ID}）の仮のタイル（${範囲}）を削除した（${n}行）`);
+  reportSeedIssue(c.seedId, `画面は4行そろえて登録するため、DBで、E2E の店舗（店舗ID ${c.支店ID}）の仮のタイル（${範囲}）を削除した（${n}行）`);
 }
 /** DBで、試験店舗のタイルのうち、タイル属性が 属性 のもののタイルタグを空にする */
 function タイルタグを空にする(c: { seedId: string; 支店ID: string }, 属性: string): void {
   const n = writeTestData({
-    理由: `${c.seedId}: ピックアップ商品以外のタイルタグ未選択は画面で保存できないため、試験店舗の「${属性}」のタイルのタイルタグを空にする`,
+    理由: `${c.seedId}: ピックアップ商品以外のタイルタグ未選択は画面で保存できないため、E2E の店舗の「${属性}」のタイルのタイルタグを空にする`,
     sql: "update dtb_tile set tag_id = null where base_info_id = $1 and tile_type_id in (select id from mtb_tile_type where name = $2)",
-    params: [c.支店ID, 属性], 対象の確かめ: "select shop_name from dtb_base_info where id = $1", 確かめのparams: [c.支店ID], 印: 店の印, 最大行数: 4,
+    params: [c.支店ID, 属性], ...E2Eの店舗の確かめ(c.支店ID), 最大行数: 4,
   });
-  reportSeedIssue(c.seedId, `ピックアップ商品以外のタイルタグ未選択は画面で保存できないため、DBで、試験店舗（支店ID ${c.支店ID}）の「${属性}」のタイルのタイルタグを空にした（${n}行）`);
+  reportSeedIssue(c.seedId, `ピックアップ商品以外のタイルタグ未選択は画面で保存できないため、DBで、E2E の店舗（店舗ID ${c.支店ID}）の「${属性}」のタイルのタイルタグを空にした（${n}行）`);
 }
 /** DBで、印つきの商品の、支店の在庫のピックアップ設定を有効にする */
 function ピックアップにする(seedId: string, 支店ID: string, 商品コード: string[]): void {
@@ -254,7 +271,7 @@ function タイルIDを控える(seedId: string, notes: Notes, 支店ID: string,
 async function 支店トップの支店を作る(browser: Browser, seedId: string, notes: Notes, d: 支店の定め): Promise<void> {
   const issue = issueOf(seedId);
   const 店名 = 試験店舗の店名(seedId);
-  const id = await 試験店舗を用意する(browser, seedId, seedId === "S-M09-10-LOCAL-033");
+  const id = await 試験店舗を用意する(browser, seedId, seedId === "S-M09-10-LOCAL-033" || seedId === "S-M09-10-ZERO-TILES");
   notes.set(d.支店ID呼び名, id);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await 支店トップページを設定する(page, {
@@ -380,9 +397,10 @@ async function 商品と在庫を用意する(browser: Browser, seedId: string, 
     await withAdminSession(browser, a.承認者, async (ap) => {
       const list = new StockApprovalListPage(ap);
       await list.open(a.支店名);
-      // 新しく登録した支店なので、この登録者の未承認の申請は、いま入れた分だけ
+      // 登録者は E2E の決まった管理者なので、前の回に承認されずに残った行（どれも E2E の印つきの商品）があれば合わせて承認する
       const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant);
-      if (rows.length !== a.商品.length) throw new Error(`${seedId}: 在庫編集の未承認の行が ${rows.length} 件（${a.商品.length} 件のはず）`);
+      if (rows.length < a.商品.length) throw new Error(`${seedId}: 在庫編集の未承認の行が ${rows.length} 件（${a.商品.length} 件はあるはず）`);
+      if (rows.length > a.商品.length) issue(`在庫編集承認一覧に、同じ登録者の前の回の未承認の行が ${rows.length - a.商品.length} 件あり、合わせて承認した（どれも E2E の印つきの商品）`);
       await list.approve(rows.map((r) => r.id), `${seedId}: 在庫編集の承認`, issue);
       await list.open(a.支店名);
       const after = (await list.rowValues()).filter((r) => rows.some((x) => x.id === r.id));

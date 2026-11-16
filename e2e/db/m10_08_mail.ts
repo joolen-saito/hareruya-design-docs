@@ -34,11 +34,6 @@ export function 管理者の番号(ログインID: string): string {
   if (!r.length) throw new Error(`管理者 ${ログインID} がDBに無い`);
   return r[0].id as string;
 }
-export function 名前の管理者の番号(名前: string): string {
-  const r = query(`select id::text as id from dtb_member where name = $1 order by id limit 1`, [名前]);
-  if (!r.length) throw new Error(`管理者 ${名前} がDBに無い`);
-  return r[0].id as string;
-}
 
 const 印のあるキー = `mail_key like '%${RUN_MARK}%'`;
 

@@ -12,7 +12,7 @@ import { test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
-import { FrontDetailSearch } from "../../pages/front/f03_03_detail_search";
+import { FrontDetailSearch, 詳細検索モーダルが閉じ切るのを待つ } from "../../pages/front/f03_03_detail_search";
 import { FrontProductList } from "../../pages/front/f03_01_product_list";
 import { 共有マスタ } from "../../seeds/f03-03";
 import { F0303の商品ID } from "../../seeds/f03-03-index";
@@ -23,7 +23,7 @@ const 並べる = (ids: string[]) => [...ids].sort();
 /** 事前準備: 店の商品一覧を、保存済み検索条件なし・モーダルが閉じた状態で開く */
 async function 一覧を開く(search: FrontDetailSearch, shop = "/ja"): Promise<void> {
   await search.openProductList(shop);
-  expect(await search.モーダルが開いている(), "開始時に商品詳細検索モーダルが閉じている").toBe(false);
+  expect(!(await search.モーダルが開いている()), "開始時に商品詳細検索モーダルが閉じている").toBe(true);
 }
 
 /** 商品一覧の「詳細検索」を押して、モーダルが開くのを待つ */
@@ -37,8 +37,35 @@ async function 詳細検索を押す(search: FrontDetailSearch): Promise<void> {
 async function 検索して読む(search: FrontDetailSearch, list: FrontProductList): Promise<string[]> {
   await search.検索する();
   await list.結果を待つ();
+  // 検索のあとの画面を撮る前に、モーダルが閉じ切るのを待つ（半透明のモーダルが結果に重なって写らないように）
+  await 詳細検索モーダルが閉じ切るのを待つ(search.page);
   return (await list.カードを読む()).map((c) => c.商品ID);
 }
+
+/**
+ * 検索結果の商品カードに、どの商品か（正本の商品コードと商品ID）を書いた「E2E の注記」の札を付ける。
+ * このケースの商品は、正本どおり商品名がすべて同じで、商品コードは画面に出ないので、画像では見分けられない。
+ * 札の商品IDはカードの商品名のリンク先から読み、商品コードはシードが作った商品の控えで引く。次の画面へ移ると札は消える。
+ */
+async function 商品の札を付ける(list: FrontProductList, 対応: Map<string, string>): Promise<void> {
+  await list.本表示のカード.evaluateAll((cards, pairs) => {
+    const m = new Map(pairs);
+    for (const card of cards) {
+      card.querySelector("[data-e2e-note]")?.remove();
+      const href = (card.querySelector("a.p-hareruya-product-card__name") as HTMLAnchorElement | null)?.href ?? "";
+      const id = /\/products\/detail\/(\d+)/.exec(href)?.[1] ?? "";
+      const code = m.get(id);
+      const note = document.createElement("div");
+      note.setAttribute("data-e2e-note", "1");
+      note.style.cssText = "border:2px solid #d00;color:#d00;background:#fff;font-size:12px;font-weight:bold;line-height:1.4;padding:2px 6px;margin:0 0 4px;";
+      note.textContent = code ? `E2E の注記：商品コード ${code}（商品ID ${id}）` : `E2E の注記：このケースの商品ではない（商品ID ${id}）`;
+      card.insertAdjacentElement("afterbegin", note);
+    }
+  }, [...対応.entries()]);
+}
+
+/** 正本の商品コードから、シードが作った商品の商品IDへの対応（商品ID → 正本の商品コード） */
+const 札の対応 = (seedId: string, codes: string[]) => new Map(codes.map((c) => [F0303の商品ID(seedId, c), c] as [string, string]));
 
 /** 項目の前の選択を外してから、正本の値だけを選ぶ */
 async function だけを選ぶ(search: FrontDetailSearch, 見出し: string, 表示名: string): Promise<void> {
@@ -168,6 +195,7 @@ caseTest("IT-F03-03-020", 値を替えて検索({
 /** 010・035: 固有色を選んで検索する */
 function 固有色で検索(o: { seedId: string; 商品名: string; 色: string[]; 出る: string[]; 出ない: string[] }) {
   return async ({ page, step, expected }: CaseCtx) => {
+    const 対応 = 札の対応(o.seedId, [...o.出る, ...o.出ない]);
     const search = new FrontDetailSearch(page);
     const list = new FrontProductList(page);
     let 結果: string[] = [];
@@ -177,10 +205,12 @@ function 固有色で検索(o: { seedId: string; 商品名: string; 色: string[
       await search.商品名の入力欄.fill(rc(o.商品名));
       for (const c of o.色) await search.選択肢を選ぶ("固有色", c);
       結果 = 並べる(await 検索して読む(search, list));
+      await 商品の札を付ける(list, 対応);
     });
     await expected(async () => {
       expect.soft(結果, `固有色 ${o.色.join("・")} の検索結果は ${o.出る.join("・")}`).toEqual(ID(o.seedId, ...o.出る));
       for (const c of o.出ない) expect.soft(結果, `選ばなかった色を含む ${c} は出ない`).not.toContain(F0303の商品ID(o.seedId, c));
+      for (const c of o.出る) await expect.soft(list.カード(F0303の商品ID(o.seedId, c)), `${c} の商品カード`).toBeVisible();
     });
   };
 }
@@ -208,10 +238,11 @@ caseTest("IT-F03-03-018", async ({ page, step, expected, capture }) => {
   });
 });
 
-caseTest("IT-F03-03-019", async ({ page, step, expected }) => {
+caseTest("IT-F03-03-019", async ({ page, step, expected, capture }) => {
   const search = new FrontDetailSearch(page);
   const list = new FrontProductList(page);
   const seedId = "S-F03-03-MANA-LANG-019";
+  const 対応 = 札の対応(seedId, Array.from({ length: 9 }, (_, i) => `MANA-${i}-019`));
   const 結果 = new Map<string, string[]>();
   await 一覧を開く(search);
   await step(1, async () => {
@@ -220,6 +251,9 @@ caseTest("IT-F03-03-019", async ({ page, step, expected }) => {
       await search.商品名の入力欄.fill(rc("F0303-MANA-019"));
       await だけを選ぶ(search, "マナ・コスト", String(n));
       結果.set(String(n), 並べる(await 検索して読む(search, list)));
+      // 0〜6 それぞれの検索結果を、どの商品かの札を付けて撮る
+      await 商品の札を付ける(list, 対応);
+      await capture(`マナ・コスト ${n} の検索結果`);
     }
   });
   await step(2, async () => {
@@ -228,10 +262,12 @@ caseTest("IT-F03-03-019", async ({ page, step, expected }) => {
     await だけを選ぶ(search, "マナ・コスト", "7+");
     note("マナ・コストの「7以上」は、画面の選択肢の「7+」を選んだ");
     結果.set("7+", 並べる(await 検索して読む(search, list)));
+    await 商品の札を付ける(list, 対応);
   });
   await expected(async () => {
     for (let n = 0; n <= 6; n++) expect.soft(結果.get(String(n)), `マナ・コスト ${n} の検索結果は MANA-${n}-019 の1商品だけ`).toEqual(ID(seedId, `MANA-${n}-019`));
     expect.soft(結果.get("7+"), "マナ・コスト 7以上の検索結果は MANA-7-019 と MANA-8-019").toEqual(ID(seedId, "MANA-7-019", "MANA-8-019"));
+    for (const c of ["MANA-7-019", "MANA-8-019"]) await expect.soft(list.カード(F0303の商品ID(seedId, c)), `マナ・コスト 7以上の検索結果の ${c} の商品カード`).toBeVisible();
   });
 });
 

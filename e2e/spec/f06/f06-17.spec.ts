@@ -5,7 +5,7 @@ import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
 import { DeckEditPage, 前面 } from "../../pages/front/f06_16_deck_entry";
 import { DeckCheckPage } from "../../pages/front/f06_17_deck_check";
 import * as DB from "../../db/f06_16";
-import { カード名 } from "../../pages/admin/f06_17_setup";
+import { カード名, 店名17 } from "../../pages/admin/f06_17_setup";
 import { 会員一覧, 大会一覧, 提出したデッキ } from "../../seeds/f06-17";
 import "../../seeds/f06-17";
 
@@ -79,10 +79,15 @@ caseTest("IT-F06-17-008", async ({ page, step, expected }) => {
   await step(1, async () => { await e.開く(d.日程ID); await expect(e.メイン).toBeVisible(); });
   await step(2, async () => { await e.入力する("メイン", `1 ${A()}`); await e.入力する("サイド", `1 ${B()}`); });
   await step(3, async () => { await e.トークン.evaluate((o) => o.remove()); });
-  await step(4, async () => { await e.提出する(); });
+  let r: Awaited<ReturnType<DeckEditPage["提出する"]>> | undefined;
+  await step(4, async () => { r = await e.提出する(); note(`提出の応答: ${r.応答?.status() ?? "なし"}・提出のあとの画面: ${new URL(page.url()).pathname}`); });
   let n = -1;
   await step(5, async () => { n = DB.大会デッキ一覧(d.日程ID, 会員("008").選手ID).length; });
-  await expected(async () => { expect.soft(n, "登録されたデッキの件数").toBe(0); });
+  await expected(async () => {
+    // 「登録されない」を、送信されなかっただけで合格にしない
+    expect.soft(r?.送信, "「デッキリストを提出する」で送信された（送信先の応答があった）").toBe(true);
+    expect.soft(n, "登録されたデッキの件数").toBe(0);
+  });
 });
 
 caseTest("IT-F06-17-009", async ({ page, step, expected }) => {
@@ -92,10 +97,15 @@ caseTest("IT-F06-17-009", async ({ page, step, expected }) => {
   await step(1, async () => { await e.開く(d.日程ID); await expect(e.メイン).toBeVisible(); });
   await step(2, async () => { await e.入力する("メイン", `1 ${A()}`); await e.入力する("サイド", `1 ${B()}`); });
   await step(3, async () => { await e.トークン.evaluate((o) => { (o as HTMLInputElement).value = "invalid-token"; }); });
-  await step(4, async () => { await e.提出する(); });
+  let r: Awaited<ReturnType<DeckEditPage["提出する"]>> | undefined;
+  await step(4, async () => { r = await e.提出する(); note(`提出の応答: ${r.応答?.status() ?? "なし"}・提出のあとの画面: ${new URL(page.url()).pathname}`); });
   let n = -1;
   await step(5, async () => { n = DB.大会デッキ一覧(d.日程ID, 会員("009").選手ID).length; });
-  await expected(async () => { expect.soft(n, "登録されたデッキの件数").toBe(0); });
+  await expected(async () => {
+    // 「登録されない」を、送信されなかっただけで合格にしない
+    expect.soft(r?.送信, "「デッキリストを提出する」で送信された（送信先の応答があった）").toBe(true);
+    expect.soft(n, "登録されたデッキの件数").toBe(0);
+  });
 });
 
 caseTest("IT-F06-17-014", async ({ page, notes, step, expected }) => {
@@ -108,10 +118,20 @@ caseTest("IT-F06-17-014", async ({ page, notes, step, expected }) => {
     await page.locator("form#decklist_submit").evaluate((f, [id]) => { (f as HTMLFormElement).action = (f as HTMLFormElement).action.replace(/\/deckentry\/\d+\/update/, `/deckentry/${id}/update`); }, [b.日程ID]);
     await page.locator('form#decklist_submit input[name="format"]').first().evaluate((o, v) => { (o as HTMLInputElement).value = v; }, fid);
   });
-  await step(3, async () => { await e.入力する("メイン", `1 ${A()}`); await e.入力する("サイド", `1 ${B()}`); await e.提出する(); });
+  let r: Awaited<ReturnType<DeckEditPage["提出する"]>> | undefined;
+  await step(3, async () => {
+    await e.入力する("メイン", `1 ${A()}`); await e.入力する("サイド", `1 ${B()}`);
+    r = await e.提出する();
+    note(`送信先: ${r.応答 ? new URL(r.応答.url()).pathname : "（応答なし）"}・応答 ${r.応答?.status() ?? "なし"}`);
+  });
   let n = -1;
   await step(4, async () => { n = DB.日程の大会デッキ件数(b.日程ID); });
-  await expected(async () => { expect.soft(n, "送信先の日程の大会デッキの件数（登録期限を過ぎているので登録されない）").toBe(0); });
+  await expected(async () => {
+    // 「登録されない」を、送信されなかった・送信先が書き換わっていなかっただけで合格にしない
+    expect.soft(r?.送信, "「デッキリストを提出する」で送信された（送信先の応答があった）").toBe(true);
+    expect.soft(r?.応答 ? new URL(r.応答.url()).pathname : "", "送信先（書き換えたイベント詳細ID）").toBe(`/ja/deckentry/${b.日程ID}/update`);
+    expect.soft(n, "送信先の日程の大会デッキの件数（登録期限を過ぎているので登録されない）").toBe(0);
+  });
 });
 
 const 不明 = "不明カードX";
@@ -178,7 +198,7 @@ caseTest("IT-F06-17-017", async ({ page, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(r.名, "大会名にフォーマットが括弧付きで添えられる").toMatch(new RegExp(`^${d.大会名}[（(]スタンダード試験[）)]$`));
-    expect.soft(r.情報, "開催店舗").toContain("晴れる屋テスト店");
+    expect.soft(r.情報, "開催店舗").toContain(店名17);
     expect.soft(r.情報, "選手の英字姓名").toContain("TEST TARO");
     expect.soft(行(r.main), "メインボードの登録内容").toEqual([`1 ${A()}`]);
     expect.soft(行(r.side), "サイドボードの登録内容").toEqual([`1 ${B()}`]);
@@ -234,7 +254,8 @@ caseTest("IT-F06-17-020", async ({ page, step, expected }) => {
   await step(2, async () => { 領域 = (await c.大会情報.innerText()).replace(/\s+/g, " "); 項目名 = (await c.大会情報.locator("dt").allInnerTexts()).map((t) => t.trim()); });
   await expected(async () => {
     expect.soft(領域.includes("DCI"), "DCIナンバーの表示").toBe(false);
-    expect.soft(項目名.includes("名前"), "項目「名前」の表示").toBe(false);
+    // 見出しは末尾に「：」が付くので、取り除いてから「名前」の項目があるかを見る
+    expect.soft(項目名.map((t) => t.replace(/[：:]\s*$/, "").trim()).includes("名前"), `項目「名前」の表示（項目: ${項目名.join(" / ")}）`).toBe(false);
     expect.soft(領域, "プレイヤー名").toContain("TEST TARO");
   });
 });

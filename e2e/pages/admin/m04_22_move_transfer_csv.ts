@@ -19,7 +19,7 @@ async function openMaster(page: Page, table: string): Promise<Locator> {
   const select = page.locator("form#form1 select").first();
   await expect(select, "マスタデータ管理のマスタの選択欄").toBeVisible();
   await chooseByLabel(select, table);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("form#form1 button[type=submit]").click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("form#form1 button[type=submit]").click({ noWaitAfter: true })]);
   const rows = page.locator("form#form2 tbody tr");
   await expect(rows.first(), `マスター ${table} の行`).toBeVisible();
   return rows;
@@ -89,8 +89,8 @@ export async function denyApprovalForAuthority(page: Page, authorityName: string
   if (await box.isChecked()) {
     await box.uncheck();
     await Promise.all([
-      page.waitForNavigation({ waitUntil: "load" }),
-      page.locator('button[type="submit"][form="form1"]').click(),
+      page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+      page.locator('button[type="submit"][form="form1"]').click({ noWaitAfter: true }),
     ]);
     await expectSaved(page, `権限「${authorityName}」の承認権限を外す登録`);
     await openAuthorityMatrix(page);
@@ -116,6 +116,25 @@ export async function pressCsvRegisterButton(page: Page, kind: CsvModalKind): Pr
   const button = page.getByRole("button", { name: kind, exact: true });
   await expect(button, `「${kind}」ボタンは1つ`).toHaveCount(1);
   await button.click();
+}
+
+/**
+ * 押したあと、モーダルが開く動き（背景が暗くなり、モーダルが下りてくる動き）が終わるまで待つ（エビデンスの手順の画像を、開き切った画面で撮るため）。
+ * 開いたかどうかは確かめない（期待結果で確かめる）。決めた時間で開き切らなくても投げない
+ */
+export async function waitModalSettled(modal: Locator, timeout = 5_000): Promise<void> {
+  await modal.waitFor({ state: "visible", timeout }).catch(() => undefined);
+  await modal.evaluate(async (el, ms) => {
+    const end = Date.now() + ms;
+    const parts = [el, el.querySelector(".modal-dialog"), document.querySelector(".modal-backdrop")].filter((x): x is Element => !!x);
+    while (Date.now() < end) {
+      const moving = parts.some((p) => p.getAnimations({ subtree: false }).some((a) => a.playState === "running"));
+      const opaque = getComputedStyle(el).opacity === "1" && el.classList.contains("show");
+      if (!moving && opaque) break;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  }, timeout).catch(() => undefined);
+  await modal.page().waitForTimeout(300);
 }
 
 /** モーダル（いま表示されているもの）と、その見出し */
@@ -242,7 +261,7 @@ export type 登録の結果 = { パス: string; 見出し: string; エラー: st
 export async function submitCsvModal(page: Page, kind: CsvModalKind): Promise<登録の結果> {
   await Promise.all([
     page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }),
-    page.locator(SUBMIT[kind]).click(),
+    page.locator(SUBMIT[kind]).click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   const visibleTexts = async (sel: string) => {

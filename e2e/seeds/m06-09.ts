@@ -12,12 +12,12 @@
 import { SETUP_ADMIN } from "../config/env";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore } from "../pages/admin/m04_24_store";
-import { storeInput } from "./m06-common";
+import { ensureMemberByStoreIdsFix as ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
+import { ensureStore, 使い回す店舗の入力 } from "../pages/admin/m04_24_reuse_k";
 
 export const M0609_ADMIN_002: Account = { loginId: "m0609_admin_002", password: "Passw0rd!M0609-002" };
-const STORE = storeInput("M06-09試験店舗002", "エムゼロロクゼロキュウシケンテンポゼロゼロニ", "Kaitori Summary Test Store", "m0609s002", "K9B");
+/** 店舗は作らない（依頼者 2026-11-15）。「M06-09試験店舗002」は、使い回す E2E の店舗 221 で表す（集計日 2099-01-01 には集計データが無い） */
+const STORE = 使い回す店舗の入力("221", "M06-09試験店舗002");
 const LABEL = "〔店舗ID-M0609-002〕";
 
 defineSeed("S-M06-09-EMPTY-002", async ({ browser, notes, seed }) => {

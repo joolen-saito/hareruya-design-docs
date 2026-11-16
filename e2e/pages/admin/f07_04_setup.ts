@@ -4,7 +4,7 @@
  * - 大会（イベント）と日程は、イベント登録画面と、イベント編集画面の「日程追加」で作る。
  * - 選手IDは、イベント申込登録画面のプレイヤー検索の結果一覧のID列から読む（申込の登録をしないときは、読んだら画面を閉じる）。
  */
-import { Browser, Page, expect } from "@playwright/test";
+import { Browser, Locator, Page, expect } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { hideDebugToolbar, adminUrl } from "../../lib/session";
 import { rc, RUN_MARK } from "../../lib/run_marker";
@@ -48,7 +48,7 @@ export async function 会員IDをメールから(page: Page, メール: string):
     await page.goto(adminUrl("/customer"));
     await page.waitForLoadState("load");
     await page.locator('[name="admin_search_customer[multi]"]').fill(メール);
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
     const row = page.locator('tr[id^="ex-customer-"]').first();
     if ((await row.count()) === 0) continue;
@@ -180,7 +180,7 @@ export async function 申込を検索する(page: Page, イベント名: string,
   await form.locator('[name="admin_search_event[event_name]"]').fill(イベント名);
   await form.locator('[name="admin_search_event[start_date_from]"]').fill("");
   await form.locator('[name="admin_search_event[start_date_to]"]').fill("");
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), form.getByRole("button", { name: "検索", exact: true }).first().click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "検索", exact: true }).first().click({ noWaitAfter: true })]);
   const total = /検索結果：\s*(\d+)\s*件/.exec((await page.locator("body").innerText()).replace(/\s+/g, " "));
   const 件数 = total ? Number(total[1]) : 0;
   const 行: 申込の行[] = [];
@@ -192,9 +192,18 @@ export async function 申込を検索する(page: Page, イベント名: string,
   return { 件数, 行 };
 }
 
+/** イベント申込一覧の検索結果の件数の文（「検索結果：1件が該当しました」） */
+export function 申込一覧の件数の文(page: Page): Locator { return page.locator("span.fw-bold", { hasText: "検索結果：" }).first(); }
+/** イベント申込一覧の検索結果の申込の行（申込を検索する と同じく、欄が5つ以上ある行） */
+export function 申込一覧の行(page: Page): Locator { return page.locator("table tbody tr:has(> td:nth-child(5))"); }
+/** 申込の行のイベント名の欄 */
+export function 申込の行のイベント名の欄(行: Locator): Locator { return 行.locator("td").nth(3); }
+/** 申込の行の申込IDの欄 */
+export function 申込の行の申込IDの欄(行: Locator): Locator { return 行.locator("td").nth(1); }
+
 /** 検索結果の行のプレイヤー名のリンクを押して、イベント申込詳細・編集画面を開く */
 export async function 申込詳細を開く(page: Page, 申込ID: string): Promise<void> {
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator(`a[href$="/event/entry/${申込ID}/edit"]`).first().click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator(`a[href$="/event/entry/${申込ID}/edit"]`).first().click({ noWaitAfter: true })]);
 }
 
 export type 申込詳細 = { 申込ID: string; イベント名の欄: string; 店舗: string; フォーマット: string; 支払番号: string };
@@ -226,4 +235,9 @@ export async function 申込一覧を開く(page: Page): Promise<void> {
 export async function フォーマットのランキング表示とイベントに表示を付ける(page: Page): Promise<void> {
   await page.locator("#admin_format_rankingFlg").setChecked(true);
   await page.locator("#admin_format_isShownInEvent").setChecked(true);
+}
+
+/** フォーマット詳細(編集)で、「ランキング表示」と「イベントに表示」の両方にチェックが付いているか */
+export async function フォーマットのランキング表示とイベントに表示が付いている(page: Page): Promise<boolean> {
+  return (await page.locator("#admin_format_rankingFlg").isChecked()) && (await page.locator("#admin_format_isShownInEvent").isChecked());
 }

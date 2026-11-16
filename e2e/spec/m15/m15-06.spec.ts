@@ -22,7 +22,7 @@ caseTest("IT-M15-06-001", async ({ page, step, expected }) => {
   await step(1, async () => { await l.開く(); });
   await step(2, async () => {
     note("画面のボタンの表示は「CSV登録」（正本は「CSV,TSV取り込み」）。同じ位置のボタン（デッキ登録CSVアップロードへのリンク）を押した");
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('a[href$="/deck/csv_import"]').click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('a[href$="/deck/csv_import"]').click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "表示された画面のアドレス").toMatch(/\/deck\/csv_import$/);

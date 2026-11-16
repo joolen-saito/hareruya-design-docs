@@ -18,7 +18,7 @@ async function ログイン済みにする(ctx: CaseCtx, k: string): Promise<Mai
   const l = new LoginPage(ctx.page);
   await l.ログイン画面を開く();
   await l.ログインする(m.メール, m.パスワード);
-  expect(await l.ログイン画面である(), `事前準備: 会員 ${k} でログインできた`).toBe(false);
+  expect(!(await l.ログイン画面である()), `事前準備: 会員 ${k} でログインできた`).toBe(true);
   return new MainNavCartPage(ctx.page);
 }
 const 数字 = (t: string): string => (t.match(/\d[\d,]*/)?.[0] ?? "").replace(/,/g, "");
@@ -148,7 +148,11 @@ caseTest("IT-F02-01-058", async (ctx) => {
     note("開発者ツールの代わりに、ブラウザの通信の差し止め（パスが /block/cart で終わる要求を止める）で遮断した");
   });
   await step(2, async () => { await n.本店トップを開く(); });
-  await step(3, async () => { await page.waitForLoadState("networkidle").catch(() => undefined); await page.waitForTimeout(1500); note(`遮断した /block/cart への要求: ${遮断した}件`); });
+  await step(3, async () => {
+    await page.waitForLoadState("networkidle").catch(() => undefined); await page.waitForTimeout(1500); note(`遮断した /block/cart への要求: ${遮断した}件`);
+    // 遮断が働いていなければ手順1を行ったことにならないので、/block/cart への要求を実際に止めたことを確かめる
+    expect(遮断した, "/block/cart への要求を遮断した件数").toBeGreaterThan(0);
+  });
   await expected(async () => {
     await n.マウスを離す(); await capture("ヘッダ");
     await expect.soft(n.見えているカートの商品数(), "ヘッダのカートの商品数（表示されない）").toHaveCount(0);

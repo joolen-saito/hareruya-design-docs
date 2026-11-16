@@ -69,7 +69,7 @@ function 検索してデッキ表示(検索語: () => string, 開催日: string[
       await capture("デッキ表示（別の画面）");
     });
     await expected(async () => {
-      expect(popup.isClosed(), "デッキ表示の画面が開いたままである").toBe(false);
+      expect(!popup.isClosed(), "デッキ表示の画面が開いたままである").toBe(true);
       await check(popup, list, ctx);
       await capture("デッキ表示（期待結果）");
     });
@@ -107,7 +107,7 @@ caseTest("IT-M13-08-003", 検索してデッキ表示(() => 権限003.検索語(
 }));
 
 caseTest("IT-M13-08-004", 検索してデッキ表示(() => 印("M1308-004検索対象大会"), ["2026-10-09", "2026-10-10"], async (popup, list, { page }) => {
-  expect.soft(popup === page, "デッキ表示が、イベント申込一覧とは別の画面（別のウィンドウ）に開く").toBe(false);
+  expect.soft(popup !== page, "デッキ表示が、イベント申込一覧とは別の画面（別のウィンドウ）に開く").toBe(true);
   expect.soft(new URL(popup.url()).pathname.endsWith(デッキ表示のパス), `別の画面に開いたのがデッキ表示（${new URL(popup.url()).pathname}）`).toBe(true);
   await expect.soft(印刷ボタン(popup), "デッキ表示の印刷ボタン（印刷向けの画面）").toBeVisible();
   expect.soft(await popup.locator(".wrapper").count(), "デッキ表示の印刷用のページ数（1以上）").toBeGreaterThan(0);
@@ -129,7 +129,7 @@ function 表示大会(大会名: () => string, 開催日: string, 手順3: (popu
     await step(2, async () => { popup = await デッキ表示を開く(page); await capture("デッキ表示（別の画面）"); });
     await step(3, async () => { await 手順3(popup, ctx); });
     await expected(async () => {
-      expect(popup.isClosed(), "デッキ表示の画面が開いたままである").toBe(false);
+      expect(!popup.isClosed(), "デッキ表示の画面が開いたままである").toBe(true);
       await check(popup, ctx);
       await capture("デッキ表示（期待結果）");
     });

@@ -8,8 +8,8 @@ export async function 住所リンクを押す(page: Page, 語: string): Promise
   const row = page.locator("#delivery tbody tr").filter({ hasText: new RegExp(esc(語)) });
   await expect(row, `お届け先住所欄の、住所に「${語}」を含む行`).toHaveCount(1, { timeout: 30_000 });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-    row.locator('a[href*="/delivery/"][href$="/edit"]').first().click({ timeout: 30_000 }),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+    row.locator('a[href*="/delivery/"][href$="/edit"]').first().click({ timeout: 30_000, noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator('[name="customer_address[address_name]"]'), "配送先編集画面").toBeVisible({ timeout: 30_000 });

@@ -18,7 +18,8 @@ import { Account, withAdminSession } from "../lib/session";
 import { createMember, findMemberId } from "../pages/admin/member";
 import { 本店の店名 } from "../pages/admin/m05_admin_member";
 import { setMemberStores, WaitingTagPage } from "../pages/admin/m05_27_waiting_tag";
-import { ensureTenant } from "../pages/admin/tenant";
+import { findTenantId } from "../pages/admin/tenant_k";
+import { 支店URLを読む, 店名を読む, 読み替えの文 } from "../lib/store_pick";
 
 defineSeed("S-F06-25-SHOPS", async () => {
   if (available) {
@@ -43,13 +44,15 @@ defineSeed("S-F06-25-SHOPS", async () => {
 
 /** 試験店舗の店頭モニターのアドレス（店名 → 支店URL） */
 /** F06-25 専用の試験店舗（M05-27 の試験店舗とは別。流れを並べても番号札を互いに消さない）。固定の店名・略称・支店URL */
-export const 本店 = "試験本店-F0625P1";
-export const 支店 = "試験支店-F0625P2";
-const 店の値: Record<string, { 略称: string; URL: string }> = {
-  [本店]: { 略称: "F61", URL: "f0625p1" },
-  [支店]: { 略称: "F62", URL: "f0625p2" },
-};
-export const モニターのパス = (店名: string): string => `/ja/${店の値[店名].URL}/waiting_number`;
+/**
+ * 店舗は作らない（依頼者 2026-11-15「店舗は作るのもう禁止」）。F06-25 専用の試験本店・試験支店は、使い回す E2E の店舗で表す: 試験本店=店舗ID 221・試験支店=5006（M05-27 の店舗とは別）。
+ * 番号札の全件消し・値の書き換えは E2E の店舗だけに行う（db/f06_25_write.ts）。店名・支店URLは店舗のいまの値。
+ */
+const 店舗IDの表: Record<string, string> = {};
+const 役の店 = (id: string): string => { const n = 店名を読む(id); 店舗IDの表[n] = id; return n; };
+export const 本店 = 役の店("221");
+export const 支店 = 役の店("5006");
+export const モニターのパス = (店名: string): string => `/ja/${支店URLを読む(店舗IDの表[店名])}/waiting_number`;
 
 const storeIds = new Map<string, string>();
 function 店舗ID(店名: string): string {
@@ -57,15 +60,16 @@ function 店舗ID(店名: string): string {
   if (!id) throw new Error(`店舗「${店名}」はまだ用意していない`);
   return id;
 }
-/** 試験店舗を、あれば使い、無ければ作る */
+/** 使い回す店舗が店舗一覧にあることを確かめて、店舗IDを控える（作らない） */
 async function ensureStores(browser: Browser, seedId: string, names: string[]): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     for (const name of names) {
-      const v = 店の値[name];
-      const id = await ensureTenant(page, {
-        店名: name, 店名カナ: "シケンテンポ", 店名英語: "Test Shop", 支店URL: v.URL, 店名略称3文字: v.略称, ショップ名略称: name.slice(0, 20),
-      }, (m) => reportSeedIssue(seedId, m));
+      const 期待 = 店舗IDの表[name];
+      if (!期待) throw new Error(`使い回す店舗でない店名: ${name}`);
+      const id = await findTenantId(page, name);
+      if (id !== 期待) throw new Error(`使い回す店舗「${name}」（店舗ID ${期待}）が店舗一覧に無い（${id ?? "なし"}）`);
       storeIds.set(name, id);
+      reportSeedIssue(seedId, 読み替えの文(name === 本店 ? "試験本店-F0625P1" : "試験支店-F0625P2", { id, 店名: name }));
     }
   });
 }

@@ -130,7 +130,7 @@ export class M0701ListPage extends BuyListPage {
     const link = this.page.locator(`#result_list_main__purchase_customer_name--${Number(番号)} a.post_name`);
     await expect(link, "行の買取依頼者氏名のリンク").toBeVisible({ timeout: OPEN });
     const text = norm(await link.innerText());
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), link.click({ timeout: OPEN })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), link.click({ timeout: OPEN, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     return text;
   }

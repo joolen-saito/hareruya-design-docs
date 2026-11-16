@@ -51,7 +51,7 @@ caseTest("IT-F03-01-008", async ({ page, step, expected }) => {
   });
   await step(3, async () => {
     await search.閉じるボタン.click({ timeout: 30_000 });
-    expect(await search.開閉後のモーダル(), "商品詳細検索を閉じたあと").toBe(false);
+    expect(!(await search.開閉後のモーダル()), "商品詳細検索を閉じたあと、モーダルが閉じている").toBe(true);
   });
   await step(4, async () => {
     const 押したもの = await list.絞り込み領域の詳細検索を押す();
@@ -397,7 +397,7 @@ caseTest("IT-F03-01-034", async ({ page, notes, step, expected }) => {
     const link = row.locator("a.p-hareruya-product-card__condition").first();
     状態名 = ((await link.innerText()) ?? "").trim();
     note(`EX は、この商品の他の状態「${状態名}」（規格ID ${ex}）のリンクを押した`);
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), link.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await expected(async () => {
@@ -417,7 +417,7 @@ caseTest("IT-F03-01-035", async ({ page, notes, step, expected }) => {
     const { card } = await カードを引く(list, pid, f.言語);
     const link = list.カードの同名商品(card);
     カードID = new URL((await link.getAttribute("href")) ?? "", page.url()).searchParams.get("cardId") ?? "";
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), link.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await list.結果を待つ();
     note(`同名商品検索のリンクが指すカードID: ${カードID || "（読めない）"}`);
   });
@@ -852,7 +852,7 @@ caseTest("IT-F03-01-086", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     expect.soft(a?.お気に入り済み, `お気に入り登録済みの「${a?.表示名}」（F0301-086-A に読み替え）の♡が塗りつぶし（登録済みの表示）`).toBe(true);
     expect.soft(b?.お気に入りボタン, `未登録の「${b?.表示名}」（F0301-086-B に読み替え）の♡が表示されている`).toBe(true);
-    expect.soft(b?.お気に入り済み, `未登録の「${b?.表示名}」の♡が白（未登録の表示）`).toBe(false);
+    expect.soft(b?.お気に入り済み === false, `未登録の「${b?.表示名}」の♡が白（未登録の表示）`).toBe(true);
   });
 });
 

@@ -16,7 +16,7 @@ import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { withAdminSession } from "../lib/session";
 import { SETUP_ADMIN } from "../config/env";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { ensureStore } from "../pages/admin/m04_24_reuse_k";
 import type { 申込入力, 申込者 } from "../pages/front/f08_05_confirm";
 import { F0802会員, PD_STORE, 会員を作る } from "./f08-02";
 
@@ -24,7 +24,7 @@ export { PD_STORE };
 
 const 店舗の注記 = (正本の店舗識別名: string) =>
   `店舗識別名「${正本の店舗識別名}」の店舗を新しく作らず（店舗識別名は画面で指定できない）、F08-05 と共通の試験店舗「${PD_STORE.店名}」` +
-  `（支店URL ${PD_STORE.支店URL}。無ければ登録）に読み替えた。手順の店舗識別名もこの店舗の支店URLとして読む`;
+  `（店舗ID ${PD_STORE.店舗ID}・支店URL ${PD_STORE.支店URL}。店舗は作らない決まり。依頼者 2026-11-15）に読み替えた。手順の店舗識別名もこの店舗の支店URLとして読む`;
 
 for (const [seedId, 呼び名, 識別名] of [
   ["S-F08-04-STORE", "共有", "f0804_shop"], ["S-F08-04-STORE-026", "026", "f0804_026_shop"], ["S-F08-04-STORE-027", "027", "f0804_027_shop"],

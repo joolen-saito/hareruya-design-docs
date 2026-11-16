@@ -68,7 +68,7 @@ export async function 身分証を選んで撮影画面へ(page: Page, 種類: s
   await form.locator('select[name="identification_select[Identification]"]').selectOption({ label: 種類 }, { timeout: 30_000 });
   await Promise.all([
     page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-    form.locator("button[type=submit]").filter({ hasText: "撮影画面へ" }).click({ timeout: 30_000 }),
+    form.locator("button[type=submit]").filter({ hasText: "撮影画面へ" }).click({ timeout: 30_000, noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
 }

@@ -21,10 +21,13 @@ import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
 import { OtcDetailPage, OtcListPage } from "../../pages/admin/m06_otc_list";
 import { PurchaseHistoryPage } from "../../pages/front/m06_otc_buy";
 import { QG_IT, QG_MEMBER_PASSWORD, qgMemberEmail, restoreFixedPriceSection } from "../../seeds/m06-04";
+import { STORE_A } from "../../seeds/m06-01";
 import {
   ITチームなしの権限, M0604_ACCOUNT, M0604_ACCOUNT_NAME, M0604_IT_A, M0604_IT_A_NAME, M0604_IT_B, M0604_L_IT, M0604_L_IT_NAME, M0604_NONACCOUNT,
   M0604_NONIT, M0604_NONPURCHASE, M0604_PURCHASE, M0604_REVOKE, 読み替えた買取,
 } from "../../seeds/m06-04-status";
+// 014・017・021 のシード（入庫待ち・入庫済みの買取に明細・在庫・集計の設定を入れる）は seeds/m06-04-summary.ts で定義している。読み込まないと「作り方が登録されていない」で止まる
+import "../../seeds/m06-04-summary";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -130,9 +133,18 @@ async function 変更画面を開く(page: Page, 受注ID: string): Promise<OtcS
   return s;
 }
 
-/** 保存を押した結果を注記に残す（送信されなかった・応答の状態） */
-function 保存の結果を残す(r: { sent: boolean; 応答の状態: number | null; 止めた理由: string }, url: string): void {
+/**
+ * 保存を押した結果を注記に残す（送信されなかった・応答の状態）。
+ * 送られたことを確かめる（送られていなければ「変わらない」「遷移する」は確かめにならない）。開き直しを見るケース（032・034）は false で、期待結果の中で確かめる。
+ */
+function 保存の結果を残す(r: { sent: boolean; 応答の状態: number | null; 止めた理由: string }, url: string, 送られたことを確かめる = true): void {
   note(r.sent ? `保存の送信の応答 ${r.応答の状態}。保存のあとの画面 ${new URL(url).pathname}` : `ブラウザの入力チェックが保存の送信を止めた（${r.止めた理由}）`);
+  if (送られたことを確かめる) expect(r.sent, `「保存」で変更の要求が送られた（${r.sent ? `応答 ${r.応答の状態}` : `ブラウザの入力チェックが止めた: ${r.止めた理由}`}）`).toBe(true);
+}
+
+/** 「経理払い出し済」「入庫済みにする」の要求が送られたことの確かめ（送られていなければ「変わらない」「戻る」は確かめにならない） */
+function 押した要求が送られた(r: { status(): number } | null, 何: string): void {
+  expect(r, `「${何}」の要求が送られた（送信の応答がある）`).not.toBeNull();
 }
 
 /**
@@ -179,7 +191,11 @@ caseTest("IT-M06-04-002", async ({ page, notes, step, expected }) => {
   let s: OtcStatusChangePage | undefined;
   let options: string[] = [];
   await step(1, async () => { s = await 変更画面を開く(page, 受注(notes, "002")); });
-  await step(2, async () => { options = await s!.選択肢(); });
+  await step(2, async () => {
+    options = await s!.選択肢();
+    await s!.選択肢の一覧を画面に出す();
+    note(`ブラウザの選択の一覧は画面の外に開いて画像に写らないので、変更後のステータスの選択欄の表示の行数を選択肢の数に広げ、選択肢が画面の中に並ぶようにして撮った（選択肢の中身・選択は変えていない）。並んだ選択肢（「ステータスを選択」を除く ${options.length}件）: ${options.join("、")}。「査定前」と廃止された「${廃止の選択肢.join("」「")}」は無い`);
+  });
   await expected(async () => {
     expect.soft([...options].sort(), "変更後のステータスの選択肢（「ステータスを選択」を除く）").toEqual([...有効な選択肢].sort());
     expect.soft(options.includes("査定前"), "現在の「査定前」が選択肢に無い").toBe(false);
@@ -292,6 +308,7 @@ function 経理払い出し済を押してDBで見る(no: string, account: Accou
       if (!ask!.ダイアログ) note("確認のダイアログが出なかった（押したまま送信された）");
       const r = await ask!.確認に答える(true);
       note(`確認のダイアログ「${ask!.ダイアログ?.message() ?? "なし"}」でOK。送信の応答 ${r?.status() ?? "なし"}・上部のメッセージ「${(await d.上部のメッセージ()).join(" / ")}」`);
+      押した要求が送られた(r, "経理払い出し済");
     });
     await step(4, async () => { after = 店頭買取の状態(id); });
     await expected(async () => {
@@ -315,6 +332,7 @@ caseTest("IT-M06-04-012", async ({ page, notes, step, expected }) => {
     if (!ask!.ダイアログ) note("確認のダイアログが出なかった（押したまま送信された）");
     const r = await ask!.確認に答える(true);
     note(`送信の応答 ${r?.status() ?? "なし"}・上部のメッセージ「${(await d.上部のメッセージ()).join(" / ")}」`);
+    押した要求が送られた(r, "経理払い出し済");
   });
   await expected(async () => {
     expect.soft(d.開いている(id), `査定ID ${査定(notes, "012")} の買取詳細へ戻った（${new URL(page.url()).pathname}）`).toBe(true);
@@ -336,13 +354,16 @@ function 入庫済みを押してDBで見る(固定: string, account: Account, �
     await step(2, async () => {
       const res = await d.入庫済みにするを押す();
       note(`正本の「入庫済み」ボタンは、画面の「入庫済みにする」を押した。送信の応答 ${res?.status() ?? "なし"}・上部のメッセージ「${(await d.上部のメッセージ()).join(" / ").slice(0, 200)}」`);
+      押した要求が送られた(res, "入庫済みにする");
     });
     await step(3, async () => { after = 店頭買取の状態(r.受注ID); });
     await expected(async () => {
       expect.soft(before.ステータス, "押す前のステータス").toBe("入庫待ち");
       expect.soft(after.ステータス, "押したあとのステータス").toBe(後);
     });
-    note(`正本の査定ID ${固定} は、シードが作った査定ID ${r.査定ID}（店頭買取受注ID ${r.受注ID}）に読み替えた。数量1の買取商品・在庫はDBでしか入らないので、明細の無い買取で見た`);
+    note(`正本の査定ID ${固定} は、シードが作った査定ID ${r.査定ID}（店頭買取受注ID ${r.受注ID}）に読み替えた。` + (後 === "入庫済み"
+      ? "数量1の買取商品（商品マスタ登録済みの印つきの商品）・買取店舗Aの在庫5・買取成立日は、シードがDBで入れた"
+      : "入庫の権限が無いので入庫は起きない（明細の無い買取で見た）"));
   };
 }
 caseTest("IT-M06-04-014", 入庫済みを押してDBで見る("600404014", M0604_PURCHASE, "入庫済み"));
@@ -377,7 +398,7 @@ function 日時が入る(no: string, 変更後: string, 前: string, 日時: "�
       if (状態も) expect.soft(after.ステータス, "保存のあとのステータス").toBe(変更後);
       expect.soft(範囲内(after[日時], 始, 終), `保存のあとの${日時}「${時刻(after[日時])}」が保存の時刻（${時刻(始)}〜${時刻(終)}）`).toBe(true);
     });
-    if (/^\d{9}$/.test(no)) note(`正本の査定ID ${no} は、シードが作った査定ID ${r.査定ID}（店頭買取受注ID ${r.受注ID}）に読み替えた。決め打ちの買取成立日・明細・在庫はDBでしか入らないので入れていない`);
+    if (/^\d{9}$/.test(no)) note(`正本の査定ID ${no} は、シードが作った査定ID ${r.査定ID}（店頭買取受注ID ${r.受注ID}）に読み替えた。買取成立日 2026-08-06 10:00・数量1の買取商品（商品マスタ登録済みの印つきの商品）・買取店舗Aの在庫5は、シードがDBで入れた`);
     note("保存の時刻は、試験の端末の時計で「保存」を押す直前から応答のあとまでとした（DBの日時は秒まで）");
   };
 }
@@ -402,8 +423,13 @@ function 成立日が変わらない(no: string, 変更後: string, 前: string,
       if (状態も) expect.soft(after.ステータス, "保存のあとのステータス").toBe(変更後);
       expect.soft(before.買取成立日 !== null, `変更の前の買取成立日が入っている（${時刻(before.買取成立日)}）`).toBe(true);
       expect.soft(時刻(after.買取成立日), "保存のあとの買取成立日（変更の前の値のまま）").toBe(時刻(before.買取成立日));
+      // 画面の「買取成立日時」の欄（買取詳細）にも、変更の前の値のまま表示されていることを確かめる（赤枠はこの欄に付く）
+      const 前の表示 = new Date((before.買取成立日 ?? 0) * 1000).toLocaleString("sv-SE", { timeZone: "Asia/Tokyo" }).replace(/-/g, "/");
+      const 詳細 = new OtcOrderDetailPage(page);
+      if (詳細.開いている(id)) await expect.soft(詳細.項目の欄("買取成立日時"), "画面の買取成立日時（変更の前の値のまま）").toHaveText(前の表示);
     });
     note(`正本の決め打ちの買取成立日はDBでしか入らないので、シードで一度「買取成立」にしたときの日時（${時刻(before.買取成立日)}）に読み替え、その値から書き換わらないことを見た`);
+    note(`保存のあとのステータスは「${after.ステータス}」（変更の前は「${before.ステータス}」）`);
   };
 }
 caseTest("IT-M06-04-022", 成立日が変わらない("022", "買取成立", "管理者取消", false));
@@ -490,9 +516,9 @@ function 開き直される(no: string, 選択肢を足す: boolean): CaseBody {
     await step(1, async () => { s = await 変更画面を開く(page, id); });
     if (選択肢を足す) {
       await step(2, async () => { await s!.選択肢を足して選ぶ("999999", "存在しないステータス"); note("変更後のステータスに値999999の選択肢を足して選んだ（開発者ツールの操作の代わりに画面のスクリプトで行った）"); });
-      await step(3, async () => { r = await s!.保存を押す(); 保存の結果を残す(r, page.url()); });
+      await step(3, async () => { r = await s!.保存を押す(); 保存の結果を残す(r, page.url(), false); });
     } else {
-      await step(2, async () => { r = await s!.保存を押す(); 保存の結果を残す(r, page.url()); });
+      await step(2, async () => { r = await s!.保存を押す(); 保存の結果を残す(r, page.url(), false); });
     }
     await expected(async () => {
       expect.soft(r.sent, `保存が送信され、画面が開き直された（${r.sent ? `応答 ${r.応答の状態}` : `ブラウザの入力チェックが止めた: ${r.止めた理由}`}）`).toBe(true);
@@ -564,7 +590,7 @@ caseTest("IT-M06-04-042", async ({ page, notes, step, expected }) => {
   await step(6, async () => {
     for (let i = 0; i < 3; i++) {
       if (i > 0) { note(`検索結果に査定ID ${査定ID} が出なかったので、検索し直した（${i}回目）`); await page.waitForTimeout(5_000); await list.open(); }
-      await list.買取店舗を選ぶ("買取店舗A");
+      await list.買取店舗を選ぶ(STORE_A.店名);
       await list.日時を空にする();
       await list.査定IDを入れる(査定ID);
       await list.検索する();
@@ -643,6 +669,7 @@ caseTest("IT-M06-04-049", async ({ page, notes, step, expected }) => {
     if (!ask!.ダイアログ) note("確認のダイアログが出なかった（押したまま送信された）");
     const r = await ask!.確認に答える(true);
     note(`送信の応答 ${r?.status() ?? "なし"}・上部のメッセージ「${(await d.上部のメッセージ()).join(" / ")}」`);
+    押した要求が送られた(r, "経理払い出し済");
   });
   await step(5, async () => { 終 = いま(); });
   await step(6, async () => { after = ステータス変更履歴(id); });
@@ -671,6 +698,7 @@ caseTest("IT-M06-04-050", async ({ page, notes, step, expected }) => {
     if (!ask!.ダイアログ) note("確認のダイアログが出なかった（押したまま送信された）");
     const r = await ask!.確認に答える(true);
     note(`送信の応答 ${r?.status() ?? "なし"}・上部のメッセージ「${(await d.上部のメッセージ()).join(" / ")}」`);
+    押した要求が送られた(r, "経理払い出し済");
   });
   await step(5, async () => { after = 店頭買取の状態(id); });
   await expected(async () => {

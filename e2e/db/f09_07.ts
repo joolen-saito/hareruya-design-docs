@@ -44,12 +44,12 @@ export type デッキの状態 = {
 export function デッキの状態を読む(デッキID: string): デッキの状態 {
   const d = query(
     `select (select count(*) from dtb_deck x join dtb_archetype a on a.id = x.archetype_id where x.deleted_at is null and a.name_en like $2) as n,
-            (select to_char(update_date at time zone 'Asia/Tokyo', 'YYYY/MM/DD HH24:MI:SS.US') from dtb_deck where id = $1::int) as t`,
+            (select to_char(update_date at time zone 'Asia/Tokyo', 'YYYY/MM/DD HH24:MI:SS.US') from dtb_deck where id = $1::int) as upd`,
     [デッキID, `%-${RUN_MARK}-%`],
   )[0];
   const cards = query(
     'select "count" as c from dtb_deck_card where deck_id = $1::int order by board_id, id',
     [デッキID],
   );
-  return { 印つきのデッキ件数: Number(d.n), 更新日時: d.t ?? "", 採用カードの件数: cards.length, 採用カードの枚数: cards.map((r) => Number(r.c)) };
+  return { 印つきのデッキ件数: Number(d.n), 更新日時: d.upd ?? "", 採用カードの件数: cards.length, 採用カードの枚数: cards.map((r) => Number(r.c)) };
 }

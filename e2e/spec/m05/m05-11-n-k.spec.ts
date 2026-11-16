@@ -62,10 +62,15 @@ caseTest("IT-M05-11-123", async ({ page, browser, notes, step, expected }) => {
 caseTest("IT-M05-11-132", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M0511_ADMIN_A);
   let p!: OrderEditPage;
-  await step(1, async () => { p = await 開く(browser, page, notes.get(key("132"))); });
+  let 開いた画面 = "";
+  await step(1, async () => { p = await 開く(browser, page, notes.get(key("132"))); 開いた画面 = 編集画面(page); });
   await step(2, async () => { await p.note.fill("キャンセル保存遷移"); });
-  await step(3, async () => { await p.登録を押す(onDialog); });
-  await expected(async () => { expect.soft(編集画面(page), "遷移先（受注情報編集画面）").toMatch(/\/order\/\d+\/edit$/); });
+  // 送信して画面が読み込み直されることを必ず待つ（遷移しなければここで落ちる。元の画面に留まったまま合格にしない）
+  await step(3, async () => { await p.登録して遷移する(onDialog); });
+  await expected(async () => {
+    expect.soft(編集画面(page), "遷移先（受注情報編集画面）").toMatch(/\/order\/\d+\/edit$/);
+    expect.soft(編集画面(page), "遷移先は同じ受注の受注情報編集画面").toBe(開いた画面);
+  });
 });
 
 // ---- 在庫変動履歴の原価 ----
@@ -76,11 +81,17 @@ function 数量変更の履歴(n: string, 変更後: string, 期待: { 増減: n
     const no = notes.get(key(n)), code = rc(`M0511-${n}-ITM`);
     let p!: OrderEditPage;
     let rows: ReturnType<typeof 在庫変動履歴の詳細> = [];
+    // 数量を減らすケース（100）だけ、正本に「一部キャンセルの確認ダイアログで「OK」を押す」の手順がある。増やすケース（101）は手順4がDBの確認
+    const 減らす = Number(変更後) < 3;
+    const 出た: string[] = [];
     await step(1, async () => { p = await 開く(browser, page, no); });
     await step(2, async () => { await new OrderItemsEdit(page).明細に入れる(code, { 数量: 変更後 }); });
-    await step(3, async () => { await p.登録を押す(onDialog); });
-    await step(4, async () => { await page.waitForLoadState("load"); /* 数量を減らしたときの一部キャンセルの確認ダイアログは、登録を押したときに受け入れた（注記に残る） */ });
-    await step(5, async () => { rows = 注文番号入り(在庫変動履歴の詳細(code)); });
+    await step(3, async () => { await p.登録を押す((m) => { 出た.push(m); onDialog(m); }); });
+    if (減らす) await step(4, async () => {
+      // 一部キャンセルの確認ダイアログは、登録を押したときに出て「OK」で受け入れた（注記に残る）。出たことを確かめる
+      expect(出た.some((m) => m.includes("一部キャンセル時")), `一部キャンセルの確認ダイアログが出た（出たダイアログ: ${出た.join(" / ") || "なし"}）`).toBe(true);
+    });
+    await step(減らす ? 5 : 4, async () => { rows = 注文番号入り(在庫変動履歴の詳細(code)); });
     await expected(async () => {
       expect.soft(rows.length, "在庫変動履歴の件数").toBe(1);
       const r = rows[0];

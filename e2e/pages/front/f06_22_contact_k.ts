@@ -2,6 +2,7 @@
 /** F06-22 お問い合わせ（フロント）の操作。セレクタ・アドレスはここだけに書く。正本: cases/F06-22_test_cases.tsv */
 import { Dialog, Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { 押して移るのを待つ } from "./nav_click";
 
 const T = 30_000;
 export type 言語 = "ja" | "en";
@@ -46,16 +47,8 @@ export class ContactPage {
   }
 
   async 押して遷移する(l: Locator): Promise<void> {
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 });
-    try {
-      await l.click({ timeout: 10_000 });
-    } catch (e) {
-      test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
-    }
-    await nav;
-    await this.page.waitForLoadState("load");
+    // 押す操作だけを行い、移るのを待つ（押せているのに click の待ちが時間切れになり、移った先で押し直してしまうのを防ぐ。pages/front/nav_click.ts）
+    await 押して移るのを待つ(this.page, l, { 直接送るときの注記: "正本の外の補い" });
   }
   async 現在地を押そうとする(): Promise<boolean> {
     const before = this.page.url();
@@ -175,11 +168,11 @@ export class ContactPage {
   }
   async 送信するを押す(): Promise<void> {
     await this.送信ボタン.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 90_000 }), this.送信ボタン.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 90_000 }), this.送信ボタン.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   async 確認画面の戻るを押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.確認画面の戻る.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.確認画面の戻る.click({ timeout: T, noWaitAfter: true })]);
     await this.入力画面の準備を待つ();
   }
   async 完了画面か(): Promise<boolean> { return /\/contact\/complete$/.test(this.path) && (await this.page.locator(".p-hareruya-contact-complete").count()) > 0; }

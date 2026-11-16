@@ -44,7 +44,7 @@ export async function 出力項目を設定する(page: Page, 番号: string[], 
   }
   const got = (await options(page, "csv-output")).map((o) => o.value);
   if (JSON.stringify(got) !== JSON.stringify(番号)) throw new Error(`${何}: 「CSV出力する項目」の並びが指定と違う（画面: ${got.join(",")}）`);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator('#csv-form button[type="submit"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator('#csv-form button[type="submit"]').click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expectSaved(page, `${何}: CSV出力項目設定（会員）の登録`);
 }

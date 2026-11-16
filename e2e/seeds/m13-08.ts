@@ -32,7 +32,7 @@ import { Browser } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { 申込の申込選手ID } from "../db/f07_04";
 import { Notes } from "../lib/notes";
-import { rc, RUN_MARK } from "../lib/run_marker";
+import { rc, RUN_MARK, rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
@@ -40,18 +40,19 @@ import { registerEvent } from "../pages/admin/event";
 import { 会員IDをメールから } from "../pages/admin/f07_04_setup";
 import { EntryNewPage } from "../pages/admin/m13_12_entry_new";
 import { カードを用意する, 大会デッキを登録する } from "../pages/admin/m13_08_deck_display";
-import { ensureMember } from "../pages/admin/member";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
 import { registerSchedule } from "../pages/admin/schedule";
-import { ensureTenant } from "../pages/admin/tenant";
+import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
 import { registerFrontMember } from "../pages/front/member_entry";
 
-export const M1308_ADMIN: Account = { loginId: "m1308_admin", password: "Passw0rd!M1308" };
+// 店舗を決まった名前の試験店舗（m13_marked_shop.ts）にしたので、管理者も決まった印の名前・ログインIDで1度だけ作って使い回す（同名の別の店舗に所属した前の管理者とぶつけない）
+export const M1308_ADMIN: Account = { loginId: rcFixed("m1308_admin").toLowerCase(), password: "Passw0rd!M1308" };
 /** 池袋店に編集権限を持つ別の管理者（シード表に行が無い。池袋店のイベントを作るときだけ画面から用意する） */
-const M1308_IKEBUKURO_ADMIN: Account = { loginId: "m1308_admin_ikebukuro", password: "Passw0rd!M1308I" };
+const M1308_IKEBUKURO_ADMIN: Account = { loginId: rcFixed("m1308_admin_ikebukuro").toLowerCase(), password: "Passw0rd!M1308I" };
 const 試験管理者の権限 = "モールオペレーター";
 const 会員のパスワード = "Passw0rd!M1308M";
 
-type 店舗 = "新宿店" | "池袋店";
+type 店舗 = string;
 
 // ---- 共通参照データ・管理者 ----
 
@@ -59,8 +60,8 @@ defineSeed("S-M13-08-REF", async ({ browser, notes, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(120_000);
-    notes.set("〔店舗ID-M1308-共有A〕", await ensureTenant(page, { 店名: "新宿店", 店名カナ: "シンジュクテン", 店名英語: "Shinjuku", 支店URL: "m1306shinjuku", 店名略称3文字: "新宿店", ショップ名略称: "新宿店" }, issue));
-    notes.set("〔店舗ID-M1308-共有B〕", await ensureTenant(page, { 店名: "池袋店", 店名カナ: "イケブクロテン", 店名英語: "Ikebukuro", 支店URL: "m1306ikebukuro", 店名略称3文字: "池袋店", ショップ名略称: "池袋店" }, issue));
+    notes.set("〔店舗ID-M1308-共有A〕", await ensureMarkedTenant(page, "新宿", issue));
+    notes.set("〔店舗ID-M1308-共有B〕", await ensureMarkedTenant(page, "池袋", issue));
     notes.set("〔カードID-M1308-共有A〕", await カードを用意する(page, { 日本語名: "稲妻", 英語名: "Lightning Bolt", カードタイプ: "インスタント" }, issue));
     notes.set("〔カードID-M1308-共有B〕", await カードを用意する(page, { 日本語名: "島", 英語名: "Island", カードタイプ: "土地" }, issue));
     notes.set("〔カードID-M1308-共有C〕", await カードを用意する(page, { 日本語名: "否認", 英語名: "Negate", カードタイプ: "インスタント" }, issue));
@@ -70,8 +71,8 @@ defineSeed("S-M13-08-REF", async ({ browser, notes, seed }) => {
 defineSeed("S-M13-08-ADM", { needs: ["S-M13-08-REF"] }, async ({ browser, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-08試験管理者", 所属店舗: "新宿店", ログインID: M1308_ADMIN.loginId, メールアドレス: "m1308_admin@example.test",
-      パスワード: M1308_ADMIN.password, 権限: 試験管理者の権限, デフォルト検索表示店舗: "新宿店", 編集可能店舗: ["新宿店"],
+      名前: rcFixed("M13-08試験管理者"), 所属店舗: 印店名.新宿, ログインID: M1308_ADMIN.loginId, メールアドレス: "m1308_admin-e2e@example.test",
+      パスワード: M1308_ADMIN.password, 権限: 試験管理者の権限, デフォルト検索表示店舗: 印店名.新宿, 編集可能店舗: [印店名.新宿],
     });
   });
   reportSeedIssue(seed.シードID, "管理者ID 130800021 は画面で決められないので、画面が振った番号のまま使う。権限は「モールオペレーター」で代えた（所属店舗・既定表示店舗・編集可能店舗は新宿店だけ）");
@@ -82,8 +83,8 @@ defineSeed("S-M13-08-ADM", { needs: ["S-M13-08-REF"] }, async ({ browser, seed }
 async function 池袋店の管理者を用意する(browser: Browser): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-08池袋店管理者", 所属店舗: "池袋店", ログインID: M1308_IKEBUKURO_ADMIN.loginId, メールアドレス: "m1308_admin_ikebukuro@example.test",
-      パスワード: M1308_IKEBUKURO_ADMIN.password, 権限: 試験管理者の権限, デフォルト検索表示店舗: "池袋店", 編集可能店舗: ["池袋店"],
+      名前: rcFixed("M13-08池袋店管理者"), 所属店舗: 印店名.池袋, ログインID: M1308_IKEBUKURO_ADMIN.loginId, メールアドレス: "m1308_admin_ikebukuro-e2e@example.test",
+      パスワード: M1308_IKEBUKURO_ADMIN.password, 権限: 試験管理者の権限, デフォルト検索表示店舗: 印店名.池袋, 編集可能店舗: [印店名.池袋],
     });
   });
 }
@@ -129,8 +130,8 @@ async function 側を作る(browser: Browser, notes: Notes, v: 側, issue: (m: s
   const メール = `${v.メールの前半}-${RUN_MARK}@example.test`.toLowerCase();
   await 会員を登録する(browser, 姓, メール);
   notes.set(`〔会員ID-M1308-${v.記号}〕`, await withAdminSession(browser, SETUP_ADMIN, (page) => 会員IDをメールから(page, メール)));
-  if (v.店舗 === "池袋店") await 池袋店の管理者を用意する(browser);
-  await withAdminSession(browser, v.店舗 === "池袋店" ? M1308_IKEBUKURO_ADMIN : M1308_ADMIN, async (page) => {
+  if (v.店舗 === 印店名.池袋) await 池袋店の管理者を用意する(browser);
+  await withAdminSession(browser, v.店舗 === 印店名.池袋 ? M1308_IKEBUKURO_ADMIN : M1308_ADMIN, async (page) => {
     page.setDefaultTimeout(120_000);
     const イベントID = await registerEvent(page, {
       イベント名日: v.イベント名日, イベント名英: v.イベント名英, 店舗: v.店舗, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎", 公開状態: "公開", 定員: "16", 参加費: "0",
@@ -178,25 +179,25 @@ const 側 = (記号: string, 店舗: 店舗, 名日: string, 開催日: string, 
 
 // 001: 検索対象と比較のイベント（新宿店）
 defineSideSeed("S-M13-08-FILTER-001", [
-  側("001A", "新宿店", 印("M1308-001検索対象大会"), "2026-10-01", 印("検索対象太郎-001"), "m1308-001-a"),
-  側("001B", "新宿店", 印("M1308-001比較大会"), "2026-10-02", 印("比較花子-001"), "m1308-001-b"),
+  側("001A", 印店名.新宿, 印("M1308-001検索対象大会"), "2026-10-01", 印("検索対象太郎-001"), "m1308-001-a"),
+  側("001B", 印店名.新宿, 印("M1308-001比較大会"), "2026-10-02", 印("比較花子-001"), "m1308-001-b"),
 ]);
 // 002: 権限内（新宿店）・権限外（池袋店）・検索対象・比較
 defineSideSeed("S-M13-08-DATA-002", [
-  側("002A", "新宿店", 印("M1308-002権限内大会"), "2026-10-03", 印("権限内太郎-002"), "m1308-002-a"),
-  側("002B", "池袋店", 印("M1308-002権限外大会"), "2026-10-04", 印("権限外次郎-002"), "m1308-002-b"),
-  側("002C", "新宿店", 印("M1308-002検索対象大会"), "2026-10-05", 印("検索対象太郎-002"), "m1308-002-c"),
-  側("002D", "新宿店", 印("M1308-002比較大会"), "2026-10-06", 印("比較花子-002"), "m1308-002-d"),
+  側("002A", 印店名.新宿, 印("M1308-002権限内大会"), "2026-10-03", 印("権限内太郎-002"), "m1308-002-a"),
+  側("002B", 印店名.池袋, 印("M1308-002権限外大会"), "2026-10-04", 印("権限外次郎-002"), "m1308-002-b"),
+  側("002C", 印店名.新宿, 印("M1308-002検索対象大会"), "2026-10-05", 印("検索対象太郎-002"), "m1308-002-c"),
+  側("002D", 印店名.新宿, 印("M1308-002比較大会"), "2026-10-06", 印("比較花子-002"), "m1308-002-d"),
 ]);
 // 003: 権限内（新宿店）・権限外（池袋店）
 defineSideSeed("S-M13-08-AUTH-003", [
-  側("003A", "新宿店", 権限003.権限内(), "2026-10-07", 印("権限内太郎-003"), "m1308-003-a"),
-  側("003B", "池袋店", 権限003.権限外(), "2026-10-08", 印("権限外次郎-003"), "m1308-003-b"),
+  側("003A", 印店名.新宿, 権限003.権限内(), "2026-10-07", 印("権限内太郎-003"), "m1308-003-a"),
+  側("003B", 印店名.池袋, 権限003.権限外(), "2026-10-08", 印("権限外次郎-003"), "m1308-003-b"),
 ]);
 // 004: 検索対象と比較
 defineSideSeed("S-M13-08-FILTER-004", [
-  側("004A", "新宿店", 印("M1308-004検索対象大会"), "2026-10-09", 印("検索対象太郎-004"), "m1308-004-a"),
-  側("004B", "新宿店", 印("M1308-004比較大会"), "2026-10-10", 印("比較花子-004"), "m1308-004-b"),
+  側("004A", 印店名.新宿, 印("M1308-004検索対象大会"), "2026-10-09", 印("検索対象太郎-004"), "m1308-004-a"),
+  側("004B", 印店名.新宿, 印("M1308-004比較大会"), "2026-10-10", 印("比較花子-004"), "m1308-004-b"),
 ]);
 
 // 005・008・010・011: メインは稲妻4枚と島20枚、サイドは否認3枚。プレイヤー名の前後の空白（DB への直接の設定）は付けない
@@ -205,7 +206,7 @@ const 空白の注記 = (n: string) => `シード表はデッキのプレイヤ�
 export const 表示大会名 = (n: string) => 印(`M1308-${n}表示大会`);
 export const 表示プレイヤー名 = (n: string) => 印(`晴屋 太郎-${n}`);
 const 表示側 = (n: string): 側[] => [
-  側(n, "新宿店", 表示大会名(n), "2026-10-15", 表示プレイヤー名(n), `m1308-${n}`, { イベント名英: 印(`M1308-${n} Display Tournament`), ...表示デッキ }),
+  側(n, 印店名.新宿, 表示大会名(n), "2026-10-15", 表示プレイヤー名(n), `m1308-${n}`, { イベント名英: 印(`M1308-${n} Display Tournament`), ...表示デッキ }),
 ];
 defineSideSeed("S-M13-08-DISPLAY-005", 表示側("005"), 空白の注記("005"));
 defineSideSeed("S-M13-08-DISPLAY-008", 表示側("008"), 空白の注記("008"));
@@ -216,5 +217,5 @@ defineSideSeed("S-M13-08-DISPLAY-011", 表示側("011"), 空白の注記("011"))
 export const 大会018 = () => 印("M1308-CB018無サイド一頁大会");
 export const プレイヤー018 = () => 印("一頁無サイド 太郎 M1308-CB018");
 defineSideSeed("S-M13-08-CBNOSIDE1P-018", [
-  側("CB018", "新宿店", 大会018(), "2026-12-01", プレイヤー018(), "m1308-cb018", { イベント名英: 印("M1308-CB018-EN"), メイン: "4 稲妻\n20 島", サイド: "" }),
+  側("CB018", 印店名.新宿, 大会018(), "2026-12-01", プレイヤー018(), "m1308-cb018", { イベント名英: 印("M1308-CB018-EN"), メイン: "4 稲妻\n20 島", サイド: "" }),
 ]);

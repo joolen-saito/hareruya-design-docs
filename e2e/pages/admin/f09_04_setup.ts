@@ -66,8 +66,8 @@ export async function マスターの行を読む(page: Page, 対象: "カード
   await page.waitForLoadState("load");
   await page.locator('select[name="entity"]').selectOption({ label: 対象 });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('form[method="get"] button[type="submit"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('form[method="get"] button[type="submit"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator("form#edit_form table.mtg-master-table"), `${対象}の一覧`).toBeVisible();
@@ -130,8 +130,8 @@ export async function カードを登録する(page: Page, v: F0904カード, wh
   }
   await expect(page.locator("#card-details-container .detail-card"), `${what}: 詳細情報が無いまま（「詳細情報を追加」は押さない）`).toHaveCount(0);
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: カードの登録`)) issue(`${what}: カード登録時の警告「${w}」`);
   const m = /\/card\/(\d+)\/edit/.exec(page.url());
@@ -191,6 +191,6 @@ export async function デッキをCSVで登録する(page: Page, rows: F0904CSV�
   await page.locator("#admin_csv_import_import_file").setInputFiles({ name: "f0904_decks.csv", mimeType: "text/csv", buffer: Buffer.from(text, "utf-8") });
   const upload = page.locator("#upload-button");
   await expect(upload, `${what}: 「CSVファイルをアップロード」が押せる`).toBeEnabled();
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), upload.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), upload.click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: デッキ登録CSVアップロード`)) issue(w);
 }

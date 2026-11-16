@@ -5,6 +5,7 @@
 import { Locator, Page, expect, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { FrontFavorite } from "./f03_08_favorite";
+import { 押して移るのを待つ } from "./nav_click";
 
 /** 本店の公開側のアドレスの先頭 */
 const FRONT = `${BASE_URL}/ja`;
@@ -176,7 +177,7 @@ export class FavoriteListPage {
   /** セール対象のみのチェックを切り替える（切り替えると画面が検索し直す）。読み込みを待つ */
   async セール対象のみを切り替える(on: boolean): Promise<void> {
     if ((await this.セール対象のみ.isChecked()) === on) throw new Error(`セール対象のみはすでに${on ? "チェックあり" : "チェックなし"}`);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.セール対象のみのラベル.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.セール対象のみのラベル.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -185,7 +186,7 @@ export class FavoriteListPage {
     const tab = this.並び順のタブ.filter({ hasText: 含む文字 });
     if ((await tab.count()) === 1 && (await tab.isVisible())) {
       const label = 空白を詰める(await tab.innerText());
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), tab.click()]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), tab.click({ noWaitAfter: true })]);
       return label;
     }
     const select = this.page.locator("#favorite-sort-select");
@@ -204,15 +205,8 @@ export class FavoriteListPage {
 
   /** リンク・ボタンを押して画面の移動を待つ（固定ヘッダーが重なって押せないときは、クリックの操作を要素へ直接送る） */
   async 押して遷移する(l: Locator): Promise<void> {
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 });
-    try {
-      await l.click({ timeout: 10_000 });
-    } catch (e) {
-      test.info().annotations.push({ type: "手順の注記", description: `押す要素に固定ヘッダーが重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
-    }
-    await nav;
+    // 押す操作だけを行い、移るのを待つ（押せているのに click の待ちが時間切れになり、移った先で押し直してしまうのを防ぐ。pages/front/nav_click.ts）
+    await 押して移るのを待つ(this.page, l, { 直接送るときの注記: "手順の注記", waitUntil: "load" });
   }
 
   /** 押して、画面が移らないか待つ（移ったら移った先を読む）。移ったかを返す */

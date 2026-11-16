@@ -30,7 +30,8 @@ export function 申込に参加者を足す(申込ID: string, プレイヤーID:
     理由: `実行の印つきの申込 ${申込ID} に参加者（プレイヤーID ${プレイヤーID}）を足す（画面には2人目以降の参加者を足す操作が無い）`,
     sql: `insert into dtb_entry_player (event_entry_id, player_id, confirm_flg, seat_order) values ($1::int, $2::int, true, $3::int)`,
     params: [申込ID, プレイヤーID, 席順],
-    対象の確かめ: `select ev.name_jp as 印つきの名前 from dtb_event_entry ee join dtb_event_detail d on d.id = ee.event_detail_id join dtb_event ev on ev.id = d.event_id where ee.id = $1::int`,
+    // 足す行の親の列（申込ID）が確かめの行に無いと止まるので、申込IDも返す
+    対象の確かめ: `select ee.id as 申込ID, ev.name_jp as 印つきの名前 from dtb_event_entry ee join dtb_event_detail d on d.id = ee.event_detail_id join dtb_event ev on ev.id = d.event_id where ee.id = $1::int`,
     確かめのparams: [申込ID],
     印,
     最大行数: 1,

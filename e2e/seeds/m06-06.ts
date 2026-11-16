@@ -16,7 +16,7 @@ import { RUN_MARK, rc } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
+import { ensureMemberByStoreIdsFix as ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
 import { サプライ品を登録する } from "../pages/admin/m07_supply";
 import { 買取を整える } from "../db/m06_04_prep";
 import { 会員を設定する, 実在庫と履歴を足す, 買取明細を足す, 受注ID, 商品規格を整える } from "../db/m06_05";
@@ -101,8 +101,8 @@ function 基本のシード(no: string, 変える: Partial<履歴> = {}, 追加�
       姓: `M0606-${no}姓`,
       履歴: [{ コード: `M0606-${no}-P`, 商品名: `M0606-${no}-商品`, 数量: 2, 単価: 1200, 変更前: 10, 変更後: 12, ...変える }],
     }, issue);
-    notes.set(`〔査定ID-M0606-${no}〕`, r.査定ID);
-    notes.set(`〔会員ID-M0606-${no}〕`, r.会員ID);
+    notes.setExtra(`〔査定ID-M0606-${no}〕`, r.査定ID);
+    notes.setExtra(`〔会員ID-M0606-${no}〕`, r.会員ID);
     後処理?.(r);
     for (const m of [...共通の注記, ...追加の注記]) issue(m);
   };
@@ -121,7 +121,7 @@ defineSeed("S-M06-06-HIST-008", NEEDS, async ({ browser, notes, seed }) => {
     姓: "M0606-008姓",
     履歴: Array.from({ length: 12 }, (_, i) => ({ コード: `M0606-008-P${String(i + 1).padStart(2, "0")}`, 商品名: "M0606-008-商品", 数量: 1, 単価: 1200, 変更前: 10, 変更後: 11 })),
   }, issue);
-  notes.set("〔査定ID-M0606-008〕", r.査定ID);
+  notes.setExtra("〔査定ID-M0606-008〕", r.査定ID);
   for (const m of [...共通の注記, "12件の履歴は、商品12件（商品名は共通）に1件ずつ足した。ほかの買取は、査定IDで絞って確かめる（共有の環境の他の買取は消さない）"]) issue(m);
 });
 
@@ -130,7 +130,7 @@ defineSeed("S-M06-06-HIST-009", NEEDS, async ({ browser, notes, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   const a = await 買取を作る(browser, "009", { 姓: "M0606-009姓", 履歴: [{ コード: "M0606-009-P", 商品名: "M0606-009-商品", 数量: 2, 単価: 1200, 変更前: 10, 変更後: 12 }] }, issue);
   await 買取を作る(browser, "009B", { 姓: "M0606-009B姓", 履歴: [{ コード: "M0606-009-PB", 商品名: "M0606-009-商品B", 数量: 1, 単価: 1200, 変更前: 10, 変更後: 11 }] }, issue);
-  notes.set("〔査定ID-M0606-009〕", a.査定ID);
+  notes.setExtra("〔査定ID-M0606-009〕", a.査定ID);
   for (const m of [...共通の注記, "別の買取（商品コード M0606-009-PB）は、別の会員・別の商品で作り、実在庫履歴を1件足した"]) issue(m);
 });
 
@@ -144,6 +144,6 @@ defineSeed("S-M06-06-HIST-018", NEEDS, async ({ browser, notes, seed }) => {
       { コード: "M0606-018-P2", 商品名: "M0606-018-商品2", 設定の買取価格: 1000, 数量: 4, 単価: 800, 変更前: 10, 変更後: 14 },
     ],
   }, issue);
-  notes.set("〔査定ID-M0606-018〕", r.査定ID);
+  notes.setExtra("〔査定ID-M0606-018〕", r.査定ID);
   for (const m of [...共通の注記, "商品に設定する買取価格は、商品1が1500・商品2が1000（サプライ品の登録で設定した）"]) issue(m);
 });

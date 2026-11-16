@@ -43,7 +43,7 @@ caseTest("IT-F01-02-032", async ({ page, notes, step, expected }) => {
   const top = new BranchTopPage(page);
   const c = () => card(top, "セール基準商品-032");
   await step(1, async () => { await top.open(支店URL("032")); await top.開いている(); await expect(c()).toBeVisible(); });
-  await step(2, async () => { await Promise.all([page.waitForURL(/\/products\/detail\/\d+/, { timeout: 30_000 }).catch(() => undefined), c().locator("a.p-hareruya-product-card__name").first().click({ timeout: 20_000 })]); await page.waitForLoadState("load"); });
+  await step(2, async () => { await Promise.all([page.waitForURL(/\/products\/detail\/\d+/, { timeout: 30_000 }).catch(() => undefined), c().locator("a.p-hareruya-product-card__name").first().click({ timeout: 20_000, noWaitAfter: true })]); await page.waitForLoadState("load"); });
   await expected(async () => {
     const id = notes.get("〔商品ID-F0102-032〕");
     expect.soft(new URL(page.url()).pathname, "遷移先（商品詳細画面）").toMatch(new RegExp(`/products/detail/${id}$`));

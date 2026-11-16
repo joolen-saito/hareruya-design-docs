@@ -19,7 +19,7 @@ const note = (m: string) => { test.info().annotations.push({ type: "手順の注
 /** 事前準備: 本店の商品一覧を、保存済み検索条件なし・モーダルが閉じた状態で新しいブラウザセッションに開く */
 async function openList(search: FrontDetailSearch): Promise<void> {
   await search.openProductList("/ja");
-  expect(await search.モーダルが開いている(), "開始時に商品詳細検索モーダルが閉じている").toBe(false);
+  expect(!(await search.モーダルが開いている()), "開始時に商品詳細検索モーダルが閉じている").toBe(true);
 }
 
 /** 商品一覧の「詳細検索」を押して、モーダルが開くのを待つ */
@@ -27,6 +27,12 @@ async function pressDetailSearch(search: FrontDetailSearch): Promise<void> {
   const 押したもの = await search.詳細検索を押す();
   if (押したもの !== "商品一覧の詳細検索ボタン") note("固定のヘッダーが商品一覧の中の「詳細検索」ボタンを覆って押せなかったため、画面上部の「詳細検索」ボタンを押した");
   await expect(search.モーダル, "商品詳細検索モーダル（開いた状態）").toHaveClass(/is-visible/);
+}
+
+/** モーダルの中を、フォーマットの欄が見える所まで動かす（モーダルの上部だけでは、フォーマットの欄が画面の外にある） */
+async function フォーマットの欄を見せる(search: FrontDetailSearch): Promise<void> {
+  await search.項目("フォーマット").evaluate((e) => e.scrollIntoView({ block: "center" }));
+  await search.page.waitForTimeout(300);
 }
 
 // ---- モーダルの開閉 ----
@@ -83,7 +89,7 @@ caseTest("IT-F03-03-022", async ({ page, step, expected }) => {
 
 // ---- 選択肢（共通マスタ） ----
 
-caseTest("IT-F03-03-013", async ({ page, step, expected }) => {
+caseTest("IT-F03-03-013", async ({ page, step, expected, capture }) => {
   const search = new FrontDetailSearch(page);
   await openList(search);
   const 第1階層: string[] = [];
@@ -101,6 +107,11 @@ caseTest("IT-F03-03-013", async ({ page, step, expected }) => {
     expect.soft(第1階層, `第1階層に非表示の親カテゴリ「${共有マスタ.非表示対象親カテゴリ}」が提示されない`).not.toContain(共有マスタ.非表示対象親カテゴリ);
     expect.soft(第1階層, `第1階層に「${共有マスタ.非表示対象カテゴリ}」が提示されない`).not.toContain(共有マスタ.非表示対象カテゴリ);
     expect.soft(第2階層, `第2階層に「${共有マスタ.非表示対象カテゴリ}」が提示されない`).not.toContain(共有マスタ.非表示対象カテゴリ);
+    // 選択肢を画像で読めるようにする: 第1階層は選択肢をすべて書き出して撮り、第2階層は一覧に広げて期待結果の画像にする
+    const 戻す1 = await search.選択肢を広げて見せる(search.カテゴリ選択欄(0), { 見出し: "カテゴリ（第1階層）", 見せる: 共有マスタ.表示対象親カテゴリ, 行: 8, 全部を書く: true });
+    await capture("第1階層の選択肢");
+    await 戻す1();
+    await search.選択肢を広げて見せる(search.カテゴリ選択欄(1), { 見出し: "カテゴリ（第2階層）", 見せる: 共有マスタ.表示対象カテゴリ, 全部を書く: true });
   });
 });
 
@@ -121,11 +132,14 @@ caseTest("IT-F03-03-015", async ({ page, step, expected }) => {
   await openList(search);
   let 選択肢: string[] = [];
   await step(1, async () => { await pressDetailSearch(search); });
-  await step(2, async () => { 選択肢 = await search.フォーマットの選択肢(); note(`フォーマットの選択肢: ${選択肢.join("、")}`); });
+  await step(2, async () => { await フォーマットの欄を見せる(search); 選択肢 = await search.フォーマットの選択肢(); note(`フォーマットの選択肢: ${選択肢.join("、")}`); });
   await expected(async () => {
     expect.soft(選択肢, `商品検索に表示する設定の「${共有マスタ.フォーマット10}」が提示される`).toContain(共有マスタ.フォーマット10);
     expect.soft(選択肢, `商品検索に表示する設定の「${共有マスタ.フォーマット20}」が提示される`).toContain(共有マスタ.フォーマット20);
     expect.soft(選択肢, `商品検索に表示しない設定の「${共有マスタ.非表示フォーマット}」が提示されない`).not.toContain(共有マスタ.非表示フォーマット);
+    await フォーマットの欄を見せる(search);
+    await expect.soft(search.フォーマットの選択肢の要素(共有マスタ.フォーマット10), `「${共有マスタ.フォーマット10}」の選択肢`).toBeVisible();
+    await expect.soft(search.フォーマットの選択肢の要素(共有マスタ.フォーマット20), `「${共有マスタ.フォーマット20}」の選択肢`).toBeVisible();
   });
 });
 
@@ -134,17 +148,20 @@ caseTest("IT-F03-03-016", async ({ page, step, expected }) => {
   await openList(search);
   let 選択肢: string[] = [];
   await step(1, async () => { await pressDetailSearch(search); });
-  await step(2, async () => { 選択肢 = await search.フォーマットの選択肢(); note(`フォーマットの選択肢（上から）: ${選択肢.join("、")}`); });
+  await step(2, async () => { await フォーマットの欄を見せる(search); 選択肢 = await search.フォーマットの選択肢(); note(`フォーマットの選択肢（上から）: ${選択肢.join("、")}`); });
   await expected(async () => {
     const i10 = 選択肢.indexOf(共有マスタ.フォーマット10);
     const i20 = 選択肢.indexOf(共有マスタ.フォーマット20);
     expect.soft(i10, `「${共有マスタ.フォーマット10}」の位置（上から）`).toBeGreaterThanOrEqual(0);
     expect.soft(i20, `「${共有マスタ.フォーマット20}」の位置（上から）`).toBeGreaterThanOrEqual(0);
     expect.soft(i10 < i20, "表示順の昇順で「フォーマット10」が「フォーマット20」より上に提示される").toBe(true);
+    await フォーマットの欄を見せる(search);
+    await expect.soft(search.フォーマットの選択肢の要素(共有マスタ.フォーマット10), `「${共有マスタ.フォーマット10}」の選択肢（上から${i10 + 1}番目）`).toBeVisible();
+    await expect.soft(search.フォーマットの選択肢の要素(共有マスタ.フォーマット20), `「${共有マスタ.フォーマット20}」の選択肢（上から${i20 + 1}番目）`).toBeVisible();
   });
 });
 
-caseTest("IT-F03-03-017", async ({ page, step, expected }) => {
+caseTest("IT-F03-03-017", async ({ page, step, expected, capture }) => {
   const search = new FrontDetailSearch(page);
   await openList(search);
   let イラストレーター: string[] = [];
@@ -165,6 +182,16 @@ caseTest("IT-F03-03-017", async ({ page, step, expected }) => {
     expect.soft(sa, `サブタイプ（英語名${共有マスタ.サブタイプA英}）の日本語名「${共有マスタ.サブタイプA日}」の位置`).toBeGreaterThanOrEqual(0);
     expect.soft(sb, `サブタイプ（英語名${共有マスタ.サブタイプB英}）の日本語名「${共有マスタ.サブタイプB日}」の位置`).toBeGreaterThanOrEqual(0);
     expect.soft(sa < sb, "サブタイプが英語名の順（AlphaSubtype、BetaSubtype）に、日本語名「んタイプ」、「あタイプ」の順で提示される").toBe(true);
+    // 並び順を画像で読めるようにする: 選択欄を一覧に広げ、それぞれの選択肢の所を見せて撮る（注記の枠に上から何番目かを書く）
+    const 見せる = async (select: import("@playwright/test").Locator, 見出し: string, 名: string) => {
+      const 戻す = await search.選択肢を広げて見せる(select, { 見出し, 見せる: 名, 行: 9 });
+      await capture(`${見出し}の「${名}」`);
+      await 戻す();
+    };
+    await 見せる(search.イラストレーターの選択欄, "イラストレーター", 共有マスタ.イラストレーターA);
+    await 見せる(search.イラストレーターの選択欄, "イラストレーター", 共有マスタ.イラストレーターB);
+    await 見せる(search.サブタイプの選択欄, "サブタイプ", 共有マスタ.サブタイプA日);
+    await search.選択肢を広げて見せる(search.サブタイプの選択欄, { 見出し: "サブタイプ", 見せる: 共有マスタ.サブタイプB日, 行: 9 });
   });
 });
 
@@ -188,6 +215,7 @@ caseTest("IT-F03-03-028", async ({ page, step, expected }) => {
     expect.soft(開始時の欄数, "開いた直後のカテゴリ選択欄の数（第1階層だけ）").toBe(1);
     expect.soft(選択後の欄数, `「${A}」を選んだあとのカテゴリ選択欄の数（第2階層が現れる）`).toBe(2);
     expect.soft(第2階層, `第2階層の選択肢に「${B}」が提示される`).toContain(B);
+    await search.選択肢を広げて見せる(search.カテゴリ選択欄(1), { 見出し: "カテゴリ（第2階層）", 見せる: B, 全部を書く: true });
   });
 });
 
@@ -220,6 +248,7 @@ caseTest("IT-F03-03-030", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(選択後の欄数, `「${B}」を選んだあとのカテゴリ選択欄の数（第3階層が現れる）`).toBe(3);
     expect.soft(第3階層, `第3階層の選択肢に「${C}」が提示される`).toContain(C);
+    await search.選択肢を広げて見せる(search.カテゴリ選択欄(2), { 見出し: "カテゴリ（第3階層）", 見せる: C, 全部を書く: true });
   });
 });
 
@@ -240,6 +269,7 @@ caseTest("IT-F03-03-032", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(選択後の欄数, `「${C}」を選んだあとのカテゴリ選択欄の数（第4階層が現れる）`).toBe(4);
     expect.soft(第4階層, `第4階層の選択肢に「${D}」が提示される`).toContain(D);
+    await search.選択肢を広げて見せる(search.カテゴリ選択欄(3), { 見出し: "カテゴリ（第4階層）", 見せる: D, 全部を書く: true });
   });
 });
 
@@ -279,16 +309,19 @@ type アドレスの形 = { パス: string; 引数: [string, string][]; 文: str
 /** モーダルの表示元の確認で、その表示元で記録する値 */
 type 表示元の結果 = { モーダルが開いた: boolean; 遷移しなかった: boolean };
 
-caseTest("IT-F03-03-001", async ({ page, notes, step, expected }) => {
+caseTest("IT-F03-03-001", async ({ page, notes, step, expected, capture }) => {
   const search = new FrontDetailSearch(page);
   const 商品ID = notes.get("〔商品ID-F0303-001〕");
   const 結果: Record<string, 表示元の結果> = {};
-  /** 表示元の画面を開き、入口を押してモーダルが画面の上に開くことを記録し、閉じるボタンで閉じる */
-  async function 表示元(名前: string, path: string, 幅: "PC" | "SP", 入口: () => ReturnType<FrontDetailSearch["PC版ナビの詳細検索ボタン"]>): Promise<void> {
+  /**
+   * 表示元の画面を開き、入口を押してモーダルが画面の上に開くことを記録し、開いた画面を撮ってから閉じるボタンで閉じる
+   * （正本の手順8は閉じない。閉じる = false のときは開いたままにする）
+   */
+  async function 表示元(名前: string, path: string, 幅: "PC" | "SP", 入口: () => ReturnType<FrontDetailSearch["PC版ナビの詳細検索ボタン"]>, 閉じる = true): Promise<void> {
     await page.setViewportSize(幅 === "SP" ? { width: 390, height: 844 } : { width: 1280, height: 720 });
     const status = await search.画面を開く(path);
     expect(status, `${名前}の応答`).toBeLessThan(400);
-    expect(await search.モーダルが開いている(), `${名前}を開いた直後、商品詳細検索モーダルが閉じている`).toBe(false);
+    expect(!(await search.モーダルが開いている()), `${名前}を開いた直後、商品詳細検索モーダルが閉じている`).toBe(true);
     const before = new URL(page.url());
     await search.入口を押す(入口());
     const after = new URL(page.url());
@@ -296,6 +329,10 @@ caseTest("IT-F03-03-001", async ({ page, notes, step, expected }) => {
       モーダルが開いた: await search.モーダルが開いている(),
       遷移しなかった: after.pathname === before.pathname && after.search === before.search,
     };
+    // 開く動き（0.3秒）が終わってから、モーダルが表示元の画面の上に開いた状態を撮る
+    await search.開閉後のモーダル();
+    await capture(`${名前}の上に開いた商品詳細検索モーダル`);
+    if (!閉じる) return;
     await search.閉じるボタン.click({ timeout: 30_000 });
     await search.開閉後のモーダル();
   }
@@ -308,7 +345,7 @@ caseTest("IT-F03-03-001", async ({ page, notes, step, expected }) => {
   await step(7, async () => { await 表示元("商品一覧画面", "/ja/products/search", "PC", () => search.詳細検索の入口().first()); });
   await step(8, async () => {
     note("商品HQ-001-F0303-001は作らず、本店の商品一覧にある既存の商品（シードの注記）の商品詳細画面で押した。TOP画面とECTOPは同じアドレス（本店 /ja・支店 /ja/osaka）で、TOP画面はPC版・SP版のナビゲーション、ECTOPは見えている「詳細検索」の入口を押した");
-    await 表示元("商品詳細画面", `/ja/products/detail/${商品ID}`, "PC", () => search.詳細検索の入口().first());
+    await 表示元("商品詳細画面", `/ja/products/detail/${商品ID}`, "PC", () => search.詳細検索の入口().first(), false);
   });
   await expected(async () => {
     expect.soft(Object.keys(結果), "確かめた表示元の数").toHaveLength(8);
@@ -316,6 +353,8 @@ caseTest("IT-F03-03-001", async ({ page, notes, step, expected }) => {
       expect.soft(r.モーダルが開いた, `${名前}の上に商品詳細検索モーダルが表示される`).toBe(true);
       expect.soft(r.遷移しなかった, `${名前}から独立した商品詳細検索画面へ遷移しない（アドレスが変わらない）`).toBe(true);
     }
+    // 期待結果の画像は、手順8の商品詳細画面の上にモーダルが開いたままの状態
+    await expect.soft(search.モーダル, "商品詳細画面の上に開いた商品詳細検索モーダル").toHaveClass(/is-visible/);
   });
 });
 
@@ -324,6 +363,7 @@ caseTest("IT-F03-03-005", async ({ page, notes, step, expected }) => {
   const タグID = notes.get("〔タグID-F0303-005〕");
   const カテゴリID = notes.get("〔カテゴリID-F0303-共有B〕");
   let 結果: アドレスの形 = { パス: "", 引数: [], 文: "" };
+  let 特殊の値 = "";
   await step(1, async () => {
     expect(await search.画面を開く(`/ja/products/search/tags/${タグID}`), "タグで絞り込んだ商品一覧の応答").toBeLessThan(400);
   });
@@ -331,6 +371,7 @@ caseTest("IT-F03-03-005", async ({ page, notes, step, expected }) => {
   await step(3, async () => {
     await search.カテゴリを選ぶ(0, 共有マスタ.表示対象親カテゴリ);
     await search.カテゴリを選ぶ(1, 共有マスタ.表示対象カテゴリ);
+    特殊の値 = await search.Foilの値("特殊");
     await search.Foilを選ぶ("特殊");
     await search.検索する();
   });
@@ -341,8 +382,9 @@ caseTest("IT-F03-03-005", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     expect.soft(結果.パス, `タグ「T-F0303-005」（タグID ${タグID}）がアドレスのパスに含まれる`).toMatch(new RegExp(`/tags/${タグID}(?:/|$)`));
     expect.soft(結果.パス, `カテゴリ「${共有マスタ.表示対象カテゴリ}」（カテゴリID ${カテゴリID}）がアドレスのパスに含まれる`).toMatch(new RegExp(`/cate/${カテゴリID}(?:/|$)`));
-    expect.soft(結果.引数.filter(([k]) => /foil/i.test(k)).map(([, v]) => v), "Foil「特殊」がGETパラメータに含まれる（Foilの欄の値が1つ送られる）").toHaveLength(1);
-    expect.soft(結果.引数.some(([k]) => /^(tags|category)(\[|$)/.test(k)), "タグとカテゴリはGETパラメータではなくパスに入る（パラメータに残らない）").toBe(false);
+    expect.soft(特殊の値, "モーダルのFoil「特殊」の選択肢が送る値").not.toBe("");
+    expect.soft(結果.引数.filter(([k]) => /foil/i.test(k)).map(([, v]) => v), `Foil「特殊」がGETパラメータに含まれる（Foilの欄の値が「特殊」の値「${特殊の値}」1つだけ）`).toEqual([特殊の値]);
+    expect.soft(!結果.引数.some(([k]) => /^(tags|category)(\[|$)/.test(k)), "タグとカテゴリはGETパラメータではなくパスに入る（パラメータに残らない）").toBe(true);
   });
 });
 
@@ -366,9 +408,18 @@ caseTest("IT-F03-03-025", async ({ page, notes, step, expected }) => {
   await step(3, async () => { await search.商品名の入力欄.fill("F0303-CARRY-025"); await search.検索する(); });
   await step(4, async () => { 結果 = search.アドレス(); note(`検索後のアドレス: ${結果.文}`); });
   await expected(async () => {
+    // 遷移元に3つが付いていたこと（付いていなければ「含まれない」は当然に成り立つ）
+    expect.soft(/[?&]cardId=/.test(開始) && /[?&]orderby=/.test(開始) && /[?&]pageno=2(&|$)/.test(開始), `遷移元の商品一覧のアドレスに並び順・ページ番号・カードIDが付いていた（${開始}）`).toBe(true);
     const keys = 結果.引数.map(([k]) => k);
-    expect.soft(keys.filter((k) => /^orderby$/i.test(k)), "検索後のアドレスに遷移元の並び順が含まれない").toHaveLength(0);
-    expect.soft(keys.filter((k) => /^pageno$/i.test(k)), "検索後のアドレスに遷移元のページ番号が含まれない").toHaveLength(0);
+    // 期待結果は「遷移元の」並び順・ページ番号が含まれないこと。欄があっても値が遷移元と違えば（ページ番号が1に戻るなど）、遷移元の値は含まれない。
+    // 欄そのものが送られているか（設計の「詳細検索から検索を実行したときは送らない」）は注記に残す
+    const 元 = new URL(開始, "https://x").searchParams;
+    const 元の並び順 = 元.get("orderby") ?? "";
+    const 元のページ番号 = 元.get("pageno") ?? "";
+    const 後の値 = (name: string) => 結果.引数.filter(([k]) => k.toLowerCase() === name).map(([, v]) => v);
+    note(`検索後のアドレスの並び順の欄: ${後の値("orderby").join("・") || "無い"}（遷移元 ${元の並び順}）・ページ番号の欄: ${後の値("pageno").join("・") || "無い"}（遷移元 ${元のページ番号}）`);
+    expect.soft(後の値("orderby"), `検索後のアドレスに遷移元の並び順（${元の並び順}）が含まれない`).not.toContain(元の並び順);
+    expect.soft(後の値("pageno"), `検索後のアドレスに遷移元のページ番号（${元のページ番号}）が含まれない`).not.toContain(元のページ番号);
     expect.soft(keys.filter((k) => /^card_?id$/i.test(k)), `検索後のアドレスに遷移元のカードID（${カードID}）が含まれない`).toHaveLength(0);
     expect.soft(結果.引数.some(([, v]) => v === カードID && /card/i.test(結果.文)), "カードIDの値がアドレスに残らない").toBe(false);
   });

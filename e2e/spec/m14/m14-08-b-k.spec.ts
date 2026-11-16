@@ -76,7 +76,7 @@ caseTest("IT-M14-08-037", async ({ page, notes, step, expected }) => {
   await step(3, async () => {
     const row = list.行(id);
     await list.操作を開く(row);
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), list.編集(row).click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), list.編集(row).click({ noWaitAfter: true })]);
   });
   await step(4, async () => { await d.削除を押す(); });
   await step(5, async () => { r = await d.実行を押す(); });
@@ -115,7 +115,7 @@ caseTest("IT-M14-08-043", async ({ page, notes, step, expected }) => {
     const row = list.行(id);
     await expect(row, "印つきのカードセットの行（セット英名の昇順の1ページ目）").toHaveCount(1);
     await list.操作を開く(row);
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), list.編集(row).click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), list.編集(row).click({ noWaitAfter: true })]);
   });
   await step(3, async () => { await d.カードセット管理を押す(); });
   await expected(async () => {

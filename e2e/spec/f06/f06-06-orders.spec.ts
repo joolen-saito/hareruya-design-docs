@@ -3,12 +3,14 @@
  * 先の spec（f06-06.spec.ts）に無かったケースのうち、注文を画面とDBで整えて確かめるもの。シードは seeds/f06-06-orders.ts。
  * 実装しないケース: 007・008・009（注文を51件・12001件作る大量データ）、020〜022（再購入の要求を開発者ツールで取得して再送する。購入履歴一覧に再購入の要求を出す画面が無い）、
  *   028（受注一覧の一括操作領域に対応状況を変える選択欄が見つからない）。
- * 処理状態は、現行の画面では文字のラベルで表示される。BOステータスと表示画像の対応（別添資料）は正本に無いので、処理状態が表示されること（ラベルの文字または画像）を確かめ、
- * 表示された内容を注記に残す。
+ * 処理状態は、現行の画面では文字の札（地の色つき）で表示される。正本が照らす別添資料は、設計書 0304 のシート「別添資料_注文ステータスと表示画像の紐付け」
+ * （BOステータスごとのフロント表示画像9枚。画像は文言と地の色の札）。期待結果が別添資料の画像を求めるケース（014・027・031〜041・047・048）は、
+ * 画面の札の文言と地の色を、別添資料の画像の文言と地の色に照らす（下の 別添資料）。010 は処理状態が表示されることだけを求めるので、表示されたことを確かめる。
  */
 import { Locator, test } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../../config/env";
 import { CaseBody, CaseCtx, caseTest, expect } from "../../lib/case";
+import { 別のブラウザの画面を印つきで撮る, scene } from "../../lib/evidence_other";
 import { hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { OrderEditPage } from "../../pages/admin/m05_11_order_edit";
 import { expectSaved } from "../../pages/admin/common";
@@ -19,7 +21,64 @@ import { mailOf } from "../../seeds/f06-06";
 import { 高松店名, 本店名, pw, レシートNo, 注文 } from "../../seeds/f06-06-orders";
 
 const note = (type: string, m: string) => { test.info().annotations.push({ type, description: m }); };
-const 画像の注記 = "処理状態は、現行の画面では文字のラベルで表示される。BOステータスと表示画像の対応（別添資料）は正本に無いので、処理状態が表示されること（ラベルの文字または画像がある）を確かめ、表示された内容を記録した";
+const 画像の注記 = "処理状態は、現行の画面では文字のラベルで表示される。期待結果は処理状態が表示されることを求めるので、表示されたこと（ラベルの文字または画像がある）を確かめ、表示された内容を記録した";
+
+/**
+ * 別添資料（設計書 0304「別添資料_注文ステータスと表示画像の紐付け」の C2〜C10 の画像）の、BOステータスごとのフロント表示画像の文言と地の色。
+ * 画像の地の色は、橙 rgb(226,112,0)（ピック中〜店頭予約の6枚）・黒 rgb(29,29,29)（出荷完了・購入済み）・灰 rgb(106,106,106)（キャンセル）。
+ */
+type 地の色 = "橙" | "黒" | "灰";
+const 別添資料: Record<string, { 文言: string; 色: 地の色 }> = {
+  ピック中: { 文言: "出荷準備", 色: "橙" },
+  入金待ち: { 文言: "入金待ち", 色: "橙" },
+  入金済み: { 文言: "出荷準備", 色: "橙" },
+  ピック完了: { 文言: "ご来店待ち", 色: "橙" },
+  出荷指示: { 文言: "出荷準備", 色: "橙" },
+  店頭予約: { 文言: "予約済み", 色: "橙" },
+  出荷完了: { 文言: "出荷完了", 色: "黒" },
+  購入済み: { 文言: "受け取り済み", 色: "黒" },
+  キャンセル: { 文言: "キャンセル", 色: "灰" },
+};
+const 別添資料の地の色: Record<地の色, [number, number, number]> = { 橙: [226, 112, 0], 黒: [29, 29, 29], 灰: [106, 106, 106] };
+/**
+ * 画面の処理状態の札の地の色（画面の札はこの3色のどれかで出る）。それぞれを、別添資料の画像の地の色のうち最も近い色に当てる。
+ * 当て方が崩れていないこと（画面の色が、当てた別添資料の色にいちばん近いこと）は、読み込み時に確かめる。
+ */
+const 画面の札の地の色: Record<地の色, string> = { 橙: "rgb(230, 123, 0)", 黒: "rgb(31, 31, 31)", 灰: "rgb(118, 118, 117)" };
+for (const [名, css] of Object.entries(画面の札の地の色) as [地の色, string][]) {
+  const c = (css.match(/\d+/g) ?? []).map(Number);
+  const 近い = (Object.entries(別添資料の地の色) as [地の色, number[]][])
+    .map(([n, d]) => ({ n, 距離: d.reduce((a, v, i) => a + (v - c[i]) ** 2, 0) }))
+    .sort((a, b) => a.距離 - b.距離)[0].n;
+  if (近い !== 名) throw new Error(`画面の札の色 ${css} は、別添資料の画像の「${名}」ではなく「${近い}」に近い（当て方を見直す）`);
+}
+const 色の名前 = (css: string) => (Object.entries(画面の札の地の色).find(([, v]) => v === css)?.[0] ?? css);
+const 別添資料の注記 = "期待結果の「別添資料で対応付けられたフロント表示画像」は、設計書 0304 のシート「別添資料_注文ステータスと表示画像の紐付け」の画像（文言と地の色の札）。"
+  + "画面は処理状態を文字の札で出すので、札の文言と地の色を、BOステータスに対応付けられた画像の文言と地の色に照らした"
+  + "（地の色は、画面の札の色 橙 rgb(230,123,0)・黒 rgb(31,31,31)・灰 rgb(118,118,117) を、別添資料の画像の 橙 rgb(226,112,0)・黒 rgb(29,29,29)・灰 rgb(106,106,106) に当てた）";
+
+/**
+ * 行の処理状態を、別添資料のBOステータスの画像（文言と地の色）と照らすための組（BOステータスは正本の名前。購入済み など）。
+ * 呼んだ側は、札の文字を 文言 と（toHaveText）、札の地の色を 色を確かめる() で（実行結果に色の名前「橙・黒・灰」が出るよう、色の名前で比べる）確かめ、結果() を注記に残す
+ */
+function 別添資料の照らし(h: HistoryListPage, 行: Locator, BO: string, 名前: string) {
+  const 期待 = 別添資料[BO];
+  if (!期待) throw new Error(`BOステータス「${BO}」は別添資料に無い`);
+  const 札 = h.処理状態の札(行);
+  return {
+    札, 文言: 期待.文言, 地の色: 画面の札の地の色[期待.色],
+    文言の項目: `${名前}の処理状態が、別添資料でBOステータス「${BO}」に対応付けられた画像の文言「${期待.文言}」で表示されること`,
+    色の項目: `${名前}の処理状態の地の色が、別添資料でBOステータス「${BO}」に対応付けられた画像と同じ${期待.色}であること`,
+    色を確かめる: async () => {
+      const css = (await 札.count()) === 0 ? "" : await 札.first().evaluate((e) => getComputedStyle(e).backgroundColor);
+      expect.soft(css === "" ? "（文字の札が無い）" : 色の名前(css), `${名前}の処理状態の地の色が、別添資料でBOステータス「${BO}」に対応付けられた画像と同じ${期待.色}であること`).toBe(期待.色);
+    },
+    結果: async () => {
+      const 実際 = (await 札.count()) === 0 ? "（文字の札が無い）" : `${((await 札.innerText()) ?? "").trim()}・${色の名前(await 札.evaluate((e) => getComputedStyle(e).backgroundColor))}`;
+      return `${BO}→別添資料「${期待.文言}・${期待.色}」／画面「${実際}」`;
+    },
+  };
+}
 const 商品の注記 = "シード表の商品名（結合商品Aなど）の商品は作らず、注文した既存の販売中の商品の名前で確かめる（共有の商品に試験の値を足さない）";
 const 日付の注記 = "シード表の固定の値（注文ID・注文番号・会員ID）は、画面が振った値に読み替えて確かめる";
 
@@ -48,7 +107,11 @@ caseTest("IT-F06-06-010", async (c) => {
     const 内容 = (await h.項目(行, "注文内容")).文;
     for (const 名 of 注文("010").商品名) expect.soft(内容, `注文内容に商品名「${名}」`).toContain(名);
     expect.soft((await h.項目(行, "注文金額合計")).文, "注文が保持する注文金額合計（9999円）").toContain("9,999");
-    expect.soft((await h.項目(行, "支払方法")).文, "支払方法").toBe("クレジットカード");
+    // 支払方法「クレジットカード」は手元の支払方法マスタに無く、シードは「クレジットカード決済」を設定した（S-F06-06-MASTER・DISPLAY-010 の注記）。注文が持つ値で確かめる
+    const 支払 = 注文("010").支払方法;
+    note("手順の注記", `支払方法は、正本の「クレジットカード」が手元の支払方法マスタに無いので、シードが注文に設定した「${支払}」が表示されることで確かめた`);
+    expect.soft(支払, "シードが注文に設定した支払方法がクレジットカードの支払方法である").toContain("クレジットカード");
+    expect.soft((await h.項目(行, "支払方法")).文, `支払方法（注文が持つ「${支払}」）`).toBe(支払);
     const s = await h.処理状態(行);
     note("手順の注記", `${画像の注記}。表示: ${状態の文(s)}`);
     expect.soft(s.表示, "処理状態が表示される").toBe(true);
@@ -56,9 +119,10 @@ caseTest("IT-F06-06-010", async (c) => {
 });
 
 // ---------------------------------------------------------------- 011・039〜041 店頭受取注文の行（店頭受取受注）
-function 店頭受取の行(前半: string, パスワード: string, n: string, 日: string | null): CaseBody {
+function 店頭受取の行(前半: string, パスワード: string, n: string, 日: string | null, BO: string): CaseBody {
   return async (c) => {
     note("手順の注記", 日付の注記);
+    note("手順の注記", 別添資料の注記);
     const { step, expected, notes } = c;
     const h = 履歴(c);
     let 行!: Locator;
@@ -70,20 +134,24 @@ function 店頭受取の行(前半: string, パスワード: string, n: string, 
       expect.soft((await h.項目(行, "注文日")).文, "注文日").toBe(日 ?? notes.get(`〔注文日-F0606-${n}〕`));
       expect.soft((await h.項目(行, "店舗")).文, "受取店舗名").toBe(o.店名);
       expect.soft(await h.注文番号のリンク(行).innerText(), "リンクとして表示された注文番号").toBe(o.番号);
-      const s = await h.処理状態(行);
-      note("手順の注記", `${画像の注記}。表示: ${状態の文(s)}`);
-      expect.soft(s.表示, "処理状態が表示される").toBe(true);
+      const x = 別添資料の照らし(h, 行, BO, "注文の行");
+      await expect.soft(x.札, x.文言の項目).toHaveText(x.文言);
+      await x.色を確かめる();
+      note("手順の注記", `処理状態: ${await x.結果()}`);
+      note("手順の注記", `注文の種類の裏づけ（照会）: この注文の配送方法は「${注文(n).配送方法}」`);
     });
   };
 }
-caseTest("IT-F06-06-039", 店頭受取の行("cbf0606-039", "Passw0rd-CBF0606039", "039", null));
-caseTest("IT-F06-06-040", 店頭受取の行("cbf0606-040", "Passw0rd-CBF0606040", "040", null));
-caseTest("IT-F06-06-041", 店頭受取の行("cbf0606-041", "Passw0rd-CBF0606041", "041", null));
+// BOステータスは正本の事前準備のとおり（シード seeds/f06-06-orders.ts の 組合せ と同じ）
+caseTest("IT-F06-06-039", 店頭受取の行("cbf0606-039", "Passw0rd-CBF0606039", "039", null, "ピック中"));
+caseTest("IT-F06-06-040", 店頭受取の行("cbf0606-040", "Passw0rd-CBF0606040", "040", null, "ピック完了"));
+caseTest("IT-F06-06-041", 店頭受取の行("cbf0606-041", "Passw0rd-CBF0606041", "041", null, "購入済み"));
 
 // ---------------------------------------------------------------- 031〜038・047・048 EC・スムーズ店頭受取の行
-function オンライン店舗の行(n: string): CaseBody {
+function オンライン店舗の行(n: string, BO: string): CaseBody {
   return async (c) => {
     note("手順の注記", 日付の注記);
+    note("手順の注記", 別添資料の注記);
     const { step, expected, notes } = c;
     const h = 履歴(c);
     let 行!: Locator;
@@ -97,22 +165,25 @@ function オンライン店舗の行(n: string): CaseBody {
       const link = h.注文番号のリンク(行);
       expect.soft(await link.innerText(), "リンクとして表示された注文番号").toBe(番号);
       expect.soft(await link.getAttribute("href"), "注文番号のリンク先").toContain(詳細のパス(注文(n).ID));
-      const s = await h.処理状態(行);
-      note("手順の注記", `${画像の注記}。表示: ${状態の文(s)}`);
-      expect.soft(s.表示, "処理状態が表示される").toBe(true);
+      const x = 別添資料の照らし(h, 行, BO, "注文の行");
+      await expect.soft(x.札, x.文言の項目).toHaveText(x.文言);
+      await x.色を確かめる();
+      note("手順の注記", `処理状態: ${await x.結果()}`);
+      note("手順の注記", `注文の種類の裏づけ（照会）: この注文の配送方法は「${注文(n).配送方法}」`);
     });
   };
 }
-caseTest("IT-F06-06-031", オンライン店舗の行("031"));
-caseTest("IT-F06-06-032", オンライン店舗の行("032"));
-caseTest("IT-F06-06-033", オンライン店舗の行("033"));
-caseTest("IT-F06-06-034", オンライン店舗の行("034"));
-caseTest("IT-F06-06-035", オンライン店舗の行("035"));
-caseTest("IT-F06-06-036", オンライン店舗の行("036"));
-caseTest("IT-F06-06-037", オンライン店舗の行("037"));
-caseTest("IT-F06-06-038", オンライン店舗の行("038"));
-caseTest("IT-F06-06-047", オンライン店舗の行("047"));
-caseTest("IT-F06-06-048", オンライン店舗の行("048"));
+// BOステータスは正本の事前準備のとおり（シード seeds/f06-06-orders.ts の 組合せ と同じ）
+caseTest("IT-F06-06-031", オンライン店舗の行("031", "出荷指示"));
+caseTest("IT-F06-06-032", オンライン店舗の行("032", "出荷完了"));
+caseTest("IT-F06-06-033", オンライン店舗の行("033", "キャンセル"));
+caseTest("IT-F06-06-034", オンライン店舗の行("034", "ピック完了"));
+caseTest("IT-F06-06-035", オンライン店舗の行("035", "出荷指示"));
+caseTest("IT-F06-06-036", オンライン店舗の行("036", "店頭予約"));
+caseTest("IT-F06-06-037", オンライン店舗の行("037", "購入済み"));
+caseTest("IT-F06-06-038", オンライン店舗の行("038", "キャンセル"));
+caseTest("IT-F06-06-047", オンライン店舗の行("047", "入金待ち"));
+caseTest("IT-F06-06-048", オンライン店舗の行("048", "入金済み"));
 
 // ---------------------------------------------------------------- 013・026・042 スマレジ取引だけの行
 function スマレジ取引の行(n: string, 前半: string, パスワード: string, レシート: string, 購入日: string, 状態を見る: boolean): CaseBody {
@@ -178,26 +249,33 @@ caseTest("IT-F06-06-045", 統合の行("045", 2, "2026/8/2"));
 caseTest("IT-F06-06-046", 統合の行("046", 2, "2026/8/2"));
 
 // ---------------------------------------------------------------- 014 9状態の処理状態
+// 注文 01〜09 のBOステータス（正本の事前準備の順。シード seeds/f06-06-orders.ts の S-F06-06-STATUS-014 と同じ）
+const 九状態 = ["ピック中", "入金待ち", "入金済み", "ピック完了", "出荷指示", "店頭予約", "出荷完了", "購入済み", "キャンセル"];
 caseTest("IT-F06-06-014", async (c) => {
-  note("手順の注記", `${画像の注記}。${日付の注記}`);
+  note("手順の注記", `${別添資料の注記}。${日付の注記}`);
   const { step, expected, notes } = c;
   const h = 履歴(c);
-  const 結果: { n: string; 状態: string; 表示: boolean; 内容: string }[] = [];
+  const 行の一覧: { k: string; BO: string; 行: Locator }[] = [];
   await step(1, async () => { await ログイン(c, "status-f0606-014", pw("014")); });
   await step(2, async () => { await h.開く(); });
   await step(3, async () => {
     // 9件は1ページ（10件）に収まる
-    for (let i = 1; i <= 9; i++) {
-      const k = String(i).padStart(2, "0");
+    for (const [i, BO] of 九状態.entries()) {
+      const k = String(i + 1).padStart(2, "0");
       const 行 = h.行(notes.get(`〔注文番号-F0606-014-${k}〕`));
       await expect(行, `注文 ${k} の行`).toHaveCount(1);
-      const s = await h.処理状態(行);
-      結果.push({ n: k, 状態: 注文(`014-${k}`).状態, 表示: s.表示, 内容: 状態の文(s) });
+      行の一覧.push({ k, BO, 行 });
     }
   });
   await expected(async () => {
-    for (const r of 結果) expect.soft(r.表示, `注文 ${r.n}（BOステータス ${r.状態}）の処理状態が表示される（表示: ${r.内容}）`).toBe(true);
-    note("手順の注記", `表示された処理状態: ${結果.map((r) => `${r.n}=${r.状態}→${r.内容}`).join(" / ")}`);
+    const 記録: string[] = [];
+    for (const r of 行の一覧) {
+      const x = 別添資料の照らし(h, r.行, r.BO, `注文 ${r.k}`);
+      await expect.soft(x.札, x.文言の項目).toHaveText(x.文言);
+      await x.色を確かめる();
+      記録.push(`${r.k}=${await x.結果()}`);
+    }
+    note("手順の注記", `処理状態: ${記録.join(" / ")}`);
   });
 });
 
@@ -249,7 +327,7 @@ caseTest("IT-F06-06-017", async (c) => {
 
 // ---------------------------------------------------------------- 027 管理画面の対応状況の変更が処理状態に反映される
 caseTest("IT-F06-06-027", async (c) => {
-  note("手順の注記", `${画像の注記}。ブラウザBの管理者は、試験の準備に使う既存の全権限の管理者で代える。${日付の注記}`);
+  note("手順の注記", `${別添資料の注記}。ブラウザBの管理者は、試験の準備に使う既存の全権限の管理者で代える。${日付の注記}`);
   const { step, expected, browser, notes } = c;
   const h = 履歴(c);
   const adminCtx = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
@@ -259,17 +337,38 @@ caseTest("IT-F06-06-027", async (c) => {
     ap.setDefaultTimeout(60_000);
     const edit = new OrderEditPage(ap);
     const 番号 = notes.get("〔注文番号-F0606-QF001〕");
-    let 前 = "", 後 = "", 保存後 = "";
+    let 前 = "", 後 = "";
     await step(1, async () => { await ログイン(c, "qf-f0606-001", "Passw0rd-QF0606"); await h.開く(); });
-    await step(2, async () => { 前 = 状態の文(await h.処理状態(h.行(番号))); });
-    await step(3, async () => { await loginAdmin(ap, SETUP_ADMIN); await edit.openByOrderNo(番号, await 本店の店名(browser)); });
-    await step(4, async () => { await edit.ステータスを選ぶ("入金済み"); await edit.ステータスを変更する(() => undefined); });
-    await step(5, async () => { await expectSaved(ap, "受注ステータスの変更"); 保存後 = await edit.現在のステータス(); });
-    await step(6, async () => { await h.開く(); 後 = 状態の文(await h.処理状態(h.行(番号))); });
+    // 期待結果の前半（手順2の処理状態が「入金待ち」の画像）は、手順2の画面で照らす（手順6のあとの画面では表示が変わっている）
+    await step(2, async () => {
+      const x = 別添資料の照らし(h, h.行(番号), "入金待ち", "手順2の注文の行");
+      await expect.soft(x.札, x.文言の項目).toHaveText(x.文言);
+      await x.色を確かめる();
+      前 = await x.結果();
+    });
+    await step(3, async () => {
+      await loginAdmin(ap, SETUP_ADMIN);
+      await edit.openByOrderNo(番号, await 本店の店名(browser));
+      await 別のブラウザの画面を印つきで撮る(ap, scene.stepLabel(3, "ブラウザB（管理者）の受注情報編集"));
+    });
+    await step(4, async () => {
+      await edit.ステータスを選ぶ("入金済み");
+      await 別のブラウザの画面を印つきで撮る(ap, scene.stepLabel(4, "ブラウザB（管理者）で入金済みを選んだところ"));
+      await edit.ステータスを変更する(() => undefined);
+    });
+    await step(5, async () => {
+      await expect.soft(edit.保存の知らせ, "ブラウザBの管理画面に「保存しました」が表示されること").toContainText("保存しました");
+      await expect.soft(edit.現在のステータスの欄, "ブラウザBの管理画面の現在のステータスが「入金済み」であること").toHaveText("入金済み");
+      await 別のブラウザの画面を印つきで撮る(ap, scene.stepLabel(5, "ブラウザB（管理者）の保存の知らせと現在のステータス"));
+      await expectSaved(ap, "受注ステータスの変更");
+    });
+    await step(6, async () => { await h.開く(); });
     await expected(async () => {
-      expect.soft(保存後, "管理画面の現在のステータス").toBe("入金済み");
-      expect.soft(前, "手順2の処理状態（入金待ちの表示）").toContain("入金待ち");
-      expect.soft(後, "手順6の処理状態（出荷準備の表示）").toContain("出荷準備");
+      const x = 別添資料の照らし(h, h.行(番号), "入金済み", "手順6の注文の行");
+      await expect.soft(x.札, x.文言の項目).toHaveText(x.文言);
+      await x.色を確かめる();
+      後 = await x.結果();
+      note("手順の注記", `処理状態: 手順2 ${前} ／ 手順6 ${後}`);
     });
   } finally {
     await adminCtx.close();

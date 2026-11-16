@@ -55,7 +55,17 @@ export class EntryNewPage {
       await this.page.waitForTimeout(10_000);
     }
     if ((await row.count()) !== 1) throw new Error(`イベント申込登録の検索結果に、「${イベント名}」の日程（日程ID ${日程ID}）の新規登録の行が ${await row.count()} 件ある（1件のはず。約1分おいて検索し直しても同じ）`);
-    await Promise.all([this.page.waitForURL(new RegExp(`/entry_registration/new/${日程ID}$`), { waitUntil: "load" }), row.getByRole("link", { name: "新規登録" }).click()]);
+    await Promise.all([this.page.waitForURL(new RegExp(`/entry_registration/new/${日程ID}$`), { waitUntil: "load", timeout: 120_000 }), row.getByRole("link", { name: "新規登録" }).click({ noWaitAfter: true })]);
+    await this.読み込みを待つ();
+  }
+
+  /**
+   * 日程IDのアドレスを直接開き、新規申込登録画面の読み込みを待つ。
+   * オンライン受付なしの日程は、イベント申込登録（検索結果）に出ない（設計書: オンライン受付ありの日程のみ検索対象）ので、
+   * 検索結果の「新規登録」から開けない。シード表の手順どおりに日程を作った（オンライン受付なし）ときの、申込の登録に使う。
+   */
+  async 日程IDのアドレスから開く(日程ID: string): Promise<void> {
+    await this.開く(日程ID);
     await this.読み込みを待つ();
   }
 

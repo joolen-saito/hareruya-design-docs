@@ -59,6 +59,9 @@ caseTest("IT-M05-05-005", async ({ page, notes, step, expected }) => {
   await step(2, async () => { url = await csv.定義のダウンロードURL(定義名("M0505基本定義-005")); expect(url, "ダウンロードURL").toMatch(/custom_csv\/export\/\d+/); });
   await step(3, async () => { 結果 = await csv.定義IDを置き換えて開く(url, "999999"); });
   await expected(async () => {
+    // 要求が送られずに（開けずに）ダウンロードが無かっただけのときに合格にしないため、置き換えたアドレスの要求に応答が返ったことも確かめる
+    expect.soft(結果?.応答 ?? null, "定義IDを999999に置き換えたアドレスの要求に応答が返った（応答の状態）").not.toBeNull();
+    if (結果?.応答 != null) note(`定義IDを999999に置き換えたアドレスの応答の状態: ${結果.応答}`);
     expect.soft(結果?.ダウンロードされた, "CSVファイルがダウンロードされない").toBe(false);
   });
 });

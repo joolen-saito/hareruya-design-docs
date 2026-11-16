@@ -34,6 +34,21 @@ export async function 編集の可否を読む(l: Locator): Promise<編集の可
   return { ...v, 編集できる: !v.読み取り専用 && !v.無効 && !v.操作できない印 };
 }
 
+/**
+ * 入力欄が編集できないこと（無効・読み取り専用・操作できない印のどれか）を、画面の要素そのものへの確かめで示す
+ * （エビデンスの画像で、その欄に赤枠が付くようにする。値を読んで真偽にするだけだと、枠が付かない）。
+ */
+export async function 編集できないことを確かめる(l: Locator, 説明: string): Promise<void> {
+  const k = await 編集の可否を読む(l);
+  if (k.無効) await expect.soft(l, `${説明}（無効）`).toBeDisabled();
+  else if (k.操作できない印) {
+    if (await l.evaluate((el) => el.classList.contains("purchase-uneditable"))) await expect.soft(l, `${説明}（操作できない印）`).toHaveClass(/purchase-uneditable/);
+    else await expect.soft(l, `${説明}（操作できない）`).toHaveCSS("pointer-events", "none");
+  }
+  else if (k.読み取り専用) await expect.soft(l, `${説明}（読み取り専用）`).toHaveAttribute("readonly", /.*/);
+  else await expect.soft(l, `${説明}（編集できない）`).toBeDisabled({ timeout: 1_000 });
+}
+
 /** 買取検索一覧から買取番号で検索し、買取番号のリンクで買取情報編集を開く */
 export async function 一覧から編集を開く(page: Page, 番号: string): Promise<M0703EditPage> {
   const l = new BuyListPage(page);
@@ -88,7 +103,12 @@ export class M0703EditPage extends BuyEditPage {
       振込依頼可能: await checked("canTransferRequestFlg"),
       振込失敗: await checked("transferFailedFlg"),
       事業者: issuerLabel,
-      登録番号: norm(await this.page.locator("#edit_basic_info_box .qualified-invoice-issuer-code").first().innerText().catch(() => "")),
+      // 登録番号の欄は、事業者でない買取では画面に無い。無い要素の innerText は試験の時間切れ（30分）まで待ち続けていた
+      // （2026-11-11 開発環境の 062・151 が「Test timeout of 1800000ms」で未判定）ので、有るときだけ読む
+      登録番号: await (async () => {
+        const code = this.page.locator("#edit_basic_info_box .qualified-invoice-issuer-code").first();
+        return (await code.count()) ? norm(await code.innerText({ timeout: OPEN })) : "";
+      })(),
       承諾方法: (await cells("買取の承諾方法")).join(" "),
       買取状況: norm(await this.買取状況の選択().locator("option:checked").innerText()),
     };
@@ -102,6 +122,45 @@ export class M0703EditPage extends BuyEditPage {
   /** 買取状況の選択肢を開く（選択欄を押す。見た目の確認のため） */
   async 買取状況の選択肢を開く(): Promise<void> {
     await this.買取状況の選択().click({ timeout: OPEN });
+  }
+
+  /**
+   * 撮影のために、買取状況の選択欄（プルダウン）を、選択肢がすべて並んで見える一覧の形に広げる（pages/front/f03_03_detail_search.ts の
+   * 選択肢を広げて見せる と同じやり方。ブラウザのプルダウンは開いても画像に写らないので、選択欄そのものを複数行の一覧にする）。
+   * 選んでいる値・選択肢は変えない。選択欄のすぐ下に「E2E の注記」の枠を置き、選択肢をすべて上から書く。戻すときは返した関数を呼ぶ。
+   */
+  async 買取状況の選択肢を広げて見せる(): Promise<() => Promise<void>> {
+    const select = this.買取状況の選択();
+    await select.waitFor({ state: "attached", timeout: OPEN });
+    await select.evaluate((el) => {
+      const sel = el as HTMLSelectElement & { __e2eSaved?: { size: string | null; style: string | null } };
+      const texts = Array.from(sel.options).map((x) => (x.textContent ?? "").replace(/\s+/g, " ").trim()).filter(Boolean);
+      sel.__e2eSaved = { size: sel.getAttribute("size"), style: sel.getAttribute("style") };
+      sel.setAttribute("size", String(Math.max(2, sel.options.length)));
+      for (const [prop, v] of [["height", "auto"], ["max-height", "none"], ["appearance", "auto"], ["-webkit-appearance", "listbox"], ["background-image", "none"], ["overflow-y", "auto"], ["padding", "4px"], ["position", "relative"], ["z-index", "10"]]) {
+        sel.style.setProperty(prop, v, "important");
+      }
+      const note = document.createElement("div");
+      note.setAttribute("data-e2e-note", "1");
+      note.style.cssText = "border:2px dashed #d00;color:#d00;background:#fff;font-size:12px;line-height:1.5;padding:4px 8px;margin:4px 0;white-space:normal;word-break:break-all;position:relative;z-index:10;";
+      note.textContent = `E2E の注記：「買取状況」の選択欄を、選択肢がすべて見える一覧の形に広げて撮った（選択肢は${texts.length}件）。選択肢（上から）：${texts.map((t, i) => `${i + 1}. ${t}`).join("／")}`;
+      sel.insertAdjacentElement("afterend", note);
+      sel.scrollIntoView({ block: "center" });
+    });
+    await this.page.waitForTimeout(300);
+    return async () => {
+      await select.evaluate((el) => {
+        const sel = el as HTMLSelectElement & { __e2eSaved?: { size: string | null; style: string | null } };
+        const sv = sel.__e2eSaved;
+        if (sv) {
+          if (sv.size === null) sel.removeAttribute("size"); else sel.setAttribute("size", sv.size);
+          if (sv.style === null) sel.removeAttribute("style"); else sel.setAttribute("style", sv.style);
+          sel.__e2eSaved = undefined;
+        }
+        const next = sel.nextElementSibling;
+        if (next && next.getAttribute("data-e2e-note") === "1") next.remove();
+      }).catch(() => undefined);
+    };
   }
 
   /** 買取状況を選ぶ（保存はしない） */
@@ -215,7 +274,7 @@ export class M0703EditPage extends BuyEditPage {
     try {
       const link = this.page.locator("#alert_no_assessment_send_mail");
       await expect(link, "「手動メール通知」").toBeVisible({ timeout: OPEN });
-      await Promise.all([this.page.waitForURL(/\/purchase\/.*mail/, { timeout: 60_000 }), link.click({ timeout: OPEN })]);
+      await Promise.all([this.page.waitForURL(/\/purchase\/.*mail/, { timeout: 120_000}), link.click({ timeout: OPEN, noWaitAfter: true })]);
       await this.page.waitForLoadState("load");
     } finally { this.page.off("dialog", on); }
     return msgs;
@@ -240,6 +299,12 @@ export class M0703EditPage extends BuyEditPage {
   /** 選んで買取の、商品名の行 */
   選んで買取の行(商品名: string): Locator {
     return this.page.locator("#buy_main_cards_field_list tr").filter({ has: this.page.locator('td[id^="purchase_list_main__product_name--"]', { hasText: 商品名 }) }).first();
+  }
+
+  /** 選んで買取の、商品コードが一致する行（追加した商品の行だけを指すため。商品コードは行の「商品コード」の欄の全体と一致するもの） */
+  選んで買取のコードの行(商品コード: string): Locator {
+    const esc = 商品コード.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return this.page.locator("#buy_main_cards_field_list tr").filter({ has: this.page.locator('td[id^="purchase_list_main__product_code--"]', { hasText: new RegExp(`^\\s*${esc}\\s*$`) }) });
   }
 
   async 選んで買取の明細(): Promise<明細の行[]> {

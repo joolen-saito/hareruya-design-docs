@@ -20,8 +20,8 @@ import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { OtcDetailPage, OtcListPage } from "../pages/admin/m06_otc_list";
-import { ensureStore } from "../pages/admin/m04_24_store";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
+import { ensureStore, 使い回す店舗の入力 } from "../pages/admin/m04_24_reuse_k";
+import { ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
 import { Account } from "../lib/session";
 import { サプライ品を登録する } from "../pages/admin/m07_supply";
 import { applyAsMember } from "../pages/front/m06_otc_buy";
@@ -34,8 +34,10 @@ export const mailOf = (前半: string): string => markedMail(前半);
 /** 買取履歴一覧に表示される買取番号（7桁） */
 export const 表示の番号 = (n: string): string => String(Number(n)).padStart(7, "0");
 
-export const OWNERS_STORE = storeInput("晴れる屋テスト店", "ハレルヤテストテン", "Hareruya Test Store", "f0611owners", "FWN");
-export const OWNERS_URL = "f0611owners";
+/** 店舗は作らない（依頼者 2026-11-15）。「晴れる屋テスト店」は使い回す E2E の店舗（店舗ID 5006・公開・開店の支店）で表す */
+export const OWNERS_STORE = 使い回す店舗の入力("5006", "晴れる屋テスト店");
+/** 「F0611-024-テスト店」は E2E の店舗（店舗ID 5007）で表す（OWNERS とは別の店舗） */
+export const STORE_024 = 使い回す店舗の入力("5007", "F0611-024-テスト店");
 
 /** 実行中に控える商品名（呼び名 → 画面で選んだ商品の表示名） */
 export const 商品名 = new Map<string, string>();
@@ -102,7 +104,7 @@ export async function 店舗の管理者を用意する(browser: Browser, 店舗
   const account: Account = { loginId: ログインID, password: "Passw0rd-StoreAdm1" };
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    await ensureMemberByStoreIds(page, { 名前: `${ログインID} 店舗管理者`, ログインID, メールアドレス: `${ログインID}@example.test`, パスワード: account.password, 権限: "システム管理者", 所属店舗ID: 店舗ID, デフォルト検索表示店舗ID: 店舗ID, 編集可能店舗ID: [店舗ID] });
+    await ensureMemberByStoreIds(page, { 名前: `${ログインID} 店舗管理者`, ログインID, メールアドレス: `${ログインID}@example.test`, パスワード: account.password, 権限: "システム管理者", 所属店舗ID: 店舗ID, デフォルト検索表示店舗ID: 店舗ID, 編集可能店舗ID: [店舗ID], 店舗は付け替える: true });
   });
   return account;
 }
@@ -134,7 +136,7 @@ defineSeed("S-F06-11-OWNERS", async ({ browser, notes, seed }) => {
   await 会員を作る(browser, notes, "f0611-b", "F0611PwdOwnersB", "〔会員ID-F0611-共有B〕", "会員B");
   notes.set("〔店舗ID-F0611-共有〕", await 店舗を用意する(browser, OWNERS_STORE, seed.シードID));
   notes.set("〔買取番号-F0611-共有A〕", (await ネット買取を申込む(browser, "f0611-a", "F0611PwdOwnersA", [null]))[0]);
-  notes.set("〔買取番号-F0611-共有B〕", (await 店頭買取を申込む(browser, OWNERS_URL, "f0611-a", "F0611PwdOwnersA", 1))[0]);
+  notes.set("〔買取番号-F0611-共有B〕", (await 店頭買取を申込む(browser, OWNERS_STORE.支店URL, "f0611-a", "F0611PwdOwnersA", 1))[0]);
   notes.set("〔買取番号-F0611-共有C〕", (await ネット買取を申込む(browser, "f0611-b", "F0611PwdOwnersB", [null]))[0]);
 });
 
@@ -228,14 +230,13 @@ const seedIdOf = (n: string): string => `S-F06-11-CBORD-${n}`;
 // ---- 店頭買取 ----
 defineSeed("S-F06-11-STORE-032", { needs: ["S-F06-11-OWNERS"] }, async ({ browser, notes }) => {
   await 会員を作る(browser, notes, "f0611-032", "F0611PwdCase032", "〔会員ID-F0611-032〕", "会員032");
-  notes.set("〔買取番号-F0611-032〕", (await 店頭買取を申込む(browser, OWNERS_URL, "f0611-032", "F0611PwdCase032", 1))[0]);
+  notes.set("〔買取番号-F0611-032〕", (await 店頭買取を申込む(browser, OWNERS_STORE.支店URL, "f0611-032", "F0611PwdCase032", 1))[0]);
 });
 
 defineSeed("S-F06-11-ADMINCANCEL-024", async ({ browser, notes, seed }) => {
   await 会員を作る(browser, notes, "f0611-024", "F0611PwdCase024", "〔会員ID-F0611-024〕", "会員024");
-  const v = storeInput("F0611-024-テスト店", "エフゼロロクイチイチゼロニヨンテストテン", "Case Twenty Four Store", "f0611case024", "FZ4");
-  notes.set("〔店舗ID-F0611-024〕", await 店舗を用意する(browser, v, seed.シードID));
-  const 番号 = await 店頭買取を申込む(browser, "f0611case024", "f0611-024", "F0611PwdCase024", 2);
+  notes.set("〔店舗ID-F0611-024〕", await 店舗を用意する(browser, STORE_024, seed.シードID));
+  const 番号 = await 店頭買取を申込む(browser, STORE_024.支店URL, "f0611-024", "F0611PwdCase024", 2);
   notes.set("〔買取番号-F0611-024A〕", 番号[0]);
   notes.set("〔買取番号-F0611-024B〕", 番号[1]);
   const 管理者 = await 店舗の管理者を用意する(browser, notes.get("〔店舗ID-F0611-024〕"), "f0611adm024");
@@ -246,7 +247,7 @@ for (const [n, 変える] of [["052", true], ["053", false]] as const) {
   defineSeed(`S-F06-11-CBORD-${n}`, { needs: ["S-F06-11-OWNERS"] }, async ({ browser, notes }) => {
     const 前半 = `cbf0611-${n}`, パス = `Passw0rd-CBF0611${n}`;
     await 会員を作る(browser, notes, 前半, パス, `〔会員ID-F0611-${n}〕`, `会員${n}`);
-    const 番号 = await 店頭買取を申込む(browser, OWNERS_URL, 前半, パス, 2);
+    const 番号 = await 店頭買取を申込む(browser, OWNERS_STORE.支店URL, 前半, パス, 2);
     notes.set(`〔買取番号-F0611-${n}A〕`, 番号[0]);
     notes.set(`〔買取番号-F0611-${n}B〕`, 番号[1]);
     if (変える) await 店頭買取のステータスを変える(browser, 番号[1], "査定中", await 店舗の管理者を用意する(browser, notes.get("〔店舗ID-F0611-共有〕"), "f0611admown"));

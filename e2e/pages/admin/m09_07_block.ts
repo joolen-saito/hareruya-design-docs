@@ -1,6 +1,7 @@
 /** M09-07 ブロック管理（一覧・登録・編集・削除）の画面操作。セレクタはここにだけ書く */
 import { Locator, Page, expect } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
+import { exceptEnvBanners } from "./common";
 
 export type ブロックの値 = { ブロック名?: string; ファイル名?: string; コード?: string };
 
@@ -17,8 +18,10 @@ export class ブロック管理 {
   get 全行(): Locator { return this.page.locator("li.list-group-item[id^='ex-block-']"); }
   get 見えている行(): Locator { return this.page.locator("li.list-group-item[id^='ex-block-']:visible"); }
   行(ID: string): Locator { return this.page.locator(`#ex-block-${ID}`); }
-  名前リンク(ID: string): Locator { return this.行(ID).locator("a[href$='/edit']").first(); }
-  編集リンク(ID: string): Locator { return this.行(ID).locator("a.btn-ec-actionIcon[href$='/edit']"); }
+  // 編集画面へのリンクのアドレスは「…/content/block/<ID>/edit?locale=ja」のように言語の指定が後ろに付く（2026-11-13 の開発環境）。
+  // 末尾一致では見つからず 006・008・009 が時間切れになったので、ブロックの編集画面のパスを含むリンクで探す
+  名前リンク(ID: string): Locator { return this.行(ID).locator(`a[href*='/content/block/${ID}/edit']`).first(); }
+  編集リンク(ID: string): Locator { return this.行(ID).locator(`a.btn-ec-actionIcon[href*='/content/block/${ID}/edit']`); }
   削除ボタン(ID: string): Locator { return this.行(ID).locator(`a[data-bs-target='#confirmModal-${ID}']`); }
   モーダル(ID: string): Locator { return this.page.locator(`#confirmModal-${ID}`); }
   async 新規作成を押す(): Promise<void> {
@@ -75,6 +78,8 @@ export class ブロック管理 {
     await this.page.waitForLoadState("load");
     await this.エディタを待つ();
   }
+  /** コード欄（エディタ）の表示。印を付けるため */
+  get コード欄(): Locator { return this.page.locator(".ace_editor .ace_content").first(); }
   async コードを読む(): Promise<string> {
     return this.page.evaluate(() => (window as unknown as { editor: { getValue(): string } }).editor.getValue());
   }
@@ -91,7 +96,8 @@ export class ブロック管理 {
     await p.locator("button.btn-ec-conversion[type=submit]").click({ timeout: 30_000 });
     await p.waitForLoadState("load");
     const ok = p.locator(".alert-success");
-    const ng = p.locator(".alert-danger, .invalid-feedback, .form-error-message");
+    // 開発用の設定のときに常に出る赤い帯は、送信の前の画面にも出ている。登録の結果として待たない・入力エラーに数えない
+    const ng = exceptEnvBanners(p.locator(".alert-danger, .invalid-feedback, .form-error-message"));
     const sys = p.getByText("システムエラーが発生しました");
     // 登録はテンプレートの保存・ファイル置き場への送信を含み、手元の環境では1分を超えることがある
     await expect(ok.or(ng).or(sys).first(), "登録の結果が表示されない").toBeVisible({ timeout: 240_000 });

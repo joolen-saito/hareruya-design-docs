@@ -14,6 +14,7 @@ import { M08CustomerEditPage } from "../../pages/admin/m08_customer_edit";
 import { LoginPage } from "../../pages/front/f06_03_login";
 import { ChangePage, 会員としてログインする, 完了画面のパス, 変更画面のパス, 自動ログイン用Cookieだけを入れる } from "../../pages/front/f06_18_change";
 import { PC_ADMIN, ブラックリストの値, 会員, 印つきメール, 既定でない配送先, 自動ログインのCookie } from "../../seeds/f06-18";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 送信の注記 = (sent: boolean) => { if (!sent) note("「変更する」を押したが、ブラウザ側の入力チェックが送信を止めた（画面は送り直されていない）"); };
@@ -33,11 +34,17 @@ const 郵便番号の比べ方 = "郵便番号はDBに数字7桁で保存され�
 // ---------------------------------------------------------------------------
 caseTest("IT-F06-18-002", async ({ page, step, expected }) => {
   await 自動ログイン用Cookieだけを入れる(page.context(), 自動ログインのCookie("S-F06-18-AUTO-002"));
+  const m = 会員("S-F06-18-AUTO-002");
   const c = new ChangePage(page);
   await step(1, async () => { await c.開く(); });
   await expected(async () => {
     expect.soft(await c.変更画面である(), "会員情報変更画面の入力フォームが表示されている").toBe(false);
     expect.soft(c.path, "開いた結果の画面のアドレス（会員情報変更画面でない）").not.toBe(変更画面のパス);
+    // 「表示されない」を、自動ログイン用Cookieが効いていなかっただけで合格にしない。
+    // 会員ログイン画面へ移ったときは、自動ログインで会員と分かっている印（ログインIDの欄にこの会員のメールアドレスが入っている）も見る
+    const l = new LoginPage(page);
+    if (await l.ログイン画面である()) expect.soft(await l.メール欄.inputValue(), "会員ログイン画面のログインIDの欄（自動ログイン用Cookieでこの会員と分かっている）").toBe(m.メール);
+    else note(`開いた結果は会員ログイン画面でない（${c.path}）。自動ログイン用Cookieが効いているかは、この画面では確かめられない`);
   });
 });
 
@@ -295,9 +302,12 @@ function 本人確認の変化(seedId: string, 変更: (c: ChangePage) => Promis
     let 後 = "";
     await step(1, async () => { await c.開いて待つ(); });
     await step(2, async () => { await 変更(c); });
-    await step(3, async () => { 送信の注記((await c.変更するを押す()).sent); });
+    let 送信後 = "";
+    await step(3, async () => { 送信の注記((await c.変更するを押す()).sent); 送信後 = c.path; });
     await step(4, async () => { 後 = 選手の値(m.会員ID)?.本人確認ステータス ?? ""; });
     await expected(async () => {
+      // 「のまま」を、変更が通らなかっただけで合格にしない。変更が通ると会員情報変更完了画面へ移る
+      expect.soft(送信後, "「変更する」のあとの画面（会員情報変更完了画面。変更が通った）").toBe(完了画面のパス);
       expect.soft(前, "変更前の本人確認ステータス（シードで登録した値）").toBe(m.本人確認);
       expect.soft(後, 文).toBe(期待(前));
     });
@@ -338,9 +348,13 @@ caseTest("IT-F06-18-023", async ({ page, notes, step, expected }) => {
     await 空に("tel][tel01", "電話番号1"); await 空に("tel][tel02", "電話番号2"); await 空に("tel][tel03", "電話番号3");
     if (無い.length) note(`画面に欄が無い・空の選択肢が無いため空にできなかった項目: ${無い.join("、")}`);
   });
-  await step(3, async () => { 送信の注記((await c.変更するを押す()).sent); });
+  let sent = false, 送信後 = "", エラー: string[] = [];
+  await step(3, async () => { sent = (await c.変更するを押す()).sent; 送信の注記(sent); 送信後 = c.path; エラー = await c.エラー文(); });
   await step(4, async () => { 後 = { 会員: 会員の行全体(会員ID), 選手: 選手の行全体(選手ID), 配送先: 配送先の行全体(配送先ID) }; });
   await expected(async () => {
+    // 「更新されない」を、「変更する」が押せていなかっただけで合格にしない。入力の誤りとして断られた（誤りの表示が出て、会員情報変更画面のまま）ことも見る
+    expect.soft(送信後, "「変更する」のあとの画面（会員情報変更画面のまま）").toBe(変更画面のパス);
+    expect.soft(エラー.length, `入力の誤りの表示の数（${sent ? "送信して画面が送り直された" : "送信される前に画面のスクリプトが止めた"}。${エラー.join(" / ")}）`).toBeGreaterThan(0);
     expect.soft(後.会員, "会員の保存内容（開始時と同じ）").toBe(前.会員);
     expect.soft(後.選手, "選手情報の保存内容（開始時と同じ）").toBe(前.選手);
     expect.soft(後.配送先, "既定配送先の保存内容（開始時と同じ）").toBe(前.配送先);
@@ -414,10 +428,12 @@ caseTest("IT-F06-18-029", async ({ page, step, expected }) => {
   await step(1, async () => { await c.開いて待つ(); });
   await step(2, async () => { if (!(await c.国を選ぶ("United States"))) note("国はすでに「United States」なので、選び直しても画面は読み込み直さない"); });
   await step(3, async () => { await c.海外の郵便番号を入れる("1234567890"); });
-  await step(4, async () => { 送信の注記((await c.変更するを押す()).sent); });
+  let 送信後 = "";
+  await step(4, async () => { 送信の注記((await c.変更するを押す()).sent); 送信後 = c.path; });
   await step(5, async () => { r = 会員の値(m.会員ID); });
   await expected(async () => {
-    note("シードの郵便番号も「1234567890」なので、保存の値が変わらないこともありうる。保存されている値が「1234567890」であることを確かめた");
+    note("シードの郵便番号も「1234567890」なので、保存の値が変わらないこともありうる。変更が通った（会員情報変更完了画面へ移った）うえで、保存されている値が「1234567890」であることを確かめた");
+    expect.soft(送信後, "「変更する」のあとの画面（会員情報変更完了画面。変更が通った）").toBe(完了画面のパス);
     expect.soft(r?.海外郵便番号, "郵便番号（海外の郵便番号）").toBe("1234567890");
   });
 });
@@ -446,10 +462,13 @@ caseTest("IT-F06-18-041", async ({ page, step, expected }) => {
     await c.日本の郵便番号を入れる("100-0001"); await c.選ぶ("address][pref", "東京都");
     await c.入れる("address][addr01", "千代田区千代田"); await c.入れる("address][addr02", "1番");
   });
-  await step(4, async () => { 送信の注記((await c.変更するを押す()).sent); });
+  let 送信後 = "";
+  await step(4, async () => { 送信の注記((await c.変更するを押す()).sent); 送信後 = c.path; });
   await step(5, async () => { r = 会員の値(m.会員ID); });
   await expected(async () => {
     note(郵便番号の比べ方);
+    note("シードの郵便番号も「100-0001」なので、保存の値が変わらないこともありうる。変更が通った（会員情報変更完了画面へ移った）うえで、保存されている値を確かめた");
+    expect.soft(送信後, "「変更する」のあとの画面（会員情報変更完了画面。変更が通った）").toBe(完了画面のパス);
     expect.soft(郵便番号の形(r?.郵便番号), `郵便番号（保存の値 ${r?.郵便番号} を3桁-4桁の形にしたもの）`).toBe("100-0001");
   });
 });
@@ -464,9 +483,13 @@ function トークン(会社名: string, 操作: (c: ChangePage) => Promise<numb
     await step(1, async () => { await c.開いて待つ(); expect(await c.トークン欄.count(), "なりすまし対策トークンの入力要素がある").toBe(1); });
     await step(2, async () => { await c.入れる("company_name", 会社名); });
     await step(3, async () => { note(`開発者ツールの操作の代わりに、画面のスクリプトで${文}`); const n = await 操作(c); expect(n, "操作したトークンの入力要素の数").toBe(1); });
-    await step(4, async () => { 送信の注記((await c.変更するを押す()).sent); });
+    let sent = false, 送信後 = "";
+    await step(4, async () => { sent = (await c.変更するを押す()).sent; 送信の注記(sent); 送信後 = c.path; });
     await step(5, async () => { 後 = 会員の値(会員ID)?.会社名; });
     await expected(async () => {
+      // 「更新されない」を、送信されなかっただけで合格にしない
+      expect.soft(sent, "「変更する」で送信された").toBe(true);
+      expect.soft(送信後, "「変更する」のあとの画面（会員情報変更完了画面へ移っていない）").not.toBe(完了画面のパス);
       expect.soft(前, "開始時の会社名").toBe("試験会社");
       expect.soft(後, `会社名（「${会社名}」に更新されない）`).toBe("試験会社");
     });
@@ -503,13 +526,13 @@ caseTest("IT-F06-18-052", async ({ page, step, expected }) => {
   const c = await ログインする(page, "S-F06-18-JP");
   await step(1, async () => { await c.開いて待つ(); });
   await step(2, async () => { await c.リンクを押す(c.戻るボタン); });
-  await expected(async () => { expect.soft(c.path.replace(/\/$/, ""), "遷移した画面のアドレス（ECTOP）").toBe("/ja"); });
+  await expected(async () => { expect.soft(c.path.replace(/\/$/, ""), "遷移した画面のアドレス（ECTOP）").toBe("/ja"); expect.soft(await 本店ECTOPの画面か(c.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 caseTest("IT-F06-18-053", async ({ page, step, expected }) => {
   const c = await ログインする(page, "S-F06-18-JP");
   await step(1, async () => { await c.開いて待つ(); });
   await step(2, async () => { await c.リンクを押す(c.パンくずホーム); });
-  await expected(async () => { expect.soft(c.path.replace(/\/$/, ""), "遷移した画面のアドレス（本店ECTOP）").toBe("/ja"); });
+  await expected(async () => { expect.soft(c.path.replace(/\/$/, ""), "遷移した画面のアドレス（本店ECTOP）").toBe("/ja"); expect.soft(await 本店ECTOPの画面か(c.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 caseTest("IT-F06-18-054", async ({ page, step, expected }) => {
   const c = await ログインする(page, "S-F06-18-JP");

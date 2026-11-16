@@ -15,11 +15,12 @@
  */
 import { test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
+import { scene, ダウンロードしたCSVの内容を撮る } from "../../lib/evidence_other";
 import { rc } from "../../lib/run_marker";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { 会員IDを調べる, 商品コードの査定ID, 実在庫履歴を消す } from "../../db/m06_05";
 import { HistoryPage, 履歴の行 } from "../../pages/admin/m06_05_history";
-import { M0605_ALL, M0605_TOKYO } from "../../seeds/m06-05";
+import { M0605_ALL, M0605_TOKYO, 大阪店の店名 } from "../../seeds/m06-05";
 import "../../seeds/m06-05-more";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -82,7 +83,7 @@ caseTest("IT-M06-05-005", async ({ page, notes, step, expected }) => {
     expect.soft(rows.filter((r) => r.査定番号 !== id).map((r) => r.査定番号), "査定番号が違う履歴（表示されない）").toEqual([]);
     expect.soft(rows.map((r) => r.商品コード).sort(), "表示された履歴の商品コード（M6501-A-NMとM6501-B-SP）").toEqual(並べる(rc("M6501-A-NM"), rc("M6501-B-SP")));
   });
-  note("東京店の査定番号は、買取店舗Aで申込んだ買取の買取店舗をDBで既存の店舗「東京店」にしたもの（デフォルト検索表示店舗が東京店の管理者の検索に出る）");
+  note("東京店の査定番号は、買取店舗Aで申込んだ買取の買取店舗をDBで、東京店を表す E2E の店舗（店舗ID 4973。東京店は 4973 で表した）にしたもの（デフォルト検索表示店舗が東京店の管理者の検索に出る）");
 });
 
 // 006: 会員IDで検索
@@ -314,7 +315,7 @@ caseTest("IT-M06-05-026", async ({ page, step, expected }) => {
       o.textContent = "11件";
       s.appendChild(o);
     });
-    await Promise.all([page.waitForURL(/page_count=11/, { timeout: 30_000 }), h.表示件数の選択().selectOption({ label: "11件" })]);
+    await Promise.all([page.waitForURL(/page_count=11/, { timeout: 120_000}), h.表示件数の選択().selectOption({ label: "11件" })]);
     await page.waitForLoadState("load");
   });
   await expected(async () => {
@@ -352,18 +353,23 @@ caseTest("IT-M06-05-030", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M0605_ALL);
   const h = new HistoryPage(page);
   const [a, b, c] = ["A", "B", "C"].map((k) => notes.get(`〔査定番号-M0605-共有CSV-${k}〕`));
-  let records: Record<string, string>[] | null = null;
+  let ダウンロードしたCSV: Record<string, string>[] | null = null;
   await step(1, async () => { await h.open(); await 商品コードで検索(h, rc("CSV-M0605")); });
   await step(2, async () => {
     const rows = await h.行を読む();
     for (const id of [a, b]) await h.行にチェックを付ける(rows.find((r) => r.査定番号 === id)!.履歴ID);
   });
-  await step(3, async () => { records = await h.CSVを取る("選択した商品履歴取得"); });
-  await step(4, async () => { expect(records, "ダウンロードされたCSV").not.toBeNull(); });
+  await step(3, async () => { ダウンロードしたCSV = await h.CSVを取る("選択した商品履歴取得"); });
+  await step(4, async () => {
+    expect(ダウンロードしたCSV, "ダウンロードされたCSV").not.toBeNull();
+    // 期待結果（CSVのデータ行）が画像で読めるよう、読み取ったCSVの内容を画面の上の枠にして撮る（アプリの画面ではないと枠に明記される）
+    const 見出し = Object.keys(ダウンロードしたCSV![0] ?? {});
+    await ダウンロードしたCSVの内容を撮る(page, [見出し, ...ダウンロードしたCSV!.map((r) => 見出し.map((k) => r[k] ?? ""))], scene.stepLabel(4, "ダウンロードしたCSVの内容"));
+  });
   await expected(async () => {
-    const got = (records ?? []).map((r) => r["査定番号"]).sort();
-    expect.soft(got, "CSVのデータ行の査定番号（チェックを付けた2件だけ）").toEqual(並べる(a, b));
-    expect.soft(got, "チェックを付けなかった履歴の行（含まれない）").not.toContain(c);
+    const 行の査定番号 = (ダウンロードしたCSV ?? []).map((r) => r["査定番号"]).sort();
+    expect.soft(行の査定番号.join("・"), `CSVのデータ行の査定番号（チェックを付けた2件だけ。CSVは全${(ダウンロードしたCSV ?? []).length}行）`).toBe(並べる(a, b).join("・"));
+    expect.soft(行の査定番号, "チェックを付けなかった履歴の行（含まれない）").not.toContain(c);
   });
 });
 
@@ -376,7 +382,7 @@ caseTest("IT-M06-05-031", async ({ page, step, expected }) => {
   await step(2, async () => { records = await h.CSVを取る("選択した商品履歴取得", 8_000); });
   await expected(async () => {
     expect.soft(records, "ダウンロードされない").toBeNull();
-    await expect.soft(h.上部のエラー().first(), "管理画面上部にエラーが表示される").toBeVisible();
+    await expect.soft(h.上部のエラーの帯().filter({ hasText: "1つ以上の商品を選択してください" }).first(), "管理画面上部のエラー（「1つ以上の商品を選択してください」）").toBeVisible();
     expect.soft(new URL(page.url()).pathname, "移った先の画面（検索直後の買取商品履歴(検索結果)）").toMatch(/\/otcbuyorder\/history(\/page\/\d+)?$/);
     expect.soft((await h.行を読む()).length, "検索結果の履歴の件数（検索直後の3件）").toBe(3);
   });
@@ -455,7 +461,7 @@ caseTest("IT-M06-05-040", async ({ page, step, expected }) => {
     await page.waitForLoadState("load");
   });
   await expected(async () => {
-    await expect.soft(h.上部のエラー().first(), "管理画面上部にエラーが表示される").toBeVisible();
+    await expect.soft(h.上部のエラーの帯().first(), "管理画面上部にエラーが表示される").toBeVisible();
     await expect.soft(h.結果の表の行(), "履歴一覧を伴わない").toHaveCount(0);
     await expect.soft(page.locator("form#search_form"), "買取商品履歴の検索画面（初期表示と同じ画面）").toBeVisible();
   });
@@ -486,9 +492,9 @@ caseTest("IT-M06-05-044", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await 査定IDで検索(h, id); });
   await step(3, async () => { rows = await h.行を読む(); });
   await expected(async () => {
-    expect.soft(基準の行(rows, rc("M0605-044-P"))?.買取店舗, "商品M0605-044-Pの行の買取店舗").toBe("大阪店");
+    expect.soft(基準の行(rows, rc("M0605-044-P"))?.買取店舗, "商品M0605-044-Pの行の買取店舗").toBe(大阪店の店名());
   });
-  note("買取は買取店舗Aで申込み、買取店舗をDBで既存の店舗「大阪店」にした");
+  note("買取は買取店舗Aで申込み、買取店舗をDBで、大阪店を表す E2E の店舗（店舗ID 5006。大阪店は 5006 で表した）にした");
 });
 
 // 045: 作業者

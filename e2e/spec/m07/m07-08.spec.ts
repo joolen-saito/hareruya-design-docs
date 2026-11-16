@@ -8,6 +8,8 @@
 import { Browser, Page, test } from "@playwright/test";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
+import { CSVの全行, CSVの内容を画面の枠に出す, CSVの枠のセル } from "../../lib/evidence_other";
+import { topErrorAlerts } from "../../pages/admin/common";
 import { BuyListPage, CSVを読む } from "../../pages/admin/m07_buy";
 import { M0708_ADMIN, カードスリーブ名, スリーブ016名, 閾値を戻す } from "../../seeds/m07-08";
 import { 棚戻し済みか } from "../../db/m07";
@@ -22,11 +24,19 @@ async function 戻す(browser: Browser): Promise<void> {
 
 const 氏名 = (s: string) => s;
 
+/** 読んだCSV（ファイル名・見出し・全データ行）を画面の枠に出し（ダウンロードの選択肢は先に閉じる）、商品名の行の枠の行の番号（無ければ -1）を返す */
+async function CSVを枠に出す(l: BuyListPage, file: import("@playwright/test").Download, csv: Awaited<ReturnType<typeof CSVを読む>>, 商品名: string): Promise<number> {
+  await l.ダウンロードの選択肢を閉じる();
+  await CSVの内容を画面の枠に出す(l.page, [{ 題: `ファイル名：${file.suggestedFilename()}`, 行: CSVの全行(csv) }]);
+  return csv.行.findIndex((r) => r["商品名"] === 商品名);
+}
+
 caseTest("IT-M07-08-004", async ({ page, browser, notes, step, expected }) => {
   try {
     await loginAdmin(page, M0708_ADMIN);
     const l = new BuyListPage(page);
     let rows: Record<string, string>[] = [];
+    let 行番号 = -1;
     await step(1, async () => { await l.open(); });
     await step(2, async () => { await l.注文者名を入れる(氏名("戻しCSV基本試験-004")); await l.検索する(); });
     await step(3, async () => { await l.対象にする(notes.get("〔買取番号-M0708-004〕")); });
@@ -35,13 +45,14 @@ caseTest("IT-M07-08-004", async ({ page, browser, notes, step, expected }) => {
       const r = await l.ダウンロードを押す("戻しリストCSV");
       expect(r.file, "戻しリストCSVのダウンロード").not.toBeNull();
       csv = await CSVを読む(r.file!);
+      行番号 = await CSVを枠に出す(l, r.file!, csv, カードスリーブ名());
     });
     await step(5, async () => { rows = csv!.行.filter((r) => r["商品名"] === カードスリーブ名()); });
     await expected(async () => {
       expect.soft(rows.length, "「カードスリーブ」の行の数").toBe(1);
-      expect.soft(rows[0]?.["ピッキング区分"] ?? "（行が無い）", "ピッキング区分").toBe("サプライ");
-      expect.soft(rows[0]?.["言語/状態"] ?? "（行が無い）", "言語/状態").toBe("サプライ品");
-      expect.soft(rows[0]?.["略称"] ?? "（行が無い）", "略称が空欄").toBe("");
+      await expect.soft(CSVの枠のセル(page, 0, 行番号, "ピッキング区分"), "ピッキング区分").toHaveText("サプライ");
+      await expect.soft(CSVの枠のセル(page, 0, 行番号, "言語/状態"), "言語/状態").toHaveText("サプライ品");
+      await expect.soft(CSVの枠のセル(page, 0, 行番号, "略称"), "略称が空欄").toHaveText("");
     });
   } finally { await 戻す(browser); }
 });
@@ -75,8 +86,9 @@ caseTest("IT-M07-08-007", async ({ page, step, expected }) => {
   await step(3, async () => { r = await l.ダウンロードを押す("戻しリストCSV"); });
   await expected(async () => {
     expect.soft(r?.file ?? null, "CSVのダウンロード").toBeNull();
-    const top = (await page.locator(".alert-danger").allInnerTexts()).join(" / ");
-    await expect.soft(page.locator(".alert-danger").first(), "管理画面上部のエラー表示").toBeVisible();
+    // 送信の応答（リダイレクト）の画面にエラーの帯が出てから文を読む（移る前の画面の文を読まない）
+    await expect.soft(topErrorAlerts(page).first(), "管理画面上部のエラー表示").toBeVisible();
+    const top = (await topErrorAlerts(page).allInnerTexts()).join(" / ");
     expect.soft(top, "エラーの文（買取注文が未選択）").toContain("選択");
     expect.soft(new URL(page.url()).pathname, "買取一覧(検索結果)画面").toMatch(/^\/admin\/purchase\/(list|page\/\d+)?$/);
     note(`操作の結果: 警告のダイアログ ${r?.ダイアログ.length ?? 0} 件（${(r?.ダイアログ ?? []).join(" / ")}）`);
@@ -101,8 +113,9 @@ caseTest("IT-M07-08-008", async ({ page, notes, step, expected }) => {
   await step(5, async () => { r = await l.ダウンロードを押す("戻しリストCSV"); });
   await expected(async () => {
     expect.soft(r?.file ?? null, "CSVのダウンロード").toBeNull();
-    const top = (await page.locator(".alert-danger").allInnerTexts()).join(" / ");
-    await expect.soft(page.locator(".alert-danger").first(), "管理画面上部のエラー表示").toBeVisible();
+    // 送信の応答（リダイレクト）の画面にエラーの帯が出てから文を読む（移る前の画面の文を読まない）
+    await expect.soft(topErrorAlerts(page).first(), "管理画面上部のエラー表示").toBeVisible();
+    const top = (await topErrorAlerts(page).allInnerTexts()).join(" / ");
     expect.soft(top, "エラーの文（選択した全件が存在しない）").toMatch(/存在しない|存在しません|見つかりません/);
     expect.soft(new URL(page.url()).pathname, "買取一覧(検索結果)画面").toMatch(/^\/admin\/purchase\/(list|page\/\d+)?$/);
   });
@@ -120,8 +133,9 @@ caseTest("IT-M07-08-009", async ({ page, notes, step, expected }) => {
   await step(5, async () => { r = await l.ダウンロードを押す("戻しリストCSV"); });
   await expected(async () => {
     expect.soft(r?.file ?? null, "CSVのダウンロード").toBeNull();
-    const top = (await page.locator(".alert-danger").allInnerTexts()).join(" / ");
-    await expect.soft(page.locator(".alert-danger").first(), "管理画面上部のエラー表示").toBeVisible();
+    // 送信の応答（リダイレクト）の画面にエラーの帯が出てから文を読む（移る前の画面の文を読まない）
+    await expect.soft(topErrorAlerts(page).first(), "管理画面上部のエラー表示").toBeVisible();
+    const top = (await topErrorAlerts(page).allInnerTexts()).join(" / ");
     expect.soft(top, "エラーの文（選択中に存在しない買取が含まれる）").toMatch(/存在しない|存在しません|見つかりません/);
     expect.soft(new URL(page.url()).pathname, "買取一覧(検索結果)画面").toMatch(/^\/admin\/purchase\/(list|page\/\d+)?$/);
   });
@@ -133,6 +147,7 @@ caseTest("IT-M07-08-016", async ({ page, browser, notes, step, expected }) => {
     const l = new BuyListPage(page);
     let csv: Awaited<ReturnType<typeof CSVを読む>> | null = null;
     let rows: Record<string, string>[] = [];
+    let 行番号 = -1;
     await step(1, async () => { await l.open(); });
     await step(2, async () => { await l.注文者名を入れる(氏名("戻しリスト組合せ試験-M0708-CB016")); await l.検索する(); });
     await step(3, async () => { await l.対象にする(notes.get("〔買取番号-M0708-CB016〕")); });
@@ -140,15 +155,16 @@ caseTest("IT-M07-08-016", async ({ page, browser, notes, step, expected }) => {
       const r = await l.ダウンロードを押す("戻しリストCSV");
       expect(r.file, "戻しリストCSVのダウンロード").not.toBeNull();
       csv = await CSVを読む(r.file!);
+      行番号 = await CSVを枠に出す(l, r.file!, csv, スリーブ016名());
     });
     await step(5, async () => { rows = csv!.行.filter((r) => r["商品名"] === スリーブ016名()); });
     await expected(async () => {
       expect.soft(rows.length, "「戻しスリーブM0708-CB016」の行の数").toBe(1);
-      expect.soft(rows[0]?.["ピッキング区分"] ?? "（行が無い）", "ピッキング区分").toBe("サプライ");
-      expect.soft(rows[0]?.["言語/状態"] ?? "（行が無い）", "言語/状態").toBe("サプライ品");
-      expect.soft(rows[0]?.["略称"] ?? "（行が無い）", "略称が空欄").toBe("");
-      expect.soft(rows[0]?.["数"] ?? "（行が無い）", "数").toBe("3");
-      expect.soft(rows[0]?.["基準価格"] ?? "（行が無い）", "基準価格").toBe("50");
+      await expect.soft(CSVの枠のセル(page, 0, 行番号, "ピッキング区分"), "ピッキング区分").toHaveText("サプライ");
+      await expect.soft(CSVの枠のセル(page, 0, 行番号, "言語/状態"), "言語/状態").toHaveText("サプライ品");
+      await expect.soft(CSVの枠のセル(page, 0, 行番号, "略称"), "略称が空欄").toHaveText("");
+      await expect.soft(CSVの枠のセル(page, 0, 行番号, "数"), "数").toHaveText("3");
+      await expect.soft(CSVの枠のセル(page, 0, 行番号, "基準価格"), "基準価格").toHaveText("50");
     });
   } finally { await 戻す(browser); }
 });
@@ -164,8 +180,9 @@ caseTest("IT-M07-08-019", async ({ page, notes, step, expected }) => {
   await step(4, async () => { r = await l.ダウンロードを押す("戻しリストCSV"); });
   await step(5, async () => { await page.waitForLoadState("load"); });
   await expected(async () => {
-    const top = (await page.locator(".alert-danger").allInnerTexts()).join(" / ");
-    await expect.soft(page.locator(".alert-danger").first(), "管理画面上部のエラー表示").toBeVisible();
+    // 送信の応答（リダイレクト）の画面にエラーの帯が出てから文を読む（移る前の画面の文を読まない）
+    await expect.soft(topErrorAlerts(page).first(), "管理画面上部のエラー表示").toBeVisible();
+    const top = (await topErrorAlerts(page).allInnerTexts()).join(" / ");
     expect.soft(top, "エラーに買取番号（7桁）").toContain(`買取番号: ${String(Number(B())).padStart(7, "0")}`);
     expect.soft(top, "エラーの文").toContain("出力対象に入庫待ち、入庫済み以外のステータスが設定されています。");
     expect.soft(new URL(page.url()).pathname, "買取一覧(検索結果)画面").toMatch(/^\/admin\/purchase\/(list|page\/\d+)?$/);

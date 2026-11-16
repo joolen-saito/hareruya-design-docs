@@ -77,6 +77,8 @@ type 候補 = {
   日本語: boolean;
   /** カードセット名の記号（省略は記号の大文字） */
   セット?: string;
+  /** 登録したカードセットの番号を控える呼び名（手順の中でカードセットを編集するケース） */
+  セットの控え?: string;
 };
 type カード = {
   /** カード名(日)の後半（「山」「術A」など） */
@@ -110,12 +112,17 @@ function 画像URL(元: string, ファイル名: string): string {
   return `${u.slice(0, i + 1)}${ファイル名}${ext}`;
 }
 
+/** 候補のカードセットの番号（呼び名 → 画面が振った番号。同じ実行の中だけ） */
+export const 作ったカードセットの番号 = new Map<string, string>();
+
 async function 画像つきのカードを登録する(page: Page, seedId: string, ケース: string, c: カード, issue: (m: string) => void, notes: { set: (k: string, v: string) => void }): Promise<void> {
   const 名日 = N(ケース, c.名), 名英 = N(ケース, c.英 ?? `${c.名}EN`);
   const 候補 = [...c.候補!].sort((a, b) => a.順 - b.順);
   for (const k of 候補) {
     const s = k.セット ?? k.記号.toUpperCase();
-    await カードセットを登録する(page, { 名: N(ケース, `SET-${s}`), 略称: `F6${ケース}${s}${印の末尾}`, リリース日: k.発売日, 特殊: k.特殊 }, issue);
+    const setId = await カードセットを登録する(page, { 名: N(ケース, `SET-${s}`), 略称: `F6${ケース}${s}${印の末尾}`, リリース日: k.発売日, 特殊: k.特殊 }, issue);
+    // シード表は〔カードセットID-…〕を控えると定めていないので、控えた番号（notes）に入れると基盤が「シード表に無い呼び名を控えた」で止める。同じ実行の中だけ、この表に持つ
+    if (k.セットの控え) 作ったカードセットの番号.set(k.セットの控え, setId);
   }
   const 既存 = await readExistingCardValues(page);
   const promo = 候補.some((k) => k.プロモ) ? await readExistingPromotionNameEn(page) : "";
@@ -146,7 +153,17 @@ function definePlanSeed(seedId: string, p: 計画): void {
         }, seedId, issue));
       }
       for (const [i, t] of (p.タグ ?? []).entries()) {
-        await 行を用意する(page, "デッキタグ", n(t), `F${英字(p.ケース)}Tag${"ABCDEFGH"[i]}${英字(RUN_MARK)}`, `${seedId} のデッキタグ`);
+        // 表示順は「いまの最大値＋1」を入れる。同じ時間にほかの実行が同じ表示順で登録すると「表示順が重複しています」で拒まれるので、開き直して最大値を読み直し、登録し直す（最大4回）
+        for (let 回 = 1; ; 回++) {
+          try {
+            await 行を用意する(page, "デッキタグ", n(t), `F${英字(p.ケース)}Tag${"ABCDEFGH"[i]}${英字(RUN_MARK)}`, `${seedId} のデッキタグ`);
+            break;
+          } catch (e) {
+            if (回 >= 4 || !/表示順が重複しています/.test(String(e))) throw e;
+            issue(`デッキタグ「${n(t)}」の登録が「表示順が重複しています」で拒まれたので、最大値を読み直して登録し直した（${回}回目）`);
+            await page.waitForTimeout(2_000 * 回);
+          }
+        }
       }
       const 作った = new Set<string>();
       for (const d of p.デッキ) {
@@ -235,6 +252,16 @@ const 候補なし = (o: Partial<候補> & { 記号: string; 順: number }): 候
 definePlanSeed("S-F09-06-IMGID-023", 基本("023", {
   カード: 術("023", [候補なし({ 記号: "w", 順: 1, 日本語: true }), 候補なし({ 記号: "x", 順: 2, 日本語: true })]), 枚数: 2,
 }));
+// 026・027: 画像の選択結果のキャッシュ（保持600秒）。W・X は値が同じで、詳細IDの小さい W が選ばれる。手順の中で W のカードセットを
+// 特殊セットにする（カードセット管理の編集で行う）ため、W のカードセットの番号を控える
+const キャッシュ = (ケース: string) => 基本(ケース, {
+  カード: 術(ケース, [
+    候補なし({ 記号: "w", 順: 1, 日本語: true, セットの控え: `〔カードセットID-F0906-${ケース}W〕` }),
+    候補なし({ 記号: "x", 順: 2, 日本語: true }),
+  ]), 枚数: 2,
+});
+definePlanSeed("S-F09-06-CACHEIN-026", キャッシュ("026"));
+definePlanSeed("S-F09-06-CACHEOUT-027", キャッシュ("027"));
 definePlanSeed("S-F09-06-NOIMGLINK-025", 基本("025", { カード: 術("025"), 枚数: 2 }));
 definePlanSeed("S-F09-06-CACHEKEY-057", {
   ケース: "057",

@@ -4,7 +4,7 @@
  * 期間内の選んだ曜日ごとに日程が作られる。
  */
 import { Locator, Page, expect } from "@playwright/test";
-import { chooseByLabel, setChecked } from "./common";
+import { chooseByLabel, setChecked, topErrorAlerts } from "./common";
 import { openEventEdit } from "./event";
 
 const OPEN = 30_000;
@@ -39,7 +39,7 @@ export class RepeatScheduleFormPage {
   get オンライン終了時刻() { return this.f("onlineEntryEndTime"); }
   get 登録ボタン() { return this.page.getByRole("button", { name: "登録", exact: true }); }
   get イベント編集リンク() { return this.page.locator(".c-conversionArea").getByRole("link", { name: "イベント編集", exact: true }); }
-  get 画面エラー() { return this.page.locator(".alert-danger"); }
+  get 画面エラー() { return topErrorAlerts(this.page); } // 開発用の設定のときに常に出る帯は除く
 
   /** 画面上部のラベル（「イベントID」「イベント名（日）」）の値 */
   async ラベルの値(ラベル: string): Promise<string> {

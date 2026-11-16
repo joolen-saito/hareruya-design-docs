@@ -15,6 +15,9 @@ import { CaseCtx, caseTest, expect } from "../../lib/case";
 import { お気に入り件数 } from "../../db/f03_08";
 import { 会員のカートの商品の数量 } from "../../db/f02_01";
 import { FrontCart } from "../../pages/front/f03_02_detail";
+import { FrontDetail } from "../../pages/front/f03_02_detail";
+import { FrontProductList } from "../../pages/front/f03_01_product_list";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 import { FavoriteListPage } from "../../pages/front/f06_09_favorite_list";
 import { memberOf, productOf, 商品名, 高額商品コード } from "../../seeds/f06-09";
 
@@ -97,6 +100,7 @@ caseTest("IT-F06-09-009", async ({ page, step, expected }) => {
   await step(2, async () => { await list.押して遷移する(list.パンくずホーム); });
   await expected(async () => {
     expect.soft(list.path, "遷移した画面（本店のECTOP）").toMatch(/^\/ja\/?$/);
+    expect.soft(await 本店ECTOPの画面か(page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true);
   });
 });
 
@@ -124,6 +128,8 @@ function 詳細へ(前半: string, code: string, 押すもの: "画像" | "商�
     });
     await expected(async () => {
       expect.soft(list.path, `遷移した画面（${code} の商品詳細）`).toBe(`/ja/products/detail/${productOf(code).productId}`);
+      const 詳細名 = (await new FrontDetail(page).商品名の文()).replace(/\s+/g, "");
+      expect.soft(詳細名, `商品詳細の商品名に ${商品名(code)} が表示されている（実際「${詳細名}」）`).toContain(商品名(code).replace(/\s+/g, ""));
     });
   };
 }
@@ -304,6 +310,7 @@ caseTest("IT-F06-09-019", async ({ page, step, expected }) => {
     note(`明細: ${rows.map((r) => `価格「${r.価格の文}」・商品数の欄が見える=${r.商品数が見える}・＋を押せる=${r.商品数を変えられる}`).join(" / ")}`);
   });
   await expected(async () => {
+    expect.soft(rows.length, "明細が表示されている（表示されたうえで商品数の欄の有無を見る）").toBeGreaterThan(0);
     for (const r of rows) expect.soft(r.商品数が見える, `価格「${r.価格の文}」の明細に商品数が表示されない`).toBe(false);
     expect.soft(await list.カートに入れるボタン(card).count(), "カートに入れる操作が表示されない").toBe(0);
   });
@@ -482,8 +489,16 @@ caseTest("IT-F06-09-025", async ({ page, notes, step, expected }) => {
   });
   await expected(async () => {
     const u = new URL(page.url());
+    const カードID = notes.get("〔カードID-F0609-025〕");
     expect.soft(u.pathname, "遷移した画面（商品一覧）").toMatch(/^\/ja\/products\/search\/?$/);
-    expect.soft(u.searchParams.get("card_id"), "検索に使ったカードID").toBe(notes.get("〔カードID-F0609-025〕"));
+    expect.soft(u.searchParams.get("card_id"), "検索に使ったカードID").toBe(カードID);
+    // アドレスだけでなく、一覧がそのカードの商品だけに絞られていること（件数・商品名）を画面の中身で確かめる
+    const pl = new FrontProductList(page);
+    await pl.結果を待つ();
+    const 件数 = await pl.商品数の値();
+    expect.soft(件数, `商品一覧の商品数が、カードID ${カードID} の商品だけ（LINK-CARD-025 の1点）に絞られている（実際 ${件数}点）`).toBe(1);
+    const 名 = (await pl.本表示のカード.locator(".p-hareruya-product-card__name-text").allInnerTexts()).map((t) => t.replace(/\s+/g, ""));
+    expect.soft(名.length > 0 && 名.every((t) => t.includes(商品名("LINK-CARD-025"))), `一覧に出た商品は LINK-CARD-025 だけ（実際 ${名.slice(0, 5).join(" / ")}${名.length > 5 ? " ほか" : ""}）`).toBe(true);
   });
 });
 
@@ -562,6 +577,8 @@ caseTest("IT-F06-09-028", async ({ page, step, expected }) => {
   await step(2, async () => { await list.押して遷移する(list.マイページボタン); });
   await expected(async () => {
     expect.soft(list.path, "遷移した画面（マイページ）").toMatch(/^\/ja\/mypage\/?$/);
+    expect.soft(await page.locator("h1.c-hareruya-heading--lev1", { hasText: "マイページ" }).count(), "マイページの見出しが表示されている").toBeGreaterThan(0);
+    expect.soft(await page.locator(".p-hareruya-mypage__barcode-name").count(), "マイページの会員名の表示がある").toBeGreaterThan(0);
   });
 });
 
@@ -731,8 +748,9 @@ caseTest("IT-F06-09-055", async ({ page, step, expected }) => {
 
 // ---- 一覧に出る・出ない（高額商品コード・在庫・公開） ----
 
-function 行の有無(前半: string, code: string, 出る: boolean) {
+function 行の有無(前半: string, code: string, 出る: boolean, 注記?: string) {
   return async ({ page, step, expected }: CaseCtx): Promise<void> => {
+    if (注記) note(注記);
     const list = new FavoriteListPage(page);
     await ログイン(list, 前半);
     let n = -1;
@@ -744,7 +762,7 @@ function 行の有無(前半: string, code: string, 出る: boolean) {
     });
   };
 }
-caseTest("IT-F06-09-045", 行の有無("cbf0609-045", "F0609-CB045-A", true));
+caseTest("IT-F06-09-045", 行の有無("cbf0609-045", "F0609-CB045-A", true, "このケースの要点は高額商品コード。商品規格の登録画面で高額商品コード F0609-CB045-HIGH を入れたシード（公開・高額商品コードあり・在庫あり）の商品 F0609-CB045-A が、一覧に出ることを確かめる"));
 caseTest("IT-F06-09-046", 行の有無("cbf0609-046", "F0609-CB046-A", true));
 caseTest("IT-F06-09-047", 行の有無("cbf0609-047", "F0609-CB047-A", false));
 caseTest("IT-F06-09-048", 行の有無("cbf0609-048", "F0609-CB048-A", true));

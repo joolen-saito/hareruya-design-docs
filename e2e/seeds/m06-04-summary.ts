@@ -15,6 +15,7 @@
 import { Browser } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { 買取の日付, 買取集計 } from "../db/m06_04";
+import { 店舗在庫の履歴を消す, 店舗在庫を設定する, 店舗在庫を調べる } from "../db/m06_03";
 import * as prep from "../db/m06_04_prep";
 import { Notes } from "../lib/notes";
 import { RUN_MARK, rc } from "../lib/run_marker";
@@ -22,7 +23,7 @@ import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { DepartmentPage } from "../pages/admin/m03_18_department";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
+import { ensureMemberByStoreIdsFix as ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
 import { customerIdByEmail } from "../pages/admin/m06_04_member";
 import { OtcOrderDetailPage } from "../pages/admin/m06_04_status";
 import { OtcDetailPage, OtcListPage } from "../pages/admin/m06_otc_list";
@@ -30,7 +31,7 @@ import { サプライ品を登録する } from "../pages/admin/m07_supply";
 import { registerFrontMember } from "../pages/front/member_entry";
 import { applyAsMember, PurchaseHistoryPage } from "../pages/front/m06_otc_buy";
 import { QG_STORE, QG_MEMBER_PASSWORD } from "./m06-04";
-import { 作った買取, 読み替えを登録する, 店舗Aで申込む } from "./m06-04-status";
+import { M0604_IT_A, 作った買取, 読み替えを登録する, 店舗Aで申込む } from "./m06-04-status";
 
 const L_A = "〔店舗ID-M0604-共有A〕";
 const L_B = "〔店舗ID-M0604-共有B〕";
@@ -74,6 +75,8 @@ type 集計シード = {
   集計?: 集計定め[];
   /** 商品マスタに登録する商品コード（印を付ける）。明細の商品 'M0604-STOCK-044' など */
   商品?: string[];
+  /** 商品の、買取店舗Aの ECCUBE 在庫を、この数にする（商品コードは 商品 の1つ。印つきの商品） */
+  店舗Aの在庫?: { 商品: string; 在庫: number; 総原価: number };
   控え?: (notes: Notes, 主: 作った買取, 印: string) => void;
   読み替え?: string;
 };
@@ -99,11 +102,45 @@ function 受注を整える(notes: Notes, 受注ID: string, 印: string, o: 受�
   }
 }
 
+
+let 在庫準備の番号 = 0;
+
+/**
+ * 印つきの商品の、買取店舗A の ECCUBE 在庫を、在庫数・総原価の値にし、在庫履歴を0件にする。
+ * 商品を登録しただけでは買取店舗A の在庫の行が無いので、準備の買取（印つき・商品つき明細1件・数量1・小計0）を画面で入庫済みにして行を作り、
+ * その行の在庫数をDBで設定する（印つきの商品の行だけ）。
+ */
+async function 店舗Aの在庫を用意する(browser: Browser, notes: Notes, 商品コード: string, 在庫: number, 総原価: number, seedId: string, issue: (m: string) => void): Promise<void> {
+  const 店 = notes.get(L_A);
+  let s = 店舗在庫を調べる(商品コード, 店);
+  if (!s) {
+    在庫準備の番号 += 1;
+    const 印 = rc(`STKPREP${在庫準備の番号}`);
+    const 準備 = await 店舗Aで申込む(browser, seedId, "M0604", 印);
+    prep.買取を整える(準備.受注ID, 印, { 状態: "入庫待ち", 成立日: null, 合計金額: 0 });
+    prep.明細を足す(準備.受注ID, 印, { 部門ID: 部門ID(notes, "カード"), 買取金額: 0, 販売金額: 0, 商品コード });
+    prep.実在庫明細を足す(準備.受注ID, 印, 商品コード, 1, 0);
+    await withAdminSession(browser, M0604_IT_A, async (page) => {
+      page.setDefaultTimeout(60_000);
+      const d = new OtcOrderDetailPage(page);
+      const st = await d.open(準備.受注ID);
+      if (st >= 400) throw new Error(`準備の買取（店頭買取受注ID ${準備.受注ID}）の買取詳細が開けない（応答 ${st}）`);
+      await new OtcDetailPage(page).ステータスを変える("入庫済み");
+    });
+    s = 店舗在庫を調べる(商品コード, 店);
+    if (!s) throw new Error(`準備の買取を入庫済みにしても、商品 ${商品コード} の買取店舗A の EC-CUBE 在庫の行ができない`);
+    issue(`商品 ${商品コード} の買取店舗A の EC-CUBE 在庫の行は、準備の買取（査定番号 ${準備.査定番号}・印つき・数量1・小計0）を画面で入庫済みにして作った`);
+  }
+  店舗在庫を設定する(s.ID, 在庫, 総原価);
+  const 消した = 店舗在庫の履歴を消す(s.ID);
+  issue(`商品 ${商品コード} の買取店舗A の EC-CUBE 在庫を、DBで在庫 ${在庫}・総原価 ${総原価} にし、準備の操作で作られた在庫履歴 ${消した} 件を消した（在庫履歴0件）`);
+}
+
 const 日の部分 = (s: string | null) => (s ? s.slice(0, 10) : null);
 
 /** 買取集計のシード（シード表1行＝1つ） */
 function defineSummarySeed(seedId: string, d: 集計シード): void {
-  defineSeed(seedId, { needs: ["S-M06-04-MASTER", ...(d.needs ?? [])] }, async ({ browser, notes, seed }) => {
+  defineSeed(seedId, { needs: ["S-M06-04-MASTER", ...(d.店舗Aの在庫 ? ["S-M06-04-IT-A"] : []), ...(d.needs ?? [])] }, async ({ browser, notes, seed }) => {
     const issue = (m: string) => reportSeedIssue(seed.シードID, m);
     const 商品コード = (原: string) => rc(原);
     if (d.商品?.length) {
@@ -112,6 +149,7 @@ function defineSummarySeed(seedId: string, d: 集計シード): void {
         await サプライ品を登録する(page, d.商品!.map((c) => ({ コード: 商品コード(c), 名前: 商品コード(c), 基準価格: "1000", 買取価格: "500" })), issue);
       });
     }
+    if (d.店舗Aの在庫) await 店舗Aの在庫を用意する(browser, notes, 商品コード(d.店舗Aの在庫.商品), d.店舗Aの在庫.在庫, d.店舗Aの在庫.総原価, seed.シードID, issue);
     const 印 = rc(d.名);
     const 主 = await 店舗Aで申込む(browser, seed.シードID, d.姓, 印);
     if (d.主の査定ID) 読み替えを登録する(d.主の査定ID, 主);
@@ -203,6 +241,37 @@ defineSummarySeed("S-M06-04-SUMMARY-STOCKED-044", {
   読み替え: "商品「M0604-STOCK-044」（実行の印つき）はグッズ商品CSV登録で作った。買取店舗AのECCUBE在庫5は入れていない（在庫の行が無ければ入庫の処理が新しく作る。ケースは買取集計だけを確かめる）",
 });
 
+// ---------------------------------------------------------------- 014・021・017（入庫の処理が通る前提。014・021 は入庫待ち、017 は入庫済み）
+
+const 入庫の注記 = "正本の専用ID（買取明細・商品・商品規格・実在庫明細・在庫）は、画面が振った番号・商品マスタ登録（グッズ商品CSV）で作った印つきの商品に読み替えた。商品コードは「M0604-STOCK-0nn」に実行の印を付けたもの";
+
+defineSummarySeed("S-M06-04-STOCKING-PENDING-014", {
+  姓: "M0604", 名: "STOCK014", 家族: ["STOCK014"], 主の査定ID: "600404014", 商品: ["M0604-STOCK-014"], 店舗Aの在庫: { 商品: "M0604-STOCK-014", 在庫: 5, 総原価: 0 },
+  主: {
+    状態: "入庫待ち", 成立日: 成立日("2026-08-02"), 入庫日時: null,
+    明細: [{ 部門: "カード", 買取: 1000, 販売: 1500, 商品: "M0604-STOCK-014" }], 実在庫: { 数量: 1, 小計: 1000 },
+  },
+  読み替え: 入庫の注記,
+});
+
+defineSummarySeed("S-M06-04-STOCKING-PENDING-021", {
+  姓: "M0604", 名: "STOCK021", 家族: ["STOCK021"], 主の査定ID: "600404021", 商品: ["M0604-STOCK-021"], 店舗Aの在庫: { 商品: "M0604-STOCK-021", 在庫: 5, 総原価: 0 },
+  主: {
+    状態: "入庫待ち", 成立日: 成立日("2026-08-06"), 入庫日時: null,
+    明細: [{ 部門: "カード", 買取: 1000, 販売: 1500, 商品: "M0604-STOCK-021" }], 実在庫: { 数量: 1, 小計: 1000 },
+  },
+  読み替え: 入庫の注記,
+});
+
+// 017: 入庫済み・買取成立日 2026-08-04 10:00・入庫日時 2026-08-04 11:00。管理者取消で、集計の作り直し（買取成立日が空だと何もしない）まで通す。端数調整部門の設定は SUMMARY-CONFIG
+defineSummarySeed("S-M06-04-STOCKED-017", {
+  needs: ["S-M06-04-SUMMARY-CONFIG"],
+  姓: "M0604", 名: "STOCKED017", 家族: ["STOCKED017"],
+  主: { 状態: "入庫済み", 成立日: 成立日("2026-08-04"), 入庫日時: 成立日("2026-08-04", "11:00:00"), キャンセル日: null },
+  控え: (notes, 主) => { notes.set("〔店頭買取受注ID-M0604-017〕", 主.受注ID); notes.set("〔査定ID-M0604-017〕", 主.査定ID); },
+  読み替え: "買取成立日 2026-08-04 10:00:00・入庫日時 2026-08-04 11:00:00 はDBで入れた（正本の日付のまま）。集計の端数調整部門（追加システム設定の固定価格商品部門）は S-M06-04-SUMMARY-CONFIG で確かめたカード部門。ステータス変更履歴0件はDBでしか作れないので、申込の「査定前」の履歴のまま",
+});
+
 defineSummarySeed("S-M06-04-SUMMARY-ONLY-052", {
   姓: "M0604", 名: "SUMM052", 家族: 家族共通, 主の査定ID: "600520052",
   主: { 状態: "入庫待ち", 成立日: 成立日("2026-07-14", "10:00:00"), 明細: [{ 部門: "カード", 買取: 800, 販売: 1200 }] },
@@ -253,14 +322,14 @@ defineSummarySeed("S-M06-04-CBSUMMARYACC-067", {
 });
 
 defineSummarySeed("S-M06-04-CBSUMMARYSTOCKED-069", {
-  姓: "M0604-CB069-A", 名: "M0604-CB069-B", 家族: ["M0604-CB069-B"], 主の査定ID: "8806901", 商品: ["M0604-CB069-STOCK"],
+  姓: "M0604-CB069-A", 名: "M0604-CB069-B", 家族: ["M0604-CB069-B"], 主の査定ID: "8806901", 商品: ["M0604-CB069-STOCK"], 店舗Aの在庫: { 商品: "M0604-CB069-STOCK", 在庫: 5, 総原価: 0 },
   主: {
     状態: "買取キャンセル", 成立日: 成立日("2027-03-14", "10:00:00"), 入庫日時: null,
     明細: [{ 部門: "カード", 買取: 700, 販売: 1100, 商品: "M0604-CB069-STOCK" }], 実在庫: { 数量: 1, 小計: 700 },
   },
   他: [{ 状態: "買取成立", 成立日: 成立日("2027-03-14", "11:00:00"), 明細: [{ 部門: "カード", 買取: 150, 販売: 250 }] }],
   集計: [{ 日: "2027-03-14", 店: "A", 部門: "カード", 買取: 1, 販売: 1 }],
-  読み替え: "商品「M0604-CB069-STOCK」（実行の印つき）はグッズ商品CSV登録で作った。買取店舗AのECCUBE在庫5は入れていない（在庫の行が無ければ入庫の処理が新しく作る）",
+  読み替え: "商品「M0604-CB069-STOCK」（実行の印つき）はグッズ商品CSV登録で作り、買取店舗AのECCUBE在庫は5にした（行は準備の買取を画面で入庫済みにして作り、在庫数をDBで5にした）",
 });
 
 defineSummarySeed("S-M06-04-CBACCBTNDATED-072", {

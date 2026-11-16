@@ -19,23 +19,28 @@ import { reportSeedIssue } from "../lib/seeds";
 import { rc } from "../lib/run_marker";
 import { Account, withAdminSession } from "../lib/session";
 import { defineSeed } from "./current_seed";
-import { 申込を行う, 査定IDを読む, 申込者の, storeInput } from "./m06-common";
+import { 申込を行う, 査定IDを読む, 申込者の } from "./m06-common";
 import { 規格を整える, カードを登録する, 実在庫に商品を追加する, 略称タグを登録する } from "../pages/admin/m06_11_setup";
-import { カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 商品規格一覧を読む, 単体カード配下のカテゴリID, 登録済みの割引率ID } from "../pages/admin/f05_04_products";
+import { カード商品CSVの公開の値, カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 商品規格一覧を読む, 単体カード配下のカテゴリID, 登録済みの割引率ID } from "../pages/admin/f05_04_products";
 import { readExistingSellGroupName } from "../pages/admin/m03_01_goods_csv";
 import { readLanguageIds } from "../pages/admin/m03_23_seed_products";
 import { 商品をカードにする, マスタを読む } from "../pages/admin/m07_09_card";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStoreWithThresholds } from "../pages/admin/m04_25_move_chain";
+import { ensureMemberByStoreIdsFix as ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
+import { ensureStoreWithThresholds } from "../pages/admin/m04_24_reuse_k";
+import { 使い回す店舗の入力 } from "../pages/admin/m04_24_reuse_k";
 import { OtcDetailPage, OtcListPage } from "../pages/admin/m06_otc_list";
 import { ensureCardset } from "../pages/admin/product_masters";
 
 export const M0610_ADMIN: Account = { loginId: "m0610_admin", password: "Passw0rd!M0610" };
 
 type 店キー = "main" | "branch";
+/**
+ * 店舗は作らない（依頼者 2026-11-15「店舗は作るのもう禁止」）。本店相当・支店Aは、使い回す E2E の店舗（本店相当=店舗ID 5006・支店A=店舗ID 5007）で表し、
+ * 高額商品閾値は、ケースの間だけ求める値に書き換えて、ケースの終わりに元へ戻す（pages/admin/store_setting_restore.ts）。書き換えるので、このシードを使うケースは solo_cases.tsv の一人で流す回に回す。
+ */
 const 店の定義 = {
-  main: { 入力: storeInput("M06-10試験店舗（本店相当）", "エムゼロロクイチゼロシケンテンポホンテンソウトウ", "Modoshi Test Main", "m0610main", "K2M"), 閾値: ["100", "500", "1000"] as [string, string, string] },
-  branch: { 入力: storeInput("M06-10試験支店A", "エムゼロロクイチゼロシケンシテンエー", "Modoshi Test Branch A", "m0610brancha", "K2N"), 閾値: ["200", "700", "1200"] as [string, string, string] },
+  main: { 入力: 使い回す店舗の入力("5006", "M06-10試験店舗（本店相当）"), 閾値: ["100", "500", "1000"] as [string, string, string] },
+  branch: { 入力: 使い回す店舗の入力("5007", "M06-10試験支店A"), 閾値: ["200", "700", "1200"] as [string, string, string] },
 };
 const 支店URLの = (k: 店キー): string => 店の定義[k].入力.支店URL;
 
@@ -121,8 +126,10 @@ async function 作る(browser: Browser, seedId: string, 申込者の姓: string,
       カード.set(x, c.カード詳細ID);
     }
     const 見出し = await カード商品CSVの見出し(page);
+    const 公開 = await カード商品CSVの公開の値(page);
+    issue(`カード商品CSVの商品公開ステータスは、「2」（公開のつもり）でなく、画面のCSVの形式の説明で「公開」に当たる値 ${公開.商品公開ステータス} を入れた（説明では 1:公開 2:非公開 3:廃止。2 を入れると非公開になる）。支店の商品公開ステータスは ${公開.支店の商品公開ステータス}（公開）`);
     const row = (x: 品): Record<string, string> => ({
-      "商品ID": "", "言語(ID)": p.言語JP, "商品公開ステータス": "2", "支店の商品公開ステータス": "1",
+      "商品ID": "", "言語(ID)": p.言語JP, "商品公開ステータス": 公開.商品公開ステータス, "支店の商品公開ステータス": 公開.支店の商品公開ステータス,
       "商品名(日)": rc(x.名), "商品名(英)": rc(x.名), "サイズ": "1", "重量": "1", "商品カテゴリ(ID)": p.カテゴリ,
       "購入グループ名称": p.購入グループ, "割引率(ID)": p.割引率, "基準価格": String(x.価格), "販売価格": String(x.販売価格 ?? x.価格), "買取価格": String(x.価格),
       "カード詳細(ID)": カード.get(x)!,

@@ -198,7 +198,7 @@ export class PurchaseSearchPage {
     try {
       await Promise.all([
         this.page.waitForURL((u) => u.toString() !== 前, { waitUntil: "domcontentloaded", timeout: 30_000 }),
-        this.フォーム.locator("[data-search-submit]").click(),
+        this.フォーム.locator("[data-search-submit]").click({ noWaitAfter: true }),
       ]);
       await this.page.waitForLoadState("load");
     } finally {

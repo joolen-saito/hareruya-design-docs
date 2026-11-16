@@ -48,8 +48,8 @@ export class CardListPage {
 
   async search(): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.form.locator('button[type="submit"]').click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.form.locator('button[type="submit"]').click({ noWaitAfter: true }),
     ]);
     const outcome = this.page.getByText(/^(検索結果：\d+件が該当しました|検索条件に合致するデータが見つかりませんでした)$/);
     await expect(outcome.first(), "カード一覧の検索結果").toBeVisible();
@@ -59,9 +59,17 @@ export class CardListPage {
   async sortBy(value: string): Promise<void> {
     const select = this.page.locator("#sort_key_pulldown");
     await expect(select, "カード一覧の並び順").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), select.selectOption(value)]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), select.selectOption(value)]);
     await expect(this.page.getByText(/^検索結果：\d+件が該当しました$/).first(), "並べ替えた検索結果").toBeVisible();
     await expect(this.page.locator("#sort_key_pulldown"), "選んだ並び順").toHaveValue(value);
+  }
+
+  /** 結果欄の表示件数を選ぶ（例: "100件"）。選ぶと検索し直される（並び順は覚えている） */
+  async showCount(label: string): Promise<void> {
+    const select = this.page.locator("#page_count_pulldown");
+    await expect(select, "カード一覧の表示件数").toBeVisible();
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), select.selectOption({ label })]);
+    await expect(this.page.getByText(/^検索結果：\d+件が該当しました$/).first(), "表示件数を変えた検索結果").toBeVisible();
   }
 
   /** 一覧の先頭から n 件を選んで「CSV出力」し、出力された行（列名→値）を返す */
@@ -90,8 +98,14 @@ export async function readExistingCardValues(page: Page): Promise<ExistingCardVa
   const list = new CardListPage(page);
   await list.open();
   await list.search();
-  const newest = await list.exportFirst(5);
-  const ids = newest.map((r) => Number(r.card_detail_id)).filter((n) => Number.isInteger(n) && n > 0);
+  let newest = await list.exportFirst(5);
+  let ids = newest.map((r) => Number(r.card_detail_id)).filter((n) => Number.isInteger(n) && n > 0);
+  if (ids.length === 0) {
+    // 先頭の5件が、ほかの試験が作ったばかりの詳細の無いカードだけのとき: 表示件数を100件にして先頭から100件を出力し直す
+    await list.showCount("100件");
+    newest = await list.exportFirst(100);
+    ids = newest.map((r) => Number(r.card_detail_id)).filter((n) => Number.isInteger(n) && n > 0);
+  }
   if (ids.length === 0) throw new Error("カード一覧のCSV出力からカード詳細IDを読めない");
   await list.sortBy("id:ASC");
   const oldest = await list.exportFirst(5);

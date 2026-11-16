@@ -14,7 +14,7 @@ export async function キャッシュを削除する(page: Page, what: string, o
   await page.waitForLoadState("load");
   const button = page.locator("form button[type=submit]").filter({ hasText: /^\s*キャッシュ削除\s*$/ });
   await expect(button, `${what}: キャッシュ管理の「キャッシュ削除」ボタン`).toHaveCount(1);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), button.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), button.click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: キャッシュ削除`)) onWarning(w);
   // 応答のあとで削除が走る。公開側（本店TOP）が開けるまで待つ
   const deadline = Date.now() + 180_000;

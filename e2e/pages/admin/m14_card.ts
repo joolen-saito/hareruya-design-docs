@@ -128,8 +128,8 @@ export async function カードを登録する(page: Page, v: カード入力, w
     }
   }
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: カードの登録`)) issue?.(w);
   const m = /\/card\/(\d+)\/edit/.exec(page.url());
@@ -178,7 +178,7 @@ export class CardSearchPage {
       await this.page.locator("#side, .c-mainNavArea, nav").getByText("カード管理", { exact: true }).first().click();
     }
     await expect(link, "メニューの「カード一覧」").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await expect(this.form, "カード検索の検索欄").toBeVisible();
   }
 
@@ -211,8 +211,8 @@ export class CardSearchPage {
   /** 「検索する」を押して結果の表示を待つ */
   async 検索する(): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.form.locator('button[type="submit"]').click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.form.locator('button[type="submit"]').click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     await this.検索結果の文();
@@ -231,6 +231,14 @@ export class CardSearchPage {
     })));
   }
 
+  /** 検索結果の行のカード名のリンクを押して、カード詳細(編集・削除)画面を開く（M14-04 の 066 で足した） */
+  async カードを開く(カードID: string): Promise<void> {
+    const link = this.行.filter({ has: this.page.locator("td:nth-child(2)", { hasText: new RegExp(`^\\s*${カードID}\\s*$`) }) }).locator("td:nth-child(3) a");
+    await expect(link, `カード一覧(検索結果)のカードID ${カードID} の行のカード名のリンク`).toHaveCount(1);
+    await Promise.all([this.page.waitForURL((u) => u.pathname.endsWith(`/card/${カードID}/edit`), { timeout: 120_000 }), link.click({ noWaitAfter: true })]);
+    await this.page.waitForLoadState("load");
+  }
+
   async 表示中のカードID(): Promise<string[]> {
     return (await this.表示行()).map((r) => r.カードID);
   }
@@ -239,7 +247,7 @@ export class CardSearchPage {
   async 表示件数を選ぶ(件数: number): Promise<void> {
     const select = this.page.locator("#page_count_pulldown");
     await expect(select, "表示件数の選択欄").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), select.selectOption({ label: `${件数}件` })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), select.selectOption({ label: `${件数}件` })]);
     await this.page.waitForLoadState("load");
     await this.検索結果の文();
   }
@@ -254,7 +262,7 @@ export class CardSearchPage {
     await expect(select, "並び順の選択欄").toBeVisible();
     // 画面の並び順の表示は「カード日名」「カード英名」（設計書は「カード名（和文）」「カード名（英文）」）
     const 表示 = ({ "カード名（和文）": "カード日名", "カード名（英文）": "カード英名" } as Record<string, string>)[キー] ?? キー;
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), select.selectOption({ label: `${表示}（${向き}）` })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), select.selectOption({ label: `${表示}（${向き}）` })]);
     await this.page.waitForLoadState("load");
     await this.検索結果の文();
   }
@@ -280,8 +288,8 @@ export class CardSearchPage {
 
   async ページ送りを押す(名: string): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.pager().getByRole("link", { name: 名, exact: true }).click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.pager().getByRole("link", { name: 名, exact: true }).click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     await this.検索結果の文();
@@ -310,8 +318,8 @@ export class CardSearchPage {
 
   async 確認ポップアップで実行する(): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.page.locator('#DeleteModal a[data-method="delete"]').click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.page.locator('#DeleteModal a[data-method="delete"]').click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -357,8 +365,8 @@ async function openMaster(page: Page, 種別: マスター種別): Promise<void>
   await page.waitForLoadState("load");
   await page.locator('select[name="entity"]').selectOption({ label: 種別 });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('form[method="get"] button[type="submit"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('form[method="get"] button[type="submit"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator("form#edit_form table.mtg-master-table"), `${種別}の一覧`).toBeVisible();
@@ -395,8 +403,8 @@ export async function ensureMaster(page: Page, 種別: マスター種別, 日�
   const code = f("code");
   if (await code.count()) await code.fill(コード ?? (英語名.replace(/[^A-Za-z0-9]/g, "").slice(0, 8) || "M14"));
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('button[type="submit"][form="edit_form"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('button[type="submit"][form="edit_form"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expectSaved(page, `${what}: ${種別}「${日本語名}」の登録`);
@@ -458,7 +466,7 @@ export const 検索欄 = {
 } as const;
 
 /** select2 の欄に語を入れ、候補（表示された選択肢の文）を返す。選ぶなら pick=true で語に一致する候補を押す */
-export async function select2に入れる(page: Page, 欄ID: string, 語: string, pick: boolean): Promise<string[]> {
+export async function select2に入れる(page: Page, 欄ID: string, 語: string, pick: boolean, 候補が出た状態で?: () => Promise<void>): Promise<string[]> {
   const container = page.locator(`#${欄ID} + span.select2`);
   await expect(container, `${欄ID} の入力欄`).toBeVisible();
   await container.click();
@@ -475,6 +483,8 @@ export async function select2に入れる(page: Page, 欄ID: string, 語: string
   await page.waitForTimeout(300);
   await expect(options.first(), `${語} の候補`).toBeVisible();
   const texts = (await options.allInnerTexts()).map((t) => t.trim());
+  // 候補が開いている間に撮る（閉じてからだと、サジェストが写らない）
+  if (候補が出た状態で) await 候補が出た状態で().catch(() => undefined);
   if (pick) {
     await options.filter({ hasText: 語 }).first().click();
   } else {

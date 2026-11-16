@@ -51,7 +51,7 @@ export class PurchaseFlowPage {
     await this.page.locator("#login_pass").fill(パスワード);
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.page.locator("form#login_mypage button[type=submit]").click(),
+      this.page.locator("form#login_mypage button[type=submit]").click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     expect(new URL(this.page.url()).pathname, "ログイン後の画面（ログイン画面のままではない）").not.toMatch(/\/login/);
@@ -172,6 +172,51 @@ export class PurchaseFlowPage {
     await nav;
     await this.page.waitForLoadState("load");
   }
+
+  // ---- 記入画面の項目（F05-06 の 002〜082 で使う） ----
+
+  /** 買取ログイン画面をアドレスで開く（ログイン済みなら記入画面へ移される） */
+  async 買取ログイン画面を開く(): Promise<void> {
+    await this.page.goto(front("/purchase/login"), { timeout: 60_000 });
+    await this.page.waitForLoadState("load");
+  }
+  get 箱数の欄(): Locator { return this.f("packageCount"); }
+  async 箱数を選ぶ(n: string): Promise<void> { await this.箱数の欄.selectOption(n); }
+  /** 箱数の近くの「箱数が多い場合、査定期間が延長されることがあります。」 */
+  get 箱数の警告(): Locator { return this.page.locator("[data-js-package-warning]"); }
+  /** 適格請求書発行事業者の確認で「はい」「いいえ」を選ぶ */
+  async 事業者を選ぶ(はい: boolean): Promise<void> {
+    await this.page.locator(`label[for="isQualifiedInvoiceIssuer_${はい ? "true" : "false"}"]`).click();
+    await expect(this.page.locator(`#isQualifiedInvoiceIssuer_${はい ? "true" : "false"}`), `適格請求書発行事業者の確認「${はい ? "はい" : "いいえ"}」が選ばれた`).toBeChecked();
+  }
+  get 登録番号の欄(): Locator { return this.page.locator("[data-js-invoice-code-validation]"); }
+  get 適格の説明リンク(): Locator { return this.page.locator('button[data-js-modal-trigger="invoice-issuer-modal"]'); }
+  get 適格の説明モーダル(): Locator { return this.page.locator("#invoice-issuer-modal"); }
+  /** 申込みの確認モーダルに出ている買取の承諾方法（表示中の説明の強調の文字） */
+  get モーダルの承諾方法(): Locator { return this.確認モーダル.locator(".p-hareruya-purchase-confirm__modal-content.is-active strong"); }
+  get モーダルの入力に戻る(): Locator { return this.確認モーダル.locator("[data-js-confirm-modal-close]"); }
+  /** 振込口座の入力欄の値（銀行名・支店名・口座番号・口座名義と、選ばれている口座種別） */
+  async 口座の入力値(): Promise<{ 銀行名: string; 支店名: string; 口座番号: string; 口座名義: string; 口座種別: string }> {
+    const checked = this.page.locator('input[name="purchase_confirm[accountTypeId]"]:checked');
+    const 種別 = (await checked.count()) ? ((await this.page.locator("label.c-hareruya-radio").filter({ has: checked }).first().innerText()) ?? "").trim() : "";
+    return {
+      銀行名: await this.f("bankCode").inputValue(), 支店名: await this.f("branchCode").inputValue(),
+      口座番号: await this.f("accountNo").inputValue(), 口座名義: await this.f("accountHolder").inputValue(), 口座種別: 種別,
+    };
+  }
+  /** お振込口座情報の入力欄（銀行名）。職業・生年月日の欄がこれより上にあるかを比べる */
+  get 銀行名の欄(): Locator { return this.f("bankCode"); }
+
+  // ---- 完了画面 ----
+
+  get 完了画面の買取番号(): Locator { return this.page.locator(".c-hareruya-heading--lev3").filter({ hasText: "買取番号" }).first(); }
+  get 本人確認の画像リンク(): Locator { return this.page.locator("a.p-hareruya-text-with-qr__qr-link").first(); }
+  get 買取TOPへ(): Locator { return this.page.locator(".p-hareruya-complete__actions a").filter({ hasText: "買取TOPへ" }).first(); }
+  get マイページへ(): Locator { return this.page.locator(".p-hareruya-complete__actions a").filter({ hasText: /^\s*マイページ\s*$/ }).first(); }
+
+  // ---- 買取カート（空のとき） ----
+
+  get カートが空の案内(): Locator { return this.page.locator("#purchase-cart-empty"); }
 
   /** 完了画面の「買取番号　PUyymmdd-10桁」から、買取の番号（数字）を読む */
   async 完了した買取の番号(): Promise<string> {

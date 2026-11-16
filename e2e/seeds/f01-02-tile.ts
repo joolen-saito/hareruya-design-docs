@@ -1,47 +1,35 @@
 /**
  * F01-02 支店ECTOP のシード（タイル・商品が要るもの）。正本: cases/F01-02_seed_data.tsv
- * 支店と管理者2人を作り、タイルのタグをタグ管理で作り、グッズ商品CSVで商品を作ってタグを付け、支店の在庫を入庫・承認し、
+ * 試験支店（全部のケースで同じ1店。seeds/f01-02.ts の 決まった支店を用意する）の中身をケースの初めにそろえ（前のケース・前の回の商品を外す）、
+ * 試験支店の決まった管理者2人で、タイルのタグをタグ管理で作り、グッズ商品CSVで商品を作ってタグを付け、支店の在庫を入庫・承認し、
  * 支店トップページ管理で上段右にそのタグのタイル（属性「その他」）・残り3区画にピックアップ商品を設定する。
  * タグの名称・商品コード・商品名は決め打ちの識別の値なので、実行ごとの印を付ける（rc）。
  */
-import { Browser } from "@playwright/test";
-import { SETUP_ADMIN } from "../config/env";
-import { RUN_MARK, rc } from "../lib/run_marker";
+import { Browser, test } from "@playwright/test";
+import { BASE_URL, SETUP_ADMIN } from "../config/env";
+import { rc, rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
+import { フィードを送って反映を待つ } from "../pages/admin/unisearch_feed";
 import { defineSeed } from "./current_seed";
 import { withAdminSession } from "../lib/session";
-import { ensureTenant } from "../pages/admin/tenant";
 import { createTopByCsv } from "../pages/admin/category";
 import { downloadGoodsCsvTemplate, readExistingGoodsChildCategoryId } from "../pages/admin/m03_01_goods_csv";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { classRowsFromProductEdit, openProductEditByCode } from "../pages/admin/m03_23_seed_products";
-import { storeNameById } from "../pages/admin/m04_19_masters";
 import { 支店在庫のピックアップを指定する, 週間販売数を設定する } from "../db/f01_02_prep";
-import { タグを付けて商品を登録する, タグを用意する, 支店トップページにタイルを設定する, 支店トップページを設定する, 支店の管理者を用意する, 管理者, 規格の高額商品コードを設定する, 規格のセールを設定する, 規格を追加する, 規格を削除する, 追加する規格, 規格の公開状態を設定する, 既存のカードを指定する } from "../pages/admin/f01_02_setup";
+import { タグを付けて商品を登録する, 支店トップページにタイルを設定する, 支店トップページを設定する, 規格の高額商品コードを設定する, 規格のセールを設定する, 規格を追加する, 規格を削除する, 追加する規格, 規格の公開状態を設定する, 既存のカードを指定する } from "../pages/admin/f01_02_setup";
+import { 決まったタグを用意する } from "../pages/admin/f01_02_branch_reset";
 import { imageFile, saveProductWithImages } from "../pages/admin/f03_06_products";
 import { searchStockByCode } from "../pages/admin/m04_02_rc_stock";
-import { loggedInMemberName, registerStockEdit, StockApprovalListPage } from "../pages/admin/stock_edit";
-import { 支店URL, 支店名 } from "./f01-02";
+import { loggedInMemberName, registerStockEdit } from "../pages/admin/stock_edit";
+import { 支店URL, 支店名, 決まった支店を用意する, 決まった登録者の在庫を承認する, 試験支店の決まった管理者 } from "./f01-02";
 
-const 略称 = (s: string): string => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; const L = "ABCDEFGHJKLMNPQRSTUVWXYZ"; return [h % 24, (h >>> 5) % 24, (h >>> 10) % 24].map((i) => L[i]).join(""); };
 
 /** 取込で作られる規格（言語日本語・状態NM）に足す規格。コードは「<商品コード><suffix>」 */
 
-/** 支店を登録する。店名略称（3文字）が、ほかの店舗と重なって登録できなかったら、略称を変えて作り直す（略称は正本の指定が無い任意の値） */
+/** 支店を用意する（試験支店を使い回し、ケースの初めとして中身をそろえる。seeds/f01-02.ts の 決まった支店を用意する） */
 export async function 支店を用意する(page: import("@playwright/test").Page, n: string, issue: (m: string) => void, 他: { 公開?: "公開" | "非公開"; X公式アカウントURL?: string } = {}): Promise<string> {
-  let last = "";
-  for (let salt = 0; salt < 6; salt++) {
-    try {
-      return await ensureTenant(page, {
-        店名: 支店名(n), 店名カナ: "シケンシテン", 店名英語: "Branch Shop", 支店URL: 支店URL(n), 店名略称3文字: 略称(`${支店URL(n)}${salt || ""}`), ショップ名略称: 支店名(n), ...他,
-      }, issue);
-    } catch (e) {
-      last = (e as Error).message;
-      if (!/略称/.test(last)) throw e;
-      issue(`店名略称が重なって登録できなかったので、略称を変えて登録し直した（${last.split("\n")[0]}）`);
-    }
-  }
-  throw new Error(`店名略称を変えても支店を登録できない: ${last}`);
+  return 決まった支店を用意する(page, n, issue, 他);
 }
 
 export type 足す規格 = { suffix: string; 言語: "日本語" | "英語"; 状態: "NM" | "SP" | "MP" | "HP"; 価格: string; 在庫?: number; セール?: boolean; 非公開?: boolean };
@@ -63,27 +51,34 @@ export type タイル商品 = {
   足す規格?: 足す規格[];
   /** 規格を足したあとで、取込の規格（NM）を削除する */
   取込規格を削除?: boolean;
-  /** 在庫の承認のあとで、商品の公開状態を変える（本店の公開状態） */
+  /** 在庫の承認のあとで、商品の公開状態を変える（本店の公開状態）。アプリは在庫がある商品を非公開にできないので、非公開・廃止にするときは「先の状態」を使う */
   承認後の状態?: "非公開" | "廃止";
+  /** 先の状態にした理由の注記（シード表は在庫を入れてから非公開にする順で、そのまま実行できないとき） */
+  先の状態の注記?: string;
   /** 支店在庫のピックアップ指定を「あり」にする（画面で指定できないので、在庫の承認のあとにDBで設定する） */
   ピックアップ指定?: boolean;
   /** 本店の過去1週間の販売数（期間別販売数集計データ。バッチが作るデータで画面で指定できないので、在庫の承認のあとにDBで設定する）。取込の規格（NM）の分 */
   週間販売数?: number;
 };
+const 先に非公開 = "シード表は支店在庫を承認してから本店の公開状態を非公開にする順だが、アプリは在庫がある商品規格を非公開にできない（入力チェック「在庫がある商品規格は非公開にできません」）。在庫を入れる前に非公開にし、そのあとで支店在庫の入庫・承認を行って、シード表の状態（本店非公開・支店在庫あり）にした";
 export const タイル商品コード = (n: string, suffix: string): string => rc(`F0102-${n}${suffix}`);
-export const タイルのタグ名 = (正本の名称: string): string => rc(正本の名称);
+/** タイルのタグの名称（決まった印。タグは共有のマスタなので、実行ごとに足さず使い回す） */
+export const タイルのタグ名 = (正本の名称: string): string => rcFixed(正本の名称);
 
 const SALE_TAG_ID = "8"; // 「固定のセールタグ」: 手元のDBでは名称「sale1(未使用)」のタグ（アプリがセールに使うタグ）
-async function タイルの支店を作る(browser: Browser, seedId: string, n: string, タグ正本名: string | null, defs: タイル商品[], notes: { set(k: string, v: string): void }, 投入方法: string, ピックアップのみ = false): Promise<void> {
+async function タイルの支店を作る(browser: Browser, seedId: string, n: string, タグ正本名: string | null, defs: タイル商品[], notes: { set(k: string, v: string): void }, 投入方法: string, ピックアップのみ = false): Promise<string> {
   const 定め = new Set([...投入方法.matchAll(/〔[^〕]+〕/g)].map((m) => m[0]));
   const issue = (m: string) => reportSeedIssue(seedId, m);
-  const url = 支店URL(n);
-  const 本店名 = await withAdminSession(browser, SETUP_ADMIN, (page) => storeNameById(page, "1"));
+  // 商品を画面で1件ずつ作り（カードの指定・タグ・在庫の入庫と承認）、1件に1分ほどかかる。週間販売数の連番（31件。007・008）は
+  // ケースの時間の上限（開発環境の流しでは30分）に収まらず、シードの途中で時間切れになった（2026-11-13）。商品の数に応じて上限を延ばす
+  if (defs.length > 10) {
+    try { test.setTimeout(Math.max(test.info().timeout, 20 * 60_000 + defs.length * 2 * 60_000)); } catch { /* テストの外（シードの道具）では延ばさない */ }
+  }
   const 支店ID = await withAdminSession(browser, SETUP_ADMIN, (page) => 支店を用意する(page, n, issue));
   notes.set(`〔支店ID-F0102-${n.replace(/^CB/, "")}〕`, 支店ID);
-  const 管: { 登録者: 管理者; 承認者: 管理者 } = await withAdminSession(browser, SETUP_ADMIN, (page) => 支店の管理者を用意する(page, n, RUN_MARK, 支店名(n), 本店名));
+  const 管 = await 試験支店の決まった管理者(browser);
   const タグ名 = タグ正本名 ? タイルのタグ名(タグ正本名) : "";
-  const タグID = タグ正本名 ? await withAdminSession(browser, SETUP_ADMIN, (page) => タグを用意する(page, タグ名, seedId)) : SALE_TAG_ID;
+  const タグID = タグ正本名 ? await withAdminSession(browser, SETUP_ADMIN, (page) => 決まったタグを用意する(page, タグ名, seedId, issue)) : SALE_TAG_ID;
   /** 在庫を入れる規格（商品コードと数量） */
   const 入庫: { code: string; 数量: number }[] = [];
   const ids = new Map<string, { productId: string; classId: string }>();
@@ -120,6 +115,7 @@ async function タイルの支店を作る(browser: Browser, seedId: string, n: 
       }
       const 付けるタグ = d.タグ付け === false ? null : d.タグ付け === "セール" ? SALE_TAG_ID : タグID;
       await タグを付けて商品を登録する(page, productId, 付けるタグ, d.先の状態 ?? null, `${seedId}: ${code}`, issue);
+      if (d.先の状態の注記) issue(`${code}: ${d.先の状態の注記}`);
       if (d.高額コード) await 規格の高額商品コードを設定する(page, productId, rows[0].商品規格ID, rc(d.高額コード), `${seedId}: ${code} の高額商品コード`, issue);
       ids.set(code, { productId, classId: rows[0].商品規格ID });
       if (d.セール) await 規格のセールを設定する(page, productId, rows[0].商品規格ID, { フラグ: true, 販売価格: d.価格 ?? "500" }, `${seedId}: ${code} のセール`, issue);
@@ -141,28 +137,7 @@ async function タイルの支店を作る(browser: Browser, seedId: string, n: 
       await stock.openEdit(stock.row(code, 支店名(n), "EC-CUBE"));
       await registerStockEdit(page, { changeType: "入庫/その他", reason: "F01-02試験データ", quantity: String(d.数量), purchasePrice: "1", approverName: 管.承認者.名前 }, `${seedId}: ${code} の在庫編集`, issue);
     }
-    if (入れる.length) {
-      await withAdminSession(browser, 管.承認者.account, async (ap) => {
-        const list = new StockApprovalListPage(ap);
-        await list.open(支店名(n));
-        const registrant = await loggedInMemberName(page);
-        // 申請した管理者はこの支店・この実行だけのもの（ログインIDに番号と実行の印が入る）なので、その管理者の未承認の行だけを承認する
-        const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant);
-        if (rows.length < 入れる.length) throw new Error(`${seedId}: 在庫編集の未承認の行が ${rows.length} 件（${入れる.length} 件のはず）`);
-        try {
-          await list.approve(rows.slice(0, 入れる.length).map((r) => r.id), `${seedId}: 在庫編集の承認`, issue);
-        } catch (e) {
-          // 承認の成功の表示が出なかったとき、承認の一覧で承認済みになったかを確かめる（なっていれば先へ進み、報告する）
-          const ids = rows.slice(0, 入れる.length).map((r) => r.id);
-          await list.open(支店名(n));
-          const after = (await list.rowValues()).filter((r) => ids.includes(r.id));
-          if (after.some((r) => r.status === "未承認")) {
-            throw new Error(`${(e as Error).message.split("\n")[0]}（承認の一覧で未承認のまま: ${after.map((r) => `${r.id}:${r.status}`).join(",")}）`);
-          }
-          issue(`在庫編集の承認で、成功の表示は出なかったが、承認の一覧から未承認の行が無くなっていた（${(e as Error).message.split("\n")[0]}）`);
-        }
-      });
-    }
+    await 決まった登録者の在庫を承認する(browser, 管.承認者, await loggedInMemberName(page), 入れる.length, seedId, issue);
     for (const d of defs.filter((x) => x.承認後の状態)) {
       await タグを付けて商品を登録する(page, ids.get(タイル商品コード(n, d.suffix))!.productId, null, d.承認後の状態!, `${seedId}: ${タイル商品コード(n, d.suffix)} を${d.承認後の状態}に`, issue);
     }
@@ -204,6 +179,7 @@ async function タイルの支店を作る(browser: Browser, seedId: string, n: 
   } else if (タグ正本名) {
     await withAdminSession(browser, SETUP_ADMIN, (page) => 支店トップページにタイルを設定する(page, 支店名(n), タグ名, seedId, issue));
   }
+  return タグID;
 }
 
 const 商品 = (suffix: string, name: string, 他: Partial<タイル商品> = {}): タイル商品 => ({ suffix, name, ...他 });
@@ -259,7 +235,7 @@ export const タイルの定め: Record<string, { シードID: string; タグ: s
   "089": { シードID: "S-F01-02-CART1-089", タグ: null, 商品: [商品("", "セール基準商品-089", { 価格: "500", 在庫: 5, セール: true })] },
   "090": { シードID: "S-F01-02-CART5-090", タグ: null, 商品: [商品("", "セール基準商品-090", { 価格: "500", 在庫: 5, セール: true })] },
   "CB095": { シードID: "S-F01-02-CBCBSALE-095", タグ: null, 商品: [商品("-A", "セール全条件F0102-CB095", { 価格: "1", 在庫: 5, セール: true })] },
-  "CB096": { シードID: "S-F01-02-CBCBSALEHQ-096", タグ: null, 商品: [商品("-A", "セール公開F0102-CB096", { 価格: "1", 在庫: 5, セール: true }), 商品("-B", "セール本店非公開F0102-CB096", { 価格: "1", 在庫: 5, セール: true, 承認後の状態: "非公開" })] },
+  "CB096": { シードID: "S-F01-02-CBCBSALEHQ-096", タグ: null, 商品: [商品("-A", "セール公開F0102-CB096", { 価格: "1", 在庫: 5, セール: true }), 商品("-B", "セール本店非公開F0102-CB096", { 価格: "1", 在庫: 5, セール: true, 先の状態: "非公開", 先の状態の注記: 先に非公開 })] },
   // ---- 2026-11-10 追加 ----
   "038": { シードID: "S-F01-02-CASE-038", タグ: "テストタイルA", 商品: [商品("A", "タイル表示対象商品", { 価格: "1" }), 商品("B", "タイル表示対象外商品", { 価格: "1", 規格非公開: true })] },
   "050": { シードID: "S-F01-02-CASE-050", タグ: "テストタイルA-050", 商品: [商品("", "テストタイル商品-050", { 画像: 画像("tile-product-050", false) })] },
@@ -279,7 +255,7 @@ export const タイルの定め: Record<string, { シードID: string; タグ: s
   "010": { シードID: "S-F01-02-CASE-010", タグ: null, 商品: [売れ筋("A", "週間公開商品-010", { 価格: "500", 在庫: 1, 週間販売数: 2 }), 売れ筋("B", "週間非公開商品-010", { 価格: "500", 在庫: 1, 週間販売数: 1, 支店公開: false })] },
   "027": { シードID: "S-F01-02-CASE-027", タグ: null, 商品: [売れ筋("", "週間在庫なし商品-027", { 価格: "500", 在庫: 0, 週間販売数: 1 })] },
   "CB093": { シードID: "S-F01-02-CBCBWEEK-093", タグ: null, 商品: [売れ筋("-A", "売れ筋公開F0102-CB093", { 価格: "500", 在庫: 3, 週間販売数: 3 })] },
-  "CB094": { シードID: "S-F01-02-CBCBWEEKHQ-094", タグ: null, 商品: [売れ筋("-A", "売れ筋公開F0102-CB094", { 価格: "500", 在庫: 3, 週間販売数: 3 }), 売れ筋("-B", "売れ筋本店非公開F0102-CB094", { 価格: "500", 在庫: 3, 週間販売数: 4, 承認後の状態: "非公開" })] },
+  "CB094": { シードID: "S-F01-02-CBCBWEEKHQ-094", タグ: null, 商品: [売れ筋("-A", "売れ筋公開F0102-CB094", { 価格: "500", 在庫: 3, 週間販売数: 3 }), 売れ筋("-B", "売れ筋本店非公開F0102-CB094", { 価格: "500", 在庫: 3, 週間販売数: 4, 先の状態: "非公開", 先の状態の注記: 先に非公開 })] },
   // SALE中の商品のラベル（029）: セールフラグ1の商品はSALE中の商品に、セールフラグ0の商品はタイルに出す（週間販売数の代わり）
   "029": { シードID: "S-F01-02-CASE-029", タグ: "SALEラベル確認タイル-029", 商品: [商品("A", "セール基準商品-029", { 価格: "500", 在庫: 5, セール: true, タグ付け: "セール" }), 商品("B", "セールフラグOFF商品-029", { 価格: "500", 在庫: 5 })] },
   // SALE中の商品（固定のセールタグ）
@@ -293,8 +269,34 @@ export const タイルの定め: Record<string, { シードID: string; タグ: s
   "085": { シードID: "S-F01-02-SALEMINHD-085", タグ: null, 商品: [商品("", "最小状態表示対象外商品F0102-085", { 価格: "500", 在庫: 5, セール: true, 規格非公開: true, 足す規格: [{ ...SP("-B", "500", 5), セール: true }] })] },
   "091": { シードID: "S-F01-02-FOILSALE-091", タグ: null, 商品: [商品("", "セールFoil商品-091", { 価格: "500", 在庫: 5, セール: true, カード: "Foil" })] },
 };
+/**
+ * 支店の商品一覧は検索サービスの索引から描く（Front/ProductController.php の unisearch_api_url の分岐）ので、一覧で確かめるケースは
+ * フィードを送って、一覧に商品が出るまで待つ。030（SALE中の商品の「もっと見る」の先の一覧）は送っていなかったため、作った商品が一覧に無く
+ * 確かめにならなかった（2026-11-13。061・062・070・071 は f01-02-shared.ts で送って待つ）
+ */
+const 一覧で確かめる: Record<string, { パス: (タグID: string) => string; 待つ商品: string }> = {
+  "030": { パス: () => "products/search/tags/8?saleFlg=1", 待つ商品: "F0102-030商品A" },
+  // 055: 「もっと見る」の先（タイルのタグの商品一覧）。タグは実行ごとに振られるIDなので、シードが使ったタグのIDで開く
+  "055": { パス: (タグID) => `products/search/tags/${タグID}`, 待つ商品: "F0102-055商品A" },
+};
 for (const [n, d] of Object.entries(タイルの定め)) {
-  defineSeed(d.シードID, async ({ browser, notes, seed }) => { await タイルの支店を作る(browser, seed.シードID, n, d.タグ, d.商品, notes, `${seed["状態・属性"]}${seed.投入方法}`, d.ピックアップのみ); });
+  defineSeed(d.シードID, async ({ browser, notes, seed }) => {
+    const タグID = await タイルの支店を作る(browser, seed.シードID, n, d.タグ, d.商品, notes, `${seed["状態・属性"]}${seed.投入方法}`, d.ピックアップのみ);
+    const 一覧 = 一覧で確かめる[n];
+    if (一覧) {
+      const url = `${BASE_URL}/ja/${支店URL(n)}/${一覧.パス(タグID)}`;
+      const 名前 = rc(一覧.待つ商品);
+      await フィードを送って反映を待つ(browser, async (ctx) => {
+        const page = await ctx.newPage();
+        await page.goto(url, { waitUntil: "load", timeout: 120_000 });
+        const card = page.locator(".p-hareruya-product-card").filter({ hasText: 名前 });
+        await card.first().waitFor({ state: "visible", timeout: 20_000 }).catch(() => undefined);
+        const k = await card.count();
+        return { ok: k > 0, 様子: `${url} の「${名前}」のカード ${k} 件` };
+      }, `${seed.シードID}: 支店の商品一覧への反映`);
+      reportSeedIssue(seed.シードID, `作った商品を検索サービスの索引へ載せるため、ユニサーチフィードを送り、支店の商品一覧（${url}）に「${名前}」が出るまで待った`);
+    }
+  });
 }
 
 // ---- カテゴリの支店表示フラグ（064） ----

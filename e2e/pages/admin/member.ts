@@ -1,6 +1,6 @@
 /** メンバー管理・メンバー登録（メニュー「システム設定」→「メンバー管理」） */
 import { expect, Page } from "@playwright/test";
-import { 名前のメンバーID } from "../../db/member";
+import { 管理者ID as ログインIDの管理者ID, 名前のメンバーID } from "../../db/member";
 import { available as dbAvailable } from "../../lib/db";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
@@ -94,6 +94,35 @@ export async function expectMember(page: Page, 管理者ID: string, v: MemberInp
   if (diff.length) throw new Error(`メンバー「${v.名前}」（管理者ID ${管理者ID}）は登録済みだが、内容が違う: ${diff.join(" / ")}`);
 }
 
+/**
+ * ensureMember と同じだが、登録済みのメンバーの所属店舗・権限・デフォルト検索表示店舗・編集可能店舗が求める内容と違うときは、
+ * メンバー編集画面で求める内容へ直して使う（店舗を使い回す店舗へ読み替えたため、前の実行で作ったメンバーの店舗が変わる。依頼者 2026-11-15「店舗は作らない」）。
+ * 名前・ログインID・パスワードは直さない（違えば ensureMember と同じく止める）。何を直したかは onFixed で知らせる。
+ */
+export async function ensureMemberFixed(page: Page, v: MemberInput, onFixed: (m: string) => void = () => {}): Promise<string> {
+  const found = await findMemberIdByLoginId(page, v.ログインID, v.名前);
+  if (!found) return createMember(page, v);
+  try {
+    await expectMember(page, found, v);
+    return found;
+  } catch (e) {
+    const msg = (e as Error).message;
+    if (/名前:/.test(msg)) throw e;
+  }
+  await page.goto(adminUrl(`/setting/system/member/${found}/edit`));
+  const f = (name: string) => page.locator(`[name="admin_member[${name}]"]`);
+  await chooseByLabel(f("baseInfo"), v.所属店舗);
+  await chooseByLabel(f("Authority"), v.権限);
+  await chooseByLabel(page.locator('[name="admin_member[editableBaseInfos][]"]'), v.編集可能店舗);
+  await chooseByLabel(f("defaultSearchBaseInfo"), v.デフォルト検索表示店舗);
+  await page.getByLabel("稼働", { exact: true }).check();
+  await page.getByRole("button", { name: "登録", exact: true }).click();
+  await expectSaved(page, `メンバー「${v.名前}」の所属店舗などの直し`);
+  await expectMember(page, found, v);
+  onFixed(`登録済みのメンバー「${v.名前}」（管理者ID ${found}）の所属店舗・権限・デフォルト検索表示店舗・編集可能店舗を、使い回す店舗に合わせて直した（所属店舗「${v.所属店舗}」・編集可能店舗「${v.編集可能店舗.join("、")}」）`);
+  return found;
+}
+
 /** 登録済みのメンバーの権限を、メンバー編集画面で変えて登録する（ほかの項目は画面の表示のまま） */
 export async function changeMemberAuthority(page: Page, 管理者ID: string, 権限: string): Promise<void> {
   await page.goto(adminUrl(`/setting/system/member/${管理者ID}/edit`));
@@ -105,9 +134,28 @@ export async function changeMemberAuthority(page: Page, 管理者ID: string, 権
   await expectSaved(page, `管理者ID ${管理者ID} の権限の変更（「${now}」→「${権限}」）`);
 }
 
-/** あれば内容を確かめて使い、無ければ登録する */
+/**
+ * ログインIDのメンバーの管理者IDを読む。無ければ null。ログインIDはメンバーの間で重ならない（登録画面が重複を受け付けない）。
+ * 名前は重なりうる（開発環境には、ほかの方の試験や前の実行の「試験 太郎」などが複数いる。2026-11-13 に M10-08 の準備が名前で決められず止まった）ので、
+ * E2E が作るメンバーは、名前でなくログインIDで1人に決める。
+ * DB を使えない環境では、一覧で名前の行を探し、その中からメンバー編集画面のログインIDが一致するものを選ぶ。
+ */
+export async function findMemberIdByLoginId(page: Page, ログインID: string, 名前: string): Promise<string | null> {
+  if (dbAvailable) return ログインIDの管理者ID(ログインID);
+  const res = await page.goto(adminUrl("/setting/system/member"));
+  if (!res || !res.ok()) throw new Error(`メンバー一覧を開けない（応答 ${res?.status() ?? "なし"}）。ログインID「${ログインID}」のメンバーがいるかを確かめられない`);
+  const rows = page.locator('tr[id^="ex-member-"]').filter({ has: page.locator("td").first().getByText(名前, { exact: true }) });
+  const ids = (await rows.evaluateAll((trs) => trs.map((tr) => tr.id))).map((id) => id.replace("ex-member-", ""));
+  for (const id of ids) {
+    await page.goto(adminUrl(`/setting/system/member/${id}/edit`));
+    if ((await page.locator('[name="admin_member[login_id]"]').inputValue()) === ログインID) return id;
+  }
+  return null;
+}
+
+/** あれば内容を確かめて使い、無ければ登録する。あるかどうかは、名前でなくログインIDで決める（名前は重なりうる） */
 export async function ensureMember(page: Page, v: MemberInput): Promise<string> {
-  const found = await findMemberId(page, v.名前);
+  const found = await findMemberIdByLoginId(page, v.ログインID, v.名前);
   if (!found) return createMember(page, v);
   await expectMember(page, found, v);
   return found;

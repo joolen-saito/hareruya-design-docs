@@ -14,7 +14,7 @@
  */
 import { expect, Locator, Page, test } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { chooseByLabel } from "./common";
+import { chooseByLabel, withoutEnvBanners } from "./common";
 
 export type SplitJoinCsvKind = "在庫分割CSV登録" | "在庫結合CSV登録";
 const MODAL_ID: Record<SplitJoinCsvKind, string> = { 在庫分割CSV登録: "#modalSplitCsv", 在庫結合CSV登録: "#modalJoinCsv" };
@@ -58,7 +58,7 @@ export const SPLIT_JOIN_LIST_PATH = LIST_PATH;
 /** 画面の上部のメッセージ（成功・誤り・注意） */
 export async function pageAlerts(page: Page): Promise<string[]> {
   const texts = await page.locator(".alert").allInnerTexts();
-  return [...new Set(texts.map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean))];
+  return [...new Set(withoutEnvBanners(texts.map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean)))]; // 開発用の設定のときに常に出る帯は除く
 }
 
 export type MemberOption = { 名前: string; 選べる: boolean; 選択: boolean };
@@ -227,7 +227,7 @@ export class SplitJoinCsvModal {
     await expect(this.登録, `${this.kind}モーダルの送信のボタンは1つ`).toHaveCount(1);
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "load", timeout: 300_000 }),
-      this.登録.click(),
+      this.登録.click({ noWaitAfter: true }),
     ]);
   }
 }
@@ -257,19 +257,29 @@ export async function searchSplitJoinByStore(page: Page, storeName: string): Pro
   await expect(form, "在庫分割結合検索/一覧の検索欄").toBeVisible();
   await chooseSearchStore(page, storeName);
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: "検索" }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: "検索" }).click({ noWaitAfter: true }),
   ]);
 }
 
-/** 在庫分割結合検索/一覧の検索結果の行（点数は、分割数・結合数の欄の1段目） */
-export async function splitJoinListRows(page: Page): Promise<SplitJoinListRow[]> {
-  return page.locator("#stock_split_join_list tbody tr").filter({ has: page.locator("td:first-child a") }).evaluateAll((trs) => trs.map((tr) => {
+const SPLIT_JOIN_ROW_READ = (trs: Element[]): SplitJoinListRow[] => trs.map((tr) => {
     const tds = tr.querySelectorAll(":scope > td");
     const td = (i: number) => (tds[i]?.textContent ?? "").replace(/\s+/g, " ").trim();
     const first = (tds[5]?.querySelector("div")?.textContent ?? tds[5]?.textContent ?? "").replace(/\s+/g, " ").trim();
     return { ID: td(0), 種別: td(1), 店舗: td(2), 在庫区分: td(3), 商品名: td(4), 点数: first, ステータス: td(8) };
-  }));
+});
+
+/** 在庫分割結合検索/一覧の検索結果の行（点数は、分割数・結合数の欄の1段目） */
+export async function splitJoinListRows(page: Page): Promise<SplitJoinListRow[]> {
+  return page.locator("#stock_split_join_list tbody tr").filter({ has: page.locator("td:first-child a") }).evaluateAll(SPLIT_JOIN_ROW_READ);
+}
+
+/** 商品名が指定の文字で始まる行の1行目だけを読む（エビデンスの赤枠が、その行だけを囲むように、行を絞って読む） */
+export async function splitJoinListRowByName(page: Page, namePrefix: string): Promise<SplitJoinListRow | undefined> {
+  const tr = page.locator("#stock_split_join_list tbody tr").filter({ has: page.locator("td:first-child a") }).filter({ hasText: namePrefix }).first();
+  if ((await tr.count()) === 0) return undefined;
+  const [row] = await tr.evaluateAll(SPLIT_JOIN_ROW_READ);
+  return row;
 }
 
 // ---- 店舗一覧（店舗IDの有無） ----
@@ -291,7 +301,7 @@ export async function readDepartmentNames(page: Page): Promise<string[]> {
   const select = page.locator("form#form1 select").first();
   await expect(select, "マスタデータ管理のマスタの選択欄").toBeVisible();
   await chooseByLabel(select, "mtb_department");
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("form#form1 button[type=submit]").click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("form#form1 button[type=submit]").click({ noWaitAfter: true })]);
   const rows = page.locator("form#form2 tbody tr");
   await expect(rows.first(), "所属のマスタの行").toBeVisible();
   const names: string[] = [];
@@ -361,6 +371,6 @@ export async function logoutAdmin(page: Page): Promise<void> {
   await toggle.click();
   const link = page.locator('.popover a[href$="/logout"]');
   await expect(link, "吹き出しの「ログアウト」").toBeVisible();
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
   await expect(page, "ログアウトするとログイン画面になる").toHaveURL(/\/login/);
 }

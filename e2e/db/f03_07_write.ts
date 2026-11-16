@@ -24,3 +24,18 @@ export function 依頼に削除日時を設定する(依頼ID: string, 日時: s
   });
   if (n !== 1) throw new Error(`入荷通知依頼 ${依頼ID} の削除日時を設定するはずが ${n} 行だった`);
 }
+
+/** 入荷通知依頼の登録日時（日本時間）を設定する。対象は印つきの会員の、削除日時の無い依頼1件（画面では登録日時を指定できない） */
+export function 依頼の登録日時を設定する(依頼ID: string, 日時: string): void {
+  const n = writeTestData({
+    理由: `入荷通知依頼 ${依頼ID} の登録日時を ${日時} にする（画面では登録日時を指定できない）`,
+    sql: `update dtb_product_request set create_date = ($1::text || '+09')::timestamptz where id = $2::int and deleted_at is null`,
+    params: [日時, 依頼ID],
+    対象の確かめ: `select r.id as 依頼ID, upper(c.email) as メール
+        from dtb_product_request r join dtb_player p on p.id = r.player_id join dtb_customer c on c.id = p.customer_id
+       where r.id = $1::int and r.deleted_at is null and upper(c.email) like $2`,
+    確かめのparams: [依頼ID, `%${印}%`],
+    印, 最大行数: 1,
+  });
+  if (n !== 1) throw new Error(`入荷通知依頼 ${依頼ID} の登録日時を設定するはずが ${n} 行だった`);
+}

@@ -173,6 +173,8 @@ caseTest("IT-M12-08-009", async ({ page, step, expected }) => {
     const rows = CSVの行(csv);
     expect.soft(行(rows).length, "日別行の数").toBe(30);
     expect.soft(日の並び(rows), "日別行の日（1日から30日）").toBe(昇順の日(30));
+    // 見出しに列が無いと「0であること」が確かめられないため、確かめる列が見出しにあることも確かめる
+    for (const h of [c.タグ名[0], c.タグ名[1], "その他(カード)", "その他", "合計"]) expect.soft(rows[0] ?? [], `CSVの見出しに「${h}」の列がある`).toContain(h);
     expect.soft(全体の差(rows, c.日数, {}), "各日のタグ・その他(カード)・その他と日別合計がすべて0であること").toEqual([]);
   });
 });
@@ -418,6 +420,7 @@ caseTest("IT-M12-08-026", async ({ page, step, expected }) => {
   await expected(async () => {
     const rows = CSVの行(csv);
     expect.soft(行(rows).length, "日別行の数（31日の月）").toBe(31);
+    expect.soft(rows[0] ?? [], `CSVの見出しにタグ1「${c.タグ名[0]}」の列がある（M1208-CB026-TAG に当たる）`).toContain(c.タグ名[0]);
     expect.soft(全体の差(rows, c.日数, {}), "キャンセルの受注の1000が集計されず、タグ1の列を含む全行・全列が0であること").toEqual([]);
   });
 });
@@ -433,6 +436,7 @@ caseTest("IT-M12-08-027", async ({ page, step, expected }) => {
     const rows = CSVの行(csv);
     expect.soft(行(rows).length, "日別行の数（31日の月）").toBe(31);
     expect.soft(日の並び(rows), "日別行の日（昇順）").toBe(昇順の日(31));
+    expect.soft(rows[0] ?? [], `CSVの見出しにタグ1「${c.タグ名[0]}」の列がある（M1208-CB027-TAG に当たる）`).toContain(c.タグ名[0]);
     expect.soft(全体の差(rows, c.日数, {}), "集計月の外（前の年の同じ月）の受注の1000が集計されず、タグ1の列を含む全行・全列が0であること").toEqual([]);
   });
 });

@@ -14,9 +14,12 @@
 import { test, Page } from "@playwright/test";
 import { expect, caseTest, CaseBody } from "../../lib/case";
 import { loginAdmin, Account } from "../../lib/session";
+import { topErrorAlerts } from "../../pages/admin/common";
 import { デッキ一覧 } from "../../pages/admin/m15_deck";
 import { アーキタイプ一覧 } from "../../pages/admin/m15_09_archetype_edit";
-import { デッキCSV登録画面, 一覧からCSV登録を開く, CSV登録画面のパス, pathOf, 送信の結果 } from "../../pages/admin/m15_06_deck_csv";
+import { デッキCSV登録画面, 一覧からCSV登録を開く, CSV登録画面のパス, pathOf, 送信の結果, デッキCSVの見出し } from "../../pages/admin/m15_06_deck_csv";
+import { decodeCsvBytes, parseCsv } from "../../lib/csv";
+import { CSVの内容を画面の枠に出す, CSVの枠を外す, CSVの表 } from "../../lib/evidence_other";
 import { DeckSearchModal, DeckTopPage } from "../../pages/front/f09_01_deck_top";
 import { DeckResultPage } from "../../pages/front/f09_02_deck_result";
 import { デッキリスト詳細を開く, 情報欄 } from "../../pages/front/m15_05_deck_show";
@@ -42,8 +45,15 @@ const 結果の注記 = (ファイル名: string, r: 送信の結果) => {
 };
 
 /** 登録画面で、ファイルを選んで送る（手順「ファイルを選択」「CSVファイルのアップロード」の中身） */
-async function 選んで送る(s: デッキCSV登録画面, ファイル名: string): Promise<送信の結果> {
+async function 選んで送る(s: デッキCSV登録画面, ファイル名: string, 中身?: 取込の中身, capture?: (label: string) => Promise<void>): Promise<送信の結果> {
   await s.ファイルを選ぶ(ファイル名, CSVファイル(ファイル名));
+  const 見せる = 中身の指定(ファイル名, 中身);
+  if (見せる) {
+    // 取り込むファイルの中身を画面の枠に出して撮り、アップロードの前に外す
+    await 取込ファイルの中身を出す(s.page, ファイル名, 見せる);
+    if (capture) await capture(`${ファイル名} を選んだ画面（取り込むファイルの中身）`);
+    await CSVの枠を外す(s.page);
+  }
   const r = await s.アップロードを押す();
   結果の注記(ファイル名, r);
   return r;
@@ -52,29 +62,84 @@ async function 選んで送る(s: デッキCSV登録画面, ファイル名: str
 /** 明細の比べやすい形 */
 const 明細の文 = (rows: { ボード: string; カード名英: string; 枚数: number }[]) => rows.map((r) => `${r.ボード} ${r.カード名英} ${r.枚数}枚`);
 
+/** 取り込むファイルの中身（確かめに関わる列）を手順の画像に出すときの指定。列＝見せる項目（プレイヤー名は常に出す）、更新前＝取り込む前のデッキの値の表 */
+type 取込の中身 = { 列: (typeof デッキCSVの見出し)[number][] | "全部"; 更新前?: () => CSVの表 };
+
+type 列名 = 取込の中身["列"];
+const 統率系: 列名 = ["フォーマット", "統率者", "表示フラグ", "デッキリスト非公開フラグ", "メインリスト", "サイドリスト"];
+const 明細系: 列名 = ["表示フラグ", "デッキリスト非公開フラグ", "メインリスト", "サイドリスト"];
+const 組合せ列: 列名 = ["デッキID", "表示フラグ", "デッキリスト非公開フラグ", "メインリスト", "サイドリスト", "統率者", "代表カード名"];
+/** ファイルごとの、手順の画像に出す列（ケースの要点の値）。ここに無いファイルは、ケースが指定したときだけ出す */
+const 中身の既定: Record<string, 列名> = {
+  "commander_duplicate-023.csv": 統率系, "commander_duplicate-024.csv": 統率系,
+  "commander_unknown-020.csv": ["フォーマット", "統率者"],
+  "image_explicit-025.csv": ["代表カード名"], "image_default-026.csv": ["代表カード名"],
+  "tags-027.csv": ["タグ"], "tag1-M1506-053.csv": ["タグ"],
+  "public_details-028.csv": 明細系, "nonpublic_combinations-029.csv": 明細系, "strict_removed-030.csv": 明細系,
+  "multi_success-031.csv": ["フォーマット", "アーキタイプ"], "rollback-032.csv": ["フォーマット", "アーキタイプ"],
+  "header_only-035.csv": "全部",
+  "fmt-M1506-055.csv": ["フォーマット", "メインリスト"], "no-dup-M1506-056.csv": ["統率者", "メインリスト"],
+  "mixed-M1506-057.csv": ["デッキID"], "update-M1506-054.csv": ["デッキID"],
+  "new-rj1506-001.csv": ["フォーマット", "アーキタイプ", "表示フラグ", "デッキリスト非公開フラグ", "メインリスト"],
+  "new-qm001.csv": ["デッキ名", "成績", "イベント名(日)", "イベント参加人数"], "update-qm002.csv": ["デッキID", "成績", "イベント名(日)"], "update-qm003.csv": ["デッキID", "デッキ名", "イベント名(日)"],
+  ...Object.fromEntries(["059", "060", "061", "062", "063", "064"].map((n) => [`m1506-cb${n}-main.csv`, 組合せ列])),
+};
+const 中身の指定 = (ファイル名: string, 指定?: 取込の中身): 取込の中身 | undefined => 指定 ?? (中身の既定[ファイル名] ? { 列: 中身の既定[ファイル名] } : undefined);
+
+/** 目に見えない値（空・改行）を、画面で読める記号にする */
+const 見える形 = (s: string): string => (s === "" ? "（空）" : s.replace(/\r\n/g, "⟦CRLF⟧").replace(/\r/g, "⟦CR⟧").replace(/\n/g, "⟦LF⟧"));
+
+/**
+ * これから取り込むファイルの中身を、画面の上の枠に出す（手順の画像に写る。ファイルを選んだ直後に呼び、アップロードの前に外す）。
+ * 確かめに関わる列だけを出し、空の欄・改行は見える記号に置き換える（置き換えたことは注記に残す）
+ */
+async function 取込ファイルの中身を出す(page: Page, ファイル名: string, 中身: 取込の中身): Promise<void> {
+  const 全 = parseCsv(decodeCsvBytes(CSVファイル(ファイル名)));
+  const head = 全[0] ?? [];
+  const idx = 中身.列 === "全部" ? head.map((_, i) => i) : head.map((h, i) => i).filter((i) => head[i] === "プレイヤー名" || (中身.列 as string[]).includes(head[i]));
+  const 見る = [idx.map((i) => head[i]), ...全.slice(1).map((r) => idx.map((i) => 見える形(r[i] ?? "")))];
+  const 表: CSVの表[] = [{ 題: `取り込むファイル「${ファイル名}」の中身（${中身.列 === "全部" ? `全 ${head.length} 項目` : `確かめに関わる ${idx.length} 項目だけ。全 ${head.length} 項目`}）`, 行: 見る }];
+  if (中身.更新前) 表.push(中身.更新前());
+  await CSVの内容を画面の枠に出す(page, 表);
+  if (全.slice(1).some((r) => idx.some((i) => /[\r\n]/.test(r[i] ?? "") || (r[i] ?? "") === ""))) {
+    const m = "取込ファイルの画像では、目に見えない値を記号で表した（⟦CRLF⟧・⟦LF⟧＝セルの中の改行、（空）＝値が入っていない欄）";
+    if (!test.info().annotations.some((a) => a.description === m)) note(m);
+  }
+}
+
 /**
  * 型: 1. 登録画面を開く／2. ファイルを選ぶ／3. アップロードを押す／4. DB で確かめる → 期待結果。
- * 読む: 手順4で DB から読む値。確かめる: 期待結果の確かめ。前に読む: 手順3の前に読んでおく値（件数など）。
+ * 読む: 手順4で DB から読む値（期待結果の場面でも読み直し、帯に照会と読み取った値を出す）。確かめる: 期待結果の確かめ。前に読む: 手順3の前に読んでおく値（件数など）。
+ * 中身: 選んだファイルの中身を手順2の画像に出す指定。誤りが出る: 取込がはじかれ、誤りの帯が出て取込完了が出ないことを確かめる。
  */
-function 取込のケース<T, B = undefined>(ファイル名: string, 読む: (前: B) => T, 確かめる: (v: T, 前: B) => void, 前に読む?: () => B): CaseBody {
+function 取込のケース<T, B = undefined>(ファイル名: string, 読む: (前: B) => T, 確かめる: (v: T, 前: B, r: 送信の結果) => void, 前に読む?: () => B, 中身?: 取込の中身, 誤りが出る = false): CaseBody {
   return async ({ page, step, expected, db }) => {
     await login(page);
     const s = new デッキCSV登録画面(page);
+    const 見せる = 中身の指定(ファイル名, 中身);
     await step(1, async () => { await s.開く(); });
-    await step(2, async () => { await s.ファイルを選ぶ(ファイル名, CSVファイル(ファイル名)); });
+    await step(2, async () => {
+      await s.ファイルを選ぶ(ファイル名, CSVファイル(ファイル名));
+      if (見せる) await 取込ファイルの中身を出す(page, ファイル名, 見せる);
+    });
     let 前 = undefined as B;
     let r!: 送信の結果;
     await step(3, async () => {
+      await CSVの枠を外す(page);
       if (前に読む) { void db; 前 = 前に読む(); }
       r = await s.アップロードを押す();
       結果の注記(ファイル名, r);
       note(アップロードの注記);
     });
-    let v!: T;
-    await step(4, async () => { void db; v = 読む(前); });
+    await step(4, async () => { void db; 読む(前); });
     await expected(async () => {
       expect(r.送った, `${ファイル名} を送った（「CSVファイルをアップロード」を押せた）`).toBe(true);
-      確かめる(v, 前);
+      if (誤りが出る) {
+        // 取込がはじかれたこと（誤りの帯が出て、取込完了の表示が出ない）。送れなかった・別の理由で何も起きなかった場合を合格にしない
+        await expect.soft(page.locator(".alert-danger").filter({ hasNotText: "デバッグモードが有効になっています" }).first(), "取込の誤りの表示（誤りの帯）").toBeVisible();
+        await expect.soft(page.locator(".alert-success"), "取込完了の表示（出ないこと）").toHaveCount(0);
+      }
+      確かめる(読む(前), 前, r); // 期待結果の場面で読み直す（帯に照会と読み取った値が出る）
     });
   };
 }
@@ -116,7 +181,7 @@ caseTest("IT-M15-06-047", async ({ page, step, expected }) => {
     expect(r.送った, "ファイルを送った").toBe(true);
     expect.soft(pathOf(page.url()), "表示された画面（デッキ登録CSVアップロード画面）").toBe(CSV登録画面のパス());
     expect.soft(誤り.length, "入力チェックエラーのメッセージの数").toBeGreaterThan(0);
-    await expect.soft(page.locator(".alert-danger").first(), "入力チェックエラーのメッセージの表示").toBeVisible();
+    await expect.soft(topErrorAlerts(page).first(), "入力チェックエラーのメッセージの表示").toBeVisible();
   });
 });
 
@@ -140,12 +205,12 @@ caseTest("IT-M15-06-002", 取込のケース("full_new-002.csv", () => 行("IT�
   expect.soft(d.デッキリスト非公開, "デッキリスト非公開フラグ（0＝公開）").toBe(false);
   expect.soft(d.メインリスト本文, "メインリスト本文").toBe("2 Main Card A");
   expect.soft(d.サイドリスト本文, "サイドリスト本文").toBe("1 Side Card");
-}));
+}, undefined, { 列: "全部" }));
 
 caseTest("IT-M15-06-003", 取込のケース("full_new-003.csv", () => 行("IT完全新規-003"), (rows, 前) => {
   const d = ただ1件(rows, "IT完全新規-003");
   expect.soft(Number(d.デッキID), `採番されたデッキID（取り込む前の最大 ${前} より大きい）`).toBeGreaterThan(前);
-}, () => 最大のデッキID()));
+}, () => 最大のデッキID(), { 列: ["デッキID", "デッキ名"] }));
 
 caseTest("IT-M15-06-004", 取込のケース("update_existing-004.csv", () => {
   const id = 既存デッキのID("1506001004");
@@ -160,7 +225,26 @@ caseTest("IT-M15-06-004", 取込のケース("update_existing-004.csv", () => {
   expect.soft(d!.日程ID, "イベント詳細").toBe(基準の日程ID());
   expect.soft(d!.開催日, "開催日（日本時間）").toBe("2025-09-01 10:00:00");
   expect.soft(d!.成績, "成績").toBe("優勝");
+  // 既存デッキは順位・参照元・参加人数などを入れずに作っている。CSV の値へ更新されたことを、変わるはずの項目でも確かめる
+  expect.soft(d!.順位, "順位").toBe("1");
+  expect.soft(d!.イベント名英, "イベント名(英)").toBe("IT Event");
+  expect.soft(d!.イベント名日, "イベント名(日)").toBe("ITイベント");
+  expect.soft(d!.参照元, "参照元").toBe("http://example.com/deck");
+  expect.soft(d!.参加人数, "参加人数").toBe("10");
+  expect.soft(d!.表示の区分, "表示フラグ（1＝表示）").toBe("表示");
+  expect.soft(d!.デッキリスト非公開, "デッキリスト非公開フラグ（0＝公開）").toBe(false);
+  expect.soft(d!.メインリスト本文, "メインリスト本文").toBe("2 Main Card A");
+  expect.soft(d!.サイドリスト本文, "サイドリスト本文").toBe("1 Side Card");
   expect.soft(同名.map((r) => r.デッキID), `プレイヤー名「${名("IT更新後-004")}」のデッキ（新しいデッキが追加されない）`).toEqual([id]);
+}, undefined, {
+  列: "全部",
+  更新前: () => {
+    const id = 既存デッキのID("1506001004");
+    const d = デッキ(id);
+    const 項目 = ["デッキID", "プレイヤー名", "デッキ名", "順位", "成績", "イベント名(英)", "イベント名(日)", "イベント開催日", "参照元", "イベント参加人数", "表示", "メインリスト", "サイドリスト"];
+    const 値 = d ? [d.デッキID, d.プレイヤー名, d.デッキ名, d.順位, d.成績, d.イベント名英, d.イベント名日, d.開催日, d.参照元, d.参加人数, d.表示の区分, d.メインリスト本文, d.サイドリスト本文].map(見える形) : 項目.map(() => "（デッキが無い）");
+    return { 題: `取り込む前のデッキID ${id} のデッキの値（試験が DB から読み取った値。CSV の「デッキID」1506001004 の代わりに、画面で登録したこのデッキを読む）`, 行: [項目, 値] };
+  },
 }));
 
 caseTest("IT-M15-06-005", 取込のケース("nonexistent_id-005.csv", () => 行("IT未一致ID-005"), (rows) => {
@@ -183,20 +267,20 @@ caseTest("IT-M15-06-006", 取込のケース("minimal_new-006.csv", () => {
   expect.soft(d.サイドリスト本文, "サイドリスト").toBe("");
   expect.soft(d.統率本文, "統率者").toBe("");
   note(`代表カード名を空にしたときの代表画像は、アーキタイプの既定の代表画像になる作り（026 で確かめる）。このケースの値: ${d.代表画像ID || "なし"}`);
-}));
+}, undefined, { 列: "全部" }));
 
 /** プレイヤー名（正本の値）ごとのデッキ */
 const 名ごと = (正本: string[]) => () => 正本.map((p) => ({ p, rows: 行(p) }));
-/** どのプレイヤー名のデッキも登録されていないこと */
+/** どのプレイヤー名のデッキも登録されていないこと（取込がはじかれたこと＝誤りの帯が出て取込完了が出ないことは、取込のケースの「誤りが出る」で確かめる） */
 const 登録されない = (v: { p: string; rows: 保存されたデッキ[] }[]) => {
   for (const { p, rows } of v) expect.soft(rows.length, `プレイヤー名「${名(p)}」のデッキの件数（登録されない）`).toBe(0);
 };
-caseTest("IT-M15-06-009", 取込のケース("unknown_format-009.csv", 名ごと(["IT未登録フォーマット-009"]), 登録されない));
-caseTest("IT-M15-06-011", 取込のケース("mismatched_archetype-011.csv", 名ごと(["IT不一致アーキタイプ-011"]), 登録されない));
-caseTest("IT-M15-06-012", 取込のケース("missing_event-012.csv", 名ごと(["IT未登録イベント-012"]), 登録されない));
-caseTest("IT-M15-06-018", 取込のケース("commander_blank-018.csv", 名ごと(["IT統率者空欄-018"]), 登録されない));
-caseTest("IT-M15-06-020", 取込のケース("commander_unknown-020.csv", 名ごと(["IT未登録統率者-020"]), 登録されない));
-caseTest("IT-M15-06-032", 取込のケース("rollback-032.csv", 名ごと(["IT取消対象A", "IT取消対象B"]), 登録されない));
+caseTest("IT-M15-06-009", 取込のケース("unknown_format-009.csv", 名ごと(["IT未登録フォーマット-009"]), 登録されない, undefined, { 列: ["フォーマット"] }, true));
+caseTest("IT-M15-06-011", 取込のケース("mismatched_archetype-011.csv", 名ごと(["IT不一致アーキタイプ-011"]), 登録されない, undefined, { 列: ["フォーマット", "アーキタイプ"] }, true));
+caseTest("IT-M15-06-012", 取込のケース("missing_event-012.csv", 名ごと(["IT未登録イベント-012"]), 登録されない, undefined, { 列: ["イベント詳細ID"] }, true));
+caseTest("IT-M15-06-018", 取込のケース("commander_blank-018.csv", 名ごと(["IT統率者空欄-018"]), 登録されない, undefined, { 列: ["フォーマット", "統率者"] }, true));
+caseTest("IT-M15-06-020", 取込のケース("commander_unknown-020.csv", 名ごと(["IT未登録統率者-020"]), 登録されない, undefined, undefined, true));
+caseTest("IT-M15-06-032", 取込のケース("rollback-032.csv", 名ごと(["IT取消対象A", "IT取消対象B"]), 登録されない, undefined, undefined, true));
 
 caseTest("IT-M15-06-010", 取込のケース("archetype_names-010.csv", () => ["ITアーキタイプ日名-010", "ITアーキタイプ英名-010"].map((p) => ({ p, rows: 行(p) })), (v) => {
   for (const { p, rows } of v) {
@@ -205,17 +289,17 @@ caseTest("IT-M15-06-010", 取込のケース("archetype_names-010.csv", () => ["
     expect.soft(rows[0].アーキタイプ名英, `「${名(p)}」のアーキタイプ`).toBe(試験型.名英);
     expect.soft(rows[0].アーキタイプのフォーマット英名, `「${名(p)}」のアーキタイプのフォーマット（試験標準フォーマット）`).toBe(標準);
   }
-}));
+}, undefined, { 列: ["フォーマット", "アーキタイプ"] }));
 
 caseTest("IT-M15-06-014", 取込のケース("display_values-014.csv", () => [行("IT表示0-014"), 行("IT表示1-014")], ([r0, r1]) => {
   expect.soft(r0.map((r) => r.表示の区分), `「${名("IT表示0-014")}」の表示の区分`).toEqual(["非表示"]);
   expect.soft(r1.map((r) => r.表示の区分), `「${名("IT表示1-014")}」の表示の区分`).toEqual(["表示"]);
-}));
+}, undefined, { 列: ["表示フラグ"] }));
 
 caseTest("IT-M15-06-016", 取込のケース("private_values-016.csv", () => [行("IT非公開0-016"), 行("IT非公開1-016")], ([r0, r1]) => {
   expect.soft(r0.map((r) => (r.デッキリスト非公開 ? "非公開" : "公開")), `「${名("IT非公開0-016")}」のデッキリスト非公開フラグ`).toEqual(["公開"]);
   expect.soft(r1.map((r) => (r.デッキリスト非公開 ? "非公開" : "公開")), `「${名("IT非公開1-016")}」のデッキリスト非公開フラグ`).toEqual(["非公開"]);
-}));
+}, undefined, { 列: ["デッキリスト非公開フラグ", "メインリスト", "サイドリスト"] }));
 
 caseTest("IT-M15-06-019", 取込のケース("commander_names-019.csv", () => ["IT統率者日名-019", "IT統率者英名-019"].map((p) => {
   const rows = 行(p);
@@ -225,30 +309,50 @@ caseTest("IT-M15-06-019", 取込のケース("commander_names-019.csv", () => ["
     expect.soft(rows.length, `プレイヤー名「${名(p)}」のデッキの件数`).toBe(1);
     expect.soft(明細の文(明細.filter((r) => r.ボード === "統率者ボード")), `「${名(p)}」の統率者`).toEqual([`統率者ボード ${統率者カード.名英} 1枚`]);
   }
-}));
+}, undefined, { 列: ["フォーマット", "統率者"] }));
 
 caseTest("IT-M15-06-021", 取込のケース("boundary_counts-021.csv", () => ["IT枚数境界下限-021", "IT枚数境界上限-021"].map((p) => ({ p, rows: 行(p) })), (v) => {
   for (const { p, rows } of v) expect.soft(rows.length, `プレイヤー名「${名(p)}」のデッキの件数（登録される）`).toBe(1);
-}));
+}, undefined, { 列: ["表示フラグ", "デッキリスト非公開フラグ", "メインリスト", "サイドリスト"] }));
 
-caseTest("IT-M15-06-022", async ({ page, step, expected, db }) => {
+caseTest("IT-M15-06-022", async ({ page, step, expected, db, capture }) => {
   await login(page);
   const s = new デッキCSV登録画面(page);
   await step(1, async () => { await s.開く(); });
+  const rs: { ファイル: string; r: 送信の結果 }[] = [];
   await step(2, async () => {
-    for (const d of 枚数範囲外) await 選んで送る(s, d.ファイル);
+    // 1ファイルごとに、選んだファイルの中身→送ったあとの画面（誤りの帯）を撮る
+    for (const d of 枚数範囲外) {
+      await s.ファイルを選ぶ(d.ファイル, CSVファイル(d.ファイル));
+      await 取込ファイルの中身を出す(page, d.ファイル, { 列: ["メインリスト", "サイドリスト"] });
+      await capture(`${d.ファイル} を選んだ画面（取り込むファイルの中身）`);
+      await CSVの枠を外す(page);
+      const r = await s.アップロードを押す();
+      結果の注記(d.ファイル, r);
+      rs.push({ ファイル: d.ファイル, r });
+      await expect.soft(page.locator(".alert-danger").filter({ hasNotText: "デバッグモードが有効になっています" }).first(), `${d.ファイル} を送ったあとの誤りの帯`).toBeVisible();
+      await capture(`${d.ファイル} を送ったあとの画面（誤りの帯）`);
+    }
     note(アップロードの注記);
   });
-  let v: { p: string; n: number }[] = [];
-  await step(3, async () => { void db; v = 枚数範囲外.map((d) => ({ p: 名(d.プレイヤー), n: プレイヤー名のデッキ(名(d.プレイヤー)).length })); });
+  const 件数 = () => 枚数範囲外.map((d) => ({ p: 名(d.プレイヤー), n: プレイヤー名のデッキ(名(d.プレイヤー)).length }));
+  await step(3, async () => { void db; 件数(); });
   await expected(async () => {
-    for (const { p, n } of v) expect.soft(n, `プレイヤー名「${p}」のデッキの件数（登録されない）`).toBe(0);
+    // 4ファイルとも送れて、取込がはじかれたこと（誤りの表示）も確かめる。送れなかったファイルの「0件」を合格にしない
+    for (const { ファイル, r } of rs) {
+      expect.soft(r.送った, `${ファイル} を送った（「CSVファイルをアップロード」を押せた）`).toBe(true);
+    }
+    await expect.soft(page.locator(".alert-danger").filter({ hasNotText: "デバッグモードが有効になっています" }).first(), `最後に送った ${枚数範囲外[枚数範囲外.length - 1].ファイル} の取込の誤りの帯（先の3ファイルの誤りは手順2の各画像）`).toBeVisible();
+    expect.soft(rs.length, "送ったファイルの数").toBe(枚数範囲外.length);
+    for (const { p, n } of 件数()) expect.soft(n, `プレイヤー名「${p}」のデッキの件数（登録されない）`).toBe(0); // 期待結果の場面で読み直す
   });
 });
 
 caseTest("IT-M15-06-023", 取込のケース("commander_duplicate-023.csv", () => 行("IT統率者重複-023"), (rows) => {
   const d = ただ1件(rows, "IT統率者重複-023");
   expect.soft(d.メインリスト本文, "メインリスト本文").not.toContain("Commander Card");
+  // 本文が空になった・ほかのカードまで消えた場合を合格にしないよう、残るはずのカードの行も確かめる
+  expect.soft(d.メインリスト本文, "メインリスト本文（Commander Card 以外の行は残る）").toContain("2 Main Card A");
 }));
 
 caseTest("IT-M15-06-024", 取込のケース("commander_duplicate-024.csv", () => {
@@ -264,6 +368,7 @@ caseTest("IT-M15-06-025", 取込のケース("image_explicit-025.csv", () => {
   return { rows, カード: rows.length === 1 ? 代表画像のカード(rows[0].代表画像ID) : "" };
 }, ({ rows, カード }) => {
   ただ1件(rows, "IT代表カード指定-025");
+  note("正本のシード表では、試験アーキタイプの既定の代表画像も同じカードのため、このケースだけでは「指定が効いた」と「既定が使われた」を見分けられない（既定と違うカードを指定して確かめるのは 059）");
   expect.soft(カード, "デッキの代表画像のカード").toBe(代表カード);
 }));
 
@@ -295,7 +400,7 @@ caseTest("IT-M15-06-029", 取込のケース("nonpublic_combinations-029.csv", (
 }), (v) => {
   for (const { p, rows, 明細 } of v) {
     expect.soft(rows.length, `プレイヤー名「${名(p)}」のデッキの件数`).toBe(1);
-    if (p === "ITフラグ00-029") expect.soft(明細.length, `「${名(p)}」（非公開フラグ0）のデッキ明細の数（作成される）`).toBeGreaterThan(0);
+    if (p === "ITフラグ00-029") expect.soft(明細の文(明細.filter((r) => r.ボード !== "統率者ボード")), `「${名(p)}」（非公開フラグ0）のデッキ明細（作成される）`).toEqual(["メインボード Main Card A 2枚", "サイドボード Side Card 1枚"]);
     else expect.soft(明細.length, `「${名(p)}」（非公開フラグ1）のデッキ明細の数（作成されない）`).toBe(0);
   }
 }));
@@ -353,15 +458,23 @@ caseTest("IT-M15-06-054", async ({ page, step, expected, db }) => {
   const id = 既存デッキのID("1506054001");
   note(`デッキID 1506054001 は、画面で登録したデッキ（ID ${id}）として読む`);
   await step(1, async () => { await s.開く(); });
-  await step(2, async () => { await s.ファイルを選ぶ(f, CSVファイル(f)); });
-  await step(3, async () => { 結果の注記(f, await s.アップロードを押す()); note(アップロードの注記); });
+  await step(2, async () => { await s.ファイルを選ぶ(f, CSVファイル(f)); await 取込ファイルの中身を出す(page, f, 中身の指定(f)!); });
+  let r1!: 送信の結果, r2!: 送信の結果;
+  await step(3, async () => { await CSVの枠を外す(page); r1 = await s.アップロードを押す(); 結果の注記(f, r1); note(アップロードの注記); });
   let 一回目 = "";
   await step(4, async () => { void db; 一回目 = デッキ(id)?.プレイヤー名 ?? "（デッキが無い）"; });
-  await step(5, async () => { await s.ファイルを選ぶ(f, CSVファイル(f)); });
-  await step(6, async () => { 結果の注記(f, await s.アップロードを押す()); });
+  await step(5, async () => { await s.ファイルを選ぶ(f, CSVファイル(f)); await 取込ファイルの中身を出す(page, f, 中身の指定(f)!); });
+  await step(6, async () => { await CSVの枠を外す(page); r2 = await s.アップロードを押す(); 結果の注記(f, r2); });
   let 二回目: { d: 保存されたデッキ | null; 同名: string[] } = { d: null, 同名: [] };
-  await step(7, async () => { 二回目 = { d: デッキ(id), 同名: 行("M1506-054-P").map((r) => r.デッキID) }; });
+  const 二回目を読む = () => ({ d: デッキ(id), 同名: 行("M1506-054-P").map((r) => r.デッキID) });
+  await step(7, async () => { 二回目 = 二回目を読む(); });
   await expected(async () => {
+    二回目 = 二回目を読む(); // 期待結果の場面で読み直す（帯に照会と読み取った値が出る）
+    expect(r1.送った, "1回目にファイルを送った").toBe(true);
+    expect(r2.送った, "2回目にファイルを送った").toBe(true);
+    // 2回目が押せなかった・はじかれた場合の「1件のまま」を合格にしないよう、2回目の取込が完了したことも確かめる
+    expect.soft(r2.エラー, "2回目の取込の誤りの表示").toEqual([]);
+    expect.soft(r2.成功.join(" "), "2回目の取込完了の表示").toContain("CSVファイルをアップロードしました");
     expect.soft(一回目, `1回目の取込後のデッキID ${id} のプレイヤー名`).toBe(名("M1506-054-P"));
     expect.soft(二回目.d === null ? 0 : 1, `2回目の取込後のデッキID ${id} のデッキの件数`).toBe(1);
     expect.soft(二回目.同名, `2回目の取込後のプレイヤー名「${名("M1506-054-P")}」のデッキ（1件のまま）`).toEqual([id]);
@@ -380,17 +493,18 @@ function 組合せ(n: "059" | "060" | "061" | "062" | "063" | "064", 確かめ�
     const f = `m1506-cb${n}-main.csv`;
     const s = new デッキCSV登録画面(page);
     await step(1, async () => { await s.開く(); });
-    await step(2, async () => { await s.ファイルを選ぶ(f, CSVファイル(f)); });
+    await step(2, async () => { await s.ファイルを選ぶ(f, CSVファイル(f)); await 取込ファイルの中身を出す(page, f, 中身の指定(f)!); });
     let r!: 送信の結果;
-    await step(3, async () => { r = await s.アップロードを押す(); 結果の注記(f, r); note(アップロードの注記); });
+    await step(3, async () => { await CSVの枠を外す(page); r = await s.アップロードを押す(); 結果の注記(f, r); note(アップロードの注記); });
     let v!: { d: 保存されたデッキ | null; 同名: string[]; 明細: string[]; 画像: string };
-    await step(4, async () => {
-      void db;
+    const 読む = () => {
       const 同名 = プレイヤー名のデッキ(c.P);
       const d = 更新 ? デッキ(id) : (同名.length === 1 ? 同名[0] : null);
-      v = { d, 同名: 同名.map((x) => x.デッキID), 明細: d ? 明細の文(デッキ明細(d.デッキID)) : [], 画像: d ? 代表画像のカード(d.代表画像ID) : "" };
-    });
+      return { d, 同名: 同名.map((x) => x.デッキID), 明細: d ? 明細の文(デッキ明細(d.デッキID)) : [], 画像: d ? 代表画像のカード(d.代表画像ID) : "" };
+    };
+    await step(4, async () => { void db; v = 読む(); });
     await expected(async () => {
+      v = 読む(); // 期待結果の場面で読み直す（帯に照会と読み取った値が出る）
       expect(r.送った, `${f} を送った（「CSVファイルをアップロード」を押せた）`).toBe(true);
       if (更新) expect.soft(v.同名, `プレイヤー名「${c.P}」のデッキ（新しいデッキは追加されず、デッキID ${id} だけ）`).toEqual([id]);
       else expect.soft(v.同名.length, `プレイヤー名「${c.P}」のデッキの件数（新しいデッキとして1件）`).toBe(1);
@@ -467,7 +581,7 @@ async function 一覧から開く(page: Page): Promise<デッキCSV登録画面>
   return new デッキCSV登録画面(page);
 }
 
-caseTest("IT-M15-06-049", async ({ page, step, expected }) => {
+caseTest("IT-M15-06-049", async ({ page, step, expected, capture }) => {
   page.setDefaultTimeout(60_000);
   page.setDefaultNavigationTimeout(120_000);
   const 選手 = QM("001", "選手");
@@ -480,7 +594,7 @@ caseTest("IT-M15-06-049", async ({ page, step, expected }) => {
   await step(3, async () => { await login(page, M1506_QM); });
   let s!: デッキCSV登録画面;
   await step(4, async () => { s = await 一覧から開く(page); });
-  await step(5, async () => { await 選んで送る(s, "new-qm001.csv"); note(アップロードの注記); });
+  await step(5, async () => { await 選んで送る(s, "new-qm001.csv", undefined, capture); note(アップロードの注記); });
   await step(6, async () => { await 店頭で検索(page, 選手); note(クリアの注記); });
   await expected(async () => {
     const rows = (await r.行()).filter((x) => x.プレイヤー === 選手);
@@ -494,7 +608,7 @@ caseTest("IT-M15-06-049", async ({ page, step, expected }) => {
   });
 });
 
-caseTest("IT-M15-06-050", async ({ page, step, expected }) => {
+caseTest("IT-M15-06-050", async ({ page, step, expected, capture }) => {
   page.setDefaultTimeout(60_000);
   page.setDefaultNavigationTimeout(120_000);
   const 選手 = QM("002", "選手");
@@ -510,7 +624,7 @@ caseTest("IT-M15-06-050", async ({ page, step, expected }) => {
   await step(3, async () => { await login(page, M1506_QM); });
   let s!: デッキCSV登録画面;
   await step(4, async () => { s = await 一覧から開く(page); });
-  await step(5, async () => { await 選んで送る(s, "update-qm002.csv"); note(アップロードの注記); });
+  await step(5, async () => { await 選んで送る(s, "update-qm002.csv", undefined, capture); note(アップロードの注記); });
   await step(6, async () => { await 店頭で検索(page, 選手); note(クリアの注記); });
   await expected(async () => {
     const rows = await 行を読む();
@@ -520,7 +634,7 @@ caseTest("IT-M15-06-050", async ({ page, step, expected }) => {
   });
 });
 
-caseTest("IT-M15-06-051", async ({ page, notes, step, expected }) => {
+caseTest("IT-M15-06-051", async ({ page, notes, step, expected, capture }) => {
   page.setDefaultTimeout(60_000);
   page.setDefaultNavigationTimeout(120_000);
   const id = notes.get("〔デッキID-M1506-003〕");
@@ -533,7 +647,7 @@ caseTest("IT-M15-06-051", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await login(page, M1506_QM); });
   let s!: デッキCSV登録画面;
   await step(3, async () => { s = await 一覧から開く(page); });
-  await step(4, async () => { await 選んで送る(s, "update-qm003.csv"); note(アップロードの注記); });
+  await step(4, async () => { await 選んで送る(s, "update-qm003.csv", undefined, capture); note(アップロードの注記); });
   let 欄: Record<string, string> = {};
   await step(5, async () => { await デッキリスト詳細を開く(page, id); 欄 = await 情報欄(page); });
   await expected(async () => {
@@ -542,26 +656,28 @@ caseTest("IT-M15-06-051", async ({ page, notes, step, expected }) => {
   });
 });
 
-caseTest("IT-M15-06-058", async ({ page, step, expected }) => {
+caseTest("IT-M15-06-058", async ({ page, step, expected, capture }) => {
   const 型 = RJ("型");
   const l = new アーキタイプ一覧(page);
-  const 行を読む = async () => (await l.行()).filter((r) => r.名日 === 型);
   const 検索の注記 = "アーキタイプ管理の検索ボタンは、画面では「検索する」（正本の「検索する >」）";
   await step(1, async () => { await login(page, M1506_RJ); });
   await step(2, async () => { await l.開く(); await l.名前で検索する(型); note(検索の注記); });
+  // 登録デッキ数の欄（画面の列名は「登録アーキタイプ数」）。画面の値を要素として確かめる（赤枠が付く）
+  const 行の要素 = () => l.結果の表.locator("tbody tr").filter({ hasText: 型 });
+  const デッキ数の欄 = () => 行の要素().locator("td").nth(5);
   await step(3, async () => {
-    const rows = await 行を読む();
-    expect(rows.length, `検索結果の「${型}」の行の数`).toBe(1);
-    expect(rows[0].登録デッキ数, "登録デッキ数").toBe("0");
+    const 列名の画面 = ((await l.結果の表.locator("thead th").nth(5).innerText().catch(() => "")) ?? "").replace(/\s+/g, " ").trim();
+    note(`画面の列名は「${列名の画面}」。正本の「登録デッキ数」に当たる欄として読んだ（画面の列名は正本と違う）`);
+    await expect(行の要素(), `検索結果の「${型}」の行の数`).toHaveCount(1);
+    await expect(デッキ数の欄(), `「${型}」の行の「${列名の画面}」（画面で確認）`).toHaveText("0");
   });
   let s!: デッキCSV登録画面;
   await step(4, async () => { s = await 一覧から開く(page); });
-  await step(5, async () => { await 選んで送る(s, "new-rj1506-001.csv"); note(アップロードの注記); });
+  await step(5, async () => { await 選んで送る(s, "new-rj1506-001.csv", undefined, capture); note(アップロードの注記); });
   await step(6, async () => { await l.開く(); await l.名前で検索する(型); note(検索の注記); });
   await expected(async () => {
-    const rows = await 行を読む();
-    expect(rows.length, `検索結果の「${型}」の行の数`).toBe(1);
-    expect.soft(rows[0].登録デッキ数, "登録デッキ数").toBe("1");
+    await expect(行の要素(), `検索結果の「${型}」の行の数`).toHaveCount(1);
+    await expect.soft(デッキ数の欄(), `「${型}」の行の「登録アーキタイプ数」の欄（正本の「登録デッキ数」。画面で確認）`).toHaveText("1");
   });
 });
 

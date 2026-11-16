@@ -38,7 +38,7 @@ const 正規 = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 export async function 言語を切り替える(page: Page): Promise<void> {
   const link = page.locator(".p-hareruya-header__nav-item--lang a").first();
   await link.waitFor({ state: "visible", timeout: 30_000 });
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 90_000 }), link.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 90_000 }), link.click({ noWaitAfter: true })]);
 }
 
 /** 公開側のトップ（日本語表示）を開く */
@@ -68,7 +68,7 @@ export class UsageRankingPage {
   async 入口を押す(): Promise<void> {
     const a = ランキングへの入口(this.page, this.lang);
     await expect(a, "メタゲーム一覧の、採用枚数ランキングへの入口").toHaveCount(1);
-    await Promise.all([this.page.waitForURL(/\/deck\/\d+\/usage_ranking\//, { waitUntil: "load", timeout: 90_000 }), a.click()]);
+    await Promise.all([this.page.waitForURL(/\/deck\/\d+\/usage_ranking\//, { waitUntil: "load", timeout: 90_000 }), a.click({ noWaitAfter: true })]);
     await this.読み込みを待つ();
   }
 
@@ -182,7 +182,7 @@ export class UsageRankingPage {
   }
   async デッキ検索ページを押す(): Promise<void> {
     await expect(this.デッキ検索ページ, "画面上部の「デッキ検索ページ」").toHaveCount(1);
-    await Promise.all([this.page.waitForURL((u) => /\/deck\/$/.test(u.pathname), { waitUntil: "load", timeout: 90_000 }), this.デッキ検索ページ.click()]);
+    await Promise.all([this.page.waitForURL((u) => /\/deck\/$/.test(u.pathname), { waitUntil: "load", timeout: 90_000 }), this.デッキ検索ページ.click({ noWaitAfter: true })]);
   }
 
   /** 画面下部の「戻る」 */
@@ -190,6 +190,6 @@ export class UsageRankingPage {
   async 戻るを押す(): Promise<void> {
     await expect(this.戻る, "画面下部の「戻る」").toHaveCount(1);
     await this.戻る.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForURL(/\/deck\/\d+\/metagame\//, { waitUntil: "load", timeout: 90_000 }), this.戻る.click()]);
+    await Promise.all([this.page.waitForURL(/\/deck\/\d+\/metagame\//, { waitUntil: "load", timeout: 90_000 }), this.戻る.click({ noWaitAfter: true })]);
   }
 }

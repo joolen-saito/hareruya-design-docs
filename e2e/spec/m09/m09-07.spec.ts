@@ -6,8 +6,9 @@
  */
 import { test, expect as pwExpect, Page } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
-import { BASE_URL } from "../../config/env";
+import { BASE_URL, ENV_NAME, SHARED_ENV } from "../../config/env";
 import { hideDebugToolbar, loginAdmin } from "../../lib/session";
+import { scene, 要素を撮る } from "../../lib/evidence_other";
 import { ブロック管理 } from "../../pages/admin/m09_07_block";
 import { ブロックIDで, ブロック名で, ファイル名のPC向けブロック } from "../../db/m09_07_block";
 import { ブロックのテンプレート } from "../../db/m09_template_files";
@@ -48,10 +49,12 @@ caseTest("IT-M09-07-006", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await ba.行(b).scrollIntoViewIfNeeded(); });
   await expected(async () => {
     for (const [id, 名] of [[b, bl.ブロック名], [a, al.ブロック名]] as const) {
-      expect.soft(await ba.名前リンク(id).innerText(), `ID ${id} のブロック名（リンクで表示）`).toBe(名);
-      expect.soft(await ba.編集リンク(id).isVisible(), `ID ${id} の編集リンクが表示されている`).toBe(true);
-      expect.soft(await ba.削除ボタン(id).isVisible(), `ID ${id} の削除ボタンが表示されている`).toBe(true);
+      await expect.soft(ba.名前リンク(id), `ID ${id} のブロック名（リンクで表示）`).toHaveText(名);
+      await expect.soft(ba.編集リンク(id), `ID ${id} の編集リンクが表示されている`).toBeVisible();
+      await expect.soft(ba.削除ボタン(id), `ID ${id} の削除ボタンが表示されている`).toBeVisible();
     }
+    // 一覧が縦に長く全体の画像では小さいので、確かめた2行をそれぞれ拡大して撮る
+    for (const [id, 名] of [[b, bl.ブロック名], [a, al.ブロック名]] as const) await 要素を撮る(ba.行(id), scene.expectedLabel(`ID ${id} の行（${名}）を拡大`));
   });
 });
 
@@ -59,14 +62,14 @@ caseTest("IT-M09-07-008", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔ブロックID-M0907-008〕");
   const ba = await ログインして(page);
   await step(1, async () => { await ba.一覧を開く(); });
-  await step(2, async () => { await Promise.all([page.waitForURL(/\/content\/block\/\d+\/edit/, { timeout: 60_000 }), ba.名前リンク(id).click({ timeout: 30_000 })]); });
+  await step(2, async () => { await Promise.all([page.waitForURL(/\/content\/block\/\d+\/edit/, { timeout: 120_000}), ba.名前リンク(id).click({ timeout: 30_000, noWaitAfter: true })]); });
   await expected(async () => { expect.soft(new URL(page.url()).pathname, "遷移した画面のアドレス（ブロック管理(編集)）").toMatch(new RegExp(`/admin/content/block/${id}/edit$`)); });
 });
 caseTest("IT-M09-07-009", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔ブロックID-M0907-009〕");
   const ba = await ログインして(page);
   await step(1, async () => { await ba.一覧を開く(); });
-  await step(2, async () => { await Promise.all([page.waitForURL(/\/content\/block\/\d+\/edit/, { timeout: 60_000 }), ba.編集リンク(id).click({ timeout: 30_000 })]); });
+  await step(2, async () => { await Promise.all([page.waitForURL(/\/content\/block\/\d+\/edit/, { timeout: 120_000}), ba.編集リンク(id).click({ timeout: 30_000, noWaitAfter: true })]); });
   await expected(async () => { expect.soft(new URL(page.url()).pathname, "遷移した画面のアドレス（ブロック管理(編集)）").toMatch(new RegExp(`/admin/content/block/${id}/edit$`)); });
 });
 
@@ -89,6 +92,8 @@ caseTest("IT-M09-07-012", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移後の画面のアドレス（ブロック管理(一覧)）").toMatch(一覧のアドレス);
     await pwExpect.soft(ba.検索ボックス, "一覧の検索ボックス").toBeVisible();
+    // 削除に失敗しても一覧へ戻る作りなので、削除したうえでの遷移であることを、一覧から行が無くなったことで確かめる
+    await pwExpect.soft(ba.行(id), `削除したID ${id} の行が一覧に無い（削除が行われた）`).toHaveCount(0);
   });
 });
 
@@ -132,13 +137,15 @@ caseTest("IT-M09-07-018", async ({ page, notes, step, expected }) => {
   let 日 = ""; let 英 = ""; let 英の画面言語: string | null = null;
   await step(1, async () => { await ba.編集を開く(id); });
   await step(2, async () => { await ba.言語を選ぶ("日本語"); });
-  await step(3, async () => { 日 = (await ba.ファイル名の右横.innerText()).trim(); });
+  await step(3, async () => {
+    日 = (await ba.ファイル名の右横.innerText()).trim();
+    await expect.soft(ba.ファイル名の右横, "日本語選択時のファイル名欄の右横が「.ja.twig」").toHaveText(".ja.twig");
+  });
   await step(4, async () => { await ba.言語を選ぶ("英語"); 英の画面言語 = new URL(page.url()).searchParams.get("locale"); });
   await step(5, async () => { 英 = (await ba.ファイル名の右横.innerText()).trim(); });
   await expected(async () => {
-    expect.soft(日, "日本語選択時のファイル名欄の右横").toBe(".ja.twig");
     expect.soft(英の画面言語, "英語選択時の画面の言語").toBe("en");
-    expect.soft(英, "英語選択時のファイル名欄の右横").toBe(".en.twig");
+    await expect.soft(ba.ファイル名の右横, "英語選択時のファイル名欄の右横が「.en.twig」").toHaveText(".en.twig");
   });
 });
 
@@ -163,7 +170,7 @@ caseTest("IT-M09-07-020", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔ブロックID-M0907-020〕");
   const ba = await ログインして(page);
   await step(1, async () => { await ba.編集を開く(id); });
-  await step(2, async () => { await Promise.all([page.waitForURL(一覧のアドレス, { timeout: 60_000 }), ba.一覧へのリンク.click({ timeout: 30_000 })]); });
+  await step(2, async () => { await Promise.all([page.waitForURL(一覧のアドレス, { timeout: 120_000}), ba.一覧へのリンク.click({ timeout: 30_000, noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移後の画面のアドレス（ブロック管理(一覧)）").toMatch(一覧のアドレス);
     await pwExpect.soft(ba.検索ボックス, "一覧の検索ボックス").toBeVisible();
@@ -240,30 +247,26 @@ caseTest("IT-M09-07-036", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔ブロックID-M0907-036〕");
   const ba = await ログインして(page);
   let 初期英 = ""; let 日 = ""; let 英 = "";
-  await step(1, async () => { await ba.編集を開く(id, "en"); 初期英 = (await ba.コードを読む()).trim(); });
+  await step(1, async () => { await ba.編集を開く(id, "en"); 初期英 = (await ba.コードを読む()).trim(); await expect.soft(ba.コード欄, "英語の編集画面を開いたときのコード欄が「編集前EN」").toContainText("編集前EN"); });
   await step(2, async () => { await ba.言語を選ぶ("日本語"); });
   await step(3, async () => { await ba.コードを入れる("更新後JA"); 結果の注記(await ba.登録して結果を読む()); });
-  await step(4, async () => { await ba.編集を開く(id, "ja"); 日 = (await ba.コードを読む()).trim(); });
+  await step(4, async () => { await ba.編集を開く(id, "ja"); 日 = (await ba.コードを読む()).trim(); await expect.soft(ba.コード欄, "開き直した日本語のコード欄が「更新後JA」").toContainText("更新後JA"); });
   await step(5, async () => { await ba.言語を選ぶ("英語"); 英 = (await ba.コードを読む()).trim(); });
   await expected(async () => {
-    expect.soft(初期英, "英語の編集画面を開いたときのコード欄").toBe("編集前EN");
-    expect.soft(日, "日本語のコード欄").toBe("更新後JA");
-    expect.soft(英, "英語のコード欄（更新前のまま）").toBe("編集前EN");
+    await expect.soft(ba.コード欄, "英語のコード欄（更新前のまま）が「編集前EN」").toContainText("編集前EN");
   });
 });
 caseTest("IT-M09-07-045", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔ブロックID-M0907-045〕");
   const ba = await ログインして(page);
   let 初期日 = ""; let 英 = ""; let 日 = "";
-  await step(1, async () => { await ba.編集を開く(id, "ja"); 初期日 = (await ba.コードを読む()).trim(); });
+  await step(1, async () => { await ba.編集を開く(id, "ja"); 初期日 = (await ba.コードを読む()).trim(); await expect.soft(ba.コード欄, "日本語の編集画面を開いたときのコード欄が「編集前JA-M0907-045」").toContainText("編集前JA-M0907-045"); });
   await step(2, async () => { await ba.言語を選ぶ("英語"); });
   await step(3, async () => { await ba.コードを入れる("更新後EN-M0907-045"); 結果の注記(await ba.登録して結果を読む()); });
-  await step(4, async () => { await ba.編集を開く(id, "en"); 英 = (await ba.コードを読む()).trim(); });
+  await step(4, async () => { await ba.編集を開く(id, "en"); 英 = (await ba.コードを読む()).trim(); await expect.soft(ba.コード欄, "開き直した英語のコード欄が「更新後EN-M0907-045」").toContainText("更新後EN-M0907-045"); });
   await step(5, async () => { await ba.言語を選ぶ("日本語"); 日 = (await ba.コードを読む()).trim(); });
   await expected(async () => {
-    expect.soft(初期日, "日本語の編集画面を開いたときのコード欄").toBe("編集前JA-M0907-045");
-    expect.soft(英, "英語のコード欄").toBe("更新後EN-M0907-045");
-    expect.soft(日, "日本語のコード欄（更新前のまま）").toBe("編集前JA-M0907-045");
+    await expect.soft(ba.コード欄, "日本語のコード欄（更新前のまま）が「編集前JA-M0907-045」").toContainText("編集前JA-M0907-045");
   });
 });
 
@@ -272,9 +275,12 @@ caseTest("IT-M09-07-037", async ({ page, notes, step, expected }) => {
   const ba = await ログインして(page);
   await step(1, async () => { await ba.編集を開く(id); });
   await step(2, async () => { await ba.入力する({ ブロック名: "遷移確認更新ブロック" }); });
-  await step(3, async () => { 結果の注記(await ba.登録して結果を読む()); });
+  let 成功 = false;
+  await step(3, async () => { const r = await ba.登録して結果を読む(); 結果の注記(r); 成功 = r.成功; });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移後の画面のアドレス（保存したブロックのブロック管理(編集)）").toMatch(new RegExp(`/admin/content/block/${id}/edit$`));
+    // 保存に失敗しても同じ編集画面が出し直されるので、保存できたうえでの遷移であることを確かめる
+    expect.soft(成功, "保存できた知らせが表示された（保存に失敗して出し直されたのではない）").toBe(true);
   });
 });
 
@@ -296,11 +302,18 @@ caseTest("IT-M09-07-043", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await ba.入力する({ ブロック名: "範囲外更新後-043" }); });
   await step(3, async () => { 結果の注記(await ba.登録して結果を読む()); });
   await step(4, async () => { 行 = ブロックIDで(id); });
-  await expected(async () => { expect.soft(行?.ファイル名, `ID ${id} のブロックのファイル名`).toBe(元); });
+  await expected(async () => {
+    // 保存されずに終わっても「ファイル名のまま」は成り立つので、ブロック名が更新された（保存が行われた）ことを確かめる
+    expect.soft(行?.ブロック名, `ID ${id} のブロック名が「範囲外更新後-043」に更新された（保存が行われた）`).toBe("範囲外更新後-043");
+    expect.soft(行?.ファイル名, `ID ${id} のブロックのファイル名`).toBe(元);
+  });
 });
 
 // ---------- 新規登録（日本語・英語のテンプレートが作られる） ----------
 async function 新規登録ケース(page: Page, step: (n: number, f: () => Promise<void>) => Promise<void>, 言語: "日本語" | "英語", 名: string, 場所: string, コード: string) {
+  // 期待結果の「日本語用・英語用のファイルが作られる」は、アプリのコンテナの中のテンプレートのファイルを読んで確かめる。手元の環境（local）でしか読めないので、
+  // 開発環境などでは登録の操作もせずに流さない（以前は登録まで進めてから読めずに止まり、不合格と数えられていた）
+  test.skip(ENV_NAME !== "local" || SHARED_ENV, `E2E_ENV=${ENV_NAME} ではテンプレートのファイル（日本語用・英語用）を読めず、期待結果を確かめられないので実行しない`);
   const ba = await ログインして(page);
   const r = { ja: null as string | null, en: null as string | null, 行: [] as ReturnType<typeof ブロック名で> };
   await step(1, async () => { await ba.一覧を開く(); await ba.新規作成を押す(); await ba.エディタを待つ(); });

@@ -70,7 +70,7 @@ export class HistoryDetailPage {
   }
   get マイページへ戻る(): Locator { return this.page.getByRole("link", { name: "マイページへ戻る" }); }
   async マイページへ戻るを押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.マイページへ戻る.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.マイページへ戻る.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 

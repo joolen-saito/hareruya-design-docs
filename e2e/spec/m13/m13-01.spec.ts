@@ -6,10 +6,10 @@ import { test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
-import { EventListPage } from "../../pages/admin/m13_01_event_list";
+import { EventListPage, M1301_東京店 } from "../../pages/admin/m13_01_event_list";
 import { ページ表示件数マスタの既定値, 登録済みのイベントか } from "../../db/m13_01";
 import { M1301_ADMIN } from "../../seeds/m13-01";
-import { OSAKA } from "../../seeds/m13-01-b";
+import { NAGOYA, OSAKA } from "../../seeds/m13-01-b";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const ids = (s: string) => s.split(",");
@@ -24,7 +24,7 @@ caseTest("IT-M13-01-001", async ({ page, step, expected }) => {
     const d = new Date(); d.setMonth(d.getMonth() - 3);
     const want = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
     expect.soft(from, "開催日(From)の初期値（実行日の3か月前）").toBe(want);
-    expect.soft(shops, "店舗の初期値（メンバーのデフォルト表示店舗）").toEqual(["東京店"]);
+    expect.soft(shops, "店舗の初期値（メンバーのデフォルト表示店舗）").toEqual([M1301_東京店]);
   });
 });
 
@@ -136,7 +136,7 @@ caseTest("IT-M13-01-004", async ({ page, step, expected }) => {
     await list.ルール適用度.selectOption({ label: "競技" });
     // 正本は店舗「東京店」と「大阪店」。大阪店は同名の店舗が複数あり選べないので、東京店だけを選ぶ
     note("店舗は「東京店」と「大阪店」を選ぶ手順だが、大阪店は手元のDBに同名の店舗が複数あるため、東京店だけを選んだ");
-    await list.店舗を選ぶ(["東京店"]);
+    await list.店舗を選ぶ([M1301_東京店]);
   });
   await step(3, async () => { await list.クリアを押す(); });
   await expected(async () => {
@@ -169,7 +169,7 @@ caseTest("IT-M13-01-025", async ({ page, notes, step, expected }) => {
   let 行 = "";
   await step(4, async () => { 行 = await list.行の文(notes.get("〔イベントID-M1301-共有-DISPLAY〕")); });
   await expected(async () => {
-    expect.soft(行, "開催店舗").toContain("東京店");
+    expect.soft(行, "開催店舗").toContain(M1301_東京店);
     expect.soft(行, "開催日時（同店舗で最も早い日時）").toContain("2026/09/01 09:00");
     expect.soft(行, "遅い日時は表示されない").not.toContain("2026/09/02 10:00");
   });
@@ -179,7 +179,7 @@ caseTest("IT-M13-01-026", async ({ page, step, expected }) => {
   await loginAdmin(page, M1301_ADMIN);
   const list = new EventListPage(page);
   await step(1, async () => { await list.開く(); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("a.btn-ec-conversion[href$='/event/create']").click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("a.btn-ec-conversion[href$='/event/create']").click({ noWaitAfter: true })]); });
   await expected(async () => {
     expect(new URL(page.url()).pathname, "遷移した画面（イベント登録）").toMatch(/\/event\/create$/);
   });
@@ -196,7 +196,7 @@ caseTest("IT-M13-01-027", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1301_ADMIN);
   const list = new EventListPage(page); const id = notes.get("〔イベントID-M1301-共有-DELETE-A〕");
   await step(1, async () => { await 編集確認を検索(list); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), list.行(id).locator(`a[href$='/event/${id}/edit']`).first().click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), list.行(id).locator(`a[href$='/event/${id}/edit']`).first().click({ noWaitAfter: true })]); });
   await expected(async () => {
     expect(new URL(page.url()).pathname, "遷移した画面（イベント編集）").toMatch(new RegExp(`/event/${id}/edit$`));
   });
@@ -208,9 +208,9 @@ caseTest("IT-M13-01-028", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await 編集確認を検索(list); });
   await step(2, async () => { await list.編集ボタンを押す(id); });
   await expected(async () => {
-    expect.soft(list.メニュー項目(id, "編集"), "メニューの「編集」を選択できる").toBeVisible();
-    expect.soft(list.メニュー項目(id, "削除"), "メニューの「削除」を選択できる").toBeVisible();
-    expect.soft(list.メニュー項目(id, "削除"), "メニューの「削除」が有効").toBeEnabled();
+    await expect.soft(list.メニュー項目(id, "編集"), "メニューの「編集」を選択できる").toBeVisible();
+    await expect.soft(list.メニュー項目(id, "削除"), "メニューの「削除」を選択できる").toBeVisible();
+    await expect.soft(list.メニュー項目(id, "削除"), "メニューの「削除」が有効").toBeEnabled();
   });
 });
 
@@ -219,7 +219,7 @@ caseTest("IT-M13-01-029", async ({ page, notes, step, expected }) => {
   const list = new EventListPage(page); const id = notes.get("〔イベントID-M1301-共有-DELETE-A〕");
   await step(1, async () => { await 編集確認を検索(list); });
   await step(2, async () => { await list.編集ボタンを押す(id); });
-  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), list.メニュー項目(id, "編集").click()]); });
+  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), list.メニュー項目(id, "編集").click({ noWaitAfter: true })]); });
   await expected(async () => {
     expect(new URL(page.url()).pathname, "遷移した画面（イベント編集）").toMatch(new RegExp(`/event/${id}/edit$`));
   });
@@ -245,8 +245,13 @@ caseTest("IT-M13-01-031", async ({ page, notes, step, expected }) => {
   const list = new EventListPage(page); const id = notes.get("〔イベントID-M1301-031〕");
   await step(1, async () => { await list.開く(); await list.開催日From.fill(""); await list.名前略称で検索する(rc("削除遷移確認")); });
   await step(2, async () => { await list.編集ボタンを押す(id); });
-  await step(3, async () => { await list.削除して確認する(id); });
+  let r = { 選べた: false, 確認が出た: false };
+  await step(3, async () => { r = await list.削除して確認する(id); });
   await expected(async () => {
+    // 削除を押す前もイベント一覧の画面なので、アドレスだけでは移ったことにならない。削除を押したこと・「削除しました」・一覧から消えたことも見る
+    expect.soft(r.確認が出た, "削除を選び、確認画面で削除を押した").toBe(true);
+    await expect.soft(list.成功の表示, "削除成功の表示").toContainText("削除しました");
+    expect.soft(await list.結果のID(), "遷移後の一覧に削除したイベントが無い").not.toContain(id);
     expect(new URL(page.url()).pathname, "削除成功後の画面（イベント一覧）").toMatch(/\/event(\/page\/\d+)?$/);
   });
 });
@@ -321,7 +326,7 @@ caseTest("IT-M13-01-017", async ({ page, notes, step, expected }) => {
   let p1: string[] = [];
   await step(5, async () => { p1 = await list.結果のID(); });
   let p2: string[] = [];
-  await step(6, async () => { await list.ページを選ぶ(2); p2 = await list.結果のID(); });
+  await step(6, async () => { await list.ページを選んで待つ(2); p2 = await list.結果のID(); });
   await expected(async () => {
     expect.soft(await list.名前略称.inputValue(), "検索条件「ページ対象」が復元される").toBe(rc("ページ対象"));
     expect.soft([...p1, ...p2].sort(), "2ページを通して11件が重複・欠落なく1回ずつ表示される").toEqual([...全部].sort());
@@ -339,7 +344,7 @@ caseTest("IT-M13-01-019", async ({ page, step, expected }) => {
     const url = await list.件数.locator("option").first().getAttribute("value");
     const v = (url ?? "").replace(/page_count=\d+/, "page_count=11");
     await Promise.all([
-      page.waitForNavigation({ waitUntil: "load" }),
+      page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
       list.件数.evaluate((el, value) => {
         const sel = el as HTMLSelectElement;
         const o = document.createElement("option"); o.value = value; o.textContent = "11件"; sel.appendChild(o); sel.value = value;
@@ -387,7 +392,7 @@ caseTest("IT-M13-01-022", async ({ page, step, expected }) => {
   await step(2, async () => {
     // ソート順の選択肢に値「invalid-order」を追加して選び、変更を送信する
     await Promise.all([
-      page.waitForNavigation({ waitUntil: "load" }),
+      page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
       list.ソート順.evaluate((el) => {
         const sel = el as HTMLSelectElement;
         const o = document.createElement("option"); o.value = "invalid-order"; o.textContent = "invalid-order"; sel.appendChild(o); sel.value = "invalid-order";
@@ -396,9 +401,10 @@ caseTest("IT-M13-01-022", async ({ page, step, expected }) => {
     ]);
   });
   await expected(async () => {
-    const text = (await page.locator("body").innerText()).replace(/\s+/g, " ");
-    expect.soft(text, "並び順のエラーが表示される").toMatch(/並び|ソート|不正|正しくない/);
-    expect.soft(await list.結果の表が表示されている(), "検索結果の表が表示されない初期表示へ戻る").toBe(false);
+    // 画面の見出し・メニューにも「並び替え」などの文字があるので、エラーの表示（警告の帯・入力欄のエラー）の文だけを見る
+    const text = await list.エラーの文();
+    expect.soft(text, "並び順のエラーが表示される（エラーの表示の文）").toMatch(/並び|ソート|不正|正しくない/);
+    expect.soft(!(await list.結果の表が表示されている()), "検索結果の表が表示されない初期表示へ戻る").toBe(true);
   });
 });
 
@@ -407,11 +413,17 @@ caseTest("IT-M13-01-024", async ({ page, notes, step, expected }) => {
   const list = new EventListPage(page); const id = notes.get("〔イベントID-M1301-024〕");
   await step(1, async () => { await list.開く(); await list.クリアを押す(); await list.名前略称で検索する(rc("ページ対象")); });
   await step(2, async () => { await list.件数を選ぶ(10); });
-  await step(3, async () => { await list.ページを選ぶ(2); });
-  await step(4, async () => { await list.編集ボタンを押す(id); await list.削除して確認する(id); });
+  let 二ページ目 = 0;
+  await step(3, async () => { await list.ページを選んで待つ(2); 二ページ目 = (await list.表示中のページ()) ?? 0; });
+  let r = { 選べた: false, 確認が出た: false };
+  await step(4, async () => { await list.編集ボタンを押す(id); r = await list.削除して確認する(id); });
   await step(5, async () => { await page.waitForLoadState("load"); /* 確認画面の「OK」は手順4で押した */ });
   await expected(async () => {
-    expect.soft(await list.現在のページ(), "ページ番号（1へ補正される）").toBe(1);
+    expect.soft(二ページ目, "削除の前は2ページ目を表示していた").toBe(2);
+    expect.soft(r.確認が出た, "削除を選び、確認画面で削除を押した").toBe(true);
+    await expect.soft(list.成功の表示, "削除しましたの表示").toContainText("削除しました");
+    // 削除のあとのアドレスは /event/page/2 のままのことがあるので、画面のページ送りの選ばれている番号で見る
+    expect.soft(await list.表示中のページ(), "ページ番号（1へ補正される）").toBe(1);
     expect.soft((await list.結果のID()).length, "1ページ目に検索結果が表示される").toBeGreaterThan(0);
   });
 });
@@ -424,7 +436,8 @@ caseTest("IT-M13-01-046", async ({ page, notes, step, expected }) => {
   await step(3, async () => { await list.名前略称で検索する(rc("M1301-046")); });
   await step(4, async () => { await list.件数を選ぶ(10); });
   await step(5, async () => {
-    await list.ページを選ぶ(2);
+    await list.ページを選んで待つ(2);
+    expect.soft(await list.表示中のページ(), "2ページ目を表示している").toBe(2);
     expect.soft(await list.結果のID(), "2ページ目にID 〔イベントID-M1301-046A〕が表示される").toContain(a);
   });
   await step(6, async () => { await list.開く(); });
@@ -432,7 +445,7 @@ caseTest("IT-M13-01-046", async ({ page, notes, step, expected }) => {
   await step(8, async () => { await list.名前略称で検索する(rc("M1301-046")); });
   await expected(async () => {
     const got = await list.結果のID();
-    expect.soft(await list.現在のページ(), "表示中のページ（1ページ目）").toBe(1);
+    expect.soft(await list.表示中のページ(), "表示中のページ（1ページ目）").toBe(1);
     expect.soft(got.length, "1ページ目の件数").toBe(10);
     expect.soft(got, "ID 〔イベントID-M1301-046A〕が表示されない").not.toContain(a);
   });
@@ -445,25 +458,29 @@ caseTest("IT-M13-01-047", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await list.クリアを押す(); });
   await step(3, async () => { await list.名前略称で検索する(rc("M1301-047")); });
   await step(4, async () => { await list.件数を選ぶ(10); });
-  await step(5, async () => { await list.ページを選ぶ(2); });
-  await step(6, async () => { await list.編集ボタンを押す(b); await list.削除して確認する(b); });
+  await step(5, async () => { await list.ページを選んで待つ(2); });
+  let r = { 選べた: false, 確認が出た: false };
+  await step(6, async () => { await list.編集ボタンを押す(b); r = await list.削除して確認する(b); });
   await step(7, async () => { await page.waitForLoadState("load"); /* 確認画面の「OK」は手順6で押した */ });
   await expected(async () => {
-    expect.soft(await list.現在のページ(), "ページ番号（2ページ目のまま）").toBe(2);
+    expect.soft(r.確認が出た, "削除を選び、確認画面で削除を押した").toBe(true);
+    await expect.soft(list.成功の表示, "削除しましたの表示").toContainText("削除しました");
+    // アドレスでなく、画面のページ送りの選ばれている番号で見る
+    expect.soft(await list.表示中のページ(), "ページ番号（2ページ目のまま）").toBe(2);
     expect.soft(await list.結果のID(), "表示されるイベント（ID 〔イベントID-M1301-047A〕だけ）").toEqual([a]);
   });
 });
 
 // ================= 店舗が複数・複合条件・権限の違う行 =================
 // 手順の「大阪店」は、機能専用の試験店舗（seeds/m13-01-b.ts）の店名として読む
-const 店舗の読み替え = `手順の「大阪店」「名古屋店」は、同名の店舗が複数あって決められないので、機能専用の試験店舗「${OSAKA.店名}」「M1301名古屋店」として読んだ（シード作成時の問題の読み替え）`;
+const 店舗の読み替え = `手順の「大阪店」は店舗「${OSAKA.店名}」（店舗ID ${OSAKA.店舗ID}）、「名古屋店」は店舗「${NAGOYA.店名}」（店舗ID ${NAGOYA.店舗ID}）として読んだ（店舗は作らない。依頼者 2026-11-15）`;
 
 caseTest("IT-M13-01-011", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1301_ADMIN);
   const list = new EventListPage(page);
   await step(1, async () => { await list.開く(); });
   await step(2, async () => { await list.クリアを押す(); });
-  await step(3, async () => { await list.名前略称.fill(rc("店舗複数確認")); await list.店舗を選ぶ(["東京店", OSAKA.店名]); });
+  await step(3, async () => { await list.名前略称.fill(rc("店舗複数確認")); await list.店舗を選ぶ([M1301_東京店, OSAKA.店名]); });
   await step(4, async () => { await list.検索する(); });
   await expected(async () => {
     const got = await list.結果のID();
@@ -483,7 +500,7 @@ caseTest("IT-M13-01-012", async ({ page, notes, step, expected }) => {
     await list.日付を入れる(list.開催日From, "2026/08/15");
     await list.日付を入れる(list.開催日To, "2026/08/15");
     await list.フォーマット.selectOption({ label: "スタンダード" });
-    await list.店舗を選ぶ(["東京店"]);
+    await list.店舗を選ぶ([M1301_東京店]);
     await list.ルール適用度.selectOption({ label: "競技" });
   });
   await step(4, async () => { await list.検索する(); });
@@ -496,14 +513,20 @@ caseTest("IT-M13-01-012", async ({ page, notes, step, expected }) => {
 caseTest("IT-M13-01-032", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1301_ADMIN);
   const list = new EventListPage(page); const id = notes.get("〔イベントID-M1301-共有-DELETE-B〕");
-  await step(1, async () => { await list.開く(); await list.開催日From.fill(""); await list.名前略称で検索する(rc("権限外削除確認")); });
+  // 店舗の欄の初期値はメンバーのデフォルト表示店舗（M1301東京店）で、そのまま検索すると権限外の店舗のイベントが出ない（2026-11-14 の開発環境の回で0件になり止まった）。
+  // 手順の「イベント名、略称で検索する」は、その条件だけで検索することと読み、020 などと同じく「検索条件をクリア」してから入れる
+  await step(1, async () => { await list.開く(); await list.クリアを押す(); await list.名前略称で検索する(rc("権限外削除確認")); });
   await step(2, async () => { await list.編集ボタンを押す(id); });
   await expected(async () => {
     expect.soft(await list.結果のID(), "権限外店舗のイベントが検索結果に表示される").toContain(id);
-    expect.soft(await list.メニューの項目(id), "ポップアップメニューの選択肢（「削除」が無い）").not.toContain("削除");
+    const 項目 = await list.メニューの項目(id);
+    // メニューが開いていることを「編集」で見てから、「削除」が無いことを確かめる
+    expect.soft(項目, "ポップアップメニューが開いている（「編集」が表示される）").toContain("編集");
+    expect.soft(項目, "ポップアップメニューの選択肢（「削除」が無い）").not.toContain("削除");
     await expect.soft(list.メニュー項目(id, "削除"), "メニューの「削除」が表示されない").toHaveCount(0);
   });
   note("シード表の権限外店舗「大阪店」は、このシードの前例（M13-02 の店舗B管理者が登録した店舗B）に読み替えた。東京店の管理者は店舗Bの編集権限を持たない");
+  note("手順1は、店舗の欄の初期値（メンバーのデフォルト表示店舗）を残すと権限外の店舗のイベントが検索結果に出ないので、「検索条件をクリア」を押してからイベント名、略称だけを入れて検索した");
 });
 
 caseTest("IT-M13-01-048", async ({ page, notes, step, expected }) => {
@@ -512,12 +535,13 @@ caseTest("IT-M13-01-048", async ({ page, notes, step, expected }) => {
   const t = notes.get("〔イベントID-M1301-048T〕"), o = notes.get("〔イベントID-M1301-048O〕");
   await step(1, async () => { await list.開く(); });
   await step(2, async () => { await list.クリアを押す(); });
-  await step(3, async () => { await list.名前略称.fill(rc("M1301-048")); await list.店舗を選ぶ(["東京店", OSAKA.店名]); await list.検索する(); });
+  await step(3, async () => { await list.名前略称.fill(rc("M1301-048")); await list.店舗を選ぶ([M1301_東京店, OSAKA.店名]); await list.検索する(); });
   let 東京のメニュー: string[] = []; let 大阪のメニュー: string[] = [];
   await step(4, async () => { await list.編集ボタンを押す(t); 東京のメニュー = await list.メニューの項目(t); await page.keyboard.press("Escape"); });
   await step(5, async () => { await list.編集ボタンを押す(o); 大阪のメニュー = await list.メニューの項目(o); });
   await expected(async () => {
     expect.soft(東京のメニュー, "東京店のID Tのメニューの選択肢（「削除」が表示される）").toContain("削除");
+    expect.soft(大阪のメニュー, "大阪店のID Oのメニューが開いている（「編集」が表示される）").toContain("編集");
     expect.soft(大阪のメニュー, "大阪店のID Oのメニューの選択肢（「削除」が表示されない）").not.toContain("削除");
   });
   note(店舗の読み替え);

@@ -74,17 +74,35 @@ export function 先頭の明細の数量を設定(受注ID: string, 数量: numb
   });
 }
 
-/** 販売中の別の商品（先頭の商品と違う商品）の商品IDと規格ID。購入履歴の明細に足す */
+/**
+ * 販売中の別の商品（先頭の商品と違う商品）の商品IDと規格ID。購入履歴の明細に足す。
+ * 状態（card_condition）と言語（language）を持つ規格に限る。購入履歴の画面は商品名を ProductClassRepository::getInfoByClass（状態・言語を内部結合）で引くので、
+ * 持たない規格（EC-CUBE の見本の「ディナーフォーク」など）は商品名が空で出る。晴れる屋の商品（カード・グッズ商品CSV登録の商品）は必ず持つ（2026-11-13 IT-F06-06-010）
+ */
 export function 別の販売中の商品(受注ID: string, 除く: string[] = []): { 商品ID: string; 規格ID: string; 商品名: string } {
   const r = query(
     `select p.id::text as "商品ID", pc.id::text as "規格ID", p.name as "商品名"
        from dtb_product p join dtb_product_class pc on pc.product_id = p.id and pc.visible
       where p.product_status_id = 1 and pc.sale_type_id = 1 and p.name not like '%予約%'
+        and pc.card_condition_id is not null and pc.language_id is not null
         and p.id <> all (select i.product_id from dtb_order_item i where i.order_id = $1::int and i.product_id is not null)
       order by p.id limit 20`, [受注ID]);
   const hit = r.find((x) => !除く.includes(String(x.商品ID)));
   if (!hit) throw new Error("明細に足せる販売中の別の商品が手元のDBに見つからない");
   return { 商品ID: String(hit.商品ID), 規格ID: String(hit.規格ID), 商品名: String(hit.商品名) };
+}
+
+/** 注文が持つ支払方法の名前（購入履歴に出る値。読むだけ） */
+export function 注文の支払方法(受注ID: string): string {
+  const r = query(`select o.payment_method as m from dtb_order o where o.id = $1::int`, [受注ID]);
+  if (r.length === 0) throw new Error(`受注ID ${受注ID} の受注が無い`);
+  return String(r[0].m ?? "");
+}
+
+/** 注文の配送方法の名前（注文の種類の裏づけ。読むだけ。複数あれば「 / 」でつなぐ） */
+export function 注文の配送方法(受注ID: string): string {
+  const r = query(`select string_agg(distinct d.name, ' / ') as n from dtb_shipping s join dtb_delivery d on d.id = s.delivery_id where s.order_id = $1::int`, [受注ID]);
+  return String(r[0]?.n ?? "（配送方法なし）");
 }
 
 /** 先頭の明細を写して、別の商品の明細を足す（金額は先頭の明細のまま） */
@@ -120,6 +138,20 @@ export function 注文日の表示(受注ID: string): string {
   const r = query(`select to_char(order_date at time zone 'Asia/Tokyo', 'YYYY/FMMM/FMDD') as d from dtb_order where id = $1::int`, [受注ID]);
   if (r.length === 0 || !r[0].d) throw new Error(`受注ID ${受注ID} の注文日を読めない`);
   return String(r[0].d);
+}
+
+/** 注文の商品明細の商品ID（明細の並び順・同じ商品は1回。読むだけ） */
+export function 注文の商品ID一覧(受注ID: string): string[] {
+  const r = query(
+    `select i.product_id::text as id, min(i.id) as k from dtb_order_item i
+      where i.order_id = $1::int and i.order_item_type_id = 1 and i.product_id is not null group by i.product_id order by k`, [受注ID]);
+  if (!r.length) throw new Error(`受注ID ${受注ID} に商品の明細が無い`);
+  return r.map((x) => String(x.id));
+}
+
+/** 注文の先頭の商品明細の商品ID（読むだけ） */
+export function 注文の先頭の商品ID(受注ID: string): string {
+  return 注文の商品ID一覧(受注ID)[0];
 }
 
 /** 注文の商品名（明細の並び順） */

@@ -8,6 +8,7 @@ import { Browser, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { CaseCtx, caseTest, expect } from "../../lib/case";
 import { hideDebugToolbar } from "../../lib/session";
+import { 別のブラウザの画面を撮る, scene } from "../../lib/evidence_other";
 import { 言語 } from "../../pages/front/f06_23_contact_history";
 import { ContactDetailPage } from "../../pages/front/f06_24_contact_detail";
 import { mailOf, 種別の名称 } from "../../seeds/f06-23";
@@ -35,7 +36,8 @@ async function 別のセッションで入る(browser: Browser, m: 資格): Prom
   return { h, 閉じる: () => context.close() };
 }
 async function 行の番号を読む(h: ContactDetailPage, 日時: string): Promise<string> {
-  const r = await h.日時の行(日時);
+  // 行は送信日時の数字で探す（日本語表示の一覧の日時の書式は 012 で確かめる。書式の違いで行を見失わないため）
+  const r = await h.日時の数字が合う行(日時);
   expect(r, `一覧に問い合わせ日時 ${日時} の行がある`).toBeDefined();
   return r!.番号;
 }
@@ -47,7 +49,11 @@ caseTest("IT-F06-23-005", async ({ page, browser, step, expected }) => {
     let 番号B = "";
     let 番号A: string[] = [];
     let 一覧: string[] = [];
-    await step(1, async () => { await b.h.開く(); 番号B = await 行の番号を読む(b.h, 日.B); });
+    await step(1, async () => {
+      await b.h.開く(); 番号B = await 行の番号を読む(b.h, 日.B);
+      // 会員Bは別のセッションなので自動の撮影に写らない。会員Bの履歴の画面（送信日時の行と番号）を残す
+      await 別のブラウザの画面を撮る(b.h.page, scene.stepLabel(1, "会員B（別のブラウザ）のお問い合わせ履歴"));
+    });
     await step(2, async () => { await a.開く(); });
     await step(3, async () => { 番号A = [await 行の番号を読む(a, 日.履歴1), await 行の番号を読む(a, 日.履歴2), await 行の番号を読む(a, 日.履歴3)]; });
     await step(4, async () => { 一覧 = (await a.行の内容()).map((r) => r.番号); });
@@ -75,7 +81,8 @@ caseTest("IT-F06-23-007", async ({ page, step, expected }) => {
   await step(3, async () => { r = (await h.行の内容()).find((x) => x.番号 === 番号); });
   await expected(async () => {
     注記種別();
-    expect.soft(r?.日時, "一覧行の問い合わせ日時").toBe(日.履歴1);
+    // 書式（設計は「Y年m月d日 H:i」）は 012 で確かめる。ここでは送信日時が表示されていることを、日時の数字で確かめる
+    expect.soft((r?.日時 ?? "").replace(/\D/g, ""), `一覧行の問い合わせ日時（表示「${r?.日時 ?? ""}」）`).toBe("202608010905");
     expect.soft(r?.種別, "一覧行のお問い合わせ種別").toBe(種別の名称().日本語);
     expect.soft(r?.番号, "一覧行のお問い合わせ番号").toBe(番号);
   });
@@ -86,7 +93,8 @@ function 件数の確認(n: string, 言: 言語, 期待: string) {
     let 件数 = "";
     await step(1, async () => { await h.開く(); });
     await step(2, async () => { 件数 = await h.件数の表示(); });
-    await expected(async () => { expect.soft(件数, "問い合わせ件数の表示").toContain(期待); });
+    // 「13件」なども「3件」を含むので、件数の欄の文がちょうどその値であることを確かめる
+    await expected(async () => { expect.soft(件数, "問い合わせ件数の表示").toBe(期待); });
   };
 }
 caseTest("IT-F06-23-008", 件数の確認("008", "ja", "3件"));
@@ -95,7 +103,7 @@ caseTest("IT-F06-23-012", async ({ page, step, expected }) => {
   const h = await 会員で入る(page, 会員A("012"));
   let r: 行 | undefined;
   await step(1, async () => { await h.開く(); });
-  await step(2, async () => { r = await h.日時の行(日.履歴1); });
+  await step(2, async () => { r = await h.日時の数字が合う行(日.履歴1); });
   await expected(async () => {
     注記種別();
     expect.soft(r, "送信日時2026-08-01 09:05の一覧行がある").toBeDefined();
@@ -107,7 +115,7 @@ caseTest("IT-F06-23-013", async ({ page, step, expected }) => {
   const h = await 会員で入る(page, 会員A("013"), "en");
   let r: 行 | undefined;
   await step(1, async () => { await h.開く(); });
-  await step(2, async () => { r = await h.日時の行("08/01/2026 09:05"); });
+  await step(2, async () => { r = await h.日時の数字が合う行("08/01/2026 09:05"); });
   await expected(async () => {
     注記種別();
     expect.soft(r, "送信日時08/01/2026 09:05の一覧行がある").toBeDefined();
@@ -118,12 +126,15 @@ caseTest("IT-F06-23-013", async ({ page, step, expected }) => {
 caseTest("IT-F06-23-014", async ({ page, step, expected }) => {
   const h = await 会員で入る(page, 会員A("014"));
   let 番号 = "";
+  let 画面の番号 = "";
   await step(1, async () => { await h.開く(); });
   await step(2, async () => {
     番号 = await 行の番号を読む(h, 日.履歴1);
     await h.押して遷移する(h.番号の行(番号).locator(h.行の種別));
+    画面の番号 = await h.詳細の番号();
   });
   await expected(async () => {
+    expect.soft(画面の番号, `詳細に表示されているお問い合わせ番号（控えた番号 ${番号}）`).toBe(番号);
     expect.soft(h.path, `遷移した画面（お問い合わせ番号 ${番号} の詳細）`).toBe(`/ja/contact/history/${番号}/detail`);
     expect.soft(await h.詳細画面である(), "お問い合わせ履歴詳細ページが表示される").toBe(true);
   });
@@ -131,12 +142,15 @@ caseTest("IT-F06-23-014", async ({ page, step, expected }) => {
 caseTest("IT-F06-23-015", async ({ page, step, expected }) => {
   const h = await 会員で入る(page, 会員A("015"));
   let 番号 = "";
+  let 画面の番号 = "";
   await step(1, async () => { await h.開く(); });
   await step(2, async () => {
     番号 = await 行の番号を読む(h, 日.履歴1);
     await h.押して遷移する(h.番号の行(番号).locator(h.行の番号));
+    画面の番号 = await h.詳細の番号();
   });
   await expected(async () => {
+    expect.soft(画面の番号, `詳細に表示されているお問い合わせ番号（控えた番号 ${番号}）`).toBe(番号);
     expect.soft(h.path, `遷移した画面（お問い合わせ番号 ${番号} の詳細）`).toBe(`/ja/contact/history/${番号}/detail`);
     expect.soft(await h.詳細画面である(), "お問い合わせ履歴詳細ページが表示される").toBe(true);
   });
@@ -196,19 +210,24 @@ function 詳細の日時と種別(n: string, 言: 言語, 日時: string, 種別
 caseTest("IT-F06-23-018", 詳細の日時と種別("018", "ja", "2026/08/01 09:05", () => 種別の名称().日本語));
 caseTest("IT-F06-23-019", 詳細の日時と種別("019", "en", "08/01/2026 09:05", () => 種別の名称().英語));
 
+const 注記エラー = "判定の根拠: 設計書（0306 お問い合わせ履歴詳細）は「他会員・存在しない番号を指定したときは当該内容を表示しない。閲覧専用のため画面上の明示エラーは出さない」。当該内容を表示しないことに加え、エラーページ（404 Page Not Found）・エラーの文言を出さないことを確かめた";
 caseTest("IT-F06-23-020", async ({ page, step, expected }) => {
   const h = await 会員で入る(page, 会員A("020"));
+  let 応答 = 0;
   await step(1, async () => { await h.開く(); });
   await step(2, async () => { await h.押して遷移する(h.番号の行(await 行の番号を読む(h, 日.履歴1))); });
   await step(3, async () => {
     expect(await h.詳細画面である(), "置き換える前にお問い合わせ履歴詳細画面が表示されている").toBe(true);
-    const s = await h.URLを開く(h.番号を置き換えたURL("999999"));
-    note(`置き換えたアドレスを開いた応答は ${s}`);
+    応答 = await h.URLを開く(h.番号を置き換えたURL("999999"));
+    note(`置き換えたアドレスを開いた応答は ${応答}`);
   });
   await expected(async () => {
     const 文 = await h.画面の文();
+    note(注記エラー);
     expect.soft(await h.詳細画面である(), "お問い合わせ番号999999の内容（詳細）が表示されない").toBe(false);
     expect.soft(文, "お問い合わせの内容が表示されない").not.toContain("確認したいです");
+    expect.soft(応答, "明示のエラーを出さない（応答がエラー 400 以上でない）").toBeLessThan(400);
+    await expect.soft(h.エラーページの表示, "明示のエラー（404 Page Not Found などのエラーページ・エラーの文言）を出さない").toHaveCount(0);
     expect.soft(await h.エラーや通知の表示(), "エラー・警告のインライン表示、フラッシュ、トーストが出ない").toEqual([]);
   });
 });
@@ -217,17 +236,25 @@ caseTest("IT-F06-23-021", async ({ page, browser, step, expected }) => {
   try {
     const a = await 会員で入る(page, 会員A("021"));
     let 番号B = "";
-    await step(1, async () => { await b.h.開く(); 番号B = await 行の番号を読む(b.h, 日.B); });
+    let 応答 = 0;
+    await step(1, async () => {
+      await b.h.開く(); 番号B = await 行の番号を読む(b.h, 日.B);
+      // 会員Bは別のセッションなので自動の撮影に写らない。会員Bの履歴の画面（送信日時の行と番号）を残す
+      await 別のブラウザの画面を撮る(b.h.page, scene.stepLabel(1, "会員B（別のブラウザ）のお問い合わせ履歴"));
+    });
     await step(2, async () => { await a.開く(); await a.押して遷移する(a.番号の行(await 行の番号を読む(a, 日.履歴1))); });
     await step(3, async () => {
       expect(await a.詳細画面である(), "置き換える前にお問い合わせ履歴詳細画面が表示されている").toBe(true);
-      const s = await a.URLを開く(a.番号を置き換えたURL(番号B));
-      note(`置き換えたアドレスを開いた応答は ${s}`);
+      応答 = await a.URLを開く(a.番号を置き換えたURL(番号B));
+      note(`置き換えたアドレスを開いた応答は ${応答}`);
     });
     await expected(async () => {
       const 文 = await a.画面の文();
+      note(注記エラー);
       expect.soft(await a.詳細画面である(), `会員Bの番号 ${番号B} の詳細が表示されない`).toBe(false);
       expect.soft(文, "会員Bのお問い合わせ内容「会員B秘匿内容」が表示されない").not.toContain("会員B秘匿内容");
+      expect.soft(応答, "明示のエラーを出さない（応答がエラー 400 以上でない）").toBeLessThan(400);
+      await expect.soft(a.エラーページの表示, "明示のエラー（404 Page Not Found などのエラーページ・エラーの文言）を出さない").toHaveCount(0);
       expect.soft(await a.エラーや通知の表示(), "エラー・警告のインライン表示、フラッシュ、トーストが出ない").toEqual([]);
     });
   } finally { await b.閉じる(); }
@@ -237,5 +264,5 @@ caseTest("IT-F06-23-025", async ({ page, step, expected }) => {
   let 件数 = "";
   await step(1, async () => { await h.開く(); });
   await step(2, async () => { 件数 = await h.件数の表示(); });
-  await expected(async () => { expect.soft(件数, "問い合わせ件数の表示").toContain("1件"); });
+  await expected(async () => { expect.soft(件数, "問い合わせ件数の表示（「11件」なども含まないよう、ちょうどの値）").toBe("1件"); });
 });

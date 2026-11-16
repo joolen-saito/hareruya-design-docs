@@ -36,6 +36,8 @@ export type カード = {
   英語?: 画像;
   日本語デッドリンク真?: boolean;
   英語デッドリンク真?: boolean;
+  /** 取得できる画像に、拡張子が .jpg ではない既存の画像URLを優先して使う（拡張子によらず .jpg で保存されることを確かめるケース） */
+  jpg以外?: boolean;
 };
 
 /** ケースと共有するキー（カード名(英)の元） */
@@ -52,8 +54,8 @@ export async function カードを作る(browser: Browser, seedId: string, 行: 
   if (!レアリティ || !レイアウト) throw new Error(`${seedId}: 既存のレアリティ・レイアウトの英語名を引けない`);
   const ノンプロモ = プロモの英語名(1);
   if (!ノンプロモ) throw new Error(`${seedId}: プロモーションID=1 の英語名を引けない`);
-  const 実体 = (言語: number): string => {
-    const u = 既存の画像URL(言語);
+  const 実体 = (言語: number, jpg以外 = false): string => {
+    const u = 既存の画像URL(言語, jpg以外);
     if (!u) throw new Error(`${seedId}: 取得できる既存の画像URL（言語ID=${言語}）が無い`);
     return u;
   };
@@ -66,9 +68,9 @@ export async function カードを作る(browser: Browser, seedId: string, 行: 
         promotion_type: x.プロモ === false ? "" : ノンプロモ, foil: x.foil ? "1" : "0", frame: "Normal", set: x.セット英名 ?? "",
       };
       const 日 = x.日本語 ?? "なし", 英 = x.英語 ?? "なし";
-      if (日 !== "なし") r.image_jp = 日 === "実体あり" ? 実体(日本語) : `m1407/${x.番号}-jp.jpg`;
+      if (日 !== "なし") r.image_jp = 日 === "実体あり" ? 実体(日本語, x.jpg以外) : `m1407/${x.番号}-jp.jpg`;
       // 画像URL(英語)は必須。「なし」のときは実体の無いURLで取り込み、あとで画像の行を消す
-      r.image_en = 英 === "実体あり" ? 実体(英語) : `m1407/${x.番号}-en.jpg`;
+      r.image_en = 英 === "実体あり" ? 実体(英語, x.jpg以外) : `m1407/${x.番号}-en.jpg`;
       return r;
     }));
     await uploadCardCsv(page, csv, "m1407-card.csv", `${seedId} のカードCSV登録`, (m) => reportSeedIssue(seedId, m));
@@ -146,16 +148,16 @@ defineSeed("S-M14-07-BASE-002", async ({ browser, notes, seed }) => {
 defineSeed("S-M14-07-FOIL-SHARED", async ({ browser, notes, seed }) => {
   const s = await セット(browser, seed.シードID, "共有", "FIN-BF", "2099-12-24");
   notes.set("〔カードセットID-M1407-共有〕", s.id);
-  await カードを作る(browser, seed.シードID, [{ 番号: "177252", セット英名: s.英, foil: true, 日本語: "実体あり", 英語: "実体あり" }]);
+  await カードを作る(browser, seed.シードID, [{ 番号: "177252", セット英名: s.英, foil: true, 日本語: "実体あり", 英語: "実体あり", jpg以外: true }]);
   画像注記(seed.シードID);
-  reportSeedIssue(seed.シードID, "カード詳細ID 177252 は固定せず、画面が振った番号にした。保存先の拡張子（.png・.webp）は、既存の画像URLのままで合わせていない。");
+  reportSeedIssue(seed.シードID, "カード詳細ID 177252 は固定せず、画面が振った番号にした。保存先の拡張子（.png・.webp）は合わせられないので、既存の画像URLのうち拡張子が .jpg ではないものを優先して使った（無ければ .jpg のもの）。");
 });
 defineSeed("S-M14-07-BASE-016", async ({ browser, notes, seed }) => {
   const s = await セット(browser, seed.シードID, "016", "FIN-016", "2099-12-18");
   notes.set("〔カードセットID-M1407-016〕", s.id);
-  await カードを作る(browser, seed.シードID, [{ 番号: "177253", セット英名: s.英, 日本語: "なし", 英語: "実体あり" }]);
+  await カードを作る(browser, seed.シードID, [{ 番号: "177253", セット英名: s.英, 日本語: "なし", 英語: "実体あり", jpg以外: true }]);
   画像注記(seed.シードID);
-  reportSeedIssue(seed.シードID, "カードセットの略称は、他のケースの「FIN」と区別するため「FIN-016」（印つき）にした。カード詳細ID 177253 は固定せず、画面が振った番号にした。保存先の拡張子（.gif）は、既存の画像URLのままで合わせていない。");
+  reportSeedIssue(seed.シードID, "カードセットの略称は、他のケースの「FIN」と区別するため「FIN-016」（印つき）にした。カード詳細ID 177253 は固定せず、画面が振った番号にした。保存先の拡張子（.gif）は合わせられないので、既存の画像URLのうち拡張子が .jpg ではないものを優先して使った（無ければ .jpg のもの）。");
 });
 defineSeed("S-M14-07-BASE-021", async ({ browser, notes, seed }) => {
   const s = await セット(browser, seed.シードID, "021", "FIN-BF-021", "2099-12-13");
