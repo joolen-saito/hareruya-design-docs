@@ -38,7 +38,8 @@ export async function readGoodsRootCategoryName(page: Page): Promise<string> {
 /** 番号2のカテゴリの画面に移ったことの確かめ（パンくずの最後が、その行で読んだ名前） */
 export async function expectOnGoodsRootCategoryPage(page: Page, name: string): Promise<void> {
   await expect(page.locator('nav[aria-label="breadcrumb"] li[aria-current="page"] a').last(),
-    `グッズのカテゴリ（番号${GOODS_ROOT_CATEGORY_ID}・名前: ${name}）の画面に移動した`).toHaveText(name);
+    // 開発環境が重いとき、移動先の画面のパンくずが10秒で出ないことがある（2026-11-15 夜 F04-01 053）。60秒待つ
+    `グッズのカテゴリ（番号${GOODS_ROOT_CATEGORY_ID}・名前: ${name}）の画面に移動した`).toHaveText(name, { timeout: 60_000 });
 }
 
 /** グッズ直下のカテゴリをあれば照合、無ければ「子カテゴリ作成」で登録する。 */
