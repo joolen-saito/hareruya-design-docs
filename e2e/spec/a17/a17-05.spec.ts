@@ -190,10 +190,12 @@ caseTest("IT-A17-05-025", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     const c = 規格IDの(商品IDの(r, notes.get("〔商品ID-A1705-025〕")), notes.get("〔規格ID-A1705-025〕"));
     expect.soft(r.状態, "応答の状態").toBe(200);
-    expect.soft(c?.product_class_images ?? "（規格が無い）", "規格画像のURL（2件）").toEqual([
+    // 期待結果は「2件が配列に入ること」で、並び順は定めていない（2026-11-15 夜: アプリはファイル名の順で返した）。並びを除いて比べる
+    const 画像 = Array.isArray(c?.product_class_images) ? [...(c!.product_class_images as string[])].sort() : "（規格が無い）";
+    expect.soft(画像, "規格画像のURL（2件。並び順は問わない）").toEqual([
       "https://stg-files.hareruyamtg.com/img/goods/L/M21/JP/0204-025-front.jpg",
       "https://stg-files.hareruyamtg.com/img/goods/L/M21/JP/0204-025-back.jpg",
-    ]);
+    ].sort());
   });
 });
 
