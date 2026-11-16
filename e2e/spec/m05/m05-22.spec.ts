@@ -124,14 +124,15 @@ caseTest("IT-M05-22-010", async (ctx) => {
   });
 });
 
+// 011: 郵便番号の前の「〒」と番号の間の空白は、期待結果（郵便番号の後ろに都道府県が無い）とは関係ないので許す（2026-11-16。送り主は「〒 A1B2C3」と空白つきで出る）
 caseTest("IT-M05-22-011", リストから("S-M05-22-ADDRESSES-011", "〔出荷指示リストID-M0522-011〕", ["〔注文番号-M0522-011〕"], (pages) => {
   const p = pages[0];
   expect.soft(pages.length, "納品書が出た").toBe(1);
   const a = p?.お届け先 ?? [], b = p?.送り主 ?? [];
   expect.soft(a.indexOf("United States") >= 0 && a.indexOf("United States") < a.findIndex((s) => s.includes("12345")), "お届け先の国「United States」が郵便番号「12345」の上").toBe(true);
-  expect.soft(a.find((s) => s.includes("12345")) ?? "", "お届け先の郵便番号の後ろに都道府県が無い").toMatch(/^〒?12345$/);
+  expect.soft(a.find((s) => s.includes("12345")) ?? "", "お届け先の郵便番号の後ろに都道府県が無い").toMatch(/^〒?\s*12345$/);
   expect.soft(b.indexOf("Canada") >= 0 && b.indexOf("Canada") < b.findIndex((s) => s.includes("A1B2C3")), "送り主の国「Canada」が郵便番号「A1B2C3」の上").toBe(true);
-  expect.soft(b.find((s) => s.includes("A1B2C3")) ?? "", "送り主の郵便番号の後ろに都道府県が無い").toMatch(/^〒?A1B2C3$/);
+  expect.soft(b.find((s) => s.includes("A1B2C3")) ?? "", "送り主の郵便番号の後ろに都道府県が無い").toMatch(/^〒?\s*A1B2C3$/);
 }));
 caseTest("IT-M05-22-012", リストから("S-M05-22-ADDRESSES-012", "〔出荷指示リストID-M0522-012〕", ["〔注文番号-M0522-012〕"], (pages) => {
   const p = pages[0];
@@ -221,7 +222,7 @@ caseTest("IT-M05-22-022", リストから("S-M05-22-ADDRESSES-022", "〔出荷�
   expect.soft(pages.length, "納品書が出た").toBe(1);
   const a = p?.お届け先 ?? [], b = p?.送り主 ?? [];
   expect.soft(a.indexOf("United States") >= 0 && a.indexOf("United States") < a.findIndex((s) => s.includes("77022")), "お届け先の国「United States」が郵便番号「77022」の上").toBe(true);
-  expect.soft(a.find((s) => s.includes("77022")) ?? "", "お届け先の郵便番号の後ろに都道府県が無い").toMatch(/^〒?77022$/);
+  expect.soft(a.find((s) => s.includes("77022")) ?? "", "お届け先の郵便番号の後ろに都道府県が無い").toMatch(/^〒?\s*77022$/);
   expect.soft(b.filter((s) => s === "Japan" || s === "日本"), "送り主に国・地域名が出ない").toEqual([]);
   expect.soft(郵便の行(b), "送り主の郵便番号の後ろに東京都").toMatch(/東京都$/);
 }));
