@@ -19,7 +19,7 @@
  * 「本店」は手元の環境の店舗ID 1（親店舗）。店名は環境で違う（手元は「Hareruya」）ので、在庫検索一覧の検索欄「店舗」の選択肢から読む。
  */
 import fs from "node:fs";
-import { rcFixed } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { expect, Page, test } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
@@ -177,9 +177,14 @@ function defineRcStock(seedId: string, orgSeedId: string, org: RcOrg, store: RcS
 
 defineRcOrg("S-M04-21-RC-ORG-057", RC057, { 試験支店: true });
 defineRcOrg("S-M04-21-RC-ORG-058", RC058, MAIN_STORE);
+// 057・058 の商品コード・商品名・CSV のファイル名は、正本の決め打ちの値に実行ごとの印を付けて作る（案A・lib/run_marker.ts）。
+// 印なしで作ると、前の実行の商品（在庫の記録が付き画面から消せない）と在庫変更CSV登録履歴の同じファイル名が残り、シードが止まる
+// （2026-11-15 夜の回の 057・058）。ケースは商品コードの書式・文字数を見ないので、印を付けても期待結果は変わらない。
+export const P057 = { 商品コード: rc("RC0421001CODE"), 商品名: rc("RC0421-001-NAME"), ファイル名: `${rc("rc0421-001")}.csv` };
+export const P058 = { 商品コード: rc("RC0421002CODE"), 商品名: rc("RC0421-002-NAME"), ファイル名: `${rc("rc0421-002")}.csv` };
 defineRcStock("S-M04-21-RC-STOCK-057", "S-M04-21-RC-ORG-057", RC057, { 試験支店: true }, {
-  商品コード: "RC0421001CODE", 商品名: "RC0421-001-NAME", csv: { ファイル名: "rc0421-001.csv", 行: ["RC0421001CODE", "-3", "999"] },
+  商品コード: P057.商品コード, 商品名: P057.商品名, csv: { ファイル名: P057.ファイル名, 行: [P057.商品コード, "-3", "999"] },
 });
 defineRcStock("S-M04-21-RC-STOCK-058", "S-M04-21-RC-ORG-058", RC058, MAIN_STORE, {
-  商品コード: "RC0421002CODE", 商品名: "RC0421-002-NAME", csv: { ファイル名: "rc0421-002.csv", 行: ["RC0421002CODE", "3", "300"] },
+  商品コード: P058.商品コード, 商品名: P058.商品名, csv: { ファイル名: P058.ファイル名, 行: [P058.商品コード, "3", "300"] },
 });

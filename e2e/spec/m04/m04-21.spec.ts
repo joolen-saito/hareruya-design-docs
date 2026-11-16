@@ -24,7 +24,7 @@ import {
   chooseFileAndRegister, downloadStockChangeTemplate, fillStockChangeCsvForm, openStockChangeCsv,
 } from "../../pages/admin/m04_21_stock_change_csv";
 import { StockListPage } from "../../pages/admin/stock_edit";
-import { caseCsvPath, M0421_ADMIN, RC057, RC057_BRANCH, RC057_BRANCH_正本の店名, RC058, templateDownloadDir } from "../../seeds/m04-21";
+import { caseCsvPath, M0421_ADMIN, P057, P058, RC057, RC057_BRANCH, RC057_BRANCH_正本の店名, RC058, templateDownloadDir } from "../../seeds/m04-21";
 import { 店名の読み替え } from "../../pages/admin/reuse_store";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -66,7 +66,7 @@ caseTest("IT-M04-21-044", async ({ page, step, expected }) => {
 
 // ---- 057: 在庫変更CSV登録の廃棄（承認待ち）が在庫履歴検索一覧に出る ----
 
-const CODE057 = "RC0421001CODE";
+const CODE057 = P057.商品コード;
 const BRANCH057 = RC057_BRANCH.店名;
 
 /** 在庫履歴検索一覧で、検索条件をクリアしてから、キーワード（商品名・カード名・商品コード）・店舗・在庫区分で検索した一覧の行 */
@@ -108,7 +108,7 @@ caseTest("IT-M04-21-057", async ({ page, step, expected }) => {
     });
   });
   await step(4, async () => {
-    const r = await chooseFileAndRegister(page, caseCsvPath("rc0421-001.csv"));
+    const r = await chooseFileAndRegister(page, caseCsvPath(P057.ファイル名));
     note(`「一括登録を実行」の結果: ${JSON.stringify(r)}`);
     if (r.結果 !== "送信") throw new Error(`在庫変更CSV登録が送信されなかった: ${JSON.stringify(r)}`);
   });
@@ -131,8 +131,8 @@ caseTest("IT-M04-21-057", async ({ page, step, expected }) => {
 
 // ---- 058: 在庫変更CSV登録の入庫の承認が商品規格一覧の在庫数に出る ----
 
-const CODE058 = "RC0421002CODE";
-const NAME058 = "RC0421-002-NAME";
+const CODE058 = P058.商品コード;
+const NAME058 = P058.商品名;
 
 caseTest("IT-M04-21-058", async ({ page, step, expected }) => {
   let before = NaN;
@@ -156,7 +156,7 @@ caseTest("IT-M04-21-058", async ({ page, step, expected }) => {
     });
   });
   await step(4, async () => {
-    const r = await chooseFileAndRegister(page, caseCsvPath("rc0421-002.csv"));
+    const r = await chooseFileAndRegister(page, caseCsvPath(P058.ファイル名));
     note(`「一括登録を実行」の結果: ${JSON.stringify(r)}`);
     if (r.結果 !== "送信") throw new Error(`在庫変更CSV登録が送信されなかった: ${JSON.stringify(r)}`);
   });
