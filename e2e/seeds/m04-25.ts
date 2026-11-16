@@ -17,6 +17,11 @@
  *   在庫移動指示IDを控える → （送り状No.の登録）→（詳細画面で備考の登録）→（入庫承認申請・入庫承認）の順に画面で作る。
  * - S-M04-25-DP-STORE-030・DP-MEMBER-030・DP-MOVE-030: M0425-030-出庫店（閾値 5000・10000）と、その店舗の管理者2人と、3商品の在庫移動指示。
  *
+ * 店舗は作らない（依頼者決定 2026-11-13）。シード表の「東京店」は試験支店（店舗ID 1574）、「大阪店」は本店（店舗ID 1）で読み替える
+ * （2026-11-16。pages/admin/reuse_store.ts）。管理者・承認者は、前のもの（前に作った店舗に結びついている）とは別に、名前に「（試験支店）」
+ * 「（本店）」を付けログインIDも変えて作る。M04-28 のシード（seeds/m04-28.ts）が使う東京店・大阪店の作り方（sharedStoreId・TOKYO_APPROVER など）は
+ * 変えず残し、M04-25 のシードだけが下の読み替えを使う。030 の「M0425-030-出庫店」（高額商品閾値2つの店舗）は店舗を作らないので作れず、流さない。
+ *
  * 正本の外で補ったもの（記録 e2e/review/M04-25_progress_2026-10-21.md の「シード・手順の解釈」。HANDOFF 4章の9 と同じ種類の補い）:
  * - 承認用管理者・入庫承認用管理者: シード表は「登録者とは別の、所属店舗と編集可能店舗が東京店（大阪店）で承認権限を持つ管理者」を使うが、
  *   作り方が無い。「M04-25東京店承認者」「M04-25大阪店入庫承認者」（システム管理者）をメンバー管理で作る（あれば使う）。
@@ -24,6 +29,7 @@
  *   グッズ商品CSV登録はシード表に人の指定が無いので、全権限の管理者（初期管理者）で行う。
  * - 在庫移動指示検索の検索（在庫移動指示IDを控える・送り状No.の登録・詳細画面を開く）: シード表は在庫移動IDだけを入れて検索するが、
  *   画面は出庫元店舗・入庫先店舗を必須にしている（入れないとブラウザの入力チェックが検索を止める）。出庫元・入庫先の店舗も選んで検索する。
+ * - 在庫変更CSVの入庫は、本店・試験支店の未承認の行が多く店舗で絞った一覧の1ページ目に今回の行が出ないので、承認の一覧は DB で調べた絞り込みの値（?id=）で開く（pages/admin/m04_33_stock_in.ts の入庫して承認する。2026-11-16）。
  * - 固定の商品コードの商品: 正本に片付けの手順が無い。同じDBで流し直したときにシードが止まらないよう、同じ商品コードの商品があれば
  *   グッズ商品CSV登録を飛ばしてその商品を使う（シードの報告に注記する）。在庫は毎回、在庫変更CSVで入庫して承認する。
  * DBでの準備が要るシード（DISPLAY-001・004・005・UNSHIPPED-002・EDIT-003・DELETE-A-018・DELETE-B-019）は作らない。
@@ -46,6 +52,9 @@ import {
   searchInstructionByMoveId, ThresholdStoreInput,
 } from "../pages/admin/m04_25_move_chain";
 import { expectSaved } from "../pages/admin/common";
+import { 入庫して承認する } from "../pages/admin/m04_33_stock_in";
+import { 試験支店, 試験支店の店舗ID, 本店の店舗ID, 本店の店名DB } from "../pages/admin/reuse_store";
+import { 店舗読み替えの注記 } from "../pages/admin/test_store";
 
 export type Actor = { 名前: string; account: Account };
 
@@ -55,9 +64,10 @@ export function guard(page: Page): void {
   page.setDefaultNavigationTimeout(180_000);
 }
 
-export const M0425_ADMIN: Account = { loginId: "m0425_admin", password: "Passw0rd!M0425" };
-export const M0425_ADMIN_ACTOR: Actor = { 名前: "M04-25試験管理者", account: M0425_ADMIN };
-const SEED_MEMBER: Actor = { 名前: "m0425_seed", account: { loginId: "m0425_seed", password: "Passw0rd!M0425seed" } };
+// 前の管理者（m0425_admin など。前に作った店舗に結びついている）とは別に、試験支店・本店に結びつけて作り直す（2026-11-16）
+export const M0425_ADMIN: Account = { loginId: "m0425t_admin", password: "Passw0rd!M0425" };
+export const M0425_ADMIN_ACTOR: Actor = { 名前: "M04-25試験管理者（試験支店）", account: M0425_ADMIN };
+const SEED_MEMBER: Actor = { 名前: "m0425t_seed（試験支店）", account: { loginId: "m0425t_seed", password: "Passw0rd!M0425seed" } };
 
 // ---------------------------------------------------------------- 店舗（M04-25・M04-28 で共有）
 
@@ -85,9 +95,19 @@ export async function sharedStoreId(browser: Browser, 店名: SharedStore, seedI
   return id;
 }
 
-defineSeed("S-M04-25-STORES", async ({ browser, notes, seed }) => {
-  notes.set("〔店舗ID-M0425-共有A〕", await sharedStoreId(browser, "東京店", seed.シードID));
-  notes.set("〔店舗ID-M0425-共有B〕", await sharedStoreId(browser, "大阪店", seed.シードID));
+/** 店舗の読み替え: シード表の「東京店」は試験支店、「大阪店」は本店 */
+export const 東京店の店名 = 試験支店.店名;
+export function 大阪店の店名(): string { return 本店の店名DB(); }
+
+defineSeed("S-M04-25-STORES", async ({ notes, seed }) => {
+  // 店舗は作らない。画面が振る番号を控える代わりに、使い回す店舗の番号（試験支店・本店）を控える（店舗の設定は書き換えない）
+  const a = 試験支店の店舗ID();
+  const b = 本店の店舗ID;
+  notes.set("〔店舗ID-M0425-共有A〕", a);
+  notes.set("〔店舗ID-M0425-共有B〕", b);
+  reportSeedIssue(seed.シードID, 店舗読み替えの注記("東京店", 東京店の店名, a));
+  reportSeedIssue(seed.シードID, 店舗読み替えの注記("大阪店", 大阪店の店名(), b));
+  reportSeedIssue(seed.シードID, "シード表の東京店の高額商品閾値1=10000は設定しない（試験支店・本店の店舗の設定は書き換えない。試験支店は閾値が空、本店は 980・4800）");
 });
 
 // ---------------------------------------------------------------- 管理者
@@ -114,9 +134,13 @@ defineSeed("S-M04-25-SEED-MEMBER", { needs: ["S-M04-25-STORES"] }, async ({ brow
   notes.set("〔メンバーID-M0425-共有〕", await ensureActor(browser, SEED_MEMBER, { 所属店舗ID: a, 編集可能店舗ID: [a, b], email: "m0425_seed@example.test" }));
 });
 
-/** 正本の外で補う承認する管理者（シード表の「承認用管理者」「入庫承認用管理者」。作り方がシード表に無い） */
+/** 正本の外で補う承認する管理者（シード表の「承認用管理者」「入庫承認用管理者」。作り方がシード表に無い）。試験支店・本店に結びつけて作る（2026-11-16） */
 export const TOKYO_APPROVER: Actor = { 名前: "M04-25東京店承認者", account: { loginId: "m0425-apr-tokyo", password: "Passw0rd!M0425apr" } };
 export const OSAKA_APPROVER: Actor = { 名前: "M04-25大阪店入庫承認者", account: { loginId: "m0425-apr-osaka", password: "Passw0rd!M0425apr" } };
+/** 承認用管理者（所属店舗・編集可能店舗は試験支店） */
+export const APPROVER_BRANCH: Actor = { 名前: "M04-25承認者（試験支店）", account: { loginId: "m0425t-apr", password: "Passw0rd!M0425apr" } };
+/** 入庫承認用管理者（所属店舗・編集可能店舗は本店） */
+export const APPROVER_HQ: Actor = { 名前: "M04-25入庫承認者（本店）", account: { loginId: "m0425t-apr-hq", password: "Passw0rd!M0425apr" } };
 const approverReady = new Set<string>();
 export async function ensureApprover(browser: Browser, a: Actor, 店舗ID: string): Promise<Actor> {
   if (!approverReady.has(a.account.loginId)) {
@@ -361,14 +385,14 @@ function simpleInstruction(n: string, opt: { 送り状No?: string; 備考?: stri
     for (const v of [opt.送り状No, opt.備考]) {
       if (v !== undefined && !seed.投入方法.includes(`「${v}」`)) throw new Error(`${seedId}: シード表に「${v}」が無い`);
     }
-    const approver = await ensureApprover(browser, TOKYO_APPROVER, tokyo);
-    const inbound = opt.入庫 ? await ensureApprover(browser, OSAKA_APPROVER, osaka) : undefined;
+    const approver = await ensureApprover(browser, APPROVER_BRANCH, tokyo);
+    const inbound = opt.入庫 ? await ensureApprover(browser, APPROVER_HQ, osaka) : undefined;
     // 基準価格と販売価格は「任意の金額」
     await ensureGoods(browser, SETUP_ADMIN, seedId, [{ 商品コード: code, 基準価格: 1000, 販売価格: 1000 }]);
-    await stockInByCsv(browser, seedId, { registrant: M0425_ADMIN_ACTOR, approver, 店舗ID: tokyo, 店名: "東京店", 行: [{ 商品コード: code, 在庫増減数: 1, 仕入単価: 100 }] });
+    await 入庫して承認する(browser, seedId, { registrant: M0425_ADMIN_ACTOR, approver, 店舗ID: tokyo, 店名: 東京店の店名, 行: [{ 商品コード: code, 在庫増減数: 1, 仕入単価: 100 }] });
     const k = n;
     await buildInstruction(ctx, {
-      出庫元: { 店舗ID: tokyo, 店名: "東京店" }, 入庫先: { 店舗ID: osaka }, operator: M0425_ADMIN_ACTOR, approver,
+      出庫元: { 店舗ID: tokyo, 店名: 東京店の店名 }, 入庫先: { 店舗ID: osaka }, operator: M0425_ADMIN_ACTOR, approver,
       moves: [{ 方法: "list", 行: [{ 商品コード: code, 移動点数: 1 }], 呼び名: `〔在庫移動ID-M0425-${k}〕` }],
       呼び名: `〔在庫移動指示ID-M0425-${k}〕`, 送り状No: opt.送り状No, 備考: opt.備考,
       入庫: opt.入庫 && inbound ? { 段: opt.入庫, approver: inbound } : undefined,
@@ -398,11 +422,11 @@ defineSeed("S-M04-25-DISPLAY-006", { needs: ADM_NEEDS }, async (ctx) => {
   const osaka = notes.get("〔店舗ID-M0425-共有B〕");
   const codes = ["M0425-006-G1", "M0425-006-G2", "M0425-006-G3", "M0425-006-G4"];
   for (const c of codes) if (!seed.投入方法.includes(`「${c}」`)) throw new Error(`${seed.シードID}: シード表に商品コード「${c}」が無い`);
-  const approver = await ensureApprover(browser, TOKYO_APPROVER, tokyo);
+  const approver = await ensureApprover(browser, APPROVER_BRANCH, tokyo);
   await ensureGoods(browser, SETUP_ADMIN, seed.シードID, codes.map((c) => ({ 商品コード: c, 基準価格: 1000, 販売価格: 1000 })));
-  await stockInByCsv(browser, seed.シードID, { registrant: M0425_ADMIN_ACTOR, approver, 店舗ID: tokyo, 店名: "東京店", 行: codes.map((c) => ({ 商品コード: c, 在庫増減数: 1, 仕入単価: 100 })) });
+  await 入庫して承認する(browser, seed.シードID, { registrant: M0425_ADMIN_ACTOR, approver, 店舗ID: tokyo, 店名: 東京店の店名, 行: codes.map((c) => ({ 商品コード: c, 在庫増減数: 1, 仕入単価: 100 })) });
   await buildInstruction(ctx, {
-    出庫元: { 店舗ID: tokyo, 店名: "東京店" }, 入庫先: { 店舗ID: osaka }, operator: M0425_ADMIN_ACTOR, approver,
+    出庫元: { 店舗ID: tokyo, 店名: 東京店の店名 }, 入庫先: { 店舗ID: osaka }, operator: M0425_ADMIN_ACTOR, approver,
     moves: [
       { 方法: "csv", 行: [{ 商品コード: codes[0], 移動点数: 1 }, { 商品コード: codes[1], 移動点数: 1 }], 呼び名: "〔在庫移動ID-M0425-006A〕" },
       { 方法: "csv", 行: [{ 商品コード: codes[2], 移動点数: 1 }, { 商品コード: codes[3], 移動点数: 1 }], 呼び名: "〔在庫移動ID-M0425-006B〕" },
@@ -420,11 +444,11 @@ defineSeed("S-M04-25-DP-SINGLE-029", { needs: [...ADM_NEEDS, "S-M04-25-SEED-MEMB
   if (!seed.投入方法.includes("商品コード「M0425-029-G1」・基準価格12000・販売価格15000") || !seed.投入方法.includes("仕入単価9000")) {
     throw new Error(`${seed.シードID}: シード表の商品・価格がテストの値と違う`);
   }
-  const approver = await ensureApprover(browser, TOKYO_APPROVER, tokyo);
+  const approver = await ensureApprover(browser, APPROVER_BRANCH, tokyo);
   await ensureGoods(browser, SETUP_ADMIN, seed.シードID, [{ 商品コード: code, 基準価格: 12000, 販売価格: 15000 }]);
-  await stockInByCsv(browser, seed.シードID, { registrant: M0425_ADMIN_ACTOR, approver, 店舗ID: tokyo, 店名: "東京店", 行: [{ 商品コード: code, 在庫増減数: 1, 仕入単価: 9000 }] });
+  await 入庫して承認する(browser, seed.シードID, { registrant: M0425_ADMIN_ACTOR, approver, 店舗ID: tokyo, 店名: 東京店の店名, 行: [{ 商品コード: code, 在庫増減数: 1, 仕入単価: 9000 }] });
   await buildInstruction(ctx, {
-    出庫元: { 店舗ID: tokyo, 店名: "東京店" }, 入庫先: { 店舗ID: osaka }, operator: SEED_MEMBER, approver,
+    出庫元: { 店舗ID: tokyo, 店名: 東京店の店名 }, 入庫先: { 店舗ID: osaka }, operator: SEED_MEMBER, approver,
     moves: [{ 方法: "csv", 行: [{ 商品コード: code, 移動点数: 1 }], 呼び名: "〔在庫移動ID-M0425-029〕" }],
     呼び名: "〔在庫移動指示ID-M0425-029〕",
   });
@@ -440,8 +464,10 @@ const STORE_030: ThresholdStoreInput = {
 export const M0425_030_A: Actor = { 名前: "m0425-030-a", account: { loginId: "m0425-030-a", password: "Passw0rd-M0425030" } };
 const M0425_030_B: Actor = { 名前: "m0425-030-b", account: { loginId: "m0425-030-b", password: "Passw0rd-M0425030" } };
 
-defineSeed("S-M04-25-DP-STORE-030", async ({ browser, notes, seed }) => {
-  notes.set("〔店舗ID-M0425-030〕", await withAdminSession(browser, SETUP_ADMIN, (page) => ensureStoreWithThresholds(page, STORE_030, (m) => reportSeedIssue(seed.シードID, m))));
+defineSeed("S-M04-25-DP-STORE-030", async ({ seed }) => {
+  // 店舗は作らない（依頼者決定 2026-11-13）。高額商品閾値を2つ（5000・10000）持つ店舗は、試験支店・本店のどちらでも読み替えられない
+  // （店舗の設定は書き換えない。試験支店は閾値が空、本店は 980・4800）ので、このシードは作らず、030 は流さない
+  throw new Error(`${seed.シードID}: 店舗を新しく作らない決定のため作れない（閾値5000・10000の店舗は試験支店・本店で読み替えられない）。030 は流さない`);
 });
 
 defineSeed("S-M04-25-DP-MEMBER-030", { needs: ["S-M04-25-DP-STORE-030", "S-M04-25-STORES"] }, async ({ browser, notes }) => {
@@ -464,7 +490,7 @@ defineSeed("S-M04-25-DP-MOVE-030", { needs: ["S-M04-25-DP-MEMBER-030", "S-M04-25
     if (!seed.投入方法.includes(`「${g.商品コード}」は基準価格${g.基準価格}・販売価格${g.販売価格}`)) throw new Error(`${seed.シードID}: シード表の ${g.商品コード} の価格がテストの値と違う`);
   }
   await ensureGoods(browser, SETUP_ADMIN, seed.シードID, goods);
-  await stockInByCsv(browser, seed.シードID, {
+  await 入庫して承認する(browser, seed.シードID, {
     registrant: M0425_030_A, approver: M0425_030_B, 店舗ID: s030, 店名: STORE_030.店名,
     行: goods.map((g) => ({ 商品コード: g.商品コード, 在庫増減数: 1, 仕入単価: g.仕入単価 })),
   });
