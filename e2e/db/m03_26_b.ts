@@ -79,7 +79,7 @@ export function カード詳細の商品(カード詳細ID: string): 商品の�
     [カード詳細ID],
   ).map((r) => ({
     商品ID: String(r.id), 商品名日: String(r.name ?? ""), 商品名英: String(r.name_en ?? ""),
-    商品公開ステータス: Number(r.product_status_id), 支店の商品公開ステータス: Number(r.is_branch_published),
+    商品公開ステータス: Number(r.product_status_id), 支店の商品公開ステータス: ["t", "true", "1"].includes(String(r.is_branch_published).toLowerCase()) ? 1 : ["f", "false", "0"].includes(String(r.is_branch_published).toLowerCase()) ? 0 : NaN, // 列は真偽値（psql は t/f で返す）。Number() すると NaN になっていた（11/16）
     サイズ: r.size === null ? null : String(r.size), 重量: r.weight === null ? null : String(r.weight),
     購入グループ: r.sell_group === null ? null : String(r.sell_group), 割引率: r.discount_id === null ? null : String(r.discount_id),
     買取減額率: r.buy_discount_id === null ? null : String(r.buy_discount_id), 略称タグ: r.storage_code_id === null ? null : String(r.storage_code_id),

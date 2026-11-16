@@ -183,6 +183,8 @@ defineSeed("S-M03-26-DUPLICATE-029", { needs: ["S-M03-26-ADM"] }, async ({ brows
 });
 
 // ---- 042: マスタに無い値の8ファイル ----
+/** 042 の8ファイルのカード詳細ID（あいだの番号はシード表に呼び名が無いので、ここに持つ） */
+export const 誤りのカード詳細 = new Map<number, string>();
 export const 誤りの項目 = ["言語(ID)", "商品カテゴリ(ID)", "割引率(ID)", "買取減額率(ID)", "略称タグ(ID)", "売上分析タグ(ID)", "タグ(ID)", "購入グループ名称"] as const;
 defineSeed("S-M03-26-MASTER-ERROR-042", { needs: ["S-M03-26-ADM"] }, async ({ browser, notes }) => {
   const seedId = "S-M03-26-MASTER-ERROR-042";
@@ -190,7 +192,8 @@ defineSeed("S-M03-26-MASTER-ERROR-042", { needs: ["S-M03-26-ADM"] }, async ({ br
   const ある = Object.entries(無い).filter(([, v]) => !v).map(([k]) => k);
   if (ある.length) throw new Error(`${seedId}: マスタに 999999042・未登録グループ-042 があるもの: ${ある.join("、")}（シード表は DB から消すが、DB は書き換えない）`);
   const ids = カード詳細を選ぶ(seedId, 8);
-  ids.forEach((id, i) => notes.set(`〔カード詳細ID-M0326-042${"ABCDEFGH"[i]}〕`, id));
+  // シード表の範囲の書き方（〔…042A〕〜〔…042H〕）は両端の2つだけが呼び名として読まれる。両端だけを控え、あいだの番号は 誤りのカード詳細 に持つ（基盤が、シード表に無い呼び名を控えると止める。F04-03 と同じ）
+  ids.forEach((id, i) => { 誤りのカード詳細.set(i, id); if (i === 0 || i === ids.length - 1) notes.set(`〔カード詳細ID-M0326-042${"ABCDEFGH"[i]}〕`, id); });
   const files = 誤りの項目.map((_, i) => `master-error-0${i + 1}.csv`);
   前提を確かめる(seedId, files, ids);
   for (const [i, k] of 誤りの項目.entries()) {

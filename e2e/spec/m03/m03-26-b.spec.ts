@@ -13,7 +13,7 @@ import { pathOf, topMessages } from "../../pages/admin/m03_21_shelf_number";
 import { CsvUploadPage, SubmitResult } from "../../pages/admin/m03_26_card_csv_upload";
 import { rc } from "../../lib/run_marker";
 import { M0326_ADMIN } from "../../seeds/m03-26";
-import { ファイル名, ファイルの場所, 誤りの項目 } from "../../seeds/m03-26-b";
+import { ファイル名, ファイルの場所, 誤りの項目, 誤りのカード詳細 } from "../../seeds/m03-26-b";
 import {
   カード商品CSVの取込履歴, カード詳細の商品, カテゴリと祖先, 在庫の店舗と在庫場所の数, 商品のカテゴリ, 商品のタグ, 商品の規格, 商品名の商品数,
   規格の価格履歴, 規格の在庫, 規格画像の件数, 商品が無いか, 商品の行, 規格の行,
@@ -214,7 +214,7 @@ caseTest("IT-M03-26-042", async ({ page, notes, step, expected }) => {
   await step(3, async () => { note("DBで確かめる"); });
   await expected(async () => {
     for (const [i, k] of 誤りの項目.entries()) {
-      const cd = notes.get(`〔カード詳細ID-M0326-042${"ABCDEFGH"[i]}〕`);
+      const cd = 誤りのカード詳細.get(i) ?? notes.get(`〔カード詳細ID-M0326-042${"ABCDEFGH"[i]}〕`);
       const ps = カード詳細の商品(cd);
       expect.soft(ps.length, `${k}に未登録値のファイル: 商品が追加されない`).toBe(0);
       expect.soft(カード商品CSVの取込履歴(ファイル名(`master-error-0${i + 1}.csv`)), `${k}に未登録値のファイル: 取込履歴が追加されない`).toBe(0);
