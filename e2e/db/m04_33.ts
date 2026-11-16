@@ -105,3 +105,23 @@ export function 商品規格の状態(商品規格ID: string): string {
   const r = query(`select c.code from dtb_product_class pc left join mtb_card_condition c on c.id = pc.card_condition_id where pc.id = $1::int`, [商品規格ID])[0];
   return r?.code ?? "";
 }
+
+/** 実行の印の付いた商品の在庫移動を束ねた在庫移動指示（持ち主の確かめ） */
+const 印の在庫移動指示 = {
+  sql: `select smt.move_instruction_id from dtb_stock_move_transfer smt
+          join dtb_stock_move_transfer_detail d on d.stock_move_transfer_id = smt.id
+          join dtb_product_stock ps on ps.id = d.move_from_product_stock_id
+          join dtb_product_class pc on pc.id = ps.product_class_id
+         where pc.product_code like '%' || $1 and smt.move_instruction_id is not null`,
+  params: [`-${RUN_MARK}`],
+};
+
+/** 画面で作った E2E の在庫移動指示の備考を書き換える（シード表の「備考は画面で指定できないので DB へ直接設定する」。M04-34 の 007。2026-11-16） */
+export function 在庫移動指示の備考を書き換える(what: string, 在庫移動指示ID: string, 備考: string): void {
+  updateOwnRows(what, { table: "dtb_stock_move_instruction", key: "id", ids: [在庫移動指示ID], set: { memo: 備考 }, owner: 印の在庫移動指示 });
+}
+
+/** 在庫移動指示の備考（無ければ空） */
+export function 在庫移動指示の備考(在庫移動指示ID: string): string {
+  return String(query(`select coalesce(memo, '') as m from dtb_stock_move_instruction where id = $1::int`, [在庫移動指示ID])[0]?.m ?? "");
+}

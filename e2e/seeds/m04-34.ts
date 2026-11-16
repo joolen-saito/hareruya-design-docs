@@ -29,7 +29,7 @@ import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { withAdminSession } from "../lib/session";
 import { 棚番号の名前を書き換える } from "../db/m04_01_x";
-import { 在庫移動の作成日時, 在庫移動の作成日時を書き換える, 在庫移動の明細, 商品規格ID, 店舗の高額商品閾値, 流す前の高額商品閾値, 棚番号の名前がある, 言語コードのID, 商品規格の状態を書き換える, 商品規格の状態 } from "../db/m04_33";
+import { 在庫移動の作成日時, 在庫移動指示の備考, 在庫移動指示の備考を書き換える, 在庫移動の作成日時を書き換える, 在庫移動の明細, 商品規格ID, 店舗の高額商品閾値, 流す前の高額商品閾値, 棚番号の名前がある, 言語コードのID, 商品規格の状態を書き換える, 商品規格の状態 } from "../db/m04_33";
 import { カードを登録する, カード詳細IDs } from "../pages/admin/m14_card";
 import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
 import { ShortTagPage } from "../pages/admin/short_tag";
@@ -104,10 +104,10 @@ export type 品 = {
   /** 状態コード（グッズ商品CSVは NM の規格を作る。NM 以外は E2E の商品規格だけ DB で書き換える） */
   状態?: string;
   /** カード（依頼者決定 2026-11-14「マスタは作ってよい」。印つきの試験用カードを作り、商品登録編集の「カード指定」で紐づける） */
-  カード?: { 英名?: string; レアリティ?: string; Foil?: "なし" | "通常" | "特殊"; カード番号?: string; 色順?: string };
+  カード?: { 英名?: string; レアリティ?: string; Foil?: "なし" | "通常" | "特殊"; カード番号?: string; 色順?: string; カラー?: string[] };
 };
 /** 在庫移動1件（呼び名は〔在庫移動・振替ID-M0434-…〕） */
-export type 移動の定め = { 呼び名: string; 入庫先: 入庫先; 品: 品[] };
+export type 移動の定め = { 呼び名: string; 入庫先: 入庫先; 品: 品[]; 備考?: string };
 export type ケースの定め = { 番号: string; 日時: string; 移動: 移動の定め[]; 店舗の呼び名?: string };
 
 /** 本店2F・本店B2F（共有A・共有B）は使わない（試験店舗の使い回し・2026-11-13 依頼者決定）。使う 034〜041 は流さない */
@@ -208,7 +208,7 @@ async function 作る(ctx: SeedCtx, d: ケースの定め): Promise<void> {
         const c = p.カード!;
         const 名 = rc(p.商品コード);
         await カードを登録する(page, {
-          カード名日: 名, カード名英: c.英名 ? 印つきの名前(c.英名) : 名, 点数で見たマナ: "0", 色順: c.色順,
+          カード名日: 名, カード名英: c.英名 ? 印つきの名前(c.英名) : 名, 点数で見たマナ: "0", 色順: c.色順, カラー: c.カラー,
           詳細: { レアリティ: c.レアリティ, Foil: c.Foil ?? "なし", カード番号: c.カード番号 },
         }, `${seedId}: ${名} のカードの登録`, issue);
         const ids = await カード詳細IDs(page);
@@ -252,6 +252,13 @@ async function 作る(ctx: SeedCtx, d: ケースの定め): Promise<void> {
     });
     const id = local.get("〔在庫移動〕");
     作った移動.set(m.呼び名, id);
+    if (m.備考) {
+      // 備考は画面で指定できない（シード表）ので、画面で作った E2E の在庫移動指示の備考だけ DB で書き換える
+      const iid = local.get("〔在庫移動指示〕");
+      在庫移動指示の備考を書き換える(`${seedId}: 在庫移動指示 ${iid} の備考を「${m.備考}」にする（画面で指定できない）`, iid, m.備考);
+      if (在庫移動指示の備考(iid) !== m.備考) throw new Error(`${seedId}: 在庫移動指示 ${iid} の備考が「${在庫移動指示の備考(iid)}」（「${m.備考}」のはず）`);
+      issue(`在庫移動指示 ${iid} の備考を DB で「${m.備考}」にした（シード表「画面で指定できないため DB へ直接設定」。E2E の在庫移動指示だけ）`);
+    }
     for (const p of m.品) 作ったもの.get(p.商品コード)!.在庫移動ID = id;
   }
 
@@ -425,3 +432,9 @@ const 支店の並び = (番号: string, 日: string, 品々: 品[]) => 並び(�
   カ("M0434-CB052-B", "ベータ商品-M0434-CB052", { 棚番号: "SH-M0434-CB052", 略称: "ALP-M0434-CB052", 略称アルファベット: true }, { 英名: "Beta Card-M0434-CB052" }),
   カ("M0434-CB052-A", "アルファ商品-M0434-CB052", { 棚番号: "SH-M0434-CB052", 略称: "ALP-M0434-CB052", 略称アルファベット: true }, { 英名: "Alpha Card-M0434-CB052" }),
 ]));
+
+// 表示項目（007。2026-11-16）。カードはカラー赤・レアリティ M（神話レア）・Foil なし。備考「箱傷あり」は在庫移動指示の備考に DB で入れる
+ケース("S-M04-34-DISPLAY-007", { 番号: "007", 日時: "2034-04-07 10:00:00", 移動: [{
+  ...移("007", "本店3F", [カ("M0434-P007-A", "表示商品-007", { 棚番号: "M0434-SH-B-007", 略称: "ABC", 数量: 3 }, { カラー: ["赤"], レアリティ: "神話レア", Foil: "なし" })]),
+  備考: "箱傷あり",
+}] });
