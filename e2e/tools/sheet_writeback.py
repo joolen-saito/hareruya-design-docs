@@ -107,6 +107,17 @@ def build_results(only: set[str]) -> dict[str, dict]:
     return out
 
 
+def date_style_of(styles: str) -> str:
+    """書式表（cellXfs）で、表示形式が yyyy-mm-dd の書式の番号。無ければ yyyy/mm/dd・yyyy/m/d の順に探す。どれも無ければ止める"""
+    fmts = dict(re.findall(r'<numFmt numFmtId="(\d+)" formatCode="([^"]*)"', styles))
+    xfs = re.findall(r"<xf [^>]*?numFmtId=\"(\d+)\"", re.search(r"<cellXfs[^>]*>(.*?)</cellXfs>", styles, re.S).group(1))
+    for want in ("yyyy-mm-dd", "yyyy/mm/dd", "yyyy/m/d"):
+        for i, n in enumerate(xfs):
+            if fmts.get(n) == want:
+                return str(i)
+    raise SystemExit("実施日に使う日付の書式が、書式表に見つからない（書き戻さない）")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("src")
@@ -126,6 +137,10 @@ def main() -> int:
     sheet_path = "xl/" + target.group(1).lstrip("/").removeprefix("xl/")
     sis = [cell_text(x) for x in re.findall(r"<si>(.*?)</si>", zin.read("xl/sharedStrings.xml").decode("utf-8"), re.S)]
     sheet = zin.read(sheet_path).decode("utf-8")
+    # 実施日の書式は、この .xlsx の書式表から yyyy-mm-dd の書式の番号を探して使う。Google スプレッドシートが書き出し直すと
+    # 書式表の番号が振り直されるので、決め打ちの番号（DATE_STYLE）は別の書式に当たることがある（2026-11-16 に 48 が日付でなくなっていた）
+    global DATE_STYLE
+    DATE_STYLE = date_style_of(zin.read("xl/styles.xml").decode("utf-8"))
 
     def value_of(cell_xml: str | None) -> str:
         if not cell_xml:
