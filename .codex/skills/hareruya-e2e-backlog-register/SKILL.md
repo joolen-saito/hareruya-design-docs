@@ -1,12 +1,34 @@
 ---
 name: hareruya-e2e-backlog-register
-description: 晴れる屋の結合テストを E2E（Playwright）で開発環境に流して不合格になったケースを、Backlog の「結合テスト課題」に起票する。不合格の洗い出し、既存の課題との重複・まとめの判定、未実装・実装乖離リストと同じ決まりの本文（設計・新アプリ・ベース実装の抜き書き）、キャプチャの添付と本文への表示、台帳での二重登録の防止、結合試験項目表の備考への課題キーの反映までを行う。E2E の不合格の起票、起票の下書き、登録、台帳の整理を頼まれたときに使う。
+description: 晴れる屋の結合テストを E2E（Playwright）で開発環境に流して不合格になったケースを、Backlog の「結合テスト課題」に起票する。結合試験項目表で実施者「齋藤」・実施結果「不合格」の行の洗い出し（起票済み・起票待ち・流し直し待ち）、既存の課題との重複・まとめの判定、未実装・実装乖離リストと同じ決まりの本文（設計・新アプリ・ベース実装の抜き書き）、キャプチャの添付と本文への表示、台帳での二重登録の防止、項目表の備考への課題の URL の書き込みまでを行う。E2E の不合格の起票、起票の下書き、登録、台帳の整理、項目表の不合格に課題が付いているかの確認を頼まれたときに使う。
 ---
 
 # 晴れる屋 E2E 不合格の Backlog 起票
 
 開発環境で流した E2E の判定（`e2e/review/judgements/<機能ID>.tsv`）のうち、不合格を Backlog に起票する。
-道具は `e2e/tools/backlog_e2e_register.py`（下書きの検査・登録・台帳）。項目表への反映は `e2e/tools/sheet_writeback.py`（台帳の課題キーを備考に書く）。
+道具は `e2e/tools/backlog_e2e_register.py`（下書きの検査・登録・台帳）。項目表への反映は `e2e/tools/sheet_writeback.py`（台帳の課題の URL を備考に書く）。
+項目表の側から漏れを見るのは `e2e/tools/sheet_fail_backlog.py`（下の「項目表の不合格を漏れなく起票する」）。
+
+## 項目表の不合格を漏れなく起票する（2026-11-16 依頼者指示）
+
+依頼者の指示:「私が担当した分について、実施結果が不具合についてはバックログに起票して、バックログURLを備考欄に記入するように仕組化してください」。
+- 対象: 項目表の実施者「齋藤」の行のうち、この仕組みが書いた行（備考に「E2EのテストID」がある行と、`e2e/config/sheet_former_e2e_rows.tsv` の行）で、実施結果が「不合格」のもの。
+- ゴール: その全部が、台帳に課題キーがあり（まとめ先・既存の課題を含む）、備考に `Backlog: https://joolen.backlog.com/view/<課題キー>` の行がある。または保留（`pending.tsv` に理由）。
+- 備考の課題は URL で書く（課題キーだけにしない）。`sheet_writeback.py` は、結果を書き直さない行（判定が古い・手元の環境の結果）でも、不合格で台帳にあれば「Backlog:」の行だけを URL にする。
+
+回し方（1周）:
+1. 項目表の写しを取る（`e2e-dev-env-and-sheet-writeback` の場所。WSL からは powershell.exe の Copy-Item）。
+2. `python3 e2e/tools/sheet_fail_backlog.py <写し.xlsx>` で仕分ける。全部済んでいれば終わりの状態 0、残りがあれば 1。
+   - `起票待ち`（開発環境で不合格と判定済み・下書きなし）→ `review/backlog_e2e/queue_sheet.tsv`。下の「手順」の 2〜6 で1件ずつ調べて起票する。
+   - `流し直し待ち`（手元の環境の結果だけ・開発環境の判定が古い）→ `review/backlog_e2e/queue_rerun_dev.tsv`。手元の判定で起票しない。スキル hareruya-e2e-case-evidence で開発環境に流して判定し、次の周で `起票待ち` に回る。
+   - `下書きあり・未登録` → 検査して `--apply`。
+   - `起票済み・備考にURLなし` → 4 で書き戻す。
+   - `保留` → 理由は `pending.tsv`。判断が出たら外す。
+3. 登録したら台帳を仕上げる（下の「手順」の 6）。
+4. `e2e/tools/sheet_writeback.py <写し> <書き出し> --plan <計画.tsv>` で備考に URL を書いた版を作り、計画で「URL の行のほかに変わる行」を確かめてから上書きする。
+   - 書く直前に、Drive の更新時刻（Google Drive コネクタの get_file_metadata の modifiedTime）が、写しを取ったときから変わっていないことを確かめる。同期フォルダのファイルだけで比べない（Drive 側の新しい版がまだ降りてきていないことがある。2026-11-16 に依頼者の保存を消しかけた）。
+   - 依頼者が項目表を開いているときは、閉じてもらってから書く。上書きしたら開き直してもらう。
+5. もう一度 2 を流し、残りが流し直し待ちと保留だけになったことを報告する（件数と課題キー）。
 
 ## 依頼者の決定（2026-11-10〜11）
 
@@ -53,7 +75,7 @@ description: 晴れる屋の結合テストを E2E（Playwright）で開発環�
 4. **検査**: `python3 e2e/tools/backlog_e2e_register.py --list` と `python3 design_impl_drift_report/citation_audit/check_ticket_terms.py --dir e2e/review/backlog_e2e` を通す。
 5. **登録**: `cd e2e && python3 tools/backlog_e2e_register.py --apply`（台帳に無い下書きを全部登録）。最初に型を変えたときは `--apply --id <テストID>` で1件だけ登録し、Backlog の画面で見え方を確かめてから残りを流す。
 6. **台帳を仕上げる**: まとめた分（テストID・代表の課題キー・「まとめ先 <代表>」）と重複の分（テストID・既存の課題キー・「既存の課題」）を台帳に足す。これで項目表の備考に課題キーが出る。
-7. **項目表へ反映**: スキル hareruya-e2e-case-evidence の流れで `e2e/tools/sheet_writeback.py` を流す（書き込む直前に最新のファイルを取り直し、変わっていないことを確かめてから上書き）。
+7. **項目表へ反映**: スキル hareruya-e2e-case-evidence の流れで `e2e/tools/sheet_writeback.py` を流す（書き込む直前に最新のファイルを取り直し、Drive の更新時刻も変わっていないことを確かめてから上書き）。備考には課題の URL が入る。最後に `e2e/tools/sheet_fail_backlog.py` で漏れが無いことを確かめる。
 8. コミットは、台帳と下書き（`e2e/review/backlog_e2e/`・`e2e/review/backlog_e2e_ledger.tsv`）を自分のファイルだけ指定して行う。プッシュは依頼者に言われたときだけ。
 
 ## 課題名・本文の決まり
