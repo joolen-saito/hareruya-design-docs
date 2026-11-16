@@ -137,7 +137,9 @@ defineSeed("S-M03-02-READ-NOVARIANT", { needs: ["S-M03-02-ADM"] }, async ({ brow
   await withAdminSession(browser, M0302_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     const categoryId = await goodsCsvCategoryId(page, issue);
-    issue(`商品カテゴリ(ID)は、正本の「旧カテゴリ」（S-M03-02-MASTERS）でなく、グッズ商品CSVが受け付けるグッズのカテゴリ（ID ${categoryId}）を使った`);
+    // シード表がこのシードで〔カテゴリID-M0302-共有D〕を控えると定めている（READ-DISCONTINUED と同じ控え方。2026-11-16 控えていなくて基盤が止めた）
+    notes.set("〔カテゴリID-M0302-共有D〕", categoryId);
+    issue(`商品カテゴリ(ID)は、正本の「旧カテゴリ」（S-M03-02-MASTERS）でなく、グッズ商品CSVが受け付けるグッズのカテゴリ（ID ${categoryId}）を使い、〔カテゴリID-M0302-共有D〕に控えた`);
     const template = await downloadGoodsCsvTemplate(page);
     await registerGoodsCsv(page, {
       what: `${seed.シードID}: グッズ商品CSV登録`,
