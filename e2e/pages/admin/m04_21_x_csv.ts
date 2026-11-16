@@ -209,7 +209,9 @@ export async function 履歴のファイルを取り出す(page: Page, 記録ID:
 
 /** 在庫編集承認一覧画面を開く（メニューから開くのと同じ画面） */
 export async function 承認一覧を開く(page: Page): Promise<void> {
-  const res = await page.goto(adminUrl("/product/stock/approval_list"));
+  // 既定の一覧（全店舗の未承認の行）は開発環境で行が多く、画面のスクリプトが終わらず「検索条件をクリア」が出てこない（2026-11-15 夜 047・048）。
+  // 絞り込みの値 0（該当なし）で軽く開いてから、正本どおり「検索条件をクリア」→店舗→検索をする（アプリの ?id= の絞り込み。正本の外の補い）
+  const res = await page.goto(adminUrl("/product/stock/approval_list?id=0"));
   expect(res?.status(), "在庫編集承認一覧の応答").toBe(200);
   await expect(page.locator("form#form_search_stock_approval_list"), "在庫編集承認一覧の検索欄").toBeVisible();
   await page.waitForLoadState("load");
