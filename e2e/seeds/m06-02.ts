@@ -15,7 +15,7 @@ import { RUN_MARK, rc } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
+import { ensureMemberByStoreIdsFix as ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
 import { 買取を整える } from "../db/m06_04_prep";
 import { 受注ID, 申込日時と更新日時を設定する } from "../db/m06_05";
 import { 事業者区分を設定する, 個別入力商品を数量で足す, 買取明細を数量で足す, 身分証を設定する } from "../db/m06_02";
@@ -64,7 +64,9 @@ type Build = Parameters<typeof defineSeed>[2];
 /** 1件の買取を作り、査定IDを〔査定ID-M0602-番号〕で控えるシード */
 const 一件のシード = (no: string, v: 整え, 注記: string[] = []): Build => async ({ browser, notes, seed }) => {
   const [id] = await 買取群を作る(browser, `M0602CASE${no}`, 1, () => v);
-  notes.set(`〔査定ID-M0602-${no}〕`, id);
+  const 呼び名 = `〔査定ID-M0602-${no}〕`;
+  // シード表が控えると定めていない番号（正本が固定の番号で書くもの）は、ケースが引くための控えにする
+  if ((seed["状態・属性"] + seed.投入方法).includes(呼び名)) notes.set(呼び名, id); else notes.setExtra(呼び名, id);
   for (const m of [...共通の注記, ...注記]) reportSeedIssue(seed.シードID, m);
 };
 

@@ -44,7 +44,8 @@ async function 押して遷移先を控える(n: MainNavPage, 名前: string, l0
     const r = await n.押して新しいタブのアドレスを読む(l);
     return { 名前, 新しいタブ: true, アドレス: r.アドレス, 状態: 0, 題名: "" };
   }
-  const [res] = await Promise.all([n.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click({ timeout: 30_000 })]);
+  // 押す操作だけを待ち（noWaitAfter）、移るのは waitForNavigation で待つ。重い ECTOP（同じ /ja/ へ移る「ショップ」など）で、押せているのに click の待ちが時間切れにならないようにする
+  const [res] = await Promise.all([n.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 90_000 }), l.click({ timeout: 30_000, noWaitAfter: true })]);
   await n.page.waitForLoadState("load");
   return { 名前, 新しいタブ: false, アドレス: [n.page.url()], 状態: res?.status() ?? 0, 題名: (await n.page.title()).trim() };
 }
@@ -77,7 +78,7 @@ function 遷移を確かめる(t: 遷移 | undefined, s: 先): void {
   const what = `「${t?.名前 ?? "?"}」を押した移り先（${s.画面}）`;
   if (!t) { expect.soft(t, `${what}: 押せていない`).toBeDefined(); return; }
   if ("道筋" in s) {
-    expect.soft(t.新しいタブ, `${what}: 同じタブで移る`).toBe(false);
+    expect.soft(!t.新しいタブ, `${what}: 同じタブで移る`).toBe(true);
     expect.soft(new URL(t.アドレス[0] ?? BASE_URL).pathname, `${what}のアドレス`).toMatch(s.道筋);
     expect.soft(t.状態, `${what}の応答`).toBeLessThan(400);
   } else if ("アドレス" in s) {

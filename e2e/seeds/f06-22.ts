@@ -60,6 +60,8 @@ export function 店舗(k: "A" | "B" | "C" | "D"): 使う店舗 | null {
   if (!店舗一覧.has(k)) throw new Error(`店舗${k}を、この実行のシードが選んでいない`);
   return 店舗一覧.get(k) ?? null;
 }
+/** S-F06-22-STORES が、選んだ店舗を控える（なければ null） */
+export function 店舗を選んだ(k: "A" | "B" | "C" | "D", v: 使う店舗 | null): void { 店舗一覧.set(k, v); }
 /** 前提に合う既存の店舗が無かったときに控える値 */
 export const 該当なし = "なし";
 

@@ -11,7 +11,8 @@ import { caseTest, CaseCtx, expect } from "../../lib/case";
 import { 会員としてログインする, 自動ログイン用Cookie } from "../../pages/front/f06_18_change";
 import { ContactPage } from "../../pages/front/f06_22_contact_k";
 import { 件名, 会員, 印つきメール, 店舗, 使う店舗 } from "../../seeds/f06-22";
-import "../../seeds/f06-22-b"; // 取り込みで抜けた登録を戻す: main 側が作り方を登録している seeds を読み込む（二重定義ではない）
+import { 閉店と非公開の店舗を用意する } from "../../seeds/f06-22-b"; // 取り込みで抜けた登録を戻す: main 側が作り方を登録している seeds を読み込む（二重定義ではない）
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -29,7 +30,7 @@ caseTest("IT-F06-22-014", async ({ page, step, expected }) => {
   const c = new ContactPage(page);
   await step(1, async () => { await c.開く(); });
   await step(2, async () => { await c.押して遷移する(c.パンくずホーム); });
-  await expected(async () => { expect.soft(c.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(c.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(c.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 caseTest("IT-F06-22-015", async ({ page, step, expected }) => {
   const c = new ContactPage(page);
@@ -145,7 +146,8 @@ const 位置 = (opts: { 値: string }[], s: 使う店舗) => opts.findIndex((o) 
 const 店舗の呼び名 = ["公開営業店10", "公開営業店20", "閉店店舗30", "非公開店舗40"];
 
 /** 010・011: 4店舗（閉店・非公開に当たる既存の店舗が無ければ、手順の前で止める） */
-function 四店舗(): 使う店舗[] {
+async function 四店舗(browser: import("@playwright/test").Browser): Promise<使う店舗[]> {
+  await 閉店と非公開の店舗を用意する(browser);
   const four = (["A", "B", "C", "D"] as const).map((k) => 店舗(k));
   if (four.some((s) => !s)) throw new Error("閉店店舗30・非公開店舗40 に当たる既存の店舗が無いので、このケースは確かめられない（シードの注記）");
   const out = four as 使う店舗[];
@@ -156,7 +158,7 @@ function 四店舗(): 使う店舗[] {
 caseTest("IT-F06-22-010", async (ctx) => {
   const { page, step, expected } = ctx;
   await ログアウト状態である(ctx);
-  const [A, B, C, D] = 四店舗();
+  const [A, B, C, D] = await 四店舗(ctx.browser);
   const c = new ContactPage(page);
   let opts: { 値: string; 表示: string }[] = [];
   await step(1, async () => { await c.開く(); });
@@ -175,7 +177,7 @@ caseTest("IT-F06-22-010", async (ctx) => {
 caseTest("IT-F06-22-011", async (ctx) => {
   const { page, step, expected } = ctx;
   await ログアウト状態である(ctx);
-  const 店 = 四店舗();
+  const 店 = await 四店舗(ctx.browser);
   const c = new ContactPage(page);
   let opts: { 値: string; 表示: string }[] = [];
   await step(1, async () => { await c.開く(); });

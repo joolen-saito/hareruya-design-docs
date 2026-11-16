@@ -10,7 +10,8 @@ import { caseTest, expect } from "../../lib/case";
 import { available } from "../../lib/db";
 import { LoginPage } from "../../pages/front/f06_03_login";
 import { ContactFormPage } from "../../pages/front/f06_22_contact_form";
-import { 件名を戻す, mailOf, PW_A } from "../../seeds/f06-22-b";
+import { 件名を戻す, mailOf, PW_A, 店10の表示 } from "../../seeds/f06-22-b";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
@@ -283,7 +284,7 @@ caseTest("IT-F06-22-047", async ({ page, step, expected }) => {
   await step(4, async () => { if (await c.完了画面である()) await c.押して遷移する(c.完了画面のトップへ戻る); });
   await expected(async () => {
     expect.soft(送れた, "確認画面へ進んだ").toBe(true);
-    expect.soft(c.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/);
+    expect.soft(c.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(c.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true);
   });
 });
 
@@ -334,7 +335,8 @@ caseTest("IT-F06-22-058", async ({ page, step, expected }) => {
 });
 
 // ================= 店舗（公開営業店10など）を使うケース =================
-const 店10 = "公開営業店10";
+/** 公開営業店10（S-F06-22-STORES が選んだ店舗）の、画面での表示名 */
+const 店10 = 店10の表示;
 const 氏名電話2 = { 姓: "試験", 名: "太郎", 電話: ["03", "1234", "5678"] as [string, string, string] };
 const キャンセル入力 = (o: Partial<import("../../pages/front/f06_22_contact_form").入力> = {}) => ({
   件名: 店舗イベント, 詳細: "イベントのキャンセル申込", イベント名: "確認イベント", イベント実施店舗: 店10, 開催日: "2026/09/15", 開始時間: "10:30",
@@ -358,6 +360,9 @@ caseTest("IT-F06-22-006", async ({ page, step, expected }) => {
     expect.soft(状態["店舗イベント"]?.詳細表示, "「店舗でのお買い物・イベントに関するお問い合わせ」でお問い合わせ詳細が表示される").toBe(true);
     expect.soft(状態["店舗イベント"]?.店舗表示, "「店舗でのお買い物・イベントに関するお問い合わせ」でお問い合わせ店舗選択が表示される").toBe(true);
     expect.soft(状態["その他"]?.付帯表示 && 状態["その他"]?.ラベル, "「その他のお問い合わせ」の入力欄").toBe("注文番号または買取番号");
+    // 「切り替わる」: 店舗でのお買い物・イベントの件名で出たお問い合わせ詳細が、ほかの件名では残らない
+    //（店舗選択・付帯情報の有無は件名ごとの設定によるので、シード表が値を定めていない件名については確かめない）
+    for (const k of ["通販", "買取", "その他"]) expect.soft(状態[k]?.詳細表示, `「${k}」の件名でお問い合わせ詳細が表示されない`).toBe(false);
   });
 });
 caseTest("IT-F06-22-019", async ({ page, step, expected }) => {
@@ -404,6 +409,9 @@ caseTest("IT-F06-22-032", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(r.確認画面, "お問い合わせ確認画面へ遷移しない").toBe(false);
     expect.soft(await c.お問い合わせ画面である(), "お問い合わせ入力画面に留まる").toBe(true);
+    // 押さなくても入力画面に留まるので、「確認画面へ」を押して止められたこと（画面の警告、または入力エラーの表示）も確かめる
+    const 入力エラー = (await page.locator(".c-hareruya-form-input__field-error, .form-error-message, .c-hareruya-text--error").allInnerTexts()).map((t) => t.trim()).filter(Boolean);
+    expect.soft(r.警告 !== null || 入力エラー.length > 0, `「確認画面へ」を押して止められた知らせ（画面の警告: ${r.警告 ?? "なし"}／入力エラー: ${入力エラー.join(" / ") || "なし"}）`).toBe(true);
     note(`画面の警告: ${r.警告 ?? "なし"}`);
   });
 });
@@ -474,7 +482,7 @@ caseTest("IT-F06-22-052", async ({ page, step, expected }) => {
   await step(5, async () => { r = await c.確認画面へ進む(); });
   await expected(async () => {
     expect.soft(r.警告 !== null, "警告のアラートが表示される").toBe(true);
-    expect.soft(r.確認画面, "送信されずにお問い合わせ入力画面に留まる（確認画面へ遷移しない）").toBe(false);
+    expect.soft(r.確認画面 === false, "送信されずにお問い合わせ入力画面に留まる（確認画面へ遷移しない）").toBe(true);
     expect.soft(await c.お問い合わせ画面である(), "お問い合わせ入力画面が表示されている").toBe(true);
   });
 });

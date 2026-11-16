@@ -3,23 +3,33 @@
  *
  * 実装したのは、次の28件。
  * - 画面だけで準備できる 001・002・003・004・019・020・021・044・045・046。
- * - 既存データへの読み替え（依頼者の方針 2026-11-10）: 009・012・013〜018・030・031〜035・037・040・041・043。
+ * - 既存データへの読み替え（依頼者の方針 2026-11-10）: 013〜018・031〜035・037・040・041・043。
  *   買取特集コーナー・目玉買取商品の商品は外部の検索サービスの索引から描かれ、画面で作った商品がすぐに出ないので、商品を登録せず、
  *   今ネット買取トップページに出ている既存の商品を使う（シードがその商品ID・規格IDを呼び名に控える）。
- * ほかのケースは実装しない（理由は報告）: 強化買取商品のコーナーが画面に無い、対象商品・優先表示商品が共有のタグの書き換えになる、
- * 商品を1件だけ・特定の状態で出す前提が索引の制約で作れない、DBで商品名を書き換えて索引の保持期間を見るケース など。
+ * 目玉買取商品・買取特集コーナーに印つきの商品を出すケース（共有の書き換えあり。夜の1本流しで1件ずつ）:
+ * 009・010・011・012・022〜024・028・029・030・038・039・042・048・049・052・053・058〜061・063〜068。作り方と戻し方は seeds/f05-01-index.ts。
+ * - 除外を確かめるケースは、同じケースの表示対象の商品がその枠に出ていること（除外の確かめが空振りでないこと）も確かめる。
+ * - 028・053 の「DBで対象商品の商品名を更新する」は、この実行で作った印つきの商品の行だけを DB で書き換える（db/unisearch_marked_rows.ts）。
+ * ほかのケースは実装しない（理由は報告）: 強化買取商品のコーナー（タグID 1000）が画面に無い（005・006・008・047・050・051・054〜056）、
+ * 目玉買取商品の枠にページ送りが無い（026）、目玉の0件は共有のタグから既存の商品を外す必要がある（027）。
  */
 import { Locator, test } from "@playwright/test";
 import { SETUP_ADMIN } from "../../config/env";
 import { expect, caseTest, CaseBody } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { withAdminSession } from "../../lib/session";
-import { まとめて買取商品IDを設定する, 店名を読む } from "../../pages/admin/f05_01_setup";
+import { 店名を読む } from "../../pages/admin/f05_01_setup";
+import { 追加システム設定の表示値, 追加システム設定を控えて書き換える } from "../../seeds/add-system-restore";
 import { BranchTopPage } from "../../pages/front/f01_02_branch";
 import { 入口 } from "../../pages/front/f03_04_category_list";
 import { NetBuyCartPage } from "../../pages/front/f05_04_net_detail";
 import { PurchaseTopPage, ツリーの項目 } from "../../pages/front/f05_01_purchase_top";
 import { F0501_まとめて買取商品 } from "../../seeds/f05-01";
+import { f0501索引の商品, f0501商品名, F0501U, 目玉, 特集の6タグ, 特集モダン } from "../../seeds/f05-01-index";
+import { タグの商品IDを読む } from "../../pages/admin/unisearch_products";
+import { 印つきの商品の商品名を書き換える } from "../../db/unisearch_marked_rows";
+import type { CaseCtx } from "../../lib/case";
+import type { カードの内容 } from "../../pages/front/f05_01_purchase_top";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -34,11 +44,13 @@ caseTest("IT-F05-01-001", async ({ page, step, expected }) => {
   await step(1, async () => {
     expect(await top.open("osaka"), "支店ECTOPの応答").toBeLessThan(400);
     await top.開いている();
+    await top.link("高額買取はこちら").first().waitFor({ state: "attached", timeout: 15_000 }).catch(() => undefined); // 読み込みの途中で数えて「無い」と誤らない
     数 = await top.link("高額買取はこちら").count();
   });
   await step(2, async () => {
-    if (数 === 0) note("支店ECTOPに「高額買取はこちら」のリンクが無い");
-    await purchase.押して移る(top.link("高額買取はこちら").first());
+    // リンクが無いときは押せない。押す操作で待ち続けて時間切れ（未判定）にせず、押さずに期待結果の確かめへ進み、ネット買取トップページへ移っていないことで不合格にする
+    if (数 === 0) note("支店ECTOPに「高額買取はこちら」のリンクが無い（リンクが無いので押さずに、移った先の確かめへ進んだ）");
+    else await purchase.押して移る(top.link("高額買取はこちら").first());
   });
   await expected(async () => {
     const u = new URL(page.url());
@@ -76,11 +88,13 @@ caseTest("IT-F05-01-003", async ({ page, step, expected }) => {
 caseTest("IT-F05-01-004", async ({ page, browser, notes, step, expected }) => {
   const purchase = new PurchaseTopPage(page);
   const 商品ID = notes.get("〔商品ID-F0501-004〕");
-  // 事前準備②: 開始時にまとめて買取商品IDを設定する（S-F05-01-BULK-SETTING）
-  await withAdminSession(browser, SETUP_ADMIN, async (admin) => {
-    for (const w of await まとめて買取商品IDを設定する(admin, 商品ID)) note(`まとめて買取商品IDの登録の警告「${w}」`);
-  });
-  note(`事前準備: 追加システム設定のまとめて買取商品IDを ${商品ID} にした（元に戻さない。シード表に戻す操作が無い）`);
+  // 事前準備②: 開始時にまとめて買取商品IDを設定する（S-F05-01-BULK-SETTING）。
+  // 共有の設定なので、書き換える前に画面で全項目を控え、ケースの終わりに基盤が画面で元の値へ戻して確かめる（seeds/add-system-restore.ts。F05-06 と同じ部品）
+  const 無い = await 追加システム設定を控えて書き換える(browser, "IT-F05-01-004", { まとめて買取商品ID: 商品ID });
+  expect(無い, "追加システム設定にまとめて買取商品IDの欄がある").toEqual([]);
+  const 表示 = await 追加システム設定の表示値(browser, ["まとめて買取商品ID"]);
+  expect(表示["まとめて買取商品ID"], "書き換えたあとの追加システム設定のまとめて買取商品ID").toBe(商品ID);
+  note(`事前準備: 共有の追加システム設定は、画面で全項目の元の値を控えて（元の値のまま保存できることも確かめて）から、まとめて買取商品IDだけを ${商品ID} にした。ケースの終わりに基盤が画面で元の値へ戻し、開き直して確かめる`);
   await step(1, async () => {
     expect(await purchase.開く(), "ネット買取トップページの応答").toBeLessThan(400);
     await expect(purchase.画面の印, "ネット買取トップページの画面").toHaveCount(1);
@@ -253,33 +267,56 @@ async function トップを開く(purchase: PurchaseTopPage): Promise<void> {
 
 caseTest("IT-F05-01-009", async ({ page, step, expected }) => {
   const purchase = new PurchaseTopPage(page);
-  note("商品は、登録せず買取特集コーナーに今出ている既存の商品で見た。各カテゴリは、枠の「もっと見る」のリンク先のタグIDで見分けた（画面の見出しの文言は設計書・正本の呼び名と違うことがあるため、見出しは注記に残す）");
+  note("各カテゴリは、枠の「もっと見る」のリンク先のタグIDで見分けた（画面の見出しの文言は設計書・正本の呼び名と違うことがあるため、見出しは注記に残す）。商品は、タグごとにそのタグだけを付けた印つきの商品（カード商品・各1件。商品名は「特集分類-009-タグID」）を作り、その枠に出ていること・ほかのタグの枠に出ていないことで、枠の商品がそのタグの対象であることを確かめた（正本は4件ずつ・カード以外も含む。カード以外は索引の発売日が空で先頭に並ぶとは限らないので作っていない）");
   let 枠: { タグID: string; 見出し: string }[] = [];
-  const 商品数: Record<string, number> = {};
+  const 枠の商品: Record<string, string[]> = {};
   await step(1, async () => { await トップを開く(purchase); });
   await step(2, async () => {
     await purchase.特集の描画を待つ();
     枠 = await purchase.特集の枠の一覧();
-    for (const { タグID } of 枠) 商品数[タグID] = (await purchase.カードを読む(purchase.カード(purchase.特集の枠(タグID)))).length;
-    note(`買取特集コーナーの枠（上から順）: ${枠.map((w) => `${w.見出し}（タグID ${w.タグID}・商品 ${商品数[w.タグID]}件）`).join("、")}`);
+    for (const { タグID } of 枠) 枠の商品[タグID] = (await purchase.カードを読む(purchase.カード(purchase.特集の枠(タグID)))).map((c) => c.商品ID);
+    note(`買取特集コーナーの枠（上から順）: ${枠.map((w) => `${w.見出し}（タグID ${w.タグID}・商品 ${枠の商品[w.タグID].length}件）`).join("、")}`);
   });
   await expected(async () => {
     expect.soft(枠.map((w) => w.タグID), "買取特集コーナーの枠のタグID（画面の並び）").toEqual(expect.arrayContaining(特集のタグ順));
-    for (const id of 特集のタグ順) expect.soft(商品数[id] ?? 0, `タグID ${id} のカテゴリに表示された商品の数（1件以上）`).toBeGreaterThan(0);
+    for (const id of 特集のタグ順) {
+      const 印 = f0501索引の商品("009", id);
+      expect.soft(枠の商品[id]?.length ?? 0, `タグID ${id} のカテゴリに表示された商品の数（1件以上）`).toBeGreaterThan(0);
+      expect.soft(枠の商品[id]?.includes(印.商品ID) ?? false, `タグID ${id} のカテゴリに、そのタグの対象商品「${印.商品名}」（商品ID ${印.商品ID}）が表示される`).toBe(true);
+      for (const 他 of 特集のタグ順.filter((x) => x !== id)) {
+        expect.soft(枠の商品[他]?.includes(印.商品ID) ?? false, `タグID ${他} のカテゴリに、タグID ${id} の対象商品「${印.商品名}」が表示されない`).toBe(false);
+      }
+    }
   });
 });
 
-caseTest("IT-F05-01-012", async ({ page, step, expected }) => {
+caseTest("IT-F05-01-012", async ({ page, browser, step, expected }) => {
   const purchase = new PurchaseTopPage(page);
-  note("商品は、登録せず買取特集コーナーに今出ている既存の商品で見た（各タグに4件以上ある既存データが前提）");
+  note("各タグに、印つきの商品（カード商品）を発売日の新しい順に 01〜04 の4件ずつ付けた（商品名は「特集上限-012-タグID-番号」）。タグに4件以上あることを管理画面のタグの対象商品で確かめてから、枠に3件だけ出る（4件目が出ない）ことを見た");
   const 商品数: Record<string, number> = {};
+  const 枠の商品: Record<string, string[]> = {};
+  const タグの印つき: Record<string, string[]> = {};
   await step(1, async () => { await トップを開く(purchase); });
   await step(2, async () => {
+    // 前提: 元のタグに4件以上ある（印つきの4件がそのタグの対象になっている）
+    await withAdminSession(browser, SETUP_ADMIN, async (admin) => {
+      admin.setDefaultTimeout(60_000);
+      for (const id of 特集のタグ順) タグの印つき[id] = await タグの商品IDを読む(admin, id, F0501U);
+    });
+    note(`管理画面のタグの対象商品（印つき）: ${特集のタグ順.map((id) => `タグID ${id} ${タグの印つき[id].length}件`).join("、")}`);
     await purchase.特集の描画を待つ();
-    for (const id of 特集のタグ順) 商品数[id] = (await purchase.カードを読む(purchase.カード(purchase.特集の枠(id)))).length;
+    for (const id of 特集のタグ順) {
+      枠の商品[id] = (await purchase.カードを読む(purchase.カード(purchase.特集の枠(id)))).map((c) => c.商品ID);
+      商品数[id] = 枠の商品[id].length;
+    }
   });
   await expected(async () => {
-    for (const id of 特集のタグ順) expect.soft(商品数[id], `タグID ${id} のカテゴリに表示された商品の数`).toBe(3);
+    for (const id of 特集のタグ順) {
+      const 四件 = ["01", "02", "03", "04"].map((j) => f0501索引の商品("012", `${id}-${j}`).商品ID);
+      expect.soft(四件.every((x) => タグの印つき[id]?.includes(x)), `タグID ${id} の対象商品に、印つきの4件（商品ID ${四件.join("・")}）がすべて入っている（4件以上ある前提）`).toBe(true);
+      expect.soft(商品数[id], `タグID ${id} のカテゴリに表示された商品の数`).toBe(3);
+      expect.soft(枠の商品[id].includes(四件[3]), `タグID ${id} の4件目（商品ID ${四件[3]}）が表示されない`).toBe(false);
+    }
   });
 });
 
@@ -315,7 +352,7 @@ caseTest("IT-F05-01-030", async ({ page, notes, step, expected }) => {
   const purchase = new PurchaseTopPage(page);
   const A = notes.get("〔商品ID-F0501-030A〕");
   const B = notes.get("〔商品ID-F0501-030B〕");
-  note(`買取価格499円・500円の商品は登録せず、目玉買取商品に今出ている既存の商品で見た（500円未満の商品ID ${A}・500円以上の商品ID ${B}）`);
+  note(`買取価格499円（商品ID ${A}）・500円（商品ID ${B}）の印つきの商品を作って、目玉買取商品で見た（正本は「カード以外」。カード以外は索引の発売日が空で目玉の先頭に並ぶとは限らないので、カードを指定した商品で作った）`);
   let 内容A: Awaited<ReturnType<PurchaseTopPage["カードを読む"]>> = [];
   let 内容B: Awaited<ReturnType<PurchaseTopPage["カードを読む"]>> = [];
   await step(1, async () => { await トップを開く(purchase); });
@@ -331,8 +368,8 @@ caseTest("IT-F05-01-030", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     const x = 内容A[0]?.数量の操作;
     const y = 内容B[0]?.数量の操作;
-    expect.soft(内容A[0]?.買取価格, "500円未満の商品の買取価格").toBeLessThan(500);
-    expect.soft(内容B[0]?.買取価格, "500円以上の商品の買取価格").toBeGreaterThanOrEqual(500);
+    expect.soft(内容A[0]?.買取価格, "境界値の商品（499円）の買取価格").toBe(499);
+    expect.soft(内容B[0]?.買取価格, "境界値の商品（500円）の買取価格").toBe(500);
     expect.soft(x, "500円未満の商品では商品数入力・マイナス・プラス・カートに入れるが表示されない").toEqual({ 入力: false, マイナス: false, プラス: false, カートに入れる: false });
     expect.soft(y, "500円以上の商品では商品数入力・マイナス・プラス・カートに入れるが表示される").toEqual({ 入力: true, マイナス: true, プラス: true, カートに入れる: true });
   });
@@ -379,7 +416,10 @@ function カートのケース実行(k: { no: string; 操作: 数量の操作[];
   });
   await step(n++, async () => {
     await cart.開く();
+    // 「ご案内」のモーダル（まとめて買取の案内）が明細の行を覆い、商品名・数量が読めない（エビデンスに写らない）ので、閉じてから読む
+    if (await cart.ご案内を閉じる()) note("ネット買取カートを開いたときに出た「ご案内」のモーダル（まとめて買取の案内）は、明細の行を覆うので「閉じる」で閉じてから確かめた（正本の外の補い）");
     カートの数量 = await cart.数量(商品ID);
+    note(`ネット買取カートの商品ID ${商品ID} の商品の数量: ${カートの数量.join("・") || "行なし"}（期待 ${k.数量}）`);
   });
   await expected(async () => {
     expect.soft(追加の応答, "カートに入れる要求の応答").toBeLessThan(400);
@@ -473,3 +513,204 @@ caseTest("IT-F05-01-043", async ({ page, browser, step, expected }) => {
     expect.soft(見出し.filter((t) => t === 店名), `店名「${店名}」の見出し`).toEqual([]);
   });
 });
+
+// ================================================================ 目玉買取商品・買取特集コーナーに印つきの商品を出すケース
+
+const 枠の名 = (枠: string) => (枠 === 目玉 ? "目玉買取商品枠" : `買取特集コーナーのタグID ${枠} の枠`);
+
+/** 枠の描画を待って商品カードを読む */
+async function 枠を読む(ctx: CaseCtx, 枠: string): Promise<カードの内容[]> {
+  const purchase = new PurchaseTopPage(ctx.page);
+  const 区画 = 枠 === 目玉 ? purchase.目玉の区画 : purchase.特集の枠(枠);
+  expect(await purchase.区画の描画を待つ(区画), `${枠の名(枠)}が画面にある`).toBe(true);
+  // 枠の見出しが上の固定ヘッダーに隠れないよう、枠の先頭を少し下げて画面に入れる（画像で見出しと商品が読めるように）
+  await 区画.first().evaluate((el) => { el.scrollIntoView({ block: "start" }); window.scrollBy(0, -140); });
+  const cards = await purchase.カードを読む(purchase.カード(区画));
+  note(`${枠の名(枠)}の商品（上から）: ${cards.map((c) => `${c.商品名}（${c.商品ID}・買取${c.買取価格 ?? "—"}）`).join("、") || "なし"}`);
+  return cards;
+}
+
+/** 出る商品・出ない商品（記号）を、枠の商品カードで確かめる。前提は、除外の確かめが空振りでないための表示対象 */
+function 出る出ない(caseNo: string, 枠: string, v: { 出る?: string[]; 出ない?: string[]; 前提?: string[] }) {
+  return async (ctx: CaseCtx): Promise<void> => {
+    const purchase = new PurchaseTopPage(ctx.page);
+    const 品 = (x: string) => f0501索引の商品(caseNo, x);
+    let cards: カードの内容[] = [];
+    await ctx.step(1, async () => {
+      expect(await purchase.開く(), "ネット買取トップページの応答").toBeLessThan(400);
+      await expect(purchase.画面の印, "ネット買取トップページの画面").toHaveCount(1);
+    });
+    await ctx.step(2, async () => { cards = await 枠を読む(ctx, 枠); });
+    await ctx.expected(async () => {
+      const ids = cards.map((c) => c.商品ID);
+      for (const x of v.前提 ?? []) expect.soft(ids.includes(品(x).商品ID), `同じケースの表示対象「${品(x).商品名}」（商品ID ${品(x).商品ID}）が${枠の名(枠)}に表示されている（除外の確かめの前提）`).toBe(true);
+      for (const x of v.出る ?? []) expect.soft(ids.includes(品(x).商品ID), `「${品(x).商品名}」（商品ID ${品(x).商品ID}）が${枠の名(枠)}に表示される`).toBe(true);
+      for (const x of v.出ない ?? []) expect.soft(ids.includes(品(x).商品ID), `「${品(x).商品名}」（商品ID ${品(x).商品ID}）が${枠の名(枠)}に表示されない`).toBe(false);
+    });
+  };
+}
+
+caseTest("IT-F05-01-010", 出る出ない("010", 特集モダン, { 前提: ["A"], 出ない: ["B", "C", "D", "E"] }));
+caseTest("IT-F05-01-022", 出る出ない("022", 目玉, { 出る: ["A", "B", "C"] }));
+caseTest("IT-F05-01-023", 出る出ない("023", 目玉, { 前提: ["A", "B", "C"], 出ない: ["D", "E", "F", "G"] }));
+caseTest("IT-F05-01-024", 出る出ない("024", 目玉, { 前提: ["A"], 出ない: ["B", "C", "D"] }));
+caseTest("IT-F05-01-048", 出る出ない("048", 特集モダン, { 出る: ["A"] }));
+caseTest("IT-F05-01-049", 出る出ない("049", 目玉, { 出る: ["A"] }));
+caseTest("IT-F05-01-058", 出る出ない("058", 特集モダン, { 出る: ["A"], 出ない: ["B"] }));
+caseTest("IT-F05-01-059", 出る出ない("059", 特集モダン, { 出る: ["A"], 出ない: ["B"] }));
+caseTest("IT-F05-01-060", 出る出ない("060", 特集モダン, { 出る: ["A"], 出ない: ["B"] }));
+caseTest("IT-F05-01-061", 出る出ない("061", 特集モダン, { 出る: ["A"], 出ない: ["B"] }));
+caseTest("IT-F05-01-063", 出る出ない("063", 目玉, { 出る: ["A"], 出ない: ["B"] }));
+caseTest("IT-F05-01-064", 出る出ない("064", 目玉, { 出る: ["A"], 出ない: ["B"] }));
+caseTest("IT-F05-01-065", 出る出ない("065", 目玉, { 出る: ["A"], 出ない: ["B"] }));
+caseTest("IT-F05-01-066", 出る出ない("066", 目玉, { 出る: ["A"], 出ない: ["B"] }));
+caseTest("IT-F05-01-067", 出る出ない("067", 目玉, { 出る: ["A"], 出ない: ["B"] }));
+caseTest("IT-F05-01-068", 出る出ない("068", 目玉, { 出る: ["A"], 出ない: ["B"] }));
+
+caseTest("IT-F05-01-011", async (ctx) => {
+  const purchase = new PurchaseTopPage(ctx.page);
+  const 並び: Record<string, string[]> = {};
+  note(`各カテゴリ（買取特集コーナーのタグID ${特集の6タグ.join("・")} の枠）のコード末尾03・01・04 の商品は、発売日の新しい順が 03・01・04 になるカードセットで作り、優先表示商品の先頭に 03・01・04・02 を置いた`);
+  await ctx.step(1, async () => {
+    expect(await purchase.開く(), "ネット買取トップページの応答").toBeLessThan(400);
+    await expect(purchase.画面の印, "ネット買取トップページの画面").toHaveCount(1);
+  });
+  await ctx.step(2, async () => { for (const t of 特集の6タグ) 並び[t] = (await 枠を読む(ctx, t)).map((c) => c.商品ID); });
+  await ctx.expected(async () => {
+    for (const t of 特集の6タグ) {
+      const want = ["03", "01", "04"].map((j) => f0501索引の商品("011", `${t}-${j}`).商品ID);
+      expect.soft(並び[t].slice(0, 3), `タグID ${t} の枠の商品の並び（先頭から 03・01・04 の商品ID）`).toEqual(want);
+    }
+  });
+});
+
+/** ネット買取トップを開き（手順1）、目玉買取商品枠の商品を読む（手順2） */
+function 目玉の一枚(caseNo: string, check: (c: カードの内容 | undefined, 名: string) => void) {
+  return async (ctx: CaseCtx): Promise<void> => {
+    const purchase = new PurchaseTopPage(ctx.page);
+    const A = f0501索引の商品(caseNo, "A");
+    let cards: カードの内容[] = [];
+    await ctx.step(1, async () => { expect(await purchase.開く(), "ネット買取トップページの応答").toBeLessThan(400); });
+    await ctx.step(2, async () => { cards = await 枠を読む(ctx, 目玉); });
+    await ctx.expected(async () => {
+      const c = cards.find((x) => x.商品ID === A.商品ID);
+      expect.soft(c !== undefined, `「${A.商品名}」が目玉買取商品枠に表示される`).toBe(true);
+      check(c, A.商品名);
+    });
+  };
+}
+caseTest("IT-F05-01-029", 目玉の一枚("029", (c, 名) => { expect.soft(c?.買取価格 ?? null, `「${名}」の買取価格（円）`).toBe(777); }));
+caseTest("IT-F05-01-052", 目玉の一枚("052", (c, 名) => { expect.soft(c?.言語ラベル ?? null, `「${名}」のカード言語`).toBe("EN"); }));
+
+caseTest("IT-F05-01-038", async (ctx) => {
+  const purchase = new PurchaseTopPage(ctx.page);
+  let cards: カードの内容[] = [];
+  const A = f0501索引の商品("038", "A");
+  const B = f0501索引の商品("038", "B");
+  await ctx.step(1, async () => { expect(await purchase.開く(), "ネット買取トップページの応答").toBeLessThan(400); });
+  await ctx.step(2, async () => { cards = await 枠を読む(ctx, 目玉); });
+  await ctx.expected(async () => {
+    const a = cards.find((x) => x.商品ID === A.商品ID);
+    const b = cards.find((x) => x.商品ID === B.商品ID);
+    expect.soft(a?.同名商品検索あり ?? null, `カード商品「${A.商品名}」に「同名商品検索」が表示される`).toBe(true);
+    expect.soft(b !== undefined, `カード以外の「${B.商品名}」が目玉買取商品枠に表示されている（操作部を確かめる前提）`).toBe(true);
+    expect.soft(b?.同名商品検索あり ?? null, `カード以外の「${B.商品名}」に「同名商品検索」が表示されない`).toBe(false);
+  });
+});
+
+caseTest("IT-F05-01-039", async (ctx) => {
+  const purchase = new PurchaseTopPage(ctx.page);
+  const [A, B, C] = ["A", "B", "C"].map((x) => f0501索引の商品("039", x));
+  let ids: string[] = [];
+  await ctx.step(1, async () => {
+    expect(await purchase.開く(), "ネット買取トップページの応答").toBeLessThan(400);
+    await 枠を読む(ctx, 目玉);
+  });
+  await ctx.step(2, async () => {
+    const link = purchase.商品のカード(purchase.目玉の区画, A.商品ID).locator('a[href*="cardId="]').first();
+    await expect(link, `「${A.商品名}」の「同名商品検索」`).toBeVisible();
+    await purchase.押して移る(link);
+    ids = await purchase.一覧の商品IDs();
+    const u = new URL(ctx.page.url());
+    note(`移った先（${u.pathname}${u.search}）の商品ID: ${ids.join("、") || "なし"}`);
+  });
+  await ctx.expected(async () => {
+    await expect.soft(purchase.ネット買取商品一覧の印, "ネット買取商品一覧画面").toHaveCount(1);
+    expect.soft(ids.includes(A.商品ID), `同じカードの「${A.商品名}」が表示される`).toBe(true);
+    expect.soft(ids.includes(B.商品ID), `同じカードの「${B.商品名}」が表示される`).toBe(true);
+    expect.soft(ids.includes(C.商品ID), `別のカードの「${C.商品名}」が表示されない`).toBe(false);
+    // 1ページ目だけを見て「表示されない」と言わないよう、一覧が同じカードの商品だけに絞られていることも見る（同じカードの商品はシードが作った2件だけ）
+    expect.soft(ids.filter((id) => id !== A.商品ID && id !== B.商品ID), "一覧に同じカード以外の商品が表示されない（同名商品検索で絞り込まれている）").toEqual([]);
+  });
+});
+
+caseTest("IT-F05-01-042", async (ctx) => {
+  const purchase = new PurchaseTopPage(ctx.page);
+  const A = f0501索引の商品("042", "A");
+  let c: カードの内容 | undefined;
+  await ctx.step(1, async () => { expect(await purchase.開く(), "ネット買取トップページの応答").toBeLessThan(400); });
+  await ctx.step(2, async () => { await purchase.目玉の区画.scrollIntoViewIfNeeded(); await 枠を読む(ctx, 目玉); });
+  await ctx.step(3, async () => {
+    const card = purchase.商品のカード(purchase.目玉の区画, A.商品ID);
+    await card.scrollIntoViewIfNeeded().catch(() => undefined);
+    c = (await purchase.カードを読む(card))[0];
+  });
+  await ctx.expected(async () => {
+    expect.soft(c !== undefined, `「${A.商品名}」が目玉買取商品枠に表示されている`).toBe(true);
+    expect.soft(c?.画像なし ?? null, `「${A.商品名}」の商品画像の位置が、画像なしを表す代替画像`).toBe(true);
+  });
+});
+
+/** 028・053: 表示を確かめ → DBで商品名を書き換え → 再読み込み */
+function 保持(caseNo: string, 前の名: string, 後の名: string, 再読み込みまで: "30秒未満" | "30秒以上") {
+  return async (ctx: CaseCtx): Promise<void> => {
+    const purchase = new PurchaseTopPage(ctx.page);
+    const A = f0501索引の商品(caseNo, "A");
+    const 前 = f0501商品名(前の名);
+    let t0 = 0;
+    let 後: カードの内容[] = [];
+    await ctx.step(1, async () => {
+      expect(await purchase.開く(), "ネット買取トップページの応答").toBeLessThan(400);
+      t0 = Date.now();
+      const cards = await 枠を読む(ctx, 目玉);
+      expect(cards.find((c) => c.商品ID === A.商品ID)?.商品名, `「${前}」が表示される`).toBe(前);
+    });
+    await ctx.step(2, async () => {
+      const n = 印つきの商品の商品名を書き換える(A.商品ID, 後の名, `IT-F05-01-${caseNo}: 対象商品の商品名を「${後の名}」にする`);
+      expect(n, "DBで書き換えた商品の行の数").toBe(1);
+      note(`DBで、この実行で作った商品（商品ID ${A.商品ID}・商品コード ${A.商品コード}）の商品名を「${後の名}」に書き換えた`);
+    });
+    await ctx.step(3, async () => {
+      if (再読み込みまで === "30秒以上") {
+        const rest = 31_000 - (Date.now() - t0);
+        if (rest > 0) await ctx.page.waitForTimeout(rest);
+      }
+      await ctx.page.reload({ waitUntil: "load" });
+      note(`最初の表示から ${Math.round((Date.now() - t0) / 1000)} 秒で再読み込みした`);
+      後 = await 枠を読む(ctx, 目玉);
+    });
+    await ctx.expected(async () => {
+      const names = 後.map((c) => c.商品名);
+      if (再読み込みまで === "30秒未満") {
+        expect.soft(names.includes(前), `再読み込み後も「${前}」が表示される`).toBe(true);
+        expect.soft(names.includes(後の名), `「${後の名}」が表示されない`).toBe(false);
+      } else {
+        expect.soft(names.includes(後の名), `再読み込み後に「${後の名}」が表示される`).toBe(true);
+        expect.soft(names.includes(前), `「${前}」が表示されない`).toBe(false);
+      }
+    });
+  };
+}
+caseTest("IT-F05-01-028", async (ctx) => {
+  const { expected } = ctx;
+  // 目玉買取商品の枠は外部の検索サービスの索引から描かれる。DB の商品名を書き換えても、検索サービスへフィードを送るまで索引は変わらない。
+  // そのため、書き換えたあと30秒未満で再読み込みして旧名が出ても、「30秒の保持（抽出結果のキャッシュ）」のせいなのか、索引が変わっていないだけなのか区別できない
+  // （30秒を過ぎても旧名のままになりうる）。フィードを送って索引を更新する方法は、反映待ちに30秒以上かかり、30秒未満の再読み込みと両立しない。
+  // 正本の意図（30秒保持）を正しく確かめられる方法が決まるまで、合否を出さずに止める（合格にしない）。対になる 053 と一緒に決め直す。
+  note("未判定で止めた: 目玉の枠は検索サービスの索引から描かれ、DB の商品名の書き換えでは30秒保持（キャッシュ）の確かめにならない（旧名が出ても保持のためとは言えない）。確かめ方が決まるまで実施しない");
+  const 確かめ方が決まっている = false as boolean;
+  if (!確かめ方が決まっている) throw new Error("IT-F05-01-028 は確かめ方が決まるまで未判定で止める（目玉の枠は検索サービスの索引から描かれ、DB の書き換えでは30秒保持を確かめられない）");
+  await 保持("028", "キャッシュ更新前商品-028", "キャッシュ更新後商品", "30秒未満")(ctx); // 旧: DB の書き換えで確かめていた形（合否の根拠にならない）
+  await expected(async () => { expect(確かめ方が決まっている, "30秒保持の確かめ方が決まっている").toBe(true); });
+});
+caseTest("IT-F05-01-053", 保持("053", "保持中商品-053", "保持終了後商品-053", "30秒以上"));

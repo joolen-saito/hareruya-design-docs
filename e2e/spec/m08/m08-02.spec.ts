@@ -1,7 +1,9 @@
 /**
  * M08-02 メール一括送信。正本: cases/M08-02_test_cases.tsv
- * 実装しないケース: メールの受信内容・受信数を確かめるもの（011・015・016・019・021・023〜026・030・031・033・034。開発環境にメールの受け口が無い）、
- * メール文字コードの設定を書き換えるもの（024・025・033・034。共有の設定は書き換えない）。
+ * 実装しないケース: メール文字コードを iso-2022-jp にする前提のもの（024・025・033・034。アプリの設定ファイルの値で、管理画面に項目が無い）。
+ * メール受信確認画面は、開発環境のメールの受け口（E2E_MAIL_URL。pages/admin/m05_06_mailbox.ts。読むだけ）で代える。
+ * 受信箱は消さない。ケースの手順の前に受け口のメールの番号を控え、そのあとに会員のアドレス（実行の印つき）へ届いたものだけを数える。
+ * 店舗基本設定（店名・メールアドレス）は共有の設定で、シード S-M08-02-BASE-DEFAULT が夜の1本流しでだけ書き換え、ケースの終わりに基盤が画面で戻す。
  * 会員の更新日時・登録日時は画面で指定できないので、シードが実行の印つきの会員に限り DB に書く。
  */
 import { test } from "@playwright/test";
@@ -11,7 +13,9 @@ import { DBの現在時刻, 件名の送信履歴, 会員の送信履歴, 送信
 import { 会員レコード全体 } from "../../db/m08_04";
 import { M08CustomerListPage } from "../../pages/admin/m08_customer_list";
 import { M08CustomerMailPage, M08MailHistoryPage } from "../../pages/admin/m08_customer_mail";
-import { M0802_ADMIN, M0802_RH_ADMIN, RH検索語, ページング語, 検索語 } from "../../seeds/m08-02";
+import { M0802_ADMIN, M0802_RH_ADMIN, M0802_店舗設定, RH検索語, ページング語, 検索語 } from "../../seeds/m08-02";
+import { mailOf } from "../../seeds/m08-common";
+import { 受けたメール, 受け口を控える as メールの受け口で数えた, 届いたメール, メールのソース } from "../../pages/admin/m05_06_mailbox";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -397,5 +401,263 @@ caseTest("IT-M08-02-032", async (ctx) => {
       expect.soft(窓[i]?.件名, `会員ID ${会員} のポップアップの件名`).toBe(件名);
       expect.soft(窓[i]?.本文, `会員ID ${会員} のポップアップの本文`).toBe("RH一括本文001");
     });
+  });
+});
+
+// ---- メールの受信を確かめるケース（011・015・016・019・021・026・030・031） ----
+// メール受信確認画面の代わりに、開発環境のメールの受け口を読む。会員のアドレスは実行の印つき（mailOf）。
+
+const 素の = (a: string): string => a.replace(/^.*</, "").replace(/>.*$/, "").replace(/"/g, "").trim().toLowerCase();
+/** 本文の比べ方: 改行を LF にそろえ、末尾の改行だけを除く（メールの本文は末尾に改行が付く） */
+const 本文の = (t: string): string => t.replace(/\r\n/g, "\n").replace(/\n+$/, "");
+const 受け口の注記 = (控え: Set<number>, 宛先: string[]): void =>
+  note(`メール受信確認画面は、開発環境のメールの受け口で読んだ。受信箱は消さず、手順の前に控えたメールの番号（${控え.size}通）より後に、` +
+    `会員のアドレス（実行の印つき: ${宛先.join("、")}）へ届いたものだけを数えた（事前準備の「受信メールを0通にする」の代わり）`);
+const 宛先の注記 = (正本: string, 実際: string): void => note(`正本の会員のメールアドレス ${正本} は、実行の印を付けた ${実際} として登録した`);
+
+/** 届いたメールの一覧の要約（エビデンスの注記に出す） */
+const 要約 = (ms: 受けたメール[]): string => ms.map((m) => `#${m.番号} To=${m.To} 件名=${m.件名}`).join(" ／ ") || "なし";
+
+caseTest("IT-M08-02-011", async (ctx) => {
+  const { page, notes, step, expected } = ctx;
+  const id = notes.get("〔会員ID-M0802-011〕");
+  const 宛先 = mailOf("customer100-m0802-011");
+  宛先の注記("customer100-m0802-011@example.test", 宛先);
+  const list = await 結果を開く(ctx, 検索語("011"));
+  const 表示 = await list.結果の会員ID();
+  expect(表示, "事前準備: 検索結果に会員ID の会員だけが表示されている").toEqual([id]);
+  const 控え = await メールの受け口で数えた();
+  受け口の注記(控え, [宛先]);
+  const m = new M08CustomerMailPage(page);
+  let r: { 遷移した: boolean; ダイアログ: string | null } = { 遷移した: false, ダイアログ: null };
+  let 届いた: 受けたメール[] = [];
+  await step(1, async () => {
+    await m.一覧で全部外す();
+    expect(await page.locator('input[name="ids[]"]:checked').count(), "チェックの付いた会員が0人").toBe(0);
+  });
+  await step(2, async () => { r = await m.その他からメール一括送信を押す(); note(`「メール一括送信」を押した結果: 画面遷移${r.遷移した ? "あり" : "なし"}、ダイアログ「${r.ダイアログ ?? "なし"}」`); });
+  await step(3, async () => {
+    // 届かないことを確かめるので、押したあと20秒待ってから数える
+    届いた = await 届いたメール(宛先, 控え, 0, 20);
+    note(`押したあと20秒待って数えた。届いたメール: ${要約(届いた)}`);
+  });
+  await expected(async () => {
+    expect.soft(届いた.length, `会員（${宛先}）宛のメールの数`).toBe(0);
+  });
+});
+
+caseTest("IT-M08-02-015", async (ctx) => {
+  const { page, notes, step, expected } = ctx;
+  const ids = ["A", "B"].map((x) => notes.get(`〔会員ID-M0802-015${x}〕`));
+  const 宛先 = [mailOf("customer100-m0802-015"), mailOf("customer200-m0802-015")];
+  宛先の注記("customer100-m0802-015@example.test・customer200-m0802-015@example.test", 宛先.join("・"));
+  await loginAdmin(page, M0802_ADMIN);
+  const 控え = await メールの受け口で数えた();
+  受け口の注記(控え, 宛先);
+  const m = new M08CustomerMailPage(page);
+  const 本文 = "本文Body-01 {{ Customer.name01 }}";
+  let 届いた: 受けたメール[][] = [];
+  await step(1, async () => { await 対象で入力画面を開く(ctx, 検索語("015"), ids); });
+  await step(2, async () => { await m.入力する("一括Mail-01", 本文); await m.送信内容を確認を押す(); });
+  await step(3, async () => { await m.メール送信を押す(); expect(await m.完了画面である(), "メール一括送信完了画面が表示された").toBe(true); });
+  await step(4, async () => {
+    // 1通目が届くまで待ち、さらに15秒待って余分なメールが無いことも数える
+    for (const a of 宛先) await 届いたメール(a, 控え, 1);
+    await page.waitForTimeout(15_000);
+    届いた = await Promise.all(宛先.map((a) => 届いたメール(a, 控え, 0, 0)));
+    宛先.forEach((a, i) => note(`${a} に届いたメール: ${要約(届いた[i])}`));
+  });
+  await expected(async () => {
+    宛先.forEach((a, i) => {
+      const ms = 届いた[i];
+      expect.soft(ms.length, `会員ID ${ids[i]}（${a}）宛のメールの数`).toBe(1);
+      const x = ms[0];
+      if (!x) return;
+      expect.soft(x.件名, `会員ID ${ids[i]} 宛のメールの件名`).toBe("一括Mail-01");
+      expect.soft(本文の(x.本文), `会員ID ${ids[i]} 宛のメールの本文（入力した本文のままで、ヘッダ・フッタ・会員の名前の差し込みが付かない）`).toBe(本文);
+    });
+  });
+});
+
+caseTest("IT-M08-02-016", async (ctx) => {
+  const { page, notes, step, expected } = ctx;
+  const id = notes.get("〔会員ID-M0802-016〕");
+  const 宛先 = mailOf("customer100-m0802-016");
+  宛先の注記("customer100-m0802-016@example.test", 宛先);
+  const v = M0802_店舗設定;
+  await loginAdmin(page, M0802_ADMIN);
+  const 控え = await メールの受け口で数えた();
+  受け口の注記(控え, [宛先]);
+  const m = new M08CustomerMailPage(page);
+  let x: 受けたメール | undefined; let ソース: Record<string, string> = {};
+  await step(1, async () => { await 対象で入力画面を開く(ctx, 検索語("016"), [id]); });
+  await step(2, async () => { await m.入力する("ヘッダ確認Title", "ヘッダ確認Body"); await m.送信内容を確認を押す(); });
+  await step(3, async () => { await m.メール送信を押す(); expect(await m.完了画面である(), "メール一括送信完了画面が表示された").toBe(true); });
+  await step(4, async () => {
+    x = (await 届いたメール(宛先, 控え, 1))[0];
+    if (x) ソース = (await メールのソース(x.番号)).ヘッダー;
+    note(`届いたメール: ${x ? `#${x.番号} From=${x.差出人} To=${x.To} Reply-To=${x.返信先} 封筒の差出人=${x.戻り先} 封筒の宛先=${x.宛先.join(",")}` : "なし"}`);
+    note("BCC は送るときにヘッダーから除かれるので、受け口に届いた封筒の宛先にあり、ヘッダーの To・Cc に無いことで確かめた。送信エラーの戻り先は、封筒の差出人（Return-Path）で確かめた");
+  });
+  await expected(async () => {
+    expect(x, "会員宛のメールが届いた").toBeTruthy();
+    if (!x) return;
+    expect.soft(素の(x.To), "宛先（To）").toBe(宛先.toLowerCase());
+    expect.soft(x.差出人.replace(/"/g, "").replace(/\s+/g, " ").trim(), "差出人（From。店名とメールアドレス1）").toBe(`${v.店名} <${v.送信元}>`);
+    expect.soft(x.宛先, "BCC（封筒の宛先にメールアドレス1がある）").toContain(v.送信元);
+    expect.soft([素の(x.To), ...(ソース["cc"] ?? "").split(",").map(素の)].includes(v.送信元), "BCC のアドレスがヘッダーの To・Cc に出ない（BCC で送られた）").toBe(false);
+    expect.soft(素の(x.返信先), "返信先（Reply-To。メールアドレス3）").toBe(v.返信先);
+    expect.soft(x.戻り先, "送信エラーの戻り先（封筒の差出人＝Return-Path。メールアドレス4）").toBe(v.戻り先);
+  });
+});
+
+/** 重複・順序（019）: 会員宛メールを届いた順に並べ、会員IDの並びにする */
+async function 届いた順(控え: Set<number>, 人: { id: string; 宛先: string }[], 何通: number[]): Promise<{ 並び: string[]; 一覧: 受けたメール[] }> {
+  const 各 = await Promise.all(人.map((p, i) => 届いたメール(p.宛先, 控え, 何通[i])));
+  const 一覧 = 各.flatMap((ms, i) => ms.map((x) => ({ x, id: 人[i].id }))).sort((a, b) => a.x.番号 - b.x.番号);
+  return { 並び: 一覧.map((e) => e.id), 一覧: 一覧.map((e) => e.x) };
+}
+
+caseTest("IT-M08-02-019", async (ctx) => {
+  const { page, notes, step, expected } = ctx;
+  const [a, b] = ["A", "B"].map((x) => notes.get(`〔会員ID-M0802-019${x}〕`));
+  const 人 = [{ id: a, 宛先: mailOf("customer100-m0802-019") }, { id: b, 宛先: mailOf("customer300-m0802-019") }];
+  宛先の注記("customer100-m0802-019@example.test・customer300-m0802-019@example.test", 人.map((p) => p.宛先).join("・"));
+  await loginAdmin(page, M0802_ADMIN);
+  const 控え = await メールの受け口で数えた();
+  受け口の注記(控え, 人.map((p) => p.宛先));
+  const m = new M08CustomerMailPage(page);
+  let 並び: string[] = [];
+  await step(1, async () => { await 対象で入力画面を開く(ctx, 検索語("019"), [a]); });
+  await step(2, async () => { await m.会員IDリストを変える([b, a, b].join(",")); expect(await m.会員IDリストを読む(), "非表示の会員IDリスト").toBe([b, a, b].join(",")); });
+  await step(3, async () => { await m.入力する("重複順序Title", "重複順序Body"); await m.送信内容を確認を押す(); });
+  await step(4, async () => { await m.メール送信を押す(); });
+  await step(5, async () => {
+    await 届いた順(控え, 人, [1, 2]);
+    await page.waitForTimeout(15_000);
+    const r = await 届いた順(控え, 人, [0, 0]);
+    並び = r.並び;
+    note(`届いた順（受け口の番号の順）: ${r.一覧.map((x, i) => `#${x.番号} 会員ID ${並び[i]}（${x.件名}）`).join(" → ")}`);
+  });
+  await expected(async () => {
+    expect.soft(並び, "会員宛メールの送信順（会員IDの並び。重複の指定も取り除かれない）").toEqual([b, a, b]);
+  });
+});
+
+caseTest("IT-M08-02-021", async (ctx) => {
+  const { page, notes, step, expected } = ctx;
+  const [a, b] = ["A", "B"].map((x) => notes.get(`〔会員ID-M0802-021${x}〕`));
+  const 宛先 = [mailOf("customer100-m0802-021"), mailOf("customer200-m0802-021")];
+  宛先の注記("customer100-m0802-021@example.test・customer200-m0802-021@example.test", 宛先.join("・"));
+  await loginAdmin(page, M0802_ADMIN);
+  const 控え = await メールの受け口で数えた();
+  受け口の注記(控え, 宛先);
+  const m = new M08CustomerMailPage(page);
+  let 届いた: 受けたメール[][] = [];
+  await step(1, async () => { await 対象で入力画面を開く(ctx, 検索語("021"), [a]); });
+  await step(2, async () => { await m.会員IDリストを変える([a, "999999", b].join(",")); expect(await m.会員IDリストを読む(), "非表示の会員IDリスト").toBe([a, "999999", b].join(",")); });
+  await step(3, async () => { await m.入力する("中断Title", "中断Body"); await m.送信内容を確認を押す(); });
+  await step(4, async () => { await m.メール送信を押す(); note(`メール送信を押したあとの画面: ${page.url()}`); });
+  await step(5, async () => {
+    // A のメールが届くのを待ってから、さらに15秒待って B を数える
+    await 届いたメール(宛先[0], 控え, 1);
+    await page.waitForTimeout(15_000);
+    届いた = await Promise.all(宛先.map((x) => 届いたメール(x, 控え, 0, 0)));
+    宛先.forEach((x, i) => note(`${x} に届いたメール: ${要約(届いた[i])}`));
+  });
+  await expected(async () => {
+    expect.soft(届いた[0].length, `会員ID ${a} 宛のメールの数`).toBe(1);
+    expect.soft(届いた[0][0]?.件名, `会員ID ${a} 宛のメールの件名`).toBe("中断Title");
+    expect.soft(届いた[1].length, `会員ID ${b} 宛のメールの数（送信されない）`).toBe(0);
+  });
+});
+
+caseTest("IT-M08-02-026", async (ctx) => {
+  const { page, notes, step, expected } = ctx;
+  const id = notes.get("〔会員ID-M0802-026〕");
+  const 宛先 = mailOf("customer100-m0802-026");
+  宛先の注記("customer100-m0802-026@example.test", 宛先);
+  await loginAdmin(page, M0802_ADMIN);
+  const 控え = await メールの受け口で数えた();
+  受け口の注記(控え, [宛先]);
+  const m = new M08CustomerMailPage(page);
+  const 本文 = "日本語本文さしすせそ";
+  let x: 受けたメール | undefined; let h: Record<string, string> = {};
+  await step(1, async () => { await 対象で入力画面を開く(ctx, 検索語("026"), [id]); });
+  await step(2, async () => { await m.入力する("無変換Title", 本文); await m.送信内容を確認を押す(); });
+  await step(3, async () => { await m.メール送信を押す(); expect(await m.完了画面である(), "メール一括送信完了画面が表示された").toBe(true); });
+  await step(4, async () => {
+    x = (await 届いたメール(宛先, 控え, 1))[0];
+    if (x) h = (await メールのソース(x.番号)).ヘッダー;
+    note(`メールのソースのヘッダー: Content-Type「${h["content-type"] ?? "なし"}」、Content-Transfer-Encoding「${h["content-transfer-encoding"] ?? "なし"}」`);
+    note("文字コード変換が無いことは、本文の文字コード（Content-Type の charset）が utf-8 のままで iso-2022-jp でないこと、転送方式の指定が無いことは、転送方式が変換の時に付く 7bit でないことで確かめた（アプリの既定の転送方式のまま）");
+  });
+  await expected(async () => {
+    expect(x, "会員宛のメールが届いた").toBeTruthy();
+    if (!x) return;
+    expect.soft(本文の(x.本文), "本文（入力した本文のまま）").toBe(本文);
+    const ct = (h["content-type"] ?? "").toLowerCase();
+    expect.soft(ct, "本文の文字コードが iso-2022-jp に変換されていない").not.toContain("iso-2022-jp");
+    expect.soft(ct, "本文の文字コード（Content-Type の charset）が utf-8 のまま").toMatch(/charset="?utf-8"?/);
+    expect.soft((h["content-transfer-encoding"] ?? "").toLowerCase(), "転送方式が 7bit に指定されていない").not.toBe("7bit");
+  });
+});
+
+caseTest("IT-M08-02-030", async (ctx) => {
+  const { page, notes, step, expected } = ctx;
+  const [a, b] = ["A", "B"].map((x) => notes.get(`〔会員ID-M0802-030${x}〕`));
+  const 宛先 = [mailOf("customer100-m0802-030"), mailOf("customer200-m0802-030")];
+  宛先の注記("customer100-m0802-030@example.test・customer200-m0802-030@example.test", 宛先.join("・"));
+  await loginAdmin(page, M0802_ADMIN);
+  const 控え = await メールの受け口で数えた();
+  受け口の注記(控え, 宛先);
+  const m = new M08CustomerMailPage(page);
+  let 届いた: 受けたメール[][] = []; let 履歴: ReturnType<typeof 件名の送信履歴> = [];
+  await step(1, async () => { await 対象で入力画面を開く(ctx, 検索語("030"), [a]); });
+  await step(2, async () => { await m.会員IDリストを変える(["999999", a, b].join(",")); expect(await m.会員IDリストを読む(), "非表示の会員IDリスト").toBe(["999999", a, b].join(",")); });
+  await step(3, async () => { await m.入力する("先頭中断Title", "先頭中断Body"); await m.送信内容を確認を押す(); });
+  await step(4, async () => { await m.メール送信を押す(); note(`メール送信を押したあとの画面: ${page.url()}`); });
+  await step(5, async () => {
+    // 届かないことを確かめるので、押したあと20秒待ってから数える
+    await page.waitForTimeout(20_000);
+    届いた = await Promise.all(宛先.map((x) => 届いたメール(x, 控え, 0, 0)));
+    宛先.forEach((x, i) => note(`押したあと20秒待って数えた。${x} に届いたメール: ${要約(届いた[i])}`));
+  });
+  await step(6, async () => { 履歴 = 件名の送信履歴("先頭中断Title", [a, b]); });
+  await expected(async () => {
+    expect.soft(届いた[0].length, `会員ID ${a} 宛のメールの数（送信されない）`).toBe(0);
+    expect.soft(届いた[1].length, `会員ID ${b} 宛のメールの数（送信されない）`).toBe(0);
+    expect.soft(履歴.length, "件名が「先頭中断Title」の送信履歴の件数（会員ID A・B あて）").toBe(0);
+  });
+});
+
+caseTest("IT-M08-02-031", async (ctx) => {
+  const { page, notes, step, expected } = ctx;
+  const id = notes.get("〔会員ID-M0802-031A〕");
+  const 宛先 = mailOf("customer100-m0802-031");
+  宛先の注記("customer100-m0802-031@example.test", 宛先);
+  await loginAdmin(page, M0802_ADMIN);
+  const 控え = await メールの受け口で数えた();
+  受け口の注記(控え, [宛先]);
+  const m = new M08CustomerMailPage(page);
+  let 届いた: 受けたメール[] = []; let 履歴: ReturnType<typeof 会員の送信履歴> = [];
+  await step(1, async () => { await 対象で入力画面を開く(ctx, 検索語("031"), [id]); });
+  await step(2, async () => { await m.入力する("一回目Title", "一回目Body"); await m.送信内容を確認を押す(); });
+  await step(3, async () => { await m.メール送信を押す(); expect(await m.完了画面である(), "1回目のメール一括送信完了画面が表示された").toBe(true); });
+  await step(4, async () => { await 対象で入力画面を開く(ctx, 検索語("031"), [id]); });
+  await step(5, async () => { await m.入力する("二回目Title", "二回目Body"); await m.送信内容を確認を押す(); });
+  await step(6, async () => { await m.メール送信を押す(); expect(await m.完了画面である(), "2回目のメール一括送信完了画面が表示された").toBe(true); });
+  await step(7, async () => {
+    await 届いたメール(宛先, 控え, 2);
+    await page.waitForTimeout(15_000);
+    届いた = await 届いたメール(宛先, 控え, 0, 0);
+    note(`${宛先} に届いたメール: ${要約(届いた)}`);
+  });
+  await step(8, async () => { 履歴 = 会員の送信履歴(id); });
+  await expected(async () => {
+    expect.soft(届いた.length, `会員ID ${id} 宛のメールの数`).toBe(2);
+    expect.soft(届いた.map((x) => x.件名).sort(), `会員ID ${id} 宛のメールの件名`).toEqual(["一回目Title", "二回目Title"]);
+    expect.soft(履歴.length, `会員ID ${id} の送信履歴の件数`).toBe(2);
+    expect.soft(履歴.map((r) => r.件名).sort(), `会員ID ${id} の送信履歴の件名`).toEqual(["一回目Title", "二回目Title"]);
   });
 });

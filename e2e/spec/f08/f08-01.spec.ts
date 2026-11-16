@@ -75,7 +75,10 @@ caseTest("IT-F08-01-004", async ({ page, step, expected }) => {
   await step(2, async () => { await i.申込前ログイン画面で言語を選ぶ("EN"); });
   await expected(async () => {
     expect.soft(await 項目名(page), "入力フォームの項目名（英語表記）").toEqual(["Email address", "Password"]);
+    await expect.soft(i.ログイン欄().locator('input[name="login_email"]'), "メールアドレスの欄の項目名（英語表記）").toHaveAttribute("placeholder", "Email address");
+    await expect.soft(i.ログイン欄().locator('input[name="login_pass"]'), "パスワードの欄の項目名（英語表記）").toHaveAttribute("placeholder", "Password");
     expect.soft(await i.申込前ログイン画面の言語(), "Languageの選択状態").toBe("EN");
+    await expect.soft(page.locator("select#select_lang"), "Languageの選択状態（EN）").toHaveValue("en");
   });
   note(`${店舗の読み替え}。入力フォームの項目名は、メールアドレス欄とパスワード欄の見出し`);
 });
@@ -87,7 +90,10 @@ caseTest("IT-F08-01-005", async ({ page, step, expected }) => {
   await step(3, async () => { await i.申込前ログイン画面で言語を選ぶ("JP"); });
   await expected(async () => {
     expect.soft(await 項目名(page), "入力フォームの項目名（日本語表記）").toEqual(["メールアドレス", "パスワード"]);
+    await expect.soft(i.ログイン欄().locator('input[name="login_email"]'), "メールアドレスの欄の項目名（日本語表記）").toHaveAttribute("placeholder", "メールアドレス");
+    await expect.soft(i.ログイン欄().locator('input[name="login_pass"]'), "パスワードの欄の項目名（日本語表記）").toHaveAttribute("placeholder", "パスワード");
     expect.soft(await i.申込前ログイン画面の言語(), "Languageの選択状態").toBe("JP");
+    await expect.soft(page.locator("select#select_lang"), "Languageの選択状態（JP）").toHaveValue("ja");
   });
   note(`${店舗の読み替え}。入力フォームの項目名は、メールアドレス欄とパスワード欄の見出し`);
 });
@@ -152,12 +158,16 @@ caseTest("IT-F08-01-010", async ({ page, step, expected }) => {
   if (!(await i.会員登録フォームか())) throw new Error("事前準備: 入力して次のページへ進んでも会員登録フォームが表示されない（入力が保持されない）");
   await step(1, async () => { await i.申込前ログイン画面を開く(支店URL); });
   await step(2, async () => { await a.アカウントなしで進む(); });
-  let v: Awaited<ReturnType<OtcInputPage["入力欄の値"]>> | null = null;
-  await step(3, async () => { v = await i.入力欄の値(); });
+  await step(3, async () => { await i.入力画面を待つ(); });
   await expected(async () => {
-    expect.soft([v!.姓, v!.名].join(" ").trim(), "お名前（保持していた「破棄確認 太郎」は表示されない）").not.toBe("破棄確認 太郎");
-    expect.soft(v!.住所3, "住所3（保持していた「F0801-010破棄確認ビル」は表示されない）").not.toBe("F0801-010破棄確認ビル");
-    expect.soft([v!.電話1, v!.電話2, v!.電話3].join("-"), "電話番号（保持していた「03-8010-0001」は表示されない）").not.toBe("03-8010-0001");
+    // 保持していた値は、姓「破棄確認」・名「太郎」・住所3「F0801-010破棄確認ビル」・電話「03」「8010」「0001」。欄ごとに、それと一致せず空であることを確かめる
+    const 欄ごと: [string, string, string][] = [
+      ["lastName", "破棄確認", "お名前（姓）"], ["firstName", "太郎", "お名前（名）"], ["addr03", "F0801-010破棄確認ビル", "住所3"],
+      ["tel01", "03", "電話番号（1つ目）"], ["tel02", "8010", "電話番号（2つ目）"], ["tel03", "0001", "電話番号（3つ目）"],
+    ];
+    for (const [name, 保持, 項目] of 欄ごと) {
+      await expect.soft(i.欄(name), `${項目}（保持していた「${保持}」と一致しない・空）`).toHaveValue("");
+    }
   });
   note(`${店舗の読み替え}。保持させる入力は、手順の前にケースのブラウザで、ゲスト導線で入力して次のページへ進み、会員登録フォームが出るところまで行った`);
 });

@@ -8,14 +8,18 @@
  *   名(英)も同じ形）。大会名は直近の大会の行（全体で1組）に入れるだけで増えないので、正本の値のまま。
  * - フォーマットコード・デッキ検索条件に表示などシード表に無い項目は、新規登録の画面の初期値のまま。
  * - 直近の大会の行は全体で1組の共有の設定。どのケースも e2e/config/solo_cases.tsv に載せて1本だけで流す。
+ *   書き換える前に画面で5行を控え、lib/shared_restore.ts の registerRestore に「控えた5行へ戻して保存し、開き直して控えと同じかを確かめる」を
+ *   登録してから書き換える（ケースの終わりに、成否によらず元の設定へ戻す。ほかの方の設定を残さないため）。
  */
 import { Browser, Page } from "@playwright/test";
 import { reportSeedIssue } from "../lib/seeds";
+import { registerRestore } from "../lib/shared_restore";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { rc } from "../lib/run_marker";
 import { ensureM05Admin } from "../pages/admin/m05_admin_member";
-import { フォーマットを新規登録する, 大会の行, 直近の大会を空にしてから入れる } from "../pages/admin/m15_11_latest_event";
+import { LatestEventDeckPage, フォーマットを新規登録する, 大会の行, 直近の大会を空にしてから入れる } from "../pages/admin/m15_11_latest_event";
+import { expectSaved } from "../pages/admin/common";
 
 export const M1511_ADMIN: Account = { loginId: "m1511qm-adm", password: "Passw0rd-M1511QM" };
 
@@ -30,12 +34,47 @@ defineSeed("S-M15-11-QM-ADM", async ({ browser }) => {
   await ensureM05Admin(browser, { 名前: "m1511 連携試験の管理者", account: M1511_ADMIN, メール: "m1511qm-adm@example.test" });
 });
 
+const 空の行 = (r: 大会の行) => Object.values(r).every((x) => x === "");
+
+/** 直近の大会管理の5行を、画面で読む */
+async function 直近の大会を読む(browser: Browser): Promise<大会の行[]> {
+  return 管理画面(browser, async (page) => { const p = new LatestEventDeckPage(page); await p.開く(); return p.すべて読む(); });
+}
+
+/** 直近の大会管理の5行を、控えた値へ戻して保存する（空の行は「消去」、値のある行は5項目を入れる） */
+async function 直近の大会を戻す(browser: Browser, 前: 大会の行[]): Promise<void> {
+  await 管理画面(browser, async (page) => {
+    const p = new LatestEventDeckPage(page);
+    await p.開く();
+    for (let i = 0; i < 前.length; i++) {
+      await p.消去を押す(i);
+      if (!空の行(前[i])) await p.入れる(i, 前[i]);
+    }
+    const r = await p.設定を押す();
+    if (!r.送った) throw new Error(`直近の大会を元の値へ戻して「直近の大会設定」を押したが送信されない（${r.止めた項目.join(" / ")}）`);
+    await expectSaved(page, "直近の大会を元の値へ戻す保存");
+  });
+}
+
+/** 書き換える前に5行を控え、ケースの終わりに戻すことを登録する */
+async function 戻すことを登録する(browser: Browser, seedId: string): Promise<void> {
+  const 前 = await 直近の大会を読む(browser);
+  if (前.length !== 5) throw new Error(`${seedId}: 直近の大会管理の行が ${前.length} 行ある（5行を前提にする）。書き換えない`);
+  registerRestore(
+    `直近の大会（全体で1組。${seedId}）`,
+    前,
+    async () => { await 直近の大会を戻す(browser, 前); },
+    async () => JSON.stringify(await 直近の大会を読む(browser)) === JSON.stringify(前),
+  );
+}
+
 /** ケース専用: フォーマットを登録し、直近の大会の5行を空にして保存し、行があれば入れて保存する */
 function defineLatestSeed(seedId: string, 前半: string, 並び順: string, 行: Omit<大会の行, "フォーマット">[]): void {
   defineSeed(seedId, { needs: ["S-M15-11-QM-ADM"] }, async ({ browser }) => {
     const issue = (m: string) => reportSeedIssue(seedId, m);
     await 管理画面(browser, async (page) => {
       await フォーマットを新規登録する(page, { 名日: フォーマット名(前半), 名英: フォーマット名英(前半), 並び順, メタ日数: "14" }, issue);
+      await 戻すことを登録する(browser, seedId);
       await 直近の大会を空にしてから入れる(page, 行.map((r) => ({ ...r, フォーマット: フォーマット名(前半) })), seedId, issue);
     });
   });

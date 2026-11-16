@@ -11,6 +11,7 @@ import path from "node:path";
 import { Browser } from "@playwright/test";
 import { getSeed, SeedRow } from "./catalog";
 import { Notes } from "./notes";
+import { pendingCount } from "./shared_restore";
 
 export type SeedCtx = {
   browser: Browser;
@@ -76,7 +77,9 @@ export async function buildSeeds(browser: Browser, seedIds: string[], notes: Not
       continue;
     }
     const before = new Set(notes.entries().map(([k]) => k));
+    const restoresBefore = pendingCount();
     await registry.get(id)!.build({ browser, seed, notes });
+    const restores = pendingCount() > restoresBefore; // 元に戻すことを登録したシードは使い回さない（ケースの終わりに戻るため。lib/shared_restore.ts）
     const added = notes.entries().filter(([k]) => !before.has(k));
     // シード表が「控える」と書いた呼び名を、作り方が実際に控えたか／シード表に無い呼び名を勝手に控えていないか
     // 〔カードID-M1209-…〕のように「…」を含む呼び名は、呼び名の書き方を説明する例示で、控える番号ではない
@@ -87,7 +90,7 @@ export async function buildSeeds(browser: Browser, seedIds: string[], notes: Not
     for (const [l] of added) {
       if (!promised.includes(l)) throw new Error(`${id} の作り方が、シード表に無い呼び名 ${l} を控えた`);
     }
-    if (shared) sharedDone.set(id, added);
+    if (shared && !restores) sharedDone.set(id, added);
   }
   return usedIds;
 }

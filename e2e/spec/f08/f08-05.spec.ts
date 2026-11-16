@@ -4,21 +4,27 @@
  * - 店舗は、ケースごとの店舗の代わりに F08-05 で共通の試験店舗（支店URL itf0805pd003）を使う（seeds/f08-05.ts の読み替え）。
  *   手順の店舗識別名「itf0805cNNN」「itf0805cbNNN」「itf0805pdNNN」は、この店舗の支店URLとして読む。
  * - 申込者の姓とメールアドレスの前半には実行の印を付ける（「店舗の査定申込み」は、この店舗の、印つきの姓の申込みとして数える）。
- * - 受信箱を確かめるケース（029・037〜043・045・083・085）は実装していない（開発環境にメールの受信箱が無い・共有の設定を書き換える）。
+ * - 受信箱は開発環境のメールの受け口（E2E_MAIL_URL）で読む。操作の前に控えたメールの番号より後に、申込者の（実行の印つきの）メールアドレスへ
+ *   届いたメールだけを数える（ほかの人のメールを拾わない）。029・042・043・045・083 を実装した。
+ * - 037〜041（共有のメールテンプレートの件名・基本情報の送信元などを書き換える）・085（共有の仮会員設定を無効にする）も実装した。
+ *   これらは共有のものを書き換えるため、夜に1本だけで流す（E2E_ALLOW_SHARED=1）。書き換える前に全項目を画面から控え、
+ *   ケースの終わりに基盤（lib/shared_restore.ts）が画面で元の値に戻して確かめる（seeds/f08-05.ts の冒頭）。
  */
-import { Page, test } from "@playwright/test";
+import { Locator, Page, test } from "@playwright/test";
 import { caseTest, CaseCtx, expect } from "../../lib/case";
-import { BASE_URL } from "../../config/env";
-import { adminUrl, hideDebugToolbar, loginAdmin } from "../../lib/session";
+import { BASE_URL, SETUP_ADMIN } from "../../config/env";
+import { mailIds, メールの見出しを読む, 宛先に届いたメール, 受信メールの一覧を出す, 届くのを待つ, 待ってから数える, 日本時間の日付, 本文の比べ用 } from "../../pages/mail_inbox";
+import { adminUrl, hideDebugToolbar, loginAdmin, withAdminSession } from "../../lib/session";
+import { ShopBasicPage } from "../../pages/admin/m10_01_shop";
 import * as db from "../../db/f08_05";
 import { OtcListPage } from "../../pages/admin/m06_otc_list";
 import { ステータス変更履歴, 会員IDで検索する, 履歴の行 } from "../../pages/admin/f08_05_otc_detail";
 import { openEditFromResult, resultRow, searchCustomer } from "../../pages/admin/f06_customer";
-import { 会員登録編集の値, 先頭の件名を開く, 検索結果の会員名, 送信履歴を開く, 配信履歴の行 } from "../../pages/admin/f08_05_member";
+import { 会員登録編集の値, 先頭の件名を開く, 先頭の送信日, 検索結果の会員名, 送信履歴を開く, 配信履歴の行 } from "../../pages/admin/f08_05_member";
 import { MemberApplyPage } from "../../pages/front/f08_05_apply";
 import { OtcApplyPage, 申込入力, 申込者 } from "../../pages/front/f08_05_confirm";
 import {
-  F0805_ADMIN, F0805_PASSWORD, PD_MEMBER_PASSWORD, PD_STORE, pdMemberEmail, サプライ複数の入力, 仮会員設定を戻す, 会員メール, 共通入力,
+  F0805_ADMIN, F0805_PASSWORD, 基本情報の値, PD_MEMBER_PASSWORD, PD_STORE, pdMemberEmail, サプライ複数の入力, 仮会員設定を戻す, 会員メール, 共通入力,
   申込メール, 申込者の, 拒否の氏名, 英語の入力, 英語の申込者, 英語の米国の入力, 米国の入力, 米国の郵便番号つき入力, 適格請求書の入力,
 } from "../../seeds/f08-05";
 
@@ -238,6 +244,8 @@ caseTest("IT-F08-05-050", async (c) => {
   await c.expected(async () => {
     for (const k of ["お名前", "住所", "職業"]) {
       expect.soft(r[k].欄, `確認画面の${k}の枠の中の入力欄の数`).toBe(0);
+      // 「変わらない」を、値が読めなかった（空のまま）だけで合格にしない
+      expect.soft(r[k].前, `確認画面の${k}の値が表示されている（打つ前）`).not.toBe("");
       expect.soft(r[k].後, `確認画面の${k}の値（文字を打ったあとも変わらない）`).toBe(r[k].前);
     }
   });
@@ -568,14 +576,18 @@ caseTest("IT-F08-05-013", async (c) => {
 caseTest("IT-F08-05-028", async (c) => {
   const who = 申込者の("028", { 姓の頭: "拒否", 名: "対象" });
   const mail = 申込メール("f0805-028");
-  const { n } = await 申込む(c, { 入力: 共通入力, 申込者: who, メール: mail });
-  const r = { 会員: -1, プレイヤー: -1, 住所帳: -1 };
+  const { n, r: 確定 } = await 申込む(c, { 入力: 共通入力, 申込者: who, メール: mail });
+  const r = { 会員: -1, プレイヤー: -1, 住所帳: -1, 申込み: -1 };
   await c.step(n, async () => {
     r.会員 = db.会員(mail).length;
     r.プレイヤー = db.プレイヤー(mail).length;
     r.住所帳 = db.姓の住所帳の数(who.姓);
+    r.申込み = db.査定申込み(店舗ID(c, "028"), who.姓).length;
   });
   await c.expected(async () => {
+    // 「会員が0件」を、申込みが確定されなかっただけで合格にしない。申込み自体は受け付けられる（会員登録だけを行わない）
+    expect.soft(確定.完了画面, `「会員登録して申込み」を押したあと完了画面へ移った（${確定.パス}）`).toBe(true);
+    expect.soft(r.申込み, "店舗の、この申込者の査定申込みの件数（申込みは受け付けられた）").toBe(1);
     expect.soft(r.会員, "このメールアドレスの会員の件数").toBe(0);
     expect.soft(r.プレイヤー, "このメールアドレスのプレイヤーの件数").toBe(0);
     expect.soft(r.住所帳, "この氏名(姓)の住所帳の件数").toBe(0);
@@ -617,10 +629,15 @@ caseTest("IT-F08-05-047", async (c) => {
 
 caseTest("IT-F08-05-048", async (c) => {
   const who = 申込者の("048");
-  const { n } = await 申込む(c, { 入力: 共通入力, 申込者: who });
-  let 件数 = -1;
-  await c.step(n, async () => { 件数 = db.姓の会員数(who.姓); });
-  await c.expected(async () => { expect(件数, "この姓の会員の件数").toBe(0); });
+  const { n, r: 確定 } = await 申込む(c, { 入力: 共通入力, 申込者: who });
+  let 件数 = -1, 申込み = -1;
+  await c.step(n, async () => { 件数 = db.姓の会員数(who.姓); 申込み = db.査定申込み(店舗ID(c, "048"), who.姓).length; });
+  await c.expected(async () => {
+    // 「会員が0件」を、申込みが確定されなかっただけで合格にしない（会員登録をせずに申込んだ後であることを確かめる）
+    expect.soft(確定.完了画面, `「査定申込み」を押したあと完了画面へ移った（${確定.パス}）`).toBe(true);
+    expect.soft(申込み, "店舗の、この申込者の査定申込みの件数（申込んだ）").toBe(1);
+    expect(件数, "この姓の会員の件数").toBe(0);
+  });
   note(`${店舗の読み替え}。姓「査定F0805-048」の会員を0件にする事前準備（あれば削除）は、姓に実行の印を付けて代えた（${who.姓}）`);
 });
 
@@ -639,12 +656,14 @@ caseTest("IT-F08-05-049", async (c) => {
 
 caseTest("IT-F08-05-055", async (c) => {
   const who = 申込者の("055");
-  const { a, n } = await 申込む(c, { 入力: 共通入力, 申込者: who });
+  const { a, n, r: 一回目 } = await 申込む(c, { 入力: 共通入力, 申込者: who });
+  let 二回目を押した = false;
   await c.step(n, async () => {
     await c.page.goBack({ waitUntil: "load" }).catch((e) => note(`ブラウザの「戻る」で読み込みが終わらなかった（${(e as Error).message.split("\n")[0]}）`));
     const path = new URL(c.page.url()).pathname;
     if (await a.確定ボタン().isVisible()) {
       const r = await a.確定する();
+      二回目を押した = true;
       note(`「戻る」で ${path} に戻り、もう一度確定のボタンを押した。移った先は ${r.パス}`);
     } else {
       note(`「戻る」で戻った画面（${path}）に確定のボタンが無く、押せなかった`);
@@ -652,7 +671,12 @@ caseTest("IT-F08-05-055", async (c) => {
   });
   let 件数 = -1;
   await c.step(n + 1, async () => { 件数 = db.査定申込み(店舗ID(c, "055"), who.姓).length; });
-  await c.expected(async () => { expect(件数, "店舗の、この申込者の査定申込みの件数（2件目が登録されない）").toBe(1); });
+  await c.expected(async () => {
+    expect.soft(一回目.完了画面, `1回目の「査定申込み」のあと完了画面へ移った（${一回目.パス}）`).toBe(true);
+    // 「2件目が登録されない」を、2回目の確定を押せなかっただけで合格にしない
+    expect.soft(二回目を押した, "「戻る」で戻った確認画面で、もう一度「査定申込み」を押せた").toBe(true);
+    expect(件数, "店舗の、この申込者の査定申込みの件数（2件目が登録されない）").toBe(1);
+  });
   note(店舗の読み替え);
 });
 
@@ -1147,4 +1171,272 @@ caseTest("IT-F08-05-074", async ({ page, notes, step, expected }) => {
     expect.soft(履歴[0]?.ステータス ?? "", "申込で作成された履歴の行のステータス").not.toBe("");
   });
   note("別のブラウザセッションは、同じブラウザのクッキーを全て消して始め直して代えた（画面のキャプチャを1つのセッションに残すため）。管理者の権限は、正本が定める細かな権限の代わりにシステム管理者にした。店舗は再実行で同じものを使う");
+});
+
+// ================= 受信メールの確認（開発環境のメールの受け口） =================
+
+const メールの注記 = (mail: string) =>
+  `${店舗の読み替え}。メールアドレスは正本の値の前半に実行の印を付けた値（${mail}）。受信箱は、操作の前に控えたメールの番号より後にこのアドレスへ届いたメールだけを数えた（受信履歴を0件にする代わり）`;
+
+/** 管理画面の会員検索から、メールアドレスの会員の登録編集画面 → 送信履歴を開く（手順の一つ） */
+async function 会員の送信履歴を開く(c: CaseCtx, mail: string): Promise<void> {
+  await c.page.context().clearCookies();
+  await loginAdmin(c.page, SETUP_ADMIN);
+  await c.page.goto(adminUrl("/customer"));
+  await c.page.waitForLoadState("load");
+  await searchCustomer(c.page, mail);
+  await openEditFromResult(c.page, mail);
+  await 送信履歴を開く(c.page);
+}
+
+caseTest("IT-F08-05-029", async (c) => {
+  const who = 申込者の("029", { 姓の頭: "拒否", 名: "対象" });
+  const mail = 申込メール("f0805-029");
+  const 控え = await mailIds();
+  const { n, r: 確定 } = await 申込む(c, { 入力: 共通入力, 申込者: who, メール: mail });
+  let 届いた: Awaited<ReturnType<typeof 待ってから数える>> = [];
+  await c.step(n, async () => { 届いた = await 待ってから数える(mail, 控え, 20_000); });
+  await c.expected(async () => {
+    // 「届いていない」を、申込みが確定されなかっただけで合格にしない
+    expect.soft(確定.完了画面, `「会員登録して申込み」を押したあと完了画面へ移った（${確定.パス}）`).toBe(true);
+    expect(届いた.length, `メールアドレス ${mail} 宛の受信メールの件数（確認メールが届いていない）`).toBe(0);
+  });
+  note(`${メールの注記(mail)}。ブラックリストの氏名は ${拒否の氏名("029")}。届かないことは、確定のあと20秒待ってから数えて確かめた`);
+});
+
+caseTest("IT-F08-05-042", async (c) => {
+  const who = 申込者の("042");
+  const mail = 申込メール("f0805-042");
+  const 控え = await mailIds();
+  const { n } = await 申込む(c, { 入力: 共通入力, 申込者: who, メール: mail });
+  let m: Awaited<ReturnType<typeof 届くのを待つ>> | undefined;
+  await c.step(n, async () => { m = await 届くのを待つ(mail, 控え); });
+  await c.expected(async () => {
+    expect(m, "確認メールが届いた").toBeDefined();
+    expect.soft(m!.本文, "確認メールの本文（申込者の姓）").toContain(who.姓);
+    expect.soft(m!.本文, "確認メールの本文（申込者の名）").toContain("太郎");
+    expect.soft(m!.本文, "確認メールの本文（会員登録を完了させるURL）").toMatch(/https?:\/\/[^\s"'<>]+\/entry\/activate\/[^\s"'<>]+/);
+  });
+  note(`${メールの注記(mail)}。会員登録を完了させるURLは、本登録の画面のアドレス（…/entry/activate/…）として確かめた。姓は正本の「査定F0805-042」に実行の印を付けた値（${who.姓}）`);
+});
+
+caseTest("IT-F08-05-043", async (c) => {
+  const mail = 申込メール("f0805-043");
+  const 控え = await mailIds();
+  const { n } = await 申込む(c, { 入力: 共通入力, 申込者: 申込者の("043"), メール: mail });
+  let m: Awaited<ReturnType<typeof 届くのを待つ>> | undefined;
+  await c.step(n, async () => { m = await 届くのを待つ(mail, 控え); });
+  let 履歴 = { 件名: "", 本文: "" };
+  await c.step(n + 1, async () => {
+    await 会員の送信履歴を開く(c, mail);
+    履歴 = await 先頭の件名を開く(c.page);
+  });
+  await c.expected(async () => {
+    expect(m, "確認メールが届いた").toBeDefined();
+    expect.soft(履歴.件名, "メール配信履歴の件名が受信した確認メールの件名と同じ").toBe(m!.件名);
+    expect.soft(本文の比べ用(履歴.本文), "メール配信履歴の本文が受信した確認メールの本文と同じ（空白・改行を除いて比べた）").toBe(本文の比べ用(m!.本文));
+  });
+  note(`${メールの注記(mail)}。手順7の「DBで…配信履歴を開く」は、管理画面の会員登録編集の「送信履歴」の件名リンクを開いて読んだ（管理者は全権限の管理者）。本文は改行・空白の違いを除いて比べた`);
+});
+
+caseTest("IT-F08-05-045", async (c) => {
+  const mail = 申込メール("f0805-045");
+  const 控え = await mailIds();
+  const { n } = await 申込む(c, { 入力: 共通入力, 申込者: 申込者の("045"), メール: mail });
+  let m: Awaited<ReturnType<typeof 届くのを待つ>> | undefined;
+  await c.step(n, async () => { m = await 届くのを待つ(mail, 控え); });
+  let 送信日 = "";
+  await c.step(n + 1, async () => {
+    await 会員の送信履歴を開く(c, mail);
+    送信日 = await 先頭の送信日(c.page);
+  });
+  await c.expected(async () => {
+    expect(m, "確認メールが届いた").toBeDefined();
+    expect.soft(送信日, "メール配信履歴の送信日が受信した確認メールの送信日（日本時間）と同じ").toBe(日本時間の日付(m!.届いた日時));
+  });
+  note(`${メールの注記(mail)}。メール配信履歴の画面は送信日を「年/月/日」の日付だけで表示するので、日付で比べた（受信したメールの日時は日本時間の日付にした）`);
+});
+
+caseTest("IT-F08-05-083", async (c) => {
+  const who = 申込者の("CB083");
+  const mail = 申込メール("f0805-cb083");
+  const 控え = await mailIds();
+  const { n } = await 申込む(c, { 入力: 共通入力, 申込者: who, メール: mail });
+  let m: Awaited<ReturnType<typeof 届くのを待つ>> | undefined;
+  await c.step(n, async () => { m = await 届くのを待つ(mail, 控え); });
+  let 会員一覧: db.会員[] = [];
+  let 住所: db.住所帳[] = [];
+  let プレイヤー: db.プレイヤー[] = [];
+  let 申込み: db.査定申込み[] = [];
+  await c.step(n + 1, async () => {
+    会員一覧 = db.会員(mail);
+    住所 = 会員一覧[0] ? db.会員の住所帳(会員一覧[0].id) : [];
+    プレイヤー = db.プレイヤー(mail);
+    申込み = db.査定申込み(店舗ID(c, "CB083"), who.姓);
+  });
+  await c.expected(async () => {
+    expect.soft(m?.件数 ?? 0, `メールアドレス ${mail} 宛の確認メールの件数`).toBe(1);
+    expect.soft(会員一覧.length, "このメールアドレスの会員の件数").toBe(1);
+    const 既定 = 住所.filter((a) => a.名称 === "会員情報住所 / Membership Information Address" && a.既定);
+    expect.soft(既定.length, "会員の住所帳の、名称「会員情報住所 / Membership Information Address」の既定の住所の件数").toBe(1);
+    expect.soft(プレイヤー.length, "このメールアドレスのプレイヤーの件数").toBe(1);
+    expect.soft(プレイヤー[0]?.姓, "プレイヤーの姓").toBe(who.姓);
+    expect.soft(プレイヤー[0]?.名, "プレイヤーの名").toBe("太郎");
+    expect.soft(申込み.length, `氏名「${who.姓}太郎」の査定申込みの件数`).toBe(1);
+  });
+  note(`${メールの注記(mail)}。氏名・姓は正本の「査定F0805-CB083」に実行の印を付けた値（${who.姓}）`);
+});
+
+// ================= 共有の設定を書き換えて戻すケース（夜に1本だけで流す） =================
+// シード（seeds/f08-05.ts）が、共有のメールテンプレート・店舗基本設定（基本情報・仮会員設定）を、書き換える前に全項目を画面から控え、
+// ケースの終わりに基盤（lib/shared_restore.ts）が画面で元の値に戻して確かめる。
+
+const 共有の注記 = "共有のメールテンプレート・基本情報・仮会員設定は、書き換える前に全項目を画面から控え、ケースの終わりに画面で元の値に戻して確かめる";
+
+/** 店舗基本設定の店名（確認メールの件名の頭に付く） */
+async function 基本情報の店名(c: CaseCtx): Promise<string> {
+  return withAdminSession(c.browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const p = new ShopBasicPage(page);
+    await p.open();
+    return await p.値("店名");
+  });
+}
+
+/**
+ * 申込んで、確認メールの件名と、基本情報の店名（件名の頭に付く）を読む（手順1〜6）。
+ * 受信メールの一覧（受け口から読んだ件名の表）を同じブラウザの別のタブに出し、期待結果の画像にも写す。呼んだ側は 一覧のタブ を閉じる
+ */
+async function 確認メールの件名を読む(c: CaseCtx, n: string, 入力: 申込入力, 申込者: 申込者): Promise<{ mail: string; 件名: string; 店名: string; 一覧のタブ?: Page; 件名の欄?: Locator }> {
+  const mail = 申込メール(`f0805-${n}`);
+  const 控え = await mailIds();
+  const { n: next } = await 申込む(c, { 入力, 申込者, メール: mail });
+  let 件名 = "";
+  let 店名 = "";
+  let 一覧のタブ: Page | undefined;
+  let 件名の欄: Locator | undefined;
+  await c.step(next, async () => {
+    件名 = (await 届くのを待つ(mail, 控え)).件名;
+    店名 = await 基本情報の店名(c);
+    const r = await 受信メールの一覧を出す(c.page.context(), mail, 控え);
+    一覧のタブ = r.タブ;
+    const 最新 = r.一覧[r.一覧.length - 1];
+    if (最新) 件名の欄 = r.件名の欄(最新.番号);
+  });
+  return { mail, 件名, 店名, 一覧のタブ, 件名の欄 };
+}
+
+
+const 件名の注記 = (mail: string, 店名: string, 件名: string) =>
+  `${メールの注記(mail)}。${共有の注記}。確認メールの件名は、アプリの作りで基本情報の店名を「[店名] 」の形で頭に付けて送るため、「[${店名}] ${件名}」として確かめた（テンプレートの件名の部分が「${件名}」）`;
+
+caseTest("IT-F08-05-037", async (c) => {
+  const r = await 確認メールの件名を読む(c, "037", 共通入力, 申込者の("037"));
+  // 表のタブは、期待結果を確かめて撮ったあとに閉じる
+  try {
+    await c.expected(async () => {
+      // 受信メールの一覧の表の件名の欄で確かめる（赤枠が件名に付く）
+      const 期待 = `[${r.店名}] F0805-JP 確認メール`;
+      if (r.件名の欄) await expect.soft(r.件名の欄, "確認メールの件名（日本語の仮会員登録のテンプレートの件名）").toHaveText(期待);
+      expect.soft(r.件名, "確認メールの件名（日本語の仮会員登録のテンプレートの件名。メールの受け口から読んだ件名）").toBe(期待);
+    });
+  } finally {
+    await r.一覧のタブ?.close().catch(() => undefined);
+  }
+  note(件名の注記(r.mail, r.店名, "F0805-JP 確認メール"));
+});
+
+caseTest("IT-F08-05-038", async (c) => {
+  const r = await 確認メールの件名を読む(c, "038", 英語の入力, 英語の申込者("038"));
+  // 表のタブは、期待結果を確かめて撮ったあとに閉じる
+  try {
+    await c.expected(async () => {
+      // 受信メールの一覧の表の件名の欄で確かめる（赤枠が件名に付く）
+      const 期待 = `[${r.店名}] F0805-EN Confirmation`;
+      if (r.件名の欄) await expect.soft(r.件名の欄, "確認メールの件名（英語の仮会員登録のテンプレートの件名）").toHaveText(期待);
+      expect.soft(r.件名, "確認メールの件名（英語の仮会員登録のテンプレートの件名。メールの受け口から読んだ件名）").toBe(期待);
+    });
+  } finally {
+    await r.一覧のタブ?.close().catch(() => undefined);
+  }
+  note(件名の注記(r.mail, r.店名, "F0805-EN Confirmation"));
+});
+
+/** 基本情報（送信元・店名・返信先・送信エラー受付）を書き換えた状態で申込み、申込者あての確認メールの番号を返す */
+async function 基本情報で申込む(c: CaseCtx, n: string): Promise<{ mail: string; 控え: Set<number>; 番号: number }> {
+  const mail = 申込メール(`f0805-${n}`);
+  const 控え = await mailIds();
+  const { n: next } = await 申込む(c, { 入力: 共通入力, 申込者: 申込者の(n), メール: mail });
+  let 番号 = 0;
+  await c.step(next, async () => {
+    await 届くのを待つ(mail, 控え);
+    番号 = (await 宛先に届いたメール(mail, 控え))[0].番号;
+  });
+  return { mail, 控え, 番号 };
+}
+
+caseTest("IT-F08-05-039", async (c) => {
+  const { mail, 番号 } = await 基本情報で申込む(c, "039");
+  const 見出し = await メールの見出しを読む(番号);
+  await c.expected(async () => {
+    expect.soft(見出し.送信元のアドレス, "確認メールの送信元のアドレス").toBe(基本情報の値.送信元);
+    expect.soft(見出し.送信元の表示名, "確認メールの送信元に併記された店舗名").toBe(基本情報の値.店名);
+  });
+  note(`${メールの注記(mail)}。${共有の注記}。送信元は、受け口の原文の送信元の見出し（符号化された文字は元に戻した）で確かめた`);
+});
+
+caseTest("IT-F08-05-040", async (c) => {
+  const mail = 申込メール("f0805-040");
+  const 控え = await mailIds();
+  const { n } = await 申込む(c, { 入力: 共通入力, 申込者: 申込者の("040"), メール: mail });
+  let 件数 = 0;
+  await c.step(n, async () => {
+    await 届くのを待つ(mail, 控え);
+    // 基本情報のメールアドレス宛（Bcc）のメールのうち、この申込者あてに送られた確認メール（同じメールの宛先に申込者が入っているもの）を数える
+    件数 = (await 宛先に届いたメール(基本情報の値.送信元, 控え)).filter((x) => x.宛先.includes(mail.toLowerCase())).length;
+  });
+  await c.expected(async () => {
+    expect.soft(件数, `メールアドレス ${基本情報の値.送信元} 宛に届いた、この申込者への確認メールの件数`).toBe(1);
+  });
+  note(`${メールの注記(mail)}。${共有の注記}。受信箱は共有のため、基本情報のアドレス宛のメールのうち、申込者のアドレスも宛先に入っている確認メールだけを数えた`);
+});
+
+caseTest("IT-F08-05-041", async (c) => {
+  const { mail, 番号 } = await 基本情報で申込む(c, "041");
+  const 見出し = await メールの見出しを読む(番号);
+  await c.expected(async () => {
+    expect.soft(見出し.返信先, "確認メールの返信先").toBe(基本情報の値.返信先);
+    expect.soft(見出し.戻り先 || 見出し.封筒の送信元, "確認メールの送信エラーの戻り先").toBe(基本情報の値.送信エラー受付);
+  });
+  note(`${メールの注記(mail)}。${共有の注記}。返信先は原文の返信先の見出し、送信エラーの戻り先は原文の戻り先の見出し（無ければ受け口が控えた送信元のアドレス）で確かめた`);
+});
+
+caseTest("IT-F08-05-085", async (c) => {
+  const who = 申込者の("CB085");
+  const mail = 申込メール("f0805-cb085");
+  const 控え = await mailIds();
+  const { n } = await 申込む(c, { 入力: 共通入力, 申込者: who, メール: mail });
+  let 届いた: Awaited<ReturnType<typeof 待ってから数える>> = [];
+  let 会員一覧: db.会員[] = [];
+  let 住所: db.住所帳[] = [];
+  let プレイヤー: db.プレイヤー[] = [];
+  let 申込み: db.査定申込み[] = [];
+  await c.step(n, async () => { 届いた = await 待ってから数える(mail, 控え, 20_000); });
+  await c.step(n + 1, async () => {
+    会員一覧 = db.会員(mail);
+    住所 = 会員一覧[0] ? db.会員の住所帳(会員一覧[0].id) : [];
+    プレイヤー = db.プレイヤー(mail);
+    申込み = db.査定申込み(店舗ID(c, "CB085"), who.姓);
+  });
+  await c.expected(async () => {
+    expect.soft(届いた.length, `メールアドレス ${mail} 宛の受信メールの件数（仮会員設定が無効なので確認メールは届かない）`).toBe(0);
+    expect.soft(会員一覧.length, "このメールアドレスの会員の件数").toBe(1);
+    const 既定 = 住所.filter((a) => a.名称 === "会員情報住所 / Membership Information Address" && a.既定);
+    expect.soft(既定.length, "会員の住所帳の、名称「会員情報住所 / Membership Information Address」の既定の住所の件数").toBe(1);
+    expect.soft(プレイヤー.length, "このメールアドレスのプレイヤーの件数").toBe(1);
+    expect.soft(プレイヤー[0]?.姓, "プレイヤーの姓").toBe(who.姓);
+    expect.soft(プレイヤー[0]?.名, "プレイヤーの名").toBe("太郎");
+    expect.soft(申込み.length, `氏名「${who.姓}太郎」の査定申込みの件数`).toBe(1);
+  });
+  note(`${メールの注記(mail)}。${共有の注記}。届かないことは、確定のあと20秒待ってから数えて確かめた。氏名・姓は正本の「査定F0805-CB085」に実行の印を付けた値（${who.姓}）`);
 });

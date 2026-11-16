@@ -5,7 +5,8 @@
  * M12-03（seeds/m12-03.ts）と同じ作り方:
  * - 試験管理者（S-M12-04-ADM）: メンバー管理で登録（権限はシステム管理者・所属店舗は本店）。
  * - 店舗（S-M12-04-STORES）: 「TC東京」は既存の本店をそのまま使う（共有の設定は書き換えない）。
- *   ケースごとの「大阪店-M1204-…」は、実行の印を付けた店名で店舗登録画面から新しく作る（足すだけ）。
+ *   ケースごとの「大阪店-M1204-…」は、E2E の共用店舗（店舗ID 221「E2E退避用支店-E2E」）を使う（店舗は作らない。依頼者 2026-11-15）。
+ *   受注は実行ごと・シードごとにほかの受注の無い年に置くので、店舗を共有しても集計は混ざらない。
  * - 受注: フロントの購入で印つきの受注を1件だけ画面で作り（基の受注。本店・宅配便）、その受注・配送先・明細の行を DB で写して必要な数にする。
  *   「TC東京・店頭受取」は配送方法を店頭受取にした受注、「宅配便」は基の受注のまま（通販）、「大阪店」は印つきの店舗を受注の店舗にした店頭受取の受注で表す。
  * - 商品: 商品CSV登録ではなく、基の受注の明細の商品コード（実行の印つき）・受注時商品名・単価・数量を DB で設定する（商品そのものは作らない。集計は受注明細の商品コードで行われる）。
@@ -18,7 +19,7 @@ import { データを控える, 受注の定め, 受注群を作る } from "../d
 import { 空いている年 } from "../db/m12_07";
 import { reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
-import { ensureM1201Store } from "../pages/admin/m12_01_stores";
+import { ensureFixedStore } from "../pages/admin/m12_01_stores";
 import { defineSeed } from "./current_seed";
 import { 受注を作る as 画面で受注を作る } from "./m05-01";
 import { ensureAnalysisAdmin } from "./m12-common";
@@ -65,7 +66,7 @@ function defineSalesSeed(seedId: string, d: データ): void {
     if (d.店舗) {
       const s = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
         page.setDefaultTimeout(60_000);
-        return ensureM1201Store(page, { 名前: d.店舗!.名前, 表示順: d.店舗!.表示順, 公開: "公開", 開店: "開店", 売上集計: "表示する", カナ: "オオサカテン", 英語: d.店舗!.英語 }, issue);
+        return ensureFixedStore(page, { 名前: d.店舗!.名前, 表示順: 100, 公開: "公開", 開店: "開店", 売上集計: "表示する", カナ: "オオサカテン", 英語: "Osaka E Two E" }, "m1204e2e", issue);
       });
       店名 = s.店名; 店舗ID = s.id;
     }

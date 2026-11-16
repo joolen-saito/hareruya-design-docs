@@ -195,9 +195,14 @@ caseTest("IT-M15-11-031", async ({ page, step, expected }) => {
     note("開発者ツールでの書き換えに当たる操作として、画面のスクリプトから隠し項目の値を書き換えた");
   });
   await step(4, async () => { await adm.入れる(0, { 大会名日: "M1511-FG031-新" }); });
-  await step(5, async () => { 押した結果の注記(await adm.設定を押す()); });
+  let r!: Awaited<ReturnType<LatestEventDeckPage["設定を押す"]>>;
+  let 成功の数 = -1;
+  await step(5, async () => { r = await adm.設定を押す(); 押した結果の注記(r); 成功の数 = await adm.成功メッセージ.count(); note(`送信のあとの画面上部のメッセージ: ${(await adm.上部のメッセージ()).join(" / ") || "なし"}`); });
   await step(6, async () => { await adm.開く(); 行 = (await adm.すべて読む()).slice(0, 1); });
   await expected(async () => {
+    // 送信されなかった（入力チェックで止まった）場合の「元のまま」を合格にしないよう、送信したことと、保存の成功が出ないことも確かめる
+    expect(r.送った, "書き換えたトークンで「直近の大会設定」を送信した").toBe(true);
+    expect.soft(成功の数, "送信のあとに保存の成功のメッセージが出ない").toBe(0);
     expect.soft(行.length, "読めた行の数（1行目）").toBe(1);
     行を確かめる(行[0], { 開催日時: "2026-09-01 10:00", フォーマット: fmt, 大会名日: "M1511-FG031-旧", 大会名英: "M1511-FG031-OldE", 参加人数: "31" }, "1行目");
   });

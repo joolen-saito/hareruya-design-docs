@@ -39,3 +39,20 @@ export async function waitForMailTo(address: string, before: Set<number>, timeou
     await new Promise((r) => setTimeout(r, 1000));
   }
 }
+
+/** 宛先あてに、控えた番号より後に届いたメールの一覧（件名つき。古い順）。届いた通数を数えるのに使う（読むだけ。F05-06 で足した） */
+export async function mailsTo(address: string, before: Set<number>): Promise<{ id: number; subject: string }[]> {
+  return (await getJson<Summary[]>("/messages"))
+    .filter((m) => !before.has(m.id) && m.recipients.some((r) => r.replace(/[<>]/g, "").trim().toLowerCase() === address.toLowerCase()))
+    .sort((a, b) => a.id - b.id)
+    .map((m) => ({ id: m.id, subject: m.subject }));
+}
+
+/** メールの本文（テキスト。無ければ HTML）を読む */
+export async function mailText(id: number): Promise<string> {
+  for (const part of ["plain", "html"]) {
+    const res = await fetch(`${MAIL_URL}/messages/${id}.${part}`);
+    if (res.ok) { const t = await res.text(); if (t) return t; }
+  }
+  throw new Error(`メール ${id} の本文を読めない`);
+}

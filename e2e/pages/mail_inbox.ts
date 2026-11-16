@@ -3,8 +3,9 @@
  * lib/mail.ts の「届くのを待つ」に、「届かないこと」「届いた数」「届いた日時」を確かめる読み方を足したもの。
  * 自分の操作で届いたメールだけを見るために、操作の前に控えたメールの番号（mailIds）より後で、宛先が一致するものだけを数える。
  */
+import type { BrowserContext, Locator, Page } from "@playwright/test";
 import { MAIL_URL } from "../config/env";
-import { mailIds, waitForMailTo } from "../lib/mail";
+import { mailIds, mailText, waitForMailTo } from "../lib/mail";
 
 export { mailIds };
 
@@ -48,6 +49,24 @@ export async function 届くのを待つ(宛先: string, 控え: Set<number>, �
   return { 件名: m.subject, 本文: m.text, 届いた日時: 全部[全部.length - 1]?.届いた日時 ?? new Date(NaN), 件数: 全部.length };
 }
 
+/**
+ * 宛先に届いたメールの一覧（番号・宛先・件名・届いた日時）を、同じブラウザの別のタブに表として出す（足した部品。読むだけ）。
+ * メールの受け口の画面はアプリの画面ではないので、エビデンスで件名を読めるように、受け口から読んだ内容を表にする。
+ * 呼んだ側は、表の件名の欄（件名の欄(番号)）を確かめ、撮ったあとにタブを閉じる。
+ */
+export async function 受信メールの一覧を出す(context: BrowserContext, 宛先: string, 控え: Set<number>): Promise<{ タブ: Page; 一覧: 届いたメール[]; 件名の欄: (番号: number) => Locator }> {
+  const 一覧 = await 宛先に届いたメール(宛先, 控え);
+  const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);
+  const 行 = 一覧.map((m) => `<tr data-mail-no="${m.番号}"><td>${m.番号}</td><td>${esc(m.宛先.join(", "))}</td><td class="subject">${esc(m.件名)}</td><td>${esc(Number.isNaN(m.届いた日時.getTime()) ? "" : m.届いた日時.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }))}</td></tr>`).join("");
+  const タブ = await context.newPage();
+  await タブ.setContent(`<html lang="ja"><head><meta charset="utf-8"><title>受信メールの一覧</title></head><body style="font-family:sans-serif;padding:24px">
+    <h2>受信メールの一覧（試験の道具がメールの受け口から読んだ、${esc(宛先)} あてのメール。アプリの画面ではない）</h2>
+    <p>操作の前に控えたメールの番号より後に、この宛先へ届いたメールだけを出した。</p>
+    <table border="1" cellpadding="8" style="border-collapse:collapse;font-size:15px"><tr><th>メールの番号</th><th>宛先</th><th>件名</th><th>届いた日時（日本時間）</th></tr>${行 || '<tr><td colspan="4">届いたメールは無い</td></tr>'}</table>
+    </body></html>`);
+  return { タブ, 一覧, 件名の欄: (番号: number) => タブ.locator(`tr[data-mail-no="${番号}"] td.subject`) };
+}
+
 /** メールの本文（HTMLのときはタグを外す）から空白をすべて除いた文。件名・本文の同じ・違うを比べるために使う */
 export function 本文の比べ用(本文: string): string {
   return 本文.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/\s+/g, "");
@@ -88,4 +107,13 @@ export async function メールの見出しを読む(番号: number): Promise<�
 export function 日本時間の日付(d: Date): string {
   const j = new Date(d.getTime() + 9 * 3600_000);
   return j.toISOString().slice(0, 10).replace(/-/g, "/");
+}
+
+/**
+ * ネット買取の振込完了メールか（件名に「振込完了」があり、本文の【オーダーID】が買取番号（7桁）と一致する）。
+ * 宛先だけで数えると別の種類のメールも振込完了メールとして数えてしまうので、種類と対象の買取まで確かめるときに使う
+ */
+export async function 振込完了メールか(m: 届いたメール, 買取番号7桁: string): Promise<boolean> {
+  if (!m.件名.includes("振込完了")) return false;
+  return (await mailText(m.番号)).includes(`【オーダーID】${買取番号7桁}`);
 }

@@ -21,6 +21,7 @@ import { Notes } from "./notes";
 import { buildSeeds, destructiveSeeds, seedIssues } from "./seeds";
 import * as dbm from "./db";
 import { assertRunnable, ENV_NAME, SHARED_ENV } from "../config/env";
+import { beginCase, pendingCount, runRestores } from "./shared_restore";
 import { hideDebugToolbar } from "./session";
 import { EVIDENCE_PREFIX, EvidenceCamera, scene } from "./evidence";
 import { Check, startRecording, stopRecording } from "./evidence_expect";
@@ -64,6 +65,8 @@ export function caseTest(testId: string, body: CaseBody): void {
     test.skip(withDb && !dbm.available, `E2E_ENV=${ENV_NAME} はDB確認の接続先が無いので、「ブラウザ+DB確認」のケースは実行しない`);
     const destructive = SHARED_ENV ? destructiveSeeds(seedIdsOf(c)) : [];
     test.skip(destructive.length > 0, `E2E_ENV=${ENV_NAME} は複数人が使う環境。データを消すシード（${destructive.join("、")}）を使うケースは実行しない`);
+    beginCase(c.テストID); // 共有の設定を書き換えて戻す部品（lib/shared_restore.ts）の記録に使う。テストIDを控えるだけ
+    try {
     await hideDebugToolbar(page.context());
     const notes = new Notes();
     let markedForEvidence: [string, string][] = [];
@@ -147,5 +150,13 @@ export function caseTest(testId: string, body: CaseBody): void {
     await body(ctx);
     expect(done.size, `${testId}: 正本の手順 ${steps.length} 個のうち ${done.size} 個しか実行していない`).toBe(steps.length);
     expect(checked, `${testId}: 期待結果を確かめていない`).toBeGreaterThan(0);
+    } finally {
+      // 共有の設定・共有のデータを書き換えて「戻す」ことを登録したケース（lib/shared_restore.ts の registerRestore）だけ、成否によらず元に戻す。
+      // 登録の無いケース（ほとんどのケース）では何もしない
+      if (pendingCount() > 0) {
+        const notRestored = await runRestores();
+        if (notRestored.length) throw new Error(`共有の設定を元に戻せなかった: ${notRestored.join("、")}`);
+      }
+    }
   });
 }

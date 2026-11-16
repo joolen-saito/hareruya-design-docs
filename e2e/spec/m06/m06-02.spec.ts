@@ -10,6 +10,7 @@
 import { Download, test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { csvRecords, decodeCsvBytes } from "../../lib/csv";
+import { CSVの内容を画面の枠に出す, CSVの枠のセル, CSVの枠のデータ行, CSVの枠の見出し } from "../../lib/evidence_other";
 import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
 import { OtcListPage } from "../../pages/admin/m06_otc_list";
@@ -26,6 +27,14 @@ async function csvを読む(file: Download): Promise<CSV> {
   const 見出し = (text.split(/\r?\n/)[0] ?? "").split(",").map((t) => t.replace(/^"|"$/g, ""));
   return { 見出し, 行: csvRecords(text) };
 }
+
+/** 読んだCSV（ファイル名・見出し・全データ行）を画面の枠に書き出して残す（ダウンロードの選択肢は先に閉じる）。続く確かめはこの枠の要素で行い、赤枠がCSVの値に付く */
+async function 枠に出す(list: OtcListPage, file: Download, csv: CSV): Promise<void> {
+  await list.ダウンロードの選択肢を閉じる();
+  await CSVの内容を画面の枠に出す(list.page, [{ 題: `ファイル名：${file.suggestedFilename()}`, 行: [csv.見出し, ...csv.行.map((r) => csv.見出し.map((k) => r[k] ?? ""))] }]);
+}
+/** CSVの枠の、査定IDの行の列のセル（行が無ければ、無い行を指して確かめが落ちる） */
+const 枠のセル = (page: import("@playwright/test").Page, csv: CSV, 査定ID: string, 列: string) => CSVの枠のセル(page, 0, csv.行.findIndex((r) => r["査定ID"] === 査定ID), 列);
 
 const 見出し12 = ["査定ID", "年月日", "代金", "数量", "氏名", "身分証", "住所", "年齢", "電話番号", "職業", "事業者であるか", "事業者番号"];
 const 一覧のアドレス = /\/otcbuyorder(\/page\/\d+)?$/;
@@ -46,7 +55,9 @@ async function 出力する(list: OtcListPage, チェック: string[]): Promise<
   for (const id of チェック) await list.対象にする(id);
   const r = await list.ダウンロードを押す("古物台帳入力用CSV");
   expect(r.file, "古物台帳入力用CSVがダウンロードされる").not.toBeNull();
-  return csvを読む(r.file!);
+  const csv = await csvを読む(r.file!);
+  await 枠に出す(list, r.file!, csv);
+  return csv;
 }
 
 // 001: 指定した査定IDのCSV
@@ -63,9 +74,11 @@ caseTest("IT-M06-02-001", async ({ page, notes, step, expected }) => {
     const r = await list.ダウンロードを押す("古物台帳入力用CSV");
     expect(r.file, "古物台帳入力用CSVがダウンロードされる").not.toBeNull();
     csv = await csvを読む(r.file!);
+    await 枠に出す(list, r.file!, csv);
   });
   await expected(async () => {
-    expect.soft(csv.行.map((r) => r["査定ID"]), "CSVの査定ID（指定した1件だけ）").toEqual([id]);
+    await expect.soft(CSVの枠のデータ行(page, 0), "CSVのデータ行（指定した1件だけ）").toHaveCount(1);
+    await expect.soft(枠のセル(page, csv, id, "査定ID"), "CSVの査定ID（指定した1件だけ）").toHaveText(id);
   });
   note(`${店舗の注記}。査定IDは画面が振った値に読み替えた`);
 });
@@ -82,10 +95,11 @@ caseTest("IT-M06-02-005", async ({ page, notes, step, expected }) => {
     const r = await list.ダウンロードを押す("古物台帳入力用CSV");
     expect(r.file, "古物台帳入力用CSVがダウンロードされる").not.toBeNull();
     csv = await csvを読む(r.file!);
+    await 枠に出す(list, r.file!, csv);
   });
   await step(4, async () => { expect(csv.行.length, "CSVのデータ行").toBeGreaterThan(0); });
   await expected(async () => {
-    expect.soft(csv.行.find((r) => r["査定ID"] === id)?.["数量"], "数量（買取明細2・3＋個別入力商品4・1）").toBe("10");
+    await expect.soft(枠のセル(page, csv, id, "数量"), "数量（買取明細2・3＋個別入力商品4・1）").toHaveText("10");
   });
   note(`${店舗の注記}。ケースの事前準備の検索は、手順1（画面を開く）の中で行った`);
 });
@@ -102,10 +116,11 @@ caseTest("IT-M06-02-007", async ({ page, notes, step, expected }) => {
     const r = await list.ダウンロードを押す("古物台帳入力用CSV");
     expect(r.file, "古物台帳入力用CSVがダウンロードされる").not.toBeNull();
     csv = await csvを読む(r.file!);
+    await 枠に出す(list, r.file!, csv);
   });
   await step(4, async () => { expect(csv.行.length, "CSVのデータ行").toBeGreaterThan(0); });
   await expected(async () => {
-    expect.soft(csv.行.find((r) => r["査定ID"] === id)?.["身分証"], "身分証").toBe("自動車運転免許証");
+    await expect.soft(枠のセル(page, csv, id, "身分証"), "身分証").toHaveText("自動車運転免許証");
   });
   note(`${店舗の注記}。ケースの事前準備の検索は、手順1（画面を開く）の中で行った`);
 });
@@ -122,13 +137,14 @@ caseTest("IT-M06-02-012", async ({ page, notes, step, expected }) => {
     const r = await list.ダウンロードを押す("古物台帳入力用CSV");
     expect(r.file, "古物台帳入力用CSVがダウンロードされる").not.toBeNull();
     csv = await csvを読む(r.file!);
+    await 枠に出す(list, r.file!, csv);
   });
   await step(4, async () => { expect(csv.見出し, "CSVの見出し行").toEqual(見出し12); });
   await expected(async () => {
-    const got = csv.行.map((r) => r["査定ID"]);
-    expect.soft(got.length, "CSVのデータ行の数").toBe(2);
-    expect.soft([...got].sort(), "CSVのデータ行（選択した2件）").toEqual([a, b].sort());
-    expect.soft(got, "チェックを付けていない査定ID（含まれない）").not.toContain(c);
+    await expect.soft(CSVの枠のデータ行(page, 0), "CSVのデータ行の数").toHaveCount(2);
+    await expect.soft(枠のセル(page, csv, a, "査定ID"), "CSVのデータ行（選択した2件のうち1件目）").toHaveText(a);
+    await expect.soft(枠のセル(page, csv, b, "査定ID"), "CSVのデータ行（選択した2件のうち2件目）").toHaveText(b);
+    await expect.soft(page.locator('#e2e-csv-note td[data-csv-col="査定ID"]').filter({ hasText: new RegExp(`^${c}$`) }), "チェックを付けていない査定ID（含まれない）").toHaveCount(0);
   });
   note(`${店舗の注記}。第2注文の国（アメリカ合衆国）は設定せず、申込のままにした。申込者姓・査定IDは画面が振った値／実行の印つきの値`);
 });
@@ -145,11 +161,12 @@ caseTest("IT-M06-02-013", async ({ page, notes, step, expected }) => {
     const r = await list.ダウンロードを押す("古物台帳入力用CSV");
     expect(r.file, "古物台帳入力用CSVがダウンロードされる").not.toBeNull();
     csv = await csvを読む(r.file!);
+    await 枠に出す(list, r.file!, csv);
   });
   await step(4, async () => { expect(csv.行.length, "CSVのデータ行").toBe(7); });
   await expected(async () => {
     const 期待 = ["パスポート", "健康保険被保険者証", "外国人登録証明書", "住民基本台帳カード", "学生証、会社員証", "身体障害者手帳", "マイナンバーカード"];
-    ids.forEach((id, i) => expect.soft(csv.行.find((r) => r["査定ID"] === id)?.["身分証"], `査定ID（${i + 1}件目）の身分証`).toBe(期待[i]));
+    for (const [i, id] of ids.entries()) await expect.soft(枠のセル(page, csv, id, "身分証"), `査定ID（${i + 1}件目）の身分証`).toHaveText(期待[i]);
   });
   note(`${店舗の注記}。査定ID（AS-M0602-101-013〜107-013）は画面が振った値に読み替えた（申込の古い順に1〜7件目）`);
 });
@@ -166,11 +183,12 @@ caseTest("IT-M06-02-014", async ({ page, notes, step, expected }) => {
     const r = await list.ダウンロードを押す("古物台帳入力用CSV");
     expect(r.file, "古物台帳入力用CSVがダウンロードされる").not.toBeNull();
     csv = await csvを読む(r.file!);
+    await 枠に出す(list, r.file!, csv);
   });
   await step(4, async () => { expect(csv.行.length, "CSVのデータ行").toBe(2); });
   await expected(async () => {
-    expect.soft(csv.行.find((r) => r["査定ID"] === biz)?.["事業者であるか"], "事業者として登録済みの注文の「事業者であるか」").toBe("1");
-    expect.soft(csv.行.find((r) => r["査定ID"] === non)?.["事業者であるか"], "事業者でない注文の「事業者であるか」（空欄）").toBe("");
+    await expect.soft(枠のセル(page, csv, biz, "事業者であるか"), "事業者として登録済みの注文の「事業者であるか」").toHaveText("1");
+    await expect.soft(枠のセル(page, csv, non, "事業者であるか"), "事業者でない注文の「事業者であるか」（空欄）").toHaveText("");
   });
   note(`${店舗の注記}。事業者の注文は区分だけを事業者にした（事業者番号の登録情報は足しておらず、このケースは事業者番号を確かめない）`);
 });
@@ -187,10 +205,11 @@ caseTest("IT-M06-02-015", async ({ page, notes, step, expected }) => {
     const r = await list.ダウンロードを押す("古物台帳入力用CSV");
     expect(r.file, "古物台帳入力用CSVがダウンロードされる").not.toBeNull();
     csv = await csvを読む(r.file!);
+    await 枠に出す(list, r.file!, csv);
   });
   await step(4, async () => { expect(csv.行.length, "CSVのデータ行").toBeGreaterThan(0); });
   await expected(async () => {
-    expect.soft(csv.行.find((r) => r["査定ID"] === id)?.["数量"], "数量（買取明細の数量1（1件のみ）の合計）").toBe("1");
+    await expect.soft(枠のセル(page, csv, id, "数量"), "数量（買取明細の数量1（1件のみ）の合計）").toHaveText("1");
   });
   note(`${店舗の注記}。ケースの事前準備の検索は、手順1（画面を開く）の中で行った`);
 });
@@ -207,10 +226,11 @@ caseTest("IT-M06-02-016", async ({ page, notes, step, expected }) => {
     const r = await list.ダウンロードを押す("古物台帳入力用CSV");
     expect(r.file, "古物台帳入力用CSVがダウンロードされる").not.toBeNull();
     csv = await csvを読む(r.file!);
+    await 枠に出す(list, r.file!, csv);
   });
   await step(4, async () => { expect(csv.行.length, "CSVのデータ行").toBeGreaterThan(0); });
   await expected(async () => {
-    expect.soft(csv.行.find((r) => r["査定ID"] === id)?.["数量"], "数量（買取明細の数量2・3だけの合計）").toBe("5");
+    await expect.soft(枠のセル(page, csv, id, "数量"), "数量（買取明細の数量2・3だけの合計）").toHaveText("5");
   });
   note(`${店舗の注記}。ケースの事前準備の検索は、手順1（画面を開く）の中で行った`);
 });
@@ -227,10 +247,11 @@ caseTest("IT-M06-02-017", async ({ page, notes, step, expected }) => {
     const r = await list.ダウンロードを押す("古物台帳入力用CSV");
     expect(r.file, "古物台帳入力用CSVがダウンロードされる").not.toBeNull();
     csv = await csvを読む(r.file!);
+    await 枠に出す(list, r.file!, csv);
   });
   await step(4, async () => { expect(csv.行.length, "CSVのデータ行").toBeGreaterThan(0); });
   await expected(async () => {
-    expect.soft(csv.行.find((r) => r["査定ID"] === id)?.["数量"], "数量（個別入力商品の数量2・4だけの合計）").toBe("6");
+    await expect.soft(枠のセル(page, csv, id, "数量"), "数量（個別入力商品の数量2・4だけの合計）").toHaveText("6");
   });
   note(`${店舗の注記}。ケースの事前準備の検索は、手順1（画面を開く）の中で行った`);
 });
@@ -310,12 +331,13 @@ caseTest("IT-M06-02-020", async ({ page, notes, step, expected }) => {
   await step(3, async () => { await list.対象にする(id); });
   await step(4, async () => { await list.対象の値を差し替える(id, "999999"); });
   await step(5, async () => { r = await list.ダウンロードを押す("古物台帳入力用CSV"); });
-  await step(6, async () => { if (r!.file) csv = await csvを読む(r!.file); });
+  await step(6, async () => { if (r!.file) { csv = await csvを読む(r!.file); await 枠に出す(list, r!.file, csv); } });
   await expected(async () => {
     expect.soft(r!.file, "CSVがダウンロードされる（エラーにならない）").not.toBeNull();
     await expect.soft(list.上部のエラー(), "エラーが表示されない").toHaveCount(0);
-    expect.soft(csv.見出し, "見出し行").toEqual(見出し12);
-    expect.soft(csv.行.length, "データ行の数").toBe(0);
+    for (const [i, h] of 見出し12.entries()) await expect.soft(CSVの枠の見出し(page, 0, i), `見出し行の${i + 1}番目`).toHaveText(h);
+    await expect.soft(page.locator('#e2e-csv-note th[data-csv-head]'), "見出し行の項目数").toHaveCount(見出し12.length);
+    await expect.soft(CSVの枠のデータ行(page, 0), "データ行の数").toHaveCount(0);
   });
   note(`${店舗の注記}。チェックボックスの値の変更は、開発者ツールと同じく画面のスクリプトで値を差し替えた（手順の指定どおり）`);
 });

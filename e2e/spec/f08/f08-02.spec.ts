@@ -80,12 +80,21 @@ async function 会員登録して確認画面へ(p: 部品, メール: string, �
 }
 
 /** 確認画面の確定のボタンを押す（完了画面へ移らなければ注記に残す） */
-async function 確定する(p: 部品): Promise<void> {
+async function 確定する(p: 部品): Promise<{ 完了画面: boolean; パス: string }> {
   const r = await p.a.確定する();
   if (!r.完了画面) note(`確定のボタンを押したあと、完了画面ではなく ${r.パス} へ移った`);
+  return r;
 }
 
 const 店舗ID = (c: CaseCtx, 呼び名: string) => c.notes.get(`〔店舗ID-F0802-${呼び名}〕`);
+/** 操作のあいだに、ある送信先へ POST が送られたか（送られたアドレスを返す） */
+async function 送られたPOST(c: CaseCtx, 送信先: RegExp, 操作: () => Promise<unknown>): Promise<string[]> {
+  const 送った: string[] = [];
+  const 見る = (q: import("@playwright/test").Request) => { if (q.method() === "POST" && 送信先.test(new URL(q.url()).pathname)) 送った.push(new URL(q.url()).pathname); };
+  c.page.on("request", 見る);
+  try { await 操作(); } finally { c.page.off("request", 見る); }
+  return 送った;
+}
 const 文字数 = (s: string, ch: string) => [...s].filter((x) => x === ch).length;
 
 // ================= 画面の表示・初期値 =================
@@ -421,9 +430,16 @@ caseTest("IT-F08-02-030", async (c) => {
   const mail = 印つきメール("f0802-player@example.invalid");
   await c.step(3, async () => { await p.i.会員登録の値を入れる(mail, "Passw0rd!F0802Player", false); });
   let r: { パス: string; 知らせ: string | null } = { パス: "", 知らせ: null };
-  await c.step(4, async () => { r = await p.i.会員登録なしで進むを押す(); });
+  const 送った: string[] = [];
+  await c.step(4, async () => {
+    const 見る = (q: import("@playwright/test").Request) => { if (q.method() === "POST" && /\/otcbuy\/\w+\/confirm/.test(q.url())) 送った.push(new URL(q.url()).pathname); };
+    c.page.on("request", 見る);
+    try { r = await p.i.会員登録なしで進むを押す(); } finally { c.page.off("request", 見る); }
+  });
   await c.expected(async () => {
-    expect.soft(r.パス, "会員登録なしの申込を選んだあとの画面（会員登録フォームのまま）").toMatch(/\/otcbuy\/\w+\/register_customer$/);
+    // 「留まる」を、押しても何も起きなかっただけで合格にしない。会員登録なしの申込として送られた（または知らせが出た）うえで、会員登録フォームに留まることを見る
+    expect.soft(送った.length > 0 || r.知らせ !== null, `会員登録なしの申込を選んだ操作が画面に受け付けられた（送信 ${送った.join("、") || "なし"}・知らせ ${r.知らせ ?? "なし"}）`).toBe(true);
+    expect.soft(r.パス, "会員登録なしの申込を選んだあとの画面（会員登録フォームのまま。送り直された画面も含む）").toMatch(/\/otcbuy\/\w+\/(register_customer|confirm)$/);
     await expect.soft(p.i.会員登録フォーム(), "会員登録フォーム（留まる）").toBeVisible();
     await expect.soft(p.a.確定ボタン(), "確認画面の確定のボタンの数（確認画面へ移らない）").toHaveCount(0);
   });
@@ -441,6 +457,9 @@ caseTest("IT-F08-02-031", async (c) => {
   await c.step(3, async () => { await p.i.会員登録の値を空にする(); });
   await c.step(4, async () => { await p.i.会員登録ありで進むを押す(); });
   await c.expected(async () => {
+    // 「留まる」を、押しても何も起きなかっただけで合格にしない。空の欄の誤りの表示が出たことも見る
+    const 誤り = (await c.page.locator(".c-hareruya-form-input__field-error, .c-hareruya-form-input__field-error--server, .ec-errorMessage, .form-error-message, .invalid-feedback").allInnerTexts()).map((t) => t.trim()).filter(Boolean);
+    expect.soft(誤り.length, `会員登録フォームの入力の誤りの表示の数（${誤り.join(" / ")}）`).toBeGreaterThan(0);
     await expect.soft(p.i.会員登録フォーム(), "会員登録ありの申込を選んだあとの会員登録フォーム（留まる）").toBeVisible();
     await expect.soft(p.a.確定ボタン(), "確認画面の確定のボタンの数（確認画面へ移らない）").toHaveCount(0);
   });
@@ -786,10 +805,13 @@ caseTest("IT-F08-02-016", async (c) => {
     if (!(await 入力して進む(p, { ...IN_JP, 電話: ["03", "9999", "0216"] }, IN_JPの申込者))) throw new Error("会員登録フォームが表示されないので、会員登録の値を入れられない");
   });
   await c.step(3, async () => { await 会員登録して確認画面へ(p, mail, "Passw0rdF0802Player-016!"); });
-  await c.step(4, async () => { await 確定する(p); });
+  let 確定 = { 完了画面: false, パス: "" };
+  await c.step(4, async () => { 確定 = await 確定する(p); });
   let rows: db.会員[] = [];
   await c.step(5, async () => { rows = db.会員(mail); });
   await c.expected(async () => {
+    // 「会員が0件」を、申込みが確定されなかっただけで合格にしない。申込み自体は受け付けられ完了画面へ移る作り（会員登録だけを行わない）
+    expect.soft(確定.パス, "「会員登録して申込み」を押したあとの画面（完了画面。申込みの処理が行われた）").toMatch(/\/otcbuy\/\w+\/complete$/);
     expect(rows.length, `メールアドレス ${mail} の会員の数（電話番号のブラックリストに一致して登録されない）`).toBe(0);
   });
   note(`${店舗の読み替え}。メールアドレスは正本の前半に実行の印を付けた値（${mail}）`);
@@ -807,10 +829,13 @@ function 住所のブラックリスト(n: "050" | "051" | "052" | "053", 正本
       if (!(await 入力して進む(p, v, IN_JPの申込者))) throw new Error("会員登録フォームが表示されないので、会員登録の値を入れられない");
     });
     await c.step(3, async () => { await 会員登録して確認画面へ(p, mail, パスワード); });
-    await c.step(4, async () => { await 確定する(p); });
+    let 確定 = { 完了画面: false, パス: "" };
+    await c.step(4, async () => { 確定 = await 確定する(p); });
     let rows: db.会員[] = [];
     await c.step(5, async () => { rows = db.会員(mail); });
     await c.expected(async () => {
+      // 「会員が0件」を、申込みが確定されなかっただけで合格にしない（申込み自体は受け付けられ完了画面へ移る作り）
+      if (期待の数 === 0) expect.soft(確定.パス, "「会員登録して申込み」を押したあとの画面（完了画面。申込みの処理が行われた）").toMatch(/\/otcbuy\/\w+\/complete$/);
       expect(rows.length, `メールアドレス ${mail} の会員の数`).toBe(期待の数);
     });
     note(`${店舗の読み替え}。メールアドレスは正本の前半に実行の印を付けた値（${mail}）。` +
@@ -898,8 +923,11 @@ caseTest("IT-F08-02-063", async (c) => {
   await c.step(1, async () => { await ゲストで入力画面を開く(p); });
   await c.step(2, async () => { await p.a.入力する(IN_JP, IN_JPの申込者); });
   await c.step(3, async () => { await p.i.フォームの送信先を書き換える(入力画面のURL(支店URL)); });
-  await c.step(4, async () => { await p.i.次のページへ進むを押す(); });
+  let 送った: string[] = [];
+  await c.step(4, async () => { 送った = await 送られたPOST(c, /^\/(ja|en)\/otcbuy\/\w+\/?$/, () => p.i.次のページへ進むを押す()); });
   await c.expected(async () => {
+    // 「移らない・入力画面が表示される」を、送信されなかっただけで合格にしない。書き換えた送信先（入力画面のURL）へ送られたことも見る
+    expect.soft(送った.length, `書き換えた送信先（店頭買取査定申込情報入力画面のURL）へ申込フォームが送られた（${送った.join("、") || "送られていない"}）`).toBeGreaterThan(0);
     expect.soft(p.i.パス, "送ったあとの画面（申込前ログイン画面へ移らない）").not.toMatch(/\/entry$/);
     await expect.soft(p.i.欄("lastName"), "申込情報入力画面のお名前（姓）の欄").toBeVisible();
   });
@@ -924,8 +952,11 @@ caseTest("IT-F08-02-067", async (c) => {
   await c.step(2, async () => { await p.a.入力する(IN_JP, IN_JPの申込者); });
   await c.step(3, async () => { await p.i.フォームの送信先を書き換える(入力画面のURL(支店URL)); });
   await c.step(4, async () => { await p.i.クッキーを消す(); });
-  await c.step(5, async () => { await p.i.次のページへ進むを押す(); });
+  let 送った: string[] = [];
+  await c.step(5, async () => { 送った = await 送られたPOST(c, /^\/(ja|en)\/otcbuy\/\w+\/?$/, () => p.i.次のページへ進むを押す()); });
   await c.expected(async () => {
+    // 「移らない・入力画面が表示される」を、送信されなかっただけで合格にしない。書き換えた送信先（入力画面のURL）へ送られたことも見る
+    expect.soft(送った.length, `書き換えた送信先（店頭買取査定申込情報入力画面のURL）へ申込フォームが送られた（${送った.join("、") || "送られていない"}）`).toBeGreaterThan(0);
     expect.soft(p.i.パス, "送ったあとの画面（申込前ログイン画面へ移らない）").not.toMatch(/\/entry$/);
     await expect.soft(p.i.欄("lastName"), "申込情報入力画面のお名前（姓）の欄").toBeVisible();
   });

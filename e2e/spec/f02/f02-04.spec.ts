@@ -13,7 +13,7 @@ import { BranchSpPage, 数字 } from "../../pages/front/f02_04_branch_sp";
 import { アドレスの本体 } from "../../pages/front/f02_02_sp_nav";
 import { LoginPage } from "../../pages/front/f06_03_login";
 import { FrontProductList } from "../../pages/front/f03_01_product_list";
-import { FIXTURES, カートのブラウザたち, カテゴリ名, カードセット名, スマホ, 会員, 会員036, 支店A, 支店B, 支店CDA, 番号, 検索の商品名, 連携の値, 索引の商品 } from "../../seeds/f02-04";
+import { FIXTURES, カートのブラウザたち, カテゴリ名, カードセット名, スマホ, 会員, 会員036, 支店A, 支店B, 支店CDA, 画像の支店を用意する, 番号, 検索の商品名, 連携の値, 索引の商品 } from "../../seeds/f02-04";
 
 test.use({ ...スマホ });
 
@@ -41,6 +41,7 @@ const 上部のカートの注記 = () => note("画面上部の帯のカート�
 
 // ---- ナビゲーションとフッタの表示（001） ----
 caseTest("IT-F02-04-001", async (ctx) => {
+  const 画像の店 = await 画像の支店を用意する(ctx.browser);
   const n = nav(ctx);
   const r: Record<string, string> = {};
   const bytes: Record<string, Buffer | null> = {};
@@ -52,10 +53,10 @@ caseTest("IT-F02-04-001", async (ctx) => {
     r[`${k}著作権`] = await n.文(n.著作権表示());
   };
   note("ご当地晴れる屋くんの画像は、正本がファイル名（branch-a-hareruya.png・branch-b-hareruya.png）だけを定めるため、色の違う小さな画像を試験用に作って使った（正本の外の補い）");
-  await ctx.step(1, async () => { await n.支店トップを開く(支店A.支店URL); await 読む("A"); });
-  await ctx.step(2, async () => { await n.支店トップを開く(支店B.支店URL); await 読む("B"); });
+  await ctx.step(1, async () => { await n.支店トップを開く(画像の店.A.支店URL); await 読む("A"); });
+  await ctx.step(2, async () => { await n.支店トップを開く(画像の店.B.支店URL); await 読む("B"); });
   await ctx.expected(async () => {
-    for (const [k, s, f] of [["A", 支店A, "branch-a-hareruya.png"], ["B", 支店B, "branch-b-hareruya.png"]] as const) {
+    for (const [k, s, f] of [["A", 画像の店.A, "branch-a-hareruya.png"], ["B", 画像の店.B, "branch-b-hareruya.png"]] as const) {
       expect.soft(r[`${k}上`], `支店${k}の画面上部の店舗名`).toBe(s.店名);
       expect.soft(r[`${k}下`], `支店${k}のフッタの店舗名`).toBe(s.店名);
       expect.soft(bytes[k] !== null && bytes[k]!.equals(fs.readFileSync(path.join(FIXTURES, f))), `支店${k}に表示されたご当地晴れる屋くんの画像が、登録した画像（${f}）と同じか`).toBe(true);
@@ -374,7 +375,7 @@ function 開閉(欄: "サイトマップ" | "お得な情報", 項目: string[])
     await ctx.expected(async () => {
       項目.forEach((t, i) => {
         expect.soft(開[i], `1回目の押下のあと「${t}」が表示される（欄の見えている範囲の中）`).toBe(true);
-        expect.soft(閉[i], `2回目の押下のあと「${t}」が非表示になる（欄の見えている範囲の外）`).toBe(false);
+        expect.soft(閉[i] === false, `2回目の押下のあと「${t}」が非表示になる（欄の見えている範囲の外）`).toBe(true);
       });
     });
   };

@@ -243,16 +243,6 @@ defineSeed("S-F05-01-CART-EMPTY", async ({ browser }) => {
   読み替え(seedId, "新しいブラウザセッションを開始し、買取カート画面で商品数0件を確かめた（ケース本体は別の新しいセッションで動く）");
 });
 
-defineSeed("S-F05-01-SPC-GROUP-009", { needs: ["S-F05-01-TAGS"] }, async ({ browser, seed, notes }) => {
-  const { 特集 } = await トップの既存商品を読む(browser);
-  呼び名を控える("S-F05-01-SPC-GROUP-009", seed, notes, Object.values(特集).flat(), "6タグ24商品を登録する代わりに、買取特集コーナーの既存の商品");
-});
-
-defineSeed("S-F05-01-SPC-LIMIT-012", { needs: ["S-F05-01-TAGS"] }, async ({ browser, seed, notes }) => {
-  const { 特集 } = await トップの既存商品を読む(browser);
-  呼び名を控える("S-F05-01-SPC-LIMIT-012", seed, notes, Object.values(特集).flat(), "6タグ24商品を登録する代わりに、買取特集コーナーの既存の商品");
-});
-
 /** 013〜018: 買取特集コーナーのタグごとの「もっと見る」。そのタグの枠に出ている既存の商品を控える */
 for (const [no, tagId] of [["013", "633"], ["014", "634"], ["015", "635"], ["016", "637"], ["017", "636"], ["018", "638"]] as const) {
   const seedId = `S-F05-01-SPC-LINK-${no}`;
@@ -261,23 +251,6 @@ for (const [no, tagId] of [["013", "633"], ["014", "634"], ["015", "635"], ["016
     呼び名を控える(seedId, seed, notes, 特集[tagId] ?? [], `タグID ${tagId} の商品を1件登録する代わりに、買取特集コーナーのタグID ${tagId} の枠に出ている既存の商品`);
   });
 }
-
-defineSeed("S-F05-01-FEAT-BOUNDARY-030", { needs: ["S-F05-01-TAGS"] }, async ({ browser, seed, notes }) => {
-  const seedId = "S-F05-01-FEAT-BOUNDARY-030";
-  const { 目玉 } = await トップの既存商品を読む(browser);
-  const 未満 = 目玉.filter((c) => c.買取価格 !== null && c.買取価格 > 0 && c.買取価格 < 500 && c.規格ID !== null);
-  const 以上 = 目玉.filter((c) => c.買取価格 !== null && c.買取価格 >= 500 && c.数量の操作.カートに入れる && c.規格ID !== null);
-  if (未満.length === 0) throw new Error(`${seedId}: 目玉買取商品の既存の商品に、買取価格500円未満（499円相当）の商品が無い`);
-  if (以上.length === 0) throw new Error(`${seedId}: 目玉買取商品の既存の商品に、買取価格500円以上で数量の操作がある商品が無い`);
-  // 呼び名の A/B を、500円未満（A）と500円以上（B）の商品に当てる
-  for (const l of Notes.labelsIn(seed["状態・属性"] + seed["投入方法"])) {
-    const m = l.match(/^〔(商品ID|規格ID)-.+([AB])〕$/);
-    if (!m) throw new Error(`${seedId}: 呼び名 ${l} の控え方が決まっていない`);
-    const c = m[2] === "A" ? 未満[0] : 以上[0];
-    notes.set(l, m[1] === "商品ID" ? c.商品ID : c.規格ID!);
-  }
-  読み替え(seedId, `買取価格499円・500円の商品を登録する代わりに、目玉買取商品に出ている既存の商品で代えた: A（500円未満）「${未満[0].商品名}」${未満[0].買取価格}円（商品ID ${未満[0].商品ID}）、B（500円以上）「${以上[0].商品名}」${以上[0].買取価格}円（商品ID ${以上[0].商品ID}）`);
-});
 
 for (const no of ["031", "032", "033", "034", "035"]) {
   const seedId = `S-F05-01-CART-${no}`;

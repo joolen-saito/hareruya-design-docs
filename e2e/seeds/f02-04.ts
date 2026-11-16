@@ -25,11 +25,14 @@
 import { Browser } from "@playwright/test";
 import path from "node:path";
 import { SETUP_ADMIN } from "../config/env";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
-import { withAdminSession } from "../lib/session";
-import { ensureBranch, 支店の入力 } from "../pages/admin/f02_03_store";
+import { Account, withAdminSession } from "../lib/session";
+import { ensureMember } from "../pages/admin/member";
+import { findTenantId } from "../pages/admin/tenant_k";
+import { 読み替えの文, 店舗で表す, 試験支店, 店名を読む, 支店URLを読む } from "../lib/store_pick";
+import { 店舗の画像と値をケースの間だけ設定する } from "../pages/admin/store_setting_restore";
 import { カート商品の定義, カート用商品を作る } from "../pages/admin/f02_03_cart_setup";
 import { ポイントを付与する } from "../pages/admin/m05_11_order_edit";
 import { 支店のゲストカートを作る, 試験カート } from "../pages/front/f02_03_cart";
@@ -74,21 +77,22 @@ export function PC版(browser: Browser): Browser {
 }
 
 export const FIXTURES = path.resolve(__dirname, "../fixtures/f02-04");
-export const 支店A: 支店の入力 = {
-  店名: "テスト支店A", 店名カナ: "テストシテンエー", 店名英語: "Test Branch Alpha", 支店URL: "f0204a", 店名略称3文字: "F4A", ショップ名略称: "テスト支店A",
-  郵便番号: "160-0022", 都道府県: "東京都", 住所1: "新宿区テスト", 住所2: "1-1", 電話番号: "03-1111-2222",
-  地図URL: "https://replace-dev.hareruyamtg.com:8443/maps/f0204-a", 営業時間: "10:00-20:00", 画像: path.join(FIXTURES, "branch-a-hareruya.png"),
-};
-export const 支店B: 支店の入力 = {
-  店名: "テスト支店B", 店名カナ: "テストシテンビー", 店名英語: "Test Branch Bravo", 支店URL: "f0204b", 店名略称3文字: "F4B", ショップ名略称: "テスト支店B",
-  郵便番号: "530-0001", 都道府県: "大阪府", 住所1: "大阪市テスト", 住所2: "2-2", 電話番号: "06-3333-4444",
-  地図URL: "https://replace-dev.hareruyamtg.com:8443/maps/f0204-b", 営業時間: "11:00-19:00", 画像: path.join(FIXTURES, "branch-b-hareruya.png"),
-};
-export const 支店CDA: 支店の入力 = {
-  店名: "テスト支店CD-A", 店名カナ: "テストシテンシーディーエー", 店名英語: "Test Branch Charlie Delta", 支店URL: "f0204cda", 店名略称3文字: "F4C", ショップ名略称: "テスト支店CD-A",
-  郵便番号: "160-0022", 都道府県: "東京都", 住所1: "新宿区テスト", 住所2: "1-1", 電話番号: "03-1111-2222",
-  地図URL: "https://replace-dev.hareruyamtg.com:8443/maps/f0204-cda", 営業時間: "10:00-20:00", 画像: path.join(FIXTURES, "branch-cd-hareruya.png"),
-};
+/**
+ * 支店A・B・CD-A。店舗は作らない（依頼者 2026-11-15「店舗は作るのもう禁止」）。住所・電話番号・営業時間が入っている、元からある店舗（読むだけ）で表す:
+ * 支店A=名古屋店（店舗ID 6）・支店B=静岡店（7）・支店CD-A=秋葉原店（8）。値は店舗のいまの登録値を読み、画面と比べる。
+ * ご当地晴れる屋くんの画像（正本の画像ファイル）は、店舗の登録内容を書き換えないので上げられず、画像の同一を比べる 001 は止める。
+ */
+export const 支店A = 店舗で表す("6");
+export const 支店B = 店舗で表す("7");
+export const 支店CDA = 店舗で表す("8");
+/** 空白を除いて比べる（画面は改行・空白を整えて出すことがある） */
+export const 空白なし = (t: string): string => t.replace(/\s+/g, "");
+async function 店舗を確かめる(page: import("@playwright/test").Page, v: 試験支店, 正本の店名: string, issue: (m: string) => void): Promise<string> {
+  const id = await findTenantId(page, v.店名);
+  if (id !== v.id) throw new Error(`店舗ID ${v.id} が店舗一覧に無い（店名「${v.店名}」で探して ${id ?? "なし"}）`);
+  issue(読み替えの文(正本の店名, { id, 店名: v.店名 }, "住所・電話番号・営業時間は店舗の登録値を読んで画面と比べる。ご当地晴れる屋くんの画像は正本の画像ファイルを上げない"));
+  return id;
+}
 
 /**
  * 画面が振った番号（店舗ID・カードセットID・会員ID）。シード表はこれらを「控える」と定めていない（呼び名〔…〕が無い）ので、
@@ -129,19 +133,19 @@ defineSeed("S-F02-04-CD-BROWSER-037", async () => { /* 同上 */ });
 defineSeed("S-F02-04-BRANCH-A", async ({ browser, notes, seed }) => {
   await withAdminSession(PC版(browser), SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    番号.set("〔店舗ID-F0204-A〕", await ensureBranch(page, 支店A, (m) => reportSeedIssue(seed.シードID, m)));
+    番号.set("〔店舗ID-F0204-A〕", await 店舗を確かめる(page, 支店A, "テスト支店A", (m) => reportSeedIssue(seed.シードID, m)));
   });
 });
 defineSeed("S-F02-04-BRANCH-B", async ({ browser, notes, seed }) => {
   await withAdminSession(PC版(browser), SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    番号.set("〔店舗ID-F0204-B〕", await ensureBranch(page, 支店B, (m) => reportSeedIssue(seed.シードID, m)));
+    番号.set("〔店舗ID-F0204-B〕", await 店舗を確かめる(page, 支店B, "テスト支店B", (m) => reportSeedIssue(seed.シードID, m)));
   });
 });
 defineSeed("S-F02-04-CD-BRANCH-A", async ({ browser, notes, seed }) => {
   await withAdminSession(PC版(browser), SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    番号.set("〔店舗ID-F0204-CDA〕", await ensureBranch(page, 支店CDA, (m) => reportSeedIssue(seed.シードID, m)));
+    番号.set("〔店舗ID-F0204-CDA〕", await 店舗を確かめる(page, 支店CDA, "テスト支店CD-A", (m) => reportSeedIssue(seed.シードID, m)));
   });
 });
 
@@ -227,16 +231,36 @@ export const カートのブラウザたち = new Map<string, 試験カート>()
 
 type カートの商品 = { 定義: Omit<カート商品の定義, "商品コード"> & { コード: string }; 数量: number };
 
+/**
+ * 支店Aの在庫を入れる管理者（支店Aだけを編集できる。承認は別の管理者）。決まった印で1度だけ作って使い回す。
+ * 支店の商品詳細は、その支店の在庫を見て数量の欄を出す（本店にだけ在庫を入れると、支店Aの商品詳細に数量の欄が出ず、カートへ入れられない）。
+ * 在庫を承認できるのは、在庫の店舗（支店A）を編集できる管理者だけ（F02-03 の前例）。共有の管理者の編集可能店舗は書き換えない。
+ */
+const 支店A在庫登録者: Account = { loginId: `${rcFixed("f0204_branch_stock")}${支店A.id}`.toLowerCase(), password: "Passw0rd!F0204BS" };
+const 支店A在庫承認者: Account = { loginId: `${rcFixed("f0204_branch_appr")}${支店A.id}`.toLowerCase(), password: "Passw0rd!F0204BA" };
+async function 支店A在庫登録者を用意する(page: import("@playwright/test").Page): Promise<void> {
+  await ensureMember(page, {
+    名前: rcFixed("F02-04支店A在庫登録者"), 所属店舗: 支店A.店名, ログインID: 支店A在庫登録者.loginId, メールアドレス: `${支店A在庫登録者.loginId}@example.test`,
+    パスワード: 支店A在庫登録者.password, 権限: "システム管理者", デフォルト検索表示店舗: 支店A.店名, 編集可能店舗: [支店A.店名],
+  });
+  await ensureMember(page, {
+    名前: rcFixed("F02-04支店A在庫承認者"), 所属店舗: 支店A.店名, ログインID: 支店A在庫承認者.loginId, メールアドレス: `${支店A在庫承認者.loginId}@example.test`,
+    パスワード: 支店A在庫承認者.password, 権限: "システム管理者", デフォルト検索表示店舗: 支店A.店名, 編集可能店舗: [支店A.店名],
+  });
+}
+
 function defineCartSeed(seedId: string, items: カートの商品[]): void {
   defineSeed(seedId, { needs: ["S-F02-04-BRANCH-A"] }, async ({ browser }) => {
     const issue = (m: string) => reportSeedIssue(seedId, m);
     const pc = PC版(browser);
-    const made = await カート用商品を作る(pc, seedId, items.map((i) => ({ ...i.定義, 商品コード: rc(i.定義.コード) })), issue);
+    const made = await カート用商品を作る(pc, seedId, items.map((i) => ({ ...i.定義, 商品コード: rc(i.定義.コード) })), issue,
+      { 店舗ID: 支店A.id, 登録者: 支店A在庫登録者, 登録者を用意する: 支店A在庫登録者を用意する, 承認者: 支店A在庫承認者 });
+    issue(`在庫数は、カートへ入れる支店A（${支店A.店名}・店舗ID ${支店A.id}）に入れた（シード表は在庫の店舗を決めていない。支店の商品詳細は、その支店の在庫で数量の欄を出す。本店に入れると支店Aの商品詳細は在庫0で数量の欄が出ない）。在庫編集の登録は ${支店A在庫登録者.loginId}、承認は ${支店A在庫承認者.loginId}（どちらも支店Aだけを編集できる E2E の管理者）`);
     const cart = await 支店のゲストカートを作る(pc, seedId, 支店A.支店URL, items.map((i, k) => ({ 商品ID: made[k].商品ID, 数量: i.数量 })));
     const 合計 = items.reduce((a, i) => a + i.数量, 0);
     if (cart.商品数 !== 合計) throw new Error(`${seedId}: カートへ入れたあとの支店トップのカートの商品数が ${cart.商品数}（${合計} のはず）`);
     issue(`支店Aのカートへ${items.map((i) => `「${i.定義.商品名}」${i.数量}個`).join("・")}を入れた順に入れ、カートの商品数が ${合計} になったことを確かめた。このブラウザの状態（クッキー）をケースのブラウザへ移して使う`);
-    issue("商品はグッズ商品CSV登録で作り（商品コードに実行の印）、商品登録編集で規格を公開にし、在庫10を入庫・承認した。支店Aの商品としてフロントの画面に出る");
+    issue("商品はグッズ商品CSV登録で作り（商品コードに実行の印）、商品登録編集で規格を公開にし、支店Aに在庫10を入庫・承認した。支店Aの商品としてフロントの画面に出る");
     カートのブラウザたち.set(seedId, cart);
   });
 }
@@ -282,7 +306,7 @@ const 索引の束F0204 = new 索引の束<F0204索引の商品>("F02-04（支�
   const out: Partial<F0204索引の商品> = { 注記 };
   await withAdminSession(pc, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    await ensureBranch(page, 支店A, issue);
+    await 店舗を確かめる(page, 支店A, "テスト支店A", issue);
     const sets: Record<string, string> = {
       A: await ensureCardset(page, カードセット名("テストセットA"), カードセット名("テストセットA"), rc("F0204-SET-A"), issue),
       B: await ensureCardset(page, カードセット名("テストセットB"), カードセット名("テストセットB"), rc("F0204-SET-B"), issue),
@@ -298,7 +322,10 @@ const 索引の束F0204 = new 索引の束<F0204索引の商品>("F02-04（支�
     // そのため、カードセットに詳細情報を持つカードを登録し、取り込んだ商品にカードを指定する
     const made = await 索引の商品を作る(page, lines.map((l) => ({
       記号: l.key, 商品コード: l.code, 商品名: l.nameJp, 基準価格: l.価格, 販売価格: l.価格, 買取価格: "100", カードセットID: sets[l.set],
-    })), "F02-04 の検索の商品", `f0204-search-${RUN_MARK}.csv`, issue);
+    })), "F02-04 の検索の商品", `f0204-search-${RUN_MARK}.csv`, issue,
+    // シード表（S-F02-04-L-PRODUCT-031）は商品カテゴリ(ID)をサプライ・グッズのカテゴリIDと定める。既定の「単体カード配下」（開発環境ではセットの下の「シングルカード」）は
+    // グッズ商品CSV登録が受け付ける範囲の外で、取込が「商品カテゴリ(ID)の値が異常です」で止まる（F02-02 の 004〜008・062 と同じ原因。2026-11-14 の見直し）
+    { カードのカテゴリ: "サプライ・グッズ" });
     for (const m of made) (out as Record<string, unknown>)[m.記号] = m.商品ID;
     issue("商品は、カードセットに詳細情報を持つカードを登録し、グッズ商品CSV登録で取り込んだ商品にカードを指定して作った（検索サービスの索引のカードセットは、指定したカードの詳細情報のカードセットから作られるため。正本の「商品をカードセットに紐付ける」の作り方）");
   });
@@ -343,9 +370,9 @@ defineSeed("S-F02-04-L-ENV", async ({ seed }) => {
 defineSeed("S-F02-04-L-BRANCH", async ({ browser, seed }) => {
   await withAdminSession(PC版(browser), SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    番号.set("〔店舗ID-F0204-A〕", await ensureBranch(page, 支店A, (m) => reportSeedIssue(seed.シードID, m)));
+    番号.set("〔店舗ID-F0204-A〕", await 店舗を確かめる(page, 支店A, "テスト支店A", (m) => reportSeedIssue(seed.シードID, m)));
   });
-  reportSeedIssue(seed.シードID, "連携試験用のテスト支店Aは、BRANCH-A と同じ「テスト支店A」（支店URL f0204a）を使う（あれば内容を確かめて使う）");
+  reportSeedIssue(seed.シードID, "連携試験用のテスト支店Aは、BRANCH-A と同じ店舗（店舗ID 6）を使う");
 });
 defineSeed("S-F02-04-L-CARDSET-031", { needs: ["S-F02-04-L-BRANCH"] }, async ({ browser, seed }) => {
   索引の商品の値 = await 索引の商品を用意する(browser, seed.シードID);
@@ -353,3 +380,26 @@ defineSeed("S-F02-04-L-CARDSET-031", { needs: ["S-F02-04-L-BRANCH"] }, async ({ 
 defineSeed("S-F02-04-L-PRODUCT-031", { needs: ["S-F02-04-L-CARDSET-031"] }, async ({ browser, seed }) => {
   索引の商品の値 = await 索引の商品を用意する(browser, seed.シードID);
 });
+
+/**
+ * 001 用: 支店A・Bに、正本の画像・郵便番号・住所・電話番号・営業時間を、E2E の店舗（A=4973・B=5006）へケースの間だけ設定し、終わりに元へ戻す（依頼者 2026-11-15）。
+ * 書き換えるので 001 は solo_cases.tsv の一人で流す回で流す。
+ */
+export type 画像の支店 = { 店名: string; 支店URL: string; 郵便番号: string; 都道府県: string; 住所1: string; 住所2: string; 電話番号: string; 営業時間: string };
+export async function 画像の支店を用意する(browser: Browser): Promise<{ A: 画像の支店; B: 画像の支店 }> {
+  const 定め = {
+    A: { id: "4973", 画像: "branch-a-hareruya.png", 郵便番号: "160-0022", 都道府県: "東京都", 住所1: "新宿区テスト", 住所2: "1-1", 電話番号: "03-1111-2222", 営業時間: "10:00-20:00" },
+    B: { id: "5006", 画像: "branch-b-hareruya.png", 郵便番号: "530-0001", 都道府県: "大阪府", 住所1: "大阪市テスト", 住所2: "2-2", 電話番号: "06-3333-4444", 営業時間: "11:00-19:00" },
+  } as const;
+  await withAdminSession(PC版(browser), SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const issue = (m: string) => reportSeedIssue("S-F02-04-BRANCH-A", m);
+    for (const d of [定め.A, 定め.B]) {
+      await 店舗の画像と値をケースの間だけ設定する(page, d.id, path.join(FIXTURES, d.画像), {
+        郵便番号: d.郵便番号.replace("-", ""), 都道府県: d.都道府県, 住所: d.住所1, 番地: d.住所2, 電話番号: d.電話番号.replace(/-/g, ""), 店舗営業時間: d.営業時間,
+      }, `店舗ID ${d.id} の画像と店舗情報`, issue);
+    }
+  });
+  const 作る = (d: (typeof 定め)["A"] | (typeof 定め)["B"]): 画像の支店 => ({ 店名: 店名を読む(d.id), 支店URL: 支店URLを読む(d.id), 郵便番号: d.郵便番号, 都道府県: d.都道府県, 住所1: d.住所1, 住所2: d.住所2, 電話番号: d.電話番号, 営業時間: d.営業時間 });
+  return { A: 作る(定め.A), B: 作る(定め.B) };
+}
