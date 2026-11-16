@@ -26,7 +26,7 @@ import { 会員IDがある, 受注の送信履歴を消す, 会員の送信履�
 import { 受注IDの, 受注の配送先ID, 受注日時を書き足す } from "../db/m05_09";
 import { 受注の対応状況名 } from "../db/m05_22";
 import { getSeed } from "../lib/catalog";
-import { 届いたメール } from "../pages/admin/m05_06_mailbox";
+import { 注文の受付メールを数えない } from "../pages/admin/m05_06_mailbox";
 import { Notes } from "../lib/notes";
 import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
@@ -133,23 +133,6 @@ export function 作った受注の(seedId: string): 作った受注[] {
 /** 試験会員のメールアドレス（前半に実行の印） */
 export const 会員のメール = (前半: string): string => markedMail(前半);
 
-/**
- * 送信の操作のあとに「宛先にメールが0通」を数えるケース（022・024・030）の注文。開発環境では、注文の受付メールが、注文の直後に1通、
- * 2分おきの定期の送信でもう1通届き、定期の分が操作のあとに届くと、操作の結果でないメールを数えてしまう（2026-11-16 030 で不合格）。
- * 注文のあと、受付メールが2通そろうまで待つ（最大135秒。そろわなくても先へ進む）。
- */
-const メールを数える受注 = new Set(["S-M05-06-ORDERS-022", "S-M05-06-ORDERS-024", "S-M05-06-ORDERS-030"]);
-async function 受付メールがそろうのを待つ(メール: string, 注文番号: string, issue: (m: string) => void): Promise<void> {
-  const deadline = Date.now() + 135_000;
-  let n = 0;
-  for (;;) {
-    n = (await 届いたメール(メール, new Set<number>(), 0, 1)).filter((m) => m.件名.includes("晴れる屋をご利用いただきありがとうございます")).length;
-    if (n >= 2 || Date.now() > deadline) break;
-    await new Promise((r) => setTimeout(r, 3000));
-  }
-  issue(`${注文番号}: 操作のあとのメールの数を正しく数えるため、注文の受付メールが${n >= 2 ? "2通そろう" : `${n}通のまま135秒たつ`}のを待った（開発環境の受け口。受付メールは操作の前に届いたものとして控えに入る）`);
-}
-
 async function 受注を作る(browser: Browser, seedId: string, 商品ID: string, o: 受注の定め): Promise<作った受注> {
   const issue = (m: string) => reportSeedIssue(seedId, m);
   const メール = 会員のメール(o.前半);
@@ -168,7 +151,11 @@ async function 受注を作る(browser: Browser, seedId: string, 商品ID: strin
     });
     issue(`${注文番号}: 受注情報編集で送料 ${o.金額.送料}・手数料 ${o.金額.手数料}・値引き ${o.金額.値引き} を入れた（配送会社・送り状番号・配送希望日は入れていない）`);
   }
-  if (メールを数える受注.has(seedId)) await 受付メールがそろうのを待つ(メール, 注文番号, issue);
+  if (["S-M05-06-ORDERS-022", "S-M05-06-ORDERS-024", "S-M05-06-ORDERS-030"].includes(seedId)) {
+    // 送信のあとに宛先のメールを0通と数えるケース。注文の受付メールの遅れて届く分を数えない（理由は m05_06_mailbox.ts）
+    注文の受付メールを数えない();
+    issue(`${注文番号}: 操作のあとの宛先のメールを数えるとき、注文の受付メール（件名「晴れる屋をご利用いただきありがとうございます。」。注文のあと1〜3分おいて同じ本文がもう1通届くことがある）は数えない`);
+  }
   const st = 受注の対応状況名(受注ID);
   if (st !== "新規受付") issue(`${注文番号}: 注文のあとの対応状況は「${st}」（シード表は「新規受付」。注文の部品の既定の支払方法による）`);
   return { 会員ID, メール, 注文番号, 受注ID, 配送ID: 配送[0], 氏名: `${o.姓} ${o.名}` };

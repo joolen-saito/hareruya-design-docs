@@ -34,7 +34,7 @@ import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
-import { Account, withAdminSession } from "../lib/session";
+import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { 商品を作って入庫する } from "../pages/admin/f04_setup";
 import { ensureM05Admin } from "../pages/admin/m05_admin_member";
 import { 出荷指示リストを生成する } from "../pages/admin/m05_20_standby";
@@ -205,12 +205,19 @@ async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め)
   for (const x of 商品の明細.filter((y) => y.注文後の価格 !== undefined || (規格IDを控える && 商品の明細.length === 1))) {
     await withAdminSession(browser, SETUP_ADMIN, async (page) => {
       page.setDefaultTimeout(60_000);
+      // 管理者でログインした直後の画面は新着情報管理の一覧なので、商品編集画面を開いてから規格一覧へ進む（2026-11-16 011 で編集画面でなくニュース画面のまま止まった）
+      await page.goto(adminUrl(`/product/product/${商品ID.get(x.コード)!}/edit`));
       const rows = await classRowsFromProductEdit(page, 商品ID.get(x.コード)!);
       if (rows.length !== 1) throw new Error(`${seedId}: ${x.名前} の商品規格が ${rows.length} 件（1件のはず）`);
       規格ID[x.コード] = rows[0].商品規格ID;
       if (x.注文後の価格 !== undefined) {
         const e = new ClassEditPage(page);
         await e.編集で開く(商品ID.get(x.コード)!, rows[0].商品規格ID);
+        // セールフラグが外れていると、販売価格は基準価格で上書きされる（画面のスクリプト）。基準価格と違う販売価格にするには、セールフラグを付ける
+        if (!(await e.セールフラグ.isChecked())) {
+          await e.セールフラグ.check();
+          reportSeedIssue(seedId, `${x.名前}: 販売価格を基準価格と違う ${x.注文後の価格} にするため、商品規格登録編集で「セールフラグ」を付けた（外れていると販売価格が基準価格で上書きされる。シード表には書かれていない補い）`);
+        }
         await e.販売価格.fill(String(x.注文後の価格));
         const r = await e.登録を押す();
         if (!r.転送があった) throw new Error(`${seedId}: ${x.名前} の販売価格を ${x.注文後の価格} にして登録できない（${(await e.画面のエラー.allInnerTexts()).join(" / ")}）`);

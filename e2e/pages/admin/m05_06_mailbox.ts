@@ -76,11 +76,21 @@ async function 読む(id: number): Promise<受けたメール> {
  * 控えた番号より後に、宛先（封筒の宛先）へ届いたメールを読む。何通を待つかを渡すと、その数がそろうまで（最大 待つ秒）待つ。
  * 0 通を確かめるとき（届かないこと）は 何通=0 にして、待つ秒だけ待ってから数える。
  */
+/**
+ * 注文の受付メールを数えない（M05-06 の「送信のあとに宛先へ0通」を数えるケースだけが、シードから呼ぶ。2026-11-16）。
+ * 開発環境では、注文の受付メール（件名「晴れる屋をご利用いただきありがとうございます。」。本文は注文の控え）が、注文の直後に1通届いたあと、
+ * 1〜3分おいてもう1通（同じ本文）届くことがある。送信の操作の結果でなく、操作のあとに届くと「0通」の確かめを誤って落とす。
+ * 呼ばないかぎり（M08 などほかの機能）は、これまでどおり宛先に届いた全部を数える。
+ */
+let 受付メールを除く = false;
+export function 注文の受付メールを数えない(): void { 受付メールを除く = true; }
+const 注文の受付の件名 = "晴れる屋をご利用いただきありがとうございます";
+
 export async function 届いたメール(宛先: string, 控え: Set<number>, 何通: number, 待つ秒 = 60): Promise<受けたメール[]> {
   const want = 素の(宛先);
   const deadline = Date.now() + 待つ秒 * 1000;
   for (;;) {
-    const hit = (await json<一覧の行[]>("/messages")).filter((m) => !控え.has(m.id) && m.recipients.some((r) => 素の(r) === want)).sort((a, b) => a.id - b.id);
+    const hit = (await json<一覧の行[]>("/messages")).filter((m) => !控え.has(m.id) && m.recipients.some((r) => 素の(r) === want) && !(受付メールを除く && 符号を戻す(m.subject ?? "").includes(注文の受付の件名))).sort((a, b) => a.id - b.id);
     if ((何通 > 0 && hit.length >= 何通) || Date.now() > deadline) return Promise.all(hit.map((m) => 読む(m.id)));
     await new Promise((r) => setTimeout(r, 2000));
   }
