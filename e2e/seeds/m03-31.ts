@@ -8,7 +8,8 @@
  *   商品規格の登録画面の言語の欄で確かめるだけにする。シード表の作り方と違うので、これを使うケースは「条件付き合格」に分ける。
  * - S-M03-31-FILE-027: 画像ファイル unsupported.png（1×1 の PNG）。正本は画像の中身を書かない。依頼者決定（2026-10-16）
  *   「画像は任意の有効な画像でよい」に従う。
- * - S-M03-31-DATA-*: グッズ商品CSV登録で作る商品（固定の商品コード M0331-<番号>）と、取込ファイル。
+ * - S-M03-31-DATA-*: グッズ商品CSV登録で作る商品（正本の商品コード M0331-<番号> に実行の印を付けた値。lib/run_marker.ts の rc。
+ *   2026-11-16: 決め打ちのままだと前の実行の商品が残り「商品コードは重複」でシードが止まった。ケースは商品コードの書式・文字数を見ないので印を付ける）と、取込ファイル。
  *
  * 取込ファイルの見出しは、投入方法の「設計書の7列」= 設計書 L0164〜L0173 の「商品ID」「言語ID」「販売価格」「買取価格」「セールフラグ」
  * 「帯URL」「タグ(ID)」（S-M03-31-QC-* の投入方法が書く見出しと同じ）。値は状態・属性のとおり（空と書かれた欄は空）。
@@ -262,8 +263,9 @@ function expectMethodSays(seedId: string, phrases: string[]): void {
 
 async function buildSingle(browser: Browser, seedId: string, notes: Notes, s: SingleSpec): Promise<void> {
   const issue = (m: string) => reportSeedIssue(seedId, m);
-  const code = `M0331-${s.no}`;
-  expectMethodSays(seedId, [`商品コードに「${code}」`, s.tagA ? `タグ(ID)に${TAG_A}` : "タグ(ID)を空"]);
+  const 正本の商品コード = `M0331-${s.no}`;
+  expectMethodSays(seedId, [`商品コードに「${正本の商品コード}」`, s.tagA ? `タグ(ID)に${TAG_A}` : "タグ(ID)を空"]);
+  const code = rc(正本の商品コード);
   if (s.edit?.帯URL) expectMethodSays(seedId, [`帯URLに「${s.edit.帯URL}」`]);
   if (s.edit?.セール販売価格) expectMethodSays(seedId, ["セールフラグにチェックを入れ", `販売価格に${s.edit.セール販売価格}`]);
   if (s.noTagId) expectMethodSays(seedId, [`IDが${s.noTagId}の行が無い`]);
@@ -335,17 +337,17 @@ async function buildFiveClasses(browser: Browser, seedId: string, notes: Notes):
   const issue = (m: string) => reportSeedIssue(seedId, m);
   expectMethodSays(seedId, [`商品コードに「M0331-${no}A」`, `言語に英語、状態にニアミント、商品コードに「M0331-${no}C」`, `高額商品コードに「M0331-${no}HP」`, "その画面で商品規格を削除を押す"]);
   const ids = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    const a = await goodsProductWithOneClass(page, { seedId, no, code: `M0331-${no}A`, tagId: "", onIssue: issue });
+    const a = await goodsProductWithOneClass(page, { seedId, no, code: rc(`M0331-${no}A`), tagId: "", onIssue: issue });
     const base = { 基準価格: "2000", 販売価格: "2000", 買取価格: "500" };
     const add = async (suffix: string, 言語: string, extra: { 高額商品コード?: string } = {}) => {
       await openClassList(page, a.productId);
-      return addClass(page, a.productId, { 言語, 状態: "ニアミント", 商品コード: `M0331-${no}${suffix}`, ...base, ...extra }, `${seedId}: 規格${suffix}`, issue);
+      return addClass(page, a.productId, { 言語, 状態: "ニアミント", 商品コード: rc(`M0331-${no}${suffix}`), ...base, ...extra }, `${seedId}: 規格${suffix}`, issue);
     };
     const b = await add("B", "日本語");
     const c = await add("C", "英語");
     const d = await add("D", "日本語");
     await deleteClassOnEdit(page, `${seedId}: 規格D`, issue);
-    const e = await add("E", "日本語", { 高額商品コード: `M0331-${no}HP` });
+    const e = await add("E", "日本語", { 高額商品コード: rc(`M0331-${no}HP`) });
     return { product: a.productId, A: a.classId, B: b, C: c, D: d, E: e };
   });
   notes.set(`〔商品ID-M0331-${no}〕`, ids.product);
