@@ -90,3 +90,26 @@ export function 商品の無いカード詳細(foil: 1 | 2): { カード詳細ID
   if (!r) throw new Error(`商品の付いていない、Foil が「${foil === 1 ? "通常" : "特殊"}」のカード詳細が開発環境に無い（カードのマスタは新しく作らない）`);
   return { カード詳細ID: String(r.id), カード名: String(r.name_jp) };
 }
+
+/**
+ * 元から開発環境にある、商品の無いカード詳細（上の関数の別版）。同じ名前・同じカードセットのカード詳細が多すぎて、カード検索の結果の
+ * 10ページ（100件）に出てこない名前（基本土地の「森」など千件を超える）を避け、名前とカードセットで絞った件数が 60 件以下のものを選ぶ。
+ * ほかの方の試験が作ったカード（2026-11-01 以降に作られたもの）は使わない。無ければ null（呼び出し側が印つきの試験用カードを作る）。
+ * カードのマスタは書き換えない（2026-11-16 依頼者指示）。
+ */
+export function 元からある商品の無いカード詳細(foil: 1 | 2): { カード詳細ID: string; カード名: string; カードセットID: string | null } | null {
+  const r = query(
+    `select * from (
+       select d.id, c.name_jp, d.cardset_id,
+              (select count(*) from mtb_card_detail d2 join mtb_card c2 on c2.id = d2.card_id
+                where c2.name_jp like '%' || c.name_jp || '%' and (d.cardset_id is null or d2.cardset_id = d.cardset_id)) as hits
+         from mtb_card_detail d join mtb_card c on c.id = d.card_id
+        where d.foil_flg = $1 and coalesce(c.name_jp, '') <> '' and d.create_date < '2026-11-01'
+          and not exists (select 1 from dtb_product p where p.card_detail_id = d.id)
+        order by d.id desc limit 400) x
+      where hits <= 60 limit 1`,
+    [foil],
+  )[0];
+  if (!r) return null;
+  return { カード詳細ID: String(r.id), カード名: String(r.name_jp), カードセットID: r.cardset_id === null ? null : String(r.cardset_id) };
+}

@@ -20,7 +20,7 @@ import {
 } from "../../pages/admin/m04_03_bulk_x";
 import { 在庫履歴の店舗を選ぶ } from "../../pages/admin/m04_03_bulk_x";
 import { 編集可能店舗を変える } from "../../pages/admin/m04_03_member_edit";
-import { deleteClassOnEdit, openClassEdit } from "../../pages/admin/m03_30_products";
+import { deleteClassOnEdit, openClassEdit, openClassList } from "../../pages/admin/m03_30_products";
 import {
   TC東京, 店の読み替え, 店舗IDの, 試験管理者, 商品コードの, 承認通知先, 承認通知先の注記, 承認通知先所属, 所属の実名, 管理者, メンバー管理者, 権限変更対象, 権限変更対象の管理者ID, 連携管理者,
 } from "../../seeds/m04-03-x";
@@ -403,6 +403,9 @@ function 権限を外される(番号: "043" | "051", 在庫の控え: string, �
         note(`ブラウザB: 「${対象.名前}」の編集可能店舗を本店だけにした（試験支店＝正本の TC東京を外した）`);
       });
       await step(3, async () => { 結果 = await 一括編集を登録する(page); note(`登録のあと: ${結果.パス}・${結果.表示 || "表示なし"}`); });
+      // 051 の手順4（DBで承認情報・履歴を確認する）。確かめる値は下の期待結果で見る
+      const 確かめ = 検証(ctx);
+      if (確かめ.length > 0) await step(4, async () => { note(`DBの確認: ${確かめ.map((c) => `${c.名前}＝${JSON.stringify(c.実際())}`).join("・")}`); });
       await expected(async () => {
         if (パス期待) expect.soft(結果.パス, "在庫一覧画面へ遷移する").toMatch(パス期待);
         for (const c of 検証(ctx)) expect.soft(c.実際(), c.名前).toEqual(c.期待);
@@ -422,6 +425,7 @@ caseTest("IT-M04-03-051", 権限を外される("051", "051", "BULK-A-051", (ctx
 
 /** 044・045: ブラウザBで商品規格編集画面を開いて削除する（商品ID・商品規格IDは控えた番号） */
 async function 規格を削除する(B: { page: import("@playwright/test").Page }, 商品ID: string, 規格ID: string): Promise<void> {
+  await openClassList(B.page, 商品ID);
   await openClassEdit(B.page, 商品ID, 規格ID);
   await deleteClassOnEdit(B.page, `商品規格ID ${規格ID} の削除`, (m) => note(m));
 }
@@ -519,6 +523,7 @@ caseTest("IT-M04-03-050", async (ctx) => {
   let rows: Awaited<ReturnType<StockHistoryPage["rows"]>> = [];
   await step(6, async () => {
     supplement(`在庫履歴検索一覧には前の実行の同じ商品の行も出るので、商品名・カード名・商品コードの欄には「L002」の代わりに、この実行の印つきの値「-L002-${RUN_MARK}」（商品コードの共通の部分）を入れた`);
+    supplement("在庫履歴検索一覧の「在庫変動理由区分」は設計書（在庫履歴一覧 識別ID 2-3）のとおり「親/子」の表示なので、正本の「廃棄(破損)」（子の名前）は画面の「廃棄/廃棄(破損)」（手順2で選んだ区分）として確かめた");
     await h.clearConditions();
     await h.fillKeyword(`-L002-${RUN_MARK}`);
     await 在庫履歴の店舗を選ぶ(page, TC東京.店名);
@@ -533,7 +538,7 @@ caseTest("IT-M04-03-050", async (ctx) => {
       expect.soft(r?.["在庫変動数"] ?? r?.["在庫増減数"], `${名}の行の在庫増減数`).toBe(数);
       expect.soft(r?.["店舗"], `${名}の行の店舗`).toBe(TC東京.ショップ名略称);
       expect.soft(r?.["在庫場所"] ?? r?.["在庫区分"], `${名}の行の在庫区分`).toBe("EC-CUBE");
-      expect.soft(r?.["在庫変動理由区分"], `${名}の行の在庫変動理由区分`).toBe("廃棄(破損)");
+      expect.soft(r?.["在庫変動理由区分"], `${名}の行の在庫変動理由区分（親/子の表示）`).toBe(廃棄);
       expect.soft(r?.["在庫変動理由"], `${名}の行の在庫変動理由`).toBe(理由);
       expect.soft(r?.["登録者"], `${名}の行の登録者`).toBe(試験管理者.名前);
       expect.soft(r?.["承認日"], `${名}の行の承認日`).toBe("-");

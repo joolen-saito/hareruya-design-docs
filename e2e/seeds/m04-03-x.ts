@@ -24,7 +24,7 @@ import { getSeed } from "../lib/catalog";
 import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
-import { 在庫IDの, 在庫数と総原価を整える, 在庫の最新の承認ID, 期間別販売数量を足す, 商品の無いカード詳細 } from "../db/m04_03_x";
+import { 在庫IDの, 在庫数と総原価を整える, 在庫の最新の承認ID, 期間別販売数量を足す, 元からある商品の無いカード詳細 } from "../db/m04_03_x";
 import { 承認一覧の行の番号 } from "../db/m04_02_x";
 import { imageFile } from "../pages/admin/f03_06_products";
 import { readExistingGoodsChildCategoryId } from "../pages/admin/m03_01_goods_csv";
@@ -34,7 +34,8 @@ import { addClass, openClassList } from "../pages/admin/m03_30_products";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
 import { 試験支店, 試験支店の店舗ID, 本店の店舗ID, 本店の店名DB } from "../pages/admin/reuse_store";
 import { 在庫編集を開く } from "../pages/admin/m04_03_bulk_x";
-import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
+import { カードを登録する, カード詳細IDs } from "../pages/admin/m14_card";
+import { assignCardOnProductEditInSet } from "../pages/admin/product_card_assign_set";
 import { ensureDepartment, ensureMemberWithDepartment } from "../pages/admin/m04_13_setup";
 import { ensureNoApprovalAuthority, M0409_NO_APPROVAL_AUTHORITY } from "../pages/admin/m04_09_setup";
 import { registerStockEdit, StockApprovalListPage } from "../pages/admin/stock_edit";
@@ -121,10 +122,22 @@ defineSeed("S-M04-03-MASTER", async ({ browser, notes, seed }) => {
       notes.set(`〔商品ID-M0403-共有${k}〕`, 商品の番号[k]);
     }
     for (const [k, foil, img] of [["A", 1, "bulk-a"], ["B", 2, "bulk-b"]] as const) {
-      const card = 商品の無いカード詳細(foil);
-      issue(`カードのマスタは新しく作らず、開発環境に既にある商品の付いていない Foil「${foil === 1 ? "通常" : "特殊"}」のカード詳細（ID ${card.カード詳細ID}「${card.カード名}」）を一括商品${k}に紐付けた`);
-      await assignCardOnProductEdit(page, {
-        productId: 商品の番号[k], cardNameJp: card.カード名, cardDetailId: card.カード詳細ID,
+      const foilName = foil === 1 ? "通常" : "特殊";
+      // 元から開発環境にある、商品の付いていないカード詳細があればそれを使う（ほかの方の試験用カードは使わない。2026-11-16 依頼者指示）。
+      // 無いとき（Foil「特殊」など）は、実行の印つきの試験用カードを画面で作って使う（マスタは作ってよい: 2026-11-14 依頼者決定。M04-33・M05-09 と同じ）
+      let card = 元からある商品の無いカード詳細(foil);
+      if (card) {
+        issue(`開発環境に元からある商品の付いていない Foil「${foilName}」のカード詳細（ID ${card.カード詳細ID}「${card.カード名}」）を一括商品${k}に紐付けた`);
+      } else {
+        const 名 = rc(`M0403-CARD-${k}`);
+        await カードを登録する(page, { カード名日: 名, カード名英: 名, 点数で見たマナ: "0", 詳細: { Foil: foilName } }, `${seed.シードID}: ${名} のカードの登録`, issue);
+        const ids = await カード詳細IDs(page);
+        if (ids.length !== 1) throw new Error(`${seed.シードID}: ${名} のカードのカード詳細が ${ids.length} 件（1件のはず）`);
+        card = { カード詳細ID: ids[0], カード名: 名, カードセットID: null };
+        issue(`Foil「${foilName}」の元からあるカード詳細が使えないので、実行の印つきの試験用カード「${名}」（カード詳細ID ${ids[0]}）を画面で作り、一括商品${k}に紐付けた`);
+      }
+      await assignCardOnProductEditInSet(page, {
+        productId: 商品の番号[k], cardNameJp: card.カード名, cardDetailId: card.カード詳細ID, cardsetId: card.カードセットID,
         productNameJp: 一括商品[k].商品名(), productNameEn: 一括商品[k].商品名(), images: [imageFile(img)],
       }, issue);
     }
@@ -380,7 +393,7 @@ defineSeed("S-M04-03-ADM-MANAGER", { needs: ["S-M04-03-MASTER"] }, async ({ brow
   await withAdminSession(browser, メンバー管理者.account, async () => undefined);
 });
 for (const [seedId, 番号] of [["S-M04-03-ADM-TARGET-043", "043"], ["S-M04-03-GF-ADM-051", "051"]] as const) {
-  defineSeed(seedId, { needs: ["S-M04-03-MASTER"] }, async ({ browser, notes }) => {
+  defineSeed(seedId, { needs: ["S-M04-03-MASTER"] }, async ({ browser }) => {
     const m = 権限変更対象(番号);
     await withAdminSession(browser, SETUP_ADMIN, async (page) => {
       page.setDefaultTimeout(60_000);
@@ -390,7 +403,6 @@ for (const [seedId, 番号] of [["S-M04-03-ADM-TARGET-043", "043"], ["S-M04-03-G
         所属店舗ID: 本店の店舗ID, デフォルト検索表示店舗ID: 本店の店舗ID, 編集可能店舗ID: [本店の店舗ID, 店舗IDの("TC東京")],
       });
       権限変更対象のID.set(番号, id);
-      notes.set(番号 === "043" ? "〔メンバーID-M0403-043〕" : "〔メンバーID-M0403-051〕", id);
       reportSeedIssue(seedId, `「${m.名前}」は所属店舗・デフォルト検索表示店舗を本店、編集可能店舗を本店と試験支店（正本の TC東京）にして作った（試験支店だけを外せるように）。権限はシステム管理者`);
     });
   });
@@ -408,10 +420,11 @@ defineSeed("S-M04-03-L-ADM-SHARED", { needs: ["S-M04-03-ADM"] }, async ({ seed }
 });
 /** S-M04-03-L-ADM-049（M04-03連携管理者-001）。実行ごとの印つきで毎回作る */
 export const 連携管理者 = 管理者の("M04-03連携管理者-001", "m0403l001", "Passw0rd!M0403L1");
-defineSeed("S-M04-03-L-ADM-049", { needs: ["S-M04-03-MASTER"] }, async ({ browser, notes }) => {
+defineSeed("S-M04-03-L-ADM-049", { needs: ["S-M04-03-MASTER"] }, async ({ browser }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    notes.set("〔メンバーID-M0403-049〕", await メンバーを用意する(page, 連携管理者, [店舗IDの("TC東京")]));
+    // シード表にこの控えの呼び名が無いので、番号は控えない（ケースも使わない）
+    await メンバーを用意する(page, 連携管理者, [店舗IDの("TC東京")]);
   });
   reportSeedIssue("S-M04-03-L-ADM-049", "権限はシステム管理者（在庫編集権限・在庫承認権限あり）。所属店舗・編集可能店舗は試験支店");
 });
