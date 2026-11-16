@@ -255,6 +255,12 @@ export type 変動履歴 = {
   承認日時: string | null; 登録日時: string; 登録者: string; 更新日時: string; 更新者: string; ファイル名: string[]; 保存先: string[];
 };
 
+/** 変更後総原価 − 変更前総原価（どちらかが無ければ null） */
+function 総原価の増減(前: unknown, 後: unknown): number | null {
+  const a = num(前), b = num(後);
+  return a === null || b === null ? null : b - a;
+}
+
 /** 在庫の在庫変動履歴（履歴IDの順）。ファイル名・保存先は、登録元が在庫変更CSV登録の行の、登録元の取込の記録 */
 export function 在庫の変動履歴(在庫ID: string): 変動履歴[] {
   return query(
@@ -285,7 +291,9 @@ export function 在庫の変動履歴(在庫ID: string): 変動履歴[] {
     店舗ID: String(r.base_info_id), 在庫区分: String(r.location), 在庫変動区分: String(r.change_type), 在庫変動理由: String(r.stock_change_reason ?? ""),
     在庫増減数: num(r.stock_change_quantity), 変更前在庫: num(r.old_stock), 変更後在庫: num(r.stock), 変更前総原価: num(r.total_cost_price_before),
     変更後総原価: num(r.total_cost_price_after), 変更前原価単価: num(r.unit_cost_price_before), 変更後原価単価: num(r.unit_cost_price_after),
-    仕入総価格: num(r.buy_price), 履歴登録元: String(r.source_name), 履歴登録元ID: r.history_source_id, 承認日時: r.approval_at,
+    // 仕入総価格は在庫変動履歴の列ではない。総原価の増減数（変更後総原価 − 変更前総原価）と同じ値（ECCUBE_HARERUYA-3614 で決定）。
+    // buy_price は「変更時買取価格」の列なので使わない（2026-11-16 流し直しのセッションの指摘。m05-11-n-k.spec.ts と同じ読み方）
+    仕入総価格: 総原価の増減(r.total_cost_price_before, r.total_cost_price_after), 履歴登録元: String(r.source_name), 履歴登録元ID: r.history_source_id, 承認日時: r.approval_at,
     登録日時: String(r.registered_at ?? ""), 登録者: String(r.registrant ?? ""), 更新日時: String(r.update_date ?? ""), 更新者: String(r.updater ?? ""),
     ファイル名: String(r.files ?? "").split("\n").filter(Boolean), 保存先: String(r.paths ?? "").split("\n").filter(Boolean),
   }));
