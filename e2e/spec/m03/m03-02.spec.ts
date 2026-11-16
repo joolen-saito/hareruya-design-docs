@@ -1,7 +1,7 @@
 /** M03-02 商品登録編集。正本: cases/M03-02_test_cases.tsv（画面だけで準備できる 003・031・036、E2E の行だけ DB で書き足す 004） */
 import { test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
-import { loginAdmin } from "../../lib/session";
+import { adminUrl, loginAdmin } from "../../lib/session";
 import { ErrorScreen, ProductEditForm, openAndReadErrorScreen } from "../../pages/admin/m03_02_product";
 import { displayedProductId } from "../../pages/admin/product_edit";
 import { M0302_ADMIN } from "../../seeds/m03-02";
@@ -94,14 +94,22 @@ caseTest("IT-M03-02-004", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔商品ID-M0302-共有B〕");
   const edit = new ProductEditForm(page);
   let 開いた画面の商品ID = "";
+  let 応答 = 0;
+  let 編集画面か = false;
   await step(1, async () => {
-    await edit.open(id);
-    開いた画面の商品ID = await displayedProductId(page);
-    note(`商品ID ${id} の商品編集画面を開いた（画面の商品ID ${開いた画面の商品ID}）。商品公開ステータスの欄の数: ${await edit.商品公開ステータス.count()}`);
+    // 手順1は「商品編集画面を開く」。画面が開いたか（応答・フォーム）は期待結果の側で確かめる（規格0件の商品は 404 になる作り。2026-11-16）
+    const res = await page.goto(adminUrl(`/product/product/${id}/edit`));
+    await page.waitForLoadState("load");
+    応答 = res?.status() ?? 0;
+    編集画面か = (await page.locator("form#form1").count()) > 0;
+    if (編集画面か) 開いた画面の商品ID = await displayedProductId(page);
+    note(`商品ID ${id} の商品編集画面のアドレスを開いた（応答 ${応答}・編集画面のフォーム ${編集画面か ? "あり" : "なし"}・画面の見出し「${((await page.locator("h3").first().textContent().catch(() => "")) ?? "").trim()}」）`);
   });
   await expected(async () => {
+    expect.soft(応答, "商品編集画面の応答（開けること）").toBe(200);
+    expect.soft(編集画面か, "商品編集画面が表示される").toBe(true);
     expect.soft(開いた画面の商品ID, "開いた画面の商品ID").toBe(id);
     // 期待結果「商品公開ステータス欄が表示されないこと」
-    await expect.soft(edit.商品公開ステータス.first(), "商品公開ステータスの欄（表示されない）").toBeHidden();
+    if (編集画面か) await expect.soft(edit.商品公開ステータス.first(), "商品公開ステータスの欄（表示されない）").toBeHidden();
   });
 });
