@@ -276,3 +276,98 @@ caseTest("IT-M05-09-059", 一覧から("S-M05-09-CBSORTCOLLNO-059", "059", ["〔
   expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-CB059-N02・M0509-CB059-N10 がある").toBe(true);
   expect.soft(位置, "商品情報の行がコレクター番号 002 が先（M0509-CB059-N02→M0509-CB059-N10）の順").toEqual([...位置].sort((a, b) => a - b));
 }));
+
+// ---- 2026-11-16 追加（棚番号・言語・状態・略称タグ・色順・英語カード名・明細の価格と数量。依頼者決定 2026-11-14「マスタは作ってよい」） ----
+const 色の補い = "色マスターの順序（色M…-WHITE＝順序1・色M…-BLUE＝順序2）は、全員が使う色順のマスタを書き換えないため、開発環境に元からある色順「白」（並び順2）と「青」（並び順3）で読み替えた（白が青より前に並ぶ関係は正本と同じ）";
+const 状態の補い = "状態 HP の規格は、取り込みでできた NM の規格の状態を DB で HP に書き換えて作った（シード表は HP の規格を足して NM の規格を削除する。並びは規格の状態で決まり、規格の数は見ない）";
+const 略称の補い = "略称タグは印つきで登録し、商品へはグッズ商品CSVの略称タグ(ID)で付けた";
+const 英名の補い = "略称タグは印つきで登録し（アルファベット順）、英語カード名は印つきで登録した（印は両方の名前の末尾に同じものが付くので、名前の順は変わらない）";
+caseTest("IT-M05-09-031", 一覧から("S-M05-09-SORT-SHELF-HQ-031", "031", ["〔注文番号-M0509-031〕"], (pages) => {
+  supplement("棚番号は印つきで登録し、名前は入力チェックを通らないので DB で正本の名前（印つき）に書き換えた");
+  const 位置 = 行の位置(pages, ["M0509-031-EN", "M0509-031-JP"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-031-EN・M0509-031-JP がある").toBe(true);
+  expect.soft(位置, "商品情報の行が棚番の並び順が小さい方が先（本店）（M0509-031-EN→M0509-031-JP）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-033", 一覧から("S-M05-09-SORT-LANG-033", "033", ["〔注文番号-M0509-033〕"], (pages) => {
+  const 位置 = 行の位置(pages, ["M0509-033-JP", "M0509-033-EN", "M0509-033-KR"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-033-JP・M0509-033-EN・M0509-033-KR がある").toBe(true);
+  expect.soft(位置, "商品情報の行が言語が日本語→英語→それ以外（M0509-033-JP→M0509-033-EN→M0509-033-KR）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-034", 一覧から("S-M05-09-SORT-COND-034", "034", ["〔注文番号-M0509-034〕"], (pages) => {
+  supplement(状態の補い);
+  const 位置 = 行の位置(pages, ["M0509-034-NM", "M0509-034-HP"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-034-NM・M0509-034-HP がある").toBe(true);
+  expect.soft(位置, "商品情報の行が状態 NM が先（M0509-034-NM→M0509-034-HP）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-036", 一覧から("S-M05-09-SORT-ABBR-036", "036", ["〔注文番号-M0509-036〕"], (pages) => {
+  supplement(略称の補い);
+  const 位置 = 行の位置(pages, ["M0509-036-A", "M0509-036-B"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-036-A・M0509-036-B がある").toBe(true);
+  expect.soft(位置, "商品情報の行が略称タグの並び順が小さい方が先（M0509-036-A→M0509-036-B）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-038", 一覧から("S-M05-09-SORT-COLOR-038", "038", ["〔注文番号-M0509-038〕"], (pages) => {
+  supplement(色の補い);
+  const 位置 = 行の位置(pages, ["M0509-038-W", "M0509-038-B"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-038-W・M0509-038-B がある").toBe(true);
+  expect.soft(位置, "商品情報の行が色の順序が小さい方が先（M0509-038-W→M0509-038-B）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-040", 一覧から("S-M05-09-SORT-ALPHA-040", "040", ["〔注文番号-M0509-040〕"], (pages) => {
+  supplement(英名の補い);
+  const 位置 = 行の位置(pages, ["M0509-040-ALPHA", "M0509-040-ZULU"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-040-ALPHA・M0509-040-ZULU がある").toBe(true);
+  expect.soft(位置, "商品情報の行がアルファベット順の略称タグで英語カード名の順（M0509-040-ALPHA→M0509-040-ZULU）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-054", 一覧から("S-M05-09-CBSORTCOND-054", "054", ["〔注文番号-M0509-CB054〕"], (pages) => {
+  supplement(状態の補い);
+  const 位置 = 行の位置(pages, ["M0509-CB054-NM", "M0509-CB054-HP"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-CB054-NM・M0509-CB054-HP がある").toBe(true);
+  expect.soft(位置, "商品情報の行が状態 NM が先（M0509-CB054-NM→M0509-CB054-HP）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-056", 一覧から("S-M05-09-CBSORTABBR-056", "056", ["〔注文番号-M0509-CB056〕"], (pages) => {
+  supplement(略称の補い);
+  const 位置 = 行の位置(pages, ["M0509-CB056-A", "M0509-CB056-B"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-CB056-A・M0509-CB056-B がある").toBe(true);
+  expect.soft(位置, "商品情報の行が略称タグの並び順が小さい方が先（M0509-CB056-A→M0509-CB056-B）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-058", 一覧から("S-M05-09-CBSORTCOLOR-058", "058", ["〔注文番号-M0509-CB058〕"], (pages) => {
+  supplement(色の補い);
+  const 位置 = 行の位置(pages, ["M0509-CB058-W", "M0509-CB058-B"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-CB058-W・M0509-CB058-B がある").toBe(true);
+  expect.soft(位置, "商品情報の行が色の順序が小さい方が先（M0509-CB058-W→M0509-CB058-B）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+caseTest("IT-M05-09-060", 一覧から("S-M05-09-CBSORTALPHA-060", "060", ["〔注文番号-M0509-CB060〕"], (pages) => {
+  supplement(英名の補い);
+  const 位置 = 行の位置(pages, ["M0509-CB060-ALPHA", "M0509-CB060-ZULU"]);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(位置.every((i) => i >= 0), "商品情報の行に M0509-CB060-ALPHA・M0509-CB060-ZULU がある").toBe(true);
+  expect.soft(位置, "商品情報の行がアルファベット順の略称タグで英語カード名の順（M0509-CB060-ALPHA→M0509-CB060-ZULU）の順").toEqual([...位置].sort((a, b) => a - b));
+}));
+
+/** 明細行の値（商品名に印つきの商品コードを含む行） */
+function 明細の行(pages: 納品書のページ[], コード: string) {
+  return 全部の行(pages).find((r) => r.商品名.includes(rc(コード)));
+}
+const 数 = (v: string | undefined): number => Number((v ?? "").replace(/[^0-9.-]/g, ""));
+caseTest("IT-M05-09-043", 一覧から("S-M05-09-LINE-PRICE-043", "043", ["〔注文番号-M0509-043〕"], (pages) => {
+  const a = 明細の行(pages, "M0509-043-A"), b = 明細の行(pages, "M0509-043-B");
+  note(`明細: A ${JSON.stringify(a)}・B ${JSON.stringify(b)}`);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft(数(a?.価格), "商品M0509-043-Aの明細行の価格が取得元の1500と同じ").toBe(1500);
+  expect.soft(数(b?.価格), "商品M0509-043-Bの明細行の価格が取得元の2800と同じ").toBe(2800);
+}));
+caseTest("IT-M05-09-044", 一覧から("S-M05-09-LINE-QTY-044", "044", ["〔注文番号-M0509-044〕"], (pages) => {
+  const a = 明細の行(pages, "M0509-044-A"), b = 明細の行(pages, "M0509-044-B");
+  note(`明細: A ${JSON.stringify(a)}・B ${JSON.stringify(b)}`);
+  expect.soft(pages.length, "納品書が出た").toBe(1);
+  expect.soft((a?.数量 ?? "").trim(), "商品M0509-044-Aの明細行の数量").toBe("3");
+  expect.soft((b?.数量 ?? "").trim(), "商品M0509-044-Bの明細行の数量").toBe("2");
+}));
