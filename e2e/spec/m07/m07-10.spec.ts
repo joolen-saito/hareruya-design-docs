@@ -8,6 +8,7 @@
 import { test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
+import { CSVの全行, CSVの内容を画面の枠に出す, CSVの枠の列 } from "../../lib/evidence_other";
 import { CSVを読む } from "../../pages/admin/m07_buy";
 import { HistoryPage, 金額の数, 状況の名前, 履歴の行 } from "../../pages/admin/m07_10_history";
 import { M0710_ADMIN } from "../../seeds/m07-10";
@@ -200,11 +201,14 @@ caseTest("IT-M07-10-023", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M0710_ADMIN);
   const h = new HistoryPage(page);
   let rows: 履歴の行[] = [];
+  let 件数: number | null = null;
   await step(1, async () => { await h.開く(); });
   await step(2, async () => { await h.買取番号を入れる(String(番号(notes.get(番号の呼び名("023"))))); await h.検索する(); });
   await step(3, async () => { await h.件数を選ぶ(10); });
-  await step(4, async () => { rows = await h.行(); });
+  await step(4, async () => { rows = await h.行(); 件数 = await h.該当件数(); });
   await expected(async () => {
+    // 11行目があること（該当が11件）を見てから数える。該当が10件以下では「11行目が1ページ目に出ない」の確かめにならない
+    expect.soft(件数, "検索結果の該当件数（11行目がある）").toBe(11);
     expect.soft(rows.length, "1ページ目に表示された履歴の行の数").toBe(10);
     expect.soft(rows.length > 10, "11行目が1ページ目に表示される").toBe(false);
   });
@@ -323,29 +327,35 @@ async function CSVを選択して取得する(ctx: Ctx, n: string, 付ける: st
     const file = await h.CSVをダウンロードする("選択した商品履歴取得");
     const csv = await CSVを読む(file);
     コード = csv.行.map((r) => r["商品コード"] ?? "");
+    await h.CSVダウンロードの選択肢を閉じる();
+    await CSVの内容を画面の枠に出す(page, [{ 題: `ファイル名：${file.suggestedFilename()}`, 行: CSVの全行(csv) }]);
   });
   await step(5, async () => { /* ダウンロードしたCSVの商品コードの列は、手順4で読んだ */ });
   return コード;
 }
 
-function CSVの確かめ(n: string, コード: string[], 付ける: string[], 出ない: string[]): void {
+/** CSVの枠の商品コードの列のうち、このケースの商品コード（A〜E）のセル。付けた商品だけが1行ずつ出ていて、付けていない商品は出ない */
+async function CSVの確かめ(page: import("@playwright/test").Page, n: string, 付ける: string[], 出ない: string[]): Promise<void> {
+  const 列 = CSVの枠の列(page, 0, "商品コード");
+  const 一致 = (x: string) => 列.filter({ hasText: new RegExp(`^${品(n, x)}$`) });
   const 探す = ["A", "B", "C", "D", "E"].map((x) => 品(n, x));
-  expect.soft(コード.filter((c) => 探す.includes(c)).sort(), "CSVに出力された商品コード").toEqual(付ける.map((x) => 品(n, x)).sort());
-  for (const x of 出ない) expect.soft(コード.includes(品(n, x)), `商品コード ${品(n, x)} の行が出力される`).toBe(false);
+  await expect.soft(列.filter({ hasText: new RegExp(`^(${探す.join("|")})$`) }), "CSVに出力された商品コード（このケースの商品の行の数）").toHaveCount(付ける.length);
+  for (const x of 付ける) await expect.soft(一致(x), `CSVに出力された商品コード ${品(n, x)}（1行）`).toHaveCount(1);
+  for (const x of 出ない) await expect.soft(一致(x), `商品コード ${品(n, x)} の行が出力される`).toHaveCount(0);
 }
 
 caseTest("IT-M07-10-034", async (ctx) => {
   const コード = await CSVを選択して取得する(ctx, "034", ["A", "C"]);
   await ctx.expected(async () => {
-    CSVの確かめ("034", コード, ["A", "C"], ["B", "D", "E"]);
-    expect.soft(コード.includes(品("034", "A")) && コード.includes(品("034", "C")), "A と C の行が出力される").toBe(true);
+    await CSVの確かめ(ctx.page, "034", ["A", "C"], ["B", "D", "E"]);
+    await expect.soft(CSVの枠の列(ctx.page, 0, "商品コード").filter({ hasText: new RegExp(`^(${品("034", "A")}|${品("034", "C")})$`) }), "A と C の行が出力される").toHaveCount(2);
   });
 });
 
 caseTest("IT-M07-10-035", async (ctx) => {
   const コード = await CSVを選択して取得する(ctx, "035", ["B"]);
   await ctx.expected(async () => {
-    CSVの確かめ("035", コード, ["B"], ["A", "C", "D", "E"]);
-    expect.soft(コード.includes(品("035", "B")), "B の行が出力される").toBe(true);
+    await CSVの確かめ(ctx.page, "035", ["B"], ["A", "C", "D", "E"]);
+    await expect.soft(CSVの枠の列(ctx.page, 0, "商品コード").filter({ hasText: new RegExp(`^${品("035", "B")}$`) }), "B の行が出力される").toHaveCount(1);
   });
 });

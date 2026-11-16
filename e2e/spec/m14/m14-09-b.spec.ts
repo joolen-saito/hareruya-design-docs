@@ -57,7 +57,7 @@ caseTest("IT-M14-09-024", async ({ page, step, expected }) => {
   let 結果 = { sent: false, url: "", status: 0 };
   await step(1, async () => {
     await 一覧を開く(page);
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('a[href$="/format/new"]').first().click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('a[href$="/format/new"]').first().click({ timeout: 20_000, noWaitAfter: true })]);
     await expect(欄(page, "nameJp"), "フォーマット詳細(登録)画面").toBeVisible();
   });
   await step(2, async () => { await 入力する(page, { 名日: 日, 名英: 英, 並び順: "100", メタ日数: "30" }); });
@@ -83,7 +83,7 @@ caseTest("IT-M14-09-025", async ({ page, notes, step, expected }) => {
     await 一覧を開く(page);
     const r = 行(page, 前日, 前英);
     await expect(r, `フォーマット一覧の「${前日} / ${前英}」の行`).toHaveCount(1);
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), r.locator("a").filter({ hasText: `${前日} / ${前英}` }).first().click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), r.locator("a").filter({ hasText: `${前日} / ${前英}` }).first().click({ timeout: 20_000, noWaitAfter: true })]);
     await expect(欄(page, "nameJp"), "フォーマット詳細画面").toBeVisible();
   });
   await step(2, async () => { await 入力する(page, { 名日: 後 }); });

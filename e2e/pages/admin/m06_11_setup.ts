@@ -72,8 +72,8 @@ export async function カードを登録する(page: Page, v: カードの指定
   await sel("foilFlg").selectOption({ label: v.詳細.Foil ? "通常" : "なし" });
   await sel("frameFlg").selectOption({ label: "通常" });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: カードの登録`)) issue(`${what}: 警告「${w}」`);
   const m = /\/card\/(\d+)\/edit/.exec(page.url());
@@ -128,7 +128,7 @@ export async function 規格を整える(page: Page, 商品ID: string, 規格ID:
   try {
     await Promise.all([
       page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }),
-      page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: OPEN }),
+      page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: OPEN, noWaitAfter: true }),
     ]);
   } finally { page.off("dialog", on); }
   for (const w of await expectSaved(page, `${what}: 商品規格の登録`)) issue(`${what}: 警告「${w}」`);

@@ -8,6 +8,7 @@
  * シードの読み替え（会員・商品・店舗・日時）は seeds/f06-15.ts の冒頭とシードの報告にある。
  */
 import { Page, test } from "@playwright/test";
+import { DBで読み取った値を撮る, scene } from "../../lib/evidence_other";
 import { CaseCtx, caseTest, expect } from "../../lib/case";
 import { 買取状況 } from "../../db/f06_15";
 import { 商品コードの実在庫と履歴 } from "../../db/f06_prep";
@@ -145,16 +146,23 @@ caseTest("IT-F06-15-041", async ({ page, notes, step, expected }) => {
 function 承諾して実在庫を見る(前半: string, 呼び名: string, コード: string[], 作られる: boolean[]) {
   return async ({ page, notes, step, expected }: CaseCtx): Promise<void> => {
     const d = new NetDetailPage(page);
-    const 番号 = notes.get(呼び名);
+    const 番号 = 呼び名.startsWith("〔") ? notes.get(呼び名) : (固定の買取番号.get(呼び名) ?? "（シードが作っていない）");
     const n: Record<string, { 実在庫: number; 履歴: number }> = {};
+    let 承諾後のボタン = -1;
+    let 承諾後の画面 = "";
     await step(1, async () => { await ログイン(page, 前半); });
     await step(2, async () => { await d.一覧から開く(番号); });
-    await step(3, async () => { await d.承諾する(); });
+    await step(3, async () => { await d.承諾する(); 承諾後のボタン = await d.承諾ボタンの数(); 承諾後の画面 = d.path; });
     await step(4, async () => {
       const s = 実在庫を読む(番号), h = 実在庫履歴を読む(番号);
       for (const c of コード) n[c] = { 実在庫: s.filter((x) => x.商品コード === 品(c)).length, 履歴: h.filter((x) => x.商品コード === 品(c)).length };
     });
     await expected(async () => {
+      await DBで読み取った値を撮る(page, `この買取（買取番号 ${番号}）の実在庫・実在庫履歴を商品コードごとに数えた件数`,
+        [["商品コード", "実在庫の件数", "実在庫履歴の件数"], ...コード.map((c) => [品(c), String(n[c].実在庫), String(n[c].履歴)])], scene.expectedLabel("DBで読み取った実在庫・実在庫履歴の件数"));
+      // 「作成されない」を、承諾が通らなかっただけで合格にしない。承諾が通ると承諾確定ボタンが消える
+      expect.soft(承諾後の画面, "承諾したあとの画面（同じ買取の買取履歴詳細へ戻った。画面の誤りでない）").toMatch(/\/mypage\/purchase_history\/net\/\d+\/?$/);
+      expect.soft(承諾後のボタン, "承諾したあとの承諾確定ボタン（「承諾する」）の数（承諾が通った）").toBe(0);
       for (let i = 0; i < コード.length; i++) {
         const c = コード[i];
         if (作られる[i]) {
@@ -206,7 +214,10 @@ caseTest("IT-F06-15-069", async ({ page, step, expected }) => {
   await step(5, async () => { const r = await d.明細(名); 申込時 = 数値(r.申込時買取価格); 売却 = r.売却; 変更できる = r.売却を変更できる; });
   await expected(async () => {
     expect.soft(m!.査定価格, `${名} の査定価格欄`).toBe("査定中");
+    expect.soft(m!.区分, "明細の区分（えらんで買取かまとめて買取か）").toBe("えらんで買取");
     expect.soft(リンク, "商品名が押せるリンクとして表示される").toBe(true);
+    expect.soft(m!.リンク先, "商品名のリンクの宛先（href）がある").not.toBe("");
+    note(`商品名の表示の確かめ（要素）: a 要素 ${m!.リンク ? "あり" : "なし"}、href=${m!.リンク先 || "なし"}、区分=${m!.区分}`);
     expect.soft(申込時, "申込時買取価格の数値").toBe("1000");
     expect.soft(売却, "売却する/しないの選択").toBe("売却する");
     expect.soft(変更できる, "売却する/しないの選択は変更できない").toBe(false);
@@ -330,7 +341,8 @@ caseTest("IT-F06-15-039", async ({ page, notes, step, expected }) => {
   let A: Page | null = null, B: Page | null = null;
   let リンクA = true, リンクB = true;
   await step(1, async () => { await ログイン(page, "f0615-039"); });
-  await step(2, async () => { await d.一覧から開く(notes.get("〔買取番号-F0615-039〕")); });
+  note("決め打ちの買取番号6150391は、シードが画面で作った買取の買取番号に読み替えた");
+  await step(2, async () => { await d.一覧から開く(固定の買取番号.get("6150391") ?? "（シードが作っていない）"); });
   await step(3, async () => {
     リンクA = (await d.明細(名A)).リンク; リンクB = (await d.明細(名B)).リンク;
     A = await d.商品名を押す(名A); B = await d.商品名を押す(名B);
@@ -348,7 +360,8 @@ caseTest("IT-F06-15-040", async ({ page, notes, step, expected }) => {
   const 名 = 品("F0615-040-削除済み商品");
   let 数 = -1;
   await step(1, async () => { await ログイン(page, "f0615-040"); });
-  await step(2, async () => { await d.一覧から開く(notes.get("〔買取番号-F0615-040〕")); });
+  note("決め打ちの買取番号6150401は、シードが画面で作った買取の買取番号に読み替えた。前提の「商品と商品規格は削除済み」は、商品の廃止・商品規格の非表示（論理削除）で読み替えている。期待結果（買取履歴詳細に商品名の明細が1件表示される）は読み替えても弱めていない");
+  await step(2, async () => { await d.一覧から開く(固定の買取番号.get("6150401") ?? "（シードが作っていない）"); });
   await step(3, async () => { 数 = await d.明細の数(名); });
   await expected(async () => {
     expect.soft(await d.詳細画面である(), "買取履歴詳細画面が表示される").toBe(true);
@@ -359,13 +372,19 @@ caseTest("IT-F06-15-040", async ({ page, notes, step, expected }) => {
 caseTest("IT-F06-15-045", async ({ page, notes, step, expected }) => {
   note("個別入力商品の実在庫の確かめは、シードが紐づけた商品規格の商品コード（F0615-045-I）で、この買取の実在庫と履歴の件数を数える");
   const d = new NetDetailPage(page);
-  const 番号 = notes.get("〔買取番号-F0615-045〕");
+  // シード表は買取番号を決め打ちの 6150451 で書いている（呼び名ではない）ので、シードが画面で作った買取の買取番号に読み替えて使う
+  note("決め打ちの買取番号6150451は、シードが画面で作った買取の買取番号に読み替えた");
+  const 番号 = 固定の買取番号.get("6150451") ?? "（シードが作っていない）";
   let n = { 実在庫: -1, 履歴: -1 };
+  let 承諾後のボタン = -1;
+    let 承諾後の画面 = "";
   await step(1, async () => { await ログイン(page, "f0615-045"); });
   await step(2, async () => { await d.一覧から開く(番号); });
-  await step(3, async () => { await d.承諾する(); });
+  await step(3, async () => { await d.承諾する(); 承諾後のボタン = await d.承諾ボタンの数(); 承諾後の画面 = d.path; });
   await step(4, async () => { n = 商品コードの実在庫と履歴(番号, 品("F0615-045-I")); });
   await expected(async () => {
+    expect.soft(承諾後の画面, "承諾したあとの画面（同じ買取の買取履歴詳細へ戻った。画面の誤りでない）").toMatch(/\/mypage\/purchase_history\/net\/\d+\/?$/);
+      expect.soft(承諾後のボタン, "承諾したあとの承諾確定ボタン（「承諾する」）の数（承諾が通った）").toBe(0);
     expect.soft(n.実在庫, "F0615-045-個別の実在庫は作成されない（件数）").toBe(0);
     expect.soft(n.履歴, "F0615-045-個別の実在庫履歴は作成されない（件数）").toBe(0);
   });
@@ -384,7 +403,7 @@ caseTest("IT-F06-15-049", async ({ page, notes, step, expected, capture }) => {
 });
 caseTest("IT-F06-15-052", 売却を切り替える("f0615-052", "〔買取番号-F0615-052〕", "F0615-052-まとめ600", "売却しない", "0", "1"));
 
-caseTest("IT-F06-15-054", 承諾して実在庫を見る("f0615-054", "〔買取番号-F0615-054〕", ["F0615-054-N", "F0615-054-I"], [true, false]));
+caseTest("IT-F06-15-054", 承諾して実在庫を見る("f0615-054", "6150541", ["F0615-054-N", "F0615-054-I"], [true, false]));
 
 /** CB の買取に、500円未満のカードをすべて売却するチェックを入れる／入れずに承諾し、商品コードごとに実在庫と実在庫履歴の件数をDBで読む */
 function 少額の売却を選んで承諾する(n: string, 入れる: boolean, コード: string[], 作られる: boolean[]) {
@@ -399,11 +418,15 @@ function 少額の売却を選んで承諾する(n: string, 入れる: boolean, 
     await step(1, async () => { await ログイン(page, `cbf0615-${n}`, CBのパスワード(n)); });
     await step(2, async () => { await d.一覧から開く(番号); 初期 = await d.少額チェックの状態(); });
     await step(3, async () => { if (入れる) 入った = await d.少額チェックを入れる(); else 入った = (await d.少額チェックの状態()).チェック済み; });
-    await step(4, async () => { await d.承諾する(); });
+    let 承諾後のボタン = -1;
+    let 承諾後の画面 = "";
+    await step(4, async () => { await d.承諾する(); 承諾後のボタン = await d.承諾ボタンの数(); 承諾後の画面 = d.path; });
     await step(5, async () => { for (const x of コード) c[x] = 商品コードの実在庫と履歴(番号, 品(x)); });
     await expected(async () => {
       expect.soft(初期.ある && !初期.チェック済み, "500円未満のカードをすべて売却するチェックは初期状態でチェックなし").toBe(true);
       expect.soft(入った, 入れる ? "チェックありの状態にできた" : "チェックなしのままである").toBe(入れる);
+      expect.soft(承諾後の画面, "承諾したあとの画面（同じ買取の買取履歴詳細へ戻った。画面の誤りでない）").toMatch(/\/mypage\/purchase_history\/net\/\d+\/?$/);
+      expect.soft(承諾後のボタン, "承諾したあとの承諾確定ボタン（「承諾する」）の数（承諾が通った）").toBe(0);
       for (let i = 0; i < コード.length; i++) {
         const x = コード[i];
         if (作られる[i]) {
@@ -424,7 +447,7 @@ caseTest("IT-F06-15-059", 少額の売却を選んで承諾する("059", false, 
 caseTest("IT-F06-15-060", 少額の売却を選んで承諾する("060", true, ["F0615-CB060-A", "F0615-CB060-L"], [false, true]));
 
 type 明細の確かめ = {
-  査定価格: string; 数量?: string; 小計?: string; リンク: boolean; 申込時?: string; 売却?: string; 変更できる?: boolean; 売却の選択なし?: boolean; 言語状態なし?: boolean;
+  査定価格: string; 数量?: string; 小計?: string; リンク: boolean; 区分?: "えらんで買取" | "まとめて買取"; 申込時?: string; 売却?: string; 変更できる?: boolean; 売却の選択なし?: boolean; 言語状態なし?: boolean;
 };
 
 /** CB の明細1件を、金額（桁区切り・通貨記号を除いた数値）・数量・小計・リンクの有無・申込時買取価格・売却の選択で確かめる（手順3〜5で同じ明細を読む）。番号は決め打ちの番号（ネット買取）か呼び名（店頭買取） */
@@ -446,7 +469,9 @@ function 明細を確かめる(n: string, 番号: { 固定: string } | { 呼び�
       expect.soft(r.査定価格 === "査定中" ? r.査定価格 : 数値(r.査定価格), "査定価格の欄").toBe(期待.査定価格);
       if (期待.数量 !== undefined) expect.soft(r.数量, "数量").toBe(期待.数量);
       if (期待.小計 !== undefined) expect.soft(数値(r.小計), "小計の数値").toBe(期待.小計);
-      expect.soft(r.リンク, 期待.リンク ? "商品名は押せるリンクとして表示される" : "商品名は文字のまま（リンクでない）表示される").toBe(期待.リンク);
+      if (期待.区分 !== undefined) expect.soft(r.区分, "明細の区分（えらんで買取かまとめて買取か）").toBe(期待.区分);
+      expect.soft(r.リンク, "商品名がリンクとして表示される").toBe(期待.リンク);
+      note(`商品名の表示の確かめ（要素）: a 要素 ${r.リンク ? "あり" : "なし（文字のまま）"}、href=${r.リンク先 || "なし"}、区分=${r.区分}`);
       if (期待.申込時 !== undefined) expect.soft(数値(r.申込時買取価格), "申込時買取価格の数値").toBe(期待.申込時);
       if (期待.売却の選択なし) expect.soft(r.売却の選択がある, "売却する/しないの選択は表示されない").toBe(false);
       if (期待.売却 !== undefined) {
@@ -459,13 +484,13 @@ function 明細を確かめる(n: string, 番号: { 固定: string } | { 呼び�
   };
 }
 
-caseTest("IT-F06-15-061", 明細を確かめる("061", { 固定: "6150611" }, "F0615-CB061-M", { 査定価格: "600", 数量: "2", 小計: "1200", リンク: false, 申込時: "700", 売却: "売却する" }));
+caseTest("IT-F06-15-061", 明細を確かめる("061", { 固定: "6150611" }, "F0615-CB061-M", { 査定価格: "600", 数量: "2", 小計: "1200", リンク: false, 区分: "まとめて買取", 申込時: "700", 売却: "売却する" }));
 caseTest("IT-F06-15-062", 明細を確かめる("062", { 呼び名: "〔買取番号-F0615-062〕" }, "F0615-CB062-S", { 査定価格: "300", 数量: "2", 小計: "600", リンク: true, 売却の選択なし: true }));
-caseTest("IT-F06-15-063", 明細を確かめる("063", { 固定: "6150631" }, "F0615-CB063-E", { 査定価格: "査定中", リンク: false, 申込時: "1000", 売却: "売却する", 変更できる: false }));
-caseTest("IT-F06-15-064", 明細を確かめる("064", { 固定: "6150641" }, "F0615-CB064-I", { 査定価格: "800", 数量: "1", 小計: "800", リンク: false, 売却: "売却する", 言語状態なし: true }));
+caseTest("IT-F06-15-063", 明細を確かめる("063", { 固定: "6150631" }, "F0615-CB063-E", { 査定価格: "査定中", リンク: false, 区分: "えらんで買取", 申込時: "1000", 売却: "売却する", 変更できる: false }));
+caseTest("IT-F06-15-064", 明細を確かめる("064", { 固定: "6150641" }, "F0615-CB064-I", { 査定価格: "800", 数量: "1", 小計: "800", リンク: false, 区分: "えらんで買取", 売却: "売却する", 言語状態なし: true }));
 caseTest("IT-F06-15-065", 明細を確かめる("065", { 呼び名: "〔買取番号-F0615-065〕" }, "F0615-CB065-I", { 査定価格: "査定中", リンク: false, 売却の選択なし: true, 言語状態なし: true }));
 caseTest("IT-F06-15-067", 明細を確かめる("067", { 呼び名: "〔買取番号-F0615-067〕" }, "F0615-CB067-S", { 査定価格: "600", 数量: "1", 小計: "600", リンク: true, 売却の選択なし: true }));
-caseTest("IT-F06-15-068", 明細を確かめる("068", { 固定: "6150681" }, "F0615-CB068-E", { 査定価格: "300", 数量: "2", 小計: "600", リンク: false, 申込時: "1000", 売却: "売却する" }));
+caseTest("IT-F06-15-068", 明細を確かめる("068", { 固定: "6150681" }, "F0615-CB068-E", { 査定価格: "300", 数量: "2", 小計: "600", リンク: false, 区分: "えらんで買取", 申込時: "1000", 売却: "売却する" }));
 
 caseTest("IT-F06-15-066", async ({ page, step, expected }) => {
   note("決め打ちの買取番号6150661は、シードが画面で作った買取の買取番号に読み替えた。500円未満カードの欄の行は、価格帯の表示から数字だけを取り出して比べる");
@@ -485,6 +510,9 @@ caseTest("IT-F06-15-066", async ({ page, step, expected }) => {
     expect.soft(数値(r?.数量 ?? ""), "500円未満カードの欄の数量").toBe("2");
     expect.soft(数値(r?.小計 ?? ""), "500円未満カードの欄の小計").toBe("600");
     expect.soft(チェック.ある, "500円未満のカードをすべて売却するチェックが表示される").toBe(true);
+    await expect.soft(d.明細の行の全部(名), `まとめて買取の一覧に商品名 ${名} の行は表示されない`).toHaveCount(0);
+    await expect.soft(d.少額カードの欄.locator(".p-hareruya-purchase-list__row").filter({ hasText: "300" }).first(), "500円未満カードの欄の査定別価格300の行").toBeVisible();
+    await expect.soft(d.少額カードをすべて売却するチェック, "500円未満のカードをすべて売却するチェック（画面）").toBeVisible();
   });
 });
 

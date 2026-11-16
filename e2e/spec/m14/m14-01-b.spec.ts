@@ -4,6 +4,7 @@ import { caseTest, CaseBody, expect } from "../../lib/case";
 import { csvRecords } from "../../lib/csv";
 import { rc } from "../../lib/run_marker";
 import { adminUrl, hideDebugToolbar, loginAdmin } from "../../lib/session";
+import { 別のブラウザの画面を印つきで撮る, 別のブラウザの画面を撮る, scene } from "../../lib/evidence_other";
 import { CardSearchPage, downloadedText, select2に入れる, 検索欄, 検索条件の入力値, 展開式を選ぶ } from "../../pages/admin/m14_card";
 import { M1401_ADMIN } from "../../seeds/m14-01";
 import { BASE_URL } from "../../config/env";
@@ -235,15 +236,16 @@ function 別ブラウザで開く(token: string, 期待: "条件が空" | "一�
       await hideDebugToolbar(ctx);
       const p2 = await ctx.newPage();
       const l2 = new CardSearchPage(p2);
-      await step(5, async () => { await loginAdmin(p2, M1401_ADMIN); });
-      await step(6, async () => { await p2.goto(url); await p2.waitForLoadState("load"); });
+      await step(5, async () => { await loginAdmin(p2, M1401_ADMIN); await 別のブラウザの画面を撮る(p2, scene.stepLabel(5, "2つ目のブラウザ（新しいセッション）のログイン後")); });
+      await step(6, async () => { await p2.goto(url); await p2.waitForLoadState("load"); await 別のブラウザの画面を撮る(p2, scene.stepLabel(6, "2つ目のブラウザで控えたURLを開いた画面")); });
       await expected(async () => {
         if (期待 === "条件が空") {
-          expect.soft(await l2.キーワード.inputValue(), "カード名・テキストの検索条件").toBe("");
+          await expect.soft(l2.キーワード, "2つ目のブラウザのカード名・テキストの検索条件").toHaveValue("");
           expect.soft(await 検索条件の入力値(p2), "入力・選択されている検索条件").toEqual([]);
         } else {
-          expect.soft(await l2.行.count(), "表示されているカードの行数").toBe(0);
+          await expect.soft(l2.行, "2つ目のブラウザに表示されているカードの行数").toHaveCount(0);
         }
+        await 別のブラウザの画面を印つきで撮る(p2, scene.expectedLabel("2つ目のブラウザ（新しいセッション）のカード検索"));
       });
     } finally { await ctx.close(); }
   };

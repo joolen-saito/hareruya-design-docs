@@ -49,6 +49,12 @@ export class ContactDetailPage extends ContactHistoryPage {
   // ---- 詳細の画面の項目 ----
   get 詳細の枠(): Locator { return this.page.locator(".p-hareruya-history-detail--contact"); }
   get お問い合わせ情報(): Locator { return this.page.locator(".p-hareruya-contact-detail__header"); }
+  get 詳細の番号の表示(): Locator { return this.page.locator(".p-hareruya-contact-detail__number"); }
+  /** 詳細に表示されているお問い合わせ番号（数字だけ。無ければ空） */
+  async 詳細の番号(): Promise<string> {
+    if ((await this.詳細の番号の表示.count()) === 0) return "";
+    return ((await this.詳細の番号の表示.first().innerText()).match(/\d+/) ?? [""])[0];
+  }
   get お問い合わせ時氏名(): Locator { return this.page.locator(".p-hareruya-contact-detail__name"); }
   get お問い合わせ内容(): Locator { return this.page.locator(".p-hareruya-contact-detail__text"); }
   get 戻る(): Locator { return this.page.locator(".p-hareruya-history-detail__btn a").first(); }
@@ -59,6 +65,11 @@ export class ContactDetailPage extends ContactHistoryPage {
   /** 画面の本文（ヘッダー・フッターを含む、見えている文） */
   async 画面の文(): Promise<string> { return 整える(await this.page.locator("body").innerText()); }
 
+  /** 現在表示中ページの要素に、画面の読み込みごとに消える印を付ける（読み込み直しが起きれば印が消える） */
+  async 読み込みの印を付ける(印: string): Promise<void> {
+    await this.パンくず現在地.evaluate((el, v) => el.setAttribute("data-e2e-load-mark", v), 印);
+  }
+
   /** パンくずの現在表示中ページを押す。アドレスが変わったかを返す */
   async 現在地を押す(): Promise<boolean> {
     const before = this.page.url();
@@ -68,6 +79,9 @@ export class ContactDetailPage extends ContactHistoryPage {
     await this.page.waitForLoadState("load");
     return this.page.url() !== before;
   }
+
+  /** エラーページ（404 Page Not Found・見つからない旨の文）の表示 */
+  get エラーページの表示(): Locator { return this.page.getByText(/Page Not Found|お探しのページが見つかりません|Not Found|システムエラー/i); }
 
   /** 画面に出ているインラインのエラー・警告、フラッシュ、トースト（見えているものの文） */
   async エラーや通知の表示(): Promise<string[]> {
@@ -110,14 +124,14 @@ export async function お問い合わせを送る(page: Page, v: 送るお問い
   await form.locator("#contact_tel_tel03").fill(v.電話番号[2]);
   await form.locator("#contact_email").fill(v.メール);
   await form.locator("#contact_contents").fill(v.内容);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), form.locator("#submitButton").click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), form.locator("#submitButton").click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   const complete = page.locator('form#contact-form button[name="mode"][value="complete"]');
   if ((await complete.count()) === 0) {
     const errs = (await page.locator(".invalid-feedback, .c-hareruya-form-error, .form-error-message, .is-error").allInnerTexts()).map(整える).filter(Boolean);
     throw new Error(`お問い合わせ画面の「確認画面へ」で確認画面にならない（${errs.join(" / ") || new URL(page.url()).pathname}）`);
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), complete.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), complete.click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   if (!/\/contact\/complete/.test(new URL(page.url()).pathname)) throw new Error(`お問い合わせの送信が完了画面にならない（${new URL(page.url()).pathname}）`);
 }

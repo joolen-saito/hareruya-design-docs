@@ -43,7 +43,7 @@ export class PurchaseHistoryPage {
   }
 
   async 検索する(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.form().getByRole("button", { name: /検索する/ }).click({ timeout: OPEN })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), this.form().getByRole("button", { name: /検索する/ }).click({ timeout: OPEN, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 

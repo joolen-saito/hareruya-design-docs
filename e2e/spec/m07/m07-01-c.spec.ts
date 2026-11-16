@@ -11,12 +11,14 @@
 import { Page, test } from "@playwright/test";
 import { expect, caseTest, CaseBody } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
+import { scene, DBで読み取った値を撮る, ダウンロードしたCSVの内容を撮る } from "../../lib/evidence_other";
 import { CSVを読む, 戻しリストを読む, 買取番号の表示 } from "../../pages/admin/m07_buy";
 import { M0701ListPage } from "../../pages/admin/m07_01_list";
 import { M0701_ADMIN } from "../../seeds/m07-01";
-import { 注文者名, 買取状況マスタの順 } from "../../seeds/m07-01-b";
+import { 注文者名 } from "../../seeds/m07-01-b";
 import { 品 } from "../../seeds/m07-03-b";
-import { 棚戻し済みか } from "../../db/m07";
+import { 選んで買取の明細ID } from "../../seeds/m07-db-prep";
+import { 戻しリスト用の商品属性, 棚戻し済みか, 買取状況マスタの表示順, 高額商品閾値 } from "../../db/m07";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 数字 = (s: string) => s.replace(/[^\d]/g, "");
@@ -73,9 +75,10 @@ caseTest("IT-M07-01-004", async ({ page, step, expected }) => {
   await step(2, async () => { await l.買取状況の選択肢を開く(); });
   await expected(async () => {
     const 選択肢 = await l.買取状況の選択肢();
-    note("マスタの表示順は、シード表 S-M07-01-MASTER の状態・属性に並ぶ順（注文、商品到着、査定中…キャンセル済み）と読んだ（DBは見ない）");
+    const 期待の並び = 買取状況マスタの表示順();
+    note(`期待の並びは、買取状況マスタの表示順の昇順（DBの読み取り）: ${期待の並び.join("、")}`);
     expect.soft(選択肢.includes("未登録在庫あり") && 選択肢.includes("入庫待ち"), "選択肢に未登録在庫ありと入庫待ちがある").toBe(true);
-    expect.soft(選択肢, "買取状況の選択肢の並び（マスタの表示順の昇順）").toEqual(買取状況マスタの順);
+    expect.soft(選択肢, "買取状況の選択肢の並び（マスタの表示順の昇順）").toEqual(期待の並び);
   });
 });
 
@@ -109,7 +112,7 @@ caseTest("IT-M07-01-006", async ({ page, notes, step, expected }) => {
     expect.soft(nums.every((n, i) => i === 0 || nums[i - 1] > n), "一覧が買取番号の降順に並ぶ（C が出るなら A・B より前に出ることの前提）").toBe(true);
     expect.soft(rows.some((r) => r.番号 === 番(A)), `棚戻し未の〔買取番号-M0701-006A〕（${買取番号の表示(A)}）が表示される`).toBe(true);
     expect.soft(rows.some((r) => r.番号 === 番(B)), `棚戻し未の〔買取番号-M0701-006B〕（${買取番号の表示(B)}）が表示される`).toBe(true);
-    expect.soft(rows.some((r) => r.番号 === 番(C)), `棚戻し済みの〔買取番号-M0701-006C〕（${買取番号の表示(C)}）が表示されない`).toBe(false);
+    expect.soft(!rows.some((r) => r.番号 === 番(C)), `棚戻し済みの〔買取番号-M0701-006C〕（${買取番号の表示(C)}）が表示されない`).toBe(true);
   });
 });
 
@@ -192,8 +195,15 @@ caseTest("IT-M07-01-055", async ({ page, notes, step, expected }) => {
     const r = await l.ダウンロードを押す("入金CSV");
     file = r.file;
     expect(file, `入金CSVのファイル（応答 ${r.応答}・警告 ${r.ダイアログ.join(" / ")}）`).not.toBeNull();
+    await l.ダウンロードの選択肢を閉じる();
   });
-  await step(5, async () => { csv = await CSVを読む(file!); });
+  await step(5, async () => {
+    csv = await CSVを読む(file!);
+    // ダウンロードの選択肢を閉じてから撮る。CSVの値は、試験が読み取った内容の枠に書き出して撮る（検索欄のラベルと取り違えない）
+    await l.ダウンロードの選択肢を閉じる();
+    const 見出し = csv.見出し;
+    await ダウンロードしたCSVの内容を撮る(page, [見出し, ...csv.行.map((r) => 見出し.map((k) => r[k] ?? ""))], scene.stepLabel(5, "ダウンロードしたCSVの内容"));
+  });
   await expected(async () => {
     const rows = csv!.行;
     note("振込金額はシード表に値が無いので、送料＋査定額（A 10000・B 8000）と読んだ。口座種別・オンライン本人確認区分はシード表の表示名（普通・当座、オンライン本人確認済み・簡易書留確認済み）で比べた");
@@ -213,10 +223,21 @@ caseTest("IT-M07-01-055", async ({ page, notes, step, expected }) => {
       expect.soft(r?.["口座番号"] ?? "（行が無い）", `${tag} の口座番号`).toBe(e.口座番号);
       expect.soft(r?.["受取人口座名義"] ?? "（行が無い）", `${tag} の受取人口座名義`).toBe(e.名義);
       expect.soft(r ? 数字(r["振込金額"]) : "（行が無い）", `${tag} の振込金額`).toBe(e.振込金額);
-      expect.soft(r?.["オンライン本人確認区分"] ?? "（行が無い）", `${tag} のオンライン本人確認区分`).toBe(e.本人確認);
+      // CSVの列の値であり、検索欄の本人確認のチェックの名前ではない。同じ文字の検索欄のラベルを指さないよう、列名つきの文で比べる
+      expect.soft(`CSVの「オンライン本人確認区分」列=「${r?.["オンライン本人確認区分"] ?? "（行が無い）"}」`, `${tag} のCSVのオンライン本人確認区分の列`).toBe(`CSVの「オンライン本人確認区分」列=「${e.本人確認}」`);
     }
   });
 });
+
+/** 設計 M07-08（0206）のピッキング区分: 基準価格と本店の閾値（●●円未満、●●円以上▲▲円未満、■■円以上）。閾値が1つも無ければ空 */
+function ピッキング区分(価格: number, 閾値: string[]): string {
+  const t = [...new Set(閾値.filter((x) => x !== "").map(Number))].sort((a, b) => a - b);
+  const 円 = (n: number) => n.toLocaleString("en-US");
+  if (t.length === 0) return "";
+  if (価格 < t[0]) return `${円(t[0])}円未満`;
+  for (let i = 0; i < t.length - 1; i++) if (価格 >= t[i] && 価格 < t[i + 1]) return `${円(t[i])}円以上${円(t[i + 1])}円未満`;
+  return `${円(t[t.length - 1])}円以上`;
+}
 
 /** 戻しリスト（059〜064）: 注文者名で検索 → 対象にチェック → 出力 → 5つ目の手順（CSVを開く・戻しリストを見る・DBの棚戻し済みフラグ） */
 type 戻しの種類 = "CSVの中身" | "PDFの中身" | "CSVで棚戻し" | "PDFで棚戻し" | "状態のエラー";
@@ -234,7 +255,12 @@ function 戻しリスト(n: string, 項目: "戻しリストCSV" | "戻しリス
     await step(4, async () => { r = await l.ダウンロードを押す(項目); });
     if (種類 !== "状態のエラー") {
       await step(5, async () => {
-        if (種類 === "CSVの中身") { expect(r.file, `戻しリストCSVのファイル（応答 ${r.応答}）`).not.toBeNull(); csv = await CSVを読む(r.file!); }
+        if (種類 === "CSVの中身") {
+          expect(r.file, `戻しリストCSVのファイル（応答 ${r.応答}）`).not.toBeNull();
+          csv = await CSVを読む(r.file!);
+          await l.ダウンロードの選択肢を閉じる();
+          await ダウンロードしたCSVの内容を撮る(page, [csv.見出し, ...csv.行.map((x) => csv!.見出し.map((k) => x[k] ?? ""))], scene.stepLabel(5, "ダウンロードした戻しリストCSVの内容"));
+        }
         if (種類 === "PDFの中身") { expect(r.popup, "戻しリストの別ウィンドウ").not.toBeNull(); pdf = await 戻しリストを読む(r.popup!); }
         if (種類 === "CSVで棚戻し" || 種類 === "PDFで棚戻し") 棚戻し = 棚戻し済みか(番号);
       });
@@ -243,20 +269,33 @@ function 戻しリスト(n: string, 項目: "戻しリストCSV" | "戻しリス
       const カード = 品(`M0701-R${n}-C`), サプライ = 品(`M0701-R${n}-S`), 明細 = 品(`M0701-${n}-FB`);
       if (種類 === "CSVの中身") {
         const rows = csv!.行;
-        note("実在庫は、通常商品（既存のカードを指定したグッズ商品）2・サプライ3。買取明細は申込みの商品（売却しない）。棚番号・略称タグは共有のマスタに足さないので設定していない（空で出る）");
+        note("実在庫は、通常商品（既存のカードを指定したグッズ商品）2・サプライ3。買取明細は申込みの商品（売却しない）。正本の前提「戻しリスト用の商品属性」のうち、棚番号・略称タグは共有のマスタに足さないので設定していない（空で出る）。そのため棚番号の表示と、略称が出ることは確かめられない（確かめたのは、設定していない略称・棚番号が空で出ること）。通常商品の色・レアリティはカード検索の1件目のカードのものなので、DBのカードの色・レアリティと同じに出ることで確かめた");
         expect.soft(csv!.見出し, "CSVの見出し").toEqual(["ピッキング区分", "棚番号", "言語/状態", "略称", "色/R", "数", "商品名", "基準価格"]);
         expect.soft(rows.length, "データ行の数（実在庫2件）").toBe(2);
         const c = rows.find((x) => (x["商品名"] ?? "").includes(カード)), s = rows.find((x) => (x["商品名"] ?? "").includes(サプライ));
+        const ac = 戻しリスト用の商品属性(カード), as = 戻しリスト用の商品属性(サプライ);
+        expect.soft(ac?.カード指定 && as?.カード指定 === false, "前提: 通常商品はカード指定あり・サプライ品はカード指定なし").toBe(true);
+        // 通常商品: 設計 M07-08（0206）の書式。言語/状態＝Foilの場合はFoilをつけて「言語/状態」（例 FoilJP/NM）、色/R＝色＋レアリティ（例 金R）、ピッキング区分＝基準価格と本店の閾値
         expect.soft(c?.["数"] ?? "（行が無い）", "実在庫の通常商品の行の数").toBe("2");
+        expect.soft(c?.["言語/状態"] ?? "（行が無い）", "実在庫の通常商品の行の言語/状態（日本語・ニアミント。Foilならつく）").toBe(`${ac?.フォイル ? "Foil" : ""}JP/NM`);
+        expect.soft(c?.["ピッキング区分"] ?? "（行が無い）", `実在庫の通常商品の行のピッキング区分（基準価格${ac?.基準価格}円・本店の閾値 ${高額商品閾値().join("/")}）`).toBe(ピッキング区分(Number(ac?.基準価格), 高額商品閾値()));
+        expect.soft(c?.["色/R"] ?? "（行が無い）", "実在庫の通常商品の行の色/R（カードの色＋レアリティ）").toBe(`${ac?.色 ?? ""}${ac?.レアリティ ?? ""}`);
+        expect.soft(c?.["略称"] ?? "（行が無い）", "実在庫の通常商品の行の略称（略称タグは設定していないので空）").toBe(ac?.略称 ?? "");
+        expect.soft(c?.["棚番号"] ?? "（行が無い）", "実在庫の通常商品の行の棚番号（棚番号は設定していないので空）").toBe(ac?.棚番号 ?? "");
+        expect.soft(c?.["商品名"] ?? "（行が無い）", "実在庫の通常商品の行の商品名（略称・言語・状態・色・レアリティを取り除いたもの）").toBe(カード);
         expect.soft(c ? 数字(c["基準価格"]) : "（行が無い）", "実在庫の通常商品の行の基準価格").toBe("1000");
-        expect.soft((c?.["言語/状態"] ?? "") !== "", "実在庫の通常商品の行の言語/状態が出る").toBe(true);
-        expect.soft((c?.["ピッキング区分"] ?? "") !== "" || (s?.["ピッキング区分"] ?? "") !== "", "ピッキング区分が出る").toBe(true);
+        // サプライ品: ピッキング区分「サプライ」・言語/状態「サプライ品」・略称と色/Rは出さない
         expect.soft(s?.["数"] ?? "（行が無い）", "実在庫のサプライの行の数").toBe("3");
+        expect.soft(s?.["ピッキング区分"] ?? "（行が無い）", "実在庫のサプライの行のピッキング区分").toBe("サプライ");
+        expect.soft(s?.["言語/状態"] ?? "（行が無い）", "実在庫のサプライの行の言語/状態").toBe("サプライ品");
+        expect.soft(s?.["略称"] ?? "（行が無い）", "実在庫のサプライの行の略称（サプライ品は表示しない）").toBe("");
+        expect.soft(s?.["色/R"] ?? "（行が無い）", "実在庫のサプライの行の色/R（サプライ品は出さない）").toBe("");
+        expect.soft(s?.["商品名"] ?? "（行が無い）", "実在庫のサプライの行の商品名").toBe(サプライ);
         expect.soft(s ? 数字(s["基準価格"]) : "（行が無い）", "実在庫のサプライの行の基準価格").toBe("1000");
         expect.soft(rows.filter((x) => (x["商品名"] ?? "").includes(明細)).length, "買取明細（申込みの商品）の行（実在庫に無いので出ない）").toBe(0);
       } else if (種類 === "PDFの中身") {
         const rows = pdf!.行;
-        note("実在庫は、通常商品（既存のカードを指定したグッズ商品）2・サプライ3。買取明細は申込みの商品（売却しない）。棚番号・略称タグは共有のマスタに足さないので設定していない");
+        note("実在庫は、通常商品（既存のカードを指定したグッズ商品）2・サプライ3。買取明細は申込みの商品（売却しない）。棚番号・略称タグは共有のマスタに足さないので設定していない（棚番号の表示は確かめられない）");
         const c = rows.find((x) => x.商品名.includes(カード)), s = rows.find((x) => x.商品名.includes(サプライ));
         expect.soft(rows.length, "戻しリストの明細の行の数（実在庫2件）").toBe(2);
         expect.soft(c?.数 ?? "（行が無い）", "実在庫の通常商品の行の数").toBe("2");
@@ -266,7 +305,7 @@ function 戻しリスト(n: string, 項目: "戻しリストCSV" | "戻しリス
         expect.soft(rows.every((x) => x.仕訳 !== ""), "各行に商品仕訳の見出しがある").toBe(true);
         expect.soft(rows.every((x) => /^\d+$/.test(x.No)), "各行に行番号がある").toBe(true);
         expect.soft(/\d+\s*\/\s*\d+/.test(pdf!.全文), "ページング（n/m）が表示される").toBe(true);
-        expect.soft(/全\s*\d+\s*個/.test(pdf!.全文), "ページ内個数小計（全N個）が表示される").toBe(true);
+        expect.soft(/全\s*\d+\s*[点個]/.test(pdf!.全文), "ページ内個数小計（全N 点）が表示される").toBe(true);
         expect.soft(rows.filter((x) => x.商品名.includes(明細)).length, "買取明細（申込みの商品）の行（実在庫に無いので出ない）").toBe(0);
       } else if (種類 === "CSVで棚戻し" || 種類 === "PDFで棚戻し") {
         expect.soft(種類 === "CSVで棚戻し" ? r.file !== null : r.popup !== null, `${項目}が出力された`).toBe(true);
@@ -318,7 +357,7 @@ caseTest("IT-M07-01-080", async ({ page, notes, step, expected }) => {
 });
 
 /** 買取商品一覧CSV（089〜095）: 注文者名で検索 → 対象にチェック → 出力 → 開く。期待はデータ行（商品コード×在庫増減数。正本のコードに実行の印） */
-function 商品一覧CSV(姓の正本: string, 対象: string[], 期待: [string, string][], 順を見る: boolean, 出ない: string[] = []): CaseBody {
+function 商品一覧CSV(姓の正本: string, 対象: string[], 期待: [string, string][], 順を見る: boolean, 出ない: string[] = [], 明細の登録順?: { 買取番号: string; 先: string; 後: string }): CaseBody {
   return async ({ page, notes, step, expected }) => {
     const l = await 始める(page);
     let file: Awaited<ReturnType<M0701ListPage["ダウンロードを押す"]>>["file"] = null;
@@ -331,8 +370,18 @@ function 商品一覧CSV(姓の正本: string, 対象: string[], 期待: [string
       file = r.file;
       expect(file, `買取商品一覧CSVのファイル（応答 ${r.応答}・警告 ${r.ダイアログ.join(" / ")}）`).not.toBeNull();
     });
-    await step(5, async () => { rows = (await CSVを読む(file!)).行; });
+    let 明細ID: { 先: number; 後: number } | null = null;
+    await step(5, async () => {
+      rows = (await CSVを読む(file!)).行;
+      if (明細の登録順) {
+        // 正本の前提「商品IDの大きい方（X2）の明細を先に登録」を、明細IDの順（作られた順）をDBで読んで示す
+        const 番 = notes.get(明細の登録順.買取番号);
+        明細ID = { 先: Number(選んで買取の明細ID(番, 品(明細の登録順.先))), 後: Number(選んで買取の明細ID(番, 品(明細の登録順.後))) };
+        await DBで読み取った値を撮る(page, `買取番号 ${番} の選んで買取の明細ID（作られた順）`, [["商品コード", "明細ID"], [`${明細の登録順.先}（商品IDの大きい方）`, String(明細ID.先)], [`${明細の登録順.後}（商品IDの小さい方）`, String(明細ID.後)]], scene.stepLabel(5, "DBで読み取った明細IDの順"));
+      }
+    });
     await expected(async () => {
+      if (明細の登録順) expect.soft(明細ID !== null && (明細ID as { 先: number; 後: number }).先 < (明細ID as { 先: number; 後: number }).後, `前提: 商品IDの大きい方（${明細の登録順.先}）の明細IDが小さい方（${明細の登録順.後}）より小さい（先に登録された）`).toBe(true);
       const 実際 = rows.map((r) => `${r["商品コード"] ?? ""}×${r["在庫増減数"] ?? ""}`);
       const 期待の行 = 期待.map(([c, q]) => `${品(c)}×${q}`);
       expect.soft(rows.length, "CSVのデータ行の数").toBe(期待.length);
@@ -345,5 +394,5 @@ function 商品一覧CSV(姓の正本: string, 対象: string[], 期待: [string
 caseTest("IT-M07-01-089", 商品一覧CSV("M0701-089-X", ["〔買取番号-M0701-089A〕"], [["M0701-089-A-OK", "2"]], true, ["M0701-089-A-NG", "M0701-089-B-OK", "M0701-089-B-NG"]));
 caseTest("IT-M07-01-090", 商品一覧CSV("M0701-090-X", ["〔買取番号-M0701-090A〕", "〔買取番号-M0701-090B〕"], [["M0701-090-A-OK", "2"], ["M0701-090-B-OK", "3"]], false, ["M0701-090-A-NG", "M0701-090-B-NG"]));
 caseTest("IT-M07-01-091", 商品一覧CSV("M0701-091-X", ["〔買取番号-M0701-091〕"], [["M0701-091-OK", "2"]], true, ["M0701-091-UNDECIDED"]));
-caseTest("IT-M07-01-093", 商品一覧CSV("M0701-CB093-X", ["〔買取番号-M0701-093〕"], [["M0701-CB093-Y", "2"], ["M0701-CB093-X2", "3"]], true));
+caseTest("IT-M07-01-093", 商品一覧CSV("M0701-CB093-X", ["〔買取番号-M0701-093〕"], [["M0701-CB093-Y", "2"], ["M0701-CB093-X2", "3"]], true, [], { 買取番号: "〔買取番号-M0701-093〕", 先: "M0701-CB093-X2", 後: "M0701-CB093-Y" }));
 caseTest("IT-M07-01-095", 商品一覧CSV("M0701-CB095-X", ["〔買取番号-M0701-095〕"], [["M0701-CB095-P", "2"], ["M0701-CB095-P", "3"]], false));

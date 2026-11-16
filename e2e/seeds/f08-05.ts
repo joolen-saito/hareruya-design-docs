@@ -32,7 +32,7 @@ import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { blacklistRows, ensureBlacklist, readTempMember, setTempMember } from "../pages/admin/f06_masters";
 import { 自動送信メールのテンプレート名 } from "../pages/admin/f08_05_member";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { ensureStore } from "../pages/admin/m04_24_reuse_k";
 import { customerIdByEmail } from "../pages/admin/m06_04_member";
 import { 管理画面で本会員にする } from "../pages/admin/member_activate";
 import { EntryPage } from "../pages/front/f06_01_entry";

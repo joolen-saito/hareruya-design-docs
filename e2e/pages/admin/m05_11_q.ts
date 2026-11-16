@@ -56,7 +56,7 @@ export class OrderEditQ {
     await expect(row, `検索結果に商品コード「${商品コード}」の規格を持つ商品が1件`).toHaveCount(1, { timeout: 60_000 });
     const value = await row.locator(`option[data-product-code="${商品コード}"]`).first().getAttribute("value");
     await row.locator("select").first().selectOption(value!, { timeout: 20_000 });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), row.locator("button.add-order-item").click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), row.locator("button.add-order-item").click({ timeout: 20_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 画面に出ている在庫についての警告の文（無ければ空） */

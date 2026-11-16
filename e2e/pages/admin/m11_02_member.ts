@@ -43,7 +43,7 @@ export class MemberEditPage {
   async 一覧から新規登録を開く(): Promise<void> {
     await this.page.goto(adminUrl("/setting/system/member"), { timeout: 60_000 });
     await this.page.waitForLoadState("load");
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.page.getByRole("link", { name: "新規登録" }).first().click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), this.page.getByRole("link", { name: "新規登録" }).first().click({ noWaitAfter: true })]);
   }
   async 編集を開く(メンバーID: string): Promise<Response | null> {
     const res = await this.page.goto(adminUrl(`/setting/system/member/${メンバーID}/edit`), { timeout: 60_000 });
@@ -146,7 +146,7 @@ export async function 自動ログアウト時間を設定する(page: Page, 分
   await page.waitForLoadState("load");
   const input = page.locator('[name="add_system[auto_logout_time]"]');
   await input.fill(分);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), page.locator('form#point_form button[type="submit"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator('form#point_form button[type="submit"]').click({ noWaitAfter: true })]);
   await expect(page.locator(".alert-success").first(), `追加システム設定の自動ログアウト時間を ${分} 分にした`).toBeVisible({ timeout: T });
   expect(await input.inputValue(), "登録後の自動ログアウト時間").toBe(分);
 }

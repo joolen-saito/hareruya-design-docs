@@ -9,25 +9,16 @@
 import { expect, Page } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { 買取できる商品の候補 } from "../../db/m07";
+import { フロントにログインする } from "./login_without_top";
 
 const front = (p: string) => `${BASE_URL}/ja${p}`;
 const OPEN = 30_000;
 
 export type 買取会員 = { メール: string; パスワード: string };
 
-/** フロントにログインする（マイページのログイン画面） */
+/** フロントにログインする。ログイン後のトップの表示は待たない（開発環境でトップだけ返らない時間帯がある。pages/front/login_without_top.ts） */
 export async function ログインする(page: Page, m: 買取会員): Promise<void> {
-  await page.goto(front("/mypage/login"), { timeout: 60_000 });
-  await page.waitForLoadState("domcontentloaded");
-  const form = page.locator("form#login_mypage");
-  await expect(form, "フロントのログイン画面").toBeVisible({ timeout: OPEN });
-  await form.locator('input[name="login_email"]').fill(m.メール, { timeout: OPEN });
-  await form.locator('input[name="login_pass"]').fill(m.パスワード, { timeout: OPEN });
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-    form.locator('button[type="submit"]').dispatchEvent("click"),
-  ]);
-  if (/\/mypage\/login/.test(page.url())) throw new Error(`フロントにログインできない（${m.メール}）`);
+  await フロントにログインする(page, m);
 }
 
 let usable: string | null = null;

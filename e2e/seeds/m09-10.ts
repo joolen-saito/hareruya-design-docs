@@ -28,7 +28,7 @@ import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Notes } from "../lib/notes";
 import { Account, withAdminSession } from "../lib/session";
-import { findTenantId } from "../pages/admin/tenant";
+import { findTenantId } from "../pages/admin/tenant_k";
 import { 本店の店名 } from "../pages/admin/m05_admin_member";
 import { ensureMember } from "../pages/admin/member";
 import { タグを付けて商品を登録する, タグを用意する } from "../pages/admin/f01_02_setup";

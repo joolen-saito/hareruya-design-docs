@@ -7,7 +7,7 @@ import { Browser, expect } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { OtcListPage } from "../pages/admin/m06_otc_list";
-import { M0424StoreInput } from "../pages/admin/m04_24_store";
+import { M0424StoreInput } from "../pages/admin/m04_24_reuse_k";
 import { applyAsGuest, 申込者 } from "../pages/front/m06_otc_buy";
 
 const COMPANY = "株式会社晴れる屋";

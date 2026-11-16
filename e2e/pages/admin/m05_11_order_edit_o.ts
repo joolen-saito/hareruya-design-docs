@@ -4,6 +4,7 @@
  */
 import { expect, Locator, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
+import { withoutEnvBanners } from "./common";
 
 /** 受注情報編集の折りたたみの欄（注文者情報・お支払情報・お届け先情報・ポイント連携エラー） */
 export const 折りたたみの欄 = { 注文者情報: "ordererInfo", お支払情報: "paymentInfo", お届け先情報: "shippingInfo", ポイント連携エラー: "pointErrorMessage" } as const;
@@ -91,9 +92,9 @@ export class OrderEditMore {
   }
 
   // ---- 履歴の画面 ----
-  /** 更新のボタン（「受注情報を登録」「受注ステータスを変更」など）の数 */
+  /** 更新のボタン（「受注情報を登録」「受注ステータスを変更」など）の数。押せない状態（disabled）で表示されているものも数える（設計書は「表示されない」） */
   async 更新ボタンの数(): Promise<number> {
-    return this.page.locator('button[type="submit"]:visible:not([disabled]), button.change-status:visible:not([disabled])').count();
+    return this.page.locator('button[type="submit"]:visible, button.change-status:visible').count();
   }
   /** 本文の中の押せるリンクの数（ヘッダ・サイドの共通の導線は除く） */
   async 本文のリンクの数(): Promise<number> {
@@ -151,8 +152,8 @@ export class OrderEditMore {
   }
   /** 画面のエラーの表示（警告の帯・入力欄のエラー） */
   async エラーの文(): Promise<string[]> {
-    return (await this.page.locator(".alert-danger:visible, .invalid-feedback:visible, .form-error-message:visible, .text-danger:visible").allTextContents())
-      .map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+    return withoutEnvBanners((await this.page.locator(".alert-danger:visible, .invalid-feedback:visible, .form-error-message:visible, .text-danger:visible").allTextContents())
+      .map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean)); // 開発用の設定のときに常に出る帯は除く
   }
 
   // ---- 日付のクリア ----

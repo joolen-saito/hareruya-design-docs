@@ -5,6 +5,7 @@
  */
 import { expect, Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { 押して移るのを待つ } from "./nav_click";
 
 const T = 30_000;
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -95,17 +96,8 @@ export class DeliveryPage {
     await this.page.waitForLoadState("load");
   }
   async 押して遷移する(l: Locator): Promise<void> {
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 });
-    try {
-      await l.click({ timeout: 10_000 });
-    } catch (e) {
-      // 固定ヘッダーが要素の上に重なって普通に押せないとき。押す操作そのものを要素へ直接送って続け、注記を残す
-      test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
-    }
-    await nav;
-    await this.page.waitForLoadState("load");
+    // 押す操作だけを行い、移るのを待つ（押せているのに click の待ちが時間切れになり、移った先で押し直してしまうのを防ぐ。pages/front/nav_click.ts）
+    await 押して移るのを待つ(this.page, l, { 直接送るときの注記: "正本の外の補い" });
   }
 
   // ---- 入力画面 ----
@@ -188,7 +180,7 @@ export class DeliveryPage {
   async 確認画面である(): Promise<boolean> { return (await this.登録するボタン.count()) > 0; }
   async 登録する(): Promise<void> {
     await expect(this.登録するボタン, "確認画面の「登録する」").toBeVisible({ timeout: T });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.登録するボタン.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.登録するボタン.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 入力画面のサーバー側の入力エラーの文 */

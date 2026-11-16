@@ -3,25 +3,28 @@
  * 値はシード表（integration_test/casegen/cases/M13-02_seed_data.tsv）の状態・属性と投入方法のとおり。
  */
 import { SETUP_ADMIN } from "../config/env";
+import { rcFixed } from "../lib/run_marker";
 import { entryMemberNames } from "./members";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { Page } from "@playwright/test";
 import { EventInput, FreeArea, ensureNoEvent, openEventCreate, openEventSearchPage, registerEvent } from "../pages/admin/event";
-import { ensureMember } from "../pages/admin/member";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
 import { registerDeck } from "../pages/admin/deck";
 import { registerEntries } from "../pages/admin/entry";
 import { registerSchedule, ScheduleInput, turnOffOnlineEntry } from "../pages/admin/schedule";
-import { ensureTenant } from "../pages/admin/tenant";
+import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
+import { 開催日の年のずれ, 開催日の読み替えを残す } from "./m13-06";
 
 /** S-M13-02-ADM の試験管理者（店舗Aだけに編集権限を持つ） */
-export const M1302_ADMIN: Account = { loginId: "m1302_admin", password: "Passw0rd!M1302" };
+// 店舗を決まった名前の試験店舗（m13_marked_shop.ts）にしたので、管理者も決まった印の名前・ログインIDで1度だけ作って使い回す（同名の別の店舗に所属した前の管理者とぶつけない）
+export const M1302_ADMIN: Account = { loginId: rcFixed("m1302_admin").toLowerCase(), password: "Passw0rd!M1302" };
 
 defineSeed("S-M13-02-MASTERS", async ({ browser, notes, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const issue = (m: string) => reportSeedIssue(seed.シードID, m);
-    notes.set("〔店舗ID-M1302-共有A〕", await ensureTenant(page, { 店名: "店舗A", 店名カナ: "テンポエー", 店名英語: "Shop A", 支店URL: "m1302a", 店名略称3文字: "テA", ショップ名略称: "店舗A" }, issue));
-    notes.set("〔店舗ID-M1302-共有B〕", await ensureTenant(page, { 店名: "店舗B", 店名カナ: "テンポビー", 店名英語: "Shop B", 支店URL: "m1302b", 店名略称3文字: "テB", ショップ名略称: "店舗B" }, issue));
+    notes.set("〔店舗ID-M1302-共有A〕", await ensureMarkedTenant(page, "A", issue));
+    notes.set("〔店舗ID-M1302-共有B〕", await ensureMarkedTenant(page, "B", issue));
     // シード表の投入方法: 初期データの選択肢が、イベント登録画面の各選択欄に表示されることを確かめる。
     // 無い選択肢は、作れなかったことにせず問題として報告する（その選択肢を使うケースは、選ぶところで落ちる）
     const form = await openEventCreate(page);
@@ -44,8 +47,8 @@ defineSeed("S-M13-02-ADM", { needs: ["S-M13-02-MASTERS"] }, async ({ browser, no
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     // シード表: 登録したあとメンバー編集画面のアドレスの番号を管理者IDとして控える（〔管理者ID-M1302-共有〕）
     notes.set("〔管理者ID-M1302-共有〕", await ensureMember(page, {
-      名前: "M13-02 試験管理者", 所属店舗: "店舗A", ログインID: M1302_ADMIN.loginId, メールアドレス: "m1302_admin@example.test",
-      パスワード: M1302_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A"],
+      名前: rcFixed("M13-02 試験管理者"), 所属店舗: 印店名.A, ログインID: M1302_ADMIN.loginId, メールアドレス: "m1302_admin-e2e@example.test",
+      パスワード: M1302_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A],
     }));
   });
 });
@@ -56,7 +59,7 @@ defineSeed("S-M13-02-ADM", { needs: ["S-M13-02-MASTERS"] }, async ({ browser, no
  */
 export function baseEvent(n: string, over: EventInput = {}): EventInput {
   return {
-    イベント名日: `編集前イベント-${n}`, イベント名英: `Before Event-${n}`, 店舗: "店舗A", フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎",
+    イベント名日: `編集前イベント-${n}`, イベント名英: `Before Event-${n}`, 店舗: 印店名.A, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎",
     公開状態: "公開", 定員: "16", 参加費: "500", ...over,
   };
 }
@@ -119,13 +122,13 @@ defineEventSeed("S-M13-02-BASE-029", "〔イベントID-M1302-029〕", baseEvent
 defineEventSeed("S-M13-02-BASE-032", "〔イベントID-M1302-032〕", baseEvent("032", { ...賞品, ...フリー("032", ["内容"]) }));
 
 /** S-M13-02-ADM-014 の管理者（IT-M13-02-014 専用。この管理者を登録者とするイベントは0件） */
-export const M1302_ADMIN_014: Account = { loginId: "m1302_admin-014", password: "M1302014Passw0rd" };
+export const M1302_ADMIN_014: Account = { loginId: rcFixed("m1302_admin-014").toLowerCase(), password: "M1302014Passw0rd" };
 
 defineSeed("S-M13-02-ADM-014", { needs: ["S-M13-02-MASTERS"] }, async ({ browser, notes }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     notes.set("〔管理者ID-M1302-014〕", await ensureMember(page, {
-      名前: "M13-02 管理者014", 所属店舗: "店舗A", ログインID: M1302_ADMIN_014.loginId, メールアドレス: "m1302_admin-014@example.test",
-      パスワード: M1302_ADMIN_014.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A"],
+      名前: rcFixed("M13-02 管理者014"), 所属店舗: 印店名.A, ログインID: M1302_ADMIN_014.loginId, メールアドレス: "m1302_admin-014-e2e@example.test",
+      パスワード: M1302_ADMIN_014.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A],
     }));
   });
 });
@@ -135,7 +138,7 @@ defineSeed("S-M13-02-ADM-014", { needs: ["S-M13-02-MASTERS"] }, async ({ browser
 /** シード表が値を定めていない項目（イベント名(英)・フォーマット・ルール適用度・定員・参加費）は、投入方法に書いてある値を入れる */
 function dateEvent(n: string, over: EventInput = {}): EventInput {
   return {
-    イベント名日: `日程操作イベント-${n}`, イベント名英: `Date Event-${n}`, 店舗: "店舗A", フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎",
+    イベント名日: `日程操作イベント-${n}`, イベント名英: `Date Event-${n}`, 店舗: 印店名.A, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎",
     公開状態: "公開", 定員: "16", 参加費: "500", ...over,
   };
 }
@@ -172,13 +175,13 @@ defineDatesSeed("S-M13-02-DATES-045", "045", dateEvent("045"), [["", 日程("202
 // ---- 店舗Bのイベント（試験管理者には編集権限が無い）
 
 /** 店舗Bに編集権限を持つ管理者。シード表の投入方法: 無ければメンバー登録画面で編集可能店舗に「店舗B」を選んで登録しておく */
-export const M1302_ADMIN_B: Account = { loginId: "m1302_admin_b", password: "Passw0rd!M1302B" };
+export const M1302_ADMIN_B: Account = { loginId: rcFixed("m1302_admin_b").toLowerCase(), password: "Passw0rd!M1302B" };
 
 async function ensureAdminB(browser: import("@playwright/test").Browser): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-02 店舗B管理者", 所属店舗: "店舗B", ログインID: M1302_ADMIN_B.loginId, メールアドレス: "m1302_admin_b@example.test",
-      パスワード: M1302_ADMIN_B.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗B", 編集可能店舗: ["店舗B"],
+      名前: rcFixed("M13-02 店舗B管理者"), 所属店舗: 印店名.B, ログインID: M1302_ADMIN_B.loginId, メールアドレス: "m1302_admin_b-e2e@example.test",
+      パスワード: M1302_ADMIN_B.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.B, 編集可能店舗: [印店名.B],
     });
   });
 }
@@ -195,7 +198,7 @@ function defineNoAuthSeed(seedId: string, n: string, input: EventInput, schedule
   });
 }
 
-defineNoAuthSeed("S-M13-02-NOAUTH-007", "007", dateEvent("007", { イベント名日: "権限外イベント-007", イベント名英: "No Auth Event-007", 店舗: "店舗B" }), [["", 日程("2026-11-01 10:00")]]);
+defineNoAuthSeed("S-M13-02-NOAUTH-007", "007", dateEvent("007", { イベント名日: "権限外イベント-007", イベント名英: "No Auth Event-007", 店舗: 印店名.B }), [["", 日程("2026-11-01 10:00")]]);
 
 // ---- 削除・権限・なりすまし対策トークンのケース用
 
@@ -208,12 +211,12 @@ defineSeed("S-M13-02-OTHER-DATE-052", { needs: ["S-M13-02-ADM"] }, async ({ brow
     }
   });
 });
-defineNoAuthSeed("S-M13-02-NOAUTH-053", "053", dateEvent("053", { イベント名日: "権限外イベント-053", イベント名英: "No Auth Event-053", 店舗: "店舗B" }), [["", 日程("2026-11-01 10:00")]]);
+defineNoAuthSeed("S-M13-02-NOAUTH-053", "053", dateEvent("053", { イベント名日: "権限外イベント-053", イベント名英: "No Auth Event-053", 店舗: 印店名.B }), [["", 日程("2026-11-01 10:00")]]);
 defineDatesSeed("S-M13-02-DATES-054", "054", dateEvent("054"), [["", 日程("2026-11-01 10:00")]]);
 defineDatesSeed("S-M13-02-DATES-055", "055", dateEvent("055"), [["", 日程("2026-11-01 10:00")]]);
 defineEventSeed("S-M13-02-BASE-056", "〔イベントID-M1302-056〕", baseEvent("056"));
 defineEventSeed("S-M13-02-BASE-058", "〔イベントID-M1302-058〕", baseEvent("058"));
-defineNoAuthSeed("S-M13-02-NOAUTH-059", "059", dateEvent("059", { イベント名日: "権限外イベント-059", イベント名英: "No Auth Event-059", 店舗: "店舗B" }), [["", 日程("2026-11-01 10:00")]]);
+defineNoAuthSeed("S-M13-02-NOAUTH-059", "059", dateEvent("059", { イベント名日: "権限外イベント-059", イベント名英: "No Auth Event-059", 店舗: 印店名.B }), [["", 日程("2026-11-01 10:00")]]);
 defineEventSeed("S-M13-02-BASE-060", "〔イベントID-M1302-060〕", baseEvent("060"));
 defineEventSeed("S-M13-02-BASE-061", "〔イベントID-M1302-061〕", baseEvent("061"));
 defineDatesSeed("S-M13-02-DATES-062", "062", dateEvent("062"), [["", 日程("2026-11-01 10:00")]]);
@@ -222,7 +225,7 @@ defineDatesSeed("S-M13-02-DATES-062", "062", dateEvent("062"), [["", 日程("202
 
 const evt = (n: string, over: EventInput = {}): EventInput => dateEvent(n, { イベント名日: `M1302-${n}-EVT`, イベント名英: `M1302-${n}-EVT-EN`, ...over });
 
-defineNoAuthSeed("S-M13-02-NOAUTH-066", "066", evt("066", { イベント名日: "M1302-066-BEFORE", イベント名英: "M1302-066-BEFORE-EN", 店舗: "店舗B" }), []);
+defineNoAuthSeed("S-M13-02-NOAUTH-066", "066", evt("066", { イベント名日: "M1302-066-BEFORE", イベント名英: "M1302-066-BEFORE-EN", 店舗: 印店名.B }), []);
 defineEventSeed("S-M13-02-BASE-067", "〔イベントID-M1302-067〕", evt("067", { チーム戦: false }));
 defineEventSeed("S-M13-02-BASE-068", "〔イベントID-M1302-068〕", evt("068", { チーム戦: false }));
 // 入力値は投入不要（フォーマットのスタンダード・モダンは共有のマスターを使う）
@@ -231,12 +234,12 @@ defineEventSeed("S-M13-02-BASE-070", "〔イベントID-M1302-070〕", evt("070"
 defineEventSeed("S-M13-02-BASE-071", "〔イベントID-M1302-071〕", evt("071"));
 
 /** S-M13-02-ADM-072 の管理者（IT-M13-02-072 専用） */
-export const M1302_ADMIN_072: Account = { loginId: "M1302-072-ADM", password: "M1302-072-Pw" };
+export const M1302_ADMIN_072: Account = { loginId: rcFixed("M1302-072-ADM"), password: "M1302-072-Pw" };
 defineSeed("S-M13-02-ADM-072", { needs: ["S-M13-02-MASTERS"] }, async ({ browser, notes }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     notes.set("〔管理者ID-M1302-072〕", await ensureMember(page, {
-      名前: "M13-02 管理者072", 所属店舗: "店舗A", ログインID: M1302_ADMIN_072.loginId, メールアドレス: "m1302-072-adm@example.test",
-      パスワード: M1302_ADMIN_072.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗A", 編集可能店舗: ["店舗A"],
+      名前: rcFixed("M13-02 管理者072"), 所属店舗: 印店名.A, ログインID: M1302_ADMIN_072.loginId, メールアドレス: "m1302-072-adm-e2e@example.test",
+      パスワード: M1302_ADMIN_072.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A],
     }));
   });
 });
@@ -245,8 +248,8 @@ defineDatesSeed("S-M13-02-DATES-073", "073", evt("073", クレカ), [["", {
   開始時間: "2026-11-01 10:00", 受付あり: true, 受付時間: { 開始: "09:00", 終了: "09:50" }, デッキ登録あり: true, デッキ登録締切: "2026-10-31 18:00",
   オンライン受付: { 開始: "2026-10-25 12:00", 終了: "2026-10-31 23:00" },
 }]]);
-defineNoAuthSeed("S-M13-02-NOAUTH-074", "074", evt("074", { 店舗: "店舗B" }), []);
-defineNoAuthSeed("S-M13-02-NOAUTH-075", "075", evt("075", { 店舗: "店舗B" }), [["", 日程("2026-11-01 10:00")]]);
+defineNoAuthSeed("S-M13-02-NOAUTH-074", "074", evt("074", { 店舗: 印店名.B }), []);
+defineNoAuthSeed("S-M13-02-NOAUTH-075", "075", evt("075", { 店舗: 印店名.B }), [["", 日程("2026-11-01 10:00")]]);
 defineSeed("S-M13-02-OTHER-DATE-076", { needs: ["S-M13-02-ADM"] }, async ({ browser, notes }) => {
   await withAdminSession(browser, M1302_ADMIN, async (page) => {
     for (const [x, input] of [["A", evt("076")], ["B", evt("076", { イベント名日: "M1302-076-OTHER", イベント名英: "M1302-076-OTHER-EN" })]] as const) {
@@ -256,15 +259,18 @@ defineSeed("S-M13-02-OTHER-DATE-076", { needs: ["S-M13-02-ADM"] }, async ({ brow
     }
   });
 });
-defineNoAuthSeed("S-M13-02-NOAUTH-079", "079", evt("079", { 店舗: "店舗B" }), [["", 日程("2026-11-01 10:00")]]);
+defineNoAuthSeed("S-M13-02-NOAUTH-079", "079", evt("079", { 店舗: 印店名.B }), [["", 日程("2026-11-01 10:00")]]);
 // 投入不要（新規イベント登録画面を未入力のまま開く）
 defineSeed("S-M13-02-NEW-081", { needs: ["S-M13-02-ADM"] }, async () => {});
-defineNoAuthSeed("S-M13-02-NOAUTH-083", "083", evt("083", { 店舗: "店舗B" }), [["", 日程("2026-11-01 10:00")]]);
+defineNoAuthSeed("S-M13-02-NOAUTH-083", "083", evt("083", { 店舗: 印店名.B }), [["", 日程("2026-11-01 10:00")]]);
 
 // ---- 申込のある日程（イベント申込登録の検索に出るのはオンライン受付ありの日程だけなので、申込を登録する日程はオンライン受付ありで登録する）
 
 const オンライン日程 = (開始時間: string, 開始: string, 終了: string): ScheduleInput => ({ 開始時間, 受付あり: false, デッキ登録あり: false, オンライン受付: { 開始, 終了 } });
 const 十一月オンライン = オンライン日程("2026-11-01 10:00", "2026-10-25 12:00", "2026-10-31 23:00");
+/** 開始時間が実行日より前だと、申込一覧の開始時間の初期値（画面を開いた日）で絞られて出ないため、実行日以後になるよう年だけずらした日程（M13-06 と同じ読み替え）。ずらした年数はオンライン受付の期間にも足す */
+const 年ずらし = (日時: string, n: number) => `${Number(日時.slice(0, 4)) + n}${日時.slice(4)}`;
+const 十一月オンライン実行日以後 = (() => { const n = 開催日の年のずれ("2026-11-01 10:00"); return オンライン日程(年ずらし("2026-11-01 10:00", n), 年ずらし("2026-10-25 12:00", n), 年ずらし("2026-10-31 23:00", n)); })();
 const 十二月オンライン = オンライン日程("2026-12-01 10:00", "2026-11-24 12:00", "2026-11-30 23:00");
 
 
@@ -293,7 +299,7 @@ defineEntrySeed("S-M13-02-DATES-004", "004", dateEvent("004", 無料), [["A", �
 // 申込を登録したあと、日程編集画面で「オンライン受付あり」を外して保存する（オンライン受付なしにする）
 defineEntrySeed("S-M13-02-APPLIED-033", "033", dateEvent("033", { イベント名日: "申込済みイベント-033", イベント名英: "Applied Event-033", ...無料, ...クレカ }), [["", 十一月オンライン]], { suffix: "", labels: [""] }, turnOffOnlineEntry);
 defineDatesSeed("S-M13-02-PAID-ONLINE-034", "034", dateEvent("034", { イベント名日: "有料オンライン受付イベント-034", イベント名英: "Paid Online Event-034", ...クレカ }), [["", 十一月オンライン]]);
-defineEntrySeed("S-M13-02-DATES-039", "039", dateEvent("039", 無料), [["", 十一月オンライン]], { suffix: "", labels: ["A", "B"] });
+defineEntrySeed("S-M13-02-DATES-039", "039", dateEvent("039", 無料), [["", 十一月オンライン実行日以後]], { suffix: "", labels: ["A", "B"] }, async () => { 開催日の読み替えを残す("S-M13-02-DATES-039", "2026-11-01 10:00"); });
 defineEntrySeed("S-M13-02-DATES-047", "047", dateEvent("047", 無料), [["", 十一月オンライン]], { suffix: "", labels: [""] });
 defineEntrySeed("S-M13-02-DATES-049", "049", dateEvent("049", 無料), [["", 十一月オンライン]], { suffix: "", labels: [""] });
 defineEntrySeed("S-M13-02-DATES-051", "051", dateEvent("051", 無料), [["A", 日程("2026-11-01 10:00")], ["B", 十二月オンライン]], { suffix: "B", labels: [""] });

@@ -10,9 +10,10 @@
 import { expect, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { expectSaved } from "./common";
-import { F0504カードを登録する, 単体カード配下のカテゴリID, 商品規格を削除する } from "./f05_04_products";
+import { F0504カードを登録する, グッズCSVが受け付けるカードのカテゴリID, 単体カード配下のカテゴリID, 商品規格を削除する } from "./f05_04_products";
 import { 言語IDの一覧, 規格を足す } from "./f03_02_seed_ops";
 import { savePublishedClass } from "./f03_07_restock";
+import { readLanguageChoicesFromClassForm } from "./m03_01_product_class";
 import { registerGoodsCsv } from "./m03_01_goods_register";
 import { classRowsFromProductEdit, productIdsByCode, readGoodsRootCategoryId } from "./m03_23_seed_products";
 import { assignCardOnProductEdit } from "./product_card_assign";
@@ -93,8 +94,19 @@ const CARD_NO_BASE = String(Date.now()).slice(-8);
  * 2. グッズ商品CSV登録でまとめて取り込む（カードの商品は「シングルカード」配下の先頭のカテゴリ、カード以外は「サプライ・グッズ」）
  * 3. 商品ごとに、カードの指定（商品名は入れ直す）→ 取り込みで作られた規格を公開（高額商品コード）、NM以外の状態なら規格を足して NM の規格を削除する
  */
-export async function 索引の商品を作る(page: Page, defs: 索引の商品の定義[], what: string, fileName: string, issue: Issue): Promise<作った索引の商品[]> {
+export async function 索引の商品を作る(page: Page, defs: 索引の商品の定義[], what: string, fileName: string, issue: Issue, opts: {
+  /**
+   * カードの商品の商品カテゴリ(ID)の選び方（既定は「単体カード配下のカテゴリID」）。
+   * - "グッズCSVが受け付ける": グッズ商品CSV登録が受け付ける範囲（ID 2・4・5 とその子孫）の「シングルカード」から選ぶ
+   * - "サプライ・グッズ": カード以外の商品と同じ「サプライ・グッズ」のカテゴリID（シード表がカードの商品にもそう定めているとき）
+   */
+  カードのカテゴリ?: "グッズCSVが受け付ける" | "サプライ・グッズ";
+} = {}): Promise<作った索引の商品[]> {
   const langs = defs.some((d) => d.言語) ? await 言語IDの一覧(page) : new Map<string, string>();
+  // 商品マスターの検索欄の言語は「日本語・英語・その他言語」だけで、フランス語などの番号は無い。足りない言語は、商品規格の登録画面の言語欄（全言語）から足す（F03-02 と同じ）
+  if (defs.some((d) => d.言語 && !langs.has(d.言語))) {
+    for (const c of await readLanguageChoicesFromClassForm(page)) if (!langs.has(c.label)) langs.set(c.label, c.id);
+  }
   const cards = new Map<string, { カード名: string; 詳細ID: string; カードID: string }>();
   for (const d of defs) {
     if (!d.カードセットID) continue;
@@ -108,7 +120,18 @@ export async function 索引の商品を作る(page: Page, defs: 索引の商品
     cards.set(key, { カード名, 詳細ID: r.カード詳細IDs[0], カードID: r.カードID });
   }
   const goodsCat = await readGoodsRootCategoryId(page);
-  const cardCat = defs.some((d) => d.カードセットID) ? (await 単体カード配下のカテゴリID(page)).id : goodsCat;
+  let cardCat = goodsCat;
+  if (defs.some((d) => d.カードセットID)) {
+    if (opts.カードのカテゴリ === "サプライ・グッズ") {
+      issue(`${what}: カードの商品の商品カテゴリ(ID)は、シード表のとおり「サプライ・グッズ」のカテゴリID（${goodsCat}）にした`);
+    } else if (opts.カードのカテゴリ === "グッズCSVが受け付ける") {
+      const c = await グッズCSVが受け付けるカードのカテゴリID(page);
+      cardCat = c.id;
+      issue(`${what}: カードの商品の商品カテゴリ(ID)は、グッズ商品CSV登録が受け付ける範囲（ID 2・4・5 とその子孫）の「${c.名称}」（ID ${c.id}）にした`);
+    } else {
+      cardCat = (await 単体カード配下のカテゴリID(page)).id;
+    }
+  }
   await registerGoodsCsv(page, {
     what: `${what}: グッズ商品CSV登録`, fileName, categoryId: goodsCat,
     common: { "地域別販売制限": "0", "スマレジ連携フラグ": "0", "原価単価": "10" },
@@ -133,6 +156,9 @@ export async function 索引の商品を作る(page: Page, defs: 索引の商品
     if (card) {
       await assignCardOnProductEdit(page, { productId: 商品ID, cardNameJp: card.カード名, cardDetailId: card.詳細ID, productNameJp: d.商品名, productNameEn: d.商品名 }, (m) => issue(`${w}: ${m}`));
     }
+    // 規格の一覧は商品登録編集画面から「規格設定」で開く。カードを指定しない商品は、いま商品マスターの一覧にいるので、先に編集画面を開く
+    await page.goto(adminUrl(`/product/product/${商品ID}/edit`));
+    await page.waitForLoadState("load");
     const rows = await classRowsFromProductEdit(page, 商品ID);
     if (rows.length !== 1) throw new Error(`${w}: 取込直後の商品規格が1件でない: ${JSON.stringify(rows)}`);
     let 規格ID = rows[0].商品規格ID;

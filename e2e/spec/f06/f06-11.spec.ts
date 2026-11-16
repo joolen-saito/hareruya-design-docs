@@ -11,7 +11,7 @@ import { test } from "@playwright/test";
 import { CaseCtx, caseTest, expect } from "../../lib/case";
 import { PurchaseHistoryListPage, PurchaseHistoryPage, ページ送り, ページ送りの位置, 一覧の行 } from "../../pages/front/f06_11_purchase_history";
 import { 買取の保存値 } from "../../db/f06_prep";
-import { mailOf, ページング会員, ページング会員の番号, 並び順005, 品, 読み替えた店舗名 } from "../../seeds/f06-11";
+import { mailOf, 作った番号を引く, ページング会員, ページング会員の番号, 並び順005, 品, 読み替えた店舗名 } from "../../seeds/f06-11";
 import "../../seeds/f06-11-b"; // 取り込みで抜けた登録を戻す: main 側が作り方を登録している seeds を読み込む（二重定義ではない）
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -362,7 +362,7 @@ caseTest("IT-F06-11-016", async ({ page, notes, step, expected }) => {
   const h = new PurchaseHistoryListPage(page);
   await ログインして開く(h, step, { 前半: "content-f0611", パスワード: "F0611PwdContent" });
   let r: 一覧の行 | null = null;
-  await step(3, async () => { r = await h.行を読む(notes.get("〔買取番号-F0611-CONTENT〕")); });
+  await step(3, async () => { r = await h.行を読む(作った番号を引く("〔買取番号-F0611-CONTENT〕")); });
   await expected(async () => {
     note(`依頼内容: 「${r?.依頼内容の文 ?? ""}」（区分の表示: ${r?.依頼内容.map((l) => l.区分).join("、")}）。区分の表示は後ろの「：」の有無を問わずに区分として読んだ`);
     const sel = r?.依頼内容.filter((l) => /^えらんで買取：?$/.test(l.区分)) ?? [];
@@ -381,7 +381,7 @@ caseTest("IT-F06-11-017", async ({ page, notes, step, expected }) => {
   const h = new PurchaseHistoryListPage(page);
   await ログインして開く(h, step, { 前半: "deleted-f0611-017", パスワード: "F0611PwdCase017" });
   let r: 一覧の行 | null = null;
-  await step(3, async () => { r = await h.行を読む(notes.get("〔買取番号-F0611-017〕")); });
+  await step(3, async () => { r = await h.行を読む(作った番号を引く("〔買取番号-F0611-017〕")); });
   await expected(async () => {
     note(`依頼内容: 「${r?.依頼内容の文 ?? ""}」`);
     expect.soft(r?.依頼内容の文 ?? "", "論理削除済みの商品の商品名が依頼内容に表示される").toContain(品("論理削除済み商品-017"));
@@ -391,7 +391,7 @@ caseTest("IT-F06-11-017", async ({ page, notes, step, expected }) => {
 caseTest("IT-F06-11-023", async ({ page, notes, step, expected }) => {
   一覧の範囲の注記();
   const h = new PurchaseHistoryListPage(page);
-  const 番号 = notes.get("〔買取ID-F0611-CONTENT〕");
+  const 番号 = 作った番号を引く("〔買取ID-F0611-CONTENT〕");
   let 前: ReturnType<typeof 買取の保存値> | null = null, 後: ReturnType<typeof 買取の保存値> | null = null;
   await step(1, async () => { 前 = 買取の保存値(番号); });
   await step(2, async () => { await h.ログインする(mailOf("content-f0611"), "F0611PwdContent"); });

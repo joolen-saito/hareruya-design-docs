@@ -14,7 +14,11 @@
  *    DB で設定したこと: 「DBで注文の受注日時・受注状況・注文者・明細の商品と数量を設定した」。
  * 5. カード: 商品のカードは、既存のカード詳細（マスタ。読むだけ）を DB で商品に指定した（同一カード・別カード・Foil）。
  *
- * 作らないシード（理由は 記録 e2e/review/F03-05_progress_2026-11-11.md）: 購入完了（002）・TC大阪支店（009・030・032・034）・状態別の規格（017・019・021）。
+ * 6. TC大阪支店（009・030・032・034。2026-11-13 追加）: 支店の商品公開ステータスはグッズ商品CSV登録の列で入れ、大阪の在庫は
+ *    F03 の索引の部品（pages/admin/f03_index_seed.ts の 店舗に入庫する。本店とTC大阪支店を編集できる F04 の登録者・承認者）で入庫して承認する。
+ *    TC大阪支店（店舗ID 5の既存店舗「トーナメントセンター 大阪」）は参照するだけで、店舗の設定は変えない。
+ *
+ * 作らないシード（理由は 記録 e2e/review/F03-05_progress_2026-11-11.md）: 購入完了（002）・状態別の規格（017・019・021）。
  *
  * 決め打ちの識別の値（商品コード・商品名・メール）には実行ごとの印を付ける（rc。依頼者決定 2026-10-28）。
  */
@@ -38,6 +42,7 @@ import { classRowsFromProductEdit } from "../pages/admin/m03_23_seed_products";
 import { searchStockByCode, stockInRow } from "../pages/admin/m04_02_rc_stock";
 import { loggedInMemberName, registerStockEdit, StockApprovalListPage, StockListPage } from "../pages/admin/stock_edit";
 import { 会員が注文する } from "../pages/front/m05_front_order";
+import { 店舗に入庫する } from "../pages/admin/f03_index_seed";
 import { markedMail, 本会員を作る } from "./f06-member";
 
 // ---- シード表の値を表す型 ----
@@ -48,6 +53,10 @@ type 商品 = {
   price?: number;
   /** 本店・EC-CUBE の在庫（省略すると5。0は入庫しない） */
   stock?: number;
+  /** TC大阪支店・EC-CUBE の在庫（省略・0は入庫しない） */
+  大阪?: number;
+  /** 支店の商品公開ステータス（省略するとCSVの既定のまま） */
+  支店公開?: "公開" | "非公開";
   /** 地域別販売制限: 0=日本語英語両サイト・1=日本語サイト（省略）・2=英語サイト */
   region?: "0" | "1" | "2";
   非公開?: boolean;
@@ -124,6 +133,7 @@ async function createProducts(browser: Browser, seedId: string, defs: 商品[], 
       what: `${seedId} のグッズ商品CSV登録`, fileName: `${seedId}.csv`, categoryId,
       lines: defs.map((d) => ({
         code: rc(d.code), nameJp: rc(d.code), nameEn: d.nameEn ?? rc(d.code), productStatus: d.非公開 ? "非公開" : "公開",
+        ...(d.支店公開 ? { branchStatus: d.支店公開 } : {}),
         values: { "基準価格": String(d.price ?? 100), "販売価格": String(d.price ?? 100), "地域別販売制限": d.region ?? "1" },
       })),
       onWarning: (w) => issue(`グッズ商品CSV登録の警告「${w}」`),
@@ -224,6 +234,7 @@ function define(seedId: string, c: ケース, login?: string): void {
     }
     if (c.商品.length > 0) await createProducts(browser, seedId, c.商品, issue);
     await stockTo(browser, seedId, c.商品.filter((d) => (d.stock ?? 5) > 0).map((d) => ({ code: rc(d.code), qty: d.stock ?? 5 })), issue);
+    await 店舗に入庫する(browser, c.商品.filter((d) => (d.大阪 ?? 0) > 0).map((d) => ({ 商品コード: rc(d.code), 店舗: "大阪" as const, 数: d.大阪! })), `${seedId} のTC大阪支店の在庫`, issue);
     カードを指定する(c.商品, issue);
     for (const o of c.注文) {
       const 明細 = o.明細.map((x) => {
@@ -384,3 +395,50 @@ export function 同時購入の実績を置き換える(受注ラベル: string,
   const n = productOf(新);
   db.明細の商品を置き換える(orderOf(受注ラベル), productOf(旧).productId, { 商品ID: n.productId, 規格ID: n.classId, 商品コード: n.code, 商品名: n.name });
 }
+
+// ---- TC大阪支店（009・030・032・034） ----
+// 店舗ID 5（トーナメントセンター 大阪）は参照だけ。支店の商品公開ステータスはCSVの列、大阪の在庫は在庫編集で入庫して別の管理者が承認する
+
+define("S-F03-05-CASE-009", {
+  商品: [
+    P("BASE-BRANCH-009", { stock: 0, 大阪: 5, 支店公開: "公開" }),
+    P("OSAKA-OK-009", { stock: 0, 大阪: 2, 支店公開: "公開" }),
+    P("OSAKA-HIDDEN-009", { stock: 0, 大阪: 2, 支店公開: "非公開" }),
+    P("OSAKA-NOSTOCK-009", { stock: 5, 大阪: 0, 支店公開: "公開" }),
+  ],
+  注文: [{ ラベル: "009", 日前: 1, 明細: ["BASE-BRANCH-009", "OSAKA-OK-009", "OSAKA-HIDDEN-009", "OSAKA-NOSTOCK-009"] }],
+  注記: "本店在庫は、シード表の購入後の数（OSAKA-NOSTOCK-009 だけ5、ほかは0）で入れた（注文はDBで作るので減らない）",
+});
+
+/** 030・032: 閲覧会員Mは購入履歴なし、会員Pの入金済みの注文（BASE・RECA）と処理中の注文（BASE・RECP） */
+function 大阪の処理中(no: "030" | "032"): ケース {
+  return {
+    会員: [
+      { key: "M", local: `cbf0305-${no}`, password: `Passw0rd-CBF0305${no}` },
+      { key: "P", local: `cbf0305-${no}p`, password: `Passw0rd-CBF0305${no}P` },
+    ],
+    商品: [
+      P(`F0305-CB${no}-BASE`, { 大阪: 5, 支店公開: "公開" }),
+      P(`F0305-CB${no}-RECA`, { 大阪: 2, 支店公開: "公開" }),
+      P(`F0305-CB${no}-RECP`, { 大阪: 2, 支店公開: "公開" }),
+    ],
+    注文: [
+      { ラベル: `${no}A`, 持ち主: "P", 日前: 1, 明細: [`F0305-CB${no}-BASE`, `F0305-CB${no}-RECA`] },
+      { 持ち主: "P", 日前: 1, 状態: "処理中", 明細: [`F0305-CB${no}-BASE`, `F0305-CB${no}-RECP`] },
+    ],
+  };
+}
+define("S-F03-05-CBPROC-030", 大阪の処理中("030"), "M");
+define("S-F03-05-CBPROC-032", 大阪の処理中("032"), "M");
+
+define("S-F03-05-CBMYP-034", {
+  会員: [
+    { key: "M", local: "cbf0305-034", password: "Passw0rd-CBF0305034" },
+    { key: "P", local: "cbf0305-034p", password: "Passw0rd-CBF0305034P" },
+  ],
+  商品: [P("F0305-CB034-BASE", { price: 3000, 大阪: 5, 支店公開: "公開" }), P("F0305-CB034-RECA", { 大阪: 2, 支店公開: "公開" })],
+  注文: [
+    { ラベル: "034A", 持ち主: "M", 日前: 1, 明細: ["F0305-CB034-BASE"] },
+    { ラベル: "034B", 持ち主: "P", 日前: 1, 明細: ["F0305-CB034-BASE", "F0305-CB034-RECA"] },
+  ],
+}, "M");

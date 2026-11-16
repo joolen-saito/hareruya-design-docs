@@ -13,6 +13,8 @@ import { イベントの日程 } from "../../db/m13_03";
 import { M1303_ADMIN } from "../../seeds/m13-03";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
+/** 登録の送信が送られ、応答の画面まで移ったこと（DB を読む・移った先を見る前に、保存の処理が終わっていること） */
+const 送られた = (r: { sent: boolean; 応答: number | null }): void => { expect(r.応答, "登録の送信が送られた（送信の応答がある）").not.toBeNull(); };
 
 /** 受付あり・デッキ登録あり・オンライン受付ありをオフにする（シード表のとおり、条件付きの入力欄は空のまま） */
 const すべてオフ: 日程の入力 = { 受付あり: false, デッキ登録あり: false, オンライン受付あり: false };
@@ -43,7 +45,7 @@ caseTest("IT-M13-03-002", async ({ page, notes, step, expected }) => {
   await step(4, async () => { await s.入力する({ デッキ登録あり: true, デッキ登録を終了する: true, デッキ登録締切: "2026/09/09 23:59" }); });
   await step(5, async () => { await s.入力する({ オンライン受付あり: true, オンライン受付: { 開始: "2026/09/01 09:00", 終了: "2026/09/09 23:00" } }); });
   await step(6, async () => { await s.入力する({ 定員: "64", 参加費: "3000", 公開状態: "公開", 賞品日: "賞品A", 賞品英: "Prize A" }); });
-  await step(7, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(7, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(8, async () => { rows = イベントの日程(id); });
   await expected(async () => {
@@ -76,7 +78,7 @@ caseTest("IT-M13-03-003", async ({ page, notes, step, expected }) => {
     await s.条件付きの欄を空にする();
     await s.入力する({ ...すべてオフ, デッキ登録を終了する: false, 賞品日: "", 賞品英: "" });
   });
-  await step(4, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(4, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(5, async () => { rows = イベントの日程(id); });
   await expected(async () => {
@@ -99,7 +101,7 @@ caseTest("IT-M13-03-004", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await s.入力する({ 開始時間: "2026/09/10 18:00" }); });
   await step(3, async () => { await s.入力する({ 受付あり: true, 受付時間: { 開始: "16:00", 終了: "17:00" } }); });
   await step(4, async () => { await s.入力する({ デッキ登録あり: false, オンライン受付あり: false, 定員: "10", 参加費: "0", 公開状態: "公開" }); });
-  await step(5, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(5, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(6, async () => { rows = イベントの日程(id); });
   await expected(async () => {
@@ -116,7 +118,7 @@ caseTest("IT-M13-03-005", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する(基本の入力); });
   await step(3, async () => { await s.入力する(すべてオフ); });
-  await step(4, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(4, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(5, async () => { rows = イベントの日程(id); });
   await expected(async () => {
@@ -132,7 +134,7 @@ caseTest("IT-M13-03-006", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する(基本の入力); });
   await step(3, async () => { await s.入力する(すべてオフ); });
-  await step(4, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(4, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(5, async () => { rows = イベントの日程(id); });
   await expected(async () => {
@@ -195,7 +197,8 @@ caseTest("IT-M13-03-010", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await expect(s.登録ボタン, "操作ボタンの並ぶ帯").toBeVisible(); });
   await expected(async () => {
     await expect.soft(s.登録ボタン, "登録ボタン").toBeVisible();
-    await expect.soft(s.更新ボタン, "更新ボタン（表示されない）").toHaveCount(0);
+    // 日程の画面の更新の操作は、ボタン名が「保存」（編集画面の送信ボタン。「更新」という名前のボタンは画面に無い）なので、保存ボタンで確かめる
+    await expect.soft(s.保存ボタン, "更新ボタン（編集画面の「保存」ボタン。表示されない）").toHaveCount(0);
     await expect.soft(s.削除ボタン, "削除ボタン（表示されない）").toHaveCount(0);
   });
 });
@@ -207,7 +210,7 @@ caseTest("IT-M13-03-017", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する({ 開始時間: "2026/09/10 18:00", 公開状態: "公開", ...すべてオフ }); });
   await step(3, async () => { await s.入力する({ 定員: "11111111", 参加費: "22222222" }); });
-  await step(4, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(4, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(5, async () => { rows = イベントの日程(id); });
   await expected(async () => {
@@ -224,7 +227,7 @@ caseTest("IT-M13-03-019", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する({ ...基本の入力, ...すべてオフ }); });
   await step(3, async () => { await s.入力する({ 賞品日: "あ".repeat(4096), 賞品英: "A".repeat(4096) }); });
-  await step(4, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(4, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(5, async () => { rows = イベントの日程(id); });
   await expected(async () => {
@@ -243,7 +246,7 @@ caseTest("IT-M13-03-022", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する({ 開始時間: "2026/09/10 18:00", 定員: "1", 参加費: "0", 公開状態: "公開" }); });
   await step(3, async () => { await s.入力する(すべてオフ); });
-  await step(4, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(4, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(5, async () => { rows = イベントの日程(id); });
   await expected(async () => {
@@ -260,7 +263,7 @@ caseTest("IT-M13-03-028", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する({ 開始時間: "", 定員: "12", 参加費: "500", 公開状態: "公開", 賞品日: "保持対象賞品" }); });
   await step(3, async () => { await s.入力する(すべてオフ); });
-  await step(4, async () => { r = await s.押して送信する(s.登録ボタン); });
+  await step(4, async () => { r = await s.押して送信を待つ(s.登録ボタン); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "表示されている画面（日程追加画面）").toBe(`/admin/event/${id}/schedule/create`);
     await expect.soft(s.定員, "定員（保たれる）").toHaveValue("12");
@@ -278,7 +281,7 @@ caseTest("IT-M13-03-029", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する(基本の入力); });
   await step(3, async () => { await s.入力する(すべてオフ); });
-  await step(4, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(4, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "移った先の画面（追加された日程の日程編集画面）").toMatch(new RegExp(`^/admin/event/${id}/schedule/\\d+/edit$`));
   });
@@ -291,7 +294,7 @@ caseTest("IT-M13-03-032", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する({ ...基本の入力, ...すべてオフ }); });
   await step(3, async () => { await s.なりすまし対策トークンを書き換える("invalid-token"); });
-  await step(4, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(4, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(5, async () => { rows = イベントの日程(id); });
   await expected(async () => {
@@ -306,7 +309,7 @@ caseTest("IT-M13-03-048", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する({ 開始時間: "2026/09/10 18:00", 公開状態: "公開", ...すべてオフ }); });
   await step(3, async () => { await s.入力する({ 定員: "99999999", 参加費: "0" }); });
-  await step(4, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(4, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(5, async () => { rows = イベントの日程(id); });
   await expected(async () => {
@@ -322,7 +325,7 @@ caseTest("IT-M13-03-050", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する({ 開始時間: "2026/09/10 18:00", 公開状態: "公開", ...すべてオフ }); });
   await step(3, async () => { await s.入力する({ 定員: "10", 参加費: "99999999" }); });
-  await step(4, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(4, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(5, async () => { rows = イベントの日程(id); });
   await expected(async () => {
@@ -335,7 +338,7 @@ caseTest("IT-M13-03-052", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1303_ADMIN);
   const s = new ScheduleFormPage(page);
   await step(1, async () => { await s.日程追加画面を開く(notes.get("〔イベントID-M1303-052〕")); });
-  await step(2, async () => { await expect(s.賞品日, "賞品（日）の欄").toBeVisible(); });
+  await step(2, async () => { await expect(s.賞品日, "賞品（日）の欄").toBeVisible(); await s.賞品英.scrollIntoViewIfNeeded(); await s.賞品英.evaluate((e) => e.scrollIntoView({ block: "center" })); });
   await expected(async () => {
     await expect.soft(s.賞品日, "賞品（日）の初期表示").toHaveValue("M1303-052賞品日");
     await expect.soft(s.賞品英, "賞品（英）の初期表示").toHaveValue("M1303-052-PRIZE-EN");
@@ -382,7 +385,7 @@ caseTest("IT-M13-03-059", async ({ page, notes, step, expected }) => {
   const s = new ScheduleFormPage(page);
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する({ 開始時間: "2026/09/11 18:00", 定員: "10", 参加費: "0", 公開状態: "公開", ...すべてオフ }); });
-  await step(3, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(3, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(4, async () => { rows = イベントの日程(id); });
   await expected(async () => {
@@ -398,10 +401,10 @@ caseTest("IT-M13-03-060", async ({ page, notes, step, expected }) => {
   const 入力: 日程の入力 = { 開始時間: "2026/09/12 18:00", 定員: "10", 参加費: "0", 公開状態: "公開", ...すべてオフ };
   await step(1, async () => { await s.日程追加画面を開く(id); });
   await step(2, async () => { await s.入力する(入力); });
-  await step(3, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(3, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   await step(4, async () => { await s.日程追加画面を開く(id); });
   await step(5, async () => { await s.入力する(入力); });
-  await step(6, async () => { await s.押して送信する(s.登録ボタン); });
+  await step(6, async () => { 送られた(await s.押して送信を待つ(s.登録ボタン)); });
   let rows: ReturnType<typeof イベントの日程> = [];
   await step(7, async () => { rows = イベントの日程(id); });
   await expected(async () => {

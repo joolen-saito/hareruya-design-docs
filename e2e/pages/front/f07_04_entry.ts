@@ -101,6 +101,25 @@ export class EventEntryPage {
     const origin = new URL(BASE_URL).origin;
     await this.page.route((u) => u.origin !== origin, (r) => (r.request().isNavigationRequest() ? r.abort() : r.continue()));
   }
+  /**
+   * 外部の決済サイトへの移動を止め、止めた所に「試験のため移動を止めた」ことと行き先（サイトのアドレスと道筋だけ。問い合わせの値は出さない）を出す（足した部品）。
+   * 外部へは送らない。止めた画面がブラウザのエラーの白い画面にならず、エビデンスで、外部の決済サイトへ移ろうとしたことが読めるようにする
+   */
+  async 外部への移動を止めて行き先を出す(): Promise<void> {
+    const origin = new URL(BASE_URL).origin;
+    await this.page.route((u) => u.origin !== origin, async (r) => {
+      if (!r.request().isNavigationRequest()) return r.continue();
+      const u = new URL(r.request().url());
+      const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);
+      await r.fulfill({
+        status: 200, contentType: "text/html; charset=utf-8",
+        body: `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>試験のため外部の決済サイトへの移動を止めました</title></head>`
+          + `<body style="font-family:sans-serif;padding:48px;line-height:1.8"><h1 style="font-size:22px">試験のため、外部の決済サイトへの移動をここで止めました</h1>`
+          + `<p>「申込する」のあと、画面は外部の決済サイトへ移ろうとしました（試験では決済サイトへ送りません）。この画面は試験の道具が出したもので、アプリの画面ではありません。</p>`
+          + `<p>移ろうとした先: ${esc(u.origin + u.pathname)}（${esc(r.request().method())}）</p></body></html>`,
+      });
+    });
+  }
 
   // ---- 申込確定画面の表示 ----
   get 確定画面の日程カード(): Locator { return this.page.locator(".p-hareruya-event-confirm__event-list .c-hareruya-event-card"); }
@@ -128,6 +147,8 @@ export class EventEntryPage {
    * 申込登録の応答を待ち受ける（ネットワークの記録を始める）。押したあとに await する。
    * 応答の本文は、完了画面へ移ってしまうと読めなくなるので、応答が届いた時点で読む。
    */
+  /** 申込登録の応答を待ち受ける と同じ。名前に Response を含むので、エビデンスの帯が確かめた値の出どころを「HTTP の応答」と書ける（lib/annotate_text.ts） */
+  申込登録のResponseを待ち受ける(): Promise<{ status: number; json: Record<string, unknown> | null }> { return this.申込登録の応答を待ち受ける(); }
   申込登録の応答を待ち受ける(): Promise<{ status: number; json: Record<string, unknown> | null }> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => { this.page.off("response", h); reject(new Error("申込登録の応答が60秒待っても届かない")); }, 60_000);
@@ -168,8 +189,8 @@ export async function 無料申込を完了する(page: Page, 日程ID: string):
   const e = new EventEntryPage(page);
   await e.申込確認を開く(日程ID);
   await e.同意して支払いへ進む();
-  expect(await e.申込確定画面か(), "申込確定画面へ進んだ").toBe(true);
+  expect(await e.申込確定画面か(), "別のブラウザで申込確定画面へ進んだ").toBe(true);
   const r = await e.申込するを押す();
-  expect(r.status, "申込登録の応答").toBeLessThan(400);
+  expect(r.status, "別のブラウザでの申込登録の応答").toBeLessThan(400);
   await e.申込完了画面を待つ();
 }

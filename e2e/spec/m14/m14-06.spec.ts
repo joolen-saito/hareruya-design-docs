@@ -38,7 +38,7 @@ caseTest("IT-M14-06-001", async ({ page, step, expected }) => {
 caseTest("IT-M14-06-006", async ({ page, step, expected }) => {
   await loginAdmin(page, M1406_ADMIN);
   await step(1, async () => { await 一覧を開く(page); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("a.btn").filter({ hasText: /^\s*新規登録\s*$/ }).first().click({ timeout: 20_000 })]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("a.btn").filter({ hasText: /^\s*新規登録\s*$/ }).first().click({ timeout: 20_000, noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname.endsWith("/cardset/new"), "遷移先がカードセット詳細(登録)画面").toBe(true);
     await expect.soft(page.locator("#admin_cardset_nameJp"), "カードセット名(日本語)の入力欄").toBeVisible();
@@ -48,7 +48,7 @@ caseTest("IT-M14-06-006", async ({ page, step, expected }) => {
 caseTest("IT-M14-06-007", async ({ page, step, expected }) => {
   await loginAdmin(page, M1406_ADMIN);
   await step(1, async () => { await 一覧を開く(page); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("a.btn").filter({ hasText: /ブロックの追加/ }).first().click({ timeout: 20_000 })]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("a.btn").filter({ hasText: /ブロックの追加/ }).first().click({ timeout: 20_000, noWaitAfter: true })]); });
   await expected(async () => {
     const u = new URL(page.url());
     expect.soft(u.pathname.endsWith("/data/mtg_master_data"), "遷移先がMTGマスターデータ画面").toBe(true);
@@ -97,7 +97,7 @@ async function 探す(L: CardsetListPage, 行: () => Locator, 方向: "先頭か
   return n;
 }
 
-caseTest("IT-M14-06-002", async ({ page, notes, step, expected }) => {
+caseTest("IT-M14-06-002", async ({ page, notes, step, expected, capture }) => {
   await loginAdmin(page, M1406_ADMIN);
   const L = new CardsetListPage(page);
   const ids = ["A", "B", "C", "D"].map((s) => notes.get(`〔カードセットID-M1406-002${s}〕`));
@@ -117,6 +117,9 @@ caseTest("IT-M14-06-002", async ({ page, notes, step, expected }) => {
         名: (await td.nth(4).innerText()).split("\n").map((t) => t.trim()).filter(Boolean),
       };
       結果.push({ id, db: カードセットの値(id), 表示 });
+      // 4件はページが違うことがあるので、行ごとに、その行が載ったページを画像に残す（この行だけに赤い枠を付ける）
+      await expect.soft(L.行(id), `カードセット ${id}（略称 ${表示.略称}）の行`).toBeVisible();
+      await capture(`カードセット ${id} の行（${await L.現在のページ番号()}ページ目）`);
     }
   });
   await expected(async () => {
@@ -148,25 +151,33 @@ caseTest("IT-M14-06-003", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await L.open(); });
   await step(2, async () => { note(共有の一覧の注記 + "（探しやすいよう、はじめに表示件数を100件にした）"); r = await 特殊セットの欄(page, notes, "〔カードセットID-M1406-003〕", true); });
   await expected(async () => {
-    expect.soft(r.行, "特殊セットのカードセットの行").toBe(1);
-    expect.soft(r.アイコン, "特殊セット欄のアイコン").toBeGreaterThan(0);
+    const id = notes.get("〔カードセットID-M1406-003〕");
+    await expect.soft(L.行(id), "特殊セットのカードセットの行").toHaveCount(1);
+    await expect.soft(L.行(id).locator("td i.fa-tag").first(), "特殊セット欄のアイコン").toBeVisible();
+    expect.soft(r.アイコン > 0, `特殊セット欄のアイコン（${r.アイコン}個）`).toBe(true);
   });
 });
 
-caseTest("IT-M14-06-042", async ({ page, notes, step, expected }) => {
+caseTest("IT-M14-06-042", async ({ page, notes, step, expected, capture }) => {
   await loginAdmin(page, M1406_ADMIN);
   const L = new CardsetListPage(page);
   let a = { 行: 0, アイコン: 0 }, b = { 行: 0, アイコン: 0 };
   await step(1, async () => { await L.open(); });
   await step(2, async () => {
     note(共有の一覧の注記 + "（探しやすいよう、はじめに表示件数を100件にした）。特殊セットの比較のため、フラグを真にした側の行も見た");
+    const idA = notes.get("〔カードセットID-M1406-042A〕"), idB = notes.get("〔カードセットID-M1406-042B〕");
     a = await 特殊セットの欄(page, notes, "〔カードセットID-M1406-042A〕", true);
+    // 比較用の、フラグを真にした側（A）の行は、そのページを画像に残す（Bの行とページが違うため）
+    await expect.soft(L.行(idA).locator("td i.fa-tag").first(), "特殊セットフラグを真にした側（比較用）の行の特殊セット欄のアイコン").toBeVisible();
+    await capture(`比較用：特殊セットフラグを真にした側の行（カードセット ${idA}）`);
     b = await 特殊セットの欄(page, notes, "〔カードセットID-M1406-042B〕", false);
+    void idB;
   });
   await expected(async () => {
-    expect.soft(a.アイコン, "特殊セットフラグを真にした側の行のアイコン（比較用）").toBeGreaterThan(0);
-    expect.soft(b.行, "特殊セットフラグが設定されていないカードセットの行").toBe(1);
-    expect.soft(b.アイコン, "特殊セットフラグが設定されていないカードセットの特殊セット欄のアイコン").toBe(0);
+    const idB = notes.get("〔カードセットID-M1406-042B〕");
+    expect.soft(a.アイコン > 0, `特殊セットフラグを真にした側の行のアイコン（比較用。${a.アイコン}個）`).toBe(true);
+    await expect.soft(L.行(idB), "特殊セットフラグが設定されていないカードセットの行").toHaveCount(1);
+    await expect.soft(L.行(idB).locator("td i.fa-tag"), "特殊セットフラグが設定されていないカードセットの特殊セット欄のアイコンが無い").toHaveCount(0);
   });
 });
 
@@ -198,7 +209,7 @@ caseTest("IT-M14-06-009", async ({ page, notes, step, expected }) => {
     await 探す(L, () => L.行(id), "先頭から", `カードセット ${id}`);
     await L.操作を開く(L.行(id));
   });
-  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), L.編集(L.行(id)).click({ timeout: 20_000 })]); });
+  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), L.編集(L.行(id)).click({ timeout: 20_000, noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname.endsWith(`/cardset/${id}/edit`), "遷移先がそのカードセットの詳細(編集・削除)画面").toBe(true);
     await expect.soft(page.locator("#admin_cardset_nameJp"), "カードセット名(日本語)の入力欄").toBeVisible();
@@ -223,13 +234,13 @@ caseTest("IT-M14-06-010", async ({ page, notes, step, expected }) => {
   });
 });
 
-caseTest("IT-M14-06-012", async ({ page, step, expected }) => {
+caseTest("IT-M14-06-012", async ({ page, step, expected, capture }) => {
   await loginAdmin(page, M1406_ADMIN);
   const L = new CardsetListPage(page);
   const 名 = ["Alpha-012", "Bravo-012", "Charlie-012", "Delta-012"].map((n) => rc(n));
   const 並び選択: { 表示: string; 読み込み: boolean; 並び: string[] }[] = [];
   /** 4件の行を一覧のページをたどって集め、現れた順に並べる */
-  async function 並びを読む(): Promise<string[]> {
+  async function 並びを読む(表示: string): Promise<string[]> {
     const found: { 名: string; 位置: number }[] = [];
     await L.ページを開く(1);
     const total = await L.総ページ数();
@@ -237,6 +248,10 @@ caseTest("IT-M14-06-012", async ({ page, step, expected }) => {
       if (n > 1) await L.ページを開く(n);
       const rows = await L.行すべて.allInnerTexts();
       rows.forEach((t, i) => { for (const x of 名) if (t.includes(x) && !found.some((f) => f.名 === x)) found.push({ 名: x, 位置: n * 1000 + i }); });
+      // 並び順ごとに、4件の行が載ったページを画像に残す（4件のうちこのページにある行だけに赤い枠を付ける）
+      const ここ = 名.filter((x) => rows.some((t) => t.includes(x)));
+      for (const x of ここ) await expect.soft(L.行すべて.filter({ hasText: x }).first(), `並び順「${表示}」の${n}ページ目の行「${x.replace(/-[0-9A-Z]+$/, "")}」`).toBeVisible();
+      if (ここ.length) await capture(`並び順「${表示}」の${n}ページ目（4件のうち ${ここ.map((x) => x.replace(/-[0-9A-Z]+$/, "")).join("・")}）`);
     }
     return found.sort((p, q) => p.位置 - q.位置).map((f) => f.名);
   }
@@ -247,7 +262,7 @@ caseTest("IT-M14-06-012", async ({ page, step, expected }) => {
     for (const 表示 of ["リリース日（降順）", "リリース日（昇順）", "セット英名（降順）", "セット英名（昇順）"]) {
       const 読み込み = await L.並び順を選ぶ(表示);
       await expect(L.並び順欄.locator("option:checked"), `選んだ並び順「${表示}」`).toHaveText(new RegExp(表示.replace(/[（）]/g, "\\$&")));
-      並び選択.push({ 表示, 読み込み, 並び: await 並びを読む() });
+      並び選択.push({ 表示, 読み込み, 並び: await 並びを読む(表示) });
     }
   });
   await expected(async () => {
@@ -465,8 +480,10 @@ function 二つのセットを選ぶ(n: string): CaseBody {
       expect.soft(r.順, `一覧の並びが SET-A-${n}, SET-B-${n} の順`).toBe(true);
       expect.soft(r.ダウンロード, "ZIPファイルがダウンロードされた").toBe(false);
       expect.soft(r.エラー.length, "エラーメッセージの数").toBeGreaterThan(0);
+      // 033 も、ZIP が出ない理由が SET-B のカード0件であることを確かめる（SET-A の画像は取得できない画像への読み替えなので、
+      // 「画像が無い」のエラーでも ZIP は出ない。それでは正本の「SET-A の画像があっても出ない」を確かめたことにならない）
+      expect.soft(r.エラー.join(" "), `SET-B-${n} にカードがない旨のエラーメッセージ`).toContain("カードがありません");
       if (n === "034") {
-        expect.soft(r.エラー.join(" "), "カードがない旨のエラーメッセージ").toContain("カードがありません");
         expect.soft(r.前, "押す前に表示していたページ（2ページ目以降）").toBeGreaterThanOrEqual(2);
         expect.soft(r.後, "エラー後に戻ったページ（保持していたページ）").toBe(r.前);
       }
@@ -485,7 +502,8 @@ caseTest("IT-M14-06-036", async ({ page, step, expected }) => {
   let 後: boolean[] = [];
   await step(1, async () => { await L.open(); });
   await step(2, async () => {
-    note(画像の注記 + "。正本は3件のカード詳細のうち2件が取得可能な画像だが、取得可能な画像は用意できないので、実体の無い画像1件のカード詳細だけにした");
+    note(画像の注記 + "。正本の前提は、3件のカード詳細のうち2件（6101036・6102036）が取得できる画像、1件（6105036）が実体の無い画像という混在。取得できる画像の実体は、画面からは置けない（オブジェクトストレージへ直接置く必要がある）ので、この前提は作れない");
+    throw new Error("正本の前提（取得できる画像2件と実体の無い画像1件の混在）を画面から用意できない。実体の無い画像だけでは、ダウンロードできる画像が1件も無い経路（全件取得失敗のエラー）になり、正本の「ZIPを返しながら取得できなかった画像だけデッドリンクを真にする」経路を通らないので、確かめずに未判定で止めた（共有のマスタに印の無いデータは足さない）");
     await L.件数を選ぶ(100);
     await 探す(L, () => L.略称の行(code), "先頭から", "SET-A-036");
     await L.略称の行(code).locator('input[name="cardsetIds[]"]').check();

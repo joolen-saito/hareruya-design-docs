@@ -12,7 +12,7 @@ import { devices, test } from "@playwright/test";
 import { caseTest, expect } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { NetBuyDetailPage } from "../../pages/front/f05_04_net_detail";
-import { F0504カテゴリ, F0504サプライの階層 } from "../../seeds/f05-04";
+import { F0504サプライの階層, F0504最上位カテゴリ002 } from "../../seeds/f05-04";
 
 const { userAgent, viewport, deviceScaleFactor, isMobile, hasTouch } = devices["iPhone 13"];
 test.use({ userAgent, viewport, deviceScaleFactor, isMobile, hasTouch });
@@ -40,10 +40,10 @@ caseTest("IT-F05-04-002", async ({ page, notes, step, expected }) => {
   });
   await expected(async () => {
     const b = await パンくずを読む(d);
-    note(`パンくずの並び: ${b.全体.join(" ＞ ")}。カテゴリ「タルキール：龍嵐録」は、シングルカード配下の実行の印つきのカテゴリに代えた。画面は最上位のカテゴリ（シングルカード）と、現在のページの項目（商品名）も出す`);
+    note(`パンくずの並び: ${b.全体.join(" ＞ ")}。カテゴリ「タルキール：龍嵐録」は、最上位に作った実行の印つきのカテゴリ「${rc(F0504最上位カテゴリ002)}」に代えた。画面は現在のページの項目（商品名）も出す`);
     expect.soft(b.先頭はホーム, "パンくずの先頭がホームアイコン").toBe(true);
     expect.soft(b.ホームの数, "ホームアイコンの数").toBe(1);
-    expect.soft(b.カテゴリ, "ホームと現在のページの項目の間のカテゴリ（最上位から商品のカテゴリまで）").toEqual(["シングルカード", rc(F0504カテゴリ.単体)]);
+    expect.soft(b.カテゴリ, "ホームと現在のページの項目の間のカテゴリ（カテゴリ「タルキール：龍嵐録」だけ）").toEqual([rc(F0504最上位カテゴリ002)]);
     expect.soft(b.現在, "現在のページの項目").toEqual([rc("F0504-CARD-001-002")]);
   });
 });
@@ -55,6 +55,7 @@ caseTest("IT-F05-04-003", async ({ page, notes, step, expected }) => {
     expect(await d.開く(notes.get("〔商品ID-F0504-003〕")), "ネット買取商品詳細（SP版）の応答").toBeLessThan(400);
     await expect(d.商品名, "ネット買取商品詳細の商品名の見出し").toBeVisible();
   });
+  await d.パンくずを折り返して全部見せる();
   await expected(async () => {
     const b = await パンくずを読む(d);
     note(`パンくずの並び: ${b.全体.join(" ＞ ")}。「スリーブ」「KMC」は、サプライ・グッズの下の実行の印つきのカテゴリに代えた。画面は現在のページの項目（商品名）も出す`);

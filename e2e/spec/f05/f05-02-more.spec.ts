@@ -16,7 +16,7 @@ const note = (m: string) => { test.info().annotations.push({ type: "手順の注
 async function 一覧を開く(s: PurchaseSearchPage): Promise<void> {
   expect(await s.開く(), "ネット買取商品一覧の応答").toBeLessThan(400);
   await expect(s.一覧の印, "ネット買取商品一覧の画面").toHaveCount(1);
-  expect(await s.モーダルが開いている(), "開始時にネット買取商品検索モーダルが閉じている").toBe(false);
+  expect(!(await s.モーダルが開いている()), "開始時にネット買取商品検索モーダルが閉じている").toBe(true);
 }
 
 async function 詳細検索を押す(s: PurchaseSearchPage): Promise<void> {

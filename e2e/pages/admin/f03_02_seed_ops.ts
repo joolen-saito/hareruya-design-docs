@@ -11,7 +11,7 @@
  */
 import { Browser, expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../../config/env";
-import { 在庫承認の最大ID } from "../../db/f03_08";
+import { 在庫承認の最大ID, 商品コードの未承認の在庫編集の行ID } from "../../db/f03_08";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { adminUrl, withAdminSession } from "../../lib/session";
 import { CategoryPage } from "./category";
@@ -21,8 +21,9 @@ import { searchStockByCode, stockInRow } from "./m04_02_rc_stock";
 import { CsvUploadPage } from "./m03_26_card_csv_upload";
 import { downloadedBytes } from "./m03_21_shelf_number";
 import { classRowsFromProductEdit, 商品規格の行 } from "./m03_23_seed_products";
+import { 登録済みの割引率ID } from "./f05_04_products";
 import { ProductSearchPage } from "./product_search";
-import { loggedInMemberName, registerStockEdit, StockApprovalListPage, StockListPage } from "./stock_edit";
+import { approveAndSettle, loggedInMemberName, registerStockEdit, StockApprovalListPage, StockListPage } from "./stock_edit";
 
 export type Issue = (m: string) => void;
 
@@ -102,8 +103,8 @@ export async function カードを登録する(page: Page, v: カードの定義
   await det.locator('select[name$="[frameFlg]"]').selectOption({ label: "通常" });
   issue(`${what}: 詳細情報の ${chosen.join("・")}・Foil「${v.Foil ?? "なし"}」・フレーム「通常」を選んだ（正本: 試験環境にある値）。コレクターNoは ${v.コレクターNo}`);
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: カードの登録`)) issue(`${what}: 警告「${w}」`);
   const m = /\/card\/(\d+)\/edit/.exec(page.url());
@@ -129,19 +130,12 @@ export async function 言語IDの一覧(page: Page): Promise<Map<string, string>
 }
 
 /**
- * 割引率の選択肢の先頭（値＝割引率ID と表示名）。商品登録編集画面の割引率の欄から読む（保存はしない）。
- * 画面を開くために、商品マスターの検索結果の先頭の商品を使う。
+ * 割引率の選択肢の先頭（値＝割引率ID と表示名）。F05-04 の 登録済みの割引率ID と同じ読み方（既存の商品の編集画面を商品IDで直接開く。保存はしない）。
+ * 商品登録画面（新規）は権限で閉じられていて 404 を返し、商品マスターを初期条件のまま検索すると開発環境では応答しないので、どちらも使わない。
  */
 export async function 割引率の先頭(page: Page): Promise<{ value: string; label: string }> {
-  const search = new ProductSearchPage(page);
-  await search.open();
-  await search.submitAndWaitForResult();
-  const first = page.locator('tr[id^="ex-product-"]').first();
-  await expect(first, "商品マスター(検索結果)に商品が1件以上ある").toHaveCount(1);
-  const id = ((await first.getAttribute("id")) ?? "").replace("ex-product-", "");
-  await page.goto(adminUrl(`/product/product/${id}/edit`));
-  await page.waitForLoadState("load");
-  return firstOption(page, 'form#form1 select[name="admin_product[Discount]"]', "割引率");
+  const d = await 登録済みの割引率ID(page);
+  return { value: d.id, label: d.名称 };
 }
 
 // ---------------------------------------------------------------------------
@@ -273,8 +267,8 @@ async function 部門を選ぶ(page: Page, what: string, issue: Issue): Promise<
 
 async function 商品規格を登録を押す(page: Page, what: string, issue: Issue): Promise<void> {
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    page.getByRole("button", { name: "商品規格を登録", exact: true }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: 商品規格の登録`)) issue(`${what}: 警告「${w}」`);
 }
@@ -308,7 +302,7 @@ export async function 規格を削除する(page: Page, productId: string, class
   await page.getByRole("link", { name: "商品規格を削除" }).click();
   const modal = page.locator("#deleteConfirmModal");
   await expect(modal, `${what}: 削除の確認`).toBeVisible();
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), modal.locator('a[data-method="delete"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), modal.locator('a[data-method="delete"]').click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品規格の削除`)) issue(`${what}: 警告「${w}」`);
 }
 
@@ -374,10 +368,13 @@ export async function 入庫して承認する(browser: Browser, items: { 商品
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const list = new StockApprovalListPage(page);
     await list.open(shop);
-    const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registeredBy && r.shop.startsWith(shop)
-      && r.changeType.endsWith("入庫/その他") && Number(r.id) > baseline);
+    // 登録者（E2E の決まった管理者）は、並行して動く別の流しのシードと同じ。自分が登録した商品コードの行をDBで引いて、その行だけを承認する
+    // （登録者・店舗・区分で絞ると、別の流しの行が混じり「未承認の行が 3 件（1 件のはず）」で止まった。2026-11-14 F03-02-115）
+    const mine = new Set(商品コードの未承認の在庫編集の行ID(items.map((i) => i.商品コード), baseline));
+    const rows = (await list.rowValues()).filter((r) => mine.has(r.id) && r.status === "未承認" && r.registrant === registeredBy && r.shop.startsWith(shop)
+      && r.changeType.endsWith("入庫/その他"));
     if (rows.length !== items.length) throw new Error(`${what}: 在庫編集の未承認の行が ${rows.length} 件（${items.length} 件のはず）`);
-    await list.approve(rows.map((r) => r.id), `${what}: 在庫編集の一括承認（${items.length}件）`, issue);
+    await approveAndSettle(list,rows.map((r) => r.id), `${what}: 在庫編集の一括承認（${items.length}件）`, issue);
     for (const it of items) {
       const after = await searchStockByCode(page, { 商品コード: it.商品コード, 店舗: shop, 在庫区分: "EC-CUBE" });
       const n = await stockInRow(after.row(it.商品コード, shop, "EC-CUBE"));
@@ -423,8 +420,8 @@ export async function 商品を登録する(page: Page, productId: string, v: { 
   }
   await expect(form.locator('input[type="radio"][name="admin_product[RegionRestriction]"]:checked'), `${what}: 販売制限が選ばれている`).toHaveCount(1);
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: 商品ID ${productId} の「商品を登録」`)) issue(`${what}: 警告「${w}」`);
 }

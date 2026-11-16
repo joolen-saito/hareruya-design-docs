@@ -10,6 +10,7 @@
  *
  * 画面の作り（アプリの Purchase/detail.twig で確かめた）:
  * - 言語・商品クラスはアドレスの lang（言語のコード JP・EN）・class（商品規格ID）で指定する。正本の「言語EN」「商品クラスEN-EX」はそれに当てた。
+ * - 正本の状態「EX」は、アプリの状態のマスタ（NM・SP・MP・HP・OT）に無いので SP に読み替える（シードの注記に出る）。
  * - 価格の表は、言語ごとにその言語の先頭の商品規格の1行だけを出す。
  * - 金額は「1,200」のように桁区切りで出る。
  * ネット買取カートはブラウザのセッションに持つ（ログインは要らない）。ケースごとに新しいブラウザで始まるので、開始時のカートは空。
@@ -17,7 +18,7 @@
 import { Page, test } from "@playwright/test";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
-import { NetBuyCartPage, NetBuyDetailPage, カテゴリ一覧の構成, カテゴリ一覧の構成を読む, カテゴリ一覧の描画を待つ, 販売側の商品一覧を開く } from "../../pages/front/f05_04_net_detail";
+import { NetBuyCartPage, NetBuyDetailPage, カテゴリ一覧の全体, カテゴリ一覧の全体を読む, カテゴリ一覧の描画を待つ, 販売側の商品一覧を開く } from "../../pages/front/f05_04_net_detail";
 import { F0504カテゴリ, f0504カートのCookie, f0504商品 } from "../../seeds/f05-04";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -30,6 +31,15 @@ async function 詳細を開く(page: Page, 商品ID: string, 指定?: { 言語?:
   expect(status, `商品ID ${商品ID} のネット買取商品詳細の応答`).toBeLessThan(400);
   await expect(d.商品名, "ネット買取商品詳細の商品名の見出し").toBeVisible();
   return d;
+}
+
+/**
+ * 正本の手順「ネット買取カート画面を開く」。開いたときに出る「ご案内」のモーダル（まとめて買取の案内）は明細の行を覆うので、閉じてから確かめる
+ * （閉じる操作は正本の外の補い。カートの中身は変えない）
+ */
+async function カートを開く(cart: NetBuyCartPage): Promise<void> {
+  await cart.開く();
+  if (await cart.ご案内を閉じる()) note("ネット買取カートを開いたときに出た「ご案内」のモーダル（まとめて買取の案内）は、明細の行を覆うので「閉じる」で閉じてから確かめた（正本の外の補い）");
 }
 
 /** 開始時のネット買取カートが空であること（新しいブラウザで始める） */
@@ -53,16 +63,27 @@ caseTest("IT-F05-04-007", async ({ page, notes, step, expected }) => {
     言語切替: await d.言語切替.count(), 状態: await d.状態の列.count(), 他のバージョン: await d.他のバージョンボタン.count(),
     査定例: await d.査定例はこちら.count(), カード説明: await d.カード説明.count(),
   });
+  // カード商品の側は「表示されている」ことを確かめるので、見えている要素だけを数える（count() は見えない要素も数える）。
+  // サプライ商品の側は「表示されない」ことなので、見えない要素も含めて数える（今までどおり）
+  const 見えている数 = async (l: import("@playwright/test").Locator) => (await l.all()).length === 0 ? 0
+    : (await Promise.all((await l.all()).map((e) => e.isVisible().catch(() => false)))).filter(Boolean).length;
+  const 見えているものを見る = async (d: NetBuyDetailPage) => ({
+    言語切替: await 見えている数(d.言語切替), 状態: await 見えている数(d.状態の列), 他のバージョン: await 見えている数(d.他のバージョンボタン),
+    査定例: await 見えている数(d.査定例はこちら), カード説明: await 見えている数(d.カード説明),
+  });
   let カード!: Awaited<ReturnType<typeof 見る>>;
   let サプライ!: Awaited<ReturnType<typeof 見る>>;
-  await step(1, async () => { const d = await 詳細を開く(page, notes.get("〔商品ID-F0504-007A〕")); カード = await 見る(d); });
+  // カード商品の側の確かめは、カード商品の画面を撮る手順1の中で行う（サプライ商品の画面の帯にカードの項目が並ばないように）
+  await step(1, async () => {
+    const d = await 詳細を開く(page, notes.get("〔商品ID-F0504-007A〕")); カード = await 見えているものを見る(d);
+    expect.soft(カード.言語切替, "カード商品の言語切替のボタンの数（見えているもの）").toBeGreaterThan(0);
+    expect.soft(カード.状態, "カード商品の状態の列の数（見えているもの）").toBeGreaterThan(0);
+    expect.soft(カード.他のバージョン, "カード商品の「他のバージョン」の数（見えているもの）").toBeGreaterThan(0);
+    expect.soft(カード.査定例, "カード商品の「査定例はこちら」の数（見えているもの）").toBeGreaterThan(0);
+    expect.soft(カード.カード説明, "カード商品のカード説明の数（見えているもの）").toBeGreaterThan(0);
+  });
   await step(2, async () => { const d = await 詳細を開く(page, notes.get("〔商品ID-F0504-007B〕")); サプライ = await 見る(d); });
   await expected(async () => {
-    expect.soft(カード.言語切替, "カード商品の言語切替のボタンの数").toBeGreaterThan(0);
-    expect.soft(カード.状態, "カード商品の状態の列の数").toBeGreaterThan(0);
-    expect.soft(カード.他のバージョン, "カード商品の「他のバージョン」の数").toBeGreaterThan(0);
-    expect.soft(カード.査定例, "カード商品の「査定例はこちら」の数").toBeGreaterThan(0);
-    expect.soft(カード.カード説明, "カード商品のカード説明の数").toBeGreaterThan(0);
     expect.soft(サプライ.言語切替, "サプライ商品の言語切替のボタンの数").toBe(0);
     expect.soft(サプライ.状態, "サプライ商品の状態の列の数").toBe(0);
     expect.soft(サプライ.他のバージョン, "サプライ商品の「他のバージョン」の数").toBe(0);
@@ -248,9 +269,10 @@ function カートへ追加して確かめる(id: string, label: string, プラ�
     await step(1, async () => { d = await 詳細を開く(page, 商品ID); });
     await step(2, async () => { await d.プラスを押す(プラス); note(`プラスを${プラス}回押したあとの商品数: ${await d.数量.inputValue()}`); });
     await step(3, async () => { const r = await d.カートに追加を押す(); note(`「カートに追加」の応答 ${r.応答}・知らせ「${r.知らせ}」`); });
-    await step(4, async () => { await cart.開く(); });
+    await step(4, async () => { await カートを開く(cart); });
     await expected(async () => {
-      expect(await cart.数量(商品ID), `ネット買取カートの商品ID ${商品ID} の行の商品数（${id}）`).toEqual([期待の数量]);
+      await expect.soft(cart.行(商品ID), `ネット買取カートの商品ID ${商品ID} の行が1行であること`).toHaveCount(1);
+      await expect.soft(cart.数量欄(商品ID), `ネット買取カートの商品ID ${商品ID} の行の商品数（${id}）`).toHaveValue(期待の数量);
     });
   };
 }
@@ -258,6 +280,14 @@ caseTest("IT-F05-04-035", カートへ追加して確かめる("035", "〔商品
 caseTest("IT-F05-04-036", カートへ追加して確かめる("036", "〔商品ID-F0504-036〕", 19, "20"));
 
 // ---- 037（上限超過と規格の指定なし） ----
+// 正本の期待結果「手順2では上限超過のダイアログ、手順3では『カートに追加』付近の追加失敗の通知」は、表示の形と位置も確かめる。
+// - 上限超過のダイアログ: ブラウザのダイアログ、または画面の上に開いたダイアログ（モーダル）に上限超過の文が出ること（設計 0305 F05-04 の画面のふるまい
+//   「上限超過のダイアログを表示する」、F05-05 の表示メッセージ F05-05-MSG-001「ブラウザダイアログまたはモーダル内」）。
+// - 「カートに追加」付近の追加失敗の通知: 追加失敗の文の知らせが、押した「カートに追加」ボタンの付近に出ること（設計 0305 F05-04「押した『カートに追加』の付近に
+//   追加失敗を通知する」）。付近は、知らせとボタンの間が画面の上で縦・横とも 付近の幅 ピクセル以内とした。
+const 付近の幅 = 100;
+const 上限超過の文 = "同一商品をカートに追加できるのは20点までです。";
+const 追加失敗の文 = "カートへの追加に失敗しました。しばらくしてから再度お試しください。";
 caseTest("IT-F05-04-037", async ({ page, notes, step, expected }) => {
   await カートを空で始める(page);
   const 商品ID = notes.get("〔商品ID-F0504-037〕");
@@ -265,6 +295,10 @@ caseTest("IT-F05-04-037", async ({ page, notes, step, expected }) => {
   const cart = new NetBuyCartPage(page);
   let 手順2 = { 応答: 0, 知らせ: "" };
   let 手順3 = { 応答: 0, 知らせ: "" };
+  // ブラウザのダイアログ（alert など）の文を控える（出たら OK で閉じる）
+  const ブラウザのダイアログ: string[] = [];
+  page.on("dialog", (dlg) => { ブラウザのダイアログ.push(dlg.message()); dlg.accept().catch(() => undefined); });
+  note(`「カートに追加」付近は、知らせと「カートに追加」ボタンの間が画面の上で縦・横とも ${付近の幅} ピクセル以内とした`);
   await step(1, async () => {
     d = await 詳細を開く(page, 商品ID);
     await d.数量を入れる("20");
@@ -275,8 +309,15 @@ caseTest("IT-F05-04-037", async ({ page, notes, step, expected }) => {
   await step(2, async () => {
     await d.再読み込み();
     await expect(d.数量, "再読み込み後の買取数量").toHaveValue("1");
+    const 前 = ブラウザのダイアログ.length;
     手順2 = await d.カートに追加を押す();
-    note(`手順2の「カートに追加」: 応答 ${手順2.応答}・知らせ「${手順2.知らせ}」`);
+    const ダイアログの文 = ブラウザのダイアログ.slice(前);
+    note(`手順2の「カートに追加」: 応答 ${手順2.応答}・知らせ「${手順2.知らせ}」・ブラウザのダイアログ ${ダイアログの文.length ? ダイアログの文.map((m) => `「${m}」`).join("") : "無し"}`);
+    await expect.soft(d.出ている知らせ, "手順2の知らせに上限超過の文が出ること").toContainText(上限超過の文);
+    const モーダル = await d.開いたダイアログ(上限超過の文).count();
+    const 形 = ダイアログの文.some((m) => m.includes(上限超過の文)) ? "ブラウザのダイアログ" : モーダル > 0 ? "画面の上に開いたダイアログ" : "ダイアログでない知らせ（画面共通の知らせ）";
+    note(`手順2の上限超過の文の出方: ${形}`);
+    expect.soft(形 !== "ダイアログでない知らせ（画面共通の知らせ）", "手順2の上限超過の文が、ダイアログ（ブラウザのダイアログ、または画面の上に開いたダイアログ）で表示されること").toBe(true);
   });
   await step(3, async () => {
     await d.再読み込み();
@@ -284,12 +325,17 @@ caseTest("IT-F05-04-037", async ({ page, notes, step, expected }) => {
     note("開発者ツールでの書き換えの代わりに、画面のスクリプトで「カートに追加」の規格の指定（data-productclass）を空にした");
     手順3 = await d.カートに追加を押す();
     note(`手順3の「カートに追加」: 応答 ${手順3.応答}・知らせ「${手順3.知らせ}」`);
+    await expect.soft(d.出ている知らせ, "手順3の知らせに追加失敗の文が出ること").toContainText(追加失敗の文);
+    const 間 = await d.知らせとカートに追加の間();
+    note(`手順3の知らせと「カートに追加」ボタンの位置（画面の上）: 知らせ ${間?.知らせ ?? "見えない"} ／ ボタン ${間?.ボタン ?? "見えない"} ／ 間 横 ${間?.横 ?? "-"}・縦 ${間?.縦 ?? "-"} ピクセル`);
+    expect.soft(!!間 && 間.横 <= 付近の幅 && 間.縦 <= 付近の幅, `手順3の追加失敗の知らせが「カートに追加」ボタンの付近（縦・横とも ${付近の幅} ピクセル以内）に表示されること`).toBe(true);
   });
-  await step(4, async () => { await cart.開く(); });
+  await step(4, async () => { await カートを開く(cart); });
   await expected(async () => {
-    expect.soft(手順2.知らせ, "手順2の上限超過のダイアログ（知らせの文）").toBe("同一商品をカートに追加できるのは20点までです。");
-    expect.soft(手順3.知らせ, "手順3の「カートに追加」付近の追加失敗の通知（知らせの文）").toBe("カートへの追加に失敗しました。しばらくしてから再度お試しください。");
-    expect.soft(await cart.数量(商品ID), `ネット買取カートの商品ID ${商品ID} の商品数`).toEqual(["20"]);
+    expect.soft(手順2.知らせ, "手順2の上限超過の知らせの文").toBe(上限超過の文);
+    expect.soft(手順3.知らせ, "手順3の追加失敗の知らせの文").toBe(追加失敗の文);
+    await expect.soft(cart.行(商品ID), `ネット買取カートの商品ID ${商品ID} の行が1行であること`).toHaveCount(1);
+    await expect.soft(cart.数量欄(商品ID), `ネット買取カートの商品ID ${商品ID} の行の商品数（20のまま）`).toHaveValue("20");
   });
 });
 
@@ -315,7 +361,8 @@ caseTest("IT-F05-04-041", async ({ page, notes, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(行.some((r) => /NM/.test(r) && /1,200/.test(r)), "状態JP-NMの行に買取価格1,200円").toBe(true);
-    expect.soft(行.some((r) => /EX/.test(r) && /(^|[^\d,])800/.test(r)), "状態JP-EXの行に買取価格800円").toBe(true);
+    // 正本の状態EXは、アプリの状態のマスタに無く SP に読み替えた（pages/admin/f05_04_products.ts の 画面の状態）
+    expect.soft(行.some((r) => /SP/.test(r) && /(^|[^\d,])800/.test(r)), "状態JP-EX（画面ではSPに読み替え）の行に買取価格800円").toBe(true);
   });
 });
 
@@ -385,10 +432,11 @@ caseTest("IT-F05-04-052", async ({ page, notes, step, expected }) => {
     note(`プラスを22回押す間の商品数の最大: ${最大}`);
   });
   await step(3, async () => { const r = await d.カートに追加を押す(); note(`「カートに追加」の応答 ${r.応答}・知らせ「${r.知らせ}」`); });
-  await step(4, async () => { await cart.開く(); });
+  await step(4, async () => { await カートを開く(cart); });
   await expected(async () => {
     expect.soft(最大, "プラスを押す間の商品数の最大（21以上にならない）").toBeLessThanOrEqual(20);
-    expect.soft(await cart.数量(商品ID), `ネット買取カートの商品ID ${商品ID} の商品数`).toEqual(["20"]);
+    await expect.soft(cart.行(商品ID), `ネット買取カートの商品ID ${商品ID} の行が1行であること`).toHaveCount(1);
+    await expect.soft(cart.数量欄(商品ID), `ネット買取カートの商品ID ${商品ID} の行の商品数`).toHaveValue("20");
   });
 });
 
@@ -405,10 +453,11 @@ caseTest("IT-F05-04-053", async ({ page, notes, step, expected }) => {
     note(`マイナスを3回押した（うち${無効}回は、画面がマイナスを無効にしていたので、その位置を押した）。押す間の商品数の最小: ${最小}`);
   });
   await step(3, async () => { const r = await d.カートに追加を押す(); note(`「カートに追加」の応答 ${r.応答}・知らせ「${r.知らせ}」`); });
-  await step(4, async () => { await cart.開く(); });
+  await step(4, async () => { await カートを開く(cart); });
   await expected(async () => {
-    expect.soft(最小, "マイナスを押す間の商品数の最小（0以下にならない）").toBeGreaterThanOrEqual(1);
-    expect.soft(await cart.数量(商品ID), `ネット買取カートの商品ID ${商品ID} の商品数`).toEqual(["1"]);
+    expect.soft(最小, "マイナスを押す間、商品数が0以下にならない（最小値が1以上）").toBeGreaterThanOrEqual(1);
+    await expect.soft(cart.行(商品ID), `ネット買取カートの商品ID ${商品ID} の行が1行であること`).toHaveCount(1);
+    await expect.soft(cart.数量欄(商品ID), `ネット買取カートの商品ID ${商品ID} の行の商品数`).toHaveValue("1");
   });
 });
 
@@ -425,9 +474,10 @@ caseTest("IT-F05-04-057", async ({ page, notes, step, expected }) => {
   let 追加 = { 応答: 0, 知らせ: "" };
   await step(1, async () => { d = await 詳細を開く(page, 商品ID); await expect(d.数量, "買取数量").toHaveValue("1"); });
   await step(2, async () => { 追加 = await d.カートに追加を押す(); note(`「カートに追加」の応答 ${追加.応答}・知らせ「${追加.知らせ}」`); });
-  await step(3, async () => { await cart.開く(); });
+  await step(3, async () => { await カートを開く(cart); });
   await expected(async () => {
-    expect.soft(await cart.数量(商品ID), `ネット買取カートの商品ID ${商品ID} の商品数（合計ちょうど20点）`).toEqual(["20"]);
+    await expect.soft(cart.行(商品ID), `ネット買取カートの商品ID ${商品ID} の行が1行であること`).toHaveCount(1);
+    await expect.soft(cart.数量欄(商品ID), `ネット買取カートの商品ID ${商品ID} の行の商品数（合計ちょうど20点）`).toHaveValue("20");
     expect.soft(追加.知らせ, "「カートに追加」のあとの知らせ（上限超過のダイアログでない）").not.toMatch(/までです/);
   });
 });
@@ -452,9 +502,10 @@ caseTest("IT-F05-04-058", async ({ page, notes, step, expected }) => {
     const r = await d.カートに追加を押す();
     note(`2回目の「カートに追加」: 応答 ${r.応答}・知らせ「${r.知らせ}」`);
   });
-  await step(4, async () => { await cart.開く(); });
+  await step(4, async () => { await カートを開く(cart); });
   await expected(async () => {
-    expect(await cart.数量(商品ID), `ネット買取カートの商品ID ${商品ID} の行（1行・商品数5）`).toEqual(["5"]);
+    await expect.soft(cart.行(商品ID), `ネット買取カートの商品ID ${商品ID} の行が1行であること`).toHaveCount(1);
+    await expect.soft(cart.数量欄(商品ID), `ネット買取カートの商品ID ${商品ID} の行の商品数（2回の追加の合計）`).toHaveValue("5");
   });
 });
 
@@ -502,26 +553,44 @@ caseTest("IT-F05-04-005", async ({ page, notes, step, expected }) => {
 });
 
 // ---- 006（販売側のカテゴリ一覧との比較） ----
+/** 販売側と買取側の画像が同じ部分（最新セットの枠の先頭）を写すよう、展開で伸びた画面を先頭へ戻してから、最新セットの枠の先頭に合わせる */
+async function 最新セットの先頭を見せる(page: Page): Promise<void> {
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.locator('.p-hareruya-category-sidebar [data-category-level1-container="latest-set"]').first().evaluate((e) => e.scrollIntoView({ block: "start" }));
+  await page.waitForTimeout(300);
+  await page.evaluate(() => window.scrollBy(0, -60));
+}
+
 caseTest("IT-F05-04-006", async ({ page, notes, step, expected }) => {
-  let 販売側!: カテゴリ一覧の構成;
-  let 買取側!: カテゴリ一覧の構成;
+  test.setTimeout(15 * 60_000); // 子を持つ項目をすべて展開して読む（販売側と買取側の両方）
+  let 販売側!: カテゴリ一覧の全体;
+  let 買取側!: カテゴリ一覧の全体;
+  const 項目の数 = (x: カテゴリ一覧の全体) => x.reduce((a, g) => a + g.項目.length + g.項目.reduce((b, it) => b + it.子.length, 0), 0);
   await step(1, async () => {
     expect(await 販売側の商品一覧を開く(page), "販売側の商品一覧の応答").toBeLessThan(400);
-    販売側 = await カテゴリ一覧の構成を読む(page);
-    note(`販売側のカテゴリ一覧の構成（枠ごとの第一階層と、先頭の子を持つ項目を展開したときの子）: ${JSON.stringify(販売側)}`);
+    販売側 = await カテゴリ一覧の全体を読む(page);
+    note(`販売側のカテゴリ一覧（枠ごとのすべての第一階層の名称・画像・子を持つか、子を持つ項目を展開したときの子）: ${項目の数(販売側)}項目 ${JSON.stringify(販売側)}`);
+    await 最新セットの先頭を見せる(page);
   });
   await step(2, async () => {
     await 詳細を開く(page, notes.get("〔商品ID-F0504-006〕"));
-    買取側 = await カテゴリ一覧の構成を読む(page);
-    note(`ネット買取商品詳細のカテゴリ一覧の構成: ${JSON.stringify(買取側)}`);
+    買取側 = await カテゴリ一覧の全体を読む(page);
+    note(`ネット買取商品詳細のカテゴリ一覧: ${項目の数(買取側)}項目 ${JSON.stringify(買取側)}`);
+    await 最新セットの先頭を見せる(page);
   });
   await expected(async () => {
-    note("ツリーの構成と表示項目は、3つの枠（最新セット・フォーマット別・その他）の第一階層の名称の並びと、各枠の先頭の『子を持つ項目』を展開したときの子の名称の並びで比べた。販促バナーは比べる対象に含めていない（カテゴリの名称だけを読んだ）");
+    note("ツリーの構成と表示項目は、3つの枠（最新セット・フォーマット別・その他）のすべての第一階層の項目の名称・画像（カテゴリのバナー画像かアイコン画像の場所）・子を持つかと、"
+      + "子を持つ項目をすべて展開したときの子（第二階層）の名称・画像・子を持つかで比べた。販促バナー（設計書の「販売側だけが表示する決済・受取・発送・ポイントの販促バナー」）はカテゴリ一覧の外の表示なので、比べる対象に入らない");
+    await 最新セットの先頭を見せる(page);
     const latest = 買取側.find((g) => g.枠 === "latest-set");
     const others = 買取側.find((g) => g.枠 === "others");
-    expect.soft(latest?.第一階層.length ?? 0, "最新セットの枠の第一階層の数（最新セットのカテゴリが1件以上）").toBeGreaterThan(0);
-    expect.soft(others?.第一階層.length ?? 0, "その他の枠の第一階層の数（最新セット以外のカテゴリが1件以上）").toBeGreaterThan(0);
-    expect.soft(買取側, "ネット買取商品詳細のカテゴリ一覧の構成が、販売側と同じ").toEqual(販売側);
+    expect.soft(latest?.項目.length ?? 0, "最新セットの枠の第一階層の数（最新セットのカテゴリが1件以上）").toBeGreaterThan(0);
+    expect.soft(others?.項目.length ?? 0, "その他の枠の第一階層の数（最新セット以外のカテゴリが1件以上）").toBeGreaterThan(0);
+    for (const 枠 of 販売側.map((g) => g.枠)) {
+      const a = 販売側.find((g) => g.枠 === 枠)!, b = 買取側.find((g) => g.枠 === 枠);
+      expect.soft(b?.項目.map((x) => x.名前) ?? [], `枠「${枠}」の第一階層の名称の並びが販売側と同じ`).toEqual(a.項目.map((x) => x.名前));
+      expect.soft(b?.項目 ?? [], `枠「${枠}」の各カテゴリの表示項目（名称・画像・子を持つか・子の表示）が販売側と同じ`).toEqual(a.項目);
+    }
   });
 });
 

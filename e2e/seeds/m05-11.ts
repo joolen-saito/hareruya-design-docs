@@ -13,7 +13,7 @@
  * - 会員のメールアドレスの前半は、実行ごとの印を付ける（依頼者決定 2026-10-28）。注文者姓などの値そのものを確かめる項目には付けない。
  */
 import { SETUP_ADMIN } from "../config/env";
-import { 受注 } from "../db/m05_11";
+import { お届け先の項目, 会員の住所3, 受注, 注文者の項目 } from "../db/m05_11";
 import { query } from "../lib/db";
 import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
@@ -23,7 +23,7 @@ const note = (seedId: string, m: string): void => console.log(`[${seedId}] ${m}`
 import { Account, withAdminSession } from "../lib/session";
 import { ensureMember, MemberInput } from "../pages/admin/member";
 import { storeNameById } from "../pages/admin/m04_19_masters";
-import { OrderEditPage, メールで受注を開く } from "../pages/admin/m05_11_order_edit";
+import { OrderEditPage, メールで受注を開く, 会員IDを一覧から読む, 会員の住所3を登録する } from "../pages/admin/m05_11_order_edit";
 import { 会員が注文する, 会員を用意する, 販売中の商品 } from "../pages/front/m05_11_order";
 import { FrontMember } from "../pages/front/member_entry";
 
@@ -73,6 +73,7 @@ export function 購入直後のシード(seedId: string, 番号: string, メー�
   defineSeed(seedId, { needs: ["S-M05-11-ADM-A"] }, async ({ browser, notes, seed }) => {
     const m = 試験会員(メール前半, opt.姓, undefined, opt.ドメイン, opt.住所3);
     await 会員を用意する(browser, m);
+    if (opt.住所3 !== undefined) await 会員に住所3を入れる(browser, m, opt.住所3, seed.シードID);
     const ids = 販売中の商品(opt.商品数 ?? 1);
     const r = await 会員が注文する(browser, m, ids.map((商品ID) => ({ 商品ID, 数量: opt.数量 ?? 1 })), seed.シードID);
     note(seed.シードID, `注文で選んだ配送方法: ${r.配送方法}`);
@@ -84,10 +85,27 @@ export function 購入直後のシード(seedId: string, 番号: string, メー�
     });
     if (got.st !== "新規受付" && got.st !== "入金待ち") reportSeedIssue(seed.シードID, `購入直後の受注のステータスが「${got.st}」（シード表は「新規受付」）`);
     notes.set(`〔受注番号-M0511-${番号}〕`, got.注文番号);
+    if (opt.住所3 !== undefined) {
+      // 注文者・お届け先は購入時に会員の住所から作られる。住所3が写っていなければ、あとの手動変更履歴も住所3を持たないので止める
+      const 注文者 = 注文者の項目(got.注文番号).addr03 ?? "", お届け先 = お届け先の項目(got.注文番号).addr03 ?? "";
+      if (注文者 !== opt.住所3 || お届け先 !== opt.住所3) throw new Error(`${seed.シードID}: 購入した受注の住所3が「${opt.住所3}」にならない（注文者「${注文者}」・お届け先「${お届け先}」）`);
+    }
     if (opt.後処理) await withAdminSession(browser, M0511_ADMIN_A, (page) => opt.後処理!(page, got.注文番号, { m, notes, 店: shop }).then(() => undefined));
     const row = 受注(got.注文番号);
     if (row.入金日 || row.注文確定日 || row.店頭予約日 || row.出荷日) reportSeedIssue(seed.シードID, `購入直後なのに入金日・注文確定日・店頭予約日・出荷日のどれかが入っている`);
   });
+}
+
+/**
+ * 会員に住所3を入れる。シード表はフロントの会員登録画面で住所3を入れるとするが、その画面は国が日本のとき住所3の欄を出さない。
+ * 入らなかったときは黙って飛ばさず、管理画面の会員情報編集で入れ（読み替えを注記に残す）、DB で入ったことを確かめる。
+ */
+async function 会員に住所3を入れる(browser: import("@playwright/test").Browser, m: FrontMember, 住所3: string, seedId: string): Promise<void> {
+  if (会員の住所3(m.メール) === 住所3) return;
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => { await 会員の住所3を登録する(page, await 会員IDを一覧から読む(page, m.メール), 住所3); });
+  reportSeedIssue(seedId, `フロントの会員登録画面は国が日本のとき住所3の欄を出さないので、住所3「${住所3}」は登録後に管理画面の会員情報編集で入れた（購入前に入れるので、受注の注文者・お届け先には同じ住所3が写る）`);
+  const got = 会員の住所3(m.メール);
+  if (got !== 住所3) throw new Error(`${seedId}: 会員の住所3が「${住所3}」にならない（DB は「${got ?? "会員が無い"}」）`);
 }
 
 for (const n of ["014", "015", "016", "017", "018", "020", "028", "029", "045", "046"]) {

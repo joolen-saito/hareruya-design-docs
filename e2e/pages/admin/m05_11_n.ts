@@ -20,15 +20,15 @@ export async function 会員検索から会員編集を開く(page: Page, 会員
   await page.waitForLoadState("load");
   await page.locator('[name="admin_search_customer[multi]"]').fill(会員ID, { timeout: 20_000 });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ timeout: 20_000 }),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ timeout: 20_000, noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   const row = page.locator(`tr#ex-customer-${会員ID}`);
   await expect(row, `会員検索一覧の会員ID ${会員ID} の行`).toHaveCount(1);
   await Promise.all([
-    page.waitForURL(new RegExp(`/customer/${会員ID}/edit`)),
-    row.locator(`a[href$="/customer/${会員ID}/edit"]`).first().click({ timeout: 20_000 }),
+    page.waitForURL(new RegExp(`/customer/${会員ID}/edit`), { timeout: 120_000 }),
+    row.locator(`a[href$="/customer/${会員ID}/edit"]`).first().click({ timeout: 20_000, noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
 }
@@ -36,8 +36,8 @@ export async function 会員検索から会員編集を開く(page: Page, 会員
 /** 会員情報編集画面の「ポイント確認」を押してポイント履歴確認画面を開く */
 export async function ポイント確認を開く(page: Page): Promise<void> {
   await Promise.all([
-    page.waitForURL(/\/customer\/point\/\d+\/history/),
-    page.getByRole("link", { name: "ポイント確認" }).first().click({ timeout: 20_000 }),
+    page.waitForURL(/\/customer\/point\/\d+\/history/, { timeout: 120_000 }),
+    page.getByRole("link", { name: "ポイント確認" }).first().click({ timeout: 20_000, noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
 }

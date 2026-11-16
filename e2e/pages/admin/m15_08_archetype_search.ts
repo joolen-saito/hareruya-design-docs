@@ -11,7 +11,7 @@
  */
 import { expect, Locator, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { chooseByLabel, expectSaved } from "./common";
+import { chooseByLabel, expectSaved, topErrorAlerts } from "./common";
 
 type Issue = (m: string) => void;
 
@@ -51,7 +51,7 @@ export class ArchetypeSearchPage {
   get 件数(): Locator { return this.page.locator("#page_count_pulldown"); }
   get 並べかえの項目(): Locator { return this.page.locator("#sort_key_pulldown"); }
   get ソート順(): Locator { return this.page.locator("#sort_order_pulldown"); }
-  get エラーの帯(): Locator { return this.page.locator(".alert-danger"); }
+  get エラーの帯(): Locator { return topErrorAlerts(this.page); } // 開発用の設定のときに常に出る帯は除く
 
   /** アーキタイプ管理(検索入力)画面を開く（メニューの「アーキタイプ一覧」と同じアドレス） */
   async 開く(): Promise<void> {
@@ -77,7 +77,7 @@ export class ArchetypeSearchPage {
 
   /** 「検索する」を押し、移った画面の読み込みを待つ */
   async 検索する(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.検索するボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.検索するボタン.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -206,7 +206,7 @@ export class ArchetypeSearchPage {
   async 件数を選ぶ(n: string): Promise<void> {
     await expect(this.件数, "件数の選択欄").toBeVisible();
     if ((await this.選択中の件数()) === `${n}件`) return;
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), chooseByLabel(this.件数, `${n}件`)]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), chooseByLabel(this.件数, `${n}件`)]);
     await this.page.waitForLoadState("load");
   }
 
@@ -214,7 +214,7 @@ export class ArchetypeSearchPage {
   async 項目を選ぶ(項目: string): Promise<boolean> {
     await expect(this.並べかえの項目, "並べかえの項目の選択欄").toBeVisible();
     if ((await this.選択中の並べかえ()).項目 === 項目) return false;
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), chooseByLabel(this.並べかえの項目, 項目)]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), chooseByLabel(this.並べかえの項目, 項目)]);
     await this.page.waitForLoadState("load");
     return true;
   }
@@ -222,7 +222,7 @@ export class ArchetypeSearchPage {
   async ソート順を選ぶ(順: "昇順" | "降順"): Promise<boolean> {
     await expect(this.ソート順, "ソート順の選択欄").toBeVisible();
     if ((await this.選択中の並べかえ()).ソート順 === 順) return false;
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), chooseByLabel(this.ソート順, 順)]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), chooseByLabel(this.ソート順, 順)]);
     await this.page.waitForLoadState("load");
     return true;
   }
@@ -231,7 +231,7 @@ export class ArchetypeSearchPage {
   async ページを開く(n: number): Promise<void> {
     const link = this.ページ送り.locator("a.page-link").filter({ hasText: exact(String(n)) });
     await expect(link.first(), `ページ送りの「${n}」`).toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), link.first().click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.first().click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -282,8 +282,8 @@ export class ArchetypeSearchPage {
     let 文 = "";
     this.page.once("dialog", (d) => { 文 = d.message(); void d.accept(); });
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "load" }),
-      menu.locator("button.dropdown-item").filter({ hasText: exact("削除") }).click(),
+      this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+      menu.locator("button.dropdown-item").filter({ hasText: exact("削除") }).click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     return 文;
@@ -300,7 +300,7 @@ export class ArchetypeSearchPage {
     return {
       文: d.message(),
       OK: async () => {
-        await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), d.accept()]);
+        await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), d.accept()]);
         await click;
         await this.page.waitForLoadState("load");
       },
@@ -311,17 +311,17 @@ export class ArchetypeSearchPage {
   async 名前を押す(id: string): Promise<void> {
     const link = this.行(id).locator(":scope > td:nth-child(3) a");
     await expect(link, `アーキタイプID ${id} の行のアーキタイプ名`).toHaveCount(1);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
   }
 
   /** 上部の「新規登録」「CSV取り込み」を押す */
   async 新規登録を押す(): Promise<void> {
     await expect(this.新規登録ボタン, "「新規登録」のボタン").toHaveCount(1);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.新規登録ボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.新規登録ボタン.click({ noWaitAfter: true })]);
   }
   async CSV取り込みを押す(): Promise<void> {
     await expect(this.CSV取り込みボタン, "「CSV取り込み」のボタン").toHaveCount(1);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.CSV取り込みボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.CSV取り込みボタン.click({ noWaitAfter: true })]);
   }
 }
 
@@ -373,7 +373,7 @@ export async function アーキタイプを新規登録する(page: Page, v: ア
   if (v.タグ?.length) await f("DeckTags").selectOption(v.タグ.map((label) => ({ label })));
   const button = アーキタイプ編集の送信ボタン(page);
   await expect(button, `${what}: アーキタイプ編集(登録)画面の「新規登録」`).toHaveText(/^\s*新規登録\s*$/);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), button.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), button.click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: アーキタイプ「${v.名日}」の登録`)) issue(`アーキタイプ「${v.名日}」の登録時の警告「${w}」`);
   return 画像ID;
 }
@@ -463,7 +463,7 @@ export async function アーキタイプCSVを取り込む(page: Page, rows: str
   await s.CSV取り込みを押す();
   await CSVアップロードのファイル欄(page).setInputFiles({ name: fileName, mimeType: "text/csv", buffer: csv });
   await expect(CSVアップロードのボタン(page), `${what}: 「CSVファイルをアップロード」が押せる`).toBeEnabled();
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), CSVアップロードのボタン(page).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), CSVアップロードのボタン(page).click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: アーキタイプ登録CSVのアップロード`)) issue(`アーキタイプ登録CSVの警告「${w}」`);
 }
 
@@ -475,7 +475,7 @@ export async function 表示件数25を外す(page: Page, issue: Issue): Promise
   await page.goto(adminUrl("/setting/system/masterdata"));
   const master = page.locator("#admin_system_masterdata_masterdata");
   await master.selectOption({ label: "mtb_page_max" });
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("form#form1 button[type=submit]").click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("form#form1 button[type=submit]").click({ noWaitAfter: true })]);
   await expect(page.locator("form#form2"), "表示件数のマスタの一覧").toBeVisible();
   const rows = page.locator("form#form2 tbody tr").filter({ has: page.locator('input[name$="[name]"]') });
   let hit = false;

@@ -167,7 +167,15 @@ defineSeed("S-F06-18-JP", async (ctx) => {
     メール: "f0618@example.com", パスワード: "F0618-Passw0rd-JP", 値: { ...国内の値, MTG姓: "SATO", MTG名: "TARO" },
     本人確認: "オンライン本人確認済み", 呼び名: ["〔会員レコードID-F0618-共有JP〕"], 読み替え: ["番号", "スマレジ", "更新日時", "確認済み"],
   });
-  const 配送先 = await 管理画面(ctx.browser, (page) => 配送先の番号(page, m.会員ID));
+  // 共有の開発環境では、フロントで登録した直後の会員の配送先が、会員登録/編集画面の一覧にすぐ出ないことがある。出ないときは間をおいて開き直す（最大で約1分）
+  const 配送先 = await 管理画面(ctx.browser, async (page) => {
+    let 番号 = await 配送先の番号(page, m.会員ID);
+    for (let i = 0; i < 6 && 番号.length === 0; i++) {
+      await page.waitForTimeout(10_000);
+      番号 = await 配送先の番号(page, m.会員ID);
+    }
+    return 番号;
+  });
   if (配送先.length !== 1) throw new Error(`S-F06-18-JP: 会員 ${m.メール} の配送先が ${配送先.length} 件（既定の配送先1件であること）`);
   ctx.notes.set("〔既定配送先レコードID-F0618-共有JP〕", 配送先[0]);
   // 選手情報レコードIDは管理画面に表示されない（シード表のとおり、DBの参照で控える）

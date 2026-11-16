@@ -57,8 +57,21 @@ export class SummaryPage {
     for (const w of 店舗) if (!names.includes(w)) throw new Error(`集計対象(各店舗)に「${w}」が無い（ある店舗: ${names.join("、")}）`);
   }
 
+  /** 集計対象(各店舗)に出ている店舗の店舗ID（チェック欄の値）。表示名が同じ店舗があっても区別できる */
+  async 店舗のID(): Promise<string[]> {
+    return this.各店舗.evaluateAll((ns) => ns.map((n) => (n as HTMLInputElement).value));
+  }
+
+  /** 集計対象(通販)の ON/OFF を入れ、各店舗は店舗IDの店舗だけを ON にする（ほかは OFF）。店舗IDで選ぶので、表示名の重なり（「名前 (ID:n)」）に左右されない */
+  async 集計対象を店舗IDで選ぶ(通販: boolean, 店舗ID: string[]): Promise<void> {
+    await this.通販.setChecked(通販, { timeout: 20_000 });
+    const ids = await this.店舗のID();
+    for (const w of 店舗ID) if (!ids.includes(w)) throw new Error(`集計対象(各店舗)に店舗ID ${w} が無い（ある店舗ID: ${ids.join("、")}）`);
+    for (let i = 0; i < ids.length; i++) await this.各店舗.nth(i).setChecked(店舗ID.includes(ids[i]), { timeout: 20_000 });
+  }
+
   async 検索する(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.検索ボタン.click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), this.検索ボタン.click({ timeout: 20_000, noWaitAfter: true })]);
   }
 
   /** 結果の表の見出し以外の行（セルの文字）。日付が前の行と結合されている行は、日付を補う。最後が総合計の行 */

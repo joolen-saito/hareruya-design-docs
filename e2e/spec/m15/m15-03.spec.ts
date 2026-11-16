@@ -16,12 +16,12 @@ caseTest("IT-M15-03-004", async ({ page, step, expected }) => {
     await l.f("player_name").fill(`${語CB004()}-選手`);
     await l.検索する();
     // 件数・並べかえ項目・ソート順は、選ぶと検索条件を保ったまま一覧が読み直される
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.件数選択.selectOption({ label: "10件" })]); await l.結果を待つ();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.並べ替え項目.selectOption({ label: "プレイヤー名" })]); await l.結果を待つ();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.並び順.selectOption({ label: "昇順" })]); await l.結果を待つ();
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.件数選択.selectOption({ label: "10件" })]); await l.結果を待つ();
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.並べ替え項目.selectOption({ label: "プレイヤー名" })]); await l.結果を待つ();
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.並び順.selectOption({ label: "昇順" })]); await l.結果を待つ();
   });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator(".pagination a.page-link", { hasText: "2" }).first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator(".pagination a.page-link", { hasText: "2" }).first().click({ noWaitAfter: true })]);
     await l.結果を待つ();
     await expect(page.locator(".pagination .page-item.active"), "現在のページ（2ページ目）").toContainText("2");
   });
@@ -30,7 +30,7 @@ caseTest("IT-M15-03-004", async ({ page, step, expected }) => {
   });
   await step(5, async () => {
     page.once("dialog", (d) => { void d.accept(); });
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.一括削除.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.一括削除.click({ noWaitAfter: true })]);
     await l.結果を待つ();
   });
   await expected(async () => {

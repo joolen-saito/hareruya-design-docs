@@ -140,7 +140,7 @@ export class CategoryPage {
       await this.page.locator(`#ex-secondaryCol .c-directoryTree label[href="#${b}"]`).click();
       await expect(ul, "カテゴリツリーの枝が開かない").toHaveClass(/\bshow\b/);
     }
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), link.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await this.ready();
   }
 
@@ -171,7 +171,7 @@ export class CategoryPage {
   /** 「子カテゴリ作成」・「カテゴリ更新」を押して、結果の画面へ移るのを待つ */
   async submitAndWait(): Promise<void> {
     await expect(this.submit, "子カテゴリ作成・カテゴリ更新のボタン").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), this.submit.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), this.submit.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -224,8 +224,8 @@ export class CategoryPage {
   /** 削除の確認モーダルで、確定のボタン（画面の名称は「削除」）を押し、結果の画面へ移るのを待つ */
   async confirmDelete(modal: Locator): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      modal.locator('a.btn-ec-delete[data-method="delete"]').click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      modal.locator('a.btn-ec-delete[data-method="delete"]').click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -267,7 +267,7 @@ export async function registerCategoryCsv(page: Page, rows: Record<string, strin
   for (const row of rows) for (const key of Object.keys(row)) if (!known.has(key)) throw new Error(`カテゴリ登録CSVの雛形に列「${key}」が無い`);
   const csv = Buffer.from(`${[csvLine(headers), ...rows.map((r) => csvLine(headers.map((h) => r[h] ?? "")))].join("\n")}\n`, "utf8");
   await page.locator("#upload-form input[type=file]").setInputFiles({ name: fileName, mimeType: "text/csv", buffer: csv });
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator("#upload-button").click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator("#upload-button").click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, what)) onWarning(w);
 }
 

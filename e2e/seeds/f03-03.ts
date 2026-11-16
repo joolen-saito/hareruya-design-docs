@@ -3,7 +3,7 @@
  *
  * 作ったシード: 検索環境の確認（ENV）、検索選択肢の共通マスタ（MASTERS）、カテゴリの階層（CATTREE-028〜030・032〜034）。
  * 2026-11-10 の方針で足したシード（既存データ・画面で作ったデータへの読み替え。読み替えは「シード作成時の問題（読み替え）」に残す）:
- *   STORE-001（商品詳細を開く既存の商品）・CARRY-005（固定名のタグを無いときだけ作る＋既存の商品）・CARRY-025（既存のカード2件）・CARRY-027（参照だけ）。
+ *   STORE-001（商品詳細を開く既存の商品）・CARRY-005（固定名のタグを無いときだけ作る＋既存の商品）・CARRY-025・CARRY-027（既存のカード2件と既存の商品2件の番号を控えるだけ）。
  *   この4つを使うケース（001・005・025・027）は、確かめるのがモーダルの表示元とアドレスで、検索結果の商品には依らない。
  *
  * 作らないシード（記録 e2e/review/F03-03_progress_2026-10-29.md）:
@@ -17,6 +17,7 @@
 import { expect, Page } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { rc } from "../lib/run_marker";
+import { Notes } from "../lib/notes";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, adminUrl, hideDebugToolbar, withAdminSession } from "../lib/session";
@@ -35,13 +36,17 @@ import { FrontProductList } from "../pages/front/f03_01_product_list";
 export const F0303_店舗 = { 本店: "/ja", TC大阪支店: "/ja/osaka" } as const;
 
 defineSeed("S-F03-03-ENV", async ({ browser }) => {
-  // 参照だけの環境。各ケースが開始時に自分で新しいブラウザセッションを使う。ここでは、本店とTC大阪支店の商品一覧・TOPが日本語で開けることを確かめる
+  // 参照だけの環境。各ケースが開始時に自分で新しいブラウザセッションを使う。ここでは、本店とTC大阪支店の公開側が動いていて、商品一覧が日本語で開けることを確かめる。
+  // 公開側が動いているかは軽い画面（会員ログイン画面）で見る。TOP（/ja・/ja/osaka）は開発環境で15〜60秒かかり、ときに 504 を返す
+  // （アプリの ProductRepository::findProductClassesByIdsInGivenOrder が全店舗の在庫を結合する。アプリ側の問題として別に伝えてある）。
+  // 2026-11-13 20:43 に、ここで TOP が 504 を返して落ち、同じ回の F03-03 の残りが早く諦めて未判定になった。
+  // TOP を表示元に使うケース（IT-F03-03-001）は、ケースの中で TOP を開いて応答を確かめる（120秒待ち、504 なら開き直す）。
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
     await hideDebugToolbar(context);
     const page = await context.newPage();
     for (const [店, path] of Object.entries(F0303_店舗)) {
-      for (const 画面 of ["/", "/products/search"]) {
+      for (const 画面 of ["/mypage/login", "/products/search"]) {
         const res = await page.goto(`${BASE_URL}${path}${画面}`, { waitUntil: "domcontentloaded" });
         expect(res?.status() ?? 0, `${店}の公開側（${path}${画面}）が開けない`).toBeLessThan(400);
       }
@@ -233,36 +238,74 @@ defineSeed("S-F03-03-MASTERS", async ({ browser, notes, seed }) => {
 
 const 読み替え = (seedId: string, m: string) => reportSeedIssue(seedId, `シード作成時の問題（読み替え）: ${m}`);
 
-/** 公開側（本店）の商品一覧から、商品詳細を開ける既存の商品を1件探す（読むだけ。何も書き換えない） */
-async function 既存の商品を探す(browser: Browser, seedId: string): Promise<{ 商品ID: string; 規格ID: string; 商品名: string }> {
+type 既存の商品 = { 商品ID: string; 規格ID: string; 商品名: string };
+
+/** 公開側（本店）の商品一覧から、商品詳細を開ける既存の商品を n 件（商品IDの違うもの）探す（読むだけ。何も書き換えない） */
+async function 既存の商品を探す(browser: Browser, seedId: string, n: number): Promise<既存の商品[]> {
   const context = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
     await hideDebugToolbar(context);
     const page = await context.newPage();
     page.setDefaultTimeout(60_000);
     const list = new FrontProductList(page);
-    const pick = async () => (await list.カードを読む()).find((c) => c.商品ID !== "" && c.行.length > 0 && c.行[0].規格ID !== "");
+    const got = new Map<string, 既存の商品>();
+    const pick = async () => {
+      for (const c of await list.カードを読む()) {
+        if (got.size >= n) return;
+        if (c.商品ID !== "" && c.行.length > 0 && c.行[0].規格ID !== "" && !got.has(c.商品ID)) {
+          got.set(c.商品ID, { 商品ID: c.商品ID, 規格ID: c.行[0].規格ID, 商品名: c.商品名 });
+        }
+      }
+    };
     await list.open(F0303_店舗.本店);
     await list.結果を待つ();
-    let c = await pick();
-    if (!c) {
+    await pick();
+    if (got.size < n) {
       const cats = (await list.左メニューのカテゴリ(false)).slice(0, 20);
       for (const cat of cats) {
         await list.openCategory(F0303_店舗.本店, cat.id);
-        c = await pick();
-        if (c) break;
+        await pick();
+        if (got.size >= n) break;
       }
     }
-    if (!c) throw new Error(`${seedId}: 本店の商品一覧に、商品詳細を開ける既存の商品が見つからない`);
-    return { 商品ID: c.商品ID, 規格ID: c.行[0].規格ID, 商品名: c.商品名 };
+    if (got.size < n) throw new Error(`${seedId}: 本店の商品一覧に、商品詳細を開ける既存の商品が ${got.size} 件しか見つからない（${n} 件要る）`);
+    return [...got.values()];
   } finally {
     await context.close();
   }
 }
 
+/** カード一覧の既存のカードを先頭から2件読む（読むだけ） */
+async function 既存のカードを2件探す(browser: Browser, seedId: string): Promise<string[]> {
+  return 画面で作る(browser, `${seedId} の作成`, async (page) => {
+    const cards = new CardSearchPage(page);
+    await cards.open();
+    await cards.検索する();
+    const got = await cards.表示中のカードID();
+    if (got.length < 2) throw new Error(`${seedId}: カード一覧に既存のカードが ${got.length} 件しかない（2件要る）`);
+    return got.slice(0, 2);
+  });
+}
+
+/**
+ * CARRY-025・027: シード表が控えると定める〔商品ID-…A/B〕〔商品規格ID-…A/B〕〔カードID-…A/B〕を、作らずに読み替えた既存の商品・カードの番号で控える。
+ * ケースは商品ID・商品規格IDを使わない（025 はカードID A をアドレスに使う）。
+ * 2026-11-13: 027 が商品ID・商品規格ID・カードIDを、025 が商品ID・商品規格IDを控えておらず、027 がシードの作成で止まった（F06-06 の aeab24884・d6815de1f と同じ抜け）
+ */
+async function 読み替えの番号を控える(browser: Browser, notes: Notes, seedId: string, n: string): Promise<{ 商品: 既存の商品[]; カード: string[] }> {
+  const カード = await 既存のカードを2件探す(browser, seedId);
+  const 商品 = await 既存の商品を探す(browser, seedId, 2);
+  for (const [i, 枝] of ["A", "B"].entries()) {
+    notes.set(`〔商品ID-F0303-${n}${枝}〕`, 商品[i].商品ID);
+    notes.set(`〔商品規格ID-F0303-${n}${枝}〕`, 商品[i].規格ID);
+    notes.set(`〔カードID-F0303-${n}${枝}〕`, カード[i]);
+  }
+  return { 商品, カード };
+}
+
 defineSeed("S-F03-03-STORE-001", async ({ browser, notes }) => {
   const id = "S-F03-03-STORE-001";
-  const p = await 既存の商品を探す(browser, id);
+  const [p] = await 既存の商品を探す(browser, id, 1);
   notes.set("〔商品ID-F0303-001〕", p.商品ID);
   notes.set("〔商品規格ID-F0303-001〕", p.規格ID);
   読み替え(id, `商品HQ-001-F0303-001（F0303-MODAL-001）を作って商品検索用試験索引へ反映する前提は、反映が画面で指定できないため作らず、本店の商品一覧にある既存の商品「${p.商品名}」（商品ID ${p.商品ID}・商品規格ID ${p.規格ID}）で代えた。このケースは8つの表示元でモーダルが開くことだけを確かめ、商品詳細は本店の商品詳細が開けるこの商品で開く。TC大阪支店で非公開という条件は使わない`);
@@ -283,7 +326,7 @@ defineSeed("S-F03-03-CARRY-005", async ({ browser, notes }) => {
     return tag.register({ 名称日: タグ005, 名称英: "Tag F0303 Url Check", 並び順: unusedSortNo(rows) }, `${id}: タグの登録`);
   });
   notes.set("〔タグID-F0303-005〕", タグID);
-  const p = await 既存の商品を探す(browser, id);
+  const [p] = await 既存の商品を探す(browser, id, 1);
   notes.set("〔商品ID-F0303-005〕", p.商品ID);
   notes.set("〔商品規格ID-F0303-005〕", p.規格ID);
   読み替え(id, `タグ「${タグ005}」（タグID ${タグID}）はタグ登録画面で、固定の名称で無いときだけ作り、あれば使い回す。商品URL-F0303-005（表示対象カテゴリ所属・タグ設定・本店公開・在庫1）を作って索引へ反映する前提は、反映が画面で指定できず、共有の既存の商品にタグを付けると書き換えになるため作らず、既存の商品（商品ID ${p.商品ID}）を控えるだけにした。このケースはアドレスの形だけを確かめ、検索結果の商品には依らない`);
@@ -291,21 +334,14 @@ defineSeed("S-F03-03-CARRY-005", async ({ browser, notes }) => {
 
 defineSeed("S-F03-03-CARRY-025", async ({ browser, notes }) => {
   const id = "S-F03-03-CARRY-025";
-  const ids = await 画面で作る(browser, `${id} の作成`, async (page) => {
-    const cards = new CardSearchPage(page);
-    await cards.open();
-    await cards.検索する();
-    const got = await cards.表示中のカードID();
-    if (got.length < 2) throw new Error(`${id}: カード一覧に既存のカードが ${got.length} 件しかない（2件要る）`);
-    return got.slice(0, 2);
-  });
-  notes.set("〔カードID-F0303-025A〕", ids[0]);
-  notes.set("〔カードID-F0303-025B〕", ids[1]);
-  読み替え(id, `商品CARRY-A-025・CARRY-B-025（F0303-CARRY-025）とそのカードを作って索引へ反映する前提は、反映が画面で指定できないため作らず、カード一覧にある既存のカード2件（カードID ${ids[0]}・${ids[1]}）のIDを控えた。このケースは検索後のアドレスに遷移元のカードID・並び順・ページ番号が残らないことだけを確かめ、検索結果の商品には依らない`);
+  const { 商品, カード } = await 読み替えの番号を控える(browser, notes, id, "025");
+  読み替え(id, `商品CARRY-A-025・CARRY-B-025（F0303-CARRY-025）とそのカードを作って索引へ反映する前提は、反映が画面で指定できないため作らず、カード一覧にある既存のカード2件（カードID ${カード[0]}・${カード[1]}）のIDを〔カードID-F0303-025A〕・〔カードID-F0303-025B〕として控えた。〔商品ID-F0303-025A/B〕・〔商品規格ID-F0303-025A/B〕は、本店の商品一覧にある既存の商品（商品ID ${商品[0].商品ID}・${商品[1].商品ID}、商品規格ID ${商品[0].規格ID}・${商品[1].規格ID}）の番号で控えた（ケースは使わない）。このケースは検索後のアドレスに遷移元のカードID・並び順・ページ番号が残らないことだけを確かめ、検索結果の商品には依らない`);
 });
 
-defineSeed("S-F03-03-CARRY-027", async () => {
-  読み替え("S-F03-03-CARRY-027", "商品CARRY-A-027・CARRY-B-027（F0303-CARRY-027）を作って索引へ反映する前提は、反映が画面で指定できないため作らない。このケースは商品名だけを入れて検索したあとのアドレスだけを確かめ、検索結果の商品には依らない");
+defineSeed("S-F03-03-CARRY-027", async ({ browser, notes }) => {
+  const id = "S-F03-03-CARRY-027";
+  const { 商品, カード } = await 読み替えの番号を控える(browser, notes, id, "027");
+  読み替え(id, `商品CARRY-A-027・CARRY-B-027（F0303-CARRY-027）とそのカードを作って索引へ反映する前提は、反映が画面で指定できないため作らない。シード表が控えると定める番号は、既存のカード2件（カードID ${カード[0]}・${カード[1]}）と本店の商品一覧にある既存の商品（商品ID ${商品[0].商品ID}・${商品[1].商品ID}、商品規格ID ${商品[0].規格ID}・${商品[1].規格ID}）の番号で控えた（ケースは使わない）。このケースは商品名だけを入れて検索したあとのアドレスだけを確かめ、検索結果の商品には依らない`);
 });
 
 void adminUrl;

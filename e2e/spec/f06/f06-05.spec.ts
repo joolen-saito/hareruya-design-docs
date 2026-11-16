@@ -13,6 +13,7 @@ import { FrontRestock } from "../../pages/front/f03_07_restock_notify";
 import { LoginPage } from "../../pages/front/f06_03_login";
 import { MypagePage, メニュー名, 言語 } from "../../pages/front/f06_05_mypage";
 import { 会員 } from "../../seeds/f06-05";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const マイページのパス = /^\/ja\/mypage\/?$/;
@@ -115,7 +116,7 @@ caseTest("IT-F06-05-006", async ({ page, step, expected }) => {
   const p = await ログインする(page, BASIC);
   await step(1, async () => { await p.開く(); });
   await step(2, async () => { await p.押して遷移する(p.パンくずホーム); });
-  await expected(async () => { expect.soft(p.path, "遷移した画面（本店ECTOP）").toMatch(ECTOPのパス); });
+  await expected(async () => { expect.soft(p.path, "遷移した画面（本店ECTOP）").toMatch(ECTOPのパス); expect.soft(await 本店ECTOPの画面か(p.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 
 // ---------------------------------------------------------------------------
@@ -188,9 +189,12 @@ caseTest("IT-F06-05-014", async ({ page, step, expected }) => {
   let 前: { 点: number | null; 履歴: string[] } = { 点: null, 履歴: [] };
   let 後: { 点: number | null; 履歴: string[] } = { 点: null, 履歴: [] };
   await step(1, async () => { 前 = { 点: 保有ポイント(m.会員ID), 履歴: ポイント履歴の行(m.会員ID) }; });
-  await step(2, async () => { await p.開く(); });
+  let 表示した = false;
+  await step(2, async () => { await p.開く(); 表示した = await p.マイページである(); });
   await step(3, async () => { 後 = { 点: 保有ポイント(m.会員ID), 履歴: ポイント履歴の行(m.会員ID) }; });
   await expected(async () => {
+    // マイページが表示されていないと「更新されない」は確かめにならないため、表示されたことも確かめる
+    expect.soft(表示した, "手順2でマイページが表示された").toBe(true);
     expect.soft(前.点, "表示前の保有ポイント").toBe(500);
     expect.soft(前.履歴.length, "表示前のポイント履歴の件数").toBe(3);
     expect.soft(後.点, "表示後の保有ポイント（更新されない）").toBe(前.点);
@@ -295,7 +299,7 @@ caseTest("IT-F06-05-034", async ({ page, step, expected }) => {
   await step(1, async () => { await p.開く(); });
   await step(2, async () => { await p.メニューを押す("ログアウト"); });
   await expected(async () => {
-    expect.soft(p.path, "遷移した画面（ECTOP）").toMatch(ECTOPのパス);
+    expect.soft(p.path, "遷移した画面（ECTOP）").toMatch(ECTOPのパス); expect.soft(await 本店ECTOPの画面か(p.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true);
     // ログアウトできたことは、同じブラウザでマイページのアドレスを取得して、ログイン画面へ移されることで確かめる
     const res = await page.context().request.get(`${BASE_URL}/ja/mypage/`, { maxRedirects: 0 });
     v.状態 = res.status();
@@ -308,7 +312,7 @@ caseTest("IT-F06-05-035", async ({ page, step, expected }) => {
   const p = await ログインする(page, BASIC);
   await step(1, async () => { await p.開く(); });
   await step(2, async () => { await p.TOPページへ戻るを押す(); });
-  await expected(async () => { expect.soft(p.path, "遷移した画面（ECTOP）").toMatch(ECTOPのパス); });
+  await expected(async () => { expect.soft(p.path, "遷移した画面（ECTOP）").toMatch(ECTOPのパス); expect.soft(await 本店ECTOPの画面か(p.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 
 // ---------------------------------------------------------------------------
@@ -345,20 +349,23 @@ function 表示ケース(a: 表示の期待) {
     const m = 会員(a.seedId);
     const p = new MypagePage(page, a.言語);
     const v = {
+      マイページ: false,
       リンク: {} as Record<string, boolean>,
       近い: null as { ポイント: string; 期限の表示: string; 期限の日付: string } | null,
     };
     await step(1, async () => {
       await p.ログインする(m.メール, m.パスワード);
-      expect(await p.ログイン画面である(), `会員 ${m.メール} でログインできた（ログイン画面のままではない）`).toBe(false);
+      expect(!(await p.ログイン画面である()), `会員 ${m.メール} でログインできた（ログイン画面のままではない）`).toBe(true);
     });
-    await step(2, async () => { await p.開く(); });
+    await step(2, async () => { await p.開く(); v.マイページ = await p.マイページである(); });
     await step(3, async () => {
       for (const n of ["買取一覧", "オンライン本人確認", "マイデッキ"] as メニュー名[]) v.リンク[n] = await p.メニューが見えているか(n);
       v.近い = await p.期限の近いポイント();
     });
     await expected(async () => {
       const 表示される = a.言語 === "ja";
+      // マイページが表示されていないと「リンク・ポイントが表示されない」は確かめにならないため、表示されたことも確かめる
+      expect.soft(v.マイページ, "マイページが表示された").toBe(true);
       for (const n of ["買取一覧", "オンライン本人確認", "マイデッキ"]) {
         expect.soft(v.リンク[n], `${a.言語 === "ja" ? "日本語版" : "英語版"}のマイページに「${n}」のリンクが${表示される ? "表示される" : "表示されない"}`).toBe(表示される);
       }

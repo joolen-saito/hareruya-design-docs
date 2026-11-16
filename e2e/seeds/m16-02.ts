@@ -32,17 +32,22 @@ import { REPO_ROOT, SETUP_ADMIN } from "../config/env";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
-import { ensureMember } from "../pages/admin/member";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
 import { 本店の店名 } from "../pages/admin/m05_admin_member";
 import { 店舗の店名と略称, 画像の種別, 画像の種別を見る } from "../pages/admin/m16_02_top_banner";
-import { ensureTenant } from "../pages/admin/tenant";
+import { 店舗IDで選ぶ, 表の店舗 } from "../pages/admin/store_pick";
 
 export const M1602_ADMIN: Account = { loginId: "m1602_admin", password: "Passw0rd!M1602" };
 
 /** 試験店舗A（シード表の「トーナメントセンター東京」「tc」の読み替え）・B（「結合試験店舗」「zz」）・C（画像を上げない店舗） */
-export const 店舗A = { 店名: "画像設定試験店舗A-M1602", 略称: "zy1" };
-export const 店舗B = { 店名: "画像設定試験店舗B-M1602", 略称: "zy2" };
-export const 店舗C = { 店名: "画像設定試験店舗C-M1602", 略称: "zy0" };
+/**
+ * 依頼者決定 2026-11-15「店舗は作るのもう禁止」により、E2E の店舗 221・4973 を A・B に、4974 を C に当てる（店舗は作らない）。
+ * 一覧は保管先のキー（banner/top/略称/）の降順で、005 は「B の画像が A の画像より前」と確かめるので、A・B は店名略称（保管先のフォルダ名）の小さい方を A にする。
+ * 店名・略称は S-M16-02-STORES が店舗編集画面から読んで入れる（ケースは実行時に読む）。C は画像をアップロードしない（4974 には誰もトップバナーを上げない）。
+ */
+export const 店舗A = { 店名: "", 略称: "" };
+export const 店舗B = { 店名: "", 略称: "" };
+export const 店舗C = { 店名: 表の店舗("4974").店名, 略称: "" };
 
 /** 入力ファイルの置き場 */
 export const M1602_FILES = path.join(REPO_ROOT, "e2e", "fixtures", "m16-02");
@@ -63,26 +68,26 @@ defineSeed("S-M16-02-ADM", async ({ browser }) => {
 
 // ---- 店舗 ----
 
-const 試験店舗の入力 = [
-  { 店: 店舗A, 英語: "Top Banner Test Store Alpha", url: "m1602a" },
-  { 店: 店舗B, 英語: "Top Banner Test Store Bravo", url: "m1602b" },
-  { 店: 店舗C, 英語: "Top Banner Test Store Charlie", url: "m1602c" },
-];
-
 defineSeed("S-M16-02-STORES", async ({ browser, notes, seed }) => {
   const id = seed.シードID;
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    for (const { 店, 英語, url } of 試験店舗の入力) {
-      const sid = await ensureTenant(page, {
-        店名: 店.店名, 店名カナ: "ガゾウセッテイシケンテンポ", 店名英語: 英語, 支店URL: url, 店名略称3文字: 店.略称, ショップ名略称: 店.店名,
-      }, (m) => reportSeedIssue(id, m));
-      const v = await 店舗の店名と略称(page, sid);
-      if (v.略称 !== 店.略称) throw new Error(`${id}: 店名「${店.店名}」の店舗（店舗ID ${sid}）の店名略称が「${v.略称}」で、決めた「${店.略称}」と違う（共有の店舗は書き換えない）`);
-      if (店 === 店舗B) notes.set("〔店舗ID-M1602-共有〕", sid);
+    const issue = (m: string) => reportSeedIssue(id, m);
+    const 候補 = [] as { 店舗ID: string; 店名: string; 略称: string }[];
+    for (const 店舗ID of ["221", "4973"]) {
+      const s1 = await 店舗IDで選ぶ(page, 店舗ID, "トップバナー試験店舗", () => undefined);
+      const v = await 店舗の店名と略称(page, s1.id);
+      候補.push({ 店舗ID: s1.id, 店名: s1.店名, 略称: v.略称 });
     }
-    reportSeedIssue(id, `店舗ID 1 の店名・店名略称の書き換えは行わず、E2E の試験店舗（${試験店舗の入力.map((x) => `「${x.店.店名}」（略称 ${x.店.略称}）`).join("・")}）に読み替えた。`
-      + "「トーナメントセンター東京（tc）」は試験店舗A、「結合試験店舗（zz）」は試験店舗B。試験店舗Cは画像をアップロードしない店舗（0件のケース用）");
+    const c = await 店舗IDで選ぶ(page, "4974", "画像のない店舗", issue);
+    const vc = await 店舗の店名と略称(page, c.id);
+    店舗C.店名 = c.店名; 店舗C.略称 = vc.略称;
+    const [a, b] = [...候補].sort((x, y) => (x.略称 < y.略称 ? -1 : 1));
+    if (!a.略称 || !b.略称 || a.略称 === b.略称 || !vc.略称) throw new Error(`${id}: 当てた店舗の店名略称（保管先のフォルダ名）が空か重なっている（${候補.map((x) => `${x.店舗ID}=${x.略称}`).join("・")}・4974=${vc.略称}）`);
+    店舗A.店名 = a.店名; 店舗A.略称 = a.略称; 店舗B.店名 = b.店名; 店舗B.略称 = b.略称;
+    notes.set("〔店舗ID-M1602-共有〕", b.店舗ID);
+    reportSeedIssue(id, `店舗ID 1 の店名・店名略称の書き換えは行わず、E2E の店舗に読み替えた（店舗は作らない。依頼者 2026-11-15）: 試験店舗A「${a.店名}」（店舗ID ${a.店舗ID}・略称 ${a.略称}）・試験店舗B「${b.店名}」（店舗ID ${b.店舗ID}・略称 ${b.略称}）・試験店舗C「${c.店名}」（店舗ID ${c.id}・略称 ${vc.略称}）。`
+      + "「トーナメントセンター東京（tc）」は試験店舗A、「結合試験店舗（zz）」は試験店舗B。試験店舗Cは画像をアップロードしない店舗（0件のケース用）。AとBは、一覧の並び（保管先のキーの降順）で B が A より前になるよう、略称の小さい方を A にした");
   });
 });
 

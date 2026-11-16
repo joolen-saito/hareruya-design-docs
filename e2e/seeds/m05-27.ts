@@ -27,20 +27,22 @@ import { 本店の店名 } from "../pages/admin/m05_admin_member";
 import { setMemberStores, WaitingTagPage } from "../pages/admin/m05_27_waiting_tag";
 import { 番号札の値を書き換える, 店舗の番号札を全件消す } from "../db/m05_27_write";
 import { createMember, findMemberId } from "../pages/admin/member";
-import { ensureTenant } from "../pages/admin/tenant";
+import { findTenantId } from "../pages/admin/tenant_k";
+import { 店名を読む, 読み替えの文 } from "../lib/store_pick";
 
 export const M0527_LIMIT: Account = { loginId: "m0527_limit", password: "Passw0rd!M0527L" };
 export const M0527_LIMIT_NAME = "M05-27制限管理者";
 
-/** M05-27 専用の試験用店舗（固定の店名・略称・支店URL） */
-export const 本店 = "試験本店-M0527P1";
-export const 支店 = "試験支店-M0527P2";
-export const 権限外 = "試験権限外店舗-M0527P3";
-const 店の値: Record<string, { 略称: string; URL: string }> = {
-  [本店]: { 略称: "M51", URL: "m0527p1" },
-  [支店]: { 略称: "M52", URL: "m0527p2" },
-  [権限外]: { 略称: "M53", URL: "m0527p3" },
-};
+/**
+ * 店舗は作らない（依頼者 2026-11-15「店舗は作るのもう禁止」）。シード表の本店・支店・権限外店舗は、使い回す E2E の店舗で表す:
+ * 本店=店舗ID 4973・支店=5007・権限外店舗=4974（非公開・閉店。管理者が編集できない店舗の役で、番号札の登録・一覧の確かめに使う）。
+ * 番号札の全件消しは E2E の店舗だけに行う（db/m05_27_write.ts）。店名は店舗のいまの値。
+ */
+const 店舗IDの表: Record<string, string> = {};
+const 役の店 = (id: string): string => { const n = 店名を読む(id); 店舗IDの表[n] = id; return n; };
+export const 本店 = 役の店("4973");
+export const 支店 = 役の店("5007");
+export const 権限外 = 役の店("4974");
 
 /** 使った試験用店舗の店舗ID */
 const storeIds = new Map<string, string>();
@@ -50,17 +52,17 @@ export function 店舗ID(店名: string): string {
   return id;
 }
 
-/** 試験用店舗を、あれば使い、無ければ作る */
+/** 使い回す店舗が店舗一覧にあることを確かめて、店舗IDを控える（作らない） */
 async function ensureStores(browser: Browser, seedId: string, names: string[]): Promise<void> {
   const issue = (m: string) => reportSeedIssue(seedId, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     for (const name of names) {
-      const v = 店の値[name];
-      if (!v) throw new Error(`試験用店舗でない店名: ${name}`);
-      const id = await ensureTenant(page, {
-        店名: name, 店名カナ: "シケンテンポ", 店名英語: "Test Shop", 支店URL: v.URL, 店名略称3文字: v.略称, ショップ名略称: name.slice(0, 20),
-      }, issue);
+      const 期待 = 店舗IDの表[name];
+      if (!期待) throw new Error(`使い回す店舗でない店名: ${name}`);
+      const id = await findTenantId(page, name);
+      if (id !== 期待) throw new Error(`使い回す店舗「${name}」（店舗ID ${期待}）が店舗一覧に無い（${id ?? "なし"}）`);
       storeIds.set(name, id);
+      issue(読み替えの文(name === 本店 ? "試験本店M527A001" : name === 支店 ? "試験支店M527B001" : "試験権限外店舗M527C001", { id, 店名: name }));
     }
   });
 }
@@ -149,7 +151,7 @@ function defineTagSeed(seedId: string, spec: TagSeed): void {
     if (書き換えた > 0) {
       reportSeedIssue(seedId, `番号札は半角英字だけしか画面で登録できないので、画面で英字だけの値（TMP＋英字）で登録し、DBで番号札の値をシード表の値（ハイフン・数字つき）に設定した（${書き換えた}件。M05-27専用の試験用店舗の番号札だけ）`);
     }
-    reportSeedIssue(seedId, "店舗はシード表の店名ごとに作らず、M05-27専用の試験用店舗（本店・支店・権限外店舗）を使い回す（店舗が増え続けないため）。店名・番号札ID・店舗IDは、登録時の値に読み替える");
+    reportSeedIssue(seedId, "店舗は作らず、使い回す E2E の店舗（本店=4973・支店=5007・権限外店舗=4974）を使う（依頼者 2026-11-15）。店名・番号札ID・店舗IDは、実際の値に読み替える");
     const byLabel: Record<string, string> = {};
     for (const label of Notes.labelsIn(getSeed(seedId)["状態・属性"] + getSeed(seedId).投入方法)) {
       const m = /^〔店舗ID-M0527-\d{3}([AB])?〕$/.exec(label);

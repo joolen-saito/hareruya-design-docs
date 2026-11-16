@@ -98,12 +98,12 @@ async function 仮会員で登録する(page: Page, mail: string, パスワー�
 
 export const 本会員のパスワード = (番号: string): string => `BeforeMail!604A-${番号}`;
 
-for (const n of ["004", "006", "014", "015", "016", "017", "061", "062"]) {
+for (const n of ["004", "005", "006", "014", "015", "016", "017", "061", "062"]) {
   defineSeed(`S-F06-04-REG-A-${n}`, async ({ browser, notes }) => {
     notes.set(`〔会員ID-F0604-${n}〕`, await 会員を作る(browser, `f0604-a-${n}`, 本会員のパスワード(n), false));
   });
 }
-for (const n of ["009", "011"]) {
+for (const n of ["009", "010", "011"]) {
   defineSeed(`S-F06-04-PROVISIONAL-${n}`, async ({ browser, notes }) => {
     notes.set(`〔会員ID-F0604-${n}〕`, await 会員を作る(browser, `f0604-temp-${n}`, `ProvPass!604-${n}`, true));
   });
@@ -185,7 +185,8 @@ defineSeed("S-F06-04-NOKEY-020", async () => {
 for (const n of ["021", "048"]) {
   defineSeed(`S-F06-04-RESET-EXPIRED-${n}`, async ({ browser }) => {
     const 前半 = `f0604-expired-${n}`;
-    await リセット会員を作る(browser, n, { 前半, パスワード: "BeforeReset!Expired", 氏名: "期限切れ本会員" });
+    await リセット会員を作る(browser, n, { 前半, パスワード: "BeforeReset!Expired1", 氏名: "期限切れ本会員" });
+    記す("ログイン用パスワードは、正本の「BeforeReset!Expired」に数字の1を足した「BeforeReset!Expired1」にした（会員情報登録の入力チェックが英字と数字をそれぞれ1文字以上求めるため。ケースはこのパスワードを使わない）");
     prep.有効期限を設定する(mailOf(前半), "2000-01-01 00:00:00");
     記す("DBで会員のリセットキーの有効期限を2000-01-01 00:00:00に設定した（画面では、発行時刻の24時間後より前にできない）。会員IDは画面が振った番号（正本の決め打ちの会員IDからの読み替え）");
   });
@@ -223,8 +224,23 @@ defineSeed("S-F06-04-WITHDRAWN-059", async ({ browser, notes }) => {
   prep.退会済みにする(mailOf("f0604-w-059"));
   記す("DBで会員を退会済み（ステータスを退会、削除フラグを有効）に設定した。画面の退会はメールアドレスをダミーに替えるので、元のメールアドレスのまま退会済みの会員は画面で作れない");
 });
+defineSeed("S-F06-04-WITHDRAWN-060", async ({ browser, notes }) => {
+  notes.set("〔会員ID-F0604-060〕", await 本会員を作る(browser, { 姓: "退会済み会員", 名: "試験", セイ: "タイカイズミ", メイ: "シケン", 前半: "f0604-w-060", パスワード: "Before-F0604060" }));
+  prep.退会済みにする(mailOf("f0604-w-060"));
+  記す("DBで会員を退会済み（ステータスを退会、削除フラグを有効）に設定した。画面の退会はメールアドレスをダミーに替えるので、元のメールアドレスのまま退会済みの会員は画面で作れない");
+});
 defineSeed("S-F06-04-RESET-WITHDRAWN-063", async ({ browser, notes }) => {
   notes.set("〔会員ID-F0604-063〕", await リセット会員を作る(browser, "063", { 前半: "f0604-w-063", パスワード: "Before-F0604063", 氏名: "退会済み再設定会員" }));
   prep.退会済みにする(mailOf("f0604-w-063"));
   記す("DBで会員を退会済み（ステータスを退会、削除フラグを有効）に設定した（リセットキーを発行したあと）。画面の退会はメールアドレスをダミーに替えるので、元のメールアドレスのまま退会済みの会員は画面で作れない");
+});
+
+// ---- メールアドレスが形式不正（@ が無い）の本会員 ----
+/** 056 の形式不正のメールアドレス（正本 f0604-056-a.example.test の前半に実行の印を付けた値） */
+export const 形式不正のメール = (): string => `${rc("f0604-056-a")}.example.test`;
+defineSeed("S-F06-04-GFREG-056", async ({ browser, notes }) => {
+  const 正しい形 = mailOf("f0604-056-pre");
+  notes.set("〔会員ID-F0604-056〕", await 本会員を作る(browser, { 姓: "形式不正再発行本会員", 名: "試験", セイ: "ケイシキフセイ", メイ: "シケン", 前半: "f0604-056-pre", パスワード: "BeforeGf!F0604-056-A" }));
+  prep.メールアドレスを替える(正しい形, 形式不正のメール());
+  記す(`会員は画面（フロントの会員登録）で正しい形のメールアドレス ${正しい形} で作り、DBでメールアドレスだけを @ の無い ${形式不正のメール()} に書き換えた（画面では @ の無いメールアドレスで登録できない）。会員IDは画面が振った番号（正本の6042056からの読み替え）`);
 });

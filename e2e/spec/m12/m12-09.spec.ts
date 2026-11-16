@@ -76,10 +76,10 @@ caseTest("IT-M12-09-005", async ({ page, step, expected }) => {
   let csv: Awaited<ReturnType<UsedCardPage["CSVを取得する"]>> = null;
   await step(5, async () => { csv = await p.CSVを取得する(); if (csv) note("画面にはボタンが1つだけで、押した時点でCSVがダウンロードされた（出力条件を保持して入力欄を固定する中間の状態にならない）"); });
   await expected(async () => {
-    expect.soft(await p.集計日From.isEditable(), "集計日(From)が編集できない状態").toBe(false);
-    expect.soft(await p.集計日To.isEditable(), "集計日(To)が編集できない状態").toBe(false);
-    expect.soft(await p.フォーマット.isEditable(), "フォーマットが編集できない状態").toBe(false);
-    expect.soft(await p.基本土地.isEditable(), "基本土地項目追加が編集できない状態").toBe(false);
+    expect.soft(!(await p.集計日From.isEditable()), "集計日(From)が編集できない状態").toBe(true);
+    expect.soft(!(await p.集計日To.isEditable()), "集計日(To)が編集できない状態").toBe(true);
+    expect.soft(!(await p.フォーマット.isEditable()), "フォーマットが編集できない状態").toBe(true);
+    expect.soft(!(await p.基本土地.isEditable()), "基本土地項目追加が編集できない状態").toBe(true);
     expect.soft((await p.選ばれたフォーマット()).join("、"), "表示されている2件のフォーマット").toBe("試験フォーマットA、試験フォーマットB");
     expect.soft(await p.CSVボタン.isVisible(), "集計結果CSVを取得する操作入口が表示されている").toBe(true);
   });
@@ -92,9 +92,12 @@ caseTest("IT-M12-09-006", async ({ page, step, expected }) => {
   await step(2, async () => { await p.入力する(p.集計日From, "2000/01/01"); await p.入力する(p.集計日To, "2000/01/31"); });
   await step(3, async () => { await p.フォーマットを選ぶ(["試験フォーマットA", "試験フォーマットB"]); });
   await step(4, async () => { await p.基本土地.setChecked(true, { timeout: 20_000 }); });
-  await step(5, async () => { const csv = await p.CSVを取得する(); if (csv) note("画面にはボタンが1つだけで、押した時点でCSVがダウンロードされた"); });
+  let 送れた = false;
+  await step(5, async () => { const csv = await p.CSVを取得する(); 送れた = csv !== null; if (csv) note("画面にはボタンが1つだけで、押した時点でCSVがダウンロードされた"); });
   await step(6, async () => { await p.open(); });
   await expected(async () => {
+    // 出力条件が受け付けられていなければ「保持されない」は当然に成り立つので、手順5で出力（CSVのダウンロード）まで進んだことも確かめる
+    expect.soft(送れた, "手順5で出力条件が受け付けられ、CSVがダウンロードされた").toBe(true);
     expect.soft(await p.集計日To.inputValue(), "集計日(To)（手順2の値が保持されていない）").toBe("");
     expect.soft((await p.選ばれたフォーマット()).length, "選ばれているフォーマットの数（保持されていない）").toBe(0);
     expect.soft(await p.基本土地.isChecked(), "基本土地項目追加（保持されていない）").toBe(false);

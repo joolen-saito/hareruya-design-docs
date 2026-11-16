@@ -17,8 +17,10 @@ import { SETUP_ADMIN } from "../config/env";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { createStore } from "../pages/admin/m04_24_store";
+import { ensureMemberByStoreIdsFix as ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
+import { findTenantId } from "../pages/admin/tenant_k";
+import { 店名を読む, 読み替えの文 } from "../lib/store_pick";
+import { createStore } from "../pages/admin/m04_24_reuse_k";
 import { PageCountConfigPage } from "../pages/admin/m03_01_page_count";
 import { HistoryPage } from "../pages/admin/m06_05_history";
 import { storeInput } from "./m06-common";
@@ -26,37 +28,24 @@ import { storeInput } from "./m06-common";
 export const M0605_TOKYO: Account = { loginId: "m0605_tokyo", password: "Passw0rd!M0605T" };
 export const M0605_ALL: Account = { loginId: "m0605_all", password: "Passw0rd!M0605A" };
 
-/** 店舗一覧で、店名が一致する開店の店舗のID（複数あれば最も小さいID）。無ければ null */
-async function 店名の店舗ID(page: Page, 店名: string): Promise<string | null> {
-  const res = await page.goto(adminUrl("/mall/tenant/page/1?page_count=10000"), { timeout: 60_000 });
-  if (!res || !res.ok()) throw new Error(`店舗一覧を開けない（応答 ${res?.status() ?? "なし"}）`);
-  const rows = await page.locator('table.table tbody tr[id^="ex-tenant-"]').evaluateAll((trs) => trs.map((tr) => {
-    const td = (i: number) => (tr.querySelectorAll("td")[i]?.textContent ?? "").replace(/\s+/g, " ").trim();
-    return { id: td(1), 店名: td(2), 開店: td(5) };
-  }));
-  const hits = rows.filter((r) => r.店名 === 店名 && r.開店 === "開店").map((r) => Number(r.id)).sort((a, b) => a - b);
-  return hits.length ? String(hits[0]) : null;
-}
-
-async function ensureShop(page: Page, 店名: string, key: string, カナ: string, 英語: string, 略称: string): Promise<string> {
-  const found = await 店名の店舗ID(page, 店名);
-  if (found) return found;
-  await createStore(page, storeInput(店名, カナ, 英語, key, 略称));
-  const id = await 店名の店舗ID(page, 店名);
-  if (!id) throw new Error(`店舗「${店名}」を登録したが、店舗一覧に出ない`);
-  return id;
-}
-
-/** 東京店・大阪店の店舗ID（シードが作る／見つける） */
+/**
+ * 店舗は作らない（依頼者 2026-11-15「店舗は作るのもう禁止」）。東京店・大阪店は、使い回す E2E の店舗で表す: 東京店=店舗ID 4973・大阪店=店舗ID 5006（どちらも公開・開店の支店）。
+ * 店名は店舗のいまの値。
+ */
 let shopIds: { 東京店: string; 大阪店: string } | undefined;
+export const 東京店の店名 = (): string => 店名を読む("4973");
+export const 大阪店の店名 = (): string => 店名を読む("5006");
 
-defineSeed("S-M06-05-SHOPS", async ({ browser }) => {
+defineSeed("S-M06-05-SHOPS", async ({ browser, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    shopIds = {
-      東京店: await ensureShop(page, "東京店", "m0605tokyo", "トウキョウテン", "Tokyo", "K5T"),
-      大阪店: await ensureShop(page, "大阪店", "m0605osaka", "オオサカテン", "Osaka", "K5O"),
-    };
+    for (const [正本, id] of [["東京店", "4973"], ["大阪店", "5006"]] as const) {
+      const 店名 = 店名を読む(id);
+      const found = await findTenantId(page, 店名);
+      if (found !== id) throw new Error(`使い回す店舗「${店名}」（店舗ID ${id}）が店舗一覧に無い（${found ?? "なし"}）`);
+      reportSeedIssue(seed.シードID, 読み替えの文(正本, { id, 店名 }));
+    }
+    shopIds = { 東京店: "4973", 大阪店: "5006" };
   });
 });
 

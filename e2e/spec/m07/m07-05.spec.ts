@@ -10,12 +10,15 @@
 import { Page, test } from "@playwright/test";
 import { caseTest, expect } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
+import { CSVの全行, CSVの内容を画面の枠に出す, CSVの枠のセル, CSVの枠の列, CSVの枠の題 } from "../../lib/evidence_other";
 import { CSVを読む } from "../../pages/admin/m07_buy";
 import { M0701ListPage } from "../../pages/admin/m07_01_list";
 import { M0705_ADMIN, 注文者名 } from "../../seeds/m07-05";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 番 = (n: string) => String(Number(n));
+/** 先頭の0の有無を問わず、その買取番号と読める値（CSVの枠の値を比べる） */
+const 番一致 = (n: string) => new RegExp(`^0*${番(n)}$`);
 
 /** ダウンロードの発生を数える（ブラウザのダウンロード履歴の代わり） */
 function ダウンロードを数える(page: Page): { 件数: () => number } {
@@ -65,6 +68,17 @@ async function Consoleで送信する(page: Page): Promise<void> {
   await page.waitForTimeout(2_000);
 }
 
+/** 入金CSVの出力の要求が送られたことの確かめ（送られていなければ「ダウンロードされない」「同じ2ページ目へ戻る」は確かめにならない） */
+function 出力の要求が送られた(応答: number | null): void {
+  expect(応答, "入金CSVの出力の要求が送られた（送信の応答がある）").not.toBeNull();
+}
+
+/** 読んだCSV（ファイル名・見出し・全データ行）を画面の枠に書き出して残す（ダウンロードの選択肢は先に閉じる）。続く確かめはこの枠の要素で行い、赤枠がCSVの値に付く */
+async function CSVを枠に出す(l: M0701ListPage, file: import("@playwright/test").Download, csv: Awaited<ReturnType<typeof CSVを読む>>): Promise<void> {
+  await l.ダウンロードの選択肢を閉じる();
+  await CSVの内容を画面の枠に出す(l.page, [{ 題: `ファイル名：${file.suggestedFilename()}`, 行: CSVの全行(csv) }]);
+}
+
 async function 現在のページ(page: Page): Promise<string> {
   return ((await page.locator("ul.pagination li.active").first().innerText().catch(() => "")) || "").trim();
 }
@@ -80,14 +94,15 @@ caseTest("IT-M07-05-003", async ({ page, notes, step, expected }) => {
     const r = await l.ダウンロードを押す("入金CSV");
     expect(r.file, `入金CSVのファイル（応答 ${r.応答}・警告 ${r.ダイアログ.join(" / ")}）`).not.toBeNull();
     csv = await CSVを読む(r.file!);
+    await CSVを枠に出す(l, r.file!, csv);
   });
   await step(4, async () => { expect(csv, "入金CSVを読めた").not.toBeNull(); });
   await expected(async () => {
     note("4人の会員の注文者名（姓）は共通の値（実行の印つき）にした。CSV出力設定は共有の設定のため書き換えず、いまの設定のまま読んだ");
     const 期待 = ["未確認", "確認中", "オンライン本人確認済み", "簡易書留確認済み"];
     for (const [i, id] of ids.entries()) {
-      const r = csv!.行.find((x) => 番(x["受注番号"] ?? "") === 番(id));
-      expect.soft(r?.["オンライン本人確認区分"] ?? "（行が無い）", `〔買取注文ID-M0705-003${"ABCD"[i]}〕のオンライン本人確認区分`).toBe(期待[i]);
+      const 行 = csv!.行.findIndex((x) => 番(x["受注番号"] ?? "") === 番(id));
+      await expect.soft(CSVの枠のセル(page, 0, 行, "オンライン本人確認区分"), `〔買取注文ID-M0705-003${"ABCD"[i]}〕のオンライン本人確認区分`).toHaveText(期待[i]);
     }
   });
 });
@@ -103,11 +118,12 @@ caseTest("IT-M07-05-005", async ({ page, notes, step, expected }) => {
     const r = await l.ダウンロードを押す("入金CSV");
     expect(r.file, `入金CSVのファイル（応答 ${r.応答}・警告 ${r.ダイアログ.join(" / ")}）`).not.toBeNull();
     csv = await CSVを読む(r.file!);
+    await CSVを枠に出す(l, r.file!, csv);
   });
   await step(4, async () => { expect(csv, "入金CSVを読めた").not.toBeNull(); });
   await expected(async () => {
     note("CSV出力設定は共有の設定のため書き換えず、いまの設定のまま読んだ");
-    expect.soft(csv!.行.map((r) => 番(r["受注番号"] ?? "")), "CSVのデータ行の買取番号（選択した2件だけが1件1行で、昇順）").toEqual([番(A), 番(B)]);
+    await expect.soft(CSVの枠の列(page, 0, "受注番号"), "CSVのデータ行の買取番号（選択した2件だけが1件1行で、昇順）").toHaveText([番一致(A), 番一致(B)]);
   });
 });
 
@@ -123,13 +139,13 @@ caseTest("IT-M07-05-006", async ({ page, notes, step, expected }) => {
     const r = await l.ダウンロードを押す("入金CSV");
     expect(r.file, `入金CSVのファイル（応答 ${r.応答}・警告 ${r.ダイアログ.join(" / ")}）`).not.toBeNull();
     csv = await CSVを読む(r.file!);
+    await CSVを枠に出す(l, r.file!, csv);
   });
   await step(5, async () => { expect(csv, "入金CSVを読めた").not.toBeNull(); });
   await expected(async () => {
     note("CSV出力設定は共有の設定のため書き換えず、いまの設定のまま読んだ");
-    const ids = csv!.行.map((r) => 番(r["受注番号"] ?? ""));
-    expect.soft(ids, "CSVのデータ行の買取番号（存在する〔買取注文ID-M0705-006A〕の1行だけ）").toEqual([番(A)]);
-    expect.soft(ids.includes("970599006"), "存在しないID 970599006の行を含む").toBe(false);
+    await expect.soft(CSVの枠の列(page, 0, "受注番号"), "CSVのデータ行の買取番号（存在する〔買取注文ID-M0705-006A〕の1行だけ）").toHaveText([番一致(A)]);
+    await expect.soft(CSVの枠の列(page, 0, "受注番号").filter({ hasText: /^0*970599006$/ }), "存在しないID 970599006の行を含む").toHaveCount(0);
   });
 });
 
@@ -186,6 +202,7 @@ caseTest("IT-M07-05-009", async ({ page, notes, step, expected }) => {
   await step(5, async () => {
     const r = await l.ダウンロードを押す("入金CSV");
     note(`入金CSVを押した結果: ファイル ${r.file ? "あり" : "なし"}・応答 ${r.応答}・警告 ${r.ダイアログ.join(" / ") || "なし"}`);
+    出力の要求が送られた(r.応答);
   });
   await step(6, async () => { await page.waitForTimeout(1_000); });
   await expected(async () => {
@@ -207,6 +224,7 @@ caseTest("IT-M07-05-010", async ({ page, step, expected }) => {
   await step(3, async () => {
     const r = await l.ダウンロードを押す("入金CSV");
     note(`入金CSVを押した結果: ファイル ${r.file ? "あり" : "なし"}・応答 ${r.応答}・警告 ${r.ダイアログ.join(" / ") || "なし"}`);
+    出力の要求が送られた(r.応答);
   });
   await expected(async () => {
     expect.soft(await 現在のページ(page), "押した後に開いている買取一覧(検索結果)のページ（2ページ目）").toBe("2");
@@ -226,6 +244,7 @@ caseTest("IT-M07-05-011", async ({ page, notes, step, expected }) => {
   await step(5, async () => {
     const r = await l.ダウンロードを押す("入金CSV");
     note(`入金CSVを押した結果: ファイル ${r.file ? "あり" : "なし"}・応答 ${r.応答}・警告 ${r.ダイアログ.join(" / ") || "なし"}`);
+    出力の要求が送られた(r.応答);
   });
   await step(6, async () => { await page.waitForTimeout(1_000); });
   await expected(async () => {
@@ -244,12 +263,13 @@ caseTest("IT-M07-05-012", async ({ page, notes, step, expected }) => {
     const r = await l.ダウンロードを押す("入金CSV");
     expect(r.file, `入金CSVのファイル（応答 ${r.応答}・警告 ${r.ダイアログ.join(" / ")}）`).not.toBeNull();
     名 = r.file!.suggestedFilename();
+    await CSVを枠に出す(l, r.file!, await CSVを読む(r.file!));
   });
   await step(4, async () => { expect(名, "ダウンロードしたCSVのファイル名").not.toBe(""); });
   await expected(async () => {
     const 先頭 = `purchase_bank_deposit_${番(A).padStart(7, "0")}_`;
     note(`ファイル名: ${名}`);
-    expect.soft(名.startsWith(先頭), `ファイル名が「${先頭}」で始まる`).toBe(true);
-    expect.soft(名.endsWith(".csv"), "拡張子が「.csv」").toBe(true);
+    await expect.soft(CSVの枠の題(page, 0), `ファイル名が「${先頭}」で始まる`).toContainText(`ファイル名：${先頭}`);
+    await expect.soft(CSVの枠の題(page, 0), "拡張子が「.csv」").toContainText(".csv（データ");
   });
 });

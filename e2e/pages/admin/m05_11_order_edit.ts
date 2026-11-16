@@ -41,33 +41,40 @@ async function 全ステータスを選ぶ(page: Page): Promise<void> {
 
 /** 受注一覧をメールアドレスで検索し、その受注の受注情報編集画面を開く。受注IDと注文番号を返す（1件のはず） */
 export async function メールで受注を開く(page: Page, メール: string, 本店: string, what: string): Promise<{ 受注ID: string; 注文番号: string }> {
-  await page.goto(adminUrl("/order"));
-  await page.waitForLoadState("load");
-  const form = page.locator("form#search_form");
-  await expect(form, "受注情報検索の検索欄").toBeVisible();
-  const tenants = form.locator("#admin_search_order_tenants");
-  if ((await tenants.count()) > 0) {
-    const selected = await tenants.evaluate((n) => Array.from((n as HTMLSelectElement).selectedOptions).map((o) => o.value));
-    if (selected.length === 0) {
-      await tenants.evaluate((node, shop) => {
-        const s = node as HTMLSelectElement;
-        const hit = Array.from(s.options).find((o) => (o.textContent ?? "").trim() === shop) ?? s.options[0];
-        hit.selected = true;
-        const w = window as unknown as { jQuery?: (e: Element) => { trigger: (ev: string) => void } };
-        if (w.jQuery) w.jQuery(s).trigger("change");
-        else s.dispatchEvent(new Event("change", { bubbles: true }));
-      }, 本店);
+  // 注文した直後は、混んでいる時間帯に受注一覧へ出るのが遅れて 0 件になることがある（2026-11-15 の開発環境で M05-11 の 105・122・129 が0件で止まった。
+  // 注文完了の画面には注文番号が出ていた）。出るまで、間をあけて検索し直す（最大4回。1件に決まらなければ従来どおり止める）
+  let ids: string[] = [];
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) await page.waitForTimeout(15_000);
+    await page.goto(adminUrl("/order"));
+    await page.waitForLoadState("load");
+    const form = page.locator("form#search_form");
+    await expect(form, "受注情報検索の検索欄").toBeVisible();
+    const tenants = form.locator("#admin_search_order_tenants");
+    if ((await tenants.count()) > 0) {
+      const selected = await tenants.evaluate((n) => Array.from((n as HTMLSelectElement).selectedOptions).map((o) => o.value));
+      if (selected.length === 0) {
+        await tenants.evaluate((node, shop) => {
+          const s = node as HTMLSelectElement;
+          const hit = Array.from(s.options).find((o) => (o.textContent ?? "").trim() === shop) ?? s.options[0];
+          hit.selected = true;
+          const w = window as unknown as { jQuery?: (e: Element) => { trigger: (ev: string) => void } };
+          if (w.jQuery) w.jQuery(s).trigger("change");
+          else s.dispatchEvent(new Event("change", { bubbles: true }));
+        }, 本店);
+      }
     }
+    const emailBox = form.locator("#admin_search_order_email");
+    await 表示する(page, emailBox);
+    await emailBox.fill(メール);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), form.locator("#search_submit").click({ noWaitAfter: true })]);
+    await page.waitForLoadState("load");
+    const hrefs = await page.locator('a.action-edit[href*="/order/"]').evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
+    ids = [...new Set(hrefs.map((h) => /\/order\/(\d+)\/edit/.exec(h)?.[1]).filter((v): v is string => !!v))];
+    if (ids.length > 0) break;
   }
-  const emailBox = form.locator("#admin_search_order_email");
-  await 表示する(page, emailBox);
-  await emailBox.fill(メール);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), form.locator("#search_submit").click()]);
-  await page.waitForLoadState("load");
-  const hrefs = await page.locator('a.action-edit[href*="/order/"]').evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
-  const ids = [...new Set(hrefs.map((h) => /\/order\/(\d+)\/edit/.exec(h)?.[1]).filter((v): v is string => !!v))];
   if (ids.length !== 1) throw new Error(`${what}: 受注一覧でメールアドレス「${メール}」の受注が ${ids.length} 件（1件のはず）`);
-  await Promise.all([page.waitForURL(new RegExp(`/order/${ids[0]}/edit`)), page.locator(`a.action-edit[href$="/order/${ids[0]}/edit"]`).first().click()]);
+  await Promise.all([page.waitForURL(new RegExp(`/order/${ids[0]}/edit`), { timeout: 120_000 }), page.locator(`a.action-edit[href$="/order/${ids[0]}/edit"]`).first().click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   const no = page.locator("a.order-history-order-no-link").first();
   await expect(no, `${what}: 受注情報編集画面の注文番号`).toBeVisible();
@@ -85,8 +92,8 @@ export async function 会員IDを一覧から読む(page: Page, メール: strin
     await page.waitForLoadState("load");
     await page.locator('[name="admin_search_customer[multi]"]').fill(メール);
     await Promise.all([
-      page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click(),
+      page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ noWaitAfter: true }),
     ]);
     await page.waitForLoadState("load");
     const rows = page.locator('tr[id^="ex-customer-"]');
@@ -102,16 +109,26 @@ export async function 会員のメモを登録する(page: Page, 会員ID: strin
   await page.goto(adminUrl(`/customer/${会員ID}/edit`));
   await page.waitForLoadState("load");
   await page.locator("#admin_customer_note").fill(メモ);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), page.locator("#register_btn").click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), page.locator("#register_btn").click({ timeout: 20_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expectSaved(page, "会員情報の保存");
+}
+
+/** 会員情報編集画面で住所3を入れて登録する（会員情報登録画面は国が日本のとき住所3の欄を出さないので、その代わり） */
+export async function 会員の住所3を登録する(page: Page, 会員ID: string, 住所3: string): Promise<void> {
+  await page.goto(adminUrl(`/customer/${会員ID}/edit`));
+  await page.waitForLoadState("load");
+  await page.locator("#admin_customer_address_addr03").fill(住所3, { timeout: 30_000 });
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), page.locator("#register_btn").click({ timeout: 20_000, noWaitAfter: true })]);
+  await page.waitForLoadState("load");
+  await expectSaved(page, "会員情報の保存（住所3）");
 }
 
 /** 会員情報のポイント履歴追加（キャンペーン、特別対応）で、注文番号は空のままポイントを増減する */
 export async function ポイントを付与する(page: Page, 会員ID: string, 増減量: number, 注文番号?: string): Promise<void> {
   await page.goto(adminUrl(`/customer/point/${会員ID}/select`));
   await page.waitForLoadState("load");
-  await Promise.all([page.waitForURL(/\/customer\/point\/\d+\/granted/), page.locator("a.point-type-select").first().click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForURL(/\/customer\/point\/\d+\/granted/, { timeout: 120_000 }), page.locator("a.point-type-select").first().click({ timeout: 20_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   if (注文番号) await page.locator("#admin_customer_point_orderNumber").fill(注文番号, { timeout: 20_000 });
   await page.locator("#admin_customer_point_pointChange").fill(String(増減量), { timeout: 20_000 });
@@ -131,7 +148,7 @@ export async function ポイントを付与する(page: Page, 会員ID: string, 
       await sel("year", today.getFullYear()); await sel("month", today.getMonth() + 1); await sel("day", today.getDate());
     }
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), page.locator("form[name=customer_point_form] button[type=submit]").click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), page.locator("form[name=customer_point_form] button[type=submit]").click({ timeout: 20_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expectSaved(page, "ポイント履歴の保存");
 }
@@ -165,14 +182,14 @@ export class OrderEditPage {
     await 表示する(this.page, noBox);
     await noBox.fill(注文番号);
     await 全ステータスを選ぶ(this.page);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), form.locator("#search_submit").click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), form.locator("#search_submit").click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     // 古い開発用データに同じ注文番号の受注があるので、受注IDが最大（最新）の行を開く
     await expect(this.page.locator('a.action-edit[href*="/order/"]').first(), `注文番号「${注文番号}」の受注`).toBeVisible();
     const hrefs = await this.page.locator('a.action-edit[href*="/order/"]').evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
     const newest = Math.max(...hrefs.map((h) => Number(/\/order\/(\d+)\/edit/.exec(h)?.[1] ?? 0)));
     const link = this.page.locator(`a.action-edit[href$="/order/${newest}/edit"]`).first();
-    await Promise.all([this.page.waitForURL(/\/order\/\d+\/edit/), link.click()]);
+    await Promise.all([this.page.waitForURL(/\/order\/\d+\/edit/, { timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     const opened = /\/order\/(\d+)\/edit/.exec(this.page.url())?.[1];
     const want = 受注(注文番号).受注ID;
@@ -191,6 +208,21 @@ export class OrderEditPage {
       }, cat);
     }
   }
+  /**
+   * 保存のあとに、同じ受注の受注情報編集画面を開き直す（保存されなかったとき、差し戻された入力のままの画面ではなく、
+   * 保存されている内容の画面をエビデンスに残すため）。操作はせず、開くだけ
+   */
+  async 開き直す(注文番号: string): Promise<void> {
+    await this.page.goto(adminUrl(`/order/${受注(注文番号).受注ID}/edit`), { timeout: 60_000 });
+    await this.page.waitForLoadState("load");
+    await expect(this.status, "開き直した受注情報編集画面の変更後のステータス").toBeVisible();
+  }
+  /** 受注情報編集画面の「現在のステータス」の表示（見出しの右の値）。画面に出ている値を確かめるときに使う */
+  get 現在のステータスの欄(): Locator {
+    return this.page.locator('div.row:has(> div.col-3[title="現在のステータス"]) > div.col').first();
+  }
+  /** 保存のあとの成功の知らせ（画面上部の帯） */
+  get 保存の知らせ(): Locator { return this.page.locator(".alert-success").first(); }
   async 現在のステータス(): Promise<string> {
     return ((await this.status.locator("option:checked").first().textContent()) ?? "").trim();
   }
@@ -273,10 +305,33 @@ export class OrderEditPage {
     await expect(register, "「受注情報を登録」").toBeVisible();
     const off = acceptDialogs(this.page, onDialog);
     try {
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), register.click({ timeout: 20_000 })]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), register.click({ timeout: 20_000, noWaitAfter: true })]);
     } catch (e) {
       // 画面の入力チェックで送信されず、画面に留まることもある（明細が無いなど）。留まったことは確かめる側が見る
       if (!/waitForNavigation/.test((e as Error).message)) throw e;
+    } finally { off(); }
+    await this.page.waitForLoadState("load");
+  }
+  /**
+   * 「受注情報を登録」を押し、押したことの結果を返す（拒否を確かめるケース用）: 送信された（受注の画面への POST）か、
+   * 送信されずにブラウザの入力チェックで差し止められた（不正な欄）か。どちらでもなければ、押せずに変わらなかったことになる
+   */
+  async 登録を押して送信を見る(onDialog: (m: string) => void): Promise<{ 送信: boolean; 入力チェック: string }> {
+    let 送信 = false;
+    const onReq = (r: import("@playwright/test").Request) => { if (r.method() === "POST" && /\/order\/\d+\/edit/.test(r.url())) 送信 = true; };
+    this.page.on("request", onReq);
+    try { await this.登録を押す(onDialog); } finally { this.page.off("request", onReq); }
+    const 入力チェック = 送信 ? "" : await this.page.locator("#form1").evaluate((f) => Array.from((f as HTMLFormElement).querySelectorAll(":invalid"))
+      .map((e) => `${(e as HTMLInputElement).name}: ${(e as HTMLInputElement).validationMessage}`).join(" / ")).catch(() => "");
+    return { 送信, 入力チェック };
+  }
+  /** 「受注情報を登録」を押し、送信による画面の遷移（読み込み）を必ず待つ。遷移しなければ落ちる（遷移を確かめるケース用。登録を押す と違い、留まったことを許さない） */
+  async 登録して遷移する(onDialog: (m: string) => void): Promise<void> {
+    const register = this.page.locator('button[type="submit"][name="mode"][value="register"]').filter({ hasText: /^\s*受注情報を登録\s*$/ }).first();
+    await expect(register, "「受注情報を登録」").toBeVisible();
+    const off = acceptDialogs(this.page, onDialog);
+    try {
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), register.click({ timeout: 20_000, noWaitAfter: true })]);
     } finally { off(); }
     await this.page.waitForLoadState("load");
   }
@@ -313,7 +368,7 @@ export class OrderEditPage {
     try {
       await Promise.all([
         this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }),
-        this.page.locator("button.change-status").first().click(),
+        this.page.locator("button.change-status").first().click({ noWaitAfter: true }),
       ]);
     } finally { off(); }
     await this.page.waitForLoadState("load");
@@ -321,9 +376,13 @@ export class OrderEditPage {
   async 受注情報を登録する(onDialog: (m: string) => void): Promise<string[]> {
     const register = this.page.locator('button[type="submit"][name="mode"][value="register"]').filter({ hasText: /^\s*受注情報を登録\s*$/ }).first();
     await expect(register, "「受注情報を登録」").toBeVisible();
+    // ブラウザの入力チェック（required など）で送信されないときは、画面が移らず待ちが時間切れになり、止まった理由が残らない。押す前に確かめて、理由を書いて止める
+    const 入力チェック = await this.page.locator("#form1").evaluate((f) => Array.from((f as HTMLFormElement).querySelectorAll(":invalid"))
+      .map((e) => `${(e as HTMLInputElement).name}: ${(e as HTMLInputElement).validationMessage}`).join(" / ")).catch(() => "");
+    if (入力チェック) throw new Error(`受注情報の保存: ブラウザの入力チェックで送信されなかった（${入力チェック}）`);
     const off = acceptDialogs(this.page, onDialog);
     try {
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), register.click()]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), register.click({ noWaitAfter: true })]);
     } finally { off(); }
     await this.page.waitForLoadState("load");
     return expectSaved(this.page, "受注情報の保存");
@@ -385,7 +444,7 @@ const 日付の対象: Record<日付欄, string> = { ピック中: "confirm_date
 export async function 日付をクリアする(page: Page, 欄: 日付欄): Promise<void> {
   const btn = page.locator(`button.clear-date[data-target="${日付の対象[欄]}"]`);
   await expect(btn, `${欄}の「クリア」ボタン`).toBeVisible();
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), btn.click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), btn.click({ timeout: 20_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
 }
 /** 折りたたみのブロック（タイトルのリンクと中身） */

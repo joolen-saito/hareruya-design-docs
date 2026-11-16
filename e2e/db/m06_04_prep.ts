@@ -66,6 +66,17 @@ export function 買取を整える(受注ID: string, 印: string, v: 買取の�
   一件(n, "買取の更新");
 }
 
+/** 印つきの買取の、ステータスだけを変える（ほかの値は変えない） */
+export function ステータスだけを変える(受注ID: string, 印: string, 状態: string): void {
+  const n = writeTestData({
+    理由: `買取 ${受注ID} のステータスを「${状態}」にする（買取成立の保存で、アプリが続けて入庫待ち・未登録在庫ありにするため）`,
+    sql: `update dtb_otc_buy_order set otc_buy_order_status_id = $2::int where id = $1::int`,
+    params: [数字(受注ID), 番号(状態)],
+    対象の確かめ: 親の確かめ, 確かめのparams: [数字(受注ID)], 印, 最大行数: 1,
+  });
+  一件(n, "買取のステータスの更新");
+}
+
 export type 明細の値 = { 部門ID: string; 買取金額: number; 販売金額: number; 数量?: number; 商品コード?: string };
 
 /** 印つきの買取に、買取明細を1件足す（商品コードを与えると、その商品規格＝商品マスタ登録済みの明細） */
@@ -113,6 +124,12 @@ export function 実在庫明細を足す(受注ID: string, 印: string, 商品�
 
 export type 写しの値 = { 査定ID: string; 名: string; 状態: string; 成立日: string | null; 合計金額: number | null; 店舗ID?: string };
 
+/**
+ * 写して足す買取の親の確かめ。足す買取の姓は元の買取の姓の写しなので、姓を親の列にする（足す買取の名は元と違うため、名では親に当たらない）。
+ * 元の買取は、名に実行の印がある（印の確かめは writeTestData が行う）。
+ */
+const 写しの親の確かめ = "select o.id, o.first_name, o.last_name from dtb_otc_buy_order o where o.id = $1::int";
+
 /** 印つきの買取の申込者情報を写して、買取をもう1件足す（名は印つきの値を渡す）。足した買取の店頭買取受注IDを返す */
 export function 買取を写して足す(元の受注ID: string, 印: string, v: 写しの値): string {
   const n = writeTestData({
@@ -124,7 +141,7 @@ export function 買取を写して足す(元の受注ID: string, 印: string, v:
                  o.apply_date, (nullif($7, '')::timestamp) at time zone 'Asia/Tokyo', o.country_id, o.pref_id, o.job_id, now()
             from dtb_otc_buy_order o where o.id = $1::int`,
     params: [数字(元の受注ID), 番号(v.状態), v.査定ID, v.名, v.店舗ID ?? "", v.合計金額 === null ? "" : v.合計金額, v.成立日 ?? ""],
-    対象の確かめ: 親の確かめ, 確かめのparams: [数字(元の受注ID)], 印, 最大行数: 1,
+    対象の確かめ: 写しの親の確かめ, 確かめのparams: [数字(元の受注ID)], 印, 最大行数: 1,
   });
   一件(n, "買取の追加");
   const r = query("select id from dtb_otc_buy_order where assessment_id = $1", [v.査定ID]);
@@ -197,7 +214,9 @@ export function 集計を足す(親の受注ID: string, 印: string, 日: string
     sql: `insert into dtb_otc_buy_order_summary (base_info_id, section_id, sell_price, buy_price, summary_date)
           select $3::int, $4::int, $6::int, $5::int, ($2::date)::timestamp at time zone 'Asia/Tokyo' from dtb_otc_buy_order o where o.id = $1::int`,
     params: [数字(親の受注ID), 日, 数字(店舗ID), 数字(部門ID), 買取金額, 販売金額],
-    対象の確かめ: 親の確かめ, 確かめのparams: [数字(親の受注ID)], 印, 最大行数: 1,
+    // 買取集計の行には買取への参照の列が無い。足す行の買取店舗が、印つきの買取の確かめの行の店舗の列に当たることで、親の列にする
+    対象の確かめ: "select o.id, o.first_name, $2::int as base_info_id from dtb_otc_buy_order o where o.id = $1::int",
+    確かめのparams: [数字(親の受注ID), 数字(店舗ID)], 印, 最大行数: 1,
   });
   一件(n, "買取集計");
 }

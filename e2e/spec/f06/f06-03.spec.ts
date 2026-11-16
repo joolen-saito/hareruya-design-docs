@@ -11,6 +11,8 @@ import { LoginPage } from "../../pages/front/f06_03_login";
 import { FrontFavorite } from "../../pages/front/f03_08_favorite";
 import { FrontRestock } from "../../pages/front/f03_07_restock_notify";
 import { mailOf, PW, 保持を設定する, 保持を戻す, 保持状態のCookie, 商品の場所, 十一文字のパスワード, 五十一文字のパスワード, 全角入りのパスワード } from "../../seeds/f06-03";
+import { 別のブラウザの画面を撮る, scene } from "../../lib/evidence_other";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
@@ -49,7 +51,7 @@ caseTest("IT-F06-03-010", async ({ page, step, expected }) => {
   const l = new LoginPage(page);
   await step(1, async () => { await l.ログイン画面を開く(); });
   await step(2, async () => { await l.押して遷移する(l.パンくずホーム); });
-  await expected(async () => { expect.soft(l.path(), "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(l.path(), "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(l.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 caseTest("IT-F06-03-011", async ({ page, step, expected }) => {
   const l = new LoginPage(page);
@@ -98,13 +100,18 @@ caseTest("IT-F06-03-014", async ({ page, browser, step, expected }) => {
     await hideDebugToolbar(ctxB);
     const b = new LoginPage(await ctxB.newPage());
     await step(1, async () => { await a.ログイン画面を開く(); await a.ログインする(mailOf("f0603-none"), PW); });
-    await step(2, async () => { await b.ログイン画面を開く(); await b.ログインする(mailOf("f0603-base-014"), "Wrong!603"); });
+    await step(2, async () => {
+      await b.ログイン画面を開く(); await b.ログインする(mailOf("f0603-base-014"), "Wrong!603");
+      // 自動のキャプチャはブラウザA（ケースの画面）しか撮らないので、ブラウザBの画面を撮る
+      await 別のブラウザの画面を撮る(b.page, scene.stepLabel(2, "ブラウザB（誤ったパスワード）のログイン画面"));
+    });
     await expected(async () => {
       expect.soft(await a.ログイン画面である(), "ブラウザAはログイン画面に留まる").toBe(true);
       expect.soft(await b.ログイン画面である(), "ブラウザBはログイン画面に留まる").toBe(true);
       const ea = await a.認証エラー(), eb = await b.認証エラー();
       expect.soft(ea, "ブラウザAに認証エラーが表示される").not.toBe("");
       expect.soft(eb, "ブラウザAとブラウザBの認証エラーが同じ").toBe(ea);
+      await 別のブラウザの画面を撮る(b.page, scene.expectedLabel("ブラウザB（誤ったパスワード）のログイン画面"));
     });
   } finally { await ctxB.close(); }
 });
@@ -186,6 +193,7 @@ caseTest("IT-F06-03-041", async ({ page, browser, step, expected }) => {
     const l = new LoginPage(page);
     await step(1, async () => { await l.ログイン画面を開く(); });
     await expected(async () => {
+      expect(await l.ログイン画面である(), "ログイン画面が表示される（選択欄の有無を見る前提）").toBe(true);
       expect.soft(await l.保持の選択欄が見えているか(), "ログイン状態の保持の選択欄が表示されない").toBe(false);
     });
   } finally { await 保持の確認(browser); }
@@ -252,7 +260,15 @@ caseTest("IT-F06-03-048", async ({ page, step, expected }) => {
 caseTest("IT-F06-03-049", async ({ page, step, expected }) => {
   const l = new LoginPage(page);
   await step(1, async () => { await l.ログイン画面を開く(); await l.ログインする(mailOf("f0603-base-049"), PW); });
-  await step(2, async () => { await l.URLを開く("/ja/forgot"); });
+  await step(2, async () => {
+    // パスワード再発行画面が開けたかを確かめる。ログイン中は 404 になることがあり（2026-11-13 の流し）、確かめないと
+    // 手順3の「ログアウトのリンクが無い」で止まって、失敗の理由が誤って見えた
+    const res = await page.goto(`${BASE_URL}/ja/forgot`, { timeout: 60_000 });
+    await page.waitForLoadState("load");
+    const status = res?.status() ?? 0;
+    expect(status, `ログイン中にパスワード再発行画面（/ja/forgot）を開いた応答（開いた画面 ${l.path()}）`).toBeLessThan(400);
+    expect(l.path(), "パスワード再発行画面が開いている").toBe("/ja/forgot");
+  });
   await step(3, async () => {
     const ok = await l.ログアウトを押す();
     expect(ok, "見えている「ログアウト」のリンクがある").toBe(true);
@@ -284,6 +300,8 @@ caseTest("IT-F06-03-015", async ({ page, browser, step, expected }) => {
       for (const [名前, x] of [["ブラウザA（仮会員）", a], ["ブラウザB（退会済み会員）", b], ["ブラウザC（削除済み会員）", c]] as const) {
         expect.soft(await x.ログイン画面である(), `${名前}はログイン画面に留まる`).toBe(true);
         expect.soft(mypagePath(x.path()), `${名前}はマイページ画面へ進んでいない`).toBe(false);
+        // 送信に失敗しても同じログイン画面に戻る作りなので、認証が断られた知らせも見る
+        expect.soft(await x.認証エラー(), `${名前}に認証エラーが表示される`).not.toBe("");
       }
     });
   } finally { await ctxB.close(); await ctxC.close(); }
@@ -357,6 +375,48 @@ caseTest("IT-F06-03-054", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(await l.ログイン画面である(), "ログイン画面に留まる").toBe(true);
     expect.soft(await l.認証エラー(), "「ログイン試行回数が多すぎます。」で始まるエラーが表示される").toMatch(/^ログイン試行回数が多すぎます。/);
+  });
+});
+
+// ---- 031 ログイン不可の30分の境目（同じ送信元から。待ちを含めて約31分かかる） ----
+const 分 = 60_000;
+async function その時刻まで待つ(page: import("@playwright/test").Page, 時刻: number): Promise<void> {
+  const rest = 時刻 - Date.now();
+  if (rest > 0) await page.waitForTimeout(rest);
+}
+caseTest("IT-F06-03-031", async ({ page, step, expected }) => {
+  test.setTimeout(50 * 分);
+  supplement(IP補足);
+  const l = new LoginPage(page);
+  const mail = mailOf("f0603-throttle-a-031");
+  // 事前準備④: 5回続けて誤ったパスワードでログインし、5回目の時刻を控えてから29分待つ
+  await l.ログイン画面を開く();
+  await 誤りを重ねる(l, mail, 5);
+  const 五回目 = Date.now();
+  note(`事前準備④の5回目の誤ったログインの時刻: ${new Date(五回目).toISOString()}。この時刻から29分たってから手順1へ進んだ`);
+  await その時刻まで待つ(page, 五回目 + 29 * 分);
+  const 成立: boolean[] = [];
+  let 二十九分のエラー = "";
+  await step(1, async () => { await l.ログイン画面を開く(); });
+  await step(2, async () => {
+    note(`手順2のログインの時刻: ログイン不可開始から ${((Date.now() - 五回目) / 分).toFixed(1)} 分後`);
+    await l.ログインする(mail, "ThrottleA!603");
+    成立.push(!(await l.ログイン画面である()));
+    二十九分のエラー = await l.認証エラー();
+  });
+  await step(3, async () => {
+    // 30分の境目ちょうどを避け、5秒の余裕をおく
+    await その時刻まで待つ(page, 五回目 + 30 * 分 + 5_000);
+    note(`手順3の待ちの終わり: ログイン不可開始から ${((Date.now() - 五回目) / 分).toFixed(1)} 分後（30分の境目ちょうどを避けて5秒の余裕をおいた）`);
+  });
+  await step(4, async () => {
+    await l.ログイン画面を開く();
+    await l.ログインする(mail, "ThrottleA!603");
+    成立.push(!(await l.ログイン画面である()));
+  });
+  await expected(async () => {
+    expect.soft(成立[0] === false, `ログイン不可開始から29分経過時はログイン画面に留まる（表示された認証エラー: ${二十九分のエラー || エラーなし文}）`).toBe(true);
+    expect.soft(成立[1], `ログイン不可開始から30分経過後は認証が成立する（実際 ${l.path()}）`).toBe(true);
   });
 });
 

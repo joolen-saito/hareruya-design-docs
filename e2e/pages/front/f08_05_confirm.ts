@@ -85,7 +85,7 @@ export class OtcApplyPage {
   async アカウントなしで進む(): Promise<void> {
     const link = this.page.locator("form#login_otc_buy a.c-hareruya-text--link");
     await expect(link, "申込前ログイン画面の、アカウントを持たない人の入口のリンク").toBeVisible({ timeout: T });
-    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+(\?|$)/, { timeout: NAV }), link.click({ timeout: T })]);
+    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+(\?|$)/, { timeout: NAV }), link.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     await expect(this.f("lastName"), "申込情報入力画面のお名前（姓）の欄").toBeVisible({ timeout: T });
   }
@@ -203,7 +203,7 @@ export class OtcApplyPage {
   async 次のページへ進む(): Promise<string> {
     const btn = this.page.locator("form#otc_buy_order_form button#otcBuyOrderApply");
     await expect(btn, "申込情報入力画面の「次のページへ進む」").toBeVisible({ timeout: T });
-    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/(register_customer|confirm)/, { timeout: NAV }), btn.click({ timeout: T })]);
+    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/(register_customer|confirm)/, { timeout: NAV }), btn.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     return new URL(this.page.url()).pathname;
   }
@@ -220,7 +220,7 @@ export class OtcApplyPage {
     await this.page.locator("#otc_buy_order_password_first").fill(パスワード, { timeout: T });
     await this.page.locator("#otc_buy_order_password_second").fill(パスワード, { timeout: T });
     await this.page.locator("#otc_buy_order_entry_privacy_flg").check({ timeout: T });
-    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/confirm/, { timeout: NAV }), this.page.locator("button#submitButton").click({ timeout: T })]);
+    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/confirm/, { timeout: NAV }), this.page.locator("button#submitButton").click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -237,7 +237,7 @@ export class OtcApplyPage {
   async 会員登録をスキップする(): Promise<void> {
     await expect(this.会員登録フォーム(), "会員登録フォーム").toBeVisible({ timeout: T });
     const skip = this.page.locator("form#otc_buy_register_customer_form a#otcBuyOrderApply");
-    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/confirm/, { timeout: NAV }), skip.click({ timeout: T })]);
+    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/confirm/, { timeout: NAV }), skip.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -277,7 +277,7 @@ export class OtcApplyPage {
     await expect(this.確定ボタン(), "店頭買取査定申込確認画面の確定のボタン").toBeVisible({ timeout: T });
     await Promise.all([
       this.page.waitForURL(/\/otcbuy\/\w+\/(complete|entry)/, { timeout: NAV }).catch(() => undefined),
-      this.確定ボタン().click({ timeout: T }),
+      this.確定ボタン().click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     const path = new URL(this.page.url()).pathname;
@@ -287,7 +287,7 @@ export class OtcApplyPage {
   /** 確認画面の「戻る」を押し、申込情報入力画面へ移る */
   async 戻る(): Promise<void> {
     const back = this.page.locator("form#otc_buy_order_form button[type=submit]:not(#otcBuyOrderApply)");
-    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+(\?|$)/, { timeout: NAV }), back.click({ timeout: T })]);
+    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+(\?|$)/, { timeout: NAV }), back.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 

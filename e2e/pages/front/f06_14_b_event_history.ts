@@ -61,7 +61,7 @@ export class マイイベント extends EventHistoryPage {
   /** ヘッダーの言語切替で、英語の表示にする */
   async 英語に切り替える(): Promise<void> {
     const l = this.page.locator(".p-hareruya-header__nav-item--lang a").first();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click({ timeout: 20_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 }

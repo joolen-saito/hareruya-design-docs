@@ -89,7 +89,7 @@ export class MetagamePage {
     const link = this.行のリンク(アーキタイプ名);
     await expect(link, `一覧の「${アーキタイプ名}」の行`).toBeVisible();
     await link.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForURL(/\/deck\/result\//, { waitUntil: "load", timeout: 90_000 }), link.click()]);
+    await Promise.all([this.page.waitForURL(/\/deck\/result\//, { waitUntil: "load", timeout: 90_000 }), link.click({ noWaitAfter: true })]);
   }
 
   /** 画面上部の「採用枚数ランキング」 */
@@ -98,7 +98,7 @@ export class MetagamePage {
   }
   async 採用枚数ランキングを押す(): Promise<void> {
     await expect(this.採用枚数ランキング, "画面上部の「採用枚数ランキング」").toHaveCount(1);
-    await Promise.all([this.page.waitForURL(/\/deck\/\d+\/usage_ranking\//, { waitUntil: "load", timeout: 90_000 }), this.採用枚数ランキング.click()]);
+    await Promise.all([this.page.waitForURL(/\/deck\/\d+\/usage_ranking\//, { waitUntil: "load", timeout: 90_000 }), this.採用枚数ランキング.click({ noWaitAfter: true })]);
   }
 
   /** 画面下部の「戻る」 */
@@ -106,7 +106,7 @@ export class MetagamePage {
   async 戻るを押す(): Promise<void> {
     await expect(this.戻る, "画面下部の「戻る」").toHaveCount(1);
     await this.戻る.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForURL((u) => /\/deck\/$/.test(u.pathname), { waitUntil: "load", timeout: 90_000 }), this.戻る.click()]);
+    await Promise.all([this.page.waitForURL((u) => /\/deck\/$/.test(u.pathname), { waitUntil: "load", timeout: 90_000 }), this.戻る.click({ noWaitAfter: true })]);
   }
 }
 

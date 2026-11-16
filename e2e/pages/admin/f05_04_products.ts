@@ -5,7 +5,7 @@
  * - カード商品CSV登録（画面の雛形の見出しで行を組み、「CSVファイルをアップロード」→確認モーダルの「確定」）
  * - 商品マスター(検索結果)で商品名から商品IDを読む／商品IDで検索して0件を確かめる
  * - 商品規格登録編集（商品コード・買取価格・代表画像を入れて「商品規格を登録」／「商品規格を削除」）
- * - 単体カード（管理画面の最上位カテゴリ「シングルカード」）配下のカテゴリのID、登録済みの割引率のID
+ * - 単体カード（カテゴリ「シングルカード」。手元は最上位、開発環境はセットの下）配下のカテゴリのID、登録済みの割引率のID
  * - ページ管理で査定例ページがあることの確かめ
  *
  * 画面の作り（アプリの実ソースで確かめた）:
@@ -122,8 +122,8 @@ export async function F0504カードを登録する(page: Page, v: F0504カー�
   }
   issue(`${what}: 詳細情報は ${chosen.join(" ／ ")} を選んだ（シード表は値を定めない。カードセットとカード番号は、カード商品CSVが振る商品コードを重ならせないために入れた）`);
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: カードの登録`)) issue(`${what}: 警告「${w}」`);
   const m = /\/card\/(\d+)\/edit/.exec(page.url());
@@ -147,6 +147,25 @@ export async function カード商品CSVの見出し(page: Page): Promise<string
   const [headers] = parseCsv(decodeCsvBytes(Buffer.concat(chunks)));
   if (!headers || !headers.includes("カード詳細(ID)") || !headers.includes("買取価格")) throw new Error(`カード商品CSVの雛形の見出しを読めない: ${headers?.join(",")}`);
   return headers;
+}
+
+/**
+ * カード商品CSV登録画面のCSVの形式の表の説明（「1:公開 2:非公開 3:廃止」・「0:非公開 1:公開」）から、
+ * 商品公開ステータス・支店の商品公開ステータスの「公開」に当たる値を読む。
+ * 正本（シード表）は「商品公開ステータスに「2」（公開）」と書くが、アプリの説明では 2 は非公開で、2 を入れると商品が非公開になり
+ * ネット買取商品詳細が 404 になった（2026-11-13）。正本の意味（公開）に当たる値を画面の説明から読んで入れる（f03_02_seed_ops・m03-23 と同じ読み替え）
+ */
+export async function カード商品CSVの公開の値(page: Page): Promise<{ 商品公開ステータス: string; 支店の商品公開ステータス: string }> {
+  const up = new CsvUploadPage(page, "カード商品");
+  await up.open();
+  const rows = await up.formatRows();
+  const 値 = (項目名: string): string => {
+    const desc = rows.find((r) => r.項目名 === 項目名)?.説明 ?? "";
+    const hit = [...desc.matchAll(/(\d+)\s*:\s*([^\d\s:]+)/g)].filter((m) => m[2].trim() === "公開");
+    if (hit.length !== 1) throw new Error(`カード商品CSVの「${項目名}」の説明から「公開」の値を一意に読めない（${desc}）`);
+    return hit[0][1];
+  };
+  return { 商品公開ステータス: 値("商品公開ステータス"), 支店の商品公開ステータス: 値("支店の商品公開ステータス") };
 }
 
 /** 見出しの列だけ値を入れ（ほかの列は空）、カード商品CSV登録画面でアップロードして確認モーダルの「確定」を押す */
@@ -208,28 +227,106 @@ export async function 商品IDで公開状態すべてを検索した件数(page
   return m ? Number(m[1]) : 0;
 }
 
-/** 管理画面の最上位カテゴリ「シングルカード」（シード表の「単体カード」）の配下の、先頭のカテゴリのID */
-export async function 単体カード配下のカテゴリID(page: Page): Promise<{ id: string; 名称: string }> {
+/**
+ * シード表の「単体カード」にあたる、名称（日）が「シングルカード」のカテゴリ。
+ * 手元（アプリの初期データ）は最上位に「シングルカード」（ID 1）があるが、開発環境のカテゴリツリーは最上位が「最新セット」「スタンダード」…
+ * （セット別）で、「シングルカード」は各セットの下にある（2026-11-13 の F05-04 の事前準備で、最上位に0件だった）。
+ * 最上位に1件あればそれを、無ければ商品マスターの検索欄のカテゴリの選択肢で、先頭の「シングルカード」を使う（読むだけ。カテゴリは書き換えない）。
+ */
+export async function シングルカードのカテゴリ(page: Page): Promise<{ id: string; 名称: string; 最上位: boolean }> {
   const category = new CategoryPage(page);
   await category.openTop();
-  const top = await category.idOf("シングルカード");
-  await category.openChildrenOf(top);
+  const top = (await category.rowValues()).filter((r) => r.nameJp === "シングルカード");
+  if (top.length > 1) throw new Error(`最上位のカテゴリに「シングルカード」が ${top.length} 件ある（1件のはず）`);
+  if (top.length === 1) return { id: top[0].id, 名称: "シングルカード", 最上位: true };
+  const search = new ProductSearchPage(page);
+  await search.open();
+  const opts = await page.locator("select#admin_search_product_category_id option").evaluateAll((os) =>
+    os.map((o) => ({ value: (o as HTMLOptionElement).value, label: o.textContent ?? "" })));
+  const depth = (label: string): number => (/^[\s　]*/.exec(label)?.[0].length ?? 0);
+  const i = opts.findIndex((o) => /^\d+$/.test(o.value) && o.label.trim() === "シングルカード");
+  if (i < 0) throw new Error("カテゴリに「シングルカード」が無い（最上位にも、商品マスターの検索欄のカテゴリの選択肢にも無い）");
+  const parent = opts.slice(0, i).reverse().find((o) => depth(o.label) < depth(opts[i].label));
+  return { id: opts[i].value, 名称: parent ? `${parent.label.trim()}＞シングルカード` : "シングルカード", 最上位: false };
+}
+
+/**
+ * シード表の「単体カード配下のカテゴリ」のID。
+ * 最上位に「シングルカード」があれば（手元）その配下の先頭のカテゴリ、無ければ（開発環境）セットの下の「シングルカード」そのもの。
+ */
+export async function 単体カード配下のカテゴリID(page: Page): Promise<{ id: string; 名称: string }> {
+  const single = await シングルカードのカテゴリ(page);
+  if (!single.最上位) return { id: single.id, 名称: single.名称 };
+  const category = new CategoryPage(page);
+  await category.openChildrenOf(single.id);
   const rows = await category.rowValues();
   if (rows.length === 0 || !/^\d+$/.test(rows[0].id)) throw new Error("「シングルカード」の配下にカテゴリが無い");
   return { id: rows[0].id, 名称: rows[0].nameJp };
 }
 
-/** 登録済みの割引率のID。既存の商品（初期条件で検索した結果の先頭）の商品登録編集画面の割引率の選択肢の先頭（保存はしない） */
-export async function 登録済みの割引率ID(page: Page): Promise<{ id: string; 名称: string }> {
+/**
+ * グッズ商品CSV登録が「商品カテゴリ(ID)」に受け付ける範囲（アプリの決め打ちのカテゴリID 2・4・5 とその子孫。
+ * Service/Csv/Importer/Event/ProductGoodsImportHandler.php の初期化）の中で、名称（日）が「シングルカード」のカテゴリ。無ければ 2・4・5 のうち最初にあるもの。
+ * 開発環境のカテゴリIDは本番と同じで、2 は「スタンダード」・4 は「モダン」・5 は「レガシー」（Entity/Category.php の NAV_ の定数）。
+ * 「単体カード配下のカテゴリID」が返す、セットの下の「シングルカード」（例: コマンダーの下）は範囲の外で、取込が
+ * 「商品カテゴリ(ID)の値が異常です」で止まった（2026-11-13〜14 の F05-01 の21件）。読むだけ。カテゴリは書き換えない。
+ */
+export async function グッズCSVが受け付けるカードのカテゴリID(page: Page): Promise<{ id: string; 名称: string }> {
+  const 根 = ["2", "4", "5"];
   const search = new ProductSearchPage(page);
   await search.open();
-  await search.submitAndWaitForResult();
-  const first = page.locator('tr[id^="ex-product-"] td:nth-child(3) a').first();
-  await expect(first, "商品マスター(検索結果)の先頭の商品").toBeVisible();
-  await Promise.all([page.waitForURL(/\/product\/product\/\d+\/edit$/), first.click()]);
-  const o = (await options(page.locator('form#form1 select[name="admin_product[Discount]"]')))[0];
-  if (!o) throw new Error("商品登録編集画面の割引率に選べる値が無い");
-  return { id: o.value, 名称: o.label };
+  const opts = await page.locator("select#admin_search_product_category_id option").evaluateAll((os) =>
+    os.map((o) => ({ value: (o as HTMLOptionElement).value, label: o.textContent ?? "" })));
+  const depth = (label: string): number => (/^[\s　]*/.exec(label)?.[0].length ?? 0);
+  /** 選択肢 i の自身と祖先（字下げの浅い前の選択肢をたどる） */
+  const 系統 = (i: number): { value: string; label: string }[] => {
+    const out = [opts[i]];
+    let d = depth(opts[i].label);
+    for (let j = i - 1; j >= 0 && d > 0; j--) {
+      const dj = depth(opts[j].label);
+      if (/^\d+$/.test(opts[j].value) && dj < d) { out.push(opts[j]); d = dj; }
+    }
+    return out;
+  };
+  for (let i = 0; i < opts.length; i++) {
+    if (!/^\d+$/.test(opts[i].value) || opts[i].label.trim() !== "シングルカード") continue;
+    const line = 系統(i);
+    if (line.some((o) => 根.includes(o.value))) return { id: opts[i].value, 名称: line.map((o) => o.label.trim()).reverse().join("＞") };
+  }
+  for (const r of 根) {
+    const o = opts.find((x) => x.value === r);
+    if (o) return { id: r, 名称: o.label.trim() };
+  }
+  throw new Error(`グッズ商品CSV登録が受け付けるカテゴリ（ID ${根.join("・")} とその子孫）が、商品マスターの検索欄のカテゴリの選択肢に無い`);
+}
+
+/** 同じ流し（同じプロセス）で一度読んだ割引率を使い回す。割引率の選択肢（MtbDiscount の id 順）は流しの間に変わらない */
+let 割引率の控え: { id: string; 名称: string } | null = null;
+
+/**
+ * 登録済みの割引率のID。既存の商品の商品登録編集画面（保存はしない）の割引率の選択肢の先頭。
+ * - 商品マスターを絞り込みなしで検索すると、開発環境では商品が多く POST /admin/product が120秒たっても応答しない（2026-11-13 の F05-04 の7件）。
+ * - 商品登録画面（新規）/admin/product/product/new は、アプリの初期データ（dtb_authority_role）で権限1〜3のすべてに閉じられていて
+ *   404「お探しのページが見つかりません」を返す（2026-11-13 11:2x〜11:4x の F05-04 の29件。画面は真っ白で form#form1 が出なかった）。
+ * - 割引率の選択肢を出す画面はアプリに商品登録編集画面しかない（販売割引率一覧 /admin/data/discount は名称だけで ID を出さない）。
+ * そこで、番号の小さい既存の商品の編集画面を商品IDで直接開いて読む（m03_01_product_class.ts の言語の読み方と同じ）。
+ * 割引率の選択肢は ProductType の Discount（全件・id 順）で、商品によらない。
+ */
+export async function 登録済みの割引率ID(page: Page): Promise<{ id: string; 名称: string }> {
+  if (割引率の控え) return 割引率の控え;
+  const select = page.locator('form#form1 select[name="admin_product[Discount]"]');
+  const tried: string[] = [];
+  for (const id of ["1", "2", "3", "4", "5", "10", "100", "1000"]) {
+    const res = await page.goto(adminUrl(`/product/product/${id}/edit`), { waitUntil: "load", timeout: 120_000 }).catch(() => null);
+    tried.push(`${id}=${res ? res.status() : "応答なし"}`);
+    if (!res || !res.ok() || !new URL(page.url()).pathname.endsWith(`/product/product/${id}/edit`)) continue;
+    await expect(page.locator("form#form1"), `商品登録編集画面（商品ID ${id}）`).toBeVisible({ timeout: 120_000 });
+    const o = (await options(select))[0];
+    if (!o) throw new Error(`商品登録編集画面（商品ID ${id}）の割引率に選べる値が無い`);
+    割引率の控え = { id: o.value, 名称: o.label };
+    return 割引率の控え;
+  }
+  throw new Error(`割引率を読むための既存の商品の編集画面を開けない（商品IDと状態コード: ${tried.join("、")}）`);
 }
 
 // ---------------------------------------------------------------------------
@@ -244,10 +341,25 @@ export async function 商品規格一覧を読む(page: Page, productId: string)
 }
 
 /** 商品規格一覧の行のうち、言語（日本語／英語）と状態の行の商品規格ID */
-export function 規格IDを選ぶ(rows: 商品規格の行[], 言語: "JP" | "EN", 状態: string): string {
+/**
+ * 正本（シード表・ケース）の状態「EX」は、アプリの状態のマスタ（mtb_card_condition: NM・SP・MP・HP・OT。Entity MtbCardCondition）に無く、
+ * カード商品CSVの取り込みも NM・SP・MP・HP・OT の規格だけを作る（2026-11-13 の開発環境で 001・014 が止まった）。
+ * 正本の「NM の次の状態」の意味で、並びの2番目の SP に読み替える。
+ */
+export const 画面の状態 = (正本の状態: string): string => (正本の状態 === "EX" ? "SP" : 正本の状態);
+export const 状態EXの読み替えの注記 = "正本の状態「EX」は、アプリの状態のマスタ（NM・SP・MP・HP・OT）に無く、カード商品CSVの取り込みでも作られない。NM の次の状態 SP に読み替えた（JP-EX→JP-SP、EN-EX→EN-SP）";
+
+/** 規格の表（「言語-状態」→ 商品規格ID）に、SP の規格を正本の EX の名前でも引けるように足す */
+export function EXの名前でも引けるようにする(規格: Record<string, string>): Record<string, string> {
+  for (const lang of ["JP", "EN"]) if (規格[`${lang}-SP`] && !規格[`${lang}-EX`]) 規格[`${lang}-EX`] = 規格[`${lang}-SP`];
+  return 規格;
+}
+
+export function 規格IDを選ぶ(rows: 商品規格の行[], 言語: "JP" | "EN", 正本の状態: string): string {
   const name = 言語 === "JP" ? "日本語" : "英語";
+  const 状態 = 画面の状態(正本の状態);
   const hit = rows.filter((r) => r.言語 === name && r.状態 === 状態);
-  if (hit.length !== 1) throw new Error(`商品規格一覧に言語「${name}」・状態「${状態}」の行が ${hit.length} 件ある（1件のはず）: ${JSON.stringify(rows)}`);
+  if (hit.length !== 1) throw new Error(`商品規格一覧に言語「${name}」・状態「${状態}」${状態 !== 正本の状態 ? `（正本の${正本の状態}）` : ""}の行が ${hit.length} 件ある（1件のはず）: ${JSON.stringify(rows)}`);
   return hit[0].商品規格ID;
 }
 
@@ -269,10 +381,25 @@ export async function 商品規格を登録する(
   const form = await openClassEdit(page, productId, classId, what);
   const smaregi = form.locator('input[name="admin_product_class[smaregi_alignment_flg]"]:checked');
   if ((await smaregi.count()) === 1 && (await smaregi.getAttribute("value")) !== "0") {
-    throw new Error(`${what}: 商品規格ID ${classId} のスマレジ連携フラグが「連携する」になっている（カード商品CSVが基準価格から決めた）。保存すると外部のスマレジへ送られるので止める`);
+    // 保存すると外部のスマレジへ送られる。この商品規格は E2E が作った印つきなので、保存の前に「連携しない」へ切り替える（スマレジへは送らない）。切り替えて保存するので、切り替わったことを確かめてから進む
+    const 連携しない = form.locator('input[name="admin_product_class[smaregi_alignment_flg]"][value="0"]');
+    if ((await 連携しない.count()) !== 1) throw new Error(`${what}: 商品規格ID ${classId} のスマレジ連携フラグが「連携する」になっていて、「連携しない」の選択肢も見つからない。保存すると外部のスマレジへ送られるので止める`);
+    await 連携しない.check({ force: true });
+    await expect(smaregi, `${what}: 商品規格ID ${classId} のスマレジ連携フラグが「連携しない」になる`).toHaveAttribute("value", "0");
+    issue(`${what}: 商品規格ID ${classId} のスマレジ連携フラグはカード商品CSVが基準価格から「連携する」にしていたので、保存の前に「連携しない」へ切り替えた（保存すると外部のスマレジへ送られるため）`);
   }
   if (v.商品コード !== undefined) await form.locator("#admin_product_class_code").fill(v.商品コード);
-  if (v.買取価格 !== undefined) await form.locator("#admin_product_class_buy_price").fill(v.買取価格);
+  if (v.買取価格 !== undefined) {
+    await form.locator("#admin_product_class_buy_price").fill(v.買取価格);
+    // アプリは「販売価格は買取価格以上」でないと保存させない。言語・状態ごとに買取価格が違う規格（英語NM 900 など）は、取り込んだ規格の販売価格（日本語NMの買取価格と同じ）が足りない。
+    // シード表は販売価格を買取価格と同じとしているので、足りないときは買取価格と同じ値にする
+    const 販売 = form.locator("#admin_product_class_price02");
+    const 今の販売 = Number((await 販売.inputValue()).replace(/[^\d.]/g, "") || "0");
+    if (今の販売 < Number(v.買取価格)) {
+      await 販売.fill(v.買取価格);
+      issue(`${what}: 商品規格ID ${classId} の販売価格が ${今の販売} 円で買取価格 ${v.買取価格} 円より低く保存できないので、買取価格と同じ ${v.買取価格} 円にした（アプリは販売価格が買取価格以上であることを求める）`);
+    }
+  }
   if (v.代表画像?.length) {
     const select = form.locator("#admin_product_class_ProductClassImages");
     const opts = await select.locator("option").evaluateAll((ns) => ns.map((n) => ({
@@ -294,8 +421,8 @@ export async function 商品規格を登録する(
     }
   }
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    page.getByRole("button", { name: "商品規格を登録", exact: true }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: 商品規格ID ${classId} の登録`)) issue(`${what}: 警告「${w}」`);
 }
@@ -307,8 +434,8 @@ export async function 商品規格を削除する(page: Page, productId: string,
   const modal = page.locator("#deleteConfirmModal");
   await expect(modal, `${what}: 削除の確認モーダル`).toBeVisible();
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    modal.locator("a.btn-ec-delete").click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    modal.locator("a.btn-ec-delete").click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: 商品規格ID ${classId} の削除`)) issue(`${what}: 警告「${w}」`);
 }

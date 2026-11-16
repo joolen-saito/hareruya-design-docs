@@ -21,9 +21,17 @@ export type 登録する会員 = {
 
 /** 会員情報登録画面で登録する（メールは読まない）。登録後に仮会員か本会員かを返す（完了画面の URL で見分ける） */
 export async function 会員登録する(page: Page, v: 登録する会員): Promise<"仮会員" | "本会員"> {
-  await page.goto(front("/entry"), { timeout: 60_000 });
-  await page.waitForLoadState("load");
+  // 2026-11-13 14:02 に、開発環境の GET /ja/entry が応答 502（本文 524 バイト）を返し、フォームを30秒待って止まった（IT-M07-03-001）。
+  // フォームが出なければ開き直し（最大3回、間に15秒）、それでも出なければ応答を書いて環境の問題として止める。
   const form = page.locator("form#entry_form");
+  let 最後 = "";
+  for (let k = 0; k < 4; k++) {
+    if (k > 0) await page.waitForTimeout(15_000);
+    const res = await page.goto(front("/entry"), { timeout: 60_000 }).catch((e: Error) => { 最後 = e.message.split("\n")[0]; return null; });
+    if (res) 最後 = `応答 ${res.status()}`;
+    if (res && res.status() < 500 && await form.waitFor({ state: "visible", timeout: OPEN }).then(() => true, () => false)) break;
+    if (k === 3) throw new Error(`会員情報登録画面（/ja/entry）にフォームが出ない（4回開いた。最後は ${最後}）。開発環境の応答の問題で、手順の前で止めた`);
+  }
   await expect(form, "会員情報登録画面").toBeVisible({ timeout: OPEN });
   const f = (name: string) => form.locator(`[name="entry[${name}]"]`);
   await f("name][name01").fill(v.姓);
@@ -42,20 +50,20 @@ export async function 会員登録する(page: Page, v: 登録する会員): Pro
   await f("address][pref").selectOption({ label: v.都道府県 });
   await f("address][addr01").fill(v.住所1);
   await f("address][addr02").fill(v.住所2);
-  if (v.住所3 !== undefined) {
-    if ((await f("address][addr03").count()) === 0) throw new Error("会員情報登録画面に住所3の欄が無い");
-    await f("address][addr03").fill(v.住所3);
-  }
+  // 住所3の欄は、国が日本以外のときだけ会員情報登録画面に出る（アプリのテンプレート Entry/index.twig）。
+  // 欄が無ければここでは入れず、呼び出し側が管理画面の会員登録編集で入れる（seeds/m07-03-b.ts の 会員を用意する）
+  if (v.住所3 !== undefined && (await f("address][addr03").count()) > 0) await f("address][addr03").fill(v.住所3);
   await f("tel][tel01").fill(v.電話[0]);
   await f("tel][tel02").fill(v.電話[1]);
   await f("tel][tel03").fill(v.電話[2]);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.getByRole("button", { name: "同意して確認画面へ" }).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.getByRole("button", { name: "同意して確認画面へ" }).click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
-  const errors = (await page.locator(".ec-errorMessage, .form-error-message, .invalid-feedback, .c-hareruya-form__error").allInnerTexts()).map((t) => t.trim()).filter(Boolean);
+  const errors = (await page.locator(".ec-errorMessage, .form-error-message, .invalid-feedback, .c-hareruya-form__error, .c-hareruya-form-input__field-error--server").allInnerTexts()).map((t) => t.trim()).filter(Boolean);
   if (errors.length) throw new Error(`会員「${v.姓} ${v.名}」の会員情報登録で入力エラー: ${errors.join(" / ")}`);
   const register = page.locator('button[name="mode"][value="complete"]');
   await expect(register, "確認画面の「登録する」").toBeVisible({ timeout: OPEN });
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), register.click()]);
+  // 登録の完了は、開発環境の遅い時間帯に1分を超えた（2026-11-11 14〜17時に25〜60秒・60秒で時間切れが10件）ので3分まで待つ
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }), register.click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   if (/\/entry\/regist_error/.test(page.url())) throw new Error(`会員「${v.姓} ${v.名}」を登録できない（${page.url()}）`);
   return /\/entry\/complete/.test(page.url()) ? "仮会員" : "本会員";
@@ -139,8 +147,9 @@ export async function 条件つきで申込む(page: Page, 商品: { 商品ID: s
   await expect(submit, "買取手続き画面の「申込み」ボタン").toBeEnabled({ timeout: OPEN });
   await submit.click({ timeout: OPEN });
   const modalSubmit = page.locator("#purchase-confirm-modal [data-js-confirm-modal-submit]");
-  await expect(modalSubmit, "確認モーダルの「申込み」ボタン").toBeVisible({ timeout: OPEN });
-  await Promise.all([page.waitForURL(/\/purchase\/complete/, { timeout: 90_000 }), modalSubmit.click({ timeout: OPEN })]);
+  // 「申込み」を押すと確認の送信（/purchase/confirm）を待ってからモーダルが出る。開発環境ではその送信が30秒を超えた（2026-11-12・F06-11-026）ので2分まで待つ
+  await expect(modalSubmit, "確認モーダルの「申込み」ボタン").toBeVisible({ timeout: 120_000 });
+  await Promise.all([page.waitForURL(/\/purchase\/complete/, { timeout: 90_000 }), modalSubmit.click({ timeout: OPEN, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   const body = (await page.locator("body").innerText({ timeout: OPEN })).replace(/\s+/g, " ");
   const m = /PU\d{6}-(\d{10})/.exec(body);

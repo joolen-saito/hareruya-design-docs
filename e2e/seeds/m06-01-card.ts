@@ -17,7 +17,7 @@ import { defineSeed } from "./current_seed";
 import { 申込を行う, 査定IDを読む, 申込者の } from "./m06-common";
 import { M0601_ADMIN_ALL, ステータスを変える, 一件ずつ申込む, 支店URL, 試験者 } from "./m06-01";
 import { カードを登録する, 規格を整える, 実在庫に商品を追加する } from "../pages/admin/m06_11_setup";
-import { カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 商品規格一覧を読む, 単体カード配下のカテゴリID, 登録済みの割引率ID } from "../pages/admin/f05_04_products";
+import { カード商品CSVの公開の値, カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 商品規格一覧を読む, 単体カード配下のカテゴリID, 登録済みの割引率ID } from "../pages/admin/f05_04_products";
 import { readExistingSellGroupName } from "../pages/admin/m03_01_goods_csv";
 import { readLanguageIds } from "../pages/admin/m03_23_seed_products";
 import { 棚番号を読む, マスタを読む } from "../pages/admin/m07_09_card";
@@ -81,8 +81,10 @@ async function 支店Bの戻しリストの買取(browser: Browser, seedId: stri
       詳細.set(x, c.カード詳細ID);
     }
     const 見出し = await カード商品CSVの見出し(page);
+    const 公開 = await カード商品CSVの公開の値(page);
+    issue(`カード商品CSVの商品公開ステータスは、「2」（公開のつもり）でなく、画面のCSVの形式の説明で「公開」に当たる値 ${公開.商品公開ステータス} を入れた（説明では 1:公開 2:非公開 3:廃止。2 を入れると非公開になる）。支店の商品公開ステータスは ${公開.支店の商品公開ステータス}（公開）`);
     const row = (x: 品): Record<string, string> => ({
-      "商品ID": "", "言語(ID)": p.言語[x.言語], "商品公開ステータス": "2", "支店の商品公開ステータス": "1",
+      "商品ID": "", "言語(ID)": p.言語[x.言語], "商品公開ステータス": 公開.商品公開ステータス, "支店の商品公開ステータス": 公開.支店の商品公開ステータス,
       "商品名(日)": rc(x.名), "商品名(英)": rc(x.名), "サイズ": "1", "重量": "1", "商品カテゴリ(ID)": p.カテゴリ,
       "購入グループ名称": p.購入グループ, "割引率(ID)": p.割引率, "基準価格": "300", "販売価格": "300", "買取価格": "300",
       "カード詳細(ID)": 詳細.get(x)!,

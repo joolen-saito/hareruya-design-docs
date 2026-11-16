@@ -3,6 +3,7 @@
  * - 会員は、フロントの新規会員登録で作る（依頼者決定 2026-10-31）。英字名は管理画面の会員編集で入れる。
  * - 大会（イベント）と日程は、イベント登録画面と「日程追加」で作る。店舗・フォーマットは共有シードが作る。
  */
+import { 店名を読む } from "../../lib/store_pick";
 import { Browser, Page } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../../config/env";
 import { hideDebugToolbar, withAdminSession, Account, adminUrl } from "../../lib/session";
@@ -17,7 +18,8 @@ import { M08CustomerEditPage } from "./m08_customer_edit";
 import { chooseByLabel, expectSaved } from "./common";
 
 export const 会員のパスワード = "Passw0rd!F0616";
-export const 店名 = "晴れる屋2";
+/** 店舗は作らない（依頼者 2026-11-15）。「晴れる屋2」は使い回す E2E の店舗 4973 で表す（店名は店舗のいまの値） */
+export const 店名 = 店名を読む("4973");
 
 export type 試験会員 = { メール: string; パスワード: string; 会員ID: string };
 

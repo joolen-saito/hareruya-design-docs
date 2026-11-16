@@ -19,7 +19,7 @@
  *
  * 作らないシード（ケースを実装していない）: カードセット（002・003・004・005〜008・062）・カテゴリ（036〜039）・ユニサーチ（004・005・007・008・062）。
  */
-import { Browser } from "@playwright/test";
+import { Browser, BrowserContextOptions } from "@playwright/test";
 import { BASE_URL } from "../config/env";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
@@ -55,6 +55,29 @@ export const 会員: Record<string, 試験会員> = {
 export const 会員識別子の注記 = (n: string): string =>
   `シード S-F02-02-MEMBER-${n} の「会員識別子 F0202-MEMBER-${n} は画面で指定できないためDBへ直接設定する」は行っていない。ケースの手順・期待結果は会員識別子を使わないため、画面で作れる範囲（会員登録・本会員・ポイント・お気に入り）で代えた（条件付き）`;
 
+// ---- PC の端末で開くブラウザ ----
+
+/**
+ * シードの中で開くブラウザを、PC の画面・端末の印にする。spec の test.use（iPhone の端末）は、テストの中で browser.newContext で開く
+ * ブラウザにも引き継がれる（Playwright は newContext に指定の無い項目へ test.use の値を入れる）。そのため管理画面がスマホの画面幅で開き、
+ * 「CSVファイルをアップロード」「登録」などのボタンに画面下の固定の帯・ヘッダーが重なって押せず、時間切れで止まっていた
+ * （2026-11-11〜13 の開発環境で 009〜012・015・017・021・063・065〜069 が事前準備で停止）。seeds/f02-02.ts の PCの管理画面で と同じ値を、
+ * 指定の無い newContext に入れる（シードが作るもの・ケースのブラウザは変えない）。
+ */
+const PCの端末: BrowserContextOptions = {
+  viewport: { width: 1280, height: 900 }, isMobile: false, hasTouch: false, deviceScaleFactor: 1,
+  userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+};
+function PCのブラウザ(browser: Browser): Browser {
+  return new Proxy(browser, {
+    get(target, prop) {
+      if (prop === "newContext") return (o: BrowserContextOptions = {}) => target.newContext({ ...PCの端末, ...o });
+      const v = Reflect.get(target, prop, target);
+      return typeof v === "function" ? v.bind(target) : v;
+    },
+  });
+}
+
 // ---- 呼び名の控え ----
 
 /** シード表の状態・属性・投入方法に出てくる呼び名を、作ったものから控える。シード表が定めた呼び名だけを控え、足りなければ落とす */
@@ -87,7 +110,8 @@ const 商品の呼び名 = (n: string, ids: string[], 文字: boolean): Record<s
 // ---- カート ----
 
 function defineCartSeed(seedId: string, n: string, defs: 商品定義[], 空にする: boolean): void {
-  defineSeed(seedId, async ({ browser, notes }) => {
+  defineSeed(seedId, async ({ browser: 元のブラウザ, notes }) => {
+    const browser = PCのブラウザ(元のブラウザ);
     const made = await 商品と在庫を作る(browser, seedId, defs);
     const cart = await ゲストカートを作る(browser, seedId, made.ids, 空にする ? made.名前[0] : undefined);
     const 期待 = 空にする ? [] : made.名前;
@@ -119,7 +143,8 @@ const お気に入り商品: Record<string, 商品定義[]> = {
 /** お気に入りの商品のシードが作った商品（会員のシードが使う） */
 const 作った商品 = new Map<string, { ids: string[]; 名前: string[] }>();
 function defineProductSeed(seedId: string, n: string): void {
-  defineSeed(seedId, async ({ browser, notes }) => {
+  defineSeed(seedId, async ({ browser: 元のブラウザ, notes }) => {
+    const browser = PCのブラウザ(元のブラウザ);
     const made = await 商品と在庫を作る(browser, seedId, お気に入り商品[n]);
     作った商品.set(n, made);
     控える(seedId, notes, 商品の呼び名(n, made.ids, true));
@@ -134,7 +159,8 @@ defineProductSeed("S-F02-02-PRODUCTS-067", "067");
 type 会員定義 = { 姓: string; 名: string; ポイント?: number; お気に入り?: string };
 
 function defineMemberSeed(seedId: string, n: string, d: 会員定義, needs: string[] = []): void {
-  defineSeed(seedId, { needs }, async ({ browser, notes }) => {
+  defineSeed(seedId, { needs }, async ({ browser: 元のブラウザ, notes }) => {
+    const browser = PCのブラウザ(元のブラウザ);
     const issue = (m: string) => reportSeedIssue(seedId, m);
     const m = 会員[n];
     const id = await 会員を登録して本会員にする(browser, { 姓: d.姓, 名: d.名, セイ: "シケン", メイ: "カイイン", メール: m.メール, パスワード: m.パスワード }, issue);

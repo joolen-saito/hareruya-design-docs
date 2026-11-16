@@ -21,13 +21,13 @@
  */
 import { Browser, expect } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
-import { RUN_MARK, rc } from "../lib/run_marker";
+import { RUN_MARK, rc, rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { CategoryPage, createTopByCsv } from "../pages/admin/category";
 import { まとめて買取商品IDを読む } from "../pages/admin/f05_01_setup";
-import { レアリティを登録する } from "../pages/admin/f05_03_setup";
+import { レアリティを用意する } from "../pages/admin/f05_03_setup";
 import { TagPage } from "../pages/admin/m03_13_tag";
 import { PurchaseSearchPage } from "../pages/front/f05_02_purchase_search";
 
@@ -59,13 +59,13 @@ defineSeed("S-F05-03-MASTER", async ({ browser, seed, notes }) => {
 });
 
 /** BREADCRUMB-011 が作ったレアリティの番号（シード表に呼び名が無いので、控えとは別に持つ）と、印つきの名称 */
-export const F0503_011 = { レアリティID: "", 名称: { 最上位: rc("スタンダード-011"), カテゴリ: rc("タルキール：龍嵐録-011"), レア: rc("レア・神話レア-011"), タグ: rc("デッキセット-011") } };
+export const F0503_011 = { レアリティID: "", 名称: { 最上位: rc("スタンダード-011"), カテゴリ: rc("タルキール：龍嵐録-011"), レア: rcFixed("レア・神話レア-011"), タグ: rc("デッキセット-011") } };
 
 defineSeed("S-F05-03-BREADCRUMB-011", async ({ browser, seed, notes }) => {
   const seedId = seed.シードID;
   const issue = (m: string) => reportSeedIssue(seedId, m);
   const 名 = {
-    A: rc("スタンダード-011"), B: rc("タルキール：龍嵐録-011"), レア: rc("レア・神話レア-011"), タグ: rc("デッキセット-011"),
+    A: rc("スタンダード-011"), B: rc("タルキール：龍嵐録-011"), レア: F0503_011.名称.レア, タグ: rc("デッキセット-011"),
   };
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
@@ -77,7 +77,8 @@ defineSeed("S-F05-03-BREADCRUMB-011", async ({ browser, seed, notes }) => {
     notes.set("〔カテゴリレコードID-F0503-011B〕", b);
     const c = await category.createChild(b, { nameJp: 名.B, nameEn: 英("Tarkir Dragonstorm 011 C") }, issue);
     notes.set("〔カテゴリレコードID-F0503-011C〕", c);
-    const rarity = await レアリティを登録する(page, { 日本語名: 名.レア, 英語名: 英("Rare Mythic 011"), コード: `F3${RUN_MARK}` }, seedId);
+    // レアリティは名称16文字・コード2文字までの共有のマスタなので、決まった名前で1度だけ作って使い回す（pages/admin/f05_03_setup.ts）
+    const rarity = await レアリティを用意する(page, { 日本語名: 名.レア, 英語名: "Rare Mythic E2E" }, seedId);
     F0503_011.レアリティID = rarity;
     const tag = new TagPage(page);
     await tag.openNew();

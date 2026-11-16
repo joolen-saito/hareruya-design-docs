@@ -15,7 +15,7 @@ async function ログイン済みにする(ctx: CaseCtx, k: string): Promise<voi
   const l = new LoginPage(ctx.page);
   await l.ログイン画面を開く();
   await l.ログインする(m.メール, m.パスワード);
-  expect(await l.ログイン画面である(), `事前準備: 会員 ${k} でログインできた`).toBe(false);
+  expect(!(await l.ログイン画面である()), `事前準備: 会員 ${k} でログインできた`).toBe(true);
 }
 const ポイントの数字 = async (n: MainNavPage): Promise<string[]> => (await n.ポイントの数字().allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
 

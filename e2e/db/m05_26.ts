@@ -124,10 +124,10 @@ export type 会員のポイント = { 残高: number; 履歴件数: number; 購�
 export function 会員のポイントを読む(会員ID: string): 会員のポイント {
   const p = query(`select point::text as p from dtb_player where customer_id = $1::int and deleted_at is null order by id desc limit 1`, [会員ID])[0];
   if (!p) throw new Error(`会員ID ${会員ID} のポイント残高が読めない`);
-  const h = query(`select point_type_id::text as t, point_change::text as c, order_id::text as o from dtb_point_history where customer_id = $1::int order by id`, [会員ID]);
+  const h = query(`select point_type_id::text as tt, point_change::text as c, order_id::text as o from dtb_point_history where customer_id = $1::int order by id`, [会員ID]);
   return {
     残高: Number(p.p), 履歴件数: h.length,
-    購入取得: h.filter((x) => x.t === "2").map((x) => ({ 増減量: Number(x.c), 受注ID: x.o })),
+    購入取得: h.filter((x) => x.tt === "2").map((x) => ({ 増減量: Number(x.c), 受注ID: x.o })),
   };
 }
 

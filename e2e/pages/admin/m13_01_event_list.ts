@@ -1,8 +1,15 @@
 /** M13-01 イベント一覧（検索入力・検索結果）の画面操作。セレクタはここだけに書く */
+import { 印店名 } from "./m13_marked_shop";
 import { Locator, Page, expect } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { EventInput, openEventEdit, registerEvent } from "./event";
 import { registerSchedule } from "./schedule";
+
+/**
+ * M13-01 の正本の「東京店」に当たる試験店舗の店名（決まった名前。無ければ1度だけ作り、以後は使い回す。依頼者決定 2026-11-11）。
+ * 開発環境には店名「東京店」の店舗が複数あり、店名で選べない（「どれを使うか決められない」で準備が止まっていた。2026-11-11 夜に27件）。
+ */
+export const M1301_東京店 = 印店名.A; // 正本の「東京店」は店舗ID 221（店舗は作らない。依頼者 2026-11-15）
 
 export class EventListPage {
   constructor(readonly page: Page) {}
@@ -48,8 +55,8 @@ export class EventListPage {
   /** 「検索」を押し、結果の表示（結果の表か「該当なし」）を待つ */
   async 検索する(): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "load" }),
-      this.page.locator("#search_form button[type='submit']").click(),
+      this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+      this.page.locator("#search_form button[type='submit']").click({ noWaitAfter: true }),
     ]);
   }
   async 名前略称で検索する(語: string): Promise<void> {
@@ -71,16 +78,16 @@ export class EventListPage {
 
   async 件数を選ぶ(件: number): Promise<void> {
     if ((await this.選択値の表示(this.件数)) === `${件}件`) return;
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.件数.selectOption({ label: `${件}件` })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.件数.selectOption({ label: `${件}件` })]);
   }
   async 並びを選ぶ(項目: "イベントID" | "イベント名", 順: "昇順" | "降順"): Promise<void> {
     const v = 項目 === "イベント名" ? "eventName" : "default";
     if ((await this.並び項目.inputValue()) !== v) {
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.並び項目.selectOption(v)]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.並び項目.selectOption(v)]);
     }
     const o = 順 === "昇順" ? "a" : "d";
     if ((await this.ソート順.inputValue()) !== o) {
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.ソート順.selectOption(o)]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.ソート順.selectOption(o)]);
     }
   }
   async ページを選ぶ(n: number): Promise<void> {
@@ -91,6 +98,31 @@ export class EventListPage {
     const m = /\/event\/page\/(\d+)/.exec(new URL(this.page.url()).pathname);
     return m ? Number(m[1]) : 1;
   }
+
+  // ---- 2026-11-12 追加（既存の操作は変えない） ----
+  /** ページ送りの番号を押し、画面の移動を待つ（ページを選ぶ は読み込み済みの画面の load を待つだけで、移動を待たない） */
+  async ページを選んで待つ(n: number): Promise<void> {
+    await Promise.all([
+      this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}),
+      this.page.locator(".pagination").getByRole("link", { name: String(n), exact: true }).click({ timeout: 30_000, noWaitAfter: true }),
+    ]);
+  }
+  /**
+   * 画面に表示中のページ番号（ページ送りの選ばれている番号）。ページ送りが無い（1ページだけ）なら 1、結果の表も無ければ null。
+   * 削除のあとはアドレスが /event/page/2 のままでも、表示は1ページ目へ補正されることがあるので、アドレスでなく画面で読む。
+   */
+  async 表示中のページ(): Promise<number | null> {
+    const active = this.page.locator(".pagination .page-item.active");
+    if ((await active.count()) > 0) return Number((await active.first().innerText()).trim());
+    return (await this.結果の表が表示されている()) ? 1 : null;
+  }
+  /** 画面のエラーの表示（警告の帯・入力欄のエラー）の文。無ければ空 */
+  async エラーの文(): Promise<string> {
+    const t = await this.page.locator(".alert-danger, .invalid-feedback, .form-error-message, span.text-danger, p.text-danger").allInnerTexts();
+    return t.map((x) => x.replace(/\s+/g, " ").trim()).filter(Boolean).join(" / ");
+  }
+  /** 成功の帯（「削除しました」など） */
+  get 成功の表示(): Locator { return this.page.locator(".alert-success"); }
 
   /** 行の操作ボタンを押してメニューを開く */
   async 編集ボタンを押す(id: string): Promise<void> {
@@ -114,14 +146,14 @@ export class EventListPage {
     const modal = this.page.locator(`#event_delete_${id}`);
     if (disabled || (await modal.count()) === 0) return { 選べた: !disabled, 確認が出た: false };
     await expect(modal, "削除の確認画面").toBeVisible({ timeout: 15_000 });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), modal.locator("a.btn-ec-delete").click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), modal.locator("a.btn-ec-delete").click({ noWaitAfter: true })]);
     return { 選べた: true, 確認が出た: true };
   }
 }
 
 /** シード用: 日程つきイベント。受付あり・デッキ登録ありは外す */
 export const 月次イベント = (名日: string, 名英: string, over: EventInput = {}): EventInput => ({
-  イベント名日: 名日, イベント名英: 名英, 店舗: "東京店", フォーマット: ["スタンダード"], ルール適用度: "一般", 公開状態: "公開", 定員: "1", 参加費: "0", ...over,
+  イベント名日: 名日, イベント名英: 名英, 店舗: M1301_東京店, フォーマット: ["スタンダード"], ルール適用度: "一般", 公開状態: "公開", 定員: "1", 参加費: "0", ...over,
 });
 
 export async function 日程を足す(page: Page, イベントID: string, 開始時間: string): Promise<void> {

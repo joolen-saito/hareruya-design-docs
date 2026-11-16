@@ -82,8 +82,14 @@ export const F0502マスタ = {
 async function ensureTag(page: Page, 名称日: string, 名称英: string, what: string): Promise<string> {
   const tag = new TagPage(page);
   await tag.showFirstPageWith("12000");
-  const hit = (await tag.allRows()).filter((r) => r.名称日 === 名称日);
-  if (hit.length > 1) throw new Error(`${what}: タグ「${名称日}」が一覧に ${hit.length} 件ある（1件のはず）`);
+  let hit = (await tag.allRows()).filter((r) => r.名称日 === 名称日);
+  if (hit.length > 1) {
+    // 開発環境には同じ名称のタグが2行ずつある（例: ID 1 と 50000001 がどちらも「最新入荷アイテム」）。名称(英)が合う行のうち、番号がいちばん小さい行（アプリが決め打ちで使う方）を使う
+    const 合う = hit.filter((r) => r.名称英 === 名称英);
+    const 候補 = (合う.length > 0 ? 合う : hit).slice().sort((a, b) => Number(a.ID) - Number(b.ID));
+    reportSeedIssue(what, `タグ「${名称日}」が一覧に ${hit.length} 件（ID ${hit.map((r) => r.ID).join("・")}）あるので、名称(英)が合う行のうち番号がいちばん小さい ID ${候補[0].ID} を使った`);
+    hit = [候補[0]];
+  }
   if (hit.length === 1) {
     expect(hit[0].名称英, `${what}: 既にあるタグ「${名称日}」の名称(英)`).toBe(名称英);
     return hit[0].ID;

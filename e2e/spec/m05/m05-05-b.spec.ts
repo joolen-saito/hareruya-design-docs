@@ -203,7 +203,11 @@ caseTest("IT-M05-05-019", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M0505_ADMIN);
   const csv = new OrderCsvPage(page);
   let r: ダウンロード結果 | undefined;
-  await step(1, async () => { await csv.openSearch(); await csv.注文番号で検索する(notes.get("〔注文番号-M0505-019〕")); });
+  await step(1, async () => {
+    await csv.openSearch();
+    const 件数 = await csv.注文番号で検索する(notes.get("〔注文番号-M0505-019〕"));
+    note(`検索結果の一覧の件数: ${件数}（受注の一覧は配送先のある受注だけを出す作り。配送先の無いこの受注は一覧に出ないため、見出し行だけのCSVは「検索で受注が当たらなかった」ことと画面では見分けられない）`);
+  });
   await step(2, async () => { r = await csv.受注詳細カスタムCSVをダウンロードする(定義名("M0505配送先定義-019")); });
   await step(3, async () => { expect(r?.行.length, "CSVを受け取れた（行数）").toBeGreaterThan(0); });
   await expected(async () => {

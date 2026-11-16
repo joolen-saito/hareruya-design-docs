@@ -107,20 +107,20 @@ export class FormatListPage {
   async 編集を押す(id: string): Promise<void> {
     const item = this.メニューの項目(id, "編集");
     await expect(item, `フォーマットID ${id} のメニューの「編集」`).toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), item.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), item.click({ noWaitAfter: true })]);
   }
 
   /** フォーマット名のリンクを押し、移った画面の読み込みを待つ */
   async フォーマット名を押す(id: string): Promise<void> {
     const link = this.フォーマット名リンク(id);
     await expect(link, `フォーマットID ${id} のフォーマット名のリンク`).toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
   }
 
   /** 「新規登録」を押し、移った画面の読み込みを待つ */
   async 新規登録を押す(): Promise<void> {
     await expect(this.新規登録ボタン, "「新規登録」ボタン").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.新規登録ボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.新規登録ボタン.click({ noWaitAfter: true })]);
   }
 
   /**
@@ -225,7 +225,7 @@ export class FormatDetailPage {
   /** 一覧へ戻るリンク（表示名「フォーマット管理」。正本の「フォーマット一覧」）を押す */
   async 一覧へ戻るを押す(): Promise<void> {
     await expect(this.一覧へ戻るリンク, "フォーマット詳細画面の一覧へ戻るリンク").toHaveText(/^\s*フォーマット管理\s*$/);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.一覧へ戻るリンク.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.一覧へ戻るリンク.click({ noWaitAfter: true })]);
   }
 
   /** いまのアドレスがフォーマット詳細画面なら、そのフォーマットID */
@@ -295,8 +295,8 @@ async function 認定の一覧を開く(page: Page): Promise<void> {
   await page.waitForLoadState("load");
   await page.locator('select[name="entity"]').selectOption({ label: "認定" });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('form[method="get"] button[type="submit"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('form[method="get"] button[type="submit"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator("form#edit_form table.mtg-master-table"), "認定の一覧").toBeVisible();
@@ -331,8 +331,8 @@ export async function 認定を用意する(page: Page, v: { 日: string; 英: s
   await f("name_en").fill(v.英);
   await f("sort_no").fill(v.並び順);
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('button[type="submit"][form="edit_form"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('button[type="submit"][form="edit_form"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expectSaved(page, `${what}: 認定「${v.日} / ${v.英}」の登録`);

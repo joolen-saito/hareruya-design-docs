@@ -11,18 +11,57 @@ import { Browser, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
-import { RUN_MARK, rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { ensureM05Admin } from "../pages/admin/m05_admin_member";
 import { registerSchedule } from "../pages/admin/schedule";
-import { イベントと日程を用意する, デッキを登録する, デッキ登録内容 } from "../pages/admin/m15_deck";
+import { イベントと日程を用意する, デッキを登録する, デッキ登録内容, デッキ一覧 } from "../pages/admin/m15_deck";
 import {
   名, カード4件を登録する, フォーマット一覧, フォーマットを登録する, アーキタイプを登録する05, デッキタグ2件を登録する, 代表カードの代役,
 } from "../pages/admin/m15_05_master";
 import { M1505_ADMIN } from "./m15-05";
 
 export { 名, 代表カードの代役 };
-export const M1505_U064: Account = { loginId: `m1505_u064_${RUN_MARK}`, password: M1505_ADMIN.password };
-export const M1505_U065: Account = { loginId: `m1505_u065_${RUN_MARK}`, password: M1505_ADMIN.password };
+/**
+ * 最終更新者を確かめる管理者（064・065。098 は seeds/m15-05-d.ts）。決まった名前で1度だけ作って使い回す（実行のたびに管理者を作らない）。
+ * 名前＝ログインID（デッキ一覧の「最終更新者」は名前で選ぶ）。前の実行でこの管理者が最終更新者になったデッキは、シードで
+ * 試験管理者（m1505_admin）が開いて「更新」を押し、最終更新者を付け替えてから使う（消さない）。
+ */
+export const M1505_U064: Account = { loginId: rcFixed("m1505_u064").toLowerCase(), password: M1505_ADMIN.password };
+export const M1505_U065: Account = { loginId: rcFixed("m1505_u065").toLowerCase(), password: M1505_ADMIN.password };
+
+/**
+ * 最終更新者がこの管理者のデッキ（前の実行の残り）を、試験管理者が開いて「更新」を押し、最終更新者を試験管理者へ付け替える。
+ * 正本の「最終更新者がこの人のデッキは（ケースで作る・更新する）1件だけ」を、決まった名前の管理者で流し直しても成り立たせる。
+ */
+export async function 最終更新者を付け替える(browser: Browser, 対象: Account, issue: (m: string) => void): Promise<void> {
+  await withAdminSession(browser, M1505_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000); page.setDefaultNavigationTimeout(120_000);
+    const l = new デッキ一覧(page);
+    const 探す = async (): Promise<string[]> => {
+      await l.開く();
+      const 有る = await l.f("member").locator("option").filter({ hasText: 対象.loginId }).count();
+      if (!有る) return [];
+      await l.f("member").selectOption({ label: 対象.loginId });
+      await l.日付クリア.click();
+      await l.検索する();
+      return l.表示されたID();
+    };
+    const 付け替えた: string[] = [];
+    for (let 回 = 0; 回 < 20; 回++) {
+      const ids = await 探す();
+      if (!ids.length) break;
+      for (const id of ids) {
+        await page.goto(adminUrl(`/deck/${id}/edit`));
+        await page.waitForLoadState("load");
+        await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('button[type="submit"][form="admin_deck"]').first().click({ noWaitAfter: true })]);
+        付け替えた.push(id);
+      }
+    }
+    const 残り = await 探す();
+    if (残り.length) throw new Error(`最終更新者が ${対象.loginId} のデッキが残る（ID ${残り.join("、")}）。試験管理者で「更新」を押しても付け替わらない`);
+    if (付け替えた.length) issue(`前の実行で最終更新者が ${対象.loginId} になったデッキ ${付け替えた.length} 件（ID ${付け替えた.join("、")}）を、試験管理者 ${M1505_ADMIN.loginId} が開いて「更新」を押し、最終更新者を付け替えた（消していない）`);
+  });
+}
 
 /** ケースの語「M1505-NNN-…」に実行の印を付けた値（前半が検索語になる） */
 export const 語 = (n: string) => rc(`M1505-${n}`);
@@ -121,7 +160,7 @@ defineSeed("S-M15-05-NOEXIST-011", { needs: ["S-M15-05-ADM"] }, async ({ browser
     const 消す = await デッキを登録する(p, { デッキ名: `${語("011")}-消す` }, issue);
     await p.goto(adminUrl(`/deck/${消す}/edit`));
     p.once("dialog", (d) => d.accept());
-    await Promise.all([p.waitForURL((u) => !/\/edit$/.test(u.pathname), { waitUntil: "load" }), p.locator("#btn_delete").click()]);
+    await Promise.all([p.waitForURL((u) => !/\/edit$/.test(u.pathname), { waitUntil: "load", timeout: 120_000 }), p.locator("#btn_delete").click({ noWaitAfter: true })]);
     notes.set("〔デッキID-M1505-011A〕", 消す);
     notes.set("〔デッキID-M1505-011B〕", await デッキを登録する(p, { デッキ名: `${語("011")}-元` }, issue));
   });
@@ -133,9 +172,11 @@ for (const n of ["039", "040", "041", "042", "043", "044", "045", "046", "047", 
 }
 defineSeed("S-M15-05-ADM2-064", { needs: ["S-M15-05-ADM"] }, async ({ browser }) => {
   await ensureM05Admin(browser, { 名前: M1505_U064.loginId, account: M1505_U064, メール: `${M1505_U064.loginId}@example.test` });
+  await 最終更新者を付け替える(browser, M1505_U064, (m) => reportSeedIssue("S-M15-05-ADM2-064", m));
 });
 defineSeed("S-M15-05-ADM2-065", { needs: ["S-M15-05-ADM"] }, async ({ browser }) => {
   await ensureM05Admin(browser, { 名前: M1505_U065.loginId, account: M1505_U065, メール: `${M1505_U065.loginId}@example.test` });
+  await 最終更新者を付け替える(browser, M1505_U065, (m) => reportSeedIssue("S-M15-05-ADM2-065", m));
 });
 
 for (const n of ["015", "016", "018"]) {

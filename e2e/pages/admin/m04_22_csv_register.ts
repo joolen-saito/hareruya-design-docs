@@ -179,7 +179,7 @@ export class CsvRegisterModal {
     await expect(this.登録, `${this.kind}モーダルの「登録」ボタンは1つ`).toHaveCount(1);
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "load", timeout: 300_000 }),
-      this.登録.click(),
+      this.登録.click({ noWaitAfter: true }),
     ]);
   }
 
@@ -226,7 +226,7 @@ export async function syncMemberStores(page: Page, memberId: string, v: { 所属
   await f("baseInfo").selectOption(v.所属店舗ID);
   await page.locator('[name="admin_member[editableBaseInfos][]"]').selectOption(v.編集可能店舗ID);
   await f("defaultSearchBaseInfo").selectOption(v.デフォルト検索表示店舗ID);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("button", { name: "登録", exact: true }).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("button", { name: "登録", exact: true }).click({ noWaitAfter: true })]);
   await expectSaved(page, `メンバー（管理者ID ${memberId}）の店舗の付け替え`);
   await open();
   const after = await current();

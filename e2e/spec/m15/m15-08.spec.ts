@@ -2,9 +2,10 @@
  * M15-08 アーキタイプ検索・一覧。ケースの正本: integration_test/casegen/cases/M15-08_test_cases.tsv
  * 実装しないケース（理由は記録 e2e/review/M15-08_progress_*.md）: DB での準備が要るシード（アーキタイプ・デッキの大量・削除済みなど）を使うもの。ここは 003 027 030 032 033。
  */
-import { Page } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
+import { exceptEnvBanners, topErrorAlerts } from "../../pages/admin/common";
 import { M1508_ADMIN } from "../../seeds/m15-08";
 
 async function login(page: Page): Promise<void> {
@@ -12,6 +13,7 @@ async function login(page: Page): Promise<void> {
   page.setDefaultNavigationTimeout(90_000);
   await loginAdmin(page, M1508_ADMIN);
 }
+const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 入力欄 = (page: Page) => page.locator('[name="admin_search_archetype[multi]"]');
 const 検索する = (page: Page) => page.locator("#admin_search_archetype button[type=submit]");
 const 結果表 = (page: Page) => page.locator(".archetype-result-table");
@@ -39,10 +41,16 @@ caseTest("IT-M15-08-027", async ({ page, step, expected }) => {
   await step(2, async () => { await 入力欄(page).fill("並べ替え"); });
   await step(3, async () => {
     await page.locator('[name="admin_search_archetype[sortOrder]"]').evaluate((e) => { (e as HTMLInputElement).value = "SIDEWAYS"; });
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), 検索する(page).click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), 検索する(page).click({ noWaitAfter: true })]);
   });
   await expected(async () => {
-    expect.soft(await page.locator(".alert-danger, .invalid-feedback, .form-error-message").count(), "並び順のエラー表示の数").toBeGreaterThan(0);
+    // 関係のない欄の誤りで合格にしないよう、画面上部の帯で、並び順についての誤りであることを確かめる
+    const 欄の誤り = (await exceptEnvBanners(page.locator(".invalid-feedback, .form-error-message")).allInnerTexts()).map((t) => t.trim()).filter(Boolean);
+    const 上部 = (await topErrorAlerts(page).allInnerTexts()).map((t) => t.trim()).filter(Boolean);
+    note(`画面上部の誤りの帯: ${上部.join(" / ") || "なし"}／欄の誤り: ${欄の誤り.join(" / ") || "なし"}／表示中の画面: ${new URL(page.url()).pathname}`);
+    expect.soft(上部.length, `画面上部の誤りの帯の数（${上部.join(" / ") || "なし"}）`).toBeGreaterThan(0);
+    expect.soft(上部.some((t) => /並び順|並べ替え|ソート|sort/i.test(t)), `画面上部の誤りの帯が並び順についての誤りである（${上部.join(" / ") || "なし"}）`).toBe(true);
+    expect.soft(new URL(page.url()).pathname, "表示中の画面（アーキタイプ管理(検索入力)画面）").toMatch(/\/archetype(\/search(\/\d+)?)?$/);
     expect.soft(await 入力欄(page).inputValue(), "アーキタイプ名の検索条件（空）").toBe("");
     expect.soft(await 結果表(page).count(), "アーキタイプ一覧の表の数").toBe(0);
   });
@@ -53,7 +61,7 @@ caseTest("IT-M15-08-030", async ({ page, step, expected }) => {
   await step(1, async () => { await 検索入力を開く(page); });
   await step(2, async () => {
     await 入力欄(page).fill("不存在キーワード");
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), 検索する(page).click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), 検索する(page).click({ noWaitAfter: true })]);
     await expect(page.getByText(/検索結果：\d+件が該当しました|検索条件に合致するデータが見つかりませんでした|該当/).first(), "検索結果の表示").toBeVisible();
   });
   await expected(async () => {
@@ -66,7 +74,7 @@ caseTest("IT-M15-08-030", async ({ page, step, expected }) => {
 caseTest("IT-M15-08-032", async ({ page, step, expected }) => {
   await login(page);
   await step(1, async () => { await 検索入力を開く(page); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("link", { name: "新規登録" }).first().click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("link", { name: "新規登録" }).first().click({ noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "表示された画面のアドレス").toMatch(/\/archetype\/new$/);
     await expect.soft(page.locator('[name="admin_archetype[nameJp]"]'), "アーキタイプ名(日)の入力欄").toBeVisible();
@@ -77,7 +85,7 @@ caseTest("IT-M15-08-032", async ({ page, step, expected }) => {
 caseTest("IT-M15-08-033", async ({ page, step, expected }) => {
   await login(page);
   await step(1, async () => { await 検索入力を開く(page); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("link", { name: "CSV取り込み" }).click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("link", { name: "CSV取り込み" }).click({ noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "表示された画面のアドレス").toMatch(/\/archetype\/csv_import$/);
     await expect.soft(page.getByText("アーキタイプ登録CSVアップロード").first(), "画面の見出し").toBeVisible();

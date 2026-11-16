@@ -53,7 +53,7 @@ export class EntryListPage {
   get 一括編集リンク() { return this.page.locator('a[data-bs-target="#bulkUpdateModal"]'); }
   get 一括編集のモーダル() { return this.page.locator("#bulkUpdateModal"); }
   get 表示件数() { return this.page.locator("#page_count_pulldown"); }
-  get CSVダウンロードボタン() { return this.page.locator("#entryCsvDownloadDropDown"); }
+  get CSV出力メニューのボタン() { return this.page.locator("#entryCsvDownloadDropDown"); }
   get 出力項目設定リンク() { return this.page.locator("#result_list_main__csv_menu").getByRole("link", { name: "出力項目設定", exact: true }); }
   /** 並び順のメニューの中の、並べ替えのリンク（昇順・降順） */
   get 並べ替えのリンク() { return this.page.locator("#result_list_main__sort_menu .dropdown-menu-sort a.dropdown-item"); }
@@ -123,7 +123,7 @@ export class EntryListPage {
 
   /** 検索するボタンを押し、結果の画面が出るまで待つ */
   async 検索する(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.検索ボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.検索ボタン.click({ noWaitAfter: true })]);
     await this.読み込みを待つ();
   }
 
@@ -159,19 +159,19 @@ export class EntryListPage {
     return (await active.first().innerText()).trim();
   }
   async 表示件数を選ぶ(件数: number): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.表示件数.selectOption({ label: `${件数}件` })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.表示件数.selectOption({ label: `${件数}件` })]);
     await this.読み込みを待つ();
   }
   async ページを開く(n: number): Promise<void> {
     const link = this.結果のページ送り.getByRole("link", { name: String(n), exact: true });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), link.click({ timeout: 30_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ timeout: 30_000, noWaitAfter: true })]);
     await this.読み込みを待つ();
   }
   /** サイドメニューの「イベント申込一覧」を押して開く（閉じていれば「イベント管理」を開いてから） */
   async サイドメニューから開く(): Promise<void> {
     const link = this.page.locator("nav").getByRole("link", { name: "イベント申込一覧", exact: true });
     if (!(await link.isVisible())) await this.page.locator('nav a[href="#nav-event"]').click();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), link.click({ timeout: 30_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ timeout: 30_000, noWaitAfter: true })]);
     await this.読み込みを待つ();
   }
 
@@ -218,7 +218,11 @@ export class EntryListPage {
   async モーダルのページを開く(n: number): Promise<void> {
     const before = await this.モーダルの日程ID();
     await this.モーダルの結果.locator(".pagination").getByRole("link", { name: String(n), exact: true }).click({ timeout: 30_000 });
-    await expect.poll(async () => JSON.stringify(await this.モーダルの日程ID()), { message: "モーダルの一覧が次のページに替わる", timeout: 30_000 }).not.toBe(JSON.stringify(before));
+    // 読み込み中は一覧が空になるため、前と違う並びで、かつ日程が1件以上出るまで待つ
+    await expect.poll(async () => {
+      const now = await this.モーダルの日程ID();
+      return now.length > 0 && JSON.stringify(now) !== JSON.stringify(before);
+    }, { message: "モーダルの一覧が次のページの日程に替わる", timeout: 30_000 }).toBe(true);
   }
 }
 
@@ -240,10 +244,10 @@ export async function 新規申込登録画面を開く(page: Page, イベント
   await page.locator('#search_form [name="admin_search_event[multi]"]').fill(イベント名);
   await page.locator('#search_form [name="admin_search_event[start_date_from]"]').fill("");
   await page.locator('#search_form [name="admin_search_event[start_date_to]"]').fill("");
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("#search_form button[type='submit']").click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#search_form button[type='submit']").click({ noWaitAfter: true })]);
   const link = page.locator(`a[href$="/entry_registration/new/${日程ID}"]`);
   if ((await link.count()) !== 1) throw new Error(`イベント申込登録の検索結果に、「${イベント名}」の日程 ${日程ID} の「新規登録」が ${await link.count()} 個ある（1個のはず）`);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
 }
 
 /** イベント新規申込登録画面のプレイヤー検索を開いて検索し、結果の表を返す */

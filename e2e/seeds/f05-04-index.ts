@@ -23,7 +23,7 @@ import { Notes } from "../lib/notes";
 import { RUN_MARK, rc } from "../lib/run_marker";
 import { withAdminSession } from "../lib/session";
 import { imageFile, saveProductWithImages } from "../pages/admin/f03_06_products";
-import { カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 商品規格一覧を読む, 商品規格を削除する, 商品規格を登録する, 単体カード配下のカテゴリID, 登録済みの割引率ID, 規格IDを選ぶ } from "../pages/admin/f05_04_products";
+import { カード商品CSVの公開の値, カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 商品規格一覧を読む, 商品規格を削除する, 商品規格を登録する, 単体カード配下のカテゴリID, 登録済みの割引率ID, 規格IDを選ぶ, EXの名前でも引けるようにする, 画面の状態, 状態EXの読み替えの注記 } from "../pages/admin/f05_04_products";
 import { 索引用カード, 索引用カードの詳細, 索引用カードを登録する } from "../pages/admin/f05_index_products";
 import { readExistingSellGroupName } from "../pages/admin/m03_01_goods_csv";
 import { readLanguageIds } from "../pages/admin/m03_23_seed_products";
@@ -46,7 +46,7 @@ export function f0504索引の商品(正本の名: string): { 商品ID: string; 
 /** 021 のカードセット（正本の名前「タルキール：龍嵐録」に印を付けた名前） */
 export const F0504セット021 = rc("タルキール：龍嵐録-F0504-021");
 
-type 共通 = { 見出し: string[]; JP: string; EN: string; その他: string; 単体: string; 購入グループ: string; 割引率: string; カードセット: string };
+type 共通 = { 見出し: string[]; 公開: { 商品公開ステータス: string; 支店の商品公開ステータス: string }; JP: string; EN: string; その他: string; 単体: string; 購入グループ: string; 割引率: string; カードセット: string };
 let common: Promise<共通> | null = null;
 const CARD_NO_BASE = String(Date.now()).slice(-8);
 let seq = 0;
@@ -62,8 +62,10 @@ function 共通の値(c: C): Promise<共通> {
       const sellGroup = await readExistingSellGroupName(page);
       const cardset = await ensureCardset(page, "F0504試験カードセット", "F0504 Test Set", "F0504S", c.issue);
       const 見出し = await カード商品CSVの見出し(page);
+      const 公開 = await カード商品CSVの公開の値(page);
+      c.issue(`カード商品CSVの商品公開ステータスは、シード表の「2」（公開）でなく、画面のCSVの形式の説明で「公開」に当たる値 ${公開.商品公開ステータス} を入れた（説明では 2 は非公開）。支店の商品公開ステータスは ${公開.支店の商品公開ステータス}（公開）`);
       c.issue(`単体カード配下のカテゴリは「${cat.名称}」（ID ${cat.id}）、購入グループ名称は「${sellGroup}」、割引率は「${discount.名称}」、その他の言語は「${lang.その他言語.label}」を使った`);
-      return { 見出し, JP: lang.日本語, EN: lang.英語, その他: lang.その他言語.id, 単体: cat.id, 購入グループ: sellGroup, 割引率: discount.id, カードセット: cardset };
+      return { 見出し, 公開, JP: lang.日本語, EN: lang.英語, その他: lang.その他言語.id, 単体: cat.id, 購入グループ: sellGroup, 割引率: discount.id, カードセット: cardset };
     });
   }
   return common;
@@ -91,7 +93,7 @@ async function カードと商品を作る(c: C, seedId: string, card: Omit<索�
       const name = rc(d.名);
       const p = String(Math.max(d.買取, 100));
       const row = (言語ID: string, 商品ID: string): Record<string, string> => ({
-        "商品ID": 商品ID, "言語(ID)": 言語ID, "商品公開ステータス": "2", "支店の商品公開ステータス": "1",
+        "商品ID": 商品ID, "言語(ID)": 言語ID, "商品公開ステータス": k.公開.商品公開ステータス, "支店の商品公開ステータス": k.公開.支店の商品公開ステータス,
         "商品名(日)": name, "商品名(英)": name, "サイズ": "1", "重量": "1", "商品カテゴリ(ID)": d.カテゴリID ?? k.単体,
         "購入グループ名称": k.購入グループ, "割引率(ID)": k.割引率, "基準価格": p, "販売価格": p, "買取価格": String(d.買取),
         "カード詳細(ID)": reg.詳細IDs[d.詳細],
@@ -103,8 +105,10 @@ async function カードと商品を作る(c: C, seedId: string, card: Omit<索�
         await カード商品CSVを登録する(page, k.見出し, [row(idOf(l), 商品ID)], `${seedId}-${d.名}-${l}.csv`, `${seedId}: ${d.名}（${l}）のカード商品CSV登録`, c.issue);
       }
       let rows = await 商品規格一覧を読む(page, 商品ID);
+      if (d.残す状態?.includes("EX")) c.issue(`${seedId}: ${d.名}: ${状態EXの読み替えの注記}`);
       if (d.残す状態) {
-        for (const r of rows.filter((x) => !d.残す状態!.includes(x.状態))) await 商品規格を削除する(page, 商品ID, r.商品規格ID, `${seedId}: ${d.名} の ${r.言語}-${r.状態}`, c.issue);
+        const 残す = d.残す状態.map(画面の状態);
+        for (const r of rows.filter((x) => !残す.includes(x.状態))) await 商品規格を削除する(page, 商品ID, r.商品規格ID, `${seedId}: ${d.名} の ${r.言語}-${r.状態}`, c.issue);
         rows = await 商品規格一覧を読む(page, 商品ID);
       }
       let 画像: string | undefined;
@@ -119,6 +123,7 @@ async function カードと商品を作る(c: C, seedId: string, card: Omit<索�
       }
       const 規格: Record<string, string> = {};
       for (const r of rows) 規格[`${r.言語 === "日本語" ? "JP" : r.言語 === "英語" ? "EN" : r.言語}-${r.状態}`] = r.商品規格ID;
+      EXの名前でも引けるようにする(規格);
       作った.set(d.名, { 商品ID, 規格, 言語: d.言語, 画像 });
       ids.push(商品ID);
     }

@@ -7,22 +7,24 @@
  */
 import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
+import { rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { registerEvent } from "../pages/admin/event";
-import { ensureMember } from "../pages/admin/member";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
 import { registerSchedule } from "../pages/admin/schedule";
 import { 基本イベント, M1303_ADMIN } from "./m13-03";
 import { 印店名 } from "../pages/admin/m13_marked_shop";
 
-export const M1303_ADMIN_B: Account = { loginId: "m1303_b_admin", password: "Passw0rd!M1303B" };
+// 店舗を決まった名前（店舗A-E2E など）にしたので、管理者も決まった印の名前・ログインIDで1度だけ作って使い回す（前の実行の印つきの店舗に所属した管理者とぶつけない）
+export const M1303_ADMIN_B: Account = { loginId: rcFixed("m1303_b_admin").toLowerCase(), password: "Passw0rd!M1303B" };
 
 /** 店舗Bだけを編集できる管理者を、無ければ作る（シード表に無い。権限外店舗のイベントを作るために足す） */
 async function 店舗B管理者を用意する(browser: Browser, seedId: string): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-03 店舗B試験管理者", 所属店舗: 印店名.B, ログインID: M1303_ADMIN_B.loginId, メールアドレス: "m1303_b_admin@example.test",
+      名前: rcFixed("M13-03 店舗B試験管理者"), 所属店舗: 印店名.B, ログインID: M1303_ADMIN_B.loginId, メールアドレス: `${M1303_ADMIN_B.loginId}@example.test`,
       パスワード: M1303_ADMIN_B.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.B, 編集可能店舗: [印店名.B],
     });
   });

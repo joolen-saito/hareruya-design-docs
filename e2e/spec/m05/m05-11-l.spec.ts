@@ -4,7 +4,7 @@ import { caseTest, expect } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
 import { OrderEditPage, 明細行 } from "../../pages/admin/m05_11_order_edit";
-import { 明細のコード } from "../../seeds/m05-11-l";
+import { 明細のコード, 明細の商品名 } from "../../seeds/m05-11-l";
 import { M0511_ADMIN_A, 店舗Aの店名 } from "../../seeds/m05-11";
 
 const NO = "〔受注番号-M0511-共有PRODUCT〕";
@@ -18,13 +18,22 @@ async function 開く(browser: Browser, page: Page, no: string): Promise<OrderEd
 
 caseTest("IT-M05-11-081", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M0511_ADMIN_A);
+  const code = rc(明細のコード[0]);
+  const 名前 = rc(明細の商品名[0]);
+  let 商品名 = "";
   await step(1, async () => { await 開く(browser, page, notes.get(NO)); });
   await step(2, async () => {
-    const link = 明細行(page, rc(明細のコード[0])).locator('a[href*="/product/product/"]').first();
+    const link = 明細行(page, code).locator('a[href*="/product/product/"]').first();
     const [popup] = await Promise.all([page.context().waitForEvent("page", { timeout: 30_000 }).catch(() => null), link.click({ timeout: 20_000 })]);
     if (popup) { await popup.waitForLoadState("load"); await page.goto(popup.url()); await popup.close(); } else await page.waitForLoadState("load");
+    // 開いた商品編集画面が、押した商品（表示確認商品）のものか（商品名の欄。規格を持つ商品の編集画面には商品コードが出ないので、商品コードは照らさない）
+    const name = page.locator("#admin_product_name");
+    if (await name.count()) 商品名 = await name.inputValue();
   });
-  await expected(async () => { expect.soft(new URL(page.url()).pathname, "遷移先（商品の商品編集画面）").toMatch(/\/product\/product\/\d+\/edit$/); });
+  await expected(async () => {
+    expect.soft(new URL(page.url()).pathname, "遷移先（商品の商品編集画面）").toMatch(/\/product\/product\/\d+\/edit$/);
+    expect.soft(商品名, "開いた商品編集画面の商品名（押した表示確認商品）").toBe(名前);
+  });
 });
 
 caseTest("IT-M05-11-078", async ({ page, browser, notes, step, expected }) => {
@@ -46,7 +55,8 @@ caseTest("IT-M05-11-078", async ({ page, browser, notes, step, expected }) => {
   });
   await expected(async () => {
     const h = (i: number) => 区分[rc(明細のコード[i])] ?? "（見つからない）";
-    expect.soft([h(0), h(1)].every((x) => /0円.*980円未満/.test(x)), `価格0・979の商品の区分: ${h(0)} / ${h(1)}`).toBe(true);
+    // 0円以上980円未満の群には見出しの行が無い（アプリの画面は、980円からと4,800円からの見出しだけを出す。ベース実装も同じ）。見出しの境目より上の群が、その区分
+    expect.soft([h(0), h(1)].every((x) => x === "（見出しなし）"), `価格0・979の商品は、980円からの見出しより上の群（0円以上980円未満）: ${h(0)} / ${h(1)}`).toBe(true);
     expect.soft([h(2), h(3)].every((x) => /980円.*4,?800円未満/.test(x)), `価格980・4799の商品の区分: ${h(2)} / ${h(3)}`).toBe(true);
     expect.soft(/4,?800円以上/.test(h(4)), `価格4800の商品の区分: ${h(4)}`).toBe(true);
   });

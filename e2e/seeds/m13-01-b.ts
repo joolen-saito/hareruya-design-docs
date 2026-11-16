@@ -1,8 +1,8 @@
 /**
  * M13-01 イベント一覧 の追加シード（画面操作）。正本: cases/M13-01_seed_data.tsv
  *
- * - 大阪店・名古屋店: 手元・開発環境に同名の店舗が複数あり画面の選択肢で決められないので、既存の店舗は使わず、機能専用の試験店舗
- *   「M1301大阪店」「M1301名古屋店」（固定名。あれば使い、無ければ登録）に読み替える。手順の「大阪店」「名古屋店」はこの店名として読む。
+ * - 大阪店・名古屋店: 依頼者決定 2026-11-15「店舗は作るのもう禁止」により、店舗は作らず、使い回す店舗の表から店舗IDで選ぶ。
+ *   大阪店 = 店舗ID 4973（E2E の店舗）、名古屋店 = 店舗ID 3（元からある店舗「福岡店」）。手順の「大阪店」「名古屋店」はこの店名として読む。
  *   各店舗の編集権限は、その店舗だけを編集できる試験管理者（m1301_osaka_admin・m1301_nagoya_admin。権限「店舗オーナー」）が持つ。
  *   m1301_admin（東京店だけ）は大阪店・名古屋店の編集権限を持たない（シード表のとおり）。
  * - 作らないシード（ケースを実装しない）: 登録済みのマスタの種類を「3種だけ」「4店舗だけ」にするもの（OPTFMT-037・OPTSHOP-038・OPTRULE-039。共有のマスタ・既存の店舗を書き換えない）、
@@ -15,17 +15,18 @@ import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { EventInput, registerEvent } from "../pages/admin/event";
-import { ensureMember } from "../pages/admin/member";
-import { ensureTenant } from "../pages/admin/tenant";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
+import { 店舗IDで選ぶ } from "../pages/admin/store_pick";
+import { 表の店舗 } from "../pages/admin/store_pick";
 import { 日程を足す, 月次イベント } from "../pages/admin/m13_01_event_list";
 import { en, 登録 } from "./m13-01";
 
-export const OSAKA = { 店名: "M1301大阪店", 店名カナ: "エムオオサカテン", 店名英語: "M Osaka", 支店URL: "m1301osaka", 店名略称3文字: "OSK", ショップ名略称: "M1301大阪" };
-export const NAGOYA = { 店名: "M1301名古屋店", 店名カナ: "エムナゴヤテン", 店名英語: "M Nagoya", 支店URL: "m1301nagoya", 店名略称3文字: "NGY", ショップ名略称: "M1301名古屋" };
+export const OSAKA = { 店舗ID: "4973", 店名: 表の店舗("4973").店名, 呼び名: "大阪店", 管理者名: "M1301大阪店管理者" };
+export const NAGOYA = { 店舗ID: "3", 店名: 表の店舗("3").店名, 呼び名: "名古屋店", 管理者名: "M1301名古屋店管理者" };
 export const OSAKA_ADMIN: Account = { loginId: "m1301_osaka_admin", password: "Passw0rd!M1301O" };
 export const NAGOYA_ADMIN: Account = { loginId: "m1301_nagoya_admin", password: "Passw0rd!M1301N" };
 
-const 店舗の注記 = "「大阪店」「名古屋店」は、同名の店舗が複数あって決められないので、機能専用の試験店舗「M1301大阪店」「M1301名古屋店」（あれば使い、無ければ登録）に読み替えた。" +
+const 店舗の注記 = `「大阪店」は店舗ID ${OSAKA.店舗ID}の店舗「${OSAKA.店名}」、「名古屋店」は店舗ID ${NAGOYA.店舗ID}の店舗「${NAGOYA.店名}」に読み替えた（店舗は作らない。依頼者 2026-11-15）。` +
   "各店舗は、その店舗だけを編集できる試験管理者（権限は「店舗オーナー」）が編集権限を持つ";
 
 /** 試験店舗と、その店舗だけを編集できる管理者を用意する（あれば使う） */
@@ -33,9 +34,9 @@ async function 試験店舗を用意する(browser: Browser, seedId: string): Pr
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const issue = (m: string) => reportSeedIssue(seedId, m);
     for (const [shop, admin, mail] of [[OSAKA, OSAKA_ADMIN, "m1301_osaka_admin@example.test"], [NAGOYA, NAGOYA_ADMIN, "m1301_nagoya_admin@example.test"]] as const) {
-      await ensureTenant(page, shop, issue);
+      await 店舗IDで選ぶ(page, shop.店舗ID, shop.呼び名, issue);
       await ensureMember(page, {
-        名前: `${shop.店名}管理者`, 所属店舗: shop.店名, ログインID: admin.loginId, メールアドレス: mail,
+        名前: shop.管理者名, 所属店舗: shop.店名, ログインID: admin.loginId, メールアドレス: mail,
         パスワード: admin.password, 権限: "店舗オーナー", デフォルト検索表示店舗: shop.店名, 編集可能店舗: [shop.店名],
       });
     }
@@ -54,6 +55,21 @@ async function 店舗の管理者で登録(browser: Browser, account: Account, i
   });
   return ids;
 }
+
+// 店舗が東京・大阪・名古屋の3件（E・F・G）と、フォーマット・ルール適用度で絞る4件（A〜D）
+defineSeed("S-M13-01-FILTER", { needs: ["S-M13-01-MASTER"] }, async ({ browser, notes, seed }) => {
+  await 試験店舗を用意する(browser, seed.シードID);
+  const [a, b, c, d, e] = await 登録(browser, [
+    { 名日: `${rc("形式確認")}A`, 名英: en("M1301 FILTER A") },
+    { 名日: `${rc("形式確認")}B`, 名英: en("M1301 FILTER B"), over: { フォーマット: ["モダン"] } },
+    { 名日: `${rc("ルール確認")}C`, 名英: en("M1301 FILTER C"), over: { ルール適用度: "競技" } },
+    { 名日: `${rc("ルール確認")}D`, 名英: en("M1301 FILTER D") },
+    { 名日: `${rc("店舗複数確認")}E`, 名英: en("M1301 FILTER E") },
+  ]);
+  const [f] = await 店舗の管理者で登録(browser, OSAKA_ADMIN, [{ 名日: `${rc("店舗複数確認")}F`, 名英: en("M1301 FILTER F"), 店舗: OSAKA.店名 }]);
+  const [g] = await 店舗の管理者で登録(browser, NAGOYA_ADMIN, [{ 名日: `${rc("店舗複数確認")}G`, 名英: en("M1301 FILTER G"), 店舗: NAGOYA.店名 }]);
+  [a, b, c, d, e, f, g].forEach((id, i) => notes.set(`〔イベントID-M1301-共有-FILTER-${"ABCDEFG"[i]}〕`, id));
+});
 
 // 複合条件の5件（2026/08/15 10:00 などの日程つき）
 defineSeed("S-M13-01-COMBINATION", { needs: ["S-M13-01-MASTER"] }, async ({ browser, notes, seed }) => {

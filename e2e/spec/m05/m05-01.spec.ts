@@ -374,7 +374,7 @@ function toSetting(n: string, menu: "CSVダウンロード" | "受注一覧カ�
     await step(3, async () => {
       if (読み替え) note(読み替え);
       const item = await p.openToolMenu(menu, 項目);
-      await Promise.all([page.waitForNavigation({ waitUntil: "load" }), item.click()]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), item.click({ noWaitAfter: true })]);
     });
     await expected(async () => {
       expect.soft(new URL(page.url()).pathname, "遷移した画面のアドレス").toMatch(path);
@@ -382,7 +382,9 @@ function toSetting(n: string, menu: "CSVダウンロード" | "受注一覧カ�
     });
   };
 }
-caseTest("IT-M05-01-020", toSetting("020", "CSVダウンロード", "受注一覧CSV出力項目設定", /\/setting\/shop\/csv\/3$/, "3",
+// 受注（CSV種別3）は経路 admin_setting_shop_csv の id の既定値なので、アプリは /setting/shop/csv で出す（Symfony が末尾の既定値を省く。index.twig は url('admin_setting_shop_csv', { id: CSV_TYPE_ORDER })）。
+// どの種別の画面かは、画面で選ばれている CSV の種類（3）で確かめる（2026-11-13 dev で /admin/setting/shop/csv だった）
+caseTest("IT-M05-01-020", toSetting("020", "CSVダウンロード", "受注一覧CSV出力項目設定", /\/setting\/shop\/csv(\/3)?$/, "3",
   "手順の「受注CSV出力項目設定」は、画面のメニューの表示名「受注一覧CSV出力項目設定」の項目とした"));
 caseTest("IT-M05-01-021", toSetting("021", "CSVダウンロード", "受注詳細CSV出力項目設定", /\/setting\/shop\/csv\/4$/, "4",
   "手順の「配送CSV出力項目設定」は、画面のメニューの表示名「受注詳細CSV出力項目設定」の項目とした"));
@@ -453,6 +455,9 @@ caseTest("IT-M05-01-030", async ({ page, notes, step, expected }) => {
     state = 受注の状態(await p.rowOrderId(no));
   });
   await expected(async () => {
+    // 画像の一覧が印刷の前のまま（対応状況「注文受領」）だと DB の値と食い違って見えるので、検索し直した一覧を撮る（手順の外の操作。合否は DB の値で見る）
+    await p.clickSearch();
+    note("期待結果の画像は、印刷のあとの対応状況が一覧に出るよう、同じ条件で検索し直してから撮った（手順の外の操作）");
     const s = state as ReturnType<typeof 受注の状態> | null;
     expect.soft(s?.対応状況, "対応状況").toBe("ピック中");
     expect.soft(s?.ブラウザ印刷フラグ, "ブラウザ印刷フラグ（ON）").toBe("true");
@@ -480,9 +485,9 @@ caseTest("IT-M05-01-038", async ({ page, notes, step, expected }) => {
     const w = opened as Page | null;
     expect(w !== null, "注文番号を押して画面が開いた").toBe(true);
     if (!w) return;
-    expect.soft(new URL(w.url()).pathname, "開いた画面のアドレス（受注情報編集）").toMatch(new RegExp(`/order/${id}/edit$`));
-    const ids = await readOrderEditIds(w, "開いた受注情報編集画面").catch(() => null);
-    expect.soft(ids?.注文番号 ?? "", "受注情報編集画面の注文番号").toBe(no);
+    // 開いたタブ（受注情報編集）の画面とその要素で確かめる（帯と赤枠を、開いたタブの画像に書くため）
+    await expect.soft(w, "開いた画面のアドレス（受注情報編集）").toHaveURL(new RegExp(`/order/${id}/edit$`));
+    await expect.soft(w.locator("a.order-history-order-no-link").first(), "受注情報編集画面の注文番号").toHaveText(no);
   });
 });
 
@@ -494,7 +499,7 @@ caseTest("IT-M05-01-039", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await p.clickSearch(); });
   await step(3, async () => {
     const item = await p.openRowMenu(no, "編集");
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), item.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), item.click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移した画面のアドレス（受注情報編集）").toMatch(new RegExp(`/order/${id}/edit$`));
@@ -511,14 +516,14 @@ caseTest("IT-M05-01-040", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await p.clickSearch(); });
   await step(3, async () => {
     const item = await p.openRowMenu(no, "メール通知");
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), item.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), item.click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     const u = new URL(page.url());
     expect.soft(u.pathname, "遷移した画面のアドレス（手動メール通知）").toMatch(/\/order\/manual_mail$/);
     expect.soft(u.searchParams.get("orderId"), "手動メール通知の対象の受注ID").toBe(id);
-    const info = await p.manualMailOrderInfo().catch(() => null);
-    expect.soft(info?.文字 ?? "", "手動メール通知画面の注文番号").toContain(no);
+    // 注文番号は、欄の「注文番号」の見出しの隣の値を完全一致で見る（遷移したこの画面で確かめる）
+    await expect.soft(p.manualMailOrderNumber(), "手動メール通知画面の注文番号").toHaveText(no);
   });
 });
 
@@ -665,7 +670,13 @@ caseTest("IT-M05-01-057", async ({ page, notes, step, expected }) => {
 caseTest("IT-M05-01-072", async ({ page, notes, step, expected }) => {
   const p = new OrderSearchPage(page);
   const no = notes.get("〔注文番号-M0501-072〕");
-  await step(1, async () => { await loginAdmin(page, M0501_ADMIN); });
+  await step(1, async () => {
+    // 「ブラウザを新しく開いて」: このケースのブラウザは前の管理画面のセッション（Cookie）を持たないことを確かめてからログインする
+    const before = await page.context().cookies();
+    expect(before.length, "ログインの前のブラウザのCookie（新しく開いたブラウザなので0件）").toBe(0);
+    await loginAdmin(page, M0501_ADMIN);
+    note("ログインの前のブラウザのCookieは0件（前のセッションの受注検索条件を持たない、新しいブラウザでログインした）");
+  });
   await step(2, async () => {
     const res = await page.goto(adminUrl("/order/page/2"));
     await page.waitForLoadState("load");

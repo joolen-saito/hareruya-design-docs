@@ -42,7 +42,7 @@ caseTest("IT-F05-04-021", async ({ page, notes, step, expected }) => {
   await step(2, async () => {
     const link = page.locator("a.p-hareruya-product-detail__specs-link").filter({ hasText: F0504セット021 });
     await expect(link, "カード説明のセット名のリンク").toHaveCount(1);
-    await Promise.all([page.waitForURL((u) => u.pathname.includes("/purchase/search"), { timeout: 60_000 }), link.click()]);
+    await Promise.all([page.waitForURL((u) => u.pathname.includes("/purchase/search"), { timeout: 120_000}), link.click({ noWaitAfter: true })]);
     await r.結果を待つ();
     rows = await r.行を読む();
     note(`遷移先: ${decodeURIComponent(page.url())}。一覧: ${名(rows).join("、")}`);

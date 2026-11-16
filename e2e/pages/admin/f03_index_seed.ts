@@ -20,7 +20,9 @@ import { adminUrl, withAdminSession } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 import { F04大阪承認者, F04大阪登録者, 大阪の管理者を用意する, 大阪の店名, 本店の店名 } from "./f04_setup";
 import { registerGoodsCsv } from "./m03_01_goods_register";
+import { 商品のカテゴリを付け替える } from "./a17_05_setup";
 import { classRowsFromProductEdit, openProductEditByCode, readGoodsRootCategoryId, readLanguageIds } from "./m03_23_seed_products";
+import { openProductEditByCodeAnyStatus } from "./f03_06_products";
 import { searchStockByCode } from "./m04_02_rc_stock";
 import { assignCardOnProductEdit } from "./product_card_assign";
 import { CardsetDetailPage } from "./m14_08_cardset_detail";
@@ -143,8 +145,8 @@ export async function 属性つきカードを登録する(page: Page, v: カー
   }
   if (chosen.length) issue(`${what}: 正本が値を定めない詳細情報の ${[...new Set(chosen)].join("・")} は選択肢の先頭を選んだ`);
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: カードの登録`)) issue(`${what}: 警告「${w}」`);
   const m = /\/card\/(\d+)\/edit/.exec(page.url());
@@ -169,6 +171,11 @@ export type 索引の商品 = {
   価格?: string;
   /** 商品カテゴリ(ID)（省略はサプライ・グッズ） */
   カテゴリID?: string;
+  /**
+   * 取り込んだあと、商品登録編集で商品カテゴリをこのカテゴリだけに付け替える（グッズ商品CSV登録が受け付けない、サプライ・グッズ系統の外のカテゴリに入れるとき）。
+   * 取込はサプライ・グッズのカテゴリで行う（カテゴリID とは同時に使わない）
+   */
+  画面で付けるカテゴリID?: string;
   タグID?: string;
   カード?: カードの属性;
   /** 既に登録したカードの詳細情報を「カード指定 >」で紐づける（同じカードの商品を何件も作るとき。カード とは同時に使わない） */
@@ -196,7 +203,7 @@ async function 規格を公開する(page: Page, productId: string, classId: str
   if (v.高額商品コード !== undefined) await form.locator("#admin_product_class_high_price_code").fill(v.高額商品コード);
   if (v.セール !== undefined) await form.locator("#admin_product_class_sale_flg").setChecked(v.セール);
   await chooseByLabel(form.locator("#admin_product_class_Status"), "公開");
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品規格の登録`)) issue(`${what}: 警告「${w}」`);
   await expect(form.locator("#admin_product_class_Status option:checked"), `${what}: 登録後の公開ステータス`).toHaveText(/^\s*公開\s*$/);
   if (v.セール !== undefined) await expect(form.locator("#admin_product_class_sale_flg"), `${what}: 登録後のセールフラグ`).toBeChecked({ checked: v.セール });
@@ -229,6 +236,8 @@ export async function 索引の商品を作る(browser: Browser, what: string, i
         productStatus: it.本店 ?? "公開", branchStatus: it.支店 ?? "公開",
         values: {
           ...(it.価格 ? { "基準価格": it.価格, "販売価格": it.価格 } : {}),
+          // 販売価格は買取価格より大きくなければ取り込めない（グッズ商品CSV登録の入力チェック）。正本の価格が100円以下（F03-03 の031 の50円など）のときだけ、買取価格を販売価格より1円低くする
+          ...(it.価格 && Number(it.価格) <= 100 ? { "買取価格": String(Math.max(0, Number(it.価格) - 1)) } : {}),
           ...(it.カテゴリID ? { "商品カテゴリ(ID)": it.カテゴリID } : {}),
           ...(langId(it.言語) ? { "言語(ID)": langId(it.言語)! } : {}),
           ...(it.検索ワード !== undefined ? { "検索ワード": it.検索ワード } : {}),
@@ -237,9 +246,10 @@ export async function 索引の商品を作る(browser: Browser, what: string, i
       })),
       onWarning: (w) => issue(`${what}: グッズ商品CSV登録の警告「${w}」`), uploadWaitMs: 180_000,
     });
-    issue(`${what}: グッズ商品CSVの購入グループ名称は既存の購入グループ、そのほか正本が定めない列（買取価格100・原価単価10・サイズ1・重量1）は試験用の値を入れた`);
+    issue(`${what}: グッズ商品CSVの購入グループ名称は既存の購入グループ、そのほか正本が定めない列（買取価格100（販売価格が100円以下の商品は販売価格より1円低い値）・原価単価10・サイズ1・重量1）は試験用の値を入れた`);
     for (const it of items) {
-      const productId = await openProductEditByCode(page, it.商品コード);
+      // 本店非公開の商品は、商品マスターの既定の公開状態（公開だけ）の検索に出ない。公開状態の絞り込みを外して探す（F03-03-006 が「行が 0 件」で止まった。2026-11-14）
+      const productId = it.本店 === "非公開" ? await openProductEditByCodeAnyStatus(page, it.商品コード) : await openProductEditByCode(page, it.商品コード);
       const card = cards.get(it.商品コード) ?? it.既存のカード;
       if (card) {
         await assignCardOnProductEdit(page, {
@@ -247,6 +257,10 @@ export async function 索引の商品を作る(browser: Browser, what: string, i
         }, (m) => issue(`${what}: ${it.商品コード}: ${m}`));
       }
       if (it.カードセットID) await 商品のカードセットを選ぶ(page, productId, it.カードセットID, `${what}: ${it.商品コード}`, issue);
+      if (it.画面で付けるカテゴリID) {
+        await 商品のカテゴリを付け替える(page, productId, [it.画面で付けるカテゴリID], `${what}: ${it.商品コード}`, issue);
+        issue(`${what}: ${it.商品コード} の商品カテゴリは、グッズ商品CSV登録がサプライ・グッズ系統の外のカテゴリを受け付けないので、サプライ・グッズで取り込んでから商品登録編集でカテゴリID ${it.画面で付けるカテゴリID} だけに付け替えた`);
+      }
       // 取込で作られた規格（状態ニアミント）を選ぶ（シード表: 「状態ニアミント・日本語の規格（取り込みで作られた規格）の行を開き」）
       const rows = await classRowsFromProductEdit(page, productId);
       const nm = rows.filter((r) => r.状態 === "NM" || r.状態.includes("ニアミント"));
@@ -319,8 +333,8 @@ export async function 商品のカードセットを選ぶ(page: Page, productId
   // 画面の部品（select2）が元の選択欄を隠すことがあるので、元の選択欄を直接選ぶ
   await sel.selectOption(cardsetId, { force: true });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: カードセットの登録`)) issue(`${what}: 警告「${w}」`);
   await expect(page.locator('form#form1 select[name="admin_product[Cardset]"]'), `${what}: 保存後のカードセット`).toHaveValue(cardsetId);

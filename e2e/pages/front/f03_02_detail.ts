@@ -22,6 +22,17 @@ export class FrontDetail {
     return res;
   }
 
+  /**
+   * 商品詳細の本体（商品説明まで）の終わりへ画面を送る。ページが縦に長い（8000px 超）と全体は撮れず見えている範囲だけを撮るので、
+   * カード専用の欄（カード情報・使われているデッキ・他のバージョン）が並ぶ位置が画像に入るよう、画面を送ってから撮る
+   */
+  async 本体の終わりへ画面を送る(): Promise<void> {
+    await this.page.locator(".p-hareruya-product-detail").first().evaluate((el) => {
+      const end = el.getBoundingClientRect().bottom + window.scrollY;
+      window.scrollTo(0, Math.max(0, end - window.innerHeight * 0.7));
+    });
+  }
+
   /** 商品名の見出し */
   get 商品名(): Locator { return this.page.locator("h1.p-hareruya-product-detail__title-text"); }
   async 商品名の文(): Promise<string> { return (await this.商品名.count()) ? norm(await this.商品名.first().textContent()) : ""; }
@@ -55,6 +66,10 @@ export class FrontDetail {
   入荷通知のボタン_規格(classId: string): Locator { return this.page.locator(`button[data-productclass="${classId}"]`); }
   get まとめて入荷通知(): Locator { return this.page.locator("#bulk_restock_notice"); }
   get お気に入り(): Locator { return this.page.locator("#add_favorite"); }
+  /** SNSでシェアする欄の「X」「LINE」のリンク（表示名は「Xでシェア」「LINEでシェア」） */
+  シェアのリンク(先: "X" | "LINE"): Locator {
+    return this.page.locator(".p-hareruya-product-detail__share a.p-hareruya-product-detail__share-link", { has: this.page.locator(`img[alt="${先}"]`) });
+  }
 
   /** ボタンの見えている文言（「入荷通知」「通知待ち」の、表示中の方） */
   async 見えている文言(button: Locator): Promise<string> {

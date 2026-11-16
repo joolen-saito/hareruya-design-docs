@@ -4,8 +4,9 @@
  * - 撮影は、画面の「撮影を開始する」の枠を押してカメラを起動し、もう一度枠を押して撮る（画面のスクリプトの作り）。
  *   試験のブラウザには実際のカメラが無いので、カメラ入力（getUserMedia）を、画像形式を判別できる絵を映す入力に差し替える（テスト用カメラ入力）。
  */
-import { BrowserContext, devices, Locator, Page } from "@playwright/test";
+import { BrowserContext, devices, expect, Locator, Page } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { 本店ECTOPの画面か } from "./f01_01_top";
 
 const T = 30_000;
 export const スマホ端末 = (() => {
@@ -50,9 +51,20 @@ export class IdentificationPage {
   get path(): string { return new URL(this.page.url()).pathname; }
   get スタート画面か(): boolean { return /\/mypage\/identification\/?$/.test(this.path); }
   get 撮影画面か(): boolean { return /\/mypage\/identification\/photograph\/?$/.test(this.path); }
-  get 申請完了画面か(): boolean { return /\/mypage\/identification\/complete\/?$/.test(this.path); }
+  /** 申請完了画面か。アドレスではなく画面の中身（申請完了画面の見出し・「マイページ」「買取」のボタンの枠）で判定する（失敗時もアドレスは /complete のままになるため） */
+  async 申請完了画面か(): Promise<boolean> { return (await this.page.locator(".p-hareruya-identification-complete .c-hareruya-heading--lev1").count()) > 0; }
   get マイページか(): boolean { return /\/mypage\/?$/.test(this.path); }
   get 本店ECTOPか(): boolean { return /^\/(ja\/?)?$/.test(this.path); }
+  /** アドレスに加えて画面の中身でも確かめる版（遷移の確かめ用） */
+  async 本店ECTOPの画面か(): Promise<boolean> { return this.本店ECTOPか && (await 本店ECTOPの画面か(this.page)); }
+  /** マイページの画面か（アドレス＋見出し「マイページ」＋会員名の表示） */
+  async マイページの画面か(): Promise<boolean> {
+    return this.マイページか && (await this.page.locator("h1.c-hareruya-heading--lev1", { hasText: "マイページ" }).count()) > 0 && (await this.page.locator(".p-hareruya-mypage__barcode-name").count()) > 0;
+  }
+  /** オンライン本人確認のスタート画面か（アドレス＋見出し「オンライン本人確認」） */
+  async スタート画面の画面か(): Promise<boolean> {
+    return this.スタート画面か && (await this.page.locator(".p-hareruya-identification h1.c-hareruya-heading--lev1", { hasText: "オンライン本人確認" }).count()) > 0;
+  }
 
   async 開く(): Promise<void> { await this.goto(`${BASE_URL}/ja/mypage/identification`); }
   /** 画面のアドレスを直接開く（応答の状態を返す） */
@@ -61,7 +73,12 @@ export class IdentificationPage {
     await this.page.waitForLoadState("load");
     return res?.status() ?? 0;
   }
-  async ログアウトする(): Promise<void> { await this.goto(`${BASE_URL}/logout`); }
+  /** ログアウトのアドレス（/ja/logout）を開き、ログアウトできたこと（応答が正常・ヘッダーにログアウトのリンクが無い）を確かめる */
+  async ログアウトする(): Promise<void> {
+    const status = await this.goto(`${BASE_URL}/ja/logout`);
+    expect(status, "ログアウトのアドレスを開いた応答（404 ならログアウトできていない）").toBeLessThan(400);
+    expect(await this.page.locator('a[href$="/logout"]').count(), "ログアウト後のヘッダーに「ログアウト」のリンクが残っていない（ログアウトできている）").toBe(0);
+  }
 
   // ---- スタート画面 ----
   get QRコード(): Locator { return this.page.locator(".p-hareruya-text-with-qr__qr-img"); }
@@ -78,7 +95,7 @@ export class IdentificationPage {
   async 種類を選ぶ(表示名: string): Promise<void> { await this.種類の選択欄.selectOption({ label: 表示名 }, { timeout: T }); }
   async 選択中の種類(): Promise<string> { return (await this.種類の選択欄.locator("option:checked").innerText()).trim(); }
   async 撮影画面へ(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.撮影画面へボタン.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.撮影画面へボタン.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -89,6 +106,10 @@ export class IdentificationPage {
   get 撮影項目の見出し(): Promise<string[]> {
     return this.page.locator(".p-hareruya-identification-photograph__section-header h2").allInnerTexts().then((a) => a.map((t) => t.trim()));
   }
+  /** 撮影項目（顔写真・オモテ面・ウラ面・斜め）が並ぶ領域全体 */
+  get 撮影項目の領域(): Locator { return this.page.locator(".p-hareruya-identification-photograph__sections"); }
+  /** 撮影画面の本体（説明・撮影項目・同意・ボタンまで） */
+  get 撮影画面の本体(): Locator { return this.page.locator(".p-hareruya-identification-photograph"); }
   get 選んだ種類の入力(): Locator { return this.page.locator('input[name="identification_image[identification]"]'); }
   get 同意チェック(): Locator { return this.page.locator('input[name="identification_image[agree]"]'); }
   get 確定ボタン(): Locator { return this.page.locator(".submit-button-forward"); }
@@ -105,7 +126,7 @@ export class IdentificationPage {
   }
   async 同意する(): Promise<void> { await this.同意チェック.check({ timeout: T }); }
   async 確定を押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), this.確定ボタン.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), this.確定ボタン.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 確定を押す。移動せず画面のスクリプトの確認ダイアログが出るときのために、出たダイアログの文を返す */

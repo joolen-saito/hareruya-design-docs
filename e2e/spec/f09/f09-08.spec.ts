@@ -207,14 +207,15 @@ caseTest("IT-F09-08-027", async (ctx) => {
 type 組の確かめ = { 並びを問わない?: string[]; 含まない?: string[] };
 
 /** 応答の組と期待の組を、並びを問わない範囲をそろえて並べる。含まないはずの規格の組も拾う */
-function 組の比べ(ctx: CaseCtx, r: 確認の応答 | undefined, 期待: [string, number][], o: 組の確かめ = {}) {
+function 組の比べ(ctx: CaseCtx, r: 確認の応答 | undefined, 期待: [string, number][], o: 組の確かめ = {}, 画面の組?: string[]) {
   const ids = (o.並びを問わない ?? []).map((k) => 規格(ctx, k));
-  const 実際 = 並べ方をそろえる(組の一覧(r), ids);
+  const 読んだ組 = 画面の組 ?? 組の一覧(r);
+  const 実際 = 並べ方をそろえる(読んだ組, ids);
   const want = 並べ方をそろえる(期待.map(([k, q]) => `${規格(ctx, k)}:${q}`), ids);
   const 含まないはず = (o.含まない ?? []).map((k) => 規格(ctx, k));
   return {
     実際, 期待: want, 名: `商品規格の識別子と数量の組（${期待.map(([k, q]) => `${k}=${q}`).join("・")}${o.並びを問わない ? `。${o.並びを問わない.join("・")} の並びは問わない` : ""}）`,
-    含まれた: 組の一覧(r).map((x) => x.split(":")[0]).filter((id) => 含まないはず.includes(id)),
+    含まれた: 読んだ組.map((x) => x.split(":")[0]).filter((id) => 含まないはず.includes(id)),
     含まない: (o.含まない ?? []).join("・"),
   };
 }
@@ -224,13 +225,23 @@ function 組を確かめる(行: string[], 条件: 条件, 期待: [string, numb
     const p = new DeckBulkPage(ctx.page);
     await 入れて押す(ctx, p, 行, 条件);
     let r: 確認の応答 | undefined;
-    await ctx.step(5, async () => { r = p.確認の応答[p.確認の応答.length - 1]; });
+    let 応答の枠: Awaited<ReturnType<DeckBulkPage["応答の内容を画面に出す"]>> | undefined;
+    await ctx.step(5, async () => {
+      r = p.確認の応答[p.確認の応答.length - 1];
+      応答の枠 = await p.応答の内容を画面に出す(r);
+      note("応答の内容を開いて見る操作（開発者ツールのネットワーク表示）の代わりに、読んだ応答の状態・処理結果・組・誤りの一覧・本文を、画面の末尾の枠へ書き出した");
+    });
     await ctx.expected(async () => {
-      const v = 組の比べ(ctx, r, 期待, o);
-      expect.soft(r?.本文?.success, "応答の処理結果（成功）").toBe(true);
+      // 応答の内容は、画面に書き出した枠の行から読む（枠の行が画像に写り、赤枠で囲まれる）
+      const 処理結果 = ((await 応答の枠!.処理結果.innerText()).split(": ")[1] ?? "").trim();
+      const 組の文 = ((await 応答の枠!.組.innerText()).split(": ")[1] ?? "").trim();
+      const 誤りの文 = ((await 応答の枠!.誤り.innerText()).split(": ")[1] ?? "").trim();
+      const 画面の組 = 組の文 === "なし" ? [] : 組の文.split("、");
+      const v = 組の比べ(ctx, r, 期待, o, 画面の組);
+      expect.soft(処理結果, "応答の処理結果（成功）").toBe("成功");
       expect.soft(v.実際, v.名).toEqual(v.期待);
       if (v.含まない) expect.soft(v.含まれた, `規格 ${v.含まない} の組を含まない`).toEqual([]);
-      expect.soft(r?.本文?.errors ?? [], "応答の誤りの一覧（無い）").toEqual([]);
+      expect.soft(誤りの文, "応答の誤りの一覧（無い）").toBe("なし");
     });
   };
 }
@@ -307,7 +318,8 @@ caseTest("IT-F09-08-055", async (ctx) => {
     const v = 組の比べ(ctx, r, [["055", 2]]);
     expect.soft(r?.本文?.success, "応答の処理結果（成功）").toBe(true);
     expect.soft(v.実際, v.名).toEqual(v.期待);
-    expect.soft((r?.本文?.errors ?? []).filter((e) => e.includes("最大行数")), "行数の誤り（出ない）").toEqual([]);
+    const response = r?.本文;
+    expect.soft((response?.errors ?? []).filter((e) => e.includes("最大行数")), "行数の誤り（出ない）").toEqual([]);
   });
 });
 

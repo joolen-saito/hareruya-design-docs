@@ -16,7 +16,7 @@ import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { withAdminSession } from "../lib/session";
 import { SETUP_ADMIN } from "../config/env";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { ensureStore } from "../pages/admin/m04_24_reuse_k";
 import type { 申込入力, 申込者 } from "../pages/front/f08_05_confirm";
 import { F0802会員, PD_STORE, 会員を作る } from "./f08-02";
 

@@ -4,11 +4,12 @@
  * 開発環境の店舗は変えない（足すだけ）。店舗一覧は店名の完全一致で探す。M12-01 の店舗（pages/admin/m12_01_stores.ts）と店名が重ならないよう、
  * 呼び名は「<正本の店名>」または「<正本の店名>-M1202-<番号>」にする（同じ実行で M12-01 の店舗と集計行が混ざらないため）。
  */
+import { 店舗の作成は禁止 } from "../../lib/store_create_ban";
 import { Page } from "@playwright/test";
 import { rc, RUN_MARK } from "../../lib/run_marker";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
-import { findTenantId } from "./tenant";
+import { findTenantId } from "./tenant_k";
 
 export type M1202店舗の定め = { 名前: string; 表示順: number; カナ: string; 英語: string };
 
@@ -25,7 +26,7 @@ function しるし(名前: string): string {
 }
 
 async function 登録する(page: Page, d: M1202店舗の定め, 店名: string, 略称: string): Promise<void> {
-  await page.goto(adminUrl("/mall/tenant/create"));
+  await page.goto(店舗の作成は禁止("pages/admin/m12_02_stores.ts")); // 店舗は作らない（依頼者 2026-11-15。lib/store_create_ban.ts）
   const f = (name: string) => page.locator(`[name="mall_tenant_shop_master[${name}]"]`);
   const url = `m1202${RUN_MARK.toLowerCase()}${しるし(d.名前)}`;
   await f("company_name").fill("試験用会社");

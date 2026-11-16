@@ -34,8 +34,10 @@ export function 既存のレイアウト英名(): string | null { return query(`
  * 取得できる（デッドリンクが偽で登録済みの）既存の画像URL。S3 にある画像の実体への読み替えに使う。
  * 画像の実体は画面から置けないので、既存のカードが使っている画像URLを、試験用のカード詳細の画像URLとして登録する。
  */
-export function 既存の画像URL(言語ID: number): string | null {
-  return query(`select url from mtb_card_image where language_id = $1 and back_flg = false and dead_link_flg = false and url is not null and url <> '' and length(url) < 120 order by id limit 1`, [言語ID])[0]?.url ?? null;
+export function 既存の画像URL(言語ID: number, jpg以外を優先 = false): string | null {
+  // jpg以外を優先: 「登録された保存先の拡張子によらず .jpg になる」を確かめるため、拡張子が .jpg/.jpeg ではない画像URLを先に選ぶ（無ければ .jpg のもの）
+  const 並び = jpg以外を優先 ? `case when url ~* '\\.jpe?g([?#].*)?$' then 1 else 0 end, id` : "id";
+  return query(`select url from mtb_card_image where language_id = $1 and back_flg = false and dead_link_flg = false and url is not null and url <> '' and length(url) < 120 order by ${並び} limit 1`, [言語ID])[0]?.url ?? null;
 }
 
 export function カード名英の詳細IDs(カード名英: string): string[] {

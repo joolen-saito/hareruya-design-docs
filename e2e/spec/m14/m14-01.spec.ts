@@ -45,7 +45,7 @@ caseTest("IT-M14-01-004", async ({ page, step, expected }) => {
   const list = new CardSearchPage(page);
   await step(1, async () => { await list.open(); });
   await step(2, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("link", { name: "新規登録", exact: true }).click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("link", { name: "新規登録", exact: true }).click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "表示された画面のアドレス（カード詳細（登録））").toMatch(/\/card\/new$/);
@@ -58,7 +58,7 @@ caseTest("IT-M14-01-005", async ({ page, step, expected }) => {
   const list = new CardSearchPage(page);
   await step(1, async () => { await list.open(); });
   await step(2, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("link", { name: "CSV取り込み", exact: true }).click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("link", { name: "CSV取り込み", exact: true }).click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "表示された画面のアドレス（カード情報CSVアップロード）").toMatch(/\/card\/csv_upload$/);

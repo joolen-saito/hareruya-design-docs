@@ -4,9 +4,10 @@
  * 画像は、正本が「branch-a.png」「branch-b.png」とだけ定める入力ファイルで、中身は決まっていない。e2e/fixtures/f02-03/ に、色の違う小さな画像を置いた（正本の外の補い）。
  */
 import { expect, Page } from "@playwright/test";
+import { 店舗の作成は禁止 } from "../../lib/store_create_ban";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
-import { findTenantId } from "./tenant";
+import { findTenantId } from "./tenant_k";
 import { guardStoreCreate } from "./store_once";
 
 export type 支店の入力 = {
@@ -19,7 +20,7 @@ const digits = (v: string) => v.replace(/-/g, "");
 
 async function create(page: Page, v: 支店の入力): Promise<void> {
   await guardStoreCreate(page, v.店名, "試験用会社", "f02_03_store.create");
-  await page.goto(adminUrl("/mall/tenant/create"));
+  await page.goto(店舗の作成は禁止("pages/admin/f02_03_store.ts"));
   await page.waitForLoadState("load");
   await f(page, "company_name").fill("試験用会社");
   await f(page, "company_kana").fill("シケンヨウガイシャ");
@@ -47,7 +48,8 @@ async function create(page: Page, v: 支店の入力): Promise<void> {
     // 画像の送信が済むと、画面の仕掛けが隠し項目へファイル名を入れる
     await expect(page.locator("#mall_tenant_shop_master_add_local_hareruyakun_image"), `店舗「${v.店名}」の画像の送信`).not.toHaveValue("", { timeout: 60_000 });
   }
-  await page.getByRole("button", { name: "登録", exact: true }).click();
+  // 店舗の登録は店舗別の在庫の行（開発環境で約36万行）を作るので、送信の応答に1分を超える（2026-11-12・押したあとの画面の移動を待つ間に押す操作の60秒が切れていた）。5分まで待つ
+  await page.getByRole("button", { name: "登録", exact: true }).click({ timeout: 300_000 });
   await expectSaved(page, `店舗「${v.店名}」の登録`);
 }
 

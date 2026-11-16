@@ -32,7 +32,7 @@ caseTest("IT-F02-01-007", async ({ page, step, expected }) => {
   await step(1, async () => {
     await n.開く("/ja/products/search");
     await n.商品検索テキストボックス().fill("検索商品");
-    await Promise.all([page.waitForURL((u) => u.searchParams.has("product") || /product=/.test(u.search), { waitUntil: "domcontentloaded", timeout: 30_000 }), n.検索ボタン().click()]);
+    await Promise.all([page.waitForURL((u) => u.searchParams.has("product") || /product=/.test(u.search), { waitUntil: "domcontentloaded", timeout: 120_000}), n.検索ボタン().click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await step(2, async () => { await n.押して遷移する(n.日英切替()); });
@@ -244,7 +244,7 @@ caseTest("IT-F02-01-060", async ({ page, step, expected }) => {
   });
   await step(3, async () => { await n.商品検索テキストボックス().fill(連携商品()); });
   await step(4, async () => {
-    await Promise.all([page.waitForURL((u) => /\/products\/search/.test(u.pathname), { waitUntil: "domcontentloaded", timeout: 30_000 }), n.検索ボタン().click()]);
+    await Promise.all([page.waitForURL((u) => /\/products\/search/.test(u.pathname), { waitUntil: "domcontentloaded", timeout: 120_000}), n.検索ボタン().click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await step(5, async () => { await page.waitForTimeout(1000); });

@@ -177,7 +177,7 @@ async function ネット買取の状況を変える(browser: Browser, seedId: st
   const after = await 管理画面で保存する(browser, 番号, { 査定, 状況 });
   if (状況 === "振込完了") {
     if (!振込完了の先.includes(after)) throw new Error(`買取番号 ${表示} の買取状況を「振込完了」にして保存したが、保存後は「${after}」（処理状態が買取完了の状況でない）`);
-    reportSeedIssue(seedId, `シード作成時の問題: 買取状況の振込完了はDBで入れる定め。管理画面で「振込完了」を選んで保存した（買取番号 ${表示} の保存後の買取状況は「${after}」。処理状態は振込完了と同じ「買取完了」）`);
+    reportSeedIssue(seedId, `シード作成時の問題: 買取状況の振込完了はDBで入れる定め。管理画面で「振込完了」を選んで保存した（買取番号 ${表示} の保存後の買取状況は「${after}」。正本の事前準備は買取状況「振込完了」だが、保存すると画面が「${after}」へ自動で進めるため、振込完了のままにはできない。処理状態は振込完了と同じ「買取完了」なので、この状況で確かめた）`);
   } else if (after !== 状況) {
     throw new Error(`買取番号 ${表示} の買取状況を「${状況}」にして保存したが、保存後は「${after}」`);
   }
@@ -191,7 +191,13 @@ async function 店頭買取を申し込む(browser: Browser, メール: string, 
 /** 店頭買取を申し込み、査定番号（一覧の買取番号）と店頭買取のID（詳細のアドレスの番号）を返す */
 async function 店頭買取を申し込んでIDも読む(browser: Browser, メール: string, パスワード: string, 名: string): Promise<{ 番号: string; ID: string }> {
   return 会員のページ(browser, async (page) => {
-    const 番号 = await applyAsMember(page, STORE_A.支店URL, { メール, パスワード }, { 姓: "晴屋", 名, セイ: "シケン", メイ: "カイイン" });
+    const 完了画面の番号 = await applyAsMember(page, STORE_A.支店URL, { メール, パスワード }, { 姓: "晴屋", 名, セイ: "シケン", メイ: "カイイン" });
+    // 申込みの完了画面の査定番号は、一覧の買取番号（日付-店舗-連番）の末尾の連番だけを出す。一覧では、この会員の一覧から連番が合う買取番号を探す
+    const h = new PurchaseHistoryListPage(page);
+    await h.指定して開く({ pageSize: 50 });
+    const 候補 = (await h.番号の並び()).filter((n) => n === 完了画面の番号 || n.endsWith(`-${完了画面の番号}`));
+    if (候補.length !== 1) throw new Error(`申込みの完了画面の査定番号 ${完了画面の番号} に当たる買取番号が、マイページの買取履歴一覧に ${候補.length} 件（1件のはず。一覧: ${(await h.番号の並び()).join("、")}）`);
+    const 番号 = 候補[0];
     const ID = await 一覧に出ている(page, 番号, "otc");
     return { 番号, ID };
   });
@@ -204,7 +210,7 @@ async function 店頭買取のステータスを変える(browser: Browser, 名:
     const 査定ID = await 申込者名で査定IDを探す(page, `晴屋 ${名}`, STORE_A.店名);
     await 一覧から詳細を開く(page, 査定ID);
     await new OtcDetailPage(page).ステータスを変える(変更後);
-    return 店頭買取のステータスを読む(page, `晴屋 ${名}`, STORE_A.店名).catch((e: Error) => `（読めない: ${e.message.slice(0, 120)}）`);
+    return 店頭買取のステータスを読む(page, `晴屋 ${名}`, STORE_A.店名, 変更後 === "買取キャンセル" ? 変更後 : undefined).catch((e: Error) => `（読めない: ${e.message.slice(0, 120)}）`);
   });
 }
 
@@ -212,7 +218,7 @@ async function 店頭買取のステータスを変える(browser: Browser, 名:
 const 買取成立の先 = ["買取成立", "入庫済み", "未登録在庫あり", "入庫待ち"];
 
 const 店舗の読み替え =(seedId: string, 正本の店名: string) => reportSeedIssue(seedId,
-  `シード作成時の問題: 店舗「${正本の店名}」は店舗登録で作る定め。共有のマスタに店舗を足さないため、M06-01 の試験店舗「${STORE_A.店名}」（あれば使い、無ければ作る）に読み替えた。`
+  `シード作成時の問題: 店舗「${正本の店名}」は店舗登録で作る定め。店舗は作らない決まり（依頼者 2026-11-15）のため、M06-01 の買取店舗A（使い回す店舗「${STORE_A.店名}」・店舗ID ${STORE_A.店舗ID}）に読み替えた。`
   + "店頭買取の買取店舗の表示も、この店名で確かめる。ステータスは M06-01 の全店管理者（編集可能店舗に買取店舗A・Bを持つ）で変えた。申込者名は「晴屋」＋実行の印つきの名");
 const 依頼日の読み替え = (seedId: string) => reportSeedIssue(seedId,
   "シード作成時の問題: 依頼日（2026-06-10 など）はDBで入れる定め。画面では指定できないので申込みの日時のまま（このシードを使うケースは依頼日の値を確かめない）");
@@ -502,6 +508,7 @@ defineSeed("S-F06-11-CASE-008", { needs: OTC_NEEDS }, async ({ browser, notes, s
   控える(notes, id, "〔買取番号-F0611-008A〕", a.表示); 控える(notes, id, "〔買取番号-F0611-008B〕", b.番号);
   控える(notes, id, "〔買取番号-F0611-008C〕", c.表示); 控える(notes, id, "〔買取番号-F0611-008D〕", d.番号);
   控える(notes, id, "〔買取番号-F0611-008E〕", e.表示); 控える(notes, id, "〔買取番号-F0611-008F〕", f.番号);
+  控える(notes, id, "〔店舗ID-F0611-008〕", notes.get("〔店舗ID-M0601-共有A〕"));
   店舗の読み替え(id, "晴れる屋テスト店-008（支店URL f0611case008）");
   DB書き込み注記(id, "ネット買取の査定承諾金額合計（振込待ち12345円・買取完了34567円）は、申込みの明細の査定価格×1（売却する）をDBで設定して作った。買取状況（査定内容承諾・振込完了）もDBで設定した。店頭買取の査定金額合計とステータスもDBで設定した");
 });
@@ -517,11 +524,23 @@ defineSeed("S-F06-11-CASE-009", { needs: OTC_NEEDS }, async ({ browser, notes, s
   const b = await 店頭買取を申し込んでIDも読む(browser, 印, m.パスワード, rc("F0611O09B"));
   店頭買取をDBで設定する(b.ID, 印, { 状況: "査定中", 査定金額合計: 88888 });
   控える(notes, id, "〔買取番号-F0611-009A〕", a.表示); 控える(notes, id, "〔買取番号-F0611-009B〕", b.番号);
+  控える(notes, id, "〔店舗ID-F0611-009〕", notes.get("〔店舗ID-M0601-共有A〕"));
   店舗の読み替え(id, "晴れる屋テスト店-009（支店URL f0611case009）");
   DB書き込み注記(id, "ネット買取（注文のまま）の査定承諾金額99999円は、申込みの明細の査定価格をDBで設定して作った。店頭買取の査定中のステータスと査定金額合計88888円もDBで設定した");
 });
 
 // ---- 016・023（依頼内容。共有可）----
+
+/**
+ * 正本が会員ID・買取番号を決め打ちにし、シード表が呼び名〔…〕で「控える」と定めていないシード（CONTENT・017）の、画面が振った番号。
+ * 控えた番号（notes）に入れると基盤（lib/seeds.ts）が「シード表に無い呼び名を控えた」で止めるので、同じ実行の中だけの表から引く
+ */
+export const 作った番号 = new Map<string, string>();
+export function 作った番号を引く(呼び名: string): string {
+  const v = 作った番号.get(呼び名);
+  if (!v) throw new Error(`${呼び名} の番号を、そのシードがまだ作っていない（シードを作っていないか、呼び名の誤り）`);
+  return v;
+}
 
 defineSeed("S-F06-11-CONTENT", async ({ browser, notes, seed }) => {
   const id = seed.シードID;
@@ -535,9 +554,9 @@ defineSeed("S-F06-11-CONTENT", async ({ browser, notes, seed }) => {
     { c: "F0611-CT-M1", 名: "F0611-CT-商品M1", 設定: { 区分: "まとめて買取", 査定価格: 700, 数量: 1, 売却: "する", 状態の定義順: 1 } },
   ]);
   個別入力商品をDBで作る(r.番号, r.印, [{ 名前: 品("F0611-CT-個別M2"), 査定金額: 800, 数量: 1, 売却: "する" }]);
-  notes.set("〔会員ID-F0611-CONTENT〕", r.会員ID);
-  notes.set("〔買取番号-F0611-CONTENT〕", r.表示);
-  notes.set("〔買取ID-F0611-CONTENT〕", r.番号);
+  作った番号.set("〔会員ID-F0611-CONTENT〕", r.会員ID);
+  作った番号.set("〔買取番号-F0611-CONTENT〕", r.表示);
+  作った番号.set("〔買取ID-F0611-CONTENT〕", r.番号);
   DB書き込み注記(id, "決め打ちの買取番号6111001は、画面が振った買取番号に読み替えた。商品A〜E・M1は申込みで作った明細（商品はグッズ商品CSV登録で作った印つきの商品）をDBで書き換えて作った（売却対象外Dは売却しない・数量0のEは数量0）。個別入力商品M2はDBで足した");
 });
 
@@ -548,8 +567,8 @@ defineSeed("S-F06-11-CASE-017", async ({ browser, notes, seed }) => {
   const m = { 前半: "deleted-f0611-017", パスワード: "F0611PwdCase017", 名: "会員017" };
   const r = await 明細つきネット買取を作る(browser, id, m, [{ c: "F0611-DEL-017", 名: "論理削除済み商品-017", 設定: { 査定価格: 1000, 数量: 1, 売却: "する" } }]);
   商品を論理削除済みにDBで設定する(品("F0611-DEL-017"));
-  notes.set("〔会員ID-F0611-017〕", r.会員ID);
-  notes.set("〔買取番号-F0611-017〕", r.表示);
+  作った番号.set("〔会員ID-F0611-017〕", r.会員ID);
+  作った番号.set("〔買取番号-F0611-017〕", r.表示);
   DB書き込み注記(id, "決め打ちの買取番号6112001・明細ID・商品ID・規格IDは、画面が振った番号に読み替えた。商品名は実行の印つきの「論理削除済み商品-017」");
 });
 

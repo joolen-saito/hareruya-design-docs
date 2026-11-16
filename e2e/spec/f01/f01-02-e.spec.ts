@@ -4,6 +4,7 @@ import { CaseBody, caseTest, expect } from "../../lib/case";
 import { BASE_URL } from "../../config/env";
 import { rc } from "../../lib/run_marker";
 import { BranchTopPage } from "../../pages/front/f01_02_branch";
+import { 押して移るのを待つ } from "../../pages/front/nav_click";
 import { 支店URL } from "../../seeds/f01-02";
 import { タイルのタグ名 } from "../../seeds/f01-02-tile";
 import { Locator } from "@playwright/test";
@@ -82,8 +83,8 @@ caseTest("IT-F01-02-030", async ({ page, step, expected }) => {
   await step(1, async () => { await top.open(支店URL("030")); await top.開いている(); });
   await step(2, async () => {
     await expect(top.SALE中, "SALE中の商品の区画").toHaveCount(1);
-    await Promise.all([page.waitForLoadState("load"), top.SALE中.getByRole("link", { name: /もっと見る/ }).locator("visible=true").first().click({ timeout: 20_000 })]);
-    await page.waitForLoadState("load");
+    // 「もっと見る」は区画の中に2つある（スライドの末尾と区画の下のボタン。移り先は同じ）。見えているものの先頭を押し、移るのは waitForNavigation で待つ
+    await 押して移るのを待つ(page, top.SALE中.getByRole("link", { name: /もっと見る/ }).locator("visible=true").first(), { 押す時間: 20_000, 移る時間: 90_000 });
     await expect(page.getByText(rc("F0102-030商品A")).first(), "商品一覧の「F0102-030商品A」").toBeVisible({ timeout: 30_000 }).catch(() => note("商品一覧に「F0102-030商品A」が見つからなかった"));
     for (const x of ["A", "B", "C"]) 数[x] = await page.getByText(rc(`F0102-030商品${x}`)).count();
   });
@@ -113,10 +114,12 @@ function カート(n: string, 商品名: string, 目標: number): CaseBody {
     await step(3, async () => { await card().locator("button.add-cart").click({ timeout: 20_000 }); await page.waitForTimeout(1500); });
     await step(4, async () => {
       const link = page.locator(".p-hareruya-cart-popup__link").first();
+      // 押す操作だけを待ち（noWaitAfter）、カートへ移るのは waitForURL で待つ（押せているのに click の移り始めの待ちが時間切れになるのを避ける）
+      const href = await link.getAttribute("href").catch(() => null);
       const 押せた = await link.isVisible().catch(() => false)
-        ? await Promise.all([page.waitForURL(/\/cart/, { timeout: 30_000 }).catch(() => undefined), link.click({ timeout: 10_000 })]).then(() => true, () => false)
+        ? await Promise.all([page.waitForURL(/\/cart/, { timeout: 90_000 }), link.click({ timeout: 10_000, noWaitAfter: true })]).then(() => true, () => false)
         : false;
-      if (!押せた) { note("カートに入れた後の案内の画面が見えない、または押せなかったので、カートを直接開いた"); await page.goto(`${BASE_URL}/cart`); }
+      if (!押せた && !/\/cart/.test(new URL(page.url()).pathname)) { note("カートに入れた後の案内の画面が見えない、または押せなかったので、案内のリンクの移り先（無ければ本店のカート）を直接開いた"); await page.goto(href ?? `${BASE_URL}/cart`, { timeout: 90_000 }); }
       await page.waitForLoadState("load");
       const item = page.locator(".p-hareruya-cart-item").filter({ hasText: rc(商品名) }).first();
       await expect(item, `カートの「${商品名}」`).toBeVisible({ timeout: 30_000 }).catch(() => note(`カートに「${商品名}」が見つからなかった`));

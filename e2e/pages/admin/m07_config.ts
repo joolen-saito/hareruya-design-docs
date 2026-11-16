@@ -28,7 +28,7 @@ export async function 閾値を設定する(page: Page, v: 閾値): Promise<void
   await page.goto(adminUrl(SHOP), { timeout: 60_000 });
   await page.waitForLoadState("load");
   for (const [i, n] of [1, 2, 3].entries()) await field(page, n).fill(v[i], { timeout: 30_000 });
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("form#point_form button[type=submit]").first().click({ timeout: 30_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("form#point_form button[type=submit]").first().click({ timeout: 30_000, noWaitAfter: true })]);
   await expectSaved(page, `高額商品閾値を ${v.map((x) => x || "未設定").join("/")} にする`);
   expect((await 閾値を読む(page)).join("/"), "登録後の高額商品閾値").toBe(v.join("/"));
 }

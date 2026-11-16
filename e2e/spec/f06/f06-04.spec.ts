@@ -1,6 +1,6 @@
 /**
  * F06-04 パスワード再発行。正本: cases/F06-04_test_cases.tsv
- * 実装しないケース: リセットキーを画面で指定できずDBへ直接設定するシードを使うもの、メールの受信そのものを確かめる 005・007・010。
+ * メールの受信を確かめる 005・007・010・056・060 は、メールの受け口（E2E_MAIL_URL）を読む。受け口は共有なので、申し込む前に控えたメールの番号より後に、その宛先へ届いたものだけを数える。
  * 記録 review/F06-04_progress_2026-11-04.md
  * 仮会員機能（共有の設定）を有効にして会員を作るシードを使うケースは、書き換えが起きれば元の値へ戻してDBの参照で確かめる。
  */
@@ -13,8 +13,11 @@ import { BASE_URL } from "../../config/env";
 import { hideDebugToolbar } from "../../lib/session";
 import { available } from "../../lib/db";
 import { mailIds } from "../../lib/mail";
+import { FrontFavorite } from "../../pages/front/f03_08_favorite";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 import { ForgotPage } from "../../pages/front/f06_04_forgot";
-import { mailOf, キーを替えたURL, 仮会員のキー, 再発行URL, 存在しないキー, 仮会員機能を戻す } from "../../seeds/f06-04";
+import { mailOf, キーを替えたURL, 仮会員のキー, 再発行URL, 存在しないキー, 仮会員機能を戻す, 形式不正のメール } from "../../seeds/f06-04";
+import { 届くのを待つ, 待ってから数える } from "../../pages/mail_inbox";
 
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -45,7 +48,7 @@ caseTest("IT-F06-04-003", async ({ page, step, expected }) => {
   const f = new ForgotPage(page);
   await step(1, async () => { await f.再発行画面を開く(); });
   await step(2, async () => { await f.押して遷移する(f.パンくずホーム); });
-  await expected(async () => { expect.soft(f.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(f.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(f.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 
 caseTest("IT-F06-04-004", async ({ page, browser, step, expected }) => {
@@ -99,7 +102,11 @@ caseTest("IT-F06-04-009", async ({ page, browser, step, expected }) => {
     const f = new ForgotPage(page);
     const メール = mailOf("f0604-temp-009");
     await step(1, async () => { await f.再発行画面を開く(); });
-    await step(2, async () => { await f.申し込む(メール); });
+    await step(2, async () => {
+      await f.申し込む(メール);
+      // 入力の誤りで申込が受け付けられなかったときも「発行されない」は成り立つので、申込が受け付けられた（送信完了画面へ進んだ）ことを確かめる
+      expect(f.完了画面か, `申込が受け付けられ、メール送信完了画面へ進んだ（実際 ${f.path}）`).toBe(true);
+    });
     let r: ReturnType<typeof リセットの状態> = null;
     await step(3, async () => { r = リセットの状態(メール); });
     await expected(async () => {
@@ -107,6 +114,96 @@ caseTest("IT-F06-04-009", async ({ page, browser, step, expected }) => {
       expect.soft(r?.リセットキー ?? null, "リセットキー（発行されていない）").toBeNull();
     });
   } finally { await 戻す(browser); }
+});
+
+// ---- 再発行メールの送信（メールの受け口を読む） ----
+const 届かない待ち = 60_000;
+const 受け口の補い = "メールの受け口は開発環境で共有のため、受信メールを0件にする代わりに、申し込む直前に受け口のメールの番号を控え、それより後にその宛先へ届いたメールだけを数えた";
+const 届かないの補い = `送信されないことは、申し込んだあと${届かない待ち / 1000}秒待ってから、その宛先へ届いたメールを数えて確かめた`;
+
+caseTest("IT-F06-04-005", async ({ page, browser, step, expected }) => {
+  try {
+    supplement(受け口の補い);
+    const f = new ForgotPage(page);
+    const メール = mailOf("f0604-a-005");
+    let before = new Set<number>();
+    let 届いた: Awaited<ReturnType<typeof 届くのを待つ>> | null = null;
+    let キー: string | null | undefined = undefined;
+    await step(1, async () => { await f.再発行画面を開く(); });
+    await step(2, async () => {
+      before = await mailIds();
+      await f.申し込む(メール);
+      expect(f.完了画面か, `申込が受け付けられ、メール送信完了画面へ進んだ（実際 ${f.path}）`).toBe(true);
+    });
+    await step(3, async () => {
+      届いた = await 届くのを待つ(メール, before);
+      if (available) キー = リセットキーの保存値(メール);
+    });
+    await expected(async () => {
+      const m = 届いた as Awaited<ReturnType<typeof 届くのを待つ>> | null;
+      const url = /https?:\/\/[^\s"'<>]+\/forgot\/reset\/([^\s"'<>/?#]+)/.exec(m?.本文 ?? "");
+      expect.soft(m?.件数 ?? 0, `「${メール}」宛のメールが1通送信される（件数）`).toBe(1);
+      expect.soft(!!url, "メールにパスワード再発行用URL（/forgot/reset/〔リセットキー〕）が含まれる").toBe(true);
+      if (available) {
+        expect.soft(!!キー, "会員にリセットキーが発行されている（DBの参照）").toBe(true);
+        expect.soft(url?.[1] ?? "", "メールのURLのリセットキーが、会員に発行されたリセットキー（DBの参照）と一致する").toBe(キー ?? "(未発行)");
+      }
+    });
+  } finally { await 戻す(browser); }
+});
+
+/** 申し込んでも、その宛先へ再発行メールが送信されないことを確かめる（007・010・060） */
+function 送信されない(宛先: string, 前: () => void = () => {}) {
+  return async ({ page, browser, step, expected }: CaseCtx): Promise<void> => {
+    try {
+      supplement(受け口の補い);
+      supplement(届かないの補い);
+      前();
+      const f = new ForgotPage(page);
+      let before = new Set<number>();
+      let 届いた: Awaited<ReturnType<typeof 待ってから数える>> = [];
+      await step(1, async () => { await f.再発行画面を開く(); });
+      await step(2, async () => {
+        before = await mailIds();
+        await f.申し込む(宛先);
+        // 入力の誤りで申込が受け付けられなかったときも「送信されない」は成り立つので、申込が受け付けられた（送信完了画面へ進んだ）ことを確かめる
+        expect(f.完了画面か, `申込が受け付けられ、メール送信完了画面へ進んだ（実際 ${f.path}）`).toBe(true);
+      });
+      await step(3, async () => { 届いた = await 待ってから数える(宛先, before, 届かない待ち); });
+      await expected(async () => {
+        expect.soft(届いた.map((m) => m.件名), `「${宛先}」宛のパスワード再発行メールが送信されない（申し込んだあとに届いたメールの件名）`).toEqual([]);
+      });
+    } finally { await 戻す(browser); }
+  };
+}
+caseTest("IT-F06-04-007", 送信されない(mailOf("f0604-none"), () => {
+  supplement(削除の補い);
+  if (available) expect(関連データの件数(mailOf("f0604-none")).会員, "事前: このメールアドレスの会員が0件").toBe(0);
+}));
+caseTest("IT-F06-04-010", 送信されない(mailOf("f0604-temp-010")));
+caseTest("IT-F06-04-060", 送信されない(mailOf("f0604-w-060"), () => {
+  note("元のメールアドレスのまま退会済みの会員は画面で作れないため、DBで会員を退会済みに設定した（シードの注記を参照）");
+}));
+
+caseTest("IT-F06-04-056", async ({ page, step, expected }) => {
+  note("会員は画面で正しい形のメールアドレスで作り、DBでメールアドレスだけを @ の無い値（正本の値の前半に実行の印を付けた値）に書き換えた（シードの注記を参照）");
+  note("開発者ツールの代わりに、画面のスクリプトでフォームに novalidate 属性を付けた");
+  note(`メールの受け口は開発環境で共有のため、「宛先を問わず0件」は確かめられない。申し込む直前に控えたメールの番号より後に、入力した宛先（${形式不正のメール()}）へ届いたメールが、${届かない待ち / 1000}秒待っても0件であることで確かめた（正本からの読み替え）`);
+  const f = new ForgotPage(page);
+  const 宛先 = 形式不正のメール();
+  let before = new Set<number>();
+  let novalidate = false;
+  let 届いた: Awaited<ReturnType<typeof 待ってから数える>> = [];
+  await step(1, async () => { await f.再発行画面を開く(); });
+  await step(2, async () => {
+    novalidate = await page.locator("form#form1").evaluate((el) => { el.setAttribute("novalidate", "novalidate"); return el.hasAttribute("novalidate"); });
+    expect(novalidate, "フォームに novalidate 属性が付いた").toBe(true);
+  });
+  await step(3, async () => { before = await mailIds(); await f.申し込む(宛先); });
+  await step(4, async () => { 届いた = await 待ってから数える(宛先, before, 届かない待ち); });
+  await expected(async () => {
+    expect.soft(届いた.map((m) => m.件名), `入力した「${宛先}」宛の受信メールが0件のまま（申し込んだあとに届いたメールの件名）`).toEqual([]);
+  });
 });
 
 // ---- 送信完了画面の部品 ----
@@ -127,7 +224,7 @@ caseTest("IT-F06-04-015", async ({ page, browser, step, expected }) => {
     const f = new ForgotPage(page);
     await step(1, async () => { await 送信完了まで(f, "f0604-a-015"); });
     await step(2, async () => { await f.押して遷移する(f.パンくずホーム); });
-    await expected(async () => { expect.soft(f.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+    await expected(async () => { expect.soft(f.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(f.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
   } finally { await 戻す(browser); }
 });
 caseTest("IT-F06-04-016", async ({ page, browser, step, expected }) => {
@@ -135,7 +232,7 @@ caseTest("IT-F06-04-016", async ({ page, browser, step, expected }) => {
     const f = new ForgotPage(page);
     await step(1, async () => { await 送信完了まで(f, "f0604-a-016"); });
     await step(2, async () => { await expect(f.ホームへ戻る, "「ホームへ戻る」ボタン").toBeVisible({ timeout: 30_000 }); await f.押して遷移する(f.ホームへ戻る); });
-    await expected(async () => { expect.soft(f.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+    await expected(async () => { expect.soft(f.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(f.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
   } finally { await 戻す(browser); }
 });
 
@@ -229,7 +326,7 @@ caseTest("IT-F06-04-047", async ({ page, step, expected }) => {
   const f = new ForgotPage(page);
   await step(1, async () => { await f.URLを開く(キーを替えたURL(再発行URL("047"), "Reset-Key")); });
   await step(2, async () => { await f.押して遷移する(f.トップページへ); });
-  await expected(async () => { expect.soft(f.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(f.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(f.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 
 // ---- ユーザー存在チェックエラー（E-2） ----
@@ -273,7 +370,7 @@ caseTest("IT-F06-04-048", async ({ page, step, expected }) => {
   const f = new ForgotPage(page);
   await step(1, async () => { await f.URLを開く(再発行URL("048")); });
   await step(2, async () => { await f.押して遷移する(f.トップページへ); });
-  await expected(async () => { expect.soft(f.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(f.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(f.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 
 // ---- 再設定画面の表示 ----
@@ -298,7 +395,8 @@ caseTest("IT-F06-04-025", async ({ page, step, expected }) => {
   const f = new ForgotPage(page);
   await step(1, async () => { await f.URLを開く(再発行URL("025")); });
   await step(2, async () => { await f.押して遷移する(f.パンくずホーム); });
-  await expected(async () => { expect.soft(f.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(f.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(f.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true);
+  });
 });
 caseTest("IT-F06-04-026", async ({ page, step, expected }) => {
   note(キー読み替え + "。保存パスワードがメールアドレスと同じ会員は、管理画面の会員編集でメールアドレスを替えて作った");
@@ -333,6 +431,10 @@ caseTest("IT-F06-04-030", async ({ page, step, expected }) => {
     expect.soft(v.前 !== null && v.前 !== "", "事前: 会員のパスワードの保存値がある").toBe(true);
     expect.soft(v.後 !== v.前 && !!v.後, "パスワードの保存値が更新されている").toBe(true);
     expect.soft(v.後 !== 新, "保存値は入力した平文ではない").toBe(true);
+    // 保存値が32文字の入力を基にしていること: 入力した32文字のパスワードでログインできる（切り詰め・別の値なら入れない）
+    expect.soft(新.length, "入力したパスワードは半角32文字").toBe(32);
+    const ログインできた = await new FrontFavorite(page).login(メール, 新).then(() => true, () => false);
+    expect.soft(ログインできた, "入力した半角32文字のパスワードで会員としてログインできる（保存値が32文字の入力を基にしている）").toBe(true);
   });
 });
 caseTest("IT-F06-04-031", async ({ page, step, expected }) => {
@@ -407,7 +509,11 @@ caseTest("IT-F06-04-037", async ({ page, step, expected }) => {
   await step(1, async () => { await f.URLを開く(再発行URL("037")); });
   await step(2, async () => { await f.再設定を入力する(メール, "Changed!604A"); });
   await step(3, async () => { await f.変更するを押す(); });
-  await expected(async () => { expect.soft(f.再設定完了画面か, `パスワード再設定完了画面へ遷移する（実際 ${f.path}）`).toBe(true); });
+  await expected(async () => {
+    expect.soft(f.再設定完了画面か, `パスワード再設定完了画面へ遷移する（実際 ${f.path}）`).toBe(true);
+    expect.soft(await page.locator(".p-hareruya-entry-complete").getByText("パスワードを変更しました。").count(), "再設定完了画面の文「パスワードを変更しました。」が表示されている").toBeGreaterThan(0);
+    expect.soft(await f.パンくず現在地.innerText().catch(() => ""), "パンくずの現在地が「パスワード再設定完了」").toContain("パスワード再設定完了");
+  });
 });
 caseTest("IT-F06-04-039", async ({ page, step, expected }) => {
   note(キー読み替え + "。開発者ツールのNetwork記録の代わりに、ブラウザが送るリクエスト（アドレスと送信内容）を記録した");
@@ -423,6 +529,8 @@ caseTest("IT-F06-04-039", async ({ page, step, expected }) => {
   await step(4, async () => { await f.変更するを押す(); });
   await step(5, async () => { await page.waitForLoadState("load"); });
   await expected(async () => {
+    const 項目 = (posts[0]?.body ?? "").split("&").map((kv) => { const [k, v = ""] = kv.split("="); const 名 = decodeURIComponent(k); return /password|pass/i.test(名) ? `${名}=（伏せる）` : /_token/.test(名) ? `${名}=${v.slice(0, 8)}…（先頭8文字）` : /email/.test(名) ? `${名}=${decodeURIComponent(v)}` : 名; });
+    note(`記録した送信（${posts.length}件）: 送信先 ${posts[0]?.url ?? "なし"} ／ 送信内容の項目 ${項目.join("、")}`);
     expect.soft(posts.length >= 1, "パスワード再設定の送信が記録されている").toBe(true);
     expect.soft(posts[0]?.url.includes(`/forgot/reset/${キー(url)}`), "送信先にURLのリセットキーが含まれる").toBe(true);
     expect.soft(/(^|&)_token=[^&]+/.test(posts[0]?.body ?? ""), "送信内容になりすまし対策トークンが含まれる").toBe(true);
@@ -480,10 +588,10 @@ function 完了画面から(n: string, 動作: "現在地" | "ホーム" | "戻�
       await expected(async () => { expect.soft(await f.現在地がリンクか(), "現在表示中ページが押下可能なリンクになっている").toBe(false); });
     } else if (動作 === "ホーム") {
       await step(4, async () => { await f.押して遷移する(f.パンくずホーム); });
-      await expected(async () => { expect.soft(f.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+      await expected(async () => { expect.soft(f.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(f.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
     } else {
       await step(4, async () => { await f.押して遷移する(f.戻る); });
-      await expected(async () => { expect.soft(f.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+      await expected(async () => { expect.soft(f.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(f.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
     }
   };
 }
@@ -498,7 +606,11 @@ caseTest("IT-F06-04-059", async ({ page, step, expected }) => {
   const メール = mailOf("f0604-w-059");
   const v = { キー: undefined as string | null | undefined };
   await step(1, async () => { await f.再発行画面を開く(); });
-  await step(2, async () => { await f.申し込む(メール); });
+  await step(2, async () => {
+    await f.申し込む(メール);
+    // 入力の誤りで申込が受け付けられなかったときも「発行されない」は成り立つので、申込が受け付けられた（送信完了画面へ進んだ）ことを確かめる
+    expect(f.完了画面か, `申込が受け付けられ、メール送信完了画面へ進んだ（実際 ${f.path}）`).toBe(true);
+  });
   await step(3, async () => { v.キー = リセットキーの保存値(メール); });
   await expected(async () => {
     expect.soft(v.キー !== undefined, "退会済み会員がDBに1件ある").toBe(true);

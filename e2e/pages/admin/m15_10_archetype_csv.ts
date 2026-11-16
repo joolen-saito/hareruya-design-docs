@@ -169,8 +169,8 @@ async function マスターを開く(page: Page, 種別: string): Promise<void> 
   await page.waitForLoadState("load");
   await page.locator('select[name="entity"]').selectOption({ label: 種別 });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('form[method="get"] button[type="submit"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('form[method="get"] button[type="submit"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator("form#edit_form table.mtg-master-table"), `${種別}の一覧`).toBeVisible();
@@ -201,7 +201,7 @@ export async function マスターの行を足す(page: Page, 種別: string, v:
   await f("name_en").fill(v.英語名);
   if (v.コード !== undefined && (await f("code").count())) await f("code").fill(v.コード);
   if (await f("sort_no").count()) await f("sort_no").fill(String(Math.max(0, ...rows.map((r) => r.並び順).filter(Number.isFinite)) + 1));
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator('button[type="submit"][form="edit_form"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator('button[type="submit"][form="edit_form"]').click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expectSaved(page, `${what}: ${種別}「${v.日本語名}」の登録`);
   if (!(await マスターの行を読む(page, 種別)).some((r) => r.日本語名 === v.日本語名)) throw new Error(`${what}: ${種別}「${v.日本語名}」を登録したが、一覧に行ができていない`);
@@ -220,7 +220,7 @@ export async function マスターの行を空にする(page: Page, 種別: stri
       await input.fill("");
     }
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator('button[type="submit"][form="edit_form"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator('button[type="submit"][form="edit_form"]').click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expectSaved(page, `${what}: ${種別}「${日本語名}」の行の削除`);
   if ((await マスターの行を読む(page, 種別)).some((r) => r.日本語名 === 日本語名)) throw new Error(`${what}: ${種別}「${日本語名}」の行を消したが、一覧に残っている`);
@@ -237,7 +237,7 @@ export async function カードセットを登録する(page: Page, v: { 名: st
   await page.waitForLoadState("load");
   const add = page.locator("a.btn").filter({ hasText: exact("新規登録") }).first();
   await expect(add, `${what}: カードセット管理(一覧)画面の「新規登録」`).toBeVisible();
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), add.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), add.click({ noWaitAfter: true })]);
   await page.locator("#admin_cardset_nameJp").fill(v.名);
   await page.locator("#admin_cardset_nameEn").fill(v.名);
   await page.locator("#admin_cardset_code").fill(v.略称);
@@ -368,13 +368,14 @@ export async function アーキタイプを登録する(page: Page, v: 登録内
   }
   const button = page.locator('button[type="submit"][form="admin_archetype"]');
   await expect(button, `${what}: アーキタイプ編集(登録)画面の「新規登録」`).toHaveText(exact("新規登録"));
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), button.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), button.click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: アーキタイプ「${v.名日}」の登録`)) issue(`アーキタイプ「${v.名日}」の登録時の警告「${w}」`);
 }
 
 /**
- * シード: 検索入力画面でアーキタイプ名を入れて「検索する」を押し、該当する行があれば、その行のアーキタイプ名を押して
- * アーキタイプ編集画面を開き、「削除」→確認ダイアログの「OK」（該当する行が無くなるまで繰り返す）。消した件数を返す。
+ * シード: 検索入力画面でアーキタイプ名を入れて「検索する」を押し、アーキタイプ名(日)か(英)が語と完全に一致する行があれば、
+ * その行のアーキタイプ名を押してアーキタイプ編集画面を開き、「削除」→確認ダイアログの「OK」（一致する行が無くなるまで繰り返す）。消した件数を返す。
+ * 検索は部分一致なので、名前の一部が同じほかの方のアーキタイプ（共有の環境）は消さない。
  */
 export async function 名前で探して消す(page: Page, 語: string, what: string): Promise<number> {
   const s = new ArchetypeSearchPage(page);
@@ -387,8 +388,14 @@ export async function 名前で探して消す(page: Page, 語: string, what: st
       if ((await s.該当件数()) === 0 || (await s.該当なしの表示.count()) > 0) return n;
       throw new Error(`${what}: 「${語}」の検索結果が読めない（${page.url()}）`);
     }
-    await s.名前を押す(rows[0].ID);
-    await 編集画面で削除する(page, `${what}: アーキタイプID ${rows[0].ID}（${rows[0].名日}）`);
+    const 一致 = rows.filter((r) => r.名日 === 語 || r.名英 === 語);
+    if (一致.length === 0) {
+      const 件数 = (await s.該当件数()) ?? 0;
+      if (件数 > rows.length) throw new Error(`${what}: 「${語}」の検索結果が1ページに収まらず、名前の一致する行が無いことを確かめられない（${件数}件）`);
+      return n;
+    }
+    await s.名前を押す(一致[0].ID);
+    await 編集画面で削除する(page, `${what}: アーキタイプID ${一致[0].ID}（${一致[0].名日}）`);
     n++;
   }
   throw new Error(`${what}: 「${語}」の該当を100件消しても0件にならない`);
@@ -399,7 +406,7 @@ export async function 編集画面で削除する(page: Page, what: string): Pro
   const b = page.locator("#btn_delete");
   await expect(b, `${what}: アーキタイプ編集画面の「削除」`).toHaveText(exact("削除"));
   page.once("dialog", (d) => { void d.accept(); });
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), b.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), b.click({ noWaitAfter: true })]);
   await expectSaved(page, `${what}: 削除`);
   const p = pathOf(page.url());
   if (!(p === 検索入力のパス() || p.startsWith(`${検索入力のパス()}/search/`))) throw new Error(`${what}: 削除のあとアーキタイプ管理画面へ戻らない（${page.url()}）`);

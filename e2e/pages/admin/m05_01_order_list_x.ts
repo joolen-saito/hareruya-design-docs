@@ -124,7 +124,7 @@ export class OrderListPage extends OrderSearchPage {
       await row.locator('button.dropdown-menu-toggle[id^="dropdown_"]').first().click();
       const del = row.locator('a.dropdown-item[data-method="delete"]').first();
       await expect(del, "ポップアップメニューの削除").toBeVisible();
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => undefined), del.click()]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => undefined), del.click({ noWaitAfter: true })]);
       await this.page.waitForLoadState("load");
     } finally { this.page.off("dialog", onDialog); }
     return dialogs;
@@ -140,6 +140,45 @@ export class OrderListPage extends OrderSearchPage {
   async 表示件数の選択肢(): Promise<string[]> {
     return (await this.page.locator("#page_count_pulldown option").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim());
   }
+  /**
+   * 撮影のために、閉じた件数の選択欄（プルダウン）を、選択肢がすべて並んで見える一覧の形に広げる（pages/front/f03_03_detail_search.ts の
+   * 選択肢を広げて見せる と同じやり方）。ブラウザのプルダウンは開いても画像に写らないので、選択欄そのものを複数行の一覧にする。
+   * 選んでいる値・選択肢は変えない。選択欄のすぐ下に「E2E の注記」の枠を置き、選択肢をすべて上から書く。戻すときは返した関数を呼ぶ。
+   */
+  async 表示件数の選択肢を広げて見せる(): Promise<() => Promise<void>> {
+    const select = this.page.locator("#page_count_pulldown");
+    await select.waitFor({ state: "attached", timeout: 15_000 });
+    await select.evaluate((el) => {
+      const sel = el as HTMLSelectElement & { __e2eSaved?: { size: string | null; style: string | null } };
+      const texts = Array.from(sel.options).map((x) => (x.textContent ?? "").replace(/\s+/g, " ").trim());
+      sel.__e2eSaved = { size: sel.getAttribute("size"), style: sel.getAttribute("style") };
+      sel.setAttribute("size", String(Math.max(2, texts.length)));
+      for (const [prop, v] of [["height", "auto"], ["max-height", "none"], ["appearance", "auto"], ["-webkit-appearance", "listbox"], ["background-image", "none"], ["overflow-y", "auto"], ["padding", "4px"], ["position", "relative"], ["z-index", "10"]]) {
+        sel.style.setProperty(prop, v, "important");
+      }
+      const note = document.createElement("div");
+      note.setAttribute("data-e2e-note", "1");
+      note.style.cssText = "border:2px dashed #d00;color:#d00;background:#fff;font-size:12px;line-height:1.5;padding:4px 8px;margin:4px 0;white-space:normal;word-break:break-all;position:relative;z-index:10;";
+      note.textContent = `E2E の注記：「件数」の選択欄を、選択肢がすべて見える一覧の形に広げて撮った（選択肢は${texts.length}件）。選択肢（上から）：${texts.map((t, i) => `${i + 1}. ${t}`).join("／")}`;
+      sel.insertAdjacentElement("afterend", note);
+      sel.scrollIntoView({ block: "center" });
+    });
+    await this.page.waitForTimeout(300);
+    return async () => {
+      await select.evaluate((el) => {
+        const sel = el as HTMLSelectElement & { __e2eSaved?: { size: string | null; style: string | null } };
+        const sv = sel.__e2eSaved;
+        if (sv) {
+          if (sv.size === null) sel.removeAttribute("size"); else sel.setAttribute("size", sv.size);
+          if (sv.style === null) sel.removeAttribute("style"); else sel.setAttribute("style", sv.style);
+          sel.__e2eSaved = undefined;
+        }
+        const next = sel.nextElementSibling;
+        if (next && next.getAttribute("data-e2e-note") === "1") next.remove();
+      }).catch(() => undefined);
+    };
+  }
+
   /** 選ばれている表示件数（画面の文字） */
   async 選ばれている表示件数(): Promise<string> {
     return ((await this.page.locator("#page_count_pulldown option:checked").first().textContent()) ?? "").replace(/\s+/g, " ").trim();
@@ -151,7 +190,7 @@ export class OrderListPage extends OrderSearchPage {
     const target = this.page.locator('#nav-order a[href$="/order"]').first();
     if (!(await target.isVisible().catch(() => false))) await this.page.locator('a[href="#nav-order"]').first().click();
     await expect(target, "メニューの受注管理の受注一覧（受注情報検索）のリンク").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), target.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), target.click({ noWaitAfter: true })]);
     await expect(this.form, "受注一覧の検索欄").toBeVisible();
   }
 }

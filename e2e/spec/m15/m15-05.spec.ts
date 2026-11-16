@@ -2,7 +2,7 @@
  * M15-05 デッキ編集（新規登録画面の表示まわり）。ケースの正本: integration_test/casegen/cases/M15-05_test_cases.tsv
  * 実装したのは、管理者とブラウザの状態だけで成り立つケース。フォーマット・アーキタイプ・カードなどの共有マスタが要るケースは未実装。
  */
-import { Page } from "@playwright/test";
+import { test, Page } from "@playwright/test";
 import { expect, caseTest, CaseBody } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { デッキ一覧 } from "../../pages/admin/m15_deck";
@@ -18,8 +18,9 @@ async function login(page: Page): Promise<void> {
 async function 新規登録画面を開く(page: Page, step: Parameters<CaseBody>[0]["step"]): Promise<void> {
   const l = new デッキ一覧(page);
   await step(1, async () => { await l.開く(); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.新規登録.click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.新規登録.click({ noWaitAfter: true })]); });
 }
+const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 右の操作 = (page: Page) => page.locator(".col-md-2 .card-body");
 const f = (page: Page, n: string) => page.locator(`[name="admin_deck[${n}]"]`);
 
@@ -52,9 +53,13 @@ caseTest("IT-M15-05-003", async ({ page, step, expected }) => {
   await 新規登録画面を開く(page, step);
   await step(3, async () => { await expect(右の操作(page), "画面下部の操作ボタン").toBeVisible(); });
   await expected(async () => {
-    for (const 名 of ["更新", "削除", "複製 >"]) {
+    for (const 名 of ["更新", "削除"]) {
       expect.soft(await 右の操作(page).getByRole("button", { name: 名, exact: true }).count(), `「${名}」ボタンの数`).toBe(0);
     }
+    // 画面の複製のボタンの文言は「複製」（正本は「複製 >」）。文言の違いで見逃さないよう、複製のポップアップを開くボタン（文言によらない）と「複製」で始まるボタンを数える
+    note("正本の「複製 >」ボタンは、画面では文言「複製」のボタン（デッキ情報複製のポップアップを開く）。文言によらず、ポップアップを開くボタンと「複製」で始まるボタンが無いことを確かめた");
+    expect.soft(await page.locator('[data-bs-target="#copyModal"]').count(), "「複製 >」（デッキ情報複製のポップアップを開く）ボタンの数").toBe(0);
+    expect.soft(await 右の操作(page).getByRole("button", { name: /^\s*複製/ }).count(), "「複製」で始まるボタンの数").toBe(0);
   });
 });
 

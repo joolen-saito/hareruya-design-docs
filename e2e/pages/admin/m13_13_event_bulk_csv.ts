@@ -36,7 +36,7 @@ export class EventBulkCsvPage {
     if ((await group.getAttribute("aria-expanded")) !== "true") await group.click();
     const link = this.page.locator("#nav-event").getByRole("link", { name: "イベント一括登録", exact: true });
     await expect(link, "メニューの「イベント管理」の下の「イベント一括登録」").toBeVisible();
-    await Promise.all([this.page.waitForURL((u) => u.pathname.endsWith(PATH), { waitUntil: "load" }), link.click()]);
+    await Promise.all([this.page.waitForURL((u) => u.pathname.endsWith(PATH), { waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await this.読み込みを待つ();
   }
 

@@ -38,3 +38,22 @@ export function お気に入りID(会員ID: string, 商品ID: string, 言語: "J
 export function 在庫承認の最大ID(): number {
   return Number(query("select coalesce(max(id), 0)::text as m from dtb_stock_approval_list")[0]?.m ?? "0");
 }
+
+/**
+ * 指定の商品コードの在庫編集の未承認の行のID（baselineId より大きいものだけ）。在庫編集承認一覧には商品コードが出ず、
+ * 同じ登録者の別のシードの行（並行して動く別の流し）と区別できないので、自分が登録した商品コードの行をDBで引く。
+ */
+export function 商品コードの未承認の在庫編集の行ID(商品コード: string[], baselineId: number): string[] {
+  const ids = new Set<string>();
+  for (const code of 商品コード) {
+    for (const r of query(
+      `select distinct a.id::text as id
+         from dtb_stock_approval_list a
+         join dtb_stock_edit_approval_detail d on d.stock_edit_approval_id = a.history_source_id
+         join dtb_product_stock ps on ps.id = d.product_stock_id
+         join dtb_product_class pc on pc.id = ps.product_class_id
+        where a.history_source_type_id = 1 and a.approval_status = 1 and a.id > $1::int and pc.product_code = $2`,
+      [baselineId, code])) ids.add(String(r.id));
+  }
+  return [...ids];
+}

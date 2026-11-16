@@ -260,6 +260,7 @@ function define(d: 定義): void {
     let made: 作った商品[] = [];
     let カードID: string[] = [];
     const 在庫ID = new Map<string, string>();
+    let 遅らせる在庫: 在庫の対象[] = [];
     if (defs.length) {
       const r = await 商品を作る(browser, d.seedId, d.n, defs, issue);
       made = r.made;
@@ -272,7 +273,10 @@ function define(d: 定義): void {
         const i = classes.indexOf(t.商品規格ID);
         return t.数 > 0 || labels.includes(`〔在庫ID-F0609-${d.n}${英字(i)}〕`) || (i === 0 && labels.includes(`〔在庫ID-F0609-${d.n}〕`));
       });
-      for (const [c, v] of await 在庫を入れて在庫IDを読む(browser, d.seedId, 対象, issue)) 在庫ID.set(c, v.在庫ID);
+      // 非公開にする商品は、アプリが「在庫がある商品規格は非公開にできません」と拒むので、非公開にしたあとで在庫を入れる（下）
+      const 非公開の規格 = new Set(defs.flatMap((p, i) => (p.非公開 ? made[i].classIds : [])));
+      遅らせる在庫 = 対象.filter((t) => 非公開の規格.has(t.商品規格ID));
+      for (const [c, v] of await 在庫を入れて在庫IDを読む(browser, d.seedId, 対象.filter((t) => !非公開の規格.has(t.商品規格ID)), issue)) 在庫ID.set(c, v.在庫ID);
     }
     const favs = (d.お気に入り ?? made.map((_, i) => ({ 会員: 0, 商品: i, 言語: "JP" as const }))).map((f) => ({ ...f, 言語: f.言語 ?? ("JP" as const) }));
     for (const mi of [...new Set(favs.map((f) => f.会員))]) {
@@ -282,6 +286,10 @@ function define(d: 定義): void {
     for (const [i, p] of defs.entries()) {
       if (!p.非公開) continue;
       await withAdminSession(browser, SETUP_ADMIN, (page) => setProductPrivate(page, made[i].productId, `${d.seedId}: ${made[i].code} を非公開にする`, issue));
+    }
+    if (遅らせる在庫.length) {
+      for (const [c, v] of await 在庫を入れて在庫IDを読む(browser, d.seedId, 遅らせる在庫, issue)) 在庫ID.set(c, v.在庫ID);
+      issue("非公開にする商品の在庫は、アプリが在庫がある商品規格の非公開を拒むので、非公開にしたあとで入庫・承認した（シード表は在庫を入れてから非公開にする順。最後の状態は同じ）");
     }
     控える(d.seedId, notes, d.n, { 会員: mems, 商品: made, カードID, 在庫ID, お気に入り: favs });
   });

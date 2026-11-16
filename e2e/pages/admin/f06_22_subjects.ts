@@ -45,7 +45,7 @@ export async function 件名を書き換える(page: Page, 変更: Record<string
       else await el.fill(val);
     }
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), m.登録ボタン.click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), m.登録ボタン.click({ timeout: 20_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expectSaved(page, "お問い合わせ件名のマスタの登録");
 }

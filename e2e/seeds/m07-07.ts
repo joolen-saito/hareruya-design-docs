@@ -31,7 +31,7 @@ import { readExistingSellGroupName } from "../pages/admin/m03_01_goods_csv";
 import { readLanguageIds } from "../pages/admin/m03_23_seed_products";
 import { ensureCardset } from "../pages/admin/product_masters";
 import {
-  F0504カードを登録する, カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 商品規格一覧を読む, 商品規格を削除する, 商品規格を登録する,
+  F0504カードを登録する, カード商品CSVの公開の値, カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 商品規格一覧を読む, 商品規格を削除する, 商品規格を登録する,
   単体カード配下のカテゴリID, 登録済みの割引率ID, 規格IDを選ぶ,
 } from "../pages/admin/f05_04_products";
 import { 入庫して承認する, 規格を登録する as 規格の価格を登録する } from "../pages/admin/f03_02_seed_ops";
@@ -55,7 +55,7 @@ defineSeed("S-M07-07-ADM", async ({ browser }) => {
 // 共有の前提（言語・レアリティ・状態）を画面で読んで控える（書き換えない）
 // ---------------------------------------------------------------------------
 
-type 共通 = { 見出し: string[]; カテゴリ: string; 割引率: string; 購入グループ: string; カードセット: string; 日本語: string; 英語: string };
+type 共通 = { 見出し: string[]; 公開: { 商品公開ステータス: string; 支店の商品公開ステータス: string }; カテゴリ: string; 割引率: string; 購入グループ: string; カードセット: string; 日本語: string; 英語: string };
 type 前提 = {
   言語: Record<"1" | "2", "JP" | "EN">;
   レアリティID: { M: string; C: string };
@@ -80,7 +80,7 @@ async function 前提を読む(browser: Browser, seedId: string): Promise<前提
     const lang = await readLanguageIds(page);
     const cardset = await ensureCardset(page, rc("M0707試験カードセット"), `M0707 Test Set ${RUN_MARK}`, `M7${RUN_MARK}`, issue);
     const common: 共通 = {
-      見出し: await カード商品CSVの見出し(page), カテゴリ: (await 単体カード配下のカテゴリID(page)).id, 割引率: (await 登録済みの割引率ID(page)).id,
+      見出し: await カード商品CSVの見出し(page), 公開: await カード商品CSVの公開の値(page), カテゴリ: (await 単体カード配下のカテゴリID(page)).id, 割引率: (await 登録済みの割引率ID(page)).id,
       購入グループ: await readExistingSellGroupName(page), カードセット: cardset, 日本語: lang.日本語, 英語: lang.英語,
     };
     return { jp, en, m, c, common };
@@ -138,7 +138,7 @@ async function 商品を作る(page: Page, 前: 前提, seedId: string, n: strin
     詳細: [{ カードセットID: c.カードセット, カード番号: 次のカード番号(), レアリティID: 前.レアリティID[d.レア ?? "M"] }],
   }, `${seedId}: カード ${n}-${d.枝}`, issue);
   const row = (言語ID: string, 商品ID: string): Record<string, string> => ({
-    "商品ID": 商品ID, "言語(ID)": 言語ID, "商品公開ステータス": "2", "支店の商品公開ステータス": "1",
+    "商品ID": 商品ID, "言語(ID)": 言語ID, "商品公開ステータス": c.公開.商品公開ステータス, "支店の商品公開ステータス": c.公開.支店の商品公開ステータス,
     "商品名(日)": name, "商品名(英)": name, "サイズ": "1", "重量": "1", "商品カテゴリ(ID)": c.カテゴリ,
     "購入グループ名称": c.購入グループ, "割引率(ID)": c.割引率, "基準価格": price, "販売価格": price, "買取価格": price,
     "カード詳細(ID)": reg.カード詳細IDs[0],
@@ -152,7 +152,8 @@ async function 商品を作る(page: Page, 前: 前提, seedId: string, n: strin
     const tag = 略称タグ名(n);
     const tp = new ShortTagPage(page);
     await tp.openNew();
-    await tp.register({ 名称: tag, 並び順: "99999", アルファベット順: false }, `${seedId}: 略称タグ ${tag} の登録`);
+    // 並び順は 0〜32767 の範囲（超えると「登録できませんでした」になる）。実行の印つきの略称タグを一番後ろに並べる大きい値にする
+    await tp.register({ 名称: tag, 並び順: "32767", アルファベット順: false }, `${seedId}: 略称タグ ${tag} の登録`);
     await 商品をカードにする(page, productId, { 商品名: name, 略称タグ: tag }, issue);
   }
   const rows = await 商品規格一覧を読む(page, productId);
@@ -178,6 +179,7 @@ async function 買取を作る(
     for (const b of 買取) for (const d of b.明細) if (!ids.has(d.枝)) { ids.set(d.枝, await 商品を作る(page, 前, seedId, n, d)); 全明細.set(d.枝, d); }
   });
   issue("シード作成時の問題: 買取依頼日は「試験実施日」だが、画面からは決められない（申込んだ日になる）。ケースは買取依頼日を確かめない。商品は基準価格＝販売価格＝買取価格のカード商品（フロントの買取に公開される）で作った");
+  issue(`シード作成時の問題: カード商品CSVの商品公開ステータスは、シード表の「2」（公開のつもり）でなく、画面のCSVの形式の説明で「公開」に当たる値 ${前.common.公開.商品公開ステータス} を入れた（説明では 1:公開 2:非公開 3:廃止。2 を入れると非公開になる）。支店の商品公開ステータスは ${前.common.公開.支店の商品公開ステータス}（公開）`);
 
   const 姓 = 注文者名(n);
   const メール = `${rc(`m0707-${n}`)}@example.test`.toLowerCase();

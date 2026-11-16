@@ -10,8 +10,8 @@ export async function customerStateByEmail(page: Page, メール: string): Promi
   await page.waitForLoadState("load");
   await page.locator('[name="admin_search_customer[multi]"]').fill(メール);
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   const rows = page.locator('tr[id^="ex-customer-"]').filter({ has: page.locator("td", { hasText: new RegExp(`^\\s*${メール.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`) }) });

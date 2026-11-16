@@ -20,8 +20,10 @@ function 検索ケース(seedNo: string, 入力指定: 条件[] | ((n: Notes) =>
     let ids: string[] = [];
     await step(入力.length + 2, async () => { await s.検索する(); ids = await s.結果の日程ID(); });
     await expected(async () => {
-      expect.soft([...ids].sort(), "検索結果に出た日程（期待の日程だけ）").toEqual(出る.map(id).sort());
-      for (const l of 出ない) expect.soft(ids.includes(id(l)), `検索結果に出ていない日程（末尾 ${l}）`).toBe(false);
+      // 赤字には日程の番号を出さない（画面に番号は出ず、お客様が対応を取れない）。シード表の呼び名の末尾の英字で書く
+      expect.soft([...ids].sort(), `検索結果に、期待の日程（末尾 ${出る.join("・")}）の${出る.length}件だけが表示される`).toEqual(出る.map(id).sort());
+      await expect.soft(s.結果の行, `検索結果の行が${出る.length}件表示される`).toHaveCount(出る.length);
+      for (const l of 出ない) expect.soft(ids.includes(id(l)), `日程（末尾 ${l}）が検索結果に表示されないこと`).toBe(false);
     });
   };
 }

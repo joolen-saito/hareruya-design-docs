@@ -12,8 +12,10 @@
 import { test, Page, Request } from "@playwright/test";
 import { expect, caseTest, CaseBody } from "../../lib/case";
 import { loginAdmin, withAdminSession, Account } from "../../lib/session";
+import { 別のブラウザの画面を撮る, 要素を撮る, scene } from "../../lib/evidence_other";
+import { 選択肢を広げたままにする } from "../../lib/evidence_select";
 import {
-  アーキタイプ一覧, アーキタイプ編集画面, アーキタイプ一覧のパス, 新規登録画面のパス, 編集画面のパス, pathOf,
+  アーキタイプ一覧, アーキタイプ編集画面, アーキタイプ一覧のパス, 新規登録画面のパス, 編集画面のパス, pathOf, 送信の結果,
 } from "../../pages/admin/m15_09_archetype_edit";
 import { アーキタイプの保存内容, アーキタイプ名日のID, 四項目の一致するアーキタイプのID } from "../../db/m15_09_archetype";
 import { DeckSearchModal, DeckTopPage } from "../../pages/front/f09_01_deck_top";
@@ -73,11 +75,19 @@ caseTest("IT-M15-09-002", async ({ page, step, expected }) => {
   let e!: アーキタイプ編集画面;
   await step(1, async () => { e = await 新規を開く(page); });
   let 選択肢: string[] = [];
-  await step(2, async () => { 選択肢 = await e.選択肢(e.公開状態); });
-  await expected(async () => {
-    expect.soft(選択肢, "公開状態の選択肢").toEqual(["公開", "非公開"]);
-    expect.soft(選択肢.includes("限定公開"), "公開状態の選択肢に「限定公開」がある").toBe(false);
+  let 戻す: () => Promise<void> = async () => undefined;
+  await step(2, async () => {
+    選択肢 = await e.選択肢(e.公開状態);
+    note("公開状態の選択欄はブラウザの選択欄で、開いた一覧は画面に撮れないため、選択肢を読んだ。画像には、選択肢が並んで見えるよう欄を一覧の形に広げて撮った（撮ったあと元に戻す）");
+    note("「限定公開」は公開状態のマスタにある（シード S-M15-09-MASTER が、3つ全部を出すデッキ新規登録画面の選択肢で「公開」「非公開」「限定公開」があることを確かめている）。アーキタイプの画面だけが出さない作り");
+    戻す = await 選択肢を広げたままにする(e.公開状態);
   });
+  await expected(async () => {
+    expect.soft(選択肢, `公開状態の選択肢（読んだ選択肢：${選択肢.join("・")}）`).toEqual(["公開", "非公開"]);
+    expect.soft(選択肢.includes("限定公開"), `公開状態の選択肢に「限定公開」がある（読んだ選択肢：${選択肢.join("・")}）`).toBe(false);
+    await expect.soft(e.公開状態, "公開状態の選択欄（選択肢は「公開」「非公開」の2つ。「限定公開」は無い）").toBeVisible();
+  });
+  await 戻す();
 });
 
 caseTest("IT-M15-09-005", async ({ page, step, expected }) => {
@@ -144,14 +154,19 @@ caseTest("IT-M15-09-008", async ({ page, step, expected }) => {
   let e!: アーキタイプ編集画面;
   await step(1, async () => { e = await 新規を開く(page); });
   let 選択肢: string[] = [];
+  let 戻す: () => Promise<void> = async () => undefined;
   await step(2, async () => {
     選択肢 = await e.選択肢(e.フォーマット);
+    戻す = await 選択肢を広げたままにする(e.フォーマット, 200);
+    note("画像には、選択肢が並んで見えるよう選択欄を一覧の形に広げて撮った（撮ったあと元に戻す）。開いた一覧はブラウザの選択欄で画面に撮れないため");
     note("手元の環境にはほかのフォーマットもある（シード表の「3件だけ」は DB を書き換えないと成り立たない）。フォーマットA・B・C の3つの並びの順を確かめた。並び順は B・C・A の順を保つ値（9591・9592・9593）で用意した");
   });
   await expected(async () => {
     const 三つ = 選択肢.filter((t) => [フォーマットA, フォーマットB, フォーマットC].includes(t));
-    expect.soft(三つ, "フォーマットの選択肢の、フォーマットA・B・C の並び（上から順）").toEqual([フォーマットB, フォーマットC, フォーマットA]);
+    expect.soft(三つ, `フォーマットの選択肢の、フォーマットA・B・C の並び（上から順。読んだ選択肢：${三つ.join("・")}）`).toEqual([フォーマットB, フォーマットC, フォーマットA]);
+    await expect.soft(e.フォーマット, `フォーマットの選択欄（フォーマットA・B・C は ${フォーマットB}・${フォーマットC}・${フォーマットA} の順に並ぶ）`).toBeVisible();
   });
+  await 戻す();
 });
 
 caseTest("IT-M15-09-009", async ({ page, step, expected }) => {
@@ -194,7 +209,7 @@ caseTest("IT-M15-09-011", async ({ page, notes, step, expected }) => {
   await step(2, async () => { 前の画面 = page.url(); await l.編集を押す(id); });
   await step(3, async () => {
     const e = new アーキタイプ編集画面(page);
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), e.戻るボタン.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), e.戻るボタン.click({ noWaitAfter: true })]);
     note(`ひとつ前の画面: ${前の画面} → 戻った画面: ${page.url()}`);
   });
   await expected(async () => {
@@ -227,9 +242,10 @@ caseTest("IT-M15-09-012", async ({ page, notes, step, expected }) => {
     expect.soft(r.解説英, "解説(英)").toBe("New Description");
     expect.soft(r.代表カード画像ID, "代表カードの画像ID").toBe(notes.get("〔画像ID-M1509-共有〕"));
     expect.soft(r.公開状態, "公開状態").toBe("公開");
-    expect.soft([...r.カラー].sort(), "カラー").toEqual(["白", "青"].sort());
+    // 値を読む式の頭を「...」にしない（出どころの DB を帯に出せなくなる）。「・」でつないだ文字で照合し、読んだ値を帯に出す
+    expect.soft(r.カラー.slice().sort().join("・"), "カラー").toBe(["白", "青"].sort().join("・"));
     expect.soft(r.フォーマット, "フォーマット").toBe(フォーマットB);
-    expect.soft([...r.タグ].sort(), "タグ").toEqual([タグA, タグB].sort());
+    expect.soft(r.タグ.slice().sort().join("・"), "タグ").toBe([タグA, タグB].sort().join("・"));
     expect.soft(r.削除日時, "削除日時（なし）").toBe("");
   });
 });
@@ -296,8 +312,17 @@ caseTest("IT-M15-09-016", async ({ page, notes, step, expected }) => {
   let e!: アーキタイプ編集画面;
   await step(1, async () => { e = await 編集を開く(page, id); });
   await step(2, async () => { await e.名日.fill("更新遷移アーキタイプ"); });
-  await step(3, async () => { await e.送信する(e.更新ボタン); });
+  let r!: 送信の結果;
+  let 成功: string[] = [];
+  await step(3, async () => {
+    r = await e.送信する(e.更新ボタン);
+    成功 = await e.成功の帯();
+    note(`更新の要求の応答 ${r.要求の応答}、移った画面 ${r.最後の画面}、メッセージ: ${[...成功, ...await e.エラーの帯()].join(" / ") || "なし"}`);
+  });
   await expected(async () => {
+    // 入力エラーで同じアドレスに出し直されても URL・入力値は同じになるため、更新が通って転送されたこと（応答 302 と保存の帯）も確かめる
+    expect.soft(r.要求の応答, "更新の要求が受け付けられて編集画面へ転送される（応答 302）").toBe(302);
+    expect.soft(成功.some((t) => t.includes("保存しました")), `画面上部の「保存しました」（表示: ${成功.join(" / ") || "なし"}）`).toBe(true);
     expect.soft(パス(page), "移った画面").toBe(編集画面のパス(id));
     await expect.soft(e.名日, "移った編集画面のアーキタイプ名(日)").toHaveValue("更新遷移アーキタイプ");
   });
@@ -616,8 +641,17 @@ caseTest("IT-M15-09-040", async ({ page, notes, step, expected }) => {
   await step(1, async () => { e = await 編集を開く(page, id); });
   await step(2, async () => { await e.名日.fill("不明画像更新"); });
   await step(3, async () => { await e.代表カードIDを書き換える("999999"); });
-  await step(4, async () => { await e.送信する(e.更新ボタン); note(`更新後の表示: ${[...await e.成功の帯(), ...await e.エラーの帯()].join(" / ")}`); });
+  let r!: 送信の結果;
+  let 成功: string[] = [];
+  await step(4, async () => {
+    r = await e.送信する(e.更新ボタン);
+    成功 = await e.成功の帯();
+    note(`更新の要求の応答 ${r.要求の応答}、更新後の表示: ${[...成功, ...await e.エラーの帯()].join(" / ") || "なし"}`);
+  });
   await expected(async () => {
+    // 保存が通っても同じ編集画面のアドレスへ転送されるため、「留まる」＝保存されずに出し直されたこと（転送されない・保存の帯が無い）も確かめる
+    expect.soft(r.要求の応答, "更新の要求が転送されずに編集画面が出し直される（応答 302 でない）").not.toBe(302);
+    expect.soft(成功, "画面上部に保存の成功の帯が出ない").toEqual([]);
     expect.soft(パス(page), "表示中の画面").toBe(編集画面のパス(id));
     await expect.soft(e.更新ボタン, "アーキタイプ編集画面の「更新」ボタン").toBeVisible();
   });
@@ -795,6 +829,8 @@ caseTest("IT-M15-09-053", async ({ page, browser, notes, step, expected }) => {
       if (st !== 200) throw new Error(`ブラウザBで ID ${id} の編集画面を開けない（応答 ${st}）`);
       const r = await b.削除してOKを押す();
       note(`ブラウザB（別のブラウザの状態で同じ管理者がログイン）で削除し、確認ダイアログ「${r.文}」で OK を押した。応答 ${r.要求の応答}、メッセージ: ${(await b.成功の帯()).join(" / ")}`);
+      // ブラウザB は別のセッションなので自動の撮影に写らない。B で削除が終わった画面を残す
+      await 別のブラウザの画面を撮る(pb, scene.stepLabel(2, "ブラウザB（管理者）で削除が終わった画面"));
     });
   });
   let r = { 要求の応答: 0, 最後の応答: 0, 最後の画面: "" };
@@ -809,8 +845,10 @@ caseTest("IT-M15-09-054", async ({ page, notes, step, expected }) => {
   const l = new アーキタイプ一覧(page);
   await step(1, async () => {
     await l.開く();
-    await l.名前で検索する(id);
-    note(`アーキタイプ管理の検索の欄は「アーキタイプ名」だけ（IDの欄は無い）。その欄に ID ${id} を入れて「検索する」を押した`);
+    const 名 = アーキタイプの保存内容(id)?.名日 ?? "";
+    if (!名) throw new Error(`アーキタイプ ID ${id} の名前をDBから読めない`);
+    await l.名前で検索する(名);
+    note(`読み替え: 正本は「ID ${id} を検索する」だが、アーキタイプ管理の検索の欄は「アーキタイプ名」だけでIDの欄は無い。そこでシードの名前「${名}」を入れて「検索する」を押し、ID ${id} の行を探して登録デッキ数を見る`);
   });
   let 行: { ID: string; 登録デッキ数: string }[] = [];
   await step(2, async () => { 行 = await l.行(); note(`検索結果の行: ${行.length ? 行.map((x) => `ID ${x.ID}（登録デッキ数 ${x.登録デッキ数}）`).join(" / ") : "なし"}`); });
@@ -839,11 +877,20 @@ caseTest("IT-M15-09-061", async ({ page, step, expected }) => {
     await m.検索する();
     return (await new DeckResultPage(page).行()).filter((r) => r.プレイヤー === 選手).map((r) => r.アーキタイプ);
   };
+  /** プレイヤーの行のアーキタイプの要素と、その全文（画面では幅で省略されて読めない）と title 属性 */
+  const 型の要素 = () => page.locator(".deckSearch-searchResult__item").filter({ has: page.locator(".deckSearch-searchResult__item__playerName__td", { hasText: 選手 }) }).locator(".deckSearch-searchResult__item__deckName").first();
+  const 全文を読む = async () => ({
+    全文: (await 型の要素().innerText()).replace(/\s+/g, " ").trim(),
+    title: await 型の要素().locator("span").last().getAttribute("title"),
+  });
   const クリアの注記 = "「クリア」とプレイヤー名の欄は、デッキ検索TOPの画面上部の「詳細検索」で開く画面の中にある。開いてから押した";
   await step(1, async () => { await 店頭で検索(); note(クリアの注記); });
   await step(2, async () => {
     const a = (await new DeckResultPage(page).行()).filter((r) => r.プレイヤー === 選手).map((r) => r.アーキタイプ);
-    expect(a, `プレイヤー「${選手}」の行のアーキタイプ`).toEqual([`${旧.日}/${旧.英}`]);
+    const t = await 全文を読む();
+    note(`一覧のアーキタイプの表示は画面の幅で省略されて読めない。更新前の要素の全文: 「${t.全文}」（title 属性: ${t.title ?? "なし"}）`);
+    expect(a, `プレイヤー「${選手}」の行のアーキタイプ（要素の全文: ${t.全文}）`).toEqual([`${旧.日}/${旧.英}`]);
+    await 要素を撮る(型の要素(), scene.stepLabel(2, `更新前のアーキタイプの要素の全文（${t.全文}）`));
   });
   await step(3, async () => { await loginAdmin(page, M1509_QM); });
   const l = new アーキタイプ一覧(page);
@@ -861,7 +908,11 @@ caseTest("IT-M15-09-061", async ({ page, step, expected }) => {
   let 表示: string[] = [];
   await step(7, async () => { 表示 = await 店頭で検索(); note(クリアの注記); });
   await expected(async () => {
-    expect(表示, `プレイヤー「${選手}」の行のアーキタイプ`).toEqual([`${新.日}/${新.英}`]);
+    const t = await 全文を読む();
+    note(`一覧のアーキタイプの表示は画面の幅で省略されて読めない。更新後の要素の全文: 「${t.全文}」（title 属性: ${t.title ?? "なし"}）`);
+    await expect.soft(型の要素(), `アーキタイプの要素の全文（画面の表示は省略されている。title 属性: ${t.title ?? "なし"}）`).toContainText(`${新.日}/${新.英}`);
+    expect(表示, `プレイヤー「${選手}」の行のアーキタイプ（要素の全文: ${t.全文}）`).toEqual([`${新.日}/${新.英}`]);
+    await 要素を撮る(型の要素(), scene.expectedLabel(`更新後のアーキタイプの要素の全文（${t.全文}）`));
   });
 });
 

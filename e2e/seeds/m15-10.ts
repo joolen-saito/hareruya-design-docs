@@ -47,11 +47,7 @@ defineSeed("S-M15-10-L-COLOR", { needs: ["S-M15-10-L-ADM"] }, async () => {
   for (const c of ["赤", "青", "白", "緑", "黒"]) if (!カラーがある(c)) throw new Error(`カラー「${c}」が手元の環境に無い（登録は行わない。判断待ち）`);
 });
 
-// カード画像（Test Card の画像）は、画面から登録できないため作らない（カード画像の登録画面・操作が無い）。
-// 使うケース（042・045）は、手元に「Unknown Card」という名前のカードが無い状態で取り込み、代表カード画像が未設定のままになることを確かめる（条件付き）。
-defineSeed("S-M15-10-CARD-IMAGES", { needs: ["S-M15-10-ADM"] }, async () => {
-  reportSeedIssue("S-M15-10-CARD-IMAGES", "Test Card の画像は画面から登録できないため作らなかった（このシードを使うケースは、画像が無い状態で確かめる）");
-});
+// カード画像（Test Card の画像）のシード S-M15-10-CARD-IMAGES は seeds/m15-10-k.ts（カード登録CSVを1件ずつ取り込んで作る）。
 
 // ---- 取込ファイルだけで成り立つもの（中身は spec が作る） ----
 for (const id of ["CSV-NEW-004", "CSV-NEW-005", "FORMAT-UNKNOWN-017", "FORMAT-UNKNOWN-018", "NORMALIZED-027", "ROLLBACK-028", "CSRF-MISSING-029", "CSRF-TAMPER-030", "TWICE-040", "CBARC-041"]) {

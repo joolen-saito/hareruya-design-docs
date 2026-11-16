@@ -33,18 +33,33 @@ import { rc } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
-import { CategoryPage } from "../pages/admin/category";
+import { CategoryPage, createTopByCsv } from "../pages/admin/category";
+import { サプライ・グッズのカテゴリID } from "../pages/admin/f09_04_setup";
+import { 商品のカテゴリを選ぶ } from "../pages/admin/f01_02_layout";
 import { imageFile, saveProductWithImages } from "../pages/admin/f03_06_products";
 import "./f05-01"; // CATEGORY が使う共有シード S-F05-01-CATEGORY-ROOTS（最新セットの第一階層）を登録する
 import {
-  F0504カードの入力, F0504カードを登録する, カード商品CSVの見出し, カード商品CSVを登録する, 商品IDで公開状態すべてを検索した件数, 商品名で商品IDを読む,
-  商品規格一覧を読む, 商品規格を削除する, 商品規格を登録する, 単体カード配下のカテゴリID, 登録済みの割引率ID, 査定例ページの行数, 規格IDを選ぶ,
+  F0504カードの入力, F0504カードを登録する, カード商品CSVの公開の値, カード商品CSVの見出し, カード商品CSVを登録する, 商品IDで公開状態すべてを検索した件数, 商品名で商品IDを読む,
+  商品規格一覧を読む, 商品規格を削除する, 商品規格を登録する, 単体カード配下のカテゴリID, シングルカードのカテゴリ, 登録済みの割引率ID, 査定例ページの行数, 規格IDを選ぶ,
+  EXの名前でも引けるようにする, 画面の状態, 状態EXの読み替えの注記,
 } from "../pages/admin/f05_04_products";
 import { readExistingSellGroupName } from "../pages/admin/m03_01_goods_csv";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { productIdsByCode, readGoodsRootCategoryId, readLanguageIds } from "../pages/admin/m03_23_seed_products";
 import { ensureCardset } from "../pages/admin/product_masters";
 import { NetBuyCartPage, NetBuyDetailPage } from "../pages/front/f05_04_net_detail";
+
+/**
+ * 管理画面を PC の画面幅で開いて操作する。SP版の spec（f05-04-sp・f05-04-index-sp）の test.use（iPhone 13）は
+ * シードで作るブラウザにも引き継がれ、管理画面がスマホの幅で開いて、カテゴリの「子カテゴリ作成」のボタンが
+ * ほかの要素に隠れて押せなかった（2026-11-13 の IT-F05-04-002。F02-02 の seeds/f02-02.ts と同じ事情）。
+ */
+async function PC幅の管理画面で<T>(browser: Browser, fn: (page: Page) => Promise<T>): Promise<T> {
+  return withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    return fn(page);
+  });
+}
 
 type 言語 = "JP" | "EN";
 type 規格キー = `${言語}-${string}`;
@@ -56,6 +71,8 @@ export type F0504の商品 = {
   規格: Record<string, string>;
   /** 規格に選んだ代表画像のファイル名（画面が付け直したもの） */
   画像: Record<string, string>;
+  /** 登録したカードのカードID（呼び名を控える側が使う） */
+  カードID?: string;
 };
 const built = new Map<string, F0504の商品>();
 
@@ -71,7 +88,7 @@ export const f0504カートのCookie = new Map<string, Awaited<ReturnType<Browse
 
 // ---- 共通の値（1回の実行で1度だけ画面から読む） ----
 
-type 共通の値 = { 見出し: string[]; 日本語: string; 英語: string; カテゴリ: string; 購入グループ: string; 割引率: string; カードセット: string };
+type 共通の値 = { 見出し: string[]; 公開: { 商品公開ステータス: string; 支店の商品公開ステータス: string }; 日本語: string; 英語: string; カテゴリ: string; 購入グループ: string; 割引率: string; カードセット: string };
 let common: 共通の値 | null = null;
 const CARD_NO_BASE = String(Date.now()).slice(-9);
 let cardSeq = 0;
@@ -86,8 +103,10 @@ async function readCommon(page: Page, seedId: string): Promise<共通の値> {
   const sellGroup = await readExistingSellGroupName(page);
   const cardset = await ensureCardset(page, "F0504試験カードセット", "F0504 Test Set", "F0504S", issue);
   const 見出し = await カード商品CSVの見出し(page);
-  common = { 見出し, 日本語: lang.日本語, 英語: lang.英語, カテゴリ: cat.id, 購入グループ: sellGroup, 割引率: discount.id, カードセット: cardset };
-  issue(`単体カード配下のカテゴリは「シングルカード」配下の先頭「${cat.名称}」（ID ${cat.id}）、購入グループ名称は「${sellGroup}」、割引率は「${discount.名称}」（ID ${discount.id}）を使った（シード表は「登録済みの」とだけ定める）`);
+  const 公開 = await カード商品CSVの公開の値(page);
+  common = { 見出し, 公開, 日本語: lang.日本語, 英語: lang.英語, カテゴリ: cat.id, 購入グループ: sellGroup, 割引率: discount.id, カードセット: cardset };
+  issue(`単体カード配下のカテゴリは「${cat.名称}」（ID ${cat.id}）、購入グループ名称は「${sellGroup}」、割引率は「${discount.名称}」（ID ${discount.id}）を使った（シード表は「登録済みの」とだけ定める）`);
+  issue(`カード商品CSVの商品公開ステータスは、シード表の「2」（公開）でなく、画面のCSVの形式の説明で「公開」に当たる値 ${公開.商品公開ステータス} を入れた（説明では 2 は非公開）。支店の商品公開ステータスは ${公開.支店の商品公開ステータス}（公開）`);
   return common;
 }
 
@@ -120,7 +139,7 @@ export async function カード商品を作る(
   const issue = (m: string) => reportSeedIssue(seedId, m);
   let out: F0504の商品 | null = null;
   let cardId = "";
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+  await PC幅の管理画面で(browser, async (page) => {
     page.setDefaultTimeout(60_000);
     const c = await readCommon(page, seedId);
     // 1. カード
@@ -136,7 +155,7 @@ export async function カード商品を作る(
     const name = rc(def.名);
     const price = String(def.買取);
     const row = (言語ID: string, 商品ID: string): Record<string, string> => ({
-      "商品ID": 商品ID, "言語(ID)": 言語ID, "商品公開ステータス": "2", "支店の商品公開ステータス": "1",
+      "商品ID": 商品ID, "言語(ID)": 言語ID, "商品公開ステータス": c.公開.商品公開ステータス, "支店の商品公開ステータス": c.公開.支店の商品公開ステータス,
       "商品名(日)": name, "商品名(英)": name, "サイズ": "1", "重量": "1", "商品カテゴリ(ID)": def.カテゴリID ?? c.カテゴリ,
       "購入グループ名称": c.購入グループ, "割引率(ID)": c.割引率, "基準価格": price, "販売価格": price, "買取価格": price,
       "カード詳細(ID)": reg.カード詳細IDs[0],
@@ -154,7 +173,7 @@ export async function カード商品を作る(
       const sources = await saveProductWithImages(page, productId, files, `${seedId}: 商品の画像`, issue);
       if (sources.length < files.length) {
         const m = `${seedId}: 商品画像を ${files.length} 件追加するはずが ${sources.length} 件しか追加できなかった`;
-        if (def.画像が要る) throw new Error(`${m}。画像の表示を確かめるケースなので、画像なしでは成り立たない`);
+        if (def.画像が要る) throw new Error(`${m}。いまのアプリは商品登録編集画面の画像アップロードを削除している（origin/develop 294a414712、2026-10-26）が、シード表・設計書（0204 商品登録編集 画面項目 7）はこの画面で追加する定め。画像の表示を確かめるケースなので、画像なしでは成り立たない（前提不足）`);
         issue(`${m}。代表画像は選ばずに続けた`);
       } else {
         imageNames.forEach(([k], i) => imageFileOf.set(k, sources[i]));
@@ -173,15 +192,18 @@ export async function カード商品を作る(
         代表画像: imageFileOf.has(key) ? [imageFileOf.get(key)!] : undefined,
       }, `${seedId}: ${key}`, issue);
     }
+    if (def.残す状態?.includes("EX") || Object.keys(def.規格).some((k) => k.endsWith("-EX"))) issue(`${seedId}: ${状態EXの読み替えの注記}`);
     if (def.残す状態) {
-      for (const r of rows.filter((x) => !def.残す状態!.includes(x.状態))) {
+      const 残す = def.残す状態.map(画面の状態);
+      for (const r of rows.filter((x) => !残す.includes(x.状態))) {
         await 商品規格を削除する(page, productId, r.商品規格ID, `${seedId}: ${r.言語}-${r.状態}`, issue);
       }
       rows = await 商品規格一覧を読む(page, productId);
     }
     const 規格: Record<string, string> = {};
     for (const r of rows) 規格[`${r.言語 === "日本語" ? "JP" : r.言語 === "英語" ? "EN" : r.言語}-${r.状態}`] = r.商品規格ID;
-    out = { 商品ID: productId, 規格, 画像: Object.fromEntries(imageFileOf) };
+    EXの名前でも引けるようにする(規格);
+    out = { 商品ID: productId, 規格, 画像: Object.fromEntries(imageFileOf), カードID: cardId };
   });
   built.set(def.名, out!);
   if (呼び名を控える) noteLabels(seedId, notes, { 商品: [out!.商品ID], カード: [cardId] });
@@ -192,7 +214,7 @@ export async function カード商品を作る(
 async function サプライ商品を作る(browser: Browser, seedId: string, 名: string, 買取: number, カテゴリID?: string): Promise<string> {
   const issue = (m: string) => reportSeedIssue(seedId, m);
   let id = "";
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+  await PC幅の管理画面で(browser, async (page) => {
     page.setDefaultTimeout(60_000);
     const categoryId = カテゴリID ?? await readGoodsRootCategoryId(page);
     const p = String(買取);
@@ -338,7 +360,7 @@ defineSeed("S-F05-04-CARD-041", async ({ browser, notes }) => {
 // ---- 043（未登録の商品ID） ----
 defineSeed("S-F05-04-NOT-FOUND-043", async ({ browser }) => {
   const seedId = "S-F05-04-NOT-FOUND-043";
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+  await PC幅の管理画面で(browser, async (page) => {
     const n = await 商品IDで公開状態すべてを検索した件数(page, "999999");
     if (n !== 0) {
       // シード表は「該当があれば商品を削除」とするが、ほかのデータを消すことになるので消さずに止める（PM の方針）
@@ -371,7 +393,7 @@ defineSeed("S-F05-04-ASSESS-049", async ({ browser, notes }) => {
     名: "F0504-049-A", 言語: ["JP"], 買取: 600, 残す状態: ["NM"],
     規格: { "JP-NM": { 商品コード: "F0504-049-A", 買取: 600 } },
   });
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+  await PC幅の管理画面で(browser, async (page) => {
     const n = await 査定例ページの行数(page);
     // ページ管理に公開の切り替えは無い。ページがあればフロントで開ける。無ければ作らずに止める（共有のマスタを書き換えない）
     if (n < 1) throw new Error(`${seedId}: ページ管理に査定例ページ（purchase_example）が無い。シード表は公開状態にするとするが、共有のページを書き換えずに止めた`);
@@ -452,11 +474,13 @@ defineSeed("S-F05-04-SEARCH-ENV", async () => {
 defineSeed("S-F05-04-CATEGORY", { needs: ["S-F05-01-CATEGORY-ROOTS"] }, async ({ browser, notes }) => {
   const seedId = "S-F05-04-CATEGORY";
   const issue = (m: string) => reportSeedIssue(seedId, m);
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+  let singleCat = { id: "", 名称: "" };
+  await PC幅の管理画面で(browser, async (page) => {
     page.setDefaultTimeout(60_000);
+    // 「シングルカード」は手元は最上位、開発環境はセットの下にある（pages/admin/f05_04_products.ts のシングルカードのカテゴリ）
+    singleCat = await シングルカードのカテゴリ(page);
+    const single = singleCat.id;
     const category = new CategoryPage(page);
-    await category.openTop();
-    const single = await category.idOf("シングルカード");
     const make = async (親: string, 名: string, 英名: string): Promise<string> => category.createChild(親, { nameJp: rc(名), nameEn: 英名, frontHide: false }, issue);
     categoryIds.set(F0504カテゴリ.単体, await make(single, F0504カテゴリ.単体, "Tarkir Dragonstorm F0504 single"));
     const latest = notes.get("〔カテゴリID-F0501-共有A〕");
@@ -464,13 +488,26 @@ defineSeed("S-F05-04-CATEGORY", { needs: ["S-F05-01-CATEGORY-ROOTS"] }, async ({
     categoryIds.set(F0504カテゴリ.最新セットの親, parent);
     categoryIds.set(F0504カテゴリ.最新セットの子, await make(parent, F0504カテゴリ.最新セットの子, "Tarkir Dragonstorm F0504 B"));
   });
-  issue(`シード表の共有カテゴリ「タルキール：龍嵐録」（DBでの販促バナーの設定を含む）は、共有のカテゴリを書き換えないため、実行の印つきのカテゴリを画面で作って代えた: シングルカード配下に「${rc(F0504カテゴリ.単体)}」、最新セットの下に「${rc(F0504カテゴリ.最新セットの親)}」とその子「${rc(F0504カテゴリ.最新セットの子)}」。販促バナーはDBで設定していない`);
+  issue(`シード表の共有カテゴリ「タルキール：龍嵐録」（DBでの販促バナーの設定を含む）は、共有のカテゴリを書き換えないため、実行の印つきのカテゴリを画面で作って代えた: 「${singleCat.名称}」（ID ${singleCat.id}）の配下に「${rc(F0504カテゴリ.単体)}」、最新セットの下に「${rc(F0504カテゴリ.最新セットの親)}」とその子「${rc(F0504カテゴリ.最新セットの子)}」。販促バナーはDBで設定していない`);
 });
 
-defineSeed("S-F05-04-CARD-002", { needs: ["S-F05-04-CATEGORY"] }, async ({ browser, notes }) => {
-  await カード商品を作る(browser, "S-F05-04-CARD-002", notes, { 名英: "F0504-CARD-A-002" }, {
+/** 002 のパンくずの確かめに使う、最上位の実行の印つきのカテゴリ（正本の値。画面の名前は rc() を付けた値） */
+export const F0504最上位カテゴリ002 = "タルキール：龍嵐録-F0504-002";
+
+defineSeed("S-F05-04-CARD-002", async ({ browser, notes }) => {
+  const seedId = "S-F05-04-CARD-002";
+  // 設計書の例（0305 ネット買取商品詳細 機能仕様「🏠 > タルキール：龍嵐録」）と同じパンくずになるよう、カテゴリは最上位に作る。
+  // 以前は S-F05-04-CATEGORY の「シングルカード」の下のカテゴリを使い、開発環境では「コマンダー＞…＞シングルカード＞タルキール…」の
+  // 階層の下になって、正本の前提（ホームアイコンとカテゴリ「タルキール：龍嵐録」からなる）が作れていなかった（2026-11-13）
+  const cat = await PC幅の管理画面で(browser, async (page) => {
+    page.setDefaultTimeout(60_000);
+    return createTopByCsv(page, { nameJp: rc(F0504最上位カテゴリ002), nameEn: "Tarkir Dragonstorm F0504 002", frontHide: "0", branchHide: "0" },
+      `${seedId.toLowerCase()}-${Date.now()}.csv`, (m) => reportSeedIssue(seedId, m));
+  });
+  reportSeedIssue(seedId, `カテゴリ「タルキール：龍嵐録」は、共有のカテゴリを書き換えないため、実行の印つきのカテゴリ「${rc(F0504最上位カテゴリ002)}」（ID ${cat}）を最上位にカテゴリ登録CSVで作って代えた（表示対象）`);
+  await カード商品を作る(browser, seedId, notes, { 名英: "F0504-CARD-A-002" }, {
     名: "F0504-CARD-001-002", 言語: ["JP"], 買取: 100, 規格: { "JP-NM": { 商品コード: "F0504-CARD-001-002" } },
-    カテゴリID: f0504カテゴリID(F0504カテゴリ.単体),
+    カテゴリID: cat,
   });
 });
 
@@ -478,15 +515,26 @@ defineSeed("S-F05-04-SUPPLY-003", { needs: ["S-F05-04-CATEGORY"] }, async ({ bro
   const seedId = "S-F05-04-SUPPLY-003";
   const issue = (m: string) => reportSeedIssue(seedId, m);
   let kmc = "";
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+  await PC幅の管理画面で(browser, async (page) => {
     page.setDefaultTimeout(60_000);
-    const root = await readGoodsRootCategoryId(page);
+    // 「サプライ・グッズ」は最上位の一覧で名前で探す。決め打ちの ID 2 は開発環境では「スタンダード」で（カテゴリIDは本番と同じ。
+    // Entity/Category.php の NAV_STANDARD_ID=2・NAV_SUPPLY_GOODS_ID=61）、「スタンダード＞スリーブ＞KMC」になっていた（2026-11-13）
+    const root = await サプライ・グッズのカテゴリID(page);
     const category = new CategoryPage(page);
     const sleeve = await category.createChild(root, { nameJp: rc(F0504サプライの階層.スリーブ), nameEn: "Sleeve F0504 003", frontHide: false }, issue);
     kmc = await category.createChild(sleeve, { nameJp: rc(F0504サプライの階層.KMC), nameEn: "KMC F0504 003", frontHide: false }, issue);
+    issue(`最上位の「サプライ・グッズ」（ID ${root}）を名前で探して使った`);
   });
   issue(`カテゴリ階層「サプライ・グッズ＞スリーブ＞KMC」は、共有のカテゴリを書き換えないため、サプライ・グッズの下に実行の印つきの「${rc(F0504サプライの階層.スリーブ)}」とその子「${rc(F0504サプライの階層.KMC)}」を画面で作って代えた`);
-  notes.set("〔商品ID-F0504-003〕", await サプライ商品を作る(browser, seedId, "F0504-SUPPLY-003", 800, kmc));
+  // グッズ商品CSV登録は、商品カテゴリ(ID)にアプリの決め打ちの ID 2・4・5 の系統しか受け付けない（ProductGoodsImportHandler.php）ので、
+  // 取り込みは受け付ける既定のカテゴリで行い、そのあと商品登録編集で商品カテゴリを KMC だけにする
+  const id = await サプライ商品を作る(browser, seedId, "F0504-SUPPLY-003", 800);
+  await PC幅の管理画面で(browser, async (page) => {
+    page.setDefaultTimeout(60_000);
+    await 商品のカテゴリを選ぶ(page, id, [kmc], `${seedId}: 商品カテゴリを「${rc(F0504サプライの階層.KMC)}」に`, issue);
+  });
+  issue(`商品カテゴリは、グッズ商品CSV登録で取り込んだあと、商品登録編集で「${rc(F0504サプライの階層.KMC)}」（ID ${kmc}）だけにした`);
+  notes.set("〔商品ID-F0504-003〕", id);
 });
 
 defineSimpleCardSeed("S-F05-04-CARD-005", "F0504-CARD-A-005", "F0504-CARD-001-005", 100, false);

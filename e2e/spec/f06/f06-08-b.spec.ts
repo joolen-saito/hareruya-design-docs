@@ -4,6 +4,8 @@
  * 入荷通知登録上限数（共有の設定）を20にするシードを使うので、基盤が1本だけで流し、終わったら控えた値へ戻して画面で確かめる。
  * 記録 review/F06-08_progress_2026-11-08.md
  */
+import { FrontDetail } from "../../pages/front/f03_02_detail";
+import { FrontProductList } from "../../pages/front/f03_01_product_list";
 import { Browser, Page, test } from "@playwright/test";
 import { 商品単位の依頼件数, 有効な依頼件数 } from "../../db/f03_07";
 import { CaseCtx, caseTest, expect } from "../../lib/case";
@@ -229,6 +231,7 @@ caseTest("IT-F06-08-019", async ({ page, browser, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(n.path, "遷移した画面（CARD-LANG-019の商品詳細）").toBe(`/ja/products/detail/${r.商品ID[0]}`);
+    expect.soft((await new FrontDetail(n.page).商品名の文()).replace(/\s+/g, ""), "商品詳細の商品名に CARD-LANG-019 が表示されている").toContain(rc("CARD-LANG-019").replace(/\s+/g, ""));
     expect.soft(n.クエリ.get("lang"), "商品詳細に指定された言語").toBe("JP");
   });
   } finally { await 終了(browser); }
@@ -247,6 +250,7 @@ caseTest("IT-F06-08-020", async ({ page, browser, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(n.path, "遷移した画面（HIGH-PRODUCT-020の商品詳細）").toBe(`/ja/products/detail/${r.商品ID[0]}`);
+    expect.soft((await new FrontDetail(n.page).商品名の文()).replace(/\s+/g, ""), "商品詳細の商品名に HIGH-PRODUCT-020 が表示されている").toContain(rc("HIGH-PRODUCT-020").replace(/\s+/g, ""));
     expect.soft(n.クエリ.get("lang"), "商品詳細に指定された言語").toBe("JP");
     expect.soft(n.クエリ.get("class"), "商品詳細に指定された規格（高額商品コードHP-Z-020の規格）").toBe(r.規格ID[0][0]);
   });
@@ -266,6 +270,7 @@ caseTest("IT-F06-08-021", async ({ page, browser, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(n.path, "遷移した画面（CARD-LANG-021の商品詳細）").toBe(`/ja/products/detail/${r.商品ID[0]}`);
+    expect.soft((await new FrontDetail(n.page).商品名の文()).replace(/\s+/g, ""), "商品詳細の商品名に CARD-LANG-021 が表示されている").toContain(rc("CARD-LANG-021").replace(/\s+/g, ""));
     expect.soft(n.クエリ.get("lang"), "商品詳細に指定された言語").toBe("EN");
   });
   } finally { await 終了(browser); }
@@ -284,6 +289,11 @@ caseTest("IT-F06-08-022", async ({ page, browser, step, expected }) => {
   await expected(async () => {
     expect.soft(n.path, "遷移した画面（商品一覧。商品の検索結果の画面）").toMatch(/\/products\/search$/);
     expect.soft(n.クエリ.get("cardId"), "検索条件のカードID").toBe(r.カードID);
+    const pl = new FrontProductList(n.page);
+    await pl.結果を待つ();
+    expect.soft(await pl.商品数の値(), "商品一覧がそのカードIDの商品だけに絞られている（商品数）").toBe(1);
+    const 名 = (await pl.本表示のカード.locator(".p-hareruya-product-card__name-text").allInnerTexts()).map((t) => t.replace(/\s+/g, ""));
+    expect.soft(名.length > 0 && 名.every((t) => t.includes(rc("CARD-LANG-022").replace(/\s+/g, ""))), `一覧に出た商品は CARD-LANG-022 だけ（実際 ${名.slice(0, 5).join(" / ")}）`).toBe(true);
   });
   } finally { await 終了(browser); }
 });

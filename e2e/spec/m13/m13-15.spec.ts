@@ -1,7 +1,7 @@
 /**
  * M13-15 画像設定。正本: cases/M13-15_test_cases.tsv
  *
- * 依頼者の方針（2026-11-10）: 既存の店舗の画像は消さない・書き換えない。シード表の東京店・大阪店・名古屋店は、E2E の試験店舗（店名の末尾「-M1315」）に読み替えた
+ * 依頼者の方針（2026-11-10）: 既存の店舗の画像は消さない・書き換えない。シード表の東京店・大阪店・名古屋店は、E2E の店舗（店舗ID 221・4973・4974。店舗は作らない。依頼者 2026-11-15）に読み替えた
  * （seeds/m13-15.ts の先頭）。保管先へ名前を決めたファイルを置く準備は、ケースの冒頭（手順の前）で試験店舗へ画面から画像をアップロードする
  * （ファイル名は画面が採番する）に読み替え、増えた画像・アップロードの前後の差で確かめる。
  * 実装しないのは、012・017（2000件・2001件の大量の画像）、018（保管先の下の区分フォルダは画面のアップロードで作れない）の3件。
@@ -23,6 +23,9 @@ import { EventTopPage } from "../../pages/front/f07_01_event_top";
 import { QK1302_ADMIN, QK連携店舗 } from "../../seeds/m13-02-qk";
 import { M1315_ADMIN, 入力ファイル, 大阪店, 大阪店の識別子, 名古屋店, 名古屋店の識別子, 東京店, 東京店の識別子 } from "../../seeds/m13-15";
 import { withAdminSession } from "../../lib/session";
+import { 選択肢を広げたままにする } from "../../lib/evidence_select";
+import { ページから読み取った値を撮る, DBで読み取った値を撮る, scene } from "../../lib/evidence_other";
+import { バナー設定を読む, バナー設定の文 } from "../../db/m13_15_banner";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -48,6 +51,14 @@ async function 用意する(p: BannerImagePage, 店名: string, file: string, �
   const url = await 準備のアップロード(p, 店名, 入力ファイル(file));
   note(`事前の準備: 正本の「${呼び名}」の代わりに、「${店名}」へ画面から画像（${file}）をアップロードし、増えた画像 ${url} を使う（ファイル名は画面が採番するので、正本の名前の画像は置けない）`);
   return url;
+}
+
+/** 画像一覧の、URL がちょうど url の行の下段（URL の表示）。赤い枠はこの行だけに付ける */
+const 行のURL = (p: BannerImagePage, url: string) => p.行(url).locator("div.small").first();
+
+/** 画像一覧の先頭の行を確かめる（一覧が画像に写る範囲を決める。一覧が空なら何もしない） */
+async function 一覧が写るようにする(p: BannerImagePage, 何の一覧: string): Promise<void> {
+  if ((await p.画像の行.count()) > 0) await expect.soft(p.画像の行.first(), `${何の一覧}の先頭の行が表示されている`).toBeVisible();
 }
 
 /** 現在の選択店舗の一覧を、店名の絞り込みにして読む */
@@ -94,16 +105,19 @@ caseTest("IT-M13-15-003", async ({ page, step, expected }) => {
   const p = new BannerImagePage(page);
   await step(1, async () => { await p.開く(); });
   let 選択肢: string[] = [];
+  let 戻す: () => Promise<void> = async () => undefined;
   await step(2, async () => {
     await p.アップロード欄の店舗.click();
-    note("アップロード欄の店舗はブラウザの選択欄で、開いた一覧は画面に撮れないため、欄を押したあと、並んでいる選択肢を読んだ");
+    note("アップロード欄の店舗はブラウザの選択欄で、開いた一覧は画面に撮れないため、欄を押したあと、並んでいる選択肢を読んだ。画像には、選択肢が並んで見えるよう欄を一覧の形に広げて撮った（撮ったあと元に戻す）");
     選択肢 = await p.アップロード欄の店舗の選択肢();
     await page.keyboard.press("Escape");
+    戻す = await 選択肢を広げたままにする(p.アップロード欄の店舗);
   });
   await expected(async () => {
-    expect.soft([...選択肢].sort(), "アップロード欄の店舗の選択肢（東京店と大阪店だけ）").toEqual([東京店, 大阪店].sort());
-    expect.soft(選択肢, "アップロード欄の店舗の選択肢に名古屋店が無い").not.toContain(名古屋店);
+    expect.soft([...選択肢].sort(), `アップロード欄の店舗の選択肢（読んだ選択肢：${選択肢.join("・")}。東京店と大阪店だけ）`).toEqual([東京店, 大阪店].sort());
+    expect.soft(選択肢, `アップロード欄の店舗の選択肢に名古屋店が無い（読んだ選択肢：${選択肢.join("・")}）`).not.toContain(名古屋店);
   });
+  await 戻す();
 });
 
 // ---- アップロード ----
@@ -272,9 +286,13 @@ caseTest("IT-M13-15-014", async ({ page, step, expected }) => {
   await step(4, async () => { urls = await p.画像のURL(); note(`全店舗の一覧の件数: ${urls.length}`); });
   await expected(async () => {
     note("名古屋店の画像は、名古屋店だけに編集権限のある管理者がシードで用意した（このケースの管理者は名古屋店を編集できない）。ほかの店舗の画像もあるので、準備した画像が並ぶことと、名古屋店の画像が1件以上並ぶことで確かめた");
+    note(`正本の東京店・大阪店・名古屋店は、E2E の店舗の保管先 ${配下(東京店の識別子)}（東京店）・${配下(大阪店の識別子)}（大阪店）・${配下(名古屋店の識別子)}（名古屋店）に読み替えた。画像には、準備した東京店2画像・大阪店1画像と、名古屋店の画像1件の行だけに赤い枠を付けた`);
     expect.soft(await p.選択店舗の表示(), "選択店舗").toBe(全て);
-    expect.soft(urls, "準備した東京店2画像と大阪店1画像が一覧にある").toEqual(expect.arrayContaining(準備));
+    const 呼び名 = ["東京店の画像", "東京店の画像", "大阪店の画像"];
+    for (const [i, u] of 準備.entries()) await expect.soft(行のURL(p, u), `準備した${呼び名[i]}「${u}」が全店舗の一覧にある`).toBeVisible();
+    const 名古屋の行 = p.画像の行.filter({ has: p.page.locator("div.small", { hasText: 配下(名古屋店の識別子) }) });
     expect.soft(urls.filter((u) => u.includes(配下(名古屋店の識別子))).length, "名古屋店の画像の件数（1件以上）").toBeGreaterThan(0);
+    await expect.soft(名古屋の行.first().locator("div.small"), `名古屋店の画像（${配下(名古屋店の識別子)} 配下）の行が一覧にある`).toBeVisible();
   });
 });
 
@@ -290,8 +308,11 @@ caseTest("IT-M13-15-015", async ({ page, step, expected }) => {
     画像 = 行数 === 1 ? await p.行の画像のアドレス(p.行(url)) : "";
   });
   await expected(async () => {
+    const 絶対 = new URL(url, page.url()).href;
+    const 正規 = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     expect.soft(行数, `URL「${url}」の行の数`).toBe(1);
-    expect.soft(new URL(画像, page.url()).href, "同じ行の画像のアドレスが、行に表示されたURLと同じ").toBe(new URL(url, page.url()).href);
+    await expect.soft(p.行(url).locator("div.small"), `行の下段に表示されたURL「${url}」の件数`).toHaveCount(1);
+    await expect.soft(p.行(url).locator("td").first().locator("img"), `同じ行の画像（img の src：${画像}）が、行に表示されたURL（${url}）と同じ`).toHaveAttribute("src", new RegExp(`^(${正規(url)}|${正規(絶対)})$`));
   });
 });
 
@@ -302,8 +323,10 @@ caseTest("IT-M13-15-019", async ({ page, step, expected }) => {
   const p = new BannerImagePage(page);
   let 前 = "";
   let 前の画像: string[] = [];
+  let DB前: ReturnType<typeof バナー設定を読む> = [];
   await step(1, async () => {
-    note("DB でなく、画像設定画面の上部のバナー設定の全欄を画面で読んで記録した（共有のバナー設定は書き換えない）");
+    note("正本どおり、バナー設定ID 1〜15 の内容（画像URL・リンク・表示タイプ・代替文・対象店舗・対象言語）を DB で読んで記録した。あわせて、画像設定画面の上部のバナー設定の全欄も画面で読んで記録した（共有のバナー設定は書き換えない。正本の前提③のバナー設定を空にする準備は行っていないので、読んだ内容はそのときの共有の設定の値）");
+    DB前 = バナー設定を読む();
     await p.開く();
     前 = await p.バナー設定の内容();
     前の画像 = await 店舗の画像(p, 東京店);
@@ -312,14 +335,24 @@ caseTest("IT-M13-15-019", async ({ page, step, expected }) => {
   await step(3, async () => { 結果を残す("valid.png", await p.アップロードする(東京店, 入力ファイル("valid.png"))); });
   let 後 = "";
   let 後の画像: string[] = [];
+  let DB後: ReturnType<typeof バナー設定を読む> = [];
   await step(4, async () => {
+    DB後 = バナー設定を読む();
     await p.開く();
     後 = await p.バナー設定の内容();
     後の画像 = await 店舗の画像(p, 東京店);
   });
   await expected(async () => {
-    expect.soft(追加分(前の画像, 後の画像).length, "画像ファイルが1件保管された").toBe(1);
-    expect.soft(後, "バナー設定の内容がアップロードの前から変わらない").toBe(前);
+    const 増えた = 追加分(前の画像, 後の画像);
+    expect.soft(増えた.length, "画像ファイルが1件保管された").toBe(1);
+    for (const u of 増えた) await expect.soft(行のURL(p, u), `増えた画像「${u}」の行（東京店の一覧）`).toBeVisible();
+    const 文前 = DB前.map(バナー設定の文), 文後 = DB後.map(バナー設定の文);
+    expect.soft(DB前.length, "DBで読んだバナー設定の行数（識別番号1〜15）").toBe(15);
+    expect.soft(文後, `DBのバナー設定内容（識別番号1〜15の全列）がアップロード前から変わらない（前後とも ${DB前.length}行）`).toEqual(文前);
+    await DBで読み取った値を撮る(page, "バナー設定の識別番号1〜15の全列（画像URL・リンク先・表示タイプ・代替文・表示店舗・言語）を、アップロードの前と後に読んだ",
+      [["識別番号", "アップロード前に読んだ内容", "アップロード後に読んだ内容", "同じか"], ...DB前.map((_, i) => [String(DB前[i].識別番号), 文前[i], 文後[i] ?? "（無い）", 文前[i] === 文後[i] ? "同じ" : "違う"])],
+      scene.expectedLabel("DBで読み取ったバナー設定の前後"));
+    expect.soft(後, "画面の上部のバナー設定の内容がアップロードの前から変わらない").toBe(前);
   });
 });
 
@@ -371,7 +404,9 @@ function 削除のケース(n: string, 絞り込み: string, 答え: "OK" | "キ
       expect.soft(await p.選択店舗の表示(), `選択店舗が「${絞り込み}」のまま（絞り込みを保つ）`).toBe(絞り込み);
       const n = await p.行(url).count();
       if (答え === "OK") expect.soft(n, `削除した画像「${url}」が一覧に表示されない`).toBe(0);
-      else expect.soft(n, `キャンセルした画像「${url}」が引き続き表示される`).toBe(1);
+      else { expect.soft(n, `キャンセルした画像「${url}」が引き続き表示される`).toBe(1); await expect.soft(行のURL(p, url), `キャンセルした画像「${url}」の行（下段のURL）`).toBeVisible(); }
+      // 選択店舗の欄と画像の一覧（先頭の行）が画像に写るようにする（縦に長い画面で、上のバナー設定だけが写らないように）
+      await 一覧が写るようにする(p, `選択店舗「${絞り込み}」の画像一覧`);
     });
   };
 }
@@ -393,7 +428,8 @@ caseTest("IT-M13-15-030", async ({ page, step, expected }) => {
   await step(3, async () => { urls = await p.画像のURL(); });
   await expected(async () => {
     expect.soft(urls, "イベント用の保管先に置いた画像が一覧に表示される").toContain(url);
-    expect.soft(url, `その画像のURL（${配下(東京店の識別子)} 配下）`).toContain(配下(東京店の識別子));
+    await expect.soft(行のURL(p, url), `イベント用の保管先に置いた画像「${url}」の行（下段のURL）が一覧に表示される`).toBeVisible();
+    await expect.soft(行のURL(p, url), `その画像のURL（${配下(東京店の識別子)} 配下）`).toContainText(配下(東京店の識別子));
   });
 });
 
@@ -433,14 +469,15 @@ caseTest("IT-M13-15-033", async ({ page, step, expected }) => {
     note("ブラウザのアドレスバーへの貼り付けは自動では行えないので、クリップボードに入った文字（または入力ダイアログの文字）を読んで確かめた");
   });
   await expected(async () => {
-    expect.soft(new URL(写した, page.url()).href, "貼り付けた内容が、行の下段に表示されているURLと同じ").toBe(new URL(url, page.url()).href);
+    await expect.soft(行のURL(p, url), `貼り付けた内容（写された文字：${写した}）と同じ、行の下段に表示されているURL（${url}）`).toHaveText(url);
+    expect.soft(new URL(写した, page.url()).href === new URL(url, page.url()).href, `貼り付けた内容（${写した}）が、行の下段に表示されているURL（${url}）と同じ`).toBe(true);
   });
 });
 
 // ---- 店舗が空のアップロード ----
 
 function 店舗が空のアップロード(n: string, 見る店: string[]) {
-  return async ({ page, step, expected }: CaseCtx) => {
+  return async ({ page, step, expected, capture }: CaseCtx) => {
     await loginAdmin(page, M1315_ADMIN(n));
     const p = new BannerImagePage(page);
     const 前: Record<string, string[]> = {};
@@ -457,14 +494,22 @@ function 店舗が空のアップロード(n: string, 見る店: string[]) {
     await step(4, async () => { const r = await p.アップロードを押す(); 送った = r.送った; 結果を残す("店舗を空にして送信", r); });
     const 後: Record<string, string[]> = {};
     await step(5, async () => {
-      for (const 店 of 見る店) 後[店] = await 店舗の画像(p, 店);
+      for (const 店 of 見る店) {
+        後[店] = await 店舗の画像(p, 店);
+        // 送信後の、この店舗の一覧（件数）を画像に残す。送信前の件数は準備で読み、期待結果の画像の表に並べる
+        await 一覧が写るようにする(p, `送信後の選択店舗「${店}」の画像一覧`);
+        await capture(`送信後の「${店}」の画像一覧（${後[店].length}件。送信前は${前[店].length}件）`);
+      }
     });
     await expected(async () => {
       expect.soft(送った, "アップロードの要求が送られた").toBe(true);
       for (const 店 of 見る店) {
-        expect.soft(追加分(前[店], 後[店]), `「${店}」の画像一覧に増えた画像が無い（画像が保管されていない）`).toEqual([]);
-        expect.soft(後[店].length, `「${店}」の画像一覧の件数が送信前と同じ`).toBe(前[店].length);
+        expect.soft(追加分(前[店], 後[店]), `「${店}」の画像一覧に増えた画像が無い（画像が保管されていない。送信前${前[店].length}件・送信後${後[店].length}件）`).toEqual([]);
+        expect.soft(後[店].length, `「${店}」の画像一覧の件数が送信前と同じ（送信前${前[店].length}件・送信後${後[店].length}件）`).toBe(前[店].length);
       }
+      await ページから読み取った値を撮る(page, "アップロードの送信の前と後の、画像一覧の件数",
+        [["選択店舗", "送信前の件数", "送信後の件数", "増えた画像"], ...見る店.map((店) => [店, String(前[店].length), String(後[店].length), String(追加分(前[店], 後[店]).length)])],
+        scene.expectedLabel("送信の前後の画像一覧の件数"));
     });
   };
 }
@@ -490,10 +535,15 @@ caseTest("IT-M13-15-039", async ({ page, step, expected }) => {
   await step(2, async () => { await p.選択店舗を選ぶ(全て); });
   await step(3, async () => { urls = await p.画像のURL(); note(`全店舗の一覧 ${urls.length} 件の先頭5件: ${urls.slice(0, 5).join("、")}`); });
   await expected(async () => {
-    note("名前を決めた4画像の並びは、画面が採番する名前に変わったため、一覧全体が保管先のパスの降順に並ぶこと、準備した画像（東京店2・大阪店1）と名古屋店の画像が並ぶことで確かめた");
+    const 識別子の降順 = [[東京店, 東京店の識別子], [大阪店, 大阪店の識別子], [名古屋店, 名古屋店の識別子]].sort((a, b) => (a[1] < b[1] ? 1 : -1));
+    note(`名前を決めた4画像の並びは、画面が採番する名前に変わったため、一覧全体が保管先のパスの降順に並ぶこと、準備した画像（東京店2・大阪店1）と名古屋店の画像が並ぶことで確かめた。店舗は E2E の店舗に読み替えており、保管先の識別子は 東京店 ${東京店の識別子}・大阪店 ${大阪店の識別子}・名古屋店 ${名古屋店の識別子}。パスの降順では上から ${識別子の降順.map((x) => `${x[0]}（${x[1]}）`).join("→")} の順になり、正本の「東京店（tc）・大阪店（os）・名古屋店（nk）の順」（保管先の識別子 tc・os・nk の降順）とは店舗の順が異なる（店舗の読み替えによる。依頼者の了承が要る）。画像の赤い枠は、準備した3画像と名古屋店の画像の行だけに付けた`);
+    const 呼び名 = ["東京店の画像", "東京店の画像", "大阪店の画像"];
+    for (const [i, u] of 準備.entries()) await expect.soft(行のURL(p, u), `準備した${呼び名[i]}「${u}」が一覧にある`).toBeVisible();
     expect.soft(urls, "準備した画像が一覧にある").toEqual(expect.arrayContaining(準備));
     expect.soft(urls.filter((u) => u.includes(配下(名古屋店の識別子))).length, "名古屋店の画像の件数（1件以上）").toBeGreaterThan(0);
-    expect.soft(降順か(urls), "一覧全体が保管先のパスの降順に並ぶ").toBe(true);
+    const 名古屋の行 = p.画像の行.filter({ has: p.page.locator("div.small", { hasText: 配下(名古屋店の識別子) }) });
+    await expect.soft(名古屋の行.first().locator("div.small"), `名古屋店の画像（${配下(名古屋店の識別子)} 配下）の行が一覧にある`).toBeVisible();
+    expect.soft(降順か(urls), `一覧全体（${urls.length}件）が保管先のパスの降順に並ぶ`).toBe(true);
   });
 });
 

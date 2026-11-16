@@ -4,7 +4,7 @@ import { Page } from "@playwright/test";
 /** 検索結果のカードのうち、イベント名が一致するもののリンク（カード全体が大会詳細画面へのリンク）を押す */
 export async function カードから大会詳細を開く(page: Page, イベント名: string): Promise<void> {
   const card = page.locator("a.p-hareruya-event-card__link").filter({ has: page.locator(".p-hareruya-event-card__title", { hasText: イベント名 }) }).first();
-  await Promise.all([page.waitForURL(/\/events\/\d+\/detail/, { waitUntil: "load" }), card.click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForURL(/\/events\/\d+\/detail/, { waitUntil: "load" }), card.click({ timeout: 20_000, noWaitAfter: true })]);
 }
 
 export type 大会詳細 = { イベント名: string; ルール適用度: string; フォーマット: string };

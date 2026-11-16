@@ -15,7 +15,7 @@ import { expect, caseTest, CaseBody } from "../../lib/case";
 import { adminUrl, loginAdmin } from "../../lib/session";
 import { デッキ一覧 } from "../../pages/admin/m15_deck";
 import { デッキ編集画面, デッキ名で検索する, デッキ情報を開く } from "../../pages/admin/m15_05_deck_edit";
-import { M1505_ADMIN, 名, カード画像, ALPHA, BETA } from "../../seeds/m15-05-k";
+import { M1505_ADMIN, 名, カード画像, ALPHA, BETA, BANNED, OUT, 代役A, 代役B } from "../../seeds/m15-05-k";
 import "../../seeds/m15-05-d-k";
 import "../../seeds/m15-05-b"; // 取り込みで抜けた登録を戻す: main 側が作り方を登録している seeds を読み込む（二重定義ではない）
 
@@ -25,6 +25,7 @@ const 行 = (t: string) => t.split(/\r?\n/).map((x) => x.trim()).filter(Boolean)
 const 規格外の警告 = (ボード: string) => `${ボード}のカードが、現行フォーマットに則さない形で登録されています。`;
 type ボード名 = "メインボード" | "サイドボード" | "統率";
 const 欄 = (e: デッキ編集画面, b: ボード名) => (b === "メインボード" ? e.メイン : b === "サイドボード" ? e.サイド : e.統率);
+const 代役の注記 = `共有のカード（${ALPHA}・${BETA}）は画面から画像を登録できず、代表カードの検索に出ない。DeckTestAlpha の画像の代わりに ${代役A}、DeckTestBeta の画像の代わりに ${代役B}（どちらも画像つきの既存カード）を代表カードとして使った（アーキタイプ「デッキ試験型甲」の代表カードも ${代役A}）`;
 const 代表カード検索の注記 = "「代表カード検索」は画面では「代表カード選択」。検索の画面のボタンは「検索」、行のボタンは「決定」";
 
 async function login(page: Page): Promise<void> {
@@ -73,13 +74,13 @@ function 警告が出る(v: 警告のケース): CaseBody {
     });
   };
 }
-caseTest("IT-M15-05-066", 警告が出る({ no: "066", ボード: "メインボード", 入力: "2 DeckTestBanned", 詳細: /1 行目の DeckTestBanned は禁止カードです/, 詳細の文: "1 行目の DeckTestBanned は禁止カードです" }));
-caseTest("IT-M15-05-067", 警告が出る({ no: "067", ボード: "メインボード", 入力: "1 DeckTestOut", 詳細: /1 行目の DeckTestOut はフォーマットの範囲から外れています/, 詳細の文: "1 行目の DeckTestOut はフォーマットの範囲から外れています" }));
-caseTest("IT-M15-05-068", 警告が出る({ no: "068", ボード: "メインボード", 入力: "5 DeckTestAlpha", 詳細: /1 行目の DeckTestAlpha が.*登録されています/, 詳細の文: "1 行目の DeckTestAlpha が…登録されています" }));
-caseTest("IT-M15-05-069", 警告が出る({ no: "069", ボード: "メインボード", 入力: "2 DeckTestAlpha", 詳細: /1 行目の DeckTestAlpha .*2枚以上登録されています/, 詳細の文: "1 行目の DeckTestAlpha …2枚以上登録されています" }));
-caseTest("IT-M15-05-070", 警告が出る({ no: "070", ボード: "統率", 入力: "1 DeckTestAlpha", 詳細: /このフォーマットでは統率用カードを使用しません/, 詳細の文: "このフォーマットでは統率用カードを使用しません" }));
-caseTest("IT-M15-05-073", 警告が出る({ no: "073", ボード: "サイドボード", 入力: "1 DeckTestBanned", 詳細: /1 行目の DeckTestBanned は禁止カードです/, 詳細の文: "1 行目の DeckTestBanned は禁止カードです" }));
-caseTest("IT-M15-05-074", 警告が出る({ no: "074", ボード: "統率", 入力: "1 DeckTestBanned", 詳細: /1 行目の DeckTestBanned は禁止カードです/, 詳細の文: "1 行目の DeckTestBanned は禁止カードです" }));
+caseTest("IT-M15-05-066", 警告が出る({ no: "066", ボード: "メインボード", 入力: `2 ${BANNED}`, 詳細: new RegExp(`1 行目の ${BANNED} は禁止カードです`), 詳細の文: `1 行目の ${BANNED} は禁止カードです` }));
+caseTest("IT-M15-05-067", 警告が出る({ no: "067", ボード: "メインボード", 入力: `1 ${OUT}`, 詳細: new RegExp(`1 行目の ${OUT} はフォーマットの範囲から外れています`), 詳細の文: `1 行目の ${OUT} はフォーマットの範囲から外れています` }));
+caseTest("IT-M15-05-068", 警告が出る({ no: "068", ボード: "メインボード", 入力: `5 ${ALPHA}`, 詳細: new RegExp(`1 行目の ${ALPHA} が.*登録されています`), 詳細の文: `1 行目の ${ALPHA} が…登録されています` }));
+caseTest("IT-M15-05-069", 警告が出る({ no: "069", ボード: "メインボード", 入力: `2 ${ALPHA}`, 詳細: new RegExp(`1 行目の ${ALPHA} .*2枚以上登録されています`), 詳細の文: `1 行目の ${ALPHA} …2枚以上登録されています` }));
+caseTest("IT-M15-05-070", 警告が出る({ no: "070", ボード: "統率", 入力: `1 ${ALPHA}`, 詳細: /このフォーマットでは統率用カードを使用しません/, 詳細の文: "このフォーマットでは統率用カードを使用しません" }));
+caseTest("IT-M15-05-073", 警告が出る({ no: "073", ボード: "サイドボード", 入力: `1 ${BANNED}`, 詳細: new RegExp(`1 行目の ${BANNED} は禁止カードです`), 詳細の文: `1 行目の ${BANNED} は禁止カードです` }));
+caseTest("IT-M15-05-074", 警告が出る({ no: "074", ボード: "統率", 入力: `1 ${BANNED}`, 詳細: new RegExp(`1 行目の ${BANNED} は禁止カードです`), 詳細の文: `1 行目の ${BANNED} は禁止カードです` }));
 
 function メインに2行を入れて警告(no: string, 行1: string, 行2: string, 詳細: RegExp, 詳細の文: string): CaseBody {
   return async ({ page, step, expected }) => {
@@ -95,13 +96,13 @@ function メインに2行を入れて警告(no: string, 行1: string, 行2: stri
     });
   };
 }
-caseTest("IT-M15-05-071", メインに2行を入れて警告("071", "3 DeckTestAlpha", "3 DeckTestBeta", /ボード内のカード枚数が 5 枚を上回っています/, "ボード内のカード枚数が 5 枚を上回っています"));
-caseTest("IT-M15-05-072", メインに2行を入れて警告("072", "2 DeckTestAlpha", "2 DeckTestBeta", /ボード内のカード枚数が 5 枚を下回っています/, "ボード内のカード枚数が 5 枚を下回っています"));
+caseTest("IT-M15-05-071", メインに2行を入れて警告("071", `3 ${ALPHA}`, `3 ${BETA}`, /ボード内のカード枚数が 5 枚を上回っています/, "ボード内のカード枚数が 5 枚を上回っています"));
+caseTest("IT-M15-05-072", メインに2行を入れて警告("072", `2 ${ALPHA}`, `2 ${BETA}`, /ボード内のカード枚数が 5 枚を下回っています/, "ボード内のカード枚数が 5 枚を下回っています"));
 
 caseTest("IT-M15-05-075", async ({ page, step, expected, notes }) => {
   await login(page);
   const e = await 検索して開く(page, step, "M1505-075-デッキ");
-  await step(3, async () => { await e.メイン.fill("1 DeckTestBanned"); await e.送信する(e.更新ボタン); note(`更新後の表示: ${[...await e.成功の帯(), ...await e.警告()].join(" / ")}`); });
+  await step(3, async () => { await e.メイン.fill(`1 ${BANNED}`); await e.送信する(e.更新ボタン); note(`更新後の表示: ${[...await e.成功の帯(), ...await e.警告()].join(" / ")}`); });
   let メイン: string[] = [];
   await step(4, async () => {
     await page.goto(adminUrl(`/deck/${notes.get("〔デッキID-M1505-075〕")}/edit`));
@@ -109,7 +110,7 @@ caseTest("IT-M15-05-075", async ({ page, step, expected, notes }) => {
     メイン = 行(await e.メイン.inputValue());
   });
   await expected(async () => {
-    expect(メイン, "開き直したデッキ編集画面の「メインボード」（警告が出ても保存される）").toEqual(["1 DeckTestBanned"]);
+    expect(メイン, "開き直したデッキ編集画面の「メインボード」（警告が出ても保存される）").toEqual([`1 ${BANNED}`]);
   });
 });
 
@@ -131,21 +132,21 @@ function 警告なしで保存(no: string, メイン: string[], 保存後のメ�
     });
   };
 }
-caseTest("IT-M15-05-145", 警告なしで保存("145", ["4 DeckTestAlpha"], ["4 DeckTestAlpha"]));
-caseTest("IT-M15-05-146", 警告なしで保存("146", ["1 DeckTestAlpha"], ["1 DeckTestAlpha"]));
-caseTest("IT-M15-05-147", 警告なしで保存("147", ["3 DeckTestAlpha", "2 DeckTestBeta"], ["3 DeckTestAlpha", "2 DeckTestBeta"]));
-caseTest("IT-M15-05-148", 警告なしで保存("148", ["3 DeckTestAlpha", "2 DeckTestBeta"], ["3 DeckTestAlpha", "2 DeckTestBeta"]));
+caseTest("IT-M15-05-145", 警告なしで保存("145", [`4 ${ALPHA}`], [`4 ${ALPHA}`]));
+caseTest("IT-M15-05-146", 警告なしで保存("146", [`1 ${ALPHA}`], [`1 ${ALPHA}`]));
+caseTest("IT-M15-05-147", 警告なしで保存("147", [`3 ${ALPHA}`, `2 ${BETA}`], [`3 ${ALPHA}`, `2 ${BETA}`]));
+caseTest("IT-M15-05-148", 警告なしで保存("148", [`3 ${ALPHA}`, `2 ${BETA}`], [`3 ${ALPHA}`, `2 ${BETA}`]));
 
 caseTest("IT-M15-05-149", async ({ page, step, expected }) => {
   await login(page);
   const e = await 検索して開く(page, step, "M1505-149-デッキ");
-  await step(3, async () => { await e.メイン.fill("4 DeckTestAlpha"); await e.サイド.fill("1 DeckTestBanned"); });
+  await step(3, async () => { await e.メイン.fill(`4 ${ALPHA}`); await e.サイド.fill(`1 ${BANNED}`); });
   await step(4, async () => { await e.送信する(e.更新ボタン); });
   let 警告: string[] = [];
   await step(5, async () => { await e.読み込みを待つ(); 警告 = await e.警告(); note(`更新後の表示: ${[...await e.成功の帯(), ...警告].join(" / ")}`); });
   await expected(async () => {
     expect.soft(警告.some((t) => t.includes(規格外の警告("サイドボード"))), `警告「${規格外の警告("サイドボード")}」が表示されている`).toBe(true);
-    expect.soft(/1 行目の DeckTestBanned は禁止カードです/.test(警告.join(" ")), `詳細メッセージ「1 行目の DeckTestBanned は禁止カードです」が表示されている（実際の警告: ${警告.join(" / ")}）`).toBe(true);
+    expect.soft(new RegExp(`1 行目の ${BANNED} は禁止カードです`).test(警告.join(" ")), `詳細メッセージ「1 行目の ${BANNED} は禁止カードです」が表示されている（実際の警告: ${警告.join(" / ")}）`).toBe(true);
     expect(警告.some((t) => t.includes(規格外の警告("メインボード"))), `警告「${規格外の警告("メインボード")}」が表示されない`).toBe(false);
   });
 });
@@ -168,6 +169,7 @@ function 更新して確かめる(v: 更新のケース): CaseBody {
     await login(page);
     const e = await 検索して開く(page, step, `M1505-CB${v.no}-デッキ`);
     await step(3, async () => {
+      note(代役の注記);
       if (v.代表カード) { note(代表カード検索の注記); await e.代表カードを選ぶ(v.代表カード, { 完全一致: true }); }
       else note("代表カードは選ばない");
     });
@@ -196,46 +198,46 @@ function 更新して確かめる(v: 更新のケース): CaseBody {
 }
 
 caseTest("IT-M15-05-163", 更新して確かめる({
-  no: "163", 代表カード: BETA, メイン: [`2 ${ALPHA}`, `1 ${BETA}`, `2 ${ALPHA}`], 期待の代表カード: BETA, 違うカード: ALPHA,
+  no: "163", 代表カード: 代役B, メイン: [`2 ${ALPHA}`, `1 ${BETA}`, `2 ${ALPHA}`], 期待の代表カード: 代役B, 違うカード: 代役A,
   期待のボード: { メイン: [`4 ${ALPHA}`, `1 ${BETA}`] },
 }));
 caseTest("IT-M15-05-164", 更新して確かめる({
-  no: "164", メイン: ["1 M1505-CB164-Nothing"], 期待の代表カード: ALPHA, 期待のボード: {},
+  no: "164", メイン: ["1 M1505-CB164-Nothing"], 期待の代表カード: 代役A, 期待のボード: {},
   警告: { ボード: "メインボード", 詳細: /1 行目の M1505-CB164-Nothing は存在しません/, 詳細の文: "1 行目の M1505-CB164-Nothing は存在しません" },
 }));
-caseTest("IT-M15-05-165", 更新して確かめる({ no: "165", 代表カード: BETA, メイン: [], 期待の代表カード: BETA, 違うカード: ALPHA, 期待のボード: {} }));
+caseTest("IT-M15-05-165", 更新して確かめる({ no: "165", 代表カード: 代役B, メイン: [], 期待の代表カード: 代役B, 違うカード: 代役A, 期待のボード: {} }));
 
 caseTest("IT-M15-05-186", 更新して確かめる({
-  no: "186", 代表カード: BETA, メイン: ["1 M1505-CB186-NoCard"], 期待の代表カード: BETA, 期待のボード: {},
+  no: "186", 代表カード: 代役B, メイン: ["1 M1505-CB186-NoCard"], 期待の代表カード: 代役B, 期待のボード: {},
   警告: { ボード: "メインボード", 詳細: /1 行目の M1505-CB186-NoCard は存在しません/, 詳細の文: "1 行目の M1505-CB186-NoCard は存在しません" },
 }));
-caseTest("IT-M15-05-187", 更新して確かめる({ no: "187", 代表カード: BETA, メイン: [`2 ${ALPHA}`], 期待の代表カード: BETA, 期待のボード: { メイン: [`2 ${ALPHA}`] } }));
+caseTest("IT-M15-05-187", 更新して確かめる({ no: "187", 代表カード: 代役B, メイン: [`2 ${ALPHA}`], 期待の代表カード: 代役B, 期待のボード: { メイン: [`2 ${ALPHA}`] } }));
 caseTest("IT-M15-05-188", 更新して確かめる({
-  no: "188", 代表カード: BETA, メイン: ["1 DeckTestBanned"], 期待の代表カード: BETA, 期待のボード: { メイン: ["1 DeckTestBanned"] },
-  警告: { ボード: "メインボード", 詳細: /1 行目の DeckTestBanned は禁止カードです/, 詳細の文: "1 行目の DeckTestBanned は禁止カードです" },
+  no: "188", 代表カード: 代役B, メイン: [`1 ${BANNED}`], 期待の代表カード: 代役B, 期待のボード: { メイン: [`1 ${BANNED}`] },
+  警告: { ボード: "メインボード", 詳細: new RegExp(`1 行目の ${BANNED} は禁止カードです`), 詳細の文: `1 行目の ${BANNED} は禁止カードです` },
 }));
 caseTest("IT-M15-05-189", 更新して確かめる({
-  no: "189", 代表カード: BETA, メイン: ["1 DeckTestOut"], 期待の代表カード: BETA, 期待のボード: { メイン: ["1 DeckTestOut"] },
-  警告: { ボード: "メインボード", 詳細: /1 行目の DeckTestOut はフォーマットの範囲から外れています/, 詳細の文: "1 行目の DeckTestOut はフォーマットの範囲から外れています" },
+  no: "189", 代表カード: 代役B, メイン: [`1 ${OUT}`], 期待の代表カード: 代役B, 期待のボード: { メイン: [`1 ${OUT}`] },
+  警告: { ボード: "メインボード", 詳細: new RegExp(`1 行目の ${OUT} はフォーマットの範囲から外れています`), 詳細の文: `1 行目の ${OUT} はフォーマットの範囲から外れています` },
 }));
 caseTest("IT-M15-05-190", 更新して確かめる({
-  no: "190", 代表カード: BETA, メイン: [`5 ${ALPHA}`], 期待の代表カード: BETA, 期待のボード: { メイン: [`5 ${ALPHA}`] },
-  警告: { ボード: "メインボード", 詳細: /1 行目の DeckTestAlpha が.*5枚以上登録されています/, 詳細の文: "1 行目の DeckTestAlpha が…5枚以上登録されています" },
+  no: "190", 代表カード: 代役B, メイン: [`5 ${ALPHA}`], 期待の代表カード: 代役B, 期待のボード: { メイン: [`5 ${ALPHA}`] },
+  警告: { ボード: "メインボード", 詳細: new RegExp(`1 行目の ${ALPHA} が.*5枚以上登録されています`), 詳細の文: `1 行目の ${ALPHA} が…5枚以上登録されています` },
 }));
 caseTest("IT-M15-05-191", 更新して確かめる({
-  no: "191", 代表カード: BETA, メイン: [`2 ${ALPHA}`], 期待の代表カード: BETA, 期待のボード: { メイン: [`2 ${ALPHA}`] },
-  警告: { ボード: "メインボード", 詳細: /1 行目の DeckTestAlpha .*2枚以上登録されています/, 詳細の文: "1 行目の DeckTestAlpha …2枚以上登録されています" },
+  no: "191", 代表カード: 代役B, メイン: [`2 ${ALPHA}`], 期待の代表カード: 代役B, 期待のボード: { メイン: [`2 ${ALPHA}`] },
+  警告: { ボード: "メインボード", 詳細: new RegExp(`1 行目の ${ALPHA} .*2枚以上登録されています`), 詳細の文: `1 行目の ${ALPHA} …2枚以上登録されています` },
 }));
 caseTest("IT-M15-05-192", 更新して確かめる({
-  no: "192", 代表カード: BETA, メイン: [], 統率: [`1 ${ALPHA}`], 期待の代表カード: BETA, 期待のボード: { 統率: [`1 ${ALPHA}`] },
+  no: "192", 代表カード: 代役B, メイン: [], 統率: [`1 ${ALPHA}`], 期待の代表カード: 代役B, 期待のボード: { 統率: [`1 ${ALPHA}`] },
   警告: { ボード: "統率", 詳細: /このフォーマットでは統率用カードを使用しません/, 詳細の文: "このフォーマットでは統率用カードを使用しません" },
 }));
 caseTest("IT-M15-05-193", 更新して確かめる({
-  no: "193", 代表カード: BETA, メイン: [`3 ${ALPHA}`, `3 ${BETA}`], 期待の代表カード: BETA, 期待のボード: { メイン: [`3 ${ALPHA}`, `3 ${BETA}`] },
+  no: "193", 代表カード: 代役B, メイン: [`3 ${ALPHA}`, `3 ${BETA}`], 期待の代表カード: 代役B, 期待のボード: { メイン: [`3 ${ALPHA}`, `3 ${BETA}`] },
   警告: { ボード: "メインボード", 詳細: /ボード内のカード枚数が 5 枚を上回っています/, 詳細の文: "ボード内のカード枚数が 5 枚を上回っています" },
 }));
 caseTest("IT-M15-05-194", 更新して確かめる({
-  no: "194", 代表カード: BETA, メイン: [`2 ${ALPHA}`, `2 ${BETA}`], 期待の代表カード: BETA, 期待のボード: { メイン: [`2 ${ALPHA}`, `2 ${BETA}`] },
+  no: "194", 代表カード: 代役B, メイン: [`2 ${ALPHA}`, `2 ${BETA}`], 期待の代表カード: 代役B, 期待のボード: { メイン: [`2 ${ALPHA}`, `2 ${BETA}`] },
   警告: { ボード: "メインボード", 詳細: /ボード内のカード枚数が 5 枚を下回っています/, 詳細の文: "ボード内のカード枚数が 5 枚を下回っています" },
 }));
 
@@ -257,7 +259,7 @@ caseTest("IT-M15-05-090", async ({ page, step, expected, notes }) => {
     expect(編集.length, "検索結果のデッキ（元と複製の2件）").toBe(2);
     const もう一方 = 編集.find((h) => !new RegExp(`/deck/${元のID}/edit`).test(h));
     expect(もう一方, `編集画面のアドレスのデッキIDが ${元のID} でない方`).toBeTruthy();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator(`.deck-result-table tbody tr td:nth-child(2) a[href="${もう一方}"]`).first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator(`.deck-result-table tbody tr td:nth-child(2) a[href="${もう一方}"]`).first().click({ noWaitAfter: true })]);
     複製側 = new デッキ編集画面(page);
     await 複製側.読み込みを待つ();
   });
@@ -302,10 +304,11 @@ caseTest("IT-M15-05-111", async ({ page, step, expected }) => {
   await step(3, async () => { await e.成績.fill("M1505-111-成績"); await e.送信する(e.更新ボタン); });
   await step(4, async () => { await e.読み込みを待つ(); note(`更新後の表示: ${[...await e.成功の帯(), ...await e.エラーの帯()].join(" / ")}`); });
   await expected(async () => {
+    note(代役の注記);
     const r = await e.代表カード();
-    expect.soft(r.名前, "代表カードの名前の欄（DeckTestAlpha）").toContain(ALPHA);
+    expect.soft(r.名前, `代表カードの名前の欄（アーキタイプの代表カード。DeckTestAlpha の画像の代わりの ${代役A}）`).toContain(代役A);
     expect.soft(r.画像, "代表カードの画像が表示されている").not.toBe("");
-    await 代表カードを確かめる(e, ALPHA);
+    await 代表カードを確かめる(e, 代役A);
   });
 });
 

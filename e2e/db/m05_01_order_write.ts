@@ -199,30 +199,43 @@ export function 明細を足す(受注ID: string): void {
  */
 export function 受注を複製する(基の受注ID: string, 注文番号: string): string {
   if (注文番号.length > 11) throw new Error(`注文番号は11文字まで（${注文番号}）`);
-  const oc = 列("dtb_order", ["id", "pre_order_id", "order_number"]);
-  const base = 受注の確かめ(基の受注ID);
+  // 会員の列を先頭に置く（書き込みの窓口は、足す行の列を前から見て、確かめの行の値に当たる最初の列を親の列とする）
+  const oc = ["customer_id", ...列("dtb_order", ["id", "pre_order_id", "order_number", "customer_id"])];
+  // 足す受注の持ち主の確かめ: 写す受注は「基の受注（印つきの商品の明細を持つ）と同じ会員」の受注として足す（会員の列で親を確かめる）。
+  // 以前は基の受注ID・商品コードだけを返していて、足す行のどの列も当たらず「足す行の親の列が…見つからない」で止まっていた（2026-11-12・M05-01 14件）
   writeTestData({
     理由: "基の受注を写して受注を足す",
     sql: `insert into dtb_order (${oc.join(", ")}, order_number) select ${oc.map((c) => `s.${c}`).join(", ")}, $2::text from dtb_order s where s.id = $1::int`,
-    params: [基の受注ID, 注文番号], ...base, 最大行数: 1,
+    params: [基の受注ID, 注文番号],
+    対象の確かめ: `select o.customer_id as 会員ID, i.product_code as 商品コード from dtb_order o join dtb_order_item i on i.order_id = o.id
+                    where o.id = $1::int and o.customer_id is not null and i.product_code like $2`,
+    確かめのparams: [基の受注ID, `%${印}%`], 印, 最大行数: 1,
   });
   const found = query(`select id from dtb_order where order_number = $1 and deleted_at is null order by id desc limit 1`, [注文番号]);
   if (found.length === 0) throw new Error(`写した受注（注文番号 ${注文番号}）が見つからない`);
   const 新 = String(found[0].id);
 
+  // 写した受注の配送先・明細の持ち主の確かめ: 写した受注が、基の受注（印つきの商品の明細を持つ）と同じ会員の受注であること
+  const 写し = {
+    対象の確かめ: `select n.id as 受注ID, i.product_code as 商品コード from dtb_order n
+                    join dtb_order b on b.id = $2::int and b.customer_id = n.customer_id
+                    join dtb_order_item i on i.order_id = b.id
+                    where n.id = $1::int and n.order_number = $3 and i.product_code like $4`,
+    確かめのparams: [新, 基の受注ID, 注文番号, `%${印}%`], 印,
+  };
   const sc = 列("dtb_shipping", ["id", "order_id"]);
   writeTestData({
     理由: "基の受注の配送先を写す",
-    sql: `insert into dtb_shipping (${sc.join(", ")}, order_id) select ${sc.map((c) => `s.${c}`).join(", ")}, $2::int from dtb_shipping s where s.order_id = $1::int`,
-    params: [基の受注ID, 新], ...base, 最大行数: 5,
+    sql: `insert into dtb_shipping (order_id, ${sc.join(", ")}) select $2::int, ${sc.map((c) => `s.${c}`).join(", ")} from dtb_shipping s where s.order_id = $1::int`,
+    params: [基の受注ID, 新], ...写し, 最大行数: 5,
   });
   const ic = 列("dtb_order_item", ["id", "order_id", "shipping_id"]);
   writeTestData({
     理由: "基の受注の明細を写す",
-    sql: `insert into dtb_order_item (${ic.join(", ")}, order_id, shipping_id) select ${ic.map((c) => `s.${c}`).join(", ")}, $2::int,
+    sql: `insert into dtb_order_item (order_id, ${ic.join(", ")}, shipping_id) select $2::int, ${ic.map((c) => `s.${c}`).join(", ")},
             case when s.shipping_id is null then null else (select sh.id from dtb_shipping sh where sh.order_id = $2::int order by sh.id limit 1) end
             from dtb_order_item s where s.order_id = $1::int`,
-    params: [基の受注ID, 新], ...base, 最大行数: 30,
+    params: [基の受注ID, 新], ...写し, 最大行数: 30,
   });
   return 新;
 }
@@ -230,18 +243,20 @@ export function 受注を複製する(基の受注ID: string, 注文番号: stri
 /** 印つきの会員（基の会員が印つきの受注を持つ）を写して、印つきのメールアドレスの会員を足す。会員IDを返す */
 export function 会員を複製する(基の会員ID: string, 新メール: string, 顧客グループID?: string): string {
   if (!新メール.includes(印)) throw new Error("写した会員のメールアドレスには実行の印を含める");
-  const base = {
-    対象の確かめ: `select c.id as 会員ID, i.product_code as 商品コード from dtb_customer c
-                    join dtb_order o on o.customer_id = c.id join dtb_order_item i on i.order_id = o.id
-                    where c.id = $1::int and i.product_code like $2 limit 1`,
-    確かめのparams: [基の会員ID, `%${印}%`], 印,
-  };
-  const cc = 列("dtb_customer", ["id", "email", "secret_key"]);
+  // 姓の列を先頭に置き、確かめの行にも姓を出す（書き込みの窓口は、足す行の列を前から見て、確かめの行の値に当たる最初の列を親の列とする）。
+  // 以前は確かめの行が基の会員ID・商品コードだけで、足す行（IDもメールも新しい）のどの列も当たらず「足す行の親の列が…見つからない」で
+  // 止まっていた（2026-11-13・M05-01-043/045。66aae32b1 で受注の写しだけ直し、会員の写しが残っていた。m08_01_write.ts の会員を写す と同じ直し方）
+  const cc = ["name01", ...列("dtb_customer", ["id", "email", "secret_key", "name01"])];
   writeTestData({
     理由: "基の会員を写して会員を足す",
     sql: `insert into dtb_customer (${cc.join(", ")}, email, secret_key) select ${cc.map((c) => `s.${c}`).join(", ")}, $2::text,
             substr(md5(random()::text || clock_timestamp()::text), 1, 32) from dtb_customer s where s.id = $1::int`,
-    params: [基の会員ID, 新メール], ...base, 最大行数: 1,
+    params: [基の会員ID, 新メール],
+    // 写す元の確かめ: 基の会員が印つきの商品の明細の受注を持つこと（足す行は、その会員の姓を写したもの）
+    対象の確かめ: `select c.name01 as 姓, c.id as 会員ID, i.product_code as 商品コード from dtb_customer c
+                    join dtb_order o on o.customer_id = c.id join dtb_order_item i on i.order_id = o.id
+                    where c.id = $1::int and c.name01 is not null and i.product_code like $2 limit 1`,
+    確かめのparams: [基の会員ID, `%${印}%`], 印, 最大行数: 1,
   });
   const found = query(`select id from dtb_customer where email = $1 order by id desc limit 1`, [新メール]);
   if (found.length === 0) throw new Error(`写した会員（${新メール}）が見つからない`);
@@ -251,7 +266,13 @@ export function 会員を複製する(基の会員ID: string, 新メール: stri
     理由: "基の会員のプレイヤー情報を写す",
     sql: `insert into dtb_player (${pc.join(", ")}, customer_id, email, customer_group_id) select ${pc.map((c) => `s.${c}`).join(", ")}, $2::int, $3::text,
             coalesce(nullif($4::text, '')::int, s.customer_group_id) from dtb_player s where s.customer_id = $1::int`,
-    params: [基の会員ID, 新, 新メール, 顧客グループID ?? ""], ...base, 最大行数: 1,
+    params: [基の会員ID, 新, 新メール, 顧客グループID ?? ""],
+    // 足すプレイヤー情報の持ち主の確かめ: いま写して足した印つきのメールの会員（足す行の会員の列が当たる）で、
+    // 写す元が印つきの商品の明細の受注を持つ会員であること（以前は基の会員の確かめで、足す行のどの列も当たらなかった）
+    対象の確かめ: `select n.id as 会員ID, n.email as メール, i.product_code as 商品コード from dtb_customer n
+                    join dtb_order o on o.customer_id = $2::int join dtb_order_item i on i.order_id = o.id
+                    where n.id = $1::int and n.email = $3 and i.product_code like $4 limit 1`,
+    確かめのparams: [新, 基の会員ID, 新メール, `%${印}%`], 印, 最大行数: 1,
   });
   return 新;
 }
@@ -284,6 +305,11 @@ export function 受注の削除日時(受注ID: string): string | null {
   const r = query(`select deleted_at::text as d from dtb_order where id = $1::int`, [受注ID])[0];
   if (!r) throw new Error(`受注ID ${受注ID} の受注が無い`);
   return r.d;
+}
+
+/** 注文番号に文字を含む、削除済みでない受注の数（検索パターンの注文番号の条件に合う受注の数。読むだけ） */
+export function 注文番号を含む受注の数(部分: string): number {
+  return Number(query(`select count(*) as n from dtb_order where order_number like $1 and deleted_at is null`, [`%${部分}%`])[0].n);
 }
 
 /** 店名の店舗ID（読むだけ。同じ店名が複数あれば最新） */

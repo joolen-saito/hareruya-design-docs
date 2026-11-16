@@ -81,7 +81,7 @@ caseTest("IT-M05-19-024", async ({ page, step, expected, capture }) => {
     await capture("見出しを押したあとの作成条件");
   });
   await expected(async () => {
-    expect.soft(初期で表示, "初期状態では作成条件が折りたたまれている（入力欄が見えるか）").toBe(false);
+    expect.soft(初期で表示 === false, "初期状態では作成条件が折りたたまれている（入力欄が見えるか）").toBe(true);
     expect.soft(押した後で表示, "見出しを押した後は注文番号の範囲と注文日の範囲の入力欄が表示される").toBe(true);
   });
 });

@@ -20,8 +20,8 @@ export class MtgMasterPage {
     await this.page.waitForLoadState("load");
     await this.page.locator('select[name="entity"]').selectOption({ label: 種別の表示名[種別] });
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.page.locator('form[method="get"] button[type="submit"]').click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.page.locator('form[method="get"] button[type="submit"]').click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     await expect(this.page.locator("form#edit_form table.mtg-master-table"), `${種別の表示名[種別]}の一覧`).toBeVisible();
@@ -69,8 +69,8 @@ export class MtgMasterPage {
   /** 「登録」を押して保存の結果を確かめる */
   async save(what: string): Promise<string[]> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.page.locator('button[type="submit"][form="edit_form"]').click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.page.locator('button[type="submit"][form="edit_form"]').click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     return expectSaved(this.page, what);
@@ -98,8 +98,8 @@ export class FormatPage {
   async openNew(): Promise<void> {
     await this.openList();
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.page.locator('a.btn[href$="/format/new"]').first().click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.page.locator('a.btn[href$="/format/new"]').first().click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     await expect(this.page.locator("#admin_format_nameJp"), "フォーマット詳細(登録)のフォーマット名(日)").toBeVisible();
@@ -129,8 +129,8 @@ export class FormatPage {
   /** 「登録」を押す。登録のあとは編集画面へ移るので、そのアドレスの番号を返す */
   async register(what: string): Promise<string> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.page.locator('button[type="submit"]:has-text("登録")').last().click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.page.locator('button[type="submit"]:has-text("登録")').last().click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     await expectSaved(this.page, what);

@@ -6,7 +6,7 @@
  */
 import { Locator, Page, expect } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { chooseByLabel, expectSaved, setChecked } from "./common";
+import { chooseByLabel, expectSaved, setChecked, topErrorAlerts } from "./common";
 import { openEventEdit } from "./event";
 
 const OPEN = 30_000;
@@ -47,7 +47,7 @@ export class ScheduleFormPage {
   get イベントページURLのリンク() { return this.page.locator("a[target='_blank'][href*='/events/']").first(); }
   /** 定員の右の単位の文字（人・組） */
   get 定員の接尾辞() { return this.page.locator(".col-1 .text-muted").first(); }
-  get 画面エラー() { return this.page.locator(".alert-danger"); }
+  get 画面エラー() { return topErrorAlerts(this.page); } // 開発用の設定のときに常に出る帯は除く
 
   /** 画面上部のラベル（「イベントID」「イベント詳細ID」「イベント名（日）」）の値 */
   async ラベルの値(ラベル: string): Promise<string> {
@@ -107,6 +107,43 @@ export class ScheduleFormPage {
     }
     await this.page.waitForLoadState("load");
     return { sent: true, 止めた項目: [] };
+  }
+
+  // ---- 2026-11-12 追加（押して送信する・確認画面の削除を押す・削除を確定する は変えない） ----
+  /**
+   * ボタンを押して送信し、送信（POST）の応答と、応答の画面への移動（読み込みの完了）を待つ。
+   * 押して送信する は、送られたあと読み込み済みの画面の load を待つだけで、応答の画面への移動を待たない
+   * （直後の DB の読みが保存の前になり、同じアドレスへ戻る画面では押す前の画面を見てしまう）。
+   */
+  async 押して送信を待つ(ボタン: Locator): Promise<{ sent: boolean; 止めた項目: string[]; 応答: number | null }> {
+    // ブラウザの入力チェックで止まる見込みのときは、送信を長く待たない
+    const 押す前 = await this.page.locator("form#schedule_form :invalid").count();
+    const res = this.page
+      .waitForResponse((r) => r.request().method() === "POST" && /\/schedule\//.test(r.url()) && r.request().isNavigationRequest(), { timeout: 押す前 ? 8_000 : 30_000 })
+      .catch(() => null);
+    const 移動 = this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => null);
+    await ボタン.click({ timeout: OPEN });
+    const r = await res;
+    if (!r) {
+      const bad = await this.page.locator("form#schedule_form :invalid").evaluateAll((els) => els.map((e) => (e as HTMLInputElement).name));
+      return { sent: false, 止めた項目: bad, 応答: null };
+    }
+    await 移動;
+    await this.page.waitForLoadState("load");
+    return { sent: true, 止めた項目: [], 応答: r.status() };
+  }
+
+  /** 確認画面（モーダル）の削除ボタンを押し、応答の画面への移動を待つ */
+  async 確認画面の削除を押して待つ(日程ID: string): Promise<void> {
+    const modal = this.page.locator(`#schedule_delete_${日程ID}`);
+    await expect(modal, "日程削除の確認画面").toBeVisible({ timeout: OPEN });
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), modal.locator("a.btn-ec-delete").click({ timeout: OPEN, noWaitAfter: true })]);
+  }
+
+  /** 日程の削除: 削除ボタン → 確認の削除ボタン（応答の画面への移動を待つ） */
+  async 削除を確定して待つ(日程ID: string): Promise<void> {
+    await this.削除ボタン.click({ timeout: OPEN });
+    await this.確認画面の削除を押して待つ(日程ID);
   }
 
   /** 登録・保存の送信の結果が成功であることを確かめる（成功メッセージ） */

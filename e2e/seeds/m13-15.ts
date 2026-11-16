@@ -3,7 +3,7 @@
  *
  * 依頼者の方針（2026-11-10）による読み替え:
  * - 既存の店舗（「東京店」tc・「大阪店」os・「名古屋店」など）の画像は消さない・書き換えない。シード表の「東京店」「大阪店」「名古屋店」は、
- *   E2E の試験用店舗（店名の末尾に印「-M1315」。支店URLは zx1315t・zx1315o・zx1315n。固定名で使い回す）に読み替える。
+ *   E2E の店舗（東京店 = 店舗ID 221・大阪店 = 4973・名古屋店 = 4974。店舗は作らない。依頼者 2026-11-15）に読み替える。
  *   シード表の識別子「tc」「os」「nk」は、試験店舗の支店URL（保管先のフォルダ名）に読み替える（名古屋店の識別子の食い違いもこれで無くなる）。
  * - 「画像URL=…／ほかのイベントバナー画像なし」「画像=0件」など、保管先へ名前を決めたファイルを置く・全て消す準備は行わない。
  *   ケースの冒頭（手順の前）で、試験店舗へ画面から画像をアップロードし（ファイル名は画面が採番する）、増えた分・アップロードの前後の差で確かめる。
@@ -12,10 +12,7 @@
  * 作らない（実装しない）ケース: 012・017（2000件・2001件の大量の画像）、018（保管先の下の区分フォルダ。画面のアップロードでは作れない）。
  *
  * 作るシード:
- * - S-M13-15-SHOPS: 店舗登録画面で試験店舗3つ（上の読み替え）を用意し（あれば使う）、店舗一覧のIDを控える。
- *   あったものを使うときは、店舗編集画面で支店URLが決めた値であることを確かめる（違えば止める）。
- *   そのほかの必須項目（会社名・店名カナ・店名英語・住所・電話番号・メールアドレスなど）はシード表が「入力チェックを通る任意の値」とするだけなので、
- *   他の店舗と重ならない値にした。
+ * - S-M13-15-SHOPS: 当てた3店舗（上の読み替え）が店舗一覧にあることを店舗IDで確かめ、店舗IDを控え、店舗編集画面から支店URL（保管先の識別子）を読む（3店舗で重ならないこと）。
  * - S-M13-15-UPLOAD-FILES: e2e/fixtures/m13-15/ に置いた入力ファイル（形式と大きさはシード表のとおり。作り方は同じ場所の README.md）。
  *   ファイルの大きさと、先頭の数バイトで画像の種別（GIF・JPEG・PNG・画像でない）を確かめる。
  * - S-M13-15-CASE-0NN（実装した各ケースの番号）: メンバー登録画面で管理者（ログインID m1315_admin-0NN）を登録し、メンバー編集画面のアドレスの番号を控える。
@@ -32,21 +29,23 @@
 import fs from "node:fs";
 import path from "node:path";
 import { REPO_ROOT, SETUP_ADMIN } from "../config/env";
+import { rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { BannerImagePage, ファイル名, 店舗の支店URL } from "../pages/admin/m13_15_banner_image";
-import { ensureMember } from "../pages/admin/member";
-import { ensureTenant } from "../pages/admin/tenant";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
+import { 店舗IDで選ぶ, 表の店舗 } from "../pages/admin/store_pick";
 import { QK1302_ADMIN } from "./m13-02-qk";
 
-export const 東京店 = "東京店-M1315";
-export const 大阪店 = "大阪店-M1315";
-export const 名古屋店 = "名古屋店-M1315";
-/** 試験店舗の支店URL（保管先のフォルダ名。シード表の識別子 tc・os・nk の読み替え）。zx で始めて、一覧の降順で実在の店舗より前に並べる */
-export const 東京店の識別子 = "zx1315t";
-export const 大阪店の識別子 = "zx1315o";
-export const 名古屋店の識別子 = "zx1315n";
+/** 正本の「東京店」は E2E の店舗 221、「大阪店」は 4973、「名古屋店」は 4974（店舗は作らない。依頼者 2026-11-15。画像のアップロードで書き換えるので E2E の店舗だけを使う） */
+export const 東京店 = 表の店舗("221").店名;
+export const 大阪店 = 表の店舗("4973").店名;
+export const 名古屋店 = 表の店舗("4974").店名;
+/** 当てた店舗の支店URL（保管先のフォルダ名。シード表の識別子 tc・os・nk の読み替え）。S-M13-15-SHOPS が店舗編集画面から読んで入れる */
+export let 東京店の識別子 = "";
+export let 大阪店の識別子 = "";
+export let 名古屋店の識別子 = "";
 
 /** 入力ファイルの置き場 */
 export const M1315_FILES = path.join(REPO_ROOT, "e2e", "fixtures", "m13-15");
@@ -55,28 +54,33 @@ export const 入力ファイル = (name: string): string => path.join(M1315_FILE
 /** 名古屋店だけに編集権限のある管理者（名古屋店の画像を用意する。ケースの管理者は名古屋店を編集できない） */
 export const M1315_NAGOYA: Account = { loginId: "m1315_admin-nagoya", password: "M1315PassNagoyaX" };
 
-/** ケースの番号（"001" など）の管理者 */
-export const M1315_ADMIN = (n: string): Account => ({ loginId: `m1315_admin-${n}`, password: `M1315Pass${n}X` });
+/**
+ * ケースの番号（"001" など）の管理者。ログインID（＝名前）は正本の「m1315_admin-0NN」に決まった印を付けた値（m1315_admin-0NN-e2e）にする。
+ * 開発環境には、試験店舗へ読み替える前の E2E（2026-11-10）が作った「m1315_admin-001」（所属・編集可能店舗が既存の東京店・大阪店）が残っていて、
+ * ログインIDで選ぶと内容が違って止まる（2026-11-14 の 001）。ほかの方の試験の管理者とも重ならないよう、印つきの値で1度だけ作って使い回す。
+ */
+export const M1315_ADMIN = (n: string): Account => ({ loginId: rcFixed(`m1315_admin-${n}`).toLowerCase(), password: `M1315Pass${n}X` });
 
 // ---- 店舗 ----
 
 const 店舗 = [
-  { 控え: "〔店舗ID-M1315-共有A〕", 店名: 東京店, 店名カナ: "トウキョウテン", 店名英語: "Image Setting Test Tokyo", 支店URL: 東京店の識別子, 店名略称3文字: "zx1", ショップ名略称: 東京店 },
-  { 控え: "〔店舗ID-M1315-共有B〕", 店名: 大阪店, 店名カナ: "オオサカテン", 店名英語: "Image Setting Test Osaka", 支店URL: 大阪店の識別子, 店名略称3文字: "zx2", ショップ名略称: 大阪店 },
-  { 控え: "〔店舗ID-M1315-共有C〕", 店名: 名古屋店, 店名カナ: "ナゴヤテン", 店名英語: "Image Setting Test Nagoya", 支店URL: 名古屋店の識別子, 店名略称3文字: "zx3", ショップ名略称: 名古屋店 },
-];
+  { 控え: "〔店舗ID-M1315-共有A〕", 店舗ID: "221", 呼び名: "東京店" },
+  { 控え: "〔店舗ID-M1315-共有B〕", 店舗ID: "4973", 呼び名: "大阪店" },
+  { 控え: "〔店舗ID-M1315-共有C〕", 店舗ID: "4974", 呼び名: "名古屋店" },
+] as const;
 
 defineSeed("S-M13-15-SHOPS", async ({ browser, notes, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    for (const { 控え, ...v } of 店舗) {
-      const id = await ensureTenant(page, v, (m) => reportSeedIssue(seed.シードID, m));
-      const url = await 店舗の支店URL(page, id);
-      // 試験店舗なので、支店URLが決めた値でなければ止める（共有の店舗は書き換えない）
-      if (url !== v.支店URL) throw new Error(`${seed.シードID}: 店名「${v.店名}」の店舗（店舗ID ${id}）の支店URLが「${url}」で、決めた「${v.支店URL}」と違う`);
-      notes.set(控え, id);
+    const urls: string[] = [];
+    for (const { 控え, 店舗ID, 呼び名 } of 店舗) {
+      const s = await 店舗IDで選ぶ(page, 店舗ID, 呼び名, (m) => reportSeedIssue(seed.シードID, m));
+      urls.push(await 店舗の支店URL(page, s.id));
+      notes.set(控え, s.id);
     }
-    reportSeedIssue(seed.シードID, "既存の店舗の画像は消さない・書き換えない方針のため、シード表の東京店（tc）・大阪店（os）・名古屋店（nk）は、E2E の試験店舗"
-      + `（${[東京店, 大阪店, 名古屋店].map((n, i) => `「${n}」（支店URL ${[東京店の識別子, 大阪店の識別子, 名古屋店の識別子][i]}）`).join("・")}）に読み替えた`);
+    if (new Set(urls).size !== urls.length || urls.some((u) => !u)) throw new Error(`${seed.シードID}: 当てた3店舗の支店URLが空か重なっている（${urls.join("・")}）`);
+    [東京店の識別子, 大阪店の識別子, 名古屋店の識別子] = urls;
+    reportSeedIssue(seed.シードID, "既存の店舗の画像は消さない・書き換えない方針のため、シード表の東京店（tc）・大阪店（os）・名古屋店（nk）は、E2E の店舗"
+      + `（${[東京店, 大阪店, 名古屋店].map((n, i) => `「${n}」（店舗ID ${店舗[i].店舗ID}・支店URL ${urls[i]}）`).join("・")}）に読み替えた（店舗は作らない。依頼者 2026-11-15）`);
   });
 });
 
@@ -145,6 +149,7 @@ async function 名古屋店の画像を用意する(browser: import("@playwright
 function defineCaseAdminSeed(seedId: string, n: string, o: { 名古屋店の画像?: boolean; needs?: string[] } = {}): void {
   defineSeed(seedId, { needs: ["S-M13-15-SHOPS", ...(o.needs ?? [])] }, async ({ browser, notes, seed }) => {
     notes.set(`〔管理者ID-M1315-${n}〕`, await 管理者を用意する(browser, n));
+    reportSeedIssue(seed.シードID, `管理者（ログインID m1315_admin-${n}）は、ログインID・名前に決まった印を付けた「${M1315_ADMIN(n).loginId}」で作った（開発環境に、試験店舗へ読み替える前に作った同じログインIDの管理者が残っていて、所属・編集可能店舗が違うため）`);
     if (o.名古屋店の画像) await 名古屋店の画像を用意する(browser, seed.シードID);
   });
 }

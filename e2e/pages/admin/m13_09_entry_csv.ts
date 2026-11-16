@@ -29,7 +29,7 @@ export async function ログアウトする(page: Page): Promise<void> {
   await page.locator(".c-headerBar__userMenu").click();
   const link = page.locator(".popover").getByRole("link", { name: "ログアウト", exact: true });
   await expect(link, "利用者のメニューの「ログアウト」").toBeVisible();
-  await Promise.all([page.waitForURL(/\/login/, { waitUntil: "load", timeout: 60_000 }), link.click()]);
+  await Promise.all([page.waitForURL(/\/login/, { waitUntil: "load", timeout: 120_000}), link.click({ noWaitAfter: true })]);
 }
 
 export const CSVダウンロードのパス = "/event/entry/csv";
@@ -62,7 +62,7 @@ export async function 出力する項目を読む(page: Page, CSV種別: string)
   await expect(type, "CSV出力項目設定のCSV種別").toBeVisible({ timeout: 30_000 });
   const now = await type.evaluate((n) => ((n as HTMLSelectElement).selectedOptions[0]?.textContent ?? "").trim());
   if (now !== CSV種別) {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), type.selectOption({ label: CSV種別 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), type.selectOption({ label: CSV種別 })]);
   }
   return (await page.locator("#csv-output option").allInnerTexts()).map((t) => t.trim()).filter(Boolean);
 }

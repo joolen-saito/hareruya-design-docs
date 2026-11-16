@@ -10,6 +10,7 @@
  */
 import { Dialog, expect, Locator, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
+import { withoutEnvBanners } from "./common";
 
 const OPEN = 30_000;
 
@@ -201,9 +202,197 @@ export class OtcDetail {
   /** 画面上部の通知（成功・エラー）の文 */
   async 通知の文(): Promise<{ 成功: string[]; エラー: string[] }> {
     const t = async (sel: string) => (await this.page.locator(sel).allInnerTexts()).map((s) => s.replace(/\s+/g, " ").trim()).filter(Boolean);
-    return { 成功: await t(".alert-success"), エラー: await t(".alert-danger") };
+    return { 成功: await t(".alert-success"), エラー: withoutEnvBanners(await t(".alert-danger")) }; // 開発用の設定のときに常に出る帯は除く
   }
+
+  // ---- 2026-11-12 追加: 個別入力商品の実在庫情報登録・商品検索モーダル（実在庫情報の商品追加と共通のモーダル #registModal） ----
+
+  /** 個別入力商品情報の表で、商品名の行 */
+  個別入力商品の行(商品名: string): Locator {
+    const table = this.枠("買取情報").locator("table").filter({ has: this.page.locator("th", { hasText: "実在庫情報登録" }) }).first();
+    return table.locator("tbody tr").filter({ has: this.page.locator("td", { hasText: new RegExp(`^\\s*${esc(商品名)}\\s*$`) }) });
+  }
+
+  /** 個別入力商品の行の「実在庫情報登録」ボタン（未登録の行だけにある） */
+  実在庫登録ボタン(商品名: string): Locator {
+    return this.個別入力商品の行(商品名).getByRole("button", { name: "実在庫情報登録", exact: true });
+  }
+
+  /** 個別入力商品の行の「実在庫情報登録」ボタンを押して、商品検索モーダルが開くのを待つ */
+  async 実在庫登録を押す(商品名: string): Promise<void> {
+    const b = this.実在庫登録ボタン(商品名);
+    await expect(b, `個別入力商品「${商品名}」の実在庫情報登録ボタン`).toHaveCount(1, { timeout: OPEN });
+    await b.click({ timeout: OPEN });
+    await expect(this.商品検索モーダル(), "商品検索モーダル").toBeVisible({ timeout: OPEN });
+  }
+
+  /** 実在庫情報の増減数編集モードの「商品追加」を押して、商品検索モーダルが開くのを待つ */
+  async 商品追加でモーダルを開く(): Promise<void> {
+    await this.商品追加を押す();
+    await expect(this.商品検索モーダル(), "商品検索モーダル").toBeVisible({ timeout: OPEN });
+  }
+
+  readonly モーダルの検索語 = () => this.商品検索モーダル().locator("#admin_search_product_id");
+  readonly モーダルのカテゴリ = () => this.商品検索モーダル().locator("#admin_search_product_category_id");
+  readonly モーダルの結果 = () => this.商品検索モーダル().locator("#searchProductModalList");
+  /** モーダルの結果の、商品ごとの行（決定ボタンのある行） */
+  readonly モーダルの結果の行 = () => this.モーダルの結果().locator("tr").filter({ has: this.page.locator("button.add-order-item") });
+
+  /** モーダルの「商品名・ID・コード」に入れ（null なら変えない）、カテゴリを表示名で選び（null なら変えない）、検索を押して結果が出るのを待つ */
+  async モーダルで検索する(語: string | null, カテゴリ: string | null = null): Promise<void> {
+    if (語 !== null) await this.モーダルの検索語().fill(語, { timeout: OPEN });
+    if (カテゴリ !== null) {
+      const opts = await this.モーダルのカテゴリ().locator("option").evaluateAll((os) => os.map((o) => ({ v: (o as HTMLOptionElement).value, t: (o.textContent ?? "").replace(/[\s　]+/g, " ").trim() })));
+      const hit = opts.filter((o) => o.v !== "" && o.t.replace(/^[└├─│\s]+/, "") === カテゴリ);
+      if (hit.length !== 1) throw new Error(`商品検索モーダルのカテゴリに「${カテゴリ}」の選択肢が ${hit.length} 件（1件のはず）`);
+      await this.モーダルのカテゴリ().selectOption(hit[0].v, { timeout: OPEN });
+    }
+    const res = this.page.waitForResponse((r) => r.request().method() === "POST" && /\/search\/product$/.test(new URL(r.url()).pathname), { timeout: 60_000 });
+    await this.商品検索モーダル().locator("#searchProductModalButton").click({ timeout: OPEN });
+    const r = await res;
+    expect(r.status(), "商品検索の応答").toBeLessThan(400);
+    await expect(this.モーダルの結果().locator("table"), "商品検索モーダルの検索結果の表").toHaveCount(1, { timeout: 60_000 });
+  }
+
+  /** モーダルの結果（商品ID・商品名・商品コードの選択肢） */
+  async モーダルの結果を読む(): Promise<{ 商品ID: string; 商品名: string; 選択肢: { 値: string; 表示: string; 商品コード: string }[] }[]> {
+    return this.モーダルの結果の行().evaluateAll((trs) => trs.map((tr) => {
+      const tds = Array.from(tr.querySelectorAll(":scope > td"));
+      const opts = Array.from(tr.querySelectorAll('select[name="product_class"] option')) as HTMLOptionElement[];
+      return {
+        商品ID: (tds[0]?.textContent ?? "").replace(/\s+/g, " ").trim(),
+        商品名: (tds[1]?.textContent ?? "").replace(/\s+/g, " ").trim(),
+        選択肢: opts.map((o) => ({ 値: o.value, 表示: (o.textContent ?? "").replace(/\s+/g, " ").trim(), 商品コード: o.dataset.productCode ?? "" })),
+      };
+    }));
+  }
+
+  /** 商品コードの規格を持つ結果の行 */
+  モーダルの規格の行(商品コード: string): Locator {
+    return this.モーダルの結果の行().filter({ has: this.page.locator(`option[data-product-code="${商品コード}"]`) });
+  }
+
+  /** 結果の行で、商品コードの規格を選ぶ（その行を返す） */
+  async モーダルで規格を選ぶ(商品コード: string): Promise<Locator> {
+    const row = this.モーダルの規格の行(商品コード);
+    await expect(row, `商品検索の結果に商品コード「${商品コード}」の規格を持つ商品が1件`).toHaveCount(1, { timeout: OPEN });
+    const value = await row.locator(`option[data-product-code="${商品コード}"]`).first().getAttribute("value");
+    if (!value) throw new Error(`商品コード「${商品コード}」の選択肢に値が無い`);
+    await row.locator('select[name="product_class"]').selectOption(value, { timeout: OPEN });
+    return row;
+  }
+
+  /** 開発者ツールの操作の代わり: 選んでいる規格の選択肢の値（送られる商品規格ID）を書き換える */
+  async 選んだ規格の値を変える(row: Locator, 値: string): Promise<void> {
+    const sel = row.locator('select[name="product_class"]');
+    await sel.evaluate((s, v) => {
+      const e = s as HTMLSelectElement;
+      const o = e.selectedOptions[0];
+      if (!o) throw new Error("規格が選ばれていない");
+      o.value = v;
+      e.value = v;
+    }, 値);
+    expect(await sel.inputValue(), "書き換えた商品規格IDの値").toBe(値);
+  }
+
+  /**
+   * 開発者ツールの操作の代わり: 実在庫情報登録の送信フォーム（決定を押すと画面のスクリプトが作って送る）の、なりすまし対策トークンを
+   * 消す（null）・値を変える。フォームは押した瞬間に作られて送られるので、フォームを送る関数を差し替えて、送る直前に細工する
+   * （送信先が実在庫情報登録のフォームだけ。ほかのフォームはそのまま送る）。
+   */
+  async 実在庫登録のトークンを細工する(値: string | null): Promise<void> {
+    await this.page.evaluate((v) => {
+      const proto = HTMLFormElement.prototype as unknown as { submit: () => void; __m0603?: boolean };
+      if (proto.__m0603) throw new Error("送信の差し替えは1度だけ");
+      const orig = proto.submit;
+      proto.submit = function (this: HTMLFormElement) {
+        if (/register-individual-stock/.test(this.action)) {
+          const t = this.querySelector('input[name="_token"]') as HTMLInputElement | null;
+          if (!t) throw new Error("実在庫情報登録の送信フォームにトークンの入力要素が無い");
+          if (v === null) t.remove(); else t.value = v;
+        }
+        return orig.call(this);
+      };
+      proto.__m0603 = true;
+    }, 値);
+  }
+
+  /**
+   * 送信を見張る。pathname が re に当たる POST の要求を待つ関数を返す（要求の本文と、応答の状態を返す）。
+   * 更新を拒否されるケースで、操作が送られずに「変わらない」で合格になるのを防ぐため、要求が送られたことを確かめるのに使う。
+   */
+  送信を見張る(re: RegExp): () => Promise<{ 本文: string; 状態: number }> {
+    const req = this.page.waitForRequest((r) => r.method() === "POST" && re.test(new URL(r.url()).pathname), { timeout: 60_000 });
+    req.catch(() => undefined);
+    return async () => {
+      const r = await req;
+      const res = await r.response();
+      return { 本文: r.postData() ?? "", 状態: res?.status() ?? 0 };
+    };
+  }
+
+  /** モーダルの結果の行の「決定」を押す（実在庫情報登録のモード: 画面のスクリプトが送信して画面が移る） */
+  async 決定して送る(row: Locator): Promise<void> {
+    await Promise.all([
+      this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}),
+      row.locator("button.add-order-item").click({ timeout: OPEN, noWaitAfter: true }),
+    ]);
+    await this.page.waitForLoadState("load");
+  }
+
+  /** モーダルの結果の行の「決定」を押す（商品追加のモード: モーダルが閉じ、増減数編集モードの表に行が足される） */
+  async 決定して足す(row: Locator): Promise<void> {
+    await row.locator("button.add-order-item").click({ timeout: OPEN });
+    await expect(this.商品検索モーダル(), "商品検索モーダルが閉じる").toBeHidden({ timeout: OPEN });
+  }
+
+  /** 増減数編集モードで、商品追加で足された行（画面のスクリプトが足した行） */
+  readonly 足された行 = () => this.編集モードの表().locator("tbody tr.js-added-stock-row");
+
+  /** 足された行の増減数の欄に入れる */
+  async 足された行の増減数を入れる(商品コード: string, 値: number): Promise<void> {
+    const f = this.足された行().filter({ has: this.page.locator("td", { hasText: new RegExp(`^\\s*${esc(商品コード)}\\s*$`) }) }).locator('input[type="number"]');
+    await expect(f, `足した商品コード ${商品コード} の増減数の欄`).toHaveCount(1, { timeout: OPEN });
+    await f.fill(String(値), { timeout: OPEN });
+  }
+
+  /** 入庫済みにするを押し、その送信の応答の状態を返す（送られたことを確かめる） */
+  async 入庫済みにするを押して応答を待つ(): Promise<number> {
+    const [res] = await Promise.all([
+      this.page.waitForResponse((r) => r.request().method() === "POST" && /\/otcbuyorder\/\d+\/restocked$/.test(new URL(r.url()).pathname), { timeout: 60_000 }),
+      this.入庫済みにするボタン().click({ timeout: OPEN }),
+    ]);
+    await this.page.waitForLoadState("load");
+    return res.status();
+  }
+}
+
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** 画面の通知・本文から、権限で止められたことを示す文を探す（「この機能は管理者によって制限されています。」・アクセス拒否の画面「アクセスできません。」） */
+export async function 権限エラーの文(page: Page): Promise<string[]> {
+  const alerts = withoutEnvBanners((await page.locator(".alert-danger").allInnerTexts()).map((s) => s.replace(/\s+/g, " ").trim()).filter(Boolean));
+  const body = ((await page.locator("body").innerText().catch(() => "")) ?? "").replace(/\s+/g, " ");
+  const found = alerts.filter((t) => t.includes("制限されています"));
+  for (const w of ["この機能は管理者によって制限されています", "アクセスできません"]) {
+    if (body.includes(w) && !found.some((f) => f.includes(w))) found.push(w);
+  }
+  return found;
 }
 
 /** 金額などの表示から数字だけを取り出す（「¥ 2,200」→ 2200） */
 export const 数 = (t: string): number => Number(t.replace(/[^\d.-]/g, ""));
+
+/** 送信を見張るときの送信先（アドレスの形） */
+export const 送信先 = {
+  詳細の更新: /\/otcbuyorder\/\d+\/update$/,
+  実在庫情報登録: /\/otcbuyorder\/\d+\/register-individual-stock\/\d+$/,
+  経理払い出し済: /\/otcbuyorder\/\d+\/account_team_paid$/,
+} as const;
+
+/** 送られた内容（フォームの本文）から、項目の値を読む。項目が無ければ null */
+export function 送られた値(本文: string, 項目: "商品規格ID" | "トークン"): string | null {
+  const name = 項目 === "商品規格ID" ? "product_class_id" : "_token";
+  const p = new URLSearchParams(本文);
+  return p.has(name) ? p.get(name) : null;
+}

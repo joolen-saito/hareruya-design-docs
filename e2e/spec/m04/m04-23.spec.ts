@@ -28,7 +28,7 @@ import { searchStockList, stockRow, stockRowValues } from "../../pages/admin/m04
 import { numberOf, StockHistoryPage } from "../../pages/admin/m04_17_stock_history";
 import {
   chooseHistoryShopAndSource, logoutAdmin, onSplitJoinList, openSplitJoinList, pageAlerts, pressSplitJoinCsvButton, searchSplitJoinByStore,
-  SplitJoinCsvKind, splitJoinCsvModal, SplitJoinCsvModal, splitJoinListRows, SPLIT_JOIN_LIST_PATH,
+  SplitJoinCsvKind, splitJoinCsvModal, SplitJoinCsvModal, splitJoinListRows, splitJoinListRowByName, SPLIT_JOIN_LIST_PATH,
 } from "../../pages/admin/m04_23_split_join_csv";
 import {
   m0423Admin, m0423Case, M0423CaseData, m0423Master, M0423L_ADMIN, RD_APR, RD_OP, 一般三郎, 承認一郎, 承認次郎,
@@ -47,12 +47,14 @@ type Zone = "EC-CUBE" | "スマレジ";
 
 /** 事前準備①のログインのあと、一覧を開いてボタンを押し、押したボタンのモーダルが表示されることを確かめる */
 function opensModal(kind: SplitJoinCsvKind): CaseBody {
-  return async ({ page, step, expected }) => {
+  return async ({ page, step, expected, capture }) => {
     await loginAdmin(page, m0423Admin());
     await step(1, () => openSplitJoinList(page));
     const { modal, title } = splitJoinCsvModal(page, kind);
     await step(2, async () => {
-      await expect(modal, "ボタンを押す前はモーダルが表示されていない").toBeHidden();
+      await expect(modal, "ボタンを押す前はモーダルが表示されない").toBeHidden();
+      // 手順のあとの画像は押したあとの画面なので、押す前の確かめはここで撮る
+      await capture("ボタンを押す前");
       await pressSplitJoinCsvButton(page, kind);
     });
     await expected(async () => {
@@ -86,7 +88,7 @@ caseTest("IT-M04-23-004", async ({ page, step, expected }) => {
   await loginAdmin(page, m0423Admin());
   const m = m0423Master();
   const modal = new SplitJoinCsvModal(page, SPLIT);
-  note(`在庫部・承認部・他店舗部は、所属のマスタに足した「${m.在庫部}」「${m.承認部}」「${m.他店舗部}」に読み替えた（依頼者決定 2026-11-14。足した順がマスタの並び順）。店舗は、試験店舗A（M04-23）→試験支店、試験店舗B（M04-23）→本店`);
+  note(`在庫部・承認部・他店舗部は、所属のマスタの既存の「${m.在庫部}」「${m.承認部}」「${m.他店舗部}」に読み替えた（マスタの並び順はこの順）`);
   let depts: string[] = [];
   await step(1, () => modal.open());
   await step(2, () => modal.chooseStore(m.A.店名));
@@ -119,7 +121,7 @@ caseTest("IT-M04-23-006", async ({ page, step, expected }) => {
   await loginAdmin(page, m0423Admin());
   const m = m0423Master();
   const modal = new SplitJoinCsvModal(page, SPLIT);
-  note(`承認部は所属のマスタに足した「${m.承認部}」、在庫部は「${m.在庫部}」に読み替えた（依頼者決定 2026-11-14）`);
+  note(`承認部は所属のマスタの既存の「${m.承認部}」、在庫部は「${m.在庫部}」に読み替えた`);
   await step(1, () => modal.open());
   await step(2, () => modal.chooseStore(m.A.店名));
   await step(3, () => modal.chooseMembers([承認一郎]));
@@ -144,13 +146,32 @@ async function fill(modal: SplitJoinCsvModal, d: M0423CaseData, v: { store?: boo
   await modal.chooseFile(d.csvPath);
 }
 
+/** 「登録」のあとの画面上部の知らせ（成功・誤り。開発用の設定のときに常に出る「デバッグモードが有効になっています。」の帯は除く） */
+type 知らせ = { 成功: string[]; 誤り: string[] };
+const 帯の文 = async (page: Page, sel: string): Promise<string[]> =>
+  [...new Set((await page.locator(sel).allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter((t) => t && !t.includes("デバッグモード")))];
+
 /** 「登録」（表示名「CSVから登録」）を押し、移った先の画面のメッセージを注記に残す */
-async function register(page: Page, modal: SplitJoinCsvModal): Promise<void> {
+async function register(page: Page, modal: SplitJoinCsvModal): Promise<知らせ> {
   note("モーダルの送信のボタンの表示名は「CSVから登録」。正本の「登録」ボタンとして押した");
   await modal.pressRegister();
   const alerts = await pageAlerts(page);
   note(`「登録」を押したあとの画面: ${new URL(page.url()).pathname}／メッセージ: ${alerts.join(" / ") || "（なし）"}`);
+  return { 成功: await 帯の文(page, ".alert-success"), 誤り: await 帯の文(page, ".alert-danger") };
 }
+
+/**
+ * 成功しても失敗しても一覧へ戻る作りなので、「一覧へ遷移する」（正常）は成功の知らせで、「0件である」（異常）は誤りの知らせで、
+ * 登録が受け付けられた／受け付けられなかったことを確かめる（登録が別の理由で失敗しただけで合格にしない）。
+ */
+const 受け付けられた = (r: 知らせ | null): Obs[] => [
+  { 何: "「登録」のあと: 登録が受け付けられた知らせ（成功の表示）がある", 実際: (r?.成功.length ?? 0) > 0, 期待: true },
+  { 何: `「登録」のあと: 誤りの表示（${r?.誤り.join(" / ") || "なし"}）`, 実際: r?.誤り ?? null, 期待: [] },
+];
+const 受け付けられなかった = (r: 知らせ | null): Obs[] => [
+  { 何: `「登録」のあと: 登録が受け付けられなかった知らせ（誤りの表示: ${r?.誤り.join(" / ") || "なし"}）がある`, 実際: (r?.誤り.length ?? 0) > 0, 期待: true },
+  { 何: "「登録」のあと: 成功の表示", 実際: r?.成功 ?? null, 期待: [] },
+];
 
 /** 確かめる項目（何を・実際の状態・期待）。DB確認は手順の中で読み、期待結果でまとめて確かめる */
 type Obs = { 何: string; 実際: unknown; 期待: unknown };
@@ -204,18 +225,20 @@ const approverOf = (a: Approver, d: M0423CaseData) => (a === "case" ? d.approver
  * 1. モーダルを開く／2. 店舗・在庫区分・承認通知先・ファイルを指定／3. 「登録」／4. DB確認（あれば）の形のケース。
  * DB確認の無いケースの期待結果は、在庫分割結合検索/一覧へ遷移すること。
  */
-function standard(kind: SplitJoinCsvKind, caseNo: string, zone: Zone, approver: Approver, db?: DbCheck): CaseBody {
+function standard(kind: SplitJoinCsvKind, caseNo: string, zone: Zone, approver: Approver, db?: DbCheck, 拒まれる = false): CaseBody {
   return async ({ page, step, expected }) => {
     await loginAdmin(page, m0423Admin());
     const d = m0423Case(caseNo);
     const modal = new SplitJoinCsvModal(page, kind);
+    let r: 知らせ | null = null;
     await step(1, () => modal.open());
     await step(2, () => fill(modal, d, { zone, approver: approverOf(approver, d) }));
-    await step(3, () => register(page, modal));
+    await step(3, async () => { r = await register(page, modal); });
     let obs: Obs[] = [];
     if (db) await step(4, async () => { obs = db(d); });
     await expected(async () => {
-      if (!db) obs = await listObs(page, "「登録」のあと");
+      if (拒まれる) obs = [...受け付けられなかった(r), ...obs];
+      if (!db) obs = [...await listObs(page, "「登録」のあと"), ...受け付けられた(r)];
       for (const o of obs) expect.soft(o.実際, o.何).toEqual(o.期待);
     });
   };
@@ -227,15 +250,16 @@ function otherStore(kind: SplitJoinCsvKind, caseNo: string, approver: Approver, 
     await loginAdmin(page, m0423Admin());
     const d = m0423Case(caseNo);
     const modal = new SplitJoinCsvModal(page, kind);
+    let r: 知らせ | null = null;
     await step(1, () => modal.open());
     await step(2, () => modal.overwriteStoreValue(notes.get(`〔店舗ID-M0423-${caseNo}〕`)));
     await step(3, async () => {
       await fill(modal, d, { store: false, zone: "EC-CUBE", approver: approverOf(approver, d) });
-      await register(page, modal);
+      r = await register(page, modal);
     });
     let obs: Obs[] = [];
     await step(4, async () => { obs = db(d); });
-    await expected(async () => { for (const o of obs) expect.soft(o.実際, o.何).toEqual(o.期待); });
+    await expected(async () => { for (const o of [...受け付けられなかった(r), ...obs]) expect.soft(o.実際, o.何).toEqual(o.期待); });
   };
 }
 caseTest("IT-M04-23-009", otherStore(SPLIT, "009", "master", none("在庫分割", "410001", "410002")));
@@ -250,12 +274,12 @@ caseTest("IT-M04-23-018", standard(JOIN, "018", "EC-CUBE", undefined, stocks(["4
 caseTest("IT-M04-23-019", standard(JOIN, "019", "EC-CUBE", undefined));
 
 // ---- 存在しない商品・在庫不足 ----
-caseTest("IT-M04-23-025", standard(SPLIT, "025", "EC-CUBE", "master", none("在庫分割", "999991")));
-caseTest("IT-M04-23-026", standard(SPLIT, "026", "EC-CUBE", "master", none("在庫分割", "999992")));
-caseTest("IT-M04-23-028", standard(SPLIT, "028", "EC-CUBE", "master", none("在庫分割", "410005")));
-caseTest("IT-M04-23-029", standard(JOIN, "029", "EC-CUBE", undefined, none("在庫結合", "999993")));
-caseTest("IT-M04-23-030", standard(JOIN, "030", "EC-CUBE", undefined, none("在庫結合", "999994")));
-caseTest("IT-M04-23-033", standard(JOIN, "033", "EC-CUBE", undefined, none("在庫結合", "420005")));
+caseTest("IT-M04-23-025", standard(SPLIT, "025", "EC-CUBE", "master", none("在庫分割", "999991"), true));
+caseTest("IT-M04-23-026", standard(SPLIT, "026", "EC-CUBE", "master", none("在庫分割", "999992"), true));
+caseTest("IT-M04-23-028", standard(SPLIT, "028", "EC-CUBE", "master", none("在庫分割", "410005"), true));
+caseTest("IT-M04-23-029", standard(JOIN, "029", "EC-CUBE", undefined, none("在庫結合", "999993"), true));
+caseTest("IT-M04-23-030", standard(JOIN, "030", "EC-CUBE", undefined, none("在庫結合", "999994"), true));
+caseTest("IT-M04-23-033", standard(JOIN, "033", "EC-CUBE", undefined, none("在庫結合", "420005"), true));
 
 // ---- 036・037: 開発者ツールで未登録の店舗ID／038: 開発者ツールで在庫区分9 ----
 function devStore(kind: SplitJoinCsvKind, caseNo: string, approver: Approver): CaseBody {
@@ -333,6 +357,7 @@ function listAfterRegister(kind: SplitJoinCsvKind, caseNo: string, head: string,
     const modal = new SplitJoinCsvModal(page, kind);
     note(`店舗は ${d.store.店名} に読み替え、商品名は正本の値に実行の印を付けた「${d.name(head)}」で作った。一覧の商品名の欄は、商品名のあとに規格・状態が付くことがあるので、商品名で始まる行を探す`);
     let rows: Awaited<ReturnType<typeof splitJoinListRows>> = [];
+    let target: Awaited<ReturnType<typeof splitJoinListRowByName>>;
     await step(1, async () => { await loginAdmin(page, M0423L_ADMIN); await openSplitJoinList(page); });
     await step(2, () => modal.openOnList());
     await step(3, async () => {
@@ -344,12 +369,13 @@ function listAfterRegister(kind: SplitJoinCsvKind, caseNo: string, head: string,
       returned = await listObs(page, "手順4: 「登録」のあと");
       await searchSplitJoinByStore(page, d.store.店名);
     });
-    await step(5, async () => { rows = await splitJoinListRows(page); });
+    await step(5, async () => { rows = await splitJoinListRows(page); target = await splitJoinListRowByName(page, d.name(head)); });
     await expected(async () => {
       for (const o of returned) expect.soft(o.実際, o.何).toEqual(o.期待);
       const hit = rows.filter((r) => r.商品名.startsWith(d.name(head)));
       expect.soft(hit.length, `検索結果一覧の、商品名が「${d.name(head)}」の行の数`).toBe(1);
-      expect.soft(hit[0] && { 種別: hit[0].種別, 店舗: hit[0].店舗, 在庫区分: hit[0].在庫区分, 点数: hit[0].点数, ステータス: hit[0].ステータス }, "その行の種別・店舗・在庫区分・点数・ステータス")
+      // 点数は、画面の「10点」の数の部分（単位の「点」は除く）で比べる。種別の表記は正本どおり比べる
+      expect.soft(target && { 種別: target.種別, 店舗: target.店舗, 在庫区分: target.在庫区分, 点数: target.点数.replace(/点$/, "").trim(), ステータス: target.ステータス }, "その行の種別・店舗・在庫区分・点数・ステータス")
         .toEqual({ 種別: want.種別, 店舗: d.store.店名, 在庫区分: "EC-CUBE", 点数: want.点数, ステータス: want.ステータス });
     });
   };
@@ -394,7 +420,7 @@ caseTest("IT-M04-23-083", async ({ page, step, expected }) => {
   const m = m0423Master();
   const code = d.code("M0423RD-001-S");
   const modal = new SplitJoinCsvModal(page, SPLIT);
-  note(`M04-23 RD店舗A は ${d.store.店名}、M04-23 RD所属A は、所属のマスタに足した「${m.在庫部}」に読み替えた。商品コードは ${code}`);
+  note(`M04-23 RD店舗A は ${d.store.店名}、M04-23 RD所属A は「${m.在庫部}」に読み替えた。商品コードは ${code}`);
   note("一覧の見出しは、正本の「在庫区分」が「在庫場所」、「在庫増減数」が「在庫変動数」");
   let before: { 件数: number | null; 行: number } = { 件数: null, 行: -1 };
   let after: Record<string, string>[] = [];
@@ -405,7 +431,7 @@ caseTest("IT-M04-23-083", async ({ page, step, expected }) => {
     note(`手順2の検索結果: 件数の表示 ${before.件数 ?? "（なし）"}・行 ${before.行}・メッセージ ${(await h.messages()).join(" / ") || "（なし）"}`);
   });
   await step(3, () => modal.open());
-  await step(4, () => fill(modal, d, { zone: "EC-CUBE", dept: m.在庫部, approver: RD_APR.名前 }).then(() => register(page, modal)));
+  await step(4, () => fill(modal, d, { zone: "EC-CUBE", dept: m.在庫部, approver: RD_APR.名前 }).then(async () => { await register(page, modal); }));
   let h: StockHistoryPage | null = null;
   await step(5, async () => { h = await searchHistory(page, code, d.store.店名); });
   await step(6, async () => { after = (await (h as unknown as StockHistoryPage).rows()).filter((r) => r["商品コード"] === code); });
@@ -430,7 +456,7 @@ caseTest("IT-M04-23-084", async ({ page, step, expected }) => {
   const m = m0423Master();
   const code = d.code("M0423RD-002-S");
   const modal = new SplitJoinCsvModal(page, SPLIT);
-  note(`M04-23 RD店舗A は ${d.store.店名}、M04-23 RD所属A は、所属のマスタに足した「${m.在庫部}」に読み替えた。商品コードは ${code}`);
+  note(`M04-23 RD店舗A は ${d.store.店名}、M04-23 RD所属A は「${m.在庫部}」に読み替えた。商品コードは ${code}`);
   type V = Awaited<ReturnType<typeof stockRowValues>>;
   let before: V | null = null;
   let after: V | null = null;
@@ -440,7 +466,7 @@ caseTest("IT-M04-23-084", async ({ page, step, expected }) => {
     before = await stockRowValues(stockRow(page, code, d.store.店名, "EC-CUBE"));
   });
   await step(2, () => modal.open());
-  await step(3, () => fill(modal, d, { zone: "EC-CUBE", dept: m.在庫部, approver: RD_APR.名前 }).then(() => register(page, modal)));
+  await step(3, () => fill(modal, d, { zone: "EC-CUBE", dept: m.在庫部, approver: RD_APR.名前 }).then(async () => { await register(page, modal); }));
   await step(4, () => searchStockList(page, { store: d.store.店名, zone: "EC-CUBE", code }));
   await step(5, async () => { after = await stockRowValues(stockRow(page, code, d.store.店名, "EC-CUBE")); });
   await expected(async () => {
@@ -468,7 +494,7 @@ function notified(kind: SplitJoinCsvKind, caseNo: string, who: (d: M0423CaseData
       await modal.chooseMembers(who(d).filter((x): x is string => !!x));
       await modal.chooseFile(d.csvPath);
     });
-    await step(3, () => register(page, modal));
+    await step(3, async () => { await register(page, modal); });
     const 受信: { 宛先: string; 件名: string; 件数: number }[] = [];
     let n = 4;
     for (const a of mails(d)) {

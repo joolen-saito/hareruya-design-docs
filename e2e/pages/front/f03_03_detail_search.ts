@@ -4,6 +4,24 @@
  */
 import { Locator, Page } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { トップのパスか, トップを開く } from "./open_top";
+
+/**
+ * 商品詳細検索モーダルとその背景が閉じ切る（開いた印が無く、見た目が透明・非表示になる）まで待つ。
+ * 閉じる動き（0.3秒で薄くなる）の途中や、開いた印が残ったまま撮ると、画像でモーダルが半透明に重なる
+ * （2026-11-12 の IT-F02-03-033・034、IT-F03-03-016 の画像）。期待結果を撮る前に呼ぶ。閉じ切らなければ落とす。
+ */
+export async function 詳細検索モーダルが閉じ切るのを待つ(page: Page, timeout = 15_000): Promise<void> {
+  await page.waitForFunction(() => {
+    const els = [document.querySelector("#product-detailed-search-modal"), ...Array.from(document.querySelectorAll(".p-hareruya-search-modal__overlay"))];
+    return els.every((e) => {
+      if (!e) return true;
+      if (e.classList.contains("is-visible")) return false;
+      const cs = getComputedStyle(e);
+      return cs.display === "none" || cs.visibility === "hidden" || Number(cs.opacity) === 0;
+    });
+  }, null, { timeout });
+}
 
 export class FrontDetailSearch {
   readonly モーダル: Locator;
@@ -147,10 +165,16 @@ export class FrontDetailSearch {
 
   // ---- 追加分（F03-03 の表示元・検索の実行・アドレスの確認） ----
 
-  /** 公開側の任意の画面（店舗の入口からのパス）を開き、モーダルのカテゴリ選択欄が組み立つまで待つ。応答の番号を返す */
+  /**
+   * 公開側の任意の画面（店舗の入口からのパス）を開き、モーダルのカテゴリ選択欄が組み立つまで待つ。応答の番号を返す。
+   * TOP画面（/ja・/ja/osaka）は開発環境で重く、ときに 504 を返すので、待ちを120秒にし、504 なら開き直す（pages/front/open_top.ts）
+   */
   async 画面を開く(path: string): Promise<number> {
-    const res = await this.page.goto(`${BASE_URL}${path}`, { waitUntil: "domcontentloaded" });
-    await this.page.waitForLoadState("load");
+    const url = `${BASE_URL}${path}`;
+    const res = トップのパスか(path)
+      ? await トップを開く(this.page, url, "domcontentloaded")
+      : await this.page.goto(url, { waitUntil: "domcontentloaded" });
+    await this.page.waitForLoadState("load", トップのパスか(path) ? { timeout: 120_000 } : undefined);
     await this.page.locator('#product-detailed-search-form [data-product-search-category-selects] select').first().waitFor({ state: "attached" });
     return res?.status() ?? 0;
   }
@@ -184,6 +208,13 @@ export class FrontDetailSearch {
   }
 
   /** Foil の選択肢（通常・Foil・特殊）を名前で選ぶ（チェックを付ける） */
+  /** Foil の選択肢（表示名）が送る値（チェック欄の value） */
+  async Foilの値(名称: string): Promise<string> {
+    const label = this.フォーム.locator(".p-hareruya-search-form__foil label.p-hareruya-search-form__checkbox")
+      .filter({ has: this.page.locator("span", { hasText: new RegExp(`^\\s*${名称}\\s*$`) }) }).first();
+    return (await label.locator("input").getAttribute("value")) ?? "";
+  }
+
   async Foilを選ぶ(名称: string): Promise<void> {
     const label = this.フォーム.locator(".p-hareruya-search-form__foil label.p-hareruya-search-form__checkbox")
       .filter({ has: this.page.locator("span", { hasText: new RegExp(`^\\s*${名称}\\s*$`) }) }).first();
@@ -197,7 +228,7 @@ export class FrontDetailSearch {
     const before = this.page.url();
     await Promise.all([
       this.page.waitForURL((u) => u.toString() !== before, { waitUntil: "domcontentloaded", timeout: 30_000 }),
-      this.検索ボタン.click(),
+      this.検索ボタン.click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     return before;
@@ -273,6 +304,64 @@ export class FrontDetailSearch {
   /** 「禁止カードも表示する」のチェック欄 */
   get 禁止カードも表示する(): Locator {
     return this.フォーム.locator(".p-hareruya-search-form__format label.p-hareruya-search-form__checkbox").filter({ hasText: /^\s*禁止カードも表示する\s*$/ }).first();
+  }
+
+  // ---- 追加分（2026-11-14 エビデンスの画像で選択肢を読めるようにする） ----
+
+  /**
+   * 撮影のために、閉じた選択欄（プルダウン）を、選択肢が並んで見える一覧の形に広げる。ブラウザのプルダウンは開いても画像に写らない
+   * （画面の外の部品として描かれる）ので、選択欄そのものを複数行の一覧にする。選んでいる値・選択肢は変えない。
+   * 選択欄のすぐ下に「E2E の注記」の枠を置き、選択肢の数と、見せたい選択肢が上から何番目かを書く（全部を書く なら選択肢をすべて書く）。
+   * 選択欄をモーダルの見える所へ動かす。戻すときは返した関数を呼ぶ（次の操作の前に戻す）。
+   */
+  async 選択肢を広げて見せる(select: Locator, o: { 見出し: string; 見せる?: string; 行?: number; 全部を書く?: boolean }): Promise<() => Promise<void>> {
+    await select.waitFor({ state: "attached", timeout: 15_000 });
+    await select.evaluate((el, o) => {
+      const sel = el as HTMLSelectElement;
+      const texts = Array.from(sel.options).map((x) => (x.textContent ?? "").replace(/\s+/g, " ").trim());
+      const k = o.見せる === undefined ? -1 : texts.indexOf(o.見せる);
+      const rows = Math.max(2, Math.min(texts.length, o.行 ?? 12));
+      (sel as unknown as { __e2eSaved?: { size: string | null; style: string | null } }).__e2eSaved = { size: sel.getAttribute("size"), style: sel.getAttribute("style") };
+      sel.setAttribute("size", String(rows));
+      for (const [prop, v] of [["height", "auto"], ["max-height", "none"], ["appearance", "auto"], ["-webkit-appearance", "listbox"], ["background-image", "none"], ["overflow-y", "auto"], ["padding", "4px"]]) {
+        sel.style.setProperty(prop, v, "important");
+      }
+      if (k >= 0) {
+        const opt = sel.options[k];
+        const rowH = sel.scrollHeight / Math.max(1, texts.length);
+        const top = opt && opt.offsetTop > 0 ? opt.offsetTop : k * rowH;
+        sel.scrollTop = Math.max(0, top - sel.clientHeight / 2 + rowH / 2);
+      }
+      const note = document.createElement("div");
+      note.setAttribute("data-e2e-note", "1");
+      note.style.cssText = "border:2px dashed #d00;color:#d00;background:#fff;font-size:12px;line-height:1.5;padding:4px 8px;margin:4px 0;white-space:normal;word-break:break-all;";
+      const 本文 = [`E2E の注記：「${o.見出し}」の選択欄を、選択肢が見える一覧の形に広げて撮った（選択肢は${texts.length}件。先頭の「${texts[0] ?? ""}」を含む）。`];
+      if (o.見せる !== undefined) 本文.push(k >= 0 ? `「${o.見せる}」は上から ${k + 1} 番目。` : `「${o.見せる}」は選択肢に無い。`);
+      if (o.全部を書く) 本文.push(`選択肢（上から）：${texts.map((t, i) => `${i + 1}. ${t}`).join("／")}`);
+      note.textContent = 本文.join("");
+      sel.insertAdjacentElement("afterend", note);
+      sel.scrollIntoView({ block: "center" });
+    }, o);
+    await this.page.waitForTimeout(300);
+    return async () => {
+      await select.evaluate((el) => {
+        const sel = el as HTMLSelectElement & { __e2eSaved?: { size: string | null; style: string | null } };
+        const sv = sel.__e2eSaved;
+        if (sv) {
+          if (sv.size === null) sel.removeAttribute("size"); else sel.setAttribute("size", sv.size);
+          if (sv.style === null) sel.removeAttribute("style"); else sel.setAttribute("style", sv.style);
+          sel.__e2eSaved = undefined;
+        }
+        const next = sel.nextElementSibling;
+        if (next && next.getAttribute("data-e2e-note") === "1") next.remove();
+      }).catch(() => undefined);
+    };
+  }
+
+  /** フォーマットの選択肢（ラジオの表示名）の要素。表示名がちょうど 名称 のもの */
+  フォーマットの選択肢の要素(名称: string): Locator {
+    const re = new RegExp(`^\\s*${名称.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`);
+    return this.フォーム.locator("[data-search-format-radios] .c-hareruya-radio__label").filter({ hasText: re }).first();
   }
 
   /** 商品名の入力欄の下に出る候補（ユニサジェスト）の文 */

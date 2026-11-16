@@ -10,13 +10,16 @@
  *   ケースとシード表の金額 300・3000 を、いまの閾値1・閾値2 に読み替え、基準価格もその区切りとの関係が同じになる値にする（price()）。
  * - MASTER 言語順・状態順・色順・レアリティ順・略称タグ AAA/BBB/COL/ALP: 登録しない。MTGマスターデータ管理・略称タグの画面で、
  *   いまの並び（言語・状態はID の順＝戻しリストの並びに使われる順、レアリティ・色順は並び順）を読み、ケースが要る順になっているかを各シードで確かめる。
- *   略称タグは既存のものを使う: AAA＝コレクター番号順でいちばん並び順の小さいもの、BBB＝AAA より並び順の大きいコレクター番号順のもの、
+ *   略称タグは既存のものを使う: AAA＝コレクター番号順のうち、並び順がそれより大きいものがある最も古い（IDの小さい）もの、BBB＝AAA より並び順の大きいコレクター番号順のうち最も古いもの、
  *   COL＝AAA と同じもの、ALP＝アルファベット順の先頭のもの。商品名の [AAA] などは、使った略称タグの名称に置き換える（ケース 041 の [ZZZ] はそのまま）。
- * - カード（カード管理のカード詳細で登録）: カードマスターに足さず、カード検索で既存のカードから、カラーが1色（赤／青）・色順が同じ色で、
- *   詳細情報のレアリティ・Foil がシード表どおりのカード詳細を探して指定する。コレクター番号・英語カード名の順を見るケースは、
- *   既存のカード詳細のうち、シード表の大小の関係（001 < 002、Alpha < Beta）と同じ関係になる2件を選ぶ。
- * - 棚番号（A01・M0709-NNN-S など）: 登録しない。棚番号の一覧（並び順の昇順）の既存の棚を、シードの中の棚の名前の昇順に割り当てる
- *   （シード表は「並び順が名称の昇順になる値」で登録する定め）。
+ * - カード（カード管理のカード詳細で登録）: カード検索で既存のカードから、カラーが1色（赤／青）・色順が同じ色で、
+ *   詳細情報のレアリティ・Foil がシード表どおりのカード詳細を探して指定する。既存に無いときは（開発環境の赤のカードは色順が未設定で、
+ *   2026-11-13 に 009・010・015 が止まった）、決まった名前の試験カード（M0709-E2E-赤-M など。札ごとに1枚）を探し、無ければ1度だけ登録して使い回す。
+ *   コレクター番号・英語カード名の順を見るケースは、既存のカード詳細のうち、シード表の大小の関係（001 < 002、Alpha < Beta）と同じ関係になる2件を選ぶ。
+ *   選べないときは、組のための決まった名前の試験カード2枚（M0709-E2E-赤-M-No001／-No002 のコレクター番号 001／002、EtoE Alpha Red M／EtoE Beta Red M など）を探し、無ければ1度だけ登録して使い回す。
+ * - 棚番号（A01・M0709-NNN-S など）: 棚番号の一覧（並び順の昇順。並び順が前の棚と同じものは除く）の既存の棚を、シードの中の棚の名前の昇順に割り当てる
+ *   （シード表は「並び順が名称の昇順になる値」で登録する定め）。既存の棚が足りないときは（2026-11-13 の開発環境は1件だけで 008 が止まった）、
+ *   決まった名前の試験用の棚（M-791〜M-793。並び順 1〜3。棚番号の名称は「大文字1字-3桁の数字」の形だけ登録できる）を探し、無ければ1度だけ登録して使い回す。
  * - 申込に使う商品: シード表はカード商品 A を申込むが、買取価格1円では買取商品詳細に「カートに追加」が出ない（下限500円）。
  *   申込は別のサプライ品（買取価格500円）で行い、実在庫はシード表どおりの商品で足す（戻しリストは実在庫の商品だけを出す）。
  * - 会員と注文者名: 会員は M07-03 と同じ作り方（フロントの会員登録＋管理画面の会員登録編集で本会員）。お名前の姓＝注文者名は実行の印つき
@@ -35,6 +38,7 @@ import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { goodsCsvCategoryId } from "../pages/admin/m03_22_product";
 import {
   カード詳細, カード詳細を探す, マスタの行, マスタを読む, 商品をカードにする, 実在庫に規格を追加する, 棚, 棚番号を読む, 略称タグ, 略称タグを読む, 規格を整える, 規格を足す,
+  決まった名前のカードを探す, 決まった名前のカードを登録する, 棚番号をすべて読む, 棚番号を登録する,
 } from "../pages/admin/m07_09_card";
 import { 条件つきで申込む } from "../pages/front/m07_03_apply";
 import { ログインする } from "../pages/front/m07_net_buy";
@@ -86,8 +90,11 @@ export async function マスタを控える(browser: Browser, seedId: string): P
     前提.レアリティ = byCode(await マスタを読む(page, "レアリティ"));
     前提.色順 = new Map((await マスタを読む(page, "色順")).map((r) => [r.名称, r] as [string, マスタの行]));
     const tags: 略称タグ[] = await 略称タグを読む(page);
-    const col = tags.filter((t) => !t.アルファベット順).sort((a, b) => a.並び順 - b.並び順);
-    const aaa = col.find((t, i) => col.findIndex((u) => u.並び順 === t.並び順) === i && col.filter((u) => u.並び順 === t.並び順).length === 1) ?? null;
+    // AAA・BBB は「AAA の並び順 < BBB の並び順」になるコレクター番号順の2つ。戻しリストに出るのはこの買取の商品だけなので、
+    // ほかの略称タグと並び順が同じでもよい（開発環境は試験で足された略称タグが多く、並び順がほとんど重なっている。2026-11-12 に
+    // 「並び順がほかと重ならないもの」を求めていたため AAA を選べず、17件が事前準備で止まっていた）。消されにくい古いもの（IDの小さいもの）を選ぶ
+    const col = tags.filter((t) => !t.アルファベット順).sort((a, b) => Number(a.ID) - Number(b.ID));
+    const aaa = col.find((t) => col.some((u) => u.並び順 > t.並び順)) ?? null;
     const bbb = aaa ? col.find((t) => t.並び順 > aaa.並び順) ?? null : null;
     const alp = tags.find((t) => t.アルファベット順) ?? null;
     前提.略称 = { AAA: aaa?.名称 ?? null, BBB: bbb?.名称 ?? null, COL: aaa?.名称 ?? null, ALP: alp?.名称 ?? null };
@@ -154,16 +161,75 @@ type 色 = "赤" | "青";
 type 札 = { 色: 色; レア: "M" | "C"; Foil: boolean };
 const pools = new Map<string, カード詳細[]>();
 
-async function 候補(page: Page, c: 札): Promise<カード詳細[]> {
+/** 決まった名前の試験カードのカード名(英)（札ごとに1枚） */
+const 試験カードの名前 = (c: 札): string => `M0709-E2E-${c.色}-${c.レア}${c.Foil ? "-Foil" : ""}`;
+
+/** 決まった名前の試験カードを探し、無ければ1度だけ登録する（コレクター番号を指定すると、その番号の詳細情報を持つもの） */
+async function 試験カードを用意する(page: Page, c: 札, 名前: string, 理由: string, issue: (m: string) => void, コレクター番号?: string): Promise<カード詳細> {
+  const r = 前提.レアリティ.get(c.レア);
+  if (!r) throw new Error(`レアリティのコード ${c.レア} がMTGマスターデータ管理に無い`);
+  const Foil = c.Foil ? "通常" as const : "なし" as const;
+  const 番号 = コレクター番号 !== undefined ? `・コレクター番号 ${コレクター番号}` : "";
+  const mine = await 決まった名前のカードを探す(page, 名前, { 色: c.色, レアリティID: r.ID, Foil, コレクター番号 });
+  if (mine) {
+    issue(`シード作成時の問題: ${理由}ので、決まった名前の試験カード「${名前}」（カードID ${mine.カードID}・カード詳細ID ${mine.詳細ID}${番号}。前の実行で1度だけ登録したもの）を使った`);
+    return mine;
+  }
+  const made = await 決まった名前のカードを登録する(page, { カード名日: 名前, カード名英: 名前, 色: c.色, レアリティID: r.ID, Foil, コレクター番号 }, issue);
+  issue(`シード作成時の問題: ${理由}ので、決まった名前の試験カード「${名前}」（カードID ${made.カードID}・カード詳細ID ${made.詳細ID}${番号}）を1度だけ登録した（次の実行からは使い回す。既存のカードは書き換えていない）`);
+  return made;
+}
+
+const 札の説明 = (c: 札) => `カラー${c.色}・色順${c.色}・レアリティ${c.レア}・Foil${c.Foil ? "あり" : "なし"}`;
+
+async function 候補(page: Page, c: 札, issue: (m: string) => void): Promise<カード詳細[]> {
   const key = `${c.色}/${c.レア}/${c.Foil ? 1 : 0}`;
   const hit = pools.get(key);
   if (hit) return hit;
   const r = 前提.レアリティ.get(c.レア);
   if (!r) throw new Error(`レアリティのコード ${c.レア} がMTGマスターデータ管理に無い`);
-  const found = await カード詳細を探す(page, { 色: c.色, レアリティ名: r.名称, レアリティID: r.ID, Foil: c.Foil ? "通常" : "なし", max: 8, open: 40 });
-  if (found.length === 0) throw new Error(`既存のカードに、カラー${c.色}・色順${c.色}・レアリティ${c.レア}・Foil${c.Foil ? "あり" : "なし"} のカード詳細が見つからない`);
+  const Foil = c.Foil ? "通常" as const : "なし" as const;
+  let found = await カード詳細を探す(page, { 色: c.色, レアリティ名: r.名称, レアリティID: r.ID, Foil, max: 8, open: 40 });
+  if (found.length === 0) {
+    // 既存のカードに無い（開発環境の単色のカードは色順が未設定のものばかり）。決まった名前の試験カードを探し、無ければ1度だけ登録する
+    found = [await 試験カードを用意する(page, c, 試験カードの名前(c), `既存のカードに、${札の説明(c)} のカード詳細が無い`, issue)];
+  }
   pools.set(key, found);
   return found;
+}
+
+/**
+ * 並びを見る組の、決まった名前の試験カード（先・後の2枚）。
+ * 番号: カード名は「M0709-E2E-色-レア(-Foil)-No001」「…-No002」、コレクター番号 001 < 002。
+ * 英名: カード名(英)は英字だけ（戻しリストの並び＝DB の文字の比較で照合順序に左右されないように）。「EtoE Alpha …」<「EtoE Beta …」。
+ */
+const 組の試験カード = (c: 札, 鍵: "番号" | "英名", 位: 0 | 1): { 名前: string; コレクター番号?: string } => 鍵 === "番号"
+  ? { 名前: `${試験カードの名前(c)}-No00${位 + 1}`, コレクター番号: `00${位 + 1}` }
+  : { 名前: `EtoE ${位 === 0 ? "Alpha" : "Beta"} ${c.色 === "赤" ? "Red" : "Blue"} ${c.レア}${c.Foil ? " Foil" : ""}` };
+
+/** 決まった名前の試験用の棚（並び順の昇順＝名前の昇順） */
+// 棚番号の名称は「大文字アルファベット1字-3桁の数字」だけ登録できる（ShelfNumberType の /^[A-Z][-][0-9]{3}$/。2026-11-13 に「M0709-E2E-S1」で 016・017 が止まった）。
+// 正本・ほかのテストが使わない M-79x を使う
+const 試験棚 = [{ 名称: "M-791", 並び順: "1" }, { 名称: "M-792", 並び順: "2" }, { 名称: "M-793", 並び順: "3" }];
+let 試験棚の名前: string[] | null = null;
+
+/** 決まった名前の試験用の棚を探し、無いものだけ1度だけ登録する。名前（並び順の昇順）を返す */
+async function 試験棚を用意する(page: Page, issue: (m: string) => void): Promise<string[]> {
+  if (試験棚の名前) return 試験棚の名前;
+  const all = await 棚番号をすべて読む(page);
+  const made: string[] = [];
+  for (const t of 試験棚) {
+    const rows = all.filter((r) => r.名称 === t.名称);
+    if (rows.length === 0) {
+      const id = await 棚番号を登録する(page, t);
+      made.push(`${t.名称}（ID ${id}・並び順 ${t.並び順}）`);
+    } else if (rows.some((r) => String(r.並び順) !== t.並び順)) {
+      throw new Error(`試験用の棚「${t.名称}」の並び順が ${rows.map((r) => r.並び順).join("・")}（${t.並び順} のはず）。ほかの方が書き換えた棚は使わない`);
+    }
+  }
+  issue(`シード作成時の問題: 既存の棚番号（並び順が前の棚と重ならないもの）が足りないので、決まった名前の試験用の棚 ${試験棚.map((t) => `${t.名称}（並び順 ${t.並び順}）`).join("・")} を使った${made.length ? `（この実行で1度だけ登録した: ${made.join("、")}。次の実行からは使い回す）` : "（前の実行で1度だけ登録したもの）"}`);
+  試験棚の名前 = 試験棚.map((t) => t.名称);
+  return 試験棚の名前;
 }
 
 const 数字だけ = (s: string) => /^\d+$/.test(s);
@@ -177,13 +243,20 @@ function 英名が先(a: string, b: string): boolean {
 }
 
 /** 先の札と後の札で、鍵（コレクター番号／英語カード名）が先<後 になるカード詳細の組を選ぶ */
-async function 組を選ぶ(page: Page, 先: 札, 後: 札, 鍵: "番号" | "英名"): Promise<[カード詳細, カード詳細]> {
-  const xs = await 候補(page, 先), ys = await 候補(page, 後);
+async function 組を選ぶ(page: Page, 先: 札, 後: 札, 鍵: "番号" | "英名", issue: (m: string) => void): Promise<[カード詳細, カード詳細]> {
+  const xs = await 候補(page, 先, issue), ys = await 候補(page, 後, issue);
   for (const x of xs) for (const y of ys) {
     if (x.詳細ID === y.詳細ID) continue;
     if (鍵 === "番号" ? 番号が先(x.コレクター番号, y.コレクター番号) : (x.カードID !== y.カードID && 英名が先(x.カード名英, y.カード名英))) return [x, y];
   }
-  throw new Error(`既存のカード詳細から、${鍵 === "番号" ? "コレクター番号" : "英語カード名"}が「${先.色}${先.レア}」<「${後.色}${後.レア}」になる組を選べない`);
+  // 既存のカード詳細（と札ごとの試験カード）に組が無い。組のための決まった名前の試験カード2枚を探し、無ければ1度だけ登録する
+  const 理由 = `既存のカード詳細から、${鍵 === "番号" ? "コレクター番号" : "英語カード名"}が「${札の説明(先)}」<「${札の説明(後)}」になる組を選べない`;
+  const a = 組の試験カード(先, 鍵, 0), b = 組の試験カード(後, 鍵, 1);
+  const x = await 試験カードを用意する(page, 先, a.名前, 理由, issue, a.コレクター番号);
+  const y = await 試験カードを用意する(page, 後, b.名前, 理由, issue, b.コレクター番号);
+  const ok = 鍵 === "番号" ? 番号が先(x.コレクター番号, y.コレクター番号) : (x.カードID !== y.カードID && 英名が先(x.カード名英, y.カード名英));
+  if (x.詳細ID === y.詳細ID || !ok) throw new Error(`${理由}。試験カード「${a.名前}」「${b.名前}」も組にならない（${x.コレクター番号}/${y.コレクター番号}・${x.カード名英}/${y.カード名英}）`);
+  return [x, y];
 }
 
 // ---------------------------------------------------------------------------
@@ -245,9 +318,13 @@ function defineReturnCardSeed(seedId: string, n: string, 品々: 品[], v: { 入
     const apply = 品コード(n, "APPLY");
     // 棚: シードの中の棚の名前の昇順に、既存の棚（並び順の昇順）を割り当てる
     const 棚名 = [...new Set(品々.map((p) => p.棚))].sort();
-    if (前提.棚.length < 棚名.length) throw new Error(`${seedId}: 既存の棚番号が ${棚名.length} 件要るが、一覧に ${前提.棚.length} 件しかない`);
-    const 棚 = new Map(棚名.map((s, i) => [s, 前提.棚[i].名称] as [string, string]));
-    issue(`シード作成時の問題: 棚番号は登録せず既存の棚を使った（${棚名.map((s) => `${s}→${棚.get(s)}`).join("、")}。シード表の名称の昇順＝既存の棚の並び順の昇順）`);
+    let 使う棚 = 前提.棚.map((x) => x.名称);
+    if (使う棚.length < 棚名.length) {
+      使う棚 = await withAdminSession(browser, SETUP_ADMIN, async (page) => { page.setDefaultTimeout(60_000); return 試験棚を用意する(page, issue); });
+      if (使う棚.length < 棚名.length) throw new Error(`${seedId}: 棚番号が ${棚名.length} 件要るが、既存の棚・試験用の棚あわせて ${使う棚.length} 件しかない`);
+    }
+    const 棚 = new Map(棚名.map((s, i) => [s, 使う棚[i]] as [string, string]));
+    issue(`シード作成時の問題: 棚番号はシード表の名称で登録せず、${使う棚 === 試験棚の名前 ? "決まった名前の試験用の棚" : "既存の棚"}を使った（${棚名.map((s) => `${s}→${棚.get(s)}`).join("、")}。シード表の名称の昇順＝棚の並び順の昇順）`);
     const 言語ID = (c: string) => { const r = 前提.言語.get(c); if (!r) throw new Error(`言語のコード ${c} がMTGマスターデータ管理に無い`); return r; };
 
     await withAdminSession(browser, SETUP_ADMIN, async (page) => {
@@ -257,16 +334,16 @@ function defineReturnCardSeed(seedId: string, n: string, 品々: 品[], v: { 入
       const 組の品 = 品々.filter((p) => p.札 && p.組);
       if (組の品.length) {
         const a = 組の品.find((p) => p.組!.位 === 0)!, b = 組の品.find((p) => p.組!.位 === 1)!;
-        const [x, y] = await 組を選ぶ(page, a.札!, b.札!, a.組!.鍵);
+        const [x, y] = await 組を選ぶ(page, a.札!, b.札!, a.組!.鍵, issue);
         カード.set(a.枝, x); カード.set(b.枝, y);
         issue(`シード作成時の問題: ${a.組!.鍵 === "番号" ? "コレクター番号" : "英語カード名"}の順を見るカードは、カードを登録せず既存のカード詳細から、正本と同じ大小になる2件を選んだ（${a.枝}: ${x.カード名日 || x.カード名英}（${a.組!.鍵 === "番号" ? x.コレクター番号 : x.カード名英}）、${b.枝}: ${y.カード名日 || y.カード名英}（${b.組!.鍵 === "番号" ? y.コレクター番号 : y.カード名英}））`);
       }
       for (const p of 品々) {
         if (!p.札 || カード.has(p.枝)) continue;
-        const c = (await 候補(page, p.札))[0];
+        const c = (await 候補(page, p.札, issue))[0];
         カード.set(p.枝, c);
       }
-      if (カード.size) issue(`シード作成時の問題: カードはカード管理に登録せず、既存のカード詳細を指定した（${[...カード.entries()].map(([k, c]) => `${k}: カード詳細ID ${c.詳細ID}「${c.カード名日 || c.カード名英}」`).join("、")}）`);
+      if (カード.size) issue(`シード作成時の問題: カードはシード表の名前でカード管理に登録せず、既存のカード詳細（無いときは決まった名前の試験カード）を指定した（${[...カード.entries()].map(([k, c]) => `${k}: カード詳細ID ${c.詳細ID}「${c.カード名日 || c.カード名英}」`).join("、")}）`);
 
       // 商品（グッズ商品CSV登録で一度に作る）
       const csvCode = (p: 品) => (p.状態 === "HP" ? 品コード(n, `NM${p.枝}`) : 品コード(n, p.枝));

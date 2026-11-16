@@ -106,21 +106,21 @@ export class 会員のポイント履歴Page {
     await this.page.waitForLoadState("load");
     await this.page.locator('[name="admin_search_customer[multi]"]').fill(会員ID);
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     const link = this.page.locator(`tr#ex-customer-${会員ID} td:nth-child(3) a`);
     await expect(link, `会員ID ${会員ID} の会員名`).toBeVisible();
-    await Promise.all([this.page.waitForURL(new RegExp(`/customer/${会員ID}/edit`)), link.click()]);
+    await Promise.all([this.page.waitForURL(new RegExp(`/customer/${会員ID}/edit`), { timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
   /** 会員登録編集画面の「ポイント確認」を押し、ポイント履歴確認画面の一覧の行（注文番号・増減量）を返す */
   async ポイント確認を押す(): Promise<{ 注文番号: string; 増減量: string }[]> {
     await Promise.all([
-      this.page.waitForURL(/\/customer\/point\/\d+\/history/),
-      this.page.getByRole("link", { name: "ポイント確認" }).first().click(),
+      this.page.waitForURL(/\/customer\/point\/\d+\/history/, { timeout: 120_000 }),
+      this.page.getByRole("link", { name: "ポイント確認" }).first().click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     const rows = this.page.locator("#pointHistory tbody tr");

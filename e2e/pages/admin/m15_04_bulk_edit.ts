@@ -12,7 +12,7 @@
  */
 import { expect, Locator, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { chooseByLabel, expectSaved } from "./common";
+import { chooseByLabel, expectSaved, topErrorAlerts, withoutEnvBanners } from "./common";
 import { デッキ一覧 } from "./m15_deck";
 import { デッキ内容, デッキ編集画面 } from "./m15_05_deck_edit";
 import { buildCardCsv, downloadCardCsvTemplate, readExistingCardValues, uploadCardCsv } from "./card_csv";
@@ -129,10 +129,11 @@ export class デッキ一括編集 {
     await this.実行ボタン.click();
     // 入力が足りないと、画面の仕掛けが送信を止めて「入力されていません。」を出す（移らない）
     const 不足 = this.区画.locator(".bulk_update_error");
-    await expect(this.page.locator(".alert-success, .alert-danger").or(不足).first(), "一括編集実行の結果の表示").toBeVisible({ timeout: 60_000 });
+    // 開発用の設定のときに常に出る赤い帯は、押す前の画面にも出ている。結果の表示として待たない・エラーに数えない
+    await expect(this.page.locator(".alert-success").or(topErrorAlerts(this.page)).or(不足).first(), "一括編集実行の結果の表示").toBeVisible({ timeout: 60_000 });
     await this.page.waitForLoadState("load");
     const read = async (sel: string) => { const out: string[] = []; for (const e of await this.page.locator(sel).all()) if (await e.isVisible()) out.push(文(await e.innerText())); return out; };
-    return { 成功: await read(".alert-success"), エラー: await read(".alert-danger"), 入力の不足: await read("#bulk_edit_panel .bulk_update_error") };
+    return { 成功: await read(".alert-success"), エラー: withoutEnvBanners(await read(".alert-danger")), 入力の不足: await read("#bulk_edit_panel .bulk_update_error") };
   }
 }
 

@@ -5,7 +5,10 @@ import { loginAdmin } from "../../lib/session";
 import { DeckResultView, DeckSearchModal, DeckTopPage } from "../../pages/front/f09_01_deck_top";
 import { OthersListPage } from "../../pages/front/f09_05_others";
 import { フォーマット一覧から編集画面を開く, 欄にチェックを付けて保存する } from "../../pages/admin/f09_05_setup";
-import { F0905_ADMIN, N, 選手 } from "../../seeds/f09-05";
+import { F0905_ADMIN, F0905_031_画像ファイル, N, 選手 } from "../../seeds/f09-05";
+import { プレイヤー名のデッキの更新日時 } from "../../db/f09_01";
+import { イベント名のデッキの件数, デッキの開催日時 } from "../../db/f09_05";
+import { 日付 } from "../../pages/admin/f09_01_setup";
 import "../../seeds/f09-05";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -20,9 +23,11 @@ async function その他を開く(top: DeckTopPage, others: OthersListPage, step
   return status;
 }
 
-/** 一覧に載るデッキが、ちょうど「載る」のプレイヤー（並びは問わない）であること（001・002・005・006・009） */
-function ちょうど載る(ケース: string, 載る: string[], 載らない: string[]): CaseBody {
+/** 一覧に載るデッキが、ちょうど「載る」のプレイヤー（並びは問わない）であること（001・002・005〜009）。注記・準備の確かめは DB で整えたシード（007・008）に使う */
+function ちょうど載る(ケース: string, 載る: string[], 載らない: string[], 注記?: string, 準備の確かめ?: () => void): CaseBody {
   return async ({ page, step, expected }) => {
+    if (注記) note(注記);
+    準備の確かめ?.();
     const top = new DeckTopPage(page);
     const others = new OthersListPage(page);
     await その他を開く(top, others, step);
@@ -63,6 +68,19 @@ caseTest("IT-F09-05-004", 対象から外す("004", "メタ分布簡易化"));
 caseTest("IT-F09-05-005", ちょうど載る("005", ["選手甲"], ["選手乙"]));
 caseTest("IT-F09-05-006", ちょうど載る("006", ["選手甲"], ["選手乙"]));
 caseTest("IT-F09-05-009", ちょうど載る("009", ["選手甲"], ["選手乙"]));
+
+caseTest("IT-F09-05-007", ちょうど載る("007", ["選手甲"], ["選手乙"],
+  "シード表の「アーキタイプ未設定」のデッキ（F0905-007-選手乙）は、画面ではアーキタイプが必須で作れないので、画面で登録したあと DB で印つきのデッキのアーキタイプを未設定にして作った"));
+
+caseTest("IT-F09-05-008", ちょうど載る("008", ["選手甲"], ["選手乙"],
+  "シード表の開催日時「実行日の23:59:59」は、画面の開催日の欄が分までなので、画面で23:59で登録したあと DB で印つきのデッキの開催日時を23:59:59（日本時間）にした",
+  () => {
+    // 準備の確かめ（参照だけ）: 甲が実行日の23:59:59。シードを作った日と流す日が違うと境界の意味が崩れるので、ここで止める
+    const 甲 = デッキの開催日時(N("008", "選手甲"));
+    const 当日 = `${日付(0).replace(/-/g, "/")} 23:59:59`;
+    note(`準備の確かめ（DBの参照）: F0905-008-選手甲のデッキの開催日時 ${甲}（実行日の23:59:59 は ${当日}）`);
+    if (甲 !== 当日) throw new Error(`F0905-008-選手甲のデッキの開催日時が実行日の23:59:59でない（${甲}。実行日は ${当日}）。シードを作った日と流す日が違う`);
+  }));
 
 // ---------------------------------------------------------------------------
 // 一覧の行の表示
@@ -106,6 +124,20 @@ caseTest("IT-F09-05-012", async ({ page, step, expected }) => {
     expect.soft(行[0]?.参加人数, "行の参加人数").toBe("64");
     expect.soft(行[0]?.タグ ?? [], "行のデッキタグ（タグ1）").toContain(N("012", "タグ1"));
     expect.soft(行[0]?.タグ ?? [], "行のデッキタグ（タグ2）").toContain(N("012", "タグ2"));
+  });
+});
+
+caseTest("IT-F09-05-031", async ({ page, step, expected }) => {
+  const top = new DeckTopPage(page);
+  const others = new OthersListPage(page);
+  await その他を開く(top, others, step);
+  await expected(async () => {
+    note(`画像ファイルの名前・カード名には実行の印を付けてあるので、正本の f0905-031-img.png は ${F0905_031_画像ファイル}、F0905-031-画像 は ${N("031", "画像")} と読んだ。`
+      + "画像ファイルは画像置き場へ直接置く代わりに管理画面のファイル管理に上げ、そのURLを画像URLに持つカードを代表カードにした。画像の取得元は、行の背景に表示される画像のアドレスの末尾のファイル名で確かめた");
+    const 行 = (await others.行()).filter((r) => r.プレイヤー === N("031", "選手甲"));
+    expect.soft(行.length, "一覧のF0905-031-選手甲の行の数").toBe(1);
+    note(`F0905-031-選手甲の行の画像のアドレス: ${行[0]?.画像 ?? "（無し）"}`);
+    expect.soft((行[0]?.画像 ?? "").split("?")[0].split("/").pop(), `F0905-031-選手甲の行の画像の取得元（代表カード画像のファイル ${F0905_031_画像ファイル}）`).toBe(F0905_031_画像ファイル);
   });
 });
 
@@ -324,6 +356,8 @@ function 選択肢と選択状態(ケース: string): CaseBody {
       選択肢 = await modal.フォーマットの選択肢();
     });
     await expected(async () => {
+      // 選択肢が読めている（空で「現れない」にならない）ことを、対象のフォーマットBが読んだ選択肢にあることで確かめる
+      expect.soft(選択肢, `比べる相手: 読んだ選択肢に${前印(ケース, "フォーマットB")}がある`).toContain(N(ケース, "フォーマットB"));
       expect.soft(選択肢, `入力欄のフォーマットの選択肢に${前印(ケース, "フォーマットA")}が現れない`).not.toContain(N(ケース, "フォーマットA"));
       const l = modal.フォーマットの選択肢のラベル(N(ケース, "フォーマットB"));
       await expect.soft(l, `入力欄のフォーマットの選択肢に${前印(ケース, "フォーマットB")}が載る`).toHaveCount(1);
@@ -337,6 +371,26 @@ caseTest("IT-F09-05-037", 選択肢と選択状態("CB037"));
 // ---------------------------------------------------------------------------
 // 利用者の検索条件を受け取らない
 // ---------------------------------------------------------------------------
+
+caseTest("IT-F09-05-022", async ({ page, step, expected }) => {
+  const top = new DeckTopPage(page);
+  const others = new OthersListPage(page);
+  const 名 = ["選手甲", "選手乙", "選手丙"].map((p) => N("022", p));
+  let 件数 = -1;
+  let 後 = { 件数: [] as number[], 更新日時: [] as string[] };
+  note("シード表の更新日時（2025/01/10 09:00:00・09:10:00・09:20:00）は、画面に欄が無いので、画面で登録したあと DB で印つきのデッキに設定した");
+  await その他を開く(top, others, step);
+  await step(3, async () => {
+    件数 = イベント名のデッキの件数(N("022", "大会"));
+    後 = プレイヤー名のデッキの更新日時(名);
+    note(`DBの確認は参照だけ。イベント名(日)が ${N("022", "大会")} のデッキの件数 ${件数}、3件のデッキの更新日時（日本時間）${後.更新日時.join("・")}`);
+  });
+  await expected(async () => {
+    expect.soft(件数, `イベント名が${前印("022", "大会")}のデッキの登録件数（3件のまま）`).toBe(3);
+    expect.soft(後.件数, "プレイヤー名ごとのデッキの件数（甲・乙・丙とも1件）").toEqual([1, 1, 1]);
+    expect.soft(後.更新日時, "甲・乙・丙のデッキの更新日時（2025/01/10 09:00:00・09:10:00・09:20:00 のまま）").toEqual(["2025/01/10 09:00:00", "2025/01/10 09:10:00", "2025/01/10 09:20:00"]);
+  });
+});
 
 caseTest("IT-F09-05-023", async ({ page, step, expected }) => {
   const top = new DeckTopPage(page);

@@ -3,6 +3,7 @@ import { Dialog, Page, Response, test } from "@playwright/test";
 import { SETUP_ADMIN } from "../../config/env";
 import { 規格の依頼件数, 有効な依頼件数 } from "../../db/f03_07";
 import { CaseBody, caseTest, expect } from "../../lib/case";
+import { ページから読み取った値を撮る, scene } from "../../lib/evidence_other";
 import { rc } from "../../lib/run_marker";
 import { withAdminSession } from "../../lib/session";
 import { expectNoProductWithId } from "../../pages/admin/m03_30_products";
@@ -128,19 +129,22 @@ async function 開いて確かめる(d: FrontDetail, 入口: string, 商品ID: s
   expect(got.商品名, "商品詳細画面が表示された（商品名の見出し）").toBe(rc(商品名));
 }
 
-caseTest("IT-F03-02-010", async ({ page, notes, step, expected }) => {
+caseTest("IT-F03-02-010", async ({ page, notes, step, expected, capture }) => {
   const d = new FrontDetail(page);
   await step(1, async () => { await 開いて確かめる(d, 店.本店, notes.get("〔商品ID-F0302-共有-SUPPLY〕"), "結合試験サプライ"); });
   await expected(async () => {
-    expect.soft(d.言語切替, "カード専用の言語切替").toHaveCount(0);
-    expect.soft(d.状態の列, "状態の欄").toHaveCount(0);
-    expect.soft(d.まとめて入荷通知, "まとめて入荷通知").toHaveCount(0);
-    expect.soft(d.使われているデッキのボタン, "使われているデッキのボタン").toHaveCount(0);
-    expect.soft(d.デッキの欄, "使われているデッキの欄").toHaveCount(0);
-    expect.soft(d.他のバージョンのボタン, "他のバージョンのボタン").toHaveCount(0);
-    expect.soft(d.他のバージョンの欄, "他のバージョンの欄").toHaveCount(0);
-    expect.soft(d.掲載記事一覧, "掲載記事一覧").toHaveCount(0);
-    expect.soft(d.カード情報, "カード情報").toHaveCount(0);
+    await expect.soft(d.言語切替, "カード専用の言語切替").toHaveCount(0);
+    await expect.soft(d.状態の列, "状態の欄").toHaveCount(0);
+    await expect.soft(d.まとめて入荷通知, "まとめて入荷通知").toHaveCount(0);
+    await expect.soft(d.使われているデッキのボタン, "使われているデッキのボタン").toHaveCount(0);
+    await expect.soft(d.デッキの欄, "使われているデッキの欄").toHaveCount(0);
+    await expect.soft(d.他のバージョンのボタン, "他のバージョンのボタン").toHaveCount(0);
+    await expect.soft(d.他のバージョンの欄, "他のバージョンの欄").toHaveCount(0);
+    await expect.soft(d.掲載記事一覧, "掲載記事一覧").toHaveCount(0);
+    await expect.soft(d.カード情報, "カード情報").toHaveCount(0);
+    // 画面が縦に長く全体は撮れないので、上部（言語切替・状態・ボタン）を撮ったあと、カード情報・デッキ・他のバージョンの欄が並ぶはずの位置（商品説明の下）へ画面を送って撮る
+    await capture("上部（言語切替・状態・ボタン）");
+    await d.本体の終わりへ画面を送る();
   });
 });
 
@@ -154,8 +158,8 @@ caseTest("IT-F03-02-019", async ({ page, notes, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(行数, "価格・在庫の表に規格の行が表示されている（表示されたうえで数える）").toBeGreaterThan(0);
-    expect.soft(d.数量の操作部, "商品数（数量）の操作部").toHaveCount(0);
-    expect.soft(d.カートに追加, "カートに追加のボタン").toHaveCount(0);
+    await expect.soft(d.数量の操作部, "商品数（数量）の操作部").toHaveCount(0);
+    await expect.soft(d.カートに追加, "カートに追加のボタン").toHaveCount(0);
   });
 });
 
@@ -166,10 +170,13 @@ caseTest("IT-F03-02-021", async ({ page, notes, step, expected }) => {
     await 開いて確かめる(d, 店.本店, notes.get("〔商品ID-F0302-共有-HIGH〕"), "高額商品コード付きカード");
     行数 = await d.価格表の行.count();
     note(`価格・在庫の表の行: ${JSON.stringify(await d.行の文())}`);
+    // 行ごとの様子（高額商品コードを付けたのは良品規格だけ。入荷通知/通知待ちの操作部が、どの行に出ているか）
+    const 行別 = await d.価格表の行.evaluateAll((trs) => trs.map((tr) => `${(tr.querySelector("td.p-hareruya-product-detail__col-status")?.textContent ?? "").replace(/\s+/g, " ").trim()}: 操作部${tr.querySelector("button[data-productclass]") ? "あり" : "なし"}`));
+    note(`入荷通知/通知待ちの操作部の行ごとの様子: ${行別.join(" / ")}`);
   });
   await expected(async () => {
     expect.soft(行数, "価格・在庫の表に規格の行が表示されている（表示されたうえで数える）").toBeGreaterThan(0);
-    expect.soft(d.入荷通知のボタン, "入荷通知/通知待ちの操作部").toHaveCount(0);
+    await expect.soft(d.入荷通知のボタン, "入荷通知/通知待ちの操作部").toHaveCount(0);
   });
 });
 
@@ -235,10 +242,10 @@ caseTest("IT-F03-02-121", async ({ page, notes, step, expected }) => {
   const d = new FrontDetail(page);
   await step(1, async () => { await 開いて確かめる(d, 店.本店, notes.get("〔商品ID-F0302-121〕"), "裏面なしカード F0302-121-A"); });
   await expected(async () => {
-    expect.soft(d.カード情報, "カード情報の欄が表示されている（表示されたうえで数える）").toHaveCount(1);
-    expect.soft(d.裏面のカード画像, "裏面カード画像の表示").toHaveCount(0);
-    expect.soft(d.裏面へ切り替える操作, "カード説明を裏面に切り替える操作").toHaveCount(0);
-    expect.soft(d.裏面のカード説明, "裏面のカード説明").toHaveCount(0);
+    await expect.soft(d.カード情報, "カード情報の欄が表示されている（表示されたうえで数える）").toHaveCount(1);
+    await expect.soft(d.裏面のカード画像, "裏面カード画像の表示").toHaveCount(0);
+    await expect.soft(d.裏面へ切り替える操作, "カード説明を裏面に切り替える操作").toHaveCount(0);
+    await expect.soft(d.裏面のカード説明, "裏面のカード説明").toHaveCount(0);
   });
 });
 
@@ -306,6 +313,9 @@ caseTest("IT-F03-02-069", async ({ page, notes, step, expected }) => {
     n = await d.英語版の対応付け.count();
     const all = await d.言語の対応付け();
     note(`ページの言語の対応付け: ${JSON.stringify(all)}`);
+    // 検索エンジン向けの情報（ページの head）は画面に出ないので、読み取った対応付けの一覧を画像の上に載せて撮る
+    const 行 = all.map((x) => { const i = x.indexOf("="); return [x.slice(0, i), x.slice(i + 1)]; });
+    await ページから読み取った値を撮る(page, "ページの head の言語ごとの対応付け（alternate）", [["言語（hreflang）", "アドレス"], ...(行.length ? 行 : [["（なし）", ""]]), ["英語版（hreflang=en）の件数", String(n)]], scene.stepLabel(2, "ページの head の対応付け"));
   });
   await expected(async () => { expect(n, "英語版ページとの対応付けの数").toBe(0); });
 });
@@ -321,7 +331,7 @@ caseTest("IT-F03-02-064", async ({ page, notes, step, expected }) => {
     note(`使われているデッキの欄のフォーマット: ${JSON.stringify(formats)}`);
   });
   await expected(async () => {
-    expect.soft(d.カード情報, "カード情報の欄が表示されている（表示されたうえで数える）").toHaveCount(1);
+    await expect.soft(d.カード情報, "カード情報の欄が表示されている（表示されたうえで数える）").toHaveCount(1);
     expect.soft(formats, "使われているデッキの欄のフォーマット（デッキの無いスタンダードが無い）").not.toContain("スタンダード");
   });
 });
@@ -353,6 +363,9 @@ function もっと見る(a: { 商品ID: string; 商品名: string; 幅: { width:
     await expected(async () => {
       expect.soft(got.ブロック, "スタンダード欄が表示されている（表示されたうえで数える）").toBe(1);
       expect.soft(got.もっと見る, "スタンダード欄のもっと見るリンクの数").toBe(0);
+      // ページが縦に長く見えている範囲だけを撮るので、スタンダード欄が画像に入るよう、画面を欄まで送ってから確かめる（欄が見えていることを要素で確かめ、画像に印を付ける）
+      await d.フォーマットのブロック("スタンダード").first().scrollIntoViewIfNeeded().catch(() => undefined);
+      await expect.soft(d.フォーマットのブロック("スタンダード").first(), "スタンダード欄（画面を送って見せる）").toBeVisible();
     });
   };
 }
@@ -388,17 +401,17 @@ function 支店で出ない(a: { 商品ID: string; 商品名: string; 高額商�
       本文 = await d.本文();
     });
     await expected(async () => {
-      expect.soft(d.入荷通知のボタン, "入荷通知/通知待ち").toHaveCount(0);
-      expect.soft(d.お気に入り, "お気に入り").toHaveCount(0);
-      expect.soft(d.まとめて入荷通知, "まとめて入荷通知").toHaveCount(0);
-      expect.soft(d.SNSでシェア, "SNSでシェアする").toHaveCount(0);
-      expect.soft(d.言語切替, "言語切替").toHaveCount(0);
-      expect.soft(d.状態の列, "状態").toHaveCount(0);
-      expect.soft(d.使われているデッキのボタン, "使われているデッキのボタン").toHaveCount(0);
-      expect.soft(d.デッキの欄, "使われているデッキの欄").toHaveCount(0);
-      expect.soft(d.他のバージョンのボタン, "他のバージョンのボタン").toHaveCount(0);
-      expect.soft(d.他のバージョンの欄, "他のバージョンの欄").toHaveCount(0);
-      expect.soft(d.掲載記事一覧, "掲載記事一覧").toHaveCount(0);
+      await expect.soft(d.入荷通知のボタン, "入荷通知/通知待ち").toHaveCount(0);
+      await expect.soft(d.お気に入り, "お気に入り").toHaveCount(0);
+      await expect.soft(d.まとめて入荷通知, "まとめて入荷通知").toHaveCount(0);
+      await expect.soft(d.SNSでシェア, "SNSでシェアする").toHaveCount(0);
+      await expect.soft(d.言語切替, "言語切替").toHaveCount(0);
+      await expect.soft(d.状態の列, "状態").toHaveCount(0);
+      await expect.soft(d.使われているデッキのボタン, "使われているデッキのボタン").toHaveCount(0);
+      await expect.soft(d.デッキの欄, "使われているデッキの欄").toHaveCount(0);
+      await expect.soft(d.他のバージョンのボタン, "他のバージョンのボタン").toHaveCount(0);
+      await expect.soft(d.他のバージョンの欄, "他のバージョンの欄").toHaveCount(0);
+      await expect.soft(d.掲載記事一覧, "掲載記事一覧").toHaveCount(0);
       if (a.高額商品コード) expect.soft(本文.includes(a.高額商品コード), `画面の文に高額商品コード ${a.高額商品コード} がある（表示されない）`).toBe(false);
     });
   };
@@ -555,6 +568,8 @@ function 依頼のDB確認(a: { 会員ID: string; 了承: boolean }): CaseBody {
     await expected(async () => {
       if (a.了承) expect(件数.有効, "在庫なしカードの先頭の商品規格の、有効な入荷通知依頼の件数").toBe(1);
       else {
+        // 「登録されない」は、確認のポップアップで「キャンセル」を押せたうえで見る（押した操作が送られなかっただけで0件のまま合格にしない）
+        expect.soft(dialogs.length, "入荷通知依頼確認のポップアップが出て「キャンセル」を押せた（出たポップアップの数）").toBeGreaterThan(0);
         expect.soft(件数.有効, "在庫なしカードの先頭の商品規格の、有効な入荷通知依頼の件数").toBe(0);
         expect.soft(全体, "会員の有効な入荷通知依頼の合計").toBe(0);
       }
@@ -601,6 +616,7 @@ function ボタンの切替(a: { 会員: string; 商品ID: string; 商品名: st
       await page.waitForTimeout(500);
       文言.後 = await d.見えている文言(d.入荷通知のボタン_規格(classId));
       note(`押したあとのボタンの文言「${文言.後}」`);
+      note("文言の食い違い（依頼者の判断待ち）: 正本の期待結果は「入荷時に通知」と「通知待ち」。設計書（0303 商品詳細 2-14）のボタン名は「入荷通知/通知待ち」で、画面は「入荷通知」と「通知待ち」");
     });
     await expected(async () => {
       expect.soft(文言.前, `押す前のボタンの表示（${a.前}）`).toBe(a.前);
@@ -610,3 +626,45 @@ function ボタンの切替(a: { 会員: string; 商品ID: string; 商品名: st
 }
 caseTest("IT-F03-02-109", ボタンの切替({ 会員: "f0302-member-109", 商品ID: "〔商品ID-F0302-109〕", 商品名: "通知待ちカード F0302-109-A", 前: "入荷時に通知", 後: "通知待ち" }));
 caseTest("IT-F03-02-110", ボタンの切替({ 会員: "f0302-member-110", 商品ID: "〔商品ID-F0302-110〕", 商品名: "通知取消カード F0302-110-A", 前: "通知待ち", 後: "入荷時に通知" }));
+
+// ---- 014・016 SNSでシェアする（2026-11-12 追加） ----
+// X・LINE のサイトは外部。新しいタブで開いた先のアドレス（転送されたあと）がログインの画面かを確かめる（外部のサイトの中身は確かめない）。
+
+function シェアのケース(先: "X" | "LINE"): CaseBody {
+  return async ({ page, notes, step, expected, capture }) => {
+    const d = new FrontDetail(page);
+    let 開いた先 = "";
+    let リンク先 = "";
+    await step(1, async () => {
+      const got = await 開く(d, 店.本店, notes.get("〔商品ID-F0302-共有-BASE-CARD〕"));
+      expect(got.商品名, "商品詳細画面に「結合試験カード」が表示される").toContain(rc("結合試験カード"));
+    });
+    await step(2, async () => {
+      const link = d.シェアのリンク(先);
+      await expect(link, `SNSでシェアする欄の「${先}」ボタン`).toBeVisible();
+      リンク先 = (await link.getAttribute("href")) ?? "";
+      const [tab] = await Promise.all([page.context().waitForEvent("page", { timeout: 30_000 }), link.click()]);
+      await tab.waitForLoadState("load", { timeout: 60_000 }).catch(() => undefined);
+      // ログインの画面へは画面のスクリプトで移ることがあるので、アドレスが落ち着くまで少し待つ
+      for (let i = 0; i < 20 && !/login|signin|flow/i.test(tab.url()); i++) await tab.waitForTimeout(500);
+      開いた先 = tab.url();
+      await tab.bringToFront();
+      await capture(`新しいタブで開いた${先}の画面`);
+      note(`「${先}」ボタンのリンク先 ${リンク先}／新しいタブで開いた先 ${開いた先}`);
+      await tab.close();
+      await page.bringToFront();
+    });
+    await expected(async () => {
+      const u = new URL(開いた先 || "about:blank");
+      if (先 === "X") {
+        expect.soft(u.hostname, "開いた先が X のサイト").toMatch(/(^|\.)(x|twitter)\.com$/);
+        expect.soft(`${u.pathname}${u.search}`, "開いた先が X のログイン画面（アドレスにログインの画面の印）").toMatch(/login|flow\/login/i);
+      } else {
+        expect.soft(u.hostname, "開いた先が LINE のサイト").toMatch(/(^|\.)line\.me$/);
+        expect.soft(`${u.pathname}${u.search}`, "開いた先が LINE のログイン画面（アドレスにログインの画面の印）").toMatch(/login|oauth2|authorize/i);
+      }
+    });
+  };
+}
+caseTest("IT-F03-02-014", シェアのケース("X"));
+caseTest("IT-F03-02-016", シェアのケース("LINE"));

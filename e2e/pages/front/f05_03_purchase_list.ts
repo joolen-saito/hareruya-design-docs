@@ -27,6 +27,26 @@ export class F0503買取一覧 {
     await this.page.waitForTimeout(1500);
   }
 
+  /** 絞り込みの並び（絞り込み領域）の「詳細検索」ボタン（見えているもの） */
+  get 絞り込み領域の詳細検索ボタン(): Locator {
+    return this.page.locator('[data-filter="detail-search"][data-modal-open="purchase-search"]:visible').first();
+  }
+  /**
+   * 絞り込み領域の「詳細検索」ボタンだけを押す（ほかのボタンで代えない）。見えるボタンが無い・押せないときは、その事実を文で返す（押せたら空）
+   */
+  async 絞り込み領域の詳細検索だけを押す(): Promise<string> {
+    const button = this.絞り込み領域の詳細検索ボタン;
+    const 置いた数 = await this.page.locator('[data-filter="detail-search"][data-modal-open="purchase-search"]').count();
+    if ((await button.count()) === 0) return `絞り込み領域に「詳細検索」ボタンが見えない（画面にある数 ${置いた数}・見えている数 0。画面の幅 ${this.page.viewportSize()?.width ?? "不明"}px）`;
+    try {
+      await button.evaluate((e) => e.scrollIntoView({ block: "center" }));
+      await button.click({ timeout: 8_000 });
+      return "";
+    } catch (e) {
+      return `絞り込み領域の「詳細検索」ボタンを押せない（${String(e).split("\n")[0].slice(0, 100)}）`;
+    }
+  }
+
   /** 絞り込みの並びの「詳細検索」を押す。押せなければ画面上部の「詳細検索」を押す。押したのがどれかを返す */
   async 絞り込み領域の詳細検索を押す(): Promise<"絞り込み領域の詳細検索ボタン" | "画面上部の詳細検索ボタン"> {
     const 候補: ["絞り込み領域の詳細検索ボタン" | "画面上部の詳細検索ボタン", Locator][] = [
@@ -58,7 +78,7 @@ export class F0503買取一覧 {
   async パンくずのホームを押す(): Promise<void> {
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.パンくずのホーム.click({ timeout: 30_000 }),
+      this.パンくずのホーム.click({ timeout: 30_000, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -74,7 +94,7 @@ export class F0503買取一覧 {
     await link.scrollIntoViewIfNeeded();
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      link.click({ timeout: 30_000 }),
+      link.click({ timeout: 30_000, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }

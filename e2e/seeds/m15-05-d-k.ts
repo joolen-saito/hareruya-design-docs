@@ -12,7 +12,7 @@
  * - 検討中のカードのカードは、シード表の「登録済みの任意の1枚」のうち DeckTestAlpha（共有のカード。読むだけ）にした。
  */
 import { defineSeed, reportCurrentSeedIssue } from "./current_seed";
-import { 名, 一件登録, 管理画面, マスタ, defineArchetypeSeed, ALPHA, BETA, 標準, 単一, 上限, 下限, 統率なし, 型甲 } from "./m15-05-k";
+import { 名, 一件登録, 管理画面, マスタ, defineArchetypeSeed, ALPHA, BETA, 代役A, 標準, 単一, 上限, 下限, 統率なし, 型甲 } from "./m15-05-k";
 import type { デッキ内容 } from "../pages/admin/m15_05_deck_edit";
 import * as prep from "../db/m15_05_prep";
 
@@ -69,7 +69,7 @@ for (const no of ["186", "187", "188", "189", "190"]) {
   defineWDeckSeed(`S-M15-05-CBDECK-${no}`, no, `M1505-CB${no}-デッキ`, { フォーマット: 標準, アーキタイプ: 型甲, メイン: `1 ${BETA}` }, 真);
 }
 for (const [no, フォーマット] of [["191", 単一], ["192", 統率なし], ["193", 上限], ["194", 下限]] as const) {
-  defineArchetypeSeed(`S-M15-05-CBARC-${no}`, no, フォーマット, ALPHA);
+  defineArchetypeSeed(`S-M15-05-CBARC-${no}`, no, フォーマット, 代役A); // 代表カードは画像つきの既存カードで代える（DeckTestAlpha→Lightning Bolt）
   defineWDeckSeed(`S-M15-05-CBDECK-${no}`, no, `M1505-CB${no}-デッキ`, { フォーマット, アーキタイプ: 名(`M1505-CB${no}-型`), メイン: `1 ${BETA}` }, 真, [...マスタ, `S-M15-05-CBARC-${no}`]);
 }
 

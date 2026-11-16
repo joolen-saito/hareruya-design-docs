@@ -35,7 +35,7 @@ caseTest("IT-M11-03-036", async ({ page, step, expected }) => {
     await l.ログイン画面を開く();
     await l.ログインする(M1103_036のメール(), M1103_036.パスワード);
     ログイン後のパス = l.path();
-    expect(await l.ログイン画面である(), `フロントにログインできた（移った先 ${ログイン後のパス}）`).toBe(false);
+    expect(!(await l.ログイン画面である()), `フロントにログインできた（移った先 ${ログイン後のパス}）`).toBe(true);
   });
   await step(2, async () => { r = await 権限管理画面のURLを開く(page); });
   await expected(async () => {

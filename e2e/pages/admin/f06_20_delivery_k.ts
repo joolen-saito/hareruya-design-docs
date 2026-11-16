@@ -16,8 +16,8 @@ export async function 住所リンクを押す(page: Page, 住所に含む語: s
   const row = お届け先の行(page, 住所に含む語);
   await expect(row, `お届け先住所欄に、住所に「${住所に含む語}」を含む行が1つある`).toHaveCount(1, { timeout: T });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-    row.locator('a[href*="/delivery/"][href$="/edit"]').first().click({ timeout: T }),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+    row.locator('a[href*="/delivery/"][href$="/edit"]').first().click({ timeout: T, noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator('[name="customer_address[address_name]"]'), "配送先編集画面").toBeVisible({ timeout: T });

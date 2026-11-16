@@ -11,6 +11,8 @@ import { adminUrl, loginAdmin } from "../../lib/session";
 import { StockListPage } from "../../pages/admin/stock_edit";
 import { BuyListPage, 買取番号の表示 } from "../../pages/admin/m07_buy";
 import { M0703EditPage, ManualMailPage, 一覧から編集を開く, 編集の可否を読む } from "../../pages/admin/m07_03_edit";
+import { M0703SectionsPage } from "../../pages/admin/m07_03_sections";
+import { まとめて買取の明細を読む, 個別入力商品を読む } from "../../db/m07_03_c";
 import { M0703B_ADMIN, M0703RG_ADMIN, 品, 買取の会員 } from "../../seeds/m07-03-b";
 import { 買取の値を読む, 履歴の件数, 実在庫を読む, 実在庫履歴を読む, 本店の在庫, 本店の在庫履歴, 選んで買取の明細 } from "../../db/m07_03";
 import { StockHistoryPage } from "../../pages/admin/m04_17_stock_history";
@@ -22,6 +24,13 @@ import { openEditFromResult, searchCustomer } from "../../pages/admin/f06_custom
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const pathOf = (page: Page) => new URL(page.url()).pathname;
 const 編集のパス = (番号: string) => new RegExp(`/purchase/${Number(番号)}/edit$`);
+
+/** 「保存」を押し、対象の買取への保存の要求が送られて応答があったことを確かめる（送られずに元の画面・元の値のままのとき、変わらないことを合格にしない） */
+async function 保存して送信を確かめる(e: M0703EditPage): Promise<Awaited<ReturnType<M0703EditPage["保存を押す"]>>> {
+  const r = await e.保存を押す();
+  expect(r.応答, "保存の要求が対象の買取へ送られ、応答があった").not.toBeNull();
+  return r;
+}
 
 /** 事前準備①のログインと、手順1（買取情報編集画面を開く） */
 async function 始める(ctx: CaseCtx, label: string): Promise<{ 番号: string; e: M0703EditPage }> {
@@ -56,14 +65,21 @@ caseTest("IT-M07-03-001", async (ctx) => {
 caseTest("IT-M07-03-002", async (ctx) => {
   const { e } = await 始める(ctx, "〔買取番号-M0703-002〕");
   let opts: string[] = [];
-  await ctx.step(2, async () => { await e.買取状況の選択肢を開く(); opts = await e.買取状況の選択肢(); });
+  await ctx.step(2, async () => {
+    await e.買取状況の選択肢を開く();
+    opts = await e.買取状況の選択肢();
+    // 選択肢を画像で読めるようにする: 選択欄を一覧の形に広げたまま、手順2と期待結果の画像を撮る（このケースではこのあと操作しない）
+    await e.page.keyboard.press("Escape");
+    await e.買取状況の選択肢を広げて見せる();
+    note("買取状況の選択欄は、選択肢がすべて見えるように一覧の形に広げて撮った（選択肢・選んでいる値は変えていない）");
+  });
   await ctx.expected(async () => {
     // 設計書（L0059〜L0063 の査定系・払い出しのステータス）と、事前準備の参照値（REF・GF-STATUS）にある管理画面用の状況
     const want = ["注文", "商品到着", "査定中", "査定中断", "査定再開", "MTGBuyer査定完了", "査定内容連絡済み", "査定内容承諾", "振込依頼済み", "振込完了",
       "振込失敗", "簡易書留送付済み", "キャンセル済み", "未登録在庫あり", "入庫待ち", "入庫済み"];
     for (const w of want) expect.soft(opts.includes(w), `買取状況の選択肢に「${w}」がある`).toBe(true);
   });
-  note("別添資料「ネット買取管理ステータス」はリポジトリに無いので、設計書の写し（L0059〜L0063）に挙がる状況と、事前準備の参照値（買取状況8件・追加の4件）に挙がる状況が選択肢にあることを確かめた");
+  note("別添資料「ネット買取管理ステータス」（integration_test/casegen/combination/units/_common/0206_sheet-17.txt）に挙がる管理画面用の16状況（設計書 L0059〜L0063 の査定系・払い出し・入庫のステータス）が、すべて選択肢にあることを確かめた。「入庫済み（仕入れ完了）」はアプリでは「入庫済み」と表示される");
 });
 
 caseTest("IT-M07-03-004", async (ctx) => {
@@ -85,7 +101,7 @@ caseTest("IT-M07-03-006", async (ctx) => {
   await ctx.step(3, async () => { await e.履歴の開閉アイコンを押す(); 閉じた = await e.履歴が見えるか(); });
   await ctx.expected(async () => {
     expect.soft(開いた, "1回目の開閉アイコンでステータス変更履歴一覧が表示される").toBe(true);
-    expect.soft(閉じた, "2回目の開閉アイコンでステータス変更履歴一覧が非表示になる").toBe(false);
+    expect.soft(閉じた === false, "2回目の開閉アイコンでステータス変更履歴一覧が非表示になる").toBe(true);
   });
 });
 
@@ -102,11 +118,14 @@ caseTest("IT-M07-03-007", async (ctx) => {
 caseTest("IT-M07-03-008", async (ctx) => {
   const { e } = await 始める(ctx, "〔買取番号-M0703-008〕");
   let url = "";
-  await ctx.step(2, async () => { const p = await e.依頼者情報の詳細を押す(); url = new URL(p.url()).pathname; await p.close(); });
+  let opened: Page | undefined;
+  await ctx.step(2, async () => { opened = await e.依頼者情報の詳細を押す(); url = new URL(opened.url()).pathname; });
   await ctx.expected(async () => {
     expect(url, "開いた画面（会員詳細＝会員登録編集）").toMatch(new RegExp(`/customer/${ctx.notes.get("〔会員番号-M0703-008〕")}/edit$`));
   });
-  note("「詳細」は会員登録編集を別のタブで開く。開いたタブの URL で確かめた");
+  // 開いた会員登録編集のタブは、期待結果の画像（開いているタブをすべて撮る）に写るよう、期待結果のあとで閉じる
+  await opened?.close();
+  note("「詳細」は会員登録編集を別のタブで開く。開いたタブの URL で確かめ、そのタブの画面を画像に残した");
 });
 
 caseTest("IT-M07-03-009", async (ctx) => {
@@ -142,9 +161,14 @@ caseTest("IT-M07-03-014", async (ctx) => {
   let 査定 = "", 依頼者 = "";
   await ctx.step(2, async () => {
     const code = 品("M0703-014-FB");
+    // 3区分（選んで買取・まとめて買取・個別入力商品）の明細の入力部品も確かめる。まとめて買取は開くと明細が並ぶ
+    const sec = new M0703SectionsPage(ctx.page);
+    await sec.まとめてを開く(1);
+    const blk = 品("M0703-014-BLK"), ind = 品("M0703-014-IND");
     const items: [string, import("@playwright/test").Locator][] = [
       ["送料", e.送料の欄()], ["管理者用メモ", e.メモの欄()],
       ["選んで買取の査定価格", e.明細の入力欄(code, "査定価格")], ["選んで買取の数量", e.明細の入力欄(code, "数量")], ["選んで買取の売却", e.明細の入力欄(code, "売却")],
+      ["まとめて買取の売却", sec.まとめての入力欄(blk, "売却")], ["個別入力商品の売却", sec.個別の売却欄(ind)],
       ["都道府県", e.f("Pref")], ["住所3", e.f("addr03")], ["電話番号", e.f("telNo")], ["身分証明書", e.f("Identification")], ["口座番号", e.口座("accountNo")],
     ];
     for (const [k, l] of items) 可否[k] = (await 編集の可否を読む(l)).編集できる;
@@ -184,8 +208,9 @@ caseTest("IT-M07-03-019", async (ctx) => {
   await ctx.step(2, async () => { await e.商品追加を押す(); });
   await ctx.step(3, async () => { await 商品を追加する(e, code); });
   await ctx.expected(async () => {
-    const rows = await e.選んで買取の明細();
-    expect(rows.filter((r) => r.商品コード === code || r.商品名 === code).length, "選んで買取の明細に追加された ADD-SUP-001 の行の数").toBe(1);
+    // 画面の明細で確かめる（保存前なのでDBには無い）。追加した商品の行だけを数える
+    const n = await e.選んで買取のコードの行(code).count();
+    expect(n, "選んで買取の明細に追加された ADD-SUP-001 の行の数").toBe(1);
   });
 });
 
@@ -220,18 +245,24 @@ caseTest("IT-M07-03-024", async (ctx) => {
   const { 番号, e } = await 始める(ctx, "〔買取番号-M0703-024〕");
   let v!: ReturnType<typeof 買取の値を読む>;
   let rows: ReturnType<typeof 選んで買取の明細> = [];
+  let まとめて: ReturnType<typeof まとめて買取の明細を読む> = [], 個別: ReturnType<typeof 個別入力商品を読む> = [];
   let r!: Awaited<ReturnType<M0703EditPage["保存を押す"]>>;
+  const sec = new M0703SectionsPage(ctx.page);
   await ctx.step(2, async () => { await e.買取状況を選ぶ("商品到着"); await e.振込状況を設定する({ 振込依頼可能: true, 振込失敗: true }); });
   await ctx.step(3, async () => {
     await e.査定編集を始める();
     await e.送料とメモを入れる({ 送料: "500", メモ: "通常保存メモ" });
     const n = await e.売却をすべて選ぶ("する");
-    note(`売却を「する」にした明細: 選んで買取 ${n} 行（まとめて買取・個別入力商品は無い。シードの報告を参照）`);
+    // まとめて買取（開くと明細が並ぶ）と個別入力商品の売却も「する」にする
+    await sec.まとめてを開く(1);
+    await sec.まとめての入力欄(品("M0703-024-BLK"), "売却").selectOption({ label: "する" }, { timeout: 30_000 });
+    await sec.個別の売却欄(品("M0703-024-IND")).selectOption({ label: "する" }, { timeout: 30_000 });
+    note(`売却を「する」にした明細: 選んで買取 ${n} 行・まとめて買取 1 行・個別入力商品 1 行`);
     await e.査定確定する();
   });
   await ctx.step(4, async () => { await e.依頼者情報の編集を押す(); await e.f("addr03").fill("神田1-2-3"); await e.依頼者情報の編集を押す(); });
   await ctx.step(5, async () => { r = await e.保存を押す(); });
-  await ctx.step(6, async () => { v = 買取の値を読む(番号); rows = 選んで買取の明細(番号); });
+  await ctx.step(6, async () => { v = 買取の値を読む(番号); rows = 選んで買取の明細(番号); まとめて = まとめて買取の明細を読む(番号); 個別 = 個別入力商品を読む(番号); });
   await ctx.expected(async () => {
     expect.soft(v.買取状況, "DBの買取状況").toBe("商品到着");
     expect.soft(v.振込依頼可能, "DBの振込依頼可能").toBe(true);
@@ -239,6 +270,8 @@ caseTest("IT-M07-03-024", async (ctx) => {
     expect.soft(v.送料, "DBの送料").toBe("500");
     expect.soft(v.メモ, "DBの管理者用メモ").toBe("通常保存メモ");
     expect.soft(rows.length > 0 && rows.every((x) => x.売却 === "する"), `DBの選んで買取の売却（すべて「売却する」）: ${rows.map((x) => x.売却).join("・")}`).toBe(true);
+    expect.soft(まとめて.map((x) => x.売却), "DBのまとめて買取の売却（「売却する」）").toEqual(["する"]);
+    expect.soft(個別.map((x) => x.売却), "DBの個別入力商品の売却（「売却する」）").toEqual(["する"]);
     expect.soft(v.住所3, "DBの住所3").toBe("神田1-2-3");
   });
   note(`保存の結果のメッセージ: 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`);
@@ -256,7 +289,8 @@ caseTest("IT-M07-03-025", async (ctx) => {
 caseTest("IT-M07-03-026", async (ctx) => {
   const { 番号, e } = await 始める(ctx, "〔買取番号-M0703-026〕");
   await ctx.step(2, async () => { await e.振込状況を設定する({ 振込依頼可能: true }); });
-  await ctx.step(3, async () => { const r = await e.保存を押す(); note(`保存の結果: 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`); });
+  // 保存の要求が送られたこと（送られずに元の画面に留まったのを「遷移した」にしない）
+  await ctx.step(3, async () => { const r = await 保存して送信を確かめる(e); note(`保存の結果: 応答 ${r.応答} 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`); });
   await ctx.expected(async () => { expect(pathOf(ctx.page), "保存後の画面（買取情報編集）").toMatch(編集のパス(番号)); });
 });
 
@@ -311,12 +345,21 @@ caseTest("IT-M07-03-031", async (ctx) => {
   });
 });
 
+const norm2 = (t: string) => t.replace(/\s+/g, " ").trim();
 caseTest("IT-M07-03-033", async (ctx) => {
   const { 番号, e } = await 始める(ctx, "〔買取番号-M0703-033〕");
   let v!: ReturnType<typeof 買取の値を読む>;
   let 口座種別の値 = "";
   await ctx.step(2, async () => { await e.依頼者情報の編集を押す(); });
   await ctx.step(3, async () => {
+    // 選ぶ前の値が選ぶ値と同じだと、保存された値を読み直すだけで合格になる。違う値から始まっていることを先に確かめる
+    const 前 = {
+      都道府県: norm2(await e.f("Pref").locator("option:checked").innerText()), 職業: norm2(await e.f("Job").locator("option:checked").innerText()),
+      身分証明書: norm2(await e.f("Identification").locator("option:checked").innerText()), 口座種別: norm2(await e.口座("accountTypeId").locator("option:checked").innerText()),
+    };
+    note(`選ぶ前の値: ${Object.entries(前).map(([k, x]) => `${k}「${x}」`).join("・")}`);
+    const 同じ = Object.entries({ 都道府県: "東京都", 職業: "会社員", 身分証明書: "自動車運転免許証", 口座種別: "普通" }).filter(([k, x]) => 前[k as keyof typeof 前] === x).map(([k]) => k);
+    if (同じ.length) throw new Error(`選ぶ前から同じ値が入っている（${同じ.join("・")}）。選んだ値が保存されたことを示せないので止めた`);
     await e.依頼者の選択欄を選ぶ("Pref", "東京都");
     await e.依頼者の選択欄を選ぶ("Job", "会社員");
     await e.依頼者の選択欄を選ぶ("Identification", "自動車運転免許証");
@@ -386,34 +429,48 @@ caseTest("IT-M07-03-039", async (ctx) => {
   });
 });
 
-async function トークンを変えて保存(ctx: CaseCtx, label: string, how: "消す" | "書き換える"): Promise<ReturnType<typeof 買取の値を読む>> {
+/** 手順1〜4（DBを読む手順5は、ケースの本文で行う。帯に確かめ方と読んだ値が正しく出るように） */
+async function トークンを変えて保存(ctx: CaseCtx, label: string, how: "消す" | "書き換える"): Promise<string> {
   const { 番号, e } = await 始める(ctx, label);
-  let v!: ReturnType<typeof 買取の値を読む>;
   await ctx.step(2, async () => { await e.振込状況を設定する({ 振込依頼可能: true }); });
   await ctx.step(3, async () => {
     const n = how === "消す" ? await e.トークンを消す() : await e.トークンを書き換える("invalid-token");
     note(`保存のフォームのなりすまし対策トークンの入力要素 ${n} 個を${how === "消す" ? "消した" : "「invalid-token」に書き換えた"}（開発者ツールの操作を、画面のスクリプトで行った）`);
   });
-  await ctx.step(4, async () => { const r = await e.保存を押す(); note(`保存の結果: 応答 ${r.応答} 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`); });
-  await ctx.step(5, async () => { v = 買取の値を読む(番号); });
-  return v;
+  await ctx.step(4, async () => { const r = await 保存して送信を確かめる(e); note(`保存の結果: 応答 ${r.応答} 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`); });
+  return 番号;
 }
 caseTest("IT-M07-03-041", async (ctx) => {
-  const v = await トークンを変えて保存(ctx, "〔買取番号-M0703-041〕", "消す");
-  await ctx.expected(async () => { expect(v.振込依頼可能, "DBの振込依頼可能（保存前のオフのまま）").toBe(false); });
+  const 番号 = await トークンを変えて保存(ctx, "〔買取番号-M0703-041〕", "消す");
+  let v!: ReturnType<typeof 買取の値を読む>;
+  await ctx.step(5, async () => {
+    // 保存に失敗した画面は入力した値（振込依頼可能のチェックはオン）のまま再表示されるので、保存された値が画面に出るよう、買取情報編集を開き直してから読む
+    await 一覧から編集を開く(ctx.page, 番号);
+    v = 買取の値を読む(番号);
+    note("保存に失敗した画面は入力した値（振込依頼可能のチェックはオン）で再表示されるので、保存された値が画面に出るよう買取情報編集を開き直した。DBの値は、開き直した画面の振込依頼可能（オフ）と同じ");
+  });
+  await ctx.expected(async () => { expect(v.振込依頼可能 ? "オン" : "オフ", "DBの振込依頼可能（保存前のオフのまま）").toBe("オフ"); });
 });
 caseTest("IT-M07-03-042", async (ctx) => {
-  const v = await トークンを変えて保存(ctx, "〔買取番号-M0703-042〕", "書き換える");
-  await ctx.expected(async () => { expect(v.振込依頼可能, "DBの振込依頼可能（保存前のオフのまま）").toBe(false); });
+  const 番号 = await トークンを変えて保存(ctx, "〔買取番号-M0703-042〕", "書き換える");
+  let v!: ReturnType<typeof 買取の値を読む>;
+  await ctx.step(5, async () => {
+    // 保存に失敗した画面は入力した値（振込依頼可能のチェックはオン）のまま再表示されるので、保存された値が画面に出るよう、買取情報編集を開き直してから読む
+    await 一覧から編集を開く(ctx.page, 番号);
+    v = 買取の値を読む(番号);
+    note("保存に失敗した画面は入力した値（振込依頼可能のチェックはオン）で再表示されるので、保存された値が画面に出るよう買取情報編集を開き直した。DBの値は、開き直した画面の振込依頼可能（オフ）と同じ");
+  });
+  await ctx.expected(async () => { expect(v.振込依頼可能 ? "オン" : "オフ", "DBの振込依頼可能（保存前のオフのまま）").toBe("オフ"); });
 });
 
 /** 買取状況を変えて保存し、手順4でDBを読む（手順: 開く → 状況を選ぶ → 保存 → DB） */
-async function 状況を変えて保存<T>(ctx: CaseCtx, label: string, 状況: string, 読む: (番号: string) => T): Promise<{ 番号: string; 値: T }> {
+async function 状況を変えて保存<T>(ctx: CaseCtx, label: string, 状況: string, 読む: ((番号: string) => T) | null): Promise<{ 番号: string; 値: T }> {
   const { 番号, e } = await 始める(ctx, label);
   let 値!: T;
   await ctx.step(2, async () => { await e.買取状況を選ぶ(状況); });
-  await ctx.step(3, async () => { const r = await e.保存を押す(); note(`保存の結果: 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`); });
-  await ctx.step(4, async () => { 値 = 読む(番号); });
+  await ctx.step(3, async () => { const r = await 保存して送信を確かめる(e); note(`保存の結果: 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`); });
+  // 読む を null にすると、手順4（DBの確認）はケースの本文で行う（確かめた値を読んだ照会の名前が帯に出るように）
+  if (読む) { const r読む = 読む; await ctx.step(4, async () => { 値 = r読む(番号); }); }
   return { 番号, 値 };
 }
 const 状況を読む = (番号: string) => 買取の値を読む(番号).買取状況;
@@ -426,13 +483,25 @@ caseTest("IT-M07-03-044", async (ctx) => {
   const r = await 状況を変えて保存(ctx, "〔買取番号-M0703-044〕", "振込依頼済み", 状況を読む);
   await ctx.expected(async () => { expect(r.値, "DBの買取状況（査定内容承諾のまま）").toBe("査定内容承諾"); });
 });
+/** 保存の前の、買取情報編集画面の査定金額合計の欄の値（保存で送られる買取合計。数値） */
+async function 送る買取合計(e: M0703EditPage): Promise<number> {
+  return Number((await e.f("totalPrice").inputValue()).replace(/[^\d-]/g, ""));
+}
 caseTest("IT-M07-03-045", async (ctx) => {
-  const r = await 状況を変えて保存(ctx, "〔買取番号-M0703-045〕", "振込依頼済み", 状況を読む);
-  await ctx.expected(async () => { expect(r.値, "DBの買取状況").toBe("振込依頼済み"); });
-  note("買取情報編集の査定金額合計の欄は、画面のスクリプトが1の位を切り上げて入れる（査定価格9999・数量1のとき 10000）。シード表の手順のまま作った");
+  const { 番号, e } = await 始める(ctx, "〔買取番号-M0703-045〕");
+  let 合計 = NaN, 値 = "";
+  await ctx.step(2, async () => { await e.買取状況を選ぶ("振込依頼済み"); 合計 = await 送る買取合計(e); });
+  await ctx.step(3, async () => { const r = await 保存して送信を確かめる(e); note(`保存の結果: 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`); });
+  await ctx.step(4, async () => { 値 = 状況を読む(番号); });
+  await ctx.expected(async () => {
+    // 正本は「買取合計9999（必要額10000の1円手前）」の境界。画面のスクリプトが査定金額合計の1の位を切り上げるので、保存で送られる合計が9999でなければ、境界を確かめたことにならない
+    expect.soft(合計, "保存で送られる買取合計（前提: 9999）").toBe(9999);
+    expect.soft(値, "DBの買取状況").toBe("振込依頼済み");
+  });
 });
 
 caseTest("IT-M07-03-051", async (ctx) => {
+  note("操作する管理者 m0703_admin の権限は「システム管理者」。アプリには入庫専用の権限が無く（設計書 M07-03 L0053「入庫の特別な権限は不要」）、入庫済みへの変更に特別な権限を付けた管理者ではない。正本の「特別な入庫権限を持たない稼働中管理者」はこの管理者で読み替えた");
   const r = await 状況を変えて保存(ctx, "〔買取番号-M0703-051〕", "入庫済み", 状況を読む);
   await ctx.expected(async () => { expect(r.値, "DBの買取状況").toBe("入庫済み"); });
 });
@@ -447,17 +516,26 @@ caseTest("IT-M07-03-052", async (ctx) => {
 caseTest("IT-M07-03-053", async (ctx) => {
   const { e } = await 始める(ctx, "〔買取番号-M0703-053〕");
   let s: ReturnType<typeof 本店の在庫> = null;
-  let h: ReturnType<typeof 本店の在庫履歴> = [];
-  await ctx.step(2, async () => { await e.買取状況を選ぶ("入庫済み"); });
+  await ctx.step(2, async () => {
+    // 事前準備の開始時の在庫（総在庫10・総原価10000）を、入庫の前にDBで読んで確かめる
+    const 開始 = 本店の在庫(品("SKU-STK-001-053"));
+    expect.soft(開始?.在庫 ?? null, "入庫の前のDBの総在庫（開始時）").toBe(10);
+    expect.soft(開始?.総原価 ?? null, "入庫の前のDBの総原価（開始時）").toBe(10000);
+    await e.買取状況を選ぶ("入庫済み");
+  });
   await ctx.step(3, async () => { const r = await e.保存を押す(); note(`保存の結果: 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`); });
-  await ctx.step(4, async () => { s = 本店の在庫(品("SKU-STK-001-053")); h = 本店の在庫履歴(品("SKU-STK-001-053")); });
+  await ctx.step(4, async () => { s = 本店の在庫(品("SKU-STK-001-053")); });
   await ctx.expected(async () => {
     expect.soft(s?.在庫 ?? null, "DBの総在庫（10＋2）").toBe(12);
     expect.soft(s?.総原価 ?? null, "DBの総原価（10000＋買取小計1000）").toBe(11000);
-    const last = h[h.length - 1];
-    expect.soft(Number(last?.変更後原価単価 ?? "NaN").toFixed(2), "DBの入庫後の原価単価（総原価11000÷総在庫12）").toBe((11000 / 12).toFixed(2));
+    const 原価単価 = s && s.在庫 > 0 ? Math.round(s.総原価 / s.在庫) : null;
+    expect.soft(原価単価, "DBの在庫の原価単価（総原価11000÷総在庫12 を四捨五入）").toBe(Math.round(11000 / 12));
   });
-  note("原価単価は在庫の表に列が無いので、入庫で作られた在庫履歴の変更後原価単価で確かめた");
+  // 確かめるのは正本の期待結果どおり在庫そのもの。在庫履歴の値は確かめに入れず、記録だけ残す
+  let h: ReturnType<typeof 本店の在庫履歴> = [];
+  try { h = 本店の在庫履歴(品("SKU-STK-001-053")); } catch { /* 参考の記録なので読めなくても続ける */ }
+  const last = h[h.length - 1];
+  note(`原価単価は在庫に列が無く、アプリは総原価÷総在庫（四捨五入）で出すので、DBの在庫の総原価と総在庫から求めて確かめた。参考: 入庫で作られた在庫履歴の変更後原価単価は「${last?.変更後原価単価 ?? "（履歴なし）"}」`);
 });
 caseTest("IT-M07-03-055", async (ctx) => {
   const { 番号, e } = await 始める(ctx, "〔買取番号-M0703-055〕");
@@ -494,29 +572,56 @@ caseTest("IT-M07-03-058", async (ctx) => {
 caseTest("IT-M07-03-061", async (ctx) => {
   const { 番号, e } = await 始める(ctx, "〔買取番号-M0703-061〕");
   let 文: string[] = [];
+  let 応答: number | null = null;
+  let 遷移した = false;
   await ctx.step(2, async () => {
     ctx.page.once("dialog", (d) => { 文.push(d.message()); void d.accept(); });
-    await Promise.all([ctx.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => null), ctx.page.locator("#sell_btn").click({ timeout: 30_000 })]);
+    // 一括売却登録の要求（対象の買取への POST）と、その応答による画面の遷移を待つ（どちらも起きなければ、元の画面のまま合格にしない）
+    const resP = ctx.page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname.endsWith(`/purchase/bulk/detail/${Number(番号)}/sell`), { timeout: 60_000 }).catch(() => null);
+    const navP = ctx.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).then(() => true, () => false);
+    await ctx.page.locator("#sell_btn").click({ timeout: 30_000 });
+    応答 = (await resP)?.status() ?? null;
+    遷移した = await navP;
   });
-  await ctx.step(3, async () => { await ctx.page.waitForLoadState("load"); note(`送信前確認の文「${文.join(" / ")}」に「OK」で答えた（ダイアログは押した直後に出るので、手順2の中で応答を決めた）`); });
+  await ctx.step(3, async () => { await ctx.page.waitForLoadState("load"); note(`送信前確認の文「${文.join(" / ")}」に「OK」で答えた（ダイアログは押した直後に出るので、手順2の中で応答を決めた）。一括売却登録の応答: ${応答 ?? "なし"}`); });
   await ctx.expected(async () => {
-    expect.soft(pathOf(ctx.page), "処理後の画面（買取情報編集）").toMatch(編集のパス(番号));
     expect.soft(文.length, "送信前確認のダイアログが出た").toBe(1);
+    expect.soft(応答, "一括売却登録の要求が対象の買取へ送られ、応答があった").not.toBeNull();
+    expect.soft(遷移した, "一括売却登録の処理後に画面が遷移した").toBe(true);
+    expect.soft(pathOf(ctx.page), "処理後の画面（買取情報編集）").toMatch(編集のパス(番号));
   });
 });
 
 // ---- 商品追加の検索のエラー ----
+
+/** 商品検索の操作をして、その要求が通信で失敗し、画面のエラー処理（アラート）が出るまで待つ。失敗した要求の URL を返す（固定の時間だけ待って終わらない） */
+async function 検索の通信の失敗を待つ(page: Page, alerts: string[], 操作: () => Promise<void>): Promise<string[]> {
+  const 失敗: string[] = [];
+  const on = (r: import("@playwright/test").Request) => { if (/\/purchase\/searchproduct/.test(new URL(r.url()).pathname)) 失敗.push(new URL(r.url()).pathname); };
+  page.on("requestfailed", on);
+  try {
+    const n = alerts.length;
+    await 操作();
+    // 待つだけ（確かめは期待結果で行う）。30秒で打ち切る
+    for (let i = 0; i < 60 && !(失敗.length > 0 && alerts.length > n); i++) await page.waitForTimeout(500);
+  } finally { page.off("requestfailed", on); }
+  return 失敗;
+}
 
 caseTest("IT-M07-03-071", async (ctx) => {
   const { 番号, e } = await 始める(ctx, "〔買取番号-M0703-071〕");
   const alerts: string[] = [];
   ctx.page.on("dialog", (d) => { alerts.push(d.message()); void d.accept(); });
   try {
+    let 失敗した要求: string[] = [];
     await ctx.step(2, async () => { await e.商品追加を押す(); });
     await ctx.step(3, async () => { await ctx.page.context().setOffline(true); });
-    await ctx.step(4, async () => { await e.商品を検索する(品("ADD-SUP-001"), false); });
+    await ctx.step(4, async () => { 失敗した要求 = await 検索の通信の失敗を待つ(ctx.page, alerts, () => e.商品を検索する(品("ADD-SUP-001"), false)); });
     await ctx.page.context().setOffline(false);
     await ctx.expected(async () => {
+      // 商品検索の要求が送られて通信で失敗し、画面のエラー処理（アラート）まで済んだこと。エラーが起きていなければ「エラー後も留まる」を確かめたことにならない
+      expect.soft(失敗した要求.length > 0, `商品検索の要求が通信で失敗した（${失敗した要求.join(" / ") || "なし"}）`).toBe(true);
+      expect.soft(alerts.some((a) => a.includes("search product failed")), `商品検索のエラーのアラートが出た（${alerts.join(" / ") || "なし"}）`).toBe(true);
       expect.soft(pathOf(ctx.page), "検索のエラー後の画面（買取情報編集のまま）").toMatch(編集のパス(番号));
       await expect.soft(ctx.page.locator("#purchase_detail_form"), "買取情報編集の画面が表示されたまま").toBeVisible();
     });
@@ -529,12 +634,16 @@ caseTest("IT-M07-03-072", async (ctx) => {
   const alerts: string[] = [];
   ctx.page.on("dialog", (d) => { alerts.push(d.message()); void d.accept(); });
   try {
+    let 失敗した要求: string[] = [];
     await ctx.step(2, async () => { await e.商品追加を押す(); });
     await ctx.step(3, async () => { await e.商品を検索する("PAGE-SUP"); });
     await ctx.step(4, async () => { await ctx.page.context().setOffline(true); });
-    await ctx.step(5, async () => { await e.結果のページを押す(2); });
+    await ctx.step(5, async () => { 失敗した要求 = await 検索の通信の失敗を待つ(ctx.page, alerts, () => e.結果のページを押す(2)); });
     await ctx.page.context().setOffline(false);
     await ctx.expected(async () => {
+      // 2ページ目の要求が送られて通信で失敗し、画面のエラー処理（アラート）まで済んだこと
+      expect.soft(失敗した要求.some((u) => /\/purchase\/searchproduct\/page\/2/.test(u)), `2ページ目の商品検索の要求が通信で失敗した（${失敗した要求.join(" / ") || "なし"}）`).toBe(true);
+      expect.soft(alerts.some((a) => a.includes("search product failed")), `ページ切替のエラーのアラートが出た（${alerts.join(" / ") || "なし"}）`).toBe(true);
       expect.soft(pathOf(ctx.page), "ページ切替のエラー後の画面（買取情報編集のまま）").toMatch(編集のパス(番号));
       await expect.soft(ctx.page.locator("#purchase_detail_form"), "買取情報編集の画面が表示されたまま").toBeVisible();
     });
@@ -603,11 +712,19 @@ caseTest("IT-M07-03-083", async (ctx) => {
   });
 });
 caseTest("IT-M07-03-084", async (ctx) => {
-  const r = await 状況を変えて保存(ctx, "〔買取番号-M0703-084〕", "査定内容承諾", (n) => ({ 状況: 状況を読む(n), 連絡: 履歴の件数(n, "査定内容連絡済み") }));
-  await ctx.expected(async () => {
-    expect.soft(r.値.状況, "DBの買取状況").toBe("査定内容承諾");
-    expect.soft(r.値.連絡, "DBの査定内容連絡済みのステータス変更履歴の件数").toBe(0);
+  const { 番号 } = await 状況を変えて保存(ctx, "〔買取番号-M0703-084〕", "査定内容承諾", null);
+  let 状況 = "";
+  let 連絡の履歴 = -1;
+  // 照会ごとに別の式で読む（帯に、確かめた値を読んだ照会の名前が書かれるように）
+  await ctx.step(4, async () => {
+    状況 = 買取の値を読む(番号).買取状況;
+    連絡の履歴 = 履歴の件数(番号, "査定内容連絡済み");
   });
+  await ctx.expected(async () => {
+    expect.soft(状況, "DBの買取状況").toBe("査定内容承諾");
+    expect.soft(連絡の履歴, "DBの査定内容連絡済みのステータス変更履歴の件数").toBe(0);
+  });
+  note("事前準備の「ステータス変更履歴は0件」は、シードが画面で買取状況を MTGBuyer査定完了 にして作ったため、その変更の履歴が既にある（この前提どおりの0件ではない）。確かめたのは、期待結果の「査定内容連絡済み」の履歴が登録されないことだけ");
 });
 
 // ---- 選んで買取の査定 ----
@@ -675,11 +792,15 @@ caseTest("IT-M07-03-090", async (ctx) => {
 
 caseTest("IT-M07-03-092", async (ctx) => {
   const { e } = await 始める(ctx, "〔買取番号-M0703-092〕");
-  let url = "";
-  await ctx.step(2, async () => { const p = await e.会員詳細を押す(); url = new URL(p.url()).pathname; await p.close(); });
+  let 開いたタブ: Page | undefined;
+  // 開いたタブは、期待結果を撮るまで閉じない（閉じてから撮ると、会員詳細の画面が画像に無い）
+  await ctx.step(2, async () => { 開いたタブ = await e.会員詳細を押す(); });
   await ctx.expected(async () => {
-    expect(url, "開いた画面（会員詳細＝会員登録編集）").toMatch(new RegExp(`/customer/${ctx.notes.get("〔会員番号-M0703-092〕")}/edit$`));
+    // 開いたタブそのものの URL を確かめる（期待結果の帯がそのタブの画像に付く）
+    expect(開いたタブ !== undefined, "会員詳細を押して別のタブが開いた").toBe(true);
+    if (開いたタブ) await expect.soft(開いたタブ, "開いた画面（会員詳細＝会員登録編集）").toHaveURL(new RegExp(`/customer/${ctx.notes.get("〔会員番号-M0703-092〕")}/edit(\\?.*)?$`));
   });
+  await 開いたタブ?.close();
   note("「会員詳細」は会員登録編集を別のタブで開く。開いたタブの URL で確かめた");
 });
 
@@ -724,12 +845,13 @@ caseTest("IT-M07-03-094", async (ctx) => {
 
 caseTest("IT-M07-03-095", async (ctx) => {
   const { e } = await 始める(ctx, "〔買取番号-M0703-095〕");
-  let rows: Awaited<ReturnType<M0703EditPage["選んで買取の明細"]>> = [];
-  await ctx.step(2, async () => { rows = await e.選んで買取の明細(); });
+  const 削除 = (c: string) => e.選んで買取のコードの行(品(c)).locator('td[id^="purchase_list_main__delete--"] a');
+  await ctx.step(2, async () => { await e.選んで買取のコードの行(品("M0703-095-SUP")).waitFor({ timeout: 30_000 }); });
   await ctx.expected(async () => {
-    const f = (c: string) => rows.find((x) => x.商品名 === 品(c) || x.商品コード === 品(c));
-    expect.soft(f("M0703-095-SUP")?.削除リンク ?? null, "サプライ品 M0703-095-SUP の行の「削除」リンク（表示される）").toBe(true);
-    expect.soft(f("M0703-095-CARD")?.削除リンク ?? null, "カード M0703-095-CARD の行の「削除」リンク（表示されない）").toBe(false);
+    // 画面の「削除」の欄そのものを確かめる（サプライ品の行にはあり、カードの行には無い）
+    await expect.soft(削除("M0703-095-SUP"), "サプライ品 M0703-095-SUP の行の「削除」リンク（表示される）").toBeVisible();
+    await expect.soft(e.選んで買取のコードの行(品("M0703-095-CARD")), "カード M0703-095-CARD の行").toBeVisible();
+    await expect.soft(e.選んで買取のコードの行(品("M0703-095-CARD")).locator('td[id^="purchase_list_main__delete--"]'), "カード M0703-095-CARD の行の「削除」の欄に、リンクが無い（空）").toBeEmpty();
   });
 });
 
@@ -740,7 +862,7 @@ async function 明細を削除(ctx: CaseCtx, label: string, コード: string, �
     ctx.page.once("dialog", (d) => { 文.push(d.message()); void (答え === "OK" ? d.accept() : d.dismiss()); });
     const link = e.選んで買取の行(品(コード)).locator('td[id^="purchase_list_main__delete--"] a');
     await expect(link, `${コード} の「削除」リンク`).toBeVisible();
-    if (答え === "OK") await Promise.all([ctx.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => null), link.click()]);
+    if (答え === "OK") await Promise.all([ctx.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => null), link.click({ noWaitAfter: true })]);
     else { await link.click(); await ctx.page.waitForTimeout(1_000); }
   });
   await ctx.step(3, async () => { await ctx.page.waitForLoadState("load"); note(`削除の確認ダイアログ「${文.join(" / ")}」に「${答え}」で答えた（ダイアログは押した直後に出るので、手順2の中で応答を決めた）`); });
@@ -856,14 +978,18 @@ caseTest("IT-M07-03-115", async (ctx) => {
   const 後: Record<string, boolean> = {};
   let 文 = "";
   await ctx.step(2, async () => { await e.査定編集を始める(); });
-  await ctx.step(3, async () => { 前 = (await 編集の可否を読む(e.明細の入力欄(code, "査定価格"))).編集できる; note(`査定編集中の M0703-115-SUP の査定価格の入力欄は${前 ? "編集できた" : "編集できなかった"}`); });
+  await ctx.step(3, async () => {
+    前 = (await 編集の可否を読む(e.明細の入力欄(code, "査定価格"))).編集できる;
+    // 正本の手順3は「編集可能であることを確認する」。最初から編集不可のままでも確定後の確かめだけで合格にならないよう、ここで確かめる
+    expect.soft(前, "査定編集中の M0703-115-SUP の査定価格の入力欄が編集可能").toBe(true);
+  });
   await ctx.step(4, async () => { await e.査定確定する(); });
   await ctx.step(5, async () => {
     for (const k of ["査定価格", "数量", "売却"] as const) 後[k] = (await 編集の可否を読む(e.明細の入力欄(code, k))).編集できる;
     文 = await e.査定編集ボタンの文();
   });
   await ctx.expected(async () => {
-    for (const [k, v] of Object.entries(後)) expect.soft(v, `査定確定後の M0703-115-SUP の${k}の入力欄が編集不可`).toBe(false);
+    for (const [k, v] of Object.entries(後)) expect.soft(v === false, `査定確定後の M0703-115-SUP の${k}の入力欄が編集不可`).toBe(true);
     expect.soft(文, "ボタンの表示").toBe("査定編集");
   });
 });
@@ -928,8 +1054,12 @@ caseTest("IT-M07-03-149", async (ctx) => {
 caseTest("IT-M07-03-154", async (ctx) => {
   const { 番号, e } = await 始める(ctx, "〔買取番号-M0703-154〕");
   let 状況 = "（行が無い）";
-  await ctx.step(2, async () => { await e.買取状況を選ぶ("振込依頼済み"); });
-  await ctx.step(3, async () => { const r = await e.保存を押す(); note(`保存の結果: 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`); });
+  let 合計 = NaN, 本人確認 = "";
+  await ctx.step(2, async () => { await e.買取状況を選ぶ("振込依頼済み"); 合計 = await 送る買取合計(e); 本人確認 = (await e.基本情報()).本人確認;
+    // 前提の確かめ（期待結果ではない）。画面のスクリプトが査定金額合計の1の位を切り上げるので、9999は画面では作れない（作れなければ前提が成り立たない）
+    expect.soft(合計, "前提: 保存で送られる買取合計が9999（必要額10000未満）であること（画面のスクリプトが切り上げて10000になると前提は成り立たない）").toBe(9999);
+  });
+  await ctx.step(3, async () => { const r = await 保存して送信を確かめる(e); note(`保存の結果: 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`); });
   await ctx.step(4, async () => {
     const l = new BuyListPage(ctx.page);
     await l.open();
@@ -937,8 +1067,12 @@ caseTest("IT-M07-03-154", async (ctx) => {
     await l.検索する();
     状況 = (await l.行()).find((x) => x.番号 === String(Number(番号)))?.買取状況 ?? "（行が無い）";
   });
-  await ctx.expected(async () => { expect(状況, "買取検索一覧の買取状況").toBe("振込依頼済み"); });
-  note("買取情報編集の査定金額合計の欄は、画面のスクリプトが1の位を切り上げて入れる（査定価格9999・数量1のとき 10000）。シード表の手順のまま作った");
+  await ctx.expected(async () => {
+    // 買取合計9999は事前準備（前提）。手順2で確かめた（期待結果の確かめには入れない）
+    expect.soft(本人確認, "本人確認状態（前提: 簡易書留確認済み）").toContain("簡易書留確認済み");
+    expect.soft(状況, "買取検索一覧の買取状況").toBe("振込依頼済み");
+  });
+  note("前提の不成立: 買取情報編集の査定金額合計の欄は、画面のスクリプトが1の位を切り上げて入れる（査定価格9999・数量1のとき 10000。画面では10円単位の値しか作れない）。事前準備の「買取合計9999で必要額10000未満」は画面では作れないので、手順2で前提として確かめ、成り立たなかったことを記録した。期待結果の確かめ（本人確認状態・買取検索一覧の買取状況）は、前提が成り立たない状態での結果");
 });
 
 // ---- RG: 買取情報編集の変更が、在庫履歴・在庫検索・買取商品履歴・会員登録編集へ反映される ----
@@ -963,8 +1097,9 @@ caseTest("IT-M07-03-150", async (ctx) => {
   await ctx.step(1, async () => { await h.open(); });
   await ctx.step(2, async () => { await h.clearConditions(); });
   await ctx.step(3, async () => { await 在庫履歴を検索(ctx.page, h, code, shop); });
-  await ctx.step(4, async () => { 前 = ネット買取の行(await h.rows()); note(`手順4: 登録元が「ネット買取」の行 ${前.length} 行`); });
-  await ctx.step(5, async () => { e = await 一覧から編集を開く(ctx.page, 番号); 状況 = (await e.基本情報()).買取状況; note(`手順5: 買取状況は「${状況}」`); });
+  // 手順4・5は正本の「確認する」。操作の前から行がある・入庫待ちでないときに、行が加わったことを確かめたことにしない
+  await ctx.step(4, async () => { 前 = ネット買取の行(await h.rows()); expect.soft(前.length, "手順4: 一覧に登録元が「ネット買取」の行が無い").toBe(0); });
+  await ctx.step(5, async () => { e = await 一覧から編集を開く(ctx.page, 番号); 状況 = (await e.基本情報()).買取状況; expect.soft(状況, "手順5: 買取状況が「入庫待ち」").toBe("入庫待ち"); });
   await ctx.step(6, async () => { await e.買取状況を選ぶ("入庫済み"); });
   await ctx.step(7, async () => { const r = await e.保存を押す(); note(`保存の結果: 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」`); });
   await ctx.step(8, async () => { await h.open(); await h.clearConditions(); await 在庫履歴を検索(ctx.page, h, code, shop); });

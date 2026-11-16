@@ -3,7 +3,7 @@ import { Browser, Page, test } from "@playwright/test";
 import { CaseBody, caseTest, expect } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
-import { 受注, 受注明細, 在庫変動履歴, 会員ポイント } from "../../db/m05_11";
+import { 受注, 受注明細, 在庫変動履歴, 会員ポイント, 受注の合計金額, 配送商品, 配送先の数, 配送商品行 } from "../../db/m05_11";
 import { searchStockByCode, stockInRow } from "../../pages/admin/m04_02_rc_stock";
 import { OrderEditPage, OrderItemsEdit, 明細行 } from "../../pages/admin/m05_11_order_edit";
 import "../../seeds/m05-11-g";
@@ -95,18 +95,31 @@ caseTest("IT-M05-11-195", async ({ page, browser, notes, step, expected }) => {
   await step(2, async () => { await new OrderItemsEdit(page).削除を押す(code); });
   await step(3, async () => { await new OrderItemsEdit(page).削除を確定する(code); });
   await step(4, async () => { await p.登録を押す(onDialog); });
-  await step(5, async () => { rows = 受注明細(notes.get(key("195"))); });
+  await step(5, async () => {
+    rows = 受注明細(notes.get(key("195")));
+    // 登録を押したあとの画面は、明細を消したままの入力を表示する（保存はされない）。保存されている内容を画面でも残すため開き直す
+    await p.開き直す(notes.get(key("195")));
+  });
   await expected(async () => { expect.soft(rows.find((r) => r.商品コード === code)?.数量, "受注の商品の数量（更新前の2のまま）").toBe("2"); });
 });
 caseTest("IT-M05-11-133", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M0511_ADMIN_A);
   const code = rc("M0511-133-ITM");
   let p!: OrderEditPage;
-  await step(1, async () => { p = await 開く(browser, page, notes.get(key("133"))); });
+  let 開いた画面 = "";
+  const 出た: string[] = [];
+  await step(1, async () => { p = await 開く(browser, page, notes.get(key("133"))); 開いた画面 = 編集画面(page); });
   await step(2, async () => { await new OrderItemsEdit(page).明細に入れる(code, { 数量: "1" }); });
-  await step(3, async () => { await p.登録を押す(onDialog); });
-  await step(4, async () => { await page.waitForLoadState("load"); /* 一部キャンセルの確認ダイアログは、登録を押したときに受け入れた（注記に残る） */ });
-  await expected(async () => { expect.soft(編集画面(page), "遷移先（受注情報編集画面）").toMatch(/\/order\/\d+\/edit$/); });
+  // 送信して画面が読み込み直されることを必ず待つ（遷移しなければここで落ちる）。確認ダイアログは押したときに出るので、ここで受け入れて文を控える
+  await step(3, async () => { await p.登録して遷移する((m) => { 出た.push(m); onDialog(m); }); });
+  await step(4, async () => {
+    // 一部キャンセルの確認ダイアログが出て、「OK」で受け入れたこと（手順3の送信の前に出た）
+    expect(出た.some((m) => m.includes("一部キャンセル時")), `一部キャンセルの確認ダイアログが出た（出たダイアログ: ${出た.join(" / ") || "なし"}）`).toBe(true);
+  });
+  await expected(async () => {
+    expect.soft(編集画面(page), "遷移先（受注情報編集画面）").toMatch(/\/order\/\d+\/edit$/);
+    expect.soft(編集画面(page), "遷移先は同じ受注の受注情報編集画面").toBe(開いた画面);
+  });
 });
 
 // ---- 在庫（在庫検索一覧で確かめる） ----
@@ -233,28 +246,46 @@ caseTest("IT-M05-11-239", async ({ page, browser, notes, step, expected }) => {
   let p!: OrderEditPage;
   const x = rc("CBM0511-239-X");
   let r: Record<string, string | null> = {};
-  let rows: ReturnType<typeof 受注明細> = [];
-  await step(1, async () => { p = await 開く(browser, page, notes.get(key("239"))); });
+  let rows: 配送商品行[] = [];
+  let 配送先 = -1, 前 = NaN, 後 = NaN;
+  await step(1, async () => { p = await 開く(browser, page, notes.get(key("239"))); 前 = 受注の合計金額(notes.get(key("239"))).合計; });
   await step(2, async () => { await new OrderItemsEdit(page).明細に入れる(x, { 数量: "2" }); });
   await step(3, async () => { await p.登録を押す(onDialog); });
-  await step(4, async () => { r = 受注(notes.get(key("239"))); rows = 受注明細(notes.get(key("239"))); });
+  await step(4, async () => { r = 受注(notes.get(key("239"))); rows = 配送商品(notes.get(key("239"))); 配送先 = 配送先の数(notes.get(key("239"))); 後 = 受注の合計金額(notes.get(key("239"))).合計; });
   await expected(async () => {
-    const row = rows.find((y) => y.商品コード === x);
-    expect.soft([Number(row?.価格), Number(row?.数量)], "配送商品の価格・数量（1000・2）").toEqual([1000, 2]);
+    expect.soft(前, "操作前の受注の合計金額（1000）").toBe(1000);
+    expect.soft(後, "受注の合計金額（2000に更新）").toBe(2000);
+    const mine = rows.filter((y) => y.商品コード === x);
+    expect.soft(mine.length, `配送先（${配送先}件）それぞれに商品 ${x} の配送商品が1件ずつ`).toBe(配送先);
+    expect.soft(配送先 > 0, "受注に配送先がある").toBe(true);
+    for (const row of mine) expect.soft([row.価格, row.数量], `配送先 ${row.配送先ID} の配送商品の価格・数量（1000・2）`).toEqual([1000, 2]);
     expect.soft(r.受注ID !== undefined, "受注が保存された").toBe(true);
   });
 });
-caseTest("IT-M05-11-240", async ({ page, browser, notes, step, expected }) => {
+caseTest("IT-M05-11-240", async ({ page, browser, notes, step, expected, capture }) => {
   await loginAdmin(page, M0511_ADMIN_A);
   let p!: OrderEditPage;
   const x = rc("CBM0511-240-X");
   let rows: ReturnType<typeof 受注明細> = [];
   let na = -1;
+  // 「受注情報を登録」を押したことの観測: 送信（受注の画面への POST）か、ブラウザの入力チェックでの差し止め（不正な欄）か
+  let 送信 = false, 入力チェックで止まった = "";
   await step(1, async () => { p = await 開く(browser, page, notes.get(key("240"))); });
   await step(2, async () => { await new OrderItemsEdit(page).明細に入れる(x, { 数量: "5" }); });
-  await step(3, async () => { await p.登録を押す(onDialog).catch(() => undefined); });
-  await step(4, async () => { rows = 受注明細(notes.get(key("240"))); na = await 在庫数(page, browser, x); });
+  await step(3, async () => {
+    // 押せなかったときは落とす（押せずに変わらなかったのを合格にしない）
+    ({ 送信, 入力チェック: 入力チェックで止まった } = await p.登録を押して送信を見る(onDialog));
+    test.info().annotations.push({ type: "手順の注記", description: 送信 ? "「受注情報を登録」で送信された" : `送信されず、ブラウザの入力チェックで止まった: ${入力チェックで止まった || "（不正な欄なし）"}` });
+  });
+  await step(4, async () => {
+    rows = 受注明細(notes.get(key("240")));
+    // 登録を押したあとの画面は、差し戻された入力（数量5）を表示する（保存はされない）。保存されている内容を画面でも残すため開き直して撮る
+    await p.開き直す(notes.get(key("240")));
+    await capture("開き直した受注情報編集画面（保存されている数量）");
+    na = await 在庫数(page, browser, x);
+  });
   await expected(async () => {
+    expect.soft(送信 || 入力チェックで止まった !== "", "「受注情報を登録」を押して、送信されたか入力チェックで差し止められた（押せずに変わらなかったのではない）").toBe(true);
     expect.soft(rows.find((y) => y.商品コード === x)?.数量, "受注数量（1のまま）").toBe("1");
     expect.soft(na, "商品の在庫（1のまま）").toBe(1);
   });
@@ -279,7 +310,11 @@ caseTest("IT-M05-11-219", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M0511_ADMIN_A);
   let p!: OrderEditPage;
   let pt = -1;
-  await step(1, async () => { p = await 開く(browser, page, notes.get(key("219"))); });
+  await step(1, async () => {
+    p = await 開く(browser, page, notes.get(key("219")));
+    // 事前準備の開始時の保持ポイント（1000）を、ステータスを変える前に読んで確かめる
+    expect.soft(会員ポイント(notes.get(key("219"))), "ステータスを変える前の会員の保持ポイント（開始時）").toBe(1000);
+  });
   await step(2, async () => { await p.ステータスを選ぶ("出荷完了"); });
   await step(3, async () => { await p.ステータスを変更する(onDialog); });
   await step(4, async () => { pt = 会員ポイント(notes.get(key("219"))); });
@@ -314,10 +349,15 @@ function プルダウン(n: string, 高額: boolean): CaseBody {
     });
     await expected(async () => {
       const opt = options.find((o) => o.includes(code)) ?? "";
-      const idx = [code, "日", "NM", "1000"].map((s) => opt.indexOf(s));
-      expect.soft(idx.every((i) => i >= 0) && idx.every((v, i) => i === 0 || v > idx[i - 1]), `プルダウンの選択肢（商品コード・日・NM・基準価格1000がこの順）: 「${opt}」`).toBe(true);
-      if (高額) expect.soft(opt.indexOf(rc(`M0511-${n}-HIGH`)) > opt.indexOf("1000"), "高額商品コードが基準価格のあとに表示される").toBe(true);
-      else expect.soft(opt.includes("HIGH"), "高額商品コードが表示される").toBe(false);
+      // 選択肢は「商品コード/言語/状態/基準価格/(あれば)高額商品コード」の区切りで、欄ごとに照らす（設計 L0557）。
+      // 正本の「日」「NM」は、画面の選択肢では言語名「日本語」・状態名「ニアミント」で出る略記なので、欄の全体がそのどちらかであることを確かめる
+      const parts = opt.split("/").map((t) => t.trim());
+      expect.soft(parts[0], `選択肢の1番目（商品コード）: 「${opt}」`).toBe(code);
+      expect.soft(["日", "日本語"], `選択肢の2番目（言語）: 「${parts[1] ?? ""}」`).toContain(parts[1] ?? "");
+      expect.soft(["NM", "ニアミント"], `選択肢の3番目（状態。正本のNM＝画面のニアミント）: 「${parts[2] ?? ""}」`).toContain(parts[2] ?? "");
+      expect.soft(parts[3]?.replace(/^[\\¥￥]/, ""), `選択肢の4番目（基準価格）: 「${parts[3] ?? ""}」`).toBe("1000");
+      if (高額) expect.soft(parts[4], `選択肢の5番目（高額商品コード。基準価格のあと）: 「${opt}」`).toBe(rc(`M0511-${n}-HIGH`));
+      else expect.soft(parts.length === 4 && !opt.includes("HIGH"), `高額商品コードが表示されない: 「${opt}」`).toBe(true);
     });
   };
 }

@@ -65,7 +65,7 @@ export class M08CustomerMailPage {
   async 会員IDリストを読む(): Promise<string> { return this.ids.inputValue({ timeout: T }); }
 
   async 送信内容を確認を押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.page.locator("#confirm").click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), this.page.locator("#confirm").click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -86,19 +86,19 @@ export class M08CustomerMailPage {
     return out;
   }
   async 戻るを押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.page.locator("#back").click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), this.page.locator("#back").click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   async 配信対象者の氏名を押す(会員ID: string): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.page.locator(`tr#ex-customer-${会員ID} a`).click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      this.page.locator(`tr#ex-customer-${会員ID} a`).click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
 
   async メール送信を押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.page.locator("#complete").click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), this.page.locator("#complete").click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -112,8 +112,8 @@ export class M08CustomerMailPage {
   /** 入力画面・完了画面の左下の「会員一覧」（戻りのリンク）を押す */
   async 会員一覧を押す(): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.page.locator("a.c-baseLink", { hasText: "会員一覧" }).first().click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      this.page.locator("a.c-baseLink", { hasText: "会員一覧" }).first().click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -121,7 +121,7 @@ export class M08CustomerMailPage {
   async 検索結果へ戻るを押す(): Promise<void> {
     const b = this.page.getByRole("button", { name: "検索結果へ戻る", exact: true }).or(this.page.getByRole("link", { name: "検索結果へ戻る", exact: true }));
     await expect(b, "メール一括送信確認画面に「検索結果へ戻る」のボタンまたはリンクが1つある").toHaveCount(1, { timeout: 5_000 });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), b.first().click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), b.first().click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 }

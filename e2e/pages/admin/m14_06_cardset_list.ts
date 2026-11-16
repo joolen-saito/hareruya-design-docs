@@ -49,7 +49,7 @@ export class CardsetListPage {
     }, 空白なし(表示));
     if (!r) throw new Error(`選択肢「${表示}」が無い`);
     if (r.selected) return false;
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), select.selectOption(r.value)]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), select.selectOption(r.value)]);
     return true;
   }
   /** 表示件数を選ぶ。読み込みが起きたら true、すでにその件数が選ばれていて起きなかったら false */
@@ -73,10 +73,10 @@ export class CardsetListPage {
   async ページ番号を押す(n: number): Promise<void> {
     const link = this.ページ番号のリンク(n).first();
     await expect(link, `ページ番号「${n}」のリンク`).toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
   }
   async 前へを押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.前へ().first().click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.前へ().first().click({ noWaitAfter: true })]);
   }
 
   async 総ページ数(): Promise<number> {
@@ -109,7 +109,8 @@ export class CardsetListPage {
       return null;
     }
     const last = await this.総ページ数();
-    for (let n = last; n >= Math.max(1, last - 5); n--) {
+    // 古いリリース日のセットは後ろのほうにあるが、共有の一覧は長さが変わるので、行が見つかるまで（最大ページ数まで）さかのぼる
+    for (let n = last; n >= Math.max(1, last - 最大ページ数 + 1); n--) {
       await this.ページを開く(n);
       if (await 行().count()) return n;
     }
@@ -132,8 +133,8 @@ export class CardsetListPage {
   /** ポップアップの実行（削除）ボタン。押すと一覧へ戻る */
   async ポップアップで実行する(): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "load" }),
-      this.削除の確認.locator('a[data-method="delete"]').click(),
+      this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+      this.削除の確認.locator('a[data-method="delete"]').click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }

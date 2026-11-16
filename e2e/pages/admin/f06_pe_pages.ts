@@ -30,7 +30,7 @@ export class 申込一覧 {
     await this.検索イベント名.fill(名);
     await this.開催日From.fill("");
     await this.開催日To.fill("");
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.検索ボタン.click({ timeout: 30_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), this.検索ボタン.click({ timeout: 30_000, noWaitAfter: true })]);
     await expect(this.件数の表示, "検索結果の表示").toBeVisible({ timeout: 60_000 });
   }
   async 件数(): Promise<number> {
@@ -80,7 +80,7 @@ export class デッキ検索 {
     await expect(this.検索ボタン, "デッキ検索・一覧画面").toBeVisible({ timeout: 30_000 });
   }
   async 検索する(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.検索ボタン.click({ timeout: 30_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), this.検索ボタン.click({ timeout: 30_000, noWaitAfter: true })]);
     await expect(this.結果の件数表示, "検索結果の表示").toBeVisible({ timeout: 60_000 });
   }
   async 件数(): Promise<number> {

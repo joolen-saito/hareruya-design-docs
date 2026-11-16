@@ -3,6 +3,7 @@ import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { rc } from "../../lib/run_marker";
 import { CustomCsvPage } from "../../pages/admin/m10_13_custom_csv";
+import { scene, 選択肢を広げて撮る } from "../../lib/evidence_other";
 import { M1013_ADMIN } from "../../seeds/m10-13";
 
 caseTest("IT-M10-13-001", async ({ page, step, expected }) => {
@@ -10,7 +11,7 @@ caseTest("IT-M10-13-001", async ({ page, step, expected }) => {
   const p = new CustomCsvPage(page);
   let 選択肢: string[] = [];
   await step(1, async () => { await p.open(); });
-  await step(2, async () => { 選択肢 = await p.選択肢(p.CSV選択); });
+  await step(2, async () => { 選択肢 = await p.選択肢(p.CSV選択); await 選択肢を広げて撮る(p.CSV選択, scene.stepLabel(2, "CSV選択の選択肢（広げて表示）")); });
   await expected(async () => {
     expect.soft(選択肢, "CSV選択の選択肢").toEqual(["商品CSV", "受注CSV", "配送CSV", "在庫CSV", "在庫移動・振替CSV", "在庫分割結合CSV"]);
   });

@@ -31,8 +31,20 @@ export async function 追加システム設定を読む(page: Page): Promise<設
 /** 指定した項目（画面の項目名 → 値）を入れて登録する。全項目を書き戻すときは全部渡す */
 export async function 追加システム設定を書く(page: Page, v: 設定値, what: string): Promise<void> {
   await 開く(page);
-  for (const [name, val] of Object.entries(v)) await page.locator(`[name="${name}"]`).fill(val, { timeout: 30_000 });
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('form#point_form button[type="submit"]').click({ timeout: 30_000 })]);
+  for (const [name, val] of Object.entries(v)) {
+    const el = page.locator(`[name="${name}"]`).first();
+    const tag = await el.evaluate((e) => e.tagName.toLowerCase(), undefined, { timeout: 30_000 });
+    // 選択欄は fill できない（2026-11-13 戻しが「Element is not an <input>」で止まり、STOP になった）
+    if (tag === "select") await el.selectOption(val, { timeout: 30_000 });
+    else if (await el.getAttribute("type") === "hidden") continue;
+    else await el.fill(val, { timeout: 30_000 });
+  }
+  // 登録ボタンは画面下のデバッグ用ツールバーに隠れて押せないことがある（2026-11-13）。押せなければフォームを送る
+  const 押す = page.locator('form#point_form button[type="submit"]').first();
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    押す.click({ timeout: 15_000, noWaitAfter: true }).catch(() => 押す.evaluate((b) => (b as HTMLButtonElement).form!.requestSubmit(b as HTMLButtonElement))),
+  ]);
   await expectSaved(page, what);
 }
 

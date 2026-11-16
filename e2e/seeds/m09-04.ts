@@ -26,6 +26,18 @@ export function 識別(v: string): string {
   return rc(v);
 }
 
+/**
+ * シード表が固定のID（914001・914012 など）で書き、呼び名〔…〕で「控える」と定めていないページの、画面が振ったID。
+ * 控えた番号（notes）に入れると基盤（lib/seeds.ts）が「シード表に無い呼び名を控えた」で止める（2026-11-13 の IT-M09-04-001・012）。
+ * 同じ実行の中だけ、ここに持つ（seeds/f02-04.ts の「番号」と同じ）。キーは読み替えたもの（例: "001開発者"・"012"・"共有標準"）
+ */
+export const 読み替えたページID = new Map<string, string>();
+export function 読み替えたページIDを引く(key: string): string {
+  const v = 読み替えたページID.get(key);
+  if (v === undefined) throw new Error(`ページID（${key}）はまだ作っていない（そのシードを作っていないか、キーの誤り）`);
+  return v;
+}
+
 export const 試験PCレイアウト = () => rc("試験PCレイアウト");
 export const 試験モバイルレイアウト = () => rc("試験モバイルレイアウト");
 
@@ -47,8 +59,20 @@ export function シードのページ(seedId: string): シードのページ {
   };
 }
 
+/**
+ * 公開側のアドレス（/ja/user_data/…）を開く・ページ確認ボタンで確かめるシード。シード表は URL=「user_data/…」と書くが、
+ * 登録画面のURL欄は左に「…/ja/user_data/」の前置きが出ていて、その右に続く部分を入れる欄なので、「user_data/」まで入れると公開アドレスが /ja/user_data/user_data/… になり、
+ * 正本の期待のアドレス（/ja/user_data/…）では開けない（2026-11-14 の判定の見直しで判明）。この番号のシードだけ、「user_data/」を除いた値を入れる
+ */
+const URL欄に前置きを重ねないシード = new Set(["S-M09-04-PAGE-021", "S-M09-04-PAGE-041", "S-M09-04-PAGE-046", "S-M09-04-PAGE-060", "S-M09-04-DPEN-064", "S-M09-04-CBEDIT-068"]);
+
 async function シードのページを作る(browser: import("@playwright/test").Browser, seedId: string, 追加: Partial<ページの値> = {}): Promise<string> {
   const v = シードのページ(seedId);
+  if (URL欄に前置きを重ねないシード.has(seedId) && v.URL.startsWith("user_data/")) {
+    const 入れる値 = v.URL.slice("user_data/".length);
+    reportSeedIssue(seedId, `読み替え: シード表はURLに「user_data/…」を入れると書くが、登録画面のURL欄は左に「…/ja/user_data/」の前置きが出ている欄で、「user_data/」まで入れると公開アドレスが /ja/user_data/user_data/… になる。正本の期待のアドレス（/ja/user_data/…）で開けるよう、URL欄には前置きの右に続く部分「${入れる値}」だけを入れた`);
+    追加 = { URL: 入れる値, ...追加 };
+  }
   return withAdminSession(browser, M0904_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     const pa = new ページ管理(page);
@@ -94,6 +118,11 @@ for (const [key, n] of 通常) {
     notes.set(`〔ページID-M0904-${n}〕`, await シードのページを作る(browser, seedId));
   });
 }
+
+/** 056: 一覧のレイアウト名欄を見るページ。PCのレイアウトに試験PCレイアウトを選び、モバイルは「---」のまま登録する（シード表の投入方法どおり） */
+defineSeed("S-M09-04-LAYPAGE-056", { needs: ["S-M09-04-ADM", "S-M09-04-LAYOUT"] }, async ({ browser, notes }) => {
+  notes.set("〔ページID-M0904-056〕", await シードのページを作る(browser, "S-M09-04-LAYPAGE-056", { PC: 試験PCレイアウト(), モバイル: null }));
+});
 
 /** 検索に当たる行が一覧に1件も無いこと（シード表の「確かめる」）。見えている行の数は、一覧を読み込んだあとで数える */
 async function 一覧に無いことを確かめる(browser: import("@playwright/test").Browser, 語: string[]): Promise<void> {
@@ -156,10 +185,10 @@ const 開発者のルート名 = "admin_content_news";
 
 for (const n of ["011", "012"]) {
   const seedId = `S-M09-04-DEV-${n}`;
-  defineSeed(seedId, { needs: ["S-M09-04-ADM"] }, async ({ browser, notes }) => {
+  defineSeed(seedId, { needs: ["S-M09-04-ADM"] }, async ({ browser }) => {
     const id = await シードのページを作る(browser, seedId);
     開発者作成にする(seedId, id, n === "011" ? 開発者のルート名 : undefined);
-    notes.set(`〔ページID-M0904-${n}〕`, id);
+    読み替えたページID.set(n, id);
   });
 }
 
@@ -174,7 +203,7 @@ defineSeed("S-M09-04-DPMIX-063", { needs: ["S-M09-04-ADM"] }, async ({ browser, 
     return new ページ管理(page).作る({ ページ名: 識別("利用者ページ-M0904-063"), URL: 識別("user_data/m0904-063-user"), ファイル名: 識別("user_data/m0904-063-user"), コード: "{% extends 'default_frame.twig' %}{% block main %}{% endblock %}", 言語: "ja" });
   });
   開発者作成にする(seedId, 開発者);
-  notes.set("〔ページID-M0904-063開発者〕", 開発者);
+  読み替えたページID.set("063開発者", 開発者);
   notes.set("〔ページID-M0904-063〕", 利用者);
 });
 
@@ -208,11 +237,11 @@ defineSeed("S-M09-04-DUPLICATE", { needs: ["S-M09-04-ADM"] }, async ({ browser, 
   const 標準 = await 作る({ ページ名: 識別("標準重複基準ページ"), URL: 識別("system/duplicate_standard"), ファイル名: 識別("default/duplicate_standard_file") });
   開発者作成にする(seedId, 標準);
   notes.set("〔ページID-M0904-共有〕", 利用者);
-  notes.set("〔ページID-M0904-共有標準〕", 標準);
+  読み替えたページID.set("共有標準", 標準);
   reportSeedIssue(seedId, "シード表の標準ページ（ID 40）は固定IDだが、画面が振ったIDの印つきのページで読み替えた（既存のページは使わない）");
 });
 
-defineSeed("S-M09-04-LIST-001", { needs: ["S-M09-04-ADM", "S-M09-04-LAYOUT"] }, async ({ browser, notes }) => {
+defineSeed("S-M09-04-LIST-001", { needs: ["S-M09-04-ADM", "S-M09-04-LAYOUT"] }, async ({ browser }) => {
   const seedId = "S-M09-04-LIST-001";
   const 作る = (v: ページの値) => withAdminSession(browser, M0904_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
@@ -222,10 +251,10 @@ defineSeed("S-M09-04-LIST-001", { needs: ["S-M09-04-ADM", "S-M09-04-LAYOUT"] }, 
   const モバイル = await 作る({ ページ名: 識別("モバイル除外ページ-001"), URL: 識別("user_data/m0904-001-mobile"), ファイル名: 識別("user_data/m0904-001-mobile"), PC: null, モバイル: 試験モバイルレイアウト() });
   const PC = await 作る({ ページ名: 識別("検索名称Alpha-M0904-001"), URL: 識別("user_data/m0904-001-pc"), ファイル名: 識別("user_data/m0904-001-pc"), PC: 試験PCレイアウト() });
   開発者作成にする(seedId, 開発者);
-  notes.set("〔ページID-M0904-001開発者〕", 開発者);
-  notes.set("〔ページID-M0904-001モバイル〕", モバイル);
-  notes.set("〔ページID-M0904-001PC〕", PC);
-  reportSeedIssue(seedId, "シード表は「ページ情報をこの4件だけに置き換える」（既存のページ情報を置き換える）が、既存のページは書き換えない・消さない方針なので置き換えない。ID 914001・924001・934001は、画面が振ったIDの印つきのページ3件（PC・開発者作成／モバイル用レイアウトのみ・利用者作成／PC・利用者作成）で読み替えた。「ほかのページが無い」ことは作れないので確かめない。モバイルの端末種別は、モバイル欄で選べる端末種別のレイアウトを設定したページとした");
+  読み替えたページID.set("001開発者", 開発者);
+  読み替えたページID.set("001モバイル", モバイル);
+  読み替えたページID.set("001PC", PC);
+  reportSeedIssue(seedId, `シード表は「ページ情報をこの4件だけに置き換える」（既存のページ情報を置き換える）が、既存のページは書き換えない・消さない方針なので置き換えない。ID 914001・924001・934001は、画面が振ったIDの印つきのページ3件（PC・開発者作成／モバイル用レイアウトのみ・利用者作成／PC・利用者作成）で読み替えた。「ほかのページが無い」ことは作れないので確かめない。モバイルの端末種別は、モバイル欄で選べる端末種別のレイアウトを設定したページとした（画面が振ったID: PC・開発者作成 ${開発者}／モバイル ${モバイル}／PC・利用者作成 ${PC}）`);
 });
 defineSeed("S-M09-04-ZERO", async () => {
   reportSeedIssue("S-M09-04-ZERO", "ID 0 のページは作らない（共有のデータ。ID 0 を DB へ書かない）。一覧に ID 0 の行が無いことを、画面の行で確かめる");

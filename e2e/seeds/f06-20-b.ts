@@ -11,7 +11,7 @@
  * - DBでの直接設定を含むシード（5・7: 20件目をDBで設定）は実装しない。
  */
 import { Browser, Page } from "@playwright/test";
-import { BASE_URL, SETUP_ADMIN } from "../config/env";
+import { BASE_URL, ENV_NAME, SETUP_ADMIN, SHARED_ENV } from "../config/env";
 import { 配送先の件数, 配送先IDの件数, 配送先登録上限, 日本国外の都道府県がある } from "../db/f06_20";
 import { available } from "../lib/db";
 import { getSeed } from "../lib/catalog";
@@ -34,11 +34,17 @@ defineSeed("S-F06-20-REF", async ({ browser }) => {
   void browser;
   if (available && !日本国外の都道府県がある()) throw new Error("都道府県ID 48「日本国外」が試験環境に無い（シード表は無ければDBで登録と定める。DBへの書き込みはしない）");
 });
-defineSeed("S-F06-20-ENV", async () => {
+/** 配送先登録上限を、読める環境（手元の環境）では読んで20件か確かめる。共有の環境ではアプリの設定値を読めないので、確かめた範囲を注記に残す */
+function 上限を確かめる(seedId: string): void {
   if (!available) return;
+  if (ENV_NAME !== "local" || SHARED_ENV) {
+    reportSeedIssue(seedId, "共有の環境ではアプリの設定値（配送先登録上限）を読めないので、20件であることは確かめていない（アプリの既定の設定ファイルの値は20件。設定の書き換えはしない）");
+    return;
+  }
   const 上限 = 配送先登録上限();
   if (上限 !== 20) throw new Error(`配送先登録上限が ${上限} 件（シード表は20件。設定の書き換えはしない）`);
-});
+}
+defineSeed("S-F06-20-ENV", async () => { 上限を確かめる("S-F06-20-ENV"); });
 
 type 住所 = { 郵便番号1: string; 郵便番号2: string; 都道府県: string; 住所1: string; 住所2: string; 電話: [string, string, string] };
 /** 会員情報住所「東京都千代田区丸の内1-1」・電話番号 03-1111-2222 */
@@ -50,8 +56,15 @@ type 会員の定め = { 前半: string; 姓: string; 名: string; 呼び名: st
 async function 会員IDを探す(browser: Browser, メール: string): Promise<string> {
   const id = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    await searchCustomer(page, メール);
-    return resultCustomerId(page, メール);
+    // 共有の開発環境では、フロントで登録した直後の会員が会員一覧の検索にすぐ出ないことがある。見つからないときは間をおいて検索し直す（最大で約1分）
+    let found: string | null = null;
+    for (let i = 0; ; i++) {
+      await searchCustomer(page, メール);
+      found = await resultCustomerId(page, メール);
+      if (found || i >= 5) break;
+      await page.waitForTimeout(10_000);
+    }
+    return found;
   });
   if (!id) throw new Error(`登録した会員 ${メール} を管理画面の会員一覧で1件に定められない`);
   return id;
@@ -183,8 +196,7 @@ defineSeed("S-F06-20-PC-ADM", async ({ browser }) => {
 defineSeed("S-F06-20-PC-ENV", async () => {
   // 配送先登録数の上限が20件であることを確かめる。ブラックリストの行は開発用の既存の行を消さない（判定の注記に残す）
   if (!available) return;
-  const 上限 = 配送先登録上限();
-  if (上限 !== 20) throw new Error(`配送先登録上限が ${上限} 件（シード表は20件。設定の書き換えはしない）`);
+  上限を確かめる("S-F06-20-PC-ENV");
   reportSeedIssue("S-F06-20-PC-ENV", "ブラックリストは0件にしていない（開発用の既存の行を消さない決まり）。このケースの氏名・電話番号・住所と一致する行が無いことは、登録が止められないことで確かめた");
 });
 for (const [n, 前半, 名, 追加] of [["052", "pc-f0620-001", "太郎", false], ["053", "pc-f0620-002", "太郎", false], ["054", "pc-f0620-003", "太郎", true]] as const) {

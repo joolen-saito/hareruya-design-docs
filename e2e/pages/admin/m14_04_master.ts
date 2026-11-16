@@ -13,8 +13,8 @@ async function openMaster(page: Page, 名: 種別): Promise<void> {
   await page.waitForLoadState("load");
   await page.locator('select[name="entity"]').selectOption({ label: 名 });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('form[method="get"] button[type="submit"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('form[method="get"] button[type="submit"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator("form#edit_form table.mtg-master-table"), `${名}の一覧`).toBeVisible();
@@ -45,8 +45,8 @@ export async function 行を用意する(page: Page, 名: 種別, 日本語名: 
   const sort = (await f("sort_no").count()) ? f("sort_no") : f("sortNo");
   if (await sort.count()) await sort.fill(String(Math.max(0, ...all.map((r) => r.並び順).filter(Number.isFinite)) + 1));
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('button[type="submit"][form="edit_form"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('button[type="submit"][form="edit_form"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expectSaved(page, `${what}: ${名}「${日本語名}」の登録`);

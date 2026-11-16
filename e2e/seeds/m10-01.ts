@@ -46,11 +46,11 @@ async function 書く(browser: Browser, seedId: string, 値: 値, トグル: boo
     page.setDefaultTimeout(60_000);
     await 元の値を控える(page);
     const p = new ShopBasicPage(page);
-    await p.open();
-    for (const k of 空にする) await p.入れる(k, "");
-    for (const [k, v] of Object.entries(値)) await p.入れる(k, v);
-    for (const t of 七つのトグル) await p.トグルを(t, トグル);
-    await p.押して保存を確かめる(`${seedId} 店舗基本設定の保存`);
+    await p.入れて保存する(`${seedId} 店舗基本設定の保存`, async () => {
+      for (const k of 空にする) await p.入れる(k, "");
+      for (const [k, v] of Object.entries(値)) await p.入れる(k, v);
+      for (const t of 七つのトグル) await p.トグルを(t, トグル);
+    });
   });
   reportSeedIssue(seedId, "経度・緯度は画面に入力欄が無いので入れていない");
 }
@@ -88,9 +88,7 @@ for (const [n, 有効] of [["044", false], ["045", true]] as const) {
     await withAdminSession(browser, SETUP_ADMIN, async (page) => {
       page.setDefaultTimeout(60_000);
       const p = new ShopBasicPage(page);
-      await p.open();
-      await p.トグルを("自動ログイン", 有効);
-      await p.押して保存を確かめる(`${seed.シードID} 自動ログイン機能の設定`);
+      await p.入れて保存する(`${seed.シードID} 自動ログイン機能の設定`, () => p.トグルを("自動ログイン", 有効));
     });
   });
 }
@@ -103,9 +101,7 @@ export async function 戻す(browser: Browser): Promise<string> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     const p = new ShopBasicPage(page);
-    await p.open();
-    await p.全部書く(元);
-    await p.押して保存を確かめる("店舗基本設定を元の値へ戻す");
+    await p.控えへ戻して保存する(元, "店舗基本設定を元の値へ戻す");
     await p.open();
     const 今 = await p.全部読む();
     const 違い = Object.keys(元).filter((k) => 元[k] !== 今[k]);

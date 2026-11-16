@@ -2,6 +2,7 @@
 import { test, Page } from "@playwright/test";
 import { caseTest, CaseBody, expect } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
+import { scene, 別のブラウザの画面を撮る, DBで読み取った値を撮る } from "../../lib/evidence_other";
 import { loginAdmin } from "../../lib/session";
 import {
   カードの詳細, カードの値, カードの分類, カードのリーガリティ, カード名英でカードID, 詳細の画像, 詳細の件数, 画像の件数, カードの件数,
@@ -9,6 +10,10 @@ import {
 import { CardSearchPage, select2に入れる } from "../../pages/admin/m14_card";
 import { CardEditPage } from "../../pages/admin/m14_04_card_edit";
 import { M1404_ADMIN, 必須 } from "../../seeds/m14-04";
+import { M1404_QL_ADMIN, M1404_RJ_ADMIN, RJ名 } from "../../seeds/m14-04-link";
+import { FrontDetail, 店 } from "../../pages/front/f03_02_detail";
+import { ProductSearchPage } from "../../pages/admin/product_search";
+import { 該当件数, 一覧の商品ID } from "../../pages/admin/m03_04_x";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 type 状態 = { card: ReturnType<typeof カードの値>; details: ReturnType<typeof カードの詳細>; legality: ReturnType<typeof カードのリーガリティ> };
@@ -56,16 +61,18 @@ caseTest("IT-M14-04-002", async ({ page, notes, step, expected }) => {
     r.更新 = await page.locator("button, a, input[type=submit]").filter({ hasText: /^\s*更新\s*$/ }).count();
     // 画面下部の削除ボタンは4系のカード削除ボタン1つだけ（旧い削除ボタンは別にもう1つ出る作りだった）
     r.削除 = await page.locator("button:visible, a:visible, input[type=button]:visible").filter({ hasText: /^\s*削除\s*$/ }).count();
-    r.画像削除 = await page.locator("button, a").filter({ hasText: /画像.*削除|削除.*画像/ }).count();
+    // ベースの画像削除の部品は「×」(.delImage)。リーガリティ削除の「×」(.delLegality)は数えない
+    r.画像削除 = await page.locator(".delImage").count() + await page.locator("button, a").filter({ hasText: /画像.*削除|削除.*画像/ }).count();
     r.アップロード = await page.locator("input[type=file]").count();
-    r.画像追加 = await page.locator("button, a").filter({ hasText: /画像を追加/ }).count();
+    // ベースの画像追加の部品は「画像追加」(.addImage)
+    r.画像追加 = await page.locator(".addImage").count() + await page.getByText(/^\s*画像追加\s*$/).count();
   });
   await expected(async () => {
     expect.soft(r.更新, "旧「更新」ボタンの数").toBe(0);
     expect.soft(r.削除, "「削除」ボタンの数（4系のカード削除ボタン1つだけ。旧削除ボタンは出ない）").toBe(1);
-    expect.soft(r.画像削除, "カード画像削除ボタンの数").toBe(0);
+    expect.soft(r.画像削除, "画像削除の「×」ボタンの数").toBe(0);
     expect.soft(r.アップロード, "カード画像アップロードの数").toBe(0);
-    expect.soft(r.画像追加, "「画像を追加」ボタンの数").toBe(0);
+    expect.soft(r.画像追加, "「画像追加」ボタンの数").toBe(0);
   });
 });
 
@@ -117,6 +124,8 @@ caseTest("IT-M14-04-005", async ({ page, step, expected }) => {
   const e = new CardEditPage(page);
   const r = { 値: [] as string[], 行: -1, 詳細: -1, action: "" };
   await step(1, async () => { await e.openNew(); });
+  // 画面下の固定のバーが欄に重ならないよう、パワー・タフネス・忠誠度の欄を画面の中央に出してから撮る
+  await e.field("power").evaluate((el) => el.scrollIntoView({ block: "center" })).catch(() => undefined);
   await expected(async () => {
     r.値 = await Promise.all(["nameJp", "nameEn", "textJp", "textEn", "manaCost", "cmc", "power", "toughness", "loyalty"].map((f) => e.field(f).inputValue()));
     r.行 = await e.リーガリティ行.count();
@@ -176,9 +185,9 @@ caseTest("IT-M14-04-009", async ({ page, notes, step, expected }) => {
   const 候補: Record<string, string[]> = {};
   await step(1, async () => { await e.open(notes.get("〔カードID-M1404-共有〕")); });
   await step(2, async () => {
-    候補["カードタイプ"] = await select2に入れる(page, "admin_card_cardtypes", "試験カードタイプ", false);
-    候補["サブタイプ"] = await select2に入れる(page, "admin_card_subtypes", "試験サブタイプ", false);
-    候補["特殊タイプ"] = await select2に入れる(page, "admin_card_specialtypes", "試験特殊タイプ", false);
+    候補["カードタイプ"] = await select2に入れる(page, "admin_card_cardtypes", "試験カードタイプ", false, () => 別のブラウザの画面を撮る(page, scene.stepLabel(2, "カードタイプ欄で候補が開いた状態")));
+    候補["サブタイプ"] = await select2に入れる(page, "admin_card_subtypes", "試験サブタイプ", false, () => 別のブラウザの画面を撮る(page, scene.stepLabel(2, "サブタイプ欄で候補が開いた状態")));
+    候補["特殊タイプ"] = await select2に入れる(page, "admin_card_specialtypes", "試験特殊タイプ", false, () => 別のブラウザの画面を撮る(page, scene.stepLabel(2, "特殊タイプ欄で候補が開いた状態")));
   });
   await expected(async () => {
     for (const [欄, 語] of [["カードタイプ", "試験カードタイプ"], ["サブタイプ", "試験サブタイプ"], ["特殊タイプ", "試験特殊タイプ"]]) {
@@ -230,6 +239,8 @@ caseTest("IT-M14-04-013", async ({ page, notes, step, expected }) => {
   const r = { 件数: -1, 欠け: [] as string[] };
   await step(1, async () => { await e.open(notes.get("〔カードID-M1404-共有〕")); before = await e.詳細一覧.count(); });
   await step(2, async () => { await e.詳細情報を追加する(); });
+  // 画面下の固定のバーが追加された詳細情報の欄に重ならないよう、その詳細情報を画面の中央に出してから撮る
+  await e.詳細一覧.last().evaluate((el) => el.scrollIntoView({ block: "center" })).catch(() => undefined);
   await expected(async () => {
     const det = e.詳細一覧.last();
     r.件数 = await e.詳細一覧.count();
@@ -309,7 +320,21 @@ caseTest("IT-M14-04-017", async ({ page, notes, step, expected }) => {
   });
   let sent = true;
   await step(4, async () => { const r = await e.登録を押す(); sent = r.sent; if (!r.sent) note("ブラウザの入力チェックが送信を止めた"); });
-  await step(5, async () => { 結果 = 読む(id); });
+  await step(5, async () => {
+    結果 = 読む(id);
+    const c5 = 結果.card, d5 = 結果.details.find((x) => x.詳細ID === A);
+    const n = (v: string | null | undefined) => String((v ?? "").length);
+    await DBで読み取った値を撮る(page, `このカード（ID ${id}）のカードと詳細情報${A}の保存値の文字数`, [
+      ["項目", "文字数（期待）"],
+      ["カード名(日)", `${n(c5?.カード名日)}（255）`], ["カード名(英)", `${n(c5?.カード名英)}（255）`], ["アリーナカード名(日)", `${n(c5?.アリーナ名日)}（255）`], ["アリーナカード名(英)", `${n(c5?.アリーナ名英)}（255）`],
+      ["基本情報のルールテキスト(日)", `${n(c5?.ルールテキスト日)}（1024）`], ["基本情報のルールテキスト(英)", `${n(c5?.ルールテキスト英)}（1024）`],
+      ["マナ・コスト", `${n(c5?.マナ・コスト)}（64）`], ["パワー", `${n(c5?.パワー)}（16）`], ["タフネス", `${n(c5?.タフネス)}（16）`], ["忠誠度", `${n(c5?.忠誠度)}（16）`],
+      ["詳細のコレクターNo", `${n(d5?.コレクターNo)}（16）`], ["詳細の裏面カード詳細ID", `${d5?.裏面詳細ID ?? ""}（999999）`],
+      ["詳細のルールテキスト(日)", `${n(d5?.ルールテキスト日)}（1024）`], ["詳細のルールテキスト(英)", `${n(d5?.ルールテキスト英)}（1024）`],
+      ["詳細のフレーバーテキスト(日)", `${n(d5?.フレーバー日)}（1024）`], ["詳細のフレーバーテキスト(英)", `${n(d5?.フレーバー英)}（1024）`],
+      ["詳細のパワー", `${n(d5?.パワー)}（16）`], ["詳細のタフネス", `${n(d5?.タフネス)}（16）`],
+    ], scene.stepLabel(5, "DBで読み取った保存値の文字数"));
+  });
   await expected(async () => {
     const c = 結果.card, d = 結果.details.find((x) => x.詳細ID === A);
     const len = (v: string | null) => (v ?? "").length;
@@ -371,9 +396,13 @@ caseTest("IT-M14-04-021", async ({ page, step, expected }) => {
   await step(3, async () => { await e.必須を入れる(await e.詳細情報を追加する(), 必須); });
   await step(4, async () => { r = await e.登録を押す(); });
   await expected(async () => {
-    const id = カード名英でカードID(英)[0];
-    expect.soft(id, "保存された「NewTransitionCard」のカードID").toBeTruthy();
-    expect.soft(new URL(r.url).pathname.endsWith(`/card/${id}/edit`), "遷移先が新しく保存されたカードの編集画面").toBe(true);
+    // 実行区分は「ブラウザのみ」なので DB は見ない。遷移先の URL がカードIDつきの編集画面で、画面に入力したカードの内容が出ていることで確かめる
+    // （カード名(英)は実行ごとの印つきで、前の実行のカードとは重ならない＝この名前のカードは今登録した1件だけ）
+    expect.soft(r.sent, "登録要求が送られた").toBe(true);
+    const id = /\/card\/(\d+)\/edit$/.exec(new URL(r.url).pathname)?.[1] ?? "";
+    expect.soft(id, "遷移先がカードIDつきのカード詳細(編集・削除)画面（/card/{カードID}/edit）").toMatch(/^\d+$/);
+    await expect.soft(e.field("nameEn"), "遷移先の画面のカード名(英)が、新しく保存した「NewTransitionCard」").toHaveValue(英);
+    await expect.soft(e.field("cmc"), "遷移先の画面の点数で見たマナ・コストが、入力した「1」").toHaveValue("1");
   });
 });
 
@@ -389,7 +418,16 @@ caseTest("IT-M14-04-022", async ({ page, notes, step, expected }) => {
     await e.画像言語(det).first().selectOption({ label: "英語" });
   });
   await step(4, async () => { const r = await e.登録を押す(); if (!r.sent) note("ブラウザの入力チェックが送信を止めた"); });
-  await step(5, async () => { 結果 = 読む(id); });
+  await step(5, async () => {
+    結果 = 読む(id);
+    const c5 = 結果.card, d5 = 結果.details.find((x) => x.詳細ID === "240401022");
+    await DBで読み取った値を撮る(page, `このカード（ID ${id}）と詳細ID 240401022 の保存値`, [
+      ["項目", "DBの値（期待）"],
+      ["カード名(日)", `${c5?.カード名日 ?? ""}（更新後カード）`], ["カード名(英)", `${c5?.カード名英 ?? ""}（UpdatedCard）`], ["点数で見たマナ・コスト", `${c5?.点数で見たマナ ?? ""}（3.5）`],
+      ["コレクターNo", `${d5?.コレクターNo ?? ""}（UPDATED-001）`], ["Foil（2=特殊）", `${d5?.Foil ?? ""}（2）`], ["フレーム（1=特殊）", `${d5?.フレーム ?? ""}（1）`],
+      ["画像の言語", `${詳細の画像("240401022")[0]?.言語 ?? ""}（英語）`],
+    ], scene.stepLabel(5, "DBで読み取った保存値"));
+  });
   await expected(async () => {
     const c = 結果.card, d = 結果.details.find((x) => x.詳細ID === "240401022");
     expect.soft([c?.カード名日, c?.カード名英, c?.点数で見たマナ], "カード名(日・英)・点数で見たマナ・コスト").toEqual(["更新後カード", "UpdatedCard", "3.5"]);
@@ -405,7 +443,11 @@ caseTest("IT-M14-04-023", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await e.open(id); });
   await step(2, async () => { await e.基本情報を入れる({ カード名日: "遷移確認更新カード" }); });
   await step(3, async () => { const r = await e.登録を押す(); url = r.url; });
-  await expected(async () => { expect.soft(new URL(url).pathname.endsWith(`/card/${id}/edit`), "遷移先がこのカードの編集画面").toBe(true); });
+  await expected(async () => {
+    expect.soft(new URL(url).pathname.endsWith(`/card/${id}/edit`), "遷移先がこのカードの編集画面").toBe(true);
+    // 入力チェックで失敗して同じ画面が出直した場合と区別する
+    await expect.soft(page.locator(".alert-success").filter({ hasText: "保存しました" }), "保存したことを知らせる表示").toBeVisible();
+  });
 });
 
 caseTest("IT-M14-04-024", async ({ page, notes, step, expected }) => {
@@ -494,7 +536,7 @@ caseTest("IT-M14-04-030", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M1404_ADMIN);
   const e = new CardEditPage(page);
   await step(1, async () => { await e.open(notes.get("〔カードID-M1404-共有〕")); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("a.c-baseLink").filter({ hasText: "カード一覧" }).click({ timeout: 20_000 })]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("a.c-baseLink").filter({ hasText: "カード一覧" }).click({ timeout: 20_000, noWaitAfter: true })]); });
   await expected(async () => {
     expect.soft(/\/card(\/search(\/\d+)?)?$/.test(new URL(page.url()).pathname.replace(/\/$/, "")), "遷移先がカード一覧").toBe(true);
     await expect.soft(new CardSearchPage(page).form, "カード一覧の検索欄").toBeVisible();
@@ -511,7 +553,7 @@ function 二ページ目から(語: string | (() => string), 呼び名: string, 
     const e = new CardEditPage(page);
     const 二ページ目で開く = async () => {
       await l.ページ送りを押す("2");
-      await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.行のカード(A).locator("td:nth-child(3) a").first().click({ timeout: 20_000 })]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.行のカード(A).locator("td:nth-child(3) a").first().click({ timeout: 20_000, noWaitAfter: true })]);
       await expect(e.form, "カード詳細(編集・削除)画面").toBeVisible();
     };
     await step(1, async () => { await l.open(); await l.キーワードで検索する(検索語); });
@@ -519,10 +561,10 @@ function 二ページ目から(語: string | (() => string), 呼び名: string, 
       // 検索保持: 2ページ目を開く → カード名を押して詳細へ → 「カード一覧」を押す
       await step(2, async () => { await l.ページ送りを押す("2"); });
       await step(3, async () => {
-        await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.行のカード(A).locator("td:nth-child(3) a").first().click({ timeout: 20_000 })]);
+        await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.行のカード(A).locator("td:nth-child(3) a").first().click({ timeout: 20_000, noWaitAfter: true })]);
         await expect(e.form, "カード詳細(編集・削除)画面").toBeVisible();
       });
-      await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("a.c-baseLink").filter({ hasText: "カード一覧" }).click({ timeout: 20_000 })]); });
+      await step(4, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("a.c-baseLink").filter({ hasText: "カード一覧" }).click({ timeout: 20_000, noWaitAfter: true })]); });
     } else {
       // 削除: 2ページ目から詳細を開く → 削除ボタン → 確認で実行
       await step(2, async () => { await 二ページ目で開く(); });
@@ -786,5 +828,149 @@ caseTest("IT-M14-04-071", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     expect.soft(結果.card?.カード名日, "カード名(日)").toBe("編集後カード-M1404-071");
     expect.soft([詳細の件数("240401071"), 詳細の件数("240402071")], "ID 240401071・240402071のカード詳細が残る").toEqual([1, 1]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 商品・デッキに紐づくカード（010・036〜039・063）。シードは seeds/m14-04-link.ts
+// ---------------------------------------------------------------------------
+
+caseTest("IT-M14-04-010", async ({ page, notes, step, expected }) => {
+  const id = notes.get("〔カードID-M1404-010〕"), d = notes.get("〔カード詳細ID-M1404-010〕");
+  await loginAdmin(page, M1404_ADMIN);
+  const e = new CardEditPage(page);
+  await step(1, async () => { await e.open(id); });
+  await step(2, async () => {
+    await expect(e.詳細(d), `カード詳細ID ${d} の詳細情報のブロックが表示されている`).toHaveCount(1);
+    await e.詳細(d).scrollIntoViewIfNeeded();
+    note("「詳細情報を追加」は詳細情報のブロックの外（詳細情報の欄の下）にある画面のボタンなので、画面にそのボタンが表示されるかで確かめた");
+  });
+  await expected(async () => {
+    await expect.soft(e.詳細の削除不可の表示(d), `カード詳細ID ${d} の詳細情報に、詳細情報削除不可の表示がある`).toBeVisible();
+    await expect.soft(e.詳細の削除ボタン(d), `カード詳細ID ${d} の詳細情報に「この詳細情報を削除」が表示されない`).toHaveCount(0);
+    await expect.soft(e.詳細情報を追加ボタン, "「詳細情報を追加」が表示されない").toBeHidden();
+  });
+});
+
+caseTest("IT-M14-04-063", async ({ page, notes, step, expected }) => {
+  const id = notes.get("〔カードID-M1404-063〕"), a = notes.get("〔カード詳細ID-M1404-063A〕"), b = notes.get("〔カード詳細ID-M1404-063B〕");
+  await loginAdmin(page, M1404_ADMIN);
+  const e = new CardEditPage(page);
+  await step(1, async () => { await e.open(id); });
+  await step(2, async () => { await expect(e.詳細(a), `カード詳細ID ${a} の詳細情報のブロックが表示されている`).toHaveCount(1); await e.詳細(a).scrollIntoViewIfNeeded(); });
+  await step(3, async () => { await expect(e.詳細(b), `カード詳細ID ${b} の詳細情報のブロックが表示されている`).toHaveCount(1); await e.詳細(b).scrollIntoViewIfNeeded(); });
+  await expected(async () => {
+    await expect.soft(e.詳細の削除不可の表示(a), `カード詳細ID ${a}（商品に紐づく）に詳細情報削除不可の表示がある`).toBeVisible();
+    await expect.soft(e.詳細の削除ボタン(a), `カード詳細ID ${a}（商品に紐づく）に「この詳細情報を削除」が表示されない`).toHaveCount(0);
+    await expect.soft(e.詳細の削除ボタン(b), `カード詳細ID ${b}（紐づきなし）に「この詳細情報を削除」が表示される`).toBeVisible();
+    await expect.soft(e.詳細の削除不可の表示(b), `カード詳細ID ${b}（紐づきなし）に詳細情報削除不可の表示が無い`).toHaveCount(0);
+  });
+});
+
+/** 036〜039: 紐づきのあるカードを削除する。確認ポップアップの実行ボタンを押し、削除の要求が送られたことを手順の中で確かめる */
+function 紐づきカードを削除する(呼び名: string, DB確認: boolean): CaseBody {
+  return async ({ page, notes, step, expected }) => {
+    const id = notes.get(呼び名);
+    await loginAdmin(page, M1404_ADMIN);
+    const e = new CardEditPage(page);
+    let r: Awaited<ReturnType<CardEditPage["確認で実行して要求を見る"]>> | undefined;
+    let 件数 = -1;
+    await step(1, async () => { await e.open(id); });
+    await step(2, async () => { await e.削除を押す(); });
+    await step(3, async () => {
+      const label = ((await page.locator('#DeleteModal a[data-method="delete"]').innerText()) ?? "").trim();
+      if (label !== "実行") note(`確認ポップアップの実行ボタンの表示は「${label}」（正本の手順は「実行」）。そのボタンを押した`);
+      r = await e.確認で実行して要求を見る(id);
+      // 手順の確かめ（削除の要求が送られたこと）。期待結果ではないので、期待結果の吹き出しにしない（送られなければ手順の失敗にする）
+      if (!r.送った) throw new Error(`カードID ${id} の削除の要求が送られなかった`);
+      note(`削除の要求: ${r.送り先}（応答 ${r.応答 ?? "なし"}）。移った先: ${r.移った先}。画面の通知: ${r.通知.join(" / ") || "なし"}`);
+    });
+    if (DB確認) await step(4, async () => { 件数 = カードの件数(id); });
+    await expected(async () => {
+      if (DB確認) {
+        expect.soft(件数, `カードID ${id} のカードの数（削除されない）`).toBe(1);
+      } else {
+        expect.soft(new URL(page.url()).pathname.replace(/\/$/, ""), `カードID ${id} のカード編集画面へ戻った`).toMatch(new RegExp(`/card/${id}/edit$`));
+      }
+    });
+  };
+}
+caseTest("IT-M14-04-036", 紐づきカードを削除する("〔カードID-M1404-036〕", true));
+caseTest("IT-M14-04-037", 紐づきカードを削除する("〔カードID-M1404-037〕", false));
+caseTest("IT-M14-04-038", 紐づきカードを削除する("〔カードID-M1404-038〕", true));
+caseTest("IT-M14-04-039", 紐づきカードを削除する("〔カードID-M1404-039〕", false));
+
+// ---------------------------------------------------------------------------
+// 商品詳細のカード情報への反映（059）
+// ---------------------------------------------------------------------------
+
+caseTest("IT-M14-04-059", async ({ page, notes, step, expected }) => {
+  const 商品ID = notes.get("〔商品ID-M1404-001〕"), カードID = notes.get("〔カードID-M1404-001〕"), d = notes.get("〔カード詳細ID-M1404-001〕");
+  const front = new FrontDetail(page);
+  const e = new CardEditPage(page);
+  let 前: Record<string, string> = {}; let 後: Record<string, string> = {};
+  await step(1, async () => {
+    const res = await front.open(店.本店, 商品ID);
+    expect(res?.status(), "本店の日本語ページの商品詳細画面が開く").toBe(200);
+  });
+  // カード情報の項目の値（カード情報の欄の、見出しが一致する行の値）。画面の欄そのものを確かめて枠にする
+  const 値の欄 = (見出し: string) => page.locator(".p-hareruya-product-detail__description-box.face_info .p-hareruya-product-detail__specs-row")
+    .filter({ has: page.locator("dt", { hasText: new RegExp(`^\\s*${見出し}\\s*$`) }) }).locator("dd");
+  await step(2, async () => {
+    await front.カード情報.first().scrollIntoViewIfNeeded(); 前 = await front.カード情報の項目(); note(`手順2のカード情報: カード名「${前["カード名"] ?? ""}」・フレーバーテキスト「${前["フレーバーテキスト"] ?? ""}」`);
+    // 更新前の値は、更新前の画面が出ているこの手順で確かめる
+    await expect.soft(値の欄("カード名"), "手順2で確認したカード名（更新前）").toHaveText("更新前カード-M1404QL001");
+    await expect.soft(値の欄("フレーバーテキスト"), "手順2で確認したフレーバーテキスト（更新前）").toHaveText("更新前フレーバー-M1404QL001");
+  });
+  await step(3, async () => { await loginAdmin(page, M1404_QL_ADMIN); });
+  await step(4, async () => { await e.open(カードID); await expect(e.詳細(d), `カード詳細ID ${d} の詳細情報のブロック`).toHaveCount(1); });
+  await step(5, async () => {
+    await e.基本情報を入れる({ カード名日: "更新後カード-M1404QL001", カード名英: "更新後カード-M1404QL001" });
+    await e.詳細を入れる(e.詳細(d), { フレーバー日: "更新後フレーバー-M1404QL001", フレーバー英: "更新後フレーバー-M1404QL001" });
+    const r = await e.登録を押す();
+    expect(r.sent, "登録ボタンで保存の要求が送られた").toBe(true);
+    note(`登録のあとの画面の通知: ${(await e.通知()).join(" / ") || "なし"}`);
+  });
+  await step(6, async () => { const res = await front.open(店.本店, 商品ID); expect(res?.status(), "商品詳細画面を開き直せた").toBe(200); });
+  await step(7, async () => { await front.カード情報.first().scrollIntoViewIfNeeded(); 後 = await front.カード情報の項目(); });
+  await expected(async () => {
+    await expect.soft(値の欄("カード名"), "開き直した商品詳細画面のカード名").toHaveText("更新後カード-M1404QL001");
+    await expect.soft(値の欄("フレーバーテキスト"), "開き直した商品詳細画面のフレーバーテキスト").toHaveText("更新後フレーバー-M1404QL001");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 商品マスターのカード名の検索への反映（066）
+// ---------------------------------------------------------------------------
+
+caseTest("IT-M14-04-066", async ({ page, notes, step, expected }) => {
+  const 商品ID = notes.get("〔商品ID-M1404-RJ001〕");
+  const 新名 = RJ名.新名(), 旧名 = RJ名.旧名(), 英名 = RJ名.英名();
+  note(`カード名は正本の値に実行の印を付けた値で検索・入力した（RJ1404-001-新名 → ${新名}、RJ1404-001-旧名 → ${旧名}、RJ1404-001-CardEn → ${英名}）`);
+  const s = new ProductSearchPage(page);
+  const list = new CardSearchPage(page);
+  const e = new CardEditPage(page);
+  const カード名で商品を検索 = async (): Promise<void> => { await s.open(); await s.ensureDetailVisible(); await s.field("card_name").fill(新名); await s.submitAndWaitForResult(); };
+  let 前の件数 = -1; let 後の件数 = -1; let 後のID: string[] = [];
+  await step(1, async () => { await loginAdmin(page, M1404_RJ_ADMIN); });
+  await step(2, async () => { await カード名で商品を検索(); });
+  await step(3, async () => { 前の件数 = await 該当件数(page); expect(前の件数, "変更前、カード名「新名」で該当する商品が無い").toBe(0); });
+  await step(4, async () => { await list.open(); await list.キーワードで検索する(英名); });
+  await step(5, async () => {
+    const rows = (await list.表示行()).filter((r) => r.カード名.includes(旧名));
+    expect(rows.length, `カード一覧(検索結果)にカード「${旧名}」の行が1件`).toBe(1);
+    await list.カードを開く(rows[0].カードID);
+  });
+  await step(6, async () => {
+    await e.基本情報を入れる({ カード名日: 新名 });
+    const r = await e.登録を押す();
+    expect(r.sent, "登録ボタンで保存の要求が送られた").toBe(true);
+    note(`登録のあとの画面の通知: ${(await e.通知()).join(" / ") || "なし"}`);
+  });
+  await step(7, async () => { await カード名で商品を検索(); 後の件数 = await 該当件数(page); 後のID = await 一覧の商品ID(page); });
+  await expected(async () => {
+    // 検索結果の文と、結果の行は、画面のその場所そのものを確かめて枠にする（画面全体を読んだ値ではなく）
+    await expect.soft(page.getByText(/検索結果：\d+件が該当しました/).first(), "検索結果の件数の文（1件が該当）").toContainText("検索結果：1件が該当しました");
+    await expect.soft(page.locator('#form_bulk input[name="ids[]"]'), `商品マスター(検索結果)に表示された商品（商品ID ${商品ID} だけ）`).toHaveValue(商品ID);
   });
 });

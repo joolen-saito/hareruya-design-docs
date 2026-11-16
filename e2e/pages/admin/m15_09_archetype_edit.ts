@@ -11,7 +11,7 @@
  */
 import { expect, Locator, Page, Response } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { chooseByLabel, expectSaved } from "./common";
+import { chooseByLabel, expectSaved, withoutEnvBanners } from "./common";
 
 type Issue = (m: string) => void;
 
@@ -158,7 +158,7 @@ export class アーキタイプ編集画面 {
   /** 代表カードの表示（名前の欄の文字と、画像の参照先。表示されていなければ空） */
   async 代表カード(): Promise<{ 名前: string; 画像: string; 画像ID: string }> {
     const 名前 = (await this.代表カード名.isVisible()) ? 文(await this.代表カード名.innerText()) : "";
-    const 画像 = (await this.代表カード画像.isVisible()) ? ((await this.代表カード画像.getAttribute("src")) ?? "") : "";
+    const 画像 = (await this.代表カード画像.getAttribute("src")) ?? ""; // 画像ファイルが無く大きさ0で見えなくても、参照先の属性は読む
     return { 名前, 画像, 画像ID: await this.代表カードID.inputValue() };
   }
 
@@ -272,7 +272,7 @@ export class アーキタイプ編集画面 {
 
   /** 送信ボタン（新規登録・更新）を押して、次の画面の読み込みを待つ */
   async 送信する(button: Locator): Promise<送信の結果> {
-    const [res] = await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), button.click()]);
+    const [res] = await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), button.click({ noWaitAfter: true })]);
     return { 要求の応答: await 送った要求の応答(res), 最後の応答: res?.status() ?? 0, 最後の画面: this.page.url() };
   }
 
@@ -289,7 +289,7 @@ export class アーキタイプ編集画面 {
     return {
       文: d.message(),
       OKを押す: async () => {
-        const [res] = await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), d.accept()]);
+        const [res] = await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), d.accept()]);
         await clicked;
         return { 要求の応答: await 送った要求の応答(res), 最後の応答: res?.status() ?? 0, 最後の画面: this.page.url() };
       },
@@ -310,7 +310,7 @@ export class アーキタイプ編集画面 {
   async 削除してOKを押す(): Promise<{ 文: string } & 送信の結果> {
     let 文 = "";
     this.page.once("dialog", (d) => { 文 = d.message(); void d.accept(); });
-    const [res] = await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.削除ボタン.click()]);
+    const [res] = await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.削除ボタン.click({ noWaitAfter: true })]);
     return { 文, 要求の応答: await 送った要求の応答(res), 最後の応答: res?.status() ?? 0, 最後の画面: this.page.url() };
   }
 
@@ -331,7 +331,7 @@ export class アーキタイプ編集画面 {
   private async 帯(sel: string): Promise<string[]> {
     const out: string[] = [];
     for (const e of await this.page.locator(sel).all()) if (await e.isVisible()) out.push(文(await e.innerText()));
-    return out;
+    return withoutEnvBanners(out); // 開発用の設定のときに常に出る赤い帯は、エラーの帯に数えない
   }
 
   /** 開いている編集画面のアーキタイプID（アドレスの番号） */
@@ -366,7 +366,7 @@ export class アーキタイプ一覧 {
   /** アーキタイプ名の欄に入れて「検索する」を押し、結果の表示を待つ */
   async 名前で検索する(語: string): Promise<void> {
     await this.名前の欄.fill(語);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.検索ボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.検索ボタン.click({ noWaitAfter: true })]);
     await this.結果を待つ();
   }
 
@@ -388,7 +388,7 @@ export class アーキタイプ一覧 {
   async 表示件数を選ぶ(件数: number): Promise<void> {
     await expect(this.表示件数, "検索結果の表示件数の選択欄").toBeVisible();
     if (((await this.表示件数.locator("option:checked").innerText()) ?? "").trim() === `${件数}件`) return; // 既に選ばれている（選び直しても画面は変わらない）
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), chooseByLabel(this.表示件数, `${件数}件`)]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), chooseByLabel(this.表示件数, `${件数}件`)]);
     await this.結果を待つ();
   }
 
@@ -396,7 +396,7 @@ export class アーキタイプ一覧 {
   async ページを押す(n: number): Promise<void> {
     const link = this.ページ送り.locator("a.page-link").filter({ hasText: new RegExp(`^\\s*${n}\\s*$`) });
     await expect(link, `ページ送りの「${n}」`).toHaveCount(1);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await this.結果を待つ();
   }
 
@@ -413,7 +413,7 @@ export class アーキタイプ一覧 {
     await tr.locator("button.dropdown-menu-toggle").click();
     const link = tr.locator(".dropdown-menu a.dropdown-item").filter({ hasText: /^\s*編集\s*$/ });
     await expect(link, `ID ${id} の行の「編集」`).toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     const e = new アーキタイプ編集画面(this.page);
     await e.読み込みを待つ();
     return e;

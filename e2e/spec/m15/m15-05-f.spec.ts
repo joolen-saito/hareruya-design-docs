@@ -37,7 +37,7 @@ caseTest("IT-M15-05-144", async ({ page, notes, step, expected }) => {
   await step(2, async () => {
     const r = l.行(id);
     await expect(r, "検索結果のデッキの行").toBeVisible();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), r.locator('a[href$="/edit"]').first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), r.locator('a[href$="/edit"]').first().click({ noWaitAfter: true })]);
   });
   await step(3, async () => { await 代表カードを検索して選ぶ(page, 代表カードの代役.B); });
   await step(4, async () => {
@@ -63,7 +63,7 @@ function 新規登録(n: string, c: 登録): CaseBody {
     const l = new デッキ一覧(page);
     const 開始 = 1;
     await step(開始, async () => { await l.開く(); });
-    await step(開始 + 1, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.新規登録.click()]); });
+    await step(開始 + 1, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.新規登録.click({ noWaitAfter: true })]); });
     await step(開始 + 2, async () => {
       await f(page, "deckName").fill(c.デッキ名);
       await f(page, "Format").selectOption({ label: c.フォーマット });

@@ -23,8 +23,8 @@ export async function お問い合わせ件名を読む(page: Page): Promise<件
   await page.waitForLoadState("load");
   await page.locator('select[name="entity"]').selectOption({ label: "お問い合わせ件名" });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }),
-    page.locator('form[method="get"] button[type="submit"]').click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000}),
+    page.locator('form[method="get"] button[type="submit"]').click({ noWaitAfter: true }),
   ]);
   await expect(page.locator("form#edit_form table.mtg-master-table"), "お問い合わせ件名の一覧").toBeVisible({ timeout: 60_000 });
   return page.locator("form#edit_form table.mtg-master-table tbody tr").evaluateAll((trs) => {

@@ -186,7 +186,7 @@ export class OtcInputPage {
   /** 申込情報入力画面の「キャンセル」を押す */
   async 入力画面のキャンセルを押す(): Promise<void> {
     const a = this.入力フォーム().locator(".p-hareruya-entry__form-actions a").filter({ hasText: /キャンセル|Cancel/ }).first();
-    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/entry/, { timeout: NAV }), a.click({ timeout: T })]);
+    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/entry/, { timeout: NAV }), a.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -288,6 +288,15 @@ export class OtcInputPage {
     for (const id of ["email_first", "email_second", "password_first", "password_second"]) await this.page.locator(`#otc_buy_order_${id}`).fill("", { timeout: T });
   }
 
+  /** 会員登録フォームに出ている入力の誤り（サーバーの誤りの文・誤りの印の付いた欄の名前）。無ければ空 */
+  async 会員登録フォームの誤り(): Promise<string[]> {
+    const f = this.会員登録フォーム();
+    const 文 = (await f.locator(".c-hareruya-text--error, .form-error-message, .c-hareruya-form-input__field-error").allInnerTexts().catch(() => [] as string[]))
+      .map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+    const 欄 = await f.locator(".c-hareruya-form-input__field.is-error").evaluateAll((els) => els.map((e) => `${(e as HTMLInputElement).name}（誤りの印）`)).catch(() => [] as string[]);
+    return [...new Set([...文, ...欄])];
+  }
+
   /** 会員登録フォームの「次のページへ進む」（会員登録ありの申込）を押す（移らなくても止めない）。押したあとのパスを返す */
   async 会員登録ありで進むを押す(): Promise<string> {
     const nav = this.page.waitForEvent("framenavigated", { timeout: 15_000 }).catch(() => undefined);
@@ -321,7 +330,7 @@ export class OtcInputPage {
   /** 会員登録フォームの「キャンセル」を押す */
   async 会員登録フォームのキャンセルを押す(): Promise<void> {
     const a = this.会員登録フォーム().locator(".p-hareruya-entry__form-actions a.c-hareruya-btn").filter({ hasText: /キャンセル|Cancel/ }).first();
-    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/entry/, { timeout: NAV }), a.click({ timeout: T })]);
+    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/entry/, { timeout: NAV }), a.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 }

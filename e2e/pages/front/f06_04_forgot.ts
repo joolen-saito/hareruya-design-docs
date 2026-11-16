@@ -5,6 +5,7 @@
 import { expect, Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { mailIds, waitForMailTo } from "../../lib/mail";
+import { 押して移るのを待つ } from "./nav_click";
 
 const TIMEOUT = 30_000;
 
@@ -26,7 +27,7 @@ export class ForgotPage {
   /** メールアドレスを入れて「次のページへ」を押し、移った先の画面まで待つ */
   async 申し込む(メール: string): Promise<void> {
     await this.メール欄.fill(メール, { timeout: TIMEOUT });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.次のページへ.click({ timeout: TIMEOUT })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.次のページへ.click({ timeout: TIMEOUT, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 申し込む前にメールの番号を控え、申し込んだあとに届くその宛先のメールのURL（パスワード再設定画面）を返す */
@@ -55,7 +56,8 @@ export class ForgotPage {
   get 再設定画面である(): Promise<boolean> { return this.新しいパスワード欄.isVisible(); }
   get エラー画面(): Locator { return this.page.locator(".p-hareruya-error"); }
   async エラーの見出し(): Promise<string> {
-    const h = this.エラー画面.locator("h2").first();
+    // E-1 などの画面は h2、共通エラー画面（404 Page Not Found）は h1 が見出し
+    const h = this.エラー画面.locator("h2, h1").first();
     return (await h.count()) === 0 ? "" : ((await h.innerText()) ?? "").replace(/\s+/g, " ").trim();
   }
   async エラーの文(): Promise<string> {
@@ -78,7 +80,7 @@ export class ForgotPage {
     await this.新しいパスワード確認欄.fill(確認, { timeout: TIMEOUT });
   }
   async 変更するを押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.変更する.click({ timeout: TIMEOUT })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.変更する.click({ timeout: TIMEOUT, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   async 再設定する(メール: string, パスワード: string): Promise<void> {
@@ -102,15 +104,7 @@ export class ForgotPage {
   }
   get パンくずホーム(): Locator { return this.page.locator("a.p-hareruya-breadcrumb__link").first(); }
   async 押して遷移する(l: Locator): Promise<void> {
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 });
-    try {
-      await l.click({ timeout: 10_000 });
-    } catch (e) {
-      test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
-    }
-    await nav;
-    await this.page.waitForLoadState("load");
+    // 押す操作だけを行い、移るのを待つ（押せているのに click の待ちが時間切れになり、移った先で押し直してしまうのを防ぐ。pages/front/nav_click.ts）
+    await 押して移るのを待つ(this.page, l, { 直接送るときの注記: "正本の外の補い" });
   }
 }

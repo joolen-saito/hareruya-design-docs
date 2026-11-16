@@ -22,21 +22,22 @@
  * 会場の選択肢（DBで作る会場A・会場B）だけを見る012は実装しない。そのケースだけが使う SOURCE-010・SOURCE-012・SOURCE-034 も作らない。
  */
 import { SETUP_ADMIN } from "../config/env";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { Page } from "@playwright/test";
 import { EventInput, FreeArea, ensureNoEvent, openEventCreate } from "../pages/admin/event";
-import { ensureMember } from "../pages/admin/member";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
 import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
 import { ensureFormat, 複製元を登録する, 長い名前のイベントを無くす } from "../pages/admin/m13_05_copy";
 import { QK1302_ADMIN, QK連携店舗 } from "./m13-02-qk";
 
 /** S-M13-05-ADM の試験管理者（店舗A・店舗Bを編集できる。店舗Cは編集できない） */
-export const M1305_ADMIN: Account = { loginId: "m1305_admin", password: "Passw0rd!M1305" };
+// 店舗を決まった名前（店舗A-E2E など）にしたので、管理者も決まった印の名前・ログインIDで1度だけ作って使い回す（前の実行の印つきの店舗に所属した管理者とぶつけない）
+export const M1305_ADMIN: Account = { loginId: rcFixed("m1305_admin").toLowerCase(), password: "Passw0rd!M1305" };
 /** S-M13-05-ADM の複製元の登録者（店舗A・店舗Cを編集できる） */
-export const M1305_SOURCE_ADMIN: Account = { loginId: "source_admin", password: "Passw0rd!M1305src" };
+export const M1305_SOURCE_ADMIN: Account = { loginId: rcFixed("source_admin").toLowerCase(), password: "Passw0rd!M1305src" };
 
 /** 複製元のイベント名(日)（印つき） */
 export const 複製元の名前 = (n: string) => rc(`複製元イベント日-${n}`);
@@ -78,11 +79,11 @@ defineSeed("S-M13-05-MASTER", async ({ browser, notes, seed }) => {
 defineSeed("S-M13-05-ADM", { needs: ["S-M13-05-MASTER"] }, async ({ browser, notes }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     notes.set("〔管理者ID-M1305-共有〕", await ensureMember(page, {
-      名前: "M13-05 試験管理者", 所属店舗: 印店名.A, ログインID: M1305_ADMIN.loginId, メールアドレス: "m1305_admin@example.test",
+      名前: rcFixed("M13-05 試験管理者"), 所属店舗: 印店名.A, ログインID: M1305_ADMIN.loginId, メールアドレス: `${M1305_ADMIN.loginId}@example.test`,
       パスワード: M1305_ADMIN.password, 権限: "モールオペレーター", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A, 印店名.B],
     }));
     await ensureMember(page, {
-      名前: "M13-05 複製元登録者", 所属店舗: 印店名.A, ログインID: M1305_SOURCE_ADMIN.loginId, メールアドレス: "m1305_source_admin@example.test",
+      名前: rcFixed("M13-05 複製元登録者"), 所属店舗: 印店名.A, ログインID: M1305_SOURCE_ADMIN.loginId, メールアドレス: `${M1305_SOURCE_ADMIN.loginId}@example.test`,
       パスワード: M1305_SOURCE_ADMIN.password, 権限: "モールオペレーター", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A, 印店名.C],
     });
   });

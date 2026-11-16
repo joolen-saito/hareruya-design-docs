@@ -4,6 +4,7 @@
  */
 import { Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { 押して移るのを待つ } from "./nav_click";
 
 export type 言語 = "ja" | "en";
 const T = 30_000;
@@ -40,7 +41,7 @@ export class MypagePage {
     const form = this.page.locator("form#login_mypage");
     await form.locator("#login_email").fill(メール, { timeout: T });
     await form.locator("#login_pass").fill(パスワード, { timeout: T });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), form.locator("button[type=submit]").click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), form.locator("button[type=submit]").click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   async 開く(): Promise<void> {
@@ -75,6 +76,8 @@ export class MypagePage {
   }
   /** 氏名の表示（バーコードの上） */
   async 名前の表示(): Promise<string> { return this.文(this.page.locator(".p-hareruya-mypage__barcode-name")); }
+  /** 氏名の表示の要素（印を付けるため） */
+  get 名前の要素(): Locator { return this.page.locator(".p-hareruya-mypage__barcode-name"); }
   /** 会員番号の表示（「会員番号 123456」の形） */
   async 会員番号の表示(): Promise<string> { return this.文(this.page.locator(".p-hareruya-mypage__barcode-id")); }
 
@@ -106,16 +109,8 @@ export class MypagePage {
     await this.page.waitForLoadState("load");
   }
   async 押して遷移する(l: Locator): Promise<void> {
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 });
-    try {
-      await l.click({ timeout: 10_000 });
-    } catch (e) {
-      test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
-    }
-    await nav;
-    await this.page.waitForLoadState("load");
+    // 押す操作だけを行い、移るのを待つ（押せているのに click の待ちが時間切れになり、移った先で押し直してしまうのを防ぐ。pages/front/nav_click.ts）
+    await 押して移るのを待つ(this.page, l, { 直接送るときの注記: "正本の外の補い" });
   }
 
   // ---- ポイント ----

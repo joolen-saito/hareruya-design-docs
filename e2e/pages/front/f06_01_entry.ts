@@ -4,6 +4,7 @@
  */
 import { expect, Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { 押して移るのを待つ } from "./nav_click";
 
 export type 入力値 = {
   姓: string; 名: string; セイ: string; メイ: string;
@@ -108,11 +109,12 @@ export class EntryPage {
   get 戻るボタン(): Locator { return this.page.locator('button[name="mode"][value="back"]'); }
   async 登録する(): Promise<void> {
     await expect(this.登録するボタン, "確認画面の「登録する」").toBeVisible({ timeout: TIMEOUT });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.登録するボタン.click({ timeout: TIMEOUT })]);
+    // 開発環境では登録の送信の応答に17〜73秒かかった（2026-11-12 の trace。押したあとの画面の移動を待つ間に、押す操作の30秒が切れていた）ので、2分まで待つ
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), this.登録するボタン.click({ timeout: 120_000, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   async 戻る(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.戻るボタン.click({ timeout: TIMEOUT })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.戻るボタン.click({ timeout: TIMEOUT, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -148,18 +150,8 @@ export class EntryPage {
     return (await cur.locator("a").count()) > 0 || (await cur.evaluate((e) => !!e.closest("a")));
   }
   async 押して遷移する(l: Locator): Promise<void> {
-    // 画面上部に固定されたヘッダーがパンくずなどを覆わない位置（画面の中ほど）へ動かしてから押す
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 });
-    try {
-      await l.click({ timeout: 10_000 });
-    } catch (e) {
-      // 固定ヘッダーが要素の上に重なって普通に押せないとき（画面の作りの問題）。押下の操作そのものは DOM へ送って続け、注記と条件付きの印を残す
-      test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
-    }
-    await nav;
-    await this.page.waitForLoadState("load");
+    // 押す操作だけを行い、移るのを待つ（押せているのに click の待ちが時間切れになり、移った先で押し直してしまうのを防ぐ。pages/front/nav_click.ts）
+    await 押して移るのを待つ(this.page, l, { 直接送るときの注記: "正本の外の補い" });
   }
 
 

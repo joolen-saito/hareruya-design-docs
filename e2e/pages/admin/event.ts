@@ -117,6 +117,31 @@ export class EventForm {
     return true;
   }
 
+  /**
+   * 2026-11-12 追加（submit は変えない）: 登録・更新ボタンを押し、送信（POST）の応答と、応答の画面への移動（読み込みの完了）を待つ。
+   * submit は、送られたあと読み込み済みの画面の domcontentloaded を待つだけで、サーバの保存の完了を待たない（直後の DB の読みが保存の前になりうる）。
+   * 送られなかったときは 応答 が null で、ブラウザの入力チェックで止まった欄の名前を 入力チェックで止まった に返す。
+   */
+  async 送信して待つ(button: Locator): Promise<{ 応答: number | null; 入力チェックで止まった: string[] }> {
+    const 不正な欄 = (b: Element): string[] => {
+      const f = (b as HTMLButtonElement).form;
+      if (!f || f.noValidate) return [];
+      return Array.from(f.elements).filter((e) => typeof (e as HTMLInputElement).checkValidity === "function" && !(e as HTMLInputElement).checkValidity())
+        .map((e) => (e as HTMLInputElement).name || (e as HTMLInputElement).id);
+    };
+    const 押す前 = await button.evaluate(不正な欄).catch(() => [] as string[]);
+    // ブラウザの入力チェックで止まる見込みのときは、送信を長く待たない
+    const 応答 = this.page
+      .waitForResponse((r) => r.request().method() === "POST" && r.request().isNavigationRequest(), { timeout: 押す前.length ? 5_000 : 30_000 })
+      .catch(() => null);
+    const 移動 = this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => null);
+    await button.click();
+    const res = await 応答;
+    if (res) await 移動;
+    await this.page.waitForLoadState("load");
+    return { 応答: res ? res.status() : null, 入力チェックで止まった: res ? [] : 押す前 };
+  }
+
   /** 開発者ツールで行うのと同じに、入力欄へ画面からは入れられない値を入れる（数値欄を文字欄に変えて値を書く） */
   async forceValue(input: Locator, value: string): Promise<void> {
     await input.evaluate((e, v) => { (e as HTMLInputElement).type = "text"; (e as HTMLInputElement).value = v; }, value);
@@ -289,12 +314,12 @@ export async function openEventSearchPage(page: Page, イベント名: string, �
     // 表示件数（選ぶと画面が切り替わる）
     const count = page.locator("#page_count_pulldown");
     if ((await count.locator("option:checked").innerText()).trim() !== `${表示件数}件`) {
-      await Promise.all([page.waitForNavigation({ waitUntil: "load" }), count.selectOption({ label: `${表示件数}件` })]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), count.selectOption({ label: `${表示件数}件` })]);
     }
     // 並び順は初期表示がID・降順。違っていたら選び直す
     if ((await page.locator("#sort_by_pulldown").inputValue()) !== "default" || (await page.locator("#sort_order_pulldown").inputValue()) !== "d") {
       await page.locator("#sort_by_pulldown").selectOption("default");
-      await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("#sort_order_pulldown").selectOption("d")]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#sort_order_pulldown").selectOption("d")]);
     }
     if (ページ > 1) {
       await page.locator(".pagination").getByRole("link", { name: String(ページ), exact: true }).click();

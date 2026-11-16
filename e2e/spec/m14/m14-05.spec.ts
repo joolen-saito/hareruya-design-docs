@@ -103,12 +103,19 @@ function 取込<T>(o: {
     let after = before;
     await step(1, async () => { await u.open(); });
     await step(2, async () => { r = await u.選んで押す(f); });
-    if (o.二度) await step(3, async () => { await u.open(); r = await u.選んで押す(f); });
+    if (o.二度) await step(3, async () => {
+      // 正本: 取込完了後にカード登録CSVアップロード画面へ戻ったら、同じファイルをもう一度選んで押す（開き直さない）
+      expect(new URL(r.url).pathname, "1回目の取込後に、カード登録CSVアップロード画面へ戻っている").toMatch(/\/card\/csv_upload$/);
+      r = await u.選んで押す(f);
+    });
     if (o.読む) await step(o.二度 ? 4 : 3, async () => { after = o.読む!(n); });
     await expected(async () => {
+      // 取込の操作が行われ、終わったこと（終わる前にDBを読んで「登録されない」を合格にしない）
+      note(`取込の結果のメッセージ: 成功「${r.成功.join(" / ")}」 エラー「${r.エラー.join(" / ")}」 警告「${r.警告.join(" / ")}」（戻った画面 ${new URL(r.url).pathname}）`);
+      expect.soft(r.送信した, "アップロードの要求が送られた").toBe(true);
+      expect.soft([...r.成功, ...r.エラー, ...r.警告].length, "取込の結果のメッセージが表示された（取込が終わった）").toBeGreaterThan(0);
       if (o.戻る) {
         expect.soft(new URL(r.url).pathname, "取込後の画面（カード登録CSVアップロード）").toMatch(/\/card\/csv_upload$/);
-        expect.soft(r.送信した, "アップロードの要求が送られた").toBe(true);
       }
       if (o.確かめ) o.確かめ(after, before, r, n);
     });
@@ -248,8 +255,9 @@ caseTest("IT-M14-05-019", 取込({
 
 // 020 は投入方法に「DBへ直接設定する」画像の準備があるため実装しない（記録の振り分け表）
 
+// 正本の「現行の日本語商品ID・現行の英語商品ID」の列。アプリ（CardCsv）もベースも見出しはキー名で照合するので、キー名（old_product_id・old_en_product_id）で足す
 caseTest("IT-M14-05-021", 取込({
-  file: (h) => ({ name: "m14-05_legacy_ids-021.csv", buffer: CSV本文([...h, "現行の日本語商品ID", "現行の英語商品ID"], [更新行("21")]) }),
+  file: (h) => ({ name: "m14-05_legacy_ids-021.csv", buffer: CSV本文([...h, "old_product_id", "old_en_product_id"], [更新行("21")]) }),
   読む: () => 読む(名E("21")),
   確かめ: (s, _b, r) => {
     expect.soft(r.エラー.join(" / "), "取込のエラー表示（なし）").toBe("");
@@ -257,8 +265,9 @@ caseTest("IT-M14-05-021", 取込({
   },
 }));
 
+// 廃止対象の「Foilフラグ・プロモフラグ」の列。見出しはキー名で照合されるので、現行（ベース）のキー名 foil_flg・promotion_flg で足す
 caseTest("IT-M14-05-022", 取込({
-  file: (h) => ({ name: "m14-05_header_removed-022.csv", buffer: CSV本文([...h, "Foilフラグ", "プロモフラグ"], [{ ...更新行("22"), "Foilフラグ": "0", "プロモフラグ": "0" }]) }),
+  file: (h) => ({ name: "m14-05_header_removed-022.csv", buffer: CSV本文([...h, "foil_flg", "promotion_flg"], [{ ...更新行("22"), foil_flg: "0", promotion_flg: "0" }]) }),
   ...変更されない("22"),
 }));
 

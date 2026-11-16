@@ -5,6 +5,12 @@
  */
 import { query } from "../lib/db";
 import { writeTestData } from "./write_adapter";
+import { E2Eの店舗 } from "../lib/store_create_ban";
+
+/** 買取集計データを書き換えてよいのは、使い回す E2E の店舗だけ（元からある店舗の集計は触らない。依頼者 2026-11-15） */
+function E2Eの店舗だけ(店舗ID: string): void {
+  if (!E2Eの店舗.some((x) => x.id === 店舗ID)) throw new Error(`店舗ID ${店舗ID} は E2E の店舗ではない。買取集計データは書き換えない`);
+}
 
 export type 部門 = { 部門ID: string; 部門コード: string; 部門名: string };
 export type 集計行 = {
@@ -37,6 +43,7 @@ const 対象の確かめ = "select s.shop_name as 印つきの名前 from dtb_ba
 
 /** 試験店舗の、期間（日付。両端を含む）の買取集計データを消して、渡した行に入れ替える */
 export function 集計データを入れ替える(店舗ID: string, 店名: string, 開始: string, 終了: string, 行: 集計行[]): void {
+  E2Eの店舗だけ(店舗ID);
   if (!/^\d+$/.test(店舗ID)) throw new Error(`店舗IDが数字でない（${店舗ID}）`);
   writeTestData({
     理由: `試験店舗 ${店名}（${店舗ID}）の ${開始}〜${終了} の買取集計データを消して入れ直す（画面には買取集計データを登録する操作が無い）`,
@@ -49,6 +56,7 @@ export function 集計データを入れ替える(店舗ID: string, 店名: stri
 
 /** 試験店舗に買取集計データを1行足す */
 export function 集計データを足す(店舗ID: string, 店名: string, r: 集計行): void {
+  E2Eの店舗だけ(店舗ID);
   if (!/^\d+$/.test(店舗ID)) throw new Error(`店舗IDが数字でない（${店舗ID}）`);
   const n = writeTestData({
     理由: `試験店舗 ${店名}（${店舗ID}）に買取集計データ（${r.日時}・買取${r.買取金額}・販売${r.販売金額}）を足す`,

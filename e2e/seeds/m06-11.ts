@@ -32,7 +32,7 @@ import { readLanguageIds } from "../pages/admin/m03_23_seed_products";
 import { 棚番号を読む, マスタを読む, 商品をカードにする } from "../pages/admin/m07_09_card";
 import { 行を用意する } from "../pages/admin/m14_04_master";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStoreWithThresholds } from "../pages/admin/m04_25_move_chain";
+import { ensureStoreWithThresholds } from "../pages/admin/m04_24_reuse_k";
 import { OtcDetailPage, OtcListPage } from "../pages/admin/m06_otc_list";
 import { ensureCardset } from "../pages/admin/product_masters";
 

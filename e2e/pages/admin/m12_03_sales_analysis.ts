@@ -15,6 +15,12 @@ export type 検索条件 = {
   平均単価From?: number; 平均単価To?: number;
   数量From?: number; 数量To?: number;
   売上分析タグ?: string[];
+  /** カテゴリの選択肢の値（カテゴリID） */
+  カテゴリID?: string;
+  /** 状態の選択肢の表示名（NM・SP など） */
+  状態?: string[];
+  /** カードセットの選択肢の表示名 */
+  カードセット?: string[];
 };
 
 export type 結果の行 = { 商品コード: string; 商品名: string; カテゴリ: string; 平均単価: string; 数量: string; 合計: string; 件数: string };
@@ -166,11 +172,35 @@ export class SalesAnalysisPage {
     if (c.数量From !== undefined) await this.数量From.fill(String(c.数量From), { timeout: 20_000 });
     if (c.数量To !== undefined) await this.数量To.fill(String(c.数量To), { timeout: 20_000 });
     if (c.売上分析タグ !== undefined) await this.複数選択を設定する(this.売上分析タグ, c.売上分析タグ);
+    if (c.カテゴリID !== undefined) await this.カテゴリ.selectOption({ value: c.カテゴリID }, { timeout: 20_000 });
+    for (const l of c.状態 ?? []) await this.状態.getByLabel(l, { exact: true }).check({ timeout: 20_000 });
+    if (c.カードセット !== undefined) await this.複数選択を設定する(this.カードセット, c.カードセット);
   }
+
+  /** 店舗の選択肢（チェック欄）の値（店舗ID）。表示名で引く */
+  async 店舗の値(名前: string): Promise<string> {
+    const v = await this.店舗(名前).getAttribute("value");
+    if (!v) throw new Error(`集計対象の店舗の選択肢「${名前}」が無い（ある選択肢: ${(await this.店舗の名前一覧()).join("、")}）`);
+    return v;
+  }
+  /** 集計対象のチェック欄（値＝店舗ID）の表示名。店舗IDで選ぶために使う。無ければ止める */
+  async 店舗の表示名(店舗ID: string): Promise<string> {
+    const box = this.店舗一覧.locator(`input[type="checkbox"][value="${店舗ID}"]`);
+    if ((await box.count()) !== 1) throw new Error(`集計対象の店舗の選択肢に店舗ID ${店舗ID} が無い（売上集計の対象でない・非公開など）`);
+    const id = await box.getAttribute("id");
+    return ((await this.店舗一覧.locator(`label[for="${id}"]`).first().innerText()) ?? "").replace(/\s+/g, " ").trim();
+  }
+  /** 結果の表の見出し */
+  async 結果の見出し(): Promise<string[]> {
+    if ((await this.結果の表.count()) === 0) return [];
+    return (await this.結果の表.locator("thead th").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim());
+  }
+  /** 結果の「CSVダウンロード」のリンク */
+  get CSVダウンロード(): Locator { return this.page.getByRole("link", { name: "CSVダウンロード", exact: true }); }
 
   /** 検索ボタンを押し、結果の画面（同じ画面）が出るのを待つ */
   async 検索する(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.検索ボタン.click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), this.検索ボタン.click({ timeout: 20_000, noWaitAfter: true })]);
     await expect(this.検索結果の件数, "検索結果の件数の表示").toBeVisible({ timeout: 30_000 });
   }
 

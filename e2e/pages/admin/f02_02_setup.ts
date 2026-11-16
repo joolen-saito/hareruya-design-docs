@@ -6,11 +6,18 @@
  * - 会員: フロントの会員登録画面で登録し（仮会員になっても本登録のメールは読まない）、管理画面の会員登録/編集で会員ステータスを本会員にする（シード表の投入方法のとおり。
  *   作り方は共通の pages/admin/member_activate.ts）。
  * - 在庫の承認: 登録の前に在庫編集承認一覧に出ている行の番号を控え、登録のあとに増えた未承認の行だけを承認する。
+ *   控えから承認までは、同じ登録者・店舗で並べて流している回と同時にしない（鍵）。
+ * - フロントのトップ（/ja/）は開かない。開発環境のトップは15〜60秒かかり、ときに 504 を返す（アプリの
+ *   ProductRepository::findProductClassesByIdsInGivenOrder が全店舗の在庫を結合する。アプリ側の問題として別に伝えてある）。
+ *   2026-11-13 20:4x 開発環境で、会員ログイン後のトップへの移動（IT-F02-02-015・017・021・067・068）と、ゲストカートを作るときのトップ（010・066）が
+ *   60秒の時間切れで落ちた。ログインは送信の応答で成否を見て（pages/front/login_without_top.ts）、保有ポイントはカート画面の画面上部で読む。
  */
 import { Browser, BrowserContext, Cookie, expect, Page } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../../config/env";
-import { hideDebugToolbar, withAdminSession } from "../../lib/session";
+import { Account, hideDebugToolbar, withAdminSession } from "../../lib/session";
 import { FrontFavorite } from "../front/f03_08_favorite";
+import { フロントにログインする } from "../front/login_without_top";
+import { withCreateOnceLock } from "../../lib/create_once_lock";
 import { カートに入れる } from "../front/f04_shopping";
 import { ポイントを付与する } from "./m05_11_order_edit";
 import { registerGoodsCsv } from "./m03_01_goods_register";
@@ -39,9 +46,12 @@ export async function ポイントを付ける(browser: Browser, 会員ID: strin
   await withAdminSession(browser, SETUP_ADMIN, async (page) => { page.setDefaultTimeout(60_000); await ポイントを付与する(page, 会員ID, 増減量); });
 }
 
-/** 本店の画面上部に出る保有ポイントの数字（ログイン中だけ出る） */
+/**
+ * 本店の画面上部に出る保有ポイントの数字（ログイン中だけ出る）。
+ * 画面上部（Block/header.twig の p-hareruya-header__point-value）は本店の画面で共通なので、トップより軽いカート画面で読む。
+ */
 async function 画面上部のポイント(page: Page): Promise<string> {
-  await page.goto(`${BASE_URL}/ja/`, { timeout: 60_000 });
+  await page.goto(`${BASE_URL}/ja/cart`, { timeout: 60_000 });
   await page.waitForLoadState("load");
   const v = page.locator(".p-hareruya-header__point-value").first();
   await expect(v, "画面上部の保有ポイント").toHaveCount(1, { timeout: 30_000 });
@@ -56,7 +66,7 @@ export async function ログインできることを確かめる(browser: Browse
   const context = await frontContext(browser);
   try {
     const f = new FrontFavorite(await context.newPage());
-    await f.login(メール, パスワード);
+    await フロントにログインする(f.page, { メール, パスワード });
     const point = await 画面上部のポイント(f.page);
     await f.logout();
     return point;
@@ -68,7 +78,7 @@ export async function お気に入りに追加する(browser: Browser, メール
   const context = await frontContext(browser);
   try {
     const f = new FrontFavorite(await context.newPage());
-    await f.login(メール, パスワード);
+    await フロントにログインする(f.page, { メール, パスワード });
     for (const id of 商品ID) {
       await f.openDetail(id, "JP");
       const r = await f.押す();
@@ -117,41 +127,63 @@ export async function グッズ商品を登録する(browser: Browser, what: str
  * 承認通知先に全権限の管理者を選んで登録し、その管理者が在庫編集承認一覧で承認する。承認のあと在庫数を確かめる。
  */
 export async function 本店の在庫を入れる(browser: Browser, what: string, 商品コード: string[], 数: number, issue: Issue): Promise<void> {
-  const approverName = await withAdminSession(browser, SETUP_ADMIN, (page) => loggedInMemberName(page));
-  const shop = await withAdminSession(browser, SETUP_ADMIN, (page) => new StockListPage(page).shopNameById("1"));
-  await withAdminSession(browser, SETUP_ADMIN, (page) => ensureStockAdmin(page));
-  // 登録の前に一覧に出ている行（承認済み・未承認とも）を控え、登録のあとに増えた行だけを承認する
-  const before = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    const list = new StockApprovalListPage(page);
-    await list.open(shop);
-    return new Set((await list.rowValues()).map((r) => r.id));
-  });
-  const registeredBy = await withAdminSession(browser, STOCK_ADMIN, async (page) => {
-    page.setDefaultTimeout(60_000);
-    const registrant = await loggedInMemberName(page);
-    if (registrant === approverName) throw new Error(`${what}: 在庫の登録者と承認者が同じ管理者になっている`);
-    const stock = new StockListPage(page);
-    for (const code of 商品コード) {
-      await stock.searchByProductCode(code);
-      await stock.openEdit(stock.row(code, shop, "EC-CUBE"));
-      await registerStockEdit(page, { changeType: "入庫/その他", reason: "試験データ", quantity: String(数), purchasePrice: "0", approverName }, `${what}: ${code} の在庫編集`, issue);
-    }
-    return registrant;
-  });
-  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    page.setDefaultTimeout(60_000);
-    const list = new StockApprovalListPage(page);
-    await list.open(shop);
-    const rows = (await list.rowValues()).filter((r) => !before.has(r.id) && r.status === "未承認" && r.registrant === registeredBy
-      && r.changeType.endsWith("入庫/その他") && r.quantity === String(数));
-    if (rows.length !== 商品コード.length) throw new Error(`${what}: 在庫編集のあとに増えた未承認の行が ${rows.length} 件（${商品コード.length} 件のはず）`);
-    await list.approve(rows.map((r) => r.id), `${what}: 在庫編集の承認（${rows.length}件）`, issue);
-    for (const code of 商品コード) {
-      const after = await searchStockByCode(page, { 商品コード: code, 店舗: shop, 在庫区分: "EC-CUBE" });
-      const n = await stockInRow(after.row(code, shop, "EC-CUBE"));
-      if (n !== 数) throw new Error(`${what}: ${code} の本店の在庫が ${n}（${数} のはず）`);
-    }
-  });
+  await 店舗の在庫を入れる(browser, what, 商品コード, 数, issue, { 店舗ID: "1", 登録者: STOCK_ADMIN, 登録者を用意する: ensureStockAdmin });
+}
+
+/**
+ * 在庫を入れる店舗と、その店舗の在庫を編集できる登録者（承認者とは別の管理者）。
+ * 承認者を省略すると、準備用の管理者（SETUP_ADMIN）が承認する。承認通知先に選べて承認できるのは、在庫の店舗を編集できる承認の権限を持つ管理者だけ
+ * （アプリ origin/develop: StockApprovalType の getMemberChoices・MemberRepository::canApprove。どちらも dtb_member_base_info で店舗に紐づくこと）。
+ * E2E が登録した支店は準備用の管理者の編集可能店舗に入っていないので、支店の在庫は、その支店を編集できる承認者を渡す（登録者を用意する で一緒に用意する）。
+ */
+export type 在庫の店舗 = { 店舗ID: string; 登録者: Account; 登録者を用意する: (page: Page) => Promise<void>; 承認者?: Account };
+
+/**
+ * 指定の店舗の在庫を入れる（作り方は 本店の在庫を入れる と同じ）。
+ * 支店の商品詳細は、その支店の在庫を見て数量の欄を出す（アプリは商品規格の在庫を店舗ごとに持つ）。支店の画面でカートへ入れるシードは、支店の在庫を入れる。
+ */
+export async function 店舗の在庫を入れる(browser: Browser, what: string, 商品コード: string[], 数: number, issue: Issue, 店: 在庫の店舗): Promise<void> {
+  const shop = await withAdminSession(browser, SETUP_ADMIN, (page) => new StockListPage(page).shopNameById(店.店舗ID));
+  await withAdminSession(browser, SETUP_ADMIN, (page) => 店.登録者を用意する(page));
+  const approver = 店.承認者 ?? SETUP_ADMIN;
+  const approverName = await withAdminSession(browser, approver, (page) => loggedInMemberName(page));
+  // 控えから承認までは、同じ登録者・店舗の在庫を入れる回（同じ機械で並べて流している F02-02 などの回）と同時にしない。
+  // 登録者・在庫変動区分・増減数が同じなので、同時に流すと、ほかの回が登録した行も「登録のあとに増えた行」に入る
+  // （2026-11-13 20:4x 開発環境の IT-F02-02-009・011・012・065: 増えた未承認の行が 3〜4 件（1〜2 件のはず））。
+  await withCreateOnceLock(`stock-approval-${店.登録者.loginId}-${店.店舗ID}`, async () => {
+    // 登録の前に一覧に出ている行（承認済み・未承認とも）を控え、登録のあとに増えた行だけを承認する
+    const before = await withAdminSession(browser, approver, async (page) => {
+      const list = new StockApprovalListPage(page);
+      await list.open(shop);
+      return new Set((await list.rowValues()).map((r) => r.id));
+    });
+    const registeredBy = await withAdminSession(browser, 店.登録者, async (page) => {
+      page.setDefaultTimeout(60_000);
+      const registrant = await loggedInMemberName(page);
+      if (registrant === approverName) throw new Error(`${what}: 在庫の登録者と承認者が同じ管理者になっている`);
+      const stock = new StockListPage(page);
+      for (const code of 商品コード) {
+        await stock.searchByProductCode(code);
+        await stock.openEdit(stock.row(code, shop, "EC-CUBE"));
+        await registerStockEdit(page, { changeType: "入庫/その他", reason: "試験データ", quantity: String(数), purchasePrice: "0", approverName }, `${what}: ${code} の在庫編集`, issue);
+      }
+      return registrant;
+    });
+    await withAdminSession(browser, approver, async (page) => {
+      page.setDefaultTimeout(60_000);
+      const list = new StockApprovalListPage(page);
+      await list.open(shop);
+      const rows = (await list.rowValues()).filter((r) => !before.has(r.id) && r.status === "未承認" && r.registrant === registeredBy
+        && r.changeType.endsWith("入庫/その他") && r.quantity === String(数));
+      if (rows.length !== 商品コード.length) throw new Error(`${what}: 在庫編集のあとに増えた未承認の行が ${rows.length} 件（${商品コード.length} 件のはず）`);
+      await list.approve(rows.map((r) => r.id), `${what}: 在庫編集の承認（${rows.length}件）`, issue);
+      for (const code of 商品コード) {
+        const after = await searchStockByCode(page, { 商品コード: code, 店舗: shop, 在庫区分: "EC-CUBE" });
+        const n = await stockInRow(after.row(code, shop, "EC-CUBE"));
+        if (n !== 数) throw new Error(`${what}: ${code} の${shop}の在庫が ${n}（${数} のはず）`);
+      }
+    });
+  }, 20 * 60_000);
 }
 
 // ---- ゲストカート ----
@@ -178,7 +210,7 @@ export async function ゲストカートを作る(browser: Browser, what: string
   try {
     const page = await context.newPage();
     page.setDefaultTimeout(60_000);
-    await page.goto(`${BASE_URL}/ja/`, { timeout: 60_000 });
+    // トップは開かない（カートに入れる が本店の商品詳細画面を開く。シード表の「本店の商品詳細画面を開いて」のとおり）
     for (const id of 商品ID) await カートに入れる(page, "", id, 1, `${what}: 商品ID ${id}`);
     if (削除する商品名 !== undefined) {
       await page.goto(`${BASE_URL}/ja/cart`, { timeout: 60_000 });
@@ -186,7 +218,7 @@ export async function ゲストカートを作る(browser: Browser, what: string
       const item = page.locator(".p-hareruya-cart-item").filter({ hasText: 削除する商品名 });
       await expect(item, `${what}: カート画面の ${削除する商品名} の行`).toHaveCount(1);
       page.once("dialog", (d) => { d.accept().catch(() => {}); });
-      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), item.locator("a.p-hareruya-cart-item__delete").click()]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), item.locator("a.p-hareruya-cart-item__delete").click({ noWaitAfter: true })]);
     }
     const 中身 = await カートの中身(page);
     const cookies = await context.cookies();

@@ -35,7 +35,12 @@ function 保存(id: string, 入力: [string, string][], 期待: (db: Record<stri
         for (const k of opt.無い欄 ?? []) if (!(await p.欄がある(k))) 無い.push(k);
         for (const m of opt.注記 ?? []) note(m);
         if (無い.length) note(`画面に入力欄が無い項目がある: ${無い.join("・")}`);
-        if (opt.押す === "不問") await p.押す();
+        if (opt.押す === "不問") {
+          // 「更新されない」の確かめになるよう、送信が送られたことを見る（送られずに更新されないのでは確かめにならない）
+          const st = await p.押して送信を待つ();
+          note(`設定ボタンの送信の応答: ${st ?? "なし"}`);
+          expect(st, "設定ボタンの送信が送られた（送信の応答がある）").not.toBeNull();
+        }
         else if (opt.押す !== false) await p.押して保存を確かめる(`${id} 店舗基本設定の保存`);
       });
       await step(3, async () => { db = 店舗基本情報を読む(); });
@@ -130,7 +135,13 @@ caseTest("IT-M10-01-007", async ({ page, browser, step, expected }) => {
     const p = new ShopBasicPage(page);
     let 見出し = "";
     await step(1, async () => { await p.open(); });
-    await step(2, async () => { await p.入れる("店名", "入力中店舗"); await p.入れる("送信元メールアドレス", ""); await p.押す(); });
+    await step(2, async () => {
+      await p.入れる("店名", "入力中店舗"); await p.入れる("送信元メールアドレス", "");
+      // 見出しを、送信の応答の画面（入力エラーで再表示された画面）で読む。押す前の画面の見出しを読んでも確かめにならない
+      const st = await p.押して送信を待つ();
+      expect(st, "設定ボタンの送信が送られた（送信の応答がある）").not.toBeNull();
+      await expect(p.欄("店名"), "再表示された画面の店名（入力中のまま）").toHaveValue("入力中店舗");
+    });
     await step(3, async () => { 見出し = (await page.locator(".c-headerBar__shopTitle span").first().innerText()).trim(); });
     await expected(async () => { expect.soft(見出し, "画面の見出しの店舗名").toBe("保存済み店舗"); });
   });
@@ -187,7 +198,12 @@ function トークン(店名: string, 操作: "書き換え" | "削除", 確か�
           if (op === "削除") t.remove(); else t.value = "INVALID";
         }, 操作);
       });
-      await step(4, async () => { await p.押す(); });
+      await step(4, async () => {
+        // 「更新されない」「再表示」「エラーが出ない」の確かめになるよう、送信が送られ、応答の画面へ移ったことを見る
+        const st = await p.押して送信を待つ();
+        note(`設定ボタンの送信の応答: ${st ?? "なし"}`);
+        expect(st, "設定ボタンの送信が送られた（送信の応答がある）").not.toBeNull();
+      });
       if (手順数 >= 5) await step(5, async () => { if (確かめ === "DBのみ") db = 店舗基本情報を読む(); /* それ以外は表示された画面を確認する（期待結果で確かめる） */ });
       if (手順数 >= 6) await step(6, async () => { db = 店舗基本情報を読む(); });
       await expected(async () => {

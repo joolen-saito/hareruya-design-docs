@@ -14,6 +14,7 @@
  *   店舗一覧の検索（店名の部分一致）で見つける。無ければ新規登録で作る。シードは、その店舗の全項目をシード表の更新前の値へ
  *   画面で入れ直す（シード表の「店舗を選択せずに店舗登録画面を開く…登録」を「試験用店舗を開いて…登録」に読み替える）。
  */
+import { 店舗の作成は禁止 } from "../../lib/store_create_ban";
 import { Browser, BrowserContext, Locator, Page, expect } from "@playwright/test";
 import { adminUrl, hideDebugToolbar } from "../../lib/session";
 import { BASE_URL } from "../../config/env";
@@ -58,7 +59,7 @@ export class TenantEditPage {
   }
   /** 店舗を選ばずに店舗登録画面（新規）を開く */
   async 新規を開く(): Promise<void> {
-    await this.page.goto(adminUrl("/mall/tenant/create"), { timeout: 60_000 });
+    await this.page.goto(店舗の作成は禁止("pages/admin/m10_15_tenant.ts（店舗登録画面の新規）"), { timeout: 60_000 }); // 店舗は作らない（依頼者 2026-11-15。lib/store_create_ban.ts）
     await this.待つ();
   }
   /** 店舗IDの店舗登録画面を直接開く（URL で開く。応答の状態を返す） */

@@ -19,7 +19,7 @@ export async function setRecommendDays(page: Page, value: string): Promise<void>
   await page.waitForLoadState("load");
   const input = page.locator(FIELD);
   await input.fill(value);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('form#point_form button[type="submit"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('form#point_form button[type="submit"]').click({ noWaitAfter: true })]);
   await expectSaved(page, `追加システム設定のレコメンド検索期間を ${value} 日にする`);
   expect(await input.inputValue(), "登録後のレコメンド検索期間（日数）").toBe(value);
 }

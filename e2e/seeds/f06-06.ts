@@ -3,7 +3,9 @@
  *
  * - 会員: フロントの会員情報登録で登録し、本登録のメールのURLを開いて本会員にする。管理画面の会員検索一覧で会員IDを控える。
  *   メールアドレスの前半に実行の印を付ける（依頼者決定 2026-10-28）。
- * - 注文（SORT・PAGE-11・NONE）: 会員が1件ずつフロントで注文し（販売中で在庫のある手元の商品1点）、管理画面の受注情報編集で「入金済み」へ変更する。注文番号と注文IDを控える。
+ * - 注文（SORT・PAGE-11・NONE）: 会員が1件ずつフロントで注文し（E2E が作って入庫した印つきのグッズ商品1点）、管理画面の受注情報編集で「入金済み」へ変更する。注文番号と注文IDを控える。
+ *   以前は DB から選んだ既存の販売中の商品（ほかの方の商品。開発環境では商品ID 1962 のカード）を使っていたが、開発環境ではカートの「購入手続きへ」が
+ *   お知らせなしでカートへ戻され（購入フローの警告）、注文へ進めなかった（2026-11-13 の IT-F06-06-005・006。2026-11-12 の 023 はカートへの追加が 404）。
  *   正本の外の補い: シード表は配送方法「ゆうパック」・支払方法「銀行振込」を選ぶと定めるが、手元の環境の共通の注文の部品（M05 のフロント注文）は銀行振込以外で
  *   外部の決済画面へ移らない支払方法（代金引換など）を選ぶ。購入履歴一覧に出る項目（注文番号・件数・並び）はこの違いに依らない。
  * - 注文が51件のシード（PAGE-51）と、商品・在庫を作る再購入のシード（REPURCHASE・OTHER-CUSTOMER）は、このセッションでは実装しない。
@@ -12,10 +14,11 @@ import { Browser } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
-import { defineSeed } from "../lib/seeds";
+import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { OrderEditPage } from "../pages/admin/m05_11_order_edit";
 import { 本店の店名 } from "../pages/admin/m05_admin_member";
+import { 商品を作って入庫する } from "../pages/admin/f04_setup";
 import { resultCustomerId, searchCustomer } from "../pages/admin/f06_customer";
 import { 会員が注文する } from "../pages/front/m05_front_order";
 import { registerFrontMember } from "../pages/front/member_entry";
@@ -38,12 +41,25 @@ async function 会員を作る(browser: Browser, メール: string, パスワー
   return id;
 }
 
+/** 注文に使う商品（この実行で1度だけ作る印つきのグッズ商品。SORT 3件×2・PAGE-11 11件×3 の注文に足りる在庫を入れる） */
+let 注文の商品: Promise<string> | null = null;
+function 注文の商品ID(browser: Browser, seedId: string): Promise<string> {
+  if (!注文の商品) {
+    注文の商品 = 商品を作って入庫する(browser, seedId, [{ 商品コード: rc("F0606-HIST-ITEM"), 商品名: rc("F06-06購入履歴試験商品"), 価格: "1000", 入庫数: 60, 入庫方法: "在庫編集" }],
+      (m) => reportSeedIssue(seedId, m)).then((made) => made[0].productId);
+    注文の商品.catch(() => { 注文の商品 = null; });
+  }
+  return 注文の商品;
+}
+
 /** 注文を n 件、1件ずつ作る。それぞれ管理画面で入金済みへ変更する。(注文番号, 注文ID) を作った順に返す */
 async function 注文を作る(browser: Browser, メール: string, パスワード: string, n: number, what: string): Promise<{ 番号: string; ID: string }[]> {
   const shop = await 本店の店名(browser);
+  const 商品ID = await 注文の商品ID(browser, what);
+  reportSeedIssue(what, `注文の商品は、既存の販売中の商品（ほかの方の商品）でなく、E2E が作って入庫した印つきのグッズ商品（商品ID ${商品ID}）にした`);
   const out: { 番号: string; ID: string }[] = [];
   for (let i = 1; i <= n; i++) {
-    const 番号 = await 会員が注文する(browser, { メール, パスワード }, `${what}の${i}件目`);
+    const 番号 = await 会員が注文する(browser, { メール, パスワード }, `${what}の${i}件目`, { 商品ID });
     const ID = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
       page.setDefaultTimeout(60_000);
       const p = new OrderEditPage(page);

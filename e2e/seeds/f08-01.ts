@@ -19,7 +19,7 @@ import { defineSeed } from "./current_seed";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { 会員の査定申込み } from "../db/f08_05";
 import { OtcCompletePage } from "../pages/front/f08_03_complete";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { ensureStore } from "../pages/admin/m04_24_reuse_k";
 import { MemberApplyPage } from "../pages/front/f08_05_apply";
 import { OtcInputPage } from "../pages/front/f08_02_input";
 import { F0802会員, PD_STORE, 会員を作る } from "./f08-02";

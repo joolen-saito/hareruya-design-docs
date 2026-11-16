@@ -20,7 +20,7 @@ export async function setFixedPriceSection(page: Page, value: string): Promise<s
   const input = page.locator(FIELD);
   await input.fill(value, { timeout: 30_000 });
   const t0 = new Date();
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('form#point_form button[type="submit"]').click({ timeout: 30_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('form#point_form button[type="submit"]').click({ timeout: 30_000, noWaitAfter: true })]);
   await expectSaved(page, `追加システム設定の固定価格商品部門IDを ${value} にする`);
   const t1 = new Date();
   expect(await input.inputValue(), "登録後の固定価格商品部門ID").toBe(value);

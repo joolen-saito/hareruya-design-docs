@@ -24,15 +24,16 @@ import { loginAdmin } from "../../lib/session";
 import { Notes } from "../../lib/notes";
 import { 姓を設定する, 棚戻し済みか } from "../../db/m06_01";
 import { OtcListPage } from "../../pages/admin/m06_otc_list";
-import { M0601_ADMIN_A, M0601_ADMIN_ALL } from "../../seeds/m06-01";
+import { M0601_ADMIN_A, M0601_ADMIN_ALL, STORE_A, STORE_B } from "../../seeds/m06-01";
 import "../../seeds/m06-01-more";
+import { 一覧のアドレス, 一覧へ戻りエラーが出る } from "./m06-01-support";
+import { scene, 別のウィンドウの画面を撮る, 別のブラウザの画面を印つきで撮る } from "../../lib/evidence_other";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
 type 押した結果 = Awaited<ReturnType<OtcListPage["ダウンロードを押す"]>>;
 
 const ALPHA = "ABCDEFGHIJK";
-const 一覧のアドレス = /\/otcbuyorder(\/page\/\d+)?$/;
 const 読む上限ページ = 3;
 
 /** ダウンロードしたファイルの中身を、見出しつきの行にする（ダウンロードの完了を待つ） */
@@ -76,10 +77,12 @@ caseTest("IT-M06-01-003", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await list.open(); });
   await step(2, async () => { await 全期間で検索する(list); });
   await expected(async () => {
-    expect.soft(await list.買取店舗の選択を読む(), "検索条件に選択された買取店舗").toBe("買取店舗A");
+    const 選んだ店 = await list.買取店舗の選択を読む();
+    expect.soft(選んだ店, "検索条件に選択された買取店舗").toBe(STORE_A.店名);
     const rows = await list.行を順に読む(読む上限ページ, [id]);
     expect.soft(rows.map((r) => r.査定ID), "一覧に表示された買取店舗Aの査定ID").toContain(id);
-    expect.soft(rows.filter((r) => r.買取店舗 !== "買取店舗A").map((r) => `${r.査定ID}（${r.買取店舗}）`), "買取店舗A以外の買取情報（表示されない）").toEqual([]);
+    // 一覧の行（画面）の買取店舗を、画面の選択欄で選ばれた店舗（上で買取店舗Aと確かめた）と比べる
+    expect.soft(rows.filter((r) => r.買取店舗 !== 選んだ店).map((r) => `${r.査定ID}（${r.買取店舗}）`), "買取店舗A以外の買取情報（表示されない）").toEqual([]);
   });
   note(検索対象の注記);
 });
@@ -95,8 +98,8 @@ caseTest("IT-M06-01-004", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     expect.soft(await list.買取店舗の選択を読む(), "検索条件の買取店舗（未選択）").toBe("");
     const rows = await list.行を順に読む(読む上限ページ, [a, b]);
-    expect.soft(rows.find((r) => r.査定ID === a)?.買取店舗, "買取店舗Aの査定IDの買取店舗").toBe("買取店舗A");
-    expect.soft(rows.find((r) => r.査定ID === b)?.買取店舗, "買取店舗Bの査定IDの買取店舗").toBe("買取店舗B");
+    expect.soft(rows.find((r) => r.査定ID === a)?.買取店舗, "買取店舗Aの査定IDの買取店舗").toBe(STORE_A.店名);
+    expect.soft(rows.find((r) => r.査定ID === b)?.買取店舗, "買取店舗Bの査定IDの買取店舗").toBe(STORE_B.店名);
   });
   note(検索対象の注記);
 });
@@ -106,10 +109,10 @@ caseTest("IT-M06-01-005", async ({ page, step, expected }) => {
   await loginAdmin(page, M0601_ADMIN_A);
   const list = new OtcListPage(page);
   await step(1, async () => { await list.open(); });
-  await step(2, async () => { await list.買取店舗を選ぶ("買取店舗B"); await list.日時を空にする(); await list.検索する(); });
-  await step(3, async () => { await list.open(); });
+  await step(2, async () => { await list.買取店舗を選ぶ(STORE_B.店名); await list.日時を空にする(); await list.検索する(); });
+  await step(3, async () => { await list.メニューから開き直す(); });
   await expected(async () => {
-    expect.soft(await list.買取店舗の選択を読む(), "検索条件の買取店舗（デフォルト検索表示店舗の買取店舗A。直近に選んだ買取店舗Bではない）").toBe("買取店舗A");
+    expect.soft(await list.買取店舗の選択を読む(), "検索条件の買取店舗（デフォルト検索表示店舗の買取店舗A。直近に選んだ買取店舗Bではない）").toBe(STORE_A.店名);
   });
 });
 
@@ -168,11 +171,14 @@ caseTest("IT-M06-01-019", async ({ page, notes, step, expected }) => {
   const list = new OtcListPage(page);
   const id = notes.get("〔査定ID-M0601-019〕");
   await step(1, async () => { await list.open(); });
-  await step(2, async () => { await list.買取店舗を選ぶ("買取店舗B"); await 全期間で検索する(list); });
+  await step(2, async () => { await list.買取店舗を選ぶ(STORE_B.店名); await 全期間で検索する(list); });
   await expected(async () => {
+    const 選んだ店 = await list.買取店舗の選択を読む();
+    expect.soft(選んだ店, "検索条件に選択された買取店舗").toBe(STORE_B.店名);
     const rows = await list.行を順に読む(読む上限ページ, [id]);
     expect.soft(rows.map((r) => r.査定ID), "一覧に表示された買取店舗Bの査定ID").toContain(id);
-    expect.soft(rows.filter((r) => r.買取店舗 !== "買取店舗B").map((r) => `${r.査定ID}（${r.買取店舗}）`), "買取店舗B以外の買取情報（表示されない）").toEqual([]);
+    // 一覧の行（画面）の買取店舗を、画面の選択欄で選ばれた店舗（上で買取店舗Bと確かめた）と比べる
+    expect.soft(rows.filter((r) => r.買取店舗 !== 選んだ店).map((r) => `${r.査定ID}（${r.買取店舗}）`), "買取店舗B以外の買取情報（表示されない）").toEqual([]);
   });
   note(検索対象の注記);
 });
@@ -303,7 +309,7 @@ caseTest("IT-M06-01-035", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     const r = (await list.行()).find((x) => x.査定ID === id);
     expect.soft(r?.査定ID, "一覧の査定ID").toBe(id);
-    expect.soft(r?.買取店舗, "一覧の買取店舗").toBe("買取店舗A");
+    expect.soft(r?.買取店舗, "一覧の買取店舗").toBe(STORE_A.店名);
     expect.soft(r?.最終更新者, "一覧の最終更新者").toBe("M06-01試験管理者A");
     expect.soft(r?.ステータス, "一覧のステータス").toBe("査定前");
   });
@@ -378,6 +384,9 @@ caseTest("IT-M06-01-041", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(項目, "選択できるダウンロードの項目").toEqual(["古物台帳入力用CSV", "買取商品一覧CSV", "戻しリストCSV", "戻しリストPDF"]);
     expect.soft(項目.filter((t) => /インポート|キャンセル/.test(t)), "選択できないダウンロードの項目（インポート用・買取商品（キャンセル）CSV）").toEqual([]);
+    // 画面のメニューの項目そのものを確かめる（縦に長い一覧の画面でも項目が読める大きさで、赤枠つきで残す）
+    await expect.soft(list.ダウンロードのメニューの項目(), "ダウンロードのメニューに並ぶ4つの項目").toHaveText(["古物台帳入力用CSV", "買取商品一覧CSV", "戻しリストCSV", "戻しリストPDF"]);
+    await 別のブラウザの画面を印つきで撮る(page, scene.expectedLabel("ダウンロードのメニューの項目（拡大）"), true);
   });
 });
 
@@ -466,6 +475,12 @@ caseTest("IT-M06-01-051", async ({ page, notes, step, expected }) => {
   await step(4, async () => { 済み = 棚戻し済みか(id); });
   await expected(async () => {
     expect.soft(r!.popup, "戻しリストPDFが開く").not.toBeNull();
+    // 開いた別ウィンドウの中身が、戻しリスト（ピッキングリストの見出しと、実在庫の商品）であること
+    if (r!.popup) {
+      const win = r!.popup;
+      await expect.soft(win.locator(".multipage").first().locator("div").first(), "開いたウィンドウの見出し（ピッキングリスト）").toContainText("ピッキングリスト", { timeout: 30_000 });
+      await expect.soft(win.locator("tr.data").filter({ hasText: rc("M0601-STK") }).first(), "開いたウィンドウの明細（実在庫の商品）").toBeVisible({ timeout: 30_000 });
+    }
     expect.soft(済み, "棚戻し済みフラグ（棚戻し済みに更新される）").toBe(true);
   });
   note(在庫の注記);
@@ -500,7 +515,7 @@ caseTest("IT-M06-01-055", async ({ page, step, expected }) => {
   await step(3, async () => { r = await list.ダウンロードを押す("買取商品一覧CSV"); });
   await expected(async () => {
     expect.soft(r!.file, "買取商品一覧CSVがダウンロードされない（買取情報にチェックを付けていない）").toBeNull();
-    expect.soft(new URL(page.url()).pathname, "移った先の画面（買取一覧）").toMatch(一覧のアドレス);
+    await 一覧へ戻りエラーが出る(list, "選択なし");
   });
   note(検索対象の注記);
 });
@@ -517,7 +532,7 @@ caseTest("IT-M06-01-056", async ({ page, notes, step, expected }) => {
   await step(4, async () => { r = await list.ダウンロードを押す("戻しリストCSV"); });
   await expected(async () => {
     expect.soft(r!.file, "戻しリストCSVがダウンロードされない（存在しない内部ID）").toBeNull();
-    expect.soft(new URL(page.url()).pathname, "移った先の画面（買取一覧）").toMatch(一覧のアドレス);
+    await 一覧へ戻りエラーが出る(list, "データなし");
   });
 });
 
@@ -533,7 +548,7 @@ caseTest("IT-M06-01-063", async ({ page, notes, step, expected }) => {
   await step(4, async () => { r = await list.ダウンロードを押す("戻しリストPDF"); });
   await expected(async () => {
     expect.soft(r!.popup, "戻しリストPDFが開かない（存在しない内部ID）").toBeNull();
-    expect.soft(new URL(page.url()).pathname, "移った先の画面（買取一覧）").toMatch(一覧のアドレス);
+    await 一覧へ戻りエラーが出る(list, "データなし");
   });
 });
 
@@ -546,10 +561,17 @@ caseTest("IT-M06-01-065", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await list.open(); await 査定IDで検索する(list, id); });
   await step(2, async () => { await list.対象にする(id); });
   await step(3, async () => { await list.戻しリストPDFの要求を遮断する(); });
-  await step(4, async () => { r = await list.戻しリストPDFを押して閉じるのを待つ(); });
+  await step(4, async () => {
+    // ポップアップが開いた時点の画面を残す（取得に失敗すると閉じるので、閉じる前に撮る）
+    r = await list.戻しリストPDFを押して閉じるのを待つ((win) => 別のウィンドウの画面を撮る(win, scene.stepLabel(4, "開いたポップアップ（戻しリストPDF）")));
+  });
   await expected(async () => {
     expect.soft(r!.開いた && r!.閉じた, "開いたポップアップが閉じる").toBe(true);
     expect.soft(new URL(r!.アドレス).pathname, "留まった画面（買取一覧）").toMatch(一覧のアドレス);
+    // 買取一覧の画面に留まっている（読み込み直されず、検索結果の行とチェックが残っている）
+    await expect.soft(list.検索結果の欄(), "買取一覧の検索結果").toBeVisible();
+    await expect.soft(list.対象の行(id), "検索結果に残った査定IDの行").toBeVisible();
+    await expect.soft(list.対象の行(id).locator('input[type="checkbox"]'), "査定IDの行のチェック（付けたまま）").toBeChecked();
   });
   note(在庫の注記);
 });
@@ -577,9 +599,14 @@ caseTest("IT-M06-01-073", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M0601_ADMIN_A);
   const list = new OtcListPage(page);
   const id = notes.get("〔査定ID-M0601-073〕");
+  let r: 押した結果 | undefined;
   await step(1, async () => { await list.open(); await 査定IDで検索する(list, id); });
   await step(2, async () => { await list.対象にする(id); });
-  await step(3, async () => { await 戻しリストCSVを出す(list); });
+  await step(3, async () => {
+    r = await 戻しリストCSVを出す(list);
+    // 出力に失敗したまま「変わらない」で合格にしないよう、戻しリストCSVが出力されたことを確かめる
+    expect(r.file, "戻しリストCSVがダウンロードされた（出力が行われた）").not.toBeNull();
+  });
   await step(4, async () => { await list.open(); await 査定IDで検索する(list, id); });
   await expected(async () => {
     expect.soft((await list.行()).find((x) => x.査定ID === id)?.ステータス, "検索し直した査定IDのステータス（入庫待ちのまま）").toBe("入庫待ち");
@@ -683,7 +710,7 @@ caseTest("IT-M06-01-078", async ({ page, notes, step, expected }) => {
   await step(5, async () => { 済み = 棚戻し済みか(a); });
   await expected(async () => {
     expect.soft(r!.file, "戻しリストCSVがダウンロードされない").toBeNull();
-    expect.soft(new URL(page.url()).pathname, "移った先の画面（買取一覧）").toMatch(一覧のアドレス);
+    await 一覧へ戻りエラーが出る(list, "対象外のステータス");
     expect.soft(済み, "入庫待ちの査定IDの棚戻し済みフラグ（棚戻し未完了のまま）").toBe(false);
   });
   note(`申込者名は実行の印を付けた値。${在庫の注記}`);

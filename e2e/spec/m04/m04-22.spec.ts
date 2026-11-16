@@ -26,7 +26,7 @@ import { numberOf, StockHistoryPage } from "../../pages/admin/m04_17_stock_histo
 import {
   CsvRegisterModal, errorAlerts, FILE_EMPTY_TEXT, MOVE_TRANSFER_LIST_PATH, onMoveTransferList, pageMessages, pathAndTailId, Zone,
 } from "../../pages/admin/m04_22_csv_register";
-import { CsvModalKind, csvModal, openMoveTransferList, pressCsvRegisterButton } from "../../pages/admin/m04_22_move_transfer_csv";
+import { CsvModalKind, csvModal, openMoveTransferList, pressCsvRegisterButton, waitModalSettled } from "../../pages/admin/m04_22_move_transfer_csv";
 import { chooseHistoryShopAndSource } from "../../pages/admin/m04_23_split_join_csv";
 import { APPROVER_A, APPROVER_B, APPROVER_Z, M0422_EDIT, M0422_VIEW, m0422Case, M0422CaseData, m0422Master, RD_OP } from "../../seeds/m04-22";
 
@@ -43,13 +43,17 @@ type Obs = { 何: string; 実際: unknown; 期待: unknown };
 
 /** 事前準備②のログインのあと、一覧を開いてボタンを押し、押したボタンのモーダルが表示されることを確かめる */
 function opensModal(kind: CsvModalKind): CaseBody {
-  return async ({ page, step, expected }) => {
+  return async ({ page, step, expected, capture }) => {
     await loginAdmin(page, M0422_EDIT);
     await step(1, () => openMoveTransferList(page));
     const { modal, title } = csvModal(page, kind);
     await step(2, async () => {
-      await expect(modal, "ボタンを押す前はモーダルが表示されていない").toBeHidden();
+      await expect(modal, "ボタンを押す前はモーダルが表示されない").toBeHidden();
+      // 手順のあとの画像は押したあとの画面なので、押す前の確かめはここで撮る
+      await capture("ボタンを押す前");
       await pressCsvRegisterButton(page, kind);
+      // 手順2の画像を、モーダルが開き切った画面で撮る（開く途中の半透明のまま写っていた。2026-11-14）
+      await waitModalSettled(modal);
     });
     await expected(async () => {
       await expect(modal, `${kind}モーダルが表示される`).toBeVisible();
@@ -303,6 +307,8 @@ caseTest("IT-M04-22-022", async ({ page, step, expected }) => {
 
 caseTest("IT-M04-22-023", moveCase("023", {
   user: M0422_VIEW, from: ["A", "EC-CUBE"], to: ["B", "EC-CUBE"],
+  // 「追加されない」だけでは、登録が別の理由で失敗しても合格になるので、登録が受け付けられなかった知らせ（誤りの帯）も確かめる
+  screen: async ({ page }) => errorObs(page, "「登録」のあと（登録が受け付けられなかった知らせ）"),
   db: ({ d }) => [{ 何: `商品コード ${d.code(MOVE_CODE("023"))} を対象とする在庫移動の件数（店舗の編集権限が無いので追加されない）`, 実際: movesOf(d.code(MOVE_CODE("023"))).length, 期待: 0 }],
 }));
 
@@ -436,6 +442,8 @@ caseTest("IT-M04-22-037", moveCase("037", {
 
 caseTest("IT-M04-22-040", xferCase("040", {
   user: M0422_VIEW,
+  // 「0件のまま」だけでは、登録が別の理由で失敗しても合格になるので、登録が受け付けられなかった知らせ（誤りの帯）も確かめる
+  screen: async ({ page }) => errorObs(page, "「登録」のあと（登録が受け付けられなかった知らせ）"),
   db: ({ d }) => [{ 何: `振替元商品コード ${d.code("M0422-040-A")} を対象とする在庫振替情報の件数（店舗の編集権限が無いので追加されない）`, 実際: movesOf(d.code("M0422-040-A")).length, 期待: 0 }],
 }));
 

@@ -228,6 +228,8 @@ caseTest("IT-F03-06-016", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     expect.soft(表示["SP版"].商品, "SP版の最近チェックした商品欄にUI-SALE-016が表示される（商品の数）").toBe(1);
     expect.soft(表示["SP版"].拡大, "商品画像拡大がSP版に表示される").toBe(true);
+    // PC版で商品が出ていないと「拡大が表示されない」は確かめにならないため、PC版にも商品が表示されていることを確かめる
+    expect.soft(表示["PC版"].商品, "PC版の最近チェックした商品欄にUI-SALE-016が表示される（商品の数）").toBe(1);
     expect.soft(表示["PC版"].拡大, "商品画像拡大がPC版に表示されない").toBe(false);
   });
 });

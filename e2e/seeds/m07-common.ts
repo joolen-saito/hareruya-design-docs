@@ -48,7 +48,7 @@ export async function 本人確認を設定する(browser: Browser, 会員: 試�
     await page.goto(adminUrl("/customer"));
     await page.waitForLoadState("load");
     await page.locator('[name="admin_search_customer[multi]"]').fill(会員.メール);
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
     const row = page.locator('tr[id^="ex-customer-"]').first();
     const id = /ex-customer-(\d+)/.exec((await row.getAttribute("id")) ?? "")?.[1];

@@ -27,7 +27,7 @@ import { openEditFromResult, resultCustomerId, searchCustomer } from "../pages/a
 import { blacklistRows, ensureBlacklist, 拒否種別 } from "../pages/admin/f06_masters";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { productIdsByCode, readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { ensureStore } from "../pages/admin/m04_24_reuse_k";
 import { M08CustomerEditPage } from "../pages/admin/m08_customer_edit";
 import { EntryPage } from "../pages/front/f06_01_entry";
 import { 申込入力, 申込者 } from "../pages/front/f08_05_confirm";

@@ -1,10 +1,12 @@
 /** M14-01 カード検索（一覧・条件抽出）の続き（CSV出力・件数表示・並び順と表示件数の組合せ）。正本: cases/M14-01_test_cases.tsv */
 import { test } from "@playwright/test";
 import { caseTest, CaseBody, expect } from "../../lib/case";
-import { csvRecords } from "../../lib/csv";
+import { csvRecords, parseCsv } from "../../lib/csv";
+import { scene, ダウンロードしたCSVの内容を撮る } from "../../lib/evidence_other";
 import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
 import { CardSearchPage, downloadedText } from "../../pages/admin/m14_card";
+import { カードCSVの列 } from "../../pages/admin/m14_05_card_csv_upload";
 import { M1401_ADMIN } from "../../seeds/m14-01";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -21,7 +23,7 @@ caseTest("IT-M14-01-008", async ({ page, step, expected }) => {
     await page.waitForTimeout(500);
     取れた = 確認文 !== "";
   });
-  await step(3, async () => { /* 確認ポップアップの「キャンセル」: 画面の確認ダイアログを閉じた（手順2で閉じた） */ note("確認ポップアップは画面の確認ダイアログとして表示され、「キャンセル」で閉じた"); });
+  await step(3, async () => { /* 確認ポップアップの「キャンセル」: 画面の確認ダイアログを閉じた（手順2で閉じた） */ note(`確認ポップアップは画面の確認ダイアログとして表示され、「キャンセル」で閉じた。確認ダイアログの文言: 「${確認文}」`); });
   await expected(async () => {
     expect.soft(取れた, "カード名リスト作成の確認ポップアップが表示された").toBe(true);
     expect.soft(new URL(page.url()).pathname, "表示された画面のアドレス（カード検索）").toMatch(/\/card$/);
@@ -34,18 +36,27 @@ caseTest("IT-M14-01-081", async ({ page, notes, step, expected }) => {
   const l = new CardSearchPage(page);
   const [A] = ID群(notes, "M1401-081", "A");
   let rows: Record<string, string>[] = [];
+  let 見出し: string[] = [];
+  let 生: string[][] = [];
   await step(1, async () => { await l.open(); await l.キーワードで検索する(rc("M1401DP081")); });
   await step(2, async () => { await l.カードを選択する([A]); });
   await step(3, async () => {
     const [d] = await Promise.all([page.waitForEvent("download", { timeout: 60_000 }), page.locator("#form_bulk button.action-submit").filter({ hasText: /^\s*CSV出力\s*$/ }).click()]);
-    rows = csvRecords(await downloadedText(d));
+    const text = await downloadedText(d);
+    rows = csvRecords(text);
+    生 = parseCsv(text);
+    見出し = 生[0] ?? [];
   });
-  await step(4, async () => { expect(rows.length, "ダウンロードされたCSVのデータ行数").toBeGreaterThan(0); });
+  await step(4, async () => {
+    expect(rows.length, "ダウンロードされたCSVのデータ行数").toBeGreaterThan(0);
+    await ダウンロードしたCSVの内容を撮る(page, 生, scene.stepLabel(4, "ダウンロードしたCSVの内容"));
+  });
   await expected(async () => {
     const names = rows.map((r) => r["name_en"] ?? "");
     expect.soft(rows.length, "CSVのデータ行数").toBe(1);
     expect.soft(names.some((n) => n === rc("M1401DP081") + "-A"), `カード名(英)がAの行がある（出力: ${names.join("、")}）`).toBe(true);
     expect.soft(names.some((n) => n === rc("M1401DP081") + "-B"), "カード名(英)がBの行がある").toBe(false);
+    expect.soft(見出し.join(","), "CSVの見出しの並び（カード情報CSV出力項目の項目順）").toBe(Object.values(カードCSVの列).join(","));
   });
 });
 
@@ -99,10 +110,10 @@ function 組合せ(num: string, 順序: ("並び" | "件数" | "往復")[], 期�
       if (o === "件数") await step(n++, async () => { await l.表示件数を選ぶ(50); });
       if (o === "往復") {
         await step(n++, async () => {
-          await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.行.first().locator("td:nth-child(3) a").click()]);
+          await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.行.first().locator("td:nth-child(3) a").click({ noWaitAfter: true })]);
         });
         await step(n++, async () => {
-          await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("a.c-baseLink").filter({ hasText: "カード一覧" }).click()]);
+          await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("a.c-baseLink").filter({ hasText: "カード一覧" }).click({ noWaitAfter: true })]);
           await l.検索結果の文();
         });
       }

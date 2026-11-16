@@ -28,8 +28,8 @@ export class StockListPage {
     await expect(this.form, "在庫検索一覧の検索欄").toBeVisible();
     await this.form.locator("#admin_search_stock_list_product_code").fill(code);
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.form.locator('button[type="submit"]').click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.form.locator('button[type="submit"]').click({ noWaitAfter: true }),
     ]);
   }
 
@@ -88,7 +88,9 @@ export async function fillStockEdit(page: Page, v: StockEditInput): Promise<void
   await changeType.selectOption(match[0].value);
   await form.locator("#admin_stock_approval_new_stock_change_reason").fill(v.reason);
   await form.locator("#admin_stock_approval_new_stock_change_quantity").fill(v.quantity);
-  await form.locator("#admin_stock_approval_new_purchase_price").fill(v.purchasePrice);
+  // 廃棄の区分を選ぶと、画面は仕入単価の欄を無効にして入力できなくする。入力できないときは値を入れない（入れようとして時間切れになっていた。2026-11-14 F03-07 の 035）
+  const 仕入単価 = form.locator("#admin_stock_approval_new_purchase_price");
+  if (await 仕入単価.isEnabled()) await 仕入単価.fill(v.purchasePrice);
 
   // 承認通知先: 部署を選ぶと、その部署のメンバーだけが選べる。承認する管理者のいる部署を探して選ぶ
   const department = form.locator("#admin_stock_approval_new_approval_department");
@@ -96,6 +98,7 @@ export async function fillStockEdit(page: Page, v: StockEditInput): Promise<void
   const departments = await department.locator("option").evaluateAll((nodes) => nodes
     .map((n) => ({ value: (n as HTMLOptionElement).value, label: n.textContent?.trim() ?? "" })).filter((o) => o.value));
   let found = false;
+  const seen = new Set<string>();
   // 承認者のいる部署を DB の参照で調べ、先に選ぶ。その部署では選択肢が出るまで長めに待つ（最大60秒）。
   // 開発環境では E2E の試験管理者が部署1に1,600人を超え、部署1のメンバーの選択肢の読み込みが5秒を超える（2026-11-11 夜の F04-01 で「いる部署が無い」）
   // 部署の選択肢の値は部署の名前。選択肢は「その店舗に所属するメンバーの部署」だけ（新アプリの StockApprovalType）
@@ -106,13 +109,17 @@ export async function fillStockEdit(page: Page, v: StockEditInput): Promise<void
     // メンバーの選択肢は、部署を選ぶと画面のスクリプトが取り直す。開発環境では遅いので、選択肢が出るまで少し待って読む（最大5秒。承認者の部署は最大60秒）
     const 回数 = 先の部署 && (d.value === 先の部署 || d.label === 先の部署) ? 120 : 10;
     for (let i = 0; i < 回数; i++) {
-      const names = (await members.locator("option").allTextContents()).map((t) => t.trim());
+      const names = (await members.locator("option").allTextContents()).map((t) => t.trim()).filter(Boolean);
+      names.forEach((n) => seen.add(n));
       if (names.includes(v.approverName)) { found = true; break; }
       await page.waitForTimeout(500);
     }
     if (found) break;
   }
-  if (!found) throw new Error(`承認通知先のメンバーに「${v.approverName}」がいる部署が無い`);
+  // 選択肢に出るのは、在庫の店舗を編集できる（店舗に紐づく）承認の権限を持つメンバーだけ（アプリ origin/develop: StockApprovalType の
+  // getMemberChoices → MemberRepository::getApprovalAuthorityMembers($BaseInfo)）。部署の選択肢は、その店舗に所属するメンバーの部署
+  if (!found) throw new Error(`承認通知先のメンバーに「${v.approverName}」がいる部署が無い（部署: ${departments.map((d) => d.label).join("、") || "なし"}／出たメンバー: ${[...seen].join("、") || "なし"}。`
+    + `承認通知先に出るのは、在庫の店舗を編集できる承認の権限を持つメンバーだけ）`);
   await form.locator("#admin_stock_approval_new_approval_notification_target_members + span.select2 .select2-selection").click();
   const option = page.locator(".select2-container--open .select2-results__option").filter({ hasText: new RegExp(`^\\s*${v.approverName}\\s*$`) });
   await expect(option, `承認通知先の候補「${v.approverName}」`).toHaveCount(1);
@@ -152,7 +159,7 @@ export class StockApprovalListPage {
     const chosen = await form.locator("#admin_search_stock_approval_list_base_info").evaluate((n) =>
       Array.from((n as HTMLSelectElement).selectedOptions).map((o) => o.textContent?.trim() ?? ""));
     expect(chosen, "店舗の絞り込み").toEqual([shopName]);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), form.locator('button[type="submit"]').click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), form.locator('button[type="submit"]').click({ noWaitAfter: true })]);
     await expect(this.page.locator("#form_search_stock_approval_list_update"), "在庫編集承認一覧の結果").toBeVisible();
     await this.page.waitForLoadState("load");
     // 共有の開発環境には前の実行の未承認の行が溜まっていて、1ページ（100件）に収まらない。並びは登録日の古い順なので、
@@ -199,6 +206,42 @@ export class StockApprovalListPage {
     await ok.click();
     for (const warning of await expectSaved(this.page, what)) onWarning(warning);
   }
+}
+
+/**
+ * 在庫編集承認一覧の一括承認（シードの前準備用）。approve と同じ押し方のあと、保存の結果の表示を最大30秒待つ。
+ * 共有の開発環境では、承認は通っているのに転送先の一覧に成功メッセージが出ないことがある（2026-11-14 F02-02。承認した行が一覧から消えていた）。
+ * そのときは一覧を1000件の表示で開き直し、承認した行が承認可能な一覧から無くなったことで承認の完了を確かめる。
+ * 失敗のメッセージが出たとき、行が残っているときは失敗にする。
+ */
+export async function approveAndSettle(list: StockApprovalListPage, ids: string[], what: string, onWarning: (w: string) => void): Promise<void> {
+  const page = list.page;
+  for (const id of ids) await page.locator(`#form_search_stock_approval_list_update input[name="approval_list_ids[]"][value="${id}"]`).check();
+  const bulk = page.locator("#btn_bulk_approve");
+  await expect(bulk, "「一括承認」").toBeVisible();
+  await bulk.click();
+  const modal = page.locator("#stockApprovalListConfirmModal");
+  await expect(modal, "承認の確認").toBeVisible();
+  await modal.locator("#btn_bulk_approve_submit").click();
+  const ok = modal.locator('.modal-footer-confirm button[type="submit"]');
+  await expect(ok, "最終確認の「OK」").toBeVisible();
+  await ok.click();
+  const success = page.locator(".alert-success");
+  let ng = page.locator(".alert-danger, .invalid-feedback, .form-error-message");
+  ng = ng.filter({ hasNotText: "デバッグモードが有効になっています。" });
+  const sys = page.getByText("システムエラーが発生しました");
+  const shown = await success.or(ng).or(sys).first().waitFor({ state: "visible", timeout: 30_000 }).then(() => true, () => false);
+  if (shown) {
+    for (const warning of await expectSaved(page, what)) onWarning(warning);
+    return;
+  }
+  await page.goto(adminUrl("/product/stock/approval_list/page/1/count/1000"), { timeout: 120_000 });
+  await expect(page.locator("#form_search_stock_approval_list_update"), "在庫編集承認一覧の結果（1000件の表示）").toBeVisible();
+  await page.waitForLoadState("load");
+  for (const id of ids) {
+    await expect(page.locator(`#form_search_stock_approval_list_update input[name="approval_list_ids[]"][value="${id}"]`), `${what}: 承認した行（${id}）が承認可能な一覧に残っている`).toHaveCount(0);
+  }
+  onWarning(`${what}: 承認後の一覧に成功メッセージが出なかったため、承認した行が一覧から無くなったことで承認の完了を確かめた`);
 }
 
 /** 商品規格一覧の「新規作成」から、日本語・指定の状態の規格を1件登録する（057） */

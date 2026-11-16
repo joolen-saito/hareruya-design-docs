@@ -13,15 +13,17 @@ import { Page, test } from "@playwright/test";
 import { expect, caseTest, CaseBody, CaseCtx } from "../../lib/case";
 import { SETUP_ADMIN } from "../../config/env";
 import { loginAdmin } from "../../lib/session";
-import { 会員の最新の受注ID } from "../../db/f10_02";
+import { 会員の最新の受注ID, 受注のメールを変える } from "../../db/f10_02";
 import { 受注の小計を読む } from "../../pages/admin/f10_02_order";
 import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
 import {
   TOP画面か, ご注文方法指定を開く, 先頭部のHTML, 入口, 支払方法を選ぶ, 注文するを押す, 配送方法を選ぶ, 使用ポイントを入れる, 購入完了画面か, 購入完了画面を開く,
   購入完了画面の読み込み前に受け渡し領域へ積む,
 } from "../../pages/front/f10_02_purchase";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 import { 受け渡し領域の要素, 項目を持つ要素, 読んだ領域 } from "../../pages/front/f10_03_retargeting";
 import { 会員のパスワード, 会員のメール, 商品コード, 商品名, 配送名 } from "../../seeds/f10-02";
+import { rc } from "../../lib/run_marker";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -67,7 +69,7 @@ async function 注文方法を整える(page: Page, 番号: string): Promise<voi
   note(`ご注文方法指定画面の配送方法は「${配送名(番号)}」、支払方法は「銀行振込」（シードで選んだとおり）`);
 }
 
-type 標準の指定 = { 店?: 入口; ポイント?: number; 読む?: (d: 読んだ領域, ctx: CaseCtx, 番号: string, 受注ID: string) => void | Promise<void>; 前に?: (page: Page) => Promise<void> };
+type 標準の指定 = { 店?: 入口; ポイント?: number; 読む?: (d: 読んだ領域, ctx: CaseCtx, 番号: string, 受注ID: string) => void | Promise<void>; 前に?: (page: Page) => Promise<void>; 注文時のメール?: string };
 
 /** 標準の3手順（ご注文方法指定画面を開く → 注文する → 購入完了画面で受け渡し領域を表示する）のケース */
 function 標準(番号: string, 確かめ: (d: 読んだ領域, 受注ID: string) => void, 指定: 標準の指定 = {}): CaseBody {
@@ -80,6 +82,13 @@ function 標準(番号: string, 確かめ: (d: 読んだ領域, 受注ID: string
     await step(1, async () => {
       await ご注文方法指定を開く(page, 指定.店 ?? 入口.日本語);
       if (!指定.店 || 指定.店 === 入口.日本語) await 注文方法を整える(page, 番号);
+      if (指定.注文時のメール) {
+        // 購入完了する受注は、この画面を開いたときにできた購入処理中の受注そのもの。シードの時点の受注とは別なので、注文する前にここで書き換える（印つきの会員の受注だけ）
+        const 処理中の受注 = 会員の最新の受注ID(会員IDの(notes, 番号));
+        const 新 = `${rc(指定.注文時のメール)}@example.test`;
+        受注のメールを変える(`F1002-${番号}: 購入処理中の受注に保存されたメール`, 処理中の受注, 会員のメール(番号), 新);
+        note(`注文する前に、購入処理中の受注（受注ID ${処理中の受注}）に保存されたメールアドレスを、画面に操作が無いので DB で、印をつけた ${新} に変えた（会員のメールは ${会員のメール(番号)} のまま）`);
+      }
     });
     await step(2, async () => {
       if (指定.ポイント) { await 使用ポイントを入れる(page, 指定.ポイント, `F1002-${番号}`); note(`使用ポイントの欄に ${指定.ポイント} を入れて注文した`); }
@@ -106,7 +115,7 @@ caseTest("IT-F10-02-006", 標準("006", (d) => 一件で値(d, "transactionTotal
 caseTest("IT-F10-02-007", 標準("007", (d) => 一件で値(d, "transactionTotal", "3780")));
 caseTest("IT-F10-02-008", 標準("008", (d) => 一件で値(d, "transactionTotal", "1620"), { ポイント: 200 }));
 caseTest("IT-F10-02-010", 標準("010", (d) => 一件で値(d, "transactionShipping", "600")));
-caseTest("IT-F10-02-011", 標準("011", (d) => 一件で値(d, "transactionMailaddress", 会員のメール("011"))));
+caseTest("IT-F10-02-011", 標準("011", (d) => 一件で値(d, "transactionMailaddress", 会員のメール("011")), { 注文時のメール: "f1002-011-order" }));
 
 // ---------------------------------------------------------------------------
 // 商品の値
@@ -214,7 +223,8 @@ caseTest("IT-F10-02-033", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(購入完了画面か(page), "再読み込みのあとも購入完了画面のまま、ではない").toBe(false);
     expect.soft(TOP画面か(page), `TOP画面へ移動している（パス ${new URL(page.url()).pathname}）`).toBe(true);
-    expect.soft(売上の要素(d!).length, "項目名 transactionId を持つ要素の数").toBe(0);
+    expect.soft(await 本店ECTOPの画面か(page), "本店ECTOPの画面（TOPにだけある印と、ヘッダーのロゴ）が表示されている").toBe(true);
+    expect.soft(売上の要素(d!).length, "受け渡し領域（dataLayer）の、項目名 transactionId を持つ要素の数").toBe(0);
   });
 });
 

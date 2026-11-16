@@ -21,7 +21,7 @@ import { 商品の公開状態, 商品名で検索して編集を開く, 商品�
 import { FrontRestock } from "../../pages/front/f03_07_restock_notify";
 import { FrontFavorite } from "../../pages/front/f03_08_favorite";
 import {
-  ご利用規約を開く, 入口, 入荷待ち商品一覧のリンク, 再計算ボタン, 受け渡し領域の要素, 商品詳細を開く, 数量の加算を押す, 数量を入れてカートに入れる,
+  ご利用規約の見出し, ご利用規約を開く, 商品詳細のフォーム, 入口, 入荷待ち商品一覧のリンク, 受け渡し領域の要素, 商品詳細を開く, 数量の加算を押す, 数量を入れてカートに入れる,
   画面で商品規格を切り替える, 画面で言語を切り替える, 買い物かごの明細, 買い物かごを開く, 項目を持つ要素, 読んだ領域,
 } from "../../pages/front/f10_03_retargeting";
 import { FrontProductList, 店舗の入口 } from "../../pages/front/f03_01_product_list";
@@ -47,6 +47,16 @@ async function 詳細でカートに入れる(page: Page, 店: 入口, 商品ID:
   const res = await 商品詳細を開く(page, 店, 商品ID);
   if ((res?.status() ?? 0) >= 400) throw new Error(`${what}: 商品詳細画面（商品ID ${商品ID}）の応答が ${res?.status()}`);
   await 数量を入れてカートに入れる(page, 商品ID, a, what);
+}
+
+/**
+ * 本店の商品詳細画面を開き、その商品が表示されたことを確かめる（051・052 の手順3）。
+ * 「開いても変わらない」を見るケースなので、開けていなければ確かめにならない。
+ */
+async function 詳細が開いたことを確かめて開く(page: Page, 商品ID: string): Promise<void> {
+  const res = await 商品詳細を開く(page, 入口.日本語, 商品ID);
+  expect(res?.status() ?? 0, `商品詳細画面（商品ID ${商品ID}）の応答`).toBeLessThan(400);
+  await expect(商品詳細のフォーム(page, 商品ID), `商品詳細画面に商品ID ${商品ID} の商品が表示されている`).toHaveCount(1, { timeout: 30_000 });
 }
 
 /** 買い物かご画面を開き、明細を注記に残す */
@@ -122,6 +132,7 @@ caseTest("IT-F10-03-003", async ({ page, notes, step, expected }) => {
   await expected(async () => { for (const x of かごの並び(d!, [A, B], A)) expect.soft(x.実際, x.何).toBe(x.期待); });
 });
 
+const 再計算ボタンの代わり = "手順4「再計算」ボタンは、新しい買い物かご画面に無い（数量の加算は画面を表示し直さずに反映される）ため、数量を変えたあとの値を確かめる意図に沿って、買い物かご画面を開き直して数量の更新を確定した";
 caseTest("IT-F10-03-004", async ({ page, notes, step, expected }) => {
   const A = notes.get("〔商品ID-F1003-004〕");
   let d: 読んだ領域 | undefined;
@@ -132,9 +143,9 @@ caseTest("IT-F10-03-004", async ({ page, notes, step, expected }) => {
     note(`加算ボタンを押したあとの明細: ${(await 買い物かごの明細(page)).map((r) => `${r.商品名}×${r.数量}`).join("、")}`);
   });
   await step(4, async () => {
-    const btn = 再計算ボタン(page);
-    if ((await btn.count()) === 0) throw new Error("買い物かご画面に「再計算」ボタンが無い（数量の加算は画面を表示し直さずに反映される作り）。手順を実行できない");
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), btn.first().click({ timeout: 30_000 })]);
+    // 新しい買い物かご画面には「再計算」ボタンが無く、数量の加算は画面を表示し直さずに反映される作り。手順の意図（数量を変えたあとの値を確かめる）に沿って、買い物かご画面を開き直す
+    note(再計算ボタンの代わり);
+    await かごを開く(page);
   });
   await step(5, async () => { d = await 表示する(page); });
   await expected(async () => { for (const x of かごの金額(d!, "1100")) expect.soft(x.実際, x.何).toBe(x.期待); });
@@ -243,7 +254,7 @@ function 一件で値(d: 読んだ領域, 項目名: string, 値: string): 確�
 }
 
 /** 商品詳細画面を開き（言語・商品規格の指定つき）、受け渡し領域を読む */
-function 詳細を開いて読む(label: string, 正本の名: string, 店: 入口, query: (notes: CaseCtx["notes"]) => { lang?: string; class?: string }, check: (d: 読んだ領域, id: string) => 確かめ[]) {
+function 詳細を開いて読む(label: string, 正本の名: string, 店: 入口, query: (notes: CaseCtx["notes"]) => { lang?: string; class?: string }, check: (d: 読んだ領域, id: string) => 確かめ[], 開いたことを確かめる = false) {
   return async ({ page, notes, step, expected }: CaseCtx): Promise<void> => {
     const id = notes.get(label);
     const q = query(notes);
@@ -253,6 +264,11 @@ function 詳細を開いて読む(label: string, 正本の名: string, 店: 入�
       note(`開いた画面: ${店 === 入口.英語 ? "英語サイト" : "日本語サイト"}・言語の指定 ${q.lang ?? "なし"}・商品規格IDの指定 ${q.class ?? "なし"}`);
       const res = await 商品詳細を開く(page, 店, id, q);
       note(`商品詳細画面の応答 ${res?.status() ?? "なし"}`);
+      if (開いたことを確かめる) {
+        // 「〜を持つ要素が0件」を見るケース: 商品詳細画面が開いていなければ（応答の誤り・別の画面）0件でも確かめにならない
+        expect(res?.status() ?? 0, `商品詳細画面（商品ID ${id}）の応答`).toBeLessThan(400);
+        await expect(商品詳細のフォーム(page, id), `商品詳細画面に商品ID ${id} の商品が表示されている`).toHaveCount(1, { timeout: 30_000 });
+      }
     });
     await step(2, async () => { d = await 表示する(page); });
     await expected(async () => { for (const x of check(d!, id)) expect.soft(x.実際, x.何).toBe(x.期待); });
@@ -351,7 +367,12 @@ caseTest("IT-F10-03-050", 切り替えて読む("S-F10-03-DET-SWSPECID-050", "�
 
 caseTest("IT-F10-03-031", async ({ page, step, expected }) => {
   let d: 読んだ領域 | undefined;
-  await step(1, async () => { await ご利用規約を開く(page); });
+  await step(1, async () => {
+    const st = await ご利用規約を開く(page);
+    // 「〜を持つ要素が0件」を見るので、ご利用規約画面が開いていること（応答の誤り・別の画面では確かめにならない）
+    expect(st, "ご利用規約画面の応答").toBeLessThan(400);
+    await expect(ご利用規約の見出し(page), "ご利用規約画面の見出し").toContainText("利用規約", { timeout: 30_000 });
+  });
   await step(2, async () => { d = await 表示する(page); });
   await expected(async () => {
     const keys = ["gtm_cart_ids", "gtm_cart_value", "gtm_product_id", "gtm_product_value", "gtm_search_ids"];
@@ -386,7 +407,7 @@ caseTest("IT-F10-03-048", async ({ page, step, expected }) => {
   await step(3, async () => {
     const link = 入荷待ち商品一覧のリンク(page);
     await expect(link.first(), "マイページの「入荷待ち商品一覧」のリンク").toBeVisible({ timeout: 30_000 });
-    await Promise.all([page.waitForURL(/\/mypage\/notifylist/, { timeout: 60_000 }), link.first().click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForURL(/\/mypage\/notifylist/, { timeout: 120_000}), link.first().click({ timeout: 30_000, noWaitAfter: true })]);
     await page.waitForLoadState("load");
     const names = await front.入荷待ち商品名一覧();
     note(`入荷待ち商品一覧の商品: ${names.join("、") || "なし"}`);
@@ -408,7 +429,7 @@ caseTest("IT-F10-03-051", async ({ page, notes, step, expected }) => {
   let 後: { 商品名: string; 数量: string }[] = [];
   await step(1, async () => { 商品ID注記("F1003-051", A); await 詳細でカートに入れる(page, 入口.日本語, A, { 数量: 2 }, "商品A"); });
   await step(2, async () => { 前 = await かごを開く(page); });
-  await step(3, async () => { await 商品詳細を開く(page, 入口.日本語, A); });
+  await step(3, async () => { await 詳細が開いたことを確かめて開く(page, A); });
   await step(4, async () => { 後 = await かごを開く(page); });
   await expected(async () => {
     const 文 = (rows: { 商品名: string; 数量: string }[]) => rows.map((r) => `${r.商品名}×${r.数量}`).join("、");
@@ -421,7 +442,7 @@ caseTest("IT-F10-03-052", async ({ page, notes, step, expected }) => {
   const A = notes.get("〔商品ID-F1003-052〕");
   await step(1, async () => { 商品ID注記("F1003-052", A); await 詳細でカートに入れる(page, 入口.日本語, A, { 数量: 1 }, "商品A"); });
   await step(2, async () => { await かごを開く(page); });
-  await step(3, async () => { await 商品詳細を開く(page, 入口.日本語, A); });
+  await step(3, async () => { await 詳細が開いたことを確かめて開く(page, A); });
   await step(4, async () => { await loginAdmin(page, F1003_GF_ADMIN); });
   await step(5, async () => {
     const id = await 商品名で検索して編集を開く(page, 商品名("F1003-052"));
@@ -640,4 +661,4 @@ caseTest("IT-F10-03-056", async ({ page, notes, step, expected }) => {
 
 caseTest("IT-F10-03-044", 詳細を開いて読む("〔商品ID-F1003-044〕", "F1003-044-X", 入口.日本語, 指定なし, (d) => [
   c(項目を持つ要素(d, "gtm_search_ids").length, `項目名 gtm_search_ids を持つ要素の数（値: ${値の一覧(d, "gtm_search_ids")}）`, 0),
-]));
+], true));

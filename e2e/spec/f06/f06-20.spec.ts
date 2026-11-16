@@ -66,7 +66,24 @@ caseTest("IT-F06-20-029", async ({ page, step, expected }) => {
   const 開く = async (p: string): Promise<void> => { await l.URLを開く(p); 結果.push(`${p} → ${l.path()}（ログイン画面 ${await l.ログイン画面である()}）`); };
   await step(1, async () => { await 開く("/ja/mypage/delivery"); });
   await step(2, async () => { await 開く("/ja/mypage/delivery/new/edit"); });
-  await step(3, async () => { await 開く("/ja/mypage/delivery/new/edit"); });
+  await step(3, async () => {
+    // 配送先確認画面は、入力画面のフォームを送信した応答として出る（確認画面だけのアドレスが無い）。
+    // 未ログインのまま、入力画面のアドレスへ確認画面へ進む送信（POST）をブラウザから行って開く
+    note("配送先確認画面は、配送先新規登録・変更画面の入力フォームを送信した応答として表示され、単独のアドレスを持たない。手順3は、ログインしていないブラウザから、入力画面のアドレスへ「確認画面へ」と同じ送信（POST）を行って開いた");
+    const p = "/ja/mypage/delivery/new/edit";
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }),
+      page.evaluate((url) => {
+        const f = document.createElement("form");
+        f.method = "post"; f.action = url;
+        for (const [k, v] of [["mode", "confirm"], ["customer_address[address_name]", "未ログイン確認-029"]]) {
+          const i = document.createElement("input"); i.type = "hidden"; i.name = k; i.value = v; f.appendChild(i);
+        }
+        document.body.appendChild(f); f.submit();
+      }, p),
+    ]);
+    結果.push(`${p}（確認画面へ進む送信） → ${l.path()}（ログイン画面 ${await l.ログイン画面である()}）`);
+  });
   await expected(async () => {
     expect.soft(結果.length, "開いた画面の数").toBe(3);
     for (const r of 結果) expect.soft(r.endsWith("（ログイン画面 true）") && r.includes("→ /ja/mypage/login"), `会員ログイン画面へ誘導される: ${r}`).toBe(true);

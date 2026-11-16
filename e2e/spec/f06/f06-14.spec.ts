@@ -5,7 +5,9 @@
  */
 import { CaseCtx, caseTest, expect } from "../../lib/case";
 import { EventHistoryPage } from "../../pages/front/f06_14_event_history";
+import { scene, 要素を撮る } from "../../lib/evidence_other";
 import { mailOf, PW } from "../../seeds/f06-14";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 async function 会員で開く(page: CaseCtx["page"]): Promise<EventHistoryPage> {
   const e = new EventHistoryPage(page);
@@ -17,13 +19,18 @@ caseTest("IT-F06-14-021", async ({ page, step, expected }) => {
   const e = await 会員で開く(page);
   await step(1, async () => { await e.開く(); });
   await step(2, async () => { await expect(e.パンくず現在地, "パンくずリストの現在表示中ページ").toBeVisible({ timeout: 30_000 }); });
-  await expected(async () => { expect.soft(await e.現在地がリンクか(), "現在表示中ページが押下可能なリンクになっている").toBe(false); });
+  await expected(async () => {
+    // 期待結果は「現在表示中の『マイイベント・デッキ登録』」が押せないこと。押せないことに加え、現在表示中ページがその名前であることも確かめる
+    expect.soft(((await e.パンくず現在地.innerText()) ?? "").replace(/\s+/g, " ").trim(), "パンくずリストの現在表示中ページの名前").toBe("マイイベント・デッキ登録");
+    expect.soft(await e.現在地がリンクか(), "現在表示中ページが押下可能なリンクになっている").toBe(false);
+    await 要素を撮る(e.パンくず現在地.locator("xpath=ancestor::nav[1]"), scene.expectedLabel("パンくずリスト（拡大）"));
+  });
 });
 caseTest("IT-F06-14-022", async ({ page, step, expected }) => {
   const e = await 会員で開く(page);
   await step(1, async () => { await e.開く(); });
   await step(2, async () => { await e.押して遷移する(e.パンくずホーム); });
-  await expected(async () => { expect.soft(e.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(e.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(e.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 caseTest("IT-F06-14-024", async ({ page, step, expected }) => {
   const e = await 会員で開く(page);

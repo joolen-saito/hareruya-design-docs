@@ -23,13 +23,8 @@ import { rc, RUN_MARK } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { defineSeed } from "./current_seed";
-import { readExistingSellGroupName } from "../pages/admin/m03_01_goods_csv";
-import { readLanguageIds } from "../pages/admin/m03_23_seed_products";
-import { ensureCardset } from "../pages/admin/product_masters";
-import {
-  F0504カードを登録する, カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 商品規格一覧を読む,
-  単体カード配下のカテゴリID, 登録済みの割引率ID, 規格IDを選ぶ, 商品規格を登録する,
-} from "../pages/admin/f05_04_products";
+import { 商品名で商品IDを読む } from "../pages/admin/f05_04_products";
+import { サプライ品を登録する, 登録できる棚名, 規格に棚番号を付けて公開する, 棚番号を登録する } from "../pages/admin/m07_supply";
 import { 一覧から編集を開く } from "../pages/admin/m07_03_edit";
 import { マスタを読む } from "../pages/admin/m07_09_card";
 import { 条件つきで申込む } from "../pages/front/m07_03_apply";
@@ -38,22 +33,25 @@ import { 会員のパスワード, 会員を用意する } from "./m07-03-b";
 import { 試験管理者を用意する } from "./m07-common";
 import { 買取状況をDBで設定する, 状況の履歴をDBで入れ替える } from "./m07-db-prep";
 import { 実在庫の数量を設定する, 査定担当者を設定する } from "../db/m07_10";
+import { メンバーID } from "../db/m03_30_x";
 import { 実在庫履歴の前後を設定する } from "../db/m07_11";
 
 export const M0711_ADMIN: Account = { loginId: "m0711_admin", password: "Passw0rd!M0711" };
 
-defineSeed("S-M07-11-ADM", async ({ browser }) => {
+defineSeed("S-M07-11-ADM", async ({ browser, notes, seed }) => {
   await 試験管理者を用意する(browser, M0711_ADMIN, "M07-11試験管理者");
+  // 管理者IDは画面が振る番号のまま（シード表の「アドレス欄の番号を控える」に当たる）。メンバー管理で作った管理者の番号をDBの参照で控える
+  const id = メンバーID(M0711_ADMIN.loginId);
+  if (!id) throw new Error("M07-11試験管理者のメンバーが、ログインID m0711_admin で見つからない");
+  notes.set("〔管理者ID-M0711-共有〕", id);
+  reportSeedIssue(seed.シードID, "管理者IDは画面が振る番号のまま。権限は「システム管理者」（買取管理を操作できる）");
 });
 
 // ---------------------------------------------------------------------------
 // 共有の前提（MASTER）を画面で読んで控える（書き換えない）
 // ---------------------------------------------------------------------------
 
-type 前提 = {
-  レアリティM: string;
-  common: { 見出し: string[]; カテゴリ: string; 割引率: string; 購入グループ: string; カードセット: string; 日本語: string };
-};
+type 前提 = Record<string, never>;
 let 控え: 前提 | null = null;
 
 async function 前提を読む(browser: Browser, seedId: string): Promise<前提> {
@@ -68,18 +66,9 @@ async function 前提を読む(browser: Browser, seedId: string): Promise<前提
     };
     await byCode("言語", "JP");
     await byCode("状態", "NM");
-    const m = await byCode("レアリティ", "M");
-    const lang = await readLanguageIds(page);
-    const cardset = await ensureCardset(page, rc("M0711試験カードセット"), `M0711 Test Set ${RUN_MARK}`, `M11${RUN_MARK}`, issue);
-    return {
-      レアリティM: m.ID,
-      common: {
-        見出し: await カード商品CSVの見出し(page), カテゴリ: (await 単体カード配下のカテゴリID(page)).id, 割引率: (await 登録済みの割引率ID(page)).id,
-        購入グループ: await readExistingSellGroupName(page), カードセット: cardset, 日本語: lang.日本語,
-      },
-    };
+    return {};
   });
-  issue("シード作成時の問題: MASTER（言語・状態・レアリティ）は共有のマスタなので書き換えず、いまの値を読んで使った。カードセットは実行の印つきの名前で新しく登録した");
+  issue("シード作成時の問題: MASTER（言語・状態）は共有のマスタなので書き換えず、いまの値があることを確かめて使った");
   return 控え;
 }
 
@@ -107,28 +96,19 @@ let cardSeq = 0;
 const CARD_NO_BASE = String(Date.now()).slice(-9);
 const 次のカード番号 = () => `${CARD_NO_BASE}${String(++cardSeq).padStart(3, "0")}`;
 
-/** カード商品を1つ作る（基準価格＝販売価格）。商品IDを返す */
-async function 商品を作る(page: Page, 前: 前提, seedId: string, n: string, d: 明細): Promise<string> {
+/**
+ * 商品を1つ作る。シード表のとおり、グッズ商品CSV登録（サプライ・グッズ。カード詳細を指定しない＝サプライ品）で作り、棚番号と公開を設定する。
+ * （カード商品CSVで作ると、買取情報編集画面の買取明細の買取単価・数量が編集できない欄になり、査定価格を入れられない。サプライ品だけが編集できる）
+ */
+async function 商品を作る(page: Page, _前: 前提, seedId: string, n: string, d: 明細): Promise<string> {
   const issue = (m: string) => reportSeedIssue(seedId, m);
-  const c = 前.common;
   const name = 品名(n, d.名末尾);
   const code = 品コード(n, d.枝);
-  const reg = await F0504カードを登録する(page, {
-    カード名英: rc(`M0711 CARD ${n} ${d.枝}`),
-    詳細: [{ カードセットID: c.カードセット, カード番号: 次のカード番号(), レアリティID: 前.レアリティM }],
-  }, `${seedId}: カード ${n}-${d.枝}`, issue);
-  const row: Record<string, string> = {
-    "商品ID": "", "言語(ID)": c.日本語, "商品公開ステータス": "2", "支店の商品公開ステータス": "1",
-    "商品名(日)": name, "商品名(英)": name, "サイズ": "1", "重量": "1", "商品カテゴリ(ID)": c.カテゴリ,
-    "購入グループ名称": c.購入グループ, "割引率(ID)": c.割引率, "基準価格": String(d.基準価格), "販売価格": String(d.基準価格),
-    "買取価格": String(d.設定の買取価格), "カード詳細(ID)": reg.カード詳細IDs[0],
-  };
-  await カード商品CSVを登録する(page, c.見出し, [row], `m0711-${n}-${d.枝}-${RUN_MARK.toLowerCase()}.csv`, `${seedId}: カード商品CSV登録`, issue);
-  const productId = await 商品名で商品IDを読む(page, name);
-  const rows = await 商品規格一覧を読む(page, productId);
-  const target = 規格IDを選ぶ(rows, "JP", "NM");
-  await 商品規格を登録する(page, productId, target, { 商品コード: code, 買取価格: String(d.設定の買取価格) }, `${seedId}: ${n}-${d.枝} の規格`, issue);
-  return productId;
+  const 棚 = 登録できる棚名(`M0711-${n}-S`);
+  await 棚番号を登録する(page, 棚, issue);
+  await サプライ品を登録する(page, [{ コード: code, 名前: name, 基準価格: String(d.基準価格), 買取価格: String(d.設定の買取価格) }], issue);
+  await 規格に棚番号を付けて公開する(page, name, code, 棚, issue);
+  return await 商品名で商品IDを読む(page, name);
 }
 
 const NEEDS = { needs: ["S-M07-11-ADM"] };
@@ -148,7 +128,7 @@ function 作る(n: string, o: 作り方): (ctx: { browser: Browser; seed: { シ�
       page.setDefaultTimeout(60_000);
       for (const m of 全明細) ids.set(m.枝, await 商品を作る(page, 前, seedId, n, m));
     });
-    issue(`シード作成時の問題: 商品は基準価格＝販売価格のカード商品（フロントの買取に公開される）で作った。商品コード・商品名は実行の印つき（${全明細.map((m) => `${品コード(n, m.枝)}（基準${m.基準価格}・商品設定の買取価格${m.設定の買取価格}）`).join(" / ")}）`);
+    issue(`シード作成時の問題: 商品は、シード表どおりグッズ商品CSV登録（サプライ品）で作り、棚番号 ${登録できる棚名(`M0711-${n}-S`)} と公開を設定した。商品コード・商品名は実行の印つき（${全明細.map((m) => `${品コード(n, m.枝)}（基準${m.基準価格}・商品設定の買取価格${m.設定の買取価格}）`).join(" / ")}）`);
     // 3) 会員と申込
     const メール = `${rc(`m0711-${n}`)}@example.test`.toLowerCase();
     const 会員ID = await 会員を用意する(browser, seedId, { 姓: rc(`M0711-${n}姓`), 名: `M0711-${n}名`, セイ: "テストセイ", メイ: "テストメイ", メール, 電話: ["090", "1234", "5678"] });

@@ -4,8 +4,9 @@
  * メタゲーム一覧の集計は、画面が受け取ったフォーマットのデッキだけを数える（設計書 L0010）。各ケースのシードは新しいフォーマットを
  * 作るので、ほかのデッキの有無は期待結果に関わらない。
  * 書いていないケースと理由:
- * 009・010・015（アーキタイプ未設定のデッキをDBへ直接入れる準備）、017・018（DB投入）、019（中身を定めない画像ファイルを置く準備）、
+ * 009・010・015（アーキタイプ未設定のデッキをDBへ直接入れる準備）、017・018（DB投入）、
  * 034・035・036（キャッシュ保存先の中身を見る・消す）。
+ * 019 は 2026-11-13 に足した（画像ファイルはファイル管理に上げ、そのURLを画像に持つカードをカードCSVで登録して代表カードにする）。
  */
 import { Page, test } from "@playwright/test";
 import { caseTest, CaseBody, expect } from "../../lib/case";
@@ -81,6 +82,8 @@ caseTest("IT-F09-03-002", async ({ page, notes, step, expected }) => {
     note(`数字以外の識別子で開いたときの応答は ${status}`);
   });
   await expected(async () => {
+    // 画面を開けずに「表示されない」とならないよう、アドレスを開いた応答が返ったことを先に確かめる
+    expect(status, "数字以外の識別子で開いたときに、画面の応答が返る").toBeGreaterThan(0);
     await expect.soft(mg.見出し.filter({ hasText: "メタゲーム" }), "メタゲーム一覧の見出しが表示されない").toHaveCount(0);
     await expect.soft(mg.一覧の項目, "メタゲーム一覧の一覧の行が表示されない").toHaveCount(0);
     await expect.soft(page.locator(".deckSearch-metaList__list__item__name", { hasText: N("002", "A") }), `${前印("002", "A")} の行が表示されない`).toHaveCount(0);
@@ -97,6 +100,8 @@ caseTest("IT-F09-03-033", async ({ page, step, expected }) => {
     note(`識別子 903033 で開いたときの応答は ${status}`);
   });
   await expected(async () => {
+    // 画面を開けずに「表示されない」とならないよう、アドレスを開いた応答が返ったことを先に確かめる
+    expect(status, "識別子 903033 で開いたときに、画面の応答が返る").toBeGreaterThan(0);
     await expect.soft(page.locator("ul.deckSearch-metaList__list"), "アーキタイプの一覧が表示されない").toHaveCount(0);
     await expect.soft(mg.一覧の項目, "アーキタイプの行が表示されない").toHaveCount(0);
   });
@@ -154,6 +159,21 @@ caseTest("IT-F09-03-020", async ({ page, notes, step, expected }) => {
     expect.soft(r.length, `一覧の ${前印("020", "A")} の行の数`).toBe(1);
     note("画像なし用の既定画像は、画面の作りの既定の画像（アーキタイプの画像なし用のファイル noimagearche.jpg）として確かめた");
     expect.soft(r[0]?.画像 ?? "", `${前印("020", "A")} の行の画像（画像なし用の既定画像）`).toMatch(/\/noimagearche\.jpg$/);
+  });
+});
+
+caseTest("IT-F09-03-019", async ({ page, notes, step, expected }) => {
+  let mg!: MetagamePage;
+  await step(1, async () => { mg = await 開く(page, notes.get("〔フォーマット識別子-F0903-019〕")); });
+  note(`画像ファイルの名前・アーキタイプ名には実行の印を付けてあるので、正本の F0903-019-A.jpg は ${N("019", "A")}.jpg、F0903-019-A は ${N("019", "A")} と読んだ。`
+    + "代表カード画像は、行の背景に表示される画像のアドレスの末尾のファイル名で確かめた");
+  await expected(async () => {
+    const r = await 行(mg, N("019", "A"));
+    expect.soft(r.length, `一覧の ${前印("019", "A")} の行の数`).toBe(1);
+    expect.soft((r[0]?.画像 ?? "").split("?")[0].split("/").pop(), `${前印("019", "A")} の行の代表カード画像（ファイル名）`).toBe(`${N("019", "A")}.jpg`);
+    expect.soft(r[0]?.名前, `${前印("019", "A")} の行の日本語名`).toBe(N("019", "A"));
+    expect.soft(r[0]?.デッキ数, `${前印("019", "A")} の行のデッキ数`).toBe("3");
+    expect.soft(r[0]?.使用率, `${前印("019", "A")} の行の使用率`).toBe("75.00%");
   });
 });
 

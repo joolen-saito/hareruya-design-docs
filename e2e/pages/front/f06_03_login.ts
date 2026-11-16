@@ -1,6 +1,7 @@
 /** F06-03 ログイン（会員ログイン画面・ヘッダーのログイン・ログアウト）の操作。セレクタはここだけに書く。正本: cases/F06-03_test_cases.tsv */
 import { expect, Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { 押して移るのを待つ } from "./nav_click";
 
 export type 店 = "本店" | "TC大阪支店";
 const base = (店: 店) => `${BASE_URL}/ja${店 === "TC大阪支店" ? "/osaka" : ""}`;
@@ -28,18 +29,30 @@ export class LoginPage {
     await this.パスワード欄.fill(パスワード, { timeout: T });
   }
   async ログインを押す(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.ログインボタン.click({ timeout: T })]);
+    // 押す操作だけを click で行い（noWaitAfter）、移るのは waitForNavigation で待つ。ログイン後に移るトップページは開発環境で30秒を超えることがあり、
+    // click の待ち（30秒）が先に切れて、押せているのに止まっていた（2026-11-12〜13 の IT-F02-03-009・055・060、F06-11-018/019、M08-04-080/081 など）
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), this.ログインボタン.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   async ログインする(メール: string, パスワード: string): Promise<void> {
     await this.入力する(メール, パスワード);
     await this.ログインを押す();
   }
-  /** 認証エラーの文（無ければ空） */
+  /**
+   * ログイン画面のログインフォームに、画面に見えて出ている認証エラーの文（無ければ空）。
+   * ヘッダーには、お気に入りのログインモーダルの誤りの文（「ログイン試行回数が多すぎます。…」など）が見えない形で常に置かれている。
+   * 以前はこれも読んでいたため、ログイン画面に認証エラーが出ていなくても「出ている」と読んでいた（2026-11-14 の IT-F06-03-006）。
+   * ログインフォームの中で、見えているものだけを読む。
+   */
   async 認証エラー(): Promise<string> {
-    const l = this.page.locator("#login_mypage [role=alert], .p-hareruya-login__form-error, .c-hareruya-form-input__field-error--server");
-    await l.first().waitFor({ state: "attached", timeout: 10_000 }).catch(() => undefined);
-    const texts = (await l.allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+    const l = this.page.locator("form#login_mypage [role=alert], form#login_mypage .c-hareruya-form-input__field-error--server");
+    await l.first().waitFor({ state: "visible", timeout: 10_000 }).catch(() => undefined);
+    const texts: string[] = [];
+    for (const e of await l.all()) {
+      if (!(await e.isVisible().catch(() => false))) continue;
+      const t = (await e.innerText().catch(() => "")).replace(/\s+/g, " ").trim();
+      if (t) texts.push(t);
+    }
     return [...new Set(texts)].join(" / ");
   }
 
@@ -57,7 +70,7 @@ export class LoginPage {
       ? this.page.locator("a.p-hareruya-header__nav-right-link", { hasText: "ログイン" }).first()
       : this.page.locator("a.p-hareruya-bottom-nav__link", { hasText: /ログイン/ }).first();
     await expect(l, `${版}版ナビゲーションの「ログイン」`).toBeVisible({ timeout: T });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -69,18 +82,10 @@ export class LoginPage {
   }
   get パンくずホーム(): Locator { return this.page.locator("a.p-hareruya-breadcrumb__link").first(); }
   async 押して遷移する(l: Locator): Promise<void> {
-    // 画面上部に固定されたヘッダーがパンくずなどを覆わない位置（画面の中ほど）へ動かしてから押す
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 });
-    try {
-      await l.click({ timeout: 10_000 });
-    } catch (e) {
-      // 固定ヘッダーが要素の上に重なって普通に押せないとき（画面の作りの問題）。押下の操作そのものは DOM へ送って続け、注記と条件付きの印を残す
-      test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
-    }
-    await nav;
-    await this.page.waitForLoadState("load");
+    // 押す操作だけを行い、移るのを待つ（押せているのに click の待ちが時間切れになり、移った先で押し直してしまうのを防ぐ。pages/front/nav_click.ts）
+    // 操作を要素へ直接送ることはしない。ほかの表示（モーダルなど）が押す位置を覆っていれば、閉じ切るまで普通のクリックで待ち、押せなければ止める
+    // （直接送ると、覆われて人が押せない状態でも通ってしまう。2026-11-14 の IT-F06-03-011 の見直し）
+    await 押して移るのを待つ(this.page, l, { 押す時間: 30_000 });
   }
 
   get パスワード再発行リンク(): Locator { return this.page.getByRole("link", { name: "パスワードをお忘れの方はこちら" }); }
@@ -109,7 +114,7 @@ export class LoginPage {
   async ログアウトを押す(): Promise<boolean> {
     const l = this.page.locator('a[href$="/logout"]:visible').first();
     if ((await l.count()) === 0) return false;
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), l.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     return true;
   }
@@ -124,7 +129,7 @@ export class LoginPage {
     const inputs = this.パスワード設定フォーム.locator("input[type=password]");
     await inputs.nth(0).fill(新, { timeout: T });
     await inputs.nth(1).fill(新, { timeout: T });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.パスワード設定フォーム.locator("button[type=submit]").click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), this.パスワード設定フォーム.locator("button[type=submit]").click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 

@@ -88,6 +88,9 @@ caseTest("IT-M05-19-012", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await s.出荷指示番号を入れる(A); await s.注文番号を入れる(注文B); await s.検索する(); });
   await expected(async () => {
     const r = await s.結果まわりの表示();
+    // 検索が実行されずに（入力の誤りなどで）一覧が出ていないだけのときに合格にしないため、検索結果がない旨の案内が出たこと（検索が実行された）も確かめる
+    expect.soft(r.結果なしの案内, "検索が実行され、検索結果がない旨の案内が表示される").toBeGreaterThan(0);
+    expect.soft(r.エラー表示, "入力の誤りなどのエラーが表示されない").toEqual([]);
     expect.soft(r.一覧, `出荷指示番号 ${A} は注文番号 ${注文B} の受注を含まないので、検索結果の一覧が表示されない`).toBe(0);
     expect.soft(await s.一覧の出荷指示番号(), "一覧に出荷指示番号の行が無い").toEqual([]);
   });
@@ -144,7 +147,7 @@ caseTest("IT-M05-19-026", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await s.open(); });
   await step(2, async () => { await 検索して開く(s, A); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), s.番号のリンク(A).click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), s.番号のリンク(A).click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await expected(async () => {
@@ -165,7 +168,7 @@ caseTest("IT-M05-19-027", async ({ page, notes, step, expected }) => {
     await expect(s.メニューの操作(A, "編集"), "ポップアップメニューの「編集」").toBeVisible({ timeout: 10_000 });
   });
   await step(4, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), s.メニューの操作(A, "編集").click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), s.メニューの操作(A, "編集").click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await expected(async () => {

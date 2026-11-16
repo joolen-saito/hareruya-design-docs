@@ -31,6 +31,16 @@ export function 商品単位の依頼件数(会員ID: string, 商品ID: string):
   return { 有効: Number(r.active), 削除済み: Number(r.removed) };
 }
 
+/** 会員と商品と言語（JP・EN）を対応付けた、商品単位の入荷通知依頼（規格を指さない依頼）の件数。言語が空の依頼は数えない */
+export function 言語つきの商品単位の依頼件数(会員ID: string, 商品ID: string, 言語: "JP" | "EN"): { 有効: number; 削除済み: number } {
+  const r = query(
+    `select count(*) filter (where r.deleted_at is null) as active, count(*) filter (where r.deleted_at is not null) as removed
+       from dtb_product_request r join dtb_player p on p.id = r.player_id
+       join mtb_language l on l.id = r.language_id
+      where p.customer_id = $1 and r.product_id = $2 and r.product_class_id is null and l.code = $3`, [会員ID, 商品ID, 言語])[0];
+  return { 有効: Number(r.active), 削除済み: Number(r.removed) };
+}
+
 /** 会員と商品に結びつく入荷通知依頼（規格単位・商品単位とも）の有効な件数。商品IDは商品、規格IDは規格が属する商品の判定に使う */
 export function 商品に属する有効な依頼件数(会員ID: string, 商品ID: string): number {
   return Number(query(
@@ -65,4 +75,10 @@ export function 規格への依頼件数(商品規格ID: string): { 有効: numb
 export function 本登録の鍵(メール: string): string {
   const rows = query(`select secret_key as v from dtb_customer where email = $1 order by id desc limit 1`, [メール]);
   return String(rows[0]?.v ?? "");
+}
+
+/** 入荷通知依頼の登録日時（日本時間の「YYYY-MM-DD HH:MI:SS」） */
+export function 依頼の登録日時(依頼ID: string): string | null {
+  const r = query(`select to_char(create_date at time zone 'Asia/Tokyo', 'YYYY-MM-DD HH24:MI:SS') as d from dtb_product_request where id = $1::int`, [依頼ID]);
+  return r[0]?.d ?? null;
 }

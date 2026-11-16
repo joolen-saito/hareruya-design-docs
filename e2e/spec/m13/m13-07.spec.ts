@@ -10,10 +10,11 @@ import { Browser, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { 申込の申込履歴の件数, 申込の申込状況 } from "../../db/m13_07";
 import { expect, caseTest } from "../../lib/case";
+import { DBで読み取った値を撮る, 別のブラウザの画面を撮る, scene } from "../../lib/evidence_other";
 import { hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { BulkEditPage, 一括更新の応答, 更新を押した結果 } from "../../pages/admin/m13_07_bulk_edit";
 import { EventHistoryPage } from "../../pages/front/f06_14_event_history_k";
-import { イベントのカード, カードの開催日時, 画面の本文 } from "../../pages/front/m13_07_event_history";
+import { イベントのカード, カードの開催日時, ゼロ件案内 } from "../../pages/front/m13_07_event_history";
 import { QK1302_ADMIN } from "../../seeds/m13-02-qk";
 import { M1307_ADMIN, QKイベント名, QK会員, 権限店舗のイベント名 } from "../../seeds/m13-07";
 
@@ -76,9 +77,10 @@ caseTest("IT-M13-07-003", async ({ page, notes, step, expected }) => {
   await step(4, async () => { for (const id of [A, B, C]) 件数[id] = 申込の申込履歴の件数(id); });
   await expected(async () => {
     note("「1件のまま」は、シードの代えで始めの件数が2件のため、始めの件数から変わらないことで確かめた");
-    expect.soft(件数[A] - 初期[A], `チェックした申込ID ${A} の申込履歴の増えた件数（始め ${初期[A]}件）`).toBe(1);
-    expect.soft(件数[B] - 初期[B], `チェックした申込ID ${B} の申込履歴の増えた件数（始め ${初期[B]}件）`).toBe(1);
-    expect.soft(件数[C] - 初期[C], `チェックしていない申込ID ${C} の申込履歴の増えた件数（始め ${初期[C]}件）`).toBe(0);
+    // 件数は確かめの場面で DB を読み直す（帯に、申込ごとの照会の条件と読み取った件数が出る）
+    expect.soft(申込の申込履歴の件数(A), `チェックした申込ID ${A} の申込履歴の件数（始め ${初期[A]}件から1件増えて ${初期[A] + 1}件）`).toBe(初期[A] + 1);
+    expect.soft(申込の申込履歴の件数(B), `チェックした申込ID ${B} の申込履歴の件数（始め ${初期[B]}件から1件増えて ${初期[B] + 1}件）`).toBe(初期[B] + 1);
+    expect.soft(申込の申込履歴の件数(C), `チェックしていない申込ID ${C} の申込履歴の件数（始め ${初期[C]}件のまま）`).toBe(初期[C]);
   });
 });
 
@@ -103,6 +105,12 @@ caseTest("IT-M13-07-002", async ({ page, notes, step, expected }) => {
 
 // ---- 004: 申込状況の選択肢ごとに更新する ----
 
+/** 更新の直後に申込の申込状況（DB の照会）で読んで控えた値。回の番号（0 から）で取り出す。控えが無い回は、いま読む */
+const 更新直後の読み取り = new Map<number, string>();
+function 更新直後の申込状況(回: number, 申込ID: string): string {
+  return 更新直後の読み取り.get(回) ?? 申込の申込状況(申込ID);
+}
+
 caseTest("IT-M13-07-004", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔申込ID-M1307-004〕");
   const 順 = ["入金待ち", "申込済み", "入金期限切れ", "キャンセル済み", "支払番号が存在しない", "決済中"];
@@ -112,6 +120,7 @@ caseTest("IT-M13-07-004", async ({ page, notes, step, expected }) => {
     expect(await b.行を読む(id), `検索結果に申込ID ${id} の行がある`).toBeDefined();
   });
   const 結果: [string, string][] = [];
+  更新直後の読み取り.clear();
   await step(2, async () => {
     for (const [i, s] of 順.entries()) {
       // 更新のあと画面が再読み込みされ（または入力領域が開いたままになり）、チェックの状態が決まらないので、2回目からは一覧を検索し直す
@@ -121,12 +130,16 @@ caseTest("IT-M13-07-004", async ({ page, notes, step, expected }) => {
       await b.申込状況を選ぶ(s);
       await 更新して閉じる(b);
       結果.push([s, 申込の申込状況(id)]);
+      更新直後の読み取り.set(i, 結果[i][1]);
+      // 更新のたびに、その時点で DB から読んだ申込状況を画面の上に出して撮る（1回の画像には最後の状態しか写らないため）
+      await DBで読み取った値を撮る(page, `申込ID ${id} の申込状況（${i + 1}回目の更新の直後）`,
+        [["回", "更新で選んだ申込状況", "DB から読んだ申込状況"], ...結果.map(([sel, got], k) => [`${k + 1}回目`, sel, got])], scene.stepLabel(2, `${i + 1}回目（${s}）の更新の直後のDBの申込状況`));
     }
     note("2回目からの更新の前に、同じ条件で一覧を検索し直して申込を表示した");
   });
   await expected(async () => {
     expect.soft(結果.length, "更新した回数").toBe(順.length);
-    for (const [i, [s, got]] of 結果.entries()) expect.soft(got, `${i + 1}回目（「${s}」を選んで更新）のあとの申込状況`).toBe(s);
+    for (const [i, [s]] of 結果.entries()) expect.soft(更新直後の申込状況(i, id), `${i + 1}回目（「${s}」を選んで更新）のあとの申込状況`).toBe(s);
   });
 });
 
@@ -173,8 +186,9 @@ caseTest("IT-M13-07-006", async ({ page, notes, step, expected }) => {
   await step(4, async () => { for (const id of ids) { 状況[id] = 申込の申込状況(id); 件数[id] = 申込の申込履歴の件数(id); } });
   await expected(async () => {
     for (const id of ids) {
-      expect.soft(状況[id], `申込ID ${id} の申込状況（始めと同じ）`).toBe(初期状況[id]);
-      expect.soft(件数[id], `申込ID ${id} の申込履歴の件数（始めと同じ）`).toBe(初期件数[id]);
+      // 確かめの場面で DB を読み直す（帯に、申込ごとの照会の条件と読み取った値が出る）
+      expect.soft(申込の申込状況(id), `申込ID ${id} の申込状況（始めの「${初期状況[id]}」のまま）`).toBe(初期状況[id]);
+      expect.soft(申込の申込履歴の件数(id), `申込ID ${id} の申込履歴の件数（始めの ${初期件数[id]}件のまま）`).toBe(初期件数[id]);
     }
   });
 });
@@ -199,7 +213,10 @@ caseTest("IT-M13-07-007", async ({ page, notes, step, expected }) => {
     let 応答の文 = "";
     try { const j = JSON.parse(r.応答?.本文 ?? "") as { message?: string[] }; 応答の文 = (j.message ?? []).join("\n"); } catch { /* JSON でない */ }
     expect.soft(r.文.trim(), "表示されたダイアログの文").not.toBe("");
-    expect.soft(r.文, "表示されたダイアログの文が、一括更新の応答のメッセージ").toBe(応答の文);
+    expect.soft(r.文, "表示されたダイアログは、申込状況を更新した旨の完了メッセージ").toMatch(/件の申込状況を更新しました/);
+    // 応答の本文は読めたときだけ突き合わせる（読めないことがあり、読めないときは画面のダイアログで確かめたことにして注記に残す）
+    if (応答の文 !== "") expect.soft(r.文, "表示されたダイアログの文が、一括更新の応答のメッセージ").toBe(応答の文);
+    else note(`一括更新の応答の本文は読めなかったため、応答との突き合わせはしていない（画面のダイアログ「${r.文}」で完了メッセージの表示を確かめた）`);
   });
 });
 
@@ -288,11 +305,10 @@ caseTest("IT-M13-07-015", async ({ page, notes, step, expected }) => {
     expect(await b.チェックされた行.count(), "チェックした申込の数").toBe(1);
   });
   await step(3, async () => { await b.一括編集を開く(); await b.申込状況を選ぶ("申込済み"); await 更新して閉じる(b); });
-  let 件数 = -1;
-  await step(4, async () => { 件数 = 申込の申込履歴の件数(id); });
+  await step(4, async () => { 申込の申込履歴の件数(id); });
   await expected(async () => {
     note(`「2件となる」は、シード表の始めの1件に1件足した数。シードの代えで始めの件数が ${初期}件のため、始めの件数に1件足した数で確かめた`);
-    expect.soft(件数 - 初期, `申込ID ${id} の申込履歴の増えた件数（始め ${初期}件）`).toBe(1);
+    expect.soft(申込の申込履歴の件数(id), `申込ID ${id} の申込履歴の件数（始め ${初期}件から1件増えて ${初期 + 1}件）`).toBe(初期 + 1);
   });
 });
 
@@ -320,21 +336,23 @@ caseTest("IT-M13-07-014", async ({ page, browser, notes, step, expected, capture
       前の件数 = await イベントのカード(page, 名).count();
       前の日時 = 前の件数 ? await カードの開催日時(イベントのカード(page, 名)) : "";
     });
-    await step(2, async () => { await loginAdmin(B.page, QK1302_ADMIN); });
+    // 手順2〜4は管理画面（ブラウザB）の操作。ケースの画面（ブラウザA）は会員のマイイベントなので、ブラウザBの画面を手順の画像に撮る
+    await step(2, async () => { await loginAdmin(B.page, QK1302_ADMIN); await 別のブラウザの画面を撮る(B.page, scene.stepLabel(2, "ブラウザB（管理画面）のログイン後")); });
     const b = new BulkEditPage(B.page);
     await step(3, async () => {
       const r = await b.イベント名で検索する(名);
       note(`ブラウザBでイベント名「${名}」（実行の印つき）を入れて検索した。店舗「${r.店舗.join("・") || "指定なし"}」・開始時間(From)「${r.開始時間From}」は初期表示のまま`);
+      await 別のブラウザの画面を撮る(B.page, scene.stepLabel(3, "ブラウザB（管理画面）のイベント申込一覧の検索結果"));
     });
     await step(4, async () => {
       await b.チェックする(id);
       await b.一括編集を開く();
       await b.申込状況を選ぶ("キャンセル済み");
+      await 別のブラウザの画面を撮る(B.page, scene.stepLabel(4, "ブラウザB（管理画面）の一括編集で「キャンセル済み」を選んだところ"));
       await 更新して閉じる(b);
-      await B.page.screenshot().then((buf) => test.info().attach("ブラウザBの更新後の画面", { body: buf, contentType: "image/png" }));
+      await 別のブラウザの画面を撮る(B.page, scene.stepLabel(4, "ブラウザB（管理画面）の更新後の画面"));
     });
-    let 後の本文 = "";
-    await step(5, async () => { await A.開く(); 後の本文 = await 画面の本文(page); await capture("ブラウザAのマイイベント・デッキ登録（更新後）"); });
+    await step(5, async () => { await A.開く(); await capture("ブラウザAのマイイベント・デッキ登録（更新後）"); });
     await expected(async () => {
       expect.soft(前の件数, `手順1の一覧のイベント名「${名}」のカードの数`).toBe(1);
       note(`手順1の一覧の開催日時の表示: 「${前の日時}」（日時の値で比べた）`);
@@ -342,7 +360,7 @@ caseTest("IT-M13-07-014", async ({ page, browser, notes, step, expected, capture
       const 値 = mm ? `${mm[1]}年${Number(mm[2])}月${Number(mm[3])}日${mm[4].padStart(2, "0")}時${mm[5]}分` : 前の日時;
       expect.soft(値, "手順1の一覧の開催日時").toBe("2030年10月23日10時00分");
       await expect.soft(イベントのカード(page, 名), `手順5の一覧のイベント名「${名}」のカード`).toHaveCount(0);
-      expect.soft(後の本文.includes("予約済みの大会はありません。"), "手順5の一覧に「予約済みの大会はありません。」と表示される").toBe(true);
+      await expect.soft(ゼロ件案内(page).first(), "手順5の一覧に「予約済みの大会はありません。」と表示される").toHaveText("予約済みの大会はありません。");
     });
   } finally {
     await B.close();

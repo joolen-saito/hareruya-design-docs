@@ -16,9 +16,17 @@ export type FrontMember = { 姓: string; 名: string; セイ: string; メイ: st
  * そのほかの必須項目（生年月日・住所・電話番号）は登録できる任意の値を入れる。
  */
 export async function registerFrontMember(page: Page, v: FrontMember): Promise<void> {
-  await page.goto(`${BASE_URL}/ja/entry`);
-  await page.waitForLoadState("load");
   const form = page.locator("form#entry_form");
+  // 開発環境では会員登録の画面が 502・500 を返すことがあり、そのまま入力欄を待つと（シードのブラウザには操作の時間切れが無いので）
+  // 試験の時間切れ（30分）まで止まっていた（2026-11-12 の IT-F06-06-006・020・025）。5xx は少し置いて開き直し、入力欄は60秒で見切る
+  let res: Awaited<ReturnType<Page["goto"]>> = null;
+  for (let i = 1; i <= 3; i++) {
+    res = await page.goto(`${BASE_URL}/ja/entry`, { timeout: 120_000 }).catch(() => null);
+    if (res && res.status() < 500) break;
+    if (i < 3) await page.waitForTimeout(15_000);
+  }
+  await page.waitForLoadState("load");
+  await expect(form, `会員登録の画面（/ja/entry・応答 ${res?.status() ?? "なし"}）の入力欄`).toBeVisible({ timeout: 60_000 });
   const f = (name: string) => form.locator(`[name="entry[${name}]"]`);
   await f("name][name01").fill(v.姓);
   await f("name][name02").fill(v.名);
@@ -38,29 +46,31 @@ export async function registerFrontMember(page: Page, v: FrontMember): Promise<v
   await f("address][addr01").fill(d.住所1);
   await f("address][addr02").fill(d.住所2);
   if (v.会社名 !== undefined) await f("company_name").fill(v.会社名);
+  // 住所3の欄は国が日本以外のときだけ出る（Entry/index.twig）。欄が無ければここでは入れないので、住所3が欠かせないシードは登録後に入ったかを確かめること
   if (v.住所3 !== undefined && (await f("address][addr03").count()) > 0) await f("address][addr03").fill(v.住所3);
   await f("tel][tel01").fill(d.電話[0]);
   await f("tel][tel02").fill(d.電話[1]);
   await f("tel][tel03").fill(d.電話[2]);
   if (v.MTG姓 !== undefined) await f("Player][lastNameEn").fill(v.MTG姓);
   if (v.MTG名 !== undefined) await f("Player][firstNameEn").fill(v.MTG名);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.getByRole("button", { name: "同意して確認画面へ" }).click()]);
+  // 開発環境では会員登録の送信の応答に17〜73秒かかった（2026-11-12 の trace）ので、送信を伴う操作は2分まで待つ
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.getByRole("button", { name: "同意して確認画面へ" }).click({ timeout: 120_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
-  const errors = (await page.locator(".ec-errorMessage, .form-error-message, .invalid-feedback, .c-hareruya-form__error").allInnerTexts()).map((t) => t.trim()).filter(Boolean);
+  const errors = (await page.locator(".ec-errorMessage, .form-error-message, .invalid-feedback, .c-hareruya-form__error, .c-hareruya-form-input__field-error--server").allInnerTexts()).map((t) => t.trim()).filter(Boolean);
   if (errors.length) throw new Error(`会員「${v.姓} ${v.名}」の会員情報登録で入力エラー: ${errors.join(" / ")}`);
   const before = await mailIds();
   const register = page.locator('button[name="mode"][value="complete"]');
-  await expect(register, "確認画面の「登録する」").toBeVisible();
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), register.click()]);
+  await expect(register, "確認画面の「登録する」").toBeVisible({ timeout: 30_000 });
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), register.click({ timeout: 120_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   if (/\/entry\/complete/.test(page.url())) {
     // 仮会員になった。届いた本登録のメールのURLを開く
     const mail = await waitForMailTo(v.メール, before);
     const url = /https?:\/\/[^\s"'<>]+\/entry\/activate\/[^\s"'<>]+/.exec(mail.text)?.[0];
     if (!url) throw new Error(`会員「${v.姓} ${v.名}」の本登録のメール（${mail.subject}）に本登録のURLが無い`);
-    await page.goto(url.replace(/&amp;/g, "&"));
+    await page.goto(url.replace(/&amp;/g, "&"), { timeout: 120_000 });
     await page.waitForLoadState("load");
   }
-  await expect(page.locator(".p-hareruya-entry-complete__message-text").first(), `会員「${v.姓} ${v.名}」の本登録の完了の表示`).toBeVisible();
+  await expect(page.locator(".p-hareruya-entry-complete__message-text").first(), `会員「${v.姓} ${v.名}」の本登録の完了の表示`).toBeVisible({ timeout: 30_000 });
   if (/\/entry\/(complete|regist_error)/.test(page.url())) throw new Error(`会員「${v.姓} ${v.名}」が本会員にならない（${page.url()}）`);
 }

@@ -13,6 +13,7 @@ import { BASE_URL } from "../../config/env";
 import { 買取の日付, 買取集計, 集計の行, 店頭買取の状態 } from "../../db/m06_04";
 import { expect, caseTest, CaseBody } from "../../lib/case";
 import { Notes } from "../../lib/notes";
+import { scene, 別のブラウザの画面を撮る } from "../../lib/evidence_other";
 import { rc } from "../../lib/run_marker";
 import { hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { SummaryPage } from "../../pages/admin/m06_09_summary";
@@ -29,7 +30,12 @@ const note = (m: string) => { test.info().annotations.push({ type: "手順の注
 
 const 退避の注記 = "正本の「その日の受注と集計を全件退避して削除し、終了時に戻す」は行わない（共有のデータを消さない）。印つきの買取だけで確かめられるよう、その日の買取店舗A・Bの買取集計だけを読んだ（その日に集計対象の実データの買取が無いことをシードで確かめてある）";
 const 決め打ち注記 = "決め打ちの査定ID・日は、シードの読み替え（画面が振った番号に読み替え、買取成立日などはDBで入れた）";
-const 当日の注記 = "買取成立日・買取キャンセル日・入庫日時は、保存した日（実行当日）を日本時間の日付で確かめた。実行当日の買取集計は、買取店舗A・Bの分だけ読んだ";
+const 当日の注記 = "買取成立日は、保存した日（実行当日）を日本時間の日付で確かめた。買取キャンセル日・入庫日時は、保存の前が空であることと、保存した時刻（「保存」を押す直前から応答のあとまで）の範囲に入ることを確かめた。実行当日の買取集計は、買取店舗A・Bの分だけ読んだ";
+
+/** いまの時刻（1970年からの秒）。DBの日時は秒までなので、範囲は秒に丸めて広げる */
+const いま = () => Date.now() / 1000;
+const 範囲内 = (v: number | null, 始: number, 終: number) => v !== null && v >= Math.floor(始) && v <= Math.ceil(終);
+const 時刻 = (v: number | null) => (v === null ? "空" : new Date(v * 1000).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }));
 
 const 店A = (notes: Notes) => notes.get("〔店舗ID-M0604-共有A〕");
 const 店B = (notes: Notes) => notes.get("〔店舗ID-M0604-共有B〕");
@@ -51,8 +57,10 @@ async function 変更画面を開く(page: Page, 受注ID: string): Promise<OtcS
   return s;
 }
 
+/** 保存を押した結果を注記に残し、変更の要求が送られたことを確かめる（送られていなければ「変わらない」「作り直されない」は確かめにならない） */
 function 保存の結果を残す(r: { sent: boolean; 応答の状態: number | null; 止めた理由: string }, url: string): void {
   note(r.sent ? `保存の送信の応答 ${r.応答の状態}。保存のあとの画面 ${new URL(url).pathname}` : `ブラウザの入力チェックが保存の送信を止めた（${r.止めた理由}）`);
+  expect(r.sent, `「保存」で変更の要求が送られた（${r.sent ? `応答 ${r.応答の状態}` : `ブラウザの入力チェックが止めた: ${r.止めた理由}`}）`).toBe(true);
 }
 
 type 変更の定め = {
@@ -76,6 +84,9 @@ function ステータスを変えて集計をDBで見る(d: 変更の定め): Ca
   return async ({ page, notes, step, expected }) => {
     const 受注ID = typeof d.固定 === "function" ? d.固定(notes) : 読み替えた買取(d.固定).受注ID;
     const 前 = 読む(notes, d.日);
+    const 前の状態 = 店頭買取の状態(受注ID);
+    let 始 = 0;
+    let 終 = 0;
     await loginAdmin(page, M0604_IT_A);
     let s: OtcStatusChangePage | undefined;
     let 後: 集計の行[] = [];
@@ -83,7 +94,12 @@ function ステータスを変えて集計をDBで見る(d: 変更の定め): Ca
     let 日付: ReturnType<typeof 買取の日付> | undefined;
     await step(1, async () => { s = await 変更画面を開く(page, 受注ID); });
     await step(2, async () => { await s!.選ぶ(d.変更後); });
-    await step(3, async () => { 保存の結果を残す(await s!.保存を押す(), page.url()); });
+    await step(3, async () => {
+      始 = いま();
+      const res = await s!.保存を押す();
+      終 = いま();
+      保存の結果を残す(res, page.url());
+    });
     await step(4, async () => {
       後 = 読む(notes, d.日);
       状態 = 店頭買取の状態(受注ID);
@@ -93,8 +109,14 @@ function ステータスを変えて集計をDBで見る(d: 変更の定め): Ca
       expect.soft(後, `${d.日} の買取集計データ（買取店舗A・B。変更の前は ${JSON.stringify(前)}）`).toEqual(並べ替え(行にする(notes, d.期待)));
       if (d.ステータス) expect.soft(状態!.ステータス, "保存のあとのステータス").toBe(d.ステータス);
       if (d.日付?.成立日) expect.soft(日付!.成立日, "買取成立日").toBe(d.日付.成立日 === "当日" ? 今日の日() : d.日付.成立日);
-      if (d.日付?.キャンセル日) expect.soft(日付!.キャンセル日, "買取キャンセル日（保存した日）").toBe(今日の日());
-      if (d.日付?.入庫日) expect.soft(日付!.入庫日, "入庫日時（保存した日）").toBe(今日の日());
+      if (d.日付?.キャンセル日) {
+        expect.soft(時刻(前の状態.買取キャンセル日), "変更の前の買取キャンセル日（空）").toBe("空");
+        expect.soft(範囲内(状態!.買取キャンセル日, 始, 終), `保存のあとの買取キャンセル日「${時刻(状態!.買取キャンセル日)}」が保存の時刻（${時刻(始)}〜${時刻(終)}）`).toBe(true);
+      }
+      if (d.日付?.入庫日) {
+        expect.soft(時刻(前の状態.入庫日時), "変更の前の入庫日時（空）").toBe("空");
+        expect.soft(範囲内(状態!.入庫日時, 始, 終), `保存のあとの入庫日時「${時刻(状態!.入庫日時)}」が保存の時刻（${時刻(始)}〜${時刻(終)}）`).toBe(true);
+      }
     });
     note(退避の注記);
     note(`保存のあとのステータスは「${状態!.ステータス}」・買取成立日は ${日付!.成立日時 ?? "空"}`);
@@ -165,6 +187,7 @@ function 経理払い出し済で集計をDBで見る(d: { 受注: (notes: Notes
       if (!ask!.ダイアログ) note("確認のダイアログが出なかった（押したまま送信された）");
       const r = await ask!.確認に答える(true);
       note(`確認のダイアログ「${ask!.ダイアログ?.message() ?? "なし"}」でOK。送信の応答 ${r?.status() ?? "なし"}・上部のメッセージ「${(await detail.上部のメッセージ()).join(" / ")}」`);
+      expect(r, "「経理払い出し済」の要求が送られた（送信の応答がある）").not.toBeNull();
     });
     await step(4, async () => {
       後 = 読む(notes, d.日);
@@ -220,8 +243,12 @@ caseTest("IT-M06-04-046", async ({ page, browser, notes, step, expected }) => {
       await list.査定IDを入れる(no);
       await list.検索する();
       await list.詳細を開く(no);
+      await 別のブラウザの画面を撮る(pageB, scene.stepLabel(3, "ブラウザB（管理画面）の買取詳細"));
     });
-    await step(4, async () => { await new OtcDetailPage(pageB).ステータスを変える("経理払い出し待ち"); });
+    await step(4, async () => {
+      await new OtcDetailPage(pageB).ステータスを変える("経理払い出し待ち");
+      await 別のブラウザの画面を撮る(pageB, scene.stepLabel(4, "ブラウザB（管理画面）でステータスを経理払い出し待ちに変えて保存したあとの買取詳細"));
+    });
     await step(5, async () => {
       await a.openList();
       行5 = await a.一覧の行(no);
@@ -232,6 +259,7 @@ caseTest("IT-M06-04-046", async ({ page, browser, notes, step, expected }) => {
       expect.soft(行5.処理状態, "手順5の処理状態").toContain("振込待ち");
       expect.soft(行5.買取金額合計.replace(/[^0-9]/g, ""), `手順5の買取金額合計（表示は「${行5.買取金額合計}」）`).toBe("45678");
     });
+    note("手順3・4はブラウザB（管理画面）の操作。ブラウザBの画面（買取詳細・ステータスを変えて保存したあと）を別に撮った。ケースの画面（ブラウザA）の画像はブラウザA（会員のフロント）の画面");
     note("査定金額合計45678円は画面で指定できないので、シードがDBで買取の査定合計金額に入れた。会員はフロントの会員登録（本登録のメール）で作った（管理画面に会員の新規登録の画面が無い）");
   } finally {
     await contextB.close();

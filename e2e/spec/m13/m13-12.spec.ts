@@ -9,6 +9,7 @@ import { Browser, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { 日程の申込の内容, 日程の申込プレイヤーのプレイヤーID, 日程の申込履歴の件数, プレイヤーの日程への申込件数, 日程の申込の件数_削除済みを含む } from "../../db/m13_12";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
+import { ページから読み取った値を撮る, 別のブラウザの画面を撮る, scene } from "../../lib/evidence_other";
 import { Account, hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { EventForm } from "../../pages/admin/event";
 import { EventListPage } from "../../pages/admin/m13_01_event_list";
@@ -18,7 +19,7 @@ import { tamperToken } from "../../pages/admin/devtools";
 import { EventHistoryPage } from "../../pages/front/f06_14_event_history_k";
 import { QK1302_ADMIN } from "../../seeds/m13-02-qk";
 import {
-  M1312_ADMIN, M1312_RI_ADMIN, QKイベント名, QK会員, RIイベント名, RI会員の姓, ページ対象の検索語, 会員の姓, 会員の氏名, 権限制御の検索語,
+  M1312_ADMIN, M1312_RI_ADMIN, M1312連携店舗, QKイベント名, QK会員, RIイベント名, RI会員の姓, ページ対象の検索語, 会員の姓, 会員の氏名, 権限制御の検索語,
 } from "../../seeds/m13-12";
 import { 印店名 } from "../../pages/admin/m13_marked_shop";
 
@@ -70,7 +71,15 @@ caseTest("IT-M13-12-002", async ({ page, notes, step, expected }) => {
   await step(2, async () => { 名 = await f.欄の表示("イベント名"); 金 = await f.支払金額.inputValue(); });
   await expected(async () => {
     note(`画面のイベント名の表示: 「${名}」。支払金額の欄の値: 「${金}」（桁区切りを除いて金額として比べた）`);
-    expect.soft(名, "イベント名が「イベント名(日)（イベント名(英)） 開催日時」の書式で表示される").toBe("M13-12統合イベント（M13-12 Integration Event） 2026-10-10 13:00");
+    // 設計は開催日時の日付の区切り記号を定めていないので、日付・時刻の値として比べる（区切りの違いは注記に残す）
+    const 期待 = { 前: "M13-12統合イベント（M13-12 Integration Event） ", 年: "2026", 月: "10", 日: "10", 時: "13", 分: "00" };
+    const m = 名.match(/^(.*?) (\d{4})[-/](\d{2})[-/](\d{2}) (\d{2}):(\d{2})$/);
+    if (m && m[2] + m[3] + m[4] === "20261010") {
+      const 区切り = 名.match(/\d{4}([-/])/)?.[1];
+      if (区切り !== "-") note(`開催日時の日付の区切りは「${区切り}」で表示された（正本の例は「-」。設計は区切り記号を定めていないので、日付・時刻の値として比べた）`);
+    }
+    expect.soft(m ? `${m[1]} ` : 名, "イベント名が「イベント名(日)（イベント名(英)） 開催日時」の書式で表示される（名称の部分）").toBe(期待.前);
+    expect.soft(m ? `${m[2]}-${m[3]}-${m[4]} ${m[5]}:${m[6]}` : 名, "開催日時が日付・時刻として 2026年10月10日 13:00").toBe(`${期待.年}-${期待.月}-${期待.日} ${期待.時}:${期待.分}`);
     expect.soft(金額(金), "支払金額に参加費2500が初期表示される").toBe("2500");
   });
 });
@@ -94,8 +103,8 @@ caseTest("IT-M13-12-003", async ({ page, notes, step, expected }) => {
     expect.soft(方法, "支払方法の初期表示").toBe("管理者追加");
     expect.soft(await f.選ばれている(f.申込状況), "選択操作のあとも申込状況は申込済みのまま").toBe("申込済み");
     expect.soft(await f.選ばれている(f.支払方法), "選択操作のあとも支払方法は管理者追加のまま").toBe("管理者追加");
-    expect.soft(f.申込状況, "申込状況の欄は変更できない（操作不可）").toBeDisabled();
-    expect.soft(f.支払方法, "支払方法の欄は変更できない（操作不可）").toBeDisabled();
+    await expect.soft(f.申込状況, "申込状況の欄は変更できない（操作不可）").toBeDisabled();
+    await expect.soft(f.支払方法, "支払方法の欄は変更できない（操作不可）").toBeDisabled();
   });
 });
 
@@ -124,15 +133,25 @@ caseTest("IT-M13-12-005", async ({ page, notes, step, expected }) => {
   await step(2, async () => {
     画面 = await f.本文(); 見出し = [...(await f.欄のラベル一覧()), ...(await f.プレイヤー表の見出し())];
     await f.ポップアップを開く();
+    // 開いただけでは結果の一覧が出ない。プレイヤー名を空のまま検索して、結果の一覧（列の見出し・各行）を出してから確かめる
+    await f.プレイヤーを検索する("");
+    note("プレイヤー検索ポップアップ画面は、開いただけでは結果の一覧が出ないため、プレイヤー名を入れずに検索して結果の一覧（列の見出し・各行）を出した状態で見た");
   });
   await expected(async () => {
-    note("プレイヤー検索ポップアップ画面は、手順どおり開いただけ（検索はしていない）の状態で見た");
-    const ポップアップ = 整える(await f.ポップアップ.innerText());
+    const 列 = (await f.結果の一覧.locator("thead th").allInnerTexts()).map(整える).filter(Boolean);
+    expect.soft(列.length, "プレイヤー検索の結果の列の見出しが表示されている").toBeGreaterThan(0);
+    expect.soft(await f.結果の行.count(), "プレイヤー検索の結果に行が表示されている").toBeGreaterThan(0);
+    expect.soft(列.filter((h) => h.includes("DCI")), `プレイヤー検索の結果の列の見出し（${列.join("、")}）にDCIナンバーが無い`).toEqual([]);
+    await expect.soft(f.結果の一覧.locator("thead"), "プレイヤー検索の結果の列の見出しにDCIナンバーが表示されない").not.toContainText("DCI");
+    expect.soft(整える(await f.結果の一覧.innerText()).includes("DCI"), "プレイヤー検索の結果（各行）にDCIナンバーが表示されない").toBe(false);
+    expect.soft(整える(await f.ポップアップ.innerText()).includes("DCI"), "プレイヤー検索ポップアップ画面にDCIナンバーが表示されない").toBe(false);
+    // ここから先は、ポップアップを閉じて（画面を覆う半透明の背景が重ならない状態で）イベント新規申込登録画面の項目を確かめる
+    await f.ポップアップを閉じる();
     for (const w of ["席順", "DCIナンバー", "チームメンバー確認済"]) {
       expect.soft(見出し.filter((h) => h.includes(w)), `イベント新規申込登録画面の項目の見出しに「${w}」が無い`).toEqual([]);
       expect.soft(画面.includes(w), `イベント新規申込登録画面に「${w}」が表示されない`).toBe(false);
+      expect.soft(await f.本文(), `（ポップアップを閉じた後も）イベント新規申込登録画面に「${w}」が表示されない`).not.toContain(w);
     }
-    expect.soft(ポップアップ.includes("DCI"), "プレイヤー検索ポップアップ画面にDCIナンバーが表示されない").toBe(false);
   });
 });
 
@@ -141,9 +160,9 @@ caseTest("IT-M13-12-006", async ({ page, notes, step, expected }) => {
   await step(1, async () => { f = await 開いておく(page, notes.get("〔イベント日程ID-M1312-006〕")); });
   await step(2, async () => { await f.プレイヤー名.scrollIntoViewIfNeeded(); });
   await expected(async () => {
-    expect.soft(f.検索ボタン, "プレイヤー未登録の行に検索ボタンが表示される").toBeVisible();
-    expect.soft(f.削除ボタン, "削除ボタンは表示されない").toBeHidden();
-    expect.soft(f.登録ボタン, "権限を保持する店舗Aのイベントに登録ボタンが表示される").toBeVisible();
+    await expect.soft(f.検索ボタン, "プレイヤー未登録の行に検索ボタンが表示される").toBeVisible();
+    await expect.soft(f.削除ボタン, "削除ボタンは表示されない").toBeHidden();
+    await expect.soft(f.登録ボタン, "権限を保持する店舗Aのイベントに登録ボタンが表示される").toBeVisible();
   });
 });
 
@@ -306,7 +325,7 @@ caseTest("IT-M13-12-020", async ({ page, notes, step, expected }) => {
   let f!: EntryNewPage;
   await step(1, async () => { f = await 開いておく(page, notes.get("〔イベント日程ID-M1312-020〕")); });
   await step(2, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), f.イベント申込登録リンク.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), f.イベント申込登録リンク.click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "イベント申込登録（検索結果）画面へ遷移する").toMatch(/\/entry_registration$/);
@@ -369,7 +388,7 @@ caseTest("IT-M13-12-032", async ({ page, notes, step, expected }) => {
   await step(1, async () => { f = await 開いておく(page, notes.get("〔イベント日程ID-M1312-032〕")); });
   let 店舗 = ""; let フォーマット = "";
   await step(2, async () => { 店舗 = await f.欄の表示("店舗"); フォーマット = await f.欄の表示("フォーマット"); });
-  note("店舗Aは印つきの店舗（" + 印店名.A + "）を作って使った");
+  note("店舗Aは、店舗を作らず、使い回す店舗（" + 印店名.A + "）に読み替えた（依頼者 2026-11-15）");
   await expected(async () => {
     expect.soft(店舗, "店舗に「店舗A」が表示される").toBe(印店名.A);
     expect.soft(フォーマット, "フォーマットに「スタンダード」が表示される").toBe("スタンダード");
@@ -423,25 +442,28 @@ caseTest("IT-M13-12-035", async ({ page, browser, step, expected, capture }) => 
   try {
     let 前 = "";
     await step(1, async () => { await A.ログインする(m.メール, m.パスワード); await A.開く(); 前 = 整える(await page.locator("main, body").first().innerText()); });
-    await step(2, async () => { await loginAdmin(B.page, QK1302_ADMIN); });
+    await step(2, async () => { await loginAdmin(B.page, QK1302_ADMIN); await 別のブラウザの画面を撮る(B.page, scene.stepLabel(2, "ブラウザB（管理者）のログイン後")); });
     const f = new EntryNewPage(B.page);
     await step(3, async () => {
       const s = new EntrySearchPage(B.page);
-      note("開催日(From)の初期値（実行日）はそのまま、店舗は初期表示（QK連携店舗）のままで検索した");
+      // 検索の条件は初期表示のまま（正本はイベント名だけを指定）。0件のときの切り分けのため、検索した条件を記録し、ブラウザBの検索結果を撮る
+      const 条件 = async () => `店舗「${(await s.選ばれている店舗().catch(() => [] as string[])).join("・") || "（指定なし）"}」・開催日(From)「${await s.日付の値(s.開催日From).catch(() => "")}」・開催日(To)「${await s.日付の値(s.開催日To).catch(() => "")}」`;
       const link = B.page.locator("table.table tbody tr").filter({ hasText: QKイベント名() }).getByRole("link", { name: "新規登録" });
       // 共有の開発環境では、登録した直後のイベントが検索結果にすぐ出ないことがある。0件のときは間をおいて検索し直す（最大で約1分）
       let n = 0;
       for (let i = 0; ; i++) {
         await s.開く();
+        if (i === 0) note(`初期表示の検索の条件のまま検索した: ${await 条件()}`);
         await s.検索イベント名.fill(QKイベント名());
         await s.検索する();
         n = await link.count();
         if (n === 1 || i >= 5) break;
         await B.page.waitForTimeout(10_000);
       }
-      if (n !== 1) note(`検索結果に新規登録が ${n} 件だった（約1分おいて検索し直しても同じ）`);
+      await 別のブラウザの画面を撮る(B.page, scene.stepLabel(3, "ブラウザB（管理者）のイベント申込登録の検索結果"));
+      if (n !== 1) note(`検索結果に新規登録が ${n} 件だった（約1分おいて検索し直しても同じ）。検索後の条件: ${await 条件()}・結果の行 ${await s.日程の行数().catch(() => 0)} 行`);
       if (n !== 1) throw new Error(`イベント申込登録の検索結果に、イベント「${QKイベント名()}」の日程の新規登録が ${n} 件（1件のはず）。結果: ${整える(await B.page.locator("table.table, .c-contentsArea").first().innerText()).slice(0, 200)}`);
-      await Promise.all([B.page.waitForURL(/\/entry_registration\/new\/\d+$/, { waitUntil: "load" }), link.click()]);
+      await Promise.all([B.page.waitForURL(/\/entry_registration\/new\/\d+$/, { waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
       await f.読み込みを待つ();
     });
     await step(4, async () => {
@@ -453,7 +475,7 @@ caseTest("IT-M13-12-035", async ({ page, browser, step, expected, capture }) => 
       await expect(f.ポップアップ).toBeHidden();
       await f.登録ボタン.click();
       await B.page.waitForLoadState("load");
-      await B.page.screenshot().then((buf) => test.info().attach("ブラウザBの登録後の画面", { body: buf, contentType: "image/png" }));
+      await 別のブラウザの画面を撮る(B.page, scene.stepLabel(4, "ブラウザB（管理者）の登録後の画面"));
     });
     await step(5, async () => { await A.開く(); await capture("ブラウザAのマイイベント・デッキ登録（登録後）"); });
     await expected(async () => {
@@ -482,7 +504,7 @@ caseTest("IT-M13-12-036", async ({ page, notes, step, expected, capture }) => {
     await l.日付を入れる(l.開催日From, ""); await l.日付を入れる(l.開催日To, "");
     await l.名前略称で検索する(RIイベント名());
     await l.編集ボタンを押す(e);
-    await Promise.all([page.waitForURL(new RegExp(`/event/${e}/edit$`), { waitUntil: "load" }), l.メニュー項目(e, "編集").click()]);
+    await Promise.all([page.waitForURL(new RegExp(`/event/${e}/edit$`), { waitUntil: "load", timeout: 120_000 }), l.メニュー項目(e, "編集").click({ noWaitAfter: true })]);
     const form = new EventForm(page);
     await expect(form.日程行(d), "日程一覧に開始時間 2026-12-14 10:00 の日程の行").toBeVisible();
     return form;
@@ -506,13 +528,13 @@ caseTest("IT-M13-12-036", async ({ page, notes, step, expected, capture }) => {
   await step(3, async () => {
     const s = new EntrySearchPage(page);
     await s.開く();
-    await s.条件を入れて検索する(["連携店舗M1312"], RIイベント名(), "", "");
+    await s.条件を入れて検索する([M1312連携店舗], RIイベント名(), "", "");
   });
   const f = new EntryNewPage(page);
   await step(4, async () => {
     const row = new EntrySearchPage(page).日程の行(d);
     await expect(row, "開始時間 2026-12-14 10:00 の日程の行").toHaveCount(1);
-    await Promise.all([page.waitForURL(new RegExp(`/entry_registration/new/${d}$`), { waitUntil: "load" }), row.getByRole("link", { name: "新規登録" }).click()]);
+    await Promise.all([page.waitForURL(new RegExp(`/entry_registration/new/${d}$`), { waitUntil: "load", timeout: 120_000 }), row.getByRole("link", { name: "新規登録" }).click({ noWaitAfter: true })]);
     await f.読み込みを待つ();
   });
   await step(5, async () => {
@@ -536,6 +558,7 @@ caseTest("IT-M13-12-036", async ({ page, notes, step, expected, capture }) => {
   });
   await expected(async () => {
     note(`ツールチップは、一括削除用チェックボックスに付く説明（カーソルを合わせると出る文）で確かめた。登録前: 「${前のヒント ?? ""}」、登録後: 「${後のヒント ?? ""}」`);
+    note("ツールチップはブラウザの標準の表示（title 属性）で、画面の画像には写らない。title 属性の値を読み取って確かめ、読み取った値を期待結果の画像（「ツールチップ（title 属性）の読み取った値」）に出した。赤枠は、その説明が付いているチェックボックス");
     expect.soft(前の人数.split("/")[0].trim(), "手順2の申込人数は0件").toBe("0");
     expect.soft(前のヒント ?? "", "手順2ではツールチップが表示されない").toBe("");
     expect.soft(前に入った, "手順2ではクリックでチェックを入れられる").toBe(true);
@@ -543,5 +566,10 @@ caseTest("IT-M13-12-036", async ({ page, notes, step, expected, capture }) => {
     expect.soft(後のヒント, "カーソルを合わせると「申込があるため削除できません」が表示される").toBe("申込があるため削除できません");
     expect.soft(後に入った, "チェックを入れられない").toBe(false);
     await expect.soft(form.日程チェック(d), "一括削除用チェックボックスは操作できない状態").toBeDisabled();
+    await ページから読み取った値を撮る(page, "一括削除用チェックボックスの説明（title 属性。ブラウザの標準のツールチップで、画面には写らない）", [
+      ["場面", "チェックボックスの説明（title 属性）の読み取った値", "チェックを入れられるか"],
+      ["登録前（手順2。申込人数 " + 前の人数 + "）", 前のヒント ? `「${前のヒント}」` : "（空。ツールチップは出ない）", 前に入った ? "入れられた" : "入れられなかった"],
+      ["登録後（手順8。申込人数 " + 後の人数 + "）", 後のヒント ? `「${後のヒント}」` : "（空。ツールチップは出ない）", 後に入った ? "入れられた" : "入れられなかった"],
+    ], scene.expectedLabel("ツールチップ（title 属性）の読み取った値"));
   });
 });

@@ -70,6 +70,10 @@ caseTest("IT-M14-09-003", async ({ page, notes, step, expected }) => {
     const rows = await list.行();
     names = rows.map((r) => r.フォーマット名);
     ids = rows.map((r) => r.フォーマットID);
+    // 画像の読み方: 削除済みにしたのは、このケースのために作った実行の印つきの行。一覧に同じ名前の既存の行があれば、それは別のフォーマット
+    const 既存 = rows.filter((r) => r.フォーマット名 === "レガシー / Legacy").map((r) => `ID ${r.フォーマットID}`);
+    note(`削除済みにしたフォーマットは「${名("レガシー")} / ${名("Legacy")}」（ID ${D}。実行の印つき）。` +
+      (既存.length ? `一覧に出ている「レガシー / Legacy」（${既存.join("、")}）は、もとから登録されている別のフォーマットで、削除済みの行ではない` : "一覧に「レガシー / Legacy」の名前の行は無い"));
   });
   await expected(async () => {
     expect.soft(names.length, "一覧の行が読み込まれている（行の数）").toBeGreaterThan(0);

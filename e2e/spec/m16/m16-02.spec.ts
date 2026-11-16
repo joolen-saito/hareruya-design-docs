@@ -6,14 +6,13 @@
  * 名前を決めたファイルを置く準備は、ケースの冒頭（手順の前）で試験店舗へ画面からアップロードして用意する（ファイル名は画面が採番する）。
  * 実装しないケース: 006・007（2000件・2001件の画像。大量のデータ）。
  */
+import fs from "node:fs";
 import { Page, test } from "@playwright/test";
 import { CaseCtx, caseTest, expect } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { TopBannerPage, URLのパス, ファイル名, 全て, 画像のURLを開く, 画像の種別, 画像の種別を見る, 準備のアップロード, 店舗の店名と略称 } from "../../pages/admin/m16_02_top_banner";
 import { M1602_ADMIN, 入力ファイル, 店舗A, 店舗B, 店舗C } from "../../seeds/m16-02";
 
-const トーナメントセンター東京 = 店舗A.店名;
-const 結合試験店舗 = 店舗B.店名;
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 追加分 = (前: string[], 後: string[]) => 後.filter((u) => !前.includes(u));
@@ -42,6 +41,28 @@ async function 中身の種別(page: Page, url: string): Promise<画像の種別
   if (!res || !res.ok()) return "読めない";
   return 画像の種別を見る(await res.body());
 }
+
+type 結果 = Awaited<ReturnType<TopBannerPage["アップロードを押す"]>>;
+
+/** 追加された画像のうち、中身が選んだファイルとバイト単位で同じもの（同じ試験店舗へほかのケースが並べて上げた画像と見分ける） */
+async function 同じ中身の画像(page: Page, urls: string[], file: string): Promise<string[]> {
+  const want = fs.readFileSync(file);
+  const out: string[] = [];
+  for (const u of urls) {
+    const res = await page.context().request.get(u).catch(() => null);
+    if (res && res.ok() && Buffer.from(await res.body()).equals(want)) out.push(u);
+  }
+  return out;
+}
+
+/** アップロードが通ったこと（転送の応答 303 と「アップロードしました」） */
+function 通ったことを確かめる(r: 結果 | undefined, 何を: string): void {
+  expect.soft(r?.送った, `${何を}: 要求を送った`).toBe(true);
+  expect.soft(r?.応答, `${何を}: アップロードが受け付けられて転送される（応答 303）`).toBe(303);
+  expect.soft((r?.成功 ?? []).join(" "), `${何を}: 「アップロードしました」の表示`).toContain("アップロードしました");
+}
+
+const 中身で数えた注記 = "同じ試験店舗へはほかのケースも同じ画像を上げるので、増えた画像のうち、選んだファイルとバイト単位で同じ中身のものを数えた";
 
 // ---- 001 初期値 ----
 
@@ -83,8 +104,9 @@ caseTest("IT-M16-02-008", async ({ page, step, expected }) => {
 
 // ---- 009・022 アップロードした画像のURL ----
 
-function アップロードして開く(店名: string, 略称: string) {
+function アップロードして開く(店: () => { 店名: string; 略称: string }) {
   return async ({ page, step, expected }: CaseCtx) => {
+    const { 店名, 略称 } = 店();
     const p = await 開く(page);
     let 前: string[] = [];
     let 追加: string[] = [];
@@ -92,17 +114,21 @@ function アップロードして開く(店名: string, 略称: string) {
     await step(1, async () => { await p.開く(); 前 = await p.画像のURL(); });
     await step(2, async () => { await p.アップロード欄の店舗を選ぶ(店名); });
     await step(3, async () => { await p.ファイルを選ぶ(入力ファイル("m1602-valid.png")); });
-    await step(4, async () => { 結果の注記("アップロード", await p.アップロードを押す()); });
+    let r結果: 結果 | undefined;
+    await step(4, async () => { r結果 = await p.アップロードを押す(); 結果の注記("アップロード", r結果); });
     await step(5, async () => {
-      追加 = 追加分(前, await p.画像のURL());
-      note(`アップロードの前の一覧（全て）にあった画像: ${前.length}件。アップロードのあとの一覧（「アップロードした店舗」は${await p.絞り込みの値()}）に増えた画像: ${追加.join("、") || "なし"}`);
-      if (追加.length === 0) throw new Error("アップロードのあとの画像一覧に、追加された画像が無い");
+      const 増えた = 追加分(前, await p.画像のURL());
+      追加 = await 同じ中身の画像(page, 増えた, 入力ファイル("m1602-valid.png"));
+      note(`アップロードの前の一覧（全て）にあった画像: ${前.length}件。アップロードのあとの一覧（「アップロードした店舗」は${await p.絞り込みの値()}）に増えた画像: ${増えた.join("、") || "なし"}。うち選んだ valid.png と同じ中身: ${追加.join("、") || "なし"}（${中身で数えた注記}）`);
+      if (追加.length === 0) throw new Error("アップロードのあとの画像一覧に、選んだ valid.png と同じ中身の追加された画像が無い");
       const r = await 画像のURLを開く(page, 追加[0]);
       開いた = r;
       await test.info().attach("新しいタブで開いた画像", { body: await r.開いたタブ.screenshot(), contentType: "image/png" }).catch(() => {});
       await r.開いたタブ.close();
     });
     await expected(async () => {
+      通ったことを確かめる(r結果, "アップロード");
+      expect.soft(追加.length, "増えた画像のうち、選んだ valid.png と同じ中身の画像の数").toBe(1);
       const r = 開いた as { 応答: number | null; 種類: string; 種別: 画像の種別 } | null;
       expect.soft(r?.応答 ?? null, "追加された画像のURLを開いた応答").toBe(200);
       expect.soft(r?.種別 ?? "開けない", "追加された画像のURLの中身（画像として参照できる）").toBe("PNG");
@@ -113,8 +139,8 @@ function アップロードして開く(店名: string, 略称: string) {
   };
 }
 
-caseTest("IT-M16-02-009", アップロードして開く(トーナメントセンター東京, 店舗A.略称));
-caseTest("IT-M16-02-022", アップロードして開く(結合試験店舗, 店舗B.略称));
+caseTest("IT-M16-02-009", アップロードして開く(() => 店舗A));
+caseTest("IT-M16-02-022", アップロードして開く(() => 店舗B));
 
 // ---- 010 GIF・JPEG・PNG ----
 
@@ -123,24 +149,31 @@ caseTest("IT-M16-02-010", async ({ page, step, expected }) => {
   let 前: string[] = [];
   let 後: string[] = [];
   const 種別: string[] = [];
+  const 結果たち: { name: string; r: 結果 }[] = [];
+  const 自分の: { name: string; urls: string[] }[] = [];
   const 送る = async (name: string) => {
     note(`「${name}」を選んだときのアップロード欄の「店舗」: ${await p.アップロード欄の店舗の値()}`);
     await p.ファイルを選ぶ(入力ファイル(name));
-    結果の注記(`「${name}」のアップロード`, await p.アップロードを押す());
+    const r = await p.アップロードを押す();
+    結果たち.push({ name, r });
+    結果の注記(`「${name}」のアップロード`, r);
   };
   await step(1, async () => { await p.開く(); 前 = await p.画像のURL(); });
-  await step(2, async () => { await p.アップロード欄の店舗を選ぶ(トーナメントセンター東京); });
+  await step(2, async () => { await p.アップロード欄の店舗を選ぶ(店舗A.店名); });
   await step(3, async () => { await 送る("m1602-valid.gif"); });
   await step(4, async () => { await 送る("m1602-valid.jpeg"); });
   await step(5, async () => { await 送る("m1602-valid.png"); });
   await step(6, async () => {
     後 = await p.画像のURL();
-    for (const u of 追加分(前, 後)) 種別.push(await 中身の種別(page, u));
-    note(`アップロードの前の一覧（全て）: ${前.length}件／あとの一覧（「アップロードした店舗」は${await p.絞り込みの値()}）: ${後.length}件。増えた画像と中身の種別: ${追加分(前, 後).map((u, i) => `${u}（${種別[i]}）`).join("、") || "なし"}`);
+    for (const name of ["m1602-valid.gif", "m1602-valid.jpeg", "m1602-valid.png"]) 自分の.push({ name, urls: await 同じ中身の画像(page, 追加分(前, 後), 入力ファイル(name)) });
+    for (const u of 自分の.flatMap((x) => x.urls)) 種別.push(await 中身の種別(page, u));
+    note(`アップロードの前の一覧（全て）: ${前.length}件／あとの一覧（「アップロードした店舗」は${await p.絞り込みの値()}）: ${後.length}件。増えた画像: ${追加分(前, 後).join("、") || "なし"}。選んだファイルと同じ中身の画像: ${自分の.map((x) => `${x.name}→${x.urls.join("、") || "なし"}`).join("／")}（${中身で数えた注記}）`);
   });
   await expected(async () => {
-    const 追加 = 追加分(前, 後);
-    expect.soft(追加.length, "トップバナー用フォルダの画像一覧に追加された画像の数").toBe(3);
+    for (const { name, r } of 結果たち) 通ったことを確かめる(r, `「${name}」のアップロード`);
+    for (const { name, urls } of 自分の) expect.soft(urls.length, `追加された「${name}」と同じ中身の画像の数`).toBe(1);
+    const 追加 = 自分の.flatMap((x) => x.urls);
+    expect.soft(追加.length, "トップバナー用フォルダの画像一覧に追加された（選んだ3ファイルの）画像の数").toBe(3);
     expect.soft([...種別].sort().join("・"), "追加された画像の中身の種別").toBe("GIF・JPEG・PNG");
     expect.soft(追加.every((u) => URLのパス(u).includes("/banner/top/")), "追加された画像がトップバナー用フォルダにある").toBe(true);
   });
@@ -153,21 +186,27 @@ caseTest("IT-M16-02-011", async ({ page, step, expected }) => {
   let 前: string[] = [];
   let 追加: string[] = [];
   await step(1, async () => { await p.開く(); 前 = await p.画像のURL(); });
-  await step(2, async () => { await p.アップロード欄の店舗を選ぶ(トーナメントセンター東京); });
+  await step(2, async () => { await p.アップロード欄の店舗を選ぶ(店舗A.店名); });
+  let r1: 結果 | undefined, r2: 結果 | undefined;
   await step(3, async () => {
     await p.ファイルを選ぶ(入力ファイル("OriginalBanner.PNG"));
-    結果の注記("1回目のアップロード", await p.アップロードを押す());
+    r1 = await p.アップロードを押す();
+    結果の注記("1回目のアップロード", r1);
   });
   await step(4, async () => {
     note(`2回目に選んだときのアップロード欄の「店舗」: ${await p.アップロード欄の店舗の値()}`);
     await p.ファイルを選ぶ(入力ファイル("OriginalBanner.PNG"));
-    結果の注記("2回目のアップロード", await p.アップロードを押す());
+    r2 = await p.アップロードを押す();
+    結果の注記("2回目のアップロード", r2);
   });
   await step(5, async () => {
-    追加 = 追加分(前, await p.画像のURL());
-    note(`あとの一覧（「アップロードした店舗」は${await p.絞り込みの値()}）に追加された画像のURL: ${追加.join("、") || "なし"}`);
+    const 増えた = 追加分(前, await p.画像のURL());
+    追加 = await 同じ中身の画像(page, 増えた, 入力ファイル("OriginalBanner.PNG"));
+    note(`あとの一覧（「アップロードした店舗」は${await p.絞り込みの値()}）に追加された画像のURL: ${増えた.join("、") || "なし"}。うち OriginalBanner.PNG と同じ中身: ${追加.join("、") || "なし"}（${中身で数えた注記}）`);
   });
   await expected(async () => {
+    通ったことを確かめる(r1, "1回目のアップロード");
+    通ったことを確かめる(r2, "2回目のアップロード");
     const 名前 = 追加.map(ファイル名);
     expect.soft(追加.length, "追加された画像の数").toBe(2);
     expect.soft(new Set(名前).size, "2件のファイル名が互いに異なる（異なる名前の数）").toBe(2);
@@ -183,16 +222,20 @@ caseTest("IT-M16-02-012", async ({ page, step, expected }) => {
   let 前: string[] = [];
   let 後: string[] = [];
   await step(1, async () => { await p.開く(); 前 = await p.画像のURL(); });
-  await step(2, async () => { await p.アップロード欄の店舗を選ぶ(トーナメントセンター東京); });
+  await step(2, async () => { await p.アップロード欄の店舗を選ぶ(店舗A.店名); });
   await step(3, async () => { await p.ファイルを選ぶ(入力ファイル("m1602-520000.png")); });
-  await step(4, async () => { 結果の注記("アップロード", await p.アップロードを押す()); });
+  let r結果: 結果 | undefined;
+  let 追加: string[] = [];
+  await step(4, async () => { r結果 = await p.アップロードを押す(); 結果の注記("アップロード", r結果); });
   await step(5, async () => {
     後 = await p.画像のURL();
-    note(`アップロードの前の一覧（全て）: ${前.length}件／あとの一覧（「アップロードした店舗」は${await p.絞り込みの値()}）: ${後.length}件。増えた画像: ${追加分(前, 後).join("、") || "なし"}`);
+    追加 = await 同じ中身の画像(page, 追加分(前, 後), 入力ファイル("m1602-520000.png"));
+    note(`アップロードの前の一覧（全て）: ${前.length}件／あとの一覧（「アップロードした店舗」は${await p.絞り込みの値()}）: ${後.length}件。増えた画像: ${追加分(前, 後).join("、") || "なし"}。うち 520000 バイトの limit.png と同じ中身: ${追加.join("、") || "なし"}（${中身で数えた注記}）`);
   });
   await expected(async () => {
-    const 追加 = 追加分(前, 後);
-    expect.soft(追加.length, "トップバナー用フォルダの画像一覧に追加された画像の数").toBe(1);
+    通ったことを確かめる(r結果, "520000バイトの画像のアップロード");
+    expect.soft(fs.statSync(入力ファイル("m1602-520000.png")).size, "選んだファイルの大きさ（520000バイト）").toBe(520000);
+    expect.soft(追加.length, "トップバナー用フォルダの画像一覧に追加された、選んだ 520000 バイトの画像の数").toBe(1);
     expect.soft(追加.every((u) => URLのパス(u).includes("/banner/top/")), "追加された画像がトップバナー用フォルダにある").toBe(true);
   });
 });
@@ -206,8 +249,8 @@ caseTest("IT-M16-02-015", async ({ page, step, expected }) => {
   let 見えている = false;
   let 画像設定画面 = false;
   await step(1, async () => { await p.開く(); });
-  await step(2, async () => { await p.絞り込みを選ぶ(トーナメントセンター東京); });
-  await step(3, async () => { await p.アップロード欄の店舗を選ぶ(トーナメントセンター東京); });
+  await step(2, async () => { await p.絞り込みを選ぶ(店舗A.店名); });
+  await step(3, async () => { await p.アップロード欄の店舗を選ぶ(店舗A.店名); });
   await step(4, async () => { await p.ファイルを選ぶ(入力ファイル("m1602-valid.png")); });
   await step(5, async () => { 結果の注記("アップロード", await p.アップロードを押す()); });
   await step(6, async () => {
@@ -218,7 +261,7 @@ caseTest("IT-M16-02-015", async ({ page, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(画像設定画面, "戻った画面が画像設定画面").toBe(true);
-    expect.soft(絞り込み, "戻った画面の「アップロードした店舗」").toBe(トーナメントセンター東京);
+    expect.soft(絞り込み, "戻った画面の「アップロードした店舗」").toBe(店舗A.店名);
     expect.soft(印, "戻った画面のアドレスの位置の印（アップロード欄）").toBe("#upload_wrap");
     expect.soft(見えている, "アップロード欄が画面の見えている範囲にある").toBe(true);
   });
@@ -230,7 +273,7 @@ caseTest("IT-M16-02-016", async ({ page, step, expected }) => {
   const p = await 開く(page);
   let 応答: number | null = null;
   await step(1, async () => { await p.開く(); });
-  await step(2, async () => { await p.アップロード欄の店舗を選ぶ(トーナメントセンター東京); });
+  await step(2, async () => { await p.アップロード欄の店舗を選ぶ(店舗A.店名); });
   await step(3, async () => { await p.ファイルを選ぶ(入力ファイル("m1602-valid.png")); });
   await step(4, async () => {
     await p.アップロードのトークンを変える("invalid-token");
@@ -279,11 +322,11 @@ caseTest("IT-M16-02-003", async ({ page, step, expected }) => {
   const b = await 用意する(p, 店舗B, "/banner/top/zz/filter-other.png-003");
   let 一覧: string[] = [];
   await step(1, async () => { await p.開く(); });
-  await step(2, async () => { await p.絞り込みを選ぶ(トーナメントセンター東京); });
+  await step(2, async () => { await p.絞り込みを選ぶ(店舗A.店名); });
   await step(3, async () => { 一覧 = await p.画像のURL(); });
   await expected(async () => {
-    expect.soft(一覧, `「${トーナメントセンター東京}」の絞り込みの一覧に、${店舗A.店名}の画像`).toContain(a);
-    expect.soft(一覧, `「${トーナメントセンター東京}」の絞り込みの一覧に、${店舗B.店名}の画像は無い`).not.toContain(b);
+    expect.soft(一覧, `「${店舗A.店名}」の絞り込みの一覧に、${店舗A.店名}の画像`).toContain(a);
+    expect.soft(一覧, `「${店舗A.店名}」の絞り込みの一覧に、${店舗B.店名}の画像は無い`).not.toContain(b);
     expect.soft(一覧.filter((u) => !配下(店舗A.略称).test(URLのパス(u))), `絞り込みの一覧の、「/banner/top/${店舗A.略称}/」配下でない画像`).toEqual([]);
   });
 });
@@ -297,7 +340,7 @@ caseTest("IT-M16-02-004", async ({ page, step, expected }) => {
   let 表示URL = "";
   let 開いた: { 応答: number | null; 種類: string; 種別: 画像の種別 } | null = null;
   await step(1, async () => { await p.開く(); });
-  await step(2, async () => { await p.絞り込みを選ぶ(トーナメントセンター東京); });
+  await step(2, async () => { await p.絞り込みを選ぶ(店舗A.店名); });
   await step(3, async () => {
     const 行 = p.行(a);
     await expect(行, "追加した画像の行").toHaveCount(1);
@@ -351,7 +394,7 @@ caseTest("IT-M16-02-017", async ({ page, step, expected }) => {
   let 一覧: string[] = [];
   let ダイアログ: string | null = null;
   await step(1, async () => { await p.開く(); });
-  await step(2, async () => { await p.絞り込みを選ぶ(トーナメントセンター東京); });
+  await step(2, async () => { await p.絞り込みを選ぶ(店舗A.店名); });
   await step(3, async () => { await expect(p.削除リンク(p.行(del)), "削除する画像の「削除」").toBeVisible(); note(確認の注記); });
   await step(4, async () => { ダイアログ = await p.削除してOKを押す(p.行(del)); });
   await step(5, async () => { 一覧 = await p.画像のURL(); });
@@ -372,7 +415,7 @@ caseTest("IT-M16-02-018", async ({ page, step, expected }) => {
   let 見えている = false;
   let 画像設定画面 = false;
   await step(1, async () => { await p.開く(); });
-  await step(2, async () => { await p.絞り込みを選ぶ(トーナメントセンター東京); });
+  await step(2, async () => { await p.絞り込みを選ぶ(店舗A.店名); });
   await step(3, async () => { await expect(p.削除リンク(p.行(del)), "削除する画像の「削除」").toBeVisible(); note(確認の注記); });
   await step(4, async () => { await p.削除してOKを押す(p.行(del)); });
   await step(5, async () => {
@@ -383,7 +426,7 @@ caseTest("IT-M16-02-018", async ({ page, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(画像設定画面, "戻った画面が画像設定画面").toBe(true);
-    expect.soft(絞り込み, "戻った画面の「アップロードした店舗」").toBe(トーナメントセンター東京);
+    expect.soft(絞り込み, "戻った画面の「アップロードした店舗」").toBe(店舗A.店名);
     expect.soft(印, "戻った画面のアドレスの位置の印（アップロード欄）").toBe("#upload_wrap");
     expect.soft(見えている, "アップロード欄が画面の見えている範囲にある").toBe(true);
   });
@@ -403,7 +446,7 @@ function 存在しない削除(全てから: boolean, 消えた名前: string, �
     await step(1, async () => { await p.開く(); });
     await step(2, async () => {
       if (全てから) 絞り込み = await p.絞り込みの値();
-      else await p.絞り込みを選ぶ(トーナメントセンター東京);
+      else await p.絞り込みを選ぶ(店舗A.店名);
     });
     await step(3, async () => {
       const 前 = await p.削除の対象を変える(p.行(keep), `banner/top/${店舗A.略称}/${消えた名前}`);
@@ -424,7 +467,7 @@ function 存在しない削除(全てから: boolean, 消えた名前: string, �
     });
     await expected(async () => {
       expect.soft(画像設定画面, "戻った画面が画像設定画面（エラー画面でない）").toBe(true);
-      expect.soft(絞り込み, "戻った画面の「アップロードした店舗」").toBe(全てから ? 全て : トーナメントセンター東京);
+      expect.soft(絞り込み, "戻った画面の「アップロードした店舗」").toBe(全てから ? 全て : 店舗A.店名);
       expect.soft(一覧, "もとの画像が一覧に残っている").toContain(keep);
       expect.soft(印, "戻った画面のアドレスの位置の印（アップロード欄）").toBe("#upload_wrap");
       expect.soft(見えている, "アップロード欄が画面の見えている範囲にある").toBe(true);
@@ -459,7 +502,7 @@ caseTest("IT-M16-02-025", async ({ page, step, expected }) => {
   const a = await 用意する(p, 店舗A, "/banner/top/tc/m1602-025-banner.png");
   let 日時 = "";
   await step(1, async () => { await p.開く(); });
-  await step(2, async () => { await p.絞り込みを選ぶ(トーナメントセンター東京); });
+  await step(2, async () => { await p.絞り込みを選ぶ(店舗A.店名); });
   await step(3, async () => { 日時 = await p.更新日時(p.行(a)); note(`追加した画像の「更新日時」: 「${日時}」`); });
   await expected(async () => {
     expect.soft(日時, "「更新日時」が空欄でない").not.toBe("");
@@ -484,7 +527,8 @@ function 全てからアップロード(先: { 店名: string; 略称: string },
     await step(2, async () => { 初期 = await p.絞り込みの値(); 前 = await p.画像のURL(); });
     await step(3, async () => { await p.アップロード欄の店舗を選ぶ(先.店名); });
     await step(4, async () => { await p.ファイルを選ぶ(入力ファイル("m1602-valid.png")); });
-    await step(5, async () => { note(戻りの注記(await p.アップロードを押す())); });
+    let r結果: 結果 | undefined;
+    await step(5, async () => { r結果 = await p.アップロードを押す(); note(戻りの注記(r結果)); });
     await step(6, async () => {
       画像設定画面 = await p.画像設定画面か();
       絞り込み = 画像設定画面 ? await p.絞り込みの値() : "（画像設定画面でない）";
@@ -498,9 +542,12 @@ function 全てからアップロード(先: { 店名: string; 略称: string },
       expect.soft(絞り込み, "戻った画面の「アップロードした店舗」").toBe(全て);
       expect.soft(印, "戻った画面のアドレスの位置の印（アップロード欄）").toBe("#upload_wrap");
       if (画像2件を見る) {
-        const 追加 = 追加分(前, 後);
+        通ったことを確かめる(r結果, "アップロード");
+        // 同じ試験店舗へほかのケースが上げた画像と見分けるため、選んだ先の店舗の配下に増えた画像に絞って数える
+        const 追加 = 追加分(前, 後).filter((u) => 配下(先.略称).test(URLのパス(u)));
+        note(`増えた画像のうち「/banner/top/${先.略称}/」配下のもの: ${追加.join("、") || "なし"}（ほかの配下に増えたもの: ${追加分(前, 後).filter((u) => !配下(先.略称).test(URLのパス(u))).join("、") || "なし"}）`);
         expect.soft(後, `あとの一覧に、もとの${店舗A.店名}の画像`).toContain(既存);
-        expect.soft(追加.length, "あとの一覧に増えた画像の数").toBe(1);
+        expect.soft(追加.length, `あとの一覧の「/banner/top/${先.略称}/」配下に増えた画像の数`).toBe(1);
         expect.soft(追加.every((u) => 配下(先.略称).test(URLのパス(u))), `増えた画像が「/banner/top/${先.略称}/」配下`).toBe(true);
       }
     });
@@ -546,8 +593,8 @@ caseTest("IT-M16-02-028", async ({ page, step, expected }) => {
   let 絞り込み = "";
   let 画像設定画面 = false;
   await step(1, async () => { await p.開く(); });
-  await step(2, async () => { await p.絞り込みを選ぶ(トーナメントセンター東京); 前 = await p.画像のURL(); });
-  await step(3, async () => { await p.アップロード欄の店舗を選ぶ(結合試験店舗); });
+  await step(2, async () => { await p.絞り込みを選ぶ(店舗A.店名); 前 = await p.画像のURL(); });
+  await step(3, async () => { await p.アップロード欄の店舗を選ぶ(店舗B.店名); });
   await step(4, async () => { await p.ファイルを選ぶ(入力ファイル("m1602-valid.png")); });
   await step(5, async () => { note(戻りの注記(await p.アップロードを押す())); });
   await step(6, async () => {
@@ -558,8 +605,8 @@ caseTest("IT-M16-02-028", async ({ page, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(画像設定画面, "戻った画面が画像設定画面").toBe(true);
-    expect.soft(絞り込み, "戻った画面の「アップロードした店舗」").toBe(トーナメントセンター東京);
-    expect.soft(後, "画像一覧が、アップロードの前と同じ（結合試験店舗にアップロードした画像は表示されない）").toEqual(前);
+    expect.soft(絞り込み, "戻った画面の「アップロードした店舗」").toBe(店舗A.店名);
+    expect.soft(後, "画像一覧が、アップロードの前と同じ（店舗B.店名にアップロードした画像は表示されない）").toEqual(前);
     expect.soft(後.filter((u) => !配下(店舗A.略称).test(URLのパス(u))), "画像一覧の、試験店舗A以外の画像").toEqual([]);
   });
 });
@@ -623,7 +670,7 @@ caseTest("IT-M16-02-034", async ({ page, step, expected }) => {
   const b = await 用意する(p, 店舗B, "/banner/top/zz/m1602-cb034-zz.png");
   let 一覧: string[] = [];
   await step(1, async () => { await p.開く(); });
-  await step(2, async () => { await p.絞り込みを選ぶ(結合試験店舗); });
+  await step(2, async () => { await p.絞り込みを選ぶ(店舗B.店名); });
   await step(3, async () => { 一覧 = await p.画像のURL(); });
   await expected(async () => {
     expect.soft(一覧, `一覧に、${店舗B.店名}の画像`).toContain(b);

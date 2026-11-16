@@ -6,6 +6,7 @@ import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
 import { DeckEditPage, 前面 } from "../../pages/front/f06_16_deck_entry";
 import * as DB from "../../db/f06_16";
 import { 会員一覧, 大会一覧 } from "../../seeds/f06-16";
+import { 店名 } from "../../pages/admin/f06_16_setup";
 import "../../seeds/f06-16";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
@@ -28,7 +29,9 @@ caseTest("IT-F06-16-002", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(await page.getByText(/DCI/).count(), "DCIナンバーの項目の数").toBe(0);
     expect.soft(await page.locator("dt, label, th, h3, h4").filter({ hasText: /^\s*名前\s*$/ }).count(), "「名前」の項目の数").toBe(0);
-    expect.soft(await page.getByText("使い方").count(), "「使い方」リンクの数").toBe(0);
+    expect.soft(await page.getByText("使い方").count(), "「使い方」の文字の数").toBe(0);
+    // 「使い方」リンクは、画面下部の説明欄（MTGアリーナからデッキリストをインポートする方法）へのページ内リンク。文字が無くても、説明欄へのページ内リンク（アイコンだけのものも）が見えていれば「使い方」リンクが表示されている
+    expect.soft(await page.locator('a[href="#how-to-import"]:visible').count(), "説明欄へのページ内リンク（「使い方」リンク）の数").toBe(0);
     expect.soft(await page.getByText("MTGアリーナからデッキリストをインポートする方法").count(), "「MTGアリーナからデッキリストをインポートする方法」の説明の数").toBe(0);
   });
 });
@@ -41,13 +44,14 @@ caseTest("IT-F06-16-003", async ({ page, step, expected }) => {
   await step(2, async () => {
     大会名 = (await e.大会名.innerText()).trim();
     情報 = (await e.大会情報.innerText()).replace(/\s+/g, " ").trim();
-    画面 = (await page.locator("main, #contents, body").first().innerText()).replace(/\s+/g, " ");
+    // 画面の本体（大会デッキ登録編集のブロック）だけを読む。ヘッダー・フッターなどにある名前を取り違えない
+    画面 = (await page.locator("#contents.p-hareruya-deckentry-edit").innerText()).replace(/\s+/g, " ");
   });
   await expected(async () => {
     expect.soft(大会名, "大会名（フォーマットつき）").toBe(`${d.大会名}（Standard）`);
-    expect.soft(情報, "開催店舗").toContain("晴れる屋2");
+    expect.soft(情報, "開催店舗").toContain(店名);
     expect.soft(/2099[-/]0?12[-/]0?20\s+10:00/.test(情報), `開催日時（2099-12-20 10:00。区切りは-と/を同じとみなす）。実際: ${情報}`).toBe(true);
-    expect.soft(画面, "プレイヤー名").toContain("YAMADA TARO");
+    expect.soft(画面, "プレイヤー名（大会デッキ登録編集画面の本体に表示）").toContain("YAMADA TARO");
   });
 });
 
@@ -377,6 +381,8 @@ caseTest("IT-F06-16-056", async ({ page, step, expected }) => {
   let 候補 = -1;
   await step(3, async () => {
     await e.カード名入力.fill("F0616-056-Ghost");
+    // サジェストはカード名の一覧を読み込んでから出る。読み込みが終わるのを待ってから、候補が出ていないことを見る
+    await page.waitForLoadState("networkidle", { timeout: 20_000 }).catch(() => undefined);
     await page.waitForTimeout(1500);
     候補 = await e.サジェスト候補.count();
   });

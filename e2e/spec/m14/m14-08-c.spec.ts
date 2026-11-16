@@ -40,9 +40,13 @@ caseTest("IT-M14-08-047", async ({ page, notes, step, expected }) => {
   await step(4, async () => { await 編集画面を開く(page, id); });
   await step(5, async () => { await page.locator('a.btn-ec-delete[data-bs-target="#DeleteModal"]').click({ timeout: 20_000 }); await expect(page.locator("#DeleteModal"), "削除の確認ポップアップ").toBeVisible(); });
   await step(6, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 30_000 }), page.locator('#DeleteModal [data-method="delete"]').click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator('#DeleteModal [data-method="delete"]').click({ timeout: 20_000, noWaitAfter: true })]);
   });
   await step(7, async () => { await menu.開く(); });
   await step(8, async () => { await menu.メニューを押す(); 削除後 = await menu.選択肢(); });
-  await expected(async () => { expect.soft(削除後.includes(名), "削除したカードセットが選択肢に含まれない（含まれるのは不合格）").toBe(false); });
+  await expected(async () => {
+    // メニューが読み込めず選択肢が空のときに「含まれない」で合格にしない（見出しの行のほかに、ほかのカードセットの選択肢が出ていること）
+    expect.soft(削除後.length, "削除後: カードセット選択メニューの選択肢が読み込まれている（見出しのほかに選択肢がある）").toBeGreaterThan(1);
+    expect.soft(削除後.includes(名), "削除したカードセットが選択肢に含まれない（含まれるのは不合格）").toBe(false);
+  });
 });

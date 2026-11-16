@@ -1,9 +1,11 @@
 /** M14-02 カード情報CSV出力項目。正本: cases/M14-02_test_cases.tsv */
 import { test, Page } from "@playwright/test";
 import { caseTest, CaseBody, expect } from "../../lib/case";
-import { csvRecords } from "../../lib/csv";
+import { csvRecords, parseCsv } from "../../lib/csv";
+import { scene, ダウンロードしたCSVの内容を撮る } from "../../lib/evidence_other";
 import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
+import { exceptEnvBanners } from "../../pages/admin/common";
 import { CardSearchPage, downloadedText } from "../../pages/admin/m14_card";
 import { M1402_ADMIN, 詳細ID } from "../../seeds/m14-02";
 
@@ -11,7 +13,7 @@ const note = (m: string) => { test.info().annotations.push({ type: "手順の注
 const セット = "M1402-FG-SET";
 
 /** 「CSV出力」を押し、ダウンロードされたCSVの行（列名→値）を返す。確認の表示（ダイアログ）が出たときは文も返す */
-async function CSV出力を押す(page: Page, 待ち = 60_000): Promise<{ 行: Record<string, string>[] | null; ダイアログ: string }> {
+async function CSV出力を押す(page: Page, 待ち = 60_000): Promise<{ 行: Record<string, string>[] | null; 生?: string[][]; ダイアログ: string }> {
   let ダイアログ = "";
   const onDialog = (d: import("@playwright/test").Dialog) => { ダイアログ = d.message(); void d.accept(); };
   page.on("dialog", onDialog);
@@ -19,7 +21,8 @@ async function CSV出力を押す(page: Page, 待ち = 60_000): Promise<{ 行: R
     const dl = page.waitForEvent("download", { timeout: 待ち }).catch(() => null);
     await page.locator("#form_bulk button.action-submit").filter({ hasText: /^\s*CSV出力\s*$/ }).click({ timeout: 20_000, noWaitAfter: true });
     const d = await dl;
-    return { 行: d ? csvRecords(await downloadedText(d)) : null, ダイアログ };
+    const text = d ? await downloadedText(d) : null;
+    return { 行: text !== null ? csvRecords(text) : null, 生: text !== null ? parseCsv(text) : undefined, ダイアログ };
   } finally { page.off("dialog", onDialog); }
 }
 
@@ -29,6 +32,7 @@ function 出力して確かめる(token: string, 呼び名: string | null, 確�
     await loginAdmin(page, M1402_ADMIN);
     const l = new CardSearchPage(page);
     let 行: Record<string, string>[] = [];
+    let 生: string[][] = [];
     await step(1, async () => { await l.open(); await l.キーワードで検索する(token); });
     await step(2, async () => {
       if (呼び名) await l.カードを選択する([notes.get(呼び名)]);
@@ -38,8 +42,12 @@ function 出力して確かめる(token: string, 呼び名: string | null, 確�
       const r = await CSV出力を押す(page);
       expect(r.行, "CSVがダウンロードされた").not.toBeNull();
       行 = r.行 ?? [];
+      生 = r.生 ?? [];
     });
-    await step(4, async () => { expect(行.length, "ダウンロードされたCSVのデータ行数").toBeGreaterThan(0); });
+    await step(4, async () => {
+      expect(行.length, "ダウンロードされたCSVのデータ行数").toBeGreaterThan(0);
+      await ダウンロードしたCSVの内容を撮る(page, 生, scene.stepLabel(4, "ダウンロードしたCSVの内容"));
+    });
     await expected(async () => {
       expect.soft(行.length, "CSVのデータ行数").toBeGreaterThan(0);
       確かめ(行, notes);
@@ -80,7 +88,7 @@ caseTest("IT-M14-02-020", 出力して確かめる(rc("M1402-FG020"), "〔カー
 async function 未選択で出力(page: Page): Promise<{ ダウンロード: boolean; ダイアログ: string; 上部メッセージ: number }> {
   const r = await CSV出力を押す(page, 4_000);
   await page.waitForTimeout(500);
-  return { ダウンロード: r.行 !== null, ダイアログ: r.ダイアログ, 上部メッセージ: await page.locator(".alert:visible").count() };
+  return { ダウンロード: r.行 !== null, ダイアログ: r.ダイアログ, 上部メッセージ: await exceptEnvBanners(page.locator(".alert:visible")).count() };
 }
 
 caseTest("IT-M14-02-022", async ({ page, step, expected }) => {
@@ -134,7 +142,7 @@ caseTest("IT-M14-02-024", async ({ page, step, expected }) => {
     const rows = r.行 ?? [];
     expect.soft(rows.map((x) => x["card_detail_id"]), "CSVのカード詳細ID").toEqual([詳細ID("2402024001")]);
     expect.soft(rows.map((x) => x["name_en"]), "CSVのカード名(英語)").toEqual(["M1402-FG024-Card-A"]);
-    expect.soft(await page.locator(".alert-danger:visible").count(), "表示されたエラーのメッセージの数").toBe(0);
+    expect.soft(await exceptEnvBanners(page.locator(".alert-danger:visible")).count(), "表示されたエラーのメッセージの数").toBe(0);
   });
   await tab2.close();
 });
@@ -157,7 +165,7 @@ caseTest("IT-M14-02-025", async ({ page, step, expected }) => {
   await step(3, async () => { r = await CSV出力を押す(page, 8_000); await page.waitForTimeout(500); });
   await expected(async () => {
     expect.soft(r.行, "ダウンロードされたCSV").toBeNull();
-    expect.soft(await page.locator(".alert:visible").count(), "管理画面上部に表示されたメッセージの数").toBeGreaterThan(0);
+    expect.soft(await exceptEnvBanners(page.locator(".alert:visible")).count(), "管理画面上部に表示されたメッセージの数").toBeGreaterThan(0);
     expect.soft(await l.form.count(), "カード検索一覧画面の検索欄").toBe(1);
   });
   await tab2.close();

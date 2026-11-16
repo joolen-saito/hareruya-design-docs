@@ -36,10 +36,17 @@ export async function 会員を作る(browser: Browser, notes: { set: (k: string
   } finally { await context.close(); }
   const id = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    await searchCustomer(page, メール);
-    return resultCustomerId(page, メール);
+    // 共有の開発環境では、フロントで登録した直後の会員が会員一覧の検索にすぐ出ないことがある。見つからないときは間をおいて検索し直す（最大で約1分。seeds/f06-member.ts と同じ）
+    let found: string | null = null;
+    for (let i = 0; ; i++) {
+      await searchCustomer(page, メール);
+      found = await resultCustomerId(page, メール);
+      if (found || i >= 5) break;
+      await page.waitForTimeout(10_000);
+    }
+    return found;
   });
-  if (!id) throw new Error(`登録した会員 ${メール} を会員一覧で探せない`);
+  if (!id) throw new Error(`登録した会員 ${メール} を会員一覧で探せない（約1分おいて検索し直しても同じ）`);
   notes.set(会員IDの呼び名, id);
   return id;
 }
@@ -80,7 +87,7 @@ const 記す = (m: string) => reportCurrentSeedIssue(`シード作成時の問�
 // ---- 商品（005・006）: 商品コード F0603-NOTIFY（在庫なし）・F0603-FAVORITE ----
 export function 商品の場所(正本の商品コード: "F0603-NOTIFY" | "F0603-FAVORITE"): { productId: string; classId: string } { return 商品規格(正本の商品コード); }
 
-// ---- 送信元IP（027〜030・054） ----
+// ---- 送信元IP（027・028・030・031・054） ----
 defineSeed("S-F06-03-IP", async () => {
   記す("送信元IPアドレスを固定する試験用のリバースプロキシが無いので、IPアドレスの指定（192.0.2.10 など）は、実行機の送信元IPアドレスのままに読み替えた（IPアドレスごとの区別を確かめるケースは実装していない）");
 });
@@ -89,6 +96,7 @@ defineSeed("S-F06-03-NOMEMBER-054", async () => { /* 会員を作らない。実
 // ---- ログイン試行回数の制限 ----
 defineSeed("S-F06-03-THROTTLE-027", async ({ browser, notes }) => { await 会員を作る(browser, notes, "f0603-throttle-a-027", "ThrottleA!603", "〔会員ID-F0603-027〕"); });
 defineSeed("S-F06-03-THROTTLE-028", async ({ browser, notes }) => { await 会員を作る(browser, notes, "f0603-throttle-a-028", "ThrottleA!603", "〔会員ID-F0603-028〕"); });
+defineSeed("S-F06-03-THROTTLE-031", async ({ browser, notes }) => { await 会員を作る(browser, notes, "f0603-throttle-a-031", "ThrottleA!603", "〔会員ID-F0603-031〕"); });
 defineSeed("S-F06-03-THROTTLE-030", async ({ browser, notes }) => {
   await 会員を作る(browser, notes, "f0603-throttle-a-030", "ThrottleA!603", "〔会員ID-F0603-030A〕");
   await 会員を作る(browser, notes, "f0603-throttle-b-030", "ThrottleB!603", "〔会員ID-F0603-030B〕");

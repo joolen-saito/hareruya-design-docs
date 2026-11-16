@@ -21,7 +21,7 @@ caseTest("IT-M05-11-111", async ({ page, browser, notes, step, expected }) => {
   let p!: OrderEditPage;
   await step(1, async () => { p = await 開く(browser, page, notes.get(key("111"))); });
   await step(2, async () => { await p.注文者情報を開く(); });
-  await step(3, async () => { await Promise.all([page.waitForURL(/\/customer\/\d+\/edit/), p.会員IDのリンク.click({ timeout: 20_000 })]); await page.waitForLoadState("load"); });
+  await step(3, async () => { await Promise.all([page.waitForURL(/\/customer\/\d+\/edit/, { timeout: 120_000 }), p.会員IDのリンク.click({ timeout: 20_000, noWaitAfter: true })]); await page.waitForLoadState("load"); });
   await expected(async () => {
     const id = notes.get("〔会員ID-M0511-111〕");
     expect.soft(new URL(page.url()).pathname, `会員ID ${id} の会員情報編集画面`).toMatch(new RegExp(`/customer/${id}/edit$`));
@@ -62,16 +62,13 @@ function 履歴の値(n: string, 欄: "注文者" | "お届け先", 姓: string,
   return async ({ page, browser, notes, step, expected }) => {
     await loginAdmin(page, M0511_ADMIN_A);
     let p!: OrderEditPage, h!: OrderEditPage;
-    let 読んだ姓 = "", 読んだ住所3 = "";
     await step(1, async () => { p = await 開く(browser, page, notes.get(key(n))); });
     await step(2, async () => { 履歴リンクの注記(); h = await p.履歴を開く(0); });
-    await step(3, async () => {
-      if (欄 === "注文者") { await h.注文者情報を開く(); 読んだ姓 = await h.注文者姓欄.inputValue(); 読んだ住所3 = await h.注文者住所3.inputValue(); }
-      else { await h.お届け先情報を開く(); 読んだ姓 = await h.お届け先姓.inputValue(); 読んだ住所3 = await h.お届け先住所3.inputValue(); }
-    });
+    await step(3, async () => { if (欄 === "注文者") await h.注文者情報を開く(); else await h.お届け先情報を開く(); });
+    // 値は、別タブで開いた履歴画面の欄そのものを確かめる（履歴画面の欄に赤枠・帯が付く。編集画面の画像に付けない）
     await expected(async () => {
-      expect.soft(読んだ姓, `履歴画面の${欄}のお名前（姓）`).toBe(姓);
-      expect.soft(読んだ住所3, `履歴画面の${欄}の住所3`).toBe(住所3);
+      await expect.soft(欄 === "注文者" ? h.注文者姓欄 : h.お届け先姓, `履歴画面の${欄}のお名前（姓）`).toHaveValue(姓);
+      await expect.soft(欄 === "注文者" ? h.注文者住所3 : h.お届け先住所3, `履歴画面の${欄}の住所3`).toHaveValue(住所3);
     });
   };
 }

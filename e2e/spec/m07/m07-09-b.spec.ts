@@ -4,6 +4,7 @@
  * シードは seeds/m07-09-card.ts。依頼者の方針（2026-11-10）で、共有の設定・マスタは書き換えず既存の値に読み替えている:
  * - 本店の高額商品閾値は、いまの閾値1・閾値2 を正本の 300・3000 として読む（商品仕訳の見出し・基準価格もそれに合わせて読む）。
  * - 略称タグ AAA・BBB・COL・ALP は既存の略称タグに、棚番号は既存の棚に、カードは既存のカード詳細に読み替える。
+ *   既存の棚・カードで前提が作れないときは、決まった名前の試験用の棚（M-791〜M-793）・試験カード（M0709-E2E-…・EtoE Alpha …）を1度だけ登録して使い回す。
  * - 注文者名・商品コード・商品名は実行の印つき（lib/run_marker）。手順2の注文者名も印つきの値を入れる。
  * 読み替えの中身はシードの報告（エビデンスの注記）に出る。
  * 実装していないケース: 011・037（備考はDBで設定する定めで、画面から作れない）。
@@ -45,6 +46,11 @@ async function 手順1から5(ctx: CaseCtx, n: string): Promise<PDF> {
   return pdf;
 }
 
+/** ポップアップの戻しリストの、商品名に枝の商品コードを含む明細の行（ポップアップを開いたまま撮り、確かめた行に枠が付く） */
+const ポップアップの行 = (p: PDF, n: string, 枝: string) => p.popup!.locator("tr.data").filter({ hasText: 品コード(n, 枝) });
+/** その行があるページの見出し（商品仕訳） */
+const ポップアップの仕訳の見出し = (p: PDF, n: string, 枝: string) => p.popup!.locator(".multipage").filter({ has: p.popup!.locator("tr.data", { hasText: 品コード(n, 枝) }) }).locator("div").first();
+
 const 位置 = (p: PDF, n: string, 枝: string): number => p.行.findIndex((r) => r.商品名.includes(品コード(n, 枝)));
 const 行 = (p: PDF, n: string, 枝: string): PDFの行 | undefined => p.行[位置(p, n, 枝)];
 const 見出し = (s: 仕訳) => 仕訳の見出し(s);
@@ -73,6 +79,9 @@ function 順のケース(n: string, 枝: string[], 注記?: () => string) {
     const p = await 手順1から5(ctx, n);
     await ctx.expected(async () => {
       if (注記) note(注記());
+      expect(p.popup !== null, "戻しリストPDFのページ（別ウィンドウ）が開いている").toBe(true);
+      // 並べて確かめた行を、開いたままの戻しリストPDFの画面で枠にする
+      for (const b of 枝) await expect.soft(ポップアップの行(p, n, b).first(), `${名(n, b)}の行が戻しリストPDFに表示されている`).toBeVisible();
       const o = 順の(p, n, 枝);
       expect.soft(o.ok, o.項目).toBe(true);
     });
@@ -117,7 +126,9 @@ caseTest("IT-M07-09-008", async (ctx) => {
   await ctx.expected(async () => {
     note(閾値の注記(["300円未満", "300円以上3000円未満", "3000円以上"]));
     const want: [string, 仕訳][] = [["A", "300円未満"], ["B", "300円以上3000円未満"], ["E", "300円以上3000円未満"], ["C", "3000円以上"], ["D", "サプライ"]];
-    for (const [b, s] of want) expect.soft(仕訳の(p, "008", b), 仕訳の項目("008", b, s)).toContain(見出し(s));
+    expect(p.popup !== null, "戻しリストPDFのページ（別ウィンドウ）が開いている").toBe(true);
+    // 商品仕訳は、開いたままの戻しリストPDFのページの見出しで確かめ、その見出しに枠を付ける
+    for (const [b, s] of want) await expect.soft(ポップアップの仕訳の見出し(p, "008", b), 仕訳の項目("008", b, s)).toContainText(見出し(s));
   });
 });
 

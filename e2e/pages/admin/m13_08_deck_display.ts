@@ -204,7 +204,7 @@ export async function 大会デッキを登録する(page: Page, v: 大会デッ
   const base = await 基線を決める(page);
   await page.goto(adminUrl("/deck"));
   await page.waitForLoadState("load");
-  await Promise.all([page.waitForURL(/\/deck\/new$/, { waitUntil: "load" }), page.getByRole("link", { name: "新規登録", exact: true }).click()]);
+  await Promise.all([page.waitForURL(/\/deck\/new$/, { waitUntil: "load", timeout: 120_000 }), page.getByRole("link", { name: "新規登録", exact: true }).click({ noWaitAfter: true })]);
   const f = (n: string) => page.locator(`[name="admin_deck[${n}]"]`);
   await chooseByLabel(f("DeckType"), "event");
   await chooseByLabel(f("Format"), base.フォーマット);

@@ -26,10 +26,29 @@ function 一件(n: number, 何: string): void {
 }
 
 /** 査定ID → 店頭買取受注ID（内部ID）。1件でなければ止める */
+/**
+ * 査定IDは、アプリが「その日・その店舗の査定申込の件数＋1」で振る。E2E が買取の申込日時などを DB で動かすと、その日の件数が減り、
+ * あとの申込に同じ査定IDが振られることがある（2026-11-15 の開発環境で M06-05・06・07・12 が「査定ID … の買取が 2 件」で止まった。M06-01 は 2026-11-14 に同じ直しをした）。
+ * 同じ査定IDが2件以上あるときは、申込者の姓・名にこの実行の印がある1件を選び、選んだ結果は覚えておく（あとで姓・名を書き換えたあとも同じ買取を指すため）。
+ * 1件に決まらなければ止める。
+ */
+const 選んだ受注ID = new Map<string, string>();
+function 査定IDの受注ID(査定ID: string): string {
+  const 覚え = 選んだ受注ID.get(査定ID);
+  if (覚え) return 覚え;
+  const r = query("select id, last_name, first_name from dtb_otc_buy_order where assessment_id = $1", [査定ID]);
+  if (r.length === 1) return String(r[0].id);
+  const mine = r.filter((x) => `${x.last_name ?? ""}${x.first_name ?? ""}`.includes(印));
+  if (r.length > 1 && mine.length === 1) { 選んだ受注ID.set(査定ID, String(mine[0].id)); return String(mine[0].id); }
+  // この実行の同じ回の前の申込（申込日時を DB で過去へ動かしたもの）が同じ査定IDのまま残っていて、印つきが2件になることがある
+  // （2026-11-16 の M06-05-037・M06-07-017・M06-12 の4件）。シードは申し込んだ直後にこの査定IDを引くので、いちばん新しい（受注IDの大きい）印つきの1件が
+  // いま申し込んだ買取（覚えない。同じ査定IDがまた振られたときに、前の買取を返さないため）
+  if (r.length > 1 && mine.length > 1) return String(Math.max(...mine.map((x) => Number(x.id))));
+  throw new Error(`査定ID ${査定ID} の買取が ${r.length} 件（1件のはず）。うちこの実行の印つきの申込者の買取は ${mine.length} 件`);
+}
+
 export function 受注ID(査定ID: string): string {
-  const r = query("select id from dtb_otc_buy_order where assessment_id = $1", [査定ID]);
-  if (r.length !== 1) throw new Error(`査定ID ${査定ID} の買取が ${r.length} 件（1件のはず）`);
-  return String(r[0].id);
+  return 査定IDの受注ID(査定ID);
 }
 
 function メンバーID(名前: string): string {

@@ -9,7 +9,7 @@
  */
 import { Locator, Page, expect } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { chooseByLabel, expectSaved, setChecked } from "./common";
+import { chooseByLabel, expectSaved, setChecked, withoutEnvBanners } from "./common";
 
 export type アップロードの結果 = { 送った: boolean; 成功: string[]; エラー: string[]; 行き先: string };
 
@@ -58,7 +58,7 @@ export class BannerImagePage {
   }
 
   async メニューを押す(項目: Locator): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), 項目.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), 項目.click({ noWaitAfter: true })]);
   }
 
   /** いまの画面が画像設定画面か（アドレスとアップロード欄で見る） */
@@ -91,7 +91,7 @@ export class BannerImagePage {
     try {
       await Promise.all([
         this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => undefined),
-        this.アップロードボタン.click(),
+        this.アップロードボタン.click({ noWaitAfter: true }),
       ]);
     } finally {
       this.page.off("request", onReq);
@@ -101,7 +101,7 @@ export class BannerImagePage {
     return {
       送った,
       成功: await 文(this.page.locator(".alert-success")),
-      エラー: await 文(this.page.locator(".alert-danger, .invalid-feedback, .form-error-message, #upload_wrap .errormsg")),
+      エラー: withoutEnvBanners(await 文(this.page.locator(".alert-danger, .invalid-feedback, .form-error-message, #upload_wrap .errormsg"))), // 開発用の設定のときに常に出る帯は除く
       行き先: this.page.url(),
     };
   }
@@ -128,7 +128,7 @@ export class BannerImagePage {
       const have = (await this.アップロード欄.locator("ul.dropdown-menu a.dropdown-item").allInnerTexts()).map((t) => t.trim());
       throw new Error(`選択店舗に「${名前}」が無い（ある選択肢: ${have.join("、")}。いまの表示: ${await this.選択店舗の表示()}）`);
     }
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), item.first().click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), item.first().click({ noWaitAfter: true })]);
     await this.読み込みを待つ();
   }
 
@@ -160,7 +160,7 @@ export class BannerImagePage {
     };
     this.page.once("dialog", onDialog);
     if (答え === "OK") {
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.削除リンク(行).click()]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), this.削除リンク(行).click({ noWaitAfter: true })]);
       await this.読み込みを待つ();
     } else {
       await this.削除リンク(行).click();
@@ -254,7 +254,7 @@ export class BannerImagePage {
   async バナー設定を押す(what: string): Promise<void> {
     const btn = this.page.locator("button.js-event-banner-setting-submit").first();
     await expect(btn, "「バナー設定」ボタン").toHaveText(/^\s*バナー設定\s*$/);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), btn.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), btn.click({ noWaitAfter: true })]);
     await expectSaved(this.page, what);
   }
 

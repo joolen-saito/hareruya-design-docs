@@ -4,6 +4,8 @@
  */
 import { query } from "../lib/db";
 import { insertOwnRows, updateOwnRows } from "../lib/db_write";
+import { RUN_MARK } from "../lib/run_marker";
+import { writeTestData } from "./write_adapter";
 
 /** 会員の最新の受注の番号（購入処理中の受注も、購入完了の受注も同じ受注） */
 export function 会員の最新の受注ID(会員ID: string): string {
@@ -51,5 +53,30 @@ export function 受注のメールを変える(what: string, 受注ID: string, �
   updateOwnRows(what, {
     table: "dtb_order", key: "id", ids: [受注ID], set: { email: 新しいメール },
     owner: { sql: `select o.id from dtb_order o join dtb_customer c on c.id = o.customer_id where c.email = $1`, params: [会員のメール] },
+  });
+}
+
+/**
+ * シード表「税込単価・商品小計（税込）は画面で指定できないため DB へ直接設定する」に当たる書き込み（IT-F10-02-039 のシード）。
+ * 印つきの会員の受注の、先頭の商品の明細の税（税込単価 − 税抜単価）と税率、受注の商品小計だけを書く。持ち主の確かめは、受注のメールが実行の印を含むこと。
+ */
+export function 受注の税込単価と小計を設定する(受注ID: string, 税抜単価: number, 税込単価: number, 税率: number, 小計: number): void {
+  const 印 = RUN_MARK.toUpperCase();
+  const 確かめ = {
+    対象の確かめ: `select o.id as 受注ID, upper(o.email) as メール from dtb_order o where o.id = $1::int and upper(o.email) like $2`,
+    確かめのparams: [受注ID, `%${印}%`] as (string | number)[],
+    印,
+  };
+  writeTestData({
+    理由: "先頭の商品の明細の税込単価を整える",
+    sql: `update dtb_order_item i set price = $2::numeric, tax = $3::numeric, tax_rate = $4::numeric
+            where i.id = (select min(x.id) from dtb_order_item x where x.order_id = $1::int and x.order_item_type_id = 1)`,
+    params: [受注ID, 税抜単価, 税込単価 - 税抜単価, 税率],
+    ...確かめ, 最大行数: 1,
+  });
+  writeTestData({
+    理由: "受注の商品小計（税込）を整える",
+    sql: `update dtb_order set subtotal = $2::numeric where id = $1::int`,
+    params: [受注ID, 小計], ...確かめ, 最大行数: 1,
   });
 }

@@ -28,7 +28,7 @@
 import { Browser, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { 申込の申込選手ID } from "../db/f07_04";
-import { RUN_MARK, rc } from "../lib/run_marker";
+import { RUN_MARK, rc, rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
@@ -36,15 +36,16 @@ import { BASE_URL } from "../config/env";
 import { openEventCreate, registerEvent } from "../pages/admin/event";
 import { 会員IDをメールから } from "../pages/admin/f07_04_setup";
 import { EntryNewPage, 会員を本会員にする, 金額 } from "../pages/admin/m13_12_entry_new";
-import { ensureMember } from "../pages/admin/member";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
 import { registerSchedule } from "../pages/admin/schedule";
 import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
-import { ensureTenant } from "../pages/admin/tenant";
+import { 店舗IDで選ぶ, 表の店舗 } from "../pages/admin/store_pick";
 import { registerFrontMember } from "../pages/front/member_entry";
 import { QK1302_ADMIN, QK連携店舗 } from "./m13-02-qk";
 
-export const M1312_ADMIN: Account = { loginId: "m1312_admin", password: "Passw0rd!M1312" };
-const M1312_ADMIN_B: Account = { loginId: "m1312_admin_b", password: "Passw0rd!M1312B" };
+// 店舗を決まった名前（店舗A-E2E など）にしたので、管理者も決まった印の名前・ログインIDで1度だけ作って使い回す（前の実行の印つきの店舗に所属した管理者とぶつけない）
+export const M1312_ADMIN: Account = { loginId: rcFixed("m1312_admin").toLowerCase(), password: "Passw0rd!M1312" };
+const M1312_ADMIN_B: Account = { loginId: rcFixed("m1312_admin_b").toLowerCase(), password: "Passw0rd!M1312B" };
 export const M1312_RI_ADMIN: Account = { loginId: "m1312_ri_admin", password: "Passw0rd-M1312RI" };
 const 会員のパスワード = "Passw0rd!M1312P";
 
@@ -54,14 +55,14 @@ const 会員のパスワード = "Passw0rd!M1312P";
 defineSeed("S-M13-12-STORE-A", async ({ browser, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const id = await ensureMarkedTenant(page, "A", (m) => reportSeedIssue(seed.シードID, m));
-    reportSeedIssue(seed.シードID, `投入方法の「DBシードで店舗ID 1301を登録する」は行わず（DBへ書かない決まり）、店舗登録画面の店名「店舗A」に実行の印を付けた店舗（店舗ID ${id}）を店舗ID 1301 の代わりにした。会場は設計書で項目が無くなったので作っていない`);
+    reportSeedIssue(seed.シードID, `投入方法の「DBシードで店舗ID 1301を登録する」は行わず（DBへ書かない決まり）、店舗は作らず、使い回す店舗（店舗ID ${id}）を店舗ID 1301 の代わりにした。会場は設計書で項目が無くなったので作っていない`);
   });
 });
 
 defineSeed("S-M13-12-STORE-B", async ({ browser, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const id = await ensureMarkedTenant(page, "B", (m) => reportSeedIssue(seed.シードID, m));
-    reportSeedIssue(seed.シードID, `投入方法の「DBシードで店舗ID 1302を登録する」は行わず（DBへ書かない決まり）、店舗登録画面の店名「店舗B」に実行の印を付けた店舗（店舗ID ${id}）を店舗ID 1302 の代わりにした。会場は設計書で項目が無くなったので作っていない`);
+    reportSeedIssue(seed.シードID, `投入方法の「DBシードで店舗ID 1302を登録する」は行わず（DBへ書かない決まり）、店舗は作らず、使い回す店舗（店舗ID ${id}）を店舗ID 1302 の代わりにした。会場は設計書で項目が無くなったので作っていない`);
   });
 });
 
@@ -77,7 +78,7 @@ defineSeed("S-M13-12-MASTER", async ({ browser, seed }) => {
 defineSeed("S-M13-12-ADM", { needs: ["S-M13-12-STORE-A", "S-M13-12-STORE-B"] }, async ({ browser }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-12試験管理者", 所属店舗: 印店名.A, ログインID: M1312_ADMIN.loginId, メールアドレス: "m1312_admin@example.test",
+      名前: rcFixed("M13-12試験管理者"), 所属店舗: 印店名.A, ログインID: M1312_ADMIN.loginId, メールアドレス: `${M1312_ADMIN.loginId}@example.test`,
       パスワード: M1312_ADMIN.password, 権限: "モールオペレーター", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A],
     });
   });
@@ -88,7 +89,7 @@ defineSeed("S-M13-12-ADM", { needs: ["S-M13-12-STORE-A", "S-M13-12-STORE-B"] }, 
 async function 店舗B管理者を用意する(browser: Browser): Promise<void> {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     await ensureMember(page, {
-      名前: "M13-12店舗B管理者", 所属店舗: 印店名.B, ログインID: M1312_ADMIN_B.loginId, メールアドレス: "m1312_admin_b@example.test",
+      名前: rcFixed("M13-12店舗B管理者"), 所属店舗: 印店名.B, ログインID: M1312_ADMIN_B.loginId, メールアドレス: `${M1312_ADMIN_B.loginId}@example.test`,
       パスワード: M1312_ADMIN_B.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.B, 編集可能店舗: [印店名.B],
     });
   });
@@ -318,14 +319,15 @@ defineSeed("S-M13-12-QK-ENTRY-035", { needs: ["S-M13-02-QK-ADM"] }, async ({ bro
 export const RI会員の姓 = () => rc("検証M1312RI-001");
 export const RIイベント名 = () => rc("RI申込大会-001");
 
+/** 正本の「連携店舗M1312」は店舗ID 6（店舗は作らない。依頼者 2026-11-15）。QK連携店舗（店舗ID 4）とは別の店舗 */
+export const M1312連携店舗 = 表の店舗("6").店名;
+
 defineSeed("S-M13-12-RI-ADM", async ({ browser, notes, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    notes.set("〔店舗ID-M1312-RI共有〕", await ensureTenant(page, {
-      店名: "連携店舗M1312", 店名カナ: "レンケイテンポエムイチサンイチニ", 店名英語: "Link Shop RI Twelve", 支店URL: "m1312ri", 店名略称3文字: "R12", ショップ名略称: "連携店舗M1312",
-    }, (m) => reportSeedIssue(seed.シードID, m)));
+    notes.set("〔店舗ID-M1312-RI共有〕", (await 店舗IDで選ぶ(page, "6", "連携店舗M1312", (m) => reportSeedIssue(seed.シードID, m))).id);
     await ensureMember(page, {
-      名前: "M13-12連携試験管理者", 所属店舗: "連携店舗M1312", ログインID: M1312_RI_ADMIN.loginId, メールアドレス: "m1312_ri_admin@example.test",
-      パスワード: M1312_RI_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "連携店舗M1312", 編集可能店舗: ["連携店舗M1312"],
+      名前: "M13-12連携試験管理者", 所属店舗: M1312連携店舗, ログインID: M1312_RI_ADMIN.loginId, メールアドレス: "m1312_ri_admin@example.test",
+      パスワード: M1312_RI_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: M1312連携店舗, 編集可能店舗: [M1312連携店舗],
     });
   });
   await withAdminSession(browser, M1312_RI_ADMIN, async (page) => { await openEventCreate(page); });
@@ -335,7 +337,7 @@ defineSeed("S-M13-12-RI-ENTRY-036", { needs: ["S-M13-12-RI-ADM"] }, async ({ bro
   await 会員を登録する(browser, { 姓: RI会員の姓(), 名: "一郎", メール: `${rc("m1312ri-001")}@example.test`.toLowerCase() }, 会員のパスワード, "ケンショウ", "イチロウ");
   await withAdminSession(browser, M1312_RI_ADMIN, async (page) => {
     const id = await registerEvent(page, {
-      イベント名日: RIイベント名(), イベント名英: "RI Entry Cup 001", 店舗: "連携店舗M1312", フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎",
+      イベント名日: RIイベント名(), イベント名英: "RI Entry Cup 001", 店舗: M1312連携店舗, フォーマット: ["スタンダード"], ルール適用度: "初心者歓迎",
       公開状態: "公開", 定員: "16", 参加費: "0",
     });
     notes.set("〔イベントID-M1312-RI001〕", id);

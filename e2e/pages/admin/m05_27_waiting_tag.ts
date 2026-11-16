@@ -1,7 +1,7 @@
 /** M05-27 店頭注文番号札管理（メニュー「受注管理」→「店頭注文番号札管理」）と、試験管理者の編集可能店舗の設定 */
 import { expect, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { expectSaved } from "./common";
+import { expectSaved, withoutEnvBanners } from "./common";
 import { findMemberId } from "./member";
 
 export class WaitingTagPage {
@@ -25,7 +25,7 @@ export class WaitingTagPage {
   /** 検索店舗を店名で選ぶ（選ぶと、その店舗の一覧で画面が作り直される） */
   async 検索店舗を選ぶ(店名: string): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
       this.shopSelect.selectOption({ label: 店名 }),
     ]);
     await this.page.waitForLoadState("load");
@@ -47,10 +47,10 @@ export class WaitingTagPage {
   async 登録する(札: string): Promise<{ 成功の表示: boolean; エラーの表示: string[] }> {
     await this.tagInput.fill(札);
     await expect(this.登録ボタン.first(), "登録ボタン").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), this.登録ボタン.first().click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), this.登録ボタン.first().click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
     const ok = await this.page.locator(".alert-success").count();
-    const ng = (await this.page.locator(".alert-danger, .invalid-feedback, .form-error-message").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+    const ng = withoutEnvBanners((await this.page.locator(".alert-danger, .invalid-feedback, .form-error-message").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean)); // 開発用の設定のときに常に出る帯は除く
     return { 成功の表示: ok > 0, エラーの表示: ng };
   }
 
@@ -83,12 +83,12 @@ export class WaitingTagPage {
   async 削除確認で削除する(): Promise<void> {
     const ok = this.削除確認.locator("a.btn-ec-delete");
     await expect(ok, "削除確認の削除ボタン").toBeVisible();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), ok.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), ok.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 画面上のメッセージ（成功・警告・エラー）の文 */
   async メッセージ(): Promise<string[]> {
-    return (await this.page.locator(".alert").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+    return withoutEnvBanners((await this.page.locator(".alert").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean)); // 開発用の設定のときに常に出る帯は除く
   }
 
   /** 一覧の中に、並び順を選ぶ項目（選択欄・並び順の文字）があるか */
@@ -132,6 +132,6 @@ export async function setMemberStores(page: Page, 名前: string, v: { 店舗ID:
   await page.locator('[name="admin_member[editableBaseInfos][]"]').selectOption(v.編集可能店舗ID);
   await page.waitForTimeout(500);
   await f("defaultSearchBaseInfo").selectOption(v.店舗ID);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.getByRole("button", { name: "登録", exact: true }).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.getByRole("button", { name: "登録", exact: true }).click({ noWaitAfter: true })]);
   await expectSaved(page, `メンバー「${名前}」の編集可能店舗の設定`);
 }

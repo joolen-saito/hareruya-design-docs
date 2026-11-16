@@ -88,3 +88,13 @@ export function フォーマットの英語名(日本語名: string): string | n
 export function カードの件数(カードID: string | number): number { return Number(query(`select count(*) as n from mtb_card where id = $1`, [カードID])[0].n); }
 
 export function カードセットのコード(日本語名: string): string | null { return query(`select code from mtb_cardset where name_jp = $1 order by id limit 1`, [日本語名])[0]?.code ?? null; }
+
+/** デッキの明細（デッキに入ったカードの行）の番号と、そのカードID（M14-04 の 038・039 で足した。デッキ明細IDは画面に出ない） */
+export function デッキの明細(デッキID: string | number): { 明細ID: string; カードID: string | null }[] {
+  return query(`select id, card_id from dtb_deck_card where deck_id = $1 order by id`, [デッキID]).map((r) => ({ 明細ID: String(r.id), カードID: r.card_id == null ? null : String(r.card_id) }));
+}
+
+/** カードのカード詳細に紐づく商品の数（M14-04 の 036・037 などで、前提の紐づきを確かめる） */
+export function カードに紐づく商品の数(カードID: string | number): number {
+  return Number(query(`select count(*) as n from dtb_product p join mtb_card_detail d on d.id = p.card_detail_id where d.card_id = $1`, [カードID])[0].n);
+}

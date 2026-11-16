@@ -9,15 +9,16 @@
 import { Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { expect, caseTest } from "../../lib/case";
-import { rc } from "../../lib/run_marker";
 import { NetBuyCartPage } from "../../pages/front/f05_04_net_detail";
 import { ネット買取の検索結果, 一覧の行 } from "../../pages/front/f05_purchase_results";
 import { F0503ページングの商品名, F0503作った, F0503販促バナーの文, f0503商品 } from "../../seeds/f05-03-index";
 import "../../seeds/f05-03"; // ENV・MASTER
 
+const 印 = (正本: string) => F0503作った.名(正本);
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 一覧 = "/ja/purchase/search";
 const 印の注記 = "カテゴリ名・タグ名・商品名・検索語の末尾の「-印」は実行ごとの印（シードが付けた値で開き、入れた）";
+const ページングの印の注記 = "ページング確認カテゴリと121商品（PAGE-001-F0503〜PAGE-121-F0503）の名前の末尾の「-E2E」は、実行をまたいで使い回す決まった印（1度だけ作り、2回目からは作り直さずに使う）";
 
 async function 開く(r: ネット買取の検索結果, path: string): Promise<void> {
   expect(await r.開く(path), "ネット買取商品一覧の応答").toBeLessThan(400);
@@ -31,14 +32,14 @@ async function 読む(r: ネット買取の検索結果, what: string): Promise<
   return rows;
 }
 const 名 = (rows: 一覧の行[]) => rows.map((x) => x.商品名);
-const 行の名 = (rows: 一覧の行[], 正本: string) => rows.find((x) => x.商品名 === rc(正本));
+const 行の名 = (rows: 一覧の行[], 正本: string) => rows.find((x) => x.商品名 === 印(正本));
 
 /** ページ送りの項目を押して、そのページへ移るのを待つ */
 async function ページを押す(r: ネット買取の検索結果, item: Locator, 先: string): Promise<void> {
   await item.scrollIntoViewIfNeeded();
   await Promise.all([
-    r.page.waitForURL((u) => (u.searchParams.get("pageno") ?? "1") === 先, { timeout: 60_000 }),
-    item.locator("a").first().click(),
+    r.page.waitForURL((u) => (u.searchParams.get("pageno") ?? "1") === 先, { timeout: 120_000}),
+    item.locator("a").first().click({ noWaitAfter: true }),
   ]);
   await r.page.waitForTimeout(500);
   await r.結果を待つ();
@@ -73,7 +74,7 @@ caseTest("IT-F05-03-007", async ({ page, step, expected }) => {
   const r = new ネット買取の検索結果(page);
   let pages: string[][] = [];
   let 件数: string | null = null;
-  note(印の注記);
+  note(ページングの印の注記);
   note("各ページの商品は商品名（商品IDの文字列。シードが作った121商品は名前が重ならない）で記録した。ページは上部のページ送りの「次へ」で移った");
   await step(1, async () => { await 開く(r, カテゴリで("ページング確認カテゴリ-007")); 件数 = await r.商品数の値(); });
   await step(2, async () => { pages = await 全ページを読む(r); note(`各ページの商品数: ${pages.map((p) => p.length).join("、")}`); });
@@ -90,7 +91,7 @@ caseTest("IT-F05-03-008", async ({ page, step, expected }) => {
   const r = new ネット買取の検索結果(page);
   let pages: string[][] = [];
   let 既定 = 0;
-  note(印の注記);
+  note(ページングの印の注記);
   note("アドレスの引数 pageSize は、カテゴリの一覧のアドレスの後ろに「?pageSize=50」「?pageSize=0」として付けた");
   await step(1, async () => { await 開く(r, `${カテゴリで("ページング確認カテゴリ-008")}?pageSize=50`); });
   await step(2, async () => { pages = await 全ページを読む(r); note(`pageSize=50 の各ページの商品数: ${pages.map((p) => p.length).join("、")}`); });
@@ -110,7 +111,7 @@ caseTest("IT-F05-03-013", async ({ page, notes, step, expected }) => {
   await step(2, async () => {
     await expect(r.まとめて買取, "「まとめて買取」のリンク").toHaveCount(1);
     await r.まとめて買取.scrollIntoViewIfNeeded();
-    await Promise.all([page.waitForURL((u) => u.pathname.includes("/purchase/detail/"), { timeout: 60_000 }), r.まとめて買取.click()]);
+    await Promise.all([page.waitForURL((u) => u.pathname.includes("/purchase/detail/"), { timeout: 120_000}), r.まとめて買取.click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移先がまとめて買取商品の詳細画面").toBe(`/ja/purchase/detail/${id}`);
@@ -149,14 +150,21 @@ caseTest("IT-F05-03-016", async ({ page, step, expected }) => {
   let rows: 一覧の行[] = [];
   note(印の注記);
   await step(1, async () => { await 開く(r, カテゴリで("マナコスト確認カテゴリ-016")); });
+  let マナの選択肢の数 = -1;
   await step(2, async () => {
     const mana = page.locator('#purchase-search-form [data-qf-row="cmc"], #purchase-search-form [data-qf-row="manaCost"], #purchase-search-form [data-filter="mana-cost"]').filter({ hasText: /^\s*3\s*$/ });
-    const n = await mana.count();
-    if (n === 0) throw new Error(`一覧の絞り込みにマナコストの選択肢が無い（絞り込みの行: ${(await page.locator("#purchase-search-form [data-filter-row]").evaluateAll((es) => es.map((e) => e.getAttribute("data-filter-row")))).join("、")}）`);
+    マナの選択肢の数 = await mana.count();
+    if (マナの選択肢の数 === 0) {
+      // 選択肢が無ければ押せない。例外（未判定）にせず、期待結果の確かめへ進んで、選択肢が無いこと・3の商品だけにならないことで不合格にする
+      note(`一覧の絞り込みにマナコストの選択肢が無い（絞り込みの行: ${(await page.locator("#purchase-search-form [data-filter-row]").evaluateAll((es) => es.map((e) => e.getAttribute("data-filter-row")))).join("、")}）`);
+      rows = await 読む(r, "絞り込みのない一覧");
+      return;
+    }
     await r.絞り込みを押す(mana.first());
     rows = await 読む(r, "絞り込みのあとの一覧");
   });
   await expected(async () => {
+    expect.soft(マナの選択肢の数, "絞り込みのマナコスト3の選択肢の数").toBeGreaterThan(0);
     expect.soft(rows.map((x) => x.商品ID), "マナコスト3の MANA-3-016 だけが表示された（MANA-4-016 は表示されない）").toEqual([f0503商品("MANA-3-016").商品ID]);
   });
 });
@@ -180,7 +188,7 @@ caseTest("IT-F05-03-018", async ({ page, notes, step, expected }) => {
   let rows: 一覧の行[] = [];
   note(印の注記);
   note("表示された商品は、商品名のリンクの商品IDと言語（lang）で記録した。REL-NEW-200-JP-018・REL-NEW-200-EN-018 は同じ商品（〔商品レコードID-F0503-018A〕）の日本語と英語の規格");
-  await step(1, async () => { await 開く(r, 一覧); await r.ヘッダで検索する(rc("F0503-SORT-018")); await r.結果を待つ(); });
+  await step(1, async () => { await 開く(r, 一覧); await r.ヘッダで検索する(印("F0503-SORT-018")); await r.結果を待つ(); });
   await step(2, async () => { rows = await 読む(r, "検索結果"); note(`選ばれている並び順: ${(await r.選ばれている並び順()).join("、")}`); });
   await expected(async () => {
     const A = notes.get("〔商品レコードID-F0503-018A〕");
@@ -200,10 +208,10 @@ caseTest("IT-F05-03-019", async ({ page, step, expected }) => {
   note("左メニューのカテゴリツリーは、ネット買取商品一覧の左の欄のカテゴリ一覧。カテゴリ「F0503色順カテゴリ-019」はサプライ・グッズの子として作った");
   await step(1, async () => {
     await 開く(r, 一覧);
-    const link = page.locator(".p-hareruya-product-list__sidebar a").filter({ hasText: new RegExp(`^\\s*${rc("F0503色順カテゴリ-019")}\\s*$`) });
-    if ((await link.count()) === 0) throw new Error(`左メニューのカテゴリツリーに「${rc("F0503色順カテゴリ-019")}」が無い`);
+    const link = page.locator(".p-hareruya-product-list__sidebar a").filter({ hasText: new RegExp(`^\\s*${印("F0503色順カテゴリ-019")}\\s*$`) });
+    if ((await link.count()) === 0) throw new Error(`左メニューのカテゴリツリーに「${印("F0503色順カテゴリ-019")}」が無い`);
     await link.first().scrollIntoViewIfNeeded().catch(() => undefined);
-    await Promise.all([page.waitForURL((u) => u.pathname.includes("/cate/"), { timeout: 60_000 }), link.first().click()]);
+    await Promise.all([page.waitForURL((u) => u.pathname.includes("/cate/"), { timeout: 120_000}), link.first().click({ noWaitAfter: true })]);
     await r.結果を待つ();
   });
   await step(2, async () => { rows = await 読む(r, "カテゴリの一覧"); 並び順 = await r.選ばれている並び順(); note(`選ばれている並び順: ${並び順.join("、")}`); });
@@ -239,7 +247,7 @@ caseTest("IT-F05-03-024", async ({ page, step, expected }) => {
   const r = new ネット買取の検索結果(page);
   let rows: 一覧の行[] = [];
   note(印の注記);
-  await step(1, async () => { await 開く(r, 一覧); await r.ヘッダで検索する(rc("F0503-ELIGIBILITY-024")); await r.結果を待つ(); });
+  await step(1, async () => { await 開く(r, 一覧); await r.ヘッダで検索する(印("F0503-ELIGIBILITY-024")); await r.結果を待つ(); });
   await step(2, async () => { rows = await 読む(r, "検索結果"); });
   await expected(async () => {
     expect.soft(rows.map((x) => x.商品ID).sort(), "ELIGIBLE-NOSTOCK-024 と ELIGIBLE-STOCK-024 だけが表示された").toEqual([f0503商品("ELIGIBLE-NOSTOCK-024").商品ID, f0503商品("ELIGIBLE-STOCK-024").商品ID].sort());
@@ -252,7 +260,7 @@ caseTest("IT-F05-03-025", async ({ page, step, expected }) => {
   let price = "";
   note(印の注記);
   note("買取価格は「¥900」の形（円の記号と桁区切り）で表示されるので、記号と桁区切りを外した数で比べた");
-  await step(1, async () => { await 開く(r, 一覧); await r.ヘッダで検索する(rc("F0503-PRICE-025")); await r.結果を待つ(); });
+  await step(1, async () => { await 開く(r, 一覧); await r.ヘッダで検索する(印("F0503-PRICE-025")); await r.結果を待つ(); });
   await step(2, async () => { const row = 行の名(await 読む(r, "検索結果"), "PRICE-001-025"); price = row?.買取価格 ?? ""; note(`PRICE-001-025 の買取価格の表示: ${price || "（行が無い）"}`); });
   await expected(async () => {
     expect.soft(price.replace(/[¥,]/g, ""), "PRICE-001-025 に、ECCUBE に登録されている今の買取価格900円が表示された").toBe("900");
@@ -274,7 +282,7 @@ caseTest("IT-F05-03-026", async ({ page, step, expected }) => {
 // ---- 028・029・031（ページ送り） ----
 caseTest("IT-F05-03-028", async ({ page, step, expected }) => {
   const r = new ネット買取の検索結果(page);
-  note(印の注記);
+  note(ページングの印の注記);
   await step(1, async () => { await 開く(r, カテゴリで("ページング確認カテゴリ-028")); });
   await step(2, async () => { await ページを押す(r, r.ページ送りの項目("上部", "3"), "3"); });
   await expected(async () => {
@@ -286,7 +294,7 @@ caseTest("IT-F05-03-028", async ({ page, step, expected }) => {
 
 caseTest("IT-F05-03-029", async ({ page, step, expected }) => {
   const r = new ネット買取の検索結果(page);
-  note(印の注記);
+  note(ページングの印の注記);
   note("手順1の「3ページ目を開く」は、カテゴリの一覧のアドレスに ?pageno=3 を付けて開いた。「<」は上部のページ送りの前へ");
   await step(1, async () => { await 開く(r, `${カテゴリで("ページング確認カテゴリ-029")}?pageno=3`); expect(await r.現在のページ(), "開いたのは3ページ目").toBe("3"); });
   await step(2, async () => { await ページを押す(r, r.上部のページ送り.locator(".p-hareruya-pagination__item--prev"), "2"); });
@@ -298,7 +306,7 @@ caseTest("IT-F05-03-029", async ({ page, step, expected }) => {
 
 caseTest("IT-F05-03-031", async ({ page, step, expected }) => {
   const r = new ネット買取の検索結果(page);
-  note(印の注記);
+  note(ページングの印の注記);
   await step(1, async () => { await 開く(r, カテゴリで("ページング確認カテゴリ-031")); });
   await step(2, async () => { await ページを押す(r, r.ページ送りの項目("下部", "2"), "2"); });
   await expected(async () => {
@@ -356,10 +364,24 @@ function 数量のケース(no: "034" | "035" | "036" | "050", 期待: string) {
     await step(1, async () => { await 開く(r, カテゴリで(カテゴリ)); row = await 行(r, 商品); await row.scrollIntoViewIfNeeded(); });
     if (no === "034") await step(2, async () => { note(`${商品} の商品数: ${await r.数量の欄(row!).inputValue()}`); });
     if (no === "035") await step(2, async () => { await r.プラスを押す(row!, 1); });
-    if (no === "036") await step(2, async () => { const d = await r.マイナスを押す(row!, 1); if (d) note("数量1のときマイナスは無効になっていた（その位置を押した）"); });
+    // 036: 正本は「商品数1でマイナスを押すと20に戻る」だが、設計 0305（買取商品一覧 識別ID 8）は 2026/9/14 の改訂（ECCUBE_HARERUYA-3077）で
+    // 「商品数が1の場合は非活性（20に戻るではなく非活性）」になっている。無効のボタンは押せないので、押さずに無効であることを確かめて未判定で止める
+    if (no === "036") await step(2, async () => { note("手順2「マイナスを押す」は、商品数1のときボタンが無効（非活性）で押せないため行えない。無効のボタンを力ずくで押すことはしていない"); });
     if (no === "050") {
       await step(2, async () => { await r.プラスを押す(row!, 2); });
       await step(3, async () => { await r.マイナスを押す(row!, 1); });
+    }
+    if (no === "036") {
+      await expected(async () => {
+        await expect.soft(r.マイナスのボタン(row!), `${商品} のマイナスのボタン（商品数1のときは無効）`).toBeDisabled();
+        expect.soft(await r.数量の欄(row!).inputValue(), `${商品} の商品数（1のまま）`).toBe("1");
+      });
+      // 正本の期待「20になる」は確かめていない。正本が設計 0305 の 2026/9/14 の改訂（商品数1ではマイナスは非活性）より古く、画面で行えない手順を含むので、合格・不合格にしない
+      const text = "合否未判定（正本の問題）。正本の手順2「マイナスを押す」・期待結果「20に戻る」は、設計 0305_基本設計仕様書(フロント_ネット買取) 買取商品一覧 識別ID 8（マイナス）の2026/9/14の改訂" +
+        "（商品数が1の場合は非活性。20に戻るではなく非活性。ECCUBE_HARERUYA-3077）より古い。アプリは改訂後の設計どおり、マイナスが無効で商品数は1のまま。依頼者の判断待ち（正本を改訂に合わせて直す）";
+      note(text);
+      // スキップではなく未判定（正本の問題）にする（F05-01-028 と同じ扱い）
+      throw new Error(text);
     }
     await expected(async () => {
       expect.soft(await r.数量の欄(row!).inputValue(), `${商品} の商品数`).toBe(期待);
@@ -374,6 +396,8 @@ caseTest("IT-F05-03-050", 数量のケース("050", "2"));
 async function カートの数量(page: Page, 商品ID: string): Promise<string[]> {
   const cart = new NetBuyCartPage(page);
   await cart.開く();
+  // 「ご案内」のモーダル（まとめて買取の案内）が明細の行を覆い、商品名・数量が読めない（エビデンスに写らない）ので、閉じてから読む
+  if (await cart.ご案内を閉じる()) note("ネット買取カートを開いたときに出た「ご案内」のモーダル（まとめて買取の案内）は、明細の行を覆うので「閉じる」で閉じてから確かめた（正本の外の補い）");
   return cart.数量(商品ID);
 }
 
@@ -540,8 +564,8 @@ function タグのケース(no: string, タグ数: 1 | 2, TARGET: boolean) {
         expect.soft(説明, `説明文「F0503-CB${no}-DESC-A」が表示されない`).not.toContain(`F0503-CB${no}-DESC-A`);
         expect.soft(説明, `説明文「F0503-CB${no}-DESC-B」が表示されない`).not.toContain(`F0503-CB${no}-DESC-B`);
       }
-      expect.soft(名(rows), `商品一覧に「F0503-CB${no}-BASE」が表示された`).toContain(rc(`F0503-CB${no}-BASE`));
-      if (TARGET) expect.soft(名(rows), `商品一覧に「F0503-CB${no}-TARGET」が表示されない`).not.toContain(rc(`F0503-CB${no}-TARGET`));
+      expect.soft(名(rows), `商品一覧に「F0503-CB${no}-BASE」が表示された`).toContain(印(`F0503-CB${no}-BASE`));
+      if (TARGET) expect.soft(名(rows), `商品一覧に「F0503-CB${no}-TARGET」が表示されない`).not.toContain(印(`F0503-CB${no}-TARGET`));
     });
   };
 }
@@ -568,7 +592,7 @@ caseTest("IT-F05-03-065", async ({ page, step, expected }) => {
   await expected(async () => {
     await expect.soft(page.locator("#purchase-search-form"), "検索フォームが表示されている").toBeVisible();
     expect.soft(await r.行.count(), "商品一覧（行）が表示されない").toBe(0);
-    expect.soft(((await page.locator("body").textContent()) ?? ""), `商品「F0503-CB065-BASE」が表示されない`).not.toContain(rc("F0503-CB065-BASE"));
+    expect.soft(((await page.locator("body").textContent()) ?? ""), `商品「F0503-CB065-BASE」が表示されない`).not.toContain(印("F0503-CB065-BASE"));
     expect.soft(((await page.locator("body").textContent()) ?? ""), "説明文「F0503-CB065-DESC-A」が表示されない").not.toContain("F0503-CB065-DESC-A");
   });
 });

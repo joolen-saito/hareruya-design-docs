@@ -12,7 +12,9 @@
  *   サプライ・グッズの子として作った。商品の商品カテゴリ(ID)には、サプライ・グッズとそのカテゴリの両方を入れた（グッズ商品CSVはカンマ区切りで複数指定できる）。
  * - PAGING-007・008・028・029・031: シード表は DB で決まった番号（商品レコードID 950007001〜 など）の121商品を入れるとする。
  *   DB には入れず、グッズ商品CSV登録で121商品を1回だけ作り、5つのカテゴリ（ページング確認カテゴリ-007・008・028・029・031）の全部に所属させた。
- *   商品名は「PAGE-001-F0503」〜「PAGE-121-F0503」（印つき）。ケースは件数・ページ・重複と欠落を見るので、5つのケースで同じ121商品を使っても成り立つ。
+ *   商品名は「PAGE-001-F0503-E2E」〜「PAGE-121-F0503-E2E」、カテゴリ名は「ページング確認カテゴリ-007-E2E」など（実行をまたいで使い回す決まった印）。
+ *   2回目からは、あれば作らずに使う（実行のたびに121商品を作り直さない。2026-11-13 PM 依頼）。
+ *   ケースは件数・ページ・重複と欠落を見るので、5つのケースで同じ121商品を使っても成り立つ。
  * - ELIGIBILITY-024: ELIGIBLE-NOSTOCK-024 の販売価格0円は作れない（買取価格を上回れない。シード表は DB での直接設定）ので1000円、
  *   ELIGIBLE-STOCK-024 の在庫10は DB ではなく入庫と承認で入れた。
  * - VIEW-032: SUPPLY-001-032 の「カード言語なし」は DB での直接設定とするが、言語は日本語のまま（カードを指定しない商品には言語ラベルが出ない作り）。
@@ -23,7 +25,7 @@
 import { Browser, expect } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { Notes } from "../lib/notes";
-import { RUN_MARK, rc } from "../lib/run_marker";
+import { RUN_MARK, rc, rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { CategoryPage } from "../pages/admin/category";
@@ -35,16 +37,39 @@ import { readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
 import { defineSeed } from "./current_seed";
 import { 索引のまとめ, まとめの結果 } from "./f05_index_batch";
 
-export const F0503索引 = new 索引のまとめ("F05-03 ネット買取商品一覧");
 type C = { browser: Browser; notes: Notes; issue: (m: string) => void };
+
+/**
+ * 名前に付けた実行の印。作ったプロセスでは RUN_MARK。同じ回（E2E_SEED_RUN_ID）のあとのプロセスは、作ったプロセスの印を読み込んで使う
+ * （Playwright はケースが落ちるとプロセスを作り直し、RUN_MARK も変わる。作ったものは .runs/index_batch/ の控えから戻す）
+ */
+let 印 = RUN_MARK;
+const 印付き = (正本: string) => (印 === RUN_MARK ? rc(正本) : `${正本}-${印}`);
 
 /** シードが作ったもの（ケースが引く） */
 export const F0503作った = {
   商品: new Map<string, 作った索引用商品>(), // 正本の商品コード → 作った商品
   カテゴリ: new Map<string, string>(), // 正本のカテゴリ名 → カテゴリID
-  タグ名: (正本: string) => rc(正本),
-  名: (正本: string) => rc(正本),
+  タグ名: (正本: string) => 印付き(正本),
+  名: (正本: string) => 印付き(正本),
 };
+
+/**
+ * 時間の上限（2026-11-13 の開発環境の流しで、1件に1〜2.5時間かかったため）: 作るのは60分まで・続けて3つ落ちたら打ち切る・
+ * フィードが実行中なら送れるまで20分まで・反映は15分まで（ふだんは6分ほど）。来なければ事前準備で止め（未判定）、同じ回の残りのケースは
+ * 作り直さずにすぐ止める。最初のケースの制限時間は、その合計に10分を足した分だけ延ばす。
+ */
+const 上限 = { 作る分: 60 * 60_000, 続けて落ちたら: 3, 送る分: 20 * 60_000, 反映の分: 15 * 60_000 };
+export const F0503索引 = new 索引のまとめ("F05-03 ネット買取商品一覧", 上限.作る分 + 上限.送る分 + 上限.反映の分 + 10 * 60_000, {
+  名: "f05-03",
+  書き出す: () => ({ 印, 商品: [...F0503作った.商品], カテゴリ: [...F0503作った.カテゴリ] }),
+  読み込む: (x) => {
+    const v = x as { 印: string; 商品: [string, 作った索引用商品][]; カテゴリ: [string, string][] };
+    印 = v.印;
+    for (const [k, p] of v.商品) F0503作った.商品.set(k, p);
+    for (const [k, id] of v.カテゴリ) F0503作った.カテゴリ.set(k, id);
+  },
+}, 上限);
 export function f0503商品(正本のコード: string): 作った索引用商品 {
   const p = F0503作った.商品.get(正本のコード);
   if (!p) throw new Error(`商品 ${正本のコード} はまだ作っていない`);
@@ -260,25 +285,67 @@ defineIndexSeed("S-F05-03-SORT-026", async (c) => {
   return { 控え: [["〔カテゴリレコードID-F0503-026〕", cat]], 目印: 目印(カテゴリの一覧(cat), "PRICE-HIGH-026") };
 });
 
-// ---- 007・008・028・029・031（121商品のページング。1組の商品を5つのカテゴリで使う） ----
-export const F0503ページングの商品名 = Array.from({ length: 121 }, (_, i) => rc(`PAGE-${String(i + 1).padStart(3, "0")}-F0503`));
-let ページングの商品: Promise<void> | null = null;
-async function ページングを用意する(c: C): Promise<void> {
+// ---- 007・008・028・029・031（121商品のページング。1組の商品を5つのカテゴリで使い、実行をまたいで使い回す） ----
+const ページングの番号 = ["007", "008", "028", "029", "031"] as const;
+const ページングのコード = (i: number) => rcFixed(`PAGE-${String(i + 1).padStart(3, "0")}-F0503`);
+export const F0503ページングの商品名 = Array.from({ length: 121 }, (_, i) => ページングのコード(i));
+let ページングの商品: Promise<string> | null = null;
+/** 決まった名前のカテゴリ5つと121商品を、あれば使い、無ければ作る。作ったか使い回したかの文を返す */
+async function ページングを用意する(c: C): Promise<string> {
   if (!ページングの商品) {
     ページングの商品 = (async () => {
       const what = "S-F05-03-PAGING-007〜031";
+      const { goods, 前からある } = await withAdminSession(c.browser, SETUP_ADMIN, async (page) => {
+        page.setDefaultTimeout(60_000);
+        const goods = await readGoodsRootCategoryId(page);
+        const cat = new CategoryPage(page);
+        await cat.openChildrenOf(goods);
+        const rows = await cat.rowValues();
+        const 前からある = new Map<string, string>();
+        for (const no of ページングの番号) {
+          const hit = rows.filter((r) => r.nameJp === rcFixed(`ページング確認カテゴリ-${no}`));
+          if (hit.length > 1) throw new Error(`${what}: サプライ・グッズの下に「${rcFixed(`ページング確認カテゴリ-${no}`)}」が ${hit.length} 件ある（1件のはず）`);
+          if (hit.length === 1) 前からある.set(no, hit[0].id);
+        }
+        return { goods, 前からある };
+      });
+      const 先頭 = await withAdminSession(c.browser, SETUP_ADMIN, (page) => 商品名を含む商品の数(page, ページングのコード(0)));
+      const 末尾 = await withAdminSession(c.browser, SETUP_ADMIN, (page) => 商品名を含む商品の数(page, ページングのコード(120)));
+      if (先頭 > 1 || 末尾 > 1 || 先頭 !== 末尾) {
+        throw new Error(`${what}: 前の実行の121商品が途中までしか無い・重なっている（「${ページングのコード(0)}」${先頭}件・「${ページングのコード(120)}」${末尾}件）。作り足すと重なるので止めた（商品管理で確かめる）`);
+      }
+      const 商品がある = 先頭 === 1;
+      if (商品がある && 前からある.size !== ページングの番号.length) {
+        throw new Error(`${what}: 121商品は前の実行のものがあるが、カテゴリ ${ページングの番号.filter((n) => !前からある.has(n)).map((n) => rcFixed(`ページング確認カテゴリ-${n}`)).join("・")} が無い（商品がそのカテゴリに入っていないので、使い回せない）。商品管理で確かめる`);
+      }
       const cats: string[] = [];
-      for (const no of ["007", "008", "028", "029", "031"]) cats.push(await カテゴリを作る(c, `ページング確認カテゴリ-${no}`, what));
-      await 商品を作る(c, what, Array.from({ length: 121 }, (_, i) => ({ コード: `PAGE-${String(i + 1).padStart(3, "0")}-F0503`, 買取: 600, カテゴリID: cats, 番号を読まない: true })));
+      for (const no of ページングの番号) {
+        const 正本の名 = `ページング確認カテゴリ-${no}`;
+        let id = 前からある.get(no);
+        if (!id) {
+          id = await withAdminSession(c.browser, SETUP_ADMIN, async (page) => {
+            page.setDefaultTimeout(60_000);
+            return new CategoryPage(page).createChild(goods, { nameJp: rcFixed(正本の名), nameEn: `F0503 Paging ${no} E2E`, frontHide: false }, c.issue);
+          });
+          c.issue(`${what}: カテゴリ「${rcFixed(正本の名)}」（カテゴリID ${id}）をサプライ・グッズの子として画面で作った（決まった印。次の実行から使い回す）`);
+        }
+        F0503作った.カテゴリ.set(正本の名, id);
+        cats.push(id);
+      }
+      if (商品がある) {
+        return `前の実行で作った「${ページングのコード(0)}」〜「${ページングのコード(120)}」の121商品と、カテゴリ ${ページングの番号.map((n) => `${rcFixed(`ページング確認カテゴリ-${n}`)}（ID ${F0503作った.カテゴリ.get(`ページング確認カテゴリ-${n}`)}）`).join("・")} を作り直さずに使った（商品管理の商品一覧で先頭と末尾の商品が1件ずつあることを確かめた）`;
+      }
+      await 索引用の商品を作る(c.browser, what, Array.from({ length: 121 }, (_, i) => ({ コード: ページングのコード(i), 買取: 600, カテゴリID: cats, 番号を読まない: true })), c.issue);
+      return `グッズ商品CSV登録で「${ページングのコード(0)}」〜「${ページングのコード(120)}」の121商品を画面で作り、ページング確認カテゴリ-007・008・028・029・031（決まった印つき）の5つに所属させた（次の実行から使い回す）`;
     })();
   }
-  await ページングの商品;
+  return ページングの商品;
 }
-function ページング(no: "007" | "008" | "028" | "029" | "031") {
+function ページング(no: (typeof ページングの番号)[number]) {
   return async (c: C): Promise<まとめの結果> => {
-    await ページングを用意する(c);
-    c.issue(`S-F05-03-PAGING-${no}: 読み替え: シード表は DB で決まった番号の121商品を入れるとするが、グッズ商品CSV登録で「PAGE-001-F0503」〜「PAGE-121-F0503」（印つき）の121商品を画面で作り、ページング確認カテゴリ-007・008・028・029・031 の5つに所属させた（5つのケースで同じ商品を使う）`);
-    return { 目印: 目印(カテゴリの一覧(F0503作った.カテゴリ.get(`ページング確認カテゴリ-${no}`)!), "PAGE-121-F0503") };
+    const 様子 = await ページングを用意する(c);
+    c.issue(`S-F05-03-PAGING-${no}: 読み替え: シード表は DB で決まった番号の121商品を入れるとするが、${様子}。5つのケースで同じ商品を使う。名前の末尾の「-E2E」は実行をまたいで使い回す決まった印`);
+    return { 目印: { パス: カテゴリの一覧(F0503作った.カテゴリ.get(`ページング確認カテゴリ-${no}`)!), 商品名: ページングのコード(120) } };
   };
 }
 defineIndexSeed("S-F05-03-PAGING-007", ページング("007"));

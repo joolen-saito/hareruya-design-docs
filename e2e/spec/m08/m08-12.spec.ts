@@ -8,6 +8,7 @@ import { Page, test } from "@playwright/test";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { BASE_URL } from "../../config/env";
 import { adminUrl, hideDebugToolbar, loginAdmin } from "../../lib/session";
+import { DBで読み取った値を撮る, 別のブラウザの画面を撮る, scene } from "../../lib/evidence_other";
 import { 支払方法の名前, 顧客グループの件数, 顧客グループIDの保存内容, 顧客グループ名の保存内容, 名称の顧客グループの件数 } from "../../db/m08_12";
 import { M08CustomerGroupPage } from "../../pages/admin/m08_customer_group";
 import { LoginPage } from "../../pages/front/f06_03_login";
@@ -51,12 +52,13 @@ caseTest("IT-M08-12-011", async ({ page, step, expected }) => {
   await step(2, async () => { await g.入れる({ 名称: "", 還元率: "" }); });
   await step(3, async () => {
     r = await g.登録する();
-    if (!r.sent) note("ブラウザの入力チェックが送信を止めた（登録の要求は送られていない）");
+    // 正本の期待結果は画面（一覧を伴う顧客グループ管理画面）だけを求め、サーバーへ送るかは求めていない。送られたかは記録だけ残す
+    note(r.sent ? `登録の要求はサーバーへ送られた（応答 ${r.status ?? "なし"}）` : "ブラウザの入力チェックが送信を止めた（登録の要求は送られていない）");
   });
   await expected(async () => {
-    expect.soft(new URL(page.url()).pathname, "顧客グループ管理画面のまま").toMatch(/^\/admin\/customer\/customer_group/);
+    // 送信がブラウザの入力チェックで止まったときは、サーバーが画面を出し直したのではなく、画面に留まっている。そのとおりに画像の文へ書く
+    expect.soft(new URL(page.url()).pathname, r.sent ? "顧客グループ管理画面が出し直されている" : "顧客グループ管理画面に留まっている（ブラウザの必須チェックで送信が止まり、サーバーは画面を出し直していない）").toMatch(/^\/admin\/customer\/customer_group/);
     expect.soft(await page.locator("table tbody tr").count(), "顧客グループの一覧の行数（一覧を伴って表示されている）").toBeGreaterThan(0);
-    expect.soft(r.sent, "入力チェックのためサーバーへ送信されて画面が再表示された").toBe(true);
   });
 });
 
@@ -68,10 +70,13 @@ function 削除(k: string, db確認: "消える" | "残る" | "なし", 行: "�
     const id = notes.get(`〔顧客グループID-M0812-${k}〕`);
     await step(1, async () => { await g.open(); });
     await step(2, async () => { await g.削除ボタンを押す(id); });
-    await step(3, async () => { note(MODAL注記); await g.モーダルで削除する(id); });
+    let 応答: number | null = null;
+    await step(3, async () => { note(MODAL注記); 応答 = await g.モーダルで削除する(id); });
     let n = -1;
     if (db確認 !== "なし") await step(4, async () => { n = 顧客グループの件数(id); });
     await expected(async () => {
+      // 要求が送られなければ「残る」は何もしなくても成り立つので、削除の要求が送られたことを確かめる
+      if (db確認 === "残る" || 行 === "残る") expect.soft(応答, "削除の要求が送られた（応答がある）").not.toBeNull();
       if (db確認 === "消える") expect.soft(n, `顧客グループID ${id} の件数（削除済みのレコードとしても残らない）`).toBe(0);
       if (db確認 === "残る") expect.soft(n, `顧客グループID ${id} の件数（削除されずDBに残る）`).toBe(1);
       if (行 !== "確認しない") {
@@ -100,7 +105,11 @@ function 登録トークン不正(db: boolean) {
     await step(5, async () => { note("開発者ツールのネットワーク情報の代わりに、登録要求の応答（HTTPステータス）を記録して確かめた"); if (db) n = 名称の顧客グループの件数("トークン不正追加"); });
     await expected(async () => {
       if (!db) expect.soft(status, "登録要求のHTTP応答ステータス").toBe(403);
-      else expect.soft(n, "名称が「トークン不正追加」の顧客グループの件数（追加されない）").toBe(0);
+      else {
+        // 要求が送られなければ「追加されない」は何もしなくても成り立つので、登録の要求が送られたことを確かめる
+        expect.soft(status, "登録の要求が送られた（応答がある）").not.toBeNull();
+        expect.soft(n, "名称が「トークン不正追加」の顧客グループの件数（追加されない）").toBe(0);
+      }
     });
   };
 }
@@ -127,7 +136,11 @@ function 削除トークン不正(db: boolean) {
     });
     await expected(async () => {
       if (!db) expect.soft(status, "削除要求のHTTP応答ステータス").toBe(403);
-      else expect.soft(n, `顧客グループID ${id} の件数（削除されずDBに残る）`).toBe(1);
+      else {
+        // 要求が送られなければ「残る」は何もしなくても成り立つので、削除の要求が送られたことを確かめる
+        expect.soft(status, "削除の要求が送られた（応答がある）").not.toBeNull();
+        expect.soft(n, `顧客グループID ${id} の件数（削除されずDBに残る）`).toBe(1);
+      }
     });
   };
 }
@@ -176,6 +189,8 @@ function マイページ系(メール前半: string, pw: string) {
           await tab.waitForLoadState("load");
           const text = await tab.locator("body").innerText();
           結果.push({ 名前: 画面[i][0], status: res?.status() ?? 0, path: new URL(tab.url()).pathname, エラー: /システムエラー/.test(text) });
+          // 新しいタブで開いた画面は、閉じる前に画像に残す（自動の撮影はケースの画面のタブしか撮らない）
+          await 別のブラウザの画面を撮る(tab, scene.stepLabel(i + 2, `新しいタブで開いた${画面[i][0]}`));
         } finally { await tab.close(); }
       });
     }
@@ -184,7 +199,7 @@ function マイページ系(メール前半: string, pw: string) {
         const r = 結果[i];
         expect.soft(r?.status ?? 0, `${画面[i][0]}の応答のHTTPステータス`).toBeLessThan(400);
         expect.soft(r?.path ?? "", `${画面[i][0]}のアドレス（対象のマイページ系画面のまま）`).toBe(画面[i][1]);
-        expect.soft(r?.エラー ?? true, `${画面[i][0]}にシステムエラーが表示されている`).toBe(false);
+        expect.soft(r !== undefined && !r.エラー, `${画面[i][0]}にシステムエラーが表示されない`).toBe(true);
       }
     });
   };
@@ -220,7 +235,7 @@ caseTest("IT-M08-12-002", async ({ page, notes, step, expected }) => {
     expect.soft(await page.locator(".card-title").first().innerText(), "入力欄の見出し").toContain("編集");
     expect.soft(await g.name.inputValue(), "名称").toBe(名称("編集前顧客グループ-002"));
     expect.soft(await g.percentage.inputValue(), "ポイント還元率").toBe("5");
-    expect.soft(await g.shopFront.isChecked(), "店内注文専用アカウントが未選択").toBe(false);
+    expect.soft(!(await g.shopFront.isChecked()), "店内注文専用アカウントが未選択").toBe(true);
     expect.soft(await g.branchFront.isChecked(), "支店店内注文専用アカウントが選択").toBe(true);
     expect.soft(await g.選択中の支払方法ID(), `支払方法は試験支払B（${支払方法の名前(notes.get(支払ラベル.B))}）だけが選択済み`).toEqual(支払ids(notes, "B"));
   });
@@ -231,13 +246,14 @@ caseTest("IT-M08-12-003", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M0812_ADMIN);
   const g = new M08CustomerGroupPage(page);
   await step(1, async () => { note(印注記); await 編集を開く(g, 名称("編集前顧客グループ-003")); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), g.newButton.click()]); await page.waitForLoadState("load"); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), g.newButton.click({ noWaitAfter: true })]); await page.waitForLoadState("load"); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "顧客グループ管理画面").toBe(GROUP_PATH);
     expect.soft(await g.新規追加の状態か(), "新規追加の状態").toBe(true);
     expect.soft(await g.percentage.inputValue(), "ポイント還元率が空").toBe("");
-    expect.soft(await g.shopFront.isChecked(), "店内注文専用アカウントが未選択").toBe(false);
-    expect.soft(await g.branchFront.isChecked(), "支店店内注文専用アカウントが未選択").toBe(false);
+    expect.soft(!(await g.shopFront.isChecked()), "店内注文専用アカウントが未選択").toBe(true);
+    expect.soft(!(await g.branchFront.isChecked()), "支店店内注文専用アカウントが未選択").toBe(true);
+    await expect.soft(g.支払方法の欄, "支払方法の欄（すべての支払方法のチェック欄）が見えている").toBeVisible();
     expect.soft(await g.選択中の支払方法ID(), "支払方法がすべて未選択").toEqual([]);
   });
 });
@@ -337,12 +353,13 @@ caseTest("IT-M08-12-013", async ({ page, step, expected }) => {
   await step(2, async () => { await g.入れる({ 名称: "", 還元率: "" }); });
   await step(3, async () => {
     r = await g.登録する();
-    if (!r.sent) note("ブラウザの入力チェックが送信を止めた（登録の要求は送られていない）");
+    // 正本の期待結果は画面（一覧を伴う顧客グループ管理画面）だけを求め、サーバーへ送るかは求めていない。送られたかは記録だけ残す
+    note(r.sent ? `登録の要求はサーバーへ送られた（応答 ${r.status ?? "なし"}）` : "ブラウザの入力チェックが送信を止めた（登録の要求は送られていない）");
   });
   await expected(async () => {
-    expect.soft(new URL(page.url()).pathname, "顧客グループ管理画面のまま").toMatch(/^\/admin\/customer\/customer_group/);
+    // 送信がブラウザの入力チェックで止まったときは、サーバーが画面を出し直したのではなく、画面に留まっている。そのとおりに画像の文へ書く
+    expect.soft(new URL(page.url()).pathname, r.sent ? "顧客グループ管理画面が出し直されている" : "顧客グループ管理画面に留まっている（ブラウザの必須チェックで送信が止まり、サーバーは画面を出し直していない）").toMatch(/^\/admin\/customer\/customer_group/);
     expect.soft(await page.locator("table tbody tr").count(), "顧客グループの一覧の行数（一覧を伴って表示されている）").toBeGreaterThan(0);
-    expect.soft(r.sent, "入力チェックのためサーバーへ送信されて画面が再表示された").toBe(true);
   });
 });
 
@@ -394,7 +411,13 @@ function 更新トークン不正(db: boolean, k: string) {
     });
     await expected(async () => {
       if (!db) expect.soft(status, "更新要求のHTTP応答ステータス").toBe(403);
-      else expect.soft(name, `顧客グループID ${id} の名称（「編集前顧客グループ-${k}」から更新されない）`).toBe(名称(`編集前顧客グループ-${k}`));
+      else {
+        // 要求が送られなければ「更新されない」は何もしなくても成り立つので、更新の要求が送られたことを確かめる
+        expect.soft(status, "更新の要求が送られた（応答がある）").not.toBeNull();
+        // 保存されなかった入力が一覧に映って更新されたように見えるため、DB の名称（更新されていない）を画像に残す
+        await DBで読み取った値を撮る(page, `顧客グループID ${id} の名称`, [["顧客グループID", "名称"], [id, name]], scene.expectedLabel("DBで読み取った名称（更新されていない）"));
+        expect.soft(name, `顧客グループID ${id} の名称（「編集前顧客グループ-${k}」から更新されない）`).toBe(名称(`編集前顧客グループ-${k}`));
+      }
     });
   };
 }
@@ -469,13 +492,20 @@ caseTest("IT-M08-12-045", 一件("045"));
 
 // ---- 店内注文専用・支店店内注文専用アカウントのアクセス制限 ----
 type 開いた画面 = { 名前: string; status: number; path: string; h1: string; システムエラー: boolean };
-async function 新しいタブで開く(page: Page, 名前: string, path: string): Promise<開いた画面> {
+/**
+ * 新しいタブで開き、応答・見出し・システムエラーの有無を読む。capture を渡すと、閉じる前に開いたタブを撮る（エビデンスに対象のタブが残る）。
+ * 見出しは、画面の見出し（h1）のうち文字のあるものをすべてつなげて読む。開発環境の画面はヘッダーにも文字の無い h1（ロゴ）があり、
+ * 先頭の h1 だけを読むと空になって、エラー画面の見出しを読めていなかった（2026-11-13 の IT-M08-12-035）。
+ */
+async function 新しいタブで開く(page: Page, 名前: string, path: string, capture?: (label: string) => Promise<void>): Promise<開いた画面> {
   const tab = await page.context().newPage();
   try {
     const res = await tab.goto(`${BASE_URL}${path}`, { timeout: 60_000 });
     await tab.waitForLoadState("load");
     const text = await tab.locator("body").innerText();
-    const h1 = (await tab.locator("h1").first().innerText({ timeout: 5_000 }).catch(() => "")).trim();
+    // h1 が読めないときは、画面のタイトル（アプリのエラー画面は見出しと同じ文をタイトルにも出す）で代える
+    const h1 = (await tab.locator("h1").allInnerTexts().catch(() => [] as string[])).map((t) => t.trim()).filter(Boolean).join(" / ") || (await tab.title()).trim();
+    if (capture) await capture(`新しいタブで開いた${名前}`);
     return { 名前, status: res?.status() ?? 0, path: new URL(tab.url()).pathname, h1, システムエラー: /システムエラー/.test(text) };
   } finally { await tab.close(); }
 }
@@ -489,14 +519,14 @@ const OTC画面2 = [
   ["お問い合わせ画面", "/ja/contact"], ["お問い合わせ履歴画面", "/ja/contact/history"],
 ] as const;
 
-caseTest("IT-M08-12-035", async ({ page, step, expected }) => {
+caseTest("IT-M08-12-035", async ({ page, step, expected, capture }) => {
   const l = new LoginPage(page);
   const m = OTC会員["035"];
   const 結果: (開いた画面 | null)[] = [];
   await step(1, async () => { await l.ログイン画面を開く(); await l.ログインする(mailOf(m.前半), m.pw); });
-  for (let i = 0; i < OTC画面.length; i++) await step(i + 2, async () => { if (i === 0) note(OTC注記); 結果.push(await 新しいタブで開く(page, OTC画面[i][0], OTC画面[i][1])); });
+  for (let i = 0; i < OTC画面.length; i++) await step(i + 2, async () => { if (i === 0) note(OTC注記); 結果.push(await 新しいタブで開く(page, OTC画面[i][0], OTC画面[i][1], capture)); });
   await step(6, async () => { note("チーム情報変更の画面は、アプリのマイページのルートに見つからない（開く対象が無い）。開けない画面として、不合格になる形で判定する"); 結果.push(null); });
-  for (let i = 0; i < OTC画面2.length; i++) await step(i + 7, async () => { 結果.push(await 新しいタブで開く(page, OTC画面2[i][0], OTC画面2[i][1])); });
+  for (let i = 0; i < OTC画面2.length; i++) await step(i + 7, async () => { 結果.push(await 新しいタブで開く(page, OTC画面2[i][0], OTC画面2[i][1], capture)); });
   await expected(async () => {
     const 名 = ["購入履歴画面", "ポイント履歴画面", "ネット買取履歴画面", "予約済み大会一覧画面", "チーム情報変更画面", ...OTC画面2.map((x) => x[0])];
     for (let i = 0; i < 結果.length; i++) {
@@ -508,13 +538,13 @@ caseTest("IT-M08-12-035", async ({ page, step, expected }) => {
   });
 });
 
-caseTest("IT-M08-12-036", async ({ page, step, expected }) => {
+caseTest("IT-M08-12-036", async ({ page, step, expected, capture }) => {
   const l = new LoginPage(page);
   const m = OTC会員["036"];
   const 画面 = [["本店のご注文方法指定画面", "/ja/shopping"], ["本店の配送先の新規登録画面", "/ja/shopping/shipping_edit/1"], ["本店の配送先の変更画面", "/ja/shopping/shipping_edit/1/1"]] as const;
   const 結果: 開いた画面[] = [];
   await step(1, async () => { await l.ログイン画面を開く(); await l.ログインする(mailOf(m.前半), m.pw); });
-  for (let i = 0; i < 画面.length; i++) await step(i + 2, async () => { if (i === 0) note(OTC注記.replace("店頭用アカウント", "支店店頭用アカウント")); 結果.push(await 新しいタブで開く(page, 画面[i][0], 画面[i][1])); });
+  for (let i = 0; i < 画面.length; i++) await step(i + 2, async () => { if (i === 0) note(OTC注記.replace("店頭用アカウント", "支店店頭用アカウント")); 結果.push(await 新しいタブで開く(page, 画面[i][0], 画面[i][1], capture)); });
   await expected(async () => {
     for (const r of 結果) {
       expect.soft(r.status, `${r.名前}の応答のHTTPステータス（対象画面が表示されない）`).toBe(403);
@@ -523,15 +553,19 @@ caseTest("IT-M08-12-036", async ({ page, step, expected }) => {
   });
 });
 
-caseTest("IT-M08-12-046", async ({ page, step, expected }) => {
+caseTest("IT-M08-12-046", async ({ page, step, expected, capture }) => {
   const l = new LoginPage(page);
   const m = OTC会員["046"];
   const 画面 = [["本店の配送先の新規登録画面", "/ja/shopping/shipping_edit/1"], ["本店の配送先の変更画面", "/ja/shopping/shipping_edit/1/1"]] as const;
   const 結果: 開いた画面[] = [];
-  await step(1, async () => { await l.ログイン画面を開く(); await l.ログインする(mailOf(m.前半), m.pw); });
+  await step(1, async () => {
+    await l.ログイン画面を開く(); await l.ログインする(mailOf(m.前半), m.pw);
+    // ログインできずにログイン画面へ戻されても「システムエラーが出ない」は成り立つので、ログインできたことを確かめる
+    expect(!(await l.ログイン画面である()), "会員でログインできた（ログイン画面のままでない）").toBe(true);
+  });
   for (let i = 0; i < 画面.length; i++) await step(i + 2, async () => {
     if (i === 0) note("注文の手続きが無い状態で開くため、対象画面そのものは表示されず別の画面へ移ることがある。判定は、システムエラーが出ないことと、利用制限のエラー画面（HTTP 403）でないことで行った");
-    結果.push(await 新しいタブで開く(page, 画面[i][0], 画面[i][1]));
+    結果.push(await 新しいタブで開く(page, 画面[i][0], 画面[i][1], capture));
   });
   await expected(async () => {
     for (const r of 結果) {

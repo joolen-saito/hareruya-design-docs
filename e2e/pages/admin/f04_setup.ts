@@ -194,7 +194,7 @@ export async function 会員のお届け先を足す(page: Page, 会員ID: strin
   await f("tel][tel01").fill(tel.slice(0, 2));
   await f("tel][tel02").fill(tel.slice(2, 6));
   await f("tel][tel03").fill(tel.slice(6));
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), page.locator("form button[type=submit]").filter({ hasText: /登録/ }).first().click({ timeout: 30_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator("form button[type=submit]").filter({ hasText: /登録/ }).first().click({ timeout: 30_000, noWaitAfter: true })]);
   await expectSaved(page, `${what}: お届け先の登録`);
 }
 
@@ -229,7 +229,7 @@ async function 処理中の受注IDを1回読む(page: Page, メール: string, 
     await box.locator('input[type="checkbox"]').evaluateAll((ns) => ns.forEach((n) => { (n as HTMLInputElement).checked = true; }));
     expect(await box.locator('input[type="checkbox"]:not(:checked)').count(), "対応状況がすべて選ばれた").toBe(0);
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), form.locator("#search_submit").click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), form.locator("#search_submit").click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   const hrefs = await page.locator('a.action-edit[href*="/order/"]').evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
   const ids = [...new Set(hrefs.map((h) => /\/order\/(\d+)\/edit/.exec(h)?.[1]).filter((v): v is string => !!v))];

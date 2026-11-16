@@ -76,7 +76,7 @@ export class CardCsvUploadPage {
     }
     const importPath = pathOf(adminUrl(IMPORT_PATH));
     const response = this.page.waitForResponse((r) => r.request().method() === "POST" && pathOf(r.url()) === importPath, { timeout: waitMs });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: waitMs }), this.アップロードボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: waitMs }), this.アップロードボタン.click({ noWaitAfter: true })]);
     const status = (await response).status();
     await this.page.waitForLoadState("load");
     const m = await this.メッセージ();
@@ -145,8 +145,8 @@ async function openMaster(page: Page, 種別: マスター種別): Promise<void>
   await page.waitForLoadState("load");
   await page.locator('select[name="entity"]').selectOption({ label: 種別 });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('form[method="get"] button[type="submit"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('form[method="get"] button[type="submit"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator("form#edit_form table.mtg-master-table"), `${種別}の一覧`).toBeVisible();
@@ -193,8 +193,8 @@ export async function マスターを用意する(page: Page, 種別: マスタ�
   if (await f("code").count()) await f("code").fill(値.replace(/[^A-Za-z0-9]/g, "").slice(0, 8) || "M1405");
   if (await f("sort_no").count()) await f("sort_no").fill(String(Math.max(0, ...rows.map((r) => r.並び順).filter(Number.isFinite)) + 1));
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('button[type="submit"][form="edit_form"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('button[type="submit"][form="edit_form"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expectSaved(page, `${what}: ${種別}「${値}」の登録`);
@@ -218,8 +218,8 @@ export async function マスターの行を消す(page: Page, 種別: マスタ�
     }
   }
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('button[type="submit"][form="edit_form"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('button[type="submit"][form="edit_form"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expectSaved(page, `${what}: ${種別}「${値}」の行の削除`);
@@ -332,7 +332,7 @@ export async function カードセットを消す(page: Page, 名英: string, wh
     await row.locator("button.dropdown-menu-toggle").click();
     await row.locator('button[data-bs-target="#DeleteModal"]').click();
     await expect(page.locator("#DeleteModal"), "削除の確認ポップアップ").toBeVisible();
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator('#DeleteModal a[data-method="delete"]').click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator('#DeleteModal a[data-method="delete"]').click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
     await expectSaved(page, `${what}: カードセット「${名英}」の削除`);
     n++;

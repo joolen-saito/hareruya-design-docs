@@ -81,15 +81,18 @@ function お気に入りの商品数(n: string, 期待: string | null): CaseBody
   return async ({ page, step, expected }) => {
     const nav = new SpNavPage(page);
     スマホの注記();
-    let 見えている = false, 値 = "";
+    let 見えている = false, 値 = "", 導線 = false;
     await step(1, async () => { await ログインする(page, n); });
     await step(2, async () => { await nav.ECTOPを開く(); });
     await step(3, async () => {
+      導線 = await nav.見えているか(nav.お気に入り());
       見えている = await nav.見えているか(nav.お気に入りの商品数());
       if (見えている) 値 = await nav.テキスト(nav.お気に入りの商品数());
     });
     await expected(async () => {
       note(会員識別子の注記(n));
+      // 画面下部のお気に入りが出ていないと「商品数が見えていない」は確かめにならないため、お気に入りが見えていることも確かめる
+      expect.soft(導線, "画面下部のお気に入りが見えている").toBe(true);
       if (期待 === null) {
         expect.soft(見えている, "お気に入りの商品数が見えていない").toBe(false);
       } else {
@@ -109,7 +112,7 @@ caseTest("IT-F02-02-012", async ({ page, step, expected }) => {
   let r: 移った先 | undefined;
   await step(1, async () => { await ログインする(page, "012"); });
   await step(2, async () => { await n.ECTOPを開く(); });
-  await step(3, async () => { r = await n.押して移った先(n.お気に入り(), "画面下部のお気に入り"); });
+  await step(3, async () => { r = await n.下部のリンクを利用者と同じ押し方で押して移った先(n.お気に入り(), "画面下部のお気に入り"); });
   await expected(async () => {
     note(会員識別子の注記("012"));
     expect.soft(パス(r!.アドレス), "移った先の画面（お気に入り商品一覧）").toMatch(画面.お気に入り一覧);
@@ -122,14 +125,17 @@ function カートの商品数(n: string, 期待: string | null): CaseBody {
   return async ({ page, step, expected }) => {
     const nav = new SpNavPage(page);
     スマホの注記();
-    let 見えている = false, 値 = "";
+    let 見えている = false, 値 = "", 導線 = false;
     await カートのブラウザにする(page, `S-F02-02-CART-${n}`);
     await step(1, async () => { await nav.ECTOPを開く(); });
     await step(2, async () => {
+      導線 = await nav.見えているか(nav.カート());
       見えている = await nav.見えているか(nav.カートの商品数());
       if (見えている) 値 = await nav.テキスト(nav.カートの商品数());
     });
     await expected(async () => {
+      // 画面下部のカートが出ていないと「商品数が見えていない」は確かめにならないため、カートが見えていることも確かめる
+      expect.soft(導線, "画面下部のカートが見えている").toBe(true);
       if (期待 === null) {
         expect.soft(見えている, "カートの商品数が見えていない").toBe(false);
       } else {
@@ -149,7 +155,7 @@ caseTest("IT-F02-02-010", async ({ page, step, expected }) => {
   let r: 移った先 | undefined;
   await カートのブラウザにする(page, "S-F02-02-CART-010");
   await step(1, async () => { await n.ECTOPを開く(); });
-  await step(2, async () => { r = await n.押して移った先(n.カート(), "画面下部のカート"); });
+  await step(2, async () => { r = await n.下部のリンクを利用者と同じ押し方で押して移った先(n.カート(), "画面下部のカート"); });
   await expected(async () => {
     expect.soft(パス(r!.アドレス), "移った先の画面（カート）").toMatch(画面.カート);
   });
@@ -161,7 +167,7 @@ caseTest("IT-F02-02-021", async ({ page, step, expected }) => {
   let r: 移った先 | undefined;
   await step(1, async () => { await ログインする(page, "021"); });
   await step(2, async () => { await n.ECTOPを開く(); });
-  await step(3, async () => { r = await n.押して移った先(n.ログインマイページ(), "ログイン/マイページ"); });
+  await step(3, async () => { r = await n.下部のリンクを利用者と同じ押し方で押して移った先(n.ログインマイページ(), "ログイン/マイページ"); });
   await expected(async () => {
     note(会員識別子の注記("021"));
     expect.soft(パス(r!.アドレス), "移った先の画面（マイページ画面）").toMatch(画面.マイページ);

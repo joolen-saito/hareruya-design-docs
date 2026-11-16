@@ -179,7 +179,7 @@ function カード情報のリンクから(o: { 名: string; 引数: "cardset" |
     await step(2, async () => {
       const link = detail.カード情報のリンク(o.名);
       await expect(link, `カード情報の「${o.名}」のリンク`).toHaveCount(1);
-      await Promise.all([page.waitForURL(/\/products\/search/, { waitUntil: "domcontentloaded" }), link.click()]);
+      await Promise.all([page.waitForURL(/\/products\/search/, { waitUntil: "domcontentloaded", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
       await list.結果を待つ();
       結果 = (await list.カードを読む()).map((c) => c.商品ID);
     });

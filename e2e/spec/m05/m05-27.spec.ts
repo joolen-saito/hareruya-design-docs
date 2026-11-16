@@ -44,7 +44,7 @@ caseTest("IT-M05-27-025", async ({ page, browser, notes, step, expected, capture
   await step(1, async () => {
     await w.open();
     expect.soft(await w.検索店舗の店名(), "検索店舗が試験本店").toBe(A);
-    expect.soft(await w.登録ボタン.count(), "登録ボタンが表示されている（件数）").toBeGreaterThan(0);
+    expect.soft(await w.登録ボタン.count(), "登録ボタンが表示されている").toBeGreaterThan(0);
   });
   await step(2, async () => { await w.検索店舗の選択値を書き換える(店舗C); await capture("検索店舗の選択値を権限外店舗の店舗IDに書き換えた画面"); });
   await step(3, async () => {
@@ -75,8 +75,10 @@ caseTest("IT-M05-27-026", async ({ page, browser, notes, step, expected, capture
     if ((await w.登録ボタン.count()) === 0) {
       note("権限外店舗を選ぶと登録ボタンが表示されない。入力欄で Enter を押してフォームを送信した（ボタンは押せない）");
       await page.locator("#waiting_tag_waiting_tag").fill("DENYREG");
-      await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }).catch(() => null), page.locator("#waiting_tag_waiting_tag").press("Enter")]);
+      const [nav] = await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }).catch(() => null), page.locator("#waiting_tag_waiting_tag").press("Enter", { noWaitAfter: true })]);
       await page.waitForLoadState("load");
+      // 送られたかどうかで「追加されない」の意味が変わる（送られなければ画面が登録をさせない、送られればサーバーが受け付けない）ので、記録に残す
+      note(nav ? `Enter で登録の要求が送られた（応答 ${nav.status()}）` : "Enter を押しても登録の要求は送られなかった（画面が登録をさせない）");
     } else {
       await w.登録する("DENYREG");
     }
@@ -88,18 +90,19 @@ caseTest("IT-M05-27-026", async ({ page, browser, notes, step, expected, capture
 });
 
 /** 事前準備の「開始時に管理者のデフォルト検索表示店舗・編集可能店舗を設定し、同管理者でログインする」 */
-async function 開始する(page: Page, browser: Browser, 既定: string, 編集可能: string[]): Promise<WaitingTagPage> {
+/** 事前準備（編集可能店舗の設定・ログイン）。画面の部品は呼び出し側で作る（画面から読んだ値を、準備のDB書き込みと取り違えて「DB で確認」と書かないため） */
+async function 開始する(page: Page, browser: Browser, 既定: string, 編集可能: string[]): Promise<void> {
   await 編集可能店舗を設定する(browser, 既定, 編集可能);
   page.setDefaultTimeout(60_000);
   await loginAdmin(page, M0527_LIMIT);
-  return new WaitingTagPage(page);
 }
 const 並べ替え = (a: string[]) => [...a].sort();
 const 十一件 = (n: string) => "ABCDEFGHIJK".split("").map((c) => `TAG${c}-${n}`);
 
 caseTest("IT-M05-27-001", async ({ page, browser, step, expected }) => {
   const A = 本店;
-  const w = await 開始する(page, browser, A, [A]);
+  await 開始する(page, browser, A, [A]);
+  const w = new WaitingTagPage(page);
   let 店名 = "", 一覧: string[] = [];
   await step(1, async () => { await w.open(); 店名 = await w.検索店舗の店名(); 一覧 = await w.一覧の番号札(); });
   await expected(async () => {
@@ -110,7 +113,8 @@ caseTest("IT-M05-27-001", async ({ page, browser, step, expected }) => {
 
 caseTest("IT-M05-27-003", async ({ page, browser, step, expected }) => {
   const A = 本店, B = 支店;
-  const w = await 開始する(page, browser, A, [A, B]);
+  await 開始する(page, browser, A, [A, B]);
+  const w = new WaitingTagPage(page);
   let 店名 = "", 一覧: string[] = [];
   await step(1, async () => { await w.open(); });
   await step(2, async () => { await w.検索店舗を選ぶ(B); 店名 = await w.検索店舗の店名(); 一覧 = await w.一覧の番号札(); });
@@ -122,7 +126,8 @@ caseTest("IT-M05-27-003", async ({ page, browser, step, expected }) => {
 
 caseTest("IT-M05-27-004", async ({ page, browser, step, expected, capture }) => {
   const A = 本店, B = 支店;
-  const w = await 開始する(page, browser, A, [A, B]);
+  await 開始する(page, browser, A, [A, B]);
+  const w = new WaitingTagPage(page);
   note("フロント表示用英字名は、画面の入力規則（半角英数字と空白だけ）のため、正本の m0527-b-004 ではなく、試験用の支店の固定の値（m0527p2）にした。店舗はシード表の店名ごとに作らず、M05-27専用の試験用店舗（本店・支店・権限外店舗）を使い回す");
   let front: Page | null = null;
   await step(1, async () => { await w.open(); });
@@ -136,7 +141,8 @@ caseTest("IT-M05-27-004", async ({ page, browser, step, expected, capture }) => 
 
 caseTest("IT-M05-27-005", async ({ page, browser, step, expected }) => {
   const A = 本店, C = 権限外;
-  const w = await 開始する(page, browser, A, [A]); // 事前準備②: 編集可能店舗を試験本店だけにして、権限外店舗を外す
+  await 開始する(page, browser, A, [A]);
+  const w = new WaitingTagPage(page); // 事前準備②: 編集可能店舗を試験本店だけにして、権限外店舗を外す
   let 編集可 = -1, 編集不可 = -1, 不可の一覧: string[] = [];
   await step(1, async () => { await w.open(); 編集可 = await w.削除ボタン("ALPHA-005").count(); });
   await step(2, async () => { await w.検索店舗を選ぶ(C); 不可の一覧 = await w.一覧の番号札(); 編集不可 = await w.削除ボタン("CHARLIE").count(); });
@@ -149,7 +155,8 @@ caseTest("IT-M05-27-005", async ({ page, browser, step, expected }) => {
 
 caseTest("IT-M05-27-006", async ({ page, browser, notes, step, expected }) => {
   const A = 本店, B = 支店;
-  const w = await 開始する(page, browser, A, [A, B]);
+  await 開始する(page, browser, A, [A, B]);
+  const w = new WaitingTagPage(page);
   const 店舗B = notes.get("〔店舗ID-M0527-006B〕");
   let 前: string[] = [], 後: string[] = [];
   await step(1, async () => { await w.open(); });
@@ -169,7 +176,8 @@ caseTest("IT-M05-27-006", async ({ page, browser, notes, step, expected }) => {
 
 caseTest("IT-M05-27-007", async ({ page, browser, step, expected }) => {
   const A = 本店, B = 支店;
-  const w = await 開始する(page, browser, A, [A, B]);
+  await 開始する(page, browser, A, [A, B]);
+  const w = new WaitingTagPage(page);
   let 画面か = false, 成功 = false;
   await step(1, async () => { await w.open(); });
   await step(2, async () => { await w.検索店舗を選ぶ(B); });
@@ -186,7 +194,8 @@ caseTest("IT-M05-27-007", async ({ page, browser, step, expected }) => {
 
 caseTest("IT-M05-27-009", async ({ page, browser, notes, step, expected }) => {
   const A = 本店, B = 支店;
-  const w = await 開始する(page, browser, A, [A, B]);
+  await 開始する(page, browser, A, [A, B]);
+  const w = new WaitingTagPage(page);
   const 店舗B = notes.get("〔店舗ID-M0527-009B〕");
   let 件数 = -1, 全件: string[] = [];
   await step(1, async () => { await w.open(); });
@@ -204,7 +213,8 @@ caseTest("IT-M05-27-009", async ({ page, browser, notes, step, expected }) => {
 
 caseTest("IT-M05-27-016", async ({ page, browser, step, expected }) => {
   const A = 本店;
-  const w = await 開始する(page, browser, A, [A]);
+  await 開始する(page, browser, A, [A]);
+  const w = new WaitingTagPage(page);
   let 一覧: string[] = [], ページ分割 = -1;
   await step(1, async () => { await w.open(); 一覧 = await w.一覧の番号札(); ページ分割 = await page.locator(".pagination, [class*='pager']").count(); });
   await expected(async () => {
@@ -215,7 +225,8 @@ caseTest("IT-M05-27-016", async ({ page, browser, step, expected }) => {
 
 caseTest("IT-M05-27-017", async ({ page, browser, step, expected }) => {
   const A = 本店;
-  const w = await 開始する(page, browser, A, [A]);
+  await 開始する(page, browser, A, [A]);
+  const w = new WaitingTagPage(page);
   let 項目 = -1, 一覧: string[] = [];
   await step(1, async () => { await w.open(); });
   await step(2, async () => { 項目 = await w.並び順の項目の数(); 一覧 = await w.一覧の番号札(); });
@@ -227,7 +238,8 @@ caseTest("IT-M05-27-017", async ({ page, browser, step, expected }) => {
 
 caseTest("IT-M05-27-018", async ({ page, browser, step, expected }) => {
   const A = 本店;
-  const w = await 開始する(page, browser, A, [A]);
+  await 開始する(page, browser, A, [A]);
+  const w = new WaitingTagPage(page);
   let 閉じた = false, 画面か = false, 一覧: string[] = [];
   await step(1, async () => { await w.open(); });
   await step(2, async () => { await w.削除確認を開く("DELETE-018"); });
@@ -246,7 +258,8 @@ caseTest("IT-M05-27-018", async ({ page, browser, step, expected }) => {
 
 caseTest("IT-M05-27-019", async ({ page, browser, notes, step, expected }) => {
   const A = 本店;
-  const w = await 開始する(page, browser, A, [A]);
+  await 開始する(page, browser, A, [A]);
+  const w = new WaitingTagPage(page);
   const 店舗 = notes.get("〔店舗ID-M0527-019〕");
   let 件数 = -1;
   await step(1, async () => { await w.open(); });
@@ -260,7 +273,8 @@ caseTest("IT-M05-27-019", async ({ page, browser, notes, step, expected }) => {
 
 caseTest("IT-M05-27-020", async ({ page, browser, step, expected }) => {
   const A = 本店;
-  const w = await 開始する(page, browser, A, [A]);
+  await 開始する(page, browser, A, [A]);
+  const w = new WaitingTagPage(page);
   let 閉じた = false, 画面か = false;
   await step(1, async () => { await w.open(); });
   await step(2, async () => { await w.削除確認を開く("DELETE-020"); });
@@ -268,12 +282,15 @@ caseTest("IT-M05-27-020", async ({ page, browser, step, expected }) => {
   await expected(async () => {
     expect.soft(閉じた, "削除確認が閉じた").toBe(true);
     expect.soft(画面か, "店頭注文番号札管理画面へ遷移した").toBe(true);
+    // 削除に失敗しても同じ一覧へ戻りうるので、削除したうえでの遷移であることを、一覧から無くなったことで確かめる
+    expect.soft(await w.一覧の番号札(), "削除した「DELETE-020」が一覧に無い（削除が行われた）").not.toContain("DELETE-020");
   });
 });
 
 caseTest("IT-M05-27-021", async ({ page, browser, step, expected, capture }) => {
   const A = 本店;
-  const w = await 開始する(page, browser, A, [A]); // ブラウザA（この page）。ブラウザBは手順2で独立したセッションを作る
+  await 開始する(page, browser, A, [A]);
+  const w = new WaitingTagPage(page); // ブラウザA（この page）。ブラウザBは手順2で独立したセッションを作る
   let メッセージ: string[] = [], 一覧: string[] = [];
   await step(1, async () => { await w.open(); await w.削除確認を開く("STALE-021"); });
   await step(2, async () => {
@@ -299,7 +316,8 @@ caseTest("IT-M05-27-021", async ({ page, browser, step, expected, capture }) => 
 
 caseTest("IT-M05-27-027", async ({ page, browser, step, expected }) => {
   const A = 本店, B = 支店;
-  const w = await 開始する(page, browser, A, [A, B]);
+  await 開始する(page, browser, A, [A, B]);
+  const w = new WaitingTagPage(page);
   let 店名 = "", 一覧: string[] = [];
   await step(1, async () => { await w.open(); });
   await step(2, async () => { 店名 = await w.検索店舗の店名(); 一覧 = await w.一覧の番号札(); });
@@ -311,7 +329,8 @@ caseTest("IT-M05-27-027", async ({ page, browser, step, expected }) => {
 
 caseTest("IT-M05-27-028", async ({ page, browser, step, expected }) => {
   const A = 本店, B = 支店;
-  const w = await 開始する(page, browser, A, [A, B]);
+  await 開始する(page, browser, A, [A, B]);
+  const w = new WaitingTagPage(page);
   let 店名 = "", 一覧: string[] = [];
   await step(1, async () => { await w.open(); });
   await step(2, async () => { await w.検索店舗を選ぶ(B); 店名 = await w.検索店舗の店名(); 一覧 = await w.一覧の番号札(); });
@@ -323,7 +342,8 @@ caseTest("IT-M05-27-028", async ({ page, browser, step, expected }) => {
 
 caseTest("IT-M05-27-029", async ({ page, browser, notes, step, expected }) => {
   const A = 本店;
-  const w = await 開始する(page, browser, A, [A]);
+  await 開始する(page, browser, A, [A]);
+  const w = new WaitingTagPage(page);
   const 店舗 = notes.get("〔店舗ID-M0527-029〕");
   let 一覧: string[] = [], DB: string[] = [];
   await step(1, async () => { await w.open(); });

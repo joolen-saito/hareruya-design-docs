@@ -37,12 +37,12 @@ export async function 出荷指示リストを範囲で生成する(page: Page, 
   await expect(page.locator("#generateList"), `${what}: 出荷指示リスト生成欄`).toBeVisible();
   await page.locator('[name="admin_generate_shipping_standby[order_id_from]"]').fill(from);
   await page.locator('[name="admin_generate_shipping_standby[order_id_to]"]').fill(to);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator('#generate_form button[type="submit"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator('#generate_form button[type="submit"]').click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await page.goto(adminUrl("/standby/search"));
   await page.waitForLoadState("load");
   await page.locator('[name="admin_shipping_standby[order_id]"]').fill(検索する注文番号);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator('button[type="submit"][form="search_form"]').click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator('button[type="submit"][form="search_form"]').click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   const ids = await page.locator('tr[id^="result_list_main__item--"]').evaluateAll((rs) => rs.map((r) => r.id.replace("result_list_main__item--", "")));
   if (ids.length === 0) {
@@ -58,7 +58,7 @@ export async function 備考を登録する(page: Page, 出荷指示リストID:
   const p = new StandbyDetailPage(page);
   await p.open(出荷指示リストID);
   await p.備考欄.fill(備考);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), p.登録ボタン.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), p.登録ボタン.click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expect(page.locator(".alert-success"), `${what}: 備考の登録の結果`).toBeVisible();
 }
@@ -98,13 +98,13 @@ export class StandbyDetailPage {
   }
 
   /** 登録ボタンを押し、その要求の応答の状態と、押したあとの画面の見出しの文を返す */
-  async 登録を押す(): Promise<{ 応答: number; 画面の文: string }> {
+  async 登録を押す(): Promise<{ 応答: number; 画面の文: string; 送信先: string }> {
     const [res] = await Promise.all([
       this.page.waitForResponse((r: Response) => r.request().method() === "POST" && /\/standby\/\d+\/update/.test(r.url())),
       this.登録ボタン.click(),
     ]);
     await this.page.waitForLoadState("load");
-    return { 応答: res.status(), 画面の文: ((await this.page.locator("body").innerText()).replace(/\s+/g, " ")).slice(0, 200) };
+    return { 応答: res.status(), 画面の文: ((await this.page.locator("body").innerText()).replace(/\s+/g, " ")).slice(0, 200), 送信先: new URL(res.url()).pathname };
   }
 
   /** リスト削除ボタンを押す（確認のダイアログが出るまで待つ。OKは別の手順で押す） */
@@ -117,9 +117,9 @@ export class StandbyDetailPage {
   }
 
   /** 確認のダイアログでOKを押し、削除要求の応答の状態を返す */
-  async 確認ダイアログでOKを押す(): Promise<{ 応答: number | null }> {
+  async 確認ダイアログでOKを押す(): Promise<{ 応答: number | null; 送信先: string }> {
     const d = this.dialog as Dialog | null;
-    if (!d) return { 応答: null };
+    if (!d) return { 応答: null, 送信先: "" };
     const resP = this.page.waitForResponse((r: Response) => /\/standby\/(\d+\/)?delete/.test(r.url()), { timeout: 15_000 }).then((r) => r, () => null);
     await d.accept();
     await this.clicking;
@@ -127,7 +127,7 @@ export class StandbyDetailPage {
     // 削除が成功すると検索画面へ移る。移り終わるまで待つ（見つからない応答なら移らないので、短く待って先へ進む）
     await this.page.waitForURL(/\/standby\/search/, { timeout: 15_000 }).catch(() => undefined);
     await this.page.waitForLoadState("load");
-    return { 応答: res ? res.status() : null };
+    return { 応答: res ? res.status() : null, 送信先: res ? new URL(res.url()).pathname : "" };
   }
 
   /** 確認のダイアログでキャンセルを押す（削除要求は送られない） */
@@ -199,9 +199,37 @@ export async function メンバーを削除する(page: Page, 管理者ID: strin
   await row.locator("a.action-delete").click();
   const ok = page.locator(`#member_delete_${管理者ID} a.btn-ec-delete[data-method="delete"]`);
   await expect(ok).toBeVisible();
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), ok.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), ok.click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
+  // 断られたとき（「関連するデータがあるため「…」を削除できませんでした」）は、その文で止める（成功の帯を待って時間切れにしない）
+  const refused = page.locator(".alert-danger", { hasText: "削除できません" });
+  if (await refused.count()) throw new Error(`メンバー（管理者ID ${管理者ID}）の削除を画面が断った: ${(await refused.first().innerText()).replace(/\s+/g, " ").trim()}`);
   await expect(page.locator(".alert-success"), "メンバー削除の結果").toBeVisible();
+}
+
+/**
+ * メンバー編集画面で、編集可能店舗をすべて外して保存する。
+ * アプリのメンバー削除は、編集可能店舗の行（dtb_member_base_info。外部キーに削除時の指定が無い）を消さずにメンバーを消そうとするため、
+ * 編集可能店舗のあるメンバーは「関連するデータがあるため…削除できませんでした」で削除できない（開発環境 2026-11-13 の IT-M10-09-021・035。
+ * ec-cube-enterprise origin/develop の MemberRepository::delete・Entity/MemberBaseInfo.php）。削除の前にこれで外す
+ */
+export async function メンバーの編集可能店舗を外す(page: Page, 管理者ID: string): Promise<void> {
+  const res = await page.goto(adminUrl(`/setting/system/member/${管理者ID}/edit`));
+  if (!res || !res.ok()) throw new Error(`メンバー編集画面を開けない（管理者ID ${管理者ID}・応答 ${res?.status() ?? "なし"}）`);
+  const 編集可能店舗 = page.locator('[name="admin_member[editableBaseInfos][]"]');
+  await expect(編集可能店舗, "メンバー編集画面の「編集可能店舗」").toHaveCount(1);
+  await 編集可能店舗.selectOption([]);
+  // デフォルト検索表示店舗の選択肢は編集可能店舗に連動するので、未選択にする
+  const デフォルト = page.locator('[name="admin_member[defaultSearchBaseInfo]"]');
+  if (await デフォルト.locator('option[value=""]').count()) await デフォルト.selectOption({ value: "" });
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+    page.getByRole("button", { name: "登録", exact: true }).click({ noWaitAfter: true }),
+  ]);
+  await page.waitForLoadState("load");
+  await expect(page.locator(".alert-success"), "編集可能店舗を外したメンバーの保存の結果").toBeVisible();
+  const 残り = await page.locator('[name="admin_member[editableBaseInfos][]"] option:checked').allInnerTexts();
+  if (残り.length) throw new Error(`メンバー（管理者ID ${管理者ID}）の編集可能店舗を外して保存したが、まだ残っている（${残り.join("、")}）`);
 }
 
 /** 受注情報検索 一覧(検索入力)で、店舗に全店を選び、注文番号を入れて（対応状況はすべて選んで）検索する */

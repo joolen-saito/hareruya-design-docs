@@ -39,7 +39,7 @@ async function 会員IDを読む(browser: import("@playwright/test").Browser, �
     await page.goto(adminUrl("/customer"));
     await page.waitForLoadState("load");
     await page.locator('[name="admin_search_customer[multi]"]').fill(メール);
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ noWaitAfter: true })]);
     await page.waitForLoadState("load");
     const id = /ex-customer-(\d+)/.exec((await page.locator('tr[id^="ex-customer-"]').first().getAttribute("id")) ?? "")?.[1];
     if (!id) throw new Error(`会員 ${メール} が会員一覧に無い`);

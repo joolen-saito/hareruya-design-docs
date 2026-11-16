@@ -11,6 +11,7 @@ import { Page, test } from "@playwright/test";
 import fs from "node:fs";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
+import { CSVの内容を画面の枠に出す, CSVの枠のセル, CSVの枠のデータ行, CSVの枠の見出し } from "../../lib/evidence_other";
 import { loginAdmin } from "../../lib/session";
 import { M0608SummaryPage } from "../../pages/admin/m06_08_summary";
 import { 集計の記録 } from "../../db/m06_08_prep";
@@ -36,7 +37,17 @@ async function CSVをダウンロードする(page: Page, s: M0608SummaryPage): 
   const dl = page.waitForEvent("download", { timeout: 60_000 });
   await s.CSVダウンロードのボタン().click({ timeout: 30_000 });
   const d = await dl;
-  return parseCsv(decodeCsvBytes(fs.readFileSync(await d.path())));
+  const csv = parseCsv(decodeCsvBytes(fs.readFileSync(await d.path())));
+  // 読んだCSV（ファイル名・見出し・全データ行）を画面の枠に書き出して残す。続く期待結果の確かめはこの枠の要素で行い、赤枠がCSVの値に付く
+  await CSVの内容を画面の枠に出す(page, [{ 題: `ファイル名：${d.suggestedFilename()}`, 行: csv }]);
+  return csv;
+}
+/** CSVの枠の、見出し行とデータ行 i（0 から）の5項目を、期待の値と比べる */
+async function 枠の行を確かめる(page: Page, i: number, 期待: string[], 説明: string): Promise<void> {
+  for (const [k, h] of ヘッダ.entries()) await expect.soft(CSVの枠のセル(page, 0, i, h), `${説明}の「${h}」`).toHaveText(期待[k] ?? "");
+}
+async function 枠の見出しを確かめる(page: Page): Promise<void> {
+  for (const [k, h] of ヘッダ.entries()) await expect.soft(CSVの枠の見出し(page, 0, k), `CSVの1行目（ヘッダ行）の${k + 1}番目`).toHaveText(h);
 }
 const ヘッダ = ["集計日", "部門コード", "部門", "買取金額", "販売金額"];
 const csv行 = (日: string, d: { 部門コード: string; 部門名: string }, 買取: number, 販売: number) => [日, d.部門コード, d.部門名, String(買取), String(販売)];
@@ -159,9 +170,11 @@ caseTest("IT-M06-08-015", async ({ page, step, expected }) => {
   await step(5, async () => { csv = await CSVをダウンロードする(page, s); });
   await step(6, async () => { csv = [...csv]; });
   await expected(async () => {
-    expect.soft(csv.slice(1), "CSVのデータ行（直前の検索条件の1行だけ）").toEqual([csv行("2026/09/01", カード, 3000, 7000)]);
-    expect.soft(csv.slice(1), "CSVのデータ行が手順4の日別の集計結果と同じ").toEqual(日別の行.map((r) => csv行(r.集計日, { 部門コード: r.部門コード, 部門名: r.部門 }, r.買取金額, r.販売金額)));
-    expect.soft(csv[0], "CSVの1行目（ヘッダ行）").toEqual(ヘッダ);
+    await expect.soft(CSVの枠のデータ行(page, 0), "CSVのデータ行の数（直前の検索条件の1行だけ）").toHaveCount(1);
+    await 枠の行を確かめる(page, 0, csv行("2026/09/01", カード, 3000, 7000), "CSVのデータ行（直前の検索条件の1行だけ）");
+    await expect.soft(CSVの枠のデータ行(page, 0), "CSVのデータ行の数が手順4の日別の集計結果の行数と同じ").toHaveCount(日別の行.length);
+    for (const [i, r] of 日別の行.entries()) await 枠の行を確かめる(page, i, csv行(r.集計日, { 部門コード: r.部門コード, 部門名: r.部門 }, r.買取金額, r.販売金額), `CSVのデータ行${i + 1}が手順4の日別の集計結果と同じ`);
+    await 枠の見出しを確かめる(page);
   });
   note(`${店舗の注記}。${部門の注記}。手順2・3の「未選択」は、デフォルトで選ばれている買取店舗の選択を外して表した`);
 });
@@ -169,6 +182,7 @@ caseTest("IT-M06-08-015", async ({ page, step, expected }) => {
 caseTest("IT-M06-08-017", async ({ page, step, expected }) => {
   const s = await 開く(page, "017");
   let 日付 = { from: "x", to: "x" }; let 部門: string[] = []; let 店: string[] = [];
+  let 検証 = { ブラウザの入力チェック: "", 画面のエラー文: [] as string[] };
   await step(1, async () => { await s.open(); });
   await step(2, async () => {
     await s.集計日を入れる("", "2026-09-01");
@@ -176,9 +190,13 @@ caseTest("IT-M06-08-017", async ({ page, step, expected }) => {
     await s.買取店舗を未選択にする();
     await s.買取店舗を選ぶ(店名("017", "B"));
     await s.検索するを押すだけ();
+    検証 = await s.検証エラーの表示();
+    note(`検索するを押したあとの検証エラーの表示: ブラウザの入力チェック「${検証.ブラウザの入力チェック || "なし"}」・画面のエラー文「${検証.画面のエラー文.join(" / ") || "なし"}」`);
   });
   await step(3, async () => { 日付 = await s.集計日(); 部門 = await s.選択中の部門(); 店 = await s.選択中の店舗(); });
   await expected(async () => {
+    // 「検証エラー後も保持」なので、検証エラーが起きたこと（ブラウザの入力チェックか画面のエラー文）を合わせて見る。起きていなければ保持は確かめにならない
+    expect.soft(検証.ブラウザの入力チェック !== "" || 検証.画面のエラー文.length > 0, "検証エラーが起きた（ブラウザの入力チェックか、画面の項目のエラー文）").toBe(true);
     expect.soft(日付, "集計日(From)の空値と集計日(To)の2026/09/01が検索欄に保持される").toEqual({ from: "", to: "2026-09-01" });
     expect.soft(部門, "選択されている部門（カード）").toEqual(["カード"]);
     expect.soft(店, "選択されている買取店舗（大阪店の役）").toEqual([店名("017", "B")]);
@@ -215,9 +233,15 @@ caseTest("IT-M06-08-023", async ({ page, browser, step, expected }) => {
     await step(4, async () => { await loginAdmin(pageB, M0608_ADMIN("023")); await sB.open(); });
     await step(5, async () => {
       const dl = pageB.waitForEvent("download", { timeout: 10_000 }).then(() => true, () => false);
+      const 送信先のパス = new URL(送信先).pathname;
+      const res = pageB.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === 送信先のパス, { timeout: 60_000 }).catch(() => null);
       await pageB.evaluate((url) => { const f = document.createElement("form"); f.method = "post"; f.action = url; document.body.appendChild(f); f.submit(); }, 送信先);
       await pageB.waitForLoadState("load");
       ダウンロードされた = await dl;
+      const r = await res;
+      note(`ブラウザBから送信先へ POST を送った応答 ${r?.status() ?? "なし"}・そのあとの画面 ${new URL(pageB.url()).pathname}`);
+      // 送ったあとも同じ買取集計データ画面にいる作りなので、POST が送られていなければ「画面が表示される」は確かめにならない
+      expect(r, "ブラウザBから手順3の送信先へ POST が送られた（応答がある）").not.toBeNull();
     });
     await expected(async () => {
       expect.soft(ダウンロードされた, "CSVがダウンロードされる（されない）").toBe(false);
@@ -294,9 +318,11 @@ caseTest("IT-M06-08-028", async ({ page, step, expected }) => {
   await step(4, async () => { csv = await CSVをダウンロードする(page, s); });
   await step(5, async () => { csv = [...csv]; });
   await expected(async () => {
-    expect.soft(csv.slice(1), "CSVのデータ行（日付の昇順、同じ日の中は部門コードの昇順の4行）").toEqual([
-      csv行("2026/09/06", カード, 1000, 3000), csv行("2026/09/06", サプライ, 400, 500), csv行("2026/09/07", カード, 800, 900), csv行("2026/09/07", サプライ, 200, 300)]);
-    expect.soft(csv.slice(1), "CSVのデータ行が手順3の日別の集計結果の行と同じ").toEqual(日別の行.map((r) => csv行(r.集計日, { 部門コード: r.部門コード, 部門名: r.部門 }, r.買取金額, r.販売金額)));
+    const 期待 = [csv行("2026/09/06", カード, 1000, 3000), csv行("2026/09/06", サプライ, 400, 500), csv行("2026/09/07", カード, 800, 900), csv行("2026/09/07", サプライ, 200, 300)];
+    await expect.soft(CSVの枠のデータ行(page, 0), "CSVのデータ行の数（日付の昇順、同じ日の中は部門コードの昇順の4行）").toHaveCount(4);
+    for (const [i, e] of 期待.entries()) await 枠の行を確かめる(page, i, e, `CSVのデータ行${i + 1}（日付の昇順、同じ日の中は部門コードの昇順）`);
+    await expect.soft(CSVの枠のデータ行(page, 0), "CSVのデータ行の数が手順3の日別の集計結果の行数と同じ").toHaveCount(日別の行.length);
+    for (const [i, r] of 日別の行.entries()) await 枠の行を確かめる(page, i, csv行(r.集計日, { 部門コード: r.部門コード, 部門名: r.部門 }, r.買取金額, r.販売金額), `CSVのデータ行${i + 1}が手順3の日別の集計結果の行と同じ`);
   });
   note(`${店舗の注記}。${部門の注記}。部門コードの昇順は、既存のカードとサプライの実際のコードの順が D01・D02 の順と同じになることを前提に確かめた`);
 });

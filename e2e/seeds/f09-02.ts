@@ -27,6 +27,9 @@ import { デッキを登録する } from "../pages/admin/m15_05_deck_edit";
 import { CSVデッキ定義, アーキタイプを登録する, デッキをCSVで登録する, 日付, 表示日付 } from "../pages/admin/f09_01_setup";
 import { デッキのアーキタイプを未設定にする, デッキの更新日時を設定する } from "../db/f09_02";
 import { フォーマットを登録する } from "../pages/admin/f09_02_setup";
+import { デッキ一覧 } from "../pages/admin/m15_deck";
+import { デッキ一括編集 } from "../pages/admin/m15_04_bulk_edit";
+import { プレイヤー名でデッキを探す } from "../pages/admin/f09_01_setup";
 
 /** 管理画面でデッキの成績を編集する試験管理者（シード表 S-F09-02-ADM） */
 export const F0902_ADMIN: Account = { loginId: "f0902-admin", password: "Passw0rd!F0902" };
@@ -70,6 +73,8 @@ type 計画 = {
   アーキタイプの割り当て?: Record<string, string>;
   /** すべてのデッキを、デッキ登録CSVアップロードの1回で登録する（件数の多いケース。デッキリストは非公開で作る） */
   CSVで作る?: boolean;
+  /** CSV登録のあと、このシードのデッキ（プレイヤー名に実行の印を持つものだけ）を、デッキ一覧の一括編集でデッキリスト公開状態＝公開にする（シード表のページ送りのケースの⑤） */
+  リストを公開にする?: boolean;
   /** 画面で作ったあと、DBですべてのデッキの更新日時を「yyyy/mm/dd hh:mm:ss」にする */
   更新日時?: string;
 };
@@ -125,7 +130,21 @@ function definePlanSeed(seedId: string, p: 計画): void {
           表示: !d.非公開, リスト非公開: true, 順位: d.順位, 参加人数: d.参加人数,
         }));
         await デッキをCSVで登録する(page, rows, seedId, issue);
-        issue(`デッキ ${rows.length} 件を、デッキ登録CSVアップロード（1回）で登録した。開催日を秒まで指定する・件数が多いため。列の並びはCSV登録画面の見出しに合わせた。デッキリスト非公開フラグは1・メインリストは空（任意の値）`);
+        issue(`デッキ ${rows.length} 件を、デッキ登録CSVアップロード（1回）で登録した。開催日を秒まで指定する・件数が多いため。列の並びはCSV登録画面の見出しに合わせた。取り込み時のデッキリスト非公開フラグは1・メインリストは空（シード表に定めが無いので任意の値。ページ送りのケースは、シード表どおり取り込んだあとに一括編集で公開にする）`);
+      }
+      if (p.リストを公開にする) {
+        const 語 = n("P");
+        const ids = await プレイヤー名でデッキを探す(page, 語);
+        if (ids.length !== p.デッキ.length) throw new Error(`${seedId}: プレイヤー名「${語}」で探したデッキが ${ids.length} 件（${p.デッキ.length} 件のはず）。デッキ一覧の1ページに収まらないか、残りがある`);
+        const l = new デッキ一覧(page);
+        const b = new デッキ一括編集(page);
+        for (const id of ids) await b.デッキを選ぶ(l, id);
+        await b.開く();
+        await b.チェック("privateFlg", true);
+        await b.デッキリスト公開状態を選ぶ("公開");
+        const r = await b.実行する();
+        if (!r.成功.length) throw new Error(`${seedId}: 一括編集でデッキリスト公開状態を公開にできない（${[...r.エラー, ...r.入力の不足].join(" / ")}）`);
+        issue(`取り込んだあと、デッキ一覧でプレイヤー名「${語}」（このシードの印つき）の ${ids.length} 件だけを選び、一括編集でデッキリスト公開状態を公開にした（シード表どおり）`);
       }
       for (const d of p.デッキ.filter((x) => x.アーキタイプなし)) {
         デッキのアーキタイプを未設定にする(n(d.プレイヤー));
@@ -271,9 +290,11 @@ definePlanSeed("S-F09-02-LISTALL-020", {
 });
 
 // ページ送り（デッキリストは非公開で、デッキ登録CSVアップロードの1回で作る）
-definePlanSeed("S-F09-02-PAGEALL-025", { ケース: "025", フォーマット: ["FMT"], CSVで作る: true, デッキ: 連番(25, 2, () => "1") });
+definePlanSeed("S-F09-02-PAGEALL-025", { ケース: "025", フォーマット: ["FMT"], CSVで作る: true, リストを公開にする: true, デッキ: 連番(25, 2, () => "1") });
 for (const [id, ケース, 件数] of [
   ["S-F09-02-SIZE20-026", "026", 21], ["S-F09-02-PAGE2-027", "027", 21], ["S-F09-02-PAGECNT-028", "028", 21],
+] as const) definePlanSeed(id, { ケース, フォーマット: ["FMT"], CSVで作る: true, リストを公開にする: true, デッキ: 連番(件数, 2, undefined, { 参加人数: "32" }) });
+for (const [id, ケース, 件数] of [
   ["S-F09-02-PAGEOVR200-058", "058", 21], ["S-F09-02-PAGEOVRNONE-059", "059", 21],
 ] as const) definePlanSeed(id, { ケース, フォーマット: ["FMT"], CSVで作る: true, デッキ: 連番(件数, 2, undefined, { 参加人数: "32" }) });
 for (const [id, ケース, 件数] of [

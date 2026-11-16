@@ -11,17 +11,18 @@
  * 作らないシード: 権限外店舗のイベント（NOAUTH）は別の管理者が要る分だけ、QK/RI 系は別機能のシードの連携が要る分は作っていない（記録を参照）。
  */
 import { SETUP_ADMIN } from "../config/env";
-import { rc } from "../lib/run_marker";
+import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { Page } from "@playwright/test";
 import { EventInput, registerEvent } from "../pages/admin/event";
-import { ensureMember } from "../pages/admin/member";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
 import { registerSchedule, ScheduleInput } from "../pages/admin/schedule";
 import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
 import { 試験用の祝日を足す, 祝日が無いことを確かめる } from "../pages/admin/m13_holiday_setup";
 
-export const M1303_ADMIN: Account = { loginId: "m1303_admin", password: "Passw0rd!M1303" };
+// 店舗を決まった名前の店舗（店舗A-E2E など）に替えたので、管理者も決まった印で作り直して使い回す（前の実行の印つきの店舗に所属した同じ名前の管理者とぶつけない）
+export const M1303_ADMIN: Account = { loginId: rcFixed("m1303_admin").toLowerCase(), password: "Passw0rd!M1303" };
 
 defineSeed("S-M13-03-ADM", async ({ browser, notes, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
@@ -29,7 +30,7 @@ defineSeed("S-M13-03-ADM", async ({ browser, notes, seed }) => {
     notes.set("〔店舗ID-M1303-共有A〕", await ensureMarkedTenant(page, "A", issue));
     notes.set("〔店舗ID-M1303-共有B〕", await ensureMarkedTenant(page, "B", issue));
     notes.set("〔管理者ID-M1303-共有〕", await ensureMember(page, {
-      名前: "M13-03 試験管理者", 所属店舗: 印店名.A, ログインID: M1303_ADMIN.loginId, メールアドレス: "m1303_admin@example.test",
+      名前: rcFixed("M13-03 試験管理者"), 所属店舗: 印店名.A, ログインID: M1303_ADMIN.loginId, メールアドレス: `${M1303_ADMIN.loginId}@example.test`,
       パスワード: M1303_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.A, 編集可能店舗: [印店名.A],
     }));
   });

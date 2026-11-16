@@ -1,6 +1,7 @@
 /** M05-19 出荷指示リスト検索（メニュー「受注管理」→「出荷指示リスト」） */
 import { Dialog, expect, Locator, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
+import { withoutEnvBanners } from "./common";
 
 export class StandbySearchPage {
   constructor(private readonly page: Page) {}
@@ -82,7 +83,8 @@ export class StandbySearchPage {
       表示件数: await p.locator("#page_count_pulldown").count(),
       ページング: await p.locator("#result_list_main nav.pagination, #result_list_main .pagination, #result_list .pagination").count(),
       結果なしの案内: await p.getByText("検索条件に合致するデータが見つかりませんでした", { exact: false }).count(),
-      エラー表示: (await p.locator(".alert-danger, .alert-warning").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean),
+      // 開発用の設定のときに常に出る赤い帯は、エラーの表示に数えない
+      エラー表示: withoutEnvBanners((await p.locator(".alert-danger, .alert-warning").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean)),
     };
   }
 
@@ -90,8 +92,8 @@ export class StandbySearchPage {
   /** 「検索する」を押して、結果の画面が出るまで待つ */
   async 検索する(): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.page.locator('button[type="submit"][form="search_form"]').click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.page.locator('button[type="submit"][form="search_form"]').click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }

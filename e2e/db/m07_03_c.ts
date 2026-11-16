@@ -49,6 +49,21 @@ export function 実在庫履歴の件数(買取番号: string): number {
   )[0].n);
 }
 
+/** 商品規格IDの商品規格の件数 */
+export function 商品規格の件数(商品規格ID: string): number {
+  return Number(query("select count(*) as n from dtb_product_class where id = $1", [数字(商品規格ID)])[0].n);
+}
+
+/** 存在しない商品規格IDを選ぶ。いまある最大のIDより十分大きい番号から探し、照会で0件だったものを返す（決め打ちにしない） */
+export function 存在しない商品規格IDを選ぶ(): string {
+  const 最大 = Number(query("select coalesce(max(id), 0) as m from dtb_product_class")[0].m);
+  for (let k = 0; k < 20; k++) {
+    const 候補 = String(最大 + 1_000_000 + k * 1_009 + 7);
+    if (商品規格の件数(候補) === 0) return 候補;
+  }
+  throw new Error("存在しない商品規格IDを選べなかった");
+}
+
 /** 選んで買取の明細の数（商品コードの商品の明細） */
 export function 選んで買取の明細の数(買取番号: string, 商品コード: string): number {
   return Number(query(

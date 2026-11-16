@@ -41,7 +41,7 @@ export class CustomCsvPage {
   /** CSV選択で種別を選ぶ（選ぶと画面を開き直す） */
   async 種別を選ぶ(label: string): Promise<void> {
     if ((await this.選択中の表示名(this.CSV選択)) === label) return;
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.CSV選択.selectOption({ label }, { timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.CSV選択.selectOption({ label }, { timeout: 20_000 })]);
     await expect(this.CSV選択).toBeVisible();
   }
 
@@ -49,7 +49,7 @@ export class CustomCsvPage {
   async 定義を選ぶ(label: string): Promise<void> {
     if ((await this.選択中の表示名(this.追加されたCSV選択)) === label) return; // すでに選ばれていれば画面は開き直されない
     const option = label === "新規作成" ? { value: "" } : { label };
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.追加されたCSV選択.selectOption(option, { timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.追加されたCSV選択.selectOption(option, { timeout: 20_000 })]);
     await expect(this.CSV選択).toBeVisible();
   }
 
@@ -125,7 +125,7 @@ export class CustomCsvPage {
     await expect(modal).toBeVisible({ timeout: 30_000 });
     const ok = modal.locator('a.btn-ec-delete[data-method="delete"]');
     await expect.poll(async () => (await ok.getAttribute("href")) ?? "#", "削除の送り先（モーダルが開き終わると入る）").toMatch(/custom_csv\/delete\/\d+/);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), ok.click({ timeout: 30_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), ok.click({ timeout: 30_000, noWaitAfter: true })]);
   }
 
   /** 画面の項目名から、その場で定義を新規作成する（種別を選び、名前を入れ、項目を渡した順に移して設定する）。定義IDを返す */
@@ -158,7 +158,7 @@ export class ProductCustomCsvPage {
 
   async 商品コードで検索する(code: string): Promise<void> {
     await this.商品コード.fill(code);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.検索ボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.検索ボタン.click({ noWaitAfter: true })]);
   }
 
   /** カスタムCSV出力のプルダウンの選択肢（先頭の見出しと、設定画面への行き先を含む） */

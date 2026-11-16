@@ -1,6 +1,7 @@
 /** F06-23 お問い合わせ履歴（フロントのマイページ）の操作。セレクタ・アドレスはここだけに書く。正本: cases/F06-23_test_cases.tsv */
 import { Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { 押して移るのを待つ } from "./nav_click";
 
 const T = 30_000;
 export type 言語 = "ja" | "en";
@@ -24,7 +25,7 @@ export class ContactHistoryPage {
     const form = this.page.locator("form#login_mypage");
     await form.locator("#login_email").fill(メール, { timeout: T });
     await form.locator("#login_pass").fill(パスワード, { timeout: T });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), form.locator("button[type=submit]").click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), form.locator("button[type=submit]").click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   async 開く(): Promise<void> {
@@ -61,6 +62,14 @@ export class ContactHistoryPage {
   async 日時の行(日時: string): Promise<{ 日時: string; 種別: string; 番号: string } | undefined> {
     return (await this.行の内容()).find((r) => r.日時 === 日時);
   }
+  /**
+   * 一覧のうち、問い合わせ日時の数字の並び（年・月・日・時・分）が一致する行（無ければ undefined）。
+   * 日本語表示の一覧の日時の書式（設計は「Y年m月d日 H:i」）の違いを問わずに、送信日時で行を探すのに使う。書式そのものは呼び出し側で確かめる
+   */
+  async 日時の数字が合う行(日時: string): Promise<{ 日時: string; 種別: string; 番号: string } | undefined> {
+    const 数字 = (t: string) => t.replace(/\D/g, "");
+    return (await this.行の内容()).find((r) => 数字(r.日時) === 数字(日時));
+  }
   /** 番号の行の、押す対象（種別・番号） */
   番号の行(番号: string): Locator {
     return this.一覧の行.filter({ has: this.page.locator(".p-hareruya-contact-list__number", { hasText: new RegExp(`[：:]\\s*${番号}\\s*[）)]`) }) });
@@ -78,15 +87,7 @@ export class ContactHistoryPage {
     return (await c.count()) === 0 ? "" : ((await c.first().innerText()) ?? "").replace(/\s+/g, " ").trim();
   }
   async 押して遷移する(l: Locator): Promise<void> {
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 });
-    try {
-      await l.click({ timeout: 10_000 });
-    } catch (e) {
-      test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
-    }
-    await nav;
-    await this.page.waitForLoadState("load");
+    // 押す操作だけを行い、移るのを待つ（押せているのに click の待ちが時間切れになり、移った先で押し直してしまうのを防ぐ。pages/front/nav_click.ts）
+    await 押して移るのを待つ(this.page, l, { 直接送るときの注記: "正本の外の補い" });
   }
 }

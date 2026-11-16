@@ -30,7 +30,7 @@ export class EntrySearchPage {
     return this.店舗.evaluate((el) => [...(el as HTMLSelectElement).selectedOptions].map((o) => (o.textContent ?? "").trim()).filter(Boolean));
   }
   async 検索する(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.page.locator("#search_form button[type='submit']").click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.page.locator("#search_form button[type='submit']").click({ noWaitAfter: true })]);
   }
   /** 開催日を空にして、店舗と検索イベント名で検索する */
   async 条件を入れて検索する(店舗名: string[], 語: string, from = "", to = ""): Promise<void> {

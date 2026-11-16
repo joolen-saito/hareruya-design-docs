@@ -31,10 +31,11 @@
  *   「不明カードX」が「あれば削除する」（015・016）は、カード一覧で無いことを確かめ、あれば止める（共有のマスタを消さない）。
  * - DCIナンバーのDBでの設定（001）は行わない（画面で指定できない。001 の期待結果は DCIナンバーを確かめない）。
  *
- * 作らないシード（ケースを実装しない）: CASE-002・020（DCIナンバーをDBで設定し、ケースがそれを確かめる）、CASE-004（試験メールの受信箱）、
+ * 作らないシード（ケースを実装しない）: CASE-002・020（DCIナンバーをDBで設定し、ケースがそれを確かめる）、
  * CASE-010（ケースの手順がDBで選手情報を消す）、CASE-011（イベントのフォーマット0件をDBで設定）、CASE-013（デッキ登録なしの日程の登録期限をDBで設定）、
  * CASE-025（ログイン会員の選手情報をDBで消す）。
  */
+import { 店名を読む } from "../lib/store_pick";
 import { Browser, Page } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { プレイヤーID } from "../db/f03_07";
@@ -54,6 +55,7 @@ import {
 import { アーキタイプを登録する, カード名リストを作成する } from "../pages/admin/f09_01_setup";
 import { カードを登録する } from "../pages/admin/m14_card";
 import { デッキ一覧 } from "../pages/admin/m15_deck";
+import { findFormat } from "../pages/admin/m14_card";
 import { ensureMember, findMemberId } from "../pages/admin/member";
 import { registerSchedule } from "../pages/admin/schedule";
 import { DeckEntryEditPage } from "../pages/front/f06_16_deck_entry_k";
@@ -62,7 +64,8 @@ import { DeckEntryEditPage } from "../pages/front/f06_16_deck_entry_k";
 // 共有の値
 // ---------------------------------------------------------------------------
 
-export const 店名 = "晴れる屋テスト店";
+/** 店舗は作らない（依頼者 2026-11-15）。「晴れる屋テスト店」は使い回す E2E の店舗 5007 で表す */
+export const 店名 = 店名を読む("5007");
 const 管理者名 = "F0617試験管理者";
 export const F0617_ADMIN: Account = { loginId: "f0617_admin", password: "Passw0rd!F0617adm" };
 
@@ -113,6 +116,18 @@ export function 大会(key: string): 作った大会 {
 
 const 管理画面 = <T>(browser: Browser, fn: (page: Page) => Promise<T>, account: Account = SETUP_ADMIN) =>
   withAdminSession(browser, account, async (page) => { page.setDefaultTimeout(60_000); page.setDefaultNavigationTimeout(120_000); return fn(page); });
+
+/**
+ * スタンダード試験に属するアーキタイプ「F0617-スタンダード試験」が無ければ登録する（あれば使う）。管理画面のデッキの登録・更新はアーキタイプが必須で、
+ * 共有のフォーマット「スタンダード試験」にはアーキタイプが無い（登録は新しい名前の追加だけで、既存のフォーマット・アーキタイプは書き換えない）。
+ */
+async function アーキタイプを用意する(page: Page, seedId: string): Promise<void> {
+  const フォーマットID = await findFormat(page, 形式.A.名日);
+  if (!フォーマットID) throw new Error(`${seedId}: フォーマット「${形式.A.名日}」が無い（共有の参照シードが作るはず）`);
+  if ((await フォーマットのアーキタイプ(page, フォーマットID)).includes(アーキタイプ名)) return;
+  const id = await アーキタイプを登録する(page, { 名: アーキタイプ名, フォーマット: 形式.A.名日 }, (x) => reportSeedIssue(seedId, x));
+  reportSeedIssue(seedId, `フォーマット「${形式.A.名日}」にアーキタイプ「${アーキタイプ名}」（ID ${id}）が無かったので登録した（デッキの登録・更新でアーキタイプが必須のため）`);
+}
 
 /** カード一覧で名前を検索し、ちょうどその名前のカードIDを返す（1件でなければ止める） */
 async function カードIDを読む(page: Page, seedId: string, 名: string): Promise<string> {
@@ -260,6 +275,7 @@ defineCaseSeed("S-F06-17-CASE-005", "005", {
     await 管理画面(ctx.browser, async (page) => {
       const ids = await 日程のデッキを検索する(page, ctx.大会!.イベント詳細ID);
       if (ids.length !== 1 || ids[0] !== id) throw new Error(`${ctx.seedId}: デッキ一覧でイベント詳細ID ${ctx.大会!.イベント詳細ID} のデッキが提出したデッキ ${id} の1件だけでない（${ids.join("、")}）`);
+      await アーキタイプを用意する(page, ctx.seedId);
       await デッキを更新する(page, id, { 空のときのアーキタイプ: アーキタイプ名 }, (x) => reportSeedIssue(ctx.seedId, x));
     }, F0617_ADMIN);
     const 編集者 = await 管理画面(ctx.browser, async (page) => {
@@ -305,9 +321,12 @@ defineCaseSeed("S-F06-17-CASE-026", "026", {
 defineCaseSeed("S-F06-17-CASE-028", "028", {
   大会: null,
   あと: async ({ browser, notes, seedId, 会員: m }) => {
-    const id = await 管理画面(browser, (page) => イベントなしの大会デッキを登録する(page, {
-      フォーマット: 形式.A.名日, アーキタイプ: アーキタイプ名, 公開状態: "非公開", 検索語: m!.名, 選手ID: m!.選手ID, メイン: `1 ${カード.通常A.名日}`,
-    }, (x) => reportSeedIssue(seedId, x)));
+    const id = await 管理画面(browser, async (page) => {
+      await アーキタイプを用意する(page, seedId);
+      return イベントなしの大会デッキを登録する(page, {
+        フォーマット: 形式.A.名日, アーキタイプ: アーキタイプ名, 公開状態: "非公開", 検索語: m!.名, 選手ID: m!.選手ID, メイン: `1 ${カード.通常A.名日}`,
+      }, (x) => reportSeedIssue(seedId, x));
+    });
     notes.set("〔デッキID-F0617-028〕", id);
     デッキ一覧の控え.set("028", id);
     reportSeedIssue(seedId, `デッキタイプ「event」（大会のデッキ種別）・イベントなしで登録した。公開状態の「非表示」は選択肢に無いので「非公開」、アーキタイプ（必須）は「${アーキタイプ名}」を選んだ`);
@@ -326,6 +345,7 @@ function CB上書き(n: string) {
     await 管理画面(ctx.browser, async (page) => {
       const ids = await 日程のデッキを検索する(page, ctx.大会!.イベント詳細ID);
       if (ids.length !== 1 || ids[0] !== id) throw new Error(`${ctx.seedId}: デッキ一覧でイベント詳細ID ${ctx.大会!.イベント詳細ID} のデッキが提出したデッキ ${id} の1件だけでない（${ids.join("、")}）`);
+      await アーキタイプを用意する(page, ctx.seedId);
       await デッキを更新する(page, id, { プレイヤー名: `F0617-CB${n}-KEEP`, 空のときのアーキタイプ: アーキタイプ名 }, (x) => reportSeedIssue(ctx.seedId, x));
     }, F0617_ADMIN);
   };
@@ -350,7 +370,7 @@ defineCBSeed("S-F06-17-CBUPD-048", "048", CB("048", { セイ: "スズキ", メ�
 // 連携（PE）: 管理画面のイベント申込一覧・デッキ一覧への連携
 // ---------------------------------------------------------------------------
 
-export const 連携店名 = "連携店F06-17";
+export const 連携店名 = 店名を読む("221");
 export const 連携形式 = { 名日: "連携形式F06-17", 名英: "Link Format F0617" };
 export const 連携カード = [
   { 名日: "連携稲妻", 名英: "Link Bolt" },

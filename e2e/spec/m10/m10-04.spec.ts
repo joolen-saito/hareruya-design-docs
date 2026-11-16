@@ -8,7 +8,7 @@ import { loginAdmin } from "../../lib/session";
 import { hideDebugToolbar } from "../../lib/session";
 import { expectSaved } from "../../pages/admin/common";
 import { PurchaseGroupPage } from "../../pages/admin/m03_22_purchase_group";
-import { PaymentPage, 画像, メール日, メール英 } from "../../pages/admin/m10_04_payment";
+import { PaymentPage, 画像, 色つきの画像, メール日, メール英 } from "../../pages/admin/m10_04_payment";
 import { 支払方法を読む, 最大の表示順 } from "../../db/m10_04_payment";
 import { M1004L_ADMIN, 名, 基本, 三件, 壱弐参, 名追加 } from "../../seeds/m10-04";
 
@@ -52,15 +52,18 @@ caseTest("IT-M10-04-003", async ({ page, step, expected }) => {
   await step(2, async () => {
     await g.openNew();
     const 行 = g.rowsByName(名.g003()); await pwExpect(行, "購入グループの行").toHaveCount(1);
-    expect.soft((await g.readRow(行)).支払方法, "変更前の支払方法欄").toContain(名.p003前());
+    await 行.scrollIntoViewIfNeeded();
+    await pwExpect.soft(行.locator("td:nth-child(4)"), "変更前の支払方法欄に変更前の名称を含む").toContainText(名.p003前());
   });
   await step(3, async () => { await p.openList(); await p.行(名.p003前()).locator("div.col-2 a").click({ timeout: 30_000 }); await pwExpect(p.支払方法欄).toBeVisible({ timeout: 30_000 }); });
   await step(4, async () => { await p.支払方法欄.fill(名.p003後(), { timeout: 30_000 }); await p.登録を押す(); await expectSaved(page, "支払方法の更新"); });
   await step(5, async () => { await g.openNew(); });
-  await step(6, async () => { const 行 = g.rowsByName(名.g003()); await pwExpect(行).toHaveCount(1); const r = await g.readRow(行); 後 = r.支払方法; });
+  await step(6, async () => { const 行 = g.rowsByName(名.g003()); await pwExpect(行).toHaveCount(1); const r = await g.readRow(行); 後 = r.支払方法; await 行.scrollIntoViewIfNeeded(); });
   await expected(async () => {
-    expect.soft(後, "購入グループの支払方法欄").toContain(名.p003後());
-    expect.soft(後.includes(名.p003前()), "購入グループの支払方法欄に変更前の名称が残っている").toBe(false);
+    const 欄 = g.rowsByName(名.g003()).locator("td:nth-child(4)");
+    await expect.soft(欄, "購入グループの支払方法欄に変更後の名称を含む").toContainText(名.p003後());
+    await expect.soft(欄, "購入グループの支払方法欄に変更前の名称が残っていない").not.toContainText(名.p003前());
+    void 後;
   });
 });
 
@@ -123,8 +126,8 @@ caseTest("IT-M10-04-012", async ({ page, step, expected }) => {
   await step(2, async () => { await p.openList(); });
   await step(3, async () => { await p.行(名.p012()).locator("div.col-2 a").click({ timeout: 30_000 }); await pwExpect(p.支払方法欄).toBeVisible({ timeout: 30_000 }); });
   await expected(async () => {
-    await pwExpect(p.ロゴのプレビュー.first(), "ロゴ画像欄").toBeVisible({ timeout: 30_000 }).catch(() => {});
-    expect.soft(await p.ロゴのプレビュー.count(), "ロゴ画像欄のプレビューの数").toBeGreaterThan(0);
+    // 登録済みの画像は、画面を開いたあとに別の要求で読み込まれる。読み込みが済んで画像が描かれるまで待ってから確かめる
+    expect.soft(await p.画像プレビューを待つ(), "ロゴ画像欄の画像のプレビュー（読み込みが済んで描かれた数）").toBeGreaterThan(0);
     expect.soft(await p.ロゴの値.inputValue(), "登録済みのロゴ画像").not.toBe("");
   });
 });
@@ -132,14 +135,20 @@ caseTest("IT-M10-04-012", async ({ page, step, expected }) => {
 caseTest("IT-M10-04-013", async ({ page, step, expected }) => {
   const p = new PaymentPage(page);
   const 見えた: Record<string, number> = {};
-  const 選ぶ = async (n: string) => { await p.ロゴを選ぶ(画像(n)); await pwExpect(p.ロゴのプレビュー.first()).toBeVisible({ timeout: 30_000 }).catch(() => {}); 見えた[n] = await p.ロゴのプレビュー.count(); };
+  const 名前: Record<string, string> = {};
+  // 形式ごとに色の違う画像（gif=赤・jpeg=緑・png=青）を選び、画像そのもののプレビューが描かれるまで待つ
+  const 選ぶ = async (n: string) => { await p.ロゴを選ぶ(色つきの画像(n)); 見えた[n] = await p.画像プレビューを待つ(); 名前[n] = await p.ロゴのファイル名(); };
+  note("正本はファイル名と形式だけを定めるため、選んだ形式が画像で見分けられるよう、gifは赤・jpegは緑・pngは青の160×80の画像を試験用に作って使った（画像の中身は正本が定めない）");
   await step(1, async () => { await ログイン(page); });
   await step(2, async () => { await p.openNew(); });
   await step(3, async () => { await 選ぶ("G013M1004n013-a.gif"); });
   await step(4, async () => { await 選ぶ("G013M1004n013-b.jpg"); });
   await step(5, async () => { await 選ぶ("G013M1004n013-c.png"); });
   await expected(async () => {
-    for (const [n, c] of Object.entries(見えた)) expect.soft(c, `${n.split(".").pop()}を選んだ直後のプレビューの数`).toBeGreaterThan(0);
+    for (const [n, c] of Object.entries(見えた)) {
+      expect.soft(c, `${n.split(".").pop()}を選んだ直後の画像のプレビューの数`).toBeGreaterThan(0);
+      expect.soft(名前[n], `${n.split(".").pop()}を選んだ直後のロゴ画像欄のファイル名`).toBe(n);
+    }
   });
 });
 
@@ -155,8 +164,8 @@ caseTest("IT-M10-04-014", async ({ page, step, expected }) => {
   await step(4, async () => { await p.openList(); });
   await step(5, async () => { await p.行(名.p014()).locator("div.col-2 a").click({ timeout: 30_000 }); await pwExpect(p.支払方法欄).toBeVisible({ timeout: 30_000 }); });
   await expected(async () => {
-    await pwExpect(p.ロゴのプレビュー.first()).toBeVisible({ timeout: 30_000 }).catch(() => {});
-    expect.soft(await p.ロゴのプレビュー.count(), "ロゴ画像欄のプレビューの数").toBeGreaterThan(0);
+    // アップロードした画像は、画面を開いたあとに別の要求で読み込まれる。読み込みが済んで画像が描かれるまで待ってから確かめる
+    expect.soft(await p.画像プレビューを待つ(), "ロゴ画像欄の画像のプレビュー（読み込みが済んで描かれた数）").toBeGreaterThan(0);
   });
 });
 
@@ -349,7 +358,15 @@ const 表示順 = (名称: string) => Number(支払方法を読む(名称).表�
 const 全 = (方法: string, 英: string) => 新規入力(方法, 英, "100");
 /** 入力に誤りがあって登録されないケースの共通の動き（画面の操作と読み取りだけ。手順と期待結果の流れは各ケースに書く） */
 async function 登録を試す(p: PaymentPage, v: ReturnType<typeof 新規入力>, メール?: { 日: string | null; 英: string | null }): Promise<void> {
-  await p.入れる(v, メール); note(条件付き注記); note(共有の注記); await p.登録を押して応答を待つ();
+  await p.入れる(v, メール); note(条件付き注記); note(共有の注記);
+  const 応答 = await p.登録を押して応答を待つ();
+  // 登録が押されずに終わっても「増えていない」は成り立つので、登録の要求がサーバーで受け付けられなかったか、
+  // ブラウザの入力チェックが入力欄の誤りを示して送信を止めたかの、どちらかであることを確かめる
+  if (応答 === null) {
+    const 誤りの欄 = await p.page.locator("form#form1 :invalid").count();
+    expect(誤りの欄, "登録の要求が送られなかったときは、ブラウザの入力チェックが入力欄の誤りを示している").toBeGreaterThan(0);
+    note("登録の要求はブラウザの入力チェックで止まり、サーバーへは送られなかった");
+  } else note(`登録の要求の応答: ${応答}（入力の誤りで編集画面が出し直された）`);
 }
 async function 編集画面に留まって一覧へ戻る(p: PaymentPage): Promise<void> {
   expect.soft(new URL(p.page.url()).pathname, "登録を押したあとの画面（支払方法の編集画面・新規に留まる）").toMatch(/\/payment\/new$/);

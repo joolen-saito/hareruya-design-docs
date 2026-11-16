@@ -71,14 +71,18 @@ export function 在庫無制限にする(商品コード: string): void {
   });
 }
 
-/** 商品コードの規格の在庫値を未設定（空）にする */
+/**
+ * 商品コードの規格の、本店（店舗ID 1）の在庫値を未設定（空）にする。
+ * 在庫の行は店舗ごと・在庫区分ごとに作られ、店舗が増えた開発環境では1つの規格に数百行ある（2026-11-15 に 328 行で止まった）。
+ * 注文・画面で見るのは本店の在庫だけなので、本店の行に限る。
+ */
 export function 在庫値を未設定にする(商品コード: string): void {
   writeTestData({
     理由: "在庫値を未設定にする（画面で指定できないため）",
-    sql: `update dtb_product_stock set stock = null where product_class_id in (select id from dtb_product_class where product_code = $1)`,
+    sql: `update dtb_product_stock set stock = null where base_info_id = 1 and product_class_id in (select id from dtb_product_class where product_code = $1)`,
     params: [商品コード],
-    対象の確かめ: `select s.id as 在庫ID, pc.product_code as 商品コード from dtb_product_stock s join dtb_product_class pc on pc.id = s.product_class_id where pc.product_code = $1`,
-    確かめのparams: [商品コード], 印, 最大行数: 5,
+    対象の確かめ: `select s.id as 在庫ID, pc.product_code as 商品コード from dtb_product_stock s join dtb_product_class pc on pc.id = s.product_class_id where pc.product_code = $1 and s.base_info_id = 1`,
+    確かめのparams: [商品コード], 印, 最大行数: 10,
   });
 }
 
@@ -159,14 +163,14 @@ export function 受注のポイント(注文番号: string): { 使用: number; �
 
 /** 受注の会員の累計注文金額 */
 export function 会員の累計注文金額(注文番号: string): number {
-  const r = query(`select c.buy_total::text as t from dtb_order o join dtb_customer c on c.id = o.customer_id where o.order_number = $1 and o.base_info_id = 1 order by o.id desc limit 1`, [注文番号])[0];
+  const r = query(`select c.buy_total::text as tt from dtb_order o join dtb_customer c on c.id = o.customer_id where o.order_number = $1 and o.base_info_id = 1 order by o.id desc limit 1`, [注文番号])[0];
   if (!r) throw new Error(`注文番号「${注文番号}」の会員が無い`);
-  return Number(r.t ?? "0");
+  return Number(r.tt ?? "0");
 }
 
 /** 商品コードの規格の在庫値（在庫の行が複数なら最初の行。値が空なら null、行が無ければ "なし"） */
 export function 商品の在庫値(商品コード: string): string | null {
-  const r = query(`select s.stock::text as v from dtb_product_stock s join dtb_product_class pc on pc.id = s.product_class_id where pc.product_code = $1 order by s.id limit 1`, [商品コード]);
+  const r = query(`select s.stock::text as v from dtb_product_stock s join dtb_product_class pc on pc.id = s.product_class_id where pc.product_code = $1 and s.base_info_id = 1 order by s.stock_location_id, s.id limit 1`, [商品コード]);
   return r.length === 0 ? "なし" : r[0].v;
 }
 

@@ -8,8 +8,8 @@ export async function customerIdByEmail(page: Page, メール: string): Promise<
   await page.waitForLoadState("load");
   await page.locator('[name="admin_search_customer[multi]"]').fill(メール, { timeout: 30_000 });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ timeout: 30_000 }),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator("#search_form button[type=submit]").filter({ hasText: "検索" }).first().click({ timeout: 30_000, noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   const rows = page.locator('tr[id^="ex-customer-"]').filter({ has: page.locator("td", { hasText: new RegExp(`^\\s*${メール.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`) }) });

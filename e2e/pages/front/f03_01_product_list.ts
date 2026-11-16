@@ -31,7 +31,7 @@ export class FrontProductList {
   async パンくずのホームを押す(): Promise<void> {
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.パンくずのホーム().click({ timeout: 30_000 }),
+      this.パンくずのホーム().click({ timeout: 30_000, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -227,7 +227,7 @@ export class FrontProductList {
   async おすすめタグを押す(名前: string): Promise<void> {
     const a = this.おすすめ商品から探す.locator(".p-hareruya-tag-list__item a").filter({ hasText: new RegExp(`^\\s*${esc(名前)}\\s*$`) }).first();
     await a.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), a.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), a.click({ noWaitAfter: true })]);
     await this.結果を待つ();
   }
 
@@ -272,7 +272,7 @@ export class FrontProductList {
       }
     }
     await link.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), link.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), link.click({ noWaitAfter: true })]);
     await this.結果を待つ();
     return 開いた;
   }
@@ -303,7 +303,7 @@ export class FrontProductList {
   async 左メニューのカテゴリを押す(href: string): Promise<void> {
     const a = this.カテゴリ一覧.locator(`a[href="${href}"]`).first();
     await a.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), a.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), a.click({ noWaitAfter: true })]);
     await this.結果を待つ();
   }
 
@@ -332,7 +332,7 @@ export class FrontProductList {
     await input.fill(keyword);
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.page.locator("button.p-hareruya-header__search-btn:visible").first().click(),
+      this.page.locator("button.p-hareruya-header__search-btn:visible").first().click({ noWaitAfter: true }),
     ]);
     await this.結果を待つ();
   }
@@ -406,7 +406,7 @@ export class FrontProductList {
   async カードの商品名を押す(商品ID: string): Promise<void> {
     const a = this.カード(商品ID).locator("a.p-hareruya-product-card__name").first();
     await a.scrollIntoViewIfNeeded();
-    await Promise.all([this.page.waitForURL(new RegExp(`/products/detail/${商品ID}`), { waitUntil: "domcontentloaded" }), a.click()]);
+    await Promise.all([this.page.waitForURL(new RegExp(`/products/detail/${商品ID}`), { waitUntil: "domcontentloaded" }), a.click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   /** 1枚のカードを読む（商品IDと言語で引く） */

@@ -61,12 +61,20 @@ export class ManualMailPage {
     await this.テンプレ選択.evaluate((el) => el.removeAttribute("required"));
   }
 
-  async 確認を押す(): Promise<void> {
+  /**
+   * 押して、送信のあとの画面の読み込みを待つ。確認・送信・入力画面へ戻るは同じアドレスへ POST する（または転送する）ので、
+   * アドレスの変化では待てない。読み込みの済んだ画面で「load」を待っても待ったことにならないので、画面の移動そのものを待つ。
+   */
+  private async 押して移動を待つ(target: Locator, what: string): Promise<void> {
+    await expect(target, what).toBeVisible({ timeout: OPEN });
     await Promise.all([
-      this.page.waitForLoadState("load"),
-      this.page.locator('#purchase-mail-form button[name="mode"][value="confirm"]').click({ timeout: OPEN }),
+      this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}),
+      target.click({ timeout: OPEN, noWaitAfter: true }),
     ]);
-    await this.page.waitForLoadState("load");
+  }
+
+  async 確認を押す(): Promise<void> {
+    await this.押して移動を待つ(this.page.locator('#purchase-mail-form button[name="mode"][value="confirm"]'), "入力画面の「確認」ボタン");
   }
 
   /** 入力画面の項目ごとのエラー表示の文（無ければ空） */
@@ -75,12 +83,14 @@ export class ManualMailPage {
     return t.map((s) => s.trim()).filter((s) => s);
   }
 
+  /** いま開いている画面の「買取編集画面に戻る」リンクを押す（画面に無ければ、その旨で落とす） */
   async 買取編集画面へ戻る(): Promise<void> {
-    await Promise.all([
-      this.page.waitForLoadState("load"),
-      this.page.locator("a.c-baseLink").filter({ hasText: /買取編集画面.*戻る/ }).click({ timeout: OPEN }),
-    ]);
-    await this.page.waitForLoadState("load");
+    const link = this.page.locator("a.c-baseLink").filter({ hasText: /買取編集画面.*戻る/ });
+    if ((await link.count()) === 0) {
+      const ある = (await this.page.locator("a.c-baseLink").allInnerTexts()).map((t) => t.trim()).filter(Boolean);
+      throw new Error(`いまの画面（${await this.確認画面を表示中か() ? "手動メール通知(確認画面)" : this.パス}）に「買取編集画面へ戻る」のリンクが無い（あるリンク: ${ある.join("、") || "なし"}）。手順を画面で実行できない`);
+    }
+    await this.押して移動を待つ(link.first(), "「買取編集画面に戻る」のリンク");
   }
 
   // ---- テンプレートの選択・確認画面 ----
@@ -128,12 +138,10 @@ export class ManualMailPage {
   }
   async 確認画面を表示中か(): Promise<boolean> { return (await this.page.locator("#back").count()) > 0; }
   async 入力画面へ戻る(): Promise<void> {
-    await Promise.all([this.page.waitForLoadState("load"), this.page.locator("#back").click({ timeout: OPEN })]);
-    await this.page.waitForLoadState("load");
+    await this.押して移動を待つ(this.page.locator("#back"), "確認画面の「手動メール通知入力画面に戻る」");
   }
   async 送信を押す(): Promise<void> {
-    await Promise.all([this.page.waitForLoadState("load"), this.page.locator('#purchase-mail-form button[name="mode"][value="complete"]').click({ timeout: OPEN })]);
-    await this.page.waitForLoadState("load");
+    await this.押して移動を待つ(this.page.locator('#purchase-mail-form button[name="mode"][value="complete"]'), "確認画面の「送信」ボタン");
   }
   get パス(): string { return new URL(this.page.url()).pathname; }
   /** 件名の入力欄のrequired属性を削除する */

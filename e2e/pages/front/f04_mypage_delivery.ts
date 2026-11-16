@@ -12,7 +12,7 @@ export async function マイページで配送先を足す(page: Page, v: 配送
   await page.waitForLoadState("load");
   const add = page.locator('a[href$="/mypage/delivery/new/edit"]').first();
   await expect(add, `${what}: 配送先一覧の「新しい住所を追加」`).toBeVisible({ timeout: 30_000 });
-  await Promise.all([page.waitForURL(/\/mypage\/delivery\/new\/edit/, { waitUntil: "domcontentloaded", timeout: 60_000 }), add.click({ timeout: 30_000 })]);
+  await Promise.all([page.waitForURL(/\/mypage\/delivery\/new\/edit/, { waitUntil: "domcontentloaded", timeout: 60_000 }), add.click({ timeout: 30_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   const f = (name: string) => page.locator(`form [name$="[${name}]"]`).first();
   const country = v.国 ?? "Japan";
@@ -42,13 +42,13 @@ export async function マイページで配送先を足す(page: Page, v: 配送
   await f("tel01").fill(parts[0]);
   await f("tel02").fill(parts[1]);
   await f("tel03").fill(parts[2]);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), page.locator("form:has([name$='[address_name]']) button[type=submit]").first().click({ timeout: 30_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), page.locator("form:has([name$='[address_name]']) button[type=submit]").first().click({ timeout: 30_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   if (!/confirm|complete/.test(page.url()) && (await page.getByRole("button", { name: "登録する" }).count()) === 0) {
     const errs = (await page.locator(".c-hareruya-form-input__field-error, .c-hareruya-form-input--error, .ec-errorMessage, .invalid-feedback").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
     throw new Error(`${what}: 配送先の入力が確認画面へ進まない（${page.url()}）: ${errs.join(" / ") || "入力エラーの表示なし"}`);
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), page.getByRole("button", { name: "登録する" }).click({ timeout: 30_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), page.getByRole("button", { name: "登録する" }).click({ timeout: 30_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expect(page, `${what}: 登録後に配送先一覧へ戻る`).toHaveURL(/\/mypage\/delivery$/, { timeout: 30_000 });
   const row = page.locator("li, div").filter({ has: page.locator(`text=${v.配送先名称}`) }).locator('a[href*="/mypage/delivery/"][href$="/edit"]').last();

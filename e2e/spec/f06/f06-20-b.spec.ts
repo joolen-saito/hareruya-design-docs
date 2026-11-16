@@ -15,6 +15,7 @@ import { 住所リンクを押す, 配送先編集の値 } from "../../pages/adm
 import { LoginPage } from "../../pages/front/f06_03_login";
 import { DeliveryPage } from "../../pages/front/f06_20_delivery";
 import { mailOf, PC_ADMIN, PC_PW, PW } from "../../seeds/f06-20-b";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
@@ -78,7 +79,7 @@ caseTest("IT-F06-20-003", async ({ page, step, expected }) => {
   const d = await ログイン(page, "f06-20-003");
   await step(1, async () => { await d.一覧を開く(); });
   await step(2, async () => { await d.押して遷移する(d.パンくずのホーム); });
-  await expected(async () => { expect.soft(d.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(d.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(d.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 
 caseTest("IT-F06-20-004", async ({ page, step, expected }) => {
@@ -141,7 +142,7 @@ caseTest("IT-F06-20-011", async ({ page, notes, step, expected }) => {
   const d = await ログイン(page, "f06-20-011");
   await step(1, async () => { await d.編集を開く(notes.get("〔配送先ID-F0620-011〕")); });
   await step(2, async () => { await d.押して遷移する(d.パンくずのホーム); });
-  await expected(async () => { expect.soft(d.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); });
+  await expected(async () => { expect.soft(d.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(d.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true); });
 });
 
 // ---------------------------------------------------------------- 新規入力画面の項目
@@ -151,7 +152,8 @@ caseTest("IT-F06-20-012", async ({ page, step, expected }) => {
   let 見出し: string[] = [];
   await step(2, async () => { 見出し = await d.見えている見出し(); });
   await expected(async () => {
-    expect.soft(見出し.some((t) => t === "名前"), `「名前」の見出しの入力項目が表示されない（見出し: ${見出し.join(" / ")}）`).toBe(false);
+    // 見出しには「必須」などの印が続くことがあるので、「名前」で始まる見出し（「名前」「名前 必須」など）を探す
+    expect.soft(見出し.some((t) => /^名前(\s|$)/.test(t)), `「名前」の見出しの入力項目が表示されない（見出し: ${見出し.join(" / ")}）`).toBe(false);
     expect.soft(見出し.some((t) => t.startsWith("配送先名称")) && await d.見えている(d.配送先名称欄), "配送先名称の入力項目が表示される").toBe(true);
     expect.soft(見出し.some((t) => t.startsWith("配送先氏名")) && await d.見えている(d.姓欄) && await d.見えている(d.名欄), "配送先氏名（姓・名）の入力項目が表示される").toBe(true);
   });
@@ -341,7 +343,7 @@ caseTest("IT-F06-20-032", async ({ page, step, expected }) => {
 });
 
 /** 033・034: 確認を開いたまま照合値を書き換え（開発者ツールでの書き換え）、「OK」を押す（手順1〜5） */
-async function 照合値を書き換えて削除(ctx: CaseCtx, 前半: string, 呼び名: string, 照合値: string | undefined): Promise<{ 確認の文: string; 記録: ReturnType<typeof 配送先の記録> }> {
+async function 照合値を書き換えて削除(ctx: CaseCtx, 前半: string, 呼び名: string, 照合値: string | undefined): Promise<{ 確認の文: string; 記録: ReturnType<typeof 配送先の記録>; 削除要求の応答: number }> {
   const { page, notes, step } = ctx;
   const d = await ログイン(page, 前半);
   const id = notes.get(`〔配送先ID-F0620-${呼び名}〕`);
@@ -350,15 +352,23 @@ async function 照合値を書き換えて削除(ctx: CaseCtx, 前半: string, �
   let 保留: Awaited<ReturnType<DeliveryPage["削除を押して確認を保留する"]>> | undefined;
   await step(2, async () => { 保留 = await d.削除を押して確認を保留する(名称); });
   await step(3, async () => { await d.削除要求の照合値を書き換える(照合値); });
-  await step(4, async () => { await 保留!.答える(true); });
+  // 「削除されない」を、削除の要求が送られなかっただけで合格にしない。OK を押したあと、この配送先の削除の要求が送られて応答があったかを見る
+  let 削除要求の応答 = 0;
+  await step(4, async () => {
+    const 応答 = page.waitForResponse((r) => r.request().method() !== "GET" && new RegExp(`/mypage/delivery/${id}/delete`).test(r.url()), { timeout: 60_000 }).catch(() => null);
+    await 保留!.答える(true);
+    削除要求の応答 = (await 応答)?.status() ?? 0;
+    note(`削除の要求の応答: ${削除要求の応答 || "（要求が送られなかった）"}`);
+  });
   let 記録 = null as ReturnType<typeof 配送先の記録>;
   await step(5, async () => { 記録 = 配送先の記録(id); });
-  return { 確認の文: 保留?.文() ?? "", 記録 };
+  return { 確認の文: 保留?.文() ?? "", 記録, 削除要求の応答 };
 }
 caseTest("IT-F06-20-033", async (ctx) => {
   const r = await 照合値を書き換えて削除(ctx, "f06-20-033", "033", undefined);
   await ctx.expected(async () => {
     expect.soft(r.確認の文, "削除の確認の文").not.toBe("");
+    expect.soft(r.削除要求の応答, "この配送先の削除の要求が送られ、応答があった").toBeGreaterThan(0);
     expect.soft(r.記録?.削除済み, "配送先が削除済みに変更されない").toBe(false);
   });
 });
@@ -366,6 +376,7 @@ caseTest("IT-F06-20-034", async (ctx) => {
   const r = await 照合値を書き換えて削除(ctx, "f06-20-034", "034", "invalid-token");
   await ctx.expected(async () => {
     expect.soft(r.確認の文, "削除の確認の文").not.toBe("");
+    expect.soft(r.削除要求の応答, "この配送先の削除の要求が送られ、応答があった").toBeGreaterThan(0);
     expect.soft(r.記録?.削除済み, "配送先が削除済みに変更されない").toBe(false);
   });
 });

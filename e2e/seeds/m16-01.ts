@@ -21,7 +21,7 @@ import { Account, withAdminSession } from "../lib/session";
 import { ensureMember } from "../pages/admin/member";
 import { 本店の店名 } from "../pages/admin/m05_admin_member";
 import { 店舗の店名と略称, 画像の種別, 画像の種別を見る } from "../pages/admin/m16_02_top_banner";
-import { ensureTenant } from "../pages/admin/tenant";
+import { ensureTenant } from "../pages/admin/tenant_k";
 
 export const M1601_ADMIN: Account = { loginId: "m1601_admin", password: "Passw0rd!M1601" };
 export const M1601_NOEDIT: Account = { loginId: "m1601_noedit", password: "Passw0rd!NoEdit" };

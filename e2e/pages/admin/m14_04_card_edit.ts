@@ -4,6 +4,7 @@
  */
 import { expect, Locator, Page, Response } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
+import { withoutEnvBanners } from "./common";
 
 export type 詳細の入力 = {
   コレクターNo?: string; 裏面カード詳細ID?: string; ルールテキスト日?: string; ルールテキスト英?: string; フレーバー日?: string; フレーバー英?: string;
@@ -169,14 +170,37 @@ export class CardEditPage {
 
   async 確認で実行する(): Promise<void> {
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      this.page.locator('#DeleteModal a[data-method="delete"]').click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+      this.page.locator('#DeleteModal a[data-method="delete"]').click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
 
   /** 保存後の画面の通知（成功・失敗のメッセージ） */
   async 通知(): Promise<string[]> {
-    return (await this.page.locator(".alert, .c-contentsArea .alert").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+    return withoutEnvBanners((await this.page.locator(".alert, .c-contentsArea .alert").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean)); // 開発用の設定のときに常に出る帯は除く
+  }
+
+  // ---- 商品・デッキに紐づくカードの削除（M14-04 の 010・036〜039・063 で足した） ----
+  /** 詳細情報のブロックの「この詳細情報を削除」ボタン（admin/Card/detail_row.twig の delete-item） */
+  詳細の削除ボタン(詳細ID: string): Locator { return this.詳細(詳細ID).locator("button.delete-item"); }
+  /** 詳細情報のブロックの「詳細情報削除不可」の表示（同じ twig の text-danger の文） */
+  詳細の削除不可の表示(詳細ID: string): Locator { return this.詳細(詳細ID).locator(".text-end span.text-danger"); }
+  /** 画面の「詳細情報を追加」ボタン */
+  get 詳細情報を追加ボタン(): Locator { return this.page.locator("#add-detail"); }
+  /**
+   * 確認ポップアップの実行ボタンを押し、削除の要求が送られたことを確かめて、移った先の画面のアドレスを返す。
+   * 削除できないとき画面は同じ編集画面へ戻る作りなので、要求が送られたこと（送り先と応答）を返して、操作をせずに合格にならないようにする。
+   */
+  async 確認で実行して要求を見る(カードID: string): Promise<{ 送った: boolean; 送り先: string; 応答: number | null; 移った先: string; 通知: string[] }> {
+    const req = this.page.waitForRequest((r) => new RegExp(`/card/${カードID}/delete`).test(r.url()), { timeout: 30_000 }).catch(() => null);
+    const res = this.page.waitForResponse((r) => new RegExp(`/card/${カードID}/delete`).test(r.url()), { timeout: 30_000 }).catch(() => null);
+    await Promise.all([
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 30_000 }).catch(() => null),
+      this.page.locator('#DeleteModal a[data-method="delete"]').click({ noWaitAfter: true }),
+    ]);
+    await this.page.waitForLoadState("load");
+    const [q, r] = await Promise.all([req, res]);
+    return { 送った: !!q, 送り先: q ? new URL(q.url()).pathname : "", 応答: r ? r.status() : null, 移った先: this.page.url(), 通知: await this.通知() };
   }
 }

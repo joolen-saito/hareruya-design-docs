@@ -79,8 +79,11 @@ export class BulkEditPage {
   /** 「更新」を押し、ダイアログが出るまで待つ。ダイアログは閉じずに返す（閉じるのは返した 閉じる()） */
   async 更新を押す(): Promise<更新を押した結果> {
     const 応答: Response[] = [];
+    // 応答の本文は、応答が届いた時点で読み始める。アラートが開いたあとに読むと、アラートを閉じるまで読み終わらず、
+    // ケースが30分の時間切れで止まった（2026-11-13 の M13-06 の 026・074）
+    const 本文の読み: Promise<string>[] = [];
     const onResponse = (r: Response) => {
-      if (r.request().method() === "POST" && 一括更新のパス.test(new URL(r.url()).pathname)) 応答.push(r);
+      if (r.request().method() === "POST" && 一括更新のパス.test(new URL(r.url()).pathname)) { 応答.push(r); 本文の読み.push(r.text().catch(() => "")); }
     };
     this.page.on("response", onResponse);
     let dialog!: Dialog;
@@ -93,7 +96,10 @@ export class BulkEditPage {
       this.page.off("response", onResponse);
     }
     const r = 応答[0];
-    const 中身 = r ? { status: r.status(), 本文: await r.text().catch(() => "") } : null;
+    const 読み = 本文の読み[0];
+    // 10秒で読み終わらなければ、アラートを閉じたあとに読み終えて入れる（閉じる の中）
+    const 読めた = 読み ? await Promise.race([読み, new Promise<null>((ok) => setTimeout(() => ok(null), 10_000))]) : null;
+    const 中身 = r ? { status: r.status(), 本文: 読めた ?? "" } : null;
     return {
       文: dialog.message(),
       応答: 中身,
@@ -101,6 +107,7 @@ export class BulkEditPage {
         const main = this.page.mainFrame();
         const nav = this.page.waitForEvent("framenavigated", { predicate: (f) => f === main, timeout: 10_000 }).then(() => true, () => false);
         await dialog.accept();
+        if (中身 && 読み && 読めた === null) 中身.本文 = await 読み;
         await clickP.catch(() => undefined);
         const moved = await nav;
         if (moved) await this.page.waitForLoadState("load");

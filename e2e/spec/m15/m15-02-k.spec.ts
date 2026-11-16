@@ -12,11 +12,12 @@ import path from "node:path";
 import { test, Page } from "@playwright/test";
 import { expect, caseTest, CaseBody } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
+import { CSVの内容を画面の枠に出す, CSVの枠のセル, CSVの枠のデータ行, CSVの枠の列 } from "../../lib/evidence_other";
 import { アプリの時刻帯, サーバーの時刻 } from "../../lib/app_config";
 import { デッキ一覧 } from "../../pages/admin/m15_deck";
 import { デッキ一括編集 } from "../../pages/admin/m15_04_bulk_edit";
 import {
-  BOMがある, CSVを読む, CSV出力の見張り, CSV出力のトークンを書き換える, CSV出力を押す, UTF8で読む, デッキIDを入れて検索する, デッキ一覧のパスの形,
+  BOMがある, CSVを読む, CSV出力の見張り, CSV出力のトークンを書き換える, CSV出力を押す, UTF8で読む, デッキIDを入れて検索する, デッキ一覧のパスの形, デッキ一覧の見出し,
   一括編集でフォーマットを選ぶ, 上部のメッセージ, 未選択で送る文, 選ぶ, 選択の値を書き換える, 選択済みの数,
 } from "../../pages/admin/m15_02_deck_csv_export";
 import { M1502_ADMIN, ダウンロード先, 参照, 青白コントロール, バーン } from "../../seeds/m15-02-k";
@@ -42,6 +43,12 @@ type 読んだCSV = ReturnType<typeof CSVを読む>;
  * 「検索 → 選ぶ → CSV出力 → 中身を読む」の形（001・002・012）。手順の分け方はケースごとに違う:
  * 001 = 検索 / 選ぶ / 押す（ダウンロードを読むのは期待結果）、002 = 検索 / 選ぶ / 押す / 表形式で開く、012 = 検索 / 選んで押す / レコードとして読む
  */
+/** 読んだCSV（ファイル名・見出し・全データ行）を画面の枠に書き出して残す。続く期待結果の確かめはこの枠の要素で行い、赤枠がCSVの値に付く */
+async function CSVを枠に出す(page: Page, w: CSV出力の見張り, 中身: Buffer): Promise<void> {
+  const 名 = w.ダウンロード[0]?.suggestedFilename() ?? "";
+  await CSVの内容を画面の枠に出す(page, [{ 題: `ファイル名：${名}`, 行: CSVを読む(中身).全行 }]);
+}
+
 function 選んで出力する(控え: string[], 選ぶ控え: string[], 形: "001" | "002" | "012", 確かめ: (ids: Record<string, string>, csv: 読んだCSV, w: CSV出力の見張り) => void): CaseBody {
   return async ({ page, notes, step, expected }) => {
     await login(page);
@@ -79,7 +86,11 @@ caseTest("IT-M15-02-007", async ({ page, notes, step, expected }) => {
   let w!: CSV出力の見張り;
   await step(1, async () => { l = await デッキIDを入れて検索する(page, [id]); });
   await step(2, async () => { await 選ぶ(l, [id]); });
-  await step(3, async () => { await 選択の値を書き換える(l, id, "159999007"); });
+  await step(3, async () => {
+    const 元 = await l.選択(id).getAttribute("value");
+    await 選択の値を書き換える(l, id, "159999007");
+    note(`選択済みのチェックボックスの値を「${元}」から「159999007」（存在しないデッキID）に書き換えた（開発者ツールで値を書き換えるのにあたる操作）。書き換え後の値は ${await page.locator('input.searched_deck_id[value="159999007"]').count()} 件の欄が持ち、チェックが入っている`);
+  });
   await step(4, async () => { w = new CSV出力の見張り(page); note(見張りの注記); });
   await step(5, async () => { await l.CSV出力.click(); await w.終わりを待つ(); });
   let 件 = 0;
@@ -100,7 +111,8 @@ caseTest("IT-M15-02-008", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     const m = await 上部のメッセージ(page);
     expect.soft(m.エラー.length, `管理画面上部のエラーの表示（${m.エラー.join(" / ")}）`).toBeGreaterThan(0);
-    expect.soft(path_(page), "戻った画面（デッキ検索・一覧）").toMatch(デッキ一覧のパスの形());
+    expect.soft(path_(page), "戻った画面（デッキ検索・一覧）のアドレス").toMatch(デッキ一覧のパスの形());
+    await expect.soft(デッキ一覧の見出し(page), "戻った画面の見出し（デッキ一覧）").toContainText("デッキ一覧");
   });
 });
 
@@ -121,14 +133,15 @@ caseTest("IT-M15-02-014", async ({ page, notes, step, expected }) => {
     if (w.ダウンロード.length) 中身 = await w.中身();
     w.止める();
     note(`応答の Content-Type「${型}」、ファイルの先頭3バイト ${[...中身.subarray(0, 3)].map((b) => b.toString(16).padStart(2, "0")).join(" ")}`);
+    await CSVを枠に出す(page, w, 中身);
   });
   await expected(async () => {
     expect.soft(型, "CSV出力の応答の Content-Type").toBe("text/csv;charset=UTF-8");
     expect.soft(BOMがある(中身), "ファイルの先頭が UTF-8 の BOM").toBe(true);
     const t = UTF8で読む(中身);
     expect.soft(t !== null, "BOM に続く本文を UTF-8 で読める").toBe(true);
-    expect.soft((t ?? "").includes("M15-02日本語デッキ-014"), "UTF-8 で読んだ本文に日本語のデッキ名がある").toBe(true);
-    expect.soft((t ?? "").includes(青白コントロール()), "UTF-8 で読んだ本文に日本語のアーキタイプ名がある").toBe(true);
+    await expect.soft(page.locator("#e2e-csv-note td").filter({ hasText: "M15-02日本語デッキ-014" }).first(), "UTF-8 で読んだ本文に日本語のデッキ名がある").toBeVisible();
+    await expect.soft(page.locator("#e2e-csv-note td").filter({ hasText: 青白コントロール() }).first(), "UTF-8 で読んだ本文に日本語のアーキタイプ名がある").toBeVisible();
   });
 });
 
@@ -158,14 +171,15 @@ caseTest("IT-M15-02-016", async ({ page, notes, step, expected, db }) => {
   let csv: ReturnType<typeof CSVを読む> = { 全行: [], 行: [] };
   await step(5, async () => {
     const w = await CSV出力を押す(l);
-    if (w.ダウンロード.length) csv = CSVを読む(await w.中身());
+    if (w.ダウンロード.length) { const 中身 = await w.中身(); csv = CSVを読む(中身); await CSVを枠に出す(page, w, 中身); }
     w.止める();
   });
   let 行: Record<string, string> | undefined;
   await step(6, async () => { 行 = csv.行.find((r) => r["デッキID"] === id); expect(行, `CSVにデッキID ${id} の行がある`).toBeTruthy(); });
   await expected(async () => {
-    expect.soft(行?.["フォーマット"] ?? "", "CSVのフォーマット").toBe("Standard");
-    expect.soft(行?.["アーキタイプ"] ?? "", "CSVのアーキタイプ").toBe(青白コントロール());
+    const i = csv.行.findIndex((r) => r["デッキID"] === id);
+    await expect.soft(CSVの枠のセル(page, 0, i, "フォーマット"), "CSVのフォーマット").toHaveText("Standard");
+    await expect.soft(CSVの枠のセル(page, 0, i, "アーキタイプ"), "CSVのアーキタイプ").toHaveText(青白コントロール());
   });
 });
 
@@ -186,7 +200,7 @@ caseTest("IT-M15-02-023", async ({ page, notes, step, expected }) => {
   let csv: ReturnType<typeof CSVを読む> = { 全行: [], 行: [] };
   await step(6, async () => {
     型 = w.頭書き("Content-Type");
-    if (w.ダウンロード.length) { 中身 = await w.中身(); csv = CSVを読む(中身); }
+    if (w.ダウンロード.length) { 中身 = await w.中身(); csv = CSVを読む(中身); await CSVを枠に出す(page, w, 中身); }
     w.止める();
     note(`応答の Content-Type「${型}」、ファイルの先頭3バイト ${[...中身.subarray(0, 3)].map((b) => b.toString(16).padStart(2, "0")).join(" ")}、データ行 ${csv.行.length}行`);
   });
@@ -194,13 +208,13 @@ caseTest("IT-M15-02-023", async ({ page, notes, step, expected }) => {
     expect.soft(型, "CSV出力の応答の Content-Type").toBe("text/csv;charset=UTF-8");
     expect.soft(BOMがある(中身), "ファイルの先頭が UTF-8 の BOM").toBe(true);
     expect.soft(UTF8で読む(中身) !== null, "BOM に続く本文を UTF-8 で読める").toBe(true);
-    expect.soft(デッキIDの列(csv.行), "見出し行に続くデータ行のデッキID（存在するデッキの1行だけ）").toEqual([A]);
-    const a = csv.行.find((r) => r["デッキID"] === A);
-    expect.soft(a?.["フォーマット"] ?? "", "デッキの行のフォーマット").toBe("Standard");
-    expect.soft(a?.["アーキタイプ"] ?? "", "デッキの行のアーキタイプ").toBe(青白コントロール());
-    expect.soft(a?.["メインリスト"] ?? "", "デッキの行のメインリスト").toBe("4 Lightning Bolt");
-    expect.soft(csv.行.some((r) => (r["メインリスト"] ?? "").includes("3 Sol Ring")), "メインリスト 3 Sol Ring の行を含む").toBe(false);
-    expect.soft(デッキIDの列(csv.行).includes("159999023"), "ID 159999023 の行を含む").toBe(false);
-    expect.soft(デッキIDの列(csv.行).includes(B), `デッキID ${B} の行を含む`).toBe(false);
+    await expect.soft(CSVの枠の列(page, 0, "デッキID"), "見出し行に続くデータ行のデッキID（存在するデッキの1行だけ）").toHaveText([A]);
+    const i = csv.行.findIndex((r) => r["デッキID"] === A);
+    await expect.soft(CSVの枠のセル(page, 0, i, "フォーマット"), "デッキの行のフォーマット").toHaveText("Standard");
+    await expect.soft(CSVの枠のセル(page, 0, i, "アーキタイプ"), "デッキの行のアーキタイプ").toHaveText(青白コントロール());
+    await expect.soft(CSVの枠のセル(page, 0, i, "メインリスト"), "デッキの行のメインリスト").toHaveText("4 Lightning Bolt");
+    await expect.soft(CSVの枠の列(page, 0, "メインリスト").filter({ hasText: "3 Sol Ring" }), "メインリスト 3 Sol Ring の行を含む").toHaveCount(0);
+    await expect.soft(CSVの枠の列(page, 0, "デッキID").filter({ hasText: /^159999023$/ }), "ID 159999023 の行を含む").toHaveCount(0);
+    await expect.soft(CSVの枠の列(page, 0, "デッキID").filter({ hasText: new RegExp(`^${B}$`) }), `デッキID ${B} の行を含む`).toHaveCount(0);
   });
 });

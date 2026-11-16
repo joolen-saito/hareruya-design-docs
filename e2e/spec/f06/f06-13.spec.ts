@@ -17,6 +17,7 @@ import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
 import { openEditFromResult, searchCustomer } from "../../pages/admin/f06_customer";
 import { M08CustomerEditPage } from "../../pages/admin/m08_customer_edit";
 import { メニュー } from "../../pages/front/f06_05_mypage";
+import { scene, 別のブラウザの画面を撮る } from "../../lib/evidence_other";
 import { IdentificationPage, スマホ端末, テスト用カメラを用意する, 全撮影枠 } from "../../pages/front/f06_13_identification";
 import { 会員 } from "../../seeds/f06-13";
 import "../../seeds/f06-13";
@@ -71,6 +72,8 @@ async function 状況を両方で読む({ page, browser, step }: Ctx, n: string)
     await sp.開く();
     await expect(sp.本人確認状況).toBeVisible();
     sp状況 = await 状況(sp);
+    // スマートフォン版の画面（別のブラウザ）は自動の撮影に写らないので、ここで撮る
+    await 別のブラウザの画面を撮る(sp.page, scene.stepLabel(2, "スマートフォン版の画面"));
   });
   return { pc状況, sp状況 };
 }
@@ -127,14 +130,14 @@ caseTest("IT-F06-13-031", async ({ page, step, expected }) => {
   const p = await PCでログインする(page, "031");
   await step(1, async () => { await p.開く(); });
   await step(2, async () => { await p.押して移動する(p.ホームアイコン); });
-  await expected(async () => { expect.soft(p.本店ECTOPか, `遷移先（本店ECTOP）。実際: ${p.path}`).toBe(true); });
+  await expected(async () => { expect.soft(await p.本店ECTOPの画面か(), `遷移先（本店ECTOP）。実際: ${p.path}`).toBe(true); });
 });
 
 caseTest("IT-F06-13-032", async ({ page, step, expected }) => {
   const p = await PCでログインする(page, "032");
   await step(1, async () => { await p.開く(); });
   await step(2, async () => { await p.押して移動する(p.マイページボタン); });
-  await expected(async () => { expect.soft(p.マイページか, `遷移先（マイページ）。実際: ${p.path}`).toBe(true); });
+  await expected(async () => { expect.soft(await p.マイページの画面か(), `遷移先（マイページ）。実際: ${p.path}`).toBe(true); });
 });
 
 // ---- 040: パンくずリスト（PC・スマホ・撮影画面・申請完了画面） ----
@@ -169,7 +172,10 @@ caseTest("IT-F06-13-041", async ({ page, step, expected }) => {
   const p = await PCでログインする(page, "041");
   await step(1, async () => { await page.goto(`${BASE_URL}/ja/mypage`, { timeout: 60_000 }); await page.waitForLoadState("load"); });
   await step(2, async () => { await p.押して移動する(page.locator(`${メニュー.オンライン本人確認}:visible`).first()); });
-  await expected(async () => { expect.soft(p.スタート画面か, `遷移先（オンライン本人確認画面）。実際: ${p.path}`).toBe(true); });
+  await expected(async () => {
+    expect.soft(await p.スタート画面の画面か(), `遷移先（オンライン本人確認画面）。実際: ${p.path}`).toBe(true);
+    await expect.soft(page.locator(".p-hareruya-identification h1.c-hareruya-heading--lev1").first(), "遷移先の見出し（オンライン本人確認）").toHaveText("オンライン本人確認");
+  });
 });
 
 // ---- 046・047: スマホで申請 → 管理画面で確認（PC版の会員。管理者は全権限の管理者で代える） ----

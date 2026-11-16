@@ -8,6 +8,7 @@
 import { Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { caseTest, expect } from "../../lib/case";
+import { scene, 要素を撮る } from "../../lib/evidence_other";
 import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
 import * as DB from "../../db/f06_13";
 import { IdentificationPage, PC版ChromeのUA, スマホ端末, テスト用カメラを用意する, マイナンバー撮影枠, 全撮影枠 } from "../../pages/front/f06_13_identification";
@@ -67,6 +68,7 @@ caseTest("IT-F06-13-005", async ({ page, step, expected }) => {
   await step(2, async () => { await p.種類を選ぶ(免許); });
   await step(3, async () => { await p.撮影画面へ(); });
   await expected(async () => {
+    await 要素を撮る(p.撮影画面の本体, scene.expectedLabel("撮影画面の全体（撮影項目の枠を含む）"));
     expect.soft(p.撮影画面か, `撮影画面へ遷移（実際: ${p.path}）`).toBe(true);
     expect.soft(await p.選んだ種類の入力.inputValue(), "撮影対象の身分証明書ID（1=自動車運転免許証）").toBe("1");
   });
@@ -79,6 +81,7 @@ caseTest("IT-F06-13-006", async ({ page, step, expected }) => {
   await step(2, async () => { await p.撮影画面へ(); });
   await step(3, async () => { 見出し = await p.撮影項目の見出し; });
   await expected(async () => {
+    await 要素を撮る(p.撮影項目の領域, scene.expectedLabel("撮影項目の全体（顔写真・オモテ面・斜め。ウラ面は無い）"));
     expect.soft(見出し.length, `撮影項目の数（${見出し.join("、")}）`).toBe(マイナンバー撮影枠.length);
     expect.soft(見出し.some((t) => t.includes("現在の顔写真")), "現在の顔写真が表示される").toBe(true);
     expect.soft(見出し.some((t) => t.includes("オモテ面")), "身分証のオモテ面が表示される").toBe(true);
@@ -94,6 +97,7 @@ caseTest("IT-F06-13-007", async ({ page, step, expected }) => {
   await step(2, async () => { await p.撮影画面へ(); });
   await step(3, async () => { 見出し = await p.撮影項目の見出し; });
   await expected(async () => {
+    await 要素を撮る(p.撮影項目の領域, scene.expectedLabel("撮影項目の全体（顔写真・オモテ面・ウラ面・斜め）"));
     expect.soft(見出し.length, `撮影項目の数（${見出し.join("、")}）`).toBe(4);
     for (const k of ["現在の顔写真", "オモテ面", "ウラ面", "斜め"]) expect.soft(見出し.some((t) => t.includes(k)), `${k}の撮影項目が表示される`).toBe(true);
   });
@@ -105,7 +109,9 @@ caseTest("IT-F06-13-008", async ({ page, step, expected }) => {
   await step(1, async () => { await p.開く(); await p.種類を選ぶ(免許); });
   await step(2, async () => { await p.撮影画面へ(); });
   await step(3, async () => { await expect(p.確定ボタン).toBeVisible(); 文 = await p.画面の文; });
-  await expected(async () => { expect.soft(文.includes("ユーザー名"), "撮影画面に「ユーザー名」の項目が表示される").toBe(false); });
+  await expected(async () => {
+    await 要素を撮る(p.撮影画面の本体, scene.expectedLabel("撮影画面の全体（「ユーザー名」の項目が無い）"));
+    expect.soft(文.includes("ユーザー名"), "撮影画面に「ユーザー名」の項目が表示される").toBe(false); });
 });
 
 // ---- 014〜018: 端末・アドレス直接指定のアクセス制御 ----
@@ -114,13 +120,13 @@ caseTest("IT-F06-13-014", async ({ page, step, expected }) => {
   await step(1, async () => { await p.開く(); await p.種類を選ぶ(免許); });
   await step(2, async () => { await p.ユーザーエージェントを変える(PC版ChromeのUA); });
   await step(3, async () => { await p.撮影画面へ(); });
-  await expected(async () => { expect.soft(p.スタート画面か, `オンライン本人確認のスタート画面へ戻る（実際: ${p.path}）`).toBe(true); });
+  await expected(async () => { expect.soft(await p.スタート画面の画面か(), `オンライン本人確認のスタート画面へ戻る（実際: ${p.path}）`).toBe(true); });
 });
 
 caseTest("IT-F06-13-015", async ({ page, step, expected }) => {
   const p = await ログインする(page, "015");
   await step(1, async () => { await p.goto(`${BASE_URL}/ja/mypage/identification/photograph`); });
-  await expected(async () => { expect.soft(p.スタート画面か, `オンライン本人確認のスタート画面へ戻る（実際: ${p.path}）`).toBe(true); });
+  await expected(async () => { expect.soft(await p.スタート画面の画面か(), `オンライン本人確認のスタート画面へ戻る（実際: ${p.path}）`).toBe(true); });
 });
 
 caseTest("IT-F06-13-016", async ({ page, step, expected }) => {
@@ -129,13 +135,13 @@ caseTest("IT-F06-13-016", async ({ page, step, expected }) => {
   await step(2, async () => { await 撮影して同意する(p); });
   await step(3, async () => { await p.ユーザーエージェントを変える(PC版ChromeのUA); });
   await step(4, async () => { await p.確定を押す(); });
-  await expected(async () => { expect.soft(p.マイページか, `マイページへ遷移（実際: ${p.path}）`).toBe(true); });
+  await expected(async () => { expect.soft(await p.マイページの画面か(), `マイページへ遷移（実際: ${p.path}）`).toBe(true); });
 });
 
 caseTest("IT-F06-13-017", async ({ page, step, expected }) => {
   const p = await ログインする(page, "017");
   await step(1, async () => { await p.goto(`${BASE_URL}/ja/mypage/identification/complete`); });
-  await expected(async () => { expect.soft(p.マイページか, `マイページへ遷移（実際: ${p.path}）`).toBe(true); });
+  await expected(async () => { expect.soft(await p.マイページの画面か(), `マイページへ遷移（実際: ${p.path}）`).toBe(true); });
 });
 
 caseTest("IT-F06-13-018", async ({ page, step, expected }) => {
@@ -145,7 +151,7 @@ caseTest("IT-F06-13-018", async ({ page, step, expected }) => {
     await p.goto(`${BASE_URL}/ja/mypage/identification/complete?identification_image[identification]=1`);
     note("クエリは、撮影画面の隠し項目の名前（identification_image[identification]）に身分証種別のID 1（自動車運転免許証）を入れて付けた");
   });
-  await expected(async () => { expect.soft(p.マイページか, `マイページへ遷移（実際: ${p.path}）`).toBe(true); });
+  await expected(async () => { expect.soft(await p.マイページの画面か(), `マイページへ遷移（実際: ${p.path}）`).toBe(true); });
 });
 
 // ---- 022・024・044・045: 申請の結果 ----
@@ -226,7 +232,7 @@ caseTest("IT-F06-13-027", async ({ page, step, expected }) => {
   await step(3, async () => { await p.画像データを書き換える("現在の顔写真", "invalid-image-data"); });
   await step(4, async () => { await p.確定を押す(); 文 = await p.画面の文; });
   await expected(async () => {
-    expect.soft(p.申請完了画面か, "申請完了画面になっていない").toBe(false);
+    expect.soft(await p.申請完了画面か(), "申請完了画面（申請完了の見出しのある画面）になっていない").toBe(false);
     expect.soft(文.includes("画像データのアップロードに失敗しました"), `共通エラー画面の表示（実際の先頭: ${文.slice(0, 80)}）`).toBe(true);
   });
 });
@@ -329,21 +335,34 @@ caseTest("IT-F06-13-033", async ({ page, step, expected }) => {
   const p = await ログインする(page, "033");
   await step(1, async () => { await p.開く(); });
   await step(2, async () => { await p.押して移動する(p.ホームアイコン); });
-  await expected(async () => { expect.soft(p.本店ECTOPか, `遷移先（本店ECTOP）。実際: ${p.path}`).toBe(true); });
+  await expected(async () => { expect.soft(await p.本店ECTOPの画面か(), `遷移先（本店ECTOP）。実際: ${p.path}`).toBe(true); });
 });
 
 caseTest("IT-F06-13-034", async ({ page, step, expected }) => {
   const p = await ログインする(page, "034");
   await step(1, async () => { await p.開く(); });
   await step(2, async () => { await p.押して移動する(p.マイページボタン); });
-  await expected(async () => { expect.soft(p.マイページか, `遷移先（マイページ）。実際: ${p.path}`).toBe(true); });
+  await expected(async () => {
+    expect.soft(await p.マイページの画面か(), `遷移先（マイページ）。実際: ${p.path}`).toBe(true);
+    await expect.soft(page.locator("h1.c-hareruya-heading--lev1").first(), "遷移先の見出し（マイページ）").toHaveText("マイページ");
+  });
 });
 
 caseTest("IT-F06-13-035", async ({ page, step, expected }) => {
   const p = await ログインする(page, "035");
-  await step(1, async () => { await 種類を選んで撮影画面を開く(p, 免許); });
+  await step(1, async () => {
+    await p.開く();
+    await p.種類を選ぶ(免許);
+    // 選んだ身分証の種類が画像に写るよう、撮影画面へ進む前の選択欄を撮る
+    await 要素を撮る(p.種類の選択欄, scene.stepLabel(1, `選んだ身分証の種類（${await p.選択中の種類()}）`));
+    await p.撮影画面へ();
+    await expect(p.確定ボタン, "撮影画面").toBeVisible();
+  });
   await step(2, async () => { await p.押して移動する(p.ホームアイコン); });
-  await expected(async () => { expect.soft(p.本店ECTOPか, `遷移先（本店ECTOP）。実際: ${p.path}`).toBe(true); });
+  await expected(async () => {
+    expect.soft(await p.本店ECTOPの画面か(), `遷移先（本店ECTOP）。実際: ${p.path}`).toBe(true);
+    await expect.soft(page.locator("header a.p-hareruya-header__logo-link").first(), "遷移先のヘッダーのロゴ（本店ECTOP）").toBeVisible();
+  });
 });
 
 caseTest("IT-F06-13-036", async ({ page, step, expected }) => {
@@ -351,7 +370,7 @@ caseTest("IT-F06-13-036", async ({ page, step, expected }) => {
   await step(1, async () => { await 種類を選んで撮影画面を開く(p, 免許); });
   await step(2, async () => { await p.押して移動する(p.キャンセル); });
   await expected(async () => {
-    expect.soft(p.スタート画面か, `オンライン本人確認画面へ戻る（実際: ${p.path}）`).toBe(true);
+    expect.soft(await p.スタート画面の画面か(), `オンライン本人確認画面へ戻る（実際: ${p.path}）`).toBe(true);
     await expect.soft(p.種類の選択欄, "オンライン本人確認画面の種類の選択欄").toBeVisible();
   });
 });
@@ -367,14 +386,14 @@ caseTest("IT-F06-13-037", async ({ page, step, expected }) => {
   const p = await ログインする(page, "037");
   await 申請して完了画面を開く(p, step);
   await step(4, async () => { await p.押して移動する(p.ホームアイコン); });
-  await expected(async () => { expect.soft(p.本店ECTOPか, `遷移先（本店ECTOP）。実際: ${p.path}`).toBe(true); });
+  await expected(async () => { expect.soft(await p.本店ECTOPの画面か(), `遷移先（本店ECTOP）。実際: ${p.path}`).toBe(true); });
 });
 
 caseTest("IT-F06-13-038", async ({ page, step, expected }) => {
   const p = await ログインする(page, "038");
   await 申請して完了画面を開く(p, step);
   await step(4, async () => { await p.押して移動する(p.完了のマイページボタン); });
-  await expected(async () => { expect.soft(p.マイページか, `遷移先（マイページ）。実際: ${p.path}`).toBe(true); });
+  await expected(async () => { expect.soft(await p.マイページの画面か(), `遷移先（マイページ）。実際: ${p.path}`).toBe(true); });
 });
 
 caseTest("IT-F06-13-039", async ({ page, step, expected }) => {

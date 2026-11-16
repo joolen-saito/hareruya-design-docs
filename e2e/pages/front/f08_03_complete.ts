@@ -65,7 +65,7 @@ export class OtcCompletePage {
 
   /** 「査定申込みへ戻る」を押し、申込前ログイン画面へ移る */
   async 査定申込みへ戻る(): Promise<void> {
-    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/entry/, { timeout: 60_000 }), this.査定申込みへ戻るのリンク().click({ timeout: T })]);
+    await Promise.all([this.page.waitForURL(/\/otcbuy\/\w+\/entry/, { timeout: 60_000 }), this.査定申込みへ戻るのリンク().click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 }

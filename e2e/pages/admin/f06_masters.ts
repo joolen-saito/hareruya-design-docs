@@ -49,7 +49,7 @@ export async function ensureBlacklist(page: Page, 種別: 拒否種別, キー�
   if ((await blacklistRows(page)).some((r) => r.種別 === 種別 && r.キーワード === キーワード)) return false;
   await page.locator('[name$="[new_blacklist_tag]"]').selectOption({ label: 種別 }, { timeout: 20_000 });
   await page.locator('[name$="[new_keyword]"]').fill(キーワード, { timeout: 20_000 });
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), page.locator("form#blacklist-form button.btn-ec-conversion[type=submit]").click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), page.locator("form#blacklist-form button.btn-ec-conversion[type=submit]").click({ timeout: 20_000, noWaitAfter: true })]);
   await expectSaved(page, `ブラックリストに${種別}「${キーワード}」を登録`);
   const after = await blacklistRows(page);
   expect(after.some((r) => r.種別 === 種別 && r.キーワード === キーワード), `ブラックリストに${種別}「${キーワード}」の行が表示される`).toBe(true);
@@ -62,7 +62,7 @@ export async function removeBlacklist(page: Page, 種別: 拒否種別, キー�
   if (!hit) return false;
   page.once("dialog", (d) => { void d.accept(); });
   const btn = page.locator(`button[form="blacklist-delete-${hit.id}"]`);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded" }), btn.click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), btn.click({ timeout: 20_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   // 確認のモーダルが出る作りなら、その確定ボタンを押す
   expect((await blacklistRows(page)).some((r) => r.種別 === 種別 && r.キーワード === キーワード), `ブラックリストから${種別}「${キーワード}」の行が消える`).toBe(false);
@@ -74,8 +74,7 @@ export async function setTempMember(page: Page, 有効: boolean): Promise<boolea
   const p = new ShopBasicPage(page);
   await p.open();
   if ((await p.有効か("仮会員")) === 有効) return false;
-  await p.トグルを("仮会員", 有効);
-  await p.押して保存を確かめる(`店舗基本設定の仮会員機能を${有効 ? "有効" : "無効"}にする`);
+  await p.入れて保存する(`店舗基本設定の仮会員機能を${有効 ? "有効" : "無効"}にする`, () => p.トグルを("仮会員", 有効));
   return true;
 }
 export async function readTempMember(page: Page): Promise<boolean> {
@@ -103,8 +102,7 @@ export async function setRememberMe(page: Page, 有効: boolean): Promise<boolea
   const p = new ShopBasicPage(page);
   await p.open();
   if ((await p.有効か("自動ログイン")) === 有効) return false;
-  await p.トグルを("自動ログイン", 有効);
-  await p.押して保存を確かめる(`店舗基本設定のログイン状態の保持を${有効 ? "有効" : "無効"}にする`);
+  await p.入れて保存する(`店舗基本設定のログイン状態の保持を${有効 ? "有効" : "無効"}にする`, () => p.トグルを("自動ログイン", 有効));
   return true;
 }
 export async function readRememberMe(page: Page): Promise<boolean> {

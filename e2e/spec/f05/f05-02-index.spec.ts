@@ -46,13 +46,15 @@ caseTest("IT-F05-02-006", async ({ page, step, expected }) => {
   const r = new ネット買取の検索結果(page);
   const M = F0502マスタ;
   let 出た: string[] = [];
+  let 失敗: string[] = [];
   note(買取詳細検索の注記);
   note(照らし方の注記);
+  note("言語の「日本語」は、モーダルの言語の選択肢「JP」と読んだ（選択肢の表示名は言語コード）");
   await step(1, async () => { await 一覧を開く(s); await モーダルを開く(s); });
   await step(2, async () => {
-    const 失敗 = await s.入れる({
+    失敗 = await s.入れる({
       商品名: rc("F0502-ALL-006"), カテゴリ: M.カテゴリB, 色: "赤", 固有色: "白", マナコスト: "3", カードタイプ: M.カードタイプA, サブタイプ: M.サブタイプA,
-      フォーマット: M.フォーマットA, 禁止カードも表示する: false, 言語: "日本語", レアリティ: "神話レア", Foil: "特殊", フレーム: "特殊", イラストレーター: M.イラストレーターA,
+      フォーマット: M.フォーマットA, 禁止カードも表示する: false, 言語: "JP", レアリティ: "神話レア", Foil: "特殊", フレーム: "特殊", イラストレーター: M.イラストレーターA,
     });
     if (失敗.length) note(`入れられなかった項目: ${失敗.join(" / ")}`);
     const カードセット欄 = await s.カードセット欄.count();
@@ -61,6 +63,7 @@ caseTest("IT-F05-02-006", async ({ page, step, expected }) => {
   });
   await step(3, async () => { 出た = await 検索して読む(s, r); });
   await expected(async () => {
+    expect.soft(失敗, "手順2で入れられなかった条件（条件を入れられないまま検索した結果で合否を決めない）").toEqual([]);
     expect.soft(出た, "ユニサーチの検索結果としてネット買取商品一覧に表示された商品（DETAIL-ALL-006 だけ）").toEqual(ids("S-F05-02-DETAIL-006", ["DETAIL-ALL-006"]));
   });
 });

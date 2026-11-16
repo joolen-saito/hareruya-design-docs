@@ -81,7 +81,7 @@ export async function フォーマット一覧から編集画面を開く(page: 
   if (!res || !res.ok()) throw new Error(`フォーマット一覧を開けない（応答 ${res?.status() ?? "なし"}）`);
   const link = page.locator("td a[href*='/format/'][href$='/edit']").filter({ hasText: new RegExp(`^\\s*${名日.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} / `) });
   await expect(link, `フォーマット一覧の「${名日}」の行`).toHaveCount(1);
-  await Promise.all([page.waitForURL(/\/format\/\d+\/edit/, { waitUntil: "load" }), link.click()]);
+  await Promise.all([page.waitForURL(/\/format\/\d+\/edit/, { waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
   await expect(欄(page, "nameJp"), "フォーマット編集画面のフォーマット名(日)").toHaveValue(名日);
   return /\/format\/(\d+)\/edit/.exec(page.url())![1];
 }

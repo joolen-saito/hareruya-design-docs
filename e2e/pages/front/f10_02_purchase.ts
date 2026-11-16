@@ -79,7 +79,7 @@ export async function 使用ポイントを入れる(page: Page, ポイント: n
 /** 「注文する」ボタンを押す。購入完了画面へ移らなければ、画面のエラーの文つきで落とす */
 export async function 注文するを押す(page: Page, what: string): Promise<void> {
   const submit = await 確定のチェックを入れる(page, what);
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), submit.click({ timeout: T })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), submit.click({ timeout: T, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   if (!購入完了画面か(page)) {
     const errors = (await page.locator(".p-hareruya-message-box--error, .ec-alert-warning, .error, .c-hareruya-form-input__field-error--server").allTextContents()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);

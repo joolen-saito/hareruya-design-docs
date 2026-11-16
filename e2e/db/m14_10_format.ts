@@ -55,3 +55,17 @@ export function デッキ名のデッキID(デッキ名: string): string | null 
   const r = query(`select id from dtb_deck where deck_name = $1 and deleted_at is null order by id desc limit 1`, [デッキ名])[0];
   return r ? String(r.id) : null;
 }
+
+/** 統率の行（統率領域）の、枚数を数えるボード（メインボードか）と、統率の行が有るか（削除されていない行）。無ければ null */
+export function 統率の行(フォーマットID: string | number): { 数えるボードがメイン: boolean } | null {
+  const r = query(
+    `select cb.board_id::text as cb from dtb_format_board fb left join dtb_format_board cb on cb.id = fb.count_board_id
+     where fb.format_id = $1 and fb.board_id = 3 and fb.deleted_at is null order by fb.id desc limit 1`, [フォーマットID])[0];
+  return r ? { 数えるボードがメイン: r.cb === "1" } : null;
+}
+
+/** フォーマットの削除日時の文字（削除されていなければ「空（NULL）」）。帯に出すための読み取り */
+export function 削除日時の文(フォーマットID: string | number): string {
+  const r = query(`select deleted_at::text as d from mtb_format where id = $1`, [フォーマットID])[0];
+  return r === undefined ? "（行が無い）" : r.d === null ? "空（NULL）" : String(r.d);
+}

@@ -34,6 +34,7 @@
  * （CASE-001・009・015・018・026・027・030・032・034・035・037・050・051、CBEX*-065〜068・071）、試験環境のメール受信サービスの停止（MAIL）、
  * レイアウトのブロック配置（ARENABLOCK-054）、連携試験（PE-REF・PE-CASE-063）。
  */
+import { 店名を読む } from "../lib/store_pick";
 import { Browser, Page } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { プレイヤーID } from "../db/f03_07";
@@ -62,7 +63,8 @@ import { registerFrontMember } from "../pages/front/member_entry";
 // 共有の値
 // ---------------------------------------------------------------------------
 
-export const 店名 = "晴れる屋2";
+/** 店舗は作らない（依頼者 2026-11-15）。「晴れる屋2」は使い回す E2E の店舗 4973 で表す */
+export const 店名 = 店名を読む("4973");
 export const F0616_ADMIN: Account = { loginId: "f0616_admin", password: "Passw0rd!F0616" };
 const 会員のパスワード = "Passw0rd!F0616";
 

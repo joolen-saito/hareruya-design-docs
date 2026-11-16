@@ -1,8 +1,9 @@
 /**
  * F03-05 商品リコメンド（012・013 以外）。正本: cases/F03-05_test_cases.tsv
  *
- * 実装しないケース: 002（購入完了の表示対象は注文したブラウザの状態で、シードの場では作れない）、009・030・032・034（TC大阪支店の在庫の準備）、
+ * 実装しないケース: 002（購入完了の表示対象は注文したブラウザの状態で、シードの場では作れない）、
  * 017・019・021（状態別の規格の価格・在庫の準備）。理由は e2e/review/F03-05_progress_2026-11-11.md。
+ * TC大阪支店（009・030・032・034）は 2026-11-13 に追加（支店公開はグッズ商品CSVの列、大阪在庫は在庫編集と承認。seeds/f03-05-more.ts）。
  * 注文はDBで印つきの受注を作る（seeds/f03-05-more.ts）。共有の設定（レコメンド検索期間）を書き換えるので、基盤が1本だけで流す。
  * 画面の作り: 商品詳細・マイページ・買い物かごのおすすめ商品枠は、サーバーが描画した枠（遅延描画の仕組みは見当たらない）で、送りボタンで横に進むカルーセル。
  */
@@ -10,7 +11,7 @@ import { Page } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { CaseCtx, caseTest, expect } from "../../lib/case";
 import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
-import { FrontRecommend, 表示された商品 } from "../../pages/front/f03_05_recommend";
+import { FrontRecommend, 表示された商品, 店のログイン画面でログインする } from "../../pages/front/f03_05_recommend";
 import { 同時購入の実績を置き換える, memberOf, productOf } from "../../seeds/f03-05-more";
 import { restoreRecommendDays, 開始時に検索期間を30にする } from "../../seeds/f03-05";
 
@@ -357,5 +358,77 @@ caseTest("IT-F03-05-033", (ctx) => 案(ctx, async ({ page, step, expected }) => 
   await step(4, async () => { rows = await front.前送りで最後まで見て読む(); });
   await expected(async () => {
     expect.soft(ids(rows), "未ログインでは購入済みの除外が行われず、会員Pが購入したことのあるF0305-CB033-RECAが出る").toContain(idOf("F0305-CB033-RECA"));
+  });
+}));
+
+// ---- TC大阪支店（009・030・032・034） ----
+const 大阪 = "/ja/osaka";
+
+async function 大阪の商品詳細を開く(front: FrontRecommend, code: string): Promise<void> {
+  expect(await front.商品詳細を開く(大阪, idOf(code)), "TC大阪支店・日本語表示の商品詳細の応答").toBeLessThan(400);
+}
+async function 大阪でログインする(page: Page, key: string): Promise<void> {
+  const m = memberOf(key);
+  await 店のログイン画面でログインする(page, 大阪, m.mail, m.password);
+}
+
+caseTest("IT-F03-05-009", (ctx) => 案(ctx, async ({ page, step, expected }) => {
+  const front = new FrontRecommend(page);
+  let rows: 表示された商品[] = [];
+  await step(1, () => 大阪の商品詳細を開く(front, "BASE-BRANCH-009"));
+  await step(2, async () => { rows = await 枠まで進んで読む(front); });
+  await step(3, async () => { rows = await front.前送りで最後まで見て読む(); });
+  await expected(async () => {
+    expect.soft(ids(rows), "TC大阪支店で支店公開かつ支店在庫があるOSAKA-OK-009だけが出る").toEqual([idOf("OSAKA-OK-009")]);
+    expect.soft(ids(rows), "支店非公開のOSAKA-HIDDEN-009は出ない").not.toContain(idOf("OSAKA-HIDDEN-009"));
+    expect.soft(ids(rows), "支店在庫がないOSAKA-NOSTOCK-009は出ない").not.toContain(idOf("OSAKA-NOSTOCK-009"));
+  });
+}));
+
+caseTest("IT-F03-05-030", (ctx) => 案(ctx, async ({ page, step, expected }) => {
+  const front = new FrontRecommend(page);
+  let rows: 表示された商品[] = [];
+  await step(1, () => 大阪でログインする(page, "M"));
+  await step(2, () => 大阪の商品詳細を開く(front, "F0305-CB030-BASE"));
+  await step(3, async () => { rows = await 枠まで進んで読む(front); });
+  await step(4, async () => { rows = await front.前送りで最後まで見て読む(); });
+  await expected(async () => {
+    expect.soft(ids(rows), "処理中以外の注文でF0305-CB030-BASEと同時購入されたF0305-CB030-RECAが出る").toContain(idOf("F0305-CB030-RECA"));
+    expect.soft(ids(rows), "処理中の注文だけに含まれるF0305-CB030-RECPは出ない").not.toContain(idOf("F0305-CB030-RECP"));
+  });
+}));
+
+caseTest("IT-F03-05-032", (ctx) => 案(ctx, async ({ page, step, expected }) => {
+  const front = new FrontRecommend(page, "買い物かご");
+  let rows: 表示された商品[] = [];
+  await step(1, () => 大阪でログインする(page, "M"));
+  await step(2, () => front.カートに1個入れる(idOf("F0305-CB032-BASE"), "TC大阪支店でカートに F0305-CB032-BASE を入れる", 大阪));
+  await step(3, async () => { expect(await front.買い物かごを開く(大阪), "TC大阪支店の買い物かごの応答").toBeLessThan(400); });
+  await step(4, async () => {
+    await front.枠までスクロールする();
+    await front.描画を待つ();
+  });
+  await step(5, async () => { rows = await front.前送りで最後まで見て読む(); });
+  await expected(async () => {
+    expect.soft(ids(rows), "処理中以外の注文でカート内のF0305-CB032-BASEと同時購入されたF0305-CB032-RECAが出る").toContain(idOf("F0305-CB032-RECA"));
+    expect.soft(ids(rows), "処理中の注文だけに含まれるF0305-CB032-RECPは出ない").not.toContain(idOf("F0305-CB032-RECP"));
+  });
+}));
+
+caseTest("IT-F03-05-034", (ctx) => 案(ctx, async ({ page, step, expected }) => {
+  const front = new FrontRecommend(page, "マイページ");
+  let rows: 表示された商品[] = [];
+  await step(1, () => 大阪でログインする(page, "M"));
+  await step(2, async () => {
+    expect(await front.マイページを開く(大阪), "TC大阪支店のマイページの応答").toBeLessThan(400);
+    expect(new URL(page.url()).pathname, "TC大阪支店のマイページに入れている（ログイン画面へ戻されていない）").toMatch(/\/osaka\/mypage\/?$/);
+  });
+  await step(3, async () => {
+    await front.枠までスクロールする();
+    await front.描画を待つ();
+  });
+  await step(4, async () => { rows = await front.前送りで最後まで見て読む(); });
+  await expected(async () => {
+    expect.soft(ids(rows), "直近の処理中以外の注文の唯一の明細F0305-CB034-BASEを基準として同時購入されたF0305-CB034-RECAが出る").toContain(idOf("F0305-CB034-RECA"));
   });
 }));

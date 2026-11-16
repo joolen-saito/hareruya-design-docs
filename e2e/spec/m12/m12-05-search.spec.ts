@@ -7,6 +7,7 @@ import { test } from "@playwright/test";
 import { 商品の依頼を控える } from "../../db/m12_05";
 import { expect, caseTest } from "../../lib/case";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
+import { CSVの内容を画面の枠に出す, CSVの枠の列 } from "../../lib/evidence_other";
 import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
 import { ProductRequestPage } from "../../pages/admin/m12_analysis";
@@ -232,9 +233,12 @@ caseTest("IT-M12-05-018", async ({ page, step, notes, expected }) => {
   let 後 = 前;
   await step(1, async () => { 前 = 商品の依頼を控える(商品ID); });
   await step(2, async () => { await p.open(); });
-  await step(3, async () => { await p.日付を空にしてキーワードを入れる(kwOf("集計確認通知待ち-018")); await p.検索する(); });
+  let 検索結果: string[] = [];
+  await step(3, async () => { await p.日付を空にしてキーワードを入れる(kwOf("集計確認通知待ち-018")); await p.検索する(); 検索結果 = ids(await p.結果の行()); });
   await step(4, async () => { 後 = 商品の依頼を控える(商品ID); });
   await expected(async () => {
+    // 検索が実行されていないと「変化しない」は確かめにならないため、検索結果に商品が出たことも確かめる
+    expect.soft(検索結果, "検索結果一覧に商品ID 〔商品ID-M1205-018〕が表示される（検索が実行された）").toContain(商品ID);
     expect.soft(前.length, "検索前の入荷通知依頼の件数（2規格への通知待ち2件）").toBe(2);
     expect.soft(後.length, "検索後の入荷通知依頼の件数が変化しない").toBe(前.length);
     expect.soft(後, "検索後の入荷通知依頼の各属性が変化しない").toEqual(前);
@@ -252,11 +256,13 @@ caseTest("IT-M12-05-019", async ({ page, step, notes, expected }) => {
     const chunks: Buffer[] = [];
     for await (const c of await dl.createReadStream()) chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c));
     rows = parseCsv(decodeCsvBytes(Buffer.concat(chunks)));
+    // 読んだCSV（ファイル名・見出し・全データ行）を画面の枠に書き出して残す。続く期待結果の確かめはこの枠の要素で行い、赤枠がCSVの値に付く
+    await CSVの内容を画面の枠に出す(page, [{ 題: `ファイル名：${dl.suggestedFilename()}`, 行: rows }]);
   });
   await expected(async () => {
-    const first = rows.map((r) => r[0]);
-    expect.soft(first, "CSVに検索条件と一致する商品ID 〔商品ID-M1205-019A〕が含まれる").toContain(notes.get("〔商品ID-M1205-019A〕"));
-    expect.soft(first, "検索条件と一致しない商品ID 〔商品ID-M1205-019B〕が含まれない").not.toContain(notes.get("〔商品ID-M1205-019B〕"));
+    const 商品ID列 = CSVの枠の列(page, 0, rows[0]?.[0] ?? "商品ID");
+    await expect.soft(商品ID列.filter({ hasText: new RegExp(`^${notes.get("〔商品ID-M1205-019A〕")}$`) }).first(), "CSVに検索条件と一致する商品ID 〔商品ID-M1205-019A〕が含まれる").toBeVisible();
+    await expect.soft(商品ID列.filter({ hasText: new RegExp(`^${notes.get("〔商品ID-M1205-019B〕")}$`) }), "検索条件と一致しない商品ID 〔商品ID-M1205-019B〕が含まれない").toHaveCount(0);
   });
 });
 

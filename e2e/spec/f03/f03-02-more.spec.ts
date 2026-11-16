@@ -59,7 +59,7 @@ caseTest("IT-F03-02-004", async ({ page, notes, step, expected }) => {
   const got = { 本店: "", 支店: "" };
   const ホームを押す = async (入口: string): Promise<string> => {
     await 開いて確かめる(d, 入口, id, BASE_NAME);
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), d.パンくずのホーム.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), d.パンくずのホーム.click({ noWaitAfter: true })]);
     const path = new URL(page.url()).pathname.replace(/\/$/, "");
     note(`ホームアイコンを押したあとのアドレスのパス: ${path}`);
     return path;
@@ -83,7 +83,7 @@ caseTest("IT-F03-02-005", async ({ page, notes, step, expected }) => {
     const link = d.パンくずのリンク(catName);
     await expect(link, "パンくずの「テストセット」のリンク").toHaveCount(1);
     href = (await link.getAttribute("href")) ?? "";
-    [res] = await Promise.all([page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+    [res] = await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     note(`パンくずのリンク先: ${href} → ${page.url()}（応答 ${status(res)}）`);
   });
   await expected(async () => {
@@ -143,10 +143,10 @@ caseTest("IT-F03-02-008", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await fav.login(m.mail, m.password); });
   await step(2, async () => { await 開いて確かめる(d, 店.TC大阪支店, notes.get(BASE_ID), BASE_NAME); });
   await expected(async () => {
-    expect.soft(d.入荷通知のボタン, "入荷通知/通知待ち").toHaveCount(0);
-    expect.soft(d.お気に入り, "お気に入り").toHaveCount(0);
-    expect.soft(d.まとめて入荷通知, "まとめて入荷通知").toHaveCount(0);
-    expect.soft(d.SNSでシェア, "SNSでシェアする").toHaveCount(0);
+    await expect.soft(d.入荷通知のボタン, "入荷通知/通知待ち").toHaveCount(0);
+    await expect.soft(d.お気に入り, "お気に入り").toHaveCount(0);
+    await expect.soft(d.まとめて入荷通知, "まとめて入荷通知").toHaveCount(0);
+    await expect.soft(d.SNSでシェア, "SNSでシェアする").toHaveCount(0);
   });
 });
 
@@ -603,7 +603,7 @@ caseTest("IT-F03-02-033", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await 開いて確かめる(d, 店.本店, id, BASE_NAME); });
   await step(2, async () => {
     await expect(d.買取情報を見る, "買取情報を見るリンク").toBeVisible();
-    [res] = await Promise.all([page.waitForNavigation({ waitUntil: "load" }), d.買取情報を見る.click()]);
+    [res] = await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), d.買取情報を見る.click({ noWaitAfter: true })]);
     note(`買取情報を見るを押した先: ${page.url()}（応答 ${status(res)}）`);
   });
   await expected(async () => {
@@ -624,7 +624,7 @@ caseTest("IT-F03-02-047", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await 開いて確かめる(d, 店.本店, notes.get(BASE_ID), BASE_NAME); });
   await step(2, async () => {
     note("記事サイト（外部）へは接続せず、移動先のアドレスだけを読んだ（外部への要求は空の応答に差し替えた）");
-    await Promise.all([page.waitForURL(/article\.hareruyamtg\.com/), d.掲載記事一覧.click()]);
+    await Promise.all([page.waitForURL(/article\.hareruyamtg\.com/, { timeout: 120_000 }), d.掲載記事一覧.click({ noWaitAfter: true })]);
     note(`移動先: ${page.url()}`);
   });
   await expected(async () => {

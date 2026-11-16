@@ -3,14 +3,20 @@ import { Page } from "@playwright/test";
 
 const 整える = (s: string) => s.replace(/ /g, " ").replace(/\s+/g, " ").trim();
 
-export type 予約の一覧 = { 本文: string; イベントの件数: number; 開催日時: string };
+export type 予約の一覧 = { 本文: string; イベントの件数: number; 開催日時: string; 案内: string };
+
+/** 一覧が0件のときの案内（「予約済みの大会はありません。」。確かめる要点の要素） */
+export const ゼロ件案内 = (page: Page) => page.locator(".p-hareruya-message-box--info");
+/** イベント名の大会のカード */
+export const 大会のカード = (page: Page, イベント名: string) => page.locator(".p-hareruya-deckentry-list__card").filter({ hasText: イベント名 });
 
 /** いま開いているマイイベント・デッキ登録の一覧から、イベント名の大会の件数と、先頭の大会の開催日時の表示を読む */
 export async function 予約の一覧を読む(page: Page, イベント名: string): Promise<予約の一覧> {
   const card = page.locator(".p-hareruya-deckentry-list__card").filter({ hasText: イベント名 });
   const n = await card.count();
   const 開催日時 = n ? 整える(await card.first().locator(".p-hareruya-deckentry-list__card-row").filter({ hasText: "開催" }).locator("dd").innerText().catch(() => "")) : "";
-  return { 本文: 整える(await page.locator("main, body").first().innerText()), イベントの件数: n, 開催日時 };
+  const 案内 = 整える(await ゼロ件案内(page).first().innerText().catch(() => ""));
+  return { 本文: 整える(await page.locator("main, body").first().innerText()), イベントの件数: n, 開催日時, 案内 };
 }
 
 /** 「2030/10/22 10:00」の表示を「2030年10月22日10時00分」の形に直す（形が違えばそのまま） */

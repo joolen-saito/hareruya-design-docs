@@ -97,6 +97,9 @@ caseTest("IT-F01-01-031", async ({ page, step, expected }) => {
     const login = new LoginPage(page);
     await login.ログイン画面を開く();
     await login.ログインする(会員のメール("031"), 会員のパスワード("031"));
+    // ログインできずに未ログインのままでも「お気に入り欄が出ない」になるため、ログインできた（ログイン画面に留まらない）ことを確かめる
+    const 留まった = /\/mypage\/login\/?$/.test(login.path());
+    expect(!留まった, `会員でログインできた（ログイン画面に留まらない。認証エラー: ${留まった ? (await login.認証エラー()) || "なし" : "なし"}）`).toBe(true);
   });
   await step(2, async () => { await top.本店TOPを開く("ja"); });
   await expected(async () => {

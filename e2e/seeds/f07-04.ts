@@ -17,17 +17,19 @@ import { Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { 会員の選手ID, 申込の申込選手ID, 申込の登録時履歴ID } from "../db/f07_04";
 import { Notes } from "../lib/notes";
-import { rc } from "../lib/run_marker";
+import { FIXED_MARK, rc, rcFixed } from "../lib/run_marker";
+import { withCreateOnceLock } from "../lib/create_once_lock";
 import { query } from "../lib/db";
 import { reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { RUN_MARK } from "../lib/run_marker";
-import { createMember } from "../pages/admin/member";
+import { createMember, ensureMember } from "../pages/admin/member";
 import { FormatPage } from "../pages/admin/f03_03_masters";
-import { 試験店舗を登録する } from "../pages/admin/f07_01_setup";
+import { 店名を読む } from "../lib/store_pick";
+import { 決まった試験店舗を用意する } from "../pages/admin/f07_01_setup";
 import {
-  デッキ登録締切を直す, フォーマットのランキング表示とイベントに表示を付ける, 会員を作る, 会員IDをメールから, 申込登録で選手を読む, 大会を登録する, 日程の設定, 試験会員, 大会,
+  デッキ登録締切を直す, フォーマットのランキング表示とイベントに表示が付いている, フォーマットのランキング表示とイベントに表示を付ける, 会員を作る, 会員IDをメールから, 申込登録で選手を読む, 大会を登録する, 日程の設定, 試験会員, 大会,
 } from "../pages/admin/f07_04_setup";
 
 const 中 = (定員 = "10", 参加費 = "0"): 日程の設定 => ({ 受付: "中", 定員, 参加費 });
@@ -177,34 +179,63 @@ const 締切前 = "2099-12-19 23:59";
 
 // ---- 管理画面のイベント申込一覧への連携（059〜062） ----
 // 会員は、シード表は管理画面の会員登録だが、フロントの新規会員登録で作る（依頼者決定 2026-10-31）。メール・名には実行の印を付ける。
-// 店舗・フォーマットは共有シード PE-REF が作る（名前に実行の印）。管理者のログインIDは英数字（実行の印つき）。
+// 店舗・フォーマット・管理者は、共有シード PE-REF が決まった名前で無ければ1度だけ作り、以後は使い回す（依頼者決定 2026-11-11「試験用の店舗は決まった名前で1度だけ作る」・
+// 依頼者の指示 2026-11-12「毎回作らずに1個でいけるやつは使い回す」。以前はフォーマットと管理者を実行ごとに作っていた）。
+// 店舗「連携店F07-04-E2E」・フォーマット「連携形式F07-04-E2E」・管理者 pef0704admine2e。ケースは実行の印つきの大会名で申込を検索して確かめるので、使い回しても取り違えない。
 // イベント登録画面の「店舗」には編集できる店舗だけが並ぶので、大会と日程は、連携店を編集できる PE-REF の管理者で登録する。
-export const 連携店名 = (): string => rc("連携店F07-04");
-export const 連携形式名 = (): string => rc("連携形式F07-04");
+/** 店舗は作らない（依頼者 2026-11-15）。連携店は使い回す E2E の店舗 221 で表す（店名は店舗のいまの値） */
+export const 連携店ID = "221";
+export const 連携店名 = (): string => 店名を読む(連携店ID);
+export const 連携形式名 = (): string => rcFixed("連携形式F07-04");
 export let PE管理者: Account = { loginId: "", password: "" };
-const PE管理者のパスワード = "Passw0rd-PE";
+/** シード表のパスワード「Passw0rd-PE」は11文字で、管理画面の規則（12文字以上）に合わないので、受け付ける値に代える（ケースはパスワードを確かめない） */
+const PE管理者のパスワード = "Passw0rd-PE-F0704";
+
+/** 決まった名前のフォーマットを、無ければ1度だけ作り、あれば使い回す（ランキング表示・イベントに表示が外れていれば付け直す）。フォーマットIDを返す */
+async function 決まったフォーマットを用意する(page: Page, issue: (m: string) => void): Promise<string> {
+  const f = new FormatPage(page);
+  const 名 = 連携形式名();
+  const find = async (): Promise<string | null> => {
+    await f.openList();
+    const hits = (await f.listRows()).filter((r) => r.名称.startsWith(`${名} / `));
+    if (hits.length > 1) throw new Error(`フォーマット「${名}」が ${hits.length} 件ある（${hits.map((h) => h.id).join("・")}）。どれを使うか決められない`);
+    return hits[0]?.id ?? null;
+  };
+  const use = async (id: string): Promise<string> => {
+    await f.openEdit(id);
+    if (!(await フォーマットのランキング表示とイベントに表示が付いている(page))) {
+      await フォーマットのランキング表示とイベントに表示を付ける(page);
+      await f.register(`フォーマット「${名}」のランキング表示・イベントに表示を付け直す`);
+      issue(`使い回すフォーマット「${名}」（ID ${id}）のランキング表示・イベントに表示が外れていたので付け直した`);
+    }
+    issue(`フォーマットは、決まった名前の「${名}」（ID ${id}）を使い回した`);
+    return id;
+  };
+  const exist = await find();
+  if (exist) return use(exist);
+  return withCreateOnceLock(`format-${名}`, async () => {
+    const again = await find();
+    if (again) return use(again);
+    await f.openNew();
+    await f.fill({ 名称日: 名, 名称英: "Link Format E2E", 並び順: "1" });
+    await フォーマットのランキング表示とイベントに表示を付ける(page);
+    const id = await f.register(`フォーマット「${名}」の登録`);
+    issue(`フォーマットは、決まった名前の「${名}」（ID ${id}）をこの回で1度だけ作った（以後の回は使い回す）`);
+    return id;
+  });
+}
 
 defineSeed("S-F07-04-PE-REF", async ({ browser, notes, seed }) => {
+  const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    notes.set("〔店舗ID-F0704-共有〕", await 試験店舗を登録する(page, 連携店名(), "pe0704", (m) => reportSeedIssue(seed.シードID, m)));
-    const f = new FormatPage(page);
-    await f.openNew();
-    await f.fill({ 名称日: 連携形式名(), 名称英: `Link Format ${RUN_MARK}`, 並び順: "1" });
-    await フォーマットのランキング表示とイベントに表示を付ける(page);
-    notes.set("〔フォーマットID-F0704-共有〕", await f.register(`フォーマット「${連携形式名()}」の登録`));
-    const loginId = `pef0704admin${RUN_MARK.toLowerCase()}`;
-    const 入力 = { 名前: `PE管理者-${RUN_MARK}`, 所属店舗: 連携店名(), ログインID: loginId, メールアドレス: `${loginId}@example.test`, 権限: "システム管理者", デフォルト検索表示店舗: 連携店名(), 編集可能店舗: [連携店名()] };
-    let password = PE管理者のパスワード;
-    try {
-      await createMember(page, { ...入力, パスワード: password });
-    } catch (e) {
-      // シード表のパスワードを画面が受け付けないときは、受け付ける値で代えて報告に残す
-      password = "Passw0rd-PE-F0704";
-      reportSeedIssue(seed.シードID, `管理者のパスワード「${PE管理者のパスワード}」を管理画面が受け付けなかった（${(e as Error).message.split("\n")[0]}）ので、代わりの値で登録した`);
-      await createMember(page, { ...入力, パスワード: password });
-    }
-    PE管理者 = { loginId, password };
+    notes.set("〔店舗ID-F0704-共有〕", await 決まった試験店舗を用意する(page, 連携店名(), "pe0704", issue));
+    notes.set("〔フォーマットID-F0704-共有〕", await 決まったフォーマットを用意する(page, issue));
+    const loginId = `pef0704admin${FIXED_MARK.toLowerCase()}s${連携店ID}`;
+    // あれば内容（所属・編集可能店舗・権限）を確かめて使い、無ければ登録する
+    await ensureMember(page, { 名前: `PE管理者-${FIXED_MARK}`, 所属店舗: 連携店名(), ログインID: loginId, メールアドレス: `${loginId}@example.test`, パスワード: PE管理者のパスワード, 権限: "システム管理者", デフォルト検索表示店舗: 連携店名(), 編集可能店舗: [連携店名()] });
+    issue(`管理者は、決まったログインID「${loginId}」の管理者を使い回した（無ければ1度だけ作る）。シード表のパスワード「Passw0rd-PE」は管理画面の規則（12文字以上）に合わないので「${PE管理者のパスワード}」に代えた`);
+    PE管理者 = { loginId, password: PE管理者のパスワード };
   });
 });
 

@@ -67,3 +67,42 @@ export function 棚番号の件数(名称: string): number {
 export function 次の棚並び順(): number {
   return Number(query("select coalesce(max(sort_no), 0) + 1 as n from dtb_shelf_number")[0].n);
 }
+
+/** 買取状況マスタの名前を表示順（昇順）に並べたもの（参照だけ） */
+export function 買取状況マスタの表示順(): string[] {
+  return query("select name as v from mtb_buy_order_status order by rank, id").map((r) => r.v as string);
+}
+
+export type 戻しリスト用の商品属性 = {
+  /** カードを指定した通常商品か（指定なしはサプライ品） */
+  カード指定: boolean;
+  言語コード: string; 状態コード: string; フォイル: boolean;
+  色: string; レアリティ: string; 略称: string; 棚番号: string; 基準価格: string; 商品名: string;
+};
+
+/** 商品コード（規格の商品コード）の、戻しリスト（CSV・PDF）に出る商品の属性（参照だけ。無ければ null）。色は色の並び順に連ねた名前 */
+export function 戻しリスト用の商品属性(コード: string): 戻しリスト用の商品属性 | null {
+  const r = query(
+    `select (p.card_detail_id is not null) as card, coalesce(lng.code, '') as lang, coalesce(cond.code, '') as cond,
+            (coalesce(cd.foil_flg, 0) <> 0) as foil, coalesce(r.code, '') as rarity, coalesce(sc.name, '') as sname,
+            coalesce(sn.name, '') as shelf, pc.standard_price as price, p.name as pname,
+            coalesce((select string_agg(cl.name_jp, '' order by cl.id) from dtb_card_color dcc join mtb_color cl on cl.id = dcc.color_id where dcc.card_id = c.id), '') as color
+       from dtb_product_class pc
+       join dtb_product p on p.id = pc.product_id
+       left join mtb_card_condition cond on cond.id = pc.card_condition_id
+       left join mtb_language lng on lng.id = pc.language_id
+       left join mtb_storage_code sc on sc.id = p.storage_code_id
+       left join dtb_shelf_number sn on sn.id = pc.shelf_number_id
+       left join mtb_card_detail cd on cd.id = p.card_detail_id
+       left join mtb_rarity r on r.id = cd.rarity_id
+       left join mtb_card c on c.id = cd.card_id
+      where pc.product_code = $1 order by pc.id desc limit 1`,
+    [コード],
+  )[0];
+  if (!r) return null;
+  return {
+    カード指定: r.card === "true", 言語コード: String(r.lang), 状態コード: String(r.cond), フォイル: r.foil === "true",
+    色: String(r.color), レアリティ: String(r.rarity), 略称: String(r.sname), 棚番号: String(r.shelf),
+    基準価格: r.price === null ? "" : String(Number(r.price)), 商品名: String(r.pname),
+  };
+}

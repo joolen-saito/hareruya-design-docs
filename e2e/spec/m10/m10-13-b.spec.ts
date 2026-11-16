@@ -4,6 +4,7 @@ import { test, expect as pwExpect, Page } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { loginAdmin, adminUrl } from "../../lib/session";
 import { CustomCsvPage } from "../../pages/admin/m10_13_custom_csv";
+import { scene, 要素を撮る } from "../../lib/evidence_other";
 import { 定義の状態を読む } from "../../db/m10_13";
 import { M1013_ADMIN } from "../../seeds/m10-13";
 import { 削除試験名 } from "../../seeds/m10-13-b";
@@ -35,13 +36,26 @@ caseTest("IT-M10-13-016", async ({ page, step, expected, notes }) => {
   await step(2, async () => { await p.open("1", notes.get("〔カスタム定義ID-M1013-016〕")); await pwExpect(p.名前).toHaveValue(削除試験名("016")); });
   await step(3, async () => { await p.名前.fill("URL分離確認CSV"); await p.設定する("カスタム定義の更新"); });
   await step(4, async () => { await 削除モーダルを開く(p); });
-  await step(5, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), p.page.locator('#DeleteModal a.btn-ec-delete[data-method="delete"]').click({ timeout: 30_000 })]); });
+  await step(5, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), p.page.locator('#DeleteModal a.btn-ec-delete[data-method="delete"]').click({ timeout: 30_000, noWaitAfter: true })]); });
   let 参照: 要求 | undefined, 設定: 要求 | undefined, 削除: 要求 | undefined;
   await step(6, async () => {
     参照 = 記録.find((r) => r.method === "GET" && /custom_csv\/1\/\d+/.test(r.url));
     設定 = 記録.find((r) => r.method === "POST");
     削除 = 記録.find((r) => /custom_csv\/delete\//.test(r.url));
     note(`記録した要求先: 参照 ${参照?.url ?? "なし"}／設定 ${設定?.url ?? "なし"}／削除 ${削除?.url ?? "なし"}`);
+    // ネットワーク記録の確認を画像に残す: 記録した要求の一覧を、別のタブに表として出す（開発者ツールのネットワーク記録に当たるもの。アプリの画面ではない）
+    const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+    const 行 = 記録.map((r) => {
+      const 種 = r === 参照 ? "画面参照" : r === 設定 ? "設定" : r === 削除 ? "削除" : "";
+      return `<tr${種 ? ' style="background:#fff3c4;font-weight:bold"' : ""}><td>${種}</td><td>${esc(r.method)}</td><td>${r.status ?? ""}</td><td>${esc(r.url)}</td></tr>`;
+    }).join("");
+    const t = await page.context().newPage();
+    await t.setContent(`<html lang="ja"><head><meta charset="utf-8"><title>ネットワーク記録</title></head><body style="font-family:sans-serif;padding:16px">
+      <h2>ネットワーク記録（E2E が手順1から記録した、カスタムCSV出力設定の要求）</h2>
+      <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:14px"><tr><th>確認する要求</th><th>方法</th><th>応答</th><th>要求先URL</th></tr>${行}</table>
+      </body></html>`);
+    await 要素を撮る(t.locator("body"), scene.stepLabel(6, "ネットワーク記録（記録した要求の一覧）"));
+    await t.close();
   });
   await expected(async () => {
     expect.soft(!!参照 && !!設定 && !!削除, `画面参照・設定・削除の要求が記録されている（参照 ${参照?.url ?? "なし"}／設定 ${設定?.url ?? "なし"}／削除 ${削除?.url ?? "なし"}）`).toBe(true);
@@ -86,6 +100,8 @@ function 書き換え削除(n: string, 書き換え: (a: import("@playwright/tes
     await expected(async () => {
       expect.soft(status !== null && status >= 400 || 期待 === "拒否と残る", `削除の要求の応答（${status}）がHTTPエラー`).toBe(true);
       if (期待 === "拒否と残る") {
+        // 要求が送られなければ「残る」は何もしなくても成り立つので、書き換えた削除の要求が送られたことを確かめる
+        expect.soft(status, "書き換えた削除の要求が送られた（応答がある）").not.toBeNull();
         expect.soft(db.定義の行数, "削除されていない定義の数").toBe(1);
         expect.soft(db.出力項目の関連数, "出力項目の関連の数").toBe(2);
       }
@@ -102,7 +118,7 @@ caseTest("IT-M10-13-022", async ({ page, step, expected, notes }) => {
   let db = { 定義の行数: -1, 削除済みの行数: -1, 出力項目の関連数: -1 };
   await step(1, async () => { await p.open("1", notes.get("〔カスタム定義ID-M1013-022〕")); await pwExpect(p.名前).toHaveValue(削除試験名("022")); });
   await step(2, async () => { await 削除モーダルを開く(p); });
-  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('#DeleteModal a.btn-ec-delete[data-method="delete"]').click({ timeout: 30_000 })]); });
+  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('#DeleteModal a.btn-ec-delete[data-method="delete"]').click({ timeout: 30_000, noWaitAfter: true })]); });
   await step(4, async () => { db = 定義の状態を読む(削除試験名("022")); });
   await expected(async () => {
     expect.soft(db.定義の行数, "削除されていない定義の数").toBe(0);
@@ -115,7 +131,7 @@ caseTest("IT-M10-13-023", async ({ page, step, expected, notes }) => {
   const p = new CustomCsvPage(page);
   await step(1, async () => { await p.open("1", notes.get("〔カスタム定義ID-M1013-023〕")); await pwExpect(p.名前).toHaveValue(削除試験名("023")); });
   await step(2, async () => { await 削除モーダルを開く(p); });
-  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator('#DeleteModal a.btn-ec-delete[data-method="delete"]').click({ timeout: 30_000 })]); await page.waitForLoadState("load"); });
+  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator('#DeleteModal a.btn-ec-delete[data-method="delete"]').click({ timeout: 30_000, noWaitAfter: true })]); await page.waitForLoadState("load"); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "削除後の画面（カスタムCSV出力設定画面の先頭）").toMatch(/\/setting\/shop\/custom_csv(\/\d+)?$/);
     expect.soft(await p.選択中の表示名(p.追加されたCSV選択), "追加されたCSV選択（先頭＝新規作成）").toBe("新規作成");

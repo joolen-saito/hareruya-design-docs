@@ -91,7 +91,7 @@ export class HistoryPage {
   async 検索する(): Promise<void> {
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
-      this.page.locator("#search_form button[type=submit]").click({ timeout: OPEN }),
+      this.page.locator("#search_form button[type=submit]").click({ timeout: OPEN, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -126,7 +126,7 @@ export class HistoryPage {
     for (let p = 2; p <= 30; p++) {
       const link = this.page.locator("ul.pagination a.page-link").filter({ hasText: new RegExp(`^\\s*${p}\\s*$`) }).first();
       if ((await link.count()) === 0) break;
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ timeout: OPEN })]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ timeout: OPEN, noWaitAfter: true })]);
       await this.page.waitForLoadState("load");
       out.push(...(await this.行()));
     }
@@ -151,7 +151,7 @@ export class HistoryPage {
   async ページを開く(番号: number): Promise<void> {
     const link = this.page.locator("ul.pagination a.page-link").filter({ hasText: new RegExp(`^\\s*${番号}\\s*$`) }).first();
     await expect(link, `ページングの「${番号}」`).toBeVisible({ timeout: OPEN });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ timeout: OPEN })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ timeout: OPEN, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -169,5 +169,14 @@ export class HistoryPage {
     await expect(item, `CSVダウンロードのメニュー「${項目}」`).toBeVisible({ timeout: OPEN });
     const [file] = await Promise.all([this.page.waitForEvent("download", { timeout: 120_000 }), item.click({ timeout: OPEN })]);
     return file;
+  }
+
+  /** 開いたままの「CSVダウンロード」の選択肢を閉じる（CSVの内容を載せた画面を撮るとき、選択肢が隠さないように）。閉じていれば何もしない */
+  async CSVダウンロードの選択肢を閉じる(): Promise<void> {
+    const item = this.page.getByRole("button", { name: "選択した商品履歴取得", exact: true });
+    if (await item.isVisible().catch(() => false)) {
+      await this.page.getByRole("button", { name: "CSVダウンロード", exact: true }).click({ timeout: OPEN });
+      await expect(item, "CSVダウンロードの選択肢が閉じる").toBeHidden({ timeout: OPEN });
+    }
   }
 }

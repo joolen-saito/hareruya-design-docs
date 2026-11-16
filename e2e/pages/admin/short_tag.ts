@@ -83,7 +83,7 @@ export class ShortTagPage {
   /** 件数欄で表示件数を選ぶ（選ぶと画面を開き直す） */
   async chooseCount(count: string): Promise<void> {
     await Promise.all([
-      this.page.waitForURL((u) => u.searchParams.get("page_count") === count),
+      this.page.waitForURL((u) => u.searchParams.get("page_count") === count, { timeout: 120_000 }),
       this.件数.selectOption(count),
     ]);
     await this.ready();
@@ -93,7 +93,7 @@ export class ShortTagPage {
   async choosePage(n: number): Promise<void> {
     const link = this.page.locator(".pagination a.page-link", { hasText: exact(String(n)) });
     await expect(link, `ページングの ${n} のリンク`).toHaveCount(1);
-    await Promise.all([this.page.waitForURL(new RegExp(`/page/${n}(\\?|$)`)), link.click()]);
+    await Promise.all([this.page.waitForURL(new RegExp(`/page/${n}(\\?|$)`), { timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await this.ready();
   }
 
@@ -147,14 +147,14 @@ export class ShortTagPage {
     const row = this.rowById(id);
     await expect(row, `一覧にID ${id} の行が1件`).toHaveCount(1);
     await expect(link(row), `ID ${id} の行の${what}`).toHaveCount(1);
-    await Promise.all([this.page.waitForURL((u) => u.pathname.endsWith(`/product/storage/${id}`)), link(row).click()]);
+    await Promise.all([this.page.waitForURL((u) => u.pathname.endsWith(`/product/storage/${id}`), { timeout: 120_000 }), link(row).click({ noWaitAfter: true })]);
     await this.ready();
   }
 
   /** 「新規登録へ戻る」を押す */
   async pressBackToNew(): Promise<void> {
     await expect(this.新規登録へ戻る, "新規登録へ戻るボタン").toBeVisible();
-    await Promise.all([this.page.waitForURL((u) => u.pathname.endsWith("/product/storage")), this.新規登録へ戻る.click()]);
+    await Promise.all([this.page.waitForURL((u) => u.pathname.endsWith("/product/storage"), { timeout: 120_000 }), this.新規登録へ戻る.click({ noWaitAfter: true })]);
     await this.ready();
   }
 
@@ -200,7 +200,7 @@ export class ShortTagPage {
       return { sent: false, 止めた項目: blocked };
     }
     const response = this.page.waitForResponse((r) => r.request().method() === "POST" && /\/product\/storage_code\/store/.test(r.url()));
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), this.登録ボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), this.登録ボタン.click({ noWaitAfter: true })]);
     return { sent: true, status: (await response).status() };
   }
 

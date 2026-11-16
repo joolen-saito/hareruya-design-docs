@@ -19,29 +19,30 @@ import { 管理者IDを探す, 集計データを入れ替える, 集計行, 部
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore } from "../pages/admin/m04_24_store";
-import { storeInput } from "./m06-common";
+import { ensureMemberByStoreIdsFix as ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
+import { ensureStore, 使い回す店舗の入力 } from "../pages/admin/m04_24_reuse_k";
+import { 店名を読む } from "../lib/store_pick";
 
 export const M0609_ADMIN: Account = { loginId: "m0609_admin", password: "Passw0rd!M0609" };
 export const M0609_ADMIN_014: Account = { loginId: "m0609_admin_014", password: "Passw0rd-M0609014" };
 export const M0609_ADMIN_015: Account = { loginId: "m0609_admin_015", password: "Passw0rd-M0609015" };
 
-/** 試験店舗（キー → 店名）。店名は正本のとおりの固定名 */
-export const 店名 = {
+/**
+ * 店舗は作らない（依頼者 2026-11-15「店舗は作るのもう禁止」）。ケースごとの試験店舗（キー）は、使い回す E2E の店舗で表す: 003B は店舗ID 5006、ほかは店舗ID 221。
+ * 同じ店舗の同じ日付の買取集計を入れ替えるので、買取集計を入れ替えるケースは solo_cases.tsv の一人で流す回に回す。店名は店舗のいまの値。
+ */
+const 店ID = { "001": "221", "003A": "221", "003B": "5006", "004": "221", "005": "221", "006": "221", "008": "221", "009": "221", "011": "221", "014": "221", "015": "221" } as const;
+const 正本の店名 = {
   "001": "M06-09試験店舗001", "003A": "M06-09試験店舗003A", "003B": "M06-09試験店舗003B", "004": "M06-09試験店舗004", "005": "M06-09試験店舗005",
   "006": "M06-09試験店舗006", "008": "M06-09試験店舗008", "009": "M06-09試験店舗009", "011": "M06-09試験店舗011",
   "014": "M0609-014-TENPO", "015": "M0609-015-TENPO",
 } as const;
-type 店キー = keyof typeof 店名;
-const キー一覧 = Object.keys(店名) as 店キー[];
-const 英語 = ["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliet", "Kilo"];
-const カナ = ["ア", "イ", "ウ", "エ", "オ", "カ", "キ", "ク", "ケ", "コ", "サ"];
+type 店キー = keyof typeof 店ID;
+export const 店名 = {} as Record<店キー, string>;
+for (const k of Object.keys(店ID) as 店キー[]) Object.defineProperty(店名, k, { get: () => 店名を読む(店ID[k]), enumerable: true });
+const キー一覧 = Object.keys(店ID) as 店キー[];
 
-const 店舗の入力 = (k: 店キー) => {
-  const i = キー一覧.indexOf(k);
-  return storeInput(店名[k], `エムゼロロクゼロキュウシュウケイシケンテンポ${カナ[i]}`, `Kaitori Summary Test Store ${英語[i]}`, `m0609sum${k.toLowerCase()}`, `K9${"ABCDEFGHIJK"[i]}`);
-};
+const 店舗の入力 = (k: 店キー) => 使い回す店舗の入力(店ID[k], 正本の店名[k]);
 
 async function 店舗を用意する(browser: Browser, k: 店キー, issue: (m: string) => void): Promise<string> {
   return withAdminSession(browser, SETUP_ADMIN, async (page) => {
@@ -73,9 +74,9 @@ defineSeed("S-M06-09-ADM", async ({ browser, seed }) => {
   for (const k of キー一覧) ids.push(await 店舗を用意する(browser, k, (m) => reportSeedIssue(seed.シードID, m)));
   await withAdminSession(browser, SETUP_ADMIN, (page) => ensureMemberByStoreIds(page, {
     名前: "M06-09試験管理者", ログインID: M0609_ADMIN.loginId, メールアドレス: "m0609_admin@example.test", パスワード: M0609_ADMIN.password,
-    権限: "システム管理者", 所属店舗ID: ids[0], デフォルト検索表示店舗ID: ids[0], 編集可能店舗ID: ids,
+    権限: "システム管理者", 所属店舗ID: ids[0], デフォルト検索表示店舗ID: ids[0], 編集可能店舗ID: [...new Set(ids)],
   }));
-  reportSeedIssue(seed.シードID, "管理者内部ID 60909001 は指定できない。権限は「システム管理者」。閲覧・編集できる店舗は、このデータが使う試験店舗11件（店舗は画面で登録）");
+  reportSeedIssue(seed.シードID, "管理者内部ID 60909001 は指定できない。権限は「システム管理者」。閲覧・編集できる店舗は、このデータが使う使い回す E2E の店舗（221・5006。店舗は作らない決まり）");
 });
 
 /** 買取集計データの入れ替えと店舗IDの控え。ケースごとの店舗（店名が正本のとおり）に、期間内の行を入れる */

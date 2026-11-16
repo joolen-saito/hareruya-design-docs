@@ -35,8 +35,8 @@ export function 配送方法の送料の要約(配送方法ID: string): string {
 
 /** 受注の内訳（受注情報編集画面で見る値の照合用）。受注ID指定 */
 export function 受注の金額(受注ID: string): { 送料: string; 手数料: string; 合計: string; 支払方法: string } {
-  const r = query(`select delivery_fee_total as d, charge as c, payment_total as t, coalesce(payment_method,'') as m from dtb_order where id = $1`, [受注ID])[0];
-  return { 送料: r?.d ?? "", 手数料: r?.c ?? "", 合計: r?.t ?? "", 支払方法: r?.m ?? "" };
+  const r = query(`select delivery_fee_total as d, charge as c, payment_total as tt, coalesce(payment_method,'') as m from dtb_order where id = $1`, [受注ID])[0];
+  return { 送料: r?.d ?? "", 手数料: r?.c ?? "", 合計: r?.tt ?? "", 支払方法: r?.m ?? "" };
 }
 
 /** 受注に保存されている支払方法の名称 */

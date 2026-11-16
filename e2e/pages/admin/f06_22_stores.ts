@@ -4,10 +4,11 @@
  * ほかの必須項目（会社名・住所・電話番号・各メールアドレス・店名略称3文字・支店URL）は、任意の有効な値を入れる。
  */
 import { expect, Page } from "@playwright/test";
+import { 店舗の作成は禁止 } from "../../lib/store_create_ban";
 import { query } from "../../lib/db";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
-import { findTenantId } from "./tenant";
+import { findTenantId } from "./tenant_k";
 import { guardStoreCreate } from "./store_once";
 
 export type 店舗の定め = { 店名: string; 店名英語: string; 公開: boolean; 営業中: boolean; 表示順: string; 受付アドレス: string; 店名略称3文字: string; 支店URL: string };
@@ -16,7 +17,7 @@ const f = (page: Page, name: string) => page.locator(`[name="mall_tenant_shop_ma
 
 async function 登録する(page: Page, v: 店舗の定め): Promise<void> {
   await guardStoreCreate(page, v.店名, "試験用会社", "f06_22_stores.登録する");
-  await page.goto(adminUrl("/mall/tenant/create"));
+  await page.goto(店舗の作成は禁止("pages/admin/f06_22_stores.ts"));
   await page.waitForLoadState("load");
   await f(page, "company_name").fill("試験用会社");
   await f(page, "company_kana").fill("シケンヨウガイシャ");
@@ -38,7 +39,8 @@ async function 登録する(page: Page, v: 店舗の定め): Promise<void> {
   await f(page, "shop_digit").fill(v.店名略称3文字);
   await f(page, "short_name_jp").fill(v.店名);
   await f(page, "rank").fill(v.表示順);
-  await page.getByRole("button", { name: "登録", exact: true }).click();
+  // 店舗の登録は店舗別の在庫の行（開発環境で約36万行）を作るので、送信の応答に1分を超える（2026-11-12・押したあとの画面の移動を待つ間に押す操作の60秒が切れていた）。5分まで待つ
+  await page.getByRole("button", { name: "登録", exact: true }).click({ timeout: 300_000 });
   await expectSaved(page, `店舗「${v.店名}」の登録`);
 }
 

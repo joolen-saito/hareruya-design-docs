@@ -85,6 +85,7 @@ caseTest("IT-F06-07-018", async ({ page, notes, step, expected }) => {
   await step(2, async () => { 本文 = await h.本文(); });
   await expected(async () => {
     expect.soft(本文.length, "購入履歴詳細の本文が表示されている").toBeGreaterThan(50);
+    expect.soft(await h.詳細画面である(), "購入履歴詳細画面が表示されている").toBe(true);
     for (const v of ["支払い先コンビニ", "お客様番号", "確認番号", "第1番号", "第2番号", "オンライン決済番号", "払込票番号"]) expect.soft(本文, `「${v}」が表示されない`).not.toContain(v);
     note(参照データの注記);
   });
@@ -125,11 +126,16 @@ caseTest("IT-F06-07-022", async ({ page, notes, step, expected }) => {
 caseTest("IT-F06-07-023", async ({ page, notes, step, expected }) => {
   const h = await ログイン(page, "023");
   const 件数: Record<string, number> = {};
+  const 詳細: Record<string, boolean> = {};
   for (const [i, suf] of ["A", "B", "C"].entries()) {
-    await step(i + 1, async () => { await h.開く(notes.get(`〔注文ID-F0607-023${suf}〕`)); 件数[suf] = await h.領収書発行リンク.count(); });
+    await step(i + 1, async () => { await h.開く(notes.get(`〔注文ID-F0607-023${suf}〕`)); 詳細[suf] = await h.詳細画面である(); 件数[suf] = await h.領収書発行リンク.count(); });
   }
   await expected(async () => {
-    for (const [suf, 名] of [["A", "郵便振替"], ["B", "銀行振込"], ["C", "代金引換"]]) expect.soft(件数[suf], `支払い方法が${名}の注文の領収書発行リンクの数（表示されない）`).toBe(0);
+    for (const [suf, 名] of [["A", "郵便振替"], ["B", "銀行振込"], ["C", "代金引換"]]) {
+      // 画面が開けていないと「表示されない」は確かめにならないため、購入履歴詳細画面であることも確かめる
+      expect.soft(詳細[suf], `支払い方法が${名}の注文の購入履歴詳細画面が表示されている`).toBe(true);
+      expect.soft(件数[suf], `支払い方法が${名}の注文の領収書発行リンクの数（表示されない）`).toBe(0);
+    }
     note(参照データの注記);
   });
 });
@@ -166,6 +172,7 @@ caseTest("IT-F06-07-042", async ({ page, notes, step, expected }) => {
   await step(2, async () => { 本文 = await h.本文(); });
   await expected(async () => {
     expect.soft(本文.length, "購入履歴詳細の本文が表示されている").toBeGreaterThan(50);
+    expect.soft(await h.詳細画面である(), "購入履歴詳細画面が表示されている").toBe(true);
     expect.soft(本文, "「※金額が変更されている商品があるため、再注文時はご注意ください。」が表示されない").not.toContain("※金額が変更されている商品があるため、再注文時はご注意ください。");
     expect.soft(h.path, "購入履歴詳細画面に留まる").toMatch(new RegExp(`/mypage/shopping_history_detail/${notes.get("〔注文ID-F0607-042〕")}$`));
     supplement("シード表は「日本語商品Aの注文時単価1,200円（現在価格と同額）」と定める。手元の販売中の商品を注文した（注文時単価は現在価格と同額。DBで参照する確かめは行っていない）");

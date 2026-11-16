@@ -41,18 +41,28 @@ caseTest("IT-M10-06-005", async ({ page, step, expected }) => {
   });
   await step(3, async () => { await d.登録を押す(); });
   await step(4, async () => { expect.soft(await 保存メッセージ(page), "完了メッセージ").toContain("保存しました"); });
+  let 行: { 地域: string; サイズ: string; 送料: string }[] = [];
   await step(5, async () => { await d.編集を開く(配送名.d005()); });
-  await step(6, async () => { await page.waitForLoadState("load"); });
-  await expected(async () => { expect.soft(true, "再度開いた編集画面の47都道府県の送料").toBe(true); });
+  await step(6, async () => { await page.waitForLoadState("load"); 行 = await d.送料の行を読む(); });
+  await expected(async () => {
+    // 47都道府県の送料を実際に読んで比べる（全国一律送料の入力欄が無く手順2で止まるときも、期待結果は空のまま合格にしない）
+    expect.soft(new Set(行.map((r) => r.地域)).size, "再度開いた編集画面の、送料の行がある都道府県の数").toBe(47);
+    expect.soft(行.filter((r) => r.送料 !== "1200").map((r) => `${r.地域}=${r.送料}`), "再度開いた編集画面で、送料が1200でない行").toEqual([]);
+  });
 });
 caseTest("IT-M10-06-006", async ({ page, step, expected }) => {
   await loginAdmin(page, M1006L_ADMIN);
   const d = new DeliveryPage(page);
   await step(1, async () => { await d.編集を開く(配送名.d006()); });
   await step(2, async () => { await pwExpect(page.getByText("全国一律送料"), "画面の「全国一律送料」の入力欄").toBeVisible({ timeout: 5_000 }); });
+  let 行: { 地域: string; サイズ: string; 送料: string }[] = [];
   await step(3, async () => { await page.waitForLoadState("load"); });
-  await step(4, async () => { await page.waitForLoadState("load"); });
-  await expected(async () => { expect.soft(true, "47都道府県の送料欄").toBe(true); });
+  await step(4, async () => { 行 = await d.送料の行を読む(); });
+  await expected(async () => {
+    // 47都道府県の送料欄を実際に読んで比べる（全国一律送料の入力欄が無く手順2で止まるときも、期待結果は空のまま合格にしない）
+    expect.soft(new Set(行.map((r) => r.地域)).size, "送料の行がある都道府県の数").toBe(47);
+    expect.soft(行.filter((r) => r.送料 !== "1500").map((r) => `${r.地域}=${r.送料}`), "送料欄が1500でない行").toEqual([]);
+  });
 });
 
 caseTest("IT-M10-06-009", async ({ page, step, expected }) => {
@@ -99,7 +109,8 @@ caseTest("IT-M10-06-021", async ({ page, step, expected }) => {
   await step(5, async () => { await d.編集を開く(配送名.d021()); });
   await step(6, async () => { 選択 = (await d.選ばれた支払方法()).filter((n) => [連携支払L(), 支払名.条件付()].includes(n)); });
   await expected(async () => {
-    expect.soft(警告.some((t) => t.includes("の購入で選択できる支払い方法がありません。支払方法の利用条件をご確認ください。")), `管理画面上部の警告（${警告.join(" / ") || "なし"}）`).toBe(true);
+    note(`画面上部に実際に出ていた警告: ${警告.join(" / ") || "なし"}`);
+    expect.soft(警告.some((t) => t.includes("の購入で選択できる支払い方法がありません。支払方法の利用条件をご確認ください。")), "管理画面上部の警告（○○の購入で選択できる支払い方法がありません。支払方法の利用条件をご確認ください。）が出る").toBe(true);
     expect.soft(選択.includes(支払名.条件付()), "条件付支払が選択されている").toBe(true);
     expect.soft(選択.includes(連携支払L()), "連携支払L が選択されている").toBe(false);
   });
@@ -117,7 +128,13 @@ caseTest("IT-M10-06-025", async ({ page, step, expected }) => {
   });
   await step(4, async () => { await g.openNew(); });
   await step(5, async () => { 一覧 = await 配送の選択肢(g); });
-  await expected(async () => { expect.soft(一覧, "購入グループ管理の配送方法の選択肢").toContain(配送名.d025()); });
+  await expected(async () => {
+    // 配送方法の選択肢が画面に写るよう、その欄までスクロールして、削除を取り消した配送方法のチェック欄に枠を付ける
+    const 欄 = page.locator("label").filter({ hasText: 配送名.d025() }).first();
+    await 欄.scrollIntoViewIfNeeded().catch(() => undefined);
+    await expect.soft(欄, "購入グループ管理の配送方法の選択肢に、削除を取り消した配送方法がある").toBeVisible();
+    void 一覧;
+  });
 });
 
 caseTest("IT-M10-06-029", async ({ page, step, expected }) => {
@@ -126,7 +143,7 @@ caseTest("IT-M10-06-029", async ({ page, step, expected }) => {
   let 選択: string[] = []; let パス = ""; let 成功: string[] = [];
   await step(1, async () => { await d.編集を開く(配送名.d029()); });
   await step(2, async () => { await d.支払方法を選ぶ(連携支払L(), false); });
-  await step(3, async () => { await d.登録を押す(); });
+  await step(3, async () => { await 誤りのまま設定を押す(d); });
   await step(4, async () => { パス = new URL(page.url()).pathname; 成功 = await 保存メッセージ(page); note(`登録後の画面: ${パス}`); });
   await step(5, async () => { await d.編集を開く(配送名.d029()); });
   await step(6, async () => { 選択 = await d.選ばれた支払方法(); });
@@ -135,6 +152,16 @@ caseTest("IT-M10-06-029", async ({ page, step, expected }) => {
     expect.soft(選択.includes(連携支払L()), "再度開いた編集画面で連携支払L が選択されている").toBe(true);
   });
 });
+
+/** 入力に誤りがあって保存されないケースの「設定」。押さずに終わっても「保存されない」は成り立つので、サーバーへ送って編集画面が出し直されたか、
+ * ブラウザの入力チェックが誤りを示して送信を止めたかのどちらかであることを確かめる */
+async function 誤りのまま設定を押す(d: DeliveryPage): Promise<void> {
+  const 応答 = await d.登録を押して応答を待つ();
+  if (応答 === null) {
+    expect(await d.入力チェックに掛かった欄の数(), "「設定」の要求が送られなかったときは、ブラウザの入力チェックが入力欄の誤りを示している").toBeGreaterThan(0);
+    note("「設定」の要求はブラウザの入力チェックで止まり、サーバーへは送られなかった");
+  } else note(`「設定」の要求の応答: ${応答}`);
+}
 
 // ---- 残りのケース ----
 const 全国一律の注記 = "手順の「全国一律送料に入力して各都道府県に適用ボタンを押す」は、画面にその入力欄・ボタンが無いので、都道府県別送料の「新規登録」の欄を47回使って、47都道府県すべてに同じ送料を入れた";
@@ -233,6 +260,11 @@ caseTest("IT-M10-06-008", async ({ page, step, expected }) => {
   });
 });
 
+/** 都道府県別送料の、地域・サイズ・送料（表示は桁区切り）が一致する行 */
+function 送料の行(d: DeliveryPage, 地域: string, サイズ: string, 送料表示: string) {
+  return d.送料の行の絞り込み(地域, サイズ).filter({ has: d.送料の行.page().locator(".display-label-fee", { hasText: new RegExp(`^\\s*${送料表示}\\s*$`) }) });
+}
+
 caseTest("IT-M10-06-011", async ({ page, step, expected }) => {
   await loginAdmin(page, M1006L_ADMIN);
   const d = new DeliveryPage(page);
@@ -244,8 +276,11 @@ caseTest("IT-M10-06-011", async ({ page, step, expected }) => {
   await step(5, async () => { await d.編集を開く(配送名.d011()); });
   await step(6, async () => { 時間 = await d.お届け時間の一覧(); });
   await expected(async () => {
-    expect.soft(時間, "お届け時間設定の入力欄").toContain("午前M1006-011-A");
-    expect.soft(時間, "お届け時間設定の入力欄").toContain("午後M1006-011-B");
+    const 入力欄 = page.locator('#delivery-time-group input[name*="[delivery_time]"]');
+    for (const 名 of ["午前M1006-011-A", "午後M1006-011-B"]) {
+      expect.soft(時間, "お届け時間設定の入力欄").toContain(名);
+      await expect.soft(入力欄.nth(時間.indexOf(名)), `お届け時間設定の入力欄に「${名}」がある`).toHaveValue(名);
+    }
   });
 });
 
@@ -266,7 +301,10 @@ caseTest("IT-M10-06-012", async ({ page, step, expected }) => {
   await step(5, async () => { expect.soft(await 保存メッセージ(page), "一覧画面の完了メッセージ").toContain("保存しました"); });
   await step(6, async () => { await d.編集を開く(配送名.d012()); });
   await step(7, async () => { 行 = (await d.送料の行を読む()).filter((r) => r.地域 === "東京都"); });
-  await expected(async () => { expect.soft(行.some((r) => r.サイズ === "60" && r.送料 === "1500"), `東京都の行（${行.map((r) => `${r.サイズ}/${r.送料}`).join(" , ")}）に、サイズ60・送料1500の行がある`).toBe(true); });
+  await expected(async () => {
+    expect.soft(行.some((r) => r.サイズ === "60" && r.送料 === "1500"), `東京都の行（${行.map((r) => `${r.サイズ}/${r.送料}`).join(" , ")}）に、サイズ60・送料1500の行がある`).toBe(true);
+    await expect.soft(送料の行(d, "東京都", "60", "1,500"), "都道府県別送料に東京都・サイズ60・送料1500の行がある（その行だけを囲む）").toHaveCount(1);
+  });
 });
 
 caseTest("IT-M10-06-013", async ({ page, step, expected }) => {
@@ -280,7 +318,7 @@ caseTest("IT-M10-06-013", async ({ page, step, expected }) => {
     await d.送料の行を足す({ 地域: null, サイズ: "60", 送料: "1500" });
     expect.soft(await d.送料の行.count(), "新規登録を押したあとの送料の行の数（足されない）").toBe(件数前);
   });
-  await step(4, async () => { await d.登録を押す(); });
+  await step(4, async () => { await 誤りのまま設定を押す(d); });
   await step(5, async () => {
     expect.soft(await 保存メッセージ(page), "「保存しました」が表示されない").not.toContain("保存しました");
     expect.soft(await d.編集画面か(), "同じ編集画面が表示されている").toBe(true);
@@ -304,14 +342,17 @@ caseTest("IT-M10-06-014", async ({ page, step, expected }) => {
     await d.送料の行を編集にする(対象);
     await d.行の入力欄をテキストにして入れる(対象, "size", "ABC");
   });
-  await step(4, async () => { await d.登録を押す(); });
+  await step(4, async () => { await 誤りのまま設定を押す(d); });
   await step(5, async () => {
     expect.soft(await 保存メッセージ(page), "「保存しました」が表示されない").not.toContain("保存しました");
     expect.soft(await d.編集画面か(), "同じ編集画面が表示されている").toBe(true);
   });
   await step(6, async () => { await d.編集を開く(配送名.d014()); });
   await step(7, async () => { 行 = (await d.送料の行を読む()).filter((r) => r.地域 === "東京都"); });
-  await expected(async () => { expect.soft(行.some((r) => r.サイズ === "ABC"), `東京都の行（${行.map((r) => r.サイズ).join(" , ")}）にサイズ「ABC」の行がある`).toBe(false); });
+  await expected(async () => {
+    // 東京都の行のうち、サイズ「ABC」の行が無いこと。画面の東京都の行（ほかの都道府県の行ではなく）で確かめる
+    await expect.soft(d.送料の行の絞り込み("東京都", "ABC"), "東京都のサイズ「ABC」の送料の行").toHaveCount(0);
+  });
 });
 
 caseTest("IT-M10-06-015", async ({ page, step, expected }) => {
@@ -324,14 +365,14 @@ caseTest("IT-M10-06-015", async ({ page, step, expected }) => {
     await d.送料の行を編集にする(東京);
     await d.行の入力欄に入れる(東京, "fee", "");
   });
-  await step(3, async () => { await d.登録を押す(); });
+  await step(3, async () => { await 誤りのまま設定を押す(d); });
   await step(4, async () => {
     expect.soft(await 保存メッセージ(page), "「保存しました」が表示されない").not.toContain("保存しました");
     expect.soft(await d.編集画面か(), "同じ編集画面が表示されている").toBe(true);
   });
   await step(5, async () => { await d.編集を開く(配送名.d015()); });
   await step(6, async () => { 行 = (await d.送料の行を読む()).filter((r) => r.地域 === "東京都"); });
-  await expected(async () => { expect.soft(行[0]?.送料, "東京都の送料").toBe("800"); });
+  await expected(async () => { await expect.soft(d.送料の行の絞り込み("東京都").first().locator(".display-label-fee"), "東京都の送料").toHaveText("800"); });
 });
 
 caseTest("IT-M10-06-016", async ({ page, step, expected }) => {
@@ -344,14 +385,14 @@ caseTest("IT-M10-06-016", async ({ page, step, expected }) => {
     await d.送料の行を編集にする(東京);
     await d.行の入力欄をテキストにして入れる(東京, "fee", "ABC");
   });
-  await step(3, async () => { await d.登録を押す(); });
+  await step(3, async () => { await 誤りのまま設定を押す(d); });
   await step(4, async () => {
     expect.soft(await 保存メッセージ(page), "「保存しました」が表示されない").not.toContain("保存しました");
     expect.soft(await d.編集画面か(), "同じ編集画面が表示されている").toBe(true);
   });
   await step(5, async () => { await d.編集を開く(配送名.d016()); });
   await step(6, async () => { 行 = (await d.送料の行を読む()).filter((r) => r.地域 === "東京都"); });
-  await expected(async () => { expect.soft(行[0]?.送料, "東京都の送料").toBe("800"); });
+  await expected(async () => { await expect.soft(d.送料の行の絞り込み("東京都").first().locator(".display-label-fee"), "東京都の送料").toHaveText("800"); });
 });
 
 caseTest("IT-M10-06-017", async ({ page, step, expected }) => {
@@ -398,6 +439,9 @@ caseTest("IT-M10-06-019", async ({ page, step, expected }) => {
   await expected(async () => {
     expect.soft(行.some((r) => r.地域 === "東京都" && r.サイズ === "60" && r.送料 === "1500"), "東京都・サイズ60・送料1500の行").toBe(true);
     expect.soft(行.some((r) => r.地域 === "大阪府" && r.サイズ === "80" && r.送料 === "1800"), "大阪府・サイズ80・送料1800の行").toBe(true);
+    // 画面の行そのものを確かめる（赤枠は期待の2行だけに付く。ほかの都道府県の行は囲まない）
+    await expect.soft(送料の行(d, "東京都", "60", "1,500"), "東京都・サイズ60・送料1500の行がある").toHaveCount(1);
+    await expect.soft(送料の行(d, "大阪府", "80", "1,800"), "大阪府・サイズ80・送料1800の行がある").toHaveCount(1);
   });
 });
 
@@ -418,7 +462,8 @@ caseTest("IT-M10-06-020", async ({ page, step, expected }) => {
   await step(7, async () => { 選択 = (await d.選ばれた支払方法()).filter((n) => n === 支払名.条件付020() || n === 連携支払L()); });
   await expected(async () => {
     expect.soft(編集のまま, "配送方法編集画面に留まっている").toBe(true);
-    expect.soft(警告.some((t) => t.includes("の購入で選択できる支払い方法がありません。支払方法の利用条件をご確認ください。")), `管理画面上部の警告（${警告.join(" / ") || "なし"}）`).toBe(true);
+    note(`画面上部に実際に出ていた警告: ${警告.join(" / ") || "なし"}`);
+    expect.soft(警告.some((t) => t.includes("の購入で選択できる支払い方法がありません。支払方法の利用条件をご確認ください。")), "管理画面上部の警告（○○の購入で選択できる支払い方法がありません。支払方法の利用条件をご確認ください。）が出る").toBe(true);
     expect.soft(選択, "開き直した編集画面で選択されている支払方法").toEqual([支払名.条件付020()]);
   });
 });

@@ -10,6 +10,8 @@ export class HolidayPage {
     await this.page.waitForLoadState("load");
     await expect(this.新規登録ボタン, "祝日追加・削除画面の新規登録ボタン").toBeVisible();
   }
+  get 画面の見出し(): Locator { return this.page.locator(".c-pageTitle__title"); }
+  get 一覧の表(): Locator { return this.page.locator("table.holiday-table"); }
   get 新規登録ボタン(): Locator { return this.page.locator("#holidayAddToggle"); }
   get 追加枠(): Locator { return this.page.locator("#holidayAddForm"); }
   get 名称欄(): Locator { return this.page.locator('#holidayAddForm input[name$="[name]"]'); }

@@ -6,6 +6,7 @@
  * - 会員は、フロントの新規会員登録で作り、MTG Companion登録本名(英語)は管理画面の会員編集で入れる。メールの前半・大会名・カード名には実行の印を付ける。
  * - 大会は、デッキ登録あり・締切 2099-12-31 23:59・受付なし・公開。開始は 2099-12-20 10:00（041〜043 は 2026-01-01 10:00）。
  */
+import { 店名を読む } from "../lib/store_pick";
 import { SETUP_ADMIN } from "../config/env";
 import { 会員の選手ID } from "../db/f06_16";
 import { rc } from "../lib/run_marker";
@@ -14,7 +15,8 @@ import { Account, withAdminSession } from "../lib/session";
 import { 会員を用意する, 試験会員, 大会を登録する } from "../pages/admin/f06_16_setup";
 import { 連携の用意を作る } from "../pages/admin/f06_pe_setup";
 
-export const 店名 = "連携店F06-17";
+/** 店舗は作らない（依頼者 2026-11-15）。連携店は使い回す E2E の店舗 221 で表す */
+export const 店名 = 店名を読む("221");
 export const 形式名 = "連携形式F06-17";
 export let 管理者: Account = { loginId: "", password: "" };
 export let カード: { 日: string; 英: string }[] = [];

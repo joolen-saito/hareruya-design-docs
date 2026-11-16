@@ -85,3 +85,14 @@ export async function 届いたメール(宛先: string, 控え: Set<number>, �
     await new Promise((r) => setTimeout(r, 2000));
   }
 }
+
+/**
+ * メールのソース（受け口に届いた生のメール）の、ヘッダー（名前は小文字。MIME の符号は戻す）と、本文の部分（転送の符号のまま）。
+ * 本文の文字コード（Content-Type の charset）と転送方式（Content-Transfer-Encoding）を確かめるのに使う（M08-02 で足した。読むだけ）。
+ */
+export async function メールのソース(番号: number): Promise<{ ヘッダー: Record<string, string>; 生の本文: string }> {
+  const src = await text(`/messages/${番号}.source`);
+  if (!src) throw new Error(`メール ${番号} のソースを読めない`);
+  const m = /\r?\n\r?\n/.exec(src);
+  return { ヘッダー: ヘッダー(src), 生の本文: m ? src.slice(m.index + m[0].length) : "" };
+}

@@ -49,6 +49,17 @@ export class M0608SummaryPage extends SummaryPage {
     await this.page.waitForLoadState("load");
   }
 
+  /**
+   * 検証エラーの表示（ブラウザの入力チェックが集計日(From)に出した文と、画面の項目のエラー文）。
+   * 集計日は必須の欄（required）なので、空のまま押すとブラウザの入力チェックが送信を止めることがある。
+   */
+  async 検証エラーの表示(): Promise<{ ブラウザの入力チェック: string; 画面のエラー文: string[] }> {
+    const ブラウザの入力チェック = await this.page.locator(日付From).evaluate((e) => (e as HTMLInputElement).validationMessage).catch(() => "");
+    const 画面のエラー文 = (await this.page.locator("#search_form .invalid-feedback, #search_form .form-error-message, #search_form .text-danger").allInnerTexts())
+      .map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+    return { ブラウザの入力チェック, 画面のエラー文 };
+  }
+
   /** 検索結果の欄（集計・日別）の数 */
   async 結果の欄の数(): Promise<number> {
     return (await this.期間全体の欄().count()) + (await this.日別の欄().count());

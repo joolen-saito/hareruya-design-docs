@@ -109,7 +109,7 @@ caseTest("IT-F01-02-034", async ({ page, step, expected }) => {
   await step(1, async () => { await top.open(支店URL("034")); await top.開いている(); });
   await step(2, async () => {
     await top.バナーのリンク.scrollIntoViewIfNeeded();
-    await Promise.all([page.waitForURL(/\/products\/search\/tags\//, { timeout: 60_000 }).catch(() => undefined), top.バナーのリンク.click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForURL(/\/products\/search\/tags\//, { timeout: 60_000 }).catch(() => undefined), top.バナーのリンク.click({ timeout: 20_000, noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await expected(async () => {
@@ -132,15 +132,26 @@ caseTest("IT-F01-02-067", async ({ page, step, expected }) => {
 
 /** QRコード & 採用情報欄の採用情報の表示（PC幅／スマートフォン幅） */
 function 採用情報(n: string, 幅: keyof typeof 画面幅, 出る: boolean): CaseBody {
-  return async ({ page, step, expected }) => {
+  return async ({ page, step, expected, capture }) => {
     const top = new BranchTopPage(page);
     let 見える = false;
     await page.setViewportSize(画面幅[幅]);
     await step(1, async () => { await top.open(支店URL(n)); await top.開いている(); });
     await step(2, async () => {
       await expect(top.注文方法欄.first(), "支店ECTOPの区画（注文方法欄）が描かれた").toBeAttached({ timeout: 30_000 });
-      if (await top.採用情報.count()) await top.採用情報.first().scrollIntoViewIfNeeded().catch(() => undefined);
+      // 見えない（スマートフォン幅で隠れる）ときは scrollIntoViewIfNeeded が見えるまで待ち続け、試験の時間切れ（30分）まで止まった（2026-11-11 の 079）ので5秒で見切る
+      if (await top.採用情報.count()) await top.採用情報.first().scrollIntoViewIfNeeded({ timeout: 5_000 }).catch(() => undefined);
       見える = await top.採用情報.first().isVisible().catch(() => false);
+      // QRコード & 採用情報欄の位置が画像に写るように、その欄まで画面を送って撮る（採用情報が隠れていても、欄は見えている）
+      if (await top.QRコード欄.first().isVisible().catch(() => false)) {
+        await top.QRコード欄.first().scrollIntoViewIfNeeded({ timeout: 5_000 }).catch(() => undefined);
+        await capture(`QRコード & 採用情報欄（${幅}幅）`);
+      } else {
+        // 欄ごと見えないときは、注文方法欄の次に欄が並ぶ位置（注文方法欄の下）まで送って、何も出ていないことが分かるように撮る
+        await top.注文方法欄.first().scrollIntoViewIfNeeded({ timeout: 5_000 }).catch(() => undefined);
+        await page.evaluate(() => window.scrollBy(0, 300));
+        await capture(`QRコード & 採用情報欄があるはずの位置（${幅}幅）`);
+      }
     });
     await expected(async () => { expect.soft(見える, `${幅}幅で、QRコード & 採用情報欄の採用情報が見える`).toBe(出る); });
   };

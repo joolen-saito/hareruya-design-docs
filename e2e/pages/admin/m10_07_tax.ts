@@ -16,8 +16,17 @@ export type 税率の入力 = { 税率: string; 規則: string; 日時: string }
 
 /** 「2032-01-01 10:00」→ 日時の入力欄の値「2032-01-01T10:00」 */
 export const 入力用の日時 = (s: string): string => s.replace(" ", "T");
-/** 一覧の表示「2030/01/01 09:00」→「2030-01-01 09:00」 */
-export const 日時に直す = (s: string): string => s.trim().replace(/\//g, "-");
+/**
+ * 一覧の表示「2030/01/01 9:00」→「2030-01-01 09:00」。一覧は時を0で埋めない（「2020/01/01 0:00」）ので、月・日・時を2桁にそろえる。
+ * 日時でない表示（「基本税率設定」）はそのまま返す。
+ */
+export const 日時に直す = (s: string): string => {
+  const t = s.trim();
+  const m = t.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})[ T]+(\d{1,2}):(\d{2})/);
+  if (!m) return t.replace(/\//g, "-");
+  const z = (x: string) => x.padStart(2, "0");
+  return `${m[1]}-${z(m[2])}-${z(m[3])} ${z(m[4])}:${m[5]}`;
+};
 
 export class TaxPage {
   constructor(readonly page: Page) {}
@@ -102,6 +111,32 @@ export class TaxPage {
     await this.page.waitForLoadState("load");
   }
   async 決定して保存を確かめる(id: string, what: string): Promise<void> { await this.決定を押す(id); await expectSaved(this.page, what); }
+
+  // ---- 送信を待つ（ケースの手順用。押す系は読み込み済みの画面の load を待つだけで、画面の移動を待たない） ----
+  /**
+   * ボタン（リンク）を押し、税率設定への送信（POST）の応答と、応答の画面への移動を待つ。
+   * 送られなかったときは 応答 が null で、ブラウザの入力チェックで止まった欄の名前を 入力チェックで止まった に返す。
+   */
+  async 押して送信を待つ(ボタン: Locator): Promise<{ 応答: number | null; 入力チェックで止まった: string[] }> {
+    const 応答 = this.page
+      .waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname.includes(TAX), { timeout: 30_000 })
+      .catch(() => null);
+    const 移動 = this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => null);
+    await ボタン.click({ timeout: 30_000 });
+    const res = await 応答;
+    if (res) await 移動;
+    await this.page.waitForLoadState("load");
+    const 止まった = res ? [] : await ボタン.evaluate((b) => {
+      const f = (b as HTMLButtonElement).form;
+      if (!f) return [];
+      return Array.from(f.elements).filter((e) => !(e as HTMLInputElement).checkValidity()).map((e) => (e as HTMLInputElement).name);
+    }).catch(() => [] as string[]);
+    return { 応答: res ? res.status() : null, 入力チェックで止まった: 止まった };
+  }
+  async 登録を押して待つ() { return this.押して送信を待つ(this.新規行.locator('button[type="submit"]')); }
+  async 決定を押して待つ(id: string) { return this.押して送信を待つ(this.行(id).locator(".edit button[type=submit]")); }
+  async モーダルで削除して待つ(id: string) { return this.押して送信を待つ(this.page.locator(`#DeleteModal_${id} a.btn-ec-delete`)); }
+  get 成功の表示(): Locator { return this.page.locator(".alert-success"); }
 
   // ---- 削除 ----
   async 削除のモーダルを開く(id: string): Promise<void> {

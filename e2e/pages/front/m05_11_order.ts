@@ -69,7 +69,7 @@ async function 確定する(page: Page, 配送方法: string, what: string, 支�
   await page.waitForLoadState("load");
   const toShopping = page.locator("a.p-hareruya-cart__checkout-btn");
   await expect(toShopping, `${what}: カートの「購入手続きへ」`).toHaveCount(1);
-  await Promise.all([page.waitForURL(/\/shopping(\?.*)?$/, { waitUntil: "domcontentloaded" }), toShopping.click()]);
+  await Promise.all([page.waitForURL(/\/shopping(\?.*)?$/, { waitUntil: "domcontentloaded" }), toShopping.click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
 
   let 選んだ配送 = 配送方法;
@@ -106,7 +106,7 @@ async function 確定する(page: Page, 配送方法: string, what: string, 支�
   await accept.check({ force: true });
   const submit = page.locator("button[data-js-payment-submit]");
   await expect(submit, `${what}: 注文のボタンが押せる`).toBeEnabled();
-  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), submit.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), submit.click({ noWaitAfter: true })]);
   await page.waitForLoadState("load");
   if (!/\/shopping\/complete/.test(page.url())) {
     const errors = (await page.locator(".p-hareruya-message-box--error, .ec-alert-warning, .error, .c-hareruya-form-input__field-error--server").allTextContents())

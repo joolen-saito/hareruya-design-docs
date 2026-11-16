@@ -163,7 +163,7 @@ export async function 商品のカテゴリを付け替える(page: Page, 商品
   const regionLabel = ((await form.locator(`label[for="${regionId}"]`).textContent()) ?? "").trim();
   expect(regionLabel, `${what}: 販売制限`).toBe("制限なし");
   await expect(form.locator('select[name="admin_product[Status]"] option:checked'), `${what}: 商品公開ステータス`).toHaveText(/^\s*公開\s*$/);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator("button[type=submit]").filter({ hasText: /^\s*商品を登録\s*$/ }).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator("button[type=submit]").filter({ hasText: /^\s*商品を登録\s*$/ }).click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品を登録`)) issue(`${what}: 警告「${w}」`);
 }
 
@@ -188,7 +188,7 @@ export async function 規格を書き換える(page: Page, 商品ID: string, 規
   }
   if (v.高額商品コード !== undefined) await form.locator("#admin_product_class_high_price_code").fill(v.高額商品コード);
   if (v.状態別称 !== undefined) await form.locator("#admin_product_class_memo").fill(v.状態別称);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品規格の登録`)) issue(`${what}: 警告「${w}」`);
   if (v.高額商品コード !== undefined) await expect(form.locator("#admin_product_class_high_price_code"), `${what}: 登録後の高額商品コード`).toHaveValue(v.高額商品コード);
   if (v.状態別称 !== undefined) await expect(form.locator("#admin_product_class_memo"), `${what}: 登録後の状態別称`).toHaveValue(v.状態別称);
@@ -226,7 +226,7 @@ export async function 入庫して承認する(browser: Browser, seedId: string,
       const list = await searchStockByCode(page, { 商品コード: it.商品コード, 店舗: shop, 在庫区分: "EC-CUBE" });
       await list.openEdit(list.row(it.商品コード, shop, "EC-CUBE"));
       await fillStockEdit(page, { changeType: "入庫/その他", reason: "結合テスト用", quantity: String(it.数量), purchasePrice: "0", approverName: A1705承認者.名前 });
-      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }), page.locator('button[type="submit"][form="stock_approval_form"]').click()]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }), page.locator('button[type="submit"][form="stock_approval_form"]').click({ noWaitAfter: true })]);
       for (const w of await expectSaved(page, `${what}の在庫編集`)) issue(`${what}: 警告「${w}」`);
       return loggedInMemberName(page);
     });
@@ -263,7 +263,7 @@ async function 承認する(page: Page, id: string, what: string, issue: Issue):
   await modal.locator("#btn_bulk_approve_submit").click();
   const ok = modal.locator('.modal-footer-confirm button[type="submit"]');
   await expect(ok, "最終確認の「OK」").toBeVisible();
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }), ok.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }), ok.click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, what)) issue(`${what}: 警告「${w}」`);
 }
 

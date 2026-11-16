@@ -61,6 +61,8 @@ caseTest("IT-M07-01-013", async ({ page, step, expected }) => {
   await step(2, async () => { await l.買取番号を入れる("abc"); });
   await step(3, async () => { await l.検索する(); });
   await expected(async () => {
+    // 入力の誤りで検索が行われずに初期表示のままでも行は0件になるので、検索が行われて0件だった（0件の通知が出た）ことも確かめる
+    await expect.soft(page.getByText("検索条件に該当するデータがありませんでした。"), "検索が行われ、0件の通知が表示された").toBeVisible();
     expect.soft(await 結果の件数(l), "検索結果の件数").toBe(0);
   });
 });
@@ -236,7 +238,11 @@ caseTest("IT-M07-01-053", async ({ page, notes, step, expected }) => {
   const 番号 = notes.get("〔買取番号-M0701-053〕");
   await step(1, async () => { await l.open(); });
   await step(2, async () => { await l.買取番号を入れる(番号); await l.検索する(); });
-  await step(3, async () => { await l.三点リーダーを押す(番号); });
+  await step(3, async () => {
+    await l.三点リーダーを押す(番号);
+    // 結果の表の下端でメニューが切れて見えないので、撮るために表のはみ出し隠しを外して余白を足す（メニューの中身・押す操作は変えない）
+    await l.メニューが切れないようにする(番号);
+  });
   const 一回目: boolean[] = [];
   const 項目 = ["編集", "削除", "メール通知"];
   await step(4, async () => {
@@ -312,7 +318,9 @@ caseTest("IT-M07-01-081", async ({ page, notes, step, expected }) => {
   await step(4, async () => { await expect(l.結果の表の行().first(), "検索結果の行").toBeVisible({ timeout: 30_000 }); });
   await expected(async () => {
     const rows = await l.行();
-    for (const [x, 状況] of [["A", "注文"], ["B", "商品到着"], ["C", "査定中●"], ["D", "査定中断●"], ["E", "査定再開●"], ["F", "MTGBuyer査定完了●"]] as const) {
+    for (const [x, 状況] of [["A", "注文"], ["B", "商品到着"], ["C", "査定中"], ["D", "査定中断"], ["E", "査定再開"], ["F", "MTGBuyer査定完了"]] as const) {
+      // 正本の ● は設計書の注記の印（MTGBuyerで変更するステータス）で、表示名の一部ではない。印を除いた表示名で比べる
+
       const n = String(Number(notes.get(`〔買取番号-M0701-081${x}〕`)));
       expect.soft(rows.find((r) => r.番号 === n)?.買取状況 ?? "（行が無い）", `買取番号〔買取番号-M0701-081${x}〕の買取状況`).toBe(状況);
     }
@@ -328,7 +336,8 @@ caseTest("IT-M07-01-083", async ({ page, notes, step, expected }) => {
   await step(4, async () => { await expect(l.結果の表の行().first(), "検索結果の行").toBeVisible({ timeout: 30_000 }); });
   await expected(async () => {
     const rows = await l.行();
-    for (const [x, 状況] of [["A", "未登録在庫あり★"], ["B", "入庫待ち★"], ["C", "入庫済み（仕入れ完了）"]] as const) {
+    // 正本の ★ は設計書の注記の印（新しいステータス）で、表示名の一部ではない。印を除いた表示名で比べる
+    for (const [x, 状況] of [["A", "未登録在庫あり"], ["B", "入庫待ち"], ["C", "入庫済み（仕入れ完了）"]] as const) {
       const n = String(Number(notes.get(`〔買取番号-M0701-083${x}〕`)));
       expect.soft(rows.find((r) => r.番号 === n)?.買取状況 ?? "（行が無い）", `買取番号〔買取番号-M0701-083${x}〕の買取状況`).toBe(状況);
     }
@@ -359,6 +368,6 @@ caseTest("IT-M07-01-084", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     const r = (await l.行()).find((x) => x.番号 === String(Number(番号)));
     expect.soft(r !== undefined, "検索結果に買取番号の行がある").toBe(true);
-    expect.soft(r?.取り消し注記 ?? true, "行にキャンセルを含む旨が表示されない").toBe(false);
+    expect.soft((r?.取り消し注記 ?? true) === false, "行にキャンセルを含む旨が表示されない").toBe(true);
   });
 });

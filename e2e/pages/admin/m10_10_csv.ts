@@ -49,7 +49,7 @@ export class CsvSettingPage {
     if ((await this.選ばれている種別()) === 名称) return;
     const hit = (await options(this.page, "csv-type")).find((o) => o.label === 名称);
     if (!hit) throw new Error(`CSV種別の選択肢に「${名称}」が無い（ある選択肢: ${(await this.種別の選択肢()).join("、")}）`);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), this.種別.selectOption(hit.value)]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), this.種別.selectOption(hit.value)]);
     await this.page.waitForLoadState("load");
     await expect(this.page.locator("#csv-form"), "CSV出力項目設定の画面").toBeVisible({ timeout: T });
   }
@@ -125,8 +125,8 @@ export class CsvSettingPage {
   /** 「登録」を押す。遷移後の画面の応答の状態を返す（エラーの画面も待つ） */
   async 登録する(): Promise<{ 応答: number }> {
     const [res] = await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      this.page.locator('#csv-form button[type="submit"]').click(),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      this.page.locator('#csv-form button[type="submit"]').click({ noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
     return { 応答: res?.status() ?? 0 };
@@ -149,7 +149,7 @@ export class CsvSettingPage {
       for (const v of p.出力しない) { const o = all.get(v); if (!o) throw new Error(`項目 ${v} が画面に無い`); o.selected = false; left.appendChild(o); }
       for (const v of p.出力する) { const o = all.get(v); if (!o) throw new Error(`項目 ${v} が画面に無い`); o.selected = false; right.appendChild(o); }
     }, 並び);
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded" }), this.page.locator('#csv-form button[type="submit"]').click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }), this.page.locator('#csv-form button[type="submit"]').click({ noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 }

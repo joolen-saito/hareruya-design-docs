@@ -3,11 +3,12 @@
  * 依頼者決定 2026-11-11「店舗は新しく作って実行の印をつけてよい」。店名・ショップ名略称は、正本の店名に実行の印を付けた値（rc）。
  * 開発環境の店舗は変えない（足すだけ）。店舗一覧は店名の完全一致で探す。
  */
+import { 店舗の作成は禁止 } from "../../lib/store_create_ban";
 import { Page } from "@playwright/test";
 import { rc, RUN_MARK } from "../../lib/run_marker";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
-import { findTenantId } from "./tenant";
+import { findTenantId } from "./tenant_k";
 
 export type 店舗の定め = { 名前: string; 表示順: number; 公開: "公開" | "非公開"; 開店: "開店" | "閉店"; 売上集計: "表示する" | "表示しない"; カナ: string; 英語: string };
 
@@ -25,7 +26,7 @@ const 略称候補 = () => {
 };
 
 async function 登録する(page: Page, d: 店舗の定め, 店名: string, 略称: string): Promise<void> {
-  await page.goto(adminUrl("/mall/tenant/create"));
+  await page.goto(店舗の作成は禁止("pages/admin/m12_01_stores.ts の 登録する")); // 店舗は作らない（依頼者 2026-11-15。lib/store_create_ban.ts）
   const f = (name: string) => page.locator(`[name="mall_tenant_shop_master[${name}]"]`);
   const url = `m1201${RUN_MARK.toLowerCase()}${d.表示順}`;
   await f("company_name").fill("試験用会社");

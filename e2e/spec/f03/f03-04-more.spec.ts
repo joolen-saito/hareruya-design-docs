@@ -298,22 +298,31 @@ caseTest("IT-F03-04-023", async ({ page, step, expected }) => {
   });
 });
 
-caseTest("IT-F03-04-024", async ({ page, step, expected }) => {
+caseTest("IT-F03-04-024", async ({ page, notes, step, expected }) => {
   const list = new FrontCategoryListMore(page);
+  const A = notes.get("〔カテゴリID-F0304-共有A〕");
+  const J = notes.get("〔カテゴリID-F0304-共有J〕");
   let 見出し: string[] = [];
   let 最新: string[] = [];
   let その他: string[] = [];
+  let 名A: string | null = null;
+  let 名J: string | null = null;
   let 本文 = "";
   await step(1, async () => { expect(await list.ECTOPを開く(入口.本店英語版), "英語版のECTOPの応答").toBeLessThan(400); });
   await step(2, async () => {
     note("ECTOPのカテゴリ一覧では「Latest Sets」は枠の見出しで押せない。子カテゴリがその枠の第一階層として並ぶので、見出しと子カテゴリが並んでいることを確かめて、押す操作に代えた");
+    note(`英語名は、シードが作ったカテゴリ（タルキール：龍嵐録 ID ${A}・サプライ ID ${J}）の項目をカテゴリIDで引いて読んだ（共有の環境に同じ英語名の既存のカテゴリがあっても、そちらで合格にしない）`);
     見出し = await list.見出し();
     最新 = await list.枠の名称("latest-set");
     その他 = await list.枠の名称("others");
+    名A = await list.枠の名称ByID("latest-set", A);
+    名J = await list.枠の名称ByID("others", J);
     本文 = await list.root.innerText();
   });
   await expected(async () => {
     expect.soft(見出し, "カテゴリ一覧に「Latest Sets」の枠の見出しがある").toContain("Latest Sets");
+    expect.soft(名A, `シードが作った「タルキール：龍嵐録」（カテゴリID ${A}）のカテゴリ名が英語名「Tarkir: Dragonstorm」で表示される`).toBe("Tarkir: Dragonstorm");
+    expect.soft(名J, `シードが作った「サプライ」（カテゴリID ${J}）のカテゴリ名が英語名「Supplies」で表示される`).toBe("Supplies");
     expect.soft(最新, "カテゴリ名として英語名「Tarkir: Dragonstorm」が表示される").toContain("Tarkir: Dragonstorm");
     expect.soft(その他, "カテゴリ名として英語名「Supplies」が表示される").toContain("Supplies");
     expect.soft(本文.includes(試験名(名.A)), "日本語名「タルキール：龍嵐録」がカテゴリ名として表示されない").toBe(false);

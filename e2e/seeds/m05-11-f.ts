@@ -9,6 +9,7 @@ import { Browser, expect } from "@playwright/test";
 import { expectSaved } from "../pages/admin/common";
 import { SETUP_ADMIN } from "../config/env";
 import { 在庫承認の最大ID } from "../db/f03_08";
+import { 商品規格の高額商品コード } from "../db/m05_11";
 import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { adminUrl, withAdminSession } from "../lib/session";
@@ -69,7 +70,13 @@ export async function 商品を用意する(browser: Browser, seedId: string, de
       const productId = await openProductEditByCode(page, code);
       const rows = await classRowsFromProductEdit(page, productId);
       if (rows.length !== 1 || rows[0].商品コード !== code) throw new Error(`${seedId}: ${code} の取込直後の商品規格が1件でない`);
-      if (rows[0].公開状態 !== "公開" && !d.取込の規格は公開しない) await savePublishedClass(page, { productId, classId: rows[0].商品規格ID, highPriceCode: d.高額商品コード ? rc(d.高額商品コード) : undefined }, `${seedId}: ${code}`, issue);
+      // 高額商品コードはシード表で商品規格登録編集画面から入れるので、取り込んだ規格がすでに公開でも画面で保存する（公開のときだけ飛ばすと入らなかった）
+      const 高額 = d.高額商品コード ? rc(d.高額商品コード) : undefined;
+      if (!d.取込の規格は公開しない && (rows[0].公開状態 !== "公開" || 高額 !== undefined)) await savePublishedClass(page, { productId, classId: rows[0].商品規格ID, highPriceCode: 高額 }, `${seedId}: ${code}`, issue);
+      if (高額 !== undefined) {
+        const got = 商品規格の高額商品コード(code);
+        if (got !== 高額) throw new Error(`${seedId}: ${code} の高額商品コードが「${高額}」にならない（DB は「${got ?? "空"}」）`);
+      }
       productIds.set(code, productId);
       if (d.画像) {
         const names = await saveProductWithImages(page, productId, [imageFile(`IMG-${d.code}`)], `${seedId}: ${code} の商品画像`, issue);
@@ -93,7 +100,7 @@ export async function 商品を用意する(browser: Browser, seedId: string, de
         const first = await section.locator("option").evaluateAll((ns) => ns.map((n) => (n as HTMLOptionElement).value).find((v) => v !== ""));
         if (first) await section.selectOption(first);
         await form.locator("#admin_product_class_Status").selectOption({ label: "公開" });
-        await Promise.all([page.waitForNavigation({ waitUntil: "load" }), form.getByRole("button", { name: "商品規格を登録" }).click()]);
+        await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録" }).click({ noWaitAfter: true })]);
         await expectSaved(page, `${seedId}: ${d.追加規格EX.code} の規格登録`);
       }
     }
@@ -140,7 +147,10 @@ export async function 入庫する(browser: Browser, seedId: string, items: { co
 type 設定 = {
   番号: string; メール前半: string; 商品: 商品[];
   /** 受注番号を控える呼び名（既定は〔受注番号-M0511-番号〕。シード表が別の呼び名で定めるとき） */
-  注文番号の呼び名?: string; 注文?: { code: string; 数量: number }[];
+  注文番号の呼び名?: string;
+  /** false にすると、受注番号を notes に控えない（シード表が受注番号を「控える」と定めていないとき。作り方が表に無い呼び名を控えると止まるため。番号は「最後に」などの引数で受け取る） */
+  注文番号をnotesに控える?: boolean;
+  注文?: { code: string; 数量: number }[];
   /** 手元に既にある商品（商品ID）を注文する（商品を作らない。画像つきの商品など。シードの実行時に求める） */
   既存商品?: () => { 商品ID: string; 数量: number }[];
   /** 会員のポイントを付ける（会員情報編集の「ポイント履歴追加」で、注文番号は空のまま） */
@@ -172,7 +182,7 @@ export function 商品注文のシード(seedId: string, s: 設定): void {
     await 会員が注文する(browser, m, lines, seed.シードID, { 配送: s.配送, 支払候補: s.支払候補 });
     const shop = await 店舗Aの店名(browser);
     const no = await withAdminSession(browser, M0511_ADMIN_A, async (page) => (await メールで受注を開く(page, m.メール, shop, seedId)).注文番号);
-    notes.set(s.注文番号の呼び名 ?? `〔受注番号-M0511-${s.番号}〕`, no);
+    if (s.注文番号をnotesに控える !== false) notes.set(s.注文番号の呼び名 ?? `〔受注番号-M0511-${s.番号}〕`, no);
     if (s.ポイント) await withAdminSession(browser, M0511_ADMIN_A, async (page) => ポイントを付与する(page, await 会員IDを一覧から読む(page, m.メール), s.ポイント!));
     if (s.注文後) await s.注文後(browser, seedId, { m, 注文番号: no, notes });
     if (s.整える || (s.状態 ?? []).length > 0) {
@@ -208,6 +218,9 @@ const 注文AB = (n: string) => [{ code: `BASE-A-${n}`, 数量: 2 }, { code: `BA
 });
 商品注文のシード("S-M05-11-BASE-073", {
   番号: "073", メール前半: "base-073",
+  // 手順3でポイント使用100を入れて保存する。会員の保有ポイントが100未満だと、アプリが「利用ポイントが所有ポイントを上回っています」で保存を止める
+  // （正本は会員の保有ポイントを定めていない。手順どおり保存できる前提として、使う分の100ポイントを付けておく）
+  ポイント: 100,
   商品: [{ code: "BASE-A-073", name: "整数入力確認商品", 入庫: [{ 数量: 12, 仕入単価: "100" }] }], 注文: [{ code: "BASE-A-073", 数量: 2 }],
   整える: async (p, items) => {
     await items.明細に入れる(rc("BASE-A-073"), { 価格: "900", 数量: "2" }); await items.金額欄({ 送料: "0", 手数料: "0", 値引き: "0" }); await p.ポイント設定("0", "0");

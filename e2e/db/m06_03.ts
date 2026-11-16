@@ -22,10 +22,25 @@ function 一件(n: number, 何: string): void {
   if (n !== 1) throw new Error(`${何}: 書き込んだ行が ${n} 行（1行のはず）`);
 }
 
+/**
+ * 査定IDは、アプリが「その日・その店舗の査定申込の件数＋1」で振る。E2E が買取の申込日時などを DB で動かすと、その日の件数が減り、
+ * あとの申込に同じ査定IDが振られることがある（2026-11-15 の開発環境で M06-05・06・07・12 が「査定ID … の買取が 2 件」で止まった。M06-01 は 2026-11-14 に同じ直しをした）。
+ * 同じ査定IDが2件以上あるときは、申込者の姓・名にこの実行の印がある1件を選び、選んだ結果は覚えておく（あとで姓・名を書き換えたあとも同じ買取を指すため）。
+ * 1件に決まらなければ止める。
+ */
+const 選んだ受注ID = new Map<string, string>();
+function 査定IDの受注ID(査定ID: string): string {
+  const 覚え = 選んだ受注ID.get(査定ID);
+  if (覚え) return 覚え;
+  const r = query("select id, last_name, first_name from dtb_otc_buy_order where assessment_id = $1", [査定ID]);
+  if (r.length === 1) return String(r[0].id);
+  const mine = r.filter((x) => `${x.last_name ?? ""}${x.first_name ?? ""}`.includes(印));
+  if (r.length > 1 && mine.length === 1) { 選んだ受注ID.set(査定ID, String(mine[0].id)); return String(mine[0].id); }
+  throw new Error(`査定ID ${査定ID} の買取が ${r.length} 件（1件のはず）。うちこの実行の印つきの申込者の買取は ${mine.length} 件`);
+}
+
 export function 受注IDを調べる(査定ID: string): string {
-  const r = query("select id from dtb_otc_buy_order where assessment_id = $1", [査定ID]);
-  if (r.length !== 1) throw new Error(`査定ID ${査定ID} の買取が ${r.length} 件（1件のはず）`);
-  return String(r[0].id);
+  return 査定IDの受注ID(査定ID);
 }
 
 function ログインIDのメンバーID(ログインID: string): string {
@@ -125,11 +140,11 @@ export type 実在庫の現状 = { 数量: number; 小計: number };
 /** 買取の実在庫情報（商品コードの商品規格）。無ければ null */
 export function 実在庫の現状(受注ID: string, 商品コード: string): 実在庫の現状 | null {
   const r = query(
-    `select s.quantity as q, s.subtotal as t from dtb_otc_buy_order_stock s join dtb_product_class pc on pc.id = s.product_class_id
+    `select s.quantity as q, s.subtotal as tt from dtb_otc_buy_order_stock s join dtb_product_class pc on pc.id = s.product_class_id
       where s.otc_buy_order_id = $1::int and pc.product_code = $2`, [数字(受注ID), 商品コード]);
   if (r.length === 0) return null;
   if (r.length > 1) throw new Error(`買取 ${受注ID} の商品 ${商品コード} の実在庫が ${r.length} 件`);
-  return { 数量: Number(r[0].q), 小計: Number(r[0].t) };
+  return { 数量: Number(r[0].q), 小計: Number(r[0].tt) };
 }
 
 export type 実在庫履歴の行 = { 変更前: number | null; 変更後: number | null };
@@ -184,4 +199,133 @@ export function ステータス履歴のIDを調べる(受注ID: string): string
 export function 会員IDを調べる(受注ID: string): string | null {
   const r = query("select customer_id as id from dtb_otc_buy_order where id = $1::int", [数字(受注ID)]);
   return r[0]?.id ?? null;
+}
+
+// ---------------------------------------------------------------- 2026-11-12 追加（残りのケース）
+
+/** 印つきの買取に、ダブルチェック者（既存のメンバー。ログインIDで指す）を1件足す */
+export function ダブルチェック者を足す(受注ID: string, ログインID: string): void {
+  一件(writeTestData({
+    理由: `買取 ${受注ID} にダブルチェック者（ログインID ${ログインID} のメンバー）を足す`,
+    sql: `insert into dtb_otc_buy_order_approver (otc_buy_order_id, approver_id, role)
+          select o.id, $2::int, 'double_check' from dtb_otc_buy_order o where o.id = $1::int`,
+    params: [数字(受注ID), 数字(ログインIDのメンバーID(ログインID))],
+    対象の確かめ: 親の確かめ, 確かめのparams: [数字(受注ID)], 印, 最大行数: 1,
+  }), "ダブルチェック者");
+}
+
+/** 部門のID。望むIDの部門があればそれ、無ければ既存の部門の先頭（共有のマスタは変えない） */
+export function 部門のID(望むID: string): { ID: string; 望んだとおり: boolean } {
+  if (query("select id from mtb_section where id = $1::int", [数字(望むID)]).length === 1) return { ID: 望むID, 望んだとおり: true };
+  const r = query("select min(id) as id from mtb_section");
+  if (!r[0]?.id) throw new Error("部門が1件も無い");
+  return { ID: String(r[0].id), 望んだとおり: false };
+}
+
+const 店舗在庫の確かめ = `select ps.id, pc.product_code from dtb_product_stock ps join dtb_product_class pc on pc.id = ps.product_class_id where ps.id = $1::int`;
+
+/** 商品コードの、店舗の EC-CUBE 在庫の行（無ければ null） */
+export function 店舗在庫を調べる(商品コード: string, 店舗ID: string): { ID: string; 在庫: number; 総原価: number } | null {
+  const r = query(
+    `select ps.id, coalesce(ps.stock, 0)::text as stock, ps.total_cost::text as total from dtb_product_stock ps join dtb_product_class pc on pc.id = ps.product_class_id
+      where pc.product_code = $1 and ps.base_info_id = $2::int and ps.stock_location_id = 1`, [商品コード, 数字(店舗ID)]);
+  if (r.length > 1) throw new Error(`商品 ${商品コード} の店舗 ${店舗ID} の EC-CUBE 在庫が ${r.length} 行`);
+  return r.length ? { ID: String(r[0].id), 在庫: Number(r[0].stock), 総原価: Number(r[0].total) } : null;
+}
+
+/** 印つきの商品の店舗在庫の、在庫数と総原価を設定する */
+export function 店舗在庫を設定する(店舗在庫ID: string, 在庫: number, 総原価: number): void {
+  一件(writeTestData({
+    理由: `店舗在庫 ${店舗在庫ID} を在庫 ${在庫}・総原価 ${総原価} にする`,
+    sql: "update dtb_product_stock set stock = $2::numeric, total_cost = $3::numeric where id = $1::int",
+    params: [数字(店舗在庫ID), 在庫, 総原価],
+    対象の確かめ: 店舗在庫の確かめ, 確かめのparams: [数字(店舗在庫ID)], 印, 最大行数: 1,
+  }), "店舗在庫の設定");
+}
+
+/** 印つきの商品の店舗在庫の、在庫履歴をすべて消す（準備の操作で作られた履歴を消して0件にする）。消した件数を返す */
+export function 店舗在庫の履歴を消す(店舗在庫ID: string): number {
+  const n = Number(query("select count(*)::text as n from dtb_stock_history where product_stock_id = $1::int", [数字(店舗在庫ID)])[0].n);
+  if (n === 0) return 0;
+  const k = writeTestData({
+    理由: `店舗在庫 ${店舗在庫ID} の在庫履歴 ${n} 件を消す（準備の入庫で作られた履歴）`,
+    sql: "delete from dtb_stock_history where product_stock_id = $1::int",
+    params: [数字(店舗在庫ID)],
+    対象の確かめ: 店舗在庫の確かめ, 確かめのparams: [数字(店舗在庫ID)], 印, 最大行数: 20,
+  });
+  if (k !== n) throw new Error(`店舗在庫 ${店舗在庫ID} の在庫履歴を ${k} 件消した（${n} 件のはず）`);
+  return k;
+}
+
+/** 商品コードの規格の、全店舗・全在庫区分の在庫の合計（総在庫） */
+export function 総在庫(商品コード: string): number {
+  return Number(query(`select coalesce(sum(ps.stock), 0)::text as n from dtb_product_stock ps join dtb_product_class pc on pc.id = ps.product_class_id where pc.product_code = $1`, [商品コード])[0].n);
+}
+
+export type 在庫履歴の行 = {
+  変更前在庫: number; 変更後在庫: number; 増減数: number | null; 変更前総原価: number | null; 変更後総原価: number | null;
+  在庫変動区分: string; 在庫変動理由: string; 登録元: string; 登録元ID: string;
+};
+
+/** 店舗在庫の在庫履歴（古い順） */
+export function 店舗在庫の履歴(店舗在庫ID: string): 在庫履歴の行[] {
+  return query(
+    `select h.old_stock::text as b, h.stock::text as a, h.stock_change_quantity::text as q, h.total_cost_price_before::text as tb, h.total_cost_price_after::text as ta,
+            concat_ws('/', t.name, d.child_name) as ty, h.stock_change_reason as reason, s.source_name as src, h.history_source_id::text as sid
+       from dtb_stock_history h
+       left join mtb_stock_change_type_detail d on d.id = h.stock_change_type_detail_id left join mtb_stock_change_type t on t.id = d.stock_change_type_id
+       left join mtb_stock_history_source_type s on s.id = h.history_source_type
+      where h.product_stock_id = $1::int order by h.id`, [数字(店舗在庫ID)])
+    .map((r) => ({
+      変更前在庫: Number(r.b), 変更後在庫: Number(r.a), 増減数: r.q === null ? null : Number(r.q),
+      変更前総原価: r.tb === null ? null : Number(r.tb), 変更後総原価: r.ta === null ? null : Number(r.ta),
+      在庫変動区分: r.ty ?? "", 在庫変動理由: r.reason ?? "", 登録元: r.src ?? "", 登録元ID: r.sid ?? "",
+    }));
+}
+
+export type 個別入力商品の詳細 = { 名前: string; 商品コード: string | null; 部門ID: string | null; 販売金額: number | null; 買取金額: number | null; 数量: number | null };
+
+/** 買取の個別入力商品（登録の順） */
+export function 個別入力商品の詳細(受注ID: string): 個別入力商品の詳細[] {
+  return query(
+    `select p.name as n, pc.product_code as c, p.section_id::text as s, p.sell_price::text as sp, p.price::text as pr, p.quantity::text as q
+       from dtb_otc_buy_order_indivisual_input_product p left join dtb_product_class pc on pc.id = p.product_class_id
+      where p.otc_buy_order_id = $1::int order by p.id`, [数字(受注ID)])
+    .map((r) => ({ 名前: r.n ?? "", 商品コード: r.c, 部門ID: r.s, 販売金額: r.sp === null ? null : Number(r.sp), 買取金額: r.pr === null ? null : Number(r.pr), 数量: r.q === null ? null : Number(r.q) }));
+}
+
+/** 買取の実在庫情報の全部（商品コード・数量・小計。商品規格の番号の順） */
+export function 実在庫の全部(受注ID: string): { 商品コード: string; 数量: number; 小計: number }[] {
+  return query(
+    `select pc.product_code as c, s.quantity::text as q, s.subtotal::text as tt from dtb_otc_buy_order_stock s join dtb_product_class pc on pc.id = s.product_class_id
+      where s.otc_buy_order_id = $1::int order by pc.id`, [数字(受注ID)])
+    .map((r) => ({ 商品コード: r.c ?? "", 数量: Number(r.q), 小計: Number(r.tt) }));
+}
+
+/** 買取の、商品コードの買取明細の件数 */
+export function 買取明細の件数(受注ID: string, 商品コード: string): number {
+  return Number(query(
+    `select count(*)::text as n from dtb_otc_buy_order_detail d join dtb_product_class pc on pc.id = d.product_class_id where d.otc_buy_order_id = $1::int and pc.product_code = $2`,
+    [数字(受注ID), 商品コード])[0].n);
+}
+
+/** 買取の査定合計金額（買取合計金額） */
+export function 買取の合計金額(受注ID: string): number | null {
+  const r = query("select total_price::text as tt from dtb_otc_buy_order where id = $1::int", [数字(受注ID)]);
+  return r[0]?.tt === null || r[0]?.tt === undefined ? null : Number(r[0].tt);
+}
+
+/** 査定番号の買取の件数（無いことの確かめ） */
+export function 査定番号の買取の件数(査定番号: string): number {
+  return Number(query("select count(*)::text as n from dtb_otc_buy_order where assessment_id = $1", [査定番号])[0].n);
+}
+
+/** 商品規格の番号の行があるか（無いことの確かめ） */
+export function 商品規格がある(商品規格ID: string): boolean {
+  return query("select id from dtb_product_class where id = $1::int", [数字(商品規格ID)]).length > 0;
+}
+
+/** 商品コードの商品規格の番号 */
+export function 規格IDを調べる(商品コード: string): string {
+  return 規格と商品のID(商品コード).規格ID;
 }

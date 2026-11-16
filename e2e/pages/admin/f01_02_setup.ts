@@ -1,5 +1,5 @@
 /** F01-02 支店ECTOP のシードが使う、管理画面の操作（支店の編集管理者・商品のセールの設定・支店の在庫）。 */
-import { Page, expect } from "@playwright/test";
+import { Locator, Page, expect } from "@playwright/test";
 import { Account } from "../../lib/session";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
@@ -40,7 +40,7 @@ export async function タグを付けて商品を登録する(page: Page, 商品
     if (first) await discount.selectOption(first);
   }
   await expect(form.locator('input[type="radio"][name="admin_product[RegionRestriction]"]:checked'), `${what}: 販売制限が選ばれている`).toHaveCount(1);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator("button[type=submit]").filter({ hasText: /^\s*商品を登録\s*$/ }).click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator("button[type=submit]").filter({ hasText: /^\s*商品を登録\s*$/ }).click({ timeout: 20_000, noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品を登録`)) onIssue(w);
 }
 
@@ -57,7 +57,7 @@ export async function 規格のセールを設定する(page: Page, 商品ID: st
     const first = await section.locator("option").evaluateAll((ns) => ns.map((n) => (n as HTMLOptionElement).value).find((x) => x !== ""));
     if (first) await section.selectOption(first);
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: 20_000, noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品規格を登録`)) onIssue(w);
 }
 
@@ -102,7 +102,7 @@ export async function 支店トップページにタイルを設定する(page: 
   await expect(selector, `${what}: 支店トップページ管理の支店の選択`).toBeVisible();
   const value = await selector.locator("option").evaluateAll((os, name) => (os as HTMLOptionElement[]).find((o) => (o.textContent ?? "").includes(name as string))?.value ?? "", 支店名);
   if (!value) throw new Error(`${what}: 支店トップページ管理の支店の選択に「${支店名}」が無い`);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), selector.selectOption(value)]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), selector.selectOption(value)]);
   await expect(page.locator('select[name="branch_toppage_management[branch_list]"]'), `${what}: 選んだ支店`).toHaveValue(value);
   const common = page.locator("#common-setting");
   if (await common.isChecked()) await common.uncheck({ timeout: 20_000 });
@@ -123,7 +123,7 @@ export async function 支店トップページにタイルを設定する(page: 
       await chooseByLabel(type, "ピックアップ商品");
     }
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#ex-conversion-action button[type=submit]").click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#ex-conversion-action button[type=submit]").click({ timeout: 20_000, noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 支店トップページ管理の登録`)) onIssue(w);
 }
 
@@ -139,7 +139,7 @@ export async function 規格の高額商品コードを設定する(page: Page, 
     const first = await section.locator("option").evaluateAll((ns) => ns.map((n) => (n as HTMLOptionElement).value).find((x) => x !== ""));
     if (first) await section.selectOption(first);
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: 20_000, noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品規格を登録`)) onIssue(w);
 }
 
@@ -172,7 +172,7 @@ export async function 規格を追加する(page: Page, 商品ID: string, v: 追
     if (first) await section.selectOption(first);
   }
   await chooseByLabel(form.locator("#admin_product_class_Status"), "公開");
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: 20_000, noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品規格を登録`)) onIssue(w);
   const m = new URL(page.url()).pathname.match(/\/class\/\d+\/edit\/(\d+)$/);
   if (!m) throw new Error(`${what}: 登録後に商品規格の編集画面へ移らない（${page.url()}）`);
@@ -186,7 +186,7 @@ export async function 規格を削除する(page: Page, 商品ID: string, 規格
   await page.getByRole("link", { name: "商品規格を削除" }).click({ timeout: 20_000 });
   const modal = page.locator("#deleteConfirmModal");
   await expect(modal, `${what}: 削除の確認`).toBeVisible();
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), modal.locator('a[data-method="delete"]').click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), modal.locator('a[data-method="delete"]').click({ timeout: 20_000, noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品規格の削除`)) onIssue(w);
 }
 
@@ -204,7 +204,7 @@ export async function 規格の公開状態を設定する(page: Page, 商品ID:
     const first = await section.locator("option").evaluateAll((ns) => ns.map((n) => (n as HTMLOptionElement).value).find((x) => x !== ""));
     if (first) await section.selectOption(first);
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.getByRole("button", { name: "商品規格を登録", exact: true }).click({ timeout: 20_000, noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品規格を登録`)) onIssue(w);
 }
 
@@ -226,13 +226,22 @@ export async function 既存のカードを指定する(page: Page, 商品ID: st
   await modal.locator("#searchCardDetailModalButton").click();
   const rows = modal.locator("#searchCardDetailModalList tbody tr");
   let chosen = "";
+  let decide: Locator | null = null;
   for (let p = 1; p <= 15 && !chosen; p++) {
     await expect(rows.first(), `${what}: カード検索の結果（${p}ページ目）`).toBeVisible({ timeout: 60_000 });
     const texts = await rows.evaluateAll((ns) => ns.map((n) => ({ id: (n.querySelector("td")?.textContent ?? "").trim(), card: (n.querySelectorAll("td")[2]?.textContent ?? "").replace(/\s+/g, " ").trim() })));
     const hit = texts.findIndex((t) => t.card.startsWith("[Foil]") === v.Foil);
     if (hit >= 0) {
       chosen = `カード詳細ID ${texts[hit].id}「${texts[hit].card}」`;
-      await rows.nth(hit).getByRole("button", { name: "決定", exact: true }).click();
+      // 「決定」は、選んだカードの情報を読みに行く要求が返るとカード検索を閉じる。押したときに一覧の描き直しと重なると要求が出ず、
+      // カード検索が開いたままになる（2026-11-11 F01-02-007）。要求が出なければ押し直す
+      const d = rows.nth(hit).getByRole("button", { name: "決定", exact: true });
+      decide = d;
+      for (let k = 0; k < 2; k++) {
+        const sent = page.waitForResponse((r) => r.url().includes("/product/detail/search/id"), { timeout: 15_000 }).then(() => true, () => false);
+        await d.click();
+        if ((await sent) || !(await modal.isVisible())) break;
+      }
       break;
     }
     const next = modal.locator("#card_detail_pagination a").filter({ hasText: new RegExp(`^\\s*${p + 1}\\s*$`) }).first();
@@ -242,6 +251,12 @@ export async function 既存のカードを指定する(page: Page, 商品ID: st
     await expect.poll(async () => (await rows.first().locator("td").first().textContent())?.trim() ?? "", { timeout: 60_000 }).not.toBe(firstId);
   }
   if (!chosen) throw new Error(`${what}: カード検索の結果に、Foil の印が${v.Foil ? "ある" : "無い"}カード詳細が見つからない（15ページまで）`);
+  // 決定の要求の応答に、開発環境のデバッグ表示のエラー画面（500）が続けて付くことがある（2026-11-14）。そのとき画面は応答を読めず、カード検索が閉じない。
+  // 利用者と同じく「決定」を押し直す（3回まで）。
+  for (let i = 0; i < 3 && decide; i++) {
+    if (await modal.waitFor({ state: "hidden", timeout: 15_000 }).then(() => true, () => false)) break;
+    await decide.click();
+  }
   await expect(modal, `${what}: カードを決定するとカード検索が閉じる`).toBeHidden({ timeout: 30_000 });
   for (const name of ['input[name="admin_product[name]"]', 'input[name="admin_product[name_en]"]']) {
     const field = form.locator(name);
@@ -252,7 +267,7 @@ export async function 既存のカードを指定する(page: Page, 商品ID: st
     const first = await discount.locator("option").evaluateAll((ns) => ns.map((n) => (n as HTMLOptionElement).value).find((x) => x !== ""));
     if (first) await discount.selectOption(first);
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator("button[type=submit]").filter({ hasText: /^\s*商品を登録\s*$/ }).click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator("button[type=submit]").filter({ hasText: /^\s*商品を登録\s*$/ }).click({ timeout: 20_000, noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: カードを指定して商品を登録`)) onIssue(w);
   onIssue(`${what}: 既存の${chosen}を商品に指定した（カードのマスタは書き換えていない。商品名はシード表の名前に入力し直した）`);
   return chosen;
@@ -271,7 +286,7 @@ export async function 支店トップページを設定する(page: Page, 支店
   await expect(selector, `${what}: 支店トップページ管理の支店の選択`).toBeVisible();
   const value = await selector.locator("option").evaluateAll((os, name) => (os as HTMLOptionElement[]).find((o) => (o.textContent ?? "").trim() === name)?.value ?? "", 支店名);
   if (!value) throw new Error(`${what}: 支店トップページ管理の支店の選択に「${支店名}」が無い`);
-  if ((await selector.inputValue()) !== value) await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), selector.selectOption(value)]);
+  if ((await selector.inputValue()) !== value) await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), selector.selectOption(value)]);
   await expect(page.locator('select[name="branch_toppage_management[branch_list]"]'), `${what}: 選んだ支店`).toHaveValue(value);
   const common = page.locator("#common-setting");
   if (await common.isChecked()) await common.uncheck({ timeout: 20_000 });
@@ -285,7 +300,7 @@ export async function 支店トップページを設定する(page: Page, 支店
     const tag = v.タイル[i].タグ;
     if (tag) await chooseByLabel(rows.nth(i).locator('select[id$="_tag"]'), tag);
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#ex-conversion-action button[type=submit]").click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#ex-conversion-action button[type=submit]").click({ timeout: 20_000, noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 支店トップページ管理の登録`)) onIssue(w);
 }
 
@@ -298,7 +313,7 @@ export async function 支店トップページのレイアウトのブロック(
   await page.waitForLoadState("load");
   const link = page.getByRole("link", { name: "支店トップページ", exact: true });
   await expect(link, `${what}: ページ管理の「支店トップページ」`).toHaveCount(1, { timeout: 30_000 });
-  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), link.click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), link.click({ noWaitAfter: true })]);
   const pc = page.locator('select[name="main_edit[PcLayout]"]');
   await expect(pc, `${what}: ページ管理(編集)のPCのレイアウト`).toHaveCount(1, { timeout: 30_000 });
   const layoutId = await pc.inputValue();

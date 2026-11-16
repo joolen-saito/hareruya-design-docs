@@ -159,15 +159,20 @@ caseTest("IT-F06-07-012", async (ctx) => {
 caseTest("IT-F06-07-013", async ({ page, step, expected }) => {
   await ログインする(page, "013");
   const h = new HistoryDetailPage(page);
-  const 結果: { 種別: string; ボタン数: number }[] = [];
+  const 結果: { 種別: string; 詳細: boolean; ボタン数: number }[] = [];
   await step(1, async () => {
     for (const [種別, キー] of [["EC", "013A"], ["店頭受取", "013B"], ["店頭受取からスマレジ取引", "013D"], ["スマレジ取引", "013E"]] as const) {
       await h.開く(注文(キー).ID);
-      結果.push({ 種別, ボタン数: await h.再購入のボタン.count() });
+      結果.push({ 種別, 詳細: await h.詳細画面である(), ボタン数: await h.再購入のボタン.count() });
     }
   });
   await expected(async () => {
-    for (const r of 結果) expect.soft(r.ボタン数, `${r.種別} の購入履歴詳細に「この注文品をもう一度購入する」ボタンが表示されない`).toBe(0);
+    expect.soft(結果.length, "4つの注文を開いた").toBe(4);
+    for (const r of 結果) {
+      // 画面が開けていないと「表示されない」は確かめにならないため、購入履歴詳細画面であることも確かめる
+      expect.soft(r.詳細, `${r.種別} の購入履歴詳細画面が表示されている`).toBe(true);
+      expect.soft(r.ボタン数, `${r.種別} の購入履歴詳細に「この注文品をもう一度購入する」ボタンが表示されない`).toBe(0);
+    }
   });
 });
 
@@ -296,7 +301,10 @@ caseTest("IT-F06-07-039", async ({ page, step, expected }) => {
   let c = -1;
   await step(1, async () => { await h.開く(注文("039").ID); });
   await step(2, async () => { c = await h.領収書発行リンク.count(); });
-  await expected(async () => { expect.soft(c, "領収書発行リンクが表示されない").toBe(0); });
+  await expected(async () => {
+    expect.soft(await h.詳細画面である(), "購入履歴詳細画面が表示されている").toBe(true);
+    expect.soft(c, "領収書発行リンクが表示されない").toBe(0);
+  });
 });
 
 /** 送り主・お届け先をそれぞれ国内／海外で確かめる */

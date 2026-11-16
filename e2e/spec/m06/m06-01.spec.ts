@@ -12,7 +12,8 @@ import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
 import { Notes } from "../../lib/notes";
 import { OtcListPage } from "../../pages/admin/m06_otc_list";
-import { M0601_ADMIN_A, M0601_ADMIN_ALL } from "../../seeds/m06-01";
+import { 一覧へ戻りエラーが出る } from "./m06-01-support";
+import { M0601_ADMIN_A, M0601_ADMIN_ALL, STORE_A, STORE_B } from "../../seeds/m06-01";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -71,8 +72,7 @@ caseTest("IT-M06-01-057", async ({ page, notes, step, expected }) => {
   await step(3, async () => { r = await list.ダウンロードを押す("戻しリストCSV"); });
   await expected(async () => {
     expect.soft(r!.file, "戻しリストCSVがダウンロードされない（入庫待ち・入庫済み以外の買取情報）").toBeNull();
-    expect.soft(new URL(page.url()).pathname, "移った先の画面（買取一覧）").toMatch(/\/otcbuyorder(\/page\/\d+)?$/);
-    await expect.soft(list.上部のエラー().first(), "画面上部にエラーが表示される").toBeVisible();
+    await 一覧へ戻りエラーが出る(list, "対象外のステータス");
   });
 });
 
@@ -82,13 +82,12 @@ caseTest("IT-M06-01-058", async ({ page, notes, step, expected }) => {
   const list = new OtcListPage(page);
   const id = notes.get("〔査定ID-M0601-058〕");
   let r: Awaited<ReturnType<OtcListPage["ダウンロードを押す"]>> | undefined;
-  await step(1, async () => { await list.open(); await 検索して対象にする(list, "買取店舗B", id)(); });
+  await step(1, async () => { await list.open(); await 検索して対象にする(list, STORE_B.店名, id)(); });
   await step(2, async () => { await list.対象にする(id); });
   await step(3, async () => { r = await list.ダウンロードを押す("戻しリストCSV"); });
   await expected(async () => {
     expect.soft(r!.file, "戻しリストCSVがダウンロードされない（編集可能権限がない買取店舗B）").toBeNull();
-    expect.soft(new URL(page.url()).pathname, "移った先の画面（買取一覧）").toMatch(/\/otcbuyorder(\/page\/\d+)?$/);
-    await expect.soft(list.上部のエラー().first(), "画面上部にエラーが表示される").toBeVisible();
+    await 一覧へ戻りエラーが出る(list, "権限のない店舗");
   });
 });
 
@@ -105,8 +104,7 @@ caseTest("IT-M06-01-059", async ({ page, notes, step, expected }) => {
   await step(4, async () => { r = await list.ダウンロードを押す("戻しリストCSV"); });
   await expected(async () => {
     expect.soft(r!.file, "戻しリストCSVがダウンロードされない（複数店舗の買取情報）").toBeNull();
-    expect.soft(new URL(page.url()).pathname, "移った先の画面（買取一覧）").toMatch(/\/otcbuyorder(\/page\/\d+)?$/);
-    await expect.soft(list.上部のエラー().first(), "画面上部にエラーが表示される").toBeVisible();
+    await 一覧へ戻りエラーが出る(list, "複数店舗");
   });
 });
 
@@ -121,8 +119,7 @@ caseTest("IT-M06-01-060", async ({ page, notes, step, expected }) => {
   await step(3, async () => { r = await list.ダウンロードを押す("戻しリストPDF"); });
   await expected(async () => {
     expect.soft(r!.popup, "戻しリストPDFが開かない（入庫待ち・入庫済み以外の買取情報）").toBeNull();
-    expect.soft(new URL(page.url()).pathname, "移った先の画面（買取一覧）").toMatch(/\/otcbuyorder(\/page\/\d+)?$/);
-    await expect.soft(list.上部のエラー().first(), "画面上部にエラーが表示される").toBeVisible();
+    await 一覧へ戻りエラーが出る(list, "対象外のステータス");
   });
 });
 
@@ -132,13 +129,12 @@ caseTest("IT-M06-01-061", async ({ page, notes, step, expected }) => {
   const list = new OtcListPage(page);
   const id = notes.get("〔査定ID-M0601-061〕");
   let r: Awaited<ReturnType<OtcListPage["ダウンロードを押す"]>> | undefined;
-  await step(1, async () => { await list.open(); await 検索して対象にする(list, "買取店舗B", id)(); });
+  await step(1, async () => { await list.open(); await 検索して対象にする(list, STORE_B.店名, id)(); });
   await step(2, async () => { await list.対象にする(id); });
   await step(3, async () => { r = await list.ダウンロードを押す("戻しリストPDF"); });
   await expected(async () => {
     expect.soft(r!.popup, "戻しリストPDFが開かない（編集可能権限がない買取店舗B）").toBeNull();
-    expect.soft(new URL(page.url()).pathname, "移った先の画面（買取一覧）").toMatch(/\/otcbuyorder(\/page\/\d+)?$/);
-    await expect.soft(list.上部のエラー().first(), "画面上部にエラーが表示される").toBeVisible();
+    await 一覧へ戻りエラーが出る(list, "権限のない店舗");
   });
 });
 
@@ -155,8 +151,7 @@ caseTest("IT-M06-01-062", async ({ page, notes, step, expected }) => {
   await step(4, async () => { r = await list.ダウンロードを押す("戻しリストPDF"); });
   await expected(async () => {
     expect.soft(r!.popup, "戻しリストPDFが開かない（複数店舗の買取情報）").toBeNull();
-    expect.soft(new URL(page.url()).pathname, "移った先の画面（買取一覧）").toMatch(/\/otcbuyorder(\/page\/\d+)?$/);
-    await expect.soft(list.上部のエラー().first(), "画面上部にエラーが表示される").toBeVisible();
+    await 一覧へ戻りエラーが出る(list, "複数店舗");
   });
 });
 

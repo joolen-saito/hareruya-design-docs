@@ -48,6 +48,20 @@ function 印刷された(名前: string, s: 印刷後の受注): void {
   expect.soft(s.注文確定日, `${名前}の注文確定日がNULL以外`).not.toBeNull();
 }
 
+/**
+ * 受付の要求が送られたことの確かめ（「変わらない」「窓が閉じる」を見るケースの前提）。送られていなければ、変わらないのは当たり前で確かめにならない。
+ * 含む・含まない: 送った内容（書き換えのあと）に含まれる・含まれないはずの項目（開発者ツールでの書き換えが効いたことの確かめ）。
+ */
+function 受付へ送った(f: OrderListStackFlow, 何: string, 含む: string[] = [], 含まない: string[] = []): void {
+  expect(f.受付.length, `${何}: スタック用紙印刷受付の要求が送られた（応答を記録できた件数）`).toBeGreaterThan(0);
+  const 送った = new URLSearchParams(f.受付[f.受付.length - 1].送った内容);
+  for (const k of 含む) {
+    const [名, 値] = k.split("=");
+    expect(送った.getAll(名), `${何}: 送った内容の項目 ${名} が ${値}（送った内容 ${送った.toString()}）`).toContain(値);
+  }
+  for (const 名 of 含まない) expect(送った.has(名), `${何}: 送った内容に項目 ${名} が無い（送った内容 ${送った.toString()}）`).toBe(false);
+}
+
 function 窓の閉じ方(f: OrderListStackFlow): void {
   expect.soft(f.dialogs.length, "エラーのダイアログが表示される（件数）").toBeGreaterThan(0);
   expect.soft(f.開いた窓, "スタック用紙印刷の窓が開く").toBeGreaterThan(0);
@@ -94,7 +108,7 @@ caseTest("IT-M05-08-003", async ({ page, notes, step, expected }) => {
   let s: 印刷後の受注 | null = null;
   await step(1, async () => { await f.開いて検索する(検索する注文者名("003")); });
   await step(2, async () => { await f.選ぶ(a.受注ID); });
-  await step(3, async () => { await f.押して終わりを待つ(); });
+  await step(3, async () => { await f.押して終わりを待つ(); 受付へ送った(f, "選択した受注の印刷"); });
   await step(4, async () => { s = 受注の印刷状態(notes.get("〔受注ID-M0508-003B〕")); });
   await expected(async () => {
     expect.soft((s as 印刷後の受注 | null)?.件数, "選択していない受注を読めた").toBe(1);
@@ -147,7 +161,7 @@ caseTest("IT-M05-08-006", async ({ page, notes, step, expected }) => {
   let sb: 印刷後の受注 | null = null;
   await step(1, async () => { await f.開いて検索する(検索する注文者名("006")); });
   await step(2, async () => { await f.選ぶ(a.受注ID); await f.選ぶ(b.受注ID); });
-  await step(3, async () => { await f.押して終わりを待つ(); });
+  await step(3, async () => { await f.押して終わりを待つ(); 受付へ送った(f, "2件の受注の印刷"); });
   await step(4, async () => { sa = 受注の印刷状態(notes.get("〔受注ID-M0508-006A〕")); sb = 受注の印刷状態(notes.get("〔受注ID-M0508-006B〕")); });
   await expected(async () => {
     expect.soft([(sa as 印刷後の受注 | null)?.件数, (sb as 印刷後の受注 | null)?.件数], "2件の受注を読めた").toEqual([1, 1]);
@@ -185,7 +199,7 @@ caseTest("IT-M05-08-008", async ({ page, notes, step, expected }) => {
     f.担当者IDを足す("999999");
     note("受付の要求にもともと担当者IDの項目は無い。押す前に、担当者IDの項目（値 999999）を足して送るようにした");
   });
-  await step(4, async () => { await f.押して終わりを待つ(); });
+  await step(4, async () => { await f.押して終わりを待つ(); 受付へ送った(f, "担当者IDを足した要求", ["operator_id=999999"]); });
   await step(5, async () => { s = 受注の印刷状態(notes.get("〔受注ID-M0508-008〕")); });
   await expected(async () => {
     const r = s as 印刷後の受注;
@@ -198,7 +212,11 @@ caseTest("IT-M05-08-009", async ({ page, notes, step, expected }) => {
   const f = await 入る(page);
   await f.準備();
   let s: 印刷後の受注 | null = null;
-  await step(1, async () => { await f.開いて検索する(検索する注文者名("009")); });
+  await step(1, async () => {
+    await f.開いて検索する(検索する注文者名("009"));
+    // 受注を選ばずに押すことの確かめになるよう、対象の受注が一覧に出ている（選べた）ことを見る
+    expect(await f.行の数(notes.get("〔受注ID-M0508-009〕")), "検索結果に受注ID 〔受注ID-M0508-009〕 の行がある").toBe(1);
+  });
   await step(2, async () => { await f.押して終わりを待つ(); });
   await step(3, async () => { s = 受注の印刷状態(notes.get("〔受注ID-M0508-009〕")); });
   await expected(async () => {
@@ -216,7 +234,7 @@ caseTest("IT-M05-08-011", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await f.開いて検索する(検索する注文者名("011")); });
   await step(2, async () => { await f.選ぶ(o.受注ID); });
   await step(3, async () => { f.トークンを外す(); });
-  await step(4, async () => { await f.押して終わりを待つ(); });
+  await step(4, async () => { await f.押して終わりを待つ(); 受付へ送った(f, "トークンを外した要求", [], ["_token"]); });
   await step(5, async () => { s = 受注の印刷状態(notes.get("〔受注ID-M0508-011〕")); });
   await expected(async () => {
     expect.soft((s as 印刷後の受注 | null)?.件数, "受注を読めた").toBe(1);
@@ -232,7 +250,7 @@ caseTest("IT-M05-08-012", async ({ page, step, expected }) => {
   await step(1, async () => { await f.開いて検索する(検索する注文者名("012")); });
   await step(2, async () => { await f.選ぶ(o.受注ID); });
   await step(3, async () => { f.トークンを外す(); });
-  await step(4, async () => { await f.押して終わりを待つ(); });
+  await step(4, async () => { await f.押して終わりを待つ(); 受付へ送った(f, "トークンを外した要求", [], ["_token"]); });
   await expected(async () => {
     expect.soft(f.窓が閉じているか(), "エラー表示後にスタック用紙印刷の窓が閉じる").toBe(true);
     窓の閉じ方(f);
@@ -248,7 +266,7 @@ caseTest("IT-M05-08-013", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await f.開いて検索する(検索する注文者名("013")); });
   await step(2, async () => { await f.選ぶ(o.受注ID); });
   await step(3, async () => { f.トークンを変える("invalid-token"); });
-  await step(4, async () => { await f.押して終わりを待つ(); });
+  await step(4, async () => { await f.押して終わりを待つ(); 受付へ送った(f, "トークンを変えた要求", ["_token=invalid-token"]); });
   await step(5, async () => { s = 受注の印刷状態(notes.get("〔受注ID-M0508-013〕")); });
   await expected(async () => {
     expect.soft((s as 印刷後の受注 | null)?.件数, "受注を読めた").toBe(1);
@@ -264,7 +282,7 @@ caseTest("IT-M05-08-014", async ({ page, step, expected }) => {
   await step(1, async () => { await f.開いて検索する(検索する注文者名("014")); });
   await step(2, async () => { await f.選ぶ(o.受注ID); });
   await step(3, async () => { f.トークンを変える("invalid-token"); });
-  await step(4, async () => { await f.押して終わりを待つ(); });
+  await step(4, async () => { await f.押して終わりを待つ(); 受付へ送った(f, "トークンを変えた要求", ["_token=invalid-token"]); });
   await expected(async () => {
     expect.soft(f.窓が閉じているか(), "エラー表示後にスタック用紙印刷の窓が閉じる").toBe(true);
     窓の閉じ方(f);
@@ -298,7 +316,7 @@ caseTest("IT-M05-08-018", async ({ page, notes, step, expected }) => {
     f.選択の値を置き換える("99999999");
     note("受付の要求の選択の値（一覧のチェックの値は配送の番号）を 99999999 に置き換えて送った");
   });
-  await step(4, async () => { await f.押して終わりを待つ(); });
+  await step(4, async () => { await f.押して終わりを待つ(); 受付へ送った(f, "選択の値を置き換えた要求", ["ids[]=99999999"]); });
   await step(5, async () => { s = 受注の印刷状態(notes.get("〔受注ID-M0508-018〕")); });
   await expected(async () => {
     expect.soft((s as 印刷後の受注 | null)?.件数, "受注を読めた").toBe(1);

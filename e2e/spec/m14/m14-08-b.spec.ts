@@ -263,12 +263,12 @@ async function 一覧から編集リンクを開く(page: Page, id: string): Pro
       // 編集リンクは行の3点リーダー（操作メニュー）の中にある
       const row = page.locator("tr").filter({ has: link });
       await row.locator("button.dropdown-menu-toggle").click({ timeout: 20_000 });
-      await Promise.all([page.waitForNavigation({ waitUntil: "load" }), link.click({ timeout: 20_000 })]);
+      await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ timeout: 20_000, noWaitAfter: true })]);
       return true;
     }
     const next = page.locator("#product_pagination a, .pagination a").filter({ hasText: /次|›|»|Next/ }).first();
     if (!(await next.count())) break;
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), next.click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), next.click({ timeout: 20_000, noWaitAfter: true })]);
   }
   return false;
 }
@@ -370,7 +370,7 @@ caseTest("IT-M14-08-034", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await 編集画面を開く(page, notes.get("〔カードセットID-M1408-034A〕")); });
   await step(2, async () => {
     const link = page.locator("form#form1 table a").filter({ hasText: rc("収録カードA") }).first();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), link.click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ timeout: 20_000, noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移先（カード詳細(編集・削除)画面）").toMatch(new RegExp(`/card/${cardA}/edit$`));
@@ -388,7 +388,7 @@ caseTest("IT-M14-08-035", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await 編集画面を開く(page, id); });
   await step(2, async () => { await page.locator('a.btn-ec-delete[data-bs-target="#DeleteModal"]').click({ timeout: 20_000 }); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 30_000 }), page.locator('#DeleteModal [data-method="delete"]').click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator('#DeleteModal [data-method="delete"]').click({ timeout: 20_000, noWaitAfter: true })]);
   });
   await step(4, async () => { 件数 = カードセットIDの件数(id); });
   await expected(async () => { expect.soft(件数, "カードセットIDのレコード数").toBe(0); });
@@ -399,7 +399,7 @@ caseTest("IT-M14-08-036", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await 編集画面を開く(page, notes.get("〔カードセットID-M1408-036〕")); });
   await step(2, async () => { await page.locator('a.btn-ec-delete[data-bs-target="#DeleteModal"]').click({ timeout: 20_000 }); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 30_000 }), page.locator('#DeleteModal [data-method="delete"]').click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator('#DeleteModal [data-method="delete"]').click({ timeout: 20_000, noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移先（カードセット一覧）").toMatch(/\/cardset(\/page\/\d+)?$/);
@@ -414,7 +414,7 @@ caseTest("IT-M14-08-038", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await 編集画面を開く(page, id); });
   await step(2, async () => { await page.locator('a.btn-ec-delete[data-bs-target="#DeleteModal"]').click({ timeout: 20_000 }); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 30_000 }), page.locator('#DeleteModal [data-method="delete"]').click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator('#DeleteModal [data-method="delete"]').click({ timeout: 20_000, noWaitAfter: true })]);
   });
   await step(4, async () => { 件数 = カードセットIDの件数(id); });
   await expected(async () => { expect.soft(件数, "収録カードがあるカードセットのレコード数（削除されない）").toBe(1); });
@@ -425,10 +425,11 @@ caseTest("IT-M14-08-039", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await 編集画面を開く(page, notes.get("〔カードセットID-M1408-039〕")); });
   await step(2, async () => { await page.locator('a.btn-ec-delete[data-bs-target="#DeleteModal"]').click({ timeout: 20_000 }); });
   await step(3, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 30_000 }), page.locator('#DeleteModal [data-method="delete"]').click({ timeout: 20_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), page.locator('#DeleteModal [data-method="delete"]').click({ timeout: 20_000, noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "遷移先（カードセット一覧）").toMatch(/\/cardset(\/page\/\d+)?$/);
+    expect.soft(await page.locator("#page_count_pulldown").count(), "カードセット一覧の表示件数の選択欄").toBe(1);
   });
 });
 

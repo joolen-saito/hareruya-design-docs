@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { REPO_ROOT } from "../../config/env";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
-import { ensureTenant } from "./tenant";
+import { ensureTenant } from "./tenant_k";
 
 /** 画像の入力ファイル（fixtures/m09-10。中身の作りは同じ場所の README.md） */
 const FIXTURES = join(REPO_ROOT, "e2e", "fixtures", "m09-10");

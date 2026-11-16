@@ -212,6 +212,11 @@ caseTest("IT-M14-10-052", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     expect.soft(選択肢, "フォーマットの選択肢に「リンク基準001」がある").toContain(名("リンク基準001"));
     expect.soft(選択肢, "フォーマットの選択肢に「リンク表示001」が無い").not.toContain(名("リンク表示001"));
+    // モーダルをフォーマットの欄までスクロールして、選択肢を画像に並べる（リンク基準001に赤い枠。リンク表示001が無いことを示す）
+    const s = new FrontDetailSearch(page);
+    await s.フォーマットの選択肢の要素(名("リンク基準001")).scrollIntoViewIfNeeded();
+    await expect.soft(s.フォーマットの選択肢の要素(名("リンク基準001")), `フォーマットの選択肢に「${名("リンク基準001")}」がある（選択肢の全体：${選択肢.join("・")}）`).toBeVisible();
+    await expect.soft(s.フォーマットの選択肢の要素(名("リンク表示001")), `フォーマットの選択肢に「${名("リンク表示001")}」が無い（選択肢の全体：${選択肢.join("・")}）`).toHaveCount(0);
   });
 });
 
@@ -239,8 +244,12 @@ caseTest("IT-M14-10-053", async ({ page, notes, step, expected }) => {
   await step(5, async () => { await list.open(); });
   await step(6, async () => { 名前 = (await list.行()).map((r) => r.フォーマット名); });
   await expected(async () => {
-    expect.soft(名前, "フォーマット一覧に「リンク削除002 / LinkDel002」が無い").not.toContain(`${名("リンク削除002")} / ${名("LinkDel002")}`);
-    expect.soft(名前, "フォーマット一覧に「リンク残存002 / LinkRemain002」がある").toContain(`${名("リンク残存002")} / ${名("LinkRemain002")}`);
+    const B = notes.get("〔フォーマットID-M1410-053B〕");
+    expect.soft(名前.includes(`${名("リンク削除002")} / ${名("LinkDel002")}`), `フォーマット一覧に「リンク削除002 / LinkDel002」が無い（フォーマットID ${A} の行が見つからない。一覧 ${名前.length}件）`).toBe(false);
+    expect.soft(名前.includes(`${名("リンク残存002")} / ${名("LinkRemain002")}`), `フォーマット一覧に「リンク残存002 / LinkRemain002」がある（一覧 ${名前.length}件）`).toBe(true);
+    // 対象の行だけに赤い枠を付ける（残る側の行を囲み、消えた側はIDで探して無いことを示す）
+    await expect.soft(list.フォーマット名リンク(B), `フォーマット一覧の「リンク残存002 / LinkRemain002」の行（フォーマットID ${B}）`).toBeVisible();
+    await expect.soft(list.フォーマット名リンク(A), `フォーマット一覧に「リンク削除002 / LinkDel002」の行（フォーマットID ${A}）が無い`).toHaveCount(0);
   });
 });
 

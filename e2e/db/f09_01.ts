@@ -46,8 +46,8 @@ export type デッキの行 = { 件数: number[]; 更新日時: string[] };
 /** プレイヤー名ごとのデッキの件数と更新日時（日本時間の「yyyy/mm/dd hh:mm:ss」。渡した名前の順） */
 export function プレイヤー名のデッキの更新日時(プレイヤー名: string[]): デッキの行 {
   const rows = プレイヤー名.map((n) => query(
-    "select count(*) as n, min(to_char(update_date at time zone 'Asia/Tokyo', 'YYYY/MM/DD HH24:MI:SS')) as t from dtb_deck where player_name = $1 and deleted_at is null",
+    "select count(*) as n, min(to_char(update_date at time zone 'Asia/Tokyo', 'YYYY/MM/DD HH24:MI:SS')) as tt from dtb_deck where player_name = $1 and deleted_at is null",
     [n],
   )[0]);
-  return { 件数: rows.map((r) => Number(r.n)), 更新日時: rows.map((r) => r.t ?? "") };
+  return { 件数: rows.map((r) => Number(r.n)), 更新日時: rows.map((r) => r.tt ?? "") };
 }

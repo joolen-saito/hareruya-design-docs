@@ -34,6 +34,7 @@ import { loggedInMemberName, StockApprovalListPage } from "../pages/admin/stock_
 import { 会員登録する, 条件つきで申込む } from "../pages/front/m07_03_apply";
 import { ログインする } from "../pages/front/m07_net_buy";
 import { 試験管理者を用意する } from "./m07-common";
+import { まとめて買取の明細をDBで作る, 個別入力商品をDBで作る } from "./m07-db-prep";
 
 export const M0703B_ADMIN: Account = { loginId: "m0703_admin", password: "Passw0rd!M0703" };
 export const M0703B_ADMIN_NAME = "M07-03試験管理者";
@@ -47,8 +48,9 @@ export const 買取の会員 = new Map<string, { メール: string; 会員ID: st
 
 // ---- 共有のシード ----
 
-defineSeed("S-M07-03-ADM", async ({ browser }) => {
+defineSeed("S-M07-03-ADM", async ({ browser, seed }) => {
   await 試験管理者を用意する(browser, M0703B_ADMIN, M0703B_ADMIN_NAME);
+  reportSeedIssue(seed.シードID, "シード作成時の問題: シード表は「ネット買取管理を操作可能／入庫専用権限なし」。アプリには入庫専用の権限が無く（設計書 M07-03 L0053「入庫の特別な権限は不要」）、権限の選択肢はシステム管理者・モール・店舗の各オーナー／オペレーターだけで、ネット買取管理を操作できる権限としてシステム管理者を付けた。特別な入庫権限は付けていない");
 });
 
 /** 買取検索一覧の「買取状況」の選択肢に、名前が揃っていることを確かめる（既存のマスタを使う） */
@@ -119,6 +121,8 @@ export async function 商品IDを画面で引く(page: import("@playwright/test"
 export type 明細の入力 = { コード: string; 査定価格?: string; 数量?: string; 売却?: "する" | "しない" | "未定" };
 export type 保存の内容 = {
   査定?: 明細の入力[]; 送料?: string; メモ?: string; 身分証明書?: string; 振込依頼可能?: boolean; 状況?: string;
+  /** 依頼者情報の都道府県・職業・身分証明書・口座種別を、ここに書いた値「以外」の選択肢にしておく（ケースが選ぶ値と別の値から始め、保存された値を読み直すだけで合格にならないようにする） */
+  別の値から?: { 都道府県?: string; 職業?: string; 身分証明書?: string; 口座種別?: string };
 };
 export type 買取の作り方 = {
   /** シード表の番号（買取NNN の NNN） */
@@ -149,6 +153,16 @@ export type 買取の作り方 = {
 export type 作った買取 = { 番号: string; メール: string; 会員ID: string; 前の番号?: string };
 /** シードIDごとの、作った買取（呼び名を控えないシード＝正本が買取IDを決め打ちにしているもの が使う） */
 export const 作った買取一覧 = new Map<string, 作った買取>();
+/**
+ * 正本が買取IDを決め打ちにし、シード表が呼び名〔…〕で「控える」と定めていないシード（S-M07-03-CASE-003・005 など）の、
+ * 画面が振った買取番号。控えた番号（notes）に入れると基盤（lib/seeds.ts）が「シード表に無い呼び名を控えた」で止めるので、
+ * 同じ実行の中だけの表（作った買取一覧）から引く（seeds/m08-04.ts の「振られた買取ID」と同じやり方）
+ */
+export function 作った買取番号を引く(seedId: string): string {
+  const v = 作った買取一覧.get(seedId);
+  if (!v) throw new Error(`${seedId} の買取はまだ作っていない（そのシードを作っていないか、シードIDの誤り）`);
+  return v.番号;
+}
 
 let 本店: string | null = null;
 
@@ -156,6 +170,13 @@ export async function 在庫を入れる(browser: Browser, seedId: string, コ�
   const issue = (m: string) => reportSeedIssue(seedId, m);
   if (!本店) 本店 = await 本店の店名(browser);
   const shop = 本店;
+  // 登録の前からある行（ほかの人・前の実行の申請）の番号を控える。登録のあとに増えた行だけを、この登録の申請とみなす
+  const 前からある = await withAdminSession(browser, M0703B_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const list = new StockApprovalListPage(page);
+    await list.open(shop);
+    return new Set((await list.rowValues()).map((r) => r.id));
+  });
   const 登録者 = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     await registerStockChangeCsv(page, {
@@ -170,11 +191,11 @@ export async function 在庫を入れる(browser: Browser, seedId: string, コ�
     page.setDefaultTimeout(60_000);
     const list = new StockApprovalListPage(page);
     await list.open(shop);
-    const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === 登録者 && r.quantity === total && r.changeType.endsWith("入庫/その他"));
-    if (rows.length === 0) throw new Error(`${seedId}: 在庫編集承認一覧に、${登録者} の在庫変更CSV登録（合計 ${total}）の未承認の行が無い`);
-    const newest = rows.sort((a, b) => Number(b.id) - Number(a.id))[0];
-    if (rows.length > 1) issue(`在庫編集承認一覧に同じ条件の未承認の行が ${rows.length} 件あり、いちばん新しい行を承認した`);
-    await list.approve([newest.id], `${seedId} の在庫変更CSV登録の承認`, issue);
+    const rows = (await list.rowValues()).filter((r) => !前からある.has(r.id) && r.status === "未承認" && r.registrant === 登録者 && r.quantity === total && r.changeType.endsWith("入庫/その他"));
+    if (rows.length === 0) throw new Error(`${seedId}: 在庫編集承認一覧に、${登録者} の在庫変更CSV登録（合計 ${total}）の未承認の行が、登録のあとに増えていない`);
+    // 同じ条件の行が登録のあとに2件以上増えたときは、どれがこの登録の申請か決められない（ほかの人の申請を承認しない）ので止める
+    if (rows.length > 1) throw new Error(`${seedId}: 登録のあとに、同じ条件（${登録者}・合計 ${total}・入庫/その他）の未承認の行が ${rows.length} 件増えた。この登録の申請を一意に決められないので承認しない`);
+    await list.approve([rows[0].id], `${seedId} の在庫変更CSV登録の承認`, issue);
   });
 }
 
@@ -207,6 +228,11 @@ export async function 会員を用意する(browser: Browser, seedId: string, v:
     if (状態 === "仮会員") issue(`会員 ${v.メール} はフロントの登録で仮会員になった。本登録のメールは読まず、管理画面の会員登録編集で「本会員」にした`);
     await edit.選ぶ("status", "本会員");
     await edit.選ぶ("job", "会社員");
+    // 住所3は会員情報登録画面に出ない（国が日本のとき）ので、会員登録編集で入れる
+    if (v.住所3 !== undefined && (await edit.get("address][addr03")) !== v.住所3) {
+      await edit.set("address][addr03", v.住所3);
+      issue(`会員 ${v.メール} の住所3「${v.住所3}」は、会員情報登録画面に欄が無い（国が日本のときは出ない）ので、管理画面の会員登録編集で入れた`);
+    }
     if (v.本人確認) await edit.ラジオを選ぶ("Player][IdentityConfirmStatus", v.本人確認);
     await edit.登録する("続行");
     const ng = await edit.エラー文();
@@ -230,6 +256,22 @@ export async function 保存まで行う(browser: Browser, 番号: string, 内�
     if (内容.身分証明書) {
       await e.依頼者情報の編集を押す();
       await e.依頼者の選択欄を選ぶ("Identification", 内容.身分証明書);
+      await e.依頼者情報の編集を押す();
+    }
+    if (内容.別の値から) {
+      await e.依頼者情報の編集を押す();
+      const 別の値 = async (sel: ReturnType<typeof e.f>, 除く: string): Promise<string> => {
+        const have = (await sel.locator("option").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).filter(Boolean);
+        const 選ぶ = have.find((t) => t !== 除く && !/選択|^-+$/.test(t));
+        if (!選ぶ) throw new Error(`「${除く}」以外の選択肢が無い（${have.join("、")}）`);
+        await sel.selectOption({ label: 選ぶ });
+        return 選ぶ;
+      };
+      const w = 内容.別の値から;
+      if (w.都道府県) await 別の値(e.f("Pref"), w.都道府県);
+      if (w.職業) await 別の値(e.f("Job"), w.職業);
+      if (w.身分証明書) await 別の値(e.f("Identification"), w.身分証明書);
+      if (w.口座種別) await 別の値(e.口座("accountTypeId"), w.口座種別);
       await e.依頼者情報の編集を押す();
     }
     if (内容.振込依頼可能 !== undefined) await e.振込状況を設定する({ 振込依頼可能: 内容.振込依頼可能 });
@@ -302,6 +344,9 @@ export function defineBuySeed(seedId: string, v: 買取の作り方, needs: stri
     for (const m of v.読み替え ?? []) issue(`シード作成時の問題: ${m}`);
     const text = seed["状態・属性"] + seed.投入方法;
     for (const l of new Set(text.match(/〔買取番号-M0703-[^〕]+〕/g) ?? [])) notes.set(l, l === v.前の買取?.呼び名 && 前の番号 ? 前の番号 : 番号);
+    // シード表が呼び名を書かず「買取ID=7004003」のように決め打ちの ID で書いたシード（003・005）は、呼び名で控えない。
+    // 控えると基盤が「シード表に無い呼び名を控えた」で止める（2026-11-13 開発環境の IT-M07-03-003。022 も〔…022〕を余計に控えて止まるところだった）。
+    // ケースは 作った買取一覧（作った買取番号を引く）から番号を引く
     for (const l of new Set(text.match(/〔会員番号-M0703-[^〕]+〕/g) ?? [])) notes.set(l, 会員ID);
   });
 }
@@ -337,17 +382,33 @@ defineBuySeed("S-M07-03-CASE-011", {
     });
   },
 });
-defineBuySeed("S-M07-03-CASE-014", { n: "014", 保存: [{ ...承諾, 送料: "300", メモ: "編集前メモ" }], 読み替え: ["まとめて買取の明細と個別入力商品はDBで登録する定めで、画面で作れないので作っていない（選んで買取だけの買取）"] });
+/** 3区分の明細のうち、画面で作れない「まとめて買取」「個別入力商品」を、画面で作った印つきの買取にDBで1件ずつ足す（依頼者の承認 2026-11-10「印つきデータは何でも」。seeds/m07-03-c.ts と同じ作り方） */
+function 残りの2区分を足す(n: string): (b: Browser, issue: (m: string) => void, a: 作った買取) => Promise<void> {
+  return async (_b, _issue, a) => {
+    まとめて買取の明細をDBで作る(a.番号, a.メール, [{ 商品コード: 品(`M0703-${n}-BLK`), 査定価格: 100, 数量: 1, 売却: "未定" }]);
+    個別入力商品をDBで作る(a.番号, a.メール, [{ 名前: 品(`M0703-${n}-IND`), 査定金額: 200, 数量: 1, 売却: "未定" }]);
+  };
+}
+defineBuySeed("S-M07-03-CASE-014", {
+  n: "014", 保存: [{ ...承諾, 送料: "300", メモ: "編集前メモ" }], 別の商品: ["M0703-014-BLK"], 後で: 残りの2区分を足す("014"),
+  読み替え: ["3区分の明細は、選んで買取（申込みの明細）を画面で、まとめて買取 M0703-014-BLK（100×1・売却未定）と個別入力商品 M0703-014-IND（200×1・売却未定）をDBで作った（値はシード表に無いので決めた）"],
+});
 defineBuySeed("S-M07-03-CASE-016", { n: "016", 保存: [{ ...承諾, 送料: "300", メモ: "編集前メモ" }], 読み替え: ["まとめて買取の明細と個別入力商品はDBで登録する定めで、画面で作れないので作っていない（選んで買取だけの買取）"] });
 defineBuySeed("S-M07-03-CASE-019", { n: "019" });
 defineBuySeed("S-M07-03-CASE-020", { n: "020" });
 defineBuySeed("S-M07-03-CASE-021", { n: "021" });
-defineBuySeed("S-M07-03-CASE-024", { n: "024", 住所3: "神田0-0-0", 保存: [{ ...承諾, 送料: "300", メモ: "編集前メモ" }], 読み替え: ["まとめて買取の明細と個別入力商品（売却未定）はDBで登録する定めで、画面で作れないので作っていない（選んで買取の売却未定の明細だけ）"] });
+defineBuySeed("S-M07-03-CASE-024", {
+  n: "024", 住所3: "神田0-0-0", 保存: [{ ...承諾, 送料: "300", メモ: "編集前メモ" }], 別の商品: ["M0703-024-BLK"], 後で: 残りの2区分を足す("024"),
+  読み替え: ["3区分の明細（売却未定）は、選んで買取（申込みの明細）を画面で、まとめて買取 M0703-024-BLK（100×1）と個別入力商品 M0703-024-IND（200×1）をDBで作った（値はシード表に無いので決めた）"],
+});
 defineBuySeed("S-M07-03-CASE-025", { n: "025", 保存: [{ 状況: "商品到着" }, 承諾, { 身分証明書: 身分証, 状況: "振込依頼済み" }], 読み替え: ["申込み時の注文の履歴をDBで消す定めだが消していない（履歴は注文を含む4件）。ケースが確かめるのは振込失敗の履歴の件数"] });
 defineBuySeed("S-M07-03-CASE-026", { n: "026", 保存: [承諾] });
 defineBuySeed("S-M07-03-CASE-029", { n: "029", 住所3: "1-1-1", 登録番号: "T0000000000029", 保存: [{ 身分証明書: 身分証 }] });
 defineBuySeed("S-M07-03-CASE-031", { n: "031", メール: "buyer7010-031", 電話: ["03", "1123", "4567"], 口座番号: "7654321" });
-defineBuySeed("S-M07-03-CASE-033", { n: "033", 保存: [{ 身分証明書: 身分証 }] });
+defineBuySeed("S-M07-03-CASE-033", {
+  n: "033", 保存: [{ 別の値から: { 都道府県: "東京都", 職業: "会社員", 身分証明書: 身分証, 口座種別: "普通" } }],
+  読み替え: ["正本は「有効な初期値」だが、ケースが選ぶ4つの値と同じ値のままでは、選んだ値が保存されたことを示せない。そこで依頼者情報の都道府県・職業・身分証明書・口座種別を、ケースが選ぶ値以外の選択肢で保存しておいた"],
+});
 defineBuySeed("S-M07-03-CASE-034", { n: "034" });
 defineBuySeed("S-M07-03-CASE-036", { n: "036", 登録番号: "T0000000000036" });
 defineBuySeed("S-M07-03-CASE-039", { n: "039", 登録番号: "T0000000000039" });

@@ -129,8 +129,8 @@ export class M08CustomerEditPage {
     await expect(pop, "オンライン本人確認のポップアップ").toBeVisible({ timeout: T });
     if (身分証有効期限) await this.f("Player][id_expiration_date").fill(身分証有効期限, { timeout: T });
     await Promise.all([
-      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
-      pop.locator("#submit_confirm").click({ timeout: T }),
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}),
+      pop.locator("#submit_confirm").click({ timeout: T, noWaitAfter: true }),
     ]);
     await this.page.waitForLoadState("load");
   }
@@ -167,7 +167,7 @@ export class M08CustomerEditPage {
     await sel.scrollIntoViewIfNeeded();
     const label = await sel.locator("option").evaluateAll((os) => (os as HTMLOptionElement[]).map((o) => (o.textContent ?? "").trim()).find((t) => /^100\D*$/.test(t)) ?? "");
     if (!label) throw new Error("件数プルダウンに100件が無い");
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 45_000 }), sel.selectOption({ label })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), sel.selectOption({ label })]);
     await this.page.waitForLoadState("load");
   }
 
@@ -199,7 +199,7 @@ export class M08CustomerEditPage {
     const modal = this.お届け先の行(氏名).locator(".modal.show, .modal");
     const btn = modal.locator("a.btn-ec-delete");
     await expect(btn, "お届け先削除のモーダルの削除ボタン").toBeVisible({ timeout: T });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), btn.click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), btn.click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
 }

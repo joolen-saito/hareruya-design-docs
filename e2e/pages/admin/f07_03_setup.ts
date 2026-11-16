@@ -12,7 +12,9 @@ import { ensureMember } from "./member";
 import { registerSchedule, ScheduleInput, turnOffOnlineEntry } from "./schedule";
 
 /** シード表の開催店舗（店舗ID 1）・フォーマット（フォーマットID 1）・参加対象者層（ID 6） */
-export const 開催店舗 = "トーナメントセンター東京";
+export const シード表の開催店舗名 = "トーナメントセンター東京";
+/** 画面に出る店舗ID 1の店名（シード表の名前は間の空白が無い。店舗IDで同じ店と確かめて、画面の店名を使う） */
+export const 開催店舗 = "トーナメントセンター 東京";
 export const 開催フォーマット = "スタンダード";
 export const 参加対象者層 = "初心者向け";
 

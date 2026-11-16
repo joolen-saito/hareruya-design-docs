@@ -30,7 +30,7 @@ async function 編集画面を開く(page: Page, step: Step, 検索語: string, 
   await step(2, async () => {
     const 行 = l.行(デッキID);
     await expect(行, "検索結果のデッキの行").toBeVisible();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), 行.locator('a[href$="/edit"]').first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), 行.locator('a[href$="/edit"]').first().click({ noWaitAfter: true })]);
   });
 }
 
@@ -46,7 +46,9 @@ function ボタン(n: string, 表示: boolean): CaseBody {
     await step(3, async () => { await expect(右の操作(page), "画面下部の操作ボタン").toBeVisible(); });
     await expected(async () => {
       if (表示) {
-        for (const 名前 of ["更新", "削除", "複製 >"]) await expect.soft(右の操作(page).getByRole("button", { name: 名前, exact: true }), `「${名前}」ボタン`).toBeVisible();
+        for (const 名前 of ["更新", "削除"]) await expect.soft(右の操作(page).getByRole("button", { name: 名前, exact: true }), `「${名前}」ボタン`).toBeVisible();
+        note("正本の「複製 >」ボタンは、画面では文言「複製」のボタン（デッキ情報複製のポップアップを開く）。文言の違いは読み替え、そのボタンが表示されることを確かめた");
+        await expect.soft(右の操作(page).locator('[data-bs-target="#copyModal"]'), "「複製 >」ボタン（画面の文言は「複製」）").toBeVisible();
       } else {
         expect.soft(await 右の操作(page).getByRole("button", { name: "新規登録", exact: true }).count(), "「新規登録」ボタンの数").toBe(0);
       }
@@ -139,7 +141,7 @@ caseTest("IT-M15-05-012", async ({ page, notes, step, expected }) => {
   await step(2, async () => {
     const 乙 = l.行(notes.get("〔デッキID-M1505-012B〕"));
     await expect(乙, "検索結果の乙のデッキの行").toBeVisible();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), 乙.locator('a[href$="/edit"]').first().click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), 乙.locator('a[href$="/edit"]').first().click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(await f(page, "deckName").inputValue(), "編集画面のデッキ名").toBe(`${語("012")}-乙`);
@@ -150,7 +152,7 @@ caseTest("IT-M15-05-012", async ({ page, notes, step, expected }) => {
 caseTest("IT-M15-05-013", async ({ page, notes, step, expected }) => {
   await login(page);
   await 編集画面を開く(page, step, `${語("013")}-デッキ`, 単一デッキ("013", notes));
-  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), 右の操作(page).getByRole("link", { name: "戻る", exact: true }).click()]); });
+  await step(3, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), 右の操作(page).getByRole("link", { name: "戻る", exact: true }).click({ noWaitAfter: true })]); });
   await expected(async () => {
     const l = new デッキ一覧(page);
     expect.soft(new URL(page.url()).pathname.replace(/\/$/, "").endsWith("/deck"), "戻った画面のアドレス（デッキ一覧）").toBe(true);
@@ -163,7 +165,7 @@ caseTest("IT-M15-05-013", async ({ page, notes, step, expected }) => {
 async function 新規登録で選ぶ(page: Page, step: Step): Promise<void> {
   const l = new デッキ一覧(page);
   await step(1, async () => { await l.開く(); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.新規登録.click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.新規登録.click({ noWaitAfter: true })]); });
   await step(3, async () => { await f(page, "Format").selectOption({ label: 名("標準") }); });
 }
 const 代表カード名 = (page: Page) => page.locator("#selectedCardImageName");
@@ -231,7 +233,7 @@ caseTest("IT-M15-05-022", async ({ page, notes, step, expected }) => {
 async function イベント検索を開く(page: Page, step: Step): Promise<void> {
   const l = new デッキ一覧(page);
   await step(1, async () => { await l.開く(); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.新規登録.click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.新規登録.click({ noWaitAfter: true })]); });
   await step(3, async () => { await page.locator('[data-bs-target="#searchEventModal"]').click(); await expect(page.locator("#searchEventModal"), "イベント検索のポップアップ").toBeVisible(); });
 }
 const 結果 = (page: Page) => page.locator("#event_search_results");
@@ -241,7 +243,7 @@ caseTest("IT-M15-05-027", async ({ page, step, expected }) => {
   await login(page);
   const l = new デッキ一覧(page);
   await step(1, async () => { await l.開く(); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.新規登録.click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.新規登録.click({ noWaitAfter: true })]); });
   await step(3, async () => { await page.locator('[data-bs-target="#searchEventModal"]').click(); await expect(page.locator("#searchEventModal"), "イベント検索のポップアップ").toBeVisible(); });
   await step(4, async () => { await page.locator("#event_search_word").fill(`${語("027")}-甲大会`); await page.locator("#btn_search_event").click(); await expect(結果(page).locator("table, p").first(), "検索結果").toBeVisible({ timeout: 30_000 }); });
   await expected(async () => {
@@ -257,7 +259,7 @@ caseTest("IT-M15-05-028", async ({ page, step, expected }) => {
   await login(page);
   const l = new デッキ一覧(page);
   await step(1, async () => { await l.開く(); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.新規登録.click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.新規登録.click({ noWaitAfter: true })]); });
   await step(3, async () => { await page.locator('[data-bs-target="#searchEventModal"]').click(); await expect(page.locator("#searchEventModal"), "イベント検索のポップアップ").toBeVisible(); });
   await step(4, async () => {
     await page.locator("#event_search_word").fill(語("028"));
@@ -277,7 +279,7 @@ caseTest("IT-M15-05-029", async ({ page, step, expected }) => {
   await login(page);
   const l = new デッキ一覧(page);
   await step(1, async () => { await l.開く(); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.新規登録.click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.新規登録.click({ noWaitAfter: true })]); });
   await step(3, async () => { await page.locator('[data-bs-target="#searchEventModal"]').click(); await expect(page.locator("#searchEventModal"), "イベント検索のポップアップ").toBeVisible(); });
   await step(4, async () => { await page.locator("#event_search_word").fill(`${語("029")}-複数大会`); await page.locator("#btn_search_event").click(); await expect(結果(page).locator("table, p").first(), "検索結果").toBeVisible({ timeout: 30_000 }); });
   await expected(async () => {
@@ -293,7 +295,7 @@ function イベントAを選ぶ(n: string, 続き: boolean): CaseBody {
   await login(page);
   const l = new デッキ一覧(page);
   await step(1, async () => { await l.開く(); });
-  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.新規登録.click()]); });
+  await step(2, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.新規登録.click({ noWaitAfter: true })]); });
   await step(3, async () => {
     await page.locator('[data-bs-target="#searchEventModal"]').click();
     await expect(page.locator("#searchEventModal"), "イベント検索のポップアップ").toBeVisible();

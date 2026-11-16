@@ -49,14 +49,20 @@ caseTest("IT-M05-20-014", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M0520_ADMIN);
   const d = new StandbyDetailPage(page);
   let 件数 = -1;
+  let r = { 応答: 0, 送信先: "" };
   await step(1, async () => { await d.open(notes.get("〔出荷指示リストID-M0520-014〕")); });
   await step(2, async () => { await d.備考欄.fill("未登録ID更新"); });
   await step(3, async () => { await d.登録フォームの送信先IDを書き換える("999999"); });
-  await step(4, async () => { await d.登録を押す(); });
+  await step(4, async () => {
+    r = await d.登録を押す();
+    // 送信先を書き換えられずに元の出荷指示リストへ送っていても「999999 が無い」は成り立つので、書き換えた送信先へ送ったことを確かめる
+    expect(r.送信先, "登録の要求を、書き換えた送信先（出荷指示リストID 999999）へ送った").toMatch(/\/standby\/999999\/update$/);
+  });
   await step(5, async () => { 件数 = 出荷指示リストの件数("999999"); });
   await expected(async () => {
     expect.soft(件数, "出荷指示リストID 999999が作成されない（登録されている件数）").toBe(0);
   });
+  note(`登録の要求の応答: ${r.応答}（送信先 ${r.送信先}）`);
 });
 
 caseTest("IT-M05-20-025", async ({ page, notes, step, expected }) => {

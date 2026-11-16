@@ -35,7 +35,7 @@ import { readLanguageIds } from "../pages/admin/m03_23_seed_products";
 import { addClass, openClassList } from "../pages/admin/m03_30_products";
 import { savePublishedClass } from "../pages/admin/f03_07_restock";
 import {
-  F0504カードを登録する, カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 単体カード配下のカテゴリID, 登録済みの割引率ID, 規格IDを選ぶ,
+  F0504カードを登録する, カード商品CSVの公開の値, カード商品CSVの見出し, カード商品CSVを登録する, 商品名で商品IDを読む, 単体カード配下のカテゴリID, 登録済みの割引率ID, 規格IDを選ぶ,
   商品規格一覧を読む,
 } from "../pages/admin/f05_04_products";
 import { ensureCardset } from "../pages/admin/product_masters";
@@ -98,6 +98,8 @@ async function カード商品を作る(browser: Browser, d: 定義, issue: (m: 
     const discountId = (await 登録済みの割引率ID(page)).id;
     const sellGroup = await readExistingSellGroupName(page);
     const headers = await カード商品CSVの見出し(page);
+    const 公開 = await カード商品CSVの公開の値(page);
+    issue(`${d.seedId}: カード商品CSVの商品公開ステータスは、シード表の「2」（公開のつもり）でなく、画面のCSVの形式の説明で「公開」に当たる値 ${公開.商品公開ステータス} を入れた（説明では 1:公開 2:非公開 3:廃止。2 を入れると非公開になる）。支店の商品公開ステータスは ${公開.支店の商品公開ステータス}（公開）`);
     // カードを商品の数だけ登録し、カード商品CSVを1回で取り込む
     const rows: Record<string, string>[] = [];
     for (const [i, p] of d.products.entries()) {
@@ -108,7 +110,7 @@ async function カード商品を作る(browser: Browser, d: 定義, issue: (m: 
       }, `${d.seedId}: カード ${i + 1}`, issue);
       const price = String(p.price);
       rows.push({
-        "商品ID": "", "言語(ID)": lang.日本語, "商品公開ステータス": "2", "支店の商品公開ステータス": "1",
+        "商品ID": "", "言語(ID)": lang.日本語, "商品公開ステータス": 公開.商品公開ステータス, "支店の商品公開ステータス": 公開.支店の商品公開ステータス,
         "商品名(日)": name, "商品名(英)": name, "サイズ": "1", "重量": "1", "商品カテゴリ(ID)": categoryId,
         "購入グループ名称": sellGroup, "割引率(ID)": discountId, "基準価格": price, "販売価格": price, "買取価格": price,
         "カード詳細(ID)": reg.カード詳細IDs[0],
@@ -216,7 +218,8 @@ defineM1206Seed("S-M12-06-CBBULKPEND-016", {
 
 defineM1206Seed("S-M12-06-CBBULKDELOVER-017", {
   sfx: "CBBULKDELOVER-017", members: ["017A", "017B"],
-  keep: (l) => !/入荷通知依頼ID/.test(l) || /-017-(01A|11B)〕$/.test(l),
+  // シード表は商品規格IDを控えると定めない（商品IDと入荷通知依頼IDの2つだけ）ので、商品規格IDは控えない
+  keep: (l) => !/商品規格ID/.test(l) && (!/入荷通知依頼ID/.test(l) || /-017-(01A|11B)〕$/.test(l)),
   products: range(11).map((n) => ({ s: `017-${n}`, base: "組合せCSV商品単位削除", suffix: n, price: 1000 })),
   requests: range(11).flatMap((n) => [
     { id: `017-${n}A`, m: "017A", p: `017-${n}`, at: DEF_AT, deleted: DEF_DEL, bulk: true },

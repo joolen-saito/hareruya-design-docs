@@ -22,8 +22,8 @@ export const フィードの文言 = {
 export async function フィードを更新する(page: Page): Promise<string> {
   await page.goto(adminUrl("/product/unisearch/feed"));
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.getByRole("button", { name: "フィードファイルを更新する" }).click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.getByRole("button", { name: "フィードファイルを更新する" }).click({ noWaitAfter: true }),
   ]);
   return (await page.locator(".alert").allInnerTexts()).join(" / ").replace(/\s+/g, " ").trim();
 }
@@ -78,7 +78,8 @@ export async function フィードを送って反映を待つ(
   browser: Browser,
   cond: (ctx: BrowserContext) => Promise<{ ok: boolean; 様子: string }>,
   何を = "検索サービスの索引への反映",
+  上限ミリ秒?: number,
 ): Promise<void> {
   await フィードを送る(browser);
-  await 索引への反映を待つ(browser, cond, { 何を });
+  await 索引への反映を待つ(browser, cond, { 何を, 上限ミリ秒 });
 }

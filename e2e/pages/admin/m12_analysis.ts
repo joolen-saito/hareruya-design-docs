@@ -2,6 +2,7 @@
 import { expect, Locator, Page } from "@playwright/test";
 import { decodeCsvBytes, parseCsv } from "../../lib/csv";
 import { adminUrl } from "../../lib/session";
+import { topErrorAlerts } from "./common";
 
 /** フォーマット売上分析 集計一覧表示 */
 export class FormatSalesPage {
@@ -20,7 +21,7 @@ export class FormatSalesPage {
     this.店舗 = page.locator('input[name$="[store_enabled]"]');
     this.集計結果 = page.locator("#result_list");
     this.CSVリンク = page.locator('a[href*="/analysis/format-sales/export"]');
-    this.エラー = page.locator(".alert-danger");
+    this.エラー = topErrorAlerts(page); // 開発用の設定のときに常に出る帯は除く
   }
 
   async open(): Promise<void> {
@@ -39,7 +40,7 @@ export class FormatSalesPage {
 
   /** 検索ボタンを押し、日別の売上表（集計結果）が出るのを待つ */
   async 検索する(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.検索ボタン.click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), this.検索ボタン.click({ timeout: 20_000, noWaitAfter: true })]);
     await expect(this.集計結果, "集計結果（日別の売上表）").toBeVisible({ timeout: 30_000 });
   }
 
@@ -142,7 +143,7 @@ export class ProductRequestPage {
 
   /** 検索ボタンを押し、結果の画面（同じ画面）が出るのを待つ */
   async 検索する(): Promise<void> {
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.検索ボタン.click({ timeout: 20_000 })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), this.検索ボタン.click({ timeout: 20_000, noWaitAfter: true })]);
   }
 
   /** 依頼日(From)・(To)を空にし、キーワード検索を入れる（検索ボタンは押さない） */

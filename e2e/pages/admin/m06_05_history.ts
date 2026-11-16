@@ -9,6 +9,7 @@
 import { Download, expect, Page } from "@playwright/test";
 import { csvRecords, decodeCsvBytes } from "../../lib/csv";
 import { adminUrl } from "../../lib/session";
+import { topErrorAlerts } from "./common";
 
 const OPEN = 30_000;
 
@@ -19,7 +20,9 @@ export class HistoryPage {
   readonly 結果の表の行 = () => this.page.locator("#result_list_main table tbody tr");
   readonly ページング = () => this.page.locator("#result_list ul.pagination");
   readonly 表示件数の選択 = () => this.page.locator("#page_count_pulldown");
-  readonly 上部のエラー = () => this.page.locator(".alert-danger");
+  readonly 上部のエラー = () => topErrorAlerts(this.page);
+  /** 管理画面上部のエラーの帯。開発用の設定のときに常に出る「デバッグモードが有効になっています。」の帯は除く（それだけで「エラーが出た」にしない） */
+  readonly 上部のエラーの帯 = () => this.page.locator(".alert-danger").filter({ hasNotText: "デバッグモード" });
   readonly 買取店舗の選択 = () => this.page.locator("#search_box__shop select");
 
   /** 買取商品履歴(検索入力)画面を開く（メニューから開いたとき） */
@@ -152,7 +155,7 @@ export class HistoryPage {
   async 行を読む(): Promise<履歴の行[]> {
     return this.page.locator('#result_list_main table tbody tr[id^="result_list_main__item--"]').evaluateAll((trs) => trs.map((tr) => {
       const id = tr.id.replace("result_list_main__item--", "");
-      const cell = (name: string) => (tr.querySelector(`#result_list_main__${name}--${id}`)?.textContent ?? "").replace(/\s+/g, " ").trim();
+      const cell = (name: string) => ((tr.querySelector(`#result_list_main__${name}--${id}`) as HTMLElement | null)?.innerText ?? "").replace(/\s+/g, " ").trim();
       return {
         履歴ID: id, 査定番号: cell("assessment_id"), 申込者: cell("applicant"), 商品コード: cell("product_code"), 商品名: cell("product_name"),
         基準価格: cell("standard_price"), 買取価格: cell("buy_price"), 買取店舗: cell("shop"), 作業者: cell("member"), 買取数: cell("buy_quantity"),

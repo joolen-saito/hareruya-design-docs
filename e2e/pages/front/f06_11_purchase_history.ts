@@ -1,6 +1,7 @@
 /** F06-11 買取履歴一覧（フロントのマイページ）の操作。セレクタ・アドレスはここだけに書く。正本: cases/F06-11_test_cases.tsv */
 import { Locator, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { 押して移るのを待つ } from "./nav_click";
 
 const T = 30_000;
 export type 言語 = "ja" | "en";
@@ -16,7 +17,7 @@ export class PurchaseHistoryPage {
     const form = this.page.locator("form#login_mypage");
     await form.locator("#login_email").fill(メール, { timeout: T });
     await form.locator("#login_pass").fill(パスワード, { timeout: T });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), form.locator("button[type=submit]").click({ timeout: T })]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), form.locator("button[type=submit]").click({ timeout: T, noWaitAfter: true })]);
     await this.page.waitForLoadState("load");
   }
   async 履歴一覧を開く(): Promise<void> {
@@ -42,16 +43,8 @@ export class PurchaseHistoryPage {
   get マイページへ戻る(): Locator { return this.page.locator(".p-hareruya-history-list__btn a").first(); }
 
   async 押して遷移する(l: Locator): Promise<void> {
-    await l.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    const nav = this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 });
-    try {
-      await l.click({ timeout: 10_000 });
-    } catch (e) {
-      test.info().annotations.push({ type: "正本の外の補い", description: `この要素は固定ヘッダーが上に重なり、普通のクリックでは押せなかった。クリックの操作を要素へ直接送って続けた（${String(e).split("\n")[0].slice(0, 80)}）` });
-      await l.dispatchEvent("click");
-    }
-    await nav;
-    await this.page.waitForLoadState("load");
+    // 押す操作だけを行い、移るのを待つ（押せているのに click の待ちが時間切れになり、移った先で押し直してしまうのを防ぐ。pages/front/nav_click.ts）
+    await 押して移るのを待つ(this.page, l, { 直接送るときの注記: "正本の外の補い" });
   }
 }
 

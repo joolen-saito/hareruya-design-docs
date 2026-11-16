@@ -10,7 +10,7 @@ import { RUN_MARK, rc } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { withAdminSession } from "../lib/session";
-import { ensureTenant } from "../pages/admin/tenant";
+import { ensureTenant } from "../pages/admin/tenant_k";
 import { createTopByCsv } from "../pages/admin/category";
 import { downloadGoodsCsvTemplate, readExistingGoodsChildCategoryId } from "../pages/admin/m03_01_goods_csv";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";

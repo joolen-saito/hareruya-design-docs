@@ -14,8 +14,8 @@ async function レアリティを開く(page: Page): Promise<void> {
   await page.waitForLoadState("load");
   await page.locator('select[name="entity"]').selectOption({ label: "レアリティ" });
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('form[method="get"] button[type="submit"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('form[method="get"] button[type="submit"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expect(page.locator("form#edit_form table.mtg-master-table"), "レアリティの一覧").toBeVisible();
@@ -51,8 +51,8 @@ export async function レアリティを登録する(page: Page, v: { 日本語�
   await f("code").fill(v.コード);
   await f("sort_no").fill(String(sort));
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.locator('button[type="submit"][form="edit_form"]').click(),
+    page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
+    page.locator('button[type="submit"][form="edit_form"]').click({ noWaitAfter: true }),
   ]);
   await page.waitForLoadState("load");
   await expectSaved(page, `${what}: レアリティの登録`);
@@ -60,4 +60,23 @@ export async function レアリティを登録する(page: Page, v: { 日本語�
   const added = (await レアリティの行(page)).filter((r) => r.日本語名 === v.日本語名);
   if (added.length !== 1) throw new Error(`${what}: レアリティ「${v.日本語名}」を登録して ${added.length} 行になった（1行のはず）`);
   return added[0].id;
+}
+
+/**
+ * 決まった名前のレアリティを1度だけ作り、2回目からは同じ行を使い回す（番号を返す）。
+ * アプリのレアリティは名称(日)・名称(英)が16文字まで、コードが2文字まで（MtbRarity の列の長さ）。実行ごとの印つきの名前や
+ * 「F3」＋実行の印のコードでは長すぎて、保存がSQLのエラー（value too long for type character varying(16)）になった
+ * （2026-11-13 の IT-F05-03-011）。共有のマスタなので、実行のたびに行を足さない。コードは「Z1」〜「Z9」「Y1」〜… のうち空いているもの。
+ */
+export async function レアリティを用意する(page: Page, v: { 日本語名: string; 英語名: string }, what: string): Promise<string> {
+  if (v.日本語名.length > 16 || v.英語名.length > 16) throw new Error(`${what}: レアリティの名称は16文字まで（${v.日本語名}／${v.英語名}）`);
+  await レアリティを開く(page);
+  const rows = await レアリティの行(page);
+  const hit = rows.filter((r) => r.日本語名 === v.日本語名);
+  if (hit.length === 1) return hit[0].id;
+  if (hit.length > 1) throw new Error(`${what}: レアリティ「${v.日本語名}」が ${hit.length} 行ある（1行のはず）`);
+  const used = new Set(rows.map((r) => r.コード));
+  const code = ["Z", "Y", "X", "W"].flatMap((h) => [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `${h}${n}`)).find((c) => !used.has(c));
+  if (!code) throw new Error(`${what}: レアリティのコードに空きが無い`);
+  return レアリティを登録する(page, { ...v, コード: code }, what);
 }

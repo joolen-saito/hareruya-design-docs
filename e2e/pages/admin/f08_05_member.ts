@@ -27,7 +27,7 @@ export async function 会員登録編集の値(page: Page): Promise<Record<strin
 export async function 送信履歴を開く(page: Page): Promise<void> {
   const btn = page.locator('a[href*="/customer/mail/"][href$="/history"]').first();
   await expect(btn, "会員登録編集画面の「送信履歴」ボタン").toBeVisible({ timeout: T });
-  await Promise.all([page.waitForURL(/\/customer\/mail\/\d+\/history/, { timeout: 60_000 }), btn.click({ timeout: T })]);
+  await Promise.all([page.waitForURL(/\/customer\/mail\/\d+\/history/, { timeout: 120_000}), btn.click({ timeout: T, noWaitAfter: true })]);
   await page.waitForLoadState("load");
   await expect(page.locator("#mail-history-form"), "メール配信履歴の画面").toBeVisible({ timeout: T });
 }

@@ -29,7 +29,7 @@ import { defineSeed } from "./current_seed";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { ensureBlacklist } from "../pages/admin/f06_masters";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { ensureStore } from "../pages/admin/m04_24_reuse_k";
 import { customerIdByEmail } from "../pages/admin/m06_04_member";
 import { 管理画面で本会員にする } from "../pages/admin/member_activate";
 import { EntryPage } from "../pages/front/f06_01_entry";

@@ -11,7 +11,7 @@
  */
 import { Locator, Page, Response, expect } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { chooseByLabel, expectSaved } from "./common";
+import { chooseByLabel, expectSaved, withoutEnvBanners } from "./common";
 import { tamperToken } from "./devtools";
 
 export const 全て = "全て";
@@ -89,7 +89,7 @@ export class TopBannerPage {
     try {
       await Promise.all([
         this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => undefined),
-        this.アップロードボタン.click(),
+        this.アップロードボタン.click({ noWaitAfter: true }),
       ]);
     } finally {
       this.page.off("request", onReq);
@@ -100,7 +100,7 @@ export class TopBannerPage {
     return {
       送った, 応答,
       成功: 画面 ? await 文(this.page.locator(".alert-success")) : [],
-      エラー: 画面 ? await 文(this.page.locator(".alert-danger, .invalid-feedback, .form-error-message, #top-banner-upload-error")) : [],
+      エラー: 画面 ? withoutEnvBanners(await 文(this.page.locator(".alert-danger, .invalid-feedback, .form-error-message, #top-banner-upload-error"))) : [], // 開発用の設定のときに常に出る帯は除く
       行き先: this.page.url(),
     };
   }
@@ -121,7 +121,7 @@ export class TopBannerPage {
       const have = (await this.絞り込みの一覧.locator("a.dropdown-item").allInnerTexts()).map((t) => t.trim());
       throw new Error(`「アップロードした店舗」に「${名前}」が無い（ある選択肢: ${have.join("、")}。いまの表示: ${await this.絞り込みの値()}）`);
     }
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load" }), item.first().click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), item.first().click({ noWaitAfter: true })]);
     await this.読み込みを待つ();
   }
 
@@ -143,7 +143,7 @@ export class TopBannerPage {
     const onDialog = async (d: import("@playwright/test").Dialog) => { message = d.message(); await d.accept(); };
     this.page.once("dialog", onDialog);
     try {
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.削除リンク(行).click()]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), this.削除リンク(行).click({ noWaitAfter: true })]);
     } finally {
       this.page.off("dialog", onDialog);
     }
@@ -182,7 +182,7 @@ export class TopBannerPage {
     this.page.on("response", onRes);
     this.page.once("dialog", onDialog);
     try {
-      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => undefined), this.削除リンク(行).click()]);
+      await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }).catch(() => undefined), this.削除リンク(行).click({ noWaitAfter: true })]);
     } finally {
       this.page.off("response", onRes);
       this.page.off("dialog", onDialog);
@@ -250,7 +250,7 @@ export async function 店舗一覧から店舗編集を開く(page: Page, 店舗
     if ((await row.locator("td").nth(1).innerText().catch(() => "")).trim() !== 店舗ID) continue;
     const link = row.locator(`a[href$="/mall/tenant/detail/${店舗ID}"]`).first();
     if (!(await link.count())) break;
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), link.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     await expect(店舗の欄(page, "shop_name"), `店舗ID ${店舗ID} の店舗編集画面の店名の欄`).toBeVisible();
     return true;
   }

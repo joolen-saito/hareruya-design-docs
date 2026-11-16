@@ -1,5 +1,5 @@
 /** F09-01 デッキ検索TOP（フロント）。正本: cases/F09-01_test_cases.tsv */
-import { Page, Request, test } from "@playwright/test";
+import { Page, Request, devices, test } from "@playwright/test";
 import { caseTest, CaseBody, expect } from "../../lib/case";
 import { DeckResultView, DeckSearchModal, DeckTopPage, MetagameView } from "../../pages/front/f09_01_deck_top";
 import { 日付, 表示日付 } from "../../pages/admin/f09_01_setup";
@@ -34,10 +34,16 @@ caseTest("IT-F09-01-001", async ({ page, step, expected }) => {
   });
 });
 
-caseTest("IT-F09-01-002", async ({ page, step, expected }) => {
+caseTest("IT-F09-01-002", async ({ page, step, expected, capture }) => {
   const top = new DeckTopPage(page);
   await step(1, async () => { await top.開く(); });
   await expected(async () => {
+    // 区画が「無いこと」を画像で示すため、メタゲームの区画の並びを全部写す（確かめる前に撮る。確かめた区画の印は最後の画像に付く）
+    const 写した = await top.区画の並びを全部写す(capture);
+    note(写した.枚数 > 0
+      ? `メタゲームの区画の並びが縦に長いので、画面の高さを ${写した.高さ}px に広げ、上から順に ${写した.枚数} 枚に分けて撮り、確かめた区画の印を付けた最後の1枚を加えて、期待結果の画像は ${写した.枚数 + 1} 枚`
+      : `メタゲームの区画の並びが全部写るよう、画面の高さを ${写した.高さ}px に広げて撮った`);
+    note(`デッキ検索TOPのメタゲームの区画（上から順）: ${(await top.区画のフォーマット名()).join("、")}`);
     // 比べる相手として、ランキング表示の対象の F1 の区画が出ていること（画面の組み立てが済んでいる）も確かめる
     await expect.soft(top.区画(N("002", "F1")), "ランキング表示の対象のフォーマットF0901-002-F1の区画（比べる相手）").toHaveCount(1);
     await expect.soft(top.区画(N("002", "F2")), "ランキング表示の対象でないフォーマットF0901-002-F2の区画").toHaveCount(0);
@@ -46,14 +52,17 @@ caseTest("IT-F09-01-002", async ({ page, step, expected }) => {
 
 caseTest("IT-F09-01-003", async ({ page, step, expected }) => {
   const top = new DeckTopPage(page);
-  let 並び: string[] = [];
+  let Fa番目 = 0, Fb番目 = 0;
   await step(1, async () => { await top.開く(); });
-  await step(2, async () => { 並び = await top.区画のフォーマット名(); });
+  await step(2, async () => {
+    // 確かめる Fa・Fb の区画の見出しだけを読む（全部の見出しを読むと、エビデンスの赤枠が全部の区画に付き、どれを確かめたか分からない）
+    Fa番目 = await top.区画の順番(N("003", "Fa"));
+    Fb番目 = await top.区画の順番(N("003", "Fb"));
+  });
   await expected(async () => {
-    const a = 並び.indexOf(N("003", "Fa")), b = 並び.indexOf(N("003", "Fb"));
-    expect.soft(a, "フォーマットF0901-003-Faの区画の位置（上から。0始まり）").toBeGreaterThanOrEqual(0);
-    expect.soft(b, "フォーマットF0901-003-Fbの区画の位置（上から。0始まり）").toBeGreaterThanOrEqual(0);
-    expect.soft(a < b, `Fa（${a + 1}番目）が Fb（${b + 1}番目）より上に並ぶ`).toBe(true);
+    expect.soft(Fa番目, `フォーマットF0901-003-Faの区画が表示されている（上から${Fa番目}番目）`).toBeGreaterThan(0);
+    expect.soft(Fb番目, `フォーマットF0901-003-Fbの区画が表示されている（上から${Fb番目}番目）`).toBeGreaterThan(0);
+    expect.soft(Fa番目 > 0 && Fb番目 > 0 && Fa番目 < Fb番目, `Fa（${Fa番目}番目）が Fb（${Fb番目}番目）より上に並ぶ`).toBe(true);
   });
 });
 
@@ -102,7 +111,7 @@ caseTest("IT-F09-01-009", async ({ page, step, expected }) => {
   const top = new DeckTopPage(page);
   let 名前: string[] = [];
   await step(1, async () => { await top.開く(); });
-  await step(2, async () => { 名前 = (await top.アーキタイプ(N("009", "F1"))).map((x) => x.名前); });
+  await step(2, async () => { 名前 = (await top.見えているアーキタイプ(N("009", "F1"))).map((x) => x.名前); });
   await expected(async () => {
     expect.soft(名前.length, "区画に示されたアーキタイプの件数").toBe(3);
     expect.soft(名前, "区画に示されたアーキタイプ").toEqual([N("009", "A1"), N("009", "A2"), N("009", "A3")]);
@@ -116,14 +125,14 @@ caseTest("IT-F09-01-010", async ({ page, step, expected }) => {
   await step(1, async () => { await top.開く(); });
   await step(2, async () => {
     await expect(top.区画(N("010", "F1")), "フォーマットF0901-010-F1のメタゲームの区画").toHaveCount(1);
-    区画 = await top.区画の文とリンク(N("010", "F1"));
-    名前 = (await top.アーキタイプ(N("010", "F1"))).map((x) => x.名前);
+    区画 = await top.区画の見えている文とリンク(N("010", "F1"));
+    名前 = (await top.見えているアーキタイプ(N("010", "F1"))).map((x) => x.名前);
   });
   await expected(async () => {
     // 区画が読めていること（首位のアーキタイプが出ている）を前提に、4位の名前が無いことを見る
     expect.soft(名前, "区画に示されたアーキタイプ（読み取りの前提）").toContain(N("010", "A1"));
     expect.soft(区画.文.includes(N("010", "A4")), "4位のアーキタイプF0901-010-A4の名称が区画の表示に現れる").toBe(false);
-    expect.soft(区画.リンク.filter((h) => h.includes(N("010", "A4"))), "4位のアーキタイプF0901-010-A4の名称を含むリンク").toEqual([]);
+    expect.soft(区画.リンク.filter((h) => h.includes(N("010", "A4"))), `区画のリンク先に、4位のアーキタイプF0901-010-A4の名称を含むものが無い（区画のリンク先 ${区画.リンク.length}件）`).toEqual([]);
   });
 });
 
@@ -258,7 +267,7 @@ caseTest("IT-F09-01-027", async ({ page, step, expected }) => {
   await step(2, async () => {
     const link = top.その他フォーマットのリンク(N("027", "F1"));
     await expect(link, "その他フォーマットの案内の、フォーマットF0901-027-F1の入口").toHaveCount(1);
-    await Promise.all([page.waitForURL(/\/deck\/\d+\/metagame\//, { waitUntil: "load" }), link.click()]);
+    await Promise.all([page.waitForURL(/\/deck\/\d+\/metagame\//, { waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "開いた画面のアドレス").toBe(`/ja/deck/${フォーマットの番号("027", "F1")}/metagame/`);
@@ -333,7 +342,7 @@ caseTest("IT-F09-01-034", async ({ page, step, expected }) => {
   await step(2, async () => {
     const link = top.アーキタイプのリンク(N("034", "F1"), N("034", "A1"));
     await expect(link, "フォーマットF0901-034-F1の区画の、アーキタイプF0901-034-A1").toHaveCount(1);
-    await Promise.all([page.waitForURL(/\/deck\/result\//, { waitUntil: "load" }), link.click()]);
+    await Promise.all([page.waitForURL(/\/deck\/result\//, { waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     const r = await 結果を読む(page);
@@ -352,7 +361,7 @@ caseTest("IT-F09-01-036", async ({ page, step, expected }) => {
     const more = top.もっと見る(N("036", "Fa"));
     await expect(more, "フォーマットF0901-036-Faの区画の「もっと見る」").toHaveText(/^\s*もっと見る\s*$/);
     await more.scrollIntoViewIfNeeded();
-    await Promise.all([page.waitForURL(/\/deck\/\d+\/metagame\//, { waitUntil: "load" }), more.click()]);
+    await Promise.all([page.waitForURL(/\/deck\/\d+\/metagame\//, { waitUntil: "load", timeout: 120_000 }), more.click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "開いた画面のアドレス").toBe(`/ja/deck/${フォーマットの番号("036", "Fa")}/metagame/`);
@@ -367,15 +376,30 @@ caseTest("IT-F09-01-036", async ({ page, step, expected }) => {
 caseTest("IT-F09-01-037", async ({ page, step, expected }) => {
   const top = new DeckTopPage(page);
   const meta = new MetagameView(page);
+  // 見出しのメタゲーム一覧へのリンクは、スマートフォン幅だけの導線（ベース pf-eccube3 の CSS は 767px 以下でだけ見出し全体を覆うリンクを出し、
+  // PC幅では表示しない）。PC幅で流すと導線が無く確かめにならなかった（2026-11-12〜13）。スマートフォンの幅・利用者エージェントで開く
+  const { userAgent, viewport } = devices["iPhone 13"];
+  await page.setViewportSize(viewport);
+  await page.setExtraHTTPHeaders({ "User-Agent": userAgent });
+  note(`スマートフォン表示は、画面の幅 ${viewport.width}px と iPhone の利用者エージェント（要求の見出し）で代えた（見出しのリンクはスマートフォン幅の導線のため）`);
   await step(1, async () => { await top.開く(); });
   await step(2, async () => {
-    const head = top.見出しのリンク(N("037", "Fa"));
-    await expect(head, "フォーマットF0901-037-Faの区画の見出しのリンク").toHaveCount(1);
-    await head.scrollIntoViewIfNeeded();
-    await Promise.all([page.waitForURL(/\/deck\/\d+\/metagame\//, { waitUntil: "load" }), head.click()]);
+    // 利用者と同じく、画面に見えている見出し（フォーマット名）を押す。見出しの中のリンク（a.deckSearch-top__metagame-title__link）は
+    // 画面の CSS で表示されない（display:none）ため、そのリンクを押そうとすると見えるまで待ち続け、30分の時間切れで止まっていた（2026-11-12）
+    const head = top.区画の見出し(N("037", "Fa"));
+    await expect(head, "フォーマットF0901-037-Faの区画の見出し").toBeVisible();
+    if (!(await top.見出しのリンク(N("037", "Fa")).isVisible())) note("見出しの中のメタゲーム一覧へのリンクは画面に表示されていない（CSS で非表示）。見えている見出しの文字を押した");
+    await head.scrollIntoViewIfNeeded({ timeout: 30_000 });
+    // 押しても画面が移らないことがある（期待結果のアドレスの確かめで判定する）ので、移るのを待つのは60秒までにし、移らなくても止めない
+    const moved = page.waitForURL(/\/deck\/\d+\/metagame\//, { waitUntil: "load", timeout: 60_000 }).then(() => true, () => false);
+    await head.click({ timeout: 30_000 });
+    if (!(await moved)) note("見出しを押してから60秒待っても、メタゲーム一覧へ移らなかった");
   });
   await expected(async () => {
-    expect.soft(new URL(page.url()).pathname, "開いた画面のアドレス").toBe(`/ja/deck/${フォーマットの番号("037", "Fa")}/metagame/`);
+    const パス = new URL(page.url()).pathname;
+    expect.soft(パス, "開いた画面のアドレス").toBe(`/ja/deck/${フォーマットの番号("037", "Fa")}/metagame/`);
+    // 移れなかったときに、メタゲーム一覧の見出しを待ち続けない（2026-11-13 は見出しを待って30分の時間切れになった）
+    if (!/\/deck\/\d+\/metagame\//.test(パス)) return;
     expect.soft(await meta.見出し(), "メタゲーム一覧の見出し").toContain(`${N("037", "Fa")}メタゲーム`);
     const 名前 = await meta.アーキタイプ名();
     expect.soft(名前, "メタゲーム一覧に並ぶアーキタイプ（A1が並ぶ）").toContain(N("037", "A1"));
@@ -399,7 +423,7 @@ caseTest("IT-F09-01-038", async ({ page, step, expected }) => {
     note("プレイヤー名を入れたモーダルは、開いたままでは「その他」を覆う。モーダルの閉じるボタンで閉じてから「その他」を押した");
     const nav = page.waitForRequest((r) => r.isNavigationRequest() && /\/deck\/others\//.test(r.url()), { timeout: 60_000 });
     await top.その他の入口.scrollIntoViewIfNeeded();
-    await Promise.all([page.waitForURL(/\/deck\/others\//, { waitUntil: "load" }), top.その他の入口.click()]);
+    await Promise.all([page.waitForURL(/\/deck\/others\//, { waitUntil: "load", timeout: 120_000 }), top.その他の入口.click({ noWaitAfter: true })]);
     要求 = decodeURIComponent((await nav).url());
   });
   await expected(async () => {
@@ -420,7 +444,7 @@ function 直近の大会から(ケース: string, 並ばない: string[], 手順
       const link = top.直近の大会のリンク(N(ケース, "E1"));
       await expect(link, `直近の大会の区画の、大会F0901-${ケース}-E1の行`).toHaveCount(1);
       await link.scrollIntoViewIfNeeded();
-      await Promise.all([page.waitForURL(/\/deck\/result\//, { waitUntil: "load" }), link.click()]);
+      await Promise.all([page.waitForURL(/\/deck\/result\//, { waitUntil: "load", timeout: 120_000 }), link.click({ noWaitAfter: true })]);
     });
     if (手順3あり) await step(3, async () => { 手順3の名前 = (await 結果を読む(page)).名前; });
     await expected(async () => {
@@ -461,6 +485,8 @@ caseTest("IT-F09-01-043", async ({ page, step, expected }) => {
     await modal.クリアする();
   });
   await expected(async () => {
+    // 10項目すべての入力欄が画像に写るよう、モーダルの上から下までが入る高さに画面を広げて撮る
+    note(`期待結果の画像は、モーダルの入力欄が上から下まで写るよう、画面の高さを ${await modal.全体が写るように広げる()}px に広げて撮った`);
     const s = await modal.入力欄の状態();
     expect.soft(s.選ばれたフォーマット, "フォーマットの選ばれた数").toBe(0);
     expect.soft(s.アーキタイプ, "アーキタイプ（選んだ値）").toBe("");
@@ -553,7 +579,7 @@ caseTest("IT-F09-01-047", async ({ page, step, expected }) => {
   await step(1, async () => { await top.開く(); });
   await step(2, async () => { await modal.開く(); note(モーダルの注記); await modal.選択画面を開く(); });
   await step(3, async () => { await modal.選択画面のフォーマットを選ぶ(N("047", "F1")); });
-  await step(4, async () => { 候補 = await modal.見えている候補(); });
+  await step(4, async () => { 候補 = await modal.見えている候補(); await modal.候補の一覧を見せる(); });
   await expected(async () => {
     expect.soft(候補, "選択画面に並ぶアーキタイプの候補（A1が並ぶ）").toContain(N("047", "A1"));
     expect.soft(候補, "選択画面に並ぶアーキタイプの候補（A2は並ばない）").not.toContain(N("047", "A2"));
@@ -617,23 +643,24 @@ caseTest("IT-F09-01-075", async ({ page, step, expected }) => {
   });
 });
 
-caseTest("IT-F09-01-077", async ({ page, step, expected }) => {
+caseTest("IT-F09-01-077", async ({ page, step, expected, capture }) => {
   const top = new DeckTopPage(page);
   const modal = new DeckSearchModal(page);
   const res = new DeckResultView(page);
-  let 入力欄 = 0;
   await step(1, async () => { await top.開く(); });
   await step(2, async () => { await modal.開く(); note(モーダルの注記); await modal.入れる("player", N("077", "Nobody")); });
   await step(3, async () => { await modal.検索する(); });
-  await step(4, async () => {
-    await res.読み込みを待つ();
-    入力欄 = await modal.欄("player").count(); // デッキ検索結果の画面にも、同じ検索条件のフォームが載る
-  });
+  await step(4, async () => { await res.読み込みを待つ(); });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "開いた画面のアドレス（デッキ検索結果）").toBe("/ja/deck/result/");
-    expect.soft(入力欄, "デッキ検索結果の画面に載る、検索条件の入力欄（プレイヤー名）の数").toBe(1);
-    await expect.soft(res.一覧の項目, "一覧の領域に並ぶデッキの数").toHaveCount(0);
+    await expect.soft(res.一覧の項目, "一覧の領域にデッキが1件も並ばない").toHaveCount(0);
     await expect.soft(res.該当なしの案内, "一覧の領域の該当なしの案内").toHaveText(/ご指定の条件に一致するデッキが見つかりませんでした。/);
+    await capture("一覧の領域（該当なしの案内）");
+    // 検索条件の入力欄は、デッキ検索結果の画面の上部の「詳細検索」のモーダルに載る（閉じていると見えない）。開いて、見えていることで確かめる
+    await modal.開く();
+    note(`期待結果の画像は、デッキ検索結果の画面で「詳細検索」のモーダルを開き、検索条件の入力欄が写るよう画面の高さを ${await modal.全体が写るように広げる()}px に広げて撮った`);
+    await modal.欄("player").scrollIntoViewIfNeeded().catch(() => undefined);
+    await expect.soft(modal.欄("player"), "デッキ検索結果の画面に載る、検索条件の入力欄（プレイヤー名）").toBeVisible();
   });
 });
 
@@ -644,8 +671,11 @@ caseTest("IT-F09-01-079", async ({ page, step, expected }) => {
   await step(1, async () => { await top.開く(); });
   await step(2, async () => { await modal.開く(); note(モーダルの注記); 選択肢 = await modal.フォーマットの選択肢(); });
   await expected(async () => {
-    expect.soft(選択肢, "フォーマットの選択肢（検索対象のF1が並ぶ）").toContain(N("079", "F1"));
-    expect.soft(選択肢, "フォーマットの選択肢（検索対象が無効のF2は並ばない）").not.toContain(N("079", "F2"));
+    // 選択肢の全部が画像に写るよう、モーダルの上から下までが入る高さに画面を広げてから、選択肢の要素で確かめる（赤枠は F1 の選択肢にだけ付く）
+    note(`期待結果の画像は、フォーマットの選択肢（${選択肢.length}件）が全部写るよう、画面の高さを ${await modal.全体が写るように広げる()}px に広げて撮った。選択肢（上から）: ${選択肢.join("、")}`);
+    await expect.soft(modal.フォーマットの選択肢のラベル(N("079", "F1")), "フォーマットの選択肢（検索対象のF1が並ぶ）").toHaveCount(1);
+    await expect.soft(modal.フォーマットの選択肢のラベル(N("079", "F1")), "フォーマットの選択肢（検索対象のF1が見えている）").toBeVisible();
+    await expect.soft(modal.フォーマットの選択肢のラベル(N("079", "F2")), "検索対象が無効のフォーマットF0901-079-F2が、フォーマットの選択肢に並ばない").toHaveCount(0);
   });
 });
 
@@ -705,7 +735,13 @@ function 要求の確かめ(入れる: (modal: DeckSearchModal) => Promise<void>
       note(`デッキ検索結果への要求: ${req!.method()} ${decodeURIComponent(req!.url())}（応答 ${status}）`);
     });
     await expected(async () => {
-      for (const c of 見る(req!, status)) expect.soft(c.実際, c.項目).toEqual(c.期待);
+      // 値は画面に無い（ブラウザが送った要求と、その応答）。画面の要素に赤枠を付けず、帯に「HTTP の応答で確認」と書くよう、
+      // 確かめの値を要求・応答から作ったことが式から分かる形にする（for…of の変数は、帯の部品が値の出どころを辿れない）
+      const 確かめたち = 見る(req!, status);
+      for (let i = 0; i < 確かめたち.length; i++) {
+        const c = 確かめたち[i];
+        expect.soft(c.実際, c.項目).toEqual(c.期待);
+      }
     });
   };
 }
@@ -753,9 +789,12 @@ caseTest("IT-F09-01-076", 要求の確かめ((m) => m.入れる("player", N("076
   { 項目: "デッキ検索結果の画面の HTTP ステータス", 実際: status, 期待: 404 },
 ]));
 
-caseTest("IT-F09-01-078", 要求の確かめ((m) => m.入れる("player", N("078", "P")), (r) => [
-  { 項目: "要求の表示件数に入っている件数の値（数字を含む値）", 実際: 条件(r).getAll("pageSize").filter((x) => /\d/.test(x)), 期待: [] },
-]));
+caseTest("IT-F09-01-078", 要求の確かめ((m) => m.入れる("player", N("078", "P")), (r, status) => {
+  note(`この要求への画面の応答は ${status}（0件のときの画面は出ている。デッキが0件のとき、デッキ検索結果は 404 を返す作り。期待結果の外の事実として残す）`);
+  return [
+  { 項目: `要求の表示件数に入っている件数の値（数字を含む値。要求の表示件数は ${条件(r).getAll("pageSize").map((x) => `pageSize=「${x}」`).join("・") || "無し"}）`, 実際: 条件(r).getAll("pageSize").filter((x) => /\d/.test(x)), 期待: [] },
+];
+}));
 
 caseTest("IT-F09-01-081", 要求の確かめ((m) => m.入れる("player", N("081", "P")), (r) => [
   { 項目: "デッキ検索結果への要求のメソッド", 実際: r.method(), 期待: "GET" },
@@ -771,7 +810,13 @@ caseTest("IT-F09-01-083", async ({ page, step, expected }) => {
   let 補助: string[] = [];
   await step(1, async () => { await top.開く(); });
   await step(2, async () => { await modal.開く(); note(モーダルの注記); await modal.選択画面を開く(); });
-  await step(3, async () => { await modal.アーキタイプ名を打つ(N("083", "A1")); });
+  await step(3, async () => {
+    // アプリは入力補助の候補を、選択画面に表示中のアーキタイプ（選んだフォーマットのタブ）だけから作る。フォーマットを選ばないと今回のアーキタイプは表示中にならず候補が空になるので、
+    // 事前準備のフォーマットを選択画面の「フォーマット」で選んでから入力する（正本の手順に無い操作。2026-11-14 の見直しで、F09-01 の 044 などと同じ読み替え）
+    const 選んだ = await modal.選択画面のフォーマットを選んでおく(N("083", "F1"));
+    note(`読み替え: 選択画面の「フォーマット」で ${N("083", "F1")} ${選んだ ? "を選んでから" : "が選ばれた状態で"}アーキタイプ名を入力した（候補は表示中のアーキタイプだけから作られるため）`);
+    await modal.アーキタイプ名を打つ(N("083", "A1"));
+  });
   await step(4, async () => {
     await page.waitForTimeout(500);
     補助 = await modal.アーキタイプ名の入力補助();

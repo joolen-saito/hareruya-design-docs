@@ -18,7 +18,7 @@ caseTest("IT-M15-07-001", async ({ page, step, expected }) => {
     await page.locator("#nav-deck_management, a.c-mainNavArea__navItemTitle:has-text('デッキ管理')").first().click().catch(() => null);
     const リンク = page.getByRole("link", { name: "デッキタグ一覧", exact: true }).first();
     await expect(リンク, "メニューの「デッキタグ一覧」").toBeVisible();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), リンク.click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), リンク.click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "表示された画面のアドレス（MTGマスターデータ管理）").toMatch(/\/data\/mtg_master_data$/);

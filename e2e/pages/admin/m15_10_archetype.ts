@@ -4,7 +4,7 @@
  */
 import { expect, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
-import { chooseByLabel, expectSaved } from "./common";
+import { chooseByLabel, expectSaved, withoutEnvBanners } from "./common";
 
 export const CSVヘッダ = "アーキタイプ名（日本語）,アーキタイプ名（英語）,代表カード名,色,フォーマット";
 
@@ -40,7 +40,7 @@ export async function アーキタイプを削除する(page: Page, id: string):
   await page.goto(adminUrl(`/archetype/${id}/edit`));
   await page.waitForLoadState("load");
   page.once("dialog", (d) => { void d.accept(); });
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("#btn_delete").click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#btn_delete").click({ noWaitAfter: true })]);
   await expectSaved(page, `アーキタイプ ID ${id} の削除`);
 }
 
@@ -62,11 +62,12 @@ export class アーキタイプCSV取込 {
   /** 「CSVファイルのアップロード」を押す。最初の応答のステータスを返す */
   async アップロードを押す(): Promise<number> {
     const res = this.page.waitForResponse((r) => r.request().method() === "POST" && r.url().includes("/archetype/csv_import"), { timeout: 120_000 });
-    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }).catch(() => null), this.アップロードボタン.click()]);
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }).catch(() => null), this.アップロードボタン.click({ noWaitAfter: true })]);
     const r = await res;
     await this.page.waitForLoadState("load");
     return r.status();
   }
-  async 文言(): Promise<string> { return (await this.page.locator(".alert").allInnerTexts()).join(" ").replace(/\s+/g, " "); }
+  /** 画面上部の帯の文（開発用の設定のときに常に出る帯は除く） */
+  async 文言(): Promise<string> { return withoutEnvBanners(await this.page.locator(".alert").allInnerTexts()).join(" ").replace(/\s+/g, " "); }
   トークン欄() { return this.page.locator('#upload-form input[name$="[_token]"]'); }
 }

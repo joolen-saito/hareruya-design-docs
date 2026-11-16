@@ -54,8 +54,8 @@ caseTest("IT-M05-11-098", async ({ page, browser, notes, step, expected }) => {
 });
 
 // ---- 商品の追加の検索 ----
-async function 検索結果(page: Page, 語: string, 行: (tr: import("@playwright/test").Locator) => import("@playwright/test").Locator, 探す: string[]): Promise<boolean[]> {
-  await page.locator("#addProduct input[type=text]").first().fill(語, { timeout: 20_000 });
+/** 入力済みの語で「検索」を押し、検索結果に探す語の行があるかを返す */
+async function 検索して探す(page: Page, 行: (tr: import("@playwright/test").Locator) => import("@playwright/test").Locator, 探す: string[]): Promise<boolean[]> {
   await page.locator("#searchProductModalButton").click({ timeout: 20_000 });
   const out: boolean[] = [];
   for (const k of 探す) out.push(await 行(page.locator("#searchProductModalList tr")).filter({ hasText: k }).first().waitFor({ timeout: 60_000 }).then(() => true, () => false));
@@ -64,10 +64,14 @@ async function 検索結果(page: Page, 語: string, 行: (tr: import("@playwrig
 caseTest("IT-M05-11-084", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M0511_ADMIN_A);
   let r: boolean[] = [];
-  await step(1, async () => { await 開く(browser, page, notes.get(key("共有BASE"))); });
-  await step(2, async () => { await page.locator('a[data-bs-target="#addProduct"]').first().click({ timeout: 20_000 }); });
-  await step(3, async () => { await expect(page.locator("#addProduct input[type=text]").first(), "商品名・ID・コードの入力欄").toBeVisible(); });
-  await step(4, async () => { r = await 検索結果(page, "検索商品", (t) => t, [rc("日本語検索商品A"), rc("日本語検索商品B")]); });
+  // 正本の手順は3つ: 1. 編集画面で「商品の追加」を押す／2. 「検索商品」を入力する／3. 「検索」を押す
+  await step(1, async () => {
+    await 開く(browser, page, notes.get(key("共有BASE")));
+    await page.locator('a[data-bs-target="#addProduct"]').first().click({ timeout: 20_000 });
+    await expect(page.locator("#addProduct input[type=text]").first(), "商品名・ID・コードの入力欄").toBeVisible();
+  });
+  await step(2, async () => { await page.locator("#addProduct input[type=text]").first().fill("検索商品", { timeout: 20_000 }); });
+  await step(3, async () => { r = await 検索して探す(page, (t) => t, [rc("日本語検索商品A"), rc("日本語検索商品B")]); });
   await expected(async () => {
     expect.soft(r[0], "検索結果に「日本語検索商品A」").toBe(true);
     expect.soft(r[1], "検索結果に「日本語検索商品B」").toBe(true);
@@ -76,12 +80,15 @@ caseTest("IT-M05-11-084", async ({ page, browser, notes, step, expected }) => {
 caseTest("IT-M05-11-085", async ({ page, browser, notes, step, expected }) => {
   await loginAdmin(page, M0511_ADMIN_A);
   let r: boolean[] = [];
-  await step(1, async () => { await 開く(browser, page, notes.get(key("共有BASE"))); });
-  await step(2, async () => { await page.locator('a[data-bs-target="#addProduct"]').first().click({ timeout: 20_000 }); });
-  await step(3, async () => { await expect(page.locator("#addProduct input[type=text]").first(), "商品名・ID・コードの入力欄").toBeVisible(); });
-  await step(4, async () => {
+  // 正本の手順は3つ: 1. 編集画面で「商品の追加」を押す／2. 「SRCH-A」を入力する／3. 「検索」を押す
+  await step(1, async () => {
+    await 開く(browser, page, notes.get(key("共有BASE")));
+    await page.locator('a[data-bs-target="#addProduct"]').first().click({ timeout: 20_000 });
+    await expect(page.locator("#addProduct input[type=text]").first(), "商品名・ID・コードの入力欄").toBeVisible();
+  });
+  await step(2, async () => { await page.locator("#addProduct input[type=text]").first().fill("SRCH-A", { timeout: 20_000 }); });
+  await step(3, async () => {
     // 商品コードは規格の選択肢（option）の属性に出る
-    await page.locator("#addProduct input[type=text]").first().fill("SRCH-A", { timeout: 20_000 });
     await page.locator("#searchProductModalButton").click({ timeout: 20_000 });
     for (const c of [rc("SRCH-A-001"), rc("SRCH-A-002")]) r.push(await page.locator("#searchProductModalList tr").filter({ has: page.locator(`option[data-product-code="${c}"]`) }).first().waitFor({ timeout: 60_000 }).then(() => true, () => false));
   });

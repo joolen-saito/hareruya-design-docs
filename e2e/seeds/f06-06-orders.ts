@@ -33,7 +33,7 @@ import { 会員が注文する } from "../pages/front/m05_front_order";
 import { mailOf } from "./f06-06";
 import { 本会員を作る } from "./f06-member";
 
-export type 作った注文 = { 番号: string; ID: string; 店名?: string; 商品名: string[]; 注文日: string; 状態: string };
+export type 作った注文 = { 番号: string; ID: string; 店名?: string; 商品名: string[]; 注文日: string; 状態: string; 支払方法: string; 配送方法: string };
 const 記録 = new Map<string, 作った注文>();
 /** 作った注文（キーは「002A」「043元1」など）。シード表が固定の値で書く注文も、このキーで引く */
 export function 注文(キー: string): 作った注文 {
@@ -105,7 +105,7 @@ async function 注文を作る(browser: Browser, notes: Notes, seedId: string, m
   if (!画面で) { 状態 = d6.対応状況を設定(ID, p.状態); done.push(`対応状況を「${状態}」に`); }
   if (状態 !== p.状態) 記す(`BOステータス「${p.状態}」は手元の対応状況マスタに同じ名前が無いので、同じ意味の「${状態}」で代える`);
   if (done.length) 記す(`画面で作った注文 ${番号} は、DBで${done.join("、")}設定した（フロントの注文の画面では作れない値）`);
-  const r: 作った注文 = { 番号, ID, 店名: p.店?.店名, 商品名: d6.注文の商品名(ID), 注文日: d6.注文日の表示(ID), 状態 };
+  const r: 作った注文 = { 番号, ID, 店名: p.店?.店名, 商品名: d6.注文の商品名(ID), 注文日: d6.注文日の表示(ID), 状態, 支払方法: d6.注文の支払方法(ID), 配送方法: d6.注文の配送方法(ID) };
   記録.set(p.キー, r);
   if (p.ラベル?.番号) 控える(notes, seedId, p.ラベル.番号, 番号);
   if (p.ラベル?.ID) 控える(notes, seedId, p.ラベル.ID, ID);
@@ -117,6 +117,19 @@ async function 注文を作る(browser: Browser, notes: Notes, seedId: string, m
 const ラベル = (n: string, 枝 = "") => ({ 番号: `〔注文番号-F0606-${n}${枝}〕`, ID: `〔注文ID-F0606-${n}${枝}〕`, 日: `〔注文日-F0606-${n}${枝}〕` });
 export const pw = (n: string) => `Pw-F0606-${n}!`;
 
+/**
+ * シード表は商品をグッズ商品CSV登録で作り〔商品ID-F0606-…〕を控えると定めるが、注文は販売中の既存の商品で作る（読み替えの注記）ので、
+ * 注文した既存の商品の商品IDを控える（明細の並びの何番目か）。ケースは商品IDを使わない。
+ * 2026-11-13: 控えていなかったため 010・014・017・031〜041・047・048 がシードの作成で止まった
+ */
+function 商品IDを控える(notes: Notes, seedId: string, 呼び名: string, 受注ID: string, 何番目 = 0, 商品コード = ""): void {
+  const 一覧 = d6.注文の商品ID一覧(受注ID);
+  const 商品ID = 一覧[何番目];
+  if (!商品ID) throw new Error(`${seedId}: 受注ID ${受注ID} に ${何番目 + 1} 番目の商品の明細が無い（${呼び名} を控えられない）`);
+  控える(notes, seedId, 呼び名, 商品ID);
+  記す(`${呼び名}は、シード表の商品${商品コード ? `（商品コード ${商品コード} をグッズ商品CSV登録で作る）` : ""}を作らず、注文した販売中の既存の商品の商品ID ${商品ID} で読み替えた`);
+}
+
 // ---- 参照マスタ（作らない。手元の既存のマスタを読んで確かめる） ----
 // S-F06-06-MASTER は seeds/f06-06-master.ts に1か所で定める（f06-06-d と f06-06-orders の二重の定義をまとめた 2026-11-11）
 import "./f06-06-master";
@@ -126,9 +139,11 @@ defineSeed("S-F06-06-DISPLAY-010", async ({ browser, notes }) => {
   記す(読み替えの注記);
   const id = "S-F06-06-DISPLAY-010";
   const m = await 会員を用意する(browser, notes, id, "〔会員ID-F0606-010〕", "display-f0606-010", pw("010"));
-  await 注文を作る(browser, notes, id, m, {
+  const r = await 注文を作る(browser, notes, id, m, {
     キー: "010", 種類: "EC", 状態: "入金済み", 注文日: "2026-01-10", 支払方法ID: 5, 保持金額: 9999, 商品を2点にする: true, ラベル: ラベル("010"),
   });
+  商品IDを控える(notes, id, "〔商品ID-F0606-010A〕", r.ID, 0, "F0606-ECA-010");
+  商品IDを控える(notes, id, "〔商品ID-F0606-010B〕", r.ID, 1, "F0606-ECB-010");
 });
 
 // ---- 1件の注文の表示（011・013・015・016・024・025・026・030） ----
@@ -160,10 +175,12 @@ defineSeed("S-F06-06-STATUS-014", async ({ browser, notes }) => {
   ];
   for (const [i, [種, 状]] of 一覧.entries()) {
     const k = String(i + 1).padStart(2, "0");
-    await 注文を作る(browser, notes, id, m, {
+    const r = await 注文を作る(browser, notes, id, m, {
       キー: `014-${k}`, 種類: 種, 状態: 状, 店: 種 === "EC" ? undefined : 本,
       ラベル: { 番号: `〔注文番号-F0606-014-${k}〕`, ID: `〔注文ID-F0606-014-${k}〕` },
     });
+    // シード表は9件とも同じ商品（STATUS-ITEM-014）で注文すると定める。1件目の注文の商品を控える
+    if (i === 0) 商品IDを控える(notes, id, "〔商品ID-F0606-014〕", r.ID, 0, "STATUS-ITEM-014");
   }
 });
 
@@ -173,8 +190,10 @@ defineSeed("S-F06-06-DISPLAY-017", async ({ browser, notes }) => {
   const id = "S-F06-06-DISPLAY-017";
   const m = await 会員を用意する(browser, notes, id, "〔会員ID-F0606-017〕", "display-f0606-017", pw("017"));
   const 本 = 本店(), 高 = 高松店();
-  await 注文を作る(browser, notes, id, m, { キー: "017A", 種類: "EC", 状態: "入金済み", ラベル: ラベル("017", "A") });
-  await 注文を作る(browser, notes, id, m, { キー: "017B", 種類: "店頭受取", 状態: "出荷完了", 注文日: "2026-09-01", 店: 本, ラベル: ラベル("017", "B") });
+  const a = await 注文を作る(browser, notes, id, m, { キー: "017A", 種類: "EC", 状態: "入金済み", ラベル: ラベル("017", "A") });
+  商品IDを控える(notes, id, "〔商品ID-F0606-017A〕", a.ID, 0, "F0606-017-A");
+  const b = await 注文を作る(browser, notes, id, m, { キー: "017B", 種類: "店頭受取", 状態: "出荷完了", 注文日: "2026-09-01", 店: 本, ラベル: ラベル("017", "B") });
+  商品IDを控える(notes, id, "〔商品ID-F0606-017B〕", b.ID, 0, "F0606-017-B");
   const 統合先 = await 注文を作る(browser, notes, id, m, {
     キー: "017統合先", 種類: "EC", 状態: "出荷完了", 注文日: "2026-09-10", 店: 本, スマレジ: { 取引ID: "SMTR-F0606-017-M", レシートNo: "R060600000117" },
   });
@@ -192,7 +211,8 @@ function 組合せ(seedId: string, n: string, 種: 種類, 状態: string): void
   defineSeed(seedId, async ({ browser, notes }) => {
     記す(読み替えの注記);
     const m = await 会員を用意する(browser, notes, seedId, `〔会員ID-F0606-${n}〕`, `cbf0606-${n}`, `Passw0rd-CBF0606${n}`);
-    await 注文を作る(browser, notes, seedId, m, { キー: n, 種類: 種, 状態, 店: 種 === "EC" ? undefined : 本店(), ラベル: ラベル(n) });
+    const r = await 注文を作る(browser, notes, seedId, m, { キー: n, 種類: 種, 状態, 店: 種 === "EC" ? undefined : 本店(), ラベル: ラベル(n) });
+    商品IDを控える(notes, seedId, `〔商品ID-F0606-${n}〕`, r.ID, 0, `F0606-CB${n}-A`);
   });
 }
 組合せ("S-F06-06-CBEC-031", "031", "EC", "出荷指示");

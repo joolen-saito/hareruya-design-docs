@@ -43,7 +43,7 @@ export async function セールの規格にして公開する(page: Page, a: { p
   await form.locator("#admin_product_class_price02").fill(a.販売価格);
   await 部門を選ぶ(page, what, issue);
   await chooseByLabel(form.locator("#admin_product_class_Status"), "公開");
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品規格の登録`)) issue(`${what}: 警告「${w}」`);
   await expect(form.locator("#admin_product_class_sale_flg"), `${what}: 登録後のセールフラグ`).toBeChecked();
   expect((await form.locator("#admin_product_class_price02").inputValue()).replace(/,/g, ""), `${what}: 登録後の販売価格`).toBe(a.販売価格);
@@ -61,6 +61,9 @@ async function 状態の表示名(page: Page, 記号: string): Promise<string> {
   return hit[0];
 }
 
+/** 正本の状態「EX」を読み替えた規格の、商品・言語ごとの使った状態（同じ商品に EX を2つ足すとき、別の状態にする） */
+const EXの読み替えで使った状態 = new Map<string, string[]>();
+
 export type 足す規格 = { 言語: "日本語" | "英語"; 状態: "NM" | "EX"; 商品コード: string; 価格: string; 買取価格: string; 高額商品コード?: string };
 
 /**
@@ -72,7 +75,19 @@ export async function 規格を足す(page: Page, productId: string, v: 足す�
   await page.goto(adminUrl(`/product/product/class/${productId}/new`));
   await page.waitForLoadState("load");
   await expect(page.locator("form#form"), `${what}: 商品規格登録編集画面（新規）`).toBeVisible();
-  const label = await 状態の表示名(page, v.状態);
+  let label: string;
+  if (v.状態 === "EX" && (await page.locator('form#form #admin_product_class_CardCondition option[data-code="EX"]').count()) === 0) {
+    // 正本の状態「EX」は、アプリの状態のマスタ（NM・SP・MP・HP・OT）に無い。NM の次の状態から順に、その商品・言語でまだ使っていない状態に読み替える
+    // （F05-04・F03-02 と同じ読み替え。価格は変えない。規格を足す画面の保存はスマレジ連携フラグが「連携しない」のまま）
+    const used = EXの読み替えで使った状態.get(`${productId}|${v.言語}`) ?? [];
+    const 代わり = ["SP", "MP", "HP", "OT"].find((c) => !used.includes(c));
+    if (!代わり) throw new Error(`${what}: 状態EXの読み替え先（SP・MP・HP・OT）をすべて使った`);
+    label = await 状態の表示名(page, 代わり);
+    EXの読み替えで使った状態.set(`${productId}|${v.言語}`, [...used, 代わり]);
+    issue(`${what}: 正本の状態「EX」は、アプリの状態のマスタ（NM・SP・MP・HP・OT）に無いので、NM の次の状態「${label}」（${代わり}）に読み替えた（価格は正本のまま）`);
+  } else {
+    label = await 状態の表示名(page, v.状態);
+  }
   await openClassList(page, productId);
   return addClass(page, productId, {
     言語: v.言語, 状態: label, 商品コード: v.商品コード, 基準価格: v.価格, 販売価格: v.価格, 買取価格: v.買取価格,

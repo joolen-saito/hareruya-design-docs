@@ -87,7 +87,7 @@ caseTest("IT-M14-01-055", async ({ page, notes, step, expected }) => {
     expect(await l.表示中のカードID(), "検索で表示されたカードID").toEqual([A]);
   });
   await step(2, async () => {
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), l.行のカード(A).locator("td:nth-child(3) a").click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), l.行のカード(A).locator("td:nth-child(3) a").click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "表示された画面のアドレス（カード詳細）").toMatch(new RegExp(`/card/${A}/edit$`));
@@ -202,6 +202,37 @@ async function リストを開く(page: Page, 名前: string): Promise<ファイ
   return { 状態: res.status(), 配列 };
 }
 
+/**
+ * 手順「ブラウザで開く」: 同じブラウザの新しいタブで /list/<名前> を開き、開いた画面の本文を読む（エビデンスにはそのタブの画面が写る）。
+ * 目印（カード名）があれば、本文の中のその文字を選んで（ブラウザの「ページ内検索」と同じく）見える位置へ動かす。
+ */
+async function ブラウザで開く(page: Page, 名前: string, 目印?: string): Promise<ファイル> {
+  const t = await page.context().newPage();
+  const res = await t.goto(`${BASE_URL}/user_data/list/${名前}`, { timeout: 60_000 }).catch(() => null);
+  await t.waitForLoadState("load").catch(() => undefined);
+  const 状態 = res?.status() ?? 0;
+  let 配列: string[] | null = null;
+  if (状態 === 200) {
+    const 本文 = await t.evaluate(() => document.body?.innerText ?? "").catch(() => "");
+    try { const j = JSON.parse(本文); if (Array.isArray(j)) 配列 = j.map(String); } catch { /* JSON の配列ではない */ }
+  }
+  if (目印) {
+    await t.evaluate((m) => {
+      const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let n = w.nextNode(); n; n = w.nextNode()) {
+        const i = (n.textContent ?? "").indexOf(m);
+        if (i < 0) continue;
+        const r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + m.length);
+        const sel = window.getSelection(); sel?.removeAllRanges(); sel?.addRange(r);
+        const b = r.getBoundingClientRect(); window.scrollTo(0, Math.max(0, window.scrollY + b.top - 200));
+        return;
+      }
+    }, 目印).catch(() => undefined);
+  }
+  note(`${名前} をブラウザの新しいタブで開いた（応答 ${状態}）${目印 ? `。画面では本文の中のカード名「${目印}」を選んで表示した` : ""}`);
+  return { 状態, 配列 };
+}
+
 /** バッチの結果が反映されるまで（目印のカード名が入るまで）待ってから、ファイルを読む */
 async function 反映後に開く(page: Page, 名前: string, 目印: string): Promise<ファイル> {
   let f: ファイル = { 状態: 0, 配列: null };
@@ -229,9 +260,11 @@ caseTest("IT-M14-01-006", async ({ page, notes, step, expected }) => {
   let 全: ファイル = { 状態: 0, 配列: null }, 標準: ファイル = { 状態: 0, 配列: null }, 現代: ファイル = { 状態: 0, 配列: null };
   await 作成する(page, step);
   await step(4, async () => {
-    全 = await 反映後に開く(page, "cardNameList.json", 名[0]);
-    標準 = await 反映後に開く(page, "cardNameList_St.json", 名[0]);
-    現代 = await 反映後に開く(page, "cardNameList_Mo.json", 名[0]);
+    // 作成の処理が終わってファイルが書き換わるまで待ってから、3つのファイルをブラウザで開く
+    for (const f of ["cardNameList.json", "cardNameList_St.json", "cardNameList_Mo.json"]) await 反映後に開く(page, f, 名[0]);
+    全 = await ブラウザで開く(page, "cardNameList.json", 名[0]);
+    標準 = await ブラウザで開く(page, "cardNameList_St.json", 名[0]);
+    現代 = await ブラウザで開く(page, "cardNameList_Mo.json", 名[0]);
   });
   await expected(async () => {
     for (const [f, ファイル名] of [[全, "cardNameList.json"], [標準, "cardNameList_St.json"], [現代, "cardNameList_Mo.json"]] as const) {
@@ -307,7 +340,7 @@ caseTest("IT-M14-01-084", async ({ page, step, expected }) => {
   await 作成する(page, step);
   await step(4, async () => {
     全 = await 反映後に開く(page, "cardNameList.json", 英A);
-    コード無し = await リストを開く(page, "cardNameList_.json");
+    コード無し = await ブラウザで開く(page, "cardNameList_.json");
   });
   await expected(async () => {
     expect.soft(全.配列?.includes(英A), "（前提）cardNameList.json が作成され、カードが含まれる").toBe(true);

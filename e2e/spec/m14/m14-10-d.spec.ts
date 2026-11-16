@@ -36,7 +36,14 @@ caseTest("IT-M14-10-025", async ({ page, notes, step, expected }) => {
   await step(2, async () => { 保存できた(await 設定して登録(page, { チェック: { searchFlg: true } })); });
   await step(3, async () => { await new DeckSearchTop(page).開く(); });
   await step(4, async () => { 選択肢 = await new DeckSearchTop(page).検索条件のフォーマット(); });
-  await expected(async () => { expect.soft(選択肢, "デッキ検索条件のフォーマットの選択肢").toContain(名); });
+  await expected(async () => {
+    expect.soft(選択肢, "デッキ検索条件のフォーマットの選択肢").toContain(名);
+    // 検索条件のフォーマットの選択肢（詳細検索のモーダルのチェック欄）を開いて、選んだフォーマットの行を画像に写す
+    const top = new DeckSearchTop(page);
+    await top.詳細検索を開く();
+    await top.フォーマットの行(名).scrollIntoViewIfNeeded();
+    await expect.soft(top.フォーマットの行(名), `デッキ検索条件（詳細検索）のフォーマットの選択肢に「${名}」がある`).toBeVisible();
+  });
 });
 
 caseTest("IT-M14-10-026", async ({ page, notes, step, expected }) => {
@@ -48,39 +55,61 @@ caseTest("IT-M14-10-026", async ({ page, notes, step, expected }) => {
   await step(2, async () => { 保存できた(await 設定して登録(page, { チェック: { productSearchFlg: true } })); });
   await step(3, async () => { await f.openProductList(); await f.詳細検索を押す(); });
   await step(4, async () => { 選択肢 = await f.フォーマットの選択肢(); });
-  await expected(async () => { expect.soft(選択肢.some((t) => t.includes(名)), "詳細検索モーダルのフォーマットの選択肢").toBe(true); });
+  await expected(async () => {
+    expect.soft(選択肢.some((t) => t.includes(名)), `詳細検索モーダルのフォーマットの選択肢（読んだ選択肢：${選択肢.join("・")}）に「${名}」がある`).toBe(true);
+    // モーダルをフォーマットの欄までスクロールして、選んだフォーマットの選択肢を画像に写す
+    const 行 = f.フォーマットの選択肢の要素(名);
+    await 行.scrollIntoViewIfNeeded();
+    await expect.soft(行, `詳細検索モーダルのフォーマットの選択肢に「${名}」がある`).toBeVisible();
+  });
 });
 
 // ---------------------------------------------------------------------------
 // 027〜029・063・075 デッキ検索のトップ（採用デッキ数ランキング・メタ分布へのリンク）
 // ---------------------------------------------------------------------------
 type 状態 = { ランキング: boolean; メタ: boolean };
-function デッキ検索トップ(n: string, 基: string, 設定: Partial<Record<"rankingFlg" | "OtherMetaFlg", boolean>>, 確かめ: (c: { ランキングの行数: number; ランキングの区画: number; メタ分布のリンク: number; 名: string }) => void): CaseBody {
+type トップの状態 = { ランキングの行数: number; ランキングの区画: number; メタ分布のリンク: number; 名: string; 区画の行: string; リンク先: string; id: string; top: DeckSearchTop; page: Page };
+/** 区画のランキングの行・メタ分布のリンクが表示されている（見えている1件を赤い枠で囲む。リンク先を添える） */
+async function 出ている(c: トップの状態, 何: "ランキング" | "メタ分布"): Promise<void> {
+  if (何 === "ランキング") await expect.soft(c.top.ランキングの行(c.id).filter({ visible: true }).first(), `採用デッキ数ランキングの行（アーキタイプ）が表示されている（「${c.名}」の区画の行の数：${c.ランキングの行数}。行：${c.区画の行 || "なし"}）`).toBeVisible();
+  else await expect.soft(c.top.メタ分布のリンク(c.id).filter({ visible: true }).first(), `メタ分布へのリンクが表示されている（「${c.名}」。リンクの数：${c.メタ分布のリンク}。リンク先：${c.リンク先 || "なし"}）`).toBeVisible();
+}
+/** 区画・ランキングの行・メタ分布のリンクが無い（ほかのフォーマットの区画を示して、ここに出ないことを画像に残す） */
+async function 出ていない(c: トップの状態): Promise<void> {
+  const 区画 = c.page.locator(".deckSearch-top__metagame__wrapper");
+  if ((await 区画.count()) > 0) await expect.soft(区画.first(), `デッキ検索のトップに並ぶほかのフォーマットの区画（「${c.名}」の区画は出ない）`).toBeVisible();
+  await expect.soft(c.top.ランキングの行(c.id), `採用デッキ数ランキングの行の数（「${c.名}」。表示されない）`).toHaveCount(0);
+  await expect.soft(c.top.メタ分布のリンク(c.id), `メタ分布へのリンクの数（「${c.名}」。表示されない）`).toHaveCount(0);
+}
+function デッキ検索トップ(n: string, 基: string, 設定: Partial<Record<"rankingFlg" | "OtherMetaFlg", boolean>>, 確かめ: (c: トップの状態) => Promise<void>): CaseBody {
   return async ({ page, notes, step, expected }) => {
     await loginAdmin(page, M1410_ADMIN);
     const id = notes.get(`〔フォーマットID-M1410-${n}〕`), 名 = rc(基);
     const top = new DeckSearchTop(page);
-    let 応答 = 0; let c = { ランキングの行数: -1, ランキングの区画: -1, メタ分布のリンク: -1, 名 };
+    let 応答 = 0; let c: トップの状態 = { ランキングの行数: -1, ランキングの区画: -1, メタ分布のリンク: -1, 名, 区画の行: "", リンク先: "", id, top, page };
     await step(1, async () => { await 編集を開く(page, id); });
     await step(2, async () => { 保存できた(await 設定して登録(page, { チェック: 設定 })); });
     await step(3, async () => {
       応答 = await top.開く();
       await expect(page.locator(".deckSearch-top__flexwrapper").first(), "デッキ検索のトップ").toBeVisible({ timeout: 30_000 });
-      c = { ランキングの行数: await top.ランキングの行(id).count(), ランキングの区画: await top.区画(id).count(), メタ分布のリンク: await top.メタ分布のリンク(id).count(), 名 };
+      c = {
+        ランキングの行数: await top.ランキングの行(id).count(), ランキングの区画: await top.区画(id).count(), メタ分布のリンク: await top.メタ分布のリンク(id).count(), 名,
+        区画の行: (await top.ランキングの行(id).allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim()).slice(0, 5).join("・"),
+        リンク先: (await top.メタ分布のリンク(id).first().getAttribute("href").catch(() => null)) ?? "", id, top, page,
+      };
     });
-    await expected(async () => { expect.soft(応答, "デッキ検索のトップの応答").toBe(200); 確かめ(c); });
+    await expected(async () => { expect.soft(応答, "デッキ検索のトップの応答").toBe(200); await 確かめ(c); });
   };
 }
-caseTest("IT-M14-10-027", デッキ検索トップ("027", "連携確認フォーマット-027", { rankingFlg: true }, (c) => { expect.soft(c.ランキングの行数, "採用デッキ数ランキングの行（アーキタイプ）の数").toBeGreaterThanOrEqual(1); }));
-caseTest("IT-M14-10-028", デッキ検索トップ("028", "連携確認フォーマット-028", { rankingFlg: true }, (c) => { expect.soft(c.メタ分布のリンク, "メタ分布へのリンクの数").toBeGreaterThanOrEqual(1); }));
-caseTest("IT-M14-10-029", デッキ検索トップ("029", "連携確認フォーマット-029", { rankingFlg: false, OtherMetaFlg: true }, (c) => { expect.soft(c.メタ分布のリンク, "メタ分布へのリンクの数").toBeGreaterThanOrEqual(1); }));
-caseTest("IT-M14-10-063", デッキ検索トップ("063", "連携確認フォーマット-063", { rankingFlg: false, OtherMetaFlg: false }, (c) => {
-  expect.soft(c.ランキングの行数, "採用デッキ数ランキングの行の数（表示されない）").toBe(0);
-  expect.soft(c.メタ分布のリンク, "メタ分布へのリンクの数（表示されない）").toBe(0);
-}));
-caseTest("IT-M14-10-075", デッキ検索トップ("075", "連携確認フォーマット-CB075", { rankingFlg: true, OtherMetaFlg: true }, (c) => {
+caseTest("IT-M14-10-027", デッキ検索トップ("027", "連携確認フォーマット-027", { rankingFlg: true }, async (c) => { expect.soft(c.ランキングの行数, "採用デッキ数ランキングの行（アーキタイプ）の数").toBeGreaterThanOrEqual(1); await 出ている(c, "ランキング"); }));
+caseTest("IT-M14-10-028", デッキ検索トップ("028", "連携確認フォーマット-028", { rankingFlg: true }, async (c) => { expect.soft(c.メタ分布のリンク, "メタ分布へのリンクの数").toBeGreaterThanOrEqual(1); await 出ている(c, "メタ分布"); }));
+caseTest("IT-M14-10-029", デッキ検索トップ("029", "連携確認フォーマット-029", { rankingFlg: false, OtherMetaFlg: true }, async (c) => { expect.soft(c.メタ分布のリンク, "メタ分布へのリンクの数").toBeGreaterThanOrEqual(1); await 出ている(c, "メタ分布"); }));
+caseTest("IT-M14-10-063", デッキ検索トップ("063", "連携確認フォーマット-063", { rankingFlg: false, OtherMetaFlg: false }, async (c) => { await 出ていない(c); }));
+caseTest("IT-M14-10-075", デッキ検索トップ("075", "連携確認フォーマット-CB075", { rankingFlg: true, OtherMetaFlg: true }, async (c) => {
   expect.soft(c.ランキングの行数, "採用デッキ数ランキングの行の数").toBeGreaterThanOrEqual(1);
   expect.soft(c.メタ分布のリンク, "メタ分布へのリンクの数").toBeGreaterThanOrEqual(1);
+  await 出ている(c, "ランキング");
+  await 出ている(c, "メタ分布");
 }));
 
 // ---------------------------------------------------------------------------
@@ -97,6 +126,11 @@ caseTest("IT-M14-10-034", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     expect.soft(選択肢.some((t) => t.includes(A)), "イベントに表示を選んだフォーマットが選択肢にある").toBe(true);
     expect.soft(選択肢.some((t) => t.includes(B)), "イベントに表示が未選択のフォーマットが選択肢にある（無いのが期待）").toBe(false);
+    // 選択肢の並びを画像に写す。Aの行は赤い枠で囲み、Bの行が無いことを示す
+    const e = new EventListFront(page);
+    await e.フォーマットの行(A).scrollIntoViewIfNeeded();
+    await expect.soft(e.フォーマットの行(A), `イベント検索のフォーマットの選択肢に「${A}」がある（選択肢の全体：${選択肢.join("・")}）`).toBeVisible();
+    await expect.soft(e.フォーマットの行(B), `イベント検索のフォーマットの選択肢に「${B}」が無い（選択肢の全体：${選択肢.join("・")}）`).toHaveCount(0);
   });
 });
 
@@ -115,14 +149,22 @@ caseTest("IT-M14-10-035", async ({ page, notes, step, expected }) => {
   });
 });
 
-caseTest("IT-M14-10-057", async ({ page, step, expected }) => {
+caseTest("IT-M14-10-057", async ({ page, step, expected, capture }) => {
   const 名A = rc("表示確認イベントA-057"), 名B = rc("表示確認イベントB-057");
   const e = new EventListFront(page);
   let 名一覧: string[] = [];
   await step(1, async () => { await e.開く(); });
-  await step(2, async () => { 名一覧 = await e.全ページのイベント名(); });
+  await step(2, async () => {
+    // 一覧は複数ページ。「表示確認イベントA-057」が載ったページを画像に残す（Aの行だけに赤い枠を付ける）
+    名一覧 = await e.全ページのイベント名(8, async (n, このページ) => {
+      if (!このページ.includes(名A)) return;
+      const 行 = page.locator("p.p-hareruya-event-card__title").filter({ hasText: 名A }).first();
+      await expect.soft(行, `「${名A}」が載った一覧（${n}ページ目）の行`).toBeVisible();
+      await capture(`「${名A}」が載った${n}ページ目`);
+    });
+  });
   await expected(async () => {
-    expect.soft(名一覧.includes(名A), "「表示確認イベントA-057」が表示されている").toBe(true);
+    expect.soft(名一覧.includes(名A), `「表示確認イベントA-057」が表示されている（${名一覧.length}件のうち）`).toBe(true);
     expect.soft(名一覧.includes(名B), "「表示確認イベントB-057」が表示されている（表示されないのが期待）").toBe(false);
   });
 });
@@ -260,8 +302,8 @@ function 分析日数(n: string, ランキングも: boolean): CaseBody {
         // デッキ検索のトップから、メタゲームの画面を経て採用枚数ランキングへ
         await page.goto(前面("/deck/"), { timeout: 60_000 });
         await page.waitForLoadState("load");
-        await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator(`a[href$="/deck/${id}/metagame/"]:visible`).first().click({ timeout: 30_000 })]);
-        await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator(`a[href$="/deck/${id}/usage_ranking/"]`).first().click({ timeout: 30_000 })]);
+        await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator(`a[href$="/deck/${id}/metagame/"]:visible`).first().click({ timeout: 30_000, noWaitAfter: true })]);
+        await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator(`a[href$="/deck/${id}/usage_ranking/"]`).first().click({ timeout: 30_000, noWaitAfter: true })]);
         応答 = 200;
       } else {
         応答 = await ランキングを開く(page, id);

@@ -26,15 +26,36 @@ function 一件(n: number, 何: string): void {
 }
 
 /** 査定ID → 店頭買取受注ID（内部ID）。1件でなければ止める */
+/** この実行で申し込んだ買取の、査定ID → 申込者の姓（同じ査定IDの買取が2件以上あるときに、E2E の1件を選ぶため） */
+const 申込者の姓 = new Map<string, string>();
+
+/** この実行で申し込んだ買取の査定IDと申込者の姓を覚える（申し込んだ直後に呼ぶ） */
+export function 申込者を覚える(査定ID: string, 姓: string): void {
+  申込者の姓.set(査定ID, 姓);
+}
+
+/** 覚えた申込者の姓（覚えていなければ null） */
+export function 覚えた申込者の姓(査定ID: string): string | null {
+  return 申込者の姓.get(査定ID) ?? null;
+}
+
+/**
+ * 査定IDは、アプリが「その日・その店舗の査定申込の件数＋1」で振る。E2E が査定申込日時を DB で過去へ移すと、その日の件数が減り、
+ * あとの申込に同じ査定IDが振られることがある（2026-11-14 の 022: 査定ID 20261114-368-0007 が2件）。
+ * 同じ査定IDが2件以上あるときは、申し込んだときに覚えた申込者の姓（無ければこの実行の印を姓に持つもの）の1件を選ぶ。1件に決まらなければ止める。
+ */
 export function 受注IDを調べる(査定ID: string): string {
-  const r = query("select id from dtb_otc_buy_order where assessment_id = $1", [査定ID]);
-  if (r.length !== 1) throw new Error(`査定ID ${査定ID} の買取が ${r.length} 件（1件のはず）`);
-  return String(r[0].id);
+  const r = query("select id, last_name from dtb_otc_buy_order where assessment_id = $1", [査定ID]);
+  if (r.length === 1) return String(r[0].id);
+  const 姓 = 申込者の姓.get(査定ID);
+  const mine = r.filter((x) => (姓 ? String(x.last_name ?? "") === 姓 : String(x.last_name ?? "").includes(印)));
+  if (r.length > 1 && mine.length === 1) return String(mine[0].id);
+  throw new Error(`査定ID ${査定ID} の買取が ${r.length} 件（1件のはず）。うちこの実行の印つきの申込者の買取は ${mine.length} 件`);
 }
 
 /** 棚戻し済みフラグ（真なら棚戻し済み） */
 export function 棚戻し済みか(査定ID: string): boolean {
-  const r = query("select restocked_flg as f from dtb_otc_buy_order where assessment_id = $1", [査定ID]);
+  const r = query("select restocked_flg as f from dtb_otc_buy_order where id = $1::int", [数字(受注IDを調べる(査定ID))]);
   if (r.length !== 1) throw new Error(`査定ID ${査定ID} の買取が ${r.length} 件（1件のはず）`);
   return r[0].f === "true" || r[0].f === "t";
 }
@@ -153,4 +174,86 @@ export function 実在庫を足す(査定ID: string, 商品コード: string, �
     params: [数字(id), 商品コード, 数量, 小計],
     対象の確かめ: 親の確かめ, 確かめのparams: [数字(id)], 印, 最大行数: 1,
   }), "実在庫情報");
+}
+
+// ---- 日時の設定（2026-11-12 に足した。020・022 が使う。実行の印つきの買取にだけ書く） ----
+
+/** 日時の文字列（「2026-08-15 00:00」の形。日本時間）を確かめる */
+function 日時(s: string): string {
+  if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(s)) throw new Error(`日時の形が違う（${s}）`);
+  return `${s}:00+09`;
+}
+
+/** 印つきの買取の査定申込日時を設定する（日本時間） */
+export function 査定申込日時を設定する(査定ID: string, 日時の文字列: string): void {
+  const id = 受注IDを調べる(査定ID);
+  一件(writeTestData({
+    理由: `買取 ${査定ID} の査定申込日時を ${日時の文字列} にする`,
+    sql: "update dtb_otc_buy_order set apply_date = $2::timestamptz where id = $1::int",
+    params: [数字(id), 日時(日時の文字列)],
+    対象の確かめ: 親の確かめ, 確かめのparams: [数字(id)], 印, 最大行数: 1,
+  }), "査定申込日時の設定");
+}
+
+/** 印つきの買取の買取成立日時を設定する（日本時間） */
+export function 買取成立日時を設定する(査定ID: string, 日時の文字列: string): void {
+  const id = 受注IDを調べる(査定ID);
+  一件(writeTestData({
+    理由: `買取 ${査定ID} の買取成立日時を ${日時の文字列} にする`,
+    sql: "update dtb_otc_buy_order set complete_date = $2::timestamptz where id = $1::int",
+    params: [数字(id), 日時(日時の文字列)],
+    対象の確かめ: 親の確かめ, 確かめのparams: [数字(id)], 印, 最大行数: 1,
+  }), "買取成立日時の設定");
+}
+
+/** 印つきの買取の買取キャンセル日時を設定する（日本時間） */
+export function 買取キャンセル日時を設定する(査定ID: string, 日時の文字列: string): void {
+  const id = 受注IDを調べる(査定ID);
+  一件(writeTestData({
+    理由: `買取 ${査定ID} の買取キャンセル日時を ${日時の文字列} にする`,
+    sql: "update dtb_otc_buy_order set cancel_date = $2::timestamptz where id = $1::int",
+    params: [数字(id), 日時(日時の文字列)],
+    対象の確かめ: 親の確かめ, 確かめのparams: [数字(id)], 印, 最大行数: 1,
+  }), "買取キャンセル日時の設定");
+}
+
+/**
+ * 査定申込日時が範囲（日本時間・両端を含む）にある買取のうち、指定の査定IDの買取（この実行で作ったもの）以外（参照だけ。ほかの方の買取は消さない）。
+ * 同じ査定IDがほかの買取にも振られていることがあるので、除くのは内部IDで決める。止めるときの判断の材料に、査定IDと申込者の姓を返す。
+ */
+export function ほかの買取の査定申込(から: string, まで: string, 除く査定ID: string[]): { 査定ID: string; 姓: string }[] {
+  const ids = 除く査定ID.map((x) => 数字(受注IDを調べる(x)));
+  const r = query(`select assessment_id, last_name from dtb_otc_buy_order where apply_date >= $1::timestamptz and apply_date <= $2::timestamptz
+      and not (id = any(string_to_array($3, ',')::int[])) order by id`, [日時(から), 日時(まで), ids.join(",")]);
+  return r.map((x) => ({ 査定ID: String(x.assessment_id ?? ""), 姓: String(x.last_name ?? "") }));
+}
+
+/** 査定申込日時が範囲にある買取のうち、指定の査定IDの買取以外の件数（参照だけ） */
+export function ほかの買取の査定申込の数(から: string, まで: string, 除く査定ID: string[]): number {
+  return ほかの買取の査定申込(から, まで, 除く査定ID).length;
+}
+
+/** 買取のステータスの名前（確かめ用。参照だけ） */
+export function 買取のステータス名(査定ID: string): string {
+  const r = query(`select s.name from dtb_otc_buy_order o left join mtb_otc_buy_order_status s on s.id = o.otc_buy_order_status_id where o.id = $1::int`, [数字(受注IDを調べる(査定ID))]);
+  if (r.length !== 1) throw new Error(`査定ID ${査定ID} の買取が ${r.length} 件（1件のはず）`);
+  return String(r[0].name ?? "");
+}
+
+/** 印つきの買取のステータスを、名前で指定したステータスにする（画面の操作で止められないときだけ使う） */
+export function ステータスを設定する(査定ID: string, 名前: string): void {
+  const id = 受注IDを調べる(査定ID);
+  const s = query("select id from mtb_otc_buy_order_status where name = $1", [名前]);
+  if (s.length !== 1) throw new Error(`買取のステータス「${名前}」が ${s.length} 件（1件のはず）`);
+  一件(writeTestData({
+    理由: `買取 ${査定ID} のステータスを「${名前}」にする`,
+    sql: "update dtb_otc_buy_order set otc_buy_order_status_id = $2::int where id = $1::int",
+    params: [数字(id), 数字(String(s[0].id))],
+    対象の確かめ: 親の確かめ, 確かめのparams: [数字(id)], 印, 最大行数: 1,
+  }), "ステータスの設定");
+}
+
+/** 買取金額が範囲（両端を含む）にある買取のうち、指定の査定ID以外の件数（参照だけ） */
+export function ほかの買取の買取金額の数(から: number, まで: number, 除く査定ID: string): number {
+  return Number(query("select count(*) as n from dtb_otc_buy_order where total_price between $1::int and $2::int and coalesce(assessment_id, '') <> $3", [から, まで, 除く査定ID])[0].n);
 }

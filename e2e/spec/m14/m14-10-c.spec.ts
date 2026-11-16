@@ -3,7 +3,7 @@ import { test, Page } from "@playwright/test";
 import { caseTest, CaseBody, expect } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
-import { カード名日のリーガリティ, フォーマットの指定数, フォーマットの値, 名日のフォーマット, 統率の枚数 } from "../../db/m14_10_format";
+import { カード名日のリーガリティ, フォーマットの指定数, フォーマットの値, 削除日時の文, 名日のフォーマット, 統率の行, 統率の枚数 } from "../../db/m14_10_format";
 import { 欄, 削除を実行する, 新規画面を開く, 編集画面を開く, 入力する, 登録を押す } from "../../pages/admin/m14_10_format";
 import { M1410_ADMIN } from "../../seeds/m14-10";
 import "../../seeds/m14-10-c";
@@ -39,7 +39,12 @@ caseTest("IT-M14-10-007", async ({ page, step, expected }) => {
     expect.soft([v?.メイン上限, v?.メイン下限, v?.サイド上限, v?.サイド下限, v?.メタ日数], "メイン上限・下限、サイド上限・下限、メタゲーム分析日数").toEqual(["60", "40", "15", "0", "30"]);
     expect.soft([v?.ルール日, v?.ルール英, v?.認定], "ルール説明(日)・(英)・認定").toEqual(["結合試験ルール", "Integration test rule", "M14-10試験認定"]);
     expect.soft([v?.検索, v?.商品検索, v?.ランキング, v?.メタ簡易, v?.アリーナ, v?.基本土地算入, v?.デッキビルダー, v?.イベント表示, v?.統率使用, v?.一枚まで], "選択項目（すべて選択）").toEqual(Array(10).fill(true));
-    expect.soft([統率?.上限, 統率?.下限], "統率上限枚数・統率下限枚数").toEqual(["2", "1"]);
+    expect.soft(`${統率?.上限}・${統率?.下限}`, `統率上限枚数・統率下限枚数（DBで読んだ値：上限${統率?.上限}・下限${統率?.下限}。2・1）`).toBe("2・1");
+    // 正本の手順3の「統率のカードをメインボード枚数に含む」を選んだ保存内容（統率の行の枚数を数えるボードがメインボード）をDBで確かめる
+    expect.soft(v ? 統率の行(v.フォーマットID)?.数えるボードがメイン : undefined, `統率のカードをメインボード枚数に含む（DBで読んだ統率の行の、枚数を数えるボード：${v && 統率の行(v.フォーマットID) ? (統率の行(v.フォーマットID)!.数えるボードがメイン ? "メインボード" : "メインボード以外") : "統率の行が無い"}）`).toBe(true);
+    await expect.soft(欄(page, "commandMaxCardCount"), "保存後の画面の統率上限枚数").toHaveValue("2");
+    await expect.soft(欄(page, "commandMinCardCount"), "保存後の画面の統率下限枚数").toHaveValue("1");
+    await expect.soft(欄(page, "commanderInMain"), "保存後の画面で、統率のカードをメインボード枚数に含むにチェックが入っている").toBeChecked();
   });
 });
 
@@ -58,6 +63,10 @@ caseTest("IT-M14-10-017", async ({ page, step, expected }) => {
     expect.soft(件数, "「任意空フォーマット」のフォーマット数").toBe(1);
     expect.soft([v?.名英, v?.並び順, v?.メタ日数], "必須項目（名称・英語名・並び順・メタゲーム分析日数14）").toEqual([rc("Optional Empty Format"), "220", "14"]);
     expect.soft([空(v?.コード), 空(v?.メイン上限), 空(v?.メイン下限), 空(v?.サイド上限), 空(v?.サイド下限), 空(v?.ルール日), 空(v?.ルール英), 空(v?.認定)], "任意項目がすべて空").toEqual(Array(8).fill(true));
+    const 選択 = [v?.検索, v?.商品検索, v?.ランキング, v?.メタ簡易, v?.アリーナ, v?.基本土地算入, v?.デッキビルダー, v?.イベント表示, v?.統率使用, v?.一枚まで];
+    expect.soft(選択, `選択項目10個（デッキ検索〜ハイランダー）がすべて偽（DBで読んだ値：${選択.map((x) => (x ? "真" : "偽")).join("・")}）`).toEqual(Array(10).fill(false));
+    const 行 = v ? 統率の行(v.フォーマットID) : null;
+    expect.soft(行, `統率の行が無い（DBで読んだ統率の行：${行 ? "有る" : "無い"}）`).toBeNull();
   });
 });
 
@@ -104,13 +113,18 @@ caseTest("IT-M14-10-041", async ({ page, notes, step, expected }) => {
   let 前: ReturnType<typeof 統率の枚数> = null;
   let 後: ReturnType<typeof 統率の枚数> = null;
   let r = { sent: false, url: "", status: 0 };
-  await step(1, async () => { await 編集画面を開く(page, id); 前 = 統率の枚数(id); });
+  await step(1, async () => {
+    await 編集画面を開く(page, id); 前 = 統率の枚数(id);
+    await expect.soft(欄(page, "commandMaxCardCount"), "更新前の画面の統率上限枚数").toHaveValue("2");
+    await expect.soft(欄(page, "commandMinCardCount"), "更新前の画面の統率下限枚数").toHaveValue("1");
+  });
   await step(2, async () => { await 入力する(page, { チェック: { useCommandFlg: false } }); });
   await step(3, async () => { r = await 登録を押す(page); if (!r.sent) note("ブラウザの入力チェックが送信を止めた"); });
   await step(4, async () => { 後 = 統率の枚数(id); });
   await expected(async () => {
-    expect.soft([前?.上限, 前?.下限], "更新前: 統率上限枚数・統率下限枚数").toEqual(["2", "1"]);
-    expect.soft(後, "更新後: 統率の上限・下限の保存（削除されている）").toBeNull();
+    expect.soft(`${前?.上限}・${前?.下限}`, `更新前: 統率上限枚数・統率下限枚数（DBで読んだ値：上限${前?.上限}・下限${前?.下限}。2・1）`).toBe("2・1");
+    expect.soft(後, `更新後: 統率の上限・下限の保存（削除されている。DBで読んだ値：${後 ? `上限${後.上限}・下限${後.下限}` : "統率の行が無い（空）"}）`).toBeNull();
+    await expect.soft(欄(page, "useCommandFlg"), "更新後の画面で、統率使用のチェックが外れている").not.toBeChecked();
   });
 });
 
@@ -134,8 +148,14 @@ caseTest("IT-M14-10-072", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await 編集画面を開く(page, id); });
   await step(2, async () => { await 入力する(page, { ルール日: "統率なし更新後-M1410CB072" }); });
   await step(3, async () => { r = await 登録を押す(page); if (!r.sent) note("ブラウザの入力チェックが送信を止めた"); });
-  await step(4, async () => { 後 = 統率の枚数(id); });
-  await expected(async () => { expect.soft(後, "統率上限枚数・統率下限枚数の保存（保存されていない）").toBeNull(); });
+  let ルール: string | null | undefined = null;
+  await step(4, async () => { 後 = 統率の枚数(id); ルール = フォーマットの値(id)?.ルール日; });
+  await expected(async () => {
+    // 登録が行われずに終わっても「保存されていない」は成り立つので、登録が保存された（ルール説明(日)が更新された）ことを確かめる
+    expect.soft(r.sent, "登録の要求が送られた").toBe(true);
+    expect.soft(ルール, "ルール説明(日)が更新された（登録が保存された）").toBe("統率なし更新後-M1410CB072");
+    expect.soft(後, "統率上限枚数・統率下限枚数の保存（保存されていない）").toBeNull();
+  });
 });
 
 caseTest("IT-M14-10-074", async ({ page, notes, step, expected }) => {
@@ -161,7 +181,7 @@ caseTest("IT-M14-10-074", async ({ page, notes, step, expected }) => {
 /** 「画面を開く → 削除ボタン → ポップアップで実行 →（DBで確かめる）」の型。トークンを書き換えるケースは、書き換えの手順が1つ増える */
 function 削除ケース(n: string, o: {
   トークン?: string; DBなし?: boolean;
-  確かめ: (ctx: { id: string; 結果: { status: number; url: string }; v: ReturnType<typeof フォーマットの値>; 指定数: number }) => void;
+  確かめ: (ctx: { id: string; 結果: { status: number; url: string }; v: ReturnType<typeof フォーマットの値>; 指定数: number; 前指定数: number; 削除日時: string; page: Page }) => void | Promise<void>;
 }): CaseBody {
   return async ({ page, notes, step, expected }) => {
     await loginAdmin(page, M1410_ADMIN);
@@ -169,6 +189,8 @@ function 削除ケース(n: string, o: {
     let 結果 = { status: 0, url: "" };
     let v: ReturnType<typeof フォーマットの値> = null;
     let 指定数 = -1;
+    let 前指定数 = -1;
+    let 削除日時 = "";
     const 実行 = async () => {
       const [res] = await Promise.all([
         page.waitForResponse((r) => r.request().isNavigationRequest() && r.request().method() !== "GET", { timeout: 30_000 }).catch(() => null),
@@ -177,18 +199,21 @@ function 削除ケース(n: string, o: {
       await page.waitForLoadState("load").catch(() => undefined);
       結果 = { status: res?.status() ?? 0, url: page.url() };
     };
-    const 読む = () => { v = フォーマットの値(id); 指定数 = フォーマットの指定数(id); };
-    await step(1, async () => { await 編集画面を開く(page, id); });
+    const 読む = () => { v = フォーマットの値(id); 指定数 = フォーマットの指定数(id); 削除日時 = 削除日時の文(id); };
+    await step(1, async () => { await 編集画面を開く(page, id); if (!o.DBなし) 前指定数 = フォーマットの指定数(id); });
     await step(2, async () => { await page.locator('a.btn-ec-delete[data-bs-target="#DeleteModal"]').click({ timeout: 20_000 }); });
     let 次 = 3;
     if (o.トークン !== undefined) {
-      await step(次++, async () => { await page.locator("#DeleteModal [data-method=delete]").evaluate((a, t) => a.setAttribute("token-for-anchor", t), o.トークン!); });
+      await step(次++, async () => {
+        await page.locator("#DeleteModal [data-method=delete]").evaluate((a, t) => a.setAttribute("token-for-anchor", t), o.トークン!);
+        note(`削除のポップアップの実行ボタンが持つなりすまし対策のトークンを、正しい値から「${o.トークン}」に書き換えた（開発者ツールで属性を書き換えるのにあたる操作）`);
+      });
     }
     await step(次++, async () => { await 実行(); });
     if (!o.DBなし) await step(次++, async () => { 読む(); });
     await expected(async () => {
       expect.soft(結果.status, "削除要求への応答があった（要求が送られた）").not.toBe(0);
-      o.確かめ({ id, 結果, v, 指定数 });
+      await o.確かめ({ id, 結果, v, 指定数, 前指定数, 削除日時, page });
     });
   };
 }
@@ -196,22 +221,28 @@ void 削除を実行する;
 
 caseTest("IT-M14-10-043", 削除ケース("043", {
   トークン: "invalid-token",
-  確かめ: ({ 結果, v, 指定数 }) => {
+  確かめ: ({ id, 結果, v, 指定数, 前指定数, 削除日時 }) => {
     expect.soft(結果.status, "削除要求への応答").toBe(403);
-    expect.soft(v?.削除済み, "フォーマットが削除されている").toBe(false);
-    expect.soft(指定数, "カードごとの禁止・制限の指定の数（2件のまま）").toBe(2);
+    expect.soft(v?.削除済み, `フォーマットが削除されていない（DBで読んだ ID ${id} の削除日時：${削除日時}）`).toBe(false);
+    expect.soft(前指定数, "削除要求の前の、カードごとの禁止・制限の指定の数（DBで読んだ値）").toBe(2);
+    expect.soft(指定数, `カードごとの禁止・制限の指定の数（DBで読んだ値：${指定数}件。2件のまま）`).toBe(2);
   },
 }));
-caseTest("IT-M14-10-046", 削除ケース("046", { 確かめ: ({ v }) => { expect.soft(v !== null && !v.削除済み, "大会が紐づくフォーマットが残っている").toBe(true); } }));
-caseTest("IT-M14-10-048", 削除ケース("048", { 確かめ: ({ v }) => { expect.soft(v !== null && !v.削除済み, "アーキタイプが紐づくフォーマットが残っている").toBe(true); } }));
+caseTest("IT-M14-10-046", 削除ケース("046", { 確かめ: async ({ id, v, 削除日時, page }) => {
+  await expect.soft(page.getByText(/削除出来ません/).first(), "削除できない旨のエラーの表示").toBeVisible();
+  expect.soft(v !== null && !v.削除済み, `大会が紐づくフォーマット（ID ${id}）が残っている（DBで読んだ削除日時：${削除日時}）`).toBe(true); } }));
+caseTest("IT-M14-10-048", 削除ケース("048", { 確かめ: async ({ id, v, 削除日時, page }) => {
+  await expect.soft(page.getByText(/削除出来ません/).first(), "削除できない旨のエラーの表示").toBeVisible();
+  expect.soft(v !== null && !v.削除済み, `アーキタイプが紐づくフォーマット（ID ${id}）が残っている（DBで読んだ削除日時：${削除日時}）`).toBe(true); } }));
 caseTest("IT-M14-10-049", 削除ケース("049", {
   確かめ: ({ id, 結果 }) => { expect.soft(IDから(結果.url), "戻った画面のフォーマットID（フォーマット新規登録・編集画面）").toBe(id); },
   DBなし: true,
 }));
 caseTest("IT-M14-10-050", 削除ケース("050", {
-  確かめ: ({ v, 指定数 }) => {
-    expect.soft(v === null || v.削除済み, "フォーマットが削除されている").toBe(true);
-    expect.soft(指定数, "カードごとの禁止・制限の指定の数").toBe(0);
+  確かめ: ({ id, v, 指定数, 前指定数, 削除日時 }) => {
+    expect.soft(前指定数, "削除前の、カードごとの禁止・制限の指定の数（禁止カード-050の禁止1件と制限カード-050の制限1件の2件。DBで読んだ値）").toBe(2);
+    expect.soft(v === null || v.削除済み, `フォーマット（ID ${id}）が削除されている（DBで読んだ削除日時：${削除日時}）`).toBe(true);
+    expect.soft(指定数, `削除後の、カードごとの禁止・制限の指定の数（DBで読んだ値：${指定数}件）`).toBe(0);
   },
 }));
 caseTest("IT-M14-10-051", 削除ケース("051", {
@@ -219,9 +250,9 @@ caseTest("IT-M14-10-051", 削除ケース("051", {
   DBなし: true,
 }));
 caseTest("IT-M14-10-068", 削除ケース("068", {
-  確かめ: ({ 結果, v }) => {
+  確かめ: ({ id, 結果, v, 削除日時 }) => {
     expect.soft(結果.status, "削除要求への応答（エラーでない）").toBeLessThan(400);
-    expect.soft(v === null || v.削除済み, "フォーマットが削除されている").toBe(true);
+    expect.soft(v === null || v.削除済み, `フォーマット（ID ${id}）が削除されている（DBで読んだ削除日時：${削除日時}）`).toBe(true);
   },
 }));
 caseTest("IT-M14-10-069", async ({ page, notes, step, expected }) => {

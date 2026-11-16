@@ -9,9 +9,22 @@ import { タイルのタグ名 } from "../../seeds/f01-02-tile";
 const note = (m: string) => test.info().annotations.push({ type: "手順の注記", description: m });
 const 空白なし = (s: string) => s.replace(/\s+/g, "");
 
+/**
+ * スライドのボタンを押す。ボタンが無効（slick-disabled・aria-disabled）なら押さずに false を返す。
+ * 無効のボタンを click すると「押せるようになるのを待つ」で時間切れになり、止まった理由（ボタンが無効）がエビデンスに残らないため
+ */
+async function スライドを押す(page: Page, l: Locator, 名前: string): Promise<boolean> {
+  await expect(l, `${名前}`).toBeVisible({ timeout: 20_000 });
+  const 無効 = (await l.getAttribute("aria-disabled")) === "true" || /slick-disabled/.test((await l.getAttribute("class")) ?? "");
+  if (無効) { note(`${名前}は無効（押せない状態）で表示されていたため、押さなかった`); return false; }
+  await l.click({ timeout: 20_000 });
+  await page.waitForTimeout(1500);
+  return true;
+}
+
 /** 商品詳細へ移ったか（支店URL配下の /products/detail/<商品ID>） */
 async function 押して商品詳細へ(page: Page, target: Locator): Promise<void> {
-  await Promise.all([page.waitForURL(/\/products\/detail\/\d+/, { timeout: 30_000 }).catch(() => undefined), target.click({ timeout: 20_000 })]);
+  await Promise.all([page.waitForURL(/\/products\/detail\/\d+/, { timeout: 30_000 }).catch(() => undefined), target.click({ timeout: 20_000, noWaitAfter: true })]);
   await page.waitForLoadState("load");
 }
 
@@ -135,7 +148,7 @@ function 画像の拡大(n: string, 幅: keyof typeof 画面幅, 置き場: "SAL
     await expected(async () => {
       note(`画像「${商品名}」の商品画像は、正本のファイル名（.webp）で中身が 32x32 の PNG（シード作成時の問題）。カードの画像は ${カードの画像}、拡大の画像は ${拡大}`);
       expect.soft(開いた, "商品画像の拡大の表示が開いた").toBe(true);
-      expect.soft(カードの画像.includes("no_image"), "カードの画像が代替画像（登録した商品画像でない）").toBe(false);
+      expect.soft(!カードの画像.includes("no_image"), "カードの画像が登録した商品画像である（代替画像でない）").toBe(true);
       const path = (u: string) => (u ? new URL(u, page.url()).pathname : "");
       expect.soft(path(拡大), "拡大した画像（登録した商品画像。カードの画像と同じ）").toBe(path(カードの画像) || "(カードの画像が無い)");
     });
@@ -151,9 +164,11 @@ caseTest("IT-F01-02-074", async ({ page, step, expected }) => {
   await page.setViewportSize(画面幅.PC);
   await step(1, async () => { await top.open(支店URL("074")); await top.開いている(); await expect(top.SALE中, "SALE中の商品の区画").toHaveCount(1, { timeout: 30_000 }); });
   await step(2, async () => { await top.SALE中.scrollIntoViewIfNeeded(); await page.waitForTimeout(1000); 前 = await top.SALE中の見えている商品名(); note(`左から1番目「${前[0] ?? ""}」・2番目「${前[1] ?? ""}」`); });
-  await step(3, async () => { await top.左スライド.click({ timeout: 20_000 }); await page.waitForTimeout(1500); 後 = await top.SALE中の見えている商品名(); });
+  let 押せた = true;
+  await step(3, async () => { 押せた = await スライドを押す(page, top.左スライド, "左スライドボタン"); 後 = await top.SALE中の見えている商品名(); });
   await expected(async () => {
     note("「左スライドボタン」は、SALE中の商品の左側の矢印のボタン（前のスライド）と読んだ（設計書: 押下すると表示されている商品を左へ1つスライドする）");
+    expect.soft(押せた, "左スライドボタンが押せる（無効の表示でない）").toBe(true);
     expect.soft(後[0] ?? "", "左から1番目の商品（手順2で左から2番目だった商品）").toBe(前[1] ?? "(手順2で2番目が無い)");
     expect.soft(後.includes(前[0] ?? "(手順2で1番目が無い)"), "手順2で左から1番目だった商品が表示領域に見えている").toBe(false);
   });
@@ -165,10 +180,12 @@ caseTest("IT-F01-02-075", async ({ page, step, expected }) => {
   await page.setViewportSize(画面幅.PC);
   await step(1, async () => { await top.open(支店URL("075")); await top.開いている(); await expect(top.SALE中, "SALE中の商品の区画").toHaveCount(1, { timeout: 30_000 }); });
   await step(2, async () => { await top.SALE中.scrollIntoViewIfNeeded(); await page.waitForTimeout(1000); 前 = await top.SALE中の見えている商品名(); note(`左から1〜3番目「${前.slice(0, 3).join("」「")}」`); });
-  await step(3, async () => { for (let i = 0; i < 2; i++) { await top.左スライド.click({ timeout: 20_000 }); await page.waitForTimeout(1500); } });
-  await step(4, async () => { await top.右スライド.click({ timeout: 20_000 }); await page.waitForTimeout(1500); 後 = await top.SALE中の見えている商品名(); });
+  const 押せた: boolean[] = [];
+  await step(3, async () => { for (let i = 0; i < 2; i++) 押せた.push(await スライドを押す(page, top.左スライド, `左スライドボタン（${i + 1}回目）`)); });
+  await step(4, async () => { 押せた.push(await スライドを押す(page, top.右スライド, "右スライドボタン")); 後 = await top.SALE中の見えている商品名(); });
   await expected(async () => {
     note("「左スライドボタン」「右スライドボタン」は、SALE中の商品の左側・右側の矢印のボタンと読んだ");
+    expect.soft(押せた, "左スライドボタン2回・右スライドボタン1回がどれも押せる（無効の表示でない）").toEqual([true, true, true]);
     expect.soft(後[0] ?? "", "左から1番目の商品（手順2で左から2番目だった商品）").toBe(前[1] ?? "(手順2で2番目が無い)");
     expect.soft(後[1] ?? "", "左から2番目の商品（手順2で左から3番目だった商品）").toBe(前[2] ?? "(手順2で3番目が無い)");
   });

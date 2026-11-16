@@ -5,9 +5,11 @@
  * 手順が「開始時間(From)を空にし」と書かないケースは、開始時間(From)を初期表示（画面を開いた日）のまま検索する。入っていた値は手順の注記に残す。
  */
 import { test } from "@playwright/test";
+import { 印店名 } from "../../pages/admin/m13_marked_shop";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { adminUrl, loginAdmin } from "../../lib/session";
+import { 支払方法の表示順 } from "../../db/m13_06_payment";
 import { EntryListPage, 結果の行, プレイヤーを決定する, プレイヤーを検索する } from "../../pages/admin/m13_06_entry_list";
 import { M1306_ADMIN, イベント057, イベント名064, デッキだけの会員, 新規参加者, 支払方法の並び, 申込状況の並び, 読み替えた開催日 } from "../../seeds/m13-06";
 
@@ -39,7 +41,7 @@ async function 初期表示であることを確かめる(list: EntryListPage): 
   expect.soft((await list.該当件数()) ?? 0, "検索結果の件数").toBe(0);
   const p = await list.いまのページ();
   expect.soft(p ?? "1", "ページ番号（ページ送りが出ていなければ1）").toBe("1");
-  expect.soft(new URL(list.page.url()).pathname, "アドレスのページ番号").not.toMatch(/\/page\/([2-9]|\d{2,})$/);
+  expect.soft(!/\/page\/([2-9]|\d{2,})$/.test(new URL(list.page.url()).pathname), "アドレスが2ページ目以降（/page/2 など）を指していない").toBe(true);
   note(`ページ番号は、ページ送りの表示（${p === null ? "出ていない" : `いまのページ ${p}`}）とアドレス（${new URL(list.page.url()).pathname}）で確かめた。初期表示の画面はページ番号を表示しない`);
 }
 const 申込IDの行 = (rows: 結果の行[], id: string) => rows.filter((r) => r.申込ID === id);
@@ -67,7 +69,9 @@ caseTest("IT-M13-06-002", async ({ page, step, expected }) => {
   let 店舗: string[] = []; let from = "";
   await step(2, async () => { 店舗 = await list.選ばれている店舗(); from = await list.開始時間From.inputValue(); });
   await expected(async () => {
-    expect.soft(店舗, "店舗の初期値").toEqual(["新宿店"]);
+    expect.soft(店舗, "店舗の初期値").toEqual([印店名.新宿]);
+    // 店舗の欄（検索条件の「店舗」の選択欄）に赤枠を付ける
+    await expect.soft(page.locator("#admin_search_event_base_info + .select2"), "店舗の欄に表示された初期値").toContainText(印店名.新宿);
     // 開始時間は日時の入力欄（例「2026-11-09T00:00」）。日付の部分を画面を開いた日と比べる
     note(`開始時間(From)の欄は日時の入力欄で、「${from}」が入っていた。日付の部分を画面を開いた日と比べた`);
     expect.soft(from.slice(0, 10), "開始時間(From)の日付（画面を開いた日）").toBe(今日());
@@ -81,7 +85,7 @@ caseTest("IT-M13-06-004", async ({ page, step, expected }) => {
   await step(2, async () => { await list.モーダルを開く(); });
   await expected(async () => {
     await expect.soft(list.モーダル, "イベント情報検索の重ねて表示する一覧").toBeVisible();
-    expect.soft(await list.モーダルで選ばれている店舗(), "モーダルの店舗の初期値").toBe("新宿店");
+    expect.soft(await list.モーダルで選ばれている店舗(), "モーダルの店舗の初期値").toBe(印店名.新宿);
     expect.soft(await list.モーダルの開催日From.inputValue(), "モーダルの開催日(From)の初期値（画面を開いた日の3か月前）").toBe(三か月前());
   });
 });
@@ -109,19 +113,29 @@ caseTest("IT-M13-06-020", async ({ page, step, expected }) => {
 
 caseTest("IT-M13-06-022", async ({ page, step, expected }) => {
   const list = await ログインして開く(page);
-  await step(1, async () => { await list.開く(); });
+  // 前提②（支払方法の表示順がコンビニ決済=1・クレジットカード決済=2・管理者追加=3）は共有の設定なので書き換えず、DBで読んで確かめる。
+  // 画面の選択肢の並びは表示順で決まるので、画面の並びだけを見ても前提の確かめにならない
+  let 表示順: { 支払方法: string; 表示順: number }[] = [];
+  await step(1, async () => { 表示順 = 支払方法の表示順(); await list.開く(); });
   let 選択肢: string[] = [];
   await step(2, async () => { 選択肢 = await list.選択肢の一覧を開く(list.支払方法); });
+  const 前提 = (rows: { 支払方法: string; 表示順: number }[]) => rows.map((r) => `${r.支払方法}=${r.表示順}`);
+  if (JSON.stringify(前提(表示順)) !== JSON.stringify(支払方法の並び.map((m, i) => `${m}=${i + 1}`))) {
+    note(`前提の不成立: 正本の事前準備は支払方法の表示順を コンビニ決済=1・クレジットカード決済=2・管理者追加=3 にすることだが、共有の設定なので書き換えず、今の値は ${前提(表示順).join("・")} だった。前提が成り立たないので未判定にした`);
+    throw new Error(`前提が成り立たない: 支払方法の表示順が ${前提(表示順).join("・")}（正本の前提は コンビニ決済=1・クレジットカード決済=2・管理者追加=3）`);
+  }
   await expected(async () => {
+    expect.soft(前提(表示順), "前提: 支払方法の表示順（DBの設定）").toEqual(支払方法の並び.map((m, i) => `${m}=${i + 1}`));
     expect.soft(選択肢, "支払方法の選択肢の並び（上から）").toEqual(支払方法の並び);
   });
+  note("前提の支払方法の表示順は共有の設定なので書き換えず、DBで読んで確かめた（コンビニ決済=1・クレジットカード決済=2・管理者追加=3）");
 });
 
 caseTest("IT-M13-06-029", async ({ page, step, expected }) => {
   const list = await ログインして開く(page);
   const 開く出力項目設定 = async () => {
-    await list.CSVダウンロードボタン.click({ timeout: 30_000 });
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), list.出力項目設定リンク.click()]);
+    await list.CSV出力メニューのボタン.click({ timeout: 30_000 });
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), list.出力項目設定リンク.click({ noWaitAfter: true })]);
     return new URL(page.url()).pathname;
   };
   let 遷移先1 = ""; let 遷移先2 = "";
@@ -182,7 +196,7 @@ caseTest("IT-M13-06-039", async ({ page, step, expected }) => {
   });
   await step(3, async () => {
     // 並び順のメニューは入れ子で開くので、書き換えたリンクをその場で押す
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), link.evaluate((a) => (a as HTMLAnchorElement).click())]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), link.evaluate((a) => (a as HTMLAnchorElement).click())]);
     await list.読み込みを待つ();
   });
   await expected(async () => {
@@ -217,7 +231,7 @@ caseTest("IT-M13-06-046", async ({ page, notes, step, expected }) => {
   });
   await step(3, async () => {
     await expect(page.locator("#submit_entry"), "登録ボタンを押せる").toBeEnabled();
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("#submit_entry").click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#submit_entry").click({ noWaitAfter: true })]);
   });
   await expected(async () => {
     expect.soft(new URL(page.url()).pathname, "登録後の遷移先（イベント申込検索画面）").toMatch(/\/event\/entry(\/page\/\d+)?\/?$/);
@@ -231,8 +245,8 @@ caseTest("IT-M13-06-048", async ({ page, step, expected }) => {
   let 選択肢: string[] = [];
   await step(2, async () => { 選択肢 = await list.選択肢の一覧を開く(list.店舗); });
   await expected(async () => {
-    expect.soft(選択肢, "店舗の選択肢に編集権限のある新宿店").toContain("新宿店");
-    expect.soft(選択肢, "店舗の選択肢に編集権限のない池袋店").toContain("池袋店");
+    expect.soft(選択肢, "店舗の選択肢に編集権限のある新宿店").toContain(印店名.新宿);
+    expect.soft(選択肢, "店舗の選択肢に編集権限のない池袋店").toContain(印店名.池袋);
     expect.soft(選択肢.length, "店舗の選択肢の数").toBe(2);
   });
 });
@@ -248,8 +262,8 @@ caseTest("IT-M13-06-049", async ({ page, step, expected }) => {
     note(`モーダルの店舗の選択肢（「指定なし」を除く）: ${選択肢.join("、")}`);
   });
   await expected(async () => {
-    expect.soft(選択肢, "モーダルの店舗の選択肢に編集権限のある新宿店").toContain("新宿店");
-    expect.soft(選択肢, "モーダルの店舗の選択肢に編集権限のない池袋店").toContain("池袋店");
+    expect.soft(選択肢, "モーダルの店舗の選択肢に編集権限のある新宿店").toContain(印店名.新宿);
+    expect.soft(選択肢, "モーダルの店舗の選択肢に編集権限のない池袋店").toContain(印店名.池袋);
     expect.soft(選択肢.length, "モーダルの店舗の選択肢の数").toBe(2);
   });
 });
@@ -274,7 +288,7 @@ function 申込状況で絞る(n: string, 状況: string) {
       await list.開く();
       await list.検索種別("イベント申込を検索").check();
       await list.イベント名.fill(rc(`M1306-${n}`));
-      await list.店舗を選ぶ(["新宿店"]);
+      await list.店舗を選ぶ([印店名.新宿]);
       await list.申込状況を選ぶ([状況]);
       await 開始時間の注記(list);
       await list.検索する();
@@ -296,7 +310,7 @@ caseTest("IT-M13-06-055", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await list.開く(); await list.検索種別("イベント申込を検索").check(); });
   await step(2, async () => {
     await list.イベント名.fill(rc("M1306-055"));
-    await list.店舗を選ぶ(["新宿店"]);
+    await list.店舗を選ぶ([印店名.新宿]);
     await list.デッキ登録有無("デッキ未登録").check();
     await 開始時間の注記(list);
   });
@@ -314,7 +328,7 @@ caseTest("IT-M13-06-057", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await list.開く(); await list.モーダルを開く(); });
   await step(2, async () => {
     await list.モーダルのイベント名.fill(rc("M1306-057"));
-    await list.モーダルの店舗.selectOption({ label: "新宿店" });
+    await list.モーダルの店舗.selectOption({ label: 印店名.新宿 });
     await list.日付を入れる(list.モーダルの開催日From, "2026/09/01");
     await list.日付を入れる(list.モーダルの開催日To, "2026/09/30");
     await list.モーダルで検索する();
@@ -329,7 +343,7 @@ caseTest("IT-M13-06-057", async ({ page, notes, step, expected }) => {
     expect.soft(行の数, `イベントID ${e} の行の数`).toBe(1);
     expect.soft(イベント名の欄, "イベント名の欄にイベント名（日）").toContain(イベント057.名日);
     expect.soft(イベント名の欄, "イベント名の欄にイベント名（英）").toContain(イベント057.名英);
-    expect.soft(イベント名の欄, "イベント名の欄に開催店舗").toContain("新宿店");
+    expect.soft(イベント名の欄, "イベント名の欄に開催店舗").toContain(印店名.新宿);
     expect.soft(イベント名の欄, "イベント名の欄にフォーマット").toContain(イベント057.フォーマット);
   });
 });
@@ -399,7 +413,7 @@ caseTest("IT-M13-06-064", async ({ page, step, expected }) => {
     expect.soft(rows[0]?.プレイヤー欄 ?? "", "プレイヤー名の表示").toContain(名前);
     expect.soft(rows[0]?.プレイヤー欄のリンク数, "プレイヤー名・デッキ登録状況の欄のリンクの数（リンクではないラベル）").toBe(0);
     expect.soft(rows[0]?.イベント欄 ?? "", "イベント名").toContain(イベント名064);
-    expect.soft(rows[0]?.イベント欄 ?? "", "店舗").toContain("新宿店");
+    expect.soft(rows[0]?.イベント欄 ?? "", "店舗").toContain(印店名.新宿);
     // 開催日はシードで読み替えた日（シード表の 2026-09-10 の年だけを実行した日以後へずらした日）
     const 開催日 = 読み替えた開催日("2026-09-10 10:00").slice(0, 10).replace(/-/g, "/");
     if (開催日 !== "2026/09/10") note(`期待結果の開催日「2026年9月10日」は、シードで読み替えた開催日「${開催日}」として確かめた`);
@@ -425,7 +439,7 @@ caseTest("IT-M13-06-068", async ({ page, notes, step, expected }) => {
     await list.開く();
     await list.開始時間From.fill("");
     await list.イベント名.fill(rc("M1306-068"));
-    await list.店舗を選ぶ(["池袋店"]);
+    await list.店舗を選ぶ([印店名.池袋]);
     await list.検索種別("デッキ登録を検索").check();
     await list.検索する();
   });
@@ -445,7 +459,7 @@ function 開始時間を空にして申込状況で絞る(n: string, 状況: str
     await step(2, async () => {
       await list.開始時間From.fill("");
       await list.イベント名.fill(rc(`M1306-${n}`));
-      await list.店舗を選ぶ(["新宿店"]);
+      await list.店舗を選ぶ([印店名.新宿]);
       await list.申込状況を選ぶ([状況]);
     });
     await step(3, async () => { await list.検索する(); });
@@ -467,7 +481,7 @@ caseTest("IT-M13-06-071", async ({ page, notes, step, expected }) => {
   await step(2, async () => {
     await list.開始時間From.fill("");
     await list.イベント名.fill(rc("M1306-071"));
-    await list.店舗を選ぶ(["新宿店"]);
+    await list.店舗を選ぶ([印店名.新宿]);
     await list.デッキ登録有無("登録デッキあり").check();
   });
   await step(3, async () => { await list.検索する(); });

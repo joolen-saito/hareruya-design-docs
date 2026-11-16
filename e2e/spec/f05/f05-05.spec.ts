@@ -60,6 +60,8 @@ const 画面 = async (c: NetBuyCart05Page, 商品: F0505商品[]) => ({
 });
 type 画面の値 = Awaited<ReturnType<typeof 画面>>;
 const 行 = (数量: number, 合計: string): 行の値 => ({ 数量: String(数量), 合計 });
+/** 「変わらない」を見るケースで、操作が送られていないだけで合格にしないための確かめ */
+const 送られた = (応答: number | null, what: string) => expect.soft(応答, `${what}（数量の一覧の更新の要求が送られ、応答が返った）`).not.toBeNull();
 
 // ---- 003 ----
 caseTest("IT-F05-05-003", async ({ page, step, expected }) => {
@@ -175,12 +177,14 @@ caseTest("IT-F05-05-011", async ({ page, step, expected }) => {
   const { c, 商品 } = await 準備する(page, "CUS-011", "CART-011");
   const { A, B } = 商品;
   let 再読込後!: 画面の値;
+  let 応答: number | null = null;
   await step(1, async () => { await c.開いて整える(); });
   await step(2, async () => { await c.数量の値を書き換える(A.規格ID, "4"); await c.数量の値を書き換える(B.規格ID, "21"); });
-  await step(3, async () => { await c.更新の応答を待つ(() => c.数量の欄から外す(B.規格ID)); });
+  await step(3, async () => { 応答 = await c.更新の応答を待つ(() => c.数量の欄から外す(B.規格ID)); note(`数量の一覧の更新の応答: ${応答 ?? "なし"}`); });
   await step(4, async () => { await c.再読み込みして整える(); 再読込後 = await 画面(c, [A, B]); });
   note(`画面が出した alert: ${c.アラート.join(" / ") || "なし"}`);
   await expected(async () => {
+    送られた(応答, "規格F0505-B-001-011の欄から外したとき");
     expect.soft(再読込後.行[A.商品コード], "規格F0505-A-001-011の数量（更新されず2）").toEqual(行(2, "200"));
     expect.soft(再読込後.行[B.商品コード], "規格F0505-B-001-011の数量（更新されず3）").toEqual(行(3, "600"));
     expect.soft(再読込後.小計, "小計").toBe("800");
@@ -194,19 +198,28 @@ function トークン(n: string, 操作: (c: NetBuyCart05Page) => Promise<void>,
     const { c, 商品 } = await 準備する(page, `CUS-${n}`, `CART-${n}`);
     const { A, B } = 商品;
     let 再読込後!: 画面の値;
+    let 応答: number | null = null;
     await step(1, async () => { await c.開いて整える(); });
     await step(2, async () => { await expect(c.トークン入力, "なりすまし対策トークンの入力要素").toHaveCount(1); await 操作(c); });
-    await step(3, async () => { await c.更新の応答を待つ(() => c.削除ボタン(A.規格ID).click()); });
+    await step(3, async () => { 応答 = await c.更新の応答を待つ(() => c.削除ボタン(A.規格ID).click()); note(`削除の要求の応答: ${応答 ?? "なし"}`); });
     await step(4, async () => { await c.再読み込みして整える(); 再読込後 = await 画面(c, [A, B]); });
+    note(`${c.届いた要求の注記}`);
     note(`${注}。画面が出した alert: ${c.アラート.join(" / ") || "なし"}`);
     await expected(async () => {
+      送られた(応答, "規格Aの削除ボタンを押したとき");
       expect.soft(再読込後.行[A.商品コード], "規格Aの明細（削除されず数量2）").toEqual(行(2, "200"));
       expect.soft(再読込後.行[B.商品コード], "規格Bの明細（削除されず数量3）").toEqual(行(3, "600"));
     });
   };
 }
-caseTest("IT-F05-05-012", トークン("012", (c) => c.トークン入力.evaluate((e) => e.remove()), "手順2は、画面のスクリプトでフォームのトークンの入力要素を削除した"));
-caseTest("IT-F05-05-013", トークン("013", (c) => c.トークン入力.evaluate((e) => { (e as HTMLInputElement).value = "invalid-token"; }), "手順2は、画面のスクリプトでフォームのトークンの値を「invalid-token」に変えた"));
+caseTest("IT-F05-05-012", トークン("012", async (c) => {
+  await c.トークン入力.evaluate((e) => e.remove());
+  await c.要求の本文を書き換える((p) => { p.delete("_token"); });
+}, "手順2は、フォームのトークンの入力要素を削除し、さらに画面のスクリプトが meta から付けるトークンも含めて、サーバーへ送る要求の本文から _token を取り除いた"));
+caseTest("IT-F05-05-013", トークン("013", async (c) => {
+  await c.トークン入力.evaluate((e) => { (e as HTMLInputElement).value = "invalid-token"; });
+  await c.要求の本文を書き換える((p) => { p.set("_token", "invalid-token"); });
+}, "手順2は、フォームのトークンの値を「invalid-token」に変え、さらにサーバーへ送る要求の本文の _token も「invalid-token」に書き換えた"));
 
 // ---- 014: 同一セッションの2つの画面 ----
 caseTest("IT-F05-05-014", async ({ page, step, expected }) => {
@@ -216,10 +229,12 @@ caseTest("IT-F05-05-014", async ({ page, step, expected }) => {
   let 再読込後!: 画面の値;
   await step(1, async () => { await a.開いて整える(); await b.開いて整える(); });
   await step(2, async () => { await b.更新の応答を待つ(() => b.削除ボタン(A.規格ID).click()); });
-  await step(3, async () => { await a.更新の応答を待つ(() => a.削除ボタン(A.規格ID).click()); });
+  let 応答: number | null = null;
+  await step(3, async () => { 応答 = await a.更新の応答を待つ(() => a.削除ボタン(A.規格ID).click()); note(`ブラウザAの削除の要求の応答: ${応答 ?? "なし"}`); });
   await step(4, async () => { await a.再読み込みして整える(); 再読込後 = await 画面(a, [A, B]); });
   note("ブラウザAとブラウザBは、同じブラウザ（同じセッション）の別タブで行った");
   await expected(async () => {
+    送られた(応答, "ブラウザAで規格F0505-A-001-014の削除ボタンを押したとき");
     expect.soft(再読込後.行[A.商品コード], "規格F0505-A-001-014の明細（削除済み）").toBeNull();
     expect.soft(再読込後.行[B.商品コード], "規格F0505-B-001-014の数量と商品ごとの合計金額").toEqual(行(3, "600"));
     expect.soft(再読込後.小計, "小計").toBe("600");
@@ -229,6 +244,7 @@ caseTest("IT-F05-05-014", async ({ page, step, expected }) => {
 // ---- 015: 空のカート ----
 caseTest("IT-F05-05-015", async ({ page, step, expected }) => {
   const { c } = await 準備する(page, "CUS-015", null);
+  test.info().annotations.push({ type: "手順の注記", description: "正本の期待「商品一覧へ戻るための導線」は、設計 0305 の改訂（2026/7/16「商品一覧ではなくTOPに修正」）に合わせて「TOPへ戻る」ボタンで確かめた（読み替え）" });
   await step(1, async () => { await c.開く(); });
   await expected(async () => {
     expect.soft(await c.明細の行.count(), "明細の行の数").toBe(0);
@@ -281,7 +297,7 @@ caseTest("IT-F05-05-023", async ({ page, step, expected }) => {
   const { c } = await 準備する(page, "CUS-023", null);
   await step(1, async () => { await c.開く(); });
   await step(2, async () => {
-    await Promise.all([page.waitForURL((u) => u.pathname !== "/ja/purchase/cart", { timeout: 60_000, waitUntil: "load" }), c.TOPへ戻るボタン.click()]);
+    await Promise.all([page.waitForURL((u) => u.pathname !== "/ja/purchase/cart", { timeout: 120_000, waitUntil: "load" }), c.TOPへ戻るボタン.click({ noWaitAfter: true })]);
   });
   note("「TOPへ戻る」のリンク先はネット買取のTOP（/ja/purchase）。TOP画面はここに当てた");
   await expected(async () => {
@@ -465,12 +481,14 @@ caseTest("IT-F05-05-036", async ({ page, step, expected }) => {
   const { c, 商品 } = await 準備する(page, "CBCUS-036", "CBCART-036");
   const { A, B } = 商品;
   let 再読込後!: 画面の値;
+  let 応答: number | null = null;
   await step(1, async () => { await c.開いて整える(); });
   await step(2, async () => { await c.数量の値を書き換える(A.規格ID, "4"); await c.数量の値を書き換える(B.規格ID, "21"); });
-  await step(3, async () => { await c.更新の応答を待つ(() => c.数量の欄から外す(B.規格ID)); });
+  await step(3, async () => { 応答 = await c.更新の応答を待つ(() => c.数量の欄から外す(B.規格ID)); note(`数量の一覧の更新の応答: ${応答 ?? "なし"}`); });
   await step(4, async () => { await c.再読み込みして整える(); 再読込後 = await 画面(c, [A, B]); });
   note(`画面が出した alert: ${c.アラート.join(" / ") || "なし"}`);
   await expected(async () => {
+    送られた(応答, "規格F0505-CB036-Bの欄から外したとき");
     expect.soft(再読込後.行[A.商品コード], "規格F0505-CB036-Aの数量（更新されず2）").toEqual(行(2, "1,200"));
     expect.soft(再読込後.行[B.商品コード], "規格F0505-CB036-Bの数量（更新されず3）").toEqual(行(3, "2,100"));
     expect.soft(再読込後.小計, "小計").toBe("3,300");
@@ -484,10 +502,18 @@ caseTest("IT-F05-05-037", async ({ page, step, expected }) => {
   const { A } = 商品;
   let 再読込後!: 画面の値;
   await step(1, async () => { await c.開いて整える(); });
-  await step(2, async () => { await c.数量欄(A.規格ID).evaluate((e) => e.removeAttribute("name")); });
-  await step(3, async () => { await c.更新の応答を待つ(() => c.数量を入れて外す(A.規格ID, "4")); });
+  await step(2, async () => {
+    await c.数量欄(A.規格ID).evaluate((e) => e.removeAttribute("name"));
+    // 画面のスクリプトは name ではなく .qty-input から数量を集めるため、サーバーへ送る要求の本文から qty を取り除く
+    await c.要求の本文を書き換える((p) => { for (const k of [...p.keys()]) if (/^qty(\[|$)/.test(k)) p.delete(k); });
+  });
+  let 応答: number | null = null;
+  await step(3, async () => { 応答 = await c.更新の応答を待つ(() => c.数量を入れて外す(A.規格ID, "4")); note(`数量の一覧の更新の応答: ${応答 ?? "なし"}`); });
   await step(4, async () => { await c.再読み込みして整える(); 再読込後 = await 画面(c, [A]); });
+  note(`数量の欄の name 属性を外し、さらに送る要求の本文から qty を取り除いた。${c.届いた要求の注記}`);
+  expect(c.届いた要求の本文.length > 0 && c.届いた要求の本文.every((b) => !/qty/.test(b)), "サーバーへ届いた要求に数量の一覧（qty）が含まれていない").toBe(true);
   await expected(async () => {
+    送られた(応答, "規格F0505-CB037-Aの欄から外したとき");
     expect.soft(再読込後.行[A.商品コード], "規格F0505-CB037-Aの数量（2のまま）と商品ごとの合計金額").toEqual(行(2, "1,200"));
     expect.soft(再読込後.小計, "小計").toBe("1,200");
   });
@@ -502,10 +528,12 @@ caseTest("IT-F05-05-038", async ({ page, step, expected }) => {
   let 文 = "";
   await step(1, async () => { await a.開いて整える(); await b.開いて整える(); });
   await step(2, async () => { await b.更新の応答を待つ(() => b.削除ボタン(A.規格ID).click()); });
-  await step(3, async () => { await a.更新の応答を待つ(() => a.数量を入れて外す(A.規格ID, "5")); });
+  let 応答: number | null = null;
+  await step(3, async () => { 応答 = await a.更新の応答を待つ(() => a.数量を入れて外す(A.規格ID, "5")); note(`ブラウザAの数量の一覧の更新の応答: ${応答 ?? "なし"}`); });
   await step(4, async () => { await a.再読み込みして整える(); 再読込後 = await 画面(a, [A]); 文 = await a.空の案内の文を読む(); });
   note("ブラウザAとブラウザBは、同じブラウザ（同じセッション）の別タブで行った");
   await expected(async () => {
+    送られた(応答, "ブラウザAで規格F0505-CB038-Aの欄から外したとき");
     expect.soft(再読込後.行[A.商品コード], "規格F0505-CB038-Aの明細（現れない）").toBeNull();
     expect.soft(再読込後.行数, "明細の行の数").toBe(0);
     expect.soft(文, "商品が入っていない案内").toContain(空の文1);

@@ -14,8 +14,10 @@ import { rc } from "../../lib/run_marker";
 import { hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { 会員, 会員の住所, 会員の選手 } from "../../db/f06_01";
 import { EntryPage, 入力値 } from "../../pages/front/f06_01_entry";
+import { scene, 要素を撮る, 選択肢を広げて撮る } from "../../lib/evidence_other";
 import { deliveryRows, openEditFromResult, readEdit, resultCustomerId, resultRow, searchCustomer } from "../../pages/admin/f06_customer";
 import { L_ADMIN, mailOf, PC_ADMIN, 仮会員機能を戻す } from "../../seeds/f06-01";
+import { 本店ECTOPの画面か } from "../../pages/front/f01_01_top";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 /** 正本の外の補い（記録で条件付きに分ける） */
@@ -133,7 +135,7 @@ caseTest("IT-F06-01-006", async ({ page, step, expected }) => {
   const e = new EntryPage(page);
   let opts: string[] = [];
   await step(1, async () => { await e.open(); });
-  await step(2, async () => { opts = await e.国の選択肢(); });
+  await step(2, async () => { opts = await e.国の選択肢(); await 選択肢を広げて撮る(e.f("country"), scene.stepLabel(2, "国の選択肢（先頭から20件を広げて表示）")); });
   await expected(async () => {
     expect.soft(opts[0], "先頭の選択肢").toBe("選択してください");
     const rest = opts.slice(1);
@@ -147,7 +149,7 @@ caseTest("IT-F06-01-007", async ({ page, step, expected }) => {
   const e = new EntryPage(page);
   let opts: string[] = [];
   await step(1, async () => { await e.open(); });
-  await step(2, async () => { opts = await e.職業の選択肢(); });
+  await step(2, async () => { opts = await e.職業の選択肢(); await 選択肢を広げて撮る(e.f("job"), scene.stepLabel(2, "職業の選択肢（広げて表示）"), 40); });
   await expected(async () => {
     expect.soft(opts, "職業の選択肢に「会社員」がある").toContain("会社員");
     expect.soft(opts, "職業の選択肢に「学生」がある").toContain("学生");
@@ -162,6 +164,7 @@ caseTest("IT-F06-01-008", async ({ page, step, expected }) => {
   });
   await expected(async () => {
     expect.soft(await e.現在地がリンクか(), "現在表示中ページが押下可能なリンクになっている").toBe(false);
+    await 要素を撮る(e.パンくず現在地.first().locator("xpath=ancestor::nav[1]"), scene.expectedLabel("パンくずリスト（拡大）"));
   });
 });
 
@@ -170,7 +173,7 @@ caseTest("IT-F06-01-009", async ({ page, step, expected }) => {
   await step(1, async () => { await e.open(); });
   await step(2, async () => { await e.押して遷移する(e.パンくずホーム); });
   await expected(async () => {
-    expect.soft(e.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/);
+    expect.soft(e.path, "遷移した画面（本店ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(e.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true);
     expect.soft(e.path, "会員登録画面のままではない").not.toMatch(/entry/);
   });
 });
@@ -199,7 +202,7 @@ caseTest("IT-F06-01-011", async ({ page, step, expected }) => {
   await step(1, async () => { await e.open(); });
   await step(2, async () => { await e.押して遷移する(page.getByRole("link", { name: "戻る", exact: true })); });
   await expected(async () => {
-    expect.soft(e.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/);
+    expect.soft(e.path, "遷移した画面（ECTOP）").toMatch(/^\/(ja\/?)?$/); expect.soft(await 本店ECTOPの画面か(e.page), "本店ECTOPの画面（トップの印とヘッダのロゴ）が表示されている").toBe(true);
   });
 });
 
@@ -219,7 +222,7 @@ caseTest("IT-F06-01-058", async ({ page, step, expected }) => {
   const e = new EntryPage(page);
   let opts: string[] = [];
   await step(1, async () => { await e.open(); });
-  await step(2, async () => { opts = await e.性別の選択肢(); });
+  await step(2, async () => { opts = await e.性別の選択肢(); await 選択肢を広げて撮る(e.f("sex"), scene.stepLabel(2, "性別の選択肢（広げて表示）")); });
   await expected(async () => {
     expect.soft(opts, "性別の選択肢に「男性」がある").toContain("男性");
     expect.soft(opts, "性別の選択肢に「女性」がある").toContain("女性");

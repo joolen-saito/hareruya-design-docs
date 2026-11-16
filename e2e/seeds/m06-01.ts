@@ -21,15 +21,20 @@ import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { OtcDetailPage, OtcListPage } from "../pages/admin/m06_otc_list";
-import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore } from "../pages/admin/m04_24_store";
-import { 申込を行う, 査定IDを読む, 申込者の, storeInput } from "./m06-common";
+import { ensureMemberByStoreIdsFix as ensureMemberByStoreIds } from "../pages/admin/m04_24_reuse_k";
+import { ensureStore, 使い回す店舗の入力 } from "../pages/admin/m04_24_reuse_k";
+import { 申込を行う, 査定IDを読む, 申込者の } from "./m06-common";
+import { 申込者を覚える, 覚えた申込者の姓 } from "../db/m06_01";
 
+
+/**
+ * 店舗は作らない（依頼者 2026-11-15「店舗は作るのもう禁止」）。買取店舗A・Bは、使い回す E2E の店舗で表す: A=店舗ID 4973・B=店舗ID 5007（どちらも公開・開店の支店）。
+ * 正本は買取店舗Aを「本店」とするが、本店は店舗ID 1 だけで、本店の戻しリストの棚番ソート（053・080）はもともと実装していない（spec/m06/m06-01-card.spec.ts）。
+ */
+export const STORE_A = 使い回す店舗の入力("4973", "買取店舗A");
+export const STORE_B = 使い回す店舗の入力("5007", "買取店舗B");
 export const M0601_ADMIN_A: Account = { loginId: "m0601_admin_a", password: "Passw0rd!M0601A" };
 export const M0601_ADMIN_ALL: Account = { loginId: "m0601_admin_all", password: "Passw0rd!M0601All" };
-
-export const STORE_A = storeInput("買取店舗A", "カイトリテンポエー", "Kaitori Store A", "m0601a", "K1A");
-export const STORE_B = storeInput("買取店舗B", "カイトリテンポビー", "Kaitori Store B", "m0601b", "K1B", "530-0001", "大阪府", "大阪市北区梅田1-1-1", "晴ビル2F", "06-2222-2222");
 
 const L_A = "〔店舗ID-M0601-共有A〕";
 const L_B = "〔店舗ID-M0601-共有B〕";
@@ -47,7 +52,7 @@ defineSeed("S-M06-01-ADM-A", { needs: ["S-M06-01-SHOPS"] }, async ({ browser, no
   const a = notes.get(L_A);
   await withAdminSession(browser, SETUP_ADMIN, (page) => ensureMemberByStoreIds(page, {
     名前: "M06-01試験管理者A", ログインID: M0601_ADMIN_A.loginId, メールアドレス: "m0601_admin_a@example.test", パスワード: M0601_ADMIN_A.password,
-    権限: "システム管理者", 所属店舗ID: a, デフォルト検索表示店舗ID: a, 編集可能店舗ID: [a],
+    権限: "システム管理者", 所属店舗ID: a, デフォルト検索表示店舗ID: a, 編集可能店舗ID: [a], 店舗は付け替える: true,
   }));
 });
 
@@ -57,7 +62,7 @@ defineSeed("S-M06-01-ADM-ALL", { needs: ["S-M06-01-SHOPS"] }, async ({ browser, 
   const b = notes.get(L_B);
   await withAdminSession(browser, SETUP_ADMIN, (page) => ensureMemberByStoreIds(page, {
     名前: "M06-01試験全店管理者", ログインID: M0601_ADMIN_ALL.loginId, メールアドレス: "m0601_admin_all@example.test", パスワード: M0601_ADMIN_ALL.password,
-    権限: "システム管理者", 所属店舗ID: a, デフォルト検索表示店舗ID: "", 編集可能店舗ID: [a, b],
+    権限: "システム管理者", 所属店舗ID: a, デフォルト検索表示店舗ID: "", 編集可能店舗ID: [a, b], 店舗は付け替える: true,
   }));
 });
 
@@ -82,6 +87,17 @@ export async function ステータスを変える(browser: Browser, 査定IDs: s
       await list.買取店舗を選ぶ("");
       await list.査定IDを入れる(id);
       await list.検索する();
+      // 同じ査定IDの買取がほかにもあれば（E2E が査定申込日時を過去へ移すと、アプリがあとの申込に同じ査定IDを振ることがある）、
+      // 申し込んだときの申込者の姓でも絞り、ほかの方の買取を開かない。1件に決まらなければ止める
+      const 同じ = (await list.行()).filter((r) => r.査定ID === id);
+      if (同じ.length > 1) {
+        const 姓 = 覚えた申込者の姓(id);
+        if (!姓) throw new Error(`査定ID ${id} の買取が一覧に ${同じ.length} 件あり、申込者の姓を覚えていないので、どれを変えるか決められない`);
+        await list.申込者名を入れる(姓);
+        await list.検索する();
+        const 絞った = (await list.行()).filter((r) => r.査定ID === id);
+        if (絞った.length !== 1) throw new Error(`査定ID ${id} の買取が、申込者の姓「${姓}」で絞っても一覧に ${絞った.length} 件（1件のはず）`);
+      }
       await list.詳細を開く(id);
       await new OtcDetailPage(page).ステータスを変える(変更後);
     }
@@ -91,7 +107,9 @@ export async function ステータスを変える(browser: Browser, 査定IDs: s
 /** 申込者名ごとに1件ずつ申込み、申込者名で検索して査定IDを返す */
 export async function 一件ずつ申込む(browser: Browser, 店: "A" | "B", 姓: string, 名: string, セイ: string, メイ: string): Promise<string> {
   await 申込を行う(browser, 支店URL(店), [申込者の(姓, 名, セイ, メイ)]);
-  return (await 査定IDを読む(browser, 姓, 1))[0];
+  const 査定ID = (await 査定IDを読む(browser, 姓, 1))[0];
+  申込者を覚える(査定ID, 姓);
+  return 査定ID;
 }
 
 export const 試験者 = (姓: string) => ({ 姓, 名: "一郎", セイ: "カイトリシケン", メイ: "イチロウ" });

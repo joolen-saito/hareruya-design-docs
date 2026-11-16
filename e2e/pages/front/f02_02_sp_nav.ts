@@ -5,6 +5,7 @@
  */
 import { Locator, Page, expect, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
+import { トップのパスか, トップを開く } from "./open_top";
 
 const T = 30_000;
 
@@ -23,8 +24,9 @@ export class SpNavPage {
   // ---- 画面を開く ----
   async トップを開く(言語: 言語 = "ja"): Promise<void> { await this.開く(`/${言語}/`); }
   async 商品一覧を開く(): Promise<void> { await this.開く("/ja/products/search"); }
+  /** トップ（/ja/・/en/）は開発環境で重く、ときに 504 を返すので、120秒待ち、504 なら開き直す（pages/front/open_top.ts） */
   async 開く(path: string): Promise<void> {
-    const res = await this.page.goto(`${BASE_URL}${path}`, { timeout: 60_000 });
+    const res = トップのパスか(path) ? await トップを開く(this.page, `${BASE_URL}${path}`) : await this.page.goto(`${BASE_URL}${path}`, { timeout: 60_000 });
     expect(res?.status() ?? 0, `${path} の応答`).toBeLessThan(400);
     await this.page.waitForLoadState("load");
   }
@@ -71,9 +73,50 @@ export class SpNavPage {
   readonly お気に入りの商品数 = () => this.page.locator('nav.p-hareruya-bottom-nav a[href*="/mypage/favorite"] .p-hareruya-bottom-nav__badge');
   readonly お気に入りのログインモーダル = () => this.page.locator("#favorite-login-modal");
   readonly ログインマイページ = () => this.page.locator('nav.p-hareruya-bottom-nav a[href*="/mypage/login"], nav.p-hareruya-bottom-nav a[href$="/mypage"], nav.p-hareruya-bottom-nav a[href$="/mypage/"]').first();
+  /** カテゴリのモーダルが開いているか（アプリは開くと is-visible を付ける。is-active は使わない） */
+  async カテゴリモーダルが開いているか(): Promise<boolean> {
+    return this.カテゴリモーダル().evaluate((el) => el.classList.contains("is-visible") && getComputedStyle(el).visibility !== "hidden" && getComputedStyle(el).display !== "none").catch(() => false);
+  }
   async モーダルが開いているか(l: Locator): Promise<boolean> {
     return l.evaluate((el) => el.classList.contains("is-active") || el.getAttribute("aria-hidden") === "false").catch(() => false);
   }
+
+  // ---- 商品検索（ヘッダの検索欄・候補リスト） ----
+  readonly 商品検索テキストボックス = () => this.page.locator("form#frmSearch input[data-search-keyword-input]:visible").first();
+  readonly 検索ボタン = () => this.page.locator("form#frmSearch button[type=submit][name=search-submit]:visible").first();
+  readonly 候補リスト = () => this.page.locator("form#frmSearch [data-search-suggest]").first();
+  /** 候補リストの商品名サジェストの項目の文（見えているものだけ） */
+  async 候補の文(): Promise<string[]> {
+    return (await this.候補リスト().locator(".p-hareruya-header__search-suggest-item:visible").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim());
+  }
+  /** 候補リストが見えているか（開いた印と、見えている項目がある） */
+  async 候補リストが見えているか(): Promise<boolean> {
+    const l = this.候補リスト();
+    const 開 = await l.evaluate((el) => el.classList.contains("is-active") || el.getAttribute("aria-hidden") === "false").catch(() => false);
+    return 開 && (await l.isVisible().catch(() => false));
+  }
+  /** 検索欄に1文字ずつ入れる（画面のスクリプトが入力のたびに候補を取りに行く） */
+  async 検索欄に入れる(文字: string): Promise<void> {
+    const box = this.商品検索テキストボックス();
+    await expect(box, "商品検索テキストボックス").toBeVisible({ timeout: T });
+    await box.click();
+    await box.fill("");
+    await box.pressSequentially(文字, { delay: 80 });
+  }
+  /** 検索ボタンを押して商品一覧へ移る */
+  async 検索を押す(): Promise<void> {
+    await Promise.all([this.page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), this.検索ボタン().click({ noWaitAfter: true })]);
+  }
+  /** 商品一覧の商品カード（商品名で） */
+  商品カード(商品名: string): Locator { return this.page.locator(".p-hareruya-product-card").filter({ hasText: 商品名 }); }
+  readonly 商品カードたち = () => this.page.locator(".p-hareruya-product-card");
+
+  // ---- カテゴリ（下部のナビのカテゴリアイコンとモーダル） ----
+  readonly カテゴリアイコン = () => this.page.locator('nav.p-hareruya-bottom-nav button[data-modal-open="category"]:visible').first();
+  readonly カテゴリモーダル = () => this.page.locator('[data-modal="category"]').first();
+  readonly カテゴリモーダルの閉じるボタン = () => this.page.locator('[data-modal="category"] [data-modal-close="category"]').first();
+  /** カテゴリモーダルの第一階層の項目（読み込み中の仮の枠を除く） */
+  readonly カテゴリの第一階層の項目 = () => this.page.locator('[data-modal="category"] [data-category-level1-container] > :not(.p-hareruya-category-level1-skeleton)');
 
   // ---- フッタ ----
   readonly 最下部のロゴ = () => this.page.locator("footer a.p-hareruya-footer__logo").first();

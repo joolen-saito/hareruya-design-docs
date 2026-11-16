@@ -100,6 +100,11 @@ export class M0703SectionsPage {
     return this.個別の行群().filter({ has: this.page.locator('td[id^="indivisual_input_product__product_name--"]', { hasText: 商品名 }) }).first();
   }
   個別の売却欄(商品名: string): Locator { return this.個別の行の場所(商品名).locator('select[name$="[saleFlg]"]'); }
+  /** 個別入力商品の行の、商品名・査定金額・数量の欄の中の入力部品（input・select・textarea） */
+  個別の文字欄の入力部品(商品名: string): Locator {
+    return this.個別の行の場所(商品名).locator('td[id^="indivisual_input_product__product_name--"], td[id^="indivisual_input_product__price--"], td[id^="indivisual_input_product__quantity--"]')
+      .locator("input, select, textarea");
+  }
   /** 個別入力商品の行の、商品名・査定金額・数量の欄に入力部品（input・select）があるか */
   async 個別の文字欄に入力部品があるか(商品名: string): Promise<boolean> {
     const row = this.個別の行の場所(商品名);

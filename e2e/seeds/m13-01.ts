@@ -1,32 +1,37 @@
 /**
  * M13-01 イベント一覧 のシード（画面操作）。正本: cases/M13-01_seed_data.tsv
  * - 管理者: 東京店だけに編集権限を持つ。権限は M13-02 と同じ「店舗オーナー」で代える。
- * - 店舗: 東京店を使う。大阪店・名古屋店は手元のDBに同名の店舗が複数あり、画面の選択肢でどれか決められないので使わない
- *   （それを使うケースは実装しない。フィルタのシードの大阪店・名古屋店のイベントは東京店で代えた。注記に残す）。
+ * - 店舗: 依頼者決定 2026-11-15「店舗は作るのもう禁止」により、店舗は作らず、使い回す店舗の表から店舗IDで選ぶ。
+ *   東京店 = 店舗ID 221（E2E の店舗）。大阪店・名古屋店は seeds/m13-01-b.ts（大阪店 = 店舗ID 4973、名古屋店 = 店舗ID 3）。権限外の「店舗B」は M13 共通の店舗B（店舗ID 4973。pages/admin/m13_marked_shop.ts）。
+ *   管理者は決まった印つきのログインID・名前で1度だけ作り、前の実行で作った管理者の店舗の権限が違えば直して使う。
  * - イベント名・検索語には実行の印を付ける（rc。検索語とイベント名の同じ語は同じ印の値になる）。
  *   シード表の「あれば削除」は、今回の実行の印つきの値なので前の実行の分は無く、行わない。
  */
 import { SETUP_ADMIN } from "../config/env";
-import { rc, RUN_MARK } from "../lib/run_marker";
+import { rc, rcFixed, RUN_MARK } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, withAdminSession } from "../lib/session";
 import { EventInput, openEventCreate, registerEvent } from "../pages/admin/event";
-import { ensureMember } from "../pages/admin/member";
-import { ensureTenant } from "../pages/admin/tenant";
-import { 余りを削除する, 日程を足す, 月次イベント } from "../pages/admin/m13_01_event_list";
+import { ensureMemberFixed as ensureMember } from "../pages/admin/member";
+import { 店舗IDで選ぶ } from "../pages/admin/store_pick";
+import { ensureMarkedTenant, 印店名 } from "../pages/admin/m13_marked_shop";
+import { M1301_東京店, 余りを削除する, 日程を足す, 月次イベント } from "../pages/admin/m13_01_event_list";
 
-export const M1301_ADMIN: Account = { loginId: "m1301_admin", password: "Passw0rd!M1301" };
+// 店舗を試験店舗「M1301東京店」にしたので、管理者も決まった印の名前・ログインIDで1度だけ作って使い回す（同名の別の東京店に所属した前の管理者とぶつけない）
+export const M1301_ADMIN: Account = { loginId: rcFixed("m1301_admin").toLowerCase(), password: "Passw0rd!M1301" };
+const M1301_ADMIN_B: Account = { loginId: rcFixed("m1301_admin_b").toLowerCase(), password: "Passw0rd!M1302B" };
 
 defineSeed("S-M13-01-ADM", async ({ browser, notes, seed }) => {
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const issue = (m: string) => reportSeedIssue(seed.シードID, m);
     void notes;
-    await ensureTenant(page, { 店名: "東京店", 店名カナ: "トウキョウテン", 店名英語: "Tokyo", 支店URL: "m1301tokyo", 店名略称3文字: "TKY", ショップ名略称: "東京店" }, issue);
+    await 店舗IDで選ぶ(page, "221", "東京店", issue);
     await ensureMember(page, {
-      名前: "M13-01試験管理者", 所属店舗: "東京店", ログインID: M1301_ADMIN.loginId, メールアドレス: "m1301_admin@example.test",
-      パスワード: M1301_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: "東京店", 編集可能店舗: ["東京店"],
+      名前: rcFixed("M13-01試験管理者"), 所属店舗: M1301_東京店, ログインID: M1301_ADMIN.loginId, メールアドレス: `${M1301_ADMIN.loginId}@example.test`,
+      パスワード: M1301_ADMIN.password, 権限: "店舗オーナー", デフォルト検索表示店舗: M1301_東京店, 編集可能店舗: [M1301_東京店],
     });
+    issue(`手順・期待結果の「東京店」は、店舗「${M1301_東京店}」（店舗ID 221）の店名として読む`);
   });
 });
 
@@ -35,7 +40,7 @@ defineSeed("S-M13-01-MASTER", { needs: ["S-M13-01-ADM"] }, async ({ browser, see
     const issue = (m: string) => reportSeedIssue(seed.シードID, m);
     const form = await openEventCreate(page);
     const 求める: [string, string[], string[]][] = [
-      ["店舗", ["東京店"], await form.options(form.店舗)],
+      ["店舗", [M1301_東京店], await form.options(form.店舗)],
       ["フォーマット", ["スタンダード", "モダン"], await form.options(form.フォーマット)],
       ["ルール適用度", ["一般", "競技"], await form.options(form.ルール適用度)],
     ];
@@ -127,14 +132,14 @@ defineSeed("S-M13-01-DELETE-READ", { needs: ["S-M13-01-MASTER"] }, async ({ brow
   ]);
   let b = "";
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    await ensureTenant(page, { 店名: "店舗B", 店名カナ: "テンポビー", 店名英語: "Shop B", 支店URL: "m1302b", 店名略称3文字: "テB", ショップ名略称: "店舗B" }, (m) => reportSeedIssue(seed.シードID, m));
+    await ensureMarkedTenant(page, "B", (m) => reportSeedIssue(seed.シードID, m));
     await ensureMember(page, {
-      名前: "M13-02 店舗B管理者", 所属店舗: "店舗B", ログインID: "m1302_admin_b", メールアドレス: "m1302_admin_b@example.test",
-      パスワード: "Passw0rd!M1302B", 権限: "店舗オーナー", デフォルト検索表示店舗: "店舗B", 編集可能店舗: ["店舗B"],
+      名前: rcFixed("M13-01 店舗B管理者"), 所属店舗: 印店名.B, ログインID: M1301_ADMIN_B.loginId, メールアドレス: `${M1301_ADMIN_B.loginId}@example.test`,
+      パスワード: M1301_ADMIN_B.password, 権限: "店舗オーナー", デフォルト検索表示店舗: 印店名.B, 編集可能店舗: [印店名.B],
     });
   });
-  await withAdminSession(browser, { loginId: "m1302_admin_b", password: "Passw0rd!M1302B" }, async (page) => {
-    b = await registerEvent(page, 月次イベント(rc("権限外削除確認"), en("M1301 DELETE B"), { 店舗: "店舗B" }));
+  await withAdminSession(browser, M1301_ADMIN_B, async (page) => {
+    b = await registerEvent(page, 月次イベント(rc("権限外削除確認"), en("M1301 DELETE B"), { 店舗: 印店名.B }));
   });
   notes.set("〔イベントID-M1301-共有-DELETE-A〕", a);
   notes.set("〔イベントID-M1301-共有-DELETE-B〕", b);

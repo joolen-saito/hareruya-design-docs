@@ -22,7 +22,7 @@
  * シード表が値を定めないもので、ここで決めたこと（各シードの報告にも出す）:
  * - カードセットの略称（任意の半角英数字）は「F8」＋シードの番号＋商品の順番＋実行の印。
  * - カードの詳細情報のレアリティ・レイアウト・プロモ種別は選択肢の先頭、フレームは「通常」（任意の選択肢）。
- * - 「新規作成」で足す規格の基準価格は販売価格と同じ値、買取価格は 10、部門は選択肢の先頭（任意の有効な値）。
+ * - 「新規作成」で足す規格の基準価格は販売価格と同じ値、買取価格は 10（販売価格が10円に満たないときは販売価格と同じ値。アプリは販売価格が買取価格以上であることを求める）、部門は選択肢の先頭（任意の有効な値）。
  * - 単体カードのカテゴリは管理画面の最上位カテゴリ「シングルカード」配下の先頭、割引率は商品登録編集画面の割引率の選択肢の先頭（F05-04 と同じ）。
  * - 在庫の登録者・承認者は、このシード専用の本店のシステム管理者2人（実行の印つき）。在庫検索一覧は規格の商品コードで探す
  *   （シード表は商品名で探すとするが、同じ商品の行のうちどの規格の行かを決めるため）。承認はシードの規格をまとめて1回で行う。
@@ -35,7 +35,7 @@ import { Browser, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
-import { rc, RUN_MARK } from "../lib/run_marker";
+import { FIXED_MARK, rc, RUN_MARK } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, adminUrl as adminUrlOf, withAdminSession } from "../lib/session";
@@ -89,7 +89,8 @@ async function 共通の値(browser: Browser, seedId: string): Promise<共通> {
   if (common) return common;
   const issue = (m: string) => reportSeedIssue(seedId, m);
   const 本店 = await 本店の店名(browser);
-  const 管理者 = (役: string, 表示: string): 管理者 => ({ 名前: `F0908${表示}-${RUN_MARK}`, account: { loginId: `f0908${役}${RUN_MARK}`.toLowerCase(), password: F0908の共通パスワード } });
+  // 在庫の登録者・承認者は決まった印で1度だけ作り、実行をまたいで使い回す（依頼者の指示 2026-11-12「毎回作らずに1個でいけるやつは使い回す」）
+  const 管理者 = (役: string, 表示: string): 管理者 => ({ 名前: `F0908${表示}-${FIXED_MARK}`, account: { loginId: `f0908${役}${FIXED_MARK}`.toLowerCase(), password: F0908の共通パスワード } });
   const 登録者 = 管理者("reg", "在庫登録者"), 承認者 = 管理者("apr", "在庫承認者");
   const v = await 管理画面(browser, SETUP_ADMIN, async (page) => {
     for (const a of [登録者, 承認者]) {
@@ -109,7 +110,7 @@ async function 共通の値(browser: Browser, seedId: string): Promise<共通> {
     };
   });
   common = { 本店, 登録者, 承認者, ...v };
-  issue(`単体カードのカテゴリは「シングルカード」配下の先頭「${common.単体カードのカテゴリ.名称}」（ID ${common.単体カードのカテゴリ.id}）、`
+  issue(`単体カードのカテゴリは「${common.単体カードのカテゴリ.名称}」（ID ${common.単体カードのカテゴリ.id}）、`
     + `割引率は「${common.割引率.名称}」（ID ${common.割引率.id}）、在庫の登録者・承認者は本店のシステム管理者「${登録者.名前}」「${承認者.名前}」を使った（シード表は値を定めない）`);
   return common;
 }
@@ -208,7 +209,7 @@ function defineStockSeed(seedId: string): void {
           const rows = await 商品規格一覧を読む(page, 商品ID);
           if (rows.length !== 1) throw new Error(`${what}: 取り込みで作られた規格が ${rows.length} 件（1件のはず）: ${JSON.stringify(rows)}`);
           for (const [i, k] of p.規格.entries()) {
-            const v = { 商品コード: コード(i), 販売価格: String(k.価格), 基準価格: i === 0 ? 価格 : String(k.価格), 買取価格: i === 0 ? 価格 : "10" };
+            const v = { 商品コード: コード(i), 販売価格: String(k.価格), 基準価格: i === 0 ? 価格 : String(k.価格), 買取価格: i === 0 ? 価格 : String(Math.min(10, k.価格)) };
             const 規格ID = i === 0
               ? await 取り込みの規格を登録する(page, 商品ID, rows[0].商品規格ID, v, `${what} の規格 ${k.言語}・${k.状態}`, issue)
               : await 規格を新しく登録する(page, 商品ID, { ...v, 言語: k.言語 === "その他言語" ? c.その他言語の名前 : k.言語, 状態: k.状態 }, `${what} の規格 ${k.言語}・${k.状態}`, issue);
@@ -239,11 +240,11 @@ function defineStockSeed(seedId: string): void {
         try {
           await list.approve(ids, `${seedId}: 在庫編集の承認`, issue);
         } catch (e) {
-          if (!String(e).includes("成功メッセージ")) throw e;
+          if (!String(e).includes("成功メッセージ") && !String(e).includes("保存の結果が表示されない")) throw e;
           await list.open(c.本店);
           const remain = (await list.rowValues()).filter((r) => ids.includes(r.id) && r.status === "未承認");
           if (remain.length) throw e;
-          issue(`${seedId}: 承認の成功の表示は出なかったが、承認一覧の該当の行は未承認でなくなった`);
+          issue(`${seedId}: 承認の結果の表示は出なかったが、承認一覧の該当の行は未承認でなくなった`);
         }
       });
       issue(`在庫は、在庫検索一覧を規格の商品コードで探して在庫編集で入れ（${在庫.map((s) => `${s.商品コード}=${s.数}`).join("、")}）、承認者がまとめて承認した`);

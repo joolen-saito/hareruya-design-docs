@@ -12,7 +12,7 @@ async function アーキタイプを検索する(page: Page, 検索語: string):
   await page.goto(adminUrl("/archetype"));
   await page.waitForLoadState("load");
   await 入力欄(page).fill(検索語);
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("#admin_search_archetype button[type=submit]").click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#admin_search_archetype button[type=submit]").click({ noWaitAfter: true })]);
   await expect(結果表(page), "アーキタイプ管理(検索結果)の表").toBeVisible({ timeout: 30_000 });
 }
 /** 検索結果で、アーキタイプ名の行の登録デッキ数 */
@@ -37,7 +37,7 @@ caseTest("IT-M15-04-006", async ({ page, notes, step, expected }) => {
     await page.locator('input.toggle_bulk_update_check[name="change_flgs[archetype]"]').check();
     await page.locator('#bulk_edit_panel [name="admin_deck_bulk_update[archetype]"]').selectOption({ label: 乙 });
   });
-  await step(7, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.locator("#bulk_update_execute").click()]); });
+  await step(7, async () => { await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.locator("#bulk_update_execute").click({ noWaitAfter: true })]); });
   await step(8, async () => { await アーキタイプを検索する(page, `${基}-型`); 後 = { 甲: await 登録デッキ数(page, 甲), 乙: await 登録デッキ数(page, 乙) }; });
   await expected(async () => {
     expect.soft(後.甲, "アーキタイプ「型甲」の登録デッキ数").toBe("0");

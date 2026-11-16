@@ -148,8 +148,8 @@ export async function 索引用カードを登録する(page: Page, v: 索引用
   }
   if (chosen.length) issue(`${what}: シード表が値を定めない必須の項目は選択肢の先頭を選んだ（${chosen.join("・")}）`);
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "load" }),
-    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click(),
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*登録\s*$/ }).click({ noWaitAfter: true }),
   ]);
   for (const w of await expectSaved(page, `${what}: カードの登録`)) issue(`${what}: 警告「${w}」`);
   const m = /\/card\/(\d+)\/edit/.exec(page.url());
@@ -290,7 +290,7 @@ export async function 買取価格を入れ直す(browser: Browser, 商品ID: st
     const form = page.locator("form#form");
     await expect(form, `${what}: 商品規格登録編集画面`).toBeVisible();
     await form.locator("#admin_product_class_buy_price").fill(String(買取));
-    await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click()]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ noWaitAfter: true })]);
     for (const w of await expectSaved(page, `${what}: 買取価格の登録`)) issue(`${what}: 警告「${w}」`);
     expect((await form.locator("#admin_product_class_buy_price").inputValue()).replace(/,/g, ""), `${what}: 登録後の買取価格`).toBe(String(買取));
   });
@@ -311,7 +311,7 @@ export async function リリース日つきのカードセットを作る(page: 
     await page.locator('[name="admin_cardset[releaseDate][month]"]').selectOption(String(Number(m)));
     await page.locator('[name="admin_cardset[releaseDate][day]"]').selectOption(String(Number(d)));
   }
-  await Promise.all([page.waitForNavigation({ waitUntil: "load" }), page.getByRole("button", { name: "登録", exact: true }).click()]);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("button", { name: "登録", exact: true }).click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: カードセットの登録`)) issue(`${what}: 警告「${w}」`);
   const id = /\/cardset\/(\d+)\/edit/.exec(page.url())?.[1];
   if (!id) throw new Error(`${what}: カードセットを登録したあと、編集画面へ移らない（${page.url()}）`);

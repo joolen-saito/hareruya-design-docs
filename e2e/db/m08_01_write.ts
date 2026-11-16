@@ -80,8 +80,9 @@ export function 購入を足す(会員ID: string, 商品名: string, 商品コ�
   if (!受注ID) throw new Error(`足した受注が見つからない（会員ID ${会員ID}）`);
   writeTestData({
     理由: "足した受注の明細を1件足す（購入商品名・コード）",
-    sql: `insert into dtb_order_item (order_id, product_name, product_code, price, quantity, tax, tax_rate, tax_adjust, order_item_type_id)
-          select o.id, $2::text, $3::text, 100, 1, 0, 10, 0, 1 from dtb_order o where o.id = $1::int`,
+    // 明細の店舗（base_info_id）は必須の列（開発環境で not null。2026-11-12・M08-01-004）。足した受注と同じ店舗にする
+    sql: `insert into dtb_order_item (order_id, base_info_id, product_name, product_code, price, quantity, tax, tax_rate, tax_adjust, order_item_type_id)
+          select o.id, o.base_info_id, $2::text, $3::text, 100, 1, 0, 10, 0, 1 from dtb_order o where o.id = $1::int`,
     params: [受注ID, 商品名, 商品コード],
     対象の確かめ: `select o.id as 受注ID, c.email as メール from dtb_order o join dtb_customer c on c.id = o.customer_id where o.id = $1::int and c.email like $2`,
     確かめのparams: [受注ID, `%${RUN_MARK}%`], 印: RUN_MARK, 最大行数: 1,
@@ -115,13 +116,17 @@ export function 買取を足す(会員ID: string, 金額: number): void {
 /** 印つきの会員（本会員）を写して、印つきのメールアドレスの会員を足す。会員IDを返す */
 export function 会員を写す(基の会員ID: string, 新メール: string): string {
   if (!新メール.includes(RUN_MARK)) throw new Error("写した会員のメールアドレスには実行の印を含める");
-  const base = 会員の確かめ(基の会員ID);
-  const cc = 列("dtb_customer", ["id", "email", "secret_key"]);
+  // 姓の列を先頭に置く（書き込みの窓口は、足す行の列を前から見て、確かめの行の値に当たる最初の列を親の列とする）。
+  // 以前は確かめの行が基の会員ID・メールだけで、足す行（IDもメールも新しい）のどの列も当たらず「足す行の親の列が…見つからない」で止まっていた（2026-11-12・M08-01 6件）
+  const cc = ["name01", ...列("dtb_customer", ["id", "email", "secret_key", "name01"])];
   writeTestData({
     理由: "印つきの会員を写して会員を足す",
     sql: `insert into dtb_customer (${cc.join(", ")}, email, secret_key) select ${cc.map((c) => `s.${c}`).join(", ")}, $2::text,
             substr(md5(random()::text || clock_timestamp()::text), 1, 32) from dtb_customer s where s.id = $1::int`,
-    params: [基の会員ID, 新メール], ...base, 最大行数: 1,
+    params: [基の会員ID, 新メール],
+    // 写す元の確かめ: 基の会員が印つきのメールの会員であること（足す行は、その会員の姓を写したもの）
+    対象の確かめ: `select c.name01 as 姓, c.id as 会員ID, c.email as メール from dtb_customer c where c.id = $1::int and c.email like $2 and c.name01 is not null`,
+    確かめのparams: [基の会員ID, `%${RUN_MARK}%`], 印: RUN_MARK, 最大行数: 1,
   });
   const found = query(`select id from dtb_customer where email = $1 order by id desc limit 1`, [新メール]);
   if (found.length === 0) throw new Error(`写した会員（${新メール}）が見つからない`);
@@ -130,7 +135,8 @@ export function 会員を写す(基の会員ID: string, 新メール: string): s
   writeTestData({
     理由: "印つきの会員のプレイヤー情報を写す",
     sql: `insert into dtb_player (${pc.join(", ")}, customer_id, email) select ${pc.map((c) => `s.${c}`).join(", ")}, $2::int, $3::text from dtb_player s where s.customer_id = $1::int`,
-    params: [基の会員ID, 新, 新メール], ...base, 最大行数: 1,
+    // 足すプレイヤー情報の持ち主の確かめ: 写して足した印つきのメールの会員（足す行の会員の列が当たる）
+    params: [基の会員ID, 新, 新メール], ...会員の確かめ(新), 最大行数: 1,
   });
   return 新;
 }
@@ -156,13 +162,15 @@ export function 会員を削除済みにする(会員ID: string): void {
 /** 印つきの会員一覧用の検索パターンを写して、同じ名前の別の表示（商品一覧用）の検索パターンを足す */
 export function 商品一覧用の検索パターンを足す(基の名前: string, 新しい名前: string): void {
   if (!基の名前.includes(RUN_MARK) || !新しい名前.includes(RUN_MARK)) throw new Error("検索パターンの名前には実行の印を含める");
-  const cols = 列("dtb_search_pattern", ["id", "name", "display_key"]);
+  // 検索パターンの中身の列を先頭に置き、確かめの行にも中身を出す（足す行の親の列を、写す元の検索パターンの中身で当てる）。
+  // 以前は確かめの行が基のIDと名前だけで、足す行のどの列も当たらず「足す行の親の列が…見つからない」で止まっていた（2026-11-12・M08-01-032）
+  const cols = ["pattern", ...列("dtb_search_pattern", ["id", "name", "display_key", "pattern"])];
   writeTestData({
     理由: "商品一覧用の検索パターンを足す（会員一覧に出ないことの確認用。商品一覧の画面に検索パターンの保存が無い）",
     sql: `insert into dtb_search_pattern (${cols.join(", ")}, name, display_key) select ${cols.map((c) => `s.${c}`).join(", ")}, $2::text, 'product'
             from dtb_search_pattern s where s.name = $1 and s.display_key = 'customer'`,
     params: [基の名前, 新しい名前],
-    対象の確かめ: `select s.id as 検索パターンID, s.name as 名前 from dtb_search_pattern s where s.name = $1 and s.display_key = 'customer'`,
+    対象の確かめ: `select s.pattern::text as 中身, s.id as 検索パターンID, s.name as 名前 from dtb_search_pattern s where s.name = $1 and s.display_key = 'customer'`,
     確かめのparams: [基の名前], 印: RUN_MARK, 最大行数: 1,
   });
 }

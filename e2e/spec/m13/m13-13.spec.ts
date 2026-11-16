@@ -5,7 +5,10 @@
  * S-M13-13-MASTER（DBシード）は、画面で店舗・選択肢・支払方法があることを確かめる形で代えた（依頼者の方針 2026-11-09。seeds/m13-13.ts）。
  * 取込ファイルには会場の列を設けない（設計書 0214 sheet-20 L0047 で削除。取込画面の雛形にも無い）。
  */
+import fs from "node:fs";
 import { test } from "@playwright/test";
+import { decodeCsvBytes, parseCsv } from "../../lib/csv";
+import { CSVの枠を外す, CSVの内容を画面の枠に出す } from "../../lib/evidence_other";
 import { expect, caseTest } from "../../lib/case";
 import { イベントと日程の総数, イベントの日程, 名前が語で始まるイベントの件数, 保存日程 } from "../../db/m13_13";
 import { イベント名で探す, 保存されているイベント, 保存イベント } from "../../db/event";
@@ -149,13 +152,47 @@ caseTest("IT-M13-13-043", async ({ page, notes, step, expected }) => {
 // 取込してDBで確かめるケース（S-M13-13-MASTER を使うもの）
 // ---------------------------------------------------------------------------
 
-/** 手順1〜3: イベント一括登録画面を開き、取込ファイルを選んでアップロードする。アップロード後の画面の帯の文を注記に残す */
-async function 取り込む({ page, step }: CaseCtx, file: string): Promise<EventBulkCsvPage> {
+/** 取込ファイルの中身（確かめに関わる列）を手順の画像に出すときの、列の指定（名前そのものか、名前の形）。「見出し」は見出し行だけ */
+type 見せる列 = (string | RegExp)[] | "見出し";
+
+/** 目に見えない値（ゼロ幅スペース・改行・空）を、画面で読める記号にする */
+const 見える形 = (s: string): string => (s === "" ? "（空）" : s.replace(/\u200B/g, "⟦ゼロ幅スペース⟧").replace(/\r\n/g, "⟦CRLF⟧").replace(/\r/g, "⟦CR⟧").replace(/\n/g, "⟦LF⟧"));
+const 見出しの形 = (s: string): string => s.replace(/\s+/g, "").replace(/（/g, "(").replace(/）/g, ")");
+
+/**
+ * これから取り込むファイルの中身を、画面の上の枠に出す（手順の画像に写る。ファイルを選んだ直後に呼び、アップロードの前に外す）。
+ * 確かめに関わる列だけを出し、ゼロ幅スペース・CR・LF・空の欄は見える記号に置き換える（置き換えたことは注記に残す）
+ */
+async function 取込ファイルの中身を出す(page: import("@playwright/test").Page, file: string, 列: 見せる列): Promise<void> {
+  const text = decodeCsvBytes(fs.readFileSync(m1313File(file)));
+  const 全 = parseCsv(text);
+  const head = 全[0] ?? [];
+  const 行末 = /\r\n/.test(text.replace(/"(?:[^"]|"")*"/g, "")) ? "CRLF" : "LF";
+  if (列 === "見出し") {
+    const 行 = [["列の番号", "見出し"], ...head.map((h, i) => [String(i + 1), h])];
+    await CSVの内容を画面の枠に出す(page, [{ 題: `取り込むファイル「${file}」の見出し行（全 ${head.length} 項目。「会場」の列は${head.includes("会場") ? "ある" : "無い"}）`, 行 }], 100);
+    return;
+  }
+  const first = head.findIndex((h) => 見出しの形(h).startsWith("イベント名(日)"));
+  const hit = (h: string) => 列.some((c) => (typeof c === "string" ? 見出しの形(c) === 見出しの形(h) : c.test(見出しの形(h))));
+  const idx = head.map((h, i) => i).filter((i) => i === first || hit(head[i]));
+  const 見る = [idx.map((i) => head[i]), ...全.slice(1).map((r) => idx.map((i) => 見える形(r[i] ?? "")))];
+  const 見えない = 全.slice(1).some((r) => idx.some((i) => /[\u200B\r\n]/.test(r[i] ?? "") || (r[i] ?? "") === ""));
+  await CSVの内容を画面の枠に出す(page, [{ 題: `取り込むファイル「${file}」の中身（確かめに関わる ${idx.length} 列だけ。全 ${head.length} 列。ファイルの行末は ${行末}）`, 行: 見る }]);
+  if (見えない) note("取込ファイルの画像では、目に見えない値を記号で表した（⟦ゼロ幅スペース⟧＝U+200B、⟦CR⟧・⟦LF⟧・⟦CRLF⟧＝改行、（空）＝値が入っていない欄）");
+}
+
+/** 手順1〜3: イベント一括登録画面を開き、取込ファイルを選んでアップロードする。アップロード後の画面の帯の文を注記に残す。列を指定すると、選んだファイルの中身をその手順の画像に出す */
+async function 取り込む({ page, step }: CaseCtx, file: string, 列?: 見せる列): Promise<EventBulkCsvPage> {
   await loginAdmin(page, M1313_ADMIN);
   const bulk = new EventBulkCsvPage(page);
   await step(1, async () => { await bulk.開く(); });
-  await step(2, async () => { await bulk.ファイルを選ぶ(m1313File(file)); });
+  await step(2, async () => {
+    await bulk.ファイルを選ぶ(m1313File(file));
+    if (列) await 取込ファイルの中身を出す(page, file, 列);
+  });
   await step(3, async () => {
+    await CSVの枠を外す(page);
     await bulk.アップロードする();
     note(`アップロード後の画面の赤の帯: ${(await bulk.エラーの文()).join(" / ") || "（なし）"}／緑の帯: ${(await bulk.成功の文()).join(" / ") || "（なし）"}`);
   });
@@ -180,10 +217,14 @@ function 読む(名前: string): 保存 {
   return { イベント, 日程: イベント.map((e) => イベントの日程(e.イベントID, tz)) };
 }
 
-/** イベントが1件、その日程が n 件であること（日程数を書かなければ日程の件数は確かめない）。1件目のイベントと1件目の日程を返す */
-function 一件(r: 保存, 名前: string, 日程数?: number): { e?: 保存イベント; d?: 保存日程 } {
-  expect.soft(r.イベント.length, `イベント名(日)が「${名前}」のイベントの件数`).toBe(1);
-  if (日程数 !== undefined) expect.soft(r.日程[0]?.length ?? 0, `「${名前}」のイベント日程の件数`).toBe(日程数);
+/**
+ * イベントが1件、その日程が n 件であること（日程数を書かなければ日程の件数は確かめない）。1件目のイベントと1件目の日程を返す。
+ * 件数は確かめの場面で DB を読み直して確かめる（帯に照会と読み取った値が出る）
+ */
+function 一件(名前: string, 日程数?: number): { e?: 保存イベント; d?: 保存日程 } {
+  expect.soft(イベント名で探す(名前).length, `イベント名(日)が「${名前}」のイベントの件数`).toBe(1);
+  if (日程数 !== undefined) expect.soft(読む(名前).日程[0]?.length ?? 0, `「${名前}」のイベント日程の件数`).toBe(日程数);
+  const r = 読む(名前);
   return { e: r.イベント[0], d: r.日程[0]?.[0] };
 }
 
@@ -193,14 +234,20 @@ type 見る値 = { e?: 保存イベント; d?: 保存日程 };
 /** 期待結果の確かめ1つ: [確かめの名前, 値の取り出し方, 期待する値] */
 type 確かめ = [string, (x: 見る値) => unknown, unknown];
 
-/** 1データ行のファイルを取り込み、イベント1件（と日程の件数）を確かめ、続けて確かめの表を確かめる */
-function 一件のケース(file: string, 名前: string, 日程数: number | undefined, 表: 確かめ[] = [], 注記?: string) {
+/** 1データ行のファイルを取り込み、イベント1件（と日程の件数）を確かめ、続けて確かめの表を確かめる。エラーなしを求めるケースは、取込後の画面のエラーが無く取込完了が出たことも確かめる */
+function 一件のケース(file: string, 名前: string, 日程数: number | undefined, 表: 確かめ[] = [], 注記?: string, エラーなし = false, 列?: 見せる列) {
   return async (ctx: CaseCtx) => {
-    await 取り込む(ctx, file);
+    const bulk = await 取り込む(ctx, file, 列);
     let r: 保存 = { イベント: [], 日程: [] };
     await ctx.step(4, async () => { r = 読む(名前); });
     await ctx.expected(async () => {
       if (注記) note(注記);
+      if (エラーなし) {
+        // 正本の「エラーにならず」: 取込後の画面に赤の帯（エラー）が無く、緑の帯（取込完了）が出ていること
+        expect.soft(await bulk.エラーの文(), "取込後の画面のエラー（無いこと）").toEqual([]);
+        expect.soft((await bulk.成功の文()).length, "取込後の画面の取込完了の表示").toBeGreaterThan(0);
+      }
+      r = 読む(名前); // 確かめの場面で読み直す（帯に照会と読み取った値が出る）
       expect.soft(r.イベント.length, `イベント名(日)が「${名前}」のイベントの件数`).toBe(1);
       if (日程数 !== undefined) expect.soft(r.日程[0]?.length ?? 0, `「${名前}」のイベント日程の件数`).toBe(日程数);
       const x: 見る値 = { e: r.イベント[0], d: r.日程[0]?.[0] };
@@ -209,17 +256,28 @@ function 一件のケース(file: string, 名前: string, 日程数: number | un
   };
 }
 
-/** 登録されないことを確かめるケース（イベント名(日)の一致、または頭の一致で0件） */
-function 登録されないケース(file: string, 名前: string[], 頭?: string) {
+/**
+ * 登録されないことを確かめるケース（イベント名(日)の一致、または頭の一致で0件）。
+ * 0件だけでは、ファイル形式の誤り（区切り文字の違いなど）でファイル全体が拒まれても合格になるので、
+ * 取込後の画面のエラーに、正本が指す行（ファイルの行番号。見出しが1行目）と項目のエラーが出ていることも確かめる
+ */
+function 登録されないケース(file: string, 名前: string[], 頭: string | undefined, 拒否: { 行: number; 語: string[]; 何: string }, 未検証: [string, string][] = []) {
   return async (ctx: CaseCtx) => {
-    await 取り込む(ctx, file);
+    const bulk = await 取り込む(ctx, file);
     const n: Record<string, number> = {};
     await ctx.step(4, async () => {
       for (const x of 名前) n[x] = イベント名で探す(x).length;
       if (頭) n[`${頭}…`] = 名前が語で始まるイベントの件数(頭);
     });
     await ctx.expected(async () => {
-      for (const [k, v] of Object.entries(n)) expect.soft(v, `イベント名(日)が「${k}」のイベントの件数`).toBe(0);
+      // 件数は確かめの場面で DB を読み直して確かめる（帯に照会と読み取った値が出る）
+      for (const x of 名前) expect.soft(イベント名で探す(x).length, `イベント名(日)が「${x}」のイベントの件数`).toBe(0);
+      if (頭) expect.soft(名前が語で始まるイベントの件数(頭), `イベント名(日)が「${頭}…」のイベントの件数`).toBe(0);
+      const errs = await bulk.エラーの文();
+      const 行の = new RegExp(`(^|[^0-9])${拒否.行}\\s*行目|行\\s*${拒否.行}\\s*[:：]`);
+      expect.soft(errs.some((t) => 行の.test(t) && 拒否.語.every((w) => t.includes(w))), `取込後の画面に、ファイルの${拒否.行}行目の${拒否.何}のエラーが出る（表示: ${errs.join(" / ") || "なし"}）`).toBe(true);
+      // 正本が求めるが、画面・ファイルの作りで確かめられない項目は、期待を弱めず不一致として残す
+      for (const [what, why] of 未検証) expect.soft(why, what).toBe("確かめた");
     });
   };
 }
@@ -251,7 +309,7 @@ caseTest("IT-M13-13-003", 一件のケース("M13-13-ALL-003.csv", 全項目イ�
     [`フリー入力エリア${i + 1}の内容(英)`, (x) => x.e?.フリー入力エリア[i]?.["内容(英)"], a["内容(英)"]],
     [`フリー入力エリア${i + 1}のアコーディオン表示（CSVの値 ${a.アコーディオン表示}）`, (x) => x.e?.フリー入力エリア[i]?.初期表示は閉じる, a.アコーディオン表示 === "1" ? "真" : "偽"],
   ]),
-]));
+], undefined, false, ["クレジットカード支払い", /^バナーURL/, /^賞品\s*\(日\)|^賞品\s*\(英\)|^賞品（日）|^賞品（英）/, /^フリー入力エリア/]));
 
 caseTest("IT-M13-13-004", 一件のケース("M13-13-ALL-004.csv", 全項目イベント名("004"), 1, [
   ["開始時間", (x) => x.d?.開始時間, "2026-10-10 15:00"],
@@ -268,7 +326,7 @@ caseTest("IT-M13-13-004", 一件のケース("M13-13-ALL-004.csv", 全項目イ�
   ["公開状態_日程", (x) => x.d?.公開状態, "非公開"],
   ["賞品_日程(日)", (x) => x.d?.["賞品(日)"], "日程参加賞"],
   ["賞品_日程(英)", (x) => x.d?.["賞品(英)"], "Schedule Prize"],
-], "受付の有無はアプリに項目が無く、受付時間（From・To）が入っていることで表される。受付=あり は受付時間が入っていることで確かめた（受付時間は開始時間の日付と合わせて保存される）"));
+], "受付の有無はアプリに項目が無く、受付時間（From・To）が入っていることで表される。受付=あり は受付時間が入っていることで確かめた（受付時間は開始時間の日付と合わせて保存される）", false, ["開始時間", "受付", "受付時間From", "受付時間To", "デッキ登録", "デッキ登録締切", "オンライン受付", "オンライン受付時間From", "オンライン受付時間To", "定員_日程", "参加費_日程", "公開状態_日程", /^賞品_日程/]));
 
 caseTest("IT-M13-13-005", async (ctx) => {
   const bulk = await 取り込む(ctx, "M13-13-ALL-005.csv");
@@ -285,8 +343,8 @@ caseTest("IT-M13-13-006", async (ctx) => {
   let b: 保存 = { イベント: [], 日程: [] };
   await ctx.step(4, async () => { a = 読む(名006.A); b = 読む(名006.B); });
   await ctx.expected(async () => {
-    expect.soft(一件(a, 名006.A, 1).d?.開始時間, "一括イベントA-006 の日程の開始時間").toBe("2026-10-20 15:00");
-    expect.soft(一件(b, 名006.B, 1).d?.開始時間, "一括イベントB-006 の日程の開始時間").toBe("2026-10-21 15:00");
+    expect.soft(一件(名006.A, 1).d?.開始時間, "一括イベントA-006 の日程の開始時間").toBe("2026-10-20 15:00");
+    expect.soft(一件(名006.B, 1).d?.開始時間, "一括イベントB-006 の日程の開始時間").toBe("2026-10-21 15:00");
   });
 });
 
@@ -295,7 +353,7 @@ caseTest("IT-M13-13-007", 一件のケース("M13-13-PARENT-ONLY-007.csv", 名00
 caseTest("IT-M13-13-008", 一件のケース("M13-13-DEFAULTS-008.csv", 名008, undefined, [
   ["日程の定員（親イベントの定員80）", (x) => x.d?.定員, "80"],
   ["日程の参加費（親イベントの参加費1200）", (x) => x.d?.参加費, "1200"],
-]));
+], undefined, false, ["定員", "参加費", "定員_日程", "参加費_日程"]));
 
 caseTest("IT-M13-13-009", async (ctx) => {
   const 既存ID = ctx.notes.get("〔イベントID-M1313-009〕");
@@ -316,20 +374,28 @@ caseTest("IT-M13-13-010", 一件のケース("M13-13-FORMATS-010.csv", 名010, u
 ]));
 
 caseTest("IT-M13-13-011", async (ctx) => {
-  await 取り込む(ctx, "M13-13-PAYMENTS-011.csv");
-  const r: Record<string, 保存イベント[]> = {};
-  await ctx.step(4, async () => { for (const [k, n] of Object.entries(名011)) r[k] = イベント名で探す(n); });
+  await 取り込む(ctx, "M13-13-PAYMENTS-011.csv", ["クレジットカード支払い", "参加費"]);
+  await ctx.step(4, async () => { for (const n of Object.values(名011)) イベント名で探す(n); });
   await ctx.expected(async () => {
     for (const [k, want] of [["あり", true], ["なし", false], ["空", false]] as const) {
-      expect.soft(r[k].length, `クレジットカード支払い「${k}」のイベントの件数`).toBe(1);
-      expect.soft(クレカ有効(r[k][0]), `クレジットカード支払い「${k}」のイベントの支払方法に「${クレジットカード支払}」がある`).toBe(want);
+      expect.soft(イベント名で探す(名011[k]).length, `クレジットカード支払い「${k}」のイベントの件数`).toBe(1);
+      // 支払方法は、読み取った支払方法の名前（無ければ「（なし）」）を帯に出して確かめる
+      const 支払 = イベント名で探す(名011[k])[0]?.支払方法 ?? [];
+      const 読んだ支払方法 = 支払.length ? 支払.join("・") : "（なし）";
+      const m = `クレジットカード支払い「${k}」のイベントの支払方法に「${クレジットカード支払}」がある`;
+      if (want) expect.soft(読んだ支払方法, m).toContain(クレジットカード支払);
+      else expect.soft(読んだ支払方法, m.replace("がある", "が無い")).not.toContain(クレジットカード支払);
     }
   });
 });
 
-caseTest("IT-M13-13-013", 登録されないケース("M13-13-UNEDITABLE-013.csv", [名013]));
-caseTest("IT-M13-13-020", 登録されないケース("M13-13-MASTER-MISSING-020.csv", [], 頭020));
-caseTest("IT-M13-13-021", 登録されないケース("M13-13-ROLLBACK-021.csv", [名021.正常, 名021.不正]));
+caseTest("IT-M13-13-013", 登録されないケース("M13-13-UNEDITABLE-013.csv", [名013], undefined, { 行: 2, 語: ["店舗"], 何: "編集できない店舗" }));
+// 1データ行目（ファイルの2行目）の存在しない店舗で取込が止まる。会場は列が無く（設計書 L0047 で削除）、不存在の会場の行を作れない
+caseTest("IT-M13-13-020", 登録されないケース("M13-13-MASTER-MISSING-020.csv", [], 頭020, { 行: 2, 語: ["店舗", "マスター"], 何: "店舗のマスタが存在しない" }, [
+  ["会場のマスタが存在しない行が登録されないこと（会場の列が無く、不存在の会場の行を作れない）", "会場の列が無く、確かめられない"],
+]));
+// 2データ行目（ファイルの3行目）の店舗が空
+caseTest("IT-M13-13-021", 登録されないケース("M13-13-ROLLBACK-021.csv", [名021.正常, 名021.不正], undefined, { 行: 3, 語: ["店舗"], 何: "店舗" }));
 
 caseTest("IT-M13-13-022", async (ctx) => {
   const bulk = await 取り込む(ctx, "M13-13-MULTI-ERROR-022.csv");
@@ -394,13 +460,14 @@ caseTest("IT-M13-13-031", 一件のケース("M13-13-NORMALIZE-031.csv", 名031,
   ["イベント名(日)にゼロ幅スペースを含む", (x) => (x.e?.["イベント名(日)"] ?? "\u200B").includes("\u200B"), false],
   ["フリー入力エリア1の内容(日)（「一行目」と「二行目」の間はLFだけ。改行を見えるように書いた形）", (x) => JSON.stringify(x.e?.フリー入力エリア[0]?.["内容(日)"] ?? ""), JSON.stringify("一行目\n二行目")],
   ["フリー入力エリア1の内容(日)にCRを含む", (x) => (x.e?.フリー入力エリア[0]?.["内容(日)"] ?? "\r").includes("\r"), false],
-]));
+], undefined, false, ["フリー入力エリア1項目名(日)", "フリー入力エリア1内容(日)"]));
 
-caseTest("IT-M13-13-032", 登録されないケース("M13-13-BREAK-032.csv", [`${頭032}前行`, `${頭032}不正行`, `${頭032}後行`], 頭032));
+// 2データ行目（ファイルの3行目）の店舗が空
+caseTest("IT-M13-13-032", 登録されないケース("M13-13-BREAK-032.csv", [`${頭032}前行`, `${頭032}不正行`, `${頭032}後行`], 頭032, { 行: 3, 語: ["店舗"], 何: "店舗" }));
 
-caseTest("IT-M13-13-036", 一件のケース("M13-13-FREE-ONLINE-036.csv", 名036, 1));
-caseTest("IT-M13-13-037", 一件のケース("M13-13-NOONLINE-PAID-037.csv", 名037, 1));
-caseTest("IT-M13-13-038", 一件のケース("M13-13-NOVENUE-038.csv", 名038, 1));
+caseTest("IT-M13-13-036", 一件のケース("M13-13-FREE-ONLINE-036.csv", 名036, 1, [], undefined, true, ["クレジットカード支払い", "参加費", "オンライン受付", "参加費_日程"]));
+caseTest("IT-M13-13-037", 一件のケース("M13-13-NOONLINE-PAID-037.csv", 名037, 1, [], undefined, true, ["クレジットカード支払い", "参加費", "受付", "オンライン受付"]));
+caseTest("IT-M13-13-038", 一件のケース("M13-13-NOVENUE-038.csv", 名038, 1, [], undefined, true, "見出し"));
 
 caseTest("IT-M13-13-040", async (ctx) => {
   await 取り込む(ctx, "M13-13-MIXED-040.csv");
@@ -408,12 +475,12 @@ caseTest("IT-M13-13-040", async (ctx) => {
   let b: 保存 = { イベント: [], 日程: [] };
   await ctx.step(4, async () => { a = 読む(名040.A); b = 読む(名040.B); });
   await ctx.expected(async () => {
-    expect.soft(一件(a, 名040.A, 1).d?.開始時間, "混在日程ありイベント-M1313-040A の日程の開始時間").toBe("2026-10-20 15:00");
-    expect.soft(一件(b, 名040.B, 0).e?.["イベント名(日)"], "混在日程なしイベント-M1313-040B のイベント").toBe(名040.B);
+    expect.soft(一件(名040.A, 1).d?.開始時間, "混在日程ありイベント-M1313-040A の日程の開始時間").toBe("2026-10-20 15:00");
+    expect.soft(一件(名040.B, 0).e?.["イベント名(日)"], "混在日程なしイベント-M1313-040B のイベント").toBe(名040.B);
   });
 });
 
-caseTest("IT-M13-13-042", 一件のケース("M13-13-FEE-ZERO-042.csv", 名042, 1));
+caseTest("IT-M13-13-042", 一件のケース("M13-13-FEE-ZERO-042.csv", 名042, 1, [], undefined, true, ["クレジットカード支払い", "参加費", "オンライン受付", "参加費_日程"]));
 
 const カード有: 確かめ = [`イベントの支払方法に「${クレジットカード支払}」がある`, (x) => クレカ有効(x.e), true];
 const 日程のオンライン = (on: boolean): 確かめ => ["日程のオンライン受付", (x) => x.d?.オンライン受付, on ? "真" : "偽"];

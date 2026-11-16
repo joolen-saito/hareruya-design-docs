@@ -5,17 +5,19 @@
  * 本人確認ステータス変更の確認は、ブラウザの確認ダイアログ。「続行」は OK、「取り消し」はキャンセルで答える。
  */
 import { Browser, Page, test } from "@playwright/test";
+import { 別のブラウザの画面を撮る, 別のブラウザの画面を印つきで撮る, scene } from "../../lib/evidence_other";
 import { BASE_URL } from "../../config/env";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import { loginAdmin, adminUrl, hideDebugToolbar } from "../../lib/session";
 import { お届け先の氏名, 会員の保存内容, 会員住所の件数 } from "../../db/m08_04";
+import { 買取状況を選ぶ, 査定済みに当たる買取状況 } from "../../db/m08_04_write";
 import { BuyListPage, 買取番号の表示 } from "../../pages/admin/m07_buy";
 import { M0703EditPage } from "../../pages/admin/m07_03_edit";
 import { 配送先編集の値, 住所リンクを押す } from "../../pages/admin/f06_20_delivery_k";
 import { ChangePage, 会員としてログインする } from "../../pages/front/f06_18_change";
 import { MypagePage } from "../../pages/front/f06_05_mypage";
 import { M08CustomerEditPage } from "../../pages/admin/m08_customer_edit";
-import { M0804_ADMIN, M0804_QH_ADMIN, M0804_RH_ADMIN, QH会員のパスワード, QH会員のメール, 更新後メール004, 重複先メール018, 重複前メール018, 長いメール010, 長いメール062 } from "../../seeds/m08-04";
+import { M0804_ADMIN, M0804_QH_ADMIN, M0804_RH_ADMIN, 振られた買取IDを引く, QH会員のパスワード, QH会員のメール, 更新後メール004, 重複先メール018, 重複前メール018, 長いメール010, 長いメール062 } from "../../seeds/m08-04";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
@@ -33,6 +35,8 @@ const 保存内容 = (id: string) => {
   if (!r) throw new Error(`会員ID ${id} の保存内容をDBの参照で読めない`);
   return r;
 };
+/** 会員情報を登録ボタンの送信（この会員の会員登録/編集画面への POST）の応答を待つ約束を、押す前に作る。応答が無ければ null */
+const 保存の送信を待つ = (page: Page, id: string) => page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === `/admin/customer/${id}/edit`, { timeout: 60_000 }).then((r) => r.status(), () => null);
 const 保存後メッセージを注記 = async (e: M08CustomerEditPage) => {
   const err = await e.エラー文();
   if (err.length) note(`保存後の画面のエラー: ${err.join(" / ")}`);
@@ -56,23 +60,37 @@ caseTest("IT-M08-04-004", async ({ page, notes, step, expected }) => {
 caseTest("IT-M08-04-005", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔会員ID-M0804-005〕");
   let e!: M08CustomerEditPage;
+  let 応答: number | null = null, 成功: string | null = null, 保存後の会社名 = "";
   await step(1, async () => { e = await 開く(page, id); });
   await step(2, async () => { await e.set("company_name", "遷移確認会社"); });
-  await step(3, async () => { await e.登録する(); await 保存後メッセージを注記(e); });
+  await step(3, async () => {
+    const res = 保存の送信を待つ(page, id);
+    await e.登録する(); 応答 = await res; 成功 = await e.成功メッセージ(); await 保存後メッセージを注記(e);
+  });
   await expected(async () => {
+    // 送信して保存され、その結果として画面が遷移したこと（送られずに元の画面のまま・入力したままの欄を見て合格にしない）
+    expect.soft(応答, "会員情報を登録の要求が送られ、応答があった").not.toBeNull();
+    expect.soft(成功, "保存の成功メッセージ").not.toBeNull();
     expect.soft(new URL(page.url()).pathname, `保存した会員ID ${id} の会員登録/編集画面のアドレス`).toBe(`/admin/customer/${id}/edit`);
-    expect.soft(await e.f("company_name").inputValue(), "会社名が保存されている").toBe("遷移確認会社");
+    // 同じ会員の会員登録/編集画面を開き直しても、会社名が保存された値で出る（入力したままの欄を見ない）
+    await e.open(id);
+    保存後の会社名 = await e.f("company_name").inputValue();
+    expect.soft(保存後の会社名, "読み込み直した画面の会社名（保存された）").toBe("遷移確認会社");
   });
 });
 
 caseTest("IT-M08-04-006", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔会員ID-M0804-006〕");
-  let e!: M08CustomerEditPage; let n = -1;
+  let e!: M08CustomerEditPage; let n = -1; let 会社 = "";
   await step(1, async () => { e = await 開く(page, id); });
   await step(2, async () => { await e.set("company_name", "住所件数確認会社"); });
   await step(3, async () => { await e.登録する(); await 保存後メッセージを注記(e); });
-  await step(4, async () => { n = 会員住所の件数(id); });
-  await expected(async () => { expect.soft(n, `会員ID ${id} の会員住所の件数（1件のまま）`).toBe(1); });
+  await step(4, async () => { n = 会員住所の件数(id); 会社 = String(保存内容(id).会社名 ?? ""); });
+  await expected(async () => {
+    // 更新が失敗しても件数は1件のままなので、更新されたこと（会社名）も確かめる
+    expect.soft(会社, "会社名（更新された）").toBe("住所件数確認会社");
+    expect.soft(n, `会員ID ${id} の会員住所の件数（1件のまま）`).toBe(1);
+  });
 });
 
 caseTest("IT-M08-04-007", async ({ page, notes, step, expected }) => {
@@ -110,7 +128,7 @@ caseTest("IT-M08-04-009", async ({ page, notes, step, expected }) => {
   });
 });
 
-caseTest("IT-M08-04-010", async ({ page, notes, step, expected }) => {
+caseTest("IT-M08-04-010", async ({ page, browser, notes, step, expected }) => {
   const id = notes.get("〔会員ID-M0804-010〕");
   const v = {
     姓: "あ".repeat(16), 名: "い".repeat(16), セイ: "ア".repeat(25), メイ: "イ".repeat(25), 会社名: "社".repeat(100), 郵便1: "100", 郵便2: "0001", 海外郵便: "1".repeat(100),
@@ -139,6 +157,12 @@ caseTest("IT-M08-04-010", async ({ page, notes, step, expected }) => {
     expect.soft([r.FAX1, r.FAX2, r.FAX3].join("-"), "FAX番号（各5桁）").toBe([v.FAX, v.FAX, v.FAX].join("-"));
     expect.soft(r.MTG姓, "MTG Companion登録本名の姓（128文字）").toBe(v.MTG姓); expect.soft(r.MTG名, "MTG Companion登録本名の名（128文字）").toBe(v.MTG名);
     expect.soft(r.退会区分, "退会区分（255文字）").toBe(v.退会区分);
+    expect.soft(String(r.郵便番号 ?? "").replace(/-/g, ""), "郵便番号（3桁＋4桁）").toBe(v.郵便1 + v.郵便2);
+    // パスワード（32文字）は暗号化して保存されるので、新しいパスワードでフロントにログインできることで確かめる
+    const { ctx: c2, A } = await 別のブラウザを開く(browser);
+    let ログイン = "";
+    try { await 会員としてログインする(A, v.メール, v.パスワード); ログイン = "できた"; } catch (err) { ログイン = `できなかった: ${(err as Error).message}`; } finally { await c2.close(); }
+    expect.soft(ログイン, "新しいパスワード（32文字）でフロントにログインできる").toBe("できた");
   });
 });
 
@@ -207,8 +231,13 @@ caseTest("IT-M08-04-024", async ({ page, notes, step, expected }) => {
     await e.set("company_name", "パスワード保持会社");
   });
   await step(4, async () => { await e.登録する(); await 保存後メッセージを注記(e); });
-  await step(5, async () => { after = String(保存内容(id).パスワード); });
-  await expected(async () => { expect.soft(after, "暗号化されたパスワード値が保存前と同じ").toBe(before); });
+  let 会社 = "";
+  await step(5, async () => { const r = 保存内容(id); after = String(r.パスワード); 会社 = String(r.会社名 ?? ""); });
+  await expected(async () => {
+    // 更新が失敗してもパスワードは変わらないので、更新されたこと（会社名）も確かめる
+    expect.soft(会社, "会社名（更新された）").toBe("パスワード保持会社");
+    expect.soft(after, "暗号化されたパスワード値が保存前と同じ").toBe(before);
+  });
 });
 
 caseTest("IT-M08-04-025", async ({ page, notes, step, expected }) => {
@@ -246,7 +275,11 @@ caseTest("IT-M08-04-028", async ({ page, notes, step, expected }) => {
   });
   await step(3, async () => { const p = await e.登録を押す(); if (p.ダイアログの文) { note(`確認ダイアログが出た: ${p.ダイアログの文}`); await p.答える("続行"); } });
   await step(4, async () => { r = 保存内容(id); });
-  await expected(async () => { expect.soft(r.本人確認ステータス, "本人確認ステータス").toBe("簡易書留確認済み"); });
+  await expected(async () => {
+    // 更新が失敗しても本人確認ステータスは変わらないので、氏名・カナ・生年月日が更新されたことも確かめる
+    expect.soft([r.お名前姓, r.お名前名, r.フリガナ姓, r.フリガナ名, r.生年月日], "お名前・お名前（フリガナ）・生年月日（更新された）").toEqual(["書留", "変更", "カキトメ", "ヘンコウ", "1991-02-03"]);
+    expect.soft(r.本人確認ステータス, "本人確認ステータス").toBe("簡易書留確認済み");
+  });
 });
 
 function 降格(k: string, 変更: (e: M08CustomerEditPage) => Promise<void>) {
@@ -304,30 +337,36 @@ caseTest("IT-M08-04-044", async ({ page, notes, step, expected }) => {
   });
 });
 
-function 遷移(k: string, ボタン: string, 画面: string) {
+/**
+ * ボタンを押して、ケースごとに決めた遷移先（アドレスの形と画面の見出し）へ移ったかを見る。期待するアドレスはリンクから取らず、ここで決める
+ * （リンク先が別の画面に誤っていても合格にしない）。アドレスと見出しは画面の作り（ルート・テンプレートの見出し）から決めた
+ */
+function 遷移(k: string, ボタン: string, 画面: string, 先: { パス: (id: string) => RegExp; 見出し: string }) {
   return async ({ page, notes, step, expected }: CaseCtx): Promise<void> => {
     const id = notes.get(`〔会員ID-M0804-${k}〕`);
-    let e!: M08CustomerEditPage; let href = ""; let status = 0;
+    let e!: M08CustomerEditPage; let status = 0; let 見出し = "";
     await step(1, async () => { e = await 開く(page, id); });
     await step(2, async () => {
       const b = page.locator("#ex-conversion-action a.btn", { hasText: ボタン });
       await expect(b, `「${ボタン}」ボタンが1つある`).toHaveCount(1);
-      href = new URL((await b.getAttribute("href")) ?? "", page.url()).pathname;
       const [res] = await Promise.all([page.waitForResponse((r) => r.request().resourceType() === "document", { timeout: 60_000 }), b.click({ timeout: 30_000 })]);
       status = res.status();
       await page.waitForLoadState("load");
+      見出し = ((await page.locator("h2.c-pageTitle__title").first().textContent().catch(() => "")) ?? "").replace(/\s+/g, " ").trim();
     });
     await expected(async () => {
-      expect.soft(new URL(page.url()).pathname, `${画面}のアドレス`).toBe(href);
+      expect.soft(new URL(page.url()).pathname, `${画面}のアドレス（会員ID ${id} の画面）`).toMatch(先.パス(id));
+      expect.soft(見出し, `${画面}の見出し`).toBe(先.見出し);
       expect.soft(status, `${画面}のHTTPステータス`).toBeLessThan(400);
       expect.soft(await e.f("email").count(), "会員登録/編集の画面ではなくなっている").toBe(0);
     });
+    note(`${画面}は、画面の見出し「${先.見出し}」の画面とした`);
   };
 }
-caseTest("IT-M08-04-050", 遷移("050", "ポイント管理・履歴一覧", "ポイント管理・履歴一覧画面"));
-caseTest("IT-M08-04-051", 遷移("051", "ポイント確認", "ポイント確認画面"));
-caseTest("IT-M08-04-052", 遷移("052", "送信履歴", "送信履歴画面"));
-caseTest("IT-M08-04-053", 遷移("053", "手動メール通知", "手動メール通知画面"));
+caseTest("IT-M08-04-050", 遷移("050", "ポイント管理・履歴一覧", "ポイント管理・履歴一覧画面", { パス: (id) => new RegExp(`/customer/point/${id}/select$`), 見出し: "ポイント履歴" }));
+caseTest("IT-M08-04-051", 遷移("051", "ポイント確認", "ポイント確認画面", { パス: (id) => new RegExp(`/customer/point/${id}/history$`), 見出し: "ポイント履歴確認" }));
+caseTest("IT-M08-04-052", 遷移("052", "送信履歴", "送信履歴画面", { パス: (id) => new RegExp(`/customer/mail/${id}/history$`), 見出し: "メール配信履歴" }));
+caseTest("IT-M08-04-053", 遷移("053", "手動メール通知", "手動メール通知画面", { パス: (id) => new RegExp(`/customer/manual_mail/${id}/?$`), 見出し: "手動メール通知" }));
 
 caseTest("IT-M08-04-060", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔会員ID-M0804-060〕");
@@ -410,6 +449,8 @@ caseTest("IT-M08-04-086", async ({ page, notes, step, expected }) => {
   await step(4, async () => { r = 保存内容(id); });
   await expected(async () => {
     expect.soft(p.ダイアログの文, "本人確認ステータス変更の確認（表示されない）").toBeNull();
+    // 更新が失敗しても本人確認ステータスは変わらないので、住所1が更新されたことも確かめる
+    expect.soft(r.住所1, "住所1（更新された）").toBe("新確認中住所1");
     expect.soft(r.本人確認ステータス, "本人確認ステータス").toBe("確認中");
   });
 });
@@ -421,7 +462,11 @@ caseTest("IT-M08-04-087", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await e.ラジオを選ぶ("Player][IdentityConfirmStatus", "オンライン本人確認済み"); });
   await step(3, async () => { await e.登録する(); await 保存後メッセージを注記(e); });
   await step(4, async () => { r = 保存内容(id); });
-  await expected(async () => { expect.soft(r.身分証有効期限, "身分証有効期限").toBe("2027-12-31"); });
+  await expected(async () => {
+    // 更新が失敗しても有効期限は変わらないので、本人確認ステータスが更新されたことも確かめる
+    expect.soft(r.本人確認ステータス, "本人確認ステータス（更新された）").toBe("オンライン本人確認済み");
+    expect.soft(r.身分証有効期限, "身分証有効期限").toBe("2027-12-31");
+  });
 });
 
 caseTest("IT-M08-04-093", async ({ page, notes, step, expected }) => {
@@ -464,7 +509,11 @@ caseTest("IT-M08-04-095", async ({ page, notes, step, expected }) => {
   await step(2, async () => { await e.ラジオを選ぶ("Player][IdentityConfirmStatus", "未確認"); });
   await step(3, async () => { await e.登録する(); await 保存後メッセージを注記(e); });
   await step(4, async () => { r = 保存内容(id); });
-  await expected(async () => { expect.soft(空(r.身分証有効期限), `身分証有効期限が空欄のまま（実際: ${r.身分証有効期限 ?? "空"}）`).toBe(true); });
+  await expected(async () => {
+    // 更新が失敗しても有効期限は空のままなので、本人確認ステータスが更新されたことも確かめる
+    expect.soft(r.本人確認ステータス, "本人確認ステータス（更新された）").toBe("未確認");
+    expect.soft(空(r.身分証有効期限), `身分証有効期限が空欄のまま（実際: ${r.身分証有効期限 ?? "空"}）`).toBe(true);
+  });
 });
 void adminUrl;
 
@@ -559,9 +608,21 @@ caseTest("IT-M08-04-033", async ({ page, notes, step, expected }) => {
 caseTest("IT-M08-04-088", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔会員ID-M0804-088〕");
   let e!: M08CustomerEditPage; let 太郎 = ""; let 花子 = "";
+  let 行数 = -1; let 表示のID: string[] = [];
+  const 控えたID = [notes.get("〔お届け先ID-M0804-088-A〕"), notes.get("〔お届け先ID-M0804-088-B〕")].sort();
   await step(1, async () => { e = await 開く(page, id); });
-  await step(2, async () => { 太郎 = await e.お届け先の文("配送 太郎"); 花子 = await e.お届け先の文("配送 花子"); });
+  await step(2, async () => {
+    太郎 = await e.お届け先の文("配送 太郎"); 花子 = await e.お届け先の文("配送 花子");
+    // お届け先住所欄の行の数と、行のリンクが指すお届け先のID（余分なお届け先が出ていないこと）
+    // 会員の住所の固定行（名称「会員情報住所」。アプリが全会員に出し、リンク・削除ボタンが無い）は、登録したお届け先ではないので数えない
+    const rows = page.locator("#delivery tbody tr").filter({ hasNotText: /会員情報住所/ });
+    行数 = await rows.count();
+    表示のID = (await rows.locator('a[href*="/delivery/"]').evaluateAll((as) => as.map((a) => /\/delivery\/(\d+)\//.exec((a as HTMLAnchorElement).getAttribute("href") ?? "")?.[1] ?? "")))
+      .filter((v, i, a) => v && a.indexOf(v) === i).sort();
+  });
   await expected(async () => {
+    expect.soft(行数, "お届け先住所欄の行の数（登録した2件だけ。会員情報住所の固定行を除く）").toBe(2);
+    expect.soft(表示のID, "お届け先住所欄に出ているお届け先（控えた2件だけ）").toEqual(控えたID);
     expect.soft(太郎, "お届け先住所欄の1件目: 氏名").toContain("配送 太郎");
     お届け先文を確かめる(太郎, "配送 太郎", "東京都千代田区1-1", "03-0884-1111", "お届け先住所欄の1件目");
     お届け先文を確かめる(花子, "配送 花子", "東京都港区2-2", "03-0884-2222", "お届け先住所欄の2件目");
@@ -583,7 +644,7 @@ caseTest("IT-M08-04-035", async ({ page, notes, step, expected }) => {
   await step(1, async () => { e = await 開く(page, id); });
   await step(2, async () => {
     await expect(e.お届け先住所を追加ボタン, "「お届け先住所を追加」ボタンが1つある").toHaveCount(1);
-    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }), e.お届け先住所を追加ボタン.click({ timeout: 30_000 })]);
+    await Promise.all([page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000}), e.お届け先住所を追加ボタン.click({ timeout: 30_000, noWaitAfter: true })]);
     await page.waitForLoadState("load");
   });
   await expected(async () => {
@@ -681,7 +742,7 @@ caseTest("IT-M08-04-082", async ({ page, notes, step, expected }) => {
 
 // ---- 買取履歴 ----
 caseTest("IT-M08-04-045", async ({ page, notes, step, expected }) => {
-  const id = notes.get("〔会員ID-M0804-045〕"); const 買取ID = notes.get("〔買取ID-M0804-045〕");
+  const id = notes.get("〔会員ID-M0804-045〕"); const 買取ID = 振られた買取IDを引く("045");
   let 行: 買取履歴の行 = [];
   await step(1, async () => { await 開く(page, id); });
   await step(2, async () => { 行 = await new M08CustomerEditPage(page).買取履歴(); note(`買取IDは画面・DBが振った番号 ${買取ID} を使った（正本の321045ではない）`); });
@@ -692,11 +753,14 @@ caseTest("IT-M08-04-045", async ({ page, notes, step, expected }) => {
     expect.soft(r.買取依頼日, "買取依頼日").toMatch(日付(2026, 8, 3));
     expect.soft(r.申込時金額.replace(/[^\d,]/g, ""), "申込時金額").toBe("5,000");
     expect.soft(r.査定金額.replace(/[^\d,]/g, ""), "査定金額").toBe("4,500");
-    expect.soft(r.買取ステータス, "買取ステータス").toBe("査定済み");
+    // 正本の「査定済み」はアプリの買取状況マスタに無いので、シードは番号3（MtbBuyOrderStatus::APPRAISAL_COMPLETE）で足した。期待はマスタのその名前
+    const 状況 = 買取状況を選ぶ(査定済みに当たる買取状況);
+    note(`正本の買取ステータス「査定済み」はアプリの買取状況マスタに無いため、番号${状況.ID}「${状況.名前}」に読み替えて確かめた`);
+    expect.soft(r.買取ステータス, `買取ステータス（正本の「査定済み」の読み替え: 「${状況.名前}」）`).toBe(状況.名前);
   });
 });
 caseTest("IT-M08-04-046", async ({ page, notes, step, expected }) => {
-  const id = notes.get("〔会員ID-M0804-共有買取〕"); const 買取ID = notes.get("〔買取ID-M0804-共有買取〕");
+  const id = notes.get("〔会員ID-M0804-共有買取〕"); const 買取ID = 振られた買取IDを引く("共有買取");
   let 行: 買取履歴の行 = [];
   await step(1, async () => { await 開く(page, id); });
   await step(2, async () => { 行 = await new M08CustomerEditPage(page).買取履歴(); note(`買取IDは画面・DBが振った番号 ${買取ID} を使った（正本の321ではない）。7桁表記はその番号を0埋めした値`); });
@@ -707,7 +771,7 @@ caseTest("IT-M08-04-046", async ({ page, notes, step, expected }) => {
   });
 });
 caseTest("IT-M08-04-049", async ({ page, notes, step, expected }) => {
-  const id = notes.get("〔会員ID-M0804-共有買取〕"); const 買取ID = notes.get("〔買取ID-M0804-共有買取〕");
+  const id = notes.get("〔会員ID-M0804-共有買取〕"); const 買取ID = 振られた買取IDを引く("共有買取");
   let e!: M08CustomerEditPage; let status = 0;
   await step(1, async () => { e = await 開く(page, id); });
   await step(2, async () => {
@@ -733,8 +797,14 @@ caseTest("IT-M08-04-070", async ({ page, notes, step, expected }) => {
   await expected(async () => {
     const f = e.f("Player][smaregiId");
     expect.soft(await f.inputValue(), "スマレジIDの表示").toBe("7080070");
-    expect.soft(await f.isEditable(), "スマレジIDは編集できない（編集用の入力欄ではなく表示だけ）").toBe(false);
-    note("スマレジIDの欄は、値が入った編集不可（disabled）の入力欄として表示される。「編集用の入力欄が表示されない」は「編集できる入力欄が無い」と解釈した");
+    expect.soft(await f.isEditable(), "スマレジIDは編集できない").toBe(false);
+    // 期待結果は「表示だけされ、編集用の入力欄が表示されない」。編集できない入力欄でも、入力欄の形で出ていれば期待どおりとしない（読み替えない）
+    const 入力欄 = await f.evaluateAll((els) => els.filter((el) => {
+      const r = (el as HTMLElement).getBoundingClientRect();
+      return ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName) && (el as HTMLInputElement).type !== "hidden" && r.width > 0 && r.height > 0;
+    }).length);
+    expect.soft(入力欄, "スマレジIDの入力欄が表示されない（表示だけ）").toBe(0);
+    if (入力欄 > 0) note("スマレジIDの欄は、値が入った編集できない（灰色の）入力欄として表示される");
   });
 });
 
@@ -753,10 +823,11 @@ caseTest("IT-M08-04-080", async ({ page, browser, notes, step, expected }) => {
     await step(1, async () => { await 会員としてログインする(A, QH会員のメール("001"), QH会員のパスワード("001")); });
     await step(2, async () => {
       変更 = new ChangePage(A); await 変更.開いて待つ();
-      expect(await 変更.値("name][name01"), "更新前のお名前(姓)").toBe("旧姓001");
-      expect(await 変更.値("company_name"), "更新前の会社名").toBe("旧会社M0804QH001");
-      expect(await 変更.値("address][addr01"), "更新前の住所1").toBe("千代田区旧町001");
-      expect(await 変更.値("address][addr02"), "更新前の住所2").toBe("旧ビル001");
+      await expect(変更.f("name][name01"), "更新前のお名前(姓)").toHaveValue("旧姓001");
+      await expect(変更.f("company_name"), "更新前の会社名").toHaveValue("旧会社M0804QH001");
+      await expect(変更.f("address][addr01"), "更新前の住所1").toHaveValue("千代田区旧町001");
+      await expect(変更.f("address][addr02"), "更新前の住所2").toHaveValue("旧ビル001");
+      await 別のブラウザの画面を印つきで撮る(A, scene.stepLabel(2, "ブラウザA（会員）の更新前の会員情報変更画面"));
     });
     await step(3, async () => { await loginAdmin(page, M0804_QH_ADMIN); });
     await step(4, async () => { e = new M08CustomerEditPage(page); if ((await e.open(id)) !== 200) throw new Error(`会員ID ${id} の会員登録/編集画面を開けない`); });
@@ -768,10 +839,17 @@ caseTest("IT-M08-04-080", async ({ page, browser, notes, step, expected }) => {
     await step(7, async () => {
       await 変更.開いて待つ();
       後 = { 姓: await 変更.値("name][name01"), 会社: await 変更.値("company_name"), 住所1: await 変更.値("address][addr01"), 住所2: await 変更.値("address][addr02") };
+      await 別のブラウザの画面を撮る(A, scene.stepLabel(7, "ブラウザA（会員）の会員情報変更画面を開き直したところ"));
     });
     await expected(async () => {
       expect.soft(後.姓, "お名前(姓)").toBe("新姓001"); expect.soft(後.会社, "会社名").toBe("新会社M0804QH001");
       expect.soft(後.住所1, "住所(住所1)").toBe("港区新町001"); expect.soft(後.住所2, "住所(住所2)").toBe("新ビル001");
+      // 確かめた欄は、ブラウザAの会員情報変更画面（開き直したまま）の欄で確かめ直して枠にする
+      await expect.soft(変更.f("name][name01"), "ブラウザAの画面のお名前(姓)").toHaveValue("新姓001");
+      await expect.soft(変更.f("company_name"), "ブラウザAの画面の会社名").toHaveValue("新会社M0804QH001");
+      await expect.soft(変更.f("address][addr01"), "ブラウザAの画面の住所(住所1)").toHaveValue("港区新町001");
+      await expect.soft(変更.f("address][addr02"), "ブラウザAの画面の住所(住所2)").toHaveValue("新ビル001");
+      await 別のブラウザの画面を印つきで撮る(A, scene.expectedLabel("ブラウザA（会員）の会員情報変更画面"));
       for (const old of ["旧姓001", "旧会社M0804QH001", "千代田区旧町001", "旧ビル001"]) expect.soft(Object.values(後), `更新前の「${old}」は表示されない`).not.toContain(old);
     });
   } finally { await ctx.close(); }
@@ -785,6 +863,8 @@ caseTest("IT-M08-04-081", async ({ page, browser, notes, step, expected }) => {
     await step(2, async () => {
       マイページ = new MypagePage(A); await マイページ.開く();
       expect(await マイページ.名前の表示(), "更新前のマイページの名前(姓)").toContain("旧姓002");
+      await expect.soft(マイページ.名前の要素, "更新前のマイページの名前に「旧姓002」を含む").toContainText("旧姓002");
+      await 別のブラウザの画面を印つきで撮る(A, scene.stepLabel(2, "ブラウザA（会員）の更新前のマイページ"));
     });
     await step(3, async () => { await loginAdmin(page, M0804_QH_ADMIN); });
     await step(4, async () => { e = new M08CustomerEditPage(page); if ((await e.open(id)) !== 200) throw new Error(`会員ID ${id} の会員登録/編集画面を開けない`); });
@@ -793,10 +873,16 @@ caseTest("IT-M08-04-081", async ({ page, browser, notes, step, expected }) => {
       await e.登録する();
       expect(await e.成功メッセージ(), `「保存しました」が表示される（エラー: ${(await e.エラー文()).join(" / ")}）`).toContain("保存しました");
     });
-    await step(7, async () => { await マイページ.開く(); 名前 = await マイページ.名前の表示(); });
+    await step(7, async () => {
+      await マイページ.開く(); 名前 = await マイページ.名前の表示();
+      await 別のブラウザの画面を撮る(A, scene.stepLabel(7, "ブラウザA（会員）のマイページを開き直したところ"));
+    });
     await expected(async () => {
       expect.soft(名前, "マイページの名前(姓)").toContain("新姓002");
       expect.soft(名前, "更新前の「旧姓002」は表示されない").not.toContain("旧姓002");
+      await expect.soft(マイページ.名前の要素, "マイページの名前に「新姓002」を含む").toContainText("新姓002");
+      await expect.soft(マイページ.名前の要素, "マイページの名前に「旧姓002」を含まない").not.toContainText("旧姓002");
+      await 別のブラウザの画面を印つきで撮る(A, scene.expectedLabel("ブラウザA（会員）のマイページ"));
     });
   } finally { await ctx.close(); }
 });
@@ -804,7 +890,16 @@ caseTest("IT-M08-04-081", async ({ page, browser, notes, step, expected }) => {
 // ---- 買取情報・本人確認の連携（RH） ----
 async function 買取を検索する(page: Page, 番号: string): Promise<{ list: BuyListPage; 行: Awaited<ReturnType<BuyListPage["行"]>> }> {
   const list = new BuyListPage(page);
-  await list.open(); await list.買取番号を入れる(String(Number(番号))); await list.検索する();
+  await list.open(); await list.買取番号を入れる(String(Number(番号)));
+  // 画面の初期表示では買取依頼日(From)に約3か月前の日付が入る。シードの買取（依頼日はシード表の 2026-08-03）がその範囲から外れて0件になるため、日付の欄を空にして買取番号だけで探す
+  const 日付 = page.locator('form#search_form input[type="date"]');
+  const 入っていた: string[] = [];
+  for (let i = 0; i < (await 日付.count()); i++) {
+    const v = await 日付.nth(i).inputValue();
+    if (v) { 入っていた.push(`${(await 日付.nth(i).getAttribute("name")) ?? i}=${v}`); await 日付.nth(i).fill(""); }
+  }
+  if (入っていた.length > 0) note(`買取検索の日付の初期値（${入っていた.join("、")}）を空にして、買取番号だけで検索した（シードの買取の依頼日が初期の範囲から外れるため）`);
+  await list.検索する();
   return { list, 行: await list.行() };
 }
 caseTest("IT-M08-04-090", async ({ page, notes, step, expected }) => {
@@ -842,7 +937,10 @@ caseTest("IT-M08-04-091", async ({ page, notes, step, expected }) => {
   };
   await step(1, async () => { await loginAdmin(page, M0804_RH_ADMIN); });
   await step(2, async () => { await 買取を検索する(page, 番号); });
-  await step(3, async () => { 前 = await 本人確認を読む(); });
+  await step(3, async () => {
+    前 = await 本人確認を読む();
+    await expect.soft(new BuyListPage(page).本人確認の欄(番号), "更新前の本人確認に「オンライン本人確認済み」を含む").toContainText("オンライン本人確認済み");
+  });
   await step(4, async () => {
     e = new M08CustomerEditPage(page); if ((await e.open(id)) !== 200) throw new Error(`会員ID ${id} の会員登録/編集画面を開けない`);
     await e.set("address][addr02", "結合ビル804更新"); p = await e.登録を押す();
@@ -851,31 +949,48 @@ caseTest("IT-M08-04-091", async ({ page, notes, step, expected }) => {
   await step(6, async () => { expect(await e.成功メッセージ(), `「保存しました」が表示される（エラー: ${(await e.エラー文()).join(" / ")}）`).toContain("保存しました"); });
   await step(7, async () => { 後 = await 本人確認を読む(); });
   await expected(async () => {
-    expect.soft(前, "更新前の本人確認").toContain("オンライン本人確認済み");
-    expect.soft(後, "買取検索一覧の本人確認に「未確認」が表示される").toContain("未確認");
-    expect.soft(後, "更新前の「オンライン本人確認済み」は表示されない").not.toContain("オンライン本人確認済み");
+    const 欄 = new BuyListPage(page).本人確認の欄(番号);
+    await expect.soft(欄, "買取検索一覧の本人確認に「未確認」が表示される").toContainText("未確認");
+    await expect.soft(欄, "更新前の「オンライン本人確認済み」は表示されない").not.toContainText("オンライン本人確認済み");
   });
 });
 
 // ---- 101件の履歴（100件上限・新しい順） ----
+/**
+ * 購入履歴・買取履歴を、件数プルダウンで100件にしてから、ページ送り（「次へ」）をたどって全ページ読む。
+ * 設計書 L0266〜L0267「先頭100件までを表示する」は、ページ送りを含む表示の全体が100件までのこと。1ページ目だけを数えると、
+ * 101件目が次のページに残っていても100件に見えるので、全ページを読む
+ */
+async function 履歴を全ページ読む(page: Page, 欄: "購入" | "買取"): Promise<{ 番号: string[]; ページ数: number }> {
+  const e = new M08CustomerEditPage(page);
+  await e.履歴の件数を100にする(欄);
+  const box = page.locator(欄 === "購入" ? "#orderHistory" : "#buyOrderHistory");
+  const 読む = async () => (欄 === "購入" ? (await e.購入履歴()).map((x) => x.受注番号) : (await e.買取履歴()).map((x) => x.買取番号));
+  const 番号 = [...(await 読む())];
+  let ページ数 = 1;
+  for (let i = 0; i < 10; i++) {
+    const next = box.locator("ul.pagination a.page-link", { hasText: /^\s*次へ\s*$/ });
+    if ((await next.count()) === 0) break;
+    await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000}), next.first().click({ timeout: 30_000, noWaitAfter: true })]);
+    番号.push(...(await 読む()));
+    ページ数 += 1;
+  }
+  note(`${欄}履歴は初期で1ページ10件のため、件数プルダウンで100件を選び、ページ送りをたどって ${ページ数} ページ（${番号.length} 件）を読んだ`);
+  return { 番号, ページ数 };
+}
 function 購入101(k: "040" | "041") {
   return async ({ page, notes, step, expected }: CaseCtx): Promise<void> => {
     const id = notes.get("〔会員ID-M0804-共有購入101〕");
     let 番号: string[] = [];
     await step(1, async () => { await 開く(page, id); });
-    await step(2, async () => {
-      const e = new M08CustomerEditPage(page);
-      await e.履歴の件数を100にする("購入");
-      番号 = (await e.購入履歴()).map((x) => x.受注番号);
-      note("購入履歴は初期で1ページ10件のため、件数プルダウンで100件を選んでから数えた");
-    });
+    await step(2, async () => { 番号 = (await 履歴を全ページ読む(page, "購入")).番号; });
     await expected(async () => {
       if (k === "040") {
-        expect.soft(番号.length, "購入履歴の表示件数").toBe(100);
-        expect.soft(番号, "最も古い受注番号910001が表示されない").not.toContain("910001");
+        expect.soft(番号.length, "購入履歴の表示件数（ページ送りを含む全体）").toBe(100);
+        expect.soft(番号, "最も古い受注番号910001が表示されない（どのページにも）").not.toContain("910001");
       } else {
         const want = Array.from({ length: 100 }, (_, i) => String(910101 - i));
-        expect.soft(番号, "購入履歴の受注番号の並び（910101から910002まで新しい順）").toEqual(want);
+        expect.soft(番号, "購入履歴の受注番号の並び（910101から910002まで新しい順。ページ送りを含む全体）").toEqual(want);
       }
     });
   };
@@ -885,18 +1000,22 @@ caseTest("IT-M08-04-041", 購入101("041"));
 function 買取101(k: "047" | "048") {
   return async ({ page, notes, step, expected }: CaseCtx): Promise<void> => {
     const id = notes.get("〔会員ID-M0804-共有買取101〕");
-    const 最古 = Number(notes.get("〔買取ID-M0804-共有買取101-最古〕")); const 最新 = Number(notes.get("〔買取ID-M0804-共有買取101-最新〕"));
+    const 最古 = Number(振られた買取IDを引く("共有買取101-最古")); const 最新 = Number(振られた買取IDを引く("共有買取101-最新"));
     let 番号: string[] = [];
     await step(1, async () => { await 開く(page, id); });
-    await step(2, async () => { const e = new M08CustomerEditPage(page); await e.履歴の件数を100にする("買取"); 番号 = (await e.買取履歴()).map((x) => x.買取番号); note(`買取履歴は初期で1ページ10件のため、件数プルダウンで100件を選んでから数えた。` + `買取IDは振られた番号（最古 ${最古}・最新 ${最新}）を使った（正本の1〜101ではない）`); });
+    await step(2, async () => {
+      番号 = (await 履歴を全ページ読む(page, "買取")).番号;
+      note(`買取IDは振られた番号（最古 ${最古}・最新 ${最新}）を使った（正本の1〜101ではない）`);
+    });
     await expected(async () => {
       if (k === "047") {
-        expect.soft(番号.length, "買取履歴の表示件数").toBe(100);
-        expect.soft(番号, "最も古い買取IDの履歴が表示されない").not.toContain(買取番号の表示(String(最古)));
+        expect.soft(番号.length, "買取履歴の表示件数（ページ送りを含む全体）").toBe(100);
+        expect.soft(番号, "最も古い買取IDの履歴が表示されない（どのページにも）").not.toContain(買取番号の表示(String(最古)));
       } else {
-        const want = 番号.slice().sort().reverse();
-        expect.soft(番号[0], "先頭は最新の買取番号").toBe(買取番号の表示(String(最新)));
-        expect.soft(番号, "買取番号が新しい順（降順）に並ぶ").toEqual(want);
+        // 101件は1文でまとめて足したので、買取IDは最古から最新まで続いた番号（前提として確かめる）。最新から最古の1つ手前までの100件が、新しい順にちょうど並ぶこと
+        expect.soft(最新 - 最古, "前提: 101件の買取IDが最古から最新まで続いた番号").toBe(100);
+        const want = Array.from({ length: 100 }, (_, i) => 買取番号の表示(String(最新 - i)));
+        expect.soft(番号, "買取履歴の買取番号の並び（最新から最古の1つ手前まで新しい順。ページ送りを含む全体）").toEqual(want);
       }
     });
   };

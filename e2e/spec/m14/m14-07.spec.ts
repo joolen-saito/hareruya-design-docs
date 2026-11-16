@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { caseTest, CaseBody, expect } from "../../lib/case";
 import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
-import { 画像のデッドリンク, カード名英の詳細IDs, 日本語, 英語 } from "../../db/m14_07";
+import { 画像のデッドリンク, カード名英の詳細IDs, 詳細の画像の状態, 日本語, 英語 } from "../../db/m14_07";
 import { CardsetListPage, ダウンロードの結果 } from "../../pages/admin/m14_06_cardset_list";
 import { 展開結果, ZIPを展開する } from "../../pages/admin/m14_07_zip";
 import { M1407_ADMIN } from "../../seeds/m14-06";
@@ -176,10 +176,21 @@ caseTest("IT-M14-07-016", async ({ page, notes, step, expected }) => {
   const ホイル = 詳細("177252"), 非ホイル = 詳細("177253");
   let d: ダウンロードの結果, z: 展開結果 = { ファイル: [], dir: "" };
   await step(1, async () => { await L.open(); });
-  await step(2, async () => { note(`2つのカードセットは、控えたIDで探した。${注記_固定の番号}保存先の拡張子は、既存の画像URLのまま（登録された拡張子によらず .jpg になることを確かめる）。${注記_画像}`); await セットを選ぶ(L, [a, b]); });
+  // 登録された保存先の拡張子（正本は .png・.gif）。既存の画像URLから .jpg ではないものを優先して選んである（seeds/m14-07.ts）
+  const 拡張子 = (詳細ID: string, 言語: number) => (/\.([A-Za-z0-9]+)(?:[?#].*)?$/.exec(詳細の画像の状態(詳細ID).find((x) => x.言語 === 言語)?.URL ?? "")?.[1] ?? "").toLowerCase();
+  const 登録 = { ホイル: "", 非ホイル: "" };
+  await step(2, async () => {
+    note(`2つのカードセットは、控えたIDで探した。${注記_固定の番号}保存先の拡張子は正本の .png・.gif に合わせられないので、既存の画像URLのうち拡張子が .jpg ではないものを使った（登録された拡張子によらず .jpg になることを確かめる）。${注記_画像}`);
+    登録.ホイル = 拡張子(ホイル, 日本語); 登録.非ホイル = 拡張子(非ホイル, 英語);
+    note(`登録された保存先の拡張子: ホイル相当の日本語画像=.${登録.ホイル}、ホイル相当ではない英語画像=.${登録.非ホイル}`);
+    await セットを選ぶ(L, [a, b]);
+  });
   await step(3, async () => { d = await L.画像ダウンロードを押す("言語別"); });
   await step(4, async () => { z = await ZIPを受け取る(d); });
   await expected(async () => {
+    // 登録された拡張子が .jpg だと「拡張子によらず .jpg になる」を確かめたことにならないので、前提として確かめる
+    expect.soft(!["jpg", "jpeg", ""].includes(登録.ホイル), `前提: ホイル相当の画像の登録された保存先の拡張子が .jpg 以外（.${登録.ホイル}）`).toBe(true);
+    expect.soft(!["jpg", "jpeg", ""].includes(登録.非ホイル), `前提: ホイル相当ではない画像の登録された保存先の拡張子が .jpg 以外（.${登録.非ホイル}）`).toBe(true);
     expect.soft(z.ファイル.map((f) => f.split("/").pop()).filter((n) => n === `F${ホイル}.jpg`).length, "ホイル相当のカード詳細の F+カード詳細ID.jpg の数").toBeGreaterThan(0);
     expect.soft(z.ファイル.map((f) => f.split("/").pop()).filter((n) => n === `${非ホイル}.jpg`).length, "ホイル相当ではないカード詳細の カード詳細ID.jpg の数").toBeGreaterThan(0);
     expect.soft(z.ファイル.filter((f) => !f.endsWith(".jpg")), "拡張子が .jpg ではないファイル").toEqual([]);
@@ -296,7 +307,11 @@ function 空のセットを含める(n: string, 履歴: boolean, 確かめ: (r: 
     await expected(async () => { expect.soft(r.前, "押す前に表示していたページ（2ページ目以降）").toBeGreaterThanOrEqual(2); 確かめ(r); });
   };
 }
-caseTest("IT-M14-07-008", 空のセットを含める("008", true, (r) => { expect.soft(r.ダウンロード, "最初のカードセットの画像を集めた card_image.zip がダウンロードされた").toBe(false); }));
+caseTest("IT-M14-07-008", 空のセットを含める("008", true, (r) => {
+  expect.soft(r.ダウンロード, "最初のカードセットの画像を集めた card_image.zip がダウンロードされた").toBe(false);
+  // 応答が返らない・エラー画面になった場合もダウンロードは起きないので、処理が終わって一覧にエラーが出たことも確かめる
+  expect.soft(r.エラー.join(" "), "ダウンロードしなかった理由（カードが無い旨）のエラーメッセージ").toContain("カードがありません");
+}));
 caseTest("IT-M14-07-009", 空のセットを含める("009", false, (r) => { expect.soft(r.後, "エラー後に戻ったページ（押す前と同じ2ページ目以降）").toBe(r.前); }));
 caseTest("IT-M14-07-010", 空のセットを含める("010", false, (r) => {
   expect.soft(r.エラー.join(" "), "カードが無い旨のエラーメッセージ（EMPTY-AFTER-010）").toContain("カードがありません");
@@ -319,7 +334,11 @@ function 画像なしのセット(n: string, 履歴: boolean, 確かめ: (r: { �
     await expected(async () => { expect.soft(r.前, "押す前に表示していたページ（2ページ目以降）").toBeGreaterThanOrEqual(2); 確かめ(r); });
   };
 }
-caseTest("IT-M14-07-022", 画像なしのセット("022", true, (r) => { expect.soft(r.ダウンロード, "card_image.zip がダウンロードされた").toBe(false); }));
+caseTest("IT-M14-07-022", 画像なしのセット("022", true, (r) => {
+  expect.soft(r.ダウンロード, "card_image.zip がダウンロードされた").toBe(false);
+  // 応答が返らない・エラー画面になった場合もダウンロードは起きないので、処理が終わって一覧にエラーが出たことも確かめる
+  expect.soft(r.エラー.join(" "), "ダウンロードしなかった理由（画像が無い旨）のエラーメッセージ").toContain("ダウンロードできる画像がありません");
+}));
 caseTest("IT-M14-07-023", 画像なしのセット("023", false, (r) => { expect.soft(r.後, "エラー後に戻ったページ（押す前と同じ2ページ目以降）").toBe(r.前); }));
 caseTest("IT-M14-07-024", 画像なしのセット("024", false, (r) => { expect.soft(r.エラー.join(" "), "画像が存在しない旨のエラーメッセージ").toContain("ダウンロードできる画像がありません"); }));
 
@@ -364,7 +383,8 @@ caseTest("IT-M14-07-030", async ({ page, notes, step, expected }) => {
   await step(5, async () => { expect.soft(r.ダウンロード, "ダウンロード履歴にある card_image.zip").toBe(false); });
   await expected(async () => {
     expect.soft(r.エラー.join(" "), "画像が存在しない旨のエラーメッセージ").toContain("ダウンロードできる画像がありません");
-    expect.soft(r.後, "エラー後に表示されているページ（押す前と同じ。1ページ目）").toBe(r.前);
+    expect.soft(r.前, "押す前に表示していたページ（1ページ目）").toBe(1);
+    expect.soft(r.後, "エラー後に表示されているページ（1ページ目）").toBe(1);
     expect.soft(r.ダウンロード, "card_image.zip がダウンロードされた").toBe(false);
   });
 });

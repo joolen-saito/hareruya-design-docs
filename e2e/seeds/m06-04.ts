@@ -19,7 +19,7 @@ import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
 import { ensureMemberByStoreIds } from "../pages/admin/m04_24_member";
-import { ensureStore } from "../pages/admin/m04_24_store";
+import { ensureStore } from "../pages/admin/m04_24_reuse_k";
 import { DepartmentPage } from "../pages/admin/m03_18_department";
 import { customerIdByEmail } from "../pages/admin/m06_04_member";
 import { OtcListPage } from "../pages/admin/m06_otc_list";
