@@ -6,7 +6,7 @@
 import { Locator, Page, test } from "@playwright/test";
 import { caseTest, expect } from "../../lib/case";
 import { アドレス帳の件数, 会員の配送先 } from "../../db/f04_02";
-import { アドレス帳の住所, アドレス帳の値, アドレス帳の都道府県名, 既定のお届け先を有効に戻す, 受注の配送一覧, 都道府県の番号, 配送の住所 } from "../../db/f04_03_x";
+import { アドレス帳の住所, アドレス帳の値, アドレス帳の都道府県名, 既定のお届け先を有効に戻す, 受注の配送一覧, 都道府県の番号, 配送の住所, 二件目の配送を足す } from "../../db/f04_03_x";
 import { 処理中受注ID一覧 } from "../../db/f04_02";
 import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
 import { 本店の店名 } from "../../pages/admin/f04_setup";
@@ -352,21 +352,33 @@ caseTest("IT-F04-03-029", async ({ page, notes, step, expected }) => {
   const 会員ID = notes.get("〔会員ID-F0403-029〕");
   const 受注ID = () => 処理中受注ID一覧(会員ID).slice(-1)[0] ?? "";
   let 記録: ReturnType<typeof 受注の配送一覧> = [];
+  let 一件目ID = "";
   let ed = new ShippingEditPage(page);
-  await step(1, async () => { 記録 = 受注の配送一覧(受注ID()); expect(記録.length, "注文手続き中の配送の件数").toBe(2); });
+  await step(1, async () => {
+    // テストのブラウザでご注文方法指定画面を開くと、アプリはこのブラウザの注文手続きを作り直す（シードの注文手続きはシードのブラウザのもの）。
+    // そのため、開いたあとの注文手続きに2件目の配送が無ければ、シードと同じ作り方（1件目を写して住所だけ変える）で、E2E の受注にだけ DB で足す
+    // （2026-11-15 夜: シードで控えた配送 50569042 ではなく、作り直された注文手続きの配送 50569044 の画面が出て止まった）
+    await new ShoppingPage(page).直接開く();
+    if (受注の配送一覧(受注ID()).length < 2) {
+      二件目の配送を足す("IT-F04-03-029: このブラウザの注文手続き", 受注ID(), 状態の("S-F04-03-MULTI-029").会員.メール, { 住所1: "台東区上野", 住所2: "2-2" });
+      note("テストのブラウザで注文手続きが作り直されたので、2件目の配送（台東区上野 2-2）を、この受注にだけ DB で足した（シードと同じ作り方。正本の外の補い）");
+    }
+    記録 = 受注の配送一覧(受注ID());
+    expect(記録.length, "注文手続き中の配送の件数").toBe(2);
+    一件目ID = 記録[0].配送ID;
+  });
   await step(2, async () => {
-    ed = await 新規の入力を開く(page, true, notes.get("〔配送ID-F0403-029〕"));
-    // 開いた画面が、シードで控えた1件目の配送のものであること（注文手続きが作り直されていない）
-    expect(new URL(page.url()).pathname, "開いた配送先の新規登録・変更画面の配送の番号").toMatch(new RegExp(`/shipping_edit/${notes.get("〔配送ID-F0403-029〕")}/?$`));
+    ed = await 新規の入力を開く(page, true, 一件目ID);
+    expect(new URL(page.url()).pathname, "開いた配送先の新規登録・変更画面の配送の番号（1件目）").toMatch(new RegExp(`/shipping_edit/${一件目ID}/?$`));
   });
   await step(3, async () => { await 国を選ぶ(ed, "Japan"); await 日本の住所を入れる(ed, { 名称: "複数配送確認住所", 住所1: "港区芝公園" }); await ed.確認画面へ(); });
   await step(4, async () => { await ed.確認画面で登録する(); });
   let 後: ReturnType<typeof 受注の配送一覧> = [];
   await step(5, async () => { 後 = 受注の配送一覧(受注ID()); });
   await expected(async () => {
-    const 一件目 = 後.find((x) => x.配送ID === notes.get("〔配送ID-F0403-029〕"));
+    const 一件目 = 後.find((x) => x.配送ID === 一件目ID);
     expect.soft(一件目?.住所1, "1件目の配送先の住所1").toBe("港区芝公園");
-    const 二件目の記録 = 記録.find((x) => x.配送ID !== notes.get("〔配送ID-F0403-029〕"));
+    const 二件目の記録 = 記録.find((x) => x.配送ID !== 一件目ID);
     const 二件目 = 後.find((x) => x.配送ID === 二件目の記録?.配送ID);
     expect.soft(二件目, "2件目の配送先（手順1で記録した住所のまま）").toEqual(二件目の記録);
   });
