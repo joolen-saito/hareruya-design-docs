@@ -46,8 +46,9 @@ async function カードを作る(browser: Parameters<typeof カード商品を�
 }
 
 /** BASE-001・002・004・005・VALIDATION-011: カード商品を作り、それを数量1で申し込んだ受注（明細1件） */
-function defineCardOrderSeed(seedId: string, 番号: string, カード名: string, 状態ID?: number): void {
+function defineCardOrderSeed(seedId: string, 番号: string, カード名: string, 状態ID?: number, 前の確かめ?: (seedId: string) => void): void {
   defineSeed(seedId, async ({ browser, seed, notes }) => {
+    if (前の確かめ) 前の確かめ(seed.シードID);
     const p = await カードを作る(browser, seed.シードID, notes, 番号, カード名);
     const o = await 会員を作って申し込む(browser, seed.シードID, { メール: `a0705-${番号}@example.test`, 商品ID: p.商品ID });
     const 受注ID = o.番号[0];
@@ -55,14 +56,18 @@ function defineCardOrderSeed(seedId: string, 番号: string, カード名: strin
     const rows = 明細を読む(受注ID).filter((m) => m.商品ID === p.商品ID);
     if (rows.length !== 1) throw new Error(`${seed.シードID}: 受注 ${受注ID} に商品 ${p.商品ID} の明細が ${rows.length} 件`);
     if (状態ID !== undefined) 明細に書く(rows[0].ID, o.メール, { 状態ID });
-    reportSeedIssue(seed.シードID, `シード作成時の問題: 正本は「申込用のサプライ商品で申し込み、買取詳細画面でサプライ品の行を削除し、査定編集でカード（査定価格1000・数量1）を足して保存する」。E2E は行を消さず、作ったカード商品（${p.商品コード}・買取価格1000）をフロントで数量1のまま申し込んだ（買取 ${受注ID}・買取状況は申込直後のまま。明細の査定金額 ${rows[0].査定金額 ?? "空"}・枚数 ${rows[0].枚数 ?? "空"}）${状態ID !== undefined ? `。明細の状態は画面で指定できないので、E2E の明細にだけ DB で状態ID ${状態ID} を書いた` : ""}`);
+    reportSeedIssue(seed.シードID, `シード作成時の問題: 正本は「申込用のサプライ商品で申し込み、買取詳細画面でサプライ品の行を削除し、査定編集でカード（査定価格1000・数量1）を足して保存する」。E2E は行を消さず、作ったカード商品（${p.商品コード}・買取価格1000）をフロントで数量1のまま申し込んだ（買取 ${受注ID}・買取状況は申込直後のまま。明細の査定金額 ${rows[0].査定金額 ?? "空"}・枚数 ${rows[0].枚数 ?? "空"}）${状態ID !== undefined ? `。明細の状態は画面で指定できないので、E2E の明細にだけ DB で状態ID ${状態ID} を書いた（持ち主は会員のメールの実行の印で確かめた）` : ""}。明細の価格・受注の合計金額・言語・Foil区分は、申込みで決まった値のままで、正本の値と違うことがある（このケースの期待結果は応答だけを見るので効かない）`);
   });
 }
 defineCardOrderSeed("S-A07-05-BASE-001", "001", "A07-05基本カード-001", 2);
-defineCardOrderSeed("S-A07-05-BASE-002", "002", "A07-05基本カード-002");
+defineCardOrderSeed("S-A07-05-BASE-002", "002", "A07-05基本カード-002", 2);
 defineCardOrderSeed("S-A07-05-BASE-004", "004", "A07-05カード-004");
 defineCardOrderSeed("S-A07-05-BASE-005", "005", "A07-05カード-005");
-defineCardOrderSeed("S-A07-05-VALIDATION-011", "011", "A07-05カード-011");
+defineCardOrderSeed("S-A07-05-VALIDATION-011", "011", "A07-05カード-011", undefined, (seedId) => {
+  // シード表「ネット買取注文ステータスID 999999 は未登録」: 買取状況のマスタに無いことを数えるだけ（あれば止める。正本の「あれば削除」はしない）
+  if (買取状況のマスタ().has("999999")) throw new Error(`${seedId}: 買取状況のマスタに ID 999999 がある（正本は未登録。E2E は消さないので止める）`);
+  reportSeedIssue(seedId, "シード作成時の問題: 買取状況のマスタに ID 999999 が無いことを DB で数えて確かめた（あれば止める。マスタは書き換えない）");
+});
 
 defineSeed("S-A07-05-ABSENT-007", async ({ browser, seed, notes }) => {
   無いことを確かめる(seed.シードID, "799999");
@@ -74,10 +79,10 @@ defineSeed("S-A07-05-ABSENT-052", async ({ seed }) => { 無いことを確かめ
 /** VALIDATION-017〜020・049: 申込用のサプライ商品で申し込んだ受注（個別入力商品0件。サプライ品の行は消さずに残す） */
 function defineSupplyOrderSeed(seedId: string, 番号: string, サプライ名: string): void {
   defineSeed(seedId, async ({ browser, seed, notes }) => {
-    const p = await カード商品を作る(browser, seed.シードID, { 商品コード: `A0705-SUP-${番号}`, 商品名日: サプライ名, 商品名英: サプライ名, 基準価格: "100", 販売価格: "100", 買取価格: "100", 在庫: 0 });
+    const p = await カード商品を作る(browser, seed.シードID, { 商品コード: `A0705-SUP-${番号}`, 商品名日: サプライ名, 商品名英: サプライ名, 基準価格: "500", 販売価格: "500", 買取価格: "500", 在庫: 0 });
     const o = await 会員を作って申し込む(browser, seed.シードID, { メール: `a0705-${番号}@example.test`, 商品ID: p.商品ID });
     notes.set(`〔受注ID-A0705-${番号}〕`, o.番号[0]);
-    reportSeedIssue(seed.シードID, `シード作成時の問題: 申込用のサプライ商品（${p.商品コード}）で申し込んだ（買取 ${o.番号[0]}・買取状況は申込直後のまま）。正本の「選んで買取の表でサプライ品の行を削除する」は、E2E の行を消すことになるのでしなかった（サプライ品の明細は残る。個別入力商品は0件）${番号 === "017" ? "。正本の「改名前受注ID=7511」は、ほかの受注の番号で、E2E は触らない" : ""}${番号 === "020" ? "。正本の合計金額1111・更新者・更新日は画面で指定できず、このケース（数値でない値で 400 になるか）の確かめに関わらないので書いていない" : ""}`);
+    reportSeedIssue(seed.シードID, `シード作成時の問題: 申込用のサプライ商品（${p.商品コード}）で申し込んだ（買取 ${o.番号[0]}・買取状況は申込直後のまま）。正本の「選んで買取の表でサプライ品の行を削除する」は、E2E の行を消すことになるのでしなかった（サプライ品の明細は残る。個別入力商品は0件）${番号 === "017" ? "。正本の「改名前受注ID=7511」は、ほかの受注の番号で、E2E は触らない" : ""}${番号 === "020" ? "。正本の合計金額1111・更新者・更新日は画面で指定できず、このケース（数値でない値で 400 になるか）の確かめに関わらないので書いていない。正本の「買取注文詳細=0件」と違い、サプライ品の明細が1件残る" : ""}。サプライ商品の価格は、正本の100円でなく500円にした（フロントのネット買取は買取価格500円以上の商品でないと申し込めない）`);
   });
 }
 defineSupplyOrderSeed("S-A07-05-VALIDATION-017", "017", "A07-05申込用サプライ");
