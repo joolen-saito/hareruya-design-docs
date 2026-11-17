@@ -2,14 +2,14 @@
  * M04-34 戻しリストPDF（カードのマスタを使わない 001・003〜006・009・010・022・023・029〜045、カードのマスタを使う 008・011〜018・020・021・046〜049・051・052）。正本: cases/M04-34_test_cases.tsv
  * 実装しないケースは記録 review/M04-34_progress_2026-11-11_dev.md の振り分け。カードのマスタは依頼者決定 2026-11-14「マスタは作ってよい」で印つきの試験用カードを作る。
  * 店舗の高額商品閾値（金額閾値）は全員が使う設定。config/solo_cases.tsv で機能ごと1本だけで流し、ケースの開始時に書き換え、
- * 終わるたびに店舗ID 1・13 を控えた値へ戻して DB で確かめる。本店2F・本店B2F の代わりの店舗（E2E が作った店舗）は戻さない。
+ * 終わるたびに店舗ID 1・1574（試験支店）を控えた値へ戻して DB で確かめる。本店2F・本店B2F の代わりの店舗（E2E が作った店舗）は戻さない。
  */
 import { Browser, chromium, test } from "@playwright/test";
 import { SETUP_ADMIN } from "../../config/env";
 import { expect, caseTest, CaseCtx } from "../../lib/case";
 import type { CaseBody } from "../../lib/case";
 import { loginAdmin, withAdminSession } from "../../lib/session";
-import { 店舗の高額商品閾値, 流す前の高額商品閾値 } from "../../db/m04_33";
+import { 店舗の高額商品閾値, 流す前の値 } from "../../db/m04_33";
 import { ReturnListPage, setStoreThresholds } from "../../pages/admin/m04_33_return_list";
 import { 全行, 戻しリスト, 戻しリストPDFを出力する } from "../../pages/admin/m04_34_return_list_pdf";
 import { M0434_ADMIN, 入庫先, 入庫先の店舗ID, 印つきの名前, 作ったもの, 作った移動, 支店, 本店3F } from "../../seeds/m04-34";
@@ -45,19 +45,19 @@ async function 閾値を整える(browser: Browser, 定め: 閾値の定め[]): 
   });
 }
 /**
- * 店舗ID 1・13 の高額商品閾値を、流す前の決まった値（980/4800/空）へ戻して DB で確かめる。
+ * 店舗ID 1・1574（試験支店）の高額商品閾値を、店舗ごとの流す前の決まった値（本店 980/4800/空・試験支店 空/空/空）へ戻して DB で確かめる。
  * テストが時間切れで打ち切られると、渡されたブラウザが閉じていて画面を開けないので、そのときは新しいブラウザを立てて戻す（2026-11-15 M04-34 の 004 で残った）。
  * それでも戻せなければ、起動の終わり（lib/teardown_shared_thresholds.ts）が印を見て戻す。
  */
 async function 閾値を戻す(browser: Browser): Promise<void> {
   const 戻す = async (b: Browser) => withAdminSession(b, SETUP_ADMIN, async (page) => {
-    for (const id of [本店3F, 支店]) await setStoreThresholds(page, id, 流す前の高額商品閾値, `終わりに: 店舗ID ${id} の高額商品閾値を流す前の ${流す前の高額商品閾値.join("/")} へ戻す（共有の設定）`);
+    for (const id of [本店3F, 支店]) await setStoreThresholds(page, id, 流す前の値(id), `終わりに: 店舗ID ${id} の高額商品閾値を流す前の ${流す前の値(id).join("/")} へ戻す（共有の設定）`);
   });
   try { await 戻す(browser); } catch {
     const fresh = await chromium.launch();
     try { await 戻す(fresh); } finally { await fresh.close().catch(() => undefined); }
   }
-  for (const id of [本店3F, 支店]) expect(店舗の高額商品閾値(id), `共有の設定（店舗ID ${id} の高額商品閾値）を流す前の値へ戻せた`).toEqual([...流す前の高額商品閾値]);
+  for (const id of [本店3F, 支店]) expect(店舗の高額商品閾値(id), `共有の設定（店舗ID ${id} の高額商品閾値）を流す前の値へ戻せた`).toEqual([...流す前の値(id)]);
 }
 
 /** 呼び名の在庫移動・振替ID */
@@ -271,7 +271,7 @@ function CB(番号: string, 日: string, 店: 入庫先, 期待の仕訳: string
 店舗が無く流さない("IT-M04-34-040", 戻しリストPDF(...CB("040", "10", "共有B", "200円以上", false, true)));
 店舗が無く流さない("IT-M04-34-041", 戻しリストPDF(...CB("041", "11", "共有B", "サプライ", true, true)));
 シード表の値で作れず流さない("IT-M04-34-042", 戻しリストPDF(...CB("042", "12", "支店", "100円以上200円未満", false, false)));
-シード表の値で作れず流さない("IT-M04-34-043", 戻しリストPDF(...CB("043", "13", "支店", "200円以上", false, false)));
+シード表の値で作れず流さない("IT-M04-34-043", 戻しリストPDF(...CB("043", 支店, "支店", "200円以上", false, false)));
 シード表の値で作れず流さない("IT-M04-34-044", 戻しリストPDF(...CB("044", "14", "支店", "サプライ", true, false)));
 
 caseTest("IT-M04-34-045", 戻しリストPDF({ 日付: "2034-07-01", 閾値: [金額閾値("支店", "6000")], 選ぶ: ["045"] }, [

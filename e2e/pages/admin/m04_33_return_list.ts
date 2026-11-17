@@ -1,6 +1,6 @@
 /**
  * M04-33 戻しリストCSV の画面操作。セレクタはここだけに書く。正本: cases/M04-33_test_cases.tsv
- * - 店舗編集画面の高額商品閾値1〜3（≪共有の設定≫。店舗ID 1・13 は全員が使うので、ケースの開始時に書き換え、終わるたびに戻す）
+ * - 店舗編集画面の高額商品閾値1〜3（≪共有の設定≫。店舗ID 1（本店）と 1574（試験支店。2026-11-18 までは 13）は全員が使うので、ケースの開始時に書き換え、終わるたびに戻す）
  * - 在庫移動・振替検索一覧: 作成日の範囲で検索し、表示件数を選び、在庫移動の行を選んで「戻しリストCSV出力」を押し、ダウンロードしたCSVを読む
  */
 import { expect, Locator, Page } from "@playwright/test";
@@ -8,7 +8,7 @@ import { csvRecords, decodeCsvBytes } from "../../lib/csv";
 import { adminUrl } from "../../lib/session";
 import { expectSaved } from "./common";
 import { downloadedBytes } from "./m03_21_shelf_number";
-import { 店舗の高額商品閾値, 流す前の高額商品閾値 } from "../../db/m04_33";
+import { 店舗の高額商品閾値, 流す前の高額商品閾値の店舗別 } from "../../db/m04_33";
 import { 印を置く } from "../../lib/shared_threshold_marker";
 
 const T = 60_000;
@@ -32,8 +32,10 @@ export async function setStoreThresholds(page: Page, 店舗ID: string, 閾値: r
   const 整える = (v: readonly string[]) => v.map((x) => (x ?? "").replace(/,/g, "").trim()).join("/");
   const 求める = 整える(閾値);
   if (整える(店舗の高額商品閾値(店舗ID)) === 求める) return;
-  // ≪共有の設定≫（店舗ID 1・13）を決まった値から書き換える前に印を置く。テストが打ち切られても、起動の終わり（lib/teardown_shared_thresholds.ts）が戻す（2026-11-15）
-  if (!opt.印を置かない && (店舗ID === "1" || 店舗ID === "13") && 求める !== 整える(流す前の高額商品閾値)) 印を置く(店舗ID, 流す前の高額商品閾値);
+  // ≪共有の設定≫（店舗ID 1・1574）を決まった値から書き換える前に印を置く。テストが打ち切られても、起動の終わり（lib/teardown_shared_thresholds.ts）が戻す（2026-11-15）
+  // 2026-11-18: 支店を店舗ID 13 から試験支店（1574）へ読み替え。店舗ごとの流す前の値（本店 980/4800/空・試験支店 空/空/空）を戻す先にする
+  const 基準 = 流す前の高額商品閾値の店舗別[店舗ID];
+  if (!opt.印を置かない && 基準 && 求める !== 整える(基準)) 印を置く(店舗ID, 基準);
   let 最後 = "";
   for (let 回 = 1; 回 <= 3; 回++) {
     await readStoreThresholds(page, 店舗ID); // 店舗編集画面を開く

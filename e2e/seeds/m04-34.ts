@@ -4,7 +4,7 @@
  * 作り方（シード表の投入方法の順。M04-33 と同じ部品で画面から作り、画面で作れない状態だけ E2E の行に DB で書き足す。依頼者決定 2026-11-10）:
  * - S-M04-34-ENV: ポップアップの許可。試験のブラウザは既定でポップアップを開ける（作るものは無い）。
  * - S-M04-34-CONFIG: 店舗ID 1（本店3F）・5（出庫元）・13（支店A）は開発環境の店舗をそのまま使う。高額商品閾値（金額閾値）は全員が使う設定なので、
- *   店舗ID 1・13 の今の値を控え、ケースの開始時に spec が書き換え、終わるたびに控えた値へ戻す（記録の「1本だけで流す」）。
+ *   店舗ID 1・1574（試験支店。11/18 までは 13）の今の値を控え、ケースの開始時に spec が書き換え、終わるたびに控えた値へ戻す（記録の「1本だけで流す」）。
  *   本店2F・本店B2F（034〜041）は、ケースごとに店舗を作らず、M04-33 と同じ「本店2F（M04-33）」「本店B2F（M04-33）」を使い回す（無ければ一度だけ登録する）。
  * - S-M04-34-ADM: 「M04-34試験管理者」。店舗ID 1・5・13・本店2F・本店B2F を編集できるシステム管理者。開発環境に手動テスト用の同じログインIDの
  *   メンバーがありうるので、ログインID・名前に実行の印を付ける。在庫の入庫・出庫の承認は、別のメンバー「M04-34承認者」（印つき）で行う（正本の外の補い）。
@@ -29,7 +29,7 @@ import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { withAdminSession } from "../lib/session";
 import { 棚番号の名前を書き換える } from "../db/m04_01_x";
-import { 在庫移動の作成日時, 在庫移動指示の備考, 在庫移動指示の備考を書き換える, 在庫移動の作成日時を書き換える, 在庫移動の明細, 商品規格ID, 店舗の高額商品閾値, 流す前の高額商品閾値, 棚番号の名前がある, 言語コードのID, 商品規格の状態を書き換える, 商品規格の状態 } from "../db/m04_33";
+import { 在庫移動の作成日時, 在庫移動指示の備考, 在庫移動指示の備考を書き換える, 在庫移動の作成日時を書き換える, 在庫移動の明細, 商品規格ID, 店舗の高額商品閾値, 流す前の値, 棚番号の名前がある, 言語コードのID, 商品規格の状態を書き換える, 商品規格の状態 } from "../db/m04_33";
 import { カードを登録する, カード詳細IDs } from "../pages/admin/m14_card";
 import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
 import { ShortTagPage } from "../pages/admin/short_tag";
@@ -41,21 +41,25 @@ import { ClassEditPage } from "../pages/admin/m03_09_class_edit";
 import { ShelfNumberPage } from "../pages/admin/m03_21_shelf_number";
 import { openProductEditByCode } from "../pages/admin/m03_23_seed_products";
 import { storeNameById } from "../pages/admin/m04_19_masters";
-import { Actor, buildInstruction, ensureActor } from "./m04-25";
+import { Actor, buildInstruction } from "./m04-25";
+import { ensureActorWithStores as ensureActor } from "../pages/admin/m04_33_actor";
+import { 試験支店ID } from "../pages/admin/test_store";
+import { 試験支店の店舗ID } from "../pages/admin/reuse_store";
 import { 入庫して承認する } from "../pages/admin/m04_33_stock_in";
 
 // ---------------------------------------------------------------- 店舗・管理者
 
 export const 出庫元 = "5";
 export const 本店3F = "1";
-export const 支店 = "13";
+// 2026-11-18 支店は店舗ID 13 から試験支店（1574・E2E の店舗）へ読み替え（13 は住所が空で店舗編集の登録が送られず、閾値を書き換えられなかった。2店は試験支店＋本店の決まり 2026-11-13）
+export const 支店 = 試験支店ID;
 // 2026-11-13 試験店舗の使い回しで編集できる店舗が 1・5・13 だけになったので、前の試験管理者（本店2F（M04-33）も編集できる）とは別の名前で作る
 export const M0434_ADMIN: Actor = { 名前: rcFixed("M04-34試験管理者3店"), account: { loginId: rcFixed("m0434_admin3").toLowerCase(), password: "Passw0rd!M0434" } };
 const 承認者: Actor = { 名前: rcFixed("M04-34承認者3店"), account: { loginId: rcFixed("m0434_apr3").toLowerCase(), password: "Passw0rd!M0434apr" } };
 // 出庫承認申請の承認通知先の選択肢は「出庫元の店舗に所属するメンバー」だけ（アプリの作り）。本店所属の承認者は出ないので、出庫元（店舗ID 5）所属の承認者を別に作る（正本の外の補い・2026-11-14）
 const 出庫承認者: Actor = { 名前: rcFixed("M04-34出庫承認者"), account: { loginId: rcFixed("m0434_outapr").toLowerCase(), password: "Passw0rd!M0434out" } };
 
-/** 店舗ID 1・13 の、書き換える前の高額商品閾値（CONFIG のシードが控える。spec が戻すのに使う） */
+/** 店舗ID 1・1574（試験支店）の、書き換える前の高額商品閾値（CONFIG のシードが控える。spec が戻すのに使う） */
 export const 元の閾値 = new Map<string, [string, string, string]>();
 /** 本店2F・本店B2F の代わりに使い回す店舗の店舗ID */
 export const 共有店舗ID: Record<"A" | "B", string> = { A: "", B: "" };
@@ -64,14 +68,15 @@ defineSeed("S-M04-34-ENV", async () => { /* 試験のブラウザは既定でポ
 
 defineSeed("S-M04-34-CONFIG", async ({ seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
+  if (試験支店の店舗ID() !== 支店) throw new Error(`支店（店舗ID ${支店}）が使い回す試験支店でない`); // 店名・会社名・支店URL を DB で確かめる（2026-11-18）
   for (const id of [本店3F, 支店]) {
     if (元の閾値.has(id)) continue;
     const 今 = 店舗の高額商品閾値(id);
     // 流す前の値と違えば、前の回が戻し損ねた見込み。その値を「元」として控えると戻し損ねが続くので、書き換えずに止める（2026-11-15）
-    if (今.join("/") !== 流す前の高額商品閾値.join("/")) throw new Error(`店舗ID ${id} の高額商品閾値が、流す前の値（${流す前の高額商品閾値.join("/")}）でなく「${今.join("/")}」。前の回が戻し損ねた見込みなので、書き換えずに止める（≪共有の設定≫。値を戻してから流す）`);
+    if (今.join("/") !== 流す前の値(id).join("/")) throw new Error(`店舗ID ${id} の高額商品閾値が、流す前の値（${流す前の値(id).join("/")}）でなく「${今.join("/")}」。前の回が戻し損ねた見込みなので、書き換えずに止める（≪共有の設定≫。値を戻してから流す）`);
     元の閾値.set(id, 今);
   }
-  issue(`店舗ID 1・13 の高額商品閾値（書き換える前）: 1=${元の閾値.get(本店3F)!.join("/")}・13=${元の閾値.get(支店)!.join("/")}。ケースが終わるたびにこの値へ戻す`);
+  issue(`店舗ID 1・${支店}（試験支店）の高額商品閾値（書き換える前）: 1=${元の閾値.get(本店3F)!.join("/")}・${支店}=${元の閾値.get(支店)!.join("/")}。ケースが終わるたびにこの値へ戻す`);
 });
 
 let 管理者あり = false;
@@ -347,7 +352,7 @@ CB("S-M04-34-CBB2FMID-039", "039", "09", "共有B", 150, false);
 CB("S-M04-34-CBB2FHIGH-040", "040", "10", "共有B", 250, false);
 CB("S-M04-34-CBB2FSUP-041", "041", "11", "共有B", 150, true);
 CB("S-M04-34-CBBRMID-042", "042", "12", "支店", 150, false);
-CB("S-M04-34-CBBRHIGH-043", "043", "13", "支店", 250, false);
+CB("S-M04-34-CBBRHIGH-043", "043", 支店, "支店", 250, false);
 CB("S-M04-34-CBBRSUP-044", "044", "14", "支店", 150, true);
 ケース("S-M04-34-CBBAND-045", { 番号: "045", 日時: "2034-07-01 10:00:00", 移動: [
   移("045", "支店", [

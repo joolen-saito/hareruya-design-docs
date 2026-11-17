@@ -57,6 +57,24 @@ export function 商品規格ID(商品コード: string): string[] {
  */
 export const 流す前の高額商品閾値: readonly [string, string, string] = ["980", "4800", ""];
 
+/**
+ * 店舗ごとの、流す前の高額商品閾値（2026-11-18）。支店は店舗ID 13 から試験支店（店舗ID 1574・E2E の店舗）へ読み替えた。
+ * 店舗ID 13 は住所1・2 が空で、店舗編集の「登録」がブラウザの必須チェックで送られず、閾値を書き換えられなかった。
+ * 13 は E2E の店舗でないので住所は埋めない（2店が要るケースは試験支店＋本店で読み替える決まり 2026-11-13）。
+ * 試験支店の流す前の値は 空/空/空（11/18 06:1x に DB で読んだ。M04-28 も試験支店の閾値は空を前提にする）。
+ */
+export const 流す前の高額商品閾値の店舗別: Readonly<Record<string, readonly [string, string, string]>> = {
+  "1": 流す前の高額商品閾値,
+  "1574": ["", "", ""],
+};
+
+/** 店舗の流す前の高額商品閾値。決めていない店舗なら落とす */
+export function 流す前の値(店舗ID: string): readonly [string, string, string] {
+  const v = 流す前の高額商品閾値の店舗別[店舗ID];
+  if (!v) throw new Error(`店舗ID ${店舗ID} の流す前の高額商品閾値を決めていない（db/m04_33.ts の 流す前の高額商品閾値の店舗別）`);
+  return v;
+}
+
 /** 店舗の高額商品閾値1〜3（空は ""） */
 export function 店舗の高額商品閾値(店舗ID: string): [string, string, string] {
   const r = query(`select expensive_threshold1 as a, expensive_threshold2 as b, expensive_threshold3 as c from dtb_base_info where id = $1::int`, [店舗ID])[0];
