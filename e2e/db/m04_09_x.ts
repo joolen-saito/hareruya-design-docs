@@ -141,3 +141,15 @@ export function 明細の商品(id: string): 明細の商品[] {
     登録時在庫数: r.reg === null ? null : Number(r.reg), 移動点数: Number(r.q),
   }));
 }
+
+/** 商品コードの商品に付いているカテゴリの番号（深いもの＝親の番号が大きいものを先に）。差分商品の検索モーダルでカテゴリを選ぶのに使う（参照だけ） */
+export function 商品コードのカテゴリ(code: string): string[] {
+  return query(
+    `select distinct pc.category_id::text as id, c.hierarchy
+       from dtb_product_class pcl join dtb_product_category pc on pc.product_id = pcl.product_id
+       join dtb_category c on c.id = pc.category_id
+      where pcl.product_code = $1
+      order by c.hierarchy desc, 1`,
+    [code],
+  ).map((r) => String(r.id));
+}

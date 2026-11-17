@@ -2078,19 +2078,40 @@ caseTest("IT-M04-09-179", rejectStockCase("179", 900));
 // ---------------------------------------------------------------- 差分商品の追加
 
 /** 移動入庫承認申請画面で「差分商品追加」を押し、商品検索モーダルで商品コードを検索して、その商品コードを選んで決定する */
-async function addDiffProduct(page: Page, code: string): Promise<void> {
+async function addDiffProduct(page: Page, code: string, opt: { mayBeAbsent?: boolean } = {}): Promise<boolean> {
   await page.locator('button[data-bs-target="#moveDifferentialProductSearchModal"]').click();
   const modal = page.locator("#moveDifferentialProductSearchModal");
   await expect(modal, "商品検索モーダル").toBeVisible();
   await modal.locator("#admin_search_product_id").fill(code);
+  // 商品検索モーダルのカテゴリの選択欄には「指定なし」が無く、既定で一覧の先頭のカテゴリが選ばれて絞り込まれる（ECCUBE_HARERUYA-4163）。
+  // そのままでは商品が見つからないので、正本の外の補いとして、商品に付いているカテゴリを選んでから検索する（2026-11-17）
+  const cat = modal.locator("#admin_search_product_category_id");
+  if (await cat.count()) {
+    const values = await cat.locator("option").evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value));
+    const pick = dbx.商品コードのカテゴリ(code).find((v) => values.includes(v));
+    if (pick) {
+      await cat.selectOption(pick);
+      note(`正本の外の補い: 商品検索モーダルのカテゴリに「指定なし」が無い（4163）ため、${code} の商品のカテゴリ（番号 ${pick}）を選んで検索した`);
+    } else note(`${code} の商品のカテゴリが、商品検索モーダルのカテゴリの選択肢に無い`);
+  }
   await modal.locator("#moveDifferentialProductSearchModalButton").click();
   const row = modal.locator("#moveDifferentialProductSearchModalList tr").filter({ has: page.locator('select[name="product_class"] option', { hasText: code }) });
+  if (opt.mayBeAbsent) {
+    // 検索結果に出ないこと自体が「追加できない」の形になりうるケース（入庫先の在庫が無い商品など）。出なければ記録して戻る
+    const shown = await row.first().waitFor({ state: "visible", timeout: 30_000 }).then(() => true, () => false);
+    if (!shown) {
+      note(`${code} は商品検索モーダルの検索結果に出ない（検索結果 ${await modal.locator("#moveDifferentialProductSearchModalList tr").count()} 行）ため、選んで追加する操作ができない`);
+      await page.keyboard.press("Escape").catch(() => undefined);
+      return false;
+    }
+  }
   await expect(row, `検索結果の ${code} の行`).toHaveCount(1, { timeout: 30_000 });
   const opts = await row.locator('select[name="product_class"] option').allInnerTexts();
   const hit = opts.find((o) => o.includes(code));
   await row.locator('select[name="product_class"]').selectOption({ label: hit! });
   await Promise.all([page.waitForEvent("load", { timeout: 60_000 }), row.locator("button.add-order-item").click()]);
   await page.waitForLoadState("load");
+  return true;
 }
 
 caseTest("IT-M04-09-195", async ({ page, notes, step, expected }) => {
@@ -2459,7 +2480,7 @@ caseTest("IT-M04-09-055", async ({ page, notes, step, expected }) => {
   await openViaList(page, id, inboundRequestPath(id));
   const tryAdd = async (code: string) => {
     try {
-      await addDiffProduct(page, code);
+      await addDiffProduct(page, code, { mayBeAbsent: true });
     } catch (e) {
       note(`${code} の差分商品追加: ${(e as Error).message.split("\n")[0]}`);
       await page.keyboard.press("Escape").catch(() => undefined);
