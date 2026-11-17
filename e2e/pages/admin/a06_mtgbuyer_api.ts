@@ -156,3 +156,16 @@ export function 応答に商品コードがある(r: 応答, 商品コード: st
 export function カード詳細IDで買取カードを取る(page: Page, 何: string, カード詳細ID: string, トークン?: string): Promise<応答> {
   return 送る(page, 何, { 方式: "GET", パス: `/api/buying/${カード詳細ID}.json`, トークン });
 }
+
+/** 固定価格部門取得（A06-12）。「文のとおり」はケースの文のパス（/api/fixedPriceSection.json）、「アプリの経路」はアプリの経路（管理者の API） */
+export function 固定価格部門を取る(page: Page, 何: string, 経路: "文のとおり" | "アプリの経路", トークン?: string): Promise<応答> {
+  return 送る(page, 何, { 方式: "GET", パス: 経路 === "文のとおり" ? "/api/fixedPriceSection.json" : "/api/admin/fixedPriceSection.json", トークン });
+}
+
+/**
+ * カード名検索（A06-08）。ケースの文のパス `/api/search.json` は 404 なので、アプリの経路（拡張子なしの …/search）へ送る。
+ * 「文のとおり」はケースの文のパスで送る（404 を注記に残すため）。名前はケースの文のとおり URL のクエリで送る
+ */
+export function 名前で買取カードを探す(page: Page, 何: string, 名前: string, 経路: "文のとおり" | "アプリの経路", トークン?: string): Promise<応答> {
+  return 送る(page, 何, { 方式: "POST", パス: 経路 === "文のとおり" ? "/api/search.json" : "/api/search", query: [["name", 名前]], トークン });
+}

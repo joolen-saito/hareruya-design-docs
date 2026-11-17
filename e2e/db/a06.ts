@@ -78,3 +78,24 @@ export function 本人確認証明書と更新担当者を書く(受注ID: strin
 export function カード詳細の数(カード詳細ID: string): number {
   return Number(query("select count(*) as n from mtb_card_detail where id = $1::int", [カード詳細ID])[0]?.n ?? 0);
 }
+
+/** 追加システム設定の固定価格商品部門IDの今の値（行が無ければ null） */
+export function 固定価格商品部門IDの設定(): string | null {
+  const r = query("select option_value from mtb_option where option_key = 'fixed_price_section'");
+  return r.length ? (r[0].option_value ?? "") : null;
+}
+
+/** 部門IDの部門の数 */
+export function 部門IDの部門の数(部門ID: string): number {
+  return Number(query("select count(*) as n from mtb_section where id = $1::int", [部門ID])[0]?.n ?? 0);
+}
+
+/** 部門コードの部門の数 */
+export function 部門コードの部門の数(部門コード: string): number {
+  return Number(query("select count(*) as n from mtb_section where code = $1", [部門コード])[0]?.n ?? 0);
+}
+
+/** 商品名がその文字列で始まる商品の数 */
+export function 名前で始まる商品の数(頭: string): number {
+  return Number(query("select count(*) as n from dtb_product where name like $1", [`${頭.replace(/[%_]/g, "\\$&")}%`])[0]?.n ?? 0);
+}
