@@ -39,8 +39,8 @@ export async function A1505トークンを受け取る(メール: string): Promi
 type 定め = { シード表のメール: string; 呼び名: string; ニックネーム?: string; プロフィール?: string; 選手を無くす?: boolean };
 
 async function 作る(ctx: SeedCtx, d: 定め): Promise<void> {
-  const 会員ID = await 会員を作る(ctx, { メール: d.シード表のメール, パスワード: A1505_PASSWORD, 名: `A1505${d.呼び名}`, 選手: true, 呼び名: d.呼び名, 機能: "A1505" });
-  ctx.notes.set(`〔顧客ID-A1505-${d.呼び名}〕`, 会員ID);
+  // シード表は会員IDを「顧客ID」と呼び、デッキユーザーIDを控えると書かない
+  await 会員を作る(ctx, { メール: d.シード表のメール, パスワード: A1505_PASSWORD, 名: `A1505${d.呼び名}`, 選手: true, 呼び名: d.呼び名, 機能: "A1505", 会員IDの名: "顧客ID", デッキユーザーIDを控える: false });
   const メール = A1501のメール(d.シード表のメール);
   const 選手ID = ctx.notes.get(`〔プレイヤーID-A1505-${d.呼び名}〕`);
   if (d.ニックネーム !== undefined || d.プロフィール !== undefined) {

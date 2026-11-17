@@ -34,6 +34,10 @@ export type 会員の定め = {
   呼び名: string;
   /** 呼び名の機能の部分（既定 A1501。A15-02 は A1502） */
   機能?: string;
+  /** 会員IDを控える呼び名の頭（既定「会員ID」。A15-05 のシード表は「顧客ID」と書く） */
+  会員IDの名?: string;
+  /** デッキユーザーIDも控えるか（既定 true。シード表が控えると書かないシードでは false） */
+  デッキユーザーIDを控える?: boolean;
 };
 
 /** 会員を登録し（本会員にする）、会員ID（・選手ID・デッキユーザーID）を控える。返り値は会員ID（A15-02 も使う） */
@@ -46,10 +50,10 @@ export async function 会員を作る({ browser, seed, notes }: SeedCtx, d: 会�
   if (d.選手 && !m.選手ID) throw new Error(`${seed.シードID}: 会員 ${メール} の選手が DB に無い（MTG Companion登録名を入れて登録した）`);
   if (!d.選手 && m.選手ID) throw new Error(`${seed.シードID}: 会員 ${メール} に選手ができた（シード表は選手が無い会員）`);
   const k = d.機能 ?? "A1501";
-  notes.set(`〔会員ID-${k}-${d.呼び名}〕`, m.会員ID);
+  notes.set(`〔${d.会員IDの名 ?? "会員ID"}-${k}-${d.呼び名}〕`, m.会員ID);
   if (d.選手) {
     notes.set(`〔プレイヤーID-${k}-${d.呼び名}〕`, m.選手ID);
-    if (m.デッキユーザーID) notes.set(`〔デッキユーザーID-${k}-${d.呼び名}〕`, m.デッキユーザーID);
+    if (m.デッキユーザーID && d.デッキユーザーIDを控える !== false) notes.set(`〔デッキユーザーID-${k}-${d.呼び名}〕`, m.デッキユーザーID);
   }
   return m.会員ID;
 }
