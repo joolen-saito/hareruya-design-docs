@@ -9,7 +9,7 @@
 import { Browser, expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../../config/env";
 import { 未承認の入庫の在庫編集番号 } from "../../db/a17_05";
-import { RUN_MARK } from "../../lib/run_marker";
+import { RUN_MARK, rcFixed } from "../../lib/run_marker";
 import { adminUrl, withAdminSession } from "../../lib/session";
 import { CategoryPage } from "./category";
 import { expectSaved } from "./common";
@@ -30,19 +30,33 @@ const PASS = "Passw0rd!A1705";
 export const A1705登録者: 管理者 = { 名前: `A1705登録者-${RUN_MARK}`, account: { loginId: `a1705reg${RUN_MARK}`.toLowerCase(), password: PASS } };
 export const A1705承認者: 管理者 = { 名前: `A1705承認者-${RUN_MARK}`, account: { loginId: `a1705apr${RUN_MARK}`.toLowerCase(), password: PASS } };
 
-let adminsReady = false;
-export async function 管理者を用意する(browser: Browser): Promise<void> {
-  if (adminsReady) return;
+/** 入庫の登録者と承認者の組 */
+export type 入庫の管理者 = { 登録者: 管理者; 承認者: 管理者 };
+const 実行ごとの入庫の管理者: 入庫の管理者 = { 登録者: A1705登録者, 承認者: A1705承認者 };
+/**
+ * 決まった印（-E2E）を付けた入庫の登録者と承認者。1度だけ作って使い回す（試験管理者は rcFixed で1度だけ。2026-11-11 決定）。
+ * 2026-11-17: A06 のシードが実行のたびに印つきのシステム管理者を2人ずつ作っていた（hareruya-design-docs-39 の指摘）ので、A06 はこちらを使う。
+ * A17-05 などこれまでの呼び出しは、既定の実行ごとの組のまま（期待結果や記録が名前を見ているかを確かめていないので変えない）。
+ */
+export const 決まった入庫の管理者: 入庫の管理者 = {
+  登録者: { 名前: rcFixed("A1705登録者"), account: { loginId: rcFixed("a1705reg").toLowerCase(), password: PASS } },
+  承認者: { 名前: rcFixed("A1705承認者"), account: { loginId: rcFixed("a1705apr").toLowerCase(), password: PASS } },
+};
+
+const 用意した = new Set<string>();
+export async function 管理者を用意する(browser: Browser, 組: 入庫の管理者 = 実行ごとの入庫の管理者): Promise<void> {
+  const key = `${組.登録者.account.loginId}|${組.承認者.account.loginId}`;
+  if (用意した.has(key)) return;
   const shop = await 本店の店名(browser);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    for (const a of [A1705登録者, A1705承認者]) {
+    for (const a of [組.登録者, 組.承認者]) {
       await ensureMember(page, {
         名前: a.名前, 所属店舗: shop, ログインID: a.account.loginId, メールアドレス: `${a.account.loginId}@example.test`,
         パスワード: a.account.password, 権限: "システム管理者", デフォルト検索表示店舗: shop, 編集可能店舗: [shop],
       });
     }
   });
-  adminsReady = true;
+  用意した.add(key);
 }
 
 // ---- カテゴリ ----
@@ -216,9 +230,10 @@ export async function 規格を削除する(page: Page, 商品ID: string, 規格
  * 在庫検索一覧で商品コード・本店・EC-CUBE の行から在庫編集を開き、入庫/その他・在庫変動理由「結合テスト用」・増減数・仕入単価0・承認通知先＝承認者で登録し、
  * 承認者で在庫編集承認一覧（その在庫編集の番号で絞り込む）の1行を承認する。正本の順（登録→承認を商品規格ごと）で行う。
  */
-export async function 入庫して承認する(browser: Browser, seedId: string, items: { 商品コード: string; 数量: number }[], issue: Issue): Promise<void> {
+export async function 入庫して承認する(browser: Browser, seedId: string, items: { 商品コード: string; 数量: number }[], issue: Issue, 組: 入庫の管理者 = 実行ごとの入庫の管理者): Promise<void> {
   if (items.length === 0) return;
-  await 管理者を用意する(browser);
+  await 管理者を用意する(browser, 組);
+  const { 登録者: A1705登録者, 承認者: A1705承認者 } = 組;
   const shop = await 本店の店名(browser);
   for (const it of items) {
     const what = `${seedId}: ${it.商品コード} の入庫（${it.数量}）`;

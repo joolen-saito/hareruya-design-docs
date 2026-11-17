@@ -35,8 +35,19 @@ export function beginCase(id: string): void {
   pending = [];
 }
 
-/** 共有のものを書き換える前に呼ぶ。before は元の値（journal に残す。戻すのは restore の中で） */
+/** 前の回で戻せなかった共有の書き換えがあるか（STOP のファイルがあるか）。あれば、その中身の先頭の行 */
+export function 共有の書き換えの止め(): string | null {
+  try { return fs.readFileSync(STOP_FILE, "utf-8").split("\n").find((l) => l.trim() !== "") ?? null; } catch { return null; }
+}
+
+/**
+ * 共有のものを書き換える前に呼ぶ。before は元の値（journal に残す。戻すのは restore の中で）。
+ * 前の回で戻せなかった書き換えがあれば（STOP のファイルがあれば）、書き換えずに止める（2026-11-17。STOP を作るだけで、読んで止める処理が無かった）。
+ * 手で戻して確かめたら、.runs/shared_restore/STOP を消すと流せるようになる。
+ */
 export function registerRestore(label: string, before: unknown, restore: () => Promise<void>, verify?: () => Promise<boolean>): void {
+  const 止め = 共有の書き換えの止め();
+  if (止め) throw new Error(`共有の書き換えを止めている（前の回で戻せなかった: ${止め.replace(/\t/g, " ").slice(0, 200)}）。${label} は書き換えない。手で戻して確かめてから ${STOP_FILE} を消す`);
   journal("書き換える前", label, before);
   pending.push({ label, restore, verify });
 }

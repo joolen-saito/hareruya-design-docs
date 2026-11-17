@@ -13,6 +13,12 @@
  * - カードのマスタは、依頼者決定 2026-11-14「マスタは作ってよい」で試験用のカードを登録する（カード名に実行の印）。レアリティ・レイアウト・
  *   プロモ種別は選択肢の先頭、カードセットは A02 の試験用カードセットを使い回す。
  * - 商品コード・商品名には実行の印を付ける（流し直しで前の実行の商品とぶつからないように）。
+ * - グッズ商品CSVのスマレジ連携・地域の列は 0 にする（A17-05 の取込と同じ。外部のスマレジへ送らない。正本は値を定めない）。2026-11-17 に足した。
+ *   それまでの取込（A06-07・10・18 の9規格）は、DB でスマレジ連携フラグが無く、スマレジの商品IDも付いていないことを確かめた（送られていない）。
+ * - 入庫の登録者・承認者は、決まった印の2人を1度だけ作って使い回す（pages/admin/a17_05_setup.ts の 決まった入庫の管理者）。
+ * - 部門は、シード表の部門名に決まった印（-E2E）を付けて部門登録画面で1度だけ登録し、使い回す（試験部門を用意する）。
+ *   部門の登録はアプリがスマレジへ連携する。開発環境の連携先はスマレジの試験環境（api.smaregi.dev。DB の呼び出しの記録で確かめた）で、
+ *   スマレジ試験環境への書き込みは可（2026-11-10 依頼者決定）。
  */
 import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
@@ -21,7 +27,11 @@ import { rc, rcFixed } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
 import { カードを紐付ける, 試験用のカードを作る } from "../pages/admin/a02_setup";
-import { 入庫して承認する, 取込の商品と規格を読む } from "../pages/admin/a17_05_setup";
+import { 決まった入庫の管理者, 入庫して承認する, 取込の商品と規格を読む } from "../pages/admin/a17_05_setup";
+import { downloadGoodsCsvTemplate } from "../pages/admin/m03_01_goods_csv";
+import { DepartmentPage } from "../pages/admin/m03_18_department";
+import { 部門コードの部門の数 } from "../db/a06";
+import { 部門を名前で探す } from "../db/m06_08_prep";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
 import { ensureMemberFixed } from "../pages/admin/member";
@@ -63,6 +73,8 @@ export type カード商品の定め = {
   在庫: number;
   /** 商品画像のファイル名（無ければ画像を付けない） */
   画像?: string;
+  /** 商品規格の部門ID（グッズ商品CSVの部門IDの列。無ければ空） */
+  部門ID?: string;
 };
 export type 作ったカード商品 = { 商品ID: string; 規格ID: string; カードID: string | null; カード詳細ID: string | null; 商品コード: string };
 
@@ -77,10 +89,12 @@ export async function カード商品を作る(browser: Browser, seedId: string,
     const card = d.カード名日 && d.カード名英
       ? await 試験用のカードを作る(page, { カード名日: rc(d.カード名日), カード名英: rc(d.カード名英), 詳細数: 1 }, `${seedId}: 試験用のカード`, issue) : null;
     const categoryId = await readGoodsRootCategoryId(page);
+    const template = await downloadGoodsCsvTemplate(page);
+    const zeros = Object.fromEntries(template.headers.filter((h) => h.includes("地域") || h.includes("スマレジ連携")).map((h) => [h, "0"]));
     await registerGoodsCsv(page, {
       what: `${seedId} のグッズ商品CSV登録`, fileName: `${seedId.toLowerCase()}-${Date.now()}.csv`, categoryId,
-      common: { "購入グループ名称": "通常商品", "原価単価": "0" },
-      lines: [{ code: 商品コード, nameJp: 商品名日, nameEn: 商品名英, values: { "基準価格": d.基準価格, "販売価格": d.販売価格, "買取価格": d.買取価格 } }],
+      common: { "購入グループ名称": "通常商品", "原価単価": "0", ...zeros },
+      lines: [{ code: 商品コード, nameJp: 商品名日, nameEn: 商品名英, values: { "基準価格": d.基準価格, "販売価格": d.販売価格, "買取価格": d.買取価格, ...(d.部門ID ? { "部門ID": d.部門ID } : {}) } }],
       onWarning: (w) => issue(`グッズ商品CSV登録の警告「${w}」`), uploadWaitMs: 300_000,
     });
     const r = await 取込の商品と規格を読む(page, 商品コード, issue);
@@ -93,8 +107,28 @@ export async function カード商品を作る(browser: Browser, seedId: string,
     }
     return { 商品ID: r.商品ID, 規格ID: r.規格ID, カードID: card?.カードID ?? null, カード詳細ID: card?.カード詳細IDs[0] ?? null, 商品コード };
   });
-  if (d.在庫 > 0) await 入庫して承認する(browser, seedId, [{ 商品コード, 数量: d.在庫 }], issue);
+  if (d.在庫 > 0) await 入庫して承認する(browser, seedId, [{ 商品コード, 数量: d.在庫 }], issue, 決まった入庫の管理者);
   if (d.画像) 商品画像を足す(`${seedId}: 商品画像 ${d.画像}`, out.商品ID, d.画像, 1);
   issue(`商品コード ${商品コード}・商品名「${商品名日}」（実行の印つき）。${d.カード名日 ? "カード商品CSV登録の代わりにグッズ商品CSV登録＋カード指定で作り" : "グッズ商品CSV登録で作り（カードは紐付けない）"}（言語 JP・状態 NM）、本店・EC-CUBE へ ${d.在庫} 入庫して承認した。${d.画像 ? `商品画像「${d.画像}」の行だけを DB に足した（実体は置かない）。` : ""}カードのレアリティ等は選択肢の先頭`);
   return out;
+}
+
+/**
+ * シード表の部門名に決まった印（-E2E）を付けた部門を、無ければ部門登録画面で登録し、あれば使い回して、部門IDを返す。
+ * 部門コードは 960000 から空いている番号を使う（ほかと重ならない数字。シード表は値を定めない）。免税区分は「対象外」。
+ */
+export async function 試験部門を用意する(browser: Browser, seedId: string, シード表の部門名: string): Promise<string> {
+  const issue = (m: string) => reportSeedIssue(seedId, m);
+  const 部門名 = rcFixed(シード表の部門名);
+  const 有る = 部門を名前で探す(部門名)[0]?.部門ID;
+  if (有る) { issue(`部門「${部門名}」（部門ID ${有る}）を使い回した（決まった印で1度だけ作ったもの）`); return 有る; }
+  return withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    let code = 960000;
+    while (部門コードの部門の数(String(code)) > 0) code++;
+    const d = new DepartmentPage(page);
+    await d.openNew();
+    const id = await d.register({ 部門名, 部門コード: String(code), 免税区分: "対象外", MTGBuyer表示フラグ: false }, `${seedId}: 部門「${部門名}」の登録`);
+    issue(`部門「${部門名}」（部門コード ${code}・免税区分 対象外）を部門登録画面で登録した（シード表の部門名に決まった印を付けて1度だけ。アプリがスマレジ試験環境へ連携する）`);
+    return id;
+  });
 }
