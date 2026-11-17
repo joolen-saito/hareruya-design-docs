@@ -99,6 +99,13 @@ function 置く(seedId: string, 正本の名前: string, bytes: Buffer, mimeType
 /** 見出しとデータ行の UTF-8 の CSV（改行 LF・末尾に改行1個・BOM なし） */
 const csv = (rows: string[][], sep = ","): Buffer => Buffer.from([見出し行.split(",").join(sep), ...rows.map((r) => r.join(sep))].join("\n") + "\n", "utf-8");
 
+/**
+ * 取込履歴を作るだけのシード（006・007）用。ファイルの中身はシード表が決めておらず（決めるのは履歴のファイル名・作業者・件数）、
+ * 設計書の見出し「部門コード(ID)」はアプリが受け付けず取込が止まる（M03-35 の 001 などの不合格と同じ）。履歴を作れるよう、
+ * アプリの部門更新CSV雛形の見出し「部門コード」で作る（正本の外の補い。注記に残す）。
+ */
+const csvAppHeader = (rows: string[][]): Buffer => Buffer.from(["商品コード,部門コード", ...rows.map((r) => r.join(","))].join("\n") + "\n", "utf-8");
+
 function expectInSeed(seedId: string, words: string[]): void {
   const s = getSeed(seedId);
   const text = s["状態・属性"] + s.投入方法;
@@ -314,7 +321,8 @@ defineSeed("S-M03-35-CASE-006", needs, async ({ browser, seed }) => {
   expectInSeed(id, ["履歴担当M0335A-006", "削除済み", "m0335_deleted_operator-006.csv"]);
   const issue = (m: string) => reportSeedIssue(id, m);
   const p = await 作る(browser, id, "HIST-006", "A", 1);
-  const f = 置く(id, "m0335_deleted_operator-006.csv", csv([[p.商品コード, 部門コードの("B")]]));
+  const f = 置く(id, "m0335_deleted_operator-006.csv", csvAppHeader([[p.商品コード, 部門コードの("B")]]));
+  issue("取込ファイルの見出しは、設計書の「部門コード(ID)」だとアプリが受け付けず履歴を作れないので、履歴を作るだけのこのシードではアプリの雛形の見出し「部門コード」にした（正本の外の補い）");
   const account: Account = { loginId: rc("m0335h006").toLowerCase(), password: "Passw0rd!M0335H6" };
   const 管理者ID = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     // 正本は所属店舗を指定しない。選べる店舗の先頭に所属させ、システム管理者の権限を付ける（S-M03-35-ADM と同じ作り方）
@@ -336,9 +344,10 @@ defineSeed("S-M03-35-CASE-007", { needs: ["S-M03-35-SECTIONS", "S-M03-35-ADM"] }
   const id = seed.シードID;
   expectInSeed(id, ["m0335_history_01-007.csv〜m0335_history_12-007.csv", "12件"]);
   const p = await 作る(browser, id, "HIST-007", "A", 1);
+  reportSeedIssue(id, "取込ファイルの見出しは、設計書の「部門コード(ID)」だとアプリが受け付けず履歴を作れないので、履歴を作るだけのこのシードではアプリの雛形の見出し「部門コード」にした（正本の外の補い）");
   for (let i = 1; i <= 12; i++) {
     const n = String(i).padStart(2, "0");
-    const f = 置く(id, `m0335_history_${n}-007.csv`, csv([[p.商品コード, 部門コードの(i % 2 === 1 ? "B" : "A")]]));
+    const f = 置く(id, `m0335_history_${n}-007.csv`, csvAppHeader([[p.商品コード, 部門コードの(i % 2 === 1 ? "B" : "A")]]));
     await 取り込む(browser, M0335_ADMIN, id, f);
   }
   reportSeedIssue(id, `M03-35試験管理者で m0335_history_01〜12-007（印つき）を部門更新CSV登録画面から12回取り込んで履歴を作った（商品 ${p.商品コード} の部門を交互に変える）。日時は取り込んだ日時のまま。ほかの方の部門更新の取込履歴は消していない（正本の「全件削除」は行わない）ので、履歴はこのケースの12件だけではない`);
