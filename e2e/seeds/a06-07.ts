@@ -42,7 +42,7 @@ defineSeed("S-A06-07-NONCARD-011", { needs: ["S-A06-07-ADM-A"] }, async ({ brows
   notes.set("〔商品規格ID-A0607-011〕", p.規格ID);
 });
 
-// 004: 4商品（A=有効・B=商品の公開状態を廃止・C=商品規格の公開状態を廃止・D=高額商品コード HIGH-004）。刷新後の画面では、削除済みを公開状態「廃止」で表す（シード表のとおり。削除しない）
+// 004: 4商品（A=有効・B=商品の削除済み・C=商品規格の削除済み・D=高額商品コード HIGH-004（シード表の値））。シード表は「削除」、刷新後の画面では公開状態「廃止」で表すので、B・C は廃止にする（削除しない）
 defineSeed("S-A06-07-FILTER-STATUS-004", { needs: ["S-A06-07-ADM-A"] }, async ({ browser, notes, seed }) => {
   for (const [n, x, 追加] of [["1", "A", {}], ["2", "B", { 商品を廃止: true }], ["3", "C", { 規格を廃止: true }], ["4", "D", { 高額商品コード: "HIGH-004" }]] as const) {
     const p = await カード商品を作る(browser, seed.シードID, {

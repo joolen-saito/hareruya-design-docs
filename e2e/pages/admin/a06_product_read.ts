@@ -48,3 +48,64 @@ export async function 販売価格を入れ直す(page: Page, 商品ID: string, 
   const now = await 規格の価格を読む(page, 商品ID, 規格ID);
   if (now.販売価格 !== 販売価格.replace(/\.0+$/, "")) throw new Error(`${what}: 販売価格を ${販売価格} に入れ直したが、画面の値が ${now.販売価格}`);
 }
+
+/** 商品登録編集画面の商品公開ステータス（選ばれている選択肢の表示名） */
+export async function 商品の公開ステータスを読む(page: Page, 商品ID: string): Promise<string> {
+  await page.goto(adminUrl(`/product/product/${商品ID}/edit`), { timeout: 60_000 });
+  await page.waitForLoadState("load");
+  return ((await page.locator('select[name="admin_product[Status]"] option:checked').first().textContent({ timeout: 30_000 })) ?? "").trim();
+}
+
+/**
+ * 商品登録編集画面で商品公開ステータスを「廃止」にして「商品を登録」し、読み戻して「廃止」になったことを確かめる
+ * （刷新後の画面では、シード表の「商品の削除済み」を公開状態「廃止」で表す）。入庫のあとに呼ぶ（廃止の商品は在庫検索一覧に出ないおそれがある）
+ */
+export async function 商品を廃止にする(page: Page, 商品ID: string, what: string, issue: (m: string) => void): Promise<void> {
+  await page.goto(adminUrl(`/product/product/${商品ID}/edit`), { timeout: 60_000 });
+  await page.waitForLoadState("load");
+  const form = page.locator("form#form1, form#form").first();
+  await chooseByLabel(page.locator('select[name="admin_product[Status]"]'), "廃止");
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }),
+    form.locator('button[type="submit"]').filter({ hasText: /^\s*商品を登録\s*$/ }).click({ noWaitAfter: true }),
+  ]);
+  for (const w of await expectSaved(page, `${what}: 商品を登録`)) issue(`${what}: 警告「${w}」`);
+  const now = await 商品の公開ステータスを読む(page, 商品ID);
+  if (now !== "廃止") throw new Error(`${what}: 商品公開ステータスを廃止にして保存したが、読み戻すと「${now}」`);
+}
+
+/**
+ * 商品規格登録編集画面で公開状態を「廃止」にして「商品規格を登録」し、読み戻して「廃止」になったことを確かめる（シード表の「商品規格の削除済み」）。
+ * 部門が未選択だと保存で入力エラーになるので、未選択なら選択肢の先頭を選ぶ。スマレジ連携は「連携しない」。入庫のあとに呼ぶ
+ */
+export async function 規格を廃止にする(page: Page, 商品ID: string, 規格ID: string, what: string, issue: (m: string) => void): Promise<void> {
+  await page.goto(adminUrl(`/product/product/class/${商品ID}/edit/${規格ID}`), { timeout: 60_000 });
+  await page.waitForLoadState("load");
+  const form = page.locator("form#form");
+  await expect(form, `${what}: 商品規格登録編集画面`).toBeVisible({ timeout: 30_000 });
+  const smaregi = form.locator('[name="admin_product_class[smaregi_alignment_flg]"]');
+  if ((await smaregi.count()) > 0) {
+    if ((await smaregi.first().evaluate((n) => n.tagName)) === "SELECT") await chooseByLabel(smaregi.first(), "連携しない");
+    else await form.getByLabel("連携しない", { exact: true }).check();
+  }
+  const section = form.locator("#admin_product_class_Section");
+  if ((await section.count()) === 1 && !(await section.inputValue())) {
+    const first = await section.locator("option").evaluateAll((ns) => ns.map((n) => (n as HTMLOptionElement).value).find((x) => x));
+    if (!first) throw new Error(`${what}: 部門の選択肢が無い`);
+    await section.selectOption(first);
+    issue(`${what}: 部門が未選択だったので、保存の入力チェックを通すため選択肢の先頭を選んだ`);
+  }
+  await chooseByLabel(form.locator("#admin_product_class_Status"), "廃止");
+  const on = (d: Dialog) => { issue(`${what}: 画面の確認「${d.message()}」をOKで閉じた`); void d.accept(); };
+  page.on("dialog", on);
+  try {
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }),
+      page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ noWaitAfter: true }),
+    ]);
+  } finally { page.off("dialog", on); }
+  for (const w of await expectSaved(page, `${what}: 商品規格の登録`)) issue(`${what}: 警告「${w}」`);
+  await page.goto(adminUrl(`/product/product/class/${商品ID}/edit/${規格ID}`), { timeout: 60_000 });
+  const now = ((await page.locator("#admin_product_class_Status option:checked").first().textContent({ timeout: 30_000 })) ?? "").trim();
+  if (now !== "廃止") throw new Error(`${what}: 商品規格の公開状態を廃止にして保存したが、読み戻すと「${now}」`);
+}

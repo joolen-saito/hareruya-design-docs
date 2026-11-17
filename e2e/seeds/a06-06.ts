@@ -61,11 +61,11 @@ defineSeed("S-A06-06-OTHER-DETAILS-003", { needs: ["S-A06-06-ADM-A"] }, async ({
   }
 });
 
-// 004: 同じカードにカード詳細4件（A=有効・B=商品の公開状態を廃止・C=商品規格の公開状態を廃止・D=高額商品コード）。削除済みは公開状態「廃止」で表す（削除しない）
+// 004: 同じカードにカード詳細4件（A=有効・B=商品の削除済み・C=商品規格の削除済み・D=高額商品コード HIGH（シード表の値））。シード表は「削除」、刷新後の画面では公開状態「廃止」で表すので、B・C は廃止にする（削除しない）
 defineSeed("S-A06-06-FILTER-STATUS-004", { needs: ["S-A06-06-ADM-A"] }, async ({ browser, notes, seed }) => {
   const card = await 試験用のカードを用意する(browser, seed.シードID, { カード名日: "A06-06状態004", カード名英: "A06-06 STATUS 004", 詳細数: 4 });
   notes.set("〔カードID-A0606-004〕", card.カードID);
-  for (const [i, x, 追加] of [[0, "A", {}], [1, "B", { 商品を廃止: true }], [2, "C", { 規格を廃止: true }], [3, "D", { 高額商品コード: "HIGH-004" }]] as const) {
+  for (const [i, x, 追加] of [[0, "A", {}], [1, "B", { 商品を廃止: true }], [2, "C", { 規格を廃止: true }], [3, "D", { 高額商品コード: "HIGH" }]] as const) {
     const p = await カード商品を作る(browser, seed.シードID, {
       商品コード: `A0606-STATUS-004${x}`, 商品名日: `A06-06状態商品004${x}`, 商品名英: `A06-06 STATUS Product 004${x}`,
       カード: { カードID: card.カードID, カード詳細ID: card.カード詳細IDs[i], カード名: card.カード名 },
