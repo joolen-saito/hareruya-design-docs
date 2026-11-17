@@ -78,7 +78,7 @@ function ログインして確かめる(n: string, check: (r: 応答, ctx: CaseC
     await ctx.step(2, async () => { r = await ログイン(ctx.page, { id: A1501のメール(`login.a1501-${n}@example.test`), password: `LoginA1501-${n}!`, ...追加 }); });
     await ctx.step(3, async () => { note(`応答 HTTP ${r.ステータス}・結果コード ${JSON.stringify(r.json?.code)}・結果メッセージ ${JSON.stringify(r.json?.message)}`); });
     await ctx.expected(async () => {
-      expect.soft(r.json, "応答本体が JSON として読める（以下の確かめの前提）").not.toBeNull();
+      expect.soft(r.json !== null, "応答本体が JSON として読める（以下の確かめの前提。本文はトークンを含むので値は記録しない）").toBe(true);
       await check(r, ctx);
     });
   };

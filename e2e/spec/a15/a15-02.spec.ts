@@ -48,8 +48,17 @@ async function トークンのCookie(ctx: CaseCtx, token: string) {
   return cs.find((c) => c.value === token);
 }
 
-/** 応答の Set-Cookie に、値を空にする（または期限切れにする）設定があるか */
-const 空にする設定 = (r: 応答): boolean => r.SetCookie.some((c) => /^[^=]+=(;|$)/.test(c) || /expires=Thu, 01 Jan 1970|max-age=0/i.test(c));
+/**
+ * 応答の Set-Cookie に、アクセストークンの Cookie の値を空にする（または期限切れにする）設定があるか。
+ * アクセストークンの Cookie は、名前に access_token を含むもの（現行の deck-api は「eccube.access_token」）。
+ * ロードバランサ（AWSALB）・セッション（eccube）・メンテナンス・表示の切替（device_view）の Cookie は数えない（2026-11-17。
+ * 前はどの Cookie でも数えていて、アクセストークンと関係のない Cookie の空の設定で落ちていた）
+ */
+const 空にする設定 = (r: 応答): boolean => {
+  const 空 = r.SetCookie.filter((c) => /^[^=]*access_token[^=]*=/i.test(c) && (/^[^=]+=(;|$)/.test(c) || /expires=Thu, 01 Jan 1970|max-age=0/i.test(c)));
+  note(`Set-Cookie で値を空にする（期限切れにする）もの: ${r.SetCookie.filter((c) => /^[^=]+=(;|$)/.test(c) || /expires=Thu, 01 Jan 1970|max-age=0/i.test(c)).map((c) => c.split("=")[0]).join("・") || "なし"}（数えるのは名前に access_token を含むものだけ）`);
+  return 空.length > 0;
+};
 
 const b64url = (o: unknown): string => Buffer.from(JSON.stringify(o)).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 

@@ -38,6 +38,11 @@ export type 会員の定め = {
   会員IDの名?: string;
   /** デッキユーザーIDも控えるか（既定 true。シード表が控えると書かないシードでは false） */
   デッキユーザーIDを控える?: boolean;
+  /**
+   * 選手ID・デッキユーザーIDを控える呼び名の末尾（既定は 呼び名 と同じ）。false なら選手IDもデッキユーザーIDも控えない
+   * （シード表が会員IDだけを控えると書くシード。例 A15-01 の 005・021。009 は会員IDが 009A、選手IDが 009）
+   */
+  選手の呼び名?: string | false;
 };
 
 /** 会員を登録し（本会員にする）、会員ID（・選手ID・デッキユーザーID）を控える。返り値は会員ID（A15-02 も使う） */
@@ -51,9 +56,10 @@ export async function 会員を作る({ browser, seed, notes }: SeedCtx, d: 会�
   if (!d.選手 && m.選手ID) throw new Error(`${seed.シードID}: 会員 ${メール} に選手ができた（シード表は選手が無い会員）`);
   const k = d.機能 ?? "A1501";
   notes.set(`〔${d.会員IDの名 ?? "会員ID"}-${k}-${d.呼び名}〕`, m.会員ID);
-  if (d.選手) {
-    notes.set(`〔プレイヤーID-${k}-${d.呼び名}〕`, m.選手ID);
-    if (m.デッキユーザーID && d.デッキユーザーIDを控える !== false) notes.set(`〔デッキユーザーID-${k}-${d.呼び名}〕`, m.デッキユーザーID);
+  if (d.選手 && d.選手の呼び名 !== false) {
+    const n = d.選手の呼び名 ?? d.呼び名;
+    notes.set(`〔プレイヤーID-${k}-${n}〕`, m.選手ID);
+    if (m.デッキユーザーID && d.デッキユーザーIDを控える !== false) notes.set(`〔デッキユーザーID-${k}-${n}〕`, m.デッキユーザーID);
   }
   return m.会員ID;
 }
@@ -87,15 +93,16 @@ defineSeed("S-A15-01-ENV", async ({ seed }) => {
 
 for (const [id, n] of [["S-A15-01-SUCCESS-001", "001"], ["S-A15-01-TOKEN-002", "002"], ["S-A15-01-COOKIE-003", "003"], ["S-A15-01-NOAUTH-007", "007"], ["S-A15-01-SCHEMA-012", "012"]] as const) {
   defineSeed(id, async (ctx) => {
-    await 会員を作る(ctx, { メール: `login.a1501-${n}@example.test`, パスワード: `LoginA1501-${n}!`, 名: `A1501${n}`, 選手: true, 呼び名: n });
+    // シード表は会員ID・選手IDを控えると書き、デッキユーザーIDは書かない
+    await 会員を作る(ctx, { メール: `login.a1501-${n}@example.test`, パスワード: `LoginA1501-${n}!`, 名: `A1501${n}`, 選手: true, 呼び名: n, デッキユーザーIDを控える: false });
     reportSeedIssue(ctx.seed.シードID, 印の注記);
   });
 }
 
 defineSeed("S-A15-01-STATUS-005", async (ctx) => {
-  const a = await 会員を作る(ctx, { メール: "nonregular.a1501-005@example.test", パスワード: "LoginA1501-005!", 名: "A1501005A", 選手: true, 呼び名: "005A" });
+  const a = await 会員を作る(ctx, { メール: "nonregular.a1501-005@example.test", パスワード: "LoginA1501-005!", 名: "A1501005A", 選手: true, 呼び名: "005A", 選手の呼び名: false });
   仮会員にする(ctx.seed.シードID, a, A1501のメール("nonregular.a1501-005@example.test"));
-  const b = await 会員を作る(ctx, { メール: "deleted.a1501-005@example.test", パスワード: "LoginA1501-005!", 名: "A1501005B", 選手: true, 呼び名: "005B" });
+  const b = await 会員を作る(ctx, { メール: "deleted.a1501-005@example.test", パスワード: "LoginA1501-005!", 名: "A1501005B", 選手: true, 呼び名: "005B", 選手の呼び名: false });
   削除済みにする(ctx.seed.シードID, b, A1501のメール("deleted.a1501-005@example.test"));
   reportSeedIssue(ctx.seed.シードID, `${印の注記}。画面の登録では本会員になるので、「本会員ではない」は E2E の会員の区分を仮会員に、「削除済み」は E2E の会員の削除の印を立てて、DB で作った（lib/db_write.ts）。どちらも選手は作った（パスワードの照合まで進むことを確かめるため）`);
 });
@@ -107,12 +114,12 @@ defineSeed("S-A15-01-CREDENTIALS-006", async (ctx) => {
 });
 
 defineSeed("S-A15-01-AUTHZ-009", async (ctx) => {
-  await 会員を作る(ctx, { メール: "player.a1501-009@example.test", パスワード: "LoginA1501-009!", 名: "A1501009A", 選手: true, 呼び名: "009A" });
+  await 会員を作る(ctx, { メール: "player.a1501-009@example.test", パスワード: "LoginA1501-009!", 名: "A1501009A", 選手: true, 呼び名: "009A", 選手の呼び名: "009" });
   await 会員を作る(ctx, { メール: "login.a1501-009@example.test", パスワード: "LoginA1501-009!", 名: "A1501009B", 選手: false, 呼び名: "009B" });
   reportSeedIssue(ctx.seed.シードID, `${印の注記}。プレイヤーを持たない会員は MTG Companion登録名を入れずに登録した。プレイヤーのニックネーム「A15-01-009プレイヤー」は、このケースが確かめないので書かなかった`);
 });
 
 defineSeed("S-A15-01-CBUSER-021", async (ctx) => {
-  await 会員を作る(ctx, { メール: "cba1501-021a@example.test", パスワード: "Passw0rd-CBA1501021", 名: "A1501CB021", 選手: true, 呼び名: "CB021" });
+  await 会員を作る(ctx, { メール: "cba1501-021a@example.test", パスワード: "Passw0rd-CBA1501021", 名: "A1501CB021", 選手: true, 呼び名: "CB021", 選手の呼び名: false });
   reportSeedIssue(ctx.seed.シードID, `${印の注記}。署名不正のトークンを作る元の有効なトークンを受け取るため、選手のある会員として登録した（ログインの API は選手の無い会員にトークンを出さない作り）`);
 });

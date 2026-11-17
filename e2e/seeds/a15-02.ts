@@ -18,7 +18,7 @@ defineSeed("S-A15-02-ENV", async ({ seed }) => {
 
 for (const [id, n] of [["S-A15-02-SUCCESS-001", "001"], ["S-A15-02-BODY-002", "002"], ["S-A15-02-COOKIE-003", "003"], ["S-A15-02-NOTOKEN-004", "004"], ["S-A15-02-BADSIG-005", "005"]] as const) {
   defineSeed(id, async (ctx) => {
-    await 会員を作る(ctx, { メール: `logout.a1502-${n}@example.test`, パスワード: `LogoutA1502-${n}!`, 名: `A1502${n}`, 選手: true, 呼び名: n, 機能: "A1502" });
+    await 会員を作る(ctx, { メール: `logout.a1502-${n}@example.test`, パスワード: `LogoutA1502-${n}!`, 名: `A1502${n}`, 選手: true, 呼び名: n, 機能: "A1502", デッキユーザーIDを控える: false });
     reportSeedIssue(ctx.seed.シードID, 印の注記);
   });
 }
