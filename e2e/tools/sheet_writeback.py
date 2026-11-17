@@ -95,6 +95,9 @@ def build_results(only: set[str]) -> dict[str, dict]:
     out: dict[str, dict] = {}
     # 栗野さんの受け持ちの機能（WORK_SPLIT.tsv）は、栗野さんが流して判定し項目表に載せる（2026-11-11 依頼者決定）。ここでは書かない
     split = {r["機能ID"]: r["受け持ち"] for r in read_tsv(E2E / "review" / "WORK_SPLIT.tsv")}
+    # 流せない・移行しないと決めたケースは、開発環境の判定が「未判定」でも、下の一覧の「実施不可」「実施不要」を書く
+    # （2026-11-17。M04-25 の 029・030 など、正本が求める店舗の設定を作れず未判定になったもの）
+    listed = {n["テストID"] for n in read_tsv(NOT_RUNNABLE)} | {n["テストID"] for n in read_tsv(NOT_NEEDED)}
     for jf in sorted(JUDG.glob("*.tsv")):
         fid = jf.stem
         if only and fid not in only:
@@ -111,6 +114,8 @@ def build_results(only: set[str]) -> dict[str, dict]:
                 continue
             if j["対象の実施日時"] != r["実施日時"]:
                 continue  # 古い実施への判定
+            if j["判定"] == "未判定" and tid in listed:
+                continue
             if j["判定"] not in RESULT_OF:
                 continue
             res = RESULT_OF[j["判定"]]
