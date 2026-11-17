@@ -68,7 +68,7 @@ export async function 削除した管理者のトークン(browser: Browser, see
   return { 管理者ID: id, トークン };
 }
 
-const 会員のパスワード = "Passw0rd!A07Mem";
+export const 会員のパスワード = "Passw0rd!A07Mem";
 /** 会員のメールアドレス（シード表の値の @ の前に実行の印。ドメインは E2E の受け口 @example.test） */
 export const A07のメール = (シード表のメール: string): string => `${rc(シード表のメール.replace(/@example\.(test|com)$/, ""))}@example.test`.toLowerCase();
 
