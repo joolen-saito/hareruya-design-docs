@@ -119,6 +119,11 @@ async function 表示値の会員(browser: Browser, notes: Notes, seedId: string
   const o = await 会員が1点注文する(browser, seedId, m);
   控える(notes, seedId, `〔注文番号-M0805-${n}〕`, o.注文番号);
   控える(notes, seedId, `〔受注ID-M0805-${n}〕`, o.受注ID);
+  if (v.増減量 < 0) {
+    // 登録直後の残高は0で、アプリは残高を0未満にする付与を受け付けない。減らす付与の前に、E2E の会員の残高をDBで足しておく（最後に正本の残高へそろえる）
+    残高をそろえる(seedId, m.会員ID, -v.増減量);
+    reportSeedIssue(seedId, `残高を0未満にする付与（${v.増減量}）はアプリが受け付けないので、付与の前に E2E の会員の残高を DB で ${-v.増減量} にした（付与のあと正本の残高 ${v.残高} へそろえる）`);
+  }
   const h = await 画面で付与する(browser, m.会員ID, 画面, { 注文番号: o.注文番号, 増減量: v.増減量, 備考: v.備考, 発行日: v.発行日 }, `${seedId}: 付与`);
   控える(notes, seedId, `〔履歴ID-M0805-${n}〕`, h);
   ポイント履歴の設定日を設定する(`${seedId}: 履歴ID ${h} の設定日を ${v.設定日} にする`, h, v.設定日);
