@@ -28,6 +28,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { expect, Page } from "@playwright/test";
 import { SETUP_ADMIN, STATE_DIR } from "../config/env";
+import { rc } from "../lib/run_marker";
 import { getSeed } from "../lib/catalog";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
@@ -161,13 +162,14 @@ async function readOnlyClass(page: Page, productId: string, code: string, what: 
 
 defineSeed("S-M03-30-DATA-055", async ({ browser, seed, notes }) => {
   const id = seed.シードID;
-  const name = "M0330試験商品055";
+  const name = rc("M0330試験商品055");
+  const code = rc("M0330-055");  // 前の実行の商品にぶつからないよう実行の印を付ける（案A。ケースは商品を商品IDで指し、商品コードの書式は見ない。2026-11-17）
   const issue = (m: string) => reportSeedIssue(id, m);
   const got = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    await registerGoodsProduct(page, { what: id, code: "M0330-055", nameJp: name, nameEn: name, values: goodsValues("200", "100"), onIssue: issue });
+    await registerGoodsProduct(page, { what: id, code, nameJp: name, nameEn: name, values: goodsValues("200", "100"), onIssue: issue });
     const productId = await openProductEditByName(page, name, id);
     await assignFirstCard(page, { productId, productNameJp: name, productNameEn: name }, id, issue);
-    return readOnlyClass(page, productId, "M0330-055", id);
+    return readOnlyClass(page, productId, code, id);
   });
   notes.set("〔商品ID-M0330-055〕", got.productId);
   notes.set("〔商品規格ID-M0330-055〕", got.classId);
@@ -176,12 +178,13 @@ defineSeed("S-M03-30-DATA-055", async ({ browser, seed, notes }) => {
 
 defineSeed("S-M03-30-DATA-059", async ({ browser, seed, notes }) => {
   const id = seed.シードID;
-  const name = "M0330試験商品059";
+  const name = rc("M0330試験商品059");
+  const code = rc("M0330-059");  // 前の実行の商品にぶつからないよう実行の印を付ける（案A。ケースは商品を商品IDで指し、商品コードの書式は見ない。2026-11-17）
   const issue = (m: string) => reportSeedIssue(id, m);
   const got = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
-    await registerGoodsProduct(page, { what: id, code: "M0330-059", nameJp: name, nameEn: name, values: goodsValues("200", "100"), onIssue: issue });
+    await registerGoodsProduct(page, { what: id, code, nameJp: name, nameEn: name, values: goodsValues("200", "100"), onIssue: issue });
     const productId = await openProductEditByName(page, name, id);
-    return readOnlyClass(page, productId, "M0330-059", id);
+    return readOnlyClass(page, productId, code, id);
   });
   notes.set("〔商品ID-M0330-059〕", got.productId);
   notes.set("〔商品規格ID-M0330-059〕", got.classId);
