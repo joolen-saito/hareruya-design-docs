@@ -7,7 +7,7 @@
  */
 import { カード詳細の数 } from "../db/a06";
 import { defineSeed } from "../lib/seeds";
-import { カード商品を作る, 試験部門を用意する, 本店の管理者を用意する, 買取の管理者の } from "./a06-buying";
+import { カード商品を作る, 試験部門を用意する, 試験用のカードを用意する, 本店の管理者を用意する, 買取の管理者の } from "./a06-buying";
 
 export const A0606_ADM_A = 買取の管理者の("a0606_admin_a", "Passw0rd!A0606A", "店舗A試験管理者");
 
@@ -43,4 +43,36 @@ defineSeed("S-A06-06-PRICE-008", { needs: ["S-A06-06-ADM-A"] }, async ({ browser
 
 defineSeed("S-A06-06-NOTFOUND-011", async ({ seed }) => {
   if (カード詳細の数("699999011") !== 0) throw new Error(`${seed.シードID}: カード詳細ID 699999011 がある（未登録の前提を満たせない。消さない）`);
+});
+
+// 003: 同じカードにカード詳細2件、それぞれに商品（状態NM・在庫1）
+defineSeed("S-A06-06-OTHER-DETAILS-003", { needs: ["S-A06-06-ADM-A"] }, async ({ browser, notes, seed }) => {
+  const card = await 試験用のカードを用意する(browser, seed.シードID, { カード名日: "A06-06他詳細003", カード名英: "A06-06 OTHER 003", 詳細数: 2 });
+  notes.set("〔カードID-A0606-003〕", card.カードID);
+  for (const [i, x] of [[0, "A"], [1, "B"]] as const) {
+    const p = await カード商品を作る(browser, seed.シードID, {
+      商品コード: `A0606-OTHER-003${x}`, 商品名日: `A06-06他詳細商品003${x}`, 商品名英: `A06-06 OTHER Product 003${x}`,
+      カード: { カードID: card.カードID, カード詳細ID: card.カード詳細IDs[i], カード名: card.カード名 },
+      基準価格: "100", 販売価格: "100", 買取価格: "10", 在庫: 1, 画像: `a0606-003${x.toLowerCase()}.jpg`,
+    });
+    notes.set(`〔カード詳細ID-A0606-003${x}〕`, card.カード詳細IDs[i]);
+    notes.set(`〔商品ID-A0606-003${x}〕`, p.商品ID);
+    notes.set(`〔商品規格ID-A0606-003${x}〕`, p.規格ID);
+  }
+});
+
+// 004: 同じカードにカード詳細4件（A=有効・B=商品の公開状態を廃止・C=商品規格の公開状態を廃止・D=高額商品コード）。削除済みは公開状態「廃止」で表す（削除しない）
+defineSeed("S-A06-06-FILTER-STATUS-004", { needs: ["S-A06-06-ADM-A"] }, async ({ browser, notes, seed }) => {
+  const card = await 試験用のカードを用意する(browser, seed.シードID, { カード名日: "A06-06状態004", カード名英: "A06-06 STATUS 004", 詳細数: 4 });
+  notes.set("〔カードID-A0606-004〕", card.カードID);
+  for (const [i, x, 追加] of [[0, "A", {}], [1, "B", { 商品を廃止: true }], [2, "C", { 規格を廃止: true }], [3, "D", { 高額商品コード: "HIGH-004" }]] as const) {
+    const p = await カード商品を作る(browser, seed.シードID, {
+      商品コード: `A0606-STATUS-004${x}`, 商品名日: `A06-06状態商品004${x}`, 商品名英: `A06-06 STATUS Product 004${x}`,
+      カード: { カードID: card.カードID, カード詳細ID: card.カード詳細IDs[i], カード名: card.カード名 },
+      基準価格: "100", 販売価格: "100", 買取価格: "10", 在庫: 1, 画像: `a0606-004${x.toLowerCase()}.jpg`, ...追加,
+    });
+    notes.set(`〔カード詳細ID-A0606-004${x}〕`, card.カード詳細IDs[i]);
+    if (x === "A" || x === "B") notes.set(`〔商品ID-A0606-004${x}〕`, p.商品ID);
+    if (x !== "B") notes.set(`〔商品規格ID-A0606-004${x}〕`, p.規格ID);
+  }
 });

@@ -54,3 +54,38 @@ caseTest("IT-A06-06-011", async (ctx) => {
     expect.soft(Array.isArray(errors) ? (errors as unknown[]).map(String) : [], "エラーの一覧（英訳されていない文）").toContain("カードが見つかりません");
   });
 });
+
+/** 応答の details の下にある、カード詳細IDのキーの一覧 */
+function 詳細のキー(r: 応答): string[] {
+  const keys: string[] = [];
+  const 探す = (v: unknown): void => {
+    if (!v || typeof v !== "object") return;
+    const o = v as Record<string, unknown>;
+    if (o.details && typeof o.details === "object") keys.push(...Object.keys(o.details as object));
+    Object.values(o).forEach(探す);
+  };
+  探す(r.json);
+  return [...new Set(keys)];
+}
+
+caseTest("IT-A06-06-003", async (ctx) => {
+  const [a, b] = ["A", "B"].map((x) => ctx.notes.get(`〔カード詳細ID-A0606-003${x}〕`));
+  const r = await 送る(ctx, a, "買取用カード一覧取得（同じカードのカード詳細が2件）");
+  await ctx.expected(async () => {
+    const keys = 詳細のキー(r);
+    expect.soft(keys.includes(a), `指定したカード詳細ID ${a} が details にある（実際のキー: ${keys.join("、") || "なし"}）`).toBe(true);
+    expect.soft(keys.includes(b), `同じカードのカード詳細ID ${b} が details にある`).toBe(true);
+  });
+});
+
+caseTest("IT-A06-06-004", async (ctx) => {
+  const [a, b, c, d] = ["A", "B", "C", "D"].map((x) => ctx.notes.get(`〔カード詳細ID-A0606-004${x}〕`));
+  const r = await 送る(ctx, a, "買取用カード一覧取得（有効・商品廃止・規格廃止・高額商品コードの4カード詳細）");
+  await ctx.expected(async () => {
+    const keys = 詳細のキー(r);
+    expect.soft(keys.includes(a), `有効なカード詳細ID ${a} が details にある（実際のキー: ${keys.join("、") || "なし"}）`).toBe(true);
+    expect.soft(keys.includes(b), `商品削除済み（公開状態 廃止）のカード詳細ID ${b} が details にある`).toBe(false);
+    expect.soft(keys.includes(c), `商品規格削除済み（公開状態 廃止）のカード詳細ID ${c} が details にある`).toBe(false);
+    expect.soft(keys.includes(d), `高額商品コードありのカード詳細ID ${d} が details にある`).toBe(false);
+  });
+});
