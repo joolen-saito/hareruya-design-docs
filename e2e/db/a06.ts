@@ -73,3 +73,8 @@ export function 本人確認証明書と更新担当者を書く(受注ID: strin
   });
   if (n !== 1) throw new Error(`受注 ${受注ID} の本人確認証明書・更新担当者の書き込みが ${n} 行（1行のはず）`);
 }
+
+/** カード詳細IDのカード詳細の数 */
+export function カード詳細の数(カード詳細ID: string): number {
+  return Number(query("select count(*) as n from mtb_card_detail where id = $1::int", [カード詳細ID])[0]?.n ?? 0);
+}

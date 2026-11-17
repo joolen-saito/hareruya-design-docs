@@ -125,3 +125,34 @@ export function コメント更新を送る(page: Page, 何: string, 受注ID: s
 export function 証明書更新を送る(page: Page, 何: string, 店頭買取ID: string, 証明書ID: string, トークン?: string): Promise<応答> {
   return 送る(page, 何, { 方式: "PUT", パス: `/api/admin/otcBuyOrder/${店頭買取ID}/identification.json`, query: [["identification", 証明書ID]], トークン });
 }
+
+/**
+ * 買取用カード一覧取得（商品ID指定。A06-07・10・18）。商品IDのカンマ区切りを、ケースの文に合わせて URL のクエリ（送り方「クエリ」）か
+ * 要求の本文（フォームの値。送り方「本文」）で送る
+ */
+export function 商品IDで買取カードを取る(page: Page, 何: string, 商品IDs: string, 送り方: "クエリ" | "本文", トークン?: string): Promise<応答> {
+  return 送る(page, 何, {
+    方式: "POST", パス: "/api/buying/products",
+    ...(送り方 === "クエリ" ? { query: [["ids", 商品IDs]] as [string, string][] } : { form: { ids: 商品IDs } }), トークン,
+  });
+}
+
+/** 応答のどこかに、その商品IDの商品が出てくるか（商品IDの項目の値で探す） */
+export function 応答に商品がある(r: 応答, 商品ID: string): boolean {
+  const 探す = (v: unknown): boolean => {
+    if (Array.isArray(v)) return v.some(探す);
+    if (v && typeof v === "object") return Object.entries(v as Record<string, unknown>).some(([k, x]) => (/^(product_?id|productId)$/i.test(k) && String(x) === 商品ID) || 探す(x));
+    return false;
+  };
+  return 探す(r.json);
+}
+
+/** 応答のどこかに、その商品コードが出てくるか */
+export function 応答に商品コードがある(r: 応答, 商品コード: string): boolean {
+  return r.本文.includes(`"${商品コード}"`);
+}
+
+/** 買取用カード一覧取得（カード詳細ID指定。A06-06） */
+export function カード詳細IDで買取カードを取る(page: Page, 何: string, カード詳細ID: string, トークン?: string): Promise<応答> {
+  return 送る(page, 何, { 方式: "GET", パス: `/api/buying/${カード詳細ID}.json`, トークン });
+}
