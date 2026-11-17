@@ -10,6 +10,8 @@
  * - 会員と買取: フロントの会員登録（依頼者決定 2026-10-31）で会員を作り、別のブラウザでログインし直してネット買取を申し込む。
  *   メールアドレスはシード表の値の @ の前に実行の印を付け、ドメインは E2E の受け口（@example.test）にする。
  */
+import fs from "node:fs";
+import path from "node:path";
 import { Browser } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
 import { reportSeedIssue } from "../lib/seeds";
@@ -116,4 +118,14 @@ export async function 買取状況を画面で保存する(browser: Browser, see
     }
   });
   reportSeedIssue(seedId, `シード作成時の問題: 買取 ${番号.join("・")} は、買取情報編集で買取状況「${状況}」${メモ !== undefined ? `・管理者用メモ「${メモ}」` : ""}を保存した`);
+}
+
+/**
+ * E2E がいま作った行を消す前の関所。消すシードの決まり（config/shared_env_delete_ok.tsv で「消してよい」）に載っていなければ止める。
+ * シード表の文に「削除」の語が無くても行を消す作り（申込時買取価格を0件にする など）は、ここを通してから消す（依頼者の了承が出るまで流さない）。
+ */
+export function 消してよいか(seedId: string, 何を: string): void {
+  const f = path.join(__dirname, "..", "config", "shared_env_delete_ok.tsv");
+  const ok = fs.existsSync(f) && fs.readFileSync(f, "utf-8").split("\n").some((l) => { const c = l.split("\t"); return c[0]?.trim() === seedId && c[1]?.trim() === "消してよい"; });
+  if (!ok) throw new Error(`${seedId}: ${何を}は E2E の行の削除で、消してよいの一覧に載っていない（依頼者の了承待ち）。このシードは流さない`);
 }
