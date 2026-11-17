@@ -33,7 +33,9 @@ import { 申込を行う, 申込者の } from "./m06-common";
 type 管理者 = Account & { 名前: string; メール: string };
 const 管理者の = (ログインID: string, パスワード: string, 名前: string): 管理者 => {
   const loginId = rcFixed(ログインID).toLowerCase();
-  return { loginId, password: パスワード, 名前: rcFixed(名前), メール: `${loginId}@example.test` };
+  // 開発環境のメンバー登録はパスワードを12文字以上に限る。シード表の11文字のパスワードは末尾に「X」を足して読み替える（A06-12 と同じ）
+  const password = パスワード.length < 12 ? `${パスワード}X` : パスワード;
+  return { loginId, password, 名前: rcFixed(名前), メール: `${loginId}@example.test` };
 };
 /** S-A06-04-ADM（有効なトークンを受け取る管理者） */
 export const A0604_ADM = 管理者の("a0604_admin", "ZxA0604c001", "A06-04試験担当");
@@ -72,7 +74,11 @@ defineSeed("S-A06-04-REFERENCES", async ({ browser, notes, seed }) => {
   const s5 = 店頭買取ステータスの名称("5");
   if (s5 !== "査定前") throw new Error(`S-A06-04-REFERENCES: 店頭買取ステータス ID 5 の名称が「${s5}」（「査定前」でない。共有のマスタは書き換えない）`);
   マスタを確かめる(seed.シードID, "職業", "会社員");
-  マスタを確かめる(seed.シードID, "国", "日本");
+  // 開発環境の国のマスタは英語の名称（ID 392「Japan」）。「日本」に当たる行として使う（共有のマスタは書き換えない）
+  if (!申込のマスタにある("国", "日本")) {
+    マスタを確かめる(seed.シードID, "国", "Japan");
+    reportSeedIssue(seed.シードID, "国「日本」は、開発環境の国のマスタでは英語の名称「Japan」（ID 392）。この行を「日本」に当たる行として使った（マスタは書き換えない）");
+  }
   マスタを確かめる(seed.シードID, "都道府県", "東京都");
   reportSeedIssue(seed.シードID, "店頭買取ステータス ID 5「査定前」・職業「会社員」・国「日本」・都道府県「東京都」は、マスタを書き換えず、あることを DB で確かめた");
 });
@@ -104,13 +110,14 @@ const 管理者のシード = (a: 管理者, 呼び名: string, 権限: string, 
     }, (m) => reportSeedIssue(seed.シードID, m)));
   });
   reportSeedIssue(seed.シードID, 補い);
+  if (a.password.length === 12 && a.password.endsWith("X")) reportSeedIssue(seed.シードID, "パスワードはシード表の11文字の値の末尾に「X」を足して読み替えた（開発環境のメンバー登録は12文字以上でないと保存できない）");
 };
 defineSeed("S-A06-04-ADM", { needs: ["S-A06-04-REFERENCES"] }, 管理者のシード(A0604_ADM, "〔管理者ID-A0604-共有A〕", "システム管理者",
   "所属は選択肢の先頭、デフォルト検索表示店舗・編集可能店舗は所属店舗と同じ試験支店（シード表に記載なし）"));
 defineSeed("S-A06-04-OTHER-ADM", { needs: ["S-A06-04-REFERENCES"] }, 管理者のシード(A0604_OTHER, "〔管理者ID-A0604-共有B〕", "システム管理者",
   "所属は選択肢の先頭、デフォルト検索表示店舗は所属店舗と同じ試験支店（シード表に記載なし）"));
-defineSeed("S-A06-04-AB-ADM", { needs: ["S-A06-04-AB-STORE"] }, 管理者のシード(A0604_AB_ADM, "〔管理者ID-A0604AB-共有〕", "システム権限",
-  "所属は、シード表の「東京店」ではなく選択肢の先頭（共通の部品の作り）。デフォルト検索表示店舗は所属店舗と同じ試験支店（シード表に記載なし）"));
+defineSeed("S-A06-04-AB-ADM", { needs: ["S-A06-04-AB-STORE"] }, 管理者のシード(A0604_AB_ADM, "〔管理者ID-A0604AB-共有〕", "システム管理者",
+  "権限グループはシード表の「システム権限」が開発環境の選択肢に無いため「システム管理者」で読み替えた（全員が使う権限グループは足さない）。所属は、シード表の「東京店」ではなく選択肢の先頭（共通の部品の作り）。デフォルト検索表示店舗は所属店舗と同じ試験支店（シード表に記載なし）"));
 
 /**
  * 試験支店のフロントで会員登録なしの店頭買取査定申込をし、査定ID・受注IDを控える。続けて担当の管理者で買取詳細画面を開き、

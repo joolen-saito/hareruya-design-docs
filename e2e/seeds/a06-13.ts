@@ -25,7 +25,9 @@ import { 申込を行う, 申込者の } from "./m06-common";
 type 管理者 = Account & { 名前: string; メール: string };
 const 管理者の = (ログインID: string, パスワード: string, 名前: string): 管理者 => {
   const loginId = rcFixed(ログインID).toLowerCase();
-  return { loginId, password: パスワード, 名前: rcFixed(名前), メール: `${loginId}@example.test` };
+  // 開発環境のメンバー登録はパスワードを12文字以上に限る。シード表の11文字のパスワードは末尾に「X」を足して読み替える（A06-12 と同じ）
+  const password = パスワード.length < 12 ? `${パスワード}X` : パスワード;
+  return { loginId, password, 名前: rcFixed(名前), メール: `${loginId}@example.test` };
 };
 /** S-A06-13-AUTH の管理者（有効なトークンを受け取る） */
 export const A0613_ADM = 管理者の("a0613_admin", "ZxA0613c001", "A06-13試験担当");
@@ -44,6 +46,7 @@ async function 管理者を用意する(ctx: Parameters<SeedBuilder>[0], a: 管�
       権限: "システム管理者", デフォルト検索表示店舗: 店名, 編集可能店舗: [店名],
     }, (m) => reportSeedIssue(seed.シードID, m)));
   });
+  if (a.password.length === 12 && a.password.endsWith("X")) reportSeedIssue(seed.シードID, "パスワードはシード表の11文字の値の末尾に「X」を足して読み替えた（開発環境のメンバー登録は12文字以上でないと保存できない）");
 }
 
 defineSeed("S-A06-13-AUTH", async (ctx) => {
@@ -60,9 +63,10 @@ defineSeed("S-A06-13-REFERENCES", async (ctx) => {
   if (証明書1 !== "自動車運転免許証" || 証明書2 !== "パスポート") reportSeedIssue(id, `本人確認証明書のマスタがシード表と違う（書き換えない）: ID 1「${証明書1}」・ID 2「${証明書2}」`);
   if (!証明書1 || !証明書2) throw new Error(`${id}: 本人確認証明書 ID 1・2 のどちらかが無い`);
   for (const [m, v] of [["職業", "会社員"], ["国", "日本"], ["都道府県", "東京都"]] as const) {
-    if (!申込のマスタにある(m, v)) throw new Error(`${id}: ${m}のマスタに「${v}」が無い`);
+    // 開発環境の国のマスタは英語の名称（ID 392「Japan」）。「日本」が無ければ「Japan」の行を「日本」に当たる行として使う（マスタは書き換えない）
+    if (!申込のマスタにある(m, v) && !(m === "国" && 申込のマスタにある(m, "Japan"))) throw new Error(`${id}: ${m}のマスタに「${v}」が無い`);
   }
-  reportSeedIssue(id, "店頭買取ステータス・本人確認証明書・職業・国・都道府県のマスタは、書き換えず、あることを DB で確かめた。更新前担当者の権限はシステム管理者、所属は選択肢の先頭");
+  reportSeedIssue(id, "店頭買取ステータス・本人確認証明書・職業・国・都道府県のマスタは、書き換えず、あることを DB で確かめた。更新前担当者の権限はシステム管理者、所属は選択肢の先頭。国「日本」は、開発環境の国のマスタでは英語の名称「Japan」（ID 392）の行として確かめた");
 });
 
 /** 試験支店のフロントで申込み、本人確認証明書ID=1・更新担当者=更新前担当者を DB で書く */

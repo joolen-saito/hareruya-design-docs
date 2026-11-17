@@ -19,7 +19,7 @@ import { 試験支店ID, 試験店舗の名前を読む, 店舗読み替えの�
 import { 管理者のトークン } from "../pages/admin/a07_api";
 import { 追加システム設定を控えて書き換える, 追加システム設定の表示値 } from "./add-system-restore";
 
-export const A0701管理者 = { 名前: rcFixed("A07-01試験管理者"), account: { loginId: rcFixed("a0701_admin").toLowerCase(), password: "ZxA0701c001" } as Account };
+export const A0701管理者 = { 名前: rcFixed("A07-01試験管理者"), account: { loginId: rcFixed("a0701_admin").toLowerCase(), password: "ZxA0701c001X" } /* シード表の ZxA0701c001 は11文字。開発環境のメンバー登録は12文字以上なので末尾に X を足して読み替えた */ as Account };
 export const A0701署名確認 = { 名前: rcFixed("A07-01署名確認管理者"), account: { loginId: rcFixed("a0701_admin_004").toLowerCase(), password: "Passw0rd!A0701S" } as Account };
 const 削除用005 = { 名前: rc("A07-01削除用005"), account: { loginId: rc("a0701_del005").toLowerCase(), password: "Passw0rd!A0701D" } as Account };
 /** 削除した管理者の認証トークン（削除の前に受け取る。プロセスの中だけ） */
@@ -34,6 +34,7 @@ async function 管理者を用意する(browser: Browser, seedId: string, a: { �
       権限: "システム管理者", デフォルト検索表示店舗: 店.試験支店, 編集可能店舗: [店.試験支店],
     }, (m) => reportSeedIssue(seedId, `シード作成時の問題: ${m}`));
     reportSeedIssue(seedId, `シード作成時の問題: 管理者はメンバー管理で登録した（名前「${a.名前}」・決まった印つき。所属・権限は任意の値＝システム管理者。${店舗読み替えの注記("A07-01試験店舗", 店.試験支店, 試験支店ID)}）。あれば使い回した（管理者ID ${id}。ログイン失敗回数・ロックはケースで変えない）`);
+    if (a.account.password === "ZxA0701c001X") reportSeedIssue(seedId, "シード作成時の問題: パスワードはシード表の11文字の値の末尾に「X」を足して読み替えた（開発環境のメンバー登録は12文字以上でないと保存できない）");
     return id;
   });
 }
