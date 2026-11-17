@@ -127,6 +127,41 @@ export async function assignShelfToProductClass(
   throw new Error(`${what}: 初期条件の検索結果の先頭 ${productIds.length} 商品に、スマレジ連携フラグが「連携しない」で棚番号が未設定の、保存できる商品規格が無い`);
 }
 
+/**
+ * assignShelfToProductClass と同じ操作で、指定の商品（E2E が登録した商品）だけを見て、棚番号を付ける。
+ * 既存の商品（ほかの方のものを含む）には触れない。状態NM・スマレジ連携フラグ「連携しない」・棚番号「指定なし」の商品規格が無ければ落とす。
+ */
+export async function assignShelfToOwnProductClass(
+  page: Page, productId: string, shelfName: string, what: string, onIssue: (m: string) => void,
+): Promise<{ 商品ID: string; 商品規格ID: string }> {
+  await openProductEdit(page, productId);
+  await openClassListFromProductEdit(page, productId);
+  await expect(activeClassRows(page).first(), `${what}: 商品規格一覧の行`).toBeVisible({ timeout: 60_000 });
+  const links = await editLinksOf(page, async (row) => {
+    const condition = ((await row.locator("td:nth-child(3)").textContent()) ?? "").trim();
+    const smaregi = ((await row.locator("td:nth-child(4)").textContent()) ?? "").trim();
+    return smaregi === "OFF" && condition === "NM";
+  });
+  const seen: string[] = [];
+  for (const href of links) {
+    await openClassEdit(page, href);
+    const flag = (await smaregiChecked(page).count()) === 1 ? await smaregiChecked(page).getAttribute("value") : null;
+    const shelf = await selectedShelfLabel(page);
+    if (flag !== "0" || shelf !== "指定なし") {
+      seen.push(`連携フラグ ${flag ?? "なし"}・棚番号「${shelf}」`);
+      await backToClassList(page, productId);
+      continue;
+    }
+    const productClassId = await displayedProductClassId(page);
+    const r = await saveShelf(page, shelfName, `${what}: 商品規格ID ${productClassId} に棚番号「${shelfName}」を付ける`);
+    if (!r.ok) throw new Error(`${what}: 商品ID ${productId}・商品規格ID ${productClassId} に棚番号「${shelfName}」を付けて保存できない: ${r.why}`);
+    for (const w of r.warnings) onIssue(w);
+    expect(await selectedShelfLabel(page), "保存後の棚番号の欄").toBe(shelfName);
+    return { 商品ID: productId, 商品規格ID: productClassId };
+  }
+  throw new Error(`${what}: 商品ID ${productId} に、状態NM・スマレジ連携フラグ「連携しない」・棚番号が未設定の商品規格が無い（一覧で条件に合った行 ${links.length} 件。開いた規格: ${seen.join(" / ") || "なし"}）`);
+}
+
 const pathOfUrl = (url: string) => new URL(url).pathname;
 
 /** 商品マスターの検索入力で、既定で付いている絞り込み（公開・NM・高額商品除外）を外す */
@@ -175,6 +210,39 @@ export async function unassignShelf(page: Page, shelfName: string, what: string,
       for (const w of r.warnings) onIssue(w);
       expect(await selectedShelfLabel(page), "保存後の棚番号の欄").toBe("指定なし");
       released.push(productClassId);
+      await backToClassList(page, productId);
+    }
+  }
+  if (released.length === 0) {
+    throw new Error(`${what}: 棚番号「${shelfName}」は使用中で削除できないが、商品マスターを棚番号で検索しても、その棚番号の商品規格が見つからない（検索結果の商品 ${productIds.length} 件）`);
+  }
+  return released;
+}
+
+/**
+ * 商品マスターを棚番号 shelfName で検索し、該当する商品の商品規格のうち棚番号が shelfName のものを「指定なし」にして「商品規格を登録」する。
+ * 外した商品ID・商品規格ID・外す前の棚番号を返す（前の実行の残りを片づけるとき、記録に残すため）。1件も外せなければ落とす（棚番号を削除できない理由が分からないまま進めない）。
+ */
+export async function unassignShelfRecorded(page: Page, shelfName: string, what: string, onIssue: (m: string) => void): Promise<{ 商品ID: string; 商品規格ID: string; 外す前: string }[]> {
+  const productIds = await productsUsingShelf(page, shelfName, what);
+  const released: { 商品ID: string; 商品規格ID: string; 外す前: string }[] = [];
+  for (const productId of productIds) {
+    await openProductEdit(page, productId);
+    await openClassListFromProductEdit(page, productId);
+    await expect(activeClassRows(page).first(), `${what}: 商品規格一覧の行`).toBeVisible({ timeout: 60_000 });
+    const links = await editLinksOf(page, async () => true);
+    for (const href of links) {
+      await openClassEdit(page, href);
+      if ((await selectedShelfLabel(page)) !== shelfName) {
+        await backToClassList(page, productId);
+        continue;
+      }
+      const productClassId = await displayedProductClassId(page);
+      const r = await saveShelf(page, "指定なし", `${what}: 商品規格ID ${productClassId} の棚番号を「指定なし」にする`);
+      if (!r.ok) throw new Error(`${what}: 商品ID ${productId}・商品規格ID ${productClassId} の棚番号を「指定なし」にして保存できない: ${r.why}`);
+      for (const w of r.warnings) onIssue(w);
+      expect(await selectedShelfLabel(page), "保存後の棚番号の欄").toBe("指定なし");
+      released.push({ 商品ID: productId, 商品規格ID: productClassId, 外す前: shelfName });
       await backToClassList(page, productId);
     }
   }

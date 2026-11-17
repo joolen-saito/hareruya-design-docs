@@ -22,7 +22,11 @@ import { Notes } from "../lib/notes";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { ensureMember } from "../pages/admin/member";
-import { assignShelfToProductClass, productsUsingShelf, unassignShelf } from "../pages/admin/m03_21_product_class_shelf";
+import { downloadGoodsCsvTemplate } from "../pages/admin/m03_01_goods_csv";
+import { registerGoodsProduct } from "../pages/admin/m03_30_products";
+import { openProductEditByCode } from "../pages/admin/m03_23_seed_products";
+import { rc } from "../lib/run_marker";
+import { assignShelfToOwnProductClass, assignShelfToProductClass, productsUsingShelf, unassignShelf, unassignShelfRecorded } from "../pages/admin/m03_21_product_class_shelf";
 import { ShelfInput, ShelfNumberPage, ShelfRow } from "../pages/admin/m03_21_shelf_number";
 
 export const M0321_ADMIN: Account = { loginId: "m0321_admin", password: "Passw0rd!M0321" };
@@ -124,6 +128,28 @@ class SeedOps {
       if (!target) break;
       await this.remove(target);
     }
+  }
+
+  /**
+   * 前の実行が残した、名称が完全に一致する棚番号だけを画面から削除する（ほかの名称の行には触らない）。
+   * 使用中で消せないときは、商品規格の棚番号の指定だけを「指定なし」にして（外した商品ID・商品規格ID・外す前の値を注記に残す）、もう一度消す
+   */
+  async removeLeftoverNamed(名称: string): Promise<void> {
+    await this.open();
+    const rows = (await this.shelf.allRows()).filter((r) => r.名称 === 名称);
+    for (const row of rows) {
+      const what = `${this.seedId}: 前の実行が残した棚番号ID ${row.ID}（${row.名称}）の削除`;
+      if ((await this.shelf.deleteRow(this.shelf.rowById(row.ID), what)) === "使用中") {
+        const released = await unassignShelfRecorded(this.page, row.名称, this.seedId, this.warn);
+        this.warn(`前の実行が残した棚番号「${row.名称}」（棚番号ID ${row.ID}）は商品規格で使用中だったので、棚番号の指定だけを画面で外した（${released.map((r) => `商品ID ${r.商品ID}・商品規格ID ${r.商品規格ID}・外す前の棚番号「${r.外す前}」`).join(" / ")}）`);
+        await this.open();
+        if ((await this.shelf.deleteRow(this.shelf.rowById(row.ID), what)) === "使用中") throw new Error(`${what}: 商品規格の棚番号を外したあとも、使用中で削除できない`);
+      } else {
+        this.warn(`前の実行が残した棚番号「${row.名称}」（棚番号ID ${row.ID}）を画面から削除した`);
+      }
+      await this.open();
+    }
+    await expect(this.shelf.rowsByName(名称), `${this.seedId}: 前の実行の残りを消したあと、名称「${名称}」の行が無い`).toHaveCount(0);
   }
 
   /** 一覧に名称の行が無いこと */
@@ -363,14 +389,22 @@ defineShelfSeed("S-M03-21-DPNEW-072", async (o) => {
 
 const used = (n: string, 名称: string) => async (o: SeedOps) => {
   await o.open();
-  if ((await o.shelf.rowsByName(名称).count()) > 0) {
-    // 正本の作り方に、この名称の清掃の手順が無い（同じ名称は登録できない）。黙って消さずに止める
-    throw new Error(`${o.seedId}: 名称「${名称}」の棚番号が前の実行から残っている。シード表に清掃の手順が無いので、消して作り直してよいかの判断が要る`);
-  }
+  // 前の実行の E2E が残した、名称が完全に同じ棚番号だけを消してから作る（依頼者の判断 2026-11-17。ほかの名称の棚番号には触らない）。
+  // 使用中で消せないときは、使っている商品規格の棚番号の指定だけを画面で外し、外した商品ID・商品規格ID・外す前の値を注記に残す
+  await o.removeLeftoverNamed(名称);
   await o.registerAll([[label(n), v(名称, "100")]]);
-  const { 商品ID, 商品規格ID } = await assignShelfToProductClass(o.page, 名称, o.seedId, o.warn);
+  // 開発環境の既存の商品はほかの方のもので、先頭の商品に付けられる規格が無くなった（2026-11-17）。この実行で登録した商品（実行の印つき）に付ける
+  const code = rc(`M0321-USED-${n}`);
+  const tpl = await downloadGoodsCsvTemplate(o.page);
+  const zeros = Object.fromEntries(tpl.headers.filter((h) => h.includes("地域") || h.includes("スマレジ連携")).map((h) => [h, "0"]));
+  await registerGoodsProduct(o.page, {
+    what: o.seedId, code, nameJp: code, nameEn: code,
+    values: { "基準価格": "200", "販売価格": "200", "買取価格": "100", "原価単価": "10", ...zeros }, onIssue: o.warn, // 基準価格が300以上だとスマレジ連携が自動でONになるので、300未満にする
+  });
+  const productId = await openProductEditByCode(o.page, code);
+  const { 商品ID, 商品規格ID } = await assignShelfToOwnProductClass(o.page, productId, 名称, o.seedId, o.warn);
   o.notes.set(`〔商品規格ID-M0321-${n}〕`, 商品規格ID);
-  o.warn(`棚番号「${名称}」を、商品ID ${商品ID} の商品規格ID ${商品規格ID}（スマレジ連携フラグ「連携しない」）に付けた`);
+  o.warn(`棚番号「${名称}」を、この実行で登録した商品（商品コード ${code}・商品ID ${商品ID}）の商品規格ID ${商品規格ID}（スマレジ連携フラグ「連携しない」）に付けた（シード表は「登録済みの商品」。既存の商品はほかの方のものなので使わない・正本の外の補い）`);
 };
 defineShelfSeed("S-M03-21-USED-026", used("026", "U-826"));
 defineShelfSeed("S-M03-21-USED-027", used("027", "U-827"));

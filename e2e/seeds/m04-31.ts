@@ -149,7 +149,18 @@ export function 棚卸名の接頭辞(k: string): string { return `${rc(`M0431-$
 export function 棚卸名(k: string, 枝 = "A"): string { return `${棚卸名の接頭辞(k)}${枝}`; }
 export const PREFIX025 = 棚卸名の接頭辞("025");
 definePrefixZero("S-M04-31-REGNOMEMO-025", PREFIX025);
-definePrefixZero("S-M04-31-REGMAX-027", 棚卸名の接頭辞("027"));
+/**
+ * 027 の棚卸名: 合計255文字のまま、実行ごとに別の名前になる形（実行の印つきの接頭辞のあと「あ」で255文字にする。印の分だけ「あ」が減る）。
+ * 棚卸名はアプリが全体で一意にするので、前の実行の同名の棚卸計画があると重複で断られる。
+ */
+export function 棚卸名255(): string { const p = 棚卸名の接頭辞("027"); return `${p}${"あ".repeat(255 - p.length)}`; }
+defineSeed("S-M04-31-REGMAX-027", async () => {
+  const name = 棚卸名255();
+  if (name.length !== 255) throw new Error(`S-M04-31-REGMAX-027: 棚卸名が${name.length}文字（255文字のはず）`);
+  const n = planCountByName(name);
+  if (n > 0) throw new Error(`S-M04-31-REGMAX-027: 実際に入力する棚卸名（255文字）の棚卸計画が ${n} 件ある。削除の画面が無いので0件にできない`);
+  reportSeedIssue("S-M04-31-REGMAX-027", "補い: 棚卸計画を削除する画面が無いので、削除はせず、実際に入力する棚卸名（実行ごとの印つきで合計255文字）の棚卸計画が0件であることをDBの参照で確かめた");
+});
 definePrefixZero("S-M04-31-REGNOEDIT-031", 棚卸名の接頭辞("031"));
 definePrefixZero("S-M04-31-CBREGAS-163", 棚卸名の接頭辞("CB163"));
 definePrefixZero("S-M04-31-CBREGBE-164", 棚卸名の接頭辞("CB164"));

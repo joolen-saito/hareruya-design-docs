@@ -23,7 +23,7 @@ import {
   headings, InventoryPlanEditPage, InventoryPlanListPage, InventoryPlanNewPage, PlanRow, pressReflectExecute, topMessages,
 } from "../../pages/admin/m04_31_inventory_plan";
 import {
-  M0431_ADMIN, M0431_NOEDIT, PREFIX025, 棚卸名, 表示名, RC160, RC160_PLAN, RC161, RC161_PLAN, RC162, RC162_PLAN, RcPlan,
+  M0431_ADMIN, M0431_NOEDIT, PREFIX025, 棚卸名255, 棚卸名, 表示名, RC160, RC160_PLAN, RC161, RC161_PLAN, RC162, RC162_PLAN, RcPlan,
 } from "../../seeds/m04-31";
 import { mainShopName } from "../../seeds/m04-02";
 
@@ -164,7 +164,7 @@ caseTest("IT-M04-31-025", async ({ page, step, expected }) => {
 });
 
 caseTest("IT-M04-31-027", async ({ page, step, expected }) => {
-  const name = `M0431-027-${"あ".repeat(245)}`;
+  const name = 棚卸名255(); // 実行の印つきの接頭辞＋「あ」で合計255文字（前の実行の同名と重ならない）
   const memo = "あ".repeat(1024);
   expect(name.length, "棚卸名は合計255文字").toBe(255);
   await loginAdmin(page, M0431_ADMIN);
