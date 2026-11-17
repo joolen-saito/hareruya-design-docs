@@ -8,6 +8,7 @@
 import { test } from "@playwright/test";
 import { caseTest, CaseCtx, expect } from "../../lib/case";
 import { トークンを受け取る, 商品IDで買取カードを取る, 応答に商品がある, 応答 } from "../../pages/admin/a06_mtgbuyer_api";
+import { rc } from "../../lib/run_marker";
 import { A0607_ADM_A } from "../../seeds/a06-07";
 import "../../seeds/a06-07";
 
@@ -74,3 +75,43 @@ function 状態階層の価格(r: 応答, 規格ID: string): string | null {
   探す(r.json);
   return found;
 }
+
+/** 応答の中で、その商品規格IDを持つ要素（無ければ null） */
+function 規格の要素(r: 応答, 規格ID: string): Record<string, unknown> | null {
+  let found: Record<string, unknown> | null = null;
+  const 探す = (v: unknown): void => {
+    if (found || !v || typeof v !== "object") return;
+    const o = v as Record<string, unknown>;
+    if (String(o.productClassId ?? "") === 規格ID) { found = o; return; }
+    Object.values(o).forEach(探す);
+  };
+  探す(r.json);
+  return found;
+}
+
+caseTest("IT-A06-07-004", async (ctx) => {
+  const [a, b, c, d] = ["A", "B", "C", "D"].map((x) => ctx.notes.get(`〔商品ID-A0607-004${x}〕`));
+  const r = await 送る(ctx, [a, b, c, d].join(","), "買取用カード一覧取得（有効・商品廃止・規格廃止・高額商品コードの4商品）");
+  await ctx.expected(async () => {
+    expect.soft(応答に商品がある(r, a), `削除されておらず高額商品コードの無い商品ID ${a} が返る`).toBe(true);
+    expect.soft(応答に商品がある(r, b), `商品が削除済み（公開状態 廃止）の商品ID ${b} が返る`).toBe(false);
+    expect.soft(応答に商品がある(r, c), `商品規格が削除済み（公開状態 廃止）の商品ID ${c} が返る`).toBe(false);
+    expect.soft(応答に商品がある(r, d), `高額商品コードありの商品ID ${d} が返る`).toBe(false);
+  });
+});
+
+caseTest("IT-A06-07-017", async (ctx) => {
+  const n = (k: string) => ctx.notes.get(k);
+  const r = await 送る(ctx, `${n("〔商品ID-A0607-017-JP〕")},${n("〔商品ID-A0607-017-EN〕")}`, "買取用カード一覧取得（同じカード詳細の言語JP・ENの商品）");
+  await ctx.expected(async () => {
+    for (const [印, 買取, 基準, 在庫] of [["JP", "1111", "3333", "5"], ["EN", "2222", "4444", "8"]] as const) {
+      const e = 規格の要素(r, n(`〔商品規格ID-A0607-017-${印}〕`));
+      expect.soft(e !== null, `言語 ${印} の商品規格 ${n(`〔商品規格ID-A0607-017-${印}〕`)} が返る`).toBe(true);
+      expect.soft(String(e?.productCode ?? ""), `言語 ${印} の商品コード`).toBe(rc(`A0607-017-${印}`));
+      expect.soft(String(e?.buyPrice ?? "").replace(/\.0+$/, ""), `言語 ${印} の買取価格`).toBe(買取);
+      expect.soft(String(e?.price ?? "").replace(/\.0+$/, ""), `言語 ${印} の基準価格`).toBe(基準);
+      expect.soft(String(e?.stock ?? ""), `言語 ${印} の在庫数`).toBe(在庫);
+      expect.soft(String(e?.sectionId ?? ""), `言語 ${印} の部門ID`).toBe(n("〔部門ID-A0607-017〕"));
+    }
+  });
+});

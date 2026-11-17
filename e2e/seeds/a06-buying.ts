@@ -35,6 +35,10 @@ import { 部門を名前で探す } from "../db/m06_08_prep";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
 import { ensureMemberFixed } from "../pages/admin/member";
+import { 規格を書き換える } from "../pages/admin/a17_05_setup";
+import { 規格を廃止にする } from "../pages/admin/m03_32_x";
+import { readLanguageIds } from "../pages/admin/m03_23_seed_products";
+import { 公開状態の値 } from "../pages/admin/m03_13_product";
 import { 規格の価格を読む, 販売価格を入れ直す } from "../pages/admin/a06_product_read";
 import { 店舗読み替えの注記, 本店ID, 試験店舗の名前を読む } from "../pages/admin/test_store";
 
@@ -75,7 +79,22 @@ export type カード商品の定め = {
   画像?: string;
   /** 商品規格の部門ID（グッズ商品CSVの部門IDの列。無ければ空） */
   部門ID?: string;
+  /** 新しいカードを作らず、このシードが作った試験用のカードのカード詳細を紐付ける（試験用のカードを用意する の結果） */
+  カード?: { カードID: string; カード詳細ID: string; カード名: string };
+  /** 取込の商品規格の言語（既定は日本語） */
+  言語?: "日本語" | "英語";
+  /** 商品の公開状態を「廃止」にする（刷新後の画面では、商品の削除済みを公開状態「廃止」で表す） */
+  商品を廃止?: boolean;
+  /** 商品規格の公開状態を「廃止」にする（商品規格の削除済み） */
+  規格を廃止?: boolean;
+  /** 商品規格に入れる高額商品コード */
+  高額商品コード?: string;
 };
+
+/** 試験用のカード（カード名に実行の印）を1枚、詳細数件のカード詳細つきで登録する */
+export async function 試験用のカードを用意する(browser: Browser, seedId: string, v: { カード名日: string; カード名英: string; 詳細数: number }): Promise<{ カードID: string; カード詳細IDs: string[]; カード名: string }> {
+  return withAdminSession(browser, SETUP_ADMIN, (page) => 試験用のカードを作る(page, { カード名日: rc(v.カード名日), カード名英: rc(v.カード名英), 詳細数: v.詳細数 }, `${seedId}: 試験用のカード`, (m) => reportSeedIssue(seedId, m)));
+}
 export type 作ったカード商品 = { 商品ID: string; 規格ID: string; カードID: string | null; カード詳細ID: string | null; 商品コード: string };
 
 /** 1商品を作る（カード・取込・カード指定・入庫・商品画像） */
@@ -86,15 +105,19 @@ export async function カード商品を作る(browser: Browser, seedId: string,
   const 商品名英 = rc(d.商品名英);
   const out = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    const card = d.カード名日 && d.カード名英
+    const made = !d.カード && d.カード名日 && d.カード名英
       ? await 試験用のカードを作る(page, { カード名日: rc(d.カード名日), カード名英: rc(d.カード名英), 詳細数: 1 }, `${seedId}: 試験用のカード`, issue) : null;
+    const card = d.カード ? { カードID: d.カード.カードID, カード詳細IDs: [d.カード.カード詳細ID], カード名: d.カード.カード名 } : made;
     const categoryId = await readGoodsRootCategoryId(page);
     const template = await downloadGoodsCsvTemplate(page);
+    const 足す値: Record<string, string> = {};
+    if (d.言語 === "英語") 足す値["言語(ID)"] = (await readLanguageIds(page)).英語;
+    if (d.商品を廃止) 足す値["商品公開ステータス"] = 公開状態の値(template, "商品公開ステータス", "廃止");
     const zeros = Object.fromEntries(template.headers.filter((h) => h.includes("地域") || h.includes("スマレジ連携")).map((h) => [h, "0"]));
     await registerGoodsCsv(page, {
       what: `${seedId} のグッズ商品CSV登録`, fileName: `${seedId.toLowerCase()}-${Date.now()}.csv`, categoryId,
       common: { "購入グループ名称": "通常商品", "原価単価": "0", ...zeros },
-      lines: [{ code: 商品コード, nameJp: 商品名日, nameEn: 商品名英, values: { "基準価格": d.基準価格, "販売価格": d.販売価格, "買取価格": d.買取価格, ...(d.部門ID ? { "部門ID": d.部門ID } : {}) } }],
+      lines: [{ code: 商品コード, nameJp: 商品名日, nameEn: 商品名英, values: { "基準価格": d.基準価格, "販売価格": d.販売価格, "買取価格": d.買取価格, ...(d.部門ID ? { "部門ID": d.部門ID } : {}), ...足す値 } }],
       onWarning: (w) => issue(`グッズ商品CSV登録の警告「${w}」`), uploadWaitMs: 300_000,
     });
     const r = await 取込の商品と規格を読む(page, 商品コード, issue);
@@ -105,10 +128,14 @@ export async function カード商品を作る(browser: Browser, seedId: string,
       await 販売価格を入れ直す(page, r.商品ID, r.規格ID, d.販売価格, `${seedId}: ${商品コード} の販売価格`, issue);
       issue(`取込とカード指定のあと販売価格が ${今.販売価格}（基準価格 ${今.基準価格}）になったので、商品規格登録編集画面でセールフラグを付けて ${d.販売価格} に入れ直した（販売価格はセールフラグが無いと基準価格と同じ値で保存される。シード表はセールフラグを定めていない）`);
     }
+    if (d.高額商品コード) await 規格を書き換える(page, r.商品ID, r.規格ID, { 高額商品コード: d.高額商品コード }, `${seedId}: ${商品コード} の高額商品コード`, issue);
+    if (d.規格を廃止) await 規格を廃止にする(page, r.商品ID, r.規格ID, `${seedId}: ${商品コード} の商品規格の廃止`, issue);
     return { 商品ID: r.商品ID, 規格ID: r.規格ID, カードID: card?.カードID ?? null, カード詳細ID: card?.カード詳細IDs[0] ?? null, 商品コード };
   });
   if (d.在庫 > 0) await 入庫して承認する(browser, seedId, [{ 商品コード, 数量: d.在庫 }], issue, 決まった入庫の管理者);
   if (d.画像) 商品画像を足す(`${seedId}: 商品画像 ${d.画像}`, out.商品ID, d.画像, 1);
+  const 状態の文 = [d.言語 === "英語" ? "言語 EN（取込の言語(ID)）" : "", d.商品を廃止 ? "商品の公開状態を廃止（取込の商品公開ステータス）" : "", d.規格を廃止 ? "商品規格の公開状態を廃止（商品規格登録編集画面）" : "", d.高額商品コード ? `高額商品コード ${d.高額商品コード}（商品規格登録編集画面）` : "", d.カード ? `既に作った試験用のカードのカード詳細 ${d.カード.カード詳細ID} を紐付けた` : ""].filter(Boolean).join("・");
+  if (状態の文) issue(`${商品コード}: ${状態の文}`);
   issue(`商品コード ${商品コード}・商品名「${商品名日}」（実行の印つき）。${d.カード名日 ? "カード商品CSV登録の代わりにグッズ商品CSV登録＋カード指定で作り" : "グッズ商品CSV登録で作り（カードは紐付けない）"}（言語 JP・状態 NM）、本店・EC-CUBE へ ${d.在庫} 入庫して承認した。${d.画像 ? `商品画像「${d.画像}」の行だけを DB に足した（実体は置かない）。` : ""}カードのレアリティ等は選択肢の先頭`);
   return out;
 }
