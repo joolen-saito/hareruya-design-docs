@@ -7,7 +7,7 @@
  * 認証トークンは、トークン所有者の会員のメールアドレスとパスワードでログインの API（A15-01）を呼んで受け取る（アプリの秘密の値は使わない）。
  */
 import { Page, request, test } from "@playwright/test";
-import { BASE_URL } from "../../config/env";
+import { API_BASE_URL } from "../../config/env";
 import { caseTest, CaseCtx, expect } from "../../lib/case";
 import { 選手を読む } from "../../db/a15_04";
 import { A1504_PASSWORD, A1504のメール } from "../../seeds/a15-04";
@@ -22,7 +22,7 @@ type 応答 = { ステータス: number; 本文: string; json: Record<string, un
 /** ユーザー情報参照（GET /user）へ要求を送る。デッキユーザーIDを渡さないときはクエリを付けない。トークンを渡したら認証トークンのヘッダに付ける */
 async function ユーザー情報参照(page: Page, a: { デッキユーザーID?: string; トークン?: string }): Promise<応答> {
   await page.setExtraHTTPHeaders(a.トークン !== undefined ? { "jwt-token": a.トークン } : {});
-  const url = `${BASE_URL}/api/user${a.デッキユーザーID !== undefined ? `?deck_user_id=${encodeURIComponent(a.デッキユーザーID)}` : ""}`;
+  const url = `${API_BASE_URL}/api/user${a.デッキユーザーID !== undefined ? `?deck_user_id=${encodeURIComponent(a.デッキユーザーID)}` : ""}`;
   const res = await page.goto(url, { timeout: 60_000 });
   if (!res) throw new Error("ユーザー情報参照の応答が無い");
   const 本文 = await res.text();
@@ -34,7 +34,7 @@ async function ユーザー情報参照(page: Page, a: { デッキユーザーID
 
 /** 会員のメールアドレスとパスワードでログインの API を呼び、認証トークンを受け取る */
 async function トークンを受け取る(シード表のメール: string): Promise<string> {
-  const api = await request.newContext({ baseURL: BASE_URL, ignoreHTTPSErrors: true });
+  const api = await request.newContext({ baseURL: API_BASE_URL, ignoreHTTPSErrors: true });
   try {
     const login = await api.post("/api/user/login", { data: { id: A1504のメール(シード表のメール), password: A1504_PASSWORD } });
     if (login.status() !== 200) throw new Error(`ログインの API が失敗した（応答 ${login.status()}）: ${(await login.text()).slice(0, 300)}`);

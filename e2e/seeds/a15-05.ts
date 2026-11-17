@@ -12,7 +12,7 @@
  *   （ログインの API は選手の無い会員にトークンを出さない作りのため。選手の行は消さない）。
  */
 import { request } from "@playwright/test";
-import { BASE_URL } from "../config/env";
+import { API_BASE_URL } from "../config/env";
 import { 選手を削除済みにする } from "../db/a15_01";
 import { 選手に書く } from "../db/a15_04";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
@@ -26,7 +26,7 @@ export const A1505のトークン = new Map<string, string>();
 
 /** 会員のメールアドレスとパスワードでログインの API を呼び、認証トークンを受け取る */
 export async function A1505トークンを受け取る(メール: string): Promise<string> {
-  const api = await request.newContext({ baseURL: BASE_URL, ignoreHTTPSErrors: true });
+  const api = await request.newContext({ baseURL: API_BASE_URL, ignoreHTTPSErrors: true });
   try {
     const r = await api.post("/api/user/login", { data: { id: メール, password: A1505_PASSWORD }, failOnStatusCode: false, timeout: 60_000 });
     if (r.status() !== 200) throw new Error(`ログインの API が失敗した（応答 ${r.status()}）: ${(await r.text()).slice(0, 300)}`);

@@ -7,7 +7,7 @@
  * アプリの秘密の値（署名鍵）は使わない。署名不正のトークンは、署名の部分を置き換えて作る。
  */
 import { Page, test } from "@playwright/test";
-import { BASE_URL } from "../../config/env";
+import { API_BASE_URL } from "../../config/env";
 import { caseTest, CaseCtx, expect } from "../../lib/case";
 import { A1501のメール } from "../../seeds/a15-01";
 import "../../seeds/a15-02";
@@ -23,7 +23,7 @@ const 文字列 = (v: unknown): string => (typeof v === "string" ? v : "");
 
 async function 送る(page: Page, 何: string, path: string, opt: { data?: unknown; token?: string }): Promise<応答> {
   const headers: Record<string, string> = opt.token !== undefined ? { "jwt-token": opt.token } : {};
-  const res = await page.request.post(`${BASE_URL}${path}`, { data: opt.data, headers, failOnStatusCode: false, timeout: 60_000 });
+  const res = await page.request.post(`${API_BASE_URL}${path}`, { data: opt.data, headers, failOnStatusCode: false, timeout: 60_000 });
   const t = await res.text();
   const SetCookie = res.headersArray().filter((h) => h.name.toLowerCase() === "set-cookie").map((h) => h.value);
   const json = 読む(t);
@@ -43,7 +43,7 @@ async function ログインして控える(ctx: CaseCtx, n: string): Promise<str
 
 /** ブラウザに保持された Cookie のうち、値がアクセストークンのもの（無ければ undefined） */
 async function トークンのCookie(ctx: CaseCtx, token: string) {
-  const cs = await ctx.page.context().cookies(BASE_URL);
+  const cs = await ctx.page.context().cookies(API_BASE_URL);
   note(`ブラウザの Cookie: ${cs.map((c) => `${c.name}（値は記録しない${c.value === token ? "・アクセストークンと同じ値" : ""}）`).join("・") || "なし"}`);
   return cs.find((c) => c.value === token);
 }

@@ -7,7 +7,7 @@
  * 認証トークンは、シードでその会員のメールアドレスとパスワードでログインの API を呼んで受け取った値（記録しない）。
  */
 import { Page, test } from "@playwright/test";
-import { BASE_URL } from "../../config/env";
+import { API_BASE_URL } from "../../config/env";
 import { 会員IDの選手の数 } from "../../db/a15_01";
 import { 選手を読む } from "../../db/a15_04";
 import { caseTest, CaseCtx, expect } from "../../lib/case";
@@ -22,7 +22,7 @@ const トークンの補い = "有効な認証トークンは、シードでそ�
 type 応答 = { ステータス: number; 本文: string; json: Record<string, unknown> | null };
 
 async function 変更する(page: Page, 本文: Record<string, unknown>, token?: string, 何回目 = ""): Promise<応答> {
-  const res = await page.request.put(`${BASE_URL}/api/user`, { data: 本文, headers: token !== undefined ? { "jwt-token": token } : {}, failOnStatusCode: false, timeout: 60_000 });
+  const res = await page.request.put(`${API_BASE_URL}/api/user`, { data: 本文, headers: token !== undefined ? { "jwt-token": token } : {}, failOnStatusCode: false, timeout: 60_000 });
   const t = await res.text();
   let json: Record<string, unknown> | null = null;
   try { json = JSON.parse(t) as Record<string, unknown>; } catch { /* JSON でない */ }

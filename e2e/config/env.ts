@@ -16,11 +16,13 @@ type Profile = {
   shared: boolean;
   /** DB確認の方法。docker: 手元のコンテナの psql／url: 接続URL（E2E_DB_URL）で psql／none: DB確認なし */
   db: "docker" | "url" | "none";
+  /** API サーバー（認証トークン（JWT）を使う会員の API・MTGバイヤーの API など）。無ければフロントと同じホスト */
+  apiBaseUrl?: string;
 };
 
 const PROFILES: Record<string, Profile> = {
   local: { baseUrl: "http://localhost:8000", adminRoute: "admin", shared: false, db: "docker" },
-  dev: { baseUrl: "https://replace-dev.hareruyamtg.com:8443", adminRoute: "admin", shared: true, db: "none" },
+  dev: { baseUrl: "https://replace-dev.hareruyamtg.com:8443", adminRoute: "admin", shared: true, db: "none", apiBaseUrl: "https://replace-dev.api.hareruyamtg.com" },
 };
 
 export const ENV_NAME = process.env.E2E_ENV || "local";
@@ -30,6 +32,11 @@ if (!profile) throw new Error(`E2E_ENV=${ENV_NAME} は未定義。使えるの�
 const env = (k: string, d: string) => process.env[k] || d;
 
 export const BASE_URL = env("E2E_BASE_URL", profile.baseUrl).replace(/\/$/, "");
+/**
+ * API サーバーの URL。開発環境では管理画面・フロントと別のホストに置かれ、ログインの API などはこちらで動く
+ * （管理画面のホストの /api/... は認証トークンを作れず 500 を返す。2026-11-17 依頼者に教わった）。E2E_API_BASE_URL で上書きできる
+ */
+export const API_BASE_URL = env("E2E_API_BASE_URL", profile.apiBaseUrl ?? BASE_URL).replace(/\/$/, "");
 export const ADMIN_ROUTE = env("E2E_ADMIN_ROUTE", profile.adminRoute);
 /** 手元（ループバック）以外へ向けたら、プロファイルが何であっても共有環境として扱う（E2E_BASE_URL の上書きで確認を素通りさせない） */
 const LOOPBACK = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(\/|$)/;

@@ -7,7 +7,7 @@
  * アプリの秘密の値（署名鍵）は使わない。トークンは「.」で3つに分けて、第1部・第2部を base64url として読むだけにする。
  */
 import { Page, test } from "@playwright/test";
-import { BASE_URL } from "../../config/env";
+import { API_BASE_URL } from "../../config/env";
 import { caseTest, CaseCtx, expect } from "../../lib/case";
 import { A1501のメール } from "../../seeds/a15-01";
 import "../../seeds/a15-01";
@@ -27,7 +27,7 @@ const 伏せる = (j: Record<string, unknown> | null): string =>
 
 /** ログインの API（POST /api/user/login）へ JSON の本文を送る */
 async function ログイン(page: Page, 本文: Record<string, unknown>, 何回目 = ""): Promise<応答> {
-  const res = await page.request.post(`${BASE_URL}/api/user/login`, { data: 本文, failOnStatusCode: false, timeout: 60_000 });
+  const res = await page.request.post(`${API_BASE_URL}/api/user/login`, { data: 本文, failOnStatusCode: false, timeout: 60_000 });
   const t = await res.text();
   const json = 読む(t);
   const 送った = Object.fromEntries(Object.entries(本文).map(([k, v]) => [k, k === "password" ? "（パスワード）" : v]));
@@ -37,7 +37,7 @@ async function ログイン(page: Page, 本文: Record<string, unknown>, 何回�
 
 /** ユーザー情報参照（GET /api/user、デッキユーザーID指定なし）へ、認証トークンのヘッダ（jwt-token）を付けて送る */
 async function ユーザー情報参照(page: Page, トークン: string, 何回目 = ""): Promise<応答> {
-  const res = await page.request.get(`${BASE_URL}/api/user`, { headers: { "jwt-token": トークン }, failOnStatusCode: false, timeout: 60_000 });
+  const res = await page.request.get(`${API_BASE_URL}/api/user`, { headers: { "jwt-token": トークン }, failOnStatusCode: false, timeout: 60_000 });
   const t = await res.text();
   note(`${何回目}要求: GET /api/user（jwt-token 付き・デッキユーザーID指定なし）・応答: HTTP ${res.status()}・本文 ${t.slice(0, 300)}`);
   return { ステータス: res.status(), 本文: t, json: 読む(t), ヘッダ: res.headers() };
@@ -99,7 +99,7 @@ caseTest("IT-A15-01-002", ログインして確かめる("002", (r, ctx) => {
 
 caseTest("IT-A15-01-003", ログインして確かめる("003", async (r, ctx) => {
   const token = 文字列(r.json?.access_token);
-  const cookies = await ctx.page.context().cookies(BASE_URL);
+  const cookies = await ctx.page.context().cookies(API_BASE_URL);
   note(`ブラウザの Cookie: ${cookies.map((c) => `${c.name}（期限 ${c.expires > 0 ? new Date(c.expires * 1000).toISOString() : "なし（セッション）"}・値は記録しない）`).join("・") || "なし"}`);
   const tokenCookie = cookies.find((c) => token !== "" && c.value === token);
   expect.soft(tokenCookie !== undefined, "応答のアクセストークンが Cookie に設定されている").toBe(true);
