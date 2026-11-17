@@ -52,7 +52,8 @@ async function 作る(browser: Browser, seedId: string, notes: { set: (l: string
     商品.set(m.呼び名, { 商品ID: p.商品ID, 商品名: p.商品コード });
     notes.set(`〔商品ID-A0706-${m.呼び名}〕`, p.商品ID);
   }
-  const メール = A07のメール(`a0706-${会員の呼び名.toLowerCase()}@example.test`);
+  // メールのローカル部は英数字だけにする（呼び名の「共有」は shared に置き換える。フロントの会員登録は日本語のローカル部を受け付けない見込み）
+  const メール = A07のメール(`a0706-${会員の呼び名.replace("共有", "shared").toLowerCase()}@example.test`);
   const ctx = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   let 会員ID: string | null = null;
   try {
@@ -102,7 +103,7 @@ async function 作る(browser: Browser, seedId: string, notes: { set: (l: string
       notes.set(`〔買取商品ID-A0706-${m.呼び名}〕`, r[0].ID);
       db.明細に書く(r[0].ID, メール, m.値);
       if (m.申込時 && m.申込時.length) for (const [c, v] of m.申込時) db.申込時買取価格を置く(r[0].ID, メール, c, v);
-      else db.申込時買取価格を消す(r[0].ID, メール);
+      else if (r[0].申込時.length) db.申込時買取価格を消す(r[0].ID, メール);
     }
   }
   issue(`画面で指定できない明細の値（査定金額・状態・買取カテゴリ・Foil区分・言語・NULL）と申込時買取価格は、E2E の明細にだけDBで書いた: ${全明細.map((m) => `${m.呼び名}: ${JSON.stringify(m.値)}・申込時 ${m.申込時?.map(([c, v]) => `${c}=${v}`).join("/") || "0件（申込みで作られた行を消した）"}`).join(" ／ ")}`);
@@ -146,7 +147,7 @@ defineSeed("S-A07-06-NONE", async ({ browser, seed, notes }) => {
     const l = new BuyListPage(page); await l.open(); await l.買取番号を入れる(番号); await l.検索する(); await l.編集画面を開く(番号);
     await new BuyEditPage(page).買取状況を変えて保存する("査定中");
   });
-  for (const m of db.明細を読む(番号)) db.申込時買取価格を消す(m.ID, メール);
+  for (const m of db.明細を読む(番号)) if (m.申込時.length) db.申込時買取価格を消す(m.ID, メール);
   db.明細を消す(番号, メール);
   reportSeedIssue(seed.シードID, `シード作成時の問題: 正本は「買取価格が登録された公開中の任意のシングルカード商品」。E2E のカード商品（${p.商品コード}）で申し込み、査定中にしてから、申込みで作られた E2E の明細と申込時買取価格をDBで消して0件にした（消してよいの一覧に載っているときだけ）`);
 });
