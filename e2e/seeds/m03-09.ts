@@ -33,7 +33,7 @@ import { saveProductWithImages } from "../pages/admin/f03_06_products";
 import { ensureMember } from "../pages/admin/member";
 import { downloadGoodsCsvTemplate } from "../pages/admin/m03_01_goods_csv";
 import { searchStockByCode } from "../pages/admin/m04_02_rc_stock";
-import { addClass, assignFirstCard, displayedClassId, openClassList, openClassListByCode, registerGoodsProduct } from "../pages/admin/m03_30_products";
+import { addClass, assignFirstCardAnyName, displayedClassId, openClassList, openClassListByCode, registerGoodsProduct } from "../pages/admin/m03_30_products";
 import { ClassEditPage } from "../pages/admin/m03_09_class_edit";
 import { loggedInMemberName, registerStockEdit, StockApprovalListPage } from "../pages/admin/stock_edit";
 
@@ -262,7 +262,7 @@ async function 商品を作る(browser: Browser, seedId: string, d: 商品の定
       issue(`${seedId}: 画像の中身は正本が決めないので、色違いの小さな PNG（${d.画像.map((n) => `${n}.png`).join("・")}）を登録した（正本の外の補い）`);
     }
     if (d.カード) {
-      await assignFirstCard(page, { productId, productNameJp: name, productNameEn: name }, seedId, issue);
+      await assignFirstCardAnyName(page, { productId, productNameJp: name, productNameEn: name }, seedId, issue);
       issue(`${seedId}: シード表の「商品カテゴリをサプライ・グッズから単体カードのカテゴリへ替える」はしていない（ケースは商品カテゴリを確かめない）`);
     }
     if (d.規格の呼び名 && d.整え) {

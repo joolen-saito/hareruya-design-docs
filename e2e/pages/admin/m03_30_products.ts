@@ -211,6 +211,29 @@ export async function assignFirstCard(page: Page, a: { productId: string; produc
 }
 
 /**
+ * assignFirstCard と同じ操作で、先頭の行のカード名の書式が「《名前 / 英名》」でないとき（英名が無い）も読む。
+ * 先頭の行は、ほかの実行が作ったカードのこともある（書式が違う）。名前は《》の中を読む。
+ */
+export async function assignFirstCardAnyName(page: Page, a: { productId: string; productNameJp: string; productNameEn: string }, what: string, onIssue: Issue): Promise<void> {
+  await page.goto(adminUrl(`/product/product/${a.productId}/edit`));
+  await page.waitForLoadState("load");
+  await page.locator('button[data-bs-target="#searchCardDetailModal"]').click();
+  const modal = page.locator("#searchCardDetailModal");
+  await expect(modal, `${what}: カード検索`).toBeVisible();
+  await modal.locator("#searchCardDetailModalButton").click();
+  const first = modal.locator("#searchCardDetailModalList tbody tr").first();
+  await expect(first, `${what}: カード検索の結果がある`).toBeVisible({ timeout: 60_000 });
+  const cardDetailId = ((await first.locator("td").nth(0).textContent()) ?? "").trim();
+  const shown = ((await first.locator("td").nth(2).textContent()) ?? "").replace(/\s+/g, " ").trim();
+  const m = /《(.+?)(?: \/ .*?)?》/.exec(shown) ?? /《(.+?) \/ /.exec(shown);
+  if (!/^\d+$/.test(cardDetailId) || !m) throw new Error(`${what}: カード検索の結果の先頭の行を読めない（ID「${cardDetailId}」・カード「${shown}」）`);
+  onIssue(`${what}: カードは、カード検索をカード名を入れずに押した結果の先頭（カード詳細ID ${cardDetailId}「${m[1]}」）を選んだ（正本: 登録済みのカードを1つ）`);
+  await assignCardOnProductEdit(page, {
+    productId: a.productId, cardNameJp: m[1], cardDetailId, productNameJp: a.productNameJp, productNameEn: a.productNameEn,
+  }, (msg) => onIssue(`${what}: ${msg}`));
+}
+
+/**
  * 商品マスター(検索入力)で、検索条件をクリアし（既定の公開状態・状態の絞り込みも外す）、IDに商品IDを入れて検索し、該当が無いことを確かめる。
  */
 export async function expectNoProductWithId(page: Page, productId: string, what: string): Promise<void> {
