@@ -3,7 +3,7 @@ import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { ProductSearchPage } from "../../pages/admin/product_search";
 import { M0301_ADMIN } from "../../seeds/m03-01";
-import "../../seeds/m03-01-009";
+import { CODE_009A, NAME } from "../../seeds/m03-01-009";
 
 caseTest("IT-M03-01-009", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M0301_ADMIN);
@@ -13,7 +13,7 @@ caseTest("IT-M03-01-009", async ({ page, notes, step, expected }) => {
     await search.expectNoRetainedSearchConditions();
   });
   await step(2, async () => {
-    await search.field("product_name").fill("AND対象商品-009");
+    await search.field("product_name").fill(NAME);
     await search.ensureDetailVisible();
     await search.chooseSelect2("category_id", "M03カテゴリA");
     expect(await search.selectedValues("category_id"), "指定したカテゴリは共有Aの採番ID").toEqual([
@@ -43,8 +43,8 @@ caseTest("IT-M03-01-009", async ({ page, notes, step, expected }) => {
     await expect.soft(page.locator(`#ex-product-${c}`), "カテゴリA・SPの商品Cは除外").toHaveCount(0);
     if (await rows.count() === 1) {
       await expect.soft(rows.first().locator("td:nth-child(2)"), "結果の商品ID").toHaveText(a);
-      await expect.soft(rows.first().locator("td:nth-child(3) a"), "結果の商品名").toHaveText("AND対象商品-009");
-      await expect.soft(rows.first().locator("td:nth-child(4)"), "結果の商品コード").toHaveText("M0301S-009A");
+      await expect.soft(rows.first().locator("td:nth-child(3) a"), "結果の商品名").toHaveText(NAME);
+      await expect.soft(rows.first().locator("td:nth-child(4)"), "結果の商品コード").toHaveText(CODE_009A);
       await expect.soft(rows.first().locator("td:nth-child(6)"), "結果の規格状態").toHaveText("NM");
     }
   });

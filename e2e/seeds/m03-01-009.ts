@@ -9,13 +9,18 @@ import {
 } from "../pages/admin/m03_01_goods_csv";
 import { replaceNmWithSpClass } from "../pages/admin/m03_01_product_class";
 import { ProductSearchPage } from "../pages/admin/product_search";
+import { rc } from "../lib/run_marker";
 import { M0301_ADMIN } from "./m03-01";
 
-const NAME = "AND対象商品-009";
+/** 前の実行の残りの同名の商品に当たらないよう、商品名にも実行の印を付ける */
+export const NAME = rc("AND対象商品-009");
+/** 商品コードは正本が決めないハーネスの値。前の実行の残りに当たらないよう実行の印を付ける */
+export const CODE_009A = rc("M0301S-009A");
+const CODE_009C = rc("M0301S-009C");
 const products = [
-  { code: "M0301S-009A", categoryNote: "〔カテゴリID-M0301-共有A〕", idNote: "〔商品ID-M0301-009A〕" },
-  { code: "M0301S-009B", categoryNote: "〔カテゴリID-M0301-共有B〕", idNote: "〔商品ID-M0301-009B〕" },
-  { code: "M0301S-009C", categoryNote: "〔カテゴリID-M0301-共有A〕", idNote: "〔商品ID-M0301-009C〕" },
+  { code: CODE_009A, categoryNote: "〔カテゴリID-M0301-共有A〕", idNote: "〔商品ID-M0301-009A〕" },
+  { code: rc("M0301S-009B"), categoryNote: "〔カテゴリID-M0301-共有B〕", idNote: "〔商品ID-M0301-009B〕" },
+  { code: CODE_009C, categoryNote: "〔カテゴリID-M0301-共有A〕", idNote: "〔商品ID-M0301-009C〕" },
 ] as const;
 
 defineSeed("S-M03-01-TEXT-009", { needs: ["S-M03-01-ADM", "S-M03-01-MASTERS-READ"] }, async ({ browser, notes, seed }) => {
@@ -60,12 +65,12 @@ defineSeed("S-M03-01-TEXT-009", { needs: ["S-M03-01-ADM", "S-M03-01-MASTERS-READ
       if (!/^\d+$/.test(id)) throw new Error(`${seed.シードID}: ${product.code} の採番商品IDを画面から読めない: ${id}`);
       await expect(row, "検索行と採番商品IDの対応").toHaveAttribute("id", `ex-product-${id}`);
       notes.set(product.idNote, id);
-      if (product.code === "M0301S-009C") {
+      if (product.code === CODE_009C) {
         await row.locator("td:nth-child(3) a").click();
         await replaceNmWithSpClass(page, {
           productId: id,
           nmCode: product.code,
-          spCode: "M0301S-009C-SP",
+          spCode: rc("M0301S-009C-SP"),
           japaneseLanguageId,
           sectionId: notes.get("〔部門ID-M0301-共有〕"),
         }, (warning) => reportSeedIssue(seed.シードID, warning));

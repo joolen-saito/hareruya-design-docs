@@ -150,6 +150,7 @@ defineCardGoodsSeed("S-M03-01-FLAGS-017", flagsSeed("017"));
 defineCardGoodsSeed("S-M03-01-FLAGS-018", flagsSeed("018"));
 
 defineCardGoodsSeed("S-M03-01-TEXT-052", {
+  cleanupProductCodes: ["M0301S-052A", "M0301S-052B"],
   expectNoCardNameMatch: "M0301-052-ThunderCard",
   goods: [
     { code: "M0301S-052A", nameJp: "カード英名甲-052", nameEn: "カード英名甲-052", idNote: "〔商品ID-M0301-052A〕" },

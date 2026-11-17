@@ -4,7 +4,7 @@ import { loginAdmin } from "../../lib/session";
 import { ProductResultPaging } from "../../pages/admin/product_result_paging";
 import { ProductSearchPage } from "../../pages/admin/product_search";
 import { M0301_ADMIN } from "../../seeds/m03-01";
-import "../../seeds/m03-01-057";
+import { NAME } from "../../seeds/m03-01-057";
 
 caseTest("IT-M03-01-057", async ({ page, notes, step, expected }) => {
   await loginAdmin(page, M0301_ADMIN);
@@ -17,7 +17,7 @@ caseTest("IT-M03-01-057", async ({ page, notes, step, expected }) => {
     await search.expectNoRetainedSearchConditions();
   });
   await step(2, async () => {
-    await search.field("product_name").fill("状態別表示商品-057");
+    await search.field("product_name").fill(NAME);
   });
   await step(3, async () => {
     await search.ensureDetailVisible();
