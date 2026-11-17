@@ -52,6 +52,8 @@ RESULT_OF = {"合格": "合格", "不合格": "不合格", "未判定": ""}
 FORMER_E2E_FILE = E2E / "config" / "sheet_former_e2e_rows.tsv"
 FORMER_E2E = {r["一覧のテストID"] for r in csv.DictReader(FORMER_E2E_FILE.open(encoding="utf-8"), delimiter="\t")} if FORMER_E2E_FILE.exists() else set()
 BACKLOG_VIEW = "https://joolen.backlog.com/view/"  # 課題の URL（lib_backlog の DEFAULT_SPACE と同じスペース）
+# 栗野さんの受け持ちの機能のうち、依頼者の指示でこちらが開発環境で流し直して判定・起票したケース（テストID・一覧のテストID・理由）
+SPLIT_EXCEPT_FILE = E2E / "config" / "sheet_split_exceptions.tsv"
 
 
 def read_tsv(p: Path) -> list[dict]:
@@ -95,6 +97,9 @@ def build_results(only: set[str]) -> dict[str, dict]:
     out: dict[str, dict] = {}
     # 栗野さんの受け持ちの機能（WORK_SPLIT.tsv）は、栗野さんが流して判定し項目表に載せる（2026-11-11 依頼者決定）。ここでは書かない
     split = {r["機能ID"]: r["受け持ち"] for r in read_tsv(E2E / "review" / "WORK_SPLIT.tsv")}
+    # ただし、依頼者の指示でこちらが流し直して判定・起票したケース（config/sheet_split_exceptions.tsv）は書く。
+    # 当たるのは項目表で実施者「齋藤」の行だけ（fix_row の決まりどおり。栗野さんの行・空欄の行は触らない）
+    split_except = {r["テストID"] for r in read_tsv(SPLIT_EXCEPT_FILE)}
     # 流せない・移行しないと決めたケースは、開発環境の判定が「未判定」でも、下の一覧の「実施不可」「実施不要」を書く
     # （2026-11-17。M04-25 の 029・030 など、正本が求める店舗の設定を作れず未判定になったもの）
     listed = {n["テストID"] for n in read_tsv(NOT_RUNNABLE)} | {n["テストID"] for n in read_tsv(NOT_NEEDED)}
@@ -102,10 +107,13 @@ def build_results(only: set[str]) -> dict[str, dict]:
         fid = jf.stem
         if only and fid not in only:
             continue
-        if split.get(fid) == "栗野さん":
+        kurino = split.get(fid) == "栗野さん"
+        if kurino and not any(t[3:9] == fid for t in split_except):
             continue
         for j in read_tsv(jf):
             tid = j["テストID"]
+            if kurino and tid not in split_except:
+                continue
             rf = EVID / fid / tid / "result.json"
             if not rf.exists():
                 continue
