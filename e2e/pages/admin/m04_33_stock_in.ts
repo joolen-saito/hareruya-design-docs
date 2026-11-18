@@ -34,6 +34,9 @@ export async function 入庫して承認する(browser: Browser, seedId: string,
     const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === v.registrant.名前
       && Number(r.id) > baseline && r.changeType.endsWith("入庫/その他") && r.quantity === String(total));
     if (rows.length === 0) throw new Error(`${seedId}: 在庫編集承認一覧（?id=${srcs[0]}）に、${v.registrant.名前} の在庫変更CSV登録（合計 ${total}）の未承認の行が無い`);
+    // 2026-11-17 のアプリの直し（ECCUBE_HARERUYA-4094。在庫承認の検索で店舗が必須）のあと、「?id=」で開いた一覧は検索欄の店舗が空のままで、
+    // 「一括承認」がブラウザの入力チェックで止まり、確認のモーダルが開かない（11/18 M04-33・34 の23件）。店舗を選ぶだけにする（検索はしない）
+    if (await list.ensureShopChosen(v.店名)) issue(`在庫編集承認一覧（?id=${srcs[0]}）の検索欄の店舗が空だったので「${v.店名}」を選んでから一括承認した（検索はしていない）`);
     if (!rows[0].shop.startsWith(v.店名)) issue(`在庫編集承認一覧の行の店舗の表示が「${rows[0].shop}」（店名「${v.店名}」で始まらない）。DB の絞り込みの値で開いた行を承認した`);
     await list.approve([rows[0].id], `${seedId}: 在庫変更CSV登録の承認`, issue);
   });
