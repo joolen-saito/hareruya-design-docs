@@ -2,6 +2,7 @@
 import { expect, Locator, Page } from "@playwright/test";
 import { メンバーの部署名 } from "../../db/member";
 import { available as dbAvailable } from "../../lib/db";
+import { selectAllStoresIfEmpty } from "../../lib/required_stores";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 
@@ -27,6 +28,8 @@ export class StockListPage {
     await this.page.goto(adminUrl("/product/stock"));
     await expect(this.form, "在庫検索一覧の検索欄").toBeVisible();
     await this.form.locator("#admin_search_stock_list_product_code").fill(code);
+    // 2026-11-17 の ECCUBE_HARERUYA-4094 で検索欄の店舗が必須になった。空のときだけ全店舗を選ぶ（店舗で絞らないのと同じ結果）
+    await selectAllStoresIfEmpty(this.form, ["admin_search_stock_list_base_info"], "在庫検索一覧");
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 120_000 }),
       this.form.locator('button[type="submit"]').click({ noWaitAfter: true }),
