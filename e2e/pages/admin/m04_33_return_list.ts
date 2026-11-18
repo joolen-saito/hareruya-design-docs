@@ -3,7 +3,7 @@
  * - 店舗編集画面の高額商品閾値1〜3（≪共有の設定≫。店舗ID 1（本店）と 1574（試験支店。2026-11-18 までは 13）は全員が使うので、ケースの開始時に書き換え、終わるたびに戻す）
  * - 在庫移動・振替検索一覧: 作成日の範囲で検索し、表示件数を選び、在庫移動の行を選んで「戻しリストCSV出力」を押し、ダウンロードしたCSVを読む
  */
-import { expect, Locator, Page } from "@playwright/test";
+import { expect, Locator, Page, test } from "@playwright/test";
 import { csvRecords, decodeCsvBytes } from "../../lib/csv";
 import { adminUrl } from "../../lib/session";
 import { expectSaved } from "./common";
@@ -77,10 +77,38 @@ export class ReturnListPage {
     }
     await 作成日.fill(開始);
     await this.form.locator('[name="admin_search_stock_move_transfer[create_date_end]"]').fill(終了);
+    await this.出庫元と入庫先を全店舗にする();
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "load", timeout: T }),
       this.form.locator('button[type="submit"]').first().click(),
     ]);
+  }
+
+  /**
+   * 2026-11-17 のアプリの直し（ECCUBE_HARERUYA-4094）で、検索欄の「出庫元店舗」「入庫先店舗」が必須（複数選択）になった。
+   * 空のままだとブラウザの入力チェックで検索が送られず、画面の移動を待ち続けて止まる（11/18 夜に M04-33・34 の32件が止まった）。
+   * 正本の手順は「作成日で検索する」だけなので、空のときだけ両方を全店舗にして、作成日だけで絞ったのと同じ結果にする（正本の外の補い）。
+   */
+  async 出庫元と入庫先を全店舗にする(): Promise<void> {
+    const ids = ["#admin_search_stock_move_transfer_move_from_base_info", "#admin_search_stock_move_transfer_move_to_base_info"];
+    let 選んだ = false;
+    for (const id of ids) {
+      const sel = this.form.locator(id);
+      if ((await sel.count()) === 0) continue;
+      const done = await sel.evaluate((el) => {
+        const s = el as HTMLSelectElement;
+        if ([...s.selectedOptions].some((o) => o.value !== "")) return false;
+        for (const o of [...s.options]) o.selected = o.value !== "";
+        s.dispatchEvent(new Event("change", { bubbles: true }));
+        const w = window as unknown as { jQuery?: (e: Element) => { trigger: (n: string) => void } };
+        w.jQuery?.(s).trigger("change");
+        return true;
+      });
+      選んだ = 選んだ || done;
+    }
+    if (選んだ) {
+      test.info().annotations.push({ type: "正本の外の補い", description: "在庫移動・振替検索一覧の検索欄の「出庫元店舗」「入庫先店舗」が必須で空だった（2026-11-17 の ECCUBE_HARERUYA-4094 から）ので、両方を全店舗にしてから作成日で検索した（作成日だけで絞るのと同じ結果）" });
+    }
   }
 
   /** 表示件数を選ぶ（選択欄は選んだ件数の一覧へ移る作り）。選べたら true */
