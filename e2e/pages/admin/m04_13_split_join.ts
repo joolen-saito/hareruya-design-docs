@@ -7,6 +7,7 @@
  * 画面の作りは、アプリの在庫の分割・結合・在庫分割結合一覧の画面のテンプレートと、それぞれの画面のスクリプトで確かめた。
  */
 import { Download, ElementHandle, expect, Locator, Page, Response, test } from "@playwright/test";
+import { selectAllStoresIfEmpty } from "../../lib/required_stores";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel } from "./common";
 import { GOODS_ROOT_CATEGORY_ID } from "./product_masters";
@@ -893,6 +894,8 @@ export class SplitJoinListPage {
       for (const t of ["分割元・結合先", "分割先・結合元"] as const) await this.target(t).setChecked(targets.includes(t));
     }
     await this.商品コード.fill(code);
+    // 店舗が必須（ECCUBE_HARERUYA-4094）。空なら全店舗を選ぶ（lib/required_stores.ts）
+    await selectAllStoresIfEmpty(this.form, ["admin_search_stock_split_join_store"], "在庫分割結合検索一覧");
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "load" }),
       this.form.locator('button[type="submit"]').filter({ hasText: "検索" }).click(),

@@ -11,6 +11,7 @@
  * 画面のスクリプトの読み込み（load）を待ってから押す（確認モーダル・入力チェックはスクリプトで動く）。
  */
 import { Dialog, expect, Locator, Page } from "@playwright/test";
+import { selectAllStoresIfEmpty } from "../../lib/required_stores";
 import { rc } from "../../lib/run_marker";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
@@ -464,6 +465,8 @@ export class MoveTransferList {
   }
   field(name: string): Locator { return this.form.locator(`[name="admin_search_stock_move_transfer[${name}]"]`); }
   async pressSearch(): Promise<void> {
+    // 出庫元店舗・入庫先店舗が必須（ECCUBE_HARERUYA-4094）。空なら全店舗を選ぶ（lib/required_stores.ts）
+    await selectAllStoresIfEmpty(this.form, ["admin_search_stock_move_transfer_move_from_base_info", "admin_search_stock_move_transfer_move_to_base_info"], "在庫移動・振替検索一覧");
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "load", timeout: 180_000 }),
       this.form.locator('button[type="submit"]').first().click(),
