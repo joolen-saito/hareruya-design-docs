@@ -116,6 +116,7 @@ export async function 商品を作って入庫する(browser: Browser, seedId: s
           await ap.waitForLoadState("load");
           const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant2 && Number(r.id) > baseline);
           if (rows.length !== 1) throw new Error(`${seedId}: 在庫編集ID ${src} で絞り込んだ在庫編集承認一覧に、未承認の行が ${rows.length} 件（1件のはず）`);
+          if (await list.ensureShopChosen(shop)) issue(`${seedId}: 在庫編集承認一覧の検索欄の店舗が空だったので「${shop}」を選んでから承認した（正本の外の補い）`);
           await 承認する(list, shop, [rows[0].id], `${seedId} の在庫編集の承認`, issue);
         }
       });
@@ -141,6 +142,7 @@ export async function 商品を作って入庫する(browser: Browser, seedId: s
       }
       const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant && Number(r.id) > baseline && r.quantity === String(total));
       if (rows.length === 0) throw new Error(`${seedId}: 在庫編集承認一覧に、登録者「${registrant}」の未承認の行（合計 ${total}）が無い`);
+      if (await list.ensureShopChosen(shop)) issue(`${seedId}: 在庫編集承認一覧の検索欄の店舗が空だったので「${shop}」を選んでから承認した（正本の外の補い）`);
       await 承認する(list, shop, [rows[0].id], `${seedId} の在庫変更CSV登録の承認`, issue);
     });
   });

@@ -174,6 +174,26 @@ export class StockApprovalListPage {
    * 一覧は「未承認が上・登録日の古い順」で、開発環境の本店には8月からの未承認の行が163件残っており、今回の行が1ページ目に出ない。
    * 表示件数は一覧の「/page/1/count/{件数}」で、検索の条件（店舗の絞り込み）はそのまま残る。この一覧そのものを試すケースは open を使う。
    */
+  /**
+   * 「?id=」で開いた一覧で、検索欄の店舗（必須）が空なら、店舗を選ぶだけにする（検索はしない＝id の絞り込みを保つ）。
+   * 店舗が空のままだと「一括承認」でブラウザの入力チェックが検索欄の店舗に掛かり、確認のモーダルが開かない
+   * （2026-11-18 A05-02 の 006 ほか7件。「Please select an item in the list」）。
+   */
+  async ensureShopChosen(shopName: string): Promise<boolean> {
+    const form = this.page.locator("form#form_search_stock_approval_list");
+    const sel = form.locator("#admin_search_stock_approval_list_base_info");
+    if (await sel.count() === 0) return false;
+    const chosen = await sel.evaluate((n) => Array.from((n as HTMLSelectElement).selectedOptions).length);
+    if (chosen > 0) return false;
+    const box = form.locator("#admin_search_stock_approval_list_base_info + span.select2");
+    await box.locator(".select2-selection").click();
+    const option = this.page.locator(".select2-container--open .select2-results__option").filter({ hasText: new RegExp(`^\\s*${shopName}\\s*$`) });
+    await expect(option, `店舗の候補「${shopName}」`).toHaveCount(1);
+    await option.click();
+    await this.page.keyboard.press("Escape");
+    return true;
+  }
+
   async openAll(shopName: string): Promise<void> {
     await this.open(shopName);
     const res = await this.page.goto(adminUrl("/product/stock/approval_list/page/1/count/1000"), { timeout: 120_000 });
