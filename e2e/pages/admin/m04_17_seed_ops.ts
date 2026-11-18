@@ -122,6 +122,8 @@ export async function pendingApprovalRows(page: Page, shop: string): Promise<Pen
   expect(res?.status(), "在庫編集承認一覧（1000件表示）の応答").toBe(200);
   await expect(page.locator("#form_search_stock_approval_list_update"), "在庫編集承認一覧の結果").toBeVisible();
   await page.waitForLoadState("load");
+  // 表示件数のページで検索欄の店舗が空なら、店舗だけを選んでおく（2026-11-18 ECCUBE_HARERUYA-4094 で一覧の検索欄の店舗が必須になった。空のままだと「一括承認」で入力チェックが掛かり確認のモーダルが開かない）
+  await list.ensureShopChosen(shop);
   return (await list.rowValues()).filter((r) => r.status === "未承認");
 }
 

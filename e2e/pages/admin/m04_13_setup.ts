@@ -311,6 +311,8 @@ export async function approveStockIns(page: Page, ins: StockIn[], registrantName
     await page.goto(adminUrl(`/product/stock/approval_list?id=${found[0].src}`));
     await expect(page.locator("#form_search_stock_approval_list_update"), "在庫編集承認一覧の結果").toBeVisible();
     await page.waitForLoadState("load");
+    // 「?id=」で開いた一覧は検索欄の店舗が空のまま（2026-11-18 ECCUBE_HARERUYA-4094 で一覧の検索欄の店舗が必須になった。空のままだと「一括承認」で入力チェックが掛かり確認のモーダルが開かない）。店舗だけを選ぶ（検索はしない）
+    if (await list.ensureShopChosen(試験店舗A)) onIssue(`在庫編集承認一覧（?id=${found[0].src}）の検索欄の店舗が空だったので「${試験店舗A}」を選んでから承認した`);
     const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrantName
       && r.shop.startsWith(試験店舗A) && r.shop.endsWith(s.zone) && r.changeType.endsWith("入庫/その他")
       && r.quantity.replace(/,/g, "") === String(s.quantity));

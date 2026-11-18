@@ -252,6 +252,8 @@ export async function 入庫して承認する(browser: Browser, seedId: string,
       await page.goto(adminUrl(`/product/stock/approval_list?id=${found[0]}`));
       await expect(page.locator("#form_search_stock_approval_list_update"), "在庫編集承認一覧の結果").toBeVisible();
       await page.waitForLoadState("load");
+      // 「?id=」で開いた一覧は検索欄の店舗が空のまま（2026-11-18 ECCUBE_HARERUYA-4094 で一覧の検索欄の店舗が必須になった。空のままだと「一括承認」で入力チェックが掛かり確認のモーダルが開かない）。店舗だけを選ぶ（検索はしない）
+      if (await list.ensureShopChosen(shop)) issue(`${what}: 在庫編集承認一覧の検索欄の店舗が空だったので「${shop}」を選んでから承認した`);
       const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant && r.changeType.endsWith("入庫/その他")
         && r.quantity.replace(/,/g, "") === String(it.数量));
       if (rows.length !== 1) throw new Error(`${what}: 在庫編集の番号 ${found[0]} で絞り込んだ在庫編集承認一覧に、合う未承認の行が ${rows.length} 件（1件のはず）`);

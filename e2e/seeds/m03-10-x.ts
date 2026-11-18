@@ -416,6 +416,8 @@ async function 入庫して承認する(browser: Browser, seedId: string, 規格
     for (const src of srcs.slice(0, 規格.length)) {
       await ap.goto(adminUrl(`/product/stock/approval_list?id=${src}`), { timeout: 60_000 });
       await ap.waitForLoadState("load");
+      // 「?id=」で開いた一覧は検索欄の店舗が空のまま（2026-11-18 ECCUBE_HARERUYA-4094 で一覧の検索欄の店舗が必須になった。空のままだと「一括承認」で入力チェックが掛かり確認のモーダルが開かない）。店舗だけを選ぶ（検索はしない）
+      if (await list.ensureShopChosen(shop)) issue(`${seedId}: 在庫編集承認一覧の検索欄の店舗が空だったので「${shop}」を選んでから承認した`);
       const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant && Number(r.id) > baseline);
       if (rows.length !== 1) throw new Error(`${seedId}: 在庫編集ID ${src} で絞り込んだ在庫編集承認一覧に、未承認の行が ${rows.length} 件（1件のはず）`);
       await list.approve([rows[0].id], `${seedId}: 在庫編集の承認`, issue);

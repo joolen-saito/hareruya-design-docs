@@ -180,6 +180,8 @@ async function fillStockInWithoutDepartment(page: Page, v: StockEditInput): Prom
 export async function approveStockIns(page: Page, store: 店, ins: 入庫[], registrantName: string, onIssue: (m: string) => void): Promise<void> {
   const list = new StockApprovalListPage(page);
   await list.open(store);
+  // 表示件数のページで検索欄の店舗が空なら、店舗だけを選んでおく（2026-11-18 ECCUBE_HARERUYA-4094 で一覧の検索欄の店舗が必須になった。空のままだと「一括承認」で入力チェックが掛かり確認のモーダルが開かない）
+  if (await list.ensureShopChosen(store)) onIssue(`在庫編集承認一覧の検索欄の店舗が空だったので「${store}」を選んでから承認した`);
   const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrantName
     && r.shop.startsWith(store) && r.changeType.endsWith("入庫/その他"));
   const ids: string[] = [];
