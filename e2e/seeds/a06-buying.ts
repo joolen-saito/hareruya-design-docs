@@ -87,6 +87,11 @@ export type カード商品の定め = {
   規格を廃止?: boolean;
   /** 商品規格に入れる高額商品コード */
   高額商品コード?: string;
+  /**
+   * 商品名(日)・商品名(英)に実行の印を付けず、渡した値のまま使う（呼ぶ側が印を名前の途中に入れたとき。
+   * 前方一致や記号の検索で、印を検索語の後ろに置けないため。A06-08 の 002・004・022・024）
+   */
+  名前はそのまま?: boolean;
 };
 
 /** 試験用のカード（カード名に実行の印）を1枚、詳細数件のカード詳細つきで登録する */
@@ -99,8 +104,8 @@ export type 作ったカード商品 = { 商品ID: string; 規格ID: string; カ
 export async function カード商品を作る(browser: Browser, seedId: string, d: カード商品の定め): Promise<作ったカード商品> {
   const issue = (m: string) => reportSeedIssue(seedId, m);
   const 商品コード = rc(d.商品コード);
-  const 商品名日 = rc(d.商品名日);
-  const 商品名英 = rc(d.商品名英);
+  const 商品名日 = d.名前はそのまま ? d.商品名日 : rc(d.商品名日);
+  const 商品名英 = d.名前はそのまま ? d.商品名英 : rc(d.商品名英);
   const out = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     const made = !d.カード && d.カード名日 && d.カード名英

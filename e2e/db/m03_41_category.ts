@@ -65,3 +65,18 @@ export function 親の下の名称のカテゴリ(親カテゴリID: string, 名
 export function 名称か英名が一致するカテゴリ(名前: string): カテゴリの保存内容[] {
   return query(`${SELECT} where category_name = $1 or category_name_en = $1 order by id`, [名前]).map(as);
 }
+
+/** カテゴリの表の全レコード数（正本の「登録前のカテゴリの全レコード数」。2026-11-20 に 060〜068 のために足した） */
+export function カテゴリの全レコード数(): number {
+  return Number(query(`select count(*)::text as n from dtb_category`)[0]?.n ?? "0");
+}
+
+/** カテゴリに結び付く商品の数（正本の「対象商品数」。カテゴリの表に件数の列は無いので、商品とカテゴリの結び付きの行を数える） */
+export function カテゴリの対象商品数(カテゴリID: string): number {
+  return Number(query(`select count(*)::text as n from dtb_product_category where category_id = $1`, [カテゴリID])[0]?.n ?? "0");
+}
+
+/** 最上位（親なし）で、表示順がその値より大きいカテゴリの数（068 の「後続カテゴリなし」の確かめ。数えるだけ） */
+export function 最上位で表示順がより大きいカテゴリの数(表示順: number): number {
+  return Number(query(`select count(*)::text as n from dtb_category where parent_category_id is null and sort_no > $1`, [String(表示順)])[0]?.n ?? "0");
+}

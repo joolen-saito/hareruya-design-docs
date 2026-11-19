@@ -29,6 +29,7 @@ import {
   CategoryCsvUploadPage, createChildFromList, exportedCategoryRow, purgeCategoriesInTree, readCategoryCsvOutputItems,
 } from "../pages/admin/m03_41_category_csv";
 import { buildCaseCsv, CaseCsvFile } from "../pages/admin/m03_41_csv_file";
+import { カテゴリの全レコード数, カテゴリの対象商品数, 最上位で表示順がより大きいカテゴリの数 } from "../db/m03_41_category";
 
 /**
  * シード表のログインID・名前は、開発環境にほかの方が手動テストの準備で登録した同じ値のメンバーがあり得る（同名・同じログインIDは登録できず、
@@ -670,4 +671,126 @@ defineCaseSeed("S-M03-41-NOPARENT-054", async (o) => {
   await o.file("parent_blank_depth3-054.csv", [newRow("parent_blank_depth3-054.csv", "親未指定階層3カテゴリ-054", {
     "カテゴリ名(英)": "No Parent Category-054", 親カテゴリID: "", 階層: "3",
   })]);
+});
+
+// ---- 11/20 に足したシード（060・062〜068。組合せの削除・更新） ----
+// どれも正本が削除フラグの値（0 か 1）を書くファイルを使う。雛形の見出しに削除フラグの列が無いあいだは前提を作れないので、
+// カテゴリを作る前に止める（020・030 と同じ。記録の裁定案1）。列が足されたときのために、作り方の続きも書いておく。
+// 061 は「商品が紐付く階層2のカテゴリ」を作る部品（グッズ商品をこのカテゴリに付ける）がまだ無いので書いていない（032 と同じ。記録に書く）。
+
+// 060: 子カテゴリが紐付く最上位のカテゴリの削除フラグ1
+defineCaseSeed("S-M03-41-CBDELCHILDTOP-060", async (o) => {
+  await requireDeleteFlagColumn(o, "削除フラグ1の行でも、子カテゴリが紐付く最上位のカテゴリが削除されないこと");
+  const a = await o.top("削除親M0341-CB060A", "M0341 Category-CB060A");
+  o.note("060A", a);
+  const b = await o.child(a, null, "削除子M0341-CB060B", "M0341 Category-CB060B");
+  o.note("060B", b);
+  await o.file("delete_child_top-M0341-CB060.csv", [await o.fromExport(a, {
+    "カテゴリ名(日)": "削除親M0341-CB060A", "カテゴリ名(英)": "M0341-CB060-A", 親カテゴリID: "0", フロント非表示フラグ: "0", 支店非表示フラグ: "0", [DELETE_FLAG]: "1",
+  })], { 削除フラグ: true });
+});
+
+// 062: 最上位への新規登録（削除フラグ0）。CSVの階層99・対象商品数999は使われない
+defineCaseSeed("S-M03-41-CBNEWTOP-062", async (o) => {
+  await requireDeleteFlagColumn(o, "削除フラグ0の新規の行が最上位に登録され、階層・表示ランク・対象商品数がCSVの値でなくアプリの決めた値になること");
+  await o.purgeNames(["新規最上位M0341-CB062"]);
+  o.notes.set("〔全レコード数-M0341-062〕", String(カテゴリの全レコード数()));
+  const f = "new_top-M0341-CB062.csv";
+  await o.file(f, [newRow(f, "新規最上位M0341-CB062", {
+    "カテゴリ名(英)": "M0341-CB062-New", 親カテゴリID: "0", 階層: "99", 対象商品数: "999", [DELETE_FLAG]: "0",
+  })], { 削除フラグ: true });
+});
+
+// 063: 子カテゴリが紐付く最上位のカテゴリの更新（削除フラグ0）と、後続のカテゴリの表示順の維持
+defineCaseSeed("S-M03-41-CBUPDTOPFOLLOW-063", async (o) => {
+  await requireDeleteFlagColumn(o, "削除フラグ0の更新の行で最上位のカテゴリが更新され、後続のカテゴリの表示順が変わらないこと");
+  const a = await o.top("更新親M0341-CB063A", "M0341 Category-CB063A");
+  o.note("063A", a);
+  const b = await o.child(a, null, "更新子M0341-CB063B", "M0341 Category-CB063B");
+  o.note("063B", b);
+  const c = await o.top("後続M0341-CB063C", "M0341 Category-CB063C");
+  o.note("063C", c);
+  await o.setRank({ id: a, rank: "7063", nameJp: "更新親M0341-CB063A", nameEn: "M0341 Category-CB063A", parentId: "0" });
+  await o.setRank({ id: c, rank: "7064", nameJp: "後続M0341-CB063C", nameEn: "M0341 Category-CB063C", parentId: "0" });
+  o.notes.set("〔対象商品数-M0341-063〕", String(カテゴリの対象商品数(a)));
+  await o.file("update_top_child-M0341-CB063.csv", [updateRow(
+    { id: a, rank: "7063", nameJp: "更新後親M0341-CB063A", nameEn: "M0341-CB063-A-After", parentId: "0" }, { 階層: "99", 対象商品数: "999", [DELETE_FLAG]: "0" },
+  )], { 削除フラグ: true });
+});
+
+// 064: 階層1の親の下で最後の1件の、紐付きの無いカテゴリの削除フラグ1
+defineCaseSeed("S-M03-41-CBDELLASTCHILD-064", async (o) => {
+  await requireDeleteFlagColumn(o, "削除フラグ1の行で、紐付きの無い階層2のカテゴリが削除され、親は削除されないこと");
+  const p = await o.top("削除親M0341-CB064P", "M0341 Category-CB064P");
+  o.note("064P", p);
+  const x = await o.child(p, null, "削除対象M0341-CB064X", "M0341 Category-CB064X");
+  o.note("064X", x);
+  await o.setRank({ id: x, rank: "1", nameJp: "削除対象M0341-CB064X", nameEn: "M0341 Category-CB064X", parentId: p });
+  // 「削除対象M0341-CB064X」には子カテゴリを作らず、どの商品の商品カテゴリにも付けない（何もしない）
+  await o.file("delete_depth2_last-M0341-CB064.csv", [updateRow(
+    { id: x, rank: "1", nameJp: "削除対象M0341-CB064X", nameEn: "M0341-CB064-X", parentId: p }, { [DELETE_FLAG]: "1" },
+  )], { 削除フラグ: true });
+});
+
+// 065: 紐付きの無い最上位のカテゴリの削除フラグ1と、後続のカテゴリの表示順の繰り上げ
+defineCaseSeed("S-M03-41-CBDELTOPFOLLOW-065", async (o) => {
+  await requireDeleteFlagColumn(o, "削除フラグ1の行で最上位のカテゴリが削除され、後続のカテゴリの表示順が1つ繰り上がること");
+  const d = await o.top("削除対象M0341-CB065D", "M0341 Category-CB065D");
+  o.note("065D", d);
+  const e = await o.top("後続M0341-CB065E", "M0341 Category-CB065E");
+  o.note("065E", e);
+  await o.setRank({ id: d, rank: "7065", nameJp: "削除対象M0341-CB065D", nameEn: "M0341 Category-CB065D", parentId: "0" });
+  await o.setRank({ id: e, rank: "7066", nameJp: "後続M0341-CB065E", nameEn: "M0341 Category-CB065E", parentId: "0" });
+  await o.file("delete_top_follow-M0341-CB065.csv", [updateRow(
+    { id: d, rank: "7065", nameJp: "削除対象M0341-CB065D", nameEn: "M0341-CB065-D", parentId: "0" }, { [DELETE_FLAG]: "1" },
+  )], { 削除フラグ: true });
+});
+
+// 066: 階層2の親の下への新規登録（削除フラグ0）。CSVの階層99は使われない
+defineCaseSeed("S-M03-41-CBNEWDEPTH3-066", async (o) => {
+  await requireDeleteFlagColumn(o, "削除フラグ0の新規の行が階層2の親の下に階層3で登録されること");
+  const g = await o.top("親M0341-CB066G", "M0341 Category-CB066G");
+  o.note("066G", g);
+  const h = await o.child(g, null, "中間M0341-CB066H", "M0341 Category-CB066H");
+  o.note("066H", h);
+  await o.purgeNames(["新規子M0341-CB066N"]);
+  o.notes.set("〔全レコード数-M0341-066〕", String(カテゴリの全レコード数()));
+  const f = "new_depth3-M0341-CB066.csv";
+  await o.file(f, [newRow(f, "新規子M0341-CB066N", { "カテゴリ名(英)": "M0341-CB066-New", 親カテゴリID: h, 階層: "99", [DELETE_FLAG]: "0" })], { 削除フラグ: true });
+});
+
+// 067: 子カテゴリが紐付く階層2のカテゴリの更新（削除フラグ0）と、後続のカテゴリの表示順の維持
+defineCaseSeed("S-M03-41-CBUPDDEP2FOLLOW-067", async (o) => {
+  await requireDeleteFlagColumn(o, "削除フラグ0の更新の行で階層2のカテゴリが更新され、後続のカテゴリの表示順が変わらないこと");
+  const p = await o.top("親M0341-CB067P", "M0341 Category-CB067P");
+  o.note("067P", p);
+  const x = await o.child(p, null, "更新対象M0341-CB067X", "M0341 Category-CB067X");
+  o.note("067X", x);
+  const z = await o.child(p, null, "後続M0341-CB067Z", "M0341 Category-CB067Z");
+  o.note("067Z", z);
+  const y = await o.child(x, p, "孫M0341-CB067Y", "M0341 Category-CB067Y");
+  o.note("067Y", y);
+  await o.setRank({ id: x, rank: "2", nameJp: "更新対象M0341-CB067X", nameEn: "M0341 Category-CB067X", parentId: p });
+  await o.setRank({ id: z, rank: "3", nameJp: "後続M0341-CB067Z", nameEn: "M0341 Category-CB067Z", parentId: p });
+  o.notes.set("〔対象商品数-M0341-067〕", String(カテゴリの対象商品数(x)));
+  await o.file("update_depth2_child-M0341-CB067.csv", [updateRow(
+    { id: x, rank: "2", nameJp: "更新後対象M0341-CB067X", nameEn: "M0341-CB067-X-After", parentId: p }, { 階層: "99", [DELETE_FLAG]: "0" },
+  )], { 削除フラグ: true });
+});
+
+// 068: 子カテゴリが紐付く、最上位で最後のカテゴリの更新（削除フラグ0）
+// 作り方の(4)「最上位で表示ランクが7068を超えるカテゴリがあれば削除する」は、ほかの方のカテゴリを消すことになるので、数えるだけにし、あれば止める
+defineCaseSeed("S-M03-41-CBUPDTOPLAST-068", async (o) => {
+  await requireDeleteFlagColumn(o, "削除フラグ0の更新の行で、最上位で最後のカテゴリが更新されること");
+  const a = await o.top("更新親M0341-CB068A", "M0341 Category-CB068A");
+  o.note("068A", a);
+  const b = await o.child(a, null, "更新子M0341-CB068B", "M0341 Category-CB068B");
+  o.note("068B", b);
+  await o.setRank({ id: a, rank: "7068", nameJp: "更新親M0341-CB068A", nameEn: "M0341 Category-CB068A", parentId: "0" });
+  const n = 最上位で表示順がより大きいカテゴリの数(7068);
+  if (n !== 0) throw new Error(`${o.seedId}: 最上位で表示ランクが7068を超えるカテゴリが ${n} 件ある（後続カテゴリなしの前提を満たせない。ほかの方のカテゴリかもしれないので消さない）`);
+  o.notes.set("〔対象商品数-M0341-068〕", String(カテゴリの対象商品数(a)));
+  await o.file("update_top_last-M0341-CB068.csv", [updateRow(
+    { id: a, rank: "7068", nameJp: "更新後親M0341-CB068A", nameEn: "M0341-CB068-A-After", parentId: "0" }, { 階層: "99", [DELETE_FLAG]: "0" },
+  )], { 削除フラグ: true });
 });
