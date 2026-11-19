@@ -12,10 +12,28 @@
  * - 在庫移動指示詳細で送状No.を入れると「登録」が押せる。
  */
 import { expect, Locator, Page } from "@playwright/test";
+import { query } from "../../lib/db";
 import { adminUrl } from "../../lib/session";
 import { chooseByLabel, expectSaved } from "./common";
 import { chooseMembers } from "./m04_19_stock_change_csv";
 import { StockListPage } from "./stock_edit";
+
+/**
+ * 店舗の選択欄で、店名の選択肢を選ぶ。店名が選択肢に無いときは、店名から店舗IDを DB で引き、その値の選択肢を選ぶ
+ * （店舗ID 1 は、画面によって「晴れる屋テスト店」「Hareruya」「トーナメントセンター 東京」など表示が違う。2026-11-19）。選んだことは onWarning で注記に残す。
+ */
+async function chooseStore(select: Locator, 店名: string, what: string, onWarning: (w: string) => void): Promise<void> {
+  const have = (await select.locator("option").allInnerTexts()).map((t) => t.trim());
+  if (have.includes(店名)) { await chooseByLabel(select, 店名); return; }
+  const rows = query("select id::text as id from dtb_base_info where shop_name = $1", [店名]);
+  if (rows.length !== 1) throw new Error(`${what}: 店舗の選択肢「${店名}」が無く、店名で引いた店舗も ${rows.length} 件（1件のはず）`);
+  const id = String(rows[0].id);
+  const opt = select.locator(`option[value="${id}"]`);
+  if ((await opt.count()) !== 1) throw new Error(`${what}: 店舗の選択肢「${店名}」（店舗ID ${id}）が無い（ある選択肢: ${have.filter(Boolean).slice(0, 8).join("、")}…）`);
+  const label = ((await opt.textContent()) ?? "").trim();
+  await select.selectOption({ value: id });
+  onWarning(`${what}: 店舗の選択肢に「${店名}」が無いので、同じ店舗（店舗ID ${id}）の選択肢「${label}」を値で選んだ（画面によって店名の表示が違う）`);
+}
 
 /** 在庫移動・振替の情報の欄で、見出しの右に表示された値 */
 async function infoValue(page: Page, 見出し: string): Promise<string> {
@@ -184,8 +202,8 @@ export async function registerTrackingNo(page: Page, 在庫移動振替ID: strin
   await page.waitForLoadState("load");
   const search = page.locator('form[name="admin_search_stock_move_instruction"]');
   await expect(search, `${what}: 在庫移動指示一覧の検索欄`).toBeVisible();
-  await chooseByLabel(search.locator("#admin_search_stock_move_instruction_move_from_base_info"), 店舗.出庫元店舗);
-  await chooseByLabel(search.locator("#admin_search_stock_move_instruction_move_to_base_info"), 店舗.入庫先店舗);
+  await chooseStore(search.locator("#admin_search_stock_move_instruction_move_from_base_info"), 店舗.出庫元店舗, `${what}（在庫移動指示一覧の出庫元店舗）`, onWarning);
+  await chooseStore(search.locator("#admin_search_stock_move_instruction_move_to_base_info"), 店舗.入庫先店舗, `${what}（在庫移動指示一覧の入庫先店舗）`, onWarning);
   await search.locator("#admin_search_stock_move_instruction_stock_move_transfer_id").fill(在庫移動振替ID);
   await Promise.all([
     page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: NAVIGATION_WAIT_MS }),

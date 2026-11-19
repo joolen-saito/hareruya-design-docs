@@ -3,7 +3,10 @@
  *
  * 画面の作り（pages/admin/m04_09_move.ts の MoveTransferList）のうち、手順の読み方にかかわるもの:
  * - 一覧は、開いたときに初期の条件で検索した結果を出す（在庫移動・振替IDの降順。設計書 L0078）。正本の「一覧画面で ID … を選択する」は、
- *   開いた一覧の行の選択欄にチェックを入れること。行が一覧に出ていないときは、その手順を実行できない（検索を補わない）。
+ *   開いた一覧の行の選択欄にチェックを入れること。
+ * - 2026-11-17 の ECCUBE_HARERUYA-4094（3ec1343d37）から、開発環境の一覧は開いた直後に検索しない（行が出ない）。行が出ていなければ、
+ *   条件を入れずに「検索」を押して、設計書の「初期の条件で検索した結果」を出してから選ぶ（正本の外の補い。エビデンスに注記する）。
+ *   出庫元店舗・入庫先店舗が必須になったので、pressSearch が空なら全店舗を選ぶ（lib/required_stores.ts）。
  * - バーコード印刷用CSV出力・在庫移動振替CSV出力・戻しリストCSV出力は、ファイルのダウンロードになる。戻しリストPDF出力は、別のウィンドウに
  *   表示する作り（ダウンロードにはならない）。ダウンロードは、ブラウザのダウンロードの発生で確かめる。
  */
@@ -24,13 +27,21 @@ async function login(page: Page, account: Account): Promise<void> {
 }
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
+const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
 
 /** 一覧の行の選択欄にチェックを入れる（行が一覧に出ていなければ、その手順は実行できない） */
 async function selectRows(list: MoveTransferList, ids: string[]): Promise<void> {
-  const shown = await list.listedIds();
+  let shown = await list.listedIds();
+  if (ids.some((id) => !shown.includes(id))) {
+    // 4094（2026-11-17）から、一覧は開いた直後に検索しない。条件を入れずに検索して、初期の条件の結果を出す
+    const before = shown.length;
+    await list.pressSearch();
+    shown = await list.listedIds();
+    supplement(`開いた直後の一覧に行が ${before} 件で、選ぶ行が無かった（ECCUBE_HARERUYA-4094 から開いた直後に検索しない）。条件を入れずに「検索」を押し、設計書の「初期の条件で検索した結果」を出してから選んだ`);
+  }
   note(`一覧に出ている行（上から）: ${shown.join("・")}`);
   for (const id of ids) {
-    if (!shown.includes(id)) throw new Error(`在庫移動・振替ID ${id} の行が一覧に出ていない（開いた一覧の初期の結果に無い）ので選択できない`);
+    if (!shown.includes(id)) throw new Error(`在庫移動・振替ID ${id} の行が一覧に出ていない（条件を入れずに検索した結果にも無い）ので選択できない`);
     await list.check(id).check();
   }
 }
