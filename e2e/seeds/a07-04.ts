@@ -97,10 +97,10 @@ defineSeed("S-A07-04-AC-PRODUCT", async ({ browser, seed }) => {
   const コード = rc("A0704-AC-PRODUCT");
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    await サプライ品を登録する(page, [{ コード, 名前: AC乙(), 基準価格: "1000", 買取価格: "100" }], (m) => reportSeedIssue(seed.シードID, m));
+    await サプライ品を登録する(page, [{ コード, 名前: AC乙(), 基準価格: "1000", 買取価格: "500" }], (m) => reportSeedIssue(seed.シードID, m));
   });
   if (!商品IDをコードから(コード)) throw new Error(`商品コード ${コード} の商品が登録されていない`);
-  reportSeedIssue(seed.シードID, `シード作成時の問題: 商品はグッズ商品CSV登録で作った（商品コード ${コード}・商品名 ${AC乙()}。実行の印つき。買取価格100円）`);
+  reportSeedIssue(seed.シードID, `シード作成時の問題: 商品はグッズ商品CSV登録で作った（商品コード ${コード}・商品名 ${AC乙()}。実行の印つき。買取価格500円。シード表の値と違うことがあるが、フロントのネット買取は買取価格500円以上の商品でないと申し込めないため・期待結果は受注のステータスだけを見るので効かない）`);
 });
 for (const [id, l] of [["S-A07-04-AC-ORDER-024", "AC001"], ["S-A07-04-AC-ORDER-025", "AC002"], ["S-A07-04-AC-ORDER-026", "AC003"]]) {
   defineSeed(id, { needs: ["S-A07-04-AC-PRODUCT"] }, async ({ browser, seed, notes }) => {
