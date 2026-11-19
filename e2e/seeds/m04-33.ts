@@ -44,7 +44,8 @@ import { ShelfNumberPage } from "../pages/admin/m03_21_shelf_number";
 import { openProductEditByCode } from "../pages/admin/m03_23_seed_products";
 import { storeNameById } from "../pages/admin/m04_19_masters";
 import { ShortTagPage } from "../pages/admin/short_tag";
-import { Actor, buildInstruction } from "./m04-25";
+import { Actor } from "./m04-25";
+import { buildInstructionFast } from "./m04-33-move";
 import { ensureActorWithStores as ensureActor } from "../pages/admin/m04_33_actor";
 import { 試験支店ID } from "../pages/admin/test_store";
 import { 試験支店の店舗ID } from "../pages/admin/reuse_store";
@@ -264,7 +265,7 @@ async function 作る(ctx: SeedCtx, d: ケースの定め): Promise<void> {
   for (const k of [...new Set(d.品.map((p) => p.入庫先))]) {
     const ps = d.品.filter((p) => p.入庫先 === k);
     const local = new Notes();
-    await buildInstruction({ browser, notes: local, seed }, {
+    await buildInstructionFast({ browser, notes: local, seed }, {
       出庫元: { 店舗ID: 出庫元, 店名: 出庫元の店名 }, 入庫先: { 店舗ID: 入庫先の店舗ID(k) },
       operator: M0433_ADMIN, approver: 出庫承認者,
       moves: ps.map((p) => ({ 方法: "csv" as const, 行: [{ 商品コード: rc(p.商品コード), 移動点数: p.数量 }], 呼び名: `〔在庫移動-${p.記号}〕` })),
