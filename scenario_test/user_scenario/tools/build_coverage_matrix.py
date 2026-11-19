@@ -44,6 +44,7 @@ BIZ = {
     "ネット買取": ["14"],
     "仕入れ業務": ["15"],
     "デッキ登録": ["18"],
+    "スマレジ連携": [],  # 店舗販売（スマレジ経由の購入パターン）。業務フローの工程は持たない（2026-11-10 依頼者決定でシートを足した）
 }
 
 STEP = re.compile(r"^- \*\*R(\d+)\*\*: \*\*\[＃\]\*\* ([^｜]+?)(?:　｜　(.*))?$")
@@ -169,13 +170,15 @@ def gate():
                 errors.append(f"{biz}/step_map: 扱いが「{scope[key]}」の工程に対応がある {key}")
             errors += check_quote(biz, "step_map", r, idx)
         fac = {r["値ID"]: r for r in read(d / "factors.tsv")}
-        for r in read(d / "cond_map.tsv"):
-            if r["値ID"] not in fac:
-                errors.append(f"{biz}/cond_map: factors に無い値ID {r['値ID']}")
-                continue
-            if fac[r["値ID"]]["扱い"] != "対象":
-                errors.append(f"{biz}/cond_map: 扱いが「{fac[r['値ID']]['扱い']}」の値に対応がある {r['値ID']}")
-            errors += check_quote(biz, "cond_map", r, idx)
+        for name in ("cond_map.tsv", "pattern_map.tsv"):  # pattern_map は〇表の〇。網羅でも通るに数える
+            nm = name[:-4]
+            for r in read(d / name):
+                if r["値ID"] not in fac:
+                    errors.append(f"{biz}/{nm}: factors に無い値ID {r['値ID']}")
+                    continue
+                if fac[r["値ID"]]["扱い"] != "対象":
+                    errors.append(f"{biz}/{nm}: 扱いが「{fac[r['値ID']]['扱い']}」の値に対応がある {r['値ID']}")
+                errors += check_quote(biz, nm, r, idx)
     return errors, idx
 
 
@@ -189,6 +192,20 @@ def check_quote(biz, name, r, idx):
     if norm(q) not in norm(idx[sid][1]):
         return [f"{biz}/{name}: 引用が {sid} 自身の行・L4・マトリクスに無い（{idx[sid][0]}）「{q[:40]}」"]
     return []
+
+
+def test_level_marks(biz):
+    """テスト単位の〇表（build_test_pattern_matrix.py）の〇を、値ID → {シナリオID} で返す。"""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import build_test_pattern_matrix as t
+    from build_pattern_matrix import strict_index
+    tests, by_sid, mdirs = t.load_tests()
+    _, marks, _, _ = t.build_marks(biz, strict_index(scenario_index()), tests, by_sid, mdirs)
+    out = defaultdict(set)
+    for tid, vs in marks.items():
+        for v in vs:
+            out[v].add(tid.split("/")[0])
+    return out
 
 
 def cmd_steps():
@@ -255,8 +272,10 @@ def cmd_xlsx(path):
                 gaps.append(["工程", biz, f"{s['業務フロー']} {s['R']} {s['#']}", s["作業概要"]])
         facs = read(d / "factors.tsv")
         cmap = defaultdict(list)
-        for r in read(d / "cond_map.tsv"):
+        for r in read(d / "cond_map.tsv") + read(d / "pattern_map.tsv"):
             cmap[r["値ID"]].append(r["シナリオID"].strip())
+        for vid, sids in test_level_marks(biz).items():  # テスト単位の〇表の〇も「通る」に数える
+            cmap[vid] += sorted(sids)
         ct = defaultdict(int)
         for f in facs:
             ids = sorted(set(cmap.get(f["値ID"], [])))
@@ -279,7 +298,8 @@ def cmd_xlsx(path):
     for sheet, judge_col, first_folder in ((ws, 8, 9), (wc, 7, 8)):
         for row in sheet.iter_rows(min_row=2):
             j = row[judge_col - 1].value
-            row[judge_col - 1].fill = fill.get(j, fill["other"])
+            if j in fill:  # 通る・抜け・判断待ちだけ色を付ける（対象外に灰色は使わない。灰色は削除の意味に取られる）
+                row[judge_col - 1].fill = fill[j]
             for c in row[first_folder - 1:first_folder - 1 + len(folders)]:
                 if c.value:
                     c.fill = fill["cell"]

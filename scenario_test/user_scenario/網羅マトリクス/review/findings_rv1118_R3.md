@@ -1,0 +1,4 @@
+- 主張：[店頭受取受注管理/scenario_list.md:17](/home/y-saito/Developments/hareruya-design-docs/scenario_test/user_scenario/店頭受取受注管理/scenario_list.md:17) の UOR-02 の L3 に「受け取りの確認が本店と支店で違う（注文日・名前／注文番号）」が残り、[cond_map.tsv:2](/home/y-saito/Developments/hareruya-design-docs/scenario_test/user_scenario/網羅マトリクス/店頭受取受注管理/cond_map.tsv:2) でもその確認方法を別の値の〇の根拠に使っている。
+- 実際：[反映記録:7](/home/y-saito/Developments/hareruya-design-docs/scenario_test/user_scenario/店頭受取受注管理/review/レビュー指摘反映_2026-11-18.md:7) は、この確認方法に当たる D12-1〜4 を「適用外」にし、〇を外したと明記する。[factors.tsv:78](/home/y-saito/Developments/hareruya-design-docs/scenario_test/user_scenario/網羅マトリクス/店頭受取受注管理/factors.tsv:78) も「受け取り時に何を確かめるかは数量・金額・在庫のDBの値に影響しない」とする。
+- 判定：取り残し
+- 修正案：UOR-02 の L3 から確認方法の違いを外し、cond_map の P-01・P-03・B1-1・B3-1 は、残す本店・支店の業務分岐を示す文を根拠にする。

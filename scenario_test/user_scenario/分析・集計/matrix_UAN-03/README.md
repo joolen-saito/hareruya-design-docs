@@ -30,7 +30,7 @@ IPA「高信頼化ソフトウェアのための開発手法ガイドブック�
 - 毎日のバッチは「前日に更新された受注・買取・在庫履歴」を探し、それらの集計日（注文日・申込日・履歴の登録日）を洗い替える。前日は必ず洗い替える。受注は更新日時のほか削除した日時でも見つける（`SummaryRecalculateTargetDateResolver.php` 全体、`DtbDailySummaryRepository.php` 148〜200行目）
 - 日付を指定してバッチを実行すると、その日の日別だけを洗い替える（`DailySummaryAggregateCommand.php` 84〜95行目）。月別は別のコマンドで、月を指定して流す（`MonthlySummaryAggregateCommand.php` 33〜41行目・86〜96行目）。月別は日別の合算なので日別のあとに流す（`MonthlySummaryAggregateCommand.php` の説明・`BatchAggregateMonthlySummaryAction.php`）
 - バッチが止まった間の変化は拾えない。日付を指定して流し直す前提（`SummaryRecalculateTargetDateResolver.php` の説明）
-- 設計書に、この日別・月別集計のバッチのシートは無い。実行の時刻もわからない（`scenario_list.md` の食い違い・判断待ち）
+- 設計書に、この日別・月別集計のバッチのシートは無い。実行の時刻もわからない。日付指定で流して確かめる（`scenario_list.md` の決着の節 #1）
 
 ## まとめた水準
 

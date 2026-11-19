@@ -85,6 +85,8 @@ def feasible(levels, factors, bans):
 def build(factors, bans):
     fids = list(factors)
     lv = {f: factors[f][1] for f in fids}
+    if len(fids) == 1:  # 因子が1つなら、水準ごとに1本
+        return [[v] for v in lv[fids[0]] if feasible((v,), factors, bans)]
     targets = set()
     for fa, fb in itertools.combinations(fids, 2):
         for a in lv[fa]:
@@ -203,8 +205,9 @@ def main():
         w.writerow(head + ["水準ID"])
         for i, row in enumerate(rows, 1):
             w.writerow([f"T{i:02d}"] + [level_name[v] for v in row] + [" ".join(row)])
-    pct2 = 100 * c2[0] / c2[1]
-    pct3 = 100 * c3[0] / c3[1]
+    # 因子が2つ以下だと組の数が0になる。そのときは網羅率を100%として扱う（数える組が無い）
+    pct2 = 100 * c2[0] / c2[1] if c2[1] else 100.0
+    pct3 = 100 * c3[0] / c3[1] if c3[1] else 100.0
     with open(HERE / f"matrix{suffix}.md", "w", encoding="utf-8") as f:
         title = (HERE / "README.md").read_text(encoding="utf-8").splitlines()[0].lstrip("# ").strip()
         f.write(f"# {title}：組み合わせテストマトリクス\n\n")
