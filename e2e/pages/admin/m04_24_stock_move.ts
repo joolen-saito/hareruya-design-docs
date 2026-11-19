@@ -12,6 +12,7 @@ import { Dialog, expect, Locator, Page } from "@playwright/test";
 import { adminUrl } from "../../lib/session";
 import { expectSaved } from "./common";
 import { StockApprovalListPage, StockListPage } from "./stock_edit";
+import { selectAllStoresIfEmpty } from "../../lib/required_stores";
 
 const exact = (text: string) => new RegExp(`^\\s*${text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`);
 
@@ -143,6 +144,9 @@ export class MoveTransferListPage {
     await this.page.waitForLoadState("load");
     await expect(this.form, "在庫移動・振替検索一覧の検索欄").toBeVisible();
     await this.form.locator('[name="admin_search_stock_move_transfer[stock_move_transfer_id]"]').fill(在庫移動ID);
+    // 2026-11-17 の ECCUBE_HARERUYA-4094 で「出庫元店舗」「入庫先店舗」が必須になり、空のままだと検索が送られず画面の移動を待ち続けて止まる
+    // （11/19 に M04-34 の 003 のシード〔M04-25 の在庫移動指示づくり〕が180秒で止まった）。ID だけで探す検索なので、空のときだけ全店舗を選ぶ（正本の外の補い）
+    await selectAllStoresIfEmpty(this.form, ["admin_search_stock_move_transfer_move_from_base_info", "admin_search_stock_move_transfer_move_to_base_info"], "在庫移動・振替検索一覧");
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: "load" }),
       this.form.locator('button[type="submit"]').first().click(),

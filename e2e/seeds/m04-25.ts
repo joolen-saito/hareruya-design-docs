@@ -47,6 +47,7 @@ import {
   approveOutbound, MoveTransferListPage, openStockApprovalListForStore, registerMove, requestOutboundApproval, searchStock,
 } from "../pages/admin/m04_24_stock_move";
 import { adminUrl } from "../lib/session";
+import { selectAllStoresIfEmpty } from "../lib/required_stores";
 import {
   approveInbound, ensureStoreWithThresholds, registerMoveByCsv, requestInboundApproval, saveMemoFromSearch, searchInstructionById,
   searchInstructionByMoveId, ThresholdStoreInput,
@@ -295,6 +296,8 @@ export async function buildInstruction({ browser, notes, seed }: SeedCtx, spec: 
         const w = window as unknown as { jQuery?: (e: Element) => { trigger: (ev: string) => void } };
         if (w.jQuery) w.jQuery(sel).trigger("change"); else sel.dispatchEvent(new Event("change", { bubbles: true }));
       }, fromId);
+      // 入庫先店舗も必須（4094）。空のときだけ全店舗を選ぶ（出庫元店舗で絞るのは正本どおり）
+      await selectAllStoresIfEmpty(moves.form, ["admin_search_stock_move_transfer_move_to_base_info"], "在庫移動・振替検索一覧");
       await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), moves.form.locator('button[type="submit"]').first().click()]);
       for (const id of moveIds) await expect(moves.row(id), `${seedId}: 在庫移動・振替検索一覧に在庫移動 ${id} の行`).toHaveCount(1);
     }
