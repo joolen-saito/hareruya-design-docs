@@ -2,13 +2,14 @@
 import { BrowserContext, Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { 購入グループ, 保存された購入グループ } from "../../db/m03_22_purchase_group";
+import { 購入グループの入力値 } from "../../db/m03_22_w";
 import { expect, CaseCtx, caseTest } from "../../lib/case";
 import { Account, hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { tamperToken } from "../../pages/admin/devtools";
 import { openProductEdit } from "../../pages/admin/product_edit";
 import { purchaseGroupChoices } from "../../pages/admin/m03_22_product";
 import {
-  DeleteResult, PendingDelete, PurchaseGroupPage, SubmitResult, pathOf, purchaseGroupIndexPath, topMessages,
+  DeleteResult, PendingDelete, PurchaseGroupPage, SubmitResult, pathOf, purchaseGroupEditPath, purchaseGroupEditUrl, purchaseGroupIndexPath, topMessages,
 } from "../../pages/admin/m03_22_purchase_group";
 import { M0322_ADMIN, M0322L_ADMIN } from "../../seeds/m03-22";
 
@@ -350,5 +351,96 @@ caseTest("IT-M03-22-032", async ({ page, notes, step, expected }) => {
   });
   await expected(async () => {
     expect(options, "購入グループ欄の選択肢").not.toContain(name);
+  });
+});
+
+// ---- 2026-11-20 追加: 初期値・一覧・文字数・遷移・見つからない・削除済み（001・006・008・017・018・019） ----
+
+caseTest("IT-M03-22-001", async ({ page, step, expected }) => {
+  const grp = await signIn(page);
+  let 個数 = -1; let 初期値 = true;
+  await step(1, async () => { await grp.openNew(); });
+  await step(2, async () => { 個数 = await grp.予約商品フラグ.count(); 初期値 = await grp.予約商品フラグ.isChecked(); note(`予約商品フラグのチェックボックス: ${個数} 個・チェック ${初期値 ? "あり" : "なし"}`); });
+  await expected(async () => {
+    expect.soft(個数, "予約商品フラグが単一選択項目（チェックボックス1個）として表示される").toBe(1);
+    expect.soft(初期値, "予約商品フラグの初期値が0（チェックなし）").toBe(false);
+  });
+});
+
+caseTest("IT-M03-22-006", async ({ page, notes, step, expected }) => {
+  const grp = await signIn(page);
+  const ids = ["006A", "006B", "006C"].map((k) => notes.get(`〔購入グループID-M0322-${k}〕`));
+  let 一覧: string[] = [];
+  await step(1, async () => { await grp.openNew(); });
+  await step(2, async () => {
+    一覧 = await grp.rows.evaluateAll((trs) => trs.map((tr) => /\/product\/sell_group\/(\d+)$/.exec(tr.querySelector("td:nth-child(1) a")?.getAttribute("href") ?? "")?.[1] ?? ""));
+    note(`一覧の購入グループID（${一覧.length} 件）: ${一覧.join("、")}`);
+  });
+  await expected(async () => {
+    expect.soft(一覧, "一覧に購入グループID 〔…006A〕が表示される").toContain(ids[0]);
+    expect.soft(一覧, "一覧に購入グループID 〔…006B〕が表示される").toContain(ids[1]);
+    expect.soft(一覧, "削除済みの購入グループID 〔…006C〕は一覧に表示されない").not.toContain(ids[2]);
+  });
+});
+
+caseTest("IT-M03-22-008", async ({ page, notes, step, expected }) => {
+  const grp = await signIn(page);
+  const id = notes.get("〔購入グループID-M0322-008〕");
+  const 日 = "あ".repeat(255), 英 = "A".repeat(255), メモ = "め".repeat(1024);
+  let r!: SubmitResult; let 保存: ReturnType<typeof 購入グループの入力値> = null;
+  await step(1, async () => { await grp.openEdit(id); });
+  await step(2, async () => { await grp.fill({ 名称日: 日, 名称英: 英, メモ }); });
+  await step(3, async () => { r = await grp.pressRegister(); noteSubmit(r); if (r.sent) await noteMessages(page, "登録ボタンを押したあと"); });
+  await step(4, async () => { 保存 = 購入グループの入力値(id); note(`保存された値の長さ: ${保存 ? `名称（日）${保存.名称日.length}・名称（英）${保存.名称英.length}・メモ${保存.メモ.length}` : "行なし"}`); });
+  await expected(async () => {
+    expect.soft(保存?.名称日, "名称（日）が255文字の入力値で更新される").toBe(日);
+    expect.soft(保存?.名称英, "名称（英）が255文字の入力値で更新される").toBe(英);
+    expect.soft(保存?.メモ, "メモが1024文字の入力値で更新される").toBe(メモ);
+  });
+});
+
+caseTest("IT-M03-22-017", async ({ page, notes, step, expected }) => {
+  const grp = await signIn(page);
+  const id = notes.get("〔購入グループID-M0322-017〕");
+  let r!: SubmitResult;
+  await step(1, async () => { await grp.openEdit(id); });
+  await step(2, async () => { await grp.fill({ 名称日: "更新遷移確認" }); });
+  await step(3, async () => { r = await grp.pressRegister(); noteSubmit(r); if (r.sent) await noteMessages(page, "登録ボタンを押したあと"); });
+  await expected(async () => {
+    expect.soft(pathOf(page.url()), "更新したあとに移った画面（更新した購入グループの編集の状態）").toBe(purchaseGroupEditPath(id));
+    await expect.soft(grp.名称日, "編集の状態の名称（日）").toHaveValue("更新遷移確認");
+  });
+});
+
+caseTest("IT-M03-22-018", async ({ page, notes, step, expected }) => {
+  const grp = await signIn(page);
+  const id = notes.get("〔購入グループID-M0322-018〕");
+  let 応答: number | null = null;
+  await step(1, async () => { await grp.openNew(); });
+  await step(2, async () => { await grp.pressName(id); });
+  await step(3, async () => {
+    const res = await page.goto(purchaseGroupEditUrl("999999"));
+    応答 = res?.status() ?? null;
+    note(`アドレスの購入グループIDを 999999 に置き換えて開いた応答: ${応答}・${pathOf(page.url())}`);
+  });
+  await expected(async () => {
+    expect.soft(応答, "ID 999999 の編集画面の応答（ページが見つからない）").toBe(404);
+    await expect.soft(grp.名称日, "ID 999999 の編集画面の入力欄は表示されない").toHaveCount(0);
+  });
+});
+
+caseTest("IT-M03-22-019", async ({ page, notes, step, expected }) => {
+  const grp = await signIn(page);
+  const a = notes.get("〔購入グループID-M0322-019A〕"), b = notes.get("〔購入グループID-M0322-019B〕");
+  await step(1, async () => { await grp.openNew(); });
+  await step(2, async () => { await grp.pressName(a); });
+  await step(3, async () => {
+    await page.goto(purchaseGroupEditUrl(b));
+    await page.waitForLoadState("load");
+    note(`削除済みの購入グループID ${b} のアドレスを開いたあとの画面: ${pathOf(page.url())}`);
+  });
+  await expected(async () => {
+    expect.soft(pathOf(page.url()), "削除済みの編集状態は表示されず、購入グループ管理画面へ移る").toBe(purchaseGroupIndexPath());
+    await expectPurchaseGroupScreen(page, "移った画面");
   });
 });

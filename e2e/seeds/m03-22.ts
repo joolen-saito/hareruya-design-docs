@@ -26,6 +26,7 @@ import { ensureMember } from "../pages/admin/member";
 import { openProductEdit } from "../pages/admin/product_edit";
 import { goodsCsvCategoryId, saveFromSearchResult, selectedPurchaseGroup } from "../pages/admin/m03_22_product";
 import { PurchaseGroupInput, PurchaseGroupPage } from "../pages/admin/m03_22_purchase_group";
+import { 購入グループの行がある, 購入グループの日時を書き足す } from "../db/m03_22_w";
 
 /**
  * シード表のログインIDは m0322_admin。開発環境には同じログインIDのメンバー（メールアドレスが @joolen.com。2026-10-28 に手動テスト用に作られたもの。
@@ -122,6 +123,40 @@ defineGroupSeed("S-M03-22-DELETE-024", one("024", group("未使用購入グル�
 defineGroupSeed("S-M03-22-DELETE-025", one("025", group("未使用購入グループ-025", "UnusedGroup-025")));
 defineGroupSeed("S-M03-22-DELETE-026", one("026", group("未使用購入グループ-026", "UnusedGroup-026")));
 defineGroupSeed("S-M03-22-RACE-029", one("029", group("競合確認購入グループ-029", "RaceGroup-029")));
+
+// ---- 日時を DB で書き足す形（2026-11-20 追加。依頼者決定 2026-11-10。名称（日）の末尾に実行の印を付ける） ----
+
+const 初期日時 = "2026-01-01 00:00:00+09";
+const 削除日時 = "2026-01-02 00:00:00+09";
+const marked = (名称日: string, 名称英: string, 予約商品フラグ = false, メモ = ""): PurchaseGroupInput => group(rc(名称日), 名称英, 予約商品フラグ, メモ);
+/** 登録して控え、作成日時・更新日時（と、削除するなら画面で削除したあとの削除日時）を書き足す */
+async function registerDated(o: SeedOps, n: string, v: PurchaseGroupInput, 削除する = false): Promise<string> {
+  const id = await o.registerAndNote(label(n), v);
+  if (削除する) {
+    await o.grp.openNew();
+    const pending = await o.grp.pressDeleteButton(o.grp.rowById(id));
+    await o.grp.confirmDelete(pending);
+  }
+  購入グループの日時を書き足す(`${o.seedId}: 購入グループID ${id} の日時`, id, { 作成日時: 初期日時, 更新日時: 初期日時, 削除日時: 削除する ? 削除日時 : undefined });
+  return id;
+}
+defineGroupSeed("S-M03-22-INIT-001", async (o) => { await registerDated(o, "001", marked("初期値確認購入グループ-001", "InitialValueGroup-001")); });
+defineGroupSeed("S-M03-22-BASE-008", async (o) => { await registerDated(o, "008", marked("編集前購入グループ-008", "BeforeGroup-008", true, "編集前メモ")); });
+defineGroupSeed("S-M03-22-BASE-017", async (o) => { await registerDated(o, "017", marked("編集前購入グループ-017", "BeforeGroup-017", true, "編集前メモ")); });
+defineGroupSeed("S-M03-22-LIST-006", async (o) => {
+  await registerDated(o, "006A", marked("編集前購入グループ-006", "BeforeGroup-006"));
+  await registerDated(o, "006B", marked("関連なし購入グループ-006", "NoRelationGroup-006"));
+  await registerDated(o, "006C", marked("削除済み購入グループ-006", "DeletedGroup-006"), true);
+});
+defineGroupSeed("S-M03-22-DELETED-019", async (o) => {
+  await registerDated(o, "019A", marked("編集前購入グループ-019", "BeforeGroup-019"));
+  await registerDated(o, "019B", marked("削除済み購入グループ-019", "DeletedGroup-019"), true);
+});
+// 購入グループID 999999 は未登録であること（行があれば、ほかの方の行なので消さずに止める）
+defineGroupSeed("S-M03-22-NOTFOUND-018", async (o) => {
+  await registerDated(o, "018", marked("編集前購入グループ-018", "BeforeGroup-018"));
+  if (購入グループの行がある("999999")) throw new Error(`${o.seedId}: 購入グループID 999999 の行がある（ほかの方の行なので消さない）`);
+});
 
 // ---- 商品に使用させる形 ----
 
