@@ -57,10 +57,11 @@ defineSeed("S-M03-03-MASTER", { needs: ["S-M03-03-ADM"] }, async ({ browser, not
       await 売.openNew();
       notes.set(`〔売上分析タグID-M0303-共有${k}〕`, await 売.register({ 名称: rc(`M0303分析${k}`), 並び順: "9999" }, `売上分析タグ「M0303分析${k}」の登録`));
     }
+    // タグ登録画面の並び順は必須（シード表は値を定めない。略称タグ・売上分析タグと同じく末尾の 9999 を入れる。2026-11-20）
     const タグ = new TagPage(page);
     for (const k of ["A", "B"]) {
       await タグ.openNew();
-      notes.set(`〔タグID-M0303-共有${k}〕`, await タグ.register({ 名称日: rc(`M0303タグ${k}`), 名称英: rc(`M0303Tag${k}`) }, `タグ「M0303タグ${k}」の登録`));
+      notes.set(`〔タグID-M0303-共有${k}〕`, await タグ.register({ 名称日: rc(`M0303タグ${k}`), 名称英: rc(`M0303Tag${k}`), 並び順: "9999" }, `タグ「M0303タグ${k}」の登録`));
     }
     const root = await readGoodsRootCategoryId(page);
     const c = new CategoryPage(page);
