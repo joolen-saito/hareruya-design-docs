@@ -16,6 +16,7 @@ import {
 import { fillStockEdit } from "../../pages/admin/m04_02_rc_stock";
 import {
   在庫の表示, 在庫一覧に戻る, 在庫変動区分を選ぶ, 在庫編集画面である, 在庫編集画面を開く, 検索欄の店舗と在庫区分, 仕入単価の欄, 店舗と在庫区分で検索する, 登録を押す,
+  画面の在庫変動履歴,
 } from "../../pages/admin/m04_02_stock_x";
 import { StockApprovalListPage, StockListPage } from "../../pages/admin/stock_edit";
 import { filterBox } from "../../pages/admin/m04_32_approval_list";
@@ -391,3 +392,30 @@ caseTest("IT-M04-02-072", async (ctx) => {
   });
 });
 
+
+// ---- 2026-11-20 追加: 在庫変動履歴の表示（005・036）。履歴は画面で指定できないので、E2E の規格の在庫へ DB で足した（seeds/m04-02-x.ts）。試験識別子は在庫変動理由の欄に入れた ----
+caseTest("IT-M04-02-005", async (ctx) => {
+  await loginAdmin(ctx.page, 担当者.account);
+  let 行: string[][] = [];
+  await ctx.step(1, async () => { expect(await 在庫編集画面を開く(ctx.page, 在庫IDの(ctx, "005")), "在庫編集画面の応答").toBe(200); });
+  await ctx.step(2, async () => { 行 = await 画面の在庫変動履歴(ctx.page); note(`表示された在庫変動履歴: ${行.length}件・理由の欄 ${行.map((r) => r[4]).join("、")}`); });
+  await ctx.expected(async () => {
+    const 識別子 = 行.map((r) => r[4]);
+    const want = Array.from({ length: 30 }, (_, i) => `H-LIMIT-${String(31 - i).padStart(2, "0")}`);
+    expect.soft(識別子, "基準日時が新しい H-LIMIT-31 から H-LIMIT-02 までの30件が新しい順に表示される").toEqual(want);
+    expect.soft(識別子, "H-LIMIT-01 は表示されない").not.toContain("H-LIMIT-01");
+  });
+});
+
+caseTest("IT-M04-02-036", async (ctx) => {
+  await loginAdmin(ctx.page, 担当者.account);
+  let 行: string[][] = [];
+  await ctx.step(1, async () => { expect(await 在庫編集画面を開く(ctx.page, 在庫IDの(ctx, "036")), "在庫編集画面の応答").toBe(200); });
+  await ctx.step(2, async () => { 行 = (await 画面の在庫変動履歴(ctx.page)).filter((r) => r[4] === "H-SYSTEM-01"); note(`H-SYSTEM-01 の行: ${JSON.stringify(行)}`); });
+  await ctx.expected(async () => {
+    expect.soft(行.length, "在庫変動履歴 H-SYSTEM-01 が表示される").toBe(1);
+    expect.soft(行[0]?.[6], "登録者に「システム」が表示される").toBe("システム");
+    expect.soft(行[0]?.[7], "承認日に「-」が表示される").toBe("-");
+    expect.soft(行[0]?.[8], "承認者に「-」が表示される").toBe("-");
+  });
+});

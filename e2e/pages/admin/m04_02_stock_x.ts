@@ -98,3 +98,10 @@ export async function 検索欄の店舗と在庫区分(page: Page): Promise<{ �
   }));
   return { 店舗, 在庫区分 };
 }
+
+/** 在庫編集画面の「在庫変動履歴」の表の行（上から順。各列の表示の文字） */
+export async function 画面の在庫変動履歴(page: Page): Promise<string[][]> {
+  return page.locator("#stockChangeHistory tbody tr").evaluateAll((trs) => trs
+    .map((tr) => Array.from(tr.querySelectorAll(":scope > td")).map((td) => ((td as HTMLElement).innerText ?? "").replace(/\s+/g, " ").trim()))
+    .filter((cells) => cells.length >= 9));
+}
