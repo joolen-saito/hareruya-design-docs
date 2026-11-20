@@ -187,9 +187,9 @@ caseTest("IT-M03-38-020", async ({ page, step, expected }) => {
   await loginAdmin(page, M0338_ADMIN);
   let csv!: ProductCsvUploadScreen; let r!: CsvUploadResult;
   await step(1, async () => { csv = await 画面を開く(page); });
-  await step(2, async () => { note("CSVファイルは選ばない"); });
-  await step(3, async () => { r = await csv.pressUpload(); 結果の注記(r); });
-  await step(4, async () => { note(`確認モーダル: ${r.確認モーダル ? "出て、確定した" : "出なかった・押す対象が無い"}`); });
+  // ケースの手順は3つ（2. CSVファイルを選択せずアップロードを押す／3. 確認モーダルの「OK」を押す）。2026-11-21 手順の数をケースに合わせた
+  await step(2, async () => { note("CSVファイルは選ばない"); r = await csv.pressUpload(); 結果の注記(r); });
+  await step(3, async () => { note(`確認モーダル: ${r.確認モーダル ? "出て、確定した" : "出なかった・押す対象が無い"}`); });
   await expected(async () => {
     expect.soft(await csv.isOnScreen(), "商品公開CSV登録画面へ遷移する（画面のまま）").toBe(true);
   });

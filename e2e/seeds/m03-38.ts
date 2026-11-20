@@ -374,12 +374,15 @@ function ファイルを作る(f: NonNullable<ImportDef["ファイル"]>, ids: R
     case "タブ": text = sepRows("\t"); bytes = Buffer.from(text, "utf-8"); break;
     case "BOM": text = sepRows(","); bytes = Buffer.concat([BOM, Buffer.from(ZWSP + text, "utf-8")]); break;
     case "最大": case "超過": {
-      text = sepRows(",");
+      // 大きさは BOM＋ゼロ幅スペース（3バイト）の繰り返しで埋める。3で割り切れない余り（1〜2バイト）は、末尾の空行で埋めると
+      // 「3行目のフォーマットが一致しません」になる（2026-11-21 015 で確かめた）ので、1行目の商品IDの頭に 0 を足して埋める（数値は同じ）
       const target = f.形 === "最大" ? 5_000_000 : 5_000_001;
+      const rest = (target - BOM.length - Buffer.byteLength(sepRows(","), "utf-8")) % 3;
+      const padded = data.map((r, i) => (i === 0 ? ["0".repeat(rest) + r[0], r[1], r[2]] : r));
+      text = 本文(padded, ",");
       const body = Buffer.from(text, "utf-8");
-      const room = target - BOM.length - body.length;
-      const n = Math.floor(room / 3), rest = room - n * 3;
-      bytes = Buffer.concat([BOM, Buffer.from(ZWSP.repeat(n), "utf-8"), body, Buffer.from("\n".repeat(rest), "utf-8")]);
+      const n = (target - BOM.length - body.length) / 3;
+      bytes = Buffer.concat([BOM, Buffer.from(ZWSP.repeat(n), "utf-8"), body]);
       break;
     }
     case "見出し不正": text = sepRows(",", ["商品番号", HEADER[1], HEADER[2]]); bytes = Buffer.from(text, "utf-8"); break;
