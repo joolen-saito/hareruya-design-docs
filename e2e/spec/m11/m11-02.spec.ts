@@ -430,9 +430,14 @@ caseTest("IT-M11-02-031", async ({ page, notes, step, expected }) => {
 caseTest("IT-M11-02-033", async ({ page, notes, step, expected }) => {
   const p = await 管理者で(page);
   const id = notes.get("〔メンバーID-M1102-033〕");
-  let タグ: string[] = []; let 店舗: string[] = [];
+  let タグ: string[] = []; let 店舗: string[] = []; let 読み替えた店名: string[] = [];
   await step(1, async () => { await p.編集を開く(id); });
-  await step(2, async () => { await p.入れる({ 編集可能店舗ID: [店舗の("東京店"), 店舗の("大阪店")] }); });
+  await step(2, async () => {
+    await p.入れる({ 編集可能店舗ID: [店舗の("東京店"), 店舗の("大阪店")] });
+    // 東京店・大阪店は本店・試験支店で読み替えた（2026-11-13 の店舗の決まり）。タグの名前は、その店舗の選択肢の表示名で確かめる
+    読み替えた店名 = await Promise.all([店舗の("東京店"), 店舗の("大阪店")].map(async (sid) => ((await p.編集可能店舗欄.locator(`option[value="${sid}"]`).textContent()) ?? "").trim()));
+    supplement(`期待結果の「東京店」「大阪店」は、読み替えた店舗の表示名「${読み替えた店名.join("」「")}」で確かめた`);
+  });
   await step(3, async () => {
     タグ = (await p.編集可能店舗欄.locator("xpath=following-sibling::span[contains(@class,'select2')][1]").locator(".select2-selection__choice").allInnerTexts()).map((t) => t.replace(/^×/, "").trim());
     note(`編集可能店舗のタグ: ${タグ.join("、") || "（無い）"}`);
@@ -440,7 +445,7 @@ caseTest("IT-M11-02-033", async ({ page, notes, step, expected }) => {
   await step(4, async () => { 送った結果の注記(await p.登録を押す()); });
   await step(5, async () => { 店舗 = 編集可能店舗(id); });
   await expected(async () => {
-    expect.soft([...タグ].sort(), "「東京店」と「大阪店」がタグとして複数選択される").toEqual(["大阪店", "東京店"]);
+    expect.soft([...タグ].sort(), "「東京店」と「大阪店」（読み替え）がタグとして複数選択される").toEqual([...読み替えた店名].sort());
     expect.soft(店舗, "編集可能店舗として2件登録される").toEqual([店舗の("東京店"), 店舗の("大阪店")].sort((a, b) => Number(a) - Number(b)));
   });
 });
