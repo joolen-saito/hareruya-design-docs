@@ -103,3 +103,8 @@ export function 表示順にする(what: string, ID: string, 値: number): void 
 export function 二段階認証を設定済みにする(what: string, ID: string): void {
   updateOwnRows(what, { table: "dtb_member", key: "id", ids: [ID], set: { two_factor_auth_key: `E2ETESTKEY${RUN_MARK}`.slice(0, 32) }, owner: メンバーの持ち主 });
 }
+
+/** 店舗の店名（読み替え先の店舗の画面の店名。メンバー管理一覧は店名をそのまま出す）。無ければ空 */
+export function 店舗IDの店名(店舗ID: string): string {
+  return String(query(`select shop_name from dtb_base_info where id = $1`, [店舗ID])[0]?.shop_name ?? "");
+}

@@ -4,7 +4,7 @@
  * シードでの解釈（正本の外の補い。記録 review/M11-01_progress_2026-11-11_dev.md にも書く）:
  * - S-M11-01-MASTER: 所属「東京店」「大阪店」・権限「システム権限」「店舗権限」は開発環境に無く、所属・権限のマスタは全員が使うので新しく作らない。
  *   M11-02 と同じく既存のもので読み替える: 所属 東京店→「試験所属A」・大阪店→「試験所属B」、権限 システム権限→「システム管理者」・店舗権限→「店舗オペレーター」。
- *   店舗「東京店」「大阪店」は、店名がちょうど一致する店舗のうち番号のいちばん小さいものを番号で選ぶ。稼働「稼働」「非稼働」は既にある。
+ *   店舗「東京店」「大阪店」は開発環境に無く作らないので、東京店→本店（1）・大阪店→試験支店（1574）で読み替える（2026-11-13 の決まり）。稼働「稼働」「非稼働」は既にある。
  * - 正本の「既存メンバーの退避（削除されていないメンバーを本シードのメンバーだけにする）と終了後の復元」は、ほかの方のメンバーを動かすので行わない。
  *   代わりに、ケースのメンバーの表示順を「いまの全メンバーの表示順の最大＋正本の表示順」にして（E2E の行だけに DB で書く）、一覧の先頭にケースのメンバーだけが
  *   正本の並びで来るようにする。期待結果の表示順の値は、この「基準＋正本の値」で読み替える。
@@ -20,8 +20,7 @@
  */
 import { Browser } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { ログインIDの数, 表示順の最大, 表示順にする, 二段階認証を設定済みにする, 繰り下がる相手を確かめる, いるか } from "../db/m11_01";
-import { 店名の店舗ID } from "../db/m11_02";
+import { ログインIDの数, 表示順の最大, 表示順にする, 二段階認証を設定済みにする, 繰り下がる相手を確かめる, いるか, 店舗IDの店名 } from "../db/m11_01";
 import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
@@ -33,11 +32,23 @@ export const 所属 = { 東京店: "試験所属A", 大阪店: "試験所属B" }
 export const 権限 = { システム権限: "システム管理者", 店舗権限: "店舗オペレーター", ゲスト権限: "ゲスト", 顧客権限: "顧客" } as const;
 export const 読み替えの文 = `所属 東京店→${所属.東京店}・大阪店→${所属.大阪店}、権限 システム権限→${権限.システム権限}・店舗権限→${権限.店舗権限}`;
 
+/**
+ * 店舗「東京店」「大阪店」は開発環境に無く、店舗は作らない決まり（依頼者決定 2026-11-13「店舗は試験支店と本店だけ。2店が要るときは試験支店＋本店」）。
+ * 東京店→本店（店舗ID 1）・大阪店→試験支店（店舗ID 1574）で読み替える（2026-11-20）。画面の店名は DB の店名（メンバー管理一覧は shopName を出す）。
+ */
+const 店舗の読み替え = { 東京店: "1", 大阪店: "1574" } as const;
 let 店舗ID: Record<"東京店" | "大阪店", string> | null = null;
-export function 店舗の(店名: "東京店" | "大阪店"): string {
+let 店名: Record<"東京店" | "大阪店", string> | null = null;
+export function 店舗の(名: "東京店" | "大阪店"): string {
   if (!店舗ID) throw new Error("S-M11-01-MASTER をまだ作っていない（店舗IDが決まっていない）");
-  return 店舗ID[店名];
+  return 店舗ID[名];
 }
+/** 読み替えた店舗の画面の店名（期待結果の「東京店」「大阪店」の読み替え） */
+export function 店名の(名: "東京店" | "大阪店"): string {
+  if (!店名) throw new Error("S-M11-01-MASTER をまだ作っていない（店名が決まっていない）");
+  return 店名[名];
+}
+export const 店舗の読み替えの文 = "店舗 東京店→本店（店舗ID 1）・大阪店→試験支店（店舗ID 1574）（依頼者決定 2026-11-13 の店舗の決まり）";
 
 export const ログインID = (正本: string): string => rc(正本).toLowerCase();
 /** 正本のパスワード（9〜12文字）に足して、アプリの最低12文字以上にした値 */
@@ -45,20 +56,23 @@ export const パスワード = (正本: string): string => `${正本}-E2Epw`;
 
 defineSeed("S-M11-01-MASTER", async ({ browser, seed }) => {
   if (店舗ID) return;
-  const ids = { 東京店: 店名の店舗ID("東京店"), 大阪店: 店名の店舗ID("大阪店") };
-  for (const [k, v] of Object.entries(ids)) if (!v) throw new Error(`開発環境に店舗「${k}」が無い`);
-  店舗ID = ids as Record<"東京店" | "大阪店", string>;
+  const ids = { ...店舗の読み替え };
+  const names = { 東京店: 店舗IDの店名(ids.東京店), 大阪店: 店舗IDの店名(ids.大阪店) };
+  for (const [k, v] of Object.entries(names)) if (!v) throw new Error(`開発環境に読み替え先の店舗（${k}→店舗ID ${ids[k as "東京店" | "大阪店"]}）が無い`);
+  店舗ID = ids;
+  店名 = names as Record<"東京店" | "大阪店", string>;
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const p = new MemberEditPage(page);
     await p.新規登録を開く();
     const 所属の選択肢 = await p.選択肢(p.所属欄);
     const 権限の選択肢 = await p.選択肢(p.権限欄);
     for (const n of Object.values(所属)) if (!所属の選択肢.includes(n)) throw new Error(`所属の選択肢に「${n}」が無い（${所属の選択肢.join("、")}）`);
-    for (const n of Object.values(権限)) if (!権限の選択肢.includes(n)) throw new Error(`権限グループの選択肢に「${n}」が無い（${権限の選択肢.join("、")}）`);
+    // ゲスト権限・顧客権限は 036〜039 だけが使う（そのケースで無ければ、そのケースだけが止まる）。全ケースの共通の前提にはしない（2026-11-20）
+    for (const n of [権限.システム権限, 権限.店舗権限]) if (!権限の選択肢.includes(n)) throw new Error(`権限グループの選択肢に「${n}」が無い（${権限の選択肢.join("、")}）`);
     const 稼働 = [await p.稼働の選択("稼働").count(), await p.稼働の選択("非稼働").count()];
     if (稼働.some((c) => c === 0)) throw new Error("稼働の選択肢「稼働」「非稼働」が無い");
   });
-  reportSeedIssue(seed.シードID, `所属・権限のマスタは作らず、開発環境に既にあるものへ読み替えた（${読み替えの文}）。店舗は店名が一致する店舗のうち番号のいちばん小さいもの（東京店=${ids.東京店}・大阪店=${ids.大阪店}）`);
+  reportSeedIssue(seed.シードID, `所属・権限のマスタは作らず、開発環境に既にあるものへ読み替えた（${読み替えの文}）。${店舗の読み替えの文}（東京店=${ids.東京店}「${names.東京店}」・大阪店=${ids.大阪店}「${names.大阪店}」）`);
 });
 
 // ---- ケースのメンバーの定め ----

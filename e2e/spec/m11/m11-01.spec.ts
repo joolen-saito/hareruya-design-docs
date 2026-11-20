@@ -12,7 +12,7 @@ import { rc } from "../../lib/run_marker";
 import { 表示順, いるか, ログインIDの数, マスタの登録内容, 入れ替えの相手を確かめる, 繰り下がる相手を確かめる } from "../../db/m11_01";
 import { MemberListPage, 操作 } from "../../pages/admin/m11_01_member_list";
 import { MemberEditPage } from "../../pages/admin/m11_02_member";
-import { 所属, 権限, 店舗の, 読み替えの文, ログイン管理者, ログインID, パスワード, 呼び名, 名前の, 正本の表示順 } from "../../seeds/m11-01";
+import { 所属, 権限, 店舗の, 店名の, 店舗の読み替えの文, 読み替えの文, ログイン管理者, ログインID, パスワード, 呼び名, 名前の, 正本の表示順 } from "../../seeds/m11-01";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
@@ -57,13 +57,13 @@ caseTest("IT-M11-01-001", async (ctx) => {
   await step(1, async () => { await l.開く(); });
   await step(2, async () => { 表示 = await l.行の表示(ID(ctx, n, "C")); note(`大阪システム担当-001 の行: ${JSON.stringify(表示)}`); });
   await expected(async () => {
-    supplement(`期待結果の所属・権限・店舗は、開発環境に既にあるものへ読み替えた値で確かめた（${読み替えの文}。店舗「大阪店」「東京店」は店名が一致する既存の店舗）`);
+    supplement(`期待結果の所属・権限・店舗は、開発環境に既にあるものへ読み替えた値で確かめた（${読み替えの文}。${店舗の読み替えの文}）`);
     const v = 表示!;
     expect.soft(v.名前, "名前").toBe(名前の(n, "C"));
     expect.soft(v.所属, "所属（大阪店の読み替え）").toBe(所属.大阪店);
     expect.soft(v.権限, "権限（システム権限の読み替え）").toBe(権限.システム権限);
-    expect.soft(v.デフォルト検索表示店舗, "デフォルト検索表示店舗").toBe("大阪店");
-    expect.soft(v.編集可能店舗.split(/\s*,\s*/).sort(), "編集可能店舗（東京店と大阪店）").toEqual(["大阪店", "東京店"].sort());
+    expect.soft(v.デフォルト検索表示店舗, "デフォルト検索表示店舗（大阪店の読み替え）").toBe(店名の("大阪店"));
+    expect.soft(v.編集可能店舗.split(/\s*,\s*/).sort(), "編集可能店舗（東京店と大阪店の読み替え）").toEqual([店名の("大阪店"), 店名の("東京店")].sort());
     expect.soft(v.自動ログアウト, "自動ログアウト").toBe("有効");
     expect.soft(v.二段階認証, "2段階認証").toContain("有効");
     expect.soft(v.二段階認証の設定, "2段階認証は設定済み（吹き出しの文）").toContain("完了");
