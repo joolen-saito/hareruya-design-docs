@@ -39,6 +39,7 @@ import {
 import { goodsRootCategoryLink } from "../pages/admin/product_masters";
 import { loggedInMemberName, registerStockEdit, StockApprovalListPage, StockListPage } from "../pages/admin/stock_edit";
 import { Page } from "@playwright/test";
+import { 商品を削除済みにする } from "../db/m03_38_w";
 
 /**
  * シード表のログインID・名前は、開発環境にほかの方が手動テストの準備で登録した同じ値のメンバーがあり得る（同名・同じログインIDは登録できず、
@@ -317,3 +318,119 @@ defineSeed("S-M03-38-L-CSV-036", { needs: ["S-M03-38-L-PROD-036"] }, async ({ no
 defineSeed("S-M03-38-L-CSV-037", { needs: ["S-M03-38-L-PROD-037"] }, async ({ notes }) => buildStatusCsv(notes, csvSpec("S-M03-38-L-CSV-037")));
 defineSeed("S-M03-38-CBCSV-046", { needs: ["S-M03-38-CBPUB-046"] }, async ({ notes }) => buildStatusCsv(notes, csvSpec("S-M03-38-CBCSV-046")));
 defineSeed("S-M03-38-CBCSV-047", { needs: ["S-M03-38-CBPUB-047"] }, async ({ notes }) => buildStatusCsv(notes, csvSpec("S-M03-38-CBCSV-047")));
+
+// ---- 2026-11-20 追加: 商品公開CSVの取込のシード（IMPORT-*・LATERREQ-039・LATERCHO-040） ----
+// 正本の「商品公開CSV履歴0件」は、全員の取込履歴を全件削除することになるので行わない。代わりに、ケースの中で取込の前後の履歴の件数（ファイル名ごと）を比べる。
+// 商品は グッズ商品CSV登録で作る（公開=商品公開ステータス・支店とも公開／非公開=ともに非公開）。商品名・商品コードには実行の印を付ける。
+// 取込ファイルは、シード表の状態・属性のとおり（商品IDは控えた商品ID。ケースの事前準備の呼び名）に作る。
+
+type 商品の状態 = "公開" | "非公開" | "削除済み";
+async function 取込用の商品を作る(browser: Parameters<typeof withAdminSession>[0], notes: Notes, seedId: string, label: string, 状態: 商品の状態): Promise<void> {
+  const issue = (m: string) => reportSeedIssue(seedId, m);
+  const key = label.replace(/^〔商品ID-M0338-|〕$/g, "");
+  const code = rc(`M0338-${key}`); const name = rc(`M03-38取込商品-${key}`);
+  const id = await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const template = await downloadGoodsCsvTemplate(page);
+    const hide: Record<string, string> = 状態 === "公開" ? {} : {
+      "商品公開ステータス": goodsStatusValue(template, "商品公開ステータス", "非公開"),
+      "支店の商品公開ステータス": goodsStatusValue(template, "支店の商品公開ステータス", "非公開"),
+    };
+    const categoryId = await supplyGoodsCategoryId(page);
+    await registerGoodsCsv(page, {
+      what: `${seedId} のグッズ商品CSV登録（${code}）`, fileName: `${code}.csv`, categoryId,
+      lines: [{ code, nameJp: name, nameEn: name }],
+      common: { ...hide, "基準価格": "1500", "販売価格": "1500", "買取価格": "1500", "原価単価": "1500", "地域別販売制限": "0" },
+      onWarning: issue,
+    });
+    return findProductIdByName(page, name, code);
+  });
+  notes.set(label, id);
+  if (状態 === "削除済み") 商品を削除済みにする(`${seedId}: ${label} を削除済みにする`, id);
+  issue(`${label}（商品ID ${id}）: グッズ商品CSV登録で${状態 === "公開" ? "全体1・支店1（公開・公開）" : "全体0・支店0（非公開・非公開）"}の商品を作った${状態 === "削除済み" ? "。画面で消せないので、削除済み（廃止）にだけ DB で書き足した（E2E が作った商品だけ）" : ""}`);
+}
+
+type 行 = [商品: string, 全体: string, 支店: string];
+type ImportDef = {
+  n: string;
+  /** 商品の呼び名の添字（"A"・"B"。1つなら ""）と状態 */
+  商品: [string, 商品の状態][];
+  ファイル?: { 名前: string; 行: 行[]; 形?: "通常" | "SJIS" | "タブ" | "BOM" | "最大" | "超過" | "見出し不正" };
+};
+const HEADER = ["商品ID", "商品公開ステータス", "支店の商品公開ステータス"];
+const ZWSP = "\u200b";
+const SJIS見出し = Buffer.from("8fa4956949442c8fa495698cf68a4a83588365815b835e83582c8e78935882cc8fa495698cf68a4a83588365815b835e8358", "hex");
+
+function 本文(rows: string[][], sep: string, header = HEADER): string {
+  return [header, ...rows].map((r) => r.join(sep)).join("\n") + "\n";
+}
+function ファイルを作る(f: NonNullable<ImportDef["ファイル"]>, ids: Record<string, string>): CsvFile & { 内容: string } {
+  const data = f.行.map(([p, a, b]) => [p === "999999" ? p : ids[p], a, b]);
+  const sepRows = (sep: string, header = HEADER) => 本文(data, sep, header);
+  const BOM = Buffer.from([0xef, 0xbb, 0xbf]);
+  let bytes: Buffer; let text: string;
+  switch (f.形 ?? "通常") {
+    case "SJIS": text = sepRows(","); bytes = Buffer.concat([SJIS見出し, Buffer.from("\n" + data.map((r) => r.join(",")).join("\n") + "\n", "utf-8")]); break;
+    case "タブ": text = sepRows("\t"); bytes = Buffer.from(text, "utf-8"); break;
+    case "BOM": text = sepRows(","); bytes = Buffer.concat([BOM, Buffer.from(ZWSP + text, "utf-8")]); break;
+    case "最大": case "超過": {
+      text = sepRows(",");
+      const target = f.形 === "最大" ? 5_000_000 : 5_000_001;
+      const body = Buffer.from(text, "utf-8");
+      const room = target - BOM.length - body.length;
+      const n = Math.floor(room / 3), rest = room - n * 3;
+      bytes = Buffer.concat([BOM, Buffer.from(ZWSP.repeat(n), "utf-8"), body, Buffer.from("\n".repeat(rest), "utf-8")]);
+      break;
+    }
+    case "見出し不正": text = sepRows(",", ["商品番号", HEADER[1], HEADER[2]]); bytes = Buffer.from(text, "utf-8"); break;
+    default: text = sepRows(","); bytes = Buffer.from(text, "utf-8");
+  }
+  return { name: f.名前, bytes, 内容: f.形 === "最大" || f.形 === "超過" ? `（${bytes.length}バイト。BOM・ゼロ幅スペースの除去後は見出しと${data.length}行だけ）${text.replace(/\n/g, "｜")}` : text };
+}
+
+function importSeed(d: ImportDef, extraNeeds: string[] = []): void {
+  defineSeed(`S-M03-38-IMPORT-${d.n}`, { needs: ["S-M03-38-ADM", "S-M03-38-CONFIG", ...extraNeeds] }, async ({ browser, notes, seed }) => {
+    const ids: Record<string, string> = {};
+    for (const [suf, st] of d.商品) {
+      const label = `〔商品ID-M0338-${d.n}${suf}〕`;
+      await 取込用の商品を作る(browser, notes, seed.シードID, label, st);
+      ids[`〔商品ID-M0338-${d.n}${suf}〕`] = notes.get(label);
+    }
+    if (d.ファイル) {
+      const f = ファイルを作る(d.ファイル, ids);
+      files.set(f.name, f);
+      reportSeedIssue(seed.シードID, `${f.name} の内容: ${f.内容}`);
+    }
+    reportSeedIssue(seed.シードID, "商品公開CSV履歴0件は、全員の取込履歴を全件削除することになるので行わない。ケースの中で、取込の前後の履歴の件数（このファイル名のもの）を比べる");
+  });
+}
+const L = (n: string, suf = "") => `〔商品ID-M0338-${n}${suf}〕`;
+const AB = (n: string): [string, 商品の状態][] => [["A", "非公開"], ["B", "公開"]];
+const 標準行 = (n: string): 行[] => [[L(n, "A"), "1", "1"], [L(n, "B"), "0", "0"]];
+for (const [n, name] of [["005", "m03-38-valid-005.csv"], ["008", "m03-38-valid-008.csv"], ["017", "m03-38-valid-017.csv"], ["018", "m03-38-valid-018.csv"]] as const) {
+  importSeed({ n, 商品: AB(n), ファイル: { 名前: name, 行: 標準行(n) } });
+}
+importSeed({ n: "009", 商品: [["", "非公開"]], ファイル: { 名前: "m03-38-shiftjis-009.csv", 行: [[L("009"), "1", "1"]], 形: "SJIS" } });
+importSeed({ n: "010", 商品: [["", "非公開"]], ファイル: { 名前: "m03-38-valid-010.tsv", 行: [[L("010"), "1", "0"]], 形: "タブ" } });
+importSeed({ n: "011", 商品: [["", "非公開"]], ファイル: { 名前: "m03-38-bom-zwsp-011.csv", 行: [[L("011"), "0", "1"]], 形: "BOM" } });
+importSeed({ n: "015", 商品: [["", "非公開"]], ファイル: { 名前: "m03-38-size-max-015.csv", 行: [[L("015"), "1", "1"]], 形: "最大" } });
+importSeed({ n: "016", 商品: [["", "非公開"]], ファイル: { 名前: "m03-38-size-over-016.csv", 行: [[L("016"), "1", "1"]], 形: "超過" } });
+importSeed({ n: "020", 商品: AB("020") });
+importSeed({ n: "023", 商品: AB("023"), ファイル: { 名前: "m03-38-bad-header-023.csv", 行: [[L("023", "A"), "1", "1"]], 形: "見出し不正" } });
+importSeed({ n: "029", 商品: AB("029"), ファイル: { 名前: "m03-38-unknown-product-029.csv", 行: [["999999", "1", "1"]] } });
+importSeed({ n: "030", 商品: [["", "削除済み"]], ファイル: { 名前: "m03-38-deleted-product-030.csv", 行: [[L("030"), "1", "1"]] } });
+importSeed({ n: "031", 商品: AB("031"), ファイル: { 名前: "m03-38-rollback-031.csv", 行: [[L("031", "A"), "1", "1"], ["999999", "1", "1"], [L("031", "B"), "0", "0"]] } });
+const ABC = (): [string, 商品の状態][] => [["A", "非公開"], ["B", "公開"], ["C", "非公開"]];
+defineSeed("S-M03-38-LATERREQ-039", { needs: ["S-M03-38-ADM", "S-M03-38-CONFIG"] }, async (ctx) => { await importFor(ctx, "039", ABC(), { 名前: "m03-38-later-required-039.csv", 行: [[L("039", "A"), "1", "1"], [L("039", "B"), "", "0"], [L("039", "C"), "1", "1"]] }); });
+defineSeed("S-M03-38-LATERCHO-040", { needs: ["S-M03-38-ADM", "S-M03-38-CONFIG"] }, async (ctx) => { await importFor(ctx, "040", ABC(), { 名前: "m03-38-later-choice-040.csv", 行: [[L("040", "A"), "1", "1"], [L("040", "B"), "2", "0"], [L("040", "C"), "1", "1"]] }); });
+async function importFor({ browser, notes, seed }: { browser: Parameters<typeof withAdminSession>[0]; notes: Notes; seed: { シードID: string } }, n: string, 商品: [string, 商品の状態][], f: NonNullable<ImportDef["ファイル"]>): Promise<void> {
+  const ids: Record<string, string> = {};
+  for (const [suf, st] of 商品) {
+    const label = `〔商品ID-M0338-${n}${suf}〕`;
+    await 取込用の商品を作る(browser, notes, seed.シードID, label, st);
+    ids[label] = notes.get(label);
+  }
+  const file = ファイルを作る(f, ids);
+  files.set(file.name, file);
+  reportSeedIssue(seed.シードID, `${file.name} の内容: ${file.内容}`);
+}
