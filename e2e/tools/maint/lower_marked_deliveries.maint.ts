@@ -37,7 +37,7 @@ test("実行の印つきの配送方法の並び順を、もとからある配�
   }
   for (const r of rows) {
     updateOwnRows(`保守: 印つきの配送方法 ${r.name} の並び順を下げる（2026-11-16 依頼者指示）`, {
-      table: "dtb_delivery", key: "id", ids: [r.id], set: { sort_no: Number(r.sort_no) - 100 }, owner,
+      table: "dtb_delivery", key: "id", ids: [String(r.id)], set: { sort_no: Number(r.sort_no) - 100 }, owner,
     });
   }
   const 上 = query(`select name, sort_no::text as s from dtb_delivery where visible and sale_type_id = 1 order by sort_no desc limit 3`);
