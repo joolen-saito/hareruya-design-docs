@@ -17,13 +17,14 @@
  *   （最上位のカテゴリ登録画面に入力欄が無い）ので、グッズ（サプライ・グッズ）の直下に子カテゴリとして作った。ほかの値（商品公開ステータス「廃止」・割引率5・買取減額率7・
  *   カード状態NM・EX・規格公開状態「公開」・地域別販売制限2）は既存のマスタにあるものを参照で確かめるだけ（発送日目安「翌日」「3日後」と言語ID 11・12の規格は、ここで使うケースが無いので見ない）。
  */
-import { Browser, Page } from "@playwright/test";
+import { Browser, Page, expect } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { 購入グループがあるか, 商品公開ステータスの名称 } from "../db/m03_03";
 import { RUN_MARK, rc } from "../lib/run_marker";
-import { Account, withAdminSession } from "../lib/session";
+import { Account, adminUrl, withAdminSession } from "../lib/session";
+import { expectSaved } from "../pages/admin/common";
 import { CategoryPage } from "../pages/admin/category";
-import { Issue, グッズ商品を取り込む, 商品のカテゴリを付け替える, 取込の商品と規格を読む, 規格を足す } from "../pages/admin/a17_05_setup";
+import { Issue, グッズ商品を取り込む, 取込の商品と規格を読む, 規格を足す } from "../pages/admin/a17_05_setup";
 import { カードを紐付ける, 試験用のカードを作る } from "../pages/admin/a02_setup";
 import { ShortTagPage } from "../pages/admin/short_tag";
 import { TagPage } from "../pages/admin/m03_13_tag";
@@ -73,6 +74,42 @@ defineSeed("S-M03-03-MASTER", { needs: ["S-M03-03-ADM"] }, async ({ browser, not
 });
 
 // ---- ケース専用の商品 ----
+
+/**
+ * 商品登録編集で、商品カテゴリを ids だけにして「商品を登録」する。
+ * 共通の部品（a17_05_setup の 商品のカテゴリを付け替える）は、開発環境のカテゴリのチェックボックスを1つずつ確かめて変えるので、
+ * カテゴリが多いと25分の時間切れになる（2026-11-21 028 で2回）。チェックの付け外しを画面の中で1度にまとめて行う（中身は同じ）。
+ */
+async function 商品のカテゴリを付け替える(page: Page, 商品ID: string, ids: string[], what: string, issue: Issue): Promise<void> {
+  await page.goto(adminUrl(`/product/product/${商品ID}/edit`), { timeout: 120_000 });
+  await page.waitForLoadState("load");
+  const form = page.locator("form#form1");
+  await expect(form, `${what}: 商品登録編集`).toBeVisible();
+  const boxes = form.locator('input[type="checkbox"][name="admin_product[Category][]"]');
+  await boxes.evaluateAll((ns, want) => {
+    for (const n of ns as HTMLInputElement[]) {
+      const on = want.includes(n.value);
+      if (n.checked !== on) { n.checked = on; n.dispatchEvent(new Event("change", { bubbles: true })); }
+    }
+  }, ids);
+  const checked = await boxes.evaluateAll((ns) => ns.filter((n) => (n as HTMLInputElement).checked).map((n) => (n as HTMLInputElement).value));
+  expect([...checked].sort(), `${what}: 商品カテゴリのチェック`).toEqual([...ids].sort());
+  const discount = form.locator('select[name="admin_product[Discount]"]');
+  if (!(await discount.inputValue())) {
+    const first = await discount.locator("option").evaluateAll((ns) => ns.map((n) => ({ v: (n as HTMLOptionElement).value, t: (n.textContent ?? "").trim() })).find((o) => o.v !== ""));
+    if (!first) throw new Error(`${what}: 割引率に選べる値が無い`);
+    await discount.selectOption(first.v);
+    issue(`${what}: 割引率は選択肢の先頭の「${first.t}」を選んだ`);
+  }
+  const region = form.locator('input[type="radio"][name="admin_product[RegionRestriction]"]:checked');
+  await expect(region, `${what}: 販売制限が選ばれている`).toHaveCount(1);
+  const regionId = (await region.getAttribute("id")) ?? "";
+  const regionLabel = ((await form.locator(`label[for="${regionId}"]`).textContent()) ?? "").trim();
+  expect(regionLabel, `${what}: 販売制限`).toBe("制限なし");
+  await expect(form.locator('select[name="admin_product[Status]"] option:checked'), `${what}: 商品公開ステータス`).toHaveText(/^\s*公開\s*$/);
+  await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), form.locator("button[type=submit]").filter({ hasText: /^\s*商品を登録\s*$/ }).click({ noWaitAfter: true })]);
+  for (const w of await expectSaved(page, `${what}: 商品を登録`)) issue(`${what}: 警告「${w}」`);
+}
 
 /** カード商品を1つ作る（取込 → カード登録 → カード指定 → 規格を足す）。商品IDを返す */
 async function カード商品を作る(browser: Browser, seedId: string, 番号: string, 追加の規格: { 言語: "日本語" | "英語"; 状態: "NM" | "EX" }[]): Promise<{ 商品ID: string; カード詳細ID: string; 規格ID: string[]; 商品名: string }> {
