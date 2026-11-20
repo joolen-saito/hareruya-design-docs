@@ -471,7 +471,7 @@ caseTest("IT-M11-02-056", async ({ page, notes, step, expected }) => {
 });
 
 // ---- デフォルト検索表示店舗の連携 ----
-function 連携(n: "039" | "040", 画面: "受注" | "在庫履歴") {
+function 連携(n: "038" | "039" | "040", 画面: "受注" | "在庫履歴" | "買取") {
   return async ({ page, notes, step, expected }: CaseCtx): Promise<void> => {
     const p = new MemberEditPage(page);
     const id = notes.get(`〔メンバーID-M1102-${n}〕`);
@@ -489,13 +489,14 @@ function 連携(n: "039" | "040", 画面: "受注" | "在庫履歴") {
     await step(5, async () => { await loginAdmin(page, 連携の対象[n]); });
     await step(6, async () => {
       if (画面 === "受注") { await page.goto(adminUrl("/order"), { timeout: 60_000 }); await page.waitForLoadState("load"); return; }
+      if (画面 === "買取") { await page.goto(adminUrl("/otcbuyorder"), { timeout: 60_000 }); await page.waitForLoadState("load"); return; }
       const link = page.locator('a[href$="/product/stock/history"]').first();
       if (await link.count()) await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 60_000 }), link.click({ force: true })]);
       else { note("メニューに在庫履歴検索一覧のリンクが見つからず、同じアドレスを開いた"); await page.goto(adminUrl("/product/stock/history"), { timeout: 60_000 }); }
       await page.waitForLoadState("load");
     });
     await step(7, async () => {
-      const sel = 画面 === "受注" ? page.locator("#admin_search_order_tenants") : page.locator("#admin_stock_history_base_info");
+      const sel = 画面 === "受注" ? page.locator("#admin_search_order_tenants") : 画面 === "買取" ? page.locator("#search_box__shop select").first() : page.locator("#admin_stock_history_base_info");
       選択 = await new MemberEditPage(page).選択中(sel);
       note(`検索条件「店舗」の選択: ${選択.文字.join("、") || "（無い）"}（番号 ${選択.値.join("、") || "なし"}）`);
     });
@@ -505,6 +506,7 @@ function 連携(n: "039" | "040", 画面: "受注" | "在庫履歴") {
     });
   };
 }
+caseTest("IT-M11-02-038", 連携("038", "買取"));
 caseTest("IT-M11-02-039", 連携("039", "受注"));
 caseTest("IT-M11-02-040", 連携("040", "在庫履歴"));
 
@@ -540,4 +542,36 @@ caseTest("IT-M11-02-052", async ({ page, browser, step, expected }) => {
       expect.soft(new URL(page.url()).pathname, "2分の無操作のあとも、メンバー管理一覧画面が表示される（ログイン状態が維持される）").toMatch(/\/setting\/system\/member\/?$/);
     });
   } finally { await 戻しを確かめる(browser); }
+});
+
+// ---- 2026-11-20 追加: 所属・権限の選択肢（002・003）。所属・権限は開発環境の全員が使うマスタなので作らず、既にあるものへ読み替えた ----
+async function 選択肢を選び直す(ctx: CaseCtx, 欄: (p: MemberEditPage) => Locator, 一つ目: string, 二つ目: string): Promise<{ 選択肢: string[]; 選択中: string[] }> {
+  const p = await 管理者で(ctx.page);
+  let 選択肢: string[] = []; let 選択中: string[] = [];
+  await ctx.step(1, async () => { await p.新規登録を開く(); });
+  await ctx.step(2, async () => { await 欄(p).click({ trial: true }); 選択肢 = (await 欄(p).locator("option").allInnerTexts()).map((t) => t.trim()).filter(Boolean); note(`セレクトボックスの選択肢: ${選択肢.join("、")}`); });
+  await ctx.step(3, async () => {
+    await 欄(p).selectOption({ label: 一つ目 });
+    await 欄(p).selectOption({ label: 二つ目 });
+    選択中 = await 欄(p).evaluate((n) => Array.from((n as HTMLSelectElement).selectedOptions).map((o) => (o.textContent ?? "").trim()));
+    note(`選択中: ${選択中.join("、")}`);
+  });
+  読み替えを確かめる();
+  return { 選択肢, 選択中 };
+}
+caseTest("IT-M11-02-002", async (ctx) => {
+  const r = await 選択肢を選び直す(ctx, (p) => p.所属欄, 所属.トレード, 所属.EC運営);
+  await ctx.expected(async () => {
+    expect.soft(r.選択肢, `所属の選択肢に「${所属.トレード}」（トレード）が表示される`).toContain(所属.トレード);
+    expect.soft(r.選択肢, `所属の選択肢に「${所属.EC運営}」（EC運営）が表示される`).toContain(所属.EC運営);
+    expect.soft(r.選択中, `最後に選択した「${所属.EC運営}」だけが選択状態になる`).toEqual([所属.EC運営]);
+  });
+});
+caseTest("IT-M11-02-003", async (ctx) => {
+  const r = await 選択肢を選び直す(ctx, (p) => p.権限欄, 権限.システム権限, 権限.店舗権限);
+  await ctx.expected(async () => {
+    expect.soft(r.選択肢, `権限グループの選択肢に「${権限.システム権限}」（システム権限）が表示される`).toContain(権限.システム権限);
+    expect.soft(r.選択肢, `権限グループの選択肢に「${権限.店舗権限}」（店舗権限）が表示される`).toContain(権限.店舗権限);
+    expect.soft(r.選択中, `最後に選択した「${権限.店舗権限}」だけが選択状態になる`).toEqual([権限.店舗権限]);
+  });
 });

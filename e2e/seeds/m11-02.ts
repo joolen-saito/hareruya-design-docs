@@ -173,10 +173,11 @@ defineSeed("S-M11-02-L-ADM", { needs: ["S-M11-02-MASTER"] }, async ({ browser, s
   });
 });
 export const 連携の対象 = {
+  "038": { loginId: ログインID("m1102l_tgt001"), password: "M1102LinkTgt001!" },
   "039": { loginId: ログインID("m1102l_tgt002"), password: "M1102LinkTgt002!" },
   "040": { loginId: ログインID("m1102l_tgt003"), password: "M1102LinkTgt003!" },
 };
-for (const [n, 番, mail] of [["039", "002", "m1102l-002@example.test"], ["040", "003", "m1102l-003@example.test"]] as const) {
+for (const [n, 番, mail] of [["038", "001", "m1102l-001@example.test"], ["039", "002", "m1102l-002@example.test"], ["040", "003", "m1102l-003@example.test"]] as const) {
   defineSeed(`S-M11-02-L-TGT-${n}`, { needs: ["S-M11-02-MASTER"] }, async ({ browser, notes, seed }) => {
     const a = 連携の対象[n];
     notes.set(`〔メンバーID-M1102-${n}〕`, await メンバーを作る(browser, seed.シードID, {
