@@ -23,6 +23,7 @@ import path from "node:path";
 import { Browser, BrowserContext, Cookie, chromium, test } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN, STATE_DIR } from "../config/env";
 import { 購入完了フリーエリアのブロックID } from "../db/f04_04";
+import { 会員の累計を整える, 在庫無制限にする } from "../db/f04_04_w";
 import { 処理中受注ID一覧, 表示中の支払方法名, 表示中の配送方法名 } from "../db/f04_02";
 import { rc } from "../lib/run_marker";
 import { getSeed } from "../lib/catalog";
@@ -57,7 +58,9 @@ export async function 専用ブラウザにする(context: BrowserContext, seedI
   await context.addCookies(s.cookies);
 }
 
-type 商品の作り方 = { コード: string; 数量: number; 価格?: string; 入庫数: number; 入庫方法: "在庫編集" | "在庫変更CSV"; 仕入単価: string; 在庫変動理由?: string; CSVの値?: Record<string, string>; 商品IDの呼び名?: string };
+type 商品の作り方 = { コード: string; 数量: number; 価格?: string; 入庫数: number; 入庫方法: "在庫編集" | "在庫変更CSV"; 仕入単価: string; 在庫変動理由?: string; CSVの値?: Record<string, string>; 商品IDの呼び名?: string;
+  /** 在庫無制限にする（規格の画面に入力欄が無いので、画面で作った規格に DB で書き足す。依頼者決定 2026-11-10） */
+  無制限?: boolean };
 type 作り方 = {
   メール: string; パスワード?: string; 姓?: string; 名?: string; セイ?: string; メイ?: string;
   商品: 商品の作り方[];
@@ -68,6 +71,8 @@ type 作り方 = {
   PB?: boolean;
   会員IDの呼び名?: string;
   受注IDの呼び名?: string;
+  /** 会員の累計購入回数・累計購入金額（画面に入力欄が無いので DB で書き足す） */
+  累計?: { 回数: number; 金額: number };
 };
 
 let PB管理者を用意した = false;
@@ -126,8 +131,11 @@ async function 作る({ browser, seed, notes }: SeedCtx, a: 作り方): Promise<
         await publishImportedClass(page, p.商品コード, `${seedId}: ${p.商品コード} の商品規格`, issue);
       }
     });
+    for (const [i, p] of a.商品.entries()) if (p.無制限) 在庫無制限にする(`${seedId}: ${p.コード} を在庫無制限にする`, 商品[i].商品コード);
     a.商品.forEach((p, i) => { if (p.商品IDの呼び名) notes.set(p.商品IDの呼び名, 商品[i].productId); });
   }
+
+  if (a.累計) 会員の累計を整える(`${seedId}: 会員の累計購入回数・金額`, m.メール, a.累計.回数, a.累計.金額);
 
   // 専用ブラウザ（会員としてログインし、カートに入れる。開くときはご注文方法指定画面で支払方法を選ぶ）
   let cookies: Cookie[] = [];
@@ -216,6 +224,27 @@ PB("S-F04-04-DPHIST-046", "dpf0404-046", "Passw0rd-F0404046", "在庫連携F0404
 PB("S-F04-04-DPSTOCK-054", "dpf0404-054", "Passw0rd-F0404054", "在庫連携F0404DP054", [PB品("F0404DP-054", 3)]);
 PB("S-F04-04-DPHIST-055", "dpf0404-055", "Passw0rd-F0404055", "在庫連携F0404DP055", [PB品("F0404DP-055", 3)]);
 
+
+// ---- 手順で DB を書き換える・累計/在庫を確かめるケースのシード（2026-11-20） ----
+// 価格はシード表の「購入金額1500・数量3」に合わせて500。販売制限数は商品ごとにシード表のとおり（CSVの列）。
+const 商品w = (コード: string, 数量: number, o: { 入庫数: number; 制限?: string; 価格?: string; 無制限?: boolean; 仕入単価?: string }): 商品の作り方 =>
+  ({ コード, 数量, 価格: o.価格, 入庫数: o.入庫数, 入庫方法: "在庫編集", 仕入単価: o.仕入単価 ?? "500", 在庫変動理由: "結合テスト用", CSVの値: o.制限 ? { "販売制限数": o.制限 } : undefined, 無制限: o.無制限 });
+通常("S-F04-04-NORMAL-001", "f0404-normal-001", [商品w("F0404-NORMAL-001", 3, { 入庫数: 10, 制限: "3", 価格: "500" })]);
+通常("S-F04-04-NORMAL-019", "f0404-normal-019", [商品w("F0404-NORMAL-019", 3, { 入庫数: 10, 制限: "3", 価格: "500" })], { 累計: { 回数: 2, 金額: 3000 } });
+通常("S-F04-04-NORMAL-020", "f0404-normal-020", [商品w("F0404-NORMAL-020", 3, { 入庫数: 10, 制限: "3", 価格: "500" })]);
+通常("S-F04-04-PAYMENT-MISMATCH-010", "f0404-pay-010", [商品w("F0404-PAY-010", 1, { 入庫数: 1, 無制限: true })]);
+通常("S-F04-04-PAYMENT-MISMATCH-011", "f0404-pay-011", [商品w("F0404-PAY-011", 1, { 入庫数: 1, 無制限: true })]);
+通常("S-F04-04-PRIVATE-012", "f0404-private-012", [商品w("F0404-PRIVATE-012", 1, { 入庫数: 1, 制限: "1" })]);
+通常("S-F04-04-PRIVATE-013", "f0404-private-013", [商品w("F0404-PRIVATE-013", 1, { 入庫数: 1, 制限: "1" })]);
+通常("S-F04-04-LIMIT-014", "f0404-limit-014", [商品w("F0404-LIMIT-014", 3, { 入庫数: 3, 制限: "3" })]);
+通常("S-F04-04-LIMIT-015", "f0404-limit-015", [商品w("F0404-LIMIT-015", 3, { 入庫数: 3, 制限: "3" })]);
+通常("S-F04-04-STOCK-ERROR-016", "f0404-stockerr-016", [商品w("F0404-STOCK-016", 3, { 入庫数: 3, 制限: "3" })], { 累計: { 回数: 2, 金額: 3000 } });
+通常("S-F04-04-STOCK-ERROR-017", "f0404-stockerr-017", [商品w("F0404-STOCK-017", 3, { 入庫数: 3, 制限: "3" })], { 累計: { 回数: 2, 金額: 3000 } });
+通常("S-F04-04-MIXED-048", "f0404-mixed-048", [商品w("F0404-MIX-A-048", 1, { 入庫数: 1, 無制限: true }), 商品w("F0404-MIX-B-048", 1, { 入庫数: 1, 無制限: true })]);
+通常("S-F04-04-UNLIM-050", "f0404-unlim-050", [商品w("F0404-UNLIM-050", 3, { 入庫数: 1, 無制限: true })]);
+通常("S-F04-04-CBCHKUNLIM-060", "cbf0404-unlim-060", [商品w("CBF0404-UNLIM-060", 2, { 入庫数: 1, 制限: "3", 無制限: true })]);
+// 049: 在庫の登録者・承認者は PB の管理者（在庫検索の確認も PB の管理者）
+通常("S-F04-04-MIXED-049", "f0404-mixed-049", [商品w("F0404-MIX-A-049", 1, { 入庫数: 10, 価格: "1000" }), 商品w("F0404-MIX-B-049", 1, { 入庫数: 1, 無制限: true })], { PB: true });
 
 // ---- 025: 購入完了画面用ブロック（全員が見る画面の文章）。ケースの開始時に書き換え、終わるたびに元へ戻す ----
 // 依頼者決定 2026-11-14「画面の文章も作ってよい（流したあと元に戻す）」。全員が見るので夜の回に1本だけで流す。元のコードは控えのファイルにも残す。

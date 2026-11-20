@@ -106,6 +106,8 @@ export class CheckoutPage {
   }
   /** システムエラー画面か（画面の見出し・本文に「システムエラー」が出る） */
   async システムエラー画面か(): Promise<boolean> {
+    // 購入の途中で検証に失敗したときの「購入エラー」画面（/shopping/error）も、設計書のシステムエラー画面として扱う（アプリのエラー画面はこれ）
+    if (/\/shopping\/error\/?$/.test(this.パス)) return true;
     const t = ((await this.page.locator("body").innerText().catch(() => "")) ?? "").slice(0, 3000);
     return /システムエラー/.test(t);
   }

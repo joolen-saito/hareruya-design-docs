@@ -15,6 +15,8 @@ import { 在庫と総原価, 在庫を検索する, 在庫履歴を検索する,
 import { frontLogin } from "../../pages/admin/m04_19_order_shortage";
 import { CheckoutPage } from "../../pages/front/f04_04_checkout";
 import { カートに入れる } from "../../pages/front/f04_shopping";
+import { カートの中身 } from "../../pages/front/f03_01_product_list";
+import { 会員の累計, 商品の総在庫と総原価, 商品を非公開にする, 商品規格ID, 受注の支払方法を変える, 受注の明細, 在庫数を変える, 購入制限数を変える } from "../../db/f04_04_w";
 import { PB_ADM, 専用ブラウザにする, 準備の, 購入完了フリーエリアを整える, 購入完了フリーエリアを戻す } from "../../seeds/f04-04";
 import { adminUrl } from "../../lib/session";
 
@@ -377,4 +379,108 @@ caseTest("IT-F04-04-055", async ({ page, browser, notes, step, expected }) => {
       expect.soft(b.値, "2回目の注文（〔注文番号-F0404-055B〕）の行の変更前在庫・変更後在庫・在庫増減数・変更前総原価・変更後総原価").toEqual({ 変更前在庫: 7, 変更後在庫: 4, 在庫増減数: -3, 変更前総原価: 3500, 変更後総原価: 2000 });
     });
   } finally { await B.ctx.close(); }
+});
+
+// ---- 2026-11-20 追加: 通常の注文の確かめ（001・019・020）と、手順で DB を書き換えるケース（010〜017・048・049・050・060） ----
+caseTest("IT-F04-04-001", async (ctx) => {
+  const c = await 銀行振込の注文まで(ctx, "S-F04-04-NORMAL-001");
+  await ctx.expected(async () => {
+    expect.soft(await c.購入完了画面か(), "完了処理後に購入完了画面が表示される").toBe(true);
+  });
+});
+
+caseTest("IT-F04-04-019", async (ctx) => {
+  const seedId = "S-F04-04-NORMAL-019"; let 後 = { 回数: -1, 金額: -1 };
+  const メール = 準備の(seedId).会員.メール;
+  const 前 = 会員の累計(メール);
+  note(`開始時の会員の累計購入回数・累計購入金額: ${JSON.stringify(前)}`);
+  const c = await 銀行振込の注文まで(ctx, seedId, async () => { 後 = 会員の累計(メール); note(`注文後の累計購入回数・累計購入金額: ${JSON.stringify(後)}`); });
+  await ctx.expected(async () => {
+    expect.soft(await c.購入完了画面か(), "購入完了画面へ移った").toBe(true);
+    expect.soft(後, "累計購入回数 2→3・累計購入金額 3000→4500").toEqual({ 回数: 3, 金額: 4500 });
+  });
+});
+
+caseTest("IT-F04-04-020", async (ctx) => {
+  const seedId = "S-F04-04-NORMAL-020"; const code = rc("F0404-NORMAL-020");
+  let 商品 = { 総在庫: -1, 総原価: -1 }; let 明細 = { 件数: -1, 注文数: -1, 総原価: -1 };
+  const c = await 銀行振込の注文まで(ctx, seedId, async () => {
+    商品 = 商品の総在庫と総原価(code); 明細 = 受注の明細(ctx.notes.get("〔受注ID-F0404-020〕"), code);
+    note(`商品情報: ${JSON.stringify(商品)}・受注情報の明細: ${JSON.stringify(明細)}`);
+  });
+  await ctx.expected(async () => {
+    expect.soft(await c.購入完了画面か(), "購入完了画面へ移った").toBe(true);
+    expect.soft(商品, "商品情報の総在庫 10→7・総原価 5000→3500").toEqual({ 総在庫: 7, 総原価: 3500 });
+    expect.soft({ 注文数: 明細.注文数, 総原価: 明細.総原価 }, "受注情報の注文数 3・総原価 1500").toEqual({ 注文数: 3, 総原価: 1500 });
+  });
+});
+
+type 変更 = { 内容: string; 実行: (notes: CaseCtx["notes"]) => void };
+/** 手順1「ご注文方法指定画面を開く」・手順2「DBで…を変更する」・手順3「注文する」・（あれば）手順4「カート画面を開く」 */
+function DBを変えて注文する(seedId: string, 変更: 変更, a: { システムエラー?: boolean; カート?: { コード: string; 数量: number }[] }) {
+  return async (ctx: CaseCtx): Promise<void> => {
+    await 専用ブラウザにする(ctx.page.context(), seedId);
+    const c = new CheckoutPage(ctx.page);
+    let 行: { 規格ID: string; 数量: number }[] = [];
+    await ctx.step(1, async () => { await c.ご注文方法指定画面を開く(); });
+    await ctx.step(2, async () => { 変更.実行(ctx.notes); note(`DBを書き換えた（E2E が作った行だけ・依頼者決定 2026-11-10）: ${変更.内容}`); });
+    await ctx.step(3, async () => { note(チェックの注記); await 注文する(c); });
+    if (a.カート) await ctx.step(4, async () => { 行 = await カートの中身(ctx.page); note(`カート画面の行: ${JSON.stringify(行)}`); });
+    await ctx.expected(async () => {
+      if (a.システムエラー) test.info().annotations.push({ type: "正本の外の補い", description: "システムエラー画面は、アプリのエラー画面（購入エラー・/shopping/error）またはシステムエラーの文が出る画面として判定した" });
+      if (a.システムエラー) expect.soft(await c.システムエラー画面か() && !(await c.購入完了画面か()), "システムエラー画面へ遷移する").toBe(true);
+      for (const k of a.カート ?? []) {
+        const 規格 = 商品規格ID(rc(k.コード));
+        expect.soft(行.filter((r) => r.規格ID === 規格).map((r) => r.数量), `カートに商品コード ${k.コード} の商品が数量 ${k.数量} のまま残る`).toEqual([k.数量]);
+      }
+    });
+  };
+}
+const 支払方法を代金引換に = (k: string): 変更 => ({ 内容: "受注の保持する支払方法を銀行振込から代金引換へ", 実行: (n) => 受注の支払方法を変える(`F04-04-${k}`, n.get(`〔受注ID-F0404-${k}〕`), "代金引換") });
+const 非公開に = (コード: string): 変更 => ({ 内容: `商品コード ${コード} の商品公開ステータスを公開から非公開へ`, 実行: () => 商品を非公開にする(`F04-04 ${コード}`, rc(コード)) });
+const 制限を2に = (コード: string): 変更 => ({ 内容: `商品コード ${コード} の購入制限数を3から2へ`, 実行: () => 購入制限数を変える(`F04-04 ${コード}`, rc(コード), 2) });
+const 在庫を2に = (コード: string): 変更 => ({ 内容: `商品コード ${コード} の在庫数を3から2へ`, 実行: () => 在庫数を変える(`F04-04 ${コード}`, rc(コード), 2) });
+
+caseTest("IT-F04-04-010", DBを変えて注文する("S-F04-04-PAYMENT-MISMATCH-010", 支払方法を代金引換に("010"), { システムエラー: true }));
+caseTest("IT-F04-04-011", DBを変えて注文する("S-F04-04-PAYMENT-MISMATCH-011", 支払方法を代金引換に("011"), { カート: [{ コード: "F0404-PAY-011", 数量: 1 }] }));
+caseTest("IT-F04-04-012", DBを変えて注文する("S-F04-04-PRIVATE-012", 非公開に("F0404-PRIVATE-012"), { システムエラー: true }));
+caseTest("IT-F04-04-013", DBを変えて注文する("S-F04-04-PRIVATE-013", 非公開に("F0404-PRIVATE-013"), { カート: [{ コード: "F0404-PRIVATE-013", 数量: 1 }] }));
+caseTest("IT-F04-04-014", DBを変えて注文する("S-F04-04-LIMIT-014", 制限を2に("F0404-LIMIT-014"), { システムエラー: true }));
+caseTest("IT-F04-04-015", DBを変えて注文する("S-F04-04-LIMIT-015", 制限を2に("F0404-LIMIT-015"), { カート: [{ コード: "F0404-LIMIT-015", 数量: 3 }] }));
+caseTest("IT-F04-04-016", DBを変えて注文する("S-F04-04-STOCK-ERROR-016", 在庫を2に("F0404-STOCK-016"), { システムエラー: true }));
+caseTest("IT-F04-04-017", DBを変えて注文する("S-F04-04-STOCK-ERROR-017", 在庫を2に("F0404-STOCK-017"), { カート: [{ コード: "F0404-STOCK-017", 数量: 3 }] }));
+caseTest("IT-F04-04-048", DBを変えて注文する("S-F04-04-MIXED-048", 非公開に("F0404-MIX-B-048"), {
+  システムエラー: true, カート: [{ コード: "F0404-MIX-A-048", 数量: 1 }, { コード: "F0404-MIX-B-048", 数量: 1 }] }));
+
+caseTest("IT-F04-04-049", async ({ page, browser, step, expected }) => {
+  const seedId = "S-F04-04-MIXED-049"; const code = rc("F0404-MIX-A-049"); const shop = await 本店の店名(browser);
+  await 専用ブラウザにする(page.context(), seedId);
+  const c = new CheckoutPage(page); const B = await ブラウザBを開く(browser);
+  try {
+    let list!: Awaited<ReturnType<typeof 在庫を検索する>>; let v = { 行の数: -1, 在庫: null as number | null, 総原価: null as number | null };
+    await step(1, async () => { await c.ご注文方法指定画面を開く(); });
+    await step(2, async () => { 商品を非公開にする("F04-04 F0404-MIX-B-049", rc("F0404-MIX-B-049")); note("DBを書き換えた（E2E が作った行だけ）: 商品コード F0404-MIX-B-049 の商品公開ステータスを公開から非公開へ"); });
+    await step(3, async () => { note(チェックの注記); await 注文する(c); });
+    await step(4, async () => { await Bで管理画面にログインする(B.page); await Bで在庫検索を開く(B.page); });
+    await step(5, async () => { list = await 在庫を検索する(B.page, code, shop); });
+    await step(6, async () => { v = await 在庫と総原価(list, code, shop); note(`手順6: ${値の文(v)}`); });
+    await expected(async () => {
+      expect.soft({ 在庫: v.在庫, 総原価: v.総原価 }, "オンラインショップの行の在庫・総原価").toEqual({ 在庫: 10, 総原価: 5000 });
+    });
+  } finally { await B.ctx.close(); }
+});
+
+caseTest("IT-F04-04-050", async (ctx) => {
+  const c = await 銀行振込の注文まで(ctx, "S-F04-04-UNLIM-050");
+  await ctx.expected(async () => {
+    expect.soft(await c.システムエラー画面か(), "在庫エラー（システムエラー画面）にならない").toBe(false);
+    expect.soft(await c.購入完了画面か(), "購入完了画面が表示される").toBe(true);
+  });
+});
+caseTest("IT-F04-04-060", async (ctx) => {
+  const c = await 銀行振込の注文まで(ctx, "S-F04-04-CBCHKUNLIM-060");
+  await ctx.expected(async () => {
+    expect.soft(await c.システムエラー画面か(), "システムエラー画面は表示されない").toBe(false);
+    expect.soft(await c.購入完了画面か(), "購入完了画面が表示される").toBe(true);
+  });
 });
