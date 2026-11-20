@@ -4,7 +4,7 @@
  * シードでの解釈（記録 review/M11-02_progress_2026-11-11_dev.md にも書く）:
  * - S-M11-02-MASTER: 所属「トレード」「EC運営」・権限「システム権限」「店舗権限」は開発環境に無く、所属・権限のマスタは全員が使うので新しく作らない。
  *   開発環境に既にあるもので読み替える: 所属 トレード→「試験所属A」・EC運営→「試験所属B」、権限 システム権限→「システム管理者」・店舗権限→「店舗オペレーター」。
- *   店舗「東京店」「大阪店」「名古屋店」は開発環境に同じ店名の店舗が複数あるので、店名がちょうど一致する店舗のうち番号のいちばん小さいものを使い、選択欄は番号で選ぶ。
+ *   店舗「東京店」「大阪店」は開発環境に無く作らないので、東京店→本店（店舗ID 1）・大阪店→試験支店（店舗ID 1574）で読み替える（2026-11-13 の決まり。2026-11-20 に直した）。名古屋店はどのケースも使わない。
  *   稼働「稼働」「非稼働」は既にある。マスタは作らず、DB と画面で確かめるだけ。
  * - 決め打ちのログインID・名前・メールアドレスには実行の印 rc() を付ける（開発環境に手動テスト用の同じログインIDのメンバーが多い）。
  *   値そのものの長さ・書式を確かめるログインID（019 の abcd、023 の A×255、044 の 50文字）は印を付けない。開発環境で未使用であることを DB の参照で確かめ、使われていれば止める。
@@ -17,7 +17,7 @@ import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
-import { ログインIDのメンバー, 店名の店舗ID, 表示順にする } from "../db/m11_02";
+import { ログインIDのメンバー, 表示順にする } from "../db/m11_02";
 import { MemberEditPage, メンバーの入力, 自動ログアウト時間を読む, 自動ログアウト時間を設定する } from "../pages/admin/m11_02_member";
 
 /** 正本の所属・権限の名前を、開発環境に既にあるものへ読み替える */
@@ -41,8 +41,9 @@ export const 連携管理者: Account = { loginId: ログインID("m1102l_adm"),
 
 defineSeed("S-M11-02-MASTER", async ({ browser, seed }) => {
   if (店舗ID) return;
-  const ids = { 東京店: 店名の店舗ID("東京店"), 大阪店: 店名の店舗ID("大阪店"), 名古屋店: 店名の店舗ID("名古屋店") };
-  for (const [k, v] of Object.entries(ids)) if (!v) throw new Error(`開発環境に店舗「${k}」が無い`);
+  // 店舗「東京店」「大阪店」は開発環境に無く、店舗は作らない決まり（依頼者決定 2026-11-13「2店が要るときは試験支店＋本店」）。
+  // 東京店→本店（店舗ID 1）・大阪店→試験支店（店舗ID 1574）で読み替える（2026-11-20。M11-01 と同じ）。名古屋店はどのケースも使わないので求めない。
+  const ids = { 東京店: "1", 大阪店: "1574", 名古屋店: "" };
   店舗ID = ids as Record<"東京店" | "大阪店" | "名古屋店", string>;
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const p = new MemberEditPage(page);
@@ -52,7 +53,7 @@ defineSeed("S-M11-02-MASTER", async ({ browser, seed }) => {
     for (const n of Object.values(所属)) if (!所属の選択肢.includes(n)) throw new Error(`所属の選択肢に「${n}」が無い（${所属の選択肢.join("、")}）`);
     for (const n of Object.values(権限)) if (!権限の選択肢.includes(n)) throw new Error(`権限グループの選択肢に「${n}」が無い（${権限の選択肢.join("、")}）`);
   });
-  reportSeedIssue(seed.シードID, `所属・権限は開発環境に既にあるものへ読み替えた（所属 トレード→${所属.トレード}・EC運営→${所属.EC運営}、権限 システム権限→${権限.システム権限}・店舗権限→${権限.店舗権限}）。店舗は店名が一致する店舗のうち番号のいちばん小さいもの（東京店=${ids.東京店}・大阪店=${ids.大阪店}・名古屋店=${ids.名古屋店}）`);
+  reportSeedIssue(seed.シードID, `所属・権限は開発環境に既にあるものへ読み替えた（所属 トレード→${所属.トレード}・EC運営→${所属.EC運営}、権限 システム権限→${権限.システム権限}・店舗権限→${権限.店舗権限}）。店舗は 東京店→本店（店舗ID ${ids.東京店}）・大阪店→試験支店（店舗ID ${ids.大阪店}）で読み替えた（2026-11-13 の店舗の決まり）`);
 });
 
 type メンバーの定め = メンバーの入力 & { 表示順?: number };
