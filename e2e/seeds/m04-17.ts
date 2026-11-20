@@ -25,6 +25,7 @@ import {
   readSupplyGoodsCategoryId, registerStockIn, uploadGoodsLines,
 } from "../pages/admin/m04_17_seed_ops";
 import { 試験支店, 試験支店の店舗ID, 店名の読み替え } from "../pages/admin/reuse_store";
+import { 履歴の値を書き足す } from "../db/m04_17_w";
 import { 在庫変動履歴の登録日時を書き足す } from "../db/m04_17_x";
 
 // 2026-11-13 試験店舗の使い回しで所属の店舗が試験支店に変わったので、前の試験管理者（M04-24 の「本店」の所属）とは別の決まった名前で作る
@@ -187,3 +188,38 @@ defineHistorySeed("S-M04-17-RANGE-009", RANGE_009.map(([s, name]) => goods(mk("R
       issue(`${name}: 在庫変動履歴（${n} 件）の登録日時を ${at.replace("+09", "")} に DB で書き換えた（E2E が作ったこの商品の在庫変動履歴だけ。画面で指定できない）`);
     }
   });
+
+// ---- 2026-11-20 追加: 範囲・区分の検索のシード（RANGE-010・011・013・014・015・CATSEL-053）。商品・入庫・承認は画面で作り、画面で指定できない値だけ、
+// 承認のあとに E2E が作ったこの商品の在庫変動履歴へ DB で書き足す（lib/db_write.ts。依頼者決定 2026-11-10）。入庫の数量は1（承認は画面）。 ----
+const 四行 = (n: string): [string, string][] => [["-01", `RANGE-01-${n}`], ["-02", `RANGE-02-${n}`], ["-03", `RANGE-03-${n}`], ["-NULL", `RANGE-NULL-${n}`]];
+function rangeSeed(n: string, 値: (i: number) => Parameters<typeof 履歴の値を書き足す>[2]): void {
+  const rows = 四行(n);
+  defineHistorySeed(`S-M04-17-RANGE-${n}`, rows.map(([s, name]) => goods(mk(`RANGE-M0417-${n}`, s), name)),
+    rows.map(([s]) => approved(mk(`RANGE-M0417-${n}`, s))),
+    async (_adm, issue) => {
+      rows.forEach(([s, name], i) => {
+        const v = 値(i);
+        const c = 履歴の値を書き足す(`S-M04-17-RANGE-${n}: ${name}`, mk(`RANGE-M0417-${n}`, s), v);
+        issue(`${name}: 在庫変動履歴（${c} 件）に ${JSON.stringify(v)} を DB で書き足した（E2E が作ったこの商品の履歴だけ。画面で指定できない）`);
+      });
+    });
+}
+rangeSeed("010", (i) => [{ 変更前在庫: 5, 変更後在庫: 10 }, { 変更前在庫: 10, 変更後在庫: 20 }, { 変更前在庫: 21, 変更後在庫: 40 }, { 変更前在庫: 0, 変更後在庫: 0 }][i]);
+rangeSeed("011", (i) => ({ 在庫増減数: [5, 10, 19, 0][i] }));
+rangeSeed("013", (i) => ({ 仕入単価: [200, 400, 800, null][i] }));
+rangeSeed("014", (i) => ({ 承認日時: ["2026-08-02 00:00:00+09", "2026-08-16 00:00:00+09", "2026-09-01 00:00:00+09", null][i] }));
+rangeSeed("015", (i) => ({ 最終更新日時: ["2026-08-03 00:00:00+09", "2026-08-17 00:00:00+09", "2026-09-02 00:00:00+09", null][i] }));
+
+// 053: 3商品の履歴の在庫変動区分を 入庫/問屋仕入・入庫/発見・廃棄/廃棄(破損) にする（登録日時 2026/08/10 10:00）
+{
+  const kinds: [string, string][] = [["-A", "入庫/問屋仕入"], ["-B", "入庫/発見"], ["-C", "廃棄/廃棄(破損)"]];
+  defineHistorySeed("S-M04-17-CATSEL-053", kinds.map(([s]) => goods(mk("CATSEL-M0417-053", s), mk("CATSEL-M0417-053", s))),
+    kinds.map(([s]) => approved(mk("CATSEL-M0417-053", s))),
+    async (_adm, issue) => {
+      for (const [s, 区分] of kinds) {
+        const c = 履歴の値を書き足す(`S-M04-17-CATSEL-053: ${s}`, mk("CATSEL-M0417-053", s), { 変動区分: 区分 });
+        在庫変動履歴の登録日時を書き足す(`S-M04-17-CATSEL-053: ${s} の登録日時`, mk("CATSEL-M0417-053", s), "2026-08-10 10:00:00+09");
+        issue(`${s}: 在庫変動履歴（${c} 件）の在庫変動区分を ${区分}、登録日時を 2026/08/10 10:00 に DB で書き足した（E2E が作ったこの商品の履歴だけ）`);
+      }
+    });
+}

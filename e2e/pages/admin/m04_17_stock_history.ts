@@ -82,6 +82,22 @@ export class StockHistoryPage {
     await this.field("sell_price_to").fill(to);
   }
 
+  /** 範囲の欄（項目名は stock・stock_change・purchase_unit_price・approval_date・update_date）の from・to を入れる。日付の欄は YYYY-MM-DD の形 */
+  async fillRange(項目: "stock" | "stock_change" | "purchase_unit_price" | "approval_date" | "update_date", from: string, to: string): Promise<void> {
+    await this.field(`${項目}_from`).fill(from);
+    await this.field(`${項目}_to`).fill(to);
+  }
+
+  /** 在庫変動理由区分の選択肢（画面の表示は「入庫 / 問屋仕入」の形）を選ぶ。正本の書き方「入庫/問屋仕入」の前後の空白は気にしない */
+  async selectChangeType(区分: string): Promise<void> {
+    const want = 区分.replace(/\s*\/\s*/g, " / ");
+    const sel = this.在庫変動理由区分欄;
+    await expect(sel, "在庫変動理由区分の欄").toHaveCount(1);
+    const labels = await sel.locator("option").evaluateAll((os) => os.map((o) => (o.textContent ?? "").replace(/\s+/g, " ").trim()));
+    if (!labels.includes(want)) throw new Error(`在庫変動理由区分に「${want}」が無い（${labels.join("、")}）`);
+    await sel.selectOption({ label: want });
+  }
+
   /** 欠品検索の「欠品履歴一覧を表示」のチェックを付け外しする（画面のスクリプトが連動する項目を切り替える） */
   async setDisposalSearch(on: boolean): Promise<void> {
     const box = this.欠品検索;

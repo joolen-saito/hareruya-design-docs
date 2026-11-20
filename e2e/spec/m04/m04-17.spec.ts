@@ -285,3 +285,88 @@ caseTest("IT-M04-17-009", async ({ page, step, expected }) => {
     expect.soft(namesOf(rows), "表示されるのは RANGE-01-009・RANGE-02-009 の2件だけ").toEqual(["RANGE-01-009", "RANGE-02-009"]);
   });
 });
+
+// ---- 2026-11-20 追加: 範囲の検索（010・011・013・014・015）と在庫変動理由区分の選択（053） ----
+// 範囲の値は、承認のあとに E2E が作った履歴へ DB で書き足した（seeds/m04-17.ts）。日付の欄は日付だけを入れる作りなので、正本の時刻は入れられない。
+const 日付だけの補い = "日付の欄は日付だけを入れる作りなので、正本の「2026/08/02 00:00」などの時刻は入れられず、日付（YYYY-MM-DD）で入れた";
+
+caseTest("IT-M04-17-010", async ({ page, step, expected }) => {
+  const h = await signIn(page);
+  await step(1, () => h.open());
+  await step(2, () => h.clearConditions());
+  await step(3, async () => { await h.fillKeyword(mk("RANGE-M0417-010")); await h.fillRange("stock", "10", "20"); });
+  await step(4, () => search(h, mk("RANGE-M0417-010")));
+  await expected(async () => {
+    expect.soft(namesOf(await h.rows()), "変更前在庫または変更後在庫が10以上20以下の RANGE-01-010・RANGE-02-010 の2件だけが表示される").toEqual(["RANGE-01-010", "RANGE-02-010"]);
+  });
+});
+
+caseTest("IT-M04-17-011", async ({ page, step, expected }) => {
+  const h = await signIn(page);
+  await step(1, () => h.open());
+  await step(2, () => h.clearConditions());
+  await step(3, async () => { await h.fillKeyword(mk("RANGE-M0417-011")); await h.fillRange("stock_change", "5", "10"); });
+  await step(4, () => search(h, mk("RANGE-M0417-011")));
+  await expected(async () => {
+    expect.soft(namesOf(await h.rows()), "在庫増減数が下限または上限と一致する RANGE-01-011・RANGE-02-011 の2件だけが表示される").toEqual(["RANGE-01-011", "RANGE-02-011"]);
+  });
+});
+
+caseTest("IT-M04-17-013", async ({ page, step, expected }) => {
+  const h = await signIn(page);
+  await step(1, () => h.open());
+  await step(2, () => h.clearConditions());
+  await step(3, async () => { await h.fillKeyword(mk("RANGE-M0417-013")); await h.fillRange("purchase_unit_price", "200", "400"); });
+  await step(4, () => search(h, mk("RANGE-M0417-013")));
+  await expected(async () => {
+    const names = namesOf(await h.rows());
+    expect.soft(names, "仕入単価が下限または上限と一致する RANGE-01-013・RANGE-02-013 だけが表示される").toEqual(["RANGE-01-013", "RANGE-02-013"]);
+    expect.soft(names, "仕入単価が空の RANGE-NULL-013 は表示されない").not.toContain("RANGE-NULL-013");
+  });
+});
+
+caseTest("IT-M04-17-014", async ({ page, step, expected }) => {
+  const h = await signIn(page);
+  await step(1, () => h.open());
+  await step(2, () => h.clearConditions());
+  await step(3, async () => {
+    await h.fillKeyword(mk("RANGE-M0417-014")); await h.fillRange("approval_date", "2026-08-02", "2026-08-16");
+    test.info().annotations.push({ type: "正本の外の補い", description: 日付だけの補い });
+  });
+  await step(4, () => search(h, mk("RANGE-M0417-014")));
+  await expected(async () => {
+    const names = namesOf(await h.rows());
+    expect.soft(names, "承認日時が下限または上限と一致する RANGE-01-014・RANGE-02-014 だけが表示される").toEqual(["RANGE-01-014", "RANGE-02-014"]);
+    expect.soft(names, "承認日が空の RANGE-NULL-014 は表示されない").not.toContain("RANGE-NULL-014");
+  });
+});
+
+caseTest("IT-M04-17-015", async ({ page, step, expected }) => {
+  const h = await signIn(page);
+  await step(1, () => h.open());
+  await step(2, () => h.clearConditions());
+  await step(3, async () => {
+    await h.fillKeyword(mk("RANGE-M0417-015")); await h.fillRange("update_date", "2026-08-03", "2026-08-17");
+    test.info().annotations.push({ type: "正本の外の補い", description: 日付だけの補い });
+  });
+  await step(4, () => search(h, mk("RANGE-M0417-015")));
+  await expected(async () => {
+    const names = namesOf(await h.rows());
+    expect.soft(names, "最終更新日時が下限または上限と一致する RANGE-01-015・RANGE-02-015 だけが表示される").toEqual(["RANGE-01-015", "RANGE-02-015"]);
+    expect.soft(names, "最終更新日が空の RANGE-NULL-015 は表示されない").not.toContain("RANGE-NULL-015");
+  });
+});
+
+caseTest("IT-M04-17-053", async ({ page, step, expected }) => {
+  const h = await signIn(page);
+  await step(1, () => h.open());
+  await step(2, () => h.clearConditions());
+  await step(3, async () => { await h.selectChangeType("入庫/問屋仕入"); });
+  await step(4, async () => { await h.fillKeyword(mk("CATSEL-M0417-053")); await search(h, mk("CATSEL-M0417-053")); });
+  await expected(async () => {
+    const codes = codesOf(await h.rows());
+    expect.soft(codes, "在庫変動理由区分が「入庫/問屋仕入」の CATSEL-M0417-053-A の1件だけが表示される").toEqual([mk("CATSEL-M0417-053", "-A")]);
+    expect.soft(codes, "CATSEL-M0417-053-B は表示されない").not.toContain(mk("CATSEL-M0417-053", "-B"));
+    expect.soft(codes, "CATSEL-M0417-053-C は表示されない").not.toContain(mk("CATSEL-M0417-053", "-C"));
+  });
+});
