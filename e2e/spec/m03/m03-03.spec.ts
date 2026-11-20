@@ -115,7 +115,7 @@ caseTest("IT-M03-03-025", async ({ page, notes, step, expected }) => {
   await step(4, async () => { const n = await 選択済み商品IDを置き換える(page, "999999025"); note(`置き換えた欄の数: ${n}`); });
   await step(5, async () => { await カード商品CSV出力を押す(page); note(`押したあとのアドレス: ${page.url()}`); });
   await expected(async () => {
-    expect(new URL(page.url()).pathname, "商品一覧画面へ遷移した").toMatch(new RegExp(`^${商品一覧のパス()}(/page/\\d+)?$`));
+    expect(new URL(page.url()).pathname, "商品一覧画面へ遷移した").toMatch(new RegExp(`^${商品一覧のパス()}(/page(/\\d+)?)?$`)); // 商品一覧はページ番号なしの /product/page でも開く（2026-11-21）
   });
 });
 
