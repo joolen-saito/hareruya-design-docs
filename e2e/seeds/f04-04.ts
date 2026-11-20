@@ -191,9 +191,11 @@ const 在庫編集 = (コード: string, 数量: number, 入庫数: number, 仕�
 const 通常 = (n: string, メール: string, 商品: 商品の作り方[], extra: Partial<作り方> = {}) =>
   defineSeed(n, async (ctx) => {
     const k = n.slice(-3);
-    // シード表が商品IDの呼び名〔商品ID-F0404-<番号>〕を定めるもの（商品1つ）は、作った商品の商品IDを控える
-    const 商品ID = `〔商品ID-F0404-${k}〕`;
-    const 商品2 = 商品.length === 1 && !商品[0].商品IDの呼び名 && getSeed(n).状態・属性.includes(商品ID) ? [{ ...商品[0], 商品IDの呼び名: 商品ID }] : 商品;
+    // シード表が商品IDの呼び名を定めるものは、作った商品の商品IDを控える。商品1つは〔商品ID-F0404-<番号>〕、
+    // 商品2つ以上は〔商品ID-F0404-<番号>A〕〔…B〕（シード表のどの列に書かれていても見る。2026-11-20 048〜050・060 で控え漏れ）
+    const 表 = JSON.stringify(getSeed(n));
+    const 呼び名の = (i: number): string => (商品.length === 1 ? `〔商品ID-F0404-${k}〕` : `〔商品ID-F0404-${k}${"ABCDEFGH"[i]}〕`);
+    const 商品2 = 商品.map((p, i) => (!p.商品IDの呼び名 && 表.includes(呼び名の(i)) ? { ...p, 商品IDの呼び名: 呼び名の(i) } : p));
     await 作る(ctx, { メール, 商品: 商品2, 開く: 銀行振込, 会員IDの呼び名: `〔会員ID-F0404-${k}〕`, 受注IDの呼び名: `〔受注ID-F0404-${k}〕`, ...extra });
   });
 通常("S-F04-04-NORMAL-021", "f0404-normal-021", [在庫編集("F0404-NORMAL-021", 3, 10, "500")]);
