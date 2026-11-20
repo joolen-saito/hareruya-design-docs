@@ -63,7 +63,9 @@ async function メンバーを作る(browser: Browser, seedId: string, v: メン
   if (v.ログインID && ログインIDのメンバー(v.ログインID).length > 0) throw new Error(`${seedId}: ログインID ${v.ログインID} のメンバーが既にいる`);
   const id = await withAdminSession(browser, 作る人, async (page) => {
     const p = new MemberEditPage(page);
-    await p.一覧から新規登録を開く();
+    // メンバー管理一覧は全メンバー（約1,700行）を出すので開くのに60秒を超えることがある（2026-11-21 31件が時間切れ）。
+    // シードでは一覧を通らず、新規登録の画面のアドレスを直接開く（登録の画面と処理は同じ。M11-01 と同じやり方）
+    await p.新規登録を開く();
     await p.入れる(v);
     const r = await p.登録を押す();
     const m = /\/member\/(\d+)\/edit/.exec(page.url());
