@@ -17,10 +17,11 @@ const 印の補い = "商品名・商品コードには実行ごとの印を付�
 async function 期間別の販売数を指定する(search: ProductSearchPage, 期間: string | null, from: string, to: string): Promise<void> {
   await search.ensureDetailVisible();
   if (期間) {
-    const sel = search.field("order_date");
-    const label = (await sel.locator("option").allInnerTexts()).map((t) => t.trim()).find((t) => t.includes(期間));
-    if (!label) throw new Error(`販売期間に「${期間}」が無い`);
-    await sel.selectOption({ label });
+    // 販売期間は選択肢のボタン（ラジオ）で並ぶ作り（select ではない）。ラベルが「期間」を含むものを選ぶ
+    const opts = await search.choiceOptions("order_date");
+    const o = opts.find((x) => x.label.includes(期間));
+    if (!o) throw new Error(`販売期間に「${期間}」が無い（${opts.map((x) => x.label).join("・")}）`);
+    await search.choice("order_date", o.value).check();
   }
   await search.field("order_quantity_from").fill(from);
   await search.field("order_quantity_to").fill(to);
