@@ -39,7 +39,7 @@ import {
 import { goodsRootCategoryLink } from "../pages/admin/product_masters";
 import { loggedInMemberName, registerStockEdit, StockApprovalListPage, StockListPage } from "../pages/admin/stock_edit";
 import { Page } from "@playwright/test";
-import { 商品を削除済みにする } from "../db/m03_38_w";
+import { 商品を削除済みにする, 未承認の在庫編集の番号 } from "../db/m03_38_w";
 
 /**
  * シード表のログインID・名前は、開発環境にほかの方が手動テストの準備で登録した同じ値のメンバーがあり得る（同名・同じログインIDは登録できず、
@@ -189,14 +189,18 @@ async function buildProduct(browser: Parameters<typeof withAdminSession>[0], not
   // 4. 登録者とは別の、承認権限を持つ管理者で、この在庫編集の行を一括承認する
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     const list = new StockApprovalListPage(page);
-    await list.openAll(mainShop);
+    // 本店の在庫編集承認一覧は未承認の行が1,000件を超え（2026-11-21 は1,397件）、1000件の表示でも今回の行が出ない。
+    // 今回の在庫編集の番号を DB から引き（参照だけ）、一覧を「?id=」で開いて、その1件だけを承認する（A17-05 のシードと同じ開き方）
+    const srcs = 未承認の在庫編集の番号(p.code, MAIN_SHOP_ID, 2);
+    if (srcs.length === 0) throw new Error(`${p.seedId}: ${p.code} の在庫編集（2）の未承認の行が DB に無い`);
+    await page.goto(adminUrl(`/product/stock/approval_list?id=${srcs[0]}`), { timeout: 60_000 });
+    await expect(page.locator("#form_search_stock_approval_list_update"), "在庫編集承認一覧の結果").toBeVisible();
+    await page.waitForLoadState("load");
+    if (await list.ensureShopChosen(mainShop)) issue(`在庫編集承認一覧を在庫編集の番号で開き、検索欄の店舗が空だったので「${mainShop}」を選んでから承認した`);
     const rows = (await list.rowValues()).filter((r) => r.status === "未承認" && r.registrant === registrant
-      && r.shop.startsWith(mainShop) && r.changeType.endsWith("入庫/その他") && r.quantity === "2");
-    // 承認一覧の行には商品コードが出ないので、登録者・数量・種別で絞る。登録者（試験管理者）は E2E が決まった印で作ったメンバーで、
-    // 前の実行で止まったシードの未承認の行（同じ登録者・同じ数量の、E2E が登録した在庫編集）が残ることがある。今回の1件は必ず含まれるので、
-    // 1件以上あればその登録者の行をまとめて承認する（残りの行は E2E の試験用商品の入庫で、承認しても害は無い）
-    if (rows.length < 1) throw new Error(`${p.seedId}: ${p.code} の在庫編集（2）の未承認の行が 0 件（1件以上あるはず）`);
-    if (rows.length > 1) issue(`在庫編集承認一覧の未承認の行が ${rows.length} 件あった（前の実行で止まった同じ登録者の行を含む）。同じ登録者の行をまとめて承認した`);
+      && r.changeType.endsWith("入庫/その他") && r.quantity === "2");
+    if (rows.length !== 1) throw new Error(`${p.seedId}: 在庫編集の番号 ${srcs[0]} で開いた在庫編集承認一覧に、合う未承認の行が ${rows.length} 件（1件のはず）`);
+    issue("在庫編集承認一覧は、未承認の行が1,000件を超えて今回の行が表示に出ないので、在庫編集の番号で開いて承認した");
     await list.approve(rows.map((r) => r.id), `${p.seedId} の在庫編集の承認`, issue);
   });
 

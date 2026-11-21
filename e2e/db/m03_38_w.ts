@@ -32,3 +32,19 @@ export function 商品を削除済みにする(what: string, 商品ID: string): 
 export function 商品IDの行がある(商品ID: string): boolean {
   return query(`select p.id from dtb_product p where p.id = $1`, [商品ID]).length > 0;
 }
+
+/**
+ * 商品コード・店舗ID・増減数が合う、未承認の在庫編集（入庫）の番号（承認一覧の「?id=」に渡す値）。新しい順（参照だけ）。
+ * 本店の在庫編集承認一覧には未承認の行が1,000件を超えて積み重なり、1000件の表示では今回の行が出ないことがあるので（2026-11-21）、番号で開く。
+ */
+export function 未承認の在庫編集の番号(商品コード: string, 店舗ID: string, 増減数: number): string[] {
+  return query(
+    `select a.history_source_id::text as src
+       from dtb_stock_approval_list a
+       join dtb_stock_edit_approval_detail d on d.stock_edit_approval_id = a.history_source_id
+       join dtb_product_stock ps on ps.id = d.product_stock_id
+       join dtb_product_class pc on pc.id = ps.product_class_id
+      where a.history_source_type_id = 1 and pc.product_code = $1 and a.base_info_id = $2::int and d.edit_quantity = $3::int and a.approval_status = 1
+      order by a.id desc`,
+    [商品コード, 店舗ID, 増減数]).map((r) => String(r.src));
+}
