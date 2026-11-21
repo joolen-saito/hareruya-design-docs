@@ -10,20 +10,23 @@
  * - 商品はグッズ商品CSV登録で作る。商品コードと商品名(日)には実行の印 rc() を付ける（検索の結果をこの実行の商品だけにするため）。
  *   正本が値を示さない必須の列は、取込が通る値（registerGoodsCsv の決め方）。
  * - 商品ID 999999006・999999011 が未登録であることは、商品一覧で商品IDを入れて検索する代わりに、DB を参照して確かめる（読むだけ）。
- * - 007・014 の在庫10・総原価2500・原価単価250: 在庫編集の入庫は F06-09 のシードと同じ部品（在庫を入れて在庫IDを読む）で行うので、
- *   仕入単価は0・在庫変動理由は部品の決まりの文になる（原価単価は250でなく0）。ケースの期待結果は在庫・原価の値を見ないので結果に関わらない。
+ * - 007・014 の在庫10・総原価2500・原価単価250: 在庫検索一覧から本店・EC-CUBE の在庫編集を開き、在庫を入れる管理者が「入庫/その他」・仕入単価250・
+ *   理由「M03-05試験データ」で登録し、別の管理者が承認する。本店の在庫編集承認一覧は未承認の行が1,000件を超え今回の行が表示に出ないので、
+ *   今回の在庫編集の番号を DB から引き（参照だけ）、一覧を「?id=」で開いて承認する（2026-11-21。F06-09 の部品は共通なので変えず、ここに書く）。
  * - 017 の「状態SPの規格2件・状態NMの規格0件」: 規格ID 017A を DB で状態SPにする作り方は使わず、商品規格一覧の「新規作成」で状態SPの規格を2件足し、
  *   取込で作られた状態NMの規格を「商品規格を削除」で消して作る（M03-04 の 034 と同じ。〔規格ID-M0305-017A〕・〔規格ID-M0305-017B〕は足した2件の規格ID）。
  */
-import { Browser, Page } from "@playwright/test";
+import { Browser, expect, Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { Notes } from "../lib/notes";
 import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
-import { Account, withAdminSession } from "../lib/session";
+import { Account, adminUrl, withAdminSession } from "../lib/session";
 import { 商品があるか } from "../db/m03_04_x";
 import { 取込の商品と規格を読む, 規格を足す, 規格を削除する } from "../pages/admin/a17_05_setup";
-import { 在庫を入れて在庫IDを読む } from "../pages/admin/f06_09_setup";
+import { ensureStockAdmin, STOCK_ADMIN } from "../pages/admin/f03_08_masters";
+import { loggedInMemberName, registerStockEdit, StockApprovalListPage, StockListPage } from "../pages/admin/stock_edit";
+import { 未承認の在庫編集の番号 } from "../db/m03_38_w";
 import { downloadGoodsCsvTemplate } from "../pages/admin/m03_01_goods_csv";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
@@ -129,6 +132,65 @@ defineSeed("S-M03-05-NOTFOUND-006", { needs: ["S-M03-05-MASTER"] }, async ({ bro
   reportSeedIssue(seed.シードID, "商品ID 999999006 が未登録であることは、商品一覧で検索する代わりに DB を参照して確かめた");
 });
 
+/** 在庫編集画面に表示された項目（ラベルの右の値） */
+async function 在庫編集の表示(page: Page, ラベル: string): Promise<string> {
+  const label = page.locator("label.form-label", { hasText: new RegExp(`^\\s*${ラベル}\\s*$`) });
+  await expect(label, `在庫編集画面の「${ラベル}」の項目`).toHaveCount(1);
+  const row = label.locator("xpath=ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' row ')][1]");
+  return ((await row.locator(".col-7 > div").first().textContent()) ?? "").replace(/[,\s]/g, "");
+}
+
+/**
+ * 本店・EC-CUBE の在庫へ入庫して承認し、在庫IDを返す（シード表: 入庫/その他・仕入単価250・理由「M03-05試験データ」）。
+ * 在庫を入れる管理者が登録し、全権限の管理者が承認する（登録者と承認者は別）。承認は、今回の在庫編集の番号を DB から引き（参照だけ）、
+ * 在庫編集承認一覧を「?id=」で開いて行う（本店の未承認の行が1,000件を超え、一覧の表示に今回の行が出ないため）。承認のあと在庫数を読み直す。
+ */
+async function 本店へ入庫して承認する(browser: Browser, seedId: string, code: string, classId: string, 数: number, issue: (m: string) => void): Promise<string> {
+  const approverName = await withAdminSession(browser, SETUP_ADMIN, (page) => loggedInMemberName(page));
+  await withAdminSession(browser, SETUP_ADMIN, (page) => ensureStockAdmin(page));
+  const shop = await withAdminSession(browser, SETUP_ADMIN, (page) => new StockListPage(page).shopNameById("1"));
+  let href = ""; let stockId = "";
+  const registrant = await withAdminSession(browser, STOCK_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const me = await loggedInMemberName(page);
+    if (me === approverName) throw new Error(`${seedId}: 在庫の登録者と承認者が同じ管理者になっている`);
+    const stock = new StockListPage(page);
+    await stock.searchByProductCode(code);
+    const links = await stock.row(code, shop, "EC-CUBE").locator("td.col-name a").evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
+    if (links.length !== 1) throw new Error(`${seedId}: 在庫検索一覧の ${code} の本店・EC-CUBE の行が ${links.length} 件（1件のはず）`);
+    href = links[0];
+    await page.goto(href);
+    await page.waitForLoadState("load");
+    await expect(page.locator("form#stock_approval_form"), `${seedId}: 在庫編集の画面`).toBeVisible();
+    const cls = await 在庫編集の表示(page, "商品規格ID");
+    if (cls !== classId) throw new Error(`${seedId}: 在庫編集画面の商品規格ID が ${cls}（${classId} のはず）`);
+    stockId = await 在庫編集の表示(page, "在庫ID");
+    if (!/^\d+$/.test(stockId)) throw new Error(`${seedId}: 在庫編集画面の在庫ID「${stockId}」を読めない`);
+    await registerStockEdit(page, { changeType: "入庫/その他", reason: "M03-05試験データ", quantity: String(数), purchasePrice: "250", approverName }, `${seedId}: ${code} の在庫編集（${数}）`, issue);
+    return me;
+  });
+  const srcs = 未承認の在庫編集の番号(code, "1", 数);
+  if (srcs.length === 0) throw new Error(`${seedId}: ${code} の在庫編集（${数}）の未承認の行が DB に無い`);
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    const list = new StockApprovalListPage(page);
+    await page.goto(adminUrl(`/product/stock/approval_list?id=${srcs[0]}`), { timeout: 60_000 });
+    await expect(page.locator("#form_search_stock_approval_list_update"), "在庫編集承認一覧の結果").toBeVisible();
+    await page.waitForLoadState("load");
+    await list.ensureShopChosen(shop);
+    const rows = (await list.rowValues()).filter((x) => x.status === "未承認" && x.registrant === registrant
+      && x.changeType.endsWith("入庫/その他") && x.quantity.replace(/,/g, "") === String(数));
+    if (rows.length !== 1) throw new Error(`${seedId}: 在庫編集の番号 ${srcs[0]} で開いた在庫編集承認一覧に、合う未承認の行が ${rows.length} 件（1件のはず）`);
+    await list.approve(rows.map((x) => x.id), `${seedId}: 在庫編集の承認`, issue);
+    await page.goto(href);
+    await page.waitForLoadState("load");
+    const got = Number(await 在庫編集の表示(page, "在庫数"));
+    if (got !== 数) throw new Error(`${seedId}: ${code} の本店の在庫が ${got}（${数} のはず）`);
+  });
+  issue("本店の在庫編集承認一覧は未承認の行が1,000件を超えて今回の行が表示に出ないので、在庫編集の番号で開いて承認した");
+  return stockId;
+}
+
 /** 007・014: 商品1件 → セールフラグ・販売価格900・帯URL → 本店EC-CUBEの在庫10（入庫して承認） */
 async function セールと在庫のある商品(browser: Browser, seedId: string, n: "007" | "014", notes: Notes): Promise<void> {
   const issue = (m: string) => reportSeedIssue(seedId, m);
@@ -146,9 +208,7 @@ async function セールと在庫のある商品(browser: Browser, seedId: strin
     await openClassEdit(page, r.商品ID, r.規格ID);
     await saveClassEdits(page, { 帯URL: "https://replace-dev.hareruyamtg.com:8443/belt/a", セール販売価格: "900" }, `${seedId}: セールの設定`, issue);
   });
-  const stock = await 在庫を入れて在庫IDを読む(browser, seedId, [{ 商品コード: code, 商品規格ID: r.規格ID, 数: 10 }], issue);
-  notes.set(`〔通販在庫ID-M0305-${n}〕`, stock.get(r.規格ID)!.在庫ID);
-  issue("在庫の入庫は F06-09 のシードと同じ部品で行ったので、仕入単価は0・在庫変動理由は部品の決まりの文（正本は仕入単価250・理由「M03-05試験データ」）。ケースの期待結果は在庫・原価の値を見ない");
+  notes.set(`〔通販在庫ID-M0305-${n}〕`, await 本店へ入庫して承認する(browser, seedId, code, r.規格ID, 10, issue));
 }
 defineSeed("S-M03-05-FORMAT-007", { needs: ["S-M03-05-MASTER", "S-M03-05-CONFIG"] }, async ({ browser, notes, seed }) => {
   await セールと在庫のある商品(browser, seed.シードID, "007", notes);
