@@ -15,6 +15,7 @@ import { rc } from "../../lib/run_marker";
 import { loginAdmin } from "../../lib/session";
 import { OtcListPage } from "../../pages/admin/m06_otc_list";
 import { M0602_ADMIN } from "../../seeds/m06-02";
+import { STORE_A } from "../../seeds/m06-01";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
@@ -45,7 +46,7 @@ async function 検索する(list: OtcListPage, 条件: { 査定ID?: string; 申�
   await list.open();
   if (条件.査定ID) await list.査定IDを入れる(条件.査定ID);
   if (条件.申込者名) await list.申込者名を入れる(条件.申込者名);
-  await list.買取店舗を選ぶ("買取店舗A");
+  await list.買取店舗を選ぶ(STORE_A.店名);
   await list.日時を空にする();
   await list.検索する();
 }
@@ -67,7 +68,7 @@ caseTest("IT-M06-02-001", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔査定ID-M0602-001〕");
   let csv: CSV = { 見出し: [], 行: [] };
   await step(1, async () => { await list.open(); });
-  await step(2, async () => { await list.査定IDを入れる(id); await list.買取店舗を選ぶ("買取店舗A"); await list.日時を空にする(); });
+  await step(2, async () => { await list.査定IDを入れる(id); await list.買取店舗を選ぶ(STORE_A.店名); await list.日時を空にする(); });
   await step(3, async () => { await list.検索する(); });
   await step(4, async () => { await list.対象にする(id); });
   await step(5, async () => {
@@ -270,7 +271,7 @@ caseTest("IT-M06-02-018", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await list.open(); });
   await step(2, async () => {
     await list.申込者名を入れる(rc("M0602CB018"));
-    await list.買取店舗を選ぶ("買取店舗A");
+    await list.買取店舗を選ぶ(STORE_A.店名);
     await list.日時を空にする();
     await list.検索する();
   });
@@ -296,7 +297,7 @@ caseTest("IT-M06-02-019", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await list.open(); });
   await step(2, async () => {
     await list.申込者名を入れる(rc("M0602CB019"));
-    await list.買取店舗を選ぶ("買取店舗A");
+    await list.買取店舗を選ぶ(STORE_A.店名);
     await list.日時を空にする();
     await list.検索する();
   });
@@ -324,7 +325,7 @@ caseTest("IT-M06-02-020", async ({ page, notes, step, expected }) => {
   await step(1, async () => { await list.open(); });
   await step(2, async () => {
     await list.申込者名を入れる(rc("M0602CB020"));
-    await list.買取店舗を選ぶ("買取店舗A");
+    await list.買取店舗を選ぶ(STORE_A.店名);
     await list.日時を空にする();
     await list.検索する();
   });
