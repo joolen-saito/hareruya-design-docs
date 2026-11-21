@@ -27,7 +27,7 @@ import { 在庫を入れて在庫IDを読む } from "../pages/admin/f06_09_setup
 import { downloadGoodsCsvTemplate } from "../pages/admin/m03_01_goods_csv";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
-import { openClassEdit, saveClassEdits } from "../pages/admin/m03_30_products";
+import { openClassEdit, openClassList, saveClassEdits } from "../pages/admin/m03_30_products";
 import { storeNameById } from "../pages/admin/m04_19_masters";
 import { ensureMember } from "../pages/admin/member";
 import { ProductSearchPage } from "../pages/admin/product_search";
@@ -141,6 +141,8 @@ async function セールと在庫のある商品(browser: Browser, seedId: strin
   notes.set(`〔規格ID-M0305-${n}〕`, r.規格ID);
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
+    // openClassEdit は商品規格一覧を開いた状態で使う（新しいセッションは管理画面のホームから始まる）
+    await openClassList(page, r.商品ID);
     await openClassEdit(page, r.商品ID, r.規格ID);
     await saveClassEdits(page, { 帯URL: "https://replace-dev.hareruyamtg.com:8443/belt/a", セール販売価格: "900" }, `${seedId}: セールの設定`, issue);
   });
