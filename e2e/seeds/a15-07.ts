@@ -72,7 +72,7 @@ defineSeed("S-A15-07-DATA", async (ctx) => {
 
 defineSeed("S-A15-07-ONE-009", async (ctx) => {
   const { notes, seed } = ctx;
-  const f = await フォーマットを用意する(ctx, "結合試験A1507-009単一形式", "dpa1507-009-fmt", "9009", "A1507FMT-009");
+  const f = await フォーマットを用意する(ctx, "結合試験A1507-009単一形式", "dpa1507-009-fmt", "9009", "A1507F-009");
   const a = await アーキタイプを用意する(ctx, "単一アーキタイプ-A1507-009", "dpa1507-009-arch", f);
   紐づきを確かめる(seed.シードID, f, ["単一アーキタイプ-A1507-009"]);
   notes.set("〔フォーマットID-A1507-009〕", f);
