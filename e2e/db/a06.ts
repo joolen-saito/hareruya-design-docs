@@ -6,6 +6,8 @@
  * （lib/db_write.ts の窓口を通す）で書く（依頼者決定 2026-11-10「E2E が作った行だけ DB に書いてよい」）。共有のマスタ・メンバーは書き換えない。
  */
 import { query } from "../lib/db";
+import { updateOwnRows } from "../lib/db_write";
+import { RUN_MARK } from "../lib/run_marker";
 import { writeTestData } from "./write_adapter";
 
 /** 管理者（メンバー）の名前と所属店舗 */
@@ -31,6 +33,19 @@ export function 店頭買取の受注(受注ID: string): { フリーコメント
                           to_char(update_date, 'YYYY-MM-DD HH24:MI:SS.US') as u
                    from dtb_otc_buy_order where id = $1::int`, [受注ID])[0];
   return r ? { フリーコメント: r.free_comment, 更新担当者ID: r.m, ステータスID: String(r.s ?? ""), 本人確認証明書ID: r.i, 店舗ID: String(r.b ?? ""), 更新日時: String(r.u ?? "") } : null;
+}
+
+/**
+ * 申込の完了画面の番号から、店頭買取の査定ID（yyyymmdd-店舗ID-番号）を引く（2026-11-20。完了画面の番号は査定IDの末尾の通し番号で、
+ * 査定IDそのものではない。そのまま査定IDとして引くと「受注が DB に無い」で止まっていた）。査定IDの形ならそのまま返す。
+ * 同じ番号が日をまたいで重ならないよう、申込日時が直近2時間の受注に限り、いちばん新しいものを使う。
+ */
+export function 申込番号の査定ID(番号: string): string {
+  if (/^\d{8}-\d+-\d+$/.test(番号)) return 番号;
+  if (!/^\d+$/.test(番号)) throw new Error(`申込の完了画面の番号 ${番号} が数字でない`);
+  const r = query("select assessment_id as a from dtb_otc_buy_order where assessment_id like $1 and apply_date > (now() at time zone 'utc') - interval '2 hours' order by id desc limit 1", [`%-${番号}`]);
+  if (!r[0]?.a) throw new Error(`申込の完了画面の番号 ${番号} の店頭買取の受注が、直近2時間に無い`);
+  return String(r[0].a);
 }
 
 /** 査定IDの店頭買取の受注ID（無ければ null） */
@@ -98,4 +113,17 @@ export function 部門コードの部門の数(部門コード: string): number 
 /** 商品名がその文字列で始まる商品の数 */
 export function 名前で始まる商品の数(頭: string): number {
   return Number(query("select count(*) as n from dtb_product where name like $1", [`${頭.replace(/[%_]/g, "\\$&")}%`])[0]?.n ?? 0);
+}
+
+/**
+ * この実行で作った商品の公開ステータスを、DB で「廃止」（3）にする（2026-11-21。在庫を入れたあとの商品は、商品登録編集画面で
+ * 「在庫がある商品規格は廃止にできません」となり、画面では作れない。シード表は入庫のあとに削除済み（廃止）とするので、E2E の商品にだけ書く）
+ */
+export function 商品をDBで廃止にする(what: string, 商品ID: string): void {
+  updateOwnRows(what, {
+    table: "dtb_product", key: "id", ids: [商品ID], set: { product_status_id: 3 },
+    owner: { sql: "select p.id from dtb_product p where exists (select 1 from dtb_product_class pc where pc.product_id = p.id and pc.product_code like $1)", params: [`%-${RUN_MARK}`] },
+  });
+  const r = query("select product_status_id::text as s from dtb_product where id = $1::int", [商品ID])[0];
+  if (String(r?.s ?? "") !== "3") throw new Error(`${what}: 商品公開ステータスを DB で廃止にしたが、読み戻すと「${r?.s}」`);
 }

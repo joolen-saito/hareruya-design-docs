@@ -100,9 +100,10 @@ defineSeed("S-A07-03-AC-PRODUCT", async ({ browser, seed }) => {
   const コード = rc("A0703-AC-PRODUCT");
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
-    await サプライ品を登録する(page, [{ コード, 名前: AC商品名(), 基準価格: "1000", 買取価格: "100" }], (m) => reportSeedIssue(seed.シードID, m));
+    await サプライ品を登録する(page, [{ コード, 名前: AC商品名(), 基準価格: "1000", 買取価格: "500" }], (m) => reportSeedIssue(seed.シードID, m));
   });
   if (!商品IDをコードから(コード)) throw new Error(`商品コード ${コード} の商品が登録されていない`);
+  reportSeedIssue(seed.シードID, `買取価格はシード表の100円でなく500円にした（フロントのネット買取は500円以上の商品でないと「カートに追加」が出ない。A07-04・A07-05 と同じ補い）`);
   reportSeedIssue(seed.シードID, `シード作成時の問題: 商品はグッズ商品CSV登録で作った（商品コード ${コード}・商品名 ${AC商品名()}。実行の印つき。買取価格100円・基準価格と販売価格1000円）。規格の部門・公開ステータスの編集は行わず、取込でできた規格のまま申し込めることを申込みで確かめる`);
 });
 

@@ -20,7 +20,7 @@
  *   ここでは消さずに、0件であることだけを確かめる。S-A06-04-GHOST-TOKEN-009（環境の鍵で署名したトークン）は作れないので、009 は書いていない。
  */
 import { SETUP_ADMIN } from "../config/env";
-import { 申込のマスタにある, 査定IDの受注ID, 店頭買取の受注, 店頭買取の受注がある, 店頭買取ステータスの名称 } from "../db/a06";
+import { 申込のマスタにある, 査定IDの受注ID, 申込番号の査定ID, 店頭買取の受注, 店頭買取の受注がある, 店頭買取ステータスの名称 } from "../db/a06";
 import { rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue, SeedBuilder } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
@@ -125,7 +125,8 @@ defineSeed("S-A06-04-AB-ADM", { needs: ["S-A06-04-AB-STORE"] }, 管理者のシ�
  */
 async function 申込んでコメントを入れる(ctx: Parameters<SeedBuilder>[0], v: { 姓: string; 名: string; セイ: string; メイ: string; 査定の呼び名: string; 受注の呼び名: string; 担当: 管理者; 担当の呼び名: string; コメント: string }): Promise<void> {
   const { browser, notes, seed } = ctx;
-  const [査定ID] = await 申込を行う(browser, 試験支店.支店URL, [申込者の(v.姓, v.名, v.セイ, v.メイ)]);
+  const [番号] = await 申込を行う(browser, 試験支店.支店URL, [申込者の(v.姓, v.名, v.セイ, v.メイ)]);
+  const 査定ID = 申込番号の査定ID(番号);
   const 受注ID = 査定IDの受注ID(査定ID);
   if (!受注ID) throw new Error(`${seed.シードID}: 申込んだ査定ID ${査定ID} の店頭買取の受注が DB に無い`);
   notes.set(v.査定の呼び名, 査定ID);

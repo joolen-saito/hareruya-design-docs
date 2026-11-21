@@ -145,7 +145,7 @@ caseTest("IT-A15-05-016", async (ctx) => {
   await ctx.step(3, async () => { await 変更する(ctx.page, { user_name: "二回目ユーザー", profile: "二回目プロフィール" }, トークン("016"), "2回目 "); });
   await ctx.step(4, async () => {
     p = 選手(ctx, "016");
-    件数 = 会員IDの選手の数(ctx.notes.get("〔会員ID-A1505-016〕"));
+    件数 = 会員IDの選手の数(ctx.notes.get("〔顧客ID-A1505-016〕"));
     note(`DB の選手: ${JSON.stringify(p)}・会員の選手の件数 ${件数}`);
   });
   await ctx.expected(async () => {

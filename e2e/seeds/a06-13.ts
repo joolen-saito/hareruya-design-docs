@@ -13,7 +13,7 @@
  *   電話番号・郵便番号・住所・生年月日・職業は共通の申込の部品の固定の値、査定申込日時・更新日時は申込・書き込みのときの値（ケースは確かめない）。
  */
 import { SETUP_ADMIN } from "../config/env";
-import { 申込のマスタにある, 査定IDの受注ID, 店頭買取の受注, 店頭買取の受注がある, 店頭買取ステータスの名称, 本人確認証明書の名称, 本人確認証明書と更新担当者を書く } from "../db/a06";
+import { 申込のマスタにある, 査定IDの受注ID, 申込番号の査定ID, 店頭買取の受注, 店頭買取の受注がある, 店頭買取ステータスの名称, 本人確認証明書の名称, 本人確認証明書と更新担当者を書く } from "../db/a06";
 import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue, SeedBuilder } from "../lib/seeds";
 import { Account, withAdminSession } from "../lib/session";
@@ -72,7 +72,8 @@ defineSeed("S-A06-13-REFERENCES", async (ctx) => {
 /** 試験支店のフロントで申込み、本人確認証明書ID=1・更新担当者=更新前担当者を DB で書く */
 const 受注のシード = (n: string): SeedBuilder => async ({ browser, notes, seed }) => {
   const 姓 = rc("晴屋");
-  const [査定ID] = await 申込を行う(browser, 試験支店.支店URL, [申込者の(姓, "太郎", "ハレルヤ", "タロウ")]);
+  const [番号] = await 申込を行う(browser, 試験支店.支店URL, [申込者の(姓, "太郎", "ハレルヤ", "タロウ")]);
+  const 査定ID = 申込番号の査定ID(番号);
   const 受注ID = 査定IDの受注ID(査定ID);
   if (!受注ID) throw new Error(`${seed.シードID}: 申込んだ査定ID ${査定ID} の店頭買取の受注が DB に無い`);
   notes.set(`〔査定ID-A0613-${n}〕`, 査定ID);

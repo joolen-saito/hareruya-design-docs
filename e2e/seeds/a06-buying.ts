@@ -30,7 +30,7 @@ import { カードを紐付ける, 試験用のカードを作る } from "../pag
 import { 決まった入庫の管理者, 入庫して承認する, 取込の商品と規格を読む } from "../pages/admin/a17_05_setup";
 import { downloadGoodsCsvTemplate } from "../pages/admin/m03_01_goods_csv";
 import { DepartmentPage } from "../pages/admin/m03_18_department";
-import { 部門コードの部門の数 } from "../db/a06";
+import { 部門コードの部門の数, 商品をDBで廃止にする } from "../db/a06";
 import { 部門を名前で探す } from "../db/m06_08_prep";
 import { registerGoodsCsv } from "../pages/admin/m03_01_goods_register";
 import { readGoodsRootCategoryId } from "../pages/admin/m03_23_seed_products";
@@ -138,7 +138,14 @@ export async function カード商品を作る(browser: Browser, seedId: string,
   if (d.商品を廃止 || d.規格を廃止) {
     await withAdminSession(browser, SETUP_ADMIN, async (page) => {
       if (d.規格を廃止) await 規格を廃止にする(page, out.商品ID, out.規格ID, `${seedId}: ${商品コード} の商品規格の廃止`, issue);
-      if (d.商品を廃止) await 商品を廃止にする(page, out.商品ID, `${seedId}: ${商品コード} の商品の廃止`, issue);
+      if (d.商品を廃止) {
+        try { await 商品を廃止にする(page, out.商品ID, `${seedId}: ${商品コード} の商品の廃止`, issue); }
+        catch (e) {
+          if (!String(e).includes("在庫がある商品規格は廃止にできません")) throw e;
+          商品をDBで廃止にする(`${seedId}: ${商品コード} の商品の廃止（DB）`, out.商品ID);
+          issue(`${商品コード} の商品の廃止: 在庫を入れたあとの商品は商品登録編集画面で「在庫がある商品規格は廃止にできません」となるため、E2E の商品の商品公開ステータスだけ DB で「廃止」にした（画面で作れない状態の書き足し）`);
+        }
+      }
     });
   }
   if (d.画像) 商品画像を足す(`${seedId}: 商品画像 ${d.画像}`, out.商品ID, d.画像, 1);

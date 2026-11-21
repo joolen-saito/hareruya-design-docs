@@ -23,7 +23,7 @@
  */
 import { Browser } from "@playwright/test";
 import { BASE_URL, SETUP_ADMIN } from "../config/env";
-import { 申込のマスタにある, 査定IDの受注ID, 店頭買取の受注がある, 店頭買取ステータスの名称 } from "../db/a06";
+import { 申込のマスタにある, 査定IDの受注ID, 申込番号の査定ID, 店頭買取の受注がある, 店頭買取ステータスの名称 } from "../db/a06";
 import { 受注に書く, 受注の今, 店頭買取ステータスがある } from "../db/a06_05";
 import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue, SeedBuilder } from "../lib/seeds";
@@ -112,7 +112,7 @@ type 受注の作り = { 名: string; 呼び名: string; ステータスID: stri
 async function 受注を作る(ctx: Parameters<SeedBuilder>[0], 作り: 受注の作り[]): Promise<void> {
   const { browser, notes, seed } = ctx;
   const 姓 = rc("前提");
-  const 査定IDs = await 申込を行う(browser, 試験支店.支店URL, 作り.map((x) => 申込者の(姓, x.名, "ゼンテイ", "ジュチュウ")));
+  const 査定IDs = (await 申込を行う(browser, 試験支店.支店URL, 作り.map((x) => 申込者の(姓, x.名, "ゼンテイ", "ジュチュウ")))).map(申込番号の査定ID);
   const 受注IDs = 査定IDs.map((q, i) => {
     const id = 査定IDの受注ID(q);
     if (!id) throw new Error(`${seed.シードID}: 申込んだ査定ID ${q}（${作り[i].名}）の店頭買取の受注が DB に無い`);
@@ -191,7 +191,8 @@ defineSeed("S-A06-05-NOORDER-NOSTATUS-028", 無いもののシード(["699028"],
 
 /** AB: 試験支店のフロントで会員登録なしの申込をし、査定ID・受注IDを控える（ステータスは査定前のまま） */
 const AB申込のシード = (n: "001" | "002"): SeedBuilder => async ({ browser, notes, seed }) => {
-  const [査定ID] = await 申込を行う(browser, 試験支店.支店URL, [申込者の("A06-05", `査定${n}`, "ゼンテイ", "ジュチュウ")]);
+  const [番号] = await 申込を行う(browser, 試験支店.支店URL, [申込者の("A06-05", `査定${n}`, "ゼンテイ", "ジュチュウ")]);
+  const 査定ID = 申込番号の査定ID(番号);
   const 受注ID = 査定IDの受注ID(査定ID);
   if (!受注ID) throw new Error(`${seed.シードID}: 申込んだ査定ID ${査定ID} の店頭買取の受注が DB に無い`);
   if (受注の今(受注ID)?.ステータスID !== "5") throw new Error(`${seed.シードID}: 受注 ${受注ID} のステータスが査定前でない`);
@@ -234,7 +235,7 @@ const AB会員のシード = (n: "003" | "004"): SeedBuilder => async ({ browser
   const 会員 = A0605_会員(n);
   const 会員ID = await 会員を登録して本会員にする(browser, { 姓: "A06-05", 名: `会員${n}`, セイ: "シケン", メイ: "カイイン", メール: 会員.メール, パスワード: 会員.パスワード },
     (m) => reportSeedIssue(seed.シードID, m));
-  const 査定ID = await 会員で申込む(browser, 会員, `会員${n}`);
+  const 査定ID = 申込番号の査定ID(await 会員で申込む(browser, 会員, `会員${n}`));
   const 受注ID = 査定IDの受注ID(査定ID);
   if (!受注ID) throw new Error(`${seed.シードID}: 申込んだ査定ID ${査定ID} の店頭買取の受注が DB に無い`);
   const 買取番号 = await 買取番号を読む(browser, 会員, 査定ID);
