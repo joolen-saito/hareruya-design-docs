@@ -173,8 +173,9 @@ export class 一括編集画面 {
     const base = b.locator("input.js-base-price-nm");
     await expect(buy, `商品ID ${商品ID}・${言語} の買取価格(NM)の入力欄`).toHaveCount(1);
     await expect(base, `商品ID ${商品ID}・${言語} の基準価格(NM)の入力欄`).toHaveCount(1);
-    await buy.fill(String(v.買取価格NM));
-    await base.fill(String(v.基準価格NM));
+    // 入力欄が読み取り専用だと fill が待ち続けて止まる（2026-11-21 M03-10 の 022）。待ちは60秒で切る
+    await buy.fill(String(v.買取価格NM), { timeout: 60_000 });
+    await base.fill(String(v.基準価格NM), { timeout: 60_000 });
     // 基準価格(NM)の入力で、画面のスクリプトが SP・MP・HP の基準価格を割引率から計算し直す
     await base.dispatchEvent("change");
     await expect(buy, `商品ID ${商品ID}・${言語} の買取価格(NM)`).toHaveValue(String(v.買取価格NM));

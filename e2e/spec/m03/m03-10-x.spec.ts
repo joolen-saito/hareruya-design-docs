@@ -346,8 +346,13 @@ caseTest("IT-M03-10-022", async (ctx) => {
     else {
       // NM の規格が無い商品は、基準価格(NM)の欄が「-」で入力欄が無い。買取価格(NM)だけを入れる
       const buy = ctx.page.locator(`form#product-class-form tbody tr:has(input[type=hidden][id$="_product_id"][value="${A.商品ID}"]) input.js-buy-price`);
-      await buy.fill("2000");
-      supplement(`NM 規格が無い商品ID ${A.商品ID} の行は基準価格(NM)の欄が${欄の文(ra.基準価格[0])}で入力欄が無いので、買取価格(NM)の 2000 だけを入れた`);
+      // 買取価格(NM)の欄が読み取り専用のときに fill が待ち続けて止まった（2026-11-21 16:43・17:13）。入れられるときだけ入れ、待ちは60秒で切る
+      if (ra.買取価格NM.入力欄 && !ra.買取価格NM.読み取り専用) {
+        await buy.fill("2000", { timeout: 60_000 });
+        supplement(`NM 規格が無い商品ID ${A.商品ID} の行は基準価格(NM)の欄が${欄の文(ra.基準価格[0])}で入力欄が無いので、買取価格(NM)の 2000 だけを入れた`);
+      } else {
+        supplement(`NM 規格が無い商品ID ${A.商品ID} の行は、基準価格(NM)の欄が${欄の文(ra.基準価格[0])}、買取価格(NM)の欄も${欄の文(ra.買取価格NM)}で入力できないので、この商品には何も入れなかった`);
+      }
     }
     await e.入れる(B.商品ID, "日本語", { 買取価格NM: 2000, 基準価格NM: 5000 });
   });
