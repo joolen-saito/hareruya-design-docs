@@ -24,6 +24,9 @@ export default defineConfig({
     locale: "ja-JP",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
+    // 1回の操作（入力・押す など）の時間切れ。無かったので、無い入力欄を待ちつづけて10分以上止まった（2026-11-21 M03-10 の 022・F04-03）。
+    // 開発環境は1画面に1分を超えることがあるので、長めに3分。画面の読み込みの待ち（navigation）はこの設定の外
+    actionTimeout: 180_000,
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], acceptDownloads: true, locale: "ja-JP" } }],
 });
