@@ -28,6 +28,11 @@ export function 受注の日時を書き足す(what: string, 受注ID: string, �
   updateOwnRows(what, { table: "dtb_order", key: "id", ids: [受注ID], set, owner: 受注の持ち主([受注ID], メール) });
 }
 
+/** 受注の注文金額合計を指定の値にする（画面では、商品の価格・送料・手数料からアプリが計算するので指定できない。004 のシード表の 4100 は 3000+800+200 と合わない） */
+export function 受注の注文金額合計を書き足す(what: string, 受注ID: string, メール: string, 合計: number): void {
+  updateOwnRows(what, { table: "dtb_order", key: "id", ids: [受注ID], set: { total: String(合計), payment_total: String(合計) }, owner: 受注の持ち主([受注ID], メール) });
+}
+
 /** 受注の金額と状態（CSV の値と見比べる） */
 export function 受注の値(受注ID: string): {
   注文金額合計: string; 商品金額合計: string; 送料: string; 手数料: string; 対応状況: string;
