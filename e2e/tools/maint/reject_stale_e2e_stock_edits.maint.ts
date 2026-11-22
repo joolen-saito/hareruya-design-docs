@@ -42,9 +42,10 @@ test("本店の在庫編集承認一覧の、E2E が登録した未承認の行�
   const shop = await new StockListPage(page).shopNameById("1");
   const list = new StockApprovalListPage(page);
   for (let round = 0; round < 40 && 残り.size > 0; round++) {
-    await list.openAll(shop);
+    // 1000件の表示は開くのが重い（1回に50分かかった）ので、500件の表示（open）で開く。並びは未承認が上・登録日の古い順で、対象は古い行なので上に出る
+    await list.open(shop);
     const onPage = (await list.rowValues()).filter((r) => r.status === "未承認" && 残り.has(r.id)).map((r) => r.id);
-    if (onPage.length === 0) throw new Error(`一覧（1000件の表示）に対象の行が出ない（残り ${残り.size} 件）`);
+    if (onPage.length === 0) throw new Error(`一覧（500件の表示）に対象の行が出ない（残り ${残り.size} 件）`);
     const batch = onPage.slice(0, 100);
     for (const id of batch) await page.locator(`#form_search_stock_approval_list_update input[name="approval_list_ids[]"][value="${id}"]`).check();
     const lineItems = page.waitForResponse((r) => r.request().method() === "POST" && /\/approval_list\/line_items$/.test(new URL(r.url()).pathname), { timeout: 300_000 });
