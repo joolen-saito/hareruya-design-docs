@@ -5,7 +5,7 @@
  * 一覧は1,000件までしか出せないので、在庫を入れて承認するシードが今回の行を見つけられずに止まっていた。
  * E2E の試験管理者（メールアドレスが @example.test、または M04-02 の担当者 m0402_admin）が登録した本店の未承認の行だけを、
  * 一覧の「一括却下」で片付ける（在庫は増えない）。人の登録の行には触らない。
- * 対象は DB を読んで決め（参照だけ）、画面では一覧に出た行のうち対象の番号のものだけにチェックを付ける。
+ * 登録日時が 2026-11-22 18:00 より前の行だけ（いま流している回が作った行を巻き込まない）。対象は DB を読んで決め（参照だけ）、画面では一覧に出た行のうち対象の番号のものだけにチェックを付ける。
  *
  * 流し方: E2E_MAINT_APPLY=1 で却下する（無ければ、対象の件数を表示するだけ）。
  *   npx playwright test -c tools/maint/playwright.config.ts tools/maint/reject_stale_e2e_stock_edits.maint.ts
@@ -17,9 +17,13 @@ import { loginAdmin } from "../../lib/session";
 import { StockApprovalListPage, StockListPage } from "../../pages/admin/stock_edit";
 import { expectSaved } from "../../pages/admin/common";
 
+/** これより前に登録された行だけを却下する（いま流している回が作った行を巻き込まない。2026-11-22 48 の頼み） */
+const 締め = "2026-11-22 18:00:00+09";
 const 対象の番号 = (): Set<string> => new Set(query(
   `select a.id::text as id from dtb_stock_approval_list a join dtb_member m on m.id = a.registered_member_id
-    where a.approval_status = 1 and a.base_info_id = 1 and (m.email like '%@example.test' or m.login_id = 'm0402_admin')`,
+    where a.approval_status = 1 and a.base_info_id = 1 and (m.email like '%@example.test' or m.login_id = 'm0402_admin')
+      and a.registered_date < $1::timestamptz`,
+  [締め],
 ).map((r) => String(r.id)));
 const 人の未承認 = (): number => Number(query(
   `select count(*)::text as n from dtb_stock_approval_list a join dtb_member m on m.id = a.registered_member_id
