@@ -42,7 +42,7 @@ import { 番号の日程の件数 } from "../db/f06_16_k";
 import { 旧カード, 旧カード情報を足す, 選手情報を会員から外す, マイデッキの日時を設定する } from "../db/f06_16_write";
 import { available } from "../lib/db";
 import { Notes } from "../lib/notes";
-import { rc, RUN_MARK } from "../lib/run_marker";
+import { rc, rcFixed, RUN_MARK } from "../lib/run_marker";
 import { reportSeedIssue } from "../lib/seeds";
 import { defineSeed } from "./current_seed";
 import { Account, hideDebugToolbar, withAdminSession } from "../lib/session";
@@ -102,8 +102,27 @@ export function 大会(key: string): 作った大会 {
   return e;
 }
 
-const 管理画面 = <T>(browser: Browser, fn: (page: Page) => Promise<T>, account: Account = SETUP_ADMIN) =>
-  withAdminSession(browser, account, async (page) => { page.setDefaultTimeout(60_000); page.setDefaultNavigationTimeout(120_000); return fn(page); });
+/**
+ * 試験管理者（f0616_admin）を、初めて使う前にメンバー管理で1度だけ用意する（決まった名前で使い回す。2026-11-23）。
+ * 手元の環境では手で作られていて、開発環境には無かった（ログインできずに全ケースが止まった）。所属店舗・編集可能店舗は E2E の店舗（店名）。
+ */
+let 試験管理者を用意した = false;
+async function 試験管理者を用意する(browser: Browser): Promise<void> {
+  if (試験管理者を用意した) return;
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    page.setDefaultTimeout(60_000);
+    await ensureMember(page, {
+      名前: rcFixed("F06-16試験管理者"), 所属店舗: 店名, ログインID: F0616_ADMIN.loginId, メールアドレス: `${F0616_ADMIN.loginId}@example.test`,
+      パスワード: F0616_ADMIN.password, 権限: "システム管理者", デフォルト検索表示店舗: 店名, 編集可能店舗: [店名],
+    });
+  });
+  試験管理者を用意した = true;
+}
+
+const 管理画面 = async <T>(browser: Browser, fn: (page: Page) => Promise<T>, account: Account = SETUP_ADMIN): Promise<T> => {
+  if (account === F0616_ADMIN) await 試験管理者を用意する(browser);
+  return withAdminSession(browser, account, async (page) => { page.setDefaultTimeout(60_000); page.setDefaultNavigationTimeout(120_000); return fn(page); });
+};
 
 // ---------------------------------------------------------------------------
 // 参照マスタ（共有）
