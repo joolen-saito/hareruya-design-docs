@@ -31,6 +31,13 @@ export function 予約グッズの子カテゴリ(): string {
   return String(r[0].id);
 }
 
+/** グッズのカテゴリ（アプリの決め打ちの番号 2）と、その下のカテゴリを、番号2を先に n 件（012 のカテゴリ数。2026-11-23） */
+export function グッズのカテゴリ(n: number): string[] {
+  const r = query(`select id from dtb_category where id = 2 or parent_category_id = 2 order by (id = 2) desc, sort_no desc, id limit $1::int`, [String(n)]).map((x) => String(x.id));
+  if (r.length !== n) throw new Error(`グッズのカテゴリ（番号2とその下）が ${r.length} 件（${n} 件要る）`);
+  return r;
+}
+
 /** 試験用会員（メールアドレス）の受注で、注文番号が当たるものの受注ID */
 export function 受注IDの(注文番号: string, メール: string): string {
   const r = query(`select o.id from dtb_order o join dtb_customer c on c.id = o.customer_id where o.order_number = $1 and c.email = $2`, [注文番号, メール]);

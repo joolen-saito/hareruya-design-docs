@@ -46,6 +46,8 @@ import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
 import { ensureBuyer, M05_BUYER, 会員が商品を注文する } from "../pages/front/m05_front_order";
 import { 並びの商品を作る, カードの定め, 規格の定め } from "./m05-09";
 import { 商品規格ID as 商品規格IDの } from "../db/m04_33";
+import { グッズのカテゴリ } from "../db/m05_21";
+import { 商品のカテゴリを付け替える } from "../pages/admin/a17_05_setup";
 
 export const M0521_ADMIN: Account = { loginId: "m0521_admin", password: "Passw0rd!M0521" };
 export const 作成日 = "2026-09-01 10:20:30";
@@ -86,6 +88,8 @@ type 明細 = {
   注文後の価格?: number;
   /** 並びの属性（2026-11-23 追加。M05-09 の 並びの商品を作る で、商品ごとのカード・略称タグ・言語・棚番号・状態をそろえる） */
   並び?: { カード?: カードの定め; 規格?: 規格の定め };
+  /** 商品のカテゴリの数（012。商品登録編集でグッズのカテゴリ（番号2とその下）をこの数だけ付ける。2026-11-23） */
+  カテゴリ数?: number;
 };
 type 定め = {
   /** 受注（1件か2件）。明細は注文でカートに入れる順 */
@@ -188,6 +192,11 @@ function 並びの定め_SORT(): Record<string, 定め> {
   const TST = { 名前: "TST", 並び順: "1" };
   const 札 = (x: 行, 価格 = 500): 明細 => ({ ...一式([x]).受注[0][0], 価格 });
   return {
+    // 012: 色2件・カテゴリ3件で数量12のカードと、色なし・カテゴリ2件で数量4のカード（価格1000）
+    "QUANTITY-012": { 受注: [[
+      { ...札({ コード: "M0521-012-A", 名: "複数色数量カード", カード: { カラー: ["白", "青"] } }, 1000), 数量: 12, カテゴリ数: 3 },
+      { ...札({ コード: "M0521-012-B", 名: "色なし数量カード", カード: { カラー: [] } }, 1000), 数量: 4, カテゴリ数: 2 },
+    ]] },
     // 001: A の明細は棚番号・Foil・JP/NM・略称 TST・白・R の基本のカード（価格1000）。B は選ばない受注
     "BASE-001": { 受注: [
       [札({ コード: "M0521-001-A", 名: "基本カード", カード: { Foil: "通常" }, 規格: { 棚: { 名前: "A-01-M0521-001", 並び順: "1" }, 略称: TST } }, 1000)],
@@ -316,6 +325,19 @@ async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め)
       if (詳細.length !== カード商品.length) throw new Error(`${seedId}: 登録したカードの詳細情報が ${詳細.length} 件（${カード商品.length} 件のはず）`);
       for (const [i, x] of カード商品.entries()) {
         await assignCardOnProductEdit(page, { productId: 商品ID.get(x.コード)!, cardNameJp: カード名, cardDetailId: 詳細[i], productNameJp: x.名前, productNameEn: x.名前 }, issue);
+      }
+    });
+  }
+
+  // 012: 商品のカテゴリの数（「カード」を含む3件・2件。カテゴリ「カード」は最上位に作れないので、グッズのカテゴリ（番号2とその下）で読み替える）
+  const カテゴリを付ける = 商品の明細.filter((x) => x.カテゴリ数);
+  if (カテゴリを付ける.length > 0) {
+    await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+      page.setDefaultTimeout(60_000);
+      for (const x of カテゴリを付ける) {
+        const ids = グッズのカテゴリ(x.カテゴリ数!);
+        await 商品のカテゴリを付け替える(page, 商品ID.get(x.コード)!, ids, `${seedId}: ${x.名前} のカテゴリ`, issue);
+        issue(`${x.名前} の商品カテゴリを ${ids.length} 件（${ids.join("・")}。グッズの番号2とその下）にした。シード表の「カード」を含むカテゴリは、カテゴリ「カード」を最上位に作れないため、グッズのカテゴリで読み替えた（ピッキングリストはカテゴリの数で数量を割り戻す）`);
       }
     });
   }
