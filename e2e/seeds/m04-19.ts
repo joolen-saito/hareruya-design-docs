@@ -28,7 +28,7 @@
  * 実装しないシード（使うケースも実装しない）: DBでの準備が要るもの（FILTER-003・FILTER-004・SORT-005・DATE-016・DATE-017・
  * PAGING-025 は使うケースの手順がDBの書き換え）、画面で指定できない日時をDBへ直接設定するもの（DISPLAY-006・EDIT-012・EDIT-013・EDIT-037）。
  */
-import { Browser, expect } from "@playwright/test";
+import { Browser, expect, Page } from "@playwright/test";
 import { BASE_URL, ENV_NAME, MAIL_URL, SETUP_ADMIN } from "../config/env";
 import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
@@ -42,6 +42,9 @@ import {
 } from "../pages/admin/m04_19_masters";
 import { addToCart, checkoutWithDeliveryChoice, clearCart, frontLogin, openOrderEditByProductCode, registerShortages, 購入会員 } from "../pages/admin/m04_19_order_shortage";
 import { ShortageHistoryPage } from "../pages/admin/m04_19_shortage_history";
+import { カードを紐付ける, 試験用のカードセットを用意する } from "../pages/admin/a02_setup";
+import { カードを登録する, カード詳細IDs } from "../pages/admin/m14_card";
+import * as dbx19 from "../db/m04_19_x";
 import { 語を含む欠品履歴の数 } from "../db/m04_19_shortage";
 import { available as dbAvailable } from "../lib/db";
 import { registerStockChangeCsv } from "../pages/admin/m04_19_stock_change_csv";
@@ -495,4 +498,61 @@ defineSeed("S-M04-19-ABSENT-018", async ({ browser, seed }) => {
     const n = await h.件数();
     if (n !== 0) throw new Error(`${seed.シードID}: 在庫履歴一覧の欠品検索で「${語}」の欠品履歴が ${n ?? "（件数の表示なし）"} 件（0件のはず。消さずに止める）`);
   });
+});
+
+// ---- 表示の続き（2026-11-23 依頼者「DB の直接の設定は E2E の行だけなら流してよい」） ----
+
+/**
+ * 欠品履歴検索一覧(検索結果)の行の欠品理由を、ペンのアイコンで編集して保存する（正本: 「欠品理由のペンアイコンを押し、
+ * テキストエリアに入れてペンアイコンを再度押す」）。保存すると在庫履歴一覧へ戻る。
+ */
+async function editShortageReason(page: Page, h: ShortageHistoryPage, code: string, text: string, what: string): Promise<void> {
+  const row = h.rowByCode(code);
+  await expect(row, `${what}: 欠品履歴の「${code}」の行`).toHaveCount(1);
+  const form = row.locator("form.js-disposal-reason-form");
+  await form.locator(".edit-icon").click();
+  const area = form.locator("textarea.edit-area");
+  await expect(area, `${what}: 欠品理由のテキストエリア`).toBeVisible({ timeout: 30_000 });
+  await area.fill(text);
+  const nav = page.waitForNavigation({ timeout: 120_000 });
+  await form.locator("button.icon-submit").click();
+  await nav;
+  await page.waitForLoadState("load");
+}
+
+defineSeed("S-M04-19-DISPLAY-006", { needs: NEEDS }, async ({ browser, notes, seed }) => {
+  const seedId = seed.シードID;
+  const issue = issueOf(seedId);
+  const code = rc("M419-DISPLAY-006");
+  const item = { 商品コード: code, 商品名: "欠品表示商品", 価格: "1980", 入庫数: 3, 注文数: 3, 欠品数: 2 };
+  await ensureBuyer(browser);
+  await expectNoProducts(browser, seedId, code);
+  // シード表はカード商品CSV登録で作り、商品規格の商品コード・価格を商品規格登録編集で入れる。グッズ商品CSV登録で
+  // 商品コード・商品名・基準価格・販売価格を入れて作り（M04-19 のほかのシードと同じ）、商品登録編集の「カード指定」で、
+  // カード詳細(登録)画面で登録した Foil「通常」のカード詳細を紐付けた（依頼者決定 2026-11-14「マスタは作ってよい」。カード名に実行の印）
+  const ids = await createGoods(browser, seedId, code, [item]);
+  const カード名 = rc("M0419欠品表示カード006");
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+    const セット名 = await 試験用のカードセットを用意する(page, `${seedId} のカードセット`, issue);
+    await カードを登録する(page, { カード名日: カード名, カード名英: rc("M0419 Display Card 006"), 点数で見たマナ: "0", 詳細: [{ カードセット: セット名, Foil: "通常" }] }, `${seedId} のカード`, issue);
+    const 詳細 = await カード詳細IDs(page);
+    if (詳細.length !== 1) throw new Error(`${seedId}: 登録したカードのカード詳細が ${詳細.length} 件（1件のはず）`);
+    await カードを紐付ける(page, ids.get(code)!, { 商品名日: item.商品名, 商品名英: item.商品名 }, { カード詳細ID: 詳細[0], カード名 }, issue);
+  });
+  issue("商品はグッズ商品CSV登録で作り、商品登録編集の「カード指定」で、カード詳細(登録)画面で登録した Foil「通常」のカード詳細を紐付けた（シード表はカード商品CSV登録）");
+  await stockIn(browser, seedId, [item]);
+  const 注文番号 = await frontOrder(browser, seedId, [{ 商品ID: ids.get(code)!, 商品コード: code, 数量: item.注文数 }]);
+  noteOrder(notes, "006", await registerOrderShortage(browser, seedId, 注文番号, [item]));
+  const 履歴ID = await readHistoryId(browser, code);
+  // M04-19更新者でログインし、欠品理由のペンアイコンで「棚卸差異」を入れて保存する（最終更新者が M04-19更新者になる）
+  await withAdminSession(browser, UPDATER, async (page) => {
+    const h = new ShortageHistoryPage(page);
+    await h.searchShortage(code);
+    await editShortageReason(page, h, code, "棚卸差異", `${seedId} の欠品理由`);
+  });
+  const 保存後 = dbx19.欠品履歴(履歴ID);
+  if (保存後?.欠品理由 !== "棚卸差異" || 保存後?.最終更新者 !== UPDATER_NAME) throw new Error(`${seedId}: 欠品理由の保存のあとの欠品の履歴 ${履歴ID}: ${JSON.stringify(保存後)}`);
+  // 登録日時・最終更新日時・登録者は画面で指定できない（シード表「DBへ直接設定する」）。E2E の履歴の行だけ書く
+  dbx19.欠品履歴の日時と登録者を整える(`${seedId}: 登録日時・登録者・最終更新日時`, 履歴ID, { 登録日時: "2026-04-10 09:30:00+09", 登録者: REGISTRANT_NAME, 最終更新日時: "2026-04-11 10:45:00+09" });
+  issue(`欠品の履歴 ${履歴ID} の登録日時（2026/04/10 09:30）・登録者（${REGISTRANT_NAME}）・最終更新日時（2026/04/11 10:45）を、E2E の行だけ DB で書いた。書いたあと: ${JSON.stringify(dbx19.欠品履歴(履歴ID))}`);
 });
