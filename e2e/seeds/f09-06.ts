@@ -124,16 +124,16 @@ async function 画像つきのカードを登録する(page: Page, seedId: strin
     // シード表は〔カードセットID-…〕を控えると定めていないので、控えた番号（notes）に入れると基盤が「シード表に無い呼び名を控えた」で止める。同じ実行の中だけ、この表に持つ
     if (k.セットの控え) 作ったカードセットの番号.set(k.セットの控え, setId);
   }
-  const 既存 = await readExistingCardValues(page);
+  const 既存 = await readExistingCardValues(page); // 番号の最大（次の未使用の番号）は使わない
   const promo = 候補.some((k) => k.プロモ) ? await readExistingPromotionNameEn(page) : "";
   const headers = await downloadCardCsvTemplate(page);
   const rows = 候補.map((k, i) => ({
     name_jp: 名日, name_en: 名英, cmc: "0", cardtype: "",
     set: N(ケース, `SET-${k.セット ?? k.記号.toUpperCase()}`), rarity: 既存.rarity, layout: 既存.layout,
     promotion_type: k.プロモ ? promo : "", foil: k.Foil ? "1" : "0",
-    image_en: 画像URL(既存.imageEn, `f0906-${ケース}-${k.記号}`), card_detail_id: String(既存.nextUnusedDetailId + i),
+    image_en: 画像URL(既存.imageEn, `f0906-${ケース}-${k.記号}`), card_detail_id: "",
   }));
-  issue(`カード「${名日}」の候補のカード詳細IDは、未使用の番号 ${rows.map((r) => r.card_detail_id).join("・")} を、シード表の番号の小さい順に振った（シード表の固定の番号は2回目の実行で使えないため）`);
+  issue(`カード「${名日}」の候補のカード詳細IDは、CSVでは空欄にして、取込で自動採番される番号を使った（CSV出力の最大より大きい番号が他のカードの詳細に使われている環境があり、指定すると取込が止まるため）。行はシード表の番号の小さい順に並べてあるので、番号の大小はシード表と同じになる`);
   await uploadCardCsv(page, buildCardCsv(headers, rows), `f0906_${ケース}_cards.csv`, `${seedId}: カードCSVアップロード（${名日}）`, (w) => issue(`カードCSVの警告「${w}」`));
   const id = await カード一覧のカードID(page, 名日);
   const jp = 候補.filter((k) => k.日本語).map((k) => `f0906-${ケース}-${k.記号}`);
