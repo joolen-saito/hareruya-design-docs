@@ -127,3 +127,16 @@ export function 商品をDBで廃止にする(what: string, 商品ID: string): v
   const r = query("select product_status_id::text as s from dtb_product where id = $1::int", [商品ID])[0];
   if (String(r?.s ?? "") !== "3") throw new Error(`${what}: 商品公開ステータスを DB で廃止にしたが、読み戻すと「${r?.s}」`);
 }
+
+/**
+ * この実行で作った商品規格の公開状態を、DB で「廃止」（3）にする（2026-11-23。在庫を入れたあとの商品規格は、商品規格登録編集画面で
+ * 「在庫がある商品規格は廃止にできません」となり、画面では作れない。商品の廃止（商品をDBで廃止にする）と同じ扱いで、E2E の規格にだけ書く）
+ */
+export function 規格をDBで廃止にする(what: string, 規格ID: string): void {
+  updateOwnRows(what, {
+    table: "dtb_product_class", key: "id", ids: [規格ID], set: { product_status_id: 3 },
+    owner: { sql: "select pc.id from dtb_product_class pc where pc.product_code like $1", params: [`%-${RUN_MARK}`] },
+  });
+  const r = query("select product_status_id::text as s from dtb_product_class where id = $1::int", [規格ID])[0];
+  if (String(r?.s ?? "") !== "3") throw new Error(`${what}: 商品規格の公開状態を DB で廃止にしたが、読み戻すと「${r?.s}」`);
+}
