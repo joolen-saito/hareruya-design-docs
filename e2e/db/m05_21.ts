@@ -38,6 +38,11 @@ export function グッズのカテゴリ(n: number): string[] {
   return r;
 }
 
+/** 商品に指定したカード詳細のID（041。2026-11-23） */
+export function 商品のカード詳細ID(商品ID: string): string {
+  return String(query(`select card_detail_id from dtb_product where id = $1::int`, [商品ID])[0]?.card_detail_id ?? "");
+}
+
 /** 試験用会員（メールアドレス）の受注で、注文番号が当たるものの受注ID */
 export function 受注IDの(注文番号: string, メール: string): string {
   const r = query(`select o.id from dtb_order o join dtb_customer c on c.id = o.customer_id where o.order_number = $1 and c.email = $2`, [注文番号, メール]);

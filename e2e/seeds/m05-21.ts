@@ -46,7 +46,8 @@ import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
 import { ensureBuyer, M05_BUYER, 会員が商品を注文する } from "../pages/front/m05_front_order";
 import { 並びの商品を作る, カードの定め, 規格の定め } from "./m05-09";
 import { 商品規格ID as 商品規格IDの } from "../db/m04_33";
-import { グッズのカテゴリ } from "../db/m05_21";
+import { グッズのカテゴリ, 商品のカード詳細ID } from "../db/m05_21";
+import { カード詳細のレアリティを外す } from "../db/m05_09";
 import { 商品のカテゴリを付け替える } from "../pages/admin/a17_05_setup";
 
 export const M0521_ADMIN: Account = { loginId: "m0521_admin", password: "Passw0rd!M0521" };
@@ -349,6 +350,15 @@ async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め)
     注文番号.push(await 会員が商品を注文する(browser, M05_BUYER, o.map((x) => ({ 商品ID: 商品ID.get(x.コード)!, 数量: x.数量 })), `${seedId}: ${i + 1}件目の受注`));
   }
   const 受注ID = 注文番号.map((n) => 受注IDの(n, M05_BUYER.メール));
+
+  // 041: レアリティを持たないカード詳細は、注文のあとで DB で外す（E2E のカード詳細の行だけ。画面ではレアリティを外せない。
+  // 外してからだと、カード検索の「決定」で検索が閉じず、フロントの商品詳細もシステムエラーになって注文できない。11/23）
+  for (const x of 商品の明細.filter((y) => y.並び?.カード?.レアリティなし)) {
+    const cd = 商品のカード詳細ID(商品ID.get(x.コード)!);
+    if (!cd) throw new Error(`${seedId}: ${x.名前} にカード詳細が指定されていない`);
+    カード詳細のレアリティを外す(`${seedId}: ${x.名前} のカード詳細 ${cd} のレアリティを外す（画面で外せない）`, cd, rc(x.コード));
+    issue(`${x.名前} のカード詳細 ${cd} のレアリティを、注文のあとで DB で外した（E2E のカード詳細の行だけ。画面ではレアリティを外せない。先に外すと、カード検索の「決定」で検索が閉じず、フロントの商品詳細もシステムエラーになる）`);
+  }
 
   // 4. 出荷指示リスト（範囲に入るのが自分の受注だけかを確かめてから生成する）
   const リスト: string[] = [];
