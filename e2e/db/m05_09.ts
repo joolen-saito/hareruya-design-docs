@@ -3,7 +3,7 @@
  * 物理名はこのファイルの SQL の中にだけ書く。書き足しは lib/db_write.ts を通し、持ち主（試験会員のメールアドレス）を確かめてから書く。
  */
 import { query } from "../lib/db";
-import { Owner, updateOwnRows } from "../lib/db_write";
+import { Owner, insertOwnRows, updateOwnRows } from "../lib/db_write";
 
 /** 注文番号と試験会員のメールアドレスから受注ID（1件のはず） */
 export function 受注IDの(注文番号: string, メール: string): string {
@@ -115,6 +115,32 @@ export function カード詳細のレアリティを外す(what: string, カー�
     table: "mtb_card_detail", key: "id", ids: [カード詳細ID], set: { rarity_id: null },
     owner: { sql: `select d.id from mtb_card_detail d join mtb_card c on c.id = d.card_id where d.id = $1::int and c.name_jp = $2`, params: [カード詳細ID, カードの名前] },
   });
+}
+
+/**
+ * 受注に2件目の配送先を足し、明細をその配送先へ移す（M05-09 の 014・062。2026-11-23）。
+ * シード表は受注情報編集の「出荷情報の追加」（出荷登録画面）で足すと定めるが、開発環境の出荷登録画面はシステムエラーになり開けない（11/23 に確認）。
+ * そのため、E2E の受注の配送先の行を写し、氏名・住所の一部だけ変えて DB で足す。足した配送先IDを返す。
+ */
+export function 配送先を写して足す(what: string, 受注ID: string, 元の配送先ID: string, メール: string, 変える: Record<string, string>): string {
+  const before = 受注の配送先ID(受注ID);
+  const src = query(`select row_to_json(s)::text as j from dtb_shipping s where s.id = $1::int and s.order_id = $2::int`, [元の配送先ID, 受注ID])[0]?.j;
+  if (!src) throw new Error(`${what}: 受注 ${受注ID} の配送先 ${元の配送先ID} が無い`);
+  const row: Record<string, string | null> = {};
+  for (const [k, v] of Object.entries(JSON.parse(String(src)) as Record<string, unknown>)) {
+    if (k === "id") continue;
+    row[k] = v === null || v === undefined ? null : String(v);
+  }
+  Object.assign(row, 変える);
+  insertOwnRows(what, { table: "dtb_shipping", parentColumn: "order_id", rows: [row], owner: 受注の持ち主([受注ID], メール) });
+  const added = 受注の配送先ID(受注ID).filter((id) => !before.includes(id));
+  if (added.length !== 1) throw new Error(`${what}: 足した配送先が ${added.length} 件（1件のはず）`);
+  return added[0];
+}
+
+/** 明細の配送先を変える（2件目の配送先へ明細を移す） */
+export function 明細の配送先を変える(what: string, 明細IDs: string[], メール: string, 配送先ID: string): void {
+  updateOwnRows(what, { table: "dtb_order_item", key: "id", ids: 明細IDs, set: { shipping_id: Number(配送先ID) }, owner: 明細の持ち主(明細IDs, メール) });
 }
 
 /** 明細の商品規格の紐付けを外す（画面では商品規格を持たない明細を作れない） */

@@ -1,5 +1,5 @@
 /**
- * M05-09 納品書印刷（日本語）の追加分（001・009・015・022・045・049・061・063）。正本: cases/M05-09_test_cases.tsv
+ * M05-09 納品書印刷（日本語）の追加分（001・009・014・015・022・045・049・061〜063）。正本: cases/M05-09_test_cases.tsv
  * 2026-11-23 追加。流せない一覧（DB への直接の設定）から外したケース。判定済みのケース（m05-09.spec.ts）の指紋を変えないため、別のファイルに書く。
  * 画面で作れない状態（支店の受注・スマレジの受注・配送先なし・配送方法なし・ゲスト受注・商品規格なしの明細）は、E2E の受注の行だけ DB で書き足した
  * （依頼者決定 2026-11-10「E2E が作った行だけ書いてよい」・2026-11-23「DB の直接の設定で流せるものは流す」）。
@@ -92,7 +92,36 @@ caseTest("IT-M05-09-009", async (ctx) => {
   });
 });
 
-// 014・062（配送先2件の受注）は、受注情報編集の「出荷情報の追加」の画面で配送先を足して明細を移す作りが未実装のため、ここでは書かない（記録に残す）
+// 014・062: 配送先2件・数量2と3の受注。2件とも選ぶ（014）・1件だけ選ぶ（062）と、納品書が1回だけ出て、商品数は受注の合計5
+const 二件の配送先の補い = "2件目の配送先は、シード表の「受注情報編集の出荷情報の追加（出荷登録画面）」が開発環境でシステムエラーになり開けないため、E2E の受注の配送先を写して DB で足し、数量3の明細をそこへ移した（E2E の行だけ）";
+caseTest("IT-M05-09-014", 一覧から(会員のメール("014"), 呼び名で("〔注文番号-M0509-014〕"), (pages, _ctx, 選んだ) => {
+  expect.soft(pages.map((p) => p.注文番号), `注文番号 ${選んだ[0]} の納品書が1回だけ出た`).toEqual([選んだ[0]]);
+  expect.soft((pages[0]?.合計の数量 ?? "").replace(/\s/g, ""), `商品数が受注単位の数量合計5（表示: ${pages[0]?.合計の数量}）`).toBe("5/5");
+}, { 補い: [二件の配送先の補い, "手順2は、検索結果の〔注文番号-M0509-014〕の行（配送先ごとに1行）を2行とも選んだ"] }));
+caseTest("IT-M05-09-062", async (ctx) => {
+  const { page, step, expected } = ctx;
+  await loginAdmin(page, M0509_ADMIN);
+  const l = new SlipOrderListPage(page);
+  const 注文番号 = ctx.notes.get("〔注文番号-M0509-CB062〕"), A = ctx.notes.get("〔配送先ID-M0509-CB062A〕");
+  let pages: 納品書のページ[] = []; let popup!: Page;
+  await step(1, async () => {
+    await l.会員の受注を出す(会員のメール("062"));
+    note(`受注情報検索を、ケースの試験会員のメールアドレス（${会員のメール("062")}）で絞り、全ての対応状況を選んで検索した（検索結果: ${(await l.結果の注文番号()).join("・")}）`);
+  });
+  await step(2, async () => {
+    const box = page.locator(`#check_${A}`);
+    await expect(box, `配送先ID ${A} の行のチェックボックス`).toHaveCount(1);
+    await box.evaluate((n) => { const i = n as HTMLInputElement; if (!i.checked) { i.checked = true; i.dispatchEvent(new Event("change", { bubbles: true })); } });
+    expect(await l.行の選択(注文番号).evaluateAll((ns) => ns.filter((x) => (x as HTMLInputElement).checked).length), "選んだのは〔配送先ID-M0509-CB062A〕の1件だけ").toBe(1);
+  });
+  await step(3, async () => { popup = await l.納品書印刷を押す(); pages = await 納品書を読む(popup); note(`納品書の注文番号（ページごと）: ${pages.map((p) => `${p.注文番号}(${p.ページ})`).join("・") || "なし"}`); });
+  await expected(async () => {
+    supplement(二件の配送先の補い);
+    expect.soft(popup.url(), "納品書印刷（日本語）の窓が開いた").toMatch(/\/order\/print\/delivery_slips\/ja/);
+    expect.soft(pages.map((p) => p.注文番号), `注文番号 ${注文番号} の納品書が1回だけ出た`).toEqual([注文番号]);
+    expect.soft((pages[0]?.合計の数量 ?? "").replace(/\s/g, ""), `商品数が受注の合計5（表示: ${pages[0]?.合計の数量}）`).toBe("5/5");
+  });
+});
 
 // 015: 選択をすべて外して押すと、納品書が1件も出ない
 caseTest("IT-M05-09-015", async (ctx) => {
