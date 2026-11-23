@@ -47,6 +47,11 @@ export const FIXTURES = path.resolve(__dirname, "../fixtures/f02-03");
 export const 支店A = 店舗で表す("2");
 export const 支店B = 店舗で表す("3");
 export const 支店B056 = 店舗で表す("4");
+/**
+ * 039（店舗情報の表示）の支店B。福岡店（店舗ID 3）は店舗営業時間が登録されておらず（営業時間の欄が空）、画面にも出ないので比べる値にならない。
+ * 店舗の登録値を書き換えない決まりなので、営業時間を含む全項目が登録済みの E2E の店舗（店舗ID 5006・公開・開店の支店。読むだけ）で表す。
+ */
+export const 支店B039 = 店舗で表す("5006");
 /** 空白を除いて比べる（画面は改行・空白を整えて出すことがある） */
 export const 空白なし = (t: string): string => t.replace(/\s+/g, "");
 

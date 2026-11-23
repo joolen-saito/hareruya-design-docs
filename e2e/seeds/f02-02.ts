@@ -20,7 +20,7 @@ import { FrontFavorite } from "../pages/front/f03_08_favorite";
 import { フロントにログインする } from "../pages/front/login_without_top";
 import { SpNavPage } from "../pages/front/f02_02_sp_nav";
 import { markedMail, 本会員を作る } from "./f06-member";
-import { 在庫を増減して承認する } from "../pages/admin/f02_01_setup";
+import { 在庫を増減して承認する } from "../pages/admin/f02_02_stock_local";
 import { フィードを送って反映を待つ } from "../pages/admin/unisearch_feed";
 import { 索引の商品を作る } from "../pages/admin/unisearch_products";
 import { CategoryPage, createTopByCsv } from "../pages/admin/category";

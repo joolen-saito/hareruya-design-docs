@@ -17,7 +17,7 @@ import { LoginPage } from "../../pages/front/f06_03_login";
 import { BranchNavPage } from "../../pages/front/f02_03_nav";
 import { 詳細検索モーダルが閉じ切るのを待つ } from "../../pages/front/f03_03_detail_search";
 import { CategoryPage } from "../../pages/admin/category";
-import { FIXTURES, カートのブラウザたち, 会員055パスワード, 会員055メール, 会員パスワード, 会員メール, 支店A, 支店B, 支店B056, 空白なし, 画像の支店を用意する } from "../../seeds/f02-03";
+import { FIXTURES, カートのブラウザたち, 会員055パスワード, 会員055メール, 会員パスワード, 会員メール, 支店A, 支店B, 支店B039, 支店B056, 空白なし, 画像の支店を用意する } from "../../seeds/f02-03";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const 画像の注記 = () => note("ご当地晴れる屋くんの画像は、正本がファイル名（branch-a.png・branch-b.png）だけを定めるため、色の違う小さな画像を試験用に作って使った（正本の外の補い）");
@@ -161,12 +161,15 @@ caseTest("IT-F02-03-039", async ({ page, step, expected }) => {
   const r: Record<string, string> = {};
   const 読む = async (k: string) => {
     r[`${k}郵便`] = await n.テキスト(n.店舗情報の郵便番号()); r[`${k}住所`] = await n.テキスト(n.店舗情報の住所());
-    r[`${k}電話`] = await n.テキスト(n.店舗情報の電話()); r[`${k}営業`] = await n.テキスト(n.店舗情報の営業時間());
+    r[`${k}電話`] = await n.テキスト(n.店舗情報の電話());
+    // 営業時間の行が画面に無いとき（店舗に営業時間が出ない）も時間切れで止めず、空として読んで期待結果の確かめで「表示されていない」と示す
+    r[`${k}営業`] = (await n.店舗情報の営業時間().count()) > 0 ? await n.テキスト(n.店舗情報の営業時間()) : "";
   };
   await step(1, async () => { await n.支店トップを開く(支店A.支店URL); await 読む("A"); });
-  await step(2, async () => { await n.支店トップを開く(支店B.支店URL); await 読む("B"); });
+  await step(2, async () => { note(`支店Bは、営業時間が登録されている E2E の店舗（${支店B039.店名}）で表した（福岡店は店舗営業時間が未登録で、比べる値にならない。店舗の登録値は書き換えない）`);
+    await n.支店トップを開く(支店B039.支店URL); await 読む("B"); });
   await expected(async () => {
-    for (const [k, s] of [["A", 支店A], ["B", 支店B]] as const) {
+    for (const [k, s] of [["A", 支店A], ["B", 支店B039]] as const) {
       expect.soft(r[`${k}郵便`], `支店${k}の郵便番号`).toContain(s.郵便番号);
       expect.soft(空白なし(r[`${k}住所`]), `支店${k}の住所`).toContain(空白なし(`${s.都道府県}${s.住所1}${s.住所2}`));
       // 画面は登録した値をそのまま出すので、店舗に登録されている値（店舗は作らず、元からある店舗の登録値を読む）と比べる

@@ -196,9 +196,20 @@ async function 店頭買取を申し込んでIDも読む(browser: Browser, メ�
     const h = new PurchaseHistoryListPage(page);
     await h.指定して開く({ pageSize: 50 });
     const 候補 = (await h.番号の並び()).filter((n) => n === 完了画面の番号 || n.endsWith(`-${完了画面の番号}`));
-    if (候補.length !== 1) throw new Error(`申込みの完了画面の査定番号 ${完了画面の番号} に当たる買取番号が、マイページの買取履歴一覧に ${候補.length} 件（1件のはず。一覧: ${(await h.番号の並び()).join("、")}）`);
-    const 番号 = 候補[0];
-    const ID = await 一覧に出ている(page, 番号, "otc");
+    if (候補.length === 0) throw new Error(`申込みの完了画面の査定番号 ${完了画面の番号} に当たる買取番号が、マイページの買取履歴一覧に 0 件（1件のはず。一覧: ${(await h.番号の並び()).join("、")}）`);
+    let 番号 = 候補[0];
+    let ID: string;
+    if (候補.length === 1) {
+      ID = await 一覧に出ている(page, 番号, "otc");
+    } else {
+      // 同じ買取番号の店頭買取が一覧に複数ある（この環境では日ごとの連番が重なることがある）。いま申し込んだのは、詳細の番号が最も大きいもの
+      const 全リンク = await page.locator(".p-hareruya-history-list__box a.c-hareruya-link").evaluateAll((els) => els.map((e) => ({ 文: (e.textContent ?? "").replace(/\s+/g, " ").trim(), href: (e as HTMLAnchorElement).getAttribute("href") ?? "" })));
+      const 同番 = 全リンク.flatMap((l) => { const m = /\/purchase_history\/otc\/(\d+)/.exec(l.href); return m && 候補.includes(l.文) ? [{ 文: l.文, ID: Number(m[1]) }] : []; });
+      if (同番.length === 0) throw new Error(`買取番号 ${候補.join("・")} の店頭買取の詳細のリンクが一覧に無い`);
+      const 最大 = 同番.reduce((a, b) => (b.ID > a.ID ? b : a));
+      番号 = 最大.文; ID = String(最大.ID);
+      test.info().annotations.push({ type: "手順の注記", description: `申込みの完了画面の査定番号 ${完了画面の番号} に当たる買取番号が一覧に ${候補.length} 件あった（同じ番号が重なっている）。いま申し込んだ店頭買取は、詳細の番号が最も大きいもの（${ID}）として扱った` });
+    }
     return { 番号, ID };
   });
 }
@@ -479,7 +490,8 @@ defineSeed("S-F06-11-CASE-005", { needs: OTC_NEEDS }, async ({ browser, notes, s
   // 期待の順: 注文(後)・注文(先)・商品到着・店頭査定前・ネット査定中・中断・再開・MTGBuyer査定完了・店頭査定中・中断・再開・連絡済み・承諾・簡易書留送付済み・振込依頼済み・振込失敗・店頭経理払い出し待ち・店頭買取成立・ネット振込完了・ネットキャンセル済み・店頭買取キャンセル
   並び順005.splice(0, 並び順005.length,
     n(1), n(0), n(2), otc[0].番号, n(3), n(4), n(5), n(6), otc[1].番号, otc[2].番号, otc[3].番号, n(7), n(8), n(9), n(10), n(11), otc[4].番号, otc[5].番号, n(12), n(13), otc[6].番号);
-  notes.set("〔買取番号-F0611-005〕", 並び順005.join(","));
+  // シード表は買取番号を決め打ちで書いていて呼び名が無いので、ケースが引けるよう別枠で控える
+  notes.setExtra("〔買取番号-F0611-005〕", 並び順005.join(","));
   店舗の読み替え(id, "晴れる屋テスト店（S-F06-11-OWNERS の店舗）");
   DB書き込み注記(id,
     "シード表は21件の買取を買取ID・依頼日つきでDBに登録する定め。画面で、ネット買取14件・店頭買取7件を申し込み、買取状況・ステータスをDBで設定した（注文の2件と店頭の査定前は申込みのまま）。決め打ちの買取番号は、画面が振った買取番号に読み替えた",

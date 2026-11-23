@@ -58,7 +58,9 @@ export const CBのパスワード = (n: string): string => `Passw0rd-CBF0615${n}
 
 function 控える(notes: Notes, seedId: string, 呼び名: string, 値: string): void {
   const s = getSeed(seedId);
+  // シード表が「控える」と定めた呼び名はそのまま控える。シード表が固定の番号で書いていて呼び名が無いもの（049・062・065・067 など）も、ケースが引けるよう別枠で控える
   if (Notes.labelsIn(s["状態・属性"] + s.投入方法).includes(呼び名)) notes.set(呼び名, 値);
+  else notes.setExtra(呼び名, 値);
 }
 
 defineSeed("S-F06-15-COMMON", async () => { /* 共通パスワードの取り決め。各ケース専用シードの会員の登録で入れる */ });

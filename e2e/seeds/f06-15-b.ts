@@ -16,7 +16,7 @@ import { hideDebugToolbar, withAdminSession } from "../lib/session";
 import { BuyEditPage, BuyListPage } from "../pages/admin/m07_buy";
 import { サプライ品を登録する } from "../pages/admin/m07_supply";
 import { ログインする, 複数を申込む } from "../pages/front/m07_net_buy";
-import { storeInput } from "./m06-common";
+import { 使い回す店舗の入力 } from "../pages/admin/m04_24_reuse_k";
 import { 店舗の管理者を用意する, 店舗を用意する, 店頭買取のステータスを変える, 店頭買取を申込む } from "./f06-11-b";
 import { 本会員を作る } from "./f06-member";
 import { PW, mailOf } from "./f06-15";
@@ -118,9 +118,10 @@ const 一件 = (枝 = "商品A", 価格 = "1000", 売却: "売却する" | "売�
 // ---- 店頭買取の処理状態（店舗を作り、会員として3件申込む） ----
 defineSeed("S-F06-15-STORESTATUS-009", async ({ browser, notes, seed }) => {
   notes.set("〔会員ID-F0615-009〕", await 会員を作る(browser, "009"));
-  const v = storeInput("F0615-009-店舗", "エフゼロロクイチゴゼロゼロキュウテンポ", "Case Zero Nine Store", "f0615store009", "F9S");
+  // 店舗「F0615-009-店舗」は作らない（依頼者 2026-11-15「店舗は作るのもう禁止」）。使い回す E2E の店舗（店舗ID 5007）で表す。ケースは店舗の値を確かめない
+  const v = 使い回す店舗の入力("5007", "F0615-009-店舗");
   notes.set("〔店舗ID-F0615-009〕", await 店舗を用意する(browser, v, seed.シードID));
-  const 番号 = await 店頭買取を申込む(browser, "f0615store009", "f0615-009", PW, 3);
+  const 番号 = await 店頭買取を申込む(browser, v.支店URL, "f0615-009", PW, 3);
   notes.set("〔買取番号-F0615-009A〕", 番号[0]);
   notes.set("〔買取番号-F0615-009B〕", 番号[1]);
   notes.set("〔買取番号-F0615-009C〕", 番号[2]);
