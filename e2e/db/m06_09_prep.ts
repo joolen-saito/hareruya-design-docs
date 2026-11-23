@@ -39,7 +39,8 @@ const 日時のtz = (日時: string): string => {
   if (!/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/.test(日時)) throw new Error(`日時の形が違う（${日時}）`);
   return `${日時.length === 10 ? `${日時} 00:00:00` : 日時}+09`;
 };
-const 対象の確かめ = "select s.shop_name as 印つきの名前 from dtb_base_info s where s.id = $1::int";
+// 書き足す行の店舗の列（親の列）と照らすため、店舗IDも読む（店名だけだと「親の列が見つからない」で止まった。2026-11-23）
+const 対象の確かめ = "select s.id::text as 店舗id, s.shop_name as 印つきの名前 from dtb_base_info s where s.id = $1::int";
 
 /** 試験店舗の、期間（日付。両端を含む）の買取集計データを消して、渡した行に入れ替える */
 export function 集計データを入れ替える(店舗ID: string, 店名: string, 開始: string, 終了: string, 行: 集計行[]): void {
