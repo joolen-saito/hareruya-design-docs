@@ -282,11 +282,12 @@ export async function 並びの商品を作る(browser: Browser, seedId: string,
         }, `${seedId}: ${名} のカードの登録`, issue);
         const ids = await カード詳細IDs(page);
         if (ids.length !== 1) throw new Error(`${seedId}: ${名} のカードのカード詳細が ${ids.length} 件（1件のはず）`);
+        await assignCardOnProductEdit(page, { productId: 商品ID.get(x.コード)!, cardNameJp: 名, cardDetailId: ids[0], productNameJp: 商品名(x), productNameEn: 商品名(x) }, issue);
+        // レアリティを外すのは、商品にカードを指定したあと（外してからだと、カード検索の「決定」でカード検索が閉じない。11/23 の 041）
         if (カードの値.レアリティなし) {
           カード詳細のレアリティを外す(`${seedId}: ${名} のカード詳細 ${ids[0]} のレアリティを外す（画面で外せない）`, ids[0], 名);
-          issue(`${名} のカード詳細 ${ids[0]} のレアリティを DB で外した（E2E のカード詳細の行だけ。画面ではレアリティを外せない）`);
+          issue(`${名} のカード詳細 ${ids[0]} のレアリティを、商品にカードを指定したあと DB で外した（E2E のカード詳細の行だけ。画面ではレアリティを外せない）`);
         }
-        await assignCardOnProductEdit(page, { productId: 商品ID.get(x.コード)!, cardNameJp: 名, cardDetailId: ids[0], productNameJp: 商品名(x), productNameEn: 商品名(x) }, issue);
       }
     });
     issue(`カード詳細(登録)画面で、印つきの試験用カードを ${カード付き.length} 枚作り（${カード付き.map((x) => `${rc(x.コード)}: レアリティ ${x.カード!.レアリティ ?? "選択肢の先頭"}・Foil ${x.カード!.Foil ?? "なし"}${x.カード!.カード番号 ? `・カード番号 ${x.カード!.カード番号}` : ""}`).join("／")}）、商品登録編集の「カード指定」で紐づけた。シード表の「商品カテゴリを単体カードに付け替える」はしていない（納品書の並びはカード詳細の有無・Foil・レアリティ・カード番号で決まり、カテゴリは使わない。実ソース SortProductTrait）`);
