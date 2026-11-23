@@ -39,11 +39,14 @@ export async function assignCardOnProductEdit(page: Page, a: CardAssignment, onI
     .filter({ has: page.locator("td:first-child", { hasText: new RegExp(`^\\s*${a.cardDetailId}\\s*$`) }) });
   // 検索結果が複数ページに分かれるとき（詳細情報が多いカード）は、行が見つかるまでページを送る
   await modal.locator("#searchCardDetailModalList tbody tr").first().waitFor({ state: "visible", timeout: 30_000 }).catch(() => undefined);
+  // ページを送ったら、一覧の先頭の行が変わるまで待つ（開発環境が遅いと 1.5 秒では次のページが出ず、ページを読み飛ばした。2026-11-23 の M05-21 の 021・30件の詳細）
+  const 先頭のID = async () => ((await modal.locator("#searchCardDetailModalList tbody tr td:first-child").first().textContent().catch(() => "")) ?? "").trim();
   for (let pageNo = 2; pageNo <= 10 && (await row.count()) === 0; pageNo++) {
     const link = modal.locator("#card_detail_pagination a").filter({ hasText: new RegExp(`^\\s*${pageNo}\\s*$`) });
     if ((await link.count()) === 0) break;
+    const before = await 先頭のID();
     await link.first().click();
-    await page.waitForTimeout(1500);
+    await expect.poll(先頭のID, { timeout: 60_000, message: `カード検索の ${pageNo} ページ目が出る` }).not.toBe(before);
   }
   await expect(row, `カード検索の結果に、カード詳細ID ${a.cardDetailId} の「${a.cardNameJp}」がある`).toHaveCount(1);
   await row.getByRole("button", { name: "決定", exact: true }).click();
