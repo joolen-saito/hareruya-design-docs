@@ -109,6 +109,14 @@ export function 受注のスマレジ取引IDを書き足す(what: string, 受�
   updateOwnRows(what, { table: "dtb_order", key: "id", ids: [受注ID], set: { smaregi_transaction_id: 値 }, owner: 受注の持ち主([受注ID], メール) });
 }
 
+/** カード詳細のレアリティを外す（画面ではレアリティを外せない。持ち主は、カードの名前が E2E の実行の印つきの名前であること。2026-11-23） */
+export function カード詳細のレアリティを外す(what: string, カード詳細ID: string, カードの名前: string): void {
+  updateOwnRows(what, {
+    table: "mtb_card_detail", key: "id", ids: [カード詳細ID], set: { rarity_id: null },
+    owner: { sql: `select d.id from mtb_card_detail d join mtb_card c on c.id = d.card_id where d.id = $1::int and c.name_jp = $2`, params: [カード詳細ID, カードの名前] },
+  });
+}
+
 /** 明細の商品規格の紐付けを外す（画面では商品規格を持たない明細を作れない） */
 export function 明細の商品規格を外す(what: string, 明細IDs: string[], メール: string): void {
   updateOwnRows(what, { table: "dtb_order_item", key: "id", ids: 明細IDs, set: { product_class_id: null }, owner: 明細の持ち主(明細IDs, メール) });

@@ -27,7 +27,7 @@ import {
   受注IDの, 受注の配送先ID, 受注の配送方法, 受注の対応状況を書き足す, 受注日時を書き足す, 注文者の都道府県を空にする, 配送先の項目を空にする,
   明細の商品規格を外す, 明細IDの, 会員のプレイヤーID, プレイヤーのスマレジIDを書き足す, プレイヤーを会員から外す, 配送方法, 都道府県がある, 国がある, 登録番号, 出荷指示リストがある,
 } from "../db/m05_09";
-import { 受注のスマレジ取引IDを書き足す, 配送方法を外す } from "../db/m05_09";
+import { 受注のスマレジ取引IDを書き足す, 配送方法を外す, カード詳細のレアリティを外す } from "../db/m05_09";
 import { 受注の店舗を書き足す, 受注の店舗, 受注から会員を外す, 配送先を受注から外す } from "../db/m05_10";
 import { 受注の出荷指示リスト, 注文番号の範囲の受注 } from "../db/m05_21";
 import { getSeed } from "../lib/catalog";
@@ -87,7 +87,9 @@ defineSeed("S-M05-09-BASEINFO", async () => {
  */
 export type カードの定め = { レアリティ?: string; Foil?: "なし" | "通常" | "特殊"; カード番号?: string; 英名?: string; 色順?: string;
   /** カードのカラー（M05-21 のピッキングリストの色数に使う。2026-11-23） */
-  カラー?: string[] };
+  カラー?: string[];
+  /** レアリティを持たないカード詳細（画面ではレアリティを外せないので、E2E のカード詳細の行だけ DB で外す。M05-21 の 041。2026-11-23） */
+  レアリティなし?: true };
 /** 並び順のケースの規格の値（2026-11-16。依頼者決定 2026-11-14「マスタは作ってよい」で、棚番号・略称タグは印つきで作る） */
 export type 規格の定め = {
   /** 言語コード（グッズ商品CSVの言語(ID)。JP・EN・KO） */
@@ -276,6 +278,10 @@ export async function 並びの商品を作る(browser: Browser, seedId: string,
         }, `${seedId}: ${名} のカードの登録`, issue);
         const ids = await カード詳細IDs(page);
         if (ids.length !== 1) throw new Error(`${seedId}: ${名} のカードのカード詳細が ${ids.length} 件（1件のはず）`);
+        if (カードの値.レアリティなし) {
+          カード詳細のレアリティを外す(`${seedId}: ${名} のカード詳細 ${ids[0]} のレアリティを外す（画面で外せない）`, ids[0], 名);
+          issue(`${名} のカード詳細 ${ids[0]} のレアリティを DB で外した（E2E のカード詳細の行だけ。画面ではレアリティを外せない）`);
+        }
         await assignCardOnProductEdit(page, { productId: 商品ID.get(x.コード)!, cardNameJp: 名, cardDetailId: ids[0], productNameJp: 商品名(x), productNameEn: 商品名(x) }, issue);
       }
     });
