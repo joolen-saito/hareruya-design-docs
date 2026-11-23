@@ -19,6 +19,8 @@
 
 使い方:
   python tools/sheet_writeback.py <元の.xlsx> <書き出す.xlsx> [--plan <計画.tsv>] [--only <機能ID>...]
+  [--blank-ok <一覧.tsv>]  実施者が空欄の行にも「実施不可」を書いてよいケース（列: テストID［cases/ のテストID］・理由［任意。備考に書く］）。
+                          2026-11-23 依頼者決定「流せない行は空欄の行にも実施不可と書き戻す」（齋藤の担当の機能だけ）。無ければ従来どおり
   （openpyxl は使わない。標準ライブラリだけで動く）
 """
 import argparse
@@ -54,6 +56,7 @@ FORMER_E2E = {r["一覧のテストID"] for r in csv.DictReader(FORMER_E2E_FILE.
 BACKLOG_VIEW = "https://joolen.backlog.com/view/"  # 課題の URL（lib_backlog の DEFAULT_SPACE と同じスペース）
 # 栗野さんの受け持ちの機能のうち、依頼者の指示でこちらが開発環境で流し直して判定・起票したケース（テストID・一覧のテストID・理由）
 SPLIT_EXCEPT_FILE = E2E / "config" / "sheet_split_exceptions.tsv"
+BLANK_OK: dict[str, str] = {}  # --blank-ok で渡す。空欄の行にも実施不可を書いてよいケース → 備考に書く理由（空なら流せない一覧の理由）
 
 
 def read_tsv(p: Path) -> list[dict]:
@@ -149,7 +152,8 @@ def build_results(only: set[str]) -> dict[str, dict]:
             tid = n["テストID"]
             if tid in out or (only and tid[3:9] not in only) or split.get(tid[3:9]) == "栗野さん":
                 continue
-            out[tid] = {"結果": result, "日付": dt.date.today(), "備考": f"{label}: {n['理由']}\nE2EのテストID {tid}"}
+            why = BLANK_OK.get(tid) if result == "実施不可" and BLANK_OK.get(tid) else n["理由"]
+            out[tid] = {"結果": result, "日付": dt.date.today(), "備考": f"{label}: {why}\nE2EのテストID {tid}"}
     return out
 
 
@@ -171,7 +175,11 @@ def main() -> int:
     ap.add_argument("dst")
     ap.add_argument("--plan", help="書き換えの計画（行・テストID・前・後）を TSV で書く")
     ap.add_argument("--only", nargs="*", default=[], help="機能IDで絞る")
+    ap.add_argument("--blank-ok", help="実施者が空欄の行にも実施不可を書いてよいケースの一覧（TSV: テストID・理由）")
     a = ap.parse_args()
+    if a.blank_ok:
+        for r in read_tsv(Path(a.blank_ok)):
+            BLANK_OK[r["テストID"]] = (r.get("理由") or "").strip()
 
     list_to_case = {r["一覧のテストID"]: r["cases/のテストID"] for r in read_tsv(ID_MAP)}
     results = build_results(set(a.only))
@@ -252,7 +260,10 @@ def main() -> int:
             return m.group(0)
         before = [value_of(cells.get(c)) for c in "IJKL"]
         if res["結果"] in ("実施不可", "実施不要") and executor != EXECUTOR:
-            return m.group(0)  # 齋藤の行だけに書く（空欄・ほかの行は触らない。2026-11-16 依頼者決定）
+            # 齋藤の行だけに書く（空欄・ほかの行は触らない。2026-11-16 依頼者決定）。
+            # ただし --blank-ok に載ったケースの「実施不可」は、実施者が空欄の行にも書く（2026-11-23 依頼者決定）
+            if not (res["結果"] == "実施不可" and executor == "" and tid in BLANK_OK):
+                return m.group(0)
         if res["結果"] == "":
             # 未判定（流したが判定できなかった）は、実施者・実施日・実施結果・備考の4列とも空欄にする（依頼者指示 2026-11-10）
             new = {"I": ("s", ""), "J": ("s", ""), "K": ("s", ""), "L": ("s", "")}
