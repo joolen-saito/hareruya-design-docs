@@ -27,6 +27,8 @@ import {
   受注IDの, 受注の配送先ID, 受注の配送方法, 受注の対応状況を書き足す, 受注日時を書き足す, 注文者の都道府県を空にする, 配送先の項目を空にする,
   明細の商品規格を外す, 明細IDの, 会員のプレイヤーID, プレイヤーのスマレジIDを書き足す, プレイヤーを会員から外す, 配送方法, 都道府県がある, 国がある, 登録番号, 出荷指示リストがある,
 } from "../db/m05_09";
+import { 受注のスマレジ取引IDを書き足す, 配送方法を外す } from "../db/m05_09";
+import { 受注の店舗を書き足す, 受注の店舗, 受注から会員を外す, 配送先を受注から外す } from "../db/m05_10";
 import { 受注の出荷指示リスト, 注文番号の範囲の受注 } from "../db/m05_21";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
@@ -83,9 +85,11 @@ defineSeed("S-M05-09-BASEINFO", async () => {
  * カード（並び順のケース 030・035・037・039 と CB の 053・055・057・059）: カード詳細(登録)画面で印つきの試験用カードを1枚作り、
  * 商品登録編集の「カード指定」でその商品に紐づける（依頼者決定 2026-11-14「マスタは作ってよい」）。指定の無い値は2行とも同じ（選択肢の先頭・Foil なし）。
  */
-type カードの定め = { レアリティ?: string; Foil?: "なし" | "通常" | "特殊"; カード番号?: string; 英名?: string; 色順?: string };
+export type カードの定め = { レアリティ?: string; Foil?: "なし" | "通常" | "特殊"; カード番号?: string; 英名?: string; 色順?: string;
+  /** カードのカラー（M05-21 のピッキングリストの色数に使う。2026-11-23） */
+  カラー?: string[] };
 /** 並び順のケースの規格の値（2026-11-16。依頼者決定 2026-11-14「マスタは作ってよい」で、棚番号・略称タグは印つきで作る） */
-type 規格の定め = {
+export type 規格の定め = {
   /** 言語コード（グッズ商品CSVの言語(ID)。JP・EN・KO） */
   言語?: string;
   /** 状態コード（グッズ商品CSVは NM の規格を作る。NM 以外は E2E の商品規格だけ DB で書き換える） */
@@ -95,7 +99,7 @@ type 規格の定め = {
   /** 略称タグ（名前と並び順・アルファベット順。同じ名前は1つを使い回す） */
   略称?: { 名前: string; 並び順: string; アルファベット?: boolean };
 };
-type 明細の定め = { コード: string; 名前: string; 価格?: number; 数量?: number; カード?: カードの定め; 規格?: 規格の定め };
+export type 明細の定め = { コード: string; 名前: string; 価格?: number; 数量?: number; カード?: カードの定め; 規格?: 規格の定め };
 type 受注の定め = {
   明細: 明細の定め[];
   注文者?: 住所の入力; お届け先?: 住所の入力; 配送方法?: string;
@@ -105,6 +109,9 @@ type 受注の定め = {
   /** DB で書き足すもの（画面で指定できない状態） */
   注文者の都道府県なし?: true; 配送先の都道府県なし?: true; 配送先の国なし?: true;
   商品規格なしの明細?: string; スマレジ会員ID?: string; プレイヤーなし?: true;
+  /** 2026-11-23 追加（DB で書き足す。E2E の行だけ）: 支店の受注（受注と配送先の店舗を試験支店 1574 に）・スマレジの受注（取引IDの呼び名。印を付けて書く）・
+   * 配送方法なし・ゲスト受注（会員を外す）・配送先なし（配送先を受注から外す） */
+  支店?: true; スマレジ取引?: string; 配送方法なし?: true; 会員なし?: true; 配送先なし?: true;
 };
 type 定め = {
   受注: 受注の定め[];
@@ -167,6 +174,18 @@ const 定めの表: Record<string, 定め> = {
   "CBSORTALPHA-060": { 受注: [{ 明細: [C("M0509-CB060-ZULU", { 英名: "M0509-CB060 Zulu Card", カード番号: "002" }, { 略称: { 名前: "M0509-CB060-TAG", 並び順: "1", アルファベット: true } }), C("M0509-CB060-ALPHA", { 英名: "M0509-CB060 Alpha Card", カード番号: "010" }, { 略称: { 名前: "M0509-CB060-TAG", 並び順: "1", アルファベット: true } })] }] },
   "CBBASE-046": { 受注: [{ 明細: [{ コード: "M0509-CB046-P1", 名前: "M0509-CB046-P1" }] }] },
   "CBLINE-047": { 受注: [{ 明細: [{ コード: "M0509-CB047-OK", 名前: "M0509-CB047-OK" }, { コード: "M0509-CB047-NG", 名前: "M0509-CB047-NG" }], 商品規格なしの明細: "M0509-CB047-NG" }] },
+  // ---- 2026-11-23 追加（流せない一覧から外した 001・009・015・022・045・049・061・063）----
+  "CHANNELS-001": { 受注: [{ 明細: P("001A") }, { 明細: P("001B"), 別の会員: true, 支店: true }, { 明細: P("001C"), スマレジ取引: "JP-SMAREGI-001-001" }] },
+  "RELATIONS-009": { 受注: [{ 明細: P("009A") }, { 明細: P("009B"), 配送先なし: true }, { 明細: P("009C"), 配送方法なし: true }], 出荷指示リスト: true },
+  "CHANNELS-015": { 受注: [{ 明細: P("015A") }, { 明細: P("015B"), 別の会員: true, 支店: true }, { 明細: P("015C"), スマレジ取引: "JP-SMAREGI-001-015" }] },
+  "COMPANY-022": { 受注: [
+    { 明細: P("022A", 1, 1000) },
+    { 明細: P("022B", 1, 2500), 別の会員: true, 支店: true, 注文者: { 姓: "納品書試験", 名: "022B注文者", 都道府県: "大阪府", 住所1: "大阪市北区", 住所2: "M0509-022B-1" }, お届け先: { 姓: "納品書試験", 名: "022B届け先", 都道府県: "大阪府", 住所1: "大阪市北区", 住所2: "M0509-022B-2" } },
+  ] },
+  "COMPANY-BRANCH-045": { 受注: [{ 明細: P("045"), 支店: true }] },
+  "CBGUEST-049": { 受注: [{ 明細: [{ コード: "M0509-CB049-OK", 名前: "M0509-CB049-OK" }, { コード: "M0509-CB049-NG", 名前: "M0509-CB049-NG" }], 商品規格なしの明細: "M0509-CB049-NG", 会員なし: true }] },
+  "CBSHIP1-061": { 受注: [{ 明細: [{ コード: "M0509-CB061-P1", 名前: "M0509-CB061-P1", 数量: 2 }] }] },
+  "CBGUESTOK-063": { 受注: [{ 明細: [{ コード: "M0509-CB063-OK", 名前: "M0509-CB063-OK" }], 会員なし: true }] },
 };
 
 /** シードが作ったもの（spec が使う） */
@@ -181,20 +200,10 @@ export function 作ったものの(seedId: string): 作ったもの {
 export const 会員の前半 = (番号: string, i = 0) => `m0509-${番号}${i > 0 ? "-b" : ""}`;
 export const 会員のメール = (番号: string, i = 0) => markedMail(会員の前半(番号, i));
 
-async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め): Promise<void> {
-  const issue = (m: string) => reportSeedIssue(seedId, m);
-  const 番号 = /-(\d{3})$/.exec(seedId)?.[1] ?? "";
-
-  // 1. 会員（受注ごとに「別の会員」でなければ同じ会員）
-  const メール: string[] = [];
-  const 会員の数 = d.受注.some((o) => o.別の会員) ? 2 : 1;
-  for (let i = 0; i < 会員の数; i++) {
-    await 本会員を作る(browser, { 姓: "納品書試験", 名: `${番号}${"ABC"[i]}`, セイ: "ノウヒンショシケン", メイ: "カイイン", 前半: 会員の前半(番号, i), パスワード: PW });
-    メール.push(会員のメール(番号, i));
-  }
-
-  // 2. 商品
-  const 明細の一覧 = d.受注.flatMap((o) => o.明細);
+/** 並びの属性（略称タグ・言語・棚番号・カード・状態）をそろえた商品を作って入庫し、明細のコード→商品ID を返す（M05-09・M05-10 で使う。2026-11-23 M05-09 の 作る から切り出した） */
+/** 名前そのまま: 商品名に実行の印を付けない（M05-21 のピッキングリストは商品名の表記を確かめるので、呼ぶ側が印の入れ方を決める。2026-11-23） */
+export async function 並びの商品を作る(browser: Browser, seedId: string, 明細の一覧: 明細の定め[], issue: (m: string) => void, opt: { 名前そのまま?: boolean } = {}): Promise<Map<string, string>> {
+  const 商品名 = (x: 明細の定め) => (opt.名前そのまま ? x.名前 : rc(x.名前));
   // 2a. 略称タグ（グッズ商品CSVの略称タグ(ID)に入れるので、商品より先に作る。同じ名前は1つを使い回す。名前は印つき）
   const 略称タグID = new Map<string, string>();
   const 略称付き = 明細の一覧.filter((x) => x.規格?.略称);
@@ -215,7 +224,7 @@ async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め)
     const CSVの値: Record<string, string> = {};
     if (x.規格?.言語) CSVの値["言語(ID)"] = 言語コードのID(x.規格.言語);
     if (x.規格?.略称) CSVの値["略称タグ(ID)"] = 略称タグID.get(x.規格.略称.名前)!;
-    return { 商品コード: rc(x.コード), 商品名: rc(x.名前), 価格: String(x.価格 ?? 1000), 入庫数: (x.数量 ?? 1) + 2, ...(Object.keys(CSVの値).length ? { CSVの値 } : {}) };
+    return { 商品コード: rc(x.コード), 商品名: 商品名(x), 価格: String(x.価格 ?? 1000), 入庫数: (x.数量 ?? 1) + 2, ...(Object.keys(CSVの値).length ? { CSVの値 } : {}) };
   }), issue);
   const 商品ID = new Map(made.map((m, i) => [明細の一覧[i].コード, m.productId]));
   if (明細の一覧.some((x) => x.規格?.言語)) issue(`商品規格の言語は、グッズ商品CSVの言語(ID)で入れた（${明細の一覧.filter((x) => x.規格?.言語).map((x) => `${rc(x.コード)}: ${x.規格!.言語}`).join("・")}）`);
@@ -254,7 +263,6 @@ async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め)
   }
 
   // 2b. カード（並び順のケース）: 商品の登録の順に、印つきの試験用カードを作って紐づける
-  if (/-CBSORT/.test(seedId)) issue("シード表の「支店の受注」は、本店の受注で読み替えた（試験会員は本店のフロントで注文する。納品書の並びで支店と本店が違うのは棚番だけで、このケースは棚番を使わない。実ソース SortProductTrait）");
   const カード付き = 明細の一覧.filter((x) => x.カード);
   if (カード付き.length > 0) {
     await withAdminSession(browser, SETUP_ADMIN, async (page) => {
@@ -263,12 +271,12 @@ async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め)
         const 名 = rc(x.コード);
         const カードの値 = x.カード!;
         await カードを登録する(page, {
-          カード名日: 名, カード名英: カードの値.英名 ? rc(カードの値.英名) : 名, 点数で見たマナ: "0", 色順: カードの値.色順,
+          カード名日: 名, カード名英: カードの値.英名 ? rc(カードの値.英名) : 名, 点数で見たマナ: "0", 色順: カードの値.色順, ...(カードの値.カラー ? { カラー: カードの値.カラー } : {}),
           詳細: { レアリティ: カードの値.レアリティ, Foil: カードの値.Foil ?? "なし", カード番号: カードの値.カード番号 },
         }, `${seedId}: ${名} のカードの登録`, issue);
         const ids = await カード詳細IDs(page);
         if (ids.length !== 1) throw new Error(`${seedId}: ${名} のカードのカード詳細が ${ids.length} 件（1件のはず）`);
-        await assignCardOnProductEdit(page, { productId: 商品ID.get(x.コード)!, cardNameJp: 名, cardDetailId: ids[0], productNameJp: 名, productNameEn: 名 }, issue);
+        await assignCardOnProductEdit(page, { productId: 商品ID.get(x.コード)!, cardNameJp: 名, cardDetailId: ids[0], productNameJp: 商品名(x), productNameEn: 商品名(x) }, issue);
       }
     });
     issue(`カード詳細(登録)画面で、印つきの試験用カードを ${カード付き.length} 枚作り（${カード付き.map((x) => `${rc(x.コード)}: レアリティ ${x.カード!.レアリティ ?? "選択肢の先頭"}・Foil ${x.カード!.Foil ?? "なし"}${x.カード!.カード番号 ? `・カード番号 ${x.カード!.カード番号}` : ""}`).join("／")}）、商品登録編集の「カード指定」で紐づけた。シード表の「商品カテゴリを単体カードに付け替える」はしていない（納品書の並びはカード詳細の有無・Foil・レアリティ・カード番号で決まり、カテゴリは使わない。実ソース SortProductTrait）`);
@@ -283,6 +291,26 @@ async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め)
     if (商品規格の状態(ids[0]) !== x.規格!.状態) throw new Error(`${seedId}: 商品規格 ${ids[0]} の状態が ${商品規格の状態(ids[0])}（${x.規格!.状態} のはず）`);
     issue(`商品規格 ${ids[0]}（${code}）の状態を DB で ${x.規格!.状態} にした。シード表の「HP の規格を足して、取り込みでできた NM の規格を削除する」の代わりに、取り込みでできた NM の規格の状態を書き換えた（グッズ商品CSV登録は NM の規格を作り、商品規格の編集画面では状態を選べない。E2E の商品規格だけ。並びは規格の状態で決まり、規格の数は見ない）`);
   }
+
+  return 商品ID;
+}
+
+async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め): Promise<void> {
+  const issue = (m: string) => reportSeedIssue(seedId, m);
+  const 番号 = /-(\d{3})$/.exec(seedId)?.[1] ?? "";
+
+  // 1. 会員（受注ごとに「別の会員」でなければ同じ会員）
+  const メール: string[] = [];
+  const 会員の数 = d.受注.some((o) => o.別の会員) ? 2 : 1;
+  for (let i = 0; i < 会員の数; i++) {
+    await 本会員を作る(browser, { 姓: "納品書試験", 名: `${番号}${"ABC"[i]}`, セイ: "ノウヒンショシケン", メイ: "カイイン", 前半: 会員の前半(番号, i), パスワード: PW });
+    メール.push(会員のメール(番号, i));
+  }
+
+  // 2. 商品
+  const 明細の一覧 = d.受注.flatMap((o) => o.明細);
+  if (/-CBSORT/.test(seedId)) issue("シード表の「支店の受注」は、本店の受注で読み替えた（試験会員は本店のフロントで注文する。納品書の並びで支店と本店が違うのは棚番だけで、このケースは棚番を使わない。実ソース SortProductTrait）");
+  const 商品ID = await 並びの商品を作る(browser, seedId, 明細の一覧, issue);
 
   // 3. 受注（続けて注文する）
   const 注文番号: string[] = [];
@@ -361,12 +389,29 @@ async function 作る(browser: Browser, seedId: string, notes: Notes, d: 定め)
       if (ids.length !== 1) throw new Error(`${seedId}: ${rc(o.商品規格なしの明細)} の明細が ${ids.length} 件（1件のはず）`);
       明細の商品規格を外す(seedId, ids, 持ち主[i]); 書いた.push(`${o.商品規格なしの明細} の明細の商品規格の紐付けを外した`);
     }
+    if (o.支店) {
+      受注の店舗を書き足す(seedId, 受注ID[i], 受注の配送先ID(受注ID[i]), 持ち主[i], 1574);
+      const now = 受注の店舗(受注ID[i]);
+      if (now.受注 !== "1574" || now.配送先.some((x) => x !== "1574")) throw new Error(`${seedId}: ${注文番号[i]} の店舗が試験支店（1574）になっていない（受注 ${now.受注}・配送先 ${now.配送先.join("・")}）`);
+      書いた.push(`${注文番号[i]} の受注と配送先の店舗を試験支店（1574）にした（シード表の「支店の受注」の読み替え。試験会員は本店のフロントで注文する）`);
+    }
+    if (o.スマレジ取引) {
+      受注のスマレジ取引IDを書き足す(seedId, 受注ID[i], 持ち主[i], rc(o.スマレジ取引));
+      書いた.push(`${注文番号[i]} をスマレジの受注（${o.スマレジ取引}）として、スマレジ取引IDに印つきの「${rc(o.スマレジ取引)}」を書いた（スマレジの取引通知で作られる受注は画面で作れない。注文番号は画面が振った ${注文番号[i]} のまま。注文番号の欄は11文字までで「${o.スマレジ取引}」は入らない）`);
+    }
+    if (o.配送方法なし) { 配送方法を外す(seedId, 受注の配送先ID(受注ID[i]), 持ち主[i]); 書いた.push(`${注文番号[i]} の配送先の配送方法を未設定`); }
     if (o.スマレジ会員ID || o.プレイヤーなし) {
       const ps = 会員のプレイヤーID(持ち主[i]);
       if (ps.length !== 1) throw new Error(`${seedId}: 会員 ${持ち主[i]} のプレイヤーが ${ps.length} 件（1件のはず）`);
       if (o.スマレジ会員ID) { プレイヤーのスマレジIDを書き足す(seedId, ps, 持ち主[i], o.スマレジ会員ID); 書いた.push(`会員のプレイヤーのスマレジ会員IDを ${o.スマレジ会員ID}`); }
       if (o.プレイヤーなし) { プレイヤーを会員から外す(seedId, ps, 持ち主[i]); 書いた.push(`${注文番号[i]} の会員からプレイヤーを外した`); }
     }
+  }
+  // 持ち主（試験会員のメールアドレス）を確かめられなくなる書き足し（配送先を外す・会員を外す）は最後
+  const 配送先ID: string[][] = 受注ID.map((id) => 受注の配送先ID(id));
+  for (const [i, o] of d.受注.entries()) {
+    if (o.配送先なし) { 配送先を受注から外す(seedId, 配送先ID[i], 持ち主[i]); 書いた.push(`${注文番号[i]} の受注から配送先（${配送先ID[i].join("・")}）を外した`); }
+    if (o.会員なし) { 受注から会員を外す(seedId, 受注ID[i], 持ち主[i]); 書いた.push(`${注文番号[i]} の受注から会員を外した（ゲスト受注。会員とプレイヤーを持たない）`); }
   }
   issue(`DB で書き足した（E2E の行だけ）: 受注 ${受注ID.join("・")} の受注日時を ${受注日時}${d.出荷指示リスト ? "・対応状況を「注文受領」へ戻した" : ""}${書いた.length ? `・${書いた.join("・")}` : ""}`);
 

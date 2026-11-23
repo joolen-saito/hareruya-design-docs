@@ -99,6 +99,16 @@ export function 配送先の項目を空にする(what: string, 配送先IDs: st
   updateOwnRows(what, { table: "dtb_shipping", key: "id", ids: 配送先IDs, set: { [col]: null }, owner: 配送先の持ち主(配送先IDs, メール) });
 }
 
+/** 配送先の配送方法を外す（画面では配送方法を持たない配送先を作れない。2026-11-23） */
+export function 配送方法を外す(what: string, 配送先IDs: string[], メール: string): void {
+  updateOwnRows(what, { table: "dtb_shipping", key: "id", ids: 配送先IDs, set: { delivery_id: null }, owner: 配送先の持ち主(配送先IDs, メール) });
+}
+
+/** 受注をスマレジの受注にする（スマレジ取引IDを書く。スマレジの取引通知で作られる受注は画面で作れない。2026-11-23） */
+export function 受注のスマレジ取引IDを書き足す(what: string, 受注ID: string, メール: string, 値: string): void {
+  updateOwnRows(what, { table: "dtb_order", key: "id", ids: [受注ID], set: { smaregi_transaction_id: 値 }, owner: 受注の持ち主([受注ID], メール) });
+}
+
 /** 明細の商品規格の紐付けを外す（画面では商品規格を持たない明細を作れない） */
 export function 明細の商品規格を外す(what: string, 明細IDs: string[], メール: string): void {
   updateOwnRows(what, { table: "dtb_order_item", key: "id", ids: 明細IDs, set: { product_class_id: null }, owner: 明細の持ち主(明細IDs, メール) });

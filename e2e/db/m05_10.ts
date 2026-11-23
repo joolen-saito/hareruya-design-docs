@@ -48,3 +48,17 @@ export function 受注の金額(受注ID: string): { 小計: number; 送料: num
   const n = (v: unknown) => Number(v ?? 0);
   return { 小計: n(r.s), 送料: n(r.d), 手数料: n(r.c), 値引き: n(r.di), 利用ポイント: n(r.u), 合計: n(r.tt), 消費税額: n(r.x) };
 }
+
+/** 受注と配送先の店舗を書き足す（「支店の受注」を試験支店で読み替える。試験会員は本店のフロントで注文するので、E2E の受注・配送先の店舗だけ DB で試験支店にする。
+ * 納品書の並び（棚番を使うのは本店だけ）は受注の店舗、受注情報検索の店舗の絞り込みは配送先の店舗で決まる。2026-11-23） */
+export function 受注の店舗を書き足す(what: string, 受注ID: string, 配送先IDs: string[], メール: string, 店舗ID: number): void {
+  updateOwnRows(what, { table: "dtb_order", key: "id", ids: [受注ID], set: { base_info_id: 店舗ID }, owner: 受注の持ち主([受注ID], メール) });
+  updateOwnRows(what, { table: "dtb_shipping", key: "id", ids: 配送先IDs, set: { base_info_id: 店舗ID }, owner: 配送先の持ち主(配送先IDs, メール) });
+}
+
+/** 受注と配送先の店舗ID */
+export function 受注の店舗(受注ID: string): { 受注: string; 配送先: string[] } {
+  const o = String(query(`select base_info_id from dtb_order where id = $1::int`, [受注ID])[0]?.base_info_id ?? "");
+  const s = query(`select base_info_id from dtb_shipping where order_id = $1::int order by id`, [受注ID]).map((r) => String(r.base_info_id ?? ""));
+  return { 受注: o, 配送先: s };
+}

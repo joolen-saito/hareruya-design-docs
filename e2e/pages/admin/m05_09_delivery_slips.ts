@@ -20,9 +20,11 @@ export type 納品書のページ = {
 
 /** 受注情報検索 一覧(検索結果)。試験会員のメールアドレスで、全ての対応状況の受注を出す */
 export class SlipOrderListPage extends OrderListPage {
-  async 会員の受注を出す(メール: string): Promise<void> {
+  /** 店舗: 検索の店舗の欄で選ぶ店舗ID（省略は画面の既定＝ログインしたメンバーの既定の検索店舗。支店の受注を出すときに渡す。2026-11-23） */
+  async 会員の受注を出す(メール: string, 店舗?: string[]): Promise<void> {
     await this.open();
     await this.showDetail();
+    if (店舗) await this.店舗IDで選ぶ(店舗);
     await this.email.fill(メール);
     const boxes = this.page.locator('#admin_search_order_status input[type="checkbox"]');
     // 見た目の部品の下の入力欄は、押しても状態が変わらないことがある（2026-11-11 の M05-09 の 004・007「Clicking the checkbox did not change its state」）。
@@ -35,6 +37,19 @@ export class SlipOrderListPage extends OrderListPage {
     const on = await boxes.evaluateAll((ns) => ns.filter((x) => (x as HTMLInputElement).checked).length);
     expect(on, "受注情報検索の対応状況のチェック（全部）").toBe(n);
     await this.clickSearch();
+  }
+  /** 検索の店舗の欄（複数選べる）を、指定の店舗IDだけにする（店名はほかの方に変えられることがあるので値で選ぶ。名前で選ぶのは 店舗を選ぶ） */
+  async 店舗IDで選ぶ(店舗: string[]): Promise<void> {
+    const sel = this.tenants;
+    await expect(sel, "受注情報検索の店舗の欄").toHaveCount(1, { timeout: 20_000 });
+    const got = await sel.evaluate((node, ids) => {
+      const s = node as HTMLSelectElement;
+      for (const o of Array.from(s.options)) o.selected = ids.includes(o.value);
+      const w = window as unknown as { jQuery?: (e: Element) => { trigger: (ev: string) => void } };
+      if (w.jQuery) w.jQuery(s).trigger("change"); else s.dispatchEvent(new Event("change", { bubbles: true }));
+      return Array.from(s.selectedOptions).map((o) => o.value);
+    }, 店舗);
+    expect([...got].sort(), "受注情報検索の店舗の欄で選んだ店舗ID").toEqual([...店舗].sort());
   }
   /** 注文番号の行の選択（配送先ごとに1行。行のチェックボックス） */
   行の選択(注文番号: string): Locator { return this.結果の行(注文番号).locator('input[type="checkbox"][id^="check_"]'); }
