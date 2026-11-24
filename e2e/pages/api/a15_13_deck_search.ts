@@ -11,11 +11,13 @@ export type 検索の応答 = { ステータス: number; 本文: string; json: R
 const 読む = (t: string): Record<string, unknown> | null => { try { return JSON.parse(t) as Record<string, unknown>; } catch { return null; } };
 
 /** 検索条件。フォーマットは配列で送る（API は format[] の形だけを条件として受け取る） */
-export type 検索条件 = { フォーマット?: string[]; モード?: string };
+export type 検索条件 = { フォーマット?: string[]; モード?: string; 大会デッキ?: string; ユーザーデッキ?: string };
 
 export async function デッキを検索する(page: Page, 条件: 検索条件, token?: string): Promise<検索の応答> {
   const params = new URLSearchParams();
   if (条件.モード !== undefined) params.set("mode", 条件.モード);
+  if (条件.大会デッキ !== undefined) params.set("event_deck_flag", 条件.大会デッキ);
+  if (条件.ユーザーデッキ !== undefined) params.set("user_deck_flag", 条件.ユーザーデッキ);
   for (const f of 条件.フォーマット ?? []) params.append("format[]", f);
   const headers: Record<string, string> = token !== undefined ? { "jwt-token": token } : {};
   const res = await page.request.get(`${API_BASE_URL}/api/decks?${params.toString()}`, { headers, failOnStatusCode: false, timeout: 120_000 });
