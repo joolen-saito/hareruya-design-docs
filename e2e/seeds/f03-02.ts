@@ -625,6 +625,11 @@ const BASE = ["S-F03-02-BASE-CARD"];
 defineMemberSeed("S-F03-02-MEMBER-007", "f0302-member-007", "Passw0rd-F0302-007!", { needs: BASE });
 defineMemberSeed("S-F03-02-MEMBER-008", "f0302-member-008", "Passw0rd-F0302-008!", { needs: BASE });
 defineMemberSeed("S-F03-02-MEMBER-020", "f0302-member-020", "Passw0rd-F0302-020!", { needs: BASE, after: (b, m) => JPをまとめて入荷通知にする(b, "S-F03-02-MEMBER-020", m) });
+// NOTIFY-020: 入荷通知依頼は、MEMBER-020 の作りの中で会員でログインして「まとめて入荷通知」を押して作る（JPをまとめて入荷通知にする）。ここで作るものは無い
+// （2026-11-24 このシードの登録が無く、020 が手順1の前で止まった）
+defineSeed("S-F03-02-NOTIFY-020", { needs: ["S-F03-02-MEMBER-020"] }, async () => {
+  reportSeedIssue("S-F03-02-NOTIFY-020", "入荷通知依頼は、S-F03-02-MEMBER-020 の作りの中で、会員でログインして商品詳細（JP）の「まとめて入荷通知」を押して作った（正本はDBで準備）");
+});
 defineMemberSeed("S-F03-02-MEMBER-024", "f0302-member-024", "Passw0rd-F0302-024!", { needs: BASE, after: (b, m) => JPをお気に入りにする(b, "S-F03-02-MEMBER-024", m) });
 defineMemberSeed("S-F03-02-MEMBER-025", "f0302-member-025", "Passw0rd-F0302-025!", { needs: BASE });
 defineMemberSeed("S-F03-02-MEMBER-026", "f0302-member-026", "Passw0rd-F0302-026!", { needs: BASE, after: (b, m) => JPをお気に入りにする(b, "S-F03-02-MEMBER-026", m) });
