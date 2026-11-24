@@ -23,6 +23,8 @@ export type カード入力 = {
   /** 点数で見たマナ・コスト */
   点数で見たマナ: string;
   マナ・コスト?: string;
+  /** パワー・タフネス・忠誠度。省略すると入れない（A14-01 のカード情報取得のケースが使う。2026-11-24） */
+  パワー?: string; タフネス?: string; 忠誠度?: string;
   カラー?: string[]; 固有色?: string[];
   /** 色順（色の並び順のマスタ。選択肢の名前）。省略すると選ばない（M04-33 の色の並び順のケースが使う。2026-11-14） */
   色順?: string;
@@ -36,6 +38,10 @@ export type 詳細入力 = {
   カードセット?: string; レアリティ?: string; レイアウト?: string; イラストレーター?: string; プロモ種別?: string; Foil?: string; フレーム?: string;
   /** カード番号（コレクター番号）。省略すると入れない（M05-09 の並び順のケースが使う。2026-11-14） */
   カード番号?: string;
+  /** フレーバーテキスト・効果テキスト（日・英）・パワー・タフネス・裏面カード詳細ID。省略すると入れない（A14-02 のカード詳細情報取得のケースが使う。2026-11-24） */
+  フレーバー日?: string; フレーバー英?: string; 効果テキスト日?: string; 効果テキスト英?: string; パワー?: string; タフネス?: string; 裏面カード詳細ID?: string;
+  /** 選択肢を表示名でなく値（マスターのID）で選ぶ。指定があれば表示名の指定より先に使う（A14-02。表示名が日本語名か英語名かに左右されない。2026-11-24） */
+  ID?: { カードセット?: string; レアリティ?: string; レイアウト?: string; イラストレーター?: string; プロモ種別?: string };
   /** 名前を指定せず「この名前以外の選択肢」から選ぶ（先頭から探す。無ければ止める。マスターには足さない） */
   以外?: { レアリティ?: string[]; レイアウト?: string[]; プロモ種別?: string[] };
 };
@@ -92,6 +98,9 @@ export async function カードを登録する(page: Page, v: カード入力, w
   await t("textEn", v.ルールテキスト英);
   await t("cmc", v.点数で見たマナ);
   await t("manaCost", v.マナ・コスト);
+  await t("power", v.パワー);
+  await t("toughness", v.タフネス);
+  await t("loyalty", v.忠誠度);
   for (const c of v.カラー ?? []) await checkByLabel(page, "admin_card_colors_", c, `${what}: カラー`);
   for (const c of v.固有色 ?? []) await checkByLabel(page, "admin_card_colorIdentities_", c, `${what}: 固有色`);
   if (v.色順) await form.locator("#admin_card_colorSequence").selectOption({ label: v.色順 });
@@ -116,13 +125,20 @@ export async function カードを登録する(page: Page, v: カード入力, w
       await expect(details, `${what}: 「詳細情報を追加」で詳細情報が増える`).toHaveCount(before + 1);
       const det = details.last();
       const sel = (f: string) => det.locator(`select[name$="[${f}]"]`);
-      if (d.カードセット) await sel("cardset").selectOption({ label: d.カードセット });
-      for (const [f, label, want, 除く] of [["rarity", "レアリティ", d.レアリティ, d.以外?.レアリティ], ["cardLayout", "レイアウト", d.レイアウト, d.以外?.レイアウト], ["promotion", "プロモ種別", d.プロモ種別, d.以外?.プロモ種別]] as const) {
-        if (want) await sel(f).selectOption({ label: want });
+      if (d.ID?.カードセット) await sel("cardset").selectOption(d.ID.カードセット);
+      else if (d.カードセット) await sel("cardset").selectOption({ label: d.カードセット });
+      for (const [f, label, want, 除く, id] of [["rarity", "レアリティ", d.レアリティ, d.以外?.レアリティ, d.ID?.レアリティ], ["cardLayout", "レイアウト", d.レイアウト, d.以外?.レイアウト, d.ID?.レイアウト], ["promotion", "プロモ種別", d.プロモ種別, d.以外?.プロモ種別, d.ID?.プロモ種別]] as const) {
+        if (id) await sel(f).selectOption(id);
+        else if (want) await sel(f).selectOption({ label: want });
         else await sel(f).selectOption((await firstOption(sel(f), `${what}: 詳細情報の${label}`, 除く ?? [])).value);
       }
-      if (d.イラストレーター) await sel("illustrator").selectOption({ label: d.イラストレーター });
+      if (d.ID?.イラストレーター) await sel("illustrator").selectOption(d.ID.イラストレーター);
+      else if (d.イラストレーター) await sel("illustrator").selectOption({ label: d.イラストレーター });
       if (d.カード番号 !== undefined) await det.locator('input[name$="[cardNo]"]').fill(d.カード番号);
+      for (const [f, val] of [["flavorJp", d.フレーバー日], ["flavorEn", d.フレーバー英], ["textJp", d.効果テキスト日], ["textEn", d.効果テキスト英],
+        ["power", d.パワー], ["toughness", d.タフネス], ["backCardDetailId", d.裏面カード詳細ID]] as const) {
+        if (val !== undefined) await det.locator(`[name$="[${f}]"]`).fill(val);
+      }
       await sel("foilFlg").selectOption({ label: d.Foil ?? "なし" });
       await sel("frameFlg").selectOption({ label: d.フレーム ?? "通常" });
     }
@@ -358,7 +374,7 @@ export class CardSearchPage {
 // ---------------------------------------------------------------------------
 
 /** MTGマスターデータ管理で選べる種別の表示名 */
-export type マスター種別 = "カードタイプ" | "サブタイプ" | "特殊タイプ" | "イラストレーター" | "プロモーション" | "レアリティ" | "カードレイアウト" | "特殊サジェスト";
+export type マスター種別 = "カードタイプ" | "サブタイプ" | "特殊タイプ" | "イラストレーター" | "プロモーション" | "レアリティ" | "カードレイアウト" | "特殊サジェスト" | "カードセットブロック";
 
 async function openMaster(page: Page, 種別: マスター種別): Promise<void> {
   await page.goto(adminUrl("/data/mtg_master_data"));

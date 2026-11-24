@@ -98,6 +98,35 @@ export function 通常価格を書く(what: string, 規格ID: string, 通常価�
   updateOwnRows(what, { table: "dtb_product_class", key: "id", ids: [規格ID], set: { price01: 通常価格 }, owner: 自分の規格() });
 }
 
+/** 商品を廃止にする（在庫のある商品は画面で廃止にできない。アプリが止める） */
+export function 商品を廃止にする(what: string, 商品ID: string): void {
+  updateOwnRows(what, { table: "dtb_product", key: "id", ids: [商品ID], set: { product_status_id: 3 }, owner: 自分の商品() });
+}
+
+/** 商品の状態（1=公開・2=非公開・3=廃止） */
+export function 商品の状態(商品ID: string): string {
+  return String(query("select product_status_id::text as s from dtb_product where id = $1::int", [商品ID])[0]?.s ?? "");
+}
+
+/**
+ * A02-04 の参照のマスタ（S-A02-04-REF）が、シード表の値で開発環境にあるかを読む（書かない）。合わないものの説明を返す。
+ * 店舗ID 1・商品状態 1=公開・3=廃止・言語 1=JP・2=EN・カード状態 1=NM・2=SP
+ */
+export function A0204の参照マスタの違い(): string[] {
+  const out: string[] = [];
+  if (query("select count(*)::text as n from dtb_base_info where id = 1")[0]?.n !== "1") out.push("店舗ID 1 が無い");
+  const st = Object.fromEntries(query("select id::text as id, name from mtb_product_status where id in (1, 3)").map((r) => [String(r.id), String(r.name)]));
+  if (st["1"] !== "公開") out.push(`商品状態ID 1 が「${st["1"] ?? "なし"}」`);
+  if (st["3"] !== "廃止") out.push(`商品状態ID 3 が「${st["3"] ?? "なし"}」`);
+  const lg = Object.fromEntries(query("select id::text as id, code from mtb_language where id in (1, 2)").map((r) => [String(r.id), String(r.code)]));
+  if (lg["1"] !== "JP") out.push(`言語ID 1 のコードが「${lg["1"] ?? "なし"}」`);
+  if (lg["2"] !== "EN") out.push(`言語ID 2 のコードが「${lg["2"] ?? "なし"}」`);
+  const cc = Object.fromEntries(query("select id::text as id, code from mtb_card_condition where id in (1, 2)").map((r) => [String(r.id), String(r.code)]));
+  if (cc["1"] !== "NM") out.push(`カード状態ID 1 のコードが「${cc["1"] ?? "なし"}」`);
+  if (cc["2"] !== "SP") out.push(`カード状態ID 2 のコードが「${cc["2"] ?? "なし"}」`);
+  return out;
+}
+
 /** 商品規格を削除済み（廃止・非表示）にする（有効な商品規格の最後の1件は画面で削除できない） */
 export function 規格を削除済みにする(what: string, 規格ID: string): void {
   updateOwnRows(what, { table: "dtb_product_class", key: "id", ids: [規格ID], set: { product_status_id: 3, visible: false }, owner: 自分の規格() });
@@ -149,6 +178,8 @@ export function 週間販売数量を足す(what: string, 規格ID: string, 数�
 
 /** 試験用のカードの名前の頭（カード名(日)。印はこの後ろに付く） */
 export const 試験用カードの名前の頭 = "A02-03試験カード-";
+/** 前の実行の値を外してよい試験用のカードの名前の頭（A02-03・A02-04 のシードが作るカード） */
+export const 試験用カードの名前の頭たち = [試験用カードの名前の頭, "A02-04試験カード-"];
 
 /**
  * この実行で作った試験用のカード（カード名が実行の印で終わる）に、旧商品ID・旧英語商品IDを書く。
@@ -171,13 +202,13 @@ export function 前の試験用カードの旧商品IDを外す(what: string, �
   const rows = query(
     "select id::text as id, coalesce(name_jp, '') as name_jp from mtb_card where old_product_id = any(string_to_array($1, ',')) or old_en_product_id = any(string_to_array($1, ','))",
     [値.join(",")]);
-  const 他 = rows.filter((r) => !String(r.name_jp).startsWith(試験用カードの名前の頭));
+  const 他 = rows.filter((r) => !試験用カードの名前の頭たち.some((h) => String(r.name_jp).startsWith(h)));
   if (他.length) throw new Error(`${what}: 旧商品ID「${値.join("・")}」を、試験用でないカード（カードID ${他.map((r) => r.id).join("・")}）が持っている（書き換えない）`);
   if (!rows.length) return 0;
   updateOwnRows(what, {
     table: "mtb_card", key: "id", ids: rows.map((r) => String(r.id)),
     set: { old_product_id: null, old_en_product_id: null },
-    owner: { sql: "select id from mtb_card where name_jp like $1 || '%'", params: [試験用カードの名前の頭] },
+    owner: { sql: "select id from mtb_card where name_jp like any(string_to_array($1, ','))", params: [試験用カードの名前の頭たち.map((h) => `${h}%`).join(",")] },
   });
   return rows.length;
 }

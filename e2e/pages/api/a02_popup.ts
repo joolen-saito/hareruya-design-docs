@@ -45,6 +45,12 @@ export async function 旧商品IDで開く(page: Page, lang: string, 旧商品ID
   return 読む(await page.goto(url, { timeout: 120_000 }), "旧商品IDのポップアップ用商品情報API");
 }
 
+/** /api/popup/old/{旧商品ID}（言語の指定なし。A02-04。拡張子 .json の有無を選ぶ）を開く */
+export async function 旧商品IDで開く_言語なし(page: Page, 旧商品ID: string, json = true): Promise<応答> {
+  const url = `${BASE_URL}/api/popup/old/${encodeURIComponent(旧商品ID)}${json ? ".json" : ""}`;
+  return 読む(await page.goto(url, { timeout: 120_000 }), "旧商品IDのポップアップ用カード情報API（言語の指定なし）");
+}
+
 /** 本文の項目の値 */
 export const 値 = (r: 応答, 名前: string): unknown => r.本文?.[名前];
 /** 本文の項目の名前（並びは問わない） */
