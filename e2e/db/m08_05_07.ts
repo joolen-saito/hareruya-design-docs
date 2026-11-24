@@ -30,6 +30,10 @@ export function 会員IDをメールで(メール: string): string {
 export function 会員があるか(会員ID: string): boolean {
   return Number(query(`select count(*) as n from dtb_customer where id = $1::int`, [会員ID])[0]?.n ?? 0) > 0;
 }
+/** 会員の選手情報のスマレジ会員ID（無い・空なら空。ポイント付与の保存は、これがあるときだけスマレジ連携のジョブを積む） */
+export function スマレジ会員ID(会員ID: string): string {
+  return String(query(`select coalesce(p.smaregi_id, '') as s from dtb_player p where p.customer_id = $1::int and p.deleted_at is null order by p.id limit 1`, [会員ID])[0]?.s ?? "");
+}
 /** ポイント種別のマスタ（ID → 名前） */
 export function ポイント種別(): Record<string, string> {
   return Object.fromEntries(query(`select t.id::text as id, t.name as name from mtb_point_type t order by t.id`).map((r) => [String(r.id), String(r.name)]));

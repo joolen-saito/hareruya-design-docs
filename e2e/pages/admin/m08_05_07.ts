@@ -93,6 +93,28 @@ export class PointPage {
     await expectSaved(this.page, what);
   }
 
+  /** 付与のフォームに入れるだけ（保存は押さない。手順を分けて記録するケース用）。発行日は YYYY-MM-DD。注文番号が空なら欄を空にする */
+  async 付与の欄に入れる(v: { 注文番号: string; 増減量: number; 備考: string; 発行日: string }, what: string): Promise<void> {
+    await this.フォームを見せる();
+    await this.注文番号.fill(v.注文番号, { timeout: T });
+    await this.増減量.fill(String(v.増減量), { timeout: T });
+    await this.備考.selectOption({ label: v.備考 }, { timeout: T });
+    await this.発行日.fill(v.発行日, { timeout: T });
+    await this.発行日.press("Escape").catch(() => undefined);
+    await expect(this.注文番号, `${what}: 注文番号`).toHaveValue(v.注文番号);
+    await expect(this.増減量, `${what}: ポイント増減量`).toHaveValue(String(v.増減量));
+    await expect(this.発行日, `${what}: ポイント発行日`).toHaveValue(v.発行日);
+  }
+  /** 付与のフォームの保存ボタンを押し、保存の完了の表示を確かめる */
+  async 付与を保存する(what: string): Promise<void> {
+    await Promise.all([
+      this.page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 180_000 }),
+      this.page.locator("form[name=customer_point_form] button[type=submit]").click({ timeout: T }),
+    ]);
+    await this.page.waitForLoadState("load");
+    await expectSaved(this.page, what);
+  }
+
   // ---- ポイント残高・履歴の一覧 ----
   /** 「ポイント残高: Npt」の N（読めなければ null） */
   async ポイント残高(): Promise<number | null> {
