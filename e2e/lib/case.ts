@@ -47,6 +47,22 @@ export type CaseCtx = {
 
 export type CaseBody = (ctx: CaseCtx) => Promise<void>;
 
+/**
+ * 送り先（API の経路）がアプリに無いかを、シードを作る前に確かめる部品（依頼者決定 2026-11-24。A15-15「起票して不合格」）。
+ * 返す値: 送り先が無いときは、その事実（状態コード・本文の種類）の文。有るときは null。
+ * 登録したケースは、確かめが「無い」と返したときだけ、シードを作らずに手順へ進む（送り先が無いので、どんなデータを作っても応答は同じ）。
+ * 「有る」と返したら、ふつうどおり使用シードを作る（作り方が無ければ、事前準備で止まる）。登録の無いケースは何も変わらない。
+ */
+export type 送り先の確かめ = (page: Page) => Promise<string | null>;
+const 送り先の確かめの登録 = new Map<string, 送り先の確かめ>();
+export function 送り先が無ければシードを作らない(testIds: string[], probe: 送り先の確かめ): void {
+  for (const id of testIds) {
+    getCase(id); // 正本に無いIDは、ここで読み込み時に落ちる
+    if (送り先の確かめの登録.has(id)) throw new Error(`${id} の送り先の確かめが二重に登録されている`);
+    送り先の確かめの登録.set(id, probe);
+  }
+}
+
 export function caseTest(testId: string, body: CaseBody): void {
   const c = getCase(testId); // 正本に無い・除外されたIDは、ここで読み込み時に落ちる
   const steps = stepsOf(c);
@@ -72,6 +88,13 @@ export function caseTest(testId: string, body: CaseBody): void {
     let markedForEvidence: [string, string][] = [];
     const camera = new EvidenceCamera(page, test.info());
     await test.step(`事前準備: ${c.事前準備}`, async () => {
+      const probe = 送り先の確かめの登録.get(c.テストID);
+      const 送り先が無い = probe ? await probe(page) : null;
+      if (送り先が無い) {
+        test.info().annotations.push({ type: "シードを作らなかった理由", description: `送り先がアプリに無い（${送り先が無い}）。どんなデータを作っても応答は同じなので、使用シード（${seedIdsOf(c).join("、")}）は作らず、ケースの文の呼び名も控えていない` });
+        await test.info().attach(`${EVIDENCE_PREFIX}控えた番号`, { body: JSON.stringify([]), contentType: "application/json" });
+        return;
+      }
       const usedSeedIds = await buildSeeds(browser, seedIdsOf(c), notes);
       for (const id of usedSeedIds) {
         for (const m of seedIssues.get(id) ?? []) test.info().annotations.push({ type: "シード作成時の問題", description: `${id}: ${m}` });
