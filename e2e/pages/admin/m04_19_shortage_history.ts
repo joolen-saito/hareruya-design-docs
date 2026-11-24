@@ -190,10 +190,11 @@ export class ShortageHistoryPage {
     return (await this.list.locator("table thead th").allTextContents()).map((t) => t.replace(/\s+/g, " ").trim());
   }
 
-  /** 一覧の行を読む（欠品履歴の表示の列の順で読む） */
+  /** 一覧の行を読む（欠品履歴の表示の列の順で読む）。
+   * 画面に見える文字だけを読む（欠品理由の欄には、隠れた編集欄に同じ文が入っていて、文字の全部を読むと「棚卸差異 棚卸差異」と二重になった。2026-11-24 006） */
   async readRows(): Promise<欠品履歴の行[]> {
     const raw = await this.rows.evaluateAll((trs) => trs.map((tr) => ({
-      cells: Array.from(tr.querySelectorAll(":scope > td")).map((td) => (td.textContent ?? "").replace(/\s+/g, " ").trim()),
+      cells: Array.from(tr.querySelectorAll(":scope > td")).map((td) => ((td as HTMLElement).innerText ?? "").replace(/\s+/g, " ").trim()),
       id: (tr.querySelector('input[name="admin_stock_history[stock_history_id]"]') as HTMLInputElement | null)?.value ?? "",
     })));
     return raw.map(({ cells, id }) => {
