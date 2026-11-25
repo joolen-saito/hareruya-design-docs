@@ -233,7 +233,6 @@ def cmd_xlsx(path):
         "通る": PatternFill("solid", fgColor="D9EAD3"),
         "抜け": PatternFill("solid", fgColor="F4CCCC"),
         "判断待ち": PatternFill("solid", fgColor="FFF2CC"),
-        "other": PatternFill("solid", fgColor="EEEEEE"),
         "cell": PatternFill("solid", fgColor="B6D7A8"),
     }
     head = Font(bold=True)
@@ -241,14 +240,15 @@ def cmd_xlsx(path):
     wb = Workbook()
     summary = wb.active
     summary.title = "集計"
-    summary.append(["業務", "工程（対象）", "工程 通る", "工程 抜け", "工程 システムの外・範囲外",
-                    "条件の値（対象）", "値 通る", "値 抜け", "値 判断待ち", "値 適用外・他業務・他層"])
+    # 対象外の工程・値の行と「扱い」の列は出さない（2026-11-20 依頼者「不要な行列は削除」。理由は step_scope.tsv・factors.tsv に残す）
+    summary.append(["業務", "工程（対象）", "工程 通る", "工程 抜け",
+                    "条件の値（対象）", "値 通る", "値 抜け"])
     gaps = []
 
     ws = wb.create_sheet("工程×シナリオ")
-    ws.append(["業務", "業務フロー", "R", "#", "作業概要", "作業内容", "扱い", "判定"] + folders + ["理由・備考"])
+    ws.append(["業務", "業務フロー", "R", "#", "作業概要", "作業内容", "判定"] + folders + ["理由・備考"])
     wc = wb.create_sheet("業務条件×シナリオ")
-    wc.append(["業務", "区分", "業務条件", "値ID", "値", "扱い", "判定"] + folders + ["出典・備考"])
+    wc.append(["業務", "区分", "業務条件", "値ID", "値", "判定"] + folders + ["出典・備考"])
     for biz in BIZ:
         d = OUT / biz
         steps = read(d / "steps.tsv")
@@ -263,10 +263,12 @@ def cmd_xlsx(path):
             ids = sorted(set(smap.get(key, [])))
             judge = "通る" if ids else ("抜け" if sc == "対象" else sc)
             st[judge] += 1
+            if sc != "対象":
+                continue
             cells = []
             for fo in folders:
                 cells.append("・".join(i for i in ids if folder_of(i, idx) == fo))
-            ws.append([biz, s["業務フロー"], s["R"], s["#"], s["作業概要"], s["作業内容"], sc, judge] + cells
+            ws.append([biz, s["業務フロー"], s["R"], s["#"], s["作業概要"], s["作業内容"], judge] + cells
                       + [scope.get(key, {}).get("理由", "")])
             if judge == "抜け":
                 gaps.append(["工程", biz, f"{s['業務フロー']} {s['R']} {s['#']}", s["作業概要"]])
@@ -281,26 +283,34 @@ def cmd_xlsx(path):
             ids = sorted(set(cmap.get(f["値ID"], [])))
             judge = "通る" if ids else ("抜け" if f["扱い"] == "対象" else f["扱い"])
             ct[judge] += 1
+            if f["扱い"] != "対象":
+                continue
             cells = ["・".join(i for i in ids if folder_of(i, idx) == fo) for fo in folders]
-            wc.append([biz, f["区分"], f["業務条件"], f["値ID"], f["値"], f["扱い"], judge] + cells
+            wc.append([biz, f["区分"], f["業務条件"], f["値ID"], f["値"], judge] + cells
                       + [((f.get("出典") or "") + " " + (f.get("備考") or "")).strip()])
             if judge == "抜け":
                 gaps.append(["業務条件", biz, f["値ID"], f"{f['業務条件']}：{f['値']}"])
         n_scope = sum(1 for s in steps if scope.get((s["業務フロー"], s["R"]), {}).get("扱い", "対象") == "対象")
-        summary.append([biz, n_scope, st["通る"], st["抜け"], len(steps) - n_scope,
-                        sum(1 for f in facs if f["扱い"] == "対象"), ct["通る"], ct["抜け"], ct["判断待ち"],
-                        sum(v for k, v in ct.items() if k in ("適用外", "他業務", "他層"))])
+        summary.append([biz, n_scope, st["通る"], st["抜け"],
+                        sum(1 for f in facs if f["扱い"] == "対象"), ct["通る"], ct["抜け"]])
     wg = wb.create_sheet("抜けの一覧")
     wg.append(["種類", "業務", "工程・値", "内容"])
     for g in gaps:
         wg.append(g)
 
-    for sheet, judge_col, first_folder in ((ws, 8, 9), (wc, 7, 8)):
+    nfold = {}
+    for sheet, first_folder in ((ws, 8), (wc, 7)):
+        empty = [first_folder + i for i in range(len(folders))
+                 if not any(sheet.cell(r, first_folder + i).value for r in range(2, sheet.max_row + 1))]
+        for c in reversed(empty):  # どのシナリオも通らないフォルダの列は出さない
+            sheet.delete_cols(c)
+        nfold[sheet.title] = len(folders) - len(empty)
+    for sheet, judge_col, first_folder in ((ws, 7, 8), (wc, 6, 7)):
         for row in sheet.iter_rows(min_row=2):
             j = row[judge_col - 1].value
-            if j in fill:  # 通る・抜け・判断待ちだけ色を付ける（対象外に灰色は使わない。灰色は削除の意味に取られる）
+            if j in fill:  # 通る・抜け・判断待ちだけ色を付ける（灰色は使わない。灰色は削除の意味に取られる）
                 row[judge_col - 1].fill = fill[j]
-            for c in row[first_folder - 1:first_folder - 1 + len(folders)]:
+            for c in row[first_folder - 1:first_folder - 1 + nfold[sheet.title]]:
                 if c.value:
                     c.fill = fill["cell"]
             for c in row:

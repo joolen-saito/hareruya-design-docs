@@ -87,6 +87,18 @@ def cid(f):
     return f.get("条件ID") or f["値ID"].rsplit("-", 1)[0]
 
 
+# Excel に出さない条件（2026-11-25 依頼者「人が見るうえでノイズになる列と行は削除してほしい」）
+#   P（業務フローパターン）：業務フローのパターン名の列。〇は本文にパターン名がある所だけで、
+#   「〇が無い＝分岐を通っていない」と読まれる。パターンと分岐の通り方は 業務フローとの照合/業務パターンとシナリオの対応表.xlsx が受け持つ。
+#   pattern_map.tsv・cond_map.tsv の〇は消さない（ゲートと 網羅マトリクス.xlsx はそのまま数える）
+HIDE_IN_XLSX = {"P"}
+
+
+def shown_cols(facs, cls):
+    """Excel に出す列：対象の値だけ（2026-11-20 依頼者「不要な行列は削除」）、HIDE_IN_XLSX の条件を除く"""
+    return [f for f in columns(facs, cls) if f["扱い"] == "対象" and cid(f) not in HIDE_IN_XLSX]
+
+
 def columns(facs, cls):
     first = {}
     for i, f in enumerate(facs):
@@ -114,7 +126,6 @@ def cmd_xlsx(path, bizs):
 
     green = PatternFill("solid", fgColor="B6D7A8")
     red = PatternFill("solid", fgColor="F4CCCC")
-    grey = PatternFill("solid", fgColor="EEEEEE")
     headfill = PatternFill("solid", fgColor="DDE5F0")
     thin = Side(style="thin", color="BBBBBB")
     box = Border(left=thin, right=thin, top=thin, bottom=thin)
@@ -129,12 +140,13 @@ def cmd_xlsx(path, bizs):
     for line in [
         ["業務パターン×シナリオ（〇表）"],
         [],
-        ["行", "シナリオ（業務の流れ1本）。上がその業務のシナリオ、下は通しシナリオなど他のフォルダのシナリオ（フォルダの列に書く。どれも実施する）"],
-        ["列", "業務パターン。上から 分類（数量・金額・決済・キャンセル・返品など）→ 業務条件 → 値"],
+        ["行", "シナリオ（業務の流れ1本）。上がその業務のシナリオ、下は通しシナリオなど他のフォルダのシナリオ（フォルダの列に書く。どれも実施する）。〇が1つも無いシナリオは出さない（シナリオの一覧は各業務の scenario_list.md）"],
+        ["列", "業務条件の値。上から 分類（数量・金額・決済・キャンセル・返品など）→ 業務条件 → 値"],
         ["〇", "そのシナリオがその値を通す（シナリオ本文に根拠の文がある）"],
         ["空欄", "そのシナリオでは通さない"],
         ["〇の数（最下行）", "0 の列は赤＝どのシナリオでも通していない抜け"],
-        ["対象外の列", "対象外にした値はこの表に出さず「対象外の列」シートに理由つきで並べる"],
+        ["業務フローの流れ", "業務フローの Excel のパターン（起点から終点までの流れ）と、それをどのシナリオで通すかは、業務フローとの照合/業務パターンとシナリオの対応表.xlsx で見る（この表にはパターンの列を出さない）"],
+        ["対象外の値", "対象外にした値（列）はこの表に出さない。理由は 網羅マトリクス/<業務>/factors.tsv の扱い・備考に残す"],
         ["根拠", "〇の根拠の文は 網羅マトリクス/<業務>/pattern_map.tsv・cond_map.tsv の「引用」"],
     ]:
         guide.append(line)
@@ -143,35 +155,34 @@ def cmd_xlsx(path, bizs):
     guide.column_dimensions["B"].width = 100
 
     total_gaps = 0
-    excluded = []
-    cls_all = {}
     for biz in bizs:
         facs, marks, cls, errors = load(biz, idx)
         if errors:
             print("\n".join(errors))
             sys.exit(f"{biz}: ゲートで止まった")
-        cols = [f for f in columns(facs, cls) if f["扱い"] == "対象"]  # 対象外の列は「対象外の列」シートへ
-        excluded += [(biz, f) for f in columns(facs, cls) if f["扱い"] != "対象"]
-        cls_all.update({(biz, k): v for k, v in cls.items()})
+        cols = shown_cols(facs, cls)
+        shown = {f["値ID"] for f in cols}
         mine = own_ids(biz)
         others = sorted({s for v in marks.values() for s in v} - set(mine),
                         key=lambda s: (idx[s][0], s))
+        # 〇が1つも無い行は出さない（2026-11-25 依頼者「ノイズになる列と行は削除」）
+        hit = {s for v, ss in marks.items() if v in shown for s in ss}
+        dropped = [s for s in mine + others if s not in hit]
+        mine = [s for s in mine if s in hit]
+        others = [s for s in others if s in hit]
         ws = wb.create_sheet(f"{biz}")
-        H = 4  # 見出しの行数：分類・業務条件・値・値ID
+        H = 3  # 見出しの行数：分類・業務条件・値（値IDと〇の数の列は出さない：2026-11-25）
         ws.cell(1, 1, "分類").font = bold
         ws.cell(2, 1, "業務条件").font = bold
-        ws.cell(3, 1, "値").font = bold
-        ws.cell(4, 1, "シナリオID").font = bold
-        ws.cell(4, 2, "フォルダ").font = bold
-        ws.cell(4, 3, "シナリオ").font = bold
-        ws.cell(4, 4, "〇の数").font = bold
-        C0 = 5
+        ws.cell(3, 1, "シナリオID").font = bold
+        ws.cell(3, 2, "フォルダ").font = bold
+        ws.cell(3, 3, "シナリオ").font = bold
+        C0 = 4
         for j, f in enumerate(cols):
             c = C0 + j
             ws.cell(1, c, cls.get(cid(f), "その他"))
             ws.cell(2, c, f["業務条件"])
-            ws.cell(3, c, f["値"] + ("（対象外）" if f["扱い"] != "対象" else ""))
-            ws.cell(4, c, f["値ID"])
+            ws.cell(3, c, f["値"])
         # 分類・業務条件の結合
         keys = {1: [cls.get(cid(f), "その他") for f in cols],
                 2: [(cls.get(cid(f), "その他"), cid(f)) for f in cols]}
@@ -192,20 +203,15 @@ def cmd_xlsx(path, bizs):
             ws.cell(r, 1, sid)
             ws.cell(r, 2, idx[sid][0] if sid in idx else "")
             ws.cell(r, 3, names.get(sid, ""))
-            n = 0
             for j, f in enumerate(cols):
                 cell = ws.cell(r, C0 + j)
                 if sid in marks.get(f["値ID"], ()):
                     cell.value = "〇"
                     cell.fill = green
                     counts[j] += 1
-                    n += 1
-                elif f["扱い"] != "対象":
-                    cell.fill = grey
                 cell.alignment = center
                 cell.border = box
-            ws.cell(r, 4, n).alignment = center
-            for k in (1, 2, 3, 4):
+            for k in (1, 2, 3):
                 ws.cell(r, k).border = box  # 色は付けない（灰色は削除の意味に取られる）
             ws.cell(r, 2).alignment = left
             ws.cell(r, 3).alignment = left
@@ -214,13 +220,11 @@ def cmd_xlsx(path, bizs):
         ws.cell(r, 3, "0 の列（赤）は抜け").font = bold
         gaps = 0
         for j, f in enumerate(cols):
-            cell = ws.cell(r, C0 + j, counts[j] if f["扱い"] == "対象" else "対象外")
+            cell = ws.cell(r, C0 + j, counts[j])
             cell.alignment = center
             cell.border = box
             cell.font = bold
-            if f["扱い"] != "対象":
-                cell.fill = grey
-            elif counts[j] == 0:
+            if counts[j] == 0:
                 cell.fill = red
                 ws.cell(3, C0 + j).fill = red
                 gaps += 1
@@ -229,7 +233,7 @@ def cmd_xlsx(path, bizs):
             for j in range(len(cols)):
                 cell = ws.cell(row, C0 + j)
                 if cell.fill != red:
-                    cell.fill = grey if cols[j]["扱い"] != "対象" else headfill
+                    cell.fill = headfill
                 cell.alignment = center if row != 3 else vert
                 cell.border = box
                 cell.font = Font(bold=row <= 2, size=9 if row >= 3 else 10)
@@ -237,24 +241,11 @@ def cmd_xlsx(path, bizs):
         ws.column_dimensions["A"].width = 10
         ws.column_dimensions["B"].width = 22
         ws.column_dimensions["C"].width = 42
-        ws.column_dimensions["D"].width = 6
         for j in range(len(cols)):
             ws.column_dimensions[get_column_letter(C0 + j)].width = 9
         ws.freeze_panes = ws.cell(H + 1, C0)
-        print(f"{biz}: シナリオ {len(mine)}本（他フォルダ {len(others)}本）・列 {len(cols)}・抜け {gaps}")
-    wx = wb.create_sheet("対象外の列")
-    wx.append(["業務", "分類", "業務条件", "値ID", "値", "扱い", "理由（備考）"])
-    for biz, f in excluded:
-        wx.append([biz, cls_all.get((biz, cid(f)), "その他"), f["業務条件"], f["値ID"], f["値"], f["扱い"], f.get("備考") or ""])
-    for c in wx[1]:
-        c.font = Font(bold=True)
-    for row in wx.iter_rows(min_row=2):
-        for c in row:
-            c.alignment = Alignment(wrap_text=True, vertical="top")
-    for col, w in zip("ABCDEFG", (16, 14, 30, 10, 40, 10, 90)):
-        wx.column_dimensions[col].width = w
-    wx.freeze_panes = "A2"
-    wx.auto_filter.ref = wx.dimensions
+        print(f"{biz}: シナリオ {len(mine)}本（他フォルダ {len(others)}本）・列 {len(cols)}・抜け {gaps}"
+              + (f"・〇の無い行を出さない {len(dropped)}本（{' '.join(dropped)}）" if dropped else ""))
     wb.save(path)
     print(f"{path} を作った（抜け {total_gaps} 列）")
 
