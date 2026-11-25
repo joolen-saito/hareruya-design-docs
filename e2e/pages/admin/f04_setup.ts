@@ -154,7 +154,7 @@ async function 承認する(list: StockApprovalListPage, shop: string, ids: stri
   try {
     await list.approve(ids, what, issue);
   } catch (e) {
-    if (!String(e).includes("成功メッセージ")) throw e;
+    if (!String(e).includes("成功メッセージ") && !String(e).includes("保存の結果が表示されない")) throw e;
     await list.openAll(shop);
     const remain = (await list.rowValues()).filter((r) => ids.includes(r.id) && r.status === "未承認");
     if (remain.length) throw e;
