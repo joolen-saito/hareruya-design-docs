@@ -12,12 +12,13 @@
  */
 import { Page } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
-import { カード詳細の番号, プロモ種別の英語名, 画像の番号, 英語名のカードセットの番号, 英語名のカードの番号 } from "../db/a14_03";
+import { カード詳細の番号, プロモ種別の英語名, 言語の画像の番号, 英語名のカードセットの番号, 英語名のカードの番号 } from "../db/a14_03";
 import { getSeed } from "../lib/catalog";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { withAdminSession } from "../lib/session";
 import { buildCardCsv, CardCsvRecord, downloadCardCsvTemplate, readExistingCardValues, uploadCardCsv } from "../pages/admin/card_csv";
 import { カードセットを登録する } from "../pages/admin/m14_08_cardset";
+import { 画像の言語を日本語へ変える } from "../pages/admin/a14_03_setup";
 import { カードを登録する } from "../pages/admin/m14_card";
 
 type セット = { 名日: string; 名英: string; 略称: string; 発売日: string; 特殊: boolean };
@@ -31,7 +32,7 @@ function 読む(投入方法: string): { セット: セット[]; CSV: CSV行[]; 
   const セット = [...投入方法.matchAll(/カードセット名（日本語）に「([^」]+)」、カードセット名（英語）に「([^」]+)」、略称に「([^」]+)」、リリース日に([\d-]+)を入れ、特殊セットフラグにチェックを入れ(て|ずに)/g)]
     .map((m) => ({ 名日: m[1], 名英: m[2], 略称: m[3], 発売日: m[4], 特殊: m[5] === "て" }));
   const CSV: CSV行[] = [];
-  for (const m of 投入方法.matchAll(/カード名\(日本語\)=([^、]+)、カード名\(英語\)=([^、（]+?)(?:（[^）]*）)?、点数で見たマナコスト=0、カードセット=([^、]+)、レアリティとレイアウトに登録済みの英語名を1つずつ、プロモ種別=([^、]+)、Foil=(\d)、画像URL\(日本語\)=([^、]+)、画像URL\(英語\)=([^、（]+)(?:（[^）]*）)?、カード詳細ID=(\d+)/g)) {
+  for (const m of 投入方法.matchAll(/カード名\(日本語\)=([^、]+)、カード名\(英語\)=([^、（]+?)(?:（[^）]*）)?、点数で見たマナコスト=0、カードセット=([^、]+)、レアリティとレイアウトに登録済みの英語名を1つずつ、プロモ種別=([^、]+)、Foil=(\d)(?:（[^）]*）)?、画像URL\(日本語\)=([^、]+)、画像URL\(英語\)=([^、（]+)(?:（[^）]*）)?、カード詳細ID=(\d+)/g)) {
     CSV.push({ 名日: m[1], 名英: m[2], セット: 空欄(m[3]), プロモ: !m[4].startsWith("空欄"), フォイル: m[5], 画像日: 空欄(m[6]), 画像英: 空欄(m[7]), 詳細ID: m[8] });
   }
   const 登録: 登録[] = [...投入方法.matchAll(/カード新規登録でカード名\(日\)に「([^」]+)」、カード名\(英\)に「([^」]+)」[^／]*?(詳細情報を追加せずに|詳細情報を追加を押して、カードセットに「([^」]+)」)/g)]
@@ -59,15 +60,22 @@ async function 作る({ browser, notes, seed }: SeedCtx): Promise<void> {
       const 既存 = await readExistingCardValues(page);
       const headers = await downloadCardCsvTemplate(page);
       const rows: CardCsvRecord[] = 無いCSV.map((c) => {
-        const 日へ = 日本語へ変える(投入, c.画像英) && c.画像日 === "";
-        const セット名 = c.セット ? セット.find((s) => s.名英 === c.セット)?.名英 ?? c.セット : "";
+                const セット名 = c.セット ? セット.find((s) => s.名英 === c.セット)?.名英 ?? c.セット : "";
         return {
           name_jp: c.名日, name_en: c.名英, cmc: "0", set: セット名, rarity: 既存.rarity, layout: 既存.layout,
           promotion_type: c.プロモ ? プロモ種別の英語名() : "", foil: c.フォイル,
-          image_jp: 日へ ? c.画像英 : c.画像日, image_en: 日へ ? "" : c.画像英, card_detail_id: c.詳細ID,
+          image_jp: c.画像日, image_en: c.画像英, card_detail_id: c.詳細ID,
         };
       });
       await uploadCardCsv(page, buildCardCsv(headers, rows), `a1403_${seed.シードID.slice(-7).replace(/[^0-9A-Z]/g, "")}.csv`, `${seed.シードID}: カード登録CSV`, (w) => iss(`カードCSVの警告「${w}」`));
+    }
+    // 「画像の言語を英語から日本語へ変える」（カードCSVは画像URL(英語)が必須列なので、英語で取り込んだあと、カード詳細の画面で日本語へ変える）
+    for (const c of CSV) {
+      const カードID = 英語名のカードの番号(c.名英);
+      if (カードID && c.画像日 === "" && 日本語へ変える(投入, c.画像英) && !言語の画像の番号(カードID, "日本語")) {
+        await 画像の言語を日本語へ変える(page, カードID, c.詳細ID);
+        iss(`カード「${c.名英}」の画像（${c.画像英}）の言語を、カード詳細の画面で英語から日本語へ変えた`);
+      }
     }
     for (const r of 登録) {
       if (英語名のカードの番号(r.名英)) { iss(`カード「${r.名英}」は登録済みなので使い回した`); continue; }
@@ -91,21 +99,29 @@ async function 作る({ browser, notes, seed }: SeedCtx): Promise<void> {
     if (!id) throw new Error(`${seed.シードID}: カードセット「${m[1]}」が登録後に見つからない`);
     notes.set(m[2], id);
   }
-  // 画像ID（呼び名の末尾 → 同じ末尾のカード）。状態の「（以下〔日本語画像ID-A1403-X〕）・URL=…」から
-  const 状態 = seed["状態・属性"];
-  for (const m of 状態.matchAll(/〔(日本語|英語)画像ID-A1403-([^〕]+)〕）・URL[=「]([^」・／]+)/g)) {
-    const カード番号 = カード[m[2]] ?? カード[`${m[2]}A`] ?? Object.values(カード)[0];
-    const x = カード番号 ? 画像の番号(カード番号, m[3]) : null;
-    if (!x) throw new Error(`${seed.シードID}: 画像（${m[3]}）が登録後に見つからない`);
-    notes.set(`〔${m[1]}画像ID-A1403-${m[2]}〕`, x.番号);
+  // 画像ID・カード詳細ID: 呼び名の末尾に合うカードを探し、DB を言語・カードで引いて控える（読むだけ）
+  const 全文 = `${seed["状態・属性"]}${投入}`;
+  const 合うカード = (末尾: string, 言語?: "日本語" | "英語"): string | undefined => {
+    if (カード[末尾]) return カード[末尾];
+    const 頭 = (/^\d+/.exec(末尾) ?? [""])[0];
+    const 候補 = Object.entries(カード).filter(([k]) => k.startsWith(頭)).map(([, v]) => v);
+    return (言語 ? 候補.find((c) => 言語の画像の番号(c, 言語)) : 候補.find((_, i, a) => a.length === 1) ?? 候補[候補.length - 1]) ?? 候補[0];
+  };
+  for (const m of new Set(全文.match(/〔(?:日本語|英語)画像ID-A1403-[^〕]+〕/g) ?? [])) {
+    const [, 言語, 末尾] = /〔(日本語|英語)画像ID-A1403-([^〕]+)〕/.exec(m)!;
+    const c = 合うカード(末尾, 言語 as "日本語" | "英語");
+    const x = c ? 言語の画像の番号(c, 言語 as "日本語" | "英語") : null;
+    if (!x) throw new Error(`${seed.シードID}: ${m} の画像が登録後に見つからない`);
+    notes.set(m, x);
   }
-  // カード詳細ID（画像なしのカードの詳細）
-  for (const m of 状態.matchAll(/カード詳細IDは登録時に画面が振る（控える。以下(〔カード詳細ID-A1403-[^〕]+〕)）/g)) {
-    const 末尾 = (/-(\d+)〕$/.exec(m[1]) ?? [])[1];
-    const c = Object.entries(カード).find(([k]) => k.startsWith(末尾 + "C"))?.[1];
+  for (const m of new Set(全文.match(/〔カード詳細ID-A1403-[^〕]+〕/g) ?? [])) {
+    const 末尾 = /-A1403-([^〕]+)〕/.exec(m)![1];
+    const 頭 = (/^\d+/.exec(末尾) ?? [""])[0];
+    const 候補 = Object.entries(カード).filter(([k]) => k.startsWith(頭));
+    const c = (候補.find(([k]) => k.endsWith("C")) ?? 候補[0])?.[1];
     const d = c ? カード詳細の番号(c)[0] : undefined;
-    if (!d) throw new Error(`${seed.シードID}: ${m[1]} の詳細が見つからない`);
-    notes.set(m[1], d);
+    if (!d) throw new Error(`${seed.シードID}: ${m} の詳細が見つからない`);
+    notes.set(m, d);
   }
 }
 

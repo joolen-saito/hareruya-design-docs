@@ -37,3 +37,11 @@ export function プロモ種別の英語名(): string {
   if (!r.length) throw new Error("プロモ種別にノンプロモ以外が無い");
   return String(r[0].name_en);
 }
+
+/** カードが持つ、その言語（日本語・英語）のカード画像の番号（最初の1つ。無ければ null） */
+export function 言語の画像の番号(カードID: string, 言語: "日本語" | "英語"): string | null {
+  const r = query(
+    `select i.id::text as id from mtb_card_image i join mtb_card_detail d on d.id = i.card_detail_id
+      where d.card_id = $1::int and i.language_id = $2::int order by i.id`, [カードID, 言語 === "日本語" ? 1 : 2]);
+  return r.length ? String(r[0].id) : null;
+}
