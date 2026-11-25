@@ -112,8 +112,9 @@ caseTest("IT-M05-21-028", async (ctx) => {
   let popup!: Page; let pages: ピッキングのページ[] = []; let 行: ピッキングの行[] = [];
   await step(1, async () => { expect(await p.詳細を開く(notes.get("〔出荷指示リストID-M0521-028〕")), "出荷指示リスト詳細画面の応答").toBeLessThan(400); });
   await step(2, async () => { await p.受注を選ぶ([notes.get("〔受注ID-M0521-028〕")]); });
-  await step(3, async () => { popup = await p.印刷を押す(); });
-  await step(4, async () => {
+  // 手順が3つのケース: 印刷を押した手順の中で画面を読む
+  await step(3, async () => {
+    popup = await p.印刷を押す();
     pages = await ピッキングリストを読む(popup);
     行 = pages.filter((x) => x.グループ === 低).flatMap((x) => x.行);
     note(`ピッキングリスト印刷画面: ${行の文(pages)}`);
