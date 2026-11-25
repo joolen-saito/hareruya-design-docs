@@ -78,7 +78,7 @@ type 作り = { 状況: "6" | "1" | "2" | "8"; 個別を足す?: boolean };
 
 /** 商品を作り、試験支店のフロントで申込んだ店頭買取の受注を、状況・担当者（共有B）・合計金額0にする */
 function 受注のシード(seedId: string, 番号: string, 作り: 作り): void {
-  defineSeed(seedId, { needs: ["S-A06-03-ADM", "S-A06-03-OTHER-ADM"] }, async ({ browser, notes, seed }) => {
+  defineSeed(seedId, { needs: ["S-A06-03-ADM", "S-A06-03-OTHER-ADM", "S-A06-03-SECTIONS"] }, async ({ browser, notes, seed }) => {
     const 姓 = rc(`A0603-${番号}`);
     const p = await カード商品を作る(browser, seed.シードID, { 商品コード: `A0603-${番号}`, 商品名日: `A0603試験商品${番号}`, 商品名英: `A0603 Test Product ${番号}`, 基準価格: "100", 販売価格: "100", 買取価格: "10", 在庫: 0 });
     notes.set(`〔商品ID-A0603-${番号}〕`, p.商品ID);
