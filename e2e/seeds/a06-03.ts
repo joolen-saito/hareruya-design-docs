@@ -90,6 +90,12 @@ function 受注のシード(seedId: string, 番号: string, 作り: 作り): voi
     notes.set(`〔査定ID-A0603-${番号}〕`, 査定ID);
     // 受注ID はシード表が控えると定めるシードだけ控える（定めないシードで控えると「シード表に無い呼び名」で止まる。ケースは査定IDから引く）
     if ((seed["状態・属性"] + seed.投入方法).includes(`〔受注ID-A0603-${番号}〕`)) notes.set(`〔受注ID-A0603-${番号}〕`, 受注ID);
+    // 部門は共有のシード(S-A06-03-SECTIONS)が作る。シード表がこのシードにも部門の控えを定めるときだけ、その部門IDを控える
+    if ((seed["状態・属性"] + seed.投入方法).includes("〔部門ID-A0603-共有〕") && !notes.get("〔部門ID-A0603-共有〕")) {
+      const 部門ID = 部門を名前で探す(部門名)[0]?.部門ID;
+      if (!部門ID) throw new Error(`${seed.シードID}: 共有の部門「${部門名}」が無い`);
+      notes.set("〔部門ID-A0603-共有〕", 部門ID);
+    }
     if (作り.状況 !== "1") {
       await withAdminSession(browser, A0605_ADM, async (page) => {
         const s = new OtcStatusChangePage(page);
