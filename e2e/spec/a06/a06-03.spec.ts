@@ -6,6 +6,7 @@
  * 「ブラウザの開発者ツールから要求を送る」「Network で確かめる」は、テストのブラウザから API サーバーへ要求を送り、応答をページに出して読む形にした
  * （pages/admin/a06_mtgbuyer_api.ts）。有効なトークンは、事前準備の「有効なjwt-tokenを発行する」のとおり、管理者のログイン API で受け取る。
  */
+import { 査定IDの受注ID } from "../../db/a06";
 import { Page, test } from "@playwright/test";
 import { caseTest, CaseCtx, expect } from "../../lib/case";
 import { 送る, トークンを受け取る, 応答 } from "../../pages/admin/a06_mtgbuyer_api";
@@ -27,7 +28,7 @@ const 規格の明細 = (規格: string, name: string, quantity: number, price: 
 const 本文 = (order_status: number, smaregi: number | null, order_details: 明細[], flg: string = "true") => ({ order_status, qualified_invoice_issuer_confirmation_flg: flg, smaregi_transaction_id: smaregi, order_details });
 
 type 場 = { 番号: string; 受注: string; 規格: string; 商品コード: string; 部門: string };
-const 場を作る = (ctx: CaseCtx, 番号: string): 場 => ({ 番号, 受注: L(ctx, "受注ID", 番号), 規格: L(ctx, "商品規格ID", 番号), 商品コード: L(ctx, "商品コード", 番号), 部門: ctx.notes.get("〔部門ID-A0603-共有〕") });
+const 場を作る = (ctx: CaseCtx, 番号: string): 場 => ({ 番号, 受注: (ctx.notes.has(`〔受注ID-A0603-${番号}〕`) ? L(ctx, "受注ID", 番号) : 査定IDの受注ID(L(ctx, "査定ID", 番号)) ?? ""), 規格: L(ctx, "商品規格ID", 番号), 商品コード: `A0603-${番号}`, 部門: ctx.notes.get("〔部門ID-A0603-共有〕") });
 
 type 送る定め = { 受注ID?: (c: 場) => string; トークン: "有効" | "なし" | "不正"; 本文: (c: 場) => unknown };
 /** 手順1: API へ PUT を送る。手順2: 応答（DB を見るケースでは DB）を確かめる */

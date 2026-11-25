@@ -274,5 +274,7 @@ for (const [k, d] of Object.entries(定めの表)) {
     const canonical = `S-M05-24-${元}`;
     const 元の番号 = 元.slice(-3), 番号 = k.slice(-3);
     await 使い回して作る({ seedId, canonical, notes, rename: (l) => l.replace(`-M0524-${元の番号}`, `-M0524-${番号}`), build: (n) => 作る(browser, canonical, n, 定めの表[元]) });
+    // spec は 作ったものの(いま頼んだシードID) で引くので、元のシードが作ったものを同じに引けるようにする（引けないと「はまだ作っていない」で止まる）
+    if (!作った.has(seedId)) 作った.set(seedId, 作ったものの(canonical));
   });
 }

@@ -83,13 +83,13 @@ function 受注のシード(seedId: string, 番号: string, 作り: 作り): voi
     const p = await カード商品を作る(browser, seed.シードID, { 商品コード: `A0603-${番号}`, 商品名日: `A0603試験商品${番号}`, 商品名英: `A0603 Test Product ${番号}`, 基準価格: "100", 販売価格: "100", 買取価格: "10", 在庫: 0 });
     notes.set(`〔商品ID-A0603-${番号}〕`, p.商品ID);
     notes.set(`〔商品規格ID-A0603-${番号}〕`, p.規格ID);
-    notes.set(`〔商品コード-A0603-${番号}〕`, p.商品コード);
     const [申込] = await 申込を行う(browser, 試験支店.支店URL, [申込者の(姓, `査定${番号}`, "ゼンテイ", "ジュチュウ")]);
     const 査定ID = 申込番号の査定ID(申込);
     const 受注ID = 査定IDの受注ID(査定ID);
     if (!受注ID) throw new Error(`${seed.シードID}: 申込んだ査定ID ${査定ID} の店頭買取の受注が DB に無い`);
     notes.set(`〔査定ID-A0603-${番号}〕`, 査定ID);
-    notes.set(`〔受注ID-A0603-${番号}〕`, 受注ID);
+    // 受注ID はシード表が控えると定めるシードだけ控える（定めないシードで控えると「シード表に無い呼び名」で止まる。ケースは査定IDから引く）
+    if ((seed["状態・属性"] + seed.投入方法).includes(`〔受注ID-A0603-${番号}〕`)) notes.set(`〔受注ID-A0603-${番号}〕`, 受注ID);
     if (作り.状況 !== "1") {
       await withAdminSession(browser, A0605_ADM, async (page) => {
         const s = new OtcStatusChangePage(page);
