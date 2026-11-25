@@ -61,7 +61,7 @@ type 会員の作り方 = {
   追加?: { 住所1?: string; 住所2?: string };
 };
 
-async function 会員を作る(ctx: SeedCtx, o: 会員の作り方): Promise<{ 会員ID: string; メール: string; パスワード: string }> {
+export async function 会員を作る(ctx: SeedCtx, o: 会員の作り方): Promise<{ 会員ID: string; メール: string; パスワード: string }> {
   const { browser, seed, notes } = ctx;
   const メール = mailOf(o.前半);
   const パスワード = o.パスワード ?? M08PW;
