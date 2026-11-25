@@ -10,7 +10,7 @@ import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { withAdminSession } from "../lib/session";
 import { OtcStatusChangePage } from "../pages/admin/m06_04_status";
-import { 試験支店 } from "../pages/admin/reuse_store";
+import { 試験支店, 試験支店の店舗ID } from "../pages/admin/reuse_store";
 import { 受注の今 } from "../db/a06_05";
 import { A0605_ADM, ステータス名 } from "./a06-05";
 import { 申込を行う, 申込者の } from "./m06-common";
@@ -34,9 +34,18 @@ function 受注のシード(seedId: string, 番号: string, 作り: { 状況?: s
     }
     if (作り.国を外す) 国の紐づけを外す(受注ID, 姓);
     notes.set(`〔店頭買取ID-A0602-${番号}〕`, 受注ID);
+    // シード表は店舗・管理者をケースごとに新しく登録して控えると定めるが、店舗は作らない決まりなので、試験支店と決まった印つきの試験管理者を読み替えて控える
+    notes.set(`〔店舗ID-A0602-${番号}X〕`, 試験支店の店舗ID());
+    notes.set(`〔管理者ID-A0602-${番号}〕`, notes.get("〔管理者ID-A0603-共有A〕"));
     reportSeedIssue(seed.シードID, `シード作成時の問題: 正本の店舗・管理者の新規登録はせず、店舗は試験支店、管理者は決まった印つきの試験管理者（所属は試験支店）に読み替えた。店頭買取（査定ID ${査定ID}・店頭買取ID ${受注ID}）は試験支店のフロントで申込んだ（国・職業は申込の部品の固定の値）。${作り.状況 ? `ステータスはステータス変更画面で「${ステータス名[作り.状況]}」にした（正本の払い出し待ち ID 7 は開発環境では「経理払い出し待ち」ID 10）。` : ""}${作り.国を外す ? "国との紐づけは E2E の受注にだけ DB で外した。" : ""}現在のステータス ID ${受注の今(受注ID)?.ステータスID}`);
   });
 }
+/** 参照マスタ: 店頭買取ステータス・国・都道府県・職業は開発環境にある値を使う。店舗3店・査定担当者は、店舗は作らない決まり（2026-11-13）で作らず、この機能の019・022・023は使わない */
+defineSeed("S-A06-02-MASTERS", async ({ notes, seed }) => {
+  const 作らない = "（作らない。店舗は作らない決まりで、このケースは使わない）";
+  for (const l of ["〔店舗ID-A0602-共有A〕", "〔店舗ID-A0602-共有B〕", "〔店舗ID-A0602-共有C〕", "〔査定担当者ID-A0602-共有〕"]) notes.set(l, 作らない);
+  reportSeedIssue(seed.シードID, "シード作成時の問題: 参照マスタ（店頭買取ステータス・国・都道府県・職業）は開発環境にある値を使い、書き換えない。共有の店舗3店と査定担当者は作らない（店舗は作らない決まり）ので、その呼び名には「作らない」と控えた。019・022・023 は使わない");
+});
 受注のシード("S-A06-02-CBHIT-019", "019", {});
 受注のシード("S-A06-02-CBSTATUS-022", "022", { 状況: "10" });
 受注のシード("S-A06-02-CBUNLINK-023", "023", { 国を外す: true });

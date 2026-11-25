@@ -7,6 +7,7 @@ import { test } from "@playwright/test";
 import { caseTest, CaseCtx, expect } from "../../lib/case";
 import { 送る, トークンを受け取る, 応答 } from "../../pages/admin/a06_mtgbuyer_api";
 import { A0605_ADM } from "../../seeds/a06-05";
+import "../../seeds/a06-02";
 import "../../seeds/a06-02-b";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
