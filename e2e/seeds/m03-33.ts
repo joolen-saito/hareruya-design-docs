@@ -57,14 +57,14 @@ export function m0333FilePath(file: string): string {
   return fs.existsSync(inFixture) ? inFixture : path.join(RUNTIME_DIR, file);
 }
 
-function writeRuntime(file: string, bytes: Buffer | string): void {
+export function writeRuntime(file: string, bytes: Buffer | string): void {
   if (fs.existsSync(path.join(FIXTURE_DIR, file))) throw new Error(`${file} は fixtures にもある（どちらを使うか決まらない）`);
   fs.mkdirSync(RUNTIME_DIR, { recursive: true });
   fs.writeFileSync(path.join(RUNTIME_DIR, file), bytes);
 }
 
 /** 画面の「雛形ファイルダウンロード」で得た雛形の見出し行（列名の並び） */
-async function templateHeader(page: Page, seedId: string): Promise<string[]> {
+export async function templateHeader(page: Page, seedId: string): Promise<string[]> {
   const upload = new HighPriceCsvUploadPage(page, "セール用高額商品価格変更");
   await upload.open();
   const rows = parseCsv(decodeCsvBytes(await downloadedBytes(await upload.downloadTemplate())));
@@ -74,13 +74,13 @@ async function templateHeader(page: Page, seedId: string): Promise<string[]> {
 }
 
 /** シード表の状態・属性に、書かれた文字列がそのままあること（書き写しの誤りを止める） */
-function expectInSeed(seedId: string, parts: string[]): void {
+export function expectInSeed(seedId: string, parts: string[]): void {
   const text = getSeed(seedId)["状態・属性"];
   for (const p of parts) if (!text.includes(p)) throw new Error(`${seedId}: シード表の状態・属性に「${p}」が無い`);
 }
 
 /** シード表の状態・属性の「<ファイル名>=<データ行>」のデータ行（次の「／」まで） */
-function dataRowInSeed(seedId: string, file: string): string {
+export function dataRowInSeed(seedId: string, file: string): string {
   const text = getSeed(seedId)["状態・属性"];
   const m = new RegExp(`${file.replace(/[.]/g, "\\.")}=([^／]+)`).exec(text);
   if (!m) throw new Error(`${seedId}: シード表の状態・属性に ${file} のデータ行が無い`);
@@ -105,10 +105,10 @@ async function offProduct(page: Page, seedId: string, n: string, notes: Notes, �
   }, { 商品ID: `〔商品ID-M0333-${n}〕`, 商品規格ID: `〔商品規格ID-M0333-${n}〕` }, notes);
 }
 
-type FileMaker = (page: Page, seedId: string) => Promise<string>;
+export type FileMaker = (page: Page, seedId: string) => Promise<string>;
 
 /** 商品と取込ファイルを作り、CSVインポート履歴に同じファイル名の行が無いことを確かめる */
-async function branchSeed(browser: Browser, seedId: string, n: string, notes: Notes, makeFile: FileMaker, 帯URL?: string): Promise<void> {
+export async function branchSeed(browser: Browser, seedId: string, n: string, notes: Notes, makeFile: FileMaker, 帯URL?: string): Promise<void> {
   await withAdminSession(browser, M0333_ADMIN, async (page) => {
     const file = await makeFile(page, seedId);
     await expectNoSameNameHistory(page, "セール用高額商品価格変更", seedId, file);
@@ -118,7 +118,7 @@ async function branchSeed(browser: Browser, seedId: string, n: string, notes: No
 }
 
 /** 雛形の見出し行の下に、正本のデータ行を1行入れた UTF-8・カンマ区切りのファイル（LF・末尾改行1つ） */
-function headerPlusRow(file: string, row: string): FileMaker {
+export function headerPlusRow(file: string, row: string): FileMaker {
   return async (page, seedId) => {
     const header = await templateHeader(page, seedId);
     writeRuntime(file, `${csvLine(header)}\n${row}\n`);

@@ -186,7 +186,7 @@ function newRow(file: string, nameJp: string, v: Row = {}): Row {
 }
 
 /** 更新の行（正本が値を書くもの）。両非表示フラグは 0 */
-function updateRow(v: { id: string; rank: string; nameJp: string; nameEn: string; parentId: string }, extra: Row = {}): Row {
+export function updateRow(v: { id: string; rank: string; nameJp: string; nameEn: string; parentId: string }, extra: Row = {}): Row {
   return {
     "カテゴリID": v.id, "表示ランク": v.rank, "カテゴリ名(日)": v.nameJp, "カテゴリ名(英)": v.nameEn, "親カテゴリID": v.parentId,
     "フロント非表示フラグ": "0", "支店非表示フラグ": "0", ...extra,
@@ -194,7 +194,7 @@ function updateRow(v: { id: string; rank: string; nameJp: string; nameEn: string
 }
 
 /** シードを作る管理者のセッションで、正本の作り方の操作をする */
-class SeedOps {
+export class SeedOps {
   private n = 0;
   private templateColumns: string[] | null = null;
 
@@ -282,7 +282,7 @@ class SeedOps {
   }
 }
 
-function defineCaseSeed(seedId: string, build: (o: SeedOps) => Promise<void>): void {
+export function defineCaseSeed(seedId: string, build: (o: SeedOps) => Promise<void>): void {
   defineSeed(seedId, async ({ browser, notes }) => {
     await withAdminSession(browser, SETUP_ADMIN, (page) => build(new SeedOps(page, seedId, notes)));
   });
