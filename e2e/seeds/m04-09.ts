@@ -188,6 +188,8 @@ export type Op =
   | {
     op: "transfer"; label: string; store: 店; zone: 在庫区分; lines: { code: string; dest: string; qty: number }[];
     by?: 役; until: "wait" | "done" | "rejected"; reject?: string; memo?: string; mention?: string[];
+    /** シード表が番号の呼び名を定めていないとき: 呼び名を「控えると定められていない番号」として控える（lib/notes.ts の setExtra） */
+    extra?: boolean;
   }
   | { op: "productId"; code: string; label: string }
   /** 商品検索の候補にする: 商品カテゴリを試験カテゴリAに変え、商品規格に高額商品コード・価格・部門・公開を入れる */
@@ -427,7 +429,7 @@ async function transfer(ctx: SeedCtx, o: Extract<Op, { op: "transfer" }>): Promi
   const by = o.by ?? "作業者";
   const id = await session(browser, ACCOUNTS[by], async (page) => {
     const id = await registerTransfer(page, { store: o.store, zone: o.zone, lines: o.lines, 所属: 所属A, メンバー: 承認者名, memo: o.memo }, `${seedId}: 在庫振替の登録`, issue);
-    notes.set(o.label, id);
+    if (o.extra) notes.setExtra(o.label, id); else notes.set(o.label, id);
     return id;
   });
   await session(browser, M0409_APP, async (page) => {

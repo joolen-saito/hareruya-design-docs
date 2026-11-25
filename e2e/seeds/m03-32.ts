@@ -161,6 +161,8 @@ export type 高額商品の作り方 = {
   商品コード: string; 商品名: string;
   CSV: { 基準価格: string; 販売価格: string; 買取価格: string };
   規格: 高額商品規格の入力;
+  /** グッズ商品CSVのタグ(ID)（正本が商品タグを持たせると定めたときだけ） */
+  タグ?: string;
 };
 
 /**
@@ -181,7 +183,7 @@ export async function createHighPriceGoods(
   const categoryId = await goodsCsvCategoryId(page, warn);
   const { confirmModal } = await registerGoodsCsv(page, {
     what: `${seedId} のグッズ商品CSV登録`, fileName: `${seedId}.csv`, categoryId,
-    lines: [{ code: v.商品コード, nameJp: v.商品名, nameEn: v.商品名, values: { "基準価格": v.CSV.基準価格, "販売価格": v.CSV.販売価格, "買取価格": v.CSV.買取価格 } }],
+    lines: [{ code: v.商品コード, nameJp: v.商品名, nameEn: v.商品名, values: { "基準価格": v.CSV.基準価格, "販売価格": v.CSV.販売価格, "買取価格": v.CSV.買取価格, ...(v.タグ ? { "タグ(ID)": v.タグ } : {}) } }],
     common: { "原価単価": "10", "地域別販売制限": "0", "スマレジ連携フラグ": "0", "スマレジ商品コード": "", "部門ID": "" },
     onWarning: (w) => warn(`グッズ商品CSV登録で出た警告「${w}」`),
   });
@@ -197,7 +199,7 @@ export async function createHighPriceGoods(
   if (dbAvailable) {
     const s = 商品規格の状態(classId);
     const want = { 基準価格: v.規格.基準価格, 販売価格: v.規格.販売価格, 買取価格: v.規格.買取価格, セール: v.規格.セール, 高額商品コード: v.規格.高額商品コード };
-    const got = s && { 基準価格: s.基準価格, 販売価格: s.販売価格, 買取価格: s.買取価格, セール: s.セール, 高額商品コード: s.高額商品コード };
+    const got = s && { 基準価格: s.基準価格, 販売価格: s.販売価格, 買取価格: s.買取価格, セール: s.セール, 高額商品コード: s.高額商品コード ?? "" };
     if (JSON.stringify(got) !== JSON.stringify(want)) throw new Error(`${seedId}: 登録した商品規格が ${JSON.stringify(got)}（シード表は ${JSON.stringify(want)}）`);
   }
 }
