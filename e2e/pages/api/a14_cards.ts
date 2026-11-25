@@ -51,3 +51,12 @@ export const 項目 = (o: Record<string, unknown> | null | undefined, 名前: st
   const v = o?.[名前];
   return v !== null && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
 };
+
+/** GET /api/cards/ のように、アプリが末尾のスラッシュを外す転送（301）を返す要求を、ブラウザと同じに転送先まで追って読む（最初の応答の状態は 転送の状態 に残す） */
+export async function カード情報を取得_転送を追う(page: Page, カードID: string): Promise<応答 & { 転送の状態: number }> {
+  const url = `${API_BASE_URL}/api/cards/${カードID}`;
+  const first = await page.request.get(url, { failOnStatusCode: false, timeout: 120_000, maxRedirects: 0 });
+  const res = await page.request.get(url, { failOnStatusCode: false, timeout: 120_000, maxRedirects: 5 });
+  const 本文 = await res.text();
+  return { 方法: "GET", ステータス: res.status(), 種類: res.headers()["content-type"] ?? "", 本文, json: 読む(本文), URL: res.url(), 転送の状態: first.status() };
+}

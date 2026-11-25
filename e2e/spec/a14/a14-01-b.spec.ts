@@ -7,7 +7,7 @@ import { test } from "@playwright/test";
 import { expect, caseTest } from "../../lib/case";
 import { カードのフォーマット } from "../../db/a14_01_b";
 import { カードの関連, カード詳細の値, カードの値, 色順の行 } from "../../db/a14_cards";
-import { カード情報を取得, 値, 項目がある, 一覧, 項目, 要約, 応答 } from "../../pages/api/a14_cards";
+import { カード情報を取得, カード情報を取得_転送を追う, 値, 項目がある, 一覧, 項目, 要約, 応答 } from "../../pages/api/a14_cards";
 import "../../seeds/a14-01";
 import "../../seeds/a14-01-b";
 
@@ -66,8 +66,8 @@ caseTest("IT-A14-01-007", async ({ page, notes, step, expected }) => {
 });
 
 caseTest("IT-A14-01-013", async ({ page, step, expected }) => {
-  let r!: 応答;
-  await step(1, async () => { r = await カード情報を取得(page, ""); note(要約(r)); });
-  await step(2, async () => { note(NETWORK); note(`HTTPステータス ${r.ステータス}`); });
+  let r!: 応答 & { 転送の状態: number };
+  await step(1, async () => { r = await カード情報を取得_転送を追う(page, ""); note(要約(r)); });
+  await step(2, async () => { note(NETWORK); note(`最初の応答 ${r.転送の状態}・転送を追った最後の応答のHTTPステータス ${r.ステータス}（${r.URL}）`); });
   await expected(async () => { expect(r.ステータス, "カードIDを付けない要求の HTTPステータス").toBe(404); });
 });
