@@ -38,7 +38,7 @@ let 用意したID: IDs | null = null;
 const 画面の種別: Record<MTGの種別, マスター種別> = { レイアウト: "カードレイアウト", レアリティ: "レアリティ", プロモ種別: "プロモーション", イラストレーター: "イラストレーター", カードセットブロック: "カードセットブロック" };
 
 /** S-A14-02-BASE のマスター・カードセットを用意して ID を返す（1度だけ） */
-async function マスターを用意する(browser: Browser, seedId: string): Promise<IDs> {
+export async function マスターを用意する(browser: Browser, seedId: string): Promise<IDs> {
   if (用意したID) return 用意したID;
   const 登録した: string[] = [];
   const 使った: string[] = [];
@@ -79,7 +79,7 @@ export function A1402のID(): IDs {
   return 用意したID;
 }
 
-const 全部の関連 = (m: IDs): 詳細入力["ID"] => ({ カードセット: m.カードセット, レアリティ: m.レアリティ, レイアウト: m.レイアウト, イラストレーター: m.イラストレーター, プロモ種別: m.プロモ種別 });
+export const 全部の関連 = (m: IDs): 詳細入力["ID"] => ({ カードセット: m.カードセット, レアリティ: m.レアリティ, レイアウト: m.レイアウト, イラストレーター: m.イラストレーター, プロモ種別: m.プロモ種別 });
 
 async function カードを作る(browser: Browser, seedId: string, カード名英: string, 詳細: 詳細入力[]): Promise<{ カードID: string; カード詳細IDs: string[] }> {
   let カードID = "";

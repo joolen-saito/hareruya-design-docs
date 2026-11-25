@@ -25,7 +25,7 @@ import { markedMail, 本会員を作る } from "./f06-member";
 
 export const M0808_ADMIN: Account = { loginId: rcFixed("m0808_admin").toLowerCase(), password: "Passw0rd!M0808" };
 export const M0808RH_ADMIN: Account = { loginId: rcFixed("m0808rh_admin").toLowerCase(), password: "Passw0rd-M0808RH" };
-const PW = "Passw0rd!M0808C";
+export const PW = "Passw0rd!M0808C";
 
 /** テンプレートの読み替え（開発環境に既にある手動送信用のテンプレートの番号） */
 export const テンプレの読み替え = { A会員: "139", B会員英語: "140", Cベースなし: "154", RH会員: "139" } as const;
@@ -53,7 +53,7 @@ defineSeed("S-M08-08-MAILBOX", async ({ seed }) => {
   reportSeedIssue(seed.シードID, "開発環境のメールの受け口を使った。受信箱の全削除はしない（ほかの方のメールもあるため）。操作の前に受け口のメールの番号を控え、そのあとに試験会員の印つきのアドレスへ届いたものだけを数える");
 });
 
-function テンプレの注記(seedId: string, keys: (keyof typeof テンプレの読み替え)[], 自動送信 = false): void {
+export function テンプレの注記(seedId: string, keys: (keyof typeof テンプレの読み替え)[], 自動送信 = false): void {
   const lines: string[] = [];
   for (const k of keys) {
     const t = テンプレート(テンプレの読み替え[k]);
@@ -80,7 +80,7 @@ const 定めの表: Record<string, 定め> = {
 };
 
 export type 作った会員 = { 会員ID: string; メール: string; 氏名: string };
-const 作った = new Map<string, 作った会員>();
+export const 作った = new Map<string, 作った会員>();
 export function 作った会員の(seedId: string): 作った会員 {
   const v = 作った.get(seedId);
   if (!v) throw new Error(`${seedId} はまだ作っていない`);

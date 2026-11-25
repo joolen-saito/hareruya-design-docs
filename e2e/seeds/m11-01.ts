@@ -86,7 +86,7 @@ type 人の定め = {
 type ケースの定め = { 番号: string; 人: 人の定め[]; 作る人?: string; 作られる人?: string[] };
 
 /** 基本の5人（ログイン管理者・東京店舗担当・大阪システム担当・東京システム担当・大阪店舗担当） */
-function 基本の5人(n: string, 上書き: Partial<Record<string, Partial<人の定め>>> = {}): 人の定め[] {
+export function 基本の5人(n: string, 上書き: Partial<Record<string, Partial<人の定め>>> = {}): 人の定め[] {
   const base: 人の定め[] = [
     { 記号: "A", 名前: `ログイン管理者-${n}`, 表示順: 5, 所属: "東京店", 権限: "システム権限", 稼働: "稼働", ログイン: { 正本のID: `m1101_admin-${n}`, 正本のパスワード: `M11P${n}X9` } },
     { 記号: "B", 名前: `東京店舗担当-${n}`, 表示順: 4, 所属: "東京店", 権限: "店舗権限", 稼働: "稼働" },
@@ -96,7 +96,7 @@ function 基本の5人(n: string, 上書き: Partial<Record<string, Partial<人�
   ];
   return base.map((p) => ({ ...p, ...(上書き[p.記号] ?? {}) }));
 }
-const 削除済み = (n: string, 名前 = `削除済みメンバー-${n}`): 人の定め => ({ 記号: "F", 名前, 表示順: 6, 削除済み: true });
+export const 削除済み = (n: string, 名前 = `削除済みメンバー-${n}`): 人の定め => ({ 記号: "F", 名前, 表示順: 6, 削除済み: true });
 const ひとり = (n: string): 人の定め[] => [
   { 記号: "", 名前: `ログイン管理者-${n}`, 表示順: 1, 所属: "東京店", 権限: "システム権限", 稼働: "稼働", ログイン: { 正本のID: `m1101_admin-${n}`, 正本のパスワード: `M11P${n}X9` } },
 ];
@@ -200,7 +200,7 @@ export function IDの(n: string): Record<string, string> {
   return r;
 }
 
-async function ケースのメンバーを作る(browser: Browser, seedId: string, c: ケースの定め, notes: { set(l: string, v: string): void }, issue: (m: string) => void): Promise<void> {
+export async function ケースのメンバーを作る(browser: Browser, seedId: string, c: ケースの定め, notes: { set(l: string, v: string): void }, issue: (m: string) => void): Promise<void> {
   const 後で = new Set(c.作られる人 ?? []);
   const ids = await 登録する(browser, seedId, SETUP_ADMIN, c.人.filter((p) => !後で.has(p.記号)).map((p) => ({ n: c.番号, p })));
   if (c.作る人) {

@@ -59,7 +59,7 @@ defineSeed("S-M11-02-MASTER", async ({ browser, seed }) => {
 type メンバーの定め = メンバーの入力 & { 表示順?: number };
 
 /** メンバー管理画面で新規登録し、移った先の編集画面のアドレスからメンバーIDを読む。表示順は E2E の行に DB で書き足す */
-async function メンバーを作る(browser: Browser, seedId: string, v: メンバーの定め, 作る人: Account = SETUP_ADMIN): Promise<string> {
+export async function メンバーを作る(browser: Browser, seedId: string, v: メンバーの定め, 作る人: Account = SETUP_ADMIN): Promise<string> {
   if (v.ログインID && ログインIDのメンバー(v.ログインID).length > 0) throw new Error(`${seedId}: ログインID ${v.ログインID} のメンバーが既にいる`);
   const id = await withAdminSession(browser, 作る人, async (page) => {
     const p = new MemberEditPage(page);
@@ -77,7 +77,7 @@ async function メンバーを作る(browser: Browser, seedId: string, v: メン
 }
 
 /** シード表の「BASE」形のメンバー（所属店舗・デフォルト検索表示店舗・編集可能店舗=東京店、所属=トレード、権限=店舗権限、非稼働、表示順4） */
-function 編集前のメンバー(n: string, pw: string, 上書き: Partial<メンバーの定め> = {}): メンバーの定め {
+export function 編集前のメンバー(n: string, pw: string, 上書き: Partial<メンバーの定め> = {}): メンバーの定め {
   return {
     名前: rc(`編集前メンバー-${n}`), 所属店舗ID: 店舗の("東京店"), 所属: 所属.トレード, ログインID: ログインID(`m1102_member-${n}`),
     メールアドレス: メール(`before-${n}@example.com`), パスワード: pw, 権限: 権限.店舗権限, 編集可能店舗ID: [店舗の("東京店")],

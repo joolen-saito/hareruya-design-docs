@@ -157,7 +157,7 @@ function writeFile(seedId: string, name: string, bytes: Buffer): void {
 }
 
 /** 行（見出しを含む）を改行でつなぎ、末尾にも改行を置いた UTF-8 のファイル */
-const utf8 = (lines: string[], eol = "\n") => Buffer.from(lines.map((l) => l + eol).join(""), "utf-8");
+export const utf8 = (lines: string[], eol = "\n") => Buffer.from(lines.map((l) => l + eol).join(""), "utf-8");
 
 /** シード表の文に、正本の語が書かれていること（書き写しの誤りを止める） */
 function expectInSeed(seedId: string, words: string[]): void {
@@ -214,7 +214,7 @@ async function createGoods(page: Page, seedId: string, notes: Notes, items: 商�
  * 商品を作って取込ファイルを用意するシード。
  * files は控えた番号を受けて [ファイル名, 中身] を返す。words はシード表に書かれているはずの語。
  */
-function defineDataSeed(seedId: string, o: {
+export function defineDataSeed(seedId: string, o: {
   items: 商品[];
   words: string[];
   files: (id: (label: string) => string) => [string, Buffer][];

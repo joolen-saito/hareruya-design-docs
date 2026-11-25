@@ -37,7 +37,7 @@ defineSeed("S-M11-03-FRONT-MEMBER-036", async ({ browser, notes, seed }) => {
 
 // ---- 権限グループ・拒否設定のシード ----
 
-type 試験権限の定め = { 控え: string; 権限名: string; 名前: string; ログインID: string; パスワード: string; 拒否URL: string[] };
+export type 試験権限の定め = { 控え: string; 権限名: string; 名前: string; ログインID: string; パスワード: string; 拒否URL: string[] };
 
 /** ケースが使うログインの情報（シードを作ったあとに読む） */
 const accounts = new Map<string, Account>();
@@ -47,7 +47,7 @@ export function M1103のアカウント(seedId: string): Account {
   return a;
 }
 
-function 試験権限を定める(seedId: string, d: 試験権限の定め): void {
+export function 試験権限を定める(seedId: string, d: 試験権限の定め): void {
   defineSeed(seedId, async ({ browser, notes, seed }) => {
     const 権限名 = `${d.権限名}-${RUN_MARK}`;
     const account: Account = { loginId: `${d.ログインID}-${RUN_MARK}`.toLowerCase(), password: d.パスワード };
