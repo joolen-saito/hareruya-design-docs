@@ -46,12 +46,15 @@ function 並びを見る(番号: string, 順: 行の定め[], 補い: string[] =
       await p.受注を選ぶ([notes.get(`〔受注ID-M0521-${番号}〕`)]);
       note(`注文番号 ${notes.get(`〔注文番号-M0521-${番号}〕`)} の受注（受注ID ${notes.get(`〔受注ID-M0521-${番号}〕`)}）の行を選んだ`);
     });
-    await step(3, async () => { popup = await p.印刷を押す(); });
-    await step(4, async () => {
+    // 手順が3つのケース（023・024・027 など）は、印刷を押した手順の中で画面を読む。4つのケースは手順4で読む
+    const 手順の数 = (ctx.c.手順.match(/(?:^|／)\s*\d+[.．]/g) ?? []).length;
+    const 読む = async () => {
       pages = await ピッキングリストを読む(popup);
       行 = pages.filter((x) => x.グループ === 低).flatMap((x) => x.行);
       note(`ピッキングリスト印刷画面: ${行の文(pages)}`);
-    });
+    };
+    await step(3, async () => { popup = await p.印刷を押す(); if (手順の数 < 4) await 読む(); });
+    if (手順の数 >= 4) await step(4, async () => { await 読む(); });
     await expected(async () => {
       for (const m of [...作りの補い, ...補い]) supplement(m);
       expect.soft(pages.some((x) => x.グループ === 低), `「${低}」のグループがある`).toBe(true);
