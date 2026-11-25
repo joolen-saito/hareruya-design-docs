@@ -19,7 +19,7 @@ import { Browser, Locator, Page, expect } from "@playwright/test";
 import { SETUP_ADMIN } from "../config/env";
 import { 会員を読む, 選手を削除済みにする } from "../db/a15_01";
 import { A1501デッキを読む, A1501閲覧用トークンを書く } from "../db/a15_01_deck";
-import { rc } from "../lib/run_marker";
+import { rc, RUN_MARK } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { adminUrl, withAdminSession } from "../lib/session";
 import { chooseByLabel, expectSaved } from "../pages/admin/common";
@@ -36,8 +36,8 @@ async function 型を用意する(page: Page, issue: Issue): Promise<{ フォー
   if (!型の約束) {
     型の約束 = (async () => {
       const 名 = rc("結合試験A1501デッキ用");
-      const フォーマット = await フォーマットを登録する(page, { 名日: `${名}フォーマット`, 名英: `${名} Format`, 並び順: "9000", メタ日数: "7" }, issue);
-      const アーキタイプ = await アーキタイプを登録する(page, { 名日: `${名}アーキタイプ`, 名英: `${名} Archetype`, フォーマット番号: フォーマット }, issue);
+      const フォーマット = await フォーマットを登録する(page, { 名日: `${名}フォーマット`, 名英: `A1501-Deck-${RUN_MARK} Format`, 並び順: "9000", メタ日数: "7" }, issue);
+      const アーキタイプ = await アーキタイプを登録する(page, { 名日: `${名}アーキタイプ`, 名英: `A1501-Deck-${RUN_MARK} Archetype`, フォーマット番号: フォーマット }, issue);
       issue(`「登録済みの任意のフォーマット・アーキタイプ」は、この実行で1度だけ登録した印つきの名前のもの（フォーマット ${フォーマット}・アーキタイプ ${アーキタイプ}）を使った`);
       return { フォーマット, アーキタイプ };
     })();
@@ -124,6 +124,14 @@ defineSeed("S-A15-01-DECKAUTHZ-013", async (ctx) => {
 for (const n of ["016", "018"] as const) {
   defineSeed(`S-A15-01-DECKAUTHZ-${n}`, async (ctx) => {
     await 持ち主とデッキ(ctx, { 呼び名: n, 選手の呼び名: n, メール: `owner.a1501-${n}@example.test`, パスワード: `LoginA1501-${n}!`, デッキ名: `A1501-${n}-LIMITED`, 公開範囲: "限定公開", デッキの呼び名: n, 閲覧用トークン: `A1501-${n}-VIEW` });
+    reportSeedIssue(ctx.seed.シードID, `${印の注記}。${名の注記}`);
+  });
+}
+
+// 014・015・017: 持ち主の非公開デッキ（閲覧用トークンなし）。014=jwt-token なし／015=署名不正のトークン／017=持ち主本人のトークン（2026-11-26 に足した）
+for (const n of ["014", "015", "017"] as const) {
+  defineSeed(`S-A15-01-DECKAUTHZ-${n}`, async (ctx) => {
+    await 持ち主とデッキ(ctx, { 呼び名: n, 選手の呼び名: n, メール: `owner.a1501-${n}@example.test`, パスワード: `LoginA1501-${n}!`, デッキ名: `A1501-${n}-PRIVATE`, 公開範囲: "非公開", デッキの呼び名: n });
     reportSeedIssue(ctx.seed.シードID, `${印の注記}。${名の注記}`);
   });
 }

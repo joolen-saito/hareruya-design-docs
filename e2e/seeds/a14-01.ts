@@ -31,7 +31,7 @@ export function マスターのID(): マスターの読み替え {
 /** 色順の名称（決まった印つき） */
 export const 色順の名称 = (): string => rcFixed("色順確認-A1401-018-A");
 
-async function カードを作る(browser: Browser, seedId: string, 番号: string, v: カード入力, 日時: string, notes: Notes, 詳細の日時 = false): Promise<{ カードID: string; カード詳細IDs: string[] }> {
+export async function カードを作る(browser: Browser, seedId: string, 番号: string, v: カード入力, 日時: string, notes: Notes, 詳細の日時 = false): Promise<{ カードID: string; カード詳細IDs: string[] }> {
   let カードID = "";
   let ids: string[] = [];
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {

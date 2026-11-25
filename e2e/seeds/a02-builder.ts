@@ -18,6 +18,7 @@ import { SETUP_ADMIN } from "../config/env";
 import {
   通常価格を書く, 規格を削除済みにする, 規格画像を紐付ける, 商品画像を足す, 週間販売数量を足す, 商品を廃止にする,
 } from "../db/a02_popup";
+import { 店舗の在庫ID } from "../db/f04_01";
 import { getSeed } from "../lib/catalog";
 import { Notes } from "../lib/notes";
 import { rc } from "../lib/run_marker";
@@ -132,6 +133,10 @@ export async function 商品を作る(browser: Browser, seedId: string, 呼び�
   // 呼び名を控える
   控える(notes, seedId, `〔商品ID-${呼び名の頭}${d.印}〕`, 商品ID);
   for (const k of d.規格) 控える(notes, seedId, `〔商品規格ID-${呼び名の頭}${k.印}〕`, 規格ID[k.印]);
+  for (const k of d.規格) {
+    const 呼 = `〔在庫ID-${呼び名の頭}${k.印}〕`;
+    if (Notes.labelsIn(getSeed(seedId)["状態・属性"] + getSeed(seedId).投入方法).includes(呼)) notes.set(呼, 店舗の在庫ID(規格ID[k.印], "1"));
+  }
   if (d.カード) {
     控える(notes, seedId, `〔カードID-${呼び名の頭}${d.印}〕`, d.カード.カードID);
     控える(notes, seedId, `〔カード詳細ID-${呼び名の頭}${d.印}〕`, d.カード.カード詳細ID);

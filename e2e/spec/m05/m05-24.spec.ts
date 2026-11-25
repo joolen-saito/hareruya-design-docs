@@ -84,8 +84,9 @@ caseTest("IT-M05-24-010", 押して読む("S-M05-24-MEMBER-CHANGED-010", ["〔�
     ["TEL1", "03"], ["TEL2", "1111"], ["TEL3", "2222"], ["FAX1", "03"], ["FAX2", "3333"], ["FAX3", "4444"],
   ];
   for (const [k, want] of 期待) expect.soft(row[k] ?? "（列が無い）", `注文者の ${k}（会員の現在値）`).toBe(want);
-  const 全部 = Object.values(row).join("|");
-  for (const old of ["旧姓", "旧名", "旧住所", 会員のメール("m0524-010-old")]) expect.soft(全部.includes(old), `受注時の旧値「${old}」を含まない`).toBe(false);
+  // 受注時の旧値を持たないのは注文者の項目。配送先の項目は受注の配送先（受注時の姓・名のまま）なので、配送先_ で始まる列は除く
+  const 全部 = Object.entries(row).filter(([k]) => !k.startsWith("配送先")).map(([, v]) => v).join("|");
+  for (const old of ["旧姓", "旧名", "旧住所", 会員のメール("m0524-010-old")]) expect.soft(全部.includes(old), `注文者の項目に受注時の旧値「${old}」を含まない`).toBe(false);
 }));
 
 caseTest("IT-M05-24-011", 押して読む("S-M05-24-DATETIME-011", ["〔注文番号-M0524-011〕"], (rows, _r, ctx) => {

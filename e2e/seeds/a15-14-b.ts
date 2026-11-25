@@ -52,7 +52,7 @@ defineSeed("S-A15-14-IMAGES-018", async ({ browser, notes, seed }) => {
       await m.locator("#card_image_search_word").fill(カード名[k]);
       await m.locator("#card_image_exact_match").check();
       await m.locator("#btn_search_card_image").click();
-      const b = m.locator(`button.select-card-image[data-name="${カード名[k]}"]`);
+      const b = m.locator(`button.select-card-image[data-name^="${カード名[k]}"]`);
       await expect(b.first(), `代表カード検索の結果に「${カード名[k]}」`).toBeVisible({ timeout: 60_000 });
       await b.first().click();
       await expect(m).toBeHidden();

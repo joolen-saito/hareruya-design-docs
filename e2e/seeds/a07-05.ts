@@ -37,7 +37,7 @@ function 無いことを確かめる(seedId: string, 番号: string): void {
 }
 
 /** カード商品（カード指定・状態 NM の規格1件・買取価格1000）を作り、商品ID・商品規格IDを控える */
-async function カードを作る(browser: Parameters<typeof カード商品を作る>[0], seedId: string, notes: { set: (l: string, v: string) => void }, 番号: string, カード名: string) {
+export async function カードを作る(browser: Parameters<typeof カード商品を作る>[0], seedId: string, notes: { set: (l: string, v: string) => void }, 番号: string, カード名: string) {
   const コード = `A0705-${番号}`;
   const p = await カード商品を作る(browser, seedId, { 商品コード: コード, 商品名日: カード名, 商品名英: カード名, カード名日: カード名, カード名英: `A0705 Test Card ${番号}`, 基準価格: "1000", 販売価格: "1000", 買取価格: "1000", 在庫: 0 });
   notes.set(`〔商品ID-A0705-${番号}〕`, p.商品ID);
@@ -77,7 +77,7 @@ defineSeed("S-A07-05-ABSENT-051", async ({ seed }) => { 無いことを確かめ
 defineSeed("S-A07-05-ABSENT-052", async ({ seed }) => { 無いことを確かめる(seed.シードID, "795052"); });
 
 /** VALIDATION-017〜020・049: 申込用のサプライ商品で申し込んだ受注（個別入力商品0件。サプライ品の行は消さずに残す） */
-function defineSupplyOrderSeed(seedId: string, 番号: string, サプライ名: string): void {
+export function defineSupplyOrderSeed(seedId: string, 番号: string, サプライ名: string): void {
   defineSeed(seedId, async ({ browser, seed, notes }) => {
     const p = await カード商品を作る(browser, seed.シードID, { 商品コード: `A0705-SUP-${番号}`, 商品名日: サプライ名, 商品名英: サプライ名, 基準価格: "500", 販売価格: "500", 買取価格: "500", 在庫: 0 });
     const o = await 会員を作って申し込む(browser, seed.シードID, { メール: `a0705-${番号}@example.test`, 商品ID: p.商品ID });

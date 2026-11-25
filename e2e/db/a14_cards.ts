@@ -125,6 +125,6 @@ export function カードセットのID(名英: string): string | undefined {
 }
 /** カードセットの値 */
 export function カードセットの値(id: string): 行 | undefined {
-  return 一行(`select id::text as id, name_jp, name_en, code, symbol_image, cardsetblock_id::text as cardsetblock_id, to_char(release_date, 'YYYY-MM-DD') as release_date
+  return 一行(`select id::text as id, name_jp, name_en, code, symbol_image, cardsetblock_id::text as cardsetblock_id, to_char(release_date at time zone 'Asia/Tokyo', 'YYYY-MM-DD') as release_date
     from mtb_cardset where id = $1::int`, [id]);
 }
