@@ -17,10 +17,10 @@ export function 受注の全体を読む(受注ID: string): 受注の全体 | nu
       from dtb_otc_buy_order where id = $1::int`, [数字(受注ID)])[0];
   return r ? { ステータスID: String(r.s), 端末取引ID: r.tx ?? null, 成立日: r.c ?? null, キャンセル日: r.x ?? null, 合計金額: r.p ?? null, 担当者ID: r.m ?? null, 更新日時: String(r.u), 確認済み: r.f ?? null } : null;
 }
-/** 注文詳細（番号・商品名・数量・単価）の一覧 */
+/** 注文詳細（番号・商品規格・数量・単価）の一覧（この表に商品名の列は無い） */
 export function 注文詳細を読む(受注ID: string): string[] {
-  return query("select id::text as i, name, quantity::text as q, price::text as p from dtb_otc_buy_order_detail where otc_buy_order_id = $1::int order by id", [数字(受注ID)])
-    .map((r) => `${r.i}:${r.name}:${r.q}:${r.p}`);
+  return query("select id::text as i, product_class_id::text as n, original_quantity::text as q, price::text as p from dtb_otc_buy_order_detail where otc_buy_order_id = $1::int order by id", [数字(受注ID)])
+    .map((r) => `${r.i}:${r.n}:${r.q}:${r.p}`);
 }
 /** 個別入力商品（番号・商品名・数量・単価・販売価格）の一覧 */
 export function 個別入力を読む(受注ID: string): string[] {

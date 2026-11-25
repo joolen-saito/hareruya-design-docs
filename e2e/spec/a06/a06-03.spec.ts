@@ -25,7 +25,7 @@ async function 有効なトークン(page: Page): Promise<string> {
 
 type 明細 = Record<string, string | number>;
 const 規格の明細 = (規格: string, name: string, quantity: number, price: number, sell_price: number, section_id: string): 明細 => ({ product_class_id: Number(規格), name, quantity, price, sell_price, section_id: Number(section_id) });
-const 本文 = (order_status: number, smaregi: number | null, order_details: 明細[], flg: string = "true") => ({ order_status, qualified_invoice_issuer_confirmation_flg: flg, smaregi_transaction_id: smaregi, order_details });
+const 本文 = (order_status: number, smaregi: number | null, order_details: 明細[], flg: string | boolean = "true") => ({ order_status, qualified_invoice_issuer_confirmation_flg: flg, smaregi_transaction_id: smaregi, order_details });
 
 type 場 = { 番号: string; 受注: string; 規格: string; 商品コード: string; 部門: string };
 const 場を作る = (ctx: CaseCtx, 番号: string): 場 => ({ 番号, 受注: (ctx.notes.has(`〔受注ID-A0603-${番号}〕`) ? L(ctx, "受注ID", 番号) : 査定IDの受注ID(L(ctx, "査定ID", 番号)) ?? ""), 規格: L(ctx, "商品規格ID", 番号), 商品コード: `A0603-${番号}`, 部門: ctx.notes.get("〔部門ID-A0603-共有〕") });
@@ -123,7 +123,7 @@ caseTest("IT-A06-03-043", 流す("043", {
 }));
 caseTest("IT-A06-03-057", 流す("057", {
   トークン: "有効",
-  本文: (c) => 本文(10, null, [規格の明細(c.規格, "正常明細057", 1, 100, 200, c.部門), 規格の明細(c.規格, "", 1, 100, 200, c.部門)]),
+  本文: (c) => 本文(10, null, [規格の明細(c.規格, "正常明細057", 1, 100, 200, c.部門), 規格の明細(c.規格, "", 1, 100, 200, c.部門)], true),
   前: (c) => JSON.stringify(全体(c)),
   後を出す: (c) => 全体(c),
   期待: (c, 前, r) => {
@@ -135,7 +135,7 @@ caseTest("IT-A06-03-057", 流す("057", {
 type 前の値 = { 履歴: number };
 caseTest("IT-A06-03-065", 流す<前の値>("065", {
   トークン: "有効",
-  本文: (c) => 本文(1, 6039065, [規格の明細(c.規格, "A0603CB065商品A", 2, 500, 600, c.部門), { name: "A0603CB065個別商品", quantity: 1, price: 300, sell_price: 400, section_id: Number(c.部門) }]),
+  本文: (c) => 本文(1, 6039065, [規格の明細(c.規格, "A0603CB065商品A", 2, 500, 600, c.部門), { name: "A0603CB065個別商品", quantity: 1, price: 300, sell_price: 400, section_id: Number(c.部門) }], true),
   前: (c) => ({ 履歴: 履歴を読む(c.受注).length }),
   後を出す: (c) => 全体(c),
   期待: (c, 前) => {
@@ -152,7 +152,7 @@ caseTest("IT-A06-03-065", 流す<前の値>("065", {
 }));
 caseTest("IT-A06-03-066", 流す<前の値>("066", {
   トークン: "有効",
-  本文: (c) => 本文(1, 6039066, [規格の明細(c.規格, "A0603CB066商品A-1", 1, 400, 500, c.部門), 規格の明細(c.規格, "A0603CB066商品A-2", 2, 400, 500, c.部門)]),
+  本文: (c) => 本文(1, 6039066, [規格の明細(c.規格, "A0603CB066商品A-1", 1, 400, 500, c.部門), 規格の明細(c.規格, "A0603CB066商品A-2", 2, 400, 500, c.部門)], true),
   前: (c) => ({ 履歴: 履歴を読む(c.受注).length }),
   後を出す: (c) => 全体(c),
   期待: (c, 前) => {
@@ -169,7 +169,7 @@ caseTest("IT-A06-03-066", 流す<前の値>("066", {
 }));
 caseTest("IT-A06-03-067", 流す<前の値>("067", {
   トークン: "有効",
-  本文: (c) => 本文(2, null, [規格の明細(c.規格, "A0603CB067商品A", 1, 100, 200, c.部門)]),
+  本文: (c) => 本文(2, null, [規格の明細(c.規格, "A0603CB067商品A", 1, 100, 200, c.部門)], true),
   前: (c) => ({ 履歴: 履歴を読む(c.受注).length }),
   後を出す: (c) => 全体(c),
   期待: (c, 前) => {
@@ -185,7 +185,7 @@ caseTest("IT-A06-03-067", 流す<前の値>("067", {
 }));
 caseTest("IT-A06-03-068", 流す<前の値>("068", {
   トークン: "有効",
-  本文: (c) => 本文(2, null, [規格の明細(c.規格, "A0603CB068商品A-1", 2, 150, 250, c.部門), 規格の明細(c.規格, "A0603CB068商品A-2", 1, 150, 250, c.部門), { name: "A0603CB068個別商品", quantity: 1, price: 90, sell_price: 190, section_id: Number(c.部門) }]),
+  本文: (c) => 本文(2, null, [規格の明細(c.規格, "A0603CB068商品A-1", 2, 150, 250, c.部門), 規格の明細(c.規格, "A0603CB068商品A-2", 1, 150, 250, c.部門), { name: "A0603CB068個別商品", quantity: 1, price: 90, sell_price: 190, section_id: Number(c.部門) }], true),
   前: (c) => ({ 履歴: 履歴を読む(c.受注).length }),
   後を出す: (c) => 全体(c),
   期待: (c, 前) => {
@@ -202,7 +202,7 @@ caseTest("IT-A06-03-068", 流す<前の値>("068", {
 }));
 caseTest("IT-A06-03-069", 流す<前の値>("069", {
   トークン: "有効",
-  本文: (c) => 本文(2, 6039069, [規格の明細(c.規格, "A0603CB069商品A", 3, 123, 223, c.部門)]),
+  本文: (c) => 本文(2, 6039069, [規格の明細(c.規格, "A0603CB069商品A", 3, 123, 223, c.部門)], true),
   前: (c) => ({ 履歴: 履歴を読む(c.受注).length }),
   後を出す: (c) => 全体(c),
   期待: (c, 前) => {
@@ -218,7 +218,7 @@ caseTest("IT-A06-03-069", 流す<前の値>("069", {
 }));
 caseTest("IT-A06-03-070", 流す<前の値>("070", {
   トークン: "有効",
-  本文: (c) => 本文(8, 6039070, [規格の明細(c.規格, "A0603CB070商品A", 3, 123, 223, c.部門)]),
+  本文: (c) => 本文(8, 6039070, [規格の明細(c.規格, "A0603CB070商品A", 3, 123, 223, c.部門)], true),
   前: (c) => ({ 履歴: 履歴を読む(c.受注).length }),
   後を出す: (c) => 全体(c),
   期待: (c, 前) => {
@@ -234,7 +234,7 @@ caseTest("IT-A06-03-070", 流す<前の値>("070", {
 }));
 caseTest("IT-A06-03-071", 流す<前の値>("071", {
   トークン: "有効",
-  本文: (c) => 本文(8, null, [規格の明細(c.規格, "A0603CB071商品A-1", 2, 123, 223, c.部門), 規格の明細(c.規格, "A0603CB071商品A-2", 3, 123, 223, c.部門), { name: "A0603CB071個別商品", quantity: 1, price: 55, sell_price: 155, section_id: Number(c.部門) }]),
+  本文: (c) => 本文(8, null, [規格の明細(c.規格, "A0603CB071商品A-1", 2, 123, 223, c.部門), 規格の明細(c.規格, "A0603CB071商品A-2", 3, 123, 223, c.部門), { name: "A0603CB071個別商品", quantity: 1, price: 55, sell_price: 155, section_id: Number(c.部門) }], true),
   前: (c) => ({ 履歴: 履歴を読む(c.受注).length }),
   後を出す: (c) => 全体(c),
   期待: (c, 前) => {
