@@ -19,7 +19,7 @@ import { 商品の定め, 商品を作る, 規格の定め, 控える } from "./
 const JP = "日本語" as const;
 const EN = "英語" as const;
 
-type 商品 = {
+export type 商品 = {
   印: string;
   セット: セット;
   プロモ?: boolean;
@@ -28,18 +28,22 @@ type 商品 = {
   商品名日?: string;
   商品名英?: string;
   商品画像?: string[];
+  /** 商品を非公開にする（取込のとき） */
+  非公開?: boolean;
+  /** 入庫のあと商品を廃止にする（DB。E2E の商品だけ） */
+  DBで廃止?: boolean;
 };
-const 規格 = (印: string, o: { 言語?: "日本語" | "英語"; 状態?: 規格の定め["状態"]; 価格?: string; 在庫?: number; 週?: number; 画像?: string } = {}): 規格の定め =>
+export const 規格 = (印: string, o: { 言語?: "日本語" | "英語"; 状態?: 規格の定め["状態"]; 価格?: string; 在庫?: number; 週?: number; 画像?: string } = {}): 規格の定め =>
   ({
     印, 言語: o.言語 ?? JP, 状態: o.状態 ?? "NM", 価格: o.価格 ?? "500", 在庫: o.在庫 ?? 1,
     ...(o.週 !== undefined ? { 週間販売数量: o.週 } : {}),
     ...(o.画像 ? { 規格画像: [{ ファイル名: o.画像, 順位: 1 }] } : {}),
   });
 /** 規格1件の商品（規格の印は商品の印と同じ） */
-const 単 = (印: string, セット: セット, o: { プロモ?: boolean; Foil?: boolean; 言語?: "日本語" | "英語"; 状態?: 規格の定め["状態"]; 価格?: string; 在庫?: number } = {}): 商品 =>
+export const 単 = (印: string, セット: セット, o: { プロモ?: boolean; Foil?: boolean; 言語?: "日本語" | "英語"; 状態?: 規格の定め["状態"]; 価格?: string; 在庫?: number } = {}): 商品 =>
   ({ 印, セット, プロモ: o.プロモ, Foil: o.Foil, 規格: [規格(印, o)] });
 
-function defineA0202Seed(seedId: string, 番号: string, 商品: 商品[]): void {
+export function defineA0202Seed(seedId: string, 番号: string, 商品: 商品[]): void {
   defineSeed(seedId, async ({ browser, notes }) => {
     await 作る(browser, seedId, 番号, 商品, notes);
   });
@@ -61,7 +65,7 @@ async function 作る(browser: Browser, seedId: string, 番号: string, 商品: 
     const d: 商品の定め = {
       印: p.印, 商品名日: p.商品名日 ?? `A02-02試験商品-${番号}${p.印}`, 商品名英: p.商品名英 ?? `A02-02 Test Product ${番号}${p.印}`,
       カード: { カードID: カード.カードID, カード詳細ID: カード.カード詳細IDs[i], カード名: カード名日 },
-      商品画像: p.商品画像, 規格: p.規格,
+      商品画像: p.商品画像, 規格: p.規格, 非公開: p.非公開, DBで廃止: p.DBで廃止,
     };
     await 商品を作る(browser, seedId, 頭, d, notes);
   }
