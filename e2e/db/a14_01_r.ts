@@ -70,7 +70,7 @@ export function 応答に含めない関連を足す(what: string, カードID: 
   const 投稿ID = String(1_000_000_000 + (Date.now() % 900_000_000));
   const [記事ID] = insertMarkedRows(`${what}: 記事`, { table: "dtb_article", key: "id", markColumn: "url", rows: [{ wp_post_id: 投稿ID, wp_type_id: 1, url: 記事URL, update_date: 今, create_date: 今 }] });
   insertOwnRows(`${what}: カードと記事の紐づけ`, { table: "dtb_article_card", parentColumn: "card_id", owner: 自分のカード(), rows: [{ card_id: カードID, article_id: 記事ID }] });
-  const [デッキID] = insertMarkedRows(`${what}: デッキ`, { table: "dtb_deck", key: "id", markColumn: "deck_name", rows: [{ disp_id: 1, deck_type_id: 1, deck_name: デッキ名, update_date: 今, create_date: 今 }] });
+  const [デッキID] = insertMarkedRows(`${what}: デッキ`, { table: "dtb_deck", key: "id", markColumn: "deck_name", rows: [{ disp_id: 1, deck_type_id: 1, deck_name: デッキ名, latest_flg: true, private_flg: false, update_date: 今, create_date: 今 }] });
   insertOwnRows(`${what}: デッキ収録カード`, { table: "dtb_deck_card", parentColumn: "deck_id", owner: 自分のデッキ(), rows: [{ deck_id: デッキID, card_id: カードID, board_id: 1, count: 1 }] });
   return { タグ名, 能力名, 記事URL, デッキ名, タグID, 能力ID, 記事ID, デッキID };
 }
