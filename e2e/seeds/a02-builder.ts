@@ -118,6 +118,8 @@ export async function 商品を作る(browser: Browser, seedId: string, 呼び�
     for (const img of k.規格画像 ?? []) {
       const imageId = 商品画像を足す(`${seedId}: 規格画像 ${img.ファイル名}`, 商品ID, img.ファイル名, 並び++);
       規格画像を紐付ける(`${seedId}: 規格画像 ${img.ファイル名} の順位 ${img.順位}`, id, imageId, img.順位);
+      // シード表が定めるときだけ、結び付けた画像のID（商品の印ごと）を控える
+      控える(notes, seedId, `〔画像ID-${呼び名の頭}${d.印}〕`, String(imageId));
     }
     if (k.DBで削除済み) 規格を削除済みにする(`${seedId}: 最後の1件の商品規格を削除済みにする`, id);
   }
