@@ -8,7 +8,7 @@ import { 申込番号の査定ID, 査定IDの受注ID } from "../db/a06";
 import { 受注の今 } from "../db/a06_05";
 import { rc } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
-import { 本店の店舗ID } from "../pages/admin/reuse_store";
+import { 本店の店舗ID, 試験支店の店舗ID } from "../pages/admin/reuse_store";
 import { 申込を行う, 申込者の } from "./m06-common";
 import "./a06-03";
 
@@ -22,5 +22,11 @@ defineSeed("S-A06-02-CBOTHER-021", { needs: ["S-A06-03-ADM"] }, async ({ browser
   const 受注ID = 査定IDの受注ID(査定ID);
   if (!受注ID) throw new Error(`${seed.シードID}: 申込んだ査定ID ${査定ID} の店頭買取の受注が DB に無い`);
   notes.set("〔店頭買取ID-A0602-021〕", 受注ID);
+  // 正本の店舗 X・Y・管理者は新しく登録せず読み替える（上の注記）。控えの番号は、読み替えた先の番号を入れる
+  notes.set("〔店舗ID-A0602-021X〕", 試験支店の店舗ID());
+  notes.set("〔店舗ID-A0602-021Y〕", 本店の店舗ID);
+  const 管理者ID = notes.get("〔管理者ID-A0603-共有A〕");
+  if (!管理者ID) throw new Error(`${seed.シードID}: 試験管理者の管理者ID（S-A06-03-ADM の〔管理者ID-A0603-共有A〕）が控えられていない`);
+  notes.set("〔管理者ID-A0602-021〕", 管理者ID);
   reportSeedIssue(seed.シードID, `シード作成時の問題: 正本の店舗 X・Y・管理者の新規登録はせず、店舗 X は試験支店（管理者は決まった印つきの試験管理者・所属は試験支店）、店舗 Y は本店（店舗ID ${本店の店舗ID}）に読み替えた。店頭買取（査定ID ${査定ID}・店頭買取ID ${受注ID}）は本店のフロント（支店URL ${本店の支店URL}）で申込んだ（国・職業は申込の部品の固定の値）。現在のステータス ID ${受注の今(受注ID)?.ステータスID}`);
 });
