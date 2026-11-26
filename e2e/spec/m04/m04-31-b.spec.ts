@@ -8,13 +8,13 @@ import { expect, caseTest } from "../../lib/case";
 import { loginAdmin } from "../../lib/session";
 import { InventoryPlanEditPage, InventoryPlanListPage, topMessages } from "../../pages/admin/m04_31_inventory_plan";
 import { M0431_ADMIN, 表示名 } from "../../seeds/m04-31";
-import { 数量CSV20001, 計画名082 } from "../../seeds/m04-31-b";
+import { 数量CSV20001, 計画ID_082, 計画名082 } from "../../seeds/m04-31-b";
 
 test.use({ actionTimeout: 90_000, navigationTimeout: 180_000 });
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
-caseTest("IT-M04-31-082", async ({ page, step, expected, notes }) => {
-  const id = notes.get("〔棚卸計画ID-M0431-082〕");
+caseTest("IT-M04-31-082", async ({ page, step, expected }) => {
+  const id = 計画ID_082();
   const name = 計画名082();
   const list = new InventoryPlanListPage(page);
   const edit = new InventoryPlanEditPage(page);

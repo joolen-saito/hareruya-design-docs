@@ -14,6 +14,9 @@ import { InventoryPlanEditPage, InventoryPlanListPage, InventoryPlanNewPage, top
 import { M0431_ADMIN, 棚卸名, 表示名 } from "./m04-31";
 
 export const 計画名082 = (): string => 棚卸名("082", "A");
+/** 082 のシードが登録した棚卸計画のID（シード表は控えると書かないので、控え（notes）には入れず、同じ実行の中だけで持つ） */
+let 計画ID082 = "";
+export const 計画ID_082 = (): string => 計画ID082;
 
 /** 見出し行＋データ20001行（商品コード M0431082N00001〜M0431082N20001・棚卸数量1） */
 export function 数量CSV20001(): string {
@@ -22,7 +25,7 @@ export function 数量CSV20001(): string {
   return rows.join("\n") + "\n";
 }
 
-defineSeed("S-M04-31-QTY20001-082", { needs: ["S-M04-31-ADM"] }, async ({ browser, notes, seed }) => {
+defineSeed("S-M04-31-QTY20001-082", { needs: ["S-M04-31-ADM"] }, async ({ browser, seed }) => {
   const issue = (m: string) => reportSeedIssue(seed.シードID, m);
   const name = 計画名082();
   if (planCountByName(name) > 0) throw new Error(`${seed.シードID}: 棚卸名 ${name} の棚卸計画が前の実行から残っている（削除の画面が無いので止めた）`);
@@ -37,7 +40,7 @@ defineSeed("S-M04-31-QTY20001-082", { needs: ["S-M04-31-ADM"] }, async ({ browse
     const m = await topMessages(page);
     if (!id || m.エラー.length) throw new Error(`${seed.シードID}: 棚卸計画を登録できない（${page.url()}・${m.エラー.join(" / ")}）`);
     expect(await new InventoryPlanEditPage(page).name(), "登録後の棚卸名").toBe(name);
-    notes.set("〔棚卸計画ID-M0431-082〕", id);
+    計画ID082 = id;
     issue(`棚卸計画「${name}」（棚卸計画ID ${id}・店舗A・EC-CUBE）を登録した。補い: 棚卸詳細20001件（商品20001件）は作れないので作らず、棚卸詳細0件の計画にした。CSVの20001行はケースの中で作る`);
   });
 });
