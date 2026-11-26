@@ -169,10 +169,16 @@ caseTest("IT-A15-09-007", async (ctx) => {
   });
 });
 
+/** 認証を拒む回（008・009）の要求本文。ケースの事前準備の固定の値のまま（認証で先に拒まれるので、マスタの控えは要らない） */
+const 認証拒否の要求: 登録要求 = {
+  deck_name: "結合試験デッキ", format_id: 15901, archetype_id: 15902, scope_id: 1, image_card_id: 15903,
+  campaign_tag_ids: [15904, 15905], cards: [{ card_id: 15911, board_id: 1, count: 1 }],
+};
+
 caseTest("IT-A15-09-008", async (ctx) => {
   let 前!: { 本体: number; カード: number }; let r!: 応答;
   await ctx.step(1, async () => { note(開発者ツールの代わり); 前 = 件数を控える(); });
-  await ctx.step(2, async () => { r = await 送る(ctx, undefined, 全項目(ctx)); });
+  await ctx.step(2, async () => { r = await 送る(ctx, undefined, 認証拒否の要求); });
   await ctx.step(3, async () => { note(要点(r)); });
   await ctx.step(4, async () => { note(`DB: デッキ本体 ${前.本体} → ${デッキ本体の件数()}`); });
   await ctx.expected(async () => { expect.soft(r.ステータス, "HTTP ステータス401").toBe(401); 拒否(r, 401); 増えない(前); });
@@ -181,7 +187,7 @@ caseTest("IT-A15-09-008", async (ctx) => {
 caseTest("IT-A15-09-009", async (ctx) => {
   let 前!: { 本体: number; カード: number }; let r!: 応答;
   await ctx.step(1, async () => { note("所有者の有効なトークンの末尾1文字を変える"); });
-  await ctx.step(2, async () => { const t = 署名を1文字変える(await トークン(ctx)); 前 = 件数を控える(); r = await 送る(ctx, t, 全項目(ctx), "末尾1文字を変えたトークン"); });
+  await ctx.step(2, async () => { const t = 署名を1文字変える(await トークン(ctx)); 前 = 件数を控える(); r = await 送る(ctx, t, 認証拒否の要求, "末尾1文字を変えたトークン"); });
   await ctx.step(3, async () => { note(要点(r)); });
   await ctx.step(4, async () => { note(`DB: デッキ本体 ${前.本体} → ${デッキ本体の件数()}`); });
   await ctx.expected(async () => { expect.soft(r.ステータス, "HTTP ステータス401").toBe(401); 拒否(r, 401); 増えない(前); });

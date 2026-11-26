@@ -38,6 +38,7 @@ import { Account, withAdminSession } from "../lib/session";
 import { 商品を作って入庫する } from "../pages/admin/f04_setup";
 import { カードを登録する, カード詳細IDs } from "../pages/admin/m14_card";
 import { ShortTagPage } from "../pages/admin/short_tag";
+import { 名称の略称タグ } from "../db/short_tag";
 import { ShelfNumberPage } from "../pages/admin/m03_21_shelf_number";
 import { ClassEditPage } from "../pages/admin/m03_09_class_edit";
 import { chooseByLabel, expectSaved } from "../pages/admin/common";
@@ -220,6 +221,9 @@ export async function 並びの商品を作る(browser: Browser, seedId: string,
       for (const x of 略称付き) {
         const t = x.規格!.略称!;
         if (略称タグID.has(t.名前)) continue;
+        // 同じ実行で前のシードが同じ印つきの名前の略称タグを登録済みなら（実行の印は実行内で共通）、新しく作らず使い回す（「値が重複しています」で止まるため）
+        const 既存 = 名称の略称タグ(rc(t.名前)).filter((x) => x.並び順 === t.並び順 && x.アルファベット順 === (t.アルファベット ?? false));
+        if (既存.length === 1) { 略称タグID.set(t.名前, 既存[0].略称タグID); continue; }
         const st = new ShortTagPage(page);
         await st.openNew();
         略称タグID.set(t.名前, await st.register({ 名称: rc(t.名前), 並び順: t.並び順, アルファベット順: t.アルファベット ?? false }, `${seedId}: 略称タグ「${rc(t.名前)}」の登録`));
