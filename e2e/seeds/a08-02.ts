@@ -12,12 +12,11 @@
 import { 言語を探す, 紐づくトップバナーの数 } from "../db/a08_02";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 
-defineSeed("S-A08-02-EMPTY-002", async ({ seed, notes }) => {
+defineSeed("S-A08-02-EMPTY-002", async ({ seed }) => {
   const 言語 = 言語を探す("FR");
   if (!言語) throw new Error(`${seed.シードID}: フランス語（言語コードFR）の言語が登録されていない`);
   const n = 紐づくトップバナーの数("FR");
   if (n !== 0) throw new Error(`${seed.シードID}: フランス語に紐づくトップバナーが ${n} 件ある（0件のはず）。他の方のバナーなので外さずに止める`);
-  notes.set("〔言語ID-A0802-002〕", 言語.番号);
   reportSeedIssue(seed.シードID, `フランス語（言語コードFR・言語ID ${言語.番号}）が登録済みで、紐づくトップバナーが0件であることを DB で読んで確かめた（シード表の言語ID 108020201 の登録・削除は行わない）`);
 });
 

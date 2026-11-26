@@ -7,16 +7,16 @@ import { test } from "@playwright/test";
 import { caseTest, expect } from "../../lib/case";
 import { 前の実行のバナーを片づける } from "../../db/a08_r";
 import { 取得する, 応答 } from "../../pages/api/a08_02_top_banners";
-import { 画像URL007, リンク007 } from "../../seeds/a08-02-r";
+import { 画像URL007, リンク007, 振られた番号を引く } from "../../seeds/a08-02-r";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
 const o = (v: unknown): Record<string, unknown> | null => (v !== null && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null);
 
-caseTest("IT-A08-02-007", async ({ page, notes, step, expected }) => {
-  const id = notes.get("〔トップバナーID-A0802-007〕");
-  const 画像URL = notes.get("〔画像URL-A0802-007〕");
-  const 言語ID = notes.get("〔言語ID-A0802-007〕");
+caseTest("IT-A08-02-007", async ({ page, step, expected }) => {
+  const id = 振られた番号を引く("トップバナーID007");
+  const 画像URL = 振られた番号を引く("画像URL007");
+  const 言語ID = 振られた番号を引く("言語ID007");
   let r: 応答 | null = null;
   await step(1, async () => {
     r = await 取得する(page, "de");

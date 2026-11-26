@@ -7,7 +7,7 @@ import { test } from "@playwright/test";
 import { caseTest, expect } from "../../lib/case";
 import { 紐づく言語の数, バナーを読む } from "../../db/a08_r";
 import { トップバナーを取得する, 応答 } from "../../pages/api/a08_01_r";
-import { 画像URL006, リンク006 } from "../../seeds/a08-01-r";
+import { 画像URL006, リンク006, 振られた番号を引く } from "../../seeds/a08-01-r";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
@@ -25,9 +25,9 @@ caseTest("IT-A08-01-002", async ({ page, step, expected }) => {
   });
 });
 
-caseTest("IT-A08-01-006", async ({ page, notes, step, expected }) => {
-  const id = notes.get("〔トップバナーID-A0801-006〕");
-  const 画像URL = notes.get("〔画像URL-A0801-006〕");
+caseTest("IT-A08-01-006", async ({ page, step, expected }) => {
+  const id = 振られた番号を引く("トップバナーID006");
+  const 画像URL = 振られた番号を引く("画像URL006");
   let r!: 応答;
   await step(1, async () => {
     const n = 紐づく言語の数(id);

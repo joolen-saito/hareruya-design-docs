@@ -9,6 +9,10 @@
 import { バナーを足す, バナーが無い, 前の実行のバナーを片づける } from "../db/a08_r";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 
+/** DB が振った番号。シード表は固定値で書き〔…〕で「控える」と定めていないので notes に入れず（基盤が止める）、同じ実行の中だけここに持つ */
+export const 振られた番号 = new Map<string, string>();
+export const 振られた番号を引く = (k: string): string => { const v = 振られた番号.get(k); if (v === undefined) throw new Error(`${k} はまだ作っていない`); return v; };
+
 export const 画像URL006 = "https://example.com/banner/a08-01-108016001.png";
 export const リンク006 = "https://example.com/campaign/a08-01-108016001";
 
@@ -21,10 +25,10 @@ defineSeed("S-A08-01-NOTFOUND-002", async ({ seed }) => {
   reportSeedIssue(seed.シードID, "トップバナーID 108012999 のトップバナーが DB に無いことを読んで確かめた（シード表の「削除」は行わない）");
 });
 
-defineSeed("S-A08-01-LANG0-006", async ({ notes, seed }) => {
+defineSeed("S-A08-01-LANG0-006", async ({ seed }) => {
   const 片づけた = 前の実行のバナーを片づける(seed.シードID, 画像URL006);
   const b = バナーを足す(`${seed.シードID}: トップバナー`, { 画像URL: 画像URL006, リンク: リンク006, 表示タイプ: 0, 代替: "A08-01結合テスト006", 並び順: 108016001 });
-  notes.set("〔トップバナーID-A0801-006〕", b.id);
-  notes.set("〔画像URL-A0801-006〕", b.画像URL);
+  振られた番号.set("トップバナーID006", b.id);
+  振られた番号.set("画像URL006", b.画像URL);
   reportSeedIssue(seed.シードID, `トップバナー（ID ${b.id}・表示タイプ0・言語の紐づけ0件）を、画像URLの末尾に実行の印を付けて DB で足した（画面に足す手段が無い。固定ID 108016001 は振られた番号 ${b.id} に読み替え）。前の実行の残り ${片づけた} 件を片づけた`);
 });

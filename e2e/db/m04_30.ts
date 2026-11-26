@@ -50,6 +50,11 @@ export function スマレジの値を整える(what: string, 規格ID: string, v
   updateOwnRows(what, { table: "dtb_product_class", key: "id", ids: [規格ID], set: { smaregi_product_id: v.スマレジ商品ID, smaregi_alignment_flg: v.連携 }, owner: 自分の商品規格 });
 }
 
+/** スマレジ商品コードを書く（カード指定のある商品は画面から入力できない。シード表の値を E2E の商品規格の行だけに書く） */
+export function スマレジ商品コードを書く(what: string, 規格ID: string, コード: string): void {
+  updateOwnRows(what, { table: "dtb_product_class", key: "id", ids: [規格ID], set: { smaregi_product_code: コード }, owner: 自分の商品規格 });
+}
+
 /** 商品規格のすべての価格変更履歴の日時を書く（シード表「価格変更日時は画面で指定できないためDBへ直接設定する」） */
 export function 価格変更日時を整える(what: string, 規格ID: string, 日時: string): string[] {
   const ids = 価格変更履歴のID(規格ID);

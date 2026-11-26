@@ -29,9 +29,13 @@ export async function 規格にスマレジ商品コードを入れて公開す�
     issue(`${what}: 部門は選択肢の先頭の「${first.label}」を選んだ（シード表: そのほかの必須項目は任意の値）`);
   }
   await form.locator('[name="admin_product_class[standard_price]"]').fill(String(a.基準価格));
-  await form.locator('[name="admin_product_class[smaregi_product_code]"]').fill(a.スマレジ商品コード ?? "");
+  // カード指定のある商品はスマレジ商品コードが自動採番で入力できない（disabled）。入力できるときだけ入れる（できないときは呼び出し側が E2E の行だけ DB で書く）
+  const コード欄 = form.locator('[name="admin_product_class[smaregi_product_code]"]');
+  const コード入力可 = await コード欄.isEnabled();
+  if (コード入力可) await コード欄.fill(a.スマレジ商品コード ?? "");
   await chooseByLabel(form.locator("#admin_product_class_Status"), "公開");
   await Promise.all([page.waitForNavigation({ waitUntil: "load", timeout: 120_000 }), page.getByRole("button", { name: "商品規格を登録", exact: true }).click({ noWaitAfter: true })]);
   for (const w of await expectSaved(page, `${what}: 商品規格の登録`)) issue(`${what}: 警告「${w}」`);
-  await expect(form.locator('[name="admin_product_class[smaregi_product_code]"]'), `${what}: 登録後のスマレジ商品コード`).toHaveValue(a.スマレジ商品コード ?? "");
+  if (コード入力可) await expect(form.locator('[name="admin_product_class[smaregi_product_code]"]'), `${what}: 登録後のスマレジ商品コード`).toHaveValue(a.スマレジ商品コード ?? "");
+  else issue(`${what}: カード指定のある商品のスマレジ商品コードは自動採番で画面から入力できない（入力欄が disabled）ので入力しなかった`);
 }

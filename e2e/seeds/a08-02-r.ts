@@ -10,10 +10,14 @@ import { 言語を探す, 紐づくトップバナーの数 } from "../db/a08_02
 import { バナーを言語へ紐づける, バナーを足す, 前の実行のバナーを片づける } from "../db/a08_r";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 
+/** DB が振った番号。シード表は固定値で書き〔…〕で「控える」と定めていないので notes に入れず（基盤が止める）、同じ実行の中だけここに持つ */
+export const 振られた番号 = new Map<string, string>();
+export const 振られた番号を引く = (k: string): string => { const v = 振られた番号.get(k); if (v === undefined) throw new Error(`${k} はまだ作っていない`); return v; };
+
 export const 画像URL007 = "https://example.com/banner/a0802-007-001.png";
 export const リンク007 = "https://example.com/campaign/a0802-007-001";
 
-defineSeed("S-A08-02-ONE-007", async ({ notes, seed }) => {
+defineSeed("S-A08-02-ONE-007", async ({ seed }) => {
   const 言語 = 言語を探す("DE");
   if (!言語) throw new Error(`${seed.シードID}: 言語コード DE の言語が登録されていない`);
   const 片づけた = 前の実行のバナーを片づける(seed.シードID, 画像URL007);
@@ -21,8 +25,8 @@ defineSeed("S-A08-02-ONE-007", async ({ notes, seed }) => {
   if (数 !== 0) throw new Error(`${seed.シードID}: ドイツ語（DE）に紐づくトップバナーが ${数} 件ある（0件のはず）。ほかの方のバナーなので外さずに止める`);
   const b = バナーを足す(`${seed.シードID}: トップバナー`, { 画像URL: 画像URL007, リンク: リンク007, 表示タイプ: 1, 代替: "A08-02結合テスト007", 並び順: 108027001 });
   バナーを言語へ紐づける(`${seed.シードID}: 言語の紐づけ`, b.id, 言語.番号, 画像URL007);
-  notes.set("〔トップバナーID-A0802-007〕", b.id);
-  notes.set("〔画像URL-A0802-007〕", b.画像URL);
-  notes.set("〔言語ID-A0802-007〕", 言語.番号);
+  振られた番号.set("トップバナーID007", b.id);
+  振られた番号.set("画像URL007", b.画像URL);
+  振られた番号.set("言語ID007", 言語.番号);
   reportSeedIssue(seed.シードID, `ドイツ語は既にある言語（言語コード DE・言語ID ${言語.番号}・${言語.名日}／${言語.名英}）を使い、言語ID 108020701 は登録しない。トップバナー（ID ${b.id}・表示タイプ1）を画像URLの末尾に実行の印を付けて DB で足し、DE だけに紐づけた（固定ID 108027001 は振られた番号に読み替え）。前の実行の残り ${片づけた} 件を片づけた`);
 });

@@ -27,6 +27,7 @@ import { ensureMaster, カード詳細IDs, カードを登録する } from "../p
 import { 行を用意する } from "../pages/admin/m14_04_master";
 import { goodsCategoryIdForCsv } from "../pages/admin/m04_19_masters";
 import { 店A } from "../pages/admin/m04_09_move";
+import { 商品のカテゴリを付け替える } from "../pages/admin/a17_05_setup";
 import { 規格にスマレジ商品コードを入れて公開する } from "../pages/admin/m04_30_setup";
 import { assignCardOnProductEdit } from "../pages/admin/product_card_assign";
 import { 試験支店の店舗ID } from "../pages/admin/reuse_store";
@@ -109,7 +110,7 @@ async function build(ctx: SeedCtx, items: 商品[], master: マスタ): Promise<
       const price = String(p.基準価格);
       await registerGoodsCsv(page, {
         what: `${seedId} のグッズ商品CSV登録（${p.code}）`, fileName: `${seedId.toLowerCase()}-${p.key.toLowerCase()}-goods.csv`,
-        categoryId: p.カテゴリ ? カテゴリID.get(p.カテゴリ)! : 既定,
+        categoryId: 既定, // 商品CSVの商品カテゴリ(ID)はグッズ配下の既存カテゴリだけ受け付ける（新しい最上位カテゴリは「値が異常です」で保存できない）。カテゴリは取込のあと商品登録編集で付け替える
         lines: [{ code: rc(p.code), nameJp: rc(p.code), nameEn: rc(p.code), values: { "基準価格": price, "販売価格": price, "買取価格": "0", "原価単価": "0" } }],
         onWarning: issue, uploadWaitMs: 600_000,
       });
@@ -134,6 +135,17 @@ async function build(ctx: SeedCtx, items: 商品[], master: マスタ): Promise<
     });
     issue(`印つきの試験用カードを ${カード付き.length} 枚作り（${カード付き.map((p) => `${rc(p.code)}: 色順 ${p.カード!.色順}・カードタイプ ${p.カード!.カードタイプ}・マナコスト ${p.カード!.マナ}`).join("／")}）、商品登録編集の「カード指定」で紐づけた（依頼者決定 2026-11-14「マスタは作ってよい」。レアリティ・レイアウト・プロモ種別は選択肢の先頭）`);
   }
+  // 2b. 最上位カテゴリの指定がある商品は、商品登録編集でそのカテゴリだけにチェックを付け替える
+  const カテゴリ付き = items.filter((p) => p.カテゴリ);
+  if (カテゴリ付き.length) {
+    await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+      page.setDefaultTimeout(60_000);
+      for (const p of カテゴリ付き) {
+        await 商品のカテゴリを付け替える(page, ids.get(p.key)!.商品ID, [カテゴリID.get(p.カテゴリ!)!], `${seedId}: ${p.code} の商品カテゴリ`, issue);
+        issue(`${p.code}: 商品カテゴリ「${p.カテゴリ}」（カテゴリID ${カテゴリID.get(p.カテゴリ!)}）は、グッズ商品CSVの取込では指定できない（グッズ配下のカテゴリだけ）ので、取込のあと商品登録編集で付け替えた`);
+      }
+    });
+  }
   // 3. 商品規格登録編集で基準価格・スマレジ商品コード・公開（連携フラグは「連携しない」のまま）。言語の指定があれば選ぶ
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     for (const p of items) {
@@ -148,6 +160,7 @@ async function build(ctx: SeedCtx, items: 商品[], master: マスタ): Promise<
   for (const p of items) {
     const x = ids.get(p.key)!;
     const what = `${seedId}: ${p.code}`;
+    if (p.カード) { db30.スマレジ商品コードを書く(`${what} のスマレジ商品コード`, x.規格ID, p.スマレジ商品コード); issue(`${p.code}: カード指定のある商品はスマレジ商品コードを画面から入力できないので、シード表の値「${p.スマレジ商品コード}」を DB で書いた（E2E の商品規格だけ）`); }
     db30.スマレジの値を整える(what, x.規格ID, { スマレジ商品ID: rc(p.code), 連携: true });
     const 在庫A = db30.スマレジの在庫ID(x.規格ID, 店舗A);
     if (!在庫A) throw new Error(`${what}: 店舗A（試験支店）のスマレジの在庫の行が無い（取り込みで作られるはず）`);
