@@ -51,7 +51,21 @@ defineSeed("S-M03-38-QB-ADM", { needs: ["S-M03-38-L-ADM"] }, async ({ seed }) =>
   reportSeedIssue(seed.シードID, "管理者 m0338qb-admin は作らず、連携試験の管理者（S-M03-38-L-ADM。商品公開CSV登録を開ける）で読み替えた");
 });
 defineSeed("S-M03-38-QB-ENV", async ({ seed }) => { reportSeedIssue(seed.シードID, "日本語版・JavaScript と Cookie は、ケースの新しいブラウザ（日本語）で満たす。環境の設定は書き換えない"); });
-defineSeed("S-M03-38-QB-MASTER", async ({ seed }) => { reportSeedIssue(seed.シードID, `タグ「最新入荷アイテム」と固定セールタグ（タグID ${SALE_TAG_ID}。アプリがセールに使うタグ）は共有のマスタ。足さない・書き換えない`); });
+defineSeed("S-M03-38-QB-MASTER", async ({ browser, seed, notes }) => {
+  // 共有のマスタ（足さない・書き換えない）。DB は読むだけ。名称が違えば直さずに止める
+  const 最新 = query(`select id::text as id, name from dtb_tag where id = 1`);
+  if (最新.length !== 1) throw new Error(`${seed.シードID}: タグID 1（本店TOPの最新入荷アイテム欄が使う固定のタグ）の行が無い。共有のマスタは足さない`);
+  if (String(最新[0].name ?? "").trim() !== "最新入荷アイテム") throw new Error(`${seed.シードID}: タグID 1 の名称が「最新入荷アイテム」でない（実際: ${最新[0].name}）。共有のマスタは書き換えない`);
+  const セール = query(`select id::text as id, name from dtb_tag where id = ${Number(SALE_TAG_ID)}`);
+  if (セール.length !== 1) throw new Error(`${seed.シードID}: 固定セールタグ（タグID ${SALE_TAG_ID}）の行が無い。共有のマスタは足さない`);
+  let カテゴリID = "";
+  await withAdminSession(browser, SETUP_ADMIN, async (page) => { page.setDefaultTimeout(60_000); カテゴリID = await readSupplyGoodsCategoryId(page); });
+  notes.set("〔タグID-M0338-最新入荷〕", String(最新[0].id));
+  notes.set("〔タグID-M0338-セール〕", String(セール[0].id));
+  notes.set("〔カテゴリID-M0338-QB〕", カテゴリID);
+  if (String(セール[0].id) !== SALE_TAG_ID) throw new Error(`${seed.シードID}: 控えたセールのタグID（${セール[0].id}）がこのシードの固定値 ${SALE_TAG_ID} と違う`);
+  reportSeedIssue(seed.シードID, `タグ「最新入荷アイテム」（タグID ${最新[0].id}）・固定セールタグ（タグID ${セール[0].id}。名称「${セール[0].name ?? ""}」）・グッズ商品CSVのカテゴリ（カテゴリID ${カテゴリID}）を参照で確かめて控えた。共有のマスタは足さない・書き換えない`);
+});
 defineSeed("S-M03-38-QB-BRANCH", async ({ seed }) => {
   const b = 大阪支店();
   reportSeedIssue(seed.シードID, `支店URL qbbranchpub の支店は、店舗を作らない決まりのため、既にある支店「${b.店名}」（店舗ID ${b.ID}・公開側 ${b.パス}/）で読み替えた`);

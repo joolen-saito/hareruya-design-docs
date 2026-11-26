@@ -83,11 +83,8 @@ caseTest("IT-A06-07-007", async (ctx) => {
   const n = (k: string) => ctx.notes.get(k);
   const [商品, カード, 詳細, a, b] = [n("〔商品ID-A0607-007〕"), n("〔カードID-A0607-007〕"), n("〔カード詳細ID-A0607-007〕"), n("〔商品規格ID-A0607-007A〕"), n("〔商品規格ID-A0607-007B〕")];
   const r = await 取る(ctx, 商品, "買取用カード一覧取得（同じ組に商品規格2件）");
-  await ctx.step(2, async () => {
-    const cc = 子(子(子(子(子(子((r.json ?? {}) as 木, "cards"), カード), "details"), 詳細), "languageClasses"), "JP");
-    note(`言語 JP 配下の状態コード: ${Object.keys(子(cc, "conditionClasses") ?? {}).join("・") || "（なし）"}`);
-  });
   await ctx.expected(async () => {
+    note(`言語 JP 配下の状態コード: ${Object.keys(子(子(子(子(子(子((r.json ?? {}) as 木, "cards"), カード), "details"), 詳細), "languageClasses"), "JP")?.conditionClasses as 木 ?? {}).join("・") || "（なし）"}`);
     const cc = 子(子(子(子(子(子(子((r.json ?? {}) as 木, "cards"), カード), "details"), 詳細), "languageClasses"), "JP"), "conditionClasses");
     const nm = 子(cc, "NM");
     expect.soft(nm !== null, "カードID→カード詳細ID→言語 JP→状態 NM の階層がある").toBe(true);
