@@ -18,6 +18,7 @@ import { expectSaved } from "../pages/admin/common";
 import { addClass, openClassEdit, openClassList } from "../pages/admin/m03_30_products";
 import { createHighPriceGoods, expectNoSameNameHistory } from "./m03-32";
 import { dataRowInSeed, expectInSeed, M0333_ADMIN, templateHeader, writeRuntime } from "./m03-33";
+import "./m03-33-b"; // S-M03-33-TAGS（参照だけのタグのマスタ）はここで定める
 
 const 空 = (row: string): string => row.replace(/空/g, "");
 const csvRow = (header: string[], row: string): string => `${csvLine(header)}\n${row}\n`;
