@@ -79,5 +79,7 @@ defineSeed("S-A06-08-CBMULTI-023", { needs: ["S-A06-08-ADM-A"] }, async ({ brows
   });
   notes.set("〔商品ID-A0608-023B〕", b.商品ID);
   notes.set("〔商品規格ID-A0608-023B〕", b.規格ID);
+  notes.set("〔カードID-A0608-023B〕", card.カードID);
+  notes.set("〔カード詳細ID-A0608-023B〕", card.カード詳細IDs[0]);
   reportSeedIssue(seed.シードID, "商品B（規格1件）を、グッズ商品CSV登録＋カード指定で作り、本店・EC-CUBE へ1入庫して承認した");
 });
