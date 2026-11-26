@@ -10,7 +10,7 @@ import { カード画像の行 } from "../../db/a14_01_r";
 import { カード詳細の値 } from "../../db/a14_cards";
 import { カード情報を取得, 値, 項目がある, 一覧, 要約, 応答 } from "../../pages/api/a14_cards";
 import "../../seeds/a14-01";
-import "../../seeds/a14-01-r";
+import { 除外確認の目印008 } from "../../seeds/a14-01-r";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const supplement = (m: string) => { test.info().annotations.push({ type: "正本の外の補い", description: m }); };
@@ -100,13 +100,14 @@ caseTest("IT-A14-01-005", async ({ page, notes, step, expected }) => {
 // ---- 008: カードタグ・キーワード能力・記事・デッキ収録カードは応答に含まれない ----
 caseTest("IT-A14-01-008", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔カードID-A1401-008〕");
-  const 目印 = ["〔除外確認タグ名-A1401-008〕", "〔除外確認能力名-A1401-008〕", "〔除外確認記事URL-A1401-008〕", "〔除外確認デッキ名-A1401-008〕"].map((k) => notes.get(k));
+  const 目印 = [...除外確認の目印008];
   let r!: 応答;
   await step(1, async () => { r = await 送る(page, id); });
   await step(2, async () => { note(NETWORK); note(`応答の項目: ${Object.keys(r.json ?? {}).join("・")}`); });
   await expected(async () => {
     expect.soft(r.ステータス, "HTTPステータス").toBe(200);
     expect.soft(r.json, "応答が JSON のオブジェクト").not.toBeNull();
+    expect(目印.length === 4 && 目印.every((w) => !!w), `関連の目印が4つそろっている（${目印.join("・")}）`).toBe(true);
     for (const w of 目印) expect.soft(r.本文.includes(w), `応答JSON全体に関連の目印「${w}」が含まれない`).toBe(false);
     const 名 = Object.keys(r.json ?? {}).filter((k) => /tag|ability|article|deck/i.test(k));
     expect.soft(名, "応答の項目名に、タグ・能力・記事・デッキを表すものが無い").toEqual([]);
