@@ -15,7 +15,7 @@ import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { withAdminSession } from "../lib/session";
 import { 規格のセールを設定する, タグを付けて商品を登録する } from "../pages/admin/f01_02_setup";
 import { savePublishedClass } from "../pages/admin/f03_07_restock";
-import { savePublishState, CsvFile } from "../pages/admin/m03_38_product_status_csv";
+import { findProductIdByName, savePublishState, CsvFile } from "../pages/admin/m03_38_product_status_csv";
 import { classRowsFromProductEdit, openProductEditByCode } from "../pages/admin/m03_23_seed_products";
 import { expectNoProductCodes, readSupplyGoodsCategoryId, uploadGoodsLines } from "../pages/admin/m04_17_seed_ops";
 import { 管理者を用意する, 人の, 入庫して承認する } from "./m04-21-q";
@@ -100,6 +100,9 @@ for (const d of 定め群) {
     await 入庫して承認する(browser, seed.シードID, { 店名: b.店名, code, 数: 5, 単価: 1, 申請者: ap, 承認者: ar }, issue);
     // 本店=公開・支店=指定の状態（商品登録編集で保存。在庫を入れたあと）
     await withAdminSession(browser, SETUP_ADMIN, async (page) => {
+      // 商品マスターの検索結果から開く（savePublishState は検索結果の行の商品名を押す。seeds/m03-38.ts と同じ手順）
+      const found = await findProductIdByName(page, name, code);
+      if (found !== 商品ID) throw new Error(`${seed.シードID}: 商品マスターの検索で見つかった商品ID ${found} が、登録した商品ID ${商品ID} と違う`);
       await savePublishState(page, 商品ID, { 商品公開ステータス: "公開", 支店の商品公開ステータス: d.支店の状態 }, issue);
     });
     const text = `商品ID,商品公開ステータス,支店の商品公開ステータス\n${商品ID},${d.csv.値[0]},${d.csv.値[1]}\n`;
