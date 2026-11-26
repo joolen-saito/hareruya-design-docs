@@ -13,8 +13,8 @@ export function バナーが無い(id: string): boolean {
   return query("select 1 from mtb_top_banner where id = $1::int", [id]).length === 0;
 }
 export function バナーを読む(id: string): バナーの行 | null {
-  const r = query("select id::text as id, image_url, link, disp_type::text as t from mtb_top_banner where id = $1::int", [id])[0];
-  return r ? { id: String(r.id), 画像URL: String(r.image_url), リンク: String(r.link), 表示タイプ: String(r.t) } : null;
+  const r = query("select id::text as id, image_url, link, disp_type::text as 表示 from mtb_top_banner where id = $1::int", [id])[0];
+  return r ? { id: String(r.id), 画像URL: String(r.image_url), リンク: String(r.link), 表示タイプ: String(r.表示) } : null;
 }
 export function 紐づく言語の数(id: string): number {
   return Number(query("select count(*)::int as n from dtb_top_banner_language where top_banner_id = $1::int", [id])[0]?.n ?? 0);

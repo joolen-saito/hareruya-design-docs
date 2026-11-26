@@ -20,7 +20,7 @@ export function 身分証画像の記録を足す(会員ID: string, 鍵の前半
 /** 会員に紐付く身分証画像の記録（画像種別の番号の順）。種別の番号・保管先の鍵 */
 export function 身分証画像の種別と鍵(会員ID: string): { 種別ID: string; 鍵: string }[] {
   return query(
-    `select g.identification_image_type_id::text as t, g.url from dtb_identification_image g join dtb_player p on p.id = g.player_id where p.customer_id = $1::int order by g.identification_image_type_id, g.id`,
+    `select g.identification_image_type_id::text as 種別列, g.url from dtb_identification_image g join dtb_player p on p.id = g.player_id where p.customer_id = $1::int order by g.identification_image_type_id, g.id`,
     [会員ID],
-  ).map((r) => ({ 種別ID: String(r.t), 鍵: String(r.url) }));
+  ).map((r) => ({ 種別ID: String(r.種別列), 鍵: String(r.url) }));
 }
