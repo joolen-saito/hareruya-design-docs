@@ -64,7 +64,11 @@ export async function 入庫して承認する(browser: Browser, seedId: string,
     const list = await searchStockByCode(page, { 商品コード: v.code, 店舗: v.店名, 在庫区分: "EC-CUBE" });
     const row = list.row(v.code, v.店名, "EC-CUBE");
     expect(await stockInRow(row), `${seedId}: 入庫の前の ${v.店名}・EC-CUBE の在庫`).toBe(0);
-    await list.openEdit(row);
+    // 在庫編集の画面は本文の描画が10秒を超えて遅れることがある（M04-13 097 で実測）ので、共通の openEdit（待ち10秒）でなく待ちを長くして開く
+    await expect(row, `${seedId}: 在庫検索一覧の対象の行は1件`).toHaveCount(1);
+    await row.locator("td.col-name a").click();
+    await expect(page.locator("form#stock_approval_form"), `${seedId}: 在庫編集の画面`).toBeVisible({ timeout: 90_000 });
+    await page.waitForLoadState("load");
     await fillStockEdit(page, { 在庫変動区分: "入庫/その他", 在庫変動理由: "試験データ", 在庫増減数: String(v.数), 仕入単価: String(v.単価), 承認通知先: v.承認者.名前 });
     await submitStockEdit(page, `${seedId} の在庫編集（入庫${v.数}）`, issue);
   });
