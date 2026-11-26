@@ -66,8 +66,9 @@ defineSeed("S-M03-38-QB-MASTER", async ({ browser, seed, notes }) => {
   if (String(セール[0].id) !== SALE_TAG_ID) throw new Error(`${seed.シードID}: 控えたセールのタグID（${セール[0].id}）がこのシードの固定値 ${SALE_TAG_ID} と違う`);
   reportSeedIssue(seed.シードID, `タグ「最新入荷アイテム」（タグID ${最新[0].id}）・固定セールタグ（タグID ${セール[0].id}。名称「${セール[0].name ?? ""}」）・グッズ商品CSVのカテゴリ（カテゴリID ${カテゴリID}）を参照で確かめて控えた。共有のマスタは足さない・書き換えない`);
 });
-defineSeed("S-M03-38-QB-BRANCH", async ({ seed }) => {
+defineSeed("S-M03-38-QB-BRANCH", async ({ seed, notes }) => {
   const b = 大阪支店();
+  notes.set("〔店舗ID-M0338-QB〕", String(b.ID));
   reportSeedIssue(seed.シードID, `支店URL qbbranchpub の支店は、店舗を作らない決まりのため、既にある支店「${b.店名}」（店舗ID ${b.ID}・公開側 ${b.パス}/）で読み替えた`);
 });
 
