@@ -50,6 +50,7 @@ async function 二規格の商品(browser: Browser, notes: { set(k: string, v: s
 
 defineSeed("S-A06-08-DUPLICATE-006", { needs: ["S-A06-08-ADM-A"] }, async ({ browser, notes, seed }) => {
   const 部門ID = await 試験部門を用意する(browser, seed.シードID, "A06-08部門");
+  notes.set("〔部門ID-A0608-006〕", 部門ID);
   reportSeedIssue(seed.シードID, "部門は「A06-08部門」（決まった印つき）を使い回した");
   await 二規格の商品(browser, notes, seed.シードID, {
     部門ID, コード: "A0608-006", 商品名日: rc("A06-08重複商品"), 商品名英: rc("A06-08 Duplicate Product"), カード名日: "A06-08重複カード", カード名英: "A06-08 Duplicate Card",
@@ -59,6 +60,10 @@ defineSeed("S-A06-08-DUPLICATE-006", { needs: ["S-A06-08-ADM-A"] }, async ({ bro
 
 defineSeed("S-A06-08-CBMULTI-023", { needs: ["S-A06-08-ADM-A"] }, async ({ browser, notes, seed }) => {
   const 部門ID = await 試験部門を用意する(browser, seed.シードID, "A06-08部門");
+  // 商品A・B とも同じ試験部門に置く（シード表は商品ごとに部門IDを控えると定める）
+  notes.set("〔部門ID-A0608-023A〕", 部門ID);
+  notes.set("〔部門ID-A0608-023B〕", 部門ID);
+  reportSeedIssue(seed.シードID, `部門は商品A・Bとも同じ試験部門（部門ID ${部門ID}）に置き、〔部門ID-A0608-023A〕〔部門ID-A0608-023B〕の両方にその番号を控えた（部門を分けることはケースの確かめに関わらない）`);
   reportSeedIssue(seed.シードID, "部門は「A06-08部門」（決まった印つき）を使い回した");
   const 前 = 前置き023();
   await 二規格の商品(browser, notes, seed.シードID, {
