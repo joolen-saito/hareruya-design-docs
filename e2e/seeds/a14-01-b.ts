@@ -6,8 +6,8 @@
  * - S-A14-01-FULL-007: カードフォーマット3件（フォーマットは開発環境の番号の小さい順に3つ・制限は使用可・制限・禁止）。
  */
 import { SETUP_ADMIN } from "../config/env";
-import { カード詳細の値, カードの値, マスターの行 } from "../db/a14_cards";
-import { 先頭のフォーマット } from "../db/a14_01_b";
+import { カード詳細の値, マスターの行 } from "../db/a14_cards";
+import { カードフォーマットの関連ID, 先頭のフォーマット } from "../db/a14_01_b";
 import { rc, rcFixed } from "../lib/run_marker";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 import { withAdminSession } from "../lib/session";
@@ -35,7 +35,6 @@ defineSeed("S-A14-01-FULL-006", async ({ browser, notes, seed }) => {
     if (!id) throw new Error(`${seed.シードID}: Foil が ${旗} のカード詳細が作られていない（作られたのは ${r.カード詳細IDs.join("・")}）`);
     notes.set(`〔カード詳細ID-A1401-006${添字}〕`, id);
   }
-  notes.set("〔色順ID-A1401-006〕", String(カードの値(r.カードID).color_sequence_id ?? ""));
   reportSeedIssue(seed.シードID, `色順「${名称}」（並び順12）は、MTGマスターデータ管理で決まった印つきの名称で${作った ? "1度だけ登録した" : "前の実行で登録したものを使い回した"}（全員が使うマスタ。依頼者決定 2026-11-14）。` +
     `固有色は名前「黒」（色ID ${黒.id}）。シード表のID 3・色順ID 4 は開発環境では別の行のことがあるので、名前で読み替えた`);
 });
@@ -47,5 +46,8 @@ defineSeed("S-A14-01-FULL-007", async ({ browser, notes, seed }) => {
     カード名日: rc("スカラベの饗宴-007"), カード名英: rc("Scarab Feast-007"), 点数で見たマナ: "0", 詳細: false,
     リーガリティ: [{ フォーマット: f[0].名日, リーガリティ: "使用可" }, { フォーマット: f[1].名日, リーガリティ: "制限" }, { フォーマット: f[2].名日, リーガリティ: "禁止" }],
   }, "2026-09-01 10:07:00+09", notes);
+  const 関連 = カードフォーマットの関連ID(r.カードID);
+  if (関連.length !== 3) throw new Error(`${seed.シードID}: カードフォーマットが ${関連.length} 件（3件のはず）`);
+  for (const [i, 添字] of ["A", "B", "C"].entries()) notes.set(`〔カードフォーマット関連ID-A1401-007${添字}〕`, 関連[i]);
   reportSeedIssue(seed.シードID, `フォーマットは、シード表のID 1・2・3でなく、開発環境で番号の小さい順の3つ（${f.map((x) => `ID ${x.id}「${x.名日}」`).join("・")}）に、制限を 使用可・制限・禁止 の順に付けた（カードID ${r.カードID}）`);
 });

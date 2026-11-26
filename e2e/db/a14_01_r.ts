@@ -17,6 +17,11 @@ type 行 = Record<string, string | null>;
 
 // ---- 書き足し ----
 
+/** カード詳細のカード番号（画面は 0 以上 999999 以下の数しか受け付けないので、登録後に シード表の値へ書き換える。この実行で作ったカード詳細だけ） */
+export function カード番号を書く(what: string, カード詳細ID: string, カード番号: string): void {
+  updateOwnRows(what, { table: "mtb_card_detail", key: "id", ids: [カード詳細ID], set: { card_no: カード番号 }, owner: 自分のカード詳細() });
+}
+
 /** カード詳細の裏面カード詳細ID（画面にも入力欄があるが、作った後に別の E2E のカード詳細へ向け直すのに使う） */
 export function 裏面を書く(what: string, カード詳細ID: string, 裏面ID: string): void {
   updateOwnRows(what, { table: "mtb_card_detail", key: "id", ids: [カード詳細ID], set: { back_card_detail_id: 裏面ID }, owner: 自分のカード詳細() });

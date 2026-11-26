@@ -13,7 +13,7 @@
  */
 import { Browser } from "@playwright/test";
 import { BASE_URL } from "../config/env";
-import { 会員を読む, メールの会員の数, 仮会員にする, 削除済みにする } from "../db/a15_01";
+import { 会員を読む, メールの会員の数, 仮会員にする, 削除済みにする, 選手を削除済みにする } from "../db/a15_01";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { hideDebugToolbar } from "../lib/session";
 import { registerFrontMember } from "../pages/front/member_entry";
@@ -108,9 +108,15 @@ defineSeed("S-A15-01-STATUS-005", async (ctx) => {
 });
 
 defineSeed("S-A15-01-CREDENTIALS-006", async (ctx) => {
-  await 会員を作る(ctx, { メール: "login.a1501-006@example.test", パスワード: "LoginA1501-006!", 名: "A1501006", 選手: false, 呼び名: "006" });
+  await 会員を作る(ctx, { メール: "login.a1501-006@example.test", パスワード: "LoginA1501-006!", 名: "A1501006", 選手: true, 呼び名: "006", 選手の呼び名: false });
+  // 画面の登録では、MTG Companion登録名を入れなくても選手が作られる。シード表は「プレイヤーは未登録」をDBで取り除くと定めるので、E2E の会員の選手にだけ削除の印を立てる
+  const メール = A1501のメール("login.a1501-006@example.test");
+  const m = 会員を読む(メール);
+  if (!m || !m.選手ID) throw new Error(`${ctx.seed.シードID}: 会員 ${メール} の選手が読めない`);
+  選手を削除済みにする(ctx.seed.シードID, m.選手ID, メール);
+  if (会員を読む(メール)?.選手ID) throw new Error(`${ctx.seed.シードID}: 会員 ${メール} の選手を取り除けていない`);
   会員が無い(ctx.seed.シードID, "absent.a1501-006@example.test");
-  reportSeedIssue(ctx.seed.シードID, `${印の注記}。この会員は MTG Companion登録名を入れずに登録し、選手を作らなかった（シード表の「対応するプレイヤーは未登録」）`);
+  reportSeedIssue(ctx.seed.シードID, `${印の注記}。この会員は MTG Companion登録名を入れずに登録したが、画面の登録では選手ができた。シード表の「対応するプレイヤーは未登録」のとおり、この E2E の会員の選手の行にだけ DB で削除の印を立てて取り除いた（行は消さない。lib/db_write.ts）`);
 });
 
 defineSeed("S-A15-01-AUTHZ-009", async (ctx) => {

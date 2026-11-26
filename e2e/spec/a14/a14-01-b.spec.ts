@@ -18,7 +18,7 @@ const n = (v: string) => Number(v);
 caseTest("IT-A14-01-006", async ({ page, notes, step, expected }) => {
   const id = notes.get("〔カードID-A1401-006〕");
   const 詳細 = (["A", "B", "C"] as const).map((k) => notes.get(`〔カード詳細ID-A1401-006${k}〕`));
-  const sid = notes.get("〔色順ID-A1401-006〕");
+  const sid = String(カードの値(id).color_sequence_id ?? ""); // 色順IDはシード表が控えると定めない。DB のカードの行から読む
   let db: { 固有色: { id: string; name_jp: string | null; name_en: string | null }[]; 詳細: { id: string; foil: string | null; frame: string | null }[]; 色順: ReturnType<typeof 色順の行> } | undefined;
   let r!: 応答;
   await step(1, async () => {

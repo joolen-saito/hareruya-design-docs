@@ -13,7 +13,7 @@
  */
 import { request } from "@playwright/test";
 import { API_BASE_URL } from "../config/env";
-import { 選手を削除済みにする } from "../db/a15_01";
+import { 会員を読む, 選手を削除済みにする } from "../db/a15_01";
 import { 選手に書く } from "../db/a15_04";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { A1501のメール, 会員を作る, 印の注記 } from "./a15-01";
@@ -40,9 +40,11 @@ type 定め = { シード表のメール: string; 呼び名: string; ニック�
 
 async function 作る(ctx: SeedCtx, d: 定め): Promise<void> {
   // シード表は会員IDを「顧客ID」と呼び、デッキユーザーIDを控えると書かない
-  await 会員を作る(ctx, { メール: d.シード表のメール, パスワード: A1505_PASSWORD, 名: `A1505${d.呼び名}`, 選手: true, 呼び名: d.呼び名, 機能: "A1505", 会員IDの名: "顧客ID", デッキユーザーIDを控える: false });
+  await 会員を作る(ctx, { メール: d.シード表のメール, パスワード: A1505_PASSWORD, 名: `A1505${d.呼び名}`, 選手: true, 呼び名: d.呼び名, 機能: "A1505", 会員IDの名: "顧客ID", デッキユーザーIDを控える: false, ...(d.選手を無くす ? { 選手の呼び名: false as const } : {}) });
   const メール = A1501のメール(d.シード表のメール);
-  const 選手ID = ctx.notes.get(`〔プレイヤーID-A1505-${d.呼び名}〕`);
+  // 「対応するプレイヤー=0件」の会員は、シード表が選手IDを控えると書かない。選手IDは控え（notes）に入れず、DB から読んで使う
+  const 選手ID = d.選手を無くす ? (会員を読む(メール)?.選手ID ?? "") : ctx.notes.get(`〔プレイヤーID-A1505-${d.呼び名}〕`);
+  if (d.選手を無くす && !選手ID) throw new Error(`${ctx.seed.シードID}: 会員 ${メール} の選手が読めない`);
   if (d.ニックネーム !== undefined || d.プロフィール !== undefined) {
     選手に書く(ctx.seed.シードID, 選手ID, メール, { ニックネーム: d.ニックネーム, プロフィール: d.プロフィール });
   }

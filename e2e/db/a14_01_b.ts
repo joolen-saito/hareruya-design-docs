@@ -6,6 +6,11 @@ export function 先頭のフォーマット(n: number): { id: string; 名日: st
   return query(`select id::text as id, name_jp from mtb_format where deleted_at is null order by id limit $1::int`, [n]).map((r) => ({ id: String(r.id), 名日: String(r.name_jp) }));
 }
 
+/** カードのカードフォーマットの関連ID（フォーマットIDの順。画面に表示されないので DB を参照する） */
+export function カードフォーマットの関連ID(カードID: string): string[] {
+  return query(`select id::text as i from dtb_card_format where card_id = $1::int order by format_id`, [カードID]).map((r) => String(r.i));
+}
+
 /** カードのカードフォーマット（フォーマットID・制限ID。フォーマットIDの順） */
 export function カードのフォーマット(カードID: string): { フォーマット: string; 制限: string }[] {
   return query(`select format_id::text as f, restriction_id::text as r from dtb_card_format where card_id = $1::int order by format_id`, [カードID]).map((r) => ({ フォーマット: String(r.f), 制限: String(r.r) }));
