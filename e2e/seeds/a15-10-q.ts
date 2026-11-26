@@ -12,6 +12,7 @@
  */
 import { BASE_URL } from "../config/env";
 import { 公開区分の番号 } from "../db/a15_18";
+import { 会員を読む } from "../db/a15_01";
 import { defineSeed, reportSeedIssue, SeedCtx } from "../lib/seeds";
 import { rc } from "../lib/run_marker";
 import { hideDebugToolbar, withAdminSession } from "../lib/session";
@@ -43,7 +44,11 @@ async function 会員とデッキを作る(ctx: SeedCtx, n: string, 呼び名: s
   const { browser, notes } = ctx;
   const メール = `a1510-ae${n}@example.test`;
   const パスワード = `ItA1510-Pass-AE${n}!`;
-  await 会員を作る(ctx, { メール, パスワード, 名, 選手: true, 呼び名, 機能: "A1510", 会員IDの名: "顧客ID", デッキユーザーIDを控える: false });
+  // シード表は選手IDを〔選手ID-A1510-<呼び名>〕で控えると定める（共通の部品の〔プレイヤーID-…〕の名では控えない）
+  await 会員を作る(ctx, { メール, パスワード, 名, 選手: true, 呼び名, 機能: "A1510", 会員IDの名: "顧客ID", デッキユーザーIDを控える: false, 選手の呼び名: false });
+  const 選手ID = 会員を読む(A1501のメール(メール))?.選手ID;
+  if (!選手ID) throw new Error(`${ctx.seed.シードID}: 登録した会員の選手IDが DB に無い`);
+  notes.set(`〔選手ID-A1510-${呼び名}〕`, 選手ID);
   所有者の定め[`AE${n}`] = { メール: A1501のメール(メール), パスワード };
   const c = await browser.newContext({ baseURL: BASE_URL, locale: "ja-JP", ignoreHTTPSErrors: true });
   try {
