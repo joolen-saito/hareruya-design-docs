@@ -18,6 +18,8 @@ import { M0333_ADMIN, m0333FilePath } from "../../seeds/m03-33";
 import { readState } from "../../seeds/m03-33-b";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
+/** 取込がファイルの形（列数）で拒まれず受け付けられたこと。ケースが意図した道を通ったことの前提の確かめで、正本の期待結果を足すものではない */
+const 受付済み = (msg: string, what: string) => expect.soft(msg, `${what}（列数・形式の誤りで拒まれていない。「CSVのフォーマットが一致しません」が出ない）`).not.toContain("CSVのフォーマットが一致しません");
 const list = (xs: string[]) => xs.join(" / ") || "なし";
 
 async function signIn(page: Page): Promise<HighPriceCsvUploadPage> {
@@ -42,7 +44,7 @@ async function prepare(ctx: CaseCtx, n: string, file: string, seedId = `S-M03-33
   const upload = await signIn(page);
   const t = {
     code, before: before as 商品, after: null as 商品 | null,
-    sent: false, path: "", 見出し: "",
+    sent: false, path: "", 見出し: "", 成功: [] as string[], 警告: [] as string[], エラー: [] as string[],
     open: async () => { await upload.open(); },
     importFile: async () => {
       await upload.choose(m0333FilePath(file));
@@ -52,6 +54,7 @@ async function prepare(ctx: CaseCtx, n: string, file: string, seedId = `S-M03-33
       if (!r.sent) note(`「CSVファイルをアップロード」を押すと、ブラウザの入力チェックが送信を止めた（${r.止めた項目.join(" / ")}）`);
       else note(`「CSVファイルをアップロード」を押したあとの取込の要求の応答: ${r.status}`);
       const m = await upload.messages();
+      t.成功 = m.成功; t.警告 = m.警告; t.エラー = m.エラー;
       t.path = pathOf(page.url());
       t.見出し = ((await upload.見出し.textContent().catch(() => "")) ?? "").trim();
       note(`押したあとの画面上部のメッセージ: 成功「${list(m.成功)}」・警告「${list(m.警告)}」・エラー「${list(m.エラー)}」`);
@@ -155,6 +158,7 @@ caseTest("IT-M03-33-017", async (ctx) => {
   await step(1, async () => { await t.open(); await t.importFile(); });
   await expected(async () => {
     expect.soft(t.sent, "取込の要求が送られた").toBe(true);
+    受付済み([...t.成功, ...t.警告, ...t.エラー].join(" / "), "取込が受け付けられている");
     expect.soft(t.path, "取込のあとの画面").toBe(uploadPath("セール用高額商品価格変更"));
     expect.soft(t.見出し, "取込のあとの画面の見出し").toBe("セール用高額商品価格変更CSVアップロード");
   });
@@ -166,6 +170,7 @@ caseTest("IT-M03-33-018", async (ctx) => {
   await step(1, async () => { await t.open(); await t.importFile(); });
   await expected(async () => {
     expect.soft(t.sent, "取込の要求が送られた").toBe(true);
+    受付済み([...t.成功, ...t.警告, ...t.エラー].join(" / "), "取込が受け付けられている");
     expect.soft(t.path, "取込のあとの画面").toBe(uploadPath("セール用高額商品価格変更"));
     expect.soft(t.見出し, "取込のあとの画面の見出し").toBe("セール用高額商品価格変更CSVアップロード");
   });

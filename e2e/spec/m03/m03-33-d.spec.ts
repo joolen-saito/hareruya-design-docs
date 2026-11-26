@@ -13,6 +13,8 @@ import { HighPriceCsvUploadPage } from "../../pages/admin/m03_32_high_price_csv"
 import { M0333_ADMIN, m0333FilePath } from "../../seeds/m03-33";
 import "../../seeds/m03-33-d";
 
+/** 取込がファイルの形で拒まれず受け付けられたこと（拒まれた理由がデータの中身であることを確かめる前提） */
+const 受付済み = (msg: string, what: string) => expect.soft(msg, `${what}（列数・形式の誤りで拒まれていない。「CSVのフォーマットが一致しません」が出ない）`).not.toContain("CSVのフォーマットが一致しません");
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 
 async function open(page: Page): Promise<HighPriceCsvUploadPage> {
@@ -44,10 +46,12 @@ caseTest("IT-M03-33-007", async ({ page, notes, step, expected }) => {
   note(`取込前（DBの参照）: 商品のタグ ${商品のタグ(productId).join(",")}・規格A ${notes.get("〔商品規格ID-M0333-007A〕")}・規格B ${notes.get("〔商品規格ID-M0333-007B〕")}`);
   let u!: HighPriceCsvUploadPage;
   await step(1, async () => { u = await open(page); });
-  await step(2, async () => { await importFile(u, "tags_replace-007.csv"); });
+  let msg = "";
+  await step(2, async () => { msg = await importFile(u, "tags_replace-007.csv"); });
   let tags: string[] = [];
   await step(3, async () => { tags = 商品のタグ(productId); note(`取込後（DBの参照）: 商品全体のタグ（番号の順） ${tags.join(",") || "なし"}`); });
   await expected(async () => {
+    受付済み(msg, "取込が受け付けられている");
     expect.soft(tags.includes("1"), "取込前のタグID 1が削除されている").toBe(false);
     expect.soft(tags, "商品全体のタグがID 2とID 3だけ（CSV指定順の2,3。DBは番号の順に読む）").toEqual(["2", "3"]);
   });
@@ -58,10 +62,12 @@ caseTest("IT-M03-33-008", async ({ page, notes, step, expected }) => {
   note(`取込前（DBの参照）: 商品のタグ ${商品のタグ(productId).join(",")}`);
   let u!: HighPriceCsvUploadPage;
   await step(1, async () => { u = await open(page); });
-  await step(2, async () => { await importFile(u, "tags_empty-008.csv"); });
+  let msg = "";
+  await step(2, async () => { msg = await importFile(u, "tags_empty-008.csv"); });
   let tags: string[] = [];
   await step(3, async () => { tags = 商品のタグ(productId); note(`取込後（DBの参照）: 商品のタグ ${tags.join(",") || "なし"}`); });
   await expected(async () => {
+    受付済み(msg, "取込が受け付けられている");
     expect.soft(tags, "商品に登録されていたタグがすべて削除され、登録タグが0件").toEqual([]);
   });
 });
@@ -72,7 +78,8 @@ caseTest("IT-M03-33-044", async ({ page, notes, step, expected }) => {
   const beforeA = stateOf(a);
   const beforeB = stateOf(b);
   note(`取込前（DBの参照）: A ${beforeA.商品コード}・${beforeA.販売価格}/${beforeA.買取価格}/${beforeA.セール}、B ${beforeB.商品コード}・${beforeB.販売価格}/${beforeB.買取価格}/${beforeB.セール}`);
-  await step(1, async () => { const u = await open(page); await importFile(u, "duplicate_product_code-044.csv"); });
+  let msg = "";
+  await step(1, async () => { const u = await open(page); msg = await importFile(u, "duplicate_product_code-044.csv"); });
   let afterA!: ReturnType<typeof stateOf>;
   let afterB!: ReturnType<typeof stateOf>;
   await step(2, async () => {
@@ -80,6 +87,7 @@ caseTest("IT-M03-33-044", async ({ page, notes, step, expected }) => {
     note(`取込後（DBの参照）: A ${afterA.販売価格}/${afterA.買取価格}/${afterA.セール}、B ${afterB.販売価格}/${afterB.買取価格}/${afterB.セール}`);
   });
   await expected(async () => {
+    受付済み(msg, "取込が受け付けられている");
     expect.soft(afterA.商品コード, "2件とも同じ商品コード").toBe(afterB.商品コード);
     expect.soft([afterA.販売価格, afterA.買取価格, afterA.セール], "商品Aの販売価格・買取価格・セールが更新されない").toEqual(["1500", "600", false]);
     expect.soft([afterB.販売価格, afterB.買取価格, afterB.セール], "商品Bの販売価格・買取価格・セールが更新されない").toEqual(["1500", "600", false]);

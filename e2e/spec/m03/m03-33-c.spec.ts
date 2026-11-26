@@ -16,6 +16,8 @@ import "../../seeds/m03-33-c";
 
 const note = (m: string) => { test.info().annotations.push({ type: "手順の注記", description: m }); };
 const URL_BASE = "https://replace-dev.hareruyamtg.com:8443";
+/** 取込がファイルの形で拒まれず受け付けられたこと（拒まれた理由がデータの中身であることを確かめる前提） */
+const 受付済み = (msg: string, what: string) => expect.soft(msg, `${what}（列数・形式の誤りで拒まれていない。「CSVのフォーマットが一致しません」が出ない）`).not.toContain("CSVのフォーマットが一致しません");
 
 async function open(page: Page): Promise<HighPriceCsvUploadPage> {
   await loginAdmin(page, M0333_ADMIN);
@@ -64,11 +66,13 @@ function notUpdatedWithTag(n: string, file: string, 手順の数: number) {
     const before = stateOf(classId);
     note(`取込前（DBの参照）: 販売価格 ${before.販売価格}・買取価格 ${before.買取価格}・セール ${before.セール}・タグ ${商品のタグ(productId).join(",")}`);
     let u!: HighPriceCsvUploadPage;
-    if (手順の数 === 2) await step(1, async () => { u = await open(page); await importFile(u, file); });
-    else { await step(1, async () => { u = await open(page); }); await step(2, async () => { await importFile(u, file); }); }
+    let msg = "";
+    if (手順の数 === 2) await step(1, async () => { u = await open(page); msg = await importFile(u, file); });
+    else { await step(1, async () => { u = await open(page); }); await step(2, async () => { msg = await importFile(u, file); }); }
     let after!: ReturnType<typeof stateOf>; let tags: string[] = [];
     await step(手順の数, async () => { after = stateOf(classId); tags = 商品のタグ(productId); note(`取込後（DBの参照）: 販売価格 ${after.販売価格}・買取価格 ${after.買取価格}・セール ${after.セール}・タグ ${tags.join(",")}`); });
     await expected(async () => {
+      受付済み(msg, "取込が受け付けられている");
       expect.soft(after.販売価格, "販売価格が更新されない").toBe("1500");
       expect.soft(after.買取価格, "買取価格が更新されない").toBe("600");
       expect.soft(after.セール, "セールが無効のまま").toBe(false);
@@ -84,11 +88,12 @@ caseTest("IT-M03-33-061", notUpdatedWithTag("061", "m0333-061-tag.csv", 3));
 caseTest("IT-M03-33-041", async ({ page, step, expected }) => {
   const file = "unknown_product-041.csv";
   const before = ファイル名の取込履歴(file).length;
-  let u!: HighPriceCsvUploadPage;
-  await step(1, async () => { u = await open(page); await importFile(u, file); });
+  let u!: HighPriceCsvUploadPage; let msg = "";
+  await step(1, async () => { u = await open(page); msg = await importFile(u, file); });
   let after = -1;
   await step(2, async () => { after = ファイル名の取込履歴(file).length; note(`取込履歴（同名）の件数: 取込前 ${before}・取込後 ${after}`); });
   await expected(async () => {
+    受付済み(msg, "取込が受け付けられている");
     expect.soft(after, "取込履歴が増えない").toBe(before);
   });
 });
@@ -96,11 +101,12 @@ caseTest("IT-M03-33-041", async ({ page, step, expected }) => {
 caseTest("IT-M03-33-042", async ({ page, notes, step, expected }) => {
   const classId = notes.get("〔商品規格ID-M0333-042〕");
   const before = stateOf(classId);
-  let u!: HighPriceCsvUploadPage;
-  await step(1, async () => { u = await open(page); await importFile(u, "no_high_price_code-042.csv"); });
+  let u!: HighPriceCsvUploadPage; let msg = "";
+  await step(1, async () => { u = await open(page); msg = await importFile(u, "no_high_price_code-042.csv"); });
   let after!: ReturnType<typeof stateOf>;
   await step(2, async () => { after = stateOf(classId); note(`取込後（DBの参照）: 販売価格 ${after.販売価格}・買取価格 ${after.買取価格}・セール ${after.セール}`); });
   await expected(async () => {
+    受付済み(msg, "取込が受け付けられている");
     expect.soft(after.販売価格, "販売価格が更新されない").toBe("1500");
     expect.soft(after.買取価格, "買取価格が更新されない").toBe("600");
     expect.soft(after.セール, "セールが無効のまま").toBe(false);
@@ -133,6 +139,7 @@ caseTest("IT-M03-33-057", async ({ page, step, expected }) => {
   await step(1, async () => { u = await open(page); });
   await step(2, async () => { msg = await importFile(u, "m0333-057-unknown.csv"); });
   await expected(async () => {
+    受付済み(msg, "取込が受け付けられている");
     expect.soft(msg, "完了メッセージ「登録が完了しました。」が表示されない").not.toContain("登録が完了しました。");
   });
 });
