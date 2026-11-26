@@ -52,7 +52,9 @@ export type 関連の控え = { タグ名: string; 能力名: string; 記事URL:
 export function 応答に含めない関連を足す(what: string, カードID: string, 番号: string): 関連の控え {
   const タグ名 = `除外確認タグ-${番号}-${RUN_MARK}`;
   const 能力名 = `除外確認能力-${番号}-${RUN_MARK}`;
-  const 記事URL = `https://replace-dev.hareruyamtg.com:8443/a14-01-${番号}/article-${RUN_MARK}`;
+  // 記事の URL の列は64文字まで。正本の「…/a14-01-<番号>/article」に実行の印を足すと超えるので、末尾の「article」を印に置き換える（応答に含めないことを確かめる行なので、URL の値は期待結果に関わらない）
+  const 記事URL = `https://replace-dev.hareruyamtg.com:8443/a14-01-${番号}/${RUN_MARK}`;
+  if (記事URL.length > 64) throw new Error(`${what}: 記事の URL「${記事URL}」が64文字を超える（列の長さ）`);
   const デッキ名 = `除外確認デッキ-${番号}-${RUN_MARK}`;
   const 今 = new Date().toISOString();
   const [タグID] = insertMarkedRows(`${what}: カードタグ`, { table: "dtb_cardtag", key: "id", markColumn: "name_en", rows: [{ name_jp: タグ名, name_en: `Excluded Tag-${番号}-${RUN_MARK}` }] });

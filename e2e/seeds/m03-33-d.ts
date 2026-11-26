@@ -43,7 +43,7 @@ function multiSeed(n: string, file: string): void {
       const productId = notes.get(`〔商品ID-M0333-${n}〕`);
       await openClassList(page, productId);
       const idB = await addClass(page, productId, {
-        言語: "日本語", 状態: "SP", 商品コード: b, 基準価格: "1500", 販売価格: "1500", 買取価格: "600", 高額商品コード: b,
+        言語: "日本語", 状態: "スライトリープレイド", 商品コード: b, 基準価格: "1500", 販売価格: "1500", 買取価格: "600", 高額商品コード: b,
       }, `${seedId}: 規格B 商品コード ${b}`, (m) => reportSeedIssue(seedId, m));
       notes.set(`〔商品規格ID-M0333-${n}B〕`, idB);
       // 作ったあと、規格Bとタグがシード表の状態になっていることをDBの参照で確かめる（違えばケースの前提が崩れるので止める）
