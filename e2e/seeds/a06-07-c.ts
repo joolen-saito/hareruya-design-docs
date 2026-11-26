@@ -47,7 +47,7 @@ defineSeed("S-A06-07-DUPLICATE-007", { needs: ["S-A06-07-ADM-A"] }, async ({ bro
   await withAdminSession(browser, SETUP_ADMIN, async (page) => {
     page.setDefaultTimeout(60_000);
     await openClassList(page, a.商品ID);
-    bID = await addClass(page, a.商品ID, { 言語: "日本語", 状態: "NM", 商品コード: コード, 基準価格: "100", 販売価格: "100", 買取価格: "10" }, `${seed.シードID}: ${コード}`, issue);
+    bID = await addClass(page, a.商品ID, { 言語: "日本語", 状態: "ニアミント", 商品コード: コード, 基準価格: "100", 販売価格: "100", 買取価格: "10" }, `${seed.シードID}: ${コード}`, issue);
   });
   await 入庫して承認する(browser, seed.シードID, [{ 商品コード: コード, 数量: 1 }], issue, 決まった入庫の管理者);
   issue("同じ商品の言語JP・状態NMに、商品規格一覧の「新規作成」で2件目の商品規格を足し（部門は選択肢の先頭）、本店・EC-CUBE へ1入庫して承認した");
