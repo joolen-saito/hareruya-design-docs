@@ -8,6 +8,7 @@
 import { Page, test } from "@playwright/test";
 import { BASE_URL } from "../../config/env";
 import { expect, caseTest } from "../../lib/case";
+import { 別のブラウザの画面を撮る, scene } from "../../lib/evidence_other";
 import { adminUrl, hideDebugToolbar, loginAdmin } from "../../lib/session";
 import { checkAndOpenBulkApprove, confirmBulkApprove } from "../../pages/admin/m04_02_rc_stock";
 import { searchApprovalList } from "../../pages/admin/m04_32_approval_list";
@@ -102,11 +103,17 @@ caseTest("IT-M04-21-052", async ({ page, browser, step, expected }) => {
   supplement("「この支店で在庫を持つ商品はこの1件だけ」は共有の試験支店では保てないので、「SALE中の商品」のうち商品名「QE0421-002-NAME」（実行の印つき）のカードだけを確かめた");
   const 読む = async (when: string): Promise<{ 件数: number; 在庫の文: string }> => {
     await top.開いている();
-    await expect(top.SALE中, `${when}: 「SALE中の商品」の区画`).toHaveCount(1, { timeout: 30_000 }).catch(() => undefined);
+    // 前提の確かめ（正本の期待ではない）: アプリは「SALE中の商品」が0件だと区画ごと出さないため、区画の有無は失敗にしない。
+    // 0件が描画の失敗でないことを、0件でも必ず出る支店のヘッダで確かめる。
+    const ヘッダ = b.page.locator("header.p-hareruya-header--branch");
+    await expect(ヘッダ.locator(".p-hareruya-header__branch-name").first(), `${when}: 支店ECTOPのヘッダの支店名（前提の確かめ・ページが読み込めている）`).toBeVisible({ timeout: 30_000 });
+    const 区画 = await top.SALE中.count();
+    note(`${when}: 前提の確かめ: 支店ECTOPのヘッダ（支店名）が表示されている。「SALE中の商品」の区画 ${区画} 件（商品0件のときアプリは区画ごと出さない）`);
     const cards = top.SALE中の商品(d.商品名);
     const 件数 = await cards.count();
     const 在庫の文 = 件数 > 0 ? ((await cards.first().locator(".p-hareruya-product-card__stock").first().textContent({ timeout: 10_000 }).catch(() => "")) ?? "").replace(/\s+/g, " ").trim() : "";
     note(`${when}: 「SALE中の商品」の商品名「${d.商品名}」のカード ${件数} 件・在庫の表示「${在庫の文}」`);
+    await 別のブラウザの画面を撮る(b.page, scene.stepLabel(when === "手順1" ? 1 : 6, `ブラウザB（公開側）の支店ECTOP・${when}`));
     return { 件数, 在庫の文 };
   };
   let 前 = { 件数: -1, 在庫の文: "" };
