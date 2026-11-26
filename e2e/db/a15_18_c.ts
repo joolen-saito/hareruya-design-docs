@@ -32,8 +32,8 @@ export type カード画像の行 = { 番号: string; 登録日時: string };
 /** カードのカード画像（表面）を、登録日時の古い順に */
 export function カードの画像を登録日時の順に読む(カードID: string): カード画像の行[] {
   return query(
-    `select i.id::text as id, i.create_date::text as t from mtb_card_image i join mtb_card_detail d on d.id = i.card_detail_id
-      where d.card_id = $1::int and i.back_flg = false order by i.create_date, i.id`, [カードID]).map((r) => ({ 番号: String(r.id), 登録日時: String(r.t) }));
+    `select i.id::text as id, i.create_date::text as 登録日時列 from mtb_card_image i join mtb_card_detail d on d.id = i.card_detail_id
+      where d.card_id = $1::int and i.back_flg = false order by i.create_date, i.id`, [カードID]).map((r) => ({ 番号: String(r.id), 登録日時: String(r.登録日時列) }));
 }
 
 /**
