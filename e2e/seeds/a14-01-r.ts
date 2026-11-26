@@ -14,13 +14,14 @@ import { カードを作る } from "./a14-01";
 import { 全部の関連, マスターを用意する } from "./a14-02";
 import { カード画像を足す, カードが無い, 応答に含めない関連を足す, 裏面を書く, 言語ID } from "../db/a14_01_r";
 import { rc } from "../lib/run_marker";
+import { Notes } from "../lib/notes";
 import { defineSeed, reportSeedIssue } from "../lib/seeds";
 
 const 日時 = "2026-09-01 10:05:00+09";
 
 defineSeed("S-A14-01-FULL-004", async ({ browser, notes, seed }) => {
   const m = await マスターを用意する(browser, seed.シードID);
-  const 裏 = await カードを作る(browser, seed.シードID, "004裏", { カード名日: rc("スカラベの饗宴-004裏"), カード名英: rc("Scarab Feast-004 Back"), 点数で見たマナ: "0", 詳細: [{ ID: 全部の関連(m), Foil: "なし", フレーム: "通常" }] }, "2026-09-01 10:04:00+09", notes);
+  const 裏 = await カードを作る(browser, seed.シードID, "004裏", { カード名日: rc("スカラベの饗宴-004裏"), カード名英: rc("Scarab Feast-004 Back"), 点数で見たマナ: "0", 詳細: [{ ID: 全部の関連(m), Foil: "なし", フレーム: "通常" }] }, "2026-09-01 10:04:00+09", new Notes()); // 裏面用のカードの番号はシード表に無い呼び名なので、控え（notes）に入れない
   const 裏ID = 裏.カード詳細IDs[0];
   const r = await カードを作る(browser, seed.シードID, "004", {
     カード名日: rc("スカラベの饗宴-004"), カード名英: rc("Scarab Feast-004"), 点数で見たマナ: "0",
