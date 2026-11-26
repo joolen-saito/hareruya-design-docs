@@ -28,7 +28,7 @@ const 規格の明細 = (規格: string, name: string, quantity: number, price: 
 const 本文 = (order_status: number, smaregi: number | null, order_details: 明細[], flg: string | boolean = "true") => ({ order_status, qualified_invoice_issuer_confirmation_flg: flg, smaregi_transaction_id: smaregi, order_details });
 
 type 場 = { 番号: string; 受注: string; 規格: string; 商品コード: string; 部門: string };
-const 場を作る = (ctx: CaseCtx, 番号: string): 場 => ({ 番号, 受注: (ctx.notes.has(`〔受注ID-A0603-${番号}〕`) ? L(ctx, "受注ID", 番号) : 査定IDの受注ID(L(ctx, "査定ID", 番号)) ?? ""), 規格: L(ctx, "商品規格ID", 番号), 商品コード: `A0603-${番号}`, 部門: ctx.notes.get("〔部門ID-A0603-共有〕") });
+const 場を作る = (ctx: CaseCtx, 番号: string): 場 => ({ 番号, 受注: (ctx.notes.has(`〔受注ID-A0603-${番号}〕`) ? L(ctx, "受注ID", 番号) : ctx.notes.has(`〔査定ID-A0603-${番号}〕`) ? 査定IDの受注ID(L(ctx, "査定ID", 番号)) ?? "" : ""), 規格: ctx.notes.has(`〔商品規格ID-A0603-${番号}〕`) ? L(ctx, "商品規格ID", 番号) : "", 商品コード: `A0603-${番号}`, 部門: ctx.notes.get("〔部門ID-A0603-共有〕") });
 
 type 送る定め = { 受注ID?: (c: 場) => string; トークン: "有効" | "なし" | "不正"; 本文: (c: 場) => unknown };
 /** 手順1: API へ PUT を送る。手順2: 応答（DB を見るケースでは DB）を確かめる */

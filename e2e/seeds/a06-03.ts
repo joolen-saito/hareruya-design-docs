@@ -81,8 +81,9 @@ function 受注のシード(seedId: string, 番号: string, 作り: 作り): voi
   defineSeed(seedId, { needs: ["S-A06-03-ADM", "S-A06-03-OTHER-ADM", "S-A06-03-SECTIONS"] }, async ({ browser, notes, seed }) => {
     const 姓 = rc(`A0603-${番号}`);
     const p = await カード商品を作る(browser, seed.シードID, { 商品コード: `A0603-${番号}`, 商品名日: `A0603試験商品${番号}`, 商品名英: `A0603 Test Product ${番号}`, 基準価格: "100", 販売価格: "100", 買取価格: "10", 在庫: 0 });
-    notes.set(`〔商品ID-A0603-${番号}〕`, p.商品ID);
-    notes.set(`〔商品規格ID-A0603-${番号}〕`, p.規格ID);
+    // 商品ID・商品規格IDは、シード表が控えると定めるシードだけ控える（定めないシードで控えると「シード表に無い呼び名」で止まる）
+    if ((seed["状態・属性"] + seed.投入方法).includes(`〔商品ID-A0603-${番号}〕`)) notes.set(`〔商品ID-A0603-${番号}〕`, p.商品ID);
+    if ((seed["状態・属性"] + seed.投入方法).includes(`〔商品規格ID-A0603-${番号}〕`)) notes.set(`〔商品規格ID-A0603-${番号}〕`, p.規格ID);
     const [申込] = await 申込を行う(browser, 試験支店.支店URL, [申込者の(姓, `査定${番号}`, "ゼンテイ", "ジュチュウ")]);
     const 査定ID = 申込番号の査定ID(申込);
     const 受注ID = 査定IDの受注ID(査定ID);
