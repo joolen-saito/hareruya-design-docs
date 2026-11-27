@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 US = Path(__file__).resolve().parents[1]
-ID = re.compile(r"\bU[A-Z]{2}-\d+\b")
+ID = re.compile(r"\bU[A-Z]{2}-\d{2}\b")  # シナリオIDは数字2桁（「UTF-8」などを取り違えない。2026-11-27）
 
 
 def all_ids():

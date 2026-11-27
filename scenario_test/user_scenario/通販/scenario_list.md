@@ -7,7 +7,7 @@
 | L1 業務領域 | シナリオのグループ | 受注〜出荷（通販） |
 | L2 シナリオ | 起点イベント→業務完了 | この表の1行 |
 | L3 バリエーション | 条件違い・例外 | `matrix/`（UTS-01の購入部分）・`matrix_UTS-02/`（取り消し・返金）・`matrix_UTS-19/`（返品）・`matrix_UTS-04/`・`matrix_UTS-05/`・`matrix_UTS-07/`・`matrix_UTS-08/`・`matrix_UTS-10/`・`matrix_UTS-11/`・`matrix_UTS-12/`・`matrix_UTS-14/`〜`matrix_UTS-18/`・`matrix_UTS-20/`・`matrix_UTS-21/`（値ごとに1回ずつ流す）と、各行の「L3」欄 |
-| L4 ステップ | 画面操作と確認 | 各シナリオの「操作の流れと期待値」 |
+| L4 ステップ | 画面操作と確認 | 各シナリオのL4のファイル `UTS-01_*.md`〜`UTS-21_*.md`（UTS-01 の見本は `US-TSUHAN-01〜03_*.md`）の「操作の流れと期待値」 |
 
 ## シナリオ一覧
 

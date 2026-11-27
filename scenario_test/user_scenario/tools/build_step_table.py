@@ -43,60 +43,20 @@ import flow_from_xlsx as fx  # noqa: E402
 import verify_flow_coverage as vf  # noqa: E402
 from build_coverage_matrix import US, scenario_index  # noqa: E402
 from build_route_table import load_routes, scenario_name, sheet_cells, step_of, step_titles  # noqa: E402
+import tobe_sheets as ts  # noqa: E402
 
 DEST = US / "業務フローとの照合"
 SID = re.compile(r"U[A-Z]{2}-\d+")
 ROWS = re.compile(r"R(\d+)")
-STEP_HEAD = ["＃", "作業概要", "判定", "通すシナリオ", "道筋（業務パターンとシナリオの対応表）", "対象外の区分", "対象外の理由", "決めた人"]
+STEP_HEAD = ["＃", "作業概要", "判定", "通すシナリオ", "通すテスト", "道筋（業務パターンとシナリオの対応表）", "対象外の区分", "対象外の理由", "決めた人"]
+# 通すテスト（2026-11-26 依頼者「シナリオが業務フローに基づいて抜け漏れなくテストできることがゴール」）：証明用の対応表の通すテストと同じ（その工程を引く通るの道筋のテストのうち、その工程を通すシナリオのもの。<シナリオID>/T01 は組み合わせ表の行、/EX1 は例外、IDだけはマトリクスの無いシナリオ）
 BIZ_HEAD = ["シナリオ", "シナリオの名前", "フォルダ", "業務一覧の＃（02_業務一覧_業務フロー.xlsx のシート「業務一覧」）", "業務一覧の業務（＃ BO業務（部署））",
             "業務フローの Excel のファイル名 ／ シート名（通す工程の数）", "備考"]
 # 2026-11-25 依頼者「Excelのファイル名とシート名を出力してほしい」：業務フローの Excel は2つあり、同じ名前のシート（店頭受取受注管理・
 #   在庫管理など）が両方に入っている（中身が違うものもある）。どちらのファイルのどのシートかを書く
 SCN_HEAD = ["シナリオ", "シナリオの名前", "フォルダ", "通す工程（業務フローのシート・＃・作業概要）", "画面マトリクスで通す〇（業務フロー対応番号・業務：画面）"]
-# 2026-11-26 依頼者「（tobe）があるシートを優先して、(tobe)シートがなければ、ついていないシートを元にシナリオを書く」（店頭買取と店頭買取 (tobe)
-#   が重複していると指摘）。(tobe) つきの4組は、(tobe) の無い方のシートの3行目の注記に合わせる（依頼者が選んだ）：
-#   店頭買取「※tobeではなくこちらを新フローとして記載しています。」・在庫管理「※asis→tobeの形式ではなく、新規に業務フローを起こしている
-#   （このファイルを新業務に修正）。」→ (tobe) の無い方を元にする。商品登録・編集（注記「※商品登録・編集 (tobe)シートに4.6.7の業務について
-#   在庫に関するtobeを記載」）・通販受注管理（注記「※すでにあるtobeで問題ないので変更なし」）→ (tobe) を元にする。
-#   元にしないシートからは、元にしたシートに無いパターンだけ出す。
-OTHER = {  # 元にしないシートの番号: (元にするシートの番号, 元にするシートにもあるので出さないパターンの＃, それでも出す工程 {R: 理由})
-    "07": ("06", {"1", "2"}, {}),
-    "09": ("10", {str(i) for i in range(1, 9)},
-           {142: "2026-11-05 依頼者の決定：部門更新CSV登録は、この 4-6 の工程として試験する（商品登録・編集 (tobe) では不要とされている）"}),
-    "13": ("12", {str(i) for i in range(1, 14)}, {}),  # 7〜13 は図に工程が無い。14 別部署からの発送依頼処理 は在庫管理に無いので出す
-    "16": ("17", {"4"}, {}),
-}
-BASE_NOTE = {"06": "※tobeではなくこちらを新フローとして記載しています。",
-             "12": "※asis→tobeの形式ではなく、新規に業務フローを起こしている（このファイルを新業務に修正）。"}
-
-
-def pattern_of(st):
-    """工程の行 → パターンの＃（＃の先頭。「（番号なし）」の工程は前の工程のパターン）"""
-    cur, out = "", {}
-    for x in sorted(st):
-        n = st[x]["#"]
-        if n and n != "（番号なし）":
-            cur = n.split("-")[0]
-        out[x] = cur
-    return out
-
-
-def kept_rows(no, st, errors):
-    """そのシートで出す工程の行。元にしないシート（OTHER）は、元にするシートに無いパターンと、決定で出す工程（とその見出し）だけ"""
-    if no not in OTHER:
-        return set(st)
-    base, drop, exc = OTHER[no]
-    plist = defaultdict(set)
-    for r in tsv("02_パターン.tsv"):
-        plist[r["業務フロー"][:2]].add(r["番号"])
-    for n in sorted(drop - plist[no]) + sorted(drop - plist[base]):
-        errors.append(f"業務フロー {no}：出さないパターン ＃{n} が {no} か {base} のパターンの一覧に無い")
-    for x in exc:
-        if x not in st or st[x]["扱い"] == "見出し":
-            errors.append(f"業務フロー {no} R{x}：決定で出す工程が 03_工程.tsv に無い")
-    pat = pattern_of(st)
-    exc_pat = {pat[x] for x in exc if x in pat}
-    return {x for x in st if pat[x] not in drop or x in exc or (pat[x] in exc_pat and st[x]["扱い"] == "見出し")}
+# (tobe) つきのシートの組でどちらを元にするか（2026-11-26）は tobe_sheets.py（証明用の対応表・業務パターンとシナリオの対応表と同じ）
+OTHER, BASE_NOTE = ts.OTHER, ts.BASE_NOTE
 
 
 def sheet_note(no, kept, st, titles):
@@ -154,7 +114,7 @@ def build():
         book = fx.XLSX[src].name
         st = steps[flow]
         titles = titles_by_no[no] = step_titles(no, st)
-        kept = kept_by_no[no] = kept_rows(no, st, errors)
+        kept = kept_by_no[no] = ts.kept_rows(no, st, errors)
         for x in sorted(set(st) - kept):  # 元にしないので出さない工程を通すシナリオ（大元の備考に書く）
             p = pstep.get((flow, x))
             if p and p[5] == "通る":
@@ -173,7 +133,7 @@ def build():
                 end = next((y for y in keys[i + 1:] if st[y]["扱い"] == "見出し" and not st[y]["#"].startswith(s["#"] + "-")), 10 ** 9)
                 under = ordered(sid for y in keys if x < y < end and (flow, y) in pstep and pstep[(flow, y)][5] == "通る"
                                 for sid in SID.findall(pstep[(flow, y)][6]))
-                rows.append(dict(head=True, cells=[num, title, "見出し", "・".join(under), "", "", "", ""]))
+                rows.append(dict(head=True, cells=[num, title, "見出し", "・".join(under), "", "", "", "", ""]))
                 continue
             p = pstep.get((flow, x))
             if not p:
@@ -190,6 +150,7 @@ def build():
                     by_sid[sid]["count"][(book, sheet)] += 1
                     by_sid[sid]["flows"].add(no)
             rows.append(dict(head=False, cells=[num, title, verdict, "\n".join(f"{sid} {label(sid)}" for sid in scen),
+                                                "\n".join(p[7].split("・")) if verdict == "通る" else "",
                                                 "・".join(route_at.get((flow, x), [])),
                                                 p[9] if verdict == "対象外" else "", p[10] if verdict == "対象外" else "",
                                                 p[11] if verdict == "対象外" else ""]))
@@ -382,14 +343,7 @@ def tobe_lines():
            ("・(tobe) のあるシートは (tobe) を優先し、(tobe) が無ければ付いていないシートを元にする。ただし、(tobe) の無い方のシートの3行目に、"
             "そちらが新しいと注記のある2組（店頭買取・在庫管理）は、注記に合わせて (tobe) の無い方を元にする（依頼者が選んだ）", False),
            ("・元にしないシートからは、元にしたシートに無いパターンだけを出す。シートごとの扱いは、各シートの1行目にも書いた", False)]
-    for o, (b, drop, exc) in OTHER.items():
-        bs, os_ = fx.md_source(b)[1], fx.md_source(o)[1]
-        why = f"注記「{BASE_NOTE[b]}」" if b in BASE_NOTE else "(tobe) を優先"
-        rest = {"07": "店頭買取 (tobe) にだけあるパターンは無いので、シートを出さない",
-                "09": "商品登録・編集にだけあるパターンは無い。2026-11-05 の依頼者の決定で試験する 4-6 部門更新だけを出す",
-                "13": "在庫管理 (tobe) にだけある 14 別部署からの発送依頼処理（※商品在庫移動依頼に限る）だけを出す",
-                "16": "通販受注管理（tobe）に無いパターン（4 発送業務 以外の 1〜3・5〜12）を出す"}[o]
-        out.append((f"　・{bs}を元にする（{why}）。{os_}：{rest}", False))
+    out += [(x, False) for x in ts.lines()]
     return out
 
 
@@ -416,6 +370,8 @@ def cmd_xlsx(path, res):
         ("・判定：通る＝通すシナリオがその工程を確かめる。対象外＝シナリオで確かめない工程（ピッキング・商品戻し・メールなどシステムを触らない作業、"
          "tobe のシートの今の運用の区間 など）。対象外の理由と決めた人を右の列に書いた", False),
         ("・通すシナリオ：その工程を通すシナリオのIDと名前（11/20 の照合で、シナリオの文が工程を通すと確かめたもの）", False),
+        ("・通すテスト：その工程を確かめるテスト（<シナリオID>/T01 は組み合わせ表の行、/EX1 は例外、IDだけは組み合わせ表の無いシナリオ）。"
+         "その工程を引く道筋（業務パターンとシナリオの対応表）のテストのうち、その工程を通すシナリオのもの。通る工程には必ず1つ以上付く（付かないと作る道具が止まる）", False),
         ("・道筋：その工程を通る、業務パターンとシナリオの対応表.xlsx の道筋（起点から終点までの流れ1本）。道筋ごとの通すテストはそちらにある", False),
         ("", False),
         *tobe_lines(),
@@ -438,9 +394,9 @@ def cmd_xlsx(path, res):
         ("・作り直し：tools/build_step_table.py（証明用の対応表の確かめが通らないと作らない）", False),
     ]
     tables = []
-    widths = [9, 34, 8, 46, 26, 18, 40, 24]
+    widths = [9, 34, 8, 46, 22, 26, 18, 40, 24]
     for sheet, _, rows, book, note in res["sheets"]:
-        keep = [i for i in range(len(STEP_HEAD)) if i < 5 or any(r["cells"][i] for r in rows)]
+        keep = [i for i in range(len(STEP_HEAD)) if i < 6 or any(r["cells"][i] for r in rows)]
         tables.append((sheet, [STEP_HEAD[i] for i in keep], [[r["cells"][i] for i in keep] for r in rows], [widths[i] for i in keep],
                        {j for j, r in enumerate(rows) if r["head"]}, "C2", f"業務フローの Excel：{book} ／ シート「{sheet}」{note}"))
     tables.append(("業務フロー画面マトリクス", ["業務フロー対応番号", "業務内容", "業務フローのシート・＃・作業概要"] + res["screens"], res["mrows"],

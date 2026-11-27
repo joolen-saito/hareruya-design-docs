@@ -21,7 +21,11 @@
   python3 -I tools/build_flow_proof.py screens            画面マトリクスの対応だけを確かめる（照合は流し直さない）
   uv run --with openpyxl python -I tools/build_flow_proof.py xlsx 業務フローとの照合/業務フローとシナリオの対応表.xlsx
       止まる条件に当たると Excel を書かない。--draft を付けると、抜けを残したまま「下書き」と書いた Excel を書く（依頼者に抜けを見せるとき）
+
+2026-11-26 依頼者「証明用の対応表と業務パターンとシナリオの対応表を (tobe) のルールに合わせて」：(tobe) つきのシートの組は、元にする
+シートの要素だけを載せる（tobe_sheets.py。紐づけの2ファイルと同じ）。照合と止まる条件は両方のシートの要素を全部見てから、載せる行を絞る。
 """
+import bisect
 import csv
 import re
 import subprocess
@@ -32,6 +36,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import flow_from_xlsx as fx  # noqa: E402
+import tobe_sheets as ts  # noqa: E402
 import verify_flow_coverage as vf  # noqa: E402
 from build_coverage_matrix import BIZ, US, norm, read, scenario_index  # noqa: E402
 
@@ -48,9 +53,13 @@ DECIDER = {
     "依頼者の決定で外した値": "依頼者（{date}の決定）・2026-11-24「外したままで良い」",
     "見出し（作業ではない）": "照合の決まり（見出しの行はパターンの段で照合する）",
     "分かれ道でない（説明・注記）": "こちらの判定（codex 3巡で確かめた 2026-11-20）",
+    "元にしないシート（(tobe) の組）": "依頼者 2026-11-26「(tobe) があるシートを優先」（店頭買取・在庫管理は3行目の注記に合わせる）",
 }
+OTHER_SHEET = "元にしないシート"  # 03 の理由（step_scope.tsv）がこれで始まる範囲外の工程は、(tobe) の組で元にしないシートの工程
 # 画面マトリクスだけの区分（決めた人は screen_map.tsv の行に書く）。2026-11-24 依頼者「良い」で抜け55件の扱いを決めたときに3つ足した
 SCREEN_CATS = set(DECIDER) | {"廃止と決まった画面", "その移動では使えない画面", "業務フローに流れが無い業務", "画面マトリクスの書き誤り"}
+DROPPED = Counter()  # (業務フロー, 段) → 載せない行の数（(tobe) の組の元にしないシート）
+PAT_FLOW = {}  # (業務フロー, パターンの番号, パターン名) → 02 の「図の流れ」（パターンの行に通すテストを付けるのに使う）
 
 
 def nz(s):
@@ -115,12 +124,12 @@ def val_text(vals, ftext):
 
 
 # ---- 対象外の区分
-def cat_cond(r):
+def cat_cond(r, step_why=""):
     m, how = r["メモ"], r["工程の扱い"]
     if how == "見出し":
         return "見出し（作業ではない）"
     if how == "範囲外":
-        return "刷新後に使わない運用"
+        return "元にしないシート（(tobe) の組）" if step_why.startswith(OTHER_SHEET) else "刷新後に使わない運用"
     if how in ("システムの外", "（番号なし）"):
         return "システムを触らない"
     if "フェーズ2" in m:
@@ -137,6 +146,8 @@ def cat_cond(r):
 
 
 def cat_step(r):
+    if r["扱い"] == "範囲外" and (r.get("理由") or "").startswith(OTHER_SHEET):
+        return "元にしないシート（(tobe) の組）"
     return {"見出し": "見出し（作業ではない）", "システムの外": "システムを触らない", "範囲外": "刷新後に使わない運用",
             "（番号なし）": "システムを触らない"}.get(r["扱い"])
 
@@ -242,7 +253,9 @@ def rows_business(idx, errors):
 
 def rows_pattern(errors):
     out = []
+    PAT_FLOW.clear()
     for r in tsv("02_パターン.tsv"):
+        PAT_FLOW[(r["業務フロー"], r["番号"], r["パターン"])] = r["図の流れ"]
         cat = cat_pattern(r) if r["判定"] == "対象外" else None
         # 図に工程が描かれていないパターン（通販 tobe 17 の13）は、表のシナリオと人の判定で通す
         scen = r["流れの工程を通るシナリオ"] or (r["表のシナリオ"] if r["判定"] == "通る" and "人の判定" in r["メモ"] else "")
@@ -284,8 +297,9 @@ def rows_cond(vt, ftext, errors):
     out = []
     rows = tsv("05_条件の文.tsv")
     memo_of = {(r["業務フロー"][:2], r["R"]): r["メモ"] for r in rows}
+    why_of = {(r["業務フロー"], r["R"]): r["理由"] for r in tsv("03_工程.tsv")}
     for r in rows:
-        cat = cat_cond(r) if r["判定"] == "対象外" else None
+        cat = cat_cond(r, why_of.get((r["業務フロー"], r["工程"]), "")) if r["判定"] == "対象外" else None
         memo = r["メモ"]
         m = re.search(r"(?:(\d\d) )?(R\d+) と同じ", memo)
         if cat == "依頼者の決定で外した値" and not decision_dates(memo) and m:  # 「06 R93 と同じ」は指す行の決定の日付を使う
@@ -299,9 +313,14 @@ def rows_cond(vt, ftext, errors):
     return out
 
 
+SROWS = {}
+
+
 def rows_screen(idx, smap, errors):
     sheet, cells = screen_cells()
     srows = {r["行"]: r for r in tsv("screen_rows.tsv")}
+    SROWS.clear()
+    SROWS.update(srows)
     smaps = defaultdict(list)
     for r in tsv("screen_map.tsv"):
         smaps[(r["行"], nz(r["画面"]))].append(r)
@@ -346,6 +365,91 @@ def rows_screen(idx, smap, errors):
     return out
 
 
+def attach_tests(rows, errors):
+    """通すテストの列を埋める（2026-11-26 依頼者「シナリオが業務フローに基づいて抜け漏れなくテストできることがゴール」）。
+    工程：その工程を引く通るの道筋のテストのうち、その工程を通すシナリオのもの。パターン：図の流れ（対のシートの流れを含む）の工程のテスト。
+    分かれ道・条件の文：業務条件の値のテスト（無ければ、その行を含む工程のテスト）。画面マトリクス：その業務の流れの工程のテストのうち、その〇のシナリオのもの。
+    「通る」の行にテストが1つも付かなければ止める"""
+    import build_route_table as brt  # 遅く読む（build_route_table がこのファイルの value_tests を読むので）
+    _, _, rerr = brt.build()
+    if rerr:
+        errors.append(f"業務パターンとシナリオの対応表の道具（build_route_table.py）が止まった：{rerr[0]}（ほか {len(rerr) - 1} 件）")
+    keys = defaultdict(list)
+    for r in tsv("03_工程.tsv"):
+        keys[r["業務フロー"]].append(int(r["R"][1:]))
+    keys = {f: sorted(v) for f, v in keys.items()}
+    md_of = {f[:2]: f for f in keys}
+
+    def step_at(f, x):
+        i = bisect.bisect_right(keys.get(f, []), x)
+        return keys[f][i - 1] if i else None
+    step_t, scen_t = defaultdict(set), defaultdict(set)
+    for ri in brt.ROUTE_INFO.values():
+        if ri["verdict"] != "通る":
+            continue
+        for x in ri["rows"]:
+            k = step_at(ri["flow"], x)
+            if k is not None:
+                step_t[(ri["flow"], k)] |= set(ri["tests"])
+        for tt in ri["tests"]:
+            scen_t[tt.split("/")[0]].add(tt)
+
+    def pick(tests, scen):
+        ss = set(SID.findall(scen))
+        return sorted(tt for tt in tests if tt.split("/")[0] in ss)
+    # 通しシナリオは、組み合わせ表の行のうち selected.tsv（実施するテスト。2026-11-12 依頼者決定）だけを流す
+    selected = {}
+    for f in US.glob("通しシナリオ/*/matrix_*/selected.tsv"):
+        with open(f, encoding="utf-8") as fh:
+            selected[f.parent.name[len("matrix_"):]] = {x["テストID"] for x in csv.DictReader(fh, delimiter="\t")}
+
+    def runs(tt):
+        s, _, tid = tt.partition("/")
+        return s not in selected or not tid or tid in selected[s]
+
+    def section_tests(f, h, e):
+        return set().union(set(), *[step_t[(f, k)] for k in keys.get(f, []) if h <= k < e])
+    for r in rows:
+        stage, flow = r[0], r[1]
+        if r[5] != "通る" or stage == "業務一覧":
+            continue
+        if stage == "工程":
+            got = pick(step_t[(flow, int(r[2][1:]))], r[6])
+        elif stage == "パターン":
+            fl = PAT_FLOW.get((flow, r[3], r[4].split("（図の流れ：")[0]), "")
+            m = re.match(r"(\S+)\s", fl or "")
+            pair = re.search(r"対のシート (\S+\.md)", fl or "")
+            target = pair.group(1) if pair else flow
+            pool = set()
+            if m:
+                name = re.sub(r"[\s　]+", "", re.split(r"（", fl[len(m.group(0)):])[0])
+                secs = [(h, e, n) for h, s, n, e in vf.sections_of(target[:2]) if s == m.group(1)]
+                if len(secs) > 1:
+                    secs = [c for c in secs if re.sub(r"[\s　]+", "", c[2]).startswith(name) or name.startswith(re.sub(r"[\s　]+", "", c[2]))] or secs
+                for h, e, _ in secs:
+                    pool |= section_tests(target, h, e)
+            else:  # 図に工程が無いパターン（通販 tobe 17 の13）：表のシナリオのテスト
+                pool = set().union(set(), *[scen_t[s] for s in SID.findall(r[6])])
+            got = pick(pool, r[6])
+        elif stage in ("分かれ道", "条件の文"):
+            got = [x for x in r[7].split("・") if x] or pick(step_t[(flow, step_at(flow, int(r[2][1:])))], r[6])
+        elif stage == "画面マトリクス":
+            pool = set()
+            for part in [q for q in SROWS.get(r[2], {}).get("業務フローの流れ", "").split("・") if q]:
+                fno, start = part.split(":R")
+                for h, s, n, e in vf.sections_of(fno):
+                    if h == int(start) and fno in md_of:
+                        pool |= section_tests(md_of[fno], h, e)
+            got = pick(pool, r[6])
+        else:
+            continue
+        r[7] = "・".join(got)
+        if not got:
+            errors.append(f"{stage} {flow} {r[2]} {r[3]}：通るのに、通すテストが付かない（通すシナリオ {r[6]} のテストが、この行を引く通るの道筋に無い）")
+        elif not any(runs(tt) for tt in got):
+            errors.append(f"{stage} {flow} {r[2]} {r[3]}：付いたテスト {got} が、どれも通しシナリオの実施しない行（selected.tsv に無い）")
+
+
 def build(rerun=True, only_screens=False):
     errors = []
     if rerun and not only_screens:
@@ -360,6 +464,7 @@ def build(rerun=True, only_screens=False):
     vt = value_tests()
     rows = (rows_business(idx, errors) + rows_pattern(errors) + rows_step(smap, errors) + rows_branch(vt, ftext, errors)
             + rows_cond(vt, ftext, errors) + rows_screen(idx, smap, errors))
+    attach_tests(rows, errors)
     for r in rows:
         where = f"{r[0]} {r[1]} {r[2]} {r[3]}"
         if r[5] not in ("通る", "対象外"):
@@ -370,7 +475,23 @@ def build(rerun=True, only_screens=False):
                 errors.append(f"{where}：通すシナリオが無い・実在しない {bad}")
         elif not (r[9] and r[10] and r[11]):
             errors.append(f"{where}：対象外の区分・理由・決めた人のどれかが空")
-    return [[i + 1] + r for i, r in enumerate(rows)], errors
+    # (tobe) の組：確かめは全部の行で済ませてから、元にしないシートの要素を外す
+    ts.reset()
+    DROPPED.clear()
+    kept = []
+    for r in rows:
+        no = r[1][:2]
+        if r[0] == "パターン":
+            ok = ts.keep_pattern(no, r[3])
+        elif r[0] in ("工程", "分かれ道", "条件の文"):
+            ok = ts.keep_row(no, int(r[2][1:]))
+        else:
+            ok = True
+        if ok:
+            kept.append(r)
+        else:
+            DROPPED[(r[1], r[0])] += 1
+    return [[i + 1] + r for i, r in enumerate(kept)], errors
 
 
 def summary(rows):
@@ -403,8 +524,17 @@ def cmd_xlsx(path, rows, errors, draft=False):
         ["段", "業務一覧（BO業務の行）／パターン（業務フローパターンの表と図の流れ）／工程（# の行）／分かれ道（判断の図形から出る矢印1本ずつ）／条件の文（「〜の場合」などの文）／画面マトリクス（業務×画面の〇）"],
         ["通る", "そのシナリオがその流れを通る（工程の対応表の引用がシナリオの文にそのままある）。分かれ道・条件の文は、当てはまる業務条件の値が全部、その流れを通るシナリオで〇。画面マトリクスは、その業務の流れを通るシナリオの文にその画面を使うところがある"],
         ["対象外", "業務フローにあってシナリオで通していないもの。区分ごとに依頼者が決めた（2026-11-24）。理由は「対象外の理由」の列"],
-        ["通すテスト", "組み合わせ表の行（<シナリオID>/T01）と例外（/E1）。〇表（網羅マトリクス/パターン×テスト.xlsx）と同じ"],
+        ["通すテスト", "その要素を確かめるテスト。組み合わせ表の行（<シナリオID>/T01）と例外（/E1・/EX1）。IDだけは組み合わせ表の無いシナリオ。"
+         "分かれ道・条件の文は業務条件の値のテスト（〇表 網羅マトリクス/パターン×テスト.xlsx と同じ）、工程・パターン・画面マトリクスは、その要素を引く道筋（業務パターンとシナリオの対応表）のテストのうち、通すシナリオのもの（2026-11-26）。"
+         "「通る」の行には必ず1つ以上付き、通しシナリオは実施するテスト（selected.tsv）が1つ以上入る。外れると作る道具が止まる"],
         ["根拠のファイル", "scenario_test/user_scenario/業務フローとの照合/（照合結果.md・01〜05_*.tsv・branch_map.tsv・judgements.tsv・business_list_map.tsv・screen_rows.tsv・screen_map.tsv）、網羅マトリクス/<業務>/"],
+        ["(tobe) のあるシート（2026-11-26）",
+         "(tobe) のあるシートは (tobe) を優先し、(tobe) が無ければ付いていないシートを元にする。ただし、(tobe) の無い方のシートの3行目に、そちらが新しいと注記のある2組"
+         "（店頭買取・在庫管理）は、注記に合わせて (tobe) の無い方を元にする（依頼者が選んだ）。元にしないシートの要素は、元にしたシートに無いパターンの分だけを載せる。"
+         "照合と、作る道具の止まる条件は、両方のシートの要素を全部見たうえで載せる行を絞った（載せない行も抜け 0）"],
+        *[["", x.strip("　・")] for x in ts.lines()],
+        ["載せない行", "・".join(f"{fx.md_source(f[:2])[1]} {'・'.join(f'{s}{n}' for (ff, s), n in DROPPED.items() if ff == f)}"
+                              for f in dict.fromkeys(ff for ff, _ in DROPPED))],
         [],
         ["段", "通る", "対象外", "抜け", "合計"],
     ]

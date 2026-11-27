@@ -3,6 +3,9 @@
 2026-11-24 依頼者「わかりにくいね。人間にとっては。業務パターンを業務フローExcelから言語化して、それとマッピングするのはどうかね」→「よい」。
 まず店頭受取受注管理（業務フロー05）で試作する。
 
+2026-11-26 依頼者「(tobe) のルールに合わせて」：(tobe) つきのシートの組は、元にするシートの道筋だけを載せる（tobe_sheets.py）。
+止まる条件は載せない道筋も含めて全部で見る。
+
 人が書くもの：業務フローとの照合/routes/<業務フロー>.tsv（業務フローのシートごと。1行＝道筋1本。業務パターンの文、分かれ目、業務条件の値、通すシナリオ、Excel の行（通る順）、図の読み替え）
 機械が足すもの：通すテスト（道筋の業務条件の値を全部持つテスト）、図の画面・データ（引いた工程の帯にある図形）、システムを触らない工程
 
@@ -55,6 +58,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import flow_from_xlsx as fx  # noqa: E402
+import tobe_sheets as tobe  # noqa: E402
 import verify_flow_coverage as vf  # noqa: E402
 from build_coverage_matrix import US, scenario_index  # noqa: E402
 from build_flow_proof import value_tests  # noqa: E402
@@ -63,6 +67,11 @@ DEST = US / "業務フローとの照合"
 SID = re.compile(r"U[A-Z]{2}-\d+")
 ROWS = re.compile(r"R(\d+)")
 VALID = re.compile(r"/([A-Z]+\d*-[A-Z]?\d+):対象")
+DROPPED = defaultdict(list)  # 業務フロー → 載せない道筋（(tobe) の組の元にしないシート。tobe_sheets.py）
+# 道筋 → 業務フロー・引く Excel の行・判定・パターンの＃・通すテスト（<シナリオID>/T01 か、マトリクスの無いシナリオはシナリオID）。
+# 証明用の対応表（build_flow_proof.py）が、工程・パターン・画面マトリクスの行に通すテストを付けるのに使う（2026-11-26 依頼者
+# 「シナリオが業務フローに基づいて抜け漏れなくテストできることがゴール」）。載せない道筋も含めて全部
+ROUTE_INFO = {}
 HEAD = ["道筋", "業務", "パターン（業務フローの番号・名前）", "業務パターン（業務フローの流れ）", "分かれ目", "判定",
         "通すシナリオ", "通すテスト", "Excel とシナリオの違い", "図の画面・データ", "システムを触らない工程", "業務条件の値", "業務フローの＃・作業概要",
         "対象外の区分", "対象外の理由", "決めた人", "業務フローのシート"]
@@ -262,6 +271,7 @@ def load_routes():
 
 def build(only=None):
     errors = []
+    ROUTE_INFO.clear()
     routes = load_routes()
     p_fix = DEST / "routes" / "arrow_fix.tsv"
     arrow_fix = tsv("routes/arrow_fix.tsv") if p_fix.exists() else []
@@ -601,6 +611,7 @@ def build(only=None):
                 if any(o is not r and t in o["tests"] and o["tests"][t] > have for o in info):
                     del r["tests"][t]
         for r in info:
+            ROUTE_INFO[r["rid"]] = dict(flow=flow, rows=r["rows"], verdict=r["verdict"], pno=r["pno"], tests=[])
             if r["verdict"] != "通る":
                 r["test_text"] = ""
                 continue
@@ -613,6 +624,7 @@ def build(only=None):
                     errors.append(f"{r['rid']}：通すシナリオ {s} のテストが無い（分かれ目の値にも、前後のテストにも当たらない）")
                     continue
                 parts.append(ts[0] if ts == [s] else f"{s}：" + "・".join(t.split("/")[1] for t in ts))
+                ROUTE_INFO[r["rid"]]["tests"] += ts
             for s in r["side"]:
                 if s not in r["scen"]:
                     errors.append(f"{r['rid']}：前後のテストの {s} が通すシナリオに無い")
@@ -690,6 +702,15 @@ def build(only=None):
             hit = any(k[0] == target and k[1] == m.group(1) and (k[2].startswith(pname) or pname.startswith(k[2])) for k in routed_named) if dup else (target, m.group(1)) in routed
             if not hit:
                 errors.append(f"{flow}：パターン {p['番号']} {p['パターン']}（図の流れ {m.group(1)}{'・' + target if pair else ''}）に道筋が無い")
+    # ---- (tobe) の組（2026-11-26 依頼者「(tobe) のルールに合わせて」）：確かめは全部の道筋で済ませてから、元にしないシートの道筋を外す
+    tobe.reset()
+    DROPPED.clear()
+    for rt in routes:
+        if not tobe.keep_pattern(rt["業務フロー"][:2], rt["パターン"].split()[0]):
+            DROPPED[rt["業務フロー"]].append(rt["道筋"])
+    gone = {x for v in DROPPED.values() for x in v}
+    routes = [rt for rt in routes if rt["道筋"] not in gone]
+    out = [r for r in out if r[0] not in gone]
     # ---- 業務フローに無いシナリオ（その業務のフォルダのシナリオで、どの道筋にも出ないもの）
     used = set()
     for rt in routes:
@@ -701,7 +722,7 @@ def build(only=None):
             walked = []
             for flow, st in steps.items():
                 for x, s in sorted(st.items()):
-                    if sid in sids(s["シナリオ"]):
+                    if sid in sids(s["シナリオ"]) and tobe.keep_row(flow[:2], x):
                         t = titles_by_no.get(flow[:2], {}).get(x) or f"{s['#']} {s['作業概要']}"
                         walked.append(f"{fx.md_source(flow[:2])[1]} {t}")
             extra.append([sid, folder, scenario_name(folder, sid), "\n".join(walked)])
@@ -743,7 +764,7 @@ def cmd_xlsx(path, out, extra):
         ("・業務パターン：Excel の工程の文から作った。Excel に無いことを補ったところは、その旨を文の中に書いた", False),
         ("・業務フローの＃・作業概要：道筋が通る工程を、業務フローの Excel の「＃」「作業概要」の列の言葉で通る順に並べた（システムを触らない工程も入る）。"
          "業務フローの Excel の同じ＃の行と見比べられる。「※飛ばす工程」は、パターンの中で通らない工程とその理由。Excel の行の番号（R23 など）は routes/*.tsv に残す", False),
-        ("・業務フローのシート：業務フローの Excel のシートの名前。今のシートと tobe のシートを1つにまとめた業務（店頭買取・商品登録・編集・在庫管理・通販）にだけ出す", False),
+        ("・業務フローのシート：業務フローの Excel のシートの名前。1つの業務に2つのシートの道筋があるとき（(tobe) の組で、元にしないシートから足したパターンがある在庫管理・通販）にだけ出す", False),
         ("・分かれ目：その道筋に進む条件（Excel の判断の図形と、条件の文）", False),
         ("・通すシナリオ：その道筋を最初から最後まで通すシナリオを、通る順に「→」でつないだ（業務フローの範囲を分けて持つシナリオが続く）。「、」のあとは同じ道筋を別の目で確かめるシナリオ", False),
         ("・通すテスト：通すシナリオの順に、シナリオごとのテスト番号を並べた（マトリクスの無いシナリオはシナリオIDだけ）。分かれ目のシナリオは、道筋の業務条件の値を全部持つテスト"
@@ -751,6 +772,13 @@ def cmd_xlsx(path, out, extra):
         ("・Excel とシナリオの違い：Excel の流れと、新しいシステム・シナリオ・テストの違い（状態の名前、テストでの印刷のしかた、支払方法ごとの違い など）。根拠の文書を書いた", False),
         ("・システムを触らない工程：道筋の中で、システムの外の作業（ピッキング・商品戻し・メールなど）", False),
         ("・対象外の区分・理由・決めた人：通していない道筋だけに書く。対象外の道筋が無い業務のシートには、この3列を出さない", False),
+        ("", False),
+        ("(tobe) のあるシート（2026-11-26）", True),
+        ("・(tobe) のあるシートは (tobe) を優先し、(tobe) が無ければ付いていないシートを元にする。ただし、(tobe) の無い方のシートの3行目に、そちらが新しいと注記のある2組"
+         "（店頭買取・在庫管理）は、注記に合わせて (tobe) の無い方を元にする（依頼者が選んだ）。元にしないシートの道筋は、元にしたシートに無いパターンの分だけを載せる", False),
+        *[(x, False) for x in tobe.lines()],
+        ("・載せない道筋：" + "・".join(f"{fx.md_source(f[:2])[1]} {len(v)} 本" for f, v in DROPPED.items())
+         + "。確かめ（下）は載せない道筋も含めて全部で行った。商品登録・編集の 4-6 部門更新は道筋の途中の工程なので、道筋では出さず「業務フローの＃とシナリオの紐づけ.xlsx」のシート「商品登録・編集」に出す", False),
         ("", False),
         ("抜けが無いことの確かめ方（道具 tools/build_route_table.py。1つでも外れると表を作らない）", True),
         ("・Excel の工程（見出し以外）・判断の矢印・条件の文が、どれか1本の道筋に入っている", False),
